@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct Cart16k : GameCart {
 
-    Cart16k() : GameCart(false, false) {
+    Cart16k(System* system) : GameCart(system, false, false) {
         
     }
 

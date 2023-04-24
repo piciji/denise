@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct System3 : GameCart {
     
-    System3() : GameCart(true, false) {
+    System3(System* system) : GameCart(system, true, false) {
         
     }
 

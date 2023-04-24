@@ -13,6 +13,8 @@ else
 fi
 echo "Finished installing dependencies. Copying application files."
 
+# supported prefixes: /usr or $(HOME)/.local
+# for a custom prefix you need to build the APP from sources: make prefix=path && make install prefix=path
 prefix=/usr
 
 if [ -d $prefix/local ]; then mkdir -p $prefix/local/bin/; else mkdir -p $prefix/bin/; fi

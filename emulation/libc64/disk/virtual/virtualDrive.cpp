@@ -168,7 +168,7 @@
 
 namespace LIBC64 {
 
-VirtualDrive::VirtualDrive(DiskStructure* structure) : structure(structure) {
+VirtualDrive::VirtualDrive(System* system, DiskStructure* structure) : system(system), structure(structure) {
     for (unsigned i = 0; i < 16; i++) {
         vdrive.buffers[i].mode = BUFFER_NOT_IN_USE;
         vdrive.buffers[i].buffer = nullptr;
@@ -661,7 +661,7 @@ auto VirtualDrive::finish(bool sendFinishEvent) -> void {
 
     if (sendFinishEvent) {
         finishEvent = [this]() { system->interface->trapsResult(structure->media, false); };
-        sysTimer.add(&finishEvent, 15);
+        system->sysTimer.add(&finishEvent, 15);
     }
 }
 

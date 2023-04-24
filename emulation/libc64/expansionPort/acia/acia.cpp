@@ -5,8 +5,6 @@
 
 namespace LIBC64 {
 
-Acia* acia = nullptr;
-
 const double Acia::bpsLookup[16] = {
     10, 50, 75, 109.92, 134.58, 150, 300, 600, 1200, 1800,
     2400, 3600, 4800, 7200, 9600, 19200
@@ -20,7 +18,7 @@ Acia::~Acia() {
     socket.clean();
 }
 
-Acia::Acia() : ExpansionPort() {
+Acia::Acia(System* system) : sysTimer(system->sysTimer), ExpansionPort(system) {
 
     setId( Interface::ExpansionIdRS232 );
     useNmi = true;
@@ -47,7 +45,7 @@ Acia::Acia() : ExpansionPort() {
         }
 
         if (command & 1)
-            sysTimer.add( &receiver, bitCyclesReceive );
+            this->sysTimer.add( &receiver, bitCyclesReceive );
     };
 
     transmitter = [this]() {
@@ -71,7 +69,7 @@ Acia::Acia() : ExpansionPort() {
             redoTx--;
 
         if (redoTx)
-            sysTimer.add( &transmitter, bitCycles );
+            this->sysTimer.add( &transmitter, bitCycles );
     };
 
     sysTimer.registerCallback( {{&receiver, 1}, {&transmitter, 1}} );

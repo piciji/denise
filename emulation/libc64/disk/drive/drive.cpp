@@ -1,6 +1,7 @@
 
 #include "drive.h"
 #include "../iec.h"
+#include "../../system/system.h"
 #include "mechanics.cpp"
 #include "mechanicsP64.cpp"
 #include "mechanicsG64.cpp"
@@ -9,7 +10,6 @@
 #include "turbotrans.cpp"
 #include "serialization.cpp"
 #include "../../system/firmware.h"
-#include "../../expansionPort/fastloader/fastloader.h"
 #include "../../../tools/gcr.h"
 
 // for 300 rpm = 5 rotation / sec = 16.000.000 / 5
@@ -38,7 +38,7 @@ namespace LIBC64 {
 // the relative	distance matters, so we can step in 8 ref cycle chunks which is handled in rotateP64 and rotateG64
     
 #define SYNC \
-    cpu->handleSo();                                                    \
+    cpu.handleSo();                                                    \
     if (operation & USERDATA_LEVEL) {                   \
         rotateD64();                                                        \
     } else if (operation & ENCODEDDATA_LEVEL) {            \
@@ -46,15 +46,15 @@ namespace LIBC64 {
     } else {                                                                \
         rotateP64();                                                  \
     }                                                                       \
-    via1->process();                                                        \
-    via2->process();                                                        \
+    via1.process();                                                        \
+    via2.process();                                                        \
     if (operation & DRIVE_MODE_157x) {                                       \
-        wd1770->clock();                                                    \
-        cia->clock();                                                   \
+        wd1770.clock();                                                    \
+        cia.clock();                                                   \
         if (operation & DRIVE_HAS_EXTRA_CIA)                                    \
-            ciaSpeeder->clock();                                                \
+            ciaSpeeder.clock();                                                \
     }                                                                           \
-    cycleCounter += iecBus->cpuCylcesPerSecond;             \
+    cycleCounter += iecBus.cpuCylcesPerSecond;             \
     if (delayInProgress)              \
         progressDelay();
     
@@ -84,7 +84,7 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
         if (extendedMemoryMap) {
             if (speeder == 4) { // dolphin v3
                 if ((addr & 0xf000) == 0x5000) {
-                    pia->write( addr & 3, data );
+                    pia.write( addr & 3, data );
                     return;
                 }
             } else if (speeder == 6) {  // profdos v1
@@ -109,7 +109,7 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
                     addr = (addr >> 2) & 3;
 
                     if (addr & 2)
-                        pia->write( addr, data );
+                        pia.write( addr, data );
                     else
                         prologicControlClassic( addr, data );
 
@@ -146,22 +146,22 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
             ram[addr & 0x7ff] = data;
 
         else if ((addr & 0x9c00) == 0x1800)
-            via1->write(addr, data);
+            via1.write(addr, data);
 
         else if ((addr & 0x9c00) == 0x1c00)
-            via2->write(addr, data);
+            via2.write(addr, data);
 
     } else {
         // 157x
         if (extendedMemoryMap) {
             if (speeder == 5) { // dolphin v3
                 if ((addr & 0xf000) == 0x5000) {
-                    pia->write( addr & 3, data );
+                    pia.write( addr & 3, data );
                     return;
                 }
             } else if (speeder == 13) {
                 if ((addr & 0xfff0) == 0x9e20) {
-                    ciaSpeeder->write(addr, data);
+                    ciaSpeeder.write(addr, data);
                     return;
                 }
             }
@@ -182,17 +182,17 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
             ram[addr & 0x7ff] = data;
 
         else if ((addr & 0xfc00) == 0x1800)
-            via1->write(addr, data);
+            via1.write(addr, data);
 
         else if ((addr & 0xfc00) == 0x1c00) {
             byteReady = false;
-            via2->write(addr, data);
+            via2.write(addr, data);
 
         } else if ((addr & 0xc000) == 0x4000) {
-            cia->write(addr, data);
+            cia.write(addr, data);
 
         } else if ((addr & 0xe000) == 0x2000) {
-            wd1770->write(addr, data);
+            wd1770.write(addr, data);
         }
     }
 }
@@ -203,7 +203,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
         if (extendedMemoryMap) {
             if (speeder == 4) {
                 if ((addr & 0xf000) == 0x5000) {
-                    return pia->read( addr & 3 );
+                    return pia.read( addr & 3 );
                 }
             } else if (speeder == 6) {
                 if (profDosAutoSpeed)
@@ -231,7 +231,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                     addr = (addr >> 2) & 3;
 
                     if (addr & 2)
-                        return pia->read( addr );
+                        return pia.read( addr );
                     else if ((addr & 1) == 0) {
                         return prologic2Mhz;
                     }
@@ -316,19 +316,19 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
             return ram[addr & 0x7ff];
 
         else if ((addr & 0x9c00) == 0x1800)
-            return via1->read(addr);
+            return via1.read(addr);
 
         else if ((addr & 0x9c00) == 0x1c00)
-            return via2->read(addr);
+            return via2.read(addr);
 
-        return cpu->dataBus;
+        return cpu.dataBus;
     }
 
     // 157x
     if (extendedMemoryMap) {
         if (speeder == 5) {
             if ((addr & 0xf000) == 0x5000) {
-                return pia->read( addr & 3 );
+                return pia.read( addr & 3 );
             }
         }
         else if (speeder == 8 || speeder == 9) { // profdos R5, R6
@@ -340,7 +340,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
             if (proSpeedControl & (1 | 2 | 0x80)) {
 
                 if ((addr & 0xfff0) == 0x9e20) {
-                    return ciaSpeeder->read(addr);
+                    return ciaSpeeder.read(addr);
                 }
 
                 if (proSpeedControl & 0x2) {
@@ -385,25 +385,33 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
         return ram[addr & 0x7ff];
 
     else if ((addr & 0xfc00) == 0x1800)
-        return via1->read(addr);
+        return via1.read(addr);
 
     else if ((addr & 0xfc00) == 0x1c00) {
         // TED line of U6 clears the Byte line in 2 Mhz mode.
         // Line is connected to Chip select of VIA 2. any access of VIA2 clears the line.
         byteReady = false;
-        return via2->read(addr);
+        return via2.read(addr);
 
     } else if ((addr & 0xc000) == 0x4000) {
-        return cia->read(addr);
+        return cia.read(addr);
     }
     else if ((addr & 0xe000) == 0x2000) {
-        return wd1770->read(addr);
+        return wd1770.read(addr);
     }
 
-    return cpu->dataBus;
+    return cpu.dataBus;
 }
 
-Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : structure(this) {
+Drive::Drive(uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* mediaConnected ) :
+via1(1),
+via2(2),
+cia(3),
+ciaSpeeder(4),
+cpu(system, this),
+system(system),
+iecBus(iecBus),
+structure(system, this) {
      
     this->number = number; 
 	this->mediaConnected = mediaConnected;
@@ -454,18 +462,10 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
     rom = rom1541II;
     romMask = rom1541IISize - 1;
-    
-    via1 = new Via( 1 );
-    via2 = new Via( 2 );
-    cia = new Cia<MOS_8520>( 3 );
-    ciaSpeeder = new Cia<MOS_8520>( 4 );
-    cpu = new M6502(this);
-    pia = new Emulator::Pia;
-    wd1770 = new WD1770;
 
-    wd1770->setTrack(dummyTrack, true);
+    wd1770.setTrack(dummyTrack, true);
 
-    pia->ca2Out = [this](bool direction) {
+    pia.ca2Out = [this, system](bool direction) {
         if (direction)
             return;
 
@@ -474,7 +474,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         }
     };
 
-    pia->cb2Out = [this](bool direction) {
+    pia.cb2Out = [this, system](bool direction) {
         if (direction)
             return;
 
@@ -483,39 +483,39 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         }
     };
 
-    pia->readPort = [this]( Emulator::Pia::Port port ) {
+    pia.readPort = [this, system]( Emulator::Pia::Port port ) {
 
         if (port == Emulator::Pia::Port::A) {
             if (speeder == 4 || speeder == 5) {
                 if (!system->secondDriveCable.parallelUse)
-                    return this->pia->ioa;
+                    return this->pia.ioa;
             } else
-                return this->pia->ioa;
+                return this->pia.ioa;
         } else {
             if (speeder == 10) {
                 if (!system->secondDriveCable.parallelUse)
-                    return this->pia->iob;
+                    return this->pia.iob;
             } else
-                return this->pia->iob;
+                return this->pia.iob;
         }
 
         uint8_t out = system->readParallel();
 
-        for (auto drive : iecBus->drivesEnabled) {
+        for (auto drive : system->iecBus.drivesEnabled) {
             if (port == Emulator::Pia::Port::A)
-                out &= drive->pia->ioa;
+                out &= drive->pia.ioa;
             else
-                out &= drive->pia->iob;
+                out &= drive->pia.iob;
         }
         return out;
     };
 
-    pia->writePort = [this]( Emulator::Pia::Port port, uint8_t data ) {
+    pia.writePort = [this]( Emulator::Pia::Port port, uint8_t data ) {
         // nothing todo here, because CA(B)2 is triggered and port value is latched on pins
     };
 
     // proSpeed 1571 v2.0 has extra CIA
-    ciaSpeeder->writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+    ciaSpeeder.writePort = [this, system]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( lines->prbChange && (port == Cia<MOS_8520>::PORTB )) {
             system->writeParallelHandshake();
@@ -525,7 +525,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         }
     };
 
-    ciaSpeeder->readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+    ciaSpeeder.readPort = [this, system]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTB ) {
             if (!system->secondDriveCable.parallelUse )
@@ -533,8 +533,8 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
             uint8_t out = system->readParallelWithHandshake();
 
-            for (auto drive : iecBus->drivesEnabled) {
-                out &= drive->ciaSpeeder->lines.iob;
+            for (auto drive : system->iecBus.drivesEnabled) {
+                out &= drive->ciaSpeeder.lines.iob;
             }
 
             return out;
@@ -543,15 +543,15 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         return lines->ioa;
     };
 
-    cia->serialOut = [this](bool spLine, bool cntLine) {
+    cia.serialOut = [this, system](bool spLine, bool cntLine) {
         if (dataDirection) {
             if (!cntLine && system->secondDriveCable.burstUse) {
-                cia1->serialIn(spLine);
+                system->cia1.serialIn(spLine);
             }
         }
     };
 
-    cia->writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+    cia.writePort = [this, system]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( lines->prbChange && (port == Cia<MOS_8520>::PORTB )) {
 
@@ -564,7 +564,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         }
     };
 
-    cia->readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+    cia.readPort = [this, system]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTB ) {
 
@@ -573,8 +573,8 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
 
             uint8_t out = system->readParallelWithHandshake();
 
-            for (auto drive : iecBus->drivesEnabled) {
-                out &= drive->cia->lines.iob;
+            for (auto drive : system->iecBus.drivesEnabled) {
+                out &= drive->cia.lines.iob;
             }
 
             return out;
@@ -582,31 +582,31 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         return lines->ioa;
     };
 
-    cia->irqCall = [this](bool state) {
+    cia.irqCall = [this](bool state) {
         if (state)
             irqIncomming |= 4;
         else
             irqIncomming &= ~4;
 
-        cpu->setIrq( irqIncomming != 0 );
+        cpu.setIrq( irqIncomming != 0 );
     };
 
-    via1->irqCall = [this](bool state) {                
+    via1.irqCall = [this](bool state) {
         if (state)
             irqIncomming |= 1;
         else
             irqIncomming &= ~1;
 
-        cpu->setIrq( irqIncomming != 0 );
+        cpu.setIrq( irqIncomming != 0 );
     };
     
-    via2->irqCall = [this](bool state) {
+    via2.irqCall = [this](bool state) {
 		if (state)
 			irqIncomming |= 2;
 		else
 			irqIncomming &= ~2; 
 		
-        cpu->setIrq( irqIncomming != 0 );
+        cpu.setIrq( irqIncomming != 0 );
     };
 
     //PB 7, CB2: ATN IN
@@ -617,7 +617,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
     //PB 1:	DATA OUT
     //PB 0:	DATA IN
     
-    via1->writePort = [this]( Via::Port port, Via::Lines* lines ) {        
+    via1.writePort = [this, system]( Via::Port port, Via::Lines* lines ) {
         
         if (port == Via::Port::B) {
             
@@ -625,7 +625,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
             
                 updateBus();
                                             
-                iecBus->updatePort();
+                system->iecBus.updatePort();
             }
         } else {
 
@@ -650,11 +650,11 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         }
     };   
     
-    via1->readPort = [this]( Via::Port port, Via::Lines* lines ) {
+    via1.readPort = [this, system]( Via::Port port, Via::Lines* lines ) {
         
         if (port == Via::Port::B) {
             // invert the three input bits, add device number  
-            return (uint8_t)( ((0x1a | iecBus->readVia()) ^ 0x85) | (this->number << 5) ); 
+            return (uint8_t)( ((0x1a | system->iecBus.readVia()) ^ 0x85) | (this->number << 5) );
         }
 
         // port A
@@ -666,8 +666,8 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         if (system->secondDriveCable.parallelUse && ((operation & DRIVE_HAS_PIA) == 0) ) {
             uint8_t out = system->readParallel();
 
-            for (auto drive : iecBus->drivesEnabled) {
-                out &= drive->via1->lines.ioa;
+            for (auto drive : system->iecBus.drivesEnabled) {
+                out &= drive->via1.lines.ioa;
             }
 
             return out;
@@ -679,7 +679,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         return lines->ioa;
     };
     
-    via2->writePort = [this]( Via::Port port, Via::Lines* lines ) {        
+    via2.writePort = [this, system]( Via::Port port, Via::Lines* lines ) {
         
         if (port == Via::Port::B) {
             
@@ -719,7 +719,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
             if ((lines->iob ^ lines->iobOld) & 4) {
                 // motor switched between on/off 
                 motorOn = (lines->iob & 4) != 0;
-                wd1770->setDiskAccessible(motorOn & loaded);
+                wd1770.setDiskAccessible(motorOn & loaded);
                 if (!motorOn)
                     motorOffInit();
 
@@ -733,7 +733,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
                 updateDeviceState();
 
                 bool _loadingState = false;
-                for( auto drive : iecBus->drivesEnabled ) {
+                for( auto drive : system->iecBus.drivesEnabled ) {
                     if (drive->motorOn) {
                         _loadingState = true;
                         break;
@@ -757,7 +757,7 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         }
     };
         
-    via2->readPort = [this]( Via::Port port, Via::Lines* lines ) {
+    via2.readPort = [this]( Via::Port port, Via::Lines* lines ) {
 
         if (port == Via::Port::B) {
 
@@ -770,25 +770,25 @@ Drive::Drive(uint8_t number, Emulator::Interface::Media* mediaConnected ) : stru
         return (latchedByte & ~lines->ddra) | ( lines->pra & lines->ddra );
     };
     
-    via2->ca2Out = [this]( bool direction ) {
+    via2.ca2Out = [this]( bool direction ) {
         byteReadyOverflow = direction;
         if (!ca1Line && !byteReadyOverflow)
-            via2->ca1In( ca1Line = true );
+            via2.ca1In( ca1Line = true );
     };
 
-    via2->cb2Out = [this]( bool state ) {
+    via2.cb2Out = [this]( bool state ) {
         readMode = state;
         updateDeviceState();
     };
 
-    via1->ca2Out = [this]( bool direction ) {
+    via1.ca2Out = [this, system]( bool direction ) {
         if (direction || (operation & DRIVE_HAS_PIA) || (operation & DRIVE_MODE_157x))
             return;
 
         system->writeParallelHandshake();
     };
 
-    structure.write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
+    structure.write = [this, system](uint8_t* buffer, unsigned length, unsigned offset) {
 		
 		return system->interface->writeMedia( getMedia(), buffer, length, offset );
 	};
@@ -811,7 +811,7 @@ Drive::~Drive() {
 
 auto Drive::updateDeviceState() -> void {
     system->diskSilence.idleFrames = 0;
-    system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, via2->lines.iob & 8, !motorOn );
+    system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, via2.lines.iob & 8, !motorOn );
 }
 
 // missing BUS communication
@@ -825,11 +825,11 @@ auto Drive::updateIdleDeviceState() -> void {
 
 auto Drive::updateBus() -> void {
     
-    clockOut = !((via1->lines.iob >> 3) & 1);    
-    dataOut =  !((via1->lines.iob >> 1) & 1);
-    atnOut =  (via1->lines.iob >> 4) & 1;            
+    clockOut = !((via1.lines.iob >> 3) & 1);
+    dataOut =  !((via1.lines.iob >> 1) & 1);
+    atnOut =  (via1.lines.iob >> 4) & 1;
 
-    if ( iecBus->atnOut == atnOut )
+    if ( iecBus.atnOut == atnOut )
         dataOut = 0;
 }
 
@@ -852,12 +852,12 @@ auto Drive::power( ) -> void {
 
     setFirmwareByType();
 
-    via1->reset();
-    via2->reset();
-    cia->reset();
-    ciaSpeeder->reset();
-    pia->reset();
-    wd1770->reset();
+    via1.reset();
+    via2.reset();
+    cia.reset();
+    ciaSpeeder.reset();
+    pia.reset();
+    wd1770.reset();
 
     proSpeedControl = 0xff;
     profDosAutoSpeed = false;
@@ -874,7 +874,7 @@ auto Drive::power( ) -> void {
     byteReady = true;
     ca1Line = true;
     hidden = false;
-    cpu->power();    
+    cpu.power();
  
     ue7Counter = uf4Counter = 0;
     randCounter = 0;
@@ -905,10 +905,10 @@ auto Drive::power( ) -> void {
     changeHalfTrack(0);
     randomizeRpm();
     extendedMemoryMap = expandMemory || (speeder > 1);
-    wd1770->setRateInMhz( 1, 16 );
+    wd1770.setRateInMhz( 1, 16 );
 
     if (system->driveSounds.useFloppy) {
-        if (loaded && !iecBus->powerOn)
+        if (loaded && !iecBus.powerOn)
             system->interface->mixDriveSound(mediaConnected, DriveSound::FloppyInsert);
 
         system->interface->mixDriveSound( mediaConnected, DriveSound::FloppySpinUp );
@@ -926,9 +926,9 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
             stepperDelay <<= 1;
             driveCycles = frequency;
         }
-        syncPosRead = (int64_t)(-0.875 * (double)iecBus->cpuCylcesPerSecond);
-        syncPosWrite = (int64_t)(0.875 * (double)iecBus->cpuCylcesPerSecond);
-        wd1770->setRateInMhz( 2, 16 );
+        syncPosRead = (int64_t)(-0.875 * (double)iecBus.cpuCylcesPerSecond);
+        syncPosWrite = (int64_t)(0.875 * (double)iecBus.cpuCylcesPerSecond);
+        wd1770.setRateInMhz( 2, 16 );
     } else {
         //system->interface->log("1 mhz", 1);
         refCyclesInCpuCycle = 16;
@@ -939,9 +939,9 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
             stepperDelay >>= 1;
             driveCycles = frequency;
         }
-        syncPosRead = (int64_t)(-0.455 * (double)iecBus->cpuCylcesPerSecond);
-        syncPosWrite = (int64_t)(0.455 * (double)iecBus->cpuCylcesPerSecond);
-        wd1770->setRateInMhz( 1, 16 );
+        syncPosRead = (int64_t)(-0.455 * (double)iecBus.cpuCylcesPerSecond);
+        syncPosWrite = (int64_t)(0.455 * (double)iecBus.cpuCylcesPerSecond);
+        wd1770.setRateInMhz( 1, 16 );
     }
 
     setSyncPos( syncPos );
@@ -959,7 +959,7 @@ auto Drive::setSyncPos(int direction) -> void {
 auto Drive::powerOff( ) -> void {
     write();  
     motorOn = false;
-    wd1770->setDiskAccessible(false);
+    wd1770.setDiskAccessible(false);
 }
 
 auto Drive::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
@@ -1031,20 +1031,20 @@ auto Drive::setViaTransition( bool direction ) -> void {
 	
 	// we check by half cycles, hence CPU IRQ line must be stable during second half cycle for recognition
 
-	int64_t half = iecBus->cpuCylcesPerSecond >> 1;
+	int64_t half = iecBus.cpuCylcesPerSecond >> 1;
 
-	if (cycleCounter >= (iecBus->cpuCylcesPerSecond + half)) {
+	if (cycleCounter >= (iecBus.cpuCylcesPerSecond + half)) {
 		// expects CPU has missed IRQ recognition
-		via1->ca1In( direction, false);
-		via1->handleInterrupt();
+		via1.ca1In( direction, false);
+		via1.handleInterrupt();
 
 	} else if (cycleCounter >= half )
 		// expects IRQ recognition this cycle
-		via1->ca1In( direction, false);
+		via1.ca1In( direction, false);
 
 	else
 		// expects IRQ recognition next cycle
-		via1->ca1In( direction, true);
+		via1.ca1In( direction, true);
 }
 
 auto Drive::detach() -> void {
@@ -1052,11 +1052,11 @@ auto Drive::detach() -> void {
     
     if (loaded) {
         attachDelay = DISC_DELAY;
-        if (iecBus->powerOn && system->driveSounds.useFloppy)
+        if (iecBus.powerOn && system->driveSounds.useFloppy)
             system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyEject );
     }
 
-    if (iecBus->powerOn && use2Mhz() )
+    if (iecBus.powerOn && use2Mhz() )
         attachDelay <<= 1;
 
     delayInProgress = attachDelay || stepperDelay;
@@ -1066,7 +1066,7 @@ auto Drive::detach() -> void {
     wasAttachDetached = false;
     
     loaded = false;
-    wd1770->setDiskAccessible(false);
+    wd1770.setDiskAccessible(false);
     pulseIndex = -1;
     pulseDelta = 1; // to reload quickly
 }
@@ -1085,12 +1085,12 @@ auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned s
     wasAttachDetached = attachDelay != 0;
     attachDelay = DISC_DELAY * 3;
 
-    if (iecBus->powerOn && use2Mhz() )
+    if (iecBus.powerOn && use2Mhz() )
         attachDelay <<= 1;
 
     delayInProgress = attachDelay || stepperDelay;
 
-    if (iecBus->powerOn && system->driveSounds.useFloppy)
+    if (iecBus.powerOn && system->driveSounds.useFloppy)
         system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyInsert, wasAttachDetached );
 
     if ( !structure.attach( data, size, loadGracefully ) )
@@ -1102,16 +1102,16 @@ auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned s
 auto Drive::postAttach() -> void {
     headOffset = 0;
     pulseIndex = gcrTrack->firstPulse;
-    wd1770->setPulseIndex(pulseIndex, pulseDelta);
+    wd1770.setPulseIndex(pulseIndex, pulseDelta);
 
     loaded = true;
-    wd1770->setDiskAccessible(motorOn);
+    wd1770.setDiskAccessible(motorOn);
 
     if (writeProtected && (type == Type::D1570 || type == Type::D1571))
-        via1->ca2In( false );
+        via1.ca2In( false );
 
     operation &= ~(USERDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
-    wd1770->setMode( WD1770::Mode::None );
+    wd1770.setMode( WD1770::Mode::None );
 
     if (structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::D71) {
         if (emulateDxxMoreAccurate)
@@ -1122,17 +1122,17 @@ auto Drive::postAttach() -> void {
         // no MFM support
     } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71) {
         operation |= ENCODEDDATA_LEVEL;
-        wd1770->setMode( WD1770::Mode::USERDATA ); // MFM is included as user data
+        wd1770.setMode( WD1770::Mode::USERDATA ); // MFM is included as user data
     } else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71) {
         operation |= FLUXDATA_LEVEL;
-        wd1770->setMode( WD1770::Mode::FLUX );
+        wd1770.setMode( WD1770::Mode::FLUX );
     }
 }
 
 auto Drive::setWriteProtect(bool state) -> void {
     
     writeProtected = state;
-    wd1770->setWriteProtected( state );
+    wd1770.setWriteProtected( state );
 }
 
 auto Drive::writeprotectSense() -> uint8_t {
@@ -1157,11 +1157,11 @@ auto Drive::writeprotectSense() -> uint8_t {
 
 auto Drive::write() -> void {
     
-    if (!written && !wd1770->wasWritten())
+    if (!written && !wd1770.wasWritten())
         return;
     
     written = false;
-    wd1770->resetWritten();
+    wd1770.resetWritten();
 
     if (structure.serializationSize) {
         system->serializationSize -= structure.serializationSize;

@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct InkwellLightpen : LightControl {
     
-    InkwellLightpen( Interface::Device* device ) : LightControl( device ) {        
+    InkwellLightpen( System* system, Interface::Device* device ) : LightControl( system, device ) {
         
         xOffset = 20;
         

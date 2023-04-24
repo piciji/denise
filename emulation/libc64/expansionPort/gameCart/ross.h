@@ -5,7 +5,7 @@ namespace LIBC64 {
 
     struct Ross : GameCart {
 
-        Ross() : GameCart(false, false) {
+        Ross(System* system) : GameCart(system, false, false) {
 
         }
 

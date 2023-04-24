@@ -2,13 +2,9 @@
 #include "system.h"
 #include "../input/input.h"
 #include "../prg/prg.h"
-#include "../tape/tape.h"
-#include "../vicII/fast/vicIIFast.h"
-#include "../vicII/vicII.h"
-#include "../disk/iec.h"
+#include "../vicII/base.h"
 #include "../sid/sid.h"
 #include "keyBuffer.h"
-#include "gluelogic.h"
 #include "../../tools/powersupply.h"
 #include "../../tools/serializer.h"
 #include "../../tools/rand.h"
@@ -25,13 +21,18 @@
 
 namespace LIBC64 {
 
-System* system = nullptr;
-ExpansionPort* expansionPort = nullptr;
-CIA::M6526* cia1 = nullptr;
-CIA::M6526* cia2 = nullptr;
-Emulator::SystemTimer sysTimer;
-
-System::System(Interface* interface) {
+System::System(Interface* interface) :
+sidManager(this),
+input(this, interface, cia1),
+glueLogic(this, sysTimer),
+vicIICycle(this),
+vicIIFast(this),
+iecBus(this, &interface->mediaGroups[Interface::MediaGroupIdDisk]),
+tape( this, &interface->mediaGroups[Interface::MediaGroupIdTape].media[0] ),
+cia1( 1, &sysTimer ),
+cia2( 2, &sysTimer ),
+traps( this ),
+cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     this->interface = interface;
 
@@ -41,46 +42,29 @@ System::System(Interface* interface) {
     basicRom = (uint8_t*)Firmware::basicRom;
     charRom = (uint8_t*)Firmware::charRom;
 
-    debugCart = new DebugCart;
+    debugCart = new DebugCart(this);
 
     createExpansions();
-    vicIICycle = new VicIICycle;
-    vicIIFast = new VicIIFast;
-    vicII = vicIICycle;
+    setCycleRenderer();
 
-    for (unsigned i = 0; i < 7; i++)
-        sids[i] = new Sid( Sid::Type::MOS_6581 );
+    sidManager.calcSerializationSizeForSevenMoreSids();
 
-    sid = new Sid( Sid::Type::MOS_6581 );
-
-    Sid::calcSerializationSizeForSevenMoreSids();
-
-    Sid::registerGlobalCallbacks();
+    sidManager.registerGlobalCallbacks();
 
     requestedSids = 0;
 
     tapeNoise.circularBuffer.resize(500, 0);
 
-    input = new Input;
     for (auto& media : interface->mediaGroups[Interface::MediaGroupIdProgram].media) {
-        auto prg = new Prg;
+        auto prg = new Prg(this);
         prg->media = &media;
         prgs.push_back( prg );
     }
     prgInUse = prgs[0];
 
-    keyBuffer = new KeyBuffer;
-    glueLogic = new GlueLogic();
     crop = new Emulator::Crop<uint8_t>;
     powerSupply = new Emulator::PowerSupply;
-    tape = new Tape( &interface->mediaGroups[Interface::MediaGroupIdTape].media[0] );
-    iecBus = new IecBus( &interface->mediaGroups[Interface::MediaGroupIdDisk] );
-
-    cia1 = new CIA::M6526( 1, &sysTimer );
-    cia2 = new CIA::M6526( 2, &sysTimer );
-    cpu = new M6510;
-    
-    traps = new Traps;
+    keyBuffer = new KeyBuffer(this, tape);
 
     readRam = [this](uint16_t addr) {
 
@@ -163,7 +147,7 @@ System::System(Interface* interface) {
         expansionPort->writeUltimaxA0( addr, value );
     };
 
-    writeUnmapped = [this](uint16_t addr, uint8_t value) {
+    writeUnmapped = [](uint16_t addr, uint8_t value) {
         // do nothing
     };
 
@@ -173,9 +157,9 @@ System::System(Interface* interface) {
 
     writeIo1Reg = [this](uint16_t addr, uint8_t value) {
 
-        if (Sid::extraSids) {
-            Sid::updateClock();
-            Sid::writeSidIO( addr, value );
+        if (sidManager.extraSids) {
+            sidManager.updateClock();
+            sidManager.writeSidIO( addr, value );
         }
 
         expansionPort->writeIo1(addr, value);
@@ -183,10 +167,10 @@ System::System(Interface* interface) {
 
     readIo1Reg = [this](uint16_t addr) {
 
-        if (Sid::extraSids) {
-            Sid* _sid = Sid::getSidByAdr( addr, true );
+        if (sidManager.extraSids) {
+            Sid* _sid = sidManager.getSidByAdr( addr, true );
             if (_sid) {
-                Sid::updateClock();
+                sidManager.updateClock();
                 return _sid->readIO( addr );
             }
         }
@@ -196,19 +180,19 @@ System::System(Interface* interface) {
 
     writeIo2Reg = [this](uint16_t addr, uint8_t value) {
 
-        if (Sid::extraSids) {
-            Sid::updateClock();
-            Sid::writeSidIO( addr, value );
+        if (sidManager.extraSids) {
+            sidManager.updateClock();
+            sidManager.writeSidIO( addr, value );
         }
         expansionPort->writeIo2(addr, value);
     };
 
     readIo2Reg = [this](uint16_t addr) {
 
-        if (Sid::extraSids) {
-            Sid* _sid = Sid::getSidByAdr( addr, true );
+        if (sidManager.extraSids) {
+            Sid* _sid = sidManager.getSidByAdr( addr, true );
             if (_sid) {
-                Sid::updateClock();
+                sidManager.updateClock();
                 return _sid->readIO( addr );
             }
         }
@@ -218,34 +202,34 @@ System::System(Interface* interface) {
 
     writeSidReg = [this](uint16_t addr, uint8_t value) {
 
-        Sid::updateClock();
+        sidManager.updateClock();
 
-        if (Sid::extraSids)
-            return Sid::writeSid( addr, value );
+        if (sidManager.extraSids)
+            return sidManager.writeSid( addr, value );
 
-        sid->writeIO( addr, value );
+        sidManager.sid->writeIO( addr, value );
     };
 
     writeDebugReg = [this](uint16_t addr, uint8_t value) {
         if ( (addr & 0xff) == 0xff)
             debugCart->setExit(value);
 
-        Sid::updateClock();
+        sidManager.updateClock();
 
-        if (Sid::extraSids)
-            return Sid::getSidByAdr( addr )->writeIO( addr, value );
+        if (sidManager.extraSids)
+            return sidManager.getSidByAdr( addr )->writeIO( addr, value );
 
-        sid->writeIO(addr, value);
+        sidManager.sid->writeIO(addr, value);
     };
 
     readSidReg = [this](uint16_t addr) {
 
-        Sid::updateClock();
+        sidManager.updateClock();
 
-        if (Sid::extraSids)
-            return Sid::getSidByAdr( addr )->readIO( addr );
+        if (sidManager.extraSids)
+            return sidManager.getSidByAdr( addr )->readIO( addr );
 
-        return sid->readIO( addr );
+        return sidManager.sid->readIO( addr );
     };
 
     writeVicReg = [this](uint16_t addr, uint8_t value) {
@@ -260,22 +244,22 @@ System::System(Interface* interface) {
 
     writeCia1Reg = [this](uint16_t addr, uint8_t value) {
 
-        cia1->write( addr, value );
+        cia1.write( addr, value );
     };
 
     readCia1Reg = [this](uint16_t addr) {
 
-        return cia1->read( addr );
+        return cia1.read( addr );
     };
 
     writeCia2Reg = [this](uint16_t addr, uint8_t value) {
 
-        cia2->write( addr, value );
+        cia2.write( addr, value );
     };
 
     readCia2Reg = [this](uint16_t addr) {
 
-        return cia2->read(addr);
+        return cia2.read(addr);
     };
 
     writeColorRam = [this](uint16_t addr, uint8_t value) {
@@ -288,45 +272,45 @@ System::System(Interface* interface) {
         return (colorRam[ addr & 0x3ff ] & 0xf) | ( vicII->lastReadPhase1() & ~0xf );
     };
 
-    setAudioRefresh();
+    //setAudioRefresh();
 
-    Sid::getPotX = [this]() {
+    sidManager.getPotX = [this]() {
 
-        return input->readPotX();
+        return input.readPotX();
     };
 
-    Sid::getPotY = [this]() {
+    sidManager.getPotY = [this]() {
 
-        return input->readPotY();
+        return input.readPotY();
     };
 
-    cia1->irqCall = [this](bool state) {
+    cia1.irqCall = [this](bool state) {
         if (state)
             irqIncomming |= 2;
         else
             irqIncomming &= ~2;
 
-        cpu->setIrq( irqIncomming != 0 );
+        cpu.setIrq( irqIncomming != 0 );
     };
 
-    cia1->serialOut = [this](bool spLine, bool cntLine) {
+    cia1.serialOut = [this](bool spLine, bool cntLine) {
 
         if (!cntLine && secondDriveCable.burstUse) {
             diskIdleOff();
-            iecBus->serialShift(spLine);
+            iecBus.serialShift(spLine);
         }
     };
 
-    cia2->irqCall = [this](bool state) {
+    cia2.irqCall = [this](bool state) {
         if (state)
             nmiIncomming |= 2;
         else
             nmiIncomming &= ~2;
 
-        cpu->setNmi( nmiIncomming != 0 );
+        cpu.setNmi( nmiIncomming != 0 );
     };
 
-    cia1->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+    cia1.readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if (observer.inputFetches) {
             if (!--observer.inputFetches)
@@ -334,53 +318,53 @@ System::System(Interface* interface) {
         }
 
         if ( port == CIA::Base::PORTA )
-            return input->readCiaPortA( lines );
+            return input.readCiaPortA( lines );
 
-        return input->readCiaPortB( lines );
+        return input.readCiaPortB( lines );
     };
 
-    cia1->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+    cia1.writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if ( port == CIA::Base::PORTA ) {
             if (lines->ioa != lines->ioaOld)
-                input->writeCiaPortA(lines);
+                input.writeCiaPortA(lines);
         } else {
             if (lines->iob != lines->iobOld)
-                input->writeCiaPortB( lines );
+                input.writeCiaPortB( lines );
         }
     };
 
-    cia2->readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+    cia2.readPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if ( port == CIA::Base::PORTA ) {
             diskIdleOff();
 
-            return (uint8_t) ( (lines->ioa & 0x3f) | iecBus->readCia() );
+            return (uint8_t) ( (lines->ioa & 0x3f) | iecBus.readCia() );
 
         } else if (secondDriveCable.parallelUserport) {
             diskIdleOff();
-            return (uint8_t)(cia2->lines.iob & iecBus->readParallelWithHandshake());
+            return (uint8_t)(cia2.lines.iob & iecBus.readParallelWithHandshake());
         }
 
         return lines->iob;
     };
 
-    cia2->writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+    cia2.writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if ( port == CIA::Base::PORTA ) {
             if (lines->ioaOld == lines->ioa)
                 return;
             // the c64 II or c64c has another glue logic for updating the vic bank
-            glueLogic->setVBank( ( ~(lines->ioa & 3) ) & 3, !lines->praChange );
+            glueLogic.setVBank( ( ~(lines->ioa & 3) ) & 3, !lines->praChange );
 
             if (diskSilence.idle ) {
-                if (iecBus->checkForIdleWrite( ~lines->ioa ))
+                if (iecBus.checkForIdleWrite( ~lines->ioa ))
                     return;
 
-                iecBus->resetTicks();
+                iecBus.resetTicks();
             }
 
-            if (iecBus->writeCia( ~lines->ioa )) {
+            if (iecBus.writeCia( ~lines->ioa )) {
                 diskSilence.idle = false;
                 diskSilence.idleFrames = 0;
                 driveCycleSyncingUpdate();
@@ -388,7 +372,7 @@ System::System(Interface* interface) {
         } else if (secondDriveCable.parallelUserport && lines->prbChange) {
             diskIdleOff();
             // Port B with parallel cable
-            iecBus->writeParallelHandshake();
+            iecBus.writeParallelHandshake();
         }
     };
 
@@ -410,22 +394,22 @@ System::System(Interface* interface) {
         right = vicII->crop.rightOverscan;
     };
 
-    tape->setReadTransition = [this]() {
+    tape.setReadTransition = [this]() {
 
-        cia1->setFlag();
+        cia1.setFlag();
     };
 
-    tape->read = [this](uint8_t* buffer, unsigned length, unsigned offset) {
+    tape.read = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 
-        return this->interface->readMedia(tape->getMedia(), buffer, length, offset);
+        return this->interface->readMedia(tape.getMedia(), buffer, length, offset);
     };
 
-    tape->write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
+    tape.write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 
-        return this->interface->writeMedia(tape->getMedia(), buffer, length, offset);
+        return this->interface->writeMedia(tape.getMedia(), buffer, length, offset);
     };
 
-    tape->senseOut = [this](bool state) {
+    tape.senseOut = [this](bool state) {
         // following refers to cpu input mode for lines 1 - 6
         // last 3 lines are always forced up
         // sense line is forced up when datasette stopped
@@ -435,15 +419,15 @@ System::System(Interface* interface) {
         // Note: when Dattasette not connected: motor line is forced down
 
         if (!state)
-            cpu->updateIoLines( 0x17 );
+            cpu.updateIoLines( 0x17 );
 
         else
-            cpu->updateIoLines( 0x7, 0x10 );
+            cpu.updateIoLines( 0x7, 0x10 );
     };
 
     countDownPowerSupply = [this]() {
-        cia1->tod( );
-        cia2->tod( );
+        cia1.tod( );
+        cia2.tod( );
 
         sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
     };
@@ -453,28 +437,25 @@ System::System(Interface* interface) {
     // connect keyboard
     for( auto& device : interface->devices ) {
         if (device.isKeyboard()) {
-            input->keyboard.setDevice( &device );
+            input.keyboard.setDevice( &device );
             break;
         }
     }
     
-    traps->add({"SerialListen", 0xED24, 0xEDAB, { 0x20, 0x97, 0xEE }, []() { traps->attention(); } });
-    traps->add({"SerialSaListen", 0xED37, 0xEDAB, { 0x20, 0x8E, 0xEE }, []() { traps->attention(); } });
-    traps->add({"SerialSendByte", 0xED41, 0xEDAB, { 0x20, 0x97, 0xEE }, []() { traps->send(); } });
-    traps->add({"SerialReceiveByte", 0xEE14, 0xEDAB, { 0xA9, 0x00, 0x85 }, []() { traps->receive(); } });
-    traps->add({"SerialReady", 0xEEA9, 0xEDAB, { 0xAD, 0x00, 0xDD }, []() { traps->ready(); } });
+    traps.add({"SerialListen", 0xED24, 0xEDAB, { 0x20, 0x97, 0xEE }, [this]() { traps.attention(); } });
+    traps.add({"SerialSaListen", 0xED37, 0xEDAB, { 0x20, 0x8E, 0xEE }, [this]() { traps.attention(); } });
+    traps.add({"SerialSendByte", 0xED41, 0xEDAB, { 0x20, 0x97, 0xEE }, [this]() { traps.send(); } });
+    traps.add({"SerialReceiveByte", 0xEE14, 0xEDAB, { 0xA9, 0x00, 0x85 }, [this]() { traps.receive(); } });
+    traps.add({"SerialReady", 0xEEA9, 0xEDAB, { 0xAD, 0x00, 0xDD }, [this]() { traps.ready(); } });
 
-    traps->add({"TapeFindHeader", 0xF72F, 0xF732, { 0x20, 0x41, 0xF8 }, []() { traps->tapeFindHeader(); } });
-    traps->add({"TapeReceive", 0xF8A1, 0xFC93, { 0x20, 0xBD, 0xFC }, []() { traps->tapeReceive(); } });
+    traps.add({"TapeFindHeader", 0xF72F, 0xF732, { 0x20, 0x41, 0xF8 }, [this]() { traps.tapeFindHeader(); } });
+    traps.add({"TapeReceive", 0xF8A1, 0xFC93, { 0x20, 0xBD, 0xFC }, [this]() { traps.tapeReceive(); } });
 }
 
 System::~System() {
 
     delete[] ram;
     delete[] colorRam;
-    delete iecBus;
-    delete vicIIFast;
-    delete vicIICycle;
     destroyExpansions();
 }
 
@@ -503,7 +484,7 @@ auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool al
             charRom = data;
             break;
         default:
-            iecBus->setFirmware( typeId, data, size );
+            iecBus.setFirmware( typeId, data, size );
             break;
     }
 }
@@ -529,24 +510,24 @@ auto System::power( bool softReset ) -> void {
     memoryCpu.unmap(0x0, 0xff);
     remapCpu();
 
-    Sid::resetAll();
+    sidManager.resetAll();
 
-    cia1->reset();
-    cia2->reset();
-    input->reset();
+    cia1.reset();
+    cia2.reset();
+    input.reset();
 
-    tape->power();
-    glueLogic->reset();
+    tape.power();
+    glueLogic.reset();
 
     powerSupply->init( vicII->frequency(), vicII->isNTSCGeometry() ? 60 : 50 );
-    tape->setCyclesPerSecond( vicII->frequency() );
-    iecBus->setCpuCyclesPerSecond( vicII->frequency() );
+    tape.setCyclesPerSecond( vicII->frequency() );
+    iecBus.setCpuCyclesPerSecond( vicII->frequency() );
 
     sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
     debugCart->init();
 
     if( !softReset )
-        iecBus->power();
+        iecBus.power();
 
     diskSilence.idle = false;
     diskSilence.idleFrames = 0;
@@ -555,9 +536,9 @@ auto System::power( bool softReset ) -> void {
     if( !softReset ) {
         setCycleRenderer( cycleRendererNextBoot );
 
-        vicIICycle->power();
-        vicIIFast->power();
-        cpu->power();
+        vicIICycle.power();
+        vicIIFast.power();
+        cpu.power();
         observer.enterRom = false;
         observer.memoryAccesses = 0;
         observer.stateChange = false;
@@ -566,18 +547,18 @@ auto System::power( bool softReset ) -> void {
         observer.inputFetches = 0;
     } else {
         // vic hasn't a reset line ... means no change ?
-        cpu->reset();
+        cpu.reset();
     }
     // cpu doesn't leave halted state by reset request   
     //cpu->setRdy( false );
     vicII->setUltimax( isUltimax() );
 
-    cpu->updateIoLines( 0x17, !tape->isEnabled() ? 0x20 : 0 );
+    cpu.updateIoLines( 0x17, !tape.isEnabled() ? 0x20 : 0 );
 
     if( !softReset ) {
         calcSerializationSize();
         if (requestedSids)
-            serializationSize += Sid::serializationSizeForSevenMoreSids;
+            serializationSize += sidManager.serializationSizeForSevenMoreSids;
 
         fastForward.config = 0;
         fastForward.frameCounter = 0;
@@ -592,15 +573,15 @@ auto System::power( bool softReset ) -> void {
 
     if (!debugCart->enable && dynamic_cast<Freezer*>(expansionPort))
         action.delay = (unsigned)(interface->stats.fps * dynamic_cast<Freezer*>(expansionPort)->bootSpeed());
-    else if (iecBus->drives[0]->speeder && secondDriveCable.parallelUse)
-        action.delay = (unsigned)(interface->stats.fps * ((iecBus->drives[0]->speeder == 10 || iecBus->drives[0]->speeder == 11)
+    else if (iecBus.drives[0]->speeder && secondDriveCable.parallelUse)
+        action.delay = (unsigned)(interface->stats.fps * ((iecBus.drives[0]->speeder == 10 || iecBus.drives[0]->speeder == 11)
             ? 0.9 : 0.5) );
     else
         action.delay = (unsigned)(interface->stats.fps * 2.2);
 
 
     if ( !expansionPort->isBootable() ) {
-        system->keyBuffer->add( action, false );
+        keyBuffer->add( action, false );
 
         action.mode = KeyBuffer::Mode::WaitFor;
         action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
@@ -612,12 +593,12 @@ auto System::power( bool softReset ) -> void {
         action.blinkingCursor = true;
         action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };
-        system->keyBuffer->add( action );
+        keyBuffer->add( action );
 
     } else {
         action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };
-        system->keyBuffer->add( action, false );
+        keyBuffer->add( action, false );
     }
 
     powerOn = true;
@@ -625,12 +606,12 @@ auto System::power( bool softReset ) -> void {
 
 auto System::powerOff() -> void {
     powerOn = false;
-    system->secondDriveCable.parallelPossible = true;
+    secondDriveCable.parallelPossible = true;
     keyBuffer->reset();
-    sid->powerOff();
-    iecBus->powerOff();
-    if (traps->installed)
-        traps->uninstall();
+    sidManager.sid->powerOff();
+    iecBus.powerOff();
+    if (traps.installed)
+        traps.uninstall();
 }
 
 auto System::initRam(uint8_t*& mem) -> void {
@@ -672,35 +653,35 @@ auto System::run() -> void {
     runAhead.pos = 0;
     acia->connectionLock = false;
 
-    if (cpu->callResetRoutine)
-        cpu->resetRoutine();
+    if (cpu.callResetRoutine)
+        cpu.resetRoutine();
 
-    input->poll();
+    input.poll();
     // of course real system sends restore when key is pressed, but polling each cycle for this is useless
     // because host updates pressed keys once per frame only
-    if (input->restore())
+    if (input.restore())
         nmiIncomming |= 1;
     else
         nmiIncomming &= ~1;
 
-    cpu->setNmi(nmiIncomming != 0);
-    iecBus->randomizeRpm();
+    cpu.setNmi(nmiIncomming != 0);
+    iecBus.randomizeRpm();
 
-    runAhead.active = !fastForward.config && runAhead.frames && !traps->installed
-        && !keyBuffer->isPrgInjectionInQueue() && !iecBus->diskInsertInProgress;
+    runAhead.active = !fastForward.config && runAhead.frames && !traps.installed
+        && !keyBuffer->isPrgInjectionInQueue() && !iecBus.diskInsertInProgress;
 
     if (runAhead.active) {
         runAhead.pos = runAhead.frames;
         vicII->disableSequencer( runAhead.performance );
-        Sid::disableAudioOut( runAhead.frames > 1 );
+        sidManager.disableAudioOut( runAhead.frames > 1 );
     }
 
     labelRunAhead:
 
     while( !leaveEmulation ) {
-        cpu->process();
+        cpu.process();
         if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
-            iecBus->syncDrives();
+            iecBus.syncDrives();
     }
 
     if (runAhead.active) {
@@ -710,7 +691,7 @@ auto System::run() -> void {
 
         if (runAhead.pos) {
             if (runAhead.pos == 2)
-                Sid::disableAudioOut(false);
+                sidManager.disableAudioOut(false);
 
             if (--runAhead.pos == 0) {
                 if (!vicII->useSequencer()) {
@@ -759,9 +740,9 @@ auto System::hintSlowSpeed(bool state) -> void {
 
 auto System::setFastForward( unsigned config ) -> void {
     fastForward.config = config | (fastForward.config & (unsigned)Interface::FastForward::SlowSpeed);
-    Sid::disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
+    sidManager.disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
-    iecBus->setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+    iecBus.setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     updateDriveSounds();
 }
 
@@ -781,46 +762,50 @@ auto System::updateDriveSounds() -> void {
 
     if (powerOn) {
         if (driveSounds.useFloppy)
-            iecBus->updateDriveSounds();
+            iecBus.updateDriveSounds();
         if (driveSounds.useTape)
-            tape->setMotorSound();
+            tape.setMotorSound();
     }
 }
 
 auto System::setCycleRenderer(bool state) -> void {
     if (state)
-        vicII = vicIICycle;
+        vicII = &vicIICycle;
     else
-        vicII = vicIIFast;
+        vicII = &vicIIFast;
+
+    cpu.vicII = vicII;
+    input.setVic( vicII );
+    expansionPort->vicII = vicII;
 }
 
 auto System::updateStats() -> void {
     interface->stats.region = vicII->isNTSCGeometry() ? Interface::Region::Ntsc : Interface::Region::Pal;
-    interface->stats.sampleIntervall = Sid::sampleLimit;
-    interface->stats.sampleRate = (double)vicII->frequency() / (double)Sid::sampleLimit;
+    interface->stats.sampleIntervall = sidManager.sampleLimit;
+    interface->stats.sampleRate = (double)vicII->frequency() / (double)sidManager.sampleLimit;
     interface->stats.fps = 1.0 / ( (double)vicII->cyclesPerFrame() / (double)vicII->frequency() );
-    interface->stats.stereoSound = Sid::isStereo();
+    interface->stats.stereoSound = sidManager.isStereo();
 }
 
 auto System::updateStatsStereo() -> void {
-    interface->stats.stereoSound = Sid::isStereo();
+    interface->stats.stereoSound = sidManager.isStereo();
 }
 
 auto System::useExtraSids(uint8_t requestedSids) -> void {
     auto requestedSidsBefore = this->requestedSids;
 
     this->requestedSids = requestedSids;
-    Sid::updateSidUsage();
+    sidManager.updateSidUsage();
 
     if (!powerOn)
         return;
 
     if (requestedSids && !requestedSidsBefore)
-        serializationSize += Sid::serializationSizeForSevenMoreSids;
+        serializationSize += sidManager.serializationSizeForSevenMoreSids;
     else if (!requestedSids && requestedSidsBefore)
-        serializationSize -= Sid::serializationSizeForSevenMoreSids;
+        serializationSize -= sidManager.serializationSizeForSevenMoreSids;
 
-    Sid::clone( requestedSidsBefore, requestedSids );
+    sidManager.clone( requestedSidsBefore, requestedSids );
 }
 
 auto System::updatePort(uint8_t lines, uint8_t ddr) -> void {
@@ -837,8 +822,8 @@ auto System::updatePort(uint8_t lines, uint8_t ddr) -> void {
     if (modeBefore != mode)
         this->remapCpu( );
 
-    tape->writeIn( ((~ddr | lines) & 8) != 0 );
-    tape->setMotorIn( ((lines & ddr) & 0x20) == 0 );
+    tape.writeIn( ((~ddr | lines) & 8) != 0 );
+    tape.setMotorIn( ((lines & ddr) & 0x20) == 0 );
 }
 
 auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
@@ -849,7 +834,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
                 diskSilence.idle = true;
                 diskSilence.idleFrames = 0;
                 driveCycleSyncingUpdate();
-                iecBus->resetDriveState();
+                iecBus.resetDriveState();
             }
         }
     }
@@ -857,7 +842,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
     if (!runAhead.pos && frame) {
         crop->apply( frame, width, height, linePitch );
         // for lightguns
-        input->drawCursor();
+        input.drawCursor();
     }
 
     if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
@@ -880,8 +865,8 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
     if (!runAhead.pos) {
         this->interface->videoRefresh8(frame, width, height, linePitch);
 
-        if (iecBus->diskInsertInProgress)
-            iecBus->insertDiskGracefully();
+        if (iecBus.diskInsertInProgress)
+            iecBus.insertDiskGracefully();
     }
 
     leaveEmulation = true;
@@ -896,7 +881,7 @@ auto System::setVicIrq( bool state ) -> void {
     else
         irqIncomming &= ~1;
 
-    cpu->setIrq( irqIncomming != 0 );
+    cpu.setIrq( irqIncomming != 0 );
 }
 
 auto System::setVicRdy(bool state) -> void {
@@ -905,7 +890,7 @@ auto System::setVicRdy(bool state) -> void {
     else
         rdyIncomming &= ~1;
 
-    cpu->setRdy( rdyIncomming != 0 );
+    cpu.setRdy( rdyIncomming != 0 );
 }
 
 auto System::VicMidScreenCallback() -> void {
@@ -913,7 +898,7 @@ auto System::VicMidScreenCallback() -> void {
     if (runAhead.pos)
         return;
 
-    input->drawCursor(true);
+    input.drawCursor(true);
 
     interface->midScreenCallback(0);
 }
@@ -924,7 +909,7 @@ auto System::pasteText( std::string buffer ) -> void {
 
 auto System::copyText( ) -> std::string {
 
-    Clipboard clipboard;
+    Clipboard clipboard(this);
     return clipboard.getText();
 }
 
@@ -932,13 +917,13 @@ auto System::checkForAutoStarter() -> bool {
 
     if (!observer.enterRom) {
 
-        if (memoryCpu.isLocation( cpu->pc >> 8, &readKernalRom ))
+        if (memoryCpu.isLocation( cpu.pc >> 8, &readKernalRom ))
             observer.enterRom = true;
 
         observer.memoryAccesses = 0;
     } else {
 
-        if (memoryCpu.isLocation( cpu->pc >> 8, &readRam ))
+        if (memoryCpu.isLocation( cpu.pc >> 8, &readRam ))
             observer.memoryAccesses++;
 
         if (observer.memoryAccesses > 2)
@@ -961,7 +946,7 @@ auto System::hintObserverLEDChange(bool state) -> void {
 }
 
 auto System::hintObserverMotorChange(bool state) -> void {
-    if (!traps->installed && kernalBootComplete)
+    if (!traps.installed && kernalBootComplete)
         observer.stateChange = true;
 
     if (!observer.inputLock && state && !observer.motor)
@@ -980,8 +965,8 @@ auto System::informAboutStateChange() -> void {
 }
 
 auto System::burstOrParallelUpdate() -> void {
-    secondDriveCable.burstUse = secondDriveCable.burstRequested && secondDriveCable.burstPossible && iecBus->drivesConnected;
-    secondDriveCable.parallelUse = secondDriveCable.parallelRequested && secondDriveCable.parallelPossible && iecBus->drivesConnected;
+    secondDriveCable.burstUse = secondDriveCable.burstRequested && secondDriveCable.burstPossible && iecBus.drivesConnected;
+    secondDriveCable.parallelUse = secondDriveCable.parallelRequested && secondDriveCable.parallelPossible && iecBus.drivesConnected;
     secondDriveCable.parallelExpansion = secondDriveCable.parallelUse && (expansionPort == fastloader);
     secondDriveCable.parallelUserport = secondDriveCable.parallelUse && (expansionPort != fastloader);
 
@@ -996,7 +981,7 @@ auto System::driveCycleSyncingUpdate() -> void {
 auto System::diskIdleOff() -> void {
     if (diskSilence.idle) {
         diskSilence.idle = false;
-        iecBus->resetTicks();
+        iecBus.resetTicks();
         driveCycleSyncingUpdate();
     }
     diskSilence.idleFrames = 0;
@@ -1006,8 +991,8 @@ auto System::readParallelWithHandshake() -> uint8_t {
     uint8_t out = 0xff;
 
     if (secondDriveCable.parallelUserport ) {
-        cia2->setFlag();
-        out = cia2->lines.iob;
+        cia2.setFlag();
+        out = cia2.lines.iob;
     } else if (secondDriveCable.parallelExpansion ) {
         if ( (fastloader->mode & FASTLOADER_PIA_PORT_A) == FASTLOADER_PIA_PORT_A ) { // PROLOGIC
             fastloader->pia.ca1In(false);
@@ -1027,7 +1012,7 @@ auto System::readParallel() -> uint8_t {
     uint8_t out = 0xff;
 
     if (secondDriveCable.parallelUserport ) {
-        out = cia2->lines.iob;
+        out = cia2.lines.iob;
     } else if (secondDriveCable.parallelExpansion ) {
         if ( (fastloader->mode & FASTLOADER_PIA_PORT_A) == FASTLOADER_PIA_PORT_A ) {
             out = fastloader->pia.ioa;
@@ -1043,7 +1028,7 @@ auto System::readParallel() -> uint8_t {
 auto System::writeParallelHandshake() -> void {
 
     if (secondDriveCable.parallelUserport ) {
-        cia2->setFlag();
+        cia2.setFlag();
     } else if (secondDriveCable.parallelExpansion ) {
         if ( (fastloader->mode & FASTLOADER_PIA_PORT_A) == FASTLOADER_PIA_PORT_A ) {
             fastloader->pia.ca1In(false);
@@ -1056,7 +1041,7 @@ auto System::writeParallelHandshake() -> void {
 }
 
 auto System::isC64C() -> bool {
-    return glueLogic->type == GlueLogic::Type::CustomIC;
+    return glueLogic.type == GlueLogic::Type::CustomIC;
 }
 
 auto System::activateDebugCart(unsigned limitCycles) -> void {
@@ -1068,13 +1053,13 @@ auto System::enabledDebugCart() -> bool {
 }
 
 auto System::setTapeLoadingNoise(unsigned volume) -> void {
-    bool _enableBefore = tapeNoise.enabled;
+    //bool _enableBefore = tapeNoise.enabled;
     tapeNoise.enabled = volume > 0;
     tapeNoise.amplitude = (int)volume * -10;
     tapeNoise.reset();
 
-    if (_enableBefore != tapeNoise.enabled)
-        setAudioRefresh();
+    //if (_enableBefore != tapeNoise.enabled)
+      //  setAudioRefresh();
 }
 
 auto System::TapeNoise::reset() -> void {
@@ -1091,60 +1076,112 @@ auto System::tapeNoiseSetSample( unsigned duration ) -> void {
     tapeNoise.active = true;
 }
 
-auto System::setAudioRefresh() -> void {
-
-    if (tapeNoise.enabled) {
-        Sid::audioRefresh = [this](int16_t sample) {
-            if (!runAhead.pos) {
-                if (tapeNoise.active) {
-                    if (tapeNoise.duration > 0) {
-                        sample = (int)sample + tapeNoise.amplitude;
-                        tapeNoise.duration -= Sid::sampleLimit;
-                    } else if (tapeNoise.circularBuffer.pending()) {
-                        tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
-                        tapeNoise.amplitude = -tapeNoise.amplitude;
-                        sample = (int)sample + tapeNoise.amplitude;
-                    } else
-                        tapeNoise.active = false;
-                }
-                this->interface->audioSample(sample, sample);
+auto System::audioRefresh(int16_t sample) -> void {
+    if (!runAhead.pos) {
+        if (tapeNoise.enabled) {
+            if (tapeNoise.active) {
+                if (tapeNoise.duration > 0) {
+                    sample = (int)sample + tapeNoise.amplitude;
+                    tapeNoise.duration -= sidManager.sampleLimit;
+                } else if (tapeNoise.circularBuffer.pending()) {
+                    tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
+                    tapeNoise.amplitude = -tapeNoise.amplitude;
+                    sample = (int)sample + tapeNoise.amplitude;
+                } else
+                    tapeNoise.active = false;
             }
-        };
+        }
 
-        Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
-            if (!runAhead.pos) {
-                if (tapeNoise.active) {
-                    if (tapeNoise.duration > 0) {
-                        sampleL = (int)sampleL + tapeNoise.amplitude;
-                        sampleR = (int)sampleR + tapeNoise.amplitude;
-                        tapeNoise.duration -= Sid::sampleLimit;
-                    } else if (tapeNoise.circularBuffer.pending()) {
-                        tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
-                        tapeNoise.amplitude = -tapeNoise.amplitude;
-                        sampleL = (int)sampleL + tapeNoise.amplitude;
-                        sampleR = (int)sampleR + tapeNoise.amplitude;
-                    } else
-                        tapeNoise.active = false;
-                }
-                this->interface->audioSample(sampleL, sampleR);
-            }
-        };
-    } else {
-        Sid::audioRefresh = [this](int16_t sample) {
-            if (!runAhead.pos)
-                this->interface->audioSample(sample, sample);
-        };
-
-        Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
-            if (!runAhead.pos)
-                this->interface->audioSample( sampleL, sampleR );
-        };
+        interface->audioSample(sample, sample);
     }
 }
+
+auto System::audioRefreshStereo(int16_t sampleL, int16_t sampleR) -> void {
+    if (!runAhead.pos) {
+        if (tapeNoise.enabled) {
+            if (tapeNoise.active) {
+                if (tapeNoise.duration > 0) {
+                    sampleL = (int)sampleL + tapeNoise.amplitude;
+                    sampleR = (int)sampleR + tapeNoise.amplitude;
+                    tapeNoise.duration -= sidManager.sampleLimit;
+                } else if (tapeNoise.circularBuffer.pending()) {
+                    tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
+                    tapeNoise.amplitude = -tapeNoise.amplitude;
+                    sampleL = (int)sampleL + tapeNoise.amplitude;
+                    sampleR = (int)sampleR + tapeNoise.amplitude;
+                } else
+                    tapeNoise.active = false;
+            }
+        }
+
+        interface->audioSample(sampleL, sampleR);
+    }
+}
+
+//auto System::setAudioRefresh() -> void {
+//
+//    if (tapeNoise.enabled) {
+//        Sid::audioRefresh = [this](int16_t sample) {
+//            if (!runAhead.pos) {
+//                if (tapeNoise.active) {
+//                    if (tapeNoise.duration > 0) {
+//                        sample = (int)sample + tapeNoise.amplitude;
+//                        tapeNoise.duration -= Sid::sampleLimit;
+//                    } else if (tapeNoise.circularBuffer.pending()) {
+//                        tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
+//                        tapeNoise.amplitude = -tapeNoise.amplitude;
+//                        sample = (int)sample + tapeNoise.amplitude;
+//                    } else
+//                        tapeNoise.active = false;
+//                }
+//                this->interface->audioSample(sample, sample);
+//            }
+//        };
+//
+//        Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
+//            if (!runAhead.pos) {
+//                if (tapeNoise.active) {
+//                    if (tapeNoise.duration > 0) {
+//                        sampleL = (int)sampleL + tapeNoise.amplitude;
+//                        sampleR = (int)sampleR + tapeNoise.amplitude;
+//                        tapeNoise.duration -= Sid::sampleLimit;
+//                    } else if (tapeNoise.circularBuffer.pending()) {
+//                        tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
+//                        tapeNoise.amplitude = -tapeNoise.amplitude;
+//                        sampleL = (int)sampleL + tapeNoise.amplitude;
+//                        sampleR = (int)sampleR + tapeNoise.amplitude;
+//                    } else
+//                        tapeNoise.active = false;
+//                }
+//                this->interface->audioSample(sampleL, sampleR);
+//            }
+//        };
+//    } else {
+//        Sid::audioRefresh = [this](int16_t sample) {
+//            if (!runAhead.pos)
+//                this->interface->audioSample(sample, sample);
+//        };
+//
+//        Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
+//            if (!runAhead.pos)
+//                this->interface->audioSample( sampleL, sampleR );
+//        };
+//    }
+//}
 
 auto System::jam(Emulator::Interface::Media* media) -> void {
     if (processFrame())
         interface->jam(media);
+}
+
+auto System::getPrgInstance(Emulator::Interface::Media* media) -> Prg* {
+
+    for(auto prg : prgs) {
+        if (prg->media == media )
+            return prg;
+    }
+
+    return nullptr;
 }
 
 }

@@ -9,6 +9,9 @@ namespace LIBC64 {
 
     struct DebugCart {
 
+        DebugCart(System* system) : system(system) {}
+
+        System* system;
         bool enable = false;
         bool exit = false;
         uint8_t exitCode;
@@ -23,9 +26,9 @@ namespace LIBC64 {
             this->exitCode = exitCode;
             exit = true;
 
-            if (!vicII->inVisibleArea())
+            if (!system->vicII->inVisibleArea())
                 system->leaveEmulation = true;
-            else if (dynamic_cast<Reu*>(expansionPort))
+            else if (dynamic_cast<Reu*>(system->expansionPort))
                 delayFrame = true;
         }
 
@@ -41,7 +44,7 @@ namespace LIBC64 {
             if (!enable)
                 return;
 
-            frames = cycles / vicII->cyclesPerFrame();
+            frames = cycles / system->vicII->cyclesPerFrame();
             frames += 1;
 
             frameCounter = 0;

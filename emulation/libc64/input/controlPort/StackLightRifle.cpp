@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct StackLightRifle : LightControl {
     
-    StackLightRifle( Interface::Device* device ) : LightControl( device ) {        
+    StackLightRifle( System* system, Interface::Device* device ) : LightControl( system, device ) {
         
         xOffset = 17;
         

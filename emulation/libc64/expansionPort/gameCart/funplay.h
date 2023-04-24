@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct Funplay : GameCart {    
 	
-    Funplay() : GameCart(false, false) {
+    Funplay(System* system) : GameCart(system, false, false) {
         
     }
     

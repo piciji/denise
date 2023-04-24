@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct SuperGames : GameCart {
     
-    SuperGames() : GameCart(false, false) {
+    SuperGames(System* system) : GameCart(system, false, false) {
         writeProtect = false;
     }       
 

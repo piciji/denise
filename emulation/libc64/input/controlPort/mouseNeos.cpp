@@ -14,7 +14,7 @@ struct MouseNeos : AnalogControl {
     uint8_t lastY;
     std::function<void ()> neosTimer;
     
-    MouseNeos( Interface::Device* device ) : AnalogControl( device ) {
+    MouseNeos( System* system, Interface::Device* device ) : AnalogControl( system, device ) {
         neosTimer = []() {};
     }
     
@@ -22,7 +22,7 @@ struct MouseNeos : AnalogControl {
         
         uint8_t out = 0xff;
         // neos right button is connected to Potentiometer X
-        out &= ~((system->interface->inputPoll( device->id, 2 ) & 1) << 4);
+        out &= ~((interface->inputPoll( device->id, 2 ) & 1) << 4);
         out &= ~0xf;
 
         if ( (neosState != NeosState::XH) && !sysTimer.has( &neosTimer ) ) {
@@ -102,7 +102,7 @@ struct MouseNeos : AnalogControl {
     }    
     
     auto getPotX() -> uint8_t { 
-        return (system->interface->inputPoll( device->id, 3 ) & 1) ? 0xff : 0;
+        return (interface->inputPoll( device->id, 3 ) & 1) ? 0xff : 0;
     }     
     
     auto reset() -> void {

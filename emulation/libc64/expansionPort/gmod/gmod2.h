@@ -9,9 +9,9 @@ namespace LIBC64 {
 
 struct Gmod2 : GameCart {
 
-    Gmod2();
+    Gmod2(System* system);
     ~Gmod2();
-	
+
 	Emulator::Interface::Media* mediaSecondary;
     uint8_t* romSecondary;
 
@@ -58,7 +58,5 @@ struct Gmod2 : GameCart {
 	auto protectFromDeletion() -> bool { return true; }
 
 };
-
-extern Gmod2* gmod2;
 
 }

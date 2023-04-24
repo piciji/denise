@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct ActionReplayMK3 : Freezer {
 
-    ActionReplayMK3() : Freezer(true, false) {
+    ActionReplayMK3(System* system) : Freezer(system, true, false) {
         
     }    
     

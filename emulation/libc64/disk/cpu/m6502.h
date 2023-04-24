@@ -35,11 +35,13 @@
 namespace LIBC64 {
 
 struct Drive;
+struct System;
     
 struct M6502 {
 
-    M6502(Drive* drive) : drive(drive) {}
-    
+    M6502(System* system, Drive* drive) : system(system), drive(drive) {}
+
+    System* system;
     Drive* drive;
 	bool irqPending;	
 	bool interruptSampled;

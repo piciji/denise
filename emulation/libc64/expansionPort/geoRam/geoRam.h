@@ -8,9 +8,10 @@ namespace LIBC64 {
     
 struct GeoRam : ExpansionPort {  
 	
-	GeoRam();
+	GeoRam(System* system);
 	~GeoRam();
-	
+
+    System* system;
 	Emulator::Interface::Media* media;
 	unsigned dumpSize = 0;
     uint8_t* dump = nullptr;
@@ -49,5 +50,4 @@ struct GeoRam : ExpansionPort {
 
 };
 
-extern GeoRam* geoRam;
 }

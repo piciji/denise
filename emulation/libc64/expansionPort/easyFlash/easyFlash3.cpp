@@ -4,12 +4,10 @@
 #include "../../../tools/petcii.h"
 
 namespace LIBC64 {  
-    
-EasyFlash3* easyFlash3 = nullptr;  
 
 #include "eapi-mx29640b.h"
 
-EasyFlash3::EasyFlash3() : FreezeButton(false, true) {
+EasyFlash3::EasyFlash3(System* system) : FreezeButton(system, false, true) {
     
     this->media = nullptr;    
 
@@ -25,7 +23,7 @@ EasyFlash3::EasyFlash3() : FreezeButton(false, true) {
 
     flash.setData( dataFlash );
 
-    flash.setEvents(&sysTimer);
+    flash.setEvents(&system->sysTimer);
 
     flash.written = [this]() {
 
@@ -36,7 +34,7 @@ EasyFlash3::EasyFlash3() : FreezeButton(false, true) {
 
         slot->dirty = true;
 
-        system->serializationSize += 1 * 1024 * 1024;
+        this->system->serializationSize += 1 * 1024 * 1024;
     };
     
     setId( Interface::ExpansionIdEasyFlash3 );
@@ -278,7 +276,7 @@ auto EasyFlash3::assign( Cart* cart ) -> void {
 
 auto EasyFlash3::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     // don't rebuild
-    return easyFlash3;
+    return this;
 }
 
 auto EasyFlash3::reset(bool softReset) -> void {
@@ -901,7 +899,7 @@ auto EasyFlash3::memoryMapUpdated() -> void {
 }
 
 auto EasyFlash3::clock() -> void {
-    // this is the real way to do a KERNAL replacement, but it could be slow if CPU port is updated too often, hence the hack (no compatibility loss)      
+    // this is the real way to do a KERNAL replacement, but it could be slow if CPU port is updated too often, hence the hack (no accuracy loss)
     
     if (!kernalHack && (mode == Mode::Kernal) && !vicBA()) {
         
@@ -909,8 +907,8 @@ auto EasyFlash3::clock() -> void {
         // this emulates PHI2 (second half cycle ~ 500 ns)
         // CPU has putted address already on BUS
         
-        bool _write = cpu->isWriteCycle();
-        uint16_t _addr = cpu->addressBus();
+        bool _write = system->cpu.isWriteCycle();
+        uint16_t _addr = system->cpu.addressBus();
         
         if ( !_write && ((_addr & 0xe000) == 0xe000) ) { // read goes to KERNAL area
             

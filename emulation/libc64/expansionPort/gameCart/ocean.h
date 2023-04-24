@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct Ocean : GameCart {
         
-    Ocean() : GameCart(false, false) {
+    Ocean(System* system) : GameCart(system, false, false) {
         
     }
     

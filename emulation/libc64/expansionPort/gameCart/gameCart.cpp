@@ -18,24 +18,21 @@
 
 namespace LIBC64 {
 
-GameCart* gameCart = nullptr;
-    
-GameCart::GameCart(bool game, bool exrom) : Cart( game, exrom ) {
+GameCart::GameCart(System* system, bool game, bool exrom) : Cart( system, game, exrom ) {
 
     setId( Interface::ExpansionIdGame );
 }
 
 auto GameCart::assign( Cart* cart ) -> void {
-    bool inUse = this == expansionPort;
+    bool inUse = this == system->expansionPort;
 
 	if (!protectFromDeletion())
 		delete this;
 
-    gameCart = (GameCart*)cart;
+    system->gameCart = (GameCart*)cart;
 
-    if (inUse)            
-        expansionPort = gameCart;
-    
+    if (inUse)
+        system->setExpansion( Interface::ExpansionIdGame );
 }
 
 auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
@@ -43,69 +40,69 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     
     switch(cartridgeId) {
         case Interface::CartridgeIdFunplay:            
-            cart = new Funplay;
+            cart = new Funplay(system);
             break;
         case Interface::CartridgeIdOcean:
-            cart = new Ocean;
+            cart = new Ocean(system);
             break;
         case Interface::CartridgeIdSystem3:
-            cart = new System3;
+            cart = new System3(system);
             break;
         case Interface::CartridgeIdSuperGames:
-            cart = new SuperGames;            
+            cart = new SuperGames(system);
             break;
         case Interface::CartridgeIdZaxxon:
-            cart = new Zaxxon;
+            cart = new Zaxxon(system);
             break;
         case Interface::CartridgeIdDefault:
         case Interface::CartridgeIdDefault8k:
-            cart = new GameCart(true, false);
+            cart = new GameCart(system, true, false);
             break;            
             
         case Interface::CartridgeIdDefault16k:
-            cart = new Cart16k;
+            cart = new Cart16k(system);
             break;            
             
         case Interface::CartridgeIdUltimax:
-            cart = new GameCart(false, true);
+            cart = new GameCart(system, false, true);
             break;
 
         case Interface::CartridgeIdGmod2:
 			// we don't recreate the card because of additional complexity
-            cart = gmod2;
+            cart = system->gmod2;
             break;
 
         case Interface::CartridgeIdMagicDesk:
-            cart = new MagicDesk;
+            cart = new MagicDesk(system);
             break;
 
         case Interface::CartridgeIdSimonsBasic:
-            cart = new SimonsBasic;
+            cart = new SimonsBasic(system);
             break;
 
         case Interface::CartridgeIdWarpSpeed:
-            cart = new WarpSpeed;
+            cart = new WarpSpeed(system);
             break;
 
         case Interface::CartridgeIdMach5:
-            cart = new Mach5;
+            cart = new Mach5(system);
             break;
 
         case Interface::CartridgeIdRoss:
-            cart = new Ross;
+            cart = new Ross(system);
             break;
 
         case Interface::CartridgeIdWestermann:
-            cart = new Westermann;
+            cart = new Westermann(system);
             break;
 
         case Interface::CartridgeIdPagefox:
-            cart = new Pagefox;
+            cart = new Pagefox(system);
             break;
             
         default:
             // forgot a rom
-            cart = new GameCart;
+            cart = new GameCart(system);
             break;            
 
     }

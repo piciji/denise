@@ -10,10 +10,8 @@
 #include "serialization.cpp"
 
 namespace LIBC64 {
-		
-VicIICycle* vicIICycle = nullptr;
 	
-VicIICycle::VicIICycle() : VicIIBase() {
+VicIICycle::VicIICycle(System* system) : VicIIBase(system) {
 	greyDotBugDisabled = false;
 }
 

@@ -5,9 +5,7 @@
 
 namespace LIBC64 {
 
-RetroReplay* retroReplay = nullptr;
-    
-RetroReplay::RetroReplay() : FreezeButton( true, false ), flash(Emulator::Flash040::Type010) {
+RetroReplay::RetroReplay(System* system) : FreezeButton( system, true, false ), flash(Emulator::Flash040::Type010) {
     
     unbeatable = 0xff;
     flashJumper = false;
@@ -22,10 +20,10 @@ RetroReplay::RetroReplay() : FreezeButton( true, false ), flash(Emulator::Flash0
     flashModeReset = [this]() {
         game = true;
         exRom = true;
-        system->changeExpansionPortMemoryMode(exRom, game);
+        this->system->changeExpansionPortMemoryMode(exRom, game);
     };
     
-    sysTimer.registerCallback({&flashModeReset, 1});
+    system->sysTimer.registerCallback({&flashModeReset, 1});
     
     init();
     
@@ -41,9 +39,9 @@ auto RetroReplay::init( ) -> void {
     flashData = new uint8_t[ 128 * 1024 ];
     
     flash.setData( flashData );
-    flash.setEvents( &sysTimer );
+    flash.setEvents( &system->sysTimer );
     
-    flash.written = []() {
+    flash.written = [this]() {
         system->serializationSize += 128 * 1024;
     };
 }
@@ -54,19 +52,19 @@ auto RetroReplay::assign( Cart* cart ) -> void {
 
 auto RetroReplay::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     // don't rebuild
-    return retroReplay;
+    return this;
 }
 
 auto RetroReplay::clock() -> void {
     
     if (flashJumper) {
-        uint16_t _addr = cpu->addressBus();
+        uint16_t _addr = system->cpu.addressBus();
         
         if (_addr >= 0x8000 && _addr <= 0x9fff) {
             exRom = requestedExRom;
             game = requestedGame;
-            system->changeExpansionPortMemoryMode(exRom, game);   
-            sysTimer.add( &flashModeReset, 1, Emulator::SystemTimer::Action::UpdateExisting );
+            system->changeExpansionPortMemoryMode(exRom, game);
+            system->sysTimer.add( &flashModeReset, 1, Emulator::SystemTimer::Action::UpdateExisting );
         } 
     }
     

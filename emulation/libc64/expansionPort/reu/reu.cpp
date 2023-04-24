@@ -4,10 +4,8 @@
 #include "../retroReplay/retroReplay.h"
 
 namespace LIBC64 {  
-    
-Reu* reu = nullptr;
-    
-Reu::Reu() : ExpansionPort() {
+
+Reu::Reu(System* system) : ExpansionPort(system), sysTimer(system->sysTimer) {
     setId( Interface::ExpansionIdReu );
     prepareRam( 128 );
 
@@ -76,7 +74,7 @@ auto Reu::setExpander( ExpansionPort* expander ) -> void {
 	
 	this->expander = expander;
 	
-	if (expander == retroReplay)
+	if (expander == system->retroReplay)
 		setId( Interface::ExpansionIdReuRetroReplay );
 	else 
 		setId( Interface::ExpansionIdReu );
@@ -254,8 +252,8 @@ auto Reu::clock() -> void {
 	
     if (waitForStart) {
         // listen CPU bus usage        
-        if (cpu->isWriteCycle()) {
-            if (cpu->addressBus() == 0xff00) {
+        if (system->cpu.isWriteCycle()) {
+            if (system->cpu.addressBus() == 0xff00) {
                 waitForStart = false;
                 sysTimer.add(&setDma, 1, Emulator::SystemTimer::Action::UpdateExisting);
             }

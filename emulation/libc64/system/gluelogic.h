@@ -1,73 +1,40 @@
 
 #pragma once
 
-#include "system.h"
+#include <cstdint>
+#include <functional>
+
+namespace Emulator {
+    struct Serializer;
+    struct SystemTimer;
+}
 
 namespace LIBC64 {
-    
+
+struct System;
+
 struct GlueLogic {
     
     enum Type : uint8_t { Discrete = 0, CustomIC = 1 } type = Type::Discrete;
     
     using Callback = std::function<void ()>;
-    
+
+    Emulator::SystemTimer& sysTimer;
+    System* system;
+
     Callback updateVbank;
     
     uint8_t vbankBefore;
     
-    GlueLogic( ) {
-        
-        updateVbank = [this]() {
-            
-            system->vicBank = vbankBefore << 14;
-        };    
-        
-        sysTimer.registerCallback( {&updateVbank, 1} );
-    }
+    GlueLogic(System* system, Emulator::SystemTimer& sysTimer);
     
-    auto serialize(Emulator::Serializer& s) -> void {        
-        
-        s.integer( vbankBefore );   
-        
-        s.integer( (uint8_t&) type );
-    }
+    auto serialize(Emulator::Serializer& s) -> void;
     
-    auto setType( Type type ) -> void {
-        
-        this->type = type;
-        // in case of on the fly switching during runtime
-        sysTimer.remove( &updateVbank );
-    }
+    auto setType( Type type ) -> void;
     
-    auto setVBank( uint8_t vbank, bool ddrChange ) -> void {
-                        
-        if ( type == Type::Discrete ) {
-            
-            system->vicBank = vbank << 14;
-            
-            goto end; // lets update vbankBefore in case of runtime switch of glue logic
-        }
-        // custom ic for C64C
-
-        // both vbank bits have changed and new vbank is 1 or 2
-        if (((vbankBefore ^ vbank) == 3) &&  (vbank == 1 || vbank == 2) ) {        
-            system->vicBank = 3 << 14; // force to 3 for the following cycle only
-            sysTimer.add( &updateVbank, 2, Emulator::SystemTimer::Action::UpdateExisting );
-            
-        } else if (ddrChange && (vbank < vbankBefore) && ((vbankBefore ^ vbank) != 3)) {
-            sysTimer.add( &updateVbank, 2, Emulator::SystemTimer::Action::UpdateExisting );
-            
-        } else
-            system->vicBank = vbank << 14;
-                    
-        end:
-            vbankBefore = vbank;
-    }
+    auto setVBank( uint8_t vbank, bool ddrChange ) -> void;
     
-    auto reset() -> void {
-        
-        vbankBefore = 0;
-    }
+    auto reset() -> void;
 };
     
 }

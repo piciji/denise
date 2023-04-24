@@ -12,12 +12,12 @@ auto Sid::readIO( uint8_t addr ) -> uint8_t {
             // sid has two AD converters. AD conversion is not emulated directly,
             // because we simply don't have a voltage to convert from.
             // we fetch resulting digital value directly from input emulation.
-            if (!sysTimer.has( &callPotUpdate )) {
-                potX = getPotX();
-                potY = getPotY();
-                sysTimer.add( &callPotUpdate, 512, Emulator::SystemTimer::Action::WhenNotExistsOnly );
+            if (!sysTimer.has( &sidManager.callPotUpdate )) {
+                sidManager.potX = sidManager.getPotX();
+                sidManager.potY = sidManager.getPotY();
+                sysTimer.add( &sidManager.callPotUpdate, 512, Emulator::SystemTimer::Action::WhenNotExistsOnly );
             }
-            lastBusValue = addr == 0x19 ? potX : potY;
+            lastBusValue = addr == 0x19 ? sidManager.potX : sidManager.potY;
             databusDecay = databusDecayTime;
             break;
 		case 0x1b:

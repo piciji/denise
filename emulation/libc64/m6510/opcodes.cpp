@@ -489,7 +489,7 @@ auto M6510::process() -> void {
 	killed = true;
     
 #define TRAPPED_KILL    \
-    if (!traps->handler()) {   \
+    if (!traps.handler()) {   \
         KILL    \
     }
 	

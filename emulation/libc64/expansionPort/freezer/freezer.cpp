@@ -12,25 +12,22 @@
 
 namespace LIBC64 {
 
-Freezer* freezer = nullptr;
-
-Freezer::Freezer(bool game, bool exrom) : FreezeButton( game, exrom ) {
+Freezer::Freezer(System* system, bool game, bool exrom) : FreezeButton( system, game, exrom ) {
 
     setId( Interface::ExpansionIdFreezer );
 }
 
 auto Freezer::assign( Cart* cart ) -> void {
-    bool inUse = this == expansionPort;
+    bool inUse = this == system->expansionPort;
 
     delete this;
 
-    freezer = (Freezer*)cart;
+    system->freezer = (Freezer*)cart;
     
-    system->setExpansionCallbacks( freezer );
+    system->setExpansionCallbacks( system->freezer );
 
-    if (inUse)            
-        expansionPort = freezer;
-    
+    if (inUse)
+        system->setExpansion( Interface::ExpansionIdFreezer );
 }
 
 auto Freezer::create( Interface::CartridgeId cartridgeId ) -> Cart* {
@@ -39,41 +36,41 @@ auto Freezer::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     switch(cartridgeId) {
 
         case Interface::CartridgeIdActionReplayMK2:
-            cart = new ActionReplayMK2;
+            cart = new ActionReplayMK2(system);
             break;
             
         case Interface::CartridgeIdActionReplayMK3:
-            cart = new ActionReplayMK3;
+            cart = new ActionReplayMK3(system);
             break;
             
         case Interface::CartridgeIdActionReplayMK4:
-            cart = new ActionReplayMK4;
+            cart = new ActionReplayMK4(system);
             break;
 
         case Interface::CartridgeIdActionReplayV41AndHigher:
         case Interface::CartridgeIdDefault:
-            cart = new ActionReplayV4;
+            cart = new ActionReplayV4(system);
             break;
 
         case Interface::CartridgeIdFinalCartridge:
-            cart = new FinalCartridge;
+            cart = new FinalCartridge(system);
             break;
 
         case Interface::CartridgeIdFinalCartridge3:
-            cart = new FinalCartridge3;
+            cart = new FinalCartridge3(system);
             break;
 
         case Interface::CartridgeIdFinalCartridgePlus:
-            cart = new FinalCartridgePlus;
+            cart = new FinalCartridgePlus(system);
             break;
 
         case Interface::CartridgeIdAtomicPower:
-            cart = new AtomicPower;
+            cart = new AtomicPower(system);
             break;
 
         default:
             // forgot a rom
-            cart = new Freezer;
+            cart = new Freezer(system);
             break;
     }
     

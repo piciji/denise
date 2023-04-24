@@ -7,7 +7,7 @@ namespace LIBC64 {
 
         bool enable;
 
-        FinalCartridge3() : Freezer(true, true) {
+        FinalCartridge3(System* system) : Freezer(system, true, true) {
 
         }
 

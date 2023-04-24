@@ -2,10 +2,8 @@
 #include "geoRam.h"
 
 namespace LIBC64 {  
-	
-GeoRam* geoRam = nullptr;	
-	
-GeoRam::GeoRam() : ExpansionPort() {
+
+GeoRam::GeoRam(System* system) : ExpansionPort(system), system(system) {
 	setId( Interface::ExpansionIdGeoRam );
 	prepareRam( 64 );
 }	

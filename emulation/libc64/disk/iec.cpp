@@ -1,10 +1,9 @@
 
 #include "iec.h"
+#include "../system/system.h"
 
 namespace LIBC64 {
-    
-IecBus* iecBus;
-   
+
 // 1. main thread (c64) runs some cycles, drive thread waits
 // 2. main thread transfers amount of consumed cycles to drive thread
 // 3. drive thread runs for this amount of cycles
@@ -52,10 +51,13 @@ IecBus* iecBus;
 // a VIA write before (-0.45 * drive cycle duration) should affect a CIA read
 // 2Mhz: 0.425 ( data change time ) - 1.3 cycles (1 write + 0.3 delay) = -0.875
 
-IecBus::IecBus(Emulator::Interface::MediaGroup* mediaGroup) {    
+IecBus::IecBus(System* system, Emulator::Interface::MediaGroup* mediaGroup) :
+system(system),
+sysTimer(system->sysTimer) {
+
     // max 4 drives will be supported
     for( unsigned i = 0; i < 4; i++ ) {    
-        Drive* drive = new Drive( i, &mediaGroup->media[i] );
+        Drive* drive = new Drive( i, system, *this, &mediaGroup->media[i] );
         
         drives.push_back( drive );
     }     
@@ -85,7 +87,7 @@ IecBus::IecBus(Emulator::Interface::MediaGroup* mediaGroup) {
             }
 
             if (updatePriority) {
-                if (system->interface->setThreadPriority(idle ? Emulator::Interface::ThreadPriority::High : Emulator::Interface::ThreadPriority::High, 0.1, 0.2 )) {
+                if (this->system->interface->setThreadPriority(idle ? Emulator::Interface::ThreadPriority::High : Emulator::Interface::ThreadPriority::High, 0.1, 0.2 )) {
                    // system->interface->log(idle ? "IEC prio change high" : "IEC prio change realtime");
                 }
                 updatePriority = false;
@@ -166,7 +168,7 @@ auto IecBus::run() -> void {
             
             else if (drive->cycleCounter == useDrive->cycleCounter) {
                 
-                if (drive->cpu->isReadNext() > useDrive->cpu->isReadNext())
+                if (drive->cpu.isReadNext() > useDrive->cpu.isReadNext())
                     useDrive = drive;    
             }
         }
@@ -174,7 +176,7 @@ auto IecBus::run() -> void {
         if (!useDrive)
             break;
         
-        useDrive->cpu->process();
+        useDrive->cpu.process();
         useDrive->synced = useDrive->cycleCounter >= useDrive->syncPos;
     }     
 }
@@ -260,7 +262,7 @@ auto IecBus::serialShift(bool bit) -> void {
 
     for (auto drive : drivesEnabled) {
         if (!drive->dataDirection)
-            drive->cia->serialIn( bit );
+            drive->cia.serialIn( bit );
     }
 }
 
@@ -272,24 +274,24 @@ auto IecBus::readParallelWithHandshake() -> uint8_t {
     for (auto drive : drivesEnabled) {
         if (drive->operation & DRIVE_HAS_PIA) {
             if (drive->speeder == 10) {
-                drive->pia->cb1In(false);
-                out &= drive->pia->iob;
+                drive->pia.cb1In(false);
+                out &= drive->pia.iob;
             } else {
-                drive->pia->ca1In(false);
-                out &= drive->pia->ioa;
+                drive->pia.ca1In(false);
+                out &= drive->pia.ioa;
             }
         } else {
             if (drive->operation & DRIVE_MODE_157x) {
                 if (drive->operation & DRIVE_HAS_EXTRA_CIA) {
-                    drive->ciaSpeeder->setFlag();
-                    out &= drive->ciaSpeeder->lines.iob;
+                    drive->ciaSpeeder.setFlag();
+                    out &= drive->ciaSpeeder.lines.iob;
                 } else {
-                    drive->cia->setFlag();
-                    out &= drive->cia->lines.iob;
+                    drive->cia.setFlag();
+                    out &= drive->cia.lines.iob;
                 }
             } else {
-                drive->via1->cb1In(false);
-                out &= drive->via1->lines.ioa;
+                drive->via1.cb1In(false);
+                out &= drive->via1.lines.ioa;
             }
         }
     }
@@ -304,18 +306,18 @@ auto IecBus::readParallel() -> uint8_t {
     for (auto drive : drivesEnabled) {
         if (drive->operation & DRIVE_HAS_PIA) {
             if (drive->speeder == 10) {
-                out &= drive->pia->iob;
+                out &= drive->pia.iob;
             } else {
-                out &= drive->pia->ioa;
+                out &= drive->pia.ioa;
             }
         } else {
             if (drive->operation & DRIVE_MODE_157x) {
                 if (drive->operation & DRIVE_HAS_EXTRA_CIA)
-                    out &= drive->ciaSpeeder->lines.iob;
+                    out &= drive->ciaSpeeder.lines.iob;
                 else
-                    out &= drive->cia->lines.iob;
+                    out &= drive->cia.lines.iob;
             } else {
-                out &= drive->via1->lines.ioa;
+                out &= drive->via1.lines.ioa;
             }
         }
     }
@@ -329,18 +331,18 @@ auto IecBus::writeParallelHandshake() -> void {
     for (auto drive : drivesEnabled) {
         if (drive->operation & DRIVE_HAS_PIA) {
             if (drive->speeder == 10) {
-                drive->pia->cb1In(false);
+                drive->pia.cb1In(false);
             } else {
-                drive->pia->ca1In(false);
+                drive->pia.ca1In(false);
             }
         } else {
             if (drive->operation & DRIVE_MODE_157x) {
                 if (drive->operation & DRIVE_HAS_EXTRA_CIA)
-                    drive->ciaSpeeder->setFlag();
+                    drive->ciaSpeeder.setFlag();
                 else
-                    drive->cia->setFlag();
+                    drive->cia.setFlag();
             } else
-                drive->via1->cb1In(false);
+                drive->via1.cb1In(false);
         }
     }
 }
@@ -461,12 +463,12 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
     threaded = drivesEnabled.size() > 0;
 }
 
-auto IecBus::hideDrive( Interface::Media* media ) -> void {
+auto IecBus::hideDrive( Emulator::Interface::Media* media ) -> void {
     // games like Roland's Ratrace look for drives and crash if find one as kind of copy protection
     drives[ media->id ]->hide();
 }
 
-auto IecBus::resetDrive( Interface::Media* media) -> void {
+auto IecBus::resetDrive( Emulator::Interface::Media* media) -> void {
 
     waitForDrives();
 

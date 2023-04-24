@@ -3,12 +3,10 @@
 #include "easyFlash.h"
 
 namespace LIBC64 {  
-    
-EasyFlash* easyFlash = nullptr;  
 
 #include "eapi-am29f040.h"
 
-EasyFlash::EasyFlash() : Cart(false, true),
+EasyFlash::EasyFlash(System* system) : Cart(system, false, true),
     flashLo(Emulator::Flash040::TypeB),
     flashHi(Emulator::Flash040::TypeB) {
     
@@ -36,14 +34,14 @@ auto EasyFlash::init( ) -> void {
     flashLo.setData( dataLo );
     flashHi.setData( dataHi );
     
-    flashLo.setEvents( &sysTimer );
-    flashHi.setEvents( &sysTimer );   
+    flashLo.setEvents( &system->sysTimer );
+    flashHi.setEvents( &system->sysTimer );
     
-    flashLo.written = []() {
+    flashLo.written = [this]() {
         system->serializationSize += 512 * 1024;
     };
 
-    flashHi.written = []() {
+    flashHi.written = [this]() {
         system->serializationSize += 512 * 1024;
     };
 }
@@ -193,7 +191,7 @@ auto EasyFlash::assign( Cart* cart ) -> void {
 
 auto EasyFlash::create( Interface::CartridgeId cartridgeId ) -> Cart* {
     // don't rebuild
-    return easyFlash;
+    return this;
 }
 
 auto EasyFlash::reset(bool softReset) -> void {

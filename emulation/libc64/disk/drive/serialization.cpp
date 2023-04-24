@@ -86,21 +86,21 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( proSpeedControl );
     s.integer( hidden );
 
-    via1->serialize( s );
-    via2->serialize( s );
-    cpu->serialize( s );
+    via1.serialize( s );
+    via2.serialize( s );
+    cpu.serialize( s );
 
     s.integer( structure.encodingGraceful.status );
 
     if (operation & DRIVE_MODE_157x) {
-        cia->serialize(s);
-        wd1770->serialize(s);
+        cia.serialize(s);
+        wd1770.serialize(s);
     }
 
     if (operation & DRIVE_HAS_PIA)
-        pia->serialize(s);
+        pia.serialize(s);
     if (operation & DRIVE_HAS_EXTRA_CIA)
-        ciaSpeeder->serialize(s);
+        ciaSpeeder.serialize(s);
 
     if (s.mode() == Emulator::Serializer::Mode::Load) {
 
@@ -114,8 +114,8 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         }
 
         if (operation & DRIVE_MODE_157x) {
-            wd1770->setTrack( gcrTrack, gcrTrack == dummyTrack );
-            wd1770->setDiskAccessible( motorOn && loaded );
+            wd1770.setTrack( gcrTrack, gcrTrack == dummyTrack );
+            wd1770.setDiskAccessible( motorOn && loaded );
         }
 
         // unserialize VIA before to get state of LED

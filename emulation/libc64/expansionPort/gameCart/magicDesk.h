@@ -5,7 +5,7 @@ namespace LIBC64 {
 
     struct MagicDesk : GameCart {
 
-        MagicDesk() : GameCart(true, false) {
+        MagicDesk(System* system) : GameCart(system, true, false) {
 
         }
 

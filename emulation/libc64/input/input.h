@@ -4,17 +4,34 @@
 #define ID_PORT_1 0
 #define ID_PORT_2 1
 
+#include <cstdint>
+#include "../../interface.h"
 #include "../../cia/base.h"
 #include "keyboard.h"
-#include "controlPort/controlPort.h"
-#include "../../tools/serializer.h"
+
+namespace Emulator {
+    struct Serializer;
+}
+
+namespace CIA {
+    struct M6526;
+}
 
 namespace LIBC64 {
-    
+
+struct System;
+struct ControlPort;
+struct VicIIBase;
+
 struct Input {
 	
-    Input();
-    
+    Input(System* system, Emulator::Interface* interface, CIA::M6526& cia1);
+
+    System* system;
+    Emulator::Interface* interface = nullptr;
+    CIA::M6526& cia1;
+
+    VicIIBase* vicII;
     ControlPort* controlPort1 = nullptr;
     ControlPort* controlPort2 = nullptr;
     Keyboard keyboard;
@@ -28,10 +45,12 @@ struct Input {
         bool allow = false;
         uint8_t midscreen = 0;
     } sampling;
-    
-    auto connectControlport( Interface::Connector* connector, Interface::Device* device ) -> void;
-    auto getConnectedDevice( Interface::Connector* connector ) -> Interface::Device*;
-    auto getCursorPosition( Interface::Device* device, int16_t& x, int16_t& y ) -> bool;
+
+    auto setVic(VicIIBase* vicII) -> void;
+
+    auto connectControlport( Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void;
+    auto getConnectedDevice( Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device*;
+    auto getCursorPosition( Emulator::Interface::Device* device, int16_t& x, int16_t& y ) -> bool;
     
     auto readCiaPortA( CIA::Base::Lines* lines ) -> uint8_t;
     auto readCiaPortB( CIA::Base::Lines* lines ) -> uint8_t;

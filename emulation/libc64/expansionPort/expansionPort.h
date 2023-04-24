@@ -11,7 +11,7 @@ namespace LIBC64 {
     
 struct ExpansionPort {
         
-    ExpansionPort() {
+    ExpansionPort(System* system) : system(system) {
 
         setId( Interface::ExpansionIdNone );
     }
@@ -21,7 +21,9 @@ struct ExpansionPort {
     struct {
         uint16_t addr;
     } bus;
-    
+
+    System* system;
+    VicIIBase* vicII;
     // pins on startup, some carts change this during runtime
     bool exRom = true;
     bool game = true;

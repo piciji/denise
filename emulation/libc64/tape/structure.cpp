@@ -1,5 +1,6 @@
 
 #include "structure.h"
+#include "../system/system.h"
 #include "tape.h"
 
 #define SHORT_PULSE(p)          (p >= 36 && p <= 54)
@@ -15,8 +16,7 @@
 
 namespace LIBC64 {
 
-TapeStructure::TapeStructure(Tape* tape) {
-    this->tape = tape;
+TapeStructure::TapeStructure(Tape& tape) : tape(tape) {
     fetchData = new uint8_t[ TAPE_FETCH_SIZE ];
     fetchPos = 0;
     fetchSize = 0;
@@ -53,7 +53,7 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
 
     curFileEntry = nullptr;
 
-    listing.convertToScreencode = system->convertToScreencode;
+    listing.convertToScreencode = tape.system->convertToScreencode;
 
     listings.push_back( {id++, listing.buildHeadline( &head[0] ) } );
 
@@ -678,7 +678,7 @@ auto TapeStructure::readForward( uint8_t& byte ) -> bool {
 
     if (fetchPos == 0) {
 
-        fetchSize = this->tape->read( fetchData, TAPE_FETCH_SIZE, curPos );
+        fetchSize = tape.read( fetchData, TAPE_FETCH_SIZE, curPos );
 
         if (fetchSize == 0)
             return false;

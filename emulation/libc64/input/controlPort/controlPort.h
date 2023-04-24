@@ -3,17 +3,29 @@
 
 #include "../../system/system.h"
 
+namespace Emulator {
+    struct SystemTimer;
+}
+
 namespace LIBC64  {
 
+struct System;
+struct SystemTimer;
+struct VicIIBase;
 // interface for all control port connected devices    
     
 struct ControlPort {
-    
-    ControlPort( Interface::Device* device = nullptr );
-    
+
+    ControlPort( System* system, Interface::Device* device = nullptr );
+
+    System* system;
+    Emulator::Interface* interface;
+    Emulator::SystemTimer& sysTimer;
     Interface::Device* device;
+
+    VicIIBase* vicII;
     
-    static auto create( Interface::Device* device ) -> ControlPort*;
+    static auto create( System* system, Interface::Device* device ) -> ControlPort*;
     
     virtual auto read( ) -> uint8_t { return 0xff; }
     virtual auto write( uint8_t value ) -> void {}

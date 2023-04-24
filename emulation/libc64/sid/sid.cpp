@@ -3,11 +3,9 @@
 
 #include "../../tools/macros.h"
 #include "../system/system.h"
-#include "multisid.cpp"
 #include "register.cpp"
 #include "envelope.cpp"
 #include "voice.cpp"
-#include "clone.cpp"
 #include "filter/main.cpp"
 #include "filter/external.cpp"
 #include "serialization.cpp"
@@ -15,64 +13,18 @@
 #include "../../tools/systimer.h"
 
 namespace LIBC64 {
-    
-Sid* sid = nullptr;      
-Sid* sids[7] = {nullptr};  
-uint8_t Sid::sampleCounter = 0;
-uint8_t Sid::sampleLimit = 2;
-bool Sid::audioOut = true;
-bool Sid::useExternalFilter = true;
-unsigned Sid::serializationSizeForSevenMoreSids = 0;
-bool Sid::useVolumeCorrection = false;
-unsigned Sid::sysClock = 0;
-uint8_t Sid::potX = 0xff;
-uint8_t Sid::potY = 0xff;
 
-std::function<uint8_t ()> Sid::getPotX = []() { return 0xff; };
-std::function<uint8_t ()> Sid::getPotY = []() { return 0xff; };
+std::vector<std::string> Sid::adrOptions = {"Default", "D400", "D420", "D440", "D460", "D480", "D4A0", "D4C0", "D4E0", "D500", "D520", "D540", "D560", "D580",
+                                            "D5A0", "D5C0", "D5E0", "D600", "D620", "D640", "D660", "D680", "D6A0", "D6C0", "D6E0", "D700", "D720", "D740", "D760", "D780",
+                                            "D7A0", "D7C0", "D7E0", "DE00", "DE20", "DE40", "DE60", "DE80", "DEA0", "DEC0", "DEE0", "DF00", "DF20", "DF40", "DF60", "DF80", "DFA0", "DFC0", "DFE0"};
 
-Sid::Callback Sid::callPotUpdate = []() { };
 
-Sid::Callback Sid::callAlarm = []() { Sid::updateClock(); };
-
-std::function<void ( int16_t )> Sid::audioRefresh = [](int16_t sample) {};
-std::function<void ( int16_t, int16_t )> Sid::audioRefreshStereo = [](int16_t sampleL, int16_t sampleR) {};   
-
-auto Sid::registerGlobalCallbacks() -> void {
-	
-	sysTimer.registerCallback( { { &callPotUpdate, 1 }, { &callAlarm, 1 } } );
-}
-
-auto Sid::updateClock() -> void {
-    sysTimer.add( &callAlarm, 200, Emulator::SystemTimer::Action::UpdateExisting );
-    
-    unsigned _delay = sysTimer.fallBackCycles( sysClock );
-	
-	if (!_delay)
-		return;
-    
-    if (extraSids) {
-        for (unsigned i = 0; i < _delay; i++)
-            clockMultiChips();    
-    } else {
-        for (unsigned i = 0; i < _delay; i++)
-            sid->clock();        
-    }
-    
-    sysClock = sysTimer.clock;		
-}
-
-auto Sid::useLeftChannel(bool state) -> void {
-    leftChannel = state;
-    updateSidUsage();
-}
-
-auto Sid::useRightChannel(bool state) -> void {
-    rightChannel = state;
-    updateSidUsage();
-}
-
-Sid::Sid( Type type ) : filter( this ), chamberlinFilter(filter) {
+Sid::Sid( System* system, SidManager& sidManager, Type type ) :
+system(system),
+sidManager(sidManager),
+sysTimer(system->sysTimer),
+filter( this ),
+chamberlinFilter(filter) {
 
     lastBusValue = 0;
 	
@@ -96,7 +48,7 @@ Sid::Sid( Type type ) : filter( this ), chamberlinFilter(filter) {
     ioMask = 0xD420;
     ioPos = 1;
 	moreAccuracy = false;
-    audioOut = true;
+
 	//idle = true;
 	//ready = false;
     powerOn = false;             
@@ -136,23 +88,29 @@ Sid::Sid( Type type ) : filter( this ), chamberlinFilter(filter) {
 //	worker.detach();
 }
 
-auto Sid::calcSerializationSizeForSevenMoreSids() -> void {
-    
-    Emulator::Serializer s;
-    
-    sid->serialize( s, false );
-    
-    serializationSizeForSevenMoreSids = s.size() * 7;
+auto Sid::useLeftChannel(bool state) -> void {
+    leftChannel = state;
 }
 
-auto Sid::disableAudioOut(bool state) -> void {
-//    if (moreAccuracy && registerWrite.pipelined) {
-//        // wait for worker thread
-//        while (ready.load()) {}
-//        applyFilterWrite();
-//    }
-        
-    audioOut = !state;
+auto Sid::useRightChannel(bool state) -> void {
+    rightChannel = state;
+}
+
+auto Sid::setIoMask( uint8_t pos ) -> void {
+
+    if (pos >= adrOptions.size())
+        return;
+
+    ioPos = pos;
+
+    if (pos == 0) {
+        ioMask = 0;
+        return;
+    }
+
+    auto str = adrOptions[pos];
+
+    ioMask = std::stoul(str, nullptr, 16);
 }
 
 auto Sid::setFilterType( FilterType filterType ) -> void {
@@ -164,13 +122,13 @@ auto Sid::setFilterType( FilterType filterType ) -> void {
     for( unsigned i = 0; i < 3; i++ )
         voice[i].setType( this->type, this->filterType == FilterType::Chamberlin );
     
-    volumeCorrection();
+    //volumeCorrection();
 }
 
-inline auto Sid::volumeCorrection( ) -> void {
+auto Sid::volumeCorrection( bool state ) -> void {
     correction = 1.0;
     
-    if (!useVolumeCorrection)
+    if (!state)
         return;
     
     switch (filterType) {
@@ -212,34 +170,6 @@ auto Sid::updateIdleState() -> void {
  //   idle = !powerOn ? true : !moreAccuracy;
 }
 
-auto Sid::setResampleQuality( uint8_t val ) -> void {
-    
-    sampleCounter = 0;
-    
-    switch(val) {
-        case 0: sampleLimit = 1; break;
-        case 1: sampleLimit = 2; break;
-        case 2: sampleLimit = 7; break;
-        default:
-        case 3: 
-            sampleLimit = 18; break;
-    }        
-}
-
-auto Sid::getResampleQuality( ) -> uint8_t {
-    
-        switch(sampleLimit) {
-            case 1: return 0;
-            case 2: return 1;
-            case 7: return 2;
-            default:
-            case 18: 
-                return 3;
-    } 
-        
-    _unreachable
-}
-
 auto Sid::setType( Type type ) -> void {
 
     this->type = type;
@@ -255,8 +185,6 @@ auto Sid::setType( Type type ) -> void {
     // update digi boost
     // it will be applied for 8580 only    
     updateDigiBoost( filter.digiBoost && type == Type::MOS_8580 );
-    
-    volumeCorrection();
 }
 
 auto Sid::setDigiBoost( bool state ) -> void {
@@ -289,7 +217,6 @@ auto Sid::reset() -> void {
 	//ready = false;	
     
 	registerWrite.pipelined = false;
-    sampleCounter = 0;    
     powerOn = true;
     updateIdleState();
 }
@@ -299,22 +226,84 @@ auto Sid::powerOff() -> void {
     powerOn = false;
 }
 
-inline auto Sid::clock() -> void {
-    unsigned i;
-    
+template<int options> auto Sid::clock() -> double {
+    constexpr bool audioOut = options & 1;
+    constexpr bool useExtFilter = options & 2;
+    int i;
+    double curSample;
+
     for (i = 0; i < 3; i++) {
-        //both happens in parallel
         envelope[i].clock();
         voice[i].clock();
     }
 
     for (i = 0; i < 3; i++)
-        voice[i].synchronize();    
+        voice[i].synchronize();
 
     for (i = 0; i < 3; i++)
-        voice[i].setWaveformOutput();    
+        voice[i].setWaveformOutput();
 
-    if (likely(audioOut)) {    
+    if constexpr (audioOut) {
+        if constexpr (useExtFilter) {
+
+            if (filterType == FilterType::Chamberlin) {
+
+                double _sample = chamberlinFilter.clock((double) voice[0].output() / 255.0,
+                                                        (double) voice[1].output() / 255.0,
+                                                        (double) voice[2].output() / 255.0);
+
+                externalFilter.clock(Emulator::sclamp(16, _sample));
+
+            } else {
+
+                filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+
+                externalFilter.clock(filter.output());
+            }
+
+            curSample = (double) externalFilter.output() * correction;
+
+        } else {
+            if (filterType == FilterType::Chamberlin)
+                curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0,
+                                                   (double) voice[1].output() / 255.0,
+                                                   (double) voice[2].output() / 255.0);
+            else {
+                filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+                curSample = filter.output();
+            }
+
+            curSample *= correction;
+        }
+    }
+
+    if (databusDecay > 0 && --databusDecay == 0)
+        lastBusValue = 0;
+
+    return curSample;
+}
+
+template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleLimit) -> int {
+    constexpr bool audioOut = options & 1;
+    constexpr bool useExtFilter = options & 2;
+
+    int i, c;
+    double curSample;
+
+    for (c = 0; c < cycles; c++) {
+
+        for (i = 0; i < 3; i++) {
+            envelope[i].clock();
+            voice[i].clock();
+        }
+
+        for (i = 0; i < 3; i++)
+            voice[i].synchronize();
+
+        for (i = 0; i < 3; i++)
+            voice[i].setWaveformOutput();
+
+        if constexpr (audioOut) {
 //        if (moreAccuracy) {            
 //            
 //            // filter calculations are threaded
@@ -330,65 +319,87 @@ inline auto Sid::clock() -> void {
 //
 //        } else {
 
-        if (useExternalFilter) {
-        
-            if (filterType == FilterType::Chamberlin) {
-                
-                double _sample = chamberlinFilter.clock( (double)voice[0].output() / 255.0,(double) voice[1].output() / 255.0, (double)voice[2].output() / 255.0 );
+            if constexpr (useExtFilter) {
 
-                externalFilter.clock( Emulator::sclamp( 16, _sample ) );                               
-                
-            } else {
+                if (filterType == FilterType::Chamberlin) {
 
-                filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+                    curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0,
+                                                            (double) voice[1].output() / 255.0,
+                                                            (double) voice[2].output() / 255.0);
 
-                externalFilter.clock( filter.output() );	
-            }
+                    externalFilter.clock(Emulator::sclamp(16, curSample));
 
-            if (!extraSids) {
+                } else {
+
+                    filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+
+                    externalFilter.clock(filter.output());
+                }
+
                 if (++sampleCounter == sampleLimit) {
-                    audioRefresh( Emulator::sclamp( 16, (float)externalFilter.output() * correction ) );
+                    system->audioRefresh( Emulator::sclamp( 16, (float) externalFilter.output() * correction ) );
                     sampleCounter = 0;
                 }
-            } else
-                curSample = (double)externalFilter.output() * correction;
-            
-        } else
-            withoutExternalFilter();
 
-       // }
-    }
-	  	
-    // bus values decay after a certain amount of time.
-    // decay time differs between single bits.
-    // single bit decaying is not emulated
-    // but approximate time till all bits are decayed
-    if (databusDecay > 0 && --databusDecay == 0 )
-        lastBusValue = 0;
-    
-}
-    
-inline auto Sid::withoutExternalFilter() -> void {
+            } else {
+                if (filterType == FilterType::Chamberlin) {
+                    curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0,
+                                                       (double) voice[1].output() / 255.0,
+                                                       (double) voice[2].output() / 255.0);
+                } else {
+                    filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+                    curSample = filter.output();
+                }
 
-    if (filterType == FilterType::Chamberlin) {
-
-        curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0, (double) voice[1].output() / 255.0, (double) voice[2].output() / 255.0);
-        
-    } else {
-
-        filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
-
-        curSample = filter.output();
-    }
-    
-    curSample *= correction;
-
-    if (!extraSids) {
-        if (++sampleCounter == sampleLimit) {
-            audioRefresh( Emulator::sclamp( 16, curSample ) );
-            sampleCounter = 0;
+                if (++sampleCounter == sampleLimit) {
+                    system->audioRefresh( Emulator::sclamp( 16, curSample * correction ) );
+                    sampleCounter = 0;
+                }
+            }
         }
-    } 
-} 
+
+        // bus values decay after a certain amount of time.
+        // decay time differs between single bits.
+        // single bit decaying is not emulated
+        // but approximate time till all bits are decayed
+        if (databusDecay > 0 && --databusDecay == 0)
+            lastBusValue = 0;
+    }
+
+    return sampleCounter;
+}
+
+template auto Sid::clock<0>() -> double;
+template auto Sid::clock<1>() -> double;
+template auto Sid::clock<2>() -> double;
+template auto Sid::clock<3>() -> double;
+
+template auto Sid::clock<0>(int cycles, int sampleCounter, int sampleLimit) -> int;
+template auto Sid::clock<1>(int cycles, int sampleCounter, int sampleLimit) -> int;
+template auto Sid::clock<2>(int cycles, int sampleCounter, int sampleLimit) -> int;
+template auto Sid::clock<3>(int cycles, int sampleCounter, int sampleLimit) -> int;
+
+//inline auto Sid::withoutExternalFilter() -> void {
+//
+//    if (filterType == FilterType::Chamberlin) {
+//
+//        curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0, (double) voice[1].output() / 255.0, (double) voice[2].output() / 255.0);
+//
+//    } else {
+//
+//        filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+//
+//        curSample = filter.output();
+//    }
+//
+//    curSample *= correction;
+//
+//    if (!extraSids) {
+//        if (++sampleCounter == sampleLimit) {
+//            audioRefresh( Emulator::sclamp( 16, curSample ) );
+//            sampleCounter = 0;
+//        }
+//    }
+//}
 
 }

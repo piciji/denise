@@ -24,7 +24,7 @@
 namespace LIBC64 {
 
 struct Fastloader : ExpansionPort {
-    Fastloader();
+    Fastloader(System* system);
 
     enum Type { PROF_DOS = 0, PROLOGIC_DOS = 1, TURBO_TRANS = 2 } type;
     uint8_t mode;
@@ -54,7 +54,5 @@ struct Fastloader : ExpansionPort {
     auto customButton() -> void;
 
 };
-
-extern Fastloader* fastloader;
 
 }

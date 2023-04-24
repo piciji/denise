@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct ActionReplayV4 : Freezer {
 
-    ActionReplayV4() : Freezer(true, false) {
+    ActionReplayV4(System* system) : Freezer(system, true, false) {
         
         ram = new uint8_t[ 8 * 1024 ];
     }

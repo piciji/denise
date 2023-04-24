@@ -2,7 +2,7 @@
 #pragma once
 
 #include "../../tools/listing.h"
-#include "../system/system.h"
+#include "../../interface.h"
 
 namespace LIBC64 {
 
@@ -10,11 +10,11 @@ struct Tape;
 
 struct TapeStructure {
 
-    TapeStructure(Tape* tape);
+    TapeStructure(Tape& tape);
     ~TapeStructure();
 
     std::vector<Emulator::Interface::Listing> listings;
-    Tape* tape = nullptr;
+    Tape& tape;
 
     struct FileEntry {
         uint8_t* header = nullptr;

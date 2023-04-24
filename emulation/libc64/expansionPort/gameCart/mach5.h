@@ -5,7 +5,7 @@ namespace LIBC64 {
 
     struct Mach5 : GameCart {
 
-        Mach5() : GameCart(true, false) {
+        Mach5(System* system) : GameCart(system, true, false) {
 
         }
 

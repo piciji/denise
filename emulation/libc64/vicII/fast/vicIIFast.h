@@ -7,7 +7,7 @@ namespace LIBC64 {
     
 struct VicIIFast : VicIIBase {         
     
-    VicIIFast();
+    VicIIFast(System* system);
     auto clock() -> void;
     auto power() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
@@ -73,5 +73,4 @@ protected:
 	inline auto setRdy(bool _baLow) -> void;
 };
 
-extern VicIIFast* vicIIFast;
 }

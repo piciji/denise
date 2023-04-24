@@ -818,7 +818,7 @@ namespace LIBC64 {
 
         auto temp = createGxx( diskName, sides );
 
-        DiskStructure structure;
+        DiskStructure structure(nullptr);
 
         structure.rawData = temp;
 

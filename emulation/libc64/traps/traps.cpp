@@ -16,8 +16,14 @@
 #define SERIAL_OPEN         0xF0
 
 namespace LIBC64 {
-    
-Traps* traps = nullptr;
+
+Traps::Traps(System* system) :
+system(system),
+cpu(system->cpu),
+iecBus(system->iecBus),
+tape(system->tape) {
+
+}
 
 auto Traps::add(Trap trap) -> void {
     trapList.push_back( trap );
@@ -82,13 +88,13 @@ auto Traps::handler() -> bool {
     if (!installed)
         return false;
 
-    auto pc = cpu->pc;
+    auto pc = cpu.pc;
 
     for(auto& trap : trapList) {
         if ((trap.address + 1) == pc) {
             auto resumeAddr = trap.resumeAddress;
             trap.job();
-            cpu->pc = resumeAddr;
+            cpu.pc = resumeAddr;
             return true;
         }
     }
@@ -100,7 +106,7 @@ auto Traps::reset(bool sendFinishEvent) -> void {
     unsigned int i, j;
     Serial* p;
     static BaseDevice* emptyDevice = new BaseDevice;
-    auto connectedDrives = iecBus->drivesEnabled.size();
+    auto connectedDrives = iecBus.drivesEnabled.size();
     this->sendFinishEvent = sendFinishEvent;
 
     SerialPtr = 0;
@@ -113,7 +119,7 @@ auto Traps::reset(bool sendFinishEvent) -> void {
             unsigned drivePos = i - 8;
             if (drivePos < connectedDrives) {
                 p->inuse = true;
-                p->device = (BaseDevice*)iecBus->drivesEnabled[drivePos]->structure.virtualDrive;
+                p->device = (BaseDevice*)iecBus.drivesEnabled[drivePos]->structure.virtualDrive;
                 p->device->reset();
             }
         }
@@ -179,8 +185,8 @@ auto Traps::attention() -> void {
         setSt(0x80);
     }
 
-    cpu->regP &= ~1; // carry off
-    cpu->regP &= ~4; // int off
+    cpu.regP &= ~1; // carry off
+    cpu.regP &= ~4; // int off
 }
 
 auto Traps::send() -> void {
@@ -194,8 +200,8 @@ auto Traps::send() -> void {
 
     write(device, secondary, data);
 
-    cpu->regP &= ~1; // carry off
-    cpu->regP &= ~4; // int off
+    cpu.regP &= ~1; // carry off
+    cpu.regP &= ~4; // int off
 }
 
 auto Traps::receive() -> void {
@@ -215,24 +221,24 @@ auto Traps::receive() -> void {
         p->device->finish(sendFinishEvent);
     }
 
-    cpu->regA = data;
-    cpu->flagN = data;
-    cpu->flagZ = data;
-    cpu->regP &= ~1; // carry off
-    cpu->regP &= ~4; // int off
+    cpu.regA = data;
+    cpu.flagN = data;
+    cpu.flagZ = data;
+    cpu.regP &= ~1; // carry off
+    cpu.regP &= ~4; // int off
 }
 
 auto Traps::ready() -> void {
     //system->interface->log("ready");
-    cpu->regA = 1;
-    cpu->flagN = 0;
-    cpu->flagZ = 0;
-    cpu->regP &= ~4; // int off
+    cpu.regA = 1;
+    cpu.flagN = 0;
+    cpu.flagZ = 0;
+    cpu.regP &= ~4; // int off
 }
 
 auto Traps::testForComplexTapeLoader() -> bool {
 
-    TapeStructure::FileEntry* fileEntry = tape->structure.getCurFile();
+    TapeStructure::FileEntry* fileEntry = tape.structure.getCurFile();
 
     if (!fileEntry || fileEntry->turoTape)
         return false;
@@ -266,7 +272,7 @@ auto Traps::testForComplexTapeLoader() -> bool {
 
         if ((fileEntry->startAddr <= 0x314) && (fileEntry->endAddr >= 0x314) ) {
             //system->interface->log("x2");
-            fileEntry = tape->structure.readCurFile();
+            fileEntry = tape.structure.readCurFile();
             if (!fileEntry)
                 return true;
 
@@ -325,10 +331,10 @@ auto Traps::tapeFindHeader() -> void {
 
     uint8_t* buf = system->ram + addr;
 
-    TapeStructure::FileEntry* fileEntry = tape->structure.getCurFile();
+    TapeStructure::FileEntry* fileEntry = tape.structure.getCurFile();
 
     if (fileEntry) {
-        tape->setPosition( fileEntry->dataOffset, true );
+        tape.setPosition( fileEntry->dataOffset, true );
         // system->interface->log(fileEntry->startAddr,1,1);
         // system->interface->log(fileEntry->endAddr,1,1);
 
@@ -348,8 +354,8 @@ auto Traps::tapeFindHeader() -> void {
     system->memoryCpu.write(0x29f, 0);
     system->memoryCpu.write(0x2a0, 0);
 
-    cpu->regP &= ~1; // reset carry
-    cpu->flagZ = 0;
+    cpu.regP &= ~1; // reset carry
+    cpu.flagZ = 0;
 }
 
 auto Traps::tapeReceive() -> void {
@@ -357,8 +363,8 @@ auto Traps::tapeReceive() -> void {
     TapeStructure::FileEntry* fileEntry;
     uint8_t st = 0x40;
 
-    if (cpu->regX == 0x0e) {
-        fileEntry = tape->structure.readCurFile();
+    if (cpu.regX == 0x0e) {
+        fileEntry = tape.structure.readCurFile();
 
         if (fileEntry) {
             if (fileEntry->type == 1) {
@@ -388,7 +394,7 @@ auto Traps::tapeReceive() -> void {
             // game "Ah diddum" has one byte more as in header specified.
             std::memcpy( system->ram + start, fileEntry->buffer, _size );
 
-            tape->setPosition( fileEntry->endOffset, false );
+            tape.setPosition( fileEntry->endOffset, false );
 
         } else {
             st = 0x10;
@@ -397,8 +403,8 @@ auto Traps::tapeReceive() -> void {
 
     setSt(st);
 
-    cpu->regP &= ~1; // carry off
-    cpu->regP &= ~4; // int off
+    cpu.regP &= ~1; // carry off
+    cpu.regP &= ~4; // int off
 
     system->memoryCpu.write(0xc0, 0x01 ); // stop motor
 	

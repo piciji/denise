@@ -3,17 +3,41 @@
 
 #include <cstdint>
 #include <functional>
-#include "../../tools/serializer.h"
+
+namespace Emulator {
+    struct SystemTimer;
+    struct Serializer;
+}
+
+namespace CIA {
+    struct M6526;
+}
 
 namespace LIBC64 {
 
 #define CPU_WRITE_CYCLE 0x80000000
 #define CPU_RDY_CYCLE	0x40000000
 
+struct System;
+struct ExpansionPort;
+struct VicIIBase;
+struct IecBus;
+struct Traps;
+
 struct M6510 {
 	
-	M6510();
-	
+	M6510(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& cia1, CIA::M6526& cia2, IecBus& iecBus, Traps& traps);
+
+    System* system;
+    Emulator::SystemTimer& sysTimer;
+    CIA::M6526& cia1;
+    CIA::M6526& cia2;
+    IecBus& iecBus;
+    Traps& traps;
+
+    ExpansionPort* expansionPort;
+    VicIIBase* vicII;
+
 	bool rdyLine;
 	
 	bool irqPending;
@@ -107,7 +131,5 @@ struct M6510 {
 	
 	auto serialize(Emulator::Serializer& s) -> void;
 };
-
-extern M6510* cpu;
 
 }

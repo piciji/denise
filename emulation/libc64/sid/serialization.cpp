@@ -2,36 +2,6 @@
 #include "sid.h"
 
 namespace LIBC64 {
-
-auto Sid::searializeActiveSids(Emulator::Serializer& s, bool light) -> void {
-    
-	s.integer( sysClock );
-    s.integer( useVolumeCorrection );
-	s.integer( potX );
-    s.integer( potY );
-    
-    sid->serialize(s, light);    
-    
-    if (system->requestedSids && (s.mode() != Emulator::Serializer::Mode::Size) ) {
-        for (unsigned i = 0; i < system->requestedSids; i++)
-            sids[i]->serialize(s, light);
-    }
-     
-    uint8_t sampleLimitBefore = sampleLimit;   
-    
-    if (!light)
-        s.integer( sampleCounter );
-    
-    s.integer( sampleLimit );
-    s.integer( useExternalFilter );    
-    
-    if (!light && (s.mode() == Emulator::Serializer::Mode::Load) ) {
-        Sid::updateSidUsage();
-     
-        if (sampleLimitBefore != sampleLimit)
-            system->updateStats();
-    }
-}    
     
 auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     
@@ -162,7 +132,7 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( externalFilter.w0hp_1_s17 );
         
         if (s.mode() == Emulator::Serializer::Mode::Load) {
-            volumeCorrection();
+            volumeCorrection(sidManager.useVolumeCorrection);
         }
     }
     
