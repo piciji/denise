@@ -595,11 +595,15 @@ auto Cmd::setReuSize(std::string arg) -> void {
         return;
     }
 
+    auto emulator = program->getEmulator("C64");
+    auto settings = program->getSettings( emulator );
+    auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdReu ];
     std::vector<int> ids = {128, 256, 512, 1024, 2048, 4096, 8192, 16384};
 
     int pos = GUIKIT::Vector::findPos<int>(ids, reuSize);
 
-    updateModel(program->getEmulator("C64"), LIBC64::Interface::ModelIdReuRam, pos);
+    updateModel(emulator, LIBC64::Interface::ModelIdReuRam, pos);
+    settings->set<unsigned>( "expansion", expansion.id);
 }
 
 auto Cmd::setGeoRamSize(std::string arg) -> void {
@@ -614,11 +618,15 @@ auto Cmd::setGeoRamSize(std::string arg) -> void {
         return;
     }
 
+    auto emulator = program->getEmulator("C64");
+    auto settings = program->getSettings( emulator );
+    auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdGeoRam ];
     std::vector<int> ids = {64, 128, 256, 512, 1024, 2048, 4096};
 
     int pos = GUIKIT::Vector::findPos<int>(ids, geoRamSize);
 
-    updateModel(program->getEmulator("C64"), LIBC64::Interface::ModelIdGeoRam, pos);
+    updateModel(emulator, LIBC64::Interface::ModelIdGeoRam, pos);
+    settings->set<unsigned>( "expansion", expansion.id);
 }
 
 auto Cmd::setCustomConfig(std::string& ident, std::string path) -> void {
