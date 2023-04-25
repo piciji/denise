@@ -28,8 +28,8 @@ ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
 endif
 objects += systemAmi agnusAmi inputAmi controlPortAmi keyboardAmi blitter copper denise paula diskDriveAmi diskStructureAmi sectorBlockAmi filesystemAmi rtcAmi
-objects += m6510 ciaBase cia6526 ciaNew vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 tapeStructureC64 inputC64 controlPortC64 acia
-objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64 fastloaderC64
+objects += m6510 ciaBase cia6526 ciaNew vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 tapeStructureC64 inputC64 controlPortC64 acia gluelogic
+objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64 fastloaderC64 keyBufferC64 sidManager
 objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64 virtualDrive64 wd1770
 objects += m93c86 mx29lv640eb icons logos fonts socket fpaq0
 
@@ -158,8 +158,10 @@ obj/vicIIBase.o:emulation/libc64/vicII/base.cpp
 obj/vicIICycle.o:emulation/libc64/vicII/vicII.cpp
 obj/vicIIFast.o:emulation/libc64/vicII/fast/vicIIFast.cpp
 obj/systemC64.o:emulation/libc64/system/system.cpp
+obj/gluelogic.o:emulation/libc64/system/gluelogic.cpp
 obj/firmwareC64.o:emulation/libc64/system/firmware.cpp
 obj/cartC64.o:	emulation/libc64/expansionPort/cart/cart.cpp
+obj/keyBufferC64.o: emulation/libc64/system/keyBuffer.cpp
 obj/gameCartC64.o: emulation/libc64/expansionPort/gameCart/gameCart.cpp
 obj/freezerC64.o: emulation/libc64/expansionPort/freezer/freezer.cpp
 obj/reuC64.o:	emulation/libc64/expansionPort/reu/reu.cpp
@@ -171,6 +173,7 @@ obj/gmod2C64.o: emulation/libc64/expansionPort/gmod/gmod2.cpp
 obj/fastloaderC64.o: emulation/libc64/expansionPort/fastloader/fastloader.cpp
 obj/clipboardC64.o: emulation/libc64/system/clipboard.cpp
 obj/sid.o: emulation/libc64/sid/sid.cpp
+obj/sidManager.o: emulation/libc64/system/sidManager.cpp
 obj/chamberlin.o: emulation/libc64/sid/filter/chamberlin.cpp
 	$(compiler) $(cppflags) $(flags) -ffast-math -fno-exceptions  $1 -c $< -o $@
 obj/tapeC64.o:	emulation/libc64/tape/tape.cpp

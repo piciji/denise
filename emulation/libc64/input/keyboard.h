@@ -1,15 +1,17 @@
 
 #pragma once
 
-#include "../system/system.h"
+namespace Emulator {
+    struct Serializer;
+}
 
 namespace LIBC64 {
-	
-struct System;	
-	
+
 struct Keyboard {
-	
-    Interface::Device* device = nullptr;  
+	Keyboard(Emulator::Interface* interface) : interface(interface) {}
+
+    Emulator::Interface* interface;
+    Emulator::Interface::Device* device = nullptr;
         
 	bool shiftLockPressed = false;
 	bool shiftLock = false;
@@ -23,7 +25,7 @@ struct Keyboard {
     uint8_t rows[8];
     bool suppressPoll;
 	    
-    auto setDevice( Interface::Device* device ) -> void {       
+    auto setDevice( Emulator::Interface::Device* device ) -> void {
         
         if (!device->isKeyboard())
             return;
@@ -47,7 +49,7 @@ struct Keyboard {
         
         for( unsigned col = 0; col < 8; col++ ) {
             for( unsigned row = 0; row < 8; row++ ) {
-                state = system->interface->inputPoll( device->id, id[row][col] ) & 1;
+                state = interface->inputPoll( device->id, id[row][col] ) & 1;
                 
                 if (state) {                    
                     rows[row] |= 1 << col;
@@ -62,7 +64,7 @@ struct Keyboard {
         
         bool shiftLockPressedBefore = shiftLockPressed;
 		
-		shiftLockPressed = system->interface->inputPoll( device->id, 64 );
+		shiftLockPressed = interface->inputPoll( device->id, 64 );
 		
 		if (shiftLockPressed && !shiftLockPressedBefore)
 			shiftLock ^= 1;
@@ -128,7 +130,7 @@ struct Keyboard {
 	
 	auto restore() -> bool {
 		
-		return system->interface->inputPoll( device->id, 65 ) & 1;
+		return interface->inputPoll( device->id, 65 ) & 1;
 	}
     
     auto serialize( Emulator::Serializer& s ) -> void {

@@ -3,7 +3,7 @@
 
 namespace LIBC64 {
     
-auto Sid::clone( uint8_t start, uint8_t end ) -> void {
+auto SidManager::clone( uint8_t start, uint8_t end ) -> void {
     
     if (start >= end)
         return;

@@ -9,7 +9,7 @@ namespace LIBC64 {
         bool useRam = false;
         uint8_t bank = 0;
 
-        Pagefox() : GameCart(true, true) {
+        Pagefox(System* system) : GameCart(system, true, true) {
             ram = new uint8_t[ 32 * 1024 ];
         }
 

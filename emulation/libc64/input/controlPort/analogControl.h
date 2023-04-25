@@ -7,15 +7,15 @@ namespace LIBC64 {
     
 struct AnalogControl : ControlPort {
     
-    AnalogControl( Interface::Device* device ) : ControlPort( device ) {}    
+    AnalogControl( System* system, Interface::Device* device ) : ControlPort( system, device ) {}
     
     int16_t posX;
     int16_t posY;
     
     virtual auto poll( ) -> void {
     // driver reported deltas will be added one time after each single global input polling in vsync
-        posX += system->interface->inputPoll( device->id, 0);
-        posY -= system->interface->inputPoll( device->id, 1);
+        posX += interface->inputPoll( device->id, 0);
+        posY -= interface->inputPoll( device->id, 1);
     }   
     
     virtual auto reset() -> void {

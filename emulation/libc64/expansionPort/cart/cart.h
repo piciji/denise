@@ -8,7 +8,7 @@ namespace LIBC64 {
 
 struct Cart : ExpansionPort {
     
-    Cart(bool game = true, bool exrom = false);
+    Cart(System* system, bool game = true, bool exrom = false);
         
     uint16_t version;
     uint8_t cartName[32];

@@ -4,16 +4,21 @@
 #include "../expansionPort/expansionPort.h"
 #include "../disk/iec.h"
 #include "../traps/traps.h"
+#include "../../tools/serializer.h"
 
 #define FALL_OFF_CYCLES 350000
 
 namespace LIBC64 {	
-	
-M6510* cpu = nullptr;	
-	
+
 #include "opcodes.cpp"	
 	
-M6510::M6510() {
+M6510::M6510(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& cia1, CIA::M6526& cia2, IecBus& iecBus, Traps& traps) :
+system(system),
+sysTimer(sysTimer),
+cia1(cia1),
+cia2(cia2),
+iecBus(iecBus),
+traps(traps) {
 	
 	unChargeBit6 = [this]() { bit6charge = 0; };
 	unChargeBit7 = [this]() { bit7charge = 0; };
@@ -187,12 +192,12 @@ auto M6510::busWatch() -> uint8_t {
 
 #define SYNC	\
 	sysTimer.process();	\
-	cia1->clock();	\
+	cia1.clock();	\
 	vicII->clock();	\
-	cia2->clock();	\
+	cia2.clock();	\
 	expansionPort->clock(); \
     if (system->secondDriveCable.cycleSyncing) \
-	    iecBus->syncDrivesEachCycle();
+	    iecBus.syncDrivesEachCycle();
 
 template<bool setI> auto M6510::busAccessUpdateFlagI( uint16_t addr ) -> void { 
 		
@@ -265,9 +270,8 @@ auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
 	SYNC
 	
     // places write on bus for $00 and $01 too.
-	// but for these two addresses
-    // it seems only the address is selected on bus in write mode but not the data.
-    // so the write happens with last data on external bus.
+	// but for these two addresses it seems only the address is selected on BUS in write mode but not the data.
+    // so the write happens with last data on external BUS.
     // it's always VIC data, readed in first half cycle.
     
 	if (addr == 0x0000) {						
@@ -338,4 +342,3 @@ auto M6510::serialize(Emulator::Serializer& s) -> void {
 }
 
 }
-

@@ -5,7 +5,7 @@ namespace LIBC64 {
 
     struct FinalCartridge : Freezer {
 
-        FinalCartridge() : Freezer(true, true) {
+        FinalCartridge(System* system) : Freezer(system, true, true) {
 
         }
 

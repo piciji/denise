@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct Zaxxon : GameCart {
 
-    Zaxxon() : GameCart(false, false) {
+    Zaxxon(System* system) : GameCart(system, false, false) {
         
     }
 

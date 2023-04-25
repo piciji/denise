@@ -10,7 +10,7 @@ struct FinalCartridgePlus : Freezer {
     bool bitCell;
     bool enable;
 
-    FinalCartridgePlus() : Freezer(true, true) {
+    FinalCartridgePlus(System* system) : Freezer(system, true, true) {
 
     }
 
@@ -50,8 +50,8 @@ struct FinalCartridgePlus : Freezer {
         // cartridge ultimax is enabled only in read mode for following address spaces (if enabled).
         // cartridge listen on BA line to find out if VIC has the BUS. if so, ultimax is inactive also.
         // todo: frequent remapping is slow.
-        uint16_t _addr = cpu->addressBus();
-        bool _write = cpu->isWriteCycle();
+        uint16_t _addr = system->cpu.addressBus();
+        bool _write = system->cpu.isWriteCycle();
 
         if (_write)
             return system->changeExpansionPortMemoryMode( exRom = true, game = true, true );

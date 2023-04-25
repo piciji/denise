@@ -1,5 +1,6 @@
 
 #include "tape.h"
+#include "../../tools/serializer.h"
 
 namespace LIBC64 {
     

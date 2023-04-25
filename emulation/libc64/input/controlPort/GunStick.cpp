@@ -8,7 +8,7 @@ struct GunStick : LightControl {
 	uint8_t* linePtr = nullptr;
 	unsigned vLatch = 0;
 	
-    GunStick( Interface::Device* device ) : LightControl( device ) {        
+    GunStick( System* system, Interface::Device* device ) : LightControl( system, device ) {
         
         xOffset = 16;
         
@@ -61,7 +61,7 @@ struct GunStick : LightControl {
         
         uint8_t color = 3;
         
-        if ( this == system->input->controlPort2 )
+        if ( this == system->input.controlPort2 )
             color = 4;
 		
 		LightControl::draw( color, midScreen );

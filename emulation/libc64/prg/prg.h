@@ -2,13 +2,19 @@
 #pragma once
 
 #include "../../tools/listing.h"
-#include "../../tools/serializer.h"
 #include "../interface.h"
+
+namespace Emulator {
+    struct Serializer;
+}
 
 namespace LIBC64 {		
 
 struct Prg {
+    Prg(System* system);
     ~Prg();
+
+    System* system;
     Emulator::Interface::Media* media = nullptr;
     
 	// loaded file
@@ -37,7 +43,7 @@ struct Prg {
 	auto set( uint8_t* data, unsigned size ) -> void;    
     auto serialize(Emulator::Serializer& s) -> void;
 	auto inject( ) -> void;	
-	static auto getMemory(unsigned& prgSize) -> uint8_t*;
+	static auto getMemory(unsigned& prgSize, uint8_t* ram) -> uint8_t*;
 	auto createListing() -> void;	
 	auto getListing() -> std::vector<Emulator::Interface::Listing>;	
 	auto prepareT64( ) -> void;	
@@ -49,9 +55,6 @@ struct Prg {
 	auto saneSize() -> void;		
 	auto find( std::vector<uint8_t> match, unsigned offset = 0 ) -> bool;
 	auto buildLoadCommand( std::vector<uint8_t> loadPath ) -> std::vector<uint8_t>;
-    
-    static auto getInstance(Emulator::Interface::Media* media) -> Prg*;
 };
 
-extern std::vector<Prg*> prgs;
-} 
+}

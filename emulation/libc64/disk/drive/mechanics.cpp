@@ -68,12 +68,12 @@ auto Drive::rotateD64() -> void {
             if (++ue3Counter == 8)
                 byteFetched( false );
             else if (!ca1Line)
-                via2->ca1In( ca1Line = true );
+                via2.ca1In( ca1Line = true );
 
         } else {
             ue3Counter = 0; //reset when sync mark detected
             if (!ca1Line)
-                via2->ca1In( ca1Line = true );
+                via2.ca1In( ca1Line = true );
         }
         
     } else {
@@ -92,12 +92,12 @@ auto Drive::rotateD64() -> void {
             writeBuffer = writeValue; // fetch next byte to buffer
 
             if ( byteReadyOverflow ) {
-                cpu->triggerSO();
+                cpu.triggerSO();
                 byteReady = true;
-                via2->ca1In( ca1Line = false );
+                via2.ca1In( ca1Line = false );
             }
         } else if (!ca1Line)
-            via2->ca1In( ca1Line = true );
+            via2.ca1In( ca1Line = true );
     }
 }
 
@@ -108,9 +108,9 @@ auto Drive::byteFetched( bool overflowNotThisCycle ) -> void {
 
     if (byteReadyOverflow) {
         // edge transition
-        cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
+        cpu.triggerSO(overflowNotThisCycle ? 2 : 1);
         byteReady = true;
-        via2->ca1In(ca1Line = false, overflowNotThisCycle);
+        via2.ca1In(ca1Line = false, overflowNotThisCycle);
     }
 }
 
@@ -331,7 +331,7 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
                 pulseDelta = (CyclesPerRevolution300Rpm - position) + gcrTrack->pulses[pulseIndex].position;
         }
 
-        wd1770->setPulseIndex(pulseIndex, pulseDelta);
+        wd1770.setPulseIndex(pulseIndex, pulseDelta);
 
     } else {    // D64, G64
         unsigned oldTrackSize = gcrTrack->size;
@@ -354,9 +354,9 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
     if ( (type == Type::D1570) && (side == 1) ) {
         gcrTrack = dummyTrack;
-        wd1770->setTrack( dummyTrack, true );
+        wd1770.setTrack( dummyTrack, true );
     } else
-        wd1770->setTrack(gcrTrack);
+        wd1770.setTrack(gcrTrack);
 
     updateDeviceState( );
 

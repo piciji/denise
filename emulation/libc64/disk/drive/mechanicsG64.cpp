@@ -136,7 +136,7 @@ namespace LIBC64 {
                             ue3Counter++;
 
                         if (!ca1Line)
-                            via2->ca1In( ca1Line = true );
+                            via2.ca1In( ca1Line = true );
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
@@ -212,7 +212,7 @@ namespace LIBC64 {
                         ue3Counter++;
 
                         if (!ca1Line)
-                            via2->ca1In( ca1Line = true );
+                            via2.ca1In( ca1Line = true );
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
@@ -221,9 +221,9 @@ namespace LIBC64 {
                         writeBuffer = writeValue;
                         bool overflowNotThisCycle = OVERFLOW_NOT_THIS_CYCLE;
                         if (byteReadyOverflow) {
-                            cpu->triggerSO(overflowNotThisCycle ? 2 : 1);
+                            cpu.triggerSO(overflowNotThisCycle ? 2 : 1);
                             byteReady = true;
-                            via2->ca1In(ca1Line = false, overflowNotThisCycle);
+                            via2.ca1In(ca1Line = false, overflowNotThisCycle);
                         }
                     }
                 }

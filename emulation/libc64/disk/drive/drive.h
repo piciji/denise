@@ -10,7 +10,6 @@
 #include "../via/via.h"
 
 #include "../structure/structure.h"
-#include "../../system/system.h"
 #include "../cpu/m6502.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
@@ -32,10 +31,12 @@
 namespace LIBC64 {
 
 typedef Emulator::Interface::DriveSound DriveSound;
+struct System;
+struct IecBus;
 
 struct Drive {
         
-    Drive( uint8_t number, Emulator::Interface::Media* mediaConnected );
+    Drive( uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* mediaConnected );
     ~Drive();
 
     enum class Type { D1541, D1541II, D1541C, D1570, D1571 } type;
@@ -44,7 +45,9 @@ struct Drive {
 
     unsigned rotSpeedBps[4] = { 250000, 266667, 285714, 307692 };
     const unsigned DISC_DELAY = 600000;
-    
+
+    System* system;
+    IecBus& iecBus;
     uint8_t number;
     uint8_t* rom = nullptr;
     uint16_t romMask;
@@ -81,13 +84,13 @@ struct Drive {
         unsigned pos;
     } motorOff;
         
-    Via* via1;
-    Via* via2;
-    Cia<MOS_8520>* cia;
-    Cia<MOS_8520>* ciaSpeeder;
-    WD1770* wd1770;
-    Emulator::Pia* pia;
-    M6502* cpu;
+    Via via1;
+    Via via2;
+    Cia<MOS_8520> cia;
+    Cia<MOS_8520> ciaSpeeder;
+    WD1770 wd1770;
+    Emulator::Pia pia;
+    M6502 cpu;
     DiskStructure structure;
     int64_t cycleCounter;
     bool synced;

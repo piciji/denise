@@ -5,7 +5,7 @@ namespace LIBC64 {
 
     struct AtomicPower : Freezer {
 
-        AtomicPower() : Freezer(true, false) {
+        AtomicPower(System* system) : Freezer(system, true, false) {
 
             ram = new uint8_t[ 8 * 1024 ];
         }

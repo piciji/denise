@@ -23,10 +23,10 @@ auto System::calcSerializationSize() -> void {
 
 auto System::serialize(unsigned& size) -> uint8_t* {   
     
-    if (keyBuffer->isPrgInjectionInQueue() || traps->installed)
+    if (keyBuffer->isPrgInjectionInQueue() || traps.installed)
         return nullptr;
 
-    iecBus->updateSerializationSize();
+    iecBus.updateSerializationSize();
     
     Emulator::Serializer s( serializationSize );
     
@@ -112,24 +112,24 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
 	uint8_t _vicModel = vicII->getModel();
 	s.integer( _vicModel );
 	
-    bool useCycleRenderer = vicII == vicIICycle;
+    bool useCycleRenderer = vicII == &vicIICycle;
     s.integer(useCycleRenderer);
 
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         setCycleRenderer( useCycleRenderer );    
 		
 		if (_vicModel != vicII->getModel())
-			system->interface->setModelValue( LIBC64::Interface::ModelIdVicIIModel, _vicModel );
+			interface->setModelValue( LIBC64::Interface::ModelIdVicIIModel, _vicModel );
 	}
     
     serialize( s );
-    cia1->serialize( s );
-    cia2->serialize( s );
+    cia1.serialize( s );
+    cia2.serialize( s );
     vicII->serialize( s );
-    Sid::searializeActiveSids( s );
-    tape->serialize( s ); 
-    iecBus->serialize( s );
-    input->serialize( s );
+    sidManager.searializeActiveSids( s );
+    tape.serialize( s );
+    iecBus.serialize( s );
+    input.serialize( s );
     serializeExpansion( s );
     
     sysTimer.serialize( s );        
@@ -176,9 +176,9 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( observer.inputLock );
     keyBuffer->serialize( s );    
     prgInUse->serialize( s );
-    glueLogic->serialize( s );
+    glueLogic.serialize( s );
     powerSupply->serialize( s );    
-    cpu->serialize( s );
+    cpu.serialize( s );
 }
 
 // for runahead
@@ -190,13 +190,13 @@ auto System::serializeLight() -> void {
     s.setMode( Emulator::Serializer::Mode::Save );
     
     serialize(s);
-    cia1->serialize(s);
-    cia2->serialize(s);
+    cia1.serialize(s);
+    cia2.serialize(s);
     vicII->serialize(s);
-	Sid::searializeActiveSids( s, runAhead.frames > 1 );
-    tape->serialize(s, true);
-    iecBus->serializeLight(s);
-    input->serialize(s);
+    sidManager.searializeActiveSids( s, runAhead.frames > 1 );
+    tape.serialize(s, true);
+    iecBus.serializeLight(s);
+    input.serialize(s);
     expansionPort->serialize( s );
 
     sysTimer.serialize(s);
@@ -210,13 +210,13 @@ auto System::unserializeLight() -> void {
     uint8_t _mode = mode;
     
     serialize(s);
-    cia1->serialize(s);
-    cia2->serialize(s);
+    cia1.serialize(s);
+    cia2.serialize(s);
     vicII->serialize(s);
-    Sid::searializeActiveSids( s, runAhead.frames > 1 );
-    tape->serialize(s, true);
-    iecBus->serializeLight(s);
-    input->serialize(s);
+    sidManager.searializeActiveSids( s, runAhead.frames > 1 );
+    tape.serialize(s, true);
+    iecBus.serializeLight(s);
+    input.serialize(s);
     expansionPort->serialize( s );
 
     sysTimer.serialize(s);         

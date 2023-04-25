@@ -7,11 +7,9 @@
 
 namespace LIBC64 { 
 
-VicIIBase* vicII = nullptr;  	
-	
 uint8_t* VicIIBase::frameBuffer = new uint8_t[VIC_MAX_LINE_LENGTH * 294];
 
-VicIIBase::VicIIBase() {
+VicIIBase::VicIIBase(System* system) : system(system), cpu(system->cpu) {
 	
     sprite0 = &sprite[0];
     sprite1 = &sprite[1];

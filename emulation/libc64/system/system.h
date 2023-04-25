@@ -4,13 +4,20 @@
 #include <functional>
 #include "../../tools/macros.h"
 #include "../interface.h"
+#include "../input/input.h"
 #include "../m6510/m6510.h"
 #include "../../cia/m6526.h"
 #include "../vicII/vicII.h"
+#include "../vicII/fast/vicIIFast.h"
+#include "../tape/tape.h"
+#include "../disk/iec.h"
 #include "memory.h"
 #include "../../tools/systimer.h"
 #include "../../tools/crop.h"
 #include "../../tools/circularBuffer.h"
+#include "gluelogic.h"
+#include "sidManager.h"
+#include "../traps/traps.h"
 
 namespace Emulator {
     struct PowerSupply;
@@ -20,11 +27,24 @@ namespace Emulator {
 namespace LIBC64 {
 
 struct Prg;
-struct Input;    
-struct KeyBuffer;	
-struct GlueLogic;
+struct KeyBuffer;
 struct ExpansionPort;
 struct DebugCart;
+struct VicIIBase;
+struct Sid;
+struct Acia;
+struct EasyFlash3;
+struct EasyFlash;
+struct Fastloader;
+struct Freezer;
+struct GameCart;
+struct GeoRam;
+struct Gmod2;
+struct RetroReplay;
+struct Reu;
+struct M6510;
+struct IecBus;
+struct Prg;
 
 struct System {   
     
@@ -85,9 +105,36 @@ struct System {
     Prg* prgInUse = nullptr;
     
 	Emulator::PowerSupply* powerSupply;
-    Input* input;
+    Input input;
     KeyBuffer* keyBuffer;
-    GlueLogic* glueLogic;    
+    GlueLogic glueLogic;
+    Emulator::SystemTimer sysTimer;
+    CIA::M6526 cia1;
+    CIA::M6526 cia2;
+    ExpansionPort* expansionPort;
+
+    Acia* acia;
+    EasyFlash3* easyFlash3;
+    EasyFlash* easyFlash;
+    Fastloader* fastloader;
+    Freezer* freezer;
+    GameCart* gameCart;
+    GeoRam* geoRam;
+    Gmod2* gmod2;
+    RetroReplay* retroReplay;
+    Reu* reu;
+
+    M6510 cpu;
+    VicIIBase* vicII;
+    VicIICycle vicIICycle;
+    VicIIFast vicIIFast;
+
+    SidManager sidManager;
+
+    Traps traps;
+    Tape tape;
+    IecBus iecBus;
+    std::vector<Prg*> prgs;
 	
 	Callback countDownPowerSupply;
 	
@@ -205,7 +252,7 @@ struct System {
     auto serializeDiskIdle(Emulator::Serializer& s) -> void;
     auto serializeExpansion(Emulator::Serializer& s) -> void;
     
-    auto setExpansion( Emulator::Interface::Expansion& expansion ) -> void;
+    auto setExpansion( Interface::ExpansionId id ) -> void;
     
     auto createExpansions() -> void;
     auto destroyExpansions() -> void;
@@ -219,7 +266,7 @@ struct System {
     auto updateDriveSounds() -> void;
     auto setTapeLoadingNoise(unsigned volume) -> void;
     
-    auto setCycleRenderer(bool state) -> void;
+    auto setCycleRenderer(bool state = true) -> void;
 	auto updateStats() -> void;
     auto updateStatsStereo() -> void;
 	
@@ -252,17 +299,14 @@ struct System {
 
     auto tapeNoiseEnabled() -> bool { return tapeNoise.enabled && !runAhead.pos; }
     auto tapeNoiseSetSample( unsigned duration ) -> void;
-    auto setAudioRefresh() -> void;
+    auto audioRefresh(int16_t sample) -> void;
+    auto audioRefreshStereo(int16_t sampleL, int16_t sampleR) -> void;
+
     auto autoStartFinish(bool soft) -> void;
     auto jam(Emulator::Interface::Media* media = nullptr) -> void;
     auto displayFrame() -> const bool { return !runAhead.pos; }
 	auto processFrame() -> const bool { return !runAhead.active || (runAhead.frames == runAhead.pos); }
+    auto getPrgInstance(Emulator::Interface::Media* media) -> Prg*;
 };
-
-extern System* system;
-extern ExpansionPort* expansionPort;
-extern CIA::M6526* cia1;
-extern CIA::M6526* cia2; 
-extern Emulator::SystemTimer sysTimer;
 
 }

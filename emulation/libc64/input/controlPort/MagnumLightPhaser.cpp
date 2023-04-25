@@ -5,7 +5,7 @@ namespace LIBC64 {
     
 struct MagnumLightPhaser : LightControl {
     
-    MagnumLightPhaser( Interface::Device* device ) : LightControl( device ) {        
+    MagnumLightPhaser( System* system, Interface::Device* device ) : LightControl( system, device ) {
         
         xOffset = 25;
         

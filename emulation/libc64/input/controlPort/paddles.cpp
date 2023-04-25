@@ -10,7 +10,7 @@ struct Paddles : AnalogControl {
     int16_t paddleX;
     int16_t paddleY;
         
-    Paddles( Interface::Device* device ) : AnalogControl( device ) {}
+    Paddles( System* system, Interface::Device* device ) : AnalogControl( system, device ) {}
     
     auto read( ) -> uint8_t { 
         

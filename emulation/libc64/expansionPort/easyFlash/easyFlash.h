@@ -8,12 +8,12 @@ namespace LIBC64 {
     
 struct EasyFlash : Cart {   
     
-    EasyFlash();
+    EasyFlash(System* system);
     ~EasyFlash();
     
     Emulator::Flash040 flashLo;
     Emulator::Flash040 flashHi;
-    
+
     uint8_t* dataLo;
     uint8_t* dataHi;
     uint8_t bank;
@@ -70,5 +70,4 @@ struct EasyFlash : Cart {
 	auto protectFromDeletion() -> bool { return true; }
 };
 
-extern EasyFlash* easyFlash;
 }

@@ -10,7 +10,7 @@ namespace LIBC64 {
 
 struct Acia : ExpansionPort {
 
-    Acia();
+    Acia(System* system);
     ~Acia();
 
     enum Status : uint8_t {  ParityError = 1, FramingError = 2, OverrunError = 4, ReceiveDataFull = 8,
@@ -19,6 +19,7 @@ struct Acia : ExpansionPort {
     std::function<void ()> receiver;
     std::function<void ()> transmitter;
 
+    Emulator::SystemTimer& sysTimer;
     std::string address;
     std::string port;
 
@@ -100,7 +101,5 @@ struct Acia : ExpansionPort {
     static const double bpsLookup[16];
     static const double t232BpsLookup[4];
 };
-
-extern Acia* acia;
 
 }

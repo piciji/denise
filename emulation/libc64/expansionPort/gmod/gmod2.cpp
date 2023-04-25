@@ -3,11 +3,8 @@
 #include <algorithm>
 
 namespace LIBC64 {
-	
-Gmod2* gmod2 = nullptr;  
 
-
-Gmod2::Gmod2() : GameCart(true, false), flash(Emulator::Flash040::TypeNormal) {
+Gmod2::Gmod2(System* system) : GameCart(system, true, false), flash(Emulator::Flash040::TypeNormal) {
     init();
 }
 
@@ -21,17 +18,17 @@ auto Gmod2::init() -> void {
 	eepromData = new uint8_t[ 2 * 1024 ];
 
     flash.setData( flashData );
-    flash.setEvents( &sysTimer );
+    flash.setEvents( &system->sysTimer );
 
-    flash.written = []() {
+    flash.written = [this]() {
         system->serializationSize += 512 * 1024;
     };
 
     eeprom.setData( eepromData );
-    eeprom.setEvents( &sysTimer );
+    eeprom.setEvents( &system->sysTimer );
     eeprom.orgSelect( true );
 
-    eeprom.written = []() {
+    eeprom.written = [this]() {
         system->serializationSize += 2 * 1024;
     };
 	
@@ -172,8 +169,8 @@ auto Gmod2::writeIo1( uint16_t addr, uint8_t value ) -> void {
 auto Gmod2::clock() -> void {
 
     if (writeEnable) {
-        uint16_t _addr = cpu->addressBus();
-        bool _write = cpu->isWriteCycle();
+        uint16_t _addr = system->cpu.addressBus();
+        bool _write = system->cpu.isWriteCycle();
 
         if ( _write && (_addr >= 0x8000) ) {// ultimax
             system->changeExpansionPortMemoryMode(true, false);

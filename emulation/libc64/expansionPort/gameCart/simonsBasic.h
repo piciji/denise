@@ -5,7 +5,7 @@ namespace LIBC64 {
 
     struct SimonsBasic : GameCart {
 
-        SimonsBasic() : GameCart(true, false) {
+        SimonsBasic(System* system) : GameCart(system, true, false) {
 
         }
 

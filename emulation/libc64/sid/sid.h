@@ -33,9 +33,15 @@
 #include "../../tools/splines.h"
 #include "../../tools/clamp.h"
 #include "../../tools/serializer.h"
-#include "../system/system.h"
+
+namespace Emulator {
+    struct SystemTimer;
+}
 
 namespace LIBC64 {
+
+struct System;
+struct SidManager;
 
 typedef double doublePoint[2];
 
@@ -43,19 +49,13 @@ struct Sid {
     
     enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;    
     enum FilterType { Standard = 0, VICE24 = 1, Chamberlin = 2 } filterType;
-    using Callback = std::function<void ()>;
-    static std::function<void ( int16_t )> audioRefresh;
-    static std::function<void ( int16_t, int16_t )> audioRefreshStereo;
-    static std::function<uint8_t ()> getPotX;
-    static std::function<uint8_t ()> getPotY;	
-    
-    Sid( Type type );
-           
+    Sid( System* system, SidManager& sidManager, Type type);
+
+    static std::vector<std::string> adrOptions;
+
     auto setType( Type type ) -> void;    
     auto setDigiBoost( bool state ) -> void;
-    static auto setDigiBoostAll( bool state ) -> void;
     auto setFilterType( FilterType filterType ) -> void;
-    static auto setFilterTypeAll( FilterType filterType ) -> void;
     auto updateDigiBoost( bool state ) -> void;
     auto readIO( uint8_t addr ) -> uint8_t;
     auto writeIO( uint8_t addr, uint8_t value ) -> void;
@@ -64,58 +64,27 @@ struct Sid {
     auto applyFilterWrite() -> void;
     auto reset() -> void;
 	auto powerOff() -> void;
-    auto clock() -> void;
+    template<int options> auto clock(int cycles, int sampleCounter, int sampleLimit) -> int;
+    template<int options> auto clock() -> void;
 	auto setMoreAccuracy(bool state) -> void;
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
     auto updateIdleState() -> void;    
     auto setIoMask(uint8_t pos) -> void;
     auto useLeftChannel(bool state) -> void;
     auto useRightChannel(bool state) -> void;
-    auto withoutExternalFilter() -> void;
-    auto volumeCorrection() -> void;
-    static auto disableAudioOut(bool state) -> void;
-    static auto setEnableFilterAll( bool state ) -> void;
-    static auto adjustFilterBias6581All(int value) -> void;
-    static auto adjustFilterBias8580All(int value) -> void;
-    static auto setTypeAll( Type type ) -> void;
-    static auto resetAll() -> void;
-    static auto updateChamberlinFrequencyAll(double sampleRate) -> void;
-    static auto isStereo() -> bool;
-    static auto calcSerializationSizeForSevenMoreSids() -> void;
-    static auto searializeActiveSids(Emulator::Serializer& s, bool light = false) -> void;
-    static auto setFilterVolumeCorrection( bool state ) -> void;
-    static auto updateClock() -> void;
-	static auto registerGlobalCallbacks() -> void;
-    static auto clone( uint8_t start, uint8_t end ) -> void;
-    
-    static unsigned sysClock;
-    static bool audioOut;
-    static bool extraSids;
-    static double leftSids;
-    static double rightSids;
-    static uint8_t sampleCounter;
-    static uint8_t sampleLimit;
-    static std::vector<Sid*> useSids;
-    static std::vector<std::string> adrOptions;
-    static bool useExternalFilter;
-    static unsigned serializationSizeForSevenMoreSids;
-    static bool useVolumeCorrection;
-    
-    double curSample;
+    auto volumeCorrection(bool state) -> void;
+
+    System* system;
+    SidManager& sidManager;
+    Emulator::SystemTimer& sysTimer;
+
     bool leftChannel = true;
     bool rightChannel = true;
     uint16_t ioMask;    
     uint8_t ioPos;    
     float correction = 1.0;
-    
-    static auto getSidByAdr(uint16_t addr, bool ioArea = false) -> Sid*;
-    static auto writeSid(uint16_t addr, uint8_t value) -> void;
-    static auto writeSidIO(uint16_t addr, uint8_t value) -> void;
-    static auto clockMultiChips() -> void;
-    static auto updateSidUsage() -> void;
-    static auto setResampleQuality( uint8_t val ) -> void;
-    static auto getResampleQuality( ) -> uint8_t;
-    
+
+    double curSample;
     uint8_t lastBusValue;
     unsigned databusDecay;
     unsigned databusDecayTime;
@@ -132,12 +101,6 @@ struct Sid {
     
 	//std::atomic<bool> ready;
 	//std::atomic<bool> idle;
-    
-    static Callback callAlarm;    
-    static Callback callPotUpdate;
-	
-    static uint8_t potX;
-    static uint8_t potY;
 		
 	int v1;
 	int v2;
@@ -452,6 +415,4 @@ struct Sid {
     } externalFilter;
 };
 
-extern Sid* sid;
-extern Sid* sids[7];
 }

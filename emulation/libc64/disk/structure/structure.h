@@ -17,11 +17,12 @@ namespace LIBC64 {
 #define MAX_TRACKS_1541 42
 
 struct VirtualDrive;
+struct System;
 struct Drive;
 
 struct DiskStructure {
     
-    DiskStructure(Drive* drive = nullptr);
+    DiskStructure(System* system, Drive* drive = nullptr);
     ~DiskStructure();
 
     static const unsigned MAX_TRACKS;    // 42, that's the maximum some drives can access
@@ -32,6 +33,8 @@ struct DiskStructure {
     static const uint8_t GAPS_IN_SPEEDZONE[4];
     
     enum class Type { D64, G64, P64, D71, G71, P71, Unknown = -1 } type;
+
+    System* system;
 	uint8_t number;
 	Emulator::Interface::Media* media = nullptr;
 	bool autoStarted = false;

@@ -26,15 +26,15 @@ auto System::serializeExpansion(Emulator::Serializer& s) -> void {
         
         auto expansion = interface->getExpansionById( expansionPortId );
 
-        setExpansion( expansion ? *expansion : interface->expansions[0] );
+        setExpansion( expansion ? (Interface::ExpansionId)expansion->id : Interface::ExpansionIdNone );
     }
     
     expansionPort->serialize( s );
 }
     
-auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
+auto System::setExpansion( Interface::ExpansionId id ) -> void {
     
-    switch(expansion.id) {
+    switch(id) {
         default:
         case Interface::ExpansionIdNone:
             expansionPort = noExpansion;
@@ -82,24 +82,28 @@ auto System::setExpansion( Emulator::Interface::Expansion& expansion ) -> void {
             expansionPort = fastloader;
             break;
     }
-    
+
+    cpu.expansionPort = expansionPort;
+    vicIICycle.expansionPort = expansionPort;
+    vicIIFast.expansionPort = expansionPort;
+    expansionPort->vicII = vicII;
 }  
     
 auto System::createExpansions() -> void {
     
-    reu = new Reu;
-    gameCart = new GameCart;
-    freezer = new Freezer;
-    easyFlash = new EasyFlash;
-    easyFlash3 = new EasyFlash3;
-    retroReplay = new RetroReplay;
-	gmod2 = new Gmod2;
-	geoRam = new GeoRam;
-	acia = new Acia;
-	fastloader = new Fastloader;
-    noExpansion = new ExpansionPort;
-    
-    expansionPort = noExpansion;
+    reu = new Reu(this);
+    gameCart = new GameCart(this);
+    freezer = new Freezer(this);
+    easyFlash = new EasyFlash(this);
+    easyFlash3 = new EasyFlash3(this);
+    retroReplay = new RetroReplay(this);
+	gmod2 = new Gmod2(this);
+	geoRam = new GeoRam(this);
+	acia = new Acia(this);
+	fastloader = new Fastloader(this);
+    noExpansion = new ExpansionPort(this);
+
+    setExpansion(Interface::ExpansionIdNone);
     
     setExpansionCallbacks( reu );
     setExpansionCallbacks( freezer );
@@ -127,7 +131,7 @@ auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) 
     if (suffix == "reu")
         return &interface->expansions[Interface::ExpansionIdReu];
     
-    auto cart = new Cart;
+    auto cart = new Cart(this);
     cart->rom = data;
     cart->romSize = size;
     Emulator::Interface::Expansion* useExpansion = &interface->expansions[Interface::ExpansionIdGame];
@@ -168,7 +172,7 @@ auto System::setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void {
         else
             nmiIncomming &= ~4;
 
-        cpu->setNmi(nmiIncomming != 0);
+        cpu.setNmi(nmiIncomming != 0);
     };
     
     expansionPtr->irqCall = [this](bool state) {
@@ -177,7 +181,7 @@ auto System::setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void {
         else
             irqIncomming &= ~4;
 
-        cpu->setIrq(irqIncomming != 0);
+        cpu.setIrq(irqIncomming != 0);
     };
 
     expansionPtr->dmaCall = [this](bool state) {
@@ -186,7 +190,7 @@ auto System::setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void {
         else
             rdyIncomming &= ~2;      
         
-        cpu->setRdy( rdyIncomming != 0 );
+        cpu.setRdy( rdyIncomming != 0 );
     };
     
     if (expansionPtr->id == Interface::ExpansionIdReu)

@@ -5,7 +5,7 @@ namespace LIBC64 {
 
     struct Westermann : GameCart {
 
-        Westermann() : GameCart(false, false) {
+        Westermann(System* system) : GameCart(system, false, false) {
 
         }
 

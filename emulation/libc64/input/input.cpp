@@ -1,7 +1,9 @@
 
 #include "input.h"
 #include "../vicII/vicII.h"
+#include "controlPort/controlPort.h"
 #include "../../tools/bits.h"
+#include "../../tools/serializer.h"
 
 #define portAOutputLo (lines->ddra & ~lines->pra)
 #define portAOutputHi (lines->ddra & lines->pra)
@@ -10,9 +12,10 @@
 
 namespace LIBC64 {       
 
-Input::Input() {
-    controlPort1 = new ControlPort;
-    controlPort2 = new ControlPort;
+Input::Input(System* system, Emulator::Interface* interface, CIA::M6526& cia1) :
+system(system), interface(interface), keyboard(interface), cia1(cia1) {
+    controlPort1 = new ControlPort(system);
+    controlPort2 = new ControlPort(system);
 }
     
 auto Input::readCiaPortA( CIA::Base::Lines* lines ) -> uint8_t {
@@ -113,11 +116,11 @@ auto Input::writeCiaPortB( CIA::Base::Lines* lines ) -> void {
 
 inline auto Input::jitPoll() -> void {
     if (sampling.allow && ((sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
-        if (system->interface->jitPoll(sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1)) {
+        if (interface->jitPoll(sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1)) {
             keyboard.poll();
             updateLightpen(!lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob);
             sampling.midscreen++;
-            //system->interface->log(vicII->getVcounter(), false);
+            //interface->log(vicII->getVcounter(), false);
         }
     }
 }
@@ -200,7 +203,15 @@ auto Input::reset() -> void {
     sampling.midscreen = 0;
 }
 
-auto Input::connectControlport( Interface::Connector* connector, Interface::Device* device ) -> void {
+auto Input::setVic(VicIIBase* vicII) -> void {
+    this->vicII = vicII;
+    if (controlPort1)
+        controlPort1->vicII = vicII;
+    if (controlPort2)
+        controlPort2->vicII = vicII;
+}
+
+auto Input::connectControlport( Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void {
     
     if (!connector)
         return;
@@ -213,7 +224,8 @@ auto Input::connectControlport( Interface::Connector* connector, Interface::Devi
     if (*controlPort)
         delete *controlPort;
     
-    *controlPort = ControlPort::create( device );
+    *controlPort = ControlPort::create( system, device );
+    (*controlPort)->vicII = vicII;
 
     updateSampling();
     
@@ -232,7 +244,7 @@ auto Input::updateSampling() -> void {
         sampling.allow = (sampling.mode != 0) && !system->enabledDebugCart() && controlPort1->useJitPolling() && controlPort2->useJitPolling();
 }
 
-auto Input::getConnectedDevice( Interface::Connector* connector ) -> Interface::Device* {
+auto Input::getConnectedDevice( Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {
     
     ControlPort* controlPort = connector->isPort1() ? controlPort1 : controlPort2;
     
@@ -254,16 +266,16 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
     
     s.integer( potMask );
     
-    this->lines = &cia1->lines;
+    this->lines = &cia1.lines;
     
     keyboard.serialize( s );
     
-    for( auto& connector : system->interface->connectors ) {
+    for( auto& connector : interface->connectors ) {
         
         Interface::Device* device = getConnectedDevice( &connector );
         
         if (!device)
-            device = system->interface->getUnplugDevice();
+            device = interface->getUnplugDevice();
         
         unsigned deviceId = device->id;
         
@@ -274,7 +286,7 @@ auto Input::serialize(Emulator::Serializer& s) -> void {
             if (deviceId != device->id) {
                 // state was generated with another connected device.
                 // we need to connect the requested device.
-                device = system->interface->getDevice( deviceId );
+                device = interface->getDevice( deviceId );
                 
                 connectControlport( &connector, device );
             }

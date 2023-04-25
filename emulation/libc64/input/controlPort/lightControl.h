@@ -95,14 +95,14 @@ struct LightControl : ControlPort {
     std::function<void ()> triggerOn;
     std::function<void ()> triggerOff;
     
-    LightControl( Interface::Device* device ) : ControlPort( device ) { }
+    LightControl( System* system, Interface::Device* device ) : ControlPort( system, device ) { }
     
     virtual auto setTrigger() -> void {
                 
         triggerOn = [this]() {
 
             // control port 2 can not access the Vic light input
-            if ( this == system->input->controlPort2 )
+            if ( this == system->input.controlPort2 )
                 return;
             
             vicII->triggerLightPen( 0, cyclePixel >> 1 );            
@@ -209,18 +209,18 @@ struct LightControl : ControlPort {
     auto poll( ) -> void {
         cy = 0;
         
-        button1Pressed = system->interface->inputPoll( device->id, 2 ) & 1;
+        button1Pressed = interface->inputPoll( device->id, 2 ) & 1;
         
         if ( device->inputs.size() >= 4 )
-            button2Pressed = system->interface->inputPoll( device->id, 3 ) & 1;        
+            button2Pressed = interface->inputPoll( device->id, 3 ) & 1;
         
         if (device->userData & 1) { // get absolute mouse position
-            posX = system->interface->inputPoll( device->id, 0);
-            posY = system->interface->inputPoll( device->id, 1);               
+            posX = interface->inputPoll( device->id, 0);
+            posY = interface->inputPoll( device->id, 1);
             
         } else {
-            posX += system->interface->inputPoll( device->id, 0);
-            posY += system->interface->inputPoll( device->id, 1);                  
+            posX += interface->inputPoll( device->id, 0);
+            posY += interface->inputPoll( device->id, 1);
         }
                 
         setBoundaries();

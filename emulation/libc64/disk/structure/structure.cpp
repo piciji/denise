@@ -2,6 +2,7 @@
 #include <thread>
 #include "structure.h"
 #include "../../system/system.h"
+#include "../../input/input.h"
 #include "../../traps/traps.h"
 #include "../../../tools/petcii.h"
 #include "dxx.cpp"
@@ -27,7 +28,9 @@ const uint8_t DiskStructure::SECTORS_IN_SPEEDZONE[4] = { 17, 18, 19, 21 };
 const unsigned DiskStructure::BYTES_IN_SPEEDZONE[4] = { 6250, 6666, 7142, 7692 };
 const uint8_t DiskStructure::GAPS_IN_SPEEDZONE[4] = { 9, 12, 17, 8 };
     
-DiskStructure::DiskStructure(Drive* drive) : drive(drive) {
+DiskStructure::DiskStructure(System* system, Drive* drive) :
+system(system),
+drive(drive) {
     
     errorMap = nullptr;
     errorMapSize = 0;
@@ -42,12 +45,12 @@ DiskStructure::DiskStructure(Drive* drive) : drive(drive) {
         }
     }
 
-    virtualDrive = new VirtualDrive(this);
+    virtualDrive = new VirtualDrive(system, this);
 }   
 
 DiskStructure::~DiskStructure() {
-    
-    clearTrackData();   
+
+    clearTrackData();
 }
 
 auto DiskStructure::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> bool {
@@ -59,7 +62,7 @@ auto DiskStructure::attach( uint8_t* data, unsigned size, bool loadGracefully ) 
 
     if (loadGracefully && (type == Type::P64) ) {
         encodingGraceful.status = 1;
-        iecBus->diskInsertInProgress = true;
+        system->iecBus.diskInsertInProgress = true;
         return false;
     }
     
@@ -436,7 +439,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
     action.mode = KeyBuffer::Mode::Input;
     action.buffer = path;
     system->keyBuffer->add( action );
-    bool mafiosino = dynamic_cast<SuperGames*>(expansionPort) && dynamic_cast<SuperGames*>(expansionPort)->mafiosino;
+    bool mafiosino = dynamic_cast<SuperGames*>(system->expansionPort) && dynamic_cast<SuperGames*>(system->expansionPort)->mafiosino;
 
     if (mafiosino) {
         action.mode = KeyBuffer::Mode::WaitFor;
@@ -445,7 +448,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
         action.delay = 0;
         system->keyBuffer->add(action);
 
-    } else if (!system->secondDriveCable.burstRequested && !dynamic_cast<Mach5*>(expansionPort)) {
+    } else if (!system->secondDriveCable.burstRequested && !dynamic_cast<Mach5*>(system->expansionPort)) {
         if (!(options & 1)) {
             action.mode = KeyBuffer::Mode::WaitFor;
             action.buffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
@@ -455,7 +458,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
         }
         action.mode = KeyBuffer::Mode::WaitFor;
         action.buffer = {'L', 'O', 'A', 'D', 'I', 'N', 'G'};
-        if (dynamic_cast<WarpSpeed*>(expansionPort))
+        if (dynamic_cast<WarpSpeed*>(system->expansionPort))
             action.buffer = {'W','A','R','P'};
 
         action.alternateBuffer = {'S', 'E', 'A', 'R', 'C', 'H', 'I', 'N', 'G'};
@@ -485,8 +488,8 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
 
     if (mafiosino) {
         action.mode = KeyBuffer::Mode::WaitDelay;
-        action.waitCallback = [](KeyBuffer::Action* action) {
-            system->input->setKeycode(0, 5); // F3
+        action.waitCallback = [this](KeyBuffer::Action* action) {
+            system->input.setKeycode(0, 5); // F3
         };
         action.delay = 1;
     } else {
@@ -505,8 +508,8 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
     }
 
     if (options & 1) { // traps
-        traps->installSerial();
-        traps->reset( options & 2 ); // trap send success event to host, error event will be always send
+        system->traps.installSerial();
+        system->traps.reset( options & 2 ); // trap send success event to host, error event will be always send
         system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
     }
 

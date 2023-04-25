@@ -8,17 +8,25 @@
 
 #include "drive/drive.h"
 #include "../../interface.h"
+#include "../../interface.h"
 #include "../../tools/serializer.h"
+
+namespace Emulator {
+    struct SystemTimer;
+}
 
 namespace LIBC64 {
 
 struct Drive;
-    
+struct System;
+
 struct IecBus {
     
-    IecBus(Emulator::Interface::MediaGroup* mediaGroup);
+    IecBus(System* system, Emulator::Interface::MediaGroup* mediaGroup);
     ~IecBus();        
-    
+
+    System* system;
+    Emulator::SystemTimer& sysTimer;
     std::vector<Drive*> drives;
     std::vector<Drive*> drivesEnabled;
     
@@ -58,8 +66,8 @@ struct IecBus {
     auto syncDrivesEachCycle( ) -> void;
     auto resetTicks() -> void;
     auto setDrivesEnabled( uint8_t count ) -> void;
-	auto hideDrive( Interface::Media* media ) -> void;
-    auto resetDrive( Interface::Media* media ) -> void;
+	auto hideDrive( Emulator::Interface::Media* media ) -> void;
+    auto resetDrive( Emulator::Interface::Media* media ) -> void;
     auto setDriveSpeed(unsigned rpmScaled) -> void;
     auto setDriveWobble(unsigned wobbleScaled) -> void;
     auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
@@ -93,6 +101,5 @@ struct IecBus {
     auto updateDriveSounds() -> void;
     auto wasAutostarted() -> bool;
 };
-   
-extern IecBus* iecBus;
+
 }

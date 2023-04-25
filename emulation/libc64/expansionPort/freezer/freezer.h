@@ -8,7 +8,7 @@ namespace LIBC64 {
     
 struct Freezer : FreezeButton {
 
-    Freezer(bool game = true, bool exrom = true);
+    Freezer(System* system, bool game = true, bool exrom = true);
     
     auto create( Interface::CartridgeId cartridgeId ) -> Cart*;
     
@@ -16,8 +16,6 @@ struct Freezer : FreezeButton {
 
     virtual auto bootSpeed() -> float { return 0.5; }
             
-};    
-    
-extern Freezer* freezer;
+};
 
 }

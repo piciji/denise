@@ -4,10 +4,13 @@
 #include "../interface.h"
 
 namespace LIBC64 {
-	
+
+struct System;
+
 struct Interface : Emulator::Interface {
 
 	Interface();
+    System* system = nullptr;
     
     enum ModelId {
         ModelIdSid, ModelIdFilter, ModelIdDigiboost, ModelIdBias6581,

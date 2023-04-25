@@ -7,9 +7,14 @@
 #include "baseDevice.h"
 
 namespace LIBC64 {
+    struct System;
+    struct M6510;
+    struct IecBus;
+    struct Tape;
 
     struct Traps {
-        
+        Traps(System* system);
+
         struct Trap {
             std::string name;
             uint16_t address;
@@ -25,6 +30,11 @@ namespace LIBC64 {
             BaseDevice* device = nullptr;
             uint8_t nextbyte[16];
         } serialdevices[16];
+
+        System* system;
+        M6510& cpu;
+        IecBus& iecBus;
+        Tape& tape;
 
         uint8_t SerialBuffer[256];
         int SerialPtr;
@@ -67,6 +77,4 @@ namespace LIBC64 {
         auto listentalkSecondary(uint8_t b) -> void;
         auto testForComplexTapeLoader() -> bool;
     };
-    
-    extern Traps* traps;
 }

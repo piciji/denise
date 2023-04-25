@@ -7,9 +7,7 @@
 
 namespace LIBC64 {  
 
-VicIIFast* vicIIFast = nullptr;    
-
-VicIIFast::VicIIFast() : VicIIBase() {
+VicIIFast::VicIIFast(System* system) : VicIIBase(system) {
     
     initMetaPattern();
 	addMeta = false;

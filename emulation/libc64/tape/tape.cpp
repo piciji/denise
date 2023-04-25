@@ -10,10 +10,8 @@
 #include "../traps/traps.h"
 
 namespace LIBC64 {
-    
-Tape* tape = nullptr;
 
-Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
+Tape::Tape( System* system, Emulator::Interface::Media* mediaConnected ) : system(system), sysTimer(system->sysTimer), structure(*this) {
     
     media = nullptr;
 	this->mediaConnected = mediaConnected;
@@ -22,7 +20,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
 	writeData = new uint8_t[ TAPE_WRITE_SIZE ];
 	    
     // events
-    motorOff = [this]() {
+    motorOff = [this, system]() {
         if (!enabled)
             return;
         motorIn = false;
@@ -31,7 +29,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
         updateCounter();
         updateDeviceState();
         if (autoStarted) {
-            if (traps->installed)
+            if (system->traps.installed)
                 return;
 
             if (counter >= 15)
@@ -57,7 +55,7 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
 
             if (gapsRemaining == 0) {
                 setMode(Mode::Stop); //end of tape or completely rewinded
-                system->hintObserverMotorChange( false );
+                this->system->hintObserverMotorChange( false );
             }
         }
 		
@@ -91,8 +89,8 @@ Tape::Tape( Emulator::Interface::Media* mediaConnected ) : structure(this) {
         if (gaps) {
             sysTimer.add(&worker, gaps * speedAdjustment());
 
-            if (system->tapeNoiseEnabled() && (mode == Tape::Mode::Play)) {
-                system->tapeNoiseSetSample( gaps );
+            if (this->system->tapeNoiseEnabled() && (mode == Tape::Mode::Play)) {
+                this->system->tapeNoiseSetSample( gaps );
             }
         }
 		
@@ -413,8 +411,8 @@ auto Tape::selectListing( unsigned pos, uint8_t options ) -> void {
     fetchPos = 0;
 
     if (options & 1) {
-        if (!traps->testForComplexTapeLoader())
-            traps->installTape();
+        if (!system->traps.testForComplexTapeLoader())
+            system->traps.installTape();
     }
 
     if ( system->kernalBootComplete )

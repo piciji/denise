@@ -7,7 +7,7 @@ namespace LIBC64 {
 
     struct WarpSpeed : GameCart {
 
-        WarpSpeed() : GameCart(false, false) {
+        WarpSpeed(System* system) : GameCart(system, false, false) {
 
         }
 

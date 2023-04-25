@@ -1,8 +1,9 @@
 
 #pragma once
 
-#include "../../tools/serializer.h"
-#include "../system/system.h"
+#include <cstdlib>
+#include <functional>
+#include "../../interface.h"
 #include "structure.h"
 
 #define TAPE_MOTOR_DELAY 32000
@@ -12,15 +13,20 @@
 #define TAPE_FETCH_SIZE 50 * 1024
 #define TAPE_WRITE_SIZE 10 * 1024
 
-#include <cstdlib>
+namespace Emulator {
+    struct Serializer;
+    struct SystemTimer;
+}
 
 namespace LIBC64 {
 
 typedef Emulator::Interface::DriveSound DriveSound;
 
+struct System;
+
 struct Tape {
     
-    Tape( Emulator::Interface::Media* mediaConnected );
+    Tape( System* system, Emulator::Interface::Media* mediaConnected );
     ~Tape();
 
 	enum Mode : uint8_t { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5 };
@@ -30,6 +36,8 @@ struct Tape {
 	std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
 	std::function<void (bool)> senseOut = [](bool state){};
 
+    System* system;
+    Emulator::SystemTimer& sysTimer;
     TapeStructure structure;
 
 	auto setEnabled( bool state ) -> void;
@@ -128,6 +136,5 @@ protected:
 	auto advanceCounterToPos(unsigned pos) -> void;
     auto updateMotorSound(bool soft = true) -> void;
 };    
-    
-extern Tape* tape;
+
 }

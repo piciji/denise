@@ -8,11 +8,12 @@ namespace LIBC64 {
     
 struct Reu : ExpansionPort {   
     
-    Reu();
+    Reu(System* system);
     ~Reu();	
     
     using Callback = std::function<void ()>;
-    
+
+    Emulator::SystemTimer& sysTimer;
     uint8_t status;          
     uint8_t command;
     uint8_t intMask;    
@@ -102,6 +103,5 @@ struct Reu : ExpansionPort {
 	auto setExpander( ExpansionPort* expander ) -> void;
 
 };    
-    
-extern Reu* reu;
+
 }

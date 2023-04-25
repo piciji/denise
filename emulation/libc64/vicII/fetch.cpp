@@ -251,7 +251,7 @@ inline auto VicIICycle::readCpu() -> uint8_t {
 		// at this point CPU is only halted by BA(RDY) when entering a read cycle.
 		// even when cpu is halted the address is selected on BUS and the VIC reads
 		// in second half cycle from this address but not the CPU.            
-		return system->memoryCpu.read( cpu->addressBus() );
+		return system->memoryCpu.read( cpu.addressBus() );
 
 	// expansion port is BUS Master... same explanation as above
 	return system->memoryCpu.read( expansionPort->addressBus() );            

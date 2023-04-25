@@ -48,9 +48,12 @@
 namespace LIBC64 {
 
 struct DiskStructure;
+struct System;
 
 struct VirtualDrive : BaseDevice {
-    VirtualDrive(DiskStructure* structure);
+    VirtualDrive(System* system, DiskStructure* structure);
+
+    System* system;
 
     struct vdrive_dir_context_t {
         uint8_t buffer[256];      /* Current directory sector. */

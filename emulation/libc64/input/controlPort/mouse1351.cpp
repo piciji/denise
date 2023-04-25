@@ -14,12 +14,12 @@ struct Mouse1351 : AnalogControl {
     unsigned sysClock;
     unsigned timestamp;
     
-    Mouse1351( Interface::Device* device ) : AnalogControl( device ) {}
+    Mouse1351( System* system, Interface::Device* device ) : AnalogControl( system, device ) {}
 
     auto poll( ) -> void {
 
-        int16_t deltaX = system->interface->inputPoll( device->id, 0);
-        int16_t deltaY = system->interface->inputPoll( device->id, 1);
+        int16_t deltaX = interface->inputPoll( device->id, 0);
+        int16_t deltaY = interface->inputPoll( device->id, 1);
 
         int _dx = std::abs(deltaX);
         int _dy = std::abs(deltaY);
@@ -43,8 +43,8 @@ struct Mouse1351 : AnalogControl {
         
         uint8_t out = 0xff;
         
-        out &= ~((system->interface->inputPoll( device->id, 2 ) & 1) << 4);
-        out &= ~((system->interface->inputPoll( device->id, 3 ) & 1) << 0);
+        out &= ~((interface->inputPoll( device->id, 2 ) & 1) << 4);
+        out &= ~((interface->inputPoll( device->id, 3 ) & 1) << 0);
         
         return out;
     }

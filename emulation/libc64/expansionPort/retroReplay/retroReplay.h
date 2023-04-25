@@ -8,10 +8,9 @@ namespace LIBC64 {
     
 struct RetroReplay : FreezeButton {
     
-    RetroReplay();
-    
-    ~RetroReplay();    
-    
+    RetroReplay(System* system);
+    ~RetroReplay();
+
     Emulator::Flash040 flash;
     std::function<void ()> flashModeReset;
     uint8_t* flashData;
@@ -72,8 +71,6 @@ struct RetroReplay : FreezeButton {
     auto createImage(unsigned& imageSize, uint8_t id) -> uint8_t*;
 	
 	auto protectFromDeletion() -> bool { return true; }
-};    
-    
-extern RetroReplay* retroReplay;   
+};
 
 }

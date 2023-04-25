@@ -6,7 +6,7 @@
 namespace LIBC64 {  
     
 struct VicIICycle : VicIIBase {
-	VicIICycle();
+	VicIICycle(System* system);
 	
 	auto clock() -> void;
 	auto clockSilence() -> void;
@@ -143,5 +143,4 @@ protected:
 	
 };
 
-extern VicIICycle* vicIICycle;
 }

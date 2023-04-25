@@ -8,7 +8,7 @@ namespace LIBC64 {
     
 struct EasyFlash3 : FreezeButton {   
     
-    EasyFlash3();
+    EasyFlash3(System* system);
     ~EasyFlash3();
         
     struct Slot {
@@ -110,5 +110,4 @@ struct EasyFlash3 : FreezeButton {
     auto updateSlotHeaderName(Slot* slot, uint8_t* header) -> void;
 };
 
-extern EasyFlash3* easyFlash3;
 }

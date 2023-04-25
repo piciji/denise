@@ -5,29 +5,27 @@
 
 namespace LIBC64 {
 
-Fastloader* fastloader = nullptr;
-
-Fastloader::Fastloader() : via(3), ExpansionPort() {
+Fastloader::Fastloader(System* system) : via(3), ExpansionPort(system) {
     setId( Interface::ExpansionIdFastloader );
 
-    pia.ca2Out = [this](bool direction) {
+    pia.ca2Out = [system, this](bool direction) {
         if (system->secondDriveCable.parallelUse && !direction && (mode & FASTLOADER_OUTPINA)) {
             system->diskIdleOff();
             // Port B with parallel cable
-            iecBus->writeParallelHandshake();
+            system->iecBus.writeParallelHandshake();
         }
     };
 
-    pia.cb2Out = [this](bool direction) {
+    pia.cb2Out = [system, this](bool direction) {
         // no use case at the moment
         if (system->secondDriveCable.parallelUse && !direction && (mode & FASTLOADER_OUTPINB)) {
             system->diskIdleOff();
             // Port B with parallel cable
-            iecBus->writeParallelHandshake();
+            system->iecBus.writeParallelHandshake();
         }
     };
 
-    pia.readPort = [this]( Emulator::Pia::Port port ) {
+    pia.readPort = [system, this]( Emulator::Pia::Port port ) {
 
         if (port == Emulator::Pia::Port::A) { // PROLOGIC
             if (!system->secondDriveCable.parallelUse || (mode & FASTLOADER_PORTB) )
@@ -35,7 +33,7 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
 
             system->diskIdleOff();
 
-            return (uint8_t)(this->pia.ioa & iecBus->readParallel());
+            return (uint8_t)(this->pia.ioa & system->iecBus.readParallel());
         }
 
         // Port B (no use case at the moment)
@@ -44,38 +42,38 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
 
         system->diskIdleOff();
 
-        return (uint8_t)(this->pia.iob & iecBus->readParallel());
+        return (uint8_t)(this->pia.iob & system->iecBus.readParallel());
     };
 
     pia.writePort = [this]( Emulator::Pia::Port port, uint8_t data ) {
         // nothing todo here, because CA(B)2 is triggered and port value is latched within PIA context
     };
 
-    via.ca2Out = [this]( bool direction ) {
+    via.ca2Out = [system, this]( bool direction ) {
         // no use case at the moment
         if (system->secondDriveCable.parallelUse && !direction && (mode & FASTLOADER_OUTPINA)) {
             system->diskIdleOff();
             // Port B with parallel cable
-            iecBus->writeParallelHandshake();
+            system->iecBus.writeParallelHandshake();
         }
     };
 
-    via.cb2Out = [this]( bool direction ) {
+    via.cb2Out = [system, this]( bool direction ) {
         if (system->secondDriveCable.parallelUse && !direction && (mode & FASTLOADER_OUTPINB)) {
             system->diskIdleOff();
             // Port B with parallel cable
-            iecBus->writeParallelHandshake();
+            system->iecBus.writeParallelHandshake();
         }
     };
 
-    via.readPort = [this]( Via::Port port, Via::Lines* lines ) {
+    via.readPort = [system, this]( Via::Port port, Via::Lines* lines ) {
         if (port == Via::Port::A) { // no use case at the moment
             if (!system->secondDriveCable.parallelUse || (mode & FASTLOADER_PORTB) )
                 return lines->ioa;
 
             system->diskIdleOff();
 
-            return (uint8_t)(lines->ioa & iecBus->readParallel());
+            return (uint8_t)(lines->ioa & system->iecBus.readParallel());
         }
 
         // Port B
@@ -84,7 +82,7 @@ Fastloader::Fastloader() : via(3), ExpansionPort() {
 
         system->diskIdleOff();
 
-        return (uint8_t)(lines->iob & iecBus->readParallel());
+        return (uint8_t)(lines->iob & system->iecBus.readParallel());
     };
 
     via.writePort = [this]( Via::Port port, Via::Lines* lines ) {
@@ -200,7 +198,7 @@ auto Fastloader::reset(bool softReset) -> void {
 auto Fastloader::customButton() -> void {
 
     if (type == TURBO_TRANS)
-        iecBus->drives[0]->cpu->setNmi();
+        system->iecBus.drives[0]->cpu.setNmi();
 }
 
 }

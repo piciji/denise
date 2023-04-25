@@ -8,7 +8,7 @@ namespace LIBC64 {
     
 struct GameCart : Cart {
     
-    GameCart(bool game = true, bool exrom = true);
+    GameCart(System* system, bool game = true, bool exrom = true);
     
     auto create( Interface::CartridgeId cartridgeId ) -> Cart*;   
     auto assign(Cart* cart) -> void;
@@ -21,8 +21,6 @@ struct GameCart : Cart {
     virtual auto isBootable( ) -> bool {
         return rom ? true : false;
     }
-};    
-    
-extern GameCart* gameCart;   
+};
 
 }

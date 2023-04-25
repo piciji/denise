@@ -4,7 +4,6 @@
 #include "prg/prg.h"
 #include "tape/tape.h"
 #include "tape/structure.h"
-#include "sid/sid.h"
 #include "vicII/fast/vicIIFast.h"
 #include "vicII/vicII.h"
 #include "input/input.h"
@@ -25,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "20";
+const std::string Interface::Version = "201";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -491,44 +490,44 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdSidMulti, "Extra SIDs", Model::Type::Combo, Model::Purpose::AudioResampler, 0, {0, 7}, {"0", "1", "2", "3", "4", "5", "6", "7"}});
     
 	models.push_back({ModelIdSid, "SID 1", Model::Type::Radio, Model::Purpose::SoundChip, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid1Left, "Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid1Right, "Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid1Adr, "Address", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid1Left, "SID 1 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
+    models.push_back({ModelIdSid1Right, "SID 1 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid1Adr, "SID 1 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
 
     models.push_back({ModelIdSid2, "SID 2", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid2Left, "Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid2Right, "Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid2Adr, "Address", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid2Left, "SID 2 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid2Right, "SID 2 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
+    models.push_back({ModelIdSid2Adr, "SID 2 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
     
     models.push_back({ModelIdSid3, "SID 3", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid3Left, "Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid3Right, "Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid3Adr, "Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid3Left, "SID 3 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
+    models.push_back({ModelIdSid3Right, "SID 3 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid3Adr, "SID 3 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
     
     models.push_back({ModelIdSid4, "SID 4", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid4Left, "Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid4Right, "Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid4Adr, "Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid4Left, "SID 4 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid4Right, "SID 4 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
+    models.push_back({ModelIdSid4Adr, "SID 4 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
     
     models.push_back({ModelIdSid5, "SID 5", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid5Left, "Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid5Right, "Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid5Adr, "Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid5Left, "SID 5 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
+    models.push_back({ModelIdSid5Right, "SID 5 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid5Adr, "SID 5 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
     
     models.push_back({ModelIdSid6, "SID 6", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid6Left, "Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid6Right, "Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid6Adr, "Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid6Left, "SID 6 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid6Right, "SID 6 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
+    models.push_back({ModelIdSid6Adr, "SID 6 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
     
     models.push_back({ModelIdSid7, "SID 7", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid7Left, "Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid7Right, "Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid7Adr, "Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid7Left, "SID 7 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
+    models.push_back({ModelIdSid7Right, "SID 7 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid7Adr, "SID 7 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
     
     models.push_back({ModelIdSid8, "SID 8", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 1}, {"8580", "6581"} });	
-    models.push_back({ModelIdSid8Left, "Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
-    models.push_back({ModelIdSid8Right, "Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
-    models.push_back({ModelIdSid8Adr, "Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
+    models.push_back({ModelIdSid8Left, "SID 8 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
+    models.push_back({ModelIdSid8Right, "SID 8 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
+    models.push_back({ModelIdSid8Adr, "SID 8 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
     
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
     models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xef, { 0, 0xff }});
@@ -804,17 +803,17 @@ auto Interface::prepareDevices() -> void {
 
 auto Interface::connect(unsigned connectorId, unsigned deviceId) -> void {
     
-    system->input->connectControlport( getConnector( connectorId ), getDevice( deviceId ) );
+    system->input.connectControlport( getConnector( connectorId ), getDevice( deviceId ) );
 }
 
 auto Interface::connect(Connector* connector, Device* device) -> void {
     
-    system->input->connectControlport( connector, device );
+    system->input.connectControlport( connector, device );
 }
 
 auto Interface::getConnectedDevice( Connector* connector ) -> Device* {
     
-    auto device = system->input->getConnectedDevice( connector );
+    auto device = system->input.getConnectedDevice( connector );
     
     if (!device)
         return getUnplugDevice();
@@ -824,7 +823,7 @@ auto Interface::getConnectedDevice( Connector* connector ) -> Device* {
 
 auto Interface::getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> bool {
     
-    return system->input->getCursorPosition( device, x, y );
+    return system->input.getCursorPosition( device, x, y );
 }
 
 auto Interface::power() -> void {
@@ -833,7 +832,7 @@ auto Interface::power() -> void {
 
 auto Interface::reset() -> void {
     
-    if ( !expansionPort->resetButton() )    
+    if ( !system->expansionPort->resetButton() )
         system->power( true );
 }
 
@@ -847,7 +846,7 @@ auto Interface::run() -> void {
 
 auto Interface::runAhead(unsigned frames) -> void {
     system->runAhead.frames = frames;
-    system->input->updateSampling();
+    system->input.updateSampling();
     system->updateDriveSounds();
 }
 
@@ -857,20 +856,20 @@ auto Interface::runAheadPerformance(bool state) -> void {
 
 auto Interface::runAheadPreventJit(bool state) -> void {
     system->runAhead.preventJit = state;
-    system->input->updateSampling();
+    system->input.updateSampling();
 }
 
 auto Interface::getRegionEncoding() -> Region {
-    return vicII->isNTSCEncoding() ? Region::Ntsc : Region::Pal;
+    return system->vicII->isNTSCEncoding() ? Region::Ntsc : Region::Pal;
 }
 
 auto Interface::getRegionGeometry() -> Region {
-    return vicII->isNTSCGeometry() ? Region::Ntsc : Region::Pal;
+    return system->vicII->isNTSCGeometry() ? Region::Ntsc : Region::Pal;
 }
 
 auto Interface::getSubRegion() -> SubRegion {
 	
-	switch(vicII->getModel()) {
+	switch(system->vicII->getModel()) {
 		default:
 			return SubRegion::Pal_B;
 			
@@ -893,15 +892,15 @@ auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool load
     if (!media || !media->group->isDisk())
         return;
     
-    iecBus->attach( media, data, size, loadGracefully );
+    system->iecBus.attach( media, data, size, loadGracefully );
 }
 
 auto Interface::writeProtectDisk(Media* media, bool state) -> void {
 
     if (!media || !media->group->isDisk())
         return;
-    
-    iecBus->writeProtect( media, state );
+
+    system->iecBus.writeProtect( media, state );
 }
 
 auto Interface::isWriteProtectedDisk(Media* media) -> bool {
@@ -909,23 +908,23 @@ auto Interface::isWriteProtectedDisk(Media* media) -> bool {
     if (!media || !media->group->isDisk())
         return false;
     
-    return iecBus->isWriteProtected( media );
+    return system->iecBus.isWriteProtected( media );
 }
 
 auto Interface::ejectDisk(Media* media) -> void {
 
     if (!media || !media->group->isDisk())
         return;
-    
-    iecBus->detach( media );
+
+    system->iecBus.detach( media );
 }
 
 auto Interface::resetDrive(Media* media) -> void {
-    iecBus->resetDrive( media );
+    system->iecBus.resetDrive( media );
 }
 
 auto Interface::hideDrive(Media* media) -> void {
-    iecBus->hideDrive( media );
+    system->iecBus.hideDrive( media );
 }
 
 auto Interface::createDiskImage(unsigned typeId, std::string name, bool hd, bool ffs, bool bootable) -> Data {
@@ -938,12 +937,12 @@ auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface:
     if (!media || !media->group->isDisk())
         return {};
     
-    return iecBus->getDiskListing( media );
+    return system->iecBus.getDiskListing( media );
 }
 
 auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
     
-    DiskStructure structure;
+    DiskStructure structure(system);
 	structure.number = media ? media->id : 0;
     
     if (!structure.attach( data, size, false ))
@@ -956,8 +955,8 @@ auto Interface::selectDiskListing(Media* media, unsigned pos, uint8_t options) -
     
     if (!media || !media->group->isDisk())
         return;
-    
-    iecBus->selectListing( media, pos, options );
+
+    system->iecBus.selectListing( media, pos, options );
 }
 
 auto Interface::selectDiskListing(Media* media, std::string fileName, uint8_t options) -> void {
@@ -965,23 +964,23 @@ auto Interface::selectDiskListing(Media* media, std::string fileName, uint8_t op
     if (!media || !media->group->isDisk())
         return;
 
-    iecBus->selectListing( media, fileName, options );
+    system->iecBus.selectListing( media, fileName, options );
 }
 
 auto Interface::insertTape(Media* media, uint8_t* data, unsigned size) -> void {
 		
     if (!media || !media->group->isTape())
         return;
-    
-	tape->load( media, data, size );
+
+    system->tape.load( media, data, size );
 }
 
 auto Interface::writeProtectTape(Media* media, bool state) -> void {
 
     if (!media || !media->group->isTape())
         return;
-	
-	tape->setWriteProtect( state );
+
+    system->tape.setWriteProtect( state );
 }
 
 auto Interface::isWriteProtectedTape(Media* media) -> bool {
@@ -989,20 +988,20 @@ auto Interface::isWriteProtectedTape(Media* media) -> bool {
     if (!media || !media->group->isTape())
         return false;
 	
-	return tape->isWriteProtected( );
+	return system->tape.isWriteProtected( );
 }
 
 auto Interface::ejectTape(Media* media) -> void {
 		
     if (!media || !media->group->isTape())
         return;
-    
-	tape->unload();
+
+    system->tape.unload();
 }
 
 auto Interface::controlTape(Media* media, TapeMode mode) -> void {
-	
-    tape->setMode( (Tape::Mode)mode );
+
+    system->tape.setMode( (Tape::Mode)mode );
 }
 
 auto Interface::getTapeControl(Media* media) -> TapeMode {
@@ -1010,30 +1009,30 @@ auto Interface::getTapeControl(Media* media) -> TapeMode {
     if (!media)
         return TapeMode::Stop;
     
-    return (TapeMode)tape->getMode();
+    return (TapeMode)system->tape.getMode();
 }
 
 auto Interface::getTapeListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
     if (!media || !media->group->isTape())
         return {};
 
-    return tape->getListing();
+    return system->tape.getListing();
 }
 
 auto Interface::getTapePreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
-    TapeStructure structure(tape);
+    TapeStructure structure(system->tape);
     structure.setData( data, size );
 
     return structure.getListing();
 }
 
 auto Interface::selectTapeListing(Media* media, unsigned pos, uint8_t options) -> void {
-	
-	tape->selectListing( pos, options );
+
+    system->tape.selectListing( pos, options );
 }
 
 auto Interface::createTapeImage(unsigned& imageSize) -> uint8_t* {
-	return tape->createTap( imageSize );
+	return system->tape.createTap( imageSize );
 }
 
 auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size) -> void {
@@ -1044,21 +1043,21 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
         return;        
     
     if (group->expansion->id == ExpansionIdGame)
-        !media->secondary ? gameCart->setRom(media, data, size) : gmod2->setSecondaryRom(media, data, size);
+        !media->secondary ? system->gameCart->setRom(media, data, size) : system->gmod2->setSecondaryRom(media, data, size);
     else if (group->expansion->id == ExpansionIdReu)
-        !media->secondary ? reu->setRam(data, size) : reu->setRom(media, data, size);
+        !media->secondary ? system->reu->setRam(data, size) : system->reu->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdFreezer)
-        freezer->setRom(media, data, size);
+        system->freezer->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdEasyFlash)
-        easyFlash->setRom(media, data, size);
+        system->easyFlash->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdEasyFlash3)
-        easyFlash3->setRom(media, data, size);
+        system->easyFlash3->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdRetroReplay)
-        retroReplay->setRom(media, data, size);
+        system->retroReplay->setRom(media, data, size);
 	else if (group->expansion->id == ExpansionIdGeoRam)
-        geoRam->setRam(media, data, size);
+        system->geoRam->setRam(media, data, size);
     else if (group->expansion->id == ExpansionIdFastloader)
-        fastloader->setRom(media, data, size);
+        system->fastloader->setRom(media, data, size);
 }
 
 auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
@@ -1069,23 +1068,23 @@ auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
         return;
     
     if (group->expansion->id == ExpansionIdEasyFlash) {
-        if (easyFlash->media == media)
-            easyFlash->setWriteProtect(state);
+        if (system->easyFlash->media == media)
+            system->easyFlash->setWriteProtect(state);
 
     } else if (group->expansion->id == ExpansionIdEasyFlash3) {
-        easyFlash3->setWriteProtect( media, state );
+        system->easyFlash3->setWriteProtect( media, state );
 
     } else if (group->expansion->id == ExpansionIdRetroReplay) {
-        if (retroReplay->media == media)
-            retroReplay->setWriteProtect( state );
+        if (system->retroReplay->media == media)
+            system->retroReplay->setWriteProtect( state );
     } else if (group->expansion->id == ExpansionIdGame) {
-        if (gameCart->media == media)
-            gameCart->setWriteProtect( state );
-        else if (gmod2->mediaSecondary == media)
-            gmod2->setSecondaryWriteProtect( state );
+        if (system->gameCart->media == media)
+            system->gameCart->setWriteProtect( state );
+        else if (system->gmod2->mediaSecondary == media)
+            system->gmod2->setSecondaryWriteProtect( state );
     } else if (group->expansion->id == ExpansionIdGeoRam) {
-		if (geoRam->media == media)
-			geoRam->setWriteProtect( state );
+		if (system->geoRam->media == media)
+            system->geoRam->setWriteProtect( state );
 	}
 }
 
@@ -1097,23 +1096,23 @@ auto Interface::isWriteProtectedExpansion(Media* media) -> bool {
         return false;
     
     if (group->expansion->id == ExpansionIdEasyFlash) {
-        if (easyFlash->media == media)
-            return easyFlash->isWriteProtected();
+        if (system->easyFlash->media == media)
+            return system->easyFlash->isWriteProtected();
 
     } else if (group->expansion->id == ExpansionIdEasyFlash3) {
-        return easyFlash3->isWriteProtected( media );
+        return system->easyFlash3->isWriteProtected( media );
 
     } else if (group->expansion->id == ExpansionIdRetroReplay) {
-        if (retroReplay->media == media)
-            return retroReplay->isWriteProtected(  );
+        if (system->retroReplay->media == media)
+            return system->retroReplay->isWriteProtected(  );
     } else if (group->expansion->id == ExpansionIdGame) {
-        if (gameCart->media == media)
-            return gameCart->isWriteProtected();
-        else if (gmod2->mediaSecondary == media)
-            return gmod2->isSecondaryWriteProtected();
+        if (system->gameCart->media == media)
+            return system->gameCart->isWriteProtected();
+        else if (system->gmod2->mediaSecondary == media)
+            return system->gmod2->isSecondaryWriteProtected();
     } else if (group->expansion->id == ExpansionIdGeoRam) {
-		if (geoRam->media == media)
-			return geoRam->isWriteProtected();
+		if (system->geoRam->media == media)
+			return system->geoRam->isWriteProtected();
 	}
 
     return false;
@@ -1128,23 +1127,23 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
     
     if (group->expansion->id == ExpansionIdGame)
 		// todo: write secondary rom for different cartridges, can't use gameCart because it's already removed by unseting primary ROM
-        !media->secondary ? gameCart->setRom(media, nullptr, 0) : gmod2->setSecondaryRom(media, nullptr, 0);
+        !media->secondary ? system->gameCart->setRom(media, nullptr, 0) : system->gmod2->setSecondaryRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdReu) {
-        !media->secondary ? reu->unsetRam() : reu->setRom(media, nullptr, 0);
+        !media->secondary ? system->reu->unsetRam() : system->reu->setRom(media, nullptr, 0);
     } else if (group->expansion->id == ExpansionIdFreezer)
-        freezer->setRom(media, nullptr, 0);
+        system->freezer->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdEasyFlash)
-        easyFlash->setRom(media, nullptr, 0);
+        system->easyFlash->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdEasyFlash3)
-        easyFlash3->unsetRom(media);
+        system->easyFlash3->unsetRom(media);
     else if (group->expansion->id == ExpansionIdRetroReplay)
-        retroReplay->setRom(media, nullptr, 0);
+        system->retroReplay->setRom(media, nullptr, 0);
 	else if (group->expansion->id == ExpansionIdGeoRam)
-		geoRam->setRam( media, nullptr, 0 );
+        system->geoRam->setRam( media, nullptr, 0 );
     else if (group->expansion->id == ExpansionIdRS232)
-        acia->socket.disconnect();
+        system->acia->socket.disconnect();
     else if (group->expansion->id == ExpansionIdFastloader)
-        fastloader->setRom(media, nullptr, 0);
+        system->fastloader->setRom(media, nullptr, 0);
 }
 
 auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id) -> uint8_t* {
@@ -1153,27 +1152,27 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uin
         return nullptr;
     
     if (group->expansion->id == ExpansionIdEasyFlash)
-        return easyFlash->createImage(imageSize);
+        return system->easyFlash->createImage(imageSize);
     
     if (group->expansion->id == ExpansionIdRetroReplay)
-        return retroReplay->createImage(imageSize, id);
+        return system->retroReplay->createImage(imageSize, id);
 	
 	if (group->expansion->id == ExpansionIdGame)
-		return gameCart->createImage(imageSize, id);
+		return system->gameCart->createImage(imageSize, id);
 	
 	if (group->expansion->id == ExpansionIdGeoRam)
-		return geoRam->createImage( imageSize, id );
+		return system->geoRam->createImage( imageSize, id );
     
     return nullptr;
 }
 
 auto Interface::isExpansionBootable() -> bool {
-    return expansionPort->isBootable();
+    return system->expansionPort->isBootable();
 }
 
 auto Interface::hasExpansionSecondaryRom() -> bool {
 	
-	return expansionPort->hasSecondaryRom();
+	return system->expansionPort->hasSecondaryRom();
 }
 
 auto Interface::insertProgram(Media* media, uint8_t* data, unsigned size) -> void {
@@ -1181,7 +1180,7 @@ auto Interface::insertProgram(Media* media, uint8_t* data, unsigned size) -> voi
     if (!media || !media->group->isProgram())
         return;
     
-    auto prg = Prg::getInstance( media );
+    auto prg = system->getPrgInstance( media );
     if (!prg)
         return;
     
@@ -1201,14 +1200,14 @@ auto Interface::ejectProgram(Media* media) -> void {
 
 auto Interface::getLoadedProgram(unsigned& size) -> uint8_t* {
 	
-	return Prg::getMemory( size );
+	return Prg::getMemory( size, system->ram );
 }
 
 auto Interface::getProgramListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
     if (!media || !media->group->isProgram())
         return {};
     
-    auto prg = Prg::getInstance( media );
+    auto prg = system->getPrgInstance( media );
     if (!prg)
         return {};
         
@@ -1216,8 +1215,7 @@ auto Interface::getProgramListing(Media* media) -> std::vector<Emulator::Interfa
 }
 
 auto Interface::getProgramPreview(uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
-    
-    Prg prg;
+    Prg prg(system);
     prg.set(data, size);
     return prg.getListing();
 }
@@ -1227,7 +1225,7 @@ auto Interface::selectProgramListing(Media* media, unsigned pos) -> bool {
         return false;
     
     // c64 memory
-    auto prg = Prg::getInstance( media );
+    auto prg = system->getPrgInstance( media );
     if (!prg)
         return false;
     system->prgInUse = prg;
@@ -1267,119 +1265,119 @@ auto Interface::getCharRom() -> Firmware* {
 auto Interface::setModelValue(unsigned modelId, int value) -> void {
     switch (modelId) {
 		case ModelIdSid:
-			sid->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 );			
+            system->sidManager.setType( 0, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 );
             break;
         case ModelIdSidFilterType:
-            Sid::setFilterTypeAll( (Sid::FilterType)value );
+            system->sidManager.setFilterTypeAll( (Sid::FilterType)value );
             break;   
         case ModelIdSidFilterVolumeEqualizer:
-            Sid::setFilterVolumeCorrection( value & 1 );
+            system->sidManager.setFilterVolumeCorrection( value & 1 );
             break;
         case ModelIdFilter:
-            Sid::setEnableFilterAll( value & 1 );
+            system->sidManager.setEnableFilterAll( value & 1 );
             break;
 		case ModelIdDigiboost:
-            Sid::setDigiBoostAll( value & 1 );
+            system->sidManager.setDigiBoostAll( value & 1 );
 			break;
 		case ModelIdBias6581:
-			Sid::adjustFilterBias6581All( value );            
+            system->sidManager.adjustFilterBias6581All( value );
 			break;
         case ModelIdBias8580:
-			Sid::adjustFilterBias8580All( value );            
+            system->sidManager.adjustFilterBias8580All( value );
 			break;
         case ModelIdSidExternal:
-            Sid::useExternalFilter = value & 1;
+            system->sidManager.useExternalFilter = value & 1;
             break;
         case ModelIdSidSampleFetch:
-            Sid::setResampleQuality( (uint8_t)value );
+            system->sidManager.setResampleQuality( (uint8_t)value );
             system->updateStats();
             break;
         case ModelIdCiaRev:
-            cia1->setNewVersion( value & 1 );
-            cia2->setNewVersion( value & 1 );
+            system->cia1.setNewVersion( value & 1 );
+            system->cia2.setNewVersion( value & 1 );
             break;
         case ModelIdCpuAneMagic:
             //this is annoying ... look in 6502 cpu code for more informations
-            cpu->setMagicForAne( value & 0xff );
+            system->cpu.setMagicForAne( value & 0xff );
             break;
 		case ModelIdCpuLaxMagic:
             //this is annoying ... look in 6502 cpu code for more informations
-            cpu->setMagicForLax( value & 0xff );
+            system->cpu.setMagicForLax( value & 0xff );
             break;
         case ModelIdGlueLogic:
-            system->glueLogic->setType( (GlueLogic::Type)(value & 1) );
+            system->glueLogic.setType( (GlueLogic::Type)(value & 1) );
             break;
         case ModelIdLeftLineAnomaly:
-            vicIIFast->setVerticalLineAnomaly( (unsigned)value );
-            vicIICycle->setVerticalLineAnomaly( (unsigned)value );
+            system->vicIIFast.setVerticalLineAnomaly( (unsigned)value );
+            system->vicIICycle.setVerticalLineAnomaly( (unsigned)value );
             break;
 		case ModelIdVicIIModel:
-			vicIIFast->setModel( (VicIIBase::Model)value );
-			vicIICycle->setModel( (VicIIBase::Model)value );
+            system->vicIIFast.setModel( (VicIIBase::Model)value );
+            system->vicIICycle.setModel( (VicIIBase::Model)value );
 			system->updateStats();
 			break;
 		case ModelIdDisableGreyDotBug:
-			vicIICycle->disableGreyDotBug( value & 1 );
+            system->vicIICycle.disableGreyDotBug( value & 1 );
 			break;            
         case ModelIdSidMulti:
             system->useExtraSids( value & 7 );
             break;
-        case ModelIdSid1Adr: sid->setIoMask( value ); break;
-        case ModelIdSid2Adr: sids[0]->setIoMask( value ); break;
-        case ModelIdSid3Adr: sids[1]->setIoMask( value ); break;
-        case ModelIdSid4Adr: sids[2]->setIoMask( value ); break;
-        case ModelIdSid5Adr: sids[3]->setIoMask( value ); break;
-        case ModelIdSid6Adr: sids[4]->setIoMask( value ); break;
-        case ModelIdSid7Adr: sids[5]->setIoMask( value ); break;
-        case ModelIdSid8Adr: sids[6]->setIoMask( value ); break;
+        case ModelIdSid1Adr: system->sidManager.setIoMask( 0, value ); break;
+        case ModelIdSid2Adr: system->sidManager.setIoMask( 1, value ); break;
+        case ModelIdSid3Adr: system->sidManager.setIoMask( 2, value ); break;
+        case ModelIdSid4Adr: system->sidManager.setIoMask( 3, value ); break;
+        case ModelIdSid5Adr: system->sidManager.setIoMask( 4, value ); break;
+        case ModelIdSid6Adr: system->sidManager.setIoMask( 5, value ); break;
+        case ModelIdSid7Adr: system->sidManager.setIoMask( 6, value ); break;
+        case ModelIdSid8Adr: system->sidManager.setIoMask( 7, value ); break;
             
-        case ModelIdSid1Left: sid->useLeftChannel( value & 1 ); break;
-        case ModelIdSid2Left: sids[0]->useLeftChannel( value & 1 ); break;
-        case ModelIdSid3Left: sids[1]->useLeftChannel( value & 1 ); break;
-        case ModelIdSid4Left: sids[2]->useLeftChannel( value & 1 ); break;
-        case ModelIdSid5Left: sids[3]->useLeftChannel( value & 1 ); break;
-        case ModelIdSid6Left: sids[4]->useLeftChannel( value & 1 ); break;
-        case ModelIdSid7Left: sids[5]->useLeftChannel( value & 1 ); break;
-        case ModelIdSid8Left: sids[6]->useLeftChannel( value & 1 ); break;
+        case ModelIdSid1Left: system->sidManager.useLeftChannel( 0, value & 1 ); break;
+        case ModelIdSid2Left: system->sidManager.useLeftChannel( 1, value & 1 ); break;
+        case ModelIdSid3Left: system->sidManager.useLeftChannel( 2, value & 1 ); break;
+        case ModelIdSid4Left: system->sidManager.useLeftChannel( 3, value & 1 ); break;
+        case ModelIdSid5Left: system->sidManager.useLeftChannel( 4, value & 1 ); break;
+        case ModelIdSid6Left: system->sidManager.useLeftChannel( 5, value & 1 ); break;
+        case ModelIdSid7Left: system->sidManager.useLeftChannel( 6, value & 1 ); break;
+        case ModelIdSid8Left: system->sidManager.useLeftChannel( 7, value & 1 ); break;
         
-        case ModelIdSid1Right: sid->useRightChannel( value & 1 ); break;
-        case ModelIdSid2Right: sids[0]->useRightChannel( value & 1 ); break;
-        case ModelIdSid3Right: sids[1]->useRightChannel( value & 1 ); break;
-        case ModelIdSid4Right: sids[2]->useRightChannel( value & 1 ); break;
-        case ModelIdSid5Right: sids[3]->useRightChannel( value & 1 ); break;
-        case ModelIdSid6Right: sids[4]->useRightChannel( value & 1 ); break;
-        case ModelIdSid7Right: sids[5]->useRightChannel( value & 1 ); break;
-        case ModelIdSid8Right: sids[6]->useRightChannel( value & 1 ); break;
+        case ModelIdSid1Right: system->sidManager.useRightChannel( 0, value & 1 ); break;
+        case ModelIdSid2Right: system->sidManager.useRightChannel( 1, value & 1 ); break;
+        case ModelIdSid3Right: system->sidManager.useRightChannel( 2, value & 1 ); break;
+        case ModelIdSid4Right: system->sidManager.useRightChannel( 3, value & 1 ); break;
+        case ModelIdSid5Right: system->sidManager.useRightChannel( 4, value & 1 ); break;
+        case ModelIdSid6Right: system->sidManager.useRightChannel( 5, value & 1 ); break;
+        case ModelIdSid7Right: system->sidManager.useRightChannel( 6, value & 1 ); break;
+        case ModelIdSid8Right: system->sidManager.useRightChannel( 7, value & 1 ); break;
         
-        case ModelIdSid2: sids[0]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
-        case ModelIdSid3: sids[1]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
-        case ModelIdSid4: sids[2]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
-        case ModelIdSid5: sids[3]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
-        case ModelIdSid6: sids[4]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
-        case ModelIdSid7: sids[5]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
-        case ModelIdSid8: sids[6]->setType( (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
+        case ModelIdSid2: system->sidManager.setType( 1, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
+        case ModelIdSid3: system->sidManager.setType( 2, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
+        case ModelIdSid4: system->sidManager.setType( 3, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
+        case ModelIdSid5: system->sidManager.setType( 4, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
+        case ModelIdSid6: system->sidManager.setType( 5, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
+        case ModelIdSid7: system->sidManager.setType( 6, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
+        case ModelIdSid8: system->sidManager.setType( 7, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
 
         case ModelIdDiskDriveModel:
-            iecBus->setDriveType( Drive::Type(value) );
+            system->iecBus.setDriveType( Drive::Type(value) );
             break;
         case ModelIdDiskDrivesConnected:
-            iecBus->setDrivesEnabled( value );
+            system->iecBus.setDrivesEnabled( value );
             system->burstOrParallelUpdate();
             break;
         case ModelIdTapeDrivesConnected:
-            tape->setEnabled( value & 1 );
+            system->tape.setEnabled( value & 1 );
             break;
         case ModelIdTapeDriveWobble:
-            tape->setWobble( value & 1 );
+            system->tape.setWobble( value & 1 );
             break;
         case ModelIdDiskDriveWobble:
-            iecBus->setDriveWobble( value );
+            system->iecBus.setDriveWobble( value );
             break;
         case ModelIdDiskDriveStepperSeekTime:
-            iecBus->setStepperSeekTime( value );
+            system->iecBus.setStepperSeekTime( value );
             break;
         case ModelIdDiskDriveSpeed:
-            iecBus->setDriveSpeed( value );
+            system->iecBus.setDriveSpeed( value );
             break;
         case ModelIdCiaBurstMode:
             system->secondDriveCable.burstRequested = value & 1;
@@ -1390,39 +1388,39 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->burstOrParallelUpdate();
             break;
         case ModelIdDriveFastLoader:
-            iecBus->setSpeeder( value );
+            system->iecBus.setSpeeder( value );
             break;
         case ModelIdDriveRam20To3F:
-            iecBus->setExpandedMemory( Drive::ExpandedMemMode::M20, value & 1 );
+            system->iecBus.setExpandedMemory( Drive::ExpandedMemMode::M20, value & 1 );
             break;
         case ModelIdDriveRam40To5F:
-            iecBus->setExpandedMemory( Drive::ExpandedMemMode::M40, value & 1 );
+            system->iecBus.setExpandedMemory( Drive::ExpandedMemMode::M40, value & 1 );
             break;
         case ModelIdDriveRam60To7F:
-            iecBus->setExpandedMemory( Drive::ExpandedMemMode::M60, value & 1 );
+            system->iecBus.setExpandedMemory( Drive::ExpandedMemMode::M60, value & 1 );
             break;
         case ModelIdDriveRam80To9F:
-            iecBus->setExpandedMemory( Drive::ExpandedMemMode::M80, value & 1 );
+            system->iecBus.setExpandedMemory( Drive::ExpandedMemMode::M80, value & 1 );
             break;
         case ModelIdDriveRamA0ToBF:
-            iecBus->setExpandedMemory( Drive::ExpandedMemMode::MA0, value & 1 );
+            system->iecBus.setExpandedMemory( Drive::ExpandedMemMode::MA0, value & 1 );
             break;
 
         case ModelIdCycleAccurateVideo:
             system->cycleRendererNextBoot = value & 1;
             break;
         case ModelIdDiskThread:
-            iecBus->setPowerThread( value & 1 );
+            system->iecBus.setPowerThread( value & 1 );
             break;
         case ModelIdDiskOnDemand:
             system->diskSilence.active = value & 1;
             system->diskIdleOff();
             break;
         case ModelIdD64Accuracy:
-            iecBus->emulateDxxMoreAccurate( value & 1 );
+            system->iecBus.emulateDxxMoreAccurate( value & 1 );
             break;
         case ModelIdDisalignTrack:
-            iecBus->disalignTracks( value & 1 );
+            system->iecBus.disalignTracks( value & 1 );
             break;
     }    
 }
@@ -1431,98 +1429,98 @@ auto Interface::getModelValue(unsigned modelId) -> int {
     
     switch (modelId) {
 		case ModelIdSid:			
-            return sid->type == Sid::Type::MOS_6581 ? 1 : 0;
+            return (system->sidManager.getType(0) == Sid::Type::MOS_6581) ? 1 : 0;
         case ModelIdSidFilterType:
-            return (int)sid->filterType;
+            return (int)system->sidManager.getFilterType();
         case ModelIdSidFilterVolumeEqualizer:
-            return Sid::useVolumeCorrection;
+            return system->sidManager.useVolumeCorrection;
         case ModelIdFilter:
-            return sid->filter.enabled;
+            return system->sidManager.isEnableFilter();
 		case ModelIdDigiboost:
-            return sid->filter.digiBoost;
+            return system->sidManager.getDigiBoost();
 		case ModelIdBias6581:
-			return sid->filter.bias6581;
+			return system->sidManager.getFilterBias6581();
         case ModelIdBias8580:
-			return sid->filter.bias8580;
+            return system->sidManager.getFilterBias8580();
         case ModelIdSidExternal:
-            return (int)Sid::useExternalFilter;
+            return (int)system->sidManager.useExternalFilter;
         case ModelIdSidSampleFetch:
-            return Sid::getResampleQuality();
+            return system->sidManager.getResampleQuality();
         case ModelIdCiaRev:
-            return cia1->isNewVersion();
+            return system->cia1.isNewVersion();
         case ModelIdCpuAneMagic:
-            return cpu->getMagicForAne();
+            return system->cpu.getMagicForAne();
 		case ModelIdCpuLaxMagic:
-			return cpu->getMagicForLax();
+			return system->cpu.getMagicForLax();
         case ModelIdGlueLogic:
-            return (int)system->glueLogic->type;
+            return (int)system->glueLogic.type;
         case ModelIdLeftLineAnomaly:
-            return (int)vicII->getVerticalLineAnomaly();
+            return (int)system->vicII->getVerticalLineAnomaly();
 		case ModelIdVicIIModel:
-			return (int)vicII->getModel();
+			return (int)system->vicII->getModel();
 		case ModelIdDisableGreyDotBug:
-			return vicIICycle->hasGreyDotBugDisbled();
+			return system->vicIICycle.hasGreyDotBugDisbled();
         case ModelIdSidMulti:
             return (int)system->requestedSids;
             
-        case ModelIdSid1Adr: return sid->ioPos;
-        case ModelIdSid2Adr: return sids[0]->ioPos;
-        case ModelIdSid3Adr: return sids[1]->ioPos;
-        case ModelIdSid4Adr: return sids[2]->ioPos;
-        case ModelIdSid5Adr: return sids[3]->ioPos;
-        case ModelIdSid6Adr: return sids[4]->ioPos;
-        case ModelIdSid7Adr: return sids[5]->ioPos;
-        case ModelIdSid8Adr: return sids[6]->ioPos;
+        case ModelIdSid1Adr: return system->sidManager.getIoPos(0);
+        case ModelIdSid2Adr: return system->sidManager.getIoPos(1);
+        case ModelIdSid3Adr: return system->sidManager.getIoPos(2);
+        case ModelIdSid4Adr: return system->sidManager.getIoPos(3);
+        case ModelIdSid5Adr: return system->sidManager.getIoPos(4);
+        case ModelIdSid6Adr: return system->sidManager.getIoPos(5);
+        case ModelIdSid7Adr: return system->sidManager.getIoPos(6);
+        case ModelIdSid8Adr: return system->sidManager.getIoPos(7);
         
-        case ModelIdSid1Left: return (int)sid->leftChannel;
-        case ModelIdSid2Left: return (int)sids[0]->leftChannel;
-        case ModelIdSid3Left: return (int)sids[1]->leftChannel;
-        case ModelIdSid4Left: return (int)sids[2]->leftChannel;
-        case ModelIdSid5Left: return (int)sids[3]->leftChannel;
-        case ModelIdSid6Left: return (int)sids[4]->leftChannel;
-        case ModelIdSid7Left: return (int)sids[5]->leftChannel;
-        case ModelIdSid8Left: return (int)sids[6]->leftChannel;
+        case ModelIdSid1Left: return (int)system->sidManager.hasLeftChannel(0);
+        case ModelIdSid2Left: return (int)system->sidManager.hasLeftChannel(1);
+        case ModelIdSid3Left: return (int)system->sidManager.hasLeftChannel(2);
+        case ModelIdSid4Left: return (int)system->sidManager.hasLeftChannel(3);
+        case ModelIdSid5Left: return (int)system->sidManager.hasLeftChannel(4);
+        case ModelIdSid6Left: return (int)system->sidManager.hasLeftChannel(5);
+        case ModelIdSid7Left: return (int)system->sidManager.hasLeftChannel(6);
+        case ModelIdSid8Left: return (int)system->sidManager.hasLeftChannel(7);
         
-        case ModelIdSid1Right: return (int)sid->rightChannel;
-        case ModelIdSid2Right: return (int)sids[0]->rightChannel;
-        case ModelIdSid3Right: return (int)sids[1]->rightChannel;
-        case ModelIdSid4Right: return (int)sids[2]->rightChannel;
-        case ModelIdSid5Right: return (int)sids[3]->rightChannel;
-        case ModelIdSid6Right: return (int)sids[4]->rightChannel;
-        case ModelIdSid7Right: return (int)sids[5]->rightChannel;
-        case ModelIdSid8Right: return (int)sids[6]->rightChannel;
+        case ModelIdSid1Right: return (int)system->sidManager.hasRightChannel(0);
+        case ModelIdSid2Right: return (int)system->sidManager.hasRightChannel(1);
+        case ModelIdSid3Right: return (int)system->sidManager.hasRightChannel(2);
+        case ModelIdSid4Right: return (int)system->sidManager.hasRightChannel(3);
+        case ModelIdSid5Right: return (int)system->sidManager.hasRightChannel(4);
+        case ModelIdSid6Right: return (int)system->sidManager.hasRightChannel(5);
+        case ModelIdSid7Right: return (int)system->sidManager.hasRightChannel(6);
+        case ModelIdSid8Right: return (int)system->sidManager.hasRightChannel(7);
         
-        case ModelIdSid2: return sids[0]->type == Sid::Type::MOS_6581 ? 1 : 0;
-        case ModelIdSid3: return sids[1]->type == Sid::Type::MOS_6581 ? 1 : 0;
-        case ModelIdSid4: return sids[2]->type == Sid::Type::MOS_6581 ? 1 : 0;
-        case ModelIdSid5: return sids[3]->type == Sid::Type::MOS_6581 ? 1 : 0;
-        case ModelIdSid6: return sids[4]->type == Sid::Type::MOS_6581 ? 1 : 0;
-        case ModelIdSid7: return sids[5]->type == Sid::Type::MOS_6581 ? 1 : 0;
-        case ModelIdSid8: return sids[6]->type == Sid::Type::MOS_6581 ? 1 : 0;
+        case ModelIdSid2: return system->sidManager.getType(1) == Sid::Type::MOS_6581 ? 1 : 0;
+        case ModelIdSid3: return system->sidManager.getType(2) == Sid::Type::MOS_6581 ? 1 : 0;
+        case ModelIdSid4: return system->sidManager.getType(3) == Sid::Type::MOS_6581 ? 1 : 0;
+        case ModelIdSid5: return system->sidManager.getType(4) == Sid::Type::MOS_6581 ? 1 : 0;
+        case ModelIdSid6: return system->sidManager.getType(5) == Sid::Type::MOS_6581 ? 1 : 0;
+        case ModelIdSid7: return system->sidManager.getType(6) == Sid::Type::MOS_6581 ? 1 : 0;
+        case ModelIdSid8: return system->sidManager.getType(7) == Sid::Type::MOS_6581 ? 1 : 0;
 
-        case ModelIdDiskDriveModel:         return (int)iecBus->drives[0]->type;
-        case ModelIdDiskDrivesConnected:    return iecBus->drivesConnected;
-        case ModelIdTapeDrivesConnected:    return tape->isEnabled() ? 1 : 0;
-        case ModelIdTapeDriveWobble:        return tape->hasWobble() ? 1 : 0;
-        case ModelIdDiskDriveWobble:        return (int)iecBus->drives[0]->wobble;
-        case ModelIdDiskDriveSpeed:         return (int)iecBus->drives[0]->rpm;
-        case ModelIdDiskDriveStepperSeekTime:return (int)(iecBus->drives[0]->stepperSeekTime / 100);
+        case ModelIdDiskDriveModel:         return (int)system->iecBus.drives[0]->type;
+        case ModelIdDiskDrivesConnected:    return system->iecBus.drivesConnected;
+        case ModelIdTapeDrivesConnected:    return system->tape.isEnabled() ? 1 : 0;
+        case ModelIdTapeDriveWobble:        return system->tape.hasWobble() ? 1 : 0;
+        case ModelIdDiskDriveWobble:        return (int)system->iecBus.drives[0]->wobble;
+        case ModelIdDiskDriveSpeed:         return (int)system->iecBus.drives[0]->rpm;
+        case ModelIdDiskDriveStepperSeekTime:return (int)(system->iecBus.drives[0]->stepperSeekTime / 100);
 
         case ModelIdCiaBurstMode:           return system->secondDriveCable.burstRequested;
         case ModelIdDriveParallelCable:     return system->secondDriveCable.parallelRequested;
-        case ModelIdDriveFastLoader:        return (int)iecBus->drives[0]->speeder;
+        case ModelIdDriveFastLoader:        return (int)system->iecBus.drives[0]->speeder;
 
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
-        case ModelIdDiskThread:             return iecBus->cpuBurnerRequested;
+        case ModelIdDiskThread:             return system->iecBus.cpuBurnerRequested;
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
-        case ModelIdD64Accuracy:            return (int)iecBus->drives[0]->emulateDxxMoreAccurate;
-        case ModelIdDisalignTrack:          return (int)iecBus->drives[0]->structure.disalignTracks;
+        case ModelIdD64Accuracy:            return (int)system->iecBus.drives[0]->emulateDxxMoreAccurate;
+        case ModelIdDisalignTrack:          return (int)system->iecBus.drives[0]->structure.disalignTracks;
 
-        case ModelIdDriveRam20To3F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M20);
-        case ModelIdDriveRam40To5F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M40);
-        case ModelIdDriveRam60To7F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M60);
-        case ModelIdDriveRam80To9F:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::M80);
-        case ModelIdDriveRamA0ToBF:         return (int)iecBus->getExpandedMemory(Drive::ExpandedMemMode::MA0);
+        case ModelIdDriveRam20To3F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M20);
+        case ModelIdDriveRam40To5F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M40);
+        case ModelIdDriveRam60To7F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M60);
+        case ModelIdDriveRam80To9F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M80);
+        case ModelIdDriveRamA0ToBF:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::MA0);
     }
     return 0;
 }
@@ -1566,7 +1564,7 @@ auto Interface::cropPitch() -> unsigned {
 }
 
 auto Interface::setInputSampling(uint8_t mode) -> void {
-    system->input->setSampling( mode );
+    system->input.setSampling( mode );
 }
 
 auto Interface::enableFloppySounds(bool state) -> void {
@@ -1594,19 +1592,19 @@ auto Interface::getForward() -> unsigned {
 }
 
 auto Interface::getLuma(uint8_t index, bool newRevision) -> double {
-    return vicII->getLuma( index, newRevision );
+    return system->vicII->getLuma( index, newRevision );
 }
 
 auto Interface::getChroma(uint8_t index) -> double {
-    return vicII->getChroma( index );
+    return system->vicII->getChroma( index );
 }
 
 auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
-    
-	vicIIFast->lineCallback.use = state;
-    vicIIFast->lineCallback.line = scanline;	
-    vicIICycle->lineCallback.use = state;
-    vicIICycle->lineCallback.line = scanline;	
+
+    system->vicIIFast.lineCallback.use = state;
+    system->vicIIFast.lineCallback.line = scanline;
+    system->vicIICycle.lineCallback.use = state;
+    system->vicIICycle.lineCallback.line = scanline;
 
 }
 
@@ -1617,7 +1615,7 @@ auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
         if (!expansion.memoryType)
             continue;
         
-        if (expansion.id != expansionPort->id)
+        if (expansion.id != system->expansionPort->id)
             continue;
         
         if (expansion.memoryType == memoryType) {
@@ -1625,7 +1623,7 @@ auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
             auto memory = getMemoryById(*memoryType, memoryId);
             
             if (memory)
-                expansionPort->prepareRam( memory->size );            
+                system->expansionPort->prepareRam( memory->size );
         }
         
         break;
@@ -1652,17 +1650,17 @@ auto Interface::setExpansion(unsigned expansionId) -> void {
     if (!expansion)
         return;
     
-    system->setExpansion( *expansion );
+    system->setExpansion( (ExpansionId)expansion->id );
 }
 
 auto Interface::unsetExpansion() -> void {
     
-    system->setExpansion( *getExpansionById( ExpansionIdNone ) );
+    system->setExpansion( ExpansionIdNone );
 }
 
 auto Interface::getExpansion() -> Expansion* {
 
-    return getExpansionById( expansionPort->id );
+    return getExpansionById( system->expansionPort->id );
 }
 
 auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void {
@@ -1673,19 +1671,19 @@ auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state 
         return;
     
     if (group->expansion->id == ExpansionIdEasyFlash) {
-        if (easyFlash->media == media)
-            easyFlash->setJumper( jumperId, state );
+        if (system->easyFlash->media == media)
+            system->easyFlash->setJumper( jumperId, state );
     
     } else if (group->expansion->id == ExpansionIdRetroReplay) {        
-        if (retroReplay->media == media)
-            retroReplay->setJumper( jumperId, state );
+        if (system->retroReplay->media == media)
+            system->retroReplay->setJumper( jumperId, state );
 
     } else if (group->expansion->id == ExpansionIdRS232) {
-        if (acia->media == media)
-            acia->setJumper( jumperId, state );
+        if (system->acia->media == media)
+            system->acia->setJumper( jumperId, state );
 
     } else if (group->expansion->id == ExpansionIdFastloader) {
-        fastloader->setJumper( state );
+        system->fastloader->setJumper( state );
     }
 }
 
@@ -1697,34 +1695,34 @@ auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
         return false;
 
     if (group->expansion->id == ExpansionIdEasyFlash)
-        return easyFlash->getJumper(jumperId);
+        return system->easyFlash->getJumper(jumperId);
 
     else if (group->expansion->id == ExpansionIdRetroReplay)
-        return retroReplay->getJumper(jumperId);
+        return system->retroReplay->getJumper(jumperId);
 
     else if (group->expansion->id == ExpansionIdRS232)
-        return acia->getJumper(jumperId);
+        return system->acia->getJumper(jumperId);
 
     else if (group->expansion->id == ExpansionIdFastloader)
-        return fastloader->getJumper();
+        return system->fastloader->getJumper();
 
     return false;
 }
 
 auto Interface::hasFreezeButton() -> bool {
-    return expansionPort->hasFreezeButton();
+    return system->expansionPort->hasFreezeButton();
 }
 
 auto Interface::freezeButton() -> void {
-    expansionPort->freeze();
+    system->expansionPort->freeze();
 }
 
 auto Interface::hasCustomCartridgeButton() -> bool {
-    return expansionPort->hasCustomButton();
+    return system->expansionPort->hasCustomButton();
 }
 
 auto Interface::customCartridgeButton() -> void {
-    expansionPort->customButton();
+    system->expansionPort->customButton();
 }
 
 auto Interface::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) -> Expansion* {
@@ -1733,11 +1731,11 @@ auto Interface::analyzeExpansion(uint8_t* data, unsigned size, std::string suffi
 }
 
 auto Interface::videoAddMeta(bool state) -> void {
-    vicIIFast->setMeta( state );
+    system->vicIIFast.setMeta( state );
 }
 
 auto Interface::setMonitorFpsRatio(double ratio) -> void {
-    Sid::updateChamberlinFrequencyAll( vicII->frequency() * ratio );
+    system->sidManager.updateChamberlinFrequencyAll( system->vicII->frequency() * ratio );
 
     system->hintSlowSpeed( ratio < 0.5 );
 }
@@ -1758,7 +1756,7 @@ auto Interface::requestImmediateReturn() -> void {
 
 auto Interface::prepareSocket( Media* media, std::string address, std::string port ) -> void {
 
-    acia->prepareSocket( media, address, port );
+    system->acia->prepareSocket( media, address, port );
 }
 
 auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
@@ -1777,10 +1775,10 @@ auto Interface::getModelIdOfCycleRenderer() -> unsigned {
 }
 
 auto Interface::autoStartedByMediaGroup() -> MediaGroup* {
-    if (iecBus->wasAutostarted())
+    if (system->iecBus.wasAutostarted())
         return getDiskMediaGroup();
 
-    if (tape->wasAutostarted())
+    if (system->tape.wasAutostarted())
         return getTapeMediaGroup();
 
     return nullptr;

@@ -13,9 +13,13 @@
 #define LEFT_LINE_ANOMALY_ONE_PIX (LEFT_LINE_ANOMALY - 700)
 
 namespace LIBC64 {  
-    
+
+struct System;
+struct ExpansionPort;
+struct M6510;
+
 struct VicIIBase {
-	VicIIBase();
+	VicIIBase(System* system);
 	virtual ~VicIIBase();
 
 	enum Interrupt {
@@ -59,7 +63,10 @@ struct VicIIBase {
 		unsigned framePos = 1;
 		bool permanent = false;
 	} leftLineAnomaly;
-	
+
+	M6510& cpu;
+	ExpansionPort* expansionPort;
+    System* system;
 	auto setModel(Model model) -> void;
 	auto getModel() -> Model { return model; }
 	auto updateBorderData() -> void;
@@ -244,7 +251,5 @@ protected:
 	template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
 
 };
-
-extern VicIIBase* vicII;
 
 }

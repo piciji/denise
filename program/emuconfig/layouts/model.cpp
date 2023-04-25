@@ -152,10 +152,11 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<bool>( _underscore(model->name), checked );
 
-                    emuThread->lock();
+                    bool locked = emuThread->lock();
                     emulator->setModelValue( model->id, checked );
                     applyCustomStuff( block, model );
-                    emuThread->unlock();
+                    if (locked) // nested (e.g. changing speeder)
+                        emuThread->unlock();
                 };
 
 			} else if (model->isRadio() ) {	
@@ -166,10 +167,11 @@ auto ModelLayout::setEvents( ) -> void {
 						
 						tabWindow->settings->set<unsigned>(_underscore(model->name), val);
 
-                        emuThread->lock();
+                        bool locked = emuThread->lock();
 						emulator->setModelValue( model->id, val );
                         applyCustomStuff( block, model );
-                        emuThread->unlock();
+                        if (locked)
+                            emuThread->unlock();
 					};
 					val++;
 				}
@@ -182,10 +184,11 @@ auto ModelLayout::setEvents( ) -> void {
 					
 					tabWindow->settings->set<unsigned>( _underscore(model->name), val);
 
-                    emuThread->lock();
+                    bool locked = emuThread->lock();
 					emulator->setModelValue( model->id, val );
                     applyCustomStuff( block, model );
-                    emuThread->unlock();
+                    if (locked)
+                        emuThread->unlock();
 				};
 					
             } else if (model->isSlider() ) {	
@@ -219,10 +222,11 @@ auto ModelLayout::setEvents( ) -> void {
 
                     block->sliderLayout->value.setText( displayText + unit );
 
-                    emuThread->lock();
+                    bool locked = emuThread->lock();
                     emulator->setModelValue( model->id, val );
                     applyCustomStuff( block, model );
-                    emuThread->unlock();
+                    if (locked)
+                        emuThread->unlock();
                 };
                 
             } else {
@@ -247,10 +251,11 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<int>( _underscore(model->name), val );
 
-                    emuThread->lock();
+                    bool locked = emuThread->lock();
                     emulator->setModelValue( model->id, val );
                     applyCustomStuff( block, model );
-                    emuThread->unlock();
+                    if (locked)
+                        emuThread->unlock();
                 };			
             }            
         }
@@ -659,9 +664,7 @@ auto ModelLayout::updateBurstVisibillity() -> void {
 }
 
 auto ModelLayout::hintDriveSettings() -> void {
-    bool activeBefore = activeEmulator != nullptr;
-    if (activeBefore)
-        program->powerOff();
+    program->powerOff();
 
     auto blockFastloader = getBlock( LIBC64::Interface::ModelIdDriveFastLoader );
     auto blockParallel = getBlock( LIBC64::Interface::ModelIdDriveParallelCable );
@@ -734,8 +737,7 @@ auto ModelLayout::hintDriveSettings() -> void {
 
     blockDriveModel->combo->onChange();
 
-    if (activeBefore)
-        program->power(emulator);
+    program->power(emulator);
 }
 
 auto ModelLayout::updateBiasVisibillity() -> void {
@@ -902,6 +904,42 @@ auto ModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tool
             case LIBC64::Interface::ModelIdSid7:
             case LIBC64::Interface::ModelIdSid8:
                 tooltip = "SID tooltip";
+                break;
+
+            case LIBC64::Interface::ModelIdSid1Adr:
+            case LIBC64::Interface::ModelIdSid2Adr:
+            case LIBC64::Interface::ModelIdSid3Adr:
+            case LIBC64::Interface::ModelIdSid4Adr:
+            case LIBC64::Interface::ModelIdSid5Adr:
+            case LIBC64::Interface::ModelIdSid6Adr:
+            case LIBC64::Interface::ModelIdSid7Adr:
+            case LIBC64::Interface::ModelIdSid8Adr:
+                name = "Address";
+                tooltip = name + " tooltip";
+                break;
+
+            case LIBC64::Interface::ModelIdSid1Left:
+            case LIBC64::Interface::ModelIdSid2Left:
+            case LIBC64::Interface::ModelIdSid3Left:
+            case LIBC64::Interface::ModelIdSid4Left:
+            case LIBC64::Interface::ModelIdSid5Left:
+            case LIBC64::Interface::ModelIdSid6Left:
+            case LIBC64::Interface::ModelIdSid7Left:
+            case LIBC64::Interface::ModelIdSid8Left:
+                name = "Left Channel";
+                tooltip = name + " tooltip";
+                break;
+
+            case LIBC64::Interface::ModelIdSid1Right:
+            case LIBC64::Interface::ModelIdSid2Right:
+            case LIBC64::Interface::ModelIdSid3Right:
+            case LIBC64::Interface::ModelIdSid4Right:
+            case LIBC64::Interface::ModelIdSid5Right:
+            case LIBC64::Interface::ModelIdSid6Right:
+            case LIBC64::Interface::ModelIdSid7Right:
+            case LIBC64::Interface::ModelIdSid8Right:
+                name = "Right Channel";
+                tooltip = name + " tooltip";
                 break;
 
             case LIBC64::Interface::ModelIdDriveRam20To3F:

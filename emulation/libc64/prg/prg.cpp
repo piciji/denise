@@ -2,11 +2,13 @@
 #include "prg.h"
 
 #include "../system/keyBuffer.h"
+#include "../../tools/serializer.h"
+#include "../system/system.h"
 #include <cstring>
 
 namespace LIBC64 {
-	
-std::vector<Prg*> prgs;
+
+Prg::Prg(System* system) : system(system) {}
 
 Prg::~Prg() {
     unset();
@@ -109,9 +111,7 @@ auto Prg::inject( ) -> void {
     ram[0x2e] = ram[0x30] = ram[0x32] = ram[0xaf] = end >> 8;				
 }
 
-auto Prg::getMemory(unsigned& prgSize) -> uint8_t* {
-    uint8_t* ram = system->ram;
-
+auto Prg::getMemory(unsigned& prgSize, uint8_t* ram) -> uint8_t* {
     unsigned _start = ram[0x2b] | (ram[0x2c] << 8);
     unsigned _end = ram[0x2d] | (ram[0x2e] << 8);    
 
@@ -291,16 +291,6 @@ auto Prg::find( std::vector<uint8_t> match, unsigned offset ) -> bool {
             return false;
 
     return true;
-}
-
-auto Prg::getInstance(Emulator::Interface::Media* media) -> Prg* {
-    
-    for(auto prg : prgs) {
-        if (prg->media == media )
-            return prg;
-    }
-    
-    return nullptr;
 }
 
 }
