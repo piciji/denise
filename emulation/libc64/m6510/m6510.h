@@ -86,7 +86,9 @@ struct M6510 {
 	using Callback = std::function<void ()>;
 	Callback unChargeBit6;
 	Callback unChargeBit7;
-	
+
+    auto registerCallbacks() -> void;
+
 	auto process() -> void;
 	
 	template<bool sampleInterrupt, bool rememberRdy = false> auto busRead( uint16_t addr ) -> uint8_t;

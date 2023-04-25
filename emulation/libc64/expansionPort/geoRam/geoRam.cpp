@@ -43,6 +43,32 @@ auto GeoRam::readIo1( uint16_t addr ) -> uint8_t {
 	return data[(blockOf16k << 14) + (page << 8) + (addr & 0xff)];
 }
 
+auto GeoRam::setRamSize(int id) -> void {
+    switch (id) {
+        default:
+        case 0: prepareRam( 64 ); break;
+        case 1: prepareRam( 128 ); break;
+        case 2: prepareRam( 256 ); break;
+        case 3: prepareRam( 512 ); break;
+        case 4: prepareRam( 1024 ); break;
+        case 5: prepareRam( 2048 ); break;
+        case 6: prepareRam( 4096 ); break;
+    }
+}
+
+auto GeoRam::getRamSize() -> int {
+    switch (size) {
+        case 64 * 1024: return 0;
+        case 128 * 1024: return 1;
+        case 256 * 1024: return 2;
+        case 512 * 1024: return 3;
+        case 1024 * 1024: return 4;
+        case 2048 * 1024: return 5;
+        case 4096 * 1024: return 6;
+    }
+    return 0;
+}
+
 auto GeoRam::prepareRam(unsigned size) -> void {    
 	
 	unsigned sizeInKb = size;

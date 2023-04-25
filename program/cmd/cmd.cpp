@@ -595,19 +595,11 @@ auto Cmd::setReuSize(std::string arg) -> void {
         return;
     }
 
-    auto emulator = program->getEmulator("C64");  
-    auto settings = program->getSettings( emulator );
-    auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdReu ];
-    auto memoryType = expansion.memoryType;
+    std::vector<int> ids = {128, 256, 512, 1024, 2048, 4096, 8192, 16384};
 
-    for(auto& memory : memoryType->memory) {
-        if (memory.size == reuSize) {
-            
-            settings->set<unsigned>( _underscore( memoryType->name ) + "_mem", memory.id);
-            
-            settings->set<unsigned>( "expansion", expansion.id);
-        }
-    }       
+    int pos = GUIKIT::Vector::findPos<int>(ids, reuSize);
+
+    updateModel(program->getEmulator("C64"), LIBC64::Interface::ModelIdReuRam, pos);
 }
 
 auto Cmd::setGeoRamSize(std::string arg) -> void {
@@ -622,19 +614,11 @@ auto Cmd::setGeoRamSize(std::string arg) -> void {
         return;
     }
 
-    auto emulator = program->getEmulator("C64");  
-    auto settings = program->getSettings( emulator );
-    auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdGeoRam ];
-    auto memoryType = expansion.memoryType;
+    std::vector<int> ids = {64, 128, 256, 512, 1024, 2048, 4096};
 
-    for(auto& memory : memoryType->memory) {
-        if (memory.size == geoRamSize) {
-            
-            settings->set<unsigned>( _underscore( memoryType->name ) + "_mem", memory.id);
-            
-            settings->set<unsigned>( "expansion", expansion.id);
-        }
-    }       
+    int pos = GUIKIT::Vector::findPos<int>(ids, geoRamSize);
+
+    updateModel(program->getEmulator("C64"), LIBC64::Interface::ModelIdGeoRam, pos);
 }
 
 auto Cmd::setCustomConfig(std::string& ident, std::string path) -> void {

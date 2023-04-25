@@ -42,31 +42,6 @@ ExpansionLayout::ExpansionLayout() {
     setFont(GUIKIT::Font::system("bold"));    
 }
 
-MemoryLayout::Block::Block() :
-    sliderLayout("mb")            
-{
-    append(sliderLayout, {~0u, ~0u} );
-}
-
-MemoryLayout::MemoryLayout() {
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
-auto MemoryLayout::build( Emulator::Interface* emulator ) -> void {
-    auto& memoryTypes = emulator->memoryTypes;
-    if (memoryTypes.empty()) return;
-
-    for(auto& memoryType : memoryTypes ) {                
-        auto block = new Block();
-        blocks.push_back( block );
-        block->memoryType = &memoryType;
-        append(*block, {~0u, 0u}, &memoryType != &memoryTypes.back() ? 7 : 0);
-        block->sliderLayout.slider.setLength( memoryType.memory.size() );
-        block->sliderLayout.name.setText( memoryType.name + ":" );
-    }          
-}
-
 SystemLayout::SystemLayout(TabWindow* tabWindow) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
@@ -89,7 +64,6 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     else
         dim = { 1, 2 };
 
-    memoryLayout.build( emulator );
     modelLayout.build( tabWindow, emulator,
     {Emulator::Interface::Model::Purpose::Cpu, Emulator::Interface::Model::Purpose::GraphicChip, Emulator::Interface::Model::Purpose::SoundChip,
     Emulator::Interface::Model::Purpose::Cia, Emulator::Interface::Model::Purpose::SubModels, Emulator::Interface::Model::Purpose::Misc}, dim );
@@ -99,7 +73,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     else
         dim = { 1, 1, 1, 1, 1, 1 };
 
-    memoryNewModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Memory}, { 1, 1, 1 } );
+    memoryModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Memory}, { 1, 1, 1 } );
     driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveSettings}, dim );
     performanceModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Performance}, { 3 } );
 
@@ -110,11 +84,9 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     if (!expansionLayout.lines.empty())
         leftLayout.append(expansionLayout, {~0u, 0u}, 10);
 
-    if (memoryNewModelLayout.hasElements())
-        leftLayout.append(memoryNewModelLayout, {~0u, 0u}, 10);
-    else if (!memoryLayout.blocks.empty())
-        leftLayout.append(memoryLayout, {~0u, 0u});
-    
+    if (memoryModelLayout.hasElements())
+        leftLayout.append(memoryModelLayout, {~0u, 0u}, 10);
+
     upperLayout.append(leftLayout, {~0u, 0u}, 10);
 
     if (driveModelLayout.hasElements())
@@ -131,25 +103,10 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
         append(performanceModelLayout, {~0u, 0u});
 
     modelLayout.setEvents();
-    memoryNewModelLayout.setEvents();
+    memoryModelLayout.setEvents();
     driveModelLayout.setEvents();
     performanceModelLayout.setEvents();
-		
-    for( auto block : memoryLayout.blocks ) {
-        auto memoryType = block->memoryType;
-        
-        block->sliderLayout.slider.onChange = [this, block, memoryType](unsigned position) {
-			if (position >= memoryType->memory.size())
-				return;
-			
-            _settings->set<unsigned>( _underscore(memoryType->name) + "_mem", position);
-            block->sliderLayout.value.setText( getSizeString( memoryType->memory[position].size ) );
 
-			if (activeEmulator)                
-                memorySliderReset.setEnabled();				            
-        };
-    }
-               
     for ( auto line : expansionLayout.lines ) {
         for( auto block : line->blocks ) {            
             block->box.onActivate = [this, block]() {
@@ -170,12 +127,10 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 }
 
 auto SystemLayout::translate() -> void {
-    memoryLayout.setText( trans->get("memory") );
-    
     modelLayout.translate();
     driveModelLayout.translate( "drives" );
     performanceModelLayout.translate( "accuracy and performance" );
-    memoryNewModelLayout.translate( "memory" );
+    memoryModelLayout.translate( "memory" );
     
     expansionLayout.setText( trans->get("expansion_port") );
     
@@ -184,30 +139,16 @@ auto SystemLayout::translate() -> void {
             block->box.setText( trans->get( block->expansion->name ) );
         }
     }
-    
-    std::vector<SliderLayout*> sliderLayouts;
-    for(auto block : memoryLayout.blocks ) {    
-        sliderLayouts.push_back( &block->sliderLayout );
-    }
-    
-    SliderLayout::scale(sliderLayouts, "1024 mb");
 
     driveModelLayout.alignSlider( "300.00 RPM" );
-    memoryNewModelLayout.alignSlider( "0.00 MB" );
-}
-
-auto SystemLayout::getSizeString( unsigned sizeInKb ) -> std::string {
-    
-    if (sizeInKb < 1024)
-        return std::to_string( sizeInKb ) + " kb";
-    
-    float _size = (float)sizeInKb / 1024.0;
-    
-    return GUIKIT::String::convertDoubleToString( _size, 1 ) + " mb";
+    memoryModelLayout.alignSlider( "0.00 MB" );
 }
 
 auto SystemLayout::updateExpansionMemory() -> void {
-    
+    if (dynamic_cast<LIBAMI::Interface*>(emulator))
+        return;
+
+    Emulator::Interface::Model* useModel = nullptr;
     Emulator::Interface::Expansion* expansionSelected = nullptr;
     
     for ( auto line : expansionLayout.lines ) {
@@ -218,34 +159,18 @@ auto SystemLayout::updateExpansionMemory() -> void {
             }                
         }
     }
-		
-	std::vector<MemoryLayout::Block*> inUse;
-    
-	for( auto& expansion : emulator->expansions ) {
 
-		if (!expansion.memoryType)
-			continue;
+    if (expansionSelected) {
+        if (expansionSelected->id == LIBC64::Interface::ExpansionIdReu ||
+            expansionSelected->id == LIBC64::Interface::ExpansionIdReuRetroReplay) {
+            useModel = emulator->getModel(LIBC64::Interface::ModelIdReuRam);
 
-		for (auto block : memoryLayout.blocks) {
+        } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdGeoRam) {
+            useModel = emulator->getModel(LIBC64::Interface::ModelIdGeoRam);
+        }
+    }
 
-			if (block->memoryType == expansion.memoryType) {
-				
-				if (&expansion == expansionSelected) {
-					
-					block->setEnabled( true );
-					
-					inUse.push_back( block );
-					
-				} else {
-					
-					if (!GUIKIT::Vector::find( inUse, block ))
-						block->setEnabled( false );
-				}								
-				
-				break;
-			}
-		}
-	}
+    memoryModelLayout.setVisibility( useModel );
 }
 
 auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void {
@@ -277,19 +202,8 @@ auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) 
 }
 
 auto SystemLayout::loadSettings() -> void {
-
-    for( auto block : memoryLayout.blocks ) {
-        auto memoryType = block->memoryType;
-        
-        unsigned id = _settings->get<unsigned>(_underscore(memoryType->name) + "_mem", memoryType->defaultMemoryId);
-        if (id >= memoryType->memory.size())
-            id = memoryType->defaultMemoryId;
-        
-        block->sliderLayout.slider.setPosition(id);
-        block->sliderLayout.value.setText(getSizeString(memoryType->memory[id].size)); 
-    }
-    
     auto expansionId = _settings->get<unsigned>( "expansion", 0);
+
     for ( auto line : expansionLayout.lines ) {
         for( auto block : line->blocks ) {
             if (block->expansion->id == expansionId)
@@ -305,5 +219,5 @@ auto SystemLayout::loadSettings() -> void {
 
     performanceModelLayout.updateWidgets();
 
-    memoryNewModelLayout.updateWidgets();
+    memoryModelLayout.updateWidgets();
 }

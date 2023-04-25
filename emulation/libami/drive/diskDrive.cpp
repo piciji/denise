@@ -352,13 +352,13 @@ auto DiskDrive::writeCiaPortB(uint8_t value, uint8_t oldValue) -> void {
     bool selectedLineOld = oldValue & (8 << number);
     bool sideBefore = (oldValue & 4) ? 0 : 1;
 
+    selected = !selectedLine;
     if (selectedLineOld && !selectedLine) {
         idPos = (idPos + 1) & 31;
         setMotor( !(value & oldValue & 0x80) );
     }
 
     side = (value & 4) ? 0 : 1;
-    selected = !selectedLine;
 
     if (!selectedLineOld && (value & 1) && (!(oldValue & 1)) ) { // step
         if (inserted) {

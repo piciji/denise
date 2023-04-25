@@ -77,7 +77,7 @@ struct SidManager {
 
     auto updateClock() -> void;
     template<int options> auto updateClockT() -> void;
-    auto registerGlobalCallbacks() -> void;
+    auto registerCallbacks() -> void;
     auto clone( uint8_t start, uint8_t end ) -> void;
 
     auto useLeftChannel(int nr, bool state) -> void;

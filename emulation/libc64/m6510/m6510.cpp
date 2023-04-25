@@ -22,9 +22,11 @@ traps(traps) {
 	
 	unChargeBit6 = [this]() { bit6charge = 0; };
 	unChargeBit7 = [this]() { bit7charge = 0; };
-	
-	sysTimer.registerCallback( { { &unChargeBit6, 1 }, { &unChargeBit7, 1 } } );
-}	
+}
+
+auto M6510::registerCallbacks() -> void {
+    sysTimer.registerCallback( { { &unChargeBit6, 1 }, { &unChargeBit7, 1 } } );
+}
 
 auto M6510::power() -> void {
 

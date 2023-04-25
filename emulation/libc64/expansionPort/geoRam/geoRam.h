@@ -31,6 +31,9 @@ struct GeoRam : ExpansionPort {
 	auto writeIo2( uint16_t addr, uint8_t value ) -> void;
 	auto readIo1( uint16_t addr ) -> uint8_t;
 	auto prepareRam(unsigned size) -> void;
+
+    auto setRamSize(int id) -> void;
+    auto getRamSize() -> int;
 	
 	auto isBootable( ) -> bool;
 	

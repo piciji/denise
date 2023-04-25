@@ -510,6 +510,7 @@ auto States::updateModels() -> void {
         if (emuView->systemLayout) {
             emuView->systemLayout->modelLayout.updateWidgets();
             emuView->systemLayout->driveModelLayout.updateWidgets();
+            emuView->systemLayout->memoryModelLayout.updateWidgets();
 
         } else if (emuView->mediaLayout) {
             int value = emulator->getModelValue(emulator->getModelIdOfEnabledDrives(emulator->getDiskMediaGroup()));

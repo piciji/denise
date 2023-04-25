@@ -110,13 +110,15 @@ Tape::Tape( System* system, Emulator::Interface::Media* mediaConnected ) : syste
     autoStarted = false;
     cylcesPerSecond = 0;
 	reset();
-    
-    sysTimer.registerCallback( { {&motorOff, 1}, {&worker, 1}, {&delayMode, 1} } );
 }    
 
 Tape::~Tape() {
     delete[] fetchData;
 	delete[] writeData;
+}
+
+auto Tape::registerCallbacks() -> void {
+    sysTimer.registerCallback( { {&motorOff, 1}, {&worker, 1}, {&delayMode, 1} } );
 }
 
 auto Tape::updateDeviceState() -> void {

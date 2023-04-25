@@ -5,13 +5,15 @@
 
 namespace LIBC64 {
 
-GlueLogic::GlueLogic(System* system, Emulator::SystemTimer& sysTimer) : system(system), sysTimer(system->sysTimer) {
+GlueLogic::GlueLogic(System* system) : system(system), sysTimer(system->sysTimer) {
 
     updateVbank = [this]() {
 
         this->system->vicBank = vbankBefore << 14;
     };
+}
 
+auto GlueLogic::registerCallbacks() -> void {
     sysTimer.registerCallback( {&updateVbank, 1} );
 }
 

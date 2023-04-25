@@ -62,6 +62,10 @@ struct Reu : ExpansionPort {
     auto readIo2( uint16_t addr ) -> uint8_t;    
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     auto prepareRam(unsigned size) -> void;
+
+    auto setRamSize(int id) -> void;
+    auto getRamSize() -> int;
+
     auto setRam( uint8_t* dump, unsigned dumpSize ) -> void;
     auto unsetRam() -> void;
     auto injectRam() -> void;

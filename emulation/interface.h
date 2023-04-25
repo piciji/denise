@@ -129,21 +129,6 @@ struct Interface {
 
     std::vector<Connector> connectors;    
 
-    struct Memory {
-        unsigned id;
-        unsigned size;
-    };
-
-    struct MemoryType {
-        unsigned id;
-        std::string name;
-        unsigned defaultMemoryId;
-
-        std::vector<Memory> memory;
-    };
-
-    std::vector<MemoryType> memoryTypes; 
-    
     struct MediaGroup;
     
     // possible extra hardware a medium can have
@@ -162,7 +147,6 @@ struct Interface {
         unsigned id;
         std::string name;        
         unsigned typeFlags;
-        MemoryType* memoryType; // RAM selection
         MediaGroup* mediaGroup; // ROM, RAM dumps
 		MediaGroup* mediaGroupExpanded; // expanded expansion
         std::vector<PCBLayout> pcbs;
@@ -528,8 +512,7 @@ struct Interface {
     virtual auto needExternalKeyUpdates() -> bool { return false; }
     virtual auto informAboutKeyUpdate() -> void {}
     virtual auto sendKeyChange(bool pressed, Device::Input* input) -> void {}
-    
-    virtual auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void {}    
+
     virtual auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void {}
     virtual auto getMemoryInitPattern( uint8_t* pattern ) -> void {}
     virtual auto getMemorySize() -> unsigned { return 0; }
@@ -717,17 +700,7 @@ struct Interface {
             
         return &connectors[ connectorId ];  
     } 
-    
-    auto getMemoryById( MemoryType& memoryType, unsigned memoryId ) -> Memory* {
-        
-        for(auto& memory : memoryType.memory) {
-            
-            if (memory.id == memoryId)
-                return &memory;
-        }
-        return nullptr;
-    }
-    
+
     auto getExpansionById( unsigned id ) -> Expansion* {
         
         for(auto& expansion : expansions) {

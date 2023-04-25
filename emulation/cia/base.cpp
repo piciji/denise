@@ -39,13 +39,13 @@
 
 namespace CIA {
       
-Base::Base( uint8_t model, Emulator::SystemTimer* events )
+Base::Base( uint8_t model, Emulator::SystemTimer& events )
 :
+events(events),
 cra( timer[T_A].control ),
 crb( timer[T_B].control )
 {	
 	this->model = model;
-    this->events = events;
 	
     readPort = []( Port port, Lines* plines ) { 
         // basic mode, when lines not modified from external
@@ -64,7 +64,7 @@ crb( timer[T_B].control )
             
             if ( timer[i].control & 1 ) {
                 timer[i].run |= 2;
-				this->events->add( &(timer[i].stepOut), 1 );
+				this->events.add( &(timer[i].stepOut), 1 );
 			}
         };
 		
@@ -73,10 +73,6 @@ crb( timer[T_B].control )
 		timer[i].stop = [this,i]() { timer[i].run &= ~1; };
 
 		timer[i].disableOneshot = [this,i]() { timer[i].oneshot = 0; };
-        
-        events->registerCallback(
-            { {&(timer[i].start), 1}, {&(timer[i].step), 1},{&(timer[i].stepOut), 1}, {&(timer[i].stop), 1}, {&(timer[i].disableOneshot), 1} }
-        );
 	}
     
     updateIcrAndSetIrq = [this]() {
@@ -121,7 +117,7 @@ crb( timer[T_B].control )
 			serialOut( (sdrShift & 0x80) != 0, false );
 
 		if (--sdrShiftCount == 1) {
-			this->events->add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
+			this->events.add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
 
 			if (sdrPending) {
 				sdrPending = false;
@@ -132,11 +128,19 @@ crb( timer[T_B].control )
 		}			
 	};
 	
-	flipDummy = [this]() {};
+	flipDummy = []() {};
 	
 	newVersion = true;
-    
-    events->registerCallback( { {&updateIcrAndSetIrq, 1}, {&updateIcrOnly, 1}, {&startSdr, 1}, {&finishSdr, 1}, {&flipCnt, 1}, {&flipDummy, 1}  } );
+}
+
+auto Base::registerCallbacks() -> void {
+    for( unsigned i = 0; i < 2; i++ ) {
+        events.registerCallback(
+                { {&(timer[i].start), 1}, {&(timer[i].step), 1},{&(timer[i].stepOut), 1}, {&(timer[i].stop), 1}, {&(timer[i].disableOneshot), 1} }
+        );
+    }
+
+    events.registerCallback( { {&updateIcrAndSetIrq, 1}, {&updateIcrOnly, 1}, {&startSdr, 1}, {&finishSdr, 1}, {&flipCnt, 1}, {&flipDummy, 1}  } );
 }
 
 auto Base::reset() -> void {
@@ -200,7 +204,7 @@ inline auto Base::interruptControl() -> void {
             irqCall( false );
             // interrupt is scheduled for next cycle, so cpu can not recognize it this cycle.
             // icr is reseted next cycle too with zero or the interrupts incomming this cycle
-            events->add( &updateIcrAndSetIrq, 1, Emulator::SystemTimer::Action::UpdateExisting );
+            events.add( &updateIcrAndSetIrq, 1, Emulator::SystemTimer::Action::UpdateExisting );
         } else
             // normal interrupt behaviour
             irqCall( true );
@@ -212,7 +216,7 @@ inline auto Base::interruptControl() -> void {
         // we schedule to update icr next cycle, so a possible second read in a row
         // gets the non reseted state of icr.
         // in next cycle icr will be reseted with zero or the interrupts incomming this cycle
-        events->add( &updateIcrOnly, 1, Emulator::SystemTimer::Action::UpdateExisting );
+        events.add( &updateIcrOnly, 1, Emulator::SystemTimer::Action::UpdateExisting );
     }                 
 }
 
@@ -226,7 +230,7 @@ inline auto Base::interruptControlOld() -> void {
             icr = 0x80;
             irqCall( false );   
             // icr is reseted next cycle with zero or the interrupts incomming this cycle
-			events->add( &updateIcrOnly, 1, Emulator::SystemTimer::Action::UpdateExisting );    
+			events.add( &updateIcrOnly, 1, Emulator::SystemTimer::Action::UpdateExisting );
            
         } else {
             // normal interrupt behaviour
@@ -241,7 +245,7 @@ inline auto Base::interruptControlOld() -> void {
 		
         irqCall( false );
         
-		events->add( &updateIcrOnly, 1, Emulator::SystemTimer::Action::UpdateExisting );    
+		events.add( &updateIcrOnly, 1, Emulator::SystemTimer::Action::UpdateExisting );
     }
 }
 
@@ -279,7 +283,7 @@ template<uint8_t timerId> inline auto Base::updateState( ) -> void {
 
                 rTimer.control &= ~1;
 
-                events->remove(&(rTimer.start));
+                events.remove(&(rTimer.start));
 
                 rTimer.run = 0;
             }
@@ -311,10 +315,10 @@ auto Base::timerAUnderflow() -> void {
 	timer[T_A].toggle ^= 1;
 	
 	if ( (crb & 0x61) == 0x41 )
-		events->add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );    
+		events.add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );
 	
     else if ( (delay & CIA_CNT1) && ((crb & 0x61) == 0x61 ))
-		events->add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );    
+		events.add( &(timer[T_B].step), 1, Emulator::SystemTimer::Action::UpdateExisting );
 	
     handleInterrupt( 1 );
 }	
@@ -357,10 +361,10 @@ auto Base::shiftOut() -> void {
 	if (!sdrShiftCount)
 		return;
 	
-	if ( events->has(&flipDummy) || events->has(&flipCnt) )
-		events->add( &flipDummy, 2 ); // you need at least one cycle delay to detect a new transition
+	if ( events.has(&flipDummy) || events.has(&flipCnt) )
+		events.add( &flipDummy, 2 ); // you need at least one cycle delay to detect a new transition
 	else
-		events->add( &flipCnt, 2 );
+		events.add( &flipCnt, 2 );
 }
 
 /**
@@ -381,7 +385,7 @@ auto Base::serialIn( bool bit ) -> void {
     if ( ++sdrShiftCount == 8 ) {
         sdrShiftCount = 0;
 		sdr = sdrShift;
-        this->events->add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
+        events.add(&finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting);
     }
 }
 
@@ -389,10 +393,10 @@ auto Base::serialIn( bool bit ) -> void {
 auto Base::positiveCntTransition( ) -> void {
            
 	if ((cra & 0x21) == 0x21) //timer A is driven by cnt pin transition      
-		events->add( &(timer[T_A].step), 2, Emulator::SystemTimer::Action::UpdateExisting );
+		events.add( &(timer[T_A].step), 2, Emulator::SystemTimer::Action::UpdateExisting );
 
 	if ( ( crb & 0x61) == 0x21) //timer B is driven by cnt pin transition
-		events->add( &(timer[T_B].step), 2, Emulator::SystemTimer::Action::UpdateExisting );
+		events.add( &(timer[T_B].step), 2, Emulator::SystemTimer::Action::UpdateExisting );
 }
 
 auto Base::switchSerialDirection(bool input) -> void {
@@ -404,7 +408,7 @@ auto Base::switchSerialDirection(bool input) -> void {
 			sdrForceFinish = (delay & CIA_CNT_NEW) != CIA_CNT_NEW;
 
 		if (!sdrForceFinish) {
-			if (sdrShiftCount != 2 && (events->delay(&flipCnt) == 1)  )
+			if (sdrShiftCount != 2 && (events.delay(&flipCnt) == 1)  )
 				sdrForceFinish = true;
 		}
 
@@ -414,7 +418,7 @@ auto Base::switchSerialDirection(bool input) -> void {
 			sdrShift <<= 1;
 
 		if (sdrForceFinish) {
-			events->add( &finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting );                
+			events.add( &finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting );
 			sdrForceFinish = false;
 		}
 	}
@@ -426,8 +430,8 @@ auto Base::switchSerialDirection(bool input) -> void {
 	delay |= CIA_CNT0;
     serialOut(input, true);
 
-	events->remove(&flipCnt);
-	events->remove(&flipDummy);
+	events.remove(&flipCnt);
+	events.remove(&flipDummy);
 	sdrShiftCount = 0;
 	sdrPending = false;
 	sdrLoaded = false;

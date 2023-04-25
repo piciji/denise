@@ -163,7 +163,7 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 		case 0xc:
 			sdr = value;
 
-			events->add( &startSdr, 2, Emulator::SystemTimer::Action::UpdateExisting );
+			events.add( &startSdr, 2, Emulator::SystemTimer::Action::UpdateExisting );
 			
 			break;
             
@@ -194,10 +194,10 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 			// one shot
 			if (value & 8) { // active
 				pT->oneshot = true; // no delay
-				events->remove( &(pT->disableOneshot) ); 
+				events.remove( &(pT->disableOneshot) );
 			} else
 				// disabling one shot has one cycle delay
-				events->add( &(pT->disableOneshot), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
+				events.add( &(pT->disableOneshot), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
 			
 			// force load (one time)
 			if ( value & 0x10 ) {
@@ -207,16 +207,16 @@ auto Base::write( unsigned pos, uint8_t value ) -> void {
 			}
             if (pos == 0xf && (value & 0x40) ) {
                 // timer B in cascaded mode, so stop phase-in if needed
-                events->add( &(pT->stop), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
+                events.add( &(pT->stop), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
             
             } else {
                 // start + phase in
                 if ( (value & 1) && !(value & 0x20) ) {
-                    events->add( &(pT->start), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
+                    events.add( &(pT->start), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
 					
                 } else {
                     // stop the timer is delayed by one cycle
-                    events->add( &(pT->stop), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );                
+                    events.add( &(pT->stop), 2, Emulator::SystemTimer::Action::WhenNotExistsOnly );
 				}
             }						
 			

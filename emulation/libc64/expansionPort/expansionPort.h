@@ -98,8 +98,10 @@ struct ExpansionPort {
     
     virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {}
     
-    virtual auto prepareRam(unsigned size) -> void {}
-    
+    virtual auto setRamSize(int id) -> void {}
+
+    virtual auto getRamSize() -> int { return 0; }
+
     virtual auto reset( bool softReset = false ) -> void {
         game = true;
         exRom = true;

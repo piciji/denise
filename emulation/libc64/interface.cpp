@@ -33,37 +33,9 @@ Interface::Interface() : Emulator::Interface( "C64" ) {
 	prepareDevices();
     prepareModels();
     preparePalettes();
-    prepareMemory();
     prepareExpansions();
     
     system = new System( this );    
-}
-
-auto Interface::prepareMemory() -> void {
-    memoryTypes.push_back( {0, "REU", 0} );
-    
-    {   auto& memory = memoryTypes[0].memory;
-        memory.push_back( {0, 128} );
-        memory.push_back( {1, 256} );
-        memory.push_back( {2, 512} );
-        memory.push_back( {3, 1024} );
-        memory.push_back( {4, 2048} );
-        memory.push_back( {5, 4096} );
-        memory.push_back( {6, 8192} );
-        memory.push_back( {7, 16384} );
-    }
-
-	memoryTypes.push_back({1, "GeoRam", 0});
-
-	{	auto& memory = memoryTypes[1].memory;
-		memory.push_back({0, 64});
-		memory.push_back({1, 128});
-		memory.push_back({2, 256});
-		memory.push_back({3, 512});
-		memory.push_back({4, 1024});
-		memory.push_back({5, 2048});
-		memory.push_back({6, 4096});
-	}
 }
 
 auto Interface::prepareMedia() -> void {
@@ -204,17 +176,17 @@ auto Interface::prepareMedia() -> void {
 }
 
 auto Interface::prepareExpansions() -> void {
-    expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr, nullptr } );
-    expansions.push_back( { ExpansionIdGame, "Cartridge", Expansion::Type::Standard | Expansion::Type::Flash | Expansion::Type::Eprom, nullptr, &mediaGroups[MediaGroupIdExpansionGame], nullptr } );
-    expansions.push_back( { ExpansionIdEasyFlash, "EasyFlash", Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash], nullptr } );
-    expansions.push_back( { ExpansionIdEasyFlash3, "EasyFlash³", Expansion::Type::Flash | Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionEasyFlash3], nullptr } );
-    expansions.push_back( { ExpansionIdFreezer, "Freezer", Expansion::Type::Freezer, nullptr, &mediaGroups[MediaGroupIdExpansionFreezer], nullptr } );
-    expansions.push_back( { ExpansionIdRetroReplay, "Retro Replay", Expansion::Type::Freezer | Expansion::Type::Flash, nullptr, &mediaGroups[MediaGroupIdExpansionRetroReplay], nullptr } );
-    expansions.push_back( { ExpansionIdGeoRam, "GeoRam", Expansion::Type::Ram | Expansion::Type::Battery, &memoryTypes[1], &mediaGroups[MediaGroupIdExpansionGeoRam], nullptr } );
-    expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu], nullptr } );
-	expansions.push_back( { ExpansionIdReuRetroReplay, "REU + Retro Replay", Expansion::Type::Ram | Expansion::Type::Freezer | Expansion::Type::Flash, &memoryTypes[0], &mediaGroups[MediaGroupIdExpansionReu], &mediaGroups[MediaGroupIdExpansionRetroReplay] } );
-	expansions.push_back( { ExpansionIdRS232, "RS-232", Expansion::Type::RS232, nullptr, &mediaGroups[MediaGroupIdExpansionRS232], nullptr } );
-    expansions.push_back( { ExpansionIdFastloader, "Fast Loader", Expansion::Type::Fastloader, nullptr, &mediaGroups[MediaGroupIdExpansionFastloader], nullptr } );
+    expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
+    expansions.push_back( { ExpansionIdGame, "Cartridge", Expansion::Type::Standard | Expansion::Type::Flash | Expansion::Type::Eprom, &mediaGroups[MediaGroupIdExpansionGame], nullptr } );
+    expansions.push_back( { ExpansionIdEasyFlash, "EasyFlash", Expansion::Type::Flash, &mediaGroups[MediaGroupIdExpansionEasyFlash], nullptr } );
+    expansions.push_back( { ExpansionIdEasyFlash3, "EasyFlash³", Expansion::Type::Flash | Expansion::Type::Freezer, &mediaGroups[MediaGroupIdExpansionEasyFlash3], nullptr } );
+    expansions.push_back( { ExpansionIdFreezer, "Freezer", Expansion::Type::Freezer, &mediaGroups[MediaGroupIdExpansionFreezer], nullptr } );
+    expansions.push_back( { ExpansionIdRetroReplay, "Retro Replay", Expansion::Type::Freezer | Expansion::Type::Flash, &mediaGroups[MediaGroupIdExpansionRetroReplay], nullptr } );
+    expansions.push_back( { ExpansionIdGeoRam, "GeoRam", Expansion::Type::Ram | Expansion::Type::Battery, &mediaGroups[MediaGroupIdExpansionGeoRam], nullptr } );
+    expansions.push_back( { ExpansionIdReu, "REU", Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionReu], nullptr } );
+	expansions.push_back( { ExpansionIdReuRetroReplay, "REU + Retro Replay", Expansion::Type::Ram | Expansion::Type::Freezer | Expansion::Type::Flash, &mediaGroups[MediaGroupIdExpansionReu], &mediaGroups[MediaGroupIdExpansionRetroReplay] } );
+	expansions.push_back( { ExpansionIdRS232, "RS-232", Expansion::Type::RS232, &mediaGroups[MediaGroupIdExpansionRS232], nullptr } );
+    expansions.push_back( { ExpansionIdFastloader, "Fast Loader", Expansion::Type::Fastloader, &mediaGroups[MediaGroupIdExpansionFastloader], nullptr } );
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -578,6 +550,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdD64Accuracy, "Emulate D64 More Accurate", Model::Type::Switch, Model::Purpose::Hidden, 0});
 
     models.push_back({ModelIdDisalignTrack, "Disalign Tracks", Model::Type::Switch, Model::Purpose::Hidden, 0});
+
+    models.push_back({ModelIdReuRam, "REU Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 7}, { "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB", "16 MB" }});
+    models.push_back({ModelIdGeoRam, "Geo Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 6}, { "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB" }});
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1422,6 +1397,12 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDisalignTrack:
             system->iecBus.disalignTracks( value & 1 );
             break;
+        case ModelIdReuRam:
+            system->reu->setRamSize( value );
+            break;
+        case ModelIdGeoRam:
+            system->geoRam->setRamSize( value );
+            break;
     }    
 }
 
@@ -1521,6 +1502,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDriveRam60To7F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M60);
         case ModelIdDriveRam80To9F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M80);
         case ModelIdDriveRamA0ToBF:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::MA0);
+        case ModelIdReuRam:                 return (int)system->reu->getRamSize();
+        case ModelIdGeoRam:                 return (int)system->geoRam->getRamSize();
     }
     return 0;
 }
@@ -1606,28 +1589,6 @@ auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
     system->vicIICycle.lineCallback.use = state;
     system->vicIICycle.lineCallback.line = scanline;
 
-}
-
-auto Interface::setMemory(MemoryType* memoryType, unsigned memoryId) -> void {
-    
-    for( auto& expansion : expansions ) {
-        
-        if (!expansion.memoryType)
-            continue;
-        
-        if (expansion.id != system->expansionPort->id)
-            continue;
-        
-        if (expansion.memoryType == memoryType) {
-            
-            auto memory = getMemoryById(*memoryType, memoryId);
-            
-            if (memory)
-                system->expansionPort->prepareRam( memory->size );
-        }
-        
-        break;
-    }
 }
 
 auto Interface::setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void {

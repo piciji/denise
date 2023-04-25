@@ -1,17 +1,4 @@
 
-struct MemoryLayout : GUIKIT::FramedVerticalLayout {
-    struct Block : GUIKIT::HorizontalLayout {
-        Emulator::Interface::MemoryType* memoryType;
-        SliderLayout sliderLayout;
-        Block();
-    };
-    std::vector<Block*> blocks;
-
-    auto build( Emulator::Interface* emulator ) -> void;
-
-    MemoryLayout();
-};
-
 struct ExpansionLayout : GUIKIT::FramedVerticalLayout {
     
     struct Line : GUIKIT::HorizontalLayout {
@@ -43,8 +30,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     GUIKIT::VerticalLayout leftLayout;
     GUIKIT::VerticalLayout rightLayout;
 
-    MemoryLayout memoryLayout;
-    ModelLayout memoryNewModelLayout;
+    ModelLayout memoryModelLayout;
     ModelLayout modelLayout;
     ModelLayout driveModelLayout;
     ModelLayout performanceModelLayout;
@@ -52,7 +38,6 @@ struct SystemLayout : GUIKIT::VerticalLayout {
 
     auto translate() -> void;
     auto updateExpansionMemory() -> void;
-    auto getSizeString( unsigned sizeInKb ) -> std::string;
     auto setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void;
     auto loadSettings() -> void;
     

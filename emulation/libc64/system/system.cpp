@@ -24,13 +24,13 @@ namespace LIBC64 {
 System::System(Interface* interface) :
 sidManager(this),
 input(this, interface, cia1),
-glueLogic(this, sysTimer),
+glueLogic(this),
 vicIICycle(this),
 vicIIFast(this),
 iecBus(this, &interface->mediaGroups[Interface::MediaGroupIdDisk]),
 tape( this, &interface->mediaGroups[Interface::MediaGroupIdTape].media[0] ),
-cia1( 1, &sysTimer ),
-cia2( 2, &sysTimer ),
+cia1( 1, sysTimer ),
+cia2( 2, sysTimer ),
 traps( this ),
 cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
@@ -49,7 +49,12 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     sidManager.calcSerializationSizeForSevenMoreSids();
 
-    sidManager.registerGlobalCallbacks();
+    sidManager.registerCallbacks();
+    glueLogic.registerCallbacks();
+    tape.registerCallbacks();
+    cpu.registerCallbacks();
+    cia1.registerCallbacks();
+    cia2.registerCallbacks();
 
     requestedSids = 0;
 

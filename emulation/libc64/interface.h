@@ -26,6 +26,8 @@ struct Interface : Emulator::Interface {
         ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble, ModelIdDriveFastLoader, ModelIdDiskDriveStepperSeekTime,
         ModelIdDriveRam20To3F, ModelIdDriveRam40To5F, ModelIdDriveRam60To7F, ModelIdDriveRam80To9F, ModelIdDriveRamA0ToBF,
         ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64Accuracy, ModelIdDisalignTrack,
+
+        ModelIdReuRam, ModelIdGeoRam
     };
     
     enum MediaGroupId {
@@ -184,8 +186,7 @@ struct Interface : Emulator::Interface {
     auto getChroma(uint8_t index) -> double; 
     
     auto setLineCallback(bool state, unsigned scanline = 0) -> void;
-    
-    auto setMemory(MemoryType* memoryType, unsigned memoryId) -> void;
+
     auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void;
 	auto getMemoryInitPattern( uint8_t* pattern ) -> void;
     auto getMemorySize() -> unsigned { return 64 * 1024; }
@@ -207,7 +208,6 @@ private:
     auto prepareModels() -> void;
     auto preparePalettes() -> void;
     auto prepareExpansions() -> void;
-    auto prepareMemory() -> void;
 };
 
 }

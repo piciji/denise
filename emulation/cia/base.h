@@ -10,7 +10,7 @@
 namespace CIA {
     
 struct Base {
-	Base( uint8_t model, Emulator::SystemTimer* events );
+	Base( uint8_t model, Emulator::SystemTimer& events );
     
     enum Port : unsigned { PORTA, PORTB };
     enum { T_A = 0, T_B = 1 };
@@ -42,6 +42,7 @@ struct Base {
     auto read(unsigned pos) -> uint8_t;
     auto write(unsigned pos, uint8_t value) -> void;
     auto reset() -> void;
+    auto registerCallbacks() -> void;
 	/**
 	 * define it in derived class
 	 */
@@ -113,7 +114,7 @@ protected:
 	 */
 
 	using Callback = std::function<void ()>;
-	Emulator::SystemTimer* events;
+	Emulator::SystemTimer& events;
 	
 	struct Timer {
 		// bit 0: -> phase in, bit 1: -> single step in cascade mode

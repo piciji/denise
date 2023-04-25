@@ -40,6 +40,7 @@ struct Tape {
     Emulator::SystemTimer& sysTimer;
     TapeStructure structure;
 
+    auto registerCallbacks() -> void;
 	auto setEnabled( bool state ) -> void;
 	auto isEnabled() -> bool { return enabled; }
 	auto writeIn(bool bit) -> void;

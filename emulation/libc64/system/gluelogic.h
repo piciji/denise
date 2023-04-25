@@ -26,8 +26,10 @@ struct GlueLogic {
     
     uint8_t vbankBefore;
     
-    GlueLogic(System* system, Emulator::SystemTimer& sysTimer);
-    
+    GlueLogic(System* system);
+
+    auto registerCallbacks() -> void;
+
     auto serialize(Emulator::Serializer& s) -> void;
     
     auto setType( Type type ) -> void;

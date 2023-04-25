@@ -82,7 +82,7 @@ template<int options> inline auto SidManager::updateClockT() -> void {
     sysClock = system->sysTimer.clock;
 }
 
-auto SidManager::registerGlobalCallbacks() -> void {
+auto SidManager::registerCallbacks() -> void {
 
     system->sysTimer.registerCallback( { { &callPotUpdate, 1 }, { &callAlarm, 1 } } );
 }

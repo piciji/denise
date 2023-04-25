@@ -82,6 +82,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
     auto getAlignedWidth(Emulator::Interface::Model* model = nullptr) -> unsigned;
 
     auto getUnit(unsigned id) -> std::string;
+
+    auto setVisibility( Emulator::Interface::Model* model ) -> void;
     
     ModelLayout();
 };

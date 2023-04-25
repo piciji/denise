@@ -487,6 +487,13 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 	return 0;
 }
 
+auto ModelLayout::setVisibility( Emulator::Interface::Model* model ) -> void {
+    for (auto line : lines) {
+        for (auto block : line->blocks)
+            block->setEnabled( model && (block->model->id == model->id) );
+    }
+}
+
 auto ModelLayout::translate( std::string theme ) -> void {
     
     setText( trans->getA( theme ) );
@@ -602,6 +609,8 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdDriveRam60To7F:
             case LIBC64::Interface::ModelIdDriveRam80To9F:
             case LIBC64::Interface::ModelIdDriveRamA0ToBF:
+            case LIBC64::Interface::ModelIdReuRam:
+            case LIBC64::Interface::ModelIdGeoRam:
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
 

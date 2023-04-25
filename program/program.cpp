@@ -254,13 +254,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     std::vector<std::string> brokenPaths;
 
     emulator->setExpansion( settings->get<unsigned>("expansion", 0) );
-    
-    // a loaded state before could change the values internally.
-    for (auto& memoryType : emulator->memoryTypes) {
-        unsigned memoryId = settings->get<unsigned>( _underscore(memoryType.name) + "_mem", memoryType.defaultMemoryId);
-        emulator->setMemory(&memoryType, memoryId);
-    }
-        
     auto expansion = emulator->getExpansion();
     
     for(auto& mediaGroup : emulator->mediaGroups) {
