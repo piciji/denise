@@ -299,7 +299,6 @@ struct System {
 
     auto tapeNoiseEnabled() -> bool { return tapeNoise.enabled && !runAhead.pos; }
     auto tapeNoiseSetSample( unsigned duration ) -> void;
-    //auto setAudioRefresh() -> void;
     auto audioRefresh(int16_t sample) -> void;
     auto audioRefreshStereo(int16_t sampleL, int16_t sampleR) -> void;
 

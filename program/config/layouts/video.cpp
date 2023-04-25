@@ -142,7 +142,7 @@ VideoLayout::VideoLayout() {
             vManager->shader.loadExternal();
 		}
 
-		view->updateShader();
+		view->updateShader(false);
         program->initVideo();
         videoDriver->hintExclusiveFullscreen( false );
         emuThread->unlock();

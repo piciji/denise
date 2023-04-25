@@ -39,6 +39,7 @@ auto Program::initVideo() -> void {
 	
 	VideoManager::setShaderInputPrecision( globalSettings->get<bool>("shader_input_precision", false) );
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
+    view->updateShaderVisibility();
 }
 
 auto Program::setVideoDimension(Emulator::Interface* emulator) -> void {

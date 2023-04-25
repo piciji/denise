@@ -51,11 +51,18 @@ auto SidManager::getIoPos(int nr) -> int {
 
 auto SidManager::updateClock() -> void {
     int options = audioOut | (useExternalFilter << 1);
+    if (sid->filterType == Sid::FilterType::Chamberlin) // same filter for all SID's
+        options |= 4;
+
     switch(options) {
         case 0: updateClockT<0>(); break;
         case 1: updateClockT<1>(); break;
         case 2: updateClockT<2>(); break;
         case 3: updateClockT<3>(); break;
+        case 4: updateClockT<4>(); break;
+        case 5: updateClockT<5>(); break;
+        case 6: updateClockT<6>(); break;
+        case 7: updateClockT<7>(); break;
     }
 }
 
@@ -93,27 +100,28 @@ auto SidManager::disableAudioOut(bool state) -> void {
 
 template<int options> auto SidManager::clockMultiChips(int cycles) -> void {
     constexpr bool _audioOut = options & 1;
-    constexpr bool _useExtFilter = options & 2;
+    //constexpr bool _useExtFilter = options & 2;
+    //constexpr bool _useChamberlain = options & 4;
 
     double sampleLeft, sampleRight;
-    double curSample;
+    const int _limit = sampleLimit;
 
     for (int c = 0; c < cycles; c++) {
         sampleLeft = sampleRight = 0.0;
 
-        if (_audioOut && (++sampleCounter == sampleLimit)) {
+        if (_audioOut && (++sampleCounter == _limit)) {
 
             sampleCounter = 0;
 
             for (auto useSid : useSids) {
 
-                curSample = useSid->clock<options>();
+                useSid->clock<options | 8>();
 
                 if (useSid->leftChannel)
-                    sampleLeft += curSample;
+                    sampleLeft += useSid->curSample;
 
                 if (useSid->rightChannel)
-                    sampleRight += curSample;
+                    sampleRight += useSid->curSample;
             }
 
             if (!leftSids) {

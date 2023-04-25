@@ -65,14 +65,13 @@ struct Sid {
     auto reset() -> void;
 	auto powerOff() -> void;
     template<int options> auto clock(int cycles, int sampleCounter, int sampleLimit) -> int;
-    template<int options> auto clock() -> double;
+    template<int options> auto clock() -> void;
 	auto setMoreAccuracy(bool state) -> void;
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
     auto updateIdleState() -> void;    
     auto setIoMask(uint8_t pos) -> void;
     auto useLeftChannel(bool state) -> void;
     auto useRightChannel(bool state) -> void;
-    auto withoutExternalFilter() -> void;
     auto volumeCorrection(bool state) -> void;
 
     System* system;
@@ -85,6 +84,7 @@ struct Sid {
     uint8_t ioPos;    
     float correction = 1.0;
 
+    double curSample;
     uint8_t lastBusValue;
     unsigned databusDecay;
     unsigned databusDecayTime;

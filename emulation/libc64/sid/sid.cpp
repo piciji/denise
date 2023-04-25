@@ -226,11 +226,13 @@ auto Sid::powerOff() -> void {
     powerOn = false;
 }
 
-template<int options> auto Sid::clock() -> double {
+template<int options> auto Sid::clock() -> void {
     constexpr bool audioOut = options & 1;
     constexpr bool useExtFilter = options & 2;
+    constexpr bool useChamberlain = options & 4;
+    constexpr bool needResult = options & 8;
+
     int i;
-    double curSample;
 
     for (i = 0; i < 3; i++) {
         envelope[i].clock();
@@ -245,8 +247,7 @@ template<int options> auto Sid::clock() -> double {
 
     if constexpr (audioOut) {
         if constexpr (useExtFilter) {
-
-            if (filterType == FilterType::Chamberlin) {
+            if constexpr (useChamberlain) {
 
                 double _sample = chamberlinFilter.clock((double) voice[0].output() / 255.0,
                                                         (double) voice[1].output() / 255.0,
@@ -255,37 +256,40 @@ template<int options> auto Sid::clock() -> double {
                 externalFilter.clock(Emulator::sclamp(16, _sample));
 
             } else {
-
                 filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
 
                 externalFilter.clock(filter.output());
             }
 
-            curSample = (double) externalFilter.output() * correction;
+            if constexpr (needResult)
+                curSample = (double) externalFilter.output() * correction;
 
         } else {
-            if (filterType == FilterType::Chamberlin)
+            if constexpr (useChamberlain) {
                 curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0,
                                                    (double) voice[1].output() / 255.0,
                                                    (double) voice[2].output() / 255.0);
-            else {
+            } else {
                 filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
-                curSample = filter.output();
             }
 
-            curSample *= correction;
+            if constexpr (needResult) {
+                if constexpr (!(useChamberlain))
+                    curSample = filter.output();
+
+                curSample *= correction;
+            }
         }
     }
 
-    if (databusDecay > 0 && --databusDecay == 0)
+    if (databusDecay && (--databusDecay == 0))
         lastBusValue = 0;
-
-    return curSample;
 }
 
 template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleLimit) -> int {
     constexpr bool audioOut = options & 1;
     constexpr bool useExtFilter = options & 2;
+    constexpr bool useChamberlain = options & 4;
 
     int i, c;
     double curSample;
@@ -321,7 +325,7 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
 
             if constexpr (useExtFilter) {
 
-                if (filterType == FilterType::Chamberlin) {
+                if constexpr (useChamberlain) {
 
                     curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0,
                                                             (double) voice[1].output() / 255.0,
@@ -342,16 +346,18 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
                 }
 
             } else {
-                if (filterType == FilterType::Chamberlin) {
+                if constexpr (useChamberlain) {
                     curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0,
                                                        (double) voice[1].output() / 255.0,
                                                        (double) voice[2].output() / 255.0);
                 } else {
                     filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
-                    curSample = filter.output();
                 }
 
                 if (++sampleCounter == sampleLimit) {
+                    if constexpr (!(useChamberlain))
+                        curSample = filter.output();
+
                     system->audioRefresh( Emulator::sclamp( 16, curSample * correction ) );
                     sampleCounter = 0;
                 }
@@ -362,44 +368,33 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
         // decay time differs between single bits.
         // single bit decaying is not emulated
         // but approximate time till all bits are decayed
-        if (databusDecay > 0 && --databusDecay == 0)
+        if (databusDecay && (--databusDecay == 0))
             lastBusValue = 0;
     }
 
     return sampleCounter;
 }
 
-template auto Sid::clock<0>() -> double;
-template auto Sid::clock<1>() -> double;
-template auto Sid::clock<2>() -> double;
-template auto Sid::clock<3>() -> double;
+template auto Sid::clock<0>() -> void;
+template auto Sid::clock<1>() -> void;
+template auto Sid::clock<2>() -> void;
+template auto Sid::clock<3>() -> void;
+template auto Sid::clock<4>() -> void;
+template auto Sid::clock<5>() -> void;
+template auto Sid::clock<6>() -> void;
+template auto Sid::clock<7>() -> void;
+template auto Sid::clock<9>() -> void;
+template auto Sid::clock<11>() -> void;
+template auto Sid::clock<13>() -> void;
+template auto Sid::clock<15>() -> void;
 
 template auto Sid::clock<0>(int cycles, int sampleCounter, int sampleLimit) -> int;
 template auto Sid::clock<1>(int cycles, int sampleCounter, int sampleLimit) -> int;
 template auto Sid::clock<2>(int cycles, int sampleCounter, int sampleLimit) -> int;
 template auto Sid::clock<3>(int cycles, int sampleCounter, int sampleLimit) -> int;
-
-//inline auto Sid::withoutExternalFilter() -> void {
-//
-//    if (filterType == FilterType::Chamberlin) {
-//
-//        curSample = chamberlinFilter.clock((double) voice[0].output() / 255.0, (double) voice[1].output() / 255.0, (double) voice[2].output() / 255.0);
-//
-//    } else {
-//
-//        filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
-//
-//        curSample = filter.output();
-//    }
-//
-//    curSample *= correction;
-//
-//    if (!extraSids) {
-//        if (++sampleCounter == sampleLimit) {
-//            audioRefresh( Emulator::sclamp( 16, curSample ) );
-//            sampleCounter = 0;
-//        }
-//    }
-//}
+template auto Sid::clock<4>(int cycles, int sampleCounter, int sampleLimit) -> int;
+template auto Sid::clock<5>(int cycles, int sampleCounter, int sampleLimit) -> int;
+template auto Sid::clock<6>(int cycles, int sampleCounter, int sampleLimit) -> int;
+template auto Sid::clock<7>(int cycles, int sampleCounter, int sampleLimit) -> int;
 
 }

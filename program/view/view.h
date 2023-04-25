@@ -53,7 +53,8 @@ struct View : public GUIKIT::Window {
 
     auto buildMenu() -> void;
     auto updateViewport() -> void;
-	auto updateShader() -> void;
+	auto updateShader(bool updateVisibility = true) -> void;
+    auto updateShaderVisibility() -> void;
 	auto switchFullScreen(bool fullScreen = true, bool forceUnacquire = false) -> void;
     auto updateMenuBar( bool toggle = false ) -> void;
     auto updateStatusBar(bool toggle = false ) -> void;

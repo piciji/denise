@@ -272,8 +272,6 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return (colorRam[ addr & 0x3ff ] & 0xf) | ( vicII->lastReadPhase1() & ~0xf );
     };
 
-    //setAudioRefresh();
-
     sidManager.getPotX = [this]() {
 
         return input.readPotX();
@@ -1053,13 +1051,9 @@ auto System::enabledDebugCart() -> bool {
 }
 
 auto System::setTapeLoadingNoise(unsigned volume) -> void {
-    //bool _enableBefore = tapeNoise.enabled;
     tapeNoise.enabled = volume > 0;
     tapeNoise.amplitude = (int)volume * -10;
     tapeNoise.reset();
-
-    //if (_enableBefore != tapeNoise.enabled)
-      //  setAudioRefresh();
 }
 
 auto System::TapeNoise::reset() -> void {
@@ -1117,57 +1111,6 @@ auto System::audioRefreshStereo(int16_t sampleL, int16_t sampleR) -> void {
         interface->audioSample(sampleL, sampleR);
     }
 }
-
-//auto System::setAudioRefresh() -> void {
-//
-//    if (tapeNoise.enabled) {
-//        Sid::audioRefresh = [this](int16_t sample) {
-//            if (!runAhead.pos) {
-//                if (tapeNoise.active) {
-//                    if (tapeNoise.duration > 0) {
-//                        sample = (int)sample + tapeNoise.amplitude;
-//                        tapeNoise.duration -= Sid::sampleLimit;
-//                    } else if (tapeNoise.circularBuffer.pending()) {
-//                        tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
-//                        tapeNoise.amplitude = -tapeNoise.amplitude;
-//                        sample = (int)sample + tapeNoise.amplitude;
-//                    } else
-//                        tapeNoise.active = false;
-//                }
-//                this->interface->audioSample(sample, sample);
-//            }
-//        };
-//
-//        Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
-//            if (!runAhead.pos) {
-//                if (tapeNoise.active) {
-//                    if (tapeNoise.duration > 0) {
-//                        sampleL = (int)sampleL + tapeNoise.amplitude;
-//                        sampleR = (int)sampleR + tapeNoise.amplitude;
-//                        tapeNoise.duration -= Sid::sampleLimit;
-//                    } else if (tapeNoise.circularBuffer.pending()) {
-//                        tapeNoise.duration += (int)tapeNoise.circularBuffer.read() - 1;
-//                        tapeNoise.amplitude = -tapeNoise.amplitude;
-//                        sampleL = (int)sampleL + tapeNoise.amplitude;
-//                        sampleR = (int)sampleR + tapeNoise.amplitude;
-//                    } else
-//                        tapeNoise.active = false;
-//                }
-//                this->interface->audioSample(sampleL, sampleR);
-//            }
-//        };
-//    } else {
-//        Sid::audioRefresh = [this](int16_t sample) {
-//            if (!runAhead.pos)
-//                this->interface->audioSample(sample, sample);
-//        };
-//
-//        Sid::audioRefreshStereo = [this](int16_t sampleL, int16_t sampleR) {
-//            if (!runAhead.pos)
-//                this->interface->audioSample( sampleL, sampleR );
-//        };
-//    }
-//}
 
 auto System::jam(Emulator::Interface::Media* media) -> void {
     if (processFrame())
