@@ -313,12 +313,12 @@ auto StatusHandler::update() -> void {
                     if (chunks.size() > 1)
                         name = chunks.back();
 
-                    if (dynamic_cast<LIBC64::Interface*> (activeEmulator)) {
-                        name += " " + GUIKIT::String::prependZero( std::to_string((unsigned)(deviceState.position / 2)), 2 );
+                    name += " " + GUIKIT::String::prependZero( std::to_string((unsigned)(deviceState.position / 2)), 2 );
 
+                    if (dynamic_cast<LIBC64::Interface*> (activeEmulator))
                         name += (deviceState.position & 1) ? ".5" : ".0";
-                    } else
-                        name += " " + GUIKIT::String::prependZero( std::to_string( deviceState.position ), 2 );
+                    else
+                        name += (deviceState.position & 1) ? ":1" : ":0";
 
                     updateText(media->id * 2 + 1, name);
 
