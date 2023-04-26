@@ -403,7 +403,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
     return cpu.dataBus;
 }
 
-Drive::Drive(uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* mediaConnected ) :
+Drive::Drive(uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* media ) :
 via1(1),
 via2(2),
 cia(3),
@@ -414,7 +414,8 @@ iecBus(iecBus),
 structure(system, this) {
      
     this->number = number; 
-	this->mediaConnected = mediaConnected;
+	this->media = media;
+    structure.media = media;
 
 	dummyTrack = new DiskStructure::MTrack;
     dummyTrack->pulses.push_back({0,0,1,1});
@@ -431,7 +432,6 @@ structure(system, this) {
     extendedMemoryMap = false;
 
 	emulateDxxMoreAccurate = false;
-    media = nullptr;
     wasAttachDetached = false;
     stepperDelay = 0;
     delayInProgress = !!attachDelay;
@@ -725,9 +725,9 @@ structure(system, this) {
 
                 if (system->driveSounds.useFloppy) {
                     if (motorOn)
-                        system->interface->mixDriveSound( this->mediaConnected, DriveSound::FloppySpinUp );
+                        system->interface->mixDriveSound( this->media, DriveSound::FloppySpinUp );
                     else
-                        system->interface->mixDriveSound( this->mediaConnected, DriveSound::FloppySpinDown );
+                        system->interface->mixDriveSound( this->media, DriveSound::FloppySpinDown );
                 }
                 
                 updateDeviceState();
@@ -790,7 +790,7 @@ structure(system, this) {
 
     structure.write = [this, system](uint8_t* buffer, unsigned length, unsigned offset) {
 		
-		return system->interface->writeMedia( getMedia(), buffer, length, offset );
+		return system->interface->writeMedia( this->media, buffer, length, offset );
 	};
     
     for(unsigned i = 0; i < motorOff.CHUNKS; i++)
@@ -811,13 +811,13 @@ Drive::~Drive() {
 
 auto Drive::updateDeviceState() -> void {
     system->diskSilence.idleFrames = 0;
-    system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, via2.lines.iob & 8, !motorOn );
+    system->interface->updateDeviceState( media, !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, via2.lines.iob & 8, !motorOn );
 }
 
 // missing BUS communication
 auto Drive::updateIdleDeviceState() -> void {
     
-    system->interface->updateDeviceState( getMediaConnected(), !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, false, true );
+    system->interface->updateDeviceState( media, !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, false, true );
 
     if (structure.autoStarted)
         system->hintObserverMotorChange( false );
@@ -909,9 +909,9 @@ auto Drive::power( ) -> void {
 
     if (system->driveSounds.useFloppy) {
         if (loaded && !iecBus.powerOn)
-            system->interface->mixDriveSound(mediaConnected, DriveSound::FloppyInsert);
+            system->interface->mixDriveSound(media, DriveSound::FloppyInsert);
 
-        system->interface->mixDriveSound( mediaConnected, DriveSound::FloppySpinUp );
+        system->interface->mixDriveSound( media, DriveSound::FloppySpinUp );
     }
 }
 
@@ -1053,7 +1053,7 @@ auto Drive::detach() -> void {
     if (loaded) {
         attachDelay = DISC_DELAY;
         if (iecBus.powerOn && system->driveSounds.useFloppy)
-            system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyEject );
+            system->interface->mixDriveSound( media, DriveSound::FloppyEject );
     }
 
     if (iecBus.powerOn && use2Mhz() )
@@ -1071,16 +1071,13 @@ auto Drive::detach() -> void {
     pulseDelta = 1; // to reload quickly
 }
 
-auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
-    this->media = media;
+auto Drive::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> void {
     detach();
     accum = 0;
     randCounter = 0;
     uf6aFlipFlop = comperatorFlipFlop = false;
     uf4Counter = ue7Counter = 0;
     ue3Counter = 0;
-    
-	structure.media = media;
 
     wasAttachDetached = attachDelay != 0;
     attachDelay = DISC_DELAY * 3;
@@ -1091,7 +1088,7 @@ auto Drive::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned s
     delayInProgress = attachDelay || stepperDelay;
 
     if (iecBus.powerOn && system->driveSounds.useFloppy)
-        system->interface->mixDriveSound( mediaConnected, DriveSound::FloppyInsert, wasAttachDetached );
+        system->interface->mixDriveSound( media, DriveSound::FloppyInsert );
 
     if ( !structure.attach( data, size, loadGracefully ) )
         return;

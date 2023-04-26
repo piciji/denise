@@ -404,12 +404,12 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     tape.read = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 
-        return this->interface->readMedia(tape.getMedia(), buffer, length, offset);
+        return this->interface->readMedia(tape.media, buffer, length, offset);
     };
 
     tape.write = [this](uint8_t* buffer, unsigned length, unsigned offset) {
 
-        return this->interface->writeMedia(tape.getMedia(), buffer, length, offset);
+        return this->interface->writeMedia(tape.media, buffer, length, offset);
     };
 
     tape.senseOut = [this](bool state) {

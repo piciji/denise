@@ -947,7 +947,7 @@ auto Interface::insertTape(Media* media, uint8_t* data, unsigned size) -> void {
     if (!media || !media->group->isTape())
         return;
 
-    system->tape.load( media, data, size );
+    system->tape.load( data, size );
 }
 
 auto Interface::writeProtectTape(Media* media, bool state) -> void {

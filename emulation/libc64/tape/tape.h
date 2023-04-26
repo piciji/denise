@@ -26,7 +26,7 @@ struct System;
 
 struct Tape {
     
-    Tape( System* system, Emulator::Interface::Media* mediaConnected );
+    Tape( System* system, Emulator::Interface::Media* media );
     ~Tape();
 
 	enum Mode : uint8_t { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5 };
@@ -45,7 +45,7 @@ struct Tape {
 	auto isEnabled() -> bool { return enabled; }
 	auto writeIn(bool bit) -> void;
 	auto setMotorIn( bool state ) -> void;
-	auto load(Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> void;
+	auto load(uint8_t* data, unsigned size) -> void;
     auto unload() -> void;
 	auto reset() -> void;
     auto power() -> void;
@@ -59,17 +59,14 @@ struct Tape {
     auto selectListing( unsigned pos, uint8_t options = 0 ) -> void;
 	auto setWobble(bool state) -> void;
 	auto hasWobble() -> bool { return wobble; }
-    auto getMedia() -> Emulator::Interface::Media* { return media; }
-	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
     auto updateDeviceState() -> void;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto setPosition( unsigned pos, bool find ) -> void;
     auto setMotorSound() -> void;
     auto wasAutostarted() -> bool { return autoStarted; }
-	
+
+	Emulator::Interface::Media* media;
 protected:
-	Emulator::Interface::Media* media; 
-	Emulator::Interface::Media* mediaConnected; // update status LED if there was no tape inserted
     std::function<void ()> worker;
     std::function<void ()> motorOff;
 	std::function<void ()> delayMode;

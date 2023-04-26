@@ -366,7 +366,7 @@ auto Drive::stepSound(bool headBang) -> void {
 
     DriveSound sound = headBang ? DriveSound::FloppyHeadBang : DriveSound::FloppyStep;
 
-    system->interface->mixDriveSound( mediaConnected, sound, currentHalftrack );
+    system->interface->mixDriveSound( media, sound, currentHalftrack );
 }
 
 inline auto Drive::syncFound() -> uint8_t {

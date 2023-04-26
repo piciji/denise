@@ -79,7 +79,6 @@ auto DiskStructure::detach() -> void {
     rawData = nullptr;
 	created = nullptr;
     rawSize = 0;
-	media = nullptr;
     
     clearTrackData();
     encodingGraceful.reset();

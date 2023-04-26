@@ -564,7 +564,7 @@ auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned 
 
     system->diskIdleOff();
     
-    drives[ media->id ]->attach( media, data, size, loadGracefully );
+    drives[ media->id ]->attach( data, size, loadGracefully );
 }
 
 auto IecBus::detach( Emulator::Interface::Media* media ) -> void {
@@ -666,7 +666,7 @@ auto IecBus::setSpeeder(uint8_t speeder) -> void {
 auto IecBus::updateDriveSounds() -> void {
     for( auto drive : drives ) {
         if (drive->motorOn)
-            system->interface->mixDriveSound( drive->mediaConnected, Emulator::Interface::DriveSound::FloppySpin );
+            system->interface->mixDriveSound( drive->media, Emulator::Interface::DriveSound::FloppySpin );
     }
 }
 

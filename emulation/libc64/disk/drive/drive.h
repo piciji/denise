@@ -36,7 +36,7 @@ struct IecBus;
 
 struct Drive {
         
-    Drive( uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* mediaConnected );
+    Drive( uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* media );
     ~Drive();
 
     enum class Type { D1541, D1541II, D1541C, D1570, D1571 } type;
@@ -72,8 +72,7 @@ struct Drive {
     uint8_t* ramA0ToBF = nullptr;
     uint8_t* turboTrans = nullptr;
 
-    Emulator::Interface::Media* media;
-	Emulator::Interface::Media* mediaConnected; // update status LED if there was no disk inserted
+	Emulator::Interface::Media* media;
 
     struct MotorOff {
         bool slowDown = false;
@@ -179,8 +178,6 @@ struct Drive {
     auto power( ) -> void;
     auto powerOff( ) -> void;
     auto setViaTransition( bool direction ) -> void;
-    auto getMedia() -> Emulator::Interface::Media* { return media; }
-	auto getMediaConnected() -> Emulator::Interface::Media* { return mediaConnected; }
 	auto setType( Type type ) -> void;
     auto progressDelay() -> void;
     auto hide() -> void;
@@ -194,7 +191,7 @@ struct Drive {
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
     auto changeHalfTrack( uint8_t step ) -> void;
-    auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully = false ) -> void;
+    auto attach( uint8_t* data, unsigned size, bool loadGracefully = false ) -> void;
     auto postAttach() -> void;
     auto detach() -> void;
     auto setWriteProtect(bool state) -> void;

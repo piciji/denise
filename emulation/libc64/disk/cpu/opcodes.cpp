@@ -640,7 +640,7 @@ SWITCH_END
 	READ( 0xfffe )			\
 	READ( 0xfffe )			\
 	READ( 0xffff )			\
-    system->jam(drive->mediaConnected); \
+    system->jam(drive->media); \
 	killed = true;
 	
 #define TRAPPED_KILL   \

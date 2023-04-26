@@ -241,7 +241,6 @@ namespace Mixer {
         switch(soundId) {
             case DriveSound::TapeInsert:
             case DriveSound::FloppyInsert:
-                //if (device->first && (data & 1)) { // detach + attach
                 if (device->first && (device->first->id == DriveSound::TapeEject || device->first->id == DriveSound::FloppyEject)) {
                     device->state |= 0x80;
                     break;
