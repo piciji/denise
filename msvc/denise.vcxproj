@@ -135,6 +135,7 @@
     <ClInclude Include="..\emulation\libc64\system\gluelogic.h" />
     <ClInclude Include="..\emulation\libc64\system\keyBuffer.h" />
     <ClInclude Include="..\emulation\libc64\system\memory.h" />
+    <ClInclude Include="..\emulation\libc64\system\sidManager.h" />
     <ClInclude Include="..\emulation\libc64\system\system.h" />
     <ClInclude Include="..\emulation\libc64\system\testbench.h" />
     <ClInclude Include="..\emulation\libc64\tape\structure.h" />
@@ -672,6 +673,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\system\firmware.cpp" />
+    <ClCompile Include="..\emulation\libc64\system\gluelogic.cpp" />
+    <ClCompile Include="..\emulation\libc64\system\keyBuffer.cpp" />
     <ClCompile Include="..\emulation\libc64\system\map.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -680,6 +683,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\emulation\libc64\system\sidManager.cpp" />
     <ClCompile Include="..\emulation\libc64\system\system.cpp" />
     <ClCompile Include="..\emulation\libc64\tape\counter.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
