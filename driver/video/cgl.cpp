@@ -26,6 +26,22 @@ struct CGL : public Video, OpenGL, RenderThread {
     bool useResizing = false;
     bool oldResizeBehaviour = false;
 
+    auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
+        dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
+    }
+
+    auto setDragnDropOverlaySlots(unsigned slots) -> void {
+        dndOverlay.setSlots(slots);
+    }
+
+    auto enableDragnDropOverlay(bool state) -> void {
+        dndOverlay.enable = state;
+    }
+
+    auto sendDragnDropOverlayCoordinates(int x, int y) -> int {
+        return dndOverlay.sendDragnDropOverlayCoordinates(x, y);
+    }
+
     bool init() {
         term();
         bool res;
@@ -290,6 +306,9 @@ struct CGL : public Video, OpenGL, RenderThread {
                 OpenGL::clear();
                 OpenGLSurface::updateTexture(renderBuffer);
                 OpenGL::refresh(disallowShader);
+
+                if (dndOverlay.enabled())
+                    dndOverlay.show(viewport);
 #ifdef DRV_FREETYPE
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
@@ -338,6 +357,9 @@ struct CGL : public Video, OpenGL, RenderThread {
                 }
 
                 OpenGL::refresh(disallowShader);
+
+                if (dndOverlay.enabled())
+                    dndOverlay.show(viewport);
 #ifdef DRV_FREETYPE
                 screenText.updateMessage();
                 screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);

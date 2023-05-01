@@ -203,6 +203,34 @@ auto pWindow::drop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, G
     if(window->onDrop) window->onDrop(paths);
 }
 
+auto pWindow::dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, pWindow* self) -> gboolean {
+    if (self->viewport) {
+
+        return pViewport::dragMove(widget, context, x, y, time, &self->viewport->viewport);
+    }
+    return false;
+}
+
+auto pWindow::dragEnd(GtkWidget* widget, GdkDragContext* context, guint time, pWindow* self) -> void {
+    if (self->viewport)
+        pViewport::dragEnd( widget, context, &self->viewport->viewport );
+}
+
+auto pWindow::dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, pWindow* self) -> void {
+    if (self->viewport)
+        pViewport::dragDataReceived( widget, context, x, y, data, type, timestamp, &self->viewport->viewport );
+    else {
+        drop(widget, context, x, y, data, type, timestamp, &self->window);
+    }
+}
+
+auto pWindow::dragDrop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, pWindow* self) -> gboolean {
+    if (self->viewport)
+        return pViewport::dragDrop( widget, context, x, y, time, &self->viewport->viewport );
+
+    return false;
+}
+
 auto pWindow::configure(GtkWidget* widget, GdkEvent* event, pWindow* p) -> gboolean {
 	p->moveWindow( event );
 	return false;
@@ -308,7 +336,11 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     g_signal_connect(G_OBJECT(widget), "configure-event", G_CALLBACK(pWindow::configure), (gpointer)this);
 	g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(pWindow::sizeAllocate), (gpointer)this);
 
-    g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(pWindow::drop), (gpointer)&window);
+    g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(pWindow::dragDataReceived), (gpointer)this);
+    g_signal_connect(G_OBJECT(widget), "drag-motion", G_CALLBACK(pWindow::dragMove), (gpointer)this);
+    g_signal_connect(G_OBJECT(widget), "drag-leave", G_CALLBACK(pWindow::dragEnd), (gpointer)this);
+    g_signal_connect(G_OBJECT(widget), "drag-drop", G_CALLBACK(pWindow::dragDrop), (gpointer)this);
+
 	g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(pWindow::onButtonPressed), (gpointer)&window);
 	g_signal_connect(G_OBJECT(widget), "window-state-event", G_CALLBACK(pWindow::stateChange), (gpointer)&window);
     g_signal_connect(G_OBJECT(mainDisplay), "realize", G_CALLBACK (pWindow::onRealize), (gpointer)this);

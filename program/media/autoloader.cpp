@@ -130,6 +130,9 @@ auto Autoloader::postProcessing() -> void {
     if (!autoStart) {
 
         if (mediaGroup->isDrive()) {
+            if (slotMode())
+                activateDrive( ddControl.emulator, mediaGroup, countImagesFor(mediaGroup) + ddControl.selection );
+
             if (view && activeEmulator && (ddControl.mode == Mode::Open || ddControl.mode == Mode::OpenWithSlot) )
                 view->setFocused(300);
             else if ( emuView && emuView->visible())

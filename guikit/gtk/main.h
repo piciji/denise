@@ -91,6 +91,12 @@ struct pWindow {
     static auto draw(GtkWidget* widget, cairo_t* context, Window* window) -> gboolean;
     static auto close(GtkWidget* widget, GdkEvent* event, Window* window) -> gint;
     static auto drop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Window* window) -> void;
+    static auto dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, pWindow* self) -> gboolean;
+    static auto dragEnd(GtkWidget* widget, GdkDragContext* context, guint time, pWindow* self) -> void;
+    //static auto dragBegin(GtkWidget* widget, GdkDragContext* context, GtkSelectionData* data, guint type, guint timestamp, pWindow* self) -> void;
+    static auto dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, pWindow* self) -> void;
+    static auto dragDrop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, pWindow* self) -> gboolean;
+
     static auto configure(GtkWidget* widget, GdkEvent* event, pWindow* p) -> gboolean;
     static auto sizeAllocate(GtkWidget* widget, GtkAllocation* allocation, pWindow* p) -> void;
     static auto getPreferredWidth(GtkWidget* widget, int* minimalWidth, int* naturalWidth) -> void;
@@ -510,7 +516,12 @@ struct pViewport : public pWidget {
     auto setDroppable(bool droppable) -> void;
     auto setGeometry(Geometry geometry) -> void;
     auto add() -> void;
-    static auto dropEvent(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void;
+    static auto dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, Viewport* viewport) -> gboolean;
+    static auto dragEnd(GtkWidget* widget, GdkDragContext* context, Viewport* viewport) -> void;
+    //static auto dragBegin(GtkWidget* widget, GdkDragContext* context, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void;
+    static auto dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void;
+    static auto dragDrop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, Viewport* viewport) -> gboolean;
+
     static auto mouseLeave(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;

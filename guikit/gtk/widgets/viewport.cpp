@@ -6,7 +6,6 @@ auto pViewport::create() -> void {
     gtk_widget_add_events(gtkWidget,
     GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_POINTER_MOTION_MASK);
 
-    g_signal_connect(G_OBJECT(gtkWidget), "drag-data-received", G_CALLBACK(pViewport::dropEvent), (gpointer)&viewport);
     g_signal_connect(G_OBJECT(gtkWidget), "button-press-event", G_CALLBACK(pViewport::mousePress), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "button-release-event", G_CALLBACK(pViewport::mouseRelease), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "leave-notify-event", G_CALLBACK(pViewport::mouseLeave), (gpointer)this);
@@ -53,12 +52,37 @@ auto pViewport::handle() -> uintptr_t {
     return (uintptr_t)gtk_widget_get_window(gtkWidget);
 }
 
-auto pViewport::dropEvent(GtkWidget* widget, GdkDragContext* context, gint x, gint y,
-GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void {
+auto pViewport::dragDrop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, Viewport* viewport) -> gboolean {
+    return TRUE;
+}
+
+auto pViewport::dragEnd(GtkWidget* widget, GdkDragContext* context, Viewport* viewport) -> void {
+    if( viewport->onDragLeave) {
+        viewport->onDragLeave();
+    }
+}
+
+//auto pViewport::dragBegin(GtkWidget* widget, GdkDragContext* context, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void {
+//    if(!viewport->state.droppable) return;
+//    auto paths = getDropPaths(data);
+//    if(!paths.empty() && viewport->onDragEnter) {
+//        viewport->onDragEnter(paths);
+//    }
+//}
+
+auto pViewport::dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void {
     if(!viewport->state.droppable) return;
     auto paths = getDropPaths(data);
     if(paths.empty()) return;
     if(viewport->onDrop) viewport->onDrop(paths);
+}
+
+auto pViewport::dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, Viewport* viewport) -> gboolean {
+    if( viewport->onDragMove) {
+        viewport->onDragMove(x, y, true);
+        return true;
+    }
+    return false;
 }
 
 auto pViewport::mouseLeave(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean {

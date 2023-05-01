@@ -347,6 +347,7 @@ auto View::setDragnDrop() -> void {
     // thats why, we have to set drop event on whole window too.
     // but viewport is on top of window, so we simply set drop event on both.
     onDrop = [this]( std::vector<std::string> files ) {
+        //statusHandler->setMessage("drop");
         emuThread->lock();
         dropZone = 0;
         videoDriver->enableDragnDropOverlay(false);
@@ -355,7 +356,7 @@ auto View::setDragnDrop() -> void {
     };
 
     viewport.onDragEnter = [this]( std::vector<std::string> files ) {
-        //statusHandler->setMessage("enter");
+        statusHandler->setMessage("enter");
         emuThread->lock();
         auto slots = autoloader->needSlotsForDragnDrop(files);
         videoDriver->setDragnDropOverlaySlots(slots);
@@ -365,17 +366,20 @@ auto View::setDragnDrop() -> void {
     };
 
     viewport.onDragLeave = [this]() {
-        //statusHandler->setMessage("leave");
+        statusHandler->setMessage("leave");
         emuThread->lock();
         videoDriver->enableDragnDropOverlay(false);
-        dropZone = 0;
         emuThread->unlock();
     };
 
-    viewport.onDragMove = [this](int x, int y) {
-        dropZone = videoDriver->sendDragnDropOverlayCoordinates(x, y);
-        //statusHandler->setMessage(std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(out) );
+    viewport.onDragMove = [this](int x, int y, bool forceActivation) {
+        if (forceActivation) {
+            videoDriver->setDragnDropOverlaySlots(4);
+            videoDriver->enableDragnDropOverlay(true);
+        }
 
+        dropZone = videoDriver->sendDragnDropOverlayCoordinates(x, y);
+        statusHandler->setMessage(std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(dropZone) );
     };
     
     viewport.onDrop = [this]( std::vector<std::string> files ) {
@@ -387,6 +391,7 @@ auto View::setDragnDrop() -> void {
         }
 
         emuThread->lock();
+        dropZone = 0;
         videoDriver->enableDragnDropOverlay(false);
         autoloader->init( files, false, mode, selection );
         autoloader->loadFiles();
