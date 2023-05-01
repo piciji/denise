@@ -260,6 +260,9 @@
     <Filter Include="emulation\cia\new">
       <UniqueIdentifier>{c2c09395-7e79-4410-a59a-6f50b233c2eb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="driver\video\d3d9">
+      <UniqueIdentifier>{d5380440-ff4a-4a76-9d71-3c84fcbbacc7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -922,6 +925,12 @@
     <ClInclude Include="..\emulation\libc64\system\sidManager.h">
       <Filter>emulation\libc64\system</Filter>
     </ClInclude>
+    <ClInclude Include="..\driver\video\d3d9\dragnDropOverlay.h">
+      <Filter>driver\video\d3d9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\winapi\processref.h">
+      <Filter>guikit\winapi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -1389,9 +1398,6 @@
     <ClCompile Include="..\driver\video\wgl.cpp">
       <Filter>driver\video</Filter>
     </ClCompile>
-    <ClCompile Include="..\driver\video\dvideo.cpp">
-      <Filter>driver\video</Filter>
-    </ClCompile>
     <ClCompile Include="..\driver\video\thread\renderThread.cpp">
       <Filter>driver\video\thread</Filter>
     </ClCompile>
@@ -1739,6 +1745,12 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\system\keyBuffer.cpp">
       <Filter>emulation\libc64\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\d3d9\dvideo.cpp">
+      <Filter>driver\video\d3d9</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\dragndrop.cpp">
+      <Filter>guikit\winapi</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -43,6 +43,7 @@
     <ClInclude Include="..\driver\tools\tools.h" />
     <ClInclude Include="..\driver\tools\utf8.h" />
     <ClInclude Include="..\driver\tools\win.h" />
+    <ClInclude Include="..\driver\video\d3d9\dragnDropOverlay.h" />
     <ClInclude Include="..\driver\video\opengl\bind.h" />
     <ClInclude Include="..\driver\video\opengl\main.h" />
     <ClInclude Include="..\driver\video\opengl\opengl.h" />
@@ -178,6 +179,7 @@
     <ClInclude Include="..\guikit\tools\file\tar.h" />
     <ClInclude Include="..\guikit\winapi\dirent.h" />
     <ClInclude Include="..\guikit\winapi\main.h" />
+    <ClInclude Include="..\guikit\winapi\processref.h" />
     <ClInclude Include="..\program\audio\dsp\base.h" />
     <ClInclude Include="..\program\audio\dsp\bass.h" />
     <ClInclude Include="..\program\audio\dsp\data.h" />
@@ -299,7 +301,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\driver\video\dvideo.cpp">
+    <ClCompile Include="..\driver\video\d3d9\dvideo.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -807,6 +809,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\guikit\winapi\display.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\dragndrop.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
