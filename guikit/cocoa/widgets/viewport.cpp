@@ -17,6 +17,29 @@
 }
 
 -(NSDragOperation) draggingEntered:(id<NSDraggingInfo>)sender {
+    auto paths = GUIKIT::getDropPaths(sender);
+    if (!paths.empty() && viewport->onDragEnter)
+        viewport->onDragEnter(paths);
+        
+    return GUIKIT::DropPathsOperation(sender);
+}
+
+-(void) draggingEnded:(id<NSDraggingInfo>)sender {
+    if(viewport->onDragLeave)
+        viewport->onDragLeave();
+}
+
+-(BOOL) wantsPeriodicDraggingUpdates {
+    return YES;
+}
+
+-(NSDragOperation) draggingUpdated:(id<NSDraggingInfo>)sender {
+    auto mp = [sender draggingLocation];
+    GUIKIT::Geometry geo = viewport->GUIKIT::Widget::state.geometry;
+    
+    if (viewport->onDragMove)
+        viewport->onDragMove(floor(mp.x), geo.height - ceil(mp.y), false);
+    
     return GUIKIT::DropPathsOperation(sender);
 }
 

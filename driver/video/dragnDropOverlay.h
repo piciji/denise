@@ -12,6 +12,7 @@ struct DragndropOverlay {
         viewport.width = 0;
         viewport.height = 0;
         buffer = nullptr;
+        enable = false;
     }
 
     virtual ~DragndropOverlay() {
@@ -42,7 +43,7 @@ struct DragndropOverlay {
     } lines[MAX_LINES];
 
     bool initialized = false;
-    std::atomic<bool> enable = false;
+    std::atomic<bool> enable;
 
     unsigned texX = 0;
     unsigned texY = 0;
