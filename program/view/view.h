@@ -15,6 +15,7 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image placeholder;
 	bool requestFullscreenSwitch = false;
     bool customResizeMode = false;
+    int dropZone = 0;
 	
     struct SystemMenu {
         Emulator::Interface* emulator;
@@ -68,6 +69,7 @@ struct View : public GUIKIT::Window {
     
     auto loadPlaceholder() -> void;
     auto renderPlaceholder() -> bool;
+    auto loadDragnDropOverlay() -> void;
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
     auto updateFastforwardCheck() -> void;

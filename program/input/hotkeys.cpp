@@ -873,7 +873,7 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
             if (!emuView->mediaLayout)
                 emuView->prepareLayout(EmuConfigView::TabWindow::Layout::Media);
 
-            emuView->mediaLayout->setMediaView();
+            //emuView->mediaLayout->setMediaView();
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Media );
             break;
         case Hotkey::Id::System:

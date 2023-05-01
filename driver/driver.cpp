@@ -1,8 +1,9 @@
 
 #include "driver.h"
+#include "video/dragnDropOverlay.h"
 
 #ifdef DRV_DIRECT3D
-	#include "video/dvideo.cpp"
+	#include "video/d3d9/dvideo.cpp"
 #endif
 
 #ifdef DRV_DSOUND

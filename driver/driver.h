@@ -1,10 +1,9 @@
 
 /**
- * v 1.1.1
+ * v 1.2
  */
 
-#ifndef DRIVER_H
-#define DRIVER_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -59,6 +58,11 @@ struct Video {
     virtual auto needResizingPreparations(bool useEmuThread) -> bool { return false; }
     virtual auto prepareResizing() -> void {}
     virtual auto endResizing() -> void {}
+
+    virtual auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {}
+    virtual auto setDragnDropOverlaySlots(unsigned slots) -> void {}
+    virtual auto enableDragnDropOverlay(bool state) -> void {}
+    virtual auto sendDragnDropOverlayCoordinates(int x, int y) -> int { return 0; }
 
     virtual auto setVRR(bool state, float speed = 0.0) -> void {}
     virtual auto hasVRR() -> bool { return false; }
@@ -117,5 +121,3 @@ struct Input {
 };
 
 }
-
-#endif

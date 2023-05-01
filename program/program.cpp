@@ -361,7 +361,11 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {
-	emulator->reset();
+    if (activeEmulator == emulator) {
+        emulator->reset();
+        resetRunAhead();
+    } else
+        power(emulator);
 }
 
 auto Program::powerOff() -> void {

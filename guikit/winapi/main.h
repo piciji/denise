@@ -14,6 +14,7 @@
 #include <shlwapi.h>
 #include <Commdlg.h>
 #include <direct.h>
+#include "processref.h"
 
 typedef HPAINTBUFFER (WINAPI *FN_BeginBufferedPaint) (HDC hdcTarget, const RECT *prcTarget, BP_BUFFERFORMAT dwFormat, BP_PAINTPARAMS *pPaintParams, HDC *phdc);    
 typedef HRESULT (WINAPI *FN_EndBufferedPaint) (HPAINTBUFFER hBufferedPaint, BOOL fUpdateTarget);
@@ -31,6 +32,26 @@ static const unsigned Windows8     = 0x0602;
 static const unsigned Windows81    = 0x0603;
 static const unsigned Windows10    = 0x0a00;
 
+struct DropManager : public IDropTarget {
+    DropManager(pWidget* refWidget);
+    ~DropManager();
+
+    pWidget* refWidget;
+    ULONG AddRef();
+    ULONG Release();
+    STDMETHODIMP QueryInterface(REFIID riid, void **ppv);
+
+    STDMETHODIMP DragEnter(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect);
+    STDMETHODIMP DragOver(DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect);
+    STDMETHODIMP DragLeave();
+    STDMETHODIMP Drop(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect);
+
+    auto setPaths(IDataObject* pdto, std::vector<std::string>& paths) -> void;
+
+private:
+    LONG m_cRef;
+};
+
 struct pApplication {
     static auto run() -> void;
     static auto processEvents() -> void;
@@ -45,7 +66,8 @@ struct pApplication {
 	
     static std::string cwd; //current working directory
 	static unsigned version;
-    
+
+    static ProcessReference g_pProcRef;
     static HMODULE uxTheme;
     static FN_BeginBufferedPaint pfnBeginBufferedPaint;
     static FN_EndBufferedPaint pfnEndBufferedPaint;
@@ -193,7 +215,12 @@ struct pWidget {
 	virtual auto setForegroundColor(unsigned color) -> void {}
     virtual auto setBackgroundColor(unsigned color) -> void {}
 
-    auto destroy() -> void { destroy(hwnd); }
+    virtual auto callDrops(std::vector<std::string>& paths) -> void {}
+    virtual auto callDragEnter(std::vector<std::string>& paths) -> void {}
+    virtual auto callDragMove(POINTL ptl) -> void {}
+    virtual auto callDragLeave() -> void {}
+
+    virtual auto destroy() -> void { destroy(hwnd); }
     auto destroy(HWND& handle) -> void;
     auto destroyImageList() -> void;
     auto setTooltip(std::string tooltip) -> void;
@@ -534,6 +561,7 @@ struct pTreeView : pWidget {
 
 struct pViewport : public pWidget {
     Viewport& viewport;
+    DropManager dropManager;
 
     auto handle() -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
@@ -542,7 +570,12 @@ struct pViewport : public pWidget {
     auto rebuild() -> void;
     auto create() -> void;
 
-    pViewport(Viewport& viewport) : pWidget(viewport), viewport(viewport) {}
+    auto callDrops(std::vector<std::string>& paths) -> void;
+    auto callDragEnter(std::vector<std::string>& paths) -> void;
+    auto callDragMove(POINTL ptl) -> void;
+    auto callDragLeave() -> void;
+
+    pViewport(Viewport& viewport) : pWidget(viewport), viewport(viewport),  dropManager(this) {}
 };
 //Layout Widgets are not directly accessable in frontend
 struct pFrame : pWidget {

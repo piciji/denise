@@ -236,9 +236,9 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                 item.info.name = setting->file;
                 auto emuView = EmuConfigView::TabWindow::getView( emulator );
                 if (emuView && emuView->mediaLayout)
-                    emuView->mediaLayout->insertImage( mediaInUse, file, &item, true );
+                    emuView->mediaLayout->insertImage( mediaInUse, file, &item, 1 );
                 else
-                    fileloader->insertImage( emulator, mediaInUse, file, &item, true );
+                    fileloader->insertImage( emulator, mediaInUse, file, &item, 1 );
             } else {
                 emulator->ejectMedium(mediaInUse);
 

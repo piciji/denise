@@ -672,7 +672,7 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 
     if (!dynamic_cast<LIBC64::Interface*>(emulator) )
         trapped = false;
-    else if (trapped && (useExpansion && !useExpansion->isEmpty()))
+    else if (trapped && (useExpansion && !useExpansion->isEmpty() && !useExpansion->isFastloader() && !useExpansion->isRS232()))
         trapped = false;
 
     bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);
@@ -711,7 +711,9 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
         program->initAutoWarp(mediaGroup);
 }
 
-auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, bool fromState) -> void {
+auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
+    bool fromState = options & 1;
+    bool dontUpdateSelected = options & 2;
 
     auto mediaGroup = media->group;
 
@@ -742,8 +744,10 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     if (!fromState && view && activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();
 
-    if (mediaGroup->selected && !media->secondary )
-        settings->set<unsigned>( _underscore(mediaGroup->name) + "_selected", media->id);
+    if (!dontUpdateSelected && mediaGroup->selected && !media->secondary ) {
+        mediaGroup->selected = media;
+        settings->set<unsigned>(_underscore(mediaGroup->name) + "_selected", media->id);
+    }
 
     if (!mediaGroup->isProgram())
         filePool->assign(_ident(emulator, media->name + "store"), file);

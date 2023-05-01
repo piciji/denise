@@ -1,8 +1,8 @@
 
-#include "thread/renderThread.h"
-#include "../tools/win.h"
-#include "../tools/tools.h"
-#include "../tools/chronos.h"
+#include "../thread/renderThread.h"
+#include "../../tools/win.h"
+#include "../../tools/tools.h"
+#include "../../tools/chronos.h"
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <math.h>
@@ -10,6 +10,8 @@
 #include <cstring>
 
 namespace DRIVER {
+
+#include "dragnDropOverlay.h"
 
 #define D3DVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
 #ifndef MAX_MONITORS
@@ -22,6 +24,7 @@ static unsigned monPos = 0;
 auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL;
 
 struct DVideo : Video, RenderThread {
+    D3d9DragndropOverlay dndOverlay;
     LPDIRECT3D9 lpD3D;
     D3DPRESENT_PARAMETERS d3dpp;
     LPDIRECT3DDEVICE9 lpD3DDevice;
@@ -103,6 +106,22 @@ struct DVideo : Video, RenderThread {
             dxRelease(effect);
         }
         effects.clear();
+    }
+
+    auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
+        dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
+    }
+
+    auto setDragnDropOverlaySlots(unsigned slots) -> void {
+        dndOverlay.setSlots(slots);
+    }
+
+    auto enableDragnDropOverlay(bool state) -> void {
+        dndOverlay.enable = state;
+    }
+
+    auto sendDragnDropOverlayCoordinates(int x, int y) -> int {
+        return dndOverlay.sendDragnDropOverlayCoordinates(x, y);
     }
 
     auto updateFilter() -> void {
@@ -409,6 +428,7 @@ struct DVideo : Video, RenderThread {
         RenderThread::reset();
 
         setShader(settings.passes);
+        dndOverlay.init(lpD3DDevice);
         return true;
     }
 
@@ -508,6 +528,12 @@ struct DVideo : Video, RenderThread {
             lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         }
 
+        if (dndOverlay.enabled()) {
+            dndOverlay.show(viewport);
+            setVertex(dndOverlay.texWidth, dndOverlay.texHeight, dndOverlay.texStorageWidth, dndOverlay.texStorageHeight, dndOverlay.texX+viewport.x, dndOverlay.texY+viewport.y, dndOverlay.texWidth, dndOverlay.texHeight);
+            lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        }
+
         if (note.enable)
             applyNote(outWidth, outHeight, outLeft, outTop);
 
@@ -586,6 +612,12 @@ struct DVideo : Video, RenderThread {
         if (!disallowShader && caps.shader && effects.size() > 0) {
             applyShader(outWidth, outHeight);
         } else {
+            lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        }
+
+        if (dndOverlay.enabled()) {
+            dndOverlay.show(viewport);
+            setVertex(dndOverlay.texWidth, dndOverlay.texHeight, dndOverlay.texStorageWidth, dndOverlay.texStorageHeight, dndOverlay.texX+viewport.x, dndOverlay.texY+viewport.y, dndOverlay.texWidth, dndOverlay.texHeight);
             lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         }
 
@@ -730,8 +762,7 @@ struct DVideo : Video, RenderThread {
                // if (!init())
                   //  return false;
             //}
-            if (settings.aspectMode == 2)
-                lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
+            lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
         }
 
         texture->GetSurfaceLevel(0, &surface);
@@ -1050,7 +1081,7 @@ struct DVideo : Video, RenderThread {
 		settings.vrr = false;
 		settings.integerScaling = false;
 
-#include "../tools/fonts.c"
+        #include "../../tools/fonts.c"
         DWORD nFonts;
         AddFontMemResourceEx( &sourceCodePro, sizeof(sourceCodePro), NULL, &nFonts );
     }
@@ -1070,4 +1101,3 @@ auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
 }
 
 }
-

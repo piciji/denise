@@ -30,6 +30,7 @@ namespace DRIVER {
 #ifdef DRV_FREETYPE
     #include "text.h"
 #endif
+#include "dragndropOverlay.h"
 
 struct CustomTexture {        
     std::string attribute;
@@ -136,6 +137,7 @@ struct OpenGL : OpenGLProgram {
     OpenGLText screenText;
 #endif
 
+    GLDragndropOverlay dndOverlay;
 	std::vector<OpenGLProgram> programs;
 	unsigned outputWidth = 0;
 	unsigned outputHeight = 0;

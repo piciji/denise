@@ -289,6 +289,9 @@ auto OpenGL::hardSync( unsigned frames ) -> void {
 auto OpenGL::init() -> bool {
 	if(!OpenGLBind()) return false;
 
+    if (!dndOverlay.init())
+        dndOverlay.term();
+
 #ifdef DRV_FREETYPE
     if (!screenText.init()) {
         screenText.term();

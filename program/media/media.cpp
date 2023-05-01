@@ -144,8 +144,7 @@ auto MediaLayout::build() -> void {
             
         } else if (mediaGroup.isDisk()) {
             tvi->setText( "disk" );
-            tvi->setImage( diskImage );            
-			tvi->setSelected();
+            tvi->setImage( diskImage );
             
         } else if (mediaGroup.isTape()) {
             tvi->setText( "tape" );
@@ -255,6 +254,8 @@ auto MediaLayout::build() -> void {
 
     auto videoManager = VideoManager::getInstance(emulator);
     colorListing(videoManager->getForegroundColor(), videoManager->getBackgroundColor());
+
+    navElements[0].tvi->setSelected();
 }
 
 auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
@@ -1025,7 +1026,7 @@ auto MediaLayout::ejectImage( MediaGroupLayout::Block* block ) -> void {
     updateMediaBlock(block, fSetting);
 }
 
-auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, bool fromState) -> void {
+auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
     
     auto layout = getMediaGroupLayout( media->group );
     
@@ -1035,14 +1036,16 @@ auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* f
     for( auto block : layout->blocks ) {
         
         if (block->media == media) {
-            insertImage( block, file, item, fromState );
+            insertImage( block, file, item, options );
             break;
         }
     }        
 }
 
-auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item, bool fromState) -> void {
-   
+auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
+    bool fromState = options & 1;
+    bool dontUpdateSelected = options & 2;
+
     if (!block)
         return;
     
@@ -1085,7 +1088,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     if (!fromState && activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();
     
-    if (mediaGroup->selected && !media->secondary && !block->header.inUse.checked() ) {
+    if (!dontUpdateSelected && mediaGroup->selected && !media->secondary && !block->header.inUse.checked() ) {
         block->header.inUse.setChecked();
         layout->selectedBlock = block;
         layout->mediaGroup->selected = block->media;

@@ -14,8 +14,8 @@ struct OpenGLText {
     FT_Library ft = nullptr;
     FT_Face face = nullptr;
     FT_GlyphSlot glyph;
-    GLuint vao;
-    GLuint vbo;
+    GLuint vao = 0;
+    GLuint vbo = 0;
     
     GLuint program = 0;
     GLuint vertex = 0;

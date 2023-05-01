@@ -90,9 +90,9 @@ auto Autoloader::postProcessing() -> void {
             else if (mediaGroup->isTape())
                 trapped = settings->get<bool>("use_tape_traps", false);
         }
-    } else if (ddControl.mode == Mode::Open)
+    } else if (ddControl.mode == Mode::Open || ddControl.mode == Mode::OpenWithSlot)
         autoStart = false;
-    else if (ddControl.mode == Mode::AutoStart) {
+    else if (ddControl.mode == Mode::AutoStart || ddControl.mode == Mode::AutoStartWithSlot) {
         autoStart = true;
         if (mediaGroup->isDisk())
             trapped = settings->get<bool>("use_disk_traps", false);
@@ -130,7 +130,7 @@ auto Autoloader::postProcessing() -> void {
     if (!autoStart) {
 
         if (mediaGroup->isDrive()) {
-            if (view && activeEmulator && (ddControl.mode == Mode::Open) )
+            if (view && activeEmulator && (ddControl.mode == Mode::Open || ddControl.mode == Mode::OpenWithSlot) )
                 view->setFocused(300);
             else if ( emuView && emuView->visible())
                 emuView->setFocused();
@@ -163,10 +163,9 @@ auto Autoloader::postProcessing() -> void {
                 continue;
 
 			if (_mediaGroup.isDrive()) {
-				activateDrive( ddControl.emulator, &_mediaGroup, count );
-			}
-			else if (_mediaGroup.isExpansion()) {
-				
+				activateDrive( ddControl.emulator, &_mediaGroup, count + (slotMode() ? ddControl.selection : 0) );
+
+			} else if (_mediaGroup.isExpansion()) {
 				useExpansion = _mediaGroup.expansion;
 				
 				auto curExpansion = ddControl.emulator->getExpansionById( settings->get<unsigned>("expansion", 0) );
@@ -197,7 +196,10 @@ auto Autoloader::postProcessing() -> void {
 		}
 
         VideoManager::hidePlaceHolder();
-        program->power( ddControl.emulator, emuView != nullptr );
+        if ( dynamic_cast<LIBC64::Interface*>(ddControl.emulator) || (ddControl.emulator != activeEmulator))
+            program->power( ddControl.emulator, emuView != nullptr );
+        else
+            program->reset(ddControl.emulator); // because of A1000 WOM
 
         if (!useExpansion)
             program->removeExpansion();
@@ -205,7 +207,7 @@ auto Autoloader::postProcessing() -> void {
         bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);
 
         useExpansion = ddControl.emulator->getExpansion();
-        if (trapped && (useExpansion && !useExpansion->isEmpty()))
+        if (trapped && (useExpansion && !useExpansion->isEmpty() && !useExpansion->isFastloader() && !useExpansion->isRS232()))
             trapped = false;
         else if (forceStandardKernal) {
             // temporary disable any speeders
@@ -214,16 +216,24 @@ auto Autoloader::postProcessing() -> void {
                 fManager->insertDefault( trapsWithSpeeder );
         }
 
-        if (mediaGroup->selected) {
+        uint8_t options = (uint8_t)trapped;
+        if (trapped && !mediaGroup->selected) {
+            if (!trapsWithSpeeder)  options |= 0x80;
+            else                    options |= 2;
+        }
+
+        if (ddControl.mode == Mode::AutoStartWithSlot) {
+            auto sel = ddControl.selection;
+            if (sel >= mediaGroup->media.size())
+                sel = 0;
+
+            ddControl.emulator->selectListing(&mediaGroup->media[sel], 0, "", options);
+            fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[sel].name) );
+
+        } else if (mediaGroup->selected) {
             ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
         } else {
-            uint8_t options = (uint8_t)trapped;
-            if (trapped) {
-                if (!trapsWithSpeeder)  options |= 0x80;
-                else                    options |= 2;
-            }
-
             ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, options);
             fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
         }
@@ -281,6 +291,66 @@ auto Autoloader::loadFiles() -> void {
 		loadFile( file, &items[0] );
 }
 
+auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsigned {
+    Emulator::Interface::MediaGroup* prefered = nullptr;
+
+    for (auto& path : files) {
+        GUIKIT::File* file = filePool->get(path);
+        if (!file || !file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
+            continue;
+
+        auto& items = file->scanArchive();
+        GUIKIT::File::Item* item = &items[0];
+        if (!item || (item->info.size == 0))
+            continue;
+
+        std::size_t end = item->info.name.find_last_of(".");
+        if (end == std::string::npos)
+            continue;
+
+        std::string fileSuffix = item->info.name.substr(end + 1);
+        GUIKIT::String::toLowerCase(fileSuffix);
+
+        for (auto emulator : emulators) {
+            for (auto& mediaGroup : emulator->mediaGroups) {
+                if (mediaGroup.isHardDisk())
+                    continue;
+
+                for (auto& mediaSuffix : mediaGroup.suffix) {
+                    if (mediaSuffix == fileSuffix) {
+                        if (mediaGroup.isExpansion()) {
+                            auto analyzedExpansion = emulator->analyzeExpansion(file->archiveData(item->id), item->info.size, fileSuffix);
+                            if (analyzedExpansion != mediaGroup.expansion)
+                                continue;
+                        }
+
+                        if (mediaGroup.isDisk())
+                            prefered = &mediaGroup;
+                        else if (mediaGroup.isTape()) {
+                            if (prefered != emulator->getDiskMediaGroup())
+                                prefered = &mediaGroup;
+                        } else { // PRG or Expansion
+                            if (!prefered)
+                                prefered = &mediaGroup;
+                        }
+                    }
+                }
+            }
+            if (prefered) { // no emu core mixing allowed
+                if (prefered->isDrive())
+                    return emulator->getModelValue( emulator->getModelIdOfEnabledDrives(prefered) );
+                int count = 0;
+                for(auto& media : prefered->media) {
+                    if (!media.secondary)
+                        count++;
+                }
+                return count;
+            }
+        }
+    }
+    return 1;
+}
+
 auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
 
 	std::size_t end;
@@ -327,20 +397,29 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 					}
 
 					unsigned alreadyInUse = countImagesFor(&mediaGroup);
+                    unsigned _pos = alreadyInUse;
                     Emulator::Interface::Media* media = mediaGroup.selected;
 
-					if ((media && alreadyInUse) || (alreadyInUse >= mediaGroup.media.size()))
+                    if (slotMode()) {
+                        _pos += ddControl.selection;
+                        media = nullptr;
+                    }
+
+					if ((media && _pos) || (_pos >= mediaGroup.media.size()))
 						return loadFiles();
 
-					ddControl.emulator = emulator;
-
 					if (!media)
-						media = &mediaGroup.media[ alreadyInUse ];
+						media = &mediaGroup.media[ _pos ];
+
+                    if (media->secondary)
+                        return loadFiles();
+
+                    ddControl.emulator = emulator;
 
 					if (emuView && emuView->mediaLayout)
-                        emuView->mediaLayout->insertImage(media, file, item);
+                        emuView->mediaLayout->insertImage(media, file, item, alreadyInUse ? 2 : 0);
 					else
-						fileloader->insertImage( emulator, media, file, item );
+                        fileloader->insertImage(emulator, media, file, item, alreadyInUse ? 2 : 0);
 
                     ddControl.mediaGroups.push_back(&mediaGroup);
 

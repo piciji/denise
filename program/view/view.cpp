@@ -347,13 +347,48 @@ auto View::setDragnDrop() -> void {
     // thats why, we have to set drop event on whole window too.
     // but viewport is on top of window, so we simply set drop event on both.
     onDrop = [this]( std::vector<std::string> files ) {
+        emuThread->lock();
+        dropZone = 0;
+        videoDriver->enableDragnDropOverlay(false);
         viewport.onDrop( files );
+        emuThread->unlock();
+    };
+
+    viewport.onDragEnter = [this]( std::vector<std::string> files ) {
+        //statusHandler->setMessage("enter");
+        emuThread->lock();
+        auto slots = autoloader->needSlotsForDragnDrop(files);
+        videoDriver->setDragnDropOverlaySlots(slots);
+        videoDriver->enableDragnDropOverlay(true);
+        dropZone = 0;
+        emuThread->unlock();
+    };
+
+    viewport.onDragLeave = [this]() {
+        //statusHandler->setMessage("leave");
+        emuThread->lock();
+        videoDriver->enableDragnDropOverlay(false);
+        dropZone = 0;
+        emuThread->unlock();
+    };
+
+    viewport.onDragMove = [this](int x, int y) {
+        dropZone = videoDriver->sendDragnDropOverlayCoordinates(x, y);
+        //statusHandler->setMessage(std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(out) );
+
     };
     
-    viewport.onDrop = []( std::vector<std::string> files ) {
+    viewport.onDrop = [this]( std::vector<std::string> files ) {
+        Autoloader::Mode mode = Autoloader::Mode::DragnDrop;
+        unsigned selection = 0;
+        if (dropZone & 0x8000) {
+            selection = dropZone & 0xff;
+            mode = (dropZone & 0x100) ? Autoloader::Mode::AutoStartWithSlot : Autoloader::Mode::OpenWithSlot;
+        }
 
         emuThread->lock();
-        autoloader->init( files, false, Autoloader::Mode::DragnDrop );
+        videoDriver->enableDragnDropOverlay(false);
+        autoloader->init( files, false, mode, selection );
         autoloader->loadFiles();
         emuThread->unlock();
     };        
@@ -845,7 +880,7 @@ auto View::buildMenu() -> void {
         sM.media->onActivate = [emulator]() {
             auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
             emuView->show(EmuConfigView::TabWindow::Layout::Media);
-            emuView->mediaLayout->setMediaView();
+           // emuView->mediaLayout->setMediaView();
 	    };
         sM.system->append( *sM.media );
 		

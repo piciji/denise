@@ -16,6 +16,7 @@ namespace GUIKIT {
 #include "statusbar.cpp"
 #include "clipboard.cpp"
 #include "display.cpp"
+#include "dragndrop.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"
@@ -67,6 +68,7 @@ auto pApplication::processMessage(MSG& msg) -> void {
 auto pApplication::quit() -> void {
     timeEndPeriod(1);
     CoUninitialize();
+    OleUninitialize();
     PostQuitMessage(0);
     
     if (uxTheme)
@@ -93,12 +95,14 @@ unsigned pApplication::version = 0;
 HMODULE pApplication::uxTheme = nullptr;
 FN_BeginBufferedPaint pApplication::pfnBeginBufferedPaint = nullptr;
 FN_EndBufferedPaint pApplication::pfnEndBufferedPaint = nullptr;
+ProcessReference pApplication::g_pProcRef;
 
 auto pApplication::initialize() -> void {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED); // same as CoInitialize(0)
     timeBeginPeriod(1);
     SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     InitCommonControls();
+    OleInitialize(NULL);
 
     WNDCLASS wc;
     wc.cbClsExtra = 0;

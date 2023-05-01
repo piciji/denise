@@ -22,12 +22,42 @@ auto pViewport::rebuild() -> void {
 }
 
 auto pViewport::setDroppable(bool droppable) -> void {
-    if (hwnd)
-        DragAcceptFiles(hwnd, droppable);
+    if (hwnd) {
+        if (droppable)  RegisterDragDrop(hwnd, &dropManager);
+        else            RevokeDragDrop(hwnd);
+    }
 }
 
 auto pViewport::handle() -> uintptr_t {
     return (uintptr_t)hwnd;
+}
+
+auto pViewport::callDrops(std::vector<std::string>& paths) -> void {
+    if(!paths.empty() && viewport.onDrop) {
+        viewport.onDrop(paths);
+    }
+}
+
+auto pViewport::callDragEnter(std::vector<std::string>& paths) -> void {
+    if(!paths.empty() && viewport.onDragEnter) {
+        viewport.onDragEnter(paths);
+    }
+}
+
+auto pViewport::callDragLeave() -> void {
+    if( viewport.onDragLeave) {
+        viewport.onDragLeave();
+    }
+}
+
+auto pViewport::callDragMove(POINTL ptl) -> void {
+    if( viewport.onDragMove && hwnd) {
+        POINT pt;
+        pt.x = ptl.x;
+        pt.y = ptl.y;
+        ScreenToClient(hwnd, &pt);
+        viewport.onDragMove(pt.x, pt.y);
+    }
 }
 
 auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
@@ -39,13 +69,6 @@ auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     switch(msg) {
         //case WM_ERASEBKGND: 
           //  return 0;
-        case WM_DROPFILES: {
-            std::vector<std::string> paths = getDropPaths(wparam);
-            if(!paths.empty() && viewport.onDrop) {
-                viewport.onDrop(paths);
-            }
-            return false;  
-        }
         case WM_GETDLGCODE:
             return DLGC_STATIC | DLGC_WANTCHARS;
             

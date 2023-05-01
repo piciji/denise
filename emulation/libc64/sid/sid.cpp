@@ -383,9 +383,13 @@ template auto Sid::clock<4>() -> void;
 template auto Sid::clock<5>() -> void;
 template auto Sid::clock<6>() -> void;
 template auto Sid::clock<7>() -> void;
+template auto Sid::clock<8>() -> void;
 template auto Sid::clock<9>() -> void;
+template auto Sid::clock<10>() -> void;
 template auto Sid::clock<11>() -> void;
+template auto Sid::clock<12>() -> void;
 template auto Sid::clock<13>() -> void;
+template auto Sid::clock<14>() -> void;
 template auto Sid::clock<15>() -> void;
 
 template auto Sid::clock<0>(int cycles, int sampleCounter, int sampleLimit) -> int;

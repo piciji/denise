@@ -1,4 +1,24 @@
 
+auto View::loadDragnDropOverlay() -> void {
+    for(int line = 0; line < 2; line++) {
+        GUIKIT::Image mediaImage;
+        GUIKIT::File file(program->imgFolder() + "mediaSlot" + std::to_string(line) + ".png");
+
+        if (!file.open())
+            return;
+
+        uint8_t* data = file.read();
+
+        if (!data)
+            return;
+
+        if (!mediaImage.loadPng(data, file.getSize()))
+            return;
+
+        videoDriver->setDragnDropOverlay(mediaImage.data, mediaImage.width, mediaImage.height, line);
+    }
+}
+
 auto View::loadPlaceholder() -> void {
     bool splashScreen = globalSettings->get<bool>("splash_screen", true);
     if (!splashScreen)

@@ -123,3 +123,33 @@ void main() {
     glFragColor = vec4(1.0, 1.0, 1.0, texture(tex, fontTexCoords).r) * fragColor;
 }
 )";
+
+static std::string OpenGLDragnDropVertexShader = R"(
+  #version 150
+
+  in vec4 texCoords;
+  uniform vec4 color;
+
+  out vec4 fragColor;
+  out vec2 texCoordsOut;
+
+  void main() {
+    fragColor = color;
+    texCoordsOut = texCoords.zw;
+
+    gl_Position = vec4(texCoords.xy, 0.0, 1.0);
+}
+)";
+
+static std::string OpenGLDragnDropFragmentShader = R"(
+#version 150
+
+in vec2 texCoordsOut;
+out vec4 glFragColor;
+uniform sampler2D source[];
+
+void main() {
+
+    glFragColor = texture(source[0], texCoordsOut);
+}
+)";
