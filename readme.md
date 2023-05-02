@@ -13,6 +13,16 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 # changelog
 
+## 2.1
+* add drag'n'drop overlay
+    * files can be inserted into the drives faster
+    * files can either only be inserted or inserted and restarted
+* fix a DVideo bug not clearing screen when using native or integer scaling
+* [Amiga] fix: Drive LED sometimes does not turn off
+* [Amiga] display tracks more clearly
+* [C64] fix: multi SID UI not updated correctly from config
+* [C64] fix: crash when changing speeder while threaded emulation is used
+
 ## 2.0
 * add Amiga emulation
     * A1000 (OSC/ICS), A500 (Full OCS), A500 (ECS Agnus, OCS Denise)

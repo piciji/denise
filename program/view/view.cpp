@@ -356,7 +356,7 @@ auto View::setDragnDrop() -> void {
     };
 
     viewport.onDragEnter = [this]( std::vector<std::string> files ) {
-        statusHandler->setMessage("enter");
+        //statusHandler->setMessage("enter");
         emuThread->lock();
         auto slots = autoloader->needSlotsForDragnDrop(files);
         videoDriver->setDragnDropOverlaySlots(slots);
@@ -366,7 +366,7 @@ auto View::setDragnDrop() -> void {
     };
 
     viewport.onDragLeave = [this]() {
-        statusHandler->setMessage("leave");
+        //statusHandler->setMessage("leave");
         emuThread->lock();
         videoDriver->enableDragnDropOverlay(false);
         emuThread->unlock();
@@ -379,7 +379,7 @@ auto View::setDragnDrop() -> void {
         }
 
         dropZone = videoDriver->sendDragnDropOverlayCoordinates(x, y);
-        statusHandler->setMessage(std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(dropZone) );
+        //statusHandler->setMessage(std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(dropZone) );
     };
     
     viewport.onDrop = [this]( std::vector<std::string> files ) {

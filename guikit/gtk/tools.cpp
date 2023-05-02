@@ -352,9 +352,11 @@ auto pFont::size(PangoFontDescription* font, std::string text) -> Size {
 }
 
 inline auto pFont::scale( unsigned pixel ) -> unsigned {
-	
 	static double dpi = gdk_screen_get_resolution (gdk_screen_get_default());
-	
+
+    if (dpi <= 0.0)
+        return pixel;
+
 	return (unsigned) ((double)pixel * dpi / 96.0 + 0.5);
 }
 
