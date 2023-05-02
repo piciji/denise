@@ -140,7 +140,7 @@ auto pStatusBar::getWidth(std::string text) -> unsigned {
         label.setText( text );
         label.setFont( statusBar.font().empty() ? Font::system() : statusBar.font() );
         
-        return label.minimumSize().width + 6;
+        return label.minimumSize().width + 7;
     }
 }
 
@@ -253,7 +253,7 @@ auto pStatusBar::update() -> void {
             
             [view setImage: image];
             
-            xPos += part.image->width + 3;
+            xPos += part.image->width + 4;
             
             usedWidgets.push_back( widget );
             
@@ -297,7 +297,7 @@ auto pStatusBar::update() -> void {
             
             separators.push_back( verticalSeparator );
             
-            xPos += 1;
+            xPos += 4;
         }
     }
 }
