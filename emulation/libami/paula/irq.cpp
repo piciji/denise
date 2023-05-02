@@ -68,7 +68,7 @@ auto Paula::setDskBlkInt() -> void {
         agnus.updateEventAbs<Agnus::EVENT_INTREQ>(nextClock);
 
 template<uint8_t nr, bool dma> auto Paula::scheduleIntreqAud() -> void {
-    int64_t nextClock = agnus.clock + (dma ? 2 : 1);
+    int64_t nextClock = agnus.clock + (dma ? 4 : 3);
 
     if constexpr (nr == 0)
         intreqAud0Clock = nextClock;
