@@ -26,13 +26,15 @@ GameCart::GameCart(System* system, bool game, bool exrom) : Cart( system, game, 
 auto GameCart::assign( Cart* cart ) -> void {
     bool inUse = this == system->expansionPort;
 
+    System* ptrSystem = system;
+
 	if (!protectFromDeletion())
 		delete this;
 
-    system->gameCart = (GameCart*)cart;
+    ptrSystem->gameCart = (GameCart*)cart;
 
     if (inUse)
-        system->setExpansion( Interface::ExpansionIdGame );
+        ptrSystem->setExpansion( Interface::ExpansionIdGame );
 }
 
 auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {

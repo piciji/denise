@@ -140,7 +140,7 @@ auto pStatusBar::getWidth(std::string text) -> unsigned {
         label.setText( text );
         label.setFont( statusBar.font().empty() ? Font::system() : statusBar.font() );
         
-        return label.minimumSize().width + 5;
+        return label.minimumSize().width + 6;
     }
 }
 

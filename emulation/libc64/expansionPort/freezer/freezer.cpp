@@ -19,15 +19,16 @@ Freezer::Freezer(System* system, bool game, bool exrom) : FreezeButton( system, 
 
 auto Freezer::assign( Cart* cart ) -> void {
     bool inUse = this == system->expansionPort;
+    System* ptrSystem = system;
 
     delete this;
 
-    system->freezer = (Freezer*)cart;
-    
-    system->setExpansionCallbacks( system->freezer );
+    ptrSystem->freezer = (Freezer*)cart;
+
+    ptrSystem->setExpansionCallbacks( ptrSystem->freezer );
 
     if (inUse)
-        system->setExpansion( Interface::ExpansionIdFreezer );
+        ptrSystem->setExpansion( Interface::ExpansionIdFreezer );
 }
 
 auto Freezer::create( Interface::CartridgeId cartridgeId ) -> Cart* {
