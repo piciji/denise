@@ -293,6 +293,8 @@ struct Agnus {
     auto fetchSprites() -> void;
     template<uint8_t nr, uint8_t target> auto fetchSprite() -> void;
     template<uint8_t nr> auto updateSpriteV() -> void;
+    template<uint8_t nr> auto setSprPos(uint16_t value) -> void;
+    template<uint8_t nr> auto setSprCtl(uint16_t value) -> void;
 
     template<uint8_t num> auto setSprptH(uint16_t value) -> void;
     template<uint8_t num> auto setSprptL(uint16_t value) -> void;

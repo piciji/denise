@@ -500,23 +500,23 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             }
             break;
 
-        case 0x140: addOneCycleEvent(SPR_POS0, value); break;
-        case 0x148: addOneCycleEvent(SPR_POS1, value); break;
-        case 0x150: addOneCycleEvent(SPR_POS2, value); break;
-        case 0x158: addOneCycleEvent(SPR_POS3, value); break;
-        case 0x160: addOneCycleEvent(SPR_POS4, value); break;
-        case 0x168: addOneCycleEvent(SPR_POS5, value); break;
-        case 0x170: addOneCycleEvent(SPR_POS6, value); break;
-        case 0x178: addOneCycleEvent(SPR_POS7, value); break;
+        case 0x140: setSprPos<0>(value);  break;
+        case 0x148: setSprPos<1>(value);  break;
+        case 0x150: setSprPos<2>(value);  break;
+        case 0x158: setSprPos<3>(value);  break;
+        case 0x160: setSprPos<4>(value);  break;
+        case 0x168: setSprPos<5>(value);  break;
+        case 0x170: setSprPos<6>(value);  break;
+        case 0x178: setSprPos<7>(value);  break;
 
-        case 0x142: addOneCycleEvent(SPR_CTL0, value); break;
-        case 0x14a: addOneCycleEvent(SPR_CTL1, value); break;
-        case 0x152: addOneCycleEvent(SPR_CTL2, value); break;
-        case 0x15a: addOneCycleEvent(SPR_CTL3, value); break;
-        case 0x162: addOneCycleEvent(SPR_CTL4, value); break;
-        case 0x16a: addOneCycleEvent(SPR_CTL5, value); break;
-        case 0x172: addOneCycleEvent(SPR_CTL6, value); break;
-        case 0x17a: addOneCycleEvent(SPR_CTL7, value); break;
+        case 0x142: setSprCtl<0>(value); break;
+        case 0x14a: setSprCtl<1>(value); break;
+        case 0x152: setSprCtl<2>(value); break;
+        case 0x15a: setSprCtl<3>(value); break;
+        case 0x162: setSprCtl<4>(value); break;
+        case 0x16a: setSprCtl<5>(value); break;
+        case 0x172: setSprCtl<6>(value); break;
+        case 0x17a: setSprCtl<7>(value); break;
 
         case 0x144: addOneCycleEvent(SPR_DATA0, value); break;
         case 0x14c: addOneCycleEvent(SPR_DATA1, value); break;

@@ -480,7 +480,7 @@ inline auto Agnus::dmaCycle() -> void {
 
     if (eClockCycle == clock) {
         // CIA accesses must be tuned to E-Clock. One CIA BUS cycle corresponds to 2 + [6,8,10,12,14] + 2 CPU cycles.
-        // The programming is coordinated in such a way t   hat the CIA is first driven forward and then the register access takes place.
+        // The programming is coordinated in such a way that the CIA is first driven forward and then the register access takes place.
         // Tests, that evaluate CIA timers are difficult because while waiting for access, the CIA internally progresses 1 or 2 cycles.
         // To make matters worse, the E-Clock phase can change with each cold start.
         eClockCycle = clock + 5;

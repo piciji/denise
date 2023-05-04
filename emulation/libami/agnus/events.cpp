@@ -106,16 +106,6 @@ auto Agnus::inactivateOneCycleEvent(int job) -> void {
     }
 }
 
-#define SPRCTL(nr) \
-    sprites[nr].ctl = data; \
-    denise.setSprCtl(nr, data); \
-    updateSpriteV<nr>();
-
-#define SPRPOS(nr) \
-    sprites[nr].pos = data; \
-    denise.setSprPos(nr, data); \
-    updateSpriteV<nr>();
-
 auto Agnus::processOneCycleEvent(int job, uint16_t data) -> void {
     // Only jobs that do not hinder each other are allowed in. A newly added job runs a delayed job immediately.
     switch (job) {
@@ -152,23 +142,23 @@ auto Agnus::processOneCycleEvent(int job, uint16_t data) -> void {
         case SPR_DATB6: denise.setSprDatB(6, data); break;
         case SPR_DATB7: denise.setSprDatB(7, data); break;
 
-        case SPR_CTL0: SPRCTL(0) break;
-        case SPR_CTL1: SPRCTL(1) break;
-        case SPR_CTL2: SPRCTL(2) break;
-        case SPR_CTL3: SPRCTL(3) break;
-        case SPR_CTL4: SPRCTL(4) break;
-        case SPR_CTL5: SPRCTL(5) break;
-        case SPR_CTL6: SPRCTL(6) break;
-        case SPR_CTL7: SPRCTL(7) break;
+        case SPR_CTL0: denise.setSprCtl(0, data); break;
+        case SPR_CTL1: denise.setSprCtl(1, data); break;
+        case SPR_CTL2: denise.setSprCtl(2, data); break;
+        case SPR_CTL3: denise.setSprCtl(3, data); break;
+        case SPR_CTL4: denise.setSprCtl(4, data); break;
+        case SPR_CTL5: denise.setSprCtl(5, data); break;
+        case SPR_CTL6: denise.setSprCtl(6, data); break;
+        case SPR_CTL7: denise.setSprCtl(7, data); break;
 
-        case SPR_POS0: SPRPOS(0) break;
-        case SPR_POS1: SPRPOS(1) break;
-        case SPR_POS2: SPRPOS(2) break;
-        case SPR_POS3: SPRPOS(3) break;
-        case SPR_POS4: SPRPOS(4) break;
-        case SPR_POS5: SPRPOS(5) break;
-        case SPR_POS6: SPRPOS(6) break;
-        case SPR_POS7: SPRPOS(7) break;
+        case SPR_POS0: denise.setSprPos(0, data); break;
+        case SPR_POS1: denise.setSprPos(1, data); break;
+        case SPR_POS2: denise.setSprPos(2, data); break;
+        case SPR_POS3: denise.setSprPos(3, data); break;
+        case SPR_POS4: denise.setSprPos(4, data); break;
+        case SPR_POS5: denise.setSprPos(5, data); break;
+        case SPR_POS6: denise.setSprPos(6, data); break;
+        case SPR_POS7: denise.setSprPos(7, data); break;
 
         case BPL_CON0: denise.setBplCon0(data); break;
         case BPL_CON2: denise.setBplCon2(data); break;

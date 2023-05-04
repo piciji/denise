@@ -399,9 +399,22 @@ template<uint8_t nr> auto Agnus::updateSpriteV() -> void {
             spr.enable = true;
         }
         if (vPos == spr.vStop) {
+            spr.fetchData = false;
             spr.enable = false;
         }
     }
+}
+
+template<uint8_t nr> auto Agnus::setSprPos(uint16_t value) -> void {
+    sprites[nr].pos = value;
+    updateSpriteV<nr>();
+    addOneCycleEvent(SPR_POS0 + nr, value);
+}
+
+template<uint8_t nr> auto Agnus::setSprCtl(uint16_t value) -> void {
+    sprites[nr].ctl = value;
+    updateSpriteV<nr>();
+    addOneCycleEvent(SPR_CTL0 + nr, value);
 }
 
 }

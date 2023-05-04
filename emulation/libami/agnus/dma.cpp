@@ -208,20 +208,28 @@ template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
 }
 
 template<uint8_t nr, uint8_t target> inline auto Agnus::fetchSprite() -> void {
-    dataBus = _swapWord(*(uint16_t*) (chipMem + sprites[nr].ptr));
+    Sprite& spr = sprites[nr];
+    dataBus = _swapWord(*(uint16_t*) (chipMem + spr.ptr));
 
     if constexpr (target == 0) {
         addOneCycleEvent(SPR_DATA0 + nr, dataBus);
     } else if constexpr (target == 1) {
         addOneCycleEvent(SPR_DATB0 + nr, dataBus);
     } else if constexpr (target == 2) {
-        addOneCycleEvent(SPR_POS0 + nr, dataBus);
+        setSprPos<nr>(dataBus);
     } else {
-        addOneCycleEvent(SPR_CTL0 + nr, dataBus);
+        setSprCtl<nr>(dataBus);
     }
 
-    sprites[nr].ptr += 2;
-    sprites[nr].ptr &= chipMemMask;
+    if constexpr (target & 2) {
+        if (vBlankEnd || vBlankEndNext) {
+            spr.fetchData = false;
+            spr.enable = false;
+        }
+    }
+
+    spr.ptr += 2;
+    spr.ptr &= chipMemMask;
     busUsage = BUS_USAGE_SPRITE;
 }
 
