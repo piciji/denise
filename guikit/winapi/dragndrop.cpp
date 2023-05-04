@@ -7,7 +7,7 @@ DropManager::~DropManager() {
     pApplication::g_pProcRef.Release();
 }
 
-auto DropManager::QueryInterface(REFIID riid, void **ppv) -> HRESULT STDMETHODCALLTYPE {
+HRESULT STDMETHODCALLTYPE DropManager::QueryInterface(REFIID riid, void **ppv) {
     if (riid == IID_IUnknown || riid == IID_IDropTarget) {
         *ppv = static_cast<IUnknown*>(this);
         AddRef();
@@ -17,18 +17,18 @@ auto DropManager::QueryInterface(REFIID riid, void **ppv) -> HRESULT STDMETHODCA
     return E_NOINTERFACE;
 }
 
-auto DropManager::AddRef() -> ULONG STDMETHODCALLTYPE {
+ULONG STDMETHODCALLTYPE DropManager::AddRef() {
     return InterlockedIncrement(&m_cRef);
 }
 
-auto DropManager::Release() -> ULONG STDMETHODCALLTYPE {
+ULONG STDMETHODCALLTYPE DropManager::Release() {
     LONG cRef = InterlockedDecrement(&m_cRef);
     if (cRef == 0)
         delete this;
     return cRef;
 }
 
-auto DropManager::DragEnter(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) -> HRESULT STDMETHODCALLTYPE {
+HRESULT STDMETHODCALLTYPE DropManager::DragEnter(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) {
     std::vector<std::string> paths;
     setPaths(pdto, paths);
 
@@ -37,18 +37,18 @@ auto DropManager::DragEnter(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DW
     return S_OK;
 }
 
-auto DropManager::DragOver(DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) -> HRESULT STDMETHODCALLTYPE {
+HRESULT STDMETHODCALLTYPE DropManager::DragOver(DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) {
     refWidget->callDragMove(ptl);
     *pdwEffect &= DROPEFFECT_COPY;
     return S_OK;
 }
 
-auto DropManager::DragLeave() -> HRESULT STDMETHODCALLTYPE {
+HRESULT STDMETHODCALLTYPE DropManager::DragLeave() {
     refWidget->callDragLeave();
     return S_OK;
 }
 
-auto DropManager::Drop(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) -> HRESULT STDMETHODCALLTYPE {
+HRESULT STDMETHODCALLTYPE DropManager::Drop(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
     std::vector<std::string> paths;
     setPaths(pdto, paths);
 
