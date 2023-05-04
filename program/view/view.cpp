@@ -1373,7 +1373,8 @@ auto View::updateSpeedLabels() -> void {
             label += " ( " + GUIKIT::String::formatFloatingPoint(otherValue, 2, true) + " % )";
         }
 
-        speedItems[i]->setText( label );
+        if (label != speedItems[i]->text())
+            speedItems[i]->setText( label );
     }
 
     auto settings = program->getSettings( activeEmulator );
