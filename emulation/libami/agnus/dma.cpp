@@ -221,7 +221,7 @@ template<uint8_t nr, uint8_t target> inline auto Agnus::fetchSprite() -> void {
         setSprCtl<nr>(dataBus);
     }
 
-    if constexpr (target & 2) {
+    if constexpr (!!(target & 2)) {
         if (vBlankEnd || vBlankEndNext) {
             spr.fetchData = false;
             spr.enable = false;
