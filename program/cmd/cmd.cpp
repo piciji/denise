@@ -210,7 +210,7 @@ auto Cmd::parse() -> void {
 		}
 
         if (attachMedia) {
-            attachments.push_back({(Emulator::Interface*)attachMedia->guid, attachMedia, arg});
+            attachments.push_back({(Emulator::Interface*)attachMedia->guid, attachMedia, GUIKIT::String::trim(arg)});
             attachMedia = nullptr;
             continue;
         }
@@ -309,6 +309,7 @@ auto Cmd::parse() -> void {
         } else {
             std::string temp = arg;
             GUIKIT::String::toLowerCase( temp );
+            GUIKIT::String::trim( arg );
             
             for(auto& suffix : allowedSuffix) {
 
