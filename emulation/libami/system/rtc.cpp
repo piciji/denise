@@ -64,6 +64,9 @@ auto RTC::updateRegs() -> void {
         t = localtime(&time);
     #endif
 
+    if (!t)
+        return;
+
     regs[0x0] = t->tm_sec % 10;
     regs[0x1] = t->tm_sec / 10;
     regs[0x2] = t->tm_min % 10;
