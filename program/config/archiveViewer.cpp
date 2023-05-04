@@ -3,25 +3,12 @@
 #include "../program.h"
 #include "../tools/filepool.h"
 #include "../../data/icons.h"
+#include "../view/view.h"
 
 ArchiveViewer* archiveViewer = nullptr;
 
 auto ArchiveViewer::build() -> void {
     cocoa.keepMenuVisibilityOnDisplay();
-    
-    GUIKIT::Geometry defaultGeometry = {100, 100, 400, 350};
-
-    GUIKIT::Geometry geometry = {
-        globalSettings->get<int>("screen_archiveviewer_x", defaultGeometry.x)
-        ,globalSettings->get<int>("screen_archiveviewer_y", defaultGeometry.y)
-        ,globalSettings->get<unsigned>("screen_archiveviewer_width", defaultGeometry.width)
-        ,globalSettings->get<unsigned>("screen_archiveviewer_height", defaultGeometry.height)
-    };
-
-    setGeometry(geometry);
-
-    if (isOffscreen())
-        setGeometry(defaultGeometry);  
 
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
     imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
@@ -55,6 +42,7 @@ auto ArchiveViewer::build() -> void {
     onClose = [this]() {
         filePool->unloadOrphaned();
         setVisible(false);
+        view->setFocused(100);
     };
 
     onMove = [&]() {
@@ -128,6 +116,20 @@ auto ArchiveViewer::setView(std::vector<GUIKIT::File::Item>& items, bool multiSe
             onCallback( fileCount == 0 ? nullptr : firstFile);
         
         return;
+    }
+
+    if (!geometryInitialized) {
+        GUIKIT::Geometry defaultGeometry = {100, 100, 400, 350};
+        GUIKIT::Geometry geometry = {
+                globalSettings->get<int>("screen_archiveviewer_x", defaultGeometry.x)
+                ,globalSettings->get<int>("screen_archiveviewer_y", defaultGeometry.y)
+                ,globalSettings->get<unsigned>("screen_archiveviewer_width", defaultGeometry.width)
+                ,globalSettings->get<unsigned>("screen_archiveviewer_height", defaultGeometry.height)
+        };
+        setGeometry(geometry);
+        if (isOffscreen())
+            setGeometry(defaultGeometry);
+        geometryInitialized = true;
     }
 
     mtimer.setInterval(30);

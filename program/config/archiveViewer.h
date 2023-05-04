@@ -13,6 +13,8 @@ struct ArchiveViewer : public GUIKIT::Window {
     GUIKIT::Image imgFolderClosed;
     GUIKIT::Image imgDocument;
     bool builded = false;
+    bool geometryInitialized = false;
+
     bool multiSelection = false;
     unsigned filesSelected = 0;
 
