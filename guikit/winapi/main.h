@@ -37,14 +37,14 @@ struct DropManager : public IDropTarget {
     ~DropManager();
 
     pWidget* refWidget;
-    ULONG AddRef();
-    ULONG Release();
-    STDMETHODIMP QueryInterface(REFIID riid, void **ppv);
+    auto AddRef() -> ULONG STDMETHODCALLTYPE;
+    auto Release() -> ULONG STDMETHODCALLTYPE;
+    auto QueryInterface(REFIID riid, void **ppv) -> HRESULT STDMETHODCALLTYPE;
 
-    STDMETHODIMP DragEnter(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect);
-    STDMETHODIMP DragOver(DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect);
-    STDMETHODIMP DragLeave();
-    STDMETHODIMP Drop(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect);
+    auto DragEnter(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) -> HRESULT STDMETHODCALLTYPE;
+    auto DragOver(DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) -> HRESULT STDMETHODCALLTYPE;
+    auto DragLeave() -> HRESULT STDMETHODCALLTYPE;
+    auto Drop(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) -> HRESULT STDMETHODCALLTYPE;
 
     auto setPaths(IDataObject* pdto, std::vector<std::string>& paths) -> void;
 

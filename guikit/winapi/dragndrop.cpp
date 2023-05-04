@@ -7,7 +7,7 @@ DropManager::~DropManager() {
     pApplication::g_pProcRef.Release();
 }
 
-STDMETHODIMP DropManager::QueryInterface(REFIID riid, void **ppv) {
+auto DropManager::QueryInterface(REFIID riid, void **ppv) -> HRESULT STDMETHODCALLTYPE {
     if (riid == IID_IUnknown || riid == IID_IDropTarget) {
         *ppv = static_cast<IUnknown*>(this);
         AddRef();
@@ -17,18 +17,18 @@ STDMETHODIMP DropManager::QueryInterface(REFIID riid, void **ppv) {
     return E_NOINTERFACE;
 }
 
-ULONG DropManager::AddRef() {
+auto DropManager::AddRef() -> ULONG STDMETHODCALLTYPE {
     return InterlockedIncrement(&m_cRef);
 }
 
-ULONG DropManager::Release() {
+auto DropManager::Release() -> ULONG STDMETHODCALLTYPE {
     LONG cRef = InterlockedDecrement(&m_cRef);
     if (cRef == 0)
         delete this;
     return cRef;
 }
 
-STDMETHODIMP DropManager::DragEnter(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) {
+auto DropManager::DragEnter(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) -> HRESULT STDMETHODCALLTYPE {
     std::vector<std::string> paths;
     setPaths(pdto, paths);
 
@@ -37,18 +37,18 @@ STDMETHODIMP DropManager::DragEnter(IDataObject* pdto, DWORD grfKeyState, POINTL
     return S_OK;
 }
 
-STDMETHODIMP DropManager::DragOver(DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) {
+auto DropManager::DragOver(DWORD grfKeyState, POINTL ptl, DWORD* pdwEffect) -> HRESULT STDMETHODCALLTYPE {
     refWidget->callDragMove(ptl);
     *pdwEffect &= DROPEFFECT_COPY;
     return S_OK;
 }
 
-STDMETHODIMP DropManager::DragLeave() {
+auto DropManager::DragLeave() -> HRESULT STDMETHODCALLTYPE {
     refWidget->callDragLeave();
     return S_OK;
 }
 
-STDMETHODIMP DropManager::Drop(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) {
+auto DropManager::Drop(IDataObject* pdto, DWORD grfKeyState, POINTL ptl, DWORD *pdwEffect) -> HRESULT STDMETHODCALLTYPE {
     std::vector<std::string> paths;
     setPaths(pdto, paths);
 
