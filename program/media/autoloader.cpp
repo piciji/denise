@@ -11,6 +11,7 @@
 #include "../states/states.h"
 #include "../firmware/manager.h"
 #include "../audio/manager.h"
+#include "../thread/emuThread.h"
 
 Autoloader* autoloader = nullptr;
 
@@ -272,6 +273,8 @@ auto Autoloader::loadFiles() -> void {
     GUIKIT::Vector::eraseVectorPos( ddControl.files, 0 );
     
     GUIKIT::File* file = filePool->get(filePath);
+    filePool->assign("autoloader", file);
+
     if (!file)
         return loadFiles();
 
@@ -286,7 +289,9 @@ auto Autoloader::loadFiles() -> void {
 
 	if (archiveViewer) {
 		archiveViewer->onCallback = [this, file](GUIKIT::File::Item* item) {
+            emuThread->lock();
 			this->loadFile( file, item );
+            emuThread->unlock();
 		};
 
 		archiveViewer->setView( items );

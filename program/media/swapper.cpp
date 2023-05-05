@@ -86,10 +86,10 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 
             if (filePaths.size() == 1) {
                 archiveViewer->onCallback = [this, file](GUIKIT::File::Item* item) {
+                    emuThread->lock();
                     if (!item || (item->info.size == 0))
-                        return this->mediaLayout->message->error(
-                                trans->get(file->isArchived() ? "archive_error" : "file_open_error",
-                                           {{"%path%", file->getFile()}}));
+                        return this->mediaLayout->message->error( trans->get(file->isArchived() ? "archive_error" : "file_open_error",
+                            {{"%path%", file->getFile()}}));
 
                     if (!listView.selected()) return;
                     auto pos = listView.selection() + archiveViewer->filesSelected + 1;
@@ -105,6 +105,8 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 
                     if (++pos == SWAPPER_SLOTS)
                         archiveViewer->setVisible(false);
+
+                    emuThread->unlock();
                 };
                 archiveViewer->setView(items, true);
             } else {
