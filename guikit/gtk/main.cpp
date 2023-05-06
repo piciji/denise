@@ -205,8 +205,8 @@ auto pWindow::drop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, G
 
 auto pWindow::dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, pWindow* self) -> gboolean {
     if (self->viewport) {
-
-        return pViewport::dragMove(widget, context, x, y, time, &self->viewport->viewport);
+        int scale = gtk_widget_get_scale_factor(self->widget);
+        return pViewport::dragMove(widget, context, x * scale, (y - self->menuHeight) * scale, time, &self->viewport->viewport);
     }
     return false;
 }
