@@ -19,6 +19,9 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(vStop);
     s.integer(dmal);
 
+    s.integer(vPosLocked);
+    s.integer(hPosLocked);
+
     s.integer(frameClock);
     s.integer(fpsChange);
     s.integer(vBlankEnd);

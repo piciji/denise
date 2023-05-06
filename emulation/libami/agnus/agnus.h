@@ -75,6 +75,8 @@ struct Agnus {
     Input& input;
     Cia<MOS_8520>& cia1;
     Cia<MOS_8520>& cia2;
+    uint16_t vPosLocked;
+    bool hPosLocked;
 
     Emulator::PowerSupply powerSupply;
     Blitter blitter;

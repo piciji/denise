@@ -82,6 +82,8 @@ auto Agnus::power(bool softReset) -> void {
     busUsage = BUS_FREE;
     hPos = 4;
     vPos = 0;
+    hPosLocked = false;
+    vPosLocked = 0;
     vStart = 0;
     vStop = 0;
     dmal = 0;
@@ -307,16 +309,11 @@ inline auto Agnus::dmaCycle() -> void {
     // de-adjust HRM DMA view by 4 cycles to Beam position.
     switch(++hPos) {
         case 1:
-            if (ERSY) {
-                hPos = 0; // need external sync to proceed
+            if (ERSY)
+                hPosLocked = true;
 
-                if (!hasActiveEvent<EVENT_LEAVE_EMULATION>())
-                    updateEvent<EVENT_LEAVE_EMULATION>(150000);
-
-            } else {
-                if (shortLineBefore)
-                    copper.cycle1();
-            }
+            if (shortLineBefore)
+                copper.cycle1();
             break;
 
         case 2:
@@ -324,7 +321,6 @@ inline auto Agnus::dmaCycle() -> void {
             updateVdiw();
             actions |= ACT_COPPER; // if Copper waits for next line
             break;
-
 
         case 5:
             if (ecsAndHigher() && lol) {
@@ -391,7 +387,7 @@ inline auto Agnus::dmaCycle() -> void {
             if (dmal & 0x300)
                 fetchSample<1>( dmal & 0x100 );
 
-            if (!lof && (vPos == (ntsc ? 6 : 5) ) ) {
+            if (!lof && (ERSY == 0) && (vPos == (ntsc ? 6 : 5) ) ) {
                 if (model != OCS_A1000) cia1.tod(); // hardwired vsync end
             }
             break;
@@ -417,7 +413,7 @@ inline auto Agnus::dmaCycle() -> void {
         case 0x21: if (!vBlank) spriteControl<2, false>(); break;
         case 0x23: if (!vBlank) spriteControl<3, true>(); break;
         case 0x24: // hsync end
-            cia2.tod();
+            if (ERSY == 0) cia2.tod();
             break;
         case 0x25: if (!vBlank) spriteControl<3, false>(); break;
         case 0x27: if (!vBlank) spriteControl<4, true>(); break;
@@ -442,7 +438,7 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 0x85:
-            if (lof && (vPos == (ntsc ? 6 : 5) ) ) {
+            if (lof && (ERSY == 0) && (vPos == (ntsc ? 6 : 5) ) ) {
                 if (model != OCS_A1000) cia1.tod();
             }
             break;
@@ -511,6 +507,11 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
     } else if (h == (hCompare + 1) ) {
         h = 0;
         if (lolToggle) _lol ^= 1;
+    }
+
+    if (ERSY) {
+        v = vPosLocked;
+        if (hPosLocked) h = 0;
     }
 
     // VHPOSR

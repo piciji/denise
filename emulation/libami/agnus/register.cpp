@@ -383,11 +383,9 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 fpsChange |= 1;
             }
 
-            if (ERSY) {
-                if ((value & 2) == 0) {
-                    if (!hasActiveEvent<EVENT_HTOTAL>())
-                        updateEvent<EVENT_HTOTAL>((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol) );
-                }
+            if ((ERSY == 0) && (value & 2)) {
+                vPosLocked = vPos;
+                hPosLocked = false;
             }
 
             bplCon0 = value & ~0xb1;

@@ -215,10 +215,7 @@ auto Agnus::HTotalEvent() -> void {
 
         hPos = 0;
         if (lolToggle) lol ^= 1;
-        if(ERSY == 0) {
-            updateEvent<EVENT_HTOTAL>((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol));
-        } else
-            setEventInactive<EVENT_HTOTAL>();
+        updateEvent<EVENT_HTOTAL>((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol));
         hTotalFirst = true;
     }
 }
