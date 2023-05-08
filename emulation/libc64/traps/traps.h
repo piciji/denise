@@ -4,6 +4,7 @@
 #include <functional>
 #include <vector>
 #include <string>
+#include <cstdint>
 #include "baseDevice.h"
 
 namespace LIBC64 {

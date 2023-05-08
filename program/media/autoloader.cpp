@@ -200,7 +200,8 @@ auto Autoloader::postProcessing() -> void {
 		}
 
         VideoManager::hidePlaceHolder();
-        if ( dynamic_cast<LIBC64::Interface*>(ddControl.emulator) || (ddControl.emulator != activeEmulator))
+        if ( dynamic_cast<LIBC64::Interface*>(ddControl.emulator) || (ddControl.emulator != activeEmulator)
+            || (activeEmulator->getModelValue( LIBAMI::Interface::ModelIdSystem ) > 0 ) )
             program->power( ddControl.emulator, emuView != nullptr );
         else
             program->reset(ddControl.emulator); // because of A1000 WOM

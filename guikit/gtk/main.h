@@ -45,6 +45,7 @@ struct pWindow {
 	bool isMinimized = false;
     bool resizing = false;
     bool requestFullscreenToggle = false;
+    gulong dragMotionId = 0;
 
     auto append(Menu& menu) -> void;
     auto append(Widget& widget) -> void;

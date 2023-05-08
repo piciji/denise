@@ -353,7 +353,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 	g_signal_connect(G_OBJECT(mainDisplay), "size-allocate", G_CALLBACK(pWindow::sizeAllocate), (gpointer)this);
 
     g_signal_connect(G_OBJECT(widget), "drag-data-received", G_CALLBACK(pWindow::dragDataReceived), (gpointer)this);
-    g_signal_connect(G_OBJECT(widget), "drag-motion", G_CALLBACK(pWindow::dragMove), (gpointer)this);
+    dragMotionId = g_signal_connect(G_OBJECT(widget), "drag-motion", G_CALLBACK(pWindow::dragMove), (gpointer)this);
     g_signal_connect(G_OBJECT(widget), "drag-leave", G_CALLBACK(pWindow::dragEnd), (gpointer)this);
     g_signal_connect(G_OBJECT(widget), "drag-drop", G_CALLBACK(pWindow::dragDrop), (gpointer)this);
 
@@ -795,7 +795,13 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
             pMonitor::setSetting( window.fullscreenSetting.displayId, window.fullscreenSetting.settingId );
 
         gtk_window_fullscreen(GTK_WINDOW(widget));
-        g_signal_connect(G_OBJECT(widget), "drag-motion", G_CALLBACK(pWindow::dragMove), (gpointer)this);
+        if (dragMotionId)
+            g_signal_handler_disconnect(G_OBJECT(widget), dragMotionId);
+
+        if (window.droppable()) {
+            dragMotionId = g_signal_connect(G_OBJECT(widget), "drag-motion", G_CALLBACK(pWindow::dragMove), (gpointer)this);
+            setDroppable(true);
+        }
     }
 }
 
