@@ -204,7 +204,23 @@ auto pWindow::drop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, G
 }
 
 auto pWindow::dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, pWindow* self) -> gboolean {
-    if (self->viewport) {
+    if (self->viewport && self->viewport->viewport.droppable()) {
+        if (!self->viewport->dragAnalyzed && self->viewport->viewport.onDragEnter) {
+            GtkTargetList* targetlist = gtk_drag_dest_get_target_list(widget);
+            GList* list = gdk_drag_context_list_targets(context);
+            if (list) {
+                while (list) {
+                    GdkAtom atom = (GdkAtom)g_list_nth_data(list, 0);
+                    if (gtk_target_list_find(targetlist, GDK_POINTER_TO_ATOM(g_list_nth_data(list, 0)), NULL)) {
+                        gtk_drag_get_data(widget, context, atom, time);
+                        break;
+                    }
+                    list = g_list_next(list);
+                }
+            }
+           return true;
+        }
+
         int scale = gtk_widget_get_scale_factor(self->widget);
         return pViewport::dragMove(widget, context, x * scale, (y - self->menuHeight) * scale, time, &self->viewport->viewport);
     }
@@ -212,12 +228,12 @@ auto pWindow::dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gint 
 }
 
 auto pWindow::dragEnd(GtkWidget* widget, GdkDragContext* context, guint time, pWindow* self) -> void {
-    if (self->viewport)
+    if (self->viewport && self->viewport->viewport.droppable())
         pViewport::dragEnd( widget, context, &self->viewport->viewport );
 }
 
 auto pWindow::dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, pWindow* self) -> void {
-    if (self->viewport)
+    if (self->viewport && self->viewport->viewport.droppable())
         pViewport::dragDataReceived( widget, context, x, y, data, type, timestamp, &self->viewport->viewport );
     else {
         drop(widget, context, x, y, data, type, timestamp, &self->window);
@@ -225,10 +241,10 @@ auto pWindow::dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint 
 }
 
 auto pWindow::dragDrop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, pWindow* self) -> gboolean {
-    if (self->viewport)
-        return pViewport::dragDrop( widget, context, x, y, time, &self->viewport->viewport );
+    if(self->viewport && self->viewport->viewport.onDrop && self->viewport->viewport.onDragEnter)
+        self->viewport->viewport.onDrop(self->viewport->paths);
 
-    return false;
+    return TRUE;
 }
 
 auto pWindow::configure(GtkWidget* widget, GdkEvent* event, pWindow* p) -> gboolean {
@@ -448,7 +464,11 @@ auto pWindow::handle() -> uintptr_t {
 }
 
 auto pWindow::setDroppable(bool droppable) -> void {
-    gtk_drag_dest_set(widget, GTK_DEST_DEFAULT_ALL, nullptr, 0, GDK_ACTION_COPY);
+    if (viewport && viewport->viewport.onDragEnter)
+        gtk_drag_dest_set(widget, (GtkDestDefaults)(GTK_DEST_DEFAULT_MOTION ), nullptr, 0, GDK_ACTION_COPY);
+    else
+        gtk_drag_dest_set(widget, (GtkDestDefaults)(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_DROP ), nullptr, 0, GDK_ACTION_COPY);
+
     if(droppable) gtk_drag_dest_add_uri_targets(widget);
 }
 
@@ -775,6 +795,7 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
             pMonitor::setSetting( window.fullscreenSetting.displayId, window.fullscreenSetting.settingId );
 
         gtk_window_fullscreen(GTK_WINDOW(widget));
+        g_signal_connect(G_OBJECT(widget), "drag-motion", G_CALLBACK(pWindow::dragMove), (gpointer)this);
     }
 }
 

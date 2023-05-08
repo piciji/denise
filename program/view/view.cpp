@@ -338,11 +338,6 @@ auto View::setAnyload( Emulator::Interface* emulator ) -> void {
 }
 
 auto View::setDragnDrop() -> void {
-    
-    viewport.setDroppable();
-    
-    setDroppable();
-    
     // aspect correct viewport doesn't fill up the complete window.
     // thats why, we have to set drop event on whole window too.
     // but viewport is on top of window, so we simply set drop event on both.
@@ -372,8 +367,8 @@ auto View::setDragnDrop() -> void {
         emuThread->unlock();
     };
 
-    viewport.onDragMove = [this](int x, int y, bool forceActivation) {
-        if (forceActivation) {
+    viewport.onDragMove = [this](int x, int y) {
+        if (!viewport.onDragEnter) {
             videoDriver->setDragnDropOverlaySlots(4);
             videoDriver->enableDragnDropOverlay(true);
         }
@@ -396,7 +391,11 @@ auto View::setDragnDrop() -> void {
         autoloader->init( files, false, mode, selection );
         autoloader->loadFiles();
         emuThread->unlock();
-    };        
+    };
+
+    viewport.setDroppable();
+
+    setDroppable();
 }
 
 auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
@@ -1601,6 +1600,8 @@ auto View::updateCartButtons( Emulator::Interface* emulator ) -> void {
         if (sM.menu->enabled() != state)
             sM.menu->setEnabled( state );
     }
+
+    editMenu.setEnabled( !!dynamic_cast<LIBC64::Interface*>(emulator) );
 }
 
 auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {

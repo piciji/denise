@@ -56,7 +56,7 @@ auto pViewport::callDragMove(POINTL ptl) -> void {
         pt.x = ptl.x;
         pt.y = ptl.y;
         ScreenToClient(hwnd, &pt);
-        viewport.onDragMove(pt.x, pt.y, false);
+        viewport.onDragMove(pt.x, pt.y);
     }
 }
 

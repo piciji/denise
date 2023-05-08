@@ -13,6 +13,7 @@ auto pViewport::create() -> void {
     //g_signal_connect(G_OBJECT(gtkWidget), "draw", G_CALLBACK(pViewport::drawEvent), (gpointer)this);
 
     g_signal_connect(gtk_widget_get_screen(gtkWidget), "monitors_changed", G_CALLBACK(pViewport::monitorsChanged), (gpointer)this);
+    dragAnalyzed = false;
 }
 
 auto pViewport::init() -> void {
@@ -38,11 +39,8 @@ auto pViewport::setGeometry(Geometry geometry) -> void {
 }
 
 auto pViewport::setDroppable(bool droppable) -> void {
-    if (!gtkWidget)
-        return;
 
-    gtk_drag_dest_set(gtkWidget, GTK_DEST_DEFAULT_ALL, nullptr, 0, GDK_ACTION_COPY);
-    if(droppable) gtk_drag_dest_add_uri_targets(gtkWidget);
+
 }
 
 auto pViewport::handle() -> uintptr_t {
@@ -52,25 +50,28 @@ auto pViewport::handle() -> uintptr_t {
     return (uintptr_t)gtk_widget_get_window(gtkWidget);
 }
 
-auto pViewport::dragDrop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, Viewport* viewport) -> gboolean {
-    return TRUE;
-}
-
 auto pViewport::dragEnd(GtkWidget* widget, GdkDragContext* context, Viewport* viewport) -> void {
     if( viewport->onDragLeave) {
         viewport->onDragLeave();
     }
+
+    viewport->p.dragAnalyzed = false;
 }
 
-//auto pViewport::dragBegin(GtkWidget* widget, GdkDragContext* context, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void {
-//    if(!viewport->state.droppable) return;
-//    auto paths = getDropPaths(data);
-//    if(!paths.empty() && viewport->onDragEnter) {
-//        viewport->onDragEnter(paths);
-//    }
-//}
-
 auto pViewport::dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void {
+    if (viewport->onDragEnter) {
+        if(!viewport->p.dragAnalyzed) {
+            viewport->p.dragAnalyzed = true;
+            viewport->p.paths = getDropPaths(data);
+
+            if (!viewport->p.paths.empty() && viewport->onDragEnter) {
+                viewport->onDragEnter(viewport->p.paths);
+            }
+        }
+        return;
+    }
+
+    viewport->p.dragAnalyzed = false;
     if(!viewport->state.droppable) return;
     auto paths = getDropPaths(data);
     if(paths.empty()) return;
@@ -79,7 +80,7 @@ auto pViewport::dragDataReceived(GtkWidget* widget, GdkDragContext* context, gin
 
 auto pViewport::dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, Viewport* viewport) -> gboolean {
     if( viewport->onDragMove) {
-        viewport->onDragMove(x, y, true);
+        viewport->onDragMove(x, y);
         return true;
     }
     return false;

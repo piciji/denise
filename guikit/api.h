@@ -789,7 +789,7 @@ struct Viewport : Widget {
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
     std::function<void (std::vector<std::string>)> onDragEnter = nullptr;
     std::function<void ()> onDragLeave = nullptr;
-    std::function<void (int x, int y, bool forceActivation)> onDragMove = nullptr;
+    std::function<void (int x, int y)> onDragMove = nullptr;
 
     std::function<void (Position&)> onMouseMove = nullptr;
     std::function<void ()> onMouseLeave = nullptr;

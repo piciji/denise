@@ -38,7 +38,7 @@
     GUIKIT::Geometry geo = viewport->GUIKIT::Widget::state.geometry;
     
     if (viewport->onDragMove)
-        viewport->onDragMove(floor(mp.x), geo.height - ceil(mp.y), false);
+        viewport->onDragMove(floor(mp.x), geo.height - ceil(mp.y));
     
     return GUIKIT::DropPathsOperation(sender);
 }

@@ -511,6 +511,8 @@ struct pTreeView : pWidget {
 
 struct pViewport : public pWidget {
     Viewport& viewport;
+    bool dragAnalyzed = false;
+    std::vector<std::string> paths;
 
     auto handle() -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
@@ -518,9 +520,7 @@ struct pViewport : public pWidget {
     auto add() -> void;
     static auto dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, Viewport* viewport) -> gboolean;
     static auto dragEnd(GtkWidget* widget, GdkDragContext* context, Viewport* viewport) -> void;
-    //static auto dragBegin(GtkWidget* widget, GdkDragContext* context, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void;
     static auto dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void;
-    static auto dragDrop(GtkWidget* widget, GdkDragContext* context, gint x, gint y, guint time, Viewport* viewport) -> gboolean;
 
     static auto mouseLeave(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
