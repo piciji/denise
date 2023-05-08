@@ -285,14 +285,14 @@ template<bool useHires> inline auto Denise::processDelayPf1() -> void {
     constexpr uint16_t mask = useHires ? 7 : 15;
     if ((hPos & mask) == delayPf1) {
         if (activePlanes >= 5) {
-            shifterA |= (uint64_t)dat1 << 32;
+            shifterA = (uint64_t)dat1 << 32;
             shifterA |= (uint64_t)dat3 << 16;
             shifterA |= (uint64_t)dat5;
         } else if (activePlanes >= 3) {
-            shifterA |= (uint64_t)dat1 << 32;
+            shifterA = (uint64_t)dat1 << 32;
             shifterA |= (uint64_t)dat3 << 16;
         } else if (activePlanes >= 1) {
-            shifterA |= (uint64_t)dat1 << 32;
+            shifterA = (uint64_t)dat1 << 32;
         }
         actions &= ~PF1_SHIFT;
     }
@@ -303,14 +303,14 @@ template<bool useHires> inline auto Denise::processDelayPf2() -> void {
 
     if ((hPos & mask) == delayPf2) {
         if (activePlanes >= 6) {
-            shifterB |= (uint64_t)dat2 << 32;
+            shifterB = (uint64_t)dat2 << 32;
             shifterB |= (uint64_t)dat4 << 16;
             shifterB |= (uint64_t)dat6;
         } else if (activePlanes >= 4) {
-            shifterB |= (uint64_t)dat2 << 32;
+            shifterB = (uint64_t)dat2 << 32;
             shifterB |= (uint64_t)dat4 << 16;
         } else if (activePlanes >= 2) {
-            shifterB |= (uint64_t)dat2 << 32;
+            shifterB = (uint64_t)dat2 << 32;
         }
         actions &= ~PF2_SHIFT;
     }
@@ -545,16 +545,14 @@ template<bool useHires> auto Denise::processPixel() -> void {
                             else
                                 color = colors[pf1PrioIllegal ? 0 : colIndex];
                         } else { // both playfields are non transparent
-                            if ((sprPrio > pf1Prio) && (sprPrio > pf2Prio)) { // sprite behind playfields
-                                if (pf2PrioOverPf1)
-                                    color = colors[pf2PrioIllegal ? 0 : colIndex2];
+                            if (pf2PrioOverPf1) {
+                                if (sprPrio < pf2Prio)
+                                    color = colors[sprData];
                                 else
-                                    color = colors[pf1PrioIllegal ? 0 : colIndex];
-                            } else if ((sprPrio < pf1Prio) && (sprPrio < pf2Prio)) { // sprite before playfields
-                                color = colors[sprData];
-                            } else { // sprite between playfields
-                                if (pf1Prio > pf2Prio)
                                     color = colors[pf2PrioIllegal ? 0 : colIndex2];
+                            } else {
+                                if (sprPrio < pf1Prio)
+                                    color = colors[sprData];
                                 else
                                     color = colors[pf1PrioIllegal ? 0 : colIndex];
                             }

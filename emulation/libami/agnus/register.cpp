@@ -398,11 +398,12 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             }
             updateHarddis();
             denise.setBplCon0(value);
-           // addOneCycleEvent(BPL_CON0, value);
+            //addOneCycleEvent(BPL_CON0, value);
         } break;
 
         case 0x102:
             denise.setBplCon1(value);
+            //addOneCycleEvent(BPL_CON1, value);
             break;
         case 0x104:
             //denise.setBplCon2(value);

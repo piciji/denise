@@ -161,6 +161,7 @@ auto Agnus::processOneCycleEvent(int job, uint16_t data) -> void {
         case SPR_POS7: denise.setSprPos(7, data); break;
 
         case BPL_CON0: denise.setBplCon0(data); break;
+        case BPL_CON1: denise.setBplCon1(data); break;
         case BPL_CON2: denise.setBplCon2(data); break;
         case INTREQ: paula.setIntreq(data); break;
         case INTENA: paula.setIntena(data); break;
