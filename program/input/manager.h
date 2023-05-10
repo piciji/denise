@@ -75,7 +75,7 @@ struct Hotkey {
 		SwapInputDevices, Power, SoftReset, AnyLoad,
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
         SyncStatus, ThreadedRenderer, ToggleSCVideo, ToggleSCVideoGPU, DiskSwapUp, DiskSwapDown, DiskAutoStart,
-        FastForward, FastForwardOff, Quit,
+        FastForward, FastForwardOff, Quit, PseudoStereo,
 
         Autofire = 1000,
     } id;

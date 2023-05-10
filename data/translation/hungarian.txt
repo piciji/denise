@@ -737,3 +737,5 @@ Chip Mem = Chip RAM
 Fast Mem = Gyors RAM
 Slow Mem = Lassú RAM
 RTC = Real Time Clock
+offset Pseudo Stereo =
+offset Pseudo Stereo tooltip =

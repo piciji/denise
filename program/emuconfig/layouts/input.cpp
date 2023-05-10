@@ -526,6 +526,9 @@ auto InputLayout::loadHotkeyList() -> void {
 
         inputList.append({ "", trans->get( input.name ), mapping->getDescription(),
                            mapping->alternate ? mapping->alternate->getDescription() : "" });
+
+        if (input.id == Hotkey::Id::PseudoStereo)
+            inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("offset Pseudo Stereo tooltip"));
 	}
     
     inputList.unlockRedraw();

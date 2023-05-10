@@ -737,3 +737,5 @@ Chip Mem = Chip RAM
 Fast Mem = Fast RAM
 Slow Mem = Slow RAM
 RTC = Real Time Clock
+offset Pseudo Stereo = Offset Pseudo Stereo
+offset Pseudo Stereo tooltip = offset the SID's with a small random distance to generate a stronger stereo effect

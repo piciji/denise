@@ -83,6 +83,7 @@ auto InputManager::setCustomHotkeys() -> void {
 		customHotkeys.push_back( {Hotkey::Id::RewindTape, "tape_rewind_key", false} );
 		customHotkeys.push_back( {Hotkey::Id::ResetTapeCounter, "tape_counter_reset_key", false} );
         customHotkeys.push_back( {Hotkey::Id::EF3Menu, "ef3 menu button", false} );
+        customHotkeys.push_back( {Hotkey::Id::PseudoStereo, "offset Pseudo Stereo", false} );
 	}	
     
 	customHotkeys.push_back( {Hotkey::Id::Software, "Software", true} );	
@@ -107,6 +108,47 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
     auto settings = program->getSettings( activeEmulator );
     
     switch ( id ) {
+        case Hotkey::Id::PseudoStereo: {
+            if (!activeEmulator)
+                break;
+
+            std::vector<int> identsLeft = {C64Interface::ModelIdSid2Left, C64Interface::ModelIdSid3Left, C64Interface::ModelIdSid4Left,
+                C64Interface::ModelIdSid5Left, C64Interface::ModelIdSid6Left, C64Interface::ModelIdSid7Left, C64Interface::ModelIdSid8Left };
+            std::vector<int> identsRight = {C64Interface::ModelIdSid2Right, C64Interface::ModelIdSid3Right, C64Interface::ModelIdSid4Right,
+                C64Interface::ModelIdSid5Right, C64Interface::ModelIdSid6Right, C64Interface::ModelIdSid7Right, C64Interface::ModelIdSid8Right };
+
+            emuThread->lock();
+            int activeSids = activeEmulator->getModelValue(C64Interface::ModelIdSidMulti);
+            activeSids = std::min(activeSids, (int)identsLeft.size());
+
+            for(int i = 0; i < activeSids; i++) {
+                int identLeft = identsLeft[i];
+                int identRight = identsRight[i];
+
+                int resultLeft = activeEmulator->getModelValue(identLeft);
+                int resultRight = activeEmulator->getModelValue(identRight);
+
+                if (resultLeft == resultRight)
+                    continue;
+
+                int ident = resultLeft ? identLeft : identRight;
+                activeEmulator->setModelValue(ident, false);
+
+                GUIKIT::Timer* timer = new GUIKIT::Timer;
+                timer->setInterval( 900 + (rand() % 500) );
+
+                timer->onFinished = [timer, ident]() {
+                    emuThread->lock();
+                    timer->setEnabled(false);
+                    activeEmulator->setModelValue(ident, true);
+                    emuThread->unlock();
+                    delete timer;
+                };
+                timer->setEnabled();
+                break;
+            }
+        } break;
+
         case Hotkey::Id::AudioRecord: {
             if (!activeEmulator)
                 break;
