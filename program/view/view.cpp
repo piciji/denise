@@ -390,6 +390,8 @@ auto View::setDragnDrop() -> void {
         videoDriver->enableDragnDropOverlay(false);
         autoloader->init( files, false, mode, selection );
         autoloader->loadFiles();
+
+        view->setFocused(300);
         emuThread->unlock();
     };
 
@@ -503,7 +505,7 @@ auto View::removeMenuTree( GUIKIT::Menu* menu ) -> void {
 		
 		if (dynamic_cast<GUIKIT::Menu*>(child) )
 			removeMenuTree( (GUIKIT::Menu*)child );		
-	}		
+	}
 			
 	menu->reset();
 	

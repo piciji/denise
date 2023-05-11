@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "201";
+const std::string Interface::Version = "202";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -446,7 +446,10 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdSidExternal, "SID External Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1});
 	// amplifies Sid 8580 digi sounds
 	models.push_back({ModelIdDigiboost, "SID 8580 Digi Boost", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
-    // use old 2.4 Filter for 8580
+    // strengthen pseudo stereo effect
+    models.push_back({ModelIdIntensifyPseudoStereo, "intensify Pseudo Stereo", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
+
+    // use old 2.4 Filter for 8580 or digital filter
     models.push_back({ModelIdSidFilterType, "SID Filter Type", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, 2},
 	{ "Standard", "VICE 2.4", "Chamberlin" }});     
 
@@ -500,7 +503,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdSid8Left, "SID 8 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
     models.push_back({ModelIdSid8Right, "SID 8 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid8Adr, "SID 8 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
-    
+
     // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
     models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xef, { 0, 0xff }});
 	// LAX magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
@@ -1254,7 +1257,10 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
 		case ModelIdDigiboost:
             system->sidManager.setDigiBoostAll( value & 1 );
 			break;
-		case ModelIdBias6581:
+        case ModelIdIntensifyPseudoStereo:
+            system->sidManager.intensifyPseudoStereo( value & 1);
+            break;
+        case ModelIdBias6581:
             system->sidManager.adjustFilterBias6581All( value );
 			break;
         case ModelIdBias8580:
@@ -1419,7 +1425,9 @@ auto Interface::getModelValue(unsigned modelId) -> int {
             return system->sidManager.isEnableFilter();
 		case ModelIdDigiboost:
             return system->sidManager.getDigiBoost();
-		case ModelIdBias6581:
+        case ModelIdIntensifyPseudoStereo:
+            return system->sidManager.hasIntensifiedPseudoStereo();
+        case ModelIdBias6581:
 			return system->sidManager.getFilterBias6581();
         case ModelIdBias8580:
             return system->sidManager.getFilterBias8580();

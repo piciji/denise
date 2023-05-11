@@ -747,6 +747,9 @@ auto System::setFastForward( unsigned config ) -> void {
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     iecBus.setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     updateDriveSounds();
+
+    if (!config && sidManager.hasIntensifiedPseudoStereo())
+        sidManager.applyOffsetPseudoStereo();
 }
 
 auto System::setFloppySounds(bool state) -> void {

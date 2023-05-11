@@ -737,5 +737,5 @@ Chip Mem = Puce RAM
 Fast Mem = RAM Rapide
 Slow Mem = RAM Lente
 RTC = Real Time Clock
-offset Pseudo Stereo =
-offset Pseudo Stereo tooltip =
+intensify Pseudo Stereo =
+intensify Pseudo Stereo tooltip =

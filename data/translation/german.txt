@@ -737,5 +737,5 @@ Chip Mem = Chip-RAM
 Fast Mem = Fast-RAM
 Slow Mem = Slow-RAM
 RTC = Real Time Clock
-offset Pseudo Stereo = Versatz Pseudo Stereo
-offset Pseudo Stereo tooltip = versetze die SID's mit einem geringen zufälligen Abstand um einen stärkeren Stereo Effekt zu generieren
+intensify Pseudo Stereo = Pseudo Stereo verstärken
+intensify Pseudo Stereo tooltip = versetzt die SID's mit einem geringen zufälligen Abstand um einen stärkeren Stereo Effekt zu generieren. Dies wird nur aktiviert, wenn dem zweiten SID kein Address Bereich zugewiesen ist.

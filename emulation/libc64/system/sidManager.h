@@ -36,6 +36,13 @@ struct SidManager {
     Callback callAlarm;
     Callback callPotUpdate;
 
+    struct {
+        bool allow = false;
+        int offset = 0;
+        bool trigger = true;
+        Sid* delayedSid = nullptr;
+    } offsetPseudoStereo;
+
     uint8_t potX;
     uint8_t potY;
 
@@ -84,6 +91,10 @@ struct SidManager {
     auto useRightChannel(int nr, bool state) -> void;
     auto hasLeftChannel(int nr) -> bool;
     auto hasRightChannel(int nr) -> bool;
+
+    auto applyOffsetPseudoStereo() -> void;
+    auto intensifyPseudoStereo(bool state) -> void;
+    auto hasIntensifiedPseudoStereo() -> bool { return offsetPseudoStereo.allow; }
 };
 
 }

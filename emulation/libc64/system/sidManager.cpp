@@ -35,6 +35,29 @@ SidManager::SidManager(LIBC64::System* system) : system(system) {
     rightSids = 0;
 }
 
+auto SidManager::intensifyPseudoStereo(bool state) -> void {
+    offsetPseudoStereo.allow = state;
+    offsetPseudoStereo.trigger = false;
+    offsetPseudoStereo.offset = 0;
+    offsetPseudoStereo.delayedSid = nullptr;
+
+    if (state && system->powerOn)
+        applyOffsetPseudoStereo();
+}
+
+auto SidManager::applyOffsetPseudoStereo() -> void {
+
+    for (auto useSid : useSids) {
+        if ((useSid->leftChannel == useSid->rightChannel) || (useSid == sid) || useSid->ioMask)
+            continue;
+
+        //system->interface->log("apply");
+        offsetPseudoStereo.offset = (system->vicII->frequency() >> 1) + (rand() & 0x3ffff);
+        offsetPseudoStereo.delayedSid = useSid;
+        break;
+    }
+}
+
 auto SidManager::setIoMask(int nr, uint8_t pos) -> void {
     if (nr == 0)
         sid->setIoMask(pos);
@@ -74,9 +97,12 @@ template<int options> inline auto SidManager::updateClockT() -> void {
     if (!_delay)
         return;
 
-    if (extraSids)
-        clockMultiChips<options>(_delay);
-    else
+    if (extraSids) {
+        if (offsetPseudoStereo.offset > 0)
+            clockMultiChips<options | 8>(_delay);
+        else
+            clockMultiChips<options>(_delay);
+    } else
         sampleCounter = sid->clock<options>(_delay, sampleCounter, sampleLimit);
 
     sysClock = system->sysTimer.clock;
@@ -102,6 +128,7 @@ template<int options> auto SidManager::clockMultiChips(int cycles) -> void {
     constexpr bool _audioOut = options & 1;
     //constexpr bool _useExtFilter = options & 2;
     //constexpr bool _useChamberlain = options & 4;
+    constexpr bool _delayed = options & 8;
 
     double sampleLeft, sampleRight;
     const int _limit = sampleLimit;
@@ -115,7 +142,11 @@ template<int options> auto SidManager::clockMultiChips(int cycles) -> void {
 
             for (auto useSid : useSids) {
 
-                useSid->clock<options | 8>();
+                if constexpr (_delayed) {
+                    if (useSid != offsetPseudoStereo.delayedSid)
+                        useSid->clock<options>();
+                } else
+                    useSid->clock<options | 8>(); // reuse 8
 
                 if (useSid->leftChannel)
                     sampleLeft += useSid->curSample;
@@ -144,6 +175,13 @@ template<int options> auto SidManager::clockMultiChips(int cycles) -> void {
             for (auto useSid : useSids)
                 useSid->clock<options>();
         }
+    }
+
+    if constexpr(_delayed) {
+        if (offsetPseudoStereo.offset > cycles)
+            offsetPseudoStereo.offset -= cycles;
+        else
+            offsetPseudoStereo.offset = 0;
     }
 }
 
@@ -183,6 +221,20 @@ auto SidManager::writeSid(uint16_t addr, uint8_t value) -> void {
 
     if (!match)
         sid->writeIO( addr, value );
+    else {
+        if (offsetPseudoStereo.allow) {
+            if ((addr & 0x1f) == 0x18) {
+                value &= 0xf;
+                if (offsetPseudoStereo.trigger) {
+                    if (value > 4) {
+                        applyOffsetPseudoStereo();
+                        offsetPseudoStereo.trigger = false;
+                    }
+                } else
+                    offsetPseudoStereo.trigger = value == 0;
+            }
+        }
+    }
 }
 
 auto SidManager::writeSidIO(uint16_t addr, uint8_t value) -> void {
@@ -355,6 +407,9 @@ auto SidManager::resetAll() -> void {
         sids[i]->reset();
 
     sampleCounter = 0;
+    offsetPseudoStereo.offset = 0;
+    offsetPseudoStereo.trigger = true;
+    offsetPseudoStereo.delayedSid = nullptr;
 }
 
 auto SidManager::calcSerializationSizeForSevenMoreSids() -> void {
