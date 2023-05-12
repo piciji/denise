@@ -135,6 +135,8 @@ auto Copper::process() -> void {
                     comp.hPos = ir1 & ir2 & 0xfe;
 
                     state = (ir2 & 1) ? Skip1 : Wait1;
+
+                    skipped = false;
                 } else { // move
                     uint16_t reg = ir1 & 0x1fe;
 
