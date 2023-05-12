@@ -165,6 +165,9 @@ auto Agnus::processOneCycleEvent(int job, uint16_t data) -> void {
         case BPL_CON2: denise.setBplCon2(data); break;
         case INTREQ: paula.setIntreq(data); break;
         case INTENA: paula.setIntena(data); break;
+
+        case BPL_MOD1: bpl1Mod = (int16_t)(data & 0xfffe); break;
+        case BPL_MOD2: bpl2Mod = (int16_t)(data & 0xfffe); break;
     }
     setEventInactive<EVENT_ONE_CYCLE_DELAY>();
 }

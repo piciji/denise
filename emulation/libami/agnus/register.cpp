@@ -411,10 +411,12 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
 
         case 0x108:
-            bpl1Mod = (int16_t)value;
+            bpl1Mod = (int16_t)(value & 0xfffe);
+           // addOneCycleEvent(BPL_MOD1, value);
             break;
         case 0x10a:
-            bpl2Mod = (int16_t)value;
+            bpl2Mod = (int16_t)(value & 0xfffe);
+        //    addOneCycleEvent(BPL_MOD2, value);
             break;
 
         case 0x110:
