@@ -135,10 +135,15 @@ template<bool onlyProgressQueue> auto Agnus::fetchPlanes() -> void {
             UseBplSHires1Mod(7) UseBplSHires2Mod(7) UseBplSHires3Mod(7) UseBplSHires4Mod(7) UseBplSHires5Mod(7) UseBplSHires6Mod(7) UseBplSHires7Mod(7)
                 bplQueue |= 0x81 << 24;
             UseBpl0Mod(7) UseBplHires0Mod(7) UseBplSHires0Mod(7)
+                if (bplState != 4) {
+                    bplCycle = BPL_QUEUE;
+                } else {
+                    bplQueue &= 0xff;
+                    bplCycle = BPL_QUEUE | 2 | BPL_ADD_MOD;
+                }
+
                 stopFetching = false;
-                bplCycle = BPL_QUEUE;
-                if (bplState != 4)
-                    bplState = 0;
+                bplState = 0;
                 if (!ecsAndHigher())
                     hardStop = true;
                 sprInhibited = false;
@@ -245,14 +250,9 @@ auto Agnus::bplControl() -> void {
         else if (bplCon0 & 0x8000)  bplCycle |= BPL_HIRES;
     } else if (_state == 4) {
         bplState = 0;
-//        if (ecs && stopFetching) {
-//            if ((bplCycle & 7) == 7)
-//                bplCycle |= BPL_ADD_MOD;
-//        }
-        //bplCycle &= BPL_ADD_MOD; // keep mod state
-        //bplCycle |= 0x8000; // empty queue
-        actions &= ~ACT_BPL;
-        bplQueue = 0;
+        bplCycle &= BPL_ADD_MOD; // keep mod state
+        bplQueue &= 0xff;
+        bplCycle |= BPL_QUEUE | 2;
         sprInhibited = false;
     }
 
@@ -295,7 +295,13 @@ auto Agnus::bplControl() -> void {
 
     if (_state == 3) {
         bplState = 4;
-        if (stopFetching)
+
+        if ((bplCycle & (BPL_ADD_MOD | 7) ) == (BPL_ADD_MOD | 7)) {
+            bplQueue &= 0xff;
+            bplCycle = BPL_QUEUE | 2;
+            stopFetching = false;
+            bplState = 0;
+        } else if (stopFetching)
             bplCycle |= BPL_ADD_MOD;
         else if (ecs)
             stopFetching = true;
