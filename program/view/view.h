@@ -106,7 +106,6 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem globalInputItem;
 
         GUIKIT::MenuCheckItem videoSyncItem;
-        GUIKIT::MenuCheckItem adaptiveSyncItem;
         GUIKIT::MenuCheckItem vrrItem;
         GUIKIT::MenuCheckItem dynamicRateControl;
 

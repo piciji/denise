@@ -53,7 +53,9 @@ struct VideoSettingsLayout : GUIKIT::FramedHorizontalLayout {
     
     GUIKIT::CheckBox exclusiveFullscreen;
     GUIKIT::CheckBox hardSync;
-    GUIKIT::CheckBox threadedRenderer;
+    GUIKIT::Label threadedRenderer;
+    GUIKIT::CheckBox trOn;
+    GUIKIT::CheckBox trAuto;
     
     VideoSettingsLayout();
 };

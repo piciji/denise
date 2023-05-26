@@ -274,7 +274,6 @@ auto Autoloader::loadFiles() -> void {
     GUIKIT::Vector::eraseVectorPos( ddControl.files, 0 );
     
     GUIKIT::File* file = filePool->get(filePath);
-    filePool->assign("autoloader", file);
 
     if (!file)
         return loadFiles();
@@ -289,9 +288,11 @@ auto Autoloader::loadFiles() -> void {
     auto& items = file->scanArchive();
 
 	if (archiveViewer) {
+        filePool->assign("autoloader", file);
 		archiveViewer->onCallback = [this, file](GUIKIT::File::Item* item) {
             emuThread->lock();
 			this->loadFile( file, item );
+            filePool->assign("autoloader", nullptr);
             emuThread->unlock();
 		};
 

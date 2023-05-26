@@ -60,7 +60,9 @@ VideoSettingsLayout::VideoSettingsLayout() {
     
     append(exclusiveFullscreen, {0u, 0u}, 10);
     append(hardSync, {0u, 0u}, 10);
-    append(threadedRenderer, {0u, 0u});
+    append(threadedRenderer, {0u, 0u}, 10);
+    append(trOn, {0u, 0u}, 10);
+    append(trAuto, {0u, 0u});
     setAlignment(0.5);
     setPadding( 10 );
     setFont(GUIKIT::Font::system("bold"));
@@ -242,16 +244,30 @@ VideoLayout::VideoLayout() {
         emuThread->unlock();
 	};
 
-    videoSettingsLayout.threadedRenderer.onToggle = [](bool checked) {
+    videoSettingsLayout.trOn.onToggle = [this](bool checked) {
         emuThread->lock();
         globalSettings->set("threaded_renderer", checked);
         VideoManager::setSynchronize();
         emuThread->unlock();
 
+        videoSettingsLayout.trAuto.setEnabled( !checked );
         view->threadedRendererWasToggled(checked);
     };
 
-    videoSettingsLayout.threadedRenderer.setChecked(globalSettings->get("threaded_renderer", true));
+    videoSettingsLayout.trOn.setChecked( globalSettings->get("threaded_renderer", true) );
+
+    videoSettingsLayout.trAuto.onToggle = [this](bool checked) {
+        emuThread->lock();
+        globalSettings->set("adaptive_sync", checked);
+        program->fastForward( false );
+        VideoManager::setSynchronize();
+        emuThread->unlock();
+
+        view->threadedRendererWasToggled( videoSettingsLayout.trOn.checked() );
+    };
+
+    videoSettingsLayout.trAuto.setChecked( globalSettings->get("adaptive_sync", false) );
+    videoSettingsLayout.trAuto.setEnabled( !globalSettings->get("threaded_renderer", true) );
     
     std::function<bool (PathsLayout::Block*, const std::string&, const std::string&)> selectPath;
 	
@@ -468,8 +484,10 @@ auto VideoLayout::translate() -> void {
 	videoSettingsLayout.exclusiveFullscreen.setTooltip( trans->get("exclusive_fullscreen_tooltip") );
     videoSettingsLayout.hardSync.setText( trans->get("hard_sync") );
 	videoSettingsLayout.hardSync.setTooltip( trans->get("hard_sync_tooltip") );
-    videoSettingsLayout.threadedRenderer.setText( trans->get("Threaded Renderer") );
-    videoSettingsLayout.threadedRenderer.setTooltip( trans->get("Threaded Renderer tooltip") );
+    videoSettingsLayout.threadedRenderer.setText( trans->getA("Threaded Renderer", true) );
+    videoSettingsLayout.trOn.setText( trans->getA("enabled") );
+    videoSettingsLayout.trOn.setTooltip( trans->getA("Threaded Renderer tooltip") );
+    videoSettingsLayout.trAuto.setText( trans->getA("Threaded Renderer Auto") );
     videoSettingsLayout.setText( trans->get("driver_properties") );
     
     screenTextLayout.option1.setText( trans->get("disabled") );

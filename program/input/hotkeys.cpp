@@ -313,8 +313,10 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (view)
                 view->threadedRendererWasToggled(checked);
 
-            if (configView)
-                configView->videoLayout->videoSettingsLayout.threadedRenderer.setChecked(checked);
+            if (configView) {
+                configView->videoLayout->videoSettingsLayout.trOn.setChecked(checked);
+                configView->videoLayout->videoSettingsLayout.trAuto.setEnabled(!checked);
+            }
 
             emuThread->lock();
             VideoManager::setSynchronize();

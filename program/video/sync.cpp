@@ -7,7 +7,7 @@
 auto VideoManager::setSynchronize() -> void {
     bool vsync = globalSettings->get<bool>("video_sync", true);
     bool threadedRenderer = globalSettings->get("threaded_renderer", true);
-    bool adaptive = globalSettings->get<bool>("adaptive_sync", true);
+    bool adaptive = globalSettings->get<bool>("adaptive_sync", false);
     bool vrr = globalSettings->get<bool>("vrr_sync", false);
 
     unsigned frameRenderEach = 1;
@@ -16,14 +16,11 @@ auto VideoManager::setSynchronize() -> void {
     if (!activeEmulator)
         return;
 
-    if (vrr && vsync)
-        vsync = false;
-
     if (audioDriver->hasSynchronized()) {
         if (vsync && adaptive) {
             if (!threadedRenderer) {
                 float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
-                // vrr = false;
+                vrr = false;
                 float ratio = (float)audioManager->inputFPS / monitorFrequency;
                 float intpart;
                 float fractpart = std::modf (ratio, &intpart);
