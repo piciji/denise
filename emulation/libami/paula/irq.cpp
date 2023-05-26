@@ -1,9 +1,4 @@
 
-// todo: To determine the correct interrupt delay within Paula, it must be taken into account that the CPU only tests for interrupts in certain cycles.
-// The CPU emulation synchronizes in multiples of DMA cycles (= 2 cycles). The limit of when an interrupt is detected or not happens after an odd number of CPU cycles.
-// If the interrupt happens in the 2nd half of the DMA cycle, it is not recognized, although the CPU evaluates IPL in this DMA cycle.
-// Synchronization after each CPU cycle slows down emulation. It is more performant to change the IPL pins one DMA cycle later in such situations.
-
 namespace LIBAMI {
 
 auto Paula::setIntena(uint16_t value) -> void {
@@ -16,6 +11,9 @@ auto Paula::setIntena(uint16_t value) -> void {
 }
 
 auto Paula::setIntreq(uint16_t value) -> void {
+    intreqLast = intreq;
+    intUpdClock = agnus.clock; // vAmigaTS/Paula/Audio/timing/audiotim3
+
     if (value & 0x8000)
         intreq |= value & 0x7fff;
     else
@@ -26,26 +24,6 @@ auto Paula::setIntreq(uint16_t value) -> void {
     if (int6Current) intreq |= 0x2000;
 
     prepareIpl();
-}
-
-auto Paula::setInt2(bool state) -> void { // CIA 1
-    // CIAs don't generate a pulse like blitter. Paula checks here on a flank.
-
-    if (state && !int2Current) {
-        intreq |= 8;
-        prepareIpl();
-    }
-
-    int2Current = state;
-}
-
-auto Paula::setInt6(bool state) -> void { // CIA 2
-    if (state && !int6Current) {
-        intreq |= 0x2000;
-        prepareIpl();
-    }
-
-    int6Current = state;
 }
 
 auto Paula::setVblInt() -> void {
@@ -67,8 +45,8 @@ auto Paula::setDskBlkInt() -> void {
     if (nextClock < agnus.eventClock[Agnus::EVENT_INTREQ]) \
         agnus.updateEventAbs<Agnus::EVENT_INTREQ>(nextClock);
 
-template<uint8_t nr, bool dma> auto Paula::scheduleIntreqAud() -> void {
-    int64_t nextClock = agnus.clock + (dma ? 4 : 3);
+template<uint8_t nr> auto Paula::scheduleIntreqAud() -> void {
+    int64_t nextClock = agnus.clock + 1; // DMA happens before event handler, means: 2 + 1
 
     if constexpr (nr == 0)
         intreqAud0Clock = nextClock;
@@ -82,14 +60,34 @@ template<uint8_t nr, bool dma> auto Paula::scheduleIntreqAud() -> void {
     UPD_INTREQ_EVENT
 }
 
+auto Paula::scheduleIntreqCia1(bool state) -> void {
+    // CIAs don't generate a pulse like blitter. Paula checks here on a flank.
+
+    if (state && !int2Current) {
+        int64_t nextClock = agnus.clock + 2;
+        intreqCia1Clock = nextClock;
+        UPD_INTREQ_EVENT
+    }
+    int2Current = state;
+}
+
+auto Paula::scheduleIntreqCia2(bool state) -> void {
+    if (state && !int6Current) {
+        int64_t nextClock = agnus.clock + 2;
+        intreqCia2Clock = nextClock;
+        UPD_INTREQ_EVENT
+    }
+    int6Current = state;
+}
+
 auto Paula::scheduleIntreqBlt() -> void {
-    int64_t nextClock = agnus.clock + 1;
+    int64_t nextClock = agnus.clock + 2;
     intreqBltClock = nextClock;
     UPD_INTREQ_EVENT
 }
 
 auto Paula::scheduleIntreqTbe() -> void {
-    int64_t nextClock = agnus.clock + 1;
+    int64_t nextClock = agnus.clock + 3;
     intreqTbeClock = nextClock;
     UPD_INTREQ_EVENT
 }
@@ -108,11 +106,13 @@ auto Paula::intreqEvent() -> void {
     int64_t nextClock = INT64_MAX;
 
     PROCESS_INTREQ(intreqTbeClock, 0)
+    PROCESS_INTREQ(intreqCia1Clock, 3)
     PROCESS_INTREQ(intreqBltClock, 6)
     PROCESS_INTREQ(intreqAud0Clock, 7)
     PROCESS_INTREQ(intreqAud1Clock, 8)
     PROCESS_INTREQ(intreqAud2Clock, 9)
     PROCESS_INTREQ(intreqAud3Clock, 10)
+    PROCESS_INTREQ(intreqCia2Clock, 13)
 
     prepareIpl();
     agnus.updateEventAbs<Agnus::EVENT_INTREQ>(nextClock);
@@ -141,16 +141,6 @@ auto Paula::prepareIpl() -> void {
 
     if (level != lastIPL) {
         ipl = (ipl & ~0xff) | level;
-
-        if (((lastIPL & 1) && !(level & 1)) ||
-            ((lastIPL & 2) && !(level & 2)) ||
-            ((lastIPL & 4) && !(level & 4)) );
-            // from WinUAE changelog it seems to matter if a bit is set or cleared.
-            // CPU detect IRQs in the first half of DMA (CCK) Sample cycle (confimed with fx68k)
-            // This means that a delay of only one CPU cycle is enough to miss this sample cycle and you have to wait for the sample point in the next opcode.
-        else
-            ipl = (ipl & ~0xff00) | (level << 8);
-
         iplCounter = 3;
     }
 }

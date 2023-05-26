@@ -57,7 +57,7 @@ rtc(agnus) {
     };
 
     cia1.irqCall = [this]( bool state ) {
-        paula.setInt2(state);
+        paula.scheduleIntreqCia1(state);
     };
 
     cia2.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
@@ -80,7 +80,7 @@ rtc(agnus) {
     };
 
     cia2.irqCall = [this]( bool state ) {
-        paula.setInt6(state);
+        paula.scheduleIntreqCia2(state);
     };
 
     crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {

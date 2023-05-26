@@ -6,9 +6,15 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.array(eventClock);
     s.integer( clock );
     s.integer( nextClock );
+    s.integer( dmaClock );
 
-    s.integer( oneCycleJob );
-    s.integer( oneCycleData );
+    s.integer( rapidJobs[0].job );
+    s.integer( rapidJobs[0].data );
+    s.integer( rapidJobs[0].clock );
+    s.integer( rapidJobs[1].job );
+    s.integer( rapidJobs[1].data );
+    s.integer( rapidJobs[1].clock );
+
     s.integer( hTotalFirst );
 
     s.integer(actions);
@@ -124,10 +130,12 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
             s.integer(fastMemSize);
         }
 
-        s.array(chipMem, chipMemMask + 1);
+        s.integer(dmaChipMemMask);
 
-        if (slowMemSize)
-            s.array(slowMem, slowMemSize);
+        s.array(chipMem, chipMemMask + 1 + slowMemSize);
+
+//        if (slowMemSize)
+//            s.array(slowMem, slowMemSize);
 
         if (fastMemSize)
             s.array(fastMem, fastMemSize);

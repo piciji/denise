@@ -54,6 +54,9 @@ struct Agnus {
            SPR_CTL0, SPR_CTL1, SPR_CTL2, SPR_CTL3, SPR_CTL4, SPR_CTL5, SPR_CTL6, SPR_CTL7,
            SPR_POS0, SPR_POS1, SPR_POS2, SPR_POS3, SPR_POS4, SPR_POS5, SPR_POS6, SPR_POS7,
            BPL_CON2, INTREQ, INTENA, BPL_CON0, BPL_CON1, BPL_MOD1, BPL_MOD2,
+           AUD_LEN0, AUD_LEN1, AUD_LEN2, AUD_LEN3,
+           AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
+           AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -86,13 +89,24 @@ struct Agnus {
     int64_t clock;
     int64_t nextClock;
 
-    int oneCycleJob;
-    uint16_t oneCycleData;
+    struct RapidJob {
+        RapidJob* sibling;
+        int job;
+        uint16_t data;
+        int64_t clock;
+
+        auto reset() -> void {
+            job = -1;
+            clock = INT64_MAX;
+        }
+    } rapidJobs[2];
+
     bool hTotalFirst;
 
     int actions = 0;
     uint8_t mapper[256] = {0};
-    uint8_t busUsage;
+    int busUsage;
+    int64_t dmaClock;
     uint8_t hPos;
     uint16_t vPos;
     uint16_t vStart;
@@ -164,6 +178,8 @@ struct Agnus {
 
     uint8_t* chipMem = nullptr;
     unsigned chipMemMask = 0;
+    unsigned dmaChipMemMask = 0;
+
     uint8_t* slowMem = nullptr;
     unsigned slowMemSize = 0;
     uint8_t* fastMem = nullptr;
@@ -228,6 +244,7 @@ struct Agnus {
     auto setChipmem(unsigned size) -> void;
     auto setSlowmem(unsigned size) -> void;
     auto setFastmem(unsigned size) -> void;
+    auto createChipSlowMem(unsigned sizeChip, unsigned sizeSlow) -> void;
 
     auto readZorro(uint32_t adr) -> uint8_t;
     auto writeZorro(uint32_t adr, uint8_t data) -> void;
@@ -328,8 +345,8 @@ struct Agnus {
     auto rememberFastMem(uint32_t adr) -> void;
     auto increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> void;
 
-    template<uint8_t Channel, bool executeCurEvent = false> auto updateEvent(int delay) -> void;
-    template<uint8_t Channel, bool executeCurEvent = false> auto updateEventAbs(int64_t absClock) -> void;
+    template<uint8_t Channel> auto updateEvent(int delay) -> void;
+    template<uint8_t Channel> auto updateEventAbs(int64_t absClock) -> void;
     template<uint8_t Channel> auto setEventInactive() -> void {
         eventClock[Channel] = INT64_MAX;
     }
@@ -342,7 +359,7 @@ struct Agnus {
 
     auto processEvents(int64_t curClock) -> void;
     auto clearEvents() -> void;
-    auto processOneCycleEvent(int job, uint16_t data) -> void;
+    auto processOneCycleEvent(RapidJob& rJob) -> void;
     template<uint8_t Channel> auto getEventDelay() -> unsigned;
     inline auto addOneCycleEvent(int job, uint16_t data = 0, int delay = 2) -> void;
     auto forceOneCycleEvent(int job) -> void;

@@ -278,7 +278,7 @@ auto Blitter::setBltAlwm(uint16_t value) -> void {
 auto Blitter::setBltCptH(uint16_t value) -> void {
     bltCpt &= 0xffff;
     bltCpt |= value << 16;
-    bltCpt &= agnus.chipMemMask;
+    bltCpt &= agnus.dmaChipMemMask;
 }
 
 auto Blitter::setBltCptL(uint16_t value) -> void {
@@ -289,7 +289,7 @@ auto Blitter::setBltCptL(uint16_t value) -> void {
 auto Blitter::setBltBptH(uint16_t value) -> void {
     bltBpt &= 0xffff;
     bltBpt |= value << 16;
-    bltBpt &= agnus.chipMemMask;
+    bltBpt &= agnus.dmaChipMemMask;
 }
 
 auto Blitter::setBltBptL(uint16_t value) -> void {
@@ -300,7 +300,7 @@ auto Blitter::setBltBptL(uint16_t value) -> void {
 auto Blitter::setBltAptH(uint16_t value) -> void {
     bltApt &= 0xffff;
     bltApt |= value << 16;
-    bltApt &= agnus.chipMemMask;
+    bltApt &= agnus.dmaChipMemMask;
 }
 
 auto Blitter::setBltAptL(uint16_t value) -> void {
@@ -311,7 +311,7 @@ auto Blitter::setBltAptL(uint16_t value) -> void {
 auto Blitter::setBltDptH(uint16_t value) -> void {
     bltDpt &= 0xffff;
     bltDpt |= value << 16;
-    bltDpt &= agnus.chipMemMask;
+    bltDpt &= agnus.dmaChipMemMask;
 }
 
 auto Blitter::setBltDptL(uint16_t value) -> void {

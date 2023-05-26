@@ -1,6 +1,6 @@
 
-#define AUDxIR(nr, dma) scheduleIntreqAud<nr, dma>();
-#define AUDxIP(nr) (intreq & (0x80 << nr))
+#define AUDxIR(nr) scheduleIntreqAud<nr>();
+#define AUDxIP(nr) ((intUpdClock == agnus.clock ? intreqLast : intreq) & (0x80 << nr))
 #define volcntrld() cha.vol = (int8_t)cha.volLatch;
 #define lencntrld() cha.len = cha.lenLatch;
 #define dmasen() if (cha.len == 1) cha.dsr = true; \
@@ -54,6 +54,11 @@ template<uint8_t nr> auto Paula::toggleAudioDMA( ) -> void {
 
     if (cha.AUDxON) {
         if (cha.state == 0) {
+            if (cha.intreq2) { // vAmigaTS/Paula/Audio/timing/dmatim2
+                AUDxIR(nr);
+                cha.intreq2 = false;
+            }
+
             lencntrld()
             // if state 0 is not left or changed to state 1, "percntrld" is constantly reloaded. For performance reasons,
             // we do not do this. This should not be a problem because "percntrld" is reloaded before reaching state 2.
@@ -77,7 +82,7 @@ auto Paula::updateModulation() -> void {
     }
 }
 
-template<uint8_t nr, bool dma> auto Paula::audxDat(uint16_t value) -> void {
+template<uint8_t nr> auto Paula::audxDat(uint16_t value) -> void {
     Channel& cha = channels[nr];
     cha.dat = value;
 
@@ -91,7 +96,7 @@ template<uint8_t nr, bool dma> auto Paula::audxDat(uint16_t value) -> void {
             }
 
         } else if (cha.state == 1) {
-            AUDxIR(nr, dma)
+            AUDxIR(nr)
             dmasen()
 
             if (notLenfin())
@@ -99,7 +104,7 @@ template<uint8_t nr, bool dma> auto Paula::audxDat(uint16_t value) -> void {
 
             cha.state = 5;
         } else if (cha.state == 5) {
-            percntrld<nr, dma, true>();
+            percntrld<nr, true>();
             volcntrld()
             pbufld1<nr>();
 
@@ -114,10 +119,10 @@ template<uint8_t nr, bool dma> auto Paula::audxDat(uint16_t value) -> void {
     } else {
         if (cha.state == 0) {
             if (!AUDxIP(nr)) {
-                percntrld<nr, dma, true>();
+                percntrld<nr, true>();
                 volcntrld()
                 pbufld1<nr>();
-                AUDxIR(nr, dma)
+                AUDxIR(nr)
                 penhi()
                 cha.state = 2;
             }
@@ -167,25 +172,25 @@ template<uint8_t nr> auto Paula::perfin() -> void {
     Channel& cha = channels[nr];
 
     if (cha.state == 2) {
-        percntrld<nr, false, false>();
+        percntrld<nr, false>();
         if (cha.audap) {
             pbufld2<nr>();
             if (cha.AUDxON) {
                 dmasen()
 
                 if (cha.intreq2) {
-                    AUDxIR(nr, false)
+                    AUDxIR(nr)
                     cha.intreq2 = false;
                 }
             } else
-                AUDxIR(nr, false)
+                AUDxIR(nr)
         }
         penlo()
         cha.state = 3;
 
     } else if (cha.state == 3) {
         if (cha.AUDxON || !AUDxIP(nr)) {
-            percntrld<nr, false, false>();
+            percntrld<nr, false>();
             volcntrld()
             pbufld1<nr>();
 
@@ -194,27 +199,25 @@ template<uint8_t nr> auto Paula::perfin() -> void {
                     dmasen()
 
                     if (cha.intreq2) {
-                        AUDxIR(nr, false)
+                        AUDxIR(nr)
                         cha.intreq2 = false;
                     }
                 } else
-                    AUDxIR(nr, false)
+                    AUDxIR(nr)
             }
             penhi()
             cha.state = 2;
         } else {
             cha.state = 0;
-            cha.intreq2 = false;
+       //     cha.intreq2 = false; // don't disable it: vAmigaTS/Paula/Audio/timing/dmatim2
             cha.percount = INT64_MAX;
         }
     }
 }
 
-template<uint8_t nr, bool dma, bool updEvent> auto Paula::percntrld() -> void {
+template<uint8_t nr, bool updEvent> auto Paula::percntrld() -> void {
     Channel& cha = channels[nr];
     cha.percount = agnus.clock + (int64_t)(cha.perLatch ? cha.perLatch : 0x10000);
-    if constexpr (dma) // happens before event handler
-        cha.percount += 1;
 
     if constexpr (updEvent) {
         if (cha.percount < agnus.eventClock[Agnus::EVENT_AUDIO_STATE])
@@ -265,15 +268,10 @@ auto Paula::getResampleQuality( ) -> int {
     _unreachable
 }
 
-template auto Paula::audxDat<0, false>(uint16_t value) -> void;
-template auto Paula::audxDat<1, false>(uint16_t value) -> void;
-template auto Paula::audxDat<2, false>(uint16_t value) -> void;
-template auto Paula::audxDat<3, false>(uint16_t value) -> void;
-
-template auto Paula::audxDat<0, true>(uint16_t value) -> void;
-template auto Paula::audxDat<1, true>(uint16_t value) -> void;
-template auto Paula::audxDat<2, true>(uint16_t value) -> void;
-template auto Paula::audxDat<3, true>(uint16_t value) -> void;
+template auto Paula::audxDat<0>(uint16_t value) -> void;
+template auto Paula::audxDat<1>(uint16_t value) -> void;
+template auto Paula::audxDat<2>(uint16_t value) -> void;
+template auto Paula::audxDat<3>(uint16_t value) -> void;
 
 template auto Paula::audxLen<0>(uint16_t value) -> void;
 template auto Paula::audxLen<1>(uint16_t value) -> void;

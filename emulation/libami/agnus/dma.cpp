@@ -7,7 +7,7 @@ template<uint8_t nr> auto Agnus::setAudPtH(uint16_t value) -> void {
     AudioDmaChannel& cha = audioDmaChannels[nr];
     cha.ptrLatch &= 0xffff;
     cha.ptrLatch |= value << 16;
-    cha.ptrLatch &= chipMemMask;
+    cha.ptrLatch &= dmaChipMemMask;
 }
 
 template<uint8_t nr> auto Agnus::setAudPtL(uint16_t value) -> void {
@@ -19,7 +19,7 @@ template<uint8_t nr> auto Agnus::setAudPtL(uint16_t value) -> void {
 auto Agnus::setBpl1ptH(uint16_t value) -> void {
     bpl1pt &= 0xffff;
     bpl1pt |= value << 16;
-    bpl1pt &= chipMemMask;
+    bpl1pt &= dmaChipMemMask;
 }
 
 auto Agnus::setBpl1ptL(uint16_t value) -> void {
@@ -30,7 +30,7 @@ auto Agnus::setBpl1ptL(uint16_t value) -> void {
 auto Agnus::setBpl2ptH(uint16_t value) -> void {
     bpl2pt &= 0xffff;
     bpl2pt |= value << 16;
-    bpl2pt &= chipMemMask;
+    bpl2pt &= dmaChipMemMask;
 }
 
 auto Agnus::setBpl2ptL(uint16_t value) -> void {
@@ -41,7 +41,7 @@ auto Agnus::setBpl2ptL(uint16_t value) -> void {
 auto Agnus::setBpl3ptH(uint16_t value) -> void {
     bpl3pt &= 0xffff;
     bpl3pt |= value << 16;
-    bpl3pt &= chipMemMask;
+    bpl3pt &= dmaChipMemMask;
 }
 
 auto Agnus::setBpl3ptL(uint16_t value) -> void {
@@ -52,7 +52,7 @@ auto Agnus::setBpl3ptL(uint16_t value) -> void {
 auto Agnus::setBpl4ptH(uint16_t value) -> void {
     bpl4pt &= 0xffff;
     bpl4pt |= value << 16;
-    bpl4pt &= chipMemMask;
+    bpl4pt &= dmaChipMemMask;
 }
 
 auto Agnus::setBpl4ptL(uint16_t value) -> void {
@@ -63,7 +63,7 @@ auto Agnus::setBpl4ptL(uint16_t value) -> void {
 auto Agnus::setBpl5ptH(uint16_t value) -> void {
     bpl5pt &= 0xffff;
     bpl5pt |= value << 16;
-    bpl5pt &= chipMemMask;
+    bpl5pt &= dmaChipMemMask;
 }
 
 auto Agnus::setBpl5ptL(uint16_t value) -> void {
@@ -74,7 +74,7 @@ auto Agnus::setBpl5ptL(uint16_t value) -> void {
 auto Agnus::setBpl6ptH(uint16_t value) -> void {
     bpl6pt &= 0xffff;
     bpl6pt |= value << 16;
-    bpl6pt &= chipMemMask;
+    bpl6pt &= dmaChipMemMask;
 }
 
 auto Agnus::setBpl6ptL(uint16_t value) -> void {
@@ -85,7 +85,7 @@ auto Agnus::setBpl6ptL(uint16_t value) -> void {
 template<uint8_t num> auto Agnus::setSprptH(uint16_t value) -> void {
     sprites[num].ptr &= 0xffff;
     sprites[num].ptr |= value << 16;
-    sprites[num].ptr &= chipMemMask;
+    sprites[num].ptr &= dmaChipMemMask;
 }
 
 template<uint8_t num> auto Agnus::setSprptL(uint16_t value) -> void {
@@ -96,7 +96,7 @@ template<uint8_t num> auto Agnus::setSprptL(uint16_t value) -> void {
 auto Agnus::setDskPtH(uint16_t value) -> void {
     dskpt &= 0xffff;
     dskpt |= value << 16;
-    dskpt &= chipMemMask;
+    dskpt &= dmaChipMemMask;
 }
 
 auto Agnus::setDskPtL(uint16_t value) -> void {
@@ -110,39 +110,40 @@ template<uint8_t pos, bool addMod> auto Agnus::fetchPlane() -> void {
         denise.setBpl1Dat( dataBus );
         bpl1pt += 2;
         if constexpr (addMod) bpl1pt += bpl1Mod;
-        bpl1pt &= chipMemMask;
+        bpl1pt &= dmaChipMemMask;
     } else if constexpr ( pos == 2) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + bpl2pt));
         denise.setBpl2Dat( dataBus );
         bpl2pt += 2;
         if constexpr (addMod) bpl2pt += bpl2Mod;
-        bpl2pt &= chipMemMask;
+        bpl2pt &= dmaChipMemMask;
     } else if constexpr ( pos == 3) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + bpl3pt));
         denise.setBpl3Dat( dataBus );
         bpl3pt += 2;
         if constexpr (addMod) bpl3pt += bpl1Mod;
-        bpl3pt &= chipMemMask;
+        bpl3pt &= dmaChipMemMask;
     } else if constexpr ( pos == 4) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + bpl4pt));
         denise.setBpl4Dat( dataBus );
         bpl4pt += 2;
         if constexpr (addMod) bpl4pt += bpl2Mod;
-        bpl4pt &= chipMemMask;
+        bpl4pt &= dmaChipMemMask;
     } else if constexpr ( pos == 5) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + bpl5pt));
         denise.setBpl5Dat( dataBus );
         bpl5pt += 2;
         if constexpr (addMod) bpl5pt += bpl1Mod;
-        bpl5pt &= chipMemMask;
+        bpl5pt &= dmaChipMemMask;
     } else if constexpr ( pos == 6) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + bpl6pt));
         denise.setBpl6Dat( dataBus );
         bpl6pt += 2;
         if constexpr (addMod) bpl6pt += bpl2Mod;
-        bpl6pt &= chipMemMask;
+        bpl6pt &= dmaChipMemMask;
     }
 
+    dmaClock = clock;
     busUsage = BUS_USAGE_BPL;
 }
 
@@ -162,7 +163,8 @@ auto Agnus::diskDma(bool writeMode) -> void {
     inactivateOneCycleEvent(Agnus::PTR_DSK_H);
 
     dskpt += 2;
-    dskpt &= chipMemMask;
+    dskpt &= dmaChipMemMask;
+    dmaClock = clock;
     busUsage = BUS_USAGE_DMAL;
 }
 
@@ -172,21 +174,21 @@ auto Agnus::fakeDiskDma(uint16_t word) -> void {
 
     *(uint16_t*)(chipMem + dskpt) = _swapWord(word);
     dskpt += 2;
-    dskpt &= chipMemMask;
+    dskpt &= dmaChipMemMask;
 }
 
 auto Agnus::fakeDiskDmaNoTracking(uint16_t word) -> void {
     if (paula.dmaDisk) {
         *(uint16_t*) (chipMem + dskpt) = _swapWord(word);
         dskpt += 2;
-        dskpt &= chipMemMask;
+        dskpt &= dmaChipMemMask;
     }
 }
 
 auto Agnus::fakeDiskDma() -> uint16_t {
     dataBus = _swapWord(*(uint16_t*) (chipMem + dskpt));
     dskpt += 2;
-    dskpt &= chipMemMask;
+    dskpt &= dmaChipMemMask;
     return dataBus;
 }
 
@@ -200,10 +202,11 @@ template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
     else
         cha.ptr += 2;
 
-    cha.ptr &= chipMemMask;
+    cha.ptr &= dmaChipMemMask;
 
-    paula.audxDat<nr, true>( dataBus ); // put on RGA BUS
+    addOneCycleEvent(AUD_DAT0 + nr, dataBus); // put on RGA BUS
 
+    dmaClock = clock;
     busUsage = BUS_USAGE_DMAL;
 }
 
@@ -229,7 +232,8 @@ template<uint8_t nr, uint8_t target> inline auto Agnus::fetchSprite() -> void {
     }
 
     spr.ptr += 2;
-    spr.ptr &= chipMemMask;
+    spr.ptr &= dmaChipMemMask;
+    dmaClock = clock;
     busUsage = BUS_USAGE_SPRITE;
 }
 
@@ -261,8 +265,9 @@ auto Agnus::fetchCopperDma(uint32_t adr, uint16_t& result) -> bool {
         return false;
 
     busUsage = BUS_USAGE_COPPER;
+    dmaClock = clock;
 
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
+    result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
     dataBus = result;
 
@@ -272,8 +277,9 @@ auto Agnus::fetchCopperDma(uint32_t adr, uint16_t& result) -> bool {
 auto Agnus::fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
 
     busUsage = BUS_USAGE_COPPER;
+    dmaClock = clock;
 
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
+    result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
     dataBus = result;
 }
@@ -297,9 +303,10 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& r
 
     busUsage = BUS_USAGE_BLITTER;
 
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
+    result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
     dataBus = result;
+    dmaClock = clock;
 
     // if a modified pointer is used for DMA in the next cycle, the change is ignored.
     inactivateOneCycleEvent(ptrEvent);
@@ -313,13 +320,14 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
 
     busUsage = BUS_USAGE_BLITTER;
 
-    adr &= chipMemMask;
+    adr &= dmaChipMemMask;
     if (trackMemChanges)
         rememberChipMem(adr);
 
     *(uint16_t*)(chipMem + adr) = _swapWord(value);
 
     dataBus = value;
+    dmaClock = clock;
 
     inactivateOneCycleEvent(PTR_BLT_D_H);
 
@@ -329,9 +337,10 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
 template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
     busUsage = BUS_USAGE_BLITTER;
 
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
+    result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
     dataBus = result;
+    dmaClock = clock;
 
     inactivateOneCycleEvent(ptrEvent);
 }
@@ -339,13 +348,14 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, u
 auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
     busUsage = BUS_USAGE_BLITTER;
 
-    adr &= chipMemMask;
+    adr &= dmaChipMemMask;
     if (trackMemChanges)
         rememberChipMem(adr);
 
     *(uint16_t*)(chipMem + adr) = _swapWord(value);
 
     dataBus = value;
+    dmaClock = clock;
 
     inactivateOneCycleEvent(PTR_BLT_D_H);
 }

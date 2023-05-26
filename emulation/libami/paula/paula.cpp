@@ -171,6 +171,11 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(intreqAud3Clock);
     s.integer(intreqBltClock);
     s.integer(intreqTbeClock);
+    s.integer(intreqCia1Clock);
+    s.integer(intreqCia2Clock);
+
+    s.integer(intUpdClock);
+    s.integer(intreqLast);
 
     s.integer(serPer);
     s.integer(serDat);
@@ -248,6 +253,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
 auto Paula::power() -> void {
     intena = 0;
     intreq = 0;
+    intUpdClock = 0;
     adkcon = 0;
     int2Current = false;
     int6Current = false;
@@ -313,6 +319,8 @@ auto Paula::power() -> void {
     intreqAud3Clock = INT64_MAX;
     intreqBltClock = INT64_MAX;
     intreqTbeClock = INT64_MAX;
+    intreqCia1Clock = INT64_MAX;
+    intreqCia2Clock = INT64_MAX;
 
     serDat = 0;
     serPer = 0;

@@ -56,6 +56,7 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             break;
     }
 
+    dataBus = (dataBus << 8) | dataBus;
     return (uint8_t)dataBus;
 }
 
@@ -175,7 +176,7 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
             break;
     }
 
-    dataBus =  (value << 8) | value;
+    dataBus = (value << 8) | value;
 }
 
 auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
@@ -251,11 +252,7 @@ auto Agnus::setChipmem(unsigned size) -> void {
     if (mask == chipMemMask)
         return;
 
-    if (chipMem)
-        delete[] chipMem;
-
-    chipMem = new uint8_t[size];
-    chipMemMask = mask;
+    createChipSlowMem(size, slowMemSize);
 }
 
 auto Agnus::setSlowmem(unsigned size) -> void {
@@ -265,14 +262,19 @@ auto Agnus::setSlowmem(unsigned size) -> void {
     if (size == slowMemSize)
         return;
 
-    if (slowMem) {
-        delete[] slowMem;
-        slowMem = nullptr;
-    }
+    createChipSlowMem(chipMemMask + 1, size);
+}
 
-    if (size)
-        slowMem = new uint8_t[size];
-    slowMemSize = size;
+auto Agnus::createChipSlowMem(unsigned sizeChip, unsigned sizeSlow) -> void {
+    if (chipMem)
+        delete[] chipMem;
+
+    chipMem = new uint8_t[sizeChip + sizeSlow];
+    chipMemMask = sizeChip - 1;
+    slowMem = nullptr;
+    if (sizeSlow)
+        slowMem = chipMem + sizeChip;
+    slowMemSize = sizeSlow;
 }
 
 auto Agnus::setFastmem(unsigned size) -> void {
@@ -352,6 +354,12 @@ auto Agnus::mapRom(bool init ) -> void {
 }
 
 auto Agnus::mapMemory() -> void {
+
+    if (ecs() && (chipMemMask == 0x7ffff) && (slowMemSize >= (512 * 1024))) {
+        dmaChipMemMask = 0xfffff;
+    } else
+        dmaChipMemMask = chipMemMask;
+
     for(int i = 8; i <= 0x1f; i++) // max 2 MB (mirrored)
         mapper[i] = CHIP_MEM;
 

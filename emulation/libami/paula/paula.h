@@ -64,6 +64,8 @@ struct Paula {
     int64_t intreqAud3Clock;
     int64_t intreqBltClock;
     int64_t intreqTbeClock;
+    int64_t intreqCia1Clock;
+    int64_t intreqCia2Clock;
 
     uint16_t serDat;
     uint16_t serPer;
@@ -112,6 +114,9 @@ struct Paula {
     uint8_t sampleLimit;
     int64_t sampleCycle;
 
+    int64_t intUpdClock;
+    uint16_t intreqLast;
+
     bool dmaDisk;
     bool audioOut = true;
 
@@ -154,7 +159,7 @@ struct Paula {
     auto instantDriveAccess() -> void;
     auto finishDMA(bool delayed = false) -> void;
 
-    template<uint8_t nr, bool dma> auto audxDat(uint16_t value) -> void;
+    template<uint8_t nr> auto audxDat(uint16_t value) -> void;
     template<uint8_t nr> auto audxLen(uint16_t value) -> void;
     template<uint8_t nr> auto audxPer(uint16_t value) -> void;
     template<uint8_t nr> auto audxVol(uint16_t value) -> void;
@@ -164,15 +169,15 @@ struct Paula {
     auto strvbl() -> void;
 
     auto dmal() -> uint16_t; // Paula transfers DMA usage bit by bit to Agnus (clocked each DMA cycle)
-    auto setInt2(bool state) -> void;
-    auto setInt6(bool state) -> void;
+    auto scheduleIntreqCia1(bool state) -> void;
+    auto scheduleIntreqCia2(bool state) -> void;
     auto setDskSyncInt() -> void;
     auto setDskBlkInt() -> void;
     auto setVblInt() -> void;
 
     auto prepareIpl() -> void;
     auto intreqEvent() -> void;
-    template<uint8_t nr, bool dma> auto scheduleIntreqAud() -> void;
+    template<uint8_t nr> auto scheduleIntreqAud() -> void;
     auto scheduleIntreqBlt() -> void;
     auto scheduleIntreqTbe() -> void;
 
@@ -196,7 +201,7 @@ struct Paula {
     template<uint8_t nr> auto pbufld1() -> void;
     template<uint8_t nr> auto pbufld2() -> void;
     template<uint8_t nr> auto perfin() -> void;
-    template<uint8_t nr, bool dma, bool updEvent> auto percntrld() -> void;
+    template<uint8_t nr, bool updEvent> auto percntrld() -> void;
     template<uint8_t nr> auto toggleAudioDMA( ) -> void;
     template<uint8_t nr> auto addSample( uint8_t sample ) -> void;
 

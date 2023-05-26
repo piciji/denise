@@ -54,11 +54,13 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
             if (!triggeredByWrite) {
                 if constexpr (byteAccess)
                     writeCustom(adr, dataBus, Trigger_Read);
-                    //writeCustom(adr, (dataBus << 8) | (dataBus & 0xff), Trigger_Read);
+                   //writeCustom(adr, (dataBus << 8) | (dataBus & 0xff), Trigger_Read);
                 else
                     writeCustom(adr, dataBus, Trigger_Read);
-            }
 
+                if ((clock - dmaClock) > 1)
+                    dataBus = 0xffff;
+            }
             break;
     }
     return dataBus;
@@ -126,27 +128,35 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
         case 0x48:
             addOneCycleEvent(PTR_BLT_C_H, value);
+            //blitter.setBltCptH(value);
             break;
         case 0x4a:
             addOneCycleEvent(PTR_BLT_C_L, value);
+            //blitter.setBltCptL(value);
             break;
         case 0x4c:
             addOneCycleEvent(PTR_BLT_B_H, value);
+            //blitter.setBltBptH(value);
             break;
         case 0x4e:
             addOneCycleEvent(PTR_BLT_B_L, value);
+            //blitter.setBltBptL(value);
             break;
         case 0x50:
             addOneCycleEvent(PTR_BLT_A_H, value);
+            //blitter.setBltAptH(value); break;
             break;
         case 0x52:
             addOneCycleEvent(PTR_BLT_A_L, value);
+            //blitter.setBltAptL(value);
             break;
         case 0x54:
             addOneCycleEvent(PTR_BLT_D_H, value);
+            //blitter.setBltDptH(value);
             break;
         case 0x56:
             addOneCycleEvent(PTR_BLT_D_L, value);
+            //blitter.setBltDptL(value);
             break;
         case 0x58:
             blitter.setBltSize(value);
@@ -248,10 +258,6 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             // Therefore, the change will only be visible in the cycle after next.
 
             addOneCycleEvent(DMACON, value);
-
-            if ((dmaCon ^ dmaConImm) & 0x21f)
-                paula.dmaCon( dmaConImm );
-
         } break;
 
         case 0x98:
@@ -259,11 +265,11 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
 
         case 0x9a:
-            addOneCycleEvent(INTENA, value);
+            addOneCycleEvent(INTENA, value, 1);
             break;
 
         case 0x9c:
-            addOneCycleEvent(INTREQ, value);
+            addOneCycleEvent(INTREQ, value, 1);
             break;
 
         case 0x9e:
@@ -316,31 +322,63 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
         case 0xa0: setAudPtH<0>(value); break;
         case 0xa2: setAudPtL<0>(value); break;
-        case 0xa4: paula.audxLen<0>(value); break;
-        case 0xa6: paula.audxPer<0>(value); break;
+        case 0xa4:
+            paula.audxLen<0>(value);
+            //addOneCycleEvent(AUD_LEN0, value);
+            break;
+        case 0xa6:
+            paula.audxPer<0>(value);
+            //addOneCycleEvent(AUD_PER0, value);
+            break;
         case 0xa8: paula.audxVol<0>(value); break;
-        case 0xaa: paula.audxDat<0,false>(value); break;
+        case 0xaa:
+            addOneCycleEvent(AUD_DAT0, value,1);
+            break;
 
         case 0xb0: setAudPtH<1>(value); break;
         case 0xb2: setAudPtL<1>(value); break;
-        case 0xb4: paula.audxLen<1>(value); break;
-        case 0xb6: paula.audxPer<1>(value); break;
+        case 0xb4:
+            paula.audxLen<1>(value);
+            //addOneCycleEvent(AUD_LEN1, value);
+            break;
+        case 0xb6:
+            paula.audxPer<1>(value);
+            //addOneCycleEvent(AUD_PER1, value);
+            break;
         case 0xb8: paula.audxVol<1>(value); break;
-        case 0xba: paula.audxDat<1,false>(value); break;
+        case 0xba:
+            addOneCycleEvent(AUD_DAT1, value,1);
+            break;
 
         case 0xc0: setAudPtH<2>(value); break;
         case 0xc2: setAudPtL<2>(value); break;
-        case 0xc4: paula.audxLen<2>(value); break;
-        case 0xc6: paula.audxPer<2>(value); break;
+        case 0xc4:
+            paula.audxLen<2>(value);
+            //addOneCycleEvent(AUD_LEN2, value);
+            break;
+        case 0xc6:
+            paula.audxPer<2>(value);
+            //addOneCycleEvent(AUD_PER2, value);
+            break;
         case 0xc8: paula.audxVol<2>(value); break;
-        case 0xca: paula.audxDat<2,false>(value); break;
+        case 0xca:
+            addOneCycleEvent(AUD_DAT2, value,1);
+            break;
 
         case 0xd0: setAudPtH<3>(value); break;
         case 0xd2: setAudPtL<3>(value); break;
-        case 0xd4: paula.audxLen<3>(value); break;
-        case 0xd6: paula.audxPer<3>(value); break;
+        case 0xd4:
+            paula.audxLen<3>(value);
+            //addOneCycleEvent(AUD_LEN3, value);
+            break;
+        case 0xd6:
+            paula.audxPer<3>(value);
+            //addOneCycleEvent(AUD_PER3, value);
+            break;
         case 0xd8: paula.audxVol<3>(value); break;
-        case 0xda: paula.audxDat<3,false>(value); break;
+        case 0xda:
+            addOneCycleEvent(AUD_DAT3, value,1);
+            break;
 
         case 0xe0:
             if ((bplQueue & 7) != 1) setBpl1ptH(value);

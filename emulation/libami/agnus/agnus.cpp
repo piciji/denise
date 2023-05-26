@@ -33,6 +33,9 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 
     this->interface = system->interface;
 
+    rapidJobs[0].sibling = &rapidJobs[1];
+    rapidJobs[1].sibling = &rapidJobs[0];
+
     chipMemChangeSize = slowMemChangeSize = fastMemChangeSize = 10 * 1024;
     chipMemChange = new MemChange[chipMemChangeSize];
     slowMemChange = new MemChange[slowMemChangeSize];
@@ -48,6 +51,12 @@ Agnus::~Agnus() {
     delete[] slowMemChange;
     delete[] fastMemChange;
     delete[] wom;
+
+    if (chipMemMask)
+        delete[] chipMem;
+
+    if (fastMemSize)
+        delete[] fastMem;
 }
 
 auto Agnus::frequency() -> unsigned {
@@ -64,6 +73,7 @@ auto Agnus::dmaControl(uint16_t data) -> void {
 auto Agnus::power(bool softReset) -> void {
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
+    dmaClock = 0;
 
     if (!chipMem)
         setChipmem(512 * 1024);
@@ -103,6 +113,9 @@ auto Agnus::power(bool softReset) -> void {
     hTotal = 0;
     beamCon = 0;
 
+    rapidJobs[0].reset();
+    rapidJobs[1].reset();
+
     for(uint8_t i = 0; i < 8; i++) {
         Sprite& spr = sprites[i];
         spr.ptr = 0;
@@ -132,7 +145,7 @@ auto Agnus::power(bool softReset) -> void {
     bpl1pt = bpl2pt = bpl3pt = bpl4pt = bpl5pt = bpl6pt = 0;
     bpl1Mod = bpl2Mod = 0;
 
-    dataBus = 0;
+    dataBus = 0xffff;
     dmaCon = 0;
     dmaConImm = 0;
     bplCon0 = 0;
@@ -454,7 +467,7 @@ inline auto Agnus::dmaCycle() -> void {
     paula.process();
 
     if (actions) {
-        uint8_t _actions = actions;
+        int _actions = actions;
 
         if (_actions & ACT_BPL)
             fetchPlanes();
@@ -695,7 +708,7 @@ template auto Agnus::updateEvent<Agnus::EVENT_KBD>(int delay) -> void;
 template auto Agnus::setEventInactive<Agnus::EVENT_AUDIO_STATE>() -> void;
 template auto Agnus::updateEvent<Agnus::EVENT_AUDIO_STATE>(int delay) -> void;
 
-template auto Agnus::updateEvent<Agnus::EVENT_ONE_CYCLE_DELAY, true>( int delay ) -> void;
+template auto Agnus::updateEvent<Agnus::EVENT_ONE_CYCLE_DELAY>( int delay ) -> void;
 template auto Agnus::updateEventAbs<Agnus::EVENT_AUDIO_STATE>(int64_t absClock) -> void;
 
 template auto Agnus::updateEvent<Agnus::EVENT_SERIAL>( int delay ) -> void;

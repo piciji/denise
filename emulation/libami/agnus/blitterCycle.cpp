@@ -81,7 +81,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
         bltADatOld = bltAdat & mask;
 
     } else if constexpr (!!(jobs & BLT_SHIFT_B)) {
-        if (jobs & BLT_DESC)
+        if constexpr (!!(jobs & BLT_DESC))
             bltBDatShifted = ((bltBdat << 16) | bltBDatOld) >> (16 - SHIFTB);
         else
             bltBDatShifted = ((bltBDatOld << 16) | bltBdat) >> SHIFTB;
@@ -175,6 +175,8 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
         } else if (!agnus.canBlitterUseBus())
             return;
 
+        //agnus.busUsage = Agnus::BUS_USAGE_BLITTER;
+
     } else {
         if (!agnus.canBlitterUseBus())
             return;
@@ -264,20 +266,19 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
             bltApt += (int16_t)bltAmod;
     }
 
-    // really occurs after first shift out or each time ?
     if constexpr (!!(jobs & BLT_UPDATE_SIGN)) { // don't need an active channel A
         if (0 > (int16_t)bltApt)    bltcon1 |= BLT_SIGN;
         else                        bltcon1 &= ~BLT_SIGN;
     }
 
     if constexpr (!!(jobs & BLT_NEXT)) {
+        bltDpt = bltCpt;
+
         if (!--curH) {
             finish();
             flags = 0;
             return;
         }
-
-        bltDpt = bltCpt;
 
         flags = (flags & 0xfff0) | (8 | 1); // shift out and cycle 1
     } else
