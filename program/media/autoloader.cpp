@@ -43,7 +43,7 @@ auto Autoloader::postProcessing() -> void {
     
     if (ddControl.saveFile) {
 
-        program->updateSaveIdent( ddControl.emulator, ddControl.saveFile );
+        program->updateSaveIdentFromSav( ddControl.emulator, ddControl.saveFile );
 
         filePool->assign("savestate", nullptr);
         

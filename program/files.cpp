@@ -183,6 +183,24 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, GUIKIT::File* f
     }
 }
 
+auto Program::updateSaveIdentFromSav( Emulator::Interface* emulator, GUIKIT::File* file ) -> void {
+    auto settings = getSettings( emulator );
+    std::string fileName = file->getFileName(true, true);
+
+    std::size_t end = fileName.find_last_of("_");
+
+    if (end != std::string::npos)
+        fileName = fileName.erase(end);
+
+    settings->set<std::string>( "save_ident", fileName);
+    settings->set<unsigned>( "save_slot", 0);
+
+    auto emuView = EmuConfigView::TabWindow::getView( emulator );
+
+    if (emuView && emuView->configurationsLayout)
+        emuView->configurationsLayout->updateSaveIdent( fileName );
+}
+
 auto Program::updateSaveIdent( Emulator::Interface* emulator, GUIKIT::File* file ) -> void {
     auto settings = getSettings( emulator );
     std::string filePath = file->getPath();

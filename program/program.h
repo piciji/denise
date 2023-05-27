@@ -121,6 +121,7 @@ struct Program : Emulator::Interface::Bind {
     auto errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> void;
     auto setExpansionSelection( Emulator::Interface* emulator ) -> void;
     auto updateSaveIdent(Emulator::Interface::Media* media, GUIKIT::File* file = nullptr) -> void;
+    auto updateSaveIdentFromSav( Emulator::Interface* emulator, GUIKIT::File* file ) -> void;
 	auto getLastUsedEmu() -> Emulator::Interface*;
 	auto getEmulator( std::string ident ) -> Emulator::Interface*;
     auto removeExpansion( bool bootableOnly = true ) -> void;
