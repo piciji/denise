@@ -672,7 +672,7 @@ struct pMenu : pMenuBase {
     auto remove(MenuBase& item) -> void;
     auto update(Window* window) -> void;
 
-    pMenu(Menu& menu) : pMenuBase(menu), menu(menu) {}
+    pMenu(Menu& menu) : pMenuBase(menu), menu(menu) { hmenu = nullptr; }
     ~pMenu();
 };
 

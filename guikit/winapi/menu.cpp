@@ -35,7 +35,7 @@ auto pMenuBase::setVisible(bool visible) -> void {
 }
 
 auto pMenuBase::setText(const std::string& text) -> void {
-    if (parentMenu()) {
+    if (parentMenu() && parentMenu()->p.hmenu) {
         MENUITEMINFO menuitem = { sizeof(MENUITEMINFO) };
         GetMenuItemInfo(parentMenu()->p.hmenu, menuBase.id, false, &menuitem);
         menuitem.dwTypeData =  utf16_t(text);
