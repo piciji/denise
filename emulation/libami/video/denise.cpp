@@ -317,14 +317,15 @@ template<bool useHires> inline auto Denise::processDelayPf2() -> void {
 }
 
 #define SPF(v1) \
-    if (!pf2NoCol && !pf1NoCol)             clxDat |= (v1 << 5) | (v1 << 1) | 1; \
-    else if (!pf2NoCol)                     clxDat |= (v1 << 5); \
-    else if (!pf1NoCol && doublePlayfield)  clxDat |= (v1 << 1);
+    if (!clxNoCol)                                          clxDat |= (v1 << 5) | (v1 << 1) | 1; \
+    else if ((clxNoCol & 2) == 0)                           clxDat |= (v1 << 5); \
+    else if (((clxNoCol & 1) == 0) && doublePlayfield)      clxDat |= (v1 << 1);
 
 #define SPF2(v1, v2) \
-    if (!pf2NoCol && !pf1NoCol)             clxDat |= (v1 << 5) | (v1 << 1) | (v2 << 9) | 1; \
-    else if (!pf2NoCol)                     clxDat |= (v1 << 5) | (v2 << 9); \
-    else if (!pf1NoCol && doublePlayfield)  clxDat |= (v1 << 1) | (v2 << 9);
+    if (!clxNoCol)                                          clxDat |= (v1 << 5) | (v1 << 1) | (v2 << 9) | 1; \
+    else if ((clxNoCol & 2) == 0)                           clxDat |= (v1 << 5) | (v2 << 9); \
+    else if (((clxNoCol & 1) == 0) && doublePlayfield)      clxDat |= (v1 << 1) | (v2 << 9); \
+    else                                                    clxDat |= (v2 << 9);
 
 template<bool useHires> auto Denise::processPixel() -> void {
     uint8_t sprGroup;
@@ -333,6 +334,7 @@ template<bool useHires> auto Denise::processPixel() -> void {
     uint8_t colIndex;
     uint8_t colIndex2;
     uint16_t color;
+    int clxNoCol;
     bool _ham = ham;
 
     Sprite& spr0 = sprites[0];
@@ -351,7 +353,7 @@ template<bool useHires> auto Denise::processPixel() -> void {
 
         if (spr0.shift) {
             sprData |= ((spr0.shift & 0x80000000) >> 31) | ((spr0.shift & 0x8000) >> 14);
-            if ((sprData & 3) && (sprClxMask & 1) ) sprGroup |= 1;
+            if ((sprData & 3)  ) sprGroup |= 1;
             spr0.shift = (spr0.shift << 1) & ~(0x10000);
         }
 
@@ -363,7 +365,7 @@ template<bool useHires> auto Denise::processPixel() -> void {
 
         if (spr2.shift) {
             sprData |= ((spr2.shift & 0x80000000) >> 27) | ((spr2.shift & 0x8000) >> 10);
-            if ((sprData & 0x30) && (sprClxMask & 4) ) sprGroup |= 2;
+            if ((sprData & 0x30) ) sprGroup |= 2;
             spr2.shift = (spr2.shift << 1) & ~(0x10000);
         }
 
@@ -375,7 +377,7 @@ template<bool useHires> auto Denise::processPixel() -> void {
 
         if (spr4.shift) {
             sprData |= ((spr4.shift & 0x80000000) >> 23) | ((spr4.shift & 0x8000) >> 6);
-            if ((sprData & 0x300) && (sprClxMask & 0x10) ) sprGroup |= 4;
+            if ((sprData & 0x300) ) sprGroup |= 4;
             spr4.shift = (spr4.shift << 1) & ~(0x10000);
         }
 
@@ -387,7 +389,7 @@ template<bool useHires> auto Denise::processPixel() -> void {
 
         if (spr6.shift) {
             sprData |= ((spr6.shift & 0x80000000) >> 19) | ((spr6.shift & 0x8000) >> 2);
-            if ((sprData & 0x3000) && (sprClxMask & 0x40) ) sprGroup |= 8;
+            if ((sprData & 0x3000) ) sprGroup |= 8;
             spr6.shift = (spr6.shift << 1) & ~(0x10000);
         }
 
@@ -467,12 +469,12 @@ template<bool useHires> auto Denise::processPixel() -> void {
         for(int h = 0; h < (useHires ? 2 : 1); h++) {
             colIndex = 0;
             colIndex2 = 0;
-            // todo: influence illegal pf2 prio modes clxDat calculation
-            bool pf1NoCol = shifterAClxEna & (shifterA ^ shifterAClxPolarity);
-            bool pf2NoCol = shifterBClxEna & (shifterB ^ shifterBClxPolarity);
+
+            clxNoCol = ((shifterAClxEna & (shifterA ^ shifterAClxPolarity)) != 0)
+                        | ((shifterBClxEna & (shifterB ^ shifterBClxPolarity)) != 0) << 1;
 
             switch(sprGroup) {
-                case 0: if (!pf2NoCol && !pf1NoCol) clxDat |= 1; break;
+                case 0: if (!clxNoCol) clxDat |= 1; break;
                 case 1: SPF(1) break;
                 case 2: SPF(2) break;
                 case 3: SPF2(3, 1) break;
@@ -482,9 +484,9 @@ template<bool useHires> auto Denise::processPixel() -> void {
                 case 7: SPF2(7, 11) break;
                 case 8: SPF(8) break;
                 case 9: SPF2(9, 4) break;
-                case 10: SPF2(10, 13) break;
+                case 10: SPF2(10, 16) break;
                 case 11: SPF2(11, 21) break;
-                case 12: SPF2(12, 14) break;
+                case 12: SPF2(12, 32) break;
                 case 13: SPF2(13, 38) break;
                 case 14: SPF2(14, 56) break;
                 case 15: SPF2(15, 63) break;

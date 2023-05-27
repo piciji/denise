@@ -51,11 +51,11 @@ struct Denise {
     int64_t shifterA; // playfield 1: planes 1, 3, 5
     int64_t shifterB; // playfield 2: planes 2, 4, 6
 
-    uint64_t shifterAClxEna;
-    uint64_t shifterBClxEna;
+    int64_t shifterAClxEna;
+    int64_t shifterBClxEna;
 
-    uint64_t shifterAClxPolarity;
-    uint64_t shifterBClxPolarity;
+    int64_t shifterAClxPolarity;
+    int64_t shifterBClxPolarity;
 
     uint16_t clxDat;
 
