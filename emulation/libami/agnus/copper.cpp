@@ -205,6 +205,12 @@ auto Copper::process() -> void {
         case Wait4: // would never match
             agnus.actions &= ~Agnus::ACT_COPPER;
             break;
+        case WARMUP:
+            state = WARMUP2;
+            break;
+        case WARMUP2:
+            state = prevState;
+            break;
     }
 }
 

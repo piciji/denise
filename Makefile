@@ -34,6 +34,7 @@ objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64
 objects += m93c86 mx29lv640eb icons logos fonts socket fpaq0
 
 objects += m68000 m68000Core
+#objects += cmoira moira moiraDebugger
 
 deps = $(objects)
 
@@ -153,6 +154,11 @@ obj/diskStructureAmi.o: emulation/libami/drive/diskStructure.cpp
 obj/sectorBlockAmi.o: emulation/libami/drive/sectorBlock.cpp
 obj/filesystemAmi.o: emulation/libami/drive/filesystem.cpp
 obj/rtcAmi.o: emulation/libami/system/rtc.cpp
+
+
+obj/cmoira.o: emulation/libami/altCpu/cpu.cpp
+obj/moira.o: emulation/libami/altCpu/Moira.cpp
+obj/moiraDebugger.o: emulation/libami/altCpu/MoiraDebugger.cpp
 
 obj/vicIIBase.o:emulation/libc64/vicII/base.cpp
 obj/vicIICycle.o:emulation/libc64/vicII/vicII.cpp

@@ -106,6 +106,7 @@ auto Agnus::addOneCycleEvent(int job, uint16_t data, int delay) -> void {
 
         rJob2.clock = useClock;
     } else {
+        interface->log("ohna");
         // We should never end up here. If it does, this does not mean that it necessarily leads to an error situation
         // if the event is executed early.
         if (rJob1.clock <= rJob2.clock)
@@ -127,12 +128,14 @@ auto Agnus::forceOneCycleEvent(int job) -> void {
     }
 }
 
-auto Agnus::inactivateOneCycleEvent(int job) -> void {
+template<bool isPtr> auto Agnus::inactivateOneCycleEvent(int job) -> void {
     if (hasActiveEvent<EVENT_ONE_CYCLE_DELAY>()) {
-        if ((rapidJobs[0].job & ~1) == job) {
+        int mask = isPtr ? ~1 : ~0;
+
+        if ((rapidJobs[0].job & mask) == job) {
             rapidJobs[0].clock = INT64_MAX;
             updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(rapidJobs[0].sibling->clock);
-        } else if ((rapidJobs[1].job & ~1) == job) {
+        } else if ((rapidJobs[1].job & mask) == job) {
             rapidJobs[1].clock = INT64_MAX;
             updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(rapidJobs[1].sibling->clock);
         }
@@ -152,10 +155,31 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case PTR_BLT_D_L: blitter.setBltDptL(data); break;
         case PTR_DSK_H: setDskPtH(data); break;
         case PTR_DSK_L: setDskPtL(data); break;
-        case DMACON:
+        case DMACON: {
             if ((dmaCon ^ dmaConImm) & 0x21f)
-                paula.dmaCon( dmaConImm );
-            dmaCon = dmaConImm; break;
+                paula.dmaCon(dmaConImm);
+            dmaCon = dmaConImm;
+            dmaConBlt = useBlitterDMA();
+
+            bool dmaConCopNew = useCopperDMA();
+            if (dmaConCop != dmaConCopNew) {
+                // vAmigaTS/Agnus/Copper/CopDma/dmatoggle1
+                if (dmaConCopNew && (copper.state == Copper::Read1 || copper.state == Copper::Read2)) {
+                    if (hPos & 1) {
+                        copper.skipped = true;
+                    } else {
+                        copper.prevState = copper.state;
+                        copper.state = ((clock - dmaClock) == 1) ? Copper::WARMUP : Copper::WARMUP2;
+                    }
+                }
+
+                addOneCycleEvent(DMACON_COP, dmaConCopNew, 1);
+            }
+        } break;
+        case DMACON_COP:
+            dmaConCop = !!data;
+            break;
+
         case BLT_INIT: blitter.initBlit(); break;
 
         case SPR_DATA0: denise.setSprDatA(0, data); break;

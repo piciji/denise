@@ -160,7 +160,7 @@ auto Agnus::diskDma(bool writeMode) -> void {
         dataBus = value;
     }
 
-    inactivateOneCycleEvent(Agnus::PTR_DSK_H);
+    inactivateOneCycleEvent<true>(Agnus::PTR_DSK_H);
 
     dskpt += 2;
     dskpt &= dmaChipMemMask;
@@ -246,7 +246,7 @@ template<bool oddCycle1> auto Agnus::canCopperUseBus() -> bool {
             return false; // a higher DMA
     }
 
-    if (!useCopperDMA())
+    if (!useCopperDMAForQueue())
         return false;
 
     return true;
@@ -288,7 +288,7 @@ auto Agnus::canBlitterUseBus() -> bool {
     if (busUsage != BUS_FREE)
         return false; // a higher DMA
 
-    if (!useBlitterDMA())
+    if (!useBlitterDMAForQueue())
         return false; // blitter get stuck
 
     if (!blitterNasty() && (countWaitCycles > 2))
@@ -309,7 +309,7 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& r
     dmaClock = clock;
 
     // if a modified pointer is used for DMA in the next cycle, the change is ignored.
-    inactivateOneCycleEvent(ptrEvent);
+    inactivateOneCycleEvent<true>(ptrEvent);
 
     return true;
 }
@@ -329,7 +329,7 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
     dataBus = value;
     dmaClock = clock;
 
-    inactivateOneCycleEvent(PTR_BLT_D_H);
+    inactivateOneCycleEvent<true>(PTR_BLT_D_H);
 
     return true;
 }
@@ -342,7 +342,7 @@ template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, u
     dataBus = result;
     dmaClock = clock;
 
-    inactivateOneCycleEvent(ptrEvent);
+    inactivateOneCycleEvent<true>(ptrEvent);
 }
 
 auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
@@ -357,7 +357,7 @@ auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
     dataBus = value;
     dmaClock = clock;
 
-    inactivateOneCycleEvent(PTR_BLT_D_H);
+    inactivateOneCycleEvent<true>(PTR_BLT_D_H);
 }
 
 }

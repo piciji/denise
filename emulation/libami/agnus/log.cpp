@@ -17,8 +17,8 @@ auto Agnus::logDmaUsage(bool waitForCpu) -> void {
         case BUS_USAGE_COPPER:
             system->interface->log("cop",0);
             system->interface->log((copper.ir1 & 1) ? 0 : (copper.ir1 & 0x1fe), 0, 1);
+            system->interface->log( (copper.state == Copper::Read2) ? "R1" : ((copper.state == Copper::Read1) ? "R2" : "-"), 0);
             system->interface->log(vPos, 0, 1);
-            system->interface->log(hPos, 0, 1);
             break;
         case BUS_USAGE_SPRITE: system->interface->log("spr",0); break;
         case BUS_USAGE_DMAL: system->interface->log("dml",0); break;
@@ -30,7 +30,7 @@ auto Agnus::logDmaUsage(bool waitForCpu) -> void {
 
 inline auto Agnus::logDmaCondition() -> bool {
     //if (vPos == 232 && (hPos >= 120 || hPos == 0 || hPos == 1) ) return true;
-    if (vPos == 0xd3 /*|| vPos == 0x3c || vPos == 0x42 || vPos == 0x48*/ ) return true;
+    if (vPos == 0x51 || vPos == 0x61  || vPos == 0x71 || vPos == 0x72  || vPos == 0x81 ) return true;
 
     return false;
 }

@@ -250,13 +250,13 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
         case 0x96: {
             // Bitplane DMA is evaluated 3 cycles before and then enters a queue.
+            // Bitplane DMA is evaluated 2 cycles before and then enters a queue.
             dmaControl(value);
-            // Blitter / Copper(*) DMA is evaluated 1 cycle before and then enters a queue.
-            // (*) for Copper maybe 2 cycles before.
-
+            // Blitter is evaluated 1 cycle before and then enters a queue.
+            // Copper is evaluated 2 cycle before and then enters a queue.
             // for performance reasons BLitter/Copper DMA usage is determined in the execution cycle.
-            // Therefore, the change will only be visible in the cycle after next.
-
+            // Therefore, the change will only be visible in the cycle after next for Blitter
+            // and one more for Copper
             addOneCycleEvent(DMACON, value);
         } break;
 
@@ -640,6 +640,9 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
         case 0x1e4:
             setDiwHigh(value);
+            break;
+
+        case 0x1fe:
             break;
 
         default:

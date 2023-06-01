@@ -57,6 +57,7 @@ struct Agnus {
            AUD_LEN0, AUD_LEN1, AUD_LEN2, AUD_LEN3,
            AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
            AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
+           DMACON_COP,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -194,6 +195,8 @@ struct Agnus {
     uint16_t dataBus = 0;
     uint16_t dmaCon;
     uint16_t dmaConImm;
+    bool dmaConCop;
+    bool dmaConBlt;
     uint16_t bplCon0;
     unsigned countWaitCycles;
     uint32_t rDmaPtr;
@@ -230,8 +233,10 @@ struct Agnus {
     auto womLocked() -> bool const { return (model != OCS_A1000) || womLock; }
 
     auto useSpriteDMA() -> bool const { return (dmaConImm & 0x220) == 0x220; }
-    auto useBlitterDMA() -> bool const { return (dmaCon & 0x240) == 0x240; }
-    auto useCopperDMA() -> bool const { return (dmaCon & 0x280) == 0x280; }
+    auto useBlitterDMA() -> bool const { return (dmaConImm & 0x240) == 0x240; }
+    auto useBlitterDMAForQueue() -> bool const { return dmaConBlt; }
+    auto useCopperDMA() -> bool const { return (dmaConImm & 0x280) == 0x280; }
+    auto useCopperDMAForQueue() -> bool const { return dmaConCop; }
     auto useBitplaneDMA() -> bool const { return (dmaConImm & 0x300) == 0x300; }
     auto blitterNasty() -> bool const { return dmaCon & 0x400; }
 
@@ -363,7 +368,7 @@ struct Agnus {
     template<uint8_t Channel> auto getEventDelay() -> unsigned;
     inline auto addOneCycleEvent(int job, uint16_t data = 0, int delay = 2) -> void;
     auto forceOneCycleEvent(int job) -> void;
-    auto inactivateOneCycleEvent(int job) -> void;
+    template<bool isPtr> auto inactivateOneCycleEvent(int job) -> void;
     auto powerSupplyEvent() -> void;
     auto leaveEmulationEvent() -> void;
     auto HTotalEvent() -> void;

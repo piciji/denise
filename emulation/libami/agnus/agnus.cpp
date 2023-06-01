@@ -148,6 +148,8 @@ auto Agnus::power(bool softReset) -> void {
     dataBus = 0xffff;
     dmaCon = 0;
     dmaConImm = 0;
+    dmaConCop = false;
+    dmaConBlt = false;
     bplCon0 = 0;
     countWaitCycles = 1;
     rDmaPtr = 0;

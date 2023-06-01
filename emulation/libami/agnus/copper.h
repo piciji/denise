@@ -44,7 +44,10 @@ struct Copper {
         Wait1                           = 18,
         Wait2                           = 19,
         Wait3                           = 20,
-        Wait4                           = 21
+        Wait4                           = 21,
+
+        WARMUP                          = 22,
+        WARMUP2                         = 23,
     } state, prevState;
 
     Agnus& agnus;
