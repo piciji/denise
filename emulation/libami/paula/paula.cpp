@@ -24,6 +24,7 @@ cpu(cpu),
 input(input) {
     sampleLimit = 0;
     enableFilter = true;
+    loopBack = false;
 }
 
 auto Paula::dmal() -> uint16_t {
@@ -59,8 +60,8 @@ auto Paula::dmal() -> uint16_t {
             case 2: out |= 3; break;
             default: break;
         }
-        if (dskTansferLength == 2) out &= ~48;
-        else if (dskTansferLength == 1) out &= ~60;
+        if (dskTransferLength == 2) out &= ~48;
+        else if (dskTransferLength == 1) out &= ~60;
     }
 
     return out;
@@ -152,7 +153,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
 
     s.integer(dskLen);
     s.integer(dskSync);
-    s.integer(dskTansferLength);
+    s.integer(dskTransferLength);
     s.integer(fifo);
     s.integer(fifoPos);
     s.integer(dskEventCycle);
@@ -171,6 +172,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(intreqAud3Clock);
     s.integer(intreqBltClock);
     s.integer(intreqTbeClock);
+    s.integer(intreqRbfClock);
     s.integer(intreqCia1Clock);
     s.integer(intreqCia2Clock);
 
@@ -180,6 +182,15 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(serPer);
     s.integer(serDat);
     s.integer(serShifter);
+    s.integer(receiveShifter);
+    s.integer(receiveCounter);
+    s.integer(serdatR);
+    s.integer(loopBack);
+    s.integer(rxd);
+    s.integer(txd);
+    s.integer(overrun);
+    s.integer(serialTransferEvent);
+    s.integer(serialReceiveEvent);
 
     s.integer(turbo);
 
@@ -301,7 +312,7 @@ auto Paula::power() -> void {
 
     dskLen = 0;
     dskSync = 0;
-    dskTansferLength = 0;
+    dskTransferLength = 0;
     fifo = 0;
     fifoPos = 0;
     dskEventCycle = agnus.clock + FDC_IDLE;
@@ -319,12 +330,23 @@ auto Paula::power() -> void {
     intreqAud3Clock = INT64_MAX;
     intreqBltClock = INT64_MAX;
     intreqTbeClock = INT64_MAX;
+    intreqRbfClock = INT64_MAX;
     intreqCia1Clock = INT64_MAX;
     intreqCia2Clock = INT64_MAX;
 
+    serialTransferEvent = INT64_MAX;
+    serialReceiveEvent = INT64_MAX;
+
     serDat = 0;
     serPer = 0;
+    serdatR = 0;
     serShifter = 0;
+    receiveShifter = 0;
+    receiveCounter = 0;
+
+    rxd = true;
+    txd = true;
+    overrun = false;
 }
 
 auto Paula::process() -> void {
@@ -350,7 +372,7 @@ auto Paula::process() -> void {
                 if (turbo && dmaDisk) {
                     uint8_t repeat = (1 << turbo) - 1;
                     do {
-                        if (!dskTansferLength)
+                        if (!dskTransferLength)
                             break;
                         if (!dskShifterPos)
                             addToFifo( agnus.fakeDiskDma() );

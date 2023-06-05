@@ -45,7 +45,7 @@ struct Paula {
 
     uint16_t dskLen;
     uint16_t dskSync;
-    uint16_t dskTansferLength;
+    uint16_t dskTransferLength;
     uint64_t fifo;
     uint8_t fifoPos;
     int64_t dskEventCycle;
@@ -64,12 +64,22 @@ struct Paula {
     int64_t intreqAud3Clock;
     int64_t intreqBltClock;
     int64_t intreqTbeClock;
+    int64_t intreqRbfClock;
     int64_t intreqCia1Clock;
     int64_t intreqCia2Clock;
 
     uint16_t serDat;
     uint16_t serPer;
     int serShifter;
+    int receiveShifter;
+    int receiveCounter;
+    uint16_t serdatR;
+    bool loopBack;
+    bool rxd;
+    bool txd;
+    bool overrun;
+    int64_t serialTransferEvent;
+    int64_t serialReceiveEvent;
 
     uint8_t turbo = 0;
 
@@ -180,6 +190,7 @@ struct Paula {
     template<uint8_t nr> auto scheduleIntreqAud() -> void;
     auto scheduleIntreqBlt() -> void;
     auto scheduleIntreqTbe() -> void;
+    auto scheduleIntreqRbf() -> void;
 
     auto setDskLen(uint16_t value) -> void;
     auto setDskDat(uint16_t value) -> void;
@@ -216,6 +227,8 @@ struct Paula {
     auto setSerdat(uint16_t value) -> void;
     auto setSerper(uint16_t value) -> void;
     auto prepareTransfer() -> void;
+    auto updateTxd() -> void;
+    auto updateSerialEvent() -> void;
 };
 
 }

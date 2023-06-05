@@ -335,7 +335,7 @@ private:
     
     template<uint8_t Inst> auto cyclesBit(int bit) -> void;
     template<uint8_t Inst> auto cyclesMul(uint16_t data) -> void;
-    template<uint8_t Inst> auto cyclesDiv(uint32_t dividend, uint16_t divisor) -> void;
+    template<uint8_t Inst> auto cyclesDiv(uint32_t dividend, uint16_t divisor) -> int;
 
     template<uint8_t Mode> constexpr static auto isRegisterMode() -> bool { return Mode == AddressRegisterDirect || Mode == DataRegisterDirect; }
     template<uint8_t Mode> constexpr static auto isDirectMode() -> bool { return isRegisterMode<Mode>() || Mode == Immediate; }

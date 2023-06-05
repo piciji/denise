@@ -279,20 +279,27 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opDiv(uint16_t o
         }
     }
 
+    int postCycles;
+
     if (overflow) {
         if constexpr(Inst == Divu)  SYNC(6);
-        else cyclesDiv<Inst>(dividend, divisor);
+        else postCycles = cyclesDiv<Divs>(dividend, divisor);
 
         v = n = true;
         c = z = false;
     } else {
-        cyclesDiv<Inst>(dividend, divisor);
+        postCycles = cyclesDiv<Inst>(dividend, divisor);
 
         defaultFlags<Word>(result);
         writeRegD<Long>(reg, result);
     }
 
     prefetch<SampleIPL>();
+
+    if constexpr (Inst == Divs) {
+        if (postCycles)
+            SYNC(postCycles);
+    }
 }
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMove(uint16_t opcode) -> void {

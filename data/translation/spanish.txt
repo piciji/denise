@@ -740,3 +740,4 @@ RTC = Real Time Clock
 intensify Pseudo Stereo =
 intensify Pseudo Stereo tooltip =
 Threaded Renderer Auto =
+Serial Loopback = 

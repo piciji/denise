@@ -714,6 +714,7 @@ template auto Agnus::updateEvent<Agnus::EVENT_ONE_CYCLE_DELAY>( int delay ) -> v
 template auto Agnus::updateEventAbs<Agnus::EVENT_AUDIO_STATE>(int64_t absClock) -> void;
 
 template auto Agnus::updateEvent<Agnus::EVENT_SERIAL>( int delay ) -> void;
+template auto Agnus::updateEventAbs<Agnus::EVENT_SERIAL>( int64_t absClock ) -> void;
 
 template auto Agnus::updateEventAbs<Agnus::EVENT_INTREQ>(int64_t absClock) -> void;
 

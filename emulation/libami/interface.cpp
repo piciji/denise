@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "205";
+const std::string Interface::Version = "206";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -44,6 +44,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdFastMem, "Fast Mem", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 8}, { "0", "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB" }});
 
     models.push_back({ModelIdRTC, "RTC", Model::Type::Switch, Model::Purpose::Misc, 0});
+    models.push_back({ModelIdSerialLoopback, "Serial Loopback", Model::Type::Switch, Model::Purpose::Misc, 0});
 }
 
 auto Interface::prepareMedia() -> void {
@@ -420,6 +421,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdRTC:
             system->setRTC(value);
             break;
+        case ModelIdSerialLoopback:
+            system->paula.loopBack = !!value;
+            break;
     }
 }
 
@@ -438,7 +442,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdChipMem:                        return system->getChipmem();
         case ModelIdSlowMem:                        return system->getSlowmem();
         case ModelIdFastMem:                        return system->getFastmem();
-        case ModelIdRTC:                            return system->useRTC();
+        case ModelIdRTC:                            return (int)system->useRTC();
+        case ModelIdSerialLoopback:                 return (int)system->paula.loopBack;
     }
 
     return 0;

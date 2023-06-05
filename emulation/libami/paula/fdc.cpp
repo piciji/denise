@@ -91,7 +91,7 @@ namespace LIBAMI {
 
 auto Paula::setDskLen(uint16_t value) -> void {
     uint16_t oldValue = dskLen;
-    dskTansferLength = value & 0x3fff;
+    dskTransferLength = value & 0x3fff;
     dskLen = value;
     bool start = false;
 
@@ -103,21 +103,21 @@ auto Paula::setDskLen(uint16_t value) -> void {
         start = true;
     } else if (!(value & 0x8000)) {
         setDskState(DiskState::OFF);
-        dskTansferLength = 0;
+        dskTransferLength = 0;
         processDiskIdleCycles();
         dmaCycles = FDC_IDLE;
         dskEventCycle = agnus.clock + dmaCycles;
         return;
     }
 
-    if (!wordSync() && (dskTansferLength == 0)) {
+    if (!wordSync() && (dskTransferLength == 0)) {
         processDiskIdleCycles();
         finishDMA();
         return;
     }
 
     if (value & oldValue & 0x4000) {
-        if(dskTansferLength == 0)
+        if(dskTransferLength == 0)
             return;
         if (diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE)
             return; // keep state
@@ -129,7 +129,14 @@ auto Paula::setDskLen(uint16_t value) -> void {
 
     if (start) {
         fifoPos = 0;
-        dskShifterPos = (diskState == DiskState::WRITE) ? 16 : 0;
+
+        if (diskState == DiskState::WRITE)
+            dskShifterPos = 16;
+        else if (msbSync() && (dskShifter == dskSync))
+            dskShifterPos = 15;
+        else
+            dskShifterPos = 0;
+
         processDiskIdleCycles();
         useInstantDriveAccess() ? instantDriveAccess() : setFdcEvent();
     }
@@ -139,7 +146,7 @@ auto Paula::finishDMA(bool delayed) -> void {
     setDskBlkInt();
     dskLen = 0;
     agnus.dmal = 0; // prevent endless loop in turbo mode
-    dskTansferLength = 0;
+    dskTransferLength = 0;
     setDskState(DiskState::OFF);
     dmaCycles = FDC_IDLE;
     dskEventCycle = agnus.clock + dmaCycles;
@@ -184,8 +191,8 @@ auto Paula::dskDatR() -> uint16_t {
 
     do {
         if(getFromFifo(out)) {
-            if (dskTansferLength) {
-                if (!--dskTansferLength) {
+            if (dskTransferLength) {
+                if (!--dskTransferLength) {
                     finishDMA(true);
                     break;
                 }
@@ -209,12 +216,12 @@ auto Paula::instantDriveAccess() -> void {
         case DiskState::WAIT_SYNC_READ:
         case DiskState::READ:
             if (system->isProcessFrame())
-                out = activeDrive->instantRead(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_READ);
+                out = activeDrive->instantRead(dskTransferLength, dskSync, diskState == DiskState::WAIT_SYNC_READ);
             break;
         case DiskState::WAIT_SYNC_WRITE:
         case DiskState::WRITE: { // no support for multi selected drives
             if (system->isProcessFrame())
-                out = activeDrive->instantWrite(dskTansferLength, dskSync, diskState == DiskState::WAIT_SYNC_WRITE);
+                out = activeDrive->instantWrite(dskTransferLength, dskSync, diskState == DiskState::WAIT_SYNC_WRITE);
         } break;
         default:
             return;
@@ -232,7 +239,7 @@ auto Paula::instantDriveAccess() -> void {
     }
 
     dskLen = 0;
-    dskTansferLength = 0;
+    dskTransferLength = 0;
     dskEventCycle = agnus.clock + dmaCycles;
 }
 
@@ -254,6 +261,9 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                 for (int i = 7; i >= 0; i--) {
                     dskShifter = (dskShifter << 1) | ((byte >> i) & 1);
 
+                    if ( (dskShifterPos == 15) && dmaDisk && (diskState == DiskState::READ))
+                        addToFifo(dskShifter);
+
                     if (dskShifter == dskSync) {
                         setDskSyncInt();
                         // When reading "DiskbytR" the sync status is displayed 2 (fast) or 4 (slow) micro seconds,
@@ -268,27 +278,26 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                         if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
                             if constexpr (waitTurbo) iterations = 1;
                             setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
-                            dskShifterPos = 0;
 
                             if (diskState == DiskState::WRITE) {
                                 dskShifterPos = 16;
                                 break;
                             }
-                            continue;
                         }
+
+                        if (wordSync())
+                            dskShifterPos = 15;
                     }
 
-                    if (++dskShifterPos == 16) {
-                        dskShifterPos = 0;
-                        if (dmaDisk && (diskState == DiskState::READ))
-                            addToFifo(dskShifter);
-                    }
+                    dskShifterPos++;
+                    dskShifterPos &= 15;
                 }
             } while((readWord || waitTurbo) && --iterations);
         } break;
         case DiskStructure::EXT:
         case DiskStructure::EXT2: {
             bool bit;
+            bool _msb = msbSync();
             if constexpr (readWord) iterations = 16;
             else if constexpr (waitTurbo) iterations = 1 << turbo;
 
@@ -298,24 +307,15 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                 dskShifter <<= 1;
                 dskShifter |= bit;
 
-                if (msbSync()) { // Apple GCR
+                if ( (dskShifterPos == 15) && dmaDisk && (diskState == DiskState::READ))
+                    addToFifo(dskShifter);
+
+                if (_msb) { // Apple GCR
                     // the MSB of each byte has to be a one, if not, "framing" is wrong and controller skips all zero bits.
                     if (((dskShifterPos & 7) == 0) && ((dskShifter & 1) == 0)) {
                         dskShifter >>= 1;
                         if (readWord && iterations) continue;
                         else break;
-                    }
-                } else if (dskShifter == dskSync) {
-                    setDskSyncInt();
-                    dskSyncCycle = agnus.clock;
-
-                    if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
-                        setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
-                        dskShifterPos = 0;
-
-                        if (diskState == DiskState::WRITE)
-                            dskShifterPos = 16;
-                        break;
                     }
                 }
 
@@ -324,11 +324,26 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                     dskBytr = byte | 0x8000;
                 }
 
-                if (++dskShifterPos == 16) {
-                    dskShifterPos = 0;
-                    if (dmaDisk && (diskState == DiskState::READ))
-                        addToFifo(dskShifter);
+                if ((dskShifter == dskSync) && !_msb) {
+                    setDskSyncInt();
+                    dskSyncCycle = agnus.clock;
+
+                    if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
+                        setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
+
+                        if (diskState == DiskState::WRITE) {
+                            dskShifterPos = 16;
+                            break;
+                        }
+                    }
+
+                    if (wordSync())
+                        dskShifterPos = 15;
                 }
+
+                dskShifterPos++;
+                dskShifterPos &= 15;
+
             } while((readWord || waitTurbo) && iterations);
         } break;
     }
@@ -367,8 +382,8 @@ auto Paula::handleFDControllerWrite() -> void {
                 disk3.writeByte(byte);
 
             if (dskShifterPos == 8) {
-                if (dskTansferLength) {
-                    if (!--dskTansferLength)
+                if (dskTransferLength) {
+                    if (!--dskTransferLength)
                         return finishDMA();
                 }
             }
@@ -394,8 +409,8 @@ auto Paula::handleFDControllerWrite() -> void {
 
             if (dskShifterPos != 16) {
                 if (++dskShifterPos == 16) {
-                    if (dskTansferLength) {
-                        if (!--dskTansferLength)
+                    if (dskTransferLength) {
+                        if (!--dskTransferLength)
                             return finishDMA();
                     }
                 }

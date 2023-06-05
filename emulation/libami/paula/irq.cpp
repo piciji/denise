@@ -86,6 +86,12 @@ auto Paula::scheduleIntreqBlt() -> void {
     UPD_INTREQ_EVENT
 }
 
+auto Paula::scheduleIntreqRbf() -> void {
+    int64_t nextClock = agnus.clock + 3;
+    intreqRbfClock = nextClock;
+    UPD_INTREQ_EVENT
+}
+
 auto Paula::scheduleIntreqTbe() -> void {
     int64_t nextClock = agnus.clock + 3;
     intreqTbeClock = nextClock;
@@ -112,6 +118,7 @@ auto Paula::intreqEvent() -> void {
     PROCESS_INTREQ(intreqAud1Clock, 8)
     PROCESS_INTREQ(intreqAud2Clock, 9)
     PROCESS_INTREQ(intreqAud3Clock, 10)
+    PROCESS_INTREQ(intreqRbfClock, 11)
     PROCESS_INTREQ(intreqCia2Clock, 13)
 
     prepareIpl();

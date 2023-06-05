@@ -386,7 +386,7 @@ auto DiskDrive::writeCiaPortB(uint8_t value, uint8_t oldValue) -> void {
 }
 
 auto DiskDrive::getId() -> unsigned { // no emulation of a HD drive with inserted DD disk.
-    if (number == 0)
+    if (!structure.hd && (number == 0))
         return 0;
 
     if (!inserted || !structure.hd)

@@ -170,21 +170,22 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
 
         for(b = 15; b >= bitLimit; b--) {
             shifter = (shifter << 1) | ((word >> b) & 1);
+            if ((pos == 15) && synced) {
+                agnus.fakeDiskDmaNoTracking(shifter);
+                words--;
+            }
+
             if (shifter == syncWord) {
                 out |= 1;
-                if (!synced) {
-                    pos = 0;
+                if (!synced)
                     synced = true;
-                    continue;
-                }
+
+                if(needSync)
+                    pos = 15;
             }
-            if (++pos == 16) {
-                pos = 0;
-                if (synced) {
-                    agnus.fakeDiskDmaNoTracking(shifter);
-                    words--;
-                }
-            }
+
+            pos++;
+            pos &= 15;
         }
     } while (words);
 

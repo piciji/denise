@@ -1,5 +1,6 @@
 
 #include "m68000.h"
+#include "../../interface.h"
 
 #ifdef REF
     #ifdef REF_INCLUDE
@@ -182,7 +183,7 @@ template<uint8_t Inst> auto M68000::cyclesMul(uint16_t data) -> void {
     }
 }
 
-template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t divisor) -> void {
+template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t divisor) -> int {
     if constexpr(Inst == Divu) {
         uint32_t hdivisor = divisor << 16;
         int cycles = 36 << 1; // minimum: 3 + (15 * 2) + 2 + 1
@@ -208,9 +209,9 @@ template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t diviso
         int16_t _divisor = (int16_t)divisor;
         int mcycles = _dividend < 0 ? 7 : 6;
 
-        if ((abs(_dividend) >> 16) >= abs(_divisor)) {
+        if ((std::abs(_dividend) >> 16) >= std::abs(_divisor)) {
             SYNC( mcycles << 1 );
-            return;
+            return 0;
         }
 
         mcycles += 53; // 3 * 15 + 4 + 4 (divisor < 0)
@@ -228,8 +229,17 @@ template<uint8_t Inst> auto M68000::cyclesDiv(uint32_t dividend, uint16_t diviso
             aquot <<= 1;
         }
 
-        SYNC( mcycles << 1 );
+        bool sampleEarly = _divisor < 0 && _dividend >= 0; // confirmed with fx68k
+
+        if (sampleEarly)
+            SYNC((mcycles - 1) << 1);
+        else
+            SYNC(mcycles << 1);
+
+        return sampleEarly ? 2 : 0;
     }
+
+    return 0;
 }
 
 template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68000::setMoveCCWhenAddressError(uint32_t data) -> void {

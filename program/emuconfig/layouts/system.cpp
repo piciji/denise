@@ -62,7 +62,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         dim = { 3, 3, 3 };
     else
-        dim = { 1, 2 };
+        dim = { 1, 3 };
 
     modelLayout.build( tabWindow, emulator,
     {Emulator::Interface::Model::Purpose::Cpu, Emulator::Interface::Model::Purpose::GraphicChip, Emulator::Interface::Model::Purpose::SoundChip,

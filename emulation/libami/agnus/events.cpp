@@ -106,7 +106,7 @@ auto Agnus::addOneCycleEvent(int job, uint16_t data, int delay) -> void {
 
         rJob2.clock = useClock;
     } else {
-        interface->log("ohna");
+        // interface->log("check one cycle event");
         // We should never end up here. If it does, this does not mean that it necessarily leads to an error situation
         // if the event is executed early.
         if (rJob1.clock <= rJob2.clock)
@@ -144,7 +144,13 @@ template<bool isPtr> auto Agnus::inactivateOneCycleEvent(int job) -> void {
 
 auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
     uint16_t data = rJob.data;
-    switch (rJob.job) {
+    int job = rJob.job;
+
+    rJob.clock = INT64_MAX;
+    rJob.job = -1;
+    updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(rJob.sibling->clock);
+
+    switch (job) {
         case PTR_BLT_A_H: blitter.setBltAptH(data); break;
         case PTR_BLT_A_L: blitter.setBltAptL(data); break;
         case PTR_BLT_B_H: blitter.setBltBptH(data); break;
@@ -242,9 +248,6 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case AUD_DAT2: paula.audxDat<2>(data); break;
         case AUD_DAT3: paula.audxDat<3>(data); break;
     }
-    rJob.clock = INT64_MAX;
-    rJob.job = -1;
-    updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(rJob.sibling->clock);
 }
 
 auto Agnus::powerSupplyEvent() -> void {

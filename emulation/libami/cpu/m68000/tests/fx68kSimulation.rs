@@ -2087,7 +2087,7 @@ mod tests {
 		assert_eq!(14, 1);	
 	}
 	
-		#[test]
+    //#[test]
 	fn test_move_minus_an() {
 		// 0x4e, 0x61 (USP A1)  0x46, 0xc4 (SR <- D4)
 		let mut core = Fx68k::new_with_code(&[0x4e, 0x61, 0x46, 0xc4, 0x2f, 0x10, 0x8a, 0xc5, 0x0, 0x3, 0x4e, 0x71, 0x80, 0xc0, 0x4e, 0x71, 0x4e, 0x71, 0x0, 0x0, 0x0, 0x8, 0x4e, 0x71,   0x4e, 0x71,0,0,1,2,0,0,0,0,0,0,0,0,  0,0,0,9,0], CodeAdress(2), StackAddress(0), 20000000);
@@ -2120,4 +2120,38 @@ mod tests {
 		println!("ra {} rv {} wa {} wv {} ssp {} usp {} d0 {} a0 {} a7 {}  fc {} halt {} pc {} au {}  flags {}", state.last_read_address, state. read_val, state.last_written_address, state.written_val, state.ssp, state.usp, state.d_registers[0], state.a_registers[0], state.a_registers[7], state.fc, state.halted, state.pc, state.au, state.flags);
 		assert_eq!(101, 1);
 	}
+
+    #[test]
+    fn test_divs() {
+        let mut core = Fx68k::new_with_code(&[0x83, 0xc0, 0x83, 0xc0, 0x4e, 0x71, 0x4e, 0x71, 0x4e, 0x71, 0x33, 0x20], CodeAdress(0), StackAddress(0), 20000000);
+        core.set_register(Register::Address(0), 10);
+        //core.set_register(Register::Address(7), 1000);
+        core.set_register(Register::Data(0), 4294967246);
+        //core.set_register(Register::Data(0), 50);
+        core.set_register(Register::Data(1), 100);
+
+        // full prefetch
+        for _ in 0..64 {
+            core.step();
+        }
+//core.setIPL(7);
+
+        let steps =  (72*2) * 8 - 8;
+
+        for _ in 0 .. steps {
+            core.step();
+        }
+
+        core.setIPL(7);
+        let steps =  ( 1 + 4 + 2 +6 + 3)  * 8 + 5;
+
+        for _ in 0 .. steps {
+            core.step();
+        }
+
+        let state = core.cpu_state();
+
+        println!("ra {} rv {} wa {} wv {} ssp {} usp {} d1 {} a0 {}  fc {} halt {} pc{}", state.last_read_address, state. read_val, state.last_written_address, state.written_val, state.ssp, state.usp, state.d_registers[1], state.a_registers[0], state.fc, state.halted, state.pc);
+        assert_eq!(14, 1);
+    }
 }
