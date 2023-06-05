@@ -2134,7 +2134,6 @@ mod tests {
         for _ in 0..64 {
             core.step();
         }
-//core.setIPL(7);
 
         let steps =  (72*2) * 8 - 8;
 
