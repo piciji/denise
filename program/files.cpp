@@ -399,12 +399,6 @@ auto Program::loadSettings() -> void {
             if (!settings->load(settingsFileFromEmuFolder(emulator->ident + "_")))
                 settings->load(settingsFile(emulator->ident + "_"));
 
-            // todo remove in next release
-            if (dynamic_cast<LIBAMI::Interface*>( emulator ) && !globalSettings->get<bool>("amiga_first_run", false)) {
-                settings->clear();
-                globalSettings->set<bool>("amiga_first_run", true);
-            }
-
         } else {
             if (!settings->load(settingsFileFromEmuFolder("global_")))
                 settings->load(settingsFile("global_"));
