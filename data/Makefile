@@ -49,7 +49,7 @@ ifeq ($(platform),macosx)
     cppflags := $(architecture) -x c++ -std=c++14 -MD
     objcppflags := $(architecture) -x objective-c++ -std=c++14 -MD
 else	
-    cppflags := $(architecture) -x c++ -std=c++20 -MD
+    cppflags := $(architecture) -x c++ -std=c++17 -MD
 endif
 	
 compile = \

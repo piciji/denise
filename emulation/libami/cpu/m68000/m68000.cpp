@@ -1,6 +1,5 @@
 
 #include "m68000.h"
-#include "../../interface.h"
 
 #ifdef REF
     #ifdef REF_INCLUDE
