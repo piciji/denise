@@ -5,17 +5,26 @@ namespace LIBAMI {
 
 auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t {
     // support for shifted sync words. could be happen in a ADF too, if track is written during emulation
-    unsigned bytes = words << 1;
-    uint8_t byte;
-    uint16_t word;
+    int byte;
+    int bit;
     bool synced = !needSync;
-    unsigned offset = headOffset >> 3;
-    unsigned length = track->length;
-    uint16_t shifter;
+    int offset = headOffset;
+    int length = track->length;
+    int bits;
+    int byteOffset;
+    uint16_t word;
+    uint8_t out = 0;
+    uint16_t shifter = 0;
     int overflow = 0;
     int b;
-    unsigned pos = 0;
-    uint8_t out = 0;
+
+    if (structure.type == DiskStructure::EXT || structure.type == DiskStructure::EXT2) {
+        bits = track->bits;
+    } else {
+        bits = length << 3;
+        offset += 7;
+        offset &= ~7;
+    }
 
     if (stepSettleClock) {
         stepSettleClock = 0;
@@ -29,62 +38,72 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
     }
 
     while(!synced) {
-        byte = track->data[offset];
+        byte = offset >> 3;
+        bit = (~offset) & 7; // msb is next
 
-        for(b = 7; b >= 0; b--) {
-            shifter = (shifter << 1) | (byte & 0x80);
-            byte <<= 1;
-
-            if (shifter == syncWord) {
-                out |= 1;
-                synced = true;
-                shifter = 0;
-                pos = b; // bit wise
-                if (pos) {
-                    byte = track->data[offset] >> pos;
-                    pos = 8 - pos;
-                    goto Next;
-                }
-                break;
-            }
-        }
-
-        if (++offset == length) {
+        offset++;
+        if ( offset >= bits ) {
             offset = 0;
-            if (!synced) {
-                if (++overflow == 2)
-                    break; // there was no sync pattern found
-            }
+            if (++overflow == 2)
+                return out; // there was no sync pattern found
+
             cia.setFlag();
         }
-    }
 
-    Next:
+        shifter = (shifter << 1) | ((track->data[byte] >> bit) & 1);
+
+        if (shifter == syncWord) {
+            out |= 1;
+            synced = true;
+            shifter = 0;
+        }
+    }
 
     if (structure.writeProtected)
         return out | 2; // write is wasted, controller don't know
 
-    do {
-        word = agnus.fakeDiskDma();
-        for(b = 15; b >= 0; b--) {
-            byte = (byte << 1) | ((word >> b) & 1);
+    if ( (structure.type == DiskStructure::ADF) && ((offset & 7) == 0) ) { // speedup
+        byteOffset = offset >> 3;
+        do {
+            word = agnus.fakeDiskDma();
 
-            if (++pos == 8) {
-                pos = 0;
-                track->data[offset] = byte;
-                if (++offset == length) {
+            track->data[byteOffset] = word >> 8;
+            if (++byteOffset == length) {
+                byteOffset = 0;
+                cia.setFlag();
+            }
+
+            track->data[byteOffset] = word & 0xff;
+            if (++byteOffset == length) {
+                byteOffset = 0;
+                cia.setFlag();
+            }
+        } while (--words);
+        offset = byteOffset << 3;
+
+    } else {
+        do {
+            word = agnus.fakeDiskDma();
+
+            for(b = 15; b >= 0; b--) {
+                byte = offset >> 3;
+                bit = (~offset) & 7; // msb is next
+
+                offset++;
+                if ( offset >= bits ) {
                     offset = 0;
                     cia.setFlag();
                 }
-                bytes--;
+
+                if (((word >> b) & 1))
+                    track->data[byte] |= 1 << bit;
+                else
+                    track->data[byte] &= ~(1 << bit);
             }
-        }
-    } while (bytes);
+        } while (--words);
+    }
 
-    if (pos)
-        track->data[offset] = (track->data[offset] & ~(0xff << (8 - pos))) | byte << (8 - pos);
-
-    headOffset = offset << 3;
+    headOffset = offset;
     written = true;
     track->written |= 1;
     return out | 2;

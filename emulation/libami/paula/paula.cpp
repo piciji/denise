@@ -112,6 +112,9 @@ auto Paula::setAdkCon(uint16_t value) -> void {
 
     if ((_adkcon ^ adkcon) & 0xff)
         updateModulation();
+
+    if ((adkcon & 0x400) && !(_adkcon & 0x400))
+        dskShifterPos = 0;
 }
 
 auto Paula::dmaCon(uint16_t value) -> void {
@@ -162,6 +165,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(dskShifterPos);
     s.integer(dmaCycles);
     s.integer(dskBytr);
+    s.integer(fifoReady);
 
     s.integer(ipl);
     s.integer(iplCounter);
@@ -319,6 +323,7 @@ auto Paula::power() -> void {
     dskSyncCycle = 0;
     dskShifter = 0;
     dskShifterPos = 0;
+    fifoReady = false;
     dmaCycles = 0;
     dskBytr = 0;
     diskState = DiskState::OFF;
@@ -383,7 +388,7 @@ auto Paula::process() -> void {
             case DiskState::INSTANT_BLK_INT:
                 if (useInstantDriveAccess())
                     setDskBlkInt();
-                diskState = DiskState::OFF;
+                setDskState(DiskState::OFF);
             default:
                 activeDrive->rotate(dmaCycles); // rotate if motor is running, doesn't matter if drive selected or FDC is idling
                 dmaCycles = FDC_IDLE;

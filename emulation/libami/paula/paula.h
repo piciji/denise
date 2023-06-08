@@ -54,6 +54,7 @@ struct Paula {
     uint8_t dskShifterPos;
     int dmaCycles;
     uint16_t dskBytr;
+    bool fifoReady;
 
     int ipl;
     int iplCounter;
@@ -167,7 +168,7 @@ struct Paula {
     auto fast() -> bool const { return adkcon & 0x100; }
     auto useInstantDriveAccess() -> bool { return turbo == 4; }
     auto instantDriveAccess() -> void;
-    auto finishDMA(bool delayed = false) -> void;
+    auto finishDMA() -> void;
 
     template<uint8_t nr> auto audxDat(uint16_t value) -> void;
     template<uint8_t nr> auto audxLen(uint16_t value) -> void;
