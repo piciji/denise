@@ -523,9 +523,12 @@ auto DiskDrive::setStepperMinTime( unsigned stepperMinTimeScaled ) -> void {
     stepperMinTimeBase = stepperMinTimeScaled;
 }
 
-auto DiskDrive::updateDeviceState() -> void {
+auto DiskDrive::updateDeviceState(bool force) -> void {
     // drive LED is hardwired to motor state
-    if (connected && selected && system->isDisplayFrame())
+    if (!connected)
+        return;
+
+    if (force || (selected && system->isDisplayFrame()))
         interface->updateDeviceState( media, agnus.paula.fdcWriteMode(), (cylinder << 1) | side, motor, !motor );
 }
 
@@ -591,7 +594,7 @@ auto DiskDrive::serialize(Emulator::Serializer& s, bool light) -> void {
     }
 
     if (s.mode() == Emulator::Serializer::Mode::Load) {
-        updateDeviceState();
+        updateDeviceState(true);
     }
 
     structure.serialize( s, written );

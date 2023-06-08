@@ -91,7 +91,7 @@ struct DiskDrive {
     auto instantWrite(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;
     auto instantRead(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;
 
-    auto updateDeviceState() -> void;
+    auto updateDeviceState(bool force = false) -> void;
     auto enableSounds(bool state) -> void;
     auto write() -> void;
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;

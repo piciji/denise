@@ -8,6 +8,7 @@ Filesystem::Filesystem(unsigned size, Structure structure, unsigned bSize) {
     this->structure = structure;
     this->bSize = bSize;
     this->blockCount = (size + (bSize - 1)) / bSize;
+    this->rootBlock = nullptr;
 }
 
 Filesystem::~Filesystem() {
@@ -37,7 +38,7 @@ auto Filesystem::importMedia(uint8_t* data, unsigned size) -> bool {
     clear();
     blocks.assign( blockCount, nullptr );
 
-    SectorBlock* rootBlock = nullptr;
+    rootBlock = nullptr;
     for (unsigned i = 0; i < blockCount; i++) {
         uint8_t* ptr = data + i * bSize;
         auto type = predictType(i, ptr);
@@ -102,7 +103,9 @@ auto Filesystem::getDirectory() -> std::vector<Emulator::Interface::Listing> {
     std::stack<SectorBlock*> dir;
     std::vector<SectorBlock*> sanityCheck; // prevent endless iterations
     std::vector<Emulator::Interface::Listing> listing;
-    auto rootBlock = getBlock( getRootBlockRef() );
+    if (!rootBlock)
+        rootBlock = getBlock( getRootBlockRef() );
+
     rootBlock->depth = -1;
     traverse( rootBlock, dir );
 
@@ -172,6 +175,7 @@ auto Filesystem::format(std::string name, bool bootblock) -> void {
     blocks[0] = new SectorBlock(*this, SectorBlock::Type::BOOT_BLOCK, 0);
     blocks[1] = new SectorBlock(*this, SectorBlock::Type::BOOT_BLOCK, 1);
     blocks[rootBlockRef] = new SectorBlock(*this, SectorBlock::Type::ROOT_BLOCK, rootBlockRef);
+    rootBlock = blocks[rootBlockRef];
 
     unsigned countBitmapBlocks = (blockCount + countBitsEachBitmapBlock() - 1) / countBitsEachBitmapBlock();
     for (unsigned i = 0; i < countBitmapBlocks; i++) {
@@ -180,7 +184,7 @@ auto Filesystem::format(std::string name, bool bootblock) -> void {
         blocks[bmBlockRef] = new SectorBlock(*this, SectorBlock::Type::BITMAP_BLOCK, bmBlockRef);
     }
 
-    SectorBlock* block = blocks[rootBlockRef];
+    SectorBlock* block = rootBlock;
     block->setName( name );
 
     if (countBitmapBlocks > 25) {
@@ -290,7 +294,10 @@ auto Filesystem::accessBitmapAllocation(unsigned ref, int update) -> bool {
 auto Filesystem::referenceBitmaps() -> void {
     unsigned i = 0;
     unsigned j = countBitmapPointersEachExtBlock();
-    auto block = blocks[getRootBlockRef()];
+    if (!rootBlock)
+        rootBlock = blocks[getRootBlockRef()];
+
+    auto block = rootBlock;
 
     for(auto& blockRef : bmBlockRefs) {
         if (i < 25) {

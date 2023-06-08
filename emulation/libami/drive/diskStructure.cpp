@@ -129,30 +129,22 @@ auto DiskStructure::create( System* system, Type type, std::string name, bool hd
 }
 
 auto DiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
-    uint8_t* data = rawData;
-    unsigned size = rawSize;
+    unsigned trackSize = (hd ? 22 : 11) * 512;
+    unsigned size = trackCount * trackSize;
+    uint8_t* data = new uint8_t[size];
 
-    if (!data)
-        return {};
-
-    if (type == Type::EXT || type == Type::EXT2) {
-        unsigned trackSize = (hd ? 22 : 11) * 512;
-        size = trackCount * trackSize;
-        data = new uint8_t[size];
-
-        for(unsigned i = 0; i < trackCount; i++) {
-            Track& track = tracks[i];
-            decodeTrack(track, data + i * trackSize);
-        }
+    for(unsigned i = 0; i < trackCount; i++) {
+        Track& track = tracks[i];
+        decodeTrack(track, data + i * trackSize);
     }
 
     Filesystem fs(size);
     if (fs.importMedia( data, size )) {
-        if (type == Type::EXT || type == Type::EXT2)
-            delete[] data;
-
+        delete[] data;
         return fs.getDirectory();
     }
+
+    delete[] data;
     return {};
 }
 

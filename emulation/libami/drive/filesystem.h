@@ -20,6 +20,7 @@ struct Filesystem {
 
     unsigned bSize;
     unsigned blockCount;
+    SectorBlock* rootBlock = nullptr;
 
     std::vector<SectorBlock*> blocks;
     std::vector<unsigned> bmBlockRefs;

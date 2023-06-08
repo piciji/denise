@@ -110,7 +110,7 @@ auto Paula::setDskLen(uint16_t value) -> void {
         return;
     }
 
-    if (!wordSync() && (dskTransferLength == 0)) {
+    if (!wordSync() && (dskTransferLength == 0)) { // todo recheck this
         processDiskIdleCycles();
         finishDMA();
         return;
@@ -119,6 +119,10 @@ auto Paula::setDskLen(uint16_t value) -> void {
     if (value & oldValue & 0x4000) {
         if(dskTransferLength == 0)
             return;
+
+        if(dskTransferLength == 1)
+            return finishDMA();
+
         if (diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE)
             return; // keep state
 
@@ -129,20 +133,25 @@ auto Paula::setDskLen(uint16_t value) -> void {
 
     if (start) {
         fifoPos = 0;
+        fifoReady = false;
+        dskShifter = 0;
 
-        if (diskState == DiskState::WRITE)
+        if (wordSync()) {
+            if(dskShifter == dskSync)
+                dskShifterPos = 15;
+            else
+                dskShifterPos &= 15;
+        } else if (diskState == DiskState::WRITE) {
             dskShifterPos = 16;
-        else if (msbSync() && (dskShifter == dskSync))
-            dskShifterPos = 15;
-        else
-            dskShifterPos = 0;
+        } else
+            dskShifterPos &= 15;
 
         processDiskIdleCycles();
         useInstantDriveAccess() ? instantDriveAccess() : setFdcEvent();
     }
 }
 
-auto Paula::finishDMA(bool delayed) -> void {
+auto Paula::finishDMA() -> void {
     setDskBlkInt();
     dskLen = 0;
     agnus.dmal = 0; // prevent endless loop in turbo mode
@@ -193,7 +202,7 @@ auto Paula::dskDatR() -> uint16_t {
         if(getFromFifo(out)) {
             if (dskTransferLength) {
                 if (!--dskTransferLength) {
-                    finishDMA(true);
+                    finishDMA();
                     break;
                 }
             }
@@ -261,7 +270,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                 for (int i = 7; i >= 0; i--) {
                     dskShifter = (dskShifter << 1) | ((byte >> i) & 1);
 
-                    if ( (dskShifterPos == 15) && dmaDisk && (diskState == DiskState::READ))
+                    if (dskTransferLength && (dskShifterPos == 15) && dmaDisk && (diskState == DiskState::READ))
                         addToFifo(dskShifter);
 
                     if (dskShifter == dskSync) {
@@ -354,7 +363,7 @@ auto Paula::handleFDControllerWrite() -> void {
     // the controller can only write with two fixed speeds. copy protections recognize this by measuring time when reading back.
     // adjusting motor speed would result in different bit cell width too. (not emulated in ADF and EXT ADF ... simply not possible)
 
-    if (!dmaDisk)
+    if (!dmaDisk || !fifoReady)
         return;
 
     switch(activeDrive->structure.type) {
@@ -407,6 +416,9 @@ auto Paula::handleFDControllerWrite() -> void {
             if (disk3.connected)
                 disk3.writeBit(state);
 
+            if (((dskShifterPos & 7) == 7) && (dskLen & 0x8000))
+                dskBytr = 0x8000;
+
             if (dskShifterPos != 16) {
                 if (++dskShifterPos == 16) {
                     if (dskTransferLength) {
@@ -416,16 +428,13 @@ auto Paula::handleFDControllerWrite() -> void {
                 }
             }
 
-            if (((dskShifterPos & 7) == 7) && (dskLen & 0x8000))
-                dskBytr = 0x8000;
-
         } break;
     }
 
-    if (dskShifterPos == 16) {
-        if (getFromFifo(dskShifter))
-            dskShifterPos = 0;
-        else
+    if (dskTransferLength && (dskShifterPos == 16)) {
+        dskShifterPos = 0;
+
+        if (!getFromFifo(dskShifter))
             dskShifter = 0;
     }
 }
@@ -441,10 +450,11 @@ inline auto Paula::getFromFifo(uint16_t& data) -> bool {
 
 inline auto Paula::addToFifo(uint16_t data) -> void {
     if (fifoPos == 3)
-        fifoPos = 2; // overflow
+        return; // overflow
 
     fifo = (fifo << 16) | data;
     fifoPos++;
+    fifoReady = true;
 }
 
 auto Paula::setDskState(DiskState next) -> void {
