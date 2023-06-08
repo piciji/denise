@@ -1602,9 +1602,13 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     bool state = !globalSettings->get<bool>("question_media_write", true);
     
     if (!state) {
-        if (fullScreen() && inputDriver->mIsAcquired())
+        bool _acquired = inputDriver->mIsAcquired();
+
+        if (_acquired)
             inputDriver->mUnacquire();
         state = message->question(trans->get("question permanent write", {{"%media%", media->name}}));
+        if(_acquired)
+            inputDriver->mAcquire();
     }
     
     return state;

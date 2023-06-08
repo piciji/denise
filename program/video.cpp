@@ -158,7 +158,7 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
 	
 	emulator->crop( (Emulator::Interface::CropType) type, aspectCorrect, left, right, top, bottom );
     
-    if (activeVideoManager) {
+    if (activeVideoManager && (activeVideoManager->emulator == activeEmulator)) {
         activeVideoManager->reinitCrtThread();
         activeVideoManager->shader.recreate = true;
     }

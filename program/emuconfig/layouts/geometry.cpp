@@ -196,7 +196,7 @@ auto GeometryLayout::updateBorderHotkeyUsage(unsigned bit, bool checked) -> void
 auto GeometryLayout::updateCrop(std::string property, unsigned value) -> void {
     emuThread->lockVideo();
     _settings->set<unsigned>( property, value );
-    if (emuThread->enabled && activeEmulator)
+    if (emuThread->enabled && (activeEmulator == emulator) )
         emuThread->updateBorder = true;
     else
         program->updateCrop( emulator );

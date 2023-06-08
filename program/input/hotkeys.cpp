@@ -58,7 +58,7 @@ auto InputManager::setHotkeys() -> void {
 
 auto InputManager::setCustomHotkeys() -> void {
 
-    customHotkeys.push_back( {Hotkey::Id::CaptureMouse, "Capture_mouse"} );
+    customHotkeys.push_back( {Hotkey::Id::CaptureMouse, "Capture_mouse", false} );
 	customHotkeys.push_back( {Hotkey::Id::Loadstate, "Loadstate", true} );
 	customHotkeys.push_back( {Hotkey::Id::Savestate, "Savestate", true} );
 	customHotkeys.push_back( {Hotkey::Id::IncSlot, "Incslot", true} );
@@ -92,6 +92,7 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Presentation, "Presentation", true} );
 	customHotkeys.push_back( {Hotkey::Id::Palette, "Palette", true} );
     customHotkeys.push_back( {Hotkey::Id::Firmware, "Firmware", true} );
+    customHotkeys.push_back( {Hotkey::Id::Audio, "Audio", true} );
 	customHotkeys.push_back( {Hotkey::Id::Geometry, "Geometry", true} );
     customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
     customHotkeys.push_back( {Hotkey::Id::DiskAutoStart, "Disk_autostart", true} );
@@ -286,7 +287,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         case Hotkey::Id::Firmware:
         case Hotkey::Id::System:
         case Hotkey::Id::Control:
-		case Hotkey::Id::Configurations:	
+		case Hotkey::Id::Configurations:
+        case Hotkey::Id::Audio:
             openMenu( emulator, id );
             break;
         case Hotkey::Id::SyncStatus: {
@@ -345,6 +347,13 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             else
                 VideoManager::getInstance( activeEmulator )->reloadSettings();
 
+            if (statusHandler) {
+                std::string txt = "Off";
+                if (_mode == (unsigned)VideoManager::CrtMode::Cpu) txt = "S/C-Video";
+                else if (_mode == (unsigned)VideoManager::CrtMode::Gpu) txt = "S/C-Video (GPU)";
+                statusHandler->setMessage( trans->getA(txt), 3 );
+            }
+
         } break;
         case Hotkey::Id::Pause:
             view->togglePause();
@@ -372,9 +381,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
 
         case Hotkey::Id::ToggleBorder: {
-            if (!activeEmulator)
-                break;
-
+            auto settings = program->getSettings( emulator );
             typedef Emulator::Interface::CropType CropType;
             auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Off);
             auto hotkeyState = settings->get<unsigned>( "border_hotkey", ~0 );
@@ -392,7 +399,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (cropType == cropTypeOld)
                 break;
 
-            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
             if (emuView && emuView->geometryLayout) {
                 if ((CropType)cropType == CropType::Off) emuView->geometryLayout->cropLayout.type1.cropOff.activate();
@@ -403,7 +410,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             } else {
                 settings->set<unsigned>("crop_type", cropType);
                 emuThread->lock();
-                program->updateCrop(activeEmulator);
+                program->updateCrop(emulator);
             }
 
         } break;
@@ -665,6 +672,7 @@ auto InputManager::pollHotkeys() -> void {
 	InputMapping* starter = nullptr;
     InputMapping* anyLoad = nullptr;
     InputMapping* diskAutostart = nullptr;
+    InputMapping* borderToggle = nullptr;
 	
 	auto useEmu = activeEmulator;
     if (!useEmu)
@@ -695,6 +703,7 @@ auto InputManager::pollHotkeys() -> void {
 			case Hotkey::Id::System:
 			case Hotkey::Id::Control:
 			case Hotkey::Id::Configurations:
+            case Hotkey::Id::Audio:
 				if (!viewOpen)
 					viewOpen = trigger;				
 				
@@ -736,6 +745,14 @@ auto InputManager::pollHotkeys() -> void {
 				else if (useEmu == trigger->inputManager->emulator)
 					anyLoad = trigger;
 				break;
+
+            case Hotkey::ToggleBorder:
+                if (!borderToggle)
+                    borderToggle = trigger;
+
+                else if (useEmu == trigger->inputManager->emulator)
+                    borderToggle = trigger;
+                break;
 
             case Hotkey::DiskAutoStart:
                 if (!diskAutostart)
@@ -779,6 +796,9 @@ auto InputManager::pollHotkeys() -> void {
     
     if (anyLoad)
 		useTrigger.push_back( anyLoad );
+
+    if (borderToggle)
+        useTrigger.push_back( borderToggle );
     
 	for( auto trigger : useTrigger )
         fireHotkey( trigger );
@@ -886,5 +906,7 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Control ); break;
 		case Hotkey::Id::Configurations:
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Configurations ); break;
+        case Hotkey::Id::Audio:
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Audio ); break;
     }
 }
