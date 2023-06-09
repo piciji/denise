@@ -348,7 +348,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 VideoManager::getInstance( activeEmulator )->reloadSettings();
 
             if (statusHandler) {
-                std::string txt = "Off";
+                std::string txt = "S/C-Video off";
                 if (_mode == (unsigned)VideoManager::CrtMode::Cpu) txt = "S/C-Video";
                 else if (_mode == (unsigned)VideoManager::CrtMode::Gpu) txt = "S/C-Video (GPU)";
                 statusHandler->setMessage( trans->getA(txt), 3 );

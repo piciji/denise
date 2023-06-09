@@ -431,6 +431,9 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 					else
                         fileloader->insertImage(emulator, media, file, item, alreadyInUse ? 2 : 0);
 
+                    if (media->group->isDisk())
+                        program->getSettings( emulator )->set<int>("swap_pos", 1, false);
+
                     ddControl.mediaGroups.push_back(&mediaGroup);
 
 					return loadFiles();

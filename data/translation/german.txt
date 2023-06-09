@@ -741,3 +741,4 @@ intensify Pseudo Stereo = Pseudo Stereo verstärken
 intensify Pseudo Stereo tooltip = versetzt die SID's mit einem geringen zufälligen Abstand um einen stärkeren Stereo Effekt zu generieren. Dies wird nur aktiviert, wenn dem zweiten SID kein Address Bereich zugewiesen ist.
 Threaded Renderer Auto = aktiviert wenn VSYNC und Emulator Geschwindigkeit abweichen
 Serial Loopback = Serial Schleifenschaltung (TX<>RX)
+S/C-Video off = S/C-Video aus

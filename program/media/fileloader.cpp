@@ -620,7 +620,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
 
     auto& items = file->scanArchive();
 
-    archiveViewer->onCallback = [this, file, media, emulator, autoLoad, selection](GUIKIT::File::Item* item) {
+    archiveViewer->onCallback = [this, file, media, emulator, autoLoad, selection, settings](GUIKIT::File::Item* item) {
 
         auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
@@ -632,6 +632,9 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
             emuView->mediaLayout->insertImage(media, file, item);
         else
             insertImage( emulator, media, file, item );
+
+        if (media->group->isDisk())
+            settings->set<int>("swap_pos", 1, false);
 
         if (autoLoad & 1) {
             autoload(emulator, media, selection, autoLoad & USE_TRAPS);

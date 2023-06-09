@@ -255,10 +255,10 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
 
 auto StatusHandler::updateDiskDriveSpace() -> void {
     if (dynamic_cast<LIBAMI::Interface*>(activeEmulator)) {
-        statusBar->updateDimension( 1, "DF0 000" );
-        statusBar->updateDimension( 3, "DF1 000" );
-        statusBar->updateDimension( 5, "DF2 000" );
-        statusBar->updateDimension( 7, "DF3 000" );
+        statusBar->updateDimension( 1, "DF0 00:0" );
+        statusBar->updateDimension( 3, "DF1 00:0" );
+        statusBar->updateDimension( 5, "DF2 00:0" );
+        statusBar->updateDimension( 7, "DF3 00:0" );
     } else {
         statusBar->updateDimension( 1, "8 00.0" );
         statusBar->updateDimension( 3, "9 00.0" );
