@@ -210,18 +210,35 @@ template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
     busUsage = BUS_USAGE_DMAL;
 }
 
-template<uint8_t nr, uint8_t target> inline auto Agnus::fetchSprite() -> void {
+template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
     Sprite& spr = sprites[nr];
-    dataBus = _swapWord(*(uint16_t*) (chipMem + spr.ptr));
 
-    if constexpr (target == 0) {
-        addOneCycleEvent(SPR_DATA0 + nr, dataBus);
-    } else if constexpr (target == 1) {
-        addOneCycleEvent(SPR_DATB0 + nr, dataBus);
-    } else if constexpr (target == 2) {
-        setSprPos<nr>(dataBus);
-    } else {
-        setSprCtl<nr>(dataBus);
+    constexpr uint8_t target = options & 0xf;
+    constexpr uint8_t control = (options >> 4) & 0xf;
+
+    if constexpr (control == 0) {
+        dataBus = _swapWord(*(uint16_t*) (chipMem + spr.ptr));
+
+        if constexpr (target == 0) {
+            addOneCycleEvent(SPR_DATA0 + nr, dataBus);
+        } else if constexpr (target == 1) {
+            addOneCycleEvent(SPR_DATB0 + nr, dataBus);
+        } else if constexpr (target == 2) {
+            setSprPos<nr>(dataBus);
+        } else if constexpr (target == 3) {
+            setSprCtl<nr>(dataBus);
+        }
+
+        dmaClock = clock;
+        busUsage = BUS_USAGE_SPRITE;
+        spr.ptr += 2;
+        spr.ptr &= dmaChipMemMask;
+    } else if constexpr (control == 1) {
+        spr.ptr += 2;
+        spr.ptr &= dmaChipMemMask;
+
+    } else if constexpr (control == 2) {
+        busUsage = BUS_USAGE_SPRITE;
     }
 
     if constexpr (!!(target & 2)) {
@@ -230,11 +247,6 @@ template<uint8_t nr, uint8_t target> inline auto Agnus::fetchSprite() -> void {
             spr.enable = false;
         }
     }
-
-    spr.ptr += 2;
-    spr.ptr &= dmaChipMemMask;
-    dmaClock = clock;
-    busUsage = BUS_USAGE_SPRITE;
 }
 
 template<bool oddCycle1> auto Agnus::canCopperUseBus() -> bool {

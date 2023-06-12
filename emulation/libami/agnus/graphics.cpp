@@ -310,44 +310,35 @@ auto Agnus::bplControl() -> void {
         bplState = 3;
 }
 
+#define CASESPR(x) \
+    case 0x80 | x: fetchSprite<x, 0>(); break; \
+    case 0xc0 | x: fetchSprite<x, 1>(); break; \
+    case 0xa0 | x: fetchSprite<x, 2>(); break; \
+    case 0xe0 | x: fetchSprite<x, 3>(); break; \
+    case 0x80 | 0x10 | x: fetchSprite<x, 0x10 | 0>(); break; \
+    case 0xc0 | 0x10 | x: fetchSprite<x, 0x10 | 1>(); break; \
+    case 0xa0 | 0x10 | x: fetchSprite<x, 0x10 | 2>(); break; \
+    case 0xe0 | 0x10 | x: fetchSprite<x, 0x10 | 3>(); break; \
+    case 0x80 | 0x08 | x: fetchSprite<x, 0x20 | 0>(); break; \
+    case 0xc0 | 0x08 | x: fetchSprite<x, 0x20 | 1>(); break; \
+    case 0xa0 | 0x08 | x: fetchSprite<x, 0x20 | 2>(); break; \
+    case 0xe0 | 0x08 | x: fetchSprite<x, 0x20 | 3>(); break;
+
+
 auto Agnus::fetchSprites() -> void {
     switch(sprQueue & 0xff) {
         case 0:
             if (!sprQueue)
                 actions &= ~ACT_SPRITE;
             break;
-        case 0x80:  fetchSprite<0, 0>(); break;
-        case 0xc0:  fetchSprite<0, 1>(); break;
-        case 0xa0:  fetchSprite<0, 2>(); break;
-        case 0xe0:  fetchSprite<0, 3>(); break;
-        case 0x81:  fetchSprite<1, 0>(); break;
-        case 0xc1:  fetchSprite<1, 1>(); break;
-        case 0xa1:  fetchSprite<1, 2>(); break;
-        case 0xe1:  fetchSprite<1, 3>(); break;
-        case 0x82:  fetchSprite<2, 0>(); break;
-        case 0xc2:  fetchSprite<2, 1>(); break;
-        case 0xa2:  fetchSprite<2, 2>(); break;
-        case 0xe2:  fetchSprite<2, 3>(); break;
-        case 0x83:  fetchSprite<3, 0>(); break;
-        case 0xc3:  fetchSprite<3, 1>(); break;
-        case 0xa3:  fetchSprite<3, 2>(); break;
-        case 0xe3:  fetchSprite<3, 3>(); break;
-        case 0x84:  fetchSprite<4, 0>(); break;
-        case 0xc4:  fetchSprite<4, 1>(); break;
-        case 0xa4:  fetchSprite<4, 2>(); break;
-        case 0xe4:  fetchSprite<4, 3>(); break;
-        case 0x85:  fetchSprite<5, 0>(); break;
-        case 0xc5:  fetchSprite<5, 1>(); break;
-        case 0xa5:  fetchSprite<5, 2>(); break;
-        case 0xe5:  fetchSprite<5, 3>(); break;
-        case 0x86:  fetchSprite<6, 0>(); break;
-        case 0xc6:  fetchSprite<6, 1>(); break;
-        case 0xa6:  fetchSprite<6, 2>(); break;
-        case 0xe6:  fetchSprite<6, 3>(); break;
-        case 0x87:  fetchSprite<7, 0>(); break;
-        case 0xc7:  fetchSprite<7, 1>(); break;
-        case 0xa7:  fetchSprite<7, 2>(); break;
-        case 0xe7:  fetchSprite<7, 3>(); break;
+        CASESPR(0)
+        CASESPR(1)
+        CASESPR(2)
+        CASESPR(3)
+        CASESPR(4)
+        CASESPR(5)
+        CASESPR(6)
+        CASESPR(7)
     }
 
     sprQueue >>= 8;
@@ -368,7 +359,7 @@ template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
         }
     }
 
-    if (useSpriteDMA() && spr.enable && !vBlankEnd) {
+    if (dmaConSpr && spr.enable && !vBlankEnd) {
         if (!sprInhibited) {
             actions |= ACT_SPRITE;
 

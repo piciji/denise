@@ -77,6 +77,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(dmaConImm);
     s.integer(dmaConCop);
     s.integer(dmaConBlt);
+    s.integer(dmaConSpr);
     s.integer(bplCon0);
     s.integer(countWaitCycles);
     s.integer(rDmaPtr);

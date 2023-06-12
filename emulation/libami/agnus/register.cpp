@@ -99,7 +99,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
 
         case 0x30:
-            paula.setSerdat(value);
+            addOneCycleEvent(SER_DAT, value,1);
             break;
 
         case 0x32:
@@ -224,11 +224,13 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x8e:
             setDiwStrt(value);
             denise.setDiwStrt(value);
+            //addOneCycleEvent(DIW_START, value);
             break;
 
         case 0x90:
             setDiwStop(value);
             denise.setDiwStop(value);
+            //addOneCycleEvent(DIW_STOP, value);
             break;
 
         case 0x92: {
@@ -249,6 +251,8 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             ddfStop = value & (ecsAndHigher() ? 0xfe : 0xfc);
             break;
         case 0x96: {
+            bool sprEnableOld = useSpriteDMA();
+            auto oldValue = dmaCon;
             // Bitplane DMA is evaluated 3 cycles before and then enters a queue.
             // Bitplane DMA is evaluated 2 cycles before and then enters a queue.
             dmaControl(value);
@@ -257,7 +261,20 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             // for performance reasons BLitter/Copper DMA usage is determined in the execution cycle.
             // Therefore, the change will only be visible in the cycle after next for Blitter
             // and one more for Copper
-            addOneCycleEvent(DMACON, value);
+            addOneCycleEvent(DMACON_1, oldValue, 1);
+
+            if (!sprEnableOld && useSpriteDMA())
+                dmaConSpr = true;
+
+            if (ecsAndHigher() && (triggeredBy == Trigger_Copper)) {
+                // early access
+                bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch & 1) && (!hardStop || harddisH);
+                if (!bplState && ddfEnable && !ddfEnableBefore) {
+                    bplState = 1;
+                    sprInhibited = true;
+                }
+                ddfEnableBefore = ddfEnable;
+            }
         } break;
 
         case 0x98:
@@ -435,8 +452,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 else if (bplCon0 & 0x8000) bplCycle |= BPL_HIRES;
             }
             updateHarddis();
-            denise.setBplCon0(value);
-            //addOneCycleEvent(BPL_CON0, value);
+            addOneCycleEvent(BPL_CON0, value);
         } break;
 
         case 0x102:
@@ -449,12 +465,10 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
 
         case 0x108:
-            bpl1Mod = (int16_t)(value & 0xfffe);
-           // addOneCycleEvent(BPL_MOD1, value);
+            addOneCycleEvent(BPL_MOD1, value);
             break;
         case 0x10a:
-            bpl2Mod = (int16_t)(value & 0xfffe);
-        //    addOneCycleEvent(BPL_MOD2, value);
+            addOneCycleEvent(BPL_MOD2, value);
             break;
 
         case 0x110:

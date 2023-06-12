@@ -57,7 +57,7 @@ struct Agnus {
            AUD_LEN0, AUD_LEN1, AUD_LEN2, AUD_LEN3,
            AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
            AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
-           DMACON_COP,
+           DMACON_COP, SER_DAT, DMACON_1, DIW_START, DIW_STOP,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -197,6 +197,7 @@ struct Agnus {
     uint16_t dmaConImm;
     bool dmaConCop;
     bool dmaConBlt;
+    bool dmaConSpr;
     uint16_t bplCon0;
     unsigned countWaitCycles;
     uint32_t rDmaPtr;
@@ -315,7 +316,7 @@ struct Agnus {
     template<uint8_t num, bool first> auto spriteControl() -> void;
     auto bplControl() -> void;
     auto fetchSprites() -> void;
-    template<uint8_t nr, uint8_t target> auto fetchSprite() -> void;
+    template<uint8_t nr, uint8_t options> auto fetchSprite() -> void;
     template<uint8_t nr> auto updateSpriteV() -> void;
     template<uint8_t nr> auto setSprPos(uint16_t value) -> void;
     template<uint8_t nr> auto setSprCtl(uint16_t value) -> void;

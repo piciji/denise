@@ -161,6 +161,24 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case PTR_BLT_D_L: blitter.setBltDptL(data); break;
         case PTR_DSK_H: setDskPtH(data); break;
         case PTR_DSK_L: setDskPtL(data); break;
+        case DMACON_1: {
+            bool dmaConSprNew = useSpriteDMA();
+            bool dmaConSprOld = (data & 0x220) == 0x220;
+
+            if (dmaConSprNew && !dmaConSprOld) {
+                if (sprQueue & 0x00ff0000) {
+                    sprQueue |= 0x10 << 16;
+
+                }
+            } else if (!dmaConSprNew && dmaConSprOld) {
+                if (sprQueue & 0x00ff0000)
+                    sprQueue |= 0x08 << 16;
+            }
+
+            dmaConSpr = dmaConSprNew;
+            addOneCycleEvent(DMACON, data, 1);
+        } break;
+
         case DMACON: {
             if ((dmaCon ^ dmaConImm) & 0x21f)
                 paula.dmaCon(dmaConImm);
@@ -247,6 +265,9 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case AUD_DAT1: paula.audxDat<1>(data); break;
         case AUD_DAT2: paula.audxDat<2>(data); break;
         case AUD_DAT3: paula.audxDat<3>(data); break;
+        case SER_DAT: paula.setSerdat(data); break;
+        case DIW_START: setDiwStrt(data); denise.setDiwStrt(data); break;
+        case DIW_STOP: setDiwStop(data); denise.setDiwStop(data); break;
     }
 }
 

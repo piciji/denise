@@ -87,13 +87,13 @@ auto Paula::scheduleIntreqBlt() -> void {
 }
 
 auto Paula::scheduleIntreqRbf() -> void {
-    int64_t nextClock = agnus.clock + 3;
+    int64_t nextClock = agnus.clock + 2;
     intreqRbfClock = nextClock;
     UPD_INTREQ_EVENT
 }
 
 auto Paula::scheduleIntreqTbe() -> void {
-    int64_t nextClock = agnus.clock + 3;
+    int64_t nextClock = agnus.clock + 2;
     intreqTbeClock = nextClock;
     UPD_INTREQ_EVENT
 }

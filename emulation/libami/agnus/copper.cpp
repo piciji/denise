@@ -201,6 +201,13 @@ auto Copper::process() -> void {
             // needs a free cycle after wait (not allocated)
             if (agnus.canCopperUseBus())
                 state = Read1;
+            else {
+                if (compare()) {
+                    state = Wait3;
+                    break;
+                }
+                state = Wait2;
+            }
             break;
         case Wait4: // would never match
             agnus.actions &= ~Agnus::ACT_COPPER;
@@ -231,6 +238,9 @@ template<bool wait> auto Copper::compare() -> bool {
 
         return false;
     }
+
+    if (agnus.hPos == 0)
+        return false;
 
     if ((ir2 & 0x8000) == 0) {
         if (blitter.busy) {

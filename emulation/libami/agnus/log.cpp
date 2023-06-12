@@ -30,7 +30,7 @@ auto Agnus::logDmaUsage(bool waitForCpu) -> void {
 
 inline auto Agnus::logDmaCondition() -> bool {
     //if (vPos == 232 && (hPos >= 120 || hPos == 0 || hPos == 1) ) return true;
-    if (vPos == 0x51 || vPos == 0x61  || vPos == 0x71 || vPos == 0x72  || vPos == 0x81 ) return true;
+    if (vPos == 113 || vPos == 112 /* || vPos == 0x71 || vPos == 0x72  || vPos == 0x81*/ ) return true;
 
     return false;
 }

@@ -139,8 +139,8 @@ auto Agnus::power(bool softReset) -> void {
     fastMemChangePos = 0;
     trackMemChanges = false;
 
-    ddfStart = false;
-    ddfStop = false;
+    ddfStart = 0;
+    ddfStop = 0;
 
     bpl1pt = bpl2pt = bpl3pt = bpl4pt = bpl5pt = bpl6pt = 0;
     bpl1Mod = bpl2Mod = 0;
@@ -150,6 +150,7 @@ auto Agnus::power(bool softReset) -> void {
     dmaConImm = 0;
     dmaConCop = false;
     dmaConBlt = false;
+    dmaConSpr = false;
     bplCon0 = 0;
     countWaitCycles = 1;
     rDmaPtr = 0;
