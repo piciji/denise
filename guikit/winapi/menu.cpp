@@ -35,10 +35,21 @@ auto pMenuBase::setVisible(bool visible) -> void {
 }
 
 auto pMenuBase::setText(const std::string& text) -> void {
+	static utf16_t* utf16Conv = nullptr;
+	
     if (parentMenu() && parentMenu()->p.hmenu) {
         MENUITEMINFO menuitem = { sizeof(MENUITEMINFO) };
         GetMenuItemInfo(parentMenu()->p.hmenu, menuBase.id, false, &menuitem);
-        menuitem.dwTypeData =  utf16_t(text);
+		
+		if (utf16Conv)
+			delete utf16Conv;
+		utf16Conv = new utf16_t(text);
+		
+		if (menuitem.dwTypeData)
+			delete[] menuitem.dwTypeData;
+			
+        menuitem.dwTypeData = *utf16Conv;
+		menuitem.cch = sizeof (*utf16Conv) / sizeof(wchar_t);
         menuitem.fMask = MIIM_TYPE | MIIM_DATA;
         SetMenuItemInfo(parentMenu()->p.hmenu, menuBase.id, false, &menuitem);
         return;
@@ -188,6 +199,7 @@ auto pMenuBase::setMenuItemInfo(HMENU parent) -> void {
 		
 	MENUITEMINFO mii = {sizeof(MENUITEMINFO)};
 	mii.cbSize = sizeof(mii);
+	mii.dwTypeData = nullptr;
 
 	if (!IsAppThemed() || (pApplication::version < WindowsVista)) {
 		setMenuInfo( parent );
