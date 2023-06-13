@@ -237,7 +237,7 @@ auto File::scanArchive() -> std::vector<File::Item>& {
             freeData( &data );
 
             if (type == Type::Gzip) {
-                item.info.name = gzip->filename;
+                item.info.name = gzip->filename != "" ? gzip->filename : getFileName(true, true);
                 item.info.size = gzip->size;
                 item.info.date = gzip->date;
                 items.push_back(item);

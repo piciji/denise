@@ -742,3 +742,4 @@ intensify Pseudo Stereo tooltip = offset the SID's with a small random distance 
 Threaded Renderer Auto = enabled if VSYNC and emulator speed deviate
 Serial Loopback = Serial Loopback (TX<>RX)
 S/C-Video off = S/C-Video off
+crop free tooltip = Allows you to crop the image arbitrarily. This makes sense, for example, if a game does not use the entire screen in order to be able to drag its playing field across the screen so that it is completely filled, which is equivalent to enlarging the gameplay.

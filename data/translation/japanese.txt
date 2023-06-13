@@ -742,3 +742,4 @@ intensify Pseudo Stereo tooltip =
 Threaded Renderer Auto =
 Serial Loopback =
 S/C-Video off =
+crop free tooltip =

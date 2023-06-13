@@ -227,6 +227,7 @@ auto GeometryLayout::translate() -> void {
     cropLayout.type1.cropAuto.setText( trans->get("crop complete") + " (2)" );
     cropLayout.type2.cropSemiAuto.setText( trans->get("crop all sides equally") + " (3)" );
     cropLayout.type2.cropFree.setText( trans->get("crop each side manually") + " (4)" );
+    cropLayout.type2.cropFree.setTooltip( trans->get("crop free tooltip") );
 
     cropLayout.hotkey.label.setText( trans->get("switchable by Hotkey", {}, true) );
     cropLayout.hotkey.cropOff.setText( "0" );

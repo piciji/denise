@@ -259,8 +259,8 @@ auto TabWindow::prepareLayout(Layout layout, unsigned tabPos) -> void {
                 mediaLayout->build();
                 mediaLayout->translate();
                 tab.setLayout( tabPos, *mediaLayout, {~0u, ~0u} );
+                mediaLayout->setMediaView();
             }
-            mediaLayout->setMediaView();
             break;
         case Layout::Configurations:
             if (!configurationsLayout) {

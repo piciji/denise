@@ -643,6 +643,9 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBAMI::Interface::ModelIdDiskDrivesConnected:
                 if(tabWindow->mediaLayout)
                     tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
+
+                if (this->emulator == activeEmulator)
+                    program->reset(activeEmulator);
                 break;
             case LIBAMI::Interface::ModelIdRegion:
                 if (tabWindow->videoLayout)

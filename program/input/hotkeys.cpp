@@ -31,6 +31,7 @@ auto InputManager::setHotkeys() -> void {
 
     hotkeys.push_back( {Hotkey::Id::ToggleSCVideo, "toggle S/C-Video"} );
     hotkeys.push_back( {Hotkey::Id::ToggleSCVideoGPU, "toggle S/C-Video GPU"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleBorder, "toggle border"} );
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "Disk_swapper_up"} );
@@ -67,7 +68,6 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Power, "Hard Reset", true} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::AnyLoad, "load software", true} );
-    customHotkeys.push_back( {Hotkey::Id::ToggleBorder, "toggle border", true} );
 
 	if (dynamic_cast<LIBC64::Interface*>(emulator) ) {
 		customHotkeys.push_back( {Hotkey::Id::ToggleSidFilter, "sid_filter_toggle", false} );
@@ -381,7 +381,6 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
 
         case Hotkey::Id::ToggleBorder: {
-            auto settings = program->getSettings( emulator );
             typedef Emulator::Interface::CropType CropType;
             auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Off);
             auto hotkeyState = settings->get<unsigned>( "border_hotkey", ~0 );
@@ -399,7 +398,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (cropType == cropTypeOld)
                 break;
 
-            auto emuView = EmuConfigView::TabWindow::getView( emulator );
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
 
             if (emuView && emuView->geometryLayout) {
                 if ((CropType)cropType == CropType::Off) emuView->geometryLayout->cropLayout.type1.cropOff.activate();
@@ -410,7 +409,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             } else {
                 settings->set<unsigned>("crop_type", cropType);
                 emuThread->lock();
-                program->updateCrop(emulator);
+                program->updateCrop(activeEmulator);
             }
 
         } break;
@@ -672,7 +671,6 @@ auto InputManager::pollHotkeys() -> void {
 	InputMapping* starter = nullptr;
     InputMapping* anyLoad = nullptr;
     InputMapping* diskAutostart = nullptr;
-    InputMapping* borderToggle = nullptr;
 	
 	auto useEmu = activeEmulator;
     if (!useEmu)
@@ -746,14 +744,6 @@ auto InputManager::pollHotkeys() -> void {
 					anyLoad = trigger;
 				break;
 
-            case Hotkey::ToggleBorder:
-                if (!borderToggle)
-                    borderToggle = trigger;
-
-                else if (useEmu == trigger->inputManager->emulator)
-                    borderToggle = trigger;
-                break;
-
             case Hotkey::DiskAutoStart:
                 if (!diskAutostart)
                     diskAutostart = trigger;
@@ -797,9 +787,6 @@ auto InputManager::pollHotkeys() -> void {
     if (anyLoad)
 		useTrigger.push_back( anyLoad );
 
-    if (borderToggle)
-        useTrigger.push_back( borderToggle );
-    
 	for( auto trigger : useTrigger )
         fireHotkey( trigger );
 }
