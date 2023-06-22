@@ -88,6 +88,10 @@ struct XA_IDENT_CORE : XA_IDENT, public IXAudio2VoiceCallback {
         if (settings.handle)
             init();
     }
+
+    auto getFrequency() -> unsigned {
+        return settings.frequency;
+    }
 	
     auto setLatency(unsigned value) -> void {		
         settings.latency = std::max<unsigned>(settings.minimumLatency, value);

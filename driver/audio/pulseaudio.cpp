@@ -34,6 +34,10 @@ struct PulseAudio : public Audio {
             init();
 	}
 
+    auto getFrequency() -> unsigned {
+        return settings.frequency;
+    }
+
 	auto setLatency(unsigned value) -> void {
         settings.latency = std::max(value, settings.minimumLatency);
         if (settings.handle)

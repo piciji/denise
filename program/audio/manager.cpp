@@ -37,17 +37,9 @@ auto AudioManager::setPriority() -> void {
     audioDriver->setHighPriority( priority );
 }
 
-auto AudioManager::setFrequency() -> void {    
-    
+auto AudioManager::setFrequency() -> void {
     unsigned frequency = globalSettings->get<unsigned>("audio_frequency_v2", 48000u, {0u, 48000u});
     audioDriver->setFrequency( frequency );
-    
-    this->outputFrequency = (double)frequency;
-    
-    setResampler();
-
-    drive.unload( );
-    setDriveSounds( false );
 }
 
 auto AudioManager::setSynchronize() -> void {
@@ -72,7 +64,7 @@ auto AudioManager::setResampler() -> void {
     
     stat = activeEmulator->getStatsForSelectedRegion();
     
-    inputFrequency = stat.sampleRate;
+    double inputFrequency = stat.sampleRate;
     inputFPS = stat.fps;
 
     measureUiUpdate.enable = false;
@@ -106,7 +98,7 @@ auto AudioManager::setResampler() -> void {
         }
     }
     
-    ratio = outputFrequency / inputFrequency;
+    ratio = (double)audioDriver->getFrequency() / inputFrequency;
 
     cosine.reset( ratio, stat.stereoSound ? 2 : 1 );   
     
@@ -158,7 +150,10 @@ auto AudioManager::setTapeNoise( ) -> void {
     activeEmulator->setTapeLoadingNoise( active ? volume : 0 );
 }
 
-auto AudioManager::setDriveSounds( bool init ) -> void {
+auto AudioManager::setDriveSounds( bool init, bool unloadAll ) -> void {
+    if (unloadAll)
+        drive.unload();
+
     if (!activeEmulator)
         return;
 
@@ -226,7 +221,7 @@ auto AudioManager::setAudioDsp() -> void {
         
         bass->setMono( !stat.stereoSound );
         bass->init( 
-            (float)outputFrequency,
+            (float)audioDriver->getFrequency(),
             (float)settings->get<unsigned>("audio_bass_freq", 200, {20, 200} ),
             (float)settings->get<unsigned>("audio_bass_gain", 10, {0, 40} ),
             settings->get<float>("audio_bass_clipping", 0.4, {0.0, 1.0} )
@@ -243,7 +238,7 @@ auto AudioManager::setAudioDsp() -> void {
         
         reverb->setMono( !stat.stereoSound );
         reverb->init( 
-            (float)outputFrequency,
+            (float)audioDriver->getFrequency(),
             settings->get<float>("audio_reverb_drytime", 0.43, {0.0, 1.0} ),
             settings->get<float>("audio_reverb_wettime", 0.4, {0.0, 1.0} ),
             settings->get<float>("audio_reverb_damping", 0.8, {0.0, 1.0} ),

@@ -14,6 +14,7 @@ struct XAudio27 {
     virtual auto term() -> void {}
     virtual auto clear() -> void {}        
     virtual auto setFrequency(unsigned value) -> void {}
+    virtual auto getFrequency() -> unsigned { return 48000u; }
     virtual auto setLatency(unsigned value) -> void {}
     virtual auto synchronize(bool state) -> void {}
     virtual auto hasSynchronized() -> bool { return false; }

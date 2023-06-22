@@ -216,6 +216,10 @@ struct DAudio : Audio {
         if (settings.handle)
             init();        
     }
+
+    auto getFrequency() -> unsigned {
+        return settings.frequency;
+    }
 	
     auto setLatency(unsigned value) -> void {		
         settings.latency = std::max<unsigned>(settings.minimumLatency, value);

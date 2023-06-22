@@ -425,7 +425,7 @@ namespace Mixer {
             loopedSounds[l++] = (device.emulator == emulator && device.second != nullptr) ? device.second->id : 0;
         }
 
-        unsigned frequency = globalSettings->get<unsigned>("audio_frequency_v2", 48000u, {0u, 48000u});
+        unsigned frequency = audioDriver->getFrequency();
 
         std::string fullPath;
         auto list = getFiles(emulator, group, fullPath);

@@ -50,6 +50,10 @@ struct OpenAL : public Audio {
 		}
 	}
 
+    auto getFrequency() -> unsigned {
+        return settings.frequency;
+    }
+
 	auto setLatency(unsigned value) -> void {
 		settings.latency = std::max<unsigned>(value, settings.minimumLatency);
 		if (settings.handle) {

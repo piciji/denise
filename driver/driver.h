@@ -89,6 +89,7 @@ struct Audio {
     virtual auto term() -> void {}
     virtual auto clear() -> void {}        
     virtual auto setFrequency(unsigned value) -> void {}
+    virtual auto getFrequency() -> unsigned { return 48000u; }
     virtual auto setLatency(unsigned value) -> void {}
     virtual auto synchronize(bool state) -> void {}
     virtual auto addSamples( const uint8_t* buffer, unsigned size) -> void {}

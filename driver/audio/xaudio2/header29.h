@@ -1198,7 +1198,7 @@ __inline float XAudio2CutoffFrequencyToOnePoleCoefficient(float CutoffFrequency,
     #define XAUDIO2_STDAPI extern "C" __declspec(dllimport) HRESULT __stdcall
 #endif
 
-#if (NTDDI_VERSION >= NTDDI_WIN10_RS5) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
 XAUDIO2_STDAPI XAudio2CreateWithVersionInfo(_Outptr_ IXAudio2** ppXAudio2,
     UINT32 Flags X2DEFAULT(0),
     XAUDIO2_PROCESSOR XAudio2Processor X2DEFAULT(XAUDIO2_DEFAULT_PROCESSOR),

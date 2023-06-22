@@ -93,6 +93,15 @@ struct XAudio2 : Audio {
             case 29: xAudio29->setFrequency(value); break;
         } 
     }
+
+    auto getFrequency() -> unsigned {
+        switch( version ) {
+            case 27: return xAudio27->getFrequency();
+            case 28: return xAudio28->getFrequency();
+            case 29: return xAudio29->getFrequency();
+        }
+        return Audio::getFrequency();
+    }
     
     auto setLatency(unsigned value) -> void { 
         switch( version ) {          
@@ -117,7 +126,7 @@ struct XAudio2 : Audio {
             case 29: return xAudio29->hasSynchronized();
         } 
         
-        return hasSynchronized();
+        return Audio::hasSynchronized();
     }
     
     auto addSamples(const uint8_t* buffer, unsigned size) -> void { 

@@ -55,6 +55,8 @@ volume("%", false, true) {
         globalSettings->set<unsigned>("audio_frequency_v2", control.frequencyCombo.userData());
         audioManager->record.finish();
         audioManager->setFrequency();
+        audioManager->setResampler();
+        audioManager->setDriveSounds( false, true );
         audioManager->setAudioDsp();
         emuThread->unlock();
     };

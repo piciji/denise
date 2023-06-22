@@ -52,8 +52,6 @@ struct AudioManager {
 
     } statistics;
         
-    double outputFrequency;
-    double inputFrequency;
     double inputFPS;
 
     Emulator::Interface::Stats stat;
@@ -75,7 +73,7 @@ struct AudioManager {
     auto setSynchronize() -> void;
     auto setVolume() -> void;
     auto setRateControl() -> void;
-    auto setDriveSounds(bool init = true) -> void;
+    auto setDriveSounds(bool init = true, bool unloadAll = false) -> void;
     auto setTapeNoise( ) -> void;
     auto setPriority() -> void;
     

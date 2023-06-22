@@ -15,7 +15,6 @@ auto Program::initAudio() -> void {
     audioManager->setLatency();
     audioManager->setSynchronize();
     audioManager->setRateControl();
-    audioManager->setAudioDsp(); 
     audioManager->setStatistics();
     audioManager->setPriority();
     
@@ -23,6 +22,10 @@ auto Program::initAudio() -> void {
         delete audioDriver;
         audioDriver = new DRIVER::Audio;
     }
+    // driver initialization could use different frequency than user requested
+    audioManager->setResampler();
+    audioManager->setDriveSounds( false, true );
+    audioManager->setAudioDsp();
 
     if (configView)
         configView->audioLayout->updateLatencySlider();

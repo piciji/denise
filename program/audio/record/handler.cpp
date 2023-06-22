@@ -29,8 +29,8 @@ auto Handler::start( Emulator::Interface* emulator, std::string& errorText ) -> 
     }
     
     std::string fileName = settings->get<std::string>( "record_ident", "sample");
-        
-    sampleRate = settings->get<unsigned>("audio_frequency_v2", 48000);
+
+    sampleRate = audioDriver->getFrequency();
 
     framesFlush = 0;
 

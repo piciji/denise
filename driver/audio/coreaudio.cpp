@@ -46,6 +46,10 @@ struct CoreAudio : public Audio {
         if(outputInstance)
             init();
     }
+
+    auto getFrequency() -> unsigned {
+        return settings.frequency;
+    }
     
     auto setLatency(unsigned value) -> void {
 		settings.latency = std::max(settings.minimumLatency, value);

@@ -27,6 +27,7 @@ struct Wasapi : public Audio {
         bool priority;
         bool synchronize;
         unsigned latency;
+        unsigned frequency;
         unsigned minimumLatency;
         bool exclusive;
     } settings;	
@@ -95,6 +96,16 @@ struct Wasapi : public Audio {
 		if(audioDevice) 
             init();        
 	}
+
+    auto setFrequency(unsigned value) -> void {
+        settings.frequency = value;
+        if (audioDevice)
+            init();
+    }
+
+    auto getFrequency() -> unsigned {
+        return settings.frequency;
+    }
     
     auto setHighPriority(bool state) -> void {
         
@@ -225,103 +236,109 @@ struct Wasapi : public Audio {
 			buffer += bytesAvail;
 		}
 	}
-	
-	auto init() -> bool {
-   
+
+    auto init() -> bool {
+        static const unsigned frequencies[] = { 48000, 44100, 96000, 32000 };
         term();
         WAVEFORMATEXTENSIBLE wf;
+        WAVEFORMATEX* closestFormat = nullptr;
         REFERENCE_TIME devicePeriod;
-		cleared = false;
-				
-		if(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&enumerator) != S_OK)
+        cleared = false;
+        unsigned latency;
+        std::vector<unsigned> useFrequencies;
+
+        useFrequencies.push_back(settings.frequency); // try user requested frequency first
+        for(auto& frequency : frequencies) {
+            if (std::find(useFrequencies.begin(), useFrequencies.end(), frequency) == useFrequencies.end())
+                useFrequencies.push_back(frequency);
+        }
+
+        if(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&enumerator) != S_OK)
             return false;
-		if(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &audioDevice) != S_OK)
+        if(enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &audioDevice) != S_OK)
             return false;
-        
+
         if(audioDevice->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, (void**)&audioClient) != S_OK)
-            return false;	
-        
+            return false;
+
+        if (audioClient->GetDevicePeriod(nullptr, &devicePeriod) != S_OK)
+            return false;
+
+        settings.minimumLatency = devicePeriod / 10000;
+
+        latency = std::max<REFERENCE_TIME>(devicePeriod, (REFERENCE_TIME) settings.latency * 10000);
+
+        for(auto& frequency : useFrequencies) {
+            for(int f = 0; f < 2; f++) {
+                prepareFormat(wf, (bool)f, frequency);
+
+                HRESULT hr = audioClient->IsFormatSupported(settings.exclusive ? AUDCLNT_SHAREMODE_EXCLUSIVE : AUDCLNT_SHAREMODE_SHARED,
+                    (const WAVEFORMATEX *)&wf, &closestFormat);
+
+                if (hr == S_OK) {
+                    settings.frequency = frequency; // in case of user requested frequency is not supported
+                    goto Match;
+                }
+
+                if (closestFormat) {
+                    // we don't use it, because of two reasons:
+                    // 1. not all hardware supported formats are supported in this software. we are too lazy for double-checking
+                    // 2. we test all in this software supported formats, so we don't miss a possible format
+                    CoTaskMemFree(closestFormat);
+                    closestFormat = nullptr;
+                }
+            }
+        }
+
+        return false;
+
+        Match:
+
         if (settings.exclusive) {
-            IPropertyStore* propertyStore = nullptr;
-            if (audioDevice->OpenPropertyStore(STGM_READ, &propertyStore) != S_OK)
-                return false;
-            PROPVARIANT propVariant;
-            if (propertyStore->GetValue(PKEY_AudioEngine_DeviceFormat, &propVariant) != S_OK)
-                return false;
-            wf = *(WAVEFORMATEXTENSIBLE*) propVariant.blob.pBlobData;
-            wf.Format.nChannels = 2;            
-            propertyStore->Release();
-            
-            if (audioClient->GetDevicePeriod(nullptr, &devicePeriod) != S_OK)
-                return false;
-            
-            settings.minimumLatency = devicePeriod / 10000;
-            
-            // expect latency in 100ns units: 1 ms = 1'000 micro = 1'000'000 ns = 10'000 units
-            // respect driver reported minimum latency
-            auto latency = std::max<REFERENCE_TIME>(devicePeriod, (REFERENCE_TIME) settings.latency * 10000);
-            
-            auto result = audioClient->Initialize(AUDCLNT_SHAREMODE_EXCLUSIVE, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, latency, latency, &wf.Format, nullptr);            
-            
+            auto result = audioClient->Initialize(AUDCLNT_SHAREMODE_EXCLUSIVE, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, latency, latency, &wf.Format, nullptr);
+
             if (result == AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED) {
                 // generated buffer for a given latency needs to be aligned
                 // i.e: 2 channels, 4 bytes a sample = 8 bytes for an audio frame -> possible buffer sizes: 8, 16, 24 and so on
                 if (audioClient->GetBufferSize(&frameCount) != S_OK)
                     return false;
                 audioClient->Release();
-                            
+
                 // simple proportion to get buffer size for a given frequency and latency
                 // when: sample rate = 1000ms
-                // then: frame count = latency     
+                // then: frame count = latency
                 // latency = (frame count * 1000) / sample rate
                 // latency 100 ns units = latency * 10000
-                latency = (REFERENCE_TIME) (10000.0 * 1000.0 * (double)frameCount / (double)wf.Format.nSamplesPerSec + 0.5);               
-                                
+                latency = (REFERENCE_TIME) (10000.0 * 1000.0 * (double)frameCount / (double)wf.Format.nSamplesPerSec + 0.5);
+
                 // reinit with corrected latency
-                if (audioDevice->Activate(IID_IAudioClient, CLSCTX_ALL, nullptr, (void**) &audioClient) != S_OK)            
-                    return false;                                   
-                
+                if (audioDevice->Activate(IID_IAudioClient, CLSCTX_ALL, nullptr, (void**) &audioClient) != S_OK)
+                    return false;
+
                 result = audioClient->Initialize(AUDCLNT_SHAREMODE_EXCLUSIVE, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, latency, latency, &wf.Format, nullptr);
-            }                        
-            
+            }
+
             if (result != S_OK)
                 return false;
-            
+
             // create as auto reset event
             eventHandle = CreateEvent(nullptr, false, false, nullptr);
-            
+
             if(audioClient->SetEventHandle(eventHandle) != S_OK)
-                return false;            
-            
+                return false;
         } else {
-                
-            WAVEFORMATEX* waveFormatEx = nullptr;
-            if(audioClient->GetMixFormat(&waveFormatEx) != S_OK)
-                return false;
-            
-            wf = *(WAVEFORMATEXTENSIBLE*)waveFormatEx;      
-            wf.Format.nChannels = 2;
-            CoTaskMemFree(waveFormatEx);
-
-            if(audioClient->GetDevicePeriod(&devicePeriod, nullptr))
-                return false;
-
-            auto latency = std::max<REFERENCE_TIME>(devicePeriod, (REFERENCE_TIME) settings.latency * 10000);
-
-            settings.minimumLatency = devicePeriod / 10000;
-
             if(audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, latency, 0, &wf.Format, nullptr) != S_OK)
                 return false;
         }
 
-		if(audioClient->GetService(__uuidof(IAudioRenderClient), (void**)&renderClient) != S_OK)
+        if(audioClient->GetService(__uuidof(IAudioRenderClient), (void**)&renderClient) != S_OK)
             return false;
-		if(audioClient->GetBufferSize(&frameCount) != S_OK)
+        if(audioClient->GetBufferSize(&frameCount) != S_OK)
             return false;
-        
-		frameSize = wf.Format.nBlockAlign;        
-		bufferSize = frameCount * frameSize;	                          		
-        
+
+        frameSize = wf.Format.nBlockAlign;
+        bufferSize = frameCount * frameSize;
+
         if (settings.exclusive) {
             // is handled in another thread, because of Dynamic Rate Control and vsync.
             // in exclusive mode we wait for an event to signal the current buffer is processed
@@ -329,18 +346,40 @@ struct Wasapi : public Audio {
             // there is no chunked copy (DRC) and we have to always wait for the event to fire.
             // this way we could miss a vblank.
             ringBuffer = new uint8_t[bufferSize * WS_CHUNKS];
-            InitializeCriticalSection(&criticalSection);            
+            InitializeCriticalSection(&criticalSection);
         }
-        
+
         clear();
-        
+
         if (settings.exclusive) {
             ready = true;
             thread = CreateThread(NULL, 0, Wasapi::worker, this, 0, NULL);
         }
-        
-		return true;
-	}
+
+        return true;
+    }
+
+    auto prepareFormat(WAVEFORMATEXTENSIBLE& wf, bool pcm, unsigned frequency) -> void {
+        wf.Format.nChannels       = 2;
+        wf.Format.nSamplesPerSec  = frequency;
+        wf.Format.wBitsPerSample  = pcm ? 16 : 32;
+        wf.Format.nBlockAlign     = (pcm ? 2 : 4) * wf.Format.nChannels;
+        wf.Format.nAvgBytesPerSec = frequency * wf.Format.nBlockAlign;
+
+        if (pcm) {
+            wf.Format.wFormatTag           = WAVE_FORMAT_PCM;
+            wf.Format.cbSize               = 0;
+            wf.Samples.wValidBitsPerSample = 0;
+            wf.dwChannelMask               = 0;
+            std::memset(&wf.SubFormat, 0, sizeof(wf.SubFormat));
+        } else {
+            wf.Format.wFormatTag           = WAVE_FORMAT_EXTENSIBLE;
+            wf.Format.cbSize               = sizeof(WORD) + sizeof(DWORD) + sizeof(GUID);
+            wf.Samples.wValidBitsPerSample = 32;
+            wf.dwChannelMask               = KSAUDIO_SPEAKER_STEREO;
+            wf.SubFormat                   = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+        }
+    }
 
 	auto init(uintptr_t handle) -> bool {
 		return init();
@@ -388,6 +427,8 @@ struct Wasapi : public Audio {
 	Wasapi() {
         settings.synchronize = false;
         settings.priority = false;
+        settings.frequency = 48000;
+        settings.latency = 32;
     }
 	
 	~Wasapi() { term(); }

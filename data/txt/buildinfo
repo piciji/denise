@@ -6,21 +6,12 @@ For example you could remove all audio drivers. The emulator will be running wit
 WINDOWS (XP and higher)
 -------
 install mingw32 or 64 (includes gnu compiler, directx, opengl, hid ... almost everything)
-https://sourceforge.net/projects/mingw-w64/
-run installer, prevent spaces if you want to change installation folder, select following options
-Version: latest
-Architecture: x86_64, select i686 only if you want to build a 32 bit version of Denise
-Threads: posix
-Exception: seh (64 bit) or dwarf (32 bit)
-Build Revision: latest
+https://github.com/niXman/mingw-builds-binaries/releases
+expand assets and download
 
 NOTE: in the following we need to include more headers / libraries to our mingw
 installation folder. The first include / lib folders you see in mingw main folder are NOT the
 target folders, therefore change to subfolder: x86_64-w64-mingw32 (64 bit) or i686-w64-mingw32 (32 bit)
-
-openal: (32 or 64 bit)
-  copy: data/libs/shared/win(32)64/OpenAL32.lib to mingw lib folder
-  copy folder with contents: data/libs/include/AL to mingw include folder
 
 freetype: (32 or 64 bit)
   copy: data/libs/static/win(32)64/libfreetype.a to mingw lib folder
@@ -32,19 +23,40 @@ open a cmd: (input cmd in windows search)
   input: set Path=<mingw_path>\mingw(32)64\bin;%Path%
   replace <mingw_path> with your specific mingw installation path
   i recommend to rename 'bin\mingw32-make.exe' to 'make.exe'
-  
-read on at 'now build Denise'. after compilation copy all contents in subfolder 'out' to any place you want.
+
+
+build freetype
+--------------
+Download the latest version of MSYS2
+https://idris2.readthedocs.io/en/latest/tutorial/windows.html
+Run the installer. Don’t install it under Program files as it needs to write files (the “unix” home directory lies under there, for example)
+In the directory where you installed MSYS2, find the file mingw64.ini and add the line MSYS2_PATH_TYPE=inherit. This adds the normal windows PATH to the shell in MSYS2.
+Start MSYS2 (click on mingw64.exe, as the icon in the start menu won’t pick up the MSYS2_PATH_TYPE from the ini, it can be added to the system settings)
+Update the installation with the latest releases with pacman -Syu
+Install the programs that the build needs with: pacman -S make mingw-w64-x86_64-gcc
+
+download and unpack latest freetype source code and put it in msys64/home/user/
+./configure --enable-static --without-zlib --without-bzip2
+make
+
+in denise root folder:
+make
+make install
+after compilation copy all contents in subfolder 'out' to any place you want.
 
 OSX
 ---
 opengl, openal should already installed (system frameworks)
 don't forget to update SDK (commandline tools), when upgrading OS: xcode-select --install
 
+when using XCode
+disable 'New Build System' or 'clean' command will not working anymore. [File->Project Settings->Build System]
+set execution directory by 'edit scheme'. it's the button aside the play/stop buttons in top left.
+
 sudo ln -s /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/* /usr/local/include/
 xcrun --show-sdk-path
 export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/
 export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/
-
 
 install brew first: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install pkg-config
@@ -53,12 +65,14 @@ cp /opt/homebrew/bin/pkg-config /usr/local/bin
 sudo easy_install pip && sudo pip install dmgbuild
 
 compile freetype
-  download source of version 2.9.1 (newer versions should work, but were not tested)
+  download latest source
   ./configure --enable-static --without-zlib --without-bzip2
   make
   sudo make install
 
-read on at 'now build Denise'
+in denise root folder:
+make
+make install
 
 LINUX
 -----
@@ -71,7 +85,7 @@ Pulseaudio: apt-get install libpulse-dev
 SDL2: apt-get install libsdl2-dev
 Udev: apt-get install libudev-dev
 
-- fix possible problem with missing -lGL
+fix possible problem with missing -lGL
 sudo rm /usr/lib/x86_64-linux-gnu/libGL.so
 sudo ln -s /usr/lib/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
 ---------------------------------------------
@@ -83,55 +97,6 @@ gtk3: pacman -Sy gtk3
 pkg-config: pacman -Sy pkgconf
 ---------------------------------------------
 
-now build Denise
-----------------
-change to projects root folder and type:
-
-make                [windows, linux, osx]
-make install		[windows, linux, osx]
-make uninstall		[linux]
-
-
------------------------------------------
-optional stuff, mostly to remember myself
------------------------------------------
-
-----------
-xcode OSX
------------
-disable 'New Build System' or 'clean' command will not working anymore. [File->Project Settings->Build System]
-set execution directory by 'edit scheme'. it's the button aside the play/stop buttons in top left.
-
----------------------
-build freetype for Windows by yourself
----------------------
-
-download and unpack latest freetype source code
-  install MSYS if you haven't already.
-  MSYS is a collection of GNU utilities such as bash, make, gawk and grep
-  to allow building of applications which depend on traditionally UNIX.
-  first run postinstall/pi.bat from msys install folder, follow the dialog
-  and input the mingw installation path.
-  afterwards there should be a file in msys etc folder /etc/fstab
-  if the postinstall procedure isn't working properly rename /etc/fstab.sample
-  in /etc/fstab and insert the mingw folder by yourself.
-  hints: use slashes instead of backslashes, in my case it looks like this:
-  C:/mingw64/x86_64-8.1.0-posix-seh-rt_v6-rev0/mingw64	/mingw
-  now start msys and you get a special cmd
-  switch to freetype folder 
-  input: ./configure --enable-static --without-zlib --without-bzip2
-  mingw make isn't working here, use msys make instead
-  in my case it looks like this: C:/msys/1.0/bin/make
-  finally we get a static library in freetype folder: objs/.libs
-  copy objs/.libs/libfreetype.a to your mingw lib folder
-  copy all files from freetype include folder to your mingw include folder
-  NOTE: keep in mind if you want to build Denise as 32 or 64 bit version.
-  freetype have to be build the same version. therefore assign a 32 or 64 bit
-  mingw installation in the before mentioned fstab file.
-  NOTE: maybe you have to reinstall msys when building an app for 32 and 64 bit
-  in my case changing mingw path in fstab file wasn't detected a second time.
-  NOTE: antivir interrupts configure task with a false positive.
-  disabling antivir afterwards and try again isn't enough so do it before.
-  otherwise remove the file from quarantine, delete freetype,
-  unpack it again, disable antivir and try again.
-  running in all these problems make installing freetype a tedious task.
+in denise root folder:
+make
+make install

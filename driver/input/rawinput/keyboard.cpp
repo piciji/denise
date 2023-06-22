@@ -1,4 +1,6 @@
 
+using KeyCallback = std::function<void ()>;
+
 struct RawKeyboard {
 	Hid::Keyboard* hidKeyboard = nullptr;
 	bool keys[256] = {0};
