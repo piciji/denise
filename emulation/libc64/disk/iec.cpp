@@ -116,7 +116,8 @@ auto IecBus::setPowerThread( bool state ) -> void {
 
 auto IecBus::setFastForward( bool state ) -> void {
 
-    cpuBurner = (state && (drivesConnected > 1) ) ? state : cpuBurnerRequested;
+    //cpuBurner = (state && (drivesConnected > 1) ) ? state : cpuBurnerRequested;
+    cpuBurner = state ? true : cpuBurnerRequested;
     
     updateIdleState();          
 }
