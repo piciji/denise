@@ -1500,7 +1500,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDriveFastLoader:        return (int)system->iecBus.drives[0]->speeder;
 
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
-        case ModelIdDiskThread:             return system->iecBus.cpuBurnerRequested;
+        case ModelIdDiskThread:             return system->iecBus.cpuBurner;
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
         case ModelIdD64Accuracy:            return (int)system->iecBus.drives[0]->emulateDxxMoreAccurate;
         case ModelIdDisalignTrack:          return (int)system->iecBus.drives[0]->structure.disalignTracks;

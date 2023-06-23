@@ -40,11 +40,9 @@ struct IecBus {
     std::atomic<bool> ready;
     std::atomic<bool> idle;
     std::atomic<bool> updatePriority;
-  //  bool threaded = false;
     uint8_t drivesConnected;
     std::condition_variable cv;
     bool cpuBurner;
-    bool cpuBurnerRequested;
     bool powerOn;
     bool diskInsertInProgress = false;
     
@@ -87,7 +85,6 @@ struct IecBus {
     auto serialize(Emulator::Serializer& s) -> void;
     auto serializeLight(Emulator::Serializer& s) -> void;
     auto setPowerThread( bool state ) -> void;
-    auto setFastForward( bool state ) -> void;
     auto updateIdleState() -> void;
     auto resetDriveState() -> void;
     auto setExpandedMemory( Drive::ExpandedMemMode expandedMemMode, bool state ) -> void;

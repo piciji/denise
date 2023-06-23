@@ -108,31 +108,17 @@ IecBus::~IecBus() {
 }
 
 auto IecBus::setPowerThread( bool state ) -> void {
-
-    cpuBurnerRequested = cpuBurner = state;
-    
-    updateIdleState();          
-}
-
-auto IecBus::setFastForward( bool state ) -> void {
-
-    cpuBurner = (state && (drivesConnected > 0) ) ? state : cpuBurnerRequested;
+    cpuBurner = state;
     
     updateIdleState();          
 }
 
 auto IecBus::updateIdleState() -> void {
-   // bool _idle = idle;
+    bool _idle = idle;
     idle = (powerOn && drivesConnected > 0) ? !cpuBurner : true;
 
-    //if (_idle != idle) {
-    //    updatePriority = true;
-    //}
-
-    if (powerOn && drivesConnected > 2) {
-        idle = false;
-        cpuBurner = true;
-    }
+    if (_idle && !idle)
+        cv.notify_one();
 }
 
 auto IecBus::run() -> void {
@@ -194,7 +180,6 @@ auto IecBus::syncDrivesEachCycle( ) -> void {
 }
 
 auto IecBus::syncDrives( int direction, bool ciaAccess ) -> bool {
-    // no disk drives connected
     if ( drivesConnected == 0 )
         return false;
       
@@ -202,8 +187,8 @@ auto IecBus::syncDrives( int direction, bool ciaAccess ) -> bool {
     
     if (!ciaAccess && (_delay < (cpuBurner ? 100 : 3000) ) )
         return true;
-    
-    //if (threaded)
+
+    if (cpuBurner)
         waitForDrives();
 
     // drive cpu runs at 1 Mhz, pal c64 is slightly slower, NTSC c64 slightly faster.
@@ -224,15 +209,11 @@ auto IecBus::syncDrives( int direction, bool ciaAccess ) -> bool {
     sysClock = sysTimer.clock; // reset for next run 
     
     // now let the drive thread catch up with the main thread   
-    if ( ciaAccess /*|| !threaded*/ ) {
-        run();        
-        
-    } else {
-        // if no cia access, run concurrent
-        ready.store(1); 
-        if (!cpuBurner)
-            cv.notify_one();
-    }
+    if ( ciaAccess || !cpuBurner )
+        run();
+    else
+        ready.store(1); // run concurrent
+
     return true;
 }
 
@@ -345,7 +326,6 @@ auto IecBus::power() -> void {
     port = 0xc0;
     lastByte = 0;
     ready = false;
-    cpuBurner = cpuBurnerRequested;
     sysClock = sysTimer.clock;
             
     for( auto drive : drivesEnabled ) {                   

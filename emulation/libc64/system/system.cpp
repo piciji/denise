@@ -708,7 +708,6 @@ auto System::run() -> void {
         unserializeLight();
     }
 
-    iecBus.waitForDrives();
     if (observer.stateChange)
         informAboutStateChange();
 
@@ -746,7 +745,6 @@ auto System::setFastForward( unsigned config ) -> void {
     fastForward.config = config | (fastForward.config & (unsigned)Interface::FastForward::SlowSpeed);
     sidManager.disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
     vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
-    iecBus.setFastForward(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
     updateDriveSounds();
 
     if (!config && sidManager.hasIntensifiedPseudoStereo())
