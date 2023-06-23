@@ -13,7 +13,7 @@ namespace LIBC64 {
 // NOTE: main thread runs a few cycles or stops before a IEC read/write, then
 // synchronizes with drive thread and goes on. in case of IEC access, main thread
 // and drive thread don't run in parallel. main thread waits for drive thread to keep up
-// before data is transfered in a cycle exact way.                 
+// before data is transferred in a cycle exact way.
 
 // we have to control the behaviour when c64 and drive(s) access IEC BUS at nearly same time.
 // if both reads or writes it doesn't matter which side access BUS first.
@@ -22,9 +22,9 @@ namespace LIBC64 {
 // to find out the time window for a write to be reflected by a read we need to know
 // some facts.
 
-// 1. how late in a cycle data can change to be readed back by CPU ?
+// 1. how late in a cycle data can change to be read back by CPU ?
 // synertek hardware manual says for 1 MHz operation.
-// address is guaranted to be stable 300 ns after leading edge of phase 1.
+// address is guaranteed to be stable 300 ns after leading edge of phase 1.
 // a memory device has ~575 ns to make data available on the bus.
 // means a VIA BUS read can detect data changes no later than 875 ns within a cycle.
 // a CIA read operates not exactly at 1 Mhz. pal is 985248 (862 ns) and ntsc is 1022727 (895 ns).
@@ -116,8 +116,7 @@ auto IecBus::setPowerThread( bool state ) -> void {
 
 auto IecBus::setFastForward( bool state ) -> void {
 
-    //cpuBurner = (state && (drivesConnected > 1) ) ? state : cpuBurnerRequested;
-    cpuBurner = state ? true : cpuBurnerRequested;
+    cpuBurner = (state && (drivesConnected > 0) ) ? state : cpuBurnerRequested;
     
     updateIdleState();          
 }
@@ -129,12 +128,11 @@ auto IecBus::updateIdleState() -> void {
     //if (_idle != idle) {
     //    updatePriority = true;
     //}
-#ifdef __APPLE__
-    if (powerOn && drivesConnected == 4) { // force, otherwise there is a huge slowdown
+
+    if (powerOn && drivesConnected > 2) {
         idle = false;
         cpuBurner = true;
     }
-#endif
 }
 
 auto IecBus::run() -> void {
@@ -182,25 +180,6 @@ auto IecBus::run() -> void {
     }     
 }
 
-inline auto IecBus::waitForDrives() -> void {
-    // wait for drive thread to finish his work    
-    while ( ready.load() ) {
-        // in case of main thread and drive thread run on different cores,
-        // we can wait in a tight loop because of true parallelism.
-        // if not so because cpu is single core or there are another cpu intense
-        // applications running aside this emulator, OS scheduler could be run both
-        // threads on same core. In this case we can not wait in a tight loop like this,
-        // because of both threads run in interleaved mode. That means each thread is running
-        // for a short time frame. There is no true parallelism. In a tight loop the OS scheduler
-        // can not transfer control to another thread until loop is finished.
-        // We get a typical dead lock. The second thread isn't progressing, so the first thread        
-        // waits for ever. We have to transfer control programmatically. That's costly even when
-        // running on different cores. But from a c++ point of view we don't know how OS scheduler
-        // spread threads.
-        std::this_thread::yield();
-    }
-}
-
 auto IecBus::syncDrivesEachCycle( ) -> void {
     if (!drivesConnected)
         return;
@@ -224,13 +203,13 @@ auto IecBus::syncDrives( int direction, bool ciaAccess ) -> bool {
     if (!ciaAccess && (_delay < (cpuBurner ? 100 : 3000) ) )
         return true;
     
-    if (threaded)
+    //if (threaded)
         waitForDrives();
 
-    // drive cpu runs at 1 Mhz, pal c64 is slightly slower, ntsc c64 slighter faster.
+    // drive cpu runs at 1 Mhz, pal c64 is slightly slower, NTSC c64 slightly faster.
     // to sync c64 and drive clock we use a simple proportional scaling term
     // when:
-    // cpu clock (pal or ntsc clock) = drive clock (1.000.000)
+    // cpu clock (PAL or NTSC clock) = drive clock (1.000.000)
     // then:
     // x cpu cycles = x drive cycles
     // cpu clock * x drive cycles = drive clock * x cpu cycles                
@@ -245,7 +224,7 @@ auto IecBus::syncDrives( int direction, bool ciaAccess ) -> bool {
     sysClock = sysTimer.clock; // reset for next run 
     
     // now let the drive thread catch up with the main thread   
-    if ( ciaAccess || !threaded ) {
+    if ( ciaAccess /*|| !threaded*/ ) {
         run();        
         
     } else {
@@ -461,7 +440,7 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
         drivesEnabled.push_back( drive );
     }
     
-    threaded = drivesEnabled.size() > 0;
+    //threaded = drivesEnabled.size() > 0;
 }
 
 auto IecBus::hideDrive( Emulator::Interface::Media* media ) -> void {

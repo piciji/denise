@@ -40,7 +40,7 @@ struct IecBus {
     std::atomic<bool> ready;
     std::atomic<bool> idle;
     std::atomic<bool> updatePriority;
-    bool threaded = false;
+  //  bool threaded = false;
     uint8_t drivesConnected;
     std::condition_variable cv;
     bool cpuBurner;
@@ -61,7 +61,10 @@ struct IecBus {
     auto run() -> void;
     
     auto updatePort() -> void;
-    auto waitForDrives() -> void;
+    auto waitForDrives() -> void {
+        while ( ready.load() )
+            std::this_thread::yield();
+    }
     auto syncDrives( int direction = 0, bool ciaAccess = false ) -> bool;
     auto syncDrivesEachCycle( ) -> void;
     auto resetTicks() -> void;

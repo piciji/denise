@@ -708,6 +708,7 @@ auto System::run() -> void {
         unserializeLight();
     }
 
+    iecBus.waitForDrives();
     if (observer.stateChange)
         informAboutStateChange();
 
