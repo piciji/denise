@@ -111,13 +111,14 @@ IecBus::~IecBus() {
 
 auto IecBus::setPowerThread( unsigned value ) -> void {
     cpuBurnerRequested = value;
-    cpuBurner = ((value == 2) && (drivesConnected > 4)) ? 1 : cpuBurnerRequested;
-    
+
     updateIdleState();          
 }
 
 auto IecBus::updateIdleState() -> void {
     bool _idle = idle;
+
+    cpuBurner = ((cpuBurnerRequested == 2) && (drivesConnected > 2)) ? 1 : cpuBurnerRequested;
     idle = (powerOn && drivesConnected > 0) ? (cpuBurner != 1) : true;
 
     if (_idle && !idle)
@@ -339,7 +340,6 @@ auto IecBus::power() -> void {
     }
 
     powerOn = true;
-    cpuBurner = ((cpuBurnerRequested == 2) && (drivesConnected > 4)) ? 1 : cpuBurnerRequested;
     updateIdleState();
 }
 
@@ -426,8 +426,6 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
         
         drivesEnabled.push_back( drive );
     }
-    
-    //threaded = drivesEnabled.size() > 0;
 }
 
 auto IecBus::hideDrive( Emulator::Interface::Media* media ) -> void {

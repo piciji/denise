@@ -744,4 +744,4 @@ S/C-Video off = S/C-Video aus
 crop free tooltip = Erlaubt das beliebige Zuschneiden des Bildes. Sinnvoll etwa, wenn ein Spiel nicht den ganzen Bildschirm nutzt, um dessen Spielfeld so über den Screen ziehen zu können, dass er komplett ausgefüllt ist, was einer Vergrößerung des Spielgeschehens gleichkommt.
 On = An
 On obsolete = An (veraltet)
-Disk Thread tooltip = Diese Einstellung ist besonders sinnvoll, wenn drei oder mehr Diskettenlaufwerke ausgewählt sind. Ist nur ein Laufwerk ausgewählt, kann die Einstellung "veraltet" Vorteile auf langsamen CPU's bringen, wird moderne CPU's jedoch stark ausbremsen.
+Disk Thread tooltip = Diese Einstellung ist besonders sinnvoll, wenn drei oder mehr Diskettenlaufwerke ausgewählt sind. Sind nur ein oder zwei Laufwerke ausgewählt, kann die Einstellung "veraltet" Vorteile auf langsamen CPU's bringen, wird moderne CPU's jedoch stark ausbremsen bei Verwendung von Warp oder runahead

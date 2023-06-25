@@ -744,4 +744,4 @@ S/C-Video off = S/C-Video off
 crop free tooltip = Allows you to crop the image arbitrarily. This makes sense, for example, if a game does not use the entire screen in order to be able to drag its playing field across the screen so that it is completely filled, which is equivalent to enlarging the gameplay.
 On = On
 On obsolete = On (obsolete)
-Disk Thread tooltip = This setting is especially useful when three or more floppy disk drives are selected. If only one drive is selected, the "obsolete" setting can bring advantages on slow CPUs, but will slow down modern CPUs considerably.
+Disk Thread tooltip = This setting is especially useful when three or more floppy disk drives are selected. Are only one or two drives selected, the "obsolete" setting can bring advantages on slow CPUs, but will slow down modern CPUs considerably when using warp or runahead.
