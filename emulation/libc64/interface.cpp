@@ -547,8 +547,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdTapeDriveWobble, "Tape Wobble", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
     models.push_back({ModelIdCycleAccurateVideo, "Cycle Accurate Video", Model::Type::Switch, Model::Purpose::Performance, 1 });
-    models.push_back({ModelIdDiskThread, "Disk Thread", Model::Type::Switch, Model::Purpose::Performance, 0 });
-    models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 0 });
+    models.push_back({ModelIdDiskThread, "Disk Thread", Model::Type::Radio, Model::Purpose::Performance, 0, {0, 2}, {"Off", "On", "On obsolete"} });
+
+    models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 1 });
 
     models.push_back({ModelIdD64Accuracy, "Emulate D64 More Accurate", Model::Type::Switch, Model::Purpose::Hidden, 0});
 
@@ -1391,7 +1392,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->cycleRendererNextBoot = value & 1;
             break;
         case ModelIdDiskThread:
-            system->iecBus.setPowerThread( value & 1 );
+            system->iecBus.setPowerThread( value );
             break;
         case ModelIdDiskOnDemand:
             system->diskSilence.active = value & 1;
@@ -1500,7 +1501,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDriveFastLoader:        return (int)system->iecBus.drives[0]->speeder;
 
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
-        case ModelIdDiskThread:             return system->iecBus.cpuBurner;
+        case ModelIdDiskThread:             return (int)system->iecBus.cpuBurnerRequested;
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
         case ModelIdD64Accuracy:            return (int)system->iecBus.drives[0]->emulateDxxMoreAccurate;
         case ModelIdDisalignTrack:          return (int)system->iecBus.drives[0]->structure.disalignTracks;

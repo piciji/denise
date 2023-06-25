@@ -65,6 +65,8 @@ sysTimer(system->sysTimer) {
     idle = true;
     updatePriority = true;
     powerOn = false;
+    cpuBurner = 0;
+    cpuBurnerRequested = 0;
 
     std::thread worker( [this] {
 
@@ -107,15 +109,16 @@ IecBus::~IecBus() {
         delete drive;
 }
 
-auto IecBus::setPowerThread( bool state ) -> void {
-    cpuBurner = state;
+auto IecBus::setPowerThread( unsigned value ) -> void {
+    cpuBurnerRequested = value;
+    cpuBurner = ((value == 2) && (drivesConnected > 4)) ? 1 : cpuBurnerRequested;
     
     updateIdleState();          
 }
 
 auto IecBus::updateIdleState() -> void {
     bool _idle = idle;
-    idle = (powerOn && drivesConnected > 0) ? !cpuBurner : true;
+    idle = (powerOn && drivesConnected > 0) ? (cpuBurner != 1) : true;
 
     if (_idle && !idle)
         cv.notify_one();
@@ -179,13 +182,13 @@ auto IecBus::syncDrivesEachCycle( ) -> void {
     run();
 }
 
-auto IecBus::syncDrives( int direction, bool ciaAccess ) -> bool {
+template<bool ciaAccess> auto IecBus::syncDrives( int direction ) -> bool {
     if ( drivesConnected == 0 )
         return false;
       
     unsigned _delay = sysTimer.fallBackCycles( sysClock );
     
-    if (!ciaAccess && (_delay < (cpuBurner ? 100 : 3000) ) )
+    if (!ciaAccess && (_delay < ((cpuBurner == 1) ? 100 : 3000) ) )
         return true;
 
     if (cpuBurner)
@@ -211,14 +214,17 @@ auto IecBus::syncDrives( int direction, bool ciaAccess ) -> bool {
     // now let the drive thread catch up with the main thread   
     if ( ciaAccess || !cpuBurner )
         run();
-    else
+    else {
         ready.store(1); // run concurrent
+        if (cpuBurner == 2)
+            cv.notify_one();
+    }
 
     return true;
 }
 
 auto IecBus::serialShift(bool bit) -> void {
-    if (!syncDrives(1, true))
+    if (!syncDrives<true>(1))
         return;
 
     for (auto drive : drivesEnabled) {
@@ -229,7 +235,7 @@ auto IecBus::serialShift(bool bit) -> void {
 
 auto IecBus::readParallelWithHandshake() -> uint8_t {
     uint8_t out = 0xff;
-    if(!syncDrives(0, true))
+    if(!syncDrives<true>(0))
         return out;
 
     for (auto drive : drivesEnabled) {
@@ -261,7 +267,7 @@ auto IecBus::readParallelWithHandshake() -> uint8_t {
 
 auto IecBus::readParallel() -> uint8_t {
     uint8_t out = 0xff;
-    if (!syncDrives(0, true))
+    if (!syncDrives<true>(0))
         return out;
 
     for (auto drive : drivesEnabled) {
@@ -286,7 +292,7 @@ auto IecBus::readParallel() -> uint8_t {
 }
 
 auto IecBus::writeParallelHandshake() -> void {
-    if (!syncDrives(0, true))
+    if (!syncDrives<true>(0))
         return;
 
     for (auto drive : drivesEnabled) {
@@ -333,12 +339,13 @@ auto IecBus::power() -> void {
     }
 
     powerOn = true;
+    cpuBurner = ((cpuBurnerRequested == 2) && (drivesConnected > 4)) ? 1 : cpuBurnerRequested;
     updateIdleState();
 }
 
 auto IecBus::writeCia( uint8_t byte ) -> bool {
     // let drives catch up
-    bool result = syncDrives( 1, true );
+    bool result = syncDrives<true>( 1 );
     
     bool atnBefore = atnOut;
     // for better readability we put out signals on separate variables
@@ -401,7 +408,7 @@ auto IecBus::readVia() -> uint8_t {
 
 auto IecBus::readCia() -> uint8_t {
     // let drives catch up
-    syncDrives( -1, true );
+    syncDrives<true>( -1 );
 	
     return port;
 }
@@ -629,5 +636,7 @@ auto IecBus::updateDriveSounds() -> void {
             system->interface->mixDriveSound( drive->media, Emulator::Interface::DriveSound::FloppySpin );
     }
 }
+
+template auto IecBus::syncDrives<false>( int direction = 0 ) -> bool;
 
 }

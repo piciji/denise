@@ -676,7 +676,7 @@ auto ModelLayout::updateBurstVisibillity() -> void {
 }
 
 auto ModelLayout::hintDriveSettings() -> void {
-    //program->powerOff();
+    program->powerOff();
 
     auto blockFastloader = getBlock( LIBC64::Interface::ModelIdDriveFastLoader );
     auto blockParallel = getBlock( LIBC64::Interface::ModelIdDriveParallelCable );

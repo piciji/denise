@@ -147,7 +147,7 @@ struct XA_IDENT_CORE : XA_IDENT, public IXAudio2VoiceCallback {
         pSourceVoice->FlushSourceBuffers(); // trigger "bufferEnd" callback
 
         ResetEvent(threadSync);
-        chunkPosition = writeChunk = unprocessedChunks = 0;
+      //  chunkPosition = writeChunk = unprocessedChunks = 0; // not change state to prevent cracking sounds
         std::memset( circularBuffer, 0, chunkSizeAll );
 
         pSourceVoice->Start(0, XAUDIO2_COMMIT_NOW);
