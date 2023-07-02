@@ -14,7 +14,7 @@ struct Image {
     ~Image() {
         if (data)
             delete[] data;
-        if (scaledData)
+        if (scaledData != data)
             delete[] scaledData;
     }
 
