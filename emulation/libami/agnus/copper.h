@@ -48,6 +48,7 @@ struct Copper {
 
         WARMUP                          = 22,
         WARMUP2                         = 23,
+        Read1FromSkip                   = 24 | 0x80,
     } state, prevState;
 
     Agnus& agnus;

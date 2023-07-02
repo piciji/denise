@@ -82,7 +82,7 @@ struct Blitter {
     bool skipY;
     bool curSkipB;
     bool curSkipY;
-    uint16_t shifter;
+    int shifter;
     bool shiftOut;
 
     bool doff;

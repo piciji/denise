@@ -6,9 +6,6 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
     switch(adr) {
         // case 0: bltddat (not accessible for CPU)
         case 2:
-            if (paula.intreqBltClock != INT64_MAX )
-                return dmaCon | (1 << 14) | (blitter.zero << 13);
-
             return dmaCon | (blitter.busy << 14) | (blitter.zero << 13);
         case 4:
             return POSR(false);

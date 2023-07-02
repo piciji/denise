@@ -64,8 +64,11 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
     }
 
     if constexpr (!!(jobs & BLT_IDLE)) {
-        if (agnus.aga())
+        if (!agnus.aga() || !nextCycle) {
+            if (!restartTimer)
+                busy = false;
             finish();
+        }
     }
 
     if constexpr (!!(jobs & BLT_SHIFT_A)) {
@@ -114,9 +117,8 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
             curW = bltSizeW;
 
             if (!--curH) {
-                if (!agnus.aga() || !(bltcon0 & 0x100) ) // OCS, ECS and AGA (only, if there is no D write)
-                    finish();
-
+                if (!agnus.aga() && !restartTimer)
+                    busy = false;
                 flags = (flags & 0xfff0) | (8 | 5); // shift out and cycle 5
                 return;
             }
@@ -126,8 +128,14 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
     } else {
         flags = (flags & 0xfff8) | nextCycle;
 
-        if constexpr (nextCycle == 0)
+        if constexpr (nextCycle == 0) {
+            if (agnus.aga()) {
+                if (!restartTimer)
+                    busy = false;
+                finish();
+            }
             flags = 0;
+        }
     }
 }
 
@@ -175,9 +183,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
         } else if (!agnus.canBlitterUseBus())
             return;
 
-        //agnus.busUsage = Agnus::BUS_USAGE_BLITTER;
-
-    } else {
+    } else if constexpr ((jobs & BLT_IDLE) == 0) {
         if (!agnus.canBlitterUseBus())
             return;
     }
@@ -204,15 +210,6 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
     }
 
     if constexpr (!!(jobs & BLT_LINE_X)) { // happens only if channel C is in use
-        // all register changes of DMA pointers are executed by the emulator one cycle later.
-        // if the pointer is used directly in the next cycle for DMA access, the register change is ignored.
-        // however, this does not apply if the pointer is changed internally in the subsequent cycle without DMA access.
-        // in reality, the register change is not executed one cycle later, but one cycle before the DMA access,
-        // the corresponding pointer is bloked and register changes occurring in the same cycle are ignored.
-
-        // There is now no DMA access here, so a floating pointer change must now be executed prematurely.
-        // it is not necessary to check whether it is the correct pointer, because e.g. the pointer for sprites is not used
-        // in this cycle if the emulation is at this point and at the end of the cycle the event would be triggered anyway.
         agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
 
 #define LINE_DECX   { if ((bltcon0 & 0xf000) == 0) { \
@@ -266,7 +263,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
             bltApt += (int16_t)bltAmod;
     }
 
-    if constexpr (!!(jobs & BLT_UPDATE_SIGN)) { // don't need an active channel A
+    if constexpr (!!(jobs & BLT_UPDATE_SIGN)) { // don't need an active channel A (todo: probably happen in cycle 2)
         if (0 > (int16_t)bltApt)    bltcon1 |= BLT_SIGN;
         else                        bltcon1 &= ~BLT_SIGN;
     }
@@ -275,14 +272,19 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
         bltDpt = bltCpt;
 
         if (!--curH) {
-            finish();
-            flags = 0;
+            if(!restartTimer)
+                busy = false;
+            flags = (flags & 0xfff8) | 7;
             return;
         }
 
         flags = (flags & 0xfff0) | (8 | 1); // shift out and cycle 1
-    } else
+    } else if constexpr ((jobs & BLT_IDLE) == 0) {
         flags = (flags & 0xfff8) | nextCycle;
+    } else {
+        finish();
+        flags = 0;
+    }
 }
 
 }

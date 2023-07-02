@@ -260,7 +260,7 @@ auto Agnus::addWaitstatesToCPU() -> void {
     }
 
     // in non nasty mode, CPU gets BUS after 3 wait cycles.
-    // note: first wait cycle already happened when entering this function, because CPU executes "sync" one DMA cylce ahead
+    // note: first wait cycle already happened when entering this function, because CPU executes "sync" one DMA cycle ahead
     // to find out if BUS is free for a possible read/write
     countWaitCycles = 1;
     busUsage = BUS_USAGE_CPU;

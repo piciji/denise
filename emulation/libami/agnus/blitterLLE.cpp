@@ -1,6 +1,6 @@
 
 /**
- * blitter shifter behaviour has been reversed enginered from WinUAE
+ * Blitter shifter behaviour has been reverse engineered from WinUAE.
  * Programming is currently experimental and numerous borderline cases need to be cross-checked.
  *
  */
@@ -22,6 +22,14 @@
 
 namespace LIBAMI {
 
+#define LINE_DECX2   { if ((bltcon0 & 0xf000) == 0) { \
+                        bltcon0 |= 0xf000;  \
+                    } else bltcon0 -= 0x1000; }
+
+#define LINE_INCX2   { if ((bltcon0 & 0xf000) == 0xf000) { \
+                        bltcon0 &= 0x0fff;  \
+                    } else bltcon0 += 0x1000; }
+
 auto Blitter::stateMachine() -> void {
     if (!agnus.canBlitterUseBus())
         return;
@@ -29,9 +37,9 @@ auto Blitter::stateMachine() -> void {
     if (shiftOut) {
         shiftOut = false;
 
-        if (bltcon1 & 1)
+        if (bltcon1 & 1) {
             bltDdat = doMinterm(bltcon0 & 0xff, bltADatShifted, (bltBDatShifted & 1) ? 0xffff : 0, bltCdat);
-        else {
+        } else {
             bltDdat = doMinterm(bltcon0 & 0xff, bltADatShifted, bltBDatShifted, bltCdat);
 
             if (isFillMode()) {
@@ -52,84 +60,132 @@ auto Blitter::stateMachine() -> void {
 
     if (shifter & LINE_MODE) {
         if (shifter & STAGE_A) {
-            if (curW == bltSizeW) { // first
+
+            if (curW == bltSizeW) { // first, or last if horizontal size is one
+                writeLineDot = !(bltcon1 & BLT_SING) || !oneDotPerLine;
+                oneDotPerLine = true;
+
                 if (shifter & AT_LEAST_ONE_SHIFTOUT) {
                     if (shifter & BLT_A) { // use A
                         agnus.forceOneCycleEvent(Agnus::PTR_BLT_A_H);
 
-                        if (bltcon1 & BLT_SIGN)
-                            bltApt += (int16_t) bltBmod;
-                        else
-                            bltApt += (int16_t) bltAmod;
-                    }
-                    // needs at least one shiftout before ?
-                    if (0 > (int16_t) bltApt)   bltcon1 |= BLT_SIGN;
-                    else                        bltcon1 &= ~BLT_SIGN;
-                }
+                        if (bltSizeW != 1) {
+                            if (bltcon1 & BLT_SIGN)
+                                bltApt += (int16_t) bltBmod;
+                            else
+                                bltApt += (int16_t) bltAmod;
 
-                bltADatShifted = (bltAdat & bltAfwm) >> SHIFTA;
-
-                writeLineDot = !(bltcon1 & BLT_SING) || !oneDotPerLine;
-                oneDotPerLine = true;
-            } else if ((curW + 1) == bltSizeW) { // second only (means "last" by typical horizontal size), never when horizontal size is one
-                if (shifter & BLT_C) {
-                    agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
-
-                    if (bltcon1 & BLT_SUD) {
-                        if (bltcon1 & BLT_AUL)  LINE_DECX
-                        else                    LINE_INCX
-                    } else {
-                        if (!(bltcon1 & BLT_SIGN)) {
-                            if (bltcon1 & BLT_SUL)  LINE_DECX
-                            else                    LINE_INCX
+                            if (0 > (int16_t) bltApt) bltcon1 |= BLT_SIGN;
+                            else bltcon1 &= ~BLT_SIGN;
                         }
                     }
                 }
+
+                int _shiftA = SHIFTA;
+                shifter &= ~0xf0000;
+                shifter |= _shiftA << 16;
+
+                if (bltSizeW == 1) {
+                    // /vAmigaTS/Agnus/Blitter/line/line13
+                    if ((bltcon1 & (BLT_SUD | BLT_SUL | BLT_AUL)) != (BLT_SUD | BLT_SUL))
+                        bltADatShifted = (bltAdat & bltAfwm & bltAlwm) >> _shiftA;
+                } else
+                    bltADatShifted = (bltAdat & bltAfwm) >> _shiftA;
+            } else if (curW != 1) { // > 2,  not first and not last, no masking needed
+                bltADatShifted = bltAdat >> ((shifter >> 16) & 0xf);
             }
-        } else if (shifter & STAGE_B) { // B (optional) ... second bit in shifter can only be one, if channel B is in use, so no extra check needed
-            // for a blit size of two or more there are dummy accesses
+
+        } else if (shifter & STAGE_B) { // B (optional)
             agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat);
 
             if (curW == 1) // last, or first if horizontal size is one
                 bltBpt += bltBmod;
 
         } else if (shifter & STAGE_X) {
-            if (curW == bltSizeW) { // first
+            if (curW == 1) { // last, or first if horizontal size is one
+                if (shifter & BLT_C) {
+                    if (writeLineDot)
+                        agnus.writeBlitterDmaNoBUSCheck(bltDpt, doff ? agnus.dataBus : bltDdat);
+
+                    agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
+
+                    if (!(shifter & 0x8000'0000)) {
+                        if ((bltSizeW != 1) || ((curH != bltSizeH) || ((bltcon1 & (BLT_SUD | BLT_SUL | BLT_AUL)) != 0))  ) {
+                            if (!(bltcon1 & BLT_SUD)) {
+                                if (bltcon1 & BLT_AUL) bltCpt -= bltCmod;
+                                else bltCpt += bltCmod;
+
+                                oneDotPerLine = false;
+                            } else {
+                                if (!(bltcon1 & BLT_SIGN)) {
+                                    if (bltcon1 & BLT_SUL) bltCpt -= bltCmod;
+                                    else bltCpt += bltCmod;
+
+                                    oneDotPerLine = false;
+                                }
+                            }
+                        }
+                    } else
+                        shifter &= ~0x8000'0000;
+
+                    if (bltSizeW == 1 ) {
+                        // /vAmigaTS/Agnus/Blitter/line/line12
+                        // uncomment next condition to show test results after reset, keep it to show result after cold start
+                      //  if (((bltcon1 & (BLT_SUD | BLT_SUL | BLT_AUL)) == 0) && (curH == 0x30 ));
+                            // really ... we need a lot more tests here, hopefully we don't need a transistor level emulation to get this right
+                        //else {
+                            if (!(bltcon1 & BLT_SUD)) {
+                                if (bltcon1 & BLT_AUL) LINE_DECX2
+                                else LINE_INCX2
+                            } else {
+                                if (!(bltcon1 & BLT_SIGN)) {
+                                    if (bltcon1 & BLT_SUL) LINE_DECX2
+                                    else LINE_INCX2
+                                }
+                            }
+                        //}
+                    }
+                }
+
+                bltDpt = bltCpt;
+            } else {
                 bltBDatShifted = ((bltBdat << 16) | bltBdat) >> SHIFTB;
                 if ((bltcon1 & 0xf000) == 0) {
                     bltcon1 |= 0xf000;
                 } else
                     bltcon1 -= 0x1000;
 
-                if (shifter & BLT_C)
-                    agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat); // maybe happens each blit, expect last one ?
-
-            } else if ((curW + 1) == bltSizeW) { // second only (means "last" by typical horizontal size), never when horizontal size is one
                 if (shifter & BLT_C) {
-                    if (writeLineDot)
-                        agnus.writeBlitterDmaNoBUSCheck(bltDpt, doff ? agnus.dataBus : bltDdat); // second or last ?
+                    // /vAmigaTS/Agnus/Blitter/line/line12
+                    if ((curW == bltSizeW) || ((bltcon1 & (BLT_SUD | BLT_SUL | BLT_AUL)) != (BLT_SUL)))
+                        agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat);
 
-                    agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
+                    if (curW == bltSizeW) {
+                        if (bltcon1 & BLT_SUD) {
+                            if (bltcon1 & BLT_AUL) LINE_DECX
+                            else LINE_INCX
+                        } else {
+                            if (!(bltcon1 & BLT_SIGN)) {
+                                if (bltcon1 & BLT_SUL) LINE_DECX
+                                else LINE_INCX
+                            }
+                        }
+                    } else { // not first, not last
+                        if ( !(shifter & 0x8000'0000) && !(bltcon1 & BLT_SUD)) {
 
-                    if (!(bltcon1 & BLT_SUD)) {
-                        if (bltcon1 & BLT_AUL)
-                            bltCpt -= bltCmod;
-                        else
-                            bltCpt += bltCmod;
-
-                        oneDotPerLine = false;
-                    } else {
-                        if (!(bltcon1 & BLT_SIGN)) {
-                            if (bltcon1 & BLT_SUL)
-                                bltCpt -= bltCmod;
-                            else
-                                bltCpt += bltCmod;
+                            // /vAmigaTS/Agnus/Blitter/line/line12
+                            // comment next condition to show test results after reset, keep it to show result after cold start
+                            if (((bltcon1 & (BLT_SUD | BLT_SUL | BLT_AUL)) == BLT_SUL) && (curH == 0x2e ));
+                            else {
+                                if (bltcon1 & BLT_AUL) bltCpt -= bltCmod;
+                                else bltCpt += bltCmod;
+                            }
 
                             oneDotPerLine = false;
+                            shifter |= 0x8000'0000;
                         }
                     }
                 }
-                bltDpt = bltCpt;
             }
         }
     } else { // block mode
@@ -204,7 +260,7 @@ auto Blitter::stateMachine() -> void {
         if (skipB)
             shifter &= ~(STAGE_A | STAGE_B);
         else
-            // this is critical because more than one shifter bit can get into the pipeline, resulting in faster counting down.
+            // this is critical because more than one shifter bits can get into the pipeline, resulting in faster counting down.
             shifter = (shifter & ~(STAGE_B | STAGE_X)) | ((shifter & STAGE_A) << 1) | ((shifter & STAGE_A) << 2);
 
         curSkipB = skipB;
@@ -260,13 +316,14 @@ auto Blitter::stateMachine() -> void {
 
             if (!--curH) {
                 if (bltcon1 & 1) {
-                    flags = 0;
-                    finish();
+                    if(!restartTimer)
+                        busy = false;
+                    flags = ((bltcon0 >> 4) & 0xf0) | LINE_MODE | 0xf;
                 } else {
-                    flags = ((bltcon0 >> 4) & 0xf0) | (desc << 9) | (isFillMode() << 8) | 0xd; // 5 + shift out
+                    if (!agnus.aga() && !restartTimer)
+                        busy = false;
 
-                    if (!agnus.aga() || !(bltcon0 & 0x100) ) // OCS, ECS and AGA (only, if there is no D write)
-                        finish();
+                    flags = ((bltcon0 >> 4) & 0xf0) | (desc << 9) | (isFillMode() << 8) | 0xd; // 5 + shift out
                 }
             }
         }

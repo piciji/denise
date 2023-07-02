@@ -117,6 +117,12 @@ auto Copper::process() -> void {
             break;
 
 // normal operation
+        case Read1FromSkip:
+            if (!agnus.canCopperUseBus()){
+                skipped = compare<false>();
+                break;
+            }
+            // fallthrough
         case Read1:
             if (agnus.fetchCopperDma(copPtr, ir1)) {
                 copPtr += 2;
@@ -171,7 +177,7 @@ auto Copper::process() -> void {
         case Skip2:
             if (agnus.canCopperUseBus()) {
                 skipped = compare<false>();
-                state = Read1;
+                state = Read1FromSkip;
             }
             break;
         case Wait1:
@@ -225,7 +231,15 @@ auto Copper::blitterBusyUpdate() -> void {
     if (ir2 & 0x8000)
         return; // don't wait for Blitter
 
-    agnus.actions |= Agnus::ACT_COPPER; // wake up Copper
+    // can happen in non Copper cycles too
+    agnus.actions |= Agnus::ACT_COPPER;
+
+    if (prevState == Skip2) {
+        skipped = compare<false>();
+    } else if (state == Wait2) {
+        if (compare())
+            state = Wait3;
+    }
 }
 
 template<bool wait> auto Copper::compare() -> bool {

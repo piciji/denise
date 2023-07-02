@@ -199,6 +199,9 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
 
                 addOneCycleEvent(DMACON_COP, dmaConCopNew, 1);
             }
+
+            if ((dmaCon ^ data) & 0x400)
+                countWaitCycles = 1;
         } break;
         case DMACON_COP:
             dmaConCop = !!data;

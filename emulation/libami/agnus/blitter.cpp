@@ -1,6 +1,7 @@
 
 //#define START_WITH_STATE_MACHINE
 
+#include "../interface.h"
 #include "blitter.h"
 #include "agnus.h"
 #include "copper.h"
@@ -23,10 +24,18 @@ auto Blitter::initBlit() -> void {
     bltBDatOld = 0;
     curW = bltSizeW;
     curH = bltSizeH;
-    // when the cycle after writing to blit size is calculation of "Final D" or later, then last D will be written (if allowed),
-    // otherwise a running Blit ends here. line draw always ends here.
-    if ((flags & (LINE_MODE | LLE)) || ((flags & 7) < 6))
+
+    if (flags & LLE) // LLE flag is removed when the final cycles begin.
         flags = 0;
+    else if (flags & LINE_MODE) {
+        // allow final slope calculation
+        if((flags & 7) != 7)
+            flags = 0;
+    } else {
+        // when the cycle after writing to blit size is calculation of "Final D" or later, then last D will be written (if allowed)
+        if((flags & 7) < 5)
+            flags = 0;
+    }
 
     restartTimer = 2;
     agnus.actions |= Agnus::ACT_BLITTER;
@@ -35,10 +44,8 @@ auto Blitter::initBlit() -> void {
 auto Blitter::startBlit() -> void {
     if (restartTimer) {
         if ( (agnus.busUsage == Agnus::BUS_USAGE_BLITTER) || agnus.canBlitterUseBus()) {
-            if ((restartTimer == 2) && (agnus.model == Agnus::OCS_A1000) ) { // if A1000 Blitter get this cycle
+            if ((restartTimer == 2) && (agnus.model == Agnus::OCS_A1000) ) // if A1000 Blitter get this cycle
                 busy = true;
-                copper.blitterBusyUpdate();
-            }
 
             if (--restartTimer == 0) {
                 fillCarry = isFci();
@@ -98,11 +105,11 @@ auto Blitter::preFill() -> void {
 
         for (mask = 1; mask != 0x100; mask <<= 1) {
             if (carry) {
-                inclusive |= mask; // fills inside area, "inclusive" only change 0 -> 1 ... means border will never removed
-                exclusive ^= mask; // exclusive mode toggles between 0 <> 1 ... means left border will be deleted, because carry switch happens afterwards
+                inclusive |= mask; // fills inside area, "inclusive" only change 0 -> 1 ... means border will never remove
+                exclusive ^= mask; // exclusive mode toggles between 0 <> 1 ... means left border will be deleted, because carry switch happens afterward
             } else {
-                inclusiveFCI |= mask; // fills outside area, "inclusive" only change 0 -> 1 ... means border will never removed
-                exclusiveFCI ^= mask; // exclusive mode toggles between 0 <> 1 ... means right border will be deleted, because carry switch happens afterwards
+                inclusiveFCI |= mask; // fills outside area, "inclusive" only change 0 -> 1 ... means border will never remove
+                exclusiveFCI ^= mask; // exclusive mode toggles between 0 <> 1 ... means right border will be deleted, because carry switch happens afterward
             }
 
             if (data & mask) carry ^= 1;
@@ -143,8 +150,13 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
         if ((value & 0xf00) == (bltcon0 & 0xf00))
             return;
 
-        if (!(flags & LINE_MODE) && cycle >= 5) // final D calc or final D write
-            return;
+        if (flags & LINE_MODE) {
+            if (cycle == 7)
+                return;
+        } else {
+            if (cycle >= 5) // final D calc or final D write
+                return;
+        }
 
         skipB = curSkipB = hasSkipB();
         skipY = curSkipY = (bltcon1 & 1) ? true : hasSkipY();
@@ -152,7 +164,7 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
     } else if (bltRegister == 0x42) { // bltcon1
         curSkipY = (bltcon1 & 1) ? true : hasSkipY();
 
-        if (((bltcon1 ^ value) & 1) == 0) { // no toggeling of block <> line
+        if (((bltcon1 ^ value) & 1) == 0) { // no toggling of block <> line
             if ((value & 1) == 0) { // keeps block mode. check for possible change of "fill" which could cause a cycle change
                 if (cycle >= 5)
                     return;
@@ -182,7 +194,7 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
         return;
 
     // now we have to create the initial state for the shifter logic, as if it was already running from the beginning.
-    // it is important that the old register values for bltcon0/1 are used, as the changed values are only adopted at a certain point.
+    // it is important that the old register values for Bltcon 0/1 are used, as the changed values are only adopted at a certain point.
     if (bltcon1 & 1) {
         if (skipB && cycle > 2) {
             curW = 1;
@@ -210,10 +222,10 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
     shiftOut = cycle == 1;
 
     flags = LLE; // activate LLE
+    // agnus.interface->log("LLE");
 }
 
 auto Blitter::finish() -> void {
-    busy = false;
     copper.blitterBusyUpdate();
     paula.scheduleIntreqBlt(); // Agnus generates one DMA cycle pulse
 }
@@ -228,6 +240,28 @@ auto Blitter::reset() -> void {
     desc = false;
     doff = false;
     flags = 0;
+    restartTimer = 0;
+
+    bltApt = 0;
+    bltBpt = 0;
+    bltCpt = 0;
+    bltDpt = 0;
+
+    bltAdat = 0;
+    bltBdat = 0;
+    bltCdat = 0;
+    bltDdat = 0;
+
+    bltADatShifted = 0;
+    bltBDatShifted = 0;
+
+    bltAfwm = 0;
+    bltAlwm = 0;
+
+    bltAmod = 0;
+    bltBmod = 0;
+    bltCmod = 0;
+    bltDmod = 0;
 }
 
 auto Blitter::setBltCon0(uint16_t value) -> void {
@@ -237,12 +271,9 @@ auto Blitter::setBltCon0(uint16_t value) -> void {
     if (flags == LLE)
         shifter |= STAGE_CHANGE;
     else {
-        // line mode or non final D cycles switch to LLE, Final D write can't prevented anymore.
-        if ((flags & 7) == 5) { // Final D calc (block mode, cycle 5) could enable/disable Final D write.
-            if (!(flags & LINE_MODE)) {
-                flags &= ~0xf0;
-                flags |= ((bltcon0 >> 4) & 0xf0);
-            }
+        if ((flags & 7) == ((flags & LINE_MODE) ? 7 : 5)) {
+            flags &= ~0xf0;
+            flags |= ((bltcon0 >> 4) & 0xf0);
         }
     }
 }

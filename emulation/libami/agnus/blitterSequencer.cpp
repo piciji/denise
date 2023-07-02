@@ -269,6 +269,16 @@ auto Blitter::process() -> void {
             lineMode<BLT_WRITE_D | BLT_LINE_Y | BLT_NEXT>(); break;
         _L_mSO(0x46) _L_mSO(0x56) _L_mSO(0xc6) _L_mSO(0xd6)
             lineMode<BLT_NEXT>(); break;
+
+        // cycle 7
+        _L_mSO(0x87) _L_mSO(0x97) _L_mSO(0xa7) _L_mSO(0xb7) _L_mSO(0xc7) _L_mSO(0xd7) _L_mSO(0xe7) _L_mSO(0xf7)
+            lineMode<BLT_BH | BLT_IDLE>();
+            startBlit();
+            break;
+        _L_mSO(0x07) _L_mSO(0x17) _L_mSO(0x27) _L_mSO(0x37) _L_mSO(0x47) _L_mSO(0x57) _L_mSO(0x67) _L_mSO(0x77)
+            lineMode<BLT_IDLE>();
+            startBlit();
+            break;
     }
 }
 
