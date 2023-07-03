@@ -1,6 +1,9 @@
 namespace GUIKIT {
 
 auto pMessageWindow::message(MessageWindow::State& state, NSAlertStyle style) -> MessageWindow::Response {
+    if (!pApplication::appTimer)
+        return MessageWindow::Response::Cancel;
+
     @autoreleasepool {
         NSAlert* alert = [[[NSAlert alloc] init] autorelease];
         if(!state.title.empty()) [alert setMessageText:[NSString stringWithUTF8String:state.title.c_str()]];
