@@ -271,6 +271,11 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case SER_DAT: paula.setSerdat(data); break;
         case DIW_START: setDiwStrt(data); denise.setDiwStrt(data); break;
         case DIW_STOP: setDiwStop(data); denise.setDiwStop(data); break;
+
+        case BLT_MODA: blitter.setBltAMod(data); break;
+        case BLT_MODB: blitter.setBltBMod(data); break;
+        case BLT_MODC: blitter.setBltCMod(data); break;
+        case BLT_MODD: blitter.setBltDMod(data); break;
     }
 }
 

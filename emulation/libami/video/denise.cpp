@@ -286,13 +286,6 @@ template<bool useHires> inline auto Denise::processDelayPf1() -> void {
     if ((hPos & mask) == delayPf1) {
         actions &= ~PF1_SHIFT;
 
-        if constexpr (useHires) {
-            if (activePlanes > 4) {
-                shifterA = 0;
-                return;
-            }
-        }
-
         if (activePlanes >= 5) {
             shifterA = (uint64_t)dat1 << 32;
             shifterA |= (uint64_t)dat3 << 16;
@@ -311,13 +304,6 @@ template<bool useHires> inline auto Denise::processDelayPf2() -> void {
 
     if ((hPos & mask) == delayPf2) {
         actions &= ~PF2_SHIFT;
-
-        if constexpr (useHires) {
-            if (activePlanes > 4) {
-                shifterB = 0;
-                return;
-            }
-        }
 
         if (activePlanes >= 6) {
             shifterB = (uint64_t)dat2 << 32;

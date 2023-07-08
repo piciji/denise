@@ -256,23 +256,6 @@ auto Blitter::stateMachine() -> void {
         }
     }
 
-    if (curSkipB ^ skipB) {
-        if (skipB)
-            shifter &= ~(STAGE_A | STAGE_B);
-        else
-            // this is critical because more than one shifter bits can get into the pipeline, resulting in faster counting down.
-            shifter = (shifter & ~(STAGE_B | STAGE_X)) | ((shifter & STAGE_A) << 1) | ((shifter & STAGE_A) << 2);
-
-        curSkipB = skipB;
-    }
-
-    if (curSkipY ^ skipY) {
-        if (skipY)
-            shifter &= ~(STAGE_X | STAGE_Y);
-
-        curSkipY = skipY;
-    }
-
     if (skipY) {
         shiftOut = shifter & STAGE_X;
     } else {
@@ -287,27 +270,6 @@ auto Blitter::stateMachine() -> void {
         shifter = (shifter & ~STAGE_B) | ((shifter & STAGE_A) << 1);
     }
 
-    if (shifter & STAGE_CHANGE) { // change channel usage
-        shifter &= ~STAGE_CHANGE;
-
-        shifter &= ~0x5f0;
-        shifter |= ((bltcon0 >> 4) & 0xf0);
-        if (hasFillmodeIdle())
-            shifter |= FILL_IDLE;
-
-        if (bltcon1 & 1) {
-            shifter |= LINE_MODE;
-            skipY = true;
-        } else
-            skipY = hasSkipY();
-
-        skipB = hasSkipB();
-
-        if (!curSkipY && skipY)
-            shiftOut = false;
-        else
-            shiftOut = skipY ? shifter & STAGE_X : shifter & STAGE_Y;
-    }
 
     if (shiftOut) {
         shifter |= AT_LEAST_ONE_SHIFTOUT | STAGE_A;
@@ -329,6 +291,44 @@ auto Blitter::stateMachine() -> void {
         }
     } else
         shifter &= ~STAGE_A;
+
+
+    if (shifter & STAGE_CHANGE) { // change channel usage
+        shifter &= ~STAGE_CHANGE;
+
+        shifter &= ~0x5f0;
+        shifter |= ((bltcon0 >> 4) & 0xf0);
+        if (hasFillmodeIdle())
+            shifter |= FILL_IDLE;
+
+        if (bltcon1 & 1) {
+            shifter |= LINE_MODE;
+            skipY = true;
+        } else
+            skipY = hasSkipY();
+
+        skipB = hasSkipB();
+
+        if (curSkipB ^ skipB) {
+            if (skipB)
+                shifter &= ~(STAGE_A | STAGE_B);
+            else
+                // this is critical because more than one shifter bits can get into the pipeline, resulting in faster counting down.
+                shifter = (shifter & ~(STAGE_B | STAGE_X)) | ((shifter & STAGE_A) << 1) | ((shifter & STAGE_A) << 2);
+
+            curSkipB = skipB;
+        }
+
+        if (curSkipY ^ skipY) {
+            if (skipY) {
+                shifter &= ~(STAGE_X | STAGE_Y);
+                shiftOut = false;
+            } else
+                shiftOut = shifter & STAGE_Y;
+
+            curSkipY = skipY;
+        }
+    }
 }
 
 // lookup table

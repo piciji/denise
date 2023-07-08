@@ -174,15 +174,19 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             }
             break;
         case 0x60:
+            //addOneCycleEvent(BLT_MODC, value);
             blitter.setBltCMod(value);
             break;
         case 0x62:
+            //addOneCycleEvent(BLT_MODB, value);
             blitter.setBltBMod(value);
             break;
         case 0x64:
+            //addOneCycleEvent(BLT_MODA, value);
             blitter.setBltAMod(value);
             break;
         case 0x66:
+            //addOneCycleEvent(BLT_MODD, value);
             blitter.setBltDMod(value);
             break;
         case 0x70:
@@ -440,7 +444,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 hPosLocked = false;
             }
 
-            bplCon0 = value & ~0xb1;
+            bplCon0 = value & (ecsAndHigher() ? ~0xb1 : ~0xf1);
 
             if (bplState) {
                 bplCycle &= BPL_QUEUE | BPL_ADD_MOD | BPL_CYCLE_MASK;
@@ -459,6 +463,9 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x104:
             //denise.setBplCon2(value);
             addOneCycleEvent(BPL_CON2, value);
+            break;
+
+        case 0x106:
             break;
 
         case 0x108:

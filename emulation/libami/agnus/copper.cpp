@@ -1,6 +1,7 @@
 
 #include "copper.h"
 #include "agnus.h"
+#include "../interface.h"
 
 namespace LIBAMI {
 
