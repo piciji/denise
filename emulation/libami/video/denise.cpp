@@ -263,10 +263,23 @@ auto Denise::setBplCon0( uint16_t value ) -> void {
     doublePlayfield = value & 0x400;
     ham = value & 0x800;
     activePlanes = (value >> 12) & 7;
+
+    updateBplDelay();
 }
 
 auto Denise::setBplCon1( uint16_t value ) -> void {
     bplCon1 = value;
+
+    updateBplDelay();
+}
+
+auto Denise::updateBplDelay() -> void {
+    delayPf1 = bplCon1 & 0xf;
+    delayPf2 = (bplCon1 >> 4) & 0xf;
+    if (hires) {
+        delayPf1 &= 7;
+        delayPf2 &= 7;
+    }
 }
 
 auto Denise::setBplCon2( uint16_t value ) -> void {
@@ -619,12 +632,6 @@ auto Denise::process() -> void {
         unsigned _actions = actions;
 
         if (_actions & BPL1_WRITTEN) {
-            delayPf1 = bplCon1 & 0xf;
-            delayPf2 = (bplCon1 >> 4) & 0xf;
-            if (hires) {
-                delayPf1 &= 7;
-                delayPf2 &= 7;
-            }
             dat1 = bpl1dat;
             dat2 = bpl2dat;
             dat3 = bpl3dat;

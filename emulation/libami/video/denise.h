@@ -157,6 +157,7 @@ struct Denise {
     auto updateCropTop() -> void;
     auto updateCropBottom() -> void;
     auto sanitizeCrop(int width, int height) -> void;
+    auto updateBplDelay() -> void;
 };
 
 }
