@@ -50,7 +50,7 @@ auto pMenuBase::setText(const std::string& text) -> void {
 			
         menuitem.dwTypeData = *utf16Conv;
 		menuitem.cch = sizeof (*utf16Conv) / sizeof(wchar_t);
-        menuitem.fMask = MIIM_TYPE | MIIM_DATA;
+        menuitem.fMask = MIIM_STRING;
         SetMenuItemInfo(parentMenu()->p.hmenu, menuBase.id, false, &menuitem);
         return;
     }
