@@ -24,7 +24,7 @@ auto Paula::pot0Dat() -> uint16_t {
 }
 
 auto Paula::pot1Dat() -> uint16_t {
-    input.observePotPort1(pot.capX1, pot.capY1);
+    input.observePotPort2(pot.capX1, pot.capY1);
     pot.running = true;
 
     return (pot.cntY1 << 8) | pot.cntX1;
