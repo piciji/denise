@@ -27,6 +27,17 @@ auto Copper::cycle1() -> void { // only gets here, if short line before
     }
 }
 
+inline auto Copper::assignCopPtr() -> void {
+    if (strobeCop == 3)
+        copPtr = cop1lc | cop2lc; // fix Quarterline-TrRickDangerous
+    else if (strobeCop == 1)
+        copPtr = cop1lc;
+    else
+        copPtr = cop2lc;
+
+    strobeCop = 0;
+}
+
 auto Copper::process() -> void {
 
     switch(state) {
@@ -41,8 +52,7 @@ auto Copper::process() -> void {
             // fallthrough
         case Strobe_VBL_2:
             if (agnus.fetchCopperDma(copPtr, ir2)) {
-                if (useCop1)    copPtr = cop1lc;
-                else            copPtr = cop2lc;
+                assignCopPtr();
                 state = Read1;
             }
             break;
@@ -53,8 +63,7 @@ auto Copper::process() -> void {
         case Strobe_VBL_4:
             if (agnus.fetchCopperDma(copPtr, ir1)) {
                 copPtr += 2;
-                if (useCop1)    copPtr = cop1lc;
-                else            copPtr = cop2lc;
+                assignCopPtr();
                 state = Strobe_VBL_7;
             }
             break;
@@ -64,8 +73,7 @@ auto Copper::process() -> void {
                 break;
         case Strobe_VBL_6:
             if (agnus.fetchCopperDma(copPtr, ir2)) {
-                if (useCop1)    copPtr = cop1lc;
-                else            copPtr = cop2lc;
+                assignCopPtr();
                 state = Strobe_VBL_7;
             }
             break;
@@ -80,8 +88,7 @@ auto Copper::process() -> void {
         case Strobe_CPU_2:
             if (agnus.canCopperUseBus()) {
                 if (agnus.copperLongGap()) {
-                    if (useCop1)    copPtr = cop1lc;
-                    else            copPtr = cop2lc;
+                    assignCopPtr();
                     state = Read1;
                 } else {
                     agnus.fetchCopperDmaNoBUSCheck(copPtr, ir1); // can not happen in cycle 1 (short lines only)
@@ -104,8 +111,7 @@ auto Copper::process() -> void {
             // fallthrough
         case Strobe_CPU_5:
             if (agnus.allocateCopper()) {
-                if (useCop1)    copPtr = cop1lc;
-                else            copPtr = cop2lc;
+                assignCopPtr();
                 state = Read1;
             }
             break;
@@ -159,10 +165,10 @@ auto Copper::process() -> void {
                     }
 
                     if (reg == 0x88) {
-                        useCop1 = true;
+                        strobeCop |= 1;
                         state = Strobe_CPU_2;
                     } else if (reg == 0x8a) {
-                        useCop1 = false;
+                        strobeCop |= 2;
                         state = Strobe_CPU_2;
                     } else {
                         agnus.writeCustom(reg, ir2, Agnus::Trigger_Copper);
@@ -301,10 +307,11 @@ auto Copper::setCOP2LCL(uint16_t value) -> void {
     cop2lc = (cop2lc & ~0xffff) | (value & 0xfffe);
 }
 
-auto Copper::strobeCOPJMP(bool firstLocation, uint8_t triggeredBy) -> void {
+auto Copper::strobeCOPJMP(uint8_t pos, uint8_t triggeredBy) -> void {
 
     if (triggeredBy == Agnus::Trigger_Vsync) {
-        prevState = state;
+        if (!strobeCop)
+            prevState = state;
 
         if (state == Read1) state = Strobe_VBL_3;
         else if (state == Read2) state = Strobe_VBL_5;
@@ -315,13 +322,14 @@ auto Copper::strobeCOPJMP(bool firstLocation, uint8_t triggeredBy) -> void {
         if ((state == Wait1 || state == Wait2 || state == Wait4) && agnus.useCopperDMA()) {
             state = (agnus.hPos & 1) ? Strobe_CPU_3 : Strobe_CPU_1;
         } else {
-            prevState = state;
+            if (!strobeCop)
+                prevState = state;
             state = Strobe_CPU_6;
         }
     }
     // access from Copper will be handled in "Read2" state
 
-    useCop1 = firstLocation;
+    strobeCop |= pos;
     skipped = false;
     agnus.actions |= Agnus::ACT_COPPER;
 }
@@ -331,7 +339,7 @@ auto Copper::reset() -> void {
     prevState = Off;
     skipped = false;
     cdang = 0x80;
-    useCop1 = true;
+    strobeCop = 0;
     ir1 = ir2 = 0;
     cop1lc = cop2lc = 0;
     copPtr = 0;
@@ -341,7 +349,7 @@ auto Copper::serialize(Emulator::Serializer& s) -> void {
     s.integer((uint8_t&)state);
     s.integer((uint8_t&)prevState);
     s.integer(cdang);
-    s.integer(useCop1);
+    s.integer(strobeCop);
     s.integer(cop1lc);
     s.integer(cop2lc);
     s.integer(copPtr);

@@ -292,7 +292,7 @@ auto Agnus::updateVCounter() -> void {
             vBlank = true;
             vBlankStart = true;
         }
-        copper.strobeCOPJMP(true, Trigger_Vsync);
+        copper.strobeCOPJMP(1, Trigger_Vsync);
     } else {
         vPos++;
         vPos &= ecsAndHigher() ? 0x7ff : 0x1ff; // register change of VPos could lead to a wrap around of 9-bit (OCS Agnus) counter.

@@ -55,7 +55,7 @@ struct Copper {
     Blitter& blitter;
 
     uint16_t cdang;
-    bool useCop1;
+    uint8_t strobeCop;
     uint32_t cop1lc;
     uint32_t cop2lc;
     uint32_t copPtr;
@@ -82,7 +82,8 @@ struct Copper {
     auto setCOP2LCH(uint16_t value) -> void;
     auto setCOP2LCL(uint16_t value) -> void;
 
-    auto strobeCOPJMP(bool firstLocation, uint8_t triggeredBy ) -> void;
+    auto strobeCOPJMP(uint8_t pos, uint8_t triggeredBy ) -> void;
+    auto assignCopPtr() -> void;
     auto cycle1() -> void;
 
     auto blitterBusyUpdate() -> void;

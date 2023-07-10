@@ -214,10 +214,10 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             copper.setCOP2LCL(value);
             break;
         case 0x88:
-            copper.strobeCOPJMP(true, triggeredBy);
+            copper.strobeCOPJMP(1, triggeredBy);
             break;
         case 0x8a:
-            copper.strobeCOPJMP(false, triggeredBy);
+            copper.strobeCOPJMP(2, triggeredBy);
             break;
         case 0x8c: // Copins (CPU can not access ?)
             break;
