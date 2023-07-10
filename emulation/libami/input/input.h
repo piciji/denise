@@ -51,6 +51,8 @@ struct Input {
     auto writeDeniseJoytest(uint16_t data) -> void;
 
     auto observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void;
+    auto observePotPort1(uint8_t& x0, uint8_t& y0) -> void;
+    auto observePotPort2(uint8_t& x1, uint8_t& y1) -> void;
 
     auto initFrame() -> void;
 

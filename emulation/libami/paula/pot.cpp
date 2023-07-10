@@ -17,10 +17,16 @@
 namespace LIBAMI {
 
 auto Paula::pot0Dat() -> uint16_t {
+    input.observePotPort1(pot.capX0, pot.capY0);
+    pot.running = true;
+
     return (pot.cntY0 << 8) | pot.cntX0;
 }
 
 auto Paula::pot1Dat() -> uint16_t {
+    input.observePotPort1(pot.capX1, pot.capY1);
+    pot.running = true;
+
     return (pot.cntY1 << 8) | pot.cntX1;
 }
 
