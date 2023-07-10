@@ -272,7 +272,7 @@ auto Blitter::process() -> void {
 
         // cycle 7
         _L_mSO(0x87) _L_mSO(0x97) _L_mSO(0xa7) _L_mSO(0xb7) _L_mSO(0xc7) _L_mSO(0xd7) _L_mSO(0xe7) _L_mSO(0xf7)
-            lineMode<BLT_BH | BLT_IDLE>();
+            lineMode<BLT_BH | BLT_UPDATE_SIGN | BLT_IDLE>();
             startBlit();
             break;
         _L_mSO(0x07) _L_mSO(0x17) _L_mSO(0x27) _L_mSO(0x37) _L_mSO(0x47) _L_mSO(0x57) _L_mSO(0x67) _L_mSO(0x77)
