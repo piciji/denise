@@ -4,7 +4,7 @@ namespace LIBAMI {
 auto DiskStructure::analyzeADF(uint8_t* data, unsigned size) -> bool {
     size &= ~511;
 
-    for (unsigned i = 80; i <= 84; i++) {
+    for (int i = 84; i > 0; i--) {
         if (size == (i * 2 * 11 * 512)) {
             trackCount = i << 1;
             hd = false;

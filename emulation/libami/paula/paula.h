@@ -201,6 +201,7 @@ struct Paula {
     auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE; }
     auto setDskState(DiskState next) -> void;
     auto processDiskIdleCycles() -> void;
+    auto handleFDControllerIdle(unsigned cycles, bool reset) -> void;
 
     auto getFromFifo(uint16_t& data) -> bool;
     auto addToFifo(uint16_t data) -> void;

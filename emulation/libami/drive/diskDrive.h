@@ -84,7 +84,7 @@ struct DiskDrive {
     auto writeByte(uint8_t byte) -> void;
     auto readBit(int& dmaCycles, bool upd) -> bool;
     auto writeBit(bool state) -> void;
-    auto rotate(int dmaCycles, bool reset = false) -> void;
+    auto rotate(int dmaCycles, bool reset, int& bitsReaded) -> uint32_t;
 
     auto getDummyTrack() -> DiskStructure::Track*;
 

@@ -115,41 +115,35 @@ auto DiskDrive::writeByte(uint8_t byte) -> void {
     track->written |= 1; // track data has changed, host have to write back
 }
 
-auto DiskDrive::rotate(int dmaCycles, bool reset) -> void {
-    if (!motor || !inserted || !dmaCycles) {
+auto DiskDrive::rotate(int dmaCycles, bool reset, int& bitsReaded) -> uint32_t {
+    if (!motor || !inserted || !selected || !dmaCycles) {
         if (reset)
             accum = 0;
-        return;
+        return 0;
     }
 
+    uint32_t out = 0;
     if (stepSettleClock) progressStepper();
 
-    unsigned refCyclesPerRevolutionScaled = refCyclesPerRevolution << 3;
     accum += track->bits * dmaCycles;
 
-    while (1) {
-        if (accum >= refCyclesPerRevolutionScaled) {
-            accum -= refCyclesPerRevolutionScaled;
-            headOffset += 8;
-            if (headOffset >= track->bits) {
-                headOffset -= track->bits;
-                if (selected)
-                    cia.setFlag();
-            }
-        } else {
-            if (accum >= refCyclesPerRevolution) {
-                accum -= refCyclesPerRevolution;
-                if (++headOffset >= track->bits) {
-                    headOffset = 0;
-                    if (selected)
-                        cia.setFlag();
-                }
-            } else
-                break;
+    while(accum >= refCyclesPerRevolution) {
+        accum -= refCyclesPerRevolution;
+        out <<= 1;
+        out |= (track->data[headOffset >> 3] >> ((~headOffset) & 7)) & 1;
+        bitsReaded++;
+
+        if (++headOffset >= track->bits) {
+            headOffset = 0;
+            if (selected)
+                cia.setFlag();
         }
     }
+
     if (reset)
         accum = 0;
+
+    return out;
 }
 
 auto DiskDrive::readBit(int& dmaCycles, bool upd) -> bool {

@@ -129,6 +129,9 @@ auto DiskStructure::create( System* system, Type type, std::string name, bool hd
 }
 
 auto DiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
+    if (type == Type::Unknown)
+        return {};
+
     unsigned trackSize = (hd ? 22 : 11) * 512;
     unsigned size = trackCount * trackSize;
     uint8_t* data = new uint8_t[size];

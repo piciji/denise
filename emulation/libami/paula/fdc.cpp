@@ -184,6 +184,12 @@ auto Paula::getDskBytR() -> uint16_t {
 
 auto Paula::setDskSync(uint16_t value) -> void {
     if (dskSync != value) {
+        if (diskState == DiskState::OFF) {
+            processDiskIdleCycles();
+            dmaCycles = FDC_IDLE;
+            dskEventCycle = agnus.clock + dmaCycles;
+        }
+
         dskSync = value;
         if (dskSync == dskShifter)
             setDskSyncInt();
@@ -250,6 +256,38 @@ auto Paula::instantDriveAccess() -> void {
     dskLen = 0;
     dskTransferLength = 0;
     dskEventCycle = agnus.clock + dmaCycles;
+}
+
+auto Paula::handleFDControllerIdle(unsigned cycles, bool reset) -> void {
+    int bitsReaded = 0;
+    uint32_t out = activeDrive->rotate(cycles, reset, bitsReaded);
+    bool _msb = msbSync();
+
+    while(bitsReaded) {
+        bitsReaded--;
+        dskShifter <<= 1;
+        dskShifter |= (out >> bitsReaded) & 1;
+
+        if (_msb) { // Apple GCR
+            // the MSB of each byte has to be a one, if not, "framing" is wrong and controller skips all zero bits.
+            if (((dskShifterPos & 7) == 0) && ((dskShifter & 1) == 0))
+                dskShifter >>= 1;
+        }
+
+        if ((dskShifterPos & 7) == 7)
+            dskBytr = (dskShifter & 0xff) | 0x8000;
+
+        if ((dskShifter == dskSync) && !_msb) {
+            setDskSyncInt();
+            dskSyncCycle = agnus.clock;
+
+            if (wordSync())
+                dskShifterPos = 15;
+        }
+
+        dskShifterPos++;
+        dskShifterPos &= 15;
+    }
 }
 
 template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> void {
@@ -328,10 +366,8 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                     }
                 }
 
-                if ((dskShifterPos & 7) == 7) {
-                    uint8_t byte = dskShifter & 0xff;
-                    dskBytr = byte | 0x8000;
-                }
+                if ((dskShifterPos & 7) == 7)
+                    dskBytr = (dskShifter & 0xff) | 0x8000;
 
                 if ((dskShifter == dskSync) && !_msb) {
                     setDskSyncInt();
@@ -481,7 +517,7 @@ auto Paula::processDiskIdleCycles() -> void {
     else
         temp = dmaCycles - temp;
 
-    activeDrive->rotate( temp, true );
+    handleFDControllerIdle(temp, true);
 }
 
 }

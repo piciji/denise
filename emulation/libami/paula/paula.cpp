@@ -390,10 +390,8 @@ auto Paula::process() -> void {
                     setDskBlkInt();
                 setDskState(DiskState::OFF);
             default:
-                activeDrive->rotate(dmaCycles); // rotate if motor is running, doesn't matter if drive selected or FDC is idling
+                handleFDControllerIdle(dmaCycles, false);
                 dmaCycles = FDC_IDLE;
-                // todo: rotate other connected drives too
-                // todo: update diskbytr and dsksync, depending which drives are selected, enabled and rotating (motor)
                 break;
         }
         dskEventCycle = agnus.clock + dmaCycles;
