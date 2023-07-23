@@ -30,6 +30,8 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
 
     s.integer(frameClock);
     s.integer(fpsChange);
+    s.integer(hBlank);
+    s.integer(hPosChangeOdd);
     s.integer(vBlankEnd);
     s.integer(vBlankEndNext);
     s.integer(vBlank);
@@ -87,6 +89,13 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(lolToggle);
     s.integer(ntsc);
     s.integer(laceMode);
+    s.integer(laceFrame);
+
+    s.integer(lineVCounter);
+    s.integer(crop.left);
+    s.integer(crop.right);
+    s.integer(crop.top);
+    s.integer(crop.bottom);
 
     s.integer(initVCounter);
     s.integer(shortLineBefore);

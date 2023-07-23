@@ -97,17 +97,17 @@ rtc(agnus) {
         top = _ntsc ? 4 : 7;
         bottom = _ntsc ? 3 : 7;
 
-        if (denise.laceMode) {
+        if (agnus.laceFrame) {
             top <<= 1;
             bottom <<= 1;
         }
     };
 
     crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-        left = denise.crop.left;
-        right = denise.crop.right;
-        top = denise.crop.top;
-        bottom = denise.crop.bottom;
+        left = agnus.crop.left;
+        right = agnus.crop.right;
+        top = agnus.crop.top;
+        bottom = agnus.crop.bottom;
     };
 
     paula.activeDrive = &diskDrives[0];

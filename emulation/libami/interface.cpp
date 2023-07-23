@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "208";
+const std::string Interface::Version = "209";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -540,8 +540,8 @@ auto Interface::informAboutKeyUpdate() -> void {
 }
 
 auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
-    system->denise.lineCallback.use = state;
-    system->denise.lineCallback.line = scanline;
+    system->agnus.lineCallback.use = state;
+    system->agnus.lineCallback.line = scanline;
 }
 
 auto Interface::crop( CropType type, bool aspectCorrect, unsigned left, unsigned right, unsigned top, unsigned bottom ) -> void {

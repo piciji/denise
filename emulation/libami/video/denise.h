@@ -30,7 +30,6 @@ struct Denise {
     bool hires;
     bool ham;
     bool doublePlayfield;
-    uint8_t laceMode;
     uint8_t activePlanes;
     uint16_t hamColor;
 
@@ -66,10 +65,8 @@ struct Denise {
     bool enableDisplay;
     bool borderFlipFlop;
 
-    uint16_t* frameBuffer;
     uint16_t* linePtr;
     int linePos;
-    int lineVCounter;
     bool enableSequencer = true;
 
     struct Sprite {
@@ -81,23 +78,6 @@ struct Denise {
         bool attached;
     } sprites[8];
 
-    struct {
-        int left;
-        int right;
-        int top;
-        int bottom;
-
-        auto reset() -> void {
-            left = right = top = bottom = 0;
-        }
-    } crop;
-
-    struct {
-        bool use;
-        unsigned line;
-        bool called;
-    } lineCallback;
-
     uint8_t sprClxMask;
     bool pf2PrioOverPf1;
     uint8_t pf1Prio;
@@ -108,10 +88,8 @@ struct Denise {
     uint16_t hStart;
     uint16_t hStop;
 
-    uint8_t endFrame;
-    bool vBlank;
     bool hBlank;
-    uint8_t hiresFrame;
+    bool hiresFrame;
 
     auto strhor() -> void;
     auto strequ() -> void;
@@ -148,15 +126,6 @@ struct Denise {
     template<bool useHires> auto processDelayPf1() -> void;
     template<bool useHires> auto processDelayPf2() -> void;
     template<bool useHires> auto processPixel() -> void;
-    auto startHblank() -> void;
-    auto endHblank() -> void;
-    auto switchToHiresMidframe() -> void;
-    inline auto doubleLoresPixel(uint16_t* _ptr, unsigned _xStart) -> void;
-    auto updateCropLeft() -> void;
-    auto updateCropRight() -> void;
-    auto updateCropTop() -> void;
-    auto updateCropBottom() -> void;
-    auto sanitizeCrop(int width, int height) -> void;
     auto updateBplDelay() -> void;
 };
 

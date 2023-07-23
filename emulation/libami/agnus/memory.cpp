@@ -74,7 +74,7 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
             break;
         case MMIO_CIA: {
             // CIA CS (Chip Select) happens when A12/A13 and VMA (respond of VPA in 68k E-Mode) are active.
-            // Gary assert VPA but don't see A12/A13. It only see the upper address bits and knows when in general CIA area.
+            // Gary assert VPA but don't see A12/A13. It only sees the upper address bits and knows when in general CIA area.
             // hence Gary asserts VPA, even if no CIA is selected at all ... "case 0x3000" in switch/case below.
             // same applies to CIA writes.
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );

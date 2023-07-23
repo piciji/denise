@@ -4,7 +4,7 @@ namespace LIBAMI {
 // By means of 8 byte counters no overflow handling is necessary. Theoretically, this could run into an overflow
 // with constant use of savestates. It has been thousands of years. The use of signed variables is faster,
 // because the compiler does not incorporate overflow handling from itself.
-// 32 bit architectures have a disadvantage here, as additional operations are necessary.
+// 32bit architectures have a disadvantage here, as additional operations are necessary.
 
 template<uint8_t Channel>
 auto Agnus::updateEvent(int delay) -> void {
@@ -23,6 +23,9 @@ auto Agnus::processEvents(int64_t curClock) -> void {
     if (curClock == eventClock[EVENT_KBD])
         input.keyboard.processEvent();
 
+    if (curClock == eventClock[EVENT_HTOTAL])
+        HTotalEvent();
+
     if (curClock == eventClock[EVENT_ONE_CYCLE_DELAY]) {
         if (curClock == rapidJobs[0].clock)
             processOneCycleEvent(rapidJobs[0]);
@@ -35,9 +38,6 @@ auto Agnus::processEvents(int64_t curClock) -> void {
 
     if (curClock == eventClock[EVENT_LEAVE_EMULATION])
         leaveEmulationEvent();
-
-    if (curClock == eventClock[EVENT_HTOTAL])
-        HTotalEvent();
 
     if (curClock == eventClock[EVENT_AUDIO_STATE])
         paula.audioEvent();
@@ -141,6 +141,8 @@ template<bool isPtr> auto Agnus::inactivateOneCycleEvent(int job) -> void {
         }
     }
 }
+
+#define _COL(pos) case COL0 + pos: denise.setColor(pos, data); break;
 
 auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
     uint16_t data = rJob.data;
@@ -276,6 +278,12 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case BLT_MODB: blitter.setBltBMod(data); break;
         case BLT_MODC: blitter.setBltCMod(data); break;
         case BLT_MODD: blitter.setBltDMod(data); break;
+
+        case VPOSW: vposw(data); break;
+        case VHPOSW: vhposw(data); break;
+
+        _COL(0) _COL(1) _COL(2) _COL(3) _COL(4) _COL(5) _COL(6) _COL(7) _COL(8) _COL(9) _COL(10) _COL(11) _COL(12) _COL(13) _COL(14) _COL(15)
+        _COL(16) _COL(17) _COL(18) _COL(19) _COL(20) _COL(21) _COL(22) _COL(23) _COL(24) _COL(25) _COL(26) _COL(27) _COL(28) _COL(29) _COL(30) _COL(31)
     }
 }
 

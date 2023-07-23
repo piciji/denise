@@ -47,17 +47,21 @@ struct Agnus {
     enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_SERIAL, EVENT_INTREQ, EVENT_CHANNELS };
 
     enum { BLT_INIT = 0, DMACON = 1,
-           PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
-           PTR_DSK_H, PTR_DSK_L,
-           SPR_DATA0, SPR_DATA1, SPR_DATA2, SPR_DATA3, SPR_DATA4, SPR_DATA5, SPR_DATA6, SPR_DATA7,
-           SPR_DATB0, SPR_DATB1, SPR_DATB2, SPR_DATB3, SPR_DATB4, SPR_DATB5, SPR_DATB6, SPR_DATB7,
-           SPR_CTL0, SPR_CTL1, SPR_CTL2, SPR_CTL3, SPR_CTL4, SPR_CTL5, SPR_CTL6, SPR_CTL7,
-           SPR_POS0, SPR_POS1, SPR_POS2, SPR_POS3, SPR_POS4, SPR_POS5, SPR_POS6, SPR_POS7,
-           BPL_CON2, INTREQ, INTENA, BPL_CON0, BPL_CON1, BPL_MOD1, BPL_MOD2,
-           AUD_LEN0, AUD_LEN1, AUD_LEN2, AUD_LEN3,
-           AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
-           AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
-           DMACON_COP, SER_DAT, DMACON_1, DIW_START, DIW_STOP, BLT_MODA, BLT_MODB, BLT_MODC, BLT_MODD,
+        PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
+        PTR_DSK_H, PTR_DSK_L,
+        SPR_DATA0, SPR_DATA1, SPR_DATA2, SPR_DATA3, SPR_DATA4, SPR_DATA5, SPR_DATA6, SPR_DATA7,
+        SPR_DATB0, SPR_DATB1, SPR_DATB2, SPR_DATB3, SPR_DATB4, SPR_DATB5, SPR_DATB6, SPR_DATB7,
+        SPR_CTL0, SPR_CTL1, SPR_CTL2, SPR_CTL3, SPR_CTL4, SPR_CTL5, SPR_CTL6, SPR_CTL7,
+        SPR_POS0, SPR_POS1, SPR_POS2, SPR_POS3, SPR_POS4, SPR_POS5, SPR_POS6, SPR_POS7,
+        BPL_CON2, INTREQ, INTENA, BPL_CON0, BPL_CON1, BPL_MOD1, BPL_MOD2,
+        AUD_LEN0, AUD_LEN1, AUD_LEN2, AUD_LEN3,
+        AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
+        AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
+        DMACON_COP, SER_DAT, DMACON_1, DIW_START, DIW_STOP, BLT_MODA, BLT_MODB, BLT_MODC, BLT_MODD,
+        VPOSW, VHPOSW,
+        COL0, COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10, COL11, COL12, COL13,
+        COL14, COL15, COL16, COL17, COL18, COL19, COL20, COL21, COL22, COL23, COL24, COL25, COL26,
+        COL27, COL28, COL29, COL30, COL31,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -117,6 +121,7 @@ struct Agnus {
     uint64_t frameClock;
     uint8_t fpsChange;
 
+    bool hBlank;
     bool vBlankEnd;
     bool vBlankEndNext;
     bool vBlank;
@@ -208,6 +213,27 @@ struct Agnus {
     bool lolToggle;
     bool ntsc;
     uint8_t laceMode;
+    uint8_t laceFrame;
+    int lineVCounter;
+    uint16_t* frameBuffer;
+    bool hPosChangeOdd = false;
+
+    struct {
+        int left;
+        int right;
+        int top;
+        int bottom;
+
+        auto reset() -> void {
+            left = right = top = bottom = 0;
+        }
+    } crop;
+
+    struct {
+        bool use;
+        unsigned line;
+        bool called;
+    } lineCallback;
 
     bool initVCounter;
     bool shortLineBefore;
@@ -374,8 +400,24 @@ struct Agnus {
     auto leaveEmulationEvent() -> void;
     auto HTotalEvent() -> void;
 
+    auto vposw(uint16_t value) -> void;
+    auto vhposw(uint16_t value) -> void;
+
     auto logDmaUsage(bool waitForCpu = false) -> void;
     auto logDmaCondition() -> bool;
+
+    auto startHblank() -> void;
+    auto endHblank() -> void;
+
+    auto switchToHiresMidframe() -> void;
+    inline auto doubleLoresPixel(uint16_t* _ptr, unsigned _xStart) -> void;
+
+    auto updateCropTop() -> void;
+    auto updateCropBottom() -> void;
+    auto updateCropLeft(int pos) -> void;
+    auto updateCropRight(int pos) -> void;
+
+    auto sanitizeCrop(int width, int height) -> void;
 };
 
 }

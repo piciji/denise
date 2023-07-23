@@ -11,6 +11,12 @@
 
 #define FREQUENCY_PAL   28375160
 #define FREQUENCY_NTSC  28636360
+
+#define LINE_MAX_WIDTH 384
+#define LINE_RENDER_OFFSET 5 // needed to avoid costly sanity checking for CRT emulation later on
+#define LINE_BUFFER_WIDTH 1024
+#define LINE_BUFFER_HEIGHT 600
+#define LINE_CROP_TEST 150
 //#define LOG_DMA_USAGE
 
 #include "agnus.h"
@@ -20,6 +26,7 @@
 #include "events.cpp"
 #include "memory.cpp"
 #include "dma.cpp"
+#include "blanking.cpp"
 #include "graphics.cpp"
 #include "register.cpp"
 #include "log.cpp"
@@ -43,6 +50,12 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 
     wom = new uint8_t[256 * 1024];
     ntsc = false;
+
+    frameBuffer = new uint16_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT];
+    lineCallback.use = false;
+    lineCallback.called = true;
+    lineCallback.line = 0;
+
     resetFps();
 }
 
@@ -57,6 +70,8 @@ Agnus::~Agnus() {
 
     if (fastMemSize)
         delete[] fastMem;
+
+    delete[] frameBuffer;
 }
 
 auto Agnus::frequency() -> unsigned {
@@ -100,11 +115,13 @@ auto Agnus::power(bool softReset) -> void {
     frameClock = 0;
     fpsChange = 0;
 
+    hBlank = false;
     vBlankEnd = false;
     vBlankEndNext = false;
     vBlank = true;
     vBlankStart = false;
     sprInhibited = false;
+    hPosChangeOdd = false;
 
     lines = ntsc ? 261 : 311;
     vTotal = 0;
@@ -159,6 +176,7 @@ auto Agnus::power(bool softReset) -> void {
     lof = true;
     lolToggle = ntsc;
     laceMode = 0;
+    laceFrame = 0;
     zorroBaseAdr = 0;
 
     initVCounter = false;
@@ -202,6 +220,9 @@ auto Agnus::power(bool softReset) -> void {
 
     hTotalFirst = true;
     updateEvent<EVENT_HTOTAL>(0xe2 - hPos);
+    denise.linePtr = frameBuffer;
+    lineVCounter = 0;
+    crop.reset();
 }
 
 auto Agnus::powerOff() -> void {
@@ -363,6 +384,7 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 4:
+            hPosChangeOdd = false;
             // This happens one cycle earlier. Due to the emulator design, "strobe" happens at the beginning
             // of the cycle, before all other processes. However, the result only applies in this (next to strobe) cycle.
             // That's why we do this at the beginning of this cycle.
@@ -381,6 +403,9 @@ inline auto Agnus::dmaCycle() -> void {
             dmal = paula.dmal();
             break;
 
+        case 0xa:
+            startHblank();
+            break;
         case 0xb:
             if (dmal & 3)
                 diskDma(dmal & 2);
@@ -436,7 +461,9 @@ inline auto Agnus::dmaCycle() -> void {
         case 0x29: if (!vBlank) spriteControl<4, false>(); break;
         case 0x2b: if (!vBlank) spriteControl<5, true>(); break;
         case 0x2d: if (!vBlank) spriteControl<5, false>(); break;
-        case 0x2f: if (!vBlank) spriteControl<6, true>(); break;
+        case 0x2f:
+            endHblank();
+            if (!vBlank) spriteControl<6, true>(); break;
         case 0x31: if (!vBlank) spriteControl<6, false>(); break;
         case 0x33: if (!vBlank) spriteControl<7, true>(); break;
         case 0x35: if (!vBlank) spriteControl<7, false>(); break;
@@ -509,7 +536,7 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
     uint8_t hCompare = (beamCon & VARBEAMEN) ? ((hTotal - 1) & 0xff + _lol) : (226 + _lol);
 
     // reading V(H)POS get the already incremented (pointing to next cycle) position, Copper uses the current position for comparisons.
-    // for performance reasons following is calculated with beginning of next cycle, so we do it here temporarly
+    // for performance reasons following is calculated with beginning of next cycle, so we do it here temporarily
     if (h == 1) {
         if (ERSY) h = 0;
     } else if (h == 2) {
@@ -622,16 +649,92 @@ auto Agnus::updateVdiw() -> void {
     if ((vPos == vStart) && !hardLimit) {
         if (!diwFlipFlop) {
             diwFlipFlop = true;
-            denise.updateCropTop();
+            updateCropTop();
         }
     }
 
     if ((vPos == vStop) || hardLimit) {
         if (diwFlipFlop) {
             diwFlipFlop = false;
-            denise.updateCropBottom();
+            updateCropBottom();
         }
     }
+}
+
+auto Agnus::vposw(uint16_t value) -> void {
+    bool lolBefore = lol;
+    bool lofBefore = lof;
+    uint16_t vPosBefore = vPos;
+
+    lof = value & 0x8000; // could result in a wrap around of vPos
+    vPos &= 0xff;
+    if (ecsAndHigher()) {
+        vPos |= (value & 7) << 8;
+        lol = 0;
+    } else {
+        vPos |= (value & 1) << 8;
+    }
+
+    if (lolBefore != lol || lofBefore != lof)
+        fpsChange |= 1;
+    if (vPosBefore != vPos)
+        fpsChange |= 2;
+
+    if (fpsChange && !hasActiveEvent<EVENT_LEAVE_EMULATION>())
+        updateEvent<EVENT_LEAVE_EMULATION>(150000);
+}
+
+auto Agnus::vhposw(uint16_t value) -> void {
+    uint16_t vPosBefore = vPos;
+    uint8_t hPosBefore = hPos + 1;
+
+    hPos = value & 0xff;
+    vPos &= 0x300;
+    vPos |= value >> 8;
+
+    if (vPosBefore != vPos) {
+        fpsChange |= 2;
+    }
+
+    if (hPosBefore != hPos ) {
+        fpsChange |= 2;
+
+        int delay = 1;
+        int limit = (beamCon & VARBEAMEN) ? hTotal : 0xe2;
+
+        if (hPos > (limit + lol) ) // miss comparator -> wrap around
+            delay += (0xff - hPos) + (limit + lol);
+        else
+            delay += limit - hPos + lol;
+
+        if (!hTotalFirst) {
+            hTotalFirst = true;
+
+            if (bplState || bplQueue)
+                actions |= ACT_BPL;
+
+        } else {
+            int diff = hPosBefore - hPos;
+            hPosChangeOdd = diff & 1;
+
+            if (hPosBefore > 0x2f && (diff > 0) )
+                denise.linePos -= diff << 1;
+        }
+
+        updateEvent<EVENT_HTOTAL>(delay);
+
+//        interface->log("h cha");
+//        interface->log(vPos,0);
+//        interface->log(hPosBefore,0,1);
+//        interface->log(hPos,0,1);
+
+        // For ease of use, the emulator increases the position at the beginning of the cycle.
+        // However, when writing the position manually, this is a problem.
+        hPos = hPos ? (hPos - 1) : 0xff;
+   }
+
+    if (fpsChange && !hasActiveEvent<EVENT_LEAVE_EMULATION>())
+        updateEvent<EVENT_LEAVE_EMULATION>(150000);
 }
 
 auto Agnus::observeFrameDuration() -> void {
