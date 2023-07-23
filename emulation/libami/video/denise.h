@@ -112,8 +112,8 @@ struct Denise {
     auto setBplCon0(uint16_t value ) -> void;
     auto setBplCon1(uint16_t value ) -> void;
     auto setBplCon2(uint16_t value ) -> void;
-    auto setSprDatA(uint8_t nr, uint16_t value ) -> void;
-    auto setSprDatB(uint8_t nr, uint16_t value ) -> void;
+    auto setSprDatA(uint8_t nr, uint16_t value, bool force = true ) -> bool;
+    auto setSprDatB(uint8_t nr, uint16_t value, bool force = true ) -> bool;
     auto setSprCtl(uint8_t nr, uint16_t value ) -> void;
     auto setSprPos(uint8_t nr, uint16_t value ) -> void;
     auto setBpl1Dat(uint16_t value) -> void;

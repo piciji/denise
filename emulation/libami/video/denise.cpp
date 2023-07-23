@@ -131,13 +131,29 @@ auto Denise::setClxCon(uint64_t value) -> void {
     }
 }
 
-auto Denise::setSprDatA( uint8_t nr, uint16_t value ) -> void {
-    sprites[nr].datA = value;
-    sprites[nr].armed = true;
+auto Denise::setSprDatA( uint8_t nr, uint16_t value, bool force ) -> bool {
+    Sprite& spr = sprites[nr];
+
+    if (!force) {
+        if (spr.armed && ((spr.x & 1) == 0) && (hPos == spr.x))
+            return false;
+    }
+
+    spr.datA = value;
+    spr.armed = true;
+    return true;
 }
 
-auto Denise::setSprDatB( uint8_t nr, uint16_t value ) -> void {
-    sprites[nr].datB = value;
+auto Denise::setSprDatB( uint8_t nr, uint16_t value, bool force ) -> bool {
+    Sprite& spr = sprites[nr];
+
+    if (!force) {
+        if (spr.armed && ((spr.x & 1) == 0) && (hPos == spr.x))
+            return false;
+    }
+
+    spr.datB = value;
+    return true;
 }
 
 auto Denise::setSprCtl( uint8_t nr, uint16_t value ) -> void {

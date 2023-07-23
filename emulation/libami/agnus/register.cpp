@@ -547,23 +547,23 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x172: setSprCtl<6>(value); break;
         case 0x17a: setSprCtl<7>(value); break;
 
-        case 0x144: addOneCycleEvent(SPR_DATA0, value); break;
-        case 0x14c: addOneCycleEvent(SPR_DATA1, value); break;
-        case 0x154: addOneCycleEvent(SPR_DATA2, value); break;
-        case 0x15c: addOneCycleEvent(SPR_DATA3, value); break;
-        case 0x164: addOneCycleEvent(SPR_DATA4, value); break;
-        case 0x16c: addOneCycleEvent(SPR_DATA5, value); break;
-        case 0x174: addOneCycleEvent(SPR_DATA6, value); break;
-        case 0x17c: addOneCycleEvent(SPR_DATA7, value); break;
+        case 0x144: if (!denise.setSprDatA(0, value, false)) addOneCycleEvent(SPR_DATA0, value); break;
+        case 0x14c: if (!denise.setSprDatA(1, value, false)) addOneCycleEvent(SPR_DATA1, value); break;
+        case 0x154: if (!denise.setSprDatA(2, value, false)) addOneCycleEvent(SPR_DATA2, value); break;
+        case 0x15c: if (!denise.setSprDatA(3, value, false)) addOneCycleEvent(SPR_DATA3, value); break;
+        case 0x164: if (!denise.setSprDatA(4, value, false)) addOneCycleEvent(SPR_DATA4, value); break;
+        case 0x16c: if (!denise.setSprDatA(5, value, false)) addOneCycleEvent(SPR_DATA5, value); break;
+        case 0x174: if (!denise.setSprDatA(6, value, false)) addOneCycleEvent(SPR_DATA6, value); break;
+        case 0x17c: if (!denise.setSprDatA(7, value, false)) addOneCycleEvent(SPR_DATA7, value); break;
 
-        case 0x146: addOneCycleEvent(SPR_DATB0, value); break;
-        case 0x14e: addOneCycleEvent(SPR_DATB1, value); break;
-        case 0x156: addOneCycleEvent(SPR_DATB2, value); break;
-        case 0x15e: addOneCycleEvent(SPR_DATB3, value); break;
-        case 0x166: addOneCycleEvent(SPR_DATB4, value); break;
-        case 0x16e: addOneCycleEvent(SPR_DATB5, value); break;
-        case 0x176: addOneCycleEvent(SPR_DATB6, value); break;
-        case 0x17e: addOneCycleEvent(SPR_DATB7, value); break;
+        case 0x146: if (!denise.setSprDatB(0, value, false)) addOneCycleEvent(SPR_DATB0, value); break;
+        case 0x14e: if (!denise.setSprDatB(1, value, false)) addOneCycleEvent(SPR_DATB1, value); break;
+        case 0x156: if (!denise.setSprDatB(2, value, false)) addOneCycleEvent(SPR_DATB2, value); break;
+        case 0x15e: if (!denise.setSprDatB(3, value, false)) addOneCycleEvent(SPR_DATB3, value); break;
+        case 0x166: if (!denise.setSprDatB(4, value, false)) addOneCycleEvent(SPR_DATB4, value); break;
+        case 0x16e: if (!denise.setSprDatB(5, value, false)) addOneCycleEvent(SPR_DATB5, value); break;
+        case 0x176: if (!denise.setSprDatB(6, value, false)) addOneCycleEvent(SPR_DATB6, value); break;
+        case 0x17e: if (!denise.setSprDatB(7, value, false)) addOneCycleEvent(SPR_DATB7, value); break;
 
         case 0x1c0:
             if (ecsAndHigher()) {
