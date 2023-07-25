@@ -84,8 +84,8 @@ rtc(agnus) {
     };
 
     crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
-        left = 30; // 384 CRT monitor, 344 CRT TV
-        right = 10;
+        left = 31; // 384 CRT monitor, 344 CRT TV
+        right = 9;
 
         if (denise.hiresFrame) {
             left <<= 1;
@@ -95,7 +95,7 @@ rtc(agnus) {
         bool _ntsc = this->interface->stats.isNtsc();
 
         top = _ntsc ? 4 : 7;
-        bottom = _ntsc ? 3 : 7;
+        bottom = _ntsc ? 3 : 0;
 
         if (agnus.laceFrame) {
             top <<= 1;
