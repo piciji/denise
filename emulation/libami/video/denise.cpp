@@ -77,7 +77,6 @@ auto Denise::power() -> void {
 auto Denise::setBpl1Dat(uint16_t value) -> void {
     bpl1dat = value;
     if (!hBlank && enableSequencer) {
-        enableDisplay = true;
         actions |= BPL1_WRITTEN;
     }
 }
@@ -563,6 +562,7 @@ auto Denise::process() -> void {
             dat5 = bpl5dat;
             dat6 = bpl6dat;
             actions &= ~BPL1_WRITTEN;
+            enableDisplay = true;
             actions |= (PF1_SHIFT | PF2_SHIFT);
         }
 
@@ -582,8 +582,10 @@ auto Denise::process() -> void {
         if (hPos == 84)     // 456 - 2 - 384 (CRT Monitor) = 70 blanking pixel
             hBlank = false;
     } else {
-        if (hPos == 14)
+        if (hPos == 14) {
             hBlank = true;
+            enableDisplay = false;
+        }
     }
 }
 

@@ -348,29 +348,20 @@ auto Agnus::fetchSprites() -> void {
     sprQueue >>= 8;
 }
 
-template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
-    Sprite& spr = sprites[num];
+template<uint8_t nr, bool first> auto Agnus::spriteControl() -> void {
+    Sprite& spr = sprites[nr];
 
-    if (first) {
-        if ( (spr.vStart == vPos) && !vBlankEnd && !vBlankEndNext) {
-            spr.fetchData = true;
-            spr.enable = true;
-        }
-
-        if ( (spr.vStop == vPos) || vBlankEndNext) {
-            spr.fetchData = false;
-            spr.enable = true;
-        }
-    }
+    if constexpr (first)
+        checkSpriteV<nr, true>();
 
     if (dmaConSpr && spr.enable && !vBlankEnd) {
         if (!sprInhibited) {
             actions |= ACT_SPRITE;
 
             if (first)
-                sprQueue |= ((0x80 | num) << 16);
+                sprQueue |= ((0x80 | nr) << 16);
             else
-                sprQueue |= ((0xc0 | num) << 16);
+                sprQueue |= ((0xc0 | nr) << 16);
 
             if (!spr.fetchData)
                 sprQueue |= 0x20 << 16;
@@ -385,6 +376,7 @@ template<uint8_t num, bool first> auto Agnus::spriteControl() -> void {
 
 template<uint8_t nr> auto Agnus::updateSpriteV() -> void {
     Sprite& spr = sprites[nr];
+    checkSpriteV<nr, false>();
 
     spr.vStart = spr.pos >> 8;
     spr.vStop = spr.ctl >> 8;
@@ -397,14 +389,32 @@ template<uint8_t nr> auto Agnus::updateSpriteV() -> void {
         if (spr.ctl & 0x20) spr.vStop |= 0x200;
     }
 
-    if (!vBlank && !vBlankEnd) {
-        if (vPos == spr.vStart) { // important if "change" happens between first and second DMA of a sprite (e.g. S. Beast jump flicker)
+    checkSpriteV<nr, false>();
+}
+
+template<uint8_t nr, bool regular> auto Agnus::checkSpriteV() -> void {
+    Sprite& spr = sprites[nr];
+
+    if constexpr (regular) {
+        if ( (spr.vStart == vPos) && !vBlankEnd && !vBlankEndNext) {
             spr.fetchData = true;
             spr.enable = true;
         }
-        if (vPos == spr.vStop) {
+
+        if ( (spr.vStop == vPos) || vBlankEndNext) {
             spr.fetchData = false;
-            spr.enable = false;
+            spr.enable = true;
+        }
+    } else {
+        if (!vBlank && !vBlankEnd) {
+            if (vPos == spr.vStart) { // important if "change" happens between first and second DMA of a sprite (e.g. S. Beast jump flicker)
+                spr.fetchData = true;
+                spr.enable = true;
+            }
+            if (vPos == spr.vStop) {
+                spr.fetchData = false;
+                spr.enable = false;
+            }
         }
     }
 }

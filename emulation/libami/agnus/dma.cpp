@@ -227,6 +227,8 @@ template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
             setSprPos<nr>(dataBus);
         } else if constexpr (target == 3) {
             setSprCtl<nr>(dataBus);
+            spr.fetchData = false;
+            checkSpriteV<nr, false>();
         }
 
         dmaClock = clock;

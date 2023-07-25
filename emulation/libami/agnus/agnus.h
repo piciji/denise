@@ -339,11 +339,12 @@ struct Agnus {
     auto waitKeyboardReset() -> void;
     template<bool onlyProgressQueue = false> auto fetchPlanes() -> void;
     template<uint8_t pos, bool addMod> auto fetchPlane() -> void;
-    template<uint8_t num, bool first> auto spriteControl() -> void;
+    template<uint8_t nr, bool first> auto spriteControl() -> void;
     auto bplControl() -> void;
     auto fetchSprites() -> void;
     template<uint8_t nr, uint8_t options> auto fetchSprite() -> void;
     template<uint8_t nr> auto updateSpriteV() -> void;
+    template<uint8_t nr, bool regular> auto checkSpriteV() -> void;
     template<uint8_t nr> auto setSprPos(uint16_t value) -> void;
     template<uint8_t nr> auto setSprCtl(uint16_t value) -> void;
 
