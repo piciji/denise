@@ -17,7 +17,7 @@ auto Agnus::logDmaUsage(bool waitForCpu) -> void {
         case BUS_USAGE_COPPER:
             system->interface->log("cop",0);
             system->interface->log((copper.ir1 & 1) ? 0 : (copper.ir1 & 0x1fe), 0, 1);
-            system->interface->log( (copper.state == Copper::Read2) ? "R1" : ((copper.state == Copper::Read1) ? "R2" : "-"), 0);
+            system->interface->log( (copper.state == Copper::Read2) ? "R1" : ((copper.state == Copper::Read1) ? "R2" : std::to_string(copper.state)), 0);
             system->interface->log(vPos, 0, 1);
             break;
         case BUS_USAGE_SPRITE: system->interface->log("spr",0); break;
