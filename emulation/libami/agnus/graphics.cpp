@@ -249,7 +249,8 @@ auto Agnus::bplControl() -> void {
         actions |= ACT_BPL;
         bplCycle &= BPL_ADD_MOD; // keep mod state
         bplCycle |= (bplCon0 >> 4) & 0x700;
-
+        if (ecs)
+            sprInhibited = true; // D (1993)(Essence).adf teddy looks good in ECS only
         if (bplCon0 & 0x40)         bplCycle |= BPL_SHIRES;
         else if (bplCon0 & 0x8000)  bplCycle |= BPL_HIRES;
     } else if (_state == 4) {
@@ -282,7 +283,6 @@ auto Agnus::bplControl() -> void {
             bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch & 1) && (!hardStop || harddisH);
             if (!bplState && ddfEnable && !ddfEnableBefore) {
                 bplState = 1;
-                sprInhibited = true;
             }
             ddfEnableBefore = ddfEnable;
         }
