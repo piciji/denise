@@ -615,9 +615,9 @@ auto Agnus::updateHarddis() -> void {
 
 auto Agnus::isEquLine() -> bool {
     if (ntsc)
-        return vPos <= 10;
+        return (vPos <= 10) && ((model != OCS_A1000) || !!vPos);
 
-    return vPos < (lof ? 9 : 8);
+    return (vPos < (lof ? 9 : 8)) && ((model != OCS_A1000) || !!vPos);
 }
 
 auto Agnus::setDiwStrt(uint16_t value) -> void {
