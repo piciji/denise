@@ -291,14 +291,14 @@ auto InputManager::autoAssign( KeyboardLayout::Type type, bool keyboardOnly ) ->
                                 mapper->anded = 1;
                                 mapper->alternate->anded = 1;
 
-                                if (keys[0].size() == 0 && keys[1].size() == 0) // all elements were mapped
+                                if (keys[0].size() == 0 && ( (keys.size() < 2) || (keys[1].size() == 0))) // all elements were mapped
                                     break;
 
                                 for( auto& key : keys[0] ) {
                                     if (key == hidInput.key) {
                                         mapper->hids.push_back( {hidDevice, &group, &hidInput, 0, 0} );
                                         // better we remove the element, as a result multiple
-                                        // mappings of the same key can not accidently found twice
+                                        // mappings of the same key can not accidentally found twice
                                         GUIKIT::Vector::eraseVectorElement( keys[0], key );
                                         break;
                                     }
