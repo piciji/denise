@@ -186,7 +186,7 @@ auto VicIIBase::getCyclesForNextLightTrigger(int x, int y, uint8_t& cyclePixel) 
 	if (isScanlineRenderer())
 		_firstVisiblePixel = firstVisiblePixel;
 	else
-		// cycle renderer has 8 pixel calculstion delay
+		// cycle renderer has 8 pixel calculation delay
 		_firstVisiblePixel = firstVisiblePixel - 8;
 		
     x += _firstVisiblePixel - ((cycle + 1) << 3);

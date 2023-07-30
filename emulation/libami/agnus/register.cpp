@@ -272,7 +272,6 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch & 1) && (!hardStop || harddisH);
                 if (!bplState && ddfEnable && !ddfEnableBefore) {
                     bplState = 1;
-                    sprInhibited = true;
                 }
                 ddfEnableBefore = ddfEnable;
             }
@@ -520,11 +519,19 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                     fpsChange |= 1;
 
                 beamCon = value;
+                bool _ntscBefore = ntsc;
+                ntsc = (value & BEAM_PAL) == 0;
                 bool lolToggleBefore = lolToggle;
                 lolToggle = !(value & LOLDIS) && !(value & BEAM_PAL);
                 if (lolToggleBefore != lolToggle)
                     fpsChange |= 1;
 
+                if (ntsc != _ntscBefore) {
+                    paula.setFilter();
+                    resetFps();
+                    interface->fpsChanged();
+                    fpsChange = 0;
+                }
                 updateHarddis();
             }
             break;

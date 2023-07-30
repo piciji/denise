@@ -94,8 +94,8 @@ rtc(agnus) {
 
         bool _ntsc = this->interface->stats.isNtsc();
 
-        top = _ntsc ? 4 : 7;
-        bottom = _ntsc ? 3 : 0;
+        top = _ntsc ? 7 : 7;
+        bottom = _ntsc ? 0 : 0;
 
         if (agnus.laceFrame) {
             top <<= 1;
@@ -111,6 +111,7 @@ rtc(agnus) {
     };
 
     paula.activeDrive = &diskDrives[0];
+    ntsc = false;
 }
 
 auto System::power(bool softReset, bool resetInstruction) -> void {
@@ -316,7 +317,6 @@ auto System::getModel() -> uint8_t {
 }
 
 auto System::updateStats() -> void {
-    // interface->stats.region = agnus.ntsc ? Interface::Region::Ntsc : Interface::Region::Pal;
     interface->stats.sampleIntervall = paula.sampleLimit;
     interface->stats.sampleRate = (double)agnus.frequency() / (double)paula.sampleLimit;
     interface->stats.fps = agnus.fps;
@@ -334,7 +334,8 @@ auto System::hintSlowSpeed(bool state) -> void {
 }
 
 auto System::setRegion( int region ) -> void {
-    agnus.ntsc = (Interface::Region)region == Interface::Region::Ntsc;
+    ntsc = (Interface::Region)region == Interface::Region::Ntsc;
+    agnus.ntsc = ntsc;
     paula.setFilter();
     agnus.resetFps();
     updateStats();

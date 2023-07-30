@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "209";
+const std::string Interface::Version = "210";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -362,7 +362,7 @@ auto Interface::runAheadPreventJit(bool state) -> void {
 }
 
 auto Interface::getRegionEncoding() -> Region {
-    return system->agnus.ntsc ? Region::Ntsc : Region::Pal;
+    return system->ntsc ? Region::Ntsc : Region::Pal;
 }
 
 auto Interface::getRegionGeometry() -> Region {
@@ -370,7 +370,7 @@ auto Interface::getRegionGeometry() -> Region {
 }
 
 auto Interface::getSubRegion() -> SubRegion {
-    return system->agnus.ntsc ? SubRegion::Ntsc_M : SubRegion::Pal_B;
+    return system->ntsc ? SubRegion::Ntsc_M : SubRegion::Pal_B;
 }
 
 auto Interface::setMonitorFpsRatio(double ratio) -> void {
@@ -430,7 +430,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
 auto Interface::getModelValue(unsigned modelId) -> int {
     switch (modelId) {
         case ModelIdSystem:                         return (int)system->getModel();
-        case ModelIdRegion:                         return (int)system->agnus.ntsc;
+        case ModelIdRegion:                         return (int)system->ntsc;
         case ModelIdLowPassFilter:                  return (int)system->paula.enableFilter;
         case ModelIdSampleFetch:                    return system->paula.getResampleQuality();
         case ModelIdDiskDrivesConnected:            return system->getDrivesEnabled();

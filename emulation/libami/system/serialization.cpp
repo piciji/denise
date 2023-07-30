@@ -119,6 +119,8 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( observer.stateChange );
     s.integer( observer.motor );
     s.integer( observer.inputFetches );
+
+    s.integer(ntsc);
 }
 
 // for runahead

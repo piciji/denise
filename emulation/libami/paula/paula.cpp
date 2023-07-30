@@ -352,6 +352,7 @@ auto Paula::power() -> void {
     rxd = true;
     txd = true;
     overrun = false;
+    setFilter();
 }
 
 auto Paula::process() -> void {

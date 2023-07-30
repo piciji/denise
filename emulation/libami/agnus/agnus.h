@@ -409,6 +409,7 @@ struct Agnus {
 
     auto startHblank() -> void;
     auto endHblank() -> void;
+    auto startHsync() -> void;
 
     auto switchToHiresMidframe() -> void;
     inline auto doubleLoresPixel(uint16_t* _ptr, unsigned _xStart) -> void;

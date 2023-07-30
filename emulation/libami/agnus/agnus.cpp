@@ -123,12 +123,14 @@ auto Agnus::power(bool softReset) -> void {
     sprInhibited = false;
     hPosChangeOdd = false;
 
-    lines = ntsc ? 261 : 311;
     vTotal = 0;
     vBStrt = 0;
     vBStop = 0;
     hTotal = 0;
-    beamCon = 0;
+    if (!softReset) {
+        beamCon = (ntsc || !ecsAndHigher()) ? 0 : BEAM_PAL;
+        lines = ntsc ? 261 : 311;
+    }
 
     rapidJobs[0].reset();
     rapidJobs[1].reset();
@@ -226,6 +228,7 @@ auto Agnus::power(bool softReset) -> void {
 }
 
 auto Agnus::powerOff() -> void {
+    ntsc = system->ntsc;
     resetFps();
 }
 
@@ -424,6 +427,11 @@ inline auto Agnus::dmaCycle() -> void {
             if (dmal & 0xc0)
                 fetchSample<0>( dmal & 0x40 );
             break;
+
+        case 0x12:
+            if (!vBlank) startHsync();
+            break;
+
         case 0x13:
             if (dmal & 0x300)
                 fetchSample<1>( dmal & 0x100 );
@@ -731,7 +739,7 @@ auto Agnus::vhposw(uint16_t value) -> void {
         // For ease of use, the emulator increases the position at the beginning of the cycle.
         // However, when writing the position manually, this is a problem.
         hPos = hPos ? (hPos - 1) : 0xff;
-   }
+    }
 
     if (fpsChange && !hasActiveEvent<EVENT_LEAVE_EMULATION>())
         updateEvent<EVENT_LEAVE_EMULATION>(150000);

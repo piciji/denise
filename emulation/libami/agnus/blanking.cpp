@@ -27,6 +27,27 @@ auto Agnus::startHblank() -> void {
     hBlank = !vBlank;
 }
 
+auto Agnus::startHsync() -> void {
+    // needed if vposw write misses vblank start
+    bool state = false;
+
+    if (ntsc) {
+        if (vPos == 3)
+            state = true;
+    } else {
+        if (lof && vPos == 3) state = true;
+        else if (!lof && vPos == 2) state = true;
+    }
+
+    if (state) {
+        vBlank = true;
+        vBlankStart = true;
+        startHblank();
+        if (system->isProcessFrame())
+            observeFrameDuration();
+    }
+}
+
 auto Agnus::endHblank() -> void {
     if (hBlank) {
         denise.linePos = 0;

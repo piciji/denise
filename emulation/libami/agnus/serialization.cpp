@@ -146,9 +146,6 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
 
         s.array(chipMem, chipMemMask + 1 + slowMemSize);
 
-//        if (slowMemSize)
-//            s.array(slowMem, slowMemSize);
-
         if (fastMemSize)
             s.array(fastMem, fastMemSize);
 

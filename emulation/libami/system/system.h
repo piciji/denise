@@ -31,6 +31,7 @@ struct System {
     Paula paula;
     RTC rtc;
     DiskDrive diskDrives[4];
+    bool ntsc;
 
     Emulator::Crop<uint16_t> crop;
 
