@@ -66,16 +66,18 @@ rtc(agnus) {
             cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
 
         } else if (lines->iob != lines->iobOld) {
-            paula.activeDrive = nullptr;
+            DiskDrive* active = nullptr;
             for(auto& drive : diskDrives) {
                 if (drive.connected) {
                     drive.writeCiaPortB(lines->iob, lines->iobOld);
-                    if (!paula.activeDrive && drive.selected)
-                        paula.activeDrive = &drive;
+                    if (!active && drive.selected)
+                        active = &drive;
                 }
             }
-            if (!paula.activeDrive)
-                paula.activeDrive = &diskDrives[0];
+            if (!active)
+                active = &diskDrives[0];
+
+            paula.setActiveDrive(active);
         }
     };
 

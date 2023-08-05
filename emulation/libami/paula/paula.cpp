@@ -159,11 +159,10 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(dskTransferLength);
     s.integer(fifo);
     s.integer(fifoPos);
-    s.integer(dskEventCycle);
     s.integer(dskSyncCycle);
     s.integer(dskShifter);
     s.integer(dskShifterPos);
-    s.integer(dmaCycles);
+    s.integer(fdcCycles);
     s.integer(dskBytr);
     s.integer(fifoReady);
 
@@ -319,12 +318,11 @@ auto Paula::power() -> void {
     dskTransferLength = 0;
     fifo = 0;
     fifoPos = 0;
-    dskEventCycle = agnus.clock + FDC_IDLE;
     dskSyncCycle = 0;
     dskShifter = 0;
     dskShifterPos = 0;
     fifoReady = false;
-    dmaCycles = 0;
+    fdcCycles = FDC_BIT;
     dskBytr = 0;
     diskState = DiskState::OFF;
     iplCounter = 0;
@@ -355,47 +353,22 @@ auto Paula::power() -> void {
     setFilter();
 }
 
+auto Paula::setActiveDrive(DiskDrive* drive) -> void {
+    activeDrive = drive;
+
+    if (!agnus.hasActiveEvent<Agnus::EVENT_FLOPPY>() && activeDrive->motor) {
+        activeDrive->reset();
+        //agnus.interface->log("fdc on");
+        agnus.updateEvent<Agnus::EVENT_FLOPPY>(fdcCycles);
+    }
+}
+
 auto Paula::process() -> void {
 
     if (iplCounter) {
         cpu.setInterrupt( (ipl >> 16) & 7 );
         ipl = (ipl << 8) | (ipl & 0xff);
         iplCounter--;
-    }
-
-    if (dskEventCycle == agnus.clock) {
-        switch (diskState) {
-            case DiskState::WAIT_SYNC_READ:
-            case DiskState::WAIT_SYNC_WRITE:
-                if (turbo)
-                    handleFDControllerRead<false, true>();
-                // fallthrough
-            case DiskState::READ:
-                handleFDControllerRead();
-                break;
-            case DiskState::WRITE: {
-                handleFDControllerWrite();
-                if (turbo && dmaDisk) {
-                    uint8_t repeat = (1 << turbo) - 1;
-                    do {
-                        if (!dskTransferLength)
-                            break;
-                        if (!dskShifterPos)
-                            addToFifo( agnus.fakeDiskDma() );
-                        handleFDControllerWrite();
-                    } while (--repeat);
-                }
-            } break;
-            case DiskState::INSTANT_BLK_INT:
-                if (useInstantDriveAccess())
-                    setDskBlkInt();
-                setDskState(DiskState::OFF);
-            default:
-                handleFDControllerIdle(dmaCycles, false);
-                dmaCycles = FDC_IDLE;
-                break;
-        }
-        dskEventCycle = agnus.clock + dmaCycles;
     }
 
     if (sampleCycle == agnus.clock) {

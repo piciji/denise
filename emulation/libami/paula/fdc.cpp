@@ -82,10 +82,14 @@
 // Halving the speed means writing double amount of data on same surface.
 // Reading needs halving the speed too, otherwise the Controller (DMA) could not handle the double amount of data.
 
+// todo: handle ADF writes bitwise to allow writing mixed disk formats same time, e.g. df1: adf, df2: ext.adf
+// writing multiple floppy with same format already works
+
 #include "paula.h"
 #include "../drive/diskDrive.h"
 
-#define FDC_IDLE (56 << 3)
+#define FDC_BIT (7)
+#define FDC_BYTE (7 * 8)
 
 namespace LIBAMI {
 
@@ -104,15 +108,15 @@ auto Paula::setDskLen(uint16_t value) -> void {
     } else if (!(value & 0x8000)) {
         setDskState(DiskState::OFF);
         dskTransferLength = 0;
-        processDiskIdleCycles();
-        dmaCycles = FDC_IDLE;
-        dskEventCycle = agnus.clock + dmaCycles;
+        fdcCycles = FDC_BIT;
+        agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles );
+        activeDrive->reset();
         return;
     }
 
     if (!wordSync() && (dskTransferLength == 0)) { // todo recheck this
-        processDiskIdleCycles();
         finishDMA();
+        activeDrive->reset();
         return;
     }
 
@@ -146,7 +150,7 @@ auto Paula::setDskLen(uint16_t value) -> void {
         } else
             dskShifterPos &= 15;
 
-        processDiskIdleCycles();
+        activeDrive->reset();
         useInstantDriveAccess() ? instantDriveAccess() : setFdcEvent();
     }
 }
@@ -157,39 +161,38 @@ auto Paula::finishDMA() -> void {
     agnus.dmal = 0; // prevent endless loop in turbo mode
     dskTransferLength = 0;
     setDskState(DiskState::OFF);
-    dmaCycles = FDC_IDLE;
-    dskEventCycle = agnus.clock + dmaCycles;
+    fdcCycles = FDC_BIT;
+    agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles );
 }
 
 auto Paula::setFdcEvent() -> void {
     if ((activeDrive->structure.type == DiskStructure::ADF) || (activeDrive->structure.type == DiskStructure::Unknown))
-        dmaCycles = 7 * 8;
+        fdcCycles = FDC_BYTE;
     else
-        dmaCycles = !fast() ? 14 : 7;
+        fdcCycles = !fast() ? (FDC_BIT << 1) : FDC_BIT;
 
-    dskEventCycle = agnus.clock + dmaCycles;
+    agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles );
 }
 
 auto Paula::getDskBytR() -> uint16_t {
-    uint16_t out = dskBytr & 0x80ff;
+    uint16_t out = dskBytr;
     dskBytr &= ~0x8000;
     if (dmaDisk && (diskState != DiskState::OFF)) out |= 0x4000;
     if (dskLen & 0x4000) out |= 0x2000;
-    if (dskSyncCycle) {
-        if((agnus.clock - dskSyncCycle) <= (!fast() ? 14 : 7) ) out |= 0x1000;
-        else dskSyncCycle = 0;
+
+    if (diskState != DiskState::OFF && (activeDrive->structure.type == DiskStructure::ADF)) { // hack when ADF is in Byte mode
+        if (dskSyncCycle) {
+            if ((agnus.clock - dskSyncCycle) <= (!fast() ? 14 : 14)) out |= 0x1000;
+            else dskSyncCycle = 0;
+        }
     }
+    else if (dskShifter == dskSync) out |= 0x1000;
+
     return out;
 }
 
 auto Paula::setDskSync(uint16_t value) -> void {
     if (dskSync != value) {
-        if (diskState == DiskState::OFF) {
-            processDiskIdleCycles();
-            dmaCycles = FDC_IDLE;
-            dskEventCycle = agnus.clock + dmaCycles;
-        }
-
         dskSync = value;
         if (dskSync == dskShifter)
             setDskSyncInt();
@@ -245,49 +248,42 @@ auto Paula::instantDriveAccess() -> void {
     if (out & 1)
         setDskSyncInt();
 
+    fdcCycles = FDC_BIT;
+
     if (out & 2) {
-        dmaCycles = 120; // some more delay, to increase compatibility. e.g. Jim Power
+        agnus.updateEvent<Agnus::EVENT_FLOPPY>( 120 ); // some more delay, to increase compatibility. e.g. Jim Power
         setDskState(DiskState::INSTANT_BLK_INT);
     } else {
-        dmaCycles = FDC_IDLE;
+        agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles );
         setDskState(DiskState::OFF);
     }
 
     dskLen = 0;
     dskTransferLength = 0;
-    dskEventCycle = agnus.clock + dmaCycles;
 }
 
-auto Paula::handleFDControllerIdle(unsigned cycles, bool reset) -> void {
-    int bitsReaded = 0;
-    uint32_t out = activeDrive->rotate(cycles, reset, bitsReaded);
-    bool _msb = msbSync();
+auto Paula::handleFDControllerIdle() -> void {
+    dskShifter <<= 1;
+    dskShifter |= activeDrive->readBit<true>(fdcCycles);
 
-    while(bitsReaded) {
-        bitsReaded--;
-        dskShifter <<= 1;
-        dskShifter |= (out >> bitsReaded) & 1;
-
-        if (_msb) { // Apple GCR
-            // the MSB of each byte has to be a one, if not, "framing" is wrong and controller skips all zero bits.
-            if (((dskShifterPos & 7) == 0) && ((dskShifter & 1) == 0))
-                dskShifter >>= 1;
-        }
-
-        if ((dskShifterPos & 7) == 7)
-            dskBytr = (dskShifter & 0xff) | 0x8000;
-
-        if ((dskShifter == dskSync) && !_msb) {
-            setDskSyncInt();
-            dskSyncCycle = agnus.clock;
-
-            if (wordSync())
-                dskShifterPos = 15;
-        }
-
-        dskShifterPos++;
-        dskShifterPos &= 15;
+    if (msbSync()) { // Apple GCR
+        // the MSB of each byte has to be a one, if not, "framing" is wrong and controller skips all zero bits.
+        if (((dskShifterPos & 7) == 0) && ((dskShifter & 1) == 0))
+            dskShifter >>= 1;
     }
+
+    if ((dskShifterPos & 7) == 7)
+        dskBytr = (dskShifter & 0xff) | 0x8000;
+
+    if ((dskShifter == dskSync) && !msbSync()) {
+        setDskSyncInt();
+
+        if (wordSync())
+            dskShifterPos = 15;
+    }
+
+    dskShifterPos++;
+    dskShifterPos &= 15;
 }
 
 template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> void {
@@ -302,7 +298,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
             else if constexpr (waitTurbo) iterations = 1 << turbo;
 
             do {
-                byte = activeDrive->readByte(dmaCycles, !(readWord || waitTurbo) );
+                byte = activeDrive->readByte<!(readWord || waitTurbo)>(fdcCycles);
                 dskBytr = byte | 0x8000;
 
                 for (int i = 7; i >= 0; i--) {
@@ -350,7 +346,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
 
             do {
                 if constexpr (readWord || waitTurbo) iterations--;
-                bit = activeDrive->readBit(dmaCycles, !(readWord || waitTurbo));
+                bit = activeDrive->readBit<!(readWord || waitTurbo)>(fdcCycles);
                 dskShifter <<= 1;
                 dskShifter |= bit;
 
@@ -371,7 +367,6 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
 
                 if ((dskShifter == dskSync) && !_msb) {
                     setDskSyncInt();
-                    dskSyncCycle = agnus.clock;
 
                     if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
                         setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
@@ -506,18 +501,43 @@ auto Paula::setDskState(DiskState next) -> void {
     }
 }
 
-auto Paula::processDiskIdleCycles() -> void {
-    if (dskEventCycle < agnus.clock)
-        return;
+auto Paula::diskEvent() -> void {
+    switch (diskState) {
+        case DiskState::WAIT_SYNC_READ:
+        case DiskState::WAIT_SYNC_WRITE:
+            if (turbo)
+                handleFDControllerRead<false, true>();
+            // fallthrough
+        case DiskState::READ:
+            handleFDControllerRead();
+            break;
+        case DiskState::WRITE: {
+            handleFDControllerWrite();
+            if (turbo && dmaDisk) {
+                uint8_t repeat = (1 << turbo) - 1;
+                do {
+                    if (!dskTransferLength)
+                        break;
+                    if (!dskShifterPos)
+                        addToFifo( agnus.fakeDiskDma() );
+                    handleFDControllerWrite();
+                } while (--repeat);
+            }
+        } break;
+        case DiskState::INSTANT_BLK_INT:
+            if (useInstantDriveAccess())
+                setDskBlkInt();
+            setDskState(DiskState::OFF);
+        default:
+            handleFDControllerIdle();
+            if (activeDrive->motorFullstop()) {
+                //agnus.interface->log("fdc off");
+                return agnus.setEventInactive<Agnus::EVENT_FLOPPY>();
+            }
+            break;
+    }
 
-    int temp = (int)(dskEventCycle - agnus.clock);
-
-    if (temp >= dmaCycles)
-        temp = 0;
-    else
-        temp = dmaCycles - temp;
-
-    handleFDControllerIdle(temp, true);
+    agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles );
 }
 
 }

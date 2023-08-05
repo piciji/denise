@@ -2,7 +2,7 @@
 namespace LIBAMI {
 // inspired by vAmiga, a 64 bit event counter is used.
 // By means of 8 byte counters no overflow handling is necessary. Theoretically, this could run into an overflow
-// with constant use of savestates. It has been thousands of years. The use of signed variables is faster,
+// with constant use of save states. It has been thousands of years. The use of signed variables is faster,
 // because the compiler does not incorporate overflow handling from itself.
 // 32bit architectures have a disadvantage here, as additional operations are necessary.
 
@@ -48,6 +48,9 @@ auto Agnus::processEvents(int64_t curClock) -> void {
     if (curClock == eventClock[EVENT_INTREQ])
         paula.intreqEvent();
 
+    if (curClock == eventClock[EVENT_FLOPPY])
+        paula.diskEvent();
+
     int64_t next = eventClock[EVENT_KBD];
     if (eventClock[EVENT_ONE_CYCLE_DELAY] < next)
         next = eventClock[EVENT_ONE_CYCLE_DELAY];
@@ -63,6 +66,8 @@ auto Agnus::processEvents(int64_t curClock) -> void {
         next = eventClock[EVENT_SERIAL];
     if (eventClock[EVENT_INTREQ] < next)
         next = eventClock[EVENT_INTREQ];
+    if (eventClock[EVENT_FLOPPY] < next)
+        next = eventClock[EVENT_FLOPPY];
 
     nextClock = next;
 }
@@ -165,16 +170,16 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case PTR_DSK_L: setDskPtL(data); break;
         case DMACON_1: {
             bool dmaConSprNew = useSpriteDMA();
-            bool dmaConSprOld = (data & 0x220) == 0x220;
+            bool dmaConSprOld = (dmaCon & 0x220) == 0x220;
 
             if (dmaConSprNew && !dmaConSprOld) {
                 if (sprQueue & 0x00ff0000) {
                     sprQueue |= 0x10 << 16;
-
                 }
             } else if (!dmaConSprNew && dmaConSprOld) {
-                if (sprQueue & 0x00ff0000)
+                if (sprQueue & 0x00ff0000) {
                     sprQueue |= 0x08 << 16;
+                }
             }
 
             dmaConSpr = dmaConSprNew;
@@ -184,10 +189,23 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case DMACON: {
             if ((dmaCon ^ dmaConImm) & 0x21f)
                 paula.dmaCon(dmaConImm);
+
+            if ((dmaCon ^ dmaConImm) & 0x400)
+                countWaitCycles = 1;
+
             dmaCon = dmaConImm;
-            dmaConBlt = useBlitterDMA();
 
             bool dmaConCopNew = useCopperDMA();
+            bool dmaConBltNew = useBlitterDMA();
+            bool aCycleMore = false;
+
+            if (dmaConBlt != dmaConBltNew) {
+                if (data) // data = Copper Access
+                    dmaConBlt = useBlitterDMA();
+                else
+                    aCycleMore = true;
+            }
+
             if (dmaConCop != dmaConCopNew) {
                 // vAmigaTS/Agnus/Copper/CopDma/dmatoggle1
                 if (dmaConCopNew && (copper.state == Copper::Read1 || copper.state == Copper::Read2)) {
@@ -198,15 +216,15 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
                         copper.state = ((clock - dmaClock) == 1) ? Copper::WARMUP : Copper::WARMUP2;
                     }
                 }
-
-                addOneCycleEvent(DMACON_COP, dmaConCopNew, 1);
+                aCycleMore = true;
             }
 
-            if ((dmaCon ^ data) & 0x400)
-                countWaitCycles = 1;
+            if (aCycleMore)
+                addOneCycleEvent(DMACON_3, data, 1);
         } break;
-        case DMACON_COP:
-            dmaConCop = !!data;
+        case DMACON_3:
+            dmaConCop = useCopperDMA();
+            dmaConBlt = useBlitterDMA();
             break;
 
         case BLT_INIT: blitter.initBlit(); break;

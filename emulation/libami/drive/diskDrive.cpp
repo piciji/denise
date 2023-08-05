@@ -37,15 +37,15 @@ unsigned DiskDrive::stepperMinTimeBase = 0;
 // updated each frame, depends on region
 unsigned DiskDrive::refCyclesPerRevolutionBase = 709379;
 
-auto DiskDrive::readByte(int& dmaCycles, bool upd) -> uint8_t {
+template<bool update> auto DiskDrive::readByte(int& dmaCycles) -> uint8_t {
     // todo: simulate deceleration more realistic (like d64)
     // e.g. there are some C64 games which expect to read some data from disc after motor has stopped.
-    if ((!motor && (motorSpeed < 20)) || !inserted)
+    if (!motorSpinning() || !inserted)
         return 0;
 
     if (stepSettleClock) progressStepper();
 
-    if (upd) {
+    if constexpr (update) {
         int refCyclesPerRevolutionScaled = refCyclesPerRevolution << 3;
         accum += track->bits * dmaCycles;
         accum -= refCyclesPerRevolutionScaled;
@@ -56,6 +56,7 @@ auto DiskDrive::readByte(int& dmaCycles, bool upd) -> uint8_t {
 
         dmaCycles = (todo + (track->bits >> 1)) / track->bits;
     }
+
     unsigned byteOffset = headOffset >> 3;
     uint8_t byte = track->data[byteOffset];
 
@@ -72,12 +73,12 @@ auto DiskDrive::readByte(int& dmaCycles, bool upd) -> uint8_t {
     // weak bits (no magnetization) for tracks, which are not included in ADF
     // encoded ADF has always valid MFM, so there are no longer sequences with zeros than 10001
     if (!byte) {
-        if (randCounter) { // continous oscilations
+        if (randCounter) { // continuous oscillations
             for (int i = 0; i < 8; i++)
                 byte |= ((randomizer.xorShift() >> 16 ) & 1) << i;
         } else {
             byte |= 1;
-            randCounter = 1; // first oscilation
+            randCounter = 1; // first oscillation
         }
     } else
         randCounter = 0;
@@ -86,7 +87,7 @@ auto DiskDrive::readByte(int& dmaCycles, bool upd) -> uint8_t {
 }
 
 auto DiskDrive::writeByte(uint8_t byte) -> void {
-    if ((!motor && (motorSpeed < 20)) || !inserted )
+    if (!motorSpinning() || !inserted)
         return;
 
     if (stepSettleClock) progressStepper();
@@ -115,45 +116,14 @@ auto DiskDrive::writeByte(uint8_t byte) -> void {
     track->written |= 1; // track data has changed, host have to write back
 }
 
-auto DiskDrive::rotate(int dmaCycles, bool reset, int& bitsReaded) -> uint32_t {
-    if (!motor || !inserted || !selected || !dmaCycles) {
-        if (reset)
-            accum = 0;
-        return 0;
-    }
-
-    uint32_t out = 0;
-    if (stepSettleClock) progressStepper();
-
-    accum += track->bits * dmaCycles;
-
-    while(accum >= refCyclesPerRevolution) {
-        accum -= refCyclesPerRevolution;
-        out <<= 1;
-        out |= (track->data[headOffset >> 3] >> ((~headOffset) & 7)) & 1;
-        bitsReaded++;
-
-        if (++headOffset >= track->bits) {
-            headOffset = 0;
-            if (selected)
-                cia.setFlag();
-        }
-    }
-
-    if (reset)
-        accum = 0;
-
-    return out;
-}
-
-auto DiskDrive::readBit(int& dmaCycles, bool upd) -> bool {
-    if ((!motor && (motorSpeed < 20)) || !inserted )
+template<bool update> auto DiskDrive::readBit(int& dmaCycles) -> bool {
+    if (!motorSpinning() || !inserted)
         return false;
 
     if (stepSettleClock) progressStepper();
 
-    if (upd) {
-        // track bit field in header determines bitcell width
+    if constexpr(update) {
+        // track bit field in header determines bit cell width
         accum += track->bits * dmaCycles;
         accum -= refCyclesPerRevolution;
 
@@ -168,9 +138,11 @@ auto DiskDrive::readBit(int& dmaCycles, bool upd) -> bool {
 
     headOffset++;
     if ( headOffset >= track->bits ) {
-        headOffset = 0;
-        if (selected)
-            cia.setFlag();
+        if ((structure.type != DiskStructure::ADF) || (headOffset >= (track->length << 3))) {
+            headOffset = 0;
+            if (selected)
+                cia.setFlag();
+        }
     }
 
     if (!selected)
@@ -180,12 +152,12 @@ auto DiskDrive::readBit(int& dmaCycles, bool upd) -> bool {
 
     // weak bits (no magnetization)
     if (state)
-        // after a flux change it takes a while until first oscilation happens.
+        // after a flux change it takes a while until first oscillation happens.
         randCounter = ( (randomizer.xorShift() >> 16 ) & 7) + 51; // 14.5 - 16.5 us
     else if (randCounter) {
         if (dmaCycles >= randCounter) {
-            state = true; // oscilation
-            // continous oscilation without any new flux change happens much faster
+            state = true; // oscillation
+            // continuous oscillation without any new flux change happens much faster
             randCounter = ( (randomizer.xorShift() >> 16 ) & 7) + (7 - (dmaCycles - randCounter) );
         } else
             randCounter -= dmaCycles;
@@ -195,12 +167,12 @@ auto DiskDrive::readBit(int& dmaCycles, bool upd) -> bool {
 }
 
 auto DiskDrive::writeBit(bool state) -> void {
-    if ((!motor && (motorSpeed < 20)) || !inserted )
+    if (!motorSpinning() || !inserted)
         return;
 
     if (stepSettleClock) progressStepper();
 
-    // no support for writing a custom bitcell width while adjusting motor speed.
+    // no support for writing a custom bit cell width while adjusting motor speed.
     // basically possible in EXT ADF, but only with compromises ... see explanation in fdc.cpp
     accum = 0;
 
@@ -227,12 +199,17 @@ auto DiskDrive::writeBit(bool state) -> void {
     track->written |= 1; // track data has changed, host have to write back
 }
 
+auto DiskDrive::reset() -> void {
+    accum = 0;
+    randCounter = 0;
+}
+
 auto DiskDrive::progressStepper() -> void {
     int64_t delay = agnus.fallBackCycles(stepSettleClock);
     if (delay >= stepperSeekTime) {
         // Continuous stepping can be done very quickly.
         // The last step, however, requires about 10 ms until data can be reliably read.
-        // The data read during stepping is hard to emulate. The magnetizations of connected tracks influence each other.
+        // The data read during stepping is hard to emulate. The magnetization of connected tracks influence each other.
         stepSettleClock = 0;
         step(nextStep, true);
     }
@@ -389,6 +366,18 @@ auto DiskDrive::getId() -> unsigned { // no emulation of a HD drive with inserte
     return 0xaaaaaaaa; // hd
 }
 
+inline auto DiskDrive::motorSpinning() -> bool {
+    if (motor && (motorSpeed == 100)) return true;
+    else if (!motor && (motorSpeed == 0)) return false;
+
+    unsigned speed = getMotorSpeed();
+
+    if (motor && (speed == 100)) motorSpeed = 100;
+    else if (!motor && (speed == 0)) motorSpeed = 0;
+
+    return motor || (speed > 20);
+}
+
 auto DiskDrive::getMotorSpeed() -> unsigned {
     int64_t cycles = agnus.fallBackCycles(motorClock);
     int percent;
@@ -416,6 +405,8 @@ auto DiskDrive::setMotor(bool state) -> void {
     motorSpeed = getMotorSpeed();
     motorClock = agnus.clock;
     motor = state;
+    if (motor)
+        accum = 0;
 
     updateDeviceState();
     if (driveSound && system->isDisplayFrame())
@@ -593,5 +584,11 @@ auto DiskDrive::serialize(Emulator::Serializer& s, bool light) -> void {
 
     structure.serialize( s, written );
 }
+
+template auto DiskDrive::readByte<false>(int& dmaCycles) -> uint8_t;
+template auto DiskDrive::readByte<true>(int& dmaCycles) -> uint8_t;
+
+template auto DiskDrive::readBit<false>(int& dmaCycles) -> bool;
+template auto DiskDrive::readBit<true>(int& dmaCycles) -> bool;
 
 }

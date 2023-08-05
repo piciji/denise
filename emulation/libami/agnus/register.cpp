@@ -253,16 +253,9 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
         case 0x96: {
             bool sprEnableOld = useSpriteDMA();
-            auto oldValue = dmaCon;
-            // Bitplane DMA is evaluated 3 cycles before and then enters a queue.
-            // Bitplane DMA is evaluated 2 cycles before and then enters a queue.
             dmaControl(value);
-            // Blitter is evaluated 1 cycle before and then enters a queue.
-            // Copper is evaluated 2 cycle before and then enters a queue.
             // for performance reasons BLitter/Copper DMA usage is determined in the execution cycle.
-            // Therefore, the change will only be visible in the cycle after next for Blitter
-            // and one more for Copper
-            addOneCycleEvent(DMACON_1, oldValue, 1);
+            addOneCycleEvent(DMACON_1, triggeredBy == Trigger_Copper, 1);
 
             if (!sprEnableOld && useSpriteDMA())
                 dmaConSpr = true;

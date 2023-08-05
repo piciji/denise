@@ -48,11 +48,10 @@ struct Paula {
     uint16_t dskTransferLength;
     uint64_t fifo;
     uint8_t fifoPos;
-    int64_t dskEventCycle;
     int64_t dskSyncCycle;
     uint16_t dskShifter;
     uint8_t dskShifterPos;
-    int dmaCycles;
+    int fdcCycles;
     uint16_t dskBytr;
     bool fifoReady;
 
@@ -200,8 +199,9 @@ struct Paula {
     auto setFdcEvent() -> void;
     auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE; }
     auto setDskState(DiskState next) -> void;
-    auto processDiskIdleCycles() -> void;
-    auto handleFDControllerIdle(unsigned cycles, bool reset) -> void;
+    auto handleFDControllerIdle() -> void;
+    auto diskEvent() -> void;
+    auto setActiveDrive(DiskDrive* drive) -> void;
 
     auto getFromFifo(uint16_t& data) -> bool;
     auto addToFifo(uint16_t data) -> void;

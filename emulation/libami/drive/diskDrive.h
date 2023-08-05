@@ -76,15 +76,19 @@ struct DiskDrive {
     auto setMotor(bool state) -> void;
     auto step(bool dir, bool updTrack) -> void;
     auto getMotorSpeed() -> unsigned;
+    auto motorSpinning() -> bool;
+    auto motorFullstop() -> bool {
+        return !motor && !motorSpeed;
+    }
     auto getId() -> unsigned;
     auto updateTrack() -> void;
     auto progressStepper() -> void;
 
-    auto readByte(int& dmaCycles, bool upd) -> uint8_t;
+    template<bool update> auto readByte(int& dmaCycles) -> uint8_t;
     auto writeByte(uint8_t byte) -> void;
-    auto readBit(int& dmaCycles, bool upd) -> bool;
+    template<bool update> auto readBit(int& dmaCycles) -> bool;
     auto writeBit(bool state) -> void;
-    auto rotate(int dmaCycles, bool reset, int& bitsReaded) -> uint32_t;
+    auto reset() -> void;
 
     auto getDummyTrack() -> DiskStructure::Track*;
 

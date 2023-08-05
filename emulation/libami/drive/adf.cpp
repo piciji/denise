@@ -95,7 +95,7 @@ auto DiskStructure::encodeTrack(Track& track, unsigned trackNr, uint8_t* userDat
 }
 
 auto DiskStructure::separateOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> void {
-    // seperate odd/even bits to make room for clock bits
+    // separate odd/even bits to make room for clock bits
     for(unsigned i = 0; i < size; i++) {
         dst[i] = (src[i] >> 1) & 0x55;
         dst[i + size] = src[i] & 0x55;
@@ -162,13 +162,13 @@ auto DiskStructure::joinOddEven(uint8_t* dst, uint8_t* src, unsigned size) -> vo
     }
 }
 
-// <FM> (4 micro per bitcell)
+// <FM> (4 micro per bit cell)
 // clock bit is always 1
 // data bit	 => FM
 // 1 		 => 11  [4 + 4 micro]
 // 0 		 => 10  [4 + 4 micro]
 //
-// <MFM> (2 micro per bitcell)
+// <MFM> (2 micro per bit cell)
 // data bit => MFM
 // 1		=> 01 [2 + 2 micro]
 // 0		=> 10 or 00 (if previous data bit is 1)  [2 + 2 micro]

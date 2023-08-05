@@ -179,11 +179,17 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
             } else
                 return; // keep line mode
 
-        } else if (value & 1) { // switch block to line
-            if (cycle >= 5) {
-                if (cycle == 5)
-                    flags = 0;
-                return;
+        } else { // toggling of block <> line
+            if (value & 1) { // switch block to line
+                if (cycle >= 5) {
+                    if (cycle == 5)
+                        flags = 0;
+                    return;
+                }
+            } else { // switch line to block
+                if (cycle == 7) {
+                    return;
+                }
             }
         }
 
