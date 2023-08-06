@@ -589,6 +589,12 @@ auto Denise::process() -> void {
     }
 }
 
+auto Denise::disableSequencer(bool state) -> void {
+    enableSequencer = !state;
+    if (!state)
+        linePtr = agnus.frameBuffer;
+}
+
 auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer((uint8_t&)model);
     s.integer(hPos);

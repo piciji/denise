@@ -96,7 +96,7 @@ struct Denise {
     auto strvbl() -> void;
     auto process() -> void;
     auto power() -> void;
-    auto disableSequencer(bool state) -> void { enableSequencer = !state; }
+    auto disableSequencer(bool state) -> void;
     inline auto useSequencer() -> bool { return enableSequencer; }
     auto serialize(Emulator::Serializer& s) -> void;
 
