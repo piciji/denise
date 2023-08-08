@@ -52,7 +52,7 @@ USHORT Process_File(unsigned char *fi, unsigned fiSize, unsigned char **fo, unsi
 	USHORT from, to, geninfo, c_version, cmode, hcrc, disktype, pv, ret;
 	ULONG pkfsize, unpkfsize;
 	UCHAR *b1, *b2;
-	time_t date;
+	//time_t date;
     USHORT cmd = CMD_UNPACK;
     USHORT PCRC = 0;
     USHORT pwd = 0;
@@ -90,7 +90,7 @@ USHORT Process_File(unsigned char *fi, unsigned fiSize, unsigned char **fo, unsi
 
     *fo = new unsigned char[MAX_OUT_SIZE];
 	geninfo = (USHORT) ((b1[10]<<8) | b1[11]);	/* General info about archive */
-	date = (time_t) ((((ULONG)b1[12])<<24) | (((ULONG)b1[13])<<16) | (((ULONG)b1[14])<<8) | (ULONG)b1[15]);	/* date in standard UNIX/ANSI format */
+	//date = (time_t) ((((ULONG)b1[12])<<24) | (((ULONG)b1[13])<<16) | (((ULONG)b1[14])<<8) | (ULONG)b1[15]);	/* date in standard UNIX/ANSI format */
 	from = (USHORT) ((b1[16]<<8) | b1[17]);		/*  Lowest track in archive. May be incorrect if archive is "appended" */
 	to = (USHORT) ((b1[18]<<8) | b1[19]);		/*  Highest track in archive. May be incorrect if archive is "appended" */
 
