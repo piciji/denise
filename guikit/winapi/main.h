@@ -748,6 +748,7 @@ struct pBrowserWindow {
     HBRUSH listBgBrush = nullptr;
     HBRUSH listHiBrush = nullptr;
     std::string selectedPath = "";
+    BrowserWindow::CustomButton* selectedButton = nullptr;
     unsigned contentSelection = 0;
     HWND dialogHwnd = nullptr;
     HWND hwndTip = nullptr;
@@ -789,6 +790,7 @@ struct pBrowserWindow {
 	auto setButtonTooltip(HWND buttonHwnd, std::string tooltip) -> void;
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
+    auto getSelectedPath(HWND dlg) -> std::string;
     
     auto getIFileParent() -> HWND;
     

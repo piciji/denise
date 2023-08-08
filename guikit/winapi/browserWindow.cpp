@@ -478,10 +478,20 @@ auto pBrowserWindow::file(bool save) -> std::string {
     }
 
     bool result = !save ? GetOpenFileName(&ofn) : GetSaveFileName(&ofn);
-    if(!result) return "";
+    if(!result)
+        return "";
+
     std::string name = utf8_t(wname);
     std::replace( name.begin(), name.end(), '\\', '/');
     dialogHwnd = nullptr;
+
+    if (selectedButton) {
+        if (selectedButton->onClick( name, (name != selectedPath) ? 0 : contentViewSelection() ) ) {
+            selectedButton = nullptr;
+            return "";
+        }
+    }
+
     return name;
 }
 
@@ -512,6 +522,21 @@ auto pBrowserWindow::createTooltip(HWND hwnd) -> void {
 
     RECT rectSetMargin = {5, 5, 5, 3};
     SendMessage(hwndTip, TTM_SETMARGIN, 0, (LPARAM)&rectSetMargin);  
+}
+
+auto pBrowserWindow::getSelectedPath(HWND dlg) -> std::string {
+    std::string out = "";
+    TCHAR wFilePath[_MAX_PATH] = { 0 };
+    HWND hTrueDlg = GetParent(hDlg);
+
+    if (SendMessage(hTrueDlg, CDM_GETFILEPATH, _MAX_PATH, (LPARAM)wFilePath) >= 0) {
+        if (!(GetFileAttributes(wFilePath) & FILE_ATTRIBUTE_DIRECTORY)) {
+            out = utf8_t(wFilePath);
+            std::replace(out.begin(), out.end(), '\\', '/');
+        }
+    }
+
+    return out;
 }
 
 auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) -> UINT_PTR {
@@ -785,8 +810,10 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 if (widgetId == button.id) {
                     
                     if (button.onClick) {
-                        if (button.onClick( context->selectedPath, context->contentViewSelection() ))
-                            PostMessage(context->dialogHwnd, WM_COMMAND, IDCANCEL, 0); //end dialog
+                        //if (button.onClick( context->selectedPath, context->contentViewSelection() ))
+                          //  PostMessage(context->dialogHwnd, WM_COMMAND, IDCANCEL, 0); //end dialog
+                        context->selectedButton = &button;
+                        PostMessage(context->dialogHwnd, WM_COMMAND, IDOK, 0); //end dialog
                     }
                     break;
                 }                                
