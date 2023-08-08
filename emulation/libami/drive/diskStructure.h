@@ -43,6 +43,7 @@ struct DiskStructure {
     unsigned rawSize = 0;
     bool writeProtected = true;
     unsigned serializationSize = 0;
+    bool dmsCompression = false;
 
     auto attach(uint8_t* data, unsigned size) -> bool;
     auto detach() -> void;
@@ -50,6 +51,7 @@ struct DiskStructure {
     auto analyzeEXT(uint8_t* data, unsigned size) -> bool;
     auto analyzeEXT2(uint8_t* data, unsigned size) -> bool;
     auto analyzeADF(uint8_t* data, unsigned size) -> bool;
+    auto analyzeDMS(uint8_t* data, unsigned size) -> bool;
 
     auto prepareADF(uint8_t* data, unsigned size) -> void;
     auto prepareEXT(uint8_t* data, unsigned size) -> void;

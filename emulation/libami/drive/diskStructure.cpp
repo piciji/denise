@@ -7,6 +7,7 @@
 #include "adf.cpp"
 #include "ext.cpp"
 #include "ext2.cpp"
+#include "dms.cpp"
 
 namespace LIBAMI {
 
@@ -28,6 +29,10 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
 
     switch(type) {
         case Type::ADF:
+            if (dmsCompression) {
+                data = rawData;
+                size = rawSize;
+            }
             prepareADF(data, size);
             break;
         case Type::EXT:
@@ -47,11 +52,14 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
 }
 
 auto DiskStructure::detach() -> void {
-    rawData = nullptr;
     rawSize = 0;
     type = Type::Unknown;
     writeProtected = false;
     hd = false;
+    if (dmsCompression && rawData)
+        delete[] rawData;
+    dmsCompression = false;
+    rawData = nullptr;
 }
 
 auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
@@ -61,6 +69,9 @@ auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
     if (analyzeEXT2(data, size))
         return true;
 
+    if (analyzeDMS(data, size))
+        return true;
+
     if (analyzeADF(data, size))
         return true;
 
@@ -68,6 +79,9 @@ auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
 }
 
 auto DiskStructure::storeWrittenTracks() -> void {
+    if (dmsCompression)
+        return;
+
     if (type == Type::EXT || type == Type::EXT2) {
         if (EXT2ImageNeedsCompleteRebuild()) {
             unsigned extSize = getEXT2CreationImageSize();
@@ -208,6 +222,7 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
     s.integer( trackCount );
     s.integer( rawSize );
     s.integer( writeProtected );
+    s.integer( dmsCompression );
     s.integer( serializationSize );
 
     if (!written || (s.mode() == Emulator::Serializer::Mode::Size))

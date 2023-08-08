@@ -31,7 +31,7 @@ objects += systemAmi agnusAmi inputAmi controlPortAmi keyboardAmi blitter copper
 objects += m6510 ciaBase cia6526 ciaNew vicIIBase vicIICycle vicIIFast systemC64 sid chamberlin tapeC64 tapeStructureC64 inputC64 controlPortC64 acia gluelogic
 objects += cartC64 gameCartC64 freezerC64 reuC64 easyFlashC64 easyFlash3C64 retroReplayC64 gmod2C64 clipboardC64 geoRamC64 fastloaderC64 keyBufferC64 sidManager
 objects += m6502 via iec prg64 driveC64 diskStructureC64 firmwareC64 pia traps64 virtualDrive64 wd1770
-objects += m93c86 mx29lv640eb icons logos fonts socket fpaq0
+objects += m93c86 mx29lv640eb icons logos fonts socket fpaq0 dmspacker
 
 objects += m68000 m68000Core
 
@@ -153,6 +153,7 @@ obj/diskStructureAmi.o: emulation/libami/drive/diskStructure.cpp
 obj/sectorBlockAmi.o: emulation/libami/drive/sectorBlock.cpp
 obj/filesystemAmi.o: emulation/libami/drive/filesystem.cpp
 obj/rtcAmi.o: emulation/libami/system/rtc.cpp
+obj/dmspacker.o: emulation/libami/drive/dms/pfile.cpp
 
 obj/vicIIBase.o:emulation/libc64/vicII/base.cpp
 obj/vicIICycle.o:emulation/libc64/vicII/vicII.cpp
