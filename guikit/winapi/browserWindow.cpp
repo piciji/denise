@@ -112,9 +112,13 @@ IFACEMETHODIMP FileDialogEventHandler::OnButtonClicked ( IFileDialogCustomize* p
         
         auto button = state->buttons[id];
         
-        if (button.onClick)
-            if ( button.onClick( filePath, 0 ) )
-                pDlg->Close( S_OK );
+        if (button.onClick) {
+            std::vector<std::string> curSelectedFiles;
+            filePath = getFilePath(pDlg, curSelectedFiles);
+
+            if (button.onClick(filePath, 0))
+                pDlg->Close(S_OK);
+        }
     }
     
     return S_OK;
@@ -486,10 +490,11 @@ auto pBrowserWindow::file(bool save) -> std::string {
     dialogHwnd = nullptr;
 
     if (selectedButton) {
-        if (selectedButton->onClick( name, (name != selectedPath) ? 0 : contentViewSelection() ) ) {
-            selectedButton = nullptr;
+        auto _selB = selectedButton;
+        selectedButton = nullptr;
+
+        if (_selB->onClick( name, (name != selectedPath) ? 0 : contentViewSelection() ) )
             return "";
-        }
     }
 
     return name;
