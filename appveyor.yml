@@ -181,7 +181,8 @@ for:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
-          export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz          
+          export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz  
+          ssh-keygen -f "/home/appveyor/.ssh/known_hosts" -R "frs.sourceforge.net"
           sshpass -p "%FTP_PSW%" scp -o StrictHostKeyChecking=accept-new "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
         fi
 
@@ -198,7 +199,8 @@ for:
     - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
-    - sh: brew install sshpass
+    - sh: wget https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz
+    - tar -zxf sshpass-1.08.tar.gz
     
   cache:
     - freetype-2.13.0.tar.gz
@@ -210,6 +212,9 @@ for:
     - sh: cd freetype-2.13.0
     - sh: ./configure --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..  
+    - sh: cd sshpass*
+    - sh: ./configure && make install
+    - sh: cd ..
     - sh: make && make install
     
   after_build:
@@ -230,7 +235,8 @@ for:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
-          export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg          
+          export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
+          ssh-keygen -f "/home/appveyor/.ssh/known_hosts" -R "frs.sourceforge.net"
           sshpass -p "%FTP_PSW%" scp -o StrictHostKeyChecking=accept-new "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
         fi
 
@@ -247,7 +253,8 @@ for:
     - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
-    - sh: brew install sshpass
+    - sh: wget https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz
+    - tar -zxf sshpass-1.08.tar.gz
 
   cache:
     - freetype-2.13.0.tar.gz
@@ -261,6 +268,9 @@ for:
     - sh: cd ..
     - sh: install -m 755 data/libs/static/macArm/libfreetype.a /usr/local/lib/
     - sh: install -m 755 data/libs/shared/macArm/libfreetype.6.dylib /usr/local/lib/
+    - sh: cd sshpass*
+    - sh: ./configure && make install
+    - sh: cd ..
     - sh: make Arch=arm64-apple-macos11 && make install
 
   after_build:
@@ -282,6 +292,7 @@ for:
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg          
+          ssh-keygen -f "/home/appveyor/.ssh/known_hosts" -R "frs.sourceforge.net"
           sshpass -p "%FTP_PSW%" scp -o StrictHostKeyChecking=accept-new "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
         fi
 
