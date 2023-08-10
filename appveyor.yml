@@ -111,7 +111,7 @@ for:
         ren out $zipSrc; Compress-Archive -Path $zipSrc -DestinationPath $zipTarget 
 
   deploy_script:
-    - cmd: |
+    - ps: |
         if($env:APPVEYOR_REPO_TAG -eq "false") {
           $zipTarget = -join("denise_", $env:Target, "_build_", $env:APPVEYOR_REPO_COMMIT.Substring(0, 7), ".zip");
           choco install -y winscp
