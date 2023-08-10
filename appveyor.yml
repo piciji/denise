@@ -182,7 +182,7 @@ for:
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz          
-          sshpass -p "%FTP_PSW%" scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
+          sshpass -p "%FTP_PSW%" scp -o StrictHostKeyChecking=accept-new "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
         fi
 
   artifacts:
@@ -198,7 +198,7 @@ for:
     - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
-    - sh: sudo brew install sshpass
+    - sh: brew install sshpass
     
   cache:
     - freetype-2.13.0.tar.gz
@@ -231,7 +231,7 @@ for:
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg          
-          sshpass -p "%FTP_PSW%" scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
+          sshpass -p "%FTP_PSW%" scp -o StrictHostKeyChecking=accept-new "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
         fi
 
   artifacts:
@@ -247,7 +247,7 @@ for:
     - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
-    - sh: sudo brew install sshpass
+    - sh: brew install sshpass
 
   cache:
     - freetype-2.13.0.tar.gz
@@ -282,7 +282,7 @@ for:
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg          
-          sshpass -p "%FTP_PSW%" scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
+          sshpass -p "%FTP_PSW%" scp -o StrictHostKeyChecking=accept-new "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
         fi
 
   artifacts:
