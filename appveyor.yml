@@ -182,8 +182,8 @@ for:
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz  
-          ssh-keygen -f "/home/appveyor/.ssh/known_hosts" -R "frs.sourceforge.net"
-          sshpass -p '%FTP_PSW%' scp -v -o StrictHostKeyChecking=yes "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
+          ssh-keygen -R "frs.sourceforge.net"
+          sshpass -p %FTP_PSW% scp -v "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
         fi
 
   artifacts:
