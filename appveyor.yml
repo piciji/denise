@@ -7,10 +7,10 @@ skip_commits:
     - '**/*.md'
 
 image:
+  - Ubuntu2004
   - Visual Studio 2019
   - macos-bigsur
   - macos
-  - Ubuntu2004
   
 stack: python 3.8
   
@@ -118,7 +118,7 @@ for:
           echo 'open sftp://piciji:%FTP_PSW%@frs.sourceforge.net/ -hostkey="acceptnew"' > ftp.txt 2>&1
           -join("put ", $zipTarget," /home/frs/project/portable68000/") >> ftp.txt
           echo exit >> ftp.txt
-          set PATH=C:\Program Files (x86)\WinSCP;%PATH%
+          $env:Path += 'C:\Program Files (x86)\WinSCP;'
           winscp.com /script=ftp.txt
         }
 
@@ -175,7 +175,15 @@ for:
         fi
         
         sudo mv out "${gzSrc}" && sudo tar -zcf "${gzTarget}" "${gzSrc}"    
-    
+
+  deploy_script:
+    - sh: |
+        if [ "${APPVEYOR_REPO_TAG}" == "false" ]
+        then
+          export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz          
+          sshpass -p "%FTP_PSW%" scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
+        fi
+
   artifacts:
     - path: 'denise*.tar.gz'  
     

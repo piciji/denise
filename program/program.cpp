@@ -768,3 +768,4 @@ auto Program::getAMIModelValue(LIBAMI::Interface::ModelId modelId) -> int {
         return activeEmulator->getModelValue(modelId);
     return 0;
 }
+
