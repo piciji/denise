@@ -115,8 +115,8 @@ for:
         if($env:APPVEYOR_REPO_TAG -eq "false") {
           $zipTarget = -join("denise_", $env:Target, "_build_", $env:APPVEYOR_REPO_COMMIT.Substring(0, 7), ".zip");
           choco install -y winscp
-          echo open sftp://piciji:%FTP_PSW%@frs.sourceforge.net/ -hostkey="acceptnew" > ftp.txt 2>&1 || date /t
-          echo put $zipTarget /home/frs/project/portable68000/ >> ftp.txt
+          echo 'open sftp://piciji:%FTP_PSW%@frs.sourceforge.net/ -hostkey="acceptnew"' > ftp.txt 2>&1
+          -join("put ", $zipTarget," /home/frs/project/portable68000/") >> ftp.txt
           echo exit >> ftp.txt
           set PATH=C:\Program Files (x86)\WinSCP;%PATH%
           winscp.com /script=ftp.txt
