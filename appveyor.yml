@@ -22,16 +22,16 @@ branches:
   
 environment:
   matrix:
+    - Job: Windows 64-bit
+      Target: win64
+    - Job: Windows 32-bit
+      Target: win32
     - Job: macOS ARM 64-bit
       Target: macos-arm
     - Job: macOS 64-bit
       Target: macos
     - Job: Linux 64-bit
       Target: linux
-    - Job: Windows 64-bit
-      Target: win64
-    - Job: Windows 32-bit
-      Target: win32
 
 matrix:
   exclude:
@@ -109,7 +109,19 @@ for:
           $zipSrc = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME);                  
         }
         ren out $zipSrc; Compress-Archive -Path $zipSrc -DestinationPath $zipTarget 
-   
+
+  deploy_script:
+    - cmd: |
+        if($env:APPVEYOR_REPO_TAG -eq "false") {
+          $zipTarget = -join("denise_", $env:Target, "_build_", $env:APPVEYOR_REPO_COMMIT.Substring(0, 7), ".zip");
+          choco install -y winscp
+          echo open sftp://piciji:%FTP_PSW%@frs.sourceforge.net/ -hostkey="acceptnew" > ftp.txt 2>&1 || date /t
+          echo put $zipTarget /home/frs/project/portable68000/ >> ftp.txt
+          echo exit >> ftp.txt
+          set PATH=C:\Program Files (x86)\WinSCP;%PATH%
+          winscp.com /script=ftp.txt
+        }
+
   artifacts:
     - path: 'denise*.zip'
    
@@ -249,14 +261,3 @@ for:
   artifacts:
     - path: 'denise*.dmg'
 
-
-deploy:
-#  - provider: FTP
-#    host: frs.sourceforge.net
-#    protocol: sftp
-#    username: piciji
-#    password:
-#      secure: sR9ZwMKR1AJo63ywiqVomw
-#    folder: ../../../../frs/project/deniseemu/${APPVEYOR_REPO_TAG_NAME}
-#    on:
-#      APPVEYOR_REPO_TAG: true
