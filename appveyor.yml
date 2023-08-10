@@ -183,7 +183,7 @@ for:
         then
           export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz  
           ssh-keygen -f "/home/appveyor/.ssh/known_hosts" -R "frs.sourceforge.net"
-          sshpass -p "%FTP_PSW%" scp -o StrictHostKeyChecking=accept-new "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
+          sshpass -p '%FTP_PSW%' scp "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
         fi
 
   artifacts:
@@ -199,11 +199,12 @@ for:
     - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
-    - sh: wget https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz
+    - sh: test -e sshpass-1.08.tar.gz && echo "File exists" || curl -L https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz --output sshpass-1.08.tar.gz
     - tar -zxf sshpass-1.08.tar.gz
     
   cache:
     - freetype-2.13.0.tar.gz
+    - sshpass-1.08.tar.gz
     
   before_build:
     - sh: export MACOSX_DEPLOYMENT_TARGET=10.9
@@ -237,7 +238,7 @@ for:
         then
           export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
           ssh-keygen -f "/home/appveyor/.ssh/known_hosts" -R "frs.sourceforge.net"
-          sshpass -p "%FTP_PSW%" scp -o StrictHostKeyChecking=accept-new "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
+          sshpass -p '%FTP_PSW%' scp "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
         fi
 
   artifacts:
@@ -253,11 +254,12 @@ for:
     - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
-    - sh: wget https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz
+    - sh: test -e sshpass-1.08.tar.gz && echo "File exists" || curl -L https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz --output sshpass-1.08.tar.gz
     - tar -zxf sshpass-1.08.tar.gz
 
   cache:
     - freetype-2.13.0.tar.gz
+    - sshpass-1.08.tar.gz
 
   before_build:
     - sh: export MACOSX_DEPLOYMENT_TARGET=11
@@ -293,7 +295,7 @@ for:
         then
           export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg          
           ssh-keygen -f "/home/appveyor/.ssh/known_hosts" -R "frs.sourceforge.net"
-          sshpass -p "%FTP_PSW%" scp -o StrictHostKeyChecking=accept-new "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
+          sshpass -p '%FTP_PSW%' scp "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
         fi
 
   artifacts:
