@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
+  - Visual Studio 2019
   - macos-bigsur
   - macos
-  - Visual Studio 2019
   - Ubuntu2004
   
 stack: python 3.8
@@ -22,16 +22,16 @@ branches:
   
 environment:
   matrix:
-    - Job: Windows 64-bit
-      Target: win64
-    - Job: Windows 32-bit
-      Target: win32
     - Job: macOS ARM 64-bit
       Target: macos-arm
     - Job: macOS 64-bit
       Target: macos
     - Job: Linux 64-bit
       Target: linux
+    - Job: Windows 64-bit
+      Target: win64
+    - Job: Windows 32-bit
+      Target: win32
 
 matrix:
   exclude:
