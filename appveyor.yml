@@ -8,10 +8,10 @@ skip_commits:
 
 image:
   - Ubuntu2004
-  - Visual Studio 2019
   - macos-bigsur
   - macos
-  
+  - Visual Studio 2019
+
 stack: python 3.8
   
 branches:
@@ -138,6 +138,7 @@ for:
     - sh: sudo apt-get --yes --force-yes install libpulse-dev
     - sh: sudo apt-get --yes --force-yes install libsdl2-dev
     - sh: sudo apt-get --yes --force-yes install libudev-dev
+    - sh: sudo apt-get install sshpass -y
     
   build_script:
     - sh: make
@@ -197,6 +198,7 @@ for:
     - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
+    - sh: sudo brew install sshpass
     
   cache:
     - freetype-2.13.0.tar.gz
@@ -224,6 +226,14 @@ for:
         
         sudo mv "${gzSrc}" "${gzTarget}"
 
+  deploy_script:
+    - sh: |
+        if [ "${APPVEYOR_REPO_TAG}" == "false" ]
+        then
+          export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg          
+          sshpass -p "%FTP_PSW%" scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
+        fi
+
   artifacts:
     - path: 'denise*.dmg'
 
@@ -237,6 +247,7 @@ for:
     - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
+    - sh: sudo brew install sshpass
 
   cache:
     - freetype-2.13.0.tar.gz
@@ -265,6 +276,14 @@ for:
         fi
         
         sudo mv "${gzSrc}" "${gzTarget}"
+
+  deploy_script:
+    - sh: |
+        if [ "${APPVEYOR_REPO_TAG}" == "false" ]
+        then
+          export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg          
+          sshpass -p "%FTP_PSW%" scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "${gzTarget}" piciji@frs.sourceforge.net:/home/frs/project/portable68000/
+        fi
 
   artifacts:
     - path: 'denise*.dmg'
