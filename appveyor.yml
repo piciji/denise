@@ -182,7 +182,7 @@ for:
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz
-          echo '%FTP_PSW%' > ftp.txt
+          echo ${FTP_PSW} > ftp.txt 2>&1
           sshpass -f "ftp.txt" scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
         fi
 
