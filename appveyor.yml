@@ -116,7 +116,7 @@ for:
           $zipTarget = -join("denise_", $env:Target, "_build_", $env:APPVEYOR_REPO_COMMIT.Substring(0, 7), ".zip");
           choco install --no-progress -y winscp
           echo 'open sftp://piciji:%FTP_PSW%@frs.sourceforge.net/ -hostkey="acceptnew"' > ftp.txt 2>&1
-          -join("put ", $zipTarget," /home/frs/project/portable68000/v 1.1/") >> ftp.txt
+          -join("put ", $zipTarget," /home/frs/project/portable68000/v\\ 1.1/") >> ftp.txt
           echo exit >> ftp.txt
           $env:Path += 'C:\Program Files (x86)\WinSCP;'
           winscp.com /script=ftp.txt
@@ -179,11 +179,11 @@ for:
 
   deploy_script:
     - sh: |
-        if [ "${APPVEYOR_REPO_TAG}" == "false" ]
+        if [ "${APPVEYOR_REPO_TAG}" == "true" ]
         then
-          export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz
+          export gzTarget=denise_ubuntu2004_${APPVEYOR_REPO_TAG_NAME}.tar.gz
           echo ${FTP_PSW} > ftp.txt 2>&1
-          sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1/"
+          sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/deniseemu/v\\ 2.1/"
         fi
 
   artifacts:
@@ -234,11 +234,11 @@ for:
 
   deploy_script:
     - sh: |
-        if [ "${APPVEYOR_REPO_TAG}" == "false" ]
+        if [ "${APPVEYOR_REPO_TAG}" == "true" ]
         then
-          export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
+          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg
           echo ${FTP_PSW} > ftp.txt 2>&1
-          sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1/"
+          sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/deniseemu/v\\ 2.1/"
         fi
 
   artifacts:
@@ -291,11 +291,11 @@ for:
 
   deploy_script:
     - sh: |
-        if [ "${APPVEYOR_REPO_TAG}" == "false" ]
+        if [ "${APPVEYOR_REPO_TAG}" == "true" ]
         then
-          export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
+          export gzTarget=denise_osx_arm64_${APPVEYOR_REPO_TAG_NAME}.dmg
           echo ${FTP_PSW} > ftp.txt 2>&1        
-          sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1/"
+          sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/deniseemu/v\\ 2.1/"
         fi
 
   artifacts:
