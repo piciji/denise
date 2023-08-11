@@ -285,9 +285,7 @@ auto Paula::power() -> void {
     pot.running = false;
     pot.dischargeCounter = 0;
 
-    for(uint8_t c = 0; c < 4; c++) {
-        Channel& cha = channels[c];
-
+    for(auto& cha : channels) {
         cha.AUDxON = false;
         cha.dr = false;
         cha.dsr = false;

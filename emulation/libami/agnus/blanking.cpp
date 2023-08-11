@@ -57,7 +57,10 @@ auto Agnus::endHblank() -> void {
 
             denise.hiresFrame = denise.hires; // can switch to hires mid-frame
             // Denise doesn't need to know of interlace or vertical position.
-            if (!laceFrame && laceMode) {
+            if (hTotalChanged) {
+                hTotalChanged = false;
+                std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT );
+            } else if (!laceFrame && laceMode) {
                 // remove old interlace data, non-lace frame wouldn't overwrite, to prevent artifacts.
                 std::memset(frameBuffer + 240 * LINE_BUFFER_WIDTH, 0, LINE_BUFFER_WIDTH * (LINE_BUFFER_HEIGHT - 240) * 2);
             }

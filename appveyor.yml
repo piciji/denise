@@ -7,10 +7,10 @@ skip_commits:
     - '**/*.md'
 
 image:
+  - Visual Studio 2019
   - Ubuntu2004
   - macos-bigsur
   - macos
-  - Visual Studio 2019
 
 stack: python 3.8
   
@@ -114,9 +114,9 @@ for:
     - ps: |
         if($env:APPVEYOR_REPO_TAG -eq "false") {
           $zipTarget = -join("denise_", $env:Target, "_build_", $env:APPVEYOR_REPO_COMMIT.Substring(0, 7), ".zip");
-          choco install -y winscp
+          choco install --no-progress -y winscp
           echo 'open sftp://piciji:%FTP_PSW%@frs.sourceforge.net/ -hostkey="acceptnew"' > ftp.txt 2>&1
-          -join("put ", $zipTarget," /home/frs/project/portable68000/") >> ftp.txt
+          -join("put ", $zipTarget," /home/frs/project/portable68000/v 1.1/") >> ftp.txt
           echo exit >> ftp.txt
           $env:Path += 'C:\Program Files (x86)\WinSCP;'
           winscp.com /script=ftp.txt
@@ -183,7 +183,7 @@ for:
         then
           export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz
           echo ${FTP_PSW} > ftp.txt 2>&1
-          sshpass -f "ftp.txt" scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1"
+          sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1/"
         fi
 
   artifacts:
@@ -238,7 +238,7 @@ for:
         then
           export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
           echo ${FTP_PSW} > ftp.txt 2>&1
-          sshpass -f "ftp.txt" scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
+          sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1/"
         fi
 
   artifacts:
@@ -295,7 +295,7 @@ for:
         then
           export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
           echo ${FTP_PSW} > ftp.txt 2>&1        
-          sshpass -f "ftp.txt" scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1"
+          sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1/"
         fi
 
   artifacts:

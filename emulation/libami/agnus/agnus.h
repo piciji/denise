@@ -218,6 +218,7 @@ struct Agnus {
     int lineVCounter;
     uint16_t* frameBuffer;
     bool hPosChangeOdd = false;
+    bool hTotalChanged = false;
 
     struct {
         int left;
@@ -254,8 +255,8 @@ struct Agnus {
     uint8_t resetFromKeyboard = 0;
     uint32_t zorroBaseAdr = 0;
 
-    auto frequency() -> unsigned;
-    auto ecsAndHigher() -> bool const { return model & (Model::ECS | Model::AGA); }
+    auto frequency() const -> unsigned;
+    auto ecsAndHigher() const -> bool { return model & (Model::ECS | Model::AGA); }
     auto ecs() -> bool const { return model == Model::ECS; }
     auto aga() -> bool const { return model == Model::AGA; }
     auto womLocked() -> bool const { return (model != OCS_A1000) || womLock; }

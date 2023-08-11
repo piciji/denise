@@ -567,6 +567,8 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
         case 0x1c0:
             if (ecsAndHigher()) {
+                if (hTotal != (value & 0xff) )
+                    hTotalChanged = true;
                 hTotal = value & 0xff;
                 fpsChange |= 1;
             }

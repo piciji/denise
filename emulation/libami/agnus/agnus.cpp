@@ -74,7 +74,7 @@ Agnus::~Agnus() {
     delete[] frameBuffer;
 }
 
-auto Agnus::frequency() -> unsigned {
+auto Agnus::frequency() const -> unsigned {
     return (ntsc ? FREQUENCY_NTSC : FREQUENCY_PAL) >> 3;
 }
 
@@ -123,20 +123,20 @@ auto Agnus::power(bool softReset) -> void {
     sprInhibited = false;
     hPosChangeOdd = false;
 
-    vTotal = 0;
+    vTotal = 0x7ff;
     vBStrt = 0;
     vBStop = 0;
-    hTotal = 0;
-    if (!softReset) {
-        beamCon = (ntsc || !ecsAndHigher()) ? 0 : BEAM_PAL;
-        lines = ntsc ? 261 : 311;
-    }
+    hTotal = 0xff;
+    hTotalChanged = false;
+
+    ntsc = system->ntsc;
+    beamCon = (ntsc || !ecsAndHigher()) ? 0 : BEAM_PAL;
+    lines = ntsc ? 261 : 311;
 
     rapidJobs[0].reset();
     rapidJobs[1].reset();
 
-    for(uint8_t i = 0; i < 8; i++) {
-        Sprite& spr = sprites[i];
+    for(auto& spr : sprites) {
         spr.ptr = 0;
         spr.pos = 0;
         spr.ctl = 0;
@@ -146,10 +146,9 @@ auto Agnus::power(bool softReset) -> void {
         spr.enable = false;
     }
 
-    for(uint8_t i = 0; i < 4; i++) {
-        AudioDmaChannel& cha = audioDmaChannels[i];
+    for(auto& cha : audioDmaChannels) {
         cha.ptr = 0;
-        cha.ptrLatch = 0;
+        cha.ptrLatch = 0xffff;
     }
 
     dskpt = 0;
@@ -407,11 +406,14 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 0xa:
-            startHblank();
+//            startHblank();
             break;
         case 0xb:
             if (dmal & 3)
                 diskDma(dmal & 2);
+            break;
+        case 0xc:
+            startHblank();
             break;
         case 0xd:
             if (dmal & 0xc)
@@ -757,8 +759,7 @@ auto Agnus::observeFrameDuration() -> void {
         double elapsedCycles = (double)fallBackCycles( frameClock );
         fps = (double)frequency() / elapsedCycles;
 
-        if (fps < 1.0)          fps = 1.0; // we allow extreme deviations just for fun
-        else if (fps > 170.0)   fps = 170.0; // most a CRT Monitor could handle, a CRT TV can deviate a few HZ only
+        if (fps < 1.0) fps = 1.0;
 
         fpsChange = 1; // reset to "typical" in next frame, if the beam position has not been changed again.
 
@@ -786,8 +787,7 @@ auto Agnus::observeFrameDuration() -> void {
         }
 
         fps = (double)frequency() / (cyclesPerLine * linesPerField);
-        if (fps < 1.0)          fps = 1.0;
-        else if (fps > 170.0)   fps = 170.0;
+        if (fps < 1.0) fps = 1.0;
 
         fpsChange = 0;
         //system->interface->log("fps change 1");

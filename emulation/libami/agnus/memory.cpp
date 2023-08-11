@@ -371,13 +371,23 @@ auto Agnus::mapMemory() -> void {
 
     mapper[0xbf] = MMIO_CIA;
 
-    for(int i = 0xc0; i <= 0xdb; i++)
+    for (int i = 0xc0; i <= 0xd7; i++)
         mapper[i] = MMIO_CUSTOM; // mirror
+
+    // todo: gayle (A600, A1200): unmapped for 0xc0 - 0xd8
+
+    if (model == OCS_A1000) {
+        for (int i = 0xd8; i <= 0xdb; i++)
+            mapper[i] = MMIO_CUSTOM; // mirror
+    } else {
+        for (int i = 0xd8; i <= 0xdb; i++)
+            mapper[i] = Unmapped;
+    }
 
     if (slowMem) { // overmap slow mem (max. 1.75 MB, not mirrored)
         uint8_t page = slowMemSize / (64 * 1024);
 
-        for(int i = 0xc0; i < (0xc0 + page); i++)
+        for(int i = 0xc0; i < (0xc0 + page); i++) // max: 0xdb
             mapper[i] = SLOW_MEM;
     }
 
@@ -390,13 +400,12 @@ auto Agnus::mapMemory() -> void {
         } else
             mapper[0xdc] = MMIO_RTC;
     } else {
-        mapper[0xdc] = MMIO_CUSTOM;
+        mapper[0xdc] = (model == OCS_A1000) ? MMIO_CUSTOM : Unmapped;
     }
 
-    mapper[0xdd] = Unmapped;
-
-    for (int i = 0xde; i <= 0xdf; i++)
-        mapper[i] = MMIO_CUSTOM;
+    mapper[0xdd] = (model == OCS_A1000) ? MMIO_CUSTOM : Unmapped;
+    mapper[0xde] = MMIO_CUSTOM;
+    mapper[0xdf] = MMIO_CUSTOM;
 
     mapper[0xe8] = fastMem ? AUTO_CONF : Unmapped;
     for(int i = 0xe9; i <= 0xef; i++)
