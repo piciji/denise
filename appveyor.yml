@@ -183,7 +183,7 @@ for:
         then
           export gzTarget=denise_ubuntu2004_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).tar.gz
           echo ${FTP_PSW} > ftp.txt 2>&1
-          sshpass -f "ftp.txt" scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
+          sshpass -f "ftp.txt" scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1"
         fi
 
   artifacts:
@@ -237,7 +237,8 @@ for:
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
-          sshpass -p %FTP_PSW% scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
+          echo ${FTP_PSW} > ftp.txt 2>&1
+          sshpass -f "ftp.txt" scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
         fi
 
   artifacts:
@@ -292,8 +293,9 @@ for:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
-          export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg          
-          sshpass -p %FTP_PSW% scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/"
+          export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
+          echo ${FTP_PSW} > ftp.txt 2>&1        
+          sshpass -f "ftp.txt" scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.1"
         fi
 
   artifacts:
