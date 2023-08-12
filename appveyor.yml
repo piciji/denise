@@ -8,9 +8,9 @@ skip_commits:
 
 image:
   - Visual Studio 2019
-  - Ubuntu2004
   - macos-bigsur
   - macos
+  - Ubuntu2004
 
 stack: python 3.8
   
@@ -112,11 +112,11 @@ for:
 
   deploy_script:
     - ps: |
-        if($env:APPVEYOR_REPO_TAG -eq "false") {
-          $zipTarget = -join("denise_", $env:Target, "_build_", $env:APPVEYOR_REPO_COMMIT.Substring(0, 7), ".zip");
+        if($env:APPVEYOR_REPO_TAG -eq "true") {
+          $zipTarget = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME, ".zip");
           choco install --no-progress -y winscp
           echo 'open sftp://piciji:%FTP_PSW%@frs.sourceforge.net/ -hostkey="acceptnew"' > ftp.txt 2>&1
-          -join("put ", $zipTarget,' "/home/frs/project/portable68000/v 1.1/"') >> ftp.txt
+          -join("put ", $zipTarget,' "/home/frs/project/deniseemu/v 2.1/"') >> ftp.txt
           echo exit >> ftp.txt
           $env:Path += 'C:\Program Files (x86)\WinSCP;'
           winscp.com /script=ftp.txt
