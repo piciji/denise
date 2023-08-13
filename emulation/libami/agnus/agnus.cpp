@@ -252,6 +252,7 @@ auto Agnus::waitKeyboardReset() -> void {
     if ((resetFromKeyboard & 0x80) == 0) {
         system->power(true);
         resetFromKeyboard |= 0x80;
+        interface->informPowerLED(false);
     }
 
     updateEvent<EVENT_LEAVE_EMULATION>(100000);

@@ -43,13 +43,16 @@ rtc(agnus) {
         return lines->iob; // parallel port
     };
 
-    cia1.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+    cia1.writePort = [this, interface]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
             if ((lines->ioa ^ lines->ioaOld) & 1)
                 agnus.setOVL(lines->ioa & 1);
 
-            paula.setLedFilter(lines->ioa & 2);
+            if ((lines->ioa ^ lines->ioaOld) & 2) {
+                interface->informPowerLED((lines->ioa & 2) == 0 );
+                paula.setLedFilter(lines->ioa & 2);
+            }
 
         } else {
             // parallel port

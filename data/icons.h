@@ -103,6 +103,11 @@ extern uint8_t ledRed[225];
 
 extern uint8_t ledGreen[247];
 
+extern uint8_t ledGreen2[235];
+extern uint8_t ledGreen2Dim[261];
+extern uint8_t ledRed2[252];
+extern uint8_t ledYellow[234];
+
 extern uint8_t edit[526];
 
 extern uint8_t fan[1195];

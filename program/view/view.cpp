@@ -807,6 +807,11 @@ auto View::loadImages() -> void {
     ledOffImage.loadPng((uint8_t*) Icons::ledOff, sizeof (Icons::ledOff));
     ledRedImage.loadPng((uint8_t*) Icons::ledRed, sizeof (Icons::ledRed));
     ledGreenImage.loadPng((uint8_t*) Icons::ledGreen, sizeof (Icons::ledGreen));
+
+    ledGreen2Image.loadPng((uint8_t*) Icons::ledGreen2, sizeof (Icons::ledGreen2));
+    ledGreen2DimImage.loadPng((uint8_t*) Icons::ledGreen2Dim, sizeof (Icons::ledGreen2Dim));
+    ledRed2Image.loadPng((uint8_t*) Icons::ledRed2, sizeof (Icons::ledRed2));
+    ledYellowImage.loadPng((uint8_t*) Icons::ledYellow, sizeof (Icons::ledYellow));
 }
 
 auto View::buildMenu() -> void {

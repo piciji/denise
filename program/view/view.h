@@ -200,6 +200,11 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image ledOffImage;
     GUIKIT::Image ledRedImage;
     GUIKIT::Image ledGreenImage;
+
+    GUIKIT::Image ledGreen2Image;
+    GUIKIT::Image ledGreen2DimImage;
+    GUIKIT::Image ledRed2Image;
+    GUIKIT::Image ledYellowImage;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels() -> void;

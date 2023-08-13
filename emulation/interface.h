@@ -311,6 +311,7 @@ struct Interface {
         virtual auto jam(Media*) -> void {}
         virtual auto setThreadPriority(ThreadPriority, float, float) -> bool { return false; }
         virtual auto informCapsLock(bool) -> void {}
+        virtual auto informPowerLED(bool) -> void {}
         virtual auto fpsChanged() -> void {}
         virtual auto trapsResult(Media*, bool error) -> void {}
     };
@@ -402,6 +403,10 @@ struct Interface {
 
     auto informCapsLock(bool state) -> void {
         bind->informCapsLock( state );
+    }
+
+    auto informPowerLED(bool state) -> void {
+        bind->informPowerLED( state );
     }
 
     auto fpsChanged() -> void {

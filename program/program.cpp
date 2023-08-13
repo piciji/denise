@@ -349,6 +349,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		globalSettings->set("last_used_emu", activeEmulator->ident);
 
         statusHandler->resetFrameCounter();
+        statusHandler->initPowerLED();
 
         view->updateSpeedLabels();
 
@@ -617,6 +618,10 @@ auto Program::updateDeviceState( Emulator::Interface::Media* media, bool write, 
 		return;
 
 	statusHandler->updateDeviceState( media, write, position, LED, motorOff );
+}
+
+auto Program::informPowerLED(bool state) -> void {
+    statusHandler->updatePowerLED(state);
 }
 
 auto Program::appFolder() -> std::string {
