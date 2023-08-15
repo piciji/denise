@@ -14,7 +14,7 @@ struct Interface : Emulator::Interface  {
 
     enum ModelId {
         ModelIdSystem,
-        ModelIdLowPassFilter,
+        ModelIdAudioFilter,
         ModelIdRegion,
         ModelIdDiskDrivesConnected,
         ModelIdDiskDriveWobble,

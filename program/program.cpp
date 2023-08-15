@@ -354,6 +354,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         view->updateSpeedLabels();
 
         view->updateDiskMenu();
+        view->updatePowerMenu();
 	}
 	
 	activeEmulator->power();

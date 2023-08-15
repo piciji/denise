@@ -13,7 +13,6 @@ struct DeviceState {
     bool motorOff;
     uint8_t inputsPerFrame;
     bool update = true;
-    int color = 0; // default
 };
 
 struct FpsCounter {
@@ -62,15 +61,24 @@ struct StatusHandler {
     auto updateDiskDriveSpace() -> void;
     auto initPowerLED() -> void;
     auto updatePowerLED(bool state) -> void;
+    auto setPowerLED() -> void;
+    auto hidePowerLED() -> void;
+    auto togglePowerLED() -> void;
+    auto hasPowerLED() -> bool;
 
     GUIKIT::StatusBar* statusBar = nullptr;
     uint16_t control;
     std::vector<DeviceState> deviceStates;
     FpsCounter fpsCounter;
-    GUIKIT::Timer powerLED;
 
     bool showFPS = false;
     bool recordAudio = false;
+
+    struct {
+        bool enable;
+        bool state;
+        GUIKIT::Timer timer;
+    } powerLED;
 
     struct {
         std::string txt = "";

@@ -34,7 +34,7 @@ struct Paula {
     bool int6Current;
 
     bool vBlankIntr;
-    bool enableFilter;
+    int filterMode;
     bool useLedFilter;
 
     DiskDrive& disk0;
@@ -149,6 +149,7 @@ struct Paula {
     auto disableAudioOut(bool state) -> void { audioOut = !state; }
     auto setLedFilter(bool state) -> void;
     auto setFilter() -> void;
+    auto setFilterMode( int val ) -> void;
     auto audioEvent() -> void;
 
     auto pot0Dat() -> uint16_t;
@@ -221,8 +222,8 @@ struct Paula {
     auto setResampleQuality( int val ) -> void;
     auto getResampleQuality( ) -> int;
 
-    auto calcFilter(float sampleFrequency, unsigned cutoffFrequency) -> float;
-    template<uint8_t channel> auto lowPassfilter(int32_t sample) -> int32_t;
+    auto calcFilter(double sampleFrequency, unsigned cutoffFrequency) -> float;
+    template<uint8_t channel> auto lowPassfilter(int32_t sample, int filterMode) -> int32_t;
 
     auto serialEvent() -> void;
     auto getSerdatR() -> uint16_t;

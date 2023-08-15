@@ -225,6 +225,10 @@ template<uint8_t nr, bool updEvent> auto Paula::percntrld() -> void {
     }
 }
 
+auto Paula::setFilterMode( int val ) -> void {
+    filterMode = val;
+}
+
 auto Paula::setResampleQuality( int val ) -> void {
     uint8_t sampleLimitBefore = sampleLimit;
 

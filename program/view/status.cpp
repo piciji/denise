@@ -25,11 +25,7 @@ auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool w
         }
     }
 
-    int _col = 0;
-    if (activeEmulator && media->group->isDisk() && dynamic_cast<LIBAMI::Interface*>(activeEmulator))
-        _col = 1;
-
-    deviceStates.push_back({media, write, position, LED, motorOff, 1, true, _col});
+    deviceStates.push_back({media, write, position, LED, motorOff, 1, true});
 }
 
 auto StatusHandler::setMessage(std::string txt, unsigned duration, bool critical ) -> void {
@@ -203,25 +199,52 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
 }
 
 auto StatusHandler::updatePowerLED(bool state) -> void {
-    if (powerLED.enabled() || !activeEmulator || !dynamic_cast<LIBAMI::Interface*>(activeEmulator))
+    powerLED.state = state;
+    if (!hasPowerLED() || powerLED.timer.enabled())
         return;
 
+    setPowerLED();
+}
+
+auto StatusHandler::setPowerLED() -> void {
     GUIKIT::Image* image;
     int model = activeEmulator->getModelValue( LIBAMI::Interface::ModelId::ModelIdSystem );
 
-    if (state)
+    if (powerLED.state)
         image = (model > 1) ? &(view->ledGreen2Image) : &(view->ledRed2Image);
     else
         image = (model > 1) ? &(view->ledGreen2DimImage) : &(view->ledOffImage);
 
     emuThread->lockStatus();
-    updateImage( 16, image );
+    updateVisible(16, true);
+    updateImage( 17, image );
     updateStatusBar();
     emuThread->unlockStatus();
 }
 
+auto StatusHandler::hidePowerLED() -> void {
+    emuThread->lockStatus();
+    updateVisible(16, false);
+    updateVisible( 17, false );
+    updateStatusBar();
+    emuThread->unlockStatus();
+}
+
+auto StatusHandler::hasPowerLED() -> bool {
+    return powerLED.enable && activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator);
+}
+
+auto StatusHandler::togglePowerLED() -> void {
+    powerLED.enable ^= 1;
+    globalSettings->set<bool>("power_led", powerLED.enable);
+    hasPowerLED() ? setPowerLED() : hidePowerLED();
+    if (powerLED.timer.enabled())
+        powerLED.timer.setEnabled(false);
+}
+
 auto StatusHandler::initPowerLED() -> void {
-    powerLED.setEnabled( activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator) );
+    powerLED.state = true;
+    powerLED.timer.setEnabled( powerLED.enable && activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator) );
 }
 
 auto StatusHandler::hideTape() -> void {
@@ -235,6 +258,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
+    powerLED.enable = globalSettings->get<bool>("power_led", true);
     auto countDecimalPoint = globalSettings->get<unsigned>("fps_decimal_point", 3, {0u, 3u});
     recordAudio = false;
 	control = 0;
@@ -249,7 +273,8 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
 
     statusBar->append( 0, exampleText, nullptr, &(view->speedControlMenu ) );    // FPS
 
-    statusBar->append( 16, &(view->ledGreenImage), nullptr, nullptr ); // Power LED
+    statusBar->append( 16, "Power", nullptr, &(view->power.menu ) );
+    statusBar->append( 17, &(view->ledGreenImage), nullptr, &(view->power.menu ) ); // Power LED
     // up to 4 disk drives
     statusBar->append( 1, "8 00.0", nullptr, &(view->diskControlMenus[0].menu) ); // disk drive track
     statusBar->append( 2, &(view->ledOffImage), nullptr, &(view->diskControlMenus[0].menu) );    // disk LED
@@ -279,20 +304,13 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->updateSeparator( 12, true );
     statusBar->updateSeparator( 13, true );
     statusBar->updateSeparator( 14, true );
-    statusBar->updateSeparator( 16, true );
+    statusBar->updateSeparator( 17, true );
 
-    powerLED.setInterval(1000);
-    powerLED.onFinished = [this]() {
-        powerLED.setEnabled(false);
-
-        if (activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator)) {
-            int model = activeEmulator->getModelValue( LIBAMI::Interface::ModelId::ModelIdSystem );
-            GUIKIT::Image* image = (model > 1) ? &(view->ledGreen2Image) : &(view->ledRed2Image);
-            emuThread->lockStatus();
-            updateImage(16, image);
-            updateStatusBar();
-            emuThread->unlockStatus();
-        }
+    powerLED.timer.setInterval(1000);
+    powerLED.timer.onFinished = [this]() {
+        powerLED.timer.setEnabled(false);
+        if (hasPowerLED())
+            setPowerLED();
     };
 }
 
@@ -366,8 +384,18 @@ auto StatusHandler::update() -> void {
                     updateText(media->id * 2 + 1, name);
 
                     GUIKIT::Image* image = &(view->ledOffImage);
-                    if (deviceState.LED & 1)
-                        image = deviceState.write ? &(view->ledRedImage) : (deviceState.color ? &(view->ledYellowImage) : &(view->ledGreenImage));
+                    if (deviceState.LED & 1) {
+                        if (deviceState.write)
+                            image = &(view->ledRedImage);
+                        else {
+                            int _col = 0;
+                            if (dynamic_cast<LIBAMI::Interface*>(activeEmulator)) {
+                                _col = activeEmulator->getModelValue(LIBAMI::Interface::ModelId::ModelIdSystem);
+                                image = (_col > 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
+                            } else
+                                image = &(view->ledGreenImage);
+                        }
+                    }
 
                     updateImage(media->id * 2 + 2, image);
 

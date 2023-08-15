@@ -872,7 +872,14 @@ auto View::buildMenu() -> void {
             };
             sM.menu->setEnabled(false);
             sM.system->append(*sM.menu);
+            sM.powerLED = nullptr;
         } else {
+            sM.powerLED = new GUIKIT::MenuItem;
+            sM.powerLED->setIcon( menuImage );
+            sM.powerLED->onActivate = []() {
+                statusHandler->togglePowerLED();
+            };
+            sM.system->append(*sM.powerLED);
             sM.menu = nullptr;
             sM.freeze = nullptr;
         }
@@ -1328,7 +1335,74 @@ auto View::buildMenu() -> void {
         diskControlMenu.menu.append( diskControlMenu.inactive );
 
         i++;
-    }   
+    }
+
+    power.power.setIcon( powerImage );
+    power.reset.setIcon( powerImage );
+
+    power.power.onActivate = []() {
+        emuThread->lock();
+        program->power(activeEmulator);
+        emuThread->unlock();
+    };
+
+    power.reset.onActivate = []() {
+        emuThread->lock();
+        program->reset(activeEmulator);
+        emuThread->unlock();
+    };
+
+    power.menu.append( power.power );
+    power.menu.append( power.reset );
+    power.menu.append( *new GUIKIT::MenuSeparator );
+
+    auto amiEmu = program->getEmulator("Amiga");
+    auto model = amiEmu->getModel( LIBAMI::Interface::ModelId::ModelIdAudioFilter );
+    if (model) {
+        int i = 0;
+        for(auto& option : model->options) {
+            auto item = new GUIKIT::MenuRadioItem;
+
+            item->onActivate = [i]() {
+                auto model = activeEmulator->getModel( LIBAMI::Interface::ModelId::ModelIdAudioFilter );
+                if (!model)
+                    return;
+                auto settings = program->getSettings(activeEmulator);
+                if (!settings)
+                    return;
+
+                settings->set<unsigned>( _underscore(model->name), i );
+                auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+                if (emuView && emuView->audioLayout) {
+                    auto block = emuView->audioLayout->settingsLayout.getBlock(model->id);
+                    if (block && (i < block->options.size() ) )
+                        block->options[i]->setChecked();
+                }
+
+                emuThread->lock();
+                activeEmulator->setModelValue( model->id, i );
+                emuThread->unlock();
+            };
+            i++;
+            power.filters.push_back(item);
+            power.menu.append( *item );
+        }
+
+        GUIKIT::MenuRadioItem::setGroup(power.filters);
+    }
+}
+
+auto View::updatePowerMenu() -> void {
+    if (!dynamic_cast<LIBAMI::Interface*>(activeEmulator))
+        return;
+    auto model = activeEmulator->getModel( LIBAMI::Interface::ModelId::ModelIdAudioFilter );
+    if (!model)
+        return;
+
+    auto val = activeEmulator->getModelValue(model->id);
+
+    if (val < power.filters.size())
+        power.filters[val]->setChecked();
 }
 
 auto View::updateSpeedLabels() -> void {
@@ -1439,6 +1513,8 @@ auto View::translate() -> void {
             sysMenu.freeze->setText(trans->get("Freeze"));
         if (sysMenu.menu)
             sysMenu.menu->setText(trans->get("cartridge button"));
+        if (sysMenu.powerLED)
+            sysMenu.powerLED->setText(trans->get("toggle Power LED"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.systemManagement->setText(trans->get("system_management"));
@@ -1490,6 +1566,20 @@ auto View::translate() -> void {
         diskControlMenu.eject.setText( trans->get("eject") );
         diskControlMenu.reset.setText( trans->get("Reset Floppy") );
         diskControlMenu.inactive.setText( trans->get("inactive until reset") );
+    }
+
+    power.power.setText( trans->get("Hard Reset") );
+    power.reset.setText( trans->get("Soft Reset") );
+
+    auto amiEmu = program->getEmulator("Amiga");
+    auto model = amiEmu->getModel( LIBAMI::Interface::ModelId::ModelIdAudioFilter );
+    if (model) {
+        int i = 0;
+        for (auto& option: model->options) {
+            std::string _trans = i == 0 ? (trans->getA("PAULA Filter", true) + " ") : "";
+            _trans += trans->getA(option);
+            power.filters[i++]->setText( _trans );
+        }
     }
     
 	tapePlayItem.setText( trans->get("tape_play_key") );

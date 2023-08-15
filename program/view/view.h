@@ -24,6 +24,7 @@ struct View : public GUIKIT::Window {
 		GUIKIT::MenuItem* poweronAndRemoveExpansions;
 		GUIKIT::MenuItem* reset;
         GUIKIT::MenuItem* freeze;
+        GUIKIT::MenuItem* powerLED;
         GUIKIT::MenuItem* menu;
         GUIKIT::MenuItem* firmware;
         GUIKIT::MenuItem* loadSoftware;
@@ -145,6 +146,13 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem reset;
         GUIKIT::MenuItem inactive;
     } diskControlMenus[4];
+
+    struct {
+        GUIKIT::Menu menu;
+        GUIKIT::MenuItem power;
+        GUIKIT::MenuItem reset;
+        std::vector<GUIKIT::MenuRadioItem*> filters;
+    } power;
 		
     GUIKIT::Image powerImage;
     GUIKIT::Image freezeImage;
@@ -208,6 +216,7 @@ struct View : public GUIKIT::Window {
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels() -> void;
+    auto updatePowerMenu() -> void;
     auto getSpeedBySelectedProfile(float& speed, bool& percent) -> unsigned;
     auto getSpeed(unsigned pos, float& speed, bool& percent) -> void;
     auto isMaximumSpeed() -> bool;
