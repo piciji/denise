@@ -633,28 +633,35 @@ auto Agnus::isEquLine() -> bool {
 
 auto Agnus::setDiwStrt(uint16_t value) -> void {
     vStart = (value >> 8) & 0xff;
-    updateVdiw();
+    updateVdiw<1>();
 }
 
-auto Agnus::setDiwStop(uint16_t value) -> void {
+auto Agnus::setDiwStop(uint16_t value, bool triggerCopper) -> void {
     vStop = (value >> 8) & 0xff;
 
     if ((vStop & 0x80) == 0)
         vStop |= 0x100;
-    updateVdiw();
+
+    triggerCopper ? updateVdiw<2 | 8>() : updateVdiw<2>();
 }
 
-auto Agnus::setDiwHigh(uint16_t value) -> void {
+auto Agnus::setDiwHigh(uint16_t value, bool triggerCopper) -> void {
     if (!ecsAndHigher())
         return;
 
+    vStart &= 0xff;
     vStart |= (value & 15) << 8;
     vStop &= 0xff;
     vStop |= ((value >> 8) & 15) << 8;
-    updateVdiw();
+    triggerCopper ? updateVdiw<4 | 8>() : updateVdiw<4>();
 }
 
-auto Agnus::updateVdiw() -> void {
+template<int mode> auto Agnus::updateVdiw() -> void {
+    constexpr bool diwStart = mode & 1;
+    constexpr bool diwStop = mode & 2;
+    constexpr bool diwHigh = mode & 4;
+    constexpr bool triggerCopper = mode & 8;
+
     bool hardLimit = vBlankStart && !harddisV;
 
     if ((vPos == vStart) && !hardLimit) {
@@ -662,13 +669,22 @@ auto Agnus::updateVdiw() -> void {
             diwFlipFlop = true;
             updateCropTop();
         }
+        if (diwStart || diwHigh)
+            bplCycle &= ~BPL_ADD_MOD;
     }
 
     if ((vPos == vStop) || hardLimit) {
-        if (diwFlipFlop) {
+        if (diwStop || diwHigh) {
+            addOneCycleEvent(UPD_V_DIW, 0,3);
+            return;
+        } else if (diwFlipFlop) {
             diwFlipFlop = false;
             updateCropBottom();
         }
+    }
+
+    if (triggerCopper && (diwStop || diwHigh) && diwFlipFlop) {
+        ECS_BPL_START_CHECK
     }
 }
 

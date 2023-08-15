@@ -63,6 +63,7 @@ struct Agnus {
         COL0, COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10, COL11, COL12, COL13,
         COL14, COL15, COL16, COL17, COL18, COL19, COL20, COL21, COL22, COL23, COL24, COL25, COL26,
         COL27, COL28, COL29, COL30, COL31,
+        UPD_V_DIW,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -259,6 +260,7 @@ struct Agnus {
     auto ecsAndHigher() const -> bool { return model & (Model::ECS | Model::AGA); }
     auto ecs() -> bool const { return model == Model::ECS; }
     auto aga() -> bool const { return model == Model::AGA; }
+    auto a1000() -> bool const { return model == Model::OCS_A1000; }
     auto womLocked() -> bool const { return (model != OCS_A1000) || womLock; }
 
     auto useSpriteDMA() -> bool const { return (dmaConImm & 0x220) == 0x220; }
@@ -354,10 +356,10 @@ struct Agnus {
     template<uint8_t num> auto setSprptL(uint16_t value) -> void;
     auto updateHarddis() -> void;
     auto isEquLine() -> bool;
-    auto updateVdiw() -> void;
+    template<int mode = 0> auto updateVdiw() -> void;
     auto setDiwStrt(uint16_t value) -> void;
-    auto setDiwStop(uint16_t value) -> void;
-    auto setDiwHigh(uint16_t value) -> void;
+    auto setDiwStop(uint16_t value, bool triggerCopper) -> void;
+    auto setDiwHigh(uint16_t value, bool triggerCopper) -> void;
     auto lace() const -> bool { return bplCon0 & 4; }
 
     template<uint8_t nr> auto fetchSample(bool reset) -> void;

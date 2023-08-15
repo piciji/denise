@@ -225,13 +225,13 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x8e:
             setDiwStrt(value);
             denise.setDiwStrt(value);
-            //addOneCycleEvent(DIW_START, value);
+            // addOneCycleEvent(DIW_START, value,2);
             break;
 
         case 0x90:
-            setDiwStop(value);
+            setDiwStop(value, triggeredBy == Trigger_Copper);
             denise.setDiwStop(value);
-            //addOneCycleEvent(DIW_STOP, value);
+            // addOneCycleEvent(DIW_STOP, value,1);
             break;
 
         case 0x92: {
@@ -260,13 +260,8 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             if (!sprEnableOld && useSpriteDMA())
                 dmaConSpr = true;
 
-            if (ecsAndHigher() && (triggeredBy == Trigger_Copper)) {
-                // early access
-                bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch & 1) && (!hardStop || harddisH);
-                if (!bplState && ddfEnable && !ddfEnableBefore) {
-                    bplState = 1;
-                }
-                ddfEnableBefore = ddfEnable;
+            if (ecsAndHigher() && (triggeredBy == Trigger_Copper)) { // early access
+                ECS_BPL_START_CHECK
             }
         } break;
 
@@ -631,7 +626,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
 
         case 0x1e4:
-            setDiwHigh(value);
+            setDiwHigh(value, triggeredBy == Trigger_Copper);
             break;
 
         case 0x1fe:
