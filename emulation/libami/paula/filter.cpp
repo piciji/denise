@@ -34,29 +34,29 @@ auto Paula::setFilter() -> void {
     filters[1].reset();
 
     // input sample frequency (not host sample frequency, we apply this filter before we resample)
-    float sampleFrequency = (float)agnus.frequency() / (float)sampleLimit;
+    double sampleFrequency = (double)agnus.frequency() / (double)sampleLimit;
 
     filter1A0 = calcFilter(sampleFrequency, 6200);
     filter2A0 = calcFilter(sampleFrequency, 20000);
     filterA0 = calcFilter(sampleFrequency, 7000);
 }
 
-auto Paula::calcFilter(float sampleFrequency, unsigned cutoffFrequency) -> float {
+auto Paula::calcFilter(double sampleFrequency, unsigned cutoffFrequency) -> float {
     if (cutoffFrequency >= (sampleFrequency / 2) )
         return 1.0;
 
-    double omega = 2.0 * M_PI * (double)cutoffFrequency / (double)sampleFrequency;
+    double omega = 2.0 * M_PI * (double)cutoffFrequency / sampleFrequency;
     return (float)(1.0 / (1.0 + 1.0 / ( std::tan (omega / 2.0) * 2.0) ));
 }
 
-template<uint8_t channel> auto Paula::lowPassfilter(int32_t sample) -> int32_t {
+template<uint8_t channel> auto Paula::lowPassfilter(int32_t sample, int filterMode) -> int32_t {
     float staticFilter, ledFilter;
     float _filterA0 = filterA0;
     float filterA0Inverse = 1.0 - _filterA0;
 
     Filter& filter = filters[channel];
 
-    if (agnus.aga()) {
+    if ((!filterMode && agnus.aga()) || (filterMode >= 5)) {
         staticFilter = (float)sample;
 
         filter.rc2 = _filterA0 * staticFilter + filterA0Inverse * filter.rc2 + (1E-10);
@@ -74,6 +74,11 @@ template<uint8_t channel> auto Paula::lowPassfilter(int32_t sample) -> int32_t {
         filter.rc5 = _filterA0 * filter.rc4   + filterA0Inverse * filter.rc5;
         ledFilter = filter.rc5;
     }
+
+    if (filterMode == 1)
+        return (int32_t)staticFilter;
+    if ( (filterMode == 3) || (filterMode == 6) || (!filterMode && agnus.a1000()))
+        return (int32_t)ledFilter;
 
     return useLedFilter ? (int32_t)ledFilter : (int32_t)staticFilter;
 }

@@ -8,6 +8,7 @@
 #include "../../../emulation/libc64/interface.h"
 #include "../../media/media.h"
 #include "../../thread/emuThread.h"
+#include "../../view/view.h"
 #include "model.h"
 
 namespace EmuConfigView {   
@@ -640,12 +641,15 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
         }
     } else {
         switch(model->id) {
+            case LIBAMI::Interface::ModelIdAudioFilter:
+                view->updatePowerMenu();
+                break;
             case LIBAMI::Interface::ModelIdDiskDrivesConnected:
                 if(tabWindow->mediaLayout)
                     tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
 
                 if (this->emulator == activeEmulator)
-                    program->reset(activeEmulator);
+                    program->power(activeEmulator);
                 break;
             case LIBAMI::Interface::ModelIdRegion:
                 if (tabWindow->videoLayout)

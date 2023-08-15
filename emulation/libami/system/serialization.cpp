@@ -94,6 +94,7 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
 
     updateDriveSounds();
     updateStats();
+    interface->informPowerLED( (cia1.lines.ioa & 2) == 0 );
 
     return true;
 }

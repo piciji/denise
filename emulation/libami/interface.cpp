@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "212";
+const std::string Interface::Version = "213";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -30,7 +30,7 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdSystem, "Amiga", Model::Type::Radio, Model::Purpose::SubModels, 1, {0, 2}, {"A1000", "A500 (Full OCS)", "A500 (ECS Agnus, OCS Denise)"} });
     models.push_back({ModelIdSampleFetch, "PAULA Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 3, {0, 11}, {"8", "16", "24", "32", "40", "48", "56", "64", "80", "96", "112", "128"}});
-    models.push_back({ModelIdLowPassFilter, "Low Pass Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1}); //0 - off, 1 - on, means software decides
+    models.push_back({ModelIdAudioFilter, "PAULA Filter", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 6}, {"Auto", "Off (A500)", "Software (A500)", "On (A500)", "Off (A1200)", "Software (A1200)", "On (A1200)"}});
     models.push_back({ModelIdRegion, "Region", Model::Type::Radio, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
@@ -385,8 +385,8 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdRegion:
             system->setRegion( value );
             break;
-        case ModelIdLowPassFilter:
-            system->paula.enableFilter = (bool)value;
+        case ModelIdAudioFilter:
+            system->paula.setFilterMode(value);
             break;
         case ModelIdSampleFetch:
             system->setResampleQuality( value );
@@ -431,13 +431,13 @@ auto Interface::getModelValue(unsigned modelId) -> int {
     switch (modelId) {
         case ModelIdSystem:                         return (int)system->getModel();
         case ModelIdRegion:                         return (int)system->ntsc;
-        case ModelIdLowPassFilter:                  return (int)system->paula.enableFilter;
+        case ModelIdAudioFilter:                    return system->paula.filterMode;
         case ModelIdSampleFetch:                    return system->paula.getResampleQuality();
         case ModelIdDiskDrivesConnected:            return system->getDrivesEnabled();
         case ModelIdDiskDriveWobble:                return (int)DiskDrive::wobble;
         case ModelIdDiskDriveSpeed:                 return (int)DiskDrive::rpm;
         case ModelIdDiskDriveStepperSeekTime:       return (int)(DiskDrive::stepperSeekTimeBase);
-        case ModelIdDiskDriveStepperAccessTime:        return (int)(DiskDrive::stepperMinTimeBase);
+        case ModelIdDiskDriveStepperAccessTime:     return (int)(DiskDrive::stepperMinTimeBase);
         case ModelIdDiskTurbo:                      return (int)system->paula.turbo;
         case ModelIdChipMem:                        return system->getChipmem();
         case ModelIdSlowMem:                        return system->getSlowmem();

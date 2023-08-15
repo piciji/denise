@@ -51,7 +51,7 @@ rtc(agnus) {
 
             if ((lines->ioa ^ lines->ioaOld) & 2) {
                 interface->informPowerLED((lines->ioa & 2) == 0 );
-                paula.setLedFilter(lines->ioa & 2);
+                paula.setLedFilter((lines->ioa & 2) == 0 );
             }
 
         } else {

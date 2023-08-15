@@ -23,7 +23,7 @@ disk3(disk3),
 cpu(cpu),
 input(input) {
     sampleLimit = 0;
-    enableFilter = true;
+    filterMode = 0;
     loopBack = false;
 }
 
@@ -151,7 +151,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(int2Current);
     s.integer(int6Current);
     s.integer(vBlankIntr);
-    s.integer(enableFilter);
+    s.integer(filterMode);
     s.integer(useLedFilter);
 
     s.integer(dskLen);
@@ -272,7 +272,7 @@ auto Paula::power() -> void {
     int2Current = false;
     int6Current = false;
     vBlankIntr = true;
-    useLedFilter = false;
+    useLedFilter = true;
     pot.cntX0 = 0;
     pot.cntY0 = 0;
     pot.cntX1 = 0;
@@ -376,9 +376,10 @@ auto Paula::process() -> void {
             int32_t sampleL = channels[0].sample + channels[3].sample;
             int32_t sampleR = channels[1].sample + channels[2].sample;
 
-            if (enableFilter) {
-                sampleL = lowPassfilter<0>(sampleL);
-                sampleR = lowPassfilter<1>(sampleR);
+            if (filterMode != 4) { // A1200 Off don't use filter
+                int _filterMode = filterMode;
+                sampleL = lowPassfilter<0>(sampleL, _filterMode);
+                sampleR = lowPassfilter<1>(sampleR, _filterMode);
             }
 
             system->audioRefresh(Emulator::sclamp(16, sampleL), Emulator::sclamp(16, sampleR));
