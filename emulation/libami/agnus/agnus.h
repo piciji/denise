@@ -59,11 +59,7 @@ struct Agnus {
         AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
         AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
         DMACON_3, SER_DAT, DMACON_1, DIW_START, DIW_STOP, BLT_MODA, BLT_MODB, BLT_MODC, BLT_MODD,
-        VPOSW, VHPOSW,
-        COL0, COL1, COL2, COL3, COL4, COL5, COL6, COL7, COL8, COL9, COL10, COL11, COL12, COL13,
-        COL14, COL15, COL16, COL17, COL18, COL19, COL20, COL21, COL22, COL23, COL24, COL25, COL26,
-        COL27, COL28, COL29, COL30, COL31,
-        UPD_V_DIW,
+        VPOSW, VHPOSW, UPD_V_DIW, UPD_DENISE_VHPOS,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -218,7 +214,6 @@ struct Agnus {
     uint8_t laceFrame;
     int lineVCounter;
     uint16_t* frameBuffer;
-    bool hPosChangeOdd = false;
     bool hTotalChanged = false;
 
     struct {

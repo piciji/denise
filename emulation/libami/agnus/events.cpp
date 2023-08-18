@@ -147,8 +147,6 @@ template<bool isPtr> auto Agnus::inactivateOneCycleEvent(int job) -> void {
     }
 }
 
-#define _COL(pos) case COL0 + pos: denise.setColor(pos, data); break;
-
 auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
     uint16_t data = rJob.data;
     int job = rJob.job;
@@ -303,10 +301,11 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case BLT_MODD: blitter.setBltDMod(data); break;
 
         case VPOSW: vposw(data); break;
-        case VHPOSW: vhposw(data); break;
-
-        _COL(0) _COL(1) _COL(2) _COL(3) _COL(4) _COL(5) _COL(6) _COL(7) _COL(8) _COL(9) _COL(10) _COL(11) _COL(12) _COL(13) _COL(14) _COL(15)
-        _COL(16) _COL(17) _COL(18) _COL(19) _COL(20) _COL(21) _COL(22) _COL(23) _COL(24) _COL(25) _COL(26) _COL(27) _COL(28) _COL(29) _COL(30) _COL(31)
+        case VHPOSW:
+            vhposw(data);
+            addOneCycleEvent(UPD_DENISE_VHPOS, (data & 0xff) << 1,2);
+            break;
+        case UPD_DENISE_VHPOS: denise.hPos = data; break;
     }
 }
 

@@ -487,19 +487,9 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x198: case 0x19a: case 0x19c: case 0x19e: case 0x1a0: case 0x1a2:
         case 0x1a4: case 0x1a6: case 0x1a8: case 0x1aa: case 0x1ac: case 0x1ae:
         case 0x1b0: case 0x1b2: case 0x1b4: case 0x1b6: case 0x1b8: case 0x1ba:
-        case 0x1bc: case 0x1be: {
-            int pos = (adr - 0x180) >> 1;
-
-            if (triggeredBy == Trigger_Copper) {
-                if (hPosChangeOdd) { // vhPos register write hack
-                    addOneCycleEvent(COL0 + pos, value);
-                } else {
-                    denise.setColor(pos, value);
-                }
-            } else
-                denise.setColor(pos, value);
-
-        } break;
+        case 0x1bc: case 0x1be:
+            denise.setColor((adr - 0x180) >> 1, value);
+            break;
 
         case 0x1dc: // beamcon
             if (ecsAndHigher()) {

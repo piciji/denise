@@ -121,7 +121,6 @@ auto Agnus::power(bool softReset) -> void {
     vBlank = true;
     vBlankStart = false;
     sprInhibited = false;
-    hPosChangeOdd = false;
 
     vTotal = 0x7ff;
     vBStrt = 0;
@@ -387,7 +386,6 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 4:
-            hPosChangeOdd = false;
             // This happens one cycle earlier. Due to the emulator design, "strobe" happens at the beginning
             // of the cycle, before all other processes. However, the result only applies in this (next to strobe) cycle.
             // That's why we do this at the beginning of this cycle.
@@ -741,8 +739,7 @@ auto Agnus::vhposw(uint16_t value) -> void {
                 actions |= ACT_BPL;
 
         } else {
-            int diff = hPosBefore - hPos;
-            hPosChangeOdd = diff & 1;
+            int diff = hPosBefore - hPos - 1;
 
             if (hPosBefore > 0x2f && (diff > 0) )
                 denise.linePos -= diff << 1;
@@ -750,7 +747,7 @@ auto Agnus::vhposw(uint16_t value) -> void {
 
         updateEvent<EVENT_HTOTAL>(delay);
 
-//        interface->log("h cha");
+//        interface->log("vhpos");
 //        interface->log(vPos,0);
 //        interface->log(hPosBefore,0,1);
 //        interface->log(hPos,0,1);

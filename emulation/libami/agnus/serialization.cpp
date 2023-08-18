@@ -31,7 +31,6 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(frameClock);
     s.integer(fpsChange);
     s.integer(hBlank);
-    s.integer(hPosChangeOdd);
     s.integer(vBlankEnd);
     s.integer(vBlankEndNext);
     s.integer(vBlank);
