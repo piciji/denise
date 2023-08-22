@@ -7,7 +7,7 @@ SwapperControlLayout::SwapperControlLayout() {
     append(ejectButton,{0u, 0u}, 10);
     append(openButton,{0u, 0u});
 	writeProtect.setChecked();
-	writeProtect.setEnabled(false);
+	//writeProtect.setEnabled(false);
     setAlignment(0.5);
 }
 
@@ -233,6 +233,6 @@ auto SwapperLayout::updateWP(bool state, bool force) -> void {
     if (controls.writeProtect.checked() != state)
         controls.writeProtect.setChecked(state);
 
-    if (controls.writeProtect.enabled() != !force)
-        controls.writeProtect.setEnabled(!force);
+   // if (controls.writeProtect.enabled() != !force)
+     //   controls.writeProtect.setEnabled(!force);
 }

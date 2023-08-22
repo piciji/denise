@@ -12,7 +12,8 @@ namespace Emulator {
  * base emulator interface to inherit
  */		
 struct Interface {
-    
+
+    virtual ~Interface() {}
     // key idents for the emulated keyboards  
     
     enum class Key : unsigned {
@@ -314,6 +315,7 @@ struct Interface {
         virtual auto informPowerLED(bool) -> void {}
         virtual auto fpsChanged() -> void {}
         virtual auto trapsResult(Media*, bool error) -> void {}
+        virtual auto libraryMissing(std::string) -> void {}
     };
     Bind* bind = nullptr;
 
@@ -415,6 +417,10 @@ struct Interface {
 
     auto log(std::string data, bool newLine = true) -> void {
         bind->log(data, newLine);
+    }
+
+    auto libraryMissing(std::string ident) -> void {
+        bind->libraryMissing(ident);
     }
 
     template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {

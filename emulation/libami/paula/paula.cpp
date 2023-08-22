@@ -196,6 +196,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(serialReceiveEvent);
 
     s.integer(turbo);
+    s.integer(turboRequested);
 
     s.integer(pot.cntX0);
     s.integer(pot.cntY0);
@@ -349,16 +350,6 @@ auto Paula::power() -> void {
     txd = true;
     overrun = false;
     setFilter();
-}
-
-auto Paula::setActiveDrive(DiskDrive* drive) -> void {
-    activeDrive = drive;
-
-    if (!agnus.hasActiveEvent<Agnus::EVENT_FLOPPY>() && activeDrive->motor) {
-        activeDrive->reset();
-        //agnus.interface->log("fdc on");
-        agnus.updateEvent<Agnus::EVENT_FLOPPY>(fdcCycles);
-    }
 }
 
 auto Paula::process() -> void {

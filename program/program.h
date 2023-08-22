@@ -50,6 +50,7 @@ struct InputManager;
 struct Program : Emulator::Interface::Bind {
 	bool isPause = false;
     bool quitInProgress = false;
+    bool initialized = false;
     static bool focused;
 
 	unsigned loopFrames = 0;
@@ -111,6 +112,7 @@ struct Program : Emulator::Interface::Bind {
     auto setThreadPriority(Emulator::Interface::ThreadPriority priority, float minProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds) -> bool override;
     auto finishStartup() -> void;
     auto trapsResult(Emulator::Interface::Media* media, bool error) -> void override;
+    auto libraryMissing(std::string plugin) -> void override;
 
     auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;

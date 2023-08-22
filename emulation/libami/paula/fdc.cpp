@@ -33,7 +33,7 @@
 // so timing can change each bitcell. The amiga drives can only write a fixed bitcell width, see above
 // e.g. PAL: 1.97356 us or 3.94712 us (if slow mode is selected in controller)
 
-// precompensation is uninteresting for emulation, beacuse it doesn't change bitcell width but
+// precompensation is uninteresting for emulation, because it doesn't change bitcell width but
 // advance or delays the flux transition within the bitcell in order to optimize the distance
 // between 2 adjacent transitions
 
@@ -114,7 +114,7 @@ auto Paula::setDskLen(uint16_t value) -> void {
         return;
     }
 
-    if (!wordSync() && (dskTransferLength == 0)) { // todo recheck this
+    if (!dskTransferLength && (diskState == DiskState::READ || diskState == DiskState::WRITE)) {
         finishDMA();
         activeDrive->reset();
         return;
@@ -182,7 +182,7 @@ auto Paula::getDskBytR() -> uint16_t {
 
     if (diskState != DiskState::OFF && (activeDrive->structure.type == DiskStructure::ADF)) { // hack when ADF is in Byte mode
         if (dskSyncCycle) {
-            if ((agnus.clock - dskSyncCycle) <= (!fast() ? 14 : 14)) out |= 0x1000;
+            if ((agnus.clock - dskSyncCycle) <= (!fast() ? 14 : 7)) out |= 0x1000;
             else dskSyncCycle = 0;
         }
     }
@@ -264,7 +264,10 @@ auto Paula::instantDriveAccess() -> void {
 
 auto Paula::handleFDControllerIdle() -> void {
     dskShifter <<= 1;
-    dskShifter |= activeDrive->readBit<true>(fdcCycles);
+    if (activeDrive->structure.type == DiskStructure::IPF)
+        dskShifter |= activeDrive->readBitIPF(fdcCycles);
+    else
+        dskShifter |= activeDrive->readBit<true>(fdcCycles);
 
     if (msbSync()) { // Apple GCR
         // the MSB of each byte has to be a one, if not, "framing" is wrong and controller skips all zero bits.
@@ -319,6 +322,9 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                         dskSyncCycle = agnus.clock;
 
                         if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
+                            if (dskTransferLength == 0)
+                                break;
+
                             if constexpr (waitTurbo) iterations = 1;
                             setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
 
@@ -337,6 +343,7 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                 }
             } while((readWord || waitTurbo) && --iterations);
         } break;
+        case DiskStructure::IPF:
         case DiskStructure::EXT:
         case DiskStructure::EXT2: {
             bool bit;
@@ -346,7 +353,11 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
 
             do {
                 if constexpr (readWord || waitTurbo) iterations--;
-                bit = activeDrive->readBit<!(readWord || waitTurbo)>(fdcCycles);
+                if (activeDrive->structure.type == DiskStructure::IPF)
+                    bit = activeDrive->readBitIPF(fdcCycles);
+                else
+                    bit = activeDrive->readBit<!(readWord || waitTurbo)>(fdcCycles);
+
                 dskShifter <<= 1;
                 dskShifter |= bit;
 
@@ -369,6 +380,9 @@ template<bool readWord, bool waitTurbo> auto Paula::handleFDControllerRead() -> 
                     setDskSyncInt();
 
                     if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
+                        if (dskTransferLength == 0)
+                            break;
+
                         setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
 
                         if (diskState == DiskState::WRITE) {
@@ -431,6 +445,7 @@ auto Paula::handleFDControllerWrite() -> void {
             if (dskShifterPos != 16)
                 dskShifterPos += 8;
         } break;
+        case DiskStructure::IPF:
         case DiskStructure::EXT:
         case DiskStructure::EXT2: {
             bool state = false;
@@ -538,6 +553,23 @@ auto Paula::diskEvent() -> void {
     }
 
     agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles );
+}
+
+auto Paula::setActiveDrive(DiskDrive* drive) -> void {
+    activeDrive = drive;
+    turbo = ((activeDrive->structure.type != DiskStructure::IPF) || !activeDrive->track->cellWidth)
+            ? turboRequested : 0;
+
+    if (!agnus.hasActiveEvent<Agnus::EVENT_FLOPPY>() && activeDrive->motor) {
+        activeDrive->reset();
+        //agnus.interface->log("fdc on");
+        agnus.updateEvent<Agnus::EVENT_FLOPPY>(fdcCycles);
+    }
+}
+
+auto Paula::setTurbo(int value) -> void {
+    turboRequested = value;
+    turbo = ((activeDrive->structure.type != DiskStructure::IPF) || !activeDrive->track->cellWidth) ? value : 0;
 }
 
 }

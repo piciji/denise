@@ -4,6 +4,7 @@
 #include <cstring>
 #include <functional>
 #include "../../interface.h"
+#include "../../tools/DLLoader.h"
 
 namespace Emulator {
 struct Serializer;
@@ -22,16 +23,23 @@ struct DiskStructure {
     DiskStructure(Agnus& agnus);
     ~DiskStructure();
 
-    enum Type { ADF, EXT2, EXT, Unknown = -1 } type = Unknown;
+    enum Type { ADF, EXT2, EXT, IPF, Unknown = -1 } type = Unknown;
+    enum {  CAPSInit, CAPSExit, CAPSAddImage, CAPSRemImage,
+            CAPSLockImageMemory, CAPSUnlockImage, CAPSLoadImage,
+            CAPSGetVersionInfo, CAPSGetImageInfo,
+            CAPSLockTrack, CAPSUnlockAllTracks,
+            CAPS_METHOD_COUNT};
 
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
 
     struct Track {
+        int pos;
         uint8_t* data = nullptr;
         unsigned length = 0;
         unsigned bits = 0;
-        unsigned storage = 0; // ext adf track space
+        unsigned storage = 0; // ext adf track space, IPF Bit 0: multi Revs (weak bits)
         uint8_t written = 0; // MSB: if set and track has changed, the entire image must be rewritten
+        uint16_t* cellWidth = nullptr; // flux formats like IPF
     };
 
     Agnus& agnus;
@@ -44,6 +52,8 @@ struct DiskStructure {
     bool writeProtected = true;
     unsigned serializationSize = 0;
     bool dmsCompression = false;
+    static Emulator::DLLoader dlLoader;
+    int capsImageId;
 
     auto attach(uint8_t* data, unsigned size) -> bool;
     auto detach() -> void;
@@ -52,13 +62,23 @@ struct DiskStructure {
     auto analyzeEXT2(uint8_t* data, unsigned size) -> bool;
     auto analyzeADF(uint8_t* data, unsigned size) -> bool;
     auto analyzeDMS(uint8_t* data, unsigned size) -> bool;
+    auto analyzeIPF(uint8_t* data, unsigned size) -> bool;
 
     auto prepareADF(uint8_t* data, unsigned size) -> void;
     auto prepareEXT(uint8_t* data, unsigned size) -> void;
     auto prepareEXT2(uint8_t* data, unsigned size) -> void;
     auto createEXT2(unsigned size) -> uint8_t*;
+    auto prepareIPF(uint8_t* data, unsigned size) -> void;
 
-    auto storeWrittenTracks() -> void;
+    static auto initIPF() -> bool;
+    static auto destroyIPF() -> void;
+    auto removeIPF() -> void;
+    auto unloadIPF() -> void;
+    auto loadNextRevIPF(Track& track) -> void;
+    auto deleteTimingIPF(Track& track) -> void;
+    auto addTimingIPF(Track& track, unsigned tiLength, uint32_t* tiData) -> void;
+
+    auto storeWrittenTracks(Emulator::Interface::Media* media) -> void;
 
     auto getListing() -> std::vector<Emulator::Interface::Listing>;
 

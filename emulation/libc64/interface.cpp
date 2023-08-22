@@ -38,6 +38,11 @@ Interface::Interface() : Emulator::Interface( "C64" ) {
     system = new System( this );    
 }
 
+Interface::~Interface() {
+    //if (system)
+      //  delete system;
+}
+
 auto Interface::prepareMedia() -> void {
 	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64", "p64", "d71", "g71", "p71"}, {"d64", "g64", "p64", "d71", "g71", "p71"} });
 	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	

@@ -753,3 +753,4 @@ On (A500) = An (A500)
 Off (A1200) = Aus (A1200)
 Software (A1200) = Software (A1200)
 On (A1200) = An (A1200)
+SPS plugin missing = Diese Software benötigt das SPS plugin mindestens Version 4.2, verfügbar hier: http://www.softpres.org

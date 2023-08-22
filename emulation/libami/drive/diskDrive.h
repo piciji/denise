@@ -12,6 +12,7 @@ namespace Emulator {
 namespace LIBAMI {
 
 struct Agnus;
+struct Paula;
 struct DiskStructure;
 struct System;
 struct Interface;
@@ -26,6 +27,7 @@ struct DiskDrive {
 
     uint8_t number;
     Agnus& agnus;
+    Paula& paula;
     System* system;
     Interface* interface;
 
@@ -55,6 +57,7 @@ struct DiskDrive {
     unsigned refCyclesPerRevolution;
 
     int accum;
+    int cellSpeed;
 
     int64_t stepClock; // minimum delay between steps
     int64_t stepSettleClock; // time to read reliable from next track
@@ -87,6 +90,7 @@ struct DiskDrive {
     template<bool update> auto readByte(int& dmaCycles) -> uint8_t;
     auto writeByte(uint8_t byte) -> void;
     template<bool update> auto readBit(int& dmaCycles) -> bool;
+    auto readBitIPF(int& dmaCycles) -> bool;
     auto writeBit(bool state) -> void;
     auto reset() -> void;
 

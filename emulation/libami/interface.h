@@ -10,6 +10,7 @@ struct System;
 struct Interface : Emulator::Interface  {
 
     Interface();
+    ~Interface();
     System* system = nullptr;
 
     enum ModelId {

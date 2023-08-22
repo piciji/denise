@@ -8,11 +8,16 @@
 #include "ext.cpp"
 #include "ext2.cpp"
 #include "dms.cpp"
+#include "ipf.cpp"
 
 namespace LIBAMI {
 
 DiskStructure::DiskStructure(Agnus& agnus) : agnus(agnus) {
     writeProtected = true;
+    capsImageId = -1;
+    for(unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
+        tracks[i].pos = i;
+    }
 }
 
 DiskStructure::~DiskStructure() {
@@ -20,7 +25,10 @@ DiskStructure::~DiskStructure() {
         Track& track = tracks[i];
         if (track.data)
             delete[] track.data;
+        if (track.cellWidth)
+            delete[] track.cellWidth;
     }
+    removeIPF();
 }
 
 auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
@@ -41,6 +49,9 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
         case Type::EXT2:
             prepareEXT2(data, size);
             break;
+        case Type::IPF:
+            prepareIPF(data, size);
+            break;
         default:
             return false;
     }
@@ -53,6 +64,9 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
 
 auto DiskStructure::detach() -> void {
     rawSize = 0;
+    if (type == Type::IPF)
+        unloadIPF();
+
     type = Type::Unknown;
     writeProtected = false;
     hd = false;
@@ -72,14 +86,20 @@ auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
     if (analyzeDMS(data, size))
         return true;
 
+    if (analyzeIPF(data, size))
+        return true;
+
     if (analyzeADF(data, size))
         return true;
 
     return false;
 }
 
-auto DiskStructure::storeWrittenTracks() -> void {
-    if (dmsCompression)
+auto DiskStructure::storeWrittenTracks(Emulator::Interface::Media* media) -> void {
+    if (dmsCompression || (type == Type::IPF) )
+        return;
+
+    if (!agnus.interface->questionToWrite(media))
         return;
 
     if (type == Type::EXT || type == Type::EXT2) {
@@ -188,7 +208,9 @@ auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits, u
     std::memset( track.data, initVal, newLength );
     track.length = newLength;
     track.bits = bits == 0 ? getTrackBitLength() : bits;
+    track.storage = 0;
     track.written = 0;
+    deleteTimingIPF(track);
 }
 
 auto DiskStructure::getTrackBitLength() -> unsigned {

@@ -119,6 +119,10 @@ rtc(agnus) {
     ntsc = false;
 }
 
+System::~System() {
+    DiskStructure::destroyIPF();
+}
+
 auto System::power(bool softReset, bool resetInstruction) -> void {
 
     agnus.power(softReset);

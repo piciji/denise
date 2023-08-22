@@ -22,6 +22,7 @@ struct Interface;
 struct System {
 
     System(Interface* interface);
+    ~System();
 
     Interface* interface;
     Input input;

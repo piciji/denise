@@ -81,6 +81,7 @@ struct Paula {
     int64_t serialTransferEvent;
     int64_t serialReceiveEvent;
 
+    uint8_t turboRequested = 0;
     uint8_t turbo = 0;
 
     struct {
@@ -203,6 +204,7 @@ struct Paula {
     auto handleFDControllerIdle() -> void;
     auto diskEvent() -> void;
     auto setActiveDrive(DiskDrive* drive) -> void;
+    auto setTurbo(int value) -> void;
 
     auto getFromFifo(uint16_t& data) -> bool;
     auto addToFifo(uint16_t data) -> void;

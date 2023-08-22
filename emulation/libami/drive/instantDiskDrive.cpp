@@ -17,8 +17,9 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
     uint16_t shifter = 0;
     int overflow = 0;
     int b;
+    bool bitMode = structure.type == DiskStructure::EXT || structure.type == DiskStructure::EXT2 || structure.type == DiskStructure::IPF;
 
-    if (structure.type == DiskStructure::EXT || structure.type == DiskStructure::EXT2) {
+    if (bitMode) {
         bits = track->bits;
     } else {
         bits = length << 3;
@@ -121,6 +122,7 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
     uint8_t out = 0;
     bool rand = false;
     int bitLimit;
+    bool bitMode = structure.type == DiskStructure::EXT || structure.type == DiskStructure::EXT2 || structure.type == DiskStructure::IPF;
 
     if (stepSettleClock) {
         stepSettleClock = 0;
@@ -153,9 +155,10 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
                 if (++overflow == 2)
                     break; // there was no sync pattern found
             }
+            structure.loadNextRevIPF(*track);
             cia.setFlag();
 
-            if (structure.type == DiskStructure::EXT || structure.type == DiskStructure::EXT2) {
+            if (bitMode) {
                 bitLimit = (track->length << 3) - track->bits;
                 if (bitLimit > 7) bitLimit = 0;
                 word &= 0xff00 << bitLimit;
@@ -168,21 +171,22 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
                 if (++overflow == 2)
                     break;
             }
+            structure.loadNextRevIPF(*track);
             cia.setFlag();
 
-            if (structure.type == DiskStructure::EXT || structure.type == DiskStructure::EXT2) {
+            if (bitMode) {
                 bitLimit = (track->length << 3) - track->bits;
                 if (bitLimit > 7) bitLimit = 0;
             }
         }
 
         if (!word) {
-            if (rand) { // continous oscilations
+            if (rand) { // continuous oscillations
                 for (int i = 0; i < 16; i++)
                     word |= ((randomizer.xorShift() >> 16 ) & 1) << i;
             } else {
                 word |= 0x155;
-                rand = 1; // first oscilation
+                rand = 1; // first oscillation
             }
         } else
             rand = 0;

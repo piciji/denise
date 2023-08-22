@@ -501,3 +501,16 @@ auto Program::addCustomFont() -> void {
         }
     }
 }
+
+auto Program::libraryMissing(std::string plugin) -> void {
+    if (!initialized)
+        return;
+
+    if (plugin == "CAPS") {
+        static bool informed = false;
+        if (view && !informed) {
+            view->message->error(trans->get("SPS plugin missing"));
+            informed = true;
+        }
+    }
+}

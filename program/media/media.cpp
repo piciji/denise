@@ -1280,8 +1280,8 @@ auto MediaLayout::updateWriteProtection( Emulator::Interface::Media* media, bool
             if (state != block->header.writeprotect.checked())            
                 block->header.writeprotect.setChecked( state );                            
             
-            if (enabled != block->header.writeprotect.enabled())               
-                block->header.writeprotect.setEnabled( enabled );                            
+           // if (enabled != block->header.writeprotect.enabled())
+             //   block->header.writeprotect.setEnabled( enabled );
 
             break;
         }

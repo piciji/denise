@@ -116,12 +116,13 @@ auto Program::finishStartup() -> void {
         return;
 
     if (!activeEmulator)
-        power(getLastUsedEmu());
+        power(getLastUsedEmu(), false);
 
     if (view && VideoManager::placeHolderFrames)
         view->setPointerCursor();
 
 	initUserInterface();
+    initialized = true;
 }
 
 auto Program::initUserInterface() -> void {
@@ -525,7 +526,11 @@ auto Program::quit() -> void {
         delete settings;
 
     // don't deinitialize "global settings", because of APP shutdown may trigger Window resizing which needs info from global settings
-    
+
+    for(auto emulator : emulators)
+        delete emulator;
+    emulators.clear();
+
     // in case of exit request from emulation core
     GUIKIT::Application::loop = nullptr;
 }

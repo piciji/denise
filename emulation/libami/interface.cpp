@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "214";
+const std::string Interface::Version = "215";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -19,6 +19,11 @@ Interface::Interface() : Emulator::Interface( "Amiga" ) {
     prepareExpansions();
 
     system = new System( this );
+}
+
+Interface::~Interface() {
+    if (system)
+        delete system;
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -48,7 +53,7 @@ auto Interface::prepareModels() -> void {
 }
 
 auto Interface::prepareMedia() -> void {
-    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "dms", "adz"}, {"adf", "ext.adf"} });
+    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "dms", "ipf", "adz"}, {"adf", "ext.adf"} });
     // mediaGroups.push_back({MediaGroupIdHardDisk, "hd", MediaGroup::Type::HardDisk, {"hdf"}, {"hdf"} });
 
     {   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -407,7 +412,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             DiskDrive::setStepperMinTime( value );
             break;
         case ModelIdDiskTurbo:
-            system->paula.turbo = value;
+            system->paula.setTurbo(value);
             break;
         case ModelIdChipMem:
             system->setChipmem(value);
@@ -438,7 +443,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskDriveSpeed:                 return (int)DiskDrive::rpm;
         case ModelIdDiskDriveStepperSeekTime:       return (int)(DiskDrive::stepperSeekTimeBase);
         case ModelIdDiskDriveStepperAccessTime:     return (int)(DiskDrive::stepperMinTimeBase);
-        case ModelIdDiskTurbo:                      return (int)system->paula.turbo;
+        case ModelIdDiskTurbo:                      return (int)system->paula.turboRequested;
         case ModelIdChipMem:                        return system->getChipmem();
         case ModelIdSlowMem:                        return system->getSlowmem();
         case ModelIdFastMem:                        return system->getFastmem();

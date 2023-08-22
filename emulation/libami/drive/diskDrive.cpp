@@ -15,7 +15,7 @@ namespace LIBAMI {
 typedef Emulator::Interface::DriveSound DriveSound;
 
 DiskDrive::DiskDrive(uint8_t number, System* system, Agnus& agnus, Cia<MOS_8520>& cia)
-: number(number), system(system), agnus(agnus), cia(cia), structure(agnus) {
+: number(number), system(system), agnus(agnus), paula(agnus.paula), cia(cia), structure(agnus) {
     interface = system->interface;
     media = &interface->mediaGroups[Interface::MediaGroupIdDisk].media[number];
     track = getDummyTrack();
@@ -166,6 +166,37 @@ template<bool update> auto DiskDrive::readBit(int& dmaCycles) -> bool {
     return state;
 }
 
+auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
+    if (!motorSpinning() || !inserted)
+        return false;
+
+    if (stepSettleClock) progressStepper();
+
+    unsigned byte = headOffset >> 3;
+    uint8_t bit = (~headOffset) & 7; // msb is next
+
+    headOffset++;
+    if ( headOffset >= track->bits ) {
+        headOffset = 0;
+        structure.loadNextRevIPF(*track);
+        if (selected)
+            cia.setFlag();
+    }
+
+    accum += track->bits * dmaCycles;
+    accum -= (refCyclesPerRevolution * cellSpeed) / 1000;
+
+    cellSpeed = track->cellWidth ? track->cellWidth[headOffset >> 3] : 1000;
+
+    unsigned todo = ((refCyclesPerRevolution * cellSpeed) / 1000) - accum;
+    dmaCycles = (todo + (track->bits >> 1) ) / track->bits;
+
+    if (!selected)
+        return false;
+
+    return (track->data[byte] >> bit) & 1;
+}
+
 auto DiskDrive::writeBit(bool state) -> void {
     if (!motorSpinning() || !inserted)
         return;
@@ -224,6 +255,7 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     accum = 0;
     wobblePos = 0;
     wobbleLimit = wobble >> 1;
+    cellSpeed = 1000;
     updateRpm();
 
     if (driveSound && system->powerOn && system->isDisplayFrame())
@@ -260,10 +292,7 @@ auto DiskDrive::write() -> void {
     if (!inserted)
         return;
 
-    if (!interface->questionToWrite(media))
-        return;
-
-    structure.storeWrittenTracks();
+    structure.storeWrittenTracks(media);
 }
 
 auto DiskDrive::power() -> void {
@@ -281,6 +310,7 @@ auto DiskDrive::power() -> void {
     side = 0;
     headOffset = 0;
     accum = 0;
+    cellSpeed = 1000;
     stepperSeekTime = (stepperSeekTimeBase * agnus.frequency()) / 10000;
     stepperMinTime = (stepperMinTimeBase * agnus.frequency()) / 10000;
     structure.serializationSize = 0;
@@ -448,6 +478,9 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
 inline auto DiskDrive::updateTrack() -> void {
     accum = 0;
     track = &structure.tracks[(cylinder << 1) | side];
+
+    paula.turbo = ((structure.type != DiskStructure::IPF) || !track->cellWidth) ? paula.turboRequested : 0;
+
     updateDeviceState();
 }
 
@@ -467,8 +500,6 @@ auto DiskDrive::setWobble(unsigned wobbleScaled) -> void {
 }
 
 auto DiskDrive::randomizeRpm(unsigned frequency) -> void {
-    // supported for EXT ADF only
-
     // drive speed is 300 rounds per minute
     // more realistic speed wobbles between 299,75 - 300,25
     // so we could generate a random number in a range of 0.5
@@ -514,7 +545,7 @@ auto DiskDrive::updateDeviceState(bool force) -> void {
         return;
 
     if (force || (selected && system->isDisplayFrame()))
-        interface->updateDeviceState( media, agnus.paula.fdcWriteMode(), (cylinder << 1) | side, motor, !motor );
+        interface->updateDeviceState( media, paula.fdcWriteMode(), (cylinder << 1) | side, motor, !motor );
 }
 
 auto DiskDrive::enableSounds(bool state) -> void {
@@ -561,6 +592,7 @@ auto DiskDrive::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(stepperMinTime);
     s.integer(randomizer.xorShift32);
     s.integer(randCounter);
+    s.integer(cellSpeed);
 
     if (s.mode() == Emulator::Serializer::Mode::Load)
         track = &structure.tracks[(cylinder << 1) | side];
