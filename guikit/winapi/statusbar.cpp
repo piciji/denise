@@ -315,7 +315,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
 
         yPos = rect.top + (unsigned)((yPos - image->height) / 2);
         
-        DrawIconEx( hDC, rect.left + (!part.position ? 3 : 0), yPos - ((pApplication::version > Windows7) ? 1 : 0), hIcon, image->width, image->height, 0, NULL, DI_NORMAL);
+        DrawIconEx( hDC, rect.left + (!part.position ? 3 : 0), yPos - ((getVersionNew() > Windows7) ? 1 : 0), hIcon, image->width, image->height, 0, NULL, DI_NORMAL);
         
         if(hIcon)
             DestroyIcon(hIcon);
@@ -340,7 +340,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
             SetTextColor(hDC, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
         }
 
-        if (IsAppThemed() && (pApplication::version <= Windows7))
+        if (IsAppThemed() && (getVersionNew() <= Windows7))
             rect.top += 2;
         else
             rect.top += 1;

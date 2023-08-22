@@ -90,7 +90,6 @@ auto pApplication::getUtf8CmdLine(std::vector<std::string>& out) -> bool {
 }
 
 std::string pApplication::cwd = "";
-unsigned pApplication::version = 0;
 
 HMODULE pApplication::uxTheme = nullptr;
 FN_BeginBufferedPaint pApplication::pfnBeginBufferedPaint = nullptr;
@@ -124,9 +123,8 @@ auto pApplication::initialize() -> void {
     RegisterClass(&wc);
 
     currentWorkingDirectory();
-	version = getVersion();
     
-    if(version >= WindowsVista) {
+    if(getVersionNew() >= WindowsVista) {
         uxTheme = LoadLibraryA("UXTHEME.DLL");
 
         if (uxTheme) {
@@ -387,7 +385,7 @@ auto pWindow::tellMeShouldICreateTheUIRightAway() -> bool {
 inline auto pWindow::XPOrBelowOrWin7InXPMode() -> bool {
 	// in Win8 and above visual styles can't be turned off anymore, so App is always themed.
 	// when App is not themed, it means Win7 visual styles looks and behaves as XP (classic mode)
-	return !IsAppThemed() || (pApplication::version <= WindowsXP);
+	return !IsAppThemed() || (getVersionNew() <= WindowsXP);
 }
 
 auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {

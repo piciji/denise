@@ -77,7 +77,7 @@ auto pFrame::create() -> void {
 	
 	pen = CreatePen(PS_SOLID, 1, getBorderColor());		
 	
-	roundedConrner = pApplication::version <= Windows7;
+	roundedConrner = getVersionNew() <= Windows7;
     
     hwnd = CreateWindow(WC_STATIC, L"",
         WS_CHILD,
@@ -370,10 +370,10 @@ auto pFrame::rebuild() -> void {
 
 inline auto pFrame::getBorderColor() -> COLORREF {
 	
-	if (!IsAppThemed() || (pApplication::version <= WindowsXP) )
+	if (!IsAppThemed() || (getVersionNew() <= WindowsXP) )
 		return RGB(0xff, 0xff, 0xff);
 	
-	if (pApplication::version > Windows7)
+	if (getVersionNew() > Windows7)
 		return RGB(0xdc, 0xdc, 0xdc);
 	
 	return RGB(0xd5, 0xdf, 0xe5);

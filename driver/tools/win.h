@@ -34,6 +34,8 @@ struct Win {
                 if (0x00000000 == fxPtr(&rovi)) {
                     FreeLibrary(hMod);
                     version = (rovi.dwMajorVersion << 8) | rovi.dwMinorVersion;
+                    if ((version >= 0xa00) && (rovi.dwBuildNumber >= 22000))
+                        version += 1; // Win 11
                     return version;
                 }
             }

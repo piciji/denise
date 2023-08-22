@@ -341,7 +341,7 @@ auto pBrowserWindow::fileMulti() -> std::vector<std::string> {
     std::vector<std::string> out;
     auto& state = browserWindow.state;
 
-    if (pApplication::version >= WindowsVista)
+    if (getVersionNew() >= WindowsVista)
         return fileVista(false, true);
 
     pApplication::currentWorkingDirectory(); //unfortunately file dialog overwrites cwd, so get it before, if not already done
@@ -421,7 +421,7 @@ auto pBrowserWindow::file(bool save) -> std::string {
     
     auto& state = browserWindow.state;
     
-    if (!state.contentView.id && (pApplication::version >= WindowsVista))
+    if (!state.contentView.id && (getVersionNew() >= WindowsVista))
         return fileVista(save)[0];
     
     pApplication::currentWorkingDirectory(); //unfortunately file dialog overwrites cwd, so get it before, if not already done

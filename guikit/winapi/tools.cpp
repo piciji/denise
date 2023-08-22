@@ -422,14 +422,6 @@ auto pSystem::printToCmd( std::string str ) -> void {
     fwprintf(stdout, utf16_t( str ) );
 }
 
-auto getVersion() -> unsigned {
-	OSVERSIONINFO versionInfo{0};
-	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&versionInfo);
-	
-	return (versionInfo.dwMajorVersion << 8) | versionInfo.dwMinorVersion;
-}
-
 typedef LONG NTSTATUS, *PNTSTATUS;
 typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 
@@ -448,6 +440,8 @@ static auto getVersionNew() -> unsigned {
             if (0x00000000 == fxPtr(&rovi)) {
                 FreeLibrary(hMod);
                 version = (rovi.dwMajorVersion << 8) | rovi.dwMinorVersion;
+                if ((version >= 0xa00) && (rovi.dwBuildNumber >= 22000))
+                    version += 1; // Win 11
                 return version;
             }
         }

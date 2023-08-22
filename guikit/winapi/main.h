@@ -31,6 +31,7 @@ static const unsigned Windows7     = 0x0601;
 static const unsigned Windows8     = 0x0602;
 static const unsigned Windows81    = 0x0603;
 static const unsigned Windows10    = 0x0a00;
+static const unsigned Windows11    = 0x0a01;
 
 struct DropManager : public IDropTarget {
     DropManager(pWidget* refWidget);
@@ -65,7 +66,6 @@ struct pApplication {
     static auto getUtf8CmdLine(std::vector<std::string>& out) -> bool;
 	
     static std::string cwd; //current working directory
-	static unsigned version;
 
     static ProcessReference g_pProcRef;
     static HMODULE uxTheme;
@@ -900,5 +900,4 @@ auto CreateBitmapWithPremultipliedAlpha(Image& image) -> HBITMAP;
 auto CreateHCursor( HBITMAP hBitmap, unsigned hotSpotX, unsigned hotSpotY ) -> HCURSOR;
 auto CreateHIcon(Image& image) -> HICON;
 auto getDropPaths(WPARAM wparam) -> std::vector<std::string>;
-auto getVersion() -> unsigned;
 }

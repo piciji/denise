@@ -12,7 +12,7 @@ auto pMonitor::getCurrentRefreshRate() -> float {
         return (float)activeSetting->devMode.dmDisplayFrequency;
     }
 
-    if (pApplication::version > Windows7) {
+    if ((getVersionNew() > Windows7) && (getVersionNew() < Windows11)) {
         DWM_TIMING_INFO timingInfo;
         ZeroMemory(&timingInfo, sizeof(timingInfo));
         timingInfo.cbSize = sizeof(timingInfo);
