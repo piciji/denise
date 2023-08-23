@@ -13,7 +13,16 @@ auto DiskStructure::initIPF() -> bool {
         return false;
 
     if (!dlLoader.hasOpened()) {
-        for (auto& plugin: {"CAPSImg", "CAPSImg_x64"}) {
+
+#if defined(_WIN32)
+        std::string plugins[] = {"CAPSImg", "CAPSImg_x64"};
+#elif defined( __APPLE__ )
+        std::string plugins[] = {"CAPSImage.framework"};
+#else
+        std::string plugins[] = {"libcapsimage.so.4", "libcapsimage.so.5"};
+#endif
+
+        for (auto& plugin: plugins) {
             dlLoader.setPath(plugin);
             if (dlLoader.open())
                 break;
