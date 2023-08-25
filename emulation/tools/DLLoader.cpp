@@ -4,6 +4,7 @@
 #else
 #include <dlfcn.h>
 #endif
+#include <cstdint>
 
 #include "DLLoader.h"
 
