@@ -17,9 +17,9 @@ auto DiskStructure::initIPF() -> bool {
 #if defined(_WIN32)
         std::string plugins[] = {"CAPSImg", "CAPSImg_x64"};
 #elif defined( __APPLE__ )
-        std::string plugins[] = {"CAPSImage.framework"};
+        std::string plugins[] = {"CAPSImage.framework/CAPSImage", "libcapsimage.5.dylib", "libcapsimage.4.dylib"};
 #else
-        std::string plugins[] = {"libcapsimage.so.4", "libcapsimage.so.5"};
+        std::string plugins[] = {"libcapsimage.so.5", "libcapsimage.so.4"};
 #endif
 
         for (auto& plugin: plugins) {

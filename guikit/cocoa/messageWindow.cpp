@@ -28,11 +28,25 @@ auto pMessageWindow::message(MessageWindow::State& state, NSAlertStyle style) ->
                 [alert addButtonWithTitle:[NSString stringWithUTF8String:trans.cancel.c_str()]];
                 break;
         }
-
+        
         [alert setAlertStyle:style];
+        
+        __block NSInteger response;
+        
+        if([NSThread isMainThread])
+            response = [alert runModal];
+        else {
+            dispatch_group_t group = dispatch_group_create();
+            dispatch_group_enter(group);
 
-        NSInteger response = [alert runModal];
-
+            dispatch_async(dispatch_get_main_queue(), ^{
+                response = [alert runModal];
+                dispatch_group_leave(group);
+            });
+        
+            dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+        }
+        
         switch(state.buttons) {
             case MessageWindow::Buttons::Ok:
                 if(response == NSAlertFirstButtonReturn) return MessageWindow::Response::Ok;
