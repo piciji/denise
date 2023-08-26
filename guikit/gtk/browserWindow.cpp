@@ -32,8 +32,12 @@ auto pBrowserWindow::responseHandler(GtkDialog* dialog, gint responseId, gpointe
 		instance->close();
 	} else if (responseId == GTK_RESPONSE_ACCEPT) {
 		
-		if (state.onOkClick) 
-			state.onOkClick( instance->selectedPath, instance->contentViewSelection() );
+		if (state.onOkClick) {
+            if (instance->multi && instance->sortedFiles.size())
+                state.onOkClick(instance->sortedFiles, instance->contentViewSelection());
+            else
+                state.onOkClick({instance->selectedPath}, instance->contentViewSelection());
+        }
 		
 		instance->close();
 	} else {		
@@ -42,9 +46,13 @@ auto pBrowserWindow::responseHandler(GtkDialog* dialog, gint responseId, gpointe
 			if (button.id == responseId) {
 
 				if (button.onClick) {
-					if ( button.onClick( instance->selectedPath, instance->contentViewSelection() ) )
-						instance->close();
-
+                    if (instance->multi && instance->sortedFiles.size()) {
+                        if ( button.onClick( instance->sortedFiles, instance->contentViewSelection() ) )
+                            instance->close();
+                    } else {
+                        if (button.onClick( {instance->selectedPath}, instance->contentViewSelection()))
+                            instance->close();
+                    }
 				}
 				break;
 			}		        
@@ -68,10 +76,8 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
 	
 	std::string path = (std::string)fileNamePtr;
 
-    if (state.orderBySelected) {
+    if (instance->multi) {
         std::vector<std::string> curSelectedFiles;
-        std::vector<std::string> resultFiles;
-
         GSList* fileList = gtk_file_chooser_get_filenames(chooser);
         for (GSList *iter = fileList; iter != nullptr; iter = g_slist_next(iter)) {
             std::string name = static_cast<char *>(iter->data);
@@ -80,22 +86,27 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
         }
         g_slist_free(fileList);
 
-        for(auto& selectedFile : instance->sortedFiles) { // sorted selection before
-            unsigned pos = 0;
-            for(auto& curSelectedFile : curSelectedFiles) { // unsorted current selection
-                if (selectedFile == curSelectedFile) {
-                    resultFiles.push_back( selectedFile );
-                    GUIKIT::Vector::eraseVectorPos(curSelectedFiles, pos);
-                    break;
+        if (state.orderBySelected) {
+            std::vector<std::string> resultFiles;
+
+            for (auto &selectedFile: instance->sortedFiles) { // sorted selection before
+                unsigned pos = 0;
+                for (auto &curSelectedFile: curSelectedFiles) { // unsorted current selection
+                    if (selectedFile == curSelectedFile) {
+                        resultFiles.push_back(selectedFile);
+                        GUIKIT::Vector::eraseVectorPos(curSelectedFiles, pos);
+                        break;
+                    }
+                    pos++;
                 }
-                pos++;
             }
-        }
 
-        for(auto& curSelectedFile : curSelectedFiles)
-            resultFiles.push_back( curSelectedFile );
+            for (auto &curSelectedFile: curSelectedFiles)
+                resultFiles.push_back(curSelectedFile);
 
-        instance->sortedFiles = resultFiles;
+            instance->sortedFiles = resultFiles;
+        } else
+            instance->sortedFiles = curSelectedFiles;
     }
 	
 	if (!path.empty() && path != instance->selectedPath) {
@@ -136,6 +147,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
     std::vector<std::string> out;
     std::string name  = "";
 	auto& state = browserWindow.state;
+    this->multi = multi;
 
 	const gchar* _cancel = g_dgettext("gtk30", "_Cancel");
 	if (!state.textCancel.empty())
@@ -193,46 +205,50 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         gtk_file_chooser_add_filter((GtkFileChooser*)dialog, gtkFilter);
     }
 	
-	g_signal_connect(dialog, "selection-changed", G_CALLBACK(pBrowserWindow::selectionHandler), (gpointer)this);	
+	g_signal_connect(dialog, "selection-changed", G_CALLBACK(pBrowserWindow::selectionHandler), (gpointer)this);
 
     if (multi) {
         sortedFiles.clear();
         gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), true);
+    }
 
-        if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-            GSList* fileList = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
+    if (state.modal) {
+        if (multi) {
+            if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+                GSList *fileList = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
 
-            for (GSList* iter = fileList; iter != nullptr; iter = g_slist_next(iter)) {
-                name = static_cast<char*>(iter->data);
-                out.push_back(name);
-                g_free(iter->data);
-            }
-
-            g_slist_free(fileList);
-
-            if (state.orderBySelected && state.orderBySelected->checked && sortedFiles.size()) {
-                std::vector<std::string> temp;
-
-                for (auto& sSortedFile : sortedFiles) {
-                    for(auto& sFile : out ) {
-                        if (GUIKIT::String::findString(sFile, sSortedFile))
-                            temp.push_back( sFile );
-                    }
+                for (GSList *iter = fileList; iter != nullptr; iter = g_slist_next(iter)) {
+                    name = static_cast<char *>(iter->data);
+                    out.push_back(name);
+                    g_free(iter->data);
                 }
-                out = temp;
-            }
-        }
 
-        close();
-    } else if (state.modal) {
-		if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-			char* temp = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-			name = temp;
-			g_free(temp);
-		}   
-        out.push_back(name);
-		close();
-	} else {
+                g_slist_free(fileList);
+
+                if (state.orderBySelected && state.orderBySelected->checked && sortedFiles.size()) {
+                    std::vector<std::string> temp;
+
+                    for (auto &sSortedFile: sortedFiles) {
+                        for (auto &sFile: out) {
+                            if (GUIKIT::String::findString(sFile, sSortedFile))
+                                temp.push_back(sFile);
+                        }
+                    }
+                    out = temp;
+                }
+            }
+
+            close();
+        } else {
+            if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+                char* temp = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+                name = temp;
+                g_free(temp);
+            }
+            out.push_back(name);
+            close();
+        }
+    } else {
         out.push_back(name);
         gtk_widget_show_all(GTK_WIDGET(dialog));
     }

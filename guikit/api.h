@@ -1122,7 +1122,7 @@ struct BrowserWindow {
     auto setPath(const std::string& path) -> BrowserWindow&;
     auto setTitle(const std::string& title) -> BrowserWindow&;
     auto setOnChangeCallback( std::function<std::vector<BrowserWindow::Listing> (std::string file)> onSelectionChange ) -> BrowserWindow&;
-    auto addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id = 0, std::string toolTip = "" ) -> BrowserWindow&;
+    auto addCustomButton( std::string text, std::function<bool (std::vector<std::string> filePaths, unsigned selection)> onClick, unsigned id = 0, std::string toolTip = "" ) -> BrowserWindow&;
     auto setDefaultButtonText(std::string textOk, std::string textCancel = "") -> BrowserWindow&;
 	auto setDefaultButtonTooltip(std::string toolTip) -> BrowserWindow&;
 	auto setNonModal() -> BrowserWindow&;
@@ -1140,7 +1140,7 @@ struct BrowserWindow {
     auto setContentViewSelection(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
     auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
 
-    auto setCallbacks( std::function<void (std::string filePath, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow&;
+    auto setCallbacks( std::function<void (std::vector<std::string> filePaths, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow&;
     auto getContentViewSelection() -> unsigned;
     auto resizeTemplate(bool resize, int adjust = 0) -> BrowserWindow&;    
     
@@ -1150,7 +1150,7 @@ struct BrowserWindow {
     struct CustomButton {        
         std::string text;
 		std::string toolTip = "";
-        std::function<bool (std::string filePath, unsigned selection)> onClick = nullptr;        
+        std::function<bool (std::vector<std::string> filePaths, unsigned selection)> onClick = nullptr;
         unsigned id = 0; // for template usage
     };
 
@@ -1187,7 +1187,7 @@ struct BrowserWindow {
         std::string path = "";
         std::string title = "";
         std::function<std::vector<Listing> (std::string filePath)> onSelectionChange = nullptr;
-        std::function<void (std::string filePath, unsigned selection)> onOkClick = nullptr;
+        std::function<void (std::vector<std::string> filePaths, unsigned selection)> onOkClick = nullptr;
         std::function<void ()> onCancelClick = nullptr;
         std::vector<CustomButton> buttons;
         ContentView contentView;

@@ -163,7 +163,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
     append(autofireControl, {~0u, 0u});
 
     captureTimer.setInterval(3500);
-    pollTimer.setInterval(50);
+    pollTimer.setInterval(200);
 
 
     for (auto& button : autofireControl.buttons) {
@@ -409,6 +409,7 @@ auto InputLayout::updateMiscSettings() -> void {
 
 auto InputLayout::stopCapture() -> void {
     pollTimer.setEnabled(false);
+    pollTimer.setInterval(200);
     captureTimer.setEnabled(false);
     InputManager::captureObject = nullptr;
     displayInputCall();
@@ -824,7 +825,8 @@ auto InputLayout::mapSelected( bool alternate ) -> void {
             updateListEntry(selection, mapping);
 
             auto manager = InputManager::getManager(emulator);
-        }
+        } else
+            pollTimer.setInterval(50);
     };
     captureTimer.onFinished = [&]() {
         stopCapture();

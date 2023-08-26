@@ -682,6 +682,7 @@ struct pBrowserWindow {
 	std::string selectedPath = "";
     std::vector<std::string> sortedFiles;
     GtkWidget* orderSelectedWidget = nullptr;
+    bool multi = false;
 	
     auto directory() -> std::string;
     auto fileGeneric(bool save, bool multi = false) -> std::vector<std::string>;

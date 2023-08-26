@@ -1391,7 +1391,7 @@ auto BrowserWindow::setContentViewColorTooltips(bool colorTooltips) -> BrowserWi
     return *this;
 }
 
-auto BrowserWindow::setCallbacks( std::function<void (std::string filePath, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow& {
+auto BrowserWindow::setCallbacks( std::function<void (std::vector<std::string> filePaths, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow& {
     state.onOkClick = onOkClick;
     state.onCancelClick = onCancelClick;
     return *this;
@@ -1431,7 +1431,7 @@ auto BrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings )
     p.setListings( listings );
 }
 
-auto BrowserWindow::addCustomButton( std::string text, std::function<bool (std::string filePath, unsigned selection)> onClick, unsigned id, std::string toolTip ) -> BrowserWindow& {
+auto BrowserWindow::addCustomButton( std::string text, std::function<bool (std::vector<std::string> filePaths, unsigned selection)> onClick, unsigned id, std::string toolTip ) -> BrowserWindow& {
     state.buttons.push_back({text, toolTip, onClick, id});            
     return *this;
 }

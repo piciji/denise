@@ -131,8 +131,8 @@ auto Autoloader::postProcessing() -> void {
     if (!autoStart) {
 
         if (mediaGroup->isDrive()) {
-            if (slotMode())
-                activateDrive( ddControl.emulator, mediaGroup, countImagesFor(mediaGroup) + ddControl.selection );
+            if (slotMode() || (ddControl.mode == Mode::Open))
+                activateDrive( ddControl.emulator, mediaGroup, countImagesFor(mediaGroup) + (slotMode() ? ddControl.selection : 0) );
 
             if (view && activeEmulator && (ddControl.mode == Mode::Open || ddControl.mode == Mode::OpenWithSlot) )
                 view->setFocused(300);
@@ -290,10 +290,11 @@ auto Autoloader::loadFiles() -> void {
 	if (archiveViewer) {
         filePool->assign("autoloader", file);
 		archiveViewer->onCallback = [this, file](GUIKIT::File::Item* item) {
-            emuThread->lock();
+            bool locked = emuThread->lock();
 			this->loadFile( file, item );
             filePool->assign("autoloader", nullptr);
-            emuThread->unlock();
+            if (locked)
+                emuThread->unlock();
 		};
 
 		archiveViewer->setView( items );

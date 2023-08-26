@@ -54,7 +54,7 @@ InputLayout::InputLayout() {
     if (driverLayout.combo.rows() == 1) driverLayout.setEnabled(false);
 
     captureTimer.setInterval(3500);
-    pollTimer.setInterval(50);
+    pollTimer.setInterval(200);
 
     reset.onActivate = [&]() {
         if (!configView->message->question( trans->get("reset_device_question") ))
@@ -274,7 +274,8 @@ auto InputLayout::mapSelected( bool alternate ) -> void {
         if (InputManager::capture(overwriteMode)) {
             stopCapture();
             updateListEntry(selection, mapping);
-        }
+        } else
+            pollTimer.setInterval(50);
     };
     captureTimer.onFinished = [&]() {
         stopCapture();
@@ -283,6 +284,7 @@ auto InputLayout::mapSelected( bool alternate ) -> void {
 
 auto InputLayout::stopCapture() -> void {
     pollTimer.setEnabled(false);
+    pollTimer.setInterval(200);
     captureTimer.setEnabled(false);
     InputManager::captureObject = nullptr;
     displayInputCall();
