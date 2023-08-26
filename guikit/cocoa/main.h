@@ -530,6 +530,7 @@ struct pBrowserWindow {
     NSSavePanel* panel = nil;
     BrowserWindow& browserWindow;
     std::string selectedPath = "";
+    bool multi = false;
     
     NSView* accessoryView = nil;
     ListView* listView = nullptr;
