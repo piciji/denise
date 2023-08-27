@@ -746,6 +746,7 @@ On obsolete =
 Disk Thread tooltip = フロッピードライブが3台以上ある場合のみ有効
 toggle Power LED =
 PAULA Filter =
+PAULA Filter tooltip =
 Auto =
 Off (A500) =
 Software (A500) =

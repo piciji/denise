@@ -746,6 +746,7 @@ On obsolete =
 Disk Thread tooltip = Ce paramètre est utile lorsqu’il y a trois disques ou plus.
 toggle Power LED =
 PAULA Filter =
+PAULA Filter tooltip =
 Auto =
 Off (A500) =
 Software (A500) =

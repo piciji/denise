@@ -7,6 +7,7 @@
 #define IDC_BUTTON          1113
 #define IDC_BUTTON1         1114
 #define IDC_BUTTON2         1115
+#define IDC_CHECKBOX        1116
 
 #define ID_GLOBE        32000
 #define ID_FILTER       32001

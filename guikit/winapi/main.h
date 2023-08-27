@@ -713,7 +713,6 @@ struct FileDialogEventHandler :
 
     BrowserWindow* browserWindow;
     BrowserWindow::State* state;
-    std::string filePath = "";
     IFileDialog* pDlg = nullptr;
     
     STDMETHODIMP QueryInterface(REFIID riid, void** ppvObject);
@@ -735,7 +734,7 @@ struct FileDialogEventHandler :
     IFACEMETHODIMP OnCheckButtonToggled(IFileDialogCustomize*, DWORD, BOOL);
     IFACEMETHODIMP OnControlActivating(IFileDialogCustomize* pfdc, DWORD dwIDCtl) { return S_OK; }
     
-    auto getFilePath(IFileDialog* pfd, std::vector<std::string>& multiples) -> std::string;
+    auto getFilePath(IFileDialog* pfd, std::string& folderPath, std::vector<std::string>& multiples) -> std::string;
 };
 
 struct pBrowserWindow {
@@ -756,6 +755,7 @@ struct pBrowserWindow {
     int lastItem = -1;
     std::vector<std::string> toolTips;
     std::vector<std::string> selectedFiles;
+    bool multi = false;
 
     struct Button {
         HWND hwnd;
@@ -775,8 +775,10 @@ struct pBrowserWindow {
     int listItemHeight = 0;
 
     auto directory() -> std::string;
-    auto file(bool save) -> std::string;
-    auto fileMulti() -> std::vector<std::string>;
+    auto fileGeneric(bool save, bool multi = false) -> std::vector<std::string>;
+    auto file(bool save) -> std::string { return fileGeneric(save)[0]; }
+    auto fileMulti() -> std::vector<std::string> { return fileGeneric(false, true); }
+
     auto fileVista(bool save, bool multi = false) -> std::vector<std::string>;
     auto close() -> void; 
     auto setForeground() -> void;
@@ -791,6 +793,7 @@ struct pBrowserWindow {
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
     auto getSelectedPath(HWND dlg) -> std::string;
+    auto splitFilenames(std::string& fileLine, std::vector<std::string>& files ) -> void;
     
     auto getIFileParent() -> HWND;
     

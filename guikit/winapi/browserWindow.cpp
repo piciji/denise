@@ -3,27 +3,28 @@
 #define IDC_BUTTON          1113
 #define IDC_BUTTON1         1114
 #define IDC_BUTTON2         1115
+#define IDC_CHECKBOX        1116
 
 HWND pBrowserWindow::dummyParent = nullptr;
 
 STDMETHODIMP FileDialogEventHandler::OnSelectionChange ( IFileDialog* pfd ) {
     std::vector<std::string> curSelectedFiles;
     std::vector<std::string> resultFiles;
-    std::string path = getFilePath(pfd, curSelectedFiles);
+    std::string folderPath = "";
+    std::string path = getFilePath(pfd, folderPath, curSelectedFiles);
 
-  //  if (!path.empty() && path != filePath) {
-        if (state && state->onSelectionChange)
-            state->onSelectionChange(path);
+    if (state && state->onSelectionChange)
+        state->onSelectionChange(path);
 
-        filePath = path;
-        pBrowserWindow& p = browserWindow->p;
+    pBrowserWindow& p = browserWindow->p;
 
-        if (state->orderBySelected) {
-            for(auto& selectedFile : p.selectedFiles) { // sorted selection before
+    if (p.multi) {
+        if (state->orderBySelected && state->orderBySelected->checked) {
+            for (auto& selectedFile: p.selectedFiles) { // sorted selection before
                 unsigned pos = 0;
-                for(auto& curSelectedFile : curSelectedFiles) { // unsorted current selection
+                for (auto& curSelectedFile: curSelectedFiles) { // unsorted current selection
                     if (selectedFile == curSelectedFile) {
-                        resultFiles.push_back( selectedFile );
+                        resultFiles.push_back(selectedFile);
                         GUIKIT::Vector::eraseVectorPos(curSelectedFiles, pos);
                         break;
                     }
@@ -32,29 +33,28 @@ STDMETHODIMP FileDialogEventHandler::OnSelectionChange ( IFileDialog* pfd ) {
             }
 
             // if more than one file was added to selection (shift key)
-            std::sort(curSelectedFiles.begin(), curSelectedFiles.end(), [](std::string& a, std::string& b) -> bool
-            { return a < b; });
+            std::sort(curSelectedFiles.begin(), curSelectedFiles.end(),
+                      [](std::string& a, std::string& b) -> bool { return a < b; });
 
-            for(auto& curSelectedFile : curSelectedFiles)
-                resultFiles.push_back( curSelectedFile );
+            for (auto& curSelectedFile: curSelectedFiles)
+                resultFiles.push_back(curSelectedFile);
 
             p.selectedFiles = resultFiles;
-        }
-
-   // }  
+        } else
+            p.selectedFiles = curSelectedFiles;
+    }
 
     return S_OK;
 }
 
-auto FileDialogEventHandler::getFilePath( IFileDialog* pfd, std::vector<std::string>& multiples ) -> std::string {
+auto FileDialogEventHandler::getFilePath( IFileDialog* pfd, std::string& folderPath, std::vector<std::string>& multiples ) -> std::string {
     
     if (!pfd)
         return "";
     
     LPOLESTR pwsz = NULL;
     IShellItem* pItem;
-    std::string path = "";
-            
+
     HRESULT hr = pfd->GetFolder(&pItem);
         
     if ( SUCCEEDED(hr)) {
@@ -62,19 +62,18 @@ auto FileDialogEventHandler::getFilePath( IFileDialog* pfd, std::vector<std::str
         hr = pItem->GetDisplayName ( SIGDN_FILESYSPATH, &pwsz );
 
         if ( SUCCEEDED(hr) ) {
-            
-            path = utf8_t(pwsz);
-            std::replace( path.begin(), path.end(), '\\', '/');
+            folderPath = utf8_t(pwsz);
+            std::replace( folderPath.begin(), folderPath.end(), '\\', '/');
             CoTaskMemFree ( pwsz );
         }
     }
     
-    hr = pfd->GetFileName( &pwsz );    
-        
+    hr = pfd->GetFileName( &pwsz );
+    std::string name  = "";
+
     if ( SUCCEEDED(hr)) {
         
-        std::string name = utf8_t(pwsz);
-        path += "/" + name;
+        name = utf8_t(pwsz);
 
         auto temp = GUIKIT::String::split(name, '\"');
 
@@ -86,7 +85,7 @@ auto FileDialogEventHandler::getFilePath( IFileDialog* pfd, std::vector<std::str
         CoTaskMemFree ( pwsz );
     }    
     
-    return path;
+    return folderPath + "/" + (multiples.size() ? multiples[0] : name );
 }
 
 STDMETHODIMP FileDialogEventHandler::QueryInterface(REFIID riid, void** ppvObject) { 
@@ -114,10 +113,28 @@ IFACEMETHODIMP FileDialogEventHandler::OnButtonClicked ( IFileDialogCustomize* p
         
         if (button.onClick) {
             std::vector<std::string> curSelectedFiles;
-            filePath = getFilePath(pDlg, curSelectedFiles);
+            std::string folderPath = "";
+            std::string filePath = getFilePath(pDlg, folderPath, curSelectedFiles);
 
-            if (button.onClick(filePath, 0))
-                pDlg->Close(S_OK);
+            auto& _browserWindow = browserWindow->p;
+            if (_browserWindow.multi && curSelectedFiles.size() > 1) {
+                std::vector<std::string> temp;
+
+                for (auto& sSortedFile : _browserWindow.selectedFiles) {
+                    for(auto& sFile : curSelectedFiles ) {
+                        if (sFile == sSortedFile) {
+                            sFile = folderPath + "/" + sFile;
+                            temp.push_back(sFile);
+                        }
+                    }
+                }
+
+                if (button.onClick(temp, 0))
+                    pDlg->Close(S_OK);
+            } else {
+                if (button.onClick({filePath}, 0))
+                    pDlg->Close(S_OK);
+            }
         }
     }
     
@@ -237,7 +254,8 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
         if ( SUCCEEDED(hr) ) {
             unsigned i = 0;
             for(auto& button : state.buttons) {                                
-                pDlgc->AddPushButton(1000 + i++, utf16_t(button.text) );
+                pDlgc->AddPushButton(1000 + i, utf16_t(button.text) );
+                pDlgc->MakeProminent(1000 + i++);
             }
         }    
     }
@@ -332,97 +350,22 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
     pDlg->Release();
     pDlg = nullptr;
     dialogHwnd = nullptr;
-    
+
+    if (!out.size())
+        out.push_back("");
+
     return out;
 }
 
 // legacy mode
-auto pBrowserWindow::fileMulti() -> std::vector<std::string> {
+auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::string> {
+    this->multi = multi;
     std::vector<std::string> out;
     auto& state = browserWindow.state;
-
-    if (getVersionNew() >= WindowsVista)
-        return fileVista(false, true);
-
-    pApplication::currentWorkingDirectory(); //unfortunately file dialog overwrites cwd, so get it before, if not already done
-    std::string path = state.path;
-    utf16_t wtitle(state.title.c_str());
-    std::replace( path.begin(), path.end(), '/', '\\');
-    utf16_t wpath(path.c_str());
-    std::string filters = "";
-
-    for(auto& filter : state.filters) {
-        std::vector<std::string> tokens = String::split(filter, '(');
-
-        if(tokens.size() != 2) continue;
-        std::string part = tokens.at(1);
-        part.pop_back();
-        String::delSpaces(part);
-        std::replace( part.begin(), part.end(), ',', ';');
-        filters += filter + "\t" + part + "\t";
-    }
-
-    utf16_t wfilters(filters.c_str());
-    wchar_t wname[2048] = L"";
-
-    wchar_t* p = wfilters;
-    while(*p != L'\0') {
-        if(*p == L'\t') *p = L'\0';
-        p++;
-    }
-
-    if(!path.empty()) {
-        //clear COMDLG32 MRU (most recently used) file list
-        //this is required in order for lpstrInitialDir to be honored in Windows 7 and above
-        SHDeleteKeyW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ComDlg32\\LastVisitedPidlMRU");
-        SHDeleteKeyW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ComDlg32\\OpenSavePidlMRU");
-    }
-
-    OPENFILENAME ofn;
-    memset(&ofn, 0, sizeof(OPENFILENAME));
-    ofn.lStructSize = sizeof(OPENFILENAME);
-    ofn.hwndOwner = state.window->p.hwnd;
-    ofn.lpstrFilter = wfilters;
-    ofn.lpstrInitialDir = wpath;
-    ofn.lpstrFile = wname;
-    ofn.lpstrTitle = wtitle;
-    ofn.nMaxFile = PATH_MAX;
-    ofn.hInstance = GetModuleHandle(0);
-    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING | OFN_ALLOWMULTISELECT;
-    ofn.lpstrDefExt = L"";
-
-    bool result = GetOpenFileName(&ofn);
-    if(!result) return out;
-
-    std::string append;
-    p = wname;
-    std::wstring pathList = p;
-    p += lstrlenW(p) + 1;
-
-    if ( *p == 0 ) {
-        append = utf8_t( pathList.c_str() );
-        std::replace( append.begin(), append.end(), '\\', '/');
-        out.push_back( append );
-    } else {
-        for ( ; *p != 0; ) {
-            std::wstring fileName = p;
-            append = utf8_t( ( pathList + L"\\" + fileName ).c_str() );
-            std::replace( append.begin(), append.end(), '\\', '/');
-            out.push_back( append );
-            p += fileName.size() + 1;
-        }
-    }
-
-    dialogHwnd = nullptr;
-    return out;
-}
-
-auto pBrowserWindow::file(bool save) -> std::string {
-    
-    auto& state = browserWindow.state;
+    selectedFiles.clear();
     
     if (!state.contentView.id && (getVersionNew() >= WindowsVista))
-        return fileVista(save)[0];
+        return fileVista(save, multi);
     
     pApplication::currentWorkingDirectory(); //unfortunately file dialog overwrites cwd, so get it before, if not already done
     std::string path = state.path;
@@ -471,7 +414,7 @@ auto pBrowserWindow::file(bool save) -> std::string {
     ofn.lpstrTitle = wtitle;
     ofn.nMaxFile = PATH_MAX;
     ofn.hInstance = GetModuleHandle(0);
-    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING | (multi ? OFN_ALLOWMULTISELECT : 0);
     ofn.lpstrDefExt = L"";
     
     if (state.templateId != -1) {
@@ -483,21 +426,59 @@ auto pBrowserWindow::file(bool save) -> std::string {
 
     bool result = !save ? GetOpenFileName(&ofn) : GetSaveFileName(&ofn);
     if(!result)
-        return "";
+        return {""};
 
-    std::string name = utf8_t(wname);
-    std::replace( name.begin(), name.end(), '\\', '/');
+    if (multi) {
+        std::string append;
+        p = wname;
+        std::wstring pathList = p;
+        p += lstrlenW(p) + 1;
+
+        if ( *p == 0 ) {
+            append = utf8_t( pathList.c_str() );
+            std::replace( append.begin(), append.end(), '\\', '/');
+            out.push_back( append );
+        } else {
+            for ( ; *p != 0; ) {
+                std::wstring fileName = p;
+                append = utf8_t( ( pathList + L"\\" + fileName ).c_str() );
+                std::replace( append.begin(), append.end(), '\\', '/');
+                out.push_back( append );
+                p += fileName.size() + 1;
+            }
+        }
+
+        if (state.orderBySelected && state.orderBySelected->checked && selectedFiles.size()) {
+            std::vector<std::string> temp;
+
+            for (auto& sSortedFile : selectedFiles) {
+                for(auto& sFile : out ) {
+                    if (GUIKIT::String::findString(sFile, sSortedFile))
+                        temp.push_back( sFile );
+                }
+            }
+            out = temp;
+        }
+
+    } else {
+        std::string _path = utf8_t(wname);
+        std::replace(_path.begin(), _path.end(), '\\', '/');
+        out.push_back(_path);
+    }
+
     dialogHwnd = nullptr;
+    if (!out.size())
+        out.push_back("");
 
     if (selectedButton) {
         auto _selB = selectedButton;
         selectedButton = nullptr;
 
-        if (_selB->onClick( name, (name != selectedPath) ? 0 : contentViewSelection() ) )
-            return "";
+        if (_selB->onClick( out, ((multi && (out.size() > 1)) || (out.size() && (out[0] != selectedPath))) ? 0 : contentViewSelection() ) )
+            return {""};
     }
 
-    return name;
+    return out;
 }
 
 auto pBrowserWindow::createTooltip(HWND hwnd) -> void {
@@ -662,6 +643,14 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
 			for (auto dlgButtonId : dlgButtonIds) {
 				ShowWindow(GetDlgItem(hDlg, dlgButtonId), SW_HIDE);
 			}
+
+            if (state->orderBySelected) {
+                HWND checkBox = GetDlgItem(hDlg, IDC_CHECKBOX);
+                SetDlgItemText(hDlg, IDC_CHECKBOX, (LPCWSTR)utf16_t(state->orderBySelected->text) );
+                SendMessage(checkBox, BM_SETCHECK, (WPARAM)state->orderBySelected->checked, 0);
+            } else {
+                ShowWindow(GetDlgItem(hDlg, IDC_CHECKBOX), SW_HIDE);
+            }
 			
             SetWindowLongPtr(listBox, GWLP_USERDATA, (LONG_PTR)context);
             WNDPROC wndprocOrig = (WNDPROC)SetWindowLongPtr(listBox, GWLP_WNDPROC, (LONG_PTR)subclassListbox);
@@ -768,42 +757,85 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     context->resize(hDlg, true);                    
                 
             } else if ( ((OFNOTIFY*)lParam)->hdr.code == CDN_SELCHANGE ) {
-                
+                bool _hit = false;
                 if (listBox) {
                     SendMessage( listBox, WM_SETREDRAW, 0, 0);
                     SendMessage( listBox, LB_RESETCONTENT, 0, 0);
                     context->toolTips.clear();
                 }
-            
-                if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 256, (LPARAM)wFilePath) >= 0) {
-                    
-                    if (!(GetFileAttributes(wFilePath) & FILE_ATTRIBUTE_DIRECTORY)) {       
-                           
-                        context->selectedPath = utf8_t(wFilePath);
-                        
-                        if (!context->selectedPath.empty() && state && state->onSelectionChange) {
-                            std::replace( context->selectedPath.begin(), context->selectedPath.end(), '\\', '/');
-                            auto rows = state->onSelectionChange( context->selectedPath );            
 
-                            if (listBox) {
-                                unsigned maximumWidth = 0; 
-                                                                
-                                for( auto& row : rows ) {                                
-                                    SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(row.entry) );
+                if (context->multi) {
+                    std::string _selectedPath = "";
+                    std::vector<std::string> curSelectedFiles;
+                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFOLDERPATH, 256, (LPARAM)wFilePath) >= 0) {
+                        _selectedPath = utf8_t(wFilePath);
 
-                                    maximumWidth = std::max<unsigned>(maximumWidth, pFont::size(context->listFont, row.entry).width);
-                                    
-                                    context->toolTips.push_back( row.tooltip );
-                                }                                
-                                SendMessage( listBox, LB_SETHORIZONTALEXTENT, maximumWidth + 8, 0);
-                                SendMessage( listBox, WM_SETREDRAW, 1, 0);
-                               // InvalidateRect(listBox, NULL, TRUE);
+                        if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETSPEC, 256, (LPARAM)wFilePath) >= 0) {
+                            std::string _selectedFiles = utf8_t(wFilePath);
+                            context->splitFilenames(_selectedFiles, curSelectedFiles);
+                        }
+                    }
+
+                    if (state->orderBySelected) {
+                        std::vector<std::string> resultFiles;
+
+                        for (auto& selectedFile: context->selectedFiles) { // sorted selection before
+                            unsigned pos = 0;
+                            for (auto& curSelectedFile: curSelectedFiles) { // unsorted current selection
+                                if (selectedFile == curSelectedFile) {
+                                    resultFiles.push_back(selectedFile);
+                                    GUIKIT::Vector::eraseVectorPos(curSelectedFiles, pos);
+                                    break;
+                                }
+                                pos++;
                             }
                         }
-                    }                                        
-                } else if (((OFNOTIFY*)lParam)->hdr.code == CDN_FOLDERCHANGE) {
-                    
-                }                
+
+                        // if more than one file was added to selection (shift key)
+                        std::sort(curSelectedFiles.begin(), curSelectedFiles.end(),
+                                  [](std::string& a, std::string& b) -> bool { return a < b; });
+
+                        for (auto& curSelectedFile: curSelectedFiles)
+                            resultFiles.push_back(curSelectedFile);
+
+                        context->selectedFiles = resultFiles;
+                    } else
+                        context->selectedFiles = curSelectedFiles;
+
+                    if (!_selectedPath.empty() && context->selectedFiles.size()) {
+                        context->selectedPath = _selectedPath + "\\" + context->selectedFiles[0];
+                        _hit = true;
+                    }
+                } else {
+                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 256, (LPARAM)wFilePath) >= 0) {
+                        if (!(GetFileAttributes(wFilePath) & FILE_ATTRIBUTE_DIRECTORY)) {
+                            context->selectedPath = utf8_t(wFilePath);
+                            _hit = true;
+                        }
+                    }
+                }
+
+                if (_hit && !context->selectedPath.empty() && state && state->onSelectionChange) {
+                    std::replace( context->selectedPath.begin(), context->selectedPath.end(), '\\', '/');
+                    auto rows = state->onSelectionChange( context->selectedPath );
+
+                    if (listBox) {
+                        unsigned maximumWidth = 0;
+
+                        for( auto& row : rows ) {
+                            SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(row.entry) );
+
+                            maximumWidth = std::max<unsigned>(maximumWidth, pFont::size(context->listFont, row.entry).width);
+
+                            context->toolTips.push_back( row.tooltip );
+                        }
+                        SendMessage( listBox, LB_SETHORIZONTALEXTENT, maximumWidth + 8, 0);
+                        SendMessage( listBox, WM_SETREDRAW, 1, 0);
+                       // InvalidateRect(listBox, NULL, TRUE);
+                    }
+                }
+            } else if (((OFNOTIFY*)lParam)->hdr.code == CDN_FOLDERCHANGE) {
+
             }
         } break;
         
@@ -822,7 +854,15 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     }
                     break;
                 }                                
-            }  
+            }
+
+            if (context->browserWindow.state.onSelectionChange) {
+                if (widgetId == IDC_CHECKBOX) {
+                    state->orderBySelected->checked ^= 1;
+                    state->orderBySelected->onToggle(state->orderBySelected->checked);
+                    break;
+                }
+            }
             
             if (listBox && widgetId == state->contentView.id) {
                 if (HIWORD(wParam) == LBN_DBLCLK) {
@@ -1025,7 +1065,8 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
     RECT rCustomView;
     RECT rListBox;
 	unsigned buttonMargin = pFont::scale(20);
-    
+    BrowserWindow::CheckButton* checkButton = browserWindow.state.orderBySelected;
+
     HWND customView = GetDlgItem(fileDialogView, IDC_FRAME);
     
     if (!customView)
@@ -1062,7 +1103,6 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
                 continue;
             
             RECT rect;
-
             GetWindowRect(hwnd, &rect);
             MapWindowPoints(NULL, fileDialogView, (POINT*)&rect, 2);
 
@@ -1084,6 +1124,32 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
 			relativeX += width + buttonMargin;
 			
 			buttonBarWidth += width + buttonMargin;
+        }
+
+        if (checkButton) {
+            HWND hwnd = GetDlgItem(hDlg, IDC_CHECKBOX);
+            if (hwnd) {
+                RECT rect;
+                GetWindowRect(hwnd, &rect);
+                MapWindowPoints(NULL, fileDialogView, (POINT*)&rect, 2);
+
+                auto size = pFont::size(Font::system(), checkButton->text);
+                int width = size.width + 10;
+                if (!IsAppThemed())
+                    width += 10;
+
+                if (relativeX == -1)
+                    relativeX = std::abs(rect.left - rCustomView.right);
+
+                int height = std::abs(rect.bottom - rect.top);
+                int relativeY = std::abs(rect.top - (listBox ? rListBox.bottom : rCustomView.top) );
+
+                buttons.push_back({hwnd, width, height, relativeX, relativeY});
+
+                relativeX += width + buttonMargin;
+
+                buttonBarWidth += width + buttonMargin;
+            }
         }
 		
 		if (listBox && buttonBarWidth) { // center button Bar
@@ -1201,6 +1267,15 @@ auto pBrowserWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) 
 auto pBrowserWindow::contentViewSelection() -> unsigned {
         
     return contentSelection;
+}
+
+auto pBrowserWindow::splitFilenames(std::string& fileLine, std::vector<std::string>& files ) -> void {
+    auto temp = GUIKIT::String::split(fileLine, '\"');
+
+    for(auto& test : temp) {
+        if (test != " ")
+            files.push_back(test);
+    }
 }
 
 pBrowserWindow::~pBrowserWindow() {

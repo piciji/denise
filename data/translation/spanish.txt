@@ -746,6 +746,7 @@ On obsolete =
 Disk Thread tooltip = Esta configuración es útil si hay tres o más unidades de disco seleccionadas.
 toggle Power LED =
 PAULA Filter =
+PAULA Filter tooltip =
 Auto =
 Off (A500) =
 Software (A500) =

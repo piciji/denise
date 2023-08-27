@@ -477,8 +477,8 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             
             auto selection = layout->listings.selection( );
 
-            emuThread->lock();
             fileloader->insertCurrentPreview( layout->mediaGroup );
+            emuThread->lock();
 
             auto media = layout->selectedBlock->media;
 

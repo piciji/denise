@@ -746,6 +746,7 @@ On obsolete = On (obsolete)
 Disk Thread tooltip = This setting is especially useful when three or more floppy disk drives are selected. Are only one or two drives selected, the "obsolete" setting can bring advantages on slow CPUs, but will slow down modern CPUs considerably when using warp or runahead.
 toggle Power LED = toggle Power LED
 PAULA Filter = PAULA Filter
+PAULA Filter tooltip = The setting "automatic" ensures that, depending on the emulated Amiga model, the filtering of the respective real device is used, namely "Software A500", "Software A1200" and "Low Pass Filter A1000" (software-controlled filter switching is not possible on the A1000).
 Auto = Automatic
 Off (A500) = Off (A500)
 Software (A500) = Software (A500)

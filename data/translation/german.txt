@@ -746,6 +746,7 @@ On obsolete = An (veraltet)
 Disk Thread tooltip = Diese Einstellung ist besonders sinnvoll, wenn drei oder mehr Diskettenlaufwerke ausgewählt sind. Sind nur ein oder zwei Laufwerke ausgewählt, kann die Einstellung "veraltet" Vorteile auf langsamen CPU's bringen, wird moderne CPU's jedoch stark ausbremsen bei Verwendung von Warp oder runahead
 toggle Power LED = Power LED umschalten
 PAULA Filter = PAULA Filter
+PAULA Filter tooltip = Die Einstellung "automatisch" sorgt dafür, daß abhängig vom emulierten Amiga-Modell, die Filterung des jeweiligen Echtgerätes verwendet wird und zwar "Software A500", "Software A1200" und "Low Pass Filter A1000" (softwaregesteuerte Filter-Umschaltung ist am A1000 nicht möglich).
 Auto = Automatisch
 Off (A500) = Aus (A500)
 Software (A500) = Software (A500)

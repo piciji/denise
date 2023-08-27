@@ -746,6 +746,7 @@ On obsolete =
 Disk Thread tooltip = Ez a beállítás akkor hasznos, ha három vagy több lemezmeghajtó van kiválasztva.
 toggle Power LED =
 PAULA Filter =
+PAULA Filter tooltip =
 Auto =
 Off (A500) =
 Software (A500) =
