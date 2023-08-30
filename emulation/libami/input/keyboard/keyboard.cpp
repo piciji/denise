@@ -35,10 +35,13 @@ auto Keyboard::processEvent() -> void {
             break;
 
         case KBD_Transfer:
+            // set KDAT here, but we emulate this when CIA CNT changes. not quite true but CIA processes SP only in context of CNT.
+
             if (shiftPos == 0) // finish
                 // set SP line high (logical 0)
                 // there is no emulation of SP line without context of CNT, because it's sampled only when CNT is rising
                 // wait for handshake
+                // KDAT sets to 1 and it keeps 1 in case of KBD_Wait_For_Timeout
                 addEvent(KBD_Wait_For_Timeout, agnus.msecToDMACycles(143) );
             else
                 // put next bit onto SP line
@@ -58,7 +61,7 @@ auto Keyboard::processEvent() -> void {
             addEvent(KBD_Transfer, agnus.usecToDMACycles(20));
             break;
 
-        case KBD_Wait_For_Timeout:
+        case KBD_Wait_For_Timeout: // clock out only, no KDAT change (Fate: Gates of Dawn IPF)
             if (state != KBD_Selftest) {
                 // todo: check behaviour for double fault, assume re transmit of 0xf9 and faulted key stroke
                 if (state != KBD_Lost_Sync_Init && state != KBD_Lost_Sync_Transmit)
@@ -141,8 +144,8 @@ auto Keyboard::sendCode(uint8_t code) -> void {
 
 auto Keyboard::resync() -> void {
     shiftPos = 1;
-    shiftOut = 0;  // SP line to 0 (logical 1)
-    addEvent(KBD_Transfer, agnus.usecToDMACycles(20));
+    shiftOut = 0x80;
+    addEvent(KBD_Transfer1, agnus.usecToDMACycles(20));
 }
 
 auto Keyboard::reset() -> void {
@@ -151,7 +154,7 @@ auto Keyboard::reset() -> void {
     capsLock = false;
     hardReset = false;
     shiftPos = 1;
-    shiftOut = 0;
+    shiftOut = 0x80;
     std::memset(keyState, 0, sizeof(keyState));
 
     interface->informCapsLock( true );
@@ -193,7 +196,7 @@ auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* i
         stroke |= 0x80;
     }
 
-    if ( keyState[0x63] && keyState[0x66] && keyState[0x67] ) { // independant from normal processing with overflow check
+    if ( keyState[0x63] && keyState[0x66] && keyState[0x67] ) { // independent of normal processing with overflow check
         if (!hardReset) {
             hardReset = true;
             addEvent(KBD_Hardreset, agnus.msecToDMACycles(500));
@@ -212,7 +215,7 @@ auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* i
         return;
     }
 
-    // even Caps Lock wont toggle LED, when queue is full ... need to check with my nose if Caps Locks toggles when Reset keys pressed same time.
+    // even Caps Lock won't toggle LED, when queue is full ... need to check with my nose if Caps Locks toggles when Reset keys pressed same time.
     if (stroke == 0x62) {
         if (state != KBD_Send)
             return;

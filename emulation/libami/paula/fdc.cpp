@@ -546,7 +546,7 @@ auto Paula::diskEvent() -> void {
         default:
             handleFDControllerIdle();
             if (activeDrive->motorFullstop()) {
-                //agnus.interface->log("fdc off");
+                //agnus.interface->log("mtr off");
                 return agnus.setEventInactive<Agnus::EVENT_FLOPPY>();
             }
             break;
@@ -562,7 +562,7 @@ auto Paula::setActiveDrive(DiskDrive* drive) -> void {
 
     if (!agnus.hasActiveEvent<Agnus::EVENT_FLOPPY>() && activeDrive->motor) {
         activeDrive->reset();
-        //agnus.interface->log("fdc on");
+        //agnus.interface->log("mtr on");
         agnus.updateEvent<Agnus::EVENT_FLOPPY>(fdcCycles);
     }
 }
