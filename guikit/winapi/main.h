@@ -772,6 +772,7 @@ struct pBrowserWindow {
     int customGapBottom = 0;
     int listRelativeX = 0;
     int listWidth = 0;
+    int listItemWidth = 0;
     int listItemHeight = 0;
 
     auto directory() -> std::string;

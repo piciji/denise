@@ -1139,6 +1139,7 @@ struct BrowserWindow {
     auto setContentViewForeground(unsigned color) -> BrowserWindow&;
     auto setContentViewSelection(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
     auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
+    auto setContentViewHint(std::string hint) -> BrowserWindow&;
 
     auto setCallbacks( std::function<void (std::vector<std::string> filePaths, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow&;
     auto getContentViewSelection() -> unsigned;
@@ -1178,7 +1179,8 @@ struct BrowserWindow {
         unsigned selectionBackgroundColor = 0;
 
         bool colorTooltips = false;
-        std::function<bool (std::string filePath, unsigned selection)> onDblClick = nullptr; 
+        std::function<bool (std::string filePath, unsigned selection)> onDblClick = nullptr;
+        std::string hint = "";
     };        
 	
     struct State {

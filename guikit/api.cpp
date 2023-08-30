@@ -1391,6 +1391,11 @@ auto BrowserWindow::setContentViewColorTooltips(bool colorTooltips) -> BrowserWi
     return *this;
 }
 
+auto BrowserWindow::setContentViewHint(std::string hint) -> BrowserWindow& {
+    state.contentView.hint = hint;
+    return *this;
+}
+
 auto BrowserWindow::setCallbacks( std::function<void (std::vector<std::string> filePaths, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow& {
     state.onOkClick = onOkClick;
     state.onCancelClick = onCancelClick;

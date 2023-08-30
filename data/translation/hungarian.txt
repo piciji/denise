@@ -755,3 +755,5 @@ Off (A1200) =
 Software (A1200) =
 On (A1200) =
 SPS plugin missing =
+multi file selection =
+Hard Reset + Eject Disks =

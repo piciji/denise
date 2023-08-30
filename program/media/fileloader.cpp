@@ -227,6 +227,13 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     fileDialogPtr->setOnChangeCallback( [this, emulator](std::string file) {
 
+        if (file.empty() && dynamic_cast<LIBAMI::Interface*>(emulator)) {
+            std::vector<GUIKIT::BrowserWindow::Listing> out;
+            for(auto media : emulator->getDiskMediaGroup()->media)
+                out.push_back({media.name});
+            return out;
+        }
+
         return this->previewFile(file, emulator);
     } );
 
@@ -344,6 +351,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         fileDialogPtr->showOrderControlForMultipleSelections( settings->get<bool>( "loader_order_selected", false ), trans->get("order selected"), [settings](bool checked) {
             settings->set<bool>( "loader_order_selected", checked );
         } );
+        fileDialogPtr->setContentViewHint( trans->get("multi file selection") );
+
         filePaths = fileDialogPtr->openMulti();
     }
 

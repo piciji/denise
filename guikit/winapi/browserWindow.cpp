@@ -386,7 +386,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
     }
 
     utf16_t wfilters(filters.c_str());
-    wchar_t wname[PATH_MAX + 1] = L"";
+    wchar_t wname[(PATH_MAX << 2) + 1] = L"";
 
     wchar_t* p = wfilters;
     while(*p != L'\0') {
@@ -412,7 +412,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
     ofn.lpstrInitialDir = wpath;
     ofn.lpstrFile = wname;
     ofn.lpstrTitle = wtitle;
-    ofn.nMaxFile = PATH_MAX;
+    ofn.nMaxFile = PATH_MAX << 2;
     ofn.hInstance = GetModuleHandle(0);
     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ENABLESIZING | (multi ? OFN_ALLOWMULTISELECT : 0);
     ofn.lpstrDefExt = L"";
@@ -429,19 +429,19 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         return {""};
 
     if (multi) {
-        std::string append;
         p = wname;
         std::wstring pathList = p;
         p += lstrlenW(p) + 1;
 
         if ( *p == 0 ) {
-            append = utf8_t( pathList.c_str() );
+            std::string append = utf8_t( pathList.c_str() );
             std::replace( append.begin(), append.end(), '\\', '/');
             out.push_back( append );
         } else {
+            out.reserve(4);
             for ( ; *p != 0; ) {
                 std::wstring fileName = p;
-                append = utf8_t( ( pathList + L"\\" + fileName ).c_str() );
+                std::string append = utf8_t( ( pathList + L"\\" + fileName ).c_str() );
                 std::replace( append.begin(), append.end(), '\\', '/');
                 out.push_back( append );
                 p += fileName.size() + 1;
@@ -530,7 +530,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
     if (Application::isQuit)
         return false;
 
-    TCHAR wFilePath[256];
+    TCHAR wFilePath[1024];
     OPENFILENAME* ofn = nullptr;
     pBrowserWindow* context = nullptr;
     BrowserWindow::State* state = nullptr;
@@ -611,8 +611,14 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 auto size = pFont::size(context->listFont, " ");
 
                 context->listItemHeight = size.height;
+                context->listItemWidth = size.width;
                 
                 SendMessage(listBox, LB_SETITEMHEIGHT, 0, size.height);
+
+                if (!state->contentView.hint.empty()) {
+                    SendMessage(listBox, LB_ADDSTRING, 0, (LPARAM) (wchar_t*) L"");
+                    SendMessage(listBox, LB_ADDSTRING, 0, (LPARAM) (wchar_t*) utf16_t(" " + state->contentView.hint));
+                }
             }
             if (!context->listBgBrush) {
                 auto colorBg = state->contentView.backgroundColor;
@@ -767,10 +773,10 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 if (context->multi) {
                     std::string _selectedPath = "";
                     std::vector<std::string> curSelectedFiles;
-                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFOLDERPATH, 256, (LPARAM)wFilePath) >= 0) {
+                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFOLDERPATH, 1024, (LPARAM)wFilePath) >= 0) {
                         _selectedPath = utf8_t(wFilePath);
 
-                        if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETSPEC, 256, (LPARAM)wFilePath) >= 0) {
+                        if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETSPEC, 1024, (LPARAM)wFilePath) >= 0) {
                             std::string _selectedFiles = utf8_t(wFilePath);
                             context->splitFilenames(_selectedFiles, curSelectedFiles);
                         }
@@ -807,7 +813,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                         _hit = true;
                     }
                 } else {
-                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 256, (LPARAM)wFilePath) >= 0) {
+                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 1024, (LPARAM)wFilePath) >= 0) {
                         if (!(GetFileAttributes(wFilePath) & FILE_ATTRIBUTE_DIRECTORY)) {
                             context->selectedPath = utf8_t(wFilePath);
                             _hit = true;
@@ -815,13 +821,41 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     }
                 }
 
-                if (_hit && !context->selectedPath.empty() && state && state->onSelectionChange) {
+                if (context->multi && (context->selectedFiles.size() > 1)) {
+                    auto rows = state->onSelectionChange( "" );
+                    int i = 0;
+                    int maxChars = context->listWidth / context->listItemWidth;
+
+                    for(auto& file : context->selectedFiles) {
+                        if (i >= rows.size())
+                            break;
+
+                        std::string ident = file;
+                        size_t lastdot = ident.size();
+                        while(1) {
+                            size_t nextdot = ident.find_last_of(".");
+                            if ( (nextdot != std::string::npos) && ((lastdot - nextdot) < 5))
+                                ident = ident.erase(nextdot);
+                            else
+                                break;
+                            lastdot = nextdot;
+                        }
+
+                        ident += "  " + rows[i++].entry + ": ";
+                        if (ident.size() > maxChars)
+                            ident = ident.substr( ident.size() - maxChars );
+
+                        SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(ident) );
+                    }
+                    SendMessage( listBox, WM_SETREDRAW, 1, 0);
+
+                } else if (_hit && !context->selectedPath.empty() && state && state->onSelectionChange) {
                     std::replace( context->selectedPath.begin(), context->selectedPath.end(), '\\', '/');
                     auto rows = state->onSelectionChange( context->selectedPath );
 
                     if (listBox) {
                         unsigned maximumWidth = 0;
-
+                        SendMessage( listBox, LB_SETTABSTOPS, 0, 0 );
                         for( auto& row : rows ) {
                             SendMessage( listBox, LB_ADDSTRING, 0, (LPARAM)(wchar_t*)utf16_t(row.entry) );
 
