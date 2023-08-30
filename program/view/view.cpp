@@ -841,6 +841,19 @@ auto View::buildMenu() -> void {
                 emuThread->unlock();
             };
             sM.system->append(*sM.poweronAndRemoveExpansions);
+            sM.poweronAndRemoveDisks = nullptr;
+        } else {
+            sM.poweronAndRemoveDisks = new GUIKIT::MenuItem;
+            sM.poweronAndRemoveDisks->setIcon(powerImage);
+            sM.poweronAndRemoveDisks->onActivate = [emulator]() {
+                emuThread->lock();
+                for(auto& media : emulator->getDiskMediaGroup()->media)
+                    fileloader->eject( emulator, &media );
+                program->power(emulator);
+                emuThread->unlock();
+            };
+            sM.system->append(*sM.poweronAndRemoveDisks);
+            sM.poweronAndRemoveExpansions = nullptr;
         }
 		        
         sM.reset = new GUIKIT::MenuItem;
@@ -1507,7 +1520,12 @@ auto View::translate() -> void {
     for(auto& sysMenu : sysMenus) {
         sysMenu.system->setText(sysMenu.emulator->ident);
         sysMenu.poweron->setText(trans->get("Hard Reset"));
-		sysMenu.poweronAndRemoveExpansions->setText(trans->get("Hard Reset + Unplug Cart"));
+
+        if (sysMenu.poweronAndRemoveExpansions)
+		    sysMenu.poweronAndRemoveExpansions->setText(trans->get("Hard Reset + Unplug Cart"));
+        if (sysMenu.poweronAndRemoveDisks)
+            sysMenu.poweronAndRemoveDisks->setText(trans->get("Hard Reset + Eject Disks"));
+
         sysMenu.reset->setText(trans->get("Soft Reset"));
         if (sysMenu.freeze)
             sysMenu.freeze->setText(trans->get("Freeze"));

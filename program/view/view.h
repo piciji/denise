@@ -22,6 +22,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::Menu* system;
         GUIKIT::MenuItem* poweron;
 		GUIKIT::MenuItem* poweronAndRemoveExpansions;
+        GUIKIT::MenuItem* poweronAndRemoveDisks;
 		GUIKIT::MenuItem* reset;
         GUIKIT::MenuItem* freeze;
         GUIKIT::MenuItem* powerLED;
