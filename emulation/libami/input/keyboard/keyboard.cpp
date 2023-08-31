@@ -35,13 +35,11 @@ auto Keyboard::processEvent() -> void {
             break;
 
         case KBD_Transfer:
-            // set KDAT here, but we emulate this when CIA CNT changes. not quite true but CIA processes SP only in context of CNT.
 
             if (shiftPos == 0) // finish
                 // set SP line high (logical 0)
                 // there is no emulation of SP line without context of CNT, because it's sampled only when CNT is rising
                 // wait for handshake
-                // KDAT sets to 1 and it keeps 1 in case of KBD_Wait_For_Timeout
                 addEvent(KBD_Wait_For_Timeout, agnus.msecToDMACycles(143) );
             else
                 // put next bit onto SP line
@@ -61,7 +59,7 @@ auto Keyboard::processEvent() -> void {
             addEvent(KBD_Transfer, agnus.usecToDMACycles(20));
             break;
 
-        case KBD_Wait_For_Timeout: // clock out only, no KDAT change (Fate: Gates of Dawn IPF)
+        case KBD_Wait_For_Timeout:
             if (state != KBD_Selftest) {
                 // todo: check behaviour for double fault, assume re transmit of 0xf9 and faulted key stroke
                 if (state != KBD_Lost_Sync_Init && state != KBD_Lost_Sync_Transmit)
@@ -144,7 +142,7 @@ auto Keyboard::sendCode(uint8_t code) -> void {
 
 auto Keyboard::resync() -> void {
     shiftPos = 1;
-    shiftOut = 0x80;
+    shiftOut = 0;
     addEvent(KBD_Transfer1, agnus.usecToDMACycles(20));
 }
 
@@ -154,7 +152,7 @@ auto Keyboard::reset() -> void {
     capsLock = false;
     hardReset = false;
     shiftPos = 1;
-    shiftOut = 0x80;
+    shiftOut = 0;
     std::memset(keyState, 0, sizeof(keyState));
 
     interface->informCapsLock( true );
