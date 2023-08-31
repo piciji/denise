@@ -773,14 +773,13 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 if (context->multi) {
                     std::string _selectedPath = "";
                     std::vector<std::string> curSelectedFiles;
-                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFOLDERPATH, 1024, (LPARAM)wFilePath) >= 0) {
-                        _selectedPath = utf8_t(wFilePath);
-
+               //     if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFOLDERPATH, 1024, (LPARAM)wFilePath) >= 0) {
+                 //       _selectedPath = utf8_t(wFilePath);
                         if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETSPEC, 1024, (LPARAM)wFilePath) >= 0) {
                             std::string _selectedFiles = utf8_t(wFilePath);
                             context->splitFilenames(_selectedFiles, curSelectedFiles);
                         }
-                    }
+                   // }
 
                     if (state->orderBySelected) {
                         std::vector<std::string> resultFiles;
@@ -808,16 +807,23 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     } else
                         context->selectedFiles = curSelectedFiles;
 
-                    if (!_selectedPath.empty() && context->selectedFiles.size()) {
-                        context->selectedPath = _selectedPath + "\\" + context->selectedFiles[0];
-                        _hit = true;
-                    }
+//                    if (!_selectedPath.empty() && context->selectedFiles.size()) {
+//                        context->selectedPath = _selectedPath + "\\" + context->selectedFiles[0];
+//                        _hit = true;
+//                    }
                 } else {
-                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 1024, (LPARAM)wFilePath) >= 0) {
-                        if (!(GetFileAttributes(wFilePath) & FILE_ATTRIBUTE_DIRECTORY)) {
-                            context->selectedPath = utf8_t(wFilePath);
-                            _hit = true;
-                        }
+//                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 1024, (LPARAM)wFilePath) >= 0) {
+//                        if (!(GetFileAttributes(wFilePath) & FILE_ATTRIBUTE_DIRECTORY)) {
+//                            context->selectedPath = utf8_t(wFilePath);
+//                            _hit = true;
+//                        }
+//                    }
+                }
+
+                if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 1024, (LPARAM)wFilePath) >= 0) {
+                    if (!(GetFileAttributes(wFilePath) & FILE_ATTRIBUTE_DIRECTORY)) {
+                        context->selectedPath = utf8_t(wFilePath);
+                        _hit = true;
                     }
                 }
 

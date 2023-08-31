@@ -12,6 +12,7 @@
 #include "../firmware/manager.h"
 #include "../audio/manager.h"
 #include "../thread/emuThread.h"
+#include "../view/status.h"
 
 Autoloader* autoloader = nullptr;
 
@@ -32,6 +33,10 @@ auto Autoloader::init( std::vector<std::string> files, bool silentError, Mode mo
         if (++i == 7)
             break;
     }        
+}
+
+auto Autoloader::setEmulator(Emulator::Interface* emulator) -> void {
+    ddControl.emulator = emulator;
 }
 
 auto Autoloader::postProcessing() -> void {
@@ -132,7 +137,7 @@ auto Autoloader::postProcessing() -> void {
 
         if (mediaGroup->isDrive()) {
             if (slotMode() || (ddControl.mode == Mode::Open))
-                activateDrive( ddControl.emulator, mediaGroup, countImagesFor(mediaGroup) + (slotMode() ? ddControl.selection : 0) );
+                activateDrive( ddControl.emulator, mediaGroup, countImagesFor(mediaGroup) + (slotMode() ? ddControl.selection : 0), true );
 
             if (view && activeEmulator && (ddControl.mode == Mode::Open || ddControl.mode == Mode::OpenWithSlot) )
                 view->setFocused(300);
@@ -461,7 +466,7 @@ auto Autoloader::countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> 
 	return counter;
 }
 
-auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void {
+auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount, bool updateStatus ) -> void {
 	
     if (requestedCount > mediaGroup->media.size())
         requestedCount = mediaGroup->media.size();
@@ -487,6 +492,14 @@ auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interfa
     if (emuView) {
         if(emuView->systemLayout) emuView->systemLayout->driveModelLayout.updateWidget( modelId );
         if(emuView->mediaLayout) emuView->mediaLayout->updateVisibility( mediaGroup, requestedCount );
+    }
+
+    if (updateStatus && statusHandler) {
+        for (auto& media: mediaGroup->media) {
+            if (media.id >= counter) {
+                statusHandler->updateDeviceState(&media, false, 0, false, true);
+            }
+        }
     }
 }
 

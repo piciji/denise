@@ -757,3 +757,4 @@ On (A1200) =
 SPS plugin missing =
 multi file selection =
 Hard Reset + Eject Disks =
+select image multi =

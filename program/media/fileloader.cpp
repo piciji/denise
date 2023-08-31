@@ -64,7 +64,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
     fileDialogPtr->setTitle(trans->get("select_" + group->name + "_image"));
 
-    fileDialogPtr->setPath( preselectPath( settings, group->name ) );
+    fileDialogPtr->setPath( preselectPath( settings, group->name, group->isDrive() && (media->id > 0) ) );
 
     fileDialogPtr->setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(group->name + "_image"), suffix ),
                                 trans->get("all_files")});
@@ -193,6 +193,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
             emuThread->lock();
             autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartDblClick, selection );
+            autoloader->setEmulator( emulator );
             autoloader->loadFiles();
             emuThread->unlock();
 
@@ -218,8 +219,6 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
         fileDialogPtr->setContentViewColorTooltips(true);
     }
-
-    fileDialogPtr->setTitle(trans->get("select image"));
 
     fileDialogPtr->setPath( settings->get<std::string>( "anyload_path", "") );
 
@@ -248,6 +247,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
         emuThread->lock();
         autoloader->init( filePaths, false, Autoloader::Mode::Open );
+        autoloader->setEmulator( emulator );
         autoloader->loadFiles();
         emuThread->unlock();
 
@@ -270,6 +270,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
             emuThread->lock();
             autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartSecondary, selection );
+            autoloader->setEmulator( emulator );
             autoloader->loadFiles();
             emuThread->unlock();
 
@@ -291,6 +292,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
                 emuThread->lock();
                 autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartPrimary, selection );
+                autoloader->setEmulator( emulator );
                 autoloader->loadFiles();
                 emuThread->unlock();
 
@@ -310,6 +312,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
             emuThread->lock();
             autoloader->init(filePaths, false, Autoloader::Mode::AutoStartDblClick, selection);
+            autoloader->setEmulator( emulator );
             autoloader->loadFiles();
             emuThread->unlock();
         }
@@ -345,9 +348,11 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     std::vector<std::string> filePaths;
 
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        fileDialogPtr->setTitle(trans->get("select image"));
         std::string filePath = fileDialogPtr->open();
         filePaths.push_back(filePath);
     } else {
+        fileDialogPtr->setTitle(trans->get("select image multi"));
         fileDialogPtr->showOrderControlForMultipleSelections( settings->get<bool>( "loader_order_selected", false ), trans->get("order selected"), [settings](bool checked) {
             settings->set<bool>( "loader_order_selected", checked );
         } );
@@ -367,6 +372,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
         emuThread->lock();
         autoloader->init( filePaths, false, Autoloader::Mode::AutoStartDblClick, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
+        autoloader->setEmulator( emulator );
         autoloader->loadFiles();
         emuThread->unlock();
     } else if (view) {
@@ -881,14 +887,29 @@ auto Fileloader::insertCurrentPreview(Emulator::Interface::MediaGroup* mediaGrou
     }
 }
 
-auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupName ) -> std::string {
+auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupName, bool lastPathFirst ) -> std::string {
+    std::string baseFolderIdent = _underscore(groupName) + "_folder";
+    std::string path;
 
-    auto baseFolderIdent = _underscore(groupName) + "_folder";
+    for(int i = 0; i < 2; i++) {
+        std::string useIdent = baseFolderIdent;
+        if (lastPathFirst)
+            useIdent += "_auto";
 
-    auto path = settings->get<std::string>( baseFolderIdent, "" );
+        lastPathFirst ^= 1;
 
-    if ( path == "" )
-        path = settings->get<std::string>( baseFolderIdent + "_auto", "" );
+        path = settings->get<std::string>( useIdent, "" );
+
+        if ( !path.empty() )
+            break;
+    }
+
+//    auto baseFolderIdent = _underscore(groupName) + "_folder";
+//
+//    auto path = settings->get<std::string>( baseFolderIdent, "" );
+//
+//    if ( path == "" )
+//        path = settings->get<std::string>( baseFolderIdent + "_auto", "" );
 
     return path;
 }

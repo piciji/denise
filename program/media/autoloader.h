@@ -22,11 +22,12 @@ struct Autoloader {
 	} ddControl;
 	
 	auto init( std::vector<std::string> files, bool silentError, Mode mode, unsigned selection = 0, std::string fileName = "") -> void;
+    auto setEmulator(Emulator::Interface* emulator) -> void;
 	auto postProcessing() -> void;
 	auto loadFiles() -> void;
 	auto loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
 	auto countImagesFor(Emulator::Interface::MediaGroup* mediaGroup) -> unsigned;
-	auto activateDrive( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount ) -> void;
+	auto activateDrive( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, unsigned requestedCount, bool updateStatus = false ) -> void;
     auto checkForSavestate( GUIKIT::File* file, GUIKIT::File::Item* item ) -> bool;
     auto needSlotsForDragnDrop(std::vector<std::string> files) -> unsigned;
     auto slotMode() -> bool { return ddControl.mode == Mode::AutoStartWithSlot || ddControl.mode == Mode::OpenWithSlot; }

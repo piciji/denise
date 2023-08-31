@@ -757,3 +757,4 @@ On (A1200) = On (A1200)
 SPS plugin missing = This image requires the SPS plugin at least version 4.2, available here: http://www.softpres.org
 multi file selection = Multiple file selection for DF0-3
 Hard Reset + Eject Disks = Hard Reset + Eject Disks
+select image multi = select image (multiple selection with CTRL/SHIFT)
