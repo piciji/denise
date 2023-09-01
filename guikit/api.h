@@ -1355,6 +1355,7 @@ struct File {
     static auto beautifyPath(std::string path) -> std::string;
     static auto getOffsetDataStringFromBinary( std::string inFile, std::string outFile ) -> bool;
     static auto getPath( std::string _fn ) -> std::string;
+    static auto removeExtension(std::string str) -> std::string;
 
     auto setFile(std::string filePath) -> void;
     auto getFile() const -> std::string { return filePath; }
