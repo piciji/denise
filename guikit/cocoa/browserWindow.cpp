@@ -11,8 +11,9 @@
 - (void)panelSelectionDidChange:(id)sender {
     auto& state = browserWindow->state;
     NSArray* curFiles = [sender filenames];
+    auto& pBW = browserWindow->p;
     
-    if (browserWindow->p.multi) {
+    if (pBW.multi) {
         std::vector<std::string> curSelectedFiles;
         for(unsigned i = 0; i < [curFiles count]; i++) {
             NSString* curPath = [curFiles objectAtIndex:i];
@@ -40,9 +41,9 @@
             for(auto& curSelectedFile : curSelectedFiles)
                 resultFiles.push_back( curSelectedFile );
                 
-            browserWindow->p.sortedFiles = resultFiles;
+            pBW.sortedFiles = resultFiles;
         } else
-            browserWindow->p.sortedFiles = curSelectedFiles;
+            pBW.sortedFiles = curSelectedFiles;
     }
     
     if ([curFiles count] == 0)
@@ -61,14 +62,33 @@
 
     auto listView = browserWindow->p.listView;
 
-    if (path != browserWindow->p.selectedPath) {
-        if (listView)
-            listView->reset();
+    bool informInsertion = pBW.multi && (pBW.sortedFiles.size() > 1);
 
-        if (state.onSelectionChange) {
-            auto rows = state.onSelectionChange(path);
-
-            if (listView) {
+    if ((path != browserWindow->p.selectedPath) || informInsertion) {
+        if (state.onSelectionChange && listView) {
+            if (!pBW.selectedPath.empty())
+                listView->reset();
+            
+            if (informInsertion) {
+                auto listings = state.onSelectionChange( "" );
+                int i = 0;
+                auto _s = GUIKIT::pFont::size([listView->p.cocoaView font], " ");
+                int maxChars = state.contentView.width / _s.width;
+                
+                for(auto& file : pBW.sortedFiles) {
+                    if (i >= listings.size())
+                        break;
+                    
+                    std::string ident = GUIKIT::File::removeExtension(file);
+                    ident += "  " + listings[i++].entry + ": ";
+                    if (ident.size() > maxChars)
+                        ident = ident.substr( ident.size() - maxChars );
+                        
+                    listView->append({ident});
+                }
+            } else {
+                auto rows = state.onSelectionChange(path);
+                
                 for(auto& row : rows) {
                     listView->append({row.entry});
                 }
@@ -79,7 +99,7 @@
             }
         }
         
-        browserWindow->p.selectedPath = path;
+        pBW.selectedPath = path;
     }
 }
 @end
@@ -295,6 +315,11 @@ auto pBrowserWindow::buildView() -> void {
         _x = maxListWidth;
         maxContentWidth = maxListWidth;
         
+        if (!state.contentView.hint.empty()) {
+            listView->append({""});
+            listView->append({state.contentView.hint});
+        }
+
         [accessoryView addSubview: listView->p.cocoaView];
         
         _y = maxContentHeight - 2;
