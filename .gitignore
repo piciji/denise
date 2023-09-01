@@ -11,4 +11,4 @@ emulation/libami/altCpu/*
 .DS_Store
 msvc/.vs/
 msvc/x64/
-msvc/x86/
+msvc/win32/

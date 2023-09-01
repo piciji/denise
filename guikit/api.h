@@ -1494,7 +1494,6 @@ struct String {
     static auto trim(std::string& str) -> std::string&;
     static auto delSpaces(std::string& str) -> std::string&;
     static auto capitalize(std::string& str) -> std::string&;
-    static auto capitalizeA(std::string str) -> std::string& { return capitalize(str); }
     static auto split(const std::string& str, char delimiter) -> std::vector<std::string>;
     static auto explode(std::string str, std::string delimiter) -> std::vector<std::string>;
     static auto unsplit( const std::vector<std::string>& parts, std::string delimiter ) -> std::string;

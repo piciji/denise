@@ -163,7 +163,9 @@ auto InputMapping::informChange(Assign& hid) -> void {
 	}	
 }
 
-#define _transhr(part) trans->get( GUIKIT::String::capitalizeA( part ) )
+inline auto InputMapping::translateElement(std::string str) -> std::string {
+    return trans->get( GUIKIT::String::capitalize( str ) );
+}
 
 auto InputMapping::getDescription() -> std::string {
 	std::string out = "";
@@ -172,17 +174,17 @@ auto InputMapping::getDescription() -> std::string {
     
 	for(auto& hid : hids) {
         
-        out += _transhr(hid.device->name);
+        out += translateElement(hid.device->name);
 
         if (!hid.device->isKeyboard())
-            out += "." + _transhr(hid.group->name) + ".";
+            out += "." + translateElement(hid.group->name) + ".";
         else
             out += ".";
 
         if (hid.device->isJoypad())
             out += hid.input->name;
         else
-            out += _transhr(hid.input->name);
+            out += translateElement(hid.input->name);
 
         if (hid.qualifier == Qualifier::Hi)
             out += ".Hi";
@@ -199,7 +201,6 @@ auto InputMapping::getDescription() -> std::string {
 
 	return out;	
 }
-#undef _transhr
 
 auto InputMapping::swapLinker() -> void {
         

@@ -1,7 +1,9 @@
 
-# remove drivers you don't need or have problems on older OS like Win XP
+# remove drivers you don't need
 # it's possible to remove all drivers
-# sdlinput covers joypad support only and is not supported for windows and macOS anymore.
+
+# sdlinput covers joypad support only and is not supported for windows and macOS anymore
+# openAL is not supported for windows anymore
 
 # some drivers like dinput (5, 7, 8) and xaudio (2.7, 2.8, 2.9) are supported in multiple versions.
 
@@ -25,7 +27,6 @@ env :=
 
 ifeq ($(platform),windows)
     drvflags = $(cppflags)
-    drvlink += $(if $(findstring openal,$(drv)),-lopenal32)
 
 else ifeq ($(platform),macosx)
     env += /usr/local/bin/

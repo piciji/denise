@@ -53,6 +53,7 @@ struct InputMapping {
     template<bool useOldValue> auto adjustDigitalValue( Assign& hid ) -> int16_t;
     template<bool lightMode = false> auto adjustAnalogValue( Assign& hid ) -> int16_t;
 	auto informChange(Assign& hid) -> void;
+    auto translateElement(std::string str) -> std::string;
 	auto getDescription() -> std::string;
 	auto swapLinker() -> void;
 	auto init() -> void;

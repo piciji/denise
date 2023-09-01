@@ -319,9 +319,9 @@ install: ## Install
 	$(call copy,data/txt/licence.md,out)
 
     ifneq ($(findstring i686, $(shell g++ --version) ),)
-	$(call copy,"data/libs/shared/win32/D3D*.dll",out)
+	$(call copy,"data/libs/shared/x86/D3D*.dll",out)
     else
-	$(call copy,"data/libs/shared/win64/D3D*.dll",out)
+	$(call copy,"data/libs/shared/x64/D3D*.dll",out)
     endif
 
     else ifeq ($(platform),macosx)

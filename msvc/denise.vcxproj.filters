@@ -263,6 +263,12 @@
     <Filter Include="driver\video\d3d9">
       <UniqueIdentifier>{d5380440-ff4a-4a76-9d71-3c84fcbbacc7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="emulation\libami\drive\ipf">
+      <UniqueIdentifier>{356de45f-f815-4175-89b4-4d240c90066d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\libami\drive\dms">
+      <UniqueIdentifier>{65d638e5-b9d7-4615-8b58-b38894fb3274}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -930,6 +936,24 @@
     </ClInclude>
     <ClInclude Include="..\guikit\winapi\processref.h">
       <Filter>guikit\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\DLLoader.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\ipf\CapsAPI.h">
+      <Filter>emulation\libami\drive\ipf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\ipf\CommonTypes.h">
+      <Filter>emulation\libami\drive\ipf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\dms\cdata.h">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\dms\dms.h">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\dms\pfile.h">
+      <Filter>emulation\libami\drive\dms</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1751,6 +1775,48 @@
     </ClCompile>
     <ClCompile Include="..\guikit\winapi\dragndrop.cpp">
       <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\DLLoader.cpp">
+      <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\ipf.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\crc_csum.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\getbits.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\maketbl.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\pfile.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\tables.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\u_deep.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\u_heavy.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\u_init.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\u_medium.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\u_quick.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\dms\u_rle.cpp">
+      <Filter>emulation\libami\drive\dms</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

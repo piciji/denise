@@ -635,6 +635,6 @@ auto IecBus::updateDriveSounds() -> void {
     }
 }
 
-template auto IecBus::syncDrives<false>( int direction = 0 ) -> bool;
+template auto IecBus::syncDrives<false>( int direction ) -> bool;
 
 }

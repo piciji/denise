@@ -1,5 +1,6 @@
 
 #ifdef _WIN32
+#define UNICODE
 #include <windows.h>
 #else
 #include <dlfcn.h>
@@ -28,7 +29,8 @@ auto DLLoader::open() -> bool {
     }
 
 #ifdef _WIN32
-    handle = LoadLibrary( pathToLib.c_str() );
+    std::wstring wpath = std::wstring(pathToLib.begin(), pathToLib.end());
+    handle = LoadLibrary( wpath.c_str() );
 #else
     handle = dlopen( pathToLib.c_str(), RTLD_NOW | RTLD_LAZY);
 #endif

@@ -28,6 +28,7 @@
 #include <thread>
 #include <functional>
 #include <cmath>
+#include <string>
 
 #include "../../tools/dac.h"
 #include "../../tools/splines.h"
