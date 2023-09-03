@@ -56,6 +56,8 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
     lineCallback.called = true;
     lineCallback.line = 0;
 
+    encryptedRom = nullptr;
+
     resetFps();
 }
 
@@ -89,6 +91,7 @@ auto Agnus::power(bool softReset) -> void {
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
     dmaClock = 0;
+    checkForRomEncryption();
 
     if (!chipMem)
         setChipmem(512 * 1024);

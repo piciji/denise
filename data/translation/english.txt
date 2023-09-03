@@ -759,3 +759,5 @@ Hard Reset + Eject Disks = Hard Reset + Eject Disks
 select image multi = select image (multiple selection with CTRL/SHIFT)
 Second Button tooltip = second fire button (e.g. Cheetah Annihilator), which is only supported by a few games
 prioritise controlport = e.g. when the cursor keys are used as a keyboard-joystick and equally move the cursor, some games cause problems. It is comparable to being operated on a joystick and keyboard at the same time. This setting suppresses keyboard inputs, which are also used for the Controlport. For self-created assignments for games, this setting may be unfavorable when using double assignments.
+Kickrom = Kickstart ROM
+Extrom = Extended/Encryption ROM

@@ -759,3 +759,5 @@ Hard Reset + Eject Disks =
 select image multi =
 Second Button tooltip =
 prioritise controlport = Par exemple, lorsque les touches de curseur sont utilisées comme un joystick de clavier et déplacent également le curseur dans le Basic, certains jeux posent des problèmes. C'est comparable à l'utilisation simultanée d'un joystick et d'un clavier. Ce paramètre supprime les entrées clavier, qui sont également utilisées pour le Controlport.
+Kickrom =
+Extrom =

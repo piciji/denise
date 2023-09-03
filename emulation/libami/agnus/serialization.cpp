@@ -131,6 +131,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
             setSlowmem(_slowMemSize);
             setFastmem(_fastMemSize);
 
+            checkForRomEncryption();
             mapRom(false);
 
             if (std::fabs(fpsOld - fps) > 0.03)

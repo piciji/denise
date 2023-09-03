@@ -83,6 +83,7 @@ struct Agnus {
     Cia<MOS_8520>& cia2;
     uint16_t vPosLocked;
     bool hPosLocked;
+    uint8_t* encryptedRom;
 
     Emulator::PowerSupply powerSupply;
     Blitter blitter;
@@ -189,8 +190,10 @@ struct Agnus {
     uint8_t* fastMem = nullptr;
     unsigned fastMemSize = 0;
     uint8_t* kickRom = nullptr;
+    unsigned kickRomSize = 0;
     unsigned kickRomMask = 0;
     uint8_t* extRom = nullptr;
+    unsigned extRomSize = 0;
     unsigned extRomMask = 0;
     uint8_t* wom = nullptr;
 
@@ -419,6 +422,7 @@ struct Agnus {
     auto updateCropRight(int pos) -> void;
 
     auto sanitizeCrop(int width, int height) -> void;
+    auto checkForRomEncryption() -> void;
 };
 
 }

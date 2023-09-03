@@ -51,7 +51,7 @@ auto FirmwareManager::clear() -> void {
 }
 
 auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> bool {
-    
+    bool slotChanged;
     auto image = findImage( firmware, storeLevel );
     
 	if (!image)
@@ -64,20 +64,22 @@ auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned
     
     if (!activeImage) {
         imagesActive.push_back({ firmware, image->data, image->size, storeLevel });
-        
+        slotChanged = true;
     } else {
         
         if (activeImage->data) {
             if ( !dataInStore( activeImage ) )
                 delete[] activeImage->data;
         }
-        
+
+        slotChanged = activeImage->data != image->data;
         activeImage->data = image->data;
         activeImage->size = image->size;
         activeImage->storeLevel = storeLevel;
     }     
     
-    emulator->setFirmware(firmware->id, image->data, image->size, storeLevel == 0);
+    emulator->setFirmware(firmware->id, image->data, image->size,
+        dynamic_cast<LIBC64::Interface*>(emulator) ? (storeLevel == 0) : slotChanged);
 
     States::getInstance( emulator )->updateFirmware( !storeLevel ? nullptr : getSetting( firmware, storeLevel ), firmware );
     

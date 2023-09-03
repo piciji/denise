@@ -33,6 +33,7 @@ struct System {
     RTC rtc;
     DiskDrive diskDrives[4];
     bool ntsc;
+    bool firmwareChanged;
 
     Emulator::Crop<uint16_t> crop;
 
@@ -66,7 +67,7 @@ struct System {
     unsigned serializationSize;
     Emulator::Serializer serializer;
 
-    auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
+    auto setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void;
     auto power(bool softReset = false, bool resetInstruction = false) -> void;
     auto powerOff() -> void;
     auto run() -> void;

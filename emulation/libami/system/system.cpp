@@ -117,6 +117,7 @@ rtc(agnus) {
 
     paula.activeDrive = &diskDrives[0];
     ntsc = false;
+    firmwareChanged = true;
 }
 
 System::~System() {
@@ -230,26 +231,28 @@ auto System::informAboutKeyUpdate() -> void {
     input.sampling.emergencyPolling = true; // call from another thread
 }
 
-auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
+auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void {
+    firmwareChanged |= allowPatching;
+
     if (size >= (512 * 1024))
         size = 512 * 1024;
-    else
-        size = Emulator::powerOfTwo( size );
 
     if (!data || !size) {
         data = nullptr;
-        size = 1;
+        size = 0;
     }
 
     switch (typeId) {
         case 0:
         default:
             agnus.kickRom = data;
-            agnus.kickRomMask = size - 1;
+            agnus.kickRomSize = size;
+            agnus.kickRomMask = size ? (Emulator::powerOfTwo( size ) - 1) : 0;
             break;
         case 1:
             agnus.extRom = data;
-            agnus.extRomMask = size - 1;
+            agnus.extRomSize = size;
+            agnus.extRomMask = size ? (Emulator::powerOfTwo( size ) - 1) : 0;
             break;
     }
 }

@@ -758,3 +758,5 @@ multi file selection =
 Hard Reset + Eject Disks =
 select image multi =
 prioritise controlport = Például amikor a kurzorbillentyűket billentyűzet-joystickként használjuk, és egyaránt használjuk a kurzor mozgatására a Basicben, akkor ilyesmi egyes játéknál problémákat okozhat. Ez ahhoz hasonlítható, mintha egy joystickkal és billentyűzettel egyszerre működtetnénk. Ez a beállítás elnyomja a billentyűzetre vonatkozó azon hozzárendeléseket, amelyeket a Játékvezérlő port is használ.
+Kickrom =
+Extrom =

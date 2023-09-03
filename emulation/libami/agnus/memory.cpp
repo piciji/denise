@@ -504,4 +504,34 @@ auto Agnus::getZorroSize() -> uint8_t {
     return ~0; // should never happen
 }
 
+auto Agnus::checkForRomEncryption() -> void {
+    int i, k;
+
+    if (!extRom || !extRomSize || !kickRom || !kickRomSize)
+        return;
+
+    if ((kickRomSize < 12) || (std::memcmp(kickRom, "AMIROMTYPE1", 11)))
+        return;
+
+    kickRomSize -= 11;
+    if (!encryptedRom || system->firmwareChanged) {
+        if (encryptedRom)
+            delete[] encryptedRom;
+
+        encryptedRom = new uint8_t[kickRomSize];
+        std::memcpy(encryptedRom, kickRom + 11, kickRomSize);
+
+        for (i = k = 0; i < kickRomSize; i++, k = (k + 1) % extRomSize)
+            encryptedRom[i] ^= extRom[k];
+    }
+
+    kickRom = encryptedRom;
+    kickRomMask = kickRomSize ? (Emulator::powerOfTwo( kickRomSize ) - 1) : 0;
+
+    extRom = nullptr;
+    extRomSize = 0;
+    extRomMask = 0;
+    system->firmwareChanged = false;
+}
+
 }

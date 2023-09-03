@@ -758,3 +758,5 @@ multi file selection =
 Hard Reset + Eject Disks =
 select image multi =
 prioritise controlport = カーソルキーをジョイスティックの入力としてアサインし、同時にBasic画面でカーソルを移動させるキーとしても使う場合、不具合が発生するゲームが存在します。は入力ポートをキーボードとジョイスティックで代替共有しており、この設定はキーボードの入力ポートの使用を抑制します
+Kickrom =
+Extrom =

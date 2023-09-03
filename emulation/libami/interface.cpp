@@ -334,7 +334,7 @@ auto Interface::getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> b
 auto Interface::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void {
     if (typeId >= firmwares.size()) return;
 
-    system->setFirmware( typeId, data, size );
+    system->setFirmware( typeId, data, size, allowPatching );
 }
 
 auto Interface::power() -> void {
