@@ -9,6 +9,7 @@
 #include "ext2.cpp"
 #include "dms.cpp"
 #include "ipf.cpp"
+#include "exe.cpp"
 
 namespace LIBAMI {
 
@@ -37,7 +38,7 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
 
     switch(type) {
         case Type::ADF:
-            if (dmsCompression) {
+            if (virtualCreated) {
                 data = rawData;
                 size = rawSize;
             }
@@ -70,9 +71,9 @@ auto DiskStructure::detach() -> void {
     type = Type::Unknown;
     writeProtected = false;
     hd = false;
-    if (dmsCompression && rawData)
+    if (virtualCreated && rawData)
         delete[] rawData;
-    dmsCompression = false;
+    virtualCreated = false;
     rawData = nullptr;
 }
 
@@ -92,11 +93,14 @@ auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
     if (analyzeADF(data, size))
         return true;
 
+    if (analyzeEXE(data, size))
+        return true;
+
     return false;
 }
 
 auto DiskStructure::storeWrittenTracks(Emulator::Interface::Media* media) -> void {
-    if (dmsCompression || (type == Type::IPF) )
+    if (virtualCreated || (type == Type::IPF) )
         return;
 
     if (!agnus.interface->questionToWrite(media))
@@ -244,7 +248,7 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
     s.integer( trackCount );
     s.integer( rawSize );
     s.integer( writeProtected );
-    s.integer( dmsCompression );
+    s.integer( virtualCreated );
     s.integer( serializationSize );
 
     if (!written || (s.mode() == Emulator::Serializer::Mode::Size))

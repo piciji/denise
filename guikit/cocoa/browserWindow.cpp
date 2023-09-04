@@ -79,7 +79,7 @@
                     if (i >= listings.size())
                         break;
                     
-                    std::string ident = GUIKIT::File::removeExtension(file);
+                    std::string ident = GUIKIT::String::removeExtension(file, 2);
                     ident += "  " + listings[i++].entry + ": ";
                     if (ident.size() > maxChars)
                         ident = ident.substr( ident.size() - maxChars );

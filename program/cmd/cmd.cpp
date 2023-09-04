@@ -58,7 +58,7 @@ Cmd::Cmd(int argc, char** argv) {
         else if ( arg == "-config-amiga" )
             configIdent = "Amiga";
 
-		else
+		else if (!GUIKIT::String::endsWith(arg, (std::string)APP_NAME + ".exe") && !GUIKIT::String::endsWith(arg, (std::string)APP_NAME))
             arguments.push_back(arg);
     }
 }
@@ -342,37 +342,41 @@ auto Cmd::parse() -> void {
                     autoload = true;
                     break;
 
-                } else if (GUIKIT::String::foundSubStr( temp, "." + suffix )) {
-                    std::replace( arg.begin(), arg.end(), '\\', '/');
-										
-					if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "vicii" ))
-						hasViciiTest = true;
-					else if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "ef_test" )) // relies on VIC last bus value
-						hasViciiTest = true;
-					else if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "bonzai" ))
-						hasViciiTest = true;
-					else if (!hasFuxxorTest && GUIKIT::String::foundSubStr( temp, "fuxxor" ))
-						hasFuxxorTest = true;
-					else if (!hasRam0001Test && GUIKIT::String::foundSubStr( temp, "ram0001" ))
-						hasRam0001Test = true;
-                    else if (!useCustomICGlueLogic && GUIKIT::String::foundSubStr( temp, "reutiming2" ) && !GUIKIT::String::foundSubStr( temp, "m2." ) )
-                        useCustomICGlueLogic = true;
-                    else if (!emulateD64WithMoreAccuracy && GUIKIT::String::foundSubStr( temp, "rpm3." ))
-                        emulateD64WithMoreAccuracy = true;
-									
-					// todo: dirty hack for Testbench to prevent injection of test.prg instead of loading "test",8,1
-					else if (GUIKIT::String::foundSubStr( temp, "defaults" ) && GUIKIT::String::foundSubStr( temp, "test." )) {
-						if (!hasDefaultTest)
-							hasDefaultTest = true;
-						else {							
-							paths[0] = GUIKIT::String::replace( paths[0], ".prg", ".d64");
-							continue;
-						}						
-					}
-					
-                    paths.push_back( arg );  
-                    autoload = true;
-                    break;
+                } else {
+                    std::string extension = GUIKIT::String::getExtension(temp, "exe");
+
+                    if (suffix == extension) {
+                        std::replace( arg.begin(), arg.end(), '\\', '/');
+
+                        if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "vicii" ))
+                            hasViciiTest = true;
+                        else if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "ef_test" )) // relies on VIC last bus value
+                            hasViciiTest = true;
+                        else if (!hasViciiTest && GUIKIT::String::foundSubStr( temp, "bonzai" ))
+                            hasViciiTest = true;
+                        else if (!hasFuxxorTest && GUIKIT::String::foundSubStr( temp, "fuxxor" ))
+                            hasFuxxorTest = true;
+                        else if (!hasRam0001Test && GUIKIT::String::foundSubStr( temp, "ram0001" ))
+                            hasRam0001Test = true;
+                        else if (!useCustomICGlueLogic && GUIKIT::String::foundSubStr( temp, "reutiming2" ) && !GUIKIT::String::foundSubStr( temp, "m2." ) )
+                            useCustomICGlueLogic = true;
+                        else if (!emulateD64WithMoreAccuracy && GUIKIT::String::foundSubStr( temp, "rpm3." ))
+                            emulateD64WithMoreAccuracy = true;
+
+                        // todo: dirty hack for Testbench to prevent injection of test.prg instead of loading "test",8,1
+                        else if (GUIKIT::String::foundSubStr( temp, "defaults" ) && GUIKIT::String::foundSubStr( temp, "test." )) {
+                            if (!hasDefaultTest)
+                                hasDefaultTest = true;
+                            else {
+                                paths[0] = GUIKIT::String::replace( paths[0], ".prg", ".d64");
+                                continue;
+                            }
+                        }
+
+                        paths.push_back( arg );
+                        autoload = true;
+                        break;
+                    }
                 }
             }                                  
         }

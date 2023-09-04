@@ -53,7 +53,7 @@ auto Interface::prepareModels() -> void {
 }
 
 auto Interface::prepareMedia() -> void {
-    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "dms", "ipf", "adz"}, {"adf", "ext.adf"} });
+    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "dms", "ipf", "adz", "exe"}, {"adf", "ext.adf"} });
     // mediaGroups.push_back({MediaGroupIdHardDisk, "hd", MediaGroup::Type::HardDisk, {"hdf"}, {"hdf"} });
 
     {   auto& group = mediaGroups[MediaGroupIdDisk];

@@ -836,7 +836,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                         if (i >= rows.size())
                             break;
 
-                        std::string ident = File::removeExtension(file);
+                        std::string ident = String::removeExtension(file, 2);
                         ident += "  " + rows[i++].entry + ": ";
                         if (ident.size() > maxChars)
                             ident = ident.substr( ident.size() - maxChars );

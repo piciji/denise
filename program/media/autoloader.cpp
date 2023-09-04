@@ -320,11 +320,8 @@ auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsign
         if (!item || (item->info.size == 0))
             continue;
 
-        std::size_t end = item->info.name.find_last_of(".");
-        if (end == std::string::npos)
-            continue;
+        std::string fileSuffix = GUIKIT::String::getExtension(item->info.name, "exe");
 
-        std::string fileSuffix = item->info.name.substr(end + 1);
         GUIKIT::String::toLowerCase(fileSuffix);
 
         for (auto emulator : emulators) {
@@ -368,9 +365,7 @@ auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsign
 }
 
 auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
-
-	std::size_t end;
-	std::string fileSuffix;
+    std::string fileSuffix;
 
 	if (!item || (item->info.size == 0))
 		goto errorOpen;
@@ -379,14 +374,8 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
         if ( checkForSavestate( file, item ) )
             return loadFiles();
     }
-    
-	end = item->info.name.find_last_of(".");
 
-	if (end == std::string::npos)
-		goto errorOpen;
-
-	fileSuffix = item->info.name.substr(end + 1);
-
+    fileSuffix = GUIKIT::String::getExtension(item->info.name, "exe");
 	GUIKIT::String::toLowerCase(fileSuffix);
 
 	for (auto emulator : emulators) {

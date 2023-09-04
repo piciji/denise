@@ -126,7 +126,7 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
                     if (i >= listings.size())
                         break;
 
-                    std::string ident = File::removeExtension(file);
+                    std::string ident = String::removeExtension(file, 2);
                     ident += "  " + listings[i++].entry + ": ";
                     if (ident.size() > maxChars)
                         ident = ident.substr( ident.size() - maxChars );

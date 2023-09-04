@@ -18,9 +18,8 @@ SectorBlock::SectorBlock(Filesystem& filesystem, Type type, unsigned nr) : files
     if (type != Type::EMPTY_BLOCK) {
         data = new uint8_t[filesystem.bSize];
         std::memset(data, 0, bSize());
+        init();
     }
-
-    init();
 }
 
 auto SectorBlock::init() -> void {
@@ -55,6 +54,14 @@ auto SectorBlock::init() -> void {
             write(-4, (uint32_t)-3);
             writeDate(std::time(nullptr), -92); // access date
             break;
+        case EXTENSION_BLOCK:
+            write(0, 16);
+            write(4, nr);
+            write(-4, (uint32_t)-3);
+            break;
+        case DATA_BLOCK_OFS:
+            write(0, 8);
+            break;
     }
 }
 
@@ -63,7 +70,8 @@ auto SectorBlock::setName(std::string name) -> void {
         case ROOT_BLOCK:
         case DIR_BLOCK:
         case FILE_HEADER_BLOCK:
-            if (name == "") name = "empty";
+            if (name == "")
+                name = "empty";
             writeName(-80, name, 30);
             break;
     }
@@ -88,6 +96,17 @@ auto SectorBlock::getNameRaw(bool indentByDepth) -> std::vector<uint16_t> {
             return readNameRaw(-80, 30, indentByDepth);
         default:
             return {};
+    }
+}
+
+auto SectorBlock::getHash() -> unsigned {
+    switch(type) {
+        case DIR_BLOCK:
+        case FILE_HEADER_BLOCK:
+            return calcHash( readName(-80, 30) );
+
+        default:
+            return 0;
     }
 }
 
@@ -138,6 +157,15 @@ auto SectorBlock::getBitmapExtBlock() -> unsigned {
     }
 }
 
+auto SectorBlock::setParentDir(unsigned pos) -> void {
+    switch(type) {
+        case FILE_HEADER_BLOCK:
+        case DIR_BLOCK:
+            write(-12, pos);
+            break;
+    }
+}
+
 auto SectorBlock::getParentDir() -> unsigned {
     switch(type) {
         case FILE_HEADER_BLOCK:
@@ -149,14 +177,24 @@ auto SectorBlock::getParentDir() -> unsigned {
     }
 }
 
-auto SectorBlock::getHash(unsigned pos) -> unsigned {
+auto SectorBlock::getHashTable(unsigned pos) -> unsigned {
     switch (type) {
         case DIR_BLOCK:
         case ROOT_BLOCK:
-            if (pos < hashTableEntries())
+            if (pos < tableEntries())
                 return read( (6 + pos) << 2 );
         default:
             return 0;
+    }
+}
+
+auto SectorBlock::setHashTable(unsigned pos, unsigned nr) -> void {
+    switch (type) {
+        case DIR_BLOCK:
+        case ROOT_BLOCK:
+            if (pos < tableEntries())
+                write( (6 + pos) << 2, nr );
+            break;
     }
 }
 
@@ -171,6 +209,191 @@ auto SectorBlock::getHashChain() -> unsigned {
     }
 }
 
+auto SectorBlock::setHashChain(unsigned nr) -> void {
+    switch (type) {
+        case DIR_BLOCK:
+        case FILE_HEADER_BLOCK:
+            write(-16, nr);
+            break;
+    }
+}
+
+auto SectorBlock::getFileHeader() -> unsigned {
+    switch (type) {
+        case EXTENSION_BLOCK:
+            return read(-12);
+        case DATA_BLOCK_OFS:
+            return read(4);
+
+        default:
+            return 0;
+    }
+}
+
+auto SectorBlock::setFileHeader(unsigned nr) -> void {
+    switch (type) {
+        case EXTENSION_BLOCK:
+            write(-12, nr);
+            break;
+        case DATA_BLOCK_OFS:
+            write(4, nr);
+            break;
+    }
+}
+
+auto SectorBlock::getNextExtension() -> unsigned {
+    switch (type) {
+        case FILE_HEADER_BLOCK:
+        case EXTENSION_BLOCK:
+            return read(-8);
+
+        default:
+            return 0;
+    }
+}
+
+auto SectorBlock::setNextExtension(unsigned nr) -> void {
+    switch (type) {
+        case FILE_HEADER_BLOCK:
+        case EXTENSION_BLOCK:
+            write(-8, nr);
+            break;
+
+        default:
+            break;
+    }
+}
+
+auto SectorBlock::getSize() -> unsigned {
+    switch (type) {
+        case DATA_BLOCK_OFS:
+            return read(12);
+        case FILE_HEADER_BLOCK:
+            return read(-188);
+        default:
+            return 0;
+    }
+}
+
+auto SectorBlock::setSize(unsigned value) -> void {
+    switch (type) {
+        case DATA_BLOCK_OFS:
+            write(12, value);
+            break;
+        case FILE_HEADER_BLOCK:
+            write(-188, value);
+            break;
+        default:
+            break;
+    }
+}
+
+auto SectorBlock::getDataSeqNum() -> unsigned {
+    switch (type) {
+        case DATA_BLOCK_OFS:
+            return read(8);
+
+        default:
+            return 0;
+    }
+}
+
+auto SectorBlock::setDataSeqNum(unsigned value) -> void {
+    switch (type) {
+        case DATA_BLOCK_OFS:
+            write(8, value);
+            break;
+
+        default:
+            break;
+    }
+}
+
+auto SectorBlock::getNextData() -> unsigned {
+    switch (type) {
+        case DATA_BLOCK_OFS:
+            return read(16);
+
+        default:
+            return 0;
+    }
+}
+
+auto SectorBlock::setNextData(unsigned value) -> void {
+    switch (type) {
+        case DATA_BLOCK_OFS:
+            write(16, value);
+            break;
+
+        default:
+            break;
+    }
+}
+
+auto SectorBlock::getHighSeq() -> unsigned {
+    switch (type) {
+        case FILE_HEADER_BLOCK:
+        case EXTENSION_BLOCK:
+            return read(8);
+
+        default:
+            return 0;
+    }
+}
+
+auto SectorBlock::setHighSeq(unsigned value) -> void {
+    switch (type) {
+        case FILE_HEADER_BLOCK:
+        case EXTENSION_BLOCK:
+            write(8, value);
+            break;
+
+        default:
+            break;
+    }
+}
+
+auto SectorBlock::getFirstData() -> unsigned {
+    switch (type) {
+        case FILE_HEADER_BLOCK:
+            return read(16);
+
+        default:
+            return 0;
+    }
+}
+
+auto SectorBlock::setFirstData(unsigned value) -> void {
+    switch (type) {
+        case FILE_HEADER_BLOCK:
+            write(16, value);
+            break;
+
+        default:
+            break;
+    }
+}
+
+auto SectorBlock::getDataTable(int pos) -> unsigned {
+    switch (type) {
+        case FILE_HEADER_BLOCK:
+        case EXTENSION_BLOCK:
+            return read( -204 - (pos << 2) );
+
+        default:
+            return 0;
+    }
+}
+
+auto SectorBlock::setDataTable(int pos, unsigned value) -> void {
+    switch (type) {
+        case FILE_HEADER_BLOCK:
+        case EXTENSION_BLOCK:
+            write( -204 - (pos << 2), value);
+            break;
+    }
+}
+
 auto SectorBlock::getChecksumOffset() -> int {
     switch(type) {
         case BOOT_BLOCK:
@@ -181,6 +404,8 @@ auto SectorBlock::getChecksumOffset() -> int {
         case ROOT_BLOCK:
         case DIR_BLOCK:
         case FILE_HEADER_BLOCK:
+        case EXTENSION_BLOCK:
+        case DATA_BLOCK_OFS:
             return 20;
 
         case BITMAP_BLOCK:
@@ -260,11 +485,13 @@ auto SectorBlock::importBlock(uint8_t* data) -> void {
         std::memcpy(this->data, data, bSize());
 }
 
-auto SectorBlock::hashTableEntries() -> unsigned {
+auto SectorBlock::tableEntries() -> unsigned {
     switch (type) {
         case ROOT_BLOCK:
         case DIR_BLOCK:
-            return 72;
+        case EXTENSION_BLOCK:
+        case FILE_HEADER_BLOCK:
+            return (bSize() / 4) - 56;
 
         default:
             return 0;
@@ -277,6 +504,10 @@ auto SectorBlock::readName(int offset, uint8_t allocatedSize) -> std::string {
     uint8_t size = *ptr++;
     uint8_t strSize = std::min(allocatedSize, size);
     out.assign(ptr, ptr + strSize);
+
+    std::replace( out.begin(), out.end(), ':', '_');
+    std::replace( out.begin(), out.end(), '/', '_');
+
     return out;
 }
 
@@ -338,6 +569,22 @@ auto SectorBlock::writeDate(time_t unixTS, int offset) -> void {
     write(offset, days);
     write(offset + 4, mins);
     write(offset + 8, ticks);
+}
+
+auto SectorBlock::capital(char c) -> char {
+    return (c >= 'a' && c <= 'z') ? c - ('a' - 'A') : c;
+}
+
+auto SectorBlock::calcHash(const std::string& str) -> uint32_t {
+    unsigned length = str.size();
+    uint32_t result = length;
+
+    for (int i = 0; i < length; i++) {
+        char c = capital(str[i]);
+        result = (result * 13 + (uint32_t)c) & 0x7FF;
+    }
+
+    return result;
 }
 
 }

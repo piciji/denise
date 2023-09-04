@@ -117,14 +117,10 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                     std::string _fn = item.info.name;
                     GUIKIT::String::toLowerCase( _fn );
 
-                    bool fileTypeAccepted = false;
-                    for(auto& s : suffixList) {
-                        if (GUIKIT::String::findString(_fn, "." + s)) {
-                            fileTypeAccepted = true;
-                            break;
-                        }
-                    }
-                    if (!fileTypeAccepted)
+                    std::string extension = GUIKIT::String::getExtension(_fn, "exe");
+                    GUIKIT::String::toLowerCase( extension );
+
+                    if (!GUIKIT::Vector::find(suffixList, extension))
                         continue;
 
                     filePool->assign(_ident(emulator, "swapper_" + std::to_string(pos)), file);

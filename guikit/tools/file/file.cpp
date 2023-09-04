@@ -366,21 +366,6 @@ auto File::getFileName(bool removeExtension, bool truncateFromEnd) -> std::strin
     return _fn;
 }
 
-auto File::removeExtension(std::string str) -> std::string { // new version
-    size_t lastdot = str.size();
-
-    while(1) {
-        size_t nextdot = str.find_last_of(".");
-        if ( (nextdot != std::string::npos) && ((lastdot - nextdot) < 5))
-            str = str.erase(nextdot);
-        else
-            break;
-        lastdot = nextdot;
-    }
-
-    return str;
-}
-
 auto File::getExtension() -> std::string {
     std::string _fn = filePath;
     String::remove(_fn, {".."});

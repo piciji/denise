@@ -51,7 +51,7 @@ struct DiskStructure {
     unsigned rawSize = 0;
     bool writeProtected = true;
     unsigned serializationSize = 0;
-    bool dmsCompression = false;
+    bool virtualCreated = false;
     static Emulator::DLLoader dlLoader;
     int capsImageId;
 
@@ -63,6 +63,7 @@ struct DiskStructure {
     auto analyzeADF(uint8_t* data, unsigned size) -> bool;
     auto analyzeDMS(uint8_t* data, unsigned size) -> bool;
     auto analyzeIPF(uint8_t* data, unsigned size) -> bool;
+    auto analyzeEXE(uint8_t* data, unsigned size) -> bool;
 
     auto prepareADF(uint8_t* data, unsigned size) -> void;
     auto prepareEXT(uint8_t* data, unsigned size) -> void;

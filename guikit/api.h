@@ -1355,7 +1355,6 @@ struct File {
     static auto beautifyPath(std::string path) -> std::string;
     static auto getOffsetDataStringFromBinary( std::string inFile, std::string outFile ) -> bool;
     static auto getPath( std::string _fn ) -> std::string;
-    static auto removeExtension(std::string str) -> std::string;
 
     auto setFile(std::string filePath) -> void;
     auto getFile() const -> std::string { return filePath; }
@@ -1516,6 +1515,8 @@ struct String {
     static auto convertDoubleToString(double value, unsigned precision = 18) -> std::string;
     static auto findOccurencesOf( std::string str, std::string subStr ) -> unsigned;
     static auto getFileName(std::string path, bool removeExtension = false) -> std::string;
+    static auto getExtension(const std::string& str, const std::string& defaultExt, int maxParts = 1, int maxPartSize = 3) -> std::string;
+    static auto removeExtension(std::string str, int maxParts = 1, int maxPartSize = 3) -> std::string;
 
     template<typename T> static auto addThousandSeparator(T digit) -> std::string {
         return addThousandSeparator( std::to_string( digit ) );

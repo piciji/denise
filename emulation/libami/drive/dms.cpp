@@ -13,7 +13,7 @@ auto DiskStructure::analyzeDMS(uint8_t* data, unsigned size) -> bool {
         if (analyzeADF(fo, foSize)) {
             rawData = fo;
             rawSize = foSize;
-            dmsCompression = true;
+            virtualCreated = true;
             return true;
         }
     }

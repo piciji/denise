@@ -498,8 +498,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
             std::string filePath;
             Emulator::Interface* emulator;
             Emulator::Interface::Media* media;
-            std::string extension = "";
-            std::size_t end;
+            std::string extension;
             Emulator::Interface::MediaGroup* group = nullptr;
             std::vector<Emulator::Interface::Listing> listings;
 
@@ -534,11 +533,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
             }
 
             fileName = items[0].info.name;
-            end = fileName.find_last_of(".");
-
-            if (end != std::string::npos)
-                extension = fileName.substr(end + 1);
-
+            extension = GUIKIT::String::getExtension(fileName, "exe");
             GUIKIT::String::toLowerCase( extension );
 
             for(auto& mediaGroup : emulator->mediaGroups) {

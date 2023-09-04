@@ -1474,16 +1474,21 @@ auto BrowserWindow::transformFilter( std::string description, const std::string&
 }
 
 auto BrowserWindow::transformFilter( std::string description, const std::vector<std::string>& suffix ) -> std::string {
-	std::string out = description + " (";
-	auto i = 0;
-	
-	for(auto& part : suffix) {		
-		out += "*." + part;
-		
-		if (++i < suffix.size())
-			out += ", ";
-	}	
-	return out + ")";
+    std::string out = "";
+
+	for(auto& part : suffix) {
+        if (part.empty())
+            continue;
+
+		out += "*." + part + ", ";
+	}
+
+    if (!out.empty())
+        out = out.substr(0, out.size() - 2);
+    else
+        return description;
+
+	return description + " (" + out + ")";
 }
 
 //messageWindow

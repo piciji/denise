@@ -99,6 +99,220 @@ auto Filesystem::predictType(unsigned ref, uint8_t* buffer) -> SectorBlock::Type
     return SectorBlock::Type::EMPTY_BLOCK;
 }
 
+auto Filesystem::currentDir() -> SectorBlock* {
+    if (cd) {
+        if (cd->type == SectorBlock::Type::ROOT_BLOCK || cd->type == SectorBlock::Type::DIR_BLOCK)
+            return cd;
+    }
+
+    if (!rootBlock)
+        rootBlock = blocks[getRootBlockRef()];
+    cd = rootBlock;
+
+    return cd;
+}
+
+auto Filesystem::placeNewBlock(SectorBlock::Type type) -> SectorBlock* {
+    auto block = allocateEmptyBlock();
+    if (block) {
+        unsigned nr = block->nr;
+        delete block;
+        block = new SectorBlock(*this, type, nr);
+        blocks[nr] = block;
+    }
+    return block;
+}
+
+auto Filesystem::allocateEmptyBlock() -> SectorBlock* {
+    for (int i = getRootBlockRef() + 1; i < blockCount; i++) {
+        if (blocks[i]->type == SectorBlock::Type::EMPTY_BLOCK) {
+            markBlockAsAllocated(i);
+            return blocks[i];
+        }
+    }
+    for (int i = getRootBlockRef() - 1; i >= 0; i--) {
+        if (blocks[i]->type == SectorBlock::Type::EMPTY_BLOCK) {
+            markBlockAsAllocated(i);
+            return blocks[i];
+        }
+    }
+    return nullptr;
+}
+
+auto Filesystem::createBase(const std::string& name, bool isDir, uint8_t* data, unsigned size) -> SectorBlock* {
+    SectorBlock* block = placeNewBlock(isDir ? SectorBlock::Type::DIR_BLOCK : SectorBlock::Type::FILE_HEADER_BLOCK);
+    if (!block)
+        return nullptr;
+
+    block->setName(name);
+    SectorBlock* cd = currentDir();
+    block->setParentDir( cd->nr );
+
+    unsigned hash = block->getHash() % cd->tableEntries();
+    unsigned hashRef = cd->getHashTable(hash);
+    if (!hashRef) {
+        cd->setHashTable(hash, block->nr);
+    } else {
+        auto last = getLastChainBlock( getHashTableBlock(hashRef) );
+        if (last)
+            last->setHashChain( block->nr );
+    }
+
+    if (data && !isDir)
+        writeData(block, data, size);
+
+    return block;
+}
+
+auto Filesystem::getLastChainBlock(SectorBlock* block) -> SectorBlock* {
+    std::set<unsigned> sanityCheck;
+
+    while (block && sanityCheck.find(block->nr) == sanityCheck.end()) {
+        SectorBlock* next = getHashTableBlock(block->getHashChain());
+        if (!next)
+            return block;
+
+        sanityCheck.insert(block->nr);
+        block = next;
+    }
+    return nullptr;
+}
+
+
+auto Filesystem::seek(std::string name) -> SectorBlock* {
+    std::set<unsigned> sanityCheck;
+
+    SectorBlock* cd = currentDir();
+
+    unsigned hash = SectorBlock::calcHash(name) % cd->tableEntries();
+    unsigned hashRef = cd->getHashTable(hash);
+
+    while (hashRef && sanityCheck.find(hashRef) == sanityCheck.end())  {
+        SectorBlock* block = getHashTableBlock(hashRef);
+        if (!block)
+            break;
+
+        if (block->getName() == name)
+            return block;
+
+        sanityCheck.insert(hashRef);
+        hashRef = block->getHashChain();
+    }
+
+    return nullptr;
+}
+
+auto Filesystem::changeDir(const std::string& name) -> SectorBlock* {
+    currentDir();
+
+    if (name == "/") {
+        cd = rootBlock;
+        return cd;
+    }
+
+    if (name == "..") {
+        cd = getBlock(cd->getParentDir());
+        return currentDir();
+    }
+
+    auto subdir = seek(name);
+    if (!subdir)
+        return cd;
+
+    cd = getBlock(subdir->nr);
+    return currentDir();
+}
+
+auto Filesystem::writeData(SectorBlock* fhBlock, uint8_t* data, unsigned size) -> bool {
+    if(fhBlock->type != SectorBlock::Type::FILE_HEADER_BLOCK)
+        return false;
+
+    unsigned dataBlocks = requiredDataBlocks(size);
+    unsigned extBlocks = requiredExtensionBlocks(size);
+    unsigned freeBlocks = countFreeBlocks();
+
+    if (freeBlocks < (dataBlocks + extBlocks))
+        return false;
+
+    SectorBlock* parent = fhBlock;
+    for (int i = 0; i < extBlocks; i++) {
+        SectorBlock* block = placeNewBlock(SectorBlock::Type::EXTENSION_BLOCK);
+        if (!block)
+            return false;
+        block->setFileHeader(fhBlock->nr);
+        parent->setNextExtension(block->nr);
+        parent = block;
+    }
+
+    parent = nullptr;
+    for (int i = 1; i <= dataBlocks; i++) {
+        SectorBlock* block = placeNewBlock(isOFS() ? SectorBlock::Type::DATA_BLOCK_OFS : SectorBlock::Type::DATA_BLOCK_FFS);
+        if (!block)
+            return false;
+
+        block->setFileHeader(fhBlock->nr);
+        block->setDataSeqNum(i);
+        if (parent)
+            parent->setNextData(block->nr);
+
+        parent = block;
+
+        if (!referenceDataBlock(fhBlock, block))
+            return false;
+
+        unsigned todo;
+        if (isOFS()) {
+            todo = std::min(bSize - 24, size);
+            std::memcpy(block->data + 24, data, todo);
+            block->setSize(todo);
+        } else {
+            todo = std::min(bSize, size);
+            std::memcpy(block->data, data, todo);
+        }
+
+        fhBlock->setSize(fhBlock->getSize() + todo);
+
+        data += todo;
+        size -= todo;
+
+        if (!size)
+            break;
+    }
+
+    return true;
+}
+
+auto Filesystem::referenceDataBlock(SectorBlock* fhBlock, SectorBlock* dataBlock) -> bool {
+    unsigned tablePos = fhBlock->getHighSeq();
+
+    if (tablePos < fhBlock->tableEntries()) {
+        if (!tablePos)
+            fhBlock->setFirstData(dataBlock->nr);
+
+        fhBlock->setDataTable(tablePos, dataBlock->nr);
+        fhBlock->setHighSeq(tablePos + 1);
+        return true;
+    }
+
+    std::set<SectorBlock*> sanityCheck;
+    SectorBlock* extBlock = fhBlock;
+
+    while(extBlock = getExtensionBlock(extBlock->getNextExtension())) {
+        if (sanityCheck.find(extBlock) != sanityCheck.end())
+            return false;
+
+        tablePos = extBlock->getHighSeq();
+
+        if (tablePos < extBlock->tableEntries()) {
+            extBlock->setDataTable(tablePos, dataBlock->nr);
+            extBlock->setHighSeq(tablePos + 1);
+            return true;
+        }
+        sanityCheck.insert( extBlock );
+    }
+    return false;
+}
+
 auto Filesystem::getDirectory() -> std::vector<Emulator::Interface::Listing> {
     std::stack<SectorBlock*> dir;
     std::vector<SectorBlock*> sanityCheck; // prevent endless iterations
@@ -155,8 +369,8 @@ auto Filesystem::traverse( SectorBlock* from, std::stack<SectorBlock*>& result )
     if (!from)
         return;
 
-    for (int i = from->hashTableEntries(); i >= 0; i--) {
-        for(SectorBlock* block = getHashTableBlock( from->getHash(i) ); block; block = getHashTableBlock(block->getHashChain())) {
+    for (int i = from->tableEntries(); i >= 0; i--) {
+        for(SectorBlock* block = getHashTableBlock( from->getHashTable(i) ); block; block = getHashTableBlock(block->getHashChain())) {
             if (find(sanityCheck, block))
                 break;
 
@@ -251,6 +465,16 @@ auto Filesystem::markBlockAsAllocated(unsigned ref) -> void {
     accessBitmapAllocation(ref, 0);
 }
 
+auto Filesystem::countFreeBlocks() -> unsigned {
+    unsigned count = 0;
+
+    for (int i = 0; i < blockCount; i++) {
+        if (isFree(i))
+            count++;
+    }
+    return count;
+}
+
 auto Filesystem::accessBitmapAllocation(unsigned ref, int update) -> bool {
     if (ref < 2)
         return false; // allocated
@@ -317,6 +541,21 @@ auto Filesystem::referenceBitmaps() -> void {
     }
 }
 
+auto Filesystem::requiredDataBlocks(unsigned fileSize) -> unsigned {
+    unsigned bytesPerBlock = bSize - (isOFS() ? 24 : 0);
+    return (fileSize + bytesPerBlock - 1) / bytesPerBlock;
+}
+
+auto Filesystem::requiredExtensionBlocks(unsigned fileSize) -> unsigned {
+    unsigned blocks = requiredDataBlocks(fileSize);
+    unsigned refs = (bSize / 4) - 56;
+
+    if (blocks <= refs)
+        return 0;
+
+    return (blocks - 1) / refs;
+}
+
 auto Filesystem::getBitmapExtBlock(unsigned ref) -> SectorBlock* {
     if ((ref >= blockCount) || (blocks[ref]->type != SectorBlock::Type::BITMAP_EXT_BLOCK))
         return nullptr;
@@ -326,6 +565,13 @@ auto Filesystem::getBitmapExtBlock(unsigned ref) -> SectorBlock* {
 
 auto Filesystem::getBitmapBlock(unsigned ref) -> SectorBlock* {
     if ((ref >= blockCount) || (blocks[ref]->type != SectorBlock::Type::BITMAP_BLOCK))
+        return nullptr;
+
+    return blocks[ref];
+}
+
+auto Filesystem::getExtensionBlock(unsigned ref) -> SectorBlock* {
+    if ((ref >= blockCount) || (blocks[ref]->type != SectorBlock::Type::EXTENSION_BLOCK))
         return nullptr;
 
     return blocks[ref];
