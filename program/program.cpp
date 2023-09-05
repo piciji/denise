@@ -360,7 +360,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 	
 	activeEmulator->power();
 
-    hintExclusiveFullscreen( );
+    updateFullscreenSetting();
 }
 
 auto Program::reset( Emulator::Interface* emulator ) -> void {

@@ -1,4 +1,12 @@
 
+struct MonitorResolutionLayout : GUIKIT::FramedHorizontalLayout {
+    GUIKIT::CheckBox active;
+    GUIKIT::ComboButton display;
+    GUIKIT::ComboButton displaySettings;
+
+    MonitorResolutionLayout();
+};
+
 struct SpeedLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::Label label;
     GUIKIT::RadioBox fps;
@@ -90,6 +98,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     InputSamplingLayout inputSamplingLayout;
     RunAheadLayout runAheadLayout;
     AutostartLayout autostartLayout;
+    MonitorResolutionLayout monitorResolutionLayout;
     
     auto translate() -> void;
     auto setRunAheadPerformance(bool state) -> void;

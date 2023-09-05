@@ -590,7 +590,8 @@ auto View::setConnectors() -> void {
         }
         
         inputItem = new GUIKIT::MenuItem;
-		inputItem->setText(emulator->ident + " " + trans->get("swap_ports") );
+        std::string txt = dynamic_cast<LIBAMI::Interface*>(emulator) ? "swap joypads Port2" : "swap Ports";
+		inputItem->setText(emulator->ident + " " + trans->getA(txt) );
         
         inputItem->onActivate = [emulator, settings]() {
             emuThread->lock();
@@ -599,21 +600,42 @@ auto View::setConnectors() -> void {
             
             auto connector2 = emulator->getConnector( 1 );
             auto connectedDevice2 = emulator->getConnectedDevice( connector2 );
-            
-            emulator->connect( connector1, connectedDevice2 );
-            emulator->connect( connector2, connectedDevice1 );
 
-            emuThread->unlock();
+            if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+                for (auto& device : emulator->devices) {
+                    if (!device.isJoypad())
+                        continue;
+                    if (!connectedDevice2 || !connectedDevice2->isJoypad()) {
+                        connectedDevice2 = &device;
+                        break;
+                    }
+                    if (connectedDevice2 != &device) {
+                        connectedDevice2 = &device;
+                        break;
+                    }
+                }
 
-            settings->set<unsigned>( _underscore(connector1->name), connectedDevice2->id);
-            settings->set<unsigned>( _underscore(connector2->name), connectedDevice1->id);
+                emulator->connect( connector2, connectedDevice2 );
+                emuThread->unlock();
+
+                settings->set<unsigned>( _underscore(connector2->name), connectedDevice2->id);
+                view->checkInputDevice(emulator, connector2, connectedDevice2);
+            } else {
+                emulator->connect( connector1, connectedDevice2 );
+                emulator->connect( connector2, connectedDevice1 );
+
+                emuThread->unlock();
+
+                settings->set<unsigned>( _underscore(connector1->name), connectedDevice2->id);
+                settings->set<unsigned>( _underscore(connector2->name), connectedDevice1->id);
+
+                view->checkInputDevice(emulator, connector1, connectedDevice2);
+                view->checkInputDevice(emulator, connector2, connectedDevice1);
+            }
 
             auto emuView = EmuConfigView::TabWindow::getView(emulator);
             if (emuView && emuView->inputLayout)
                 emuView->inputLayout->updateConnectorButtons();
-            
-            view->checkInputDevice(emulator, connector1, connectedDevice2);
-            view->checkInputDevice(emulator, connector2, connectedDevice1);            
         };
         
         inputItem->setIcon(swapperImage);

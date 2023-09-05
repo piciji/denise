@@ -68,15 +68,6 @@ VideoSettingsLayout::VideoSettingsLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoResolutionLayout::VideoResolutionLayout() : displaySettings(true) {
-    append(active, {0u, 0u}, 10 );
-    append(display, {0u, 0u}, 10 );
-    append(displaySettings, {0u, 0u} );
-    setAlignment(0.5);
-    setPadding( 10 );
-    setFont(GUIKIT::Font::system("bold"));
-}
-
 VideoFpsLayout::Options::Options() {
     append(labelDecimalPlace, {0u, 0u}, 5);
     append(Zero, {0u, 0u}, 5);
@@ -150,65 +141,9 @@ VideoLayout::VideoLayout() {
         emuThread->unlock();
 	};
 
-    append(videoResolution, {~0u, 0u}, 10);
     append(paths, {~0u, 0u}, 10);
     append(driverLayout, {~0u, 0u}, 5);
     append(videoSettingsLayout, {~0u, 0u}, 5);
-
-    videoResolution.display.onChange = [this]() {
-        emuThread->lock();
-        auto displayId = videoResolution.display.userData();
-
-        videoResolution.displaySettings.reset();
-
-        for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
-            videoResolution.displaySettings.append( resolution.name, resolution.id );
-
-        globalSettings->set<unsigned>("fullscreen_display", (unsigned)videoResolution.display.userData() );
-
-        globalSettings->set<unsigned>("fullscreen_setting", 0 );
-
-        program->updateFullscreenSetting();
-
-        emuThread->unlock();
-        videoResolution.synchronizeLayout();
-    };
-
-    videoResolution.displaySettings.onChange = [this]() {
-        emuThread->lock();
-        globalSettings->set<unsigned>("fullscreen_setting", videoResolution.displaySettings.userData() );
-
-        program->updateFullscreenSetting();
-        emuThread->unlock();
-    };
-
-    videoResolution.active.onToggle = [this](bool checked) {
-        emuThread->lock();
-        globalSettings->set<bool>("fullscreen_setting_active", checked);
-
-        program->updateFullscreenSetting();
-
-        videoResolution.display.setEnabled( checked );
-        videoResolution.displaySettings.setEnabled( checked );
-        emuThread->unlock();
-    };
-
-    videoResolution.active.setChecked( globalSettings->get<bool>("fullscreen_setting_active", false) );
-
-    for( auto& display : GUIKIT::Monitor::getDisplays() )
-        videoResolution.display.append(display.name, display.id);
-
-    auto displayId = globalSettings->get<unsigned>("fullscreen_display", 0 );
-
-    videoResolution.display.setSelectionByUserId( displayId );
-
-    for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
-        videoResolution.displaySettings.append( resolution.name, resolution.id );
-
-    videoResolution.displaySettings.setSelectionByUserId( globalSettings->get<unsigned>("fullscreen_setting", 0 ) );
-
-    videoResolution.display.setEnabled( videoResolution.active.checked() );
-    videoResolution.displaySettings.setEnabled( videoResolution.active.checked() );
     
 	if (driverLayout.combo.rows() > 0) append(driverLayout, {~0u, 0u}, 5);
     if (driverLayout.combo.rows() == 1) driverLayout.setEnabled(false);
@@ -512,9 +447,6 @@ auto VideoLayout::translate() -> void {
     paths.shader.label.setText(trans->get("Shader",{}, true));
 	paths.shader.select.setText(trans->get("select"));
 	paths.shader.empty.setText(trans->get("remove"));
-
-    videoResolution.setText( trans->get("preselect fullscreen resolution") );
-    videoResolution.active.setText( trans->get("enable") );
 
     videoFps.setText( trans->get("FPS") );
     videoFps.updateDelay.name.setText( trans->get("Refresh", {}, true) );

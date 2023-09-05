@@ -269,20 +269,23 @@ auto Program::updateOverallSynchronize() -> void {
 }
 
 auto Program::updateFullscreenSetting() -> void {
+    if (!activeEmulator)
+        return;
+    auto _settings = getSettings(activeEmulator);
 
     if (!view)
         return;
 
-    bool _active = globalSettings->get<bool>("fullscreen_setting_active", false);
-    unsigned _display = globalSettings->get<unsigned>("fullscreen_display", 0 );
-    unsigned _setting = globalSettings->get<unsigned>("fullscreen_setting", 0 );
+    bool _active = _settings->get<bool>("fullscreen_setting_active", false);
+    unsigned _display = _settings->get<unsigned>("fullscreen_display", 0 );
+    unsigned _setting = _settings->get<unsigned>("fullscreen_setting", 0 );
 
     if (!_active || (_setting == 0) )
         view->setFullscreenSetting( false );
     else
         view->setFullscreenSetting( true, _display, _setting );
 
-    program->hintExclusiveFullscreen();
+    hintExclusiveFullscreen();
 }
 
 auto Program::fpsChanged() -> void {

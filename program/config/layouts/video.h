@@ -76,20 +76,10 @@ struct VideoFpsLayout : GUIKIT::FramedVerticalLayout {
     VideoFpsLayout();
 };
 
-struct VideoResolutionLayout : GUIKIT::FramedHorizontalLayout {
-
-    GUIKIT::CheckBox active;
-    GUIKIT::ComboButton display;
-    GUIKIT::ComboButton displaySettings;
-
-    VideoResolutionLayout();
-};
-
 struct VideoLayout : GUIKIT::VerticalLayout {
     InScreenTextLayout screenTextLayout;
     CrtEmulationLayout crtEmulation;
 	VideoGeometryLayout videoGeometry;
-    VideoResolutionLayout videoResolution;
     VideoFpsLayout videoFps;
 
     VideoSettingsLayout videoSettingsLayout;

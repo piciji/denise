@@ -73,10 +73,10 @@ struct Hotkey {
         DiskSwap7, DiskSwap8, DiskSwap9, DiskSwap10, DiskSwap11,
         DiskSwap12, DiskSwap13, DiskSwap14,
         ToggleFastForward, ToggleFastForwardAggressive, Presentation, Palette, Geometry, System, Firmware, Control,
-		SwapInputDevices, Power, SoftReset, AnyLoad,
+		SwapPortDevices, Power, SoftReset, AnyLoad,
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
         SyncStatus, ThreadedRenderer, ToggleSCVideo, ToggleSCVideoGPU, DiskSwapUp, DiskSwapDown, DiskAutoStart,
-        FastForward, FastForwardOff, Quit, Audio,
+        FastForward, FastForwardOff, Quit, Audio, SwapJoypadsPort2,
 
         Autofire = 1000,
     } id;
