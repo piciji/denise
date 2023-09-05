@@ -12,6 +12,7 @@ Cmd::Cmd(int argc, char** argv) {
 	std::string arg;
     std::string configIdent = "";
     std::vector<std::string> out;
+    hasContent = false;
 
 #ifdef _WIN32
     if (GUIKIT::Application::getUtf8CmdLine(out))
@@ -19,6 +20,11 @@ Cmd::Cmd(int argc, char** argv) {
 #endif
 
     for (unsigned i = 0; i < argc; i++) {
+        if (i == 0) // is always the executable itself
+            continue;
+
+        hasContent = true; // starting file associations from explorer don't use argv for macOS
+
         if (out.size())
             arg = out[i];
         else
@@ -58,7 +64,7 @@ Cmd::Cmd(int argc, char** argv) {
         else if ( arg == "-config-amiga" )
             configIdent = "Amiga";
 
-		else if (!GUIKIT::String::endsWith(arg, (std::string)APP_NAME + ".exe") && !GUIKIT::String::endsWith(arg, (std::string)APP_NAME))
+		else //if (!GUIKIT::String::endsWith(arg, (std::string)APP_NAME + ".exe") && !GUIKIT::String::endsWith(arg, (std::string)APP_NAME))
             arguments.push_back(arg);
     }
 }
@@ -310,6 +316,13 @@ auto Cmd::parse() -> void {
             std::string temp = arg;
             GUIKIT::String::toLowerCase( temp );
             GUIKIT::String::trim( arg );
+            std::string extension = GUIKIT::String::getExtension(temp, "");
+            if (extension.empty()) {
+                GUIKIT::File file(arg);
+                if (file.exists())
+                    extension = "exe"; // amiga executables have often no file extension
+                file.unload();
+            }
             
             for(auto& suffix : allowedSuffix) {
 
@@ -343,8 +356,6 @@ auto Cmd::parse() -> void {
                     break;
 
                 } else {
-                    std::string extension = GUIKIT::String::getExtension(temp, "exe");
-
                     if (suffix == extension) {
                         std::replace( arg.begin(), arg.end(), '\\', '/');
 

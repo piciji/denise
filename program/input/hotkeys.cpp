@@ -320,6 +320,9 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 configView->videoLayout->videoSettingsLayout.trAuto.setEnabled(!checked);
             }
 
+            if (statusHandler)
+                statusHandler->setMessage( trans->getA(checked ? "enabled" : "disabled"), 3 );
+
             emuThread->lock();
             VideoManager::setSynchronize();
         } break;

@@ -24,7 +24,7 @@ auto DiskStructure::analyzeEXE(uint8_t* data, unsigned size) -> bool {
 
         fs.calculateChecksums();
 
-        rawSize = getADFCreationImageSize();
+        rawSize = fs.volSize();
         rawData = new uint8_t[rawSize];
         fs.exportMedia(rawData, rawSize);
 

@@ -33,6 +33,7 @@ struct Cmd {
 	uint8_t autostartPrg = 1;
     std::string screenshotPath = "";
     std::string diskListing = "";
+    bool hasContent = false;
     
     auto parse() -> void;
     

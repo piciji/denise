@@ -32,6 +32,7 @@ struct Filesystem {
     auto importMedia(uint8_t* data, unsigned size) -> bool;
     auto clear() -> void;
     auto isOFS() -> bool { return structure == Structure::OFS; }
+    auto volSize() -> unsigned { return blockCount * bSize; }
 
     auto markBlockAsFree(unsigned ref) -> void;
     auto markBlockAsAllocated(unsigned ref) -> void;
