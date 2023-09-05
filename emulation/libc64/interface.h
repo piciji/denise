@@ -56,7 +56,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdFinalCartridge3 = 3, CartridgeIdFinalCartridgePlus = 29, CartridgeIdSimonsBasic = 4,
         CartridgeIdWarpSpeed = 16, CartridgeIdAtomicPower = 9, CartridgeIdMach5 = 51, CartridgeIdRoss = 23,
         CartridgeIdWestermann = 11, CartridgeIdPagefox = 53,
-        CartridgeIdSwiftlink = 270, CartridgeIdTurbo232 = 271,
+        CartridgeIdSwiftlink = 270, CartridgeIdTurbo232 = 271, CartridgeIdDinamic = 17,
     };
 
     enum FirmwareId {

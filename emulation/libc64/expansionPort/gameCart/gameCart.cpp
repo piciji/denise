@@ -15,6 +15,7 @@
 #include "ross.h"
 #include "westermann.h"
 #include "pagefox.h"
+#include "dinamic.h"
 
 namespace LIBC64 {
 
@@ -100,6 +101,10 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
 
         case Interface::CartridgeIdPagefox:
             cart = new Pagefox(system);
+            break;
+
+        case Interface::CartridgeIdDinamic:
+            cart = new Dinamic(system);
             break;
             
         default:
