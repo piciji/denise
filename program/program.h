@@ -29,9 +29,9 @@
 #define LICENSE "GPLv3"
 #define AUTHOR "PiCiJi"
 
-#define MAX_MEDIUM_SIZE 100u * 1024u * 1024u
-#define MAX_FIRMWARE_SIZE 512u * 1024u
-#define MAX_HARDDISK_SIZE 4095u * 1024u * 1024u
+#define MAX_MEDIUM_SIZE (100u * 1024u * 1024u)
+#define MAX_FIRMWARE_SIZE (512u * 1024u + 11)
+#define MAX_HARDDISK_SIZE (4096u * 1024u * 1024u)
 
 #include <vector>
 #include <time.h>
