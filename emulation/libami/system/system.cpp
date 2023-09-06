@@ -234,8 +234,8 @@ auto System::informAboutKeyUpdate() -> void {
 auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void {
     firmwareChanged |= allowPatching;
 
-    if (size >= (512 * 1024))
-        size = 512 * 1024;
+    if (size > ((512 * 1024) + 11)) // + possible 11 byte encryption header
+        size = 512 * 1024 + 11;
 
     if (!data || !size) {
         data = nullptr;

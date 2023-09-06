@@ -73,6 +73,9 @@ Agnus::~Agnus() {
     if (fastMemSize)
         delete[] fastMem;
 
+    if(encryptedRom)
+        delete[] encryptedRom;
+
     delete[] frameBuffer;
 }
 

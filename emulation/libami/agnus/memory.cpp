@@ -513,20 +513,20 @@ auto Agnus::checkForRomEncryption() -> void {
     if ((kickRomSize < 12) || (std::memcmp(kickRom, "AMIROMTYPE1", 11)))
         return;
 
-    kickRomSize -= 11;
+    auto encSize = kickRomSize - 11;
     if (!encryptedRom || system->firmwareChanged) {
         if (encryptedRom)
             delete[] encryptedRom;
 
-        encryptedRom = new uint8_t[kickRomSize];
-        std::memcpy(encryptedRom, kickRom + 11, kickRomSize);
+        encryptedRom = new uint8_t[encSize];
+        std::memcpy(encryptedRom, kickRom + 11, encSize);
 
-        for (i = k = 0; i < kickRomSize; i++, k = (k + 1) % extRomSize)
+        for (i = k = 0; i < encSize; i++, k = (k + 1) % extRomSize)
             encryptedRom[i] ^= extRom[k];
     }
 
     kickRom = encryptedRom;
-    kickRomMask = kickRomSize ? (Emulator::powerOfTwo( kickRomSize ) - 1) : 0;
+    kickRomMask = Emulator::powerOfTwo( encSize ) - 1;
 
     extRom = nullptr;
     extRomSize = 0;
