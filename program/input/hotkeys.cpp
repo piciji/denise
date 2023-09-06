@@ -32,8 +32,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ToggleSCVideo, "toggle S/C-Video"} );
     hotkeys.push_back( {Hotkey::Id::ToggleSCVideoGPU, "toggle S/C-Video GPU"} );
     hotkeys.push_back( {Hotkey::Id::ToggleBorder, "toggle border"} );
-    hotkeys.push_back( {Hotkey::Id::SwapPortDevices, "swap Ports"} );
-    hotkeys.push_back( {Hotkey::Id::SwapJoypadsPort2, "swap joypads Port2"} );
+    hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "Disk_swapper_up"} );
@@ -66,6 +65,8 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Savestate, "Savestate", true} );
 	customHotkeys.push_back( {Hotkey::Id::IncSlot, "Incslot", true} );
     customHotkeys.push_back( {Hotkey::Id::DecSlot, "Decslot", true} );
+    customHotkeys.push_back( {Hotkey::Id::SwapPortDevices, "swap Ports", true} );
+    customHotkeys.push_back( {Hotkey::Id::SwapJoypadsPort2, "swap joypads Port2", true} );
 	customHotkeys.push_back( {Hotkey::Id::Power, "Hard Reset", true} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::AnyLoad, "load software", true} );
@@ -196,10 +197,11 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
         case Hotkey::Id::SwapJoypadsPort2: {
             emuThread->lock();
-            auto connector = activeEmulator->getConnector( 1 );
-            auto connectedDevice = activeEmulator->getConnectedDevice( connector );
+            auto settings = program->getSettings( emulator );
+            auto connector = emulator->getConnector( 1 );
+            auto connectedDevice = emulator->getConnectedDevice( connector );
 
-            for (auto& device : activeEmulator->devices) {
+            for (auto& device : emulator->devices) {
                 if (!device.isJoypad())
                     continue;
                 if (!connectedDevice || !connectedDevice->isJoypad()) {
@@ -212,32 +214,33 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 }
             }
 
-            activeEmulator->connect( connector, connectedDevice );
+            emulator->connect( connector, connectedDevice );
             settings->set<unsigned>( _underscore(connector->name), connectedDevice->id);
-            view->checkInputDevice(activeEmulator, connector, connectedDevice);
+            view->checkInputDevice(emulator, connector, connectedDevice);
 
-            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+            auto emuView = EmuConfigView::TabWindow::getView(emulator);
             if (emuView && emuView->inputLayout)
                 emuView->inputLayout->updateConnectorButtons();
         } break;
 		case Hotkey::Id::SwapPortDevices: {
             emuThread->lock();
-			auto connector1 = activeEmulator->getConnector( 0 );
-            auto connectedDevice1 = activeEmulator->getConnectedDevice( connector1 );
+            auto settings = program->getSettings( emulator );
+			auto connector1 = emulator->getConnector( 0 );
+            auto connectedDevice1 = emulator->getConnectedDevice( connector1 );
             
-            auto connector2 = activeEmulator->getConnector( 1 );
-            auto connectedDevice2 = activeEmulator->getConnectedDevice( connector2 );
+            auto connector2 = emulator->getConnector( 1 );
+            auto connectedDevice2 = emulator->getConnectedDevice( connector2 );
 
-            activeEmulator->connect( connector1, connectedDevice2 );
-            activeEmulator->connect( connector2, connectedDevice1 );
+            emulator->connect( connector1, connectedDevice2 );
+            emulator->connect( connector2, connectedDevice1 );
 
             settings->set<unsigned>( _underscore(connector1->name), connectedDevice2->id);
             settings->set<unsigned>( _underscore(connector2->name), connectedDevice1->id);
 
-            view->checkInputDevice( activeEmulator, connector1, connectedDevice2 );
-			view->checkInputDevice( activeEmulator, connector2, connectedDevice1 );
+            view->checkInputDevice( emulator, connector1, connectedDevice2 );
+			view->checkInputDevice( emulator, connector2, connectedDevice1 );
 
-            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+            auto emuView = EmuConfigView::TabWindow::getView(emulator);
             if (emuView && emuView->inputLayout)
                 emuView->inputLayout->updateConnectorButtons();
 		} break;
@@ -407,6 +410,17 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         case Hotkey::ToggleStatus:
             emuThread->lock();
             if(!videoDriver || !videoDriver->hasExclusiveFullscreen()) view->updateStatusBar( true );
+            break;
+
+        case Hotkey::ApplyWindowSize:
+            if (!view || view->fullScreen())
+                break;
+
+            emuThread->lock();
+            globalSettings->set<unsigned>("screen_width", globalSettings->get<unsigned>("view_hold_width", 800));
+            globalSettings->set<unsigned>("screen_height", globalSettings->get<unsigned>("view_hold_height", 600));
+
+            view->updateGeometry(true);
             break;
 
         case Hotkey::Id::ToggleBorder: {
@@ -699,6 +713,7 @@ auto InputManager::pollHotkeys() -> void {
 	InputMapping* starter = nullptr;
     InputMapping* anyLoad = nullptr;
     InputMapping* diskAutostart = nullptr;
+    InputMapping* swapPorts = nullptr;
 	
 	auto useEmu = activeEmulator;
     if (!useEmu)
@@ -710,6 +725,14 @@ auto InputManager::pollHotkeys() -> void {
             case Hotkey::Id::FastForward:
             case Hotkey::Id::FastForwardOff:
                 fastForwardAutostart = trigger; // use last event
+                break;
+
+            case Hotkey::Id::SwapJoypadsPort2:
+            case Hotkey::Id::SwapPortDevices:
+                if (!swapPorts)
+                    swapPorts = trigger;
+                else if (useEmu == trigger->inputManager->emulator)
+                    swapPorts = trigger;
                 break;
 
 			case Hotkey::Id::DiskSwapper:
@@ -803,6 +826,9 @@ auto InputManager::pollHotkeys() -> void {
     
     if (anyLoad)
 		useTrigger.push_back( anyLoad );
+
+    if (swapPorts)
+        useTrigger.push_back( swapPorts );
 
 	for( auto trigger : useTrigger )
         fireHotkey( trigger );

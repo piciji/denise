@@ -594,9 +594,10 @@ auto InputLayout::appendListEntry(std::string& name, Emulator::Interface::Device
             inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Autofire tooltip"));
         else if (input.key == Emulator::Interface::Key::Autofire)
             inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Turbo Button tooltip"));
-        else if (input.key == Emulator::Interface::Key::AutofireDirection)
-            inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Turbo Direction tooltip"));
-        else // diagonal
+        else if (input.key == Emulator::Interface::Key::AutofireDirection) {
+            std::string example = dynamic_cast<LIBC64::Interface*>(emulator) ? "Daley Thompson's Decathlon" : "Summer Challenge";
+            inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Turbo Direction tooltip", {{"%example%", example}}));
+        } else // diagonal
             inputList.setRowTooltip(inputList.rowCount() - 1, trans->get("Diagonal tooltip"));
     }
 }
