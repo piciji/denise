@@ -295,12 +295,12 @@ template<bool changeTrigger> auto InputManager::update() -> void {
         continue;
 	}
 
-    if constexpr (!changeTrigger) {
-        if (hasShadow) {
-            for (auto shadow: shadows)
-                shadow->state = shadow->virtualLinked->state;
-        }
-    } else {
+    if (hasShadow) {
+        for (auto shadow: shadows)
+            shadow->state = shadow->virtualLinked->state;
+    }
+
+    if constexpr (changeTrigger) {
         for(auto cMapping : changed) {
             if (cMapping->shadowMap.size()) {
                 for (auto shadow: cMapping->shadowMap)

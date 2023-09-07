@@ -10,7 +10,7 @@ struct Joypad : ControlPort {
 
     auto readButton1( ) -> uint8_t {
 
-        return interface->inputPoll( device->id, 4 );
+        return interface->inputPoll( device->id, 4 ) & 1;
     }
 
     auto readDirection( ) -> uint16_t {
@@ -21,11 +21,11 @@ struct Joypad : ControlPort {
         // 0 1 -> Bit 1 press
         // 1 1 -> Bit 0 press
 
-        if (interface->inputPoll( device->id, 2 )) out |= 0x300; // Left
-        if (interface->inputPoll( device->id, 3 )) out |= 0x3; // Right
+        if (interface->inputPoll( device->id, 2 ) & 1) out |= 0x300; // Left
+        if (interface->inputPoll( device->id, 3 ) & 1) out |= 0x3; // Right
 
-        if (interface->inputPoll( device->id, 0 )) out ^= 0x100; // Up
-        if (interface->inputPoll( device->id, 1 )) out ^= 0x1; // Down
+        if (interface->inputPoll( device->id, 0 ) & 1) out ^= 0x100; // Up
+        if (interface->inputPoll( device->id, 1 ) & 1) out ^= 0x1; // Down
 
         return out;
     }
@@ -40,7 +40,7 @@ struct Joypad : ControlPort {
     }
 
     auto observePot(uint8_t& x, uint8_t& y) -> void {
-        y = interface->inputPoll( device->id, 5 ) ? 0 : 0xff;
+        y = (interface->inputPoll( device->id, 5 ) & 1) ? 0 : 0xff;
     }
 
     auto serialize(Emulator::Serializer& s) -> void {
