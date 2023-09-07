@@ -42,6 +42,8 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(vBStop);
     s.integer(hTotal);
     s.integer(beamCon);
+    s.integer(hsStrt);
+    s.integer(hsStop);
 
     for(int i = 0; i < 8; i++) {
         Sprite& spr = sprites[i];

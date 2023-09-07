@@ -561,6 +561,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x1c2:
             if (ecsAndHigher()) {
                 // system->interface->log( "hsync stop written " + std::to_string(value));
+                hsStop = value & 0xff;
             }
 
         case 0x1c4:
@@ -600,6 +601,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x1de:
             if (ecsAndHigher()) {
                 // system->interface->log( "hsync start written " + std::to_string(value));
+                hsStrt = value & 0xff;
             }
             break;
 

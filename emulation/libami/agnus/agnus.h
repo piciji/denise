@@ -11,20 +11,8 @@
  * AGA
  *
  * Bitplane <> Strobe, Refresh, DMAL conflicts
- *      Is there software that specifically triggers such a conflict to achieve something meaningful ?
- *
- * variable vsync, hsync start/stop, hcenter (interlace: vsync on long fields)
- *      alter the position when the electron beam is moved back. This should happen during the blanking period. (no color output)
- *      otherwise, artifacts will occur during this process.
- *      can this be used in any sense from an emulation point of view ? is there software for this ?
- *      note: altered syncing/blanking don't change FPS
- *
- * variable hblank start/stop
- *      what is it used for? hsync should be enough, because only csync (h+v sync) is visible for ECS Denise.
- *      OCS Denise has hardwired horizontal blanking.
- *
+ * variable vsync, vblank, hsync, hblank, hcenter
  * UHRES/DUAL stuff (using two screens independantly ?)
- *      was there ever software for this?
  */
 
 namespace LIBAMI {
@@ -126,6 +114,8 @@ struct Agnus {
     bool vBlank;
     bool vBlankStart;
     bool sprInhibited;
+    uint8_t hsStrt;
+    uint8_t hsStop;
 
     uint16_t lines;
     uint16_t vTotal;

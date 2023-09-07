@@ -5,6 +5,7 @@
 #define VARVBEN 0x1000
 #define LOLDIS 0x800
 #define VARVSYEN 0x200
+#define VARHSYEN 0x100
 #define VARBEAMEN 0x80
 #define BEAM_PAL 0x20
 #define VARCSYEN 0x10

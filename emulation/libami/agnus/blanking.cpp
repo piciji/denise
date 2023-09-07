@@ -24,7 +24,18 @@ auto Agnus::startHblank() -> void {
         lineCallback.called = true;
     }
 
-    hBlank = !vBlank;
+    if (vBlank) {
+        hBlank = false;
+    } else {
+        if (beamCon & VARHSYEN) { // Alcatraz-Blitter ECS
+            int _ht = (beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol);
+
+            if ((hsStop > _ht) || (hsStop < hsStrt))
+                std::memset(denise.linePtr, 0, LINE_BUFFER_WIDTH << 1 );
+        }
+        hBlank = true;
+    }
+
 }
 
 auto Agnus::startHsync() -> void {
