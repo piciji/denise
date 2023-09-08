@@ -9,6 +9,8 @@
 #include "finalCartridge3.h"
 #include "finalCartridgePlus.h"
 #include "atomicPower.h"
+#include "diashowMaker.h"
+#include "superSnapshotV5.h"
 
 namespace LIBC64 {
 
@@ -67,6 +69,14 @@ auto Freezer::create( Interface::CartridgeId cartridgeId ) -> Cart* {
 
         case Interface::CartridgeIdAtomicPower:
             cart = new AtomicPower(system);
+            break;
+
+        case Interface::CartridgeIdDiashowMaker:
+            cart = new DiashowMaker(system);
+            break;
+
+        case Interface::CartridgeIdSuperSnapshotV5:
+            cart = new SuperSnapshotV5(system);
             break;
 
         default:

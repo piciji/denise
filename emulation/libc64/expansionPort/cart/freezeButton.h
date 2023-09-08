@@ -24,6 +24,7 @@ struct FreezeButton : Cart {
     virtual auto didFreeze() -> void {}
     virtual auto blockFreeze() -> bool { return false; }
     virtual auto arm() -> bool { return false; }
+    virtual auto switchToUltimax() -> bool { return true; }
     
     virtual auto freeze() -> void {
         if (blockFreeze())
@@ -38,9 +39,9 @@ struct FreezeButton : Cart {
     virtual auto clock() -> void {
 
         if (freezeArmed && conditionMet()) {
-            exRom = true;
-            game = false;
-            system->changeExpansionPortMemoryMode(exRom, game);
+            if (switchToUltimax())
+                system->changeExpansionPortMemoryMode(exRom = true, game = false );
+
             freezeArmed = arm();
             writesInARow = 0;
             didFreeze();
