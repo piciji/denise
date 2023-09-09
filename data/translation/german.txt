@@ -762,3 +762,6 @@ Kickrom = Kickstart ROM
 Extrom = Extended/Encryption ROM
 swap joypads Port2 = Joypads in Port 2 tauschen
 apply window size = Fenstergröße anwenden
+guess disks = Folge-Disketten erraten
+guess disks tooltip = Der Diskwechsler kann Folge-Disketten von Programmen erraten, wenn ein bestimmtes Benennungs-Schema bei den Dateinamen beibehalten wird. Beispiel: Turrican - Seite 1 oder Turrican - 1 oder Turrican - a undsoweiter. Die Folgedisketten können dann direkt per Hotkey eingelegt werden, ohne dass der Wechsler dazu vorher manuell befüllt werden muss. Wird der Wechsler aber manuell befüllt, dann werden die in den Slots liegenden Folge-Disketten eingelegt.
+fullscreen switch tooltip = Die Einstellungen werden nur beim Wechsel vom Fenster ins Vollbild angewendet.

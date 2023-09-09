@@ -356,7 +356,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         fileDialogPtr->showOrderControlForMultipleSelections( settings->get<bool>( "loader_order_selected", false ), trans->get("order selected"), [settings](bool checked) {
             settings->set<bool>( "loader_order_selected", checked );
         } );
-        fileDialogPtr->setContentViewHint( trans->get("multi file selection") );
+        fileDialogPtr->setContentViewHint( trans->get("multi file selection"), trans->get("swapper multi hint tooltip") );
 
         filePaths = fileDialogPtr->openMulti();
     }

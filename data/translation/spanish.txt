@@ -762,3 +762,6 @@ Kickrom =
 Extrom =
 swap joypads Port2 =
 apply window size =
+guess disks =
+guess disks tooltip =
+fullscreen switch tooltip =

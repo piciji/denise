@@ -133,8 +133,7 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) : autostartLayout(tabWindow->emulat
     append( speedLayout, {~0u, 0u}, 10 );
     append( inputSamplingLayout, {~0u, 0u}, 10 );
     append( runAheadLayout, {~0u, 0u}, 10 );
-    append( autostartLayout, {~0u, 0u}, 10);
-    append( monitorResolutionLayout, {~0u, 0u});
+    append( autostartLayout, {~0u, 0u});
 
     autostartLayout.autoWarp.off.onActivate = [this]() {
 
@@ -341,47 +340,6 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) : autostartLayout(tabWindow->emulat
         view->activateCustomSpeed();
     };
 
-    monitorResolutionLayout.display.onChange = [this]() {
-        emuThread->lock();
-        auto displayId = monitorResolutionLayout.display.userData();
-
-        monitorResolutionLayout.displaySettings.reset();
-
-        for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
-            monitorResolutionLayout.displaySettings.append( resolution.name, resolution.id );
-
-        _settings->set<unsigned>("fullscreen_display", (unsigned)monitorResolutionLayout.display.userData() );
-
-        _settings->set<unsigned>("fullscreen_setting", 0 );
-
-        program->updateFullscreenSetting();
-
-        emuThread->unlock();
-        monitorResolutionLayout.synchronizeLayout();
-    };
-
-    monitorResolutionLayout.displaySettings.onChange = [this]() {
-        emuThread->lock();
-        _settings->set<unsigned>("fullscreen_setting", monitorResolutionLayout.displaySettings.userData() );
-
-        program->updateFullscreenSetting();
-        emuThread->unlock();
-    };
-
-    monitorResolutionLayout.active.onToggle = [this](bool checked) {
-        emuThread->lock();
-        _settings->set<bool>("fullscreen_setting_active", checked);
-
-        program->updateFullscreenSetting();
-
-        monitorResolutionLayout.display.setEnabled( checked );
-        monitorResolutionLayout.displaySettings.setEnabled( checked );
-        emuThread->unlock();
-    };
-
-    for( auto& display : GUIKIT::Monitor::getDisplays() )
-        monitorResolutionLayout.display.append(display.name, display.id);
-
     loadSettings();
 }
 
@@ -456,9 +414,6 @@ auto MiscLayout::translate() -> void {
     speedLayout.fps.setText( trans->get("FPS") );
     speedLayout.percent.setText( trans->get("Percent") );
     speedLayout.apply.setText( trans->get("enable") );
-
-    monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );
-    monitorResolutionLayout.active.setText( trans->get("enable") );
 }
 
 auto MiscLayout::initAutowarp(Emulator::Interface::MediaGroup* forGroup) -> void {
@@ -533,20 +488,5 @@ auto MiscLayout::loadSettings() -> void {
         speedLayout.percent.setChecked();
     else
         speedLayout.fps.setChecked();
-
-    monitorResolutionLayout.active.setChecked( _settings->get<bool>("fullscreen_setting_active", false) );
-
-    auto displayId = _settings->get<unsigned>("fullscreen_display", 0 );
-
-    monitorResolutionLayout.display.setSelectionByUserId( displayId );
-
-    monitorResolutionLayout.displaySettings.reset();
-    for( auto& resolution : GUIKIT::Monitor::getSettings( displayId ) )
-        monitorResolutionLayout.displaySettings.append( resolution.name, resolution.id );
-
-    monitorResolutionLayout.displaySettings.setSelectionByUserId( _settings->get<unsigned>("fullscreen_setting", 0 ) );
-
-    monitorResolutionLayout.display.setEnabled( monitorResolutionLayout.active.checked() );
-    monitorResolutionLayout.displaySettings.setEnabled( monitorResolutionLayout.active.checked() );
 
 }

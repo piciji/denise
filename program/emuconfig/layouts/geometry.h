@@ -1,4 +1,12 @@
 
+struct MonitorResolutionLayout : GUIKIT::FramedHorizontalLayout {
+    GUIKIT::CheckBox active;
+    GUIKIT::ComboButton display;
+    GUIKIT::ComboButton displaySettings;
+
+    MonitorResolutionLayout();
+};
+
 struct CropLayout : GUIKIT::FramedVerticalLayout {
 
     struct Type1 : GUIKIT::HorizontalLayout {
@@ -54,6 +62,7 @@ struct GeometryLayout : GUIKIT::VerticalLayout {
 
     CropLayout cropLayout;
     RatioLayout ratioLayout;
+    MonitorResolutionLayout monitorResolutionLayout;
 
     auto translate() -> void;
 	auto updateVisibillity() -> void;

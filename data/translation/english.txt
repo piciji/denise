@@ -762,3 +762,6 @@ Kickrom = Kickstart ROM
 Extrom = Extended/Encryption ROM
 swap joypads Port2 = swap joypads in Port 2
 apply window size = apply window size
+guess disks = Guessing subsequent floppy disks
+guess disks tooltip = The disk swapper can guess subsequent floppy disks of programs if a certain naming scheme is retained for the file names. Example: Turrican - side 1 or Turrican - 1 or Turrican - a and so on. The subsequent floppy disks can then be inserted directly via hotkey without having to manually fill the swapper beforehand. However, if the swapper is filled manually, then the follow-up floppy disks located in the slots are inserted.
+fullscreen switch tooltip = The settings are applied only when switching from window to fullscreen.

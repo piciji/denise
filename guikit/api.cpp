@@ -1391,8 +1391,9 @@ auto BrowserWindow::setContentViewColorTooltips(bool colorTooltips) -> BrowserWi
     return *this;
 }
 
-auto BrowserWindow::setContentViewHint(std::string hint) -> BrowserWindow& {
+auto BrowserWindow::setContentViewHint(std::string hint, std::string tooltip) -> BrowserWindow& {
     state.contentView.hint = hint;
+    state.contentView.hintTooltip = tooltip;
     return *this;
 }
 

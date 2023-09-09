@@ -35,13 +35,21 @@ struct SwapperControlLayout : GUIKIT::HorizontalLayout {
     SwapperControlLayout();
 };
 
+struct SwapperInfoLayout : GUIKIT::HorizontalLayout {
+    GUIKIT::Label info1;
+    GUIKIT::Label info2;
+
+    SwapperInfoLayout();
+};
+
 struct SwapperLayout : GUIKIT::VerticalLayout {
 
     MediaLayout* mediaLayout;
     Emulator::Interface* emulator;
     
     GUIKIT::ListView listView;
-    GUIKIT::Label info;
+
+    SwapperInfoLayout info;
     SwapperControlLayout controls;
 
     auto translate() -> void;

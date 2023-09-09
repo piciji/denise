@@ -158,7 +158,7 @@ auto pWidget::setTooltip(std::string tooltip) -> void {
     toolInfo.lpszText = wtooltip;
 
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
-    SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 20000);
+    SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 25000);
     SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, 800);
 }
 

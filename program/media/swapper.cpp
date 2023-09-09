@@ -11,6 +11,13 @@ SwapperControlLayout::SwapperControlLayout() {
     setAlignment(0.5);
 }
 
+SwapperInfoLayout::SwapperInfoLayout() {
+    append(info1, {0u, 0u}, 20);
+    append(info2, {0u, 0u}, 0);
+    info2.setForegroundColor(0xff4500);
+    setAlignment(0.5);
+}
+
 SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
     this->mediaLayout = mediaLayout;
     this->emulator = mediaLayout->emulator;
@@ -18,7 +25,6 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
     setMargin(10);
 	listView.setHeaderVisible();
 	listView.setHeaderText({"", "", ""});
-    info.setForegroundColor(0xff4500);
 
     append(listView,{~0u, ~0u}, 5);
     append(info,{0u, 0u}, 10);
@@ -192,8 +198,11 @@ auto SwapperLayout::translate() -> void {
     controls.ejectAllButton.setText(trans->get("eject all"));
 	controls.writeProtect.setText(trans->get("write_protected"));
 
-    info.setText( trans->get("swapper multi hint") );
-    info.setTooltip( trans->get("swapper multi hint tooltip") );
+    info.info1.setText( trans->get("swapper multi hint") );
+    info.info1.setTooltip( trans->get("swapper multi hint tooltip") );
+
+    info.info2.setText( trans->get("guess disks") );
+    info.info2.setTooltip( trans->get("guess disks tooltip") );
 }
 
 auto SwapperLayout::getSetting( unsigned pos ) -> FileSetting* {
