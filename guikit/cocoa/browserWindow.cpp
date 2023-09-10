@@ -318,6 +318,8 @@ auto pBrowserWindow::buildView() -> void {
         if (!state.contentView.hint.empty()) {
             listView->append({""});
             listView->append({state.contentView.hint});
+            listView->setRowTooltip(0, "");
+            listView->setRowTooltip(1, state.contentView.hintTooltip);
         }
 
         [accessoryView addSubview: listView->p.cocoaView];
