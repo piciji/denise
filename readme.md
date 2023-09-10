@@ -17,11 +17,24 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * add drag'n'drop overlay
     * files can be inserted into the drives faster
     * files can either only be inserted or inserted and restarted
-* fix a DVideo bug not clearing screen when using native or integer scaling
-* [Amiga] fix: Drive LED sometimes does not turn off
-* [Amiga] display tracks more clearly
-* [C64] fix: multi SID UI not updated correctly from config
-* [C64] fix: crash when changing speeder while threaded emulation is used
+    * multi file support
+* fix: Wasapi didn't work on some audio hardware  
+* [Amiga]
+* greatly improved accuracy [thanks to amilo3438 for finding broken demos]
+* fix: Drive LED sometimes does not turn off
+* display tracks more clearly
+* add IPF, DMS, EXE and encrypted kick rom support
+* add RTC
+* add multi file support for any loader (fill DF0-3 in one go)
+* show power LED in status line
+    * colors for power and drive LEDs depend on the model
+    * click on power LED to select audio filter
+* [C64]
+* fix: multi SID UI not updated correctly from config
+* fix: crash when changing speeder while threaded emulation is used
+* add cartridges: Dinamic, Diashow Maker, Super Snapshot V5
+* add option to intensify pseudo stereo
+    * this way pseudo stereo is possible with same SID models
 
 ## 2.0
 * add Amiga emulation
