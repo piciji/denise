@@ -19,7 +19,7 @@ struct Denise {
     ~Denise();
 
     enum Model : uint8_t { OCS_A1000_NO_EHB = 1, OCS_A1000 = 2, OCS = 4 } model = OCS;
-    enum { PF1_SHIFT = 1, PF2_SHIFT = 2, INIT_HPOS = 4, RESET_HPOS = 8, BPL1_WRITTEN = 0x10 };
+    enum { PF1_SHIFT = 1, PF2_SHIFT = 2, BPL1_WRITTEN = 0x10 };
 
     System* system;
     Agnus& agnus;

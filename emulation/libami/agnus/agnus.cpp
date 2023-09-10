@@ -393,22 +393,25 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 4:
-            // This happens one cycle earlier. Due to the emulator design, "strobe" happens at the beginning
-            // of the cycle, before all other processes. However, the result only applies in this (next to strobe) cycle.
-            // That's why we do this at the beginning of this cycle.
             if (isEquLine()) {
-                denise.strequ();
                 paula.strequ();
             } else if (vBlank) {
-                denise.strvbl();
                 paula.strvbl();
             } else {
-                denise.strhor();
                 paula.strhor();
             }
             // DMAL is fetched serial bit by bit (14 cycles). It is ok to do this in one step,
             // because the value of all bits is fixed (really ?) at the time of the first push.
             dmal = paula.dmal();
+            break;
+
+        case 6:
+            // because of some internal delays in denise chip
+            if (isEquLine());
+            else if (vBlank)
+                denise.strvbl();
+            else
+                denise.strhor();
             break;
 
         case 0xa:

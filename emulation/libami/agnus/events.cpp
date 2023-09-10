@@ -303,9 +303,11 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case VPOSW: vposw(data); break;
         case VHPOSW:
             vhposw(data);
-            addOneCycleEvent(UPD_DENISE_VHPOS, (data & 0xff) << 1,2);
+            addOneCycleEvent(UPD_DENISE_VHPOS, (data & 0xff) << 1);
             break;
-        case UPD_DENISE_VHPOS: denise.hPos = data; break;
+        case UPD_DENISE_VHPOS:
+            denise.hPos = data;
+            break;
     }
 }
 

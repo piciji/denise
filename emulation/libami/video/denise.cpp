@@ -82,7 +82,7 @@ auto Denise::setBpl1Dat(uint16_t value) -> void {
 }
 
 auto Denise::strhor() -> void {
-    actions |= INIT_HPOS;
+    hPos = 2;
 }
 
 auto Denise::strequ() -> void {
@@ -91,7 +91,7 @@ auto Denise::strequ() -> void {
 
 auto Denise::strvbl() -> void {
     // Denise has no vcounter
-    actions |= INIT_HPOS;
+    hPos = 2;
 }
 
 auto Denise::setDiwStrt(uint16_t value) -> void {
@@ -266,7 +266,7 @@ template<bool useHires> inline auto Denise::processDelayPf2() -> void {
     else if (((clxNoCol & 1) == 0) && doublePlayfield)      clxDat |= (v1 << 1) | (v2 << 9); \
     else                                                    clxDat |= (v2 << 9);
 
-template<bool useHires> auto Denise::processPixel() -> void {
+template<bool useHires> inline auto Denise::processPixel() -> void {
     uint8_t sprGroup;
     uint8_t sprPrio;
     uint16_t sprData;
@@ -551,28 +551,16 @@ auto Denise::process() -> void {
     } else
         hPos += 2;
 
-    if (actions & (BPL1_WRITTEN | INIT_HPOS | RESET_HPOS)) {
-        int _actions = actions;
-
-        if (_actions & BPL1_WRITTEN) {
-            dat1 = bpl1dat;
-            dat2 = bpl2dat;
-            dat3 = bpl3dat;
-            dat4 = bpl4dat;
-            dat5 = bpl5dat;
-            dat6 = bpl6dat;
-            actions &= ~BPL1_WRITTEN;
-            enableDisplay = true;
-            actions |= (PF1_SHIFT | PF2_SHIFT);
-        }
-
-        if (_actions & INIT_HPOS) {
-            actions &= ~INIT_HPOS;
-            actions |= RESET_HPOS;
-        } else if (_actions & RESET_HPOS) {
-            hPos = 2;
-            actions &= ~RESET_HPOS;
-        }
+    if (actions & BPL1_WRITTEN) {
+        dat1 = bpl1dat;
+        dat2 = bpl2dat;
+        dat3 = bpl3dat;
+        dat4 = bpl4dat;
+        dat5 = bpl5dat;
+        dat6 = bpl6dat;
+        actions &= ~BPL1_WRITTEN;
+        enableDisplay = true;
+        actions |= (PF1_SHIFT | PF2_SHIFT);
     }
 
     hPos &= 0x1ff; // wrap around when strEqu
