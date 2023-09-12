@@ -25,16 +25,15 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * display tracks more clearly
 * add IPF, DMS, EXE and encrypted kick rom support
 * add RTC
-* add multi file support for any loader (fill DF0-3 in one go)
+* add multi file support for any-loader (fill DF0-3 in one go)
 * show power LED in status line
     * colors for power and drive LEDs depend on the model
     * click on power LED to select audio filter
 * [C64]
 * fix: multi SID UI not updated correctly from config
-* fix: crash when changing speeder while threaded emulation is used
+* fix: crash when changing speeder
 * add cartridges: Dinamic, Diashow Maker, Super Snapshot V5
-* add option to intensify pseudo stereo
-    * this way pseudo stereo is possible with same SID models
+* add option to intensify pseudo stereo (now also works with same SID models)
 
 ## 2.0
 * add Amiga emulation
