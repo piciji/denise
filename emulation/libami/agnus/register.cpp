@@ -224,14 +224,12 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
         case 0x8e:
             setDiwStrt(value);
-            denise.setDiwStrt(value);
-            // addOneCycleEvent(DIW_START, value,2);
+            addOneCycleEvent(DIW_START, value);
             break;
 
         case 0x90:
             setDiwStop(value, triggeredBy == Trigger_Copper);
-            denise.setDiwStop(value);
-            // addOneCycleEvent(DIW_STOP, value,1);
+            addOneCycleEvent(DIW_STOP, value);
             break;
 
         case 0x92: {
@@ -562,6 +560,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             if (ecsAndHigher()) {
                 // system->interface->log( "hsync stop written " + std::to_string(value));
                 hsStop = value & 0xff;
+                fpsChange |= 2;
             }
 
         case 0x1c4:
@@ -589,12 +588,14 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x1cc:
             if (ecsAndHigher()) {
                 vBStrt = value & 0x7ff;
+                fpsChange |= 2;
             }
             break;
 
         case 0x1ce:
             if (ecsAndHigher()) {
                 vBStop = value & 0x7ff;
+                fpsChange |= 2;
             }
             break;
 
@@ -602,6 +603,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             if (ecsAndHigher()) {
                 // system->interface->log( "hsync start written " + std::to_string(value));
                 hsStrt = value & 0xff;
+                fpsChange |= 2;
             }
             break;
 

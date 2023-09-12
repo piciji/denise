@@ -114,11 +114,13 @@ auto Agnus::addOneCycleEvent(int job, uint16_t data, int delay) -> void {
         // interface->log("check one cycle event");
         // We should never end up here. If it does, this does not mean that it necessarily leads to an error situation
         // if the event is executed early.
-        if (rJob1.clock <= rJob2.clock)
-            processOneCycleEvent(rJob1);
-        else
-            processOneCycleEvent(rJob2);
-
+        if (rJob1.clock <= rJob2.clock) {
+        //    interface->log(rJob1.job,0);
+            processOneCycleEvent<true>(rJob1);
+        } else {
+          //  interface->log(rJob2.job,0);
+            processOneCycleEvent<true>(rJob2);
+        }
         addOneCycleEvent(job, data, delay);
     }
 }
@@ -147,7 +149,7 @@ template<bool isPtr> auto Agnus::inactivateOneCycleEvent(int job) -> void {
     }
 }
 
-auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
+template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
     uint16_t data = rJob.data;
     int job = rJob.job;
 
@@ -287,7 +289,8 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
         case AUD_DAT2: paula.audxDat<2>(data); break;
         case AUD_DAT3: paula.audxDat<3>(data); break;
         case SER_DAT: paula.setSerdat(data); break;
-        case DIW_START: setDiwStrt(data); break;
+        case DIW_START: denise.setDiwStrt(data); break;
+        case DIW_STOP: denise.setDiwStop(data); break;
         case UPD_V_DIW:
             if (diwFlipFlop) {
                 diwFlipFlop = false;
@@ -306,6 +309,7 @@ auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
             addOneCycleEvent(UPD_DENISE_VHPOS, (data & 0xff) << 1);
             break;
         case UPD_DENISE_VHPOS:
+            denise.process(tooSoon ? 0 : -1);
             denise.hPos = data;
             break;
     }

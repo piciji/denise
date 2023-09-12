@@ -369,6 +369,13 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 5:
+            // because of some internal delays in denise chip
+            if (isEquLine());
+            else if (vBlank)
+                denise.strvbl();
+            else
+                denise.strhor();
+
             if (ecsAndHigher() && lol) {
                 // todo strlong (OCS denise ignores it)
             }
@@ -403,15 +410,6 @@ inline auto Agnus::dmaCycle() -> void {
             // DMAL is fetched serial bit by bit (14 cycles). It is ok to do this in one step,
             // because the value of all bits is fixed (really ?) at the time of the first push.
             dmal = paula.dmal();
-            break;
-
-        case 6:
-            // because of some internal delays in denise chip
-            if (isEquLine());
-            else if (vBlank)
-                denise.strvbl();
-            else
-                denise.strhor();
             break;
 
         case 0xa:
@@ -512,7 +510,6 @@ inline auto Agnus::dmaCycle() -> void {
         processEvents(clock);
 
     bplControl();
-    denise.process();
     paula.process();
 
     if (actions) {
@@ -751,8 +748,10 @@ auto Agnus::vhposw(uint16_t value) -> void {
         } else {
             int diff = hPosBefore - hPos - 1;
 
-            if (hPosBefore > 0x2f && (diff > 0) )
+            if (hPosBefore > 0x2f && (diff > 0) ) {
+                denise.process(-1);
                 denise.linePos -= diff << 1;
+            }
         }
 
         updateEvent<EVENT_HTOTAL>(delay);

@@ -6,6 +6,7 @@ namespace LIBAMI {
 auto Agnus::startHblank() -> void {
 
     if (vBlankStart) {
+        denise.process();
         if (laceFrame & 1)
             lineVCounter--;
 
@@ -20,6 +21,7 @@ auto Agnus::startHblank() -> void {
 
         lineVCounter = 0;
     } else if (!lineCallback.called && (lineVCounter >= lineCallback.line)) {
+        denise.process();
         system->videoMidScreenCallback(laceFrame | (denise.hiresFrame ? 4 : 0) );
         lineCallback.called = true;
     }
@@ -30,8 +32,10 @@ auto Agnus::startHblank() -> void {
         if (beamCon & VARHSYEN) { // Alcatraz-Blitter ECS
             int _ht = (beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol);
 
-            if ((hsStop > _ht) || (hsStop < hsStrt))
-                std::memset(denise.linePtr, 0, LINE_BUFFER_WIDTH << 1 );
+            if ((hsStop > _ht) || (hsStop < hsStrt)) {
+                denise.process();
+                std::memset(denise.linePtr, 0, LINE_BUFFER_WIDTH << 1);
+            }
         }
         hBlank = true;
     }
@@ -60,6 +64,7 @@ auto Agnus::startHsync() -> void {
 }
 
 auto Agnus::endHblank() -> void {
+    denise.process();
     if (hBlank) {
         denise.linePos = 0;
 

@@ -384,7 +384,7 @@ struct Agnus {
 
     auto processEvents(int64_t curClock) -> void;
     auto clearEvents() -> void;
-    auto processOneCycleEvent(RapidJob& rJob) -> void;
+    template<bool tooSoon = false> auto processOneCycleEvent(RapidJob& rJob) -> void;
     template<uint8_t Channel> auto getEventDelay() -> unsigned;
     inline auto addOneCycleEvent(int job, uint16_t data = 0, int delay = 2) -> void;
     auto forceOneCycleEvent(int job) -> void;

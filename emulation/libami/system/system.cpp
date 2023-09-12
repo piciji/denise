@@ -133,7 +133,6 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
             calcSerializationSize();
 
             cpu.power();
-            denise.power();
 
             fastForward.config = 0;
             fastForward.frameCounter = 0;
@@ -144,6 +143,7 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
         }
     }
 
+    denise.power(resetInstruction || softReset);
     paula.power();
     cia1.reset();
     cia2.reset();
@@ -196,6 +196,7 @@ auto System::run() -> void {
 #endif
     }
 
+    denise.process(); // keep up, so we don't need to serialize BplUpdate
     if (useRunAhead) {
         if (runAhead.frames == runAhead.pos) {
             serializeLight();
