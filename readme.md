@@ -15,7 +15,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 ## 2.1
 * add drag'n'drop overlay
-    * files can be inserted into the drives faster
+    * files can be inserted into additional drives faster
     * files can either only be inserted or inserted and restarted
     * multi file support
 * fix: Wasapi didn't work on some audio hardware  

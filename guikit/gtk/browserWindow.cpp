@@ -317,6 +317,8 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
     if (!state.contentView.hint.empty()) {
         listView->append({""});
         listView->append({state.contentView.hint});
+        listView->setRowTooltip(0, "");
+        listView->setRowTooltip(1, state.contentView.hintTooltip);
     }
 
 	return listView->p.gtkWidget;
