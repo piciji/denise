@@ -617,7 +617,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
 
                 if (!state->contentView.hint.empty()) {
                     SendMessage(listBox, LB_ADDSTRING, 0, (LPARAM) (wchar_t*) L"");
-                    SendMessage(listBox, LB_ADDSTRING, 0, (LPARAM) (wchar_t*) utf16_t(" " + state->contentView.hint));
+                    SendMessage(listBox, LB_ADDSTRING, 0, (LPARAM) (wchar_t*) utf16_t(state->contentView.hint));
                     context->toolTips.push_back("");
                     context->toolTips.push_back(state->contentView.hintTooltip);
                 }
@@ -735,6 +735,11 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                         }
 
                         auto lRow = lDraw->rcItem;
+                        if (!state->contentView.specialFont) {
+                            lRow.left += 2;
+                            lRow.top += 2;
+                            lRow.bottom += 2;
+                        }
 
                         FillRect(lDraw->hDC, &lRow, hBrush);
 
