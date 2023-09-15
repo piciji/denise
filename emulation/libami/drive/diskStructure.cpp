@@ -78,6 +78,9 @@ auto DiskStructure::detach() -> void {
 }
 
 auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
+    if (!data || !size)
+        return false;
+
     if (analyzeEXT(data, size))
         return true;
 
