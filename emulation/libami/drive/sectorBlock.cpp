@@ -528,7 +528,7 @@ auto SectorBlock::readNameRaw(int offset, uint8_t allocatedSize, bool indentByDe
             out[i + _depth] = *ptr++;
 
         if (type == Type::DIR_BLOCK)
-            out.push_back(0x2b02);
+            out.push_back(0x5c);
 
     } else {
         out.resize(strSize);
