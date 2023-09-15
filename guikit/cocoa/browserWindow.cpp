@@ -66,8 +66,7 @@
 
     if ((path != browserWindow->p.selectedPath) || informInsertion) {
         if (state.onSelectionChange && listView) {
-            if (!pBW.selectedPath.empty())
-                listView->reset();
+            listView->reset();
             
             if (informInsertion) {
                 auto listings = state.onSelectionChange( "" );
@@ -181,7 +180,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
              
                     if( (paths != nil) && ([paths count] > 0)) {
                         for(auto path : paths) {
-                            const char* name = [[paths objectAtIndex:0] UTF8String];
+                            const char* name = [path UTF8String];
                             out.push_back((std::string)name);
                         }
                         if (state.orderBySelected && state.orderBySelected->checked && sortedFiles.size()) {
