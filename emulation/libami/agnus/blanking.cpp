@@ -86,6 +86,13 @@ auto Agnus::endHblank() -> void {
                 lineVCounter = 1;
 
             lineCallback.called = !lineCallback.use /*|| !lineCallback.line*/;
+
+            if (system->runAhead.pos == 1) {
+                if (!denise.useSequencer()) {
+                    // when blitter blocks CPU a long time and we end here before RA ... TURNIPS-WorkForNothing_qdfix.adf
+                    denise.disableSequencer(false);
+                }
+            }
         }
 
         if (lineVCounter >= LINE_BUFFER_HEIGHT) // could happen, if beam position has been changed

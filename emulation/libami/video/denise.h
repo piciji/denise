@@ -110,7 +110,7 @@ struct Denise {
     auto process(int offset = 0) -> void;
     template<bool _hires, bool _ham, bool _doublePlayfield> auto process(const int cycles, const int _activePlanes) -> void;
     auto power(bool softReset = false) -> void;
-    auto disableSequencer(bool state) -> void;
+    inline auto disableSequencer(bool state) -> void { enableSequencer = !state; }
     inline auto useSequencer() -> bool { return enableSequencer; }
     auto serialize(Emulator::Serializer& s) -> void;
 

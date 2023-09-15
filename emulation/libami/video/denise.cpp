@@ -110,16 +110,20 @@ auto Denise::setBpl1Dat(uint16_t value) -> void {
 }
 
 auto Denise::strhor() -> void {
-    int cycle = agnus.fallBackCycles(deniseClock);
-    BplUpdate& upd = bplUpdate[cycle & 0xff];
-    upd.actions |= RESET_HPOS;
+    if (enableSequencer) {
+        int cycle = agnus.fallBackCycles(deniseClock);
+        BplUpdate& upd = bplUpdate[cycle & 0xff];
+        upd.actions |= RESET_HPOS;
+    }
 }
 
 auto Denise::strvbl() -> void {
     // Denise has no vcounter
-    int cycle = agnus.fallBackCycles(deniseClock);
-    BplUpdate& upd = bplUpdate[cycle & 0xff];
-    upd.actions |= RESET_HPOS;
+    if (enableSequencer) {
+        int cycle = agnus.fallBackCycles(deniseClock);
+        BplUpdate& upd = bplUpdate[cycle & 0xff];
+        upd.actions |= RESET_HPOS;
+    }
 }
 
 auto Denise::setDiwStrt(uint16_t value) -> void {
@@ -266,13 +270,8 @@ auto Denise::process(int offset) -> void {
     int cycles = ((int)(agnus.clock - deniseClock) + offset) & 0xff;
     deniseClock = agnus.clock + offset;
 
-    if (!enableSequencer) {
-        hPos += cycles << 1;
-        hPos &= 0x1ff;
-        hBlank = true;
-        enableDisplay = false;
+    if (!enableSequencer)
         return;
-    }
 
     switch(bplCon0 & (0x8000 | 0x800 | 0x400)) { // hires, ham, dpf
         case 0: process<false, false, false>(cycles, activePlanes); break;     // lores
@@ -673,12 +672,6 @@ template<bool _hires, bool _ham, bool _doublePlayfield> inline auto Denise::proc
             }
         }
     }
-}
-
-auto Denise::disableSequencer(bool state) -> void {
-    enableSequencer = !state;
-    if (!state)
-        linePtr = agnus.frameBuffer;
 }
 
 auto Denise::serialize(Emulator::Serializer& s) -> void {
