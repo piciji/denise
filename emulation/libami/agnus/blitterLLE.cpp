@@ -312,9 +312,12 @@ auto Blitter::stateMachine() -> void {
         if (curSkipB ^ skipB) {
             if (skipB)
                 shifter &= ~(STAGE_A | STAGE_B);
-            else
+            else {
                 // this is critical because more than one shifter bits can get into the pipeline, resulting in faster counting down.
-                shifter = (shifter & ~(STAGE_B | STAGE_X)) | ((shifter & STAGE_A) << 1) | ((shifter & STAGE_A) << 2);
+                shifter = (shifter & ~(STAGE_B)) | ((shifter & STAGE_A) << 1) | ((shifter & STAGE_A) << 2);
+                if (shifter & STAGE_X) // Jim Power - Two Live Crew Crack
+                    shifter |= STAGE_A;
+            }
 
             curSkipB = skipB;
         }
