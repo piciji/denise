@@ -650,6 +650,34 @@ auto pWindow::applyMaximizeCorrection(Geometry& geo) -> void {
     }
 }
 
+auto pWindow::updateFullScreen( bool inUse, unsigned displayId, unsigned settingId) -> void {
+    locked = true;
+    unfullscreenZoomed = IsZoomed(hwnd);
+    if (inUse)
+        pMonitor::setSetting( displayId, settingId );
+    else
+        pMonitor::resetSetting();
+
+    HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFOEX info;
+    memset(&info, 0, sizeof(MONITORINFOEX));
+    info.cbSize = sizeof(MONITORINFOEX);
+    GetMonitorInfo(monitor, &info);
+    RECT rc = info.rcMonitor;
+    Geometry geometry = {(signed)rc.left, (signed)rc.top, (unsigned)(rc.right - rc.left), (unsigned)(rc.bottom - rc.top) };
+    SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE /*| WS_POPUP*/); // popup prevents messagebox topmost in opengl fullscreen
+    SetWindowLongPtr(hwnd, GWL_EXSTYLE, (GetWindowLongPtr(hwnd, GWL_EXSTYLE) | WS_EX_APPWINDOW));
+    Geometry margin = frameMargin();
+    setGeometry({
+        geometry.x + margin.x, geometry.y + margin.y,
+        geometry.width - margin.width, geometry.height - margin.height
+    });
+
+    //window.statusBar()->p.setComposited( !fullScreen );
+    locked = false;
+    if(window.onSize) window.onSize(Window::SIZE_MODE::Default);
+}
+
 auto pWindow::setFullScreen(bool fullScreen) -> void {
     locked = true;
 

@@ -19,6 +19,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
+    - config_fullscreen_toggle
   
 environment:
   matrix:

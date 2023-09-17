@@ -280,12 +280,12 @@ auto Program::updateFullscreenSetting() -> void {
     unsigned _display = _settings->get<unsigned>("fullscreen_display", 0 );
     unsigned _setting = _settings->get<unsigned>("fullscreen_setting", 0 );
 
+    hintExclusiveFullscreen();
+
     if (!_active || (_setting == 0) )
         view->setFullscreenSetting( false );
     else
         view->setFullscreenSetting( true, _display, _setting );
-
-    hintExclusiveFullscreen();
 }
 
 auto Program::fpsChanged() -> void {

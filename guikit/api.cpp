@@ -301,6 +301,13 @@ auto Window::setFullScreen(bool fullScreen) -> void {
 
 auto Window::setFullscreenSetting( bool inUse, unsigned displayId, unsigned settingId ) -> void {
 
+    if (fullScreen()) {
+        if (!inUse && fullscreenSetting.inUse)
+            p.updateFullScreen(false);
+        else if ( (inUse && !fullscreenSetting.inUse) || (inUse && ((displayId != fullscreenSetting.displayId) || (settingId != fullscreenSetting.settingId))))
+            p.updateFullScreen(true, displayId, settingId);
+    }
+
     fullscreenSetting.inUse = inUse;
     fullscreenSetting.displayId = displayId;
     fullscreenSetting.settingId = settingId;

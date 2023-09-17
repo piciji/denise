@@ -46,6 +46,7 @@ struct pWindow {
     auto setMenuVisible(bool visible) -> void;
     auto keepMenuVisibilityOnDisplay(bool state) -> void;
     auto setFullScreen(bool fullScreen) -> void;
+    auto updateFullScreen( bool inUse, unsigned displayId = 0, unsigned settingId = 0) -> void;
     auto setDroppable(bool droppable) -> void;
     auto geometry() -> Geometry;
     auto focused() -> bool;

@@ -772,6 +772,27 @@ auto pWindow::setForeground() -> void {
 	setFocused();
 }
 
+auto pWindow::updateFullScreen( bool inUse, unsigned displayId, unsigned settingId) -> void {
+    //if (!window.resizable()) return;
+    locked = true;
+    requestFullscreenToggle = true;
+    timer.setEnabled();
+
+    if (inUse)
+        pMonitor::setSetting( displayId, settingId );
+    else
+        pMonitor::resetSetting();
+
+    gtk_window_fullscreen(GTK_WINDOW(widget));
+    if (dragMotionId)
+        g_signal_handler_disconnect(G_OBJECT(widget), dragMotionId);
+
+    if (window.droppable()) {
+        dragMotionId = g_signal_connect(G_OBJECT(widget), "drag-motion", G_CALLBACK(pWindow::dragMove), (gpointer)this);
+        setDroppable(true);
+    }
+}
+
 auto pWindow::setFullScreen(bool fullScreen) -> void {
     //if (!window.resizable()) return;
     locked = true;

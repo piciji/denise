@@ -288,7 +288,7 @@ auto GeometryLayout::translate() -> void {
     ratioLayout.native.setText( trans->getA("Native") );
     ratioLayout.native.setTooltip( trans->getA("Native tooltip") );
     ratioLayout.integerScaling.setText( trans->getA("integer_scaling") );
-    monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
+    //monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
     monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );
     monitorResolutionLayout.active.setText( trans->get("enable") );
     

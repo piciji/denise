@@ -663,9 +663,25 @@ auto pWindow::geometry() -> Geometry {
     }
 }
 
+auto pWindow::updateFullScreen( bool inUse, unsigned displayId, unsigned settingId) -> void {
+    fullScreenToggleDelay = true;
+
+    @autoreleasepool {
+        if (inUse)
+            pMonitor::setSetting( displayId, settingId );
+        else
+            pMonitor::resetSetting();
+
+        [NSApp setPresentationOptions:NSApplicationPresentationFullScreen];
+        [cocoaWindow setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+        [cocoaWindow toggleFullScreen:nil];
+    }
+}
+
 auto pWindow::setFullScreen(bool fullScreen) -> void {
     if (!window.resizable()) return;
     fullScreenToggleDelay = true;
+
     @autoreleasepool {
         if(fullScreen) {
             if (window.fullscreenSetting.inUse)
