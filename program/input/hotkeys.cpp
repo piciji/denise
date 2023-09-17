@@ -350,7 +350,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             }
 
             if (statusHandler)
-                statusHandler->setMessage( trans->getA(checked ? "enabled" : "disabled"), 3 );
+                statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA(checked ? "enabled" : "disabled"), 3 );
 
             emuThread->lock();
             VideoManager::setSynchronize();

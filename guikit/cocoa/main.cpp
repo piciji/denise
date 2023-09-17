@@ -664,7 +664,7 @@ auto pWindow::geometry() -> Geometry {
 }
 
 auto pWindow::updateFullScreen( bool inUse, unsigned displayId, unsigned settingId) -> void {
-    fullScreenToggleDelay = true;
+  //  fullScreenToggleDelay = true;
 
     @autoreleasepool {
         if (inUse)
@@ -672,9 +672,9 @@ auto pWindow::updateFullScreen( bool inUse, unsigned displayId, unsigned setting
         else
             pMonitor::resetSetting();
 
-        [NSApp setPresentationOptions:NSApplicationPresentationFullScreen];
-        [cocoaWindow setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
-        [cocoaWindow toggleFullScreen:nil];
+     //   [NSApp setPresentationOptions:NSApplicationPresentationFullScreen];
+     //   [cocoaWindow setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+     //   [cocoaWindow toggleFullScreen:nil];
     }
 }
 

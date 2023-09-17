@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
+  - macos
   - Visual Studio 2019
   - macos-bigsur
-  - macos
   - Ubuntu2004
 
 stack: python 3.8
