@@ -1,13 +1,4 @@
 
-MonitorResolutionLayout::MonitorResolutionLayout() : displaySettings(true) {
-    append(active, {0u, 0u}, 10 );
-    append(display, {0u, 0u}, 10 );
-    append(displaySettings, {0u, 0u} );
-    setAlignment(0.5);
-    setPadding( 10 );
-    setFont(GUIKIT::Font::system("bold"));
-}
-
 SpeedLayout::SpeedLayout() {
     append(label, {0u, 0u}, 5);
     append(fps, {0u, 0u}, 5 );

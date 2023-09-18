@@ -763,5 +763,5 @@ swap joypads Port2 = Joypads in Port 2 tauschen
 apply window size = Fenstergröße anwenden
 guess disks = Folge-Disketten erraten
 guess disks tooltip = Der Diskwechsler kann Folge-Disketten von Programmen erraten, wenn ein bestimmtes Benennungs-Schema bei den Dateinamen beibehalten wird. Beispiel: "Turrican - Seite 1, Turrican - Seite 2" oder "Turrican - 1, Turrican - 2" oder "Turrican - a, Turrican - b" undsoweiter. Die Folgedisketten können dann direkt per Hotkey eingelegt werden, ohne dass der Wechsler dazu vorher manuell befüllt werden muss. Wird der Wechsler aber manuell befüllt, dann werden die in den Slots liegenden Folge-Disketten eingelegt.
-fullscreen switch tooltip = Die Einstellungen werden nur beim Wechsel vom Fenster ins Vollbild angewendet. Z.b. eine im Vollbild geladenene Konfig mit veränderter Auflösung/Wiederholrate wird also erst beim nächsten Wechsel ins Vollbild die Auflösung/Wiederholrate anwenden.
+fullscreen switch tooltip = Eine Aktivierung ist nur sinnvoll, wenn im Vollbild eine abweichende Auflösung/Wiederholrate benötigt wird. Die Einstellungen werden nur beim Wechsel vom Fenster ins Vollbild angewendet. Z.b. eine im Vollbild geladenene Konfig mit veränderter Auflösung/Wiederholrate wird diese nicht sofort anwenden, sondern erst beim nächsten Wechsel ins Vollbild.
 geometry = Bildgeometrie

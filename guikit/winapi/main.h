@@ -108,7 +108,7 @@ struct pWindow {
     auto setMenuVisible(bool visible) -> void;
     auto setStatusVisible(bool visible) -> void;
     auto setFullScreen(bool fullScreen) -> void;
-    auto updateFullScreen( bool inUse, unsigned displayId = 0, unsigned settingId = 0) -> void;
+   // auto updateFullScreen( bool inUse, unsigned displayId = 0, unsigned settingId = 0) -> void;
     auto fullScreenToggleDelayed() -> bool { return locked; }
     auto setDroppable(bool droppable) -> void;
     auto frameMargin() -> Geometry;

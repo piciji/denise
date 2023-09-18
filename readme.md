@@ -20,7 +20,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * multi file support
 * fix: Wasapi didn't work on some audio hardware  
 * [Amiga]
-* greatly improved accuracy [thanks to amilo3438 for finding broken demos]
+* greatly improved accuracy [thanks to amilo3438 and AW182 for finding broken demos]
 * fix: Drive LED sometimes does not turn off
 * display tracks more clearly
 * add IPF, DMS, EXE and encrypted kick rom support
@@ -31,7 +31,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * click on power LED to select audio filter
 * [C64]
 * fix: multi SID UI not updated correctly from config
-* fix: crash when changing speeder
+* fix: sometimes crashes when changing speeder
 * add cartridges: Dinamic, Diashow Maker, Super Snapshot V5
 * add option to intensify pseudo stereo (now also works with same SID models)
 

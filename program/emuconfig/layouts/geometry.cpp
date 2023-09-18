@@ -1,4 +1,14 @@
 
+MonitorResolutionLayout::MonitorResolutionLayout() : displaySettings(true) {
+    append(active, {0u, 0u}, 10 );
+    append(display, {0u, 0u}, 10 );
+    append(displaySettings, {0u, 0u} );
+    setAlignment(0.5);
+    setPadding( 10 );
+    setFont(GUIKIT::Font::system("bold"));
+    active.setForegroundColor( 0xff4500 );
+}
+
 CropLayout::Type1::Type1() {
     append( cropOff, {0u, 0u}, 10 );
     append( cropMonitor, {0u, 0u}, 10 );
@@ -288,7 +298,7 @@ auto GeometryLayout::translate() -> void {
     ratioLayout.native.setText( trans->getA("Native") );
     ratioLayout.native.setTooltip( trans->getA("Native tooltip") );
     ratioLayout.integerScaling.setText( trans->getA("integer_scaling") );
-    //monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
+    monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
     monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );
     monitorResolutionLayout.active.setText( trans->get("enable") );
     
