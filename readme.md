@@ -19,8 +19,10 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * files can either only be inserted or inserted and restarted
     * multi file support
 * fix: Wasapi didn't work on some audio hardware  
+* thanks to all translators: Ben, Ulgon, Ferenc, Muzza
 * [Amiga]
-* greatly improved accuracy [thanks to amilo3438 and AW182 for finding broken demos]
+* greatly improved accuracy, thanks to amilo3438, vAmigaTS, CPU Tester, AW182
+* ~15% speed up
 * fix: Drive LED sometimes does not turn off
 * display tracks more clearly
 * add IPF, DMS, EXE and encrypted kick rom support

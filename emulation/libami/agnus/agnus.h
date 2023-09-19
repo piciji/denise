@@ -123,6 +123,7 @@ struct Agnus {
     uint16_t vBStop;
     uint8_t hTotal;
     uint16_t beamCon;
+    bool secureRA;
 
     struct Sprite {
         uint32_t ptr;

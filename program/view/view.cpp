@@ -278,7 +278,7 @@ auto View::build() -> void {
         emuThread->unlock();
     };
     
-	fullscreenOnStartUp.setInterval(600);
+	fullscreenOnStartUp.setInterval(800);
 	fullscreenOnStartUp.onFinished = [this]() {
 		fullscreenOnStartUp.setEnabled(false);
 		emuThread->lock();

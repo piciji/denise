@@ -20,6 +20,7 @@ auto Agnus::startHblank() -> void {
                              LINE_BUFFER_WIDTH - width, laceFrame | (denise.hiresFrame ? 4 : 0));
 
         lineVCounter = 0;
+        secureRA = system->runAhead.pos == 1;
     } else if (!lineCallback.called && (lineVCounter >= lineCallback.line)) {
         denise.process();
         system->videoMidScreenCallback(laceFrame | (denise.hiresFrame ? 4 : 0) );
@@ -87,7 +88,8 @@ auto Agnus::endHblank() -> void {
 
             lineCallback.called = !lineCallback.use /*|| !lineCallback.line*/;
 
-            if (system->runAhead.pos == 1) {
+            if (secureRA) {
+                secureRA = false;
                 if (!denise.useSequencer()) {
                     // when blitter blocks CPU a long time and we end here before RA ... TURNIPS-WorkForNothing_qdfix.adf
                     denise.disableSequencer(false);

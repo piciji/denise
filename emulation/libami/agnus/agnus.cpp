@@ -121,6 +121,7 @@ auto Agnus::power(bool softReset) -> void {
     dmal = 0;
     frameClock = 0;
     fpsChange = 0;
+    secureRA = false;
 
     hBlank = false;
     vBlankEnd = false;
