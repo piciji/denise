@@ -72,14 +72,14 @@ for:
       - image: Visual Studio 2019        
       
   init:
-    - if "%Target%"=="win64" ( set mingw_archive=x86_64-8.1.0-release-posix-seh-rt_v6-rev0.7z)
-    - if "%Target%"=="win32" ( set mingw_archive=i686-8.1.0-release-posix-dwarf-rt_v6-rev0.7z)
+    - if "%Target%"=="win64" ( set mingw_archive=x86_64-12.2.0-release-posix-seh-msvcrt-rt_v10-rev2.7z)
+    - if "%Target%"=="win32" ( set mingw_archive=i686-12.2.0-release-posix-dwarf-msvcrt-rt_v10-rev2.7z)
     - if "%Target%"=="win64" ( set mingw_dir=mingw64)
     - if "%Target%"=="win32" ( set mingw_dir=mingw32)
     - if "%Target%"=="win64" ( set mingw_libs=%mingw_dir%\x86_64-w64-mingw32)
     - if "%Target%"=="win32" ( set mingw_libs=%mingw_dir%\i686-w64-mingw32)
-    - if "%Target%"=="win64" ( set mingw_url=https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win64/Personal Builds/mingw-builds/8.1.0/threads-posix/seh/%mingw_archive%)
-    - if "%Target%"=="win32" ( set mingw_url=https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win32/Personal Builds/mingw-builds/8.1.0/threads-posix/dwarf/%mingw_archive%)
+    - if "%Target%"=="win64" ( set mingw_url=https://github.com/niXman/mingw-builds-binaries/releases/download/12.2.0-rt_v10-rev2/%mingw_archive%)
+    - if "%Target%"=="win32" ( set mingw_url=https://github.com/niXman/mingw-builds-binaries/releases/download/12.2.0-rt_v10-rev2/%mingw_archive%)
     - if "%Target%"=="win64" ( set arch=x64)
     - if "%Target%"=="win32" ( set arch=x86)
 
@@ -134,12 +134,12 @@ for:
       
   install:
     - sh: sudo apt-get --allow-releaseinfo-change update
-    - sh: sudo apt-get --yes --force-yes install mesa-common-dev
-    - sh: sudo apt-get --yes --force-yes install libgtk-3-dev
-    - sh: sudo apt-get --yes --force-yes install libopenal-dev
-    - sh: sudo apt-get --yes --force-yes install libpulse-dev
-    - sh: sudo apt-get --yes --force-yes install libsdl2-dev
-    - sh: sudo apt-get --yes --force-yes install libudev-dev
+    - sh: sudo apt-get install mesa-common-dev -y
+    - sh: sudo apt-get install libgtk-3-dev -y
+    - sh: sudo apt-get install libopenal-dev -y
+    - sh: sudo apt-get install libpulse-dev -y
+    - sh: sudo apt-get install libsdl2-dev -y
+    - sh: sudo apt-get install libudev-dev -y
     - sh: sudo apt-get install sshpass -y
     
   build_script:

@@ -502,13 +502,13 @@ struct DVideo : Video, RenderThread {
     auto _redraw(bool disallowShader) -> void {
 		RECT windowsize;
 		
-		if (!XPMode) {
-			windowsize = getDimension(settings.handle);
-			if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
-				if (!resetOrInit())
-					return;
-			}
-		}
+//		if (!XPMode) {
+//			windowsize = getDimension(settings.handle);
+//			if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
+//				if (!resetOrInit())
+//					return;
+//			}
+//		}
 
         unsigned outWidth = outScreen.right;
         unsigned outHeight = outScreen.bottom;
@@ -559,13 +559,13 @@ struct DVideo : Video, RenderThread {
             lost = true;
         }
 		
-		if (XPMode) {
-			windowsize = getDimension(settings.handle);
-			if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
-				if (!resetOrInit())
-					return;
-			}
-		}
+//		if (XPMode) {
+//			windowsize = getDimension(settings.handle);
+//			if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
+//				if (!resetOrInit())
+//					return;
+//			}
+//		}
     }
 
     auto refresh() -> void {
@@ -721,11 +721,9 @@ struct DVideo : Video, RenderThread {
     }
 
     inline auto _lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+        RECT windowsize = getDimension( settings.handle );
 
         if (settings.threaded) {
-
-            RECT windowsize = getDimension( settings.handle );
-
             if (lost || (integerScalingHeight != _height) || ((settings.aspectMode == 2) && (integerScalingWidth != _width))
                 || (lastWindowSize.right != windowsize.right) || (lastWindowSize.bottom != windowsize.bottom)) {
                 wait();
@@ -743,12 +741,12 @@ struct DVideo : Video, RenderThread {
             }
 
             return RenderThread::lock(data, pitch, _width, _height, reuse);
-        } else {
-			if (lost && !recover()) {
-				if (!init())
-                    return false;
-			}
-		}
+        }
+
+        if ((windowsize.right != lastWindowSize.right) || (windowsize.bottom != lastWindowSize.bottom)) {
+            if (!resetOrInit())
+                return false;
+        }
 
         if(_width != inputWidth || _height != inputHeight) {
             resize( inputWidth = _width, inputHeight = _height );
