@@ -2,7 +2,6 @@
 namespace LIBAMI {
 
 auto DiskStructure::analyzeADF(uint8_t* data, unsigned size) -> bool {
-    size &= ~511;
 
     for (int i = 84; i > 0; i--) {
         if (size == (i * 2 * 11 * 512)) {

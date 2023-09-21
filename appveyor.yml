@@ -95,6 +95,7 @@ for:
     - cmd: xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include"
     - cmd: xcopy /I /Y "data\libs\static\%arch%\libfreetype.a" "%mingw_libs%\lib"
     - cmd: del out\.gitkeep
+    - cmd: g++ -v
   
   build_script:
     - cmd: mingw32-make && mingw32-make install
