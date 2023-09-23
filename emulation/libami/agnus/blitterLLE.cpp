@@ -316,8 +316,6 @@ auto Blitter::stateMachine() -> void {
             } else {
                 shifter = (shifter & ~STAGE_Y) | ((shifter & STAGE_X) << 1);
                 shiftOut = shifter & STAGE_Y;
-                if (shiftOut) // Jim Power - Two Live Crew Crack
-                    shifter |= STAGE_A;
             }
 
             curSkipY = skipY;
@@ -328,12 +326,11 @@ auto Blitter::stateMachine() -> void {
                 shifter &= ~(STAGE_A | STAGE_B);
             else {
                 // this is critical because more than one shifter bits can get into the pipeline, resulting in faster counting down.
-                shifter = (shifter & ~(STAGE_B | STAGE_X)) | ((shifter & STAGE_A) << 1) | ((shifter & STAGE_A) << 2);
+                shifter = (shifter & ~(STAGE_B )) | ((shifter & STAGE_A) << 1);
             }
 
             curSkipB = skipB;
         }
-
     }
 }
 
