@@ -183,7 +183,7 @@ auto System::run() -> void {
 
     if (useRunAhead) {
         runAhead.pos = runAhead.frames;
-        denise.disableSequencer( runAhead.performance );
+        denise.setDisableSequencer( runAhead.performance ? 1 : 2 );
         paula.disableAudioOut( runAhead.frames > 1 );
     }
 
@@ -208,7 +208,7 @@ auto System::run() -> void {
 
             if (--runAhead.pos == 0) {
                 if (!denise.useSequencer()) {
-                    denise.disableSequencer(false);
+                    denise.setDisableSequencer(0);
                 }
             }
             leaveEmulation = false;
@@ -270,14 +270,14 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
 
     else if (fastForward.renderNext) {
         fastForward.renderNext = false;
-        denise.disableSequencer( fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer );
+        denise.setDisableSequencer( (fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer) ? 1 : 2 );
 
     } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
         frame = nullptr;
 
         if ((++fastForward.frameCounter & 15) == 0) {
             fastForward.frameCounter = 0;
-            denise.disableSequencer( false );
+            denise.setDisableSequencer( 0 );
             fastForward.renderNext = true;
         }
     }
@@ -368,7 +368,14 @@ auto System::setRunAhead(unsigned frames) -> void {
 auto System::setFastForward( unsigned config ) -> void {
     fastForward.config = config | (fastForward.config & (unsigned)Interface::FastForward::SlowSpeed);
     paula.disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
-    denise.disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+
+    if (config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer) denise.setDisableSequencer( 1 );
+    else if (config & (unsigned) Emulator::Interface::FastForward::ReduceVideoOutput) denise.setDisableSequencer( 2 );
+    else denise.setDisableSequencer( 0 );
+
+    fastForward.frameCounter = 0;
+    fastForward.renderNext = false;
+
     updateDriveSounds();
 }
 

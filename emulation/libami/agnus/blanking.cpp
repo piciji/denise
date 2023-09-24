@@ -92,7 +92,7 @@ auto Agnus::endHblank() -> void {
                 secureRA = false;
                 if (!denise.useSequencer()) {
                     // when blitter blocks CPU a long time and we end here before RA ... TURNIPS-WorkForNothing_qdfix.adf
-                    denise.disableSequencer(false);
+                    denise.setDisableSequencer(0);
                 }
             }
         }
@@ -145,7 +145,7 @@ auto Agnus::sanitizeCrop(int width, int height) -> void {
     width >>= 1;
     height >>= 1;
 
-    if (!denise.enableSequencer || laceFrame ) {
+    if (!denise.useSequencer() || laceFrame ) {
         crop.reset();
     } else {
         if (crop.left > width) crop.left = 0;

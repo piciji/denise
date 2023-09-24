@@ -96,7 +96,7 @@ auto Denise::power(bool softReset) -> void {
 // Denise listen for addresses, put on RGA BUS
 auto Denise::setBpl1Dat(uint16_t value) -> void {
     bpl1dat = value;
-    if (enableSequencer) {
+    if (disableSequencer != 1) {
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
         upd.dat1 = bpl1dat;
@@ -110,7 +110,7 @@ auto Denise::setBpl1Dat(uint16_t value) -> void {
 }
 
 auto Denise::strhor() -> void {
-    if (enableSequencer) {
+    if (disableSequencer != 1) {
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
         upd.actions |= RESET_HPOS;
@@ -119,7 +119,7 @@ auto Denise::strhor() -> void {
 
 auto Denise::strvbl() -> void {
     // Denise has no vcounter
-    if (enableSequencer) {
+    if (disableSequencer != 1) {
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
         upd.actions |= RESET_HPOS;
@@ -267,30 +267,43 @@ auto Denise::setBplCon2( uint16_t value ) -> void {
 
 
 auto Denise::process(int offset) -> void {
+    // offset -1: inited by event system, which is already incremented a cycle
     int cycles = ((int)(agnus.clock - deniseClock) + offset) & 0xff;
     deniseClock = agnus.clock + offset;
 
-    if (!enableSequencer)
-        return;
+    if (disableSequencer) {
+        if (disableSequencer & 1)
+            return;
 
-    switch(bplCon0 & (0x8000 | 0x800 | 0x400)) { // hires, ham, dpf
-        case 0: process<false, false, false>(cycles, activePlanes); break;     // lores
-        case 0x400: process<false, false, true>(cycles, activePlanes); break; // dpf
+        switch(bplCon0 & (0x8000 | 0x400)) { // hires, dpf  ... HAM is not relevant
+            case 0: process<false, false, false, false>(cycles, activePlanes); break;     // lores
+            case 0x400: process<false, false, true, false>(cycles, activePlanes); break; // dpf
 
-        case 0x8000: process<true, false, false>(cycles, activePlanes); break;  // hires
-        case 0x800: process<false, true, false>(cycles, activePlanes); break; // ham
+            case 0x8000: process<true, false, false, false>(cycles, activePlanes); break;  // hires
+            case 0x8000 | 0x400: process<true, false, true, false>(cycles, activePlanes); break; // hires dpf
+        }
 
-        case 0x8000 | 0x400: process<true, false, true>(cycles, activePlanes); break; // hires dpf
-        case 0x8000 | 0x800: process<true, true, false>(cycles, activePlanes); break; // hires ham
+    } else {
+        switch(bplCon0 & (0x8000 | 0x800 | 0x400)) { // hires, ham, dpf
+            case 0: process<false, false, false>(cycles, activePlanes); break;     // lores
+            case 0x400: process<false, false, true>(cycles, activePlanes); break; // dpf
 
-        case 0x800 | 0x400: process<false, true, true>(cycles, activePlanes); break;
-        case 0x8000 | 0x800 | 0x400: process<true, true, true>(cycles, activePlanes); break;
+            case 0x8000: process<true, false, false>(cycles, activePlanes); break;  // hires
+            case 0x800: process<false, true, false>(cycles, activePlanes); break; // ham
+
+            case 0x8000 | 0x400: process<true, false, true>(cycles, activePlanes); break; // hires dpf
+            case 0x8000 | 0x800: process<true, true, false>(cycles, activePlanes); break; // hires ham
+
+            case 0x800 | 0x400: process<false, true, true>(cycles, activePlanes); break;
+            case 0x8000 | 0x800 | 0x400: process<true, true, true>(cycles, activePlanes); break;
+        }
     }
 
     BplUpdate& upd = bplUpdate[cycles];
     if (upd.actions) {
+        // both supported actions are scheduled a cycle later, so it could happen that synchronisation miss this
         bplUpdate[0] = upd;
-        upd.actions = 0;
+        upd.actions = 0; // disable for this position
     }
 }
 
@@ -305,7 +318,7 @@ auto Denise::process(int offset) -> void {
     else if (((clxNoCol & 1) == 0) && _doublePlayfield)     clxDat |= (v1 << 1) | (v2 << 9); \
     else                                                    clxDat |= (v2 << 9);
 
-template<bool _hires, bool _ham, bool _doublePlayfield> inline auto Denise::process(const int cycles, const int _activePlanes) -> void {
+template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline auto Denise::process(const int cycles, const int _activePlanes) -> void {
     uint8_t sprGroup;
     uint8_t sprPrio;
     uint16_t sprData;
@@ -391,66 +404,68 @@ template<bool _hires, bool _ham, bool _doublePlayfield> inline auto Denise::proc
             if (spr6.armed && (hPos == spr6.x)) spr6.shift = (spr6.datA << 16) | spr6.datB;
             if (spr7.armed && (hPos == spr7.x)) spr7.shift = (spr7.datA << 16) | spr7.datB;
 
-            if (sprData) {
-                if (sprData & 0xf) { // Spr 0/1
-                    if (spr1.attached) {
-                        sprData = (sprData & 0xf) + 16;
-                    } else {
-                        if (sprData & 3)
-                            sprData = (sprData & 3) + 16;
-                        else
-                            sprData = ((sprData >> 2) & 3) + 16;
+            if constexpr (_display) {
+                if (sprData) {
+                    if (sprData & 0xf) { // Spr 0/1
+                        if (spr1.attached) {
+                            sprData = (sprData & 0xf) + 16;
+                        } else {
+                            if (sprData & 3)
+                                sprData = (sprData & 3) + 16;
+                            else
+                                sprData = ((sprData >> 2) & 3) + 16;
+                        }
+                    } else if (sprData & 0xf0) { // Spr 2/3
+                        if (spr3.attached) {
+                            sprData = ((sprData & 0xf0) >> 4) + 16;
+                        } else {
+                            if (sprData & 0x30)
+                                sprData = ((sprData >> 4) & 3) + 20;
+                            else
+                                sprData = ((sprData >> 6) & 3) + 20;
+                        }
+                        sprPrio = 1;
+                    } else if (sprData & 0xf00) { // Spr 4/5
+                        if (spr5.attached) {
+                            sprData = ((sprData & 0xf00) >> 8) + 16;
+                        } else {
+                            if (sprData & 0x300)
+                                sprData = ((sprData >> 8) & 3) + 24;
+                            else
+                                sprData = ((sprData >> 10) & 3) + 24;
+                        }
+                        sprPrio = 2;
+                    } else { // Spr 6/7
+                        if (spr7.attached) {
+                            sprData = ((sprData & 0xf000) >> 12) + 16;
+                        } else {
+                            if (sprData & 0x3000)
+                                sprData = ((sprData >> 12) & 3) + 28;
+                            else
+                                sprData = ((sprData >> 14) & 3) + 28;
+                        }
+                        sprPrio = 3;
                     }
-                } else if (sprData & 0xf0) { // Spr 2/3
-                    if (spr3.attached) {
-                        sprData = ((sprData & 0xf0) >> 4) + 16;
-                    } else {
-                        if (sprData & 0x30)
-                            sprData = ((sprData >> 4) & 3) + 20;
-                        else
-                            sprData = ((sprData >> 6) & 3) + 20;
-                    }
-                    sprPrio = 1;
-                } else if (sprData & 0xf00) { // Spr 4/5
-                    if (spr5.attached) {
-                        sprData = ((sprData & 0xf00) >> 8) + 16;
-                    } else {
-                        if (sprData & 0x300)
-                            sprData = ((sprData >> 8) & 3) + 24;
-                        else
-                            sprData = ((sprData >> 10) & 3) + 24;
-                    }
-                    sprPrio = 2;
-                } else { // Spr 6/7
-                    if (spr7.attached) {
-                        sprData = ((sprData & 0xf000) >> 12) + 16;
-                    } else {
-                        if (sprData & 0x3000)
-                            sprData = ((sprData >> 12) & 3) + 28;
-                        else
-                            sprData = ((sprData >> 14) & 3) + 28;
-                    }
-                    sprPrio = 3;
                 }
             }
 
-            if (!borderFlipFlop) {
-                if (hPos == hStop) {
-                    borderFlipFlop = true;
-                    if (!hBlank && !agnus.crop.right)
-                        agnus.updateCropRight(linePos);
-                }
-            } else {
-                if (hPos == hStart) {
-                    borderFlipFlop = false;
-                    if (!agnus.crop.left)
-                        agnus.updateCropLeft(linePos);
+            if constexpr (_display) {
+                if (!borderFlipFlop) {
+                    if (hPos == hStop) {
+                        borderFlipFlop = true;
+                        if (!hBlank && !agnus.crop.right)
+                            agnus.updateCropRight(linePos);
+                    }
+                } else {
+                    if (hPos == hStart) {
+                        borderFlipFlop = false;
+                        if (!agnus.crop.left)
+                            agnus.updateCropLeft(linePos);
+                    }
                 }
             }
 
             for(int h = 0; h < (_hires ? 2 : 1); h++) {
-                colIndex = 0;
-                colIndex2 = 0;
 
                 clxNoCol = ((shifterAClxEna & (shifterA ^ shifterAClxPolarity)) != 0)
                            | ((shifterBClxEna & (shifterB ^ shifterBClxPolarity)) != 0) << 1;
@@ -474,122 +489,145 @@ template<bool _hires, bool _ham, bool _doublePlayfield> inline auto Denise::proc
                     case 15: SPF2(15, 63) break;
                 }
 
-                if (shifterA | shifterB) {
-                    if constexpr (_doublePlayfield) {
-                        colIndex = (shifterA >> 47) | ((shifterA >> 30) & 2) | ((shifterA >> 13) & 4);
-                        colIndex2 = (shifterB >> 47) | ((shifterB >> 30) & 2) | ((shifterB >> 13) & 4);
+                if constexpr (_display) {
+                    colIndex = 0;
+                    colIndex2 = 0;
 
-                        if (colIndex2)
-                            colIndex2 |= 8;
-
-                        if constexpr (_ham) {
-                            colIndexHam = (colIndex2 && (!colIndex || pf2PrioOverPf1)) ? (colIndex2 & cMask2) : (colIndex & cMask1);
-
-                            switch( ((colIndex2 & 4) >> 1) | ((colIndex & 4) >> 2) ) {
-                                case 0: hamColor = colors[ colIndexHam ]; break;
-                                case 1: hamColor = (hamColor & 0xff0) | colIndexHam; break;
-                                case 2: hamColor = (hamColor & 0x0ff) | (colIndexHam << 8); break;
-                                case 3: hamColor = (hamColor & 0xf0f) | (colIndexHam << 4); break;
-                            }
-                        }
-                    } else {
-                        colIndex = (shifterA >> 47) | ((shifterB >> 46) & 2) | ((shifterA >> 29) & 4)
-                                   | ((shifterB >> 28) & 8) | ((shifterA >> 11) & 16) | ((shifterB >> 10) & 32);
-
-                        if constexpr (_ham) {
-                            switch(colIndex & 0x30) {
-                                case 0:     hamColor = colors[ colIndex & 0xf ]; break;
-                                case 0x10:  hamColor = (hamColor & 0xff0) | (colIndex & 0xf); break;
-                                case 0x20:  hamColor = (hamColor & 0x0ff) | ((colIndex & 0xf) << 8); break;
-                                case 0x30:  hamColor = (hamColor & 0xf0f) | ((colIndex & 0xf) << 4); break;
-                            }
-                        } else if (pf2PrioIllegal && (colIndex & 0x10)) {
-                            colIndex &= 0x30;
-                        }
-                    }
-
-                    shifterA = (shifterA << 1) & ~(0x1000100010000);
-                    shifterB = (shifterB << 1) & ~(0x1000100010000);
-                } else if constexpr (_ham)
-                    hamColor = colors[ 0 ];
-
-                if (!borderFlipFlop && enableDisplay) {
-                    if (sprData) {
+                    if (shifterA | shifterB) {
                         if constexpr (_doublePlayfield) {
-                            if (!colIndex && !colIndex2) // both playfields are transparent
-                                color = colors[sprData];
-                            else if (!colIndex) { // playfield 1 is transparent
-                                if (sprPrio < pf2Prio)
+                            colIndex = (shifterA >> 47) | ((shifterA >> 30) & 2) | ((shifterA >> 13) & 4);
+                            colIndex2 = (shifterB >> 47) | ((shifterB >> 30) & 2) | ((shifterB >> 13) & 4);
+
+                            if (colIndex2)
+                                colIndex2 |= 8;
+
+                            if constexpr (_ham) {
+                                colIndexHam = (colIndex2 && (!colIndex || pf2PrioOverPf1)) ? (colIndex2 & cMask2) : (
+                                        colIndex & cMask1);
+
+                                switch (((colIndex2 & 4) >> 1) | ((colIndex & 4) >> 2)) {
+                                    case 0:
+                                        hamColor = colors[colIndexHam];
+                                        break;
+                                    case 1:
+                                        hamColor = (hamColor & 0xff0) | colIndexHam;
+                                        break;
+                                    case 2:
+                                        hamColor = (hamColor & 0x0ff) | (colIndexHam << 8);
+                                        break;
+                                    case 3:
+                                        hamColor = (hamColor & 0xf0f) | (colIndexHam << 4);
+                                        break;
+                                }
+                            }
+                        } else {
+                            colIndex = (shifterA >> 47) | ((shifterB >> 46) & 2) | ((shifterA >> 29) & 4)
+                                       | ((shifterB >> 28) & 8) | ((shifterA >> 11) & 16) | ((shifterB >> 10) & 32);
+
+                            if constexpr (_ham) {
+                                switch (colIndex & 0x30) {
+                                    case 0:
+                                        hamColor = colors[colIndex & 0xf];
+                                        break;
+                                    case 0x10:
+                                        hamColor = (hamColor & 0xff0) | (colIndex & 0xf);
+                                        break;
+                                    case 0x20:
+                                        hamColor = (hamColor & 0x0ff) | ((colIndex & 0xf) << 8);
+                                        break;
+                                    case 0x30:
+                                        hamColor = (hamColor & 0xf0f) | ((colIndex & 0xf) << 4);
+                                        break;
+                                }
+                            } else if (pf2PrioIllegal && (colIndex & 0x10)) {
+                                colIndex &= 0x30;
+                            }
+                        }
+
+                        shifterA = (shifterA << 1) & ~(0x1000100010000);
+                        shifterB = (shifterB << 1) & ~(0x1000100010000);
+                    } else if constexpr (_ham)
+                        hamColor = colors[0];
+
+                    if (!borderFlipFlop && enableDisplay) {
+                        if (sprData) {
+                            if constexpr (_doublePlayfield) {
+                                if (!colIndex && !colIndex2) // both playfields are transparent
                                     color = colors[sprData];
-                                else if constexpr (_ham)
-                                    color = hamColor;
-                                else
-                                    color = colors[colIndex2 & cMask2];
-                            } else if (!colIndex2) { // playfield 2 is transparent
-                                if (sprPrio < pf1Prio)
-                                    color = colors[sprData];
-                                else if constexpr (_ham)
-                                    color = hamColor;
-                                else
-                                    color = colors[colIndex & cMask1];
-                            } else { // both playfields are non transparent
-                                if (pf2PrioOverPf1) {
+                                else if (!colIndex) { // playfield 1 is transparent
                                     if (sprPrio < pf2Prio)
                                         color = colors[sprData];
                                     else if constexpr (_ham)
                                         color = hamColor;
                                     else
                                         color = colors[colIndex2 & cMask2];
-                                } else {
+                                } else if (!colIndex2) { // playfield 2 is transparent
                                     if (sprPrio < pf1Prio)
                                         color = colors[sprData];
                                     else if constexpr (_ham)
                                         color = hamColor;
                                     else
                                         color = colors[colIndex & cMask1];
+                                } else { // both playfields are non transparent
+                                    if (pf2PrioOverPf1) {
+                                        if (sprPrio < pf2Prio)
+                                            color = colors[sprData];
+                                        else if constexpr (_ham)
+                                            color = hamColor;
+                                        else
+                                            color = colors[colIndex2 & cMask2];
+                                    } else {
+                                        if (sprPrio < pf1Prio)
+                                            color = colors[sprData];
+                                        else if constexpr (_ham)
+                                            color = hamColor;
+                                        else
+                                            color = colors[colIndex & cMask1];
+                                    }
+                                }
+                            } else {
+                                if constexpr (_ham) {
+                                    if (sprPrio < pf2Prio)
+                                        color = colors[sprData];
+                                    else
+                                        color = hamColor;
+                                } else {
+                                    if (!colIndex || (sprPrio < pf2Prio))
+                                        color = colors[sprData];
+                                    else
+                                        color = colors[colIndex];
                                 }
                             }
-                        } else {
-                            if constexpr (_ham) {
-                                if (sprPrio < pf2Prio)
-                                    color = colors[sprData];
-                                else
+
+                        } else { // no sprite data
+                            if constexpr (_doublePlayfield) {
+                                if constexpr (_ham)
                                     color = hamColor;
-                            } else {
-                                if (!colIndex || (sprPrio < pf2Prio))
-                                    color = colors[sprData];
-                                else
-                                    color = colors[colIndex];
-                            }
-                        }
-
-                    } else { // no sprite data
-                        if constexpr (_doublePlayfield) {
-                            if constexpr (_ham)
+                                else {
+                                    if (colIndex2 && (!colIndex || pf2PrioOverPf1)) {
+                                        color = colors[colIndex2 & cMask2];
+                                    } else
+                                        color = colors[colIndex & cMask1];
+                                }
+                            } else if constexpr (_ham)
                                 color = hamColor;
-                            else {
-                                if (colIndex2 && (!colIndex || pf2PrioOverPf1)) {
-                                    color = colors[colIndex2 & cMask2];
-                                } else
-                                    color = colors[colIndex & cMask1];
-                            }
-                        } else if constexpr (_ham)
-                            color = hamColor;
-                        else
-                            color = colors[colIndex];
+                            else
+                                color = colors[colIndex];
+                        }
+                    } else
+                        color = hBlank ? 0 : colors[0];
+
+                    *(linePtr + linePos++) = color;
+
+
+                    if constexpr (!_hires) {
+                        if (hiresFrame)
+                            *(linePtr + linePos++) = color;
                     }
-                } else
-                    color = hBlank ? 0 : colors[0];
 
-                *(linePtr + linePos++) = color;
-
-                if constexpr (!_hires) {
-                    if (hiresFrame)
-                        *(linePtr + linePos++) = color;
+                    // if Agnus misses sync
+                    linePos &= 0x3ff;
                 }
-
-                // if Agnus misses sync
-                linePos &= 0x3ff;
             }
 
             if (pfShift) {

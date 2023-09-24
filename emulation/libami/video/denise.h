@@ -78,7 +78,7 @@ struct Denise {
 
     uint16_t* linePtr;
     int linePos;
-    bool enableSequencer = true;
+    int disableSequencer = 0; // 1: off (full), 2: off (but calculate collisions)
     int64_t deniseClock;
 
     struct Sprite {
@@ -108,10 +108,10 @@ struct Denise {
     auto strvbl() -> void;
 
     auto process(int offset = 0) -> void;
-    template<bool _hires, bool _ham, bool _doublePlayfield> auto process(const int cycles, const int _activePlanes) -> void;
+    template<bool _hires, bool _ham, bool _doublePlayfield, bool _display = true> auto process(const int cycles, const int _activePlanes) -> void;
     auto power(bool softReset = false) -> void;
-    inline auto disableSequencer(bool state) -> void { enableSequencer = !state; }
-    inline auto useSequencer() -> bool { return enableSequencer; }
+    inline auto setDisableSequencer(int state) -> void { disableSequencer = state; }
+    inline auto useSequencer() -> bool { return disableSequencer == 0; }
     auto serialize(Emulator::Serializer& s) -> void;
 
     auto joy0Dat() -> uint16_t;
