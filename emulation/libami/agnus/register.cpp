@@ -588,14 +588,16 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x1cc:
             if (ecsAndHigher()) {
                 vBStrt = value & 0x7ff;
-                fpsChange |= 2;
+                if (beamCon & VARVBEN)
+                    fpsChange |= 2;
             }
             break;
 
         case 0x1ce:
             if (ecsAndHigher()) {
                 vBStop = value & 0x7ff;
-                fpsChange |= 2;
+                if (beamCon & VARVBEN)
+                    fpsChange |= 2;
             }
             break;
 

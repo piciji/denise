@@ -787,11 +787,12 @@ auto Agnus::observeFrameDuration() -> void {
 
         fpsChange = 1; // reset to "typical" in next frame, if the beam position has not been changed again.
 
-        //system->interface->log("fps change 2");
-        //system->interface->log(std::to_string(fps), 0);
         system->updateStats();
-        if (std::fabs(fpsOld - fps) > 0.03)
+        if (std::fabs(fpsOld - fps) > 0.03) {
+            //interface->log("fps change 2");
+            //interface->log(fps, 0);
             interface->fpsChanged();
+        }
 
     } else if (fpsChange & 1) { // typical, e.g. lace change
         double linesPerField;
@@ -812,14 +813,14 @@ auto Agnus::observeFrameDuration() -> void {
 
         fps = (double)frequency() / (cyclesPerLine * linesPerField);
         if (fps < 1.0) fps = 1.0;
-
         fpsChange = 0;
-        //system->interface->log("fps change 1");
-        //system->interface->log(std::to_string(fps), 0);
 
         system->updateStats();
-        if (std::fabs(fpsOld - fps) > 0.03)
+        if (std::fabs(fpsOld - fps) > 0.03) {
+            //interface->log("fps change 1");
+            //interface->log(fps, 0);
             interface->fpsChanged();
+        }
     }
 
     frameClock = clock;

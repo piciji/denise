@@ -136,8 +136,11 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
             checkForRomEncryption();
             mapRom(false);
 
-            if (std::fabs(fpsOld - fps) > 0.03)
+            if (std::fabs(fpsOld - fps) > 0.03) {
+                //interface->log(fpsOld);
+                //interface->log(fps, 0);
                 interface->fpsChanged();
+            }
         } else {
             s.integer(chipMemMask);
             s.integer(slowMemSize);
