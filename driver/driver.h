@@ -24,6 +24,14 @@ struct Viewport {
 
 extern Viewport viewport;
 
+struct IntegerScaling {
+    unsigned width = 0;
+    unsigned height = 0;
+    bool doubleSize = false;
+};
+
+extern IntegerScaling integerScaling;
+
 struct Video {	
     enum class ShaderType { GLSL, HLSL, NotSupported };
     enum class Filter { Nearest = 0, Linear = 1 };
@@ -69,8 +77,13 @@ struct Video {
     virtual auto hasVRR() -> bool { return false; }
     virtual auto changeThreadPriorityToRealtime(bool state) -> void {}
 
-    virtual auto setRatio(int mode, bool integerScaling) -> void {} // mode: 0: off, 1: TV, 2: Native
+    virtual auto setRatio(int mode, bool _integerScaling) -> void {} // mode: 0: off, 1: TV, 2: Native
     auto getViewport() -> Viewport& { return viewport; }
+    auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
+        integerScaling.width = _w;
+        integerScaling.height = _h;
+        integerScaling.doubleSize = _ds;
+    }
 
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 	/** direct 3D only */

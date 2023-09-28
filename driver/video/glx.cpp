@@ -263,11 +263,9 @@ struct GLX : public Video, OpenGL, RenderThread {
             resizeMutex.lock();
 
         makeCurrent(true);
-        if (OpenGL::size(_width, _height)) {
-            integerScalingWidth = _width;
-            integerScalingHeight = _height;
+        if (OpenGL::size(_width, _height))
             calcViewport();
-        }
+
         if (_useResizing) {
             clearCurrent();
             resizeMutex.unlock();
@@ -285,11 +283,9 @@ struct GLX : public Video, OpenGL, RenderThread {
             resizeMutex.lock();
 
         makeCurrent(true);
-        if (OpenGL::size(_width, _height)) {
-            integerScalingWidth = _width;
-            integerScalingHeight = _height;
+        if (OpenGL::size(_width, _height))
             calcViewport();
-        }
+
         if (_useResizing) {
             clearCurrent();
             resizeMutex.unlock();
@@ -307,11 +303,9 @@ struct GLX : public Video, OpenGL, RenderThread {
             resizeMutex.lock();
 
         makeCurrent(true);
-        if (OpenGL::size(_width, _height)) {
-            integerScalingWidth = _width;
-            integerScalingHeight = _height;
+        if (OpenGL::size(_width, _height))
             calcViewport();
-        }
+
         if (_useResizing) {
             clearCurrent();
             resizeMutex.unlock();
@@ -322,8 +316,6 @@ struct GLX : public Video, OpenGL, RenderThread {
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
         OpenGL::resize( _buffer, _width, _height );
-        integerScalingWidth = _width;
-        integerScalingHeight = _height;
         calcViewport();
     }
 
@@ -552,13 +544,13 @@ struct GLX : public Video, OpenGL, RenderThread {
         glXMakeCurrent(display, glxwindow, glxcontext);
     }
 
-    auto setRatio(int mode, bool integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
-        if (settings.aspectMode == mode && settings.integerScaling == integerScaling)
+    auto setRatio(int mode, bool _integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
+        if (settings.aspectMode == mode && settings.integerScaling == _integerScaling)
             return;
 
         wait();
         settings.aspectMode = mode;
-        settings.integerScaling = integerScaling;
+        settings.integerScaling = _integerScaling;
 
         calcViewport();
     }

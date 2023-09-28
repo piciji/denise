@@ -144,8 +144,6 @@ struct OpenGL : OpenGLProgram {
     int outputLeft = 0;
     int outputTop = 0;
 	bool initialized = false;
-    unsigned integerScalingHeight = 0;
-    unsigned integerScalingWidth = 0;
     unsigned windowWidth = 0;
     unsigned windowHeight = 0;
     bool useShader = false;

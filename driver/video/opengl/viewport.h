@@ -5,36 +5,57 @@ auto OpenGL::calcViewport() -> void {
     outputTop = 0;
     outputLeft = 0;
 
-    bool integerScaling = settings.integerScaling || (settings.aspectMode == 2);
-    int _height = integerScalingHeight;
+    bool native = settings.aspectMode == 2;
+    bool crt = settings.aspectMode == 1;
+    bool useIntegerScaling = settings.integerScaling || native;
+    bool fraction = integerScaling.height & 1;
+    int scalingHeight = integerScaling.height;
+    int scalingWidth = integerScaling.width;
+    bool useDoubleSize = integerScaling.doubleSize && native && settings.integerScaling;
 
-    if ((integerScalingHeight == 0) || (outputHeight < integerScalingHeight))
-        integerScaling = false;
+    if (!useDoubleSize) {
+        scalingHeight >>= 1;
+        scalingWidth >>= 1;
+    } else
+        fraction = false;
 
-    if (integerScaling) {
-        while (outputHeight > _height)
-            _height += integerScalingHeight;
+    if ((scalingHeight == 0) || (outputHeight < scalingHeight)) {
+        useIntegerScaling = false;
+    }
 
-        while (_height > outputHeight)
-            _height -= integerScalingHeight;
+    int _height = scalingHeight;
+    int _width = scalingWidth;
+    int factorH = 1;
+    int factorW = 1;
+
+    if (useIntegerScaling) {
+        while (outputHeight > _height) {
+            factorH++;
+            _height = (factorH * scalingHeight) + (fraction ? (factorH >> 1) : 0);
+        }
+
+        while (_height > (float)outputHeight) {
+            factorH--;
+            _height = (factorH * scalingHeight) + (fraction ? (factorH >> 1) : 0);
+        }
 
         outputTop = (outputHeight - _height) / 2;
         outputHeight = _height;
     }
 
-    if (settings.aspectMode == 1) {
+    if (crt) {
         float _aspectWidth = 4.0;
         float _aspectHeight = 3.0;
 
         while(1) {
             _height = outputHeight;
-            int _width = (unsigned)(((float(_height) / _aspectHeight) * _aspectWidth) + 0.5);
+            _width = (unsigned)(((float(_height) / _aspectHeight) * _aspectWidth) + 0.5);
 
             if (_width > outputWidth) {
-                if (integerScaling) {
-                    _height = outputHeight - integerScalingHeight;
+                if (useIntegerScaling) {
+                    _height = outputHeight - scalingHeight;
 
-                    if (_height >= integerScalingHeight) {
+                    if (_height >= scalingHeight) {
                         outputTop += (outputHeight - _height) / 2;
                         outputHeight = _height;
                         continue;
@@ -53,17 +74,33 @@ auto OpenGL::calcViewport() -> void {
 
             break;
         }
-    } else if (settings.aspectMode == 2) { // Native
-        int _width = integerScalingWidth;
-
+    } else if (native) { // Native
         if (_width > outputWidth)
             _width = outputWidth;
         else {
-            while (outputWidth > _width)
-                _width += integerScalingWidth;
+            while (outputWidth > _width) {
+                if (factorW >= factorH)
+                    break;
 
-            while (_width > outputWidth)
-                _width -= integerScalingWidth;
+                factorW++;
+                _width += scalingWidth;
+            }
+
+            while (_width > outputWidth) {
+                factorW--;
+                _width -= scalingWidth;
+            }
+
+            while(factorW < factorH) {
+                if (factorH > 1) {
+                    factorH--;
+                    _height = (factorH * scalingHeight) + (fraction ? (factorH >> 1) : 0);
+                } else
+                    break;
+
+                outputTop = (outputHeight - _height) / 2;
+                outputHeight = _height;
+            }
         }
 
         outputLeft = (outputWidth - _width) / 2;

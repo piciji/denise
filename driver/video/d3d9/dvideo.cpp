@@ -38,8 +38,6 @@ struct DVideo : Video, RenderThread {
     const unsigned FONT_WIDTH = 1024;
     unsigned textureWidth = 0;
     unsigned textureHeight = 0;
-    unsigned integerScalingHeight = 0;
-    unsigned integerScalingWidth = 0;
 
     unsigned inputWidth, inputHeight;
     RECT outScreen;
@@ -146,7 +144,7 @@ struct DVideo : Video, RenderThread {
     auto setVertex(unsigned src_w, unsigned src_h, unsigned tex_w, unsigned tex_h, unsigned dest_x, unsigned dest_y, unsigned dest_w, unsigned dest_h) -> void {
         d3dvertex vertex[4];
 
-        vertex[0].x = vertex[2].x = ((float) dest_x);
+        vertex[0].x = vertex[2].x = ((float) dest_x - 0.5);
         vertex[1].x = vertex[3].x = ((float) dest_x + (float) dest_w);
         vertex[0].y = vertex[1].y = ((float) dest_y);
         vertex[2].y = vertex[3].y = ((float) dest_y + (float) dest_h);
@@ -157,9 +155,9 @@ struct DVideo : Video, RenderThread {
         vertex[2].rhw = vertex[3].rhw = 1.0;
 
         vertex[0].u = vertex[2].u = 0.0;
-        vertex[1].u = vertex[3].u = ((float) (src_w) - 0.5f) / (float) tex_w;
+        vertex[1].u = vertex[3].u = ((float) (src_w) + 0.0f) / (float) tex_w;
         vertex[0].v = vertex[1].v = 0.0;
-        vertex[2].v = vertex[3].v = ((float) (src_h) - 0.5f) / (float) tex_h;
+        vertex[2].v = vertex[3].v = ((float) (src_h) + 0.5f) / (float) tex_h;
 
         vertex_buffer->Lock(0, sizeof (d3dvertex) * 4, (void**) &vertex_ptr, 0);
         std::memcpy(vertex_ptr, vertex, sizeof (d3dvertex) * 4);
@@ -724,11 +722,8 @@ struct DVideo : Video, RenderThread {
         RECT windowsize = getDimension( settings.handle );
 
         if (settings.threaded) {
-            if (lost || (integerScalingHeight != _height) || ((settings.aspectMode == 2) && (integerScalingWidth != _width))
-                || (lastWindowSize.right != windowsize.right) || (lastWindowSize.bottom != windowsize.bottom)) {
+            if (lost || (lastWindowSize.right != windowsize.right) || (lastWindowSize.bottom != windowsize.bottom)) {
                 wait();
-                integerScalingHeight = _height;
-                integerScalingWidth = _width;
                 if (!reset()) {
                     if (!init())
                         return false;
@@ -750,16 +745,7 @@ struct DVideo : Video, RenderThread {
 
         if(_width != inputWidth || _height != inputHeight) {
             resize( inputWidth = _width, inputHeight = _height );
-        }
-
-        if ((_height != integerScalingHeight) || ((settings.aspectMode == 2) && (integerScalingWidth != _width)) ) {
-            integerScalingHeight = _height;
-            integerScalingWidth = _width;
             calcDimension();
-          //  if (!reset()) {
-               // if (!init())
-                  //  return false;
-            //}
             lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
         }
 
@@ -784,6 +770,8 @@ struct DVideo : Video, RenderThread {
             h = d3dcaps.MaxTextureHeight;
 
         renderBuffer->data = new uint32_t[w * h]();
+        calcDimension();
+        lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
     }
 
     auto calcPitch( unsigned _width ) -> unsigned {
@@ -925,8 +913,6 @@ struct DVideo : Video, RenderThread {
         wait();
         settings.aspectMode = mode;
         settings.integerScaling = integerScaling;
-        integerScalingHeight = 0;
-        integerScalingWidth = 0;
 
         if (settings.handle)
             init();
@@ -935,38 +921,60 @@ struct DVideo : Video, RenderThread {
     auto calcDimension() -> void {
         lastWindowSize = getDimension( settings.handle );
         outScreen = lastWindowSize;
+        outScreen.top = 0;
+        outScreen.left = 0;
 
-        bool integerScaling = settings.integerScaling || (settings.aspectMode == 2);
-        int _height = integerScalingHeight;
-        outScreen.top = outScreen.left = 0;
+        bool native = settings.aspectMode == 2;
+        bool crt = settings.aspectMode == 1;
+        bool useIntegerScaling = settings.integerScaling || native;
+        bool fraction = integerScaling.height & 1;
+        int scalingHeight = integerScaling.height;
+        int scalingWidth = integerScaling.width;
+        bool useDoubleSize = integerScaling.doubleSize && native && settings.integerScaling;
 
-        if ((integerScalingHeight == 0) || (outScreen.bottom < integerScalingHeight))
-            integerScaling = false;
+        if (!useDoubleSize) {
+            scalingHeight >>= 1;
+            scalingWidth >>= 1;
+        } else
+            fraction = false;
 
-        if (integerScaling) {
-            while (outScreen.bottom > _height)
-                _height += integerScalingHeight;
+        if ((scalingHeight == 0) || (outScreen.bottom < scalingHeight)) {
+            useIntegerScaling = false;
+        }
 
-            while (_height > outScreen.bottom)
-                _height -= integerScalingHeight;
+        int _height = scalingHeight;
+        int _width = scalingWidth;
+        int factorH = 1;
+        int factorW = 1;
+
+        if (useIntegerScaling) {
+            while (outScreen.bottom > _height) {
+                factorH++;
+                _height = (factorH * scalingHeight) + (fraction ? (factorH >> 1) : 0);
+            }
+
+            while (_height > outScreen.bottom) {
+                factorH--;
+                _height = (factorH * scalingHeight) + (fraction ? (factorH >> 1) : 0);
+            }
 
             outScreen.top = (outScreen.bottom - _height) / 2;
             outScreen.bottom = _height;
         }
 
-        if (settings.aspectMode == 1) { // TV
+        if (crt) { // TV
             float _aspectWidth = 4.0;
             float _aspectHeight = 3.0;
 
             while(1) {
                 _height = outScreen.bottom;
-                int _width = (unsigned)(((float(_height) / _aspectHeight) * _aspectWidth) + 0.5);
+                _width = (unsigned)(((float(_height) / _aspectHeight) * _aspectWidth) + 0.5);
 
                 if (_width > outScreen.right) {
-                    if (integerScaling) {
-                        _height = outScreen.bottom - integerScalingHeight;
+                    if (useIntegerScaling) {
+                        _height = outScreen.bottom - scalingHeight;
 
-                        if (_height >= integerScalingHeight) {
+                        if (_height >= scalingHeight) {
                             outScreen.top += (outScreen.bottom - _height) / 2;
                             outScreen.bottom = _height;
                             continue;
@@ -985,17 +993,33 @@ struct DVideo : Video, RenderThread {
 
                 break;
             }
-        } else if ((settings.aspectMode == 2) && integerScalingWidth) { // Native
-            int _width = integerScalingWidth;
-
+        } else if (native && scalingWidth) { // Native
             if (_width > outScreen.right)
                 _width = outScreen.right;
             else {
-                while (outScreen.right > _width)
-                    _width += integerScalingWidth;
+                while (outScreen.right > _width) {
+                    if (factorW >= factorH)
+                        break;
 
-                while (_width > outScreen.right)
-                    _width -= integerScalingWidth;
+                    factorW++;
+                    _width += scalingWidth;
+                }
+
+                while (_width > outScreen.right) {
+                    factorW--;
+                    _width -= scalingWidth;
+                }
+
+                while(factorW < factorH) {
+                    if (factorH > 1) {
+                        factorH--;
+                        _height = (factorH * scalingHeight) + (fraction ? (factorH >> 1) : 0);
+                    } else
+                        break;
+
+                    outScreen.top = (outScreen.bottom - _height) / 2;
+                    outScreen.bottom = _height;
+                }
             }
 
             outScreen.left = (outScreen.right - _width) / 2;

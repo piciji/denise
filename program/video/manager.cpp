@@ -370,9 +370,9 @@ auto VideoManager::preCalcGamma() -> void {
         
         preCalcF[c] = (float)preCalc[c] / 255.0;
 		
-		// to emulatate scanlines with a given intensity, the colors of the 
+		// to emulate scanlines with a given intensity, the colors of the
 		// adjacent lines will be blended together with reduced luminance.
-		// thats why we precalculate the result of mixing two colors too.
+		// that's why we precalculate the result of mixing two colors too.
 		// formula: (a + b) / 2
 		// if there is no shade, the scanline is black and fully visible. 
 		// otherwise the original mixed color will be visible.
@@ -446,25 +446,25 @@ inline auto VideoManager::adjustSaturation(double& r, double& g, double& b) -> v
 
 auto VideoManager::injectPhaseTransferError() -> void {
     
-    // next we encode/decode pal signal.
-    // sender(c64, amiga) transfers pal's V component 180° phase shifted (change sign) each odd line.
+    // next we encode/decode PAL signal.
+    // sender(c64, amiga) transfers PAL's V component 180° phase shifted (change sign) each odd line.
     // receiver translates it back by changing sign of V component again.
-    // if there is no phase error during transmission, this process would be completly useless.
+    // if there is no phase error during transmission, this process would be completely useless.
     // you already assume it, the real world is not ideal.
     // to explain this let's have a look what's the problem with NTSC.
     // a sender adds some degree of hue(V component) errors while transmitting the signal.
     // there is a setting, called tint, on each NTSC TV. this way you can correct a great portion
     // of the hue error of a specific sender. of course the hue error isn't constant, means you
-    // can't correct it completly. thats why ntsc is called: never the same color :-)
+    // can't correct it completely. that's why NTSC is called: never the same color :-)
     // back to pal and the approach to stabilize hue.
-    // even lines: same transmission as NTSC, the transfered signal is received with an unknown
-    // phase shift error. in comparision to NTSC the information is stored in TV. (delay line)
+    // even lines: same transmission as NTSC, the transferred signal is received with an unknown
+    // phase shift error. in comparison to NTSC the information is stored in TV. (delay line)
     // odd lines: V component is phase shifted by 180° before transmission. (simply means the V value change sign).
-    // the transmission adds a similiar phase shift error within such a short time of one display line.
-    // receiver (TV) reverses sign of V component, which includes a similiar phase shift error like happened in
+    // the transmission adds a similar phase shift error within such a short time of one display line.
+    // receiver (TV) reverses sign of V component, which includes a similar phase shift error like happened in
     // even line. 
     // now the receiver already has the U/V data of the even line, which is shifted by an unknown phase error from the 
-    // real U/V data and there is the U/V data of the odd line which is shifted by a similiar phase error but in the other
+    // real U/V data and there is the U/V data of the odd line which is shifted by a similar phase error but in the other
     // direction of the even line data. so we simply have to calculate the average between odd and even data to get
     // the original value. a tint correction like NTSC would be unnecessary.
     // the hue error is a lot of smaller than NTSC, because the error doesn't shift that much in the short
@@ -490,7 +490,7 @@ auto VideoManager::injectPhaseTransferError() -> void {
 	// i.e. sin( a + b ) * modifier = modifier * (sin a cos b + cos a sin b)
 	//								= modifier * sin a cos b + modifier * cos a sin b
 	// we have already calculated: V = modifier * sin a , U = modifier * cos a
-	// so after substituaion we get:
+	// so after substitution we get:
 	//								= V * cos b + U * sin b
 	
     double rotU = std::cos( phaseError * M_PI / 180.0 );	// cos b
@@ -618,6 +618,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 	float* gpuDataFloat;
     constexpr bool interlace = options & 3;
     constexpr bool field = options & 2;
+    constexpr bool hires = options & 4;
     bool iHold = interlace && !field && !interlaceDecay;
 
     if (needAUpdate)
@@ -651,6 +652,8 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     }
 
     frameRenderPos = 0;
+    videoDriver->setIntegerScalingDimension( hires ? width : (width << 1),
+        interlace ? height : (scanlines ? ((height << 1) - 1) : (height << 1) ), hires || interlace || scanlines);
 
     if (placeHolderFrames) {
         if ((placeHolderFrames & 3) == 0)
@@ -1148,7 +1151,7 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
     unsigned heightFirstHalfScreen = ((height * scaler) >> 8) & ~1;
 	unsigned destOffset = (width + destPitch) * (heightFirstHalfScreen << ((!interlace && scanlines) ? 1 : 0));
     
-    if (!re.dest || ((re.options ^ re1.options) & (1 | 4 | 32)) ) { // mostly to check if midscreen callback is lores and switches to hires later on
+    if (!re.dest || ((re.options ^ re1.options) & (1 | 4 | 32)) ) { // mostly to check if mid-screen callback is lores and switches to hires later on
         while (re.ready.load())
             std::this_thread::yield();
 

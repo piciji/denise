@@ -130,11 +130,9 @@ struct WGL : Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height, reuse);
 
         makeCurrent(true);
-        if (OpenGL::size(_width, _height)) {
-            integerScalingWidth = _width;
-            integerScalingHeight = _height;
+        if (OpenGL::size(_width, _height))
             calcViewport();
-        }
+
         return OpenGL::lock(data, pitch);
     }
 
@@ -143,11 +141,9 @@ struct WGL : Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height, reuse);
 
         makeCurrent(true);
-        if (OpenGL::size(_width, _height)) {
-            integerScalingWidth = _width;
-            integerScalingHeight = _height;
+        if (OpenGL::size(_width, _height))
             calcViewport();
-        }
+
         return OpenGL::lock(data, pitch);
     }
 
@@ -156,18 +152,14 @@ struct WGL : Video, OpenGL, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height, reuse);
 
         makeCurrent(true);
-        if (OpenGL::size(_width, _height)) {
-            integerScalingWidth = _width;
-            integerScalingHeight = _height;
+        if (OpenGL::size(_width, _height))
             calcViewport();
-        }
+
         return OpenGL::lock(data, pitch);
     }
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
         OpenGL::resize( _buffer, _width, _height );
-        integerScalingWidth = _width;
-        integerScalingHeight = _height;
         calcViewport();
     }
 
@@ -352,13 +344,13 @@ struct WGL : Video, OpenGL, RenderThread {
 #endif
     }
 
-    auto setRatio(int mode, bool integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
-        if (settings.aspectMode == mode && settings.integerScaling == integerScaling)
+    auto setRatio(int mode, bool _integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
+        if (settings.aspectMode == mode && settings.integerScaling == _integerScaling)
             return;
 
         wait();
         settings.aspectMode = mode;
-        settings.integerScaling = integerScaling;
+        settings.integerScaling = _integerScaling;
 
         calcViewport();
     }

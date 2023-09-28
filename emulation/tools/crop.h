@@ -102,7 +102,7 @@ struct Crop {
 
 		if (settings.aspectCorrect &&
             (settings.type == CropType::Auto || settings.type == CropType::SemiAuto) )
-			correct( width, height );
+			correct( width, height, options );
 
 		frame += top * lineLength;
 		frame += left;
@@ -133,8 +133,10 @@ struct Crop {
 		return (unsigned) ( value + 0.5 );
 	}
 	
-	auto correct( unsigned width, unsigned height ) -> void {
-		
+	auto correct( unsigned width, unsigned height, int options ) -> void {
+		bool lace = options & 3;
+        bool hires = options & 4;
+
 		unsigned _correctedHeight = roundUp( (double)croppedWidth * (double)height / (double)width );
         unsigned diff;
 
@@ -147,6 +149,11 @@ struct Crop {
 
 			croppedHeight = _correctedHeight;
 
+            if (lace) {
+                top &= ~1;
+                croppedHeight &= ~1;
+            }
+
 			return;
 		}
 		
@@ -158,6 +165,11 @@ struct Crop {
         else left = 0;
 
         croppedWidth = _correctedWidth;
+
+        if (hires) {
+            left &= ~1;
+            croppedWidth &= ~1;
+        }
 	}
 };
 
