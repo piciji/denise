@@ -69,6 +69,7 @@
 namespace DRIVER {
 
 Viewport viewport;
+IntegerScaling integerScaling;
 
 auto Video::available() -> std::vector<std::string> {
 	return {
