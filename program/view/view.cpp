@@ -978,6 +978,14 @@ auto View::buildMenu() -> void {
             sM.system->append(*sM.palette);				
         }
 
+        sM.geometry = new GUIKIT::MenuItem;
+        sM.geometry->setIcon( cropImage );
+        sM.geometry->onActivate = [emulator]() {
+            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
+            emuView->show(EmuConfigView::TabWindow::Layout::Geometry);
+        };
+        sM.system->append( *sM.geometry );
+
         sM.audio = new GUIKIT::MenuItem;
         sM.audio->setIcon( volumeImage );
         sM.audio->onActivate = [emulator]() {
@@ -993,14 +1001,6 @@ auto View::buildMenu() -> void {
             emuView->show(EmuConfigView::TabWindow::Layout::Firmware);
         };
         sM.system->append( *sM.firmware );
-
-        sM.geometry = new GUIKIT::MenuItem;
-        sM.geometry->setIcon( cropImage );
-        sM.geometry->onActivate = [emulator]() {
-            auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
-            emuView->show(EmuConfigView::TabWindow::Layout::Geometry);
-        };
-        sM.system->append( *sM.geometry );
 
         sM.misc = new GUIKIT::MenuItem;
         sM.misc->setIcon( toolsImage );

@@ -104,9 +104,9 @@ auto TabWindow::build() -> void {
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         appendTab(Layout::Palette, paletteImage);
 
+    appendTab(Layout::Geometry, cropImage);
     appendTab(Layout::Audio, volumeImage);
     appendTab(Layout::Firmware, memoryImage);
-    appendTab(Layout::Geometry, cropImage);
     appendTab(Layout::Misc, miscImage);
 	
 	if (tellMeShouldICreateTheUIRightAway()) {
