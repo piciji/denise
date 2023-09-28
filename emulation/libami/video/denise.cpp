@@ -627,6 +627,11 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
 
                     // if Agnus misses sync
                     linePos &= 0x3ff;
+                } else {
+                    if (shifterA | shifterB) {
+                        shifterA = (shifterA << 1) & ~(0x1000100010000);
+                        shifterB = (shifterB << 1) & ~(0x1000100010000);
+                    }
                 }
             }
 
