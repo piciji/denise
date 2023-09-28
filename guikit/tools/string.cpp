@@ -21,14 +21,15 @@ auto String::delSpaces(std::string& str) -> std::string& {
     return str;
 }
 
-auto String::split(const std::string& str, char delimiter) -> std::vector<std::string> {
+auto String::split(const std::string& str, char delimiter, bool trimParts) -> std::vector<std::string> {
     size_t start = 0;
     size_t end = str.find_first_of( delimiter );
     std::vector<std::string> tokens;
 
     while (end <= std::string::npos) {
         std::string part = str.substr(start, end - start);
-        String::trim( part );
+        if (trimParts)
+            String::trim( part );
 	    if(!part.empty()) tokens.emplace_back( part );
 	    if (end == std::string::npos) break;
 

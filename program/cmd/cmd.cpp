@@ -64,7 +64,7 @@ Cmd::Cmd(int argc, char** argv) {
         else if ( arg == "-config-amiga" )
             configIdent = "Amiga";
 
-		else //if (!GUIKIT::String::endsWith(arg, (std::string)APP_NAME + ".exe") && !GUIKIT::String::endsWith(arg, (std::string)APP_NAME))
+		else
             arguments.push_back(arg);
     }
 }
@@ -314,6 +314,7 @@ auto Cmd::parse() -> void {
             attachMedia->guid = (uintptr_t)emuAmiga;
         } else {
             std::string temp = arg;
+            std::string temp2 = arg;
             GUIKIT::String::toLowerCase( temp );
             GUIKIT::String::trim( arg );
             std::string extension = GUIKIT::String::getExtension(temp, "");
@@ -329,7 +330,7 @@ auto Cmd::parse() -> void {
                 if (diskListing.empty() && GUIKIT::String::foundSubStr( temp, "." + suffix + ":" )) {
                     std::replace( arg.begin(), arg.end(), '\\', '/');
                     // load specific listing from disk
-                    auto splits = GUIKIT::String::split(arg, ':');
+                    auto splits = GUIKIT::String::split(temp2, ':', false);
 
                     arg = "";
                     bool nextPart = false;
