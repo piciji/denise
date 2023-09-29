@@ -39,8 +39,8 @@ Interface::Interface() : Emulator::Interface( "C64" ) {
 }
 
 Interface::~Interface() {
-    //if (system)
-      //  delete system;
+    if (system)
+        delete system;
 }
 
 auto Interface::prepareMedia() -> void {

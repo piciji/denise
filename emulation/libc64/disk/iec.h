@@ -33,13 +33,14 @@ struct IecBus {
     bool atnOut;
     bool clockOut;
     bool dataOut;
+    bool threadInitialized;
     uint8_t lastByte;
     uint8_t port;
     int64_t sysClock;
     int64_t cpuCylcesPerSecond;
     std::atomic<bool> ready;
     std::atomic<bool> idle;
-    std::atomic<bool> updatePriority;
+    std::atomic<bool> kill;
     uint8_t drivesConnected;
     std::condition_variable cv;
     unsigned cpuBurnerRequested;
@@ -101,6 +102,7 @@ struct IecBus {
     auto setSpeeder(uint8_t speeder) -> void;
     auto updateDriveSounds() -> void;
     auto wasAutostarted() -> bool;
+    auto initThread() -> void;
 };
 
 }

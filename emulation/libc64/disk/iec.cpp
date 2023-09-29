@@ -63,50 +63,58 @@ sysTimer(system->sysTimer) {
     }     
 
     idle = true;
-    updatePriority = true;
     powerOn = false;
+    kill = false;
+    threadInitialized = false;
     cpuBurner = 0;
     cpuBurnerRequested = 0;
+}
+
+IecBus::~IecBus() {
+    kill.store(1);
+    cv.notify_one();
+    waitForDrives();
+
+    for( auto drive : drives )
+        delete drive;
+}
+
+auto IecBus::initThread() -> void {
+    threadInitialized = true;
 
     std::thread worker( [this] {
-
         std::chrono::milliseconds duration(5);
         std::mutex cvM;
         std::unique_lock<std::mutex> lk(cvM);
 
-        while(1) {
+        if (this->system->interface->setThreadPriority(Emulator::Interface::ThreadPriority::High )) {
+            // system->interface->log("IEC prio change high");
+        }
 
+        while(1) {
             ready = false;
 
             // let drive thread wait until main thread signals a safe start
             while (!ready.load()) {
 
                 if (idle.load()) {
-                    if (cv.wait_for(lk, duration, [this](){ return ready.load(); }))
-                        break;
-                } else
-                    std::this_thread::yield();
-            }
+                    if (cv.wait_for(lk, duration, [this](){ return ready.load(); })) {
+                        if (kill)
+                            return;
 
-            if (updatePriority) {
-                if (this->system->interface->setThreadPriority(idle ? Emulator::Interface::ThreadPriority::High : Emulator::Interface::ThreadPriority::High, 0.1, 0.2 )) {
-                   // system->interface->log(idle ? "IEC prio change high" : "IEC prio change realtime");
+                        break;
+                    }
+                } else {
+                    if (kill)
+                        return;
+                    std::this_thread::yield();
                 }
-                updatePriority = false;
             }
 
             run();
         }
-
     } );
-
     worker.detach();
-}
-
-IecBus::~IecBus() {
-    
-    for( auto drive : drives )
-        delete drive;
 }
 
 auto IecBus::setPowerThread( unsigned value ) -> void {
@@ -318,7 +326,6 @@ auto IecBus::writeParallelHandshake() -> void {
 auto IecBus::powerOff() -> void {
     
     idle = true;
-    //updatePriority = true;
     powerOn = false;
     waitForDrives();
     
@@ -327,7 +334,9 @@ auto IecBus::powerOff() -> void {
 }
 
 auto IecBus::power() -> void {
-    
+    if (!threadInitialized)
+        initThread();
+
     atnOut = clockOut = dataOut = 1;
     
     port = 0xc0;
