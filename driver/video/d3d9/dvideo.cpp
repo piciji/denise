@@ -144,20 +144,27 @@ struct DVideo : Video, RenderThread {
     auto setVertex(unsigned src_w, unsigned src_h, unsigned tex_w, unsigned tex_h, unsigned dest_x, unsigned dest_y, unsigned dest_w, unsigned dest_h) -> void {
         d3dvertex vertex[4];
 
-        vertex[0].x = vertex[2].x = ((float) dest_x - 0.5);
-        vertex[1].x = vertex[3].x = ((float) dest_x + (float) dest_w);
-        vertex[0].y = vertex[1].y = ((float) dest_y);
-        vertex[2].y = vertex[3].y = ((float) dest_y + (float) dest_h);
+        vertex[0].x = vertex[2].x = ((float) dest_x - 0.5f);
+        vertex[1].x = vertex[3].x = ((float) dest_x + (float) dest_w - 0.5f);
+        vertex[0].y = vertex[1].y = ((float) dest_y - 0.5f);
+        vertex[2].y = vertex[3].y = ((float) dest_y + (float) dest_h - 0.5f);
 
         vertex[0].z = vertex[1].z = 1.0;
         vertex[2].z = vertex[3].z = 1.0;
         vertex[0].rhw = vertex[1].rhw = 1.0;
         vertex[2].rhw = vertex[3].rhw = 1.0;
 
-        vertex[0].u = vertex[2].u = 0.0;
-        vertex[1].u = vertex[3].u = ((float) (src_w) + 0.0f) / (float) tex_w;
-        vertex[0].v = vertex[1].v = 0.0;
-        vertex[2].v = vertex[3].v = ((float) (src_h) + 0.5f) / (float) tex_h;
+        if (settings.filter == Video::Filter::Linear) {
+            vertex[0].u = vertex[2].u = 0.0f;
+            vertex[1].u = vertex[3].u = ((float) (src_w) - 0.5f) / (float) tex_w;
+            vertex[0].v = vertex[1].v = 0.0f;
+            vertex[2].v = vertex[3].v = ((float) (src_h) - 0.5f) / (float) tex_h;
+        } else {
+            vertex[0].u = vertex[2].u = 0.0f;
+            vertex[1].u = vertex[3].u = ((float) (src_w) + 0.0f) / (float) tex_w;
+            vertex[0].v = vertex[1].v = 0.0f;
+            vertex[2].v = vertex[3].v = ((float) (src_h) + 0.0f) / (float) tex_h;
+        }
 
         vertex_buffer->Lock(0, sizeof (d3dvertex) * 4, (void**) &vertex_ptr, 0);
         std::memcpy(vertex_ptr, vertex, sizeof (d3dvertex) * 4);
