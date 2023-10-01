@@ -1,25 +1,14 @@
 
 struct FirmwareContainer : GUIKIT::FramedVerticalLayout {
     
-    struct Block : GUIKIT::VerticalLayout {
-        unsigned typeId;   
-		
-        FirmwareContainer* parent;        
+    struct Block : GUIKIT::HorizontalLayout {
+        unsigned typeId;
+        FirmwareContainer* parent;
 
-        struct Top : GUIKIT::HorizontalLayout {
-            GUIKIT::Label fileLabelTitle;
-            GUIKIT::Label fileLabel;
-
-            Top();
-        } top;
-
-        struct Bottom : GUIKIT::HorizontalLayout {
-            GUIKIT::LineEdit edit;
-            GUIKIT::Button open;
-            GUIKIT::Button eject;
-
-            Bottom();
-        } bottom;
+        GUIKIT::Label fileLabelTitle;
+        GUIKIT::LineEdit fileLabel;
+        GUIKIT::Button open;
+        GUIKIT::Button eject;
 
         Block();
     };

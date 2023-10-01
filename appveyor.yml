@@ -19,6 +19,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
+    - try_folder_layout_change
   
 environment:
   matrix:

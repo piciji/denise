@@ -1,27 +1,17 @@
 
-FirmwareContainer::Block::Top::Top() {
+FirmwareContainer::Block::Block() {
     append(fileLabelTitle, {0u, 0u}, 5);
-    append(fileLabel, {~0u, 0u});
-    setAlignment(0.5);
-    fileLabelTitle.setFont(GUIKIT::Font::system("bold"));
-}
+    append(fileLabel, {~0u, 0u}, 5);
+    append(open, {0u,0u}, 5);
+    append(eject, {0u,0u});
 
-FirmwareContainer::Block::Bottom::Bottom() {
-    edit.setEditable(false);
-    edit.setDroppable(false);
+    fileLabel.setEditable(false);
+    fileLabel.setDroppable(false);
     open.setEnabled(false);
     eject.setEnabled(false);
 
-    append(edit, {~0u,0u}, 5);
-    append(open, {0u,0u}, 5);
-    append(eject, {0u,0u});
-        
     setAlignment(0.5);
-}
-
-FirmwareContainer::Block::Block() {
-    append(top, {~0u,0u}, 2);
-    append(bottom, {~0u,0u});
+    fileLabelTitle.setFont(GUIKIT::Font::system("bold"));
 }
 
 FirmwareContainer::FirmwareContainer() {
@@ -72,9 +62,9 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         containerLayout.blocks.push_back(block);
         containerLayout.append(*block,{~0u, 0u}, &emulator->firmwares.back() == &firmware ? 0 : 5);
 
-        block->top.fileLabelTitle.setText(firmware.name);
+        block->fileLabelTitle.setText(firmware.name);
 
-        block->bottom.eject.onActivate = [this, block]() {
+        block->eject.onActivate = [this, block]() {
             auto storeLevel = _settings->get<unsigned>("use_firmware", 0, {0, manager->maxSets});
             if (storeLevel == 0)
                 return;
@@ -82,8 +72,8 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
             auto fSetting = manager->getSetting( &firmware, storeLevel );
 
             emuThread->lock();
-            block->bottom.edit.setText("");
-            block->top.fileLabel.setText("");
+            block->fileLabel.setTooltip("");
+            block->fileLabel.setText("");
             fSetting->init();
             this->manager->addImage(&firmware, storeLevel, nullptr, 0);
             selectedBlock = block;
@@ -91,11 +81,11 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
             emuThread->unlock();
         };
 
-        block->bottom.edit.onFocus = [this, block]() {
+        block->fileLabel.onFocus = [this, block]() {
             selectedBlock = block;
         };
 
-        block->bottom.open.onActivate = [this, block]() {
+        block->open.onActivate = [this, block]() {
             auto storeLevel = _settings->get<unsigned>("use_firmware", 0, {0, manager->maxSets});
             if (storeLevel == 0)
                 return;
@@ -114,7 +104,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
             assign(filePath, block, fSetting, storeLevel);
         };
 
-        block->bottom.edit.onDrop = [this, block](std::vector<std::string> files) {
+        block->fileLabel.onDrop = [this, block](std::vector<std::string> files) {
             auto storeLevel = _settings->get<unsigned>("use_firmware", 0, {0, manager->maxSets});
             if (storeLevel == 0)
                 return;
@@ -158,12 +148,12 @@ auto FirmwareLayout::updateVisibility() -> void {
         auto& firmware = emulator->firmwares[block->typeId];
         auto fSetting = manager->getSetting( &firmware, storeLevel );
 
-        block->top.fileLabel.setText( fSetting->file );
-        block->bottom.edit.setText( fSetting->path );
+        block->fileLabel.setText( fSetting->file );
+        block->fileLabel.setTooltip( fSetting->path );
 
-        block->bottom.open.setEnabled(storeLevel != 0);
-        block->bottom.eject.setEnabled(storeLevel != 0);
-        block->bottom.edit.setDroppable(storeLevel != 0);
+        block->open.setEnabled(storeLevel != 0);
+        block->eject.setEnabled(storeLevel != 0);
+        block->fileLabel.setDroppable(storeLevel != 0);
     }
 }
 
@@ -194,8 +184,8 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         if (item->info.size > MAX_FIRMWARE_SIZE)
             return program->errorFirmwareSize(item, mes);          
 
-        block->top.fileLabel.setText(item->info.name);
-        block->bottom.edit.setText(file->getFile());
+        block->fileLabel.setText(item->info.name);
+        block->fileLabel.setTooltip(file->getFile());
         
         fSetting->setPath(file->getFile());
         fSetting->setFile(item->info.name);
@@ -226,9 +216,9 @@ auto FirmwareLayout::translate() -> void {
     unsigned storeLevel = 0;
 
     for( auto block : containerLayout.blocks ) {
-        block->bottom.open.setText( trans->get("open") );
-        block->bottom.eject.setText( trans->get("eject") );
-        block->top.fileLabelTitle.setText(trans->get(emulator->firmwares[block->typeId].name, {}, true));
+        block->open.setText( trans->get("open") );
+        block->eject.setText( trans->get("eject") );
+        block->fileLabelTitle.setText(trans->get(emulator->firmwares[block->typeId].name));
     }
 
     for (auto box : selectorBoxes) {
@@ -245,6 +235,12 @@ auto FirmwareLayout::translate() -> void {
     }
 
     containerLayout.setText( trans->get("files") );
+
+    unsigned neededWidth = 0;
+    for(auto block : containerLayout.blocks)
+        neededWidth = std::max(neededWidth, block->fileLabelTitle.minimumSize().width);
+    for(auto block : containerLayout.blocks)
+        block->children[0].size.width = neededWidth;
 }
 
 auto FirmwareLayout::drop( std::string path ) -> void {

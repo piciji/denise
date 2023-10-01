@@ -612,7 +612,6 @@ Equal = =
 Arrow Up = ↑
 Arrow Left = ←
 Backspace = visszatörlés
-Expanded Speeder ROM = Bővített Speeder ROM
 Refresh = Frissítés
 Decimal Place = Tizedes jegyek száma
 customize speed = Egyéni sebesség
@@ -765,3 +764,4 @@ guess disks = Gyors következő lemez behelyezés
 guess disks tooltip = A lemezcserélő képes kitalálni a programok további floppylemezeinek a nevét, ha a nevek egy bizonyos elnevezési sémát követnek. Példa: "Turrican - side 1, Turrican - side 2" vagy "Turrican - 1, Turrican - 2" vagy "Turrican - a, Turrican - b" stb. A következő floppylemezeket ezután közvetlenül a gyorsbillentyűvel lehet behelyezni, anélkül, hogy a cserélőt előzetesen manuálisan ki kellene tölteni. Ha azonban a lemezcserélő manuálisan van feltöltve, akkor a slotokban található következő floppylemezek kerülnek behelyezésre.
 fullscreen switch tooltip = A beállítások csak akkor kerülnek alkalmazásra, amikor ablakos módból teljes képernyőre váltasz.
 geometry = Képgeometria
+Expanded = Expanded

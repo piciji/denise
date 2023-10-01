@@ -259,10 +259,13 @@ auto FirmwareManager::getSetting( Emulator::Interface::Firmware* firmware, unsig
     if (storeLevel == 0) {
         fSetting->id = 0;
 
-        if ( dynamic_cast<LIBC64::Interface*>(emulator) && (firmware->id == LIBC64::Interface::FirmwareId::FirmwareIdExpanded))
+        if ( dynamic_cast<LIBC64::Interface*>(emulator) && (firmware->id == LIBC64::Interface::FirmwareId::FirmwareIdExpanded)) {
             fSetting->path = "";
-        else
+            fSetting->file = "";
+        } else {
             fSetting->path = program->dataFolder() + firmware->name;
+            fSetting->file = firmware->name;
+        }
 
         fSetting->setSaveable(false);
     }

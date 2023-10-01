@@ -576,7 +576,7 @@ auto Interface::prepareFirmware() -> void {
     firmwares.push_back({FirmwareIdVC1541C, "VC1541-C"});
     firmwares.push_back({FirmwareIdVC1571, "VC1571"});
     firmwares.push_back({FirmwareIdVC1570, "VC1570"});
-    firmwares.push_back({FirmwareIdExpanded, "Expanded Speeder ROM"});
+    firmwares.push_back({FirmwareIdExpanded, "Expanded"});
 }
 
 auto Interface::prepareDevices() -> void {
