@@ -425,12 +425,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
         case Hotkey::Id::ToggleBorder: {
             typedef Emulator::Interface::CropType CropType;
-            auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Off);
+            auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Monitor, {0u, 6u});
             auto hotkeyState = settings->get<unsigned>( "border_hotkey", ~0 );
             auto cropTypeOld = cropType;
 
             do {
-                if (++cropType > 4)
+                if (++cropType > 6)
                     cropType = 0;
 
                 if (hotkeyState & (1 << cropType))
@@ -447,8 +447,11 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 if ((CropType)cropType == CropType::Off) emuView->geometryLayout->cropLayout.type1.cropOff.activate();
                 else if ((CropType)cropType == CropType::Monitor) emuView->geometryLayout->cropLayout.type1.cropMonitor.activate();
                 else if ((CropType)cropType == CropType::Auto) emuView->geometryLayout->cropLayout.type1.cropAuto.activate();
-                else if ((CropType)cropType == CropType::SemiAuto) emuView->geometryLayout->cropLayout.type2.cropSemiAuto.activate();
-                else if ((CropType)cropType == CropType::Free) emuView->geometryLayout->cropLayout.type2.cropFree.activate();
+                else if ((CropType)cropType == CropType::SemiAuto) emuView->geometryLayout->cropLayout.type1.cropSemiAuto.activate();
+                else if ((CropType)cropType == CropType::Free) emuView->geometryLayout->cropLayout.type2.cropFree1.activate();
+
+                else if (cropType == ((int)CropType::Free + 1) ) emuView->geometryLayout->cropLayout.type2.cropFree2.activate();
+                else if (cropType == ((int)CropType::Free + 2) ) emuView->geometryLayout->cropLayout.type2.cropFree3.activate();
             } else {
                 settings->set<unsigned>("crop_type", cropType);
                 emuThread->lock();

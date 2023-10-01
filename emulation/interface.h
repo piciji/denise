@@ -67,6 +67,13 @@ struct Interface {
 	Interface( std::string ident ) {
         this->ident = ident;        
     }
+
+    struct Crop {
+        unsigned left;
+        unsigned right;
+        unsigned top;
+        unsigned bottom;
+    };
 	
     struct Device {
         unsigned id;
@@ -542,7 +549,7 @@ struct Interface {
 	virtual auto getSubRegion() -> SubRegion { return SubRegion::Pal_B; }
     
     //crop
-	virtual auto crop( CropType type, bool aspectCorrect, unsigned left = 0, unsigned right = 0, unsigned top = 0, unsigned bottom = 0 ) -> void {}
+	virtual auto cropFrame( CropType type, bool aspectCorrect, Crop crop ) -> void {}
     // get native resolution after cropping
     virtual auto cropWidth() -> unsigned { return 0; }
     virtual auto cropHeight() -> unsigned { return 0; }

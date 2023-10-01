@@ -157,7 +157,7 @@ struct Interface : Emulator::Interface {
     auto getModelIdOfCycleRenderer() -> unsigned;
     
     //crop
-	auto crop( CropType type, bool aspectCorrect, unsigned left = 0, unsigned right = 0, unsigned top = 0, unsigned bottom = 0 ) -> void;
+	auto cropFrame( CropType type, bool aspectCorrect, Crop crop ) -> void;
     auto cropWidth() -> unsigned;
     auto cropHeight() -> unsigned;
     auto cropTop() -> unsigned;

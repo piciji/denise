@@ -150,6 +150,9 @@ struct Program : Emulator::Interface::Bind {
     auto canExclusiveFullscreen() -> bool;
     auto setVideoFilter(bool driverOnly = false) -> void;
 	auto updateCrop( Emulator::Interface* emulator ) -> void;
+    auto getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& crop) -> bool;
+    auto setCrop(Emulator::Interface* emulator, std::string ident, int value) -> void;
+    auto getCropDefault(int pos, int direction) -> unsigned;
     auto setPalette( Emulator::Interface* emulator ) -> void;
     auto midScreenCallback(uint8_t interlace) -> void override;
     auto toggleFastForward(bool aggressive) -> void;

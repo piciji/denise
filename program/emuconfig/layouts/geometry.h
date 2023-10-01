@@ -13,13 +13,15 @@ struct CropLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::RadioBox cropOff;
         GUIKIT::RadioBox cropMonitor;
         GUIKIT::RadioBox cropAuto;
+        GUIKIT::RadioBox cropSemiAuto;
 
         Type1();
     } type1;
 
     struct Type2 : GUIKIT::HorizontalLayout {
-        GUIKIT::RadioBox cropSemiAuto;
-        GUIKIT::RadioBox cropFree;
+        GUIKIT::RadioBox cropFree1;
+        GUIKIT::RadioBox cropFree2;
+        GUIKIT::RadioBox cropFree3;
 
         Type2();
     } type2;
@@ -30,7 +32,9 @@ struct CropLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::CheckBox cropMonitor;
         GUIKIT::CheckBox cropAuto;
         GUIKIT::CheckBox cropSemiAuto;
-        GUIKIT::CheckBox cropFree;
+        GUIKIT::CheckBox cropFree1;
+        GUIKIT::CheckBox cropFree2;
+        GUIKIT::CheckBox cropFree3;
 
         Hotkey();
     } hotkey;
@@ -69,6 +73,7 @@ struct GeometryLayout : GUIKIT::VerticalLayout {
     auto loadSettings() -> void;
     auto updateCrop(std::string property, unsigned value) -> void;
     auto updateBorderHotkeyUsage(unsigned bit, bool checked) -> void;
+    auto updateBorderSlider() -> void;
 
     GeometryLayout(TabWindow* tabWindow);
 };

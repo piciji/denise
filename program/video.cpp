@@ -144,19 +144,70 @@ auto Program::setPalette( Emulator::Interface* emulator ) -> void {
     videoManager->setPalette( paletteManager->getCurrentPalette() );
 }
 
-auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
-	
+auto Program::getCropDefault(int pos, int direction) -> unsigned {
+    if (pos > 2 || direction > 3)
+        return 0;
+
+    static int Adjustments[3][4] = {
+        {45, 19, 11, 37},
+        {45, 19, 10, 10},
+        {39, 15, 10, 10}
+    };
+
+    return Adjustments[pos][direction];
+}
+
+auto Program::getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& crop) -> bool {
+    typedef Emulator::Interface::CropType CropType;
     auto settings = getSettings( emulator );
-    
-	auto left = settings->get<unsigned>("crop_left", 0, {0u,100u});
-	auto right = settings->get<unsigned>("crop_right", 0, {0u,100u});
-	auto top = settings->get<unsigned>("crop_top", 0, {0u,100u});
-	auto bottom = settings->get<unsigned>("crop_bottom", 0, {0u,100u});
-	
-	auto type = settings->get<unsigned>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u,4u});
-	auto aspectCorrect = settings->get<bool>("crop_aspect_correct", 0);
-	
-	emulator->crop( (Emulator::Interface::CropType) type, aspectCorrect, left, right, top, bottom );
+    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 6u});
+    bool hasAmiga = dynamic_cast<LIBAMI::Interface*>(emulator);
+
+    if ((CropType)type == CropType::SemiAuto) {
+        crop.right = crop.top = crop.bottom = crop.left = settings->get<unsigned>("crop_all", 0, {0u, 100u});
+    } else if (type >= (int)Emulator::Interface::CropType::Free) {
+        int offset = type - (int)Emulator::Interface::CropType::Free;
+        std::string _offset = offset ? std::to_string(offset) : "";
+
+        crop.left = settings->get<unsigned>("crop_left" + _offset, hasAmiga ? getCropDefault(offset, 0) : 0, {0u, 100u});
+        crop.right = settings->get<unsigned>("crop_right" + _offset, hasAmiga ? getCropDefault(offset, 1) : 0, {0u, 100u});
+        crop.top = settings->get<unsigned>("crop_top" + _offset, hasAmiga ? getCropDefault(offset, 2) : 0, {0u, 100u});
+        crop.bottom = settings->get<unsigned>("crop_bottom" + _offset, hasAmiga ? getCropDefault(offset, 3) : 0, {0u, 100u});
+    } else
+        return false;
+
+    return true;
+}
+
+auto Program::setCrop(Emulator::Interface* emulator, std::string ident, int value) -> void {
+    typedef Emulator::Interface::CropType CropType;
+    bool isDimension = ident == "crop_left" || ident == "crop_right" || ident == "crop_bottom" || ident == "crop_top";
+    auto settings = getSettings( emulator );
+
+    if (isDimension) {
+        int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 6u});
+        if ((CropType) type == CropType::SemiAuto) {
+            ident = "crop_all";
+
+        } else if (type >= (int) Emulator::Interface::CropType::Free) {
+            int offset = type - (int) Emulator::Interface::CropType::Free;
+            std::string _offset = offset ? std::to_string(offset) : "";
+
+            ident += _offset;
+        }
+    }
+
+    settings->set<unsigned>( ident, value );
+}
+
+auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
+    auto settings = getSettings( emulator );
+    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 4u}); // 5 and 6 as 4
+    auto aspectCorrect = settings->get<bool>("crop_aspect_correct", false);
+    Emulator::Interface::Crop crop = {0};
+    getCrop(emulator, crop);
+
+	emulator->cropFrame( (Emulator::Interface::CropType) type, aspectCorrect, crop );
     
     if (activeVideoManager && (activeVideoManager->emulator == activeEmulator)) {
         activeVideoManager->reinitCrtThread();

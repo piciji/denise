@@ -18,11 +18,7 @@ struct Crop {
 		CropType type;
 		bool aspectCorrect;
         bool ntsc;
-		
-		unsigned left; //or all directions
-		unsigned right;
-		unsigned top;
-		unsigned bottom;
+        Interface::Crop crop;
 	} settings;
     
     struct Latest {
@@ -36,7 +32,7 @@ struct Crop {
     
 	unsigned croppedWidth;
 	unsigned croppedHeight;
-	
+
 	unsigned top;
 	unsigned bottom;
 	unsigned left;
@@ -56,10 +52,10 @@ struct Crop {
 			monitorBorderCallback( top, bottom, left, right );            
             
         } else if( settings.type == CropType::SemiAuto ) {
-			top = settings.left;
-			left = settings.left;
-			right = settings.left;
-			bottom = settings.left;
+			top = settings.crop.left;
+			left = settings.crop.left;
+			right = settings.crop.left;
+			bottom = settings.crop.left;
 
             if (options & 3) {
                 top <<= 1;
@@ -71,10 +67,10 @@ struct Crop {
             }
 			
 		} else if( settings.type == CropType::Free ) {			
-			top = settings.top;
-			left = settings.left;
-			right = settings.right;
-			bottom = settings.bottom;
+			top = settings.crop.top;
+			left = settings.crop.left;
+			right = settings.crop.right;
+			bottom = settings.crop.bottom;
 
             if (options & 3) {
                 top <<= 1;
