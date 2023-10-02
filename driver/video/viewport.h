@@ -5,7 +5,7 @@
 
 namespace DRIVER {
 
-struct Screen {
+struct ViewScreen {
     enum class Mode { Window = 0, Crt = 1, Native = 2 } mode;
 
     struct {
@@ -14,30 +14,25 @@ struct Screen {
         bool doubleSize = false;
     } scaling;
 
-    Viewport viewport;
     bool hasIntegerScaling;
     unsigned windowWidth;
     unsigned windowHeight;
 
-    Screen() {
+    ViewScreen() {
         mode = Mode::Window;
         hasIntegerScaling = false;
         windowWidth = 0;
         windowHeight = 0;
-        viewport.height = 0;
-        viewport.width = 0;
-        viewport.x = 0;
-        viewport.y = 0;
         scaling.height = 0;
         scaling.width = 0;
         scaling.doubleSize = false;
     }
 
-    auto update() {
-        update(windowWidth, windowHeight);
+    auto update(Viewport& viewport) {
+        update(viewport, windowWidth, windowHeight);
     }
 
-    auto update( unsigned outputWidth, unsigned outputHeight ) -> void {
+    auto update( Viewport& viewport, unsigned outputWidth, unsigned outputHeight ) -> void {
         windowWidth = outputWidth;
         windowHeight = outputHeight;
 

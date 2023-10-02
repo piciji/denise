@@ -20,6 +20,7 @@
 
 #include "bind.h"
 #include "../../tools/chronos.h"
+#include "../viewport.h"
 
 namespace DRIVER {
 
@@ -31,7 +32,6 @@ namespace DRIVER {
     #include "text.h"
 #endif
 #include "dragndropOverlay.h"
-#include "../viewport.h"
 
 struct CustomTexture {        
     std::string attribute;
@@ -110,13 +110,11 @@ struct OpenGL : OpenGLProgram {
         Video::Filter filter = Video::Filter::Linear;
         std::vector<ShaderPass*> passes = {};
 
-        int aspectMode = 1;
-        bool integerScaling = false;
-
         bool vrr = false;
     } settings;
 
-    Screen screen;
+    ViewScreen viewScreen;
+    Viewport viewport;
 
 	auto shader(std::vector<ShaderPass*> passes) -> void;
     template<typename T> auto shaderAttribute( std::string _program, std::string attribute, T value ) -> void;

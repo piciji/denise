@@ -129,7 +129,7 @@ struct WGL : Video, OpenGL, RenderThread {
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height))
-            screen.update();
+            viewScreen.update(viewport);
 
         return OpenGL::lock(data, pitch);
     }
@@ -140,7 +140,7 @@ struct WGL : Video, OpenGL, RenderThread {
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height))
-            screen.update();
+            viewScreen.update(viewport);
 
         return OpenGL::lock(data, pitch);
     }
@@ -151,14 +151,14 @@ struct WGL : Video, OpenGL, RenderThread {
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height))
-            screen.update();
+            viewScreen.update(viewport);
 
         return OpenGL::lock(data, pitch);
     }
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
         OpenGL::resize( _buffer, _width, _height );
-        screen.update();
+        viewScreen.update(viewport);
     }
 
 	auto clear() -> void {
@@ -180,11 +180,11 @@ struct WGL : Video, OpenGL, RenderThread {
         unsigned _windowHeight = rc.bottom - rc.top;
 
         if (!_force) {
-            if ( (_windowWidth == screen.windowWidth) && (_windowHeight == screen.windowHeight) )
+            if ( (_windowWidth == viewScreen.windowWidth) && (_windowHeight == viewScreen.windowHeight) )
                 return;
         }
 
-        screen.update(_windowWidth, _windowHeight);
+        viewScreen.update(viewport, _windowWidth, _windowHeight);
     }
 
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
@@ -217,9 +217,9 @@ struct WGL : Video, OpenGL, RenderThread {
 		OpenGL::refresh(disallowShader);
 
         if (dndOverlay.enabled())
-            dndOverlay.show(screen.viewport);
+            dndOverlay.show(viewport);
 #ifdef DRV_FREETYPE
-        screenText.showText(screen.viewport.width, screen.viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
+        screenText.showText(viewport.width, viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
         if (settings.vrr) {
             glFinish();
@@ -261,10 +261,10 @@ struct WGL : Video, OpenGL, RenderThread {
         OpenGL::refresh(disallowShader);
 
         if (dndOverlay.enabled())
-            dndOverlay.show(screen.viewport);
+            dndOverlay.show(viewport);
 #ifdef DRV_FREETYPE
         screenText.updateMessage();
-        screenText.showText(screen.viewport.width, screen.viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
+        screenText.showText(viewport.width, viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
         if (settings.vrr) {
             glFinish();
@@ -340,23 +340,23 @@ struct WGL : Video, OpenGL, RenderThread {
     }
 
     auto setRatio(int mode, bool _integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
-        if ((int)screen.mode == mode && screen.hasIntegerScaling == _integerScaling)
+        if ((int)viewScreen.mode == mode && viewScreen.hasIntegerScaling == _integerScaling)
             return;
 
         wait();
-        screen.mode = (Screen::Mode)mode;
-        screen.hasIntegerScaling = _integerScaling;
+        viewScreen.mode = (ViewScreen::Mode)mode;
+        viewScreen.hasIntegerScaling = _integerScaling;
 
-        screen.update();
+        viewScreen.update(viewport);
     }
 
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
-        screen.scaling.width = _w;
-        screen.scaling.height = _h;
-        screen.scaling.doubleSize = _ds;
+        viewScreen.scaling.width = _w;
+        viewScreen.scaling.height = _h;
+        viewScreen.scaling.doubleSize = _ds;
     }
 
-    auto getViewport() -> Viewport& { return screen.viewport; }
+    auto getViewport() -> Viewport& { return viewport; }
 
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();

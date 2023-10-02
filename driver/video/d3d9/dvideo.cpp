@@ -40,7 +40,9 @@ struct DVideo : Video, RenderThread {
     unsigned textureWidth = 0;
     unsigned textureHeight = 0;
 
-    Screen screen;
+    ViewScreen viewScreen;
+    Viewport viewport;
+
     unsigned inputWidth, inputHeight;
     std::mutex noteMutex;
 	const bool XPMode;
@@ -240,7 +242,7 @@ struct DVideo : Video, RenderThread {
 
         HWND handle = settings.handle;
         RECT windowSize = getDimension( handle );
-        screen.update( windowSize.right, windowSize.bottom );
+        viewScreen.update( viewport, windowSize.right, windowSize.bottom );
 
         RECT outScreenParent;
 		settings.parent = getParentHandle();
@@ -359,7 +361,7 @@ struct DVideo : Video, RenderThread {
 
         HWND handle = settings.handle;
         RECT windowSize = getDimension( handle );
-        screen.update( windowSize.right, windowSize.bottom );
+        viewScreen.update( viewport, windowSize.right, windowSize.bottom );
 
         RECT outScreenParent;
         settings.parent = getParentHandle();
@@ -509,23 +511,23 @@ struct DVideo : Video, RenderThread {
             return;
 
         lpD3DDevice->BeginScene();
-        setVertex(inputWidth, inputHeight, textureWidth, textureHeight, screen.viewport.x, screen.viewport.y, screen.viewport.width, screen.viewport.height);
+        setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
         lpD3DDevice->SetTexture(0, texture);
 
         if (!disallowShader && caps.shader && effects.size() > 0) {
-            applyShader(screen.viewport.width, screen.viewport.height);
+            applyShader(viewport.width, viewport.height);
         } else {
             lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         }
 
         if (dndOverlay.enabled()) {
-            dndOverlay.show(screen.viewport);
-            setVertex(dndOverlay.texWidth, dndOverlay.texHeight, dndOverlay.texStorageWidth, dndOverlay.texStorageHeight, dndOverlay.texX + screen.viewport.x, dndOverlay.texY + screen.viewport.y, dndOverlay.texWidth, dndOverlay.texHeight);
+            dndOverlay.show(viewport);
+            setVertex(dndOverlay.texWidth, dndOverlay.texHeight, dndOverlay.texStorageWidth, dndOverlay.texStorageHeight, dndOverlay.texX + viewport.x, dndOverlay.texY + viewport.y, dndOverlay.texWidth, dndOverlay.texHeight);
             lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         }
 
         if (note.enable)
-            applyNote(screen.viewport.width, screen.viewport.height, screen.viewport.x, screen.viewport.y);
+            applyNote(viewport.width, viewport.height, viewport.x, viewport.y);
 
         lpD3DDevice->EndScene();
 
@@ -571,24 +573,24 @@ struct DVideo : Video, RenderThread {
         }
 
         lpD3DDevice->BeginScene();
-        setVertex(inputWidth, inputHeight, textureWidth, textureHeight, screen.viewport.x, screen.viewport.y, screen.viewport.width, screen.viewport.height);
+        setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
         lpD3DDevice->SetTexture(0, texture);
 
         if (!disallowShader && caps.shader && effects.size() > 0) {
-            applyShader(screen.viewport.width, screen.viewport.height);
+            applyShader(viewport.width, viewport.height);
         } else {
             lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         }
 
         if (dndOverlay.enabled()) {
-            dndOverlay.show(screen.viewport);
-            setVertex(dndOverlay.texWidth, dndOverlay.texHeight, dndOverlay.texStorageWidth, dndOverlay.texStorageHeight, dndOverlay.texX + screen.viewport.x, dndOverlay.texY + screen.viewport.y, dndOverlay.texWidth, dndOverlay.texHeight);
+            dndOverlay.show(viewport);
+            setVertex(dndOverlay.texWidth, dndOverlay.texHeight, dndOverlay.texStorageWidth, dndOverlay.texStorageHeight, dndOverlay.texX + viewport.x, dndOverlay.texY + viewport.y, dndOverlay.texWidth, dndOverlay.texHeight);
             lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         }
 
         noteMutex.lock();
         if (note.enable)
-            applyNote(screen.viewport.width, screen.viewport.height, screen.viewport.x, screen.viewport.y);
+            applyNote(viewport.width, viewport.height, viewport.x, viewport.y);
         noteMutex.unlock();
 
         lpD3DDevice->EndScene();
@@ -689,7 +691,7 @@ struct DVideo : Video, RenderThread {
         RECT windowsize = getDimension( settings.handle );
 
         if (settings.threaded) {
-            if (lost || (screen.windowWidth != windowsize.right) || (screen.windowHeight != windowsize.bottom)) {
+            if (lost || (viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
                 wait();
                 if (!reset()) {
                     if (!init())
@@ -705,7 +707,7 @@ struct DVideo : Video, RenderThread {
             return RenderThread::lock(data, pitch, _width, _height, reuse);
         }
 
-        if ((screen.windowWidth != windowsize.right) || (screen.windowHeight != windowsize.bottom)) {
+        if ((viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
             if (!resetOrInit())
                 return false;
         }
@@ -713,7 +715,7 @@ struct DVideo : Video, RenderThread {
         if(_width != inputWidth || _height != inputHeight) {
             resize( inputWidth = _width, inputHeight = _height );
             RECT windowSize = getDimension( settings.handle );
-            screen.update( windowSize.right, windowSize.bottom );
+            viewScreen.update( viewport, windowSize.right, windowSize.bottom );
             lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
         }
 
@@ -739,7 +741,7 @@ struct DVideo : Video, RenderThread {
 
         renderBuffer->data = new uint32_t[w * h]();
         RECT windowSize = getDimension( settings.handle );
-        screen.update( windowSize.right, windowSize.bottom );
+        viewScreen.update( viewport, windowSize.right, windowSize.bottom );
         lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
     }
 
@@ -876,24 +878,24 @@ struct DVideo : Video, RenderThread {
 
     auto setRatio(int mode, bool integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
 
-        if ((int)screen.mode == mode && screen.hasIntegerScaling == integerScaling)
+        if ((int)viewScreen.mode == mode && viewScreen.hasIntegerScaling == integerScaling)
             return;
 
         wait();
-        screen.mode = (Screen::Mode)mode;
-        screen.hasIntegerScaling = integerScaling;
+        viewScreen.mode = (ViewScreen::Mode)mode;
+        viewScreen.hasIntegerScaling = integerScaling;
 
         if (settings.handle)
             init();
     }
 
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
-        screen.scaling.width = _w;
-        screen.scaling.height = _h;
-        screen.scaling.doubleSize = _ds;
+        viewScreen.scaling.width = _w;
+        viewScreen.scaling.height = _h;
+        viewScreen.scaling.doubleSize = _ds;
     }
 
-    auto getViewport() -> Viewport& { return screen.viewport; }
+    auto getViewport() -> Viewport& { return viewport; }
 
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();

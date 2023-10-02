@@ -206,8 +206,8 @@ auto OpenGL::refresh(bool disallowShader) -> void {
             continue;
         }
         
-        targetWidth = screen.viewport.width;
-        targetHeight = screen.viewport.height;
+        targetWidth = viewport.width;
+        targetHeight = viewport.height;
         
         if(p.relativeWidth) targetWidth = sources[0].width * p.relativeWidth;        
         if(p.relativeHeight) targetHeight = sources[0].height * p.relativeHeight;        
@@ -220,7 +220,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 		_glUniform1i("phase", p.phase);
 		_glUniform1i("sourceLength", sources.size());
 		_glUniform4f("targetSize", targetWidth, targetHeight, 1.0 / targetWidth, 1.0 / targetHeight);
-		_glUniform4f("outputSize", screen.viewport.width, screen.viewport.height, 1.0 / screen.viewport.width, 1.0 / screen.viewport.height);
+		_glUniform4f("outputSize", viewport.width, viewport.height, 1.0 / viewport.width, 1.0 / viewport.height);
 
 		unsigned id = 0;
 		for(auto& source : sources) {
@@ -254,8 +254,8 @@ auto OpenGL::refresh(bool disallowShader) -> void {
         pLast = &p;
 	}
 
-	targetWidth = screen.viewport.width;
-	targetHeight = screen.viewport.height;
+	targetWidth = viewport.width;
+	targetHeight = viewport.height;
 	if (relativeWidth) targetWidth = sources[0].width * relativeWidth;
 	if (relativeHeight) targetHeight = sources[0].height * relativeHeight;
 
@@ -264,11 +264,11 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 
 	_glUniform1i("source[0]", 0);
 	_glUniform4f("targetSize", targetWidth, targetHeight, 1.0 / targetWidth, 1.0 / targetHeight);
-	_glUniform4f("outputSize", screen.viewport.width, screen.viewport.height, 1.0 / screen.viewport.width, 1.0 / screen.viewport.height);
+	_glUniform4f("outputSize", viewport.width, viewport.height, 1.0 / viewport.width, 1.0 / viewport.height);
 
 	_glParameters(sources[0].filter, GL_CLAMP_TO_EDGE, sources[0].mipmap);
 
-	render(screen.viewport.x, screen.viewport.y, screen.viewport.width, screen.viewport.height);
+	render(viewport.x, viewport.y, viewport.width, viewport.height);
 
 }
 
