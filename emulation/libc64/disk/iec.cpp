@@ -71,9 +71,12 @@ sysTimer(system->sysTimer) {
 }
 
 IecBus::~IecBus() {
-    kill.store(1);
-    cv.notify_one();
-    waitForDrives();
+    if (threadInitialized) {
+        waitForDrives();
+        idle.store(0);
+        kill.store(1);
+        cv.notify_one();
+    }
 
     for( auto drive : drives )
         delete drive;
@@ -99,9 +102,6 @@ auto IecBus::initThread() -> void {
 
                 if (idle.load()) {
                     if (cv.wait_for(lk, duration, [this](){ return ready.load(); })) {
-                        if (kill)
-                            return;
-
                         break;
                     }
                 } else {
