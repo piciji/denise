@@ -31,6 +31,7 @@ namespace DRIVER {
     #include "text.h"
 #endif
 #include "dragndropOverlay.h"
+#include "../viewport.h"
 
 struct CustomTexture {        
     std::string attribute;
@@ -115,6 +116,8 @@ struct OpenGL : OpenGLProgram {
         bool vrr = false;
     } settings;
 
+    Screen screen;
+
 	auto shader(std::vector<ShaderPass*> passes) -> void;
     template<typename T> auto shaderAttribute( std::string _program, std::string attribute, T value ) -> void;
     auto shaderAttribute(std::string _program, std::string attribute, float* data, unsigned size) -> void;
@@ -129,7 +132,6 @@ struct OpenGL : OpenGLProgram {
 	auto term() -> void;
     auto hardSync(unsigned frames = 0) -> void;
     auto getCustomTexture( std::string _program, std::string attribute ) -> CustomTexture*;
-    auto calcViewport() -> void;
     auto initVRR(float speed) -> void;
     auto waitVRR() -> void;
     
@@ -139,13 +141,7 @@ struct OpenGL : OpenGLProgram {
 
     GLDragndropOverlay dndOverlay;
 	std::vector<OpenGLProgram> programs;
-	unsigned outputWidth = 0;
-	unsigned outputHeight = 0;
-    int outputLeft = 0;
-    int outputTop = 0;
 	bool initialized = false;
-    unsigned windowWidth = 0;
-    unsigned windowHeight = 0;
     bool useShader = false;
 
     int64_t lastCapTime;
@@ -158,7 +154,6 @@ struct OpenGL : OpenGLProgram {
 #include "surface.h"
 #include "program.h"
 #include "main.h"
-#include "viewport.h"
 #include "vrr.h"
 
 }

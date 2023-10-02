@@ -123,7 +123,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height))
-            calcViewport();
+            screen.update();
 
         if (_useResizing) {
             clearCurrent();
@@ -143,7 +143,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height))
-            calcViewport();
+            screen.update();
 
         if (_useResizing) {
             clearCurrent();
@@ -163,7 +163,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height))
-            calcViewport();
+            screen.update();
 
         if (_useResizing) {
             clearCurrent();
@@ -175,7 +175,7 @@ struct CGL : public Video, OpenGL, RenderThread {
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
         OpenGL::resize( _buffer, _width, _height );
-        calcViewport();
+        screen.update();
     }
 
     void clear() {
@@ -197,14 +197,11 @@ struct CGL : public Video, OpenGL, RenderThread {
         unsigned _windowHeight = area.size.height;
 
         if (!_force) {
-            if ( (_windowWidth == windowWidth) && (_windowHeight == windowHeight) )
+            if ( (_windowWidth == screen.windowWidth) && (_windowHeight == screen.windowHeight) )
                 return;
         }
 
-        windowWidth = _windowWidth;
-        windowHeight = _windowHeight;
-
-        calcViewport();
+        screen.update(_windowWidth, _windowHeight);
     }
     
     auto forceResize() -> void {
@@ -300,9 +297,9 @@ struct CGL : public Video, OpenGL, RenderThread {
                 OpenGL::refresh(disallowShader);
 
                 if (dndOverlay.enabled())
-                    dndOverlay.show(viewport);
+                    dndOverlay.show(screen.viewport);
 #ifdef DRV_FREETYPE
-                screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
+                screenText.showText(screen.viewport.width, screen.viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
 
                 if (useResizing)
@@ -351,10 +348,10 @@ struct CGL : public Video, OpenGL, RenderThread {
                 OpenGL::refresh(disallowShader);
 
                 if (dndOverlay.enabled())
-                    dndOverlay.show(viewport);
+                    dndOverlay.show(screen.viewport);
 #ifdef DRV_FREETYPE
                 screenText.updateMessage();
-                screenText.showText(outputWidth, outputHeight, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
+                screenText.showText(screen.viewport.width, screen.viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
                 if (useResizing)
                     [[view openGLContext] flushBuffer];
@@ -490,15 +487,23 @@ struct CGL : public Video, OpenGL, RenderThread {
     }
 
     auto setRatio(int mode, bool _integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
-        if (settings.aspectMode == mode && settings.integerScaling == _integerScaling)
+        if ((int)screen.mode == mode && screen.hasIntegerScaling == _integerScaling)
             return;
 
         wait();
-        settings.aspectMode = mode;
-        settings.integerScaling = _integerScaling;
+        screen.mode = (Screen::Mode)mode;
+        screen.hasIntegerScaling = _integerScaling;
 
-        calcViewport();
+        screen.update();
     }
+
+    auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
+        screen.scaling.width = _w;
+        screen.scaling.height = _h;
+        screen.scaling.doubleSize = _ds;
+    }
+
+    auto getViewport() -> Viewport& { return screen.viewport; }
 
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
