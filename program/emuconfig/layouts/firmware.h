@@ -7,8 +7,8 @@ struct FirmwareContainer : GUIKIT::FramedVerticalLayout {
 
         GUIKIT::Label fileLabelTitle;
         GUIKIT::LineEdit fileLabel;
-        GUIKIT::Button open;
         GUIKIT::Button eject;
+        GUIKIT::Button open;
 
         Block();
     };

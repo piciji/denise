@@ -66,7 +66,6 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::IncSlot, "Incslot", true} );
     customHotkeys.push_back( {Hotkey::Id::DecSlot, "Decslot", true} );
     customHotkeys.push_back( {Hotkey::Id::SwapPortDevices, "swap Ports", true} );
-    customHotkeys.push_back( {Hotkey::Id::SwapJoypadsPort2, "swap joypads Port2", true} );
 	customHotkeys.push_back( {Hotkey::Id::Power, "Hard Reset", true} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::AnyLoad, "load software", true} );
@@ -85,7 +84,8 @@ auto InputManager::setCustomHotkeys() -> void {
 		customHotkeys.push_back( {Hotkey::Id::RewindTape, "tape_rewind_key", false} );
 		customHotkeys.push_back( {Hotkey::Id::ResetTapeCounter, "tape_counter_reset_key", false} );
         customHotkeys.push_back( {Hotkey::Id::EF3Menu, "ef3 menu button", false} );
-	}	
+	} else
+        customHotkeys.push_back( {Hotkey::Id::SwapJoypadsPort2, "swap joypads Port2", false} );
     
 	customHotkeys.push_back( {Hotkey::Id::Software, "Software", true} );	
     customHotkeys.push_back( {Hotkey::Id::System, "System", true} );
@@ -425,12 +425,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
         case Hotkey::Id::ToggleBorder: {
             typedef Emulator::Interface::CropType CropType;
-            auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Monitor, {0u, 6u});
-            auto hotkeyState = settings->get<unsigned>( "border_hotkey", ~0 );
+            auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Monitor, {0u, 9u});
+            auto hotkeyState = settings->get<unsigned>( "border_hotkey", 1 | 2 | 4 | 8 | 0x10 );
             auto cropTypeOld = cropType;
 
             do {
-                if (++cropType > 6)
+                if (++cropType > 9)
                     cropType = 0;
 
                 if (hotkeyState & (1 << cropType))
@@ -452,6 +452,9 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
                 else if (cropType == ((int)CropType::Free + 1) ) emuView->geometryLayout->cropLayout.type2.cropFree2.activate();
                 else if (cropType == ((int)CropType::Free + 2) ) emuView->geometryLayout->cropLayout.type2.cropFree3.activate();
+                else if (cropType == ((int)CropType::Free + 3) ) emuView->geometryLayout->cropLayout.type3.cropFree4.activate();
+                else if (cropType == ((int)CropType::Free + 4) ) emuView->geometryLayout->cropLayout.type3.cropFree5.activate();
+                else if (cropType == ((int)CropType::Free + 5) ) emuView->geometryLayout->cropLayout.type3.cropFree6.activate();
             } else {
                 settings->set<unsigned>("crop_type", cropType);
                 emuThread->lock();

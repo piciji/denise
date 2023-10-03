@@ -2,8 +2,8 @@
 FirmwareContainer::Block::Block() {
     append(fileLabelTitle, {0u, 0u}, 5);
     append(fileLabel, {~0u, 0u}, 5);
-    append(open, {0u,0u}, 5);
-    append(eject, {0u,0u});
+    append(eject, {0u,0u}, 5);
+    append(open, {0u,0u});
 
     fileLabel.setEditable(false);
     fileLabel.setDroppable(false);

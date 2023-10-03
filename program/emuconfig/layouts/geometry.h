@@ -26,6 +26,14 @@ struct CropLayout : GUIKIT::FramedVerticalLayout {
         Type2();
     } type2;
 
+    struct Type3 : GUIKIT::HorizontalLayout {
+        GUIKIT::RadioBox cropFree4;
+        GUIKIT::RadioBox cropFree5;
+        GUIKIT::RadioBox cropFree6;
+
+        Type3();
+    } type3;
+
     struct Hotkey : GUIKIT::HorizontalLayout {
         GUIKIT::Label label;
         GUIKIT::CheckBox cropOff;
@@ -35,6 +43,9 @@ struct CropLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::CheckBox cropFree1;
         GUIKIT::CheckBox cropFree2;
         GUIKIT::CheckBox cropFree3;
+        GUIKIT::CheckBox cropFree4;
+        GUIKIT::CheckBox cropFree5;
+        GUIKIT::CheckBox cropFree6;
 
         Hotkey();
     } hotkey;

@@ -148,10 +148,13 @@ auto Program::getCropDefault(int pos, int direction) -> unsigned {
     if (pos > 2 || direction > 3)
         return 0;
 
-    static int Adjustments[3][4] = {
+    static int Adjustments[6][4] = {
+        {0, 0, 0, 0},
         {45, 19, 11, 37},
         {45, 19, 10, 10},
-        {39, 15, 10, 10}
+        {39, 15, 10, 10},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}
     };
 
     return Adjustments[pos][direction];
@@ -160,7 +163,7 @@ auto Program::getCropDefault(int pos, int direction) -> unsigned {
 auto Program::getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& crop) -> bool {
     typedef Emulator::Interface::CropType CropType;
     auto settings = getSettings( emulator );
-    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 6u});
+    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 9u});
     bool hasAmiga = dynamic_cast<LIBAMI::Interface*>(emulator);
 
     if ((CropType)type == CropType::SemiAuto) {
@@ -185,7 +188,7 @@ auto Program::setCrop(Emulator::Interface* emulator, std::string ident, int valu
     auto settings = getSettings( emulator );
 
     if (isDimension) {
-        int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 6u});
+        int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 9u});
         if ((CropType) type == CropType::SemiAuto) {
             ident = "crop_all";
 
@@ -202,7 +205,7 @@ auto Program::setCrop(Emulator::Interface* emulator, std::string ident, int valu
 
 auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
     auto settings = getSettings( emulator );
-    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 4u}); // 5 and 6 as 4
+    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 4u}); // higher as 4
     auto aspectCorrect = settings->get<bool>("crop_aspect_correct", false);
     Emulator::Interface::Crop crop = {0};
     getCrop(emulator, crop);
