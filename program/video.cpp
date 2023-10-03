@@ -145,7 +145,7 @@ auto Program::setPalette( Emulator::Interface* emulator ) -> void {
 }
 
 auto Program::getCropDefault(int pos, int direction) -> unsigned {
-    if (pos > 2 || direction > 3)
+    if (pos > 5 || direction > 3)
         return 0;
 
     static int Adjustments[6][4] = {
