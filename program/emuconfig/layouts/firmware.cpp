@@ -60,7 +60,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
         block->typeId = firmware.id;
         block->parent = &containerLayout;
         containerLayout.blocks.push_back(block);
-        containerLayout.append(*block,{~0u, 0u}, &emulator->firmwares.back() == &firmware ? 0 : 5);
+        containerLayout.append(*block,{~0u, 0u}, &emulator->firmwares.back() == &firmware ? 0 : 10);
 
         block->fileLabelTitle.setText(firmware.name);
 

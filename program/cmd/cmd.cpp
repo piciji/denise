@@ -63,7 +63,8 @@ Cmd::Cmd(int argc, char** argv) {
 
         else if ( arg == "-config-amiga" )
             configIdent = "Amiga";
-
+        else if ( arg == "-fullscreen" )
+            startInFullscreen = true;
 		else
             arguments.push_back(arg);
     }
@@ -103,6 +104,8 @@ auto Cmd::printHelp() -> void {
     options.push_back({"-attachDF1", "Attach disk image in Device DF1", "<image path>"});
     options.push_back({"-attachDF2", "Attach disk image in Device DF2", "<image path>"});
     options.push_back({"-attachDF3", "Attach disk image in Device DF3", "<image path>"});
+
+    options.push_back({"-fullscreen", "Start in Fullscreen", ""});
 
     options.push_back({"-config-c64", "Load C64 config", "<config path>"});
     options.push_back({"-config-amiga", "Load Amiga config", "<config path>"});
@@ -489,9 +492,9 @@ auto Cmd::autoloadImages() -> void {
 
     if (!autoload) {
         if (noGui)
-            program->exit(1);
+            return program->exit(1);
         
-        return;
+        goto end;
     }
 
     if (debug) {
@@ -518,8 +521,8 @@ auto Cmd::autoloadImages() -> void {
 
     if (GUIKIT::Application::exitCode)
         return;
-    
-    if (!debug && !noDriver && !noGui && globalSettings->get<bool>("open_fullscreen", false)) {
+end:
+    if (!debug && !noDriver && !noGui && (startInFullscreen || (autoload && globalSettings->get<bool>("open_fullscreen", false)))) {
         view->fullscreenOnStartUp.setEnabled();
     }
 

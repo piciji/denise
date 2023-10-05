@@ -34,6 +34,7 @@ struct Cmd {
     std::string screenshotPath = "";
     std::string diskListing = "";
     bool hasContent = false;
+    bool startInFullscreen = false;
     
     auto parse() -> void;
     
