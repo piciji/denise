@@ -196,6 +196,8 @@ auto Program::init() -> void {
 
 	if (!cmd->debug)
         addCustomFont();
+
+    upgradeCropSettings();
 }
 
 auto Program::initEmulator( Emulator::Interface* emulator ) -> void {

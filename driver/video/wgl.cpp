@@ -396,6 +396,8 @@ struct WGL : Video, OpenGL, RenderThread {
     auto freeContext() -> void {
         clearCurrent();
     }
+
+    auto canHardSync() -> bool { return true; }
 };
 
 }

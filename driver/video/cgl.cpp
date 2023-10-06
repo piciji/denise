@@ -536,6 +536,8 @@ struct CGL : public Video, OpenGL, RenderThread {
     auto freeContext() -> void {
         clearCurrent();
     }
+
+    auto canHardSync() -> bool { return true; }
     
     auto innerUpdate() -> void {
         if (oldResizeBehaviour) {

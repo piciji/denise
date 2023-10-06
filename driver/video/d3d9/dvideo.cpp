@@ -816,6 +816,8 @@ struct DVideo : Video, RenderThread {
         settings.exclusiveFullscreenRate = rate;
     }
 
+    auto canExclusiveFullscreen() -> bool { return true; }
+
     auto hasExclusiveFullscreen() -> bool { return settings.exclusiveFullscreen; }
 
     auto disableExclusiveFullscreen() -> void {

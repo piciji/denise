@@ -32,6 +32,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ToggleSCVideo, "toggle S/C-Video"} );
     hotkeys.push_back( {Hotkey::Id::ToggleSCVideoGPU, "toggle S/C-Video GPU"} );
     hotkeys.push_back( {Hotkey::Id::ToggleBorder, "toggle border"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleBorderPrev, "toggle border prev"} );
     hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
@@ -423,15 +424,20 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             view->updateGeometry(true);
             break;
 
-        case Hotkey::Id::ToggleBorder: {
+        case Hotkey::Id::ToggleBorder:
+        case Hotkey::Id::ToggleBorderPrev: {
+            bool prev = id == Hotkey::Id::ToggleBorderPrev;
             typedef Emulator::Interface::CropType CropType;
-            auto cropType = settings->get<unsigned>("crop_type", (unsigned)CropType::Monitor, {0u, 9u});
-            auto hotkeyState = settings->get<unsigned>( "border_hotkey", 1 | 2 | 4 | 8 | 0x10 );
+            int cropType = settings->get<int>("crop_type", (unsigned)CropType::Monitor, {0u, 11u});
+            auto hotkeyState = settings->get<unsigned>( "border_hotkey", program->getCropHotkeyDefault() );
             auto cropTypeOld = cropType;
 
             do {
-                if (++cropType > 9)
+                cropType += prev ? -1 : 1;
+                if (cropType > 11)
                     cropType = 0;
+                else if (cropType < 0)
+                    cropType = 11;
 
                 if (hotkeyState & (1 << cropType))
                     break;
@@ -446,21 +452,23 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (emuView && emuView->geometryLayout) {
                 if ((CropType)cropType == CropType::Off) emuView->geometryLayout->cropLayout.type1.cropOff.activate();
                 else if ((CropType)cropType == CropType::Monitor) emuView->geometryLayout->cropLayout.type1.cropMonitor.activate();
+                else if ((CropType)cropType == CropType::AutoRatio) emuView->geometryLayout->cropLayout.type1.cropAutoAspect.activate();
                 else if ((CropType)cropType == CropType::Auto) emuView->geometryLayout->cropLayout.type1.cropAuto.activate();
-                else if ((CropType)cropType == CropType::SemiAuto) emuView->geometryLayout->cropLayout.type1.cropSemiAuto.activate();
-                else if ((CropType)cropType == CropType::Free) emuView->geometryLayout->cropLayout.type2.cropFree1.activate();
+                else if ((CropType)cropType == CropType::AllSidesRatio) emuView->geometryLayout->cropLayout.type2.cropAllSidesAspect.activate();
+                else if ((CropType)cropType == CropType::AllSides) emuView->geometryLayout->cropLayout.type2.cropAllSides.activate();
+                else if ((CropType)cropType == CropType::Free) emuView->geometryLayout->cropLayout.type3.cropFree1.activate();
 
-                else if (cropType == ((int)CropType::Free + 1) ) emuView->geometryLayout->cropLayout.type2.cropFree2.activate();
-                else if (cropType == ((int)CropType::Free + 2) ) emuView->geometryLayout->cropLayout.type2.cropFree3.activate();
-                else if (cropType == ((int)CropType::Free + 3) ) emuView->geometryLayout->cropLayout.type3.cropFree4.activate();
-                else if (cropType == ((int)CropType::Free + 4) ) emuView->geometryLayout->cropLayout.type3.cropFree5.activate();
-                else if (cropType == ((int)CropType::Free + 5) ) emuView->geometryLayout->cropLayout.type3.cropFree6.activate();
+                else if (cropType == ((int)CropType::Free + 1) ) emuView->geometryLayout->cropLayout.type3.cropFree2.activate();
+                else if (cropType == ((int)CropType::Free + 2) ) emuView->geometryLayout->cropLayout.type3.cropFree3.activate();
+                else if (cropType == ((int)CropType::Free + 3) ) emuView->geometryLayout->cropLayout.type4.cropFree4.activate();
+                else if (cropType == ((int)CropType::Free + 4) ) emuView->geometryLayout->cropLayout.type4.cropFree5.activate();
+                else if (cropType == ((int)CropType::Free + 5) ) emuView->geometryLayout->cropLayout.type4.cropFree6.activate();
             } else {
                 settings->set<unsigned>("crop_type", cropType);
                 emuThread->lock();
                 program->updateCrop(activeEmulator);
             }
-
+            statusHandler->setMessage( program->getCropMessage(activeEmulator, (CropType)cropType) );
         } break;
 
         case Hotkey::ResetTapeCounter:

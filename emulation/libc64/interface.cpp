@@ -1525,9 +1525,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
     return 0;
 }
 
-auto Interface::cropFrame( CropType type, bool aspectCorrect, Crop crop ) -> void {
+auto Interface::cropFrame( CropType type, Crop crop ) -> void {
 	system->crop->settings.type = type;
-	system->crop->settings.aspectCorrect = aspectCorrect;
     system->crop->settings.crop = crop;
 }
 

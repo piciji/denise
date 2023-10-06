@@ -12,34 +12,42 @@ MonitorResolutionLayout::MonitorResolutionLayout() : displaySettings(true) {
 CropLayout::Type1::Type1() {
     append( cropOff, {0u, 0u}, 10 );
     append( cropMonitor, {0u, 0u}, 10 );
-    append( cropAuto, {0u, 0u}, 10 );
-    append( cropSemiAuto, {0u, 0u} );
+    append( cropAutoAspect, {0u, 0u}, 10 );
+    append( cropAuto, {0u, 0u} );
+
+    setAlignment(0.5);
 }
 
 CropLayout::Type2::Type2() {
-    append( cropFree1, {0u, 0u}, 10 );
-    append( cropFree2, {0u, 0u}, 10 );
-    append( cropFree3, {0u, 0u} );
+    append( cropAllSidesAspect, {0u, 0u}, 10 );
+    append( cropAllSides, {0u, 0u} );
+
+    setAlignment(0.5);
 }
 
 CropLayout::Type3::Type3() {
+    append( cropFree1, {0u, 0u}, 10 );
+    append( cropFree2, {0u, 0u}, 10 );
+    append( cropFree3, {0u, 0u} );
+
+    setAlignment(0.5);
+}
+
+CropLayout::Type4::Type4() {
     append( cropFree4, {0u, 0u}, 10 );
     append( cropFree5, {0u, 0u}, 10 );
     append( cropFree6, {0u, 0u} );
+
+    setAlignment(0.5);
 }
 
 CropLayout::Hotkey::Hotkey() {
     append( label, {0u, 0u}, 10 );
-    append( cropOff, {0u, 0u}, 10 );
-    append( cropMonitor, {0u, 0u}, 10 );
-    append( cropAuto, {0u, 0u}, 10 );
-    append( cropSemiAuto, {0u, 0u}, 10 );
-    append( cropFree1, {0u, 0u}, 10 );
-    append( cropFree2, {0u, 0u}, 10 );
-    append( cropFree3, {0u, 0u}, 10 );
-    append( cropFree4, {0u, 0u}, 10 );
-    append( cropFree5, {0u, 0u}, 10 );
-    append( cropFree6, {0u, 0u} );
+    for(int i = 0; i < 12; i++) {
+        auto checkBox = new GUIKIT::CheckBox;
+        append( *checkBox, {0u, 0u}, i < 11 ? 10 : 0 );
+        boxes.push_back(checkBox);
+    }
 
     setAlignment(0.5);
 }
@@ -53,7 +61,7 @@ cropBottom("px")
     append( type1, {0u, 0u}, 5 );
     append( type2, {0u, 0u}, 5 );
     append( type3, {0u, 0u}, 5 );
-    append( aspectCorrect, {0u, 0u}, 5 );
+    append( type4, {0u, 0u}, 5 );
     append( cropLeft, {~0u, 0u}, 5 );
     append( cropRight, {~0u, 0u}, 5 );
     append( cropTop, {~0u, 0u}, 5 );
@@ -64,9 +72,10 @@ cropBottom("px")
     cropTop.slider.setLength(101);
     cropBottom.slider.setLength(101);
 
-    GUIKIT::RadioBox::setGroup( type1.cropOff, type1.cropMonitor, type1.cropAuto, type1.cropSemiAuto,
-                                type2.cropFree1, type2.cropFree2, type2.cropFree3,
-                                type3.cropFree4, type3.cropFree5, type3.cropFree6);
+    GUIKIT::RadioBox::setGroup( type1.cropOff, type1.cropMonitor, type1.cropAutoAspect, type1.cropAuto,
+                                type2.cropAllSidesAspect, type2.cropAllSides,
+                                type3.cropFree1, type3.cropFree2, type3.cropFree3,
+                                type4.cropFree4, type4.cropFree5, type4.cropFree6);
 
     append( hotkey, {0u, 0u} );
 
@@ -112,64 +121,73 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
 		updateVisibillity();
 	};
 
+    cropLayout.type1.cropAutoAspect.onActivate = [this]( ) {
+        updateCrop("crop_type", (unsigned)CropType::AutoRatio);
+
+        updateVisibillity();
+    };
+
     cropLayout.type1.cropAuto.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Auto);
 
 		updateVisibillity();
 	};
 
-    cropLayout.type1.cropSemiAuto.onActivate = [this]( ) {
-        updateCrop("crop_type", (unsigned)CropType::SemiAuto);
+    cropLayout.type2.cropAllSidesAspect.onActivate = [this]( ) {
+        updateCrop("crop_type", (unsigned)CropType::AllSidesRatio);
 
         updateBorderSlider();
 		updateVisibillity();
 	};
 
-    cropLayout.type2.cropFree1.onActivate = [this]( ) {
+    cropLayout.type2.cropAllSides.onActivate = [this]( ) {
+        updateCrop("crop_type", (unsigned)CropType::AllSides);
+
+        updateBorderSlider();
+        updateVisibillity();
+    };
+
+    cropLayout.type3.cropFree1.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Free);
 
         updateBorderSlider();
 		updateVisibillity();
 	};
 
-    cropLayout.type2.cropFree2.onActivate = [this]( ) {
+    cropLayout.type3.cropFree2.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Free + 1);
 
         updateBorderSlider();
         updateVisibillity();
     };
 
-    cropLayout.type2.cropFree3.onActivate = [this]( ) {
+    cropLayout.type3.cropFree3.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Free + 2);
 
         updateBorderSlider();
         updateVisibillity();
     };
 
-    cropLayout.type3.cropFree4.onActivate = [this]( ) {
+    cropLayout.type4.cropFree4.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Free + 3);
 
         updateBorderSlider();
         updateVisibillity();
     };
 
-    cropLayout.type3.cropFree5.onActivate = [this]( ) {
+    cropLayout.type4.cropFree5.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Free + 4);
 
         updateBorderSlider();
         updateVisibillity();
     };
 
-    cropLayout.type3.cropFree6.onActivate = [this]( ) {
+    cropLayout.type4.cropFree6.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Free + 5);
 
         updateBorderSlider();
         updateVisibillity();
     };
-
-    cropLayout.aspectCorrect.onToggle = [this](bool checked) {
-        updateCrop("crop_aspect_correct", checked);
-	};
 
     cropLayout.cropLeft.slider.onChange = [this](unsigned position) {
         updateCrop("crop_left", position);
@@ -195,36 +213,11 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         cropLayout.cropBottom.value.setText( std::to_string( position ) + " px" );
 	};
 
-    cropLayout.hotkey.cropOff.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(0, checked);
-    };
-    cropLayout.hotkey.cropMonitor.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(1, checked);
-    };
-    cropLayout.hotkey.cropAuto.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(2, checked);
-    };
-    cropLayout.hotkey.cropSemiAuto.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(3, checked);
-    };
-    cropLayout.hotkey.cropFree1.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(4, checked);
-    };
-    cropLayout.hotkey.cropFree2.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(5, checked);
-    };
-    cropLayout.hotkey.cropFree3.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(6, checked);
-    };
-    cropLayout.hotkey.cropFree4.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(7, checked);
-    };
-    cropLayout.hotkey.cropFree5.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(8, checked);
-    };
-    cropLayout.hotkey.cropFree6.onToggle = [this](bool checked) {
-        updateBorderHotkeyUsage(9, checked);
-    };
+    for(int i = 0; i < 12; i++) {
+        cropLayout.hotkey.boxes[i]->onToggle = [this, i](bool checked) {
+            updateBorderHotkeyUsage(i, checked);
+        };
+    }
 
     ratioLayout.window.onActivate = [this]() {
         emuThread->lock();
@@ -303,7 +296,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
 }
 
 auto GeometryLayout::updateBorderHotkeyUsage(unsigned bit, bool checked) -> void {
-    unsigned state = _settings->get<unsigned>( "border_hotkey", 1 | 2 | 4 | 8 | 0x10 );
+    unsigned state = _settings->get<unsigned>( "border_hotkey", program->getCropHotkeyDefault() );
 
     if (checked)
         state |= 1 << bit;
@@ -326,14 +319,12 @@ auto GeometryLayout::updateCrop(std::string property, unsigned value) -> void {
 }
 
 auto GeometryLayout::updateVisibillity() -> void {
-	auto val = _settings->get<unsigned>( "crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 9u});
+	auto val = _settings->get<unsigned>( "crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
 
-    cropLayout.cropLeft.setEnabled( val >= 3 );
-    cropLayout.cropRight.setEnabled( val >= 4 );
-    cropLayout.cropTop.setEnabled( val >= 4 );
-    cropLayout.cropBottom.setEnabled( val >= 4 );
-
-    cropLayout.aspectCorrect.setEnabled( val == 2 || val == 3 );
+    cropLayout.cropLeft.setEnabled( val >= 4 );
+    cropLayout.cropRight.setEnabled( val >= 6 );
+    cropLayout.cropTop.setEnabled( val >= 6 );
+    cropLayout.cropBottom.setEnabled( val >= 6 );
 }
 
 auto GeometryLayout::translate() -> void {
@@ -345,36 +336,33 @@ auto GeometryLayout::translate() -> void {
 
     cropLayout.type1.cropOff.setText( trans->get("disabled") + " (0)" );
     cropLayout.type1.cropMonitor.setText( trans->get("monitor") + " (1)" );
-    cropLayout.type1.cropAuto.setText( trans->get("crop complete") + " (2)" );
-    cropLayout.type1.cropSemiAuto.setText( trans->get("crop all sides equally") + " (3)" );
-    cropLayout.type2.cropFree1.setText( trans->get("crop each side manually") + " (4)" );
-    cropLayout.type2.cropFree1.setTooltip( trans->get("crop free tooltip") );
-    cropLayout.type2.cropFree2.setText( trans->get("crop each side manually") + " (5)" );
-    cropLayout.type2.cropFree2.setTooltip( trans->get("crop free tooltip") );
-    cropLayout.type2.cropFree3.setText( trans->get("crop each side manually") + " (6)" );
-    cropLayout.type2.cropFree3.setTooltip( trans->get("crop free tooltip") );
+    cropLayout.type1.cropAutoAspect.setText( trans->get("crop complete ratio") + " (2)" );
+    cropLayout.type1.cropAutoAspect.setTooltip( trans->get("crop complete ratio tooltip") );
+    cropLayout.type1.cropAuto.setText( trans->get("crop complete") + " (3)" );
 
-    cropLayout.type3.cropFree4.setText( trans->get("crop each side manually") + " (7)" );
-    cropLayout.type3.cropFree4.setTooltip( trans->get("crop free tooltip") );
-    cropLayout.type3.cropFree5.setText( trans->get("crop each side manually") + " (8)" );
-    cropLayout.type3.cropFree5.setTooltip( trans->get("crop free tooltip") );
-    cropLayout.type3.cropFree6.setText( trans->get("crop each side manually") + " (9)" );
-    cropLayout.type3.cropFree6.setTooltip( trans->get("crop free tooltip") );
+    cropLayout.type2.cropAllSidesAspect.setText( trans->get("crop all sides equally ratio") + " (4)" );
+    cropLayout.type2.cropAllSides.setText( trans->get("crop all sides equally") + " (5)" );
+
+    cropLayout.type3.cropFree1.setText( trans->get("crop each side manually") + " (6)" );
+    cropLayout.type3.cropFree1.setTooltip( trans->get("crop free tooltip") );
+    cropLayout.type3.cropFree2.setText( trans->get("crop each side manually") + " (7)" );
+    cropLayout.type3.cropFree2.setTooltip( trans->get("crop free tooltip") );
+    cropLayout.type3.cropFree3.setText( trans->get("crop each side manually") + " (8)" );
+    cropLayout.type3.cropFree3.setTooltip( trans->get("crop free tooltip") );
+
+    cropLayout.type4.cropFree4.setText( trans->get("crop each side manually") + " (9)" );
+    cropLayout.type4.cropFree4.setTooltip( trans->get("crop free tooltip") );
+    cropLayout.type4.cropFree5.setText( trans->get("crop each side manually") + " (10)" );
+    cropLayout.type4.cropFree5.setTooltip( trans->get("crop free tooltip") );
+    cropLayout.type4.cropFree6.setText( trans->get("crop each side manually") + " (11)" );
+    cropLayout.type4.cropFree6.setTooltip( trans->get("crop free tooltip") );
 
     cropLayout.hotkey.label.setText( trans->get("switchable by Hotkey", {}, true) );
-    cropLayout.hotkey.cropOff.setText( "0" );
-    cropLayout.hotkey.cropMonitor.setText( "1" );
-    cropLayout.hotkey.cropAuto.setText( "2" );
-    cropLayout.hotkey.cropSemiAuto.setText( "3" );
-    cropLayout.hotkey.cropFree1.setText( "4" );
-    cropLayout.hotkey.cropFree2.setText( "5" );
-    cropLayout.hotkey.cropFree3.setText( "6" );
 
-    cropLayout.hotkey.cropFree4.setText( "7" );
-    cropLayout.hotkey.cropFree5.setText( "8" );
-    cropLayout.hotkey.cropFree6.setText( "9" );
+    for(int i = 0; i < 12; i++) {
+        cropLayout.hotkey.boxes[i]->setText( std::to_string(i) );
+    }
 
-    cropLayout.aspectCorrect.setText( trans->get("maintain display ratio") );
 	cropLayout.setText( trans->get("crop border") );
 
     ratioLayout.setText( trans->getA("scaling") );
@@ -407,34 +395,29 @@ auto GeometryLayout::updateBorderSlider() -> void {
 
 auto GeometryLayout::loadSettings() -> void {
     typedef Emulator::Interface::CropType CropType;
-    auto valCropType = _settings->get<unsigned>("crop_type", (unsigned) CropType::Monitor, {0u, 9u});
+    auto valCropType = _settings->get<unsigned>("crop_type", (unsigned) CropType::Monitor, {0u, 11u});
 
     if (valCropType == 1) cropLayout.type1.cropMonitor.setChecked();
-    else if (valCropType == 2) cropLayout.type1.cropAuto.setChecked();
-    else if (valCropType == 3) cropLayout.type1.cropSemiAuto.setChecked();
-    else if (valCropType == 4) cropLayout.type2.cropFree1.setChecked();
-    else if (valCropType == 5) cropLayout.type2.cropFree2.setChecked();
-    else if (valCropType == 6) cropLayout.type2.cropFree3.setChecked();
-    else if (valCropType == 7) cropLayout.type3.cropFree4.setChecked();
-    else if (valCropType == 8) cropLayout.type3.cropFree5.setChecked();
-    else if (valCropType == 9) cropLayout.type3.cropFree6.setChecked();
+    else if (valCropType == 2) cropLayout.type1.cropAutoAspect.setChecked();
+    else if (valCropType == 3) cropLayout.type1.cropAuto.setChecked();
+
+    else if (valCropType == 4) cropLayout.type2.cropAllSidesAspect.setChecked();
+    else if (valCropType == 5) cropLayout.type2.cropAllSides.setChecked();
+
+    else if (valCropType == 6) cropLayout.type3.cropFree1.setChecked();
+    else if (valCropType == 7) cropLayout.type3.cropFree2.setChecked();
+    else if (valCropType == 8) cropLayout.type3.cropFree3.setChecked();
+    else if (valCropType == 9) cropLayout.type4.cropFree4.setChecked();
+    else if (valCropType == 10) cropLayout.type4.cropFree5.setChecked();
+    else if (valCropType == 11) cropLayout.type4.cropFree6.setChecked();
     else cropLayout.type1.cropOff.setChecked();
 
-    auto valCropAC = _settings->get<bool>("crop_aspect_correct", 0);
-    cropLayout.aspectCorrect.setChecked(valCropAC);
     updateBorderSlider();
 
-    unsigned hotkeyState = _settings->get<unsigned>( "border_hotkey", 1 | 2 | 4 | 8 | 0x10 );
-    cropLayout.hotkey.cropOff.setChecked( hotkeyState & 1 );
-    cropLayout.hotkey.cropMonitor.setChecked( hotkeyState & 2 );
-    cropLayout.hotkey.cropAuto.setChecked( hotkeyState & 4 );
-    cropLayout.hotkey.cropSemiAuto.setChecked( hotkeyState & 8 );
-    cropLayout.hotkey.cropFree1.setChecked( hotkeyState & 0x10 );
-    cropLayout.hotkey.cropFree2.setChecked( hotkeyState & 0x20 );
-    cropLayout.hotkey.cropFree3.setChecked( hotkeyState & 0x40 );
-    cropLayout.hotkey.cropFree4.setChecked( hotkeyState & 0x80 );
-    cropLayout.hotkey.cropFree5.setChecked( hotkeyState & 0x100 );
-    cropLayout.hotkey.cropFree6.setChecked( hotkeyState & 0x200 );
+    unsigned hotkeyState = _settings->get<unsigned>( "border_hotkey", program->getCropHotkeyDefault() );
+    for(int i = 0; i < 12; i++) {
+        cropLayout.hotkey.boxes[i]->setChecked( hotkeyState & ( 1 << i ) );
+    }
 
     bool integerScaling = _settings->get<bool>("integer_scaling", false);
     ratioLayout.integerScaling.setChecked(integerScaling);

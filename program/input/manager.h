@@ -76,7 +76,7 @@ struct Hotkey {
 		SwapPortDevices, Power, SoftReset, AnyLoad,
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
         SyncStatus, ThreadedRenderer, ToggleSCVideo, ToggleSCVideoGPU, DiskSwapUp, DiskSwapDown, DiskAutoStart,
-        FastForward, FastForwardOff, Quit, Audio, SwapJoypadsPort2, ApplyWindowSize,
+        FastForward, FastForwardOff, Quit, Audio, SwapJoypadsPort2, ApplyWindowSize, ToggleBorderPrev,
 
         Autofire = 1000,
     } id;

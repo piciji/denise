@@ -549,9 +549,8 @@ auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
     system->agnus.lineCallback.line = scanline;
 }
 
-auto Interface::cropFrame( CropType type, bool aspectCorrect, Crop crop ) -> void {
+auto Interface::cropFrame( CropType type, Crop crop ) -> void {
     system->crop.settings.type = type;
-    system->crop.settings.aspectCorrect = aspectCorrect;
     system->crop.settings.crop = crop;
 }
 

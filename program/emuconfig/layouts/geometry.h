@@ -12,45 +12,41 @@ struct CropLayout : GUIKIT::FramedVerticalLayout {
     struct Type1 : GUIKIT::HorizontalLayout {
         GUIKIT::RadioBox cropOff;
         GUIKIT::RadioBox cropMonitor;
+        GUIKIT::RadioBox cropAutoAspect;
         GUIKIT::RadioBox cropAuto;
-        GUIKIT::RadioBox cropSemiAuto;
 
         Type1();
     } type1;
 
     struct Type2 : GUIKIT::HorizontalLayout {
-        GUIKIT::RadioBox cropFree1;
-        GUIKIT::RadioBox cropFree2;
-        GUIKIT::RadioBox cropFree3;
+        GUIKIT::RadioBox cropAllSidesAspect;
+        GUIKIT::RadioBox cropAllSides;
 
         Type2();
     } type2;
 
     struct Type3 : GUIKIT::HorizontalLayout {
-        GUIKIT::RadioBox cropFree4;
-        GUIKIT::RadioBox cropFree5;
-        GUIKIT::RadioBox cropFree6;
+        GUIKIT::RadioBox cropFree1;
+        GUIKIT::RadioBox cropFree2;
+        GUIKIT::RadioBox cropFree3;
 
         Type3();
     } type3;
 
+    struct Type4 : GUIKIT::HorizontalLayout {
+        GUIKIT::RadioBox cropFree4;
+        GUIKIT::RadioBox cropFree5;
+        GUIKIT::RadioBox cropFree6;
+
+        Type4();
+    } type4;
+
     struct Hotkey : GUIKIT::HorizontalLayout {
         GUIKIT::Label label;
-        GUIKIT::CheckBox cropOff;
-        GUIKIT::CheckBox cropMonitor;
-        GUIKIT::CheckBox cropAuto;
-        GUIKIT::CheckBox cropSemiAuto;
-        GUIKIT::CheckBox cropFree1;
-        GUIKIT::CheckBox cropFree2;
-        GUIKIT::CheckBox cropFree3;
-        GUIKIT::CheckBox cropFree4;
-        GUIKIT::CheckBox cropFree5;
-        GUIKIT::CheckBox cropFree6;
-
+        std::vector<GUIKIT::CheckBox*> boxes;
         Hotkey();
     } hotkey;
 
-    GUIKIT::CheckBox aspectCorrect;
     SliderLayout cropLeft;
     SliderLayout cropRight;
     SliderLayout cropTop;
@@ -60,7 +56,6 @@ struct CropLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct RatioLayout : GUIKIT::FramedHorizontalLayout {
-
     GUIKIT::Label label;
     GUIKIT::RadioBox window;
     GUIKIT::RadioBox tv;
@@ -71,7 +66,6 @@ struct RatioLayout : GUIKIT::FramedHorizontalLayout {
 };
 
 struct GeometryLayout : GUIKIT::VerticalLayout {
-
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
 

@@ -111,7 +111,7 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
 
 auto Program::canExclusiveFullscreen() -> bool {
 
-    return !isPause
+    return !isPause && videoDriver->canExclusiveFullscreen()
         && globalSettings->get<bool>("exclusive_fullscreen", false)
         && !globalSettings->get<bool>("threaded_emu", false);
 }
@@ -144,6 +144,10 @@ auto Program::setPalette( Emulator::Interface* emulator ) -> void {
     videoManager->setPalette( paletteManager->getCurrentPalette() );
 }
 
+auto Program::getCropHotkeyDefault() -> unsigned {
+    return 1 | 2 | 4 | 8 | 0x80 | 0x100 | 0x200;
+}
+
 auto Program::getCropDefault(int pos, int direction) -> unsigned {
     if (pos > 5 || direction > 3)
         return 0;
@@ -151,8 +155,8 @@ auto Program::getCropDefault(int pos, int direction) -> unsigned {
     static int Adjustments[6][4] = {
         {0, 0, 0, 0},
         {45, 19, 11, 37},
-        {45, 19, 10, 10},
-        {39, 15, 10, 10},
+        {45, 19, 16, 10},
+        {39, 15, 16, 11},
         {0, 0, 0, 0},
         {0, 0, 0, 0}
     };
@@ -160,13 +164,35 @@ auto Program::getCropDefault(int pos, int direction) -> unsigned {
     return Adjustments[pos][direction];
 }
 
+auto Program::upgradeCropSettings() -> void {
+    if (!globalSettings->get<bool>("upd_crop", false)) {
+
+        for(auto emulator : emulators) {
+            auto settings = getSettings( emulator );
+            auto cropType = settings->get<int>("crop_type", (unsigned) Emulator::Interface::CropType::Monitor, {0u, 11u});
+            auto valCropAC = settings->get<bool>("crop_aspect_correct", false);
+
+            switch(cropType) {
+                case 2: cropType = valCropAC ? 2 : 3; break;
+                case 3: cropType = valCropAC ? 4 : 5; break;
+                case 4: cropType = 6; break;
+            }
+
+            settings->set<unsigned >("crop_type", cropType);
+            settings->remove("crop_aspect_correct");
+        }
+
+        globalSettings->set<bool>("upd_crop", true);
+    }
+}
+
 auto Program::getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& crop) -> bool {
     typedef Emulator::Interface::CropType CropType;
     auto settings = getSettings( emulator );
-    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 9u});
+    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
     bool hasAmiga = dynamic_cast<LIBAMI::Interface*>(emulator);
 
-    if ((CropType)type == CropType::SemiAuto) {
+    if ((CropType)type == CropType::AllSidesRatio || (CropType)type == CropType::AllSides) {
         crop.right = crop.top = crop.bottom = crop.left = settings->get<unsigned>("crop_all", 0, {0u, 100u});
     } else if (type >= (int)Emulator::Interface::CropType::Free) {
         int offset = type - (int)Emulator::Interface::CropType::Free;
@@ -188,8 +214,8 @@ auto Program::setCrop(Emulator::Interface* emulator, std::string ident, int valu
     auto settings = getSettings( emulator );
 
     if (isDimension) {
-        int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 9u});
-        if ((CropType) type == CropType::SemiAuto) {
+        int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
+        if ((CropType) type == CropType::AllSidesRatio || (CropType) type == CropType::AllSides) {
             ident = "crop_all";
 
         } else if (type >= (int) Emulator::Interface::CropType::Free) {
@@ -203,14 +229,31 @@ auto Program::setCrop(Emulator::Interface* emulator, std::string ident, int valu
     settings->set<unsigned>( ident, value );
 }
 
+auto Program::getCropMessage( Emulator::Interface* emulator, Emulator::Interface::CropType cropType) -> std::string {
+    typedef Emulator::Interface::CropType CropType;
+    std::string out;
+
+    switch(cropType) {
+        case CropType::Off: out = "disabled"; break;
+        case CropType::Monitor: out = "monitor"; break;
+        case CropType::AutoRatio: out = "crop complete ratio"; break;
+        case CropType::Auto: out = "crop complete"; break;
+        case CropType::AllSidesRatio: out = "crop all sides equally ratio"; break;
+        case CropType::AllSides: out = "crop all sides equally"; break;
+        default:
+        case CropType::Free: out = "crop each side manually"; break;
+    }
+
+    return trans->getA(out) + " (" + std::to_string(int(cropType)) + ")";
+}
+
 auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
     auto settings = getSettings( emulator );
-    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 4u}); // higher as 4
-    auto aspectCorrect = settings->get<bool>("crop_aspect_correct", false);
+    int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 6u});
     Emulator::Interface::Crop crop = {0};
     getCrop(emulator, crop);
 
-	emulator->cropFrame( (Emulator::Interface::CropType) type, aspectCorrect, crop );
+	emulator->cropFrame( (Emulator::Interface::CropType) type, crop );
     
     if (activeVideoManager && (activeVideoManager->emulator == activeEmulator)) {
         activeVideoManager->reinitCrtThread();

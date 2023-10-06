@@ -52,7 +52,8 @@ struct Interface {
         AltAndShift2, AltAndShift3,
     };
     
-    enum class CropType { Off = 0, Monitor = 1, Auto = 2, SemiAuto = 3, Free = 4 };
+    //enum class CropType { Off = 0, Monitor = 1, Auto = 2, SemiAuto = 3, Free = 4 };
+    enum class CropType { Off = 0, Monitor = 1, AutoRatio = 2, Auto = 3, AllSidesRatio = 4, AllSides = 5, Free = 6 };
     enum class TapeMode { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5, Unpressed = 6 };
     enum class FastForward { NoAudioOut = 1, NoVideoOut = 2, ReduceVideoOutput = 4, NoVideoSequencer = 8, SlowSpeed = 16 };
     enum class DriveSound { FloppyInsert = 1, FloppyEject = 2, FloppySpinUp = 3, FloppySpinDown = 4,
@@ -549,7 +550,7 @@ struct Interface {
 	virtual auto getSubRegion() -> SubRegion { return SubRegion::Pal_B; }
     
     //crop
-	virtual auto cropFrame( CropType type, bool aspectCorrect, Crop crop ) -> void {}
+	virtual auto cropFrame( CropType type, Crop crop ) -> void {}
     // get native resolution after cropping
     virtual auto cropWidth() -> unsigned { return 0; }
     virtual auto cropHeight() -> unsigned { return 0; }

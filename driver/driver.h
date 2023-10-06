@@ -77,6 +77,9 @@ struct Video {
 	virtual auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {}
     virtual auto disableExclusiveFullscreen() -> void {}
 
+    virtual auto canHardSync() -> bool { return false; }
+    virtual auto canExclusiveFullscreen() -> bool { return false; }
+
     virtual ~Video() = default;
     static auto create(const std::string& driver) -> Video*;
 	static auto available() -> std::vector<std::string>;

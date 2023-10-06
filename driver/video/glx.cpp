@@ -591,6 +591,8 @@ struct GLX : public Video, OpenGL, RenderThread {
         clearCurrent();
     }
 
+    auto canHardSync() -> bool { return true; }
+
     GLX() {
 
     }

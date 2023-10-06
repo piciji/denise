@@ -16,8 +16,6 @@ struct Crop {
 	
 	struct {
 		CropType type;
-		bool aspectCorrect;
-        bool ntsc;
         Interface::Crop crop;
 	} settings;
     
@@ -45,13 +43,13 @@ struct Crop {
 			return false;
 		}
         
-		if( settings.type == CropType::Auto ) {
+		if( settings.type == CropType::Auto || settings.type == CropType::AutoRatio ) {
 			removeBorderCallback( top, bottom, left, right );
 		
 		} else if( settings.type == CropType::Monitor ) {		
 			monitorBorderCallback( top, bottom, left, right );            
             
-        } else if( settings.type == CropType::SemiAuto ) {
+        } else if( settings.type == CropType::AllSides || settings.type == CropType::AllSidesRatio ) {
 			top = settings.crop.left;
 			left = settings.crop.left;
 			right = settings.crop.left;
@@ -96,8 +94,7 @@ struct Crop {
 		croppedHeight = height - (top + bottom);
 		croppedWidth = width - (left + right);
 
-		if (settings.aspectCorrect &&
-            (settings.type == CropType::Auto || settings.type == CropType::SemiAuto) )
+		if (settings.type == CropType::AutoRatio || settings.type == CropType::AllSidesRatio)
 			correct( width, height, options );
 
 		frame += top * lineLength;

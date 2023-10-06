@@ -87,7 +87,7 @@ struct Interface : Emulator::Interface  {
     auto getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned;
 
     //crop
-    auto cropFrame( CropType type, bool aspectCorrect, Crop crop ) -> void;
+    auto cropFrame( CropType type, Crop crop ) -> void;
     auto cropWidth() -> unsigned;
     auto cropHeight() -> unsigned;
     auto cropTop() -> unsigned;

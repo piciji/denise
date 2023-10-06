@@ -110,7 +110,7 @@ VideoLayout::VideoLayout() {
         if(driver == "Direct3D")
             showExclusiveFullscreenCheck = true;
         
-        if(GUIKIT::String::foundSubStr(driver, "GL"))
+        if(GUIKIT::String::foundSubStr(driver, "GL") || GUIKIT::String::foundSubStr(driver, "Direct3D11"))
             showHardSync = true;
         
 		i++;
@@ -118,11 +118,6 @@ VideoLayout::VideoLayout() {
 	
 	driverLayout.combo.onChange = [this]() {
 		globalSettings->set<std::string>("video_driver", driverLayout.combo.text() );
-        
-		globalSettings->set("exclusive_fullscreen", false);
-		videoSettingsLayout.exclusiveFullscreen.setChecked(false);
-
-        updateDriverPropsVisibility();
 
         emuThread->lock();
         // disable fastforward before, otherwise if threaded CPU CRT is selected, the midline callback would be active with fastforward.
@@ -137,7 +132,7 @@ VideoLayout::VideoLayout() {
 
 		view->updateShader(false);
         program->initVideo();
-        videoDriver->hintExclusiveFullscreen( false );
+        updateDriverPropsVisibility();
         emuThread->unlock();
 	};
 
@@ -151,16 +146,16 @@ VideoLayout::VideoLayout() {
     if( showExclusiveFullscreenCheck ) {        
         videoSettingsLayout.exclusiveFullscreen.setEnabled(false);
 
-        if (selectedDriver == "Direct3D") {
+        if (videoDriver->canExclusiveFullscreen()) {
             videoSettingsLayout.exclusiveFullscreen.setEnabled( !globalSettings->get<bool>("threaded_emu", false) );
             videoSettingsLayout.exclusiveFullscreen.setChecked(globalSettings->get("exclusive_fullscreen", false));
         }
     } else
         videoSettingsLayout.remove( videoSettingsLayout.exclusiveFullscreen );
     
-    if( showHardSync ) {        
-        videoSettingsLayout.hardSync.setEnabled( GUIKIT::String::foundSubStr(selectedDriver, "GL") );
-        videoSettingsLayout.hardSync.setChecked(globalSettings->get("gl_hardsync", true));
+    if( showHardSync ) {
+        videoSettingsLayout.hardSync.setEnabled(videoDriver->canHardSync());
+        videoSettingsLayout.hardSync.setChecked(globalSettings->get("hardsync", true));
     } else
         videoSettingsLayout.remove( videoSettingsLayout.hardSync );
 	
@@ -174,7 +169,7 @@ VideoLayout::VideoLayout() {
     
     videoSettingsLayout.hardSync.onToggle = [](bool checked) {
         emuThread->lock();
-		globalSettings->set("gl_hardsync", checked);
+		globalSettings->set("hardsync", checked);
 		videoDriver->hardSync( checked );
         emuThread->unlock();
 	};
@@ -454,15 +449,8 @@ auto VideoLayout::translate() -> void {
 }
 
 auto VideoLayout::updateDriverPropsVisibility() -> void {
-    auto selected = driverLayout.combo.text();
     auto threadedEmu = globalSettings->get<bool>("threaded_emu", false);
 
-    if (selected == "Direct3D") {
-        videoSettingsLayout.exclusiveFullscreen.setEnabled( !threadedEmu );
-        videoSettingsLayout.hardSync.setEnabled(false);
-
-    } else if(GUIKIT::String::foundSubStr(selected, "GL")) {
-        videoSettingsLayout.exclusiveFullscreen.setEnabled(false);
-        videoSettingsLayout.hardSync.setEnabled();
-    }
+    videoSettingsLayout.exclusiveFullscreen.setEnabled( !threadedEmu && videoDriver->canExclusiveFullscreen() );
+    videoSettingsLayout.hardSync.setEnabled( videoDriver->canHardSync() );
 }

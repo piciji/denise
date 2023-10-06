@@ -153,6 +153,9 @@ struct Program : Emulator::Interface::Bind {
     auto getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& crop) -> bool;
     auto setCrop(Emulator::Interface* emulator, std::string ident, int value) -> void;
     auto getCropDefault(int pos, int direction) -> unsigned;
+    auto getCropHotkeyDefault() -> unsigned;
+    auto upgradeCropSettings() -> void;
+    auto getCropMessage( Emulator::Interface* emulator, Emulator::Interface::CropType cropType) -> std::string;
     auto setPalette( Emulator::Interface* emulator ) -> void;
     auto midScreenCallback(uint8_t interlace) -> void override;
     auto toggleFastForward(bool aggressive) -> void;
