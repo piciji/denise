@@ -165,24 +165,26 @@ auto Program::getCropDefault(int pos, int direction) -> unsigned {
 }
 
 auto Program::upgradeCropSettings() -> void {
-    if (!globalSettings->get<bool>("upd_crop", false)) {
+    for(auto emulator : emulators) {
+        auto settings = getSettings( emulator );
 
-        for(auto emulator : emulators) {
-            auto settings = getSettings( emulator );
+        if (!settings->get<bool>("upd_crop", false)) {
+            settings->set<bool>("upd_crop", true);
+
             auto cropType = settings->get<int>("crop_type", (unsigned) Emulator::Interface::CropType::Monitor, {0u, 11u});
             auto valCropAC = settings->get<bool>("crop_aspect_correct", false);
+            settings->remove("crop_aspect_correct");
 
             switch(cropType) {
                 case 2: cropType = valCropAC ? 2 : 3; break;
                 case 3: cropType = valCropAC ? 4 : 5; break;
                 case 4: cropType = 6; break;
+                default:
+                    continue;
             }
 
-            settings->set<unsigned >("crop_type", cropType);
-            settings->remove("crop_aspect_correct");
+            settings->set<unsigned>("crop_type", cropType);
         }
-
-        globalSettings->set<bool>("upd_crop", true);
     }
 }
 
