@@ -143,7 +143,6 @@ struct Paula {
     float filter2A0;
     float filterA0;
 
-    auto process() -> void;
     auto power() -> void;
     auto powerOff() -> void;
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
@@ -234,6 +233,9 @@ struct Paula {
     auto prepareTransfer() -> void;
     auto updateTxd() -> void;
     auto updateSerialEvent() -> void;
+    
+    auto iplUpdate() -> void;
+    auto sampleUpdate() -> void;
 };
 
 }

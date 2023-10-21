@@ -251,7 +251,7 @@ template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
     }
 }
 
-template<bool oddCycle1> auto Agnus::canCopperUseBus() -> bool {
+template<bool oddCycle1> inline auto Agnus::canCopperUseBus() -> bool {
     if constexpr (oddCycle1) {
         if (bplQueue & 0xff)
             return false; // a higher DMA

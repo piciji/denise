@@ -72,7 +72,7 @@ namespace LIBAMI {
 // Bit 7: reserved, Bits 8 - 10: useBpl
 // Bit 15: empty queue
 
-template<bool onlyProgressQueue> auto Agnus::fetchPlanes() -> void {
+template<bool onlyProgressQueue> inline auto Agnus::fetchPlanes() -> void {
 
     if constexpr (!onlyProgressQueue) {
         switch(bplCycle++) {
@@ -244,17 +244,17 @@ template<bool onlyProgressQueue> auto Agnus::fetchPlanes() -> void {
     if (!bplState && ddfEnable && !ddfEnableBefore) bplState = 1; \
     ddfEnableBefore = ddfEnable;
 
-auto Agnus::bplControl() -> void {
-    bool ecs = ecsAndHigher();
-    uint8_t _state = bplState;
-    uint8_t _hPos = hPos;
+template<bool _ecs, bool start>
+inline auto Agnus::bplControl() -> void {
+    const uint8_t _state = bplState;
+    const uint8_t _hPos = hPos;
 
     if (_state == 1) {
         bplState = 2;
         actions |= ACT_BPL;
         bplCycle &= BPL_ADD_MOD; // keep mod state
         bplCycle |= (bplCon0 >> 4) & 0x700;
-        if (ecs)
+        if constexpr(_ecs)
             sprInhibited = true; // D (1993)(Essence).adf teddy looks good in ECS only
         if (bplCon0 & 0x40)         bplCycle |= BPL_SHIRES;
         else if (bplCon0 & 0x8000)  bplCycle |= BPL_HIRES;
@@ -266,7 +266,7 @@ auto Agnus::bplControl() -> void {
         sprInhibited = false;
     }
 
-    if (ecs) { // ECS / AGA
+    if constexpr(_ecs) { // ECS / AGA
         if (ddfStartMatch == 2) {
             ddfStartMatch = 0;
             if (bplState)
@@ -291,7 +291,7 @@ auto Agnus::bplControl() -> void {
         if (bplState && (_hPos == ddfStop))
             stopFetching = true;
 
-        if (!bplState && !hardStop && (_hPos == ddfStart) && useBitplaneDMA() && diwFlipFlop) {
+        if (start && !bplState && !hardStop && useBitplaneDMA() && diwFlipFlop) {
             bplState = 1;
             sprInhibited = true;
             sprQueue &= 0xffffff;
@@ -308,7 +308,7 @@ auto Agnus::bplControl() -> void {
             bplState = 0;
         } else if (stopFetching)
             bplCycle |= BPL_ADD_MOD;
-        else if (ecs)
+        else if constexpr(_ecs)
             stopFetching = true;
 
     } else if (_state == 2 && (!useBitplaneDMA() || !diwFlipFlop))
@@ -330,7 +330,7 @@ auto Agnus::bplControl() -> void {
     case 0xe0 | 0x08 | x: fetchSprite<x, 0x20 | 3>(); break;
 
 
-auto Agnus::fetchSprites() -> void {
+inline auto Agnus::fetchSprites() -> void {
     switch(sprQueue & 0xff) {
         case 0:
             if (!sprQueue)

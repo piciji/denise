@@ -510,8 +510,20 @@ inline auto Agnus::dmaCycle() -> void {
     if (++clock == nextClock)
         processEvents(clock);
 
-    bplControl();
-    paula.process();
+    if (ecsAndHigher()) {
+        bplControl<true, false>();
+    } else {
+        if (bplState)
+            bplControl<false, false>();
+        else if (hPos == ddfStart)
+            bplControl<false, true>();
+    }
+    
+    if (paula.iplCounter)
+        paula.iplUpdate();
+        
+    if (paula.sampleCycle == clock)
+        paula.sampleUpdate();
 
     if (actions) {
         int _actions = actions;

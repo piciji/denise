@@ -352,29 +352,26 @@ auto Paula::power() -> void {
     setFilter();
 }
 
-auto Paula::process() -> void {
+auto Paula::iplUpdate() -> void {
+    cpu.setInterrupt( (ipl >> 16) & 7 );
+    ipl = (ipl << 8) | (ipl & 0xff);
+    iplCounter--;
+}
 
-    if (iplCounter) {
-        cpu.setInterrupt( (ipl >> 16) & 7 );
-        ipl = (ipl << 8) | (ipl & 0xff);
-        iplCounter--;
-    }
-
-    if (sampleCycle == agnus.clock) {
-        sampleCycle = agnus.clock + sampleLimit;
-
-        if (audioOut) {
-            int32_t sampleL = channels[0].sample + channels[3].sample;
-            int32_t sampleR = channels[1].sample + channels[2].sample;
-
-            if (filterMode != 4) { // A1200 Off don't use filter
-                int _filterMode = filterMode;
-                sampleL = lowPassfilter<0>(sampleL, _filterMode);
-                sampleR = lowPassfilter<1>(sampleR, _filterMode);
-            }
-
-            system->audioRefresh(Emulator::sclamp(16, sampleL), Emulator::sclamp(16, sampleR));
+auto Paula::sampleUpdate() -> void {
+    sampleCycle = agnus.clock + sampleLimit;
+    
+    if (audioOut) {
+        int32_t sampleL = channels[0].sample + channels[3].sample;
+        int32_t sampleR = channels[1].sample + channels[2].sample;
+        
+        if (filterMode != 4) { // A1200 Off don't use filter
+            int _filterMode = filterMode;
+            sampleL = lowPassfilter<0>(sampleL, _filterMode);
+            sampleR = lowPassfilter<1>(sampleR, _filterMode);
         }
+        
+        system->audioRefresh(Emulator::sclamp(16, sampleL), Emulator::sclamp(16, sampleR));
     }
 }
 

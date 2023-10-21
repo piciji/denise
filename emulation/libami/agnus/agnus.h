@@ -333,7 +333,7 @@ struct Agnus {
     template<bool onlyProgressQueue = false> auto fetchPlanes() -> void;
     template<uint8_t pos, bool addMod> auto fetchPlane() -> void;
     template<uint8_t nr, bool first> auto spriteControl() -> void;
-    auto bplControl() -> void;
+    template<bool _ecs, bool start> auto bplControl() -> void;
     auto fetchSprites() -> void;
     template<uint8_t nr, uint8_t options> auto fetchSprite() -> void;
     template<uint8_t nr> auto updateSpriteV() -> void;
