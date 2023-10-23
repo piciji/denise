@@ -41,7 +41,7 @@ struct View : public GUIKIT::Window {
     };
 
     auto translate() -> void;
-    auto getViewportHandle() -> uintptr_t;
+    auto getViewportHandle(bool driverChange) -> uintptr_t;
 
     auto build() -> void;
     auto setConnectors() -> void;

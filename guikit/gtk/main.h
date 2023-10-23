@@ -516,7 +516,7 @@ struct pViewport : public pWidget {
     bool dragAnalyzed = false;
     std::vector<std::string> paths;
 
-    auto handle() -> uintptr_t;
+    auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
     auto setGeometry(Geometry geometry) -> void;
     auto add() -> void;

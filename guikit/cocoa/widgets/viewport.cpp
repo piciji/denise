@@ -133,7 +133,7 @@ auto pViewport::setDroppable(bool droppable) -> void {
     }
 }
 
-auto pViewport::handle() -> uintptr_t {
+auto pViewport::handle(bool hintRecreation) -> uintptr_t {
     return (uintptr_t)cocoaView;
 }
 

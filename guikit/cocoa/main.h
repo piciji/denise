@@ -418,7 +418,7 @@ struct pTreeView : pWidget {
 struct pViewport : public pWidget {
     Viewport& viewport;
 
-    auto handle() -> uintptr_t;
+    auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
     auto init() -> void;
 

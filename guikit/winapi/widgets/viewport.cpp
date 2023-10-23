@@ -15,7 +15,11 @@ auto pViewport::create() -> void {
 auto pViewport::rebuild() -> void {
     if(!needRebuild())
         return;
-    
+
+    _rebuild();
+}
+
+inline auto pViewport::_rebuild() -> void {
     create();
     setDroppable(viewport.droppable());
     pWidget::rebuild();
@@ -28,7 +32,13 @@ auto pViewport::setDroppable(bool droppable) -> void {
     }
 }
 
-auto pViewport::handle() -> uintptr_t {
+auto pViewport::handle(bool hintRecreation) -> uintptr_t {
+    if (hintRecreation) {
+        _rebuild();
+        setGeometry(viewport.geometry());
+        setVisible(true);
+    }
+
     return (uintptr_t)hwnd;
 }
 

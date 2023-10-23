@@ -799,7 +799,7 @@ struct Viewport : Widget {
     auto setText(const std::string& text) -> void = delete;
 
     auto droppable() -> bool const { return state.droppable; }
-    auto handle() -> uintptr_t;
+    auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable = true) -> void;
     auto getMousePosition() -> Position&;
 

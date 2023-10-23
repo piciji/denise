@@ -131,7 +131,7 @@ VideoLayout::VideoLayout() {
 		}
 
 		view->updateShader(false);
-        program->initVideo();
+        program->initVideo(true);
         updateDriverPropsVisibility();
         emuThread->unlock();
 	};

@@ -564,11 +564,12 @@ struct pViewport : public pWidget {
     Viewport& viewport;
     DropManager dropManager;
 
-    auto handle() -> uintptr_t;
+    auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
     static auto CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     auto rebuild() -> void;
+    auto _rebuild() -> void;
     auto create() -> void;
 
     auto callDrops(std::vector<std::string>& paths) -> void;

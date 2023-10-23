@@ -142,7 +142,7 @@ struct Program : Emulator::Interface::Bind {
     
     //video
     auto setVideoDimension(Emulator::Interface* emulator = nullptr) -> void;
-    auto initVideo() -> void;
+    auto initVideo(bool driverChange = false) -> void;
 	auto getVideoDriver() -> std::string;
     auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void override;
 	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;

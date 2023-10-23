@@ -373,9 +373,10 @@ auto Program::loadSettings() -> void {
             std::string customConfig = cmd->getCustomConfig(emulator);
 
             if (!customConfig.empty()) {
-                if (settings->load(customConfig))
+                if (settings->load(customConfig)) {
+                    globalSettings->set("last_used_emu", emulator->ident);
                     continue;
-                else
+                } else
                     cmd->removeCustomConfig(emulator);
             }
 

@@ -1150,8 +1150,8 @@ auto TreeView::reset() -> void {
 
 TreeView::TreeView() : Widget(*new pTreeView(*this)), p((pTreeView&)Widget::p) { p.init(); }
 
-auto Viewport::handle() -> uintptr_t {
-    return p.handle();
+auto Viewport::handle(bool hintRecreation) -> uintptr_t {
+    return p.handle(hintRecreation);
 }
 
 auto Viewport::setDroppable(bool droppable) -> void {

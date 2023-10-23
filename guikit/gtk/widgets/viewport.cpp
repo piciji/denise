@@ -43,7 +43,7 @@ auto pViewport::setDroppable(bool droppable) -> void {
 
 }
 
-auto pViewport::handle() -> uintptr_t {
+auto pViewport::handle(bool hintRecreation) -> uintptr_t {
     if (viewport.window()->hints == Window::Hints::Video)
         return (uintptr_t) gtk_widget_get_window(viewport.window()->p.mainDisplay);
     //return GDK_WINDOW_XID(gtk_widget_get_window(gtkWidget));

@@ -2,7 +2,7 @@
 #include "cmd/cmd.h"
 #include <cstring>
 
-auto Program::initVideo() -> void {
+auto Program::initVideo(bool driverChange) -> void {
     
 	if (videoDriver)
         delete videoDriver;
@@ -20,7 +20,7 @@ auto Program::initVideo() -> void {
     setVideoDimension();
     updateFullscreenSetting();
 	    
-    if ( !videoDriver->init( view->getViewportHandle() ) ) {
+    if ( !videoDriver->init( view->getViewportHandle(driverChange) ) ) {
         delete videoDriver;
         videoDriver = new DRIVER::Video;
     }
@@ -184,6 +184,8 @@ auto Program::upgradeCropSettings() -> void {
             }
 
             settings->set<unsigned>("crop_type", cropType);
+            if (dynamic_cast<LIBAMI::Interface*>(emulator))
+                settings->set<unsigned>("border_hotkey", program->getCropHotkeyDefault() );
         }
     }
 }

@@ -1657,8 +1657,8 @@ auto View::translate() -> void {
     customizeSpeedItem.setText( trans->get("customize speed") );
 }
 
-auto View::getViewportHandle() -> uintptr_t {
-    return viewport.handle();
+auto View::getViewportHandle(bool driverChange) -> uintptr_t {
+    return viewport.handle(driverChange);
 }
 
 auto View::loadCursor() -> void {
