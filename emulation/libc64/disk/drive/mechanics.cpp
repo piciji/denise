@@ -50,10 +50,10 @@ auto Drive::rotateD64() -> void {
             byte = (!loaded || !trackPtr) ? 0 : trackPtr[ headOffset >> 3 ];
         }
 
-        // make room for incomming bit
+        // make room for incoming bit
         readBuffer <<= 1;
         writeBuffer <<= 1;
-        // append incomming bit
+        // append incoming bit
         readBuffer |= (byte >> 7) & 1;
         readBuffer &= 0x3ff; // 10 bit buffer
 
@@ -61,7 +61,7 @@ auto Drive::rotateD64() -> void {
             // when there are more than three zeros in a row, a one will be injected by drive mechanic
             readBuffer |= 1;
 
-        // if last 10 bits in a row are non zero then there is a sync.
+        // if last 10 bits in a row are non-zero then there is a sync.
         // in this case data is not moving.
         if (~readBuffer & 0x3ff) {
             // no sync 
@@ -87,29 +87,49 @@ auto Drive::rotateD64() -> void {
         writeBuffer <<= 1;
 
         if (++ue3Counter == 8) {
-            ue3Counter = 0;
+            byteWritten(false);
 
-            writeBuffer = writeValue; // fetch next byte to buffer
-
-            if ( byteReadyOverflow ) {
-                cpu.triggerSO();
-                byteReady = true;
-                via2.ca1In( ca1Line = false );
-            }
         } else if (!ca1Line)
             via2.ca1In( ca1Line = true );
     }
 }
 
-auto Drive::byteFetched( bool overflowNotThisCycle ) -> void {
+auto Drive::byteWritten( bool overflowNotThisCycle ) -> void {
+    ue3Counter = 0;
+    writeBuffer = writeValue;
 
+    if (operation & DRIVE_MODE_154x) {
+        if (byteReadyOverflow) {
+            // edge transition
+            cpu.triggerSO(overflowNotThisCycle ? 2 : 1);
+            via2.ca1In(ca1Line = false, overflowNotThisCycle);
+        }
+    } else {
+        if (byteReadyOverflow)
+            cpu.triggerSO(overflowNotThisCycle ? 2 : 1);
+
+        byteReady = true;
+        via2.ca1In(ca1Line = false, overflowNotThisCycle);
+    }
+}
+
+auto Drive::byteFetched( bool overflowNotThisCycle ) -> void {
     ue3Counter = 0;
     latchedByte = writeBuffer = readBuffer & 0xff;
 
-    if (byteReadyOverflow) {
-        // edge transition
-        cpu.triggerSO(overflowNotThisCycle ? 2 : 1);
-        byteReady = true;
+    if (operation & DRIVE_MODE_154x) {
+        if (byteReadyOverflow) {
+            // edge transition
+            cpu.triggerSO(overflowNotThisCycle ? 2 : 1);
+            // true for 1540 and 1541 (long board) or 1541C (long board)...there are 1541C with short board
+            // todo: I guess 1541-II behaves like 1571, means ca1In don't depends on "byteReadyOverflow"
+            via2.ca1In(ca1Line = false, overflowNotThisCycle);
+        }
+    } else {
+        if (byteReadyOverflow)
+            cpu.triggerSO(overflowNotThisCycle ? 2 : 1);
+
+        byteReady = true; // only needed for 1570/1571
         via2.ca1In(ca1Line = false, overflowNotThisCycle);
     }
 }

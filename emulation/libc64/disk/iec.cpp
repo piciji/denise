@@ -5,31 +5,30 @@
 namespace LIBC64 {
 
 // 1. main thread (c64) runs some cycles, drive thread waits
-// 2. main thread transfers amount of consumed cycles to drive thread
-// 3. drive thread runs for this amount of cycles
+// 2. main thread transfers number of consumed cycles to drive thread
+// 3. drive thread runs for this number of cycles
 // 4. main thread doesn't wait for drive thread and goes on
-// 5. depending on which thread finish his work first, threads waits for each other
+// 5. depending on which thread finishes his work first, threads wait for each other
 // 6. go to second step and repeat
-// NOTE: main thread runs a few cycles or stops before a IEC read/write, then
-// synchronizes with drive thread and goes on. in case of IEC access, main thread
+// NOTE: main thread runs a few cycles or stops before an IEC read/write, then
+// synchronizes with drive thread and goes on. in the case of IEC access, main thread
 // and drive thread don't run in parallel. main thread waits for drive thread to keep up
 // before data is transferred in a cycle exact way.
 
-// we have to control the behaviour when c64 and drive(s) access IEC BUS at nearly same time.
-// if both reads or writes it doesn't matter which side access BUS first.
-// if one side reads and the other writes we have to carefully control BUS access.
-// when accessing exactly same time a read happens before a write.
-// to find out the time window for a write to be reflected by a read we need to know
-// some facts.
+// we have to control the behavior when c64 and drive(s) access IEC BUS at nearly the same time.
+// if both read or write, it doesn't matter which side access BUS first.
+// if one side reads and the other writes, we have to carefully control BUS access.
+// when accessing exactly the same time, a read happens before a writing.
+// to find out the time window for a writing to be reflected by a read, we need to know some facts.
 
-// 1. how late in a cycle data can change to be read back by CPU ?
+// 1. how late in a cycle, data can change to be read back by CPU ?
 // synertek hardware manual says for 1 MHz operation.
-// address is guaranteed to be stable 300 ns after leading edge of phase 1.
+// address is guaranteed to be stable 300 ns after the leading edge of phase 1.
 // a memory device has ~575 ns to make data available on the bus.
 // means a VIA BUS read can detect data changes no later than 875 ns within a cycle.
 // a CIA read operates not exactly at 1 Mhz. pal is 985248 (862 ns) and ntsc is 1022727 (895 ns).
 // so a safe value could be 850 ns for all participants, don't know how far we 
-// should approach the value in order to reliably read back.
+// should approach the value to reliably read back.
 
 // 2. how long it takes a write is visible for other IEC BUS connected devices ?
 // it takes ~0.3 cycle.
@@ -101,7 +100,7 @@ auto IecBus::initThread() -> void {
             while (!ready.load()) {
 
                 if (idle.load()) {
-                    if (cv.wait_for(lk, duration, [this](){ return ready.load(); })) {
+                    if (cv.wait_for(lk, duration, [this](){ return ready.load() || kill.load(); })) {
                         break;
                     }
                 } else {
@@ -393,16 +392,15 @@ auto IecBus::writeCia( uint8_t byte ) -> bool {
 
 auto IecBus::updatePort() -> void {
     
-    // the iec bus uses the same lines for both in / out going transfer.
-    // so if there is no drive present
-    // the cia reads back the same values for the 'in' marked pins
+    // the iec bus uses the same lines for both in / out going transfers.
+    // so if there is no drive present, the cia reads back the same values for the 'in' marked pins
     port = (dataOut << 7) | (clockOut << 6);
     
     for (auto drive : drivesEnabled) {
         if (drive->hidden)
             continue;
 
-        // override it by data sended from drives
+        // override it by data sent from drives
         // Note: bit state 1 means "false", and 0 means "true"
         // a line will become "false" (released) only if all devices signal false
         // a line will become "true" (pulled down) if one or more devices signal true
@@ -438,7 +436,7 @@ auto IecBus::setDrivesEnabled( uint8_t count ) -> void {
 }
 
 auto IecBus::hideDrive( Emulator::Interface::Media* media ) -> void {
-    // games like Roland's Ratrace look for drives and crash if find one as kind of copy protection
+    // games like "Roland's Ratrace" look for drives and crash if find one as kind of copy protection
     drives[ media->id ]->hide();
 }
 

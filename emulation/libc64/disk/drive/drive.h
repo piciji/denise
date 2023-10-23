@@ -211,6 +211,7 @@ struct Drive {
     auto updateIdleDeviceState() -> void;
 
     auto byteFetched( bool overflowNotThisCycle ) -> void;
+    auto byteWritten( bool overflowNotThisCycle ) -> void;
 
     auto updateCycleSpeed(bool mhz2x, bool init = true) -> void;
     auto setFirmwareByType( ) -> void;

@@ -166,16 +166,7 @@ namespace LIBC64 {
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
-
-                        ue3Counter = 0;
-                        writeBuffer = writeValue;
-                        bool overflowNotThisCycle = OVERFLOW_NOT_THIS_CYCLE;
-
-                        if (byteReadyOverflow) {
-                            cpu.triggerSO(overflowNotThisCycle ? 2 : 1);
-                            byteReady = true;
-                            via2.ca1In(ca1Line = false, overflowNotThisCycle);
-                        }
+                        byteWritten(OVERFLOW_NOT_THIS_CYCLE);
                     }
                 }
 

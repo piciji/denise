@@ -104,7 +104,7 @@ namespace LIBC64 {
 
                     if (ue3Counter == 8)
                         byteFetched( OVERFLOW_NOT_THIS_CYCLE );
-                    // after an amount of time without a flux reversal
+                    // after an amount of time without a flux reversal,
                     // the rule that a one is shifted in after 3 zeros in a row
                     // is violated by some randomness. means the counter registers
                     // will be reset after some time but that doesn't mean it can
@@ -120,8 +120,8 @@ namespace LIBC64 {
                     // every 16 ref cycles uf4 is incremented, at least for speedzone 0.
                     // when uf4 == 2 a one is shifted in.
                     // when uf4 == (6 or 10 or 14) a zero is shifted in.
-                    // if there is no further flux reversal a one will be shiftd in each 3 zeros.
-                    // because of magnetic mediums can not read too much zeros in row reliable.
+                    // if there is no further flux reversal, a one will be shifted in each 3 zeros.
+                    // because of magnetic mediums cannot read too many zeros in row reliable.
                     uf4Counter = (uf4Counter + 1) & 0xf;
 
                     if ((uf4Counter & 3) == 2) {
@@ -153,7 +153,7 @@ namespace LIBC64 {
                         accum -= refCyclesPerRevolution;
 
                         if (readBit())
-                            // too short ( < 2.5 microseconds ) flux reversals will be removed by a filter
+                            // too short (< 2.5 microseconds) flux reversals will be removed by a filter
                             // not emulated, because variable bit cell length isn't emulated either but necessary for this
                             // NOTE: gcr images are almost clean already
                             comperatorFlipFlop ^= 1;
@@ -191,7 +191,7 @@ namespace LIBC64 {
                         todo = 16 - ue7Counter;
                 }
 
-                // ue7 and uf4 works same like reading
+                // ue7 and uf4 work same like reading
                 ue7Counter += todo;
                 if (ue7Counter == 16) {
 
@@ -216,15 +216,7 @@ namespace LIBC64 {
                     }
                         // uf4: 0,1,4,5,8,9,12,13
                     else if (((uf4Counter & 2) == 0) && (ue3Counter == 8)) {
-
-                        ue3Counter = 0;
-                        writeBuffer = writeValue;
-                        bool overflowNotThisCycle = OVERFLOW_NOT_THIS_CYCLE;
-                        if (byteReadyOverflow) {
-                            cpu.triggerSO(overflowNotThisCycle ? 2 : 1);
-                            byteReady = true;
-                            via2.ca1In(ca1Line = false, overflowNotThisCycle);
-                        }
+                        byteWritten(OVERFLOW_NOT_THIS_CYCLE);
                     }
                 }
 
