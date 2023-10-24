@@ -683,6 +683,8 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     auto settings = program->getSettings( emulator );
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
+    autoloader->set(emulator, media, trapped);
+
     if (mediaGroup->isDrive()) {
         autoloader->activateDrive( emulator, mediaGroup, 1 );
     }

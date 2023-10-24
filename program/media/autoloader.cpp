@@ -232,21 +232,26 @@ auto Autoloader::postProcessing() -> void {
             else                    options |= 2;
         }
 
+        Emulator::Interface::Media* autoStarted;
         if (ddControl.mode == Mode::AutoStartWithSlot) {
             auto sel = ddControl.selection;
             if (sel >= mediaGroup->media.size())
                 sel = 0;
 
-            ddControl.emulator->selectListing(&mediaGroup->media[sel], 0, "", options);
-            fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[sel].name) );
+            autoStarted = &mediaGroup->media[sel];
+            ddControl.emulator->selectListing(autoStarted, 0, "", options);
 
         } else if (mediaGroup->selected) {
-            ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
-            fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
+            autoStarted = mediaGroup->selected;
+            ddControl.emulator->selectListing(autoStarted, ddControl.selection, ddControl.fileName, trapped);
+
         } else {
-            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, options);
-            fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
+            autoStarted = &mediaGroup->media[0];
+            ddControl.emulator->selectListing(autoStarted, ddControl.selection, ddControl.fileName, options);
         }
+
+        fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(autoStarted->name) );
+        set(ddControl.emulator, autoStarted, trapped);
 
         if (audioManager)
             audioManager->drive.reset(mediaGroup, true);
@@ -549,4 +554,25 @@ auto Autoloader::checkForSavestate( GUIKIT::File* file, GUIKIT::File::Item* item
 End:
     filePool->unloadOrphaned();
     return true;
+}
+
+auto Autoloader::set(Emulator::Interface* emulator, Emulator::Interface::Media* media, bool trapped) -> void {
+    for(auto& use : used) {
+        if (use.emulator == emulator) {
+            use.media = media;
+            use.trapped = trapped;
+            break;
+        }
+    }
+    used.push_back({emulator, media});
+}
+
+auto Autoloader::get(Emulator::Interface* emulator, bool& trapped) -> Emulator::Interface::Media* {
+    for(auto& use : used) {
+        if (use.emulator == emulator) {
+            trapped = use.trapped;
+            return use.media;
+        }
+    }
+    return nullptr;
 }

@@ -157,7 +157,14 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 
         emuThread->lock();
         fileloader->insertSwapDisk( emulator, listView.selection() + 1 );
-        InputManager::activateHotkey(Hotkey::Id::DiskAutoStart, emulator);
+        auto settings = program->getSettings( emulator );
+        auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
+        auto media = emulator->getEnabledDisk(mediaId);
+        auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
+        if (fSetting->path.empty())
+            return;
+        fileloader->autoload(emulator, media, 0, settings->get<bool>("autostart_traps_on_dblclick", false) );
+
         emuThread->unlock();
     };
 

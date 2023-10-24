@@ -480,6 +480,12 @@ struct DVideo : Video, RenderThread {
 
 
     auto redraw(bool disallowShader = false) -> void {
+        RECT windowsize = getDimension( settings.handle );
+        if ((viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
+            if (!resetOrInit())
+                return;
+        }
+
 		if (XPMode)
 			return redrawCustom(disallowShader);			
 		
@@ -689,27 +695,18 @@ struct DVideo : Video, RenderThread {
 
     inline auto _lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
         RECT windowsize = getDimension( settings.handle );
+        if (lost || (viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
+            if (!resetOrInit())
+                return false;
+        }
 
         if (settings.threaded) {
-            if (lost || (viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
-                wait();
-                if (!reset()) {
-                    if (!init())
-                        return false;
-                }
-            }
-
             if( settings.synchronize && IsIconic( settings.parent ) ) {
                 wait();
                 return false;
             }
 
             return RenderThread::lock(data, pitch, _width, _height, reuse);
-        }
-
-        if ((viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
-            if (!resetOrInit())
-                return false;
         }
 
         if(_width != inputWidth || _height != inputHeight) {

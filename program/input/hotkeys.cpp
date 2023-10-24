@@ -4,6 +4,7 @@
 #include "../audio/manager.h"
 #include "../thread/emuThread.h"
 #include "../media/fileloader.h"
+#include "../media/autoloader.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -98,7 +99,7 @@ auto InputManager::setCustomHotkeys() -> void {
     customHotkeys.push_back( {Hotkey::Id::Audio, "Audio", true} );
 	customHotkeys.push_back( {Hotkey::Id::Geometry, "Geometry", true} );
     customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
-    customHotkeys.push_back( {Hotkey::Id::DiskAutoStart, "Disk_autostart", true} );
+    customHotkeys.push_back( {Hotkey::Id::AutoStart, "autostart last program", true} );
 }
 
 auto InputManager::fireHotkey(InputMapping* trigger) -> void {
@@ -649,18 +650,18 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 activeEmulator->customCartridgeButton();
             break;
 
-        case Hotkey::DiskAutoStart: {
+        case Hotkey::AutoStart: {
             emuThread->lock();
-            auto settings = program->getSettings( emulator );
-            auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
-            auto media = emulator->getEnabledDisk(mediaId);
+            bool trapped;
+            auto media = autoloader->get(emulator, trapped);
+            if (!media)
+                break;
 
             auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
             if (fSetting->path.empty())
                 break;
 
-            if (media)
-                fileloader->autoload(emulator, media, 0, settings->get<bool>("autostart_traps_on_dblclick", false) );
+            fileloader->autoload(emulator, media, 0, trapped );
         } break;
         
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:
@@ -726,7 +727,7 @@ auto InputManager::pollHotkeys() -> void {
 	InputMapping* stateHandler = nullptr;
 	InputMapping* starter = nullptr;
     InputMapping* anyLoad = nullptr;
-    InputMapping* diskAutostart = nullptr;
+    InputMapping* lastAutostart = nullptr;
     InputMapping* swapPorts = nullptr;
 	
 	auto useEmu = activeEmulator;
@@ -801,12 +802,12 @@ auto InputManager::pollHotkeys() -> void {
 					anyLoad = trigger;
 				break;
 
-            case Hotkey::DiskAutoStart:
-                if (!diskAutostart)
-                    diskAutostart = trigger;
+            case Hotkey::AutoStart:
+                if (!lastAutostart)
+                    lastAutostart = trigger;
 
                 else if (useEmu == trigger->inputManager->emulator)
-                    diskAutostart = trigger;
+                    lastAutostart = trigger;
                 break;
                 
 			default:
@@ -832,8 +833,8 @@ auto InputManager::pollHotkeys() -> void {
 	if(stateHandler)
 		useTrigger.push_back( stateHandler );
 
-    if(diskAutostart)
-        useTrigger.push_back( diskAutostart );
+    if(lastAutostart)
+        useTrigger.push_back( lastAutostart );
 
 	if (starter)
 		useTrigger.push_back( starter );
