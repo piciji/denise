@@ -25,6 +25,7 @@ struct Autoloader {
         Emulator::Interface* emulator;
         Emulator::Interface::Media* media;
         bool trapped;
+        unsigned selection;
     };
     std::vector<Used> used;
 
@@ -38,8 +39,8 @@ struct Autoloader {
     auto checkForSavestate( GUIKIT::File* file, GUIKIT::File::Item* item ) -> bool;
     auto needSlotsForDragnDrop(std::vector<std::string> files) -> unsigned;
     auto slotMode() -> bool { return ddControl.mode == Mode::AutoStartWithSlot || ddControl.mode == Mode::OpenWithSlot; }
-    auto set(Emulator::Interface* emulator, Emulator::Interface::Media* media, bool trapped) -> void;
-    auto get(Emulator::Interface* emulator, bool& trapped) -> Emulator::Interface::Media*;
+    auto set(Emulator::Interface* emulator, Emulator::Interface::Media* media, bool trapped, unsigned selection = 0) -> void;
+    auto get(Emulator::Interface* emulator, bool& trapped, unsigned& selection) -> Emulator::Interface::Media*;
 };
 
 extern Autoloader* autoloader;

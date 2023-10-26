@@ -44,6 +44,8 @@ struct CropLayout : GUIKIT::FramedVerticalLayout {
     struct Hotkey : GUIKIT::HorizontalLayout {
         GUIKIT::Label label;
         std::vector<GUIKIT::CheckBox*> boxes;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button reset;
         Hotkey();
     } hotkey;
 
@@ -76,7 +78,7 @@ struct GeometryLayout : GUIKIT::VerticalLayout {
     auto translate() -> void;
 	auto updateVisibillity() -> void;
     auto loadSettings() -> void;
-    auto updateCrop(std::string property, unsigned value) -> void;
+    auto updateCrop(std::string property, unsigned value = 0) -> void;
     auto updateBorderHotkeyUsage(unsigned bit, bool checked) -> void;
     auto updateBorderSlider() -> void;
 

@@ -653,7 +653,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         case Hotkey::AutoStart: {
             emuThread->lock();
             bool trapped;
-            auto media = autoloader->get(emulator, trapped);
+            unsigned selection;
+            auto media = autoloader->get(emulator, trapped, selection);
             if (!media)
                 break;
 
@@ -661,7 +662,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (fSetting->path.empty())
                 break;
 
-            fileloader->autoload(emulator, media, 0, trapped );
+            fileloader->autoload(emulator, media, selection, trapped );
         } break;
         
         case Hotkey::DiskSwap0: case Hotkey::DiskSwap1: case Hotkey::DiskSwap2:

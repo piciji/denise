@@ -232,26 +232,23 @@ auto Autoloader::postProcessing() -> void {
             else                    options |= 2;
         }
 
-        Emulator::Interface::Media* autoStarted;
         if (ddControl.mode == Mode::AutoStartWithSlot) {
             auto sel = ddControl.selection;
             if (sel >= mediaGroup->media.size())
                 sel = 0;
 
-            autoStarted = &mediaGroup->media[sel];
-            ddControl.emulator->selectListing(autoStarted, 0, "", options);
-
+            ddControl.emulator->selectListing(&mediaGroup->media[sel], 0, "", options);
+            fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[sel].name) );
+            set(ddControl.emulator, &mediaGroup->media[0], trapped);
         } else if (mediaGroup->selected) {
-            autoStarted = mediaGroup->selected;
-            ddControl.emulator->selectListing(autoStarted, ddControl.selection, ddControl.fileName, trapped);
-
+            ddControl.emulator->selectListing(mediaGroup->selected, ddControl.selection, ddControl.fileName, trapped);
+            fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->selected->name) );
+            set(ddControl.emulator, mediaGroup->selected, trapped);
         } else {
-            autoStarted = &mediaGroup->media[0];
-            ddControl.emulator->selectListing(autoStarted, ddControl.selection, ddControl.fileName, options);
+            ddControl.emulator->selectListing(&mediaGroup->media[0], ddControl.selection, ddControl.fileName, options);
+            fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(mediaGroup->media[0].name) );
+            set(ddControl.emulator, &mediaGroup->media[0], trapped, ddControl.selection);
         }
-
-        fSetting = FileSetting::getInstance( ddControl.emulator, _underscore(autoStarted->name) );
-        set(ddControl.emulator, autoStarted, trapped);
 
         if (audioManager)
             audioManager->drive.reset(mediaGroup, true);
@@ -556,21 +553,23 @@ End:
     return true;
 }
 
-auto Autoloader::set(Emulator::Interface* emulator, Emulator::Interface::Media* media, bool trapped) -> void {
+auto Autoloader::set(Emulator::Interface* emulator, Emulator::Interface::Media* media, bool trapped, unsigned selection) -> void {
     for(auto& use : used) {
         if (use.emulator == emulator) {
             use.media = media;
             use.trapped = trapped;
+            use.selection = selection;
             break;
         }
     }
-    used.push_back({emulator, media});
+    used.push_back({emulator, media, trapped, selection});
 }
 
-auto Autoloader::get(Emulator::Interface* emulator, bool& trapped) -> Emulator::Interface::Media* {
+auto Autoloader::get(Emulator::Interface* emulator, bool& trapped, unsigned& selection) -> Emulator::Interface::Media* {
     for(auto& use : used) {
         if (use.emulator == emulator) {
             trapped = use.trapped;
+            selection = use.selection;
             return use.media;
         }
     }

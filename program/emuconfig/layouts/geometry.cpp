@@ -48,6 +48,8 @@ CropLayout::Hotkey::Hotkey() {
         append( *checkBox, {0u, 0u}, i < 11 ? 10 : 0 );
         boxes.push_back(checkBox);
     }
+    append(spacer, {~0u, 0u});
+    append(reset, {0u, 0u});
 
     setAlignment(0.5);
 }
@@ -77,7 +79,7 @@ cropBottom("px")
                                 type3.cropFree1, type3.cropFree2, type3.cropFree3,
                                 type4.cropFree4, type4.cropFree5, type4.cropFree6);
 
-    append( hotkey, {0u, 0u} );
+    append( hotkey, {~0u, 0u} );
 
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -219,6 +221,20 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         };
     }
 
+    cropLayout.hotkey.reset.onActivate = [this]() {
+        int type = _settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
+        if (type < (int)CropType::Free)
+            return;
+        int offset = type - (int)CropType::Free;
+
+        program->setCrop(emulator, "crop_left", program->getCropDefault(offset, 0));
+        program->setCrop(emulator, "crop_right", program->getCropDefault(offset, 1));
+        program->setCrop(emulator, "crop_top", program->getCropDefault(offset, 2));
+        program->setCrop(emulator, "crop_bottom", program->getCropDefault(offset, 3));
+        updateBorderSlider();
+        updateCrop("");
+    };
+
     ratioLayout.window.onActivate = [this]() {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 0);
@@ -307,7 +323,8 @@ auto GeometryLayout::updateBorderHotkeyUsage(unsigned bit, bool checked) -> void
 }
 
 auto GeometryLayout::updateCrop(std::string property, unsigned value) -> void {
-    program->setCrop(emulator, property, value);
+    if (!property.empty())
+        program->setCrop(emulator, property, value);
 
     emuThread->lockVideo();
     if (emuThread->enabled && (activeEmulator == emulator) )
@@ -325,6 +342,7 @@ auto GeometryLayout::updateVisibillity() -> void {
     cropLayout.cropRight.setEnabled( val >= 6 );
     cropLayout.cropTop.setEnabled( val >= 6 );
     cropLayout.cropBottom.setEnabled( val >= 6 );
+    cropLayout.hotkey.reset.setEnabled( dynamic_cast<LIBAMI::Interface*>(emulator) && (val == 7 || val == 8 || val == 9) );
 }
 
 auto GeometryLayout::translate() -> void {
@@ -358,6 +376,7 @@ auto GeometryLayout::translate() -> void {
     cropLayout.type4.cropFree6.setTooltip( trans->get("crop free tooltip") );
 
     cropLayout.hotkey.label.setText( trans->get("switchable by Hotkey", {}, true) );
+    cropLayout.hotkey.reset.setText( trans->getA("reset") );
 
     for(int i = 0; i < 12; i++) {
         cropLayout.hotkey.boxes[i]->setText( std::to_string(i) );

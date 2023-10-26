@@ -47,7 +47,7 @@ auto pCheckBox::onCustomDraw(LPARAM lparam) -> LRESULT {
                     //::GetTextExtentPoint32(lpcd->hdc, buttonText, textLength, &dimensions);
                     //const int xPos = (lpcd->rc.right - dimensions.cx) / 2;
                     //const int yPos = (lpcd->rc.bottom - dimensions.cy) / 2;
-                    static Size containerSize = pWidget::getScaledContainerSize( {16, 2} );
+                    static Size containerSize = pWidget::getScaledContainerSize( {16, 1} );
                     ::SetBkMode(lpcd->hdc, TRANSPARENT);
                     auto color = checkBox.foregroundColor();
                     ::SetTextColor(lpcd->hdc, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
