@@ -19,6 +19,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
+    - d3d11
   
 environment:
   matrix:
