@@ -8,7 +8,7 @@
 # some drivers like dinput (5, 7, 8) and xaudio (2.7, 2.8, 2.9) are supported in multiple versions.
 
 ifeq ($(platform),windows)
-    drv += wgl direct3d dsound dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29 wasapi rawinput
+    drv += wgl direct3d9 direct3d11 dsound dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29 wasapi rawinput
 
 else ifeq ($(platform),macosx)
     drv += cgl openal coreaudio iokit
@@ -20,7 +20,7 @@ else
     drv += glx openal pulseaudio xlib udev sdlinput
 
 endif
-# show in screen status text for opengl
+# show in screen status text
 drv += freetype
 env :=
 
@@ -62,7 +62,8 @@ endif
 drvflags += $(foreach c,$(call strupper,$(drv)),-DDRV_$c)
 drvflags += $(if $(findstring sdl,$(drv)),$(shell $(env)sdl2-config --cflags))
 
-drvlink += $(if $(findstring direct3d,$(drv)),-ld3d9 -ld3dx9)
+drvlink += $(if $(findstring direct3d9,$(drv)),-ld3d9 -ld3dx9)
+drvlink += $(if $(findstring direct3d11,$(drv)),-ld3d11 -ld3dcompiler)
 drvlink += $(if $(findstring dsound,$(drv)),-ldsound)
 drvlink += $(if $(findstring dinput,$(drv)),-ldinput -ldxguid)
 drvlink += $(if $(findstring wgl,$(drv)),-lopengl32)

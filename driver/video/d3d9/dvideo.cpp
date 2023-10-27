@@ -19,12 +19,9 @@ namespace DRIVER {
 #define MAX_MONITORS 9
 #endif
 
-static HMONITOR monList[MAX_MONITORS];
-static unsigned monPos = 0;
-
 auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL;
 
-struct DVideo : Video, RenderThread {
+struct D3D9 : Video, RenderThread {
     D3d9DragndropOverlay dndOverlay;
     LPDIRECT3D9 lpD3D;
     D3DPRESENT_PARAMETERS d3dpp;
@@ -211,47 +208,21 @@ struct DVideo : Video, RenderThread {
         }
     }
 
-    auto getFullscreenAdapter(HWND handle) -> int {
-        MONITORINFO info;
-        info.cbSize = sizeof(info);
-        HMONITOR hMon = MonitorFromWindow( handle, MONITOR_DEFAULTTONEAREST);
-
-        if (!hMon)
-            return -1;
-
-        if (GetMonitorInfo(hMon, &info)) {
-            RECT outScreenParent = getDimension( handle );
-            unsigned monitorWidth = std::abs(info.rcMonitor.right - info.rcMonitor.left);
-            unsigned monitorHeight = std::abs(info.rcMonitor.bottom - info.rcMonitor.top);
-
-            if ( (outScreenParent.right == monitorWidth)
-                 && (outScreenParent.bottom == monitorHeight) ) {
-
-                for (unsigned i = 0; i < monPos; i++) {
-                    if (monList[i] == hMon) {
-                        return i;
-                    }
-                }
-            }
-        }
-        return -1;
-    }
-
     auto reset(bool exclusiveFullscreenNeedInit = true) -> bool {
         bool exclusiveFullscreen = false;
 
         HWND handle = settings.handle;
-        RECT windowSize = getDimension( handle );
+        RECT windowSize = Win::getDimension( handle );
         viewScreen.update( viewport, windowSize.right, windowSize.bottom );
 
         RECT outScreenParent;
-		settings.parent = getParentHandle();
+		settings.parent = Win::getParentHandle( handle );
 
         if (settings.hintExclusiveFullscreen) {
             handle = settings.parent;
-            outScreenParent = getDimension( handle );
+            outScreenParent = Win::getDimension( handle );
 
-            if ( getFullscreenAdapter(handle) >= 0 ) {
+            if ( Win::getFullscreenAdapter(handle) >= 0 ) {
                 exclusiveFullscreen = true;
 				_clear();
 
@@ -348,10 +319,6 @@ struct DVideo : Video, RenderThread {
 		if (XPMode)
 			taskbar = FindWindow(L"Shell_TrayWnd", NULL);
         term();
-	
-        if (monPos == 0) {
-            EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)NULL );
-        }
 
         if ((lpD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL) {
             return false;
@@ -360,16 +327,16 @@ struct DVideo : Video, RenderThread {
         bool exclusiveFullscreen = false;
 
         HWND handle = settings.handle;
-        RECT windowSize = getDimension( handle );
+        RECT windowSize = Win::getDimension( handle );
         viewScreen.update( viewport, windowSize.right, windowSize.bottom );
 
         RECT outScreenParent;
-        settings.parent = getParentHandle();
+        settings.parent = Win::getParentHandle( handle );
 
         if (settings.hintExclusiveFullscreen && !disallowExclusiveFullscreen) {
             handle = settings.parent;
-            outScreenParent = getDimension( handle );
-            adapterId = getFullscreenAdapter(handle);
+            outScreenParent = Win::getDimension( handle );
+            adapterId = Win::getFullscreenAdapter(handle);
 
             if (adapterId >= 0) {
                 exclusiveFullscreen = true;				
@@ -480,7 +447,7 @@ struct DVideo : Video, RenderThread {
 
 
     auto redraw(bool disallowShader = false) -> void {
-        RECT windowsize = getDimension( settings.handle );
+        RECT windowsize = Win::getDimension( settings.handle );
         if ((viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
             if (!resetOrInit())
                 return;
@@ -694,7 +661,7 @@ struct DVideo : Video, RenderThread {
     }
 
     inline auto _lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
-        RECT windowsize = getDimension( settings.handle );
+        RECT windowsize = Win::getDimension( settings.handle );
         if (lost || (viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
             if (!resetOrInit())
                 return false;
@@ -711,7 +678,7 @@ struct DVideo : Video, RenderThread {
 
         if(_width != inputWidth || _height != inputHeight) {
             resize( inputWidth = _width, inputHeight = _height );
-            RECT windowSize = getDimension( settings.handle );
+            RECT windowSize = Win::getDimension( settings.handle );
             viewScreen.update( viewport, windowSize.right, windowSize.bottom );
             lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
         }
@@ -737,7 +704,7 @@ struct DVideo : Video, RenderThread {
             h = d3dcaps.MaxTextureHeight;
 
         renderBuffer->data = new uint32_t[w * h]();
-        RECT windowSize = getDimension( settings.handle );
+        RECT windowSize = Win::getDimension( settings.handle );
         viewScreen.update( viewport, windowSize.right, windowSize.bottom );
         lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
     }
@@ -788,19 +755,6 @@ struct DVideo : Video, RenderThread {
         wait();
         settings.filter = filter;
         updateFilter();
-    }
-
-    auto getParentHandle() -> HWND {
-        HWND parent = GetParent( settings.handle );
-        if(!parent) return settings.handle;
-        return parent;
-    }
-
-    auto getDimension(HWND handle) -> RECT {
-        RECT rect;
-        GetClientRect(handle, &rect);
-
-        return rect;
     }
 
     auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {
@@ -946,12 +900,11 @@ struct DVideo : Video, RenderThread {
 		
 		return true;
 	}
-	
-    DVideo(bool XPMode) : XPMode(XPMode) {
+
+    D3D9(bool XPMode) : XPMode(XPMode) {
         lpD3DDevice = 0;
         lpD3D = 0;
         mFont = 0;
-        monPos = 0;
 
         vertex_buffer = 0;
         surface = 0;
@@ -971,18 +924,12 @@ struct DVideo : Video, RenderThread {
         AddFontMemResourceEx( &sourceCodePro, sizeof(sourceCodePro), NULL, &nFonts );
     }
 
-    ~DVideo() {
+    ~D3D9() {
         RenderThread::enable(false);
         term();
     }
 };
 
 #undef D3DVERTEX
-
-auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL {
-
-    monList[monPos++] = hMonitor;
-    return true;  // continue enumerating
-}
 
 }

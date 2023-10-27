@@ -94,10 +94,8 @@ VideoFpsLayout::VideoFpsLayout() : updateDelay("ms") {
 
 VideoLayout::VideoLayout() {
     setMargin(10);
-	
-    // append only if direct3d is present
+
     bool showExclusiveFullscreenCheck = false;
-    // append only if GL is present
     bool showHardSync = false;
     
 	auto selectedDriver = program->getVideoDriver();
@@ -107,7 +105,7 @@ VideoLayout::VideoLayout() {
 		if (driver == selectedDriver) {
 			driverLayout.combo.setSelection( i );
 		}
-        if(driver == "Direct3D")
+        if(GUIKIT::String::foundSubStr(driver, "Direct3D"))
             showExclusiveFullscreenCheck = true;
         
         if(GUIKIT::String::foundSubStr(driver, "GL") || GUIKIT::String::foundSubStr(driver, "Direct3D11"))

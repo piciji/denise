@@ -88,7 +88,7 @@ struct DragndropOverlay {
         return result;
     }
 
-    auto updateAlpha() -> void {
+    auto updateAlpha() -> bool {
         bool bufferChanged = false;
 
         for (int l = 0; l < MAX_LINES; l++) {
@@ -105,6 +105,8 @@ struct DragndropOverlay {
 
         if (bufferChanged)
             updateBuffer();
+
+        return bufferChanged;
     }
 
     auto setAlpha(Image& bitmap, Slot& slot) -> bool {
@@ -223,6 +225,8 @@ struct DragndropOverlay {
             y += bitmap.scaledHeight + lineSpace;
         }
 
+        texWidth = bufferWidth;
+        texHeight = bufferHeight;
         buildTexture(bufferWidth, bufferHeight);
     }
 

@@ -1,9 +1,14 @@
 
+#define DRV_UNIT
 #include "driver.h"
 #include "video/dragnDropOverlay.h"
 
-#ifdef DRV_DIRECT3D
+#ifdef DRV_DIRECT3D9
 	#include "video/d3d9/dvideo.cpp"
+#endif
+
+#ifdef DRV_DIRECT3D11
+    #include "video/d3d11/d3d11.cpp"
 #endif
 
 #ifdef DRV_DSOUND
@@ -70,10 +75,14 @@ namespace DRIVER {
 
 auto Video::available() -> std::vector<std::string> {
 	return {
-	#ifdef DRV_DIRECT3D
-		"Direct3D",
+    #ifdef DRV_DIRECT3D11
+        "Direct3D11",
+    #endif
+
+	#ifdef DRV_DIRECT3D9
+		"Direct3D9",
 	#endif
-				
+
 	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
 		"OpenGL",
 	#endif
@@ -81,10 +90,14 @@ auto Video::available() -> std::vector<std::string> {
 }
 
 auto Video::preferred() -> std::string {
-	#ifdef DRV_DIRECT3D
-		return "Direct3D";
+    #ifdef DRV_DIRECT3D11
+        return "Direct3D11";
+    #endif
+
+	#ifdef DRV_DIRECT3D9
+		return "Direct3D9";
 	#endif
-				
+
 	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
 		return "OpenGL";
 	#endif
@@ -93,8 +106,12 @@ auto Video::preferred() -> std::string {
 }
 
 auto Video::create(const std::string& driver) -> Video* {
-    #ifdef DRV_DIRECT3D
-        if(driver == "Direct3D") return new DVideo( !IsAppThemed() || (Win::getVersion() <= 0x0501) );
+    #ifdef DRV_DIRECT3D11
+        if(driver == "Direct3D11") return new D3D11( );
+    #endif
+
+    #ifdef DRV_DIRECT3D9
+        if(driver == "Direct3D9") return new D3D9( !IsAppThemed() || (Win::getVersion() <= 0x0501) );
 	#endif
 
 	#ifdef DRV_WGL
@@ -117,26 +134,26 @@ auto Audio::available() -> std::vector<std::string> {
 
     #ifdef DRV_XAUDIO29
 		if (Win::getVersion() >= 0x0a00)
-            list.push_back("XAudio 2.9"); 
+            list.push_back("XAudio 2.9");
 	#endif
-        
+
     #ifdef DRV_XAUDIO28
 		if (Win::getVersion() >= 0x0602)
-            list.push_back("XAudio 2.8"); 
+            list.push_back("XAudio 2.8");
 	#endif
-        
+
     #ifdef DRV_XAUDIO27
         if (Win::getVersion() >= 0x0501)
-            list.push_back("XAudio 2.7"); 
+            list.push_back("XAudio 2.7");
 	#endif
-	
+
     #ifdef DRV_WASAPI
 		list.push_back("Wasapi Exclusive");
-	#endif 
-	
+	#endif
+
     #ifdef DRV_WASAPI
 		list.push_back("Wasapi Shared");
-	#endif    
+	#endif
 
 	#ifdef DRV_PULSEAUDIO
 		list.push_back("PulseAudio");
@@ -149,11 +166,11 @@ auto Audio::available() -> std::vector<std::string> {
     #ifdef DRV_OPENAL
 		list.push_back("OpenAL");
 	#endif
-        
+
     #ifdef DRV_DSOUND
 		list.push_back("DirectSound");
 	#endif
-	
+
     return list;
 }
 
@@ -163,12 +180,12 @@ auto Audio::preferred() -> std::string {
         if (Win::getVersion() >= 0x0a00)
             return "XAudio 2.9";
     #endif
-    
+
     #ifdef DRV_XAUDIO28
         if (Win::getVersion() >= 0x0602)
             return "XAudio 2.8";
     #endif
-        
+
     #ifdef DRV_XAUDIO27
         if (Win::getVersion() >= 0x0501)
             return "XAudio 2.7";
@@ -177,11 +194,11 @@ auto Audio::preferred() -> std::string {
     #ifdef DRV_WASAPI
 		return "Wasapi Shared";
 	#endif
-        
+
     #ifdef DRV_DSOUND
 		return "DirectSound";
 	#endif
-        
+
 	#ifdef DRV_PULSEAUDIO
 		return "PulseAudio";
 	#endif
@@ -189,7 +206,7 @@ auto Audio::preferred() -> std::string {
     #ifdef DRV_COREAUDIO
         return "CoreAudio";
     #endif
-				
+
 	#ifdef DRV_OPENAL
 		return "OpenAL";
 	#endif
@@ -197,7 +214,7 @@ auto Audio::preferred() -> std::string {
 	return "";
 }
 
-auto Audio::create(const std::string& driver) -> Audio* {	
+auto Audio::create(const std::string& driver) -> Audio* {
 	#ifdef DRV_DSOUND
         if(driver == "DirectSound") return new DAudio();
 	#endif
@@ -251,7 +268,7 @@ auto Input::available() -> std::vector<std::string> {
 	#ifdef DRV_RAWINPUT
 		"RawInput",
 	#endif
-		
+
     #ifdef DRV_IOKIT
         "IoKit",
     #endif
@@ -259,7 +276,7 @@ auto Input::available() -> std::vector<std::string> {
     #if defined(DRV_XLIB) && defined(DRV_UDEV)
 		"Xlib/Udev",
 	#endif
-        
+
 	#if defined(DRV_XLIB) && defined(DRV_SDLINPUT)
 		"Xlib/Sdl",
 	#endif
@@ -278,19 +295,19 @@ auto Input::preferred() -> std::string {
     #ifdef DRV_DINPUT8
 		return "DirectInput 8";
 	#endif
-        
+
     #ifdef DRV_DINPUT7
 		return "DirectInput 7";
 	#endif
 
     #ifdef DRV_DINPUT5
 		return "DirectInput 5";
-	#endif 
-	
+	#endif
+
     #ifdef DRV_IOKIT
         return "IoKit";
     #endif
-    
+
 	#if defined(DRV_XLIB) && defined(DRV_UDEV)
 		return "Xlib/Udev";
 	#endif
@@ -306,7 +323,7 @@ auto Input::preferred() -> std::string {
 	return "";
 }
 
-auto Input::create(const std::string& driver) -> Input* {	
+auto Input::create(const std::string& driver) -> Input* {
 	#ifdef DRV_DINPUT5
         if(driver == "DirectInput 5") return new DInput(0x500);
     #endif
@@ -326,7 +343,7 @@ auto Input::create(const std::string& driver) -> Input* {
 	#ifdef DRV_IOKIT
         if(driver == "IoKit") return new Iokit();
 	#endif
-            
+
 	#if defined(DRV_XLIB) && defined(DRV_UDEV)
 		if(driver == "Xlib/Udev") return new XInput("udev");
 	#endif

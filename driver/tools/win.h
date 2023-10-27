@@ -1,5 +1,5 @@
 
-//following is for windows OS only
+//following is for Windows OS only
 #pragma once
 
 #ifdef _MSC_VER
@@ -12,12 +12,15 @@
 #include <windows.h>
 #include "hid.h"
 
-#define dxRelease(__m) if(__m) __m->Release(), __m = 0;
+#define dxRelease(__m) if(__m) { __m->Release(), __m = nullptr; }
 
 struct Win {
 
     typedef LONG NTSTATUS, *PNTSTATUS;
     typedef NTSTATUS(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
+
+    static HMONITOR monList[MAX_MONITORS];
+    static unsigned monPos;
 
     static auto getVersion() -> unsigned {
         static unsigned version = 0;
@@ -200,4 +203,57 @@ struct Win {
         return Hid::Key::Unknown;
     }
 
+    static auto getParentHandle(HWND handle) -> HWND {
+        HWND parent = GetParent( handle );
+        if(!parent) return handle;
+        return parent;
+    }
+
+    static auto getDimension(HWND handle) -> RECT {
+        RECT rect;
+        GetClientRect(handle, &rect);
+
+        return rect;
+    }
+
+    static auto getFullscreenAdapter(HWND handle) -> int {
+        MONITORINFO info;
+        info.cbSize = sizeof(info);
+        HMONITOR hMon = MonitorFromWindow( handle, MONITOR_DEFAULTTONEAREST);
+
+        if (!hMon)
+            return -1;
+
+        if (monPos == 0) {
+            EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)NULL );
+        }
+
+        if (GetMonitorInfo(hMon, &info)) {
+            RECT outScreenParent = getDimension( handle );
+            unsigned monitorWidth = std::abs(info.rcMonitor.right - info.rcMonitor.left);
+            unsigned monitorHeight = std::abs(info.rcMonitor.bottom - info.rcMonitor.top);
+
+            if ( (outScreenParent.right == monitorWidth)
+                 && (outScreenParent.bottom == monitorHeight) ) {
+
+                for (unsigned i = 0; i < monPos; i++) {
+                    if (monList[i] == hMon) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
+    }
+
+    static auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL {
+
+        monList[monPos++] = hMonitor;
+        return true;  // continue enumerating
+    }
 };
+
+#ifdef DRV_UNIT
+HMONITOR Win::monList[MAX_MONITORS];
+unsigned Win::monPos = 0;
+#endif

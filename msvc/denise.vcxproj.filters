@@ -269,6 +269,9 @@
     <Filter Include="emulation\libami\drive\dms">
       <UniqueIdentifier>{65d638e5-b9d7-4615-8b58-b38894fb3274}</UniqueIdentifier>
     </Filter>
+    <Filter Include="driver\video\d3d11">
+      <UniqueIdentifier>{7d0eb547-8099-44b3-8d6a-39ef86431f3e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -954,6 +957,15 @@
     </ClInclude>
     <ClInclude Include="..\emulation\libami\drive\dms\pfile.h">
       <Filter>emulation\libami\drive\dms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\viewport.h">
+      <Filter>driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\freetype.h">
+      <Filter>driver\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\d3d11\shaders.h">
+      <Filter>driver\video\d3d11</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1817,6 +1829,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libami\drive\dms\u_rle.cpp">
       <Filter>emulation\libami\drive\dms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\d3d11\d3d11.cpp">
+      <Filter>driver\video\d3d11</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

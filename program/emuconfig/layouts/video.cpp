@@ -645,13 +645,13 @@ auto VideoLayout::updateVisibillity() -> void {
     base.option.tvGamma.setEnabled( crtChecked && base.mode.palette.checked() && _pal );
 	
     if (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL) {
-        if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::HLSL) {
+        //if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::HLSL) {
             if(crtGpuChecked) {
                 base.mode.svideoCpu.setChecked();
                 _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
             }
 			base.mode.svideoGpu.setEnabled(false);
-        }
+        //}
                     
         tab2.setEnabled(false);
         tab3.setEnabled(false);
@@ -684,7 +684,7 @@ auto VideoLayout::updateVisibillity() -> void {
     bloom.glow.active.setEnabled();
     bloom.weight.slider.setEnabled( bloom.weight.active.checked() );
 
-    // only enabled, when GPU active
+    // only enabled when GPU active
 	
 	if (crtGpuChecked) {	
 		crtGlitch.lumaNoise.slider.setEnabled( crtGlitch.lumaNoise.active.checked() );

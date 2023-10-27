@@ -11,26 +11,23 @@
     #define glGetProcAddress(name) (*glXGetProcAddress)((const GLubyte*)(name))
 #endif
 
-#include <cstring>
-#ifdef DRV_FREETYPE
-    #include <ft2build.h>
-    #include FT_FREETYPE_H
-	#include "../../tools/font.h"
-#endif
-
 #include "bind.h"
 #include "../../tools/chronos.h"
 #include "../viewport.h"
 
 namespace DRIVER {
+    #include "shaders.h"
+    #include "utility.h"
+}
 
-#include "../../tools/tools.h"
-#include "../../tools/shaderpass.h"
-#include "shaders.h"
-#include "utility.h"
 #ifdef DRV_FREETYPE
     #include "text.h"
 #endif
+
+namespace DRIVER {
+
+#include "../../tools/tools.h"
+#include "../../tools/shaderpass.h"
 #include "dragndropOverlay.h"
 
 struct CustomTexture {        

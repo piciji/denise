@@ -43,7 +43,9 @@
     <ClInclude Include="..\driver\tools\tools.h" />
     <ClInclude Include="..\driver\tools\utf8.h" />
     <ClInclude Include="..\driver\tools\win.h" />
+    <ClInclude Include="..\driver\video\d3d11\shaders.h" />
     <ClInclude Include="..\driver\video\d3d9\dragnDropOverlay.h" />
+    <ClInclude Include="..\driver\video\freetype.h" />
     <ClInclude Include="..\driver\video\opengl\bind.h" />
     <ClInclude Include="..\driver\video\opengl\main.h" />
     <ClInclude Include="..\driver\video\opengl\opengl.h" />
@@ -53,6 +55,7 @@
     <ClInclude Include="..\driver\video\opengl\text.h" />
     <ClInclude Include="..\driver\video\opengl\utility.h" />
     <ClInclude Include="..\driver\video\thread\renderThread.h" />
+    <ClInclude Include="..\driver\video\viewport.h" />
     <ClInclude Include="..\emulation\cia\base.h" />
     <ClInclude Include="..\emulation\cia\m6526.h" />
     <ClInclude Include="..\emulation\cia\m8520.h" />
@@ -330,6 +333,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\d3d11\d3d11.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\driver\video\d3d9\dvideo.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -1650,7 +1659,7 @@
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D;GUIKIT_WINAPI;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -1663,7 +1672,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;d3d11.lib;d3dcompiler.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -1681,7 +1690,7 @@ xcopy "$(ProjectDir)..\data\libs\shared\x86\*.dll" "$(TargetDir)" /e /y /i /r</C
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D;GUIKIT_WINAPI;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -1697,7 +1706,7 @@ xcopy "$(ProjectDir)..\data\libs\shared\x86\*.dll" "$(TargetDir)" /e /y /i /r</C
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;d3d11.lib;d3dcompiler.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ENTRY:"mainCRTStartup" %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -1713,7 +1722,7 @@ xcopy "$(ProjectDir)..\data\libs\shared\x86\*.dll" "$(TargetDir)" /e /y /i /r</C
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D;GUIKIT_WINAPI;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <Optimization>Disabled</Optimization>
@@ -1728,7 +1737,7 @@ xcopy "$(ProjectDir)..\data\libs\shared\x86\*.dll" "$(TargetDir)" /e /y /i /r</C
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;d3d11.lib;d3dcompiler.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -1746,7 +1755,7 @@ xcopy "$(ProjectDir)..\data\libs\shared\x64\*.dll" "$(TargetDir)" /e /y /i /r</C
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D;GUIKIT_WINAPI;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1763,7 +1772,7 @@ xcopy "$(ProjectDir)..\data\libs\shared\x64\*.dll" "$(TargetDir)" /e /y /i /r</C
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d9.lib;d3dx9.lib;d3d11.lib;d3dcompiler.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ENTRY:"mainCRTStartup" %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>

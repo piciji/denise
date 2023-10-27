@@ -1,6 +1,8 @@
 
-#include "../../tools/utf8.h"
 #include <thread>
+#include "../freetype.h"
+
+namespace DRIVER {
 
 struct OpenGLText {
 
@@ -11,74 +13,58 @@ struct OpenGLText {
         bool criticalUpdated = false;
     } current;
 
-    FT_Library ft = nullptr;
-    FT_Face face = nullptr;
-    FT_GlyphSlot glyph;
+    Freetype ft;
+
     GLuint vao = 0;
     GLuint vbo = 0;
-    
+
     GLuint program = 0;
     GLuint vertex = 0;
     GLuint fragment = 0;
-    
+
     GLuint textTex = 0;
     std::mutex updateMutex;
-    
-    FT_Byte* data = nullptr;
+
+    bool initialized = false;
 
     enum {
         ALIGN_LEFT/*Top*/ = 0,  ALIGN_CENTER = 1, ALIGN_RIGHT = 2, VALIGN_BOTTOM = 4, VALIGN_CENTER = 16
     };
-        
-    unsigned char* textBuffer = nullptr;
-    unsigned totalWidth = 0;
-    unsigned totalHeight = 0;
-    
-    bool initialized = false;
-    bool disable = false;
-    
+
+
     OpenGLText() {
     }
-    
+
     ~OpenGLText() {
         term();
     }
-    
+
     auto setFontSize(int value) -> void {
-        FT_Set_Pixel_Sizes(face, 0, value);
+        ft.setFontSize(value);
     }
-    
+
     auto setColor(float r, float g, float b, float a) -> void {
         if (program) {
             glUseProgram(program);
             glUniform4f(glGetUniformLocation(program, "color"), r, g, b, a);
-        }            
+        }
     }
-    
+
     auto term() -> void {
-        
-        if(face) {
-            FT_Done_Face(face);
-            face = nullptr;
-        }
-        
-        if(ft) {
-            FT_Done_FreeType(ft);
-            ft = nullptr;
-        }
-        
+        ft.term();
+
         if (vertex) {
             glDetachShader(program, vertex);
             glDeleteShader(vertex);
             vertex = 0;
         }
-        
+
         if (fragment) {
             glDetachShader(program, fragment);
             glDeleteShader(fragment);
             fragment = 0;
         }
-        
+
         if (program) {
             glDeleteProgram(program);
             program = 0;
@@ -88,48 +74,24 @@ struct OpenGLText {
             glDeleteBuffers(1, &vbo);
             vbo = 0;
         }
-        
+
         if (vao) {
             glDeleteVertexArrays(1, &vao);
             vao = 0;
         }
-        
-        if (textBuffer) {
-            delete[] textBuffer;
-            textBuffer = nullptr;
-        }
-        
+
         if (textTex) {
             glDeleteTextures(1, &textTex);
-            textTex = 0;            
+            textTex = 0;
         }
-        
-        if (data) {
-            delete[] data;
-            data = nullptr;
-        }
-        
+
         initialized = false;
     }
-    
+
     auto init() -> bool {
         term();
-        #include "../../tools/fonts.c"
-        
-        if (FT_Init_FreeType( &ft ))
+        if (!ft.init())
             return false;
-        
-        if (FT_New_Face(ft, getFontFile().c_str(), 0, &face)) {
-            data = new FT_Byte[ sizeof (sourceCodePro) ];
-            std::memcpy(data, &sourceCodePro, sizeof (sourceCodePro));
-            
-            if (FT_New_Memory_Face(ft, data, sizeof(sourceCodePro), 0, &face))
-                return false;            
-        }
-        
-        FT_Set_Pixel_Sizes(face, 0, 1);
-        
-        glyph = face->glyph;      
 
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
@@ -143,7 +105,7 @@ struct OpenGLText {
         fragment = _glCreateShader(program, GL_FRAGMENT_SHADER, OpenGLTextFragmentShader.c_str(), error);
         _glLinkProgram( nullptr, program, error );
         glUseProgram( program );
-        
+
         if (!error.empty()) {
             return false;
         }
@@ -151,45 +113,45 @@ struct OpenGLText {
         auto fontCoords = glGetAttribLocation(program, "fontCoords");
         glEnableVertexAttribArray(fontCoords);
         glVertexAttribPointer(fontCoords, 4, GL_FLOAT, GL_FALSE, 0, 0);
-        
+
         return initialized = true;
     }
-    
+
     auto showText(unsigned screenWidth, unsigned screenHeight, float xAdjust, float yAdjust, int align) -> void {
-        if (disable || !textTex || !initialized) {
+        if (!ft.hasText() || !textTex || !initialized) {
             return;
         }
-	
+
 		glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textTex);
-		
+
         glUseProgram(program);
 		glEnable(GL_BLEND);
 		glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
         float screenx = 2.0f / screenWidth, screeny = 2.0f / screenHeight;
-        float textx = (float)totalWidth * screenx;
-        float texty = (float)totalHeight * screeny;
-        
+        float textx = (float)ft.totalWidth * screenx;
+        float texty = (float)ft.totalHeight * screeny;
+
         float x = -1.0;
-        float y = 1.0;        
-        
+        float y = 1.0;
+
         if (align & ALIGN_CENTER) {
             x = 0.0 - textx / 2;
         } else if(align & ALIGN_RIGHT) {
             x = 1.0 - textx;
         }
-        
+
         if (align & VALIGN_CENTER) {
             y = 0.0 + texty / 2;
         } else if (align & VALIGN_BOTTOM) {
             y = -1.0 + texty;
-        }              
-        
+        }
+
         x += xAdjust;
-        y += yAdjust;        
-        
+        y += yAdjust;
+
         GLfloat box[4][4] = {
             {x, y, 0, 0},
             {x + textx, y, 1, 0},
@@ -202,88 +164,12 @@ struct OpenGLText {
         glDisable(GL_BLEND);
     }
 
-    auto buildTexture(std::string text) -> void {
-        disable = text.empty();
-        
-        if (disable || !initialized) 
+    auto buildTexture(std::string& text) -> void {
+        if (!ft.buildTexture(text))
             return;
 
-        unsigned index = 0;
-        unsigned code;
-        totalWidth = 0;
-        totalHeight = 0;
-        unsigned upHeight = 0;
-        unsigned downHeight = 0;
-        
-        while (code = utf8decode(text, index)) {
-                                       
-            if (FT_Load_Char(face, code, FT_LOAD_RENDER)) {
-                continue;
-            }
-            
-            totalWidth += (glyph->advance.x >> 6 );            
-            
-            upHeight = std::max<unsigned>(upHeight, (unsigned)(glyph->bitmap.rows ));
-			
-			if (glyph->bitmap_top < 0)
-				continue;
-            
-            if (glyph->bitmap.rows > glyph->bitmap_top)
-                downHeight = std::max<unsigned>(downHeight, glyph->bitmap.rows - glyph->bitmap_top);
-        }
-        
-        upHeight += 1;
-        downHeight += 1;
-        totalHeight = upHeight + downHeight;
-                
-        if (textBuffer) {
-            delete[] textBuffer;
-            textBuffer = nullptr;
-        }
-                    
-        if (textTex) {
+        if (textTex)
             glDeleteTextures(1, &textTex);
-            textTex = 0;            
-        }
-        
-        unsigned _size = totalWidth * totalHeight;
-        
-        if (_size == 0) {
-            disable = true;
-            return;
-        }            
-            
-        textBuffer = new unsigned char[ _size ];
-        std::memset(textBuffer, 0, _size );
-
-        index = 0;
-        unsigned writePos = 0;
-		unsigned curPos;
-        
-        while (code = utf8decode(text, index)) {
-            if (FT_Load_Char(face, code, FT_LOAD_RENDER)) {
-                continue;
-            }
-            
-            for(unsigned i = 0; i < glyph->bitmap.rows; i++) {
-                            
-                for(unsigned j = 0; j < glyph->bitmap.width; j++) {
-                                       
-					if (glyph->bitmap_top < 0) {
-						curPos = (totalHeight + glyph->bitmap_top + i) * totalWidth + writePos + j + glyph->bitmap_left;	
-						
-					} else {						
-						curPos = (upHeight - glyph->bitmap_top + i) * totalWidth + writePos + j + glyph->bitmap_left;
-					}
-					
-					if (curPos >= _size)
-						break;
-                                                           
-                    *( textBuffer + curPos ) = glyph->bitmap.buffer[i * glyph->bitmap.width + j ];                                        
-                }
-            }
-            writePos += (glyph->advance.x >> 6);
-        }
 
         glActiveTexture(GL_TEXTURE0);
         glGenTextures(1, &textTex);
@@ -293,8 +179,8 @@ struct OpenGLText {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, totalWidth, totalHeight, 0, GL_RED, GL_UNSIGNED_BYTE, textBuffer);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, ft.totalWidth, ft.totalHeight, 0, GL_RED, GL_UNSIGNED_BYTE, ft.textBuffer);
     }
 
     auto updateMessage() -> void {
@@ -313,7 +199,7 @@ struct OpenGLText {
             bool critical = current.critical;
             updateMutex.unlock();
 
-            if (!disable) {
+            if (ft.hasText()) {
                 if (critical)
                     setColor(0.7f, 0.0f, 0.0f, 1.0f);
                 else
@@ -343,7 +229,7 @@ struct OpenGLText {
             current.critical = critical;
 
             if (instant) {
-                if (!disable) {
+                if (ft.hasText()) {
                     if (critical)
                         setColor(0.7f, 0.0f, 0.0f, 1.0f);
                     else
@@ -358,3 +244,5 @@ struct OpenGLText {
 
     }
 };
+
+}

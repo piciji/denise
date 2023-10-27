@@ -67,9 +67,6 @@ struct D3d9DragndropOverlay : DragndropOverlay {
         lpD3DDevice->CreateTexture( texStorageWidth, texStorageHeight, 1, 0, D3DFMT_A8R8G8B8,
                                     static_cast<D3DPOOL> (D3DPOOL_MANAGED), &texture, nullptr);
 
-        texWidth = width;
-        texHeight = height;
-
         updateBuffer();
     }
 
