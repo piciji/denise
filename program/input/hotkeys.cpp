@@ -99,7 +99,7 @@ auto InputManager::setCustomHotkeys() -> void {
     customHotkeys.push_back( {Hotkey::Id::Audio, "Audio", true} );
 	customHotkeys.push_back( {Hotkey::Id::Geometry, "Geometry", true} );
     customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
-    customHotkeys.push_back( {Hotkey::Id::AutoStart, "autostart last program", true} );
+    customHotkeys.push_back( {Hotkey::Id::AutoStart, "autostart media", true} );
 }
 
 auto InputManager::fireHotkey(InputMapping* trigger) -> void {
