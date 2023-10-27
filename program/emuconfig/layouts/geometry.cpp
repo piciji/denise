@@ -227,10 +227,10 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
             return;
         int offset = type - (int)CropType::Free;
 
-        program->setCrop(emulator, "crop_left", program->getCropDefault(offset, 0));
-        program->setCrop(emulator, "crop_right", program->getCropDefault(offset, 1));
-        program->setCrop(emulator, "crop_top", program->getCropDefault(offset, 2));
-        program->setCrop(emulator, "crop_bottom", program->getCropDefault(offset, 3));
+        program->setCrop(emulator, "crop_left", program->getCropDefault(emulator, offset, 0));
+        program->setCrop(emulator, "crop_right", program->getCropDefault(emulator, offset, 1));
+        program->setCrop(emulator, "crop_top", program->getCropDefault(emulator, offset, 2));
+        program->setCrop(emulator, "crop_bottom", program->getCropDefault(emulator, offset, 3));
         updateBorderSlider();
         updateCrop("");
     };
@@ -342,7 +342,7 @@ auto GeometryLayout::updateVisibillity() -> void {
     cropLayout.cropRight.setEnabled( val >= 6 );
     cropLayout.cropTop.setEnabled( val >= 6 );
     cropLayout.cropBottom.setEnabled( val >= 6 );
-    cropLayout.hotkey.reset.setEnabled( dynamic_cast<LIBAMI::Interface*>(emulator) && (val == 7 || val == 8 || val == 9) );
+    cropLayout.hotkey.reset.setEnabled( val >= 6 );
 }
 
 auto GeometryLayout::translate() -> void {
@@ -377,6 +377,7 @@ auto GeometryLayout::translate() -> void {
 
     cropLayout.hotkey.label.setText( trans->get("switchable by Hotkey", {}, true) );
     cropLayout.hotkey.reset.setText( trans->getA("reset") );
+    cropLayout.hotkey.reset.setTooltip( trans->getA("reset free border tooltip") );
 
     for(int i = 0; i < 12; i++) {
         cropLayout.hotkey.boxes[i]->setText( std::to_string(i) );

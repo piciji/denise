@@ -148,7 +148,10 @@ auto Program::getCropHotkeyDefault() -> unsigned {
     return 1 | 2 | 4 | 8 | 0x80 | 0x100 | 0x200;
 }
 
-auto Program::getCropDefault(int pos, int direction) -> unsigned {
+auto Program::getCropDefault(Emulator::Interface* emulator, int pos, int direction) -> unsigned {
+    if (!dynamic_cast<LIBAMI::Interface*>(emulator))
+        return 0;
+
     if (pos > 5 || direction > 3)
         return 0;
 
@@ -194,7 +197,6 @@ auto Program::getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& 
     typedef Emulator::Interface::CropType CropType;
     auto settings = getSettings( emulator );
     int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
-    bool hasAmiga = dynamic_cast<LIBAMI::Interface*>(emulator);
 
     if ((CropType)type == CropType::AllSidesRatio || (CropType)type == CropType::AllSides) {
         crop.right = crop.top = crop.bottom = crop.left = settings->get<unsigned>("crop_all", 0, {0u, 100u});
@@ -202,10 +204,10 @@ auto Program::getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& 
         int offset = type - (int)Emulator::Interface::CropType::Free;
         std::string _offset = offset ? std::to_string(offset) : "";
 
-        crop.left = settings->get<unsigned>("crop_left" + _offset, hasAmiga ? getCropDefault(offset, 0) : 0, {0u, 100u});
-        crop.right = settings->get<unsigned>("crop_right" + _offset, hasAmiga ? getCropDefault(offset, 1) : 0, {0u, 100u});
-        crop.top = settings->get<unsigned>("crop_top" + _offset, hasAmiga ? getCropDefault(offset, 2) : 0, {0u, 100u});
-        crop.bottom = settings->get<unsigned>("crop_bottom" + _offset, hasAmiga ? getCropDefault(offset, 3) : 0, {0u, 100u});
+        crop.left = settings->get<unsigned>("crop_left" + _offset, getCropDefault(emulator, offset, 0), {0u, 100u});
+        crop.right = settings->get<unsigned>("crop_right" + _offset, getCropDefault(emulator, offset, 1), {0u, 100u});
+        crop.top = settings->get<unsigned>("crop_top" + _offset, getCropDefault(emulator, offset, 2), {0u, 100u});
+        crop.bottom = settings->get<unsigned>("crop_bottom" + _offset, getCropDefault(emulator, offset, 3), {0u, 100u});
     } else
         return false;
 

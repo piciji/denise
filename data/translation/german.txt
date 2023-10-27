@@ -767,4 +767,5 @@ crop complete ratio = komplett abschneiden und Anzeigeverhältnis einhalten
 crop all sides equally ratio = Allseitig gleichmäßig abschneiden und Anzeigeverhältnis einhalten
 crop complete ratio tooltip = Da Amiga Spiele, im Gegensatz zu C64 Spielen, unterschiedliche Rahmengrößen verwenden, kann diese Funktion nicht in allen Spielen immer die ideale Maximierung am Bildschirm garantieren. In den Feldern "Jede Seite manuell abschneiden" können alternativ selbst definierte Werte angelegt werden. Einige Felder enthalten bereits vordefinierte Werte für typische Rahmengrößen.
 toggle border prev = Rahmen umschalten (zurück)
-autostart last program = Autostart letztes Programm
+autostart media = Autostart Programm/Diskette
+reset free border tooltip = Setzt für die Auswahlen 7, 8, 9 auf vorgegebene, in vielen Spielen gut nutzbare, Werte zurück.

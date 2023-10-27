@@ -767,4 +767,5 @@ crop complete ratio = Crop complete and maintain display ratio
 crop all sides equally ratio = Crop all sides equally and maintain display ratio
 crop complete ratio tooltip = Since Amiga games, in contrast to C64 games, use different frame sizes, this function cannot always guarantee the ideal maximization on the screen in all games. In the fields "crop each side manually" you can alternatively create self-defined values. Some fields already contain predefined values for typical frame sizes.
 toggle border prev = toggle border (prev)
-autostart last program = Autostart last program
+autostart media = Autostart program/disk
+reset free border tooltip = For the selection 7, 8, 9, resets to predefined values that are easily usable in many games.
