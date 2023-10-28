@@ -50,7 +50,7 @@ endif
 
 ifneq ($(findstring freetype,$(drv)),)
     ifneq ($(findstring gl,$(drv)),)
-	ifeq ($(platform),windows)
+	ifeq ($(SubSystem),win32)
 	    drvlink += -lfreetype
 	else
 		drvflags += $(shell $(env)pkg-config --cflags freetype2)

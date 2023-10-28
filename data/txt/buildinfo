@@ -1,48 +1,52 @@
 
-There is a makefile in 'drivers' folder. There you can remove some drivers, you don't need
-or don't want to install, like SDL2, freetype or openal. simply ignore removed drivers in following installation guide.
-For example you could remove all audio drivers. The emulator will be running without audio.
-
-WINDOWS (XP and higher)
--------
-install mingw32 or 64 (includes gnu compiler, directx, opengl, hid ... almost everything)
+WINDOWS (7 and higher)
+-----------
+[install MSYS2 and start]
+pacman --noconfirm -Sy
+pacman --needed --noconfirm -S bash pacman pacman-mirrors msys2-runtime
+[restart shell]
+pacman --noconfirm -Su
+[64 bit]
+pacman -S --noconfirm --needed wget git make mingw-w64-x86_64-toolchain mingw-w64-x86_64-ntldd mingw-w64-x86_64-zlib mingw-w64-x86_64-pkg-config mingw-w64-x86_64-libxml2 mingw-w64-x86_64-freetype mingw-w64-x86_64-python3 mingw-w64-x86_64-drmingw mingw-w64-x86_64-harfbuzz
+[32 bit]
+pacman -S --noconfirm --needed wget git make mingw-w64-i686-toolchain mingw-w64-i686-ntldd mingw-w64-i686-zlib mingw-w64-i686-pkg-config mingw-w64-i686-libxml2 mingw-w64-i686-freetype mingw-w64-i686-python3 mingw-w64-i686-drmingw mingw-w64-i686-harfbuzz
+[start MinGW 32 or 64 ]
+pacman -S make
+pacman -S gcc
+git clone https://piciji@bitbucket.org/piciji/denise.git denise
+make -j*            (*) concurrent tasks: replace this with the number of your CPU cores
+make install
+./out/Denise.exe
+-----------
+without MSYS2
+-----------
+IDE's like CLion don't support MSYS and therefore no posix shell.
+download mingw32 or 64
 https://github.com/niXman/mingw-builds-binaries/releases
-expand assets and download
-
-NOTE: in the following we need to include more headers / libraries to our mingw
-installation folder. The first include / lib folders you see in mingw main folder are NOT the
-target folders, therefore change to subfolder: x86_64-w64-mingw32 (64 bit) or i686-w64-mingw32 (32 bit)
-
-freetype: (32 or 64 bit)
+expand assets and download/unpack
+download or git clone denise
+in the following we need to include more headers / libraries to our mingw installation folder.
+the first include / lib folders you see in mingw main folder are NOT the target folders,
+therefore change to subfolder: x86_64-w64-mingw32 (64 bit) or i686-w64-mingw32 (32 bit)
+from denise folder
   copy: data/libs/static/win(32)64/libfreetype.a to mingw lib folder
   copy: data/libs/include/ft2build.h to mingw include folder
   copy folder with contents: data/libs/include/freetype to mingw include folder
 
-open a cmd: (input cmd in windows search)
+open a cmd:
   we need to set mingw 32 or 64 bit to system environment variables
   input: set Path=<mingw_path>\mingw(32)64\bin;%Path%
   replace <mingw_path> with your specific mingw installation path
   i recommend to rename 'bin\mingw32-make.exe' to 'make.exe'
 
+in denise root folder
+make SubSystem=win32
+make SubSystem=win32 install
+---------------
+Visual Studio
+---------------
+there is a solution file in folder msvc
 
-build freetype
---------------
-Download the latest version of MSYS2
-https://idris2.readthedocs.io/en/latest/tutorial/windows.html
-Run the installer. Don’t install it under Program files as it needs to write files (the “unix” home directory lies under there, for example)
-In the directory where you installed MSYS2, find the file mingw64.ini and add the line MSYS2_PATH_TYPE=inherit. This adds the normal windows PATH to the shell in MSYS2.
-Start MSYS2 (click on mingw64.exe, as the icon in the start menu won’t pick up the MSYS2_PATH_TYPE from the ini, it can be added to the system settings)
-Update the installation with the latest releases with pacman -Syu
-Install the programs that the build needs with: pacman -S make mingw-w64-x86_64-gcc
-
-download and unpack latest freetype source code and put it in msys64/home/user/
-./configure --enable-static --without-zlib --without-bzip2
-make
-
-in denise root folder:
-make
-make install
-after compilation copy all contents in subfolder 'out' to any place you want.
 
 OSX
 ---
@@ -76,7 +80,7 @@ make install
 
 LINUX
 -----
-please install following dependencies if you haven't already
+install following dependencies if you haven't already
 
 GTK+ 3: apt-get install libgtk-3-dev
 OpenGL: apt-get install mesa-common-dev
@@ -84,10 +88,6 @@ OpenAL: apt-get install libopenal-dev
 Pulseaudio: apt-get install libpulse-dev
 SDL2: apt-get install libsdl2-dev
 Udev: apt-get install libudev-dev
-
-fix possible problem with missing -lGL
-sudo rm /usr/lib/x86_64-linux-gnu/libGL.so
-sudo ln -s /usr/lib/libGL.so.1 /usr/lib/x86_64-linux-gnu/libGL.so
 ---------------------------------------------
 ARCH Linux
 ----------

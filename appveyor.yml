@@ -99,7 +99,7 @@ for:
     - cmd: g++ -v
   
   build_script:
-    - cmd: mingw32-make && mingw32-make install
+    - cmd: mingw32-make SubSystem=win32 && mingw32-make SubSystem=win32 install
    
   after_build:
     - ps: |

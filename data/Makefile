@@ -59,13 +59,12 @@ compile = \
 
 
 #file handling
-ifeq ($(platform),windows)
+ifeq ($(SubSystem),win32)
     SHELL := cmd
     delete = del $(subst /,\,$1)
     copy = xcopy /I /Y $3 $(subst /,\,$1) $(subst /,\,$2)
 else
     delete = rm -rf $1
-    copy = rm -rf $2 && cp -r $1 $2
 endif
 
 
