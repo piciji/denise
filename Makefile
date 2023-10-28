@@ -310,7 +310,8 @@ endif
 
 install: ## Install
     ifeq ($(platform),windows)
-	$(call copy,data/$(translationFolder),out/$(translationFolder))	
+    ifeq ($(SubSystem),win32)
+	$(call copy,data/$(translationFolder),out/$(translationFolder))
 	$(call copy,data/$(dataFolder),out/$(dataFolder))
 	$(call copy,data/$(imgFolder)/bundle,out/$(imgFolder))
 	$(call copy,data/$(soundFolder),out/$(soundFolder), /S)
@@ -319,9 +320,28 @@ install: ## Install
 	$(call copy,data/txt/licence.md,out)
 
     ifneq ($(findstring i686, $(shell g++ --version) ),)
-	$(call copy,"data/libs/shared/x86/D3D*.dll",out)
+	$(call copy,"data/libs/shared/x86/D3DX9_43.dll",out)
     else
-	$(call copy,"data/libs/shared/x64/D3D*.dll",out)
+	$(call copy,"data/libs/shared/x64/D3DX9_43.dll",out)
+    endif
+    else
+	mkdir -p out/$(translationFolder)
+	mkdir -p out/$(dataFolder)
+	mkdir -p out/$(imgFolder)
+	mkdir -p out/$(soundFolder)
+	mkdir -p out/$(shaderFolder)
+	cp -r data/$(translationFolder)/* out/$(translationFolder)/
+	cp -r data/$(dataFolder)/* out/$(dataFolder)/
+	cp -r data/$(imgFolder)/bundle/* out/$(imgFolder)/
+	cp -r data/$(soundFolder)/* out/$(soundFolder)/
+	cp -r data/$(shaderFolder)/* out/$(shaderFolder)/
+	cp readme.md out
+	cp data/txt/licence.md out
+    ifneq ($(findstring i686, $(shell g++ --version) ),)
+	cp data/libs/shared/x86/D3DX9_43.dll out
+    else
+	cp data/libs/shared/x64/D3DX9_43.dll out
+    endif
     endif
 
     else ifeq ($(platform),macosx)

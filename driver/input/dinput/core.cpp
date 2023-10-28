@@ -2,6 +2,7 @@
 #include <dinput.h>
 #include <dbt.h>
 #include <cstring>
+#include <cstdint>
 
 #include "../../tools/win.h"
 #include "../../tools/hid.h"
