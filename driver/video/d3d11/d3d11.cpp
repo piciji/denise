@@ -2,6 +2,7 @@
 #include <d3d11_4.h>
 #include <d3dcompiler.h>
 #include <thread>
+#include <libloaderapi.h>
 #include "../../tools/win.h"
 #include "../../tools/tools.h"
 #include "../../tools/chronos.h"
@@ -61,7 +62,8 @@ struct D3D11 : Video, RenderThread {
 
     ID3D11Device* device;
     ID3D11DeviceContext* context;
-    IDXGISwapChain2* swapChain;
+    IDXGISwapChain4* swapChain;
+
     HANDLE frameLatency;
 
     ID3D11Buffer* ubo;
@@ -81,6 +83,7 @@ struct D3D11 : Video, RenderThread {
 
     int64_t lastCapTime;
     int64_t minimumCapTime;
+    bool hasAdvancedDXGISupport;
 
     // a matrix multiplication with this model-view doesn't change the result, so we don't apply it for now
     Matrix4x4 modelView = {
@@ -114,6 +117,7 @@ struct D3D11 : Video, RenderThread {
 
         bool exclusiveFullscreen = false;
         bool hintExclusiveFullscreen = false;
+        std::vector<ShaderPass*> passes = {};
     } settings;
 
     D3D11() {
@@ -137,6 +141,7 @@ struct D3D11 : Video, RenderThread {
         settings.msgUpdated = false;
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
+        hasAdvancedDXGISupport = false;
 
         for(auto& sampler : samplers)
             for(auto& _sampler : sampler)
@@ -146,6 +151,13 @@ struct D3D11 : Video, RenderThread {
     ~D3D11() {
         RenderThread::enable(false);
         term();
+    }
+
+    auto setShader(std::vector<ShaderPass*> passes) -> void {
+        wait();
+        settings.passes = passes;
+        shader( passes );
+        RenderThread::reset();
     }
 
     auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {
@@ -164,7 +176,7 @@ struct D3D11 : Video, RenderThread {
         }
     }
 
-    auto canHardSync() -> bool { return true; }
+    auto canHardSync() -> bool { return hasAdvancedDXGISupport; }
 
     auto setFilter(Filter filter) -> void {
         if (filter == settings.filter)
@@ -234,6 +246,8 @@ struct D3D11 : Video, RenderThread {
         return dndOverlay.sendDragnDropOverlayCoordinates(x, y);
     }
 
+    auto shaderFormat() -> ShaderType { return ShaderType::HLSL; }
+
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
@@ -245,6 +259,17 @@ struct D3D11 : Video, RenderThread {
     }
 
     auto hasVRR() -> bool { return settings.vrr; }
+
+    auto checkForSupport(bool& hasAdvancedDXGI) -> bool {
+        HMODULE handle = LoadLibraryA( "dxgi" );
+        if (!handle)
+            return false;
+        FARPROC ptr1 = GetProcAddress(handle, "CreateDXGIFactory1");
+        FARPROC ptr2 = GetProcAddress(handle, "CreateDXGIFactory2");
+        hasAdvancedDXGI = ptr2 != nullptr;
+        FreeLibrary(handle);
+        return ptr1 != nullptr;
+    }
 
     auto init(uintptr_t handle) -> bool {
         settings.handle = (HWND) handle;
@@ -258,6 +283,9 @@ struct D3D11 : Video, RenderThread {
         IDXGIFactory2* dxgiFactory = nullptr;
         DXGI_SWAP_CHAIN_DESC1 desc;
         std::memset(&desc, 0, sizeof(desc) );
+
+        if (!checkForSupport(hasAdvancedDXGISupport))
+            return false;
 
         D3D_FEATURE_LEVEL features[] = {
             D3D_FEATURE_LEVEL_11_0,
@@ -305,9 +333,8 @@ struct D3D11 : Video, RenderThread {
         desc.SampleDesc.Count = 1;
         desc.SampleDesc.Quality = 0;
         desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-        if (settings.hardSync)
+        if (settings.hardSync && hasAdvancedDXGISupport)
             desc.Flags |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-
         desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
         if (FAILED(dxgiFactory->CreateSwapChainForHwnd((IUnknown*) device, settings.handle, &desc, nullptr, nullptr, (IDXGISwapChain1**)&swapChain))) {
@@ -327,7 +354,7 @@ struct D3D11 : Video, RenderThread {
 
         if (FAILED(dxgiFactory->MakeWindowAssociation(settings.handle, DXGI_MWA_NO_ALT_ENTER))) {}
 
-        if (settings.hardSync) {
+        if (swapFlags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT) { // hardsync isn't available for Win7
             frameLatency = swapChain->GetFrameLatencyWaitableObject();
             if (frameLatency)
                 if (SUCCEEDED( swapChain->SetMaximumFrameLatency(1))) {}
@@ -474,11 +501,29 @@ struct D3D11 : Video, RenderThread {
         return true;
     }
 
+    auto shader(std::vector<ShaderPass*>& passes) -> void {
+        ShaderPass* primaryPass = nullptr;
+
+        for(auto pass : passes) {
+            if (pass->primary) {
+                primaryPass = pass;
+                break;
+            }
+        }
+
+        for(auto pass : passes) {
+            if (pass->primary)
+                continue;
+
+
+        }
+    }
+
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height, reuse);
 
-        if (settings.hardSync && !settings.vrr)
+        if (frameLatency && !settings.vrr)
             WaitForSingleObjectEx( frameLatency, 500, true);
 
         if(_width != frame.texture.desc.Width || _height != frame.texture.desc.Height) {
@@ -515,7 +560,7 @@ struct D3D11 : Video, RenderThread {
         bool disallowShader = false;
         RenderBuffer* renderBuffer = getBufferToRender();
         if (renderBuffer && renderBuffer->height) {
-            if (settings.hardSync && !settings.vrr)
+            if (frameLatency && !settings.vrr)
                 WaitForSingleObjectEx( frameLatency, 500, true);
 
             renderBuffer->sharedMutex.lock();

@@ -111,7 +111,7 @@ auto Video::create(const std::string& driver) -> Video* {
     #endif
 
     #ifdef DRV_DIRECT3D9
-        if(driver == "Direct3D9") return new D3D9( !IsAppThemed() || (Win::getVersion() <= 0x0501) );
+        if(driver == "Direct3D9") return new D3D9( !IsAppThemed() || (Win::getVersion() <= Win::WindowsXP) );
 	#endif
 
 	#ifdef DRV_WGL

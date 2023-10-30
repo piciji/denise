@@ -817,7 +817,7 @@ struct D3D9 : Video, RenderThread {
             noteMutex.unlock();
     }
 
-    auto shaderFormat() -> ShaderType { return ShaderType::HLSL; }
+    auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 
     auto lockResize() -> void {
         resizeMutex.lock();
