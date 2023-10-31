@@ -2,6 +2,7 @@
 #define DRV_UNIT
 #include "driver.h"
 #include "video/dragnDropOverlay.h"
+#include "../program/tools/logger.h"
 
 #ifdef DRV_DIRECT3D9
 	#include "video/d3d9/dvideo.cpp"

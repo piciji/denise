@@ -63,7 +63,7 @@ drvflags += $(foreach c,$(call strupper,$(drv)),-DDRV_$c)
 drvflags += $(if $(findstring sdl,$(drv)),$(shell $(env)sdl2-config --cflags))
 
 drvlink += $(if $(findstring direct3d9,$(drv)),-ld3d9 -ld3dx9)
-drvlink += $(if $(findstring direct3d11,$(drv)),-ld3d11 -ld3dcompiler)
+drvlink += $(if $(findstring direct3d11,$(drv)),-ld3d11 -ld3dcompiler -ldxgi)
 drvlink += $(if $(findstring dsound,$(drv)),-ldsound)
 drvlink += $(if $(findstring dinput,$(drv)),-ldinput -ldxguid)
 drvlink += $(if $(findstring wgl,$(drv)),-lopengl32)

@@ -1,6 +1,7 @@
 
 #include <d3d11_4.h>
 #include <d3dcompiler.h>
+#include <wrl.h>
 #include <thread>
 #include <libloaderapi.h>
 #include "../../tools/win.h"
@@ -62,7 +63,7 @@ struct D3D11 : Video, RenderThread {
 
     ID3D11Device* device;
     ID3D11DeviceContext* context;
-    IDXGISwapChain4* swapChain;
+    IDXGISwapChain2* swapChain;
 
     HANDLE frameLatency;
 
@@ -83,7 +84,6 @@ struct D3D11 : Video, RenderThread {
 
     int64_t lastCapTime;
     int64_t minimumCapTime;
-    bool hasAdvancedDXGISupport;
 
     // a matrix multiplication with this model-view doesn't change the result, so we don't apply it for now
     Matrix4x4 modelView = {
@@ -141,7 +141,6 @@ struct D3D11 : Video, RenderThread {
         settings.msgUpdated = false;
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
-        hasAdvancedDXGISupport = false;
 
         for(auto& sampler : samplers)
             for(auto& _sampler : sampler)
@@ -176,7 +175,7 @@ struct D3D11 : Video, RenderThread {
         }
     }
 
-    auto canHardSync() -> bool { return hasAdvancedDXGISupport; }
+    auto canHardSync() -> bool { return true; }
 
     auto setFilter(Filter filter) -> void {
         if (filter == settings.filter)
@@ -260,31 +259,45 @@ struct D3D11 : Video, RenderThread {
 
     auto hasVRR() -> bool { return settings.vrr; }
 
-    auto checkForSupport(bool& hasAdvancedDXGI) -> bool {
-        HMODULE handle = LoadLibraryA( "dxgi" );
-        if (!handle)
-            return false;
-        FARPROC ptr1 = GetProcAddress(handle, "CreateDXGIFactory1");
-        FARPROC ptr2 = GetProcAddress(handle, "CreateDXGIFactory2");
-        hasAdvancedDXGI = ptr2 != nullptr;
-        FreeLibrary(handle);
-        return ptr1 != nullptr;
-    }
-
     auto init(uintptr_t handle) -> bool {
         settings.handle = (HWND) handle;
         return init();
     }
 
+    auto checkSupport() -> int {
+        Microsoft::WRL::ComPtr<IDXGIFactory1> dxgiFactory1 = nullptr;
+        Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory2 = nullptr;
+        Microsoft::WRL::ComPtr<IDXGIFactory5> dxgiFactory5 = nullptr;
+        int state = 0;
+
+        if (SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)dxgiFactory2.ReleaseAndGetAddressOf()))) {
+            state |= 1;
+            if (SUCCEEDED(dxgiFactory2->QueryInterface(__uuidof(IDXGIFactory5), (void**)dxgiFactory5.ReleaseAndGetAddressOf()))) {
+                state |= 2;
+                if (dxgiFactory5) {
+                    int allowTearing;
+                    if (SUCCEEDED(dxgiFactory5->CheckFeatureSupport(DXGI_FEATURE::DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing)))) {
+                        if (allowTearing)
+                            state |= 8;
+                    }
+                }
+            }
+        } else if (SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)dxgiFactory1.ReleaseAndGetAddressOf()))) {
+            state |= 4;
+        }
+
+//        dxRelease(dxgiFactory1);
+//        dxRelease(dxgiFactory2);
+//        dxRelease(dxgiFactory5);
+        return state;
+    }
+
     auto init() -> bool {
         term();
-        IDXGIDevice2* dxgiDevice = nullptr;
-        IDXGIAdapter* dxgiAdapter = nullptr;
-        IDXGIFactory2* dxgiFactory = nullptr;
-        DXGI_SWAP_CHAIN_DESC1 desc;
-        std::memset(&desc, 0, sizeof(desc) );
+        int support = checkSupport();
 
-        if (!checkForSupport(hasAdvancedDXGISupport))
+        logger->log("sup: " + std::to_string(support));
+        if (!support)
             return false;
 
         D3D_FEATURE_LEVEL features[] = {
@@ -298,12 +311,14 @@ struct D3D11 : Video, RenderThread {
         deviceFlags = D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-        if (FAILED(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, deviceFlags, features, 3, D3D11_SDK_VERSION, &device, nullptr, &context)))
+        if (FAILED(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, deviceFlags, features, 3, D3D11_SDK_VERSION, &device, nullptr, &context))) {
+            logger->log("error device");
             return term(), false;
+        }
 
 #ifdef D3D_DEBUG
-        if (SUCCEEDED(device->QueryInterface(IID_ID3D11Debug, (void**)&debug))) {
-            if (SUCCEEDED(debug->QueryInterface(IID_ID3D11InfoQueue, (void**)&debugInfoQueue))) {
+        if (SUCCEEDED(device->QueryInterface(__uuidof(ID3D11Debug), (void**)&debug))) {
+            if (SUCCEEDED(debug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&debugInfoQueue))) {
                 debugInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, TRUE);
                 debugInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
                 debugInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
@@ -311,58 +326,144 @@ struct D3D11 : Video, RenderThread {
         }
 #endif
 
-        if (FAILED(device->QueryInterface(IID_IDXGIDevice2, (void**)&dxgiDevice)))
-            return term(), false;
+        if (support & 4) {
+            IDXGIDevice1* dxgiDevice = nullptr;
+            IDXGIAdapter* dxgiAdapter = nullptr;
+            IDXGIFactory1* dxgiFactory = nullptr;
+            DXGI_SWAP_CHAIN_DESC desc;
+            std::memset(&desc, 0, sizeof(desc) );
 
-        if (FAILED(dxgiDevice->GetAdapter(&dxgiAdapter))) {
-            dxRelease(dxgiDevice)
-            return term(), false;
-        }
-
-        if (FAILED(dxgiAdapter->GetParent(IID_IDXGIFactory2, (void**)&dxgiFactory))) {
-            dxRelease(dxgiAdapter)
-            dxRelease(dxgiDevice)
-            return term(), false;
-        }
-
-        desc.Width = 0;
-        desc.Height = 0;
-        desc.BufferCount = 2;
-        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        desc.SampleDesc.Count = 1;
-        desc.SampleDesc.Quality = 0;
-        desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-        if (settings.hardSync && hasAdvancedDXGISupport)
-            desc.Flags |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-
-        if (FAILED(dxgiFactory->CreateSwapChainForHwnd((IUnknown*) device, settings.handle, &desc, nullptr, nullptr, (IDXGISwapChain1**)&swapChain))) {
-            desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-            desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-            desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-
-            if (FAILED(dxgiFactory->CreateSwapChainForHwnd((IUnknown*) device, settings.handle, &desc, nullptr, nullptr, (IDXGISwapChain1**)&swapChain))) {
-                dxRelease(dxgiAdapter)
-                dxRelease(dxgiDevice)
-                dxRelease(dxgiFactory)
+            if (FAILED(device->QueryInterface(__uuidof(IDXGIDevice1), (void**)&dxgiDevice))) {
+                logger->log("error dxgi");
                 return term(), false;
             }
+
+            if (FAILED(dxgiDevice->GetAdapter(&dxgiAdapter))) {
+                logger->log("error adapter");
+                dxRelease(dxgiDevice)
+                return term(), false;
+            }
+
+            if (FAILED(dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), (void**)&dxgiFactory))) {
+                logger->log("error factory");
+                dxRelease(dxgiAdapter)
+                dxRelease(dxgiDevice)
+                return term(), false;
+            }
+
+            desc.BufferDesc.Width = 0;
+            desc.BufferDesc.Height = 0;
+            desc.BufferCount = 2;
+            desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            desc.SampleDesc.Count = 1;
+            desc.SampleDesc.Quality = 0;
+            desc.OutputWindow = settings.handle;
+            desc.Windowed = true;
+
+            desc.Flags = (support & 8) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+            if (settings.hardSync)
+                desc.Flags |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+            desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+
+            if (FAILED(dxgiFactory->CreateSwapChain((IUnknown*)device, &desc, (IDXGISwapChain**)&swapChain))) {
+                desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+                desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+                desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+                logger->log("error flip");
+                if (FAILED(dxgiFactory->CreateSwapChain((IUnknown*) device, &desc, (IDXGISwapChain**)&swapChain))) {
+                    logger->log("error non flip");
+                    dxRelease(dxgiAdapter)
+                    dxRelease(dxgiDevice)
+                    dxRelease(dxgiFactory)
+                    return term(), false;
+                }
+            }
+
+            swapFlags = desc.Flags;
+
+            if (FAILED(dxgiFactory->MakeWindowAssociation(settings.handle, DXGI_MWA_NO_ALT_ENTER))) {}
+
+            if (swapFlags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT) {
+                if SUCCEEDED(dxgiDevice->SetMaximumFrameLatency(1)) {
+                    logger->log("success frame latency");
+                }
+            }
+
+            dxRelease(dxgiFactory)
+            dxRelease(dxgiAdapter)
+            dxRelease(dxgiDevice)
+
+        } else {
+            IDXGIDevice2* dxgiDevice = nullptr;
+            IDXGIAdapter* dxgiAdapter = nullptr;
+            IDXGIFactory2* dxgiFactory = nullptr;
+            DXGI_SWAP_CHAIN_DESC1 desc;
+            std::memset(&desc, 0, sizeof(desc) );
+
+            if (FAILED(device->QueryInterface(__uuidof(IDXGIDevice2), (void**) &dxgiDevice))) {
+                logger->log("error dxgi");
+                return term(), false;
+            }
+
+            if (FAILED(dxgiDevice->GetAdapter(&dxgiAdapter))) {
+                logger->log("error adapter");
+                dxRelease(dxgiDevice)
+                return term(), false;
+            }
+
+            if (FAILED(dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), (void**) &dxgiFactory))) {
+                logger->log("error factory");
+                dxRelease(dxgiAdapter)
+                dxRelease(dxgiDevice)
+                return term(), false;
+            }
+
+            desc.Width = 0;
+            desc.Height = 0;
+            desc.BufferCount = 2;
+            desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            desc.SampleDesc.Count = 1;
+            desc.SampleDesc.Quality = 0;
+
+            desc.Flags = (support & 8) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+            if (settings.hardSync)
+                desc.Flags |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+            desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+
+            if (FAILED(dxgiFactory->CreateSwapChainForHwnd((IUnknown*) device, settings.handle, &desc, nullptr, nullptr, (IDXGISwapChain1**) &swapChain))) {
+                desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+                desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+                desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+                logger->log("error flip");
+
+                if (FAILED(dxgiFactory->CreateSwapChainForHwnd((IUnknown*) device, settings.handle, &desc, nullptr, nullptr, (IDXGISwapChain1**) &swapChain))) {
+                    logger->log("error non flip");
+                    dxRelease(dxgiAdapter)
+                    dxRelease(dxgiDevice)
+                    dxRelease(dxgiFactory)
+                    return term(), false;
+                }
+            }
+
+            swapFlags = desc.Flags;
+
+            if (FAILED(dxgiFactory->MakeWindowAssociation(settings.handle, DXGI_MWA_NO_ALT_ENTER))) {}
+
+            if (swapFlags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT) {
+                frameLatency = swapChain->GetFrameLatencyWaitableObject();
+                logger->log("wait");
+                if (frameLatency)
+                    if (SUCCEEDED( swapChain->SetMaximumFrameLatency(1))) {
+                        logger->log("wait 1");
+                    }
+            }
+
+            dxRelease(dxgiFactory)
+            dxRelease(dxgiAdapter)
+            dxRelease(dxgiDevice)
         }
-
-        swapFlags = desc.Flags;
-
-        if (FAILED(dxgiFactory->MakeWindowAssociation(settings.handle, DXGI_MWA_NO_ALT_ENTER))) {}
-
-        if (swapFlags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT) { // hardsync isn't available for Win7
-            frameLatency = swapChain->GetFrameLatencyWaitableObject();
-            if (frameLatency)
-                if (SUCCEEDED( swapChain->SetMaximumFrameLatency(1))) {}
-        }
-
-        dxRelease(dxgiFactory)
-        dxRelease(dxgiAdapter)
-        dxRelease(dxgiDevice)
 
         if (!initMainTexture(32, 32))
             return term(), false;
@@ -390,7 +491,7 @@ struct D3D11 : Video, RenderThread {
         descS.ComparisonFunc = D3D11_COMPARISON_NEVER;
         descS.MinLOD = -D3D11_FLOAT32_MAX;
         descS.MaxLOD = D3D11_FLOAT32_MAX;
-
+        logger->log("suc 1");
         for (int i = 0; i < 4; i++) {
             switch(i) {
                 case 0: descS.AddressU = D3D11_TEXTURE_ADDRESS_BORDER; break;
@@ -409,7 +510,7 @@ struct D3D11 : Video, RenderThread {
             if (FAILED(device->CreateSamplerState( &descS, &samplers[(int)Video::Filter::Nearest][i])))
                 return term(), false;
         }
-
+        logger->log("suc 2");
         D3D11_SUBRESOURCE_DATA vertexData;
         D3D11_BUFFER_DESC descV;
         Vertex vertices[] = {
@@ -432,7 +533,7 @@ struct D3D11 : Video, RenderThread {
 
         if (FAILED(device->CreateBuffer(&descV, &vertexData, &frame.vbo)))
             return term(), false;
-
+        logger->log("suc 3");
         descV.Usage = D3D11_USAGE_DYNAMIC;
         descV.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         descV.ByteWidth = sizeof(Vertex) * 4;
@@ -440,7 +541,7 @@ struct D3D11 : Video, RenderThread {
             return term(), false;
         if (FAILED(device->CreateBuffer(&descV, nullptr, &overlay.vbo)))
             return term(), false;
-
+        logger->log("suc 4");
         D3D11_INPUT_ELEMENT_DESC descShader[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -449,13 +550,13 @@ struct D3D11 : Video, RenderThread {
 
         if (!createShader(device, D3D11outputShader, "PS", "VS", "", descShader, countof(descShader), &frame.shader))
             return term(), false;
-
+        logger->log("suc 5");
         if (!createShader(device, D3D11messageShader, "PS", "VS", "", descShader, countof(descShader), &message.shader))
             return term(), false;
-
+        logger->log("suc 6");
         if (!createShader(device, D3D11overlayShader, "PS", "VS", "", descShader, countof(descShader), &overlay.shader))
             return term(), false;
-
+        logger->log("suc 7");
         dndOverlay.initialized = true;
         D3D11_BLEND_DESC blendDesc;
         std::memset(&blendDesc, 0, sizeof(blendDesc));
@@ -471,11 +572,11 @@ struct D3D11 : Video, RenderThread {
         blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
         if (FAILED(device->CreateBlendState(&blendDesc, &blendEnable)))
             return term(), false;
-
+        logger->log("suc 8");
         blendDesc.RenderTarget[0].BlendEnable           = false;
         if (FAILED(device->CreateBlendState(&blendDesc, &blendDisable)))
             return term(), false;
-
+        logger->log("suc 9");
         D3D11_RASTERIZER_DESC descR;
         descR.CullMode              = D3D11_CULL_NONE;
         descR.FillMode              = D3D11_FILL_SOLID;
@@ -498,6 +599,7 @@ struct D3D11 : Video, RenderThread {
             ft.setFontSize(12);
 #endif
         RenderThread::reset();
+        logger->log("suc ok");
         return true;
     }
 
@@ -627,7 +729,7 @@ struct D3D11 : Video, RenderThread {
             updateMessageParameter();
         }
 
-        if (FAILED(swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backBuffer)))
+        if (FAILED(swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer)))
             return;
 
         if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)backBuffer, nullptr, &rtv)))
@@ -673,7 +775,7 @@ struct D3D11 : Video, RenderThread {
             pOutput->WaitForVBlank();
             pOutput->Release();
         } else
-            swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+            swapChain->Present(0, (swapFlags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
         if (settings.vrr) {
             context->Flush();

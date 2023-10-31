@@ -1,5 +1,4 @@
 
-#include <cstring>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
