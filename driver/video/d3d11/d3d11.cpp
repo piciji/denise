@@ -296,7 +296,7 @@ struct D3D11 : Video, RenderThread {
         term();
         int support = checkSupport();
 
-        logger->log("sup: " + std::to_string(support));
+        logger->log("support: " + std::to_string(support));
         if (!support)
             return false;
 
@@ -384,7 +384,7 @@ struct D3D11 : Video, RenderThread {
 
             if (FAILED(dxgiFactory->MakeWindowAssociation(settings.handle, DXGI_MWA_NO_ALT_ENTER))) {}
 
-            if (swapFlags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT) {
+            if (settings.hardSync) {
                 if SUCCEEDED(dxgiDevice->SetMaximumFrameLatency(1)) {
                     logger->log("success frame latency");
                 }
@@ -453,11 +453,17 @@ struct D3D11 : Video, RenderThread {
 
             if (swapFlags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT) {
                 frameLatency = swapChain->GetFrameLatencyWaitableObject();
-                logger->log("wait");
-                if (frameLatency)
-                    if (SUCCEEDED( swapChain->SetMaximumFrameLatency(1))) {
-                        logger->log("wait 1");
+                if (frameLatency) {
+                    logger->log("latency waitable");
+
+                    if (SUCCEEDED(swapChain->SetMaximumFrameLatency(1))) {
+                        logger->log("success frame latency");
                     }
+                }
+            } else if (settings.hardSync) {
+                if SUCCEEDED(dxgiDevice->SetMaximumFrameLatency(1)) {
+                    logger->log("success frame latency");
+                }
             }
 
             dxRelease(dxgiFactory)
@@ -484,14 +490,14 @@ struct D3D11 : Video, RenderThread {
 
         if (FAILED(device->CreateBuffer(&descP, &uboData, &ubo)))
             return term(), false;
-
+        logger->log("suc 1");
         D3D11_SAMPLER_DESC descS;
         std::memset(&descS, 0, sizeof(descS));
         descS.MaxAnisotropy = 1;
         descS.ComparisonFunc = D3D11_COMPARISON_NEVER;
         descS.MinLOD = -D3D11_FLOAT32_MAX;
         descS.MaxLOD = D3D11_FLOAT32_MAX;
-        logger->log("suc 1");
+
         for (int i = 0; i < 4; i++) {
             switch(i) {
                 case 0: descS.AddressU = D3D11_TEXTURE_ADDRESS_BORDER; break;
@@ -825,13 +831,13 @@ struct D3D11 : Video, RenderThread {
         ID3DBlob* vsCode = nullptr;
         ID3DBlob* gsCode = nullptr;
 
-        if (!psEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, psEntry.c_str(), "ps_5_0", 0, 0, &psCode, &error)))
+        if (!psEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, psEntry.c_str(), "ps_4_0", 0, 0, &psCode, &error)))
             msg = (const char*)error->GetBufferPointer();
 
-        if (!vsEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, vsEntry.c_str(), "vs_5_0", 0, 0, &vsCode, &error)))
+        if (!vsEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, vsEntry.c_str(), "vs_4_0", 0, 0, &vsCode, &error)))
             msg = (const char*)error->GetBufferPointer();
 
-        if (!gsEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, gsEntry.c_str(), "gs_5_0", 0, 0, &gsCode, &error)))
+        if (!gsEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, gsEntry.c_str(), "gs_4_0", 0, 0, &gsCode, &error)))
             msg = (const char*)error->GetBufferPointer();
 
         if (psCode)
