@@ -14,7 +14,7 @@ auto OpenGLProgram::bind(ShaderPass& pass) -> std::string {
     crop.set( pass.crop );
 	
 	if (pass.relativeWidth) relativeWidth = double(pass.relativeWidth) / 100.0;    
-	if (pass.relativeHeight)    relativeHeight = double(pass.relativeHeight) / 100.0;
+	if (pass.relativeHeight) relativeHeight = double(pass.relativeHeight) / 100.0;
 
 	program = glCreateProgram();
     pass.program = (unsigned)program;

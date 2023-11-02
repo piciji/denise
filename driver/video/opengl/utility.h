@@ -20,10 +20,11 @@ static auto _glFilter(const std::string& filter) -> GLuint {
 	return GL_LINEAR;
 }
 
-static auto _glWrap(const std::string& wrap)  -> GLuint {
+static auto _glWrap(const std::string& wrap) -> GLuint {
 	if(wrap == "border") return GL_CLAMP_TO_BORDER;
 	if(wrap == "edge"  ) return GL_CLAMP_TO_EDGE;
 	if(wrap == "repeat") return GL_REPEAT;
+    if(wrap == "mirror") return GL_MIRRORED_REPEAT;
 	return GL_CLAMP_TO_BORDER;
 }
 

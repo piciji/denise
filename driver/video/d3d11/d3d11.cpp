@@ -9,7 +9,9 @@
 #include "../../tools/chronos.h"
 #include "../viewport.h"
 #include "../thread/renderThread.h"
+#include "types.h"
 #include "shaders.h"
+#include "utility.h"
 
 #ifdef DRV_FREETYPE
 #include "../freetype.h"
@@ -19,40 +21,21 @@
 
 namespace DRIVER {
 
-struct D3D11 : Video, RenderThread {
+struct D3D11 : Video, RenderThread, D3D11Utility {
     struct Matrix4x4 {
         float data[16];
     };
 
-    struct Vertex {
-        float position[2];
-        float texcoord[2];
-        float color[4];
-    };
-
-    struct Shader {
-        ID3D11VertexShader* vs = nullptr;
-        ID3D11PixelShader* ps = nullptr;
-        ID3D11GeometryShader* gs = nullptr;
-        ID3D11InputLayout* layout = nullptr;
-    };
-
-    struct Texture {
-        D3D11_TEXTURE2D_DESC desc;
-        ID3D11Texture2D* ptr = nullptr;
-        ID3D11Texture2D* staging = nullptr;
-        ID3D11ShaderResourceView* view = nullptr;
-    };
-
     struct Rectangle {
-        Texture texture;
-        Shader shader;
+        D3DTexture texture;
+        D3DShader shader;
         ID3D11Buffer* vbo;
     };
 
     Rectangle frame;
     Rectangle overlay;
     Rectangle message;
+    std::vector<D3DProgram> programs;
 
 #ifdef DRV_FREETYPE
     Freetype ft;
@@ -84,6 +67,7 @@ struct D3D11 : Video, RenderThread {
 
     int64_t lastCapTime;
     int64_t minimumCapTime;
+    bool legacy;
 
     // a matrix multiplication with this model-view doesn't change the result, so we don't apply it for now
     Matrix4x4 modelView = {
@@ -120,7 +104,8 @@ struct D3D11 : Video, RenderThread {
         std::vector<ShaderPass*> passes = {};
     } settings;
 
-    D3D11() {
+    D3D11(bool legacy) {
+        this->legacy = legacy;
         debugInfoQueue = nullptr;
         debug = nullptr;
         frameLatency = nullptr;
@@ -152,7 +137,7 @@ struct D3D11 : Video, RenderThread {
         term();
     }
 
-    auto setShader(std::vector<ShaderPass*> passes) -> void {
+    auto setShader(std::vector<ShaderPass*> passes) -> void { return;
         wait();
         settings.passes = passes;
         shader( passes );
@@ -519,7 +504,7 @@ struct D3D11 : Video, RenderThread {
         logger->log("suc 2");
         D3D11_SUBRESOURCE_DATA vertexData;
         D3D11_BUFFER_DESC descV;
-        Vertex vertices[] = {
+        D3DVertex vertices[] = {
             {{0.0f,  0.0f},  {0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
             {{0.0f,  1.0f},  {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
             {{1.0f,  0.0f},  {1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
@@ -542,16 +527,16 @@ struct D3D11 : Video, RenderThread {
         logger->log("suc 3");
         descV.Usage = D3D11_USAGE_DYNAMIC;
         descV.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-        descV.ByteWidth = sizeof(Vertex) * 4;
+        descV.ByteWidth = sizeof(D3DVertex) * 4;
         if (FAILED(device->CreateBuffer(&descV, nullptr, &message.vbo)))
             return term(), false;
         if (FAILED(device->CreateBuffer(&descV, nullptr, &overlay.vbo)))
             return term(), false;
         logger->log("suc 4");
         D3D11_INPUT_ELEMENT_DESC descShader[] = {
-            { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(Vertex, color), D3D11_INPUT_PER_VERTEX_DATA, 0 }
+            { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(D3DVertex, color), D3D11_INPUT_PER_VERTEX_DATA, 0 }
         };
 
         if (!createShader(device, D3D11outputShader, "PS", "VS", "", descShader, countof(descShader), &frame.shader))
@@ -610,20 +595,18 @@ struct D3D11 : Video, RenderThread {
     }
 
     auto shader(std::vector<ShaderPass*>& passes) -> void {
-        ShaderPass* primaryPass = nullptr;
+        for(auto& program : programs) {
+            releaseShader(program.shader);
+            releaseTexture(program.texture);
+        }
+        programs.clear();
 
         for(auto pass : passes) {
             if (pass->primary) {
-                primaryPass = pass;
-                break;
-            }
-        }
-
-        for(auto pass : passes) {
-            if (pass->primary)
                 continue;
-
-
+            }
+            programs.push_back({});
+            buildProgram(device, programs.back(), *pass);
         }
     }
 
@@ -747,13 +730,13 @@ struct D3D11 : Video, RenderThread {
         context->OMSetBlendState(blendDisable, nullptr, D3D11_DEFAULT_SAMPLE_MASK);
         context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-        UINT stride = sizeof(Vertex);
+        UINT stride = sizeof(D3DVertex);
         UINT offset = 0;
         context->IASetVertexBuffers(0, 1, &frame.vbo, &stride, &offset);
         context->OMSetRenderTargets(1, &rtv, nullptr);
         context->ClearRenderTargetView(rtv, clearColor);
 
-        setShader(frame.shader);
+        applyShader(frame.shader);
         context->PSSetShaderResources(0, 1, &frame.texture.view);
         context->PSSetSamplers(0, 1, &samplers[(int)settings.filter][1]);
         context->VSSetConstantBuffers(0, 1, &ubo);
@@ -776,10 +759,13 @@ struct D3D11 : Video, RenderThread {
 
         if (settings.synchronize) {
             swapChain->Present(1, 0);
-            IDXGIOutput* pOutput;
-            swapChain->GetContainingOutput(&pOutput);
-            pOutput->WaitForVBlank();
-            pOutput->Release();
+            if (!legacy) {
+                IDXGIOutput* pOutput;
+                if (SUCCEEDED(swapChain->GetContainingOutput(&pOutput))) {
+                    pOutput->WaitForVBlank();
+                    pOutput->Release();
+                }
+            }
         } else
             swapChain->Present(0, (swapFlags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
@@ -790,7 +776,7 @@ struct D3D11 : Video, RenderThread {
         dxRelease(rtv)
     }
 
-    auto setShader(Shader& shader) -> void {
+    auto applyShader(D3DShader& shader) -> void {
         context->IASetInputLayout(shader.layout);
         context->VSSetShader(shader.vs, nullptr, 0);
         context->PSSetShader(shader.ps, nullptr, 0);
@@ -798,9 +784,9 @@ struct D3D11 : Video, RenderThread {
     }
 
     auto blendRect(Rectangle& rect) -> void {
-        setShader(rect.shader);
+        applyShader(rect.shader);
         context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-        UINT stride = sizeof(Vertex);
+        UINT stride = sizeof(D3DVertex);
         UINT offset = 0;
         context->IASetVertexBuffers(0, 1, &rect.vbo, &stride, &offset);
 
@@ -819,52 +805,6 @@ struct D3D11 : Video, RenderThread {
         d3D11Viewport.MaxDepth = 1.0;
         d3D11Viewport.MinDepth = 0.0;
         context->RSSetViewports(1, &d3D11Viewport);
-    }
-
-    auto createShader( ID3D11Device* device, const std::string& data, const std::string psEntry, const std::string vsEntry, const std::string gsEntry,
-         const D3D11_INPUT_ELEMENT_DESC* inputElementDescs, unsigned numElements, Shader* out) -> bool {
-
-        ID3DBlob* error = nullptr;
-        const char* msg = nullptr;
-
-        ID3DBlob* psCode = nullptr;
-        ID3DBlob* vsCode = nullptr;
-        ID3DBlob* gsCode = nullptr;
-
-        if (!psEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, psEntry.c_str(), "ps_4_0", 0, 0, &psCode, &error)))
-            msg = (const char*)error->GetBufferPointer();
-
-        if (!vsEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, vsEntry.c_str(), "vs_4_0", 0, 0, &vsCode, &error)))
-            msg = (const char*)error->GetBufferPointer();
-
-        if (!gsEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, gsEntry.c_str(), "gs_4_0", 0, 0, &gsCode, &error)))
-            msg = (const char*)error->GetBufferPointer();
-
-        if (psCode)
-            if (FAILED(device->CreatePixelShader( psCode->GetBufferPointer(), psCode->GetBufferSize(), nullptr, &out->ps)))
-                msg = (const char*)-1;
-
-        if (vsCode) {
-            LPVOID bufPtr  = vsCode->GetBufferPointer();
-            SIZE_T bufSize = vsCode->GetBufferSize();
-            if (FAILED(device->CreateVertexShader(bufPtr, bufSize, nullptr, &out->vs)))
-                msg = (const char*)-2;
-
-            if (inputElementDescs)
-                if (FAILED(device->CreateInputLayout(inputElementDescs, numElements, bufPtr, bufSize, &out->layout)))
-                    msg = (const char*)-3;
-        }
-
-        if (gsCode)
-            if (FAILED(device->CreateGeometryShader(gsCode->GetBufferPointer(), gsCode->GetBufferSize(), nullptr, &out->gs)))
-                msg = (const char*)-4;
-
-        dxRelease(vsCode)
-        dxRelease(psCode)
-        dxRelease(gsCode)
-        dxRelease(error)
-
-        return msg == nullptr;
     }
 
     auto term() -> void {
@@ -898,9 +838,9 @@ struct D3D11 : Video, RenderThread {
             dxRelease(samplers[(int)Video::Filter::Linear][i])
         }
 
-        releaseShader(&frame.shader);
-        releaseShader(&message.shader);
-        releaseShader(&overlay.shader);
+        releaseShader(frame.shader);
+        releaseShader(message.shader);
+        releaseShader(overlay.shader);
 
         dxRelease(debugInfoQueue)
         dxRelease(debug)
@@ -923,7 +863,7 @@ struct D3D11 : Video, RenderThread {
         return initTexture(frame.texture, useStaging);
     }
 
-    auto initTexture(Texture& tex, bool useStaging = true) -> bool {
+    auto initTexture(D3DTexture& tex, bool useStaging = true) -> bool {
         tex.desc.MipLevels          = 1;
         tex.desc.ArraySize          = 1;
         tex.desc.SampleDesc.Count   = 1;
@@ -958,25 +898,11 @@ struct D3D11 : Video, RenderThread {
         return true;
     }
 
-    auto releaseTexture(Texture& tex) -> void {
-        std::memset(&tex.desc, 0, sizeof(tex.desc));
-        dxRelease(tex.view)
-        dxRelease(tex.staging)
-        dxRelease(tex.ptr)
-    }
-
     auto getDimension(HWND handle) -> RECT {
         RECT rect;
         GetClientRect(handle, &rect);
 
         return rect;
-    }
-
-    auto releaseShader(Shader* shader) -> void {
-        dxRelease(shader->layout)
-        dxRelease(shader->vs)
-        dxRelease(shader->ps)
-        dxRelease(shader->gs)
     }
 
     auto showMessage(std::string message, bool critical = false) -> void {
@@ -1016,7 +942,7 @@ struct D3D11 : Video, RenderThread {
         };
 
         bool critical = settings.msgCritical;
-        Vertex* vertex = (Vertex*)mappedVbo.pData;
+        D3DVertex* vertex = (D3DVertex*)mappedVbo.pData;
 
         for(int i = 0; i < 4; i++) {
             vertex->color[0] = critical ? 0.7 : 1.0;
@@ -1112,7 +1038,7 @@ struct D3D11 : Video, RenderThread {
             {x,     y - h, 0, 1},
             {x + w, y - h, 1, 1}
         };
-        Vertex* vertex = (Vertex*) mappedVbo.pData;
+        D3DVertex* vertex = (D3DVertex*) mappedVbo.pData;
 
         for (int i = 0; i < 4; i++) {
             vertex->color[0] = 1.0;

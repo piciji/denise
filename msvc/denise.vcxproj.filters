@@ -967,6 +967,12 @@
     <ClInclude Include="..\driver\video\d3d11\shaders.h">
       <Filter>driver\video\d3d11</Filter>
     </ClInclude>
+    <ClInclude Include="..\driver\video\d3d11\types.h">
+      <Filter>driver\video\d3d11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\d3d11\utility.h">
+      <Filter>driver\video\d3d11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">

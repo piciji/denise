@@ -44,6 +44,8 @@
     <ClInclude Include="..\driver\tools\utf8.h" />
     <ClInclude Include="..\driver\tools\win.h" />
     <ClInclude Include="..\driver\video\d3d11\shaders.h" />
+    <ClInclude Include="..\driver\video\d3d11\types.h" />
+    <ClInclude Include="..\driver\video\d3d11\utility.h" />
     <ClInclude Include="..\driver\video\d3d9\dragnDropOverlay.h" />
     <ClInclude Include="..\driver\video\freetype.h" />
     <ClInclude Include="..\driver\video\opengl\bind.h" />
