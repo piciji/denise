@@ -475,7 +475,7 @@ auto Program::willRun() -> bool {
 	if (focused) return true;
 	//no focus
 	if (*pauseFocusLoss) return false;
-	if (videoDriver && videoDriver->hasExclusiveFullscreen()) return false; //exclusive fullscreen can't run in background
+	//if (videoDriver && videoDriver->hasExclusiveFullscreen()) return false; //exclusive fullscreen can't run in background
 	
 	return true;
 }

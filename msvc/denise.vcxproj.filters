@@ -973,6 +973,12 @@
     <ClInclude Include="..\driver\video\d3d11\utility.h">
       <Filter>driver\video\d3d11</Filter>
     </ClInclude>
+    <ClInclude Include="..\driver\video\dragnDropOverlay.h">
+      <Filter>driver\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\d3d11\dxgiHandler.h">
+      <Filter>driver\video\d3d11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -1838,6 +1844,12 @@
     </ClCompile>
     <ClCompile Include="..\driver\video\d3d11\d3d11.cpp">
       <Filter>driver\video\d3d11</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\shader_glsl.cpp">
+      <Filter>program\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\shader_hlsl.cpp">
+      <Filter>program\video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

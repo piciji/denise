@@ -469,9 +469,17 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 			break;
 		case WM_ACTIVATEAPP:
 			if (LOWORD(wparam) == WA_INACTIVE) {
-			//	if(window.fullScreen())
-              //      ShowWindow( hwnd, SW_MINIMIZE );
-			}
+                if(window.fullScreen()) {
+                    if (window.onInactive)
+                        window.onInactive();
+                }
+            } else if (LOWORD(wparam) == WA_ACTIVE) {
+                if (window.fullScreen()) {
+                    if (window.onActive)
+                        window.onActive();
+                }
+            }
+
 			break;
         case WM_SETFOCUS:
             if (window.fullScreen() && window.statusBar())

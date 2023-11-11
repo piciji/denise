@@ -1,7 +1,6 @@
 
 #include <d3d11_4.h>
 #include <d3dcompiler.h>
-#include <wrl.h>
 #include <thread>
 #include <libloaderapi.h>
 #include "../../tools/win.h"
@@ -12,6 +11,7 @@
 #include "types.h"
 #include "shaders.h"
 #include "utility.h"
+#include "dxgiHandler.h"
 
 #ifdef DRV_FREETYPE
 #include "../freetype.h"
@@ -21,7 +21,7 @@
 
 namespace DRIVER {
 
-struct D3D11 : Video, RenderThread, D3D11Utility {
+struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
     struct Matrix4x4 {
         float data[16];
     };
@@ -46,12 +46,12 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
 
     ID3D11Device* device;
     ID3D11DeviceContext* context;
-    IDXGISwapChain2* swapChain;
-
-    HANDLE frameLatency;
+    SwapChain swapChain;
 
     ID3D11Buffer* ubo;
+    ID3D11Buffer* uboChain;
     ID3D11SamplerState* samplers[2][4];
+    DXGI_FORMAT format;
 
     ID3D11BlendState* blendEnable;
     ID3D11BlendState* blendDisable;
@@ -63,13 +63,11 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
     ID3D11Debug* debug;
 
     float clearColor[4] = {0.0, 0.0, 0.0, 1.0};
-    UINT swapFlags;
 
     int64_t lastCapTime;
     int64_t minimumCapTime;
     bool legacy;
 
-    // a matrix multiplication with this model-view doesn't change the result, so we don't apply it for now
     Matrix4x4 modelView = {
         1.0, 0.0, 0.0, 0.0,
         0.0, 1.0, 0.0, 0.0,
@@ -100,6 +98,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         std::atomic<bool> msgUpdated = false;
 
         bool exclusiveFullscreen = false;
+        float exclusiveFullscreenRate = 0.0;
         bool hintExclusiveFullscreen = false;
         std::vector<ShaderPass*> passes = {};
     } settings;
@@ -108,11 +107,12 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         this->legacy = legacy;
         debugInfoQueue = nullptr;
         debug = nullptr;
-        frameLatency = nullptr;
-        swapChain = nullptr;
+        swapChain.ptr = nullptr;
+        swapChain.frameLatency = nullptr;
         device = nullptr;
         context = nullptr;
         ubo = nullptr;
+        uboChain = nullptr;
         frame.vbo = nullptr;
         message.vbo = nullptr;
         overlay.vbo = nullptr;
@@ -121,7 +121,6 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         blendDisable = nullptr;
         scissorEnable = nullptr;
         scissorDisable = nullptr;
-        swapFlags = 0;
         settings.handle = nullptr;
         settings.msgUpdated = false;
         settings.hintExclusiveFullscreen = false;
@@ -137,15 +136,32 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         term();
     }
 
-    auto setShader(std::vector<ShaderPass*> passes) -> void { return;
+    auto setShader(std::vector<ShaderPass*> passes) -> void {
         wait();
         settings.passes = passes;
         shader( passes );
         RenderThread::reset();
     }
 
+    auto setShaderAttribute( std::string _program, std::string attribute, float value ) -> void {
+        shaderAttribute<float>(_program, attribute, value);
+    }
+
+    auto setShaderAttribute( std::string _program, std::string attribute, int value ) -> void {
+        shaderAttribute<int>(_program, attribute, value);
+    }
+
+    auto setShaderAttribute(std::string _program, std::string attribute, float* data, unsigned size) -> void {
+        shaderAttribute(_program, attribute, data, size);
+    }
+
+    auto setShaderAttribute(std::string _program, std::string attribute, uint32_t* data, unsigned _width, unsigned _height) -> void {
+        shaderAttribute(_program, attribute, data, _width, _height);
+    }
+
     auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {
         settings.hintExclusiveFullscreen = state;
+        settings.exclusiveFullscreenRate = rate;
     }
 
     auto canExclusiveFullscreen() -> bool { return true; }
@@ -154,9 +170,47 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
 
     auto disableExclusiveFullscreen() -> void {
         if (settings.exclusiveFullscreen) {
-            wait();
-            swapChain->SetFullscreenState(false, nullptr);
+            //wait();
+            resizeMutexThreaded.lock();
+            initSwapChain(device, settings.handle, settings.hardSync, swapChain, true);
+            resizeMutexThreaded.unlock();
             settings.exclusiveFullscreen = false;
+        }
+    }
+
+    auto activateApp(bool state) -> void {
+        if (settings.handle && settings.hintExclusiveFullscreen) {
+         //   wait();
+            if (state) {
+                HWND parent = Win::getParentHandle(settings.handle);
+                int adapterId = Win::getFullscreenAdapter(parent);
+                if (adapterId >= 0) {
+                    settings.exclusiveFullscreen = true;
+                    resizeMutexThreaded.lock();
+                    initSwapChain(device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
+                    resizeMutexThreaded.unlock();
+                    return;
+                }
+            }
+
+            resizeMutexThreaded.lock();
+            initSwapChain(device, settings.handle, settings.hardSync, swapChain, true);
+            resizeMutexThreaded.unlock();
+        }
+    }
+
+    auto checkFSE() -> void {
+        RECT windowSize = Win::getDimension(settings.handle);
+        if ((windowSize.right != viewScreen.windowWidth) || (windowSize.bottom != viewScreen.windowHeight)) {
+            HWND parent = Win::getParentHandle(settings.handle);
+            int adapterId = Win::getFullscreenAdapter(parent);
+            if (adapterId >= 0) {
+             //   wait();
+                settings.exclusiveFullscreen = true;
+                resizeMutexThreaded.lock();
+                initSwapChain(device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
+                resizeMutexThreaded.unlock();
+            }
         }
     }
 
@@ -167,16 +221,21 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
             return;
         wait();
         settings.filter = filter;
+        frame.texture.sampler = samplers[(int)filter][1];
     }
 
     auto hardSync(bool state) -> void {
         wait();
         settings.hardSync = state;
-        if (settings.handle)
-            init();
+        if (settings.handle) {
+            if (!initSwapChain(device, settings.handle, state, swapChain)) {
+
+            }
+        }
     }
 
     auto synchronize(bool state) -> void {
+        wait();
         settings.synchronize = state;
     }
 
@@ -249,41 +308,8 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         return init();
     }
 
-    auto checkSupport() -> int {
-        Microsoft::WRL::ComPtr<IDXGIFactory1> dxgiFactory1 = nullptr;
-        Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory2 = nullptr;
-        Microsoft::WRL::ComPtr<IDXGIFactory5> dxgiFactory5 = nullptr;
-        int state = 0;
-
-        if (SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**)dxgiFactory2.ReleaseAndGetAddressOf()))) {
-            state |= 1;
-            if (SUCCEEDED(dxgiFactory2->QueryInterface(__uuidof(IDXGIFactory5), (void**)dxgiFactory5.ReleaseAndGetAddressOf()))) {
-                state |= 2;
-                if (dxgiFactory5) {
-                    int allowTearing;
-                    if (SUCCEEDED(dxgiFactory5->CheckFeatureSupport(DXGI_FEATURE::DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing)))) {
-                        if (allowTearing)
-                            state |= 8;
-                    }
-                }
-            }
-        } else if (SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)dxgiFactory1.ReleaseAndGetAddressOf()))) {
-            state |= 4;
-        }
-
-//        dxRelease(dxgiFactory1);
-//        dxRelease(dxgiFactory2);
-//        dxRelease(dxgiFactory5);
-        return state;
-    }
-
     auto init() -> bool {
         term();
-        int support = checkSupport();
-
-        logger->log("support: " + std::to_string(support));
-        if (!support)
-            return false;
 
         D3D_FEATURE_LEVEL features[] = {
             D3D_FEATURE_LEVEL_11_0,
@@ -297,7 +323,6 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
 #endif
 
         if (FAILED(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, deviceFlags, features, 3, D3D11_SDK_VERSION, &device, nullptr, &context))) {
-            logger->log("error device");
             return term(), false;
         }
 
@@ -311,151 +336,10 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         }
 #endif
 
-        if (support & 4) {
-            IDXGIDevice1* dxgiDevice = nullptr;
-            IDXGIAdapter* dxgiAdapter = nullptr;
-            IDXGIFactory1* dxgiFactory = nullptr;
-            DXGI_SWAP_CHAIN_DESC desc;
-            std::memset(&desc, 0, sizeof(desc) );
+        if (!initSwapChain(device, settings.handle, settings.hardSync, swapChain))
+            return false;
 
-            if (FAILED(device->QueryInterface(__uuidof(IDXGIDevice1), (void**)&dxgiDevice))) {
-                logger->log("error dxgi");
-                return term(), false;
-            }
-
-            if (FAILED(dxgiDevice->GetAdapter(&dxgiAdapter))) {
-                logger->log("error adapter");
-                dxRelease(dxgiDevice)
-                return term(), false;
-            }
-
-            if (FAILED(dxgiAdapter->GetParent(__uuidof(IDXGIFactory1), (void**)&dxgiFactory))) {
-                logger->log("error factory");
-                dxRelease(dxgiAdapter)
-                dxRelease(dxgiDevice)
-                return term(), false;
-            }
-
-            desc.BufferDesc.Width = 0;
-            desc.BufferDesc.Height = 0;
-            desc.BufferCount = 2;
-            desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-            desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            desc.SampleDesc.Count = 1;
-            desc.SampleDesc.Quality = 0;
-            desc.OutputWindow = settings.handle;
-            desc.Windowed = true;
-
-            desc.Flags = (support & 8) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-            if (settings.hardSync)
-                desc.Flags |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-            desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-
-            if (FAILED(dxgiFactory->CreateSwapChain((IUnknown*)device, &desc, (IDXGISwapChain**)&swapChain))) {
-                desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-                desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-                desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-                logger->log("error flip");
-                if (FAILED(dxgiFactory->CreateSwapChain((IUnknown*) device, &desc, (IDXGISwapChain**)&swapChain))) {
-                    logger->log("error non flip");
-                    dxRelease(dxgiAdapter)
-                    dxRelease(dxgiDevice)
-                    dxRelease(dxgiFactory)
-                    return term(), false;
-                }
-            }
-
-            swapFlags = desc.Flags;
-
-            if (FAILED(dxgiFactory->MakeWindowAssociation(settings.handle, DXGI_MWA_NO_ALT_ENTER))) {}
-
-            if (settings.hardSync) {
-                if SUCCEEDED(dxgiDevice->SetMaximumFrameLatency(1)) {
-                    logger->log("success frame latency");
-                }
-            }
-
-            dxRelease(dxgiFactory)
-            dxRelease(dxgiAdapter)
-            dxRelease(dxgiDevice)
-
-        } else {
-            IDXGIDevice2* dxgiDevice = nullptr;
-            IDXGIAdapter* dxgiAdapter = nullptr;
-            IDXGIFactory2* dxgiFactory = nullptr;
-            DXGI_SWAP_CHAIN_DESC1 desc;
-            std::memset(&desc, 0, sizeof(desc) );
-
-            if (FAILED(device->QueryInterface(__uuidof(IDXGIDevice2), (void**) &dxgiDevice))) {
-                logger->log("error dxgi");
-                return term(), false;
-            }
-
-            if (FAILED(dxgiDevice->GetAdapter(&dxgiAdapter))) {
-                logger->log("error adapter");
-                dxRelease(dxgiDevice)
-                return term(), false;
-            }
-
-            if (FAILED(dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), (void**) &dxgiFactory))) {
-                logger->log("error factory");
-                dxRelease(dxgiAdapter)
-                dxRelease(dxgiDevice)
-                return term(), false;
-            }
-
-            desc.Width = 0;
-            desc.Height = 0;
-            desc.BufferCount = 2;
-            desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-            desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            desc.SampleDesc.Count = 1;
-            desc.SampleDesc.Quality = 0;
-
-            desc.Flags = (support & 8) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-            if (settings.hardSync)
-                desc.Flags |= DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-            desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-
-            if (FAILED(dxgiFactory->CreateSwapChainForHwnd((IUnknown*) device, settings.handle, &desc, nullptr, nullptr, (IDXGISwapChain1**) &swapChain))) {
-                desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-                desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-                desc.Flags &= ~DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-                logger->log("error flip");
-
-                if (FAILED(dxgiFactory->CreateSwapChainForHwnd((IUnknown*) device, settings.handle, &desc, nullptr, nullptr, (IDXGISwapChain1**) &swapChain))) {
-                    logger->log("error non flip");
-                    dxRelease(dxgiAdapter)
-                    dxRelease(dxgiDevice)
-                    dxRelease(dxgiFactory)
-                    return term(), false;
-                }
-            }
-
-            swapFlags = desc.Flags;
-
-            if (FAILED(dxgiFactory->MakeWindowAssociation(settings.handle, DXGI_MWA_NO_ALT_ENTER))) {}
-
-            if (swapFlags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT) {
-                frameLatency = swapChain->GetFrameLatencyWaitableObject();
-                if (frameLatency) {
-                    logger->log("latency waitable");
-
-                    if (SUCCEEDED(swapChain->SetMaximumFrameLatency(1))) {
-                        logger->log("success frame latency");
-                    }
-                }
-            } else if (settings.hardSync) {
-                if SUCCEEDED(dxgiDevice->SetMaximumFrameLatency(1)) {
-                    logger->log("success frame latency");
-                }
-            }
-
-            dxRelease(dxgiFactory)
-            dxRelease(dxgiAdapter)
-            dxRelease(dxgiDevice)
-        }
-
+        format = _format();
         if (!initMainTexture(32, 32))
             return term(), false;
 
@@ -466,16 +350,22 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
 
         D3D11_BUFFER_DESC descP;
         std::memset(&descP, 0, sizeof(descP));
-        descP.ByteWidth           = sizeof(projection);
-        descP.Usage               = D3D11_USAGE_DYNAMIC;
-        descP.BindFlags           = D3D11_BIND_CONSTANT_BUFFER;
-        descP.CPUAccessFlags      = D3D11_CPU_ACCESS_WRITE;
-        descP.MiscFlags           = 0;
+        descP.ByteWidth = sizeof(projection);
+        descP.Usage = D3D11_USAGE_DYNAMIC;
+        descP.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        descP.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        descP.MiscFlags = 0;
         descP.StructureByteStride = 0;
 
         if (FAILED(device->CreateBuffer(&descP, &uboData, &ubo)))
             return term(), false;
-        logger->log("suc 1");
+
+        uboData.pSysMem = &modelView;
+        descP.ByteWidth = sizeof(modelView);
+
+        if (FAILED(device->CreateBuffer(&descP, &uboData, &uboChain)))
+            return term(), false;
+
         D3D11_SAMPLER_DESC descS;
         std::memset(&descS, 0, sizeof(descS));
         descS.MaxAnisotropy = 1;
@@ -501,7 +391,8 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
             if (FAILED(device->CreateSamplerState( &descS, &samplers[(int)Video::Filter::Nearest][i])))
                 return term(), false;
         }
-        logger->log("suc 2");
+        frame.texture.sampler = samplers[(int)settings.filter][1];
+
         D3D11_SUBRESOURCE_DATA vertexData;
         D3D11_BUFFER_DESC descV;
         D3DVertex vertices[] = {
@@ -509,6 +400,11 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
             {{0.0f,  1.0f},  {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
             {{1.0f,  0.0f},  {1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
             {{1.0f,  1.0f},  {1.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+
+            { { -1.0f, -1.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+            { { -1.0f,  1.0f }, { 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+            { { 1.0f,  -1.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+            { { 1.0f,   1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
         };
 
         vertexData.pSysMem = vertices;
@@ -524,7 +420,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
 
         if (FAILED(device->CreateBuffer(&descV, &vertexData, &frame.vbo)))
             return term(), false;
-        logger->log("suc 3");
+
         descV.Usage = D3D11_USAGE_DYNAMIC;
         descV.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         descV.ByteWidth = sizeof(D3DVertex) * 4;
@@ -532,7 +428,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
             return term(), false;
         if (FAILED(device->CreateBuffer(&descV, nullptr, &overlay.vbo)))
             return term(), false;
-        logger->log("suc 4");
+
         D3D11_INPUT_ELEMENT_DESC descShader[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -541,13 +437,13 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
 
         if (!createShader(device, D3D11outputShader, "PS", "VS", "", descShader, countof(descShader), &frame.shader))
             return term(), false;
-        logger->log("suc 5");
+
         if (!createShader(device, D3D11messageShader, "PS", "VS", "", descShader, countof(descShader), &message.shader))
             return term(), false;
-        logger->log("suc 6");
+
         if (!createShader(device, D3D11overlayShader, "PS", "VS", "", descShader, countof(descShader), &overlay.shader))
             return term(), false;
-        logger->log("suc 7");
+
         dndOverlay.initialized = true;
         D3D11_BLEND_DESC blendDesc;
         std::memset(&blendDesc, 0, sizeof(blendDesc));
@@ -563,11 +459,11 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
         if (FAILED(device->CreateBlendState(&blendDesc, &blendEnable)))
             return term(), false;
-        logger->log("suc 8");
+
         blendDesc.RenderTarget[0].BlendEnable           = false;
         if (FAILED(device->CreateBlendState(&blendDesc, &blendDisable)))
             return term(), false;
-        logger->log("suc 9");
+
         D3D11_RASTERIZER_DESC descR;
         descR.CullMode              = D3D11_CULL_NONE;
         descR.FillMode              = D3D11_FILL_SOLID;
@@ -590,32 +486,53 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
             ft.setFontSize(12);
 #endif
         RenderThread::reset();
-        logger->log("suc ok");
         return true;
     }
 
     auto shader(std::vector<ShaderPass*>& passes) -> void {
         for(auto& program : programs) {
             releaseShader(program.shader);
-            releaseTexture(program.texture);
+            releaseTexture(program.renderTarget);
+            for (auto& tex : program.textures) {
+                releaseTexture(tex);
+            }
         }
         programs.clear();
 
+        ShaderPass* primaryPass = nullptr;
+
         for(auto pass : passes) {
             if (pass->primary) {
+                primaryPass = pass;
                 continue;
             }
             programs.push_back({});
-            buildProgram(device, programs.back(), *pass);
+            D3DProgram& program = programs.back();
+            buildProgram(device, program, *pass);
+            program.renderTarget.sampler = samplers[ program.filter ][ program.wrap ];
         }
+
+        if (primaryPass) {
+            format = _format(primaryPass->format);
+            frame.texture.sampler = samplers[ _filter(primaryPass->filter) ][_wrap( primaryPass->wrap )];
+        } else {
+            format = _format();
+            frame.texture.sampler = samplers[ (int)settings.filter ][1];
+        }
+
+        if (format != frame.texture.desc.Format)
+            initMainTexture( frame.texture.desc.Width, frame.texture.desc.Height );
     }
 
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+        if (settings.hintExclusiveFullscreen)
+            checkFSE();
+
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height, reuse);
 
-        if (frameLatency && !settings.vrr)
-            WaitForSingleObjectEx( frameLatency, 500, true);
+        if (swapChain.frameLatency && !settings.vrr)
+            WaitForSingleObjectEx( swapChain.frameLatency, 500, true);
 
         if(_width != frame.texture.desc.Width || _height != frame.texture.desc.Height) {
             if (!initMainTexture(_width, _height))
@@ -632,8 +549,36 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         return true;
     }
 
+    auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+        if (settings.hintExclusiveFullscreen)
+            checkFSE();
+
+        if (settings.threaded)
+            return RenderThread::lock(data, pitch, _width, _height, reuse);
+
+        if (swapChain.frameLatency && !settings.vrr)
+            WaitForSingleObjectEx( swapChain.frameLatency, 500, true);
+
+        if(_width != frame.texture.desc.Width || _height != frame.texture.desc.Height) {
+            if (!initMainTexture(_width, _height))
+                return false;
+        }
+
+        D3D11_MAPPED_SUBRESOURCE mappedTexture;
+        if (FAILED(context->Map((ID3D11Resource*)frame.texture.staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture)))
+            return false;
+
+        data = (float*)mappedTexture.pData;
+        pitch = mappedTexture.RowPitch >> 4;
+
+        return true;
+    }
+
     auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
-        renderBuffer->data = new uint32_t[w * h]();
+        if (format == DXGI_FORMAT_R32G32B32A32_FLOAT)
+            renderBuffer->dataFloat = new float[w * h * 4]();
+        else
+            renderBuffer->data = new uint32_t[w * h]();
     }
 
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
@@ -651,8 +596,8 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         bool disallowShader = false;
         RenderBuffer* renderBuffer = getBufferToRender();
         if (renderBuffer && renderBuffer->height) {
-            if (frameLatency && !settings.vrr)
-                WaitForSingleObjectEx( frameLatency, 500, true);
+            if (swapChain.frameLatency && !settings.vrr)
+                WaitForSingleObjectEx( swapChain.frameLatency, 500, true);
 
             renderBuffer->sharedMutex.lock();
 
@@ -665,8 +610,11 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
             if (FAILED(context->Map((ID3D11Resource*)frame.texture.staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture)))
                 return;
 
-            int srcPitch = renderBuffer->width << 2;
+            int srcPitch = renderBuffer->width << (format == DXGI_FORMAT_R32G32B32A32_FLOAT ? 4 : 2);
             uint8_t* src = (uint8_t*)renderBuffer->data;
+            if (format == DXGI_FORMAT_R32G32B32A32_FLOAT)
+                src = (uint8_t*)renderBuffer->dataFloat;
+
             unsigned pitch = mappedTexture.RowPitch;
             uint8_t* dest = (uint8_t*)mappedTexture.pData;
 
@@ -698,33 +646,15 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
     auto redraw(bool disallowShader = false) -> void {
         ID3D11RenderTargetView* rtv = nullptr;
         ID3D11Texture2D* backBuffer = nullptr;
-        RECT windowSize = getDimension( settings.handle );
+        RECT windowSize = Win::getDimension( settings.handle );
 
         if ((windowSize.right != viewScreen.windowWidth) || (windowSize.bottom != viewScreen.windowHeight)) {
-            if(settings.hintExclusiveFullscreen) {
-                int adapterId = Win::getFullscreenAdapter( Win::getParentHandle( settings.handle ) );
-                if (adapterId >= 0) {
-                    settings.exclusiveFullscreen = true;
-                    swapChain->SetFullscreenState(true, nullptr);
-                }
-            } else if(settings.exclusiveFullscreen) {
-                settings.exclusiveFullscreen = false;
-                swapChain->SetFullscreenState(false, nullptr);
-            }
-
-            swapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, swapFlags );
+            resizeMutexThreaded.lock();
+            swapChain.ptr->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, swapChain.flags );
+            resizeMutexThreaded.unlock();
             viewScreen.update(viewport, windowSize.right, windowSize.bottom);
-            setViewport(viewport);
             updateMessageParameter();
         }
-
-        if (FAILED(swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer)))
-            return;
-
-        if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)backBuffer, nullptr, &rtv)))
-            return;
-
-        dxRelease(backBuffer)
 
         context->RSSetState(scissorDisable);
         context->OMSetBlendState(blendDisable, nullptr, D3D11_DEFAULT_SAMPLE_MASK);
@@ -733,12 +663,119 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         UINT stride = sizeof(D3DVertex);
         UINT offset = 0;
         context->IASetVertexBuffers(0, 1, &frame.vbo, &stride, &offset);
+
+        D3DTexture* textures[2] = {&frame.texture, nullptr};
+
+        if (!disallowShader) {
+            auto ts = Chronos::getTimestampInMicroseconds();
+            unsigned targetWidth;
+            unsigned targetHeight;
+
+            for(auto& p : programs) {
+                if (p.crop.active) {
+                    targetWidth = textures[0]->desc.Width - p.crop.left - p.crop.right;
+                    targetHeight = textures[0]->desc.Height - p.crop.top - p.crop.bottom;
+
+                    if(targetWidth != p.renderTarget.desc.Width || targetHeight != p.renderTarget.desc.Height) {
+                        releaseTexture(p.renderTarget);
+                        p.renderTarget.desc.Width = targetWidth;
+                        p.renderTarget.desc.Height = targetHeight;
+                        p.renderTarget.desc.Format = textures[0]->desc.Format;
+                        if (!initTexture(p.renderTarget, false))
+                            return;
+                    }
+
+                    D3D11_BOX frameBox;
+                    frameBox.left   = p.crop.left;
+                    frameBox.top    = p.crop.top;
+                    frameBox.front  = 0;
+                    frameBox.right  = targetWidth + p.crop.left;
+                    frameBox.bottom = targetHeight + p.crop.top;
+                    frameBox.back   = 1;
+                    context->CopySubresourceRegion((ID3D11Resource*)p.renderTarget.ptr, 0, 0, 0, 0, (ID3D11Resource*)textures[0]->ptr, 0, &frameBox);
+                    textures[1] = textures[0];
+                    textures[0] = &p.renderTarget;
+                    continue;
+                }
+
+                targetWidth = viewport.width;
+                targetHeight = viewport.height;
+                if(p.relativeWidth) targetWidth = textures[0]->desc.Width * p.relativeWidth;
+                if(p.relativeHeight) targetHeight = textures[0]->desc.Height * p.relativeHeight;
+
+                if(targetWidth != p.renderTarget.desc.Width || targetHeight != p.renderTarget.desc.Height) {
+                    releaseTexture(p.renderTarget);
+                    p.renderTarget.desc.Width = targetWidth;
+                    p.renderTarget.desc.Height = targetHeight;
+                    p.renderTarget.desc.Format = p.format;
+                    p.renderTarget.desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+                    if (p.mipmap)
+                        p.renderTarget.desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+                    if (!initTexture(p.renderTarget))
+                        return;
+                }
+
+                applyShader(p.shader);
+
+                setConstantInt(p.shader, "ts", ts);
+                float _targetSize[4] = {(float)targetWidth, (float)targetHeight, 1.0f / (float)targetWidth, 1.0f / (float)targetHeight};
+                setConstantFloat4(p.shader, "targetSize", _targetSize );
+                updateConstantData(context, p.shader, "scene");
+
+                for (unsigned int i = 0; i < p.shader.constantBufferCount; i++)
+                    context->PSSetConstantBuffers(p.shader.constantBuffers[i].bindIndex, 1, &p.shader.constantBuffers[i].constantBuffer);
+
+                context->VSSetConstantBuffers(0, 1, &p == &programs.back() ? &ubo : &uboChain);
+
+                ID3D11RenderTargetView* null_rt = nullptr;
+                context->OMSetRenderTargets(1, &null_rt, nullptr);
+
+                context->PSSetShaderResources(p.bindTexture.index, 1, &textures[0]->view);
+                context->PSSetSamplers(p.bindTexture.indexSampler, 1, &textures[0]->sampler);
+
+                if (textures[1] && (p.bindPrevTexture.index >= 0) ) {
+                    context->PSSetShaderResources(p.bindPrevTexture.index, 1, &textures[1]->view);
+                    context->PSSetSamplers(p.bindPrevTexture.indexSampler, 1, &textures[1]->sampler);
+                }
+
+                for(auto& texture : p.textures) {
+                    context->PSSetShaderResources(texture.bind.index, 1, &texture.view);
+                    context->PSSetSamplers(texture.bind.indexSampler, 1, &texture.sampler);
+                }
+
+                context->OMSetRenderTargets( 1, &p.renderTarget.rtView, nullptr);
+
+                setViewport({targetWidth, targetHeight, 0, 0});
+
+                context->Draw(4, (&p == &programs.back()) ? 0 : 4 );
+
+                if (p.mipmap)
+                    context->GenerateMips( p.renderTarget.view);
+
+                textures[1] = textures[0];
+                textures[0] = &p.renderTarget;
+            }
+        }
+
+        resizeMutexThreaded.lock();
+        if (FAILED(swapChain.ptr->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer))) {
+            resizeMutexThreaded.unlock();
+            return;
+        }
+
+        if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)backBuffer, nullptr, &rtv)))
+            return;
+
+        dxRelease(backBuffer)
+
         context->OMSetRenderTargets(1, &rtv, nullptr);
         context->ClearRenderTargetView(rtv, clearColor);
 
+        setViewport(viewport);
         applyShader(frame.shader);
-        context->PSSetShaderResources(0, 1, &frame.texture.view);
-        context->PSSetSamplers(0, 1, &samplers[(int)settings.filter][1]);
+        context->PSSetShaderResources(0, 1, &textures[0]->view);
+        context->PSSetSamplers(0, 1, &textures[0]->sampler);
         context->VSSetConstantBuffers(0, 1, &ubo);
 
         context->Draw(4, 0);
@@ -758,20 +795,21 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         }
 
         if (settings.synchronize) {
-            swapChain->Present(1, 0);
+            swapChain.ptr->Present(1, 0);
             if (!legacy) {
                 IDXGIOutput* pOutput;
-                if (SUCCEEDED(swapChain->GetContainingOutput(&pOutput))) {
+                if (SUCCEEDED(swapChain.ptr->GetContainingOutput(&pOutput))) {
                     pOutput->WaitForVBlank();
                     pOutput->Release();
                 }
             }
         } else
-            swapChain->Present(0, (swapFlags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? DXGI_PRESENT_ALLOW_TEARING : 0);
+            swapChain.ptr->Present(0, (swapChain.flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING) ? DXGI_PRESENT_ALLOW_TEARING : 0);
 
-        if (settings.vrr) {
+        resizeMutexThreaded.unlock();
+
+        if (settings.vrr)
             context->Flush();
-        }
 
         dxRelease(rtv)
     }
@@ -796,7 +834,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         context->Draw(4, 0);
     }
 
-    auto setViewport(Viewport& viewport) -> void {
+    auto setViewport(const Viewport& viewport) -> void {
         D3D11_VIEWPORT d3D11Viewport;
         d3D11Viewport.Width = viewport.width;
         d3D11Viewport.Height = viewport.height;
@@ -814,11 +852,6 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
             context->Flush();
         }
 
-        if (frameLatency) {
-            CloseHandle(frameLatency);
-            frameLatency = nullptr;
-        }
-
         releaseTexture(frame.texture);
         releaseTexture(message.texture);
         releaseTexture(overlay.texture);
@@ -828,6 +861,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         dxRelease(overlay.vbo)
 
         dxRelease(ubo)
+        dxRelease(uboChain)
         dxRelease(blendEnable)
         dxRelease(blendDisable)
         dxRelease(scissorEnable)
@@ -845,7 +879,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         dxRelease(debugInfoQueue)
         dxRelease(debug)
 
-        dxRelease(swapChain)
+        clearSwapChain(swapChain);
         dxRelease(context)
         dxRelease(device)
 
@@ -855,12 +889,12 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
 #endif
     }
 
-    auto initMainTexture(unsigned w, unsigned h, bool useStaging = true) -> bool {
+    auto initMainTexture(unsigned w, unsigned h) -> bool {
         releaseTexture(frame.texture);
         frame.texture.desc.Width = w;
         frame.texture.desc.Height = h;
-        frame.texture.desc.Format = DXGI_FORMAT_B8G8R8X8_UNORM;
-        return initTexture(frame.texture, useStaging);
+        frame.texture.desc.Format = format;
+        return initTexture(frame.texture);
     }
 
     auto initTexture(D3DTexture& tex, bool useStaging = true) -> bool {
@@ -868,10 +902,24 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         tex.desc.ArraySize          = 1;
         tex.desc.SampleDesc.Count   = 1;
         tex.desc.SampleDesc.Quality = 0;
-        tex.desc.BindFlags          = D3D11_BIND_SHADER_RESOURCE;
+        tex.desc.BindFlags          |= D3D11_BIND_SHADER_RESOURCE;
         tex.desc.Usage              = useStaging ? D3D11_USAGE_DEFAULT : D3D11_USAGE_DYNAMIC;
         if (!useStaging)
             tex.desc.CPUAccessFlags     = D3D11_CPU_ACCESS_WRITE;
+
+        bool render = tex.desc.BindFlags & D3D11_BIND_RENDER_TARGET;
+
+        if (tex.desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS) {
+            tex.desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
+            unsigned width = tex.desc.Width >> 2;
+            unsigned height = tex.desc.Height >> 2;
+
+            while (width && height) { // based on log2
+                width >>= 1; 
+                height >>= 1;
+                tex.desc.MipLevels++;
+            }
+        }
 
         if (FAILED(device->CreateTexture2D(&tex.desc, nullptr, &tex.ptr)))
             return false;
@@ -885,9 +933,12 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         if (FAILED(device->CreateShaderResourceView((ID3D11Resource*)tex.ptr, &viewDesc, &tex.view)))
             return false;
 
-        if (useStaging) {
+        if (render) {
+            if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)tex.ptr, nullptr, &tex.rtView)))
+                return false;
+
+        } else if (useStaging) {
             D3D11_TEXTURE2D_DESC desc = tex.desc;
-            desc.MipLevels = 1;
             desc.BindFlags = 0;
             desc.MiscFlags = 0;
             desc.Usage = D3D11_USAGE_STAGING;
@@ -896,13 +947,6 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
                 return false;
         }
         return true;
-    }
-
-    auto getDimension(HWND handle) -> RECT {
-        RECT rect;
-        GetClientRect(handle, &rect);
-
-        return rect;
     }
 
     auto showMessage(std::string message, bool critical = false) -> void {
@@ -1053,6 +1097,97 @@ struct D3D11 : Video, RenderThread, D3D11Utility {
         }
 
         context->Unmap((ID3D11Resource*)overlay.vbo, 0);
+    }
+
+    template<typename T> auto shaderAttribute( std::string _program, std::string attribute, T value ) -> void {
+        wait();
+        bool success = false;
+        for(auto& program : programs) {
+            if (program.ident == _program) {
+                if (std::is_same<T, int>::value) {
+                    if (setConstantInt(program.shader, attribute, value)) { success = true; }
+                } else {
+                    if (setConstantFloat(program.shader, attribute, value)) { success = true; }
+                }
+                if (success) {
+                    updateConstantData(context, program.shader, "$Globals");
+                }
+                break;
+            }
+        }
+    }
+
+    auto shaderAttribute(std::string _program, std::string attribute, float* data, unsigned size) -> void {
+        D3DTexture* customTexture = nullptr;
+        wait();
+        for(auto& program : programs) {
+            if (program.ident == _program) {
+                customTexture = findRessource(program, attribute);
+                break;
+            }
+        }
+        if (!customTexture)
+            return;
+
+        releaseTexture( *customTexture );
+        customTexture->desc.Width = size;
+        customTexture->desc.Height = 1;
+        customTexture->desc.Format = DXGI_FORMAT_R32_FLOAT;
+        customTexture->sampler = samplers[(int)Video::Filter::Nearest][0];
+        if (!initTexture(*customTexture, false))
+            return;
+
+        D3D11_MAPPED_SUBRESOURCE mappedTexture;
+        if (FAILED(context->Map( (ID3D11Resource*)customTexture->ptr, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTexture)))
+            return;
+
+        unsigned pitch = mappedTexture.RowPitch;
+        uint8_t* dest = (uint8_t*)mappedTexture.pData;
+        std::memcpy(dest, (uint8_t*)data, size * 4);
+
+        context->Unmap((ID3D11Resource*)customTexture->ptr, 0);
+    }
+
+    auto shaderAttribute(std::string _program, std::string attribute, uint32_t* data, unsigned _width, unsigned _height ) -> void {
+        D3DTexture* customTexture = nullptr;
+        wait();
+
+        for(auto& program : programs) {
+            if (program.ident == _program) {
+                customTexture = findRessource(program, attribute);
+                break;
+            }
+        }
+        if (!customTexture)
+            return;
+
+        releaseTexture( *customTexture );
+        customTexture->desc.Width = _width;
+        customTexture->desc.Height = _height;
+        customTexture->desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        customTexture->desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+        customTexture->sampler = samplers[(int)Video::Filter::Linear][2];
+        if (!initTexture(*customTexture, true))
+            return;
+
+        D3D11_MAPPED_SUBRESOURCE mappedTexture;
+        if (FAILED(context->Map( (ID3D11Resource*)customTexture->staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture)))
+            return;
+
+        int srcPitch = _width << 2;
+        uint8_t* src = (uint8_t*)data;
+        unsigned pitch = mappedTexture.RowPitch;
+        uint8_t* dest = (uint8_t*)mappedTexture.pData;
+
+        for(int i = 0; i < _height; i++) {
+            std::memcpy(dest, src, srcPitch);
+            src += srcPitch;
+            dest += pitch;
+        }
+
+        context->Unmap((ID3D11Resource*)customTexture->staging, 0);
+        context->CopyResource((ID3D11Resource*)customTexture->ptr, (ID3D11Resource*)customTexture->staging);
+        context->GenerateMips( customTexture->view);
     }
 
     auto waitVRR() -> void {

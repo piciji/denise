@@ -189,6 +189,8 @@ struct Window : Base {
     std::function<void ()> onUnminimize = nullptr; 
 	std::function<void ()> onFocus = nullptr;
     std::function<void ()> onRealize = nullptr;
+    std::function<void ()> onInactive = nullptr;
+    std::function<void ()> onActive = nullptr;
 
     enum class Hints { Default, Video } hints = Hints::Default;
     

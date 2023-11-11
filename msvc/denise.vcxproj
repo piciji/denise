@@ -43,10 +43,12 @@
     <ClInclude Include="..\driver\tools\tools.h" />
     <ClInclude Include="..\driver\tools\utf8.h" />
     <ClInclude Include="..\driver\tools\win.h" />
+    <ClInclude Include="..\driver\video\d3d11\dxgiHandler.h" />
     <ClInclude Include="..\driver\video\d3d11\shaders.h" />
     <ClInclude Include="..\driver\video\d3d11\types.h" />
     <ClInclude Include="..\driver\video\d3d11\utility.h" />
     <ClInclude Include="..\driver\video\d3d9\dragnDropOverlay.h" />
+    <ClInclude Include="..\driver\video\dragnDropOverlay.h" />
     <ClInclude Include="..\driver\video\freetype.h" />
     <ClInclude Include="..\driver\video\opengl\bind.h" />
     <ClInclude Include="..\driver\video\opengl\main.h" />
@@ -1553,6 +1555,18 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\program\video\shader.cpp" />
+    <ClCompile Include="..\program\video\shader_glsl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\program\video\shader_hlsl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\program\video\sync.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

@@ -358,7 +358,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             VideoManager::setSynchronize();
         } break;
         case Hotkey::Id::ToggleSCVideoGPU:
-            if(videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL)
+            if(videoDriver->shaderFormat() == DRIVER::Video::ShaderType::NotSupported)
                 break;
         case Hotkey::Id::ToggleSCVideo: {
             if (!activeEmulator)

@@ -4,14 +4,16 @@
 #include <vector>
 #include <string>
 #include "../../guikit/api.h"
+#include "../../driver/driver.h"
 
+typedef DRIVER::Video::ShaderType ShaderFormat;
 #define SHADER_OFFSCREEN_WIDTH 4 // same value for left and right side
 
 struct VideoManager;
 struct ShaderPass;
 
-struct Shader {        
-    
+struct Shader {
+
     VideoManager* vManager;
     std::vector<ShaderPass*> externalPasses;
     std::vector<ShaderPass*> internalPasses;
@@ -54,20 +56,43 @@ struct Shader {
     auto transferRandomLine() -> void;
     auto transferBloom() -> void;
     
-    auto buildOutputEncoding() -> std::string;
-    auto buildBandwidthReduction() -> std::string;
-    auto buildDelayLineAndConvertToRgb() -> std::string;
-    auto buildNoise() -> std::string;
-    auto buildLumaLatency() -> std::string;    
-    auto buildRadialDistortion() -> std::string;
-    auto buildMask() -> std::string;
-    auto buildRandomLineOffset() -> std::string;
-    auto buildBloom(bool phase1) -> std::string;
+    auto buildOutputEncoding(ShaderFormat& format) -> std::string;
+    auto buildOutputEncodingGLSL() -> std::string;
+    auto buildOutputEncodingHLSL() -> std::string;
+
+    auto buildBandwidthReduction(ShaderFormat& format) -> std::string;
+    auto buildBandwidthReductionGLSL() -> std::string;
+    auto buildBandwidthReductionHLSL() -> std::string;
+    auto buildDelayLineAndConvertToRgb(ShaderFormat& format) -> std::string;
+    auto buildDelayLineAndConvertToRgbGLSL() -> std::string;
+    auto buildDelayLineAndConvertToRgbHLSL() -> std::string;
+    auto buildNoise(ShaderFormat& format) -> std::string;
+    auto buildNoiseGLSL() -> std::string;
+    auto buildNoiseHLSL() -> std::string;
+    auto buildLumaLatency(ShaderFormat& format) -> std::string;
+    auto buildLumaLatencyGLSL() -> std::string;
+    auto buildLumaLatencyHLSL() -> std::string;
+    auto buildRadialDistortion(ShaderFormat& format) -> std::string;
+    auto buildRadialDistortionGLSL() -> std::string;
+    auto buildRadialDistortionHLSL() -> std::string;
+    auto buildMask(ShaderFormat& format) -> std::string;
+    auto buildMaskGLSL() -> std::string;
+    auto buildMaskHLSL() -> std::string;
+    auto buildRandomLineOffset(ShaderFormat& format) -> std::string;
+    auto buildRandomLineOffsetGLSL() -> std::string;
+    auto buildRandomLineOffsetHLSL() -> std::string;
+    auto buildBloom(ShaderFormat& format, bool phase1) -> std::string;
+    auto buildBloomGLSL(bool phase1) -> std::string;
+    auto buildBloomHLSL(bool phase1) -> std::string;
     
-    auto buildGamma() -> std::string;
+    auto buildGamma(ShaderFormat& format) -> std::string;
+    auto buildGammaGLSL() -> std::string;
+    auto buildGammaHLSL() -> std::string;
     auto buildMaskTexture() -> void;
 
-    auto buildGammaAndScanlines() -> std::string;
+    auto buildGammaAndScanlines(ShaderFormat& format) -> std::string;
+    auto buildGammaAndScanlinesGLSL() -> std::string;
+    auto buildGammaAndScanlinesHLSL() -> std::string;
     auto addBaseProps( ShaderPass* pass ) -> void;
     auto calcRadialScale(float intensity) -> float;    
     

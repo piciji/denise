@@ -168,7 +168,15 @@ auto View::build() -> void {
         emuThread->unlock();
 		return allow;
 	};
-    
+
+    onInactive = [this]() {
+        videoDriver->activateApp(false);
+    };
+
+    onActive = [this]() {
+        videoDriver->activateApp(true);
+    };
+
     onUnminimize = [this]() {
         this->updateViewport();
         statusHandler->resetFrameCounter();

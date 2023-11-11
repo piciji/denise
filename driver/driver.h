@@ -77,6 +77,8 @@ struct Video {
 	virtual auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {}
     virtual auto disableExclusiveFullscreen() -> void {}
 
+    virtual auto activateApp(bool state) -> void {}
+
     virtual auto canHardSync() -> bool { return false; }
     virtual auto canExclusiveFullscreen() -> bool { return false; }
 

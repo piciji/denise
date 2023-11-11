@@ -644,15 +644,13 @@ auto VideoLayout::updateVisibillity() -> void {
     
     base.option.tvGamma.setEnabled( crtChecked && base.mode.palette.checked() && _pal );
 	
-    if (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::GLSL) {
-        //if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::HLSL) {
-            if(crtGpuChecked) {
-                base.mode.svideoCpu.setChecked();
-                _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
-            }
-			base.mode.svideoGpu.setEnabled(false);
-        //}
-                    
+    if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::NotSupported) {
+        if(crtGpuChecked) {
+            base.mode.svideoCpu.setChecked();
+            _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
+        }
+
+        base.mode.svideoGpu.setEnabled(false);
         tab2.setEnabled(false);
         tab3.setEnabled(false);
         return;

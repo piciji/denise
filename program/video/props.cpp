@@ -379,7 +379,7 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     bool _usePhaseError = settings->get<bool>("video_phase_error_use" + modeIdent, true);
     bool _newLuma = settings->get<bool>("video_new_luma" + modeIdent, true);
     bool _tvGamma = settings->get<bool>("video_tv_gamma" + modeIdent, false);
-    int _hanoverBars = settings->get<int>("video_hanover_bars" + modeIdent, _crtMode == (unsigned)CrtMode::Gpu ? (10 << moreError) : (-10 << moreError), {-100, 100});
+    int _hanoverBars = settings->get<int>("video_hanover_bars" + modeIdent, _crtMode == (unsigned)CrtMode::Gpu ? 10 : -10, {-100, 100});
     bool _useHanoverBars = settings->get<bool>("video_hanover_bars_use" + modeIdent, true);
     unsigned _blur = settings->get<unsigned>("video_blur" + modeIdent, 30,{0, 100});
     bool _useBlur = settings->get<bool>("video_blur_use" + modeIdent, true);
@@ -442,7 +442,7 @@ auto VideoManager::reloadSettings() -> void {
     
     auto [VPARAMS] = getSettings();
     
-    bool useShader = videoDriver && videoDriver->shaderFormat() == DRIVER::Video::ShaderType::GLSL;
+    bool useShader = videoDriver && (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::NotSupported);
 
     setSaturation(_saturation);
     setContrast(_contrast);
