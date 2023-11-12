@@ -6,6 +6,7 @@
 #include "../../tools/chronos.h"
 #include <d3d9.h>
 #include <d3dx9.h>
+#include "symbols.h"
 #include <math.h>
 #include <uxtheme.h>
 #include <cstring>
@@ -21,7 +22,7 @@ namespace DRIVER {
 
 auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL;
 
-struct D3D9 : Video, RenderThread {
+struct D3D9 : Video, RenderThread, D3D9Symbols {
     D3d9DragndropOverlay dndOverlay;
     LPDIRECT3D9 lpD3D;
     D3DPRESENT_PARAMETERS d3dpp;
@@ -31,7 +32,6 @@ struct D3D9 : Video, RenderThread {
     LPDIRECT3DTEXTURE9 texture;
     LPDIRECT3DVERTEXBUFFER9 vertex_buffer, *vertex_ptr;
     D3DLOCKED_RECT d3dlr;
-    std::vector<LPD3DXEFFECT> effects;
     ID3DXFont* mFont;
     const unsigned FONT_WIDTH = 1024;
     unsigned textureWidth = 0;
@@ -50,7 +50,6 @@ struct D3D9 : Video, RenderThread {
     struct {
         bool synchronize;
         Filter filter = Video::Filter::Linear;
-        std::vector<ShaderPass*> passes = {};
         HWND handle;
         HWND parent;
         bool hintExclusiveFullscreen = false;
@@ -88,18 +87,10 @@ struct D3D9 : Video, RenderThread {
     bool lost;
 
     auto releaseResources() -> void {
-        releaseShader();
         dxRelease(surface);
         dxRelease(texture);
         dxRelease(vertex_buffer);
         dxRelease(mFont);
-    }
-
-    auto releaseShader() -> void {
-        for (auto effect : effects) {
-            dxRelease(effect);
-        }
-        effects.clear();
     }
 
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
@@ -167,45 +158,6 @@ struct D3D9 : Video, RenderThread {
         vertex_buffer->Unlock();
 
         lpD3DDevice->SetStreamSource(0, vertex_buffer, 0, sizeof (d3dvertex));
-    }
-
-    auto setShader(std::vector<ShaderPass*> passes) -> void {
-
-        settings.passes = passes;
-        releaseShader();
-
-        for (auto pass : passes) {
-
-            if (pass->fragment.empty())
-                continue;
-
-            if (!caps.shader || !lpD3DDevice) {
-                pass->error = "no shader support";
-                continue;
-            }
-
-            if (pass->fragment.empty()) continue;
-
-            LPD3DXBUFFER pBufferErrors = nullptr;
-            LPD3DXEFFECT effect = nullptr;
-
-            HRESULT hr = D3DXCreateEffect(lpD3DDevice, (const void*) pass->fragment.c_str(), lstrlenA(pass->fragment.c_str()), NULL, NULL, 0, NULL, &effect, &pBufferErrors);
-
-            if (pBufferErrors) {
-                char* errorMessage = (char*) pBufferErrors->GetBufferPointer();
-                std::string str(errorMessage);
-                pass->error = str;
-                delete pBufferErrors;
-            }
-
-            if (!SUCCEEDED(hr)) continue;
-
-            D3DXHANDLE hTech;
-            effect->FindNextValidTechnique(NULL, &hTech);
-            effect->SetTechnique(hTech);
-
-            effects.push_back(effect);
-        }
     }
 
     auto reset(bool exclusiveFullscreenNeedInit = true) -> bool {
@@ -297,8 +249,10 @@ struct D3D9 : Video, RenderThread {
         textureHeight = 0;
         resize(inputWidth, inputHeight);
 
-        D3DXCreateFont(lpD3DDevice, 15, 0, 0, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
-                       DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Source Code Pro"), &mFont);
+        if (D3D9CreateFont)
+            D3D9CreateFont(lpD3DDevice, 15, 0, 0, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
+                           DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Source Code Pro"), &mFont);
+
         note.enable = false;
 
         updateFilter();
@@ -320,7 +274,7 @@ struct D3D9 : Video, RenderThread {
 			taskbar = FindWindow(L"Shell_TrayWnd", NULL);
         term();
 
-        if ((lpD3D = Direct3DCreate9(D3D_SDK_VERSION)) == NULL) {
+        if ((lpD3D = D3D9Create(D3D_SDK_VERSION)) == NULL) {
             return false;
         }
 
@@ -401,12 +355,13 @@ struct D3D9 : Video, RenderThread {
         recover();
         RenderThread::reset();
 
-        setShader(settings.passes);
         dndOverlay.init(lpD3DDevice);
         return true;
     }
 
     auto init(uintptr_t handle) -> bool {
+        if (!initializeSymbols())
+            return false;
         settings.handle = (HWND) handle;
         return init(true);
     }
@@ -487,11 +442,7 @@ struct D3D9 : Video, RenderThread {
         setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
         lpD3DDevice->SetTexture(0, texture);
 
-        if (!disallowShader && caps.shader && effects.size() > 0) {
-            applyShader(viewport.width, viewport.height);
-        } else {
-            lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-        }
+        lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 
         if (dndOverlay.enabled()) {
             dndOverlay.show(viewport);
@@ -499,7 +450,7 @@ struct D3D9 : Video, RenderThread {
             lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         }
 
-        if (note.enable)
+        if (note.enable && mFont)
             applyNote(viewport.width, viewport.height, viewport.x, viewport.y);
 
         lpD3DDevice->EndScene();
@@ -549,11 +500,7 @@ struct D3D9 : Video, RenderThread {
         setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
         lpD3DDevice->SetTexture(0, texture);
 
-        if (!disallowShader && caps.shader && effects.size() > 0) {
-            applyShader(viewport.width, viewport.height);
-        } else {
-            lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-        }
+        lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 
         if (dndOverlay.enabled()) {
             dndOverlay.show(viewport);
@@ -562,7 +509,7 @@ struct D3D9 : Video, RenderThread {
         }
 
         noteMutex.lock();
-        if (note.enable)
+        if (note.enable && mFont)
             applyNote(viewport.width, viewport.height, viewport.x, viewport.y);
         noteMutex.unlock();
 
@@ -586,35 +533,6 @@ struct D3D9 : Video, RenderThread {
             pos = 0;
         SetRect(&fontRect, pos, outHeight + outTop - 18, outLeft + outWidth - 5, outHeight + outTop - 0);
         mFont->DrawTextW(NULL, note.message, -1, &fontRect, DT_RIGHT, note.fontColor);
-    }
-
-    auto applyShader(unsigned outWidth, unsigned outHeight) -> void {
-        D3DXVECTOR4 inputSize;
-        inputSize.x = inputWidth;
-        inputSize.y = inputHeight;
-        inputSize.z = 1.0 / inputHeight;
-        inputSize.w = 1.0 / inputWidth;
-
-        D3DXVECTOR4 outputSize;
-        outputSize.x = outWidth;
-        outputSize.y = outHeight;
-        outputSize.z = 1.0 / outHeight;
-        outputSize.w = 1.0 / outWidth;
-
-        for (auto effect : effects) {
-            UINT passes;
-            effect->Begin(&passes, 0);
-            effect->SetTexture("texture0", texture);
-            effect->SetVector("inputSize", &inputSize);
-            effect->SetVector("outputSize", &outputSize);
-
-            for (unsigned pass = 0; pass < passes; pass++) {
-                effect->BeginPass(pass);
-                lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
-                effect->EndPass();
-            }
-            effect->End();
-        }
     }
 
     auto clear() -> void {
@@ -785,10 +703,13 @@ struct D3D9 : Video, RenderThread {
             RenderThread::enable(state);
 
             textureWidth = 0, textureHeight = 0;
-			if (settings.exclusiveFullscreen)
-				reset(false);
-			else
-				init();
+
+            if (settings.handle) {
+                if (settings.exclusiveFullscreen)
+                    reset(false);
+                else
+                    init();
+            }
 			
             settings.threaded = state;
         }

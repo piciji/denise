@@ -319,11 +319,6 @@ install: ## Install
 	$(call copy,readme.md,out)
 	$(call copy,data/txt/licence.md,out)
 
-    ifneq ($(findstring i686, $(shell g++ --version) ),)
-	$(call copy,"data/libs/shared/x86/D3DX9_43.dll",out)
-    else
-	$(call copy,"data/libs/shared/x64/D3DX9_43.dll",out)
-    endif
     else
 	mkdir -p out/$(translationFolder)
 	mkdir -p out/$(dataFolder)
@@ -337,11 +332,6 @@ install: ## Install
 	cp -r data/$(shaderFolder)/* out/$(shaderFolder)/
 	cp readme.md out
 	cp data/txt/licence.md out
-    ifneq ($(findstring i686, $(shell g++ --version) ),)
-	cp data/libs/shared/x86/D3DX9_43.dll out
-    else
-	cp data/libs/shared/x64/D3DX9_43.dll out
-    endif
     endif
 
     else ifeq ($(platform),macosx)
