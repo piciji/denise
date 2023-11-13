@@ -307,7 +307,7 @@ struct WGL : Video, OpenGL, RenderThread {
 		if(wglCreateContextAttribs) {
 			int attributes[] = {
 				WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-				WGL_CONTEXT_MINOR_VERSION_ARB, 2,
+				WGL_CONTEXT_MINOR_VERSION_ARB, 1,
 				0
 			};
 			HGLRC context = wglCreateContextAttribs(display, 0, attributes);

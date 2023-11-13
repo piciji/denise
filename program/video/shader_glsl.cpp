@@ -3,7 +3,7 @@ auto Shader::buildOutputEncodingGLSL() -> std::string {
     bool c64Glitches = vManager->isC64() && vManager->useLineGlitch();
 
     std::string out = R"(
-        #version 150
+        #version 140
 
         uniform int oddLine;
         uniform sampler2D source[];
@@ -23,14 +23,12 @@ auto Shader::buildOutputEncodingGLSL() -> std::string {
     }
 
     out += R"(
-        in Vertex {
-          vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
 
         void main() {
-            vec4 color = texture(source[0], texCoord).xyzw;
+            vec4 color = texture(source[0], texCoordFrag).xyzw;
     )";
 
     std::string rgbToLumaChroma;
@@ -59,12 +57,12 @@ auto Shader::buildOutputEncodingGLSL() -> std::string {
     if (c64Glitches) {
 
         if (vManager->firSharp == 0)
-            out += "float xposF = texCoord.x * targetSize.x;";
+            out += "float xposF = texCoordFrag.x * targetSize.x;";
         else
             // texture is doubled size: to make this working we need the xpos in original size.
             // means: 0 and 0.5 is Pixel 1, 1 and 1.5 is Pixel 2 and so on.
 
-            out += "float xposF = texCoord.x * (targetSize.x / 2.0);";
+            out += "float xposF = texCoordFrag.x * (targetSize.x / 2.0);";
 
         out += R"(
 
@@ -114,10 +112,10 @@ auto Shader::buildOutputEncodingGLSL() -> std::string {
 
     if (vManager->pal) {
         if (lace) {
-            out += R"( int oddLineFrame = int(floor(mod(floor(texCoord.y * targetSize.y / 2.0), 2.0))); )"; // e, e, o, o, e, e, o, o, ...
+            out += R"( int oddLineFrame = int(floor(mod(floor(texCoordFrag.y * targetSize.y / 2.0), 2.0))); )"; // e, e, o, o, e, e, o, o, ...
             out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
         } else {
-            out += R"( int oddLineFrame = int(floor(mod(texCoord.y * targetSize.y, 2.0))); )";  // e, o, e, o, e, o, ...
+            out += R"( int oddLineFrame = int(floor(mod(texCoordFrag.y * targetSize.y, 2.0))); )";  // e, o, e, o, e, o, ...
             out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
         }
     } else
@@ -131,28 +129,26 @@ auto Shader::buildOutputEncodingGLSL() -> std::string {
 auto Shader::buildLumaLatencyGLSL() -> std::string {
 
     std::string out = R"(
-		#version 150
+		#version 140
 
 		uniform sampler2D source[];
         uniform float lumaFall;
         uniform float lumaRise;
         uniform vec4 targetSize;
 
-        in Vertex {
-          vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
 
 		void main() {
-			vec4 color = texture(source[0], texCoord ).xyzw;
+			vec4 color = texture(source[0], texCoordFrag ).xyzw;
 	)";
 
     int rounds = vManager->firSharp == 0 ? -3 : -7;
 
     double pos = ((double) (rounds)) / ((double) (vManager->emulator->cropWidth() << (vManager->firSharp == 0 ? 0 : 1)));
 
-    out += "vec2 xy = texCoord.xy;";
+    out += "vec2 xy = texCoordFrag.xy;";
 
     out += "float ySrc = texture(source[0], xy + vec2( " + _doubleToStr(pos) + " , 0.0)).x; ";
 
@@ -206,11 +202,9 @@ auto Shader::buildLumaLatencyGLSL() -> std::string {
 auto Shader::buildNoiseGLSL() -> std::string {
 
     std::string out = R"(
-        #version 150
+        #version 140
 
-        in Vertex {
-          vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
         uniform sampler2D source[];
@@ -226,7 +220,7 @@ auto Shader::buildNoiseGLSL() -> std::string {
 
         void main() {
             float time = float(ts) / 1000000.0;
-            vec2 xy = texCoord.xy;
+            vec2 xy = texCoordFrag.xy;
             float y = random(xy + vec2(time * xy.x, time * xy.y)) * lumaNoise;
             float u = random(xy + vec2(time * xy.y, time * xy.x)) * chromaNoise;
             float v = random(xy - vec2(time * xy.x, time * xy.y)) * chromaNoise;
@@ -240,11 +234,9 @@ auto Shader::buildNoiseGLSL() -> std::string {
 auto Shader::buildRandomLineOffsetGLSL() -> std::string {
 
     std::string out = R"(
-        #version 150
+        #version 140
 
-        in Vertex {
-          vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
         uniform sampler2D source[];
@@ -261,7 +253,7 @@ auto Shader::buildRandomLineOffsetGLSL() -> std::string {
 
         void main() {
             float time = float(ts) / 1000000.0;
-            vec2 xy = texCoord.xy;
+            vec2 xy = texCoordFrag.xy;
             float offset = random(vec2(time * xy.y, xy.y + (time * xy.y))) * lineFactor;
             float x0 = xy.x + offset;
             float x1 = x0 + targetSize.z;
@@ -328,20 +320,18 @@ auto Shader::buildBandwidthReductionGLSL() -> std::string {
         _sharp = "-1.0";
 
     std::string out = R"(
-        #version 150
+        #version 140
 
         uniform sampler2D source[];
         uniform vec4 targetSize;
 
-        in Vertex {
-          vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
 
         void main() {
             float screenWidth = targetSize.x;
-            vec3 yuv=texture(source[0], texCoord + vec2(
+            vec3 yuv=texture(source[0], texCoordFrag + vec2(
     )";
 
     out += _sharp;
@@ -366,10 +356,10 @@ auto Shader::buildBandwidthReductionGLSL() -> std::string {
         double pos = ((double)i ) / ((double)(vManager->emulator->cropWidth() << 1));
 
         if (i != 0)
-            out += "    yuv += (texture(source[0], texCoord + vec2(" + _doubleToStr(-pos) + ", 0.0) ).xyz "
-                        "+ texture(source[0], texCoord + vec2(" + _doubleToStr(pos) + ", 0.0) ).xyz) * ";
-//            out += "    yuv += (texture(source[0], texCoord + vec2(" + std::to_string(-i) + " / screenWidth, 0.0) ).xyz "
-//                    "+ texture(source[0], texCoord + vec2(" + std::to_string(i) + " / screenWidth, 0.0) ).xyz) * ";
+            out += "    yuv += (texture(source[0], texCoordFrag + vec2(" + _doubleToStr(-pos) + ", 0.0) ).xyz "
+                        "+ texture(source[0], texCoordFrag + vec2(" + _doubleToStr(pos) + ", 0.0) ).xyz) * ";
+//            out += "    yuv += (texture(source[0], texCoordFrag + vec2(" + std::to_string(-i) + " / screenWidth, 0.0) ).xyz "
+//                    "+ texture(source[0], texCoordFrag + vec2(" + std::to_string(i) + " / screenWidth, 0.0) ).xyz) * ";
 
         out += "vec3(" + _doubleToStr(luma) + "," + _doubleToStr(chromaUI) + "," + _doubleToStr(chromaVQ) + ");";
 
@@ -383,7 +373,7 @@ auto Shader::buildBandwidthReductionGLSL() -> std::string {
 auto Shader::buildDelayLineAndConvertToRgbGLSL() -> std::string {
 
     std::string out = R"(
-        #version 150
+        #version 140
 
         uniform sampler2D source[];
         uniform float hanoverBars;
@@ -391,9 +381,7 @@ auto Shader::buildDelayLineAndConvertToRgbGLSL() -> std::string {
         uniform vec4 targetSize;
 		uniform int oddLine;
 
-        in Vertex {
-          vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
 
@@ -404,15 +392,15 @@ auto Shader::buildDelayLineAndConvertToRgbGLSL() -> std::string {
 
         if (lace)
             out += R"(
-				int lineFactor = int(floor(mod(floor(texCoord.y * targetSize.y / 2.0), 2.0)));
-				vec3 yuv = (texture(source[0], texCoord.xy).xyz);
-				vec3 yuvLineBefore = (texture(source[0], texCoord.xy + vec2(0.0, -2.0 / targetSize.y )).xyz);
+				int lineFactor = int(floor(mod(floor(texCoordFrag.y * targetSize.y / 2.0), 2.0)));
+				vec3 yuv = (texture(source[0], texCoordFrag.xy).xyz);
+				vec3 yuvLineBefore = (texture(source[0], texCoordFrag.xy + vec2(0.0, -2.0 / targetSize.y )).xyz);
 			)";
         else
             out += R"(
-				int lineFactor = int(floor(mod(texCoord.y * targetSize.y, 2.0)));
-				vec3 yuv = (texture(source[0], texCoord.xy).xyz);
-				vec3 yuvLineBefore = (texture(source[0], texCoord.xy + vec2(0.0, -1.0 / targetSize.y )).xyz);
+				int lineFactor = int(floor(mod(texCoordFrag.y * targetSize.y, 2.0)));
+				vec3 yuv = (texture(source[0], texCoordFrag.xy).xyz);
+				vec3 yuvLineBefore = (texture(source[0], texCoordFrag.xy + vec2(0.0, -1.0 / targetSize.y )).xyz);
 			)";
 
         out += R"(
@@ -424,7 +412,7 @@ auto Shader::buildDelayLineAndConvertToRgbGLSL() -> std::string {
     } else {
 
         out += R"(
-			vec3 color = texture(source[0], texCoord).xyz * mat3(1.0, 1.630, 0.317, 1.0, -0.378, -0.466, 1.0, -1.089, 1.677);
+			vec3 color = texture(source[0], texCoordFrag).xyz * mat3(1.0, 1.630, 0.317, 1.0, -0.378, -0.466, 1.0, -1.089, 1.677);
 			fragColor = vec4(color, 1.0);
 		}
 		)";
@@ -449,20 +437,18 @@ auto Shader::buildGammaGLSL() -> std::string {
     // color is normalized between [0,1] -> * 255 (for denormalization) / 768 for lookup
 
     std::string out = R"(
-        #version 150
+        #version 140
 
         uniform sampler2D source[];
         uniform sampler1D gamma;
         uniform vec4 targetSize;
 
-        in Vertex {
-          vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
 
         void main() {
-			vec3 color = texture(source[0], texCoord).rgb;
+			vec3 color = texture(source[0], texCoordFrag).rgb;
 			color.r = texture(gamma, 1.0/3.0 + color.r * 0.33203125 ).x;
 			color.g = texture(gamma, 1.0/3.0 + color.g * 0.33203125 ).x;
 			color.b = texture(gamma, 1.0/3.0 + color.b * 0.33203125 ).x;
@@ -475,24 +461,22 @@ auto Shader::buildGammaGLSL() -> std::string {
 
 auto Shader::buildGammaAndScanlinesGLSL() -> std::string {
     std::string out = R"(
-        #version 150
+        #version 140
 
         uniform sampler2D source[];
         uniform sampler1D gammaWithShade;
         uniform sampler1D gamma;
         uniform vec4 targetSize;
 
-        in Vertex {
-          vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
 
         void main() {
-		    vec3 color = texture(source[0], texCoord).rgb;
-			vec3 colorUp = texture(source[0], texCoord.xy + vec2( 0.0, -1.0 / targetSize.y ) ).rgb;
-			vec3 colorDown = texture(source[0], texCoord.xy + vec2( 0.0, 1.0 / targetSize.y ) ).rgb;
-			int lineFactor = int(floor(mod(texCoord.y * targetSize.y, 2.0)));
+		    vec3 color = texture(source[0], texCoordFrag).rgb;
+			vec3 colorUp = texture(source[0], texCoordFrag.xy + vec2( 0.0, -1.0 / targetSize.y ) ).rgb;
+			vec3 colorDown = texture(source[0], texCoordFrag.xy + vec2( 0.0, 1.0 / targetSize.y ) ).rgb;
+			int lineFactor = int(floor(mod(texCoordFrag.y * targetSize.y, 2.0)));
 
 			color.r = mix( texture(gamma, 1.0/3.0 + color.r * 0.33203125 ).x, texture(gammaWithShade, 1.0/3.0 + 0.166015625 * colorUp.r + 0.166015625 * colorDown.r ).x, lineFactor );
 			color.g = mix( texture(gamma, 1.0/3.0 + color.g * 0.33203125 ).x, texture(gammaWithShade, 1.0/3.0 + 0.166015625 * colorUp.g + 0.166015625 * colorDown.g ).x, lineFactor );
@@ -508,15 +492,13 @@ auto Shader::buildGammaAndScanlinesGLSL() -> std::string {
 auto Shader::buildRadialDistortionGLSL() -> std::string {
 
     std::string out = R"(
-        #version 150
+        #version 140
 
         uniform sampler2D source[];
         uniform float Factor;
         uniform float Scale;
 
-        in Vertex {
-            vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
 
@@ -527,7 +509,7 @@ auto Shader::buildRadialDistortionGLSL() -> std::string {
         }
 
         void main(void) {
-            vec2 xy = ((radialDistortion(texCoord.xy) - vec2(0.5, 0.5)) * Scale) + vec2(0.5, 0.5);
+            vec2 xy = ((radialDistortion(texCoordFrag.xy) - vec2(0.5, 0.5)) * Scale) + vec2(0.5, 0.5);
 
             fragColor = texture(source[0], xy);
         }
@@ -553,7 +535,7 @@ auto Shader::buildMaskGLSL() -> std::string {
         uniforms += R"( uniform float lightFromCenter; )";
 
     std::string out = R"(
-        #version 150
+        #version 140
 
         uniform sampler2D source[];
 		uniform float luminance;
@@ -562,24 +544,22 @@ auto Shader::buildMaskGLSL() -> std::string {
     out += uniforms;
 
     out += R"(
-        in Vertex {
-            vec2 texCoord;
-        };
+        in vec2 texCoordFrag;
 
         out vec4 fragColor;
 
         void main(void) {
 
-            vec3 color = texture(source[0], texCoord).xyz;
+            vec3 color = texture(source[0], texCoordFrag).xyz;
         )";
 
     if (vManager->maskLevel)
-        out += "color *= mix( vec3(1.0), texture( maskLayer, texCoord * vec2(maskScaleX, maskScaleY) ).xyz, maskLevel ); ";
-    //out += "color = mix( vec3(1.0), texture( maskLayer, texCoord * vec2(1.0) ).xyz, 1.0 );";
+        out += "color *= mix( vec3(1.0), texture( maskLayer, texCoordFrag * vec2(maskScaleX, maskScaleY) ).xyz, maskLevel ); ";
+    //out += "color = mix( vec3(1.0), texture( maskLayer, texCoordFrag * vec2(1.0) ).xyz, 1.0 );";
 
     if (vManager->lightFromCenter) {
         out += R"(
-            vec2 lightVector = (texCoord - vec2(0.5)) * lightFromCenter;
+            vec2 lightVector = (texCoordFrag - vec2(0.5)) * lightFromCenter;
         )";
 
         light = "exp(-dot(lightVector, lightVector)) * ";
@@ -609,11 +589,9 @@ auto Shader::buildBloomGLSL( bool phase1 ) -> std::string {
     GaussianBlur gB( vManager->bloomRadius << 1, vManager->bloomVariance);
 
     std::string out = R"(
-		#version 150
+		#version 140
 
-		in Vertex {
-            vec2 texCoord;
-        };
+		in vec2 texCoordFrag;
 
 		uniform sampler2D source[];
     )";
@@ -631,19 +609,19 @@ auto Shader::buildBloomGLSL( bool phase1 ) -> std::string {
     for ( int i = (vManager->bloomRadius << 1); i >= 0; i-- ) {
 
         if (i == 0) {
-            out += " sum += texture(source[0], texCoord).rgb * ";
+            out += " sum += texture(source[0], texCoordFrag).rgb * ";
 
         } else if (phase1) {
             double pos = ((double)i ) / ((double)(vManager->emulator->cropWidth() << 1));
 
-            out += " sum += (texture(source[0], texCoord + vec2(" + _doubleToStr(-pos) + ", 0.0) ).rgb "
-                                                                                         "+ texture(source[0], texCoord + vec2(" + _doubleToStr(pos) + ", 0.0) ).rgb) * ";
+            out += " sum += (texture(source[0], texCoordFrag + vec2(" + _doubleToStr(-pos) + ", 0.0) ).rgb "
+                                                                                         "+ texture(source[0], texCoordFrag + vec2(" + _doubleToStr(pos) + ", 0.0) ).rgb) * ";
 
         } else {
             double pos = ((double)i ) / ((double)(vManager->emulator->cropHeight() << 1));
 
-            out += " sum += (texture(source[0], texCoord + vec2(0.0, " + _doubleToStr(-pos) + ") ).rgb "
-                                                                                              "+ texture(source[0], texCoord + vec2(0.0, " + _doubleToStr(pos) + ") ).rgb) * ";
+            out += " sum += (texture(source[0], texCoordFrag + vec2(0.0, " + _doubleToStr(-pos) + ") ).rgb "
+                                                                                              "+ texture(source[0], texCoordFrag + vec2(0.0, " + _doubleToStr(pos) + ") ).rgb) * ";
         }
 
         out += " " + GUIKIT::String::convertDoubleToString( gB.get( i ) ) + ";";
@@ -656,12 +634,12 @@ auto Shader::buildBloomGLSL( bool phase1 ) -> std::string {
 		)";
     else if (vManager->bloomWeight == 3.0)
         out += R"(
-			fragColor = vec4(clamp(texture(source[1], texCoord).rgb + ( sum.rgb * glow ), 0.0, 1.0), 1.0);
+			fragColor = vec4(clamp(texture(source[1], texCoordFrag).rgb + ( sum.rgb * glow ), 0.0, 1.0), 1.0);
 			}
 		)";
     else
         out += R"(
-			fragColor = vec4(clamp(texture(source[1], texCoord).rgb + ( pow(sum.rgb, vec3(weight)) * glow ), 0.0, 1.0), 1.0);
+			fragColor = vec4(clamp(texture(source[1], texCoordFrag).rgb + ( pow(sum.rgb, vec3(weight)) * glow ), 0.0, 1.0), 1.0);
 			}
 		)";
 

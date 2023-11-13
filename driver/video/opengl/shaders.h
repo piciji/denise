@@ -1,15 +1,13 @@
 
 static std::string OpenGLOutputVertexShader = R"(
-  #version 150
+  #version 140
 
   uniform vec4 targetSize;
   uniform vec4 outputSize;
 
   in vec2 texCoord;
 
-  out Vertex {
-    vec2 texCoord;
-  } vertexOut;
+  out vec2 texCoordFrag;
 
   void main() {
     //center image within output window
@@ -31,23 +29,21 @@ static std::string OpenGLOutputVertexShader = R"(
     gl_Position.xy -= align / outputSize.xy;
     gl_Position.zw = vec2(0.0, 1.0);
 
-    vertexOut.texCoord = texCoord;
+    texCoordFrag = texCoord;
   }
 )";
 
 static std::string OpenGLVertexShader = R"(
-  #version 150
+  #version 140
 
   in vec4 position;
   in vec2 texCoord;
 
-  out Vertex {
-    vec2 texCoord;
-  } vertexOut;
+  out vec2 texCoordFrag;
 
   void main() {
     gl_Position = position;
-    vertexOut.texCoord = texCoord;
+    texCoordFrag = texCoord;
   }
 )";
 
@@ -76,23 +72,21 @@ static std::string OpenGLGeometryShader = R"(
 )";
 
 static std::string OpenGLFragmentShader = R"(
-  #version 150
+  #version 140
 
   uniform sampler2D source[];
 
-  in Vertex {
-    vec2 texCoord;
-  };
+  in vec2 texCoordFrag;
 
   out vec4 fragColor;
 
   void main() {
-    fragColor = texture(source[0], texCoord);
+    fragColor = texture(source[0], texCoordFrag);
   }
 )";
 
 static std::string OpenGLTextVertexShader = R"(
-  #version 150
+  #version 140
 
   in vec4 fontCoords;
  
@@ -110,7 +104,7 @@ static std::string OpenGLTextVertexShader = R"(
 )";
 
 static std::string OpenGLTextFragmentShader = R"(
-#version 150
+#version 140
 
 in vec4 fragColor; // fragment color
 in vec2 fontTexCoords; // texture coords for th glyph
@@ -125,7 +119,7 @@ void main() {
 )";
 
 static std::string OpenGLDragnDropVertexShader = R"(
-  #version 150
+  #version 140
 
   in vec4 texCoords;
   uniform vec4 color;
@@ -142,7 +136,7 @@ static std::string OpenGLDragnDropVertexShader = R"(
 )";
 
 static std::string OpenGLDragnDropFragmentShader = R"(
-#version 150
+#version 140
 
 in vec2 texCoordsOut;
 out vec4 glFragColor;
