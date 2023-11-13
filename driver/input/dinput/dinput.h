@@ -3,6 +3,7 @@
 #include "v7.h"
 #include "v8.h"
 #include "../../driver.h"
+#include "format.h"
 
 #if defined (DRV_DINPUT5) && !defined(DRV_DINPUT7) && !defined(DRV_DINPUT8)
     #define DIRECTINPUT_VERSION 0x0500

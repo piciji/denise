@@ -1,4 +1,5 @@
 
+#include <initguid.h>
 #include <d3d11_4.h>
 #include <d3dcompiler.h>
 #include <thread>
@@ -9,6 +10,7 @@
 #include "../viewport.h"
 #include "../thread/renderThread.h"
 #include "types.h"
+#include "symbols.h"
 #include "shaders.h"
 #include "utility.h"
 #include "dxgiHandler.h"
@@ -21,7 +23,7 @@
 
 namespace DRIVER {
 
-struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
+struct D3D11 : Video, RenderThread, DXGIHandler {
     struct Matrix4x4 {
         float data[16];
     };
@@ -61,6 +63,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
 
     ID3D11InfoQueue* debugInfoQueue;
     ID3D11Debug* debug;
+    D3D11Symbols symbols;
 
     float clearColor[4] = {0.0, 0.0, 0.0, 1.0};
 
@@ -172,7 +175,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
         if (settings.exclusiveFullscreen) {
             //wait();
             resizeMutexThreaded.lock();
-            initSwapChain(device, settings.handle, settings.hardSync, swapChain, true);
+            initSwapChain(symbols, device, settings.handle, settings.hardSync, swapChain, true);
             resizeMutexThreaded.unlock();
             settings.exclusiveFullscreen = false;
         }
@@ -187,14 +190,14 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
                 if (adapterId >= 0) {
                     settings.exclusiveFullscreen = true;
                     resizeMutexThreaded.lock();
-                    initSwapChain(device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
+                    initSwapChain(symbols, device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
                     resizeMutexThreaded.unlock();
                     return;
                 }
             }
 
             resizeMutexThreaded.lock();
-            initSwapChain(device, settings.handle, settings.hardSync, swapChain, true);
+            initSwapChain(symbols, device, settings.handle, settings.hardSync, swapChain, true);
             resizeMutexThreaded.unlock();
         }
     }
@@ -208,7 +211,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
              //   wait();
                 settings.exclusiveFullscreen = true;
                 resizeMutexThreaded.lock();
-                initSwapChain(device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
+                initSwapChain(symbols, device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
                 resizeMutexThreaded.unlock();
             }
         }
@@ -228,7 +231,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
         wait();
         settings.hardSync = state;
         if (settings.handle) {
-            if (!initSwapChain(device, settings.handle, state, swapChain)) {
+            if (!initSwapChain(symbols, device, settings.handle, state, swapChain)) {
 
             }
         }
@@ -304,6 +307,9 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
     auto hasVRR() -> bool { return settings.vrr; }
 
     auto init(uintptr_t handle) -> bool {
+        if (!symbols.initializeSymbols())
+            return false;
+
         settings.handle = (HWND) handle;
         return init();
     }
@@ -322,7 +328,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
         deviceFlags = D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-        if (FAILED(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, deviceFlags, features, 3, D3D11_SDK_VERSION, &device, nullptr, &context))) {
+        if (FAILED(symbols.D3D11Create(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, deviceFlags, features, 3, D3D11_SDK_VERSION, &device, nullptr, &context))) {
             return term(), false;
         }
 
@@ -336,10 +342,10 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
         }
 #endif
 
-        if (!initSwapChain(device, settings.handle, settings.hardSync, swapChain))
+        if (!initSwapChain(symbols, device, settings.handle, settings.hardSync, swapChain))
             return false;
 
-        format = _format();
+        format = D3D11Utility::_format();
         if (!initMainTexture(32, 32))
             return term(), false;
 
@@ -435,13 +441,13 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
             { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(D3DVertex, color), D3D11_INPUT_PER_VERTEX_DATA, 0 }
         };
 
-        if (!createShader(device, D3D11outputShader, "PS", "VS", "", descShader, countof(descShader), &frame.shader))
+        if (!D3D11Utility::createShader(symbols, device, D3D11outputShader, "PS", "VS", "", descShader, countof(descShader), &frame.shader))
             return term(), false;
 
-        if (!createShader(device, D3D11messageShader, "PS", "VS", "", descShader, countof(descShader), &message.shader))
+        if (!D3D11Utility::createShader(symbols, device, D3D11messageShader, "PS", "VS", "", descShader, countof(descShader), &message.shader))
             return term(), false;
 
-        if (!createShader(device, D3D11overlayShader, "PS", "VS", "", descShader, countof(descShader), &overlay.shader))
+        if (!D3D11Utility::createShader(symbols, device, D3D11overlayShader, "PS", "VS", "", descShader, countof(descShader), &overlay.shader))
             return term(), false;
 
         dndOverlay.initialized = true;
@@ -491,10 +497,10 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
 
     auto shader(std::vector<ShaderPass*>& passes) -> void {
         for(auto& program : programs) {
-            releaseShader(program.shader);
-            releaseTexture(program.renderTarget);
+            D3D11Utility::releaseShader(program.shader);
+            D3D11Utility::releaseTexture(program.renderTarget);
             for (auto& tex : program.textures) {
-                releaseTexture(tex);
+                D3D11Utility::releaseTexture(tex);
             }
         }
         programs.clear();
@@ -508,15 +514,15 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
             }
             programs.push_back({});
             D3DProgram& program = programs.back();
-            buildProgram(device, program, *pass);
+            D3D11Utility::buildProgram(symbols, device, program, *pass);
             program.renderTarget.sampler = samplers[ program.filter ][ program.wrap ];
         }
 
         if (primaryPass) {
-            format = _format(primaryPass->format);
-            frame.texture.sampler = samplers[ _filter(primaryPass->filter) ][_wrap( primaryPass->wrap )];
+            format = D3D11Utility::_format(primaryPass->format);
+            frame.texture.sampler = samplers[ D3D11Utility::_filter(primaryPass->filter) ][D3D11Utility::_wrap( primaryPass->wrap )];
         } else {
-            format = _format();
+            format = D3D11Utility::_format();
             frame.texture.sampler = samplers[ (int)settings.filter ][1];
         }
 
@@ -677,7 +683,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
                     targetHeight = textures[0]->desc.Height - p.crop.top - p.crop.bottom;
 
                     if(targetWidth != p.renderTarget.desc.Width || targetHeight != p.renderTarget.desc.Height) {
-                        releaseTexture(p.renderTarget);
+                        D3D11Utility::releaseTexture(p.renderTarget);
                         p.renderTarget.desc.Width = targetWidth;
                         p.renderTarget.desc.Height = targetHeight;
                         p.renderTarget.desc.Format = textures[0]->desc.Format;
@@ -704,7 +710,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
                 if(p.relativeHeight) targetHeight = textures[0]->desc.Height * p.relativeHeight;
 
                 if(targetWidth != p.renderTarget.desc.Width || targetHeight != p.renderTarget.desc.Height) {
-                    releaseTexture(p.renderTarget);
+                    D3D11Utility::releaseTexture(p.renderTarget);
                     p.renderTarget.desc.Width = targetWidth;
                     p.renderTarget.desc.Height = targetHeight;
                     p.renderTarget.desc.Format = p.format;
@@ -718,10 +724,10 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
 
                 applyShader(p.shader);
 
-                setConstantInt(p.shader, "ts", ts);
+                D3D11Utility::setConstantInt(p.shader, "ts", ts);
                 float _targetSize[4] = {(float)targetWidth, (float)targetHeight, 1.0f / (float)targetWidth, 1.0f / (float)targetHeight};
-                setConstantFloat4(p.shader, "targetSize", _targetSize );
-                updateConstantData(context, p.shader, "scene");
+                D3D11Utility::setConstantFloat4(p.shader, "targetSize", _targetSize );
+                D3D11Utility::updateConstantData(context, p.shader, "scene");
 
                 for (unsigned int i = 0; i < p.shader.constantBufferCount; i++)
                     context->PSSetConstantBuffers(p.shader.constantBuffers[i].bindIndex, 1, &p.shader.constantBuffers[i].constantBuffer);
@@ -852,9 +858,9 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
             context->Flush();
         }
 
-        releaseTexture(frame.texture);
-        releaseTexture(message.texture);
-        releaseTexture(overlay.texture);
+        D3D11Utility::releaseTexture(frame.texture);
+        D3D11Utility::releaseTexture(message.texture);
+        D3D11Utility::releaseTexture(overlay.texture);
 
         dxRelease(frame.vbo)
         dxRelease(message.vbo)
@@ -872,9 +878,9 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
             dxRelease(samplers[(int)Video::Filter::Linear][i])
         }
 
-        releaseShader(frame.shader);
-        releaseShader(message.shader);
-        releaseShader(overlay.shader);
+        D3D11Utility::releaseShader(frame.shader);
+        D3D11Utility::releaseShader(message.shader);
+        D3D11Utility::releaseShader(overlay.shader);
 
         dxRelease(debugInfoQueue)
         dxRelease(debug)
@@ -890,7 +896,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
     }
 
     auto initMainTexture(unsigned w, unsigned h) -> bool {
-        releaseTexture(frame.texture);
+        D3D11Utility::releaseTexture(frame.texture);
         frame.texture.desc.Width = w;
         frame.texture.desc.Height = h;
         frame.texture.desc.Format = format;
@@ -1006,7 +1012,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
 
     auto buildMessageTexture(std::string& text) -> void {
 #ifdef DRV_FREETYPE
-        releaseTexture(message.texture);
+        D3D11Utility::releaseTexture(message.texture);
         if (!ft.buildTexture(text))
             return;
 
@@ -1041,7 +1047,7 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
             return;
 
         dndOverlay.updateAlpha();
-        releaseTexture(overlay.texture);
+        D3D11Utility::releaseTexture(overlay.texture);
         overlay.texture.desc.Width = dndOverlay.texWidth;
         overlay.texture.desc.Height = dndOverlay.texHeight;
         overlay.texture.desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -1105,12 +1111,12 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
         for(auto& program : programs) {
             if (program.ident == _program) {
                 if (std::is_same<T, int>::value) {
-                    if (setConstantInt(program.shader, attribute, value)) { success = true; }
+                    if (D3D11Utility::setConstantInt(program.shader, attribute, value)) { success = true; }
                 } else {
-                    if (setConstantFloat(program.shader, attribute, value)) { success = true; }
+                    if (D3D11Utility::setConstantFloat(program.shader, attribute, value)) { success = true; }
                 }
                 if (success) {
-                    updateConstantData(context, program.shader, "$Globals");
+                    D3D11Utility::updateConstantData(context, program.shader, "$Globals");
                 }
                 break;
             }
@@ -1122,14 +1128,14 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
         wait();
         for(auto& program : programs) {
             if (program.ident == _program) {
-                customTexture = findRessource(program, attribute);
+                customTexture = D3D11Utility::findRessource(program, attribute);
                 break;
             }
         }
         if (!customTexture)
             return;
 
-        releaseTexture( *customTexture );
+        D3D11Utility::releaseTexture( *customTexture );
         customTexture->desc.Width = size;
         customTexture->desc.Height = 1;
         customTexture->desc.Format = DXGI_FORMAT_R32_FLOAT;
@@ -1154,14 +1160,14 @@ struct D3D11 : Video, RenderThread, D3D11Utility, DXGIHandler {
 
         for(auto& program : programs) {
             if (program.ident == _program) {
-                customTexture = findRessource(program, attribute);
+                customTexture = D3D11Utility::findRessource(program, attribute);
                 break;
             }
         }
         if (!customTexture)
             return;
 
-        releaseTexture( *customTexture );
+        D3D11Utility::releaseTexture( *customTexture );
         customTexture->desc.Width = _width;
         customTexture->desc.Height = _height;
         customTexture->desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;

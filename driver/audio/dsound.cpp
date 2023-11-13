@@ -11,11 +11,14 @@
 
 namespace DRIVER {
 
+typedef HRESULT(__stdcall *DSoundCreate_t)(LPCGUID lpGUID,LPDIRECTSOUND *ppDS,LPUNKNOWN pUnkOuter);
+
 struct DAudio : Audio {
     LPDIRECTSOUND ds;
     DSBUFFERDESC dsbd;
     WAVEFORMATEX wfx;
     LPDIRECTSOUNDBUFFER dsb;
+    HMODULE library;
 
     uint8_t* chunkBuffer;
     unsigned chunkSize;
@@ -25,6 +28,7 @@ struct DAudio : Audio {
     uint8_t readChunk;
     uint8_t distance;
     bool cleared;
+    DSoundCreate_t DSoundCreate;
     
     struct {
         bool priority;
@@ -157,6 +161,18 @@ struct DAudio : Audio {
         return (double) deltaMid / halfSize;
     }
 
+    auto initializeSymbols() -> bool {
+        library = LoadLibraryA("dsound.dll");
+        if (!library)
+            return false;
+
+        DSoundCreate = (DSoundCreate_t)GetProcAddress(library, "DirectSoundCreate");
+        if (!DSoundCreate)
+            return false;
+
+        return true;
+    }
+
     auto init() -> bool {
 		cleared = false;
 		term();
@@ -167,7 +183,7 @@ struct DAudio : Audio {
         
 		chunkBuffer = new uint8_t[chunkSize];
 
-		DWORD result = DirectSoundCreate(0, &ds, 0);
+		HRESULT result = DSoundCreate(0, &ds, 0);
 		if (result != DS_OK)
 			return false;		
 
@@ -201,6 +217,8 @@ struct DAudio : Audio {
 	}
 
     auto init(uintptr_t handle) -> bool {
+        if (!initializeSymbols())
+            return false;
         settings.handle = (HWND) handle;
         return init();
     }
@@ -247,9 +265,15 @@ struct DAudio : Audio {
 		settings.handle = nullptr;
         settings.priority = false;
         cleared = false;
+        library = nullptr;
+        DSoundCreate = nullptr;
 	}
 	
-    ~DAudio() { term(); }
+    ~DAudio() {
+        term();
+        if (library)
+            FreeLibrary(library);
+    }
 };
 
 }

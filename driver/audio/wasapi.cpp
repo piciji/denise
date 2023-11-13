@@ -1,6 +1,5 @@
 #include <atomic>
 #include <initguid.h>
-#include <avrt.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <audiopolicy.h>
@@ -10,6 +9,8 @@
 
 #ifdef _MSC_VER
 DEFINE_GUID(IID_IAudioClient, 0x1cb9ad4c, 0xdbfa, 0x4c32, 0xb1,0x78, 0xc2,0xf5,0x68,0xa7,0x03,0xb2);
+#else
+DEFINE_GUID(KSDATAFORMAT_SUBTYPE_IEEE_FLOAT, 0x00000003, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 #endif
 
 #define WS_CHUNKS 16

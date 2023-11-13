@@ -34,7 +34,7 @@ struct D3D11Utility {
         return DXGI_FORMAT_B8G8R8A8_UNORM;
     }
 
-    auto buildProgram(ID3D11Device* device, D3DProgram& program, ShaderPass& pass) -> bool {
+    static auto buildProgram(D3D11Symbols& symbols, ID3D11Device* device, D3DProgram& program, ShaderPass& pass) -> bool {
         program.ident = pass.ident;
         program.filter = _filter( pass.filter );
         program.wrap = _wrap( pass.wrap );
@@ -52,7 +52,7 @@ struct D3D11Utility {
             { "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
 
-        if (!createShader(device, pass.fragment, "PS", "VS", "", desc, countof(desc), &program.shader)) {
+        if (!createShader(symbols, device, pass.fragment, "PS", "VS", "", desc, countof(desc), &program.shader)) {
             pass.error = program.shader.error;
             return false;
         }
@@ -64,7 +64,7 @@ struct D3D11Utility {
         return true;
     }
 
-    static auto createShader( ID3D11Device* device, const std::string& data, const std::string psEntry, const std::string vsEntry, const std::string gsEntry,
+    static auto createShader( D3D11Symbols& symbols, ID3D11Device* device, const std::string& data, const std::string psEntry, const std::string vsEntry, const std::string gsEntry,
                        const D3D11_INPUT_ELEMENT_DESC* inputElementDescs, unsigned numElements, D3DShader* out) -> bool {
 
         ID3DBlob* error = nullptr;
@@ -74,20 +74,20 @@ struct D3D11Utility {
         ID3DBlob* vsCode = nullptr;
         ID3DBlob* gsCode = nullptr;
 
-        if (!psEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, psEntry.c_str(), "ps_4_0", 0, 0, &psCode, &error)))
+        if (!psEntry.empty() && FAILED(symbols.D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, psEntry.c_str(), "ps_4_0", 0, 0, &psCode, &error)))
             msg = (const char*)error->GetBufferPointer();
 
-        if (!vsEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, vsEntry.c_str(), "vs_4_0", 0, 0, &vsCode, &error)))
+        if (!vsEntry.empty() && FAILED(symbols.D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, vsEntry.c_str(), "vs_4_0", 0, 0, &vsCode, &error)))
             msg = (const char*)error->GetBufferPointer();
 
-        if (!gsEntry.empty() && FAILED(D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, gsEntry.c_str(), "gs_4_0", 0, 0, &gsCode, &error)))
+        if (!gsEntry.empty() && FAILED(symbols.D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, gsEntry.c_str(), "gs_4_0", 0, 0, &gsCode, &error)))
             msg = (const char*)error->GetBufferPointer();
 
         if (psCode) {
             if (FAILED(device->CreatePixelShader( psCode->GetBufferPointer(), psCode->GetBufferSize(), nullptr, &out->ps)))
                 msg = "can't create pixel shader";
             else
-                D3DReflect( psCode->GetBufferPointer(), psCode->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&out->reflPS);
+                symbols.D3DReflect( psCode->GetBufferPointer(), psCode->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&out->reflPS);
         }
 
         if (vsCode) {
@@ -244,16 +244,16 @@ struct D3D11Utility {
         return nullptr;
     }
 
-    auto setConstantInt(D3DShader& shader, std::string name, int data) -> bool {
-        return this->setConstantData(shader, name, (void*)(&data), sizeof(int));
+    static auto setConstantInt(D3DShader& shader, std::string name, int data) -> bool {
+        return setConstantData(shader, name, (void*)(&data), sizeof(int));
     }
 
-    auto setConstantFloat(D3DShader& shader, std::string name, float data) -> bool {
-        return this->setConstantData(shader, name, (void*)(&data), sizeof(float));
+    static auto setConstantFloat(D3DShader& shader, std::string name, float data) -> bool {
+        return setConstantData(shader, name, (void*)(&data), sizeof(float));
     }
 
-    auto setConstantFloat4(D3DShader& shader, std::string name, const float data[4]) -> bool {
-        return this->setConstantData(shader, name, (void*)(data), sizeof(float) * 4);
+    static auto setConstantFloat4(D3DShader& shader, std::string name, const float data[4]) -> bool {
+        return setConstantData(shader, name, (void*)(data), sizeof(float) * 4);
     }
 
     static auto setConstantData(D3DShader& shader, std::string name, const void* data, unsigned int size) -> bool {

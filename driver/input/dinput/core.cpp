@@ -1,4 +1,5 @@
 
+#include <initguid.h>
 #include <dinput.h>
 #include <dbt.h>
 #include <cstring>
@@ -13,9 +14,9 @@
 #define DI8DEVCLASS_GAMECTRL DIDEVTYPE_JOYSTICK
 #endif
 
-namespace DRIVER {            
-    
-struct DI_IDENT_CORE : DI_IDENT {        
+namespace DRIVER {
+
+struct DI_IDENT_CORE : DI_IDENT {
     HWND hwndMain = nullptr;
 	HWND hwndHotPlug = nullptr;
     HANDLE changeHandler = nullptr;

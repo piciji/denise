@@ -45,6 +45,7 @@
     <ClInclude Include="..\driver\tools\win.h" />
     <ClInclude Include="..\driver\video\d3d11\dxgiHandler.h" />
     <ClInclude Include="..\driver\video\d3d11\shaders.h" />
+    <ClInclude Include="..\driver\video\d3d11\symbols.h" />
     <ClInclude Include="..\driver\video\d3d11\types.h" />
     <ClInclude Include="..\driver\video\d3d11\utility.h" />
     <ClInclude Include="..\driver\video\d3d9\dragnDropOverlay.h" />
@@ -1689,7 +1690,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -1723,7 +1724,7 @@ xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ENTRY:"mainCRTStartup" %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -1754,7 +1755,7 @@ xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -1789,7 +1790,7 @@ xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;ksuser.lib;uuid.lib;avrt.lib;dinput8.lib;dxguid.lib;dsound.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype.lib;opengl32.lib;Xaudio2.lib;dwmapi.lib;winmm.lib;shlwapi.lib;msimg32.lib;uxtheme.lib;comctl32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ENTRY:"mainCRTStartup" %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>

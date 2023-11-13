@@ -12,12 +12,12 @@ namespace DRIVER {
 
 struct DXGIHandler {
 
-    auto initSwapChain(ID3D11Device* device, HWND handle, bool hardSync, SwapChain& swapChain, bool windowed = true, float rate = 0.0) -> bool {
+    auto initSwapChain(D3D11Symbols& symbols, ID3D11Device* device, HWND handle, bool hardSync, SwapChain& swapChain, bool windowed = true, float rate = 0.0) -> bool {
         if (swapChain.ptr )
             swapChain.ptr->SetFullscreenState(false, nullptr);
 
         clearSwapChain(swapChain);
-        int support = checkSupport();
+        int support = checkSupport(symbols);
         RECT outScreenParent;
         if (!windowed)
             outScreenParent = Win::getDimension( handle );
@@ -161,7 +161,7 @@ struct DXGIHandler {
         swapChain.flags = 0;
     }
 
-    static auto checkSupport() -> int {
+    static auto checkSupport(D3D11Symbols& symbols) -> int {
         static int support = -1;
 
         if (support >= 0)
@@ -172,7 +172,7 @@ struct DXGIHandler {
         Microsoft::WRL::ComPtr<IDXGIFactory2> dxgiFactory2 = nullptr;
         Microsoft::WRL::ComPtr<IDXGIFactory5> dxgiFactory5 = nullptr;
 
-        if (SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**) dxgiFactory2.ReleaseAndGetAddressOf()))) {
+        if (SUCCEEDED(symbols.CreateDXGIFactory1(__uuidof(IDXGIFactory2), (void**) dxgiFactory2.ReleaseAndGetAddressOf()))) {
             support |= 1; // minimum: Windows 7 with "Platform update"
             if (SUCCEEDED(dxgiFactory2->QueryInterface(__uuidof(IDXGIFactory5), (void**) dxgiFactory5.ReleaseAndGetAddressOf()))) {
                 support |= 2; // minimum: Windows 8
@@ -184,7 +184,7 @@ struct DXGIHandler {
                     }
                 }
             }
-        } else if (SUCCEEDED( CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**) dxgiFactory1.ReleaseAndGetAddressOf()))) {
+        } else if (SUCCEEDED( symbols.CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**) dxgiFactory1.ReleaseAndGetAddressOf()))) {
             support |= 4; // Windows 7 without "Platform update"
         }
 

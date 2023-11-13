@@ -982,6 +982,9 @@
     <ClInclude Include="..\driver\video\d3d9\symbols.h">
       <Filter>driver\video\d3d9</Filter>
     </ClInclude>
+    <ClInclude Include="..\driver\video\d3d11\symbols.h">
+      <Filter>driver\video\d3d11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
