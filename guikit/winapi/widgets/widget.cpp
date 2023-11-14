@@ -87,7 +87,7 @@ auto pWidget::rebuild() -> void {
 
 auto pWidget::getParentHandle() -> HWND {
 
-	if (!parentTabFrameLayout || !IsAppThemed( ))
+	if (!parentTabFrameLayout || !hasAppThemed( ))
 		return widget.window() ? widget.window()->p.hwnd : nullptr;
 	
 	return parentTabFrameLayout->frameWidget->p.hwnd;
@@ -95,7 +95,7 @@ auto pWidget::getParentHandle() -> HWND {
 
 auto pWidget::getParentTabWidget() -> Widget* {
 
-	if (!parentTabFrameLayout || !IsAppThemed( ))
+	if (!parentTabFrameLayout || !hasAppThemed( ))
 		return nullptr;
 	
 	return parentTabFrameLayout->frameWidget;
@@ -198,7 +198,7 @@ auto pWidget::getBackgroundBrush() -> HBRUSH {
 	HBRUSH brush = baseBrush;
 	
 	if ( parentTabFrameLayout ) {
-		if ( IsAppThemed( ) )
+		if ( hasAppThemed( ) )
 			brush = pTabFrame::getTabBackgroundForControl( parentTabFrameLayout->frameWidget->p.hwnd, hwnd );
 		
 	} else if (widget.window()->p.brush)

@@ -179,7 +179,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 			TabFrameLayout* parentTabFrameLayout = ((Widget*)base)->p.parentTabFrameLayout;
             
             if (parentTabFrameLayout) {
-                if (!IsAppThemed()) break;
+                if (!hasAppThemed()) break;
 
                 SetBkMode((HDC)(wparam), TRANSPARENT);
                 return (INT_PTR)pTabFrame::getTabBackgroundForControl( parentTabFrameLayout->frameWidget->p.hwnd, ((Widget*)base)->p.hwnd);
@@ -385,7 +385,7 @@ auto pWindow::tellMeShouldICreateTheUIRightAway() -> bool {
 inline auto pWindow::XPOrBelowOrWin7InXPMode() -> bool {
 	// in Win8 and above visual styles can't be turned off anymore, so App is always themed.
 	// when App is not themed, it means Win7 visual styles looks and behaves as XP (classic mode)
-	return !IsAppThemed() || (getVersionNew() <= WindowsXP);
+	return !hasAppThemed() || (getVersionNew() <= WindowsXP);
 }
 
 auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {

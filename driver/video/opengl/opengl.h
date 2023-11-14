@@ -110,6 +110,12 @@ struct OpenGL : OpenGLProgram {
         bool vrr = false;
     } settings;
 
+    struct {
+        GLint major;
+        GLint minor;
+        const GLubyte* glsl;
+    } version;
+
     ViewScreen viewScreen;
     Viewport viewport;
 

@@ -13,16 +13,14 @@
 // Please take and use, change, or whatever.
 //
 
-#version 150
+#version 140
 
 uniform sampler2D source[];
 uniform vec4 sourceSize[];
 uniform vec4 targetSize;
 uniform int phase;
 
-in Vertex {
-  vec2 texCoord;
-};
+in vec2 texCoordFrag;
 
 out vec4 fragColor;
 

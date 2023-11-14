@@ -108,11 +108,11 @@ auto Video::preferred() -> std::string {
 
 auto Video::create(const std::string& driver) -> Video* {
     #ifdef DRV_DIRECT3D11
-        if(driver == "Direct3D11") return new D3D11( !IsAppThemed() || (Win::getVersion() <= Win::Windows7) );
+        if(driver == "Direct3D11") return new D3D11( !Win::hasAppThemed() || (Win::getVersion() <= Win::Windows7) );
     #endif
 
     #ifdef DRV_DIRECT3D9
-        if(driver == "Direct3D9") return new D3D9( !IsAppThemed() || (Win::getVersion() <= Win::WindowsXP) );
+        if(driver == "Direct3D9") return new D3D9( !Win::hasAppThemed() || (Win::getVersion() <= Win::WindowsXP) );
 	#endif
 
 	#ifdef DRV_WGL

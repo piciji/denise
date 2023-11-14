@@ -6,6 +6,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 
+#include <initguid.h>
 #include <windows.h>
 #include <shobjidl.h>
 #include <uxtheme.h>
@@ -15,6 +16,8 @@
 #include <Commdlg.h>
 #include <direct.h>
 #include "processref.h"
+
+DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 
 typedef HPAINTBUFFER (WINAPI *FN_BeginBufferedPaint) (HDC hdcTarget, const RECT *prcTarget, BP_BUFFERFORMAT dwFormat, BP_PAINTPARAMS *pPaintParams, HDC *phdc);    
 typedef HRESULT (WINAPI *FN_EndBufferedPaint) (HPAINTBUFFER hBufferedPaint, BOOL fUpdateTarget);
@@ -832,6 +835,9 @@ struct pFont {
     static auto scale( unsigned pixel ) -> unsigned;
 };
 
+typedef void (WINAPI *SetWindowTheme_t)(HWND hwnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
+typedef int (WINAPI *IsAppThemed_t)();
+
 struct pSystem {
     static auto getUserDataFolder() -> std::string;
     static auto getResourceFolder(std::string appIdent) -> std::string;
@@ -842,6 +848,10 @@ struct pSystem {
     static auto isOffscreen( Geometry geometry ) -> bool;
     static auto getOSLang() -> System::Language;
     static auto printToCmd( std::string str ) -> void;
+    static auto loadThemedFunctions() -> void;
+
+    static SetWindowTheme_t pSetWindowTheme;
+    static IsAppThemed_t pIsAppThemed;
 };
 
 struct pMonitor {

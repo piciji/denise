@@ -207,7 +207,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 //			SendMessage(hwnd, SB_SETICON, part.position, (LPARAM) hIcon);
 //			DestroyIcon(hIcon);
 //		} else {
-            bool _border = IsAppThemed() && part.appendSeparator && ((part.position + 1) < usedParts.size());
+            bool _border = hasAppThemed() && part.appendSeparator && ((part.position + 1) < usedParts.size());
 
             SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
 //      }
@@ -275,7 +275,7 @@ auto pStatusBar::update() -> void {
             part.position = i;
             usedParts.push_back( &part );
 
-            bool _border = IsAppThemed() && part.appendSeparator && ((i + 1) < countVisible);
+            bool _border = hasAppThemed() && part.appendSeparator && ((i + 1) < countVisible);
 
             SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
         }
@@ -340,7 +340,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
             SetTextColor(hDC, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
         }
 
-        if (IsAppThemed() && (getVersionNew() <= Windows7))
+        if (hasAppThemed() && (getVersionNew() <= Windows7))
             rect.top += 2;
         else
             rect.top += 1;

@@ -2,6 +2,8 @@
 //timer
 std::vector<pTimer*> pTimer::timers;
 bool offscreen;
+SetWindowTheme_t pSystem::pSetWindowTheme = nullptr;
+IsAppThemed_t pSystem::pIsAppThemed = nullptr;
 
 auto CALLBACK pTimer::timeoutProc(HWND hwnd, UINT msg, UINT_PTR timerID, DWORD time) -> void {
     for(auto& instance : timers) {
@@ -420,6 +422,46 @@ auto pSystem::printToCmd( std::string str ) -> void {
         return;
     
     fwprintf(stdout, utf16_t( str ) );
+}
+
+auto pSystem::loadThemedFunctions() -> void {
+    static bool prepared = false;
+    if (prepared)
+        return;
+    prepared = true;
+
+    HMODULE hMod = LoadLibraryA("uxtheme.dll");
+    if(!hMod)
+        return;
+
+    pIsAppThemed = (IsAppThemed_t)( GetProcAddress(hMod, "IsAppThemed"));
+    pSetWindowTheme = (SetWindowTheme_t)( GetProcAddress(hMod, "SetWindowTheme"));
+}
+
+static auto hasAppThemed() -> bool {
+    // result is "false" when Win 7 is witched to classic (XP) mode
+    // Win7 standard and all OS's above return "true"
+    // never tested on real XP or Vista
+    static int themed = -1; // undetermined
+
+    if (themed >= 0)
+        return (themed == 1) ? true : false;
+
+    themed = 1; // most likely
+
+    pSystem::loadThemedFunctions();
+
+    if (pSystem::pIsAppThemed && !pSystem::pIsAppThemed())
+        themed = 0;
+
+    return (themed == 1) ? true : false;
+}
+
+static auto setWindowTheme(HWND hwnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList) -> void {
+    pSystem::loadThemedFunctions();
+
+    if (pSystem::pSetWindowTheme)
+        pSystem::pSetWindowTheme(hwnd, pszSubAppName, pszSubIdList);
 }
 
 typedef LONG NTSTATUS, *PNTSTATUS;

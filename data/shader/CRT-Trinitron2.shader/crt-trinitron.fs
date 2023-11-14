@@ -1,5 +1,5 @@
 
-#version 150
+#version 140
 
 /*
    CRT - Trinitron
@@ -44,9 +44,7 @@ uniform vec4 targetSize;
 #define eps 1e-8
 
 
-in Vertex {
-  vec2 texCoord;
-};
+in vec2 texCoordFrag;
 
 out vec4 fragColor;
 
@@ -80,7 +78,7 @@ vec3 Mask(vec2 pos, vec3 c)
 void main() {
 
 	vec2 ps = 1.0/sourceSize[0].xy;
-	vec2 OGL2Pos = texCoord / ps - vec2(0.5,0.5);
+	vec2 OGL2Pos = texCoordFrag / ps - vec2(0.5,0.5);
 	vec2 fp = fract(OGL2Pos);
 	vec2 dx = vec2(ps.x,0.0);
 	vec2 dy = vec2(0.0, ps.y);

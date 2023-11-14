@@ -25,8 +25,20 @@ auto OpenGLProgram::bind(ShaderPass& pass) -> std::string {
 	if(!pass.vertex.empty()) {
 		vertex = _glCreateShader(program, GL_VERTEX_SHADER, pass.vertex.c_str(), error );
 	} else {
-		vertex = _glCreateShader(program, GL_VERTEX_SHADER, 
-            pass.primary ? OpenGLOutputVertexShader.c_str() : OpenGLVertexShader.c_str(), error );
+        if(pass.fragment.empty())
+            vertex = _glCreateShader(program, GL_VERTEX_SHADER,
+                pass.primary ? OpenGLOutputVertexShaderLegacy.c_str() : OpenGLVertexShaderLegacy.c_str(), error );
+        else {
+            std::size_t found = pass.fragment.find( "#version 140" );
+            bool legacy = found != std::string::npos;
+
+            if (legacy)
+                vertex = _glCreateShader(program, GL_VERTEX_SHADER,
+                    pass.primary ? OpenGLOutputVertexShaderLegacy.c_str() : OpenGLVertexShaderLegacy.c_str(), error );
+            else
+                vertex = _glCreateShader(program, GL_VERTEX_SHADER,
+                    pass.primary ? OpenGLOutputVertexShader.c_str() : OpenGLVertexShader.c_str(), error );
+        }
 	}
 
 	if(!pass.geometry.empty()) {
@@ -36,7 +48,14 @@ auto OpenGLProgram::bind(ShaderPass& pass) -> std::string {
 	if(!pass.fragment.empty()) {
 		fragment = _glCreateShader(program, GL_FRAGMENT_SHADER, pass.fragment.c_str(), error );
 	} else {
-		fragment = _glCreateShader(program, GL_FRAGMENT_SHADER, OpenGLFragmentShader.c_str(), error );
+        if(pass.vertex.empty())
+            fragment = _glCreateShader(program, GL_FRAGMENT_SHADER, OpenGLFragmentShaderLegacy.c_str(), error);
+        else {
+            std::size_t found = pass.vertex.find("#version 140");
+            bool legacy = found != std::string::npos;
+
+            fragment = _glCreateShader(program, GL_FRAGMENT_SHADER, legacy ? OpenGLFragmentShaderLegacy.c_str() : OpenGLFragmentShader.c_str(), error);
+        }
 	}
 
 	OpenGLSurface::allocate();

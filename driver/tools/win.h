@@ -63,6 +63,32 @@ struct Win {
         version = (versionInfo.dwMajorVersion << 8) | versionInfo.dwMinorVersion;
         return version;
     }
+
+    static auto hasAppThemed() -> bool {
+        // result is "false" when Win 7 is witched to classic (XP) mode
+        // Win7 standard and all OS's above return "true"
+        // never tested on real XP or Vista
+        static int themed = -1; // undetermined
+
+        if (themed >= 0)
+            return (themed == 1) ? true : false;
+
+        themed = 1; // most likely
+
+        HMODULE hMod = LoadLibraryA("uxtheme.dll");
+        if(!hMod)
+            return true;
+
+        typedef BOOL WINAPI ISAPPTHEMED();
+        ISAPPTHEMED* pISAPPTHEMED = reinterpret_cast<ISAPPTHEMED*>( GetProcAddress(hMod, "IsAppThemed"));
+
+        if (pISAPPTHEMED && !pISAPPTHEMED())
+            themed = 0;
+
+        FreeLibrary(hMod);
+
+        return (themed == 1) ? true : false;
+    }
     
     //convert wide char to utf8
     static auto utf8_t(const wchar_t* s) -> std::string {

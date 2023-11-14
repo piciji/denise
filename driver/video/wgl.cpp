@@ -304,10 +304,18 @@ struct WGL : Video, OpenGL, RenderThread {
 		wglCreateContextAttribs = (HGLRC (APIENTRY*)(HDC, HGLRC, const int*))glGetProcAddress("wglCreateContextAttribsARB");
 		wglSwapInterval = (BOOL (APIENTRY*)(int))glGetProcAddress("wglSwapIntervalEXT");
 
-		if(wglCreateContextAttribs) {
+        glGetIntegerv(GL_MAJOR_VERSION, &version.major);
+        glGetIntegerv(GL_MINOR_VERSION, &version.minor);
+        version.glsl = glGetString( GL_SHADING_LANGUAGE_VERSION );
+        logger->log("opengl:");
+        logger->log(std::to_string(version.major), false);
+        logger->log(std::to_string(version.minor), false);
+        logger->log( (const char*)version.glsl, false);
+
+        if(wglCreateContextAttribs) {
 			int attributes[] = {
 				WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-				WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+				WGL_CONTEXT_MINOR_VERSION_ARB, (version.major == 3 && version.minor == 1) ? 1 : 2,
 				0
 			};
 			HGLRC context = wglCreateContextAttribs(display, 0, attributes);

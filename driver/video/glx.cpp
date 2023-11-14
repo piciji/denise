@@ -119,11 +119,14 @@ struct GLX : public Video, OpenGL, RenderThread {
             glXSwapInterval = (int (*)(int))glGetProcAddress("glXSwapIntervalMESA");
             if(!glXSwapInterval) glXSwapInterval = (int (*)(int))glGetProcAddress("glXSwapIntervalSGI");
         }
-               
+
+        glGetIntegerv(GL_MAJOR_VERSION, &version.major);
+        glGetIntegerv(GL_MINOR_VERSION, &version.minor);
+
         if(glXCreateContextAttribs) {
             signed attributes[] = {
                 GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-                GLX_CONTEXT_MINOR_VERSION_ARB, 2,
+                GLX_CONTEXT_MINOR_VERSION_ARB, (version.major == 3 && version.minor == 1) ? 1 : 2,
                 None
             };
             GLXContext context = glXCreateContextAttribs(display, fbConfig[0], nullptr, true, attributes);

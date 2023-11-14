@@ -496,7 +496,7 @@ auto pBrowserWindow::createTooltip(HWND hwnd) -> void {
             hwnd, NULL, GetModuleHandle(0), 0);
 
     if (colorTooltips && (overrideBg || overrideFg))
-        SetWindowTheme(hwndTip, L" ", L" ");
+        setWindowTheme(hwndTip, L" ", L" ");
 
     if (colorTooltips && overrideFg)
         SendMessage(hwndTip, TTM_SETTIPTEXTCOLOR, RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff), 0);
@@ -1147,7 +1147,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
             
             auto size = pFont::size(Font::system(), button.text);
             width = size.width + 10;
-			if (!IsAppThemed())
+			if (!hasAppThemed())
 				width += 10;
             
 			if (relativeX == -1)
@@ -1172,7 +1172,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
 
                 auto size = pFont::size(Font::system(), checkButton->text);
                 int width = size.width + 10;
-                if (!IsAppThemed())
+                if (!hasAppThemed())
                     width += 10;
 
                 if (relativeX == -1)

@@ -1,5 +1,41 @@
 
 static std::string OpenGLOutputVertexShader = R"(
+  #version 150
+
+  uniform vec4 targetSize;
+  uniform vec4 outputSize;
+
+  in vec2 texCoord;
+
+  out Vertex {
+    vec2 texCoord;
+  } vertexOut;
+
+  void main() {
+    //center image within output window
+    if(gl_VertexID == 0 || gl_VertexID == 2) {
+      gl_Position.x = -(targetSize.x / outputSize.x);
+    } else {
+      gl_Position.x = +(targetSize.x / outputSize.x);
+    }
+
+    //center and flip vertically (buffer[0, 0] = top-left; OpenGL[0, 0] = bottom-left)
+    if(gl_VertexID == 0 || gl_VertexID == 1) {
+      gl_Position.y = +(targetSize.y / outputSize.y);
+    } else {
+      gl_Position.y = -(targetSize.y / outputSize.y);
+    }
+
+    //align image to even pixel boundary to prevent aliasing
+    vec2 align = fract((outputSize.xy + targetSize.xy) / 2.0) * 2.0;
+    gl_Position.xy -= align / outputSize.xy;
+    gl_Position.zw = vec2(0.0, 1.0);
+
+    vertexOut.texCoord = texCoord;
+  }
+)";
+
+static std::string OpenGLOutputVertexShaderLegacy = R"(
   #version 140
 
   uniform vec4 targetSize;
@@ -34,6 +70,22 @@ static std::string OpenGLOutputVertexShader = R"(
 )";
 
 static std::string OpenGLVertexShader = R"(
+  #version 150
+
+  in vec4 position;
+  in vec2 texCoord;
+
+  out Vertex {
+    vec2 texCoord;
+  } vertexOut;
+
+  void main() {
+    gl_Position = position;
+    vertexOut.texCoord = texCoord;
+  }
+)";
+
+static std::string OpenGLVertexShaderLegacy = R"(
   #version 140
 
   in vec4 position;
@@ -72,6 +124,22 @@ static std::string OpenGLGeometryShader = R"(
 )";
 
 static std::string OpenGLFragmentShader = R"(
+  #version 150
+
+  uniform sampler2D source[];
+
+  in Vertex {
+    vec2 texCoord;
+  };
+
+  out vec4 fragColor;
+
+  void main() {
+    fragColor = texture(source[0], texCoord);
+  }
+)";
+
+static std::string OpenGLFragmentShaderLegacy = R"(
   #version 140
 
   uniform sampler2D source[];
