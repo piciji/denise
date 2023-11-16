@@ -15,12 +15,14 @@
 #include <shlwapi.h>
 #include <Commdlg.h>
 #include <direct.h>
+#include <dwmapi.h>
 #include "processref.h"
 
 DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 
 typedef HPAINTBUFFER (WINAPI *FN_BeginBufferedPaint) (HDC hdcTarget, const RECT *prcTarget, BP_BUFFERFORMAT dwFormat, BP_PAINTPARAMS *pPaintParams, HDC *phdc);    
 typedef HRESULT (WINAPI *FN_EndBufferedPaint) (HPAINTBUFFER hBufferedPaint, BOOL fUpdateTarget);
+typedef HRESULT (WINAPI *DwmGetCompositionTimingInfo_t)(HWND hwnd, DWM_TIMING_INFO *pTimingInfo);
 
 namespace GUIKIT {
 
@@ -887,6 +889,8 @@ struct pMonitor {
     static auto getCurrentRefreshRate() -> float;
     static auto getCurrentResolution() -> Size { return {0,0}; }
     static auto getRefreshRate( unsigned displayId, unsigned settingId ) -> float;
+
+    static auto getTimingInfo() -> DwmGetCompositionTimingInfo_t;
 };
 
 struct pThreadPriority {

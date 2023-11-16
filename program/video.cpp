@@ -39,7 +39,7 @@ auto Program::initVideo(bool driverChange) -> void {
 	
 	VideoManager::setShaderInputPrecision( globalSettings->get<bool>("shader_input_precision", false) );
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
-    view->updateShaderVisibility();
+    view->updateShader();
     view->loadDragnDropOverlay();
 }
 
@@ -399,4 +399,11 @@ auto Program::fpsChanged() -> void {
         emuThread->updateFps = true;
     else
         fpsChangeTimer.setEnabled();
+}
+
+auto Program::appendShaderFormat(std::string& str) -> void {
+    switch (videoDriver->shaderFormat()) {
+        case DRIVER::Video::ShaderType::HLSL: str += "hlsl"; break;
+        case DRIVER::Video::ShaderType::GLSL: str += "glsl"; break;
+    }
 }

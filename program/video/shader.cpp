@@ -392,7 +392,9 @@ auto Shader::loadExternal() -> bool {
 
     GUIKIT::Settings* shaderSetting = nullptr;
 
-    auto folder = globalSettings->get<std::string>("shader_folder", "");
+    std::string ident = "shader_folder_";
+    program->appendShaderFormat(ident);
+    auto folder = globalSettings->get<std::string>(ident, "");
     if (folder.empty())
         folder = program->shaderFolder();
     

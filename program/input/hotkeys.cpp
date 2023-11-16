@@ -25,6 +25,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );
 
     hotkeys.push_back( {Hotkey::Id::Freeze, "freeze button"} );
+    hotkeys.push_back( {Hotkey::Id::Rotation, "rotation"} );
 
     hotkeys.push_back( {Hotkey::Id::SyncStatus, "Sync status"} );
     hotkeys.push_back( {Hotkey::Id::ThreadedRenderer, "Threaded Renderer"} );
@@ -112,6 +113,17 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
     auto settings = program->getSettings( activeEmulator );
     
     switch ( id ) {
+        case Hotkey::Id::Rotation: {
+            unsigned rot = globalSettings->get<unsigned>("rotation", 0 );
+            if (rot == 0) rot = 90;
+            else if (rot == 90) rot = 180;
+            else if (rot == 180) rot = 270;
+            else if (rot == 270) rot = 0;
+
+            globalSettings->set<unsigned>("rotation", rot, false );
+            videoDriver->setRotation( rot);
+        } break;
+
         case Hotkey::Id::AudioRecord: {
             if (!activeEmulator)
                 break;

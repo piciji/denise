@@ -51,6 +51,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     SwapChain swapChain;
 
     ID3D11Buffer* ubo;
+    ID3D11Buffer* uboRotated;
     ID3D11Buffer* uboChain;
     ID3D11SamplerState* samplers[2][4];
     DXGI_FORMAT format;
@@ -84,6 +85,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         -1.0f,-1.0f, 0.0f, 1.0f,
     };
 
+    Matrix4x4 projectionRotated;
+
     struct {
         bool synchronize = false;
         bool hardSync = false;
@@ -104,6 +107,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         float exclusiveFullscreenRate = 0.0;
         bool hintExclusiveFullscreen = false;
         std::vector<ShaderPass*> passes = {};
+        unsigned rotation = ~0;
     } settings;
 
     D3D11(bool legacy) {
@@ -115,6 +119,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         device = nullptr;
         context = nullptr;
         ubo = nullptr;
+        uboRotated = nullptr;
         uboChain = nullptr;
         frame.vbo = nullptr;
         message.vbo = nullptr;
@@ -128,6 +133,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         settings.msgUpdated = false;
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
+        settings.rotation = ~0;
 
         for(auto& sampler : samplers)
             for(auto& _sampler : sampler)
@@ -306,6 +312,25 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
     auto hasVRR() -> bool { return settings.vrr; }
 
+    auto setRotation(unsigned degree) -> void {
+        if (settings.rotation == degree)
+            return;
+
+        settings.rotation = degree;
+        float radian = degree * (M_PI / 180.0f);
+        D3D11_MAPPED_SUBRESOURCE mapped;
+        Matrix4x4 rot = {
+            { cosf(radian), sinf(radian), 0.0f, 0.0f ,
+              -sinf(radian), cosf(radian), 0.0f, 0.0f ,
+              0.0f, 0.0f, 0.0f, 0.0f ,
+              0.0f, 0.0f, 0.0f, 1.0f }};
+
+        MatrixMultiply(projectionRotated.data, projection.data, 4, 4, rot.data, 4, 4);
+        context->Map( (ID3D11Resource*)uboRotated, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+        *(Matrix4x4*)mapped.pData = projectionRotated;
+        context->Unmap((ID3D11Resource*)uboRotated, 0);
+    }
+
     auto init(uintptr_t handle) -> bool {
         if (!symbols.initializeSymbols())
             return false;
@@ -365,6 +390,11 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
         if (FAILED(device->CreateBuffer(&descP, &uboData, &ubo)))
             return term(), false;
+
+        if (FAILED(device->CreateBuffer(&descP, nullptr, &uboRotated)))
+            return term(), false;
+
+        setRotation(0);
 
         uboData.pSysMem = &modelView;
         descP.ByteWidth = sizeof(modelView);
@@ -727,6 +757,11 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 D3D11Utility::setConstantInt(p.shader, "ts", ts);
                 float _targetSize[4] = {(float)targetWidth, (float)targetHeight, 1.0f / (float)targetWidth, 1.0f / (float)targetHeight};
                 D3D11Utility::setConstantFloat4(p.shader, "targetSize", _targetSize );
+
+                float srcWidth = textures[0]->desc.Width;
+                float srcHeight = textures[0]->desc.Height;
+                float _sourceSize[4] = {srcWidth, srcHeight, 1.0f / srcWidth, 1.0f / srcHeight};
+                D3D11Utility::setConstantFloat4(p.shader, "sourceSize", _sourceSize );
                 D3D11Utility::updateConstantData(context, p.shader, "scene");
 
                 for (unsigned int i = 0; i < p.shader.constantBufferCount; i++)
@@ -737,8 +772,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 ID3D11RenderTargetView* null_rt = nullptr;
                 context->OMSetRenderTargets(1, &null_rt, nullptr);
 
-                context->PSSetShaderResources(p.bindTexture.index, 1, &textures[0]->view);
-                context->PSSetSamplers(p.bindTexture.indexSampler, 1, &textures[0]->sampler);
+                if (p.bindTexture.index >= 0) {
+                    context->PSSetShaderResources(p.bindTexture.index, 1, &textures[0]->view);
+                    context->PSSetSamplers(p.bindTexture.indexSampler, 1, &textures[0]->sampler);
+                }
 
                 if (textures[1] && (p.bindPrevTexture.index >= 0) ) {
                     context->PSSetShaderResources(p.bindPrevTexture.index, 1, &textures[1]->view);
@@ -782,10 +819,11 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         applyShader(frame.shader);
         context->PSSetShaderResources(0, 1, &textures[0]->view);
         context->PSSetSamplers(0, 1, &textures[0]->sampler);
-        context->VSSetConstantBuffers(0, 1, &ubo);
+        context->VSSetConstantBuffers(0, 1, &uboRotated);
 
         context->Draw(4, 0);
 
+        context->VSSetConstantBuffers(0, 1, &ubo);
 #ifdef DRV_FREETYPE
         if (ft.hasText()) {
             blendRect(message);
@@ -867,6 +905,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         dxRelease(overlay.vbo)
 
         dxRelease(ubo)
+        dxRelease(uboRotated)
         dxRelease(uboChain)
         dxRelease(blendEnable)
         dxRelease(blendDisable)
@@ -1206,9 +1245,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             return;
         }
 
-        if (remaining >= 10000) {
+        if (remaining >= 5000) {
 
-            remaining -= 8000;
+            remaining -= 3500;
 
             unsigned sleepInMilli = (unsigned) ((float) remaining / 1000.0);
 

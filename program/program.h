@@ -163,6 +163,7 @@ struct Program : Emulator::Interface::Bind {
     auto updateOverallSynchronize() -> void;
     auto updateFullscreenSetting() -> void;
     auto fpsChanged() -> void override;
+    auto appendShaderFormat(std::string& str) -> void;
 	
     //input
     auto initInput() -> void;

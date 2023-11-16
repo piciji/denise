@@ -81,6 +81,7 @@ struct Video {
 
     virtual auto canHardSync() -> bool { return false; }
     virtual auto canExclusiveFullscreen() -> bool { return false; }
+    virtual auto setRotation(unsigned degree) -> void {}
 
     virtual ~Video() = default;
     static auto create(const std::string& driver) -> Video*;

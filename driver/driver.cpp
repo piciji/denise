@@ -1,5 +1,7 @@
 
 #define DRV_UNIT
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include "driver.h"
 #include "video/dragnDropOverlay.h"
 #include "../program/tools/logger.h"

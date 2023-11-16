@@ -4,9 +4,25 @@ std::vector<pMonitor::Setting> pMonitor::settings;
 pMonitor::Device* pMonitor::activeDevice = nullptr;
 pMonitor::Setting* pMonitor::activeSetting = nullptr;
 
-#include <dwmapi.h>
+auto pMonitor::getTimingInfo() -> DwmGetCompositionTimingInfo_t {
+    static DwmGetCompositionTimingInfo_t dwmGetCompositionTimingInfo = nullptr;
+    static bool loaded = false;
+
+    if (loaded)
+        return dwmGetCompositionTimingInfo;
+    loaded = true;
+
+    HMODULE hMod = LoadLibraryA("dwmapi.dll");
+    if(!hMod)
+        return nullptr;
+
+    dwmGetCompositionTimingInfo = (DwmGetCompositionTimingInfo_t)( GetProcAddress(hMod, "DwmGetCompositionTimingInfo"));
+    return dwmGetCompositionTimingInfo;
+}
 
 auto pMonitor::getCurrentRefreshRate() -> float {
+    HRESULT result = S_FALSE;
+    float rateInterval = 0.0;
 
     if (activeDevice && activeSetting) {
         return (float)activeSetting->devMode.dmDisplayFrequency;
@@ -17,8 +33,10 @@ auto pMonitor::getCurrentRefreshRate() -> float {
         ZeroMemory(&timingInfo, sizeof(timingInfo));
         timingInfo.cbSize = sizeof(timingInfo);
 
-        HRESULT result = DwmGetCompositionTimingInfo(NULL, &timingInfo);
-        float rateInterval = 0.0;
+        DwmGetCompositionTimingInfo_t dwmGetCompositionTimingInfo = getTimingInfo();
+
+        if (dwmGetCompositionTimingInfo)
+            result = dwmGetCompositionTimingInfo(NULL, &timingInfo);
 
         if (result == S_OK) {
 

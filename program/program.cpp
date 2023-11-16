@@ -361,6 +361,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 	}
 	
 	activeEmulator->power();
+    videoDriver->setRotation( 0 );
 
     updateFullscreenSetting();
 }
@@ -588,7 +589,9 @@ auto Program::settingsFileFromEmuFolder( std::string ident ) -> std::string {
 }
 
 auto Program::shaderFolder() -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + SHADER_FOLDER;
+    std::string str = GUIKIT::System::getResourceFolder(appFolder()) + SHADER_FOLDER;
+    appendShaderFormat(str);
+    return str + "/";
 }
 
 auto Program::imgFolder() -> std::string {

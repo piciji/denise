@@ -90,6 +90,7 @@ struct VideoLayout : GUIKIT::VerticalLayout {
 
     auto translate() -> void;
     auto updateDriverPropsVisibility() -> void;
+    auto updateShaderPath() -> void;
 
     VideoLayout();
 };

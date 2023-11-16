@@ -44,8 +44,7 @@ auto View::build() -> void {
 		
     if (!cmd->noGui) {                
         
-        buildMenu();    
-        updateShader(false);
+        buildMenu();
         translate();
 
         updateMenuBar();
@@ -661,10 +660,12 @@ auto View::setConnectors() -> void {
     }
 }
 
-auto View::updateShader(bool updateVisibility) -> void {
+auto View::updateShader() -> void {
     
 	std::vector<GUIKIT::File::Info> shaderList;
-	auto folder = globalSettings->get<std::string>("shader_folder", "");
+    std::string ident = "shader_folder_";
+    program->appendShaderFormat(ident);
+	auto folder = globalSettings->get<std::string>(ident, "");
     
     if (folder.empty())
         folder = program->shaderFolder();
@@ -712,12 +713,11 @@ auto View::updateShader(bool updateVisibility) -> void {
         }
     }
 
-    if (updateVisibility)
-        updateShaderVisibility();
+    updateShaderVisibility();
 }
 
 auto View::updateShaderVisibility() -> void {
-    bool visible = videoDriver && (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::GLSL);
+    bool visible = videoDriver && (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::NotSupported);
 
     for(auto& sM : sysMenus) {
         for(auto child : sM.shaderMenu->childs)
