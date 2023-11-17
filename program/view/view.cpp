@@ -690,27 +690,42 @@ auto View::updateShader() -> void {
 		
         auto activeShaders = vManager->shader.getActiveShaders();
 
+        std::vector<GUIKIT::MenuRadioItem*> items;
+
+        GUIKIT::MenuRadioItem* item = new GUIKIT::MenuRadioItem;
+        GUIKIT::MenuRadioItem* checkedItem = item;
+        item->setText(trans->getA("none"));
+        item->setChecked();
+        item->onActivate = [item, vManager]() {
+            emuThread->lock();
+            vManager->shader.removeActiveShader(item->text());
+            emuThread->unlock();
+        };
+
+        sM.shaderMenu->append(*item);
+        items.push_back(item);
+
         for (auto& shaderInfo : shaderList) {
-            GUIKIT::MenuCheckItem* item = new GUIKIT::MenuCheckItem;            
+            GUIKIT::MenuRadioItem* item = new GUIKIT::MenuRadioItem;
             item->setText(shaderInfo.name);
             
             for (auto& activeShader : activeShaders) {
                 if (activeShader == shaderInfo.name) {
-                    item->setChecked();
+                    checkedItem = item;
                     break;
                 }
             }
-            item->onToggle = [item, vManager]() {
+            item->onActivate = [item, vManager]() {
                 emuThread->lock();
-                if (item->checked()) {
-					vManager->shader.addActiveShader(item->text());
-                } else {
-                    vManager->shader.removeActiveShader(item->text());
-                }
+                vManager->shader.addActiveShader(item->text());
                 emuThread->unlock();
             };
             sM.shaderMenu->append(*item);
+            items.push_back(item);
         }
+
+        GUIKIT::MenuRadioItem::setGroup(items);
+        checkedItem->setChecked();
     }
 
     updateShaderVisibility();

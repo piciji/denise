@@ -226,8 +226,8 @@ struct WGL : Video, OpenGL, RenderThread {
             waitVRR();
             SwapBuffers(display);
         } else {
-            SwapBuffers(display);
             if (settings.hardSync && settings.synchronize) glFinish();
+            SwapBuffers(display);
         }
 		resizeMutex.unlock();
 	}
@@ -356,6 +356,16 @@ struct WGL : Video, OpenGL, RenderThread {
         viewScreen.hasIntegerScaling = _integerScaling;
 
         viewScreen.update(viewport);
+    }
+
+    auto setRotation(unsigned degree) -> void {
+        if (mvp.rotation == degree)
+            return;
+        wait();
+        viewScreen.flipped = degree == 90 || degree == 270;
+        viewScreen.update(viewport);
+        mvp.rotation = degree;
+        mvp.width = 0;
     }
 
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {

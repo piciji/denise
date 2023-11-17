@@ -555,6 +555,16 @@ struct GLX : public Video, OpenGL, RenderThread {
         viewScreen.update(viewport);
     }
 
+    auto setRotation(unsigned degree) -> void {
+        if (mvp.rotation == degree)
+            return;
+        wait();
+        viewScreen.flipped = degree == 90 || degree == 270;
+        viewScreen.update(viewport);
+        mvp.rotation = degree;
+        mvp.width = 0;
+    }
+
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
         viewScreen.scaling.width = _w;
         viewScreen.scaling.height = _h;

@@ -28,7 +28,7 @@ auto OpenGLTexture::getType() const -> GLuint {
 auto OpenGLSurface::allocate() -> void {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
-	glGenBuffers(3, &vbo[0]);
+	glGenBuffers(2, &vbo[0]);
 }
 
 auto OpenGLSurface::deleteBuffer() -> void {
@@ -147,7 +147,7 @@ auto OpenGLSurface::cropTexture(OpenGLSurface* src) -> void {
 }
 
 auto OpenGLSurface::release() -> void {
-	if(vbo[0]) { glDeleteBuffers(3, &vbo[0]); for(auto &o : vbo) o = 0; }
+	if(vbo[0]) { glDeleteBuffers(2, &vbo[0]); for(auto &o : vbo) o = 0; }
 	if(vao) { glDeleteVertexArrays(1, &vao); vao = 0; }
 	if(vertex) { glDetachShader(program, vertex); glDeleteShader(vertex); vertex = 0; }
 	if(geometry) { glDetachShader(program, geometry); glDeleteShader(geometry); geometry = 0; }
@@ -165,12 +165,7 @@ auto OpenGLSurface::render(unsigned targetLeft, unsigned targetTop, unsigned tar
         mvp.width = targetWidth;
         mvp.height = targetHeight;
 
-        float w = 1.0;
-        float h = 1.0;
-        float u = (float)targetWidth, v = (float)targetHeight;
-        GLint location;
-
-        GLfloat modelView[] = {
+        static GLfloat modelView[] = {
           1, 0, 0, 0,
           0, 1, 0, 0,
           0, 0, 1, 0,
@@ -179,68 +174,68 @@ auto OpenGLSurface::render(unsigned targetLeft, unsigned targetTop, unsigned tar
 
         std::memcpy(mvp.modelView, modelView, 16 * sizeof(GLfloat));
 
-        GLfloat projection[] = {
-           2.0f/u,  0.0f,    0.0f, 0.0f,
-           0.0f,    2.0f/v,  0.0f, 0.0f,
-           0.0f,    0.0f,   -1.0f, 0.0f,
-          -1.0f,   -1.0f,    0.0f, 1.0f,
+        static GLfloat projection[] = {
+           2.0f,  0.0f,  0.0f, 0.0f,
+           0.0f,  2.0f,  0.0f, 0.0f,
+           0.0f,  0.0f, -1.0f, 0.0f,
+          -1.0f, -1.0f,  0.0f, 1.0f,
         };
 
-        std::memcpy(mvp.projection, projection, 16 * sizeof(GLfloat));
+        if (mvp.rotation > 0) {
+            float radian = (float)mvp.rotation * (M_PI / 180.0f);
 
-        MatrixMultiply(mvp.modelViewProjection, modelView, 4, 4, projection, 4, 4);
+            GLfloat rot[] =
+                { cosf(radian), sinf(radian), 0.0f, 0.0f,
+                  -sinf(radian), cosf(radian), 0.0f, 0.0f,
+                  0.0f, 0.0f, 0.0f, 0.0f,
+                  0.0f, 0.0f, 0.0f, 1.0f };
 
-        GLfloat vertices[] = {
+            MatrixMultiply(mvp.projection, projection, 4, 4, rot, 4, 4);
+        } else
+            std::memcpy(mvp.projection, projection, 16 * sizeof(GLfloat));
+
+        MatrixMultiply(mvp.modelViewProjection, modelView, 4, 4, mvp.projection, 4, 4);
+
+        static GLfloat vertices[] = {
           0, 0, 0, 1,
-          u, 0, 0, 1,
-          0, v, 0, 1,
-          u, v, 0, 1,
+          1, 0, 0, 1,
+          0, 1, 0, 1,
+          1, 1, 0, 1,
         };
-
-        std::memcpy(mvp.vertices, vertices, 16 * sizeof(GLfloat));
 
         for(unsigned n = 0; n < 16; n += 4) {
             MatrixMultiply(&mvp.positions[n], &vertices[n], 1, 4, mvp.modelViewProjection, 4, 4);
         }
 
-        GLfloat texCoords[] = {
+        static GLfloat texCoords[] = {
           0, 0,
-          w, 0,
-          0, h,
-          w, h,
+          1, 0,
+          0, 1,
+          1, 1,
         };
 
         std::memcpy(mvp.texCoords, texCoords, 8 * sizeof(GLfloat));
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-        glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), mvp.vertices, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
         glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), mvp.positions, GL_STATIC_DRAW);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
         glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), mvp.texCoords, GL_STATIC_DRAW);
     }
 
-	_glUniformMatrix4fv("modelView", mvp.modelView);
+	//_glUniformMatrix4fv("modelView", mvp.modelView);
 	_glUniformMatrix4fv("projection", mvp.projection);
-	_glUniformMatrix4fv("modelViewProjection", mvp.modelViewProjection);
+	//_glUniformMatrix4fv("modelViewProjection", mvp.modelViewProjection);
 
 	glBindVertexArray(vao);
-//
+
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-//	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), mvp.vertices, GL_STATIC_DRAW);
-	GLuint locationVertex = glGetAttribLocation(program, "vertex");
-	glEnableVertexAttribArray(locationVertex);
-	glVertexAttribPointer(locationVertex, 4, GL_FLOAT, GL_FALSE, 0, 0);
-//
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 //	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), mvp.positions, GL_STATIC_DRAW);
 	GLuint locationPosition = glGetAttribLocation(program, "position");
 	glEnableVertexAttribArray(locationPosition);
 	glVertexAttribPointer(locationPosition, 4, GL_FLOAT, GL_FALSE, 0, 0);
 //
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 //	glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), mvp.texCoords, GL_STATIC_DRAW);
 	GLuint locationTexCoord = glGetAttribLocation(program, "texCoord");
 	glEnableVertexAttribArray(locationTexCoord);
@@ -249,7 +244,6 @@ auto OpenGLSurface::render(unsigned targetLeft, unsigned targetTop, unsigned tar
 	glBindFragDataLocation(program, 0, "fragColor");
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-	glDisableVertexAttribArray(locationVertex);
 	glDisableVertexAttribArray(locationPosition);
 	glDisableVertexAttribArray(locationTexCoord);
 }

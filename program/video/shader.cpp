@@ -519,14 +519,14 @@ auto Shader::loadShader(std::string path, std::string shaderFile, ShaderPass* pa
 
 auto Shader::addActiveShader(std::string shader) -> void {
 
-    std::string shaderList = "";
+//    std::string shaderList = "";
+//
+//    for (auto& activeShader : getActiveShaders())
+//        shaderList += activeShader + "###";
+//
+//    shaderList += shader;
     
-    for (auto& activeShader : getActiveShaders())
-        shaderList += activeShader + "###";    
-    
-    shaderList += shader;            
-    
-    vManager->settings->set<std::string>("shader", shaderList);
+    vManager->settings->set<std::string>("shader", shader);
     
 	bool error = !loadExternal(); 
 	    
@@ -538,19 +538,19 @@ auto Shader::addActiveShader(std::string shader) -> void {
 }
 
 auto Shader::removeActiveShader(std::string shader) -> void {
-    std::string shaderList = "";
-
-    for (auto& activeShader : getActiveShaders()) {
-        if (shader != activeShader) {
-            
-            if (!shaderList.empty())
-                shaderList += "###";
-                
-            shaderList += activeShader;
-        }
-    }
+//    std::string shaderList = "";
+//
+//    for (auto& activeShader : getActiveShaders()) {
+//        if (shader != activeShader) {
+//
+//            if (!shaderList.empty())
+//                shaderList += "###";
+//
+//            shaderList += activeShader;
+//        }
+//    }
     
-    vManager->settings->set<std::string>("shader", shaderList);
+    vManager->settings->set<std::string>("shader", "");
     
 	bool error = !loadExternal(); 
 	    

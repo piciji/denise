@@ -63,6 +63,8 @@ auto OpenGLProgram::bind(ShaderPass& pass) -> std::string {
 
     mvp.width = 0;
     mvp.height = 0;
+    if (!pass.primary)
+        mvp.rotation = 0;
     
     return error;
 }

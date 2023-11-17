@@ -6,6 +6,7 @@ static std::string OpenGLOutputVertexShader = R"(
   uniform vec4 outputSize;
 
   in vec2 texCoord;
+  in vec4 position;
 
   out Vertex {
     vec2 texCoord;
@@ -13,23 +14,24 @@ static std::string OpenGLOutputVertexShader = R"(
 
   void main() {
     //center image within output window
-    if(gl_VertexID == 0 || gl_VertexID == 2) {
-      gl_Position.x = -(targetSize.x / outputSize.x);
-    } else {
-      gl_Position.x = +(targetSize.x / outputSize.x);
-    }
-
-    //center and flip vertically (buffer[0, 0] = top-left; OpenGL[0, 0] = bottom-left)
-    if(gl_VertexID == 0 || gl_VertexID == 1) {
-      gl_Position.y = +(targetSize.y / outputSize.y);
-    } else {
-      gl_Position.y = -(targetSize.y / outputSize.y);
-    }
+//    if(gl_VertexID == 0 || gl_VertexID == 2) {
+//      gl_Position.x = -(targetSize.x / outputSize.x);
+//    } else {
+//      gl_Position.x = +(targetSize.x / outputSize.x);
+//    }
+//
+//    //center and flip vertically (buffer[0, 0] = top-left; OpenGL[0, 0] = bottom-left)
+//    if(gl_VertexID == 0 || gl_VertexID == 1) {
+//      gl_Position.y = +(targetSize.y / outputSize.y);
+//    } else {
+//      gl_Position.y = -(targetSize.y / outputSize.y);
+//    }
 
     //align image to even pixel boundary to prevent aliasing
     vec2 align = fract((outputSize.xy + targetSize.xy) / 2.0) * 2.0;
+
+    gl_Position = vec4(position.x, -position.y, 0.0, 1.0);
     gl_Position.xy -= align / outputSize.xy;
-    gl_Position.zw = vec2(0.0, 1.0);
 
     vertexOut.texCoord = texCoord;
   }
@@ -42,28 +44,16 @@ static std::string OpenGLOutputVertexShaderLegacy = R"(
   uniform vec4 outputSize;
 
   in vec2 texCoord;
+  in vec4 position;
 
   out vec2 texCoordFrag;
 
   void main() {
-    //center image within output window
-    if(gl_VertexID == 0 || gl_VertexID == 2) {
-      gl_Position.x = -(targetSize.x / outputSize.x);
-    } else {
-      gl_Position.x = +(targetSize.x / outputSize.x);
-    }
-
-    //center and flip vertically (buffer[0, 0] = top-left; OpenGL[0, 0] = bottom-left)
-    if(gl_VertexID == 0 || gl_VertexID == 1) {
-      gl_Position.y = +(targetSize.y / outputSize.y);
-    } else {
-      gl_Position.y = -(targetSize.y / outputSize.y);
-    }
-
     //align image to even pixel boundary to prevent aliasing
     vec2 align = fract((outputSize.xy + targetSize.xy) / 2.0) * 2.0;
+
+    gl_Position = vec4(position.x, -position.y, 0.0, 1.0);
     gl_Position.xy -= align / outputSize.xy;
-    gl_Position.zw = vec2(0.0, 1.0);
 
     texCoordFrag = texCoord;
   }

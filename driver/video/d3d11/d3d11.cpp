@@ -315,7 +315,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     auto setRotation(unsigned degree) -> void {
         if (settings.rotation == degree)
             return;
-
+        wait();
+        viewScreen.flipped = degree == 90 || degree == 270;
+        viewScreen.update(viewport);
         settings.rotation = degree;
         float radian = degree * (M_PI / 180.0f);
         D3D11_MAPPED_SUBRESOURCE mapped;

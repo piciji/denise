@@ -68,18 +68,18 @@ struct OpenGLSurface : OpenGLTexture {
     struct {
         GLfloat modelView[16];
         GLfloat projection[16];
-        GLfloat vertices[16];
         GLfloat texCoords[8];
         GLfloat modelViewProjection[4 * 4];
         GLfloat positions[4 * 4];
         unsigned width = 0;
         unsigned height = 0;
+        unsigned rotation = 0;
     } mvp;
 
 	GLuint program = 0;
 	GLuint framebuffer = 0;
 	GLuint vao = 0;
-	GLuint vbo[3] = {0, 0, 0};
+	GLuint vbo[2] = {0, 0};
 	GLuint vertex = 0;
 	GLuint geometry = 0;
 	GLuint fragment = 0;

@@ -17,6 +17,7 @@ struct ViewScreen {
     bool hasIntegerScaling;
     unsigned windowWidth;
     unsigned windowHeight;
+    bool flipped;
 
     ViewScreen() {
         mode = Mode::Window;
@@ -26,6 +27,7 @@ struct ViewScreen {
         scaling.height = 0;
         scaling.width = 0;
         scaling.doubleSize = false;
+        flipped = false;
     }
 
     auto update(Viewport& viewport) {
@@ -41,7 +43,10 @@ struct ViewScreen {
 
         bool native = mode == Mode::Native;
         bool crt = mode == Mode::Crt;
-        bool useIntegerScaling = hasIntegerScaling || native;
+        if (native && flipped)
+            crt = true;
+
+        bool useIntegerScaling = (hasIntegerScaling || native) && !flipped;
         bool fraction = scaling.height & 1;
         int scalingHeight = scaling.height;
         int scalingWidth = scaling.width;
@@ -78,8 +83,8 @@ struct ViewScreen {
         }
 
         if (crt) {
-            float _aspectWidth = 4.0;
-            float _aspectHeight = 3.0;
+            float _aspectWidth = flipped ? 3.0 : 4.0;
+            float _aspectHeight = flipped ? 4.0 : 3.0;
 
             while(1) {
                 _height = outputHeight;
