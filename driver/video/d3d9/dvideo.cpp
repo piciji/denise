@@ -36,6 +36,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     const unsigned FONT_WIDTH = 1024;
     unsigned textureWidth = 0;
     unsigned textureHeight = 0;
+    unsigned* tempBuffer;
 
     ViewScreen viewScreen;
     Viewport viewport;
@@ -56,7 +57,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         float exclusiveFullscreenRate = 0.0;
         bool exclusiveFullscreen = false;
         bool threaded = false;
-
+        unsigned degree;
         bool vrr = false;
     } settings;
 
@@ -265,6 +266,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         releaseResources();
         dxRelease(lpD3DDevice);
         dxRelease(lpD3D);
+        if (tempBuffer) {
+            delete[] tempBuffer;
+            tempBuffer = nullptr;
+        }
     }
 
     auto init(bool disallowExclusiveFullscreen = false) -> bool {
@@ -389,6 +394,9 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             resizeMutex.unlock();
         } else {
             resizeMutex.lock();
+            if (settings.degree)
+                applyRotation(settings.degree, tempBuffer);
+
             if (surface) {
                 surface->UnlockRect();
                 dxRelease(surface);
@@ -400,6 +408,33 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         }
     }
 
+    auto applyRotation(unsigned degree, unsigned* dataS, unsigned pitchS = 0) -> void {
+        texture->GetSurfaceLevel(0, &surface);
+        surface->LockRect(&d3dlr, 0, flags.lock);
+        unsigned pitch = d3dlr.Pitch >> 2;
+        unsigned* dataD = (unsigned*) d3dlr.pBits;
+
+        switch(degree) {
+            case 90:
+                for(int y = 0; y < inputWidth; y++) {
+                    for(int x = 0; x < inputHeight; x++)
+                        *(dataD + pitch * x + (inputWidth - y - 1)) = *dataS++;
+                    dataS += pitchS;
+                } break;
+            case 270:
+                for(int y = 0; y < inputWidth; y++) {
+                    for(int x = 0; x < inputHeight; x++)
+                        *(dataD + pitch * (inputHeight - x - 1) + y) = *dataS++;
+                    dataS += pitchS;
+                } break;
+            case 180:
+                for(int y = 0; y < inputHeight; y++) {
+                    for(int x = 0; x < inputWidth; x++)
+                        *(dataD + pitch * (inputHeight - y - 1) + (inputWidth - x - 1)) = *dataS++;
+                    dataS += pitchS;
+                } break;
+        }
+    }
 
     auto redraw(bool disallowShader = false) -> void {
         RECT windowsize = Win::getDimension( settings.handle );
@@ -473,16 +508,28 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if (renderBuffer && renderBuffer->data) {
             renderBuffer->sharedMutex.lock();
 
-            //if (renderBuffer->updated || (inputWidth != renderBuffer->width) || (inputHeight != renderBuffer->height) ) {
-            if ( (inputWidth != renderBuffer->width) || (inputHeight != renderBuffer->height) ) {
-             //   renderBuffer->updated = false;
-                resize(inputWidth = renderBuffer->width, inputHeight = renderBuffer->height);
+            if (settings.degree) {
+                int _width = renderBuffer->width;
+                int _height = renderBuffer->height;
+                if (settings.degree == 90 || settings.degree == 270) {
+                    auto _t = _width;
+                    _width = _height;
+                    _height = _t;
+                }
+
+                if ( (inputWidth != _width) || (inputHeight != _height) )
+                    resize(inputWidth = _width, inputHeight = _height);
+
+                applyRotation(settings.degree, renderBuffer->data, renderBuffer->pitch - renderBuffer->width);
+            } else {
+                if ((inputWidth != renderBuffer->width) || (inputHeight != renderBuffer->height))
+                    resize(inputWidth = renderBuffer->width, inputHeight = renderBuffer->height);
+
+                texture->GetSurfaceLevel(0, &surface);
+                surface->LockRect(&d3dlr, 0, flags.lock);
+
+                std::memcpy(d3dlr.pBits, renderBuffer->data, textureWidth * textureHeight * 4);
             }
-
-            texture->GetSurfaceLevel(0, &surface);
-            surface->LockRect(&d3dlr, 0, flags.lock);
-
-            std::memcpy( d3dlr.pBits, renderBuffer->data, textureWidth * textureHeight * 4 );
 
             disallowShader = renderBuffer->disallowShader;
 
@@ -592,6 +639,28 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             }
 
             return RenderThread::lock(data, pitch, _width, _height, reuse);
+        }
+
+        if (settings.degree) {
+            pitch = _width;
+            if (settings.degree == 90 || settings.degree == 270) {
+                auto _t = _width;
+                _width = _height;
+                _height = _t;
+            }
+            if(_width != inputWidth || _height != inputHeight) {
+                resize( inputWidth = _width, inputHeight = _height );
+
+                RECT windowSize = Win::getDimension( settings.handle );
+                viewScreen.update( viewport, windowSize.right, windowSize.bottom );
+                lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
+
+                if (tempBuffer)
+                    delete[] tempBuffer;
+                tempBuffer = new unsigned[_width * _height];
+            }
+            data = tempBuffer;
+            return true;
         }
 
         if(_width != inputWidth || _height != inputHeight) {
@@ -771,6 +840,17 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
     auto getViewport() -> Viewport& { return viewport; }
 
+    auto setRotation(unsigned degree) -> void {
+        if (settings.degree == degree)
+            return;
+        wait();
+        viewScreen.flipped = degree == 90 || degree == 270;
+        viewScreen.update(viewport);
+        settings.degree = degree;
+        inputWidth = inputHeight = 0;
+        _clear();
+    }
+
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
@@ -830,6 +910,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         vertex_buffer = 0;
         surface = 0;
         texture = 0;
+        tempBuffer = nullptr;
 
         lost = true;		
         settings.filter = Filter::Nearest;
@@ -839,6 +920,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         settings.exclusiveFullscreen = false;
         settings.threaded = false;
 		settings.vrr = false;
+        settings.degree = 0;
 
         #include "../../tools/fonts.c"
         DWORD nFonts;
