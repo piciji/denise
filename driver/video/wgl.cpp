@@ -307,10 +307,6 @@ struct WGL : Video, OpenGL, RenderThread {
         glGetIntegerv(GL_MAJOR_VERSION, &version.major);
         glGetIntegerv(GL_MINOR_VERSION, &version.minor);
         version.glsl = glGetString( GL_SHADING_LANGUAGE_VERSION );
-        logger->log("opengl:");
-        logger->log(std::to_string(version.major), false);
-        logger->log(std::to_string(version.minor), false);
-        logger->log( (const char*)version.glsl, false);
 
         if(wglCreateContextAttribs) {
 			int attributes[] = {

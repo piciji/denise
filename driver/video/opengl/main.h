@@ -197,7 +197,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 
             p.size(targetWidth, targetHeight);
             p.cropTexture( pLast );
-
+            glFlush();
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, p.framebuffer);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, p.texture);
@@ -214,6 +214,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
         
 		p.size(targetWidth, targetHeight);
 		glUseProgram(p.program);
+        glFlush();
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, p.framebuffer);
 
         _glUniform1i("ts", ts );
@@ -260,6 +261,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 	if (relativeHeight) targetHeight = sources[0].height * relativeHeight;
 
 	glUseProgram(program);
+    glFlush();
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // to screen
 
 	_glUniform1i("source[0]", 0);
