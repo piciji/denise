@@ -5,10 +5,10 @@
 #include <string>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include "../tools/font.h"
 
 namespace DRIVER {
 
-#include "../tools/font.h"
 #include "../tools/fonts.c"
 #include "../tools/utf8.h"
 
