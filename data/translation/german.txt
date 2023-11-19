@@ -769,3 +769,4 @@ crop complete ratio tooltip = Da Amiga Spiele, im Gegensatz zu C64 Spielen, unte
 toggle border prev = Rahmen umschalten (zurück)
 autostart media = Autostart Programm/Diskette
 reset free border tooltip = Setzt für die Auswahlen 7, 8, 9 auf vorgegebene, in vielen Spielen gut nutzbare, Werte zurück.
+quarter rotation = viertel Drehung

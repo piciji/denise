@@ -769,3 +769,4 @@ crop complete ratio tooltip = Since Amiga games, in contrast to C64 games, use d
 toggle border prev = toggle border (prev)
 autostart media = Autostart program/disk
 reset free border tooltip = For the selection 7, 8, 9, resets to predefined values that are easily usable in many games.
+quarter rotation = quarter rotation

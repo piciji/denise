@@ -68,7 +68,7 @@ auto VideoManager::setSynchronize() -> void {
 }
 
 auto VideoManager::setHardSync() -> void {
-    videoDriver->hardSync( globalSettings->get<bool>("hardsync", true) );
+    videoDriver->hardSync( globalSettings->get<bool>("hardsync", false) );
 }
 
 #undef VIDEO_SKEW

@@ -415,13 +415,13 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         unsigned* dataD = (unsigned*) d3dlr.pBits;
 
         switch(degree) {
-            case 90:
+            case 270:
                 for(int y = 0; y < inputWidth; y++) {
                     for(int x = 0; x < inputHeight; x++)
                         *(dataD + pitch * x + (inputWidth - y - 1)) = *dataS++;
                     dataS += pitchS;
                 } break;
-            case 270:
+            case 90:
                 for(int y = 0; y < inputWidth; y++) {
                     for(int x = 0; x < inputHeight; x++)
                         *(dataD + pitch * (inputHeight - x - 1) + y) = *dataS++;
@@ -839,6 +839,8 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     }
 
     auto getViewport() -> Viewport& { return viewport; }
+
+    auto getRotation() -> unsigned { return settings.degree; }
 
     auto setRotation(unsigned degree) -> void {
         if (settings.degree == degree)

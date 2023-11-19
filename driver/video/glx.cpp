@@ -555,6 +555,8 @@ struct GLX : public Video, OpenGL, RenderThread {
         viewScreen.update(viewport);
     }
 
+    auto getRotation() -> unsigned { return mvp.rotation; }
+
     auto setRotation(unsigned degree) -> void {
         if (mvp.rotation == degree)
             return;

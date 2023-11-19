@@ -132,6 +132,7 @@ VideoLayout::VideoLayout() {
         updateDriverPropsVisibility();
         updateShaderPath();
         emuThread->unlock();
+        paths.shader.setEnabled(videoDriver->shaderFormat() != DRIVER::Video::ShaderType::NotSupported);
 	};
 
     append(paths, {~0u, 0u}, 10);
@@ -153,7 +154,7 @@ VideoLayout::VideoLayout() {
     
     if( showHardSync ) {
         videoSettingsLayout.hardSync.setEnabled(videoDriver->canHardSync());
-        videoSettingsLayout.hardSync.setChecked(globalSettings->get("hardsync", true));
+        videoSettingsLayout.hardSync.setChecked(globalSettings->get("hardsync", false));
     } else
         videoSettingsLayout.remove( videoSettingsLayout.hardSync );
 	
@@ -406,6 +407,8 @@ VideoLayout::VideoLayout() {
         VideoManager::setShaderInputPrecision( checked );
         emuThread->unlock();
     };
+
+    paths.shader.setEnabled(videoDriver->shaderFormat() != DRIVER::Video::ShaderType::NotSupported);
 }
 
 auto VideoLayout::translate() -> void {

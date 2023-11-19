@@ -182,7 +182,11 @@ auto OpenGLSurface::render(unsigned targetLeft, unsigned targetTop, unsigned tar
         };
 
         if (mvp.rotation > 0) {
-            float radian = (float)mvp.rotation * (M_PI / 180.0f);
+            unsigned _rotation = mvp.rotation;
+            if (_rotation == 90) _rotation = 270;
+            else if (_rotation == 270) _rotation = 90;
+
+            float radian = (float)_rotation * (M_PI / 180.0f);
 
             GLfloat rot[] =
                 { cosf(radian), sinf(radian), 0.0f, 0.0f,
