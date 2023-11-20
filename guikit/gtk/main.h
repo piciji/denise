@@ -7,6 +7,7 @@
 #include <X11/extensions/Xrandr.h>
 #include <sys/mman.h>
 #include <semaphore.h>
+#include <fcntl.h>
 
 namespace GUIKIT {
 
@@ -795,9 +796,8 @@ struct pThreadPriority {
 };
 
 struct pInterProcess {
-    static bool anotherInstanceRunning;
     static int fd;
-    static caddr_t memptr;
+    static unsigned char* memptr;
     static sem_t* semptr;
     static Timer comTimer;
 
