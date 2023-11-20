@@ -145,6 +145,7 @@ struct Application {
     static std::function<void ()> loop;
 	static std::function<void (std::string text)> onClipboardRequest;
     static std::function<void ()> onDisplayChange;
+    static std::function<void ()> onQuitRequest;
 
     static auto initialize() -> void;
     static auto run() -> void;
@@ -158,10 +159,12 @@ struct Application {
 #ifdef _WIN32
     static auto getUtf8CmdLine(std::vector<std::string>& out) -> bool;
 #endif
+    static auto closeOtherInstances() -> void;
 
     static bool isQuit;
     static int exitCode;
     static std::string name;
+    static std::string vendor;
 
     struct Cocoa {
         static std::function<void ()> onAbout;

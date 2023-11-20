@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
+#include <sys/mman.h>
+#include <semaphore.h>
 
 namespace GUIKIT {
 
@@ -790,6 +792,19 @@ struct pMonitor {
 
 struct pThreadPriority {
     static auto setPriority(ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0) -> bool;
+};
+
+struct pInterProcess {
+    static bool anotherInstanceRunning;
+    static int fd;
+    static caddr_t memptr;
+    static sem_t* semptr;
+    static Timer comTimer;
+
+    static auto closeOtherInstances() -> void;
+    static auto Acquire() -> bool;
+    static auto Release() -> void;
+    static auto checkQuit() -> void;
 };
 
 static auto getDropPaths(GtkSelectionData* data) -> std::vector<std::string>;

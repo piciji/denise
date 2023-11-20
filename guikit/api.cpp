@@ -55,9 +55,11 @@ Base::Base() {
 bool Application::isQuit = false;
 int Application::exitCode = 0;
 std::string Application::name;
+std::string Application::vendor;
 std::function<void ()> Application::loop = nullptr;
 std::function<void (std::string text)> Application::onClipboardRequest = nullptr;
 std::function<void ()> Application::onDisplayChange = nullptr;
+std::function<void ()> Application::onQuitRequest = nullptr;
 
 std::function<void ()> Application::Cocoa::onAbout;
 std::function<void ()> Application::Cocoa::onPreferences;
@@ -115,6 +117,10 @@ auto Application::initialize() -> void {
 
 auto Application::requestClipboardText() -> void {
     pApplication::requestClipboardText();
+}
+
+auto Application::closeOtherInstances() -> void {
+    pInterProcess::closeOtherInstances();
 }
 
 auto Application::setClipboardText( std::string text ) -> void {

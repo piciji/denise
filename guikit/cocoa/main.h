@@ -627,6 +627,10 @@ struct pMonitor {
 struct pThreadPriority {
     static auto setPriority(ThreadPriority::Mode mode, float typicalProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0) -> bool;
 };
+
+struct pInterProcess {
+    static auto closeOtherInstances() -> void {}
+};
     
 struct pHelper {
     static auto getColor(unsigned color) -> NSColor*;

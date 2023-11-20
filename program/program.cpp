@@ -48,14 +48,21 @@ int main(int argc, char** argv) {
     }
     
     Program program;
-    GUIKIT::Application::processEvents();
-    GUIKIT::Application::run();
+    if (!GUIKIT::Application::isQuit) {
+        GUIKIT::Application::processEvents();
+        GUIKIT::Application::run();
+    }
     return GUIKIT::Application::exitCode;
 }
 
 Program::Program() {
     program = this;
     GUIKIT::Application::name = APP_NAME;
+    GUIKIT::Application::vendor = "PiCiJi";
+    GUIKIT::Application::onQuitRequest = []() {
+        view->onClose();
+    };
+
     globalSettings = new GUIKIT::Settings;
 	autoloader = new Autoloader;
 	fileloader = new Fileloader;
@@ -616,8 +623,10 @@ auto Program::exit(int code) -> void {
 		program->quit();
         GUIKIT::Application::quit();
 			
-	} else if (!emuThread->enabled)
-        view->onClose();
+	} else if (!emuThread || !emuThread->enabled) {
+        if(view)
+            view->onClose();
+    }
 
     // this function doesn't close the APP when emu thread is enabled.
     // debug cart always disables emu thread.

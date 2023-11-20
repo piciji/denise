@@ -526,6 +526,9 @@ end:
         view->fullscreenOnStartUp.setEnabled();
     }
 
+    if (!debug && !noGui && autoload && globalSettings->get<bool>("single_instance", false))
+        GUIKIT::Application::closeOtherInstances();
+
     autoload = false;
 }
 

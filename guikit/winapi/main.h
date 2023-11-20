@@ -897,6 +897,23 @@ struct pThreadPriority {
     static auto setPriority(ThreadPriority::Mode mode, float minProcessingTimeInMilliSeconds = 0, float maxProcessingTimeInMilliSeconds = 0) -> bool;
 };
 
+struct pInterProcessParam {
+    bool quitRequested;
+    int ident;
+};
+
+struct pInterProcess {
+    static bool anotherInstanceRunning;
+    static HANDLE fileMapping;
+    static pInterProcessParam* param;
+    static Timer comTimer;
+
+    static auto closeOtherInstances() -> void;
+    static auto Acquire() -> bool;
+    static auto Release() -> void;
+    static auto checkQuit() -> void;
+};
+
 struct utf16_t {
     operator wchar_t*() { return buffer; }
     operator const wchar_t*() const { return buffer; }

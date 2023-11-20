@@ -50,6 +50,8 @@ auto pApplication::processEvents() -> void {
 }
 
 auto pApplication::quit() -> void {
+    pInterProcess::Release();
+
     if(gtk_main_level())
 		gtk_main_quit();
 

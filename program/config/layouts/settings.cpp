@@ -33,7 +33,13 @@ SwitchesLayout::SwitchesLayout() {
     append(alternateSoftwarePreview, {~0u, 0u}, 3);
     append(questionMediaWrite, {~0u, 0u}, 3);
     append(threadedEmu, {~0u, 0u}, 3);
-    append(splashScreen, {~0u, 0u});
+
+    if (!GUIKIT::Application::isCocoa()) {
+        append(splashScreen, {~0u, 0u}, 3);
+        append(singleInstance, {~0u, 0u});
+    } else
+        append(splashScreen, {~0u, 0u});
+
     setFont(GUIKIT::Font::system("bold"));
     threadedEmu.setForegroundColor( 0xff4500 );
 }
@@ -192,6 +198,11 @@ SettingsLayout::SettingsLayout() {
     switches.splashScreen.setChecked(globalSettings->get<bool>("splash_screen", true));
     switches.splashScreen.onToggle = [](bool checked) {
         globalSettings->set<bool>("splash_screen", checked);
+    };
+
+    switches.singleInstance.setChecked(globalSettings->get<bool>("single_instance", false));
+    switches.singleInstance.onToggle = [](bool checked) {
+        globalSettings->set<bool>("single_instance", checked);
     };
 
     setLang();
@@ -481,6 +492,7 @@ auto SettingsLayout::translate() -> void {
     switches.threadedEmu.setText(trans->get("Threaded Emulation"));
     switches.threadedEmu.setTooltip(trans->get("Threaded Emulation tooltip"));
     switches.splashScreen.setText(trans->get("Splash Screen"));
+    switches.singleInstance.setText(trans->get("Single Instance"));
 
     about.left.license.setText( trans->get("license", {}, true) + " " + LICENSE );
     about.left.author.setText( trans->get("author", {}, true) + " " + AUTHOR );

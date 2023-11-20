@@ -17,6 +17,7 @@ namespace GUIKIT {
 #include "clipboard.cpp"
 #include "display.cpp"
 #include "dragndrop.cpp"
+#include "interProcess.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"
@@ -66,6 +67,7 @@ auto pApplication::processMessage(MSG& msg) -> void {
 }
 
 auto pApplication::quit() -> void {
+    pInterProcess::Release();
     timeEndPeriod(1);
     CoUninitialize();
     OleUninitialize();

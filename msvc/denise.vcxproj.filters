@@ -1857,6 +1857,9 @@
     <ClCompile Include="..\program\video\shader_hlsl.cpp">
       <Filter>program\video</Filter>
     </ClCompile>
+    <ClCompile Include="..\guikit\winapi\interProcess.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\emulation\libc64\sid\filter\circuit">
