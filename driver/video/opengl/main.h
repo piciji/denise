@@ -155,7 +155,9 @@ auto OpenGL::lock(int32_t*& data, unsigned& pitch) -> bool {
 auto OpenGL::clear() -> void {
 	for(auto& p : programs) {
 		glUseProgram(p.program);
+        glFlush();
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, p.framebuffer);
+        glFlush();
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
@@ -199,6 +201,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
             p.cropTexture( pLast );
             glFlush();
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, p.framebuffer);
+            glFlush();
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, p.texture);
 
@@ -216,7 +219,7 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 		glUseProgram(p.program);
         glFlush();
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, p.framebuffer);
-
+        glFlush();
         _glUniform1i("ts", ts );
 		_glUniform1i("phase", p.phase);
 		_glUniform1i("sourceLength", sources.size());
@@ -261,7 +264,6 @@ auto OpenGL::refresh(bool disallowShader) -> void {
 	if (relativeHeight) targetHeight = sources[0].height * relativeHeight;
 
 	glUseProgram(program);
-    glFlush();
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // to screen
 
 	_glUniform1i("source[0]", 0);
