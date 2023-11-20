@@ -255,6 +255,7 @@ namespace DRIVER {
                         return ready.load() || kill.load();
                     })) {
                         if (kill) {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(100));
                             kill = false;
                             return;
                         }

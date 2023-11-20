@@ -203,6 +203,8 @@ SettingsLayout::SettingsLayout() {
     switches.singleInstance.setChecked(globalSettings->get<bool>("single_instance", false));
     switches.singleInstance.onToggle = [](bool checked) {
         globalSettings->set<bool>("single_instance", checked);
+        if (checked)
+            GUIKIT::Application::closeOtherInstances();
     };
 
     setLang();

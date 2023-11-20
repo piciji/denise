@@ -772,3 +772,4 @@ reset free border tooltip = Setzt für die Auswahlen (7), (8), (9) auf vorgegebe
 quarter rotation = viertel Drehung
 Slow Mem tooltip = Speicher, der an der A501 Trapdoor Speichererweiterung zugänglich ist (auch bekannt als: Ranger-RAM, Bogo-RAM)
 Fast Mem tooltip = Speicher, der am Erweiterungsport oder über den CPU Sockel zugänglich ist
+Single Instance = Frontends öffnen nur eine Instanz

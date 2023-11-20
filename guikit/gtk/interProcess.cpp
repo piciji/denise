@@ -43,15 +43,8 @@ auto pInterProcess::Acquire() -> bool {
         return false;
 
     semptr = sem_open(szUniqueIdent.c_str(), O_CREAT, 0644, 0);
-    if (!semptr) {
-//        if (errno == EEXIST)
-//            anotherInstanceRunning = true;
-//
-//        semptr = sem_open(szUniqueIdent.c_str(), O_CREAT, 0644, 0);
-//
-//        if (!semptr)
-            return false;
-    }
+    if (!semptr)
+        return false;
 
     return true;
 }
