@@ -72,7 +72,6 @@ auto pInterProcess::Release() -> void {
        // comTimer = nullptr;
     }
 
-
     if (param)
         UnmapViewOfFile(param);
 
