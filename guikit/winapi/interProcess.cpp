@@ -68,8 +68,8 @@ auto pInterProcess::checkQuit() -> void {
 auto pInterProcess::Release() -> void {
     if (comTimer) {
         comTimer->setEnabled(false);
-        delete comTimer;
-        comTimer = nullptr;
+       // delete comTimer;
+       // comTimer = nullptr;
     }
 
 

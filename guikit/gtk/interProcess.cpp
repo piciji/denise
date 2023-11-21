@@ -74,11 +74,16 @@ auto pInterProcess::checkQuit() -> void {
 
 auto pInterProcess::Release() -> void {
     if (comTimer) {
+        comTimer->onFinished = nullptr;
         comTimer->setEnabled(false);
-        delete comTimer;
-        comTimer = nullptr;
+    // don't delete timer in quit process
+    //    delete comTimer;
+    //    comTimer = nullptr;
     }
-    munmap(memptr, 5);
+
+    if (memptr)
+        munmap(memptr, 5);
+
     memptr = nullptr;
 
     if (fd >= 0)
