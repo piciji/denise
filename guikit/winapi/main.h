@@ -906,7 +906,7 @@ struct pInterProcess {
     static bool anotherInstanceRunning;
     static HANDLE fileMapping;
     static pInterProcessParam* param;
-    static Timer comTimer;
+    static Timer* comTimer;
 
     static auto closeOtherInstances() -> void;
     static auto Acquire() -> bool;

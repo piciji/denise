@@ -799,7 +799,7 @@ struct pInterProcess {
     static int fd;
     static unsigned char* memptr;
     static sem_t* semptr;
-    static Timer comTimer;
+    static Timer* comTimer;
 
     static auto closeOtherInstances() -> void;
     static auto Acquire() -> bool;
