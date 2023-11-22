@@ -773,3 +773,6 @@ quarter rotation = viertel Drehung
 Slow Mem tooltip = Speicher, der an der A501 Trapdoor Speichererweiterung zugänglich ist (auch bekannt als: Ranger-RAM, Bogo-RAM)
 Fast Mem tooltip = Speicher, der am Erweiterungsport oder über den CPU Sockel zugänglich ist
 Single Instance = Frontends öffnen nur eine Instanz
+toggle Auto Warp = Auto Warp umschalten
+Auto Warp on = Auto Warp aktiviert
+Auto Warp off = Auto Warp deaktiviert

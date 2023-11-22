@@ -274,9 +274,9 @@ auto Program::toggleFastForward(bool aggressive) -> void {
     bool ff = warp.active && !warp.aggressive;
     bool ffa = warp.active && warp.aggressive;
 
-    if ( (!ff && !ffa) || (ff && !aggressive) || (ffa && aggressive) )
-        if (warp.motorControlled)
-            warp.enableAutoWarp = false;
+    //if ( (!ff && !ffa) || (ff && !aggressive) || (ffa && aggressive) )
+      //  if (warp.motorControlled)
+        //    warp.enableAutoWarp = false;
 
     if ( (!aggressive && ffa) || (aggressive && ff) ) {
         // switch modes (already active)

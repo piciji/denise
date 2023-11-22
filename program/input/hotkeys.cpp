@@ -26,6 +26,7 @@ auto InputManager::setHotkeys() -> void {
 
     hotkeys.push_back( {Hotkey::Id::Freeze, "freeze button"} );
     hotkeys.push_back( {Hotkey::Id::Rotation, "quarter rotation"} );
+    hotkeys.push_back( {Hotkey::Id::Autowarp, "toggle Auto Warp"} );
 
     hotkeys.push_back( {Hotkey::Id::SyncStatus, "Sync status"} );
     hotkeys.push_back( {Hotkey::Id::ThreadedRenderer, "Threaded Renderer"} );
@@ -261,6 +262,14 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             emuThread->lock();
             program->toggleFastForward( id == Hotkey::Id::ToggleFastForwardAggressive );
             break;
+
+        case Hotkey::Id::Autowarp: {
+            emuThread->lock();
+            if (!activeEmulator || !activeEmulator->autoStartedByMediaGroup() || !settings->get<unsigned>("auto_warp", 0))
+                break;
+            program->warp.enableAutoWarp ^= 1;
+            statusHandler->setMessage( trans->getA(program->warp.enableAutoWarp ? "Auto Warp on" : "Auto Warp off"), 7 );
+        } break;
 
         case Hotkey::Id::FastForward:
             if (!program->warp.active) {
@@ -684,13 +693,17 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (!activeEmulator)
                 break;
 
-            int swapPos = settings->get<int>("swap_pos", 1u);
+            int swapPos = settings->get<int>("swap_pos", -1);
 
-            if (id == Hotkey::DiskSwapUp)
+            if (id == Hotkey::DiskSwapUp) {
+                if (swapPos == -1)
+                    swapPos = fileloader->getSwapPos();
                 swapPos++;
-            else if (id == Hotkey::DiskSwapDown)
+            } else if (id == Hotkey::DiskSwapDown) {
+                if (swapPos == -1)
+                    swapPos = fileloader->getSwapPos();
                 swapPos--;
-            else
+            } else
                 swapPos = id - Hotkey::DiskSwap0;
 
             if (swapPos < 0) swapPos = SWAPPER_SLOTS - 1;
