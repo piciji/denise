@@ -666,7 +666,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
             insertImage( emulator, media, file, item );
 
         if (media->group->isDisk())
-            settings->set<int>("swap_pos", 1, false);
+            settings->set<int>("swap_pos", -1, false);
 
         if (autoLoad & 1) {
             autoload(emulator, media, selection, autoLoad & USE_TRAPS);
@@ -925,6 +925,20 @@ auto Fileloader::loadSettings(Emulator::Interface* emulator) -> void {
         auto fSetting = FileSetting::getInstance( emulator, "swapper_" + std::to_string( i ) );
         fSetting->update();
     }
+}
+
+auto Fileloader::getSwapPos() -> unsigned {
+    auto settings = program->getSettings( activeEmulator );
+    auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
+    auto media = activeEmulator->getEnabledDisk(mediaId);
+    if (!media)
+        return 0;
+    auto fSetting = FileSetting::getInstance( activeEmulator, _underscore(media->name ) );
+    if (fSetting->path.empty())
+        return 0;
+
+    DiskFinder diskFinder(fSetting->path);
+    return diskFinder.getDiskPos();
 }
 
 auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> void {

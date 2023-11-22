@@ -36,7 +36,7 @@ struct DiskFinder {
         return false;
     }
 
-    auto getPosIdentLetter( unsigned pos ) -> std::string {
+    static auto getPosIdentLetter( unsigned pos ) -> std::string {
 
         switch (pos) {
             case 0: return "boot";
@@ -58,6 +58,37 @@ struct DiskFinder {
         }
 
         return "";
+    }
+
+    static auto getLetterIdentPos( std::string letter ) -> unsigned {
+        static std::vector<std::string> list = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o"};
+
+        int pos = GUIKIT::Vector::findPos(list, letter);
+
+        return pos >= 0 ? (pos + 1) : 0;
+    }
+
+    auto getDiskPos( ) -> unsigned {
+        std::string temp = fileName;
+
+        while(1) {
+            if (!temp.size())
+                break;
+
+            //char _char = temp.back();
+            std::string last = temp.substr(temp.length() - 1, 1);
+            temp.pop_back();
+
+            auto list = GUIKIT::File::getFolderListAlt( filePath, temp, 20 );
+
+            if (list.size() < 2)
+                continue;
+
+            return GUIKIT::String::isNumber(last)
+                ? GUIKIT::String::convertToNumber(last) : getLetterIdentPos(last);
+        }
+
+        return 0;
     }
 
     auto findNext( unsigned diskPos ) -> std::string {

@@ -41,6 +41,7 @@ struct Fileloader {
     auto autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool trapped, bool forceOverrideSpeeder = false) -> void;
     auto loadSettings(Emulator::Interface* emulator) -> void;
     auto insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> void;
+    auto getSwapPos() -> unsigned;
 };
 
 extern Fileloader* fileloader;
