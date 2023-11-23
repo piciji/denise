@@ -61,6 +61,7 @@ struct DiskFinder {
     }
 
     static auto getLetterIdentPos( std::string letter ) -> unsigned {
+        GUIKIT::String::toLowerCase(letter);
         static std::vector<std::string> list = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o"};
 
         int pos = GUIKIT::Vector::findPos(list, letter);
@@ -71,11 +72,13 @@ struct DiskFinder {
     auto getDiskPos( ) -> unsigned {
         std::string temp = fileName;
 
+        if (GUIKIT::String::foundSubStr( temp, "boot" ))
+            return 0;
+
         while(1) {
             if (!temp.size())
                 break;
 
-            //char _char = temp.back();
             std::string last = temp.substr(temp.length() - 1, 1);
             temp.pop_back();
 
@@ -133,6 +136,9 @@ struct DiskFinder {
         auto splittedSuffix = GUIKIT::String::split( suffix, '.' );
         // use last suffix part only, in case og .1.D64
         std::string tempSuffix = splittedSuffix[ splittedSuffix.size() - 1 ];
+
+        if ((diskPos != 0) && GUIKIT::String::endsWith(temp, "boot"))
+            GUIKIT::String::replace(temp, "boot", "");
 
         while(1) {
 
