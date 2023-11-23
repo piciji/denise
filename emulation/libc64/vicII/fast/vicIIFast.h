@@ -48,6 +48,7 @@ protected:
     bool sprCrunching = false;
 
     auto setLineInterrupt() -> void;
+    auto applyUfliHack(bool nufli) -> void;
 	
     auto scanline() -> void;
     auto applyBorder() -> void;

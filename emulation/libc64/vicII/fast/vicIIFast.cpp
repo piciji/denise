@@ -27,6 +27,8 @@ auto VicIIFast::power() -> void {
     // reset to default scanline renderer pos
     cycleTab[32] |= ScanlineRender;
     cycleTab[53] &= ~ScanlineRender;
+    cycleTab[54] |= ScanlineRenderFin;
+    cycleTab[55] &= ~ScanlineRenderFin;
 
 	linePtr = frameBuffer;
     VicIIBase::power();

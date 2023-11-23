@@ -4,6 +4,8 @@
 
 namespace LIBC64 {
 
+#define _NUFLI (cycleTab[55] & ScanlineRenderFin)
+
 auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
 	uint8_t value = 0;
 	addr &= 0x3f;
@@ -184,8 +186,9 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 				setRdy( _badLine );        
                         
 			if ( badLine != _badLine ) {
+                uint8_t limit = (sprCrunching && _NUFLI ) ? 10 : 13;
 
-				if (cycle <= 13) {
+				if (cycle <= limit) {
 					badLine = _badLine;
 
 					if (badLine)
@@ -194,10 +197,10 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 				} else if (cycle < 54 ) {
 
 					if (cycle >= 32) {
-						dmaDelay = cycle - 13;
+						dmaDelay = cycle - limit;
 						scanline();
 					} else
-						dmaDelay = cycle - 13;
+						dmaDelay = cycle - limit;
 
 				} else {
 
@@ -248,13 +251,10 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 					spr->expandYFlop = true;
 				
 				if (!flipBefore && spr->expandYFlop && (cycle == 14) ) {
-                    // sprite crunching
 
                     if (!sprCrunching) {
-                        // set scanline render pos to end of line (MUIFLI fix)
-                        cycleTab[32] &= ~ScanlineRender;
-                        cycleTab[53] |= ScanlineRender;
                         sprCrunching = true;
+                        applyUfliHack(_NUFLI);
                     }
 
                     spr->mc = (0x2a & (spr->mcBase & spr->mc)) | (0x15 & (spr->mcBase | spr->mc));
@@ -290,12 +290,12 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 		break;
 
 		case 0x1d: {
-			bool _expandX;
-			
+            applyUfliHack((value & 0x81) == 0);
+
 			for( unsigned i = 0; i < 8; i++ ) {
 				Sprite* spr = &sprite[ i ];
 				
-				_expandX = spr->expandX;
+				bool _expandX = spr->expandX;
 				spr->expandX = (value >> i) & 1;		
 				
 				if (_expandX != spr->expandX)
@@ -332,4 +332,23 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
     }
 }
 
+auto VicIIFast::applyUfliHack(bool nufli) -> void {
+    if (nufli) {
+        cycleTab[54] &= ~ScanlineRenderFin;
+        cycleTab[55] |= ScanlineRenderFin;
+        cycleTab[32] |= ScanlineRender;
+        cycleTab[53] &= ~ScanlineRender;
+    } else {
+        cycleTab[55] &= ~ScanlineRenderFin;
+        cycleTab[54] |= ScanlineRenderFin;
+        if (sprCrunching) {
+            // set scanline render pos to end of line (MUIFLI fix)
+            cycleTab[32] &= ~ScanlineRender;
+            cycleTab[53] |= ScanlineRender;
+        }
+    }
 }
+
+}
+
+#undef _NUFLI
