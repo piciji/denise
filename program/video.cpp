@@ -3,9 +3,13 @@
 #include <cstring>
 
 auto Program::initVideo(bool driverChange) -> void {
-    
-	if (videoDriver)
+
+    unsigned rotation = 0;
+
+	if (videoDriver) {
+        rotation = videoDriver->getRotation();
         delete videoDriver;
+    }
     
     if (cmd->noDriver) {
         videoDriver = new DRIVER::Video;
@@ -24,6 +28,9 @@ auto Program::initVideo(bool driverChange) -> void {
         delete videoDriver;
         videoDriver = new DRIVER::Video;
     }
+
+    if (driverChange)
+        videoDriver->setRotation(rotation);
 
     if (activeVideoManager)
         activeVideoManager->reinitCrtThread(true);
@@ -49,7 +56,7 @@ auto Program::setVideoDimension(Emulator::Interface* emulator) -> void {
 
     auto settings = program->getSettings( activeEmulator );
 
-    int aspectMode = settings->get<int>("aspect_mode", 1, {0, 2});
+    int aspectMode = settings->get<int>("aspect_mode", 1, {0, 3});
     bool integerScaling = settings->get<bool>("integer_scaling", false);
 
     videoDriver->setRatio( aspectMode, integerScaling );
@@ -408,5 +415,21 @@ auto Program::appendShaderFormat(std::string& str) -> void {
     switch (videoDriver->shaderFormat()) {
         case DRIVER::Video::ShaderType::HLSL: str += "hlsl"; break;
         case DRIVER::Video::ShaderType::GLSL: str += "glsl"; break;
+    }
+}
+
+auto Program::setRotation() -> void {
+    if (!activeEmulator)
+        return;
+    auto _settings = getSettings(activeEmulator);
+
+    unsigned rotation = _settings->get<unsigned>("rotation", 0);
+
+    switch(rotation) {
+        default:
+        case 0: videoDriver->setRotation(0); break;
+        case 90: videoDriver->setRotation(90); break;
+        case 180: videoDriver->setRotation(180); break;
+        case 270: videoDriver->setRotation(270); break;
     }
 }

@@ -114,12 +114,20 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
     
     switch ( id ) {
         case Hotkey::Id::Rotation: {
+            emuThread->lock();
+            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
             unsigned rot = videoDriver->getRotation();
+
             if (rot == 0) rot = 90;
             else if (rot == 90) rot = 180;
             else if (rot == 180) rot = 270;
             else if (rot == 270) rot = 0;
-            videoDriver->setRotation( rot);
+
+            settings->set<unsigned>("rotation", rot);
+            videoDriver->setRotation(rot);
+            if (emuView && emuView->geometryLayout)
+                emuView->geometryLayout->setRotation(rot);
+
         } break;
 
         case Hotkey::Id::AudioRecord: {

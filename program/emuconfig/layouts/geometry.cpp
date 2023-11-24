@@ -9,6 +9,19 @@ MonitorResolutionLayout::MonitorResolutionLayout() : displaySettings(true) {
     active.setForegroundColor( 0xff4500 );
 }
 
+RotationLayout::RotationLayout() {
+    append(rotation, {0u, 0u}, 20 );
+    append(degree0, {0u, 0u}, 10 );
+    append(degree90, {0u, 0u}, 10 );
+    append(degree180, {0u, 0u}, 10 );
+    append(degree270, {0u, 0u} );
+    setAlignment(0.5);
+    setPadding( 10 );
+    setFont(GUIKIT::Font::system("bold"));
+
+    GUIKIT::RadioBox::setGroup(degree0, degree90, degree180, degree270);
+}
+
 CropLayout::Type1::Type1() {
     append( cropOff, {0u, 0u}, 10 );
     append( cropMonitor, {0u, 0u}, 10 );
@@ -89,10 +102,11 @@ RatioLayout::RatioLayout() {
     append(label, {0u, 0u}, 10);
     append(window, {0u, 0u}, 5);
     append(tv, {0u, 0u}, 5);
-    append(native, {0u, 0u}, 20);
+    append(native, {0u, 0u}, 5);
+    append(nativeFree, {0u, 0u}, 20);
     append(integerScaling, {0u, 0u});
 
-    GUIKIT::RadioBox::setGroup( window, tv, native );
+    GUIKIT::RadioBox::setGroup( window, tv, native, nativeFree );
 
     setAlignment(0.5);
     setPadding(10);
@@ -107,7 +121,8 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
 
 	append(cropLayout, {~0u, 0u}, 10);
     append(ratioLayout, {~0u, 0u}, 10);
-    append(monitorResolutionLayout, {~0u, 0u});
+    append(monitorResolutionLayout, {~0u, 0u}, 10);
+    append(rotationLayout, {~0u, 0u});
 
     typedef Emulator::Interface::CropType CropType;
 
@@ -259,6 +274,14 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
+    ratioLayout.nativeFree.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<int>("aspect_mode", 3);
+        program->setVideoDimension(this->emulator);
+        view->updateViewport();
+        emuThread->unlock();
+    };
+
     ratioLayout.integerScaling.onToggle = [this](bool checked) {
         emuThread->lock();
         _settings->set<bool>("integer_scaling", checked);
@@ -305,6 +328,38 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
+    rotationLayout.degree0.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned>("rotation", 0);
+        if (activeEmulator == emulator)
+            videoDriver->setRotation(0);
+        emuThread->unlock();
+    };
+
+    rotationLayout.degree90.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned>("rotation", 90);
+        if (activeEmulator == emulator)
+            videoDriver->setRotation(90);
+        emuThread->unlock();
+    };
+
+    rotationLayout.degree180.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned>("rotation", 180);
+        if (activeEmulator == emulator)
+            videoDriver->setRotation(180);
+        emuThread->unlock();
+    };
+
+    rotationLayout.degree270.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned>("rotation", 270);
+        if (activeEmulator == emulator)
+            videoDriver->setRotation(270);
+        emuThread->unlock();
+    };
+
     for( auto& display : GUIKIT::Monitor::getDisplays() )
         monitorResolutionLayout.display.append(display.name, display.id);
 
@@ -346,6 +401,13 @@ auto GeometryLayout::updateVisibillity() -> void {
 }
 
 auto GeometryLayout::translate() -> void {
+
+    rotationLayout.rotation.setText( trans->getA("rotation angle", true) );
+    rotationLayout.degree0.setText("0 °");
+    rotationLayout.degree90.setText("90 °");
+    rotationLayout.degree180.setText("180 °");
+    rotationLayout.degree270.setText("270 °");
+    rotationLayout.setText( trans->getA("image rotation") );
 
     cropLayout.cropLeft.name.setText( trans->get("left", {},true) );
     cropLayout.cropRight.name.setText( trans->get("right", {},true) );
@@ -391,6 +453,7 @@ auto GeometryLayout::translate() -> void {
     ratioLayout.tv.setText( trans->getA("CRT TV") );
     ratioLayout.native.setText( trans->getA("Native") );
     ratioLayout.native.setTooltip( trans->getA("Native tooltip") );
+    ratioLayout.nativeFree.setText( trans->getA("Native free") );
     ratioLayout.integerScaling.setText( trans->getA("integer_scaling") );
     monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
     monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );
@@ -415,6 +478,16 @@ auto GeometryLayout::updateBorderSlider() -> void {
 
 auto GeometryLayout::loadSettings() -> void {
     typedef Emulator::Interface::CropType CropType;
+
+    auto rotation = _settings->get<unsigned>("rotation", 0);
+    switch(rotation) {
+        default:
+        case 0: rotationLayout.degree0.setChecked(); break;
+        case 90: rotationLayout.degree90.setChecked(); break;
+        case 180: rotationLayout.degree180.setChecked(); break;
+        case 270: rotationLayout.degree270.setChecked(); break;
+    }
+
     auto valCropType = _settings->get<unsigned>("crop_type", (unsigned) CropType::Monitor, {0u, 11u});
 
     if (valCropType == 1) cropLayout.type1.cropMonitor.setChecked();
@@ -442,11 +515,12 @@ auto GeometryLayout::loadSettings() -> void {
     bool integerScaling = _settings->get<bool>("integer_scaling", false);
     ratioLayout.integerScaling.setChecked(integerScaling);
 
-    int aspectMode = _settings->get<int>("aspect_mode", 1, {0, 2});
+    int aspectMode = _settings->get<int>("aspect_mode", 1, {0, 3});
     switch(aspectMode) {
         case 0: ratioLayout.window.setChecked(); break;
         case 1: ratioLayout.tv.setChecked(); break;
         case 2: ratioLayout.native.setChecked(); break;
+        case 3: ratioLayout.nativeFree.setChecked(); break;
     }
 
     monitorResolutionLayout.active.setChecked( _settings->get<bool>("fullscreen_setting_active", false) );
@@ -465,4 +539,13 @@ auto GeometryLayout::loadSettings() -> void {
     monitorResolutionLayout.displaySettings.setEnabled( monitorResolutionLayout.active.checked() );
 
     updateVisibillity();
+}
+
+auto GeometryLayout::setRotation(int degree) -> void {
+    switch(degree) {
+        case 0: rotationLayout.degree0.setChecked(); break;
+        case 90: rotationLayout.degree90.setChecked(); break;
+        case 180: rotationLayout.degree180.setChecked(); break;
+        case 270: rotationLayout.degree270.setChecked(); break;
+    }
 }

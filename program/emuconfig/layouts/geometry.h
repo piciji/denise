@@ -7,6 +7,16 @@ struct MonitorResolutionLayout : GUIKIT::FramedHorizontalLayout {
     MonitorResolutionLayout();
 };
 
+struct RotationLayout : GUIKIT::FramedHorizontalLayout {
+    GUIKIT::Label rotation;
+    GUIKIT::RadioBox degree0;
+    GUIKIT::RadioBox degree90;
+    GUIKIT::RadioBox degree180;
+    GUIKIT::RadioBox degree270;
+
+    RotationLayout();
+};
+
 struct CropLayout : GUIKIT::FramedVerticalLayout {
 
     struct Type1 : GUIKIT::HorizontalLayout {
@@ -62,6 +72,7 @@ struct RatioLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::RadioBox window;
     GUIKIT::RadioBox tv;
     GUIKIT::RadioBox native;
+    GUIKIT::RadioBox nativeFree;
     GUIKIT::CheckBox integerScaling;
 
     RatioLayout();
@@ -74,6 +85,7 @@ struct GeometryLayout : GUIKIT::VerticalLayout {
     CropLayout cropLayout;
     RatioLayout ratioLayout;
     MonitorResolutionLayout monitorResolutionLayout;
+    RotationLayout rotationLayout;
 
     auto translate() -> void;
 	auto updateVisibillity() -> void;
@@ -81,6 +93,7 @@ struct GeometryLayout : GUIKIT::VerticalLayout {
     auto updateCrop(std::string property, unsigned value = 0) -> void;
     auto updateBorderHotkeyUsage(unsigned bit, bool checked) -> void;
     auto updateBorderSlider() -> void;
+    auto setRotation(int degree) -> void;
 
     GeometryLayout(TabWindow* tabWindow);
 };

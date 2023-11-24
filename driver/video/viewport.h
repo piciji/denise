@@ -6,7 +6,7 @@
 namespace DRIVER {
 
 struct ViewScreen {
-    enum class Mode { Window = 0, Crt = 1, Native = 2 } mode;
+    enum class Mode { Window = 0, Crt = 1, Native = 2, NativeFree = 3 } mode;
 
     struct {
         unsigned width = 0;
@@ -42,9 +42,10 @@ struct ViewScreen {
         unsigned outputLeft = 0;
 
         bool native = mode == Mode::Native;
+        bool nativeFree = mode == Mode::NativeFree;
         bool crt = mode == Mode::Crt;
         if (native && flipped)
-            crt = true;
+            nativeFree = true;
 
         bool useIntegerScaling = (hasIntegerScaling || native) && !flipped;
         bool fraction = scaling.height & 1;
@@ -82,9 +83,17 @@ struct ViewScreen {
             outputHeight = _height;
         }
 
-        if (crt) {
-            float _aspectWidth = flipped ? 3.0 : 4.0;
-            float _aspectHeight = flipped ? 4.0 : 3.0;
+        if (crt || nativeFree) {
+            float _aspectWidth;
+            float _aspectHeight;
+
+            if (crt) {
+                _aspectWidth = flipped ? 3.0 : 4.0;
+                _aspectHeight = flipped ? 4.0 : 3.0;
+            } else { // native free
+                _aspectWidth = flipped ? scaling.height : scaling.width;
+                _aspectHeight = flipped ? scaling.width : scaling.height;
+            }
 
             while(1) {
                 _height = outputHeight;

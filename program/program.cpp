@@ -369,7 +369,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 	}
 	
 	activeEmulator->power();
-    videoDriver->setRotation( 0 );
+    if (emuSwap)
+        setRotation();
 
     updateFullscreenSetting();
 }
