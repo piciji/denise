@@ -45,10 +45,8 @@ protected:
     uint8_t* patternBadlineNtsc;
     uint8_t* patternLineNtsc;
     unsigned dmaDelay = 0;
-    bool sprCrunching = false;
 
     auto setLineInterrupt() -> void;
-    auto applyUfliHack(bool nufli) -> void;
 	
     auto scanline() -> void;
     auto applyBorder() -> void;

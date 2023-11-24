@@ -22,13 +22,6 @@ auto VicIIFast::power() -> void {
     dmaDelay = 0;
 	dataC = 0;
 	dataG = 0;
-    sprCrunching = false;
-
-    // reset to default scanline renderer pos
-    cycleTab[32] |= ScanlineRender;
-    cycleTab[53] &= ~ScanlineRender;
-    cycleTab[54] |= ScanlineRenderFin;
-    cycleTab[55] &= ~ScanlineRenderFin;
 
 	linePtr = frameBuffer;
     VicIIBase::power();
