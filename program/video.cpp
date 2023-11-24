@@ -274,9 +274,9 @@ auto Program::toggleFastForward(bool aggressive) -> void {
     bool ff = warp.active && !warp.aggressive;
     bool ffa = warp.active && warp.aggressive;
 
-    //if ( (!ff && !ffa) || (ff && !aggressive) || (ffa && aggressive) )
-      //  if (warp.motorControlled)
-        //    warp.enableAutoWarp = false;
+    if (warp.manuellEndsAutoWarp && warp.motorControlled)
+        //if ( (!ff && !ffa) || (ff && !aggressive) || (ffa && aggressive) )
+            warp.enableAutoWarp = false;
 
     if ( (!aggressive && ffa) || (aggressive && ff) ) {
         // switch modes (already active)
@@ -289,8 +289,11 @@ auto Program::toggleFastForward(bool aggressive) -> void {
 
         if (view)
             view->updateFastforwardCheck();
-    } else
-        fastForward( !ff && !ffa, aggressive);
+    } else {
+        bool toggleOn = !ff && !ffa;
+        fastForward( toggleOn, aggressive);
+        warp.manuell = toggleOn;
+    }
 }
 
 auto Program::fastForward( bool activate, bool aggressive ) -> void {

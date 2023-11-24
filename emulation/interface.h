@@ -739,7 +739,17 @@ struct Interface {
         
         return nullptr;
     }
-	
+
+    auto getDriveMediaGroups() -> std::vector<MediaGroup*> {
+        std::vector<MediaGroup*> groups;
+
+        for (auto& group : mediaGroups) {
+            if (group.isDrive())
+                groups.push_back(&group);
+        }
+        return groups;
+    }
+
 	auto getDiskMediaGroup() -> MediaGroup* {
 		
 		for (auto& group : mediaGroups) {

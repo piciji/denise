@@ -50,16 +50,21 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
         bool errorShown = false;
         
         std::string suffix = "*";
-        auto mediaGroup = emulator->getDiskMediaGroup();
+        std::vector<std::string> suffixList;
+        auto groups = emulator->getDriveMediaGroups();
+        std::string filterIdent = groups.size() > 1 ? "drive image" : "disk_image";
+        std::string title = groups.size() > 1 ? "select drive images" : "select disk images";
 
-        auto suffixList = mediaGroup->suffix;
-        auto _suffix = suffixList;
-        GUIKIT::Vector::combine(_suffix, GUIKIT::File::suppportedCompressionExtensions());
-        suffix = GUIKIT::BrowserWindow::transformFilter(trans->get("disk_image"), _suffix );
+        for(auto group : groups) {
+            GUIKIT::Vector::combine(suffixList, group->suffix);
+        }
+
+        GUIKIT::Vector::combine(suffixList, GUIKIT::File::suppportedCompressionExtensions());
+        suffix = GUIKIT::BrowserWindow::transformFilter(trans->get(filterIdent), suffixList );
 
 		std::vector<std::string> filePaths = GUIKIT::BrowserWindow()
 			.setWindow( *(this->mediaLayout->tabWindow) )
-			.setTitle( trans->get("select_swapper_image") )
+			.setTitle( trans->get(title) )
 			.setPath( preselectPath( ) )
 			.setFilters({ suffix,
 				trans->get("all_files")})
@@ -156,15 +161,15 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
         if(!listView.selected()) return;
 
         emuThread->lock();
-        fileloader->insertSwapDisk( emulator, listView.selection() + 1 );
-        auto settings = program->getSettings( emulator );
-        auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
-        auto media = emulator->getEnabledDisk(mediaId);
-        auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
-        if (fSetting->path.empty())
-            return;
-        fileloader->autoload(emulator, media, 0, settings->get<bool>("autostart_traps_on_dblclick", false) );
+        Emulator::Interface::Media* media = fileloader->insertSwapDisk( emulator, listView.selection() + 1 );
+        if (media) {
+            std::string traps = "autostart_traps_on_dblclick";
+            if (media->group->isTape())
+                traps = "autostart_tape_traps_on_dblclick";
 
+            auto settings = program->getSettings(emulator);
+            fileloader->autoload(emulator, media, 0, settings->get<bool>(traps, false));
+        }
         emuThread->unlock();
     };
 
@@ -208,8 +213,8 @@ auto SwapperLayout::translate() -> void {
     info.info1.setText( trans->get("swapper multi hint") );
     info.info1.setTooltip( trans->get("swapper multi hint tooltip") );
 
-    info.info2.setText( trans->get("guess disks") );
-    info.info2.setTooltip( trans->get("guess disks tooltip") );
+    info.info2.setText( trans->get( emulator->getTapeMediaGroup() ? "guess media" : "guess disks") );
+    info.info2.setTooltip( trans->get("guess media tooltip") );
 }
 
 auto SwapperLayout::getSetting( unsigned pos ) -> FileSetting* {

@@ -665,8 +665,10 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         else
             insertImage( emulator, media, file, item );
 
-        if (media->group->isDisk())
-            settings->set<int>("swap_pos", -1, false);
+        if (media->group->isDrive()) {
+            fileloader->swap.media = media;
+            fileloader->swap.pos = -1;
+        }
 
         if (autoLoad & 1) {
             autoload(emulator, media, selection, autoLoad & USE_TRAPS);
@@ -744,8 +746,11 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 
     view->setFocused(300);
 
-    if (mediaGroup->isTape() || mediaGroup->isDisk())
+    if (mediaGroup->isDrive()) {
         program->initAutoWarp(mediaGroup);
+        fileloader->swap.media = media;
+        fileloader->swap.pos = -1;
+    }
 }
 
 auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
@@ -927,12 +932,16 @@ auto Fileloader::loadSettings(Emulator::Interface* emulator) -> void {
     }
 }
 
-auto Fileloader::getSwapPos() -> unsigned {
-    auto settings = program->getSettings( activeEmulator );
-    auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
-    auto media = activeEmulator->getEnabledDisk(mediaId);
-    if (!media)
-        return 0;
+auto Fileloader::getSwapPos(Emulator::Interface* emulator) -> unsigned {
+    auto settings = program->getSettings( emulator );
+    Emulator::Interface::Media* media = fileloader->swap.media ? fileloader->swap.media : &emulator->getDiskMediaGroup()->media[0];
+    if (media->group->isDisk()) {
+        auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
+        auto media2 = emulator->getEnabledDisk(mediaId);
+        if (media2)
+            media = media2;
+    }
+
     auto fSetting = FileSetting::getInstance( activeEmulator, _underscore(media->name ) );
     if (fSetting->path.empty())
         return 0;
@@ -941,18 +950,47 @@ auto Fileloader::getSwapPos() -> unsigned {
     return diskFinder.getDiskPos();
 }
 
-auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> void {
+auto Fileloader::initSwap(Emulator::Interface* emulator) -> void {
+    swap.media = &emulator->getDiskMediaGroup()->media[0];
+    swap.pos = -1;
+}
+
+auto Fileloader::getSwapMedia(Emulator::Interface* emulator, int swapPos, FileSetting* fSetting) -> Emulator::Interface::Media* {
     auto settings = program->getSettings( emulator );
-    auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
+    Emulator::Interface::Media* media = nullptr;
+
+    if (fSetting->path.empty() || (swapPos == 0) ) {
+        media = fileloader->swap.media ? fileloader->swap.media : &emulator->getDiskMediaGroup()->media[0];
+    } else {
+        std::string fileSuffix = GUIKIT::String::getExtension(fSetting->file, "exe");
+        auto driveGroups = emulator->getDriveMediaGroups();
+        for (auto group: driveGroups) {
+            for (auto& suffix: group->suffix) {
+                if (suffix == fileSuffix) {
+                    media = &group->media[0];
+                    break;
+                }
+            }
+            if (media)
+                break;
+        }
+    }
+
+    if (media->group->isDisk()) {
+        auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
+        auto media2 = emulator->getEnabledDisk(mediaId);
+        if (media2)
+            media = media2;
+    }
+
+    return media;
+}
+
+auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> Emulator::Interface::Media* {
     GUIKIT::File* file;
-
-    auto media = emulator->getEnabledDisk(mediaId);
-    if (!media)
-        return;
-
-    settings->set<int>("swap_pos", swapPos, false);
-
+    fileloader->swap.pos = swapPos;
     FileSetting* fSetting = FileSetting::getInstance( emulator, "swapper_" + std::to_string(swapPos) );
+    Emulator::Interface::Media* media = getSwapMedia(emulator, swapPos, fSetting);
 
     FileSetting fs;
     if (fSetting->path.empty() || (swapPos == 0) ) {
@@ -961,7 +999,7 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
         auto srcSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
 
         if (srcSetting->path.empty())
-            return;
+            return nullptr;
 
         DiskFinder diskFinder( srcSetting->path );
 
@@ -985,7 +1023,7 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
         (file->archiveData(fSetting->id) == nullptr)
             ) {
         statusHandler->setMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), 2, true);
-        return;
+        return nullptr;
     }
 
     filePool->assign( _ident(emulator, "swapper_" + std::to_string(swapPos)), file);
@@ -1001,5 +1039,7 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
     if (emuView && emuView->mediaLayout)
         emuView->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );
 
-    statusHandler->setMessage( trans->get("insert_floppy", {{"%drive%", media->name},{"%file%", fSetting->file}}) );
+    statusHandler->setMessage( trans->get("insert drive", {{"%drive%", media->name},{"%file%", fSetting->file}}) );
+
+    return media;
 }

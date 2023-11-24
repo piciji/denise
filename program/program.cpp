@@ -343,6 +343,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             setVideoFilter();
             statusHandler->updateDiskDriveSpace();
             setVideoDimension(activeEmulator);
+            fileloader->initSwap(emulator);
         }
 
 		resetRunAhead();
@@ -669,7 +670,7 @@ auto Program::autoStartFinish(bool soft) -> void {
 
 auto Program::hintAutoWarp(uint8_t state) -> void {
 
-    if (!activeEmulator || !warp.enableAutoWarp || !warp.motorControlled)
+    if (!activeEmulator || !warp.enableAutoWarp || warp.manuell || !warp.motorControlled)
         return;
 
     bool motorOn = state & 1;
@@ -691,20 +692,22 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool ini
     if (!activeEmulator)
         return;
 
-    unsigned _autoWarp = program->getSettings( activeEmulator )->get<unsigned>("auto_warp", 0);
+    auto _settings = program->getSettings( activeEmulator );
 
+    unsigned _autoWarp = _settings->get<unsigned>("auto_warp", 0);
+    warp.manuellEndsAutoWarp = _settings->get<bool>("manuell_ends_auto_warp", true);
     warp.enableAutoWarp = _autoWarp != 0;
 
     if (warp.enableAutoWarp) {
         if (mediaGroup->isDisk()) {
             if (dynamic_cast<LIBC64::Interface*>(activeEmulator))
-                warp.motorControlled = !program->getSettings(activeEmulator)->get<bool>("auto_warp_disk_first_file", true);
+                warp.motorControlled = !_settings->get<bool>("auto_warp_disk_first_file", true);
             else
                 warp.motorControlled = true;
 
-            warp.inputControlled = program->getSettings(activeEmulator)->get<bool>("auto_warp_off_input", false);
+            warp.inputControlled = _settings->get<bool>("auto_warp_off_input", false);
         } else {
-            warp.motorControlled = !program->getSettings(activeEmulator)->get<bool>("auto_warp_tape_first_file", false);
+            warp.motorControlled = !_settings->get<bool>("auto_warp_tape_first_file", false);
             warp.inputControlled = false;
         }
 

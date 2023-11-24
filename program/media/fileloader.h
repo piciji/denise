@@ -25,6 +25,11 @@ struct Fileloader {
     GUIKIT::Timer foregroundTimer;
     GUIKIT::Timer previewTimer;
 
+    struct {
+        int pos = -1;
+        Emulator::Interface::Media* media = nullptr;
+    } swap;
+
     auto anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void;
     auto load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
     auto eject(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, bool secondaryOnly) -> void;
@@ -40,8 +45,10 @@ struct Fileloader {
     auto preselectPath( GUIKIT::Settings* settings, std::string& groupName, bool lastPathFirst = false ) -> std::string;
     auto autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool trapped, bool forceOverrideSpeeder = false) -> void;
     auto loadSettings(Emulator::Interface* emulator) -> void;
-    auto insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> void;
-    auto getSwapPos() -> unsigned;
+    auto insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> Emulator::Interface::Media*;
+    auto getSwapPos(Emulator::Interface* emulator) -> unsigned;
+    auto getSwapMedia(Emulator::Interface* emulator, int swapPos, FileSetting* fSetting) -> Emulator::Interface::Media*;
+    auto initSwap(Emulator::Interface* emulator) -> void;
 };
 
 extern Fileloader* fileloader;

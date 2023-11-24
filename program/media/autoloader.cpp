@@ -250,6 +250,11 @@ auto Autoloader::postProcessing() -> void {
             set(ddControl.emulator, &mediaGroup->media[0], trapped, ddControl.selection);
         }
 
+        if (mediaGroup->isDrive()) {
+            fileloader->swap.media = &mediaGroup->media[0];
+            fileloader->swap.pos = -1;
+        }
+
         if (audioManager)
             audioManager->drive.reset(mediaGroup, true);
         
@@ -427,9 +432,6 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
                         emuView->mediaLayout->insertImage(media, file, item, alreadyInUse ? 2 : 0);
 					else
                         fileloader->insertImage(emulator, media, file, item, alreadyInUse ? 2 : 0);
-
-                    if (media->group->isDisk())
-                        program->getSettings( emulator )->set<int>("swap_pos", -1, false);
 
                     ddControl.mediaGroups.push_back(&mediaGroup);
 

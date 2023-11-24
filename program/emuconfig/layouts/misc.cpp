@@ -95,10 +95,13 @@ AutostartLayout::AutostartLayout(Emulator::Interface* emulator) : autoWarp(emula
 
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         append(autoWarp, {0u, 0u}, 5 );
+        append(manuellOverAutowarp, {0u, 0u}, 5 );
         startWrapper = new StartWrapper;
         append(*startWrapper, {0u, 0u}, 5 );
-    } else
-        append(autoWarp, {0u, 0u}, 5 );
+    } else {
+        append(autoWarp, {0u, 0u}, 5);
+        append(manuellOverAutowarp, {0u, 0u}, 5 );
+    }
 
     append(autostartDragnDrop, {~0u, 0u});
 
@@ -143,6 +146,12 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) : autostartLayout(tabWindow->emulat
     autostartLayout.autoWarp.aggressive.onActivate = [this]() {
 
         _settings->set<unsigned>("auto_warp", 2);
+
+        initAutowarp();
+    };
+
+    autostartLayout.manuellOverAutowarp.onToggle = [this](bool checked) {
+        _settings->set<bool>("manuell_ends_auto_warp", checked);
 
         initAutowarp();
     };
@@ -382,6 +391,8 @@ auto MiscLayout::translate() -> void {
     autostartLayout.autoWarp.normal.setText(trans->get("normal"));
     autostartLayout.autoWarp.off.setText(trans->get("off"));
 
+    autostartLayout.manuellOverAutowarp.setText(trans->getA("manuell ends auto warp"));
+
     autostartLayout.autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
     autostartLayout.autoWarp.diskFirstFile.setTooltip(trans->get("warp first file tooltip"));
     autostartLayout.autoWarp.tapeFirstFile.setText(trans->get("tape warp first file"));
@@ -432,6 +443,8 @@ auto MiscLayout::loadSettings() -> void {
         autostartLayout.autoWarp.normal.setChecked();
     else if (autoWarp == 2)
         autostartLayout.autoWarp.aggressive.setChecked();
+
+    autostartLayout.manuellOverAutowarp.setChecked( _settings->get<bool>("manuell_ends_auto_warp", true) );
 
     autostartLayout.autoWarp.diskFirstFile.setChecked(_settings->get<bool>("auto_warp_disk_first_file", true));
 

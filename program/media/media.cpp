@@ -226,14 +226,14 @@ auto MediaLayout::build() -> void {
     };
 		
     tvi = new GUIKIT::TreeViewItem;
-    tvi->setText( "disk_swapper" );
+    tvi->setText( "swapper" );
     tvi->setImage( swapperImage );    
-    mediaTree.append(*tvi);    
+    mediaTree.append(*tvi);
     swapperLayout = new SwapperLayout(this);
     moduleSwitch.setLayout( navElements.size(), *swapperLayout, {~0u, ~0u} );
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
     navElements.push_back( { tvi, nullptr, (Layout*)swapperLayout } );
-    
+
     tvi = new GUIKIT::TreeViewItem;
     tvi->setText( "create" );
     tvi->setImage( addImage );    
@@ -876,7 +876,7 @@ auto MediaLayout::translate() -> void {
             nav.tvi->setText( trans->get( getMediaGroupTransIdent( nav.mediaGroupLayout->mediaGroup ) ) );
             
         } else if ( dynamic_cast<SwapperLayout*>(nav.altLayout))
-            nav.tvi->setText( trans->get( "disk_swapper" ) );
+            nav.tvi->setText( trans->get( emulator->getTapeMediaGroup() ? "swapper" : "disk swapper" ) );
         else if ( dynamic_cast<PathsLayout*>(nav.altLayout))
             nav.tvi->setText( trans->get( "paths" ) );
         else if ( nav.altLayout == &creatorLayout )

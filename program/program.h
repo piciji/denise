@@ -63,6 +63,8 @@ struct Program : Emulator::Interface::Bind {
         bool enableAutoWarp = false;
         bool motorControlled = false;
         bool inputControlled = false;
+        bool manuell = false;
+        bool manuellEndsAutoWarp = false;
 	} warp;
 
     auto quit() -> void;

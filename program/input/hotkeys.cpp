@@ -25,8 +25,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::AudioRecord, "audio record"} );
 
     hotkeys.push_back( {Hotkey::Id::Freeze, "freeze button"} );
-    hotkeys.push_back( {Hotkey::Id::Rotation, "quarter rotation"} );
-    hotkeys.push_back( {Hotkey::Id::Autowarp, "toggle Auto Warp"} );
+    hotkeys.push_back( {Hotkey::Id::Rotation, "image rotation"} );
 
     hotkeys.push_back( {Hotkey::Id::SyncStatus, "Sync status"} );
     hotkeys.push_back( {Hotkey::Id::ThreadedRenderer, "Threaded Renderer"} );
@@ -39,23 +38,23 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "Disk_swapper_up"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwapDown, "Disk_swapper_down"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap0, "Disk_swapper_call0"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap1, "Disk_swapper_call1"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap2, "Disk_swapper_call2"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap3, "Disk_swapper_call3"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap4, "Disk_swapper_call4"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap5, "Disk_swapper_call5"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap6, "Disk_swapper_call6"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap7, "Disk_swapper_call7"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap8, "Disk_swapper_call8"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap9, "Disk_swapper_call9"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap10, "Disk_swapper_call10"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap11, "Disk_swapper_call11"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap12, "Disk_swapper_call12"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap13, "Disk_swapper_call13"} );
-    hotkeys.push_back( {Hotkey::Id::DiskSwap14, "Disk_swapper_call14"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "swapper up"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwapDown, "swapper down"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap0, "swap media0"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap1, "swap media1"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap2, "swap media2"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap3, "swap media3"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap4, "swap media4"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap5, "swap media5"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap6, "swap media6"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap7, "swap media7"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap8, "swap media8"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap9, "swap media9"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap10, "swap media10"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap11, "swap media11"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap12, "swap media12"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap13, "swap media13"} );
+    hotkeys.push_back( {Hotkey::Id::DiskSwap14, "swap media14"} );
 
     // not assignable, not saveable
     hiddenHotkeys.push_back( {Hotkey::Id::FastForward, ""} );
@@ -100,7 +99,7 @@ auto InputManager::setCustomHotkeys() -> void {
     customHotkeys.push_back( {Hotkey::Id::Firmware, "Firmware", true} );
     customHotkeys.push_back( {Hotkey::Id::Audio, "Audio", true} );
 	customHotkeys.push_back( {Hotkey::Id::Geometry, "Geometry", true} );
-    customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "Disk_swapper", true} );
+    customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "swapper", true} );
     customHotkeys.push_back( {Hotkey::Id::AutoStart, "autostart media", true} );
 }
 
@@ -262,14 +261,6 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             emuThread->lock();
             program->toggleFastForward( id == Hotkey::Id::ToggleFastForwardAggressive );
             break;
-
-        case Hotkey::Id::Autowarp: {
-            emuThread->lock();
-            if (!activeEmulator || !activeEmulator->autoStartedByMediaGroup() || !settings->get<unsigned>("auto_warp", 0))
-                break;
-            program->warp.enableAutoWarp ^= 1;
-            statusHandler->setMessage( trans->getA(program->warp.enableAutoWarp ? "Auto Warp on" : "Auto Warp off"), 7 );
-        } break;
 
         case Hotkey::Id::FastForward:
             if (!program->warp.active) {
@@ -693,15 +684,15 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (!activeEmulator)
                 break;
 
-            int swapPos = settings->get<int>("swap_pos", -1);
+            int swapPos = fileloader->swap.pos;
 
             if (id == Hotkey::DiskSwapUp) {
                 if (swapPos == -1)
-                    swapPos = fileloader->getSwapPos();
+                    swapPos = fileloader->getSwapPos(activeEmulator);
                 swapPos++;
             } else if (id == Hotkey::DiskSwapDown) {
                 if (swapPos == -1)
-                    swapPos = fileloader->getSwapPos();
+                    swapPos = fileloader->getSwapPos(activeEmulator);
                 swapPos--;
             } else
                 swapPos = id - Hotkey::DiskSwap0;

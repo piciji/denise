@@ -52,6 +52,8 @@ struct AutostartLayout : GUIKIT::FramedVerticalLayout {
         AutoWarp(Emulator::Interface* emulator);
     } autoWarp;
 
+    GUIKIT::CheckBox manuellOverAutowarp;
+
     struct StartWrapper : GUIKIT::HorizontalLayout {
         struct Start : GUIKIT::VerticalLayout {
             GUIKIT::CheckBox diskTrapsOnDblClick;
