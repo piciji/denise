@@ -343,7 +343,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             setVideoFilter();
             statusHandler->updateDiskDriveSpace();
             setVideoDimension(activeEmulator);
-            fileloader->initSwap(emulator);
         }
 
 		resetRunAhead();

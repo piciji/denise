@@ -692,7 +692,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (!activeEmulator)
                 break;
 
-            int swapPos = fileloader->swap.pos;
+            int swapPos = settings->get<int>("swap_pos", -1);
 
             if (id == Hotkey::DiskSwapUp) {
                 if (swapPos == -1)

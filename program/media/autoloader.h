@@ -40,7 +40,9 @@ struct Autoloader {
     auto needSlotsForDragnDrop(std::vector<std::string> files) -> unsigned;
     auto slotMode() -> bool { return ddControl.mode == Mode::AutoStartWithSlot || ddControl.mode == Mode::OpenWithSlot; }
     auto set(Emulator::Interface* emulator, Emulator::Interface::Media* media, bool trapped, unsigned selection = 0) -> void;
+    auto setOnlyForFirstDrive(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
     auto get(Emulator::Interface* emulator, bool& trapped, unsigned& selection) -> Emulator::Interface::Media*;
+    auto getLatestDrive(Emulator::Interface* emulator) -> Emulator::Interface::Media*;
 };
 
 extern Autoloader* autoloader;

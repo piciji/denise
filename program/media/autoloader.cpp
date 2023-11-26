@@ -143,7 +143,9 @@ auto Autoloader::postProcessing() -> void {
                 view->setFocused(300);
             else if ( emuView && emuView->visible())
                 emuView->setFocused();
-            
+
+            autoloader->setOnlyForFirstDrive(ddControl.emulator, &mediaGroup->media[0]);
+            settings->set<int>("swap_pos", -1, false);
         } else {
             // not autostarted expansion needs settings window
             if (!emuView)
@@ -251,8 +253,7 @@ auto Autoloader::postProcessing() -> void {
         }
 
         if (mediaGroup->isDrive()) {
-            fileloader->swap.media = &mediaGroup->media[0];
-            fileloader->swap.pos = -1;
+            settings->set<int>("swap_pos", -1, false);
         }
 
         if (audioManager)
@@ -555,13 +556,26 @@ End:
     return true;
 }
 
+auto Autoloader::setOnlyForFirstDrive(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void {
+    if(!media->group->isDrive() || (&media->group->media[0] != media))
+        return;
+
+    for(auto& use : used) {
+        if (use.emulator == emulator) {
+            use.media = media;
+            return;
+        }
+    }
+    used.push_back({emulator, media, false, 0});
+}
+
 auto Autoloader::set(Emulator::Interface* emulator, Emulator::Interface::Media* media, bool trapped, unsigned selection) -> void {
     for(auto& use : used) {
         if (use.emulator == emulator) {
             use.media = media;
             use.trapped = trapped;
             use.selection = selection;
-            break;
+            return;
         }
     }
     used.push_back({emulator, media, trapped, selection});
@@ -576,4 +590,12 @@ auto Autoloader::get(Emulator::Interface* emulator, bool& trapped, unsigned& sel
         }
     }
     return nullptr;
+}
+
+auto Autoloader::getLatestDrive(Emulator::Interface* emulator) -> Emulator::Interface::Media* {
+    for(auto& use : used)
+        if (use.emulator == emulator) {
+            return use.media->group->isDrive() ? use.media : emulator->getDisk(0);
+    }
+    return emulator->getDisk(0);
 }
