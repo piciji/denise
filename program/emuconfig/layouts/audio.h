@@ -87,15 +87,21 @@ struct ReverbControlLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct PanningControlLayout : GUIKIT::FramedVerticalLayout {
-    
+
     struct TopLayout : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox active;
+        SliderLayout separation;
+
+        TopLayout();
+    } top;
+
+    struct MiddleLayout : GUIKIT::HorizontalLayout {
         GUIKIT::Label leftChannel;
         SliderLayout leftMix;
         SliderLayout rightMix;
-        
-        TopLayout();
-    } top;
+
+        MiddleLayout();
+    } middle;
     
     struct BottomLayout : GUIKIT::HorizontalLayout {
         GUIKIT::Label rightChannel;
@@ -151,4 +157,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
 
     auto updateFloppyProfileList() -> void;
     auto updateTapeProfileList() -> void;
+
+    auto initSeparation() -> void;
+    auto setSeparation() -> void;
 };

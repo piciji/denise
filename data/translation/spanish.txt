@@ -783,3 +783,4 @@ guess media = Guessing subsequent floppy disks/tapes
 guess media tooltip = El intercambiador de discos puede adivinar los siguientes disquetes de programas si se conserva un determinado esquema de nombres para en los archivos. Ejemplo: "Turrican - lado 1, Turrican - lado 2" o "Turrican - 1, Turrican - 2" o "Turrican - a, Turrican - b" y así sucesivamente. Los siguientes disquetes se pueden insertar directamente mediante una tecla de acceso rápido, sin tener que llenar previamente el intercambiador manualmente. Sin embargo, si el intercambiador se llena manualmente, se insertan los siguientes disquetes ubicados en las ranuras.
 manuell ends auto warp = manual warping stops automatic warping until the next restart
 Native free = Native (free)
+Stereo Separation = Stereo Separation

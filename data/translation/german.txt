@@ -783,3 +783,4 @@ guess media = Folge-Disketten/Kassetten erraten
 guess media tooltip = Der Wechsler kann Folge-Datenträger von Programmen erraten, wenn ein bestimmtes Benennungs-Schema bei den Dateinamen beibehalten wird. Beispiel: "Turrican - Seite 1, Turrican - Seite 2" oder "Turrican - 1, Turrican - 2" oder "Turrican - a, Turrican - b" undsoweiter. Diese Dateien können dann direkt per Hotkey eingelegt werden, ohne dass der Wechsler dazu vorher manuell befüllt werden muss. Wird der Wechsler aber manuell befüllt, dann werden die in den Slots liegenden Dateien eingelegt.
 manuell ends auto warp = manuelles Warpen beendet automatisches Warpen bis zum nächsten Neustart
 Native free = Ursprünglich (stufenlos)
+Stereo Separation = Stereo Trennung

@@ -783,3 +783,4 @@ guess media = Guessing subsequent floppy disks/tapes
 guess media tooltip = The swapper can guess subsequent disks/tapes of programs if a certain naming scheme is retained for the file names. Example: "Turrican - side 1, Turrican - side 2" oder "Turrican - 1, Turrican - 2" oder "Turrican - a, Turrican - b" and so on. The subsequent files can then be inserted directly via hotkey without having to manually fill the swapper beforehand. However, if the swapper is filled manually, then the follow-up disks or tapes located in the slots are inserted.
 manuell ends auto warp = manual warping stops automatic warping until the next restart
 Native free = Native (free)
+Stereo Separation = Stereo Separation

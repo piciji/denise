@@ -783,3 +783,4 @@ guess media = Guessing subsequent floppy disks/tapes
 guess media tooltip = A lemezcserélő képes kitalálni a programok további floppylemezeinek a nevét, ha a nevek egy bizonyos elnevezési sémát követnek. Példa: "Turrican - side 1, Turrican - side 2" vagy "Turrican - 1, Turrican - 2" vagy "Turrican - a, Turrican - b" stb. A következő floppylemezeket ezután közvetlenül a gyorsbillentyűvel lehet behelyezni, anélkül, hogy a cserélőt előzetesen manuálisan ki kellene tölteni. Ha azonban a lemezcserélő manuálisan van feltöltve, akkor a slotokban található következő floppylemezek kerülnek behelyezésre.
 manuell ends auto warp = manual warping stops automatic warping until the next restart
 Native free = Native (free)
+Stereo Separation = Stereo Separation

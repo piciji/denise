@@ -148,9 +148,18 @@ ReverbControlLayout::ReverbControlLayout() {
 }
 
 PanningControlLayout::TopLayout::TopLayout() :
+separation("%") {
+    append( active, {0u, 0u}, 10 );
+    append( separation, {~0u, 0u} );
+    separation.slider.setLength(21);
+    separation.updateValueWidth( "000%" );
+
+    setAlignment( 0.5 );
+}
+
+PanningControlLayout::MiddleLayout::MiddleLayout() :
 leftMix( "" ),
 rightMix( "" ) {
-    append( active, {0u, 0u}, 10 );
     append( leftChannel, {0u, 0u}, 10);
     append( leftMix, {~0u, 0u}, 10);
     append( rightMix, {~0u, 0u});
@@ -186,6 +195,7 @@ rightMix( "" ) {
 
 PanningControlLayout::PanningControlLayout() {
     append( top, {~0u, 0u}, 10 );
+    append( middle, {~0u, 0u}, 10 );
     append( bottom, {~0u, 0u} );
     setFont(GUIKIT::Font::system("bold"));
     setPadding( 10 );
@@ -332,10 +342,12 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
     
-    setDspEvent( &panning.top.leftMix, "audio_panning_left0", 1.0 );
-    setDspEvent( &panning.top.rightMix, "audio_panning_left1", 0.0 );
+    setDspEvent( &panning.middle.leftMix, "audio_panning_left0", 1.0 );
+    setDspEvent( &panning.middle.rightMix, "audio_panning_left1", 0.0 );
     setDspEvent( &panning.bottom.leftMix, "audio_panning_right0", 0.0 );
     setDspEvent( &panning.bottom.rightMix, "audio_panning_right1", 1.0 );
+
+    setSeparation();
         
     audioRecord.duration.useTimeLimit.onToggle = [this](bool checked) {
         _settings->set<bool>( "audio_record_timelimit", checked);
@@ -586,6 +598,50 @@ auto AudioLayout::initDsp(SliderLayout* sliderLayout, std::string ident, float d
     sliderLayout->value.setText(GUIKIT::String::convertDoubleToString(val, 2));
 }
 
+auto AudioLayout::initSeparation() -> void {
+    unsigned l0 = panning.middle.leftMix.slider.position();
+    unsigned l1 = panning.middle.rightMix.slider.position();
+    unsigned r0 = panning.bottom.leftMix.slider.position();
+    unsigned r1 = panning.bottom.rightMix.slider.position();
+
+    if(((l0 + l1) == 100) && ((r0 + r1) == 100) && (l0 == r1) && (l1 == r0)) {
+        unsigned pos = ((l0 - 50) * 20) / 50;
+        panning.top.separation.value.setText( std::to_string(pos * 5) + "%" );
+        panning.top.separation.slider.setPosition( pos );
+    }
+}
+
+auto AudioLayout::setSeparation() -> void {
+
+    panning.top.separation.slider.onChange = [this](unsigned position) {
+
+        unsigned val = 50 + ((position * 50) / 20);
+        float v1 = (float)val / 100.0;
+        float v2 = (float)(100 - val) / 100.0;
+
+        _settings->set<float>("audio_panning_left0", v1);
+        _settings->set<float>("audio_panning_left1", v2);
+        _settings->set<float>("audio_panning_right0", v2);
+        _settings->set<float>("audio_panning_right1", v1);
+
+        panning.top.separation.value.setText( std::to_string(position * 5) + "%" );
+
+        panning.middle.leftMix.slider.setPosition(val);
+        panning.middle.rightMix.slider.setPosition(100 - val);
+        panning.bottom.leftMix.slider.setPosition(100 - val);
+        panning.bottom.rightMix.slider.setPosition(val);
+
+        panning.middle.leftMix.value.setText( GUIKIT::String::convertDoubleToString(v1, 2) );
+        panning.middle.rightMix.value.setText( GUIKIT::String::convertDoubleToString(v2, 2) );
+        panning.bottom.leftMix.value.setText( GUIKIT::String::convertDoubleToString(v2, 2) );
+        panning.bottom.rightMix.value.setText( GUIKIT::String::convertDoubleToString(v1, 2) );
+
+        emuThread->lock();
+        audioManager->setAudioDsp();
+        emuThread->unlock();
+    };
+}
+
 auto AudioLayout::translate() -> void {
     settingsLayout.translate( );
     moduleFrame.setText(trans->get("selection"));
@@ -606,9 +662,10 @@ auto AudioLayout::translate() -> void {
 
     panning.setText(trans->get("Balance"));
     panning.top.active.setText(trans->get("enable"));
-    panning.top.leftChannel.setText(trans->get("left Channel"));
-    panning.top.leftMix.name.setText(trans->get("mix left"));
-    panning.top.rightMix.name.setText(trans->get("mix right"));
+    panning.top.separation.name.setText(trans->get("Stereo Separation"));
+    panning.middle.leftChannel.setText(trans->get("left Channel"));
+    panning.middle.leftMix.name.setText(trans->get("mix left"));
+    panning.middle.rightMix.name.setText(trans->get("mix right"));
     panning.bottom.rightChannel.setText(trans->get("right Channel"));
     panning.bottom.leftMix.name.setText(trans->get("mix left"));
     panning.bottom.rightMix.name.setText(trans->get("mix right"));
@@ -656,10 +713,12 @@ auto AudioLayout::loadSettings() -> void {
     initDsp( &reverb.bottom.roomWidth, "audio_reverb_roomwidth", 0.56 );
     initDsp( &reverb.bottom.roomSize, "audio_reverb_roomsize", 0.56 );
     
-    initDsp( &panning.top.leftMix, "audio_panning_left0", 1.0 );
-    initDsp( &panning.top.rightMix, "audio_panning_left1", 0.0 );
+    initDsp( &panning.middle.leftMix, "audio_panning_left0", 1.0 );
+    initDsp( &panning.middle.rightMix, "audio_panning_left1", 0.0 );
     initDsp( &panning.bottom.leftMix, "audio_panning_right0", 0.0 );
     initDsp( &panning.bottom.rightMix, "audio_panning_right1", 1.0 );
+
+    initSeparation();
     
     panning.top.active.setChecked( _settings->get<bool>("audio_panning", false ) );
     reverb.top.active.setChecked( _settings->get<bool>("audio_reverb", false ) );

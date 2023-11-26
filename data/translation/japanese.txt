@@ -783,3 +783,4 @@ guess media = Guessing subsequent floppy disks/tapes
 guess media tooltip = ファイル名に連番などが付いている時にディスクスワップ機能はプログラムが次に必要とするディスクを予測してスワッパー操作を経由せずホットキーのみでディスクを入れ替えられます。(例えば"Turrican - side 1"と"Turrican - side 2"や"Turrican A"、"Turrican B"など) ただし、複数のイメージをスワッパーに手動設定した場合は登録順に挿入されます。
 manuell ends auto warp = manual warping stops automatic warping until the next restart
 Native free = Native (free)
+Stereo Separation = Stereo Separation
