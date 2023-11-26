@@ -90,37 +90,55 @@ struct ViewScreen {
             if (crt) {
                 _aspectWidth = flipped ? 3.0 : 4.0;
                 _aspectHeight = flipped ? 4.0 : 3.0;
+
+                while(1) {
+                    _height = outputHeight;
+                    _width = (unsigned)(((float(_height) / _aspectHeight) * _aspectWidth) + 0.5);
+
+                    if (_width > outputWidth) {
+                        if (useIntegerScaling) {
+                            _height = outputHeight - scalingHeight;
+
+                            if (_height >= scalingHeight) {
+                                outputTop += (outputHeight - _height) / 2;
+                                outputHeight = _height;
+                                continue;
+                            }
+                        }
+
+                        _height = (unsigned)(((float(outputWidth) / _aspectWidth) * _aspectHeight) + 0.5);
+                        outputLeft = 0;
+                        outputTop += (outputHeight - _height) / 2;
+                        outputHeight = _height;
+
+                    } else {
+                        outputLeft = (outputWidth - _width) / 2;
+                        outputWidth = _width;
+                    }
+
+                    break;
+                }
+
             } else { // native free
                 _aspectWidth = flipped ? scaling.height : scaling.width;
                 _aspectHeight = flipped ? scaling.width : scaling.height;
-            }
 
-            while(1) {
-                _height = outputHeight;
-                _width = (unsigned)(((float(_height) / _aspectHeight) * _aspectWidth) + 0.5);
+                float screenAspect = (float)windowWidth / (float)outputHeight;
+                float nativeAspect = _aspectWidth / _aspectHeight;
 
-                if (_width > outputWidth) {
-                    if (useIntegerScaling) {
-                        _height = outputHeight - scalingHeight;
-
-                        if (_height >= scalingHeight) {
-                            outputTop += (outputHeight - _height) / 2;
-                            outputHeight = _height;
-                            continue;
-                        }
-                    }
-
-                    _height = (unsigned)(((float(outputWidth) / _aspectWidth) * _aspectHeight) + 0.5);
-                    outputLeft = 0;
-                    outputTop += (outputHeight - _height) / 2;
-                    outputHeight = _height;
-
+                float scaleX, scaleY;
+                if (nativeAspect < screenAspect) {
+                    scaleX = nativeAspect / screenAspect;
+                    scaleY = 1.0f;
                 } else {
-                    outputLeft = (outputWidth - _width) / 2;
-                    outputWidth = _width;
+                    scaleX = 1.0f;
+                    scaleY = screenAspect / nativeAspect;
                 }
 
-                break;
+                outputWidth = windowWidth * scaleX;
+                outputHeight = outputHeight * scaleY;
+                outputLeft = (windowWidth - outputWidth) / 2.0;
+                outputTop = (windowHeight - outputHeight) / 2.0;
             }
         } else if (native) { // Native
             if (_width > outputWidth)

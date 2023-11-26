@@ -439,7 +439,8 @@ auto GeometryLayout::translate() -> void {
 
     cropLayout.hotkey.label.setText( trans->get("switchable by Hotkey", {}, true) );
     cropLayout.hotkey.reset.setText( trans->getA("reset") );
-    cropLayout.hotkey.reset.setTooltip( trans->getA("reset free border tooltip") );
+    if (dynamic_cast<LIBAMI::Interface*>(emulator))
+        cropLayout.hotkey.reset.setTooltip( trans->getA("reset free border tooltip") );
 
     for(int i = 0; i < 12; i++) {
         cropLayout.hotkey.boxes[i]->setText( std::to_string(i) );

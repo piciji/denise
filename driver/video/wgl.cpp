@@ -367,6 +367,7 @@ struct WGL : Video, OpenGL, RenderThread {
     }
 
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
+        // update happens during next frame, if input width/height is changing
         viewScreen.scaling.width = _w;
         viewScreen.scaling.height = _h;
         viewScreen.scaling.doubleSize = _ds;

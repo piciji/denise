@@ -259,7 +259,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         viewScreen.hasIntegerScaling = integerScaling;
         if (settings.handle) {
             viewScreen.update(viewport);
-            setViewport(viewport);
+          //  setViewport(viewport);
         }
     }
 
@@ -577,6 +577,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if(_width != frame.texture.desc.Width || _height != frame.texture.desc.Height) {
             if (!initMainTexture(_width, _height))
                 return false;
+            viewScreen.update(viewport);
         }
 
         D3D11_MAPPED_SUBRESOURCE mappedTexture;
@@ -602,6 +603,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if(_width != frame.texture.desc.Width || _height != frame.texture.desc.Height) {
             if (!initMainTexture(_width, _height))
                 return false;
+            viewScreen.update(viewport);
         }
 
         D3D11_MAPPED_SUBRESOURCE mappedTexture;
@@ -619,6 +621,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             renderBuffer->dataFloat = new float[w * h * 4]();
         else
             renderBuffer->data = new uint32_t[w * h]();
+
+        viewScreen.update(viewport);
     }
 
     auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
