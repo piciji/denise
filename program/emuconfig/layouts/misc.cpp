@@ -396,7 +396,7 @@ auto MiscLayout::translate() -> void {
     autostartLayout.autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
     autostartLayout.autoWarp.diskFirstFile.setTooltip(trans->get("warp first file tooltip"));
     autostartLayout.autoWarp.tapeFirstFile.setText(trans->get("tape warp first file"));
-    autostartLayout.autoWarp.tapeFirstFile.setTooltip(trans->get("warp first file tooltip"));
+    autostartLayout.autoWarp.tapeFirstFile.setTooltip(trans->get("warp first tape file tooltip"));
     autostartLayout.autoWarp.disableWarpWhenInput.setText(trans->get("disable warp when input"));
     autostartLayout.autoWarp.disableWarpWhenInput.setTooltip( trans->get("disable warp when input tooltip") );
 

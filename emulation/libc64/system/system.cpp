@@ -660,8 +660,7 @@ auto System::run() -> void {
         cpu.resetRoutine();
 
     input.poll();
-    // of course real system sends restore when key is pressed, but polling each cycle for this is useless
-    // because host updates pressed keys once per frame only
+
     if (input.restore())
         nmiIncomming |= 1;
     else

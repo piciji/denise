@@ -362,9 +362,11 @@ auto Paula::sampleUpdate() -> void {
     sampleCycle = agnus.clock + sampleLimit;
     
     if (audioOut) {
-        int32_t sampleL = channels[0].sample + channels[3].sample;
+        int32_t sampleL = channels[0].sample + channels[3].sample; // sample: 14 bit (8bit * 6bit volume), mix two samples: 15 bit
         int32_t sampleR = channels[1].sample + channels[2].sample;
-        
+        sampleL <<= 1; // 16 bit
+        sampleR <<= 1;
+
         if (filterMode != 4) { // A1200 Off don't use filter
             int _filterMode = filterMode;
             sampleL = lowPassfilter<0>(sampleL, _filterMode);

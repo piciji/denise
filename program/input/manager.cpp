@@ -352,8 +352,8 @@ auto InputManager::handleAutofire(InputMapping* mapping, InputMapping* useMappin
         mapping->autoFirePos = 0;
         useMapping->state = 1;
     } else {
-        if (!jit.enable ||
-            ((Chronos::getTimestampInMilliseconds() - jit.lastTimestamp) > jit.rescanDelay)) {
+       // if (!jit.enable ||
+         //   ((Chronos::getTimestampInMilliseconds() - jit.lastTimestamp) > jit.rescanDelay)) {
             if (mapping->autoFirePos == 0) {
                 if (autoFireHold) {
                     mapping->autoFirePos = autoFireFrequency + 1;
@@ -367,10 +367,10 @@ auto InputManager::handleAutofire(InputMapping* mapping, InputMapping* useMappin
                 if (mapping->autoFirePos == 0)
                     useMapping->state = 1;
             }
-        } else if (mapping->autoFirePos == 0)
-            useMapping->state = 1;
-        else
-            useMapping->state = 0x80;
+       // } else if (mapping->autoFirePos == 0)
+            //useMapping->state = 1;
+        //else
+          //  useMapping->state = 0x80;
     }
 }
 
