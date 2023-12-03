@@ -409,6 +409,9 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
         }
 
         requestFullscreenToggle = false;
+
+        if (this->window.aspectRatio().width)
+            updateGeometryHint();
     };
 
     timerFullscreen.setInterval( 150 );
@@ -699,13 +702,17 @@ auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
 
     if (!resizing) {
         resizing = true;
-        if (window.onResizeStart && !window.fullScreen())
+        if (window.onResizeStart && !window.fullScreen()) {
+            auto _temp = window.aspectRatio();
             window.state.aspectRatio = window.onResizeStart();
+            if (_temp.width != window.aspectRatio().width)
+                updateGeometryHint();
+        }
     }
 
 	timerResize.setEnabled();
-    if (window.aspectRatio().width)
-        updateGeometryHint();
+  //  if (window.aspectRatio().width)
+    //    updateGeometryHint();
 
     if(this->window.state.layout) {
         this->window.state.layout->resetSynchronisation();

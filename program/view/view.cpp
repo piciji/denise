@@ -120,7 +120,7 @@ auto View::build() -> void {
 		    audioDriver->clear();
     };
 
-    GUIKIT::Setting* aspectSetting = globalSettings->find("aspect_correct_resizing");
+    GUIKIT::Setting* aspectSetting = globalSettings->getOrInit("aspect_correct_resizing", false);
 
     onResizeStart = [this, aspectSetting] {
         videoDriver->hintResizing(true);
@@ -134,7 +134,7 @@ auto View::build() -> void {
             }
         }
         GUIKIT::Size screenRatio = {0,0};
-        if (*aspectSetting) {
+        if (aspectSetting && *aspectSetting) {
             switch(videoDriver->getAspectRatio()) {
                 case 1: screenRatio = {4,3}; break;
                 case 2:
