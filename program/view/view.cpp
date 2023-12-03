@@ -137,6 +137,7 @@ auto View::build() -> void {
         if (*aspectSetting) {
             switch(videoDriver->getAspectRatio()) {
                 case 1: screenRatio = {4,3}; break;
+                case 2:
                 case 3: videoDriver->getIntegerScalingDimension(screenRatio.width, screenRatio.height); break;
             }
         }
