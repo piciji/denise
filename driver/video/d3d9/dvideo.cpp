@@ -819,7 +819,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         resizeMutex.unlock();
     }
 
-    auto setRatio(int mode, bool integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
+    auto setAspectRatio(int mode, bool integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
 
         if ((int)viewScreen.mode == mode && viewScreen.hasIntegerScaling == integerScaling)
             return;
@@ -832,10 +832,19 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             init();
     }
 
+    auto getAspectRatio() -> int {
+        return (int)viewScreen.mode;
+    }
+
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
         viewScreen.scaling.width = _w;
         viewScreen.scaling.height = _h;
         viewScreen.scaling.doubleSize = _ds;
+    }
+
+    auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void {
+        _w = viewScreen.scaling.width;
+        _h = viewScreen.scaling.height;
     }
 
     auto getViewport() -> Viewport& { return viewport; }

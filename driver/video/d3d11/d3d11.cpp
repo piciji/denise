@@ -250,7 +250,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
     auto hasSynchronized() -> bool { return settings.synchronize; }
 
-    auto setRatio(int mode, bool integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
+    auto setAspectRatio(int mode, bool integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
         if ((int)viewScreen.mode == mode && viewScreen.hasIntegerScaling == integerScaling)
             return;
 
@@ -261,6 +261,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             viewScreen.update(viewport);
           //  setViewport(viewport);
         }
+    }
+
+    auto getAspectRatio() -> int {
+        return (int)viewScreen.mode;
     }
 
     auto setThreaded(bool state) -> void {
@@ -280,6 +284,11 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         viewScreen.scaling.width = _w;
         viewScreen.scaling.height = _h;
         viewScreen.scaling.doubleSize = _ds;
+    }
+
+    auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void {
+        _w = viewScreen.scaling.width;
+        _h = viewScreen.scaling.height;
     }
 
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {

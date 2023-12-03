@@ -59,7 +59,7 @@ auto Program::setVideoDimension(Emulator::Interface* emulator) -> void {
     int aspectMode = settings->get<int>("aspect_mode", 1, {0, 3});
     bool integerScaling = settings->get<bool>("integer_scaling", false);
 
-    videoDriver->setRatio( aspectMode, integerScaling );
+    videoDriver->setAspectRatio( aspectMode, integerScaling );
 }
 
 auto Program::getVideoDriver() -> std::string {

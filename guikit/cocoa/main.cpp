@@ -209,8 +209,10 @@
 }
 
 -(void)windowWillStartLiveResize:(NSNotification *)notification {
-    if (window->onResizeStart && !window->fullScreen())
-        window->onResizeStart();
+    if (window->onResizeStart && !window->fullScreen()) {
+        window->state.aspectRatio = window->onResizeStart();
+        window->p.applyAspectRatio();
+    }
 }
 
 -(void)windowDidEndLiveResize:(NSNotification *)notification {

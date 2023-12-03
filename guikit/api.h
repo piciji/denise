@@ -184,7 +184,7 @@ struct Window : Base {
     std::function<void ()> onClose = nullptr;
     std::function<void ()> onMove = nullptr;
     std::function<void (SIZE_MODE sizeMode )> onSize = nullptr;
-    std::function<void ()> onResizeStart = nullptr;
+    std::function<Size ()> onResizeStart = nullptr;
     std::function<void ()> onResizeEnd = nullptr;
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
 	std::function<bool ()> onContext = nullptr;

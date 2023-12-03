@@ -700,7 +700,7 @@ auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
     if (!resizing) {
         resizing = true;
         if (window.onResizeStart && !window.fullScreen())
-            window.onResizeStart();
+            window.state.aspectRatio = window.onResizeStart();
     }
 
 	timerResize.setEnabled();

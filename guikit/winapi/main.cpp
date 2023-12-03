@@ -427,7 +427,7 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 				window.statusBar( )->p.setLockDisabled(true);
 
             if (window.onResizeStart && !window.fullScreen())
-                window.onResizeStart();
+                window.state.aspectRatio = window.onResizeStart();
 
             return 0;
         case WM_EXITSIZEMOVE:

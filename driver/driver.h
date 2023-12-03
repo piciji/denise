@@ -67,9 +67,11 @@ struct Video {
     virtual auto hasVRR() -> bool { return false; }
     virtual auto changeThreadPriorityToRealtime(bool state) -> void {}
 
-    virtual auto setRatio(int mode, bool _integerScaling) -> void {} // mode: 0: off, 1: TV, 2: Native
+    virtual auto setAspectRatio(int mode, bool _integerScaling) -> void {} // mode: 0: off, 1: TV, 2: Native, 3: Native Alt
+    virtual auto getAspectRatio() -> int { return 0; }
     virtual auto getViewport() -> Viewport& { static Viewport vp = {0}; return vp; }
     virtual auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {}
+    virtual auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void { }
 
     virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 	/** direct 3D only */

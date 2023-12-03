@@ -342,10 +342,6 @@ VideoLayout::VideoLayout() {
     videoGeometry.aspectCorrectResizing.onToggle = [&](bool checked) {
         emuThread->lock();
         globalSettings->set<bool>("aspect_correct_resizing", checked);
-        if (checked)
-            view->setAspectRatio( {4, 3} );
-        else
-            view->setAspectRatio( {0, 0} );
         view->updateViewport();
         emuThread->unlock();
     };
@@ -435,7 +431,7 @@ auto VideoLayout::translate() -> void {
     crtEmulation.setText( trans->get("crt_emulation") );
 	
 	videoGeometry.setText(trans->get("geometry"));
-    videoGeometry.aspectCorrectResizing.setText(trans->get("resize aspect corrected"));
+    videoGeometry.aspectCorrectResizing.setText(trans->get("lock aspect ratio"));
     videoGeometry.dimension.label.setText(trans->getA("resolution", true));
     videoGeometry.control.refresh.setText(trans->getA("refresh"));
     videoGeometry.control.apply.setText(trans->getA("apply"));

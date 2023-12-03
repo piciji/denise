@@ -135,10 +135,10 @@ struct ViewScreen {
                     scaleY = screenAspect / nativeAspect;
                 }
 
-                outputWidth = windowWidth * scaleX;
-                outputHeight = outputHeight * scaleY;
-                outputLeft = (windowWidth - outputWidth) / 2.0;
-                outputTop = (windowHeight - outputHeight) / 2.0;
+                outputWidth = ((float)windowWidth * scaleX) + 0.5;
+                outputHeight = ((float)outputHeight * scaleY) + 0.5;
+                outputLeft = ((float)(windowWidth - outputWidth) / 2.0) + 0.0;
+                outputTop = ((float)(windowHeight - outputHeight) / 2.0) + 0.0;
             }
         } else if (native) { // Native
             if (_width > outputWidth)

@@ -343,7 +343,7 @@ struct WGL : Video, OpenGL, RenderThread {
 #endif
     }
 
-    auto setRatio(int mode, bool _integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
+    auto setAspectRatio(int mode, bool _integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
         if ((int)viewScreen.mode == mode && viewScreen.hasIntegerScaling == _integerScaling)
             return;
 
@@ -352,6 +352,10 @@ struct WGL : Video, OpenGL, RenderThread {
         viewScreen.hasIntegerScaling = _integerScaling;
 
         viewScreen.update(viewport);
+    }
+
+    auto getAspectRatio() -> int {
+        return (int)viewScreen.mode;
     }
 
     auto getRotation() -> unsigned { return mvp.rotation; }
@@ -371,6 +375,11 @@ struct WGL : Video, OpenGL, RenderThread {
         viewScreen.scaling.width = _w;
         viewScreen.scaling.height = _h;
         viewScreen.scaling.doubleSize = _ds;
+    }
+
+    auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void {
+        _w = viewScreen.scaling.width;
+        _h = viewScreen.scaling.height;
     }
 
     auto getViewport() -> Viewport& { return viewport; }

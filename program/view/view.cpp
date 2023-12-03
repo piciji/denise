@@ -25,11 +25,6 @@ auto View::build() -> void {
     setBackgroundColor(0);
     cocoa.setDisableIconsInTopMenu(true);
 
-    if (globalSettings->get<bool>("aspect_correct_resizing", false))
-        setAspectRatio( {4,3} );
-    else
-        setAspectRatio( {0,0} );
-
     updateGeometry();
     
     append(viewport);
@@ -125,7 +120,9 @@ auto View::build() -> void {
 		    audioDriver->clear();
     };
 
-    onResizeStart = [this]() {
+    GUIKIT::Setting* aspectSetting = globalSettings->find("aspect_correct_resizing");
+
+    onResizeStart = [this, aspectSetting] {
         videoDriver->hintResizing(true);
 
         if (activeVideoManager /*&& !fullScreen() && !requestFullscreenSwitch*/) {
@@ -136,6 +133,14 @@ auto View::build() -> void {
                 customResizeMode = true;
             }
         }
+        GUIKIT::Size screenRatio = {0,0};
+        if (*aspectSetting) {
+            switch(videoDriver->getAspectRatio()) {
+                case 1: screenRatio = {4,3}; break;
+                case 3: videoDriver->getIntegerScalingDimension(screenRatio.width, screenRatio.height); break;
+            }
+        }
+        return screenRatio;
     };
 
     onResizeEnd = [this]() {
