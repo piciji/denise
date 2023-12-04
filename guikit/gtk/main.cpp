@@ -744,6 +744,11 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
 
     resize(geometry);
 
+    GdkGeometry geom;
+    geom.min_width = 100;
+    geom.min_height = 100;
+    gtk_window_set_geometry_hints(GTK_WINDOW(widget), nullptr, &geom, (GdkWindowHints)GDK_HINT_MIN_SIZE);
+
     if(window.state.layout) {
         window.state.layout->resetSynchronisation();
         Geometry layoutGeometry = this->geometry();
