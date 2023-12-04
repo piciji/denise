@@ -181,6 +181,11 @@ auto EmuThread::handleUIEvents() -> void {
         view->setDefaultCursor();
         dismissPlaceholder = false;
     }
+
+    if (updateScreenDimension) {
+        view->adjustToEmu(true);
+        updateScreenDimension = false;
+    }
 }
 
 auto EmuThread::clearEvents() -> void {

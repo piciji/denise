@@ -578,8 +578,8 @@ struct GLX : public Video, OpenGL, RenderThread {
     }
 
     auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void {
-        _w = viewScreen.scaling.width;
-        _h = viewScreen.scaling.height;
+        _w = viewScreen.scaling.width >> 1;
+        _h = viewScreen.scaling.height >> 1;
     }
 
     auto getViewport() -> Viewport& { return viewport; }

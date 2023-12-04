@@ -262,6 +262,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 1);
         program->setVideoDimension(this->emulator);
+        view->adjustToEmu(emulator);
         view->updateViewport();
         emuThread->unlock();
     };
@@ -270,6 +271,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 2);
         program->setVideoDimension(this->emulator);
+        view->adjustToEmu(emulator);
         view->updateViewport();
         emuThread->unlock();
     };
@@ -278,6 +280,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 3);
         program->setVideoDimension(this->emulator);
+        view->adjustToEmu(emulator);
         view->updateViewport();
         emuThread->unlock();
     };

@@ -245,6 +245,7 @@ auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
 auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     isPause = false;
     bool emuSwap = activeEmulator != emulator;
+    bool switchOn = activeEmulator == nullptr;
     powerOff();
     
     activeEmulator = emulator;
@@ -343,6 +344,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             setVideoFilter();
             statusHandler->updateDiskDriveSpace();
             setVideoDimension(activeEmulator);
+            if (!switchOn && globalSettings->get("aspect_correct_resizing", false))
+                VideoManager::updateScreenDimension = true;
         }
 
 		resetRunAhead();

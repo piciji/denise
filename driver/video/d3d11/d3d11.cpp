@@ -287,8 +287,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     }
 
     auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void {
-        _w = viewScreen.scaling.width;
-        _h = viewScreen.scaling.height;
+        _w = viewScreen.scaling.width >> 1;
+        _h = viewScreen.scaling.height >> 1;
     }
 
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {

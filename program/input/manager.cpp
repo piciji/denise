@@ -14,6 +14,7 @@ std::vector<InputManager*> inputManagers;
 InputMapping* InputManager::captureObject = nullptr;
 unsigned InputManager::retry = 0;
 bool InputManager::driverChange = false;
+bool InputManager::autofireInProgresss = false;
 bool InputManager::urgentUpdate = true;
 std::vector<Hid::Device*> InputManager::hidDevices;
 std::vector<InputManager::DeviceRemap> InputManager::remapDevices;
@@ -352,26 +353,22 @@ auto InputManager::handleAutofire(InputMapping* mapping, InputMapping* useMappin
         mapping->autoFirePos = 0;
         useMapping->state = 1;
     } else {
-       // if (!jit.enable ||
-         //   ((Chronos::getTimestampInMilliseconds() - jit.lastTimestamp) > jit.rescanDelay)) {
-            if (mapping->autoFirePos == 0) {
-                if (autoFireHold) {
-                    mapping->autoFirePos = autoFireFrequency + 1;
-                    useMapping->state = 1;
-                } else {
-                    mapping->autoFirePos = autoFireFrequency;
-                    useMapping->state = 0x80;
-                }
+        if (mapping->autoFirePos == 0) {
+            if (autoFireHold) {
+                mapping->autoFirePos = autoFireFrequency + 1;
+                useMapping->state = 1;
             } else {
-                mapping->autoFirePos--;
-                if (mapping->autoFirePos == 0)
-                    useMapping->state = 1;
+                mapping->autoFirePos = autoFireFrequency;
+                useMapping->state = 0x80;
             }
-       // } else if (mapping->autoFirePos == 0)
-            //useMapping->state = 1;
-        //else
-          //  useMapping->state = 0x80;
+        } else {
+            mapping->autoFirePos--;
+            if (mapping->autoFirePos == 0)
+                useMapping->state = 1;
+        }
     }
+
+    autofireInProgresss = true;
 }
 
 inline auto InputManager::updateAndTrigger() -> void {

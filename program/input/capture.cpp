@@ -49,6 +49,11 @@ auto InputManager::jitPoll(int delay) -> bool {
     
     auto ts = Chronos::getTimestampInMilliseconds();
 
+    if(autofireInProgresss) {
+        delay = 1;
+        autofireInProgresss = false;
+    }
+
     if ((ts - jit.lastTimestamp) >= ( (delay >= 0) ? delay : jit.rescanDelay)) {
         jit.lastTimestamp = ts;
         

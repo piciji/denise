@@ -225,6 +225,8 @@ struct View : public GUIKIT::Window {
 	auto activateCustomSpeed() -> void;
 	auto threadedRendererWasToggled(bool state) -> void;
     auto updateGeometry(bool withViewport = false) -> void;
+    auto adjustToEmu(Emulator::Interface* emulator) -> void;
+    auto adjustToEmu(bool withViewport) -> void;
     
     View();
 };

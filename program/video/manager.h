@@ -72,6 +72,7 @@ struct VideoManager {
     static uint8_t frameRenderTrigger;
     static unsigned placeHolderFrames;
     static bool needAUpdate;
+    static bool updateScreenDimension;
 	
     static auto setCrtThreaded(bool state) -> void;
     static auto setShaderInputPrecision(bool state) -> void;

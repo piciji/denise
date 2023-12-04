@@ -142,6 +142,7 @@ struct InputManager {
 
 	static std::vector<InputMapping*> hotkeyTriggers;
     static bool driverChange;
+    static bool autofireInProgresss;
 	
 	static auto getManager( Emulator::Interface* emulator ) -> InputManager*;
 	static auto build() -> void;
