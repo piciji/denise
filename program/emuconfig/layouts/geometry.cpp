@@ -384,17 +384,25 @@ auto GeometryLayout::updateCrop(std::string property, unsigned value) -> void {
     if (!property.empty())
         program->setCrop(emulator, property, value);
 
-    emuThread->lockVideo();
-    if (emuThread->enabled && (activeEmulator == emulator) )
-        emuThread->updateBorder = true;
-    else
-        program->updateCrop( emulator );
+//    emuThread->lockVideo();
+//    if (emuThread->enabled && (activeEmulator == emulator) )
+//        emuThread->updateBorder = true;
+//    else
+    if (emuThread->enabled && (activeEmulator == emulator) ) {
+        emuThread->lock();
+        program->updateCrop(emulator);
+        emuThread->unlock();
+    } else
+        program->updateCrop(emulator);
 
-    emuThread->unlockVideo();
+//    emuThread->unlockVideo();
 }
 
 auto GeometryLayout::updateVisibillity() -> void {
 	auto val = _settings->get<unsigned>( "crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
+
+    if (globalSettings->get("aspect_correct_resizing", false))
+        VideoManager::updateScreenDimension = true;
 
     cropLayout.cropLeft.setEnabled( val >= 4 );
     cropLayout.cropRight.setEnabled( val >= 6 );

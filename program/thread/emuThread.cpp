@@ -98,12 +98,12 @@ auto EmuThread::initWorker() -> void {
                 return;
             }
 
-            if (updateBorder && activeEmulator) {
-                videoMutex.lock();
-                program->updateCrop(activeEmulator);
-                updateBorder = false;
-                videoMutex.unlock();
-            }
+//            if (updateBorder && activeEmulator) {
+//                videoMutex.lock();
+//                program->updateCrop(activeEmulator);
+//                updateBorder = false;
+//                videoMutex.unlock();
+//            }
 
             program->loop();
 
