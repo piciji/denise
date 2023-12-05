@@ -786,3 +786,4 @@ Stereo Separation = Stereo Trennung
 warp first tape file tooltip = Wenn aktiviert, beschleunigt ein zugeschalteter Auto Warp nur das Laden der ersten Datei. Wenn deaktiviert, beschleunigt er auch das Nachladen, bzw. Zwischenlade-Sequenzen. Für Software auf Kassette, wird generell empfohlen, auch das Nachladen beschleunigen zu lassen, da dies zu einer extremen Verkürzung der sonst recht langen Ladezeiten führt. Will man allerdings evtl. Musik während des Ladens hören, darf nicht beschleunigt werden.
 lock aspect ratio = Seitenverhältnis sperren
 crop window = Fenster zuschneiden
+italian = Italienisch
