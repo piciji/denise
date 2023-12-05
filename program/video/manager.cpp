@@ -22,7 +22,6 @@ uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
 unsigned VideoManager::placeHolderFrames = 0;
 bool VideoManager::needAUpdate = true;
-bool VideoManager::updateScreenDimension = false;
 
 std::vector<VideoManager*> videoManagers;
 
@@ -655,14 +654,6 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     frameRenderPos = 0;
     videoDriver->setIntegerScalingDimension( hires ? width : (width << 1),
         interlace ? height : (scanlines ? ((height << 1) - 1) : (height << 1) ), hires || interlace || scanlines);
-
-    if (updateScreenDimension && !view->fullScreen()) {
-        updateScreenDimension = false;
-        if (emuThread->enabled)
-            emuThread->updateScreenDimension = true;
-        else
-            view->adjustToEmu(true);
-    }
 
     if (placeHolderFrames) {
         if ((placeHolderFrames & 3) == 0)

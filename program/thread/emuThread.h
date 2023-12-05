@@ -19,7 +19,6 @@ struct EmuThread {
     std::atomic<bool> updateBorder;
     std::atomic<bool> updateFps;
     std::atomic<bool> dismissPlaceholder;
-    std::atomic<bool> updateScreenDimension;
 
     std::atomic<bool> ready;
     std::atomic<bool> kill;

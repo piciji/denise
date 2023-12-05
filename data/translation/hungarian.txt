@@ -785,3 +785,4 @@ Native free = Native (free)
 Stereo Separation = Stereo Separation
 warp first tape file tooltip = When activated, a connected Auto Warp only speeds up the loading of the first file. If disabled, it also accelerates reloading or intermediate loading sequences. For software on cassette, it is generally recommended to speed up the reload as well, as this leads to an extreme reduction in the otherwise quite long loading times. However, if you want to listen to music while loading, you must not speed up.
 lock aspect ratio = lock aspect ratio
+crop window = crop window

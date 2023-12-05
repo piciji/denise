@@ -14,7 +14,7 @@ std::vector<InputManager*> inputManagers;
 InputMapping* InputManager::captureObject = nullptr;
 unsigned InputManager::retry = 0;
 bool InputManager::driverChange = false;
-bool InputManager::autofireInProgresss = false;
+int InputManager::autofireDirection = 0;
 bool InputManager::urgentUpdate = true;
 std::vector<Hid::Device*> InputManager::hidDevices;
 std::vector<InputManager::DeviceRemap> InputManager::remapDevices;
@@ -368,7 +368,8 @@ auto InputManager::handleAutofire(InputMapping* mapping, InputMapping* useMappin
         }
     }
 
-    autofireInProgresss = true;
+    if (useMapping->emuInput->key == Emulator::Interface::Key::AutofireDirection)
+        autofireDirection = 50; // override JIT rescan delay for shaking games
 }
 
 inline auto InputManager::updateAndTrigger() -> void {

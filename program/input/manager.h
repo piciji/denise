@@ -77,7 +77,7 @@ struct Hotkey {
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
         SyncStatus, ThreadedRenderer, ToggleSCVideo, ToggleSCVideoGPU, DiskSwapUp, DiskSwapDown, AutoStart,
         FastForward, FastForwardOff, Quit, Audio, SwapJoypadsPort2, ApplyWindowSize, ToggleBorderPrev,
-        Rotation,
+        Rotation, CropWindow,
         Autofire = 1000,
     } id;
     std::string name;
@@ -142,7 +142,7 @@ struct InputManager {
 
 	static std::vector<InputMapping*> hotkeyTriggers;
     static bool driverChange;
-    static bool autofireInProgresss;
+    static int autofireDirection;
 	
 	static auto getManager( Emulator::Interface* emulator ) -> InputManager*;
 	static auto build() -> void;

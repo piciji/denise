@@ -74,7 +74,8 @@ struct RatioLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::RadioBox native;
     GUIKIT::RadioBox nativeFree;
     GUIKIT::CheckBox integerScaling;
-
+    GUIKIT::Widget spacer;
+    GUIKIT::Button cropWindow;
     RatioLayout();
 };
 

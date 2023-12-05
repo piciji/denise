@@ -321,6 +321,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
     auto hasVRR() -> bool { return settings.vrr; }
 
+    auto getViewport() -> Viewport& { return viewport; }
+
     auto getRotation() -> unsigned { return settings.rotation; }
 
     auto setRotation(unsigned degree) -> void {

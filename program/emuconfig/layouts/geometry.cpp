@@ -105,6 +105,8 @@ RatioLayout::RatioLayout() {
     append(native, {0u, 0u}, 5);
     append(nativeFree, {0u, 0u}, 20);
     append(integerScaling, {0u, 0u});
+    append(spacer, {~0u, 0u});
+    append(cropWindow, {0u, 0u});
 
     GUIKIT::RadioBox::setGroup( window, tv, native, nativeFree );
 
@@ -262,7 +264,6 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 1);
         program->setVideoDimension(this->emulator);
-        view->adjustToEmu(emulator);
         view->updateViewport();
         emuThread->unlock();
     };
@@ -271,7 +272,6 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 2);
         program->setVideoDimension(this->emulator);
-        view->adjustToEmu(emulator);
         view->updateViewport();
         emuThread->unlock();
     };
@@ -280,7 +280,6 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 3);
         program->setVideoDimension(this->emulator);
-        view->adjustToEmu(emulator);
         view->updateViewport();
         emuThread->unlock();
     };
@@ -291,6 +290,10 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         program->setVideoDimension(this->emulator);
         view->updateViewport();
         emuThread->unlock();
+    };
+
+    ratioLayout.cropWindow.onActivate = [this]() {
+        view->adjustToEmu(true);
     };
 
     monitorResolutionLayout.display.onChange = [this]() {
@@ -384,25 +387,17 @@ auto GeometryLayout::updateCrop(std::string property, unsigned value) -> void {
     if (!property.empty())
         program->setCrop(emulator, property, value);
 
-//    emuThread->lockVideo();
-//    if (emuThread->enabled && (activeEmulator == emulator) )
-//        emuThread->updateBorder = true;
-//    else
-    if (emuThread->enabled && (activeEmulator == emulator) ) {
-        emuThread->lock();
-        program->updateCrop(emulator);
-        emuThread->unlock();
-    } else
+    emuThread->lockVideo();
+    if (emuThread->enabled && (activeEmulator == emulator) )
+        emuThread->updateBorder = true;
+    else
         program->updateCrop(emulator);
 
-//    emuThread->unlockVideo();
+    emuThread->unlockVideo();
 }
 
 auto GeometryLayout::updateVisibillity() -> void {
 	auto val = _settings->get<unsigned>( "crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
-
-    if (globalSettings->get("aspect_correct_resizing", false))
-        VideoManager::updateScreenDimension = true;
 
     cropLayout.cropLeft.setEnabled( val >= 4 );
     cropLayout.cropRight.setEnabled( val >= 6 );
@@ -467,6 +462,8 @@ auto GeometryLayout::translate() -> void {
     ratioLayout.native.setTooltip( trans->getA("Native tooltip") );
     ratioLayout.nativeFree.setText( trans->getA("Native free") );
     ratioLayout.integerScaling.setText( trans->getA("integer_scaling") );
+    ratioLayout.cropWindow.setText( trans->getA("crop window") );
+
     monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
     monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );
     monitorResolutionLayout.active.setText( trans->get("enable") );

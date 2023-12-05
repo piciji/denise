@@ -98,12 +98,12 @@ auto EmuThread::initWorker() -> void {
                 return;
             }
 
-//            if (updateBorder && activeEmulator) {
-//                videoMutex.lock();
-//                program->updateCrop(activeEmulator);
-//                updateBorder = false;
-//                videoMutex.unlock();
-//            }
+            if (updateBorder && activeEmulator) {
+                videoMutex.lock();
+                program->updateCrop(activeEmulator);
+                updateBorder = false;
+                videoMutex.unlock();
+            }
 
             program->loop();
 
@@ -180,11 +180,6 @@ auto EmuThread::handleUIEvents() -> void {
         program->setVideoFilter(true);
         view->setDefaultCursor();
         dismissPlaceholder = false;
-    }
-
-    if (updateScreenDimension) {
-        view->adjustToEmu(true);
-        updateScreenDimension = false;
     }
 }
 

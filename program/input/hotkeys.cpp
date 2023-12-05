@@ -36,6 +36,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ToggleBorder, "toggle border"} );
     hotkeys.push_back( {Hotkey::Id::ToggleBorderPrev, "toggle border prev"} );
     hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
+    hotkeys.push_back( {Hotkey::Id::CropWindow, "crop window"} );
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "swapper up"} );
@@ -441,6 +442,11 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             globalSettings->set<unsigned>("screen_height", globalSettings->get<unsigned>("view_hold_height", 600));
 
             view->updateGeometry(true);
+            break;
+
+        case Hotkey::CropWindow:
+            if (view)
+                view->adjustToEmu(true);
             break;
 
         case Hotkey::Id::ToggleBorder:

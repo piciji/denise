@@ -1900,47 +1900,45 @@ auto View::updateGeometry(bool withViewport) -> void {
         updateViewport();
 }
 
-auto View::adjustToEmu(Emulator::Interface* emulator) -> void {
-    if (emulator != activeEmulator)
-        return;
-
-    if (globalSettings->get("aspect_correct_resizing", false)) {
-        if (!fullScreen())
-            adjustToEmu(false);
-        else
-            VideoManager::updateScreenDimension = true;
-    }
-}
-
 auto View::adjustToEmu(bool withViewport) -> void {
-    if (!globalSettings->get("aspect_correct_resizing", false) || fullScreen())
+   // if (!globalSettings->get("aspect_correct_resizing", false) || fullScreen())
+   if (fullScreen())
         return;
 
-    auto geo = viewport.geometry();
-    GUIKIT::Size dim = {0,0};
-    videoDriver->getIntegerScalingDimension(dim.width, dim.height);
-    if (!dim.width || !dim.height)
-        return;
+    auto driverViewport = videoDriver->getViewport();
 
-    unsigned _h = dim.height;
-    switch(videoDriver->getAspectRatio()) {
-        case 0:
-            return;
-        case 1:
-            geo.width = (geo.height * 4) / 3;
-            break;
-        case 2:
-            while (_h < geo.height)
-                _h += dim.height;
 
-            geo.height = _h;
-        case 3:
-            geo.width = (geo.height * dim.width) / dim.height;
-            break;
-    }
 
-    globalSettings->set<unsigned>("screen_width", geo.width);
-    globalSettings->set<unsigned>("screen_height", geo.height);
+//    auto geo = viewport.geometry();
+//    GUIKIT::Size dim = {0,0};
+//    videoDriver->getIntegerScalingDimension(dim.width, dim.height);
+//    if (!dim.width || !dim.height)
+//        return;
+//
+//    unsigned _h = dim.height;
+//    switch(videoDriver->getAspectRatio()) {
+//        case 0:
+//            return;
+//        case 1:
+//            geo.width = (geo.height * 4) / 3;
+//            break;
+//        case 2:
+//            while (_h < geo.height)
+//                _h += dim.height;
+//
+//            geo.height = _h;
+//        case 3:
+//            geo.width = (geo.height * dim.width) / dim.height;
+//            break;
+//    }
+
+    globalSettings->set<int>("screen_x", geometry().x + driverViewport.x );
+    globalSettings->set<int>("screen_y", geometry().y + driverViewport.y );
+    globalSettings->set<unsigned>("screen_width", driverViewport.width);
+    globalSettings->set<unsigned>("screen_height", driverViewport.height);
+
+//    globalSettings->set<unsigned>("screen_width", geo.width);
+//    globalSettings->set<unsigned>("screen_height", geo.height);
 
     updateGeometry(withViewport);
 }
