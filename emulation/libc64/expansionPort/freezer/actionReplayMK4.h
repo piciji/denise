@@ -50,6 +50,10 @@ struct ActionReplayMK4 : Freezer {
     
     auto reset(bool softReset = false) -> void {
         enable = true;
+        if (softReset) {
+            game = true;
+            exRom = false;
+        }
         cRomH = cRomL = getChip(1);        
     }
         

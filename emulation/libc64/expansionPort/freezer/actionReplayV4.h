@@ -129,6 +129,10 @@ struct ActionReplayV4 : Freezer {
         enable = true;
         useRam = false;
         bug = false;
+        if (softReset) {
+            game = true;
+            exRom = false;
+        }
         std::memset(ram, 0, 8 * 1024);
     }
         
