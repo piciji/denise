@@ -96,6 +96,7 @@ std::string pApplication::cwd = "";
 HMODULE pApplication::uxTheme = nullptr;
 FN_BeginBufferedPaint pApplication::pfnBeginBufferedPaint = nullptr;
 FN_EndBufferedPaint pApplication::pfnEndBufferedPaint = nullptr;
+DrawThemeParentBackground_t pApplication::drawThemeParentBackground = nullptr;
 ProcessReference pApplication::g_pProcRef;
 
 auto pApplication::initialize() -> void {
@@ -132,6 +133,7 @@ auto pApplication::initialize() -> void {
         if (uxTheme) {
             pfnBeginBufferedPaint = (FN_BeginBufferedPaint)::GetProcAddress(uxTheme, "BeginBufferedPaint");
             pfnEndBufferedPaint = (FN_EndBufferedPaint)::GetProcAddress(uxTheme, "EndBufferedPaint");
+            drawThemeParentBackground = (DrawThemeParentBackground_t)::GetProcAddress(uxTheme, "DrawThemeParentBackground");
         }
     }
 }

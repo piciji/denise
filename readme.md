@@ -12,6 +12,16 @@
 Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trademarks of JetBrains s.r.o.
 
 # changelog
+## 2.2
+* added D3D11 driver
+    * openGL has bad VSYNC/VRR behavior on Windows 11 (replace it with D3D11: Options->Video->Driver)
+* added italian translation (thanks to Luigi)
+* added an option to rotate the screen (90°/180°/270°)
+* added more options to handle the screen aspect ratio
+* added an option to force a single instance when opening another instance from frontend loader or file explorer
+* fixed Amiga basic volume (louder)
+* added a more easy way to set stereo separation
+* added tapes to swapper (mixed disc/tape swapper)
 
 ## 2.1
 * add drag'n'drop overlay

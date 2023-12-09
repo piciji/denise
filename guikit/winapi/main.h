@@ -23,6 +23,7 @@ DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x
 typedef HPAINTBUFFER (WINAPI *FN_BeginBufferedPaint) (HDC hdcTarget, const RECT *prcTarget, BP_BUFFERFORMAT dwFormat, BP_PAINTPARAMS *pPaintParams, HDC *phdc);    
 typedef HRESULT (WINAPI *FN_EndBufferedPaint) (HPAINTBUFFER hBufferedPaint, BOOL fUpdateTarget);
 typedef HRESULT (WINAPI *DwmGetCompositionTimingInfo_t)(HWND hwnd, DWM_TIMING_INFO *pTimingInfo);
+typedef HRESULT (WINAPI *DrawThemeParentBackground_t)(HWND hwnd, HDC hdc, const RECT *prc);
 
 namespace GUIKIT {
 
@@ -76,6 +77,7 @@ struct pApplication {
     static HMODULE uxTheme;
     static FN_BeginBufferedPaint pfnBeginBufferedPaint;
     static FN_EndBufferedPaint pfnEndBufferedPaint;
+    static DrawThemeParentBackground_t drawThemeParentBackground;
 };
 
 struct pWindow {
