@@ -391,7 +391,7 @@ auto MiscLayout::translate() -> void {
     autostartLayout.autoWarp.normal.setText(trans->get("normal"));
     autostartLayout.autoWarp.off.setText(trans->get("off"));
 
-    autostartLayout.manuellOverAutowarp.setText(trans->getA("manuell ends auto warp"));
+    autostartLayout.manuellOverAutowarp.setText(trans->getA("manual ends auto warp"));
 
     autostartLayout.autoWarp.diskFirstFile.setText(trans->get("disk warp first file"));
     autostartLayout.autoWarp.diskFirstFile.setTooltip(trans->get("warp first file tooltip"));
