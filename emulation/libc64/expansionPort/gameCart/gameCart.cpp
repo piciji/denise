@@ -16,6 +16,7 @@
 #include "westermann.h"
 #include "pagefox.h"
 #include "dinamic.h"
+#include "comal80.h"
 
 namespace LIBC64 {
 
@@ -106,7 +107,11 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
         case Interface::CartridgeIdDinamic:
             cart = new Dinamic(system);
             break;
-            
+
+        case Interface::CartridgeIdComal80:
+            cart = new Comal80(system);
+            break;
+
         default:
             // forgot a rom
             cart = new GameCart(system);

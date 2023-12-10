@@ -410,8 +410,10 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 
         requestFullscreenToggle = false;
 
-        if (this->window.aspectRatio().width)
-            updateGeometryHint();
+        if (pApplication::desktopSession != pApplication::DesktopSession::XFCE) {
+            if (this->window.aspectRatio().width)
+                updateGeometryHint();
+        }
     };
 
     timerFullscreen.setInterval( 150 );
@@ -711,8 +713,10 @@ auto pWindow::sizeWindow(GtkAllocation* allocation) -> void {
     }
 
 	timerResize.setEnabled();
-  //  if (window.aspectRatio().width)
-    //    updateGeometryHint();
+    if (pApplication::desktopSession == pApplication::DesktopSession::XFCE) {
+        if (window.aspectRatio().width)
+            updateGeometryHint();
+    }
 
     if(this->window.state.layout) {
         this->window.state.layout->resetSynchronisation();

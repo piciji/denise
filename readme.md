@@ -15,13 +15,18 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 ## 2.2
 * added D3D11 driver
     * openGL has bad VSYNC/VRR behavior on Windows 11 (replace it with D3D11: Options->Video->Driver)
+    * ported internal and external openGL shader to D3D11 
 * added italian translation (thanks to Luigi)
 * added an option to rotate the screen (90°/180°/270°)
-* added more options to handle the screen aspect ratio
 * added an option to force a single instance when opening another instance from frontend loader or file explorer
 * fixed Amiga basic volume (louder)
-* added a more easy way to set stereo separation
+* improved 1571 emulation
+* added cartridge Comal-80
+* added a more easy way to set stereo separation (Audio -> DSP)
 * added tapes to swapper (mixed disc/tape swapper)
+* added option to decide if manual warping stops automatic warping until next restart
+* added more options to control the screen aspect ratio
+* added button/hotkey to crop the outer frame after resizing or changing "aspect ratio" or emulated border
 
 ## 2.1
 * add drag'n'drop overlay

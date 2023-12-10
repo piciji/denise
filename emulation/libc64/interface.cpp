@@ -212,6 +212,7 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdWestermann, "Westermann"} );
         expansion.pcbs.push_back( {CartridgeIdPagefox, "Pagefox"} );
         expansion.pcbs.push_back( {CartridgeIdDinamic, "Dinamic"} );
+        expansion.pcbs.push_back( {CartridgeIdComal80, "Comal-80"} );
 		expansion.creationIdents.push_back( "Gmod2 Flash" );
         expansion.creationIdents.push_back( "Gmod2 Eeprom" );
         
