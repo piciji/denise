@@ -21,7 +21,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * added an option to force a single instance when opening another instance from frontend loader or file explorer
 * fixed Amiga basic volume (louder)
 * improved 1571 emulation
-* added cartridge Comal-80
+* added C64 cartridges Comal-80, Silverrock, RGCD
 * added a more easy way to set stereo separation (Audio -> DSP)
 * added tapes to swapper (mixed disc/tape swapper)
 * added option to decide if manual warping stops automatic warping until next restart

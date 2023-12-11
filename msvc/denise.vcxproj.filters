@@ -985,6 +985,12 @@
     <ClInclude Include="..\driver\video\d3d11\symbols.h">
       <Filter>driver\video\d3d11</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\silverrock.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\rgcd.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">

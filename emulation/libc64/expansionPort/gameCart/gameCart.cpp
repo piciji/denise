@@ -17,6 +17,8 @@
 #include "pagefox.h"
 #include "dinamic.h"
 #include "comal80.h"
+#include "silverrock.h"
+#include "rgcd.h"
 
 namespace LIBC64 {
 
@@ -110,6 +112,19 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
 
         case Interface::CartridgeIdComal80:
             cart = new Comal80(system);
+            break;
+
+        case Interface::CartridgeIdSilverrock:
+            cart = new Silverrock(system);
+            break;
+
+        case Interface::CartridgeIdRGCD:
+            cart = new RGCD(system);
+            break;
+
+        case Interface::CartridgeIdRGCDHucky: // only when user selected for BIN file
+            cart = new RGCD(system);
+            cart->version = 0x101;
             break;
 
         default:

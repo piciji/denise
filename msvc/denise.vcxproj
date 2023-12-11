@@ -124,7 +124,9 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\magicDesk.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\ocean.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\pagefox.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\rgcd.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\ross.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\silverrock.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\simonsBasic.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\supergames.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\system3.h" />
