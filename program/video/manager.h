@@ -80,7 +80,7 @@ struct VideoManager {
     static auto setHardSync() -> void;
 
     enum class MaskType : unsigned { Aperture = 0u, ShadowMask = 1u, SlotMask = 2u } maskType;
-    enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u } crtMode;
+    enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u, GpuExtern = 3u } crtMode;
 
     struct DataUpdates {
         std::string ident;

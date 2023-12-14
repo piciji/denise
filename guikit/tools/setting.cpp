@@ -40,6 +40,7 @@ auto Settings::clear() -> void {
         delete setting;    
     
     list.clear();
+    references.clear();
 }
 
 auto Settings::setSaveable( const std::string& ident, bool state ) -> void {
@@ -167,6 +168,90 @@ auto Settings::get(type_info<std::string> t, const std::string& ident, std::stri
     Setting* setting = find( ident );
     if (!setting) return defaultValue;
     return setting->value;
+}
+
+auto Settings::loadEx(const std::string& path, int depth, const char separator) -> bool {
+    std::string line, key, val;
+    Setting* setting = nullptr;
+
+    if (depth == 0) {
+        this->path = path;
+        clear();
+    } else if (depth > 16)
+        return false;
+
+    File file(path);
+    if(!file.open())
+        return false;
+    if(file.getSize() == 0)
+        return true;
+
+    auto fp = file.getHandle();
+    char chunk[1024];
+
+    while ( fgets(chunk, sizeof(chunk), fp) ) {
+        line = chunk;
+
+        String::remove(line, {"\t", "\r\n", "\n"});
+        String::trim(line);
+
+        if ( line.length() == 0 )
+            continue;
+
+        if (stripCommentsAndDetectIncludes(line)) {
+            if (String::foundSubStr(line, "#include")) {
+                String::remove(line, {"#include"});
+                String::trim(line);
+                String::removeQuote(line);
+                loadEx( File::resolveRelativePath(path, line), depth + 1, separator);
+                continue;
+
+            } else if (String::foundSubStr(line, "#reference")) {
+                String::remove(line, {"#reference"});
+                String::trim(line);
+                String::removeQuote(line);
+                std::string _path = File::resolveRelativePath(path, line);
+                if (!Vector::find(references, _path))
+                    references.push_back(_path);
+                continue;
+            }
+        }
+
+        std::size_t start = line.find_first_of( separator );
+
+        if (start != std::string::npos) {
+            val = line.substr(start + 1);
+            key = line.erase(start);
+            String::trim(key);
+            String::removeQuote(key);
+            setting = add( key );
+            if (depth > 0)
+                setting->saveable = false;
+        }
+    }
+    return true;
+}
+
+
+
+auto Settings::stripCommentsAndDetectIncludes(std::string& line) -> bool {
+    if (line[0] == '#')
+        return true; // include or reference
+
+    std::size_t startComment = line.find_first_of( '#' );
+    std::size_t startLiteral = line.find_first_of( '\"' );
+
+    if ((startLiteral != std::string::npos) && (startLiteral < startComment)) {
+        std::string temp = line.substr(startLiteral + 1);
+        std::size_t endLiteral = temp.find_first_of( '\"' );
+
+        if ((endLiteral != std::string::npos) && (endLiteral > startComment)) {
+            // assume this as part of value, but not a comment
+            return false;
+        }
+    }
+    line.erase(startComment); // it's a comment
+    return false;
 }
 
 auto Settings::load(const std::string& path, unsigned maxFileSize, bool themed) -> bool {

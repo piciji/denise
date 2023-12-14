@@ -388,11 +388,19 @@ auto File::del( ) -> bool {
 }
 
 //static
-auto File::getPath( std::string _fn ) -> std::string {
+auto File::getPath( std::string _fn, bool returnSlashIfError ) -> std::string {
        
     std::size_t end = _fn.find_last_of("/");
-    if (end == std::string::npos)
+    if (end == std::string::npos) {
+        if (returnSlashIfError) {
+#ifdef GUIKIT_WINAPI
+            return ".\\";
+#else
+            return "./";
+#endif
+        }
         return _fn;
+    }
     return _fn.erase(end + 1);
 }
 
@@ -610,6 +618,46 @@ auto File::getOffsetDataStringFromBinary( std::string inFile, std::string outFil
 
     fileIn.unload();
     fileOut.unload();
-    return !error;    
-    
+    return !error;
+}
+
+auto File::resolveRelativePath(std::string _fn, std::string relPath ) -> std::string {
+    if (isAbsolute(relPath))
+        return relPath;
+
+    std::string basePath = getPath(_fn, false);
+    basePath += relPath;
+
+#ifdef GUIKIT_WINAPI
+    utf16_t wBasePath(basePath.c_str());
+    wchar_t absPath[MAX_PATH];
+
+    if (_wfullpath(absPath, wBasePath, MAX_PATH))
+        return utf8_t(absPath);
+#else
+    if (isAbsolute(basePath))
+        return basePath;
+
+    basePath = pSystem::getWorkingDirectory() + basePath;
+#endif
+
+    return basePath;
+}
+
+auto File::isAbsolute(const std::string& path) -> bool {
+    if (path.size() > 0) {
+        if (path[0] == '/')
+            return true;
+#ifdef GUIKIT_WINAPI
+        if ((path[0] == '\\') && (path[1] == '\\'))
+            return true;
+
+        if ((path[0] == ':') && (path[1] == '/'))
+            return true;
+
+        if ((path[0] == ':') && (path[1] == '\\'))
+            return true;
+#endif
+    }
+    return false;
 }

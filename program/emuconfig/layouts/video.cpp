@@ -1,53 +1,56 @@
 
-VideoModeLayout::VideoModeLayout(bool withSpectrum) {
+VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
     if (withSpectrum) {
         append(palette,{0u, 0u}, 10);
         append(spectrum,{0u, 0u}, 20);
+        GUIKIT::RadioBox::setGroup(palette, spectrum);
     }
-    
+
     append(rgb,{0u, 0u}, 10);
     append(svideoCpu,{0u, 0u}, 10);
-    append(svideoGpu,{0u, 0u});
-    	
+    append(svideoGpu,{0u, 0u}, 10);
+    append(externGpu,{0u, 0u});
+
     append(spacer,{~0u, 0u});
     append(reset,{0u, 0u});
 
-    GUIKIT::RadioBox::setGroup(palette, spectrum);
-    GUIKIT::RadioBox::setGroup(rgb, svideoCpu, svideoGpu);
+    GUIKIT::RadioBox::setGroup(rgb, svideoCpu, svideoGpu, externGpu);
 
     setAlignment(0.5);
 }
 
-VideoOptionLayout::VideoOptionLayout(bool withSpectrum) {
+VideoBaseLayout::View::Option::Option(bool withSpectrum) {
     if (withSpectrum) {
-        append(newLuma, {0u, 0u}, 10);    	    
+        append(newLuma, {0u, 0u}, 10);
         append(tvGamma, {0u, 0u}, 10);
     } else {
         append(tvGamma, {0u, 0u}, 10);
     }
 
-	append(linearInterpolation, {0u, 0u});
+    append(linearInterpolation, {0u, 0u});
 
     setAlignment(0.5);
 }
 
-VideoBaseLayout::VideoBaseLayout(bool withSpectrum) :
+VideoBaseLayout::View::View(bool withSpectrum) :
 mode(withSpectrum),
 option(withSpectrum),
 phase("°", false),
 scanlines("%", true),
 interlace("%", true) {
+
     append(mode, {~0u, 0u}, 2);
     append(option, {~0u, 0u}, 2);
-        
+
     if (withSpectrum)
         append(phase, {~0u, 0u}, 2);
-        
-    append(saturation, {~0u, 0u}, 2);        
-    append(contrast, {~0u, 0u}, 2);     
+
+    append(saturation, {~0u, 0u}, 2);
+    append(contrast, {~0u, 0u}, 2);
     append(brightness, {~0u, 0u}, 2);
     append(gamma, {~0u, 0u}, 2);
     append(scanlines,{~0u, 0u}, 2);
+
     if (!withSpectrum)
         append(interlace,{~0u, 0u});
 
@@ -58,61 +61,61 @@ interlace("%", true) {
     phase.slider.setLength(361);
     scanlines.slider.setLength(101);
     interlace.slider.setLength(101);
-    
-    setFont(GUIKIT::Font::system("bold"));    
+
     setPadding(8);
+    setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoEncodingLayout::VideoEncodingLayout() :
+VideoBaseLayout::Encoding::Encoding() :
 phaseError("°", true),
 hanoverBars("%", true),
 blur("%", true) {
+
     append(phaseError,{~0u, 0u}, 2);
     append(hanoverBars,{~0u, 0u}, 2);
     append(blur,{~0u, 0u});
-    
+
     phaseError.slider.setLength(181); // -45° <-> 45°  ( 0.5 steps )
-	hanoverBars.slider.setLength(201); // saturation change -100% <-> 100%
-	blur.slider.setLength(101);
-    
-    setFont(GUIKIT::Font::system("bold"));    
+    hanoverBars.slider.setLength(201); // saturation change -100% <-> 100%
+    blur.slider.setLength(101);
+
+    setFont(GUIKIT::Font::system("bold"));
     setPadding(8);
 }
 
-VideoLumaDelayLayout::VideoLumaDelayLayout() :
+VideoBaseLayout::LumaDelay::LumaDelay() :
 lumaRise("px", true),
 lumaFall("px", true) {
-	append(lumaRise,{~0u, 0u}, 2);
+    append(lumaRise,{~0u, 0u}, 2);
     append(lumaFall,{~0u, 0u});
-	
-	lumaRise.slider.setLength(31);
-	lumaFall.slider.setLength(31);
-    
-    setFont(GUIKIT::Font::system("bold"));    
+
+    lumaRise.slider.setLength(31);
+    lumaFall.slider.setLength(31);
+
+    setFont(GUIKIT::Font::system("bold"));
     setPadding(8);
 }
 
-VideoSubsamplingLayout::FirSharpLayout::FirSharpLayout() {
-    append(sharpLeft, {0u, 0u}, 10);
-    append(natural, {0u, 0u}, 10);
-    append(sharpRight, {0u, 0u});
-    
-    GUIKIT::RadioBox::setGroup( sharpLeft, natural, sharpRight );
-    
-    setAlignment(0.5);
+VideoBaseLayout::VideoBaseLayout(bool withSpectrum) :
+view(withSpectrum) {
+
+    append(view, {~0u, 0u}, 5);
+    append(encoding, {~0u, 0u}, 5);
+    append(lumaDelay, {~0u, 0u});
+
 }
 
-VideoGpuMiscLayout::Options::Options() {
+VideoInternLayout::Misc::Option::Option() {
     append(hires, {0u, 0u}, 15);
     append(distortionHires, {0u, 0u});
-    
+
     setAlignment(0.5);
 }
 
-VideoGpuMiscLayout::VideoGpuMiscLayout() :
+VideoInternLayout::Misc::Misc() :
 luminance("%", false),
 lightFromCenter("%", true) {
-    append(options, {~0u, 0u}, 3);
+    append(option, {~0u, 0u}, 3);
     append(lightFromCenter, {~0u, 0u}, 2);
     append(luminance, {~0u, 0u});
 
@@ -123,18 +126,17 @@ lightFromCenter("%", true) {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoMaskTypeLayout::VideoMaskTypeLayout() {
-    append(type, {175u, 0u}, 10);
-    append(apertureMask, {0u, 0u}, 10);
-    append(shadowMask, {0u, 0u}, 10);
-    append(slotMask, {0u, 0u});
-    
-    GUIKIT::RadioBox::setGroup( apertureMask, shadowMask, slotMask );
-    
+VideoInternLayout::Subsampling::FirSharp::FirSharp() {
+    append(sharpLeft, {0u, 0u}, 10);
+    append(natural, {0u, 0u}, 10);
+    append(sharpRight, {0u, 0u});
+
+    GUIKIT::RadioBox::setGroup( sharpLeft, natural, sharpRight );
+
     setAlignment(0.5);
 }
 
-VideoSubsamplingLayout::VideoSubsamplingLayout() :
+VideoInternLayout::Subsampling::Subsampling() :
 firFilter("", false) {
     append(firSharp, {~0u, 0u}, 2);
     append(firFilter, {~0u, 0u}, 2);
@@ -142,10 +144,21 @@ firFilter("", false) {
     firFilter.slider.setLength(11);
 
     setPadding(8);
-    setFont(GUIKIT::Font::system("bold"));  
+    setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoMaskLayout::VideoMaskLayout() :
+VideoInternLayout::Mask::Type::Type() {
+    append(label, {175u, 0u}, 10);
+    append(apertureMask, {0u, 0u}, 10);
+    append(shadowMask, {0u, 0u}, 10);
+    append(slotMask, {0u, 0u});
+
+    GUIKIT::RadioBox::setGroup( apertureMask, shadowMask, slotMask );
+
+    setAlignment(0.5);
+}
+
+VideoInternLayout::Mask::Mask() :
 level("%", true),
 pitch("mm", false),
 dpi("dpi", false),
@@ -165,47 +178,52 @@ luminance("%", false) {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoBloomLayout::VideoBloomLayout() :
+VideoInternLayout::Bloom::Bloom() :
 glow("%", true),
 radius("px", false),
 variance("", false),
-weight("", true)
-{
-	append(glow, {~0u, 0u}, 2);
+weight("", true) {
+    append(glow, {~0u, 0u}, 2);
     append(weight, {~0u, 0u}, 2);
     append(radius, {~0u, 0u}, 2);
-	append(variance, {~0u, 0u});    
+    append(variance, {~0u, 0u});
 
     glow.slider.setLength(201);
     radius.slider.setLength(6);
-	variance.slider.setLength(111);
-    weight.slider.setLength(301);    
-	
-    setPadding(8);	
-    setFont(GUIKIT::Font::system("bold"));    
+    variance.slider.setLength(111);
+    weight.slider.setLength(301);
+
+    setPadding(8);
+    setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoCrtGlitchLayout::VideoCrtGlitchLayout() :
+VideoInternLayout::VideoInternLayout() {
+    append(misc,{~0u, 0u}, 10);
+    append(subsampling,{~0u, 0u}, 10);
+    append(mask,{~0u, 0u}, 10);
+    append(bloom,{~0u, 0u});
+}
+
+VideoGlitchLayout::Crt::Crt() :
 lumaNoise("%", true),
 chromaNoise("%", true),
 radialDistortion("%", true),
 randomLineOffset("%", true) {
-
     append(lumaNoise,{~0u, 0u}, 2);
     append(chromaNoise,{~0u, 0u}, 2);
     append(randomLineOffset,{~0u, 0u}, 2);
-    append(radialDistortion,{~0u, 0u}); 
-    
+    append(radialDistortion,{~0u, 0u});
+
     lumaNoise.slider.setLength(1001);
     chromaNoise.slider.setLength(1001);
     randomLineOffset.slider.setLength(1001);
     radialDistortion.slider.setLength(101);
-    
+
     setPadding(8);
-    setFont(GUIKIT::Font::system("bold"));  
+    setFont(GUIKIT::Font::system("bold"));
 }
 
-VideoVicIIGlitchLayout::VideoVicIIGlitchLayout() :
+VideoGlitchLayout::VicII::VicII() :
 aec("%", true),
 ba("%", true),
 phi0("%", true),
@@ -228,164 +246,247 @@ cas("%", true) {
     setFont(GUIKIT::Font::system("bold"));
 }
 
+VideoGlitchLayout::VideoGlitchLayout(bool withVic) {
+    append(crt,{~0u, 0u}, 10);
+    if (withVic)
+        append(vicII,{~0u, 0u});
+}
+
+VideoShaderLayout::Control::Control() {
+    append(loaded,{0u, 0u}, 10);
+    append(unload,{0u, 0u});
+    append(spacer,{~0u, 0u});
+    append(save,{0u, 0u}, 10);
+    append(load,{0u, 0u});
+
+    setPadding(8);
+    setFont(GUIKIT::Font::system("bold"));
+}
+
+VideoShaderLayout::Favourite::Control::Control() {
+    append(add,{0u, 0u}, 10);
+    append(remove,{0u, 0u});
+}
+
+VideoShaderLayout::Favourite::Favourite() {
+    append(list,{0u, 0u}, 10);
+    append(control,{0u, 0u});
+
+    setPadding(8);
+    setFont(GUIKIT::Font::system("bold"));
+}
+
+VideoPassLayout::Load::Load() {
+    append(label,{0u, 0u}, 10);
+    append(button,{0u, 0u});
+}
+
+VideoPassLayout::VideoPassLayout() {
+    append(load,{0u, 0u}, 10);
+    append(filter,{0u, 0u}, 10);
+    append(scale,{0u, 0u});
+
+    setPadding(8);
+    setFont(GUIKIT::Font::system("bold"));
+}
+
 VideoLayout::VideoLayout(TabWindow* tabWindow) :
-base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
-{    
+layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ),
+layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
+    GUIKIT::TreeViewItem* tvi;
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
-    
-    appendHeader("");
-    appendHeader("");
-    appendHeader("");
+    imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
+    imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
+    imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
+
+    tviBase.setText( "view" );
+    tviBase.setUserData( (uintptr_t)1 );
+    tviBase.setImage( imgFolderClosed );
+    tviBase.setImageExpanded( imgFolderOpen );
+
+    tviIntern.setText( "intern" );
+    tviIntern.setUserData( (uintptr_t)11 );
+    tviIntern.setImage(imgDocument);
+
+    tviGlitch.setText( "Glitches" );
+    tviGlitch.setUserData( (uintptr_t)12 );
+    tviGlitch.setImage(imgDocument);
+
+    moduleSwitch.setLayout(1, layBase, {~0u, ~0u});
+    moduleSwitch.setLayout(11, layIntern, {~0u, ~0u});
+    moduleSwitch.setLayout(12, layGlitch, {~0u, ~0u});
+
+    tviShader.setText( "Shader" );
+    tviShader.setUserData( (uintptr_t)2 );
+    tviShader.setImage(imgDocument);
+    tviParams.setText( "Params" );
+    tviParams.setUserData( (uintptr_t)3 );
+    tviParams.setImage(imgDocument);
+
+    tviBase.append(tviIntern);
+    tviBase.append(tviGlitch);
+    moduleTree.append(tviBase);
+
+    moduleTree.append(tviShader);
+    moduleTree.append(tviParams);
+
+    moduleSwitch.setLayout(1, layBase, {~0u, ~0u});
+    moduleSwitch.setLayout(11, layIntern, {~0u, ~0u});
+    moduleSwitch.setLayout(12, layGlitch, {~0u, ~0u});
+    moduleSwitch.setLayout(2, layShader, {~0u, ~0u});
+
+    tviBase.setExpanded();
+
+
+    append( moduleTree, { GUIKIT::Font::scale(150), ~0u}, 10 );
+
+    append( moduleSwitch, {~0u, ~0u} );
+
+    moduleSwitch.setSelection( 1 );
+
+    moduleTree.onChange = [this]() {
+        auto item = moduleTree.selected();
+
+        if (!item)
+            return;
+
+        unsigned navIdent = (unsigned)item->userData();
+
+        moduleSwitch.setSelection( navIdent );
+    };
 
     setMargin(10);
     setPadding(10);
 
-    tab1.append(base, {~0u, 0u}, 5);
-    tab1.append(encoding, {~0u, 0u}, 5);
-	tab1.append(lumaDelay, {~0u, 0u});
-
-    tab2.append(gpuMisc, {~0u, 0u}, 10);
-    tab2.append(subsampling, {~0u, 0u}, 10);
-    tab2.append(mask, {~0u, 0u}, 10);
-	tab2.append(bloom, {~0u, 0u});    
-        
-    tab3.append(crtGlitch, {~0u, 0u}, 10 );
-    if (dynamic_cast<LIBC64::Interface*>(emulator))
-        tab3.append( vicIIGlitch, {~0u, 0u} );                    
-       
-    setLayout(0, tab1, {~0u, ~0u});
-    setLayout(1, tab2, {~0u, ~0u});           
-    setLayout(2, tab3, {~0u, ~0u});            
-    
-    setSliderAction<unsigned>( &base.gamma, "gamma", [this](unsigned value) { vManager()->setGamma( value ); },
+    setSliderAction<unsigned>( &layBase.view.gamma, "gamma", [this](unsigned value) { vManager()->setGamma( value ); },
           [this](unsigned position) { return position + 30; } );                
-    setSliderAction<unsigned>( &base.saturation, "saturation", [this](unsigned value) { vManager()->setSaturation( value ); } );
-    setSliderAction<unsigned>( &base.brightness, "brightness", [this](unsigned value) { vManager()->setBrightness( value ); } );
-    setSliderAction<unsigned>( &base.contrast, "contrast", [this](unsigned value) { vManager()->setContrast( value ); } );
-    setSliderAction<int>( &base.phase, "phase", [this](int value) { vManager()->setPhase( value ); }, [this](unsigned position) { return (int)position - 180; } );
-    setSliderAction<unsigned>( &base.scanlines, "scanlines", [this](unsigned value) { vManager()->setScanlines( value ); },
+    setSliderAction<unsigned>( &layBase.view.saturation, "saturation", [this](unsigned value) { vManager()->setSaturation( value ); } );
+    setSliderAction<unsigned>( &layBase.view.brightness, "brightness", [this](unsigned value) { vManager()->setBrightness( value ); } );
+    setSliderAction<unsigned>( &layBase.view.contrast, "contrast", [this](unsigned value) { vManager()->setContrast( value ); } );
+    setSliderAction<int>( &layBase.view.phase, "phase", [this](int value) { vManager()->setPhase( value ); }, [this](unsigned position) { return (int)position - 180; } );
+    setSliderAction<unsigned>( &layBase.view.scanlines, "scanlines", [this](unsigned value) { vManager()->setScanlines( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &base.interlace, "interlace", [this](unsigned value) { vManager()->setInterlace( value ); },
+    setSliderAction<unsigned>( &layBase.view.interlace, "interlace", [this](unsigned value) { vManager()->setInterlace( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &encoding.blur, "blur", [this](unsigned value) { vManager()->setBlur( value ); } );
-    setSliderAction<float>( &encoding.phaseError, "phase_error", [this](float value) { vManager()->setPhaseError( value ); },
+    setSliderAction<unsigned>( &layBase.encoding.blur, "blur", [this](unsigned value) { vManager()->setBlur( value ); } );
+    setSliderAction<float>( &layBase.encoding.phaseError, "phase_error", [this](float value) { vManager()->setPhaseError( value ); },
         [this](unsigned position) { return (float)((int)position - 90) / 2.0f; } );          
-    setSliderAction<int>( &encoding.hanoverBars, "hanover_bars", [this](int value) { vManager()->setHanoverBars( value ); }, [this](unsigned position) { return (int)position - 100; } );
-    setSliderAction<float>( &mask.pitch, "mask_pitch", [this](float value) { vManager()->setMaskPitch( value ); },
+    setSliderAction<int>( &layBase.encoding.hanoverBars, "hanover_bars", [this](int value) { vManager()->setHanoverBars( value ); }, [this](unsigned position) { return (int)position - 100; } );
+    setSliderAction<float>( &layIntern.mask.pitch, "mask_pitch", [this](float value) { vManager()->setMaskPitch( value ); },
         [this](unsigned position) { return (float)position / 100.0f; } );  
-    setSliderAction<unsigned>( &mask.dpi, "mask_dpi", [this](unsigned value) { vManager()->setMaskDpi( value ); } );
-    setSliderAction<unsigned>( &mask.level, "mask_level", [this](unsigned value) { vManager()->setMaskLevel( value ); },
+    setSliderAction<unsigned>( &layIntern.mask.dpi, "mask_dpi", [this](unsigned value) { vManager()->setMaskDpi( value ); } );
+    setSliderAction<unsigned>( &layIntern.mask.level, "mask_level", [this](unsigned value) { vManager()->setMaskLevel( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &mask.luminance, "mask_luminance", [this](unsigned value) { vManager()->setMaskLuminance( value ); } );
-    setSliderAction<unsigned>( &subsampling.firFilter, "fir_filter_length", [this](unsigned value) { vManager()->setFirFilterLength( value ); },
+    setSliderAction<unsigned>( &layIntern.mask.luminance, "mask_luminance", [this](unsigned value) { vManager()->setMaskLuminance( value ); } );
+    setSliderAction<unsigned>( &layIntern.subsampling.firFilter, "fir_filter_length", [this](unsigned value) { vManager()->setFirFilterLength( value ); },
         [this](unsigned position) { return position * 2 + 1; } );  
-    setSliderAction<float>( &crtGlitch.lumaNoise, "luma_noise", [this](float value) { vManager()->setLumaNoise( value ); },
+    setSliderAction<float>( &layGlitch.crt.lumaNoise, "luma_noise", [this](float value) { vManager()->setLumaNoise( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 10.0f; });
-    setSliderAction<float>( &crtGlitch.chromaNoise, "chroma_noise", [this](float value) { vManager()->setChromaNoise( value ); },
+    setSliderAction<float>( &layGlitch.crt.chromaNoise, "chroma_noise", [this](float value) { vManager()->setChromaNoise( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<unsigned>( &crtGlitch.radialDistortion, "radial_distortion", [this](unsigned value) { vManager()->setRadialDistortion( value ); },
+    setSliderAction<unsigned>( &layGlitch.crt.radialDistortion, "radial_distortion", [this](unsigned value) { vManager()->setRadialDistortion( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<float>( &vicIIGlitch.aec, "aec_glitch", [this](float value) { vManager()->setAecGlitch( value ); },
+    setSliderAction<float>( &layGlitch.vicII.aec, "aec_glitch", [this](float value) { vManager()->setAecGlitch( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<float>( &vicIIGlitch.ba, "ba_glitch", [this](float value) { vManager()->setBaGlitch( value ); },
+    setSliderAction<float>( &layGlitch.vicII.ba, "ba_glitch", [this](float value) { vManager()->setBaGlitch( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<float>( &vicIIGlitch.phi0, "phi0_glitch", [this](float value) { vManager()->setPhi0Glitch( value ); },
+    setSliderAction<float>( &layGlitch.vicII.phi0, "phi0_glitch", [this](float value) { vManager()->setPhi0Glitch( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<float>( &vicIIGlitch.ras, "ras_glitch", [this](float value) { vManager()->setRasGlitch( value ); },
+    setSliderAction<float>( &layGlitch.vicII.ras, "ras_glitch", [this](float value) { vManager()->setRasGlitch( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<float>( &vicIIGlitch.cas, "cas_glitch", [this](float value) { vManager()->setCasGlitch( value ); },
+    setSliderAction<float>( &layGlitch.vicII.cas, "cas_glitch", [this](float value) { vManager()->setCasGlitch( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<float>( &lumaDelay.lumaRise, "luma_rise", [this](float value) { vManager()->setLumaRise( value ); },
+    setSliderAction<float>( &layBase.lumaDelay.lumaRise, "luma_rise", [this](float value) { vManager()->setLumaRise( value ); },
         [this](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
-    setSliderAction<float>( &lumaDelay.lumaFall, "luma_fall", [this](float value) { vManager()->setLumaFall( value ); },
+    setSliderAction<float>( &layBase.lumaDelay.lumaFall, "luma_fall", [this](float value) { vManager()->setLumaFall( value ); },
         [this](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
-    setSliderAction<unsigned>( &gpuMisc.lightFromCenter, "light_from_center", [this](unsigned value) { vManager()->setLightFromCenter( value ); },
+    setSliderAction<unsigned>( &layIntern.misc.lightFromCenter, "light_from_center", [this](unsigned value) { vManager()->setLightFromCenter( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &gpuMisc.luminance, "luminance", [this](unsigned value) { vManager()->setLuminance( value ); } );
-	setSliderAction<unsigned>( &bloom.glow, "bloom_glow", [this](unsigned value) { vManager()->setBloomGlow( value ); },
+    setSliderAction<unsigned>( &layIntern.misc.luminance, "luminance", [this](unsigned value) { vManager()->setLuminance( value ); } );
+	setSliderAction<unsigned>( &layIntern.bloom.glow, "bloom_glow", [this](unsigned value) { vManager()->setBloomGlow( value ); },
         [this](unsigned position) { return std::max(position, 1u); } );
-	setSliderAction<float>( &bloom.variance, "bloom_variance", [this](float value) { vManager()->setBloomVariance( value ); },
+	setSliderAction<float>( &layIntern.bloom.variance, "bloom_variance", [this](float value) { vManager()->setBloomVariance( value ); },
 		[this](unsigned position) { return ((float)position / 10.0f) + 1.0f; } ); 
-	setSliderAction<unsigned>( &bloom.radius, "bloom_radius", [this](unsigned value) { vManager()->setBloomRadius( value ); },
+	setSliderAction<unsigned>( &layIntern.bloom.radius, "bloom_radius", [this](unsigned value) { vManager()->setBloomRadius( value ); },
 		[this](unsigned position) { return position + 1; } ); 
-	setSliderAction<float>( &bloom.weight, "bloom_weight", [this](float value) { vManager()->setBloomWeight( value ); },
+	setSliderAction<float>( &layIntern.bloom.weight, "bloom_weight", [this](float value) { vManager()->setBloomWeight( value ); },
 		[this](unsigned position) { return (float)std::max(position, 1u) / 100.0f; } );
-    setSliderAction<float>( &crtGlitch.randomLineOffset, "random_line_offset", [this](float value) { vManager()->setRandomLineOffset( value ); },
+    setSliderAction<float>( &layGlitch.crt.randomLineOffset, "random_line_offset", [this](float value) { vManager()->setRandomLineOffset( value ); },
         [this](unsigned position) { return (float)std::max(position, 1u) / 100.0f; } );
     
-    base.option.newLuma.onToggle = [this](bool checked) {
+    layBase.view.option.newLuma.onToggle = [this](bool checked) {
         _settings->set<bool>( "video_new_luma" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("new_luma", checked);
     };
 
-    base.option.tvGamma.onToggle = [this](bool checked) {
+    layBase.view.option.tvGamma.onToggle = [this](bool checked) {
         _settings->set<bool>( "video_tv_gamma" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("tv_gamma", checked);
     };
 	
-	base.option.linearInterpolation.onToggle = [this](bool checked) {
+	layBase.view.option.linearInterpolation.onToggle = [this](bool checked) {
 		_settings->set<unsigned>("video_filter", checked ? 1 : 0 );
         emuThread->lock();
         program->setVideoFilter();
         emuThread->unlock();
 	};
-	
-	base.option.linearInterpolation.setChecked( _settings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
-        
-    mask.type.apertureMask.onActivate = [this]() {
+
+    layBase.view.option.linearInterpolation.setChecked( _settings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
+
+    layIntern.mask.type.apertureMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::Aperture);
         vManager()->updateData<unsigned>("mask_type", (unsigned)VideoManager::MaskType::Aperture);
     };
 
-    mask.type.shadowMask.onActivate = [this]() {
+    layIntern.mask.type.shadowMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::ShadowMask);
         vManager()->updateData<unsigned>("mask_type", (unsigned)VideoManager::MaskType::ShadowMask);
     };
-    
-    mask.type.slotMask.onActivate = [this]() {
+
+    layIntern.mask.type.slotMask.onActivate = [this]() {
         _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::SlotMask);
         vManager()->updateData<unsigned>("mask_type", (unsigned)VideoManager::MaskType::SlotMask);
     };
-    
-    base.mode.reset.onActivate = [this]() {
+
+    layBase.view.mode.reset.onActivate = [this]() {
         vManager()->resetSettings();
         emuThread->lock();
         updatePresets();
         emuThread->unlock();
     };
-    
-    base.mode.palette.onActivate = [this]() {
+
+    layBase.view.mode.palette.onActivate = [this]() {
         _settings->set<bool>( "video_spectrum", false);
         emuThread->lock();
         updatePresets();
         emuThread->unlock();
     };
-    
-    base.mode.spectrum.onActivate = [this]() {
+
+    layBase.view.mode.spectrum.onActivate = [this]() {
         _settings->set<bool>("video_spectrum", true);
         emuThread->lock();
         updatePresets();
         emuThread->unlock();
-    };       
+    };
 
-    base.mode.rgb.onActivate = [this]() {
+    layBase.view.mode.rgb.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
         emuThread->lock();
         program->fastForward( false );
         updatePresets();
         emuThread->unlock();
     };
-    
-    base.mode.svideoCpu.onActivate = [this]() {
+
+    layBase.view.mode.svideoCpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         emuThread->lock();
         program->fastForward( false );
 		updatePresets();
         emuThread->unlock();
     };
-    
-    base.mode.svideoGpu.onActivate = [this]() {
+
+    layBase.view.mode.svideoGpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
         emuThread->lock();
         program->fastForward( false );
@@ -393,54 +494,54 @@ base( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) )
         emuThread->unlock();
     };
 
-    gpuMisc.options.distortionHires.onToggle = [this](bool checked) {
+    layIntern.misc.option.distortionHires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("distortion_hires", checked);
     };
 
-    gpuMisc.options.hires.onToggle = [this](bool checked) {
+    layIntern.misc.option.hires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_hires" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("hires", checked);
     };
 
-    subsampling.firSharp.sharpLeft.onActivate = [this]() {
+    layIntern.subsampling.firSharp.sharpLeft.onActivate = [this]() {
         
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), -1);
         vManager()->updateData<int>("fir_filter_sharp", -1);
     };
 
-    subsampling.firSharp.sharpRight.onActivate = [this]() {
+    layIntern.subsampling.firSharp.sharpRight.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 1);
         vManager()->updateData<int>("fir_filter_sharp", 1);
     };
 
-    subsampling.firSharp.natural.onActivate = [this]() {
+    layIntern.subsampling.firSharp.natural.onActivate = [this]() {
 
         _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 0);
         vManager()->updateData<int>("fir_filter_sharp", 0);
     };
     
-    vicIIGlitch.toggleAll.onActivate = [this]() {
+    layGlitch.vicII.toggleAll.onActivate = [this]() {
         
-        bool b1 = vicIIGlitch.aec.active.checked();
-        bool b2 = vicIIGlitch.ba.active.checked();
-        bool b3 = vicIIGlitch.phi0.active.checked();
-        bool b4 = vicIIGlitch.ras.active.checked();
-        bool b5 = vicIIGlitch.cas.active.checked();
-        bool _checked = b1 || b2 || b3 || b4 || b5;        
-        
-        vicIIGlitch.aec.active.setChecked( !_checked );
-        vicIIGlitch.ba.active.setChecked( !_checked );
-        vicIIGlitch.phi0.active.setChecked( !_checked );
-        vicIIGlitch.ras.active.setChecked( !_checked );
-        vicIIGlitch.cas.active.setChecked( !_checked );
+        bool b1 = layGlitch.vicII.aec.active.checked();
+        bool b2 = layGlitch.vicII.ba.active.checked();
+        bool b3 = layGlitch.vicII.phi0.active.checked();
+        bool b4 = layGlitch.vicII.ras.active.checked();
+        bool b5 = layGlitch.vicII.cas.active.checked();
+        bool _checked = b1 || b2 || b3 || b4 || b5;
 
-        vicIIGlitch.aec.active.onToggle( !_checked );
-        vicIIGlitch.ba.active.onToggle( !_checked );
-        vicIIGlitch.phi0.active.onToggle( !_checked );
-        vicIIGlitch.ras.active.onToggle( !_checked );
-        vicIIGlitch.cas.active.onToggle( !_checked );
+        layGlitch.vicII.aec.active.setChecked( !_checked );
+        layGlitch.vicII.ba.active.setChecked( !_checked );
+        layGlitch.vicII.phi0.active.setChecked( !_checked );
+        layGlitch.vicII.ras.active.setChecked( !_checked );
+        layGlitch.vicII.cas.active.setChecked( !_checked );
+
+        layGlitch.vicII.aec.active.onToggle( !_checked );
+        layGlitch.vicII.ba.active.onToggle( !_checked );
+        layGlitch.vicII.phi0.active.onToggle( !_checked );
+        layGlitch.vicII.ras.active.onToggle( !_checked );
+        layGlitch.vicII.cas.active.onToggle( !_checked );
     };
 
     loadSettings(true);
@@ -452,14 +553,14 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
         layout->active.onToggle = [this, layout, baseIdent, callBack, callTransfer](bool checked) {
             _settings->set<bool>("video_" + baseIdent + "_use" + this->sliderIdent(), checked);
             layout->slider.setEnabled(checked);
-            if (layout == &mask.level) {                
-                mask.setEnabled( checked );
+            if (layout == &layIntern.mask.level) {
+                layIntern.mask.setEnabled( checked );
                 layout->active.setEnabled();
-                gpuMisc.luminance.setEnabled( !checked );
-            } else if (layout == &bloom.glow) {
-                bloom.setEnabled( checked );
-                layout->active.setEnabled();	
-				bloom.weight.slider.setEnabled( bloom.weight.active.checked() );
+                layIntern.misc.luminance.setEnabled( !checked );
+            } else if (layout == &layIntern.bloom.glow) {
+                layIntern.bloom.setEnabled( checked );
+                layout->active.setEnabled();
+                layIntern.bloom.weight.slider.setEnabled( layIntern.bloom.weight.active.checked() );
 			}
             
             unsigned position = layout->slider.position();
@@ -471,7 +572,7 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
     layout->slider.onChange = [this, layout, baseIdent, callBack, callTransfer](unsigned position) {
 		T value = callTransfer( position );	
         auto unit = layout->unit;
-        auto roundDigits = (layout == &mask.pitch || layout == &crtGlitch.randomLineOffset || layout == &bloom.weight) ? 2 : 1;
+        auto roundDigits = (layout == &layIntern.mask.pitch || layout == &layGlitch.crt.randomLineOffset || layout == &layIntern.bloom.weight) ? 2 : 1;
 		
         _settings->set<T>("video_" + baseIdent + this->sliderIdent(), value);
 		
@@ -496,115 +597,115 @@ auto VideoLayout::updatePresets(bool reloadDriver) -> void {
     if (videoDriver && reloadDriver)
         VideoManager::getInstance( emulator )->reloadSettings();
     
-	base.option.newLuma.setChecked( _newLuma );
-    base.option.tvGamma.setChecked( _tvGamma );
-    base.saturation.slider.setPosition(_saturation);
-    base.saturation.value.setText(std::to_string(_saturation) + " %");
-    base.gamma.slider.setPosition(_gamma - 30 );
-    base.gamma.value.setText( std::to_string(_gamma) + " %" );
-    base.brightness.slider.setPosition(_brightness);
-    base.brightness.value.setText(std::to_string(_brightness) + " %");   
-    base.contrast.slider.setPosition(_contrast);
-    base.contrast.value.setText(std::to_string(_contrast) + " %");
-    base.phase.slider.setPosition(_phase + 180);
-    base.phase.value.setText(std::to_string(_phase) + " °");
-    base.scanlines.active.setChecked( _useScanlines );
-    base.scanlines.slider.setPosition( _scanlines );
-    base.scanlines.value.setText( std::to_string(_scanlines) + " %" );
-    base.interlace.active.setChecked( _useInterlace );
-    base.interlace.slider.setPosition( _interlace );
-    base.interlace.value.setText( std::to_string(_interlace) + " %" );
+	layBase.view.option.newLuma.setChecked( _newLuma );
+    layBase.view.option.tvGamma.setChecked( _tvGamma );
+    layBase.view.saturation.slider.setPosition(_saturation);
+    layBase.view.saturation.value.setText(std::to_string(_saturation) + " %");
+    layBase.view.gamma.slider.setPosition(_gamma - 30 );
+    layBase.view.gamma.value.setText( std::to_string(_gamma) + " %" );
+    layBase.view.brightness.slider.setPosition(_brightness);
+    layBase.view.brightness.value.setText(std::to_string(_brightness) + " %");
+    layBase.view.contrast.slider.setPosition(_contrast);
+    layBase.view.contrast.value.setText(std::to_string(_contrast) + " %");
+    layBase.view.phase.slider.setPosition(_phase + 180);
+    layBase.view.phase.value.setText(std::to_string(_phase) + " °");
+    layBase.view.scanlines.active.setChecked( _useScanlines );
+    layBase.view.scanlines.slider.setPosition( _scanlines );
+    layBase.view.scanlines.value.setText( std::to_string(_scanlines) + " %" );
+    layBase.view.interlace.active.setChecked( _useInterlace );
+    layBase.view.interlace.slider.setPosition( _interlace );
+    layBase.view.interlace.value.setText( std::to_string(_interlace) + " %" );
 	// crt
-    encoding.phaseError.active.setChecked( _usePhaseError );
-    encoding.phaseError.slider.setPosition( int(_phaseError * 2.0) + 90);
-    encoding.phaseError.value.setText( GUIKIT::String::formatFloatingPoint(_phaseError, 1) + " °");
-    encoding.hanoverBars.active.setChecked( _useHanoverBars );
-    encoding.hanoverBars.slider.setPosition( _hanoverBars + 100 );
-    encoding.hanoverBars.value.setText( std::to_string(_hanoverBars) + " %" );
-    encoding.blur.active.setChecked( _useBlur );
-    encoding.blur.slider.setPosition( _blur );
-    encoding.blur.value.setText( std::to_string(_blur) + " %" );
-    lumaDelay.lumaRise.active.setChecked( _useLumaRise );
-    lumaDelay.lumaRise.slider.setPosition( (unsigned)((_lumaRise - 1.0) * 10.0) );
-    lumaDelay.lumaRise.value.setText( GUIKIT::String::formatFloatingPoint(_lumaRise, 1) + " px" );
-    lumaDelay.lumaFall.active.setChecked( _useLumaFall );
-    lumaDelay.lumaFall.slider.setPosition( (unsigned)((_lumaFall - 1.0) * 10.0) );
-    lumaDelay.lumaFall.value.setText( GUIKIT::String::formatFloatingPoint(_lumaFall, 1) + " px" );
+    layBase.encoding.phaseError.active.setChecked( _usePhaseError );
+    layBase.encoding.phaseError.slider.setPosition( int(_phaseError * 2.0) + 90);
+    layBase.encoding.phaseError.value.setText( GUIKIT::String::formatFloatingPoint(_phaseError, 1) + " °");
+    layBase.encoding.hanoverBars.active.setChecked( _useHanoverBars );
+    layBase.encoding.hanoverBars.slider.setPosition( _hanoverBars + 100 );
+    layBase.encoding.hanoverBars.value.setText( std::to_string(_hanoverBars) + " %" );
+    layBase.encoding.blur.active.setChecked( _useBlur );
+    layBase.encoding.blur.slider.setPosition( _blur );
+    layBase.encoding.blur.value.setText( std::to_string(_blur) + " %" );
+    layBase.lumaDelay.lumaRise.active.setChecked( _useLumaRise );
+    layBase.lumaDelay.lumaRise.slider.setPosition( (unsigned)((_lumaRise - 1.0) * 10.0) );
+    layBase.lumaDelay.lumaRise.value.setText( GUIKIT::String::formatFloatingPoint(_lumaRise, 1) + " px" );
+    layBase.lumaDelay.lumaFall.active.setChecked( _useLumaFall );
+    layBase.lumaDelay.lumaFall.slider.setPosition( (unsigned)((_lumaFall - 1.0) * 10.0) );
+    layBase.lumaDelay.lumaFall.value.setText( GUIKIT::String::formatFloatingPoint(_lumaFall, 1) + " px" );
 
     // shader features    
-    crtGlitch.chromaNoise.active.setChecked( _useChromaNoise );
-    crtGlitch.chromaNoise.slider.setPosition( (unsigned)(_chromaNoise * 10.0) );
-    crtGlitch.chromaNoise.value.setText( GUIKIT::String::formatFloatingPoint(_chromaNoise, 1) + " %" );
-    crtGlitch.lumaNoise.active.setChecked(_useLumaNoise);
-    crtGlitch.lumaNoise.slider.setPosition((unsigned)(_lumaNoise * 10.0));
-    crtGlitch.lumaNoise.value.setText(GUIKIT::String::formatFloatingPoint(_lumaNoise, 1) + " %");
-    crtGlitch.radialDistortion.active.setChecked( _useRadialDistortion );
-    crtGlitch.radialDistortion.slider.setPosition( _radialDistortion );
-    crtGlitch.radialDistortion.value.setText( std::to_string(_radialDistortion) + " %" );
-    crtGlitch.randomLineOffset.active.setChecked( _useRandomLineOffset );
-    crtGlitch.randomLineOffset.slider.setPosition( (unsigned)(_randomLineOffset * 100.0) );
-    crtGlitch.randomLineOffset.value.setText( GUIKIT::String::formatFloatingPoint(_randomLineOffset, 2) + " %" );
-    
-	mask.level.active.setChecked( _useMaskLevel );
-    mask.level.slider.setPosition( _maskLevel );
-    mask.level.value.setText( std::to_string(_maskLevel) + " %" );
-    mask.luminance.slider.setPosition(_maskLuminance);
-    mask.luminance.value.setText(std::to_string(_maskLuminance) + " %");
-    mask.pitch.slider.setPosition( _maskPitch * 100.0 );
-    mask.pitch.value.setText( GUIKIT::String::formatFloatingPoint(_maskPitch, 2) + " mm" );
-    mask.dpi.slider.setPosition( _maskDpi );
-    mask.dpi.value.setText( std::to_string(_maskDpi) + " dpi" );
+    layGlitch.crt.chromaNoise.active.setChecked( _useChromaNoise );
+    layGlitch.crt.chromaNoise.slider.setPosition( (unsigned)(_chromaNoise * 10.0) );
+    layGlitch.crt.chromaNoise.value.setText( GUIKIT::String::formatFloatingPoint(_chromaNoise, 1) + " %" );
+    layGlitch.crt.lumaNoise.active.setChecked(_useLumaNoise);
+    layGlitch.crt.lumaNoise.slider.setPosition((unsigned)(_lumaNoise * 10.0));
+    layGlitch.crt.lumaNoise.value.setText(GUIKIT::String::formatFloatingPoint(_lumaNoise, 1) + " %");
+    layGlitch.crt.radialDistortion.active.setChecked( _useRadialDistortion );
+    layGlitch.crt.radialDistortion.slider.setPosition( _radialDistortion );
+    layGlitch.crt.radialDistortion.value.setText( std::to_string(_radialDistortion) + " %" );
+    layGlitch.crt.randomLineOffset.active.setChecked( _useRandomLineOffset );
+    layGlitch.crt.randomLineOffset.slider.setPosition( (unsigned)(_randomLineOffset * 100.0) );
+    layGlitch.crt.randomLineOffset.value.setText( GUIKIT::String::formatFloatingPoint(_randomLineOffset, 2) + " %" );
 
-	bloom.glow.active.setChecked( _useBloomGlow );
-    bloom.glow.slider.setPosition( _bloomGlow );
-    bloom.glow.value.setText( std::to_string( _bloomGlow ) + " %" );
-	bloom.weight.active.setChecked( _useBloomWeight );
-    bloom.weight.slider.setPosition( _bloomWeight * 100.0 );	
-    bloom.weight.value.setText( GUIKIT::String::formatFloatingPoint( _bloomWeight, 2 ) );
-    bloom.variance.slider.setPosition( (unsigned)((_bloomVariance - 1.0) * 10.0) );
-    bloom.variance.value.setText( GUIKIT::String::formatFloatingPoint( _bloomVariance, 1 ) );
-    bloom.radius.slider.setPosition( _bloomRadius - 1 );
-    bloom.radius.value.setText( std::to_string( _bloomRadius ) + " px" );
-	
-    vicIIGlitch.aec.active.setChecked( _useAecGlitch );	
-    vicIIGlitch.aec.slider.setPosition( (unsigned)(_aecGlitch * 10.0) );
-    vicIIGlitch.aec.value.setText( GUIKIT::String::formatFloatingPoint(_aecGlitch, 1) + " %" );
-    vicIIGlitch.ba.active.setChecked( _useBaGlitch );	
-    vicIIGlitch.ba.slider.setPosition( (unsigned)(_baGlitch * 10.0) );
-    vicIIGlitch.ba.value.setText( GUIKIT::String::formatFloatingPoint(_baGlitch, 1) + " %" );
-    vicIIGlitch.phi0.active.setChecked( _usePhi0Glitch );	
-    vicIIGlitch.phi0.slider.setPosition( (unsigned)(_phi0Glitch * 10.0) );
-    vicIIGlitch.phi0.value.setText( GUIKIT::String::formatFloatingPoint(_phi0Glitch, 1) + " %" );
-    vicIIGlitch.ras.active.setChecked( _useRasGlitch );	
-    vicIIGlitch.ras.slider.setPosition( (unsigned)(_rasGlitch * 10.0) );
-    vicIIGlitch.ras.value.setText( GUIKIT::String::formatFloatingPoint(_rasGlitch, 1) + " %" );
-    vicIIGlitch.cas.active.setChecked( _useCasGlitch );	
-    vicIIGlitch.cas.slider.setPosition( (unsigned)(_casGlitch * 10.0) );
-    vicIIGlitch.cas.value.setText( GUIKIT::String::formatFloatingPoint(_casGlitch, 1) + " %" );
+    layIntern.mask.level.active.setChecked( _useMaskLevel );
+    layIntern.mask.level.slider.setPosition( _maskLevel );
+    layIntern.mask.level.value.setText( std::to_string(_maskLevel) + " %" );
+    layIntern.mask.luminance.slider.setPosition(_maskLuminance);
+    layIntern.mask.luminance.value.setText(std::to_string(_maskLuminance) + " %");
+    layIntern.mask.pitch.slider.setPosition( _maskPitch * 100.0 );
+    layIntern.mask.pitch.value.setText( GUIKIT::String::formatFloatingPoint(_maskPitch, 2) + " mm" );
+    layIntern.mask.dpi.slider.setPosition( _maskDpi );
+    layIntern.mask.dpi.value.setText( std::to_string(_maskDpi) + " dpi" );
 
-    gpuMisc.options.distortionHires.setChecked( _distortionHires );
-    gpuMisc.options.hires.setChecked( _hires );
-    gpuMisc.luminance.slider.setPosition( _luminance );
-    gpuMisc.luminance.value.setText( std::to_string(_luminance) + " %" );
-    gpuMisc.lightFromCenter.active.setChecked( _useLightFromCenter );
-    gpuMisc.lightFromCenter.slider.setPosition( _lightFromCenter );
-    gpuMisc.lightFromCenter.value.setText( std::to_string(_lightFromCenter) + " %" );
-    subsampling.firFilter.slider.setPosition( (unsigned)(_firFilterLength / 2) );
-    subsampling.firFilter.value.setText( std::to_string( _firFilterLength ) );
+    layIntern.bloom.glow.active.setChecked( _useBloomGlow );
+    layIntern.bloom.glow.slider.setPosition( _bloomGlow );
+    layIntern.bloom.glow.value.setText( std::to_string( _bloomGlow ) + " %" );
+    layIntern.bloom.weight.active.setChecked( _useBloomWeight );
+    layIntern.bloom.weight.slider.setPosition( _bloomWeight * 100.0 );
+    layIntern.bloom.weight.value.setText( GUIKIT::String::formatFloatingPoint( _bloomWeight, 2 ) );
+    layIntern.bloom.variance.slider.setPosition( (unsigned)((_bloomVariance - 1.0) * 10.0) );
+    layIntern.bloom.variance.value.setText( GUIKIT::String::formatFloatingPoint( _bloomVariance, 1 ) );
+    layIntern.bloom.radius.slider.setPosition( _bloomRadius - 1 );
+    layIntern.bloom.radius.value.setText( std::to_string( _bloomRadius ) + " px" );
+
+    layGlitch.vicII.aec.active.setChecked( _useAecGlitch );
+    layGlitch.vicII.aec.slider.setPosition( (unsigned)(_aecGlitch * 10.0) );
+    layGlitch.vicII.aec.value.setText( GUIKIT::String::formatFloatingPoint(_aecGlitch, 1) + " %" );
+    layGlitch.vicII.ba.active.setChecked( _useBaGlitch );
+    layGlitch.vicII.ba.slider.setPosition( (unsigned)(_baGlitch * 10.0) );
+    layGlitch.vicII.ba.value.setText( GUIKIT::String::formatFloatingPoint(_baGlitch, 1) + " %" );
+    layGlitch.vicII.phi0.active.setChecked( _usePhi0Glitch );
+    layGlitch.vicII.phi0.slider.setPosition( (unsigned)(_phi0Glitch * 10.0) );
+    layGlitch.vicII.phi0.value.setText( GUIKIT::String::formatFloatingPoint(_phi0Glitch, 1) + " %" );
+    layGlitch.vicII.ras.active.setChecked( _useRasGlitch );
+    layGlitch.vicII.ras.slider.setPosition( (unsigned)(_rasGlitch * 10.0) );
+    layGlitch.vicII.ras.value.setText( GUIKIT::String::formatFloatingPoint(_rasGlitch, 1) + " %" );
+    layGlitch.vicII.cas.active.setChecked( _useCasGlitch );
+    layGlitch.vicII.cas.slider.setPosition( (unsigned)(_casGlitch * 10.0) );
+    layGlitch.vicII.cas.value.setText( GUIKIT::String::formatFloatingPoint(_casGlitch, 1) + " %" );
+
+    layIntern.misc.option.distortionHires.setChecked( _distortionHires );
+    layIntern.misc.option.hires.setChecked( _hires );
+    layIntern.misc.luminance.slider.setPosition( _luminance );
+    layIntern.misc.luminance.value.setText( std::to_string(_luminance) + " %" );
+    layIntern.misc.lightFromCenter.active.setChecked( _useLightFromCenter );
+    layIntern.misc.lightFromCenter.slider.setPosition( _lightFromCenter );
+    layIntern.misc.lightFromCenter.value.setText( std::to_string(_lightFromCenter) + " %" );
+    layIntern.subsampling.firFilter.slider.setPosition( (unsigned)(_firFilterLength / 2) );
+    layIntern.subsampling.firFilter.value.setText( std::to_string( _firFilterLength ) );
     
     if (_firFilterSharp == -1)
-        subsampling.firSharp.sharpLeft.setChecked();
+        layIntern.subsampling.firSharp.sharpLeft.setChecked();
     else if (_firFilterSharp == 1)
-        subsampling.firSharp.sharpRight.setChecked();
+        layIntern.subsampling.firSharp.sharpRight.setChecked();
     else
-        subsampling.firSharp.natural.setChecked();
+        layIntern.subsampling.firSharp.natural.setChecked();
         
-    if ( _maskType == (unsigned)VideoManager::MaskType::ShadowMask )    
-        mask.type.shadowMask.setChecked();
-    else if ( _maskType == (unsigned)VideoManager::MaskType::SlotMask )    
-        mask.type.slotMask.setChecked();
+    if ( _maskType == (unsigned)VideoManager::MaskType::ShadowMask )
+        layIntern.mask.type.shadowMask.setChecked();
+    else if ( _maskType == (unsigned)VideoManager::MaskType::SlotMask )
+        layIntern.mask.type.slotMask.setChecked();
     else
-        mask.type.apertureMask.setChecked();    
+        layIntern.mask.type.apertureMask.setChecked();
 	
 	updateVisibillity();
 }
@@ -614,187 +715,186 @@ auto VideoLayout::updateVisibillity() -> void {
 	bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
     bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
 	
-	if (base.mode.spectrum.checked()) {
-        base.phase.setEnabled(true);
-        base.option.newLuma.setEnabled(true);
+	if (layBase.view.mode.spectrum.checked()) {
+        layBase.view.phase.setEnabled(true);
+        layBase.view.option.newLuma.setEnabled(true);
     } else {
-        base.phase.setEnabled(false);
-        base.option.newLuma.setEnabled(false);        
+        layBase.view.phase.setEnabled(false);
+        layBase.view.option.newLuma.setEnabled(false);
     }
-    base.scanlines.slider.setEnabled( base.scanlines.active.checked() );
-    base.interlace.slider.setEnabled( base.interlace.active.checked() );
+    layBase.view.scanlines.slider.setEnabled( layBase.view.scanlines.active.checked() );
+    layBase.view.interlace.slider.setEnabled( layBase.view.interlace.active.checked() );
 		
-    bool crtChecked = base.mode.svideoCpu.checked() || base.mode.svideoGpu.checked();
-    bool crtGpuChecked = base.mode.svideoGpu.checked();
+    bool crtChecked = layBase.view.mode.svideoCpu.checked() || layBase.view.mode.svideoGpu.checked();
+    bool crtGpuChecked = layBase.view.mode.svideoGpu.checked();
 
-    encoding.setEnabled( crtChecked );
-    lumaDelay.setEnabled( (isC64 && crtChecked) || crtGpuChecked );
+    layBase.encoding.setEnabled( crtChecked );
+    layBase.lumaDelay.setEnabled( (isC64 && crtChecked) || crtGpuChecked );
     
     if (crtChecked) {
-        encoding.phaseError.slider.setEnabled( encoding.phaseError.active.checked() );
-        encoding.hanoverBars.setEnabled( _pal );
-        encoding.hanoverBars.slider.setEnabled( _pal && encoding.hanoverBars.active.checked() );
-        encoding.blur.slider.setEnabled(  encoding.blur.active.checked() );
+        layBase.encoding.phaseError.slider.setEnabled( layBase.encoding.phaseError.active.checked() );
+        layBase.encoding.hanoverBars.setEnabled( _pal );
+        layBase.encoding.hanoverBars.slider.setEnabled( _pal && layBase.encoding.hanoverBars.active.checked() );
+        layBase.encoding.blur.slider.setEnabled(  layBase.encoding.blur.active.checked() );
     }
 
     if ((isC64 && crtChecked) || crtGpuChecked) {
-        lumaDelay.lumaRise.slider.setEnabled(lumaDelay.lumaRise.active.checked());
-        lumaDelay.lumaFall.slider.setEnabled(lumaDelay.lumaFall.active.checked());
+        layBase.lumaDelay.lumaRise.slider.setEnabled(layBase.lumaDelay.lumaRise.active.checked());
+        layBase.lumaDelay.lumaFall.slider.setEnabled(layBase.lumaDelay.lumaFall.active.checked());
     }
     
-    base.option.tvGamma.setEnabled( crtChecked && base.mode.palette.checked() && _pal );
+    layBase.view.option.tvGamma.setEnabled( crtChecked && layBase.view.mode.palette.checked() && _pal );
 	
     if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::NotSupported) {
         if(crtGpuChecked) {
-            base.mode.svideoCpu.setChecked();
+            layBase.view.mode.svideoCpu.setChecked();
             _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         }
 
-        base.mode.svideoGpu.setEnabled(false);
-        tab2.setEnabled(false);
-        tab3.setEnabled(false);
+        layBase.view.mode.svideoGpu.setEnabled(false);
+        //tab2.setEnabled(false);
+        //tab3.setEnabled(false);
         return;
     }
-    
-    base.mode.svideoGpu.setEnabled();
-    tab2.setEnabled(crtGpuChecked);
-    tab3.setEnabled(crtGpuChecked);
+
+    layBase.view.mode.svideoGpu.setEnabled();
+  //  tab2.setEnabled(crtGpuChecked);
+    //tab3.setEnabled(crtGpuChecked);
     
     if ( crtGpuChecked )
         // crt with gpu don't use blur setting
-        encoding.blur.setEnabled( false );
+        layBase.encoding.blur.setEnabled( false );
 
-    gpuMisc.setEnabled();
-    gpuMisc.options.hires.setEnabled();
-    gpuMisc.options.distortionHires.setEnabled();
+    layIntern.misc.setEnabled();
+    layIntern.misc.option.hires.setEnabled();
+    layIntern.misc.option.distortionHires.setEnabled();
 
-    mask.setEnabled( mask.level.active.checked() );
-    mask.level.active.setEnabled();    
-	
-    crtGlitch.radialDistortion.setEnabled();
-    crtGlitch.radialDistortion.slider.setEnabled( crtGlitch.radialDistortion.active.checked() );
+    layIntern.mask.setEnabled( layIntern.mask.level.active.checked() );
+    layIntern.mask.level.active.setEnabled();
 
-    gpuMisc.luminance.setEnabled( !mask.level.active.checked() );
-    gpuMisc.lightFromCenter.setEnabled();
-    gpuMisc.lightFromCenter.slider.setEnabled( gpuMisc.lightFromCenter.active.checked() );
+    layGlitch.crt.radialDistortion.setEnabled();
+    layGlitch.crt.radialDistortion.slider.setEnabled( layGlitch.crt.radialDistortion.active.checked() );
 
-    bloom.setEnabled( bloom.glow.active.checked() );
-    bloom.glow.active.setEnabled();
-    bloom.weight.slider.setEnabled( bloom.weight.active.checked() );
+    layIntern.misc.luminance.setEnabled( !layIntern.mask.level.active.checked() );
+    layIntern.misc.lightFromCenter.setEnabled();
+    layIntern.misc.lightFromCenter.slider.setEnabled( layIntern.misc.lightFromCenter.active.checked() );
+
+    layIntern.bloom.setEnabled( layIntern.bloom.glow.active.checked() );
+    layIntern.bloom.glow.active.setEnabled();
+    layIntern.bloom.weight.slider.setEnabled( layIntern.bloom.weight.active.checked() );
 
     // only enabled when GPU active
 	
-	if (crtGpuChecked) {	
-		crtGlitch.lumaNoise.slider.setEnabled( crtGlitch.lumaNoise.active.checked() );
-		crtGlitch.chromaNoise.slider.setEnabled( crtGlitch.chromaNoise.active.checked() );
-		crtGlitch.randomLineOffset.slider.setEnabled( crtGlitch.randomLineOffset.active.checked() );
+	if (crtGpuChecked) {
+        layGlitch.crt.lumaNoise.slider.setEnabled( layGlitch.crt.lumaNoise.active.checked() );
+        layGlitch.crt.chromaNoise.slider.setEnabled( layGlitch.crt.chromaNoise.active.checked() );
+        layGlitch.crt.randomLineOffset.slider.setEnabled( layGlitch.crt.randomLineOffset.active.checked() );
 
-		vicIIGlitch.aec.slider.setEnabled( isC64 && vicIIGlitch.aec.active.checked() );
-		vicIIGlitch.ba.slider.setEnabled( isC64 && vicIIGlitch.ba.active.checked() );
-		vicIIGlitch.phi0.slider.setEnabled( isC64 && vicIIGlitch.phi0.active.checked() );
-		vicIIGlitch.ras.slider.setEnabled( isC64 && vicIIGlitch.ras.active.checked() );
-		vicIIGlitch.cas.slider.setEnabled( isC64 && vicIIGlitch.cas.active.checked() );
+        layGlitch.vicII.aec.slider.setEnabled( isC64 && layGlitch.vicII.aec.active.checked() );
+        layGlitch.vicII.ba.slider.setEnabled( isC64 && layGlitch.vicII.ba.active.checked() );
+        layGlitch.vicII.phi0.slider.setEnabled( isC64 && layGlitch.vicII.phi0.active.checked() );
+        layGlitch.vicII.ras.slider.setEnabled( isC64 && layGlitch.vicII.ras.active.checked() );
+        layGlitch.vicII.cas.slider.setEnabled( isC64 && layGlitch.vicII.cas.active.checked() );
 	}
 }
 
 auto VideoLayout::translate() -> void {
-    setHeader(0, trans->get("view") );
-    setHeader(1, trans->get("shader") );
-    setHeader(2, trans->get("shader 2") );
-    
-    base.setText(trans->get("view"));	
-    base.saturation.name.setText( trans->get("saturation", {}, true) );
-    base.gamma.name.setText( trans->get("gamma", {},true) );
-    base.brightness.name.setText( trans->get("brightness", {}, true) );
-    base.contrast.name.setText( trans->get("contrast", {}, true) );
-    base.phase.name.setText( trans->get("phase", {}, true) );
-    base.option.newLuma.setText( trans->get("new_luma") );
-    base.option.tvGamma.setText( trans->get("TV gamma") );
-	base.option.linearInterpolation.setText( trans->get("linear_interpolation") );
-    base.mode.palette.setText( trans->get("palette") );
-    base.mode.spectrum.setText( trans->get("color_spectrum") );    
-    base.mode.reset.setText( trans->get("reset") );	
-    base.mode.rgb.setText( trans->get("RGB") );
-    base.mode.svideoCpu.setText( trans->get("S/C-Video") );
-    base.mode.svideoCpu.setTooltip( trans->get("S/C-Video tooltip") );
-    base.mode.svideoGpu.setText( trans->get("S/C-Video on GPU") );
-    base.mode.svideoGpu.setTooltip( trans->get("S/C-Video tooltip") );
-    base.scanlines.active.setText( trans->get("scanlines", {}, true) );
-    base.interlace.active.setText( trans->get("interlace", {}, true) );
+    layBase.view.setText(trans->get("view"));
 
-    encoding.setText(trans->get("color encoding"));
-    encoding.phaseError.active.setText( trans->get("phase_error", {}, true) );
-    encoding.hanoverBars.active.setText( trans->get("hanover_bars", {}, true) );
-    encoding.blur.active.setText( trans->get("blur", {}, true) );
-    lumaDelay.setText(trans->get("luma delay"));
-    lumaDelay.lumaRise.active.setText( trans->get("luma_rise", {}, true) );
-    lumaDelay.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
+    layBase.view.saturation.name.setText( trans->get("saturation", {}, true) );
+    layBase.view.gamma.name.setText( trans->get("gamma", {},true) );
+    layBase.view.brightness.name.setText( trans->get("brightness", {}, true) );
+    layBase.view.contrast.name.setText( trans->get("contrast", {}, true) );
+    layBase.view.phase.name.setText( trans->get("phase", {}, true) );
+    layBase.view.option.newLuma.setText( trans->get("new_luma") );
+    layBase.view.option.tvGamma.setText( trans->get("TV gamma") );
+    layBase.view.option.linearInterpolation.setText( trans->get("linear_interpolation") );
+    layBase.view.mode.palette.setText( trans->get("palette") );
+    layBase.view.mode.spectrum.setText( trans->get("color_spectrum") );
+    layBase.view.mode.reset.setText( trans->get("reset") );
+    layBase.view.mode.rgb.setText( trans->get("RGB") );
+    layBase.view.mode.svideoCpu.setText( trans->get("S/C-Video") );
+    layBase.view.mode.svideoCpu.setTooltip( trans->get("S/C-Video tooltip") );
+    layBase.view.mode.svideoGpu.setText( trans->get("S/C-Video on GPU") );
+    layBase.view.mode.svideoGpu.setTooltip( trans->get("S/C-Video tooltip") );
+    layBase.view.scanlines.active.setText( trans->get("scanlines", {}, true) );
+    layBase.view.interlace.active.setText( trans->get("interlace", {}, true) );
 
-    gpuMisc.setText(trans->get("generic"));
-    gpuMisc.options.distortionHires.setText( trans->get("distortion_hires") );
-    gpuMisc.options.distortionHires.setTooltip( trans->get("distortion hires tooltip") );
-    gpuMisc.options.hires.setText( trans->get("hires") );
-    gpuMisc.luminance.name.setText( trans->get("luminance", {}, true) );
-    gpuMisc.lightFromCenter.active.setText( trans->get("light_from_center", {}, true) );
+    layBase.encoding.setText(trans->get("color encoding"));
+    layBase.encoding.phaseError.active.setText( trans->get("phase_error", {}, true) );
+    layBase.encoding.hanoverBars.active.setText( trans->get("hanover_bars", {}, true) );
+    layBase.encoding.blur.active.setText( trans->get("blur", {}, true) );
+    layBase.lumaDelay.setText(trans->get("luma delay"));
+    layBase.lumaDelay.lumaRise.active.setText( trans->get("luma_rise", {}, true) );
+    layBase.lumaDelay.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
 
-    subsampling.setText(trans->get("chroma subsampling"));
-    subsampling.firFilter.name.setText( trans->get("fir filter blur", {}, true) );
-    subsampling.firSharp.sharpLeft.setText( trans->get("fir filter left") );
-    subsampling.firSharp.sharpRight.setText( trans->get("fir filter right") );
-    subsampling.firSharp.natural.setText( trans->get("fir filter natural") );
+    layIntern.misc.setText(trans->get("generic"));
+    layIntern.misc.option.distortionHires.setText( trans->get("distortion_hires") );
+    layIntern.misc.option.distortionHires.setTooltip( trans->get("distortion hires tooltip") );
+    layIntern.misc.option.hires.setText( trans->get("hires") );
+    layIntern.misc.luminance.name.setText( trans->get("luminance", {}, true) );
+    layIntern.misc.lightFromCenter.active.setText( trans->get("light_from_center", {}, true) );
 
-    mask.setText( trans->get("mask") );
-    mask.type.type.setText( trans->get("type", {}, true) );
-    mask.type.apertureMask.setText( trans->get("aperture_mask") );
-    mask.type.shadowMask.setText( trans->get("shadow_mask") );
-    mask.type.slotMask.setText( trans->get("slot_mask") );
-	mask.level.active.setText( trans->get("intensity", {}, true) );
-    mask.luminance.name.setText( trans->get("luminance", {}, true) );
-    mask.pitch.name.setText( trans->get("pitch", {}, true) );    
-    mask.dpi.name.setText( trans->get("DPI", {}, true) );
-	
-	bloom.setText( trans->get("color_bloom") );
-	bloom.glow.active.setText( trans->get("glow", {}, true) );
-	bloom.radius.name.setText( trans->get("radius", {}, true) );
-	bloom.variance.name.setText( trans->get("variance", {}, true) );
-	bloom.weight.active.setText( trans->get("weight", {}, true) );
+    layIntern.subsampling.setText(trans->get("chroma subsampling"));
+    layIntern.subsampling.firFilter.name.setText( trans->get("fir filter blur", {}, true) );
+    layIntern.subsampling.firSharp.sharpLeft.setText( trans->get("fir filter left") );
+    layIntern.subsampling.firSharp.sharpRight.setText( trans->get("fir filter right") );
+    layIntern.subsampling.firSharp.natural.setText( trans->get("fir filter natural") );
 
-    crtGlitch.setText( trans->get("crt_glitches") );
-    crtGlitch.lumaNoise.active.setText( trans->get("luma_noise", {}, true) );
-    crtGlitch.chromaNoise.active.setText( trans->get("chroma_noise", {}, true) );
-    crtGlitch.radialDistortion.active.setText( trans->get("radial_distortion", {}, true) );
-    crtGlitch.randomLineOffset.active.setText( trans->get("random_line_offset", {}, true) );
-    
-    vicIIGlitch.setText( trans->get("vicII_glitches") );
-    vicIIGlitch.toggleAll.setText( trans->get("toggle_all_glitches") );
-    vicIIGlitch.aec.active.setText(trans->get("aec_glitch",{}, true));
-    vicIIGlitch.ba.active.setText(trans->get("ba_glitch",{}, true));
-    vicIIGlitch.phi0.active.setText(trans->get("phi_glitch",{}, true));
-    vicIIGlitch.ras.active.setText(trans->get("ras_glitch",{}, true));
-    vicIIGlitch.cas.active.setText(trans->get("cas_glitch",{}, true));
-    
-    SliderLayout::scale({&base.saturation, &base.gamma, &base.brightness, &base.contrast, &base.phase, &base.scanlines, &base.interlace, &encoding.phaseError, &encoding.hanoverBars, &encoding.blur, &lumaDelay.lumaRise, &lumaDelay.lumaFall},
-        "-100 %");
-    unsigned neededWidth = SliderLayout::scale({&subsampling.firFilter, &gpuMisc.lightFromCenter, &gpuMisc.luminance, &mask.level, &mask.luminance, &mask.dpi, &mask.pitch, &bloom.glow, &bloom.radius, &bloom.variance, &bloom.weight},
-        "0.00 mm", mask.type.type.minimumSize().width );
-    SliderLayout::scale({&crtGlitch.lumaNoise, &crtGlitch.chromaNoise, &crtGlitch.randomLineOffset, &crtGlitch.radialDistortion, &vicIIGlitch.aec, &vicIIGlitch.ba, &vicIIGlitch.phi0, &vicIIGlitch.ras, &vicIIGlitch.cas},
-        "100.0 %");
-    
-    mask.type.children[ 0 ].size.width = neededWidth;
+    layIntern.mask.setText( trans->get("mask") );
+    layIntern.mask.type.label.setText( trans->get("type", {}, true) );
+    layIntern.mask.type.apertureMask.setText( trans->get("aperture_mask") );
+    layIntern.mask.type.shadowMask.setText( trans->get("shadow_mask") );
+    layIntern.mask.type.slotMask.setText( trans->get("slot_mask") );
+    layIntern.mask.level.active.setText( trans->get("intensity", {}, true) );
+    layIntern.mask.luminance.name.setText( trans->get("luminance", {}, true) );
+    layIntern.mask.pitch.name.setText( trans->get("pitch", {}, true) );
+    layIntern.mask.dpi.name.setText( trans->get("DPI", {}, true) );
+
+    layIntern.bloom.setText( trans->get("color_bloom") );
+    layIntern.bloom.glow.active.setText( trans->get("glow", {}, true) );
+    layIntern.bloom.radius.name.setText( trans->get("radius", {}, true) );
+    layIntern.bloom.variance.name.setText( trans->get("variance", {}, true) );
+    layIntern.bloom.weight.active.setText( trans->get("weight", {}, true) );
+
+    layGlitch.crt.setText( trans->get("crt_glitches") );
+    layGlitch.crt.lumaNoise.active.setText( trans->get("luma_noise", {}, true) );
+    layGlitch.crt.chromaNoise.active.setText( trans->get("chroma_noise", {}, true) );
+    layGlitch.crt.radialDistortion.active.setText( trans->get("radial_distortion", {}, true) );
+    layGlitch.crt.randomLineOffset.active.setText( trans->get("random_line_offset", {}, true) );
+
+    layGlitch.vicII.setText( trans->get("vicII_glitches") );
+    layGlitch.vicII.toggleAll.setText( trans->get("toggle_all_glitches") );
+    layGlitch.vicII.aec.active.setText(trans->get("aec_glitch",{}, true));
+    layGlitch.vicII.ba.active.setText(trans->get("ba_glitch",{}, true));
+    layGlitch.vicII.phi0.active.setText(trans->get("phi_glitch",{}, true));
+    layGlitch.vicII.ras.active.setText(trans->get("ras_glitch",{}, true));
+    layGlitch.vicII.cas.active.setText(trans->get("cas_glitch",{}, true));
+
+    SliderLayout::scale({&layBase.view.saturation, &layBase.view.gamma, &layBase.view.brightness, &layBase.view.contrast, &layBase.view.phase, &layBase.view.scanlines, &layBase.view.interlace, &layBase.encoding.phaseError, &layBase.encoding.hanoverBars, &layBase.encoding.blur, &layBase.lumaDelay.lumaRise, &layBase.lumaDelay.lumaFall},
+                        "-100 %");
+    unsigned neededWidth = SliderLayout::scale({&layIntern.subsampling.firFilter, &layIntern.misc.lightFromCenter, &layIntern.misc.luminance, &layIntern.mask.level, &layIntern.mask.luminance, &layIntern.mask.dpi, &layIntern.mask.pitch, &layIntern.bloom.glow, &layIntern.bloom.radius, &layIntern.bloom.variance, &layIntern.bloom.weight},
+                        "0.00 mm", layIntern.mask.type.label.minimumSize().width );
+    SliderLayout::scale({&layGlitch.crt.lumaNoise, &layGlitch.crt.chromaNoise, &layGlitch.crt.randomLineOffset, &layGlitch.crt.radialDistortion, &layGlitch.vicII.aec, &layGlitch.vicII.ba, &layGlitch.vicII.phi0, &layGlitch.vicII.ras, &layGlitch.vicII.cas},
+                        "100.0 %");
+
+    layIntern.mask.type.children[ 0 ].size.width = neededWidth;
 }
 
 auto VideoLayout::sliderIdent() -> std::string {
 	
 	std::string ident = (emulator->getRegionEncoding() == Emulator::Interface::Region::Pal) ? "_pal" : "_ntsc";
 	
-    if (dynamic_cast<LIBC64::Interface*>(emulator) && base.mode.spectrum.checked())
+    if (dynamic_cast<LIBC64::Interface*>(emulator) && layBase.view.mode.spectrum.checked())
         ident += "_spectrum";
 	
-	if (base.mode.svideoCpu.checked())
+	if (layBase.view.mode.svideoCpu.checked())
 		ident += "_crtcpu";
-	else if (base.mode.svideoGpu.checked())
+	else if (layBase.view.mode.svideoGpu.checked())
 		ident += "_crtgpu";
-    		
+    else if (layBase.view.mode.externGpu.checked())
+        ident += "_externgpu";
+
 	return ident;
 }
 
@@ -802,16 +902,18 @@ auto VideoLayout::loadSettings(bool init) -> void {
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
     
     if (crtMode == VideoManager::CrtMode::Gpu)
-        base.mode.svideoGpu.setChecked();
+        layBase.view.mode.svideoGpu.setChecked();
+    else if (crtMode == VideoManager::CrtMode::GpuExtern)
+        layBase.view.mode.externGpu.setChecked();
     else if (crtMode == VideoManager::CrtMode::Cpu)
-        base.mode.svideoCpu.setChecked();
+        layBase.view.mode.svideoCpu.setChecked();
     else
-        base.mode.rgb.setChecked();
+        layBase.view.mode.rgb.setChecked();
     
     if (dynamic_cast<LIBC64::Interface*>(emulator) && _settings->get<bool>( "video_spectrum", true) )
-        base.mode.spectrum.setChecked();
+        layBase.view.mode.spectrum.setChecked();
     else
-        base.mode.palette.setChecked();
+        layBase.view.mode.palette.setChecked();
         
     updatePresets(!init);
 }

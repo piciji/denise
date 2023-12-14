@@ -1,152 +1,211 @@
 
-struct VideoModeLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::RadioBox palette;
-    GUIKIT::RadioBox spectrum; 
-    GUIKIT::RadioBox rgb;
-    GUIKIT::RadioBox svideoCpu;
-    GUIKIT::RadioBox svideoGpu;
+struct VideoBaseLayout : GUIKIT::VerticalLayout {
 
-    GUIKIT::Widget spacer;
-    GUIKIT::Button reset;
-    
-    VideoModeLayout(bool withSpectrum);
-};
+    struct View : GUIKIT::FramedVerticalLayout {
+        struct Mode : GUIKIT::HorizontalLayout {
+            GUIKIT::RadioBox palette;
+            GUIKIT::RadioBox spectrum;
+            GUIKIT::RadioBox rgb;
+            GUIKIT::RadioBox svideoCpu;
+            GUIKIT::RadioBox svideoGpu;
+            GUIKIT::RadioBox externGpu;
 
-struct VideoOptionLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::CheckBox newLuma;
-    GUIKIT::CheckBox tvGamma;
-	GUIKIT::CheckBox linearInterpolation;
-    
-    VideoOptionLayout(bool withSpectrum);
-};
+            GUIKIT::Widget spacer;
+            GUIKIT::Button reset;
 
-struct VideoBaseLayout : GUIKIT::FramedVerticalLayout {
-    VideoModeLayout mode;
-    VideoOptionLayout option;
-            
-    SliderLayout saturation;
-    SliderLayout gamma;
-    SliderLayout brightness;        	
-    SliderLayout contrast;   
-    SliderLayout phase;
-    SliderLayout scanlines;
-    SliderLayout interlace;
-    
+            Mode(bool withSpectrum);
+        } mode;
+
+        struct Option : GUIKIT::HorizontalLayout {
+            GUIKIT::CheckBox newLuma;
+            GUIKIT::CheckBox tvGamma;
+            GUIKIT::CheckBox linearInterpolation;
+
+            Option(bool withSpectrum);
+        } option;
+
+        SliderLayout saturation;
+        SliderLayout gamma;
+        SliderLayout brightness;
+        SliderLayout contrast;
+        SliderLayout phase;
+        SliderLayout interlace;
+        SliderLayout scanlines;
+
+        View(bool withSpectrum);
+    } view;
+
+    struct Encoding : GUIKIT::FramedVerticalLayout {
+        SliderLayout phaseError;
+        SliderLayout hanoverBars;
+        SliderLayout blur;
+
+        Encoding();
+    } encoding;
+
+    struct LumaDelay : GUIKIT::FramedVerticalLayout {
+        SliderLayout lumaRise;
+        SliderLayout lumaFall;
+
+        LumaDelay();
+    } lumaDelay;
+
     VideoBaseLayout(bool withSpectrum);
 };
 
-struct VideoEncodingLayout : GUIKIT::FramedVerticalLayout {
-    SliderLayout phaseError; 
-    SliderLayout hanoverBars;
-    SliderLayout blur;
+struct VideoInternLayout : GUIKIT::VerticalLayout {
 
-    VideoEncodingLayout();
+    struct Misc : GUIKIT::FramedVerticalLayout {
+        struct Option : GUIKIT::HorizontalLayout {
+            GUIKIT::CheckBox hires;
+            GUIKIT::CheckBox distortionHires;
+
+            Option();
+        } option;
+
+        SliderLayout lightFromCenter;
+        SliderLayout luminance;
+
+        Misc();
+    } misc;
+
+    struct Subsampling : GUIKIT::FramedVerticalLayout {
+        SliderLayout firFilter;
+
+        struct FirSharp : GUIKIT::HorizontalLayout {
+            GUIKIT::RadioBox sharpLeft;
+            GUIKIT::RadioBox natural;
+            GUIKIT::RadioBox sharpRight;
+
+            FirSharp();
+        } firSharp;
+
+        Subsampling();
+    } subsampling;
+
+    struct Mask : GUIKIT::FramedVerticalLayout {
+        SliderLayout level;
+        SliderLayout luminance;
+
+        struct Type : GUIKIT::HorizontalLayout {
+            GUIKIT::Label label;
+            GUIKIT::RadioBox apertureMask;
+            GUIKIT::RadioBox shadowMask;
+            GUIKIT::RadioBox slotMask;
+
+            Type();
+        } type;
+
+        SliderLayout dpi;
+        SliderLayout pitch;
+
+        Mask();
+    } mask;
+
+    struct Bloom : GUIKIT::FramedVerticalLayout {
+        SliderLayout glow;
+        SliderLayout radius;
+        SliderLayout variance;
+        SliderLayout weight;
+
+        Bloom();
+    } bloom;
+
+    VideoInternLayout();
 };
 
-struct VideoLumaDelayLayout : GUIKIT::FramedVerticalLayout {
-    SliderLayout lumaRise;
-    SliderLayout lumaFall;
+struct VideoGlitchLayout : GUIKIT::VerticalLayout {
 
-    VideoLumaDelayLayout();
+    struct Crt : GUIKIT::FramedVerticalLayout {
+        SliderLayout lumaNoise;
+        SliderLayout chromaNoise;
+        SliderLayout randomLineOffset;
+        SliderLayout radialDistortion;
+
+        Crt();
+    } crt;
+
+    struct VicII : GUIKIT::FramedVerticalLayout {
+        GUIKIT::Button toggleAll;
+        SliderLayout aec;
+        SliderLayout ba;
+        SliderLayout phi0;
+        SliderLayout ras;
+        SliderLayout cas;
+
+        VicII();
+    } vicII;
+
+    VideoGlitchLayout(bool withVic);
 };
 
-struct VideoMaskTypeLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::Label type;
-    GUIKIT::RadioBox apertureMask;
-    GUIKIT::RadioBox shadowMask;
-    GUIKIT::RadioBox slotMask;
-    
-    VideoMaskTypeLayout();
+struct VideoShaderLayout : GUIKIT::VerticalLayout {
+
+    struct Control : GUIKIT::FramedHorizontalLayout {
+        GUIKIT::Label loaded;
+        GUIKIT::Button unload;
+
+        GUIKIT::Widget spacer;
+        GUIKIT::Button save;
+        GUIKIT::Button load;
+
+        Control();
+    } control;
+
+    struct Favourite : GUIKIT::FramedVerticalLayout {
+        GUIKIT::ListView list;
+
+        struct Control : GUIKIT::HorizontalLayout {
+            GUIKIT::Button add;
+            GUIKIT::Button remove;
+
+            Control();
+        } control;
+
+        Favourite();
+    } favourite;
+
+    VideoShaderLayout();
 };
 
-struct VideoGpuMiscLayout : GUIKIT::FramedVerticalLayout {
+struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
+    struct Load : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::Button button;
 
-    struct Options : GUIKIT::HorizontalLayout {
-        GUIKIT::CheckBox hires;
-        GUIKIT::CheckBox distortionHires;
+        Load();
+    } load;
 
-        Options();
-    } options;
+    GUIKIT::Label filter;
+    GUIKIT::Label scale;
+    GUIKIT::Button removePass;
+    GUIKIT::Button appendPass;
 
-    SliderLayout lightFromCenter;
-    SliderLayout luminance;
-
-    VideoGpuMiscLayout();
+    VideoPassLayout();
 };
 
-struct VideoSubsamplingLayout : GUIKIT::FramedVerticalLayout {
-    SliderLayout firFilter;
-
-    struct FirSharpLayout : GUIKIT::HorizontalLayout {
-        GUIKIT::RadioBox sharpLeft;
-        GUIKIT::RadioBox natural;
-        GUIKIT::RadioBox sharpRight;
-
-        FirSharpLayout();
-    } firSharp;
-
-    VideoSubsamplingLayout();
-};
-
-struct VideoMaskLayout : GUIKIT::FramedVerticalLayout {
-    
-    SliderLayout level;
-    SliderLayout luminance;
-    VideoMaskTypeLayout type;
-    SliderLayout dpi;
-    SliderLayout pitch;
-    
-    VideoMaskLayout();
-};
-
-struct VideoBloomLayout : GUIKIT::FramedVerticalLayout {
-    SliderLayout glow;
-    SliderLayout radius;
-    SliderLayout variance;
-    SliderLayout weight;
-    
-    VideoBloomLayout();
-};
-
-struct VideoCrtGlitchLayout : GUIKIT::FramedVerticalLayout {
-    SliderLayout lumaNoise;
-    SliderLayout chromaNoise;
-    SliderLayout randomLineOffset;
-    SliderLayout radialDistortion;
-    
-    VideoCrtGlitchLayout();
-};
-
-struct VideoVicIIGlitchLayout : GUIKIT::FramedVerticalLayout {
-    GUIKIT::Button toggleAll;
-    SliderLayout aec;
-    SliderLayout ba;
-    SliderLayout phi0;
-    SliderLayout ras;
-    SliderLayout cas;
-    
-    VideoVicIIGlitchLayout();
-};
-
-struct VideoLayout : GUIKIT::TabFrameLayout {
+struct VideoLayout : GUIKIT::FramedHorizontalLayout {
 
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
-    
-    GUIKIT::VerticalLayout tab1;
-        VideoBaseLayout base;
-        VideoEncodingLayout encoding;
-        VideoLumaDelayLayout lumaDelay;
+    GUIKIT::TreeView moduleTree;
+    GUIKIT::SwitchLayout moduleSwitch;
+    GUIKIT::TreeViewItem tviBase;
+        GUIKIT::TreeViewItem tviIntern;
+        GUIKIT::TreeViewItem tviGlitch;
 
-    GUIKIT::VerticalLayout tab2;
-        VideoGpuMiscLayout gpuMisc;
-        VideoSubsamplingLayout subsampling;
-        VideoMaskLayout mask;
-        VideoBloomLayout bloom;        
-        
-    GUIKIT::VerticalLayout tab3;
-        VideoCrtGlitchLayout crtGlitch;
-        VideoVicIIGlitchLayout vicIIGlitch;
+    GUIKIT::TreeViewItem tviShader;
+    GUIKIT::TreeViewItem tviParams;
+
+    VideoBaseLayout layBase;
+    VideoInternLayout layIntern;
+    VideoGlitchLayout layGlitch;
+
+    VideoShaderLayout layShader;
+
+    GUIKIT::Image imgFolderOpen;
+    GUIKIT::Image imgFolderClosed;
+    GUIKIT::Image imgDocument;
     	
     auto translate() -> void;
     auto sliderIdent() -> std::string;

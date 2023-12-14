@@ -1360,7 +1360,10 @@ struct File {
     static auto createDir( std::string path, std::string basePath = "" ) -> bool;
     static auto beautifyPath(std::string path) -> std::string;
     static auto getOffsetDataStringFromBinary( std::string inFile, std::string outFile ) -> bool;
-    static auto getPath( std::string _fn ) -> std::string;
+
+    static auto getPath( std::string _fn, bool returnSlashIfError = false ) -> std::string;
+    static auto resolveRelativePath(std::string _fn, std::string relPath ) -> std::string;
+    static auto isAbsolute(const std::string& path) -> bool;
 
     auto setFile(std::string filePath) -> void;
     auto getFile() const -> std::string { return filePath; }
@@ -1474,6 +1477,14 @@ private:
     auto get(type_info<double> t, const std::string& ident, double defaultValue) -> double;
     auto get(type_info<std::string> t, const std::string& ident, std::string defaultValue) -> std::string;
 
+    auto loadEx(const std::string& path, int depth = 0, const char separator = '=') -> bool;
+    auto stripCommentsAndDetectIncludes(std::string& line) -> bool;
+
+    auto getReferences() -> std::vector<std::string>& { return references; }
+    auto getPath() -> std::string& { return path; }
+
+    std::vector<std::string> references;
+    std::string path;
     std::vector<Setting*> list;
     void* guid = nullptr;
 };
