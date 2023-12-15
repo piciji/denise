@@ -695,7 +695,13 @@ auto Shader::transferMask() -> void {
 	// 1 inch = 25.4 mm
 	// x dpi -> x dots = 25.4 mm
 	// 1 dot = y mm (how much mm takes one dot)
-	// y = 25.4 mm / x dots	
+	// y = 25.4 mm / x dots
+    auto format = videoDriver->shaderFormat();
+    int mimmappingScale = 0;
+
+    if (format == ShaderFormat::GLSL)
+        mimmappingScale = 1;
+
 	float oneDotWidth = 25.4f / (float)vManager->maskDpi;
 	
 	// dot pitch means distance between two red holes in mask   
@@ -708,7 +714,7 @@ auto Shader::transferMask() -> void {
 		case VideoManager::MaskType::Aperture:
         case VideoManager::MaskType::SlotMask: {    
      
-            scaleY = ((float)(vManager->emulator->cropWidth() << 1) * scaleX) / ((float)(vManager->emulator->cropHeight() ));
+            scaleY = ((float)(vManager->emulator->cropWidth() << mimmappingScale) * scaleX) / ((float)(vManager->emulator->cropHeight() ));
         } break;
         case VideoManager::MaskType::ShadowMask: {
              
