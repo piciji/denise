@@ -975,8 +975,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
         if (tex.desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS) {
             tex.desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-            unsigned width = tex.desc.Width >> 2;
-            unsigned height = tex.desc.Height >> 2;
+            unsigned width = tex.desc.Width >> 1;
+            unsigned height = tex.desc.Height >> 1;
 
             while (width && height) { // based on log2
                 width >>= 1; 
