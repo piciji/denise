@@ -1658,6 +1658,10 @@ auto VideoManager::free() -> void {
         delete[] tempDestHold;
 }
 
+auto VideoManager::parseAndApply(std::string path) -> bool {
+    return shader.parseAndApply(path);
+}
+
 VideoManager::~VideoManager() {
     enableCrtThread(false);
     free();

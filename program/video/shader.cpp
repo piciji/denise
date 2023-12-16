@@ -866,6 +866,22 @@ auto Shader::buildBloom(ShaderFormat& format, bool phase1) -> std::string {
     return "";
 }
 
+auto Shader::parseAndApply(std::string path) -> bool {
+    ShaderParser* tempParser = new ShaderParser;
+
+    if (!tempParser->loadPreset(path)) {
+        delete tempParser;
+        return false;
+    }
+
+    if (parser)
+        delete parser;
+
+    parser = tempParser;
+
+    return true;
+}
+
 Shader::Shader(VideoManager* vManager) {
     this->vManager = vManager;
 	buildMaskTexture();

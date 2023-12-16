@@ -312,6 +312,8 @@ struct VideoManager {
 
     template<typename T> auto updateData(std::string ident, T data) -> void;
     auto applyDataUpdates() -> void;
+
+    auto parseAndApply(std::string path) -> bool;
 };
 
 extern std::vector<VideoManager*> videoManagers;

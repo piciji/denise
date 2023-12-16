@@ -276,15 +276,87 @@ VideoShaderLayout::Favourite::Favourite() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
+VideoShaderLayout::VideoShaderLayout() {
+    append(control,{0u, 0u}, 10);
+    append(favourite,{0u, 0u});
+}
+
 VideoPassLayout::Load::Load() {
     append(label,{0u, 0u}, 10);
     append(button,{0u, 0u});
 }
 
+VideoPassLayout::Filter::Filter() {
+    append(label,{0u, 0u}, 10);
+    append(unspec,{0u, 0u}, 10);
+    append(linear,{0u, 0u}, 10);
+    append(nearest,{0u, 0u});
+
+    GUIKIT::RadioBox::setGroup( unspec, linear, nearest );
+    setAlignment(0.5);
+}
+
+VideoPassLayout::Wrap::Wrap() {
+    append(label,{0u, 0u}, 10);
+    append(border,{0u, 0u}, 10);
+    append(edge,{0u, 0u}, 10);
+    append(repeat,{0u, 0u}, 10);
+    append(mirror,{0u, 0u});
+
+    GUIKIT::RadioBox::setGroup( border, edge, repeat, mirror );
+    setAlignment(0.5);
+}
+
+VideoPassLayout::Scale::Scale() {
+    append(label,{0u, 0u}, 10);
+    append(scaleInput,{0u, 0u}, 10);
+    append(scaleAbsolute,{0u, 0u}, 10);
+    append(scaleViewport,{0u, 0u});
+
+    GUIKIT::RadioBox::setGroup( scaleInput, scaleAbsolute, scaleViewport );
+    setAlignment(0.5);
+}
+
+VideoPassLayout::Absolute::Absolute() {
+    append(labelX,{0u, 0u}, 10);
+    append(lineX,{0u, 0u}, 10);
+    append(labelY,{0u, 0u}, 10);
+    append(lineY,{0u, 0u}, 10);
+    setAlignment(0.5);
+}
+
+VideoPassLayout::BufferType::BufferType() {
+    append(label,{0u, 0u}, 10);
+    append(unorm,{0u, 0u}, 10);
+    append(srgb,{0u, 0u}, 10);
+    append(fp,{0u, 0u});
+
+    GUIKIT::RadioBox::setGroup( unorm, srgb, fp );
+    setAlignment(0.5);
+}
+
+VideoPassLayout::Control::Control() {
+    append(lockToggle,{0u, 0u}, 10);
+    append(removePass,{0u, 0u}, 10);
+    append(appendPass,{0u, 0u}, 10);
+    setAlignment(0.5);
+}
+
 VideoPassLayout::VideoPassLayout() {
     append(load,{0u, 0u}, 10);
     append(filter,{0u, 0u}, 10);
-    append(scale,{0u, 0u});
+    append(wrap,{0u, 0u}, 10);
+    append(scaleModeX,{0u, 0u}, 10);
+    append(scaleModeY,{0u, 0u}, 10);
+    append(scaleX,{0u, 0u}, 10);
+    append(scaleY,{0u, 0u}, 10);
+    append(absolute,{0u, 0u}, 10);
+    append(bufferType,{0u, 0u}, 10);
+
+    append(alias,{0u, 0u}, 10);
+    append(mipmap,{0u, 0u}, 10);
+    append(modulo,{0u, 0u}, 10);
+    append(control,{0u, 0u});
 
     setPadding(8);
     setFont(GUIKIT::Font::system("bold"));
@@ -542,6 +614,22 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         layGlitch.vicII.phi0.active.onToggle( !_checked );
         layGlitch.vicII.ras.active.onToggle( !_checked );
         layGlitch.vicII.cas.active.onToggle( !_checked );
+    };
+
+    layShader.control.load.onActivate = [this]() {
+        static const std::vector<std::string> suffixList = {"slang", "slangp"};
+        auto path = GUIKIT::BrowserWindow()
+                .setTitle(trans->getA("select slang shader"))
+                .setPath( _settings->get<std::string>("slang_folder", "") )
+                .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
+                .open();
+
+        if (path.empty())
+            return;
+
+        if (vManager()->parseAndApply(path)) {
+
+        }
     };
 
     loadSettings(true);
@@ -870,6 +958,10 @@ auto VideoLayout::translate() -> void {
     layGlitch.vicII.phi0.active.setText(trans->get("phi_glitch",{}, true));
     layGlitch.vicII.ras.active.setText(trans->get("ras_glitch",{}, true));
     layGlitch.vicII.cas.active.setText(trans->get("cas_glitch",{}, true));
+
+    layShader.control.unload.setText( trans->getA("unload") );
+    layShader.control.save.setText( trans->getA("save") );
+    layShader.control.load.setText( trans->getA("load") );
 
     SliderLayout::scale({&layBase.view.saturation, &layBase.view.gamma, &layBase.view.brightness, &layBase.view.contrast, &layBase.view.phase, &layBase.view.scanlines, &layBase.view.interlace, &layBase.encoding.phaseError, &layBase.encoding.hanoverBars, &layBase.encoding.blur, &layBase.lumaDelay.lumaRise, &layBase.lumaDelay.lumaFall},
                         "-100 %");

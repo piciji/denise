@@ -176,10 +176,65 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
         Load();
     } load;
 
-    GUIKIT::Label filter;
-    GUIKIT::Label scale;
-    GUIKIT::Button removePass;
-    GUIKIT::Button appendPass;
+    struct Filter : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox unspec;
+        GUIKIT::RadioBox linear;
+        GUIKIT::RadioBox nearest;
+
+        Filter();
+    } filter;
+
+    struct Wrap : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox border;
+        GUIKIT::RadioBox edge;
+        GUIKIT::RadioBox repeat;
+        GUIKIT::RadioBox mirror;
+
+        Wrap();
+    } wrap;
+
+    struct Scale : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox scaleInput;
+        GUIKIT::RadioBox scaleAbsolute;
+        GUIKIT::RadioBox scaleViewport;
+
+        Scale();
+    } scaleModeX, scaleModeY;
+
+    SliderLayout scaleX;
+    SliderLayout scaleY;
+
+    struct Absolute : GUIKIT::HorizontalLayout {
+        GUIKIT::Label labelX;
+        GUIKIT::LineEdit lineX;
+        GUIKIT::Label labelY;
+        GUIKIT::LineEdit lineY;
+
+        Absolute();
+    } absolute;
+
+    struct BufferType : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox unorm;
+        GUIKIT::RadioBox srgb;
+        GUIKIT::RadioBox fp;
+        BufferType();
+    } bufferType;
+
+    GUIKIT::LineEdit alias;
+    GUIKIT::CheckBox mipmap;
+    GUIKIT::ComboButton modulo;
+
+    struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::CheckButton lockToggle;
+        GUIKIT::Button removePass;
+        GUIKIT::Button appendPass;
+
+        Control();
+    } control;
 
     VideoPassLayout();
 };

@@ -184,7 +184,7 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
     if(!file.open())
         return false;
     if(file.getSize() == 0)
-        return true;
+        return false;
 
     auto fp = file.getHandle();
     char chunk[1024];

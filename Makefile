@@ -22,7 +22,7 @@ include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
 objects += input audio video palette shader bass reverb panning audiorecord wavwriter sinc cosine cosineSSE driveSounds
-objects += guikit libAmi libC64 autoloader fileloader renderthread emuthread
+objects += guikit libAmi libC64 autoloader fileloader renderthread emuthread shaderParser
 objects += driver
 ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
@@ -235,6 +235,7 @@ obj/cmd.o:		program/cmd/cmd.cpp
 obj/palette.o:		program/video/palette.cpp
 obj/video.o:		program/video/manager.cpp
 obj/shader.o:		program/video/shader.cpp
+obj/shaderParser.o: program/video/shaderParser.cpp
 
 deps := $(patsubst %,obj/%.d,$(deps))
 objects := $(patsubst %,obj/%.o,$(objects))

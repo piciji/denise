@@ -5,6 +5,7 @@
 #include <string>
 #include "../../guikit/api.h"
 #include "../../driver/driver.h"
+#include "shaderParser.h"
 
 typedef DRIVER::Video::ShaderType ShaderFormat;
 #define SHADER_OFFSCREEN_WIDTH 4 // same value for left and right side
@@ -25,7 +26,8 @@ struct Shader {
     bool lace = false;
     GUIKIT::Image imageAperture;
     GUIKIT::Image imageShadowMask;
-    GUIKIT::Image imageSlotMask;    
+    GUIKIT::Image imageSlotMask;
+    ShaderParser* parser = nullptr;
     
     std::vector<std::string> loadErrors;
     
@@ -97,6 +99,8 @@ struct Shader {
     auto calcRadialScale(float intensity) -> float;    
     
     auto normaliseDimension( unsigned& widthScale, unsigned& heightScale ) -> void;
+
+    auto parseAndApply(std::string path) -> bool;
         
     Shader(VideoManager* vManager);
     ~Shader();
