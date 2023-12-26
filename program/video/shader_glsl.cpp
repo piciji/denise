@@ -1,6 +1,6 @@
 
 auto Shader::buildOutputEncodingGLSL() -> std::string {
-    bool c64Glitches = vManager->isC64() && vManager->useLineGlitch();
+    bool c64Glitches = vManager->useLineGlitch();
 
     std::string out = R"(
         #version 140

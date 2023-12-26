@@ -341,21 +341,18 @@ auto VideoManager::resetSettings() -> void {
 }
 
 auto VideoManager::getModeIdent() -> std::string {
-    //unsigned _region = settings->get<unsigned>("video_region"), 0u, {0u, 1u});
 	bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
-    bool _useSpectrum = settings->get<bool>("video_spectrum", true);    
-    unsigned _crtMode = settings->get<unsigned>("video_crt", (unsigned)CrtMode::None, {0u, 2u});
+    unsigned _crtMode = settings->get<unsigned>("video_crt", (unsigned)CrtMode::None, {0u, 3u});
     
     std::string modeIdent = _pal ? "_pal" : "_ntsc";
-
-    if (dynamic_cast<LIBC64::Interface*> (emulator) && _useSpectrum)
-        modeIdent += "_spectrum";
 
     if (_crtMode == (unsigned)CrtMode::Cpu)
         modeIdent += "_crtcpu";
     else if (_crtMode == (unsigned)CrtMode::Gpu)
-        modeIdent += "_crtgpu";    
-    
+        modeIdent += "_crtgpu";
+    else if (_crtMode == (unsigned)CrtMode::GpuExtern)
+        modeIdent += "_externgpu";
+
     return modeIdent;
 }
 

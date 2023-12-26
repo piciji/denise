@@ -2,22 +2,22 @@
 #pragma once
 
 struct ShaderPreset {
-    enum WrapType { WRAP_BORDER = 0, WRAP_EDGE, WRAP_REPEAT, WRAP_MIRRORED_REPEAT };
+    enum WrapMode { WRAP_BORDER = 0, WRAP_EDGE, WRAP_REPEAT, WRAP_MIRRORED_REPEAT };
     enum Filter { FILTER_UNSPEC = 0, FILTER_LINEAR, FILTER_NEAREST };
     enum BufferType { BUFFER_UNORM = 0, BUFFER_SRGB, BUFFER_FP };
-    enum ScaleType { SCALE_INPUT, SCALE_ABSOLUTE, SCALE_VIEWPORT };
+    enum ScaleType { SCALE_INPUT = 0, SCALE_ABSOLUTE, SCALE_VIEWPORT };
 
     int feedback;
 
     struct Pass {
-        int id;
         std::string src;
         Filter filter;
-        WrapType wrap;
+        WrapMode wrap;
         unsigned frameModulo;
         BufferType bufferType;
         bool mipmap;
         std::string alias;
+        bool inUse;
 
         ScaleType scaleTypeX;
         ScaleType scaleTypeY;
@@ -30,7 +30,7 @@ struct ShaderPreset {
 
     struct Lut {
         Filter filter;
-        WrapType wrap;
+        WrapMode wrap;
         std::string id;
         std::string path;
         bool mipmap;
@@ -46,8 +46,19 @@ struct ShaderPreset {
         float step;
         std::string id;
         std::string desc;
+
+        auto isDescriptor() -> bool {
+            return (minimum == maximum) || ((maximum == step) && (step <= 0.01));
+        }
     };
     std::vector<Param> params;
+
+    auto clear() {
+        params.clear();
+        luts.clear();
+        passes.clear();
+        feedback = -1;
+    }
 };
 
 struct CropPass {        

@@ -523,6 +523,7 @@ struct ImageView : Widget {
     auto setUri( std::string uri ) -> void;
 
     auto uri() -> std::string { return state.uri; };
+    auto image() -> Image* { return state.image; }
 
     struct {
         Image* image = nullptr;
@@ -1363,6 +1364,7 @@ struct File {
 
     static auto getPath( std::string _fn, bool returnSlashIfError = false ) -> std::string;
     static auto resolveRelativePath(std::string _fn, std::string relPath ) -> std::string;
+    static auto buildRelativePath(std::string refPath, std::string targetPath) -> std::string;
     static auto isAbsolute(const std::string& path) -> bool;
 
     auto setFile(std::string filePath) -> void;
@@ -1431,6 +1433,8 @@ struct Settings {
     auto add(Setting* setting) -> void;
     auto remove(const std::string& ident) -> bool;
     auto clear() -> void;
+    auto hasDepthError() -> bool { return errorDepth; }
+    auto getBrokenPaths() -> std::vector<std::string>& { return brokenPaths; }
 
     template<typename T> class type_info{};
 
@@ -1483,9 +1487,11 @@ private:
     auto stripCommentsAndDetectIncludes(std::string& line) -> bool;
 
     std::vector<std::string> references;
+    std::vector<std::string> brokenPaths;
     std::string path;
     std::vector<Setting*> list;
     void* guid = nullptr;
+    bool errorDepth = false;
 };
 
 struct Translation {
@@ -1525,6 +1531,7 @@ struct String {
     static auto convertIntToHex( int number, bool prepend_0x = true ) -> std::string;
     static auto convertHexToInt( std::string hex, int defaultValueByFailure = 0 ) -> int;
     static auto formatFloatingPoint(double value, uint8_t roundDecimal = 0, bool cutTrailingZero = false) -> std::string;
+    static auto countDecimalPlaces(double value, int& places) -> int;
     static auto prependZero( std::string str, unsigned width ) -> std::string;
     static auto prependLeft( std::string str, char placeHolder, unsigned width ) -> std::string;
     static auto removeDuplicates( std::vector<std::string>& strs ) -> void;
@@ -1566,8 +1573,8 @@ struct Vector {
 		return -1;
 	}
     template<typename T>
-    static auto combine(std::vector<T>& target, const std::vector<T>& source) -> void {
-        target.insert( target.end(), source.begin(), source.end() );
+    static auto combine(std::vector<T>& target, const std::vector<T>& source, bool prepend = false) -> void {
+        target.insert( prepend ? target.begin() : target.end(), source.begin(), source.end() );
     }
     template <typename T> 
     static auto concat(std::vector<T>& v1, std::vector<T>& v2) -> std::vector<T> {

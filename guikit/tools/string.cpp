@@ -267,6 +267,28 @@ auto String::convertHexToInt( std::string hex, int defaultValueByFailure ) -> in
     return _out;
 }
 
+auto String::countDecimalPlaces(double value, int& places) -> int {
+    enum { Point, Comma } type;
+    std::string str = std::to_string( value );
+
+    if (str.find('.') != std::string::npos)
+        type = Point;
+    else if (str.find(',') != std::string::npos)
+        type = Comma;
+    else {
+        places = str.size();
+        return 0;
+    }
+
+    std::string strPlaces = str.substr(0, str.find( type == Point ? '.' : ','));
+    places = strPlaces.size();
+
+    str = str.erase(0, str.find( type == Point ? '.' : ',') + 1);
+    str = str.substr(0, str.find_last_not_of('0') + 1);
+
+    return str.size();
+}
+
 auto String::formatFloatingPoint(double value, uint8_t roundDecimal, bool cutTrailingZero) -> std::string {
     
 	if (value == 0.0)
@@ -296,6 +318,13 @@ auto String::formatFloatingPoint(double value, uint8_t roundDecimal, bool cutTra
             if (str.find(type == Point ? '.' : ',') == str.size() - 1)
                 str = str.substr(0, str.size() - 1);
         }
+
+        return str;
+
+    } else if (cutTrailingZero) {
+        str = str.substr(0, str.find_last_not_of('0') + 1);
+        if (str.find(type == Point ? '.' : ',') == str.size() - 1)
+            str = str.substr(0, str.size() - 1);
 
         return str;
     }

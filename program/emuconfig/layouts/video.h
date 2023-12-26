@@ -1,4 +1,6 @@
 
+#define PARAMS_PER_PAGE 10
+
 struct VideoBaseLayout : GUIKIT::VerticalLayout {
 
     struct View : GUIKIT::FramedVerticalLayout {
@@ -141,23 +143,40 @@ struct VideoGlitchLayout : GUIKIT::VerticalLayout {
 
 struct VideoShaderLayout : GUIKIT::VerticalLayout {
 
-    struct Control : GUIKIT::FramedHorizontalLayout {
-        GUIKIT::Label loaded;
-        GUIKIT::Button unload;
+    struct Main : GUIKIT::FramedVerticalLayout {
+        struct Control : GUIKIT::HorizontalLayout {
+            GUIKIT::Button unload;
+            GUIKIT::Button prependPreset;
+            GUIKIT::Button appendPreset;
 
-        GUIKIT::Widget spacer;
-        GUIKIT::Button save;
-        GUIKIT::Button load;
+            GUIKIT::Widget spacer;
+            GUIKIT::Button apply;
+            GUIKIT::Button save;
+            GUIKIT::Button load;
 
-        Control();
-    } control;
+            Control();
+        } control;
+
+        struct Info : GUIKIT::HorizontalLayout {
+            GUIKIT::Label label;
+            GUIKIT::Label loaded;
+            GUIKIT::Button toParams;
+
+            Info();
+        } info;
+
+        Main();
+
+        std::vector<GUIKIT::Label*> brokenLabels;
+    } main;
 
     struct Favourite : GUIKIT::FramedVerticalLayout {
         GUIKIT::ListView list;
 
         struct Control : GUIKIT::HorizontalLayout {
-            GUIKIT::Button add;
+            GUIKIT::Widget spacer;
             GUIKIT::Button remove;
+            GUIKIT::Button add;
 
             Control();
         } control;
@@ -169,69 +188,49 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
 };
 
 struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
-    struct Load : GUIKIT::HorizontalLayout {
-        GUIKIT::Label label;
-        GUIKIT::Button button;
 
-        Load();
-    } load;
+    struct Settings : GUIKIT::HorizontalLayout {
+        struct Identifier : GUIKIT::VerticalLayout {
+            GUIKIT::Label fileIdent;
+            GUIKIT::Label filter;
+            GUIKIT::Label wrap;
+            GUIKIT::Label bufferType;
+            GUIKIT::Label mipmap;
+            GUIKIT::Label modulo;
+            GUIKIT::Label scaleX;
+            GUIKIT::Label scaleY;
 
-    struct Filter : GUIKIT::HorizontalLayout {
-        GUIKIT::Label label;
-        GUIKIT::RadioBox unspec;
-        GUIKIT::RadioBox linear;
-        GUIKIT::RadioBox nearest;
+            Identifier();
+        } identifier;
 
-        Filter();
-    } filter;
+        struct Data : GUIKIT::VerticalLayout {
+            GUIKIT::Label fileIdent;
 
-    struct Wrap : GUIKIT::HorizontalLayout {
-        GUIKIT::Label label;
-        GUIKIT::RadioBox border;
-        GUIKIT::RadioBox edge;
-        GUIKIT::RadioBox repeat;
-        GUIKIT::RadioBox mirror;
+            struct Filter : GUIKIT::HorizontalLayout {
+                GUIKIT::RadioBox unspec;
+                GUIKIT::RadioBox linear;
+                GUIKIT::RadioBox nearest;
 
-        Wrap();
-    } wrap;
+                Filter();
+            } filter;
 
-    struct Scale : GUIKIT::HorizontalLayout {
-        GUIKIT::Label label;
-        GUIKIT::RadioBox scaleInput;
-        GUIKIT::RadioBox scaleAbsolute;
-        GUIKIT::RadioBox scaleViewport;
+            GUIKIT::Label wrap;
+            GUIKIT::Label type;
+            GUIKIT::Label mipmap;
+            GUIKIT::Label modulo;
+            GUIKIT::Label scaleX;
+            GUIKIT::Label scaleY;
 
-        Scale();
-    } scaleModeX, scaleModeY;
+            Data();
+        } data;
 
-    SliderLayout scaleX;
-    SliderLayout scaleY;
-
-    struct Absolute : GUIKIT::HorizontalLayout {
-        GUIKIT::Label labelX;
-        GUIKIT::LineEdit lineX;
-        GUIKIT::Label labelY;
-        GUIKIT::LineEdit lineY;
-
-        Absolute();
-    } absolute;
-
-    struct BufferType : GUIKIT::HorizontalLayout {
-        GUIKIT::Label label;
-        GUIKIT::RadioBox unorm;
-        GUIKIT::RadioBox srgb;
-        GUIKIT::RadioBox fp;
-        BufferType();
-    } bufferType;
-
-    GUIKIT::LineEdit alias;
-    GUIKIT::CheckBox mipmap;
-    GUIKIT::ComboButton modulo;
+        Settings();
+    } settings;
 
     struct Control : GUIKIT::HorizontalLayout {
-        GUIKIT::CheckButton lockToggle;
-        GUIKIT::Button removePass;
-        GUIKIT::Button appendPass;
+        GUIKIT::ImageView up;
+        GUIKIT::ImageView down;
+        GUIKIT::Button hide;
 
         Control();
     } control;
@@ -239,10 +238,25 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
     VideoPassLayout();
 };
 
-struct VideoLayout : GUIKIT::FramedHorizontalLayout {
+struct VideoParamLayout : GUIKIT::FramedVerticalLayout {
+    GUIKIT::VerticalLayout params;
+
+    struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::Widget spacer;
+        GUIKIT::Button previous;
+        GUIKIT::Button next;
+
+        Control();
+    } control;
+
+    VideoParamLayout();
+};
+
+struct VideoLayout : GUIKIT::HorizontalLayout {
 
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
+    GUIKIT::FramedVerticalLayout layNav;
     GUIKIT::TreeView moduleTree;
     GUIKIT::SwitchLayout moduleSwitch;
     GUIKIT::TreeViewItem tviBase;
@@ -250,6 +264,7 @@ struct VideoLayout : GUIKIT::FramedHorizontalLayout {
         GUIKIT::TreeViewItem tviGlitch;
 
     GUIKIT::TreeViewItem tviShader;
+    std::vector<GUIKIT::TreeViewItem*> tviPasses;
     GUIKIT::TreeViewItem tviParams;
 
     VideoBaseLayout layBase;
@@ -257,18 +272,43 @@ struct VideoLayout : GUIKIT::FramedHorizontalLayout {
     VideoGlitchLayout layGlitch;
 
     VideoShaderLayout layShader;
+    VideoPassLayout layPass;
+    VideoParamLayout layParam;
 
     GUIKIT::Image imgFolderOpen;
     GUIKIT::Image imgFolderClosed;
     GUIKIT::Image imgDocument;
+    GUIKIT::Image pageUp;
+    GUIKIT::Image pageDown;
+    GUIKIT::Image pageUpGray;
+    GUIKIT::Image pageDownGray;
+
+    unsigned selectedPassId;
+    unsigned selectedParamId;
+
+    struct TviParam {
+        GUIKIT::TreeViewItem* tvi;
+        unsigned starts;
+        unsigned counts;
+    };
+    std::vector<TviParam> params;
+
+    SliderLayoutAlt* paramSliders[PARAMS_PER_PAGE];
     	
     auto translate() -> void;
     auto sliderIdent() -> std::string;
     auto updatePresets(bool reloadDriver = true) -> void;
     auto updateVisibillity() -> void;
     auto loadSettings(bool init = false) -> void;
+    auto buildShaderUI(ShaderPreset* preset) -> void;
+    auto buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> void;
+    auto buildParams(TviParam& tviParam) -> void;
+    auto countFloatingPoint(ShaderPreset::Param& param, int& places, int& decimalPlaces) -> void;
+    auto updateMoveImg() -> void;
+    auto clearBrokenPaths() -> void;
+    auto showBrokenPaths(std::vector<std::string>& brokenPaths) -> void;
     
-    template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<void ( T value )> callBack, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
+    template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }
     
     VideoLayout(TabWindow* tabWindow);

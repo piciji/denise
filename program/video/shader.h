@@ -100,7 +100,16 @@ struct Shader {
     
     auto normaliseDimension( unsigned& widthScale, unsigned& heightScale ) -> void;
 
-    auto parseAndApply(std::string path) -> bool;
+    auto loadPreset(std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto addPreset(std::string path, bool prepend, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto savePreset(std::string path) -> bool;
+    auto getPreset() -> ShaderPreset*;
+    auto clearPreset() -> void;
+    auto getPresetPath() -> std::string;
+    auto getPresetPathCombined() -> std::string;
+    auto movePass(unsigned& passId, bool up) -> void;
+    auto togglePassUsage(unsigned passId) -> ShaderPreset::Pass*;
+    auto setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void;
         
     Shader(VideoManager* vManager);
     ~Shader();

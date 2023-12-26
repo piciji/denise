@@ -139,9 +139,12 @@ VideoManager::VideoManager(Emulator::Interface* emulator) : shader(this) {
 }
 
 auto VideoManager::update() -> void {
-	
+
+    bool _lcMode = crtMode == CrtMode::Cpu || crtMode == CrtMode::Gpu
+            || ( (crtMode == CrtMode::GpuExtern) && (useLumaDelay() || useLineGlitch() || useRegionEncoding() ) );
+
     if (!colorSpectrum || !isC64() ) { // palette
-        if ( useCrtMode() ) {
+        if ( _lcMode ) {
             convertPaletteToLumaChroma();
             // to get color table with applied base properties for list view colors in GUI
             convertLumaChromaToRGB();
@@ -156,11 +159,11 @@ auto VideoManager::update() -> void {
 
     if ( useCrtMode() ) {
         preCalcGamma();
-		
-		if ((countColorBits == 4) && useLumaDelay())
-            preCalcLumaDelay();
-        
+
         if (crtMode == CrtMode::Cpu) {
+            if ((countColorBits == 4) && useLumaDelay())
+                preCalcLumaDelay();
+
             injectPhaseTransferError();
             convertLumaChromaToInteger();   
         }             
@@ -354,7 +357,7 @@ auto VideoManager::preCalcGamma() -> void {
     double scanlineShade = 1.0 - (double)scanlines / 100.0;
     
 	// we precalculate the requested adjustments for each color state.
-	// besides we apply adjustments on out of range color values in order to 
+	// besides, we apply adjustments on out-of-range color values to
 	// use this later on intermediate values for more precise final results
 	for(int c = 0; c < (256 * 3); c++) {
 		
@@ -375,13 +378,13 @@ auto VideoManager::preCalcGamma() -> void {
 		// that's why we precalculate the result of mixing two colors too.
 		// formula: (a + b) / 2
 		// if there is no shade, the scanline is black and fully visible. 
-		// otherwise the original mixed color will be visible.
+		// otherwise, the original mixed color will be visible.
 		preCalcScanline[c * 2] = uclamp8( c1 * scanlineShade ); 
         
         preCalcScanlineF[c * 2] = preCalcScanline[c * 2] / 255.0;
 
 		// the mixing formula above could produce uneven results: x.5
-		// of course the color channel can be an integer value only, but
+		// the color channel can be an integer value only, but
 		// applying adjustments on a virtual fractional value results in more
 		// precise final values.
 		c1 = (double)((c - 256) + 0.5);
@@ -395,8 +398,8 @@ auto VideoManager::preCalcGamma() -> void {
         
         preCalcScanlineF[c * 2 + 1] = preCalcScanline[c * 2 + 1] / 255.0;
 	}
-    
-    if ( !shader.recreate )
+
+    if ( !shader.recreate && useCrtMode() )
         shader.transferGammaAndScanlines();
 }
 
@@ -1115,9 +1118,13 @@ auto VideoManager::useLumaDelay() -> bool {
 	return lumaFall > 0.0 || lumaRise > 0.0;
 }
 
+auto VideoManager::useRegionEncoding() -> bool {
+    return hanoverBars || hanoverBarsAlt || phaseError > 0.0;
+}
+
 auto VideoManager::useLineGlitch() -> bool {
 	
-	return baGlitch > 0.0 || aecGlitch > 0.0 || phi0Glitch > 0.0 || casGlitch > 0.0 || rasGlitch > 0.0;
+	return isC64() && (baGlitch > 0.0 || aecGlitch > 0.0 || phi0Glitch > 0.0 || casGlitch > 0.0 || rasGlitch > 0.0);
 }
 
 template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void {
@@ -1658,8 +1665,44 @@ auto VideoManager::free() -> void {
         delete[] tempDestHold;
 }
 
-auto VideoManager::parseAndApply(std::string path) -> bool {
-    return shader.parseAndApply(path);
+auto VideoManager::loadPreset(std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+    return shader.loadPreset(path, brokenPaths);
+}
+
+auto VideoManager::addPreset(std::string path, bool prepend, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+    return shader.addPreset(path, prepend, brokenPaths);
+}
+
+auto VideoManager::savePreset(std::string path) -> bool {
+    return shader.savePreset(path);
+}
+
+auto VideoManager::getPreset() -> ShaderPreset* {
+    return shader.getPreset();
+}
+
+auto VideoManager::clearPreset() -> void {
+    shader.clearPreset();
+}
+
+auto VideoManager::getPresetPath() -> std::string {
+    return shader.getPresetPath();
+}
+
+auto VideoManager::getPresetPathCombined() -> std::string {
+    return shader.getPresetPathCombined();
+}
+
+auto VideoManager::movePass(unsigned& passId, bool up) -> void {
+    shader.movePass(passId, up);
+}
+
+auto VideoManager::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
+    return shader.togglePassUsage(passId);
+}
+
+auto VideoManager::setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void {
+    shader.setPassFilter(passId, filter);
 }
 
 VideoManager::~VideoManager() {

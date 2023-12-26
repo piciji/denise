@@ -254,6 +254,7 @@ struct VideoManager {
     auto useLumaDelay() -> bool;
     auto useLineGlitch() -> bool;
     auto usePostShading() -> bool;
+    auto useRegionEncoding() -> bool;
     // seter props
     auto usePal(bool state) -> void; // pal or ntsc
     auto useColorSpectrum(bool state) -> void; // color spectrum or palette
@@ -313,7 +314,16 @@ struct VideoManager {
     template<typename T> auto updateData(std::string ident, T data) -> void;
     auto applyDataUpdates() -> void;
 
-    auto parseAndApply(std::string path) -> bool;
+    auto loadPreset(std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto addPreset(std::string path, bool prepend, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto savePreset(std::string path) -> bool;
+    auto getPreset() -> ShaderPreset*;
+    auto getPresetPath() -> std::string;
+    auto getPresetPathCombined() -> std::string;
+    auto clearPreset() -> void;
+    auto movePass(unsigned& passId, bool up) -> void;
+    auto togglePassUsage(unsigned passId) -> ShaderPreset::Pass*;
+    auto setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void;
 };
 
 extern std::vector<VideoManager*> videoManagers;

@@ -126,4 +126,10 @@ extern uint8_t hide[528];
 
 extern uint8_t fullscreen[426];
 
+extern uint8_t pageDown[279];
+extern uint8_t pageUp[277];
+
+extern uint8_t pageDownGray[288];
+extern uint8_t pageUpGray[286];
+
 }

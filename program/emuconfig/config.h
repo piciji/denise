@@ -6,6 +6,7 @@ struct InputMapping;
 struct FileSetting;
 struct FirmwareManager;
 
+#include <cmath>
 #include "../../guikit/api.h"
 #include "../program.h"
 #include "layouts/model.h"
@@ -19,6 +20,7 @@ namespace EmuConfigView {
 struct TabWindow;
 	
 #include "../config/slider.h"
+#include "../config/sliderAlt.h"
 #include "layouts/system.h"
 #include "layouts/configurations.h"
 #include "layouts/geometry.h"

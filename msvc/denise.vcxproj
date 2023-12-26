@@ -255,6 +255,7 @@
     <ClInclude Include="..\program\video\manager.h" />
     <ClInclude Include="..\program\video\palette.h" />
     <ClInclude Include="..\program\video\shader.h" />
+    <ClInclude Include="..\program\video\shaderParser.h" />
     <ClInclude Include="..\program\view\message.h" />
     <ClInclude Include="..\program\view\status.h" />
     <ClInclude Include="..\program\view\view.h" />
@@ -1565,6 +1566,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\program\video\shader.cpp" />
+    <ClCompile Include="..\program\video\shaderParser.cpp" />
     <ClCompile Include="..\program\video\shader_glsl.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>

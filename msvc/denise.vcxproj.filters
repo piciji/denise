@@ -991,6 +991,9 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\rgcd.h">
       <Filter>emulation\libc64\expansionPort\gameCart</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\video\shaderParser.h">
+      <Filter>program\video</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -1865,6 +1868,9 @@
     </ClCompile>
     <ClCompile Include="..\guikit\winapi\interProcess.cpp">
       <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\video\shaderParser.cpp">
+      <Filter>program\video</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

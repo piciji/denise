@@ -32,6 +32,16 @@ auto pImageView::onLink() -> void {
         ShellExecute(hwnd, L"open",  utf16_t(imageView.state.uri), NULL, NULL, SW_SHOWNORMAL );
 }
 
+auto pImageView::setEnabled(bool enabled) -> void {
+    if (hwnd)
+        InvalidateRect(hwnd, 0, false);
+}
+
+auto pImageView::setImage(Image* image) -> void {
+    if (hwnd)
+        InvalidateRect(hwnd, 0, false);
+}
+
 auto pImageView::rebuild() -> void {
     if(!needRebuild())
         return;
@@ -39,6 +49,19 @@ auto pImageView::rebuild() -> void {
     create();
     InvalidateRect(hwnd, 0, false);
     pWidget::rebuild();
+}
+
+auto pImageView::updateCursor() -> void {
+    if (hCursor)
+        DestroyCursor( hCursor );
+
+    if (imageView.enabled() && (!imageView.state.uri.empty() || imageView.onClick) )
+        hCursor = LoadCursor(0, IDC_HAND);
+    else
+        hCursor = LoadCursor(0, IDC_ARROW);
+
+    if (hCursor)
+        SetCursor(hCursor);
 }
 
 auto CALLBACK pImageView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
@@ -86,17 +109,7 @@ auto CALLBACK pImageView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
             return 0;
         }
         case WM_SETCURSOR:
-            HCURSOR hCursor;
-            if (imageView->state.uri == "") {
-                hCursor = LoadCursor(0, IDC_ARROW);
-            } else {
-                hCursor = LoadCursor(0, IDC_HAND);
-            }
-
-            if (hCursor) {
-                SetCursor(hCursor);
-            }
-
+            imageView->p.updateCursor();
             return 1;
 
         case WM_NCHITTEST:

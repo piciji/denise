@@ -1,6 +1,6 @@
 
 auto Shader::buildOutputEncodingHLSL() -> std::string {
-    bool c64Glitches = vManager->isC64() && vManager->useLineGlitch();
+    bool c64Glitches = vManager->useLineGlitch();
 
     std::string out = R"(
         uniform sampler t0S;

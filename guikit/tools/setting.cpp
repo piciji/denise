@@ -41,6 +41,8 @@ auto Settings::clear() -> void {
     
     list.clear();
     references.clear();
+    brokenPaths.clear();
+    errorDepth = false;
 }
 
 auto Settings::setSaveable( const std::string& ident, bool state ) -> void {
@@ -103,7 +105,7 @@ auto Settings::set(type_info<std::string> t, const std::string& ident, std::stri
 auto Settings::get(type_info<bool> t, const std::string& ident, bool defaultValue) -> bool {
     Setting* setting = find( ident );
     if (!setting) return defaultValue;
-	return setting->value != "0";
+	return setting->value != "0" && setting->value != "false";
 }
 
 auto Settings::get(type_info<int> t, const std::string& ident, int defaultValue) -> int {
@@ -177,12 +179,16 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
     if (depth == 0) {
         this->path = path;
         clear();
-    } else if (depth > 16)
+    } else if (depth > 16) {
+        errorDepth = true;
         return false;
+    }
 
     File file(path);
-    if(!file.open())
+    if(!file.open()) {
+        brokenPaths.push_back(path);
         return false;
+    }
     if(file.getSize() == 0)
         return false;
 
@@ -225,6 +231,7 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
             String::trim(key);
             String::removeQuote(key);
             setting = add( key );
+            setting->set(val);
             if (depth > 0)
                 setting->saveable = false;
         }
@@ -241,7 +248,7 @@ auto Settings::stripCommentsAndDetectIncludes(std::string& line) -> bool {
     std::size_t startComment = line.find_first_of( '#' );
     std::size_t startLiteral = line.find_first_of( '\"' );
 
-    if ((startLiteral != std::string::npos) && (startLiteral < startComment)) {
+    if ((startLiteral != std::string::npos) && (startComment != std::string::npos) && (startLiteral < startComment)) {
         std::string temp = line.substr(startLiteral + 1);
         std::size_t endLiteral = temp.find_first_of( '\"' );
 
@@ -250,7 +257,9 @@ auto Settings::stripCommentsAndDetectIncludes(std::string& line) -> bool {
             return false;
         }
     }
-    line.erase(startComment); // it's a comment
+    if (startComment != std::string::npos)
+        line.erase(startComment); // it's a comment
+
     return false;
 }
 

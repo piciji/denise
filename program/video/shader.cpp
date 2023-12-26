@@ -1,3 +1,4 @@
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 
@@ -866,20 +867,97 @@ auto Shader::buildBloom(ShaderFormat& format, bool phase1) -> std::string {
     return "";
 }
 
-auto Shader::parseAndApply(std::string path) -> bool {
+auto Shader::addPreset(std::string path, bool prepend, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+    if (!parser)
+        return loadPreset(path, brokenPaths);
+
     ShaderParser* tempParser = new ShaderParser;
 
-    if (!tempParser->loadPreset(path)) {
+    bool res = tempParser->loadPreset(path);
+    GUIKIT::Vector::combine(brokenPaths, tempParser->brokenPaths);
+
+    if (!res) {
         delete tempParser;
-        return false;
+        return nullptr;
     }
 
-    if (parser)
+    ShaderPreset* preset = &parser->shaderPreset;
+
+    parser->addPreset( tempParser, prepend );
+
+    delete tempParser;
+    return preset;
+}
+
+auto Shader::loadPreset(std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+    ShaderParser* tempParser = new ShaderParser;
+
+    bool res = tempParser->loadPreset(path);
+    GUIKIT::Vector::combine(brokenPaths, tempParser->brokenPaths);
+
+    if (!res) {
+        delete tempParser;
+        return nullptr;
+    }
+
+    if (parser) {
+        parser->clear();
         delete parser;
+    }
 
     parser = tempParser;
 
-    return true;
+    return &parser->shaderPreset;
+}
+
+auto Shader::savePreset(std::string path) -> bool {
+    if (parser)
+        return parser->savePreset(path);
+
+    return false;
+}
+
+auto Shader::getPreset() -> ShaderPreset* {
+    if (parser)
+        return &parser->shaderPreset;
+
+    return nullptr;
+}
+
+auto Shader::clearPreset() -> void {
+    if (parser)
+        parser->clear();
+}
+
+auto Shader::getPresetPathCombined() -> std::string {
+    if (!parser)
+        return "";
+
+    return parser->getPresetPathCombined();
+}
+
+auto Shader::getPresetPath() -> std::string {
+    if (parser)
+        return parser->getPresetPath();
+
+    return "";
+}
+
+auto Shader::movePass(unsigned& passId, bool up) -> void {
+    if (parser)
+        parser->movePass(passId, up);
+}
+
+auto Shader::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
+    if (parser)
+        return parser->togglePassUsage(passId);
+
+    return nullptr;
+}
+
+auto Shader::setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void {
+    if (parser)
+        parser->setPassFilter(passId, filter);
 }
 
 Shader::Shader(VideoManager* vManager) {

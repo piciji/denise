@@ -632,8 +632,11 @@ auto File::resolveRelativePath(std::string _fn, std::string relPath ) -> std::st
     utf16_t wBasePath(basePath.c_str());
     wchar_t absPath[MAX_PATH];
 
-    if (_wfullpath(absPath, wBasePath, MAX_PATH))
-        return utf8_t(absPath);
+    if (_wfullpath(absPath, wBasePath, MAX_PATH)) {
+        std::string fullPath = utf8_t(absPath);
+        std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
+        return fullPath;
+    }
 #else
     if (isAbsolute(basePath))
         return basePath;
@@ -660,4 +663,35 @@ auto File::isAbsolute(const std::string& path) -> bool {
 #endif
     }
     return false;
+}
+
+auto File::buildRelativePath(std::string refPath, std::string targetPath) -> std::string {
+    int length = targetPath.size();
+    if (refPath.size() < length)
+        length = refPath.size();
+
+    int matchPos = 0;
+    for(int i = 0; i < length; i++) {
+        if (refPath[i] != targetPath[i]) {
+            break;
+        }
+
+        if (refPath[i] == '/')
+            matchPos = i + 1;
+    }
+
+    if (matchPos == 0)
+        return targetPath;
+
+    refPath = refPath.substr(matchPos);
+    targetPath = targetPath.substr(matchPos);
+
+    auto parts = String::split(refPath, '/');
+    if (parts.size() > 1) {
+        for(int i = 0; i < (parts.size() - 1); i++ ) {
+            targetPath = "../" + targetPath;
+        }
+    }
+
+    return targetPath;
 }
