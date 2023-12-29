@@ -16,12 +16,9 @@ struct ShaderPass;
 struct Shader {
 
     VideoManager* vManager;
-    std::vector<ShaderPass*> externalPasses;
     std::vector<ShaderPass*> internalPasses;
-    std::vector<ShaderPass*> internalPassesPost;
 
     ShaderPass* primaryPass = nullptr;
-    bool externalLoaded = false;
     bool recreate = true;
     bool lace = false;
     GUIKIT::Image imageAperture;
@@ -34,14 +31,7 @@ struct Shader {
     auto sendToDriver(bool retry = false) -> bool;
     auto getPrimary(std::vector<ShaderPass*>& passes) -> ShaderPass*;
     auto loadInternal() -> void;
-    auto loadExternal() -> bool;
-    auto addActiveShader(std::string shader) -> void;
-    auto removeActiveShader(std::string shader) -> void;
-    auto getActiveShaders() -> std::vector<std::string>;
-    auto mapPass(GUIKIT::Setting* theme, ShaderPass* pass, std::string path = "") -> void;
-    auto loadShader(std::string path, std::string shaderFile, ShaderPass* pass) -> std::string;
     auto clean(std::vector<ShaderPass*>& passes) -> void;
-    auto removeIncompleteShader() -> void;
     auto setAttribute(std::string program, std::string attribute, float value) -> void;
     auto setAttribute(std::string program, std::string attribute, int value) -> void;
 
@@ -100,10 +90,11 @@ struct Shader {
     
     auto normaliseDimension( unsigned& widthScale, unsigned& heightScale ) -> void;
 
-    auto loadPreset(std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto loadPreset(const std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
     auto addPreset(std::string path, bool prepend, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
     auto savePreset(std::string path) -> bool;
     auto getPreset() -> ShaderPreset*;
+    auto getPreset(std::vector<std::string>& brokenPaths) -> ShaderPreset*;
     auto clearPreset() -> void;
     auto getPresetPath() -> std::string;
     auto getPresetPathCombined() -> std::string;

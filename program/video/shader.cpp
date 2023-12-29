@@ -25,24 +25,15 @@ auto Shader::sendToDriver(bool retry) -> bool {
         delete primaryPass;
         primaryPass = nullptr;
     }
-	
-    auto extPrimary = getPrimary(externalPasses);
+
     auto intPrimary = getPrimary(internalPasses);
 
-    if (extPrimary || intPrimary) {
+    if (intPrimary) {
 
         primaryPass = new ShaderPass;
         primaryPass->primary = true;
         primaryPass->internalFormatMatchesData = false;
 
-        if (extPrimary) {            
-            primaryPass->format = extPrimary->format;
-            primaryPass->wrap = extPrimary->wrap;
-            primaryPass->modulo = extPrimary->modulo;
-			primaryPass->filter = extPrimary->filter;
-            primaryPass->relativeHeight = extPrimary->relativeHeight;
-            primaryPass->relativeWidth = extPrimary->relativeWidth;
-        }
 
         if (intPrimary) {
             primaryPass->format = intPrimary->format;
@@ -60,16 +51,6 @@ auto Shader::sendToDriver(bool retry) -> bool {
     for (auto pass : internalPasses) {
         if (!pass->primary)
             out.push_back(pass);
-    }   
-    
-	for (auto pass : externalPasses) {
-        if (!pass->primary)
-            out.push_back(pass);
-    }  
-
-    for (auto pass : internalPassesPost) {
-        if (!pass->primary)
-            out.push_back(pass);
     }
     
 	videoDriver->setShader( out );    
@@ -81,8 +62,7 @@ auto Shader::sendToDriver(bool retry) -> bool {
             error += "\n" + pass->ident + ": " + pass->error;
 
     if (!retry && !error.empty()) {        
-        view->message->error( error );   
-        removeIncompleteShader();
+        view->message->error( error );
         sendToDriver( true ); // try again
     } else
         transferDataToShader();
@@ -96,132 +76,85 @@ auto Shader::getPrimary(std::vector<ShaderPass*>& passes) -> ShaderPass* {
             return pass;  
     
     return nullptr;
-}  
-
-auto Shader::removeIncompleteShader() -> void {
-			
-	std::vector<std::string> shaders;
-	std::vector<ShaderPass*> usePasses;		
-	
-	for (auto pass : externalPasses) {
-		if (!pass->error.empty())
-			continue;
-		
-		for(auto pass2 : externalPasses) {
-			
-			if (pass2->error.empty())
-				continue;
-			
-			if (pass->ident == pass2->ident) {
-				pass->error = "error";				
-				break;
-			}
-		}
-	}
-	
-	for (auto pass : externalPasses) {
-		if (pass->error.empty()) {
-			usePasses.push_back( pass );
-			if (!pass->primary)
-				shaders.push_back( pass->ident );	
-		} else
-			delete pass;
-	}
-	
-	externalPasses = usePasses;		
-
-	if (externalPasses.size() == 1)
-        clean(externalPasses); 
-	
-	GUIKIT::String::removeDuplicates( shaders );
-	
-    std::string shaderList = "";    
-	for(auto& s : shaders) {
-        
-        if (!shaderList.empty())
-            shaderList += "###";
-        
-		shaderList += s;
-    }
-	
-	vManager->settings->set<std::string>("shader", shaderList);
-}      
+}
 
 auto Shader::loadInternal() -> void {
 	
     clean(internalPasses);
-    clean(internalPassesPost);
     auto format = videoDriver->shaderFormat();
     if(format == DRIVER::Video::ShaderType::NotSupported)
         return;
     
     auto filter = vManager->settings->get<unsigned>( "video_filter", 1u, {0u, 1u});
     ShaderPass* pass;
+    ShaderPreset* preset = new ShaderPreset;
+    preset->feedback = -1;
+    preset->bufferType = ShaderPreset::BUFFER_FP;
+
+    ShaderPreset::Pass passX;
+    passX.inUse = true;
+    passX.native = true;
+    passX.wrap = ShaderPreset::WRAP_BORDER;
+    passX.frameModulo = 0;
+    passX.bufferType = ShaderPreset::BUFFER_FP;
+    passX.scaleTypeX = ShaderPreset::SCALE_INPUT;
+    passX.scaleTypeY = ShaderPreset::SCALE_INPUT;
 
 	if (vManager->crtMode == VideoManager::CrtMode::Gpu) {
-		
-		pass = new ShaderPass;
-        addBaseProps(pass);
-		pass->fragment = buildOutputEncoding(format);
-		pass->ident = "outputEncoding";
-		pass->filter = "nearest";
-		pass->relativeWidth = vManager->firSharp == 0 ? 100 : 200;
-        pass->relativeHeight = 100;
-		internalPasses.push_back( pass );
+        passX.src = buildOutputEncoding(format);
+        passX.filter = ShaderPreset::FILTER_NEAREST;
+        passX.mipmap = false;
+        passX.alias = "outputEncoding";
+        passX.scaleX = vManager->firSharp == 0 ? 1.0 : 2.0;
+        passX.scaleY = 1.0;
+        preset->passes.push_back(passX);
 		
         if (vManager->randomLineOffset) {
-            pass = new ShaderPass;
-            pass->primary = false;
-            addBaseProps(pass);
-            pass->fragment = buildRandomLineOffset(format);
-            pass->ident = "randomLine";
-            pass->relativeHeight = 100;
-            pass->relativeWidth = 100;
-            pass->filter = "nearest";
-            internalPasses.push_back(pass);
+            passX.src = buildRandomLineOffset(format);
+            passX.filter = ShaderPreset::FILTER_NEAREST;
+            passX.mipmap = false;
+            passX.alias = "randomLine";
+            passX.scaleX = 1.0;
+            passX.scaleY = 1.0;
+            preset->passes.push_back(passX);
         }
 
         if (vManager->useLumaDelay() ) {
-            pass = new ShaderPass;
-            addBaseProps(pass);
-            pass->fragment = buildLumaLatency(format);
-            pass->ident = "lumaLatency";
-            pass->filter = "nearest";
-            pass->relativeWidth = 100;
-            pass->relativeHeight = 100;
-            internalPasses.push_back( pass );
+            passX.src = buildLumaLatency(format);
+            passX.filter = ShaderPreset::FILTER_NEAREST;
+            passX.mipmap = false;
+            passX.alias = "lumaLatency";
+            passX.scaleX = 1.0;
+            passX.scaleY = 1.0;
+            preset->passes.push_back(passX);
         }
 
         if (vManager->lumaNoise || vManager->chromaNoise) {
-            ShaderPass* pass = new ShaderPass;
-            addBaseProps(pass);
-            pass->fragment = buildNoise(format);
-            pass->ident = "noise";
-            pass->filter = "nearest";
-            pass->relativeWidth = 100;
-            pass->relativeHeight = 100;
-            internalPasses.push_back( pass );
+            passX.src = buildNoise(format);
+            passX.filter = ShaderPreset::FILTER_NEAREST;
+            passX.mipmap = false;
+            passX.alias = "noise";
+            passX.scaleX = 1.0;
+            passX.scaleY = 1.0;
+            preset->passes.push_back(passX);
         }
-        
-        pass = new ShaderPass;
-        pass->primary = false;
-        addBaseProps(pass);
-        pass->fragment = buildBandwidthReduction(format);
-        pass->ident = "bandwidth";
-		pass->filter = "nearest";
-		pass->relativeWidth = vManager->firSharp == 0 ? 200 : 100;
-        pass->relativeHeight = 100;
-        internalPasses.push_back(pass);
 
-		pass = new ShaderPass;
-		pass->primary = false;
-		addBaseProps(pass);
-		pass->fragment = buildDelayLineAndConvertToRgb(format);
-		pass->ident = "delayLine";
-		pass->filter = "nearest";
-		pass->relativeWidth = 100;
-		pass->relativeHeight = 100;
-		internalPasses.push_back(pass);
+        passX.src = buildBandwidthReduction(format);
+        passX.filter = ShaderPreset::FILTER_NEAREST;
+        passX.mipmap = false;
+        passX.alias = "bandwidth";
+        passX.scaleX = vManager->firSharp == 0 ? 2.0 : 1.0;
+        passX.scaleY = 1.0;
+        preset->passes.push_back(passX);
+
+        passX.src = buildDelayLineAndConvertToRgb(format);
+        passX.filter = ShaderPreset::FILTER_NEAREST;
+        passX.mipmap = false;
+        passX.alias = "delayLine";
+        passX.scaleX = 1.0;
+        passX.scaleY = 1.0;
+        preset->passes.push_back(passX);
+
 
         if (vManager->scanlines && !lace) {
             pass = new ShaderPass;
@@ -289,66 +222,36 @@ auto Shader::loadInternal() -> void {
 		pass->filter = "nearest";
 		internalPasses.push_back( pass );
         
-	} else if (vManager->usePostShading()) {     
-        
-        pass = new ShaderPass;
-        pass->primary = true;
-		pass->ident = "primary";
-		pass->filter = filter == 1 ? "linear" : "nearest";
-		internalPasses.push_back( pass );
-
-        if (vManager->bloomGlow) {
+        // post shading runs after external shaders
+        if (vManager->useMask()) {
             pass = new ShaderPass;
             pass->primary = false;
-            addBaseProps(pass);
-            pass->fragment = buildBloom(format, true);
-            pass->ident = "bloomPhase1";
-            pass->relativeWidth = 100;
-            pass->relativeHeight = 100;
+            pass->external = false;
+            pass->fragment = buildMask(format);
+            pass->ident = "crtMask";
+
+            pass->relativeHeight = vManager->hires ? 200 : 100;
+            pass->relativeWidth = vManager->hires ? 200 : 100;
+            normaliseDimension( pass->relativeWidth, pass->relativeHeight );
             pass->filter = filter == 1 ? "linear" : "nearest";
             pass->mipmap = true;
-            internalPasses.push_back(pass);
+            internalPasses.push_back( pass );
+        }
 
+        if (vManager->radialDistortion) {
             pass = new ShaderPass;
             pass->primary = false;
-            addBaseProps(pass);
-            pass->fragment = buildBloom(format, false);
-            pass->ident = "bloom";
-            pass->relativeWidth = 100;
-            pass->relativeHeight = 100;
-            pass->filter = "nearest";
+            pass->external = false;
+            pass->fragment = buildRadialDistortion(format);
+            pass->ident = "radialDistortion";
+            pass->relativeHeight = vManager->distortionHires ? 200 : 100;
+            pass->relativeWidth = vManager->distortionHires ? 200 : 100;
+            pass->mipmap = true;
+            pass->filter = filter == 1 ? "linear" : "nearest";
             internalPasses.push_back(pass);
         }
-    }
-
-	// post shading runs after external shaders
-	if (vManager->usePostShading()) {
-		pass = new ShaderPass;
-		pass->primary = false;
-		pass->external = false;
-		pass->fragment = buildMask(format);
-		pass->ident = "crtMask";
-
-		pass->relativeHeight = vManager->hires ? 200 : 100;
-		pass->relativeWidth = vManager->hires ? 200 : 100;
-        normaliseDimension( pass->relativeWidth, pass->relativeHeight );
-		pass->filter = filter == 1 ? "linear" : "nearest";
-        pass->mipmap = true;
-		internalPassesPost.push_back( pass );
 	}
 
-    if (vManager->radialDistortion) {
-        pass = new ShaderPass;
-        pass->primary = false;
-        pass->external = false;
-        pass->fragment = buildRadialDistortion(format);
-        pass->ident = "radialDistortion";
-        pass->relativeHeight = vManager->distortionHires ? 200 : 100;
-        pass->relativeWidth = vManager->distortionHires ? 200 : 100;
-        pass->mipmap = true;
-        pass->filter = filter == 1 ? "linear" : "nearest";
-        internalPassesPost.push_back(pass);
-    }
 }
 
 auto Shader::normaliseDimension( unsigned& widthScale, unsigned& heightScale ) -> void {
@@ -383,188 +286,6 @@ auto Shader::addBaseProps( ShaderPass* pass ) -> void {
 		pass->format = "rgba8";
 		pass->internalFormatMatchesData = true;
 	}			
-}
-
-auto Shader::loadExternal() -> bool {
-
-    externalLoaded = true; 
-    loadErrors.clear();    
-    clean(externalPasses);
-
-    GUIKIT::Settings* shaderSetting = nullptr;
-
-    std::string ident = "shader_folder_";
-    program->appendShaderFormat(ident);
-    auto folder = globalSettings->get<std::string>(ident, "");
-    if (folder.empty())
-        folder = program->shaderFolder();
-    
-    if (folder.empty())
-        return true;
-
-    folder = GUIKIT::File::beautifyPath(folder);
-
-    auto shaders = getActiveShaders();
-    if (shaders.empty())
-        return true;        
-
-    ShaderPass* ioPass = new ShaderPass;
-    ioPass->primary = true;
-    externalPasses.push_back(ioPass);
-	
-    for (auto& shaderIdent : shaders) {
-        std::string path = folder + shaderIdent;
-
-        if (!GUIKIT::File::isDir(path + "/")) {
-			auto pass = new ShaderPass;
-			pass->ident = shaderIdent;			
-            std::string effect = loadShader(folder, shaderIdent, pass);
-            if (effect.empty()) {
-				delete pass;
-				continue;
-			}            
-            pass->fragment = effect;			
-            externalPasses.push_back(pass);			
-            continue;
-        }
-        path += "/";
-
-        if (shaderSetting) delete shaderSetting;
-
-        shaderSetting = new GUIKIT::Settings;
-        if (!shaderSetting->load(path + "manifest.bml", 1024 * 1024, true)) {
-            if (!shaderSetting->load(path + "manifest", 1024 * 1024, true)) {
-                loadErrors.push_back(path + "manifest");
-                continue;
-            }
-        }
-
-        auto input = shaderSetting->find("input");
-        if (input) mapPass(input, ioPass);
-
-        auto output = shaderSetting->find("output");
-        if (output) mapPass(output, ioPass);
-
-        auto programs = shaderSetting->findMulti("program");
-
-        for (auto program : programs) {
-            auto pass = new ShaderPass;
-			pass->ident = shaderIdent;
-            mapPass(program, pass, path);
-            externalPasses.push_back(pass);		
-        }				
-    }
-
-    if (shaderSetting)
-        delete shaderSetting;
-
-    std::string error = "";
-
-    if (!loadErrors.empty()) {
-        for(auto& loadError : loadErrors)
-            error += trans->get("file_open_error", {{"%path%", loadError}}) + "\n";            
-    }
-
-    if (externalPasses.size() == 1)
-        clean(externalPasses);    
-    
-    if (!error.empty()) {
-        removeIncompleteShader();
-        view->message->warning( error );  
-    }
-
-	return error.empty();
-}
-
-auto Shader::mapPass(GUIKIT::Setting* theme, ShaderPass* pass, std::string path) -> void {
-
-    for (auto setting : theme->childs) {
-        if (setting->getIdent() == "filter") {
-            pass->filter = setting->value;
-        } else if (setting->getIdent() == "wrap") {
-            pass->wrap = setting->value;
-        } else if (setting->getIdent() == "format") {
-            pass->format = setting->value;
-        } else if (setting->getIdent() == "width") {
-            pass->relativeWidth = GUIKIT::String::convertToNumber(setting->value);
-        } else if (setting->getIdent() == "height") {
-            pass->relativeHeight = GUIKIT::String::convertToNumber(setting->value);
-        } else if (setting->getIdent() == "modulo") {
-            pass->modulo = setting->uValue;
-        } else if (setting->getIdent() == "vertex") {
-            pass->vertex = loadShader(path, setting->value, pass);
-        } else if (setting->getIdent() == "fragment") {
-            pass->fragment = loadShader(path, setting->value, pass);
-        } else if (setting->getIdent() == "geometry") {
-            pass->geometry = loadShader(path, setting->value, pass);
-        }
-    }
-}
-
-auto Shader::loadShader(std::string path, std::string shaderFile, ShaderPass* pass) -> std::string {
-	
-	if (shaderFile.empty())
-		return "";
-	
-	path += shaderFile;
-    GUIKIT::File file(path);
-    if (!file.open()) {
-		pass->error = "error";
-        loadErrors.push_back(path);
-        return "";
-    }
-    std::string s;
-    s.assign((char*) file.read(), file.getSize());
-    return s;
-}
-
-auto Shader::addActiveShader(std::string shader) -> void {
-
-//    std::string shaderList = "";
-//
-//    for (auto& activeShader : getActiveShaders())
-//        shaderList += activeShader + "###";
-//
-//    shaderList += shader;
-    
-    vManager->settings->set<std::string>("shader", shader);
-    
-	bool error = !loadExternal(); 
-	    
-    if (activeVideoManager == vManager)
-		error |= !sendToDriver();
-    
-	if (error) 
-		view->updateShader();
-}
-
-auto Shader::removeActiveShader(std::string shader) -> void {
-//    std::string shaderList = "";
-//
-//    for (auto& activeShader : getActiveShaders()) {
-//        if (shader != activeShader) {
-//
-//            if (!shaderList.empty())
-//                shaderList += "###";
-//
-//            shaderList += activeShader;
-//        }
-//    }
-    
-    vManager->settings->set<std::string>("shader", "");
-    
-	bool error = !loadExternal(); 
-	    
-    if (activeVideoManager == vManager)
-		error |= !sendToDriver();
-    
-	if (error) 
-		view->updateShader();	    
-}
-
-auto Shader::getActiveShaders() -> std::vector<std::string> {
-    auto activeShaders = vManager->settings->get<std::string>("shader", "");
-    return GUIKIT::String::explode(activeShaders, "###");
 }
 
 auto Shader::clean(std::vector<ShaderPass*>& passes) -> void {
@@ -886,10 +607,11 @@ auto Shader::addPreset(std::string path, bool prepend, std::vector<std::string>&
     parser->addPreset( tempParser, prepend );
 
     delete tempParser;
+    recreate = true;
     return preset;
 }
 
-auto Shader::loadPreset(std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+auto Shader::loadPreset(const std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
     ShaderParser* tempParser = new ShaderParser;
 
     bool res = tempParser->loadPreset(path);
@@ -906,6 +628,7 @@ auto Shader::loadPreset(std::string& path, std::vector<std::string>& brokenPaths
     }
 
     parser = tempParser;
+    recreate = true;
 
     return &parser->shaderPreset;
 }
@@ -915,6 +638,15 @@ auto Shader::savePreset(std::string path) -> bool {
         return parser->savePreset(path);
 
     return false;
+}
+
+auto Shader::getPreset(std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+    if (parser) {
+        GUIKIT::Vector::combine(brokenPaths, parser->brokenPaths);
+        return &parser->shaderPreset;
+    }
+
+    return nullptr;
 }
 
 auto Shader::getPreset() -> ShaderPreset* {
@@ -927,6 +659,8 @@ auto Shader::getPreset() -> ShaderPreset* {
 auto Shader::clearPreset() -> void {
     if (parser)
         parser->clear();
+
+    recreate = true;
 }
 
 auto Shader::getPresetPathCombined() -> std::string {
@@ -966,7 +700,5 @@ Shader::Shader(VideoManager* vManager) {
 }
 
 Shader::~Shader() {
-    clean(externalPasses);
     clean(internalPasses);
-    clean(internalPassesPost);
 }

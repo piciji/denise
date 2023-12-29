@@ -12,13 +12,23 @@ auto Shader::buildOutputEncodingHLSL() -> std::string {
         };
         uniform UBO ubo;
 
-        uniform int oddLine;
-        uniform float rotU;
-        uniform float rotV;
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+        };
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Push {
+            float oddLine
+            float rotU;
+            float rotV;
+			float CAS;
+			float RAS;
+			float PHI0;
+			float AEC;
+			float BA;
+			float cyclePixel;
+            float lace;
         };
 
         struct VSInput {
@@ -32,17 +42,6 @@ auto Shader::buildOutputEncodingHLSL() -> std::string {
         };
     )";
 
-    if (c64Glitches) {
-        out += R"(
-			uniform float CAS;
-			uniform float RAS;
-			uniform float PHI0;
-			uniform float AEC;
-			uniform float BA;
-			uniform int cyclePixel;
-		)";
-    }
-
     out += R"(
         PSInput VS(VSInput input) {
             PSInput output;
@@ -53,51 +52,21 @@ auto Shader::buildOutputEncodingHLSL() -> std::string {
 
         float4 PS(PSInput input) : SV_TARGET {
             float4 color = t0.Sample(t0S, input.tex);
+            float3 lumaChroma = color.xyz;
     )";
 
-    std::string rgbToLumaChroma;
-    std::string flags = "256.0 * color.w";
-
-    if (vManager->pal)
-        rgbToLumaChroma = R"(
-            float3 lumaChroma = mul( float3x3(0.299,0.587,0.114,-0.147407,-0.289391,0.436798,0.614777,-0.514799,-0.099978), color.rgb);
-        )";
-    else
-        rgbToLumaChroma = R"(
-            float3 lumaChroma = mul( float3x3(0.23485876230514607, 0.6335007388077467, 0.13164049888710716, 0.4409594767911895, -0.27984362502847304, -0.16111585176271648, 0.14630060102591497, -0.5594814826856017, 0.4131808816596867), color.rgb);
-        )";
-
-    if (vManager->shaderInputPrecision) {
-        // we already start with yuv/yiq
-        rgbToLumaChroma = R"(
-            float3 lumaChroma = color.xyz;
-        )";
-
-        flags = "color.w";
-    }
-
-    out += rgbToLumaChroma;
-
     if (c64Glitches) {
-
-        if (vManager->firSharp == 0)
-            out += "float xposF = input.tex.x * targetSize.x;";
-        else
-            // texture is doubled size: to make this working we need the xpos in original size.
-            // means: 0 and 0.5 is Pixel 1, 1 and 1.5 is Pixel 2 and so on.
-
-            out += "float xposF = input.tex.x * (targetSize.x / 2.0);";
+        // if texture is doubled size we need the xpos in original size.
+        // means: 0 and 0.5 is Pixel 1, 1 and 1.5 is Pixel 2 and so on.
+        out += "float xposF = input.tex.x * SourceSize.x;";
 
         out += R"(
-
 			// to align pixel pos within vic cycle
             int xpos = int(xposF);
-			xpos += cyclePixel;
+			xpos += int(cyclePixel);
 			xpos &= 7;
+            int flags = int( color.w );
         )";
-
-        out += "int flags = int( " + flags + " ); ";
-
 
         // luma will be darkened when some vic lines changes their state
         // AEC and BA state will be transfered in unused alpha channel for each pixel
@@ -124,28 +93,20 @@ auto Shader::buildOutputEncodingHLSL() -> std::string {
             out += "lumaChroma.x *= 1.0 - (((((~xpos >> 1) & 1) & (~xpos & 1)) ^ 1) * RAS);";
     }
 
-    out += R"(
-        float3 yuvEven = float3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV, lumaChroma.z * rotU + lumaChroma.y * rotV);
-        float3 yuvOdd = float3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV * -1, lumaChroma.z * rotU + lumaChroma.y * rotV * -1);
-    )";
-
-//    out += R"(
-//        #define yuvEven float3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV, lumaChroma.z * rotU + lumaChroma.y * rotV)
-//        #define yuvOdd float3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV * -1, lumaChroma.z * rotU + lumaChroma.y * rotV * -1)
-//    )";
-
     if (vManager->pal) {
-        if (lace) {
-            out += R"( int oddLineFrame = int(floor(mod(floor(input.tex.y * targetSize.y / 2.0), 2.0))); )"; // e, e, o, o, e, e, o, o, ...
-            out += "return float4( lerp(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
-        } else {
-            out += R"( int oddLineFrame = int(floor(mod(input.tex.y * targetSize.y, 2.0))); )";  // e, o, e, o, e, o, ...
-            out += "return float4( lerp(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
-        }
+        out += R"(
+            float3 yuvEven = float3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV, lumaChroma.z * rotU + lumaChroma.y * rotV);
+            float3 yuvOdd = float3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV * -1, lumaChroma.z * rotU + lumaChroma.y * rotV * -1);
+
+            // lace : e, e, o, o, e, e, o, o, ...
+            // non lace: e, o, e, o, e, o, ...
+            int oddLineFrame = int(floor(mod(floor(input.tex.y * OutputSize.y / float( 1 << int(lace) )), 2.0)));
+
+            return float4( lerp(yuvOdd, yuvEven, (oddLineFrame ^ int(oddLine)) ), 1.0 );
+            }
+        )";
     } else
         out += "return float4(yuvEven, 1.0); ";
-
-    out += " } ";
 
     return out;
 }
@@ -156,9 +117,16 @@ auto Shader::buildLumaLatencyHLSL() -> std::string {
 		uniform sampler t0S;
         uniform Texture2D <float4> t0;
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
+        };
+
+        cbuffer Push {
+            float lumaFall;
+            float lumaRise;
         };
 
         struct VSInput {
@@ -176,9 +144,6 @@ auto Shader::buildLumaLatencyHLSL() -> std::string {
         };
         uniform UBO ubo;
 
-        uniform float lumaFall;
-        uniform float lumaRise;
-
         PSInput VS(VSInput input) {
             PSInput output;
             output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
@@ -192,11 +157,9 @@ auto Shader::buildLumaLatencyHLSL() -> std::string {
 
     int rounds = vManager->firSharp == 0 ? -3 : -7;
 
-    double pos = ((double) (rounds)) / ((double) (vManager->emulator->cropWidth() << (vManager->firSharp == 0 ? 0 : 1)));
-
     out += "float2 xy = input.tex.xy;";
 
-    out += "float ySrc = t0.Sample(t0S, xy + float2( " + _doubleToStr(pos) + " , 0.0)).x; ";
+    out += "float ySrc = t0.Sample(t0S, xy + float2( float(" + std::to_string(rounds) + ") / float(SourceSize.x), 0.0)).x; ";
 
     out += R"(
 			float y = ySrc;
@@ -219,10 +182,7 @@ auto Shader::buildLumaLatencyHLSL() -> std::string {
 
         rounds += 1;
 
-        pos = ((double) (rounds)) / ((double) (vManager->emulator->cropWidth() << (vManager->firSharp == 0 ? 0 : 1)));
-
-        out += " yTarget = t0.Sample(t0S, xy + float2( " + _doubleToStr(pos) + " , 0.0)).x; ";
-
+        out += " yTarget = t0.Sample(t0S, xy + float2( float(" + std::to_string(rounds) + ") / float(SourceSize.x), 0.0)).x; ";
         out += R"(
                 // check for a change of luma between 2 adjacent pixel
                 yChanged = ySrc == yTarget ? 0 : 1;
@@ -266,11 +226,16 @@ auto Shader::buildNoiseHLSL() -> std::string {
         };
         uniform UBO ubo;
 
-        uniform float lumaNoise, chromaNoise;
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
+        };
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Push {
+            float lumaNoise;
+            float chromaNoise;
         };
 
         float random( float2 seed ) {
@@ -287,7 +252,7 @@ auto Shader::buildNoiseHLSL() -> std::string {
         }
 
         float4 PS(PSInput input) : SV_TARGET {
-            float time = float(ts) / 1000000.0;
+            float time = ts / 1000000.0;
             float2 xy = input.tex.xy;
             float y = random(xy + float2(time * xy.x, time * xy.y)) * lumaNoise;
             float u = random(xy + float2(time * xy.y, time * xy.x)) * chromaNoise;
@@ -320,11 +285,15 @@ auto Shader::buildRandomLineOffsetHLSL() -> std::string {
         };
         uniform UBO ubo;
 
-        uniform float lineFactor;
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
+        };
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Push {
+            float lineFactor;
         };
 
         float random( float2 seed ) {
@@ -341,14 +310,14 @@ auto Shader::buildRandomLineOffsetHLSL() -> std::string {
         }
 
         float4 PS(PSInput input) : SV_TARGET {
-            float time = float(ts) / 1000000.0;
+            float time = ts / 1000000.0;
             float2 xy = input.tex.xy;
             float offset = random(float2(time * xy.y, xy.y + (time * xy.y))) * lineFactor;
             float x0 = xy.x + offset;
             float x1 = x0 + targetSize.z;
             float4 tex0 = t0.Sample(t0S, float2( frac(x0), xy.y )).xyzw;
             float4 tex1 = t0.Sample(t0S, float2( frac(x1), xy.y )).xyzw;
-            return lerp(tex0, tex1, frac(x0 * targetSize.x));
+            return lerp(tex0, tex1, frac(x0 * OutputSize.x));
         }
     )";
 
@@ -427,9 +396,11 @@ auto Shader::buildBandwidthReductionHLSL() -> std::string {
         };
         uniform UBO ubo;
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
         };
 
         PSInput VS(VSInput input) {
@@ -440,7 +411,7 @@ auto Shader::buildBandwidthReductionHLSL() -> std::string {
         }
 
         float4 PS(PSInput input) : SV_TARGET {
-            float screenWidth = targetSize.x;
+            float screenWidth = OutputSize.x;
             float3 yuv=t0.Sample(t0S, input.tex + float2(
     )";
 
@@ -468,11 +439,8 @@ auto Shader::buildBandwidthReductionHLSL() -> std::string {
         if (i != 0)
             out += "    yuv += (t0.Sample(t0S, input.tex + float2(" + _doubleToStr(-pos) + ", 0.0) ).xyz "
                      "+ t0.Sample(t0S, input.tex + float2(" + _doubleToStr(pos) + ", 0.0) ).xyz) * ";
-//            out += "    yuv += (texture(source[0], input.tex + float2(" + std::to_string(-i) + " / screenWidth, 0.0) ).xyz "
-//                    "+ texture(source[0], input.tex + float2(" + std::to_string(i) + " / screenWidth, 0.0) ).xyz) * ";
 
         out += "float3(" + _doubleToStr(luma) + "," + _doubleToStr(chromaUI) + "," + _doubleToStr(chromaVQ) + ");";
-
     }
 
     out += R"( return float4( yuv, 1.0 );
@@ -493,9 +461,6 @@ auto Shader::buildDelayLineAndConvertToRgbHLSL() -> std::string {
         };
         uniform UBO ubo;
 
-        uniform float hanoverBars;
-        uniform float hanoverBarsAlt;
-		uniform int oddLine;
         #define mod(x, y) (x - y * floor(x / y))
 
         struct VSInput {
@@ -508,9 +473,18 @@ auto Shader::buildDelayLineAndConvertToRgbHLSL() -> std::string {
             float2 tex : TEXCOORD0;
         };
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
+        };
+
+        cbuffer Push {
+            float hanoverBars;
+            float hanoverBarsAlt;
+		    float oddLine;
+            float lace;
         };
 
         PSInput VS(VSInput input) {
@@ -525,21 +499,14 @@ auto Shader::buildDelayLineAndConvertToRgbHLSL() -> std::string {
 
     if (vManager->pal) {
 
-        if (lace)
-            out += R"(
-				int lineFactor = int(floor(mod(floor(input.tex.y * targetSize.y / 2.0), 2.0)));
+        out += R"(
+				int lineFactor = int(floor(mod(floor(input.tex.y * OutputSize.y / float( 1 << int(lace) )), 2.0)));
 				float3 yuv = (t0.Sample(t0S, input.tex.xy).xyz);
-				float3 yuvLineBefore = (t0.Sample(t0S, input.tex.xy + float2(0.0, -2.0 / targetSize.y )).xyz);
-			)";
-        else
-            out += R"(
-				int lineFactor = int(floor(mod(input.tex.y * targetSize.y, 2.0)));
-				float3 yuv = (t0.Sample(t0S, input.tex.xy).xyz);
-				float3 yuvLineBefore = (t0.Sample(t0S, input.tex.xy + float2(0.0, -1.0 / targetSize.y )).xyz);
+				float3 yuvLineBefore = (t0.Sample(t0S, input.tex.xy + float2(0.0, -1.0 * float( 1 << int(lace) ) / OutputSize.y )).xyz);
 			)";
 
         out += R"(
-				float2 merged = float2(yuv.y + yuvLineBefore.y, yuv.z + yuvLineBefore.z) * lerp(hanoverBars, hanoverBarsAlt, lineFactor ^ oddLine) * 0.5;
+				float2 merged = float2(yuv.y + yuvLineBefore.y, yuv.z + yuvLineBefore.z) * lerp(hanoverBars, hanoverBarsAlt, lineFactor ^ int(oddLine)) * 0.5;
 				float3 color = mul(float3x3(1.0,0.0,1.140251,1.0,-0.39393070,-0.58080921,1.0,2.0283976,0.0), float3(yuv.x, merged.x, merged.y));
 				return float4(color, 1.0);
 			}

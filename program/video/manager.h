@@ -84,6 +84,7 @@ struct VideoManager {
 
     struct DataUpdates {
         std::string ident;
+        int offset;
         unsigned dataU;
         int dataI;
         float dataF;
@@ -253,7 +254,7 @@ struct VideoManager {
     
     auto useLumaDelay() -> bool;
     auto useLineGlitch() -> bool;
-    auto usePostShading() -> bool;
+    auto useMask() -> bool;
     auto useRegionEncoding() -> bool;
     // seter props
     auto usePal(bool state) -> void; // pal or ntsc
@@ -311,13 +312,18 @@ struct VideoManager {
     auto getModeIdent() -> std::string;
     auto applyMeta() -> void;
 
+    auto updateData(int offset, float data) -> void;
     template<typename T> auto updateData(std::string ident, T data) -> void;
     auto applyDataUpdates() -> void;
 
-    auto loadPreset(std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto loadPreset(const std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto loadPreset(const std::string& path) -> void;
+    auto loadPreset() -> bool;
+
     auto addPreset(std::string path, bool prepend, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
     auto savePreset(std::string path) -> bool;
     auto getPreset() -> ShaderPreset*;
+    auto getPreset(std::vector<std::string>& brokenPaths) -> ShaderPreset*;
     auto getPresetPath() -> std::string;
     auto getPresetPathCombined() -> std::string;
     auto clearPreset() -> void;

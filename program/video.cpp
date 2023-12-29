@@ -35,14 +35,13 @@ auto Program::initVideo(bool driverChange) -> void {
     if (activeVideoManager)
         activeVideoManager->reinitCrtThread(true);
         
-    // opengl crt shader only at the moment
-    for( auto emuView : emuConfigViews ) {
-        if (emuView->videoLayout)
-            emuView->videoLayout->updateVisibillity();
+    for( auto emulator : emulators ) {
+        auto emuView = EmuConfigView::TabWindow::getView(emulator);
+        if (emuView && emuView->videoLayout)
+            emuView->videoLayout->updatePresets();
+        else
+            VideoManager::getInstance(emulator)->reloadSettings();
     }
-        
-    for( auto emulator : emulators )        
-        VideoManager::getInstance( emulator )->reloadSettings();
 	
 	VideoManager::setShaderInputPrecision( globalSettings->get<bool>("shader_input_precision", false) );
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );

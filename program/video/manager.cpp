@@ -161,7 +161,7 @@ auto VideoManager::update() -> void {
         preCalcGamma();
 
         if (crtMode == CrtMode::Cpu) {
-            if ((countColorBits == 4) && useLumaDelay())
+            if ((countColorBits == 4) && useLumaDelay()) // for Amiga CPU mode would be too slow
                 preCalcLumaDelay();
 
             injectPhaseTransferError();
@@ -638,14 +638,8 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     if ( !placeHolderFrames && shader.recreate ) {
         shader.loadInternal();
         
-        bool error = false;        
-        if (!shader.externalLoaded)
-            error = !shader.loadExternal();
-
+        bool error = false;
         error |= !shader.sendToDriver();
-
-        //if (error)
-          //  view->updateShader();
 		
         shader.recreate  = false;
     }
@@ -1108,9 +1102,9 @@ auto VideoManager::useCrtMode() -> bool {
     return crtMode == CrtMode::Cpu || crtMode == CrtMode::Gpu;
 }
 
-auto VideoManager::usePostShading() -> bool {
+auto VideoManager::useMask() -> bool {
 	
-	return bloomGlow > 0.0 || maskLevel > 0.0 || radialDistortion > 0.0 || lightFromCenter > 0.0 || (maskLevel ? maskLuminance : luminance) != 1.0;
+	return maskLevel > 0.0 || lightFromCenter > 0.0 || (maskLevel ? maskLuminance : luminance) != 1.0;
 }
 
 auto VideoManager::useLumaDelay() -> bool {
@@ -1119,7 +1113,7 @@ auto VideoManager::useLumaDelay() -> bool {
 }
 
 auto VideoManager::useRegionEncoding() -> bool {
-    return hanoverBars || hanoverBarsAlt || phaseError > 0.0;
+    return (hanoverBars && pal) || phaseError > 0.0;
 }
 
 auto VideoManager::useLineGlitch() -> bool {
@@ -1529,9 +1523,22 @@ auto VideoManager::powerOff() -> void {
     shader.lace = false;
 }
 
+auto VideoManager::updateData(int offset, float data) -> void {
+    DataUpdates dataUpdate;
+    dataUpdate.offset = offset;
+    dataUpdate.dataF = data;
+
+    emuThread->lockVideo();
+    dataUpdates.push_back( dataUpdate );
+    dataUpdatesPending = true;
+    needAUpdate = true;
+    emuThread->unlockVideo();
+}
+
 template<typename T> auto VideoManager::updateData(std::string ident, T data) -> void {
     DataUpdates dataUpdate;
     dataUpdate.ident = ident;
+    dataUpdate.offset = -1;
 
     if (std::is_same<T, float>::value) {
         dataUpdate.dataF = data;
@@ -1665,7 +1672,23 @@ auto VideoManager::free() -> void {
         delete[] tempDestHold;
 }
 
-auto VideoManager::loadPreset(std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+auto VideoManager::loadPreset() -> bool {
+    std::string path = settings->get<std::string>("slang_loaded", "");
+    if (path.empty())
+        return false;
+
+    std::vector<std::string> brokenPaths;
+    return loadPreset(path, brokenPaths) != nullptr;
+}
+
+auto VideoManager::loadPreset(const std::string& path) -> void {
+    std::vector<std::string> brokenPaths;
+    if (loadPreset(path, brokenPaths)) {
+        settings->set<std::string>("slang_loaded", path);
+    }
+}
+
+auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
     return shader.loadPreset(path, brokenPaths);
 }
 
@@ -1675,6 +1698,10 @@ auto VideoManager::addPreset(std::string path, bool prepend, std::vector<std::st
 
 auto VideoManager::savePreset(std::string path) -> bool {
     return shader.savePreset(path);
+}
+
+auto VideoManager::getPreset(std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+    return shader.getPreset(brokenPaths);
 }
 
 auto VideoManager::getPreset() -> ShaderPreset* {

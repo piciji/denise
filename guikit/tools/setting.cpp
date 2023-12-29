@@ -176,7 +176,7 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
     std::string line, key, val;
     Setting* setting = nullptr;
 
-    if (depth == 0) {
+    if (depth <= 0) {
         this->path = path;
         clear();
     } else if (depth > 16) {
@@ -204,7 +204,7 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
         if ( line.length() == 0 )
             continue;
 
-        if (stripCommentsAndDetectIncludes(line)) {
+        if ((depth >= 0) && stripCommentsAndDetectIncludes(line)) {
             if (String::foundSubStr(line, "#include")) {
                 String::remove(line, {"#include"});
                 String::trim(line);
@@ -263,53 +263,53 @@ auto Settings::stripCommentsAndDetectIncludes(std::string& line) -> bool {
     return false;
 }
 
-auto Settings::load(const std::string& path, unsigned maxFileSize, bool themed) -> bool {
-    std::string line, key, val;
-
-    File file(path);
-    if(!file.open())
-        return false;
-    if(file.getSize() == 0)
-        return true;
-    if(file.getSize() > maxFileSize )
-        return false;
-
-    auto fp = file.getHandle();
-    char chunk[256];
-	Setting* setting = nullptr;
-	Setting* parent = nullptr;
-
-    clear();
-    
-    while ( fgets(chunk, sizeof(chunk), fp) ) {
-        line = chunk;
-
-        String::remove(line, {"\t", "\r\n", "\n"});
-        if ( line.length() == 0 )
-            continue;		
-
-        std::size_t start = line.find_first_of( ":" );
-		
-		if (start != std::string::npos) {
-			val = line.substr(start + 1);
-			key = line.erase(start);
-			String::trim(key);
-			String::removeQuote(key);
-			if(parent == nullptr) setting = add( key );
-			else setting = parent->add( key );
-			setting->set( val );
-			continue;
-		}
-				
-		if (!themed)
-            continue;
-			
-		setting = new Setting( String::trim(line) );
-        list.push_back( setting );
-		parent = setting;
-    }
-    return true;
-}
+//auto Settings::load(const std::string& path, unsigned maxFileSize, bool themed) -> bool {
+//    std::string line, key, val;
+//
+//    File file(path);
+//    if(!file.open())
+//        return false;
+//    if(file.getSize() == 0)
+//        return true;
+//    if(file.getSize() > maxFileSize )
+//        return false;
+//
+//    auto fp = file.getHandle();
+//    char chunk[256];
+//	Setting* setting = nullptr;
+//	Setting* parent = nullptr;
+//
+//    clear();
+//
+//    while ( fgets(chunk, sizeof(chunk), fp) ) {
+//        line = chunk;
+//
+//        String::remove(line, {"\t", "\r\n", "\n"});
+//        if ( line.length() == 0 )
+//            continue;
+//
+//        std::size_t start = line.find_first_of( ":" );
+//
+//		if (start != std::string::npos) {
+//			val = line.substr(start + 1);
+//			key = line.erase(start);
+//			String::trim(key);
+//			String::removeQuote(key);
+//			if(parent == nullptr) setting = add( key );
+//			else setting = parent->add( key );
+//			setting->set( val );
+//			continue;
+//		}
+//
+//		if (!themed)
+//            continue;
+//
+//		setting = new Setting( String::trim(line) );
+//        list.push_back( setting );
+//		parent = setting;
+//    }
+//    return true;
+//}
 
 auto Setting::set(std::string data) -> void {
 	String::trim(data);

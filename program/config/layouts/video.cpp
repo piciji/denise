@@ -41,21 +41,6 @@ VideoGeometryLayout::VideoGeometryLayout() {
 	setFont(GUIKIT::Font::system("bold"));
 }
 
-PathsLayout::Block::Block() {
-    edit.setEditable(false);
-    append(label, {0u, 0u}, 10);
-    append(edit, {~0u, 0u}, 10);
-    append(empty, {0u, 0u}, 10);
-    append(select, {0u, 0u});
-    setAlignment(0.5);
-}
-
-PathsLayout::PathsLayout() {
-    setPadding(10);
-	append(shader, {~0u, 0u});
-    setFont(GUIKIT::Font::system("bold"));
-}
-
 VideoSettingsLayout::VideoSettingsLayout() {
     
     append(exclusiveFullscreen, {0u, 0u}, 10);
@@ -122,20 +107,11 @@ VideoLayout::VideoLayout() {
         // fastforward will not render all frames but mid scanline callback runs without finishing the frame
         // todo: solve this better, more self-acting
         program->fastForward(false);
-        for (auto emulator : emulators) {
-            program->getSettings(emulator)->set<std::string>( "shader", "");
-            auto vManager = VideoManager::getInstance(emulator);
-            vManager->shader.loadExternal();
-		}
-
         program->initVideo(true);
         updateDriverPropsVisibility();
-        updateShaderPath();
         emuThread->unlock();
-        paths.shader.setEnabled(videoDriver->shaderFormat() != DRIVER::Video::ShaderType::NotSupported);
 	};
 
-    append(paths, {~0u, 0u}, 10);
     append(driverLayout, {~0u, 0u}, 5);
     append(videoSettingsLayout, {~0u, 0u}, 5);
     
@@ -197,64 +173,7 @@ VideoLayout::VideoLayout() {
 
     videoSettingsLayout.trAuto.setChecked( globalSettings->get("adaptive_sync", false) );
     videoSettingsLayout.trAuto.setEnabled( !globalSettings->get("threaded_renderer", true) );
-    
-    std::function<bool (PathsLayout::Block*, const std::string&, std::string)> selectPath;
-	
-	selectPath = [&](PathsLayout::Block* block, const std::string& title, std::string savekey) -> bool {
-		auto path = GUIKIT::BrowserWindow()
-        .setTitle( trans->get( title ) )
-        .setWindow( *configView )
-        .directory();
 
-        if(!path.empty()) {
-            program->appendShaderFormat(savekey);
-            globalSettings->set<std::string>( savekey, path);
-            block->edit.setText( path );
-			return true;
-        }
-		return false;
-	};
-	
-	paths.shader.select.onActivate = [&, selectPath]() {
-        emuThread->lock();
-		if (selectPath(&paths.shader, "select_shader_folder", "shader_folder_")) {
-            for (auto emulator : emulators) {
-                program->getSettings(emulator)->set<std::string>( "shader", "");
-                auto vManager = VideoManager::getInstance(emulator);
-                vManager->shader.loadExternal();
-			}
-                			
-			view->updateShader();
-			
-			if (activeVideoManager)
-				activeVideoManager->shader.sendToDriver();			
-		}
-        emuThread->unlock();
-	};
-	
-	paths.shader.empty.onActivate = [&]() {
-        emuThread->lock();
-        std::string savekey = "shader_folder_";
-        program->appendShaderFormat(savekey);
-        globalSettings->set<std::string>(savekey, "");
-        paths.shader.edit.setText( "" );
-        
-        for (auto emulator : emulators) {
-            program->getSettings(emulator)->set<std::string>("shader", "");
-            auto vManager = VideoManager::getInstance(emulator);
-            vManager->shader.loadExternal();
-		}
-
-        view->updateShader();
-        
-		if (activeVideoManager)
-			activeVideoManager->shader.sendToDriver();
-
-        emuThread->unlock();
-    };
-
-    updateShaderPath();
-    
 	hLayout.append(videoGeometry, {~0u, 0u}, 20);
     hLayout.append(screenTextLayout, {~0u, 0u}, 20);
     hLayout.append(crtEmulation, {~0u, 0u});
@@ -403,8 +322,6 @@ VideoLayout::VideoLayout() {
         VideoManager::setShaderInputPrecision( checked );
         emuThread->unlock();
     };
-
-    paths.shader.setEnabled(videoDriver->shaderFormat() != DRIVER::Video::ShaderType::NotSupported);
 }
 
 auto VideoLayout::translate() -> void {
@@ -437,22 +354,12 @@ auto VideoLayout::translate() -> void {
     videoGeometry.control.apply.setText(trans->getA("apply"));
     
     driverLayout.name.setText( trans->get("driver", {}, true) );
-    
-    paths.setText( trans->get("paths") );
-    paths.shader.label.setText(trans->get("Shader",{}, true));
-	paths.shader.select.setText(trans->get("select"));
-	paths.shader.empty.setText(trans->get("remove"));
 
     videoFps.setText( trans->get("FPS") );
     videoFps.updateDelay.name.setText( trans->get("Refresh", {}, true) );
     videoFps.options.labelDecimalPlace.setText( trans->get("Decimal Place", {}, true) );
 }
 
-auto VideoLayout::updateShaderPath() -> void {
-    std::string shaderFolder = "shader_folder_";
-    program->appendShaderFormat(shaderFolder);
-    paths.shader.edit.setText( globalSettings->get<std::string>(shaderFolder, "") );
-}
 
 auto VideoLayout::updateDriverPropsVisibility() -> void {
     auto threadedEmu = globalSettings->get<bool>("threaded_emu", false);

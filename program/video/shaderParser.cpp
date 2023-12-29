@@ -73,6 +73,9 @@ auto ShaderParser::savePreset(std::string path) -> bool {
 
         for(int i = 0; i < shaderPreset.passes.size(); i++) {
             auto& pass = shaderPreset.passes[i];
+            if (!pass.inUse)
+                continue;
+
             writeLine(fp, i, "shader", GUIKIT::File::buildRelativePath(path, pass.src));
             writeLine(fp, i, "filter_linear", pass.filter == ShaderPreset::FILTER_NEAREST ? "false" : "true");
             writeLine(fp, i, "wrap_mode", translateWrapMode(pass.wrap));
@@ -170,8 +173,8 @@ auto ShaderParser::fetchParameters(std::string path, int passId, int depth) -> v
         line = chunk;
         GUIKIT::String::remove(line, { "\r\n", "\n" });
 
-        if (std::equal(prefix.begin(), prefix.end(), line.begin())) {
-            GUIKIT::String::remove(line, {"#include"});
+        if ((line.size() > prefix.size()) && std::equal(prefix.begin(), prefix.end(), line.begin())) {
+            GUIKIT::String::remove(line, {prefix});
             GUIKIT::String::trim(line);
             GUIKIT::String::removeQuote(line);
             fetchParameters( GUIKIT::File::resolveRelativePath(path, line), passId, depth + 1);

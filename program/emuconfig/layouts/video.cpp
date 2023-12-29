@@ -49,7 +49,7 @@ interlace("%", true) {
     append(contrast, {~0u, 0u}, 2);
     append(brightness, {~0u, 0u}, 2);
     append(gamma, {~0u, 0u}, 2);
-    append(scanlines,{~0u, 0u}, 2);
+    append(scanlines,{~0u, 0u}, withSpectrum ? 0 : 2);
 
     if (!withSpectrum)
         append(interlace,{~0u, 0u});
@@ -265,7 +265,7 @@ VideoShaderLayout::Main::Control::Control() {
 }
 
 VideoShaderLayout::Main::Info::Info() {
-    append(label,{0u, 0u}, 10);
+    append(label,{0u, 0u}, 5);
     append(loaded,{~0u, 0u});
     append(toParams,{0u, 0u});
 
@@ -283,9 +283,11 @@ VideoShaderLayout::Main::Main() {
 }
 
 VideoShaderLayout::Favourite::Control::Control() {
+    append(remove,{0u, 0u});
     append(spacer,{~0u, 0u});
-    append(remove,{0u, 0u}, 20);
     append(add,{0u, 0u});
+    add.setEnabled(false);
+    remove.setEnabled(false);
     setAlignment(0.5);
 }
 
@@ -349,8 +351,11 @@ VideoPassLayout::Control::Control() {
 
 VideoPassLayout::VideoPassLayout() {
     append(settings,{0u, 0u}, 20);
-    append(control,{0u, 0u});
+    append(control,{0u, 0u},20);
+    append(info,{~0u, 50u});
 
+    info.setForegroundColor(0xff4500);
+    info.setEditable(false);
     setPadding(8);
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -573,6 +578,14 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         emuThread->unlock();
     };
 
+    layBase.view.mode.externGpu.onActivate = [this]() {
+        _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::GpuExtern);
+        emuThread->lock();
+        program->fastForward( false );
+        updatePresets();
+        emuThread->unlock();
+    };
+
     layIntern.misc.option.distortionHires.onToggle = [this](bool checked) {
         _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("distortion_hires", checked);
@@ -634,19 +647,9 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (path.empty())
             return;
 
-        std::vector<std::string> brokenPaths;
-        ShaderPreset* preset = vManager()->loadPreset(path, brokenPaths);
-
-        if (preset) {
-            buildShaderUI(preset);
-            layShader.main.info.loaded.setText( GUIKIT::String::getFileName( path, true ) );
+        if (loadShader(path)) {
             _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
-            _settings->set<std::string>("slang_loaded", path);
-            layShader.main.control.setEnabled();
-            layShader.main.control.apply.setEnabled(false);
         }
-
-        showBrokenPaths(brokenPaths);
     };
 
     layShader.main.control.prependPreset.onActivate = [this]() {
@@ -668,7 +671,6 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             layShader.main.info.loaded.setText( GUIKIT::String::getFileName( vManager()->getPresetPathCombined() ) );
             _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.main.control.apply.setEnabled(false);
-            videoDriver->setShader( preset );
         }
         showBrokenPaths(brokenPaths);
     };
@@ -684,6 +686,8 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (path.empty())
             return;
 
+        loadShader(path);
+
         std::vector<std::string> brokenPaths;
         ShaderPreset* preset = vManager()->addPreset(path, false, brokenPaths);
 
@@ -692,20 +696,12 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             layShader.main.info.loaded.setText( GUIKIT::String::getFileName( vManager()->getPresetPathCombined() ) );
             _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.main.control.apply.setEnabled(false);
-            videoDriver->setShader( preset );
         }
         showBrokenPaths(brokenPaths);
     };
 
     layShader.main.control.unload.onActivate = [this]() {
-        vManager()->clearPreset();
-        buildShaderUI(nullptr);
-        layShader.main.info.loaded.setText( "" );
-        _settings->set<std::string>("slang_loaded", "");
-        layShader.main.control.setEnabled(false);
-        layShader.main.control.load.setEnabled();
-        videoDriver->setShader( nullptr );
-        clearBrokenPaths();
+        unloadShader();
     };
 
     layShader.main.control.save.onActivate = [this]() {
@@ -730,7 +726,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layShader.main.control.apply.onActivate = [this]() {
-        videoDriver->setShader( vManager()->getPreset() );
+        vManager()->shader.recreate = true;
     };
 
     layShader.favourite.control.add.onActivate = [this]() {
@@ -754,6 +750,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             }
             i++;
         }
+        view->updateShader();
     };
 
     layShader.favourite.control.remove.onActivate = [this]() {
@@ -784,25 +781,21 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             _settings->set<std::string>( "shader_fav_" + std::to_string(i), fav);
             i++;
         }
+
+        layShader.favourite.control.remove.setEnabled(false);
+        layShader.favourite.control.add.setEnabled(false);
+        view->updateShader();
     };
 
     layShader.favourite.list.onActivate = [this]() {
         int selection = layShader.favourite.list.selection();
-
         std::string path = layShader.favourite.list.text(selection, 0);
+        loadShader(path);
+    };
 
-        std::vector<std::string> brokenPaths;
-        ShaderPreset* preset = vManager()->loadPreset(path, brokenPaths);
-
-        if (preset) {
-            buildShaderUI(preset);
-            layShader.main.info.loaded.setText( GUIKIT::String::getFileName( path, true ) );
-            _settings->set<std::string>("slang_loaded", path);
-            layShader.main.control.setEnabled();
-            layShader.main.control.apply.setEnabled(false);
-            videoDriver->setShader( preset );
-        }
-        showBrokenPaths(brokenPaths);
+    layShader.favourite.list.onChange = [this]() {
+        layShader.favourite.control.add.setEnabled();
+        layShader.favourite.control.remove.setEnabled();
     };
 
     layPass.control.hide.onActivate = [this]() {
@@ -887,7 +880,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
                 if (offset < preset->params.size()) {
                     ShaderPreset::Param& param = preset->params[offset];
                     val = (float) position * param.step + param.minimum;
-                    param.value = val;
+                    vManager()->updateData(offset, val);
                 }
             }
             return val;
@@ -905,8 +898,8 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
                 if (offset < preset->params.size()) {
                     ShaderPreset::Param& param = preset->params[offset];
-                    param.value = param.initial;
                     val = param.initial;
+                    vManager()->updateData(offset, val);
                 }
             }
             return val;
@@ -954,6 +947,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
         auto& param = params[selectedParamId];
 
+        tviParams.setExpanded();
         if (!param.tvi)
             tviParams.setSelected();
         else
@@ -996,7 +990,7 @@ auto VideoLayout::countFloatingPoint(ShaderPreset::Param& param, int& places, in
     places = std::max(places, placesStep);
 }
 
-auto VideoLayout::buildShaderUI(ShaderPreset* preset) -> void {
+auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool expand) -> void {
     for(auto tviPass : tviPasses) {
         tviShader.remove(*tviPass);
         delete tviPass;
@@ -1075,8 +1069,10 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset) -> void {
         layShader.main.info.toParams.setEnabled();
     }
 
-    tviShader.setExpanded();
-    tviParams.setExpanded();
+    if (expand) {
+        tviShader.setExpanded();
+        tviParams.setExpanded();
+    }
 }
 
 auto VideoLayout::buildParams(TviParam& tviParam) -> void {
@@ -1215,7 +1211,7 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
             } else if (layout == &layIntern.bloom.glow) {
                 layIntern.bloom.setEnabled( checked );
                 layout->active.setEnabled();
-                layIntern.bloom.weight.slider.setEnabled( layIntern.bloom.weight.active.checked() );
+                layIntern.bloom.weight.slider.setEnabled( layIntern.bloom.weight.active.checked() && layout->active.checked() );
 			}
             
             unsigned position = layout->slider.position();
@@ -1361,14 +1357,27 @@ auto VideoLayout::updatePresets(bool reloadDriver) -> void {
         layIntern.mask.type.slotMask.setChecked();
     else
         layIntern.mask.type.apertureMask.setChecked();
+
+    std::vector<std::string> brokenPaths;
+    ShaderPreset* preset = vManager()->getPreset(brokenPaths);
+    if (preset) {
+        buildShaderUI(preset, false);
+        layShader.main.info.loaded.setText(GUIKIT::String::getFileName(vManager()->getPresetPath(), true));
+        layShader.main.control.setEnabled();
+        showBrokenPaths(brokenPaths);
+    } else
+        layShader.main.control.unload.onActivate();
 	
 	updateVisibillity();
 }
 
 auto VideoLayout::updateVisibillity() -> void {
-	
 	bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
     bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
+    bool crtCpuChecked = layBase.view.mode.svideoCpu.checked();
+    bool crtGpuChecked = layBase.view.mode.svideoGpu.checked();
+    bool externGpuChecked = layBase.view.mode.externGpu.checked();
+    bool crtChecked = crtCpuChecked || crtGpuChecked || externGpuChecked;
 	
 	if (layBase.view.mode.spectrum.checked()) {
         layBase.view.phase.setEnabled(true);
@@ -1377,14 +1386,15 @@ auto VideoLayout::updateVisibillity() -> void {
         layBase.view.phase.setEnabled(false);
         layBase.view.option.newLuma.setEnabled(false);
     }
-    layBase.view.scanlines.slider.setEnabled( layBase.view.scanlines.active.checked() );
+
+    layBase.view.scanlines.setEnabled(!externGpuChecked);
+    if (!externGpuChecked)
+        layBase.view.scanlines.slider.setEnabled( layBase.view.scanlines.active.checked() );
+
     layBase.view.interlace.slider.setEnabled( layBase.view.interlace.active.checked() );
-		
-    bool crtChecked = layBase.view.mode.svideoCpu.checked() || layBase.view.mode.svideoGpu.checked();
-    bool crtGpuChecked = layBase.view.mode.svideoGpu.checked();
 
     layBase.encoding.setEnabled( crtChecked );
-    layBase.lumaDelay.setEnabled( (isC64 && crtChecked) || crtGpuChecked );
+    layBase.lumaDelay.setEnabled( (isC64 && crtCpuChecked) || crtGpuChecked || externGpuChecked );
     
     if (crtChecked) {
         layBase.encoding.phaseError.slider.setEnabled( layBase.encoding.phaseError.active.checked() );
@@ -1393,7 +1403,7 @@ auto VideoLayout::updateVisibillity() -> void {
         layBase.encoding.blur.slider.setEnabled(  layBase.encoding.blur.active.checked() );
     }
 
-    if ((isC64 && crtChecked) || crtGpuChecked) {
+    if ((isC64 && crtCpuChecked) || crtGpuChecked || externGpuChecked) {
         layBase.lumaDelay.lumaRise.slider.setEnabled(layBase.lumaDelay.lumaRise.active.checked());
         layBase.lumaDelay.lumaFall.slider.setEnabled(layBase.lumaDelay.lumaFall.active.checked());
     }
@@ -1401,50 +1411,45 @@ auto VideoLayout::updateVisibillity() -> void {
     layBase.view.option.tvGamma.setEnabled( crtChecked && layBase.view.mode.palette.checked() && _pal );
 	
     if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::NotSupported) {
-        if(crtGpuChecked) {
+        if(crtGpuChecked || externGpuChecked) {
             layBase.view.mode.svideoCpu.setChecked();
             _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         }
 
         layBase.view.mode.svideoGpu.setEnabled(false);
-        //tab2.setEnabled(false);
-        //tab3.setEnabled(false);
+        layBase.view.mode.externGpu.setEnabled(false);
+        layIntern.setEnabled(false);
+        layGlitch.setEnabled(false);
         return;
     }
 
     layBase.view.mode.svideoGpu.setEnabled();
-  //  tab2.setEnabled(crtGpuChecked);
-    //tab3.setEnabled(crtGpuChecked);
+    layBase.view.mode.externGpu.setEnabled();
+    layIntern.setEnabled(crtGpuChecked);
+    layGlitch.setEnabled(crtGpuChecked);
     
-    if ( crtGpuChecked )
-        // crt with gpu don't use blur setting
+    if ( crtGpuChecked || externGpuChecked )
         layBase.encoding.blur.setEnabled( false );
 
-    layIntern.misc.setEnabled();
-    layIntern.misc.option.hires.setEnabled();
-    layIntern.misc.option.distortionHires.setEnabled();
+    if (crtGpuChecked) {
+        layIntern.mask.setEnabled( layIntern.mask.level.active.checked() );
+        layIntern.mask.level.active.setEnabled();
+        layGlitch.crt.radialDistortion.slider.setEnabled( layGlitch.crt.radialDistortion.active.checked() );
+        layIntern.misc.luminance.setEnabled( !layIntern.mask.level.active.checked() );
+        layIntern.misc.lightFromCenter.slider.setEnabled( layIntern.misc.lightFromCenter.active.checked() );
+        layIntern.bloom.setEnabled( layIntern.bloom.glow.active.checked() );
+        layIntern.bloom.glow.active.setEnabled();
+        layIntern.bloom.weight.slider.setEnabled( layIntern.bloom.weight.active.checked() && layIntern.bloom.glow.active.checked() );
+    }
 
-    layIntern.mask.setEnabled( layIntern.mask.level.active.checked() );
-    layIntern.mask.level.active.setEnabled();
-
-    layGlitch.crt.radialDistortion.setEnabled();
-    layGlitch.crt.radialDistortion.slider.setEnabled( layGlitch.crt.radialDistortion.active.checked() );
-
-    layIntern.misc.luminance.setEnabled( !layIntern.mask.level.active.checked() );
-    layIntern.misc.lightFromCenter.setEnabled();
-    layIntern.misc.lightFromCenter.slider.setEnabled( layIntern.misc.lightFromCenter.active.checked() );
-
-    layIntern.bloom.setEnabled( layIntern.bloom.glow.active.checked() );
-    layIntern.bloom.glow.active.setEnabled();
-    layIntern.bloom.weight.slider.setEnabled( layIntern.bloom.weight.active.checked() );
-
-    // only enabled when GPU active
-	
 	if (crtGpuChecked) {
-        layGlitch.crt.lumaNoise.slider.setEnabled( layGlitch.crt.lumaNoise.active.checked() );
-        layGlitch.crt.chromaNoise.slider.setEnabled( layGlitch.crt.chromaNoise.active.checked() );
-        layGlitch.crt.randomLineOffset.slider.setEnabled( layGlitch.crt.randomLineOffset.active.checked() );
+        layGlitch.crt.lumaNoise.slider.setEnabled(layGlitch.crt.lumaNoise.active.checked());
+        layGlitch.crt.chromaNoise.slider.setEnabled(layGlitch.crt.chromaNoise.active.checked());
+        layGlitch.crt.randomLineOffset.slider.setEnabled(layGlitch.crt.randomLineOffset.active.checked());
+    }
 
+    if (isC64 && (crtGpuChecked || externGpuChecked)) {
+        layGlitch.vicII.setEnabled();
         layGlitch.vicII.aec.slider.setEnabled( isC64 && layGlitch.vicII.aec.active.checked() );
         layGlitch.vicII.ba.slider.setEnabled( isC64 && layGlitch.vicII.ba.active.checked() );
         layGlitch.vicII.phi0.slider.setEnabled( isC64 && layGlitch.vicII.phi0.active.checked() );
@@ -1472,7 +1477,7 @@ auto VideoLayout::translate() -> void {
     layBase.view.mode.svideoCpu.setTooltip( trans->get("S/C-Video tooltip") );
     layBase.view.mode.svideoGpu.setText( trans->get("S/C-Video on GPU") );
     layBase.view.mode.svideoGpu.setTooltip( trans->get("S/C-Video tooltip") );
-    layBase.view.mode.externGpu.setText( trans->get("extern GPU") );
+    layBase.view.mode.externGpu.setText( trans->get("Shader") );
     layBase.view.scanlines.active.setText( trans->get("scanlines", {}, true) );
     layBase.view.interlace.active.setText( trans->get("interlace", {}, true) );
 
@@ -1539,7 +1544,7 @@ auto VideoLayout::translate() -> void {
     layShader.favourite.list.setHeaderText({trans->getA("selection")});
 
     layShader.main.info.label.setText( trans->getA("loaded", true) );
-    layShader.main.info.toParams.setText( trans->getA("params") );
+    layShader.main.info.toParams.setText( trans->getA("Parameter") );
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
 
@@ -1555,10 +1560,10 @@ auto VideoLayout::translate() -> void {
     layParam.control.previous.setText( trans->getA("previous") );
     layParam.control.next.setText( trans->getA("next") );
 
-    tviBase.setText( trans->getA("generic") );
-    tviIntern.setText( trans->getA("internal Shader") );
+    tviBase.setText( trans->getA("overview") );
+    tviIntern.setText( trans->getA("S/C-Video on GPU") );
     tviGlitch.setText( trans->getA("Glitches") );
-    tviShader.setText( trans->getA("external Shader") );
+    tviShader.setText( trans->getA("Shader") );
     tviParams.setText( trans->getA("Parameter") );
 
     layNav.setText( trans->getA("selection") );
@@ -1568,6 +1573,8 @@ auto VideoLayout::translate() -> void {
     layPass.settings.data.filter.nearest.setText( trans->getA("nearest") );
     layPass.settings.data.filter.linear.setText( trans->getA("linear") );
     layPass.settings.data.filter.unspec.setText( trans->getA("unspec") );
+
+    layPass.info.setText( trans->getA("shader update info") );
 
     for(int i = 0; i < PARAMS_PER_PAGE; i++) {
         paramSliders[i]->defaultButton.setText( trans->getA("default") );
@@ -1625,27 +1632,6 @@ auto VideoLayout::loadSettings(bool init) -> void {
         i++;
     }
 
-    std::string shaderPath = _settings->get<std::string>("slang_loaded", "");
-    bool shaderLoaded = false;
-
-    if (!shaderPath.empty()) {
-        std::vector<std::string> brokenPaths;
-        ShaderPreset* preset = vManager()->loadPreset(shaderPath, brokenPaths);
-
-        if (preset) {
-            buildShaderUI(preset);
-            layShader.main.info.loaded.setText(GUIKIT::String::getFileName(shaderPath, true));
-            shaderLoaded = true;
-            videoDriver->setShader( preset );
-        }
-        showBrokenPaths(brokenPaths);
-    }
-
-    if (!shaderLoaded)
-        layShader.main.control.unload.onActivate();
-    else
-        layShader.main.control.setEnabled();
-        
     updatePresets(!init);
 
     layBase.view.option.linearInterpolation.setChecked( _settings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
@@ -1674,4 +1660,29 @@ auto VideoLayout::showBrokenPaths(std::vector<std::string>& brokenPaths) -> void
 
     if (hasLabels || brokenPaths.size())
         layShader.synchronizeLayout();
+}
+
+auto VideoLayout::loadShader(std::string path) -> bool {
+    std::vector<std::string> brokenPaths;
+    ShaderPreset* preset = vManager()->loadPreset(path, brokenPaths);
+
+    if (preset) {
+        buildShaderUI(preset);
+        layShader.main.info.loaded.setText( GUIKIT::String::getFileName( path, true ) );
+        _settings->set<std::string>("slang_loaded", path);
+        layShader.main.control.setEnabled();
+        layShader.main.control.apply.setEnabled(false);
+    }
+    showBrokenPaths(brokenPaths);
+    return preset != nullptr;
+}
+
+auto VideoLayout::unloadShader() -> void {
+    vManager()->clearPreset();
+    buildShaderUI(nullptr);
+    layShader.main.info.loaded.setText( "" );
+    _settings->set<std::string>("slang_loaded", "");
+    layShader.main.control.setEnabled(false);
+    layShader.main.control.load.setEnabled();
+    clearBrokenPaths();
 }

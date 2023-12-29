@@ -1457,7 +1457,8 @@ struct Settings {
     }
 
     auto setSaveable( const std::string& ident, bool state ) -> void;
-    auto load(const std::string& path, unsigned maxFileSize = 1 * 1024 * 1024, bool themed = false) -> bool;
+    //auto load(const std::string& path, unsigned maxFileSize = 1 * 1024 * 1024, bool themed = false) -> bool;
+    auto load(const std::string& path) -> bool { return loadEx(path, -1, ':'); }
     auto loadEx(const std::string& path, int depth = 0, const char separator = '=') -> bool;
     auto save(const std::string& path) -> bool;
     auto getList() -> std::vector<Setting*>& { return list; }

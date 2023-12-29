@@ -8,6 +8,7 @@ struct ShaderPreset {
     enum ScaleType { SCALE_INPUT = 0, SCALE_ABSOLUTE, SCALE_VIEWPORT };
 
     int feedback;
+    BufferType bufferType; // format of incoming frame data (uses floating point for YUV)
 
     struct Pass {
         std::string src;
@@ -18,6 +19,7 @@ struct ShaderPreset {
         bool mipmap;
         std::string alias;
         bool inUse;
+        bool native;
 
         ScaleType scaleTypeX;
         ScaleType scaleTypeY;

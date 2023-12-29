@@ -35,20 +35,6 @@ struct VideoGeometryLayout : GUIKIT::FramedVerticalLayout {
     VideoGeometryLayout();
 };
 
-struct PathsLayout : GUIKIT::FramedVerticalLayout {
-
-    struct Block : GUIKIT::HorizontalLayout {
-        GUIKIT::Label label;
-        GUIKIT::LineEdit edit;
-        GUIKIT::Button empty;
-        GUIKIT::Button select;
-
-        Block();
-    } shader;
-
-    PathsLayout();
-};
-
 struct VideoSettingsLayout : GUIKIT::FramedHorizontalLayout {
     
     GUIKIT::CheckBox exclusiveFullscreen;
@@ -83,14 +69,12 @@ struct VideoLayout : GUIKIT::VerticalLayout {
     VideoFpsLayout videoFps;
 
     VideoSettingsLayout videoSettingsLayout;
-    PathsLayout paths;
 
     DriverLayout driverLayout;
     GUIKIT::HorizontalLayout hLayout;
 
     auto translate() -> void;
     auto updateDriverPropsVisibility() -> void;
-    auto updateShaderPath() -> void;
 
     VideoLayout();
 };

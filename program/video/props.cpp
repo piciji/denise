@@ -490,6 +490,8 @@ auto VideoManager::reloadSettings() -> void {
 	// update only, crt mode could be changed
     VideoManager::setCrtThreaded( VideoManager::crtThreaded );
 	VideoManager::setShaderInputPrecision( VideoManager::shaderInputPrecision );
+
+    loadPreset();
     
     applyMeta();
 }

@@ -235,6 +235,8 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
         Control();
     } control;
 
+    GUIKIT::MultilineEdit info;
+
     VideoPassLayout();
 };
 
@@ -300,13 +302,15 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto updatePresets(bool reloadDriver = true) -> void;
     auto updateVisibillity() -> void;
     auto loadSettings(bool init = false) -> void;
-    auto buildShaderUI(ShaderPreset* preset) -> void;
+    auto buildShaderUI(ShaderPreset* preset, bool expand = true) -> void;
     auto buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> void;
     auto buildParams(TviParam& tviParam) -> void;
     auto countFloatingPoint(ShaderPreset::Param& param, int& places, int& decimalPlaces) -> void;
     auto updateMoveImg() -> void;
     auto clearBrokenPaths() -> void;
     auto showBrokenPaths(std::vector<std::string>& brokenPaths) -> void;
+    auto loadShader(std::string path) -> bool;
+    auto unloadShader() -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

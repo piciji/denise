@@ -667,63 +667,63 @@ auto View::setConnectors() -> void {
 }
 
 auto View::updateShader() -> void {
-    
-	std::vector<GUIKIT::File::Info> shaderList;
-    std::string ident = "shader_folder_";
-    program->appendShaderFormat(ident);
-	auto folder = globalSettings->get<std::string>(ident, "");
-    
-    if (folder.empty())
-        folder = program->shaderFolder();
-    
-    if (!folder.empty())
-		shaderList = GUIKIT::File::getFolderList(folder);	
-    
     for(auto& sM : sysMenus) {
-        
         removeMenuTree( sM.shaderMenu );
-
-        sM.shaderMenu->setEnabled( shaderList.size() != 0 );
-    }
-    
-    if (shaderList.size() == 0)
-        return;
-    
-    for(auto& sM : sysMenus) {
         auto emulator = sM.emulator;
-        
+        auto settings = program->getSettings(emulator);
 		auto vManager = VideoManager::getInstance( emulator );
-		
-        auto activeShaders = vManager->shader.getActiveShaders();
+        std::string loaded = vManager->getPresetPath();
+
+        std::vector<std::string> shaderList;
+        int i = 0;
+        while(1) {
+            std::string fav = settings->get<std::string>( "shader_fav_" + std::to_string(i), "");
+            if (fav.empty())
+                break;
+
+            shaderList.push_back(fav);
+            i++;
+        }
 
         std::vector<GUIKIT::MenuRadioItem*> items;
-
         GUIKIT::MenuRadioItem* item = new GUIKIT::MenuRadioItem;
         GUIKIT::MenuRadioItem* checkedItem = item;
         item->setText(trans->getA("none"));
         item->setChecked();
-        item->onActivate = [item, vManager]() {
+        item->onActivate = [emulator, vManager]() {
             emuThread->lock();
-            vManager->shader.removeActiveShader(item->text());
+            auto emuView = EmuConfigView::TabWindow::getView(emulator);
+            if (emuView && emuView->videoLayout)
+                emuView->videoLayout->unloadShader();
+            else
+                vManager->clearPreset();
             emuThread->unlock();
         };
 
         sM.shaderMenu->append(*item);
         items.push_back(item);
 
-        for (auto& shaderInfo : shaderList) {
+        if (shaderList.size() == 0) {
+            sM.shaderMenu->setEnabled( false );
+            continue;
+        }
+
+        sM.shaderMenu->setEnabled();
+
+        for (auto& shaderPath : shaderList) {
             GUIKIT::MenuRadioItem* item = new GUIKIT::MenuRadioItem;
-            item->setText(shaderInfo.name);
+            item->setText(GUIKIT::String::getFileName(shaderPath, true));
+
+            if (loaded == shaderPath)
+                checkedItem = item;
             
-            for (auto& activeShader : activeShaders) {
-                if (activeShader == shaderInfo.name) {
-                    checkedItem = item;
-                    break;
-                }
-            }
-            item->onActivate = [item, vManager]() {
+            item->onActivate = [emulator, vManager, shaderPath]() {
                 emuThread->lock();
-                vManager->shader.addActiveShader(item->text());
+                auto emuView = EmuConfigView::TabWindow::getView(emulator);
+                if (emuView && emuView->videoLayout)
+                    emuView->videoLayout->loadShader(shaderPath);
+                else
+                    vManager->loadPreset(shaderPath);
                 emuThread->unlock();
             };
             sM.shaderMenu->append(*item);
@@ -731,7 +731,8 @@ auto View::updateShader() -> void {
         }
 
         GUIKIT::MenuRadioItem::setGroup(items);
-        checkedItem->setChecked();
+        if (checkedItem)
+            checkedItem->setChecked();
     }
 
     updateShaderVisibility();
