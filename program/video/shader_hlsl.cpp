@@ -1,7 +1,5 @@
 
 auto Shader::buildOutputEncodingHLSL() -> std::string {
-    bool c64Glitches = vManager->useLineGlitch();
-
     std::string out = R"(
         uniform sampler t0S;
         uniform Texture2D <float4> t0;
@@ -29,6 +27,7 @@ auto Shader::buildOutputEncodingHLSL() -> std::string {
 			float BA;
 			float cyclePixel;
             float lace;
+            float palMode;
         };
 
         struct VSInput {
@@ -41,6 +40,16 @@ auto Shader::buildOutputEncodingHLSL() -> std::string {
             float2 tex : TEXCOORD0;
         };
     )";
+    // lace : e, e, o, o, e, e, o, o, ...
+    // non lace: e, o, e, o, e, o, ...
+
+    // luma will be darkened when some vic lines changes their state
+    // AEC and BA state will be transferred in unused alpha channel for each pixel
+    // PHI0, CAS, RAS have the same behavior within each cycle.
+    // PHI0: second half cycle is darkened
+    // Pixel: 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5 -> first half cycle
+    // CAS: third and fourth pixel of each half cycle are darkened
+    // RAS: first pixel of each half cycle will be non darkened
 
     out += R"(
         PSInput VS(VSInput input) {
@@ -53,60 +62,26 @@ auto Shader::buildOutputEncodingHLSL() -> std::string {
         float4 PS(PSInput input) : SV_TARGET {
             float4 color = t0.Sample(t0S, input.tex);
             float3 lumaChroma = color.xyz;
-    )";
-
-    if (c64Glitches) {
-        // if texture is doubled size we need the xpos in original size.
-        // means: 0 and 0.5 is Pixel 1, 1 and 1.5 is Pixel 2 and so on.
-        out += "float xposF = input.tex.x * SourceSize.x;";
-
-        out += R"(
-			// to align pixel pos within vic cycle
+            float xposF = input.tex.x * SourceSize.x;
             int xpos = int(xposF);
-			xpos += int(cyclePixel);
+            xpos += int(cyclePixel);
 			xpos &= 7;
             int flags = int( color.w );
-        )";
+            lumaChroma.x *= 1.0 - ((flags & 1) * BA);
+            lumaChroma.x *= 1.0 - (((flags >> 1) & 1) * AEC);
+            lumaChroma.x *= 1.0 - (((xpos >> 2) & 1) * PHI0);
+            lumaChroma.x *= 1.0 - (((xpos >> 1) & 1) * CAS);
+            lumaChroma.x *= 1.0 - (((((~xpos >> 1) & 1) & (~xpos & 1)) ^ 1) * RAS);
 
-        // luma will be darkened when some vic lines changes their state
-        // AEC and BA state will be transfered in unused alpha channel for each pixel
-
-        if (vManager->baGlitch > 0.0)
-            out += "lumaChroma.x *= 1.0 - ((flags & 1) * BA);";
-
-        if (vManager->aecGlitch > 0.0)
-            out += "lumaChroma.x *= 1.0 - (((flags >> 1) & 1) * AEC);";
-
-        // PHI0, CAS, RAS have the same behaviour within each cycle.
-
-        if (vManager->phi0Glitch > 0.0)
-            // PHI0: second half cycle is darkened
-            // Pixel: 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5 -> first half cycle
-            out += "lumaChroma.x *= 1.0 - (((xpos >> 2) & 1) * PHI0);";
-
-        if (vManager->casGlitch > 0.0)
-            // CAS: third and fourth pixel of each half cycle are darkened
-            out += "lumaChroma.x *= 1.0 - (((xpos >> 1) & 1) * CAS);";
-
-        if (vManager->rasGlitch > 0.0)
-            // RAS: first pixel of each half cycle will be non darkened
-            out += "lumaChroma.x *= 1.0 - (((((~xpos >> 1) & 1) & (~xpos & 1)) ^ 1) * RAS);";
-    }
-
-    if (vManager->pal) {
-        out += R"(
             float3 yuvEven = float3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV, lumaChroma.z * rotU + lumaChroma.y * rotV);
             float3 yuvOdd = float3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV * -1, lumaChroma.z * rotU + lumaChroma.y * rotV * -1);
 
-            // lace : e, e, o, o, e, e, o, o, ...
-            // non lace: e, o, e, o, e, o, ...
-            int oddLineFrame = int(floor(mod(floor(input.tex.y * OutputSize.y / float( 1 << int(lace) )), 2.0)));
-
-            return float4( lerp(yuvOdd, yuvEven, (oddLineFrame ^ int(oddLine)) ), 1.0 );
-            }
-        )";
-    } else
-        out += "return float4(yuvEven, 1.0); ";
+            if (palMode) {
+                int oddLineFrame = int(floor(mod(floor(input.tex.y * OutputSize.y / float( 1 << int(lace) )), 2.0)));
+                return float4( lerp(yuvOdd, yuvEven, (oddLineFrame ^ int(oddLine)) ), 1.0 );
+            } else
+                return float4(yuvEven, 1.0);
+    )";
 
     return out;
 }
@@ -153,15 +128,8 @@ auto Shader::buildLumaLatencyHLSL() -> std::string {
 
         float4 PS(PSInput input) : SV_TARGET {
             float4 color = t0.Sample(t0S, input.tex);
-	)";
-
-    int rounds = vManager->firSharp == 0 ? -3 : -7;
-
-    out += "float2 xy = input.tex.xy;";
-
-    out += "float ySrc = t0.Sample(t0S, xy + float2( float(" + std::to_string(rounds) + ") / float(SourceSize.x), 0.0)).x; ";
-
-    out += R"(
+            float2 xy = input.tex.xy;
+            float ySrc = t0.Sample(t0S, xy + float2( -3.0 / float(SourceSize.x), 0.0)).x;
 			float y = ySrc;
 			float yTarget;
 			float yDiff = 0.0;
@@ -169,37 +137,44 @@ auto Shader::buildLumaLatencyHLSL() -> std::string {
             int yChanged;
             float _lumaRise = lumaRise;
             float _lumaFall = lumaFall;
-		)";
 
-    if(vManager->firSharp != 0) {
-        out += R"(
-            _lumaRise *= 0.57142857;
-            _lumaFall *= 0.57142857;
-        )";
-    }
+            yTarget = t0.Sample(t0S, xy + float2( -2.0 / float(SourceSize.x), 0.0)).x;
+            // check for a change of luma between 2 adjacent pixel
+            yChanged = ySrc == yTarget ? 0 : 1;
+            ySrc = yTarget;
+            yDiff = yChanged == 1 ? (yTarget - y) : yDiff;
+            yDirection = int( sign( yTarget - y ) );
 
-    while (rounds < 0) {
+            // a direction of 0 means no change, a direction of 1 means 'rise' only
+            // a direction of -1 means 'fall' only
+            y = yDirection == 1 ? min(y + (yDiff * _lumaRise), yTarget) :
+                (yDirection == -1 ? max(y + (yDiff * _lumaFall), yTarget) : y);
 
-        rounds += 1;
+            yTarget = t0.Sample(t0S, xy + float2( -1.0 / float(SourceSize.x), 0.0)).x;
+            // check for a change of luma between 2 adjacent pixel
+            yChanged = ySrc == yTarget ? 0 : 1;
+            ySrc = yTarget;
+            yDiff = yChanged == 1 ? (yTarget - y) : yDiff;
+            yDirection = int( sign( yTarget - y ) );
 
-        out += " yTarget = t0.Sample(t0S, xy + float2( float(" + std::to_string(rounds) + ") / float(SourceSize.x), 0.0)).x; ";
-        out += R"(
-                // check for a change of luma between 2 adjacent pixel
-                yChanged = ySrc == yTarget ? 0 : 1;
-                ySrc = yTarget;
-                yDiff = yChanged == 1 ? (yTarget - y) : yDiff;
-				yDirection = int( sign( yTarget - y ) );
+            // a direction of 0 means no change, a direction of 1 means 'rise' only
+            // a direction of -1 means 'fall' only
+            y = yDirection == 1 ? min(y + (yDiff * _lumaRise), yTarget) :
+                (yDirection == -1 ? max(y + (yDiff * _lumaFall), yTarget) : y);
 
-				// a direction of 0 means no change, a direction of 1 means 'rise' only
-				// a direction of -1 means 'fall' only
-                y = yDirection == 1 ? min(y + (yDiff * _lumaRise), yTarget) :
-                    (yDirection == -1 ? max(y + (yDiff * _lumaFall), yTarget) : y);
-			)";
-    }
+            yTarget = t0.Sample(t0S, xy).x;
+            // check for a change of luma between 2 adjacent pixel
+            yChanged = ySrc == yTarget ? 0 : 1;
+            ySrc = yTarget;
+            yDiff = yChanged == 1 ? (yTarget - y) : yDiff;
+            yDirection = int( sign( yTarget - y ) );
 
-    out += R"(
-			return float4(y, color.yzw);
-		}
+            // a direction of 0 means no change, a direction of 1 means 'rise' only
+            // a direction of -1 means 'fall' only
+            y = yDirection == 1 ? min(y + (yDiff * _lumaRise), yTarget) :
+                (yDirection == -1 ? max(y + (yDiff * _lumaFall), yTarget) : y);
+
+            return float4(y, color.yzw);
 	)";
 
     return out;
