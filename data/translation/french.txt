@@ -312,7 +312,6 @@ ba_glitch = Luminance BA
 phi_glitch = Luminance PHI
 ras_glitch = Luminance RAS
 cas_glitch = Luminance CAS
-color_channel_32bit = Tout les canaux de couleur en 32 Bits
 distortion_hires = Distorsion en Haute Résolution
 hires = Haute Résolution
 aperture_mask = Masque d'ouverture

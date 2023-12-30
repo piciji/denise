@@ -628,8 +628,12 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 
     if (laceMode != interlace) {
         laceMode = interlace;
-        if (interlace) {
-            resetTempData(0, true);}
+        if (interlace)
+            resetTempData(0, true);
+
+        unsigned cropTop = emulator->cropTop();
+        updateParam("lace", (float)interlace);
+        updateParam("oddLine", interlace ? ((cropTop >> 1) & 1) : (cropTop & 1));
     }
     
     if ( !placeHolderFrames && shader.recreate ) {

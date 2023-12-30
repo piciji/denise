@@ -521,8 +521,8 @@ auto Shader::buildDelayLineAndConvertToRgbHLSL() -> std::string {
     return out;
 }
 
+auto Shader::buildGammaHLSL() -> std::string {
 
-auto Shader::buildGammaAndScanlinesHLSL() -> std::string {
     // gamma lookup texture has 768 values instead of 256 for an 8-bit channel.
     // Means, we provide gamma values for out of range colors.
     // because of color math before it could happen that a resulting color is bigger than
@@ -535,6 +535,54 @@ auto Shader::buildGammaAndScanlinesHLSL() -> std::string {
     // texture is normalized; means: positon / 768
     // center: 256 / 768 = 1 / 3
     // color is normalized between [0,1] -> * 255 (for denormalization) / 768 for lookup
+
+    std::string out = R"(
+        uniform sampler t0S;
+        uniform sampler gammaS;
+        uniform Texture2D <float4> t0;
+        uniform Texture2D gamma;
+
+        struct VSInput {
+            float2 pos : TEXCOORD0;
+            float2 tex : TEXCOORD1;
+        };
+
+        struct PSInput {
+            float4 pos : SV_POSITION;
+            float2 tex : TEXCOORD0;
+        };
+
+        struct UBO {
+            float4x4 projection;
+        };
+        uniform UBO ubo;
+
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
+        };
+        PSInput VS(VSInput input) {
+            PSInput output;
+            output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
+            output.tex = input.tex;
+            return output;
+        }
+
+        float4 PS(PSInput input) : SV_TARGET {
+			float3 color = t0.Sample(t0S, input.tex).rgb;
+			color.r = gamma.Sample(gammaS, 1.0/3.0 + color.r * 0.33203125 ).x;
+			color.g = gamma.Sample(gammaS, 1.0/3.0 + color.g * 0.33203125 ).x;
+			color.b = gamma.Sample(gammaS, 1.0/3.0 + color.b * 0.33203125 ).x;
+			return float4( color, 1.0 );
+		}
+    )";
+
+    return out;
+}
+
+auto Shader::buildGammaAndScanlinesHLSL() -> std::string {
 
     std::string out = R"(
         uniform sampler t0S;
@@ -568,7 +616,6 @@ auto Shader::buildGammaAndScanlinesHLSL() -> std::string {
         };
 
         cbuffer Push {
-            float scanlines;
             float lace;
         };
 
@@ -580,11 +627,10 @@ auto Shader::buildGammaAndScanlinesHLSL() -> std::string {
         }
 
         float4 PS(PSInput input) : SV_TARGET {
-            int noScanlines = int(lace) | ((int(scanlines) == 0) ? 1 : 0);
 		    float3 color = t0.Sample(t0S, input.tex).rgb;
 			float3 colorUp = t0.Sample(t0S, input.tex.xy + float2( 0.0, -1.0 / targetSize.y ) ).rgb;
 			float3 colorDown = t0.Sample(t0S, input.tex.xy + float2( 0.0, 1.0 / targetSize.y ) ).rgb;
-			int lineFactor = int(floor(mod(input.tex.y * OutputSize.y, 2.0))) | noScanlines;
+			int lineFactor = int(floor(mod(input.tex.y * OutputSize.y, 2.0))) | int(lace);
 
 			color.r = lerp( gamma.Sample(gammaS, 1.0/3.0 + color.r * 0.33203125 ).x, gammaWithShade.Sample(gammaWithShadeS, 1.0/3.0 + 0.166015625 * colorUp.r + 0.166015625 * colorDown.r ).x, lineFactor );
 			color.g = lerp( gamma.Sample(gammaS, 1.0/3.0 + color.g * 0.33203125 ).x, gammaWithShade.Sample(gammaWithShadeS, 1.0/3.0 + 0.166015625 * colorUp.g + 0.166015625 * colorDown.g ).x, lineFactor );

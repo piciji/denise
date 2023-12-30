@@ -312,7 +312,6 @@ ba_glitch = BA fényesség hiba
 phi_glitch = PHI fényesség hiba
 ras_glitch = RAS fényesség hiba
 cas_glitch = CAS fényesség hiba
-color_channel_32bit = 32-bit egyenkénti színcsatorna
 distortion_hires = Hi-Res torzítás
 hires = Hi-Res
 aperture_mask = Képrácsmaszk

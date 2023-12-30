@@ -98,7 +98,7 @@ auto VideoManager::setHanoverBars( int hanoverBars ) -> void {
 
 auto VideoManager::setBlur( unsigned blur ) -> void {
     this->blur = (double)blur / 50.0;
-    requestUpdate(true);
+    requestUpdate();
 }
 
 auto VideoManager::setLumaRise( float pixel ) -> void {
@@ -115,8 +115,7 @@ auto VideoManager::setLumaFall( float pixel ) -> void {
 
 auto VideoManager::setScanlines(unsigned intensity) -> void {
     waitForCrtRenderer();
-    updateShader( "", "gammaAndScanlines", scanlines, (uint8_t)intensity );
-    this->scanlines = intensity;
+    setData( "", scanlines, (uint8_t)intensity );
     requestUpdate();
     reinitCrtThread();
 }
@@ -272,26 +271,26 @@ template<typename T> auto VideoManager::updateShader(std::string program, std::s
     }
 }
 
-template<typename T> auto VideoManager::setData( std::string ident, T& target, T intensity, T activationValue) -> void {
+template<typename T> auto VideoManager::setData( const std::string& ident, T& target, T intensity, T activationValue) -> void {
     T intensityBefore = target;
     target = intensity;
 
     if (activeEmulator != emulator)
         shader.recreate = true;
-
-    else if (target == activationValue && intensityBefore != activationValue) {
+    else if (target == activationValue && intensityBefore != activationValue)
         shader.recreate = true;
-
-    } else if (target != activationValue && intensityBefore == activationValue) {
+    else if (target != activationValue && intensityBefore == activationValue)
         shader.recreate = true;
+    else if (!ident.empty())
+        updateParam(ident, float(intensity));
+}
 
-    } else {
-        for(auto& param : shader.preset.params) {
-            if (param.id == ident) {
-                param.value = (float)intensity;
-                shader.paramsDirty = true;
-                break;
-            }
+auto VideoManager::updateParam(const std::string& ident, float value) -> void {
+    for(auto& param : shader.preset.params) {
+        if (param.id == ident) {
+            param.value = value;
+            shader.paramsDirty = true;
+            break;
         }
     }
 }

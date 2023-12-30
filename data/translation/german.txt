@@ -312,7 +312,6 @@ ba_glitch = BA Luminanz Fehler
 phi_glitch = PHI Luminanz Fehler
 ras_glitch = RAS Luminanz Fehler
 cas_glitch = CAS Luminanz Fehler
-color_channel_32bit = 32-bit je Farbkanal
 distortion_hires = Verzerrung in hoher Auflösung
 hires = hohe Auflösung
 aperture_mask = Streifenmaske

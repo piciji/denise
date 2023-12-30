@@ -312,7 +312,6 @@ ba_glitch = 輝度のひずみ：BA
 phi_glitch = 輝度のひずみ：PHI
 ras_glitch = 輝度のひずみ：RAS
 cas_glitch = 輝度のひずみ：CAS
-color_channel_32bit = 各色チャンネルを32-bit化
 distortion_hires = ハイレゾのひずみ
 hires = ハイレゾ
 aperture_mask = アパーチャマスク

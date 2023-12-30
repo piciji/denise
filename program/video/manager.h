@@ -310,7 +310,8 @@ struct VideoManager {
     auto applyMeta() -> void;
 
     auto updateData(int offset, float data) -> void;
-    template<typename T> auto setData( std::string ident, T& target, T intensity, T activationValue) -> void;
+    auto updateParam(const std::string& ident, float value) -> void;
+    template<typename T> auto setData( const std::string& ident, T& target, T intensity, T activationValue = (T)0) -> void;
     auto setData( unsigned offset, float value) -> void;
     template<typename T> auto updateData(std::string ident, T data) -> void;
     auto applyDataUpdates() -> void;

@@ -89,9 +89,9 @@ auto Shader::build() -> void {
         passX.scaleY = 1.0;
         preset.passes.push_back(passX);
 
-        passX.src = buildGammaAndScanlines(format);
+        passX.src = vManager->scanlines ? buildGammaAndScanlines(format) : buildGamma(format);
         passX.filter = ShaderPreset::FILTER_NEAREST;
-        passX.alias = "scanlines";
+        passX.alias = "gammaScanlines";
         passX.scaleX = 1.0;
         passX.scaleY = 2.0;
         passX.dontScaleIfInterlace = true;
@@ -163,6 +163,14 @@ auto Shader::addParams() -> void {
     unsigned cropTop = vManager->emulator->cropTop();
     unsigned cropLeft = vManager->emulator->cropLeft();
 
+    param.pass = -1;
+    param.id = "oddLine";
+    param.value = vManager->laceMode ? ((cropTop >> 1) & 1) : (cropTop & 1);
+    preset.params.push_back(param);
+    param.id = "lace";
+    param.value = vManager->laceMode;
+    preset.params.push_back(param);
+
     passId = getPassId("outputEncoding");
     if (passId >= 0) {
         param.pass = passId;
@@ -174,9 +182,9 @@ auto Shader::addParams() -> void {
         param.value = std::sin(vManager->phaseError * M_PI / 180.0);;
         preset.params.push_back(param);
 
-        param.id = "oddLine";
-        param.value = vManager->laceMode ? ((cropTop >> 1) & 1) : (cropTop & 1);
-        preset.params.push_back(param);
+//        param.id = "oddLine";
+//        param.value = vManager->laceMode ? ((cropTop >> 1) & 1) : (cropTop & 1);
+//        preset.params.push_back(param);
 
         if (vManager->isC64()) {
             param.id = "BA";
@@ -249,9 +257,9 @@ auto Shader::addParams() -> void {
         param.value = _hanBarAlt;
         preset.params.push_back(param);
 
-        param.id = "oddLine";
-        param.value = vManager->laceMode ? ((cropTop >> 1) & 1) : (cropTop & 1);
-        preset.params.push_back(param);
+//        param.id = "oddLine";
+//        param.value = vManager->laceMode ? ((cropTop >> 1) & 1) : (cropTop & 1);
+//        preset.params.push_back(param);
     }
 
     passId = getPassId("scanlines");
