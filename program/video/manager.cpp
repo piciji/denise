@@ -17,7 +17,6 @@
 
 bool VideoManager::synchronized = true;
 bool VideoManager::crtThreaded = true;
-bool VideoManager::shaderInputPrecision = false;
 uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
 unsigned VideoManager::placeHolderFrames = 0;
@@ -399,8 +398,8 @@ auto VideoManager::preCalcGamma() -> void {
         preCalcScanlineF[c * 2 + 1] = preCalcScanline[c * 2 + 1] / 255.0;
 	}
 
-    if ( !shader.recreate && useCrtMode() )
-        shader.transferGammaAndScanlines();
+    if ( !shader.recreate && (crtMode == CrtMode::Gpu) )
+        shader.paramsDirty = true;
 }
 
 inline auto VideoManager::adjustBrightness(double& c) -> void {
@@ -627,20 +626,14 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     if (needAUpdate)
         updateAll();
 
-    if (shader.lace != interlace) {
-        shader.lace = interlace;
-        if (crtMode == CrtMode::Gpu)
-            shader.recreate = true;
-        else if (interlace) {
+    if (laceMode != interlace) {
+        laceMode = interlace;
+        if (interlace) {
             resetTempData(0, true);}
     }
     
     if ( !placeHolderFrames && shader.recreate ) {
-        shader.loadInternal();
-        
-        bool error = false;
-        error |= !shader.sendToDriver();
-		
+        shader.build();
         shader.recreate  = false;
     }
 
@@ -677,18 +670,10 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
         src -= SHADER_OFFSCREEN_WIDTH;
 
-        if (shaderInputPrecision) {
-            if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : 1), iHold))
-                return;
+        if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : (scanlines ? 0 : 1) ), iHold))
+            return;
 
-            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuDataFloat, gpuPitch - width);
-
-        } else {
-            if (!videoDriver->lock(gpuData, gpuPitch, width, height + (interlace ? 2 : 1), iHold))
-                return;
-
-            renderToRgbNoGamma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width );
-        }
+        renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuDataFloat, gpuPitch - width);
 
 	} else if (crtThreaded) {
         if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? ((height << 1) - 1) : height, iHold))
@@ -785,70 +770,6 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
             for(unsigned w = 0; w < width; w++)
                 *dest++ = colorTable[ *src++ & mask ];
 
-            src += srcPitch;
-            dest += destPitch;
-        }
-    }
-}
-
-template<typename T, bool interlace, bool field> inline auto VideoManager::renderToRgbNoGamma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
-    const T* srcDelay = src;
-    T colorNative;
-    unsigned metaShift = countColorBits;
-    unsigned mask = (1 << metaShift) - 1;
-    unsigned cropTop = this->emulator->cropTop();
-    uint32_t color;
-    ColorRgbLight colorI;
-
-    if (interlace && !field && !interlaceDecay) // hold -> update full frames only
-        return;
-
-    if(cropTop) {
-        srcDelay -= width + srcPitch;
-        if constexpr (interlace)
-            srcDelay -= width + srcPitch;
-    }
-
-    for (int i = 0; i <= interlace; i++) {
-        for (unsigned w = 0; w < width; w++) {
-            colorNative = *srcDelay++;
-            *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
-        }
-        dest += destPitch;
-        srcDelay += srcPitch;
-    }
-
-    if (interlace && interlaceDecay) {
-        int iRate = 100 - interlaceDecay;
-
-        for (unsigned h = 0; h < height; h++) {
-            if (field == (h & 1)) {
-                for (unsigned w = 0; w < width; w++) {
-                    colorNative = *src++;
-                    *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
-                }
-            } else {
-                for (unsigned w = 0; w < width; w++) {
-                    colorNative = *src++;
-                    color = colorTableNoGamma[colorNative & mask];
-
-                    colorI.r = (((color >> 16) & 0xff) * iRate) / 100;
-                    colorI.g = (((color >> 8) & 0xff) * iRate) / 100;
-                    colorI.b = (((color >> 0) & 0xff) * iRate) / 100;
-
-                    *dest++ =  ((colorNative >> metaShift) << 24) | colorI.r << 16 | colorI.g << 8 | colorI.b;
-                }
-            }
-
-            src += srcPitch;
-            dest += destPitch;
-        }
-    } else {
-        for (unsigned h = 0; h < height; h++) {
-            for (unsigned w = 0; w < width; w++) {
-                colorNative = *src++;
-                *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
-            }
             src += srcPitch;
             dest += destPitch;
         }
@@ -1520,7 +1441,7 @@ auto VideoManager::convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void
 auto VideoManager::powerOff() -> void {
 	reinitCrtThread(true);
     currentHeight = 0;
-    shader.lace = false;
+    laceMode = false;
 }
 
 auto VideoManager::updateData(int offset, float data) -> void {
@@ -1566,8 +1487,9 @@ auto VideoManager::applyDataUpdates() -> void {
     emuThread->unlockVideo();
 
     for(auto& dataUpdate : _dataUpdates) {
+        if (dataUpdate.offset >= 0)                         setData(dataUpdate.offset, dataUpdate.dataF);
 
-        if (dataUpdate.ident == "gamma")                    setGamma( dataUpdate.dataU );
+        else if (dataUpdate.ident == "gamma")               setGamma( dataUpdate.dataU );
         else if (dataUpdate.ident == "saturation")          setSaturation( dataUpdate.dataU );
         else if (dataUpdate.ident == "brightness")          setBrightness( dataUpdate.dataU );
         else if (dataUpdate.ident == "contrast")            setContrast( dataUpdate.dataU );

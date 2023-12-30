@@ -1,6 +1,28 @@
 
 #pragma once
 
+struct CropPass {
+    unsigned top = 0;
+    unsigned left = 0;
+    unsigned bottom = 0;
+    unsigned right = 0;
+
+    bool active = false;
+
+    auto release() -> void {
+        top = left = bottom = right = 0;
+        active = false;
+    }
+
+    auto set(const CropPass& crop) -> void {
+        top = crop.top;
+        left = crop.left;
+        bottom = crop.bottom;
+        right = crop.right;
+        active = top || left || bottom || right;
+    }
+};
+
 struct ShaderPreset {
     enum WrapMode { WRAP_BORDER = 0, WRAP_EDGE, WRAP_REPEAT, WRAP_MIRRORED_REPEAT };
     enum Filter { FILTER_UNSPEC = 0, FILTER_LINEAR, FILTER_NEAREST };
@@ -20,6 +42,8 @@ struct ShaderPreset {
         std::string alias;
         bool inUse;
         bool native;
+        bool dontScaleIfInterlace;
+        CropPass crop;
 
         ScaleType scaleTypeX;
         ScaleType scaleTypeY;
@@ -36,6 +60,10 @@ struct ShaderPreset {
         std::string id;
         std::string path;
         bool mipmap;
+
+        uint32_t* data; // alternate
+        unsigned width;
+        unsigned height;
     };
     std::vector<Lut> luts;
 
@@ -55,33 +83,20 @@ struct ShaderPreset {
     };
     std::vector<Param> params;
 
+    struct DynamicTexture {
+        std::string id;
+        int pass;
+        float* data;
+        unsigned width;
+    };
+    std::vector<DynamicTexture> dynamicTextures;
+
     auto clear() {
         params.clear();
+        dynamicTextures.clear();
         luts.clear();
         passes.clear();
         feedback = -1;
-    }
-};
-
-struct CropPass {        
-    unsigned top = 0;
-    unsigned left = 0;
-    unsigned bottom = 0;
-    unsigned right = 0;
-    
-    bool active = false;
-    
-    auto release() -> void {
-        top = left = bottom = right = 0;
-        active = false;
-    }
-    
-    auto set(CropPass& crop) -> void {
-        top = crop.top;
-        left = crop.left;
-        bottom = crop.bottom;
-        right = crop.right;
-        active = top || left || bottom || right;
     }
 };
 

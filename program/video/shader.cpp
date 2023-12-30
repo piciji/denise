@@ -18,296 +18,343 @@
 #include "shader_glsl.cpp"
 #include "shader_hlsl.cpp"
 
-auto Shader::sendToDriver(bool retry) -> bool {
-    std::vector<ShaderPass*> out;
-
-    if (primaryPass) {
-        delete primaryPass;
-        primaryPass = nullptr;
-    }
-
-    auto intPrimary = getPrimary(internalPasses);
-
-    if (intPrimary) {
-
-        primaryPass = new ShaderPass;
-        primaryPass->primary = true;
-        primaryPass->internalFormatMatchesData = false;
-
-
-        if (intPrimary) {
-            primaryPass->format = intPrimary->format;
-            primaryPass->wrap = intPrimary->wrap;
-            primaryPass->vertex = intPrimary->vertex;
-            primaryPass->fragment = intPrimary->fragment;
-			primaryPass->filter = intPrimary->filter;
-            primaryPass->internalFormatMatchesData = intPrimary->internalFormatMatchesData;
-            primaryPass->mipmap = intPrimary->mipmap;
-        }
-
-        out.push_back(primaryPass);
-    }
-    
-    for (auto pass : internalPasses) {
-        if (!pass->primary)
-            out.push_back(pass);
-    }
-    
-	videoDriver->setShader( out );    
-	
-	std::string error = "";
-	
-	for( auto pass : out )
-        if (pass->error != "")
-            error += "\n" + pass->ident + ": " + pass->error;
-
-    if (!retry && !error.empty()) {        
-        view->message->error( error );
-        sendToDriver( true ); // try again
-    } else
-        transferDataToShader();
-
-	return error.empty();
-}
-
-auto Shader::getPrimary(std::vector<ShaderPass*>& passes) -> ShaderPass* {
-    for (auto pass : passes)
-        if (pass->primary)
-            return pass;  
-    
-    return nullptr;
-}
-
-auto Shader::loadInternal() -> void {
-	
-    clean(internalPasses);
+auto Shader::build() -> void {
     auto format = videoDriver->shaderFormat();
     if(format == DRIVER::Video::ShaderType::NotSupported)
         return;
     
     auto filter = vManager->settings->get<unsigned>( "video_filter", 1u, {0u, 1u});
-    ShaderPass* pass;
-    ShaderPreset* preset = new ShaderPreset;
-    preset->feedback = -1;
-    preset->bufferType = ShaderPreset::BUFFER_FP;
+    preset.clear();
+    preset.feedback = -1;
+    preset.bufferType = ShaderPreset::BUFFER_FP;
 
     ShaderPreset::Pass passX;
     passX.inUse = true;
     passX.native = true;
-    passX.wrap = ShaderPreset::WRAP_BORDER;
+    passX.wrap = ShaderPreset::WRAP_EDGE;
     passX.frameModulo = 0;
     passX.bufferType = ShaderPreset::BUFFER_FP;
     passX.scaleTypeX = ShaderPreset::SCALE_INPUT;
     passX.scaleTypeY = ShaderPreset::SCALE_INPUT;
+    passX.dontScaleIfInterlace = false;
+    passX.mipmap = false;
+    passX.crop.active = false;
 
 	if (vManager->crtMode == VideoManager::CrtMode::Gpu) {
         passX.src = buildOutputEncoding(format);
         passX.filter = ShaderPreset::FILTER_NEAREST;
-        passX.mipmap = false;
         passX.alias = "outputEncoding";
         passX.scaleX = vManager->firSharp == 0 ? 1.0 : 2.0;
         passX.scaleY = 1.0;
-        preset->passes.push_back(passX);
+        preset.passes.push_back(passX);
 		
         if (vManager->randomLineOffset) {
             passX.src = buildRandomLineOffset(format);
             passX.filter = ShaderPreset::FILTER_NEAREST;
-            passX.mipmap = false;
             passX.alias = "randomLine";
             passX.scaleX = 1.0;
             passX.scaleY = 1.0;
-            preset->passes.push_back(passX);
+            preset.passes.push_back(passX);
         }
 
         if (vManager->useLumaDelay() ) {
             passX.src = buildLumaLatency(format);
             passX.filter = ShaderPreset::FILTER_NEAREST;
-            passX.mipmap = false;
             passX.alias = "lumaLatency";
             passX.scaleX = 1.0;
             passX.scaleY = 1.0;
-            preset->passes.push_back(passX);
+            preset.passes.push_back(passX);
         }
 
         if (vManager->lumaNoise || vManager->chromaNoise) {
             passX.src = buildNoise(format);
             passX.filter = ShaderPreset::FILTER_NEAREST;
-            passX.mipmap = false;
             passX.alias = "noise";
             passX.scaleX = 1.0;
             passX.scaleY = 1.0;
-            preset->passes.push_back(passX);
+            preset.passes.push_back(passX);
         }
 
         passX.src = buildBandwidthReduction(format);
         passX.filter = ShaderPreset::FILTER_NEAREST;
-        passX.mipmap = false;
         passX.alias = "bandwidth";
         passX.scaleX = vManager->firSharp == 0 ? 2.0 : 1.0;
         passX.scaleY = 1.0;
-        preset->passes.push_back(passX);
+        preset.passes.push_back(passX);
 
         passX.src = buildDelayLineAndConvertToRgb(format);
         passX.filter = ShaderPreset::FILTER_NEAREST;
-        passX.mipmap = false;
         passX.alias = "delayLine";
         passX.scaleX = 1.0;
         passX.scaleY = 1.0;
-        preset->passes.push_back(passX);
+        preset.passes.push_back(passX);
 
+        passX.src = buildGammaAndScanlines(format);
+        passX.filter = ShaderPreset::FILTER_NEAREST;
+        passX.alias = "scanlines";
+        passX.scaleX = 1.0;
+        passX.scaleY = 2.0;
+        passX.dontScaleIfInterlace = true;
+        preset.passes.push_back(passX);
 
-        if (vManager->scanlines && !lace) {
-            pass = new ShaderPass;
-            pass->primary = false;
-            addBaseProps(pass);
-            pass->fragment = buildGammaAndScanlines(format);
-            pass->ident = "scanlines";
-            pass->relativeWidth = 100;
-            pass->relativeHeight = 200;
-            pass->filter = "nearest";
-            internalPasses.push_back(pass);
-
-        } else {
-			pass = new ShaderPass;
-			pass->primary = false;
-			addBaseProps(pass);
-			pass->fragment = buildGamma(format);
-			pass->ident = "gamma";
-			pass->relativeWidth = 100;
-			pass->relativeHeight = 100;
-			pass->filter = "nearest";
-			internalPasses.push_back( pass );
-		}
+        passX.dontScaleIfInterlace = false;
 
         if (vManager->bloomGlow) {
-            pass = new ShaderPass;
-            pass->primary = false;
-            addBaseProps(pass);
-            pass->fragment = buildBloom(format, true);
-            pass->ident = "bloomPhase1";
-            pass->relativeWidth = 100;
-            pass->relativeHeight = (vManager->scanlines || lace) ? 100 : 200;
-            pass->filter = filter == 1 ? "linear" : "nearest";
-            pass->mipmap = true;
-            internalPasses.push_back(pass);
+            passX.src = buildBloom(format, true);
+            passX.filter = filter == 1 ? ShaderPreset::FILTER_LINEAR : ShaderPreset::FILTER_NEAREST;
+            passX.alias = "bloomPhase1";
+            passX.scaleX = 1.0;
+            passX.scaleY = 1.0;
+            passX.mipmap = true;
+            preset.passes.push_back(passX);
 
-            pass = new ShaderPass;
-            pass->primary = false;
-            addBaseProps(pass);
-            pass->fragment = buildBloom(format, false);
-            pass->ident = "bloom";
-            pass->relativeWidth = 100;
-            pass->relativeHeight = 100;
-            pass->filter = "nearest";
-            internalPasses.push_back(pass);
+            passX.src = buildBloom(format, false);
+            passX.filter = ShaderPreset::FILTER_NEAREST;
+            passX.alias = "bloom";
+            passX.scaleX = 1.0;
+            passX.scaleY = 1.0;
+            passX.mipmap = false;
+            preset.passes.push_back(passX);
         }
-                      
-        pass = new ShaderPass;
-        pass->primary = false;
-        addBaseProps(pass);
-		pass->ident = "crop";
+
+        passX.src = "";
+        passX.filter = filter == 1 ? ShaderPreset::FILTER_LINEAR : ShaderPreset::FILTER_NEAREST;
+        passX.alias = "crop";
+        passX.scaleX = 1.0;
+        passX.scaleY = 1.0;
+        passX.mipmap = false;
         // remove first non visible line(s). it was needed as delay line to calculate first visible line
-        pass->crop.top = (vManager->scanlines || vManager->bloomGlow || lace) ? 2 : 1;
-        pass->crop.bottom = (vManager->scanlines && !lace) ? 1 : 0;
-        // same here, we have some pixel offscreen to calculate bandwidth reduction
-		pass->crop.left = SHADER_OFFSCREEN_WIDTH << 1;
-		pass->crop.right = SHADER_OFFSCREEN_WIDTH << 1;
-        pass->filter = filter == 1 ? "linear" : "nearest";
-		internalPasses.push_back( pass );
-                    
-        pass = new ShaderPass;
-        pass->primary = true;
-        addBaseProps(pass);
-		pass->ident = "primary";		
-		pass->filter = "nearest";
-		internalPasses.push_back( pass );
-        
+        passX.crop.set({2, SHADER_OFFSCREEN_WIDTH << 1, 0, SHADER_OFFSCREEN_WIDTH << 1});
+        preset.passes.push_back(passX);
+
+        passX.crop.active = false;
         // post shading runs after external shaders
         if (vManager->useMask()) {
-            pass = new ShaderPass;
-            pass->primary = false;
-            pass->external = false;
-            pass->fragment = buildMask(format);
-            pass->ident = "crtMask";
-
-            pass->relativeHeight = vManager->hires ? 200 : 100;
-            pass->relativeWidth = vManager->hires ? 200 : 100;
-            normaliseDimension( pass->relativeWidth, pass->relativeHeight );
-            pass->filter = filter == 1 ? "linear" : "nearest";
-            pass->mipmap = true;
-            internalPasses.push_back( pass );
+            passX.src = buildMask(format);
+            passX.filter = filter == 1 ? ShaderPreset::FILTER_LINEAR : ShaderPreset::FILTER_NEAREST;
+            passX.alias = "crtMask";
+            passX.scaleX = vManager->hires ? 2.0 : 1.0;
+            passX.scaleY = vManager->hires ? 2.0 : 1.0;
+            passX.mipmap = true;
+            preset.passes.push_back(passX);
         }
 
         if (vManager->radialDistortion) {
-            pass = new ShaderPass;
-            pass->primary = false;
-            pass->external = false;
-            pass->fragment = buildRadialDistortion(format);
-            pass->ident = "radialDistortion";
-            pass->relativeHeight = vManager->distortionHires ? 200 : 100;
-            pass->relativeWidth = vManager->distortionHires ? 200 : 100;
-            pass->mipmap = true;
-            pass->filter = filter == 1 ? "linear" : "nearest";
-            internalPasses.push_back(pass);
+            passX.src = buildRadialDistortion(format);
+            passX.filter = filter == 1 ? ShaderPreset::FILTER_LINEAR : ShaderPreset::FILTER_NEAREST;
+            passX.alias = "radialDistortion";
+            passX.scaleX = vManager->distortionHires ? 2.0 : 1.0;
+            passX.scaleY = vManager->distortionHires ? 2.0 : 1.0;
+            passX.mipmap = true;
+            preset.passes.push_back(passX);
         }
+
+        addParams();
+
+        videoDriver->setShader(preset);
 	}
-
 }
 
-auto Shader::normaliseDimension( unsigned& widthScale, unsigned& heightScale ) -> void {
+auto Shader::addParams() -> void {
+    ShaderPreset::Param param;
+    ShaderPreset::DynamicTexture dynamicTexture;
+    ShaderPreset::Lut lut;
+    int passId;
+    unsigned cropTop = vManager->emulator->cropTop();
+    unsigned cropLeft = vManager->emulator->cropLeft();
 
-    if (vManager->crtMode == VideoManager::CrtMode::Gpu) {
-        if (vManager->scanlines || vManager->bloomGlow || lace);
-		else
-            heightScale <<= 1;            
-    } else {            
-        widthScale <<= 1;
+    passId = getPassId("outputEncoding");
+    if (passId >= 0) {
+        param.pass = passId;
+        param.id = "rotU";
+        param.value = std::cos(vManager->phaseError * M_PI / 180.0);;
+        preset.params.push_back(param);
 
-        //if (!vManager->useCrtMode() || !vManager->scanlines)
-        if (vManager->scanlines || lace);
-        else
-            heightScale <<= 1;
+        param.id = "rotV";
+        param.value = std::sin(vManager->phaseError * M_PI / 180.0);;
+        preset.params.push_back(param);
+
+        param.id = "oddLine";
+        param.value = vManager->laceMode ? ((cropTop >> 1) & 1) : (cropTop & 1);
+        preset.params.push_back(param);
+
+        if (vManager->isC64()) {
+            param.id = "BA";
+            param.value = vManager->baGlitch;
+            preset.params.push_back(param);
+            param.id = "AEC";
+            param.value = vManager->aecGlitch;
+            preset.params.push_back(param);
+            param.id = "PHI0";
+            param.value = vManager->phi0Glitch;
+            preset.params.push_back(param);
+            param.id = "RAS";
+            param.value = vManager->rasGlitch;
+            preset.params.push_back(param);
+            param.id = "CAS";
+            param.value = vManager->casGlitch;
+            preset.params.push_back(param);
+            param.id = "cyclePixel";
+            param.value = float((cropLeft + (vManager->pal ? 2 : 4)) & 7);
+            preset.params.push_back(param);
+        }
     }
+
+    passId = getPassId("randomLine");
+    if (passId >= 0) {
+        param.pass = passId;
+        param.id = "lineFactor";
+        param.value = vManager->randomLineOffset;
+        preset.params.push_back(param);
+    }
+
+    passId = getPassId("noise");
+    if (passId >= 0) {
+        param.pass = passId;
+        param.id = "lumaNoise";
+        param.value = vManager->lumaNoise;
+        preset.params.push_back(param);
+
+        param.id = "chromaNoise";
+        param.value = vManager->chromaNoise;
+        preset.params.push_back(param);
+    }
+
+    passId = getPassId("lumaLatency");
+    if (passId >= 0) {
+        param.pass = passId;
+        param.id = "lumaRise";
+        param.value = vManager->lumaRise == 0.0 ? 1.0f : (float) vManager->lumaRise;
+        preset.params.push_back(param);
+
+        param.id = "lumaFall";
+        param.value = vManager->lumaFall == 0.0 ? 1.0f : (float) vManager->lumaFall;
+        preset.params.push_back(param);
+    }
+
+    passId = getPassId("delayLine");
+    if (passId >= 0) {
+        param.pass = passId;
+
+        float _hanBar = (double) vManager->hanoverBars / 128.0;
+        float _hanBarAlt = (double) vManager->hanoverBarsAlt / 128.0;
+        if (_hanBarAlt == 0.0)
+            _hanBarAlt = 1.0;
+
+        param.id = "hanoverBars";
+        param.value = _hanBar;
+        preset.params.push_back(param);
+
+        param.id = "hanoverBarsAlt";
+        param.value = _hanBarAlt;
+        preset.params.push_back(param);
+
+        param.id = "oddLine";
+        param.value = vManager->laceMode ? ((cropTop >> 1) & 1) : (cropTop & 1);
+        preset.params.push_back(param);
+    }
+
+    passId = getPassId("scanlines");
+    if (passId >= 0) {
+        dynamicTexture.pass = passId;
+        dynamicTexture.id = "gammaWithShade";
+        dynamicTexture.data = &vManager->preCalcScanlineF[0];
+        dynamicTexture.width = 512 * 3;
+        preset.dynamicTextures.push_back(dynamicTexture);
+        dynamicTexture.id = "gamma";
+        dynamicTexture.data = &vManager->preCalcF[0];
+        dynamicTexture.width = 256 * 3;
+        preset.dynamicTextures.push_back(dynamicTexture);
+    }
+
+    passId = getPassId("bloom");
+    if (passId >= 0) {
+        param.pass = passId;
+        param.id = "weight";
+        param.value = vManager->bloomWeight;
+        preset.params.push_back(param);
+
+        param.id = "glow";
+        param.value = vManager->bloomGlow;
+        preset.params.push_back(param);
+    }
+
+    passId = getPassId("crtMask");
+    if (passId >= 0) {
+        param.pass = passId;
+        param.id = "lightFromCenter";
+        param.value = vManager->lightFromCenter;
+        preset.params.push_back(param);
+        param.id = "luminance";
+        param.value = vManager->maskLevel ? vManager->maskLuminance : vManager->luminance;
+        preset.params.push_back(param);
+        param.id = "maskLevel";
+        param.value = vManager->maskLevel;
+        preset.params.push_back(param);
+
+        float scaleX, scaleY;
+        scaleMask(scaleX, scaleY);
+        param.id = "maskScaleX";
+        param.value = scaleX;
+        preset.params.push_back(param);
+        param.id = "maskScaleY";
+        param.value = scaleY;
+        preset.params.push_back(param);
+
+        GUIKIT::Image* useImage;
+        switch(vManager->maskType) {
+            default:
+            case VideoManager::MaskType::Aperture: useImage = &imageAperture; break;
+            case VideoManager::MaskType::ShadowMask: useImage = &imageShadowMask; break;
+            case VideoManager::MaskType::SlotMask: useImage = &imageSlotMask; break;
+        }
+        lut.id = "maskLayer";
+        lut.mipmap = true;
+        lut.filter = ShaderPreset::FILTER_LINEAR;
+        lut.wrap = ShaderPreset::WRAP_REPEAT;
+        lut.width = useImage->width;
+        lut.height = useImage->height;
+        lut.data = (uint32_t*)useImage->data;
+    }
+
+    passId = getPassId("radialDistortion");
+    if (passId >= 0) {
+        param.pass = passId;
+        param.id = "Factor";
+        param.value = vManager->radialDistortion;
+        preset.params.push_back(param);
+        param.id = "Scale";
+        param.value = calcRadialScale( vManager->radialDistortion );
+        preset.params.push_back(param);
+    }
+
+    paramsDirty = false;
 }
 
-auto Shader::addBaseProps( ShaderPass* pass ) -> void {
+auto Shader::getPassId(const std::string& ident) -> int {
+    for(int i = 0; i < preset.passes.size(); i++) {
+        ShaderPreset::Pass& pass = preset.passes[i];
 
-	pass->wrap = "border";
-    pass->external = false;
-	
-    if (!pass->primary) {
-        pass->format = "rgba32f";
-		pass->internalFormatMatchesData = true;
-        
-	} else if (vManager->shaderInputPrecision) {
-		pass->format = "rgba32f";
-		pass->internalFormatMatchesData = true;
-	} else {
-		pass->format = "rgba8";
-		pass->internalFormatMatchesData = true;
-	}			
+        if (pass.alias == ident)
+            return 0;
+    }
+    return -1;
 }
 
-auto Shader::clean(std::vector<ShaderPass*>& passes) -> void {
-    for (auto pass : passes)
-        delete pass;
 
-    passes.clear();
-}
-
-auto Shader::transferDataToShader() -> void {
-    transferOutputEncoding();
-    transferLumaLatency();
-    transferNoise();
-    transferDelayLine();        
-    transferGammaAndScanlines();          
-    transferRadialDistortion();
-	transferMaskTexture();
-    transferMask();
-    transferLuminance();
-    transferRandomLine();
-	transferBloom();
-}
+//auto Shader::transferDataToShader() -> void {
+//    transferOutputEncoding();
+//    transferLumaLatency();
+//    transferNoise();
+//    transferDelayLine();
+//    transferGammaAndScanlines();
+//    transferRadialDistortion();
+//	transferMaskTexture();
+//    transferMask();
+//    transferLuminance();
+//    transferRandomLine();
+//	transferBloom();
+//}
 
 auto Shader::transferBloom() -> void {
 	setAttribute("bloom", "weight", vManager->bloomWeight);
@@ -327,17 +374,6 @@ auto Shader::transferDelayLine() -> void {
         setAttribute("delayLine", "oddLine", (int)((vManager->emulator->cropTop() >> 1) & 1));
     else
         setAttribute("delayLine", "oddLine", (int) (vManager->emulator->cropTop() & 1));
-}
-
-auto Shader::transferGammaAndScanlines() -> void {
-    
-    if (vManager->scanlines && !lace) {
-        videoDriver->setShaderAttribute("scanlines", "gammaWithShade", &vManager->preCalcScanlineF[0], 512 * 3);    
-        videoDriver->setShaderAttribute("scanlines", "gamma", &vManager->preCalcF[0], 256 * 3);
-               
-    } else {
-        videoDriver->setShaderAttribute("gamma", "gamma", &vManager->preCalcF[0], 256 * 3);
-    }
 }
 
 auto Shader::transferOutputEncoding() -> void {
@@ -413,22 +449,21 @@ auto Shader::transferMaskTexture() -> void {
 		videoDriver->setShaderAttribute( "crtMask", "maskLayer", (uint32_t*)useImage->data, useImage->width, useImage->height );
 }
 
-auto Shader::transferMask() -> void {
+auto Shader::scaleMask(float& scaleX, float& scaleY) -> void {
 	// 1 inch = 25.4 mm
 	// x dpi -> x dots = 25.4 mm
 	// 1 dot = y mm (how much mm takes one dot)
 	// y = 25.4 mm / x dots
     auto format = videoDriver->shaderFormat();
-    int mimmappingScale = 0;
+    int mipmappingScale = 0;
 
     if (format == ShaderFormat::GLSL)
-        mimmappingScale = 1;
+        mipmappingScale = 1;
 
 	float oneDotWidth = 25.4f / (float)vManager->maskDpi;
 	
 	// dot pitch means distance between two red holes in mask   
-	float scaleX = ((float)(vManager->emulator->cropWidth() ) * oneDotWidth) / vManager->maskPitch;
-	float scaleY;
+	scaleX = ((float)(vManager->emulator->cropWidth() ) * oneDotWidth) / vManager->maskPitch;
     
     switch(vManager->maskType) {
 		
@@ -436,7 +471,7 @@ auto Shader::transferMask() -> void {
 		case VideoManager::MaskType::Aperture:
         case VideoManager::MaskType::SlotMask: {    
      
-            scaleY = ((float)(vManager->emulator->cropWidth() << mimmappingScale) * scaleX) / ((float)(vManager->emulator->cropHeight() ));
+            scaleY = ((float)(vManager->emulator->cropWidth() << mipmappingScale) * scaleX) / ((float)(vManager->emulator->cropHeight() ));
         } break;
         case VideoManager::MaskType::ShadowMask: {
              
@@ -444,9 +479,9 @@ auto Shader::transferMask() -> void {
         } break;                    
     }
     
-	setAttribute( "crtMask", "maskLevel", vManager->maskLevel );
-	setAttribute( "crtMask", "maskScaleX", scaleX );
-	setAttribute( "crtMask", "maskScaleY", scaleY );
+	//setAttribute( "crtMask", "maskLevel", vManager->maskLevel );
+	//setAttribute( "crtMask", "maskScaleX", scaleX );
+	//setAttribute( "crtMask", "maskScaleY", scaleY );
 }
 
 auto Shader::setAttribute(std::string program, std::string attribute, float value) -> void {
@@ -700,5 +735,5 @@ Shader::Shader(VideoManager* vManager) {
 }
 
 Shader::~Shader() {
-    clean(internalPasses);
+
 }

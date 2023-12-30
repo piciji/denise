@@ -250,6 +250,7 @@ auto ShaderParser::parseTextures() -> bool {
         ShaderPreset::Lut lut;
         lut.id = id;
         lut.path = rootSettings.get<std::string>(id, "");
+        lut.data = nullptr;
         if (lut.path.empty())
             continue;
         lut.path = GUIKIT::File::resolveRelativePath( rootSettings.getPath(), lut.path );

@@ -37,7 +37,7 @@ struct Video {
     virtual auto clear() -> void {}
     virtual auto setFilter(Filter filter) -> void {}
 	virtual auto setShader(std::vector<ShaderPass*> passes) -> void {}
-    virtual auto setShader(ShaderPreset* preset) -> void {}
+    virtual auto setShader(ShaderPreset& preset) -> void {}
     virtual auto setShaderAttribute( std::string _program, std::string attribute, float value ) -> void {}
     virtual auto setShaderAttribute( std::string _program, std::string attribute, int value ) -> void {}
     virtual auto setShaderAttribute( std::string _program, std::string attribute, float* data, unsigned size) -> void {}

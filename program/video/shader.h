@@ -16,33 +16,27 @@ struct ShaderPass;
 struct Shader {
 
     VideoManager* vManager;
-    std::vector<ShaderPass*> internalPasses;
 
-    ShaderPass* primaryPass = nullptr;
+    ShaderPreset preset;
     bool recreate = true;
-    bool lace = false;
+    bool paramsDirty = false;
     GUIKIT::Image imageAperture;
     GUIKIT::Image imageShadowMask;
     GUIKIT::Image imageSlotMask;
     ShaderParser* parser = nullptr;
     
     std::vector<std::string> loadErrors;
-    
-    auto sendToDriver(bool retry = false) -> bool;
-    auto getPrimary(std::vector<ShaderPass*>& passes) -> ShaderPass*;
-    auto loadInternal() -> void;
-    auto clean(std::vector<ShaderPass*>& passes) -> void;
+
+    auto build() -> void;
     auto setAttribute(std::string program, std::string attribute, float value) -> void;
     auto setAttribute(std::string program, std::string attribute, int value) -> void;
 
-    auto transferDataToShader() -> void;
     auto transferDelayLine() -> void;
     auto transferOutputEncoding() -> void;
-    auto transferGammaAndScanlines() -> void;
     auto transferNoise() -> void;
     auto transferLumaLatency() -> void;
     auto transferRadialDistortion() -> void;
-    auto transferMask() -> void;
+    auto scaleMask(float& scaleX, float& scaleY) -> void;
     auto transferMaskTexture() -> void;
     auto transferLuminance() -> void;   
     auto transferRandomLine() -> void;
@@ -85,10 +79,7 @@ struct Shader {
     auto buildGammaAndScanlines(ShaderFormat& format) -> std::string;
     auto buildGammaAndScanlinesGLSL() -> std::string;
     auto buildGammaAndScanlinesHLSL() -> std::string;
-    auto addBaseProps( ShaderPass* pass ) -> void;
-    auto calcRadialScale(float intensity) -> float;    
-    
-    auto normaliseDimension( unsigned& widthScale, unsigned& heightScale ) -> void;
+    auto calcRadialScale(float intensity) -> float;
 
     auto loadPreset(const std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
     auto addPreset(std::string path, bool prepend, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
@@ -101,6 +92,8 @@ struct Shader {
     auto movePass(unsigned& passId, bool up) -> void;
     auto togglePassUsage(unsigned passId) -> ShaderPreset::Pass*;
     auto setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void;
+    auto addParams() -> void;
+    auto getPassId(const std::string& ident) -> int;
         
     Shader(VideoManager* vManager);
     ~Shader();

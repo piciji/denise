@@ -42,8 +42,7 @@ auto Program::initVideo(bool driverChange) -> void {
         else
             VideoManager::getInstance(emulator)->reloadSettings();
     }
-	
-	VideoManager::setShaderInputPrecision( globalSettings->get<bool>("shader_input_precision", false) );
+
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
     view->updateShader();
     view->loadDragnDropOverlay();

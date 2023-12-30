@@ -1,7 +1,6 @@
 
 CrtEmulationLayout::CrtEmulationLayout() {
     append( threadMode, {0u, 0u}, 5 );
-    append( shaderInputPrecision, {0u, 0u} );
     
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -314,14 +313,7 @@ VideoLayout::VideoLayout() {
         VideoManager::setCrtThreaded( checked );
         emuThread->unlock();
     };
-    
-	crtEmulation.shaderInputPrecision.setChecked( globalSettings->get<bool>("crt_shader_input_precision", false) );
-    crtEmulation.shaderInputPrecision.onToggle = [this](bool checked) {
-        emuThread->lock();
-        globalSettings->set<bool>("crt_shader_input_precision", checked);
-        VideoManager::setShaderInputPrecision( checked );
-        emuThread->unlock();
-    };
+
 }
 
 auto VideoLayout::translate() -> void {
@@ -344,7 +336,6 @@ auto VideoLayout::translate() -> void {
     screenTextLayout.setText( trans->get("screen_status") );
     
     crtEmulation.threadMode.setText( trans->get("crt_threaded") );
-    crtEmulation.shaderInputPrecision.setText( trans->get("color_channel_32bit") );
     crtEmulation.setText( trans->get("crt_emulation") );
 	
 	videoGeometry.setText(trans->get("geometry"));

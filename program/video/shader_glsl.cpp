@@ -43,14 +43,14 @@ auto Shader::buildOutputEncodingGLSL() -> std::string {
             vec3 lumaChroma = vec3( color.rgb * mat3(0.23485876230514607, 0.6335007388077467, 0.13164049888710716, 0.4409594767911895, -0.27984362502847304, -0.16111585176271648, 0.14630060102591497, -0.5594814826856017, 0.4131808816596867));
         )";
 
-    if (vManager->shaderInputPrecision) {
+   // if (vManager->shaderInputPrecision) {
         // we already start with yuv/yiq
         rgbToLumaChroma = R"(
             vec3 lumaChroma = color.xyz;
         )";
 
         flags = "color.w";
-    }
+   // }
 
     out += rgbToLumaChroma;
 
@@ -111,13 +111,13 @@ auto Shader::buildOutputEncodingGLSL() -> std::string {
 //    )";
 
     if (vManager->pal) {
-        if (lace) {
+  //      if (lace) {
             out += R"( int oddLineFrame = int(floor(mod(floor(texCoordFrag.y * targetSize.y / 2.0), 2.0))); )"; // e, e, o, o, e, e, o, o, ...
             out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
-        } else {
+    //    } else {
             out += R"( int oddLineFrame = int(floor(mod(texCoordFrag.y * targetSize.y, 2.0))); )";  // e, o, e, o, e, o, ...
             out += "fragColor=vec4( mix(yuvOdd, yuvEven, oddLineFrame ^ oddLine), 1.0 ); ";
-        }
+      //  }
     } else
         out += "fragColor=vec4(yuvEven, 1.0); ";
 
@@ -390,13 +390,13 @@ auto Shader::buildDelayLineAndConvertToRgbGLSL() -> std::string {
 
     if (vManager->pal) {
 
-        if (lace)
+     //   if (lace)
             out += R"(
 				int lineFactor = int(floor(mod(floor(texCoordFrag.y * targetSize.y / 2.0), 2.0)));
 				vec3 yuv = (texture(source[0], texCoordFrag.xy).xyz);
 				vec3 yuvLineBefore = (texture(source[0], texCoordFrag.xy + vec2(0.0, -2.0 / targetSize.y )).xyz);
 			)";
-        else
+       // else
             out += R"(
 				int lineFactor = int(floor(mod(texCoordFrag.y * targetSize.y, 2.0)));
 				vec3 yuv = (texture(source[0], texCoordFrag.xy).xyz);

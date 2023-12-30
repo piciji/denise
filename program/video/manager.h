@@ -67,14 +67,12 @@ struct VideoManager {
         
 	static bool synchronized;
     static bool crtThreaded;
-    static bool shaderInputPrecision;
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
     static unsigned placeHolderFrames;
     static bool needAUpdate;
 	
     static auto setCrtThreaded(bool state) -> void;
-    static auto setShaderInputPrecision(bool state) -> void;
     static auto setFrameRender(uint8_t limit) -> void;
     static auto setSynchronize() -> void;
     static auto setHardSync() -> void;
@@ -195,7 +193,7 @@ struct VideoManager {
     ColorLumaChroma* evenTable = nullptr;
     ColorLumaChroma* oddTable = nullptr;
 
-    bool rgbCable = false;
+    bool laceMode = false;
     bool colorTableUpdated = false;
     inline auto needUpdate() -> bool { return !colorTableUpdated; }
     auto requestUpdate(bool withShader = false) -> void;
@@ -214,7 +212,6 @@ struct VideoManager {
     
     template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch) -> void;
     template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
-    template<typename T, bool interlace = false, bool field = false> inline auto renderToRgbNoGamma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
     template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
     template<typename T> inline auto renderCrtSelection(Render& re) -> void;
     template<typename T, uint8_t options = 0> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
@@ -313,6 +310,8 @@ struct VideoManager {
     auto applyMeta() -> void;
 
     auto updateData(int offset, float data) -> void;
+    template<typename T> auto setData( std::string ident, T& target, T intensity, T activationValue) -> void;
+    auto setData( unsigned offset, float value) -> void;
     template<typename T> auto updateData(std::string ident, T data) -> void;
     auto applyDataUpdates() -> void;
 

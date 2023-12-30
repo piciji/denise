@@ -423,6 +423,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         descS.ComparisonFunc = D3D11_COMPARISON_NEVER;
         descS.MinLOD = -D3D11_FLOAT32_MAX;
         descS.MaxLOD = D3D11_FLOAT32_MAX;
+        std::copy(std::begin(clearColor), std::end(clearColor), std::begin(descS.BorderColor) );
 
         for (int i = 0; i < 4; i++) {
             switch(i) {

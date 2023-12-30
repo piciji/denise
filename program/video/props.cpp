@@ -14,13 +14,6 @@ auto VideoManager::setCrtThreaded(bool state) -> void {
 	}
 }
 
-auto VideoManager::setShaderInputPrecision(bool state) -> void {
-    shaderInputPrecision = state;
-    for (auto videoManager : videoManagers) {
-        videoManager->requestUpdate(true);
-    }
-}
-
 auto VideoManager::usePal(bool state) -> void {
 	pal = state;
     requestUpdate(true);
@@ -279,6 +272,42 @@ template<typename T> auto VideoManager::updateShader(std::string program, std::s
     }
 }
 
+template<typename T> auto VideoManager::setData( std::string ident, T& target, T intensity, T activationValue) -> void {
+    T intensityBefore = target;
+    target = intensity;
+
+    if (activeEmulator != emulator)
+        shader.recreate = true;
+
+    else if (target == activationValue && intensityBefore != activationValue) {
+        shader.recreate = true;
+
+    } else if (target != activationValue && intensityBefore == activationValue) {
+        shader.recreate = true;
+
+    } else {
+        for(auto& param : shader.preset.params) {
+            if (param.id == ident) {
+                param.value = (float)intensity;
+                shader.paramsDirty = true;
+                break;
+            }
+        }
+    }
+}
+
+auto VideoManager::setData( unsigned offset, float value) -> void {
+    if (activeEmulator != emulator)
+        shader.recreate = true;
+    else {
+        auto& params = shader.preset.params;
+        if (offset < params.size()) {
+            params[offset].value = value;
+            shader.paramsDirty = true;
+        }
+    }
+}
+
 auto VideoManager::resetSettings() -> void {
 
     auto modeIdent = getModeIdent();
@@ -489,7 +518,6 @@ auto VideoManager::reloadSettings() -> void {
 	
 	// update only, crt mode could be changed
     VideoManager::setCrtThreaded( VideoManager::crtThreaded );
-	VideoManager::setShaderInputPrecision( VideoManager::shaderInputPrecision );
 
     loadPreset();
     

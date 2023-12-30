@@ -434,11 +434,9 @@ auto Shader::buildBandwidthReductionHLSL() -> std::string {
         if ( (centerChromaVQ + i) < NChromaVQ )
             chromaVQ = firChromaVQ[centerChromaVQ + i];
 
-        double pos = ((double)i ) / ((double)(vManager->emulator->cropWidth() << 1));
-
         if (i != 0)
-            out += "    yuv += (t0.Sample(t0S, input.tex + float2(" + _doubleToStr(-pos) + ", 0.0) ).xyz "
-                     "+ t0.Sample(t0S, input.tex + float2(" + _doubleToStr(pos) + ", 0.0) ).xyz) * ";
+            out += "    yuv += (t0.Sample(t0S, input.tex + float2(-1.0 * float(" + std::to_string(i) + ") / OutputSize.x, 0.0) ).xyz "
+                     "+ t0.Sample(t0S, input.tex + float2(float(" + std::to_string(i) + ") / OutputSize.x, 0.0) ).xyz) * ";
 
         out += "float3(" + _doubleToStr(luma) + "," + _doubleToStr(chromaUI) + "," + _doubleToStr(chromaVQ) + ");";
     }
@@ -523,8 +521,8 @@ auto Shader::buildDelayLineAndConvertToRgbHLSL() -> std::string {
     return out;
 }
 
-auto Shader::buildGammaHLSL() -> std::string {
 
+auto Shader::buildGammaAndScanlinesHLSL() -> std::string {
     // gamma lookup texture has 768 values instead of 256 for an 8-bit channel.
     // Means, we provide gamma values for out of range colors.
     // because of color math before it could happen that a resulting color is bigger than
@@ -538,52 +536,6 @@ auto Shader::buildGammaHLSL() -> std::string {
     // center: 256 / 768 = 1 / 3
     // color is normalized between [0,1] -> * 255 (for denormalization) / 768 for lookup
 
-    std::string out = R"(
-        uniform sampler t0S;
-        uniform sampler gammaS;
-        uniform Texture2D <float4> t0;
-        uniform Texture2D gamma;
-
-        struct VSInput {
-            float2 pos : TEXCOORD0;
-            float2 tex : TEXCOORD1;
-        };
-
-        struct PSInput {
-            float4 pos : SV_POSITION;
-            float2 tex : TEXCOORD0;
-        };
-
-        struct UBO {
-            float4x4 projection;
-        };
-        uniform UBO ubo;
-
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
-        };
-
-        PSInput VS(VSInput input) {
-            PSInput output;
-            output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
-            output.tex = input.tex;
-            return output;
-        }
-
-        float4 PS(PSInput input) : SV_TARGET {
-			float3 color = t0.Sample(t0S, input.tex).rgb;
-			color.r = gamma.Sample(gammaS, 1.0/3.0 + color.r * 0.33203125 ).x;
-			color.g = gamma.Sample(gammaS, 1.0/3.0 + color.g * 0.33203125 ).x;
-			color.b = gamma.Sample(gammaS, 1.0/3.0 + color.b * 0.33203125 ).x;
-			return float4( color, 1.0 );
-		}
-    )";
-
-    return out;
-}
-
-auto Shader::buildGammaAndScanlinesHLSL() -> std::string {
     std::string out = R"(
         uniform sampler t0S;
         uniform sampler gammaWithShadeS;
@@ -608,9 +560,16 @@ auto Shader::buildGammaAndScanlinesHLSL() -> std::string {
         };
         uniform UBO ubo;
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
+        };
+
+        cbuffer Push {
+            float scanlines;
+            float lace;
         };
 
         PSInput VS(VSInput input) {
@@ -621,10 +580,11 @@ auto Shader::buildGammaAndScanlinesHLSL() -> std::string {
         }
 
         float4 PS(PSInput input) : SV_TARGET {
+            int noScanlines = int(lace) | ((int(scanlines) == 0) ? 1 : 0);
 		    float3 color = t0.Sample(t0S, input.tex).rgb;
 			float3 colorUp = t0.Sample(t0S, input.tex.xy + float2( 0.0, -1.0 / targetSize.y ) ).rgb;
 			float3 colorDown = t0.Sample(t0S, input.tex.xy + float2( 0.0, 1.0 / targetSize.y ) ).rgb;
-			int lineFactor = int(floor(mod(input.tex.y * targetSize.y, 2.0)));
+			int lineFactor = int(floor(mod(input.tex.y * OutputSize.y, 2.0))) | noScanlines;
 
 			color.r = lerp( gamma.Sample(gammaS, 1.0/3.0 + color.r * 0.33203125 ).x, gammaWithShade.Sample(gammaWithShadeS, 1.0/3.0 + 0.166015625 * colorUp.r + 0.166015625 * colorDown.r ).x, lineFactor );
 			color.g = lerp( gamma.Sample(gammaS, 1.0/3.0 + color.g * 0.33203125 ).x, gammaWithShade.Sample(gammaWithShadeS, 1.0/3.0 + 0.166015625 * colorUp.g + 0.166015625 * colorDown.g ).x, lineFactor );
@@ -648,9 +608,6 @@ auto Shader::buildRadialDistortionHLSL() -> std::string {
         };
         uniform UBO ubo;
 
-        uniform float Factor;
-        uniform float Scale;
-
         struct VSInput {
             float2 pos : TEXCOORD0;
             float2 tex : TEXCOORD1;
@@ -661,9 +618,16 @@ auto Shader::buildRadialDistortionHLSL() -> std::string {
             float2 tex : TEXCOORD0;
         };
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
+        };
+
+        cbuffer Push {
+            float Factor;
+            float Scale;
         };
 
         float2 radialDistortion( float2 xy ){
@@ -691,20 +655,7 @@ auto Shader::buildRadialDistortionHLSL() -> std::string {
 
 auto Shader::buildMaskHLSL() -> std::string {
 
-    std::string uniforms = "";
     std::string light = "";
-
-    if (vManager->maskLevel)
-        uniforms += R"(
-            uniform Texture2D maskLayer;
-            uniform sampler maskLayerS;
-            uniform float maskLevel;
-            uniform float maskScaleX;
-            uniform float maskScaleY;
-        )";
-
-    if (vManager->lightFromCenter)
-        uniforms += R"( uniform float lightFromCenter; )";
 
     std::string out = R"(
         uniform sampler t0S;
@@ -713,10 +664,14 @@ auto Shader::buildMaskHLSL() -> std::string {
             float4x4 projection;
         };
         uniform UBO ubo;
-		uniform float luminance;
     )";
 
-    out += uniforms;
+    if (vManager->maskLevel)
+        out += R"(
+            uniform Texture2D maskLayer;
+            uniform sampler maskLayerS;
+
+        )";
 
     out += R"(
         struct VSInput {
@@ -729,9 +684,19 @@ auto Shader::buildMaskHLSL() -> std::string {
             float2 tex : TEXCOORD0;
         };
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
+        };
+
+        cbuffer Push {
+            float maskLevel;
+            float maskScaleX;
+            float maskScaleY;
+            float lightFromCenter;
+            float luminance;
         };
 
         PSInput VS(VSInput input) {
@@ -748,7 +713,6 @@ auto Shader::buildMaskHLSL() -> std::string {
 
     if (vManager->maskLevel)
         out += "color *= lerp( float3(1.0, 1.0, 1.0), maskLayer.Sample( maskLayerS, input.tex * float2(maskScaleX, maskScaleY) ).xyz, maskLevel ); ";
-    //out += "color = lerp( float3(1.0, 1.0, 1.0), maskLayer.Sample( maskLayerS, input.tex * float2(1.0) ).xyz, 1.0 );";
 
     if (vManager->lightFromCenter) {
         out += R"(
@@ -769,16 +733,6 @@ auto Shader::buildMaskHLSL() -> std::string {
 }
 
 auto Shader::buildBloomHLSL( bool phase1 ) -> std::string {
-
-    std::string _uniforms = "";
-
-    if (!phase1) {
-        _uniforms = R"(
-            uniform float weight;
-            uniform float glow;
-        )";
-    }
-
     GaussianBlur gB( vManager->bloomRadius << 1, vManager->bloomVariance);
 
     std::string out = R"(
@@ -792,8 +746,6 @@ auto Shader::buildBloomHLSL( bool phase1 ) -> std::string {
         uniform UBO ubo;
     )";
 
-    out += _uniforms;
-
     out += R"(
         struct VSInput {
             float2 pos : TEXCOORD0;
@@ -805,9 +757,16 @@ auto Shader::buildBloomHLSL( bool phase1 ) -> std::string {
             float2 tex : TEXCOORD0;
         };
 
-        cbuffer scene {
-            int ts : packoffset(c0);
-            float4 targetSize : packoffset(c1);
+        cbuffer Scene : register(b0) {
+            float ts packoffset(c0);
+            float4 SourceSize packoffset(c1);
+            float4 OutputSize packoffset(c2);
+            float4 OriginalSize packoffset(c3);
+        };
+
+        cbuffer Push {
+            float weight;
+            float glow;
         };
 
         PSInput VS(VSInput input) {
@@ -828,16 +787,12 @@ auto Shader::buildBloomHLSL( bool phase1 ) -> std::string {
             out += " sum += t0.Sample(t0S, input.tex).rgb * ";
 
         } else if (phase1) {
-            double pos = ((double)i ) / ((double)(vManager->emulator->cropWidth() << 1));
-
-            out += " sum += (t0.Sample(t0S, input.tex + float2(" + _doubleToStr(-pos) + ", 0.0) ).rgb "
-                 "+ t0.Sample(t0S, input.tex + float2(" + _doubleToStr(pos) + ", 0.0) ).rgb) * ";
+            out += " sum += (t0.Sample(t0S, input.tex + float2(-1.0 * float(" + std::to_string(i) + ") / OutputSize.x, 0.0) ).rgb "
+                 "+ t0.Sample(t0S, input.tex + float2(float(" + std::to_string(i) + ") / OutputSize.x, 0.0) ).rgb) * ";
 
         } else {
-            double pos = ((double)i ) / ((double)(vManager->emulator->cropHeight() << 1));
-
-            out += " sum += (t0.Sample(t0S, input.tex + float2(0.0, " + _doubleToStr(-pos) + ") ).rgb "
-                 "+ t0.Sample(t0S, input.tex + float2(0.0, " + _doubleToStr(pos) + ") ).rgb) * ";
+            out += " sum += (t0.Sample(t0S, input.tex + float2(0.0, -1.0 * float(" + std::to_string(i) + ") / OutputSize.y) ).rgb "
+                 "+ t0.Sample(t0S, input.tex + float2(0.0, float(" + std::to_string(i) + ") / OutputSize.y) ).rgb) * ";
         }
 
         out += " " + GUIKIT::String::convertDoubleToString( gB.get( i ) ) + ";";
