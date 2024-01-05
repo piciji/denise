@@ -146,11 +146,11 @@ struct Program : Emulator::Interface::Bind {
     auto setVideoDimension(Emulator::Interface* emulator = nullptr) -> void;
     auto initVideo(bool driverChange = false) -> void;
 	auto getVideoDriver() -> std::string;
-    auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void override;
+    auto videoRefresh(const uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void override;
 	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void override;
 	auto hintExclusiveFullscreen() -> void;
     auto canExclusiveFullscreen() -> bool;
-    auto setVideoFilter(bool driverOnly = false) -> void;
+    auto setVideoFilter() -> void;
 	auto updateCrop( Emulator::Interface* emulator ) -> void;
     auto getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& crop) -> bool;
     auto setCrop(Emulator::Interface* emulator, std::string ident, int value) -> void;
@@ -165,8 +165,8 @@ struct Program : Emulator::Interface::Bind {
     auto updateOverallSynchronize() -> void;
     auto updateFullscreenSetting() -> void;
     auto fpsChanged() -> void override;
-    auto appendShaderFormat(std::string& str) -> void;
     auto setRotation() -> void;
+    auto checkShaderSupport(Emulator::Interface* emulator) -> void;
 	
     //input
     auto initInput() -> void;

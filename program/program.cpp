@@ -252,11 +252,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     activeVideoManager = VideoManager::getInstance( emulator );
     activeInputManager = InputManager::getManager(emulator);
 
-    if (activeVideoManager) {
+    if (activeVideoManager)
         activeVideoManager->updateCrtThreads();
-        if (emuSwap)
-            activeVideoManager->shader.recreate = true;
-    }
 
     if (activeInputManager)
         activeInputManager->setupKeycodeTransfer();
@@ -341,6 +338,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
 		if (emuSwap) {
             setVideoFilter();
+            activeVideoManager->rebuildShader = true;
             statusHandler->updateDiskDriveSpace();
             setVideoDimension(activeEmulator);
         }
@@ -597,9 +595,7 @@ auto Program::settingsFileFromEmuFolder( std::string ident ) -> std::string {
 }
 
 auto Program::shaderFolder() -> std::string {
-    std::string str = GUIKIT::System::getResourceFolder(appFolder()) + SHADER_FOLDER;
-    appendShaderFormat(str);
-    return str + "/";
+    return GUIKIT::System::getResourceFolder(appFolder()) + SHADER_FOLDER;
 }
 
 auto Program::imgFolder() -> std::string {

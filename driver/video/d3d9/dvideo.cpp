@@ -615,10 +615,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         }
     }
 
-    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         resizeMutex.lock();
 
-        bool result = _lock(data, pitch, _width, _height, reuse);
+        bool result = _lock(data, pitch, _width, _height, options & 1);
 
         resizeMutex.unlock();
 

@@ -41,8 +41,6 @@ struct ShaderPreset {
         bool mipmap;
         std::string alias;
         bool inUse;
-        bool native;
-        bool dontScaleIfInterlace;
         CropPass crop;
 
         ScaleType scaleTypeX;
@@ -61,7 +59,7 @@ struct ShaderPreset {
         std::string path;
         bool mipmap;
 
-        uint32_t* data; // alternate
+        uint8_t* data; // alternate
         unsigned width;
         unsigned height;
     };
@@ -76,6 +74,7 @@ struct ShaderPreset {
         float step;
         std::string id;
         std::string desc;
+        bool hide;
 
         auto isDescriptor() -> bool {
             return (minimum == maximum) || ((maximum == step) && (step <= 0.01));
@@ -83,20 +82,12 @@ struct ShaderPreset {
     };
     std::vector<Param> params;
 
-    struct DynamicTexture {
-        std::string id;
-        int pass;
-        float* data;
-        unsigned width;
-    };
-    std::vector<DynamicTexture> dynamicTextures;
-
     auto clear() {
         params.clear();
-        dynamicTextures.clear();
         luts.clear();
         passes.clear();
         feedback = -1;
+        bufferType = BUFFER_UNORM;
     }
 };
 

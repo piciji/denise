@@ -570,6 +570,13 @@ auto Interface::cropLeft() -> unsigned {
     return system->crop.latest.left;
 }
 
+auto Interface::cropCoordUpdated(unsigned& top, unsigned& left) -> bool {
+    auto& latest = system->crop.latest;
+    top = latest.top;
+    left = latest.left;
+    return latest.topLeftChanged;
+}
+
 auto Interface::cropData16() -> uint16_t* {
     return system->crop.latest.frame;
 }

@@ -1,0 +1,134 @@
+
+shaders = 14
+float_framebuffer = true
+
+shader0 = resources/colorEncoding.slang
+alias0 = "YUV/YIC Encoding"
+filter_linear0 = false
+float_framebuffer0 = true
+scale_type0 = source
+scale0 = 1.0
+
+shader1 = resources/vicGlitches.slang
+alias1 = "VICII Glitches"
+filter_linear1 = false
+float_framebuffer1 = true
+scale_type1 = source
+scale1 = 1.0
+
+shader2 = resources/randomLineOffset.slang
+alias2 = "Random Line Offset"
+filter_linear2 = false
+float_framebuffer2 = true
+scale_type2 = source
+scale2 = 1.0
+
+shader3 = resources/lumaLatency.slang
+alias3 = "Luma Latency"
+filter_linear3 = false
+float_framebuffer3 = true
+scale_type3 = source
+scale3 = 1.0
+
+shader4 = resources/noise.slang
+alias4 = "Luma/Chroma Noise"
+filter_linear4 = false
+float_framebuffer4 = true
+scale_type4 = source
+scale4 = 1.0
+
+shader5 = resources/bandwidth.slang
+alias5 = "Bandwidth Reduction"
+filter_linear5 = false
+float_framebuffer5 = true
+scale_type5 = source
+scale_x5 = 2.0
+scale_y5 = 1.0
+
+shader6 = resources/delayLine.slang
+alias6 = "YUV/YIC Decoding"
+filter_linear6 = false
+float_framebuffer6 = true
+scale_type6 = source
+scale6 = 1.0
+
+shader7 = resources/gammaScanlines.slang
+alias7 = "Gamma and Scanlines"
+filter_linear7 = false
+float_framebuffer7 = true
+scale_type7 = source
+scale_x7 = 1.0
+scale_y7 = 2.0
+
+shader8 = resources/bloomHorizontal.slang
+alias8 = "Bloom Phase 1"
+float_framebuffer8 = true
+scale_type8 = source
+scale8 = 1.0
+mipmap_input8 = true
+
+shader9 = resources/bloomVertical.slang
+alias9 = "Bloom Phase 2"
+filter_linear9 = false
+float_framebuffer9 = true
+scale_type9 = source
+scale9 = 1.0
+
+shader10 =
+alias10 = "Crop"
+crop10 = 2 8 0 8
+float_framebuffer10 = true
+scale_type10 = source
+scale10 = 1.0
+
+shader11 = resources/mask.slang
+alias11 = "Mask"
+float_framebuffer11 = true
+scale_type11 = source
+scale11 = 1.0
+mipmap_input11 = true
+
+shader12 = resources/luminance.slang
+alias12 = "Luminance"
+float_framebuffer12 = true
+scale_type12 = source
+scale12 = 1.0
+
+shader13 = resources/radialDistortion.slang
+alias13 = "Radial Distortion"
+float_framebuffer13 = true
+scale_type13 = source
+scale13 = 1.0
+mipmap_input13 = true
+
+textures = "lutBloom;lutBandwidth;lutMaskAperture;lutMaskShadow;lutMaskSlot;lutPhaseShift"
+
+lutBloom = resources/lutBloom.png
+lutBloom_linear = false
+lutBloom_mipmap = false
+lutBloom_wrap_mode = "edge"
+
+lutBandwidth = resources/lutBandwidth.png
+lutBandwidth_linear = false
+lutBandwidth_mipmap = false
+lutBandwidth_wrap_mode = "edge"
+
+lutMaskAperture = resources/lutMaskAperture.png
+lutMaskAperture_linear = true
+lutMaskAperture_mipmap = true
+lutMaskAperture_wrap_mode = "repeat"
+
+lutMaskShadow = resources/lutMaskShadow.png
+lutMaskShadow_linear = true
+lutMaskShadow_mipmap = true
+lutMaskShadow_wrap_mode = "repeat"
+
+lutMaskSlot = resources/lutMaskSlot.png
+lutMaskSlot_linear = true
+lutMaskSlot_mipmap = true
+lutMaskSlot_wrap_mode = "repeat"
+
+lutPhaseShift = resources/lutPhaseShift.png
+lutPhaseShift_linear = false
+lutPhaseShift_mipmap = false
+lutPhaseShift_wrap_mode = "edge"

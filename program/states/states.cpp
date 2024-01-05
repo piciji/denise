@@ -523,9 +523,9 @@ auto States::updateModels() -> void {
 
     if (regionChange) {
         if (emuView && emuView->videoLayout)
-            emuView->videoLayout->updatePresets();
+            emuView->videoLayout->updatePresets(true, false);
         else if (videoDriver && activeVideoManager)
-            activeVideoManager->reloadSettings();
+            activeVideoManager->reloadSettings(false);
     }
     
     if (regionChange || resamplerChange) {

@@ -32,7 +32,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::Quit, "exit"} );
 
     hotkeys.push_back( {Hotkey::Id::ToggleSCVideo, "toggle S/C-Video"} );
-    hotkeys.push_back( {Hotkey::Id::ToggleSCVideoGPU, "toggle S/C-Video GPU"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleShader, "toggle Shader"} );
     hotkeys.push_back( {Hotkey::Id::ToggleBorder, "toggle border"} );
     hotkeys.push_back( {Hotkey::Id::ToggleBorderPrev, "toggle border prev"} );
     hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
@@ -376,7 +376,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             emuThread->lock();
             VideoManager::setSynchronize();
         } break;
-        case Hotkey::Id::ToggleSCVideoGPU:
+        case Hotkey::Id::ToggleShader:
             if(videoDriver->shaderFormat() == DRIVER::Video::ShaderType::NotSupported)
                 break;
         case Hotkey::Id::ToggleSCVideo: {
@@ -388,7 +388,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
             if (id == Hotkey::Id::ToggleSCVideo && _current == (unsigned)VideoManager::CrtMode::Cpu) {
                 _mode = (unsigned)VideoManager::CrtMode::None;
-            } else if (id == Hotkey::Id::ToggleSCVideoGPU && _current == (unsigned)VideoManager::CrtMode::Gpu) {
+            } else if (id == Hotkey::Id::ToggleShader && _current == (unsigned)VideoManager::CrtMode::Gpu) {
                 _mode = (unsigned)VideoManager::CrtMode::None;
             }
 
@@ -398,12 +398,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (emuView && emuView->videoLayout)
                 emuView->videoLayout->loadSettings();
             else
-                VideoManager::getInstance( activeEmulator )->reloadSettings();
+                VideoManager::getInstance( activeEmulator )->reloadSettings(false);
 
             if (statusHandler) {
-                std::string txt = "S/C-Video off";
+                std::string txt = "RGB";
                 if (_mode == (unsigned)VideoManager::CrtMode::Cpu) txt = "S/C-Video";
-                else if (_mode == (unsigned)VideoManager::CrtMode::Gpu) txt = "S/C-Video (GPU)";
+                else if (_mode == (unsigned)VideoManager::CrtMode::Gpu) txt = "Shader";
                 statusHandler->setMessage( trans->getA(txt), 3 );
             }
 

@@ -841,9 +841,6 @@
     <ClInclude Include="..\program\video\palette.h">
       <Filter>program\video</Filter>
     </ClInclude>
-    <ClInclude Include="..\program\video\shader.h">
-      <Filter>program\video</Filter>
-    </ClInclude>
     <ClInclude Include="..\program\video\manager.h">
       <Filter>program\video</Filter>
     </ClInclude>
@@ -1618,9 +1615,6 @@
       <Filter>program\thread</Filter>
     </ClCompile>
     <ClCompile Include="..\program\video\props.cpp">
-      <Filter>program\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\program\video\shader.cpp">
       <Filter>program\video</Filter>
     </ClCompile>
     <ClCompile Include="..\program\video\sync.cpp">

@@ -576,12 +576,12 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             initMainTexture( frame.texture.desc.Width, frame.texture.desc.Height );
     }
 
-    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.hintExclusiveFullscreen)
             checkFSE();
 
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, reuse);
+            return RenderThread::lock(data, pitch, _width, _height, options & 1);
 
         if (swapChain.frameLatency && !settings.vrr)
             WaitForSingleObjectEx( swapChain.frameLatency, 500, true);
@@ -602,12 +602,12 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         return true;
     }
 
-    auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+    auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.hintExclusiveFullscreen)
             checkFSE();
 
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, reuse);
+            return RenderThread::lock(data, pitch, _width, _height, options & 1);
 
         if (swapChain.frameLatency && !settings.vrr)
             WaitForSingleObjectEx( swapChain.frameLatency, 500, true);

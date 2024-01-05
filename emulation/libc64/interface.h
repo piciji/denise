@@ -163,6 +163,7 @@ struct Interface : Emulator::Interface {
     auto cropHeight() -> unsigned;
     auto cropTop() -> unsigned;
     auto cropLeft() -> unsigned;
+    auto cropCoordUpdated(unsigned& top, unsigned& left) -> bool;
     auto cropData() -> uint8_t*;
     auto cropPitch() -> unsigned;
 

@@ -123,9 +123,9 @@ struct WGL : Video, OpenGL, RenderThread {
 //        clearCurrent();
 	}
 
-    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, reuse);
+            return RenderThread::lock(data, pitch, _width, _height, options & 1);
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height))
@@ -134,20 +134,9 @@ struct WGL : Video, OpenGL, RenderThread {
         return OpenGL::lock(data, pitch);
     }
 
-    auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+    auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, reuse);
-
-        makeCurrent(true);
-        if (OpenGL::size(_width, _height))
-            viewScreen.update(viewport);
-
-        return OpenGL::lock(data, pitch);
-    }
-
-    auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
-        if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, reuse);
+            return RenderThread::lock(data, pitch, _width, _height, options & 1);
 
         makeCurrent(true);
         if (OpenGL::size(_width, _height))

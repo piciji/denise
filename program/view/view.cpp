@@ -667,6 +667,8 @@ auto View::setConnectors() -> void {
 }
 
 auto View::updateShader() -> void {
+    bool visible = videoDriver && (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::NotSupported);
+
     for(auto& sM : sysMenus) {
         removeMenuTree( sM.shaderMenu );
         auto emulator = sM.emulator;
@@ -733,15 +735,7 @@ auto View::updateShader() -> void {
         GUIKIT::MenuRadioItem::setGroup(items);
         if (checkedItem)
             checkedItem->setChecked();
-    }
 
-    updateShaderVisibility();
-}
-
-auto View::updateShaderVisibility() -> void {
-    bool visible = videoDriver && (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::NotSupported);
-
-    for(auto& sM : sysMenus) {
         for(auto child : sM.shaderMenu->childs)
             child->setEnabled(visible);
     }

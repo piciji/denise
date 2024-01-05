@@ -256,9 +256,9 @@ struct GLX : public Video, OpenGL, RenderThread {
         resizeMutex.unlock();
     }
 
-	auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+	auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, reuse);
+            return RenderThread::lock(data, pitch, _width, _height, options & 1);
 
         // resizing could generate 2 "makeCurrent" in a row without "clear" in between,
         bool _useResizing = useResizing;
@@ -277,9 +277,9 @@ struct GLX : public Video, OpenGL, RenderThread {
 		return OpenGL::lock(data, pitch);
 	}
 	
-	auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+	auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, reuse);
+            return RenderThread::lock(data, pitch, _width, _height, options & 1);
 
         bool _useResizing = useResizing;
         if (_useResizing)
@@ -296,26 +296,6 @@ struct GLX : public Video, OpenGL, RenderThread {
 
         return OpenGL::lock(data, pitch);
     }
-
-    auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
-        if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, reuse);
-
-        bool _useResizing = useResizing;
-        if (_useResizing)
-            resizeMutex.lock();
-
-        makeCurrent(true);
-        if (OpenGL::size(_width, _height))
-            viewScreen.update(viewport);
-
-        if (_useResizing) {
-            clearCurrent();
-            resizeMutex.unlock();
-        }
-
-		return OpenGL::lock(data, pitch);
-	}
 
     auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
         OpenGL::resize( _buffer, _width, _height );

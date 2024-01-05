@@ -5,11 +5,15 @@
 #include "../../driver/driver.h"
 
 struct ShaderParser {
+    ShaderParser();
+
     GUIKIT::Settings rootSettings;
     ShaderPreset shaderPreset;
     std::vector<std::string> entryPaths;
-    bool modified;
     std::vector<std::string> brokenPaths;
+    static std::vector<ShaderPreset::Lut> luts;
+    bool modified;
+    bool internalShader;
 
     auto loadPreset(std::string path) -> bool;
 
@@ -29,7 +33,7 @@ struct ShaderParser {
 
     auto translateFilter(int filter) -> ShaderPreset::Filter;
 
-    auto parseTextures() -> bool;
+    auto parseTextures() -> void;
 
     auto fetchParameters(std::string path, int passId, int depth = 0) -> void;
 
@@ -49,9 +53,19 @@ struct ShaderParser {
 
     auto setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void;
 
+    auto setPassScaleX(unsigned passId, float scale) -> void;
+    auto setPassScaleY(unsigned passId, float scale) -> void;
+
     auto writeLine(FILE* fp, unsigned passId, std::string key, std::string value) -> void;
     auto writeLine(FILE* fp, std::string key, std::string value) -> void;
 
+    auto needMetaData() -> bool;
+
     auto clear() -> void;
+
+    static auto buildLutBloom() -> void;
+    static auto buildLutMask() -> void;
+    static auto buildLutPhaseShift() -> void;
+    static auto buildLutBandwidth() -> void;
 };
 

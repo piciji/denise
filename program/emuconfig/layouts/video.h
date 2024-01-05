@@ -1,5 +1,5 @@
 
-#define PARAMS_PER_PAGE 10
+#define PARAMS_PER_PAGE 13
 
 struct VideoBaseLayout : GUIKIT::VerticalLayout {
 
@@ -10,7 +10,6 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
             GUIKIT::RadioBox rgb;
             GUIKIT::RadioBox svideoCpu;
             GUIKIT::RadioBox svideoGpu;
-            GUIKIT::RadioBox externGpu;
 
             GUIKIT::Widget spacer;
             GUIKIT::Button reset;
@@ -55,103 +54,21 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
     VideoBaseLayout(bool withSpectrum);
 };
 
-struct VideoInternLayout : GUIKIT::VerticalLayout {
-
-    struct Misc : GUIKIT::FramedVerticalLayout {
-        struct Option : GUIKIT::HorizontalLayout {
-            GUIKIT::CheckBox hires;
-            GUIKIT::CheckBox distortionHires;
-
-            Option();
-        } option;
-
-        SliderLayout lightFromCenter;
-        SliderLayout luminance;
-
-        Misc();
-    } misc;
-
-    struct Subsampling : GUIKIT::FramedVerticalLayout {
-        SliderLayout firFilter;
-
-        struct FirSharp : GUIKIT::HorizontalLayout {
-            GUIKIT::RadioBox sharpLeft;
-            GUIKIT::RadioBox natural;
-            GUIKIT::RadioBox sharpRight;
-
-            FirSharp();
-        } firSharp;
-
-        Subsampling();
-    } subsampling;
-
-    struct Mask : GUIKIT::FramedVerticalLayout {
-        SliderLayout level;
-        SliderLayout luminance;
-
-        struct Type : GUIKIT::HorizontalLayout {
-            GUIKIT::Label label;
-            GUIKIT::RadioBox apertureMask;
-            GUIKIT::RadioBox shadowMask;
-            GUIKIT::RadioBox slotMask;
-
-            Type();
-        } type;
-
-        SliderLayout dpi;
-        SliderLayout pitch;
-
-        Mask();
-    } mask;
-
-    struct Bloom : GUIKIT::FramedVerticalLayout {
-        SliderLayout glow;
-        SliderLayout radius;
-        SliderLayout variance;
-        SliderLayout weight;
-
-        Bloom();
-    } bloom;
-
-    VideoInternLayout();
-};
-
-struct VideoGlitchLayout : GUIKIT::VerticalLayout {
-
-    struct Crt : GUIKIT::FramedVerticalLayout {
-        SliderLayout lumaNoise;
-        SliderLayout chromaNoise;
-        SliderLayout randomLineOffset;
-        SliderLayout radialDistortion;
-
-        Crt();
-    } crt;
-
-    struct VicII : GUIKIT::FramedVerticalLayout {
-        GUIKIT::Button toggleAll;
-        SliderLayout aec;
-        SliderLayout ba;
-        SliderLayout phi0;
-        SliderLayout ras;
-        SliderLayout cas;
-
-        VicII();
-    } vicII;
-
-    VideoGlitchLayout(bool withVic);
-};
-
 struct VideoShaderLayout : GUIKIT::VerticalLayout {
 
     struct Main : GUIKIT::FramedVerticalLayout {
         struct Control : GUIKIT::HorizontalLayout {
             GUIKIT::Button unload;
-            GUIKIT::Button prependPreset;
-            GUIKIT::Button appendPreset;
-
-            GUIKIT::Widget spacer;
             GUIKIT::Button apply;
             GUIKIT::Button save;
+
+            GUIKIT::Label folder;
+            GUIKIT::RadioBox internal;
+            GUIKIT::RadioBox external;
+
+            GUIKIT::Widget spacer;
+            GUIKIT::Button prependPreset;
+            GUIKIT::Button appendPreset;
             GUIKIT::Button load;
 
             Control();
@@ -218,8 +135,30 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
             GUIKIT::Label type;
             GUIKIT::Label mipmap;
             GUIKIT::Label modulo;
-            GUIKIT::Label scaleX;
-            GUIKIT::Label scaleY;
+
+            struct ScaleX : GUIKIT::HorizontalLayout {
+                GUIKIT::Label label;
+
+                struct Control : GUIKIT::HorizontalLayout {
+                    GUIKIT::RadioBox radios[5];
+
+                    Control();
+                } control;
+
+                ScaleX();
+            } scaleX;
+
+            struct ScaleY : GUIKIT::HorizontalLayout {
+                GUIKIT::Label label;
+
+                struct Control : GUIKIT::HorizontalLayout {
+                    GUIKIT::RadioBox radios[5];
+
+                    Control();
+                } control;
+
+                ScaleY();
+            } scaleY;
 
             Data();
         } data;
@@ -262,16 +201,12 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::TreeView moduleTree;
     GUIKIT::SwitchLayout moduleSwitch;
     GUIKIT::TreeViewItem tviBase;
-        GUIKIT::TreeViewItem tviIntern;
-        GUIKIT::TreeViewItem tviGlitch;
 
     GUIKIT::TreeViewItem tviShader;
     std::vector<GUIKIT::TreeViewItem*> tviPasses;
     GUIKIT::TreeViewItem tviParams;
 
     VideoBaseLayout layBase;
-    VideoInternLayout layIntern;
-    VideoGlitchLayout layGlitch;
 
     VideoShaderLayout layShader;
     VideoPassLayout layPass;
@@ -290,8 +225,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
 
     struct TviParam {
         GUIKIT::TreeViewItem* tvi;
-        unsigned starts;
-        unsigned counts;
+        std::vector<unsigned> offsets;
     };
     std::vector<TviParam> params;
 
@@ -299,7 +233,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     	
     auto translate() -> void;
     auto sliderIdent() -> std::string;
-    auto updatePresets(bool reloadDriver = true) -> void;
+    auto updatePresets(bool reloadDriver, bool reloadPreset) -> void;
     auto updateVisibillity() -> void;
     auto loadSettings(bool init = false) -> void;
     auto buildShaderUI(ShaderPreset* preset, bool expand = true) -> void;
@@ -311,6 +245,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto showBrokenPaths(std::vector<std::string>& brokenPaths) -> void;
     auto loadShader(std::string path) -> bool;
     auto unloadShader() -> void;
+    auto getShaderFolder() -> std::string;
+    auto externalFolder() -> bool { return layShader.main.control.external.checked(); }
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

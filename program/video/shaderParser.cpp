@@ -1,6 +1,10 @@
 
-#include "shaderParser.h"
+#define _USE_MATH_DEFINES
 #include <cstdio>
+#include <cstring>
+#include <cmath>
+#include "shaderParser.h"
+#include "luts.cpp"
 
 auto ShaderParser::loadPreset(std::string path) -> bool {
     clear();
@@ -18,7 +22,6 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
         return true;
     }
 
-
     int passCount = rootSettings.get<unsigned>("shaders", 0);
     if (!passCount) {
         createSinglePass(path);
@@ -26,21 +29,20 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
     }
 
     shaderPreset.feedback = rootSettings.get<int>("feedback", -1);
+    if (rootSettings.get<bool>("YUV_or_YIC", false))
+        shaderPreset.bufferType = ShaderPreset::BUFFER_FP;
+    else
+        shaderPreset.bufferType = ShaderPreset::BUFFER_SRGB;
 
-    for(int i = 0; i < passCount; i++) {
-        if (!parsePass(i)) {
-
-        }
-    }
+    for(int i = 0; i < passCount; i++)
+        parsePass(i);
 
     if (shaderPreset.passes.empty()) { // wtf
         createSinglePass(path);
         return true;
     }
 
-    if (!parseTextures()) {
-
-    }
+    parseTextures();
 
     for(int i = 0; i < shaderPreset.passes.size(); i++) {
         ShaderPreset::Pass& pass = shaderPreset.passes[i];
@@ -70,13 +72,14 @@ auto ShaderParser::savePreset(std::string path) -> bool {
         writeLine(fp, "shaders", std::to_string(shaderPreset.passes.size()) + "\n");
         if (shaderPreset.feedback >= 0)
             writeLine(fp, "feedback", std::to_string(shaderPreset.feedback) );
+        if (shaderPreset.bufferType == ShaderPreset::BUFFER_FP)
+            writeLine(fp, "YUV_or_YIC", "true" );
 
         for(int i = 0; i < shaderPreset.passes.size(); i++) {
             auto& pass = shaderPreset.passes[i];
-            if (!pass.inUse)
-                continue;
-
             writeLine(fp, i, "shader", GUIKIT::File::buildRelativePath(path, pass.src));
+            if (!pass.inUse)
+                writeLine(fp, i, "hide", "true");
             writeLine(fp, i, "filter_linear", pass.filter == ShaderPreset::FILTER_NEAREST ? "false" : "true");
             writeLine(fp, i, "wrap_mode", translateWrapMode(pass.wrap));
             writeLine(fp, i, "mipmap_input", pass.mipmap ? "true" : "false");
@@ -143,7 +146,7 @@ auto ShaderParser::createSinglePass(std::string path) -> void {
     pass.frameModulo = 0;
     pass.bufferType = ShaderPreset::BufferType::BUFFER_UNORM;
     pass.mipmap = false;
-    pass.alias = "";
+    pass.alias = "default";
     pass.scaleX = 1.0;
     pass.scaleY = 1.0;
     pass.absX = 0;
@@ -153,9 +156,9 @@ auto ShaderParser::createSinglePass(std::string path) -> void {
 }
 
 auto ShaderParser::fetchParameters(std::string path, int passId, int depth) -> void {
+    static const std::string prefix = "#include";
     std::string line;
     int filled;
-    std::string prefix = "#include";
 
     if (depth > 16)
         return;
@@ -208,10 +211,7 @@ auto ShaderParser::fetchParameters(std::string path, int passId, int depth) -> v
 
         param.pass = passId;
 
-        if (rootSettings.find(param.id))
-            param.value = rootSettings.get<float>(param.id);
-        else
-            param.value = param.initial;
+        param.value = rootSettings.get<float>(param.id, param.initial);
 
         addParameter(param);
     }
@@ -234,11 +234,18 @@ auto ShaderParser::addParameter(ShaderPreset::Param& param) -> void {
     shaderPreset.params.push_back(param);
 }
 
-auto ShaderParser::parseTextures() -> bool {
+auto ShaderParser::parseTextures() -> void {
+    if (!luts.size()) {
+        buildLutBloom();
+        buildLutMask();
+        buildLutPhaseShift();
+        buildLutBandwidth();
+    }
+
     std::string lutList = rootSettings.get<std::string>("textures", "");
 
     if (lutList.empty())
-        return true;
+        return;
 
     auto parts = GUIKIT::String::explode(lutList, ";");
     shaderPreset.luts.reserve( parts.size() );
@@ -263,19 +270,27 @@ auto ShaderParser::parseTextures() -> bool {
         lut.mipmap = rootSettings.get<bool>(id + "_mipmap", false);
         lut.wrap = translateWrapMode( rootSettings.get<std::string>(id + "_wrap_mode", "") );
 
+        for(auto& tempLut : luts) {
+            if (lut.id == tempLut.id) {
+                lut.data = tempLut.data;
+                lut.width = tempLut.width;
+                lut.height = tempLut.height;
+                break;
+            }
+        }
+
         shaderPreset.luts.push_back(lut);
     }
-    return true;
 }
 
 auto ShaderParser::parsePass(unsigned pos) -> bool {
     ShaderPreset::Pass pass;
     std::string strPos = std::to_string(pos);
     std::string path = rootSettings.get<std::string>("shader" + strPos, "");
-    if (!path.empty())
-        path = GUIKIT::File::resolveRelativePath( rootSettings.getPath(), path);
+    if (path.empty())
+        return false;
 
-    pass.src = path;
+    pass.src = GUIKIT::File::resolveRelativePath( rootSettings.getPath(), path);
     pass.inUse = true;
 
     int filter = -1;
@@ -295,6 +310,10 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
 
     pass.mipmap = rootSettings.get<bool>("mipmap_input" + strPos, false);
     pass.alias = rootSettings.get<std::string>("alias" + strPos, "");
+    if (pass.alias == "YUV/YIC Encoding")
+        internalShader = true;
+
+    pass.inUse = !rootSettings.get<bool>("hide" + strPos, false);
 
     pass.scaleTypeX = ShaderPreset::SCALE_INPUT;
     pass.scaleTypeY = ShaderPreset::SCALE_INPUT;
@@ -326,9 +345,9 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
             pass.absX = rootSettings.get<unsigned>("scale_x" + strPos, 0);
     } else {
         if (rootSettings.find("scale" + strPos))
-            pass.scaleX = rootSettings.get<float>("scale" + strPos, 0.0);
+            pass.scaleX = rootSettings.get<float>("scale" + strPos, 1.0);
         else
-            pass.scaleX = rootSettings.get<float>("scale_x" + strPos, 0.0);
+            pass.scaleX = rootSettings.get<float>("scale_x" + strPos, 1.0);
     }
 
     if (pass.scaleTypeY == ShaderPreset::SCALE_ABSOLUTE) {
@@ -338,9 +357,9 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
             pass.absY = rootSettings.get<unsigned>("scale_y" + strPos, 0);
     } else {
         if (rootSettings.find("scale" + strPos))
-            pass.scaleY = rootSettings.get<float>("scale" + strPos, 0.0);
+            pass.scaleY = rootSettings.get<float>("scale" + strPos, 1.0);
         else
-            pass.scaleY = rootSettings.get<float>("scale_y" + strPos, 0.0);
+            pass.scaleY = rootSettings.get<float>("scale_y" + strPos, 1.0);
     }
 
     shaderPreset.passes.push_back(pass);
@@ -441,14 +460,16 @@ auto ShaderParser::addPreset(ShaderParser* parser, bool prepend) -> void {
     if (prepend) {
         int nextId = preset.passes.size();
         for (auto& param : shaderPreset.params)
-            param.pass = param.pass + nextId;
+            param.pass += nextId;
 
         GUIKIT::Vector::insert( entryPaths, parser->getPresetPath(), 0 );
 
+        shaderPreset.bufferType = preset.bufferType;
+        shaderPreset.feedback = preset.feedback;
     } else {
         int nextId = shaderPreset.passes.size();
         for (auto& param : preset.params)
-            param.pass = param.pass + nextId;
+            param.pass += nextId;
 
         entryPaths.push_back( parser->getPresetPath() );
     }
@@ -505,11 +526,47 @@ auto ShaderParser::setPassFilter(unsigned passId, ShaderPreset::Filter filter) -
     modified = true;
 }
 
+auto ShaderParser::setPassScaleX(unsigned passId, float scale) -> void {
+    if (passId >= shaderPreset.passes.size())
+        return;
+    ShaderPreset::Pass& pass = shaderPreset.passes[passId];
+    if (pass.scaleTypeX == ShaderPreset::SCALE_ABSOLUTE)
+        return;
+
+    pass.scaleX = scale;
+    modified = true;
+}
+
+auto ShaderParser::setPassScaleY(unsigned passId, float scale) -> void {
+    if (passId >= shaderPreset.passes.size())
+        return;
+    ShaderPreset::Pass& pass = shaderPreset.passes[passId];
+    if (pass.scaleTypeY == ShaderPreset::SCALE_ABSOLUTE)
+        return;
+
+    pass.scaleY = scale;
+    modified = true;
+}
+
+auto ShaderParser::needMetaData() -> bool {
+    for (auto& pass : shaderPreset.passes) {
+        if (pass.inUse && (pass.alias == "VICII Glitches"))
+            return true;
+    }
+
+    return false;
+}
+
 auto ShaderParser::clear() -> void {
     entryPaths.clear();
+    brokenPaths.clear();
     shaderPreset.clear();
     rootSettings.clear();
-    brokenPaths.clear();
     modified = false;
+    internalShader = false;
+}
+
+ShaderParser::ShaderParser() {
+    clear();
 }
 

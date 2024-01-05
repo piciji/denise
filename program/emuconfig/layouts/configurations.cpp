@@ -733,7 +733,7 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
     if(this->tabWindow->videoLayout)
         this->tabWindow->videoLayout->loadSettings();
     else if (videoDriver)
-        VideoManager::getInstance( emulator )->reloadSettings();
+        VideoManager::getInstance( emulator )->reloadSettings(true);
 
     if(this->tabWindow->mediaLayout)
         this->tabWindow->mediaLayout->loadSettings();

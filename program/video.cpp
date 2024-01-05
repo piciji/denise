@@ -32,15 +32,19 @@ auto Program::initVideo(bool driverChange) -> void {
     if (driverChange)
         videoDriver->setRotation(rotation);
 
-    if (activeVideoManager)
+    if (activeVideoManager) {
         activeVideoManager->reinitCrtThread(true);
+        activeVideoManager->rebuildShader = true;
+    }
         
     for( auto emulator : emulators ) {
+        checkShaderSupport(emulator);
+
         auto emuView = EmuConfigView::TabWindow::getView(emulator);
         if (emuView && emuView->videoLayout)
-            emuView->videoLayout->updatePresets();
+            emuView->videoLayout->updatePresets(true, true);
         else
-            VideoManager::getInstance(emulator)->reloadSettings();
+            VideoManager::getInstance(emulator)->reloadSettings(true);
     }
 
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
@@ -129,12 +133,9 @@ auto Program::hintExclusiveFullscreen() -> void {
         videoDriver->hintExclusiveFullscreen( false );
 }
 
-auto Program::setVideoFilter(bool driverOnly) -> void {
+auto Program::setVideoFilter() -> void {
 	if (activeEmulator)
 		videoDriver->setFilter( (DRIVER::Video::Filter)getSettings( activeEmulator )->get<unsigned>("video_filter", 1u, {0u, 1u}) );
-	
-	if (!driverOnly && activeVideoManager)
-        activeVideoManager->shader.recreate = true;
 }
 
 auto Program::setPalette( Emulator::Interface* emulator ) -> void {
@@ -268,7 +269,6 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
     
     if (activeVideoManager && (activeVideoManager->emulator == activeEmulator)) {
         activeVideoManager->reinitCrtThread();
-        activeVideoManager->shader.recreate = true;
     }
 }
 
@@ -307,9 +307,7 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     
     auto settings = getSettings( activeEmulator );
     activeVideoManager = VideoManager::getInstance( activeEmulator );
-    
     unsigned forward = 0;
-    VideoManager::CrtMode crtMode = (VideoManager::CrtMode)settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
     if (activate) {
         VideoManager::hidePlaceHolder();
@@ -323,13 +321,6 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         if (videoDriver->hasVRR())
             videoDriver->setVRR(false);
 
-        if (crtMode != VideoManager::CrtMode::None) {
-            settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
-            if (activeVideoManager)
-                activeVideoManager->reloadSettings();
-            settings->set<unsigned>("video_crt", (unsigned)crtMode);
-        }
-
         forward = (unsigned)Emulator::Interface::FastForward::NoAudioOut | (unsigned)Emulator::Interface::FastForward::ReduceVideoOutput;
         if (aggressive)
             forward |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
@@ -340,9 +331,6 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         VideoManager::setSynchronize();
 
         if (activeVideoManager) {
-            if (crtMode != VideoManager::CrtMode::None)
-                activeVideoManager->reloadSettings();
-
             activeVideoManager->resetTempData();
         }
 
@@ -409,13 +397,6 @@ auto Program::fpsChanged() -> void {
         fpsChangeTimer.setEnabled();
 }
 
-auto Program::appendShaderFormat(std::string& str) -> void {
-    switch (videoDriver->shaderFormat()) {
-        case DRIVER::Video::ShaderType::HLSL: str += "hlsl"; break;
-        case DRIVER::Video::ShaderType::GLSL: str += "glsl"; break;
-    }
-}
-
 auto Program::setRotation() -> void {
     if (!activeEmulator)
         return;
@@ -429,5 +410,14 @@ auto Program::setRotation() -> void {
         case 90: videoDriver->setRotation(90); break;
         case 180: videoDriver->setRotation(180); break;
         case 270: videoDriver->setRotation(270); break;
+    }
+}
+
+auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {
+    auto settings = program->getSettings( emulator );
+    auto crtMode = settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
+
+    if ((VideoManager::CrtMode)crtMode == VideoManager::CrtMode::Gpu) {
+        settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
     }
 }

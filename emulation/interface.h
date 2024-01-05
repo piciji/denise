@@ -556,6 +556,7 @@ struct Interface {
     virtual auto cropHeight() -> unsigned { return 0; }
     virtual auto cropTop() -> unsigned { return 0; }
     virtual auto cropLeft() -> unsigned { return 0; }
+    virtual auto cropCoordUpdated(unsigned& top, unsigned& left) -> bool { return false; }
     virtual auto cropData() -> uint8_t* { return nullptr; }
     virtual auto cropData16() -> uint16_t* { return nullptr; }
     virtual auto cropPitch() -> unsigned { return 0; }

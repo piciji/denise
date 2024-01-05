@@ -8,13 +8,12 @@ VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
 
     append(rgb,{0u, 0u}, 10);
     append(svideoCpu,{0u, 0u}, 10);
-    append(svideoGpu,{0u, 0u}, 10);
-    append(externGpu,{0u, 0u});
+    append(svideoGpu,{0u, 0u});
 
     append(spacer,{~0u, 0u});
     append(reset,{0u, 0u});
 
-    GUIKIT::RadioBox::setGroup(rgb, svideoCpu, svideoGpu, externGpu);
+    GUIKIT::RadioBox::setGroup(rgb, svideoCpu, svideoGpu);
 
     setAlignment(0.5);
 }
@@ -105,161 +104,25 @@ view(withSpectrum) {
 
 }
 
-VideoInternLayout::Misc::Option::Option() {
-    append(hires, {0u, 0u}, 15);
-    append(distortionHires, {0u, 0u});
-
-    setAlignment(0.5);
-}
-
-VideoInternLayout::Misc::Misc() :
-luminance("%", false),
-lightFromCenter("%", true) {
-    append(option, {~0u, 0u}, 3);
-    append(lightFromCenter, {~0u, 0u}, 2);
-    append(luminance, {~0u, 0u});
-
-    lightFromCenter.slider.setLength(301);
-    luminance.slider.setLength(501);
-
-    setPadding(8);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
-VideoInternLayout::Subsampling::FirSharp::FirSharp() {
-    append(sharpLeft, {0u, 0u}, 10);
-    append(natural, {0u, 0u}, 10);
-    append(sharpRight, {0u, 0u});
-
-    GUIKIT::RadioBox::setGroup( sharpLeft, natural, sharpRight );
-
-    setAlignment(0.5);
-}
-
-VideoInternLayout::Subsampling::Subsampling() :
-firFilter("", false) {
-    append(firSharp, {~0u, 0u}, 2);
-    append(firFilter, {~0u, 0u}, 2);
-
-    firFilter.slider.setLength(11);
-
-    setPadding(8);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
-VideoInternLayout::Mask::Type::Type() {
-    append(label, {175u, 0u}, 10);
-    append(apertureMask, {0u, 0u}, 10);
-    append(shadowMask, {0u, 0u}, 10);
-    append(slotMask, {0u, 0u});
-
-    GUIKIT::RadioBox::setGroup( apertureMask, shadowMask, slotMask );
-
-    setAlignment(0.5);
-}
-
-VideoInternLayout::Mask::Mask() :
-level("%", true),
-pitch("mm", false),
-dpi("dpi", false),
-luminance("%", false) {
-    append(level,{~0u, 0u}, 2);
-    append(luminance,{~0u, 0u}, 2);
-    append(type,{~0u, 0u}, 2);
-    append(dpi,{~0u, 0u}, 2);
-    append(pitch,{~0u, 0u});
-
-    level.slider.setLength(101);
-    dpi.slider.setLength(201);
-    pitch.slider.setLength(101);
-    luminance.slider.setLength(501);
-
-    setPadding(8);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
-VideoInternLayout::Bloom::Bloom() :
-glow("%", true),
-radius("px", false),
-variance("", false),
-weight("", true) {
-    append(glow, {~0u, 0u}, 2);
-    append(weight, {~0u, 0u}, 2);
-    append(radius, {~0u, 0u}, 2);
-    append(variance, {~0u, 0u});
-
-    glow.slider.setLength(201);
-    radius.slider.setLength(6);
-    variance.slider.setLength(111);
-    weight.slider.setLength(301);
-
-    setPadding(8);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
-VideoInternLayout::VideoInternLayout() {
-    append(misc,{~0u, 0u}, 10);
-    append(subsampling,{~0u, 0u}, 10);
-    append(mask,{~0u, 0u}, 10);
-    append(bloom,{~0u, 0u});
-}
-
-VideoGlitchLayout::Crt::Crt() :
-lumaNoise("%", true),
-chromaNoise("%", true),
-radialDistortion("%", true),
-randomLineOffset("%", true) {
-    append(lumaNoise,{~0u, 0u}, 2);
-    append(chromaNoise,{~0u, 0u}, 2);
-    append(randomLineOffset,{~0u, 0u}, 2);
-    append(radialDistortion,{~0u, 0u});
-
-    lumaNoise.slider.setLength(1001);
-    chromaNoise.slider.setLength(1001);
-    randomLineOffset.slider.setLength(1001);
-    radialDistortion.slider.setLength(101);
-
-    setPadding(8);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
-VideoGlitchLayout::VicII::VicII() :
-aec("%", true),
-ba("%", true),
-phi0("%", true),
-ras("%", true),
-cas("%", true) {
-    append(aec,{~0u, 0u}, 2);
-    append(ba,{~0u, 0u}, 2);
-    append(phi0,{~0u, 0u}, 2);
-    append(ras,{~0u, 0u}, 2);
-    append(cas,{~0u, 0u}, 5);
-    append(toggleAll,{0u, 0u});
-
-    aec.slider.setLength(1001);
-    ba.slider.setLength(1001);
-    phi0.slider.setLength(1001);
-    ras.slider.setLength(1001);
-    cas.slider.setLength(1001);
-
-    setPadding(8);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
-VideoGlitchLayout::VideoGlitchLayout(bool withVic) {
-    append(crt,{~0u, 0u}, 10);
-    if (withVic)
-        append(vicII,{~0u, 0u});
-}
-
 VideoShaderLayout::Main::Control::Control() {
     append(unload,{0u, 0u}, 10);
-    append(prependPreset,{0u, 0u}, 10);
-    append(appendPreset,{0u, 0u},10);
-    append(spacer,{~0u, 0u});
     append(apply,{0u, 0u}, 10);
     append(save,{0u, 0u}, 10);
+    append(folder,{0u, 0u}, 5);
+    append(internal,{0u, 0u}, 5);
+    append(external,{0u, 0u});
+    append(spacer,{~0u, 0u});
+    append(prependPreset,{0u, 0u}, 10);
+    append(appendPreset,{0u, 0u}, 10);
     append(load,{0u, 0u});
+
+    GUIKIT::RadioBox::setGroup(internal, external);
+    internal.setChecked();
+    unload.setEnabled(false);
+    apply.setEnabled(false);
+    save.setEnabled(false);
+    prependPreset.setEnabled(false);
+    appendPreset.setEnabled(false);
 
     setAlignment(0.5);
 }
@@ -308,12 +171,12 @@ VideoShaderLayout::VideoShaderLayout() {
 
 VideoPassLayout::Settings::Identifier::Identifier() {
     append(fileIdent,{0u, 0u}, 10);
-    append(filter,{0u, 0u}, 10);
+    append(filter,{0u, 0u}, 12);
     append(wrap,{0u, 0u}, 10);
     append(bufferType,{0u, 0u}, 10);
     append(mipmap,{0u, 0u}, 10);
-    append(modulo,{0u, 0u}, 10);
-    append(scaleX,{0u, 0u}, 10);
+    append(modulo,{0u, 0u}, 12);
+    append(scaleX,{0u, 0u}, 12);
     append(scaleY,{0u, 0u});
 }
 
@@ -323,6 +186,44 @@ VideoPassLayout::Settings::Data::Filter::Filter() {
     append(nearest,{0u, 0u});
 
     GUIKIT::RadioBox::setGroup( unspec, linear, nearest );
+    setAlignment(0.5);
+}
+
+VideoPassLayout::Settings::Data::ScaleX::Control::Control() {
+    std::vector<GUIKIT::RadioBox*> boxes;
+    for(int i = 0; i < 5; i++) {
+        radios[i].setText( std::to_string(i+1) + "x" );
+        append(radios[i], {0u, 0u}, 10);
+        boxes.push_back(&radios[i]);
+    }
+
+    GUIKIT::RadioBox::setGroup( boxes );
+    setAlignment(0.5);
+}
+
+VideoPassLayout::Settings::Data::ScaleX::ScaleX() {
+    append(label, {0u, 0u}, 10);
+    append(control, {0u, 0u});
+
+    setAlignment(0.5);
+}
+
+VideoPassLayout::Settings::Data::ScaleY::Control::Control() {
+    std::vector<GUIKIT::RadioBox*> boxes;
+    for(int i = 0; i < 5; i++) {
+        radios[i].setText( std::to_string(i+1) + "x" );
+        append(radios[i], {0u, 0u}, 10);
+        boxes.push_back(&radios[i]);
+    }
+
+    GUIKIT::RadioBox::setGroup( boxes );
+    setAlignment(0.5);
+}
+
+VideoPassLayout::Settings::Data::ScaleY::ScaleY() {
+    append(label, {0u, 0u}, 10);
+    append(control, {0u, 0u});
+
     setAlignment(0.5);
 }
 
@@ -375,8 +276,7 @@ VideoParamLayout::VideoParamLayout() {
 }
 
 VideoLayout::VideoLayout(TabWindow* tabWindow) :
-layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ),
-layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
+layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     GUIKIT::TreeViewItem* tvi;
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
@@ -389,14 +289,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     pageDownGray.loadPng((uint8_t*)Icons::pageDownGray, sizeof(Icons::pageDownGray) );
 
     tviBase.setUserData( (uintptr_t)1 );
-    tviBase.setImage( imgFolderClosed );
-    tviBase.setImageExpanded( imgFolderOpen );
-
-    tviIntern.setUserData( (uintptr_t)11 );
-    tviIntern.setImage(imgDocument);
-
-    tviGlitch.setUserData( (uintptr_t)12 );
-    tviGlitch.setImage(imgDocument);
+    tviBase.setImage( imgDocument );
 
     tviShader.setUserData( (uintptr_t)2 );
     tviShader.setImage(imgFolderClosed);
@@ -406,20 +299,13 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     tviParams.setImage(imgFolderClosed);
     tviParams.setImageExpanded(imgFolderOpen);
 
-    tviBase.append(tviIntern);
-    tviBase.append(tviGlitch);
     moduleTree.append(tviBase);
-
     moduleTree.append(tviShader);
 
     moduleSwitch.setLayout(1, layBase, {~0u, ~0u});
-    moduleSwitch.setLayout(11, layIntern, {~0u, ~0u});
-    moduleSwitch.setLayout(12, layGlitch, {~0u, ~0u});
     moduleSwitch.setLayout(2, layShader, {~0u, ~0u});
     moduleSwitch.setLayout(21, layPass, {~0u, ~0u});
     moduleSwitch.setLayout(3, layParam, {~0u, ~0u});
-
-    tviBase.setExpanded();
 
     layNav.append( moduleTree, { GUIKIT::Font::scale(160), ~0u} );
     layNav.setPadding(10);
@@ -478,29 +364,9 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     setSliderAction<unsigned>( &layBase.encoding.blur, "blur" );
     setSliderAction<float>( &layBase.encoding.phaseError, "phase_error", [](unsigned position) { return (float)((int)position - 90) / 2.0f; } );
     setSliderAction<int>( &layBase.encoding.hanoverBars, "hanover_bars", [](unsigned position) { return (int)position - 100; } );
-    setSliderAction<float>( &layIntern.mask.pitch, "mask_pitch", [](unsigned position) { return (float)position / 100.0f; } );
-    setSliderAction<unsigned>( &layIntern.mask.dpi, "mask_dpi" );
-    setSliderAction<unsigned>( &layIntern.mask.level, "mask_level", [](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &layIntern.mask.luminance, "mask_luminance" );
-    setSliderAction<unsigned>( &layIntern.subsampling.firFilter, "fir_filter_length", [](unsigned position) { return position * 2 + 1; } );
-    setSliderAction<float>( &layGlitch.crt.lumaNoise, "luma_noise", [](unsigned position) { return (float)std::max(position, 1u) / 10.0f; });
-    setSliderAction<float>( &layGlitch.crt.chromaNoise, "chroma_noise", [](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<unsigned>( &layGlitch.crt.radialDistortion, "radial_distortion", [](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<float>( &layGlitch.vicII.aec, "aec_glitch", [](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<float>( &layGlitch.vicII.ba, "ba_glitch", [](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<float>( &layGlitch.vicII.phi0, "phi0_glitch", [](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<float>( &layGlitch.vicII.ras, "ras_glitch", [](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
-    setSliderAction<float>( &layGlitch.vicII.cas, "cas_glitch", [](unsigned position) { return (float)std::max(position, 1u) / 10.0f; } );
     setSliderAction<float>( &layBase.lumaDelay.lumaRise, "luma_rise", [](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
     setSliderAction<float>( &layBase.lumaDelay.lumaFall, "luma_fall", [](unsigned position) { return ((float)std::max(position, 1u) / 10.0f) + 1.0f; } );
-    setSliderAction<unsigned>( &layIntern.misc.lightFromCenter, "light_from_center", [](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &layIntern.misc.luminance, "luminance" );
-	setSliderAction<unsigned>( &layIntern.bloom.glow, "bloom_glow", [](unsigned position) { return std::max(position, 1u); } );
-	setSliderAction<float>( &layIntern.bloom.variance, "bloom_variance", [](unsigned position) { return ((float)position / 10.0f) + 1.0f; } );
-	setSliderAction<unsigned>( &layIntern.bloom.radius, "bloom_radius", [](unsigned position) { return position + 1; } );
-	setSliderAction<float>( &layIntern.bloom.weight, "bloom_weight", [](unsigned position) { return (float)std::max(position, 1u) / 100.0f; } );
-    setSliderAction<float>( &layGlitch.crt.randomLineOffset, "random_line_offset", [](unsigned position) { return (float)std::max(position, 1u) / 100.0f; } );
-    
+
     layBase.view.option.newLuma.onToggle = [this](bool checked) {
         _settings->set<bool>( "video_new_luma" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("new_luma", checked);
@@ -518,39 +384,24 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         emuThread->unlock();
 	};
 
-    layIntern.mask.type.apertureMask.onActivate = [this]() {
-        _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::Aperture);
-        vManager()->updateData<unsigned>("mask_type", (unsigned)VideoManager::MaskType::Aperture);
-    };
-
-    layIntern.mask.type.shadowMask.onActivate = [this]() {
-        _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::ShadowMask);
-        vManager()->updateData<unsigned>("mask_type", (unsigned)VideoManager::MaskType::ShadowMask);
-    };
-
-    layIntern.mask.type.slotMask.onActivate = [this]() {
-        _settings->set<unsigned>( "video_mask_type" + this->sliderIdent(), (unsigned)VideoManager::MaskType::SlotMask);
-        vManager()->updateData<unsigned>("mask_type", (unsigned)VideoManager::MaskType::SlotMask);
-    };
-
     layBase.view.mode.reset.onActivate = [this]() {
         vManager()->resetSettings();
         emuThread->lock();
-        updatePresets();
+        updatePresets(true, false);
         emuThread->unlock();
     };
 
     layBase.view.mode.palette.onActivate = [this]() {
         _settings->set<bool>( "video_spectrum", false);
         emuThread->lock();
-        updatePresets();
+        updatePresets(true, false);
         emuThread->unlock();
     };
 
     layBase.view.mode.spectrum.onActivate = [this]() {
         _settings->set<bool>("video_spectrum", true);
         emuThread->lock();
-        updatePresets();
+        updatePresets(true, false);
         emuThread->unlock();
     };
 
@@ -558,7 +409,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
         emuThread->lock();
         program->fastForward( false );
-        updatePresets();
+        updatePresets(true, false);
         emuThread->unlock();
     };
 
@@ -566,7 +417,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         emuThread->lock();
         program->fastForward( false );
-		updatePresets();
+		updatePresets(true, false);
         emuThread->unlock();
     };
 
@@ -574,73 +425,16 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
         emuThread->lock();
         program->fastForward( false );
-		updatePresets();
+		updatePresets(true, false);
         emuThread->unlock();
-    };
-
-    layBase.view.mode.externGpu.onActivate = [this]() {
-        _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::GpuExtern);
-        emuThread->lock();
-        program->fastForward( false );
-        updatePresets();
-        emuThread->unlock();
-    };
-
-    layIntern.misc.option.distortionHires.onToggle = [this](bool checked) {
-        _settings->set<bool>("video_distortion_hires" + this->sliderIdent(), checked);
-        vManager()->updateData<bool>("distortion_hires", checked);
-    };
-
-    layIntern.misc.option.hires.onToggle = [this](bool checked) {
-        _settings->set<bool>("video_hires" + this->sliderIdent(), checked);
-        vManager()->updateData<bool>("hires", checked);
-    };
-
-    layIntern.subsampling.firSharp.sharpLeft.onActivate = [this]() {
-        
-        _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), -1);
-        vManager()->updateData<int>("fir_filter_sharp", -1);
-    };
-
-    layIntern.subsampling.firSharp.sharpRight.onActivate = [this]() {
-
-        _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 1);
-        vManager()->updateData<int>("fir_filter_sharp", 1);
-    };
-
-    layIntern.subsampling.firSharp.natural.onActivate = [this]() {
-
-        _settings->set<int>("video_fir_filter_sharp" + this->sliderIdent(), 0);
-        vManager()->updateData<int>("fir_filter_sharp", 0);
-    };
-    
-    layGlitch.vicII.toggleAll.onActivate = [this]() {
-        
-        bool b1 = layGlitch.vicII.aec.active.checked();
-        bool b2 = layGlitch.vicII.ba.active.checked();
-        bool b3 = layGlitch.vicII.phi0.active.checked();
-        bool b4 = layGlitch.vicII.ras.active.checked();
-        bool b5 = layGlitch.vicII.cas.active.checked();
-        bool _checked = b1 || b2 || b3 || b4 || b5;
-
-        layGlitch.vicII.aec.active.setChecked( !_checked );
-        layGlitch.vicII.ba.active.setChecked( !_checked );
-        layGlitch.vicII.phi0.active.setChecked( !_checked );
-        layGlitch.vicII.ras.active.setChecked( !_checked );
-        layGlitch.vicII.cas.active.setChecked( !_checked );
-
-        layGlitch.vicII.aec.active.onToggle( !_checked );
-        layGlitch.vicII.ba.active.onToggle( !_checked );
-        layGlitch.vicII.phi0.active.onToggle( !_checked );
-        layGlitch.vicII.ras.active.onToggle( !_checked );
-        layGlitch.vicII.cas.active.onToggle( !_checked );
     };
 
     layShader.main.control.load.onActivate = [this]() {
         static const std::vector<std::string> suffixList = {"slang", "slangp"};
+
         auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->getA("select slang shader"))
-                .setPath( _settings->get<std::string>("slang_folder", "") )
+                .setPath( getShaderFolder() )
                 .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
                 .open();
 
@@ -648,7 +442,9 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             return;
 
         if (loadShader(path)) {
-            _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
+            layShader.favourite.control.add.setEnabled();
+            if (externalFolder())
+                _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
         }
     };
 
@@ -656,7 +452,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         static const std::vector<std::string> suffixList = {"slang", "slangp"};
         auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->getA("select slang shader"))
-                .setPath( _settings->get<std::string>("slang_folder", "") )
+                .setPath( getShaderFolder() )
                 .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
                 .open();
 
@@ -669,8 +465,10 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (preset) {
             buildShaderUI(preset);
             layShader.main.info.loaded.setText( GUIKIT::String::getFileName( vManager()->getPresetPathCombined() ) );
-            _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
+            if (externalFolder())
+                _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.main.control.apply.setEnabled(false);
+            layShader.favourite.control.add.setEnabled();
         }
         showBrokenPaths(brokenPaths);
     };
@@ -679,7 +477,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         static const std::vector<std::string> suffixList = {"slang", "slangp"};
         auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->getA("select slang shader"))
-                .setPath( _settings->get<std::string>("slang_folder", "") )
+                .setPath( getShaderFolder() )
                 .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
                 .open();
 
@@ -694,8 +492,10 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (preset) {
             buildShaderUI(preset);
             layShader.main.info.loaded.setText( GUIKIT::String::getFileName( vManager()->getPresetPathCombined() ) );
-            _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
+            if (externalFolder())
+                _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.main.control.apply.setEnabled(false);
+            layShader.favourite.control.add.setEnabled();
         }
         showBrokenPaths(brokenPaths);
     };
@@ -726,7 +526,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layShader.main.control.apply.onActivate = [this]() {
-        vManager()->shader.recreate = true;
+        vManager()->rebuildShader = true;
     };
 
     layShader.favourite.control.add.onActivate = [this]() {
@@ -783,7 +583,6 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         }
 
         layShader.favourite.control.remove.setEnabled(false);
-        layShader.favourite.control.add.setEnabled(false);
         view->updateShader();
     };
 
@@ -794,7 +593,8 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layShader.favourite.list.onChange = [this]() {
-        layShader.favourite.control.add.setEnabled();
+        if (vManager()->getPreset())
+            layShader.favourite.control.add.setEnabled();
         layShader.favourite.control.remove.setEnabled();
     };
 
@@ -875,7 +675,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
             if (selectedParamId < params.size()) {
                 auto& tviParam = params[selectedParamId];
-                unsigned offset = tviParam.starts + i;
+                unsigned offset = tviParam.offsets[i];
 
                 if (offset < preset->params.size()) {
                     ShaderPreset::Param& param = preset->params[offset];
@@ -894,7 +694,7 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
             if (selectedParamId < params.size()) {
                 auto& tviParam = params[selectedParamId];
-                unsigned offset = tviParam.starts + i;
+                unsigned offset = tviParam.offsets[i];
 
                 if (offset < preset->params.size()) {
                     ShaderPreset::Param& param = preset->params[offset];
@@ -969,6 +769,19 @@ layGlitch( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_UNSPEC);
     };
 
+    for(int i = 0; i < 5; i++) {
+        auto& radioX = layPass.settings.data.scaleX.control.radios[i];
+        auto& radioY = layPass.settings.data.scaleY.control.radios[i];
+
+        radioX.onActivate = [this, i]() {
+            vManager()->setPassScaleX(selectedPassId, float(i+1));
+        };
+
+        radioY.onActivate = [this, i]() {
+            vManager()->setPassScaleY(selectedPassId, float(i+1));
+        };
+    }
+
     loadSettings(true);
 }
 
@@ -1029,21 +842,50 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool expand) -> void {
 
     GUIKIT::TreeViewItem* tviParam = nullptr;
     unsigned paramCount = preset->params.size();
-    unsigned i = 0;
-    unsigned start = 0;
     unsigned pageElement = 0;
-    for(auto& param : preset->params) {
-        i++;
+    std::vector<unsigned> offsets;
+    bool isDescriptor;
+    unsigned countDescriptors = 0;
 
-        if (++pageElement == PARAMS_PER_PAGE) {
-            if (param.isDescriptor()) {
-                params.push_back( {tviParam, start, pageElement - 1 } );
-                pageElement = 1;
-                start = i - 1;
+    for(unsigned i = 0; i < preset->params.size(); i++) {
+        auto& param = preset->params[i];
+
+        if (GUIKIT::String::findString(param.id, "autoEmu_"))
+            continue;
+
+        offsets.push_back(i);
+        isDescriptor = param.isDescriptor();
+        if (isDescriptor)
+            countDescriptors++;
+
+        int adjust = -3 + (countDescriptors >> 1);
+        if (adjust > 0)
+            adjust = 0;
+
+        if (++pageElement == (PARAMS_PER_PAGE + adjust) ) {
+            if (isDescriptor) {
+                std::vector<unsigned> offsetsTemp;
+                for(int o = offsets.size() - 1; o >= 0; o--) {
+                    unsigned offset = offsets[o];
+                    auto& p = preset->params[offset];
+                    if (!p.isDescriptor()) {
+                        break;
+                    }
+
+                    GUIKIT::Vector::insert(offsetsTemp, offset, 0);
+                    offsets.pop_back();
+                }
+
+                params.push_back( {tviParam, offsets} );
+                offsets.clear();
+                offsets = offsetsTemp;
+                pageElement = countDescriptors = offsetsTemp.size();
+
             } else {
-                params.push_back( {tviParam, start, pageElement } );
+                params.push_back( {tviParam, offsets} );
                 pageElement = 0;
-                start = i;
+                offsets.clear();
+                countDescriptors = 0;
             }
 
             tviParam = new GUIKIT::TreeViewItem;
@@ -1053,13 +895,13 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool expand) -> void {
     }
 
     if (pageElement)
-        params.push_back( {tviParam, start, pageElement } );
+        params.push_back( {tviParam, offsets} );
     else if (tviParam)
         delete tviParam;
 
     for(auto& param : params) {
         if (param.tvi) {
-            param.tvi->setText( preset->params[param.starts].desc );
+            param.tvi->setText( preset->params[param.offsets[0]].desc );
             tviParams.append(*param.tvi);
         }
     }
@@ -1089,9 +931,9 @@ auto VideoLayout::buildParams(TviParam& tviParam) -> void {
     int placesMax = 0;
     int decimalPlacesMax = 0;
 
-    for(int i = 0; i < tviParam.counts; i++) {
+    for(int i = 0; i < tviParam.offsets.size(); i++) {
         auto sliderLay = paramSliders[i];
-        int offset = tviParam.starts + i;
+        int offset = tviParam.offsets[i];
         auto& shaderParam = preset->params[offset];
 
 
@@ -1153,24 +995,63 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
     std::string scaleX = "";
     std::string scaleY = "";
 
-    switch(pass.scaleTypeX) {
-        default:
-        case ShaderPreset::SCALE_INPUT: scaleX = "Input - " + GUIKIT::String::formatFloatingPoint(pass.scaleX, 2); break;
-        case ShaderPreset::SCALE_VIEWPORT: scaleX = "Viewport - " + GUIKIT::String::formatFloatingPoint(pass.scaleX, 2); break;
-        case ShaderPreset::SCALE_ABSOLUTE: scaleX = "Absolute - " + std::to_string( pass.absX ); break;
+    GUIKIT::RadioBox* useRadioX = nullptr;
+    if (pass.scaleTypeX != ShaderPreset::SCALE_ABSOLUTE) {
+        for (int i = 0; i < 5; i++) {
+            auto& radio = layPass.settings.data.scaleX.control.radios[i];
+            if (pass.scaleX == float(i+1)) {
+                useRadioX = &radio;
+                break;
+            }
+        }
     }
 
-    switch(pass.scaleTypeY) {
-        default:
-        case ShaderPreset::SCALE_INPUT: scaleY = "Input - " + GUIKIT::String::formatFloatingPoint(pass.scaleY, 2); break;
-        case ShaderPreset::SCALE_VIEWPORT: scaleY = "Viewport - " + GUIKIT::String::formatFloatingPoint(pass.scaleY, 2); break;
-        case ShaderPreset::SCALE_ABSOLUTE: scaleY = "Absolute - " + std::to_string( pass.absY ); break;
+    if (useRadioX) {
+        useRadioX->setChecked();
+        scaleX = "Input";
+    } else {
+        switch(pass.scaleTypeX) {
+            default:
+            case ShaderPreset::SCALE_INPUT: scaleX = "Input - " + GUIKIT::String::formatFloatingPoint(pass.scaleX, 2); break;
+            case ShaderPreset::SCALE_VIEWPORT: scaleX = "Viewport - " + GUIKIT::String::formatFloatingPoint(pass.scaleX, 2); break;
+            case ShaderPreset::SCALE_ABSOLUTE: scaleX = "Absolute - " + std::to_string( pass.absX ); break;
+        }
     }
 
-    layPass.settings.data.scaleX.setText( scaleX );
-    layPass.settings.data.scaleY.setText( scaleY );
+    GUIKIT::RadioBox* useRadioY = nullptr;
+    if (pass.scaleTypeY != ShaderPreset::SCALE_ABSOLUTE) {
+        for (int i = 0; i < 5; i++) {
+            auto& radio = layPass.settings.data.scaleY.control.radios[i];
+            if (pass.scaleY == float(i+1)) {
+                useRadioY = &radio;
+                break;
+            }
+        }
+    }
+
+    if (useRadioY) {
+        useRadioY->setChecked();
+        scaleY = "Input";
+    } else {
+        switch(pass.scaleTypeY) {
+            default:
+            case ShaderPreset::SCALE_INPUT: scaleY = "Input - " + GUIKIT::String::formatFloatingPoint(pass.scaleY, 2); break;
+            case ShaderPreset::SCALE_VIEWPORT: scaleY = "Viewport - " + GUIKIT::String::formatFloatingPoint(pass.scaleY, 2); break;
+            case ShaderPreset::SCALE_ABSOLUTE: scaleY = "Absolute - " + std::to_string( pass.absY ); break;
+        }
+    }
+
+    layPass.settings.data.scaleX.label.setText( scaleX );
+    layPass.settings.data.scaleY.label.setText( scaleY );
+    layPass.settings.data.scaleX.synchronizeLayout();
+    layPass.settings.data.scaleY.synchronizeLayout();
 
     layPass.settings.setEnabled(pass.inUse);
+
+    if (pass.inUse) {
+        layPass.settings.data.scaleX.control.setEnabled(useRadioX != nullptr);
+        layPass.settings.data.scaleY.control.setEnabled(useRadioY != nullptr);
+    }
 
     updateMoveImg();
 }
@@ -1204,16 +1085,7 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
         layout->active.onToggle = [this, layout, baseIdent, callTransfer](bool checked) {
             _settings->set<bool>("video_" + baseIdent + "_use" + this->sliderIdent(), checked);
             layout->slider.setEnabled(checked);
-            if (layout == &layIntern.mask.level) {
-                layIntern.mask.setEnabled( checked );
-                layout->active.setEnabled();
-                layIntern.misc.luminance.setEnabled( !checked );
-            } else if (layout == &layIntern.bloom.glow) {
-                layIntern.bloom.setEnabled( checked );
-                layout->active.setEnabled();
-                layIntern.bloom.weight.slider.setEnabled( layIntern.bloom.weight.active.checked() && layout->active.checked() );
-			}
-            
+
             unsigned position = layout->slider.position();
 			T value = callTransfer( position );
 
@@ -1223,12 +1095,11 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
     layout->slider.onChange = [this, layout, baseIdent, callTransfer](unsigned position) {
 		T value = callTransfer( position );	
         auto unit = layout->unit;
-        auto roundDigits = (layout == &layIntern.mask.pitch || layout == &layGlitch.crt.randomLineOffset || layout == &layIntern.bloom.weight) ? 2 : 1;
 		
         _settings->set<T>("video_" + baseIdent + this->sliderIdent(), value);
 		
 		if (std::is_same<T, float>::value)
-			layout->value.setText( GUIKIT::String::formatFloatingPoint(value, roundDigits) + " " + unit);
+			layout->value.setText( GUIKIT::String::formatFloatingPoint(value, 1) + " " + unit);
 		else
 			layout->value.setText( std::to_string(value) + " " + unit);
 
@@ -1241,12 +1112,12 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
     };
 }
 
-auto VideoLayout::updatePresets(bool reloadDriver) -> void {
+auto VideoLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> void {
     
     auto [VPARAMS] = VideoManager::getInstance( emulator )->getSettings( );
     
     if (videoDriver && reloadDriver)
-        VideoManager::getInstance( emulator )->reloadSettings();
+        VideoManager::getInstance( emulator )->reloadSettings(reloadPreset);
 
 	layBase.view.option.newLuma.setChecked( _newLuma );
     layBase.view.option.tvGamma.setChecked( _tvGamma );
@@ -1283,87 +1154,13 @@ auto VideoLayout::updatePresets(bool reloadDriver) -> void {
     layBase.lumaDelay.lumaFall.slider.setPosition( (unsigned)((_lumaFall - 1.0) * 10.0) );
     layBase.lumaDelay.lumaFall.value.setText( GUIKIT::String::formatFloatingPoint(_lumaFall, 1) + " px" );
 
-    // shader features    
-    layGlitch.crt.chromaNoise.active.setChecked( _useChromaNoise );
-    layGlitch.crt.chromaNoise.slider.setPosition( (unsigned)(_chromaNoise * 10.0) );
-    layGlitch.crt.chromaNoise.value.setText( GUIKIT::String::formatFloatingPoint(_chromaNoise, 1) + " %" );
-    layGlitch.crt.lumaNoise.active.setChecked(_useLumaNoise);
-    layGlitch.crt.lumaNoise.slider.setPosition((unsigned)(_lumaNoise * 10.0));
-    layGlitch.crt.lumaNoise.value.setText(GUIKIT::String::formatFloatingPoint(_lumaNoise, 1) + " %");
-    layGlitch.crt.radialDistortion.active.setChecked( _useRadialDistortion );
-    layGlitch.crt.radialDistortion.slider.setPosition( _radialDistortion );
-    layGlitch.crt.radialDistortion.value.setText( std::to_string(_radialDistortion) + " %" );
-    layGlitch.crt.randomLineOffset.active.setChecked( _useRandomLineOffset );
-    layGlitch.crt.randomLineOffset.slider.setPosition( (unsigned)(_randomLineOffset * 100.0) );
-    layGlitch.crt.randomLineOffset.value.setText( GUIKIT::String::formatFloatingPoint(_randomLineOffset, 2) + " %" );
-
-    layIntern.mask.level.active.setChecked( _useMaskLevel );
-    layIntern.mask.level.slider.setPosition( _maskLevel );
-    layIntern.mask.level.value.setText( std::to_string(_maskLevel) + " %" );
-    layIntern.mask.luminance.slider.setPosition(_maskLuminance);
-    layIntern.mask.luminance.value.setText(std::to_string(_maskLuminance) + " %");
-    layIntern.mask.pitch.slider.setPosition( _maskPitch * 100.0 );
-    layIntern.mask.pitch.value.setText( GUIKIT::String::formatFloatingPoint(_maskPitch, 2) + " mm" );
-    layIntern.mask.dpi.slider.setPosition( _maskDpi );
-    layIntern.mask.dpi.value.setText( std::to_string(_maskDpi) + " dpi" );
-
-    layIntern.bloom.glow.active.setChecked( _useBloomGlow );
-    layIntern.bloom.glow.slider.setPosition( _bloomGlow );
-    layIntern.bloom.glow.value.setText( std::to_string( _bloomGlow ) + " %" );
-    layIntern.bloom.weight.active.setChecked( _useBloomWeight );
-    layIntern.bloom.weight.slider.setPosition( _bloomWeight * 100.0 );
-    layIntern.bloom.weight.value.setText( GUIKIT::String::formatFloatingPoint( _bloomWeight, 2 ) );
-    layIntern.bloom.variance.slider.setPosition( (unsigned)((_bloomVariance - 1.0) * 10.0) );
-    layIntern.bloom.variance.value.setText( GUIKIT::String::formatFloatingPoint( _bloomVariance, 1 ) );
-    layIntern.bloom.radius.slider.setPosition( _bloomRadius - 1 );
-    layIntern.bloom.radius.value.setText( std::to_string( _bloomRadius ) + " px" );
-
-    layGlitch.vicII.aec.active.setChecked( _useAecGlitch );
-    layGlitch.vicII.aec.slider.setPosition( (unsigned)(_aecGlitch * 10.0) );
-    layGlitch.vicII.aec.value.setText( GUIKIT::String::formatFloatingPoint(_aecGlitch, 1) + " %" );
-    layGlitch.vicII.ba.active.setChecked( _useBaGlitch );
-    layGlitch.vicII.ba.slider.setPosition( (unsigned)(_baGlitch * 10.0) );
-    layGlitch.vicII.ba.value.setText( GUIKIT::String::formatFloatingPoint(_baGlitch, 1) + " %" );
-    layGlitch.vicII.phi0.active.setChecked( _usePhi0Glitch );
-    layGlitch.vicII.phi0.slider.setPosition( (unsigned)(_phi0Glitch * 10.0) );
-    layGlitch.vicII.phi0.value.setText( GUIKIT::String::formatFloatingPoint(_phi0Glitch, 1) + " %" );
-    layGlitch.vicII.ras.active.setChecked( _useRasGlitch );
-    layGlitch.vicII.ras.slider.setPosition( (unsigned)(_rasGlitch * 10.0) );
-    layGlitch.vicII.ras.value.setText( GUIKIT::String::formatFloatingPoint(_rasGlitch, 1) + " %" );
-    layGlitch.vicII.cas.active.setChecked( _useCasGlitch );
-    layGlitch.vicII.cas.slider.setPosition( (unsigned)(_casGlitch * 10.0) );
-    layGlitch.vicII.cas.value.setText( GUIKIT::String::formatFloatingPoint(_casGlitch, 1) + " %" );
-
-    layIntern.misc.option.distortionHires.setChecked( _distortionHires );
-    layIntern.misc.option.hires.setChecked( _hires );
-    layIntern.misc.luminance.slider.setPosition( _luminance );
-    layIntern.misc.luminance.value.setText( std::to_string(_luminance) + " %" );
-    layIntern.misc.lightFromCenter.active.setChecked( _useLightFromCenter );
-    layIntern.misc.lightFromCenter.slider.setPosition( _lightFromCenter );
-    layIntern.misc.lightFromCenter.value.setText( std::to_string(_lightFromCenter) + " %" );
-    layIntern.subsampling.firFilter.slider.setPosition( (unsigned)(_firFilterLength / 2) );
-    layIntern.subsampling.firFilter.value.setText( std::to_string( _firFilterLength ) );
-    
-    if (_firFilterSharp == -1)
-        layIntern.subsampling.firSharp.sharpLeft.setChecked();
-    else if (_firFilterSharp == 1)
-        layIntern.subsampling.firSharp.sharpRight.setChecked();
-    else
-        layIntern.subsampling.firSharp.natural.setChecked();
-        
-    if ( _maskType == (unsigned)VideoManager::MaskType::ShadowMask )
-        layIntern.mask.type.shadowMask.setChecked();
-    else if ( _maskType == (unsigned)VideoManager::MaskType::SlotMask )
-        layIntern.mask.type.slotMask.setChecked();
-    else
-        layIntern.mask.type.apertureMask.setChecked();
-
     std::vector<std::string> brokenPaths;
     ShaderPreset* preset = vManager()->getPreset(brokenPaths);
     if (preset) {
         buildShaderUI(preset, false);
         layShader.main.info.loaded.setText(GUIKIT::String::getFileName(vManager()->getPresetPath(), true));
         layShader.main.control.setEnabled();
+        layShader.favourite.control.add.setEnabled();
         showBrokenPaths(brokenPaths);
     } else
         layShader.main.control.unload.onActivate();
@@ -1376,86 +1173,45 @@ auto VideoLayout::updateVisibillity() -> void {
     bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
     bool crtCpuChecked = layBase.view.mode.svideoCpu.checked();
     bool crtGpuChecked = layBase.view.mode.svideoGpu.checked();
-    bool externGpuChecked = layBase.view.mode.externGpu.checked();
-    bool crtChecked = crtCpuChecked || crtGpuChecked || externGpuChecked;
+
+    if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::NotSupported) {
+        if(crtGpuChecked) {
+            layBase.view.mode.rgb.setChecked();
+            crtGpuChecked = false;
+        }
+        layBase.view.mode.svideoGpu.setEnabled(false);
+    } else
+        layBase.view.mode.svideoGpu.setEnabled();
 	
 	if (layBase.view.mode.spectrum.checked()) {
-        layBase.view.phase.setEnabled(true);
-        layBase.view.option.newLuma.setEnabled(true);
+        layBase.view.phase.setEnabled();
+        layBase.view.option.newLuma.setEnabled();
     } else {
         layBase.view.phase.setEnabled(false);
         layBase.view.option.newLuma.setEnabled(false);
     }
 
-    layBase.view.scanlines.setEnabled(!externGpuChecked);
-    if (!externGpuChecked)
+    layBase.view.scanlines.setEnabled(crtCpuChecked);
+    if (crtCpuChecked)
         layBase.view.scanlines.slider.setEnabled( layBase.view.scanlines.active.checked() );
 
     layBase.view.interlace.slider.setEnabled( layBase.view.interlace.active.checked() );
 
-    layBase.encoding.setEnabled( crtChecked );
-    layBase.lumaDelay.setEnabled( (isC64 && crtCpuChecked) || crtGpuChecked || externGpuChecked );
-    
-    if (crtChecked) {
+    layBase.encoding.setEnabled( crtCpuChecked );
+    if (crtCpuChecked) {
         layBase.encoding.phaseError.slider.setEnabled( layBase.encoding.phaseError.active.checked() );
         layBase.encoding.hanoverBars.setEnabled( _pal );
         layBase.encoding.hanoverBars.slider.setEnabled( _pal && layBase.encoding.hanoverBars.active.checked() );
         layBase.encoding.blur.slider.setEnabled(  layBase.encoding.blur.active.checked() );
     }
 
-    if ((isC64 && crtCpuChecked) || crtGpuChecked || externGpuChecked) {
+    layBase.lumaDelay.setEnabled(isC64 && crtCpuChecked);
+    if (isC64 && crtCpuChecked) {
         layBase.lumaDelay.lumaRise.slider.setEnabled(layBase.lumaDelay.lumaRise.active.checked());
         layBase.lumaDelay.lumaFall.slider.setEnabled(layBase.lumaDelay.lumaFall.active.checked());
     }
     
-    layBase.view.option.tvGamma.setEnabled( crtChecked && layBase.view.mode.palette.checked() && _pal );
-	
-    if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::NotSupported) {
-        if(crtGpuChecked || externGpuChecked) {
-            layBase.view.mode.svideoCpu.setChecked();
-            _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
-        }
-
-        layBase.view.mode.svideoGpu.setEnabled(false);
-        layBase.view.mode.externGpu.setEnabled(false);
-        layIntern.setEnabled(false);
-        layGlitch.setEnabled(false);
-        return;
-    }
-
-    layBase.view.mode.svideoGpu.setEnabled();
-    layBase.view.mode.externGpu.setEnabled();
-    layIntern.setEnabled(crtGpuChecked);
-    layGlitch.setEnabled(crtGpuChecked);
-    
-    if ( crtGpuChecked || externGpuChecked )
-        layBase.encoding.blur.setEnabled( false );
-
-    if (crtGpuChecked) {
-        layIntern.mask.setEnabled( layIntern.mask.level.active.checked() );
-        layIntern.mask.level.active.setEnabled();
-        layGlitch.crt.radialDistortion.slider.setEnabled( layGlitch.crt.radialDistortion.active.checked() );
-        layIntern.misc.luminance.setEnabled( !layIntern.mask.level.active.checked() );
-        layIntern.misc.lightFromCenter.slider.setEnabled( layIntern.misc.lightFromCenter.active.checked() );
-        layIntern.bloom.setEnabled( layIntern.bloom.glow.active.checked() );
-        layIntern.bloom.glow.active.setEnabled();
-        layIntern.bloom.weight.slider.setEnabled( layIntern.bloom.weight.active.checked() && layIntern.bloom.glow.active.checked() );
-    }
-
-	if (crtGpuChecked) {
-        layGlitch.crt.lumaNoise.slider.setEnabled(layGlitch.crt.lumaNoise.active.checked());
-        layGlitch.crt.chromaNoise.slider.setEnabled(layGlitch.crt.chromaNoise.active.checked());
-        layGlitch.crt.randomLineOffset.slider.setEnabled(layGlitch.crt.randomLineOffset.active.checked());
-    }
-
-    if (isC64 && (crtGpuChecked || externGpuChecked)) {
-        layGlitch.vicII.setEnabled();
-        layGlitch.vicII.aec.slider.setEnabled( isC64 && layGlitch.vicII.aec.active.checked() );
-        layGlitch.vicII.ba.slider.setEnabled( isC64 && layGlitch.vicII.ba.active.checked() );
-        layGlitch.vicII.phi0.slider.setEnabled( isC64 && layGlitch.vicII.phi0.active.checked() );
-        layGlitch.vicII.ras.slider.setEnabled( isC64 && layGlitch.vicII.ras.active.checked() );
-        layGlitch.vicII.cas.slider.setEnabled( isC64 && layGlitch.vicII.cas.active.checked() );
-	}
+    layBase.view.option.tvGamma.setEnabled( (crtCpuChecked || crtGpuChecked) && layBase.view.mode.palette.checked() && _pal );
 }
 
 auto VideoLayout::translate() -> void {
@@ -1475,9 +1231,7 @@ auto VideoLayout::translate() -> void {
     layBase.view.mode.rgb.setText( trans->get("RGB") );
     layBase.view.mode.svideoCpu.setText( trans->get("S/C-Video") );
     layBase.view.mode.svideoCpu.setTooltip( trans->get("S/C-Video tooltip") );
-    layBase.view.mode.svideoGpu.setText( trans->get("S/C-Video on GPU") );
-    layBase.view.mode.svideoGpu.setTooltip( trans->get("S/C-Video tooltip") );
-    layBase.view.mode.externGpu.setText( trans->get("Shader") );
+    layBase.view.mode.svideoGpu.setText( trans->get("Shader") );
     layBase.view.scanlines.active.setText( trans->get("scanlines", {}, true) );
     layBase.view.interlace.active.setText( trans->get("interlace", {}, true) );
 
@@ -1489,51 +1243,12 @@ auto VideoLayout::translate() -> void {
     layBase.lumaDelay.lumaRise.active.setText( trans->get("luma_rise", {}, true) );
     layBase.lumaDelay.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
 
-    layIntern.misc.setText(trans->get("miscellaneous"));
-    layIntern.misc.option.distortionHires.setText( trans->get("distortion_hires") );
-    layIntern.misc.option.distortionHires.setTooltip( trans->get("distortion hires tooltip") );
-    layIntern.misc.option.hires.setText( trans->get("hires") );
-    layIntern.misc.luminance.name.setText( trans->get("luminance", {}, true) );
-    layIntern.misc.lightFromCenter.active.setText( trans->get("light_from_center", {}, true) );
-
-    layIntern.subsampling.setText(trans->get("chroma subsampling"));
-    layIntern.subsampling.firFilter.name.setText( trans->get("fir filter blur", {}, true) );
-    layIntern.subsampling.firSharp.sharpLeft.setText( trans->get("fir filter left") );
-    layIntern.subsampling.firSharp.sharpRight.setText( trans->get("fir filter right") );
-    layIntern.subsampling.firSharp.natural.setText( trans->get("fir filter natural") );
-
-    layIntern.mask.setText( trans->get("mask") );
-    layIntern.mask.type.label.setText( trans->get("type", {}, true) );
-    layIntern.mask.type.apertureMask.setText( trans->get("aperture_mask") );
-    layIntern.mask.type.shadowMask.setText( trans->get("shadow_mask") );
-    layIntern.mask.type.slotMask.setText( trans->get("slot_mask") );
-    layIntern.mask.level.active.setText( trans->get("intensity", {}, true) );
-    layIntern.mask.luminance.name.setText( trans->get("luminance", {}, true) );
-    layIntern.mask.pitch.name.setText( trans->get("pitch", {}, true) );
-    layIntern.mask.dpi.name.setText( trans->get("DPI", {}, true) );
-
-    layIntern.bloom.setText( trans->get("color_bloom") );
-    layIntern.bloom.glow.active.setText( trans->get("glow", {}, true) );
-    layIntern.bloom.radius.name.setText( trans->get("radius", {}, true) );
-    layIntern.bloom.variance.name.setText( trans->get("variance", {}, true) );
-    layIntern.bloom.weight.active.setText( trans->get("weight", {}, true) );
-
-    layGlitch.crt.setText( trans->get("crt_glitches") );
-    layGlitch.crt.lumaNoise.active.setText( trans->get("luma_noise", {}, true) );
-    layGlitch.crt.chromaNoise.active.setText( trans->get("chroma_noise", {}, true) );
-    layGlitch.crt.radialDistortion.active.setText( trans->get("radial_distortion", {}, true) );
-    layGlitch.crt.randomLineOffset.active.setText( trans->get("random_line_offset", {}, true) );
-
-    layGlitch.vicII.setText( trans->get("vicII_glitches") );
-    layGlitch.vicII.toggleAll.setText( trans->get("toggle_all_glitches") );
-    layGlitch.vicII.aec.active.setText(trans->get("aec_glitch",{}, true));
-    layGlitch.vicII.ba.active.setText(trans->get("ba_glitch",{}, true));
-    layGlitch.vicII.phi0.active.setText(trans->get("phi_glitch",{}, true));
-    layGlitch.vicII.ras.active.setText(trans->get("ras_glitch",{}, true));
-    layGlitch.vicII.cas.active.setText(trans->get("cas_glitch",{}, true));
-
     layShader.main.control.prependPreset.setText( trans->getA("prepend preset") );
     layShader.main.control.appendPreset.setText( trans->getA("append preset") );
+
+    layShader.main.control.folder.setText( trans->getA("shader folder", true) );
+    layShader.main.control.internal.setText( trans->getA("internal") );
+    layShader.main.control.external.setText( trans->getA("external") );
     layShader.main.control.unload.setText( trans->getA("unload") );
     layShader.main.control.apply.setText( trans->getA("apply") );
     layShader.main.control.save.setText( trans->getA("save") );
@@ -1561,8 +1276,6 @@ auto VideoLayout::translate() -> void {
     layParam.control.next.setText( trans->getA("next") );
 
     tviBase.setText( trans->getA("overview") );
-    tviIntern.setText( trans->getA("S/C-Video on GPU") );
-    tviGlitch.setText( trans->getA("Glitches") );
     tviShader.setText( trans->getA("Shader") );
     tviParams.setText( trans->getA("Parameter") );
 
@@ -1572,7 +1285,7 @@ auto VideoLayout::translate() -> void {
 
     layPass.settings.data.filter.nearest.setText( trans->getA("nearest") );
     layPass.settings.data.filter.linear.setText( trans->getA("linear") );
-    layPass.settings.data.filter.unspec.setText( trans->getA("unspec") );
+    layPass.settings.data.filter.unspec.setText( trans->getA("unspecified") );
 
     layPass.info.setText( trans->getA("shader update info") );
 
@@ -1582,24 +1295,19 @@ auto VideoLayout::translate() -> void {
 
     SliderLayout::scale({&layBase.view.saturation, &layBase.view.gamma, &layBase.view.brightness, &layBase.view.contrast, &layBase.view.phase, &layBase.view.scanlines, &layBase.view.interlace, &layBase.encoding.phaseError, &layBase.encoding.hanoverBars, &layBase.encoding.blur, &layBase.lumaDelay.lumaRise, &layBase.lumaDelay.lumaFall},
                         "-100 %");
-    unsigned neededWidth = SliderLayout::scale({&layIntern.subsampling.firFilter, &layIntern.misc.lightFromCenter, &layIntern.misc.luminance, &layIntern.mask.level, &layIntern.mask.luminance, &layIntern.mask.dpi, &layIntern.mask.pitch, &layIntern.bloom.glow, &layIntern.bloom.radius, &layIntern.bloom.variance, &layIntern.bloom.weight},
-                        "0.00 mm", layIntern.mask.type.label.minimumSize().width );
-    SliderLayout::scale({&layGlitch.crt.lumaNoise, &layGlitch.crt.chromaNoise, &layGlitch.crt.randomLineOffset, &layGlitch.crt.radialDistortion, &layGlitch.vicII.aec, &layGlitch.vicII.ba, &layGlitch.vicII.phi0, &layGlitch.vicII.ras, &layGlitch.vicII.cas},
-                        "100.0 %");
-
-    layIntern.mask.type.children[ 0 ].size.width = neededWidth;
 }
 
 auto VideoLayout::sliderIdent() -> std::string {
 	
 	std::string ident = (emulator->getRegionEncoding() == Emulator::Interface::Region::Pal) ? "_pal" : "_ntsc";
 
+    if (dynamic_cast<LIBC64::Interface*>(emulator) && layBase.view.mode.spectrum.checked())
+        ident += "_spectrum";
+
 	if (layBase.view.mode.svideoCpu.checked())
 		ident += "_crtcpu";
 	else if (layBase.view.mode.svideoGpu.checked())
 		ident += "_crtgpu";
-    else if (layBase.view.mode.externGpu.checked())
-        ident += "_externgpu";
 
 	return ident;
 }
@@ -1609,8 +1317,6 @@ auto VideoLayout::loadSettings(bool init) -> void {
     
     if (crtMode == VideoManager::CrtMode::Gpu)
         layBase.view.mode.svideoGpu.setChecked();
-    else if (crtMode == VideoManager::CrtMode::GpuExtern)
-        layBase.view.mode.externGpu.setChecked();
     else if (crtMode == VideoManager::CrtMode::Cpu)
         layBase.view.mode.svideoCpu.setChecked();
     else
@@ -1632,7 +1338,7 @@ auto VideoLayout::loadSettings(bool init) -> void {
         i++;
     }
 
-    updatePresets(!init);
+    updatePresets(!init, true);
 
     layBase.view.option.linearInterpolation.setChecked( _settings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
 }
@@ -1682,7 +1388,19 @@ auto VideoLayout::unloadShader() -> void {
     buildShaderUI(nullptr);
     layShader.main.info.loaded.setText( "" );
     _settings->set<std::string>("slang_loaded", "");
+    _settings->set<bool>("intern_preset", false);
     layShader.main.control.setEnabled(false);
     layShader.main.control.load.setEnabled();
+    layShader.main.control.folder.setEnabled();
+    layShader.main.control.internal.setEnabled();
+    layShader.main.control.external.setEnabled();
+    layShader.favourite.control.add.setEnabled(false);
     clearBrokenPaths();
+}
+
+auto VideoLayout::getShaderFolder() -> std::string {
+    if (externalFolder())
+        return _settings->get<std::string>("slang_folder", "");
+
+    return program->shaderFolder();
 }

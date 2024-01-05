@@ -72,7 +72,7 @@ struct System {
     auto powerOff() -> void;
     auto run() -> void;
     auto informAboutKeyUpdate() -> void;
-    auto videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t interlace) -> void;
+    auto videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void;
     auto videoMidScreenCallback(uint8_t options) -> void;
     auto audioRefresh(int16_t left, int16_t right) -> void;
     auto setModel(uint8_t model) -> void;

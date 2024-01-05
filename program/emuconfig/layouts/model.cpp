@@ -573,9 +573,9 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 
             case LIBC64::Interface::ModelIdVicIIModel:
                 if (tabWindow->videoLayout)
-                    tabWindow->videoLayout->updatePresets();
+                    tabWindow->videoLayout->updatePresets(true, false);
                 else if (videoDriver)
-                    VideoManager::getInstance( emulator )->reloadSettings();
+                    VideoManager::getInstance( emulator )->reloadSettings(false);
 
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
@@ -653,9 +653,9 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 break;
             case LIBAMI::Interface::ModelIdRegion:
                 if (tabWindow->videoLayout)
-                    tabWindow->videoLayout->updatePresets();
+                    tabWindow->videoLayout->updatePresets(true, false);
                 else if (videoDriver)
-                    VideoManager::getInstance( emulator )->reloadSettings();
+                    VideoManager::getInstance( emulator )->reloadSettings(false);
                 // fallthrough
             case LIBAMI::Interface::ModelIdChipMem:
             case LIBAMI::Interface::ModelIdSlowMem:

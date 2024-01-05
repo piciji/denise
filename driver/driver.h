@@ -29,15 +29,15 @@ struct Video {
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
 
-    virtual auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool { return false; }
-    virtual auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool { return false; }
-    virtual auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool { return false; }
+    // options: bit 0: hold last frame, 7: shader params dirty
+    virtual auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
+    virtual auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
     virtual auto redraw(bool disallowShader = false) -> void {}
     virtual auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {}
     virtual auto clear() -> void {}
     virtual auto setFilter(Filter filter) -> void {}
 	virtual auto setShader(std::vector<ShaderPass*> passes) -> void {}
-    virtual auto setShader(ShaderPreset& preset) -> void {}
+    virtual auto setShader(ShaderPreset* preset) -> void {}
     virtual auto setShaderAttribute( std::string _program, std::string attribute, float value ) -> void {}
     virtual auto setShaderAttribute( std::string _program, std::string attribute, int value ) -> void {}
     virtual auto setShaderAttribute( std::string _program, std::string attribute, float* data, unsigned size) -> void {}

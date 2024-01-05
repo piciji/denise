@@ -26,6 +26,7 @@ struct Crop {
         unsigned top;
         unsigned left;
         unsigned linePitch;
+        bool topLeftChanged;
     } latest;
     
 	unsigned croppedWidth;
@@ -36,7 +37,7 @@ struct Crop {
 	unsigned left;
 	unsigned right;
 		
-	auto updateBorder(uint8_t options ) -> bool {
+	auto updateBorder(uint8_t& options ) -> bool {
         
 		if ( settings.type == CropType::Off ) {
             top = left = right = bottom = 0;
@@ -114,8 +115,12 @@ struct Crop {
         latest.width = width;
         latest.height = height;
         latest.linePitch = linePitch;
-        latest.top = top;
-        latest.left = left;
+        if ( (latest.top != top) || (latest.left != left) ) {
+            latest.top = top;
+            latest.left = left;
+            latest.topLeftChanged = true;
+        } else
+            latest.topLeftChanged = false;
     }
 	
 	auto roundUp( double value ) -> unsigned {
@@ -126,7 +131,7 @@ struct Crop {
 		return (unsigned) ( value + 0.5 );
 	}
 	
-	auto correct( unsigned width, unsigned height, int options ) -> void {
+	auto correct( unsigned width, unsigned height, uint8_t& options ) -> void {
 		bool lace = options & 3;
         bool hires = options & 4;
 
