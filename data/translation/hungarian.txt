@@ -787,3 +787,4 @@ warp first tape file tooltip = Ha aktiválva van, a csatlakoztatott Auto Warp cs
 lock aspect ratio = Képarány zárolása
 crop window = ablak körülvágása
 italian = olasz
+toggle scaling = toggle scaling

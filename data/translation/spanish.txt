@@ -787,3 +787,4 @@ warp first tape file tooltip = Cuando se activa, Auto Warp sólo acelera la carg
 lock aspect ratio = Bloquear relación de aspecto
 crop window = Recortar ventana
 italian = Italiano
+toggle scaling = toggle scaling

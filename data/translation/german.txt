@@ -787,3 +787,4 @@ warp first tape file tooltip = Wenn aktiviert, beschleunigt ein zugeschalteter A
 lock aspect ratio = Seitenverhältnis sperren
 crop window = Fenster zuschneiden
 italian = Italienisch
+toggle scaling = Skalierung umschalten

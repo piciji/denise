@@ -787,3 +787,4 @@ warp first tape file tooltip = Lorsqu'il est activé, un Auto Warp connecté acc
 lock aspect ratio = verrouiller les proportions
 crop window = rogner la fenêtre
 italian = Italien
+toggle scaling = toggle scaling
