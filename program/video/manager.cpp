@@ -417,15 +417,15 @@ auto VideoManager::injectPhaseTransferError() -> void {
     
     // next we encode/decode PAL signal.
     // sender(c64, amiga) transfers PAL's V component 180° phase shifted (change sign) each odd line.
-    // receiver translates it back by changing sign of V component again.
+    // the receiver translates it back by changing sign of V component again.
     // if there is no phase error during transmission, this process would be completely useless.
     // you already assume it, the real world is not ideal.
-    // to explain this let's have a look what's the problem with NTSC.
+    // to explain this, let's have a look at what's the problem with NTSC.
     // a sender adds some degree of hue(V component) errors while transmitting the signal.
     // there is a setting, called tint, on each NTSC TV. this way you can correct a great portion
-    // of the hue error of a specific sender. of course the hue error isn't constant, means you
-    // can't correct it completely. that's why NTSC is called: never the same color :-)
-    // back to pal and the approach to stabilize hue.
+    // of the hue error of a specific sender. of course, the hue error isn't constant, means you
+    // can't correct it completely. that's why NTSC is called: never the same color
+    // back to PAL and the approach to stabilize hue.
     // even lines: same transmission as NTSC, the transferred signal is received with an unknown
     // phase shift error. in comparison to NTSC the information is stored in TV. (delay line)
     // odd lines: V component is phase shifted by 180° before transmission. (simply means the V value change sign).
@@ -442,7 +442,7 @@ auto VideoManager::injectPhaseTransferError() -> void {
     // 1. the vertical resolution is halved, because 2 lines will be blended together.
     // 2. if sender adds a huge phase shift error to U/V, the receiver can indeed reconstruct the original hue
     // by averaging data from even and odd lines but the overall saturation will be lowered.
-    // delay lines will be saved in an analog way. depending on TV quality adjacent lines are desaturated differently.
+    // delay lines will be saved in an analog way. depending on TV quality, adjacent lines are desaturated differently.
 	// this effect is known as (Hanover Bars)
     
 	// we have already calculated the values for U and V
@@ -468,12 +468,12 @@ auto VideoManager::injectPhaseTransferError() -> void {
     for (unsigned c = 0; c < colorCount; c++) {
 		
 		evenTable[c].y = lumaChromaTable[c].y;
-		// phase shifted chroma, received in TV (pal, ntsc)
+		// phase shifted chroma, received in TV (PAL, NTSC)
 		evenTable[c].u_i = lumaChromaTable[c].u_i * rotU - lumaChromaTable[c].v_q * rotV;
 		evenTable[c].v_q = lumaChromaTable[c].v_q * rotU + lumaChromaTable[c].u_i * rotV;
         
 		if (pal) {
-			// same phase error but shifted in opposite direction (pal)
+			// same phase error but shifted in the opposite direction (PAL)
 			oddTable[c].y = lumaChromaTable[c].y;
 			oddTable[c].u_i = lumaChromaTable[c].u_i * rotU - lumaChromaTable[c].v_q * rotV * -1;
 			oddTable[c].v_q = lumaChromaTable[c].v_q * rotU + lumaChromaTable[c].u_i * rotV * -1;
@@ -482,8 +482,8 @@ auto VideoManager::injectPhaseTransferError() -> void {
 }
 
 auto VideoManager::convertLumaChromaToInteger() -> void {
-	// luma changes overshoot then continue to oscillate a few pixel.
-    // i.e. a blur of 1 means the luma of both neighbouring pixel are weighted with 25% each    
+	// luma changes overshoot then continue to oscillate a few pixels.
+    // i.e. a blur of 1 means the luma of both neighboring pixels are weighted with 25% each
     // and the center pixel is weighted with 50 %
     double neighbour = blur * 0.25;
     double center = 1.0 - neighbour * 2.0;
@@ -491,15 +491,15 @@ auto VideoManager::convertLumaChromaToInteger() -> void {
 	
 	for (unsigned c = 0; c < colorCount; c++) {
 
-        // for performance reasons we want to calculate the crt frame with integer later on.
+        // for performance reasons, we want to calculate the crt frame with integer later on.
         // we need to scale up with at least 8 bits to reconvert back to RGB lossless.
 		evenTable[c].u_i_s = (int32_t) (evenTable[c].u_i * double(1 << 8) + (evenTable[c].u_i < 0 ? -0.5 : 0.5));
 		evenTable[c].v_q_s = (int32_t) (evenTable[c].v_q * double(1 << 8) + (evenTable[c].v_q < 0 ? -0.5 : 0.5));
         
         // we scale up with 11 bits instead of 8, why ? read on
-        // after chroma subsampling (adding 4 pixel), the scaling of chroma increases to 10 bits
+        // after chroma subsampling (adding 4 pixels), the scaling of chroma increases to 10 bits,
         // and after adding the final pixel to delayed pixel the scaling of chroma increases to 11 bits.
-        // chroma and luma need to be scaled the same in order to apply math on it.
+        // chroma and luma need to be scaled the same to apply math on it.
         // average color (horizontal) = (pixel1 + pixel2 + pixel3 + pixel4) / 4
         // average color (vertical)   = (average color (horizontal) + delayed average color of last line) / 2
         // 
@@ -507,7 +507,7 @@ auto VideoManager::convertLumaChromaToInteger() -> void {
         // pFinal * 2 = (p1 + p2 + p3 + p4) / 4 + (pLast1 + pLast2 + pLast3 + pLast4) / 4
         // pFinal * 8 = p1 + p2 + p3 + p4 + pLast1 + pLast2 + pLast3 + pLast4
         
-        // so we can add all 8 pixel first and divide later on by 8 to get the averaged pixel.
+        // so we can add all 8 pixels first and divide later on by 8 to get the averaged pixel.
         // for ntsc there isn't a delay line. we scale up 2 bits only.
         
         evenTable[c].y_s = (int32_t) (evenTable[c].y * center * double(1 << scalerLuma) + (evenTable[c].y < 0 ? -0.5 : 0.5));

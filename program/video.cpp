@@ -280,8 +280,7 @@ auto Program::toggleFastForward(bool aggressive) -> void {
     bool ffa = warp.active && warp.aggressive;
 
     if (warp.manuellEndsAutoWarp && warp.motorControlled)
-        //if ( (!ff && !ffa) || (ff && !aggressive) || (ffa && aggressive) )
-            warp.enableAutoWarp = false;
+        warp.enableAutoWarp = false;
 
     if ( (!aggressive && ffa) || (aggressive && ff) ) {
         // switch modes (already active)
@@ -304,12 +303,15 @@ auto Program::toggleFastForward(bool aggressive) -> void {
 auto Program::fastForward( bool activate, bool aggressive ) -> void {
     if (!activeEmulator)
         return;
-    
-    auto settings = getSettings( activeEmulator );
+
     activeVideoManager = VideoManager::getInstance( activeEmulator );
     unsigned forward = 0;
 
     if (activate) {
+        activeEmulator->setLineCallback(false);
+        if (activeVideoManager)
+            activeVideoManager->waitForCrtRenderer();
+
         VideoManager::hidePlaceHolder();
         warp.active = true;
         warp.aggressive = aggressive;
