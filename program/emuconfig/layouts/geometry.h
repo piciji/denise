@@ -67,15 +67,27 @@ struct CropLayout : GUIKIT::FramedVerticalLayout {
     CropLayout();
 };
 
-struct RatioLayout : GUIKIT::FramedHorizontalLayout {
-    GUIKIT::Label label;
-    GUIKIT::RadioBox window;
-    GUIKIT::RadioBox tv;
-    GUIKIT::RadioBox native;
-    GUIKIT::RadioBox nativeFree;
-    GUIKIT::CheckBox integerScaling;
-    GUIKIT::Widget spacer;
-    GUIKIT::Button cropWindow;
+struct RatioLayout : GUIKIT::FramedVerticalLayout {
+
+    struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox window;
+        GUIKIT::RadioBox tv;
+        GUIKIT::RadioBox native;
+        GUIKIT::RadioBox nativeFree;
+        GUIKIT::CheckBox integerScaling;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button cropWindow;
+        Control();
+    } control;
+
+    struct Hotkey : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        std::vector<GUIKIT::CheckBox*> boxes;
+
+        Hotkey();
+    } hotkey;
+
     RatioLayout();
 };
 
@@ -93,6 +105,7 @@ struct GeometryLayout : GUIKIT::VerticalLayout {
     auto loadSettings() -> void;
     auto updateCrop(std::string property, unsigned value = 0) -> void;
     auto updateBorderHotkeyUsage(unsigned bit, bool checked) -> void;
+    auto updateScaleHotkeyUsage(unsigned bit, bool checked) -> void;
     auto updateBorderSlider() -> void;
     auto setRotation(int degree) -> void;
 

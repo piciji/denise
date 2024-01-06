@@ -999,6 +999,9 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
                 return nullptr;
         }
 
+        if (srcSetting->path.empty())
+            return nullptr;
+
         DiskFinder diskFinder( srcSetting->path );
 
         auto result = diskFinder.findNext( swapPos );

@@ -12,6 +12,9 @@
 Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trademarks of JetBrains s.r.o.
 
 # changelog
+## 2.2.1
+* fixed spanish translation
+
 ## 2.2
 * added D3D11 driver
     * openGL has bad VSYNC/VRR behavior on Windows 11 (replace it with D3D11: Options->Video->Driver)

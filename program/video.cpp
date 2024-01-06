@@ -154,6 +154,10 @@ auto Program::getCropHotkeyDefault() -> unsigned {
     return 1 | 2 | 4 | 8 | 0x80 | 0x100 | 0x200;
 }
 
+auto Program::getScaleHotkeyDefault() -> unsigned {
+    return 1 | 2 | 4 | 8;
+}
+
 auto Program::getCropDefault(Emulator::Interface* emulator, int pos, int direction) -> unsigned {
     if (!dynamic_cast<LIBAMI::Interface*>(emulator))
         return 0;
@@ -257,6 +261,20 @@ auto Program::getCropMessage( Emulator::Interface* emulator, Emulator::Interface
     }
 
     return trans->getA(out) + " (" + std::to_string(int(cropType)) + ")";
+}
+
+auto Program::getScaleMessage(Emulator::Interface* emulator, int aspectMode ) -> std::string {
+    std::string out;
+
+    switch(aspectMode) {
+        case 0: out = "window"; break;
+        default:
+        case 1: out = "CRT TV"; break;
+        case 2: out = "Native"; break;
+        case 3: out = "Native free"; break;
+    }
+
+    return trans->getA(out) + " (" + std::to_string(aspectMode) + ")";
 }
 
 auto Program::updateCrop( Emulator::Interface* emulator ) -> void {

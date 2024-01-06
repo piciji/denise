@@ -35,6 +35,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ToggleShader, "toggle Shader"} );
     hotkeys.push_back( {Hotkey::Id::ToggleBorder, "toggle border"} );
     hotkeys.push_back( {Hotkey::Id::ToggleBorderPrev, "toggle border prev"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleScaling, "toggle scaling"} );
     hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
     hotkeys.push_back( {Hotkey::Id::CropWindow, "crop window"} );
 
@@ -71,6 +72,7 @@ auto InputManager::setCustomHotkeys() -> void {
     customHotkeys.push_back( {Hotkey::Id::DecSlot, "Decslot", true} );
     customHotkeys.push_back( {Hotkey::Id::SwapPortDevices, "swap Ports", true} );
 	customHotkeys.push_back( {Hotkey::Id::Power, "Hard Reset", true} );
+    customHotkeys.push_back( {Hotkey::Id::PowerWithUnplugCart, "Hard Reset + Unplug Cart", true} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::AnyLoad, "load software", true} );
 
@@ -304,6 +306,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             emuThread->lock();
 			program->power(emulator);
 			break;
+
+        case Hotkey::PowerWithUnplugCart:
+            emuThread->lock();
+            program->power(emulator);
+            program->removeExpansion(false);
+            break;
 			
 		case Hotkey::SoftReset:
             emuThread->lock();
@@ -448,6 +456,41 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (view)
                 view->adjustToEmu(true);
             break;
+
+        case Hotkey::Id::ToggleScaling: {
+            auto hotkeyState = settings->get<unsigned>( "scale_hotkey", program->getScaleHotkeyDefault() );
+            int aspectMode = settings->get<int>("aspect_mode", 1, {0, 3});
+            auto aspectModeOld = aspectMode;
+
+            do {
+                aspectMode++;
+                if (aspectMode > 3)
+                    aspectMode = 0;
+
+                if (hotkeyState & (1 << aspectMode))
+                    break;
+
+            } while (aspectMode != aspectModeOld);
+
+            if (aspectMode == aspectModeOld)
+                break;
+
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            if (emuView && emuView->geometryLayout) {
+                switch(aspectMode) {
+                    case 0: emuView->geometryLayout->ratioLayout.control.window.activate(); break;
+                    case 1: emuView->geometryLayout->ratioLayout.control.tv.activate(); break;
+                    case 2: emuView->geometryLayout->ratioLayout.control.native.activate(); break;
+                    case 3: emuView->geometryLayout->ratioLayout.control.nativeFree.activate(); break;
+                }
+            } else {
+                emuThread->lock();
+                settings->set<unsigned>("aspect_mode", aspectMode);
+                program->setVideoDimension(activeEmulator);
+                view->updateViewport();
+            }
+            statusHandler->setMessage( program->getScaleMessage(activeEmulator, aspectMode) );
+        } break;
 
         case Hotkey::Id::ToggleBorder:
         case Hotkey::Id::ToggleBorderPrev: {

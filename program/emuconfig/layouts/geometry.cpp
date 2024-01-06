@@ -98,7 +98,7 @@ cropBottom("px")
     setFont(GUIKIT::Font::system("bold"));
 }
 
-RatioLayout::RatioLayout() {
+RatioLayout::Control::Control() {
     append(label, {0u, 0u}, 10);
     append(window, {0u, 0u}, 5);
     append(tv, {0u, 0u}, 5);
@@ -111,6 +111,23 @@ RatioLayout::RatioLayout() {
     GUIKIT::RadioBox::setGroup( window, tv, native, nativeFree );
 
     setAlignment(0.5);
+
+}
+
+RatioLayout::Hotkey::Hotkey() {
+    append(label, {0u, 0u}, 10);
+
+    for(int i = 0; i < 4; i++) {
+        auto checkBox = new GUIKIT::CheckBox;
+        append( *checkBox, {0u, 0u}, i < 3 ? 10 : 0 );
+        boxes.push_back(checkBox);
+    }
+}
+
+RatioLayout::RatioLayout() {
+    append(control, {~0u, 0u}, 10);
+    append(hotkey, {0u, 0u});
+
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -252,7 +269,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         updateCrop("");
     };
 
-    ratioLayout.window.onActivate = [this]() {
+    ratioLayout.control.window.onActivate = [this]() {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 0);
         program->setVideoDimension(this->emulator);
@@ -260,7 +277,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
-    ratioLayout.tv.onActivate = [this]() {
+    ratioLayout.control.tv.onActivate = [this]() {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 1);
         program->setVideoDimension(this->emulator);
@@ -268,7 +285,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
-    ratioLayout.native.onActivate = [this]() {
+    ratioLayout.control.native.onActivate = [this]() {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 2);
         program->setVideoDimension(this->emulator);
@@ -276,7 +293,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
-    ratioLayout.nativeFree.onActivate = [this]() {
+    ratioLayout.control.nativeFree.onActivate = [this]() {
         emuThread->lock();
         _settings->set<int>("aspect_mode", 3);
         program->setVideoDimension(this->emulator);
@@ -284,7 +301,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
-    ratioLayout.integerScaling.onToggle = [this](bool checked) {
+    ratioLayout.control.integerScaling.onToggle = [this](bool checked) {
         emuThread->lock();
         _settings->set<bool>("integer_scaling", checked);
         program->setVideoDimension(this->emulator);
@@ -292,7 +309,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
-    ratioLayout.cropWindow.onActivate = [this]() {
+    ratioLayout.control.cropWindow.onActivate = [this]() {
         view->adjustToEmu(true);
     };
 
@@ -314,6 +331,12 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
         monitorResolutionLayout.synchronizeLayout();
     };
+
+    for(int i = 0; i < 4; i++) {
+        ratioLayout.hotkey.boxes[i]->onToggle = [this, i](bool checked) {
+            updateScaleHotkeyUsage(i, checked);
+        };
+    }
 
     monitorResolutionLayout.displaySettings.onChange = [this]() {
         emuThread->lock();
@@ -381,6 +404,17 @@ auto GeometryLayout::updateBorderHotkeyUsage(unsigned bit, bool checked) -> void
         state &= ~(1 << bit);
 
     _settings->set<unsigned>( "border_hotkey", state );
+}
+
+auto GeometryLayout::updateScaleHotkeyUsage(unsigned bit, bool checked) -> void {
+    unsigned state = _settings->get<unsigned>( "scale_hotkey", program->getScaleHotkeyDefault() );
+
+    if (checked)
+        state |= 1 << bit;
+    else
+        state &= ~(1 << bit);
+
+    _settings->set<unsigned>( "scale_hotkey", state );
 }
 
 auto GeometryLayout::updateCrop(std::string property, unsigned value) -> void {
@@ -452,17 +486,22 @@ auto GeometryLayout::translate() -> void {
         cropLayout.hotkey.boxes[i]->setText( std::to_string(i) );
     }
 
+    for(int i = 0; i < 4; i++) {
+        ratioLayout.hotkey.boxes[i]->setText( std::to_string(i) );
+    }
+
 	cropLayout.setText( trans->get("crop border") );
 
     ratioLayout.setText( trans->getA("scaling") );
-    ratioLayout.label.setText( trans->getA("aspect ratio", true) );
-    ratioLayout.window.setText( trans->getA("window") );
-    ratioLayout.tv.setText( trans->getA("CRT TV") );
-    ratioLayout.native.setText( trans->getA("Native") );
-    ratioLayout.native.setTooltip( trans->getA("Native tooltip") );
-    ratioLayout.nativeFree.setText( trans->getA("Native free") );
-    ratioLayout.integerScaling.setText( trans->getA("integer_scaling") );
-    ratioLayout.cropWindow.setText( trans->getA("crop window") );
+    ratioLayout.control.label.setText( trans->getA("aspect ratio", true) );
+    ratioLayout.control.window.setText( trans->getA("window") + " (0)" );
+    ratioLayout.control.tv.setText( trans->getA("CRT TV") + " (1)" );
+    ratioLayout.control.native.setText( trans->getA("Native") + " (2)" );
+    ratioLayout.control.native.setTooltip( trans->getA("Native tooltip") );
+    ratioLayout.control.nativeFree.setText( trans->getA("Native free") + " (3)" );
+    ratioLayout.control.integerScaling.setText( trans->getA("integer_scaling") );
+    ratioLayout.control.cropWindow.setText( trans->getA("crop window") );
+    ratioLayout.hotkey.label.setText( trans->getA("switchable by Hotkey", true) );
 
     monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
     monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );
@@ -522,14 +561,19 @@ auto GeometryLayout::loadSettings() -> void {
     }
 
     bool integerScaling = _settings->get<bool>("integer_scaling", false);
-    ratioLayout.integerScaling.setChecked(integerScaling);
+    ratioLayout.control.integerScaling.setChecked(integerScaling);
 
     int aspectMode = _settings->get<int>("aspect_mode", 1, {0, 3});
     switch(aspectMode) {
-        case 0: ratioLayout.window.setChecked(); break;
-        case 1: ratioLayout.tv.setChecked(); break;
-        case 2: ratioLayout.native.setChecked(); break;
-        case 3: ratioLayout.nativeFree.setChecked(); break;
+        case 0: ratioLayout.control.window.setChecked(); break;
+        case 1: ratioLayout.control.tv.setChecked(); break;
+        case 2: ratioLayout.control.native.setChecked(); break;
+        case 3: ratioLayout.control.nativeFree.setChecked(); break;
+    }
+
+    hotkeyState = _settings->get<unsigned>( "scale_hotkey", program->getScaleHotkeyDefault() );
+    for(int i = 0; i < 4; i++) {
+        ratioLayout.hotkey.boxes[i]->setChecked( hotkeyState & ( 1 << i ) );
     }
 
     monitorResolutionLayout.active.setChecked( _settings->get<bool>("fullscreen_setting_active", false) );

@@ -783,6 +783,7 @@ warp first tape file tooltip = When activated, a connected Auto Warp only speeds
 lock aspect ratio = lock aspect ratio
 crop window = crop window
 italian = Italian
+toggle scaling = toggle scaling
 buffer format = Buffer format
 Mipmap = Mip Mapping
 Modulo = Modulo
