@@ -1,6 +1,6 @@
 
-uniform sampler t0S;
-uniform Texture2D <float4> t0;
+uniform sampler SourceS;
+uniform Texture2D <float4> Source;
 
 struct VSInput {
     float2 pos : TEXCOORD0;
@@ -17,11 +17,8 @@ struct UBO {
 };
 uniform UBO ubo;
 
-cbuffer Scene : register(b0) {
-    float ts packoffset(c0);
-    float4 SourceSize packoffset(c1);
-    float4 OutputSize packoffset(c2);
-    float4 OriginalSize packoffset(c3);
+cbuffer Scene {
+    float Seed : packoffset(c0);
 };
 
 cbuffer Push {
@@ -46,10 +43,10 @@ PSInput VS(VSInput input) {
 }
 
 float4 PS(PSInput input) : SV_TARGET {
-    float time = ts / 1000000.0;
+    float _seed = Seed / 1000.0;
     float2 xy = input.tex.xy;
-    float y = random(xy + float2(time * xy.x, time * xy.y)) * lumaNoise;
-    float u = random(xy + float2(time * xy.y, time * xy.x)) * chromaNoise;
-    float v = random(xy - float2(time * xy.x, time * xy.y)) * chromaNoise;
-    return t0.Sample(t0S, xy).xyzw + float4(y, u, v, 0.0);
+    float y = random(xy + float2(_seed * xy.x, _seed * xy.y)) * lumaNoise;
+    float u = random(xy + float2(_seed * xy.y, _seed * xy.x)) * chromaNoise;
+    float v = random(xy - float2(_seed * xy.x, _seed * xy.y)) * chromaNoise;
+    return Source.Sample(SourceS, xy).xyzw + float4(y, u, v, 0.0);
 }

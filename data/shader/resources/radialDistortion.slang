@@ -1,6 +1,6 @@
 
-uniform sampler t0S;
-uniform Texture2D <float4> t0;
+uniform sampler SourceS;
+uniform Texture2D <float4> Source;
 
 struct UBO {
     float4x4 projection;
@@ -17,11 +17,8 @@ struct PSInput {
     float2 tex : TEXCOORD0;
 };
 
-cbuffer Scene : register(b0) {
-    float ts packoffset(c0);
-    float4 SourceSize packoffset(c1);
-    float4 OutputSize packoffset(c2);
-    float4 OriginalSize packoffset(c3);
+cbuffer Scene {
+    float4 SourceSize : packoffset(c0);
 };
 
 cbuffer Push {
@@ -30,7 +27,8 @@ cbuffer Push {
 
 #pragma parameter radial_distortion     "Radial Distortion"     20 0 100 1
 
-float2 radialDistortion( float2 xy ) {
+
+float2 radialDistortion( float2 xy, float intensity ) {
     float2 center = xy - float2(0.5, 0.5);
     float dist = dot(center,center) * intensity;
     return xy + (center * (1.0 + dist) * dist);
@@ -50,9 +48,9 @@ float4 PS(PSInput input) : SV_TARGET {
     float xL = offset / width;
     float xR = (width - offset) / width;
 
-    float Scale = 1.0f / sqrt( distance( radialDistortion( float2(xL * intensity, 0.0) ), radialDistortion( float2(1.0 - intensity + xR * intensity, 0.0) ) ) );
+    float Scale = 1.0f / sqrt( distance( radialDistortion( float2(xL * intensity, 0.0), intensity ), radialDistortion( float2(1.0 - intensity + xR * intensity, 0.0), intensity ) ) );
 
-    float2 xy = ((radialDistortion(input.tex.xy) - float2(0.5, 0.5)) * Scale) + float2(0.5, 0.5);
+    float2 xy = ((radialDistortion(input.tex.xy, intensity) - float2(0.5, 0.5)) * Scale) + float2(0.5, 0.5);
 
-    return t0.Sample(t0S, xy);
+    return Source.Sample(SourceS, xy);
 }

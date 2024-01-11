@@ -27,13 +27,14 @@ struct ShaderPreset {
     enum WrapMode { WRAP_BORDER = 0, WRAP_EDGE, WRAP_REPEAT, WRAP_MIRRORED_REPEAT };
     enum Filter { FILTER_UNSPEC = 0, FILTER_LINEAR, FILTER_NEAREST };
     enum BufferType { BUFFER_UNORM = 0, BUFFER_SRGB, BUFFER_FP };
-    enum ScaleType { SCALE_INPUT = 0, SCALE_ABSOLUTE, SCALE_VIEWPORT };
+    enum ScaleType { SCALE_NONE = -1, SCALE_INPUT = 0, SCALE_ABSOLUTE, SCALE_VIEWPORT };
 
     int feedback;
-    BufferType bufferType; // format of incoming frame data (uses floating point for YUV)
+    bool lumaChroma; // format of incoming frame data (uses floating point for YUV/YIC)
 
     struct Pass {
         std::string src;
+        std::string code;
         Filter filter;
         WrapMode wrap;
         unsigned frameModulo;
@@ -42,6 +43,7 @@ struct ShaderPreset {
         std::string alias;
         bool inUse;
         CropPass crop;
+        std::string error;
 
         ScaleType scaleTypeX;
         ScaleType scaleTypeY;
@@ -74,7 +76,6 @@ struct ShaderPreset {
         float step;
         std::string id;
         std::string desc;
-        bool hide;
 
         auto isDescriptor() -> bool {
             return (minimum == maximum) || ((maximum == step) && (step <= 0.01));
@@ -87,7 +88,7 @@ struct ShaderPreset {
         luts.clear();
         passes.clear();
         feedback = -1;
-        bufferType = BUFFER_UNORM;
+        lumaChroma = false;
     }
 };
 

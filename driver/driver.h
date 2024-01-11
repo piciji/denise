@@ -22,10 +22,7 @@ struct Viewport {
     int y = 0;
 };
 
-struct Video {	
-    enum class ShaderType { GLSL, HLSL, NotSupported };
-    enum class Filter { Nearest = 0, Linear = 1 };
-  
+struct Video {
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
 
@@ -35,13 +32,8 @@ struct Video {
     virtual auto redraw(bool disallowShader = false) -> void {}
     virtual auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {}
     virtual auto clear() -> void {}
-    virtual auto setFilter(Filter filter) -> void {}
-	virtual auto setShader(std::vector<ShaderPass*> passes) -> void {}
+    virtual auto setLinearFilter(bool state) -> void {}
     virtual auto setShader(ShaderPreset* preset) -> void {}
-    virtual auto setShaderAttribute( std::string _program, std::string attribute, float value ) -> void {}
-    virtual auto setShaderAttribute( std::string _program, std::string attribute, int value ) -> void {}
-    virtual auto setShaderAttribute( std::string _program, std::string attribute, float* data, unsigned size) -> void {}
-    virtual auto setShaderAttribute( std::string _program, std::string attribute, uint32_t* data, unsigned _width, unsigned _height) -> void {}
     virtual auto synchronize(bool state) -> void {}
 	virtual auto hasSynchronized() -> bool { return false; }
     virtual auto hardSync(bool state) -> void {}
@@ -74,7 +66,7 @@ struct Video {
     virtual auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {}
     virtual auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void { }
 
-    virtual auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
+    virtual auto shaderSupport() -> bool { return false; }
 	/** direct 3D only */
 	virtual auto hasExclusiveFullscreen() -> bool { return false; }
 	virtual auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {}

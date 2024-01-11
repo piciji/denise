@@ -201,7 +201,7 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
         String::remove(line, {"\t", "\r\n", "\n"});
         String::trim(line);
 
-        if ( line.length() == 0 )
+        if (( line.length() < 2 ) || ((line[0] == '/') && (line[1] == '/')))
             continue;
 
         if ((depth >= 0) && stripCommentsAndDetectIncludes(line)) {
@@ -210,7 +210,6 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
                 String::trim(line);
                 String::removeQuote(line);
                 loadEx( File::resolveRelativePath(path, line), depth + 1, separator);
-                continue;
 
             } else if (String::foundSubStr(line, "#reference")) {
                 String::remove(line, {"#reference"});
@@ -219,8 +218,8 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
                 std::string _path = File::resolveRelativePath(path, line);
                 if (!Vector::find(references, _path))
                     references.push_back(_path);
-                continue;
-            }
+            } // else it is a comment
+            continue;
         }
 
         std::size_t start = line.find_first_of( separator );
@@ -243,7 +242,7 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
 
 auto Settings::stripCommentsAndDetectIncludes(std::string& line) -> bool {
     if (line[0] == '#')
-        return true; // include or reference
+        return true; // include, reference or whole line is a comment
 
     std::size_t startComment = line.find_first_of( '#' );
     std::size_t startLiteral = line.find_first_of( '\"' );
@@ -258,7 +257,7 @@ auto Settings::stripCommentsAndDetectIncludes(std::string& line) -> bool {
         }
     }
     if (startComment != std::string::npos)
-        line.erase(startComment); // it's a comment
+        line.erase(startComment); // it's a comment, but not the whole line
 
     return false;
 }

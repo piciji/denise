@@ -49,16 +49,18 @@ float4 PS(PSInput input) : SV_TARGET {
     float3 sum = float3(0.0, 0.0, 0.0);
 
     int n = bloom_radius << 1;
-    int offset = (int(bloom_radius) - 1) * (111 * 13) + int(bloom_variance - 1.0 * 10.0) * 13;
+    //int offset = (int(bloom_radius) - 1) * (111 * 13) + int(bloom_variance - 1.0 * 10.0) * 13;
+    int offset = (111 * 13) + int(bloom_variance - 1.0 * 10.0) * 13;
+    int offsetY = int(bloom_radius) - 1;
 
     do {
         sum += (t0.Sample(t0S, input.tex + float2(-1.0 * float(n) / OutputSize.x, 0.0) ).rgb
-            + t0.Sample(t0S, input.tex + float2(float(n) / OutputSize.x, 0.0) ).rgb) * bloom.Sample(bloomS, offset + n );
+            + t0.Sample(t0S, input.tex + float2(float(n) / OutputSize.x, 0.0) ).rgb) * bloom.Sample(bloomS, float2(offset + n, offsetY) );
 
         n -= 1;
     } while(n > 0);
 
-    sum += t0.Sample(t0S, input.tex).rgb * bloom.Sample(bloomS, offset + n );
+    sum += t0.Sample(t0S, input.tex).rgb * bloom.Sample(bloomS, float2(offset + n, offsetY) );
 
     return float4( sum.rgb, 1.0 );
 }

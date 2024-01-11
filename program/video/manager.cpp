@@ -324,7 +324,7 @@ auto VideoManager::convertLumaChromaToRGB() -> void {
         adjustGamma(rgb.g);
         adjustGamma(rgb.b);
 		
-		colorTable[c] = 255 << 24 | uclamp8( rgb.r ) << 16 | uclamp8( rgb.g ) << 8 | uclamp8( rgb.b );        
+		colorTable[c] = 255 << 24 | uclamp8( rgb.r ) << 16 | uclamp8( rgb.g ) << 8 | uclamp8( rgb.b );
     }
 }
 
@@ -604,6 +604,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             setData("autoEmu_pal", (float)pal);
             setData("autoEmu_subRegion", emulator->getSubRegion());
             setData("autoEmu_tvGamma", (float)(colorSpectrum || crtRealGamma));
+            setData("autoEmu_lumaChroma", (float)(parser->internalShader && parser->shaderPreset.lumaChroma));
             rebuildShader  = false;
         } else if (cropCoordUpdated) {
             setData("autoEmu_cropTop", (float)cropTop);
@@ -652,7 +653,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
             src -= SHADER_OFFSCREEN_WIDTH;
 
-            if (parser->shaderPreset.bufferType == ShaderPreset::BUFFER_FP) {
+            if (parser->shaderPreset.lumaChroma) {
                 if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : 1), iHold | (shaderDirty << 1) ))
                     return;
 
@@ -754,7 +755,7 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     for (int i = 0; i <= interlace; i++) {
         for (unsigned w = 0; w < width; w++) {
             colorNative = *srcDelay++;
-            *dest++ = colorTableNoGamma[colorNative & mask] | (((colorNative >> metaShift) | 0x80) << 24);
+            *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
         }
         dest += destPitch;
         srcDelay += srcPitch;
@@ -767,7 +768,7 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
             if (field == (h & 1)) {
                 for (unsigned w = 0; w < width; w++) {
                     colorNative = *src++;
-                    *dest++ = colorTableNoGamma[colorNative & mask] | (((colorNative >> metaShift) | 0x80) << 24);
+                    *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
                 }
             } else {
                 for (unsigned w = 0; w < width; w++) {
@@ -778,7 +779,7 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
                     colorI.g = (((color >> 8) & 0xff) * iRate) / 100;
                     colorI.b = (((color >> 0) & 0xff) * iRate) / 100;
 
-                    *dest++ =  (((colorNative >> metaShift) << 24) | 0x80) | colorI.r << 16 | colorI.g << 8 | colorI.b;
+                    *dest++ =  ((colorNative >> metaShift) << 24) | colorI.r << 16 | colorI.g << 8 | colorI.b;
                 }
             }
 
@@ -789,7 +790,7 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
         for (unsigned h = 0; h < height; h++) {
             for (unsigned w = 0; w < width; w++) {
                 colorNative = *src++;
-                *dest++ = colorTableNoGamma[colorNative & mask] | (((colorNative >> metaShift) | 0x80) << 24);
+                *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
             }
             src += srcPitch;
             dest += destPitch;

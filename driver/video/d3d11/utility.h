@@ -5,20 +5,6 @@ namespace DRIVER {
 
 struct D3D11Utility {
 
-    static auto _filter(const std::string& filter) -> int {
-        if(filter == "nearest") return 0;
-        if(filter == "linear" ) return 1;
-        return 1;
-    }
-
-    static auto _wrap(const std::string& wrap) -> int {
-        if(wrap == "border") return 0;
-        if(wrap == "edge"  ) return 1;
-        if(wrap == "repeat") return 2;
-        if(wrap == "mirror") return 3;
-        return 0;
-    }
-
     static auto _format(const std::string& format = "") -> DXGI_FORMAT {
         if(format == "") return DXGI_FORMAT_B8G8R8A8_UNORM;
         if(format == "r32i"   ) return DXGI_FORMAT_R32_SINT;
@@ -34,25 +20,32 @@ struct D3D11Utility {
         return DXGI_FORMAT_B8G8R8A8_UNORM;
     }
 
-    static auto buildProgram(D3D11Symbols& symbols, ID3D11Device* device, D3DProgram& program, ShaderPass& pass) -> bool {
-        program.ident = pass.ident;
-        program.filter = _filter( pass.filter );
-        program.wrap = _wrap( pass.wrap );
-        program.format = _format( pass.format );
+    static auto buildProgram(D3D11Symbols& symbols, D3D_FEATURE_LEVEL& featureLevel, ID3D11Device* device, D3DProgram& program, ShaderPreset::Pass& pass) -> bool {
         program.mipmap = pass.mipmap;
-        program.crop.set( pass.crop );
-        program.relativeWidth =  program.relativeHeight = 0;
-        if (pass.relativeWidth) program.relativeWidth = float(pass.relativeWidth) / 100.0;
-        if (pass.relativeHeight) program.relativeHeight = float(pass.relativeHeight) / 100.0;
-        if (program.crop.active)
-            return true;
+        program.scaleX = pass.scaleX;
+        program.absX = pass.absX;
+        program.scaleTypeX = pass.scaleTypeX;
+        program.scaleY = pass.scaleY;
+        program.absY = pass.absY;
+        program.scaleTypeY = pass.scaleTypeY;
+        program.filter = pass.filter;
+        program.wrap = pass.wrap;
+        program.ident = pass.alias;
+
+        if (pass.bufferType == ShaderPreset::BUFFER_FP)
+            program.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        else if (pass.bufferType == ShaderPreset::BUFFER_SRGB)
+            program.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+        else
+            program.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+
 
         static const D3D11_INPUT_ELEMENT_DESC desc[] = {
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
 
-        if (!createShader(symbols, device, pass.fragment, "PS", "VS", "", desc, countof(desc), &program.shader)) {
+        if (!createShader(symbols, featureLevel, device, pass.code, "PS", "VS", "", desc, countof(desc), &program.shader)) {
             pass.error = program.shader.error;
             return false;
         }
@@ -64,7 +57,46 @@ struct D3D11Utility {
         return true;
     }
 
-    static auto createShader( D3D11Symbols& symbols, ID3D11Device* device, const std::string& data, const std::string psEntry, const std::string vsEntry, const std::string gsEntry,
+    static auto resolveParams(ShaderPreset* preset, std::vector<D3DProgram*>& programs, D3DTexture* orig, float* seed) -> void {
+        for(auto& param : preset->params) {
+            for(auto p : programs) {
+                for(int  c = 0; c < p->shader.constantBufferCount; c++) {
+                    D3DConstantBuffer* cBuffer = &p->shader.constantBuffers[c];
+                    for(auto& v : cBuffer->variables) {
+                        if (v.name == param.id) {
+                            v.value = (void*)&param.value;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        D3DTexture* texture = orig;
+        for(auto p : programs) {
+            for (unsigned int i = 0; i < p->shader.constantBufferCount; i++) {
+                auto& cBuffer = p->shader.constantBuffers[i];
+
+                if (cBuffer.name != "Scene")
+                    continue;
+
+                for(auto& v : cBuffer.variables) {
+                    if (v.name == "SourceSize") {
+                        v.value = (void*)&texture->size;
+                    } else if (v.name == "OutputSize") {
+                        v.value = (void*)&p->renderTarget.size;
+                    } else if (v.name == "OriginalSize") {
+                        v.value = (void*)&orig->size;
+                    } else if (v.name == "Seed") {
+                        v.value = (void*)&seed;
+                    }
+                }
+            }
+            texture = &p->renderTarget;
+        }
+    }
+
+    static auto createShader( D3D11Symbols& symbols, D3D_FEATURE_LEVEL& featureLevel, ID3D11Device* device, const std::string& data, const std::string psEntry, const std::string vsEntry, const std::string gsEntry,
                        const D3D11_INPUT_ELEMENT_DESC* inputElementDescs, unsigned numElements, D3DShader* out) -> bool {
 
         ID3DBlob* error = nullptr;
@@ -74,13 +106,15 @@ struct D3D11Utility {
         ID3DBlob* vsCode = nullptr;
         ID3DBlob* gsCode = nullptr;
 
-        if (!psEntry.empty() && FAILED(symbols.D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, psEntry.c_str(), "ps_4_0", 0, 0, &psCode, &error)))
+        bool level5Support = featureLevel >= D3D_FEATURE_LEVEL_11_0;
+
+        if (!psEntry.empty() && FAILED(symbols.D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, psEntry.c_str(), level5Support ? "ps_5_0" : "ps_4_0", 0, 0, &psCode, &error)))
             msg = (const char*)error->GetBufferPointer();
 
-        if (!vsEntry.empty() && FAILED(symbols.D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, vsEntry.c_str(), "vs_4_0", 0, 0, &vsCode, &error)))
+        if (!vsEntry.empty() && FAILED(symbols.D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, vsEntry.c_str(), level5Support ? "vs_5_0" : "vs_4_0", 0, 0, &vsCode, &error)))
             msg = (const char*)error->GetBufferPointer();
 
-        if (!gsEntry.empty() && FAILED(symbols.D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, gsEntry.c_str(), "gs_4_0", 0, 0, &gsCode, &error)))
+        if (!gsEntry.empty() && FAILED(symbols.D3DCompile(data.c_str(), data.size(), nullptr, nullptr, nullptr, gsEntry.c_str(), level5Support ? "gs_5_0" : "gs_4_0", 0, 0, &gsCode, &error)))
             msg = (const char*)error->GetBufferPointer();
 
         if (psCode) {
@@ -133,26 +167,19 @@ struct D3D11Utility {
             switch (resourceDesc.Type) {
                 case D3D_SIT_TEXTURE: {
                     std::string ident = resourceDesc.Name;
-                    if (ident == "t0") {
-                        prg.bindTexture.index = resourceDesc.BindPoint;
-                        break;
-                    } if (ident == "t1") {
-                        prg.bindPrevTexture.index = resourceDesc.BindPoint;
-                        break;
-                    }
-
-                    for(auto& tex : prg.textures) {
-                        if (tex.attribute == ident) {
-                            tex.bind.index = resourceDesc.BindPoint;
+                    for(auto& bind : prg.bindTextures) {
+                        if (bind.ident == ident) {
+                            bind.index = resourceDesc.BindPoint;
                             found = true;
                             break;
                         }
                     }
                     if (!found) {
-                        D3DTexture texture;
-                        texture.attribute = ident;
-                        texture.bind.index = resourceDesc.BindPoint;
-                        prg.textures.push_back(texture);
+                        D3DTextureBind bind;
+                        bind.ident = ident;
+                        bind.index = resourceDesc.BindPoint;
+                        bind.texture = nullptr;
+                        prg.bindTextures.push_back(bind);
                     }
                 } break;
 
@@ -160,26 +187,19 @@ struct D3D11Utility {
                     std::string ident = resourceDesc.Name;
                     ident.pop_back(); // remove "S"
 
-                    if (ident == "t0") {
-                        prg.bindTexture.indexSampler = resourceDesc.BindPoint;
-                        break;
-                    } if (ident == "t1") {
-                        prg.bindPrevTexture.indexSampler = resourceDesc.BindPoint;
-                        break;
-                    }
-
-                    for(auto& tex : prg.textures) {
-                        if (tex.attribute == ident) {
-                            tex.bind.indexSampler = resourceDesc.BindPoint;
+                    for(auto& bind : prg.bindTextures) {
+                        if (bind.ident == ident) {
+                            bind.indexSampler = resourceDesc.BindPoint;
                             found = true;
                             break;
                         }
                     }
                     if (!found) {
-                        D3DTexture texture;
-                        texture.attribute = ident;
-                        texture.bind.indexSampler = resourceDesc.BindPoint;
-                        prg.textures.push_back(texture);
+                        D3DTextureBind bind;
+                        bind.ident = ident;
+                        bind.indexSampler = resourceDesc.BindPoint;
+                        bind.texture = nullptr;
+                        prg.bindTextures.push_back(bind);
                     }
                 } break;
             }
@@ -201,17 +221,14 @@ struct D3D11Utility {
             shader.constantBuffers[i].name = bufferDesc.Name;
 
             D3D11_BUFFER_DESC newBuffDesc;
-            newBuffDesc.Usage = D3D11_USAGE_DEFAULT;
+            newBuffDesc.Usage = D3D11_USAGE_DYNAMIC;
             newBuffDesc.ByteWidth = bufferDesc.Size;
             newBuffDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-            newBuffDesc.CPUAccessFlags = 0;
+            newBuffDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
             newBuffDesc.MiscFlags = 0;
             newBuffDesc.StructureByteStride = 0;
             device->CreateBuffer(&newBuffDesc, 0, &shader.constantBuffers[i].constantBuffer);
-
             shader.constantBuffers[i].size = bufferDesc.Size;
-            shader.constantBuffers[i].localBuffer = new unsigned char[bufferDesc.Size];
-            ZeroMemory(shader.constantBuffers[i].localBuffer, bufferDesc.Size);
 
             for (int v = 0; v < bufferDesc.Variables; v++) {
                 ID3D11ShaderReflectionVariable* var = cb->GetVariableByIndex(v);
@@ -220,7 +237,6 @@ struct D3D11Utility {
                 var->GetDesc(&varDesc);
 
                 D3DShaderVariable varStruct;
-                varStruct.constantBufferIndex = i;
                 varStruct.byteOffset = varDesc.StartOffset;
                 varStruct.size = varDesc.Size;
                 varStruct.name = std::string(varDesc.Name);
@@ -230,59 +246,6 @@ struct D3D11Utility {
 
         dxRelease( shader.reflPS )
         return true;
-    }
-
-    static auto findConstantVar( D3DShader& shader, std::string name, int size ) -> D3DShaderVariable* {
-        for (unsigned int i = 0; i < shader.constantBufferCount; i++) {
-            auto& cBuffer = shader.constantBuffers[i];
-            for(auto& var : cBuffer.variables) {
-                if (var.name == name && var.size == size) {
-                    return &var;
-                }
-            }
-        }
-        return nullptr;
-    }
-
-    static auto setConstantInt(D3DShader& shader, std::string name, int data) -> bool {
-        return setConstantData(shader, name, (void*)(&data), sizeof(int));
-    }
-
-    static auto setConstantFloat(D3DShader& shader, std::string name, float data) -> bool {
-        return setConstantData(shader, name, (void*)(&data), sizeof(float));
-    }
-
-    static auto setConstantFloat4(D3DShader& shader, std::string name, const float data[4]) -> bool {
-        return setConstantData(shader, name, (void*)(data), sizeof(float) * 4);
-    }
-
-    static auto setConstantData(D3DShader& shader, std::string name, const void* data, unsigned int size) -> bool {
-        D3DShaderVariable* var = findConstantVar(shader, name, size);
-        if (!var)
-            return false;
-
-        std::memcpy(shader.constantBuffers[var->constantBufferIndex].localBuffer + var->byteOffset, data, size);
-
-        return true;
-    }
-
-    static auto updateConstantData(ID3D11DeviceContext* context, D3DShader& shader, const std::string& name) -> void {
-        for (unsigned int i = 0; i < shader.constantBufferCount; i++) {
-            auto& cBuffer = shader.constantBuffers[i];
-            if (cBuffer.name == name) {
-                context->UpdateSubresource( cBuffer.constantBuffer, 0, 0, cBuffer.localBuffer, 0, 0);
-                break;
-            }
-        }
-    }
-
-    static auto findRessource( D3DProgram& prg, std::string& attribute ) -> D3DTexture* {
-        for (auto& texture : prg.textures) {
-            if (texture.attribute == attribute) {
-                return &texture;
-            }
-        }
-        return nullptr;
     }
 
     static auto releaseShader(D3DShader& shader) -> void {
@@ -295,7 +258,6 @@ struct D3D11Utility {
         if (shader.constantBuffers) {
             for (unsigned int i = 0; i < shader.constantBufferCount; i++) {
                 dxRelease(shader.constantBuffers[i].constantBuffer)
-                delete[] shader.constantBuffers[i].localBuffer;
             }
             delete[] shader.constantBuffers;
         }

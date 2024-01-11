@@ -28,7 +28,7 @@ auto OpenGL::shader(std::vector<ShaderPass*> passes) -> void {
     } else {
         primaryPass = new ShaderPass;
         primaryPass->primary = true;
-        primaryPass->filter = settings.filter == Video::Filter::Linear ? "linear" : "nearest";
+        primaryPass->filter = settings.linearFilter ? "linear" : "nearest";
         OpenGLProgram::bind( *primaryPass );        
         delete primaryPass;
     }

@@ -1,6 +1,6 @@
 
-uniform sampler t0S;
-uniform Texture2D <float4> t0;
+uniform sampler SourceS;
+uniform Texture2D <float4> Source;
 uniform Texture2D <float> bandwidth;
 uniform sampler bandwidthS;
 
@@ -19,11 +19,8 @@ struct UBO {
 };
 uniform UBO ubo;
 
-cbuffer Scene : register(b0) {
-    float ts packoffset(c0);
-    float4 SourceSize packoffset(c1);
-    float4 OutputSize packoffset(c2);
-    float4 OriginalSize packoffset(c3);
+cbuffer Scene {
+    float4 OutputSize : packoffset(c0);
 };
 
 cbuffer Push {
@@ -42,14 +39,19 @@ PSInput VS(VSInput input) {
 }
 
 float4 PS(PSInput input) : SV_TARGET {
-    int offset = int(autoEmu_subRegion) * 22 * 75 + int(firTaps) * 75;
-    int rounds = bandwidth.Sample(bandwidthS, offset + 24).x
-    float3 yuv = t0.Sample(t0S, input.tex).xyz * float3(bandwidth.Sample(bandwidthS, offset).x,bandwidth.Sample(bandwidthS, offset + 25).x,bandwidth.Sample(bandwidthS, offset + 50).x);
+    int offset = int(firTaps) * 75;
+    int offsetY = int(autoEmu_subRegion) * int(firTaps);
+
+    int rounds = bandwidth.Sample(bandwidthS, float2(offset + 24, offsetY) ).x
+    float3 yuv = t0.Sample(t0S, input.tex).xyz * float3(bandwidth.Sample(bandwidthS, float2(offset, offsetY)).x,
+            bandwidth.Sample(bandwidthS, float2(offset + 25, offsetY)).x,bandwidth.Sample(bandwidthS, float2(offset + 50, offsetY)).x);
 
     int n = 1;
     do {
         yuv += (t0.Sample(t0S, input.tex + float2(-1.0 * float(n)) / OutputSize.x, 0.0) ).xyz + t0.Sample(t0S, input.tex + float2(float(n) / OutputSize.x, 0.0) ).xyz) *
-            float3(bandwidth.Sample(bandwidthS, offset + n).x,bandwidth.Sample(bandwidthS, offset + n + 25).x,bandwidth.Sample(bandwidthS, offset + n + 50).x);
+            float3(bandwidth.Sample(bandwidthS, float2(offset + n, offsetY)).x,
+            bandwidth.Sample(bandwidthS, float2(offset + n + 25, offsetY)).x,
+            bandwidth.Sample(bandwidthS, float2(offset + n + 50, offsetY)).x);
 
         n += 1;
     } while(n <= rounds);

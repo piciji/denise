@@ -50,7 +50,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
     struct {
         bool synchronize;
-        Filter filter = Video::Filter::Linear;
+        bool linearFilter = true;
         HWND handle;
         HWND parent;
         bool hintExclusiveFullscreen = false;
@@ -116,10 +116,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             if (!init())
                 return;
         }
-
-        flags.filter = D3DTEXF_POINT;
-        if (settings.filter == Video::Filter::Nearest) flags.filter = D3DTEXF_POINT;
-        else if (settings.filter == Video::Filter::Linear) flags.filter = D3DTEXF_LINEAR;
+        flags.filter = settings.linearFilter ? D3DTEXF_LINEAR : D3DTEXF_POINT;
 
 		lpD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP );
 		lpD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP );
@@ -142,7 +139,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         vertex[0].rhw = vertex[1].rhw = 1.0;
         vertex[2].rhw = vertex[3].rhw = 1.0;
 
-        if (settings.filter == Video::Filter::Linear) {
+        if (settings.linearFilter) {
             vertex[0].u = vertex[2].u = 0.0f;
             vertex[1].u = vertex[3].u = ((float) (src_w) - 0.5f) / (float) tex_w;
             vertex[0].v = vertex[1].v = 0.0f;
@@ -736,11 +733,11 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
     auto hasSynchronized() -> bool { return settings.synchronize; }
 
-    auto setFilter(Filter filter) -> void {
-        if (filter == settings.filter)
+    auto setLinearFilter(bool state) -> void {
+        if (state == settings.linearFilter)
             return;
         wait();
-        settings.filter = filter;
+        settings.linearFilter = state;
         updateFilter();
     }
 
@@ -806,8 +803,6 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if (settings.threaded)
             noteMutex.unlock();
     }
-
-    auto shaderFormat() -> ShaderType { return ShaderType::NotSupported; }
 
     auto lockResize() -> void {
         resizeMutex.lock();
@@ -924,7 +919,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         tempBuffer = nullptr;
 
         lost = true;		
-        settings.filter = Filter::Nearest;
+        settings.linearFilter = true;
         settings.synchronize = false;
         settings.handle = nullptr;
         settings.hintExclusiveFullscreen = false;

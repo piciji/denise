@@ -193,8 +193,8 @@ struct GLX : public Video, OpenGL, RenderThread {
     }
 
     auto hasThreaded() -> bool { return settings.threaded; }
-    
-    auto shaderFormat() -> ShaderType { return ShaderType::GLSL; }
+
+    auto shaderSupport() -> bool { return true; }
     
     auto setShader(std::vector<ShaderPass*> passes) -> void {
         wait();
@@ -242,16 +242,16 @@ struct GLX : public Video, OpenGL, RenderThread {
         clearCurrent();
         resizeMutex.unlock();
     }
-	
-    auto setFilter(Filter filter) -> void {
-        if (settings.filter == filter)
+
+    auto setLinearFilter(bool state) -> void {
+        if (state == settings.linearFilter)
             return;
-        settings.filter = filter;
         wait();
+        settings.linearFilter = state;
         resizeMutex.lock();
      //   makeCurrent();
 
-        OpenGL::filter = filter == Filter::Linear ? GL_LINEAR : GL_NEAREST;
+        OpenGL::filter = state ? GL_LINEAR : GL_NEAREST;
       //  clearCurrent();
         resizeMutex.unlock();
     }

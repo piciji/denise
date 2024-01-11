@@ -1,12 +1,9 @@
 
-uniform sampler t0S;
-uniform Texture2D <float4> t0;
+uniform sampler SourceS;
+uniform Texture2D <float4> Source;
 
-cbuffer Scene : register(b0) {
-    float ts packoffset(c0);
-    float4 SourceSize packoffset(c1);
-    float4 OutputSize packoffset(c2);
-    float4 OriginalSize packoffset(c3);
+cbuffer Scene {
+    float4 SourceSize : packoffset(c0);
 };
 
 cbuffer Push {
@@ -41,9 +38,9 @@ PSInput VS(VSInput input) {
 }
 
 float4 PS(PSInput input) : SV_TARGET {
-    float4 color = t0.Sample(t0S, input.tex);
+    float4 color = Source.Sample(SourceS, input.tex);
     float2 xy = input.tex.xy;
-    float ySrc = t0.Sample(t0S, xy + float2( -3.0 / float(SourceSize.x), 0.0)).x;
+    float ySrc = Source.Sample(SourceS, xy + float2( -3.0 / float(SourceSize.x), 0.0)).x;
     float y = ySrc;
     float yTarget;
     float yDiff = 0.0;
@@ -56,7 +53,7 @@ float4 PS(PSInput input) : SV_TARGET {
     if (_lumaRise > 0.0) _lumaRise = 1.0 / _lumaRise;
     if (_lumaFall > 0.0) _lumaFall = 1.0 / _lumaFall;
 
-    yTarget = t0.Sample(t0S, xy + float2( -2.0 / float(SourceSize.x), 0.0)).x;
+    yTarget = Source.Sample(SourceS, xy + float2( -2.0 / float(SourceSize.x), 0.0)).x;
     // check for a change of luma between 2 adjacent pixel
     yChanged = ySrc == yTarget ? 0 : 1;
     ySrc = yTarget;
@@ -68,7 +65,7 @@ float4 PS(PSInput input) : SV_TARGET {
     y = yDirection == 1 ? min(y + (yDiff * _lumaRise), yTarget) :
         (yDirection == -1 ? max(y + (yDiff * _lumaFall), yTarget) : y);
 
-    yTarget = t0.Sample(t0S, xy + float2( -1.0 / float(SourceSize.x), 0.0)).x;
+    yTarget = Source.Sample(SourceS, xy + float2( -1.0 / float(SourceSize.x), 0.0)).x;
     // check for a change of luma between 2 adjacent pixel
     yChanged = ySrc == yTarget ? 0 : 1;
     ySrc = yTarget;
@@ -80,7 +77,7 @@ float4 PS(PSInput input) : SV_TARGET {
     y = yDirection == 1 ? min(y + (yDiff * _lumaRise), yTarget) :
         (yDirection == -1 ? max(y + (yDiff * _lumaFall), yTarget) : y);
 
-    yTarget = t0.Sample(t0S, xy).x;
+    yTarget = Source.Sample(SourceS, xy).x;
     // check for a change of luma between 2 adjacent pixel
     yChanged = ySrc == yTarget ? 0 : 1;
     ySrc = yTarget;

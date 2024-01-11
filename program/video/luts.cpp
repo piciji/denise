@@ -5,38 +5,10 @@
 
 std::vector<ShaderPreset::Lut> ShaderParser::luts;
 
-auto ShaderParser::buildLutPhaseShift() -> void {
-    unsigned capacity = 181 * 4 * 2;
-    float rotU;
-    float rotV;
-    uint8_t* phaseLUT = new uint8_t[ capacity ];
-    float* pF = (float*)phaseLUT;
-
-    for(int i = 0; i < 181; i++ ) {
-        float phaseError = (float(i) / 2.0) - 45.0;
-        phaseError *= M_PI / 180.0;
-
-        rotU = std::cos(phaseError);
-        rotV = std::sin(phaseError);
-
-        pF[i] = rotU;
-        pF[i + 181] = rotV;
-    }
-
-    ShaderPreset::Lut lut;
-    lut.data = phaseLUT;
-    lut.width = capacity;
-    lut.height = 1;
-    lut.mipmap = false;
-    lut.filter = ShaderPreset::FILTER_NEAREST;
-    lut.wrap = ShaderPreset::WRAP_EDGE;
-    lut.id = "lutPhaseShift";
-    luts.push_back(lut);
-}
-
 auto ShaderParser::buildLutBloom() -> void {
-    unsigned capacity = 6 * 111 * 13 * 4;
-    uint8_t* bloomLUT = new uint8_t[ capacity ];
+    unsigned width = 111 * 13 * 4;
+    unsigned height = 6;
+    uint8_t* bloomLUT = new uint8_t[ width * height ];
     float* bF = (float*)bloomLUT;
 
     for(int r = 0; r < 6; r++) {
@@ -51,8 +23,8 @@ auto ShaderParser::buildLutBloom() -> void {
 
     ShaderPreset::Lut lut;
     lut.data = bloomLUT;
-    lut.width = capacity;
-    lut.height = 1;
+    lut.width = width;
+    lut.height = height;
     lut.mipmap = false;
     lut.filter = ShaderPreset::FILTER_NEAREST;
     lut.wrap = ShaderPreset::WRAP_EDGE;
@@ -62,8 +34,9 @@ auto ShaderParser::buildLutBloom() -> void {
 
 auto ShaderParser::buildLutBandwidth() -> void {
     typedef Emulator::Interface::SubRegion SubRegion;
-    unsigned capacity = 4 * 22 * 25 * 3 * 4;
-    uint8_t* bwLUT = new uint8_t[ capacity ];
+    unsigned width = 25 * 3 * 4;
+    unsigned height = 4 * 22;
+    uint8_t* bwLUT = new uint8_t[ width * height ];
     float* bwF = (float*)bwLUT;
     double videoBandWith;
     double subCarrier;
@@ -147,8 +120,8 @@ auto ShaderParser::buildLutBandwidth() -> void {
 
     ShaderPreset::Lut lut;
     lut.data = bwLUT;
-    lut.width = capacity;
-    lut.height = 1;
+    lut.width = width;
+    lut.height = height;
     lut.mipmap = false;
     lut.filter = ShaderPreset::FILTER_NEAREST;
     lut.wrap = ShaderPreset::WRAP_EDGE;

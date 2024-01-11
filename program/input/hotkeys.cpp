@@ -385,7 +385,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             VideoManager::setSynchronize();
         } break;
         case Hotkey::Id::ToggleShader:
-            if(videoDriver->shaderFormat() == DRIVER::Video::ShaderType::NotSupported)
+            if(!videoDriver->shaderSupport())
                 break;
         case Hotkey::Id::ToggleSCVideo: {
             if (!activeEmulator)

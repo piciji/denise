@@ -378,7 +378,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 	
 	layBase.view.option.linearInterpolation.onToggle = [this](bool checked) {
-		_settings->set<unsigned>("video_filter", checked ? 1 : 0 );
+		_settings->set<bool>("video_filter", checked );
         emuThread->lock();
         program->setVideoFilter();
         emuThread->unlock();
@@ -850,8 +850,8 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool expand) -> void {
     for(unsigned i = 0; i < preset->params.size(); i++) {
         auto& param = preset->params[i];
 
-        if (GUIKIT::String::findString(param.id, "autoEmu_"))
-            continue;
+        //if (GUIKIT::String::findString(param.id, "autoEmu_"))
+          //  continue;
 
         offsets.push_back(i);
         isDescriptor = param.isDescriptor();
@@ -1174,7 +1174,7 @@ auto VideoLayout::updateVisibillity() -> void {
     bool crtCpuChecked = layBase.view.mode.svideoCpu.checked();
     bool crtGpuChecked = layBase.view.mode.svideoGpu.checked();
 
-    if (videoDriver->shaderFormat() == DRIVER::Video::ShaderType::NotSupported) {
+    if (!videoDriver->shaderSupport()) {
         if(crtGpuChecked) {
             layBase.view.mode.rgb.setChecked();
             crtGpuChecked = false;
@@ -1340,7 +1340,7 @@ auto VideoLayout::loadSettings(bool init) -> void {
 
     updatePresets(!init, true);
 
-    layBase.view.option.linearInterpolation.setChecked( _settings->get<unsigned>("video_filter", 1u, {0u, 1u}) );
+    layBase.view.option.linearInterpolation.setChecked( _settings->get<bool>("video_filter", true) );
 }
 
 auto VideoLayout::clearBrokenPaths() -> void {

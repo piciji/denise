@@ -667,7 +667,7 @@ auto View::setConnectors() -> void {
 }
 
 auto View::updateShader() -> void {
-    bool visible = videoDriver && (videoDriver->shaderFormat() != DRIVER::Video::ShaderType::NotSupported);
+    bool visible = videoDriver && videoDriver->shaderSupport();
 
     for(auto& sM : sysMenus) {
         removeMenuTree( sM.shaderMenu );

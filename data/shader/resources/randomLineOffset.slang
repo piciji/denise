@@ -1,6 +1,6 @@
 
-uniform sampler t0S;
-uniform Texture2D <float4> t0;
+uniform sampler SourceS;
+uniform Texture2D <float4> Source;
 
 struct VSInput {
     float2 pos : TEXCOORD0;
@@ -17,15 +17,13 @@ struct UBO {
 };
 uniform UBO ubo;
 
-cbuffer Scene : register(b0) {
-    float ts packoffset(c0);
-    float4 SourceSize packoffset(c1);
-    float4 OutputSize packoffset(c2);
-    float4 OriginalSize packoffset(c3);
+cbuffer Scene {
+    float Seed : packoffset(c0);
+    float4 OutputSize : packoffset(c1);
 };
 
 cbuffer Push {
-    float lineFactor;
+    float randomLineOffset;
 };
 
 #pragma parameter randomLineOffset      "Random Line Offset"    0 0 10.0 0.01
@@ -44,13 +42,13 @@ PSInput VS(VSInput input) {
 }
 
 float4 PS(PSInput input) : SV_TARGET {
-    float time = ts / 1000000.0;
+    float _seed = Seed / 1000.0;
     float lineFactor = pow(randomLineOffset, 2.0) / 10000.0;
     float2 xy = input.tex.xy;
-    float offset = random(float2(time * xy.y, xy.y + (time * xy.y))) * lineFactor;
+    float offset = random(float2(_seed * xy.y, xy.y + (_seed * xy.y))) * lineFactor;
     float x0 = xy.x + offset;
-    float x1 = x0 + targetSize.z;
-    float4 tex0 = t0.Sample(t0S, float2( frac(x0), xy.y )).xyzw;
-    float4 tex1 = t0.Sample(t0S, float2( frac(x1), xy.y )).xyzw;
+    float x1 = x0 + OutputSize.z;
+    float4 tex0 = Source.Sample(SourceS, float2( frac(x0), xy.y )).xyzw;
+    float4 tex1 = Source.Sample(SourceS, float2( frac(x1), xy.y )).xyzw;
     return lerp(tex0, tex1, frac(x0 * OutputSize.x));
 }

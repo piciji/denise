@@ -1,8 +1,8 @@
 
 uniform sampler t0S;
 uniform Texture2D <float4> t0;
-uniform sampler t1S;
-uniform Texture2D <float4> t1;
+uniform sampler Bloom-HorizontalS;
+uniform Texture2D <float4> Bloom-Horizontal;
 uniform sampler bloomS;
 uniform Texture2D <float> bloom;
 
@@ -52,16 +52,18 @@ float4 PS(PSInput input) : SV_TARGET {
     float3 sum = float3(0.0, 0.0, 0.0);
 
     int n = bloom_radius << 1;
-    int offset = (int(bloom_radius) - 1) * (111 * 13) + int(bloom_variance - 1.0 * 10.0) * 13;
+    //int offset = (int(bloom_radius) - 1) * (111 * 13) + int(bloom_variance - 1.0 * 10.0) * 13;
+    int offset = int(bloom_variance - 1.0 * 10.0) * 13;
+    int offsetY = int(bloom_radius) - 1;
 
     do {
         sum += (t0.Sample(t0S, input.tex + float2(0.0, -1.0 * float(n) / OutputSize.y) ).rgb
-            + t0.Sample(t0S, input.tex + float2(0.0, float(n) / OutputSize.y) ).rgb) * bloom.Sample(bloomS, offset + n );
+            + t0.Sample(t0S, input.tex + float2(0.0, float(n) / OutputSize.y) ).rgb) * bloom.Sample(bloomS, float2(offset + n, offsetY) );
 
         n -= 1;
     } while(n > 0);
 
-    sum += t0.Sample(t0S, input.tex).rgb * bloom.Sample(bloomS, offset + n );
+    sum += t0.Sample(t0S, input.tex).rgb * bloom.Sample(bloomS, float2(offset + n, offsetY) );
 
-    return float4(clamp(t1.Sample(t1S, input.tex).rgb + ( pow(sum.rgb, float3(bloom_weight, bloom_weight, bloom_weight)) * (bloom_glow / 100.0) ), 0.0, 1.0), 1.0);
+    return float4(clamp(Bloom-Horizontal.Sample(Bloom-HorizontalS, input.tex).rgb + ( pow(sum.rgb, float3(bloom_weight, bloom_weight, bloom_weight)) * (bloom_glow / 100.0) ), 0.0, 1.0), 1.0);
 }

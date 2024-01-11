@@ -104,7 +104,7 @@ struct OpenGL : OpenGLProgram {
         bool synchronize = false;
         bool hardSync = false;
         bool threaded = false;
-        Video::Filter filter = Video::Filter::Linear;
+        bool linearFilter = true;
         std::vector<ShaderPass*> passes = {};
 
         bool vrr = false;

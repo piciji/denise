@@ -1,17 +1,14 @@
 
-uniform sampler t0S;
-uniform Texture2D <float4> t0;
+uniform sampler SourceS;
+uniform Texture2D <float4> Source;
 
 struct UBO {
     float4x4 projection;
 };
 uniform UBO ubo;
 
-cbuffer Scene : register(b0) {
-    float ts packoffset(c0);
-    float4 SourceSize packoffset(c1);
-    float4 OutputSize packoffset(c2);
-    float4 OriginalSize packoffset(c3);
+cbuffer Scene {
+    float4 SourceSize : packoffset(c0);
 };
 
 cbuffer Push {
@@ -59,10 +56,10 @@ PSInput VS(VSInput input) {
 }
 
 float4 PS(PSInput input) : SV_TARGET {
-    float4 color = t0.Sample(t0S, input.tex);
+    float4 color = Source.Sample(SourceS, input.tex);
     float AEC = glitch_aec * glitch_aec * 0.0001;
     float BA = glitch_ba * glitch_ba * 0.0001;
-    float PHI = glitch_phi * glitch_phi * 0.0001;
+    float PHI0 = glitch_phi * glitch_phi * 0.0001;
     float CAS = glitch_cas * glitch_cas * 0.0001;
     float RAS = glitch_ras * glitch_ras * 0.0001;
 

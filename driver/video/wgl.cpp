@@ -53,7 +53,7 @@ struct WGL : Video, OpenGL, RenderThread {
     
     auto hasSynchronized() -> bool { return settings.synchronize; }
     
-    auto shaderFormat() -> ShaderType { return ShaderType::GLSL; }
+    auto shaderSupport() -> bool { return true; }
     
     auto hardSync(bool state) -> void {
         wait();
@@ -112,14 +112,14 @@ struct WGL : Video, OpenGL, RenderThread {
         OpenGL::shaderAttribute( _program, attribute, data, _width, _height );
         clearCurrent();
     }
-    
-	auto setFilter(Filter filter) -> void {
-        if (settings.filter == filter)
+
+    auto setLinearFilter(bool state) -> void {
+        if (state == settings.linearFilter)
             return;
-        settings.filter = filter;
         wait();
+        settings.linearFilter = state;
      //   makeCurrent();
-		OpenGL::filter = filter == Filter::Linear ? GL_LINEAR : GL_NEAREST;
+		OpenGL::filter = state ? GL_LINEAR : GL_NEAREST;
 //        clearCurrent();
 	}
 

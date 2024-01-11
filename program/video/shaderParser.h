@@ -63,9 +63,10 @@ struct ShaderParser {
 
     auto clear() -> void;
 
+    auto loadShader(ShaderPreset::Pass& pass) -> bool;
+
     static auto buildLutBloom() -> void;
     static auto buildLutMask() -> void;
-    static auto buildLutPhaseShift() -> void;
     static auto buildLutBandwidth() -> void;
 };
 

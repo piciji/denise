@@ -47,7 +47,7 @@ auto View::renderPlaceholder() -> bool {
     if (GUIKIT::Application::isQuit)
 		return false;
 
-    videoDriver->setFilter( DRIVER::Video::Filter::Linear );
+    videoDriver->setLinearFilter( true );
 
 	unsigned gpu_pitch;
     unsigned* gpu_data = 0;

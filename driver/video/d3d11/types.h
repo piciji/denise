@@ -2,6 +2,16 @@
 #pragma once
 
 namespace DRIVER {
+    struct Matrix4x4 {
+        float data[16];
+    };
+
+    struct Float4 {
+        float x;
+        float y;
+        float z;
+        float w;
+    };
 
     struct SwapChain {
         UINT flags = 0;
@@ -18,8 +28,8 @@ namespace DRIVER {
     struct D3DShaderVariable {
         unsigned int byteOffset;
         unsigned int size;
-        unsigned int constantBufferIndex;
         std::string name;
+        void* value;
     };
 
     struct D3DConstantBuffer {
@@ -27,24 +37,27 @@ namespace DRIVER {
         unsigned int size;
         unsigned int bindIndex;
         ID3D11Buffer* constantBuffer;
-        unsigned char* localBuffer;
         std::vector<D3DShaderVariable> variables;
     };
 
-    struct D3DTextureBind {
-        int index = -1;
-        int indexSampler = -1;
-    };
-
     struct D3DTexture {
-        std::string attribute;
+        std::string ident;
         D3D11_TEXTURE2D_DESC desc;
         ID3D11Texture2D* ptr = nullptr;
         ID3D11Texture2D* staging = nullptr;
         ID3D11ShaderResourceView* view = nullptr;
         ID3D11RenderTargetView* rtView = nullptr;
-        ID3D11SamplerState* sampler = nullptr;
-        D3DTextureBind bind;
+        Float4 size;
+    };
+
+    struct D3DTextureBind {
+        std::string ident;
+        int index = -1;
+        int indexSampler = -1;
+        D3DTexture* texture = nullptr;
+        ID3D11SamplerState* sampler;
+        ShaderPreset::Filter filter;
+        ShaderPreset::WrapMode wrap;
     };
 
     struct D3DShader {
@@ -61,18 +74,20 @@ namespace DRIVER {
 
     struct D3DProgram {
         D3DShader shader;
-        CropPass crop;
         std::string ident;
-        int filter;
-        int wrap;
         DXGI_FORMAT format;
-        float relativeWidth = 0;
-        float relativeHeight = 0;
         bool mipmap = false;
-        std::vector<D3DTexture> textures;
-        D3DTextureBind bindTexture;
-        D3DTextureBind bindPrevTexture;
+        std::vector<D3DTextureBind> bindTextures;
         D3DTexture renderTarget;
+
+        ShaderPreset::ScaleType scaleTypeX;
+        ShaderPreset::ScaleType scaleTypeY;
+        float scaleX;
+        float scaleY;
+        unsigned absX;
+        unsigned absY;
+        ShaderPreset::Filter filter;
+        ShaderPreset::WrapMode wrap;
     };
 
 }

@@ -135,7 +135,7 @@ auto Program::hintExclusiveFullscreen() -> void {
 
 auto Program::setVideoFilter() -> void {
 	if (activeEmulator)
-		videoDriver->setFilter( (DRIVER::Video::Filter)getSettings( activeEmulator )->get<unsigned>("video_filter", 1u, {0u, 1u}) );
+		videoDriver->setLinearFilter( getSettings( activeEmulator )->get<bool>("video_filter", true) );
 }
 
 auto Program::setPalette( Emulator::Interface* emulator ) -> void {
