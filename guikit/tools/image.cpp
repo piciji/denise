@@ -104,11 +104,11 @@ auto Image::loadPng(const uint8_t* src, unsigned size) -> bool {
     return true;
 }
 
-auto Image::generatePng( uint8_t* rgbData, unsigned width, unsigned height, unsigned& pngSize ) -> uint8_t* {
+auto Image::generatePng( uint8_t* rgbData, unsigned width, unsigned height, unsigned channels, unsigned& pngSize ) -> uint8_t* {
     
     ENCODE::Png png;
     
-    auto pngData = png.generate( rgbData, width, height );
+    auto pngData = png.generate( rgbData, width, height, channels );
     
     pngSize = png.fileSize;
     

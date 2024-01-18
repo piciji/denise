@@ -655,10 +655,10 @@ auto File::isAbsolute(const std::string& path) -> bool {
         if ((path[0] == '\\') && (path[1] == '\\'))
             return true;
 
-        if ((path[0] == ':') && (path[1] == '/'))
+        if ((path[1] == ':') && (path[2] == '/'))
             return true;
 
-        if ((path[0] == ':') && (path[1] == '\\'))
+        if ((path[1] == ':') && (path[2] == '\\'))
             return true;
 #endif
     }

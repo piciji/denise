@@ -25,7 +25,7 @@ cbuffer Push {
     float radial_distortion;
 };
 
-#pragma parameter radial_distortion     "Radial Distortion"     20 0 100 1
+#pragma parameter radial_distortion     "Radial Distortion"     5 0 100 1
 
 
 float2 radialDistortion( float2 xy, float intensity ) {

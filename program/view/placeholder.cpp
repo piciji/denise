@@ -58,7 +58,7 @@ auto View::renderPlaceholder() -> bool {
 
 	uint8_t* data = placeholder.data;
 
-    if (videoDriver->lock(gpu_data, gpu_pitch, placeholder.width, placeholder.height)) {
+    if (videoDriver->lock(gpu_data, gpu_pitch, placeholder.width, placeholder.height, DRIVER::OPT_DisallowShader)) {
         for (_h = 0; _h < placeholder.height; _h++) {
             for (_w = 0; _w < placeholder.width; _w++) {
                 *gpu_data++ = data[0] << 16 | data[1] << 8 | data[2];
@@ -67,7 +67,7 @@ auto View::renderPlaceholder() -> bool {
             gpu_data += gpu_pitch - (placeholder.width );
         }
 
-        videoDriver->unlockAndRedraw(true);
+        videoDriver->unlockAndRedraw();
     }
 
     return true;

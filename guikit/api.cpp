@@ -335,8 +335,9 @@ auto Window::setResizable(bool resizable) -> void {
 }
 
 auto Window::setGeometry(Geometry geometry) -> void {
-    geometry.width = std::min<unsigned>(geometry.width, pSystem::getDesktopSize().width);
-    geometry.height = std::min<unsigned>(geometry.height, pSystem::getDesktopSize().height);
+    auto _size = pSystem::getDesktopSize();
+    geometry.width = std::min<unsigned>(geometry.width, _size.width);
+    geometry.height = std::min<unsigned>(geometry.height, _size.height);
     state.geometry = geometry;
     p.setGeometry(geometry);
 }

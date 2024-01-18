@@ -434,6 +434,9 @@ auto Program::setRotation() -> void {
 }
 
 auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {
+    if (videoDriver->shaderSupport())
+        return;
+
     auto settings = program->getSettings( emulator );
     auto crtMode = settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 

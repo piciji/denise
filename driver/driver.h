@@ -22,6 +22,8 @@ struct Viewport {
     int y = 0;
 };
 
+enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4 };
+
 struct Video {
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
@@ -30,7 +32,7 @@ struct Video {
     virtual auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
     virtual auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
     virtual auto redraw(bool disallowShader = false) -> void {}
-    virtual auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {}
+    virtual auto unlockAndRedraw() -> void {}
     virtual auto clear() -> void {}
     virtual auto setLinearFilter(bool state) -> void {}
     virtual auto setShader(ShaderPreset* preset) -> void {}

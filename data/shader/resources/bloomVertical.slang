@@ -1,10 +1,10 @@
 
-uniform sampler t0S;
-uniform Texture2D <float4> t0;
-uniform sampler Bloom-HorizontalS;
-uniform Texture2D <float4> Bloom-Horizontal;
-uniform sampler bloomS;
-uniform Texture2D <float> bloom;
+uniform sampler SourceS;
+uniform Texture2D <float4> Source;
+uniform sampler BloomHorizontalS;
+uniform Texture2D <float4> BloomHorizontal;
+uniform sampler lutBloomS;
+uniform Texture2D lutBloom;
 
 struct UBO {
     float4x4 projection;
@@ -21,11 +21,8 @@ struct PSInput {
     float2 tex : TEXCOORD0;
 };
 
-cbuffer Scene : register(b0) {
-    float ts packoffset(c0);
-    float4 SourceSize packoffset(c1);
-    float4 OutputSize packoffset(c2);
-    float4 OriginalSize packoffset(c3);
+cbuffer Scene {
+    float4 OutputSize : packoffset(c0);
 };
 
 cbuffer Push {
@@ -35,10 +32,24 @@ cbuffer Push {
     float bloom_variance;
 };
 
+#pragma parameter bloom_glow       "Bloom Glow"      0 0 200 1
+#pragma parameter bloom_weight     "Bloom Weight"    2.55 0 3.0 0.01
 #pragma parameter bloom_radius     "Bloom Radius"    4 1 6 1
 #pragma parameter bloom_variance   "Bloom Variance"  2.7 1.0 12.0 0.1
-#pragma parameter bloom_glow       "Bloom Glow"      40 0 200 1
-#pragma parameter bloom_weight     "Bloom Weight"    2.55 0 3.0 0.01
+
+#define lutBloomTexWidth 1553.0
+#define lutBloomTexHeight 6.0
+
+float bloomTex( float pos, float posY ) {
+    float4 packed = lutBloom.Sample(lutBloomS, float2(pos / lutBloomTexWidth, posY / lutBloomTexHeight) ).rgba;
+
+    int unpacked = (uint(packed.r * 255.0) & 0xff)
+                   | ((uint(packed.g * 255.0) & 0xff) << 8)
+                   | ((uint(packed.b * 255.0) & 0xff) << 16)
+                   | ((uint(packed.a * 255.0) & 0xff) << 24);
+
+    return (float)unpacked / 1000000.0f;
+}
 
 PSInput VS(VSInput input) {
     PSInput output;
@@ -48,22 +59,25 @@ PSInput VS(VSInput input) {
 }
 
 float4 PS(PSInput input) : SV_TARGET {
+    if (bloom_glow == 0) {
+        return float4(Source.Sample(SourceS, input.tex).rgb, 1.0);
+    }
 
     float3 sum = float3(0.0, 0.0, 0.0);
+    float _weight = 3.0 - bloom_weight;
 
-    int n = bloom_radius << 1;
-    //int offset = (int(bloom_radius) - 1) * (111 * 13) + int(bloom_variance - 1.0 * 10.0) * 13;
-    int offset = int(bloom_variance - 1.0 * 10.0) * 13;
-    int offsetY = int(bloom_radius) - 1;
+    int n = int(bloom_radius) << 1;
+    int offset = int((bloom_variance - 1.0) * 10.0) * 14;
+    float offsetY = int(bloom_radius) - 1;
 
     do {
-        sum += (t0.Sample(t0S, input.tex + float2(0.0, -1.0 * float(n) / OutputSize.y) ).rgb
-            + t0.Sample(t0S, input.tex + float2(0.0, float(n) / OutputSize.y) ).rgb) * bloom.Sample(bloomS, float2(offset + n, offsetY) );
+        sum += (Source.Sample(SourceS, input.tex + float2(0.0, -1.0 * float(n) / OutputSize.y) ).rgb
+            + Source.Sample(SourceS, input.tex + float2(0.0, float(n) / OutputSize.y) ).rgb) * bloomTex(offset + n, offsetY);
 
         n -= 1;
     } while(n > 0);
 
-    sum += t0.Sample(t0S, input.tex).rgb * bloom.Sample(bloomS, float2(offset + n, offsetY) );
+    sum += Source.Sample(SourceS, input.tex).rgb * bloomTex(offset + n, offsetY);
 
-    return float4(clamp(Bloom-Horizontal.Sample(Bloom-HorizontalS, input.tex).rgb + ( pow(sum.rgb, float3(bloom_weight, bloom_weight, bloom_weight)) * (bloom_glow / 100.0) ), 0.0, 1.0), 1.0);
+    return float4(clamp(BloomHorizontal.Sample(BloomHorizontalS, input.tex).rgb + ( pow(sum.rgb, float3(_weight, _weight, _weight)) * (bloom_glow / 100.0) ), 0.0, 1.0), 1.0);
 }

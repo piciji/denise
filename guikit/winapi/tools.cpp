@@ -1,7 +1,8 @@
 
 //timer
 std::vector<pTimer*> pTimer::timers;
-bool offscreen;
+bool pSystem::offscreen = true;
+std::vector<RECT> pSystem::clientRects;
 SetWindowTheme_t pSystem::pSetWindowTheme = nullptr;
 IsAppThemed_t pSystem::pIsAppThemed = nullptr;
 
@@ -320,6 +321,15 @@ auto getDropPaths(WPARAM wparam) -> std::vector<std::string> {
 }
 
 //system
+auto CALLBACK MonitorEnumProc2(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL {
+    MONITORINFO monitorInfo;
+    monitorInfo.cbSize = sizeof(MONITORINFO);
+    GetMonitorInfo( hMonitor, &monitorInfo );
+    RECT clientRect = monitorInfo.rcMonitor;
+    pSystem::clientRects.push_back(clientRect);
+    return TRUE;
+}
+
 auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData) -> BOOL {
     MONITORINFO monitorInfo;
     
@@ -329,6 +339,9 @@ auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
     Geometry* geometry = (Geometry*)dwData;
     
     RECT clientRect = monitorInfo.rcMonitor;
+
+    if (pSystem::clientRects.size() < 4)
+        pSystem::clientRects.push_back(clientRect);
     
     int xOff = geometry->width / 2;
     int yOff = geometry->height / 2;
@@ -345,7 +358,7 @@ auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
     if ( (geometry->y + yOff) > clientRect.bottom ) 
         return TRUE;
     
-    offscreen = false;
+    pSystem::offscreen = false;
     
     return FALSE;
 }
@@ -377,7 +390,26 @@ auto pSystem::getExecutableDirectory() -> std::string {
 }
 
 auto pSystem::getDesktopSize() -> Size {
-    return {(unsigned)GetSystemMetrics(SM_CXSCREEN), (unsigned)GetSystemMetrics(SM_CYSCREEN)};
+    Size out = { 0,0 };
+
+    if (!clientRects.size())
+        EnumDisplayMonitors(NULL, NULL, MonitorEnumProc2, 0 );
+
+    for (auto& clientRect : clientRects) {
+        if (clientRect.right > out.width)
+            out.width = clientRect.right;
+
+        if (clientRect.bottom > out.height)
+            out.height = clientRect.bottom;
+    }
+
+    if (!out.width)
+        out.width = (unsigned)GetSystemMetrics(SM_CXSCREEN);
+
+    if (!out.height)
+        out.height = (unsigned)GetSystemMetrics(SM_CYSCREEN);
+
+    return out;
 }
 
 auto pSystem::sleep(unsigned milliSeconds) -> void {

@@ -1,6 +1,6 @@
 
-uniform sampler t0S;
-uniform Texture2D <float4> t0;
+uniform sampler SourceS;
+uniform Texture2D <float4> Source;
 #define mod(x, y) (x - y * floor(x / y))
 
 struct VSInput {
@@ -18,11 +18,8 @@ struct UBO {
 };
 uniform UBO ubo;
 
-cbuffer Scene : register(b0) {
-    float ts packoffset(c0);
-    float4 SourceSize packoffset(c1);
-    float4 OutputSize packoffset(c2);
-    float4 OriginalSize packoffset(c3);
+cbuffer Scene {
+    float4 OutputSize : packoffset(c0);
 };
 
 cbuffer Push {
@@ -30,15 +27,15 @@ cbuffer Push {
     float autoEmu_lace;
     float scanlineShade;
     float gamma;
-    float tvGamma;
+    float autoEmu_tvGamma;
 };
 
-#pragma parameter scanline_head    "[Scanlines]"        0 0 0.001 0.001
-#pragma parameter scanlineShade    "Scanline Shade"     0 0 100 1
-#pragma parameter gamma            "Gamma"              100 30 280 1
-#pragma parameter autoEmu_tvGamma  "TV Gamma"           1 0 1 1
-#pragma parameter autoEmu_pal      "PAL"                1 0 1 1
-#pragma parameter autoEmu_lace     "Interlace"          0 0 1 1
+#pragma parameter scanline_head    "[SCANLINES AND GAMMA]"  0 0 0.001 0.001
+#pragma parameter scanlineShade    "Scanline Shade"         20 0 100 1
+#pragma parameter gamma            "Gamma"                  100 30 280 1
+#pragma parameter autoEmu_tvGamma  "TV Gamma"               1 0 1 1
+#pragma parameter autoEmu_pal      "PAL"                    1 0 1 1
+#pragma parameter autoEmu_lace     "Interlace"              0 0 1 1
 
 PSInput VS(VSInput input) {
     PSInput output;
@@ -48,9 +45,9 @@ PSInput VS(VSInput input) {
 }
 
 float4 PS(PSInput input) : SV_TARGET {
-    float3 color = t0.Sample(t0S, input.tex).rgb;
-    float3 colorUp = t0.Sample(t0S, input.tex.xy + float2( 0.0, -1.0 / targetSize.y ) ).rgb;
-    float3 colorDown = t0.Sample(t0S, input.tex.xy + float2( 0.0, 1.0 / targetSize.y ) ).rgb;
+    float3 color = Source.Sample(SourceS, input.tex).rgb;
+    float3 colorUp = Source.Sample(SourceS, input.tex.xy + float2( 0.0, -1.0 / OutputSize.y ) ).rgb;
+    float3 colorDown = Source.Sample(SourceS, input.tex.xy + float2( 0.0, 1.0 / OutputSize.y ) ).rgb;
     float shade = 1.0 - (scanlineShade / 100.0);
     float _gamma = gamma / 100.0;
     if (autoEmu_tvGamma && autoEmu_pal)
@@ -60,6 +57,7 @@ float4 PS(PSInput input) : SV_TARGET {
     if ((int(autoEmu_lace) == 0) && (scanlineShade > 0.0))
         lineFactor = int(floor(mod(input.tex.y * OutputSize.y, 2.0)));
 
+    color = clamp(color, 0.0, 1.0);
     color.r = lerp( pow(color.r, _gamma), pow((colorUp.r + colorDown.r) / 2.0, _gamma) * shade, lineFactor );
     color.g = lerp( pow(color.g, _gamma), pow((colorUp.g + colorDown.g) / 2.0, _gamma) * shade, lineFactor );
     color.b = lerp( pow(color.b, _gamma), pow((colorUp.b + colorDown.b) / 2.0, _gamma) * shade, lineFactor );

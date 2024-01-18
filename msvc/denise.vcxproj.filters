@@ -1854,22 +1854,22 @@
     <ClCompile Include="..\driver\video\d3d11\d3d11.cpp">
       <Filter>driver\video\d3d11</Filter>
     </ClCompile>
-    <ClCompile Include="..\program\video\shader_glsl.cpp">
-      <Filter>program\video</Filter>
-    </ClCompile>
-    <ClCompile Include="..\program\video\shader_hlsl.cpp">
-      <Filter>program\video</Filter>
-    </ClCompile>
     <ClCompile Include="..\guikit\winapi\interProcess.cpp">
       <Filter>guikit\winapi</Filter>
     </ClCompile>
     <ClCompile Include="..\program\video\shaderParser.cpp">
       <Filter>program\video</Filter>
     </ClCompile>
+    <ClCompile Include="..\program\video\luts.cpp">
+      <Filter>program\video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\emulation\libc64\sid\filter\circuit">
       <Filter>emulation\libc64\sid\filter</Filter>
+    </None>
+    <None Include="..\data\shader\resources\bandwidth.slang">
+      <Filter>data</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

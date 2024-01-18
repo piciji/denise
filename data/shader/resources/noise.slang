@@ -32,8 +32,8 @@ float random( float2 seed ) {
     return 1.0 - float((n * (((n * n) * 15731) + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0;
 }
 
-#pragma parameter lumaNoise     "Luma Noise"        1.5 0.0 100.0 0.1
-#pragma parameter chromaNoise   "Chroma Noise"      1.5 0.0 100.0 0.1
+#pragma parameter lumaNoise     "Luma Noise"        0 0 100.0 0.1
+#pragma parameter chromaNoise   "Chroma Noise"      0 0 100.0 0.1
 
 PSInput VS(VSInput input) {
     PSInput output;
@@ -43,10 +43,9 @@ PSInput VS(VSInput input) {
 }
 
 float4 PS(PSInput input) : SV_TARGET {
-    float _seed = Seed / 1000.0;
     float2 xy = input.tex.xy;
-    float y = random(xy + float2(_seed * xy.x, _seed * xy.y)) * lumaNoise;
-    float u = random(xy + float2(_seed * xy.y, _seed * xy.x)) * chromaNoise;
-    float v = random(xy - float2(_seed * xy.x, _seed * xy.y)) * chromaNoise;
+    float y = random(xy + float2(Seed * xy.x, Seed * xy.y)) * (lumaNoise / 100.0);
+    float u = random(xy + float2(Seed * xy.y, Seed * xy.x)) * (chromaNoise / 100.0);
+    float v = random(xy - float2(Seed * xy.x, Seed * xy.y)) * (chromaNoise / 100.0);
     return Source.Sample(SourceS, xy).xyzw + float4(y, u, v, 0.0);
 }

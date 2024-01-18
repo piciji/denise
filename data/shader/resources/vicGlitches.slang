@@ -39,7 +39,7 @@ struct PSInput {
 // CAS: third and fourth pixel of each half cycle are darkened
 // RAS: first pixel of each half cycle will be non darkened
 
-#pragma parameter vicGlitches_head      "[VICII Glitches]"   0 0 0.001 0.001
+#pragma parameter vicGlitches_head      "[VICII GLITCHES]"   0 0 0.001 0.001
 #pragma parameter glitch_aec            "AEC"                10.5 0 100 0.1
 #pragma parameter glitch_ba             "BA"                 10.5 0 100 0.1
 #pragma parameter glitch_phi            "PHI"                10.5 0 100 0.1

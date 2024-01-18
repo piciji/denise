@@ -57,6 +57,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     DXGI_FORMAT format;
     float seed;
     bool updateRTS;
+    uint8_t options;
 
     ID3D11BlendState* blendEnable;
     ID3D11BlendState* blendDisable;
@@ -137,6 +138,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
         settings.rotation = ~0;
+        options = 0;
 
         for(auto& sampler : samplers)
             for(auto& _sampler : sampler)
@@ -376,7 +378,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             if (SUCCEEDED(debug->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&debugInfoQueue))) {
                 debugInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, TRUE);
                 debugInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
-                debugInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
+           //     debugInfoQueue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
             }
         }
 #endif
@@ -384,7 +386,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if (!initSwapChain(symbols, device, settings.handle, settings.hardSync, swapChain))
             return false;
 
-        format = D3D11Utility::_format();
+        format = DXGI_FORMAT_B8G8R8A8_UNORM;
         if (!initMainTexture(32, 32))
             return term(), false;
 
@@ -544,6 +546,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         for(auto program : programs) {
             D3D11Utility::releaseShader(program->shader);
             D3D11Utility::releaseTexture(program->renderTarget);
+            D3D11Utility::releaseTexture(program->cropTarget);
             delete program;
         }
         for(auto lut : luts) {
@@ -553,14 +556,14 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         programs.clear();
         luts.clear();
 
-        format = DXGI_FORMAT_B8G8R8A8_UNORM;
-
         if (preset) {
             for (auto& pass: preset->passes) {
                 if (!pass.inUse)
                     continue;
+
                 D3DProgram* program = new D3DProgram;
                 D3D11Utility::releaseTexture(program->renderTarget);
+                D3D11Utility::releaseTexture(program->cropTarget);
                 if (!D3D11Utility::buildProgram(symbols, featureLevel, device, *program, pass))
                     continue;
 
@@ -568,6 +571,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             }
 
             for (auto& lut: preset->luts) {
+                if (!lut.data)
+                    continue;
+
                 D3DTexture* lutTex = new D3DTexture;
                 D3D11Utility::releaseTexture(*lutTex);
                 lutTex->ident = lut.id;
@@ -588,7 +594,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                     continue;
                 }
 
-                int srcPitch = lut.width;
+                int srcPitch = lut.width << 2;
                 uint8_t* src = lut.data;
                 unsigned pitch = mappedTexture.RowPitch;
                 uint8_t* dest = (uint8_t*) mappedTexture.pData;
@@ -615,7 +621,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                         b.filter = p->filter;
                         b.wrap = p->wrap;
                         b.sampler = samplers[b.filter][b.wrap];
-                        tex = &p->renderTarget;
+                        tex = p->crop.active ? &p->cropTarget : &p->renderTarget;
                     } else {
                         for(auto lutTex : luts) {
                             if (lutTex->ident == b.ident) {
@@ -662,14 +668,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             }
 
             D3D11Utility::resolveParams(preset, programs, &frame.texture, &seed);
-            if (preset->lumaChroma)
-                format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-
             updateRTS = true;
         }
-
-        if (format != frame.texture.desc.Format)
-            initMainTexture( frame.texture.desc.Width, frame.texture.desc.Height );
     }
 
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
@@ -677,12 +677,14 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             checkFSE();
 
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, options & 1);
+            return RenderThread::lock(data, pitch, _width, _height, options);
 
+        this->options = options;
         if (swapChain.frameLatency && !settings.vrr)
             WaitForSingleObjectEx( swapChain.frameLatency, 500, true);
 
-        if(_width != frame.texture.desc.Width || _height != frame.texture.desc.Height) {
+        format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        if(format != frame.texture.desc.Format || _width != frame.texture.desc.Width || _height != frame.texture.desc.Height) {
             if (!initMainTexture(_width, _height))
                 return false;
             viewScreen.update(viewport);
@@ -704,12 +706,14 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             checkFSE();
 
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, options & 1);
+            return RenderThread::lock(data, pitch, _width, _height, options);
 
+        this->options = options;
         if (swapChain.frameLatency && !settings.vrr)
             WaitForSingleObjectEx( swapChain.frameLatency, 500, true);
 
-        if(_width != frame.texture.desc.Width || _height != frame.texture.desc.Height) {
+        format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+        if(format != frame.texture.desc.Format || _width != frame.texture.desc.Width || _height != frame.texture.desc.Height) {
             if (!initMainTexture(_width, _height))
                 return false;
             viewScreen.update(viewport);
@@ -727,7 +731,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     }
 
     auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
-        if (format == DXGI_FORMAT_R32G32B32A32_FLOAT)
+        if (renderBuffer->floatFormat)
             renderBuffer->dataFloat = new float[w * h * 4]();
         else
             renderBuffer->data = new uint32_t[w * h]();
@@ -736,19 +740,19 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         updateRTS = true;
     }
 
-    auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
+    auto unlockAndRedraw() -> void {
         if (settings.threaded) {
-            RenderThread::unlock(disallowShader);
+            RenderThread::unlock();
             return;
         }
         context->Unmap((ID3D11Resource*)frame.texture.staging, 0);
         context->CopyResource((ID3D11Resource*)frame.texture.ptr, (ID3D11Resource*)frame.texture.staging);
 
-        redraw(disallowShader);
+        redraw(options & OPT_DisallowShader);
     }
 
     auto refresh() -> void {
-        bool disallowShader = false;
+        options = 0;
         RenderBuffer* renderBuffer = getBufferToRender();
         if (renderBuffer && renderBuffer->height) {
             if (swapChain.frameLatency && !settings.vrr)
@@ -756,7 +760,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
             renderBuffer->sharedMutex.lock();
 
-            if(renderBuffer->width != frame.texture.desc.Width || renderBuffer->height != frame.texture.desc.Height) {
+            format = renderBuffer->floatFormat ? DXGI_FORMAT_R32G32B32A32_FLOAT : DXGI_FORMAT_B8G8R8A8_UNORM;
+            if(format != frame.texture.desc.Format || renderBuffer->width != frame.texture.desc.Width || renderBuffer->height != frame.texture.desc.Height) {
                 if (!initMainTexture(renderBuffer->width, renderBuffer->height))
                     return;
             }
@@ -765,10 +770,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             if (FAILED(context->Map((ID3D11Resource*)frame.texture.staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture)))
                 return;
 
-            int srcPitch = renderBuffer->width << (format == DXGI_FORMAT_R32G32B32A32_FLOAT ? 4 : 2);
-            uint8_t* src = (uint8_t*)renderBuffer->data;
-            if (format == DXGI_FORMAT_R32G32B32A32_FLOAT)
-                src = (uint8_t*)renderBuffer->dataFloat;
+            int srcPitch = renderBuffer->width << (renderBuffer->floatFormat ? 4 : 2);
+            uint8_t* src = renderBuffer->floatFormat ? (uint8_t*)renderBuffer->dataFloat : (uint8_t*)renderBuffer->data;
 
             unsigned pitch = mappedTexture.RowPitch;
             uint8_t* dest = (uint8_t*)mappedTexture.pData;
@@ -782,7 +785,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             context->Unmap((ID3D11Resource*)frame.texture.staging, 0);
             context->CopyResource((ID3D11Resource*)frame.texture.ptr, (ID3D11Resource*)frame.texture.staging);
 
-            disallowShader = renderBuffer->disallowShader;
+            options = renderBuffer->options;
             renderBuffer->sharedMutex.unlock();
 
             accessMutex.lock();
@@ -795,7 +798,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             buildMessageTexture(settings.message);
         }
 #endif
-        redraw(disallowShader);
+        redraw(options & OPT_DisallowShader);
     }
 
     auto redraw(bool disallowShader = false) -> void {
@@ -825,10 +828,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         UINT offset = 0;
         context->IASetVertexBuffers(0, 1, &frame.vbo, &stride, &offset);
 
-        seed += 0.001;
         D3DTexture* texture = &frame.texture;
 
         if (!disallowShader) {
+            seed = (float)Chronos::getTimestampInMilliseconds() / 1000.0;
             for(auto p : programs) {
                 applyShader(p->shader);
 
@@ -850,10 +853,17 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 ID3D11RenderTargetView* nullRT = nullptr;
                 context->OMSetRenderTargets(1, &nullRT, nullptr);
 
+                // it's important to clear not used slots for this pass
+                ID3D11ShaderResourceView* textures[16] = { nullptr };
+                ID3D11SamplerState*       samplers[16] = { nullptr };
+
                 for(auto& bind : p->bindTextures) {
-                    context->PSSetShaderResources(bind.index, 1, &bind.texture->view);
-                    context->PSSetSamplers(bind.indexSampler, 1, &bind.sampler);
+                    textures[bind.index] = bind.texture->view;
+                    samplers[bind.indexSampler] = bind.sampler;
                 }
+
+                context->PSSetShaderResources(0, 16, textures);
+                context->PSSetSamplers(0, 16, samplers);
 
                 context->OMSetRenderTargets( 1, &p->renderTarget.rtView, nullptr);
 
@@ -864,7 +874,11 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 if (p->mipmap)
                     context->GenerateMips( p->renderTarget.view);
 
-                texture = &p->renderTarget;
+                if (p->crop.active) {
+                    context->CopySubresourceRegion((ID3D11Resource*)p->cropTarget.ptr, 0, 0, 0, 0, (ID3D11Resource*)p->renderTarget.ptr, 0, &p->cropBox);
+                    texture = &p->cropTarget;
+                } else
+                    texture = &p->renderTarget;
             }
         }
 
@@ -926,15 +940,18 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     }
 
     auto updateRenderTargets(unsigned width, unsigned height) -> void {
+        int cropScaleX = 1;
+        int cropScaleY = 1;
+
         for(auto p : programs ) {
             if (p->scaleTypeX != ShaderPreset::SCALE_NONE || p->scaleTypeY != ShaderPreset::SCALE_NONE) {
-                if (p->scaleTypeX == ShaderPreset::SCALE_INPUT) width *= p->scaleX;
+                if (p->scaleTypeX == ShaderPreset::SCALE_INPUT) { width *= p->scaleX; cropScaleX *= p->scaleX; }
                 else if (p->scaleTypeX == ShaderPreset::SCALE_VIEWPORT) width = viewport.width * p->scaleX;
                 else if (p->scaleTypeX == ShaderPreset::SCALE_ABSOLUTE) width = p->absX;
 
                 if (!width) width = viewport.width;
 
-                if (p->scaleTypeY == ShaderPreset::SCALE_INPUT) height *= p->scaleY;
+                if (p->scaleTypeY == ShaderPreset::SCALE_INPUT) { height *= p->scaleY; cropScaleY *= p->scaleY; }
                 else if (p->scaleTypeY == ShaderPreset::SCALE_VIEWPORT) height = viewport.width * p->scaleY;
                 else if (p->scaleTypeY == ShaderPreset::SCALE_ABSOLUTE) height = p->absY;
 
@@ -955,6 +972,28 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
                 if (!initTexture(p->renderTarget))
                     continue;
+            }
+
+            if (p->crop.active) {
+                uint8_t interlace = (options & OPT_Interlace) ? 1 : 0;
+                width -= (p->crop.left + p->crop.right) * cropScaleX;
+                height -= ((p->crop.top + p->crop.bottom) << interlace) * cropScaleY;
+
+                p->cropBox.left   = p->crop.left * cropScaleX;
+                p->cropBox.top    = (p->crop.top << interlace) * cropScaleY;
+                p->cropBox.front  = 0;
+                p->cropBox.right  = width + p->crop.left * cropScaleX;
+                p->cropBox.bottom = height + (p->crop.top << interlace) * cropScaleY;
+                p->cropBox.back   = 1;
+
+                if(width != p->cropTarget.desc.Width || height != p->cropTarget.desc.Height) {
+                    D3D11Utility::releaseTexture(p->cropTarget);
+                    p->cropTarget.desc.Width = width;
+                    p->cropTarget.desc.Height = height;
+                    p->cropTarget.desc.Format = p->format;
+                    if (!initTexture(p->cropTarget, false))
+                        continue;
+                }
             }
         }
     }

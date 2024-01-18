@@ -1,0 +1,118 @@
+
+shaders = 12
+luma_chroma = true
+
+shader0 = resources/colorEncoding.slang
+alias0 = "LumaChromaEncoding"
+filter_linear0 = false
+float_framebuffer0 = true
+scale_type0 = source
+scale0 = 1.0
+
+shader1 = resources/vicGlitches.slang
+alias1 = "VICIIGlitches"
+filter_linear1 = false
+float_framebuffer1 = true
+scale_type1 = source
+scale1 = 1.0
+
+shader2 = resources/randomLineOffset.slang
+alias2 = "RandomLineOffset"
+filter_linear2 = false
+float_framebuffer2 = true
+scale_type2 = source
+scale2 = 1.0
+
+shader3 = resources/lumaLatency.slang
+alias3 = "LumaLatency"
+filter_linear3 = false
+float_framebuffer3 = true
+scale_type3 = source
+scale3 = 1.0
+
+shader4 = resources/noise.slang
+alias4 = "LumaChromaNoise"
+filter_linear4 = false
+float_framebuffer4 = true
+scale_type4 = source
+scale4 = 1.0
+
+shader5 = resources/bandwidth.slang
+alias5 = "BandwidthReduction"
+filter_linear5 = false
+float_framebuffer5 = true
+scale_type5 = source
+scale_x5 = 2.0
+scale_y5 = 1.0
+
+shader6 = resources/colorDecoding.slang
+alias6 = "LumaChromaDecoding"
+filter_linear6 = false
+float_framebuffer6 = true
+scale_type6 = source
+scale6 = 1.0
+
+shader7 = resources/scanlines.slang
+alias7 = "Scanlines"
+filter_linear7 = false
+float_framebuffer7 = true
+scale_type7 = source
+scale_x7 = 1.0
+scale_y7 = 2.0
+
+shader8 = resources/bloomHorizontal.slang
+alias8 = "BloomHorizontal"
+float_framebuffer8 = true
+scale_type8 = source
+scale8 = 1.0
+mipmap_input8 = true
+
+shader9 = resources/bloomVertical.slang
+alias9 = "BloomVertical"
+filter_linear9 = false
+float_framebuffer9 = true
+scale_type9 = source
+scale9 = 1.0
+
+shader10 = resources/mask.slang
+alias10 = "Mask"
+float_framebuffer10 = true
+scale_type10 = source
+scale_x10 = 1.0
+scale_y10 = 1.0
+mipmap_input10 = true
+
+shader11 = resources/radialDistortion.slang
+alias11 = "RadialDistortion"
+float_framebuffer11 = true
+scale_type11 = source
+scale11 = 1.0
+mipmap_input11 = true
+
+# LUT generation: program/video/luts.cpp
+textures = "lutBloom;lutBandwidth;lutMaskAperture;lutMaskShadow;lutMaskSlot"
+
+lutBloom = resources/lutBloom.png
+lutBloom_linear = false
+lutBloom_mipmap = false
+lutBloom_wrap_mode = "clamp_to_border"
+
+lutBandwidth = resources/lutBandwidth.png
+lutBandwidth_linear = false
+lutBandwidth_mipmap = false
+lutBandwidth_wrap_mode = "clamp_to_edge"
+
+lutMaskAperture = resources/lutMaskAperture.png
+lutMaskAperture_linear = true
+lutMaskAperture_mipmap = true
+lutMaskAperture_wrap_mode = "repeat"
+
+lutMaskShadow = resources/lutMaskShadow.png
+lutMaskShadow_linear = true
+lutMaskShadow_mipmap = true
+lutMaskShadow_wrap_mode = "repeat"
+
+lutMaskSlot = resources/lutMaskSlot.png
+lutMaskSlot_linear = true
+lutMaskSlot_mipmap = true
+lutMaskSlot_wrap_mode = "repeat"

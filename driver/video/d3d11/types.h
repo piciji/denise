@@ -79,6 +79,7 @@ namespace DRIVER {
         bool mipmap = false;
         std::vector<D3DTextureBind> bindTextures;
         D3DTexture renderTarget;
+        D3DTexture cropTarget;
 
         ShaderPreset::ScaleType scaleTypeX;
         ShaderPreset::ScaleType scaleTypeY;
@@ -88,6 +89,8 @@ namespace DRIVER {
         unsigned absY;
         ShaderPreset::Filter filter;
         ShaderPreset::WrapMode wrap;
+        CropPass crop;
+        D3D11_BOX cropBox;
     };
 
 }

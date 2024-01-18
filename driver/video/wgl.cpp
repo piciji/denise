@@ -22,6 +22,7 @@ struct WGL : Video, OpenGL, RenderThread {
 	HDC display = nullptr;
 	HGLRC wglcontext = nullptr;
     HWND handle = nullptr;
+    uint8_t options = 0;
 
     bool hasRendererContext = false;
 
@@ -125,8 +126,9 @@ struct WGL : Video, OpenGL, RenderThread {
 
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, options & 1);
+            return RenderThread::lock(data, pitch, _width, _height, options);
 
+        this->options = options;
         makeCurrent(true);
         if (OpenGL::size(_width, _height))
             viewScreen.update(viewport);
@@ -136,8 +138,9 @@ struct WGL : Video, OpenGL, RenderThread {
 
     auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, options & 1);
+            return RenderThread::lock(data, pitch, _width, _height, options);
 
+        this->options = options;
         makeCurrent(true);
         if (OpenGL::size(_width, _height))
             viewScreen.update(viewport);
@@ -176,14 +179,11 @@ struct WGL : Video, OpenGL, RenderThread {
         viewScreen.update(viewport, _windowWidth, _windowHeight);
     }
 
-    auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
+    auto unlockAndRedraw() -> void {
         if (settings.threaded) {
-            RenderThread::unlock(disallowShader);
+            RenderThread::unlock();
         } else {
-            redraw(disallowShader);
-
-            if (freeContext)
-                clearCurrent();
+            redraw(options & OPT_DisallowShader);
         }
     }
 
@@ -226,7 +226,7 @@ struct WGL : Video, OpenGL, RenderThread {
         makeCurrent();
         OpenGL::clear();
 
-        bool disallowShader = false;
+        options = 0;
         RenderBuffer* renderBuffer = getBufferToRender();
         if (renderBuffer && renderBuffer->height) {
             renderBuffer->sharedMutex.lock();
@@ -238,7 +238,7 @@ struct WGL : Video, OpenGL, RenderThread {
             }
 
             OpenGL::updateTexture(renderBuffer);
-            disallowShader = renderBuffer->disallowShader;
+            options = renderBuffer->options;
             renderBuffer->sharedMutex.unlock();
 
             accessMutex.lock();
@@ -247,7 +247,7 @@ struct WGL : Video, OpenGL, RenderThread {
         }
 		resizeMutexThreaded.lock();
         resizeWindow();
-        OpenGL::refresh(disallowShader);
+        OpenGL::refresh(options & OPT_DisallowShader);
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);

@@ -60,7 +60,6 @@ struct VideoManager {
     ~VideoManager();
 
     bool rebuildShader = true;
-    bool shaderDirty = false;
 
     ShaderParser* parser = nullptr;
 
@@ -78,7 +77,7 @@ struct VideoManager {
     static auto setSynchronize() -> void;
     static auto setHardSync() -> void;
 
-    enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u, GpuExtern = 3u } crtMode;
+    enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u } crtMode;
 
     struct DataUpdates {
         std::string ident;
@@ -121,7 +120,6 @@ struct VideoManager {
     Emulator::Interface::Palette* palette;
     
     uint32_t* colorTable = nullptr;
-    uint32_t* colorTableNoGamma = nullptr;
     auto reinitCrtThread( bool initMem = false ) -> void;
     auto resetTempData( int offset = 0, bool onlyIfUsed = false ) -> void;
 
@@ -150,10 +148,9 @@ struct VideoManager {
     double lumaRise;
     double lumaFall;
 
-    uint8_t preCalc[256 * 3];
+    uint8_t preCalcGamma[256 * 3];
     uint8_t preCalcScanline[512 * 3];
-    
-    // precalc blur for rf modulated luma change
+
     int32_t preCalcLumaCenter[0xffff + 1];
     int32_t preCalcLumaNeighbour[0xffff + 1];
     
@@ -178,7 +175,6 @@ struct VideoManager {
     auto convertRGBToYUV(ColorLumaChroma* dest, ColorRgb* src) -> void;
     auto setPalette(Emulator::Interface::Palette* palette) -> void;
 
-    template<typename T, bool interlace, bool field> auto renderToRgbNoGamma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop) -> void;
     template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch, unsigned& cropTop) -> void;
     template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
     template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
@@ -203,8 +199,8 @@ struct VideoManager {
     auto injectPhaseTransferError() -> void;
     auto convertLumaChromaToInteger() -> void;
     auto convertPaletteToLumaChroma() -> void;
-    auto preCalcGamma() -> void;
-    auto preCalcLumaDelay() -> void;
+    auto calculateGamma() -> void;
+    auto calculateLumaDelay() -> void;
     template<typename T> auto createWorker(Render* re) -> void;
     auto enableCrtThread( bool state) -> void;
     auto updateCrtThreads() -> void;
@@ -267,8 +263,11 @@ struct VideoManager {
     auto movePass(unsigned& passId, bool up) -> void;
     auto togglePassUsage(unsigned passId) -> ShaderPreset::Pass*;
     auto setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void;
+    auto setPassFormat(unsigned passId, ShaderPreset::BufferType bufferType) -> void;
+    auto setPassMipmap(unsigned passId, bool state) -> void;
     auto setPassScaleX(unsigned passId, float scale) -> void;
     auto setPassScaleY(unsigned passId, float scale) -> void;
+    auto shaderLumaChromaInput() -> bool;
 };
 
 extern std::vector<VideoManager*> videoManagers;

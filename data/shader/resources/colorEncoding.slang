@@ -34,7 +34,7 @@ struct PSInput {
     float2 tex : TEXCOORD0;
 };
 
-#pragma parameter Encoding_head         "[YUV/YIC Encoding]" 0 0 0.001 0.001
+#pragma parameter Encoding_head         "[YUV/YIC ENCODING]" 0 0 0.001 0.001
 #pragma parameter noEncoding            "Disable Encoding"   0 0 1 1
 #pragma parameter phaseErrorPAL         "Phase Error PAL"    22.5 -45 45 0.5
 #pragma parameter phaseErrorNTSC        "Phase Error NTSC"   0 -45 45 0.5
@@ -68,7 +68,7 @@ float4 PS(PSInput input) : SV_TARGET {
         } else {
             lumaChroma = mul( float3x3(0.23485876230514607, 0.6335007388077467, 0.13164049888710716, 0.4409594767911895, -0.27984362502847304, -0.16111585176271648, 0.14630060102591497, -0.5594814826856017, 0.4131808816596867), color.rgb);
         }
-        flags = 256.0 * color.w;
+        flags = 0;
     }
 
     if (noEncoding) {

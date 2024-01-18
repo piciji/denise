@@ -76,7 +76,7 @@ struct Image {
     enum Format : unsigned { RGBA, BGRA } format;
 
     auto loadPng(const uint8_t* src, unsigned size) -> bool;
-    auto generatePng( uint8_t* rgbData, unsigned width, unsigned height, unsigned& pngSize ) -> uint8_t*;
+    auto generatePng( uint8_t* rgbData, unsigned width, unsigned height, unsigned channels, unsigned& pngSize ) -> uint8_t*;
     auto alphaBlend(unsigned alphaColor) -> void;
 	auto alphaMultiply() -> void;
     auto scaleNearest(unsigned outputWidth, unsigned outputHeight) -> void;

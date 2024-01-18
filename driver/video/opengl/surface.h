@@ -47,8 +47,8 @@ auto OpenGLSurface::getBuffer(RenderBuffer* renderBuffer) -> void* {
     if (format == GL_RGB32F || format == GL_RGBA32F)
         return renderBuffer ? renderBuffer->dataFloat : bufferFloat;
     
-    if (format == GL_RGB32I || format == GL_RGBA32I)
-        return renderBuffer ? renderBuffer->dataInt : bufferInt;
+    //if (format == GL_RGB32I || format == GL_RGBA32I)
+      //  return renderBuffer ? renderBuffer->dataInt : bufferInt;
     
     return renderBuffer ? renderBuffer->data : buffer;
 }
@@ -99,10 +99,10 @@ auto OpenGLSurface::resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -
         renderBuffer->dataFloat = new float[w * h * 3]();
     else if (format == GL_RGBA32F)
         renderBuffer->dataFloat = new float[w * h * 4]();
-    else if (format == GL_RGB32I)
-        renderBuffer->dataInt = new int32_t[w * h * 3]();
-    else if (format == GL_RGBA32I)
-        renderBuffer->dataInt = new int32_t[w * h * 4]();
+    //else if (format == GL_RGB32I)
+      //  renderBuffer->dataInt = new int32_t[w * h * 3]();
+   // else if (format == GL_RGBA32I)
+     //   renderBuffer->dataInt = new int32_t[w * h * 4]();
     else
         renderBuffer->data = new uint32_t[w * h]();
 }

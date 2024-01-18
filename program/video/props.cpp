@@ -138,7 +138,6 @@ auto VideoManager::setData(const std::string& ident, float value) -> void {
         for(auto& param : parser->shaderPreset.params) {
             if (param.id == ident) {
                 param.value = value;
-                shaderDirty = true;
                 break;
             }
         }
@@ -151,7 +150,6 @@ auto VideoManager::setData( unsigned offset, float value) -> void {
         auto& params = parser->shaderPreset.params;
         if (offset < params.size()) {
             params[offset].value = value;
-            shaderDirty = true;
         }
     }
 }

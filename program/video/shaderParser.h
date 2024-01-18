@@ -11,9 +11,9 @@ struct ShaderParser {
     ShaderPreset shaderPreset;
     std::vector<std::string> entryPaths;
     std::vector<std::string> brokenPaths;
-    static std::vector<ShaderPreset::Lut> luts;
+  //  static std::vector<ShaderPreset::Lut> luts;
+    std::vector<uint8_t*> lutData;
     bool modified;
-    bool internalShader;
 
     auto loadPreset(std::string path) -> bool;
 
@@ -52,6 +52,8 @@ struct ShaderParser {
     auto togglePassUsage(unsigned passId) -> ShaderPreset::Pass*;
 
     auto setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void;
+    auto setPassFormat(unsigned passId, ShaderPreset::BufferType bufferType) -> void;
+    auto setPassMipmap(unsigned passId, bool state) -> void;
 
     auto setPassScaleX(unsigned passId, float scale) -> void;
     auto setPassScaleY(unsigned passId, float scale) -> void;
@@ -64,9 +66,12 @@ struct ShaderParser {
     auto clear() -> void;
 
     auto loadShader(ShaderPreset::Pass& pass) -> bool;
+    auto loadLUT(ShaderPreset::Lut& lut) -> bool;
+    auto updateCrop() -> void;
 
     static auto buildLutBloom() -> void;
     static auto buildLutMask() -> void;
     static auto buildLutBandwidth() -> void;
+    static auto writeLut(const std::string& path, uint8_t* data, unsigned width, unsigned height) -> void;
 };
 

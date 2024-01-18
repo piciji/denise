@@ -42,13 +42,16 @@ PSInput VS(VSInput input) {
 }
 
 float4 PS(PSInput input) : SV_TARGET {
-    float _seed = Seed / 1000.0;
-    float lineFactor = pow(randomLineOffset, 2.0) / 10000.0;
-    float2 xy = input.tex.xy;
-    float offset = random(float2(_seed * xy.y, xy.y + (_seed * xy.y))) * lineFactor;
-    float x0 = xy.x + offset;
-    float x1 = x0 + OutputSize.z;
-    float4 tex0 = Source.Sample(SourceS, float2( frac(x0), xy.y )).xyzw;
-    float4 tex1 = Source.Sample(SourceS, float2( frac(x1), xy.y )).xyzw;
-    return lerp(tex0, tex1, frac(x0 * OutputSize.x));
+    if (randomLineOffset > 0) {
+        float lineFactor = pow(randomLineOffset, 2.0) / 10000.0;
+        float2 xy = input.tex.xy;
+        float offset = random(float2(Seed * xy.y, xy.y + (Seed * xy.y))) * lineFactor;
+        float x0 = xy.x + offset;
+        float x1 = x0 + OutputSize.z;
+        float4 tex0 = Source.Sample(SourceS, float2( frac(x0), xy.y )).xyzw;
+        float4 tex1 = Source.Sample(SourceS, float2( frac(x1), xy.y )).xyzw;
+        return lerp(tex0, tex1, frac(x0 * OutputSize.x));
+    } else {
+        return Source.Sample(SourceS, input.tex.xy).xyzw;
+    }
 }

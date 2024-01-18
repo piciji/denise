@@ -731,7 +731,7 @@ auto Cmd::saveExitScreenshot() -> void {
     
     unsigned pngSize = 0;
     GUIKIT::Image png;
-    uint8_t* pngData = png.generatePng( screen, width, height, pngSize );
+    uint8_t* pngData = png.generatePng( screen, width, height, 3, pngSize );
     
     GUIKIT::File file;
     file.setFile( screenshotPath );

@@ -9,7 +9,7 @@ struct Png {
     uint32_t adler;
     unsigned fileSize = 0;
 
-    auto generate( uint8_t* rgbData, unsigned width, unsigned height ) -> uint8_t* {
+    auto generate( uint8_t* rgbData, unsigned width, unsigned height, unsigned channels ) -> uint8_t* {
 
         uint8_t* out = nullptr;
         CRC32 crc32;
@@ -19,7 +19,12 @@ struct Png {
         if (!rgbData || width == 0 || height == 0)
             return nullptr;
 
-        unsigned lineSize = width * 3 + 1;
+        if (channels != 3 && channels != 4) {
+            channels = 3;
+        }
+        uint8_t colorType = channels == 3 ? 0x02 : 0x06;
+
+        unsigned lineSize = width * channels + 1;
         unsigned size = lineSize * height;
 
         unsigned blocks = size / DEFLATE_MAX_BLOCK_SIZE;
@@ -38,7 +43,7 @@ struct Png {
             0x49, 0x48, 0x44, 0x52,
             0, 0, 0, 0,  // width
             0, 0, 0, 0,  // height
-            0x08, 0x02, 0x00, 0x00, 0x00,
+            0x08, colorType, 0x00, 0x00, 0x00,
             0, 0, 0, 0,
             0, 0, 0, 0,  // size
             0x49, 0x44, 0x41, 0x54,
@@ -59,7 +64,7 @@ struct Png {
         unsigned x = 0;
         unsigned y = 0;
         unsigned blockPos = 0;
-        unsigned todo = width * height * 3;
+        unsigned todo = width * height * channels;
         unsigned remain = size;
 
         while (todo) {

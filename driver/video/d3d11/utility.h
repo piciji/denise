@@ -5,21 +5,6 @@ namespace DRIVER {
 
 struct D3D11Utility {
 
-    static auto _format(const std::string& format = "") -> DXGI_FORMAT {
-        if(format == "") return DXGI_FORMAT_B8G8R8A8_UNORM;
-        if(format == "r32i"   ) return DXGI_FORMAT_R32_SINT;
-        if(format == "r32ui"  ) return DXGI_FORMAT_R32_UINT;
-        if(format == "rgba8"  ) return DXGI_FORMAT_B8G8R8A8_UNORM;
-        if(format == "rgb10a2") return DXGI_FORMAT_R10G10B10A2_UNORM;
-        if(format == "rgba16" ) return DXGI_FORMAT_R16G16B16A16_UINT;
-        if(format == "rgba16f") return DXGI_FORMAT_R16G16B16A16_FLOAT;
-        if(format == "rgba32f") return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        if(format == "rgba32i") return DXGI_FORMAT_R32G32B32A32_SINT;
-        if(format == "rgb32f") return DXGI_FORMAT_R32G32B32_FLOAT;
-        if(format == "rgb32i") return DXGI_FORMAT_R32G32B32_SINT;
-        return DXGI_FORMAT_B8G8R8A8_UNORM;
-    }
-
     static auto buildProgram(D3D11Symbols& symbols, D3D_FEATURE_LEVEL& featureLevel, ID3D11Device* device, D3DProgram& program, ShaderPreset::Pass& pass) -> bool {
         program.mipmap = pass.mipmap;
         program.scaleX = pass.scaleX;
@@ -31,13 +16,14 @@ struct D3D11Utility {
         program.filter = pass.filter;
         program.wrap = pass.wrap;
         program.ident = pass.alias;
+        program.crop.set( pass.crop );
 
         if (pass.bufferType == ShaderPreset::BUFFER_FP)
-            program.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+            program.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
         else if (pass.bufferType == ShaderPreset::BUFFER_SRGB)
-            program.format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+            program.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
         else
-            program.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            program.format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 
         static const D3D11_INPUT_ELEMENT_DESC desc[] = {
@@ -88,11 +74,11 @@ struct D3D11Utility {
                     } else if (v.name == "OriginalSize") {
                         v.value = (void*)&orig->size;
                     } else if (v.name == "Seed") {
-                        v.value = (void*)&seed;
+                        v.value = (void*)seed;
                     }
                 }
             }
-            texture = &p->renderTarget;
+            texture = p->crop.active ? &p->cropTarget : &p->renderTarget;
         }
     }
 

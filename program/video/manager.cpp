@@ -84,11 +84,10 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
     colorTableUpdated = false;
     dataUpdatesPending = false;
 
-    lumaChromaTable = new ColorLumaChroma[this->colorCount];      
-    evenTable = new ColorLumaChroma[this->colorCount];  
-    oddTable = new ColorLumaChroma[this->colorCount];          
-    colorTable = new uint32_t[this->colorCount];     
-    colorTableNoGamma = new uint32_t[this->colorCount];     
+    lumaChromaTable = new ColorLumaChroma[this->colorCount];
+    evenTable = new ColorLumaChroma[this->colorCount];
+    oddTable = new ColorLumaChroma[this->colorCount];
+    colorTable = new uint32_t[this->colorCount];
     
     newLuma = true;
     crtRealGamma = false;
@@ -122,7 +121,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
 auto VideoManager::update() -> void {
 
     if (!colorSpectrum || !isC64() ) { // palette
-        if ( (crtMode == CrtMode::Cpu) || ( (crtMode == CrtMode::Gpu) && parser->internalShader ) ) {
+        if ( (crtMode == CrtMode::Cpu) || ( (crtMode == CrtMode::Gpu) && parser->shaderPreset.lumaChroma ) ) {
             convertPaletteToLumaChroma();
 
             convertLumaChromaToRGB();
@@ -136,10 +135,10 @@ auto VideoManager::update() -> void {
     }
 
     if ( crtMode == CrtMode::Cpu ) {
-        preCalcGamma();
+        calculateGamma();
 
         if ((countColorBits == 4) && useLumaDelay())
-            preCalcLumaDelay();
+            calculateLumaDelay();
 
         injectPhaseTransferError();
         convertLumaChromaToInteger();
@@ -257,9 +256,6 @@ auto VideoManager::adjustPalette() -> void {
         adjustSaturation( rgb.r, rgb.g, rgb.b );        
         adjustBrightness(rgb.r); adjustBrightness(rgb.g); adjustBrightness(rgb.b);
         adjustContrast(rgb.r); adjustContrast(rgb.g); adjustContrast(rgb.b);
-
-        colorTableNoGamma[c] = uclamp8( rgb.r ) << 16 | uclamp8( rgb.g ) << 8 | uclamp8( rgb.b );
-
         adjustGamma(rgb.r); adjustGamma(rgb.g); adjustGamma(rgb.b);
         
         colorTable[c] = 255 << 24 | uclamp8( rgb.r ) << 16 | uclamp8( rgb.g ) << 8 | uclamp8( rgb.b );
@@ -312,8 +308,6 @@ auto VideoManager::convertLumaChromaToRGB() -> void {
         else
 			convertYIQToRGB( &rgb, &lumaChromaTable[c] );
 
-        colorTableNoGamma[c] = uclamp8( rgb.r ) << 16 | uclamp8( rgb.g ) << 8 | uclamp8( rgb.b );    
-        
 		if (pal && colorSpectrum) {
 			normalizeColorSpectrumPalGamma(rgb.r);
 			normalizeColorSpectrumPalGamma(rgb.g);
@@ -328,7 +322,7 @@ auto VideoManager::convertLumaChromaToRGB() -> void {
     }
 }
 
-auto VideoManager::preCalcGamma() -> void {
+auto VideoManager::calculateGamma() -> void {
     double scanlineShade = 1.0 - (double)scanlines / 100.0;
     
 	// we precalculate the requested adjustments for each color state.
@@ -344,7 +338,7 @@ auto VideoManager::preCalcGamma() -> void {
 		adjustGamma( c1 );
 		
 		// make sure the final color channel is integer with a precision of 8 bit
-		preCalc[c] = uclamp8( c1 );
+        preCalcGamma[c] = uclamp8( c1 );
 		
 		// to emulate scanlines with a given intensity, the colors of the
 		// adjacent lines will be blended together with reduced luminance.
@@ -522,7 +516,7 @@ auto VideoManager::convertLumaChromaToInteger() -> void {
 	}
 }
 
-auto VideoManager::preCalcLumaDelay() -> void {
+auto VideoManager::calculateLumaDelay() -> void {
 	
 	double yStep[4];
 	double y;
@@ -590,12 +584,13 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     constexpr bool hires = options & 4;
     bool iHold = interlace && !field && !interlaceDecay;
     bool warp = program->warp.active;
+    uint8_t gpuOptions = iHold | (interlace << 1) | (warp << 2);
 
     if (needAUpdate)
         updateAll();
 
     bool cropCoordUpdated = emulator->cropCoordUpdated(cropTop, cropLeft);
-    if (!placeHolderFrames) {
+    if (!placeHolderFrames) { 
         if (rebuildShader) {
             videoDriver->setShader( (crtMode == CrtMode::Gpu) ? &parser->shaderPreset : nullptr);
             setData("autoEmu_cropTop", (float)cropTop);
@@ -604,7 +599,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             setData("autoEmu_pal", (float)pal);
             setData("autoEmu_subRegion", emulator->getSubRegion());
             setData("autoEmu_tvGamma", (float)(colorSpectrum || crtRealGamma));
-            setData("autoEmu_lumaChroma", (float)(parser->internalShader && parser->shaderPreset.lumaChroma));
+            setData("autoEmu_lumaChroma", (float)(parser->shaderPreset.lumaChroma));
             rebuildShader  = false;
         } else if (cropCoordUpdated) {
             setData("autoEmu_cropTop", (float)cropTop);
@@ -642,50 +637,42 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         return;
 
     } else if ( warp || (crtMode == CrtMode::None) ) {
-        if (!videoDriver->lock(gpuData, gpuPitch, width, height, iHold))
+        if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
             return;
 
         renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
 
 	} else if (crtMode == CrtMode::Gpu) {
-        if (parser->internalShader) {
+        if (parser->shaderPreset.lumaChroma) {
             width += SHADER_OFFSCREEN_WIDTH << 1;
             srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
             src -= SHADER_OFFSCREEN_WIDTH;
 
-            if (parser->shaderPreset.lumaChroma) {
-                if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : 1), iHold | (shaderDirty << 1) ))
-                    return;
+            if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : 1), gpuOptions ))
+                return;
 
-                renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuDataFloat, gpuPitch - width, cropTop);
+            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuDataFloat, gpuPitch - width, cropTop);
 
-            } else {
-                if (!videoDriver->lock(gpuData, gpuPitch, width, height + (interlace ? 2 : 1), iHold | (shaderDirty << 1)))
-                    return;
-
-                renderToRgbNoGamma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width, cropTop);
-            }
         } else {
-            if (!videoDriver->lock(gpuData, gpuPitch, width, height, iHold | (shaderDirty << 1)))
+            if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
                 return;
 
             renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
         }
-        shaderDirty = false;
 	} else if (crtThreaded) {
-        if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? (height << 1) : height, iHold))
+        if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? (height << 1) : height, gpuOptions))
             renderCrtThreadedBlank(width, height, src, srcPitch, iHold ? 0 : gpuData, gpuPitch - width);
         else
             renderCrtThreaded<T, options>(width, height, src, srcPitch, iHold ? 0 : gpuData, gpuPitch - width, cropTop);
 
     } else {
-        if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? (height << 1) : height, iHold))
+        if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? (height << 1) : height, gpuOptions))
             return;
 
         renderCrt<T, options>(width, height, src, srcPitch, iHold ? 0 : gpuData, gpuPitch - width, cropTop);
 	}		           
 
-    videoDriver->unlockAndRedraw( warp );
+    videoDriver->unlockAndRedraw( );
 }
 
 template<typename T, bool interlace, bool field> inline auto VideoManager::renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
@@ -729,69 +716,6 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
             for(unsigned w = 0; w < width; w++)
                 *dest++ = colorTable[ *src++ & mask ];
 
-            src += srcPitch;
-            dest += destPitch;
-        }
-    }
-}
-
-template<typename T, bool interlace, bool field> inline auto VideoManager::renderToRgbNoGamma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop) -> void {
-    const T* srcDelay = src;
-    T colorNative;
-    unsigned metaShift = countColorBits;
-    unsigned mask = (1 << metaShift) - 1;
-    uint32_t color;
-    ColorRgbLight colorI;
-
-    if (interlace && !field && !interlaceDecay) // hold -> update full frames only
-        return;
-
-    if(cropTop) {
-        srcDelay -= width + srcPitch;
-        if constexpr (interlace)
-            srcDelay -= width + srcPitch;
-    }
-
-    for (int i = 0; i <= interlace; i++) {
-        for (unsigned w = 0; w < width; w++) {
-            colorNative = *srcDelay++;
-            *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
-        }
-        dest += destPitch;
-        srcDelay += srcPitch;
-    }
-
-    if (interlace && interlaceDecay) {
-        int iRate = 100 - interlaceDecay;
-
-        for (unsigned h = 0; h < height; h++) {
-            if (field == (h & 1)) {
-                for (unsigned w = 0; w < width; w++) {
-                    colorNative = *src++;
-                    *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
-                }
-            } else {
-                for (unsigned w = 0; w < width; w++) {
-                    colorNative = *src++;
-                    color = colorTableNoGamma[colorNative & mask];
-
-                    colorI.r = (((color >> 16) & 0xff) * iRate) / 100;
-                    colorI.g = (((color >> 8) & 0xff) * iRate) / 100;
-                    colorI.b = (((color >> 0) & 0xff) * iRate) / 100;
-
-                    *dest++ =  ((colorNative >> metaShift) << 24) | colorI.r << 16 | colorI.g << 8 | colorI.b;
-                }
-            }
-
-            src += srcPitch;
-            dest += destPitch;
-        }
-    } else {
-        for (unsigned h = 0; h < height; h++) {
-            for (unsigned w = 0; w < width; w++) {
-                colorNative = *src++;
-                *dest++ = colorTableNoGamma[colorNative & mask] | ((colorNative >> metaShift) << 24);
-            }
             src += srcPitch;
             dest += destPitch;
         }
@@ -975,10 +899,11 @@ template<uint8_t options> auto VideoManager::renderMidScreen() -> void {
     re->options = getRenderOptions<options>();
 
     if((re->options ^ render[1].options) & (1 | 4 | 32)) { // scanlines, interlace, hires changes
-        re->dest = nullptr; // disable treaded emulation one frame to prevent artifacts
+        re->dest = nullptr; // disable threaded emulation one frame to prevent artifacts
         return;
     }
 
+    re->options |= 0x80;
 	re->ready.store(1);
 	re->cv.notify_one();
 }
@@ -1142,7 +1067,6 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& r
 	
 	ColorLumaChroma* lineTable;
 	ColorRgb* lineBeforeDest = nullptr;
-	ColorRgb rgb;
 	ColorLumaChroma yuv;
     ColorRgbLight colorI;
 	int32_t uSubSample, vSubSample;
@@ -1237,9 +1161,9 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& r
                 int16_t b = (yuv.y_s + ((x1 * yuv.u_i_s) >> 8) + 1024) >> 11;
 
                 if constexpr (interlace) {
-                    colorI.r = preCalc[ r + 256 ];
-                    colorI.g = preCalc[ g + 256 ];
-                    colorI.b = preCalc[ b + 256 ];
+                    colorI.r = preCalcGamma[ r + 256 ];
+                    colorI.g = preCalcGamma[ g + 256 ];
+                    colorI.b = preCalcGamma[ b + 256 ];
                     *re.dest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
 
                     if (!iHold) {
@@ -1249,7 +1173,7 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& r
                         *re.fieldDest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
                     }
                 } else
-                    *re.dest++ = 255 << 24 | preCalc[ r + 256 ] << 16 | preCalc[ g + 256 ] << 8 | preCalc[ b + 256 ];
+                    *re.dest++ = 255 << 24 | preCalcGamma[ r + 256 ] << 16 | preCalcGamma[ g + 256 ] << 8 | preCalcGamma[ b + 256 ];
 
                 if constexpr (withScanlines) {
                     if (re.scanlineDest) {
@@ -1285,7 +1209,20 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& r
 			re.scanlineDest = re.dest;
 			re.dest +=	re.width + re.destPitch;
 		}
-	}	
+	}
+
+    if constexpr (withScanlines) {
+        if ((re.options & 0x80) == 0) {
+            lineBeforeDest = &lineBefore[0];
+            for (unsigned w = 0; w < re.width; w++) {
+                *re.scanlineDest++ = 255 << 24 | preCalcScanline[lineBeforeDest->rInt + 512] << 16
+                                     | preCalcScanline[lineBeforeDest->gInt + 512] << 8
+                                     | preCalcScanline[lineBeforeDest->bInt + 512];
+
+                lineBeforeDest++;
+            }
+        }
+    }
 	
 	re.src = (uint8_t*)_src;
 }
@@ -1305,7 +1242,6 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render& 
     constexpr bool field = options & 8;
     constexpr bool iHold = options & 16;
 
-	ColorRgb rgb;
 	ColorLumaChroma yiq;
     ColorRgbLight colorI;
 	ColorRgb* lineBeforeDest = nullptr;
@@ -1359,9 +1295,9 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render& 
                 int16_t b = (yiq.y_s - ((x5 * yiq.u_i_s - x6 * yiq.v_q_s) >> 8) + 512) >> 10;
 
                 if constexpr (interlace) {
-                    colorI.r = preCalc[ r + 256 ];
-                    colorI.g = preCalc[ g + 256 ];
-                    colorI.b = preCalc[ b + 256 ];
+                    colorI.r = preCalcGamma[ r + 256 ];
+                    colorI.g = preCalcGamma[ g + 256 ];
+                    colorI.b = preCalcGamma[ b + 256 ];
                     *re.dest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
 
                     if (!iHold) {
@@ -1371,7 +1307,7 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render& 
                         *re.fieldDest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
                     }
                 } else
-                    *re.dest++ = 255 << 24 | preCalc[ r + 256 ] << 16 | preCalc[ g + 256 ] << 8 | preCalc[ b + 256 ];
+                    *re.dest++ = 255 << 24 | preCalcGamma[ r + 256 ] << 16 | preCalcGamma[ g + 256 ] << 8 | preCalcGamma[ b + 256 ];
 
                 if constexpr (withScanlines) {
                     if ( re.scanlineDest) {
@@ -1407,6 +1343,19 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render& 
 			re.dest +=	re.width + re.destPitch;
 		}
 	}
+
+    if constexpr (withScanlines) {
+        if ((re.options & 0x80) == 0) {
+            lineBeforeDest = &lineBefore[0];
+            for (unsigned w = 0; w < re.width; w++) {
+                *re.scanlineDest++ = 255 << 24 | preCalcScanline[lineBeforeDest->rInt + 512] << 16
+                                     | preCalcScanline[lineBeforeDest->gInt + 512] << 8
+                                     | preCalcScanline[lineBeforeDest->bInt + 512];
+
+                lineBeforeDest++;
+            }
+        }
+    }
 	
 	re.src = (uint8_t*)_src;
 }
@@ -1549,9 +1498,6 @@ auto VideoManager::free() -> void {
     if (colorTable)
         delete[] colorTable;
 
-    if (colorTableNoGamma)
-        delete[] colorTableNoGamma;
-        
     if (lumaChromaTable)
         delete[] lumaChromaTable;                
     
@@ -1562,7 +1508,7 @@ auto VideoManager::free() -> void {
         delete[] oddTable;
         
     evenTable = oddTable = lumaChromaTable = nullptr;
-    colorTable = colorTableNoGamma = nullptr;
+    colorTable = nullptr;
 	
 	if (tempDest)
 		delete[] tempDest;
@@ -1657,24 +1603,43 @@ auto VideoManager::getPresetPathCombined() -> std::string {
 
 auto VideoManager::movePass(unsigned& passId, bool up) -> void {
     parser->movePass(passId, up);
+    rebuildShader = true;
 }
 
 auto VideoManager::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
     auto pass = parser->togglePassUsage(passId);
     applyMeta();
+    rebuildShader = true;
     return pass;
 }
 
 auto VideoManager::setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void {
     parser->setPassFilter(passId, filter);
+    rebuildShader = true;
+}
+
+auto VideoManager::setPassFormat(unsigned passId, ShaderPreset::BufferType bufferType) -> void {
+    parser->setPassFormat(passId, bufferType);
+    rebuildShader = true;
+}
+
+auto VideoManager::setPassMipmap(unsigned passId, bool state) -> void {
+    parser->setPassMipmap(passId, state);
+    rebuildShader = true;
 }
 
 auto VideoManager::setPassScaleX(unsigned passId, float scale) -> void {
     parser->setPassScaleX(passId, scale);
+    rebuildShader = true;
 }
 
 auto VideoManager::setPassScaleY(unsigned passId, float scale) -> void {
     parser->setPassScaleY(passId, scale);
+    rebuildShader = true;
+}
+
+auto VideoManager::shaderLumaChromaInput() -> bool {
+    return parser->shaderPreset.lumaChroma;
 }
 
 VideoManager::~VideoManager() {

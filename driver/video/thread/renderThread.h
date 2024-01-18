@@ -11,12 +11,12 @@ namespace DRIVER {
     struct RenderBuffer {
         std::mutex sharedMutex;
         unsigned* data = nullptr;
-        int32_t* dataInt = nullptr;
         float* dataFloat = nullptr;
+        bool floatFormat = false;
         unsigned width = 0;
         unsigned height = 0;
         unsigned pitch = 0;
-        bool disallowShader = false;
+        uint8_t options = 0;
     };
 
     struct RenderThread {
@@ -52,12 +52,11 @@ namespace DRIVER {
         auto enable(bool state) -> void;
         auto changePriorityToRealtime(bool state) -> void;
 
-        auto prepareBuffer(unsigned _width, unsigned _height) -> bool;
-        auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool;
-        auto lock(int32_t*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool;
-        auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse) -> bool;
+        auto prepareBuffer(unsigned _width, unsigned _height, bool floatFormat) -> bool;
+        auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options) -> bool;
+        auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options) -> bool;
 
-        auto unlock(bool disallowShader = false) -> void;
+        auto unlock() -> void;
         auto reset() -> void;
         auto wait() -> void;
 

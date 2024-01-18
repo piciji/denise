@@ -54,6 +54,7 @@ End:
         applyOverrides(path, settingsList);
     }
 
+    updateCrop();
     return true;
 }
 
@@ -69,11 +70,13 @@ auto ShaderParser::savePreset(std::string path) -> bool {
         out = "#reference \"" + GUIKIT::File::buildRelativePath(path, entryPaths[0]) + "\"\n";
         fputs( out.c_str(), fp );
     } else {
-        writeLine(fp, "shaders", std::to_string(shaderPreset.passes.size()) + "\n");
+        writeLine(fp, "shaders", std::to_string(shaderPreset.passes.size()));
         if (shaderPreset.feedback >= 0)
             writeLine(fp, "feedback", std::to_string(shaderPreset.feedback) );
         if (shaderPreset.lumaChroma)
             writeLine(fp, "luma_chroma", "true" );
+
+        fputs( "\n", fp );
 
         for(int i = 0; i < shaderPreset.passes.size(); i++) {
             auto& pass = shaderPreset.passes[i];
@@ -123,8 +126,10 @@ auto ShaderParser::savePreset(std::string path) -> bool {
 
     for (auto& param : shaderPreset.params) {
         if (param.initial != param.value) {
-            out = param.id + " = " + std::to_string(param.value) + "\n";
-            fputs( out.c_str(), fp );
+            if (!GUIKIT::String::findString(param.id, "autoEmu_")) {
+                out = param.id + " = " + std::to_string(param.value) + "\n";
+                fputs( out.c_str(), fp );
+            }
         }
     }
 
@@ -243,11 +248,11 @@ auto ShaderParser::addParameter(ShaderPreset::Param& param) -> void {
 }
 
 auto ShaderParser::parseTextures() -> void {
-    if (!luts.size()) {
-        buildLutBloom();
-        buildLutMask();
-        buildLutBandwidth();
-    }
+   // if (!luts.size()) {
+   //     buildLutBloom();
+   //     buildLutMask();
+   //     buildLutBandwidth();
+   // }
 
     std::string lutList = rootSettings.get<std::string>("textures", "");
 
@@ -277,13 +282,16 @@ auto ShaderParser::parseTextures() -> void {
         lut.mipmap = rootSettings.get<bool>(id + "_mipmap", false);
         lut.wrap = translateWrapMode( rootSettings.get<std::string>(id + "_wrap_mode", "") );
 
-        for(auto& tempLut : luts) {
-            if (lut.id == tempLut.id) {
-                lut.data = tempLut.data;
-                lut.width = tempLut.width;
-                lut.height = tempLut.height;
-                break;
-            }
+        if (!loadLUT(lut)) {
+
+//            for (auto& tempLut : luts) {
+//                if (lut.id == tempLut.id) {
+//                    lut.data = tempLut.data;
+//                    lut.width = tempLut.width;
+//                    lut.height = tempLut.height;
+//                    break;
+//                }
+//            }
         }
 
         shaderPreset.luts.push_back(lut);
@@ -317,8 +325,6 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
 
     pass.mipmap = rootSettings.get<bool>("mipmap_input" + strPos, false);
     pass.alias = rootSettings.get<std::string>("alias" + strPos, "");
-    if (pass.alias == "LumaChromaEncoding")
-        internalShader = true;
 
     pass.inUse = !rootSettings.get<bool>("hide" + strPos, false);
 
@@ -484,6 +490,7 @@ auto ShaderParser::addPreset(ShaderParser* parser, bool prepend) -> void {
     GUIKIT::Vector::combine<ShaderPreset::Pass>(shaderPreset.passes, preset.passes, prepend);
     GUIKIT::Vector::combine<ShaderPreset::Param>(shaderPreset.params, preset.params, prepend);
     GUIKIT::Vector::combine<ShaderPreset::Lut>(shaderPreset.luts, preset.luts, prepend);
+    updateCrop();
 }
 
 auto ShaderParser::movePass(unsigned& passId, bool up) -> void {
@@ -503,6 +510,7 @@ auto ShaderParser::movePass(unsigned& passId, bool up) -> void {
             modified = true;
         }
     }
+    updateCrop();
 }
 
 auto ShaderParser::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
@@ -512,7 +520,7 @@ auto ShaderParser::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
     ShaderPreset::Pass& pass = shaderPreset.passes[passId];
     pass.inUse ^= 1;
     modified = true;
-
+    updateCrop();
     return &pass;
 }
 
@@ -530,6 +538,24 @@ auto ShaderParser::setPassFilter(unsigned passId, ShaderPreset::Filter filter) -
 
     ShaderPreset::Pass& pass = shaderPreset.passes[passId];
     pass.filter = filter;
+    modified = true;
+}
+
+auto ShaderParser::setPassFormat(unsigned passId, ShaderPreset::BufferType bufferType) -> void {
+    if (passId >= shaderPreset.passes.size())
+        return;
+
+    ShaderPreset::Pass& pass = shaderPreset.passes[passId];
+    pass.bufferType = bufferType;
+    modified = true;
+}
+
+auto ShaderParser::setPassMipmap(unsigned passId, bool state) -> void {
+    if (passId >= shaderPreset.passes.size())
+        return;
+
+    ShaderPreset::Pass& pass = shaderPreset.passes[passId];
+    pass.mipmap = state;
     modified = true;
 }
 
@@ -569,12 +595,53 @@ auto ShaderParser::loadShader(ShaderPreset::Pass& pass) -> bool {
         return false;
 
     GUIKIT::File file(pass.src);
-    if (!file.open()) {
+    if (!file.open())
         return false;
-    }
 
     pass.code.assign((char*) file.read(), file.getSize());
     return true;
+}
+
+auto ShaderParser::loadLUT(ShaderPreset::Lut& lut) -> bool {
+    if (lut.path.empty())
+        return false;
+
+    GUIKIT::File file(lut.path);
+    if (!file.open())
+        return false;
+
+    GUIKIT::Image png;
+    if (!png.loadPng(file.read(), file.getSize() ))
+        return false;
+
+    lut.data = new uint8_t[png.width * png.height * 4];
+    std::memcpy(lut.data, png.data, png.width * png.height * 4);
+    lutData.push_back(lut.data);
+
+    lut.width = png.width;
+    lut.height = png.height;
+
+    return true;
+}
+
+auto ShaderParser::updateCrop() -> void {
+    for(auto& pass : shaderPreset.passes)
+        pass.crop.release();
+
+    if (!shaderPreset.lumaChroma)
+        return;
+
+    for(int i = shaderPreset.passes.size() - 1; i >= 0; i--) {
+        ShaderPreset::Pass& pass = shaderPreset.passes[i];
+        if (!pass.inUse)
+            continue;
+
+        if (GUIKIT::String::findString(pass.alias, "Mask") || GUIKIT::String::findString(pass.alias, "BloomVertical")
+            || GUIKIT::String::findString(pass.alias, "Gamma") || GUIKIT::String::findString(pass.alias, "LumaChromaDecoding") ) {
+            pass.crop.set({1, 4, 0, 4});
+            break;
+        }
+    }
 }
 
 auto ShaderParser::clear() -> void {
@@ -583,10 +650,11 @@ auto ShaderParser::clear() -> void {
     shaderPreset.clear();
     rootSettings.clear();
     modified = false;
-    internalShader = false;
+    for (auto data : lutData)
+        delete[] data;
+    lutData.clear();
 }
 
 ShaderParser::ShaderParser() {
     clear();
 }
-

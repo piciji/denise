@@ -59,7 +59,6 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
     struct Main : GUIKIT::FramedVerticalLayout {
         struct Control : GUIKIT::HorizontalLayout {
             GUIKIT::Button unload;
-            GUIKIT::Button apply;
             GUIKIT::Button save;
 
             GUIKIT::Label folder;
@@ -132,8 +131,16 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
             } filter;
 
             GUIKIT::Label wrap;
-            GUIKIT::Label type;
-            GUIKIT::Label mipmap;
+
+            struct BufferFormat : GUIKIT::HorizontalLayout {
+                GUIKIT::RadioBox unorm;
+                GUIKIT::RadioBox srgb;
+                GUIKIT::RadioBox fp;
+
+                BufferFormat();
+            } bufferFormat;
+
+            GUIKIT::CheckBox mipmap;
             GUIKIT::Label modulo;
 
             struct ScaleX : GUIKIT::HorizontalLayout {
@@ -169,12 +176,10 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::ImageView up;
         GUIKIT::ImageView down;
-        GUIKIT::Button hide;
+        GUIKIT::Button disable;
 
         Control();
     } control;
-
-    GUIKIT::MultilineEdit info;
 
     VideoPassLayout();
 };

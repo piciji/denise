@@ -859,6 +859,9 @@ struct pSystem {
 
     static SetWindowTheme_t pSetWindowTheme;
     static IsAppThemed_t pIsAppThemed;
+    static bool offscreen;
+    static std::vector<RECT> clientRects;
+
 };
 
 struct pMonitor {

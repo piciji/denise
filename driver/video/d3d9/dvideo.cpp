@@ -47,6 +47,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
     int64_t lastCapTime;
     int64_t minimumCapTime;
+    uint8_t options;
 
     struct {
         bool synchronize;
@@ -383,11 +384,11 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 		}
 	}
 	
-    auto unlockAndRedraw(bool disallowShader = false, bool freeContext = false) -> void {
+    auto unlockAndRedraw() -> void {
 
         if (settings.threaded) {
             resizeMutex.lock();
-            RenderThread::unlock(disallowShader);
+            RenderThread::unlock();
             resizeMutex.unlock();
         } else {
             resizeMutex.lock();
@@ -399,7 +400,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
                 dxRelease(surface);
             }
 
-            _redraw(disallowShader);
+            _redraw();
 
             resizeMutex.unlock();
         }
@@ -441,14 +442,14 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         }
 
 		if (XPMode)
-			return redrawCustom(disallowShader);			
+			return redrawCustom();
 		
         resizeMutexThreaded.lock();
-		_redraw(disallowShader);
+		_redraw();
         resizeMutexThreaded.unlock();
     }
 
-    auto redrawCustom(bool disallowShader = false) -> void {
+    auto redrawCustom() -> void {
         resizeMutexThreaded.lock();
 
         lpD3DDevice->BeginScene();
@@ -466,7 +467,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         resizeMutexThreaded.unlock();
     }
 	
-    auto _redraw(bool disallowShader) -> void {
+    auto _redraw() -> void {
         if( settings.synchronize && IsIconic( settings.parent ) )
             return;
 
@@ -499,7 +500,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     auto refresh() -> void {
         resizeMutexThreaded.lock();
 
-        bool disallowShader = false;
+        options = 0;
         RenderBuffer* renderBuffer = getBufferToRender();
 
         if (renderBuffer && renderBuffer->data) {
@@ -528,7 +529,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
                 std::memcpy(d3dlr.pBits, renderBuffer->data, textureWidth * textureHeight * 4);
             }
 
-            disallowShader = renderBuffer->disallowShader;
+            options = renderBuffer->options;
 
             surface->UnlockRect();
             dxRelease(surface);
@@ -615,14 +616,14 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         resizeMutex.lock();
 
-        bool result = _lock(data, pitch, _width, _height, options & 1);
+        bool result = _lock(data, pitch, _width, _height, options);
 
         resizeMutex.unlock();
 
         return result;
     }
 
-    inline auto _lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, bool reuse = false) -> bool {
+    inline auto _lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         RECT windowsize = Win::getDimension( settings.handle );
         if (lost || (viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
             if (!resetOrInit())
@@ -635,9 +636,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
                 return false;
             }
 
-            return RenderThread::lock(data, pitch, _width, _height, reuse);
+            return RenderThread::lock(data, pitch, _width, _height, options);
         }
 
+        this->options = options;
         if (settings.degree) {
             pitch = _width;
             if (settings.degree == 90 || settings.degree == 270) {
@@ -918,7 +920,8 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         texture = 0;
         tempBuffer = nullptr;
 
-        lost = true;		
+        lost = true;
+        options = 0;
         settings.linearFilter = true;
         settings.synchronize = false;
         settings.handle = nullptr;
