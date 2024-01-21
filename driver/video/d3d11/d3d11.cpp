@@ -34,7 +34,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     Rectangle frame;
     Rectangle overlay;
     Rectangle message;
+    Rectangle progress;
+
     std::vector<D3DProgram*> programs;
+    std::vector<D3DProgram*> programsTemp;
     std::vector<D3DTexture*> luts;
 
 #ifdef DRV_FREETYPE
@@ -58,6 +61,15 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     float seed;
     bool updateRTS;
     uint8_t options;
+
+    unsigned progressDegree;
+    bool progressVisible;
+    ID3D11Buffer* constantBufferProgress;
+
+    ShaderPreset* preset;
+    std::atomic<int> shaderId = 0;
+    std::atomic<bool> shaderReady = false;
+    std::function<void (int pass, bool hasErrors)> onShaderCallback = nullptr;
 
     ID3D11BlendState* blendEnable;
     ID3D11BlendState* blendDisable;
@@ -123,10 +135,12 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         context = nullptr;
         ubo = nullptr;
         uboRotated = nullptr;
+        constantBufferProgress = nullptr;
         uboChain = nullptr;
         frame.vbo = nullptr;
         message.vbo = nullptr;
         overlay.vbo = nullptr;
+        progress.vbo = nullptr;
         updateRTS = false;
 
         blendEnable = nullptr;
@@ -139,6 +153,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         settings.exclusiveFullscreen = false;
         settings.rotation = ~0;
         options = 0;
+        progressDegree = 0;
+        progressVisible = false;
 
         for(auto& sampler : samplers)
             for(auto& _sampler : sampler)
@@ -153,7 +169,11 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     auto setShader(ShaderPreset* preset) -> void {
         wait();
         shader( preset );
-        RenderThread::reset();
+       // RenderThread::reset();
+    }
+
+    auto setShaderProgressCallback( std::function<void (int pass, bool hasErrors)> onCallback ) -> void {
+        onShaderCallback = onCallback;
     }
 
     auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {
@@ -280,6 +300,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     }
 
     auto hasThreaded() -> bool { return settings.threaded; }
+
+    auto waitRenderThread() -> void { if (settings.threaded) wait(); }
 
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
         viewScreen.scaling.width = _w;
@@ -410,6 +432,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if (FAILED(device->CreateBuffer(&descP, nullptr, &uboRotated)))
             return term(), false;
 
+        if (FAILED(device->CreateBuffer(&descP, nullptr, &constantBufferProgress)))
+            return term(), false;
+
         setRotation(0);
 
         uboData.pSysMem = &modelView;
@@ -481,6 +506,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             return term(), false;
         if (FAILED(device->CreateBuffer(&descV, nullptr, &overlay.vbo)))
             return term(), false;
+        if (FAILED(device->CreateBuffer(&descV, nullptr, &progress.vbo)))
+            return term(), false;
 
         D3D11_INPUT_ELEMENT_DESC descShader[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -495,6 +522,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             return term(), false;
 
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11overlayShader, "PS", "VS", "", descShader, countof(descShader), &overlay.shader))
+            return term(), false;
+
+        if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11progressShader, "PS", "VS", "", descShader, countof(descShader), &progress.shader))
             return term(), false;
 
         dndOverlay.initialized = true;
@@ -543,6 +573,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     }
 
     auto shader(ShaderPreset* preset) -> void {
+        shaderReady = false;
+        progressVisible = false;
+        std::vector<D3DProgram*> _programs;
+
         for(auto program : programs) {
             D3D11Utility::releaseShader(program->shader);
             D3D11Utility::releaseTexture(program->renderTarget);
@@ -556,104 +590,161 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         programs.clear();
         luts.clear();
 
-        if (preset) {
-            for (auto& pass: preset->passes) {
-                if (!pass.inUse)
-                    continue;
+        shaderId++;
 
-                D3DProgram* program = new D3DProgram;
-                D3D11Utility::releaseTexture(program->renderTarget);
-                D3D11Utility::releaseTexture(program->cropTarget);
-                if (!D3D11Utility::buildProgram(symbols, featureLevel, device, *program, pass))
-                    continue;
+        this->preset = preset;
+        if (!preset)
+            return;
 
-                programs.push_back(program);
-            }
+        for (unsigned passId = 0; passId < preset->passes.size(); passId++) {
+            auto& pass = preset->passes[passId];
+            if (!pass.inUse)
+                continue;
 
-            for (auto& lut: preset->luts) {
-                if (!lut.data)
-                    continue;
+            D3DProgram* program = new D3DProgram;
+            program->passId = passId;
+            program->mipmap = pass.mipmap;
+            program->scaleX = pass.scaleX;
+            program->absX = pass.absX;
+            program->scaleTypeX = pass.scaleTypeX;
+            program->scaleY = pass.scaleY;
+            program->absY = pass.absY;
+            program->scaleTypeY = pass.scaleTypeY;
+            program->filter = pass.filter;
+            program->wrap = pass.wrap;
+            program->ident = pass.alias;
+            program->crop.set( pass.crop );
+            program->src = pass.code;
 
-                D3DTexture* lutTex = new D3DTexture;
-                D3D11Utility::releaseTexture(*lutTex);
-                lutTex->ident = lut.id;
-                lutTex->desc.Width = lut.width;
-                lutTex->desc.Height = lut.height;
-                lutTex->desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                if (lut.mipmap)
-                    lutTex->desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+            if (pass.bufferType == ShaderPreset::BUFFER_FP)
+                program->format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+            else if (pass.bufferType == ShaderPreset::BUFFER_SRGB)
+                program->format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+            else
+                program->format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
-                if (!initTexture(*lutTex, true)) {
-                    delete lutTex;
-                    continue;
-                }
+            _programs.push_back(program);
+        }
 
-                D3D11_MAPPED_SUBRESOURCE mappedTexture;
-                if (FAILED(context->Map((ID3D11Resource*) lutTex->staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture))) {
-                    delete lutTex;
-                    continue;
-                }
+        if (!_programs.size())
+            return;
 
-                int srcPitch = lut.width << 2;
-                uint8_t* src = lut.data;
-                unsigned pitch = mappedTexture.RowPitch;
-                uint8_t* dest = (uint8_t*) mappedTexture.pData;
+        progressVisible = true;
+        int _sid = shaderId;
+        std::thread worker([this, _programs, _sid] {
+            auto ts = Chronos::getTimestampInMilliseconds();
 
-                for (int i = 0; i < lut.height; i++) {
-                    std::memcpy(dest, src, srcPitch);
-                    src += srcPitch;
-                    dest += pitch;
-                }
+            for(auto p : _programs) {
+                D3D11Utility::releaseTexture(p->renderTarget);
+                D3D11Utility::releaseTexture(p->cropTarget);
 
-                context->Unmap((ID3D11Resource*) lutTex->staging, 0);
-                context->CopyResource((ID3D11Resource*) lutTex->ptr, (ID3D11Resource*) lutTex->staging);
+         //       Sleep( 500 );
+                bool success = D3D11Utility::buildProgram2(symbols, featureLevel, device, *p);
+                if (!success)
+                    D3D11Utility::releaseShader(p->shader);
 
-                if (lut.mipmap)
-                    context->GenerateMips(lutTex->view);
-                luts.push_back(lutTex);
-            }
-
-            D3DTexture* tex = &frame.texture;
-            for(auto p : programs) {
-                for(auto& b : p->bindTextures) {
-                    if (b.ident == "Source") {
-                        b.texture = tex;
-                        b.filter = p->filter;
-                        b.wrap = p->wrap;
-                        b.sampler = samplers[b.filter][b.wrap];
-                        tex = p->crop.active ? &p->cropTarget : &p->renderTarget;
-                    } else {
-                        for(auto lutTex : luts) {
-                            if (lutTex->ident == b.ident) {
-                                b.texture = lutTex;
-                                for (auto& lut: preset->luts) {
-                                    if (lut.id == lutTex->ident) {
-                                        b.filter = lut.filter;
-                                        b.wrap = lut.wrap;
-                                        b.sampler = samplers[lut.filter][lut.wrap];
-                                        break;
-                                    }
-                                }
-                                break;
-                            }
-                        }
+                if (shaderId != _sid) {
+                    for(auto p : _programs) {
+                        D3D11Utility::releaseShader(p->shader);
+                        delete p;
                     }
+                    return;
+                }
+
+                auto ts2 = Chronos::getTimestampInMilliseconds();
+                if (!success || ((ts2 - ts) >= 1000)) {
+                    onShaderCallback(p->passId, !success);
+                    ts = ts2;
                 }
             }
 
-            for(auto p : programs) {
-                for(auto& b : p->bindTextures) {
-                    if (b.texture)
-                        continue;
+            while(shaderReady) {
+                std::this_thread::yield();
+            }
+            programsTemp = _programs;
+            shaderReady = true;
+            progressVisible = false;
+        });
+        worker.detach();
+    }
 
-                    for(auto p2 : programs) {
-                        if (p2->ident == b.ident) {
-                            for(auto& b2 : p2->bindTextures) {
-                                if (b2.ident == "Source") {
-                                    b.texture = b2.texture;
-                                    b.filter = b2.filter;
-                                    b.wrap = b2.wrap;
-                                    b.sampler = b2.sampler;
+    auto shaderPostBuild() -> void {
+        for (auto& lut: preset->luts) {
+            if (!lut.data)
+                continue;
+
+            D3DTexture* lutTex = new D3DTexture;
+            D3D11Utility::releaseTexture(*lutTex);
+            lutTex->ident = lut.id;
+            lutTex->desc.Width = lut.width;
+            lutTex->desc.Height = lut.height;
+            lutTex->desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            if (lut.mipmap)
+                lutTex->desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+            if (!initTexture(*lutTex, true)) {
+                delete lutTex;
+                continue;
+            }
+
+            D3D11_MAPPED_SUBRESOURCE mappedTexture;
+            if (FAILED(context->Map((ID3D11Resource*) lutTex->staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture))) {
+                delete lutTex;
+                continue;
+            }
+
+            int srcPitch = lut.width << 2;
+            uint8_t* src = lut.data;
+            unsigned pitch = mappedTexture.RowPitch;
+            uint8_t* dest = (uint8_t*) mappedTexture.pData;
+
+            for (int i = 0; i < lut.height; i++) {
+                std::memcpy(dest, src, srcPitch);
+                src += srcPitch;
+                dest += pitch;
+            }
+
+            context->Unmap((ID3D11Resource*) lutTex->staging, 0);
+            context->CopyResource((ID3D11Resource*) lutTex->ptr, (ID3D11Resource*) lutTex->staging);
+
+            if (lut.mipmap)
+                context->GenerateMips(lutTex->view);
+            luts.push_back(lutTex);
+        }
+
+        programs.clear();
+        bool hasError = false;
+        for(auto p : programsTemp) {
+            std::string& error = p->shader.error;
+            if (!error.empty()) {
+                if (p->passId < preset->passes.size()) {
+                    preset->passes[p->passId].error = error;
+                    hasError = true;
+                }
+            }
+
+            if (p->shader.layout)
+                programs.push_back(p);
+        }
+
+        D3DTexture* tex = &frame.texture;
+        for(auto p : programs) {
+            for(auto& b : p->bindTextures) {
+                if (b.ident == "Source") {
+                    b.texture = tex;
+                    b.filter = p->filter;
+                    b.wrap = p->wrap;
+                    b.sampler = samplers[b.filter][b.wrap];
+                    tex = p->crop.active ? &p->cropTarget : &p->renderTarget;
+                } else {
+                    for(auto lutTex : luts) {
+                        if (lutTex->ident == b.ident) {
+                            b.texture = lutTex;
+                            for (auto& lut: preset->luts) {
+                                if (lut.id == lutTex->ident) {
+                                    b.filter = lut.filter;
+                                    b.wrap = lut.wrap;
+                                    b.sampler = samplers[lut.filter][lut.wrap];
                                     break;
                                 }
                             }
@@ -661,20 +752,49 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                         }
                     }
                 }
-                for(int i = p->bindTextures.size() - 1; i >= 0; i--) {
-                    if (!p->bindTextures[i].texture)
-                        p->bindTextures.erase(p->bindTextures.begin() + i);
+            }
+        }
+
+        for(auto p : programs) {
+            for(auto& b : p->bindTextures) {
+                if (b.texture)
+                    continue;
+
+                for(auto p2 : programs) {
+                    if (p2->ident == b.ident) {
+                        for(auto& b2 : p2->bindTextures) {
+                            if (b2.ident == "Source") {
+                                b.texture = b2.texture;
+                                b.filter = b2.filter;
+                                b.wrap = b2.wrap;
+                                b.sampler = b2.sampler;
+                                break;
+                            }
+                        }
+                        break;
+                    }
                 }
             }
-
-            D3D11Utility::resolveParams(preset, programs, &frame.texture, &seed);
-            updateRTS = true;
+            for(int i = p->bindTextures.size() - 1; i >= 0; i--) {
+                if (!p->bindTextures[i].texture)
+                    p->bindTextures.erase(p->bindTextures.begin() + i);
+            }
         }
+
+        D3D11Utility::resolveParams(preset, programs, &frame.texture, &seed);
+        onShaderCallback(-1, hasError);
+        updateRTS = true;
     }
 
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.hintExclusiveFullscreen)
             checkFSE();
+
+        if (shaderReady) {
+            wait();
+            shaderPostBuild();
+            shaderReady = false;
+        }
 
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height, options);
@@ -704,6 +824,15 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
         if (settings.hintExclusiveFullscreen)
             checkFSE();
+
+        if (shaderReady) {
+            wait();
+            shaderPostBuild();
+            shaderReady = false;
+        }
+
+        if (!programs.size()) // YUV input needs a shader to progress it
+            return false;
 
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height, options);
@@ -853,7 +982,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 ID3D11RenderTargetView* nullRT = nullptr;
                 context->OMSetRenderTargets(1, &nullRT, nullptr);
 
-                // it's important to clear not used slots for this pass
+                // it's important to clear unused slots for this pass
                 ID3D11ShaderResourceView* textures[16] = { nullptr };
                 ID3D11SamplerState*       samplers[16] = { nullptr };
 
@@ -913,6 +1042,11 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if (dndOverlay.enabled()) {
             buildOverlayTexture();
             blendRect(overlay);
+        }
+
+        if (progressVisible && progress.texture.ptr) {
+            setProgressPosition();
+            blendRectProgress(progress);
         }
 
         if (settings.vrr) {
@@ -1018,6 +1152,30 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         context->Draw(4, 0);
     }
 
+    auto blendRectProgress(Rectangle& rect) -> void {
+        applyShader(rect.shader);
+        context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        UINT stride = sizeof(D3DVertex);
+        UINT offset = 0;
+        context->IASetVertexBuffers(0, 1, &rect.vbo, &stride, &offset);
+
+        context->PSSetShaderResources(0, 1, &rect.texture.view);
+        context->PSSetSamplers(0, 1, &samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE]);
+
+        D3D11_MAPPED_SUBRESOURCE subRes;
+        if (SUCCEEDED(context->Map((ID3D11Resource*)constantBufferProgress, 0, D3D11_MAP_WRITE_DISCARD, 0, &subRes))) {
+            std::memcpy((uint8_t*)subRes.pData, (uint8_t*)&progressDegree, 4);
+            context->Unmap((ID3D11Resource*)constantBufferProgress, 0);
+            context->PSSetConstantBuffers(0, 1, &constantBufferProgress);
+        }
+
+        if (++progressDegree == 360)
+            progressDegree = 0;
+
+        context->OMSetBlendState(blendEnable, nullptr, D3D11_DEFAULT_SAMPLE_MASK);
+        context->Draw(4, 0);
+    }
+
     auto setViewport(const Viewport& viewport) -> void {
         D3D11_VIEWPORT d3D11Viewport;
         d3D11Viewport.Width = viewport.width;
@@ -1039,14 +1197,17 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         D3D11Utility::releaseTexture(frame.texture);
         D3D11Utility::releaseTexture(message.texture);
         D3D11Utility::releaseTexture(overlay.texture);
+        D3D11Utility::releaseTexture(progress.texture);
 
         dxRelease(frame.vbo)
         dxRelease(message.vbo)
         dxRelease(overlay.vbo)
+        dxRelease(progress.vbo)
 
         dxRelease(ubo)
         dxRelease(uboRotated)
         dxRelease(uboChain)
+        dxRelease(constantBufferProgress)
         dxRelease(blendEnable)
         dxRelease(blendDisable)
         dxRelease(scissorEnable)
@@ -1284,6 +1445,67 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         }
 
         context->Unmap((ID3D11Resource*)overlay.vbo, 0);
+    }
+
+    auto setProgressAnimation(uint8_t* _data, unsigned _width, unsigned _height) -> void {
+        D3D11Utility::releaseTexture(progress.texture);
+        progress.texture.desc.Width = _width;
+        progress.texture.desc.Height = _height;
+        progress.texture.desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        initTexture(progress.texture, false);
+
+        D3D11_MAPPED_SUBRESOURCE mappedTexture;
+        if (FAILED(context->Map( (ID3D11Resource*)progress.texture.ptr, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTexture)))
+            return;
+
+        int srcPitch = _width << 2;
+        uint8_t* src = _data;
+        unsigned pitch = mappedTexture.RowPitch;
+        uint8_t* dest = (uint8_t*)mappedTexture.pData;
+
+        for(int i = 0; i < _height; i++) {
+            std::memcpy(dest, src, srcPitch);
+            src += srcPitch;
+            dest += pitch;
+        }
+
+        context->Unmap((ID3D11Resource*)progress.texture.ptr, 0);
+    }
+
+    auto setProgressPosition() -> void {
+        D3D11_MAPPED_SUBRESOURCE mappedVbo;
+        if (FAILED(context->Map((ID3D11Resource*)progress.vbo, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedVbo)))
+            return;
+
+        float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
+
+        float x = -1.0 + (viewport.width - progress.texture.size.x - 20) * screenx;
+        float y = 1.0 -  20.0 * screeny;
+
+        float w = progress.texture.size.x * screenx;
+        float h = progress.texture.size.y * screeny;
+
+        float box[4][4] = {
+                {x,     y,     0, 0},
+                {x + w, y,     1, 0},
+                {x,     y - h, 0, 1},
+                {x + w, y - h, 1, 1}
+        };
+        D3DVertex* vertex = (D3DVertex*) mappedVbo.pData;
+
+        for (int i = 0; i < 4; i++) {
+            vertex->color[0] = 1.0;
+            vertex->color[1] = 1.0;
+            vertex->color[2] = 1.0;
+            vertex->color[3] = 1.0;
+            vertex->position[0] = box[i][0];
+            vertex->position[1] = box[i][1];
+            vertex->texcoord[0] = box[i][2];
+            vertex->texcoord[1] = box[i][3];
+            vertex++;
+        }
+
+        context->Unmap((ID3D11Resource*)progress.vbo, 0);
     }
 
     auto waitVRR() -> void {

@@ -80,6 +80,8 @@ namespace DRIVER {
         std::vector<D3DTextureBind> bindTextures;
         D3DTexture renderTarget;
         D3DTexture cropTarget;
+        std::string src;
+        unsigned passId;
 
         ShaderPreset::ScaleType scaleTypeX;
         ShaderPreset::ScaleType scaleTypeY;

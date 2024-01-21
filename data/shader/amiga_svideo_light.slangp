@@ -1,0 +1,64 @@
+
+shaders = 7
+luma_chroma = true
+
+shader0 = resources/colorEncoding.slang
+alias0 = "LumaChromaEncoding"
+filter_linear0 = false
+float_framebuffer0 = true
+scale_type0 = source
+scale0 = 1.0
+
+shader1 = resources/randomLineOffset.slang
+alias1 = "RandomLineOffset"
+filter_linear1 = false
+float_framebuffer1 = true
+scale_type1 = source
+scale1 = 1.0
+
+shader2 = resources/lumaLatency.slang
+alias2 = "LumaLatency"
+filter_linear2 = false
+float_framebuffer2 = true
+scale_type2 = source
+scale2 = 1.0
+
+shader3 = resources/noise.slang
+alias3 = "LumaChromaNoise"
+filter_linear3 = false
+float_framebuffer3 = true
+scale_type3 = source
+scale3 = 1.0
+
+shader4 = resources/bandwidth.slang
+alias4 = "BandwidthReduction"
+filter_linear4 = false
+float_framebuffer4 = true
+scale_type4 = source
+scale_x4 = 2.0
+scale_y4 = 1.0
+
+shader5 = resources/colorDecoding.slang
+alias5 = "LumaChromaDecoding"
+filter_linear5 = false
+float_framebuffer5 = true
+scale_type5 = source
+scale5 = 1.0
+
+shader6 = resources/gamma.slang
+alias6 = "Gamma"
+filter_linear6 = false
+float_framebuffer6 = true
+scale_type6 = source
+scale6 = 1.0
+
+
+# LUT generation: program/video/luts.cpp
+textures = "lutBandwidth"
+
+lutBandwidth = resources/lutBandwidth.png
+lutBandwidth_linear = false
+lutBandwidth_mipmap = false
+lutBandwidth_wrap_mode = "clamp_to_edge"
+
+

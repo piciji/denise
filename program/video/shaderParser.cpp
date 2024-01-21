@@ -248,12 +248,6 @@ auto ShaderParser::addParameter(ShaderPreset::Param& param) -> void {
 }
 
 auto ShaderParser::parseTextures() -> void {
-   // if (!luts.size()) {
-   //     buildLutBloom();
-   //     buildLutMask();
-   //     buildLutBandwidth();
-   // }
-
     std::string lutList = rootSettings.get<std::string>("textures", "");
 
     if (lutList.empty())
@@ -284,14 +278,6 @@ auto ShaderParser::parseTextures() -> void {
 
         if (!loadLUT(lut)) {
 
-//            for (auto& tempLut : luts) {
-//                if (lut.id == tempLut.id) {
-//                    lut.data = tempLut.data;
-//                    lut.width = tempLut.width;
-//                    lut.height = tempLut.height;
-//                    break;
-//                }
-//            }
         }
 
         shaderPreset.luts.push_back(lut);

@@ -121,7 +121,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
 auto VideoManager::update() -> void {
 
     if (!colorSpectrum || !isC64() ) { // palette
-        if ( (crtMode == CrtMode::Cpu) || ( (crtMode == CrtMode::Gpu) && parser->shaderPreset.lumaChroma ) ) {
+        if ( (crtMode == CrtMode::Cpu) || ( (crtMode == CrtMode::Gpu) && shaderLumaChromaInput() ) ) {
             convertPaletteToLumaChroma();
 
             convertLumaChromaToRGB();
@@ -592,14 +592,14 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     bool cropCoordUpdated = emulator->cropCoordUpdated(cropTop, cropLeft);
     if (!placeHolderFrames) { 
         if (rebuildShader) {
-            videoDriver->setShader( (crtMode == CrtMode::Gpu) ? &parser->shaderPreset : nullptr);
             setData("autoEmu_cropTop", (float)cropTop);
             setData("autoEmu_cropLeft", (float)cropLeft);
             setData("autoEmu_lace", (float)interlace);
             setData("autoEmu_pal", (float)pal);
             setData("autoEmu_subRegion", emulator->getSubRegion());
             setData("autoEmu_tvGamma", (float)(colorSpectrum || crtRealGamma));
-            setData("autoEmu_lumaChroma", (float)(parser->shaderPreset.lumaChroma));
+            setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
+            videoDriver->setShader( (crtMode == CrtMode::Gpu) ? &parser->shaderPreset : nullptr);
             rebuildShader  = false;
         } else if (cropCoordUpdated) {
             setData("autoEmu_cropTop", (float)cropTop);
@@ -643,17 +643,18 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
 
 	} else if (crtMode == CrtMode::Gpu) {
-        if (parser->shaderPreset.lumaChroma) {
+        if (shaderLumaChromaInput()) {
             width += SHADER_OFFSCREEN_WIDTH << 1;
             srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
             src -= SHADER_OFFSCREEN_WIDTH;
 
             if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : 1), gpuOptions ))
-                return;
+                goto Typical;
 
             renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuDataFloat, gpuPitch - width, cropTop);
 
         } else {
+Typical:
             if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
                 return;
 
@@ -1528,9 +1529,7 @@ auto VideoManager::loadPreset() -> bool {
 
 auto VideoManager::loadPreset(const std::string& path) -> void {
     std::vector<std::string> brokenPaths;
-    if (loadPreset(path, brokenPaths)) {
-        settings->set<std::string>("slang_loaded", path);
-    }
+    loadPreset(path, brokenPaths);
 }
 
 auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
@@ -1544,6 +1543,7 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
         return nullptr;
     }
 
+    settings->set<std::string>("slang_loaded", path);
     parser->clear();
     delete parser;
 
@@ -1590,6 +1590,7 @@ auto VideoManager::getPreset() -> ShaderPreset* {
 auto VideoManager::clearPreset() -> void {
     parser->clear();
     applyMeta();
+    settings->set<std::string>("slang_loaded", "");
     rebuildShader = true;
 }
 

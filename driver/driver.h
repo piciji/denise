@@ -36,11 +36,14 @@ struct Video {
     virtual auto clear() -> void {}
     virtual auto setLinearFilter(bool state) -> void {}
     virtual auto setShader(ShaderPreset* preset) -> void {}
+    virtual auto setShaderProgressCallback( std::function<void (int pass, bool hasErrors)> onCallback ) -> void {}
     virtual auto synchronize(bool state) -> void {}
 	virtual auto hasSynchronized() -> bool { return false; }
     virtual auto hardSync(bool state) -> void {}
     virtual auto setThreaded(bool state) -> void {}
     virtual auto hasThreaded() -> bool { return false; }
+    virtual auto waitRenderThread() -> void {}
+    virtual auto setProgressAnimation(uint8_t* _data, unsigned _width, unsigned _height) -> void {}
 
 	virtual auto showMessage(std::string message, bool critical = false) -> void {}
     virtual auto forceResize() -> void {}

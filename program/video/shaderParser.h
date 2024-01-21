@@ -11,7 +11,6 @@ struct ShaderParser {
     ShaderPreset shaderPreset;
     std::vector<std::string> entryPaths;
     std::vector<std::string> brokenPaths;
-  //  static std::vector<ShaderPreset::Lut> luts;
     std::vector<uint8_t*> lutData;
     bool modified;
 

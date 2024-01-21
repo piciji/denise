@@ -181,6 +181,9 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
         Control();
     } control;
 
+    GUIKIT::Label errorLabel;
+    GUIKIT::MultilineEdit errorMessage;
+
     VideoPassLayout();
 };
 
@@ -220,6 +223,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image imgFolderOpen;
     GUIKIT::Image imgFolderClosed;
     GUIKIT::Image imgDocument;
+    GUIKIT::Image imgError;
     GUIKIT::Image pageUp;
     GUIKIT::Image pageDown;
     GUIKIT::Image pageUpGray;
@@ -252,6 +256,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto unloadShader() -> void;
     auto getShaderFolder() -> std::string;
     auto externalFolder() -> bool { return layShader.main.control.external.checked(); }
+    auto openShaderFileDialog() -> std::string;
+    auto presentShaderError() -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

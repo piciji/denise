@@ -5,36 +5,15 @@ namespace DRIVER {
 
 struct D3D11Utility {
 
-    static auto buildProgram(D3D11Symbols& symbols, D3D_FEATURE_LEVEL& featureLevel, ID3D11Device* device, D3DProgram& program, ShaderPreset::Pass& pass) -> bool {
-        program.mipmap = pass.mipmap;
-        program.scaleX = pass.scaleX;
-        program.absX = pass.absX;
-        program.scaleTypeX = pass.scaleTypeX;
-        program.scaleY = pass.scaleY;
-        program.absY = pass.absY;
-        program.scaleTypeY = pass.scaleTypeY;
-        program.filter = pass.filter;
-        program.wrap = pass.wrap;
-        program.ident = pass.alias;
-        program.crop.set( pass.crop );
-
-        if (pass.bufferType == ShaderPreset::BUFFER_FP)
-            program.format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-        else if (pass.bufferType == ShaderPreset::BUFFER_SRGB)
-            program.format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-        else
-            program.format = DXGI_FORMAT_R8G8B8A8_UNORM;
-
+    static auto buildProgram2(D3D11Symbols& symbols, D3D_FEATURE_LEVEL& featureLevel, ID3D11Device* device, D3DProgram& program) -> bool {
 
         static const D3D11_INPUT_ELEMENT_DESC desc[] = {
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
 
-        if (!createShader(symbols, featureLevel, device, pass.code, "PS", "VS", "", desc, countof(desc), &program.shader)) {
-            pass.error = program.shader.error;
+        if (!createShader(symbols, featureLevel, device, program.src, "PS", "VS", "", desc, countof(desc), &program.shader))
             return false;
-        }
 
         if (!createPSConsts(device, program)) {
             return false;
@@ -137,12 +116,16 @@ struct D3D11Utility {
     static auto createPSConsts(ID3D11Device* device, D3DProgram& prg ) -> bool {
         D3DShader& shader = prg.shader;
 
-        if (!shader.reflPS)
+        if (!shader.reflPS) {
+            shader.error = "reflection error";
             return false;
+        }
 
         D3D11_SHADER_DESC shaderDesc;
-        if (FAILED(shader.reflPS->GetDesc(&shaderDesc)))
+        if (FAILED(shader.reflPS->GetDesc(&shaderDesc))) {
+            shader.error = "reflection error";
             return false;
+        }
 
         int resourceCount = shaderDesc.BoundResources;
         for (int r = 0; r < resourceCount; r++) {

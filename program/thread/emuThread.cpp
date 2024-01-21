@@ -181,6 +181,14 @@ auto EmuThread::handleUIEvents() -> void {
         view->setDefaultCursor();
         dismissPlaceholder = false;
     }
+
+    if (presentShaderError) {
+        auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+        if (emuView && emuView->videoLayout)
+            emuView->videoLayout->presentShaderError();
+
+        presentShaderError = false;
+    }
 }
 
 auto EmuThread::clearEvents() -> void {

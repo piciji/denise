@@ -4,8 +4,6 @@
 #include "../../emulation/interface.h"
 #include "../program.h"
 
-//std::vector<ShaderPreset::Lut> ShaderParser::luts;
-
 auto ShaderParser::buildLutBloom() -> void {
     unsigned width = 111 * (13 + 1) * 4;
     unsigned height = 6 + 1;
@@ -21,16 +19,6 @@ auto ShaderParser::buildLutBloom() -> void {
             }
         }
     }
-
-//    ShaderPreset::Lut lut;
-//    lut.data = bloomLUT;
-//    lut.width = width >> 2;
-//    lut.height = height;
-//    lut.mipmap = false;
-//    lut.filter = ShaderPreset::FILTER_NEAREST;
-//    lut.wrap = ShaderPreset::WRAP_EDGE;
-//    lut.id = "lutBloom";
-//    luts.push_back(lut);
 
     writeLut("resources/lutBloom.png", bloomLUT, width >> 2, height);
     delete[] bloomLUT;
@@ -129,16 +117,6 @@ auto ShaderParser::buildLutBandwidth() -> void {
         }
     }
 
-    //ShaderPreset::Lut lut;
-    //lut.data = bwLUT;
-    //lut.width = width >> 2;
-    //lut.height = height;
-    //lut.mipmap = false;
-    //lut.filter = ShaderPreset::FILTER_NEAREST;
-    //lut.wrap = ShaderPreset::WRAP_EDGE;
-    //lut.id = "lutBandwidth";
-    //luts.push_back(lut);
-
     writeLut("resources/lutBandwidth.png", bwLUT, width >> 2, height);
     delete[] bwLUT;
 }
@@ -174,35 +152,4 @@ auto ShaderParser::buildLutMask() -> void {
     writeLut("resources/lutMaskAperture.png", imageAperture.data, imageAperture.width, imageAperture.height);
     writeLut("resources/lutMaskShadow.png", imageShadowMask.data, imageShadowMask.width, imageShadowMask.height);
     writeLut("resources/lutMaskSlot.png", imageSlotMask.data, imageSlotMask.width, imageSlotMask.height);
-
-//    ShaderPreset::Lut lut;
-//    lut.data = new uint8_t[imageAperture.width * imageAperture.height * 4];
-//    std::memcpy(lut.data, imageAperture.data, imageAperture.width * imageAperture.height * 4);
-//    lut.width = imageAperture.width;
-//    lut.height = imageAperture.height;
-//    lut.mipmap = true;
-//    lut.filter = ShaderPreset::FILTER_LINEAR;
-//    lut.wrap = ShaderPreset::WRAP_REPEAT;
-//    lut.id = "lutMaskAperture";
-//    luts.push_back(lut);
-//
-//    lut.data = new uint8_t[imageShadowMask.width * imageShadowMask.height * 4];
-//    std::memcpy(lut.data, imageShadowMask.data, imageShadowMask.width * imageShadowMask.height * 4);
-//    lut.width = imageShadowMask.width;
-//    lut.height = imageShadowMask.height;
-//    lut.mipmap = true;
-//    lut.filter = ShaderPreset::FILTER_LINEAR;
-//    lut.wrap = ShaderPreset::WRAP_REPEAT;
-//    lut.id = "lutMaskShadow";
-//    luts.push_back(lut);
-//
-//    lut.data = new uint8_t[imageSlotMask.width * imageSlotMask.height * 4];
-//    std::memcpy(lut.data, imageSlotMask.data, imageSlotMask.width * imageSlotMask.height * 4);
-//    lut.width = imageSlotMask.width;
-//    lut.height = imageSlotMask.height;
-//    lut.mipmap = true;
-//    lut.filter = ShaderPreset::FILTER_LINEAR;
-//    lut.wrap = ShaderPreset::WRAP_REPEAT;
-//    lut.id = "lutMaskSlot";
-//    luts.push_back(lut);
 }

@@ -109,6 +109,7 @@ namespace DRIVER {
             buffer.height = 0;
             buffer.pitch = 0;
             buffer.options = 0;
+            buffer.floatFormat = false;
         }
 
         fillPos = 0;
@@ -192,7 +193,7 @@ namespace DRIVER {
     auto RenderThread::changePriorityToRealtime(bool state) -> void {
         // only macOS need higher thread priorities to prevent scrolling hiccups.
         // there are some situations, when a realtime priority blocks the system forever, mostly "un-fullscreen" with higher rendering speed.
-        // in these situations we temporarly decrese priority to normal
+        // in these situations, we temporarily decrease priority to normal
 #ifdef __APPLE__
         realtime = state;
         updatePriority = true;

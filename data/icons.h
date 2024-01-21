@@ -132,4 +132,5 @@ extern uint8_t pageUp[277];
 extern uint8_t pageDownGray[288];
 extern uint8_t pageUpGray[286];
 
+extern uint8_t error[338];
 }

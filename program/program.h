@@ -169,6 +169,7 @@ struct Program : Emulator::Interface::Bind {
     auto fpsChanged() -> void override;
     auto setRotation() -> void;
     auto checkShaderSupport(Emulator::Interface* emulator) -> void;
+    auto loadProgress() -> void;
 	
     //input
     auto initInput() -> void;

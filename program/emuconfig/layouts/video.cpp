@@ -259,7 +259,9 @@ VideoPassLayout::Control::Control() {
 
 VideoPassLayout::VideoPassLayout() {
     append(settings,{0u, 0u}, 20);
-    append(control,{0u, 0u},20);
+    append(control,{0u, 0u}, 20);
+    append(errorLabel,{0u, 0u}, 5);
+    append(errorMessage, {~0u, 70u});
     setPadding(8);
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -286,6 +288,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
     imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
     imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
+    imgError.loadPng((uint8_t*)Icons::error, sizeof(Icons::error) );
     pageUp.loadPng((uint8_t*)Icons::pageUp, sizeof(Icons::pageUp) );
     pageDown.loadPng((uint8_t*)Icons::pageDown, sizeof(Icons::pageDown) );
     pageUpGray.loadPng((uint8_t*)Icons::pageUpGray, sizeof(Icons::pageUpGray) );
@@ -433,35 +436,25 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layShader.main.control.load.onActivate = [this]() {
-        static const std::vector<std::string> suffixList = {"slang", "slangp"};
-
-        auto path = GUIKIT::BrowserWindow()
-                .setTitle(trans->getA("select slang shader"))
-                .setPath( getShaderFolder() )
-                .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
-                .open();
-
+        auto path = openShaderFileDialog();
         if (path.empty())
             return;
 
+        emuThread->lock();
         if (loadShader(path)) {
             layShader.favourite.control.add.setEnabled();
             if (externalFolder())
                 _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
         }
+        emuThread->unlock();
     };
 
     layShader.main.control.prependPreset.onActivate = [this]() {
-        static const std::vector<std::string> suffixList = {"slang", "slangp"};
-        auto path = GUIKIT::BrowserWindow()
-                .setTitle(trans->getA("select slang shader"))
-                .setPath( getShaderFolder() )
-                .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
-                .open();
-
+        auto path = openShaderFileDialog();
         if (path.empty())
             return;
 
+        emuThread->lock();
         std::vector<std::string> brokenPaths;
         ShaderPreset* preset = vManager()->addPreset(path, true, brokenPaths);
 
@@ -473,20 +466,16 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             layShader.favourite.control.add.setEnabled();
             layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
+        emuThread->unlock();
         showBrokenPaths(brokenPaths);
     };
 
     layShader.main.control.appendPreset.onActivate = [this]() {
-        static const std::vector<std::string> suffixList = {"slang", "slangp"};
-        auto path = GUIKIT::BrowserWindow()
-                .setTitle(trans->getA("select slang shader"))
-                .setPath( getShaderFolder() )
-                .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
-                .open();
-
+        auto path = openShaderFileDialog();
         if (path.empty())
             return;
 
+        emuThread->lock();
         std::vector<std::string> brokenPaths;
         ShaderPreset* preset = vManager()->addPreset(path, false, brokenPaths);
 
@@ -498,11 +487,14 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             layShader.favourite.control.add.setEnabled();
             layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
+        emuThread->unlock();
         showBrokenPaths(brokenPaths);
     };
 
     layShader.main.control.unload.onActivate = [this]() {
+        emuThread->lock();
         unloadShader();
+        emuThread->unlock();
     };
 
     layShader.main.control.save.onActivate = [this]() {
@@ -586,7 +578,9 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layShader.favourite.list.onActivate = [this]() {
         int selection = layShader.favourite.list.selection();
         std::string path = layShader.favourite.list.text(selection, 0);
+        emuThread->lock();
         loadShader(path);
+        emuThread->unlock();
     };
 
     layShader.favourite.list.onChange = [this]() {
@@ -596,7 +590,9 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layPass.control.disable.onActivate = [this]() {
+        emuThread->lock();
         auto pass = vManager()->togglePassUsage(selectedPassId);
+        emuThread->unlock();
         if(!pass)
             return;
 
@@ -611,8 +607,13 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layPass.control.down.onClick = [this]() {
+        if (!layPass.control.down.enabled())
+            return;
+
         unsigned passIdBefore = selectedPassId;
+        emuThread->lock();
         vManager()->movePass( selectedPassId, false);
+        emuThread->unlock();
 
         if (passIdBefore != selectedPassId) {
             auto preset = vManager()->getPreset();
@@ -634,8 +635,13 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layPass.control.up.onClick = [this]() {
+        if (!layPass.control.up.enabled())
+            return;
+
         unsigned passIdBefore = selectedPassId;
+        emuThread->lock();
         vManager()->movePass( selectedPassId, true);
+        emuThread->unlock();
 
         if (passIdBefore != selectedPassId) {
             auto preset = vManager()->getPreset();
@@ -750,31 +756,45 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layPass.settings.data.filter.nearest.onActivate = [this]() {
+        emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_NEAREST);
+        emuThread->unlock();
     };
 
     layPass.settings.data.filter.linear.onActivate = [this]() {
+        emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_LINEAR);
+        emuThread->unlock();
     };
 
     layPass.settings.data.filter.unspec.onActivate = [this]() {
+        emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_UNSPEC);
+        emuThread->unlock();
     };
 
     layPass.settings.data.bufferFormat.unorm.onActivate = [this]() {
+        emuThread->lock();
         vManager()->setPassFormat(selectedPassId, ShaderPreset::BUFFER_UNORM);
+        emuThread->unlock();
     };
 
     layPass.settings.data.bufferFormat.srgb.onActivate = [this]() {
+        emuThread->lock();
         vManager()->setPassFormat(selectedPassId, ShaderPreset::BUFFER_SRGB);
+        emuThread->unlock();
     };
 
     layPass.settings.data.bufferFormat.fp.onActivate = [this]() {
+        emuThread->lock();
         vManager()->setPassFormat(selectedPassId, ShaderPreset::BUFFER_FP);
+        emuThread->unlock();
     };
 
     layPass.settings.data.mipmap.onToggle = [this](bool checked) {
+        emuThread->lock();
         vManager()->setPassMipmap(selectedPassId, checked);
+        emuThread->unlock();
     };
 
     for(int i = 0; i < 5; i++) {
@@ -782,11 +802,15 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         auto& radioY = layPass.settings.data.scaleY.control.radios[i];
 
         radioX.onActivate = [this, i]() {
+            emuThread->lock();
             vManager()->setPassScaleX(selectedPassId, float(i+1));
+            emuThread->unlock();
         };
 
         radioY.onActivate = [this, i]() {
+            emuThread->lock();
             vManager()->setPassScaleY(selectedPassId, float(i+1));
+            emuThread->unlock();
         };
     }
 
@@ -828,6 +852,7 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool expand) -> void {
     params.clear();
     moduleTree.remove(tviParams);
     layShader.main.info.toParams.setEnabled(false);
+    layPass.errorMessage.setText("");
 
     if (!preset)
         return;
@@ -1055,6 +1080,13 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
     layPass.settings.data.scaleX.synchronizeLayout();
     layPass.settings.data.scaleY.synchronizeLayout();
 
+    if (!pass.error.empty()) {
+        std::string _error = pass.error;
+        GUIKIT::String::replace(_error, "\n", "\r\n");
+        layPass.errorMessage.setText(_error);
+    } else
+        layPass.errorMessage.setText("");
+
     layPass.settings.setEnabled(pass.inUse);
 
     if (pass.inUse) {
@@ -1172,7 +1204,7 @@ auto VideoLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> void {
         layShader.favourite.control.add.setEnabled();
         showBrokenPaths(brokenPaths);
     } else
-        layShader.main.control.unload.onActivate();
+        unloadShader();
 	
 	updateVisibillity();
 }
@@ -1301,6 +1333,8 @@ auto VideoLayout::translate() -> void {
     layPass.settings.data.bufferFormat.srgb.setText( trans->getA("buffer format srgb") );
     layPass.settings.data.bufferFormat.fp.setText( trans->getA("buffer format fp") );
 
+    layPass.errorLabel.setText( trans->getA("error output", true) );
+
     for(int i = 0; i < PARAMS_PER_PAGE; i++) {
         paramSliders[i]->defaultButton.setText( trans->getA("default") );
     }
@@ -1368,6 +1402,15 @@ auto VideoLayout::showBrokenPaths(std::vector<std::string>& brokenPaths) -> void
     }
     layShader.main.brokenLabels.clear();
 
+    if (brokenPaths.size()) {
+        auto label = new GUIKIT::Label;
+        label->setText( trans->getA("broken paths", true) );
+        label->setForegroundColor(0xff4500);
+        label->setFont(GUIKIT::Font::system("bold"));
+        layShader.main.brokenLabels.push_back(label);
+        layShader.main.append(*label, {0u, 0u}, 2);
+    }
+
     for (auto& brokenPath : brokenPaths) {
         auto label = new GUIKIT::Label;
         label->setText(brokenPath);
@@ -1387,7 +1430,6 @@ auto VideoLayout::loadShader(std::string path) -> bool {
     if (preset) {
         buildShaderUI(preset);
         layShader.main.info.loaded.setText( GUIKIT::String::getFileName( path, true ) );
-        _settings->set<std::string>("slang_loaded", path);
         layShader.main.control.setEnabled();
         layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
     }
@@ -1399,8 +1441,6 @@ auto VideoLayout::unloadShader() -> void {
     vManager()->clearPreset();
     buildShaderUI(nullptr);
     layShader.main.info.loaded.setText( "" );
-    _settings->set<std::string>("slang_loaded", "");
-    _settings->set<bool>("intern_preset", false);
     layShader.main.control.setEnabled(false);
     layShader.main.control.load.setEnabled();
     layShader.main.control.folder.setEnabled();
@@ -1416,4 +1456,33 @@ auto VideoLayout::getShaderFolder() -> std::string {
         return _settings->get<std::string>("slang_folder", "");
 
     return program->shaderFolder();
+}
+
+auto VideoLayout::openShaderFileDialog() -> std::string {
+    static const std::vector<std::string> suffixList = {"slang", "slangp"};
+
+    return GUIKIT::BrowserWindow()
+            .setTitle(trans->getA("select slang shader"))
+            .setPath( getShaderFolder() )
+            .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
+            .open();
+}
+
+auto VideoLayout::presentShaderError() -> void {
+    auto preset = vManager()->getPreset();
+
+    unsigned passId = 0;
+    for(auto& pass : preset->passes) {
+        if (pass.inUse && !pass.error.empty()) {
+            tviPasses[passId]->setImage(imgError);
+
+            if (selectedPassId == passId) {
+                std::string _error = pass.error;
+                GUIKIT::String::replace(_error, "\n", "\r\n");
+                layPass.errorMessage.setText(_error);
+            }
+        }
+
+        passId++;
+    }
 }

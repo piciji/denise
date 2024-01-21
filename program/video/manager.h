@@ -60,10 +60,7 @@ struct VideoManager {
     ~VideoManager();
 
     bool rebuildShader = true;
-
     ShaderParser* parser = nullptr;
-
-    std::vector<std::string> loadErrors;
         
 	static bool synchronized;
     static bool crtThreaded;

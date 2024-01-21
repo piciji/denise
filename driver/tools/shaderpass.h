@@ -30,7 +30,7 @@ struct ShaderPreset {
     enum ScaleType { SCALE_NONE = -1, SCALE_INPUT = 0, SCALE_ABSOLUTE, SCALE_VIEWPORT };
 
     int feedback;
-    bool lumaChroma; // format of incoming frame data (uses floating point for YUV/YIC)
+    bool lumaChroma = false; // format of incoming frame data (uses floating point for YUV/YIC)
 
     struct Pass {
         std::string src;

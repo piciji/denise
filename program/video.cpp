@@ -50,6 +50,54 @@ auto Program::initVideo(bool driverChange) -> void {
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
     view->updateShader();
     view->loadDragnDropOverlay();
+    videoDriver->setShaderProgressCallback( [](int pass, bool hasErrors) {
+        if (pass < 0) {
+            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+            if (emuView && emuView->videoLayout) {
+                if (emuThread->enabled) {
+                    emuThread->presentShaderError = true;
+                } else {
+                    emuView->videoLayout->presentShaderError();
+                }
+            }
+        }
+
+        if (statusHandler) {
+            if (pass < 0)
+                statusHandler->setMessage(trans->get(hasErrors ? "shader has errors" : "shader activated"),
+                    3, hasErrors);
+            else
+                statusHandler->setMessage(trans->get(hasErrors ? "pass error" : "pass success",
+                    {{"%pass%", std::to_string(pass)}}), 3, hasErrors);
+        }
+    } );
+
+    loadProgress();
+}
+
+auto Program::loadProgress() -> void {
+    static GUIKIT::Image* mediaImage = nullptr;
+    static bool initialized = false;
+
+    if (!initialized) {
+        initialized = true;
+        GUIKIT::File file(program->imgFolder() + "progress.png");
+
+        if (!file.open())
+            return;
+
+        uint8_t* data = file.read();
+
+        if (!data)
+            return;
+
+        mediaImage = new GUIKIT::Image;
+        if (!mediaImage->loadPng(data, file.getSize()))
+            return;
+    }
+
+    if (mediaImage && mediaImage->data)
+        videoDriver->setProgressAnimation(mediaImage->data, mediaImage->width, mediaImage->height);
 }
 
 auto Program::setVideoDimension(Emulator::Interface* emulator) -> void {

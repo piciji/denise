@@ -137,6 +137,7 @@ auto VideoManager::setData(const std::string& ident, float value) -> void {
     else
         for(auto& param : parser->shaderPreset.params) {
             if (param.id == ident) {
+                videoDriver->waitRenderThread();
                 param.value = value;
                 break;
             }
@@ -149,6 +150,7 @@ auto VideoManager::setData( unsigned offset, float value) -> void {
     else {
         auto& params = parser->shaderPreset.params;
         if (offset < params.size()) {
+            videoDriver->waitRenderThread();
             params[offset].value = value;
         }
     }
