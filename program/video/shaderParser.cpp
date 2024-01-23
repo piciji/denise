@@ -16,18 +16,14 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
     if (!res)
         return false;
 
-    // we use the first found file which includes ident "shaders"
+    // we use the first found file which includes identifier "shaders"
     // we don't check if there is another file that includes it.
-    if (!findRootConfig(rootSettings)) {
-        createSinglePass(path);
-        goto End;
-    }
+    if (!findRootConfig(rootSettings))
+        return createSinglePass(path);
 
     passCount = rootSettings.get<unsigned>("shaders", 0);
-    if (!passCount) {
-        createSinglePass(path);
-        goto End;
-    }
+    if (!passCount)
+        return false;
 
     shaderPreset.feedback = rootSettings.get<int>("feedback", -1);
     shaderPreset.lumaChroma = rootSettings.get<bool>("luma_chroma", false);
@@ -35,19 +31,10 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
     for(int i = 0; i < passCount; i++)
         parsePass(i);
 
-    if (shaderPreset.passes.empty()) { // wtf
-        createSinglePass(path);
-        fetchParameters(path, 0);
-        return true;
-    }
+    if (shaderPreset.passes.empty()) // wtf
+        return false;
 
     parseTextures();
-End:
-    for(int i = 0; i < shaderPreset.passes.size(); i++) {
-        ShaderPreset::Pass& pass = shaderPreset.passes[i];
-        fetchParameters(pass.src, i);
-        loadShader(pass);
-    }
 
     if (path != rootSettings.getPath()) { // there is at least one reference to root config
         std::vector<GUIKIT::Settings*> settingsList;
@@ -88,8 +75,8 @@ auto ShaderParser::savePreset(std::string path) -> bool {
             writeLine(fp, i, "wrap_mode", translateWrapMode(pass.wrap));
             writeLine(fp, i, "mipmap_input", pass.mipmap ? "true" : "false");
             writeLine(fp, i, "alias", pass.alias);
-            writeLine(fp, i, "float_framebuffer", pass.bufferType == ShaderPreset::BUFFER_FP ? "true" : "false");
-            writeLine(fp, i, "srgb_framebuffer", pass.bufferType == ShaderPreset::BUFFER_SRGB ? "true" : "false");
+            writeLine(fp, i, "float_framebuffer", pass.bufferType == ShaderPreset::BufferType::R16G16B16A16_SFLOAT ? "true" : "false");
+            writeLine(fp, i, "srgb_framebuffer", pass.bufferType == ShaderPreset::BufferType::R8G8B8A8_SRGB ? "true" : "false");
 
             if (pass.scaleTypeX != ShaderPreset::SCALE_NONE) {
                 writeLine(fp, i, "scale_type_x", translateScaleType(pass.scaleTypeX));
@@ -149,85 +136,28 @@ inline auto ShaderParser::writeLine(FILE* fp, unsigned passId, std::string key, 
     fputs( out.c_str(), fp );
 }
 
-auto ShaderParser::createSinglePass(std::string path) -> void {
+auto ShaderParser::createSinglePass(std::string path) -> bool {
     ShaderPreset::Pass pass;
     pass.src = path;
+    pass.alias = "";
+    pass.error = "";
+    if (!fetchShaderSource<false>(path, pass))
+        return false;
     pass.filter = ShaderPreset::Filter::FILTER_UNSPEC;
     pass.scaleTypeX = ShaderPreset::ScaleType::SCALE_INPUT;
     pass.scaleTypeY = ShaderPreset::ScaleType::SCALE_INPUT;
     pass.wrap = ShaderPreset::WrapMode::WRAP_EDGE;
     pass.frameModulo = 0;
-    pass.bufferType = ShaderPreset::BufferType::BUFFER_UNORM;
+    if (pass.bufferType == ShaderPreset::BufferType::UNKNOWN)
+        pass.bufferType = ShaderPreset::BufferType::R8G8B8A8_UNORM;
     pass.mipmap = false;
-    pass.alias = "";
     pass.scaleX = 1.0;
     pass.scaleY = 1.0;
     pass.absX = 0;
     pass.absY = 0;
     pass.inUse = true;
     shaderPreset.passes.push_back(pass);
-}
-
-auto ShaderParser::fetchParameters(std::string path, int passId, int depth) -> void {
-    static const std::string prefix = "#include";
-    std::string line;
-    int filled;
-
-    if (depth > 16)
-        return;
-
-    GUIKIT::File file(path);
-    if(!file.open() || !file.getSize()) {
-        brokenPaths.push_back(path);
-        return;
-    }
-
-    auto fp = file.getHandle();
-
-    char chunk[1024];
-    while ( fgets(chunk, sizeof(chunk), fp) ) {
-        line = chunk;
-        GUIKIT::String::remove(line, { "\r\n", "\n" });
-
-        if ((line.size() > prefix.size()) && std::equal(prefix.begin(), prefix.end(), line.begin())) {
-            GUIKIT::String::remove(line, {prefix});
-            GUIKIT::String::trim(line);
-            GUIKIT::String::removeQuote(line);
-            fetchParameters( GUIKIT::File::resolveRelativePath(path, line), passId, depth + 1);
-            continue;
-        }
-
-        if (!GUIKIT::String::foundSubStr(line, "#pragma parameter"))
-            continue;
-
-        ShaderPreset::Param param;
-
-        char id[64];
-        char desc[64];
-        if ((filled = sscanf_s(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
-                                  id, sizeof(id), desc, sizeof(desc), &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
-            continue;
-
-        param.id = id;
-        param.desc = desc;
-
-        if (GUIKIT::String::foundSubStr(param.id, "EMPTY_LINE"))
-            continue;
-
-        GUIKIT::String::trim(param.desc);
-
-        if (filled == 5)
-            param.step  = 0.1f * (param.maximum - param.minimum);
-
-        if (param.isDescriptor() && param.desc.empty())
-            continue;
-
-        param.pass = passId;
-
-        param.value = rootSettings.get<float>(param.id, param.initial);
-
-        addParameter(param);
-    }
+    return true;
 }
 
 auto ShaderParser::addParameter(ShaderPreset::Param& param) -> void {
@@ -276,9 +206,8 @@ auto ShaderParser::parseTextures() -> void {
         lut.mipmap = rootSettings.get<bool>(id + "_mipmap", false);
         lut.wrap = translateWrapMode( rootSettings.get<std::string>(id + "_wrap_mode", "") );
 
-        if (!loadLUT(lut)) {
-
-        }
+        if (!loadLUT(lut))
+            continue;
 
         shaderPreset.luts.push_back(lut);
     }
@@ -286,12 +215,20 @@ auto ShaderParser::parseTextures() -> void {
 
 auto ShaderParser::parsePass(unsigned pos) -> bool {
     ShaderPreset::Pass pass;
+    pass.crop.release();
     std::string strPos = std::to_string(pos);
     std::string path = rootSettings.get<std::string>("shader" + strPos, "");
     if (path.empty())
         return false;
 
     pass.src = GUIKIT::File::resolveRelativePath( rootSettings.getPath(), path);
+    pass.alias = rootSettings.get<std::string>("alias" + strPos, "");
+    pass.bufferType = ShaderPreset::BufferType::UNKNOWN;
+    pass.error = "";
+
+    if (!fetchShaderSource<false>(pass.src, pass))
+        return false;
+
     pass.inUse = true;
 
     int filter = -1;
@@ -302,16 +239,16 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
     pass.wrap = translateWrapMode( rootSettings.get<std::string>("wrap_mode" + strPos, "") );
     pass.frameModulo = rootSettings.get<unsigned>("frame_count_mod" + strPos, 0);
 
-    if (rootSettings.get<bool>("srgb_framebuffer" + strPos, false))
-        pass.bufferType = ShaderPreset::BUFFER_SRGB;
-    else if (rootSettings.get<bool>("float_framebuffer" + strPos, false))
-        pass.bufferType = ShaderPreset::BUFFER_FP;
-    else
-        pass.bufferType = ShaderPreset::BUFFER_UNORM;
+    if (pass.bufferType == ShaderPreset::BufferType::UNKNOWN) {
+        if (rootSettings.get<bool>("srgb_framebuffer" + strPos, false))
+            pass.bufferType = ShaderPreset::BufferType::R8G8B8A8_SRGB;
+        else if (rootSettings.get<bool>("float_framebuffer" + strPos, false))
+            pass.bufferType = ShaderPreset::BufferType::R16G16B16A16_SFLOAT;
+        else
+            pass.bufferType = ShaderPreset::BufferType::R8G8B8A8_UNORM;
+    }
 
     pass.mipmap = rootSettings.get<bool>("mipmap_input" + strPos, false);
-    pass.alias = rootSettings.get<std::string>("alias" + strPos, "");
-
     pass.inUse = !rootSettings.get<bool>("hide" + strPos, false);
 
     pass.scaleTypeX = ShaderPreset::SCALE_NONE;
@@ -399,6 +336,82 @@ auto ShaderParser::translateWrapMode(ShaderPreset::WrapMode wrapMode) -> std::st
     if (wrapMode == ShaderPreset::WRAP_REPEAT) return "repeat";
     if (wrapMode == ShaderPreset::WRAP_MIRRORED_REPEAT) return "mirrored_repeat";
     return "clamp_to_border";
+}
+
+auto ShaderParser::translateBufferType(ShaderPreset::BufferType& type ) ->  const std::string {
+    if (type == ShaderPreset::BufferType::R8_UNORM) return "R8_UNORM";
+    if (type == ShaderPreset::BufferType::R8_UINT) return "R8_UINT";
+    if (type == ShaderPreset::BufferType::R8_SINT) return "R8_SINT";
+    if (type == ShaderPreset::BufferType::R8G8_UNORM) return "R8G8_UNORM";
+    if (type == ShaderPreset::BufferType::R8G8_UINT) return "R8G8_UINT";
+    if (type == ShaderPreset::BufferType::R8G8_SINT) return "R8G8_SINT";
+    if (type == ShaderPreset::BufferType::R8G8B8A8_UNORM) return "R8G8B8A8_UNORM";
+    if (type == ShaderPreset::BufferType::R8G8B8A8_UINT) return "R8G8B8A8_UINT";
+    if (type == ShaderPreset::BufferType::R8G8B8A8_SINT) return "R8G8B8A8_SINT";
+    if (type == ShaderPreset::BufferType::R8G8B8A8_SRGB) return "R8G8B8A8_SRGB";
+
+    if (type == ShaderPreset::BufferType::A2B10G10R10_UNORM_PACK32) return "A2B10G10R10_UNORM_PACK32";
+    if (type == ShaderPreset::BufferType::A2B10G10R10_UINT_PACK32) return "A2B10G10R10_UINT_PACK32";
+
+    if (type == ShaderPreset::BufferType::R16_UINT) return "R16_UINT";
+    if (type == ShaderPreset::BufferType::R16_SINT) return "R16_SINT";
+    if (type == ShaderPreset::BufferType::R16_SFLOAT) return "R16_SFLOAT";
+    if (type == ShaderPreset::BufferType::R16G16_UINT) return "R16G16_UINT";
+    if (type == ShaderPreset::BufferType::R16G16_SINT) return "R16G16_SINT";
+    if (type == ShaderPreset::BufferType::R16G16_SFLOAT) return "R16G16_SFLOAT";
+    if (type == ShaderPreset::BufferType::R16G16B16A16_UINT) return "R16G16B16A16_UINT";
+    if (type == ShaderPreset::BufferType::R16G16B16A16_SINT) return "R16G16B16A16_SINT";
+    if (type == ShaderPreset::BufferType::R16G16B16A16_SFLOAT) return "R16G16B16A16_SFLOAT";
+
+    if (type == ShaderPreset::BufferType::R32_UINT) return "R32_UINT";
+    if (type == ShaderPreset::BufferType::R32_SINT) return "R32_SINT";
+    if (type == ShaderPreset::BufferType::R32_SFLOAT) return "R32_SFLOAT";
+    if (type == ShaderPreset::BufferType::R32G32_UINT) return "R32G32_UINT";
+    if (type == ShaderPreset::BufferType::R32G32_SINT) return "R32G32_SINT";
+    if (type == ShaderPreset::BufferType::R32G32_SFLOAT) return "R32G32_SFLOAT";
+    if (type == ShaderPreset::BufferType::R32G32B32A32_UINT) return "R32G32B32A32_UINT";
+    if (type == ShaderPreset::BufferType::R32G32B32A32_SINT) return "R32G32B32A32_SINT";
+    if (type == ShaderPreset::BufferType::R32G32B32A32_SFLOAT) return "R32G32B32A32_SFLOAT";
+
+    return "UNKNOWN";
+}
+
+auto ShaderParser::translateBufferType(const std::string& str ) -> ShaderPreset::BufferType {
+    if (str == "R8_UNORM") return ShaderPreset::BufferType::R8_UNORM;
+    if (str == "R8_UINT") return ShaderPreset::BufferType::R8_UINT;
+    if (str == "R8_SINT") return ShaderPreset::BufferType::R8_SINT;
+    if (str == "R8G8_UNORM") return ShaderPreset::BufferType::R8G8_UNORM;
+    if (str == "R8G8_UINT") return ShaderPreset::BufferType::R8G8_UINT;
+    if (str == "R8G8_SINT") return ShaderPreset::BufferType::R8G8_SINT;
+    if (str == "R8G8B8A8_UNORM") return ShaderPreset::BufferType::R8G8B8A8_UNORM;
+    if (str == "R8G8B8A8_UINT") return ShaderPreset::BufferType::R8G8B8A8_UINT;
+    if (str == "R8G8B8A8_SINT") return ShaderPreset::BufferType::R8G8B8A8_SINT;
+    if (str == "R8G8B8A8_SRGB") return ShaderPreset::BufferType::R8G8B8A8_SRGB;
+
+    if (str == "A2B10G10R10_UNORM_PACK32") return ShaderPreset::BufferType::A2B10G10R10_UNORM_PACK32;
+    if (str == "A2B10G10R10_UINT_PACK32") return ShaderPreset::BufferType::A2B10G10R10_UINT_PACK32;
+
+    if (str == "R16_UINT") return ShaderPreset::BufferType::R16_UINT;
+    if (str == "R16_SINT") return ShaderPreset::BufferType::R16_SINT;
+    if (str == "R16_SFLOAT") return ShaderPreset::BufferType::R16_SFLOAT;
+    if (str == "R16G16_UINT") return ShaderPreset::BufferType::R16G16_UINT;
+    if (str == "R16G16_SINT") return ShaderPreset::BufferType::R16G16_SINT;
+    if (str == "R16G16_SFLOAT") return ShaderPreset::BufferType::R16G16_SFLOAT;
+    if (str == "R16G16B16A16_UINT") return ShaderPreset::BufferType::R16G16B16A16_UINT;
+    if (str == "R16G16B16A16_SINT") return ShaderPreset::BufferType::R16G16B16A16_SINT;
+    if (str == "R16G16B16A16_SFLOAT") return ShaderPreset::BufferType::R16G16B16A16_SFLOAT;
+
+    if (str == "R32_UINT") return ShaderPreset::BufferType::R32_UINT;
+    if (str == "R32_SINT") return ShaderPreset::BufferType::R32_SINT;
+    if (str == "R32_SFLOAT") return ShaderPreset::BufferType::R32_SFLOAT;
+    if (str == "R32G32_UINT") return ShaderPreset::BufferType::R32G32_UINT;
+    if (str == "R32G32_SINT") return ShaderPreset::BufferType::R32G32_SINT;
+    if (str == "R32G32_SFLOAT") return ShaderPreset::BufferType::R32G32_SFLOAT;
+    if (str == "R32G32B32A32_UINT") return ShaderPreset::BufferType::R32G32B32A32_UINT;
+    if (str == "R32G32B32A32_SINT") return ShaderPreset::BufferType::R32G32B32A32_SINT;
+    if (str == "R32G32B32A32_SFLOAT") return ShaderPreset::BufferType::R32G32B32A32_SFLOAT;
+
+    return ShaderPreset::BufferType::UNKNOWN;
 }
 
 auto ShaderParser::findRootConfig(GUIKIT::Settings& settings, int depth) -> bool {
@@ -527,15 +540,6 @@ auto ShaderParser::setPassFilter(unsigned passId, ShaderPreset::Filter filter) -
     modified = true;
 }
 
-auto ShaderParser::setPassFormat(unsigned passId, ShaderPreset::BufferType bufferType) -> void {
-    if (passId >= shaderPreset.passes.size())
-        return;
-
-    ShaderPreset::Pass& pass = shaderPreset.passes[passId];
-    pass.bufferType = bufferType;
-    modified = true;
-}
-
 auto ShaderParser::setPassMipmap(unsigned passId, bool state) -> void {
     if (passId >= shaderPreset.passes.size())
         return;
@@ -576,33 +580,24 @@ auto ShaderParser::needMetaData() -> bool {
     return false;
 }
 
-auto ShaderParser::loadShader(ShaderPreset::Pass& pass) -> bool {
-    if (pass.src.empty())
-        return false;
-
-    GUIKIT::File file(pass.src);
-    if (!file.open())
-        return false;
-
-    pass.code.assign((char*) file.read(), file.getSize());
-    return true;
-}
-
 auto ShaderParser::loadLUT(ShaderPreset::Lut& lut) -> bool {
     if (lut.path.empty())
         return false;
 
     GUIKIT::File file(lut.path);
-    if (!file.open())
+    if (!file.open()) {
+        brokenPaths.push_back(lut.path);
         return false;
+    }
 
     GUIKIT::Image png;
-    if (!png.loadPng(file.read(), file.getSize() ))
+    if (!png.loadPng(file.read(), file.getSize() )) {
+        brokenPaths.push_back(lut.path);
         return false;
+    }
 
     lut.data = new uint8_t[png.width * png.height * 4];
     std::memcpy(lut.data, png.data, png.width * png.height * 4);
-    lutData.push_back(lut.data);
 
     lut.width = png.width;
     lut.height = png.height;
@@ -630,15 +625,135 @@ auto ShaderParser::updateCrop() -> void {
     }
 }
 
+template <bool SLANG>
+auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass& pass, int depth) -> bool {
+    static const std::string versionPrefix = "#version";
+    static const std::string includePrefix = "#include";
+    static const std::string pragmaPrefix = "#pragma";
+    static const std::string endifPrefix = "#endif";
+    static const std::string paramPrefix = "#pragma parameter";
+    static const std::string namePrefix = "#pragma name";
+    static const std::string formatPrefix = "#pragma format";
+
+    char chunk[1024];
+    std::string line;
+    int filled;
+
+    if (depth > 16)
+        return false;
+
+    GUIKIT::File file(path);
+    if(!file.open() || !file.getSize()) {
+        brokenPaths.push_back(path);
+        return false;
+    }
+
+    auto fp = file.getHandle();
+
+    if (SLANG && !depth) {
+        pass.code = "";
+        if (!fgets(chunk, sizeof(chunk), fp)) {
+            brokenPaths.push_back(path);
+            return false;
+        }
+        line = chunk;
+        GUIKIT::String::remove(line, { "\r" });
+
+        if (!GUIKIT::String::startsWith(line, versionPrefix)) {
+            brokenPaths.push_back("version string missing in " + path);
+            return false;
+        }
+
+        pass.code += line;
+        if(SLANG) pass.code += "#extension GL_GOOGLE_cpp_style_line_directive : require\n";
+    }
+
+    unsigned pos = !depth ? 2 : 1;
+    if(SLANG) pass.code += "#line " + std::to_string(pos) + " \"" + GUIKIT::String::getFileName(path) + "\"\n";
+
+    while ( fgets(chunk, sizeof(chunk), fp) ) {
+        line = chunk;
+        GUIKIT::String::remove(line, { "\r" });
+        GUIKIT::String::trim(line);
+
+        if (GUIKIT::String::startsWith(line, includePrefix)) {
+            GUIKIT::String::remove(line, {includePrefix});
+            GUIKIT::String::trim(line);
+            GUIKIT::String::removeQuote(line);
+            if (!fetchShaderSource<SLANG>( GUIKIT::File::resolveRelativePath(path, line), pass, depth + 1))
+                return false;
+
+            if(SLANG) pass.code += "#line " + std::to_string(pos) + " \"" + GUIKIT::String::getFileName(path) + "\"\n";
+        } else if (GUIKIT::String::startsWith(line, endifPrefix)) {
+            pass.code += line;
+            if(SLANG) pass.code += "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n";
+        } else if (GUIKIT::String::startsWith(line, pragmaPrefix)) {
+            pass.code += line;
+            if(SLANG) pass.code += "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n";
+
+            if (GUIKIT::String::startsWith(line, paramPrefix)) {
+                ShaderPreset::Param param;
+
+                char id[64];
+                char desc[64];
+                if ((filled = sscanf_s(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
+                                       id, sizeof(id), desc, sizeof(desc), &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
+                    goto End;
+
+                param.id = id;
+                param.desc = desc;
+
+                if (GUIKIT::String::foundSubStr(param.id, "EMPTY_LINE"))
+                    goto End;
+
+                GUIKIT::String::trim(param.desc);
+
+                if (filled == 5)
+                    param.step  = 0.1f * (param.maximum - param.minimum);
+
+                if (param.isDescriptor() && param.desc.empty())
+                    goto End;
+
+                param.pass = shaderPreset.passes.size();
+                param.value = rootSettings.get<float>(param.id, param.initial);
+                addParameter(param);
+            } else if (GUIKIT::String::startsWith(line, namePrefix)) {
+                if (pass.alias.empty()) {
+                    GUIKIT::String::remove(line, {namePrefix});
+                    GUIKIT::String::remove(line, { "\n" });
+                    GUIKIT::String::trim(line);
+                    GUIKIT::String::removeQuote(line);
+                    pass.alias = line;
+                }
+            } else if (GUIKIT::String::startsWith(line, formatPrefix)) {
+                GUIKIT::String::remove(line, {formatPrefix});
+                GUIKIT::String::remove(line, { "\n" });
+                GUIKIT::String::trim(line);
+                pass.bufferType = translateBufferType( line );
+            }
+        }
+        else {
+            line = chunk;
+            GUIKIT::String::remove(line, { "\r" }); 
+            pass.code += line;
+        }
+End:
+        pos++;
+    }
+    return true;
+}
+
 auto ShaderParser::clear() -> void {
+    for(auto& lut : shaderPreset.luts) {
+        if (lut.data)
+            delete[] lut.data;
+    }
+
     entryPaths.clear();
     brokenPaths.clear();
     shaderPreset.clear();
     rootSettings.clear();
     modified = false;
-    for (auto data : lutData)
-        delete[] data;
-    lutData.clear();
 }
 
 ShaderParser::ShaderParser() {

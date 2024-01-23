@@ -1520,8 +1520,10 @@ auto VideoManager::free() -> void {
 
 auto VideoManager::loadPreset() -> bool {
     std::string path = settings->get<std::string>("slang_loaded", "");
-    if (path.empty())
+    if (path.empty()) {
+        clearPreset();
         return false;
+    }
 
     std::vector<std::string> brokenPaths;
     return loadPreset(path, brokenPaths) != nullptr;
@@ -1575,7 +1577,12 @@ auto VideoManager::addPreset(std::string path, bool prepend, std::vector<std::st
 }
 
 auto VideoManager::savePreset(std::string path) -> bool {
-    return parser->savePreset(path);
+    bool res = parser->savePreset(path);
+
+    if (res)
+        settings->set<std::string>("slang_loaded", path);
+
+    return res;
 }
 
 auto VideoManager::getPreset(std::vector<std::string>& brokenPaths) -> ShaderPreset* {
@@ -1619,11 +1626,6 @@ auto VideoManager::setPassFilter(unsigned passId, ShaderPreset::Filter filter) -
     rebuildShader = true;
 }
 
-auto VideoManager::setPassFormat(unsigned passId, ShaderPreset::BufferType bufferType) -> void {
-    parser->setPassFormat(passId, bufferType);
-    rebuildShader = true;
-}
-
 auto VideoManager::setPassMipmap(unsigned passId, bool state) -> void {
     parser->setPassMipmap(passId, state);
     rebuildShader = true;
@@ -1641,6 +1643,10 @@ auto VideoManager::setPassScaleY(unsigned passId, float scale) -> void {
 
 auto VideoManager::shaderLumaChromaInput() -> bool {
     return parser->shaderPreset.lumaChroma;
+}
+
+auto VideoManager::translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string {
+    return parser->translateBufferType(bufferType);
 }
 
 VideoManager::~VideoManager() {

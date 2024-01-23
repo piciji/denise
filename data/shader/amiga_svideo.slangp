@@ -82,6 +82,9 @@ scale_type10 = source
 scale10 = 1.0
 mipmap_input10 = true
 
+phaseErrorPAL = 3.5
+lumaRise = 1.2
+
 
 # LUT generation: program/video/luts.cpp
 textures = "lutBloom;lutBandwidth;lutMaskAperture;lutMaskShadow;lutMaskSlot"

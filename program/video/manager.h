@@ -260,11 +260,11 @@ struct VideoManager {
     auto movePass(unsigned& passId, bool up) -> void;
     auto togglePassUsage(unsigned passId) -> ShaderPreset::Pass*;
     auto setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void;
-    auto setPassFormat(unsigned passId, ShaderPreset::BufferType bufferType) -> void;
     auto setPassMipmap(unsigned passId, bool state) -> void;
     auto setPassScaleX(unsigned passId, float scale) -> void;
     auto setPassScaleY(unsigned passId, float scale) -> void;
     auto shaderLumaChromaInput() -> bool;
+    auto translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string;
 };
 
 extern std::vector<VideoManager*> videoManagers;

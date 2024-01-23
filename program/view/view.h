@@ -16,7 +16,12 @@ struct View : public GUIKIT::Window {
 	bool requestFullscreenSwitch = false;
     bool customResizeMode = false;
     int dropZone = 0;
-	
+
+    struct ShaderFavourites {
+        std::string path;
+        GUIKIT::MenuRadioItem* item;
+    };
+
     struct SystemMenu {
         Emulator::Interface* emulator;
         GUIKIT::Menu* system;
@@ -38,6 +43,8 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem* palette;
         GUIKIT::MenuItem* geometry;
         GUIKIT::MenuItem* misc;
+
+        std::vector<ShaderFavourites> shaderFavourites;
     };
 
     auto translate() -> void;
@@ -56,7 +63,8 @@ struct View : public GUIKIT::Window {
 
     auto buildMenu() -> void;
     auto updateViewport() -> void;
-	auto updateShader() -> void;
+	auto updateShader(Emulator::Interface* emulator) -> void;
+    auto buildShader() -> void;
 	auto switchFullScreen(bool fullScreen = true, bool forceUnacquire = false) -> void;
     auto updateMenuBar( bool toggle = false ) -> void;
     auto updateStatusBar(bool toggle = false ) -> void;

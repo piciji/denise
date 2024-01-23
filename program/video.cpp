@@ -48,7 +48,7 @@ auto Program::initVideo(bool driverChange) -> void {
     }
 
 	VideoManager::setCrtThreaded( globalSettings->get<bool>("crt_threaded", true) );
-    view->updateShader();
+    view->buildShader();
     view->loadDragnDropOverlay();
     videoDriver->setShaderProgressCallback( [](int pass, bool hasErrors) {
         if (pass < 0) {

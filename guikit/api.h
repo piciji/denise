@@ -1523,6 +1523,7 @@ struct String {
     static auto foundSubStr(std::string& str, std::string subStr) -> bool;
     static auto findString(const std::string& strHaystack, const std::string& strNeedle) -> bool; // ignore case
     static auto endsWith(std::string& str, std::string suffix) -> bool;
+    static auto startsWith(const std::string& str, const std::string& prefix) -> bool;
     static auto removeQuote(std::string& str) -> std::string&;
     static auto remove(std::string& str, const std::vector<std::string>& subStr) -> std::string&;
     static auto replace(std::string& str, const std::string& search, const std::string& replace) -> std::string&;

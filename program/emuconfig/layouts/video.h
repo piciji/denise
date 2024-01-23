@@ -61,11 +61,11 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Button unload;
             GUIKIT::Button save;
 
+            GUIKIT::Widget spacer;
             GUIKIT::Label folder;
             GUIKIT::RadioBox internal;
             GUIKIT::RadioBox external;
 
-            GUIKIT::Widget spacer;
             GUIKIT::Button prependPreset;
             GUIKIT::Button appendPreset;
             GUIKIT::Button load;
@@ -131,15 +131,7 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
             } filter;
 
             GUIKIT::Label wrap;
-
-            struct BufferFormat : GUIKIT::HorizontalLayout {
-                GUIKIT::RadioBox unorm;
-                GUIKIT::RadioBox srgb;
-                GUIKIT::RadioBox fp;
-
-                BufferFormat();
-            } bufferFormat;
-
+            GUIKIT::Label bufferType;
             GUIKIT::CheckBox mipmap;
             GUIKIT::Label modulo;
 

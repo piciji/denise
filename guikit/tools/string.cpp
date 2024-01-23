@@ -156,6 +156,10 @@ auto String::endsWith(std::string& str, std::string suffix) -> bool {
     return str.size() >= suffix.size() && 0 == str.compare( str.size() - suffix.size(), suffix.size(), suffix );
 }
 
+auto String::startsWith(const std::string& str, const std::string& prefix) -> bool {
+    return (prefix.size() <= str.size()) && std::equal(prefix.begin(), prefix.end(), str.begin());
+}
+
 auto String::removeQuote(std::string& str) -> std::string& {
     int s = str.length();
     if(s < 2) return str;
@@ -168,7 +172,7 @@ auto String::removeQuote(std::string& str) -> std::string& {
 }
 
 auto String::remove(std::string& str, const std::vector<std::string>& subStr) -> std::string& {
-    for(auto sub : subStr) {
+    for(auto& sub : subStr) {
         std::string::size_type n = sub.length();
 
         for (std::string::size_type i = str.find(sub);

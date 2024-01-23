@@ -4,6 +4,8 @@
 #include "../../emulation/interface.h"
 #include "../program.h"
 
+// todo: use PNG library with compression support
+
 auto ShaderParser::buildLutBloom() -> void {
     unsigned width = 111 * (13 + 1) * 4;
     unsigned height = 6 + 1;
@@ -66,9 +68,8 @@ auto ShaderParser::buildLutBandwidth() -> void {
                 break;
         }
 
-        // sample rate is 4 times the color sub carrier
+        // the sample rate is 4 times the color sub carrier
         // The sampling rates for NTSC and PAL composite video signals are 14.3181818 Msamples/sec and 17.734475 Msamples/sec, respectively.
-        //SincFirFilter fir( vManager->pal ? 5000000.0 : 4200000.0, vManager->pal ? 17734475.0 : 14318180.0 );
         SincFirFilter fir( videoBandWith, subCarrier * 4.0 );
 
         for( int taps = 0; taps <= 21; taps++ ) {

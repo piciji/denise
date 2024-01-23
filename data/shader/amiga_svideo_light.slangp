@@ -52,6 +52,9 @@ float_framebuffer6 = true
 scale_type6 = source
 scale6 = 1.0
 
+phaseErrorPAL = 3.5
+lumaRise = 1.2
+
 
 # LUT generation: program/video/luts.cpp
 textures = "lutBandwidth"

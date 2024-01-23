@@ -87,20 +87,19 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     int64_t minimumCapTime;
     bool legacy;
 
-    Matrix4x4 modelView = {
+    const Matrix4x4 modelView = {
         1.0, 0.0, 0.0, 0.0,
         0.0, 1.0, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     };
-    Matrix4x4 projection = {
+
+    const Matrix4x4 projection = {
         2.0f,  0.0f, 0.0f, 0.0f,
         0.0f,  2.0f, 0.0f, 0.0f,
         0.0f,  0.0f,-1.0f, 0.0f,
         -1.0f,-1.0f, 0.0f, 1.0f,
     };
-
-    Matrix4x4 projectionRotated;
 
     struct {
         bool synchronize = false;
@@ -349,6 +348,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     auto getRotation() -> unsigned { return settings.rotation; }
 
     auto setRotation(unsigned degree) -> void {
+        Matrix4x4 projectionRotated;
         if (settings.rotation == degree)
             return;
         wait();
@@ -615,14 +615,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             program->ident = pass.alias;
             program->crop.set( pass.crop );
             program->src = pass.code;
-
-            if (pass.bufferType == ShaderPreset::BUFFER_FP)
-                program->format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-            else if (pass.bufferType == ShaderPreset::BUFFER_SRGB)
-                program->format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-            else
-                program->format = DXGI_FORMAT_R8G8B8A8_UNORM;
-
+            program->format = D3D11Utility::getFormat( pass.bufferType );
             _programs.push_back(program);
         }
 
@@ -682,33 +675,16 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             if (lut.mipmap)
                 lutTex->desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-            if (!initTexture(*lutTex, true)) {
+            if (!D3D11Utility::initTexture(device, *lutTex, true)) {
                 delete lutTex;
                 continue;
             }
 
-            D3D11_MAPPED_SUBRESOURCE mappedTexture;
-            if (FAILED(context->Map((ID3D11Resource*) lutTex->staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture))) {
+            if (!D3D11Utility::buildTexture(context, *lutTex, lut.data)) {
                 delete lutTex;
                 continue;
             }
 
-            int srcPitch = lut.width << 2;
-            uint8_t* src = lut.data;
-            unsigned pitch = mappedTexture.RowPitch;
-            uint8_t* dest = (uint8_t*) mappedTexture.pData;
-
-            for (int i = 0; i < lut.height; i++) {
-                std::memcpy(dest, src, srcPitch);
-                src += srcPitch;
-                dest += pitch;
-            }
-
-            context->Unmap((ID3D11Resource*) lutTex->staging, 0);
-            context->CopyResource((ID3D11Resource*) lutTex->ptr, (ID3D11Resource*) lutTex->staging);
-
-            if (lut.mipmap)
-                context->GenerateMips(lutTex->view);
             luts.push_back(lutTex);
         }
 
@@ -1104,7 +1080,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 if (p->mipmap)
                     p->renderTarget.desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-                if (!initTexture(p->renderTarget))
+                if (!D3D11Utility::initTexture(device, p->renderTarget))
                     continue;
             }
 
@@ -1125,7 +1101,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                     p->cropTarget.desc.Width = width;
                     p->cropTarget.desc.Height = height;
                     p->cropTarget.desc.Format = p->format;
-                    if (!initTexture(p->cropTarget, false))
+                    if (!D3D11Utility::initTexture(device, p->cropTarget, false))
                         continue;
                 }
             }
@@ -1240,61 +1216,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         frame.texture.desc.Width = w;
         frame.texture.desc.Height = h;
         frame.texture.desc.Format = format;
-        return initTexture(frame.texture);
-    }
-
-    auto initTexture(D3DTexture& tex, bool useStaging = true) -> bool {
-        tex.desc.MipLevels          = 1;
-        tex.desc.ArraySize          = 1;
-        tex.desc.SampleDesc.Count   = 1;
-        tex.desc.SampleDesc.Quality = 0;
-        tex.desc.BindFlags          |= D3D11_BIND_SHADER_RESOURCE;
-        tex.desc.Usage              = useStaging ? D3D11_USAGE_DEFAULT : D3D11_USAGE_DYNAMIC;
-        if (!useStaging)
-            tex.desc.CPUAccessFlags     = D3D11_CPU_ACCESS_WRITE;
-
-        bool render = tex.desc.BindFlags & D3D11_BIND_RENDER_TARGET;
-
-        if (tex.desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS) {
-            tex.desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-            unsigned width = tex.desc.Width >> 1;
-            unsigned height = tex.desc.Height >> 1;
-
-            while (width && height) { // based on log2
-                width >>= 1; 
-                height >>= 1;
-                tex.desc.MipLevels++;
-            }
-        }
-
-        if (FAILED(device->CreateTexture2D(&tex.desc, nullptr, &tex.ptr)))
-            return false;
-
-        D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
-        std::memset(&viewDesc, 0, sizeof(viewDesc));
-        viewDesc.Format                          = tex.desc.Format;
-        viewDesc.ViewDimension                   = D3D_SRV_DIMENSION_TEXTURE2D;
-        viewDesc.Texture2D.MostDetailedMip       = 0;
-        viewDesc.Texture2D.MipLevels             = -1;
-        if (FAILED(device->CreateShaderResourceView((ID3D11Resource*)tex.ptr, &viewDesc, &tex.view)))
-            return false;
-
-        if (render) {
-            if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)tex.ptr, nullptr, &tex.rtView)))
-                return false;
-
-        } else if (useStaging) {
-            D3D11_TEXTURE2D_DESC desc = tex.desc;
-            desc.BindFlags = 0;
-            desc.MiscFlags = 0;
-            desc.Usage = D3D11_USAGE_STAGING;
-            desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-            if (FAILED(device->CreateTexture2D(&desc, nullptr, &tex.staging)))
-                return false;
-        }
-
-        tex.size = {(float)tex.desc.Width, (float)tex.desc.Height, 1.0f / float(tex.desc.Width), 1.0f / float(tex.desc.Height)};
-        return true;
+        return D3D11Utility::initTexture(device, frame.texture);
     }
 
     auto showMessage(std::string message, bool critical = false) -> void {
@@ -1361,24 +1283,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         message.texture.desc.Width = ft.totalWidth;
         message.texture.desc.Height = ft.totalHeight;
         message.texture.desc.Format = DXGI_FORMAT_A8_UNORM;
-        initTexture(message.texture, false);
-
-        D3D11_MAPPED_SUBRESOURCE mappedTexture;
-        if (FAILED(context->Map( (ID3D11Resource*)message.texture.ptr, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTexture)))
-            return;
-
-        int srcPitch = ft.totalWidth;
-        uint8_t* src = ft.textBuffer;
-        unsigned pitch = mappedTexture.RowPitch;
-        uint8_t* dest = (uint8_t*)mappedTexture.pData;
-
-        for(int i = 0; i < ft.totalHeight; i++) {
-            std::memcpy(dest, src, srcPitch);
-            src += srcPitch;
-            dest += pitch;
-        }
-
-        context->Unmap((ID3D11Resource*)message.texture.ptr, 0);
+        if(D3D11Utility::initTexture(device, message.texture, false))
+            D3D11Utility::buildTexture(context, message.texture, ft.textBuffer);
 #endif
         updateMessageParameter();
     }
@@ -1393,24 +1299,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         overlay.texture.desc.Width = dndOverlay.texWidth;
         overlay.texture.desc.Height = dndOverlay.texHeight;
         overlay.texture.desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        initTexture(overlay.texture, false);
-
-        D3D11_MAPPED_SUBRESOURCE mappedTexture;
-        if (FAILED(context->Map( (ID3D11Resource*)overlay.texture.ptr, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTexture)))
-            return;
-
-        int srcPitch = dndOverlay.texWidth << 2;
-        uint8_t* src = dndOverlay.buffer;
-        unsigned pitch = mappedTexture.RowPitch;
-        uint8_t* dest = (uint8_t*)mappedTexture.pData;
-
-        for(int i = 0; i < dndOverlay.texHeight; i++) {
-            std::memcpy(dest, src, srcPitch);
-            src += srcPitch;
-            dest += pitch;
-        }
-
-        context->Unmap((ID3D11Resource*)overlay.texture.ptr, 0);
+        if(D3D11Utility::initTexture(device, overlay.texture, false))
+            if (!D3D11Utility::buildTexture(context, overlay.texture, dndOverlay.buffer))
+                return;
 
         D3D11_MAPPED_SUBRESOURCE mappedVbo;
         if (FAILED(context->Map((ID3D11Resource*)overlay.vbo, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedVbo)))
@@ -1452,24 +1343,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         progress.texture.desc.Width = _width;
         progress.texture.desc.Height = _height;
         progress.texture.desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        initTexture(progress.texture, false);
-
-        D3D11_MAPPED_SUBRESOURCE mappedTexture;
-        if (FAILED(context->Map( (ID3D11Resource*)progress.texture.ptr, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTexture)))
-            return;
-
-        int srcPitch = _width << 2;
-        uint8_t* src = _data;
-        unsigned pitch = mappedTexture.RowPitch;
-        uint8_t* dest = (uint8_t*)mappedTexture.pData;
-
-        for(int i = 0; i < _height; i++) {
-            std::memcpy(dest, src, srcPitch);
-            src += srcPitch;
-            dest += pitch;
+        if (D3D11Utility::initTexture(device, progress.texture, false)) {
+            if (!D3D11Utility::buildTexture(context, progress.texture, _data))
+                return;
         }
-
-        context->Unmap((ID3D11Resource*)progress.texture.ptr, 0);
     }
 
     auto setProgressPosition() -> void {

@@ -5,6 +5,43 @@ namespace DRIVER {
 
 struct D3D11Utility {
 
+    static auto getFormat(ShaderPreset::BufferType& bufferType) -> DXGI_FORMAT {
+        if (bufferType == ShaderPreset::BufferType::R8_UNORM) return DXGI_FORMAT_R8_UNORM;
+        if (bufferType == ShaderPreset::BufferType::R8_UINT) return DXGI_FORMAT_R8_UINT;
+        if (bufferType == ShaderPreset::BufferType::R8_SINT) return DXGI_FORMAT_R8_SINT;
+        if (bufferType == ShaderPreset::BufferType::R8G8_UNORM) return DXGI_FORMAT_R8G8_UNORM;
+        if (bufferType == ShaderPreset::BufferType::R8G8_UINT) return DXGI_FORMAT_R8G8_UINT;
+        if (bufferType == ShaderPreset::BufferType::R8G8_SINT) return DXGI_FORMAT_R8G8_SINT;
+        if (bufferType == ShaderPreset::BufferType::R8G8B8A8_UNORM) return DXGI_FORMAT_R8G8B8A8_UNORM;
+        if (bufferType == ShaderPreset::BufferType::R8G8B8A8_UINT) return DXGI_FORMAT_R8G8B8A8_UINT;
+        if (bufferType == ShaderPreset::BufferType::R8G8B8A8_SINT) return DXGI_FORMAT_R8G8B8A8_SINT;
+        if (bufferType == ShaderPreset::BufferType::R8G8B8A8_SRGB) return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+
+        if (bufferType == ShaderPreset::BufferType::A2B10G10R10_UNORM_PACK32) return DXGI_FORMAT_R10G10B10A2_UNORM;
+        if (bufferType == ShaderPreset::BufferType::A2B10G10R10_UINT_PACK32) return DXGI_FORMAT_R10G10B10A2_UINT;
+
+        if (bufferType == ShaderPreset::BufferType::R16_UINT) return DXGI_FORMAT_R16_UINT;
+        if (bufferType == ShaderPreset::BufferType::R16_SINT) return DXGI_FORMAT_R16_SINT;
+        if (bufferType == ShaderPreset::BufferType::R16_SFLOAT) return DXGI_FORMAT_R16_FLOAT;
+        if (bufferType == ShaderPreset::BufferType::R16G16_UINT) return DXGI_FORMAT_R16G16_UINT;
+        if (bufferType == ShaderPreset::BufferType::R16G16_SINT) return DXGI_FORMAT_R16G16_SINT;
+        if (bufferType == ShaderPreset::BufferType::R16G16_SFLOAT) return DXGI_FORMAT_R16G16_FLOAT;
+        if (bufferType == ShaderPreset::BufferType::R16G16B16A16_UINT) return DXGI_FORMAT_R16G16B16A16_UINT;
+        if (bufferType == ShaderPreset::BufferType::R16G16B16A16_SINT) return DXGI_FORMAT_R16G16B16A16_SINT;
+        if (bufferType == ShaderPreset::BufferType::R16G16B16A16_SFLOAT) return DXGI_FORMAT_R16G16B16A16_FLOAT;
+
+        if (bufferType == ShaderPreset::BufferType::R32_UINT) return DXGI_FORMAT_R32_UINT;
+        if (bufferType == ShaderPreset::BufferType::R32_SINT) return DXGI_FORMAT_R32_SINT;
+        if (bufferType == ShaderPreset::BufferType::R32_SFLOAT) return DXGI_FORMAT_R32_FLOAT;
+        if (bufferType == ShaderPreset::BufferType::R32G32_UINT) return DXGI_FORMAT_R32G32_UINT;
+        if (bufferType == ShaderPreset::BufferType::R32G32_SINT) return DXGI_FORMAT_R32G32_SINT;
+        if (bufferType == ShaderPreset::BufferType::R32G32_SFLOAT) return DXGI_FORMAT_R32G32_FLOAT;
+        if (bufferType == ShaderPreset::BufferType::R32G32B32A32_UINT) return DXGI_FORMAT_R32G32B32A32_UINT;
+        if (bufferType == ShaderPreset::BufferType::R32G32B32A32_SINT) return DXGI_FORMAT_R32G32B32A32_SINT;
+        if (bufferType == ShaderPreset::BufferType::R32G32B32A32_SFLOAT) return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        return DXGI_FORMAT_R8G8B8A8_UNORM;
+    }
+
     static auto buildProgram2(D3D11Symbols& symbols, D3D_FEATURE_LEVEL& featureLevel, ID3D11Device* device, D3DProgram& program) -> bool {
 
         static const D3D11_INPUT_ELEMENT_DESC desc[] = {
@@ -214,6 +251,94 @@ struct D3D11Utility {
         }
 
         dxRelease( shader.reflPS )
+        return true;
+    }
+
+    static auto buildTexture(ID3D11DeviceContext* context, D3DTexture& tex, uint8_t* data) -> bool {
+        D3D11_MAPPED_SUBRESOURCE mappedTexture;
+        if (tex.staging) {
+            if (FAILED(context->Map((ID3D11Resource*)tex.staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture)))
+                return false;
+        }
+        else {
+            if (FAILED(context->Map((ID3D11Resource*)tex.ptr, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedTexture)))
+                return false;
+        }
+
+        int srcPitch = tex.desc.Width << (tex.desc.Format == DXGI_FORMAT_A8_UNORM ? 0 : 2);
+        uint8_t* src = data;
+        unsigned pitch = mappedTexture.RowPitch;
+        uint8_t* dest = (uint8_t*) mappedTexture.pData;
+
+        for (int i = 0; i < tex.desc.Height; i++) {
+            std::memcpy(dest, src, srcPitch);
+            src += srcPitch;
+            dest += pitch;
+        }
+
+        if (tex.staging) {
+            context->Unmap((ID3D11Resource*) tex.staging, 0);
+            context->CopyResource((ID3D11Resource*) tex.ptr, (ID3D11Resource*) tex.staging);
+        } else
+            context->Unmap((ID3D11Resource*)tex.ptr, 0);
+
+        if (tex.desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS)
+            context->GenerateMips(tex.view);
+
+        return true;
+    }
+
+    static auto initTexture(ID3D11Device* device, D3DTexture& tex, bool useStaging = true) -> bool {
+        tex.desc.MipLevels          = 1;
+        tex.desc.ArraySize          = 1;
+        tex.desc.SampleDesc.Count   = 1;
+        tex.desc.SampleDesc.Quality = 0;
+        tex.desc.BindFlags          |= D3D11_BIND_SHADER_RESOURCE;
+        tex.desc.Usage              = useStaging ? D3D11_USAGE_DEFAULT : D3D11_USAGE_DYNAMIC;
+        if (!useStaging)
+            tex.desc.CPUAccessFlags     = D3D11_CPU_ACCESS_WRITE;
+
+        bool render = tex.desc.BindFlags & D3D11_BIND_RENDER_TARGET;
+
+        if (tex.desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS) {
+            tex.desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
+            unsigned width = tex.desc.Width >> 1;
+            unsigned height = tex.desc.Height >> 1;
+
+            while (width && height) { // based on log2
+                width >>= 1;
+                height >>= 1;
+                tex.desc.MipLevels++;
+            }
+        }
+
+        if (FAILED(device->CreateTexture2D(&tex.desc, nullptr, &tex.ptr)))
+            return false;
+
+        D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
+        std::memset(&viewDesc, 0, sizeof(viewDesc));
+        viewDesc.Format                          = tex.desc.Format;
+        viewDesc.ViewDimension                   = D3D_SRV_DIMENSION_TEXTURE2D;
+        viewDesc.Texture2D.MostDetailedMip       = 0;
+        viewDesc.Texture2D.MipLevels             = -1;
+        if (FAILED(device->CreateShaderResourceView((ID3D11Resource*)tex.ptr, &viewDesc, &tex.view)))
+            return false;
+
+        if (render) {
+            if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)tex.ptr, nullptr, &tex.rtView)))
+                return false;
+
+        } else if (useStaging) {
+            D3D11_TEXTURE2D_DESC desc = tex.desc;
+            desc.BindFlags = 0;
+            desc.MiscFlags = 0;
+            desc.Usage = D3D11_USAGE_STAGING;
+            desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+            if (FAILED(device->CreateTexture2D(&desc, nullptr, &tex.staging)))
+                return false;
+        }
+
+        tex.size = {(float)tex.desc.Width, (float)tex.desc.Height, 1.0f / float(tex.desc.Width), 1.0f / float(tex.desc.Height)};
         return true;
     }
 
