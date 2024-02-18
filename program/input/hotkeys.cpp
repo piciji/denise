@@ -119,17 +119,17 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         case Hotkey::Id::Rotation: {
             emuThread->lock();
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-            unsigned rot = videoDriver->getRotation();
+            DRIVER::Rotation rotation = videoDriver->getRotation();
 
-            if (rot == 0) rot = 90;
-            else if (rot == 90) rot = 180;
-            else if (rot == 180) rot = 270;
-            else if (rot == 270) rot = 0;
+            if (rotation == DRIVER::ROT_0) rotation = DRIVER::ROT_90;
+            else if (rotation == DRIVER::ROT_90) rotation = DRIVER::ROT_180;
+            else if (rotation == DRIVER::ROT_180) rotation = DRIVER::ROT_270;
+            else if (rotation == DRIVER::ROT_270) rotation = DRIVER::ROT_0;
 
-            settings->set<unsigned>("rotation", rot);
-            videoDriver->setRotation(rot);
+            settings->set<unsigned>("rotation", (unsigned)rotation);
+            videoDriver->setRotation(rotation);
             if (emuView && emuView->geometryLayout)
-                emuView->geometryLayout->setRotation(rot);
+                emuView->geometryLayout->setRotation(rotation);
 
         } break;
 
@@ -410,8 +410,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
             if (statusHandler) {
                 std::string txt = "RGB";
-                if (_mode == (unsigned)VideoManager::CrtMode::Cpu) txt = "S/C-Video";
-                else if (_mode == (unsigned)VideoManager::CrtMode::Gpu) txt = "Shader";
+                if (_mode == (unsigned)VideoManager::CrtMode::Cpu) txt = "S/C-Video CPU";
+                else if (_mode == (unsigned)VideoManager::CrtMode::Gpu) txt = "Shader GPU";
                 statusHandler->setMessage( trans->getA(txt), 3 );
             }
 

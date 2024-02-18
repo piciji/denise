@@ -4,7 +4,7 @@
 
 auto Program::initVideo(bool driverChange) -> void {
 
-    unsigned rotation = 0;
+    DRIVER::Rotation rotation = DRIVER::ROT_0;
 
 	if (videoDriver) {
         rotation = videoDriver->getRotation();
@@ -52,13 +52,12 @@ auto Program::initVideo(bool driverChange) -> void {
     view->loadDragnDropOverlay();
     videoDriver->setShaderProgressCallback( [](int pass, bool hasErrors) {
         if (pass < 0) {
-            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-            if (emuView && emuView->videoLayout) {
-                if (emuThread->enabled) {
+            auto manager = VideoManager::getInstance(activeEmulator);
+            if (manager) {
+                if (emuThread->enabled)
                     emuThread->presentShaderError = true;
-                } else {
-                    emuView->videoLayout->presentShaderError();
-                }
+                else
+                    manager->finishPreset();
             }
         }
 
@@ -71,6 +70,44 @@ auto Program::initVideo(bool driverChange) -> void {
                     {{"%pass%", std::to_string(pass)}}), 3, hasErrors);
         }
     } );
+
+    videoDriver->setShaderCacheCallback( [this](DRIVER::DiskFile& diskFile) {
+        if (diskFile.isLUT) {
+            GUIKIT::File file(diskFile.path);
+            if (!file.open())
+                return;
+
+            GUIKIT::Image png;
+            if (!png.load(file.read(), file.getSize(), true ))
+                return;
+
+            diskFile.data = png.data;
+            diskFile.width = png.width;
+            diskFile.height = png.height;
+
+            return;
+        }
+
+        std::string _shaderFolder = shaderFolder();
+        std::string absPath = _shaderFolder + diskFile.path;
+        GUIKIT::File f(absPath, true);
+
+        if (diskFile.data && diskFile.size) {
+            std::string subPath = GUIKIT::File::getPath(diskFile.path);
+
+            if ( !GUIKIT::File::isDir( GUIKIT::File::getPath(absPath) ) )
+                GUIKIT::File::createDir(subPath, _shaderFolder);
+
+            if (f.open(GUIKIT::File::Mode::Write))
+                f.write(diskFile.data, diskFile.size);
+        } else {
+            if (f.open()) {
+                diskFile.data = f.read();
+                diskFile.size = f.getSize();
+            }
+        }
+    } );
+    videoDriver->useShaderCache( globalSettings->get<bool>("shader_cache", true) );
 
     loadProgress();
 }
@@ -470,15 +507,8 @@ auto Program::setRotation() -> void {
         return;
     auto _settings = getSettings(activeEmulator);
 
-    unsigned rotation = _settings->get<unsigned>("rotation", 0);
-
-    switch(rotation) {
-        default:
-        case 0: videoDriver->setRotation(0); break;
-        case 90: videoDriver->setRotation(90); break;
-        case 180: videoDriver->setRotation(180); break;
-        case 270: videoDriver->setRotation(270); break;
-    }
+    DRIVER::Rotation rotation = (DRIVER::Rotation)_settings->get<unsigned>("rotation", (unsigned)DRIVER::ROT_0, {0u, 3u});
+    videoDriver->setRotation(rotation);
 }
 
 auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {

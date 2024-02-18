@@ -73,6 +73,7 @@ struct VideoManager {
     static auto setFrameRender(uint8_t limit) -> void;
     static auto setSynchronize() -> void;
     static auto setHardSync() -> void;
+    static auto unloadDataStorage() -> void;
 
     enum class CrtMode : unsigned { None = 0u, Cpu = 1u, Gpu = 2u } crtMode;
 
@@ -257,6 +258,7 @@ struct VideoManager {
     auto getPresetPath() -> std::string;
     auto getPresetPathCombined() -> std::string;
     auto clearPreset() -> void;
+    auto finishPreset() -> void;
     auto movePass(unsigned& passId, bool up) -> void;
     auto togglePassUsage(unsigned passId) -> ShaderPreset::Pass*;
     auto setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void;

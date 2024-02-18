@@ -30,6 +30,9 @@ auto DiskStructure::prepareADF(uint8_t* data, unsigned size) -> void {
 
         initTrack(track, bytes, 0, hasData ? 0xaa : 0);
 
+        if (track.pos == 129)
+            int f = 3;
+
         if (hasData) {
             encodeTrack(track, i, data + (i * sectors * 512));
 

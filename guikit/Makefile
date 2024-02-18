@@ -1,8 +1,4 @@
 
-# compile api.cpp and add uiflags to generic compiler flags
-# add uilink to application linker flags
-# windows NOTE: don't forget to compile a rc file which points to a manifest file to apply visual styles
-
 ifeq ($(platform),windows)
     uiflags = $(cppflags) -DGUIKIT_WINAPI
     uilink = -lgdi32 -lcomdlg32 -lole32 -lcomctl32 -lshlwapi -lmsimg32 -lwinmm

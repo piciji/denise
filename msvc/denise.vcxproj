@@ -37,8 +37,11 @@
     <ClInclude Include="..\driver\tools\chronos.h" />
     <ClInclude Include="..\driver\tools\crc32.h" />
     <ClInclude Include="..\driver\tools\font.h" />
+    <ClInclude Include="..\driver\tools\glslang.h" />
     <ClInclude Include="..\driver\tools\hid.h" />
+    <ClInclude Include="..\driver\tools\ShaderCache.h" />
     <ClInclude Include="..\driver\tools\shaderpass.h" />
+    <ClInclude Include="..\driver\tools\spirvReflection.h" />
     <ClInclude Include="..\driver\tools\threadPriority.h" />
     <ClInclude Include="..\driver\tools\tools.h" />
     <ClInclude Include="..\driver\tools\utf8.h" />
@@ -188,6 +191,7 @@
     <ClInclude Include="..\guikit\api.h" />
     <ClInclude Include="..\guikit\tools\crc32.h" />
     <ClInclude Include="..\guikit\tools\decode\gzip.h" />
+    <ClInclude Include="..\guikit\tools\decode\images.h" />
     <ClInclude Include="..\guikit\tools\decode\inflate.h" />
     <ClInclude Include="..\guikit\tools\decode\png.h" />
     <ClInclude Include="..\guikit\tools\decode\zip.h" />
@@ -244,6 +248,7 @@
     <ClInclude Include="..\program\thread\emuThread.h" />
     <ClInclude Include="..\program\tools\chronos.h" />
     <ClInclude Include="..\program\tools\circularBuffer.h" />
+    <ClInclude Include="..\program\tools\dataStorage.h" />
     <ClInclude Include="..\program\tools\DiskFinder.h" />
     <ClInclude Include="..\program\tools\filepool.h" />
     <ClInclude Include="..\program\tools\filesetting.h" />
@@ -263,6 +268,66 @@
     <ClCompile Include="..\data\fonts\fonts.cpp" />
     <ClCompile Include="..\data\icons\icons.cpp" />
     <ClCompile Include="..\data\icons\logos.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\GenericCodeGen\CodeGen.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\GenericCodeGen\Link.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\HLSL\hlslAttributes.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\HLSL\hlslGrammar.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\HLSL\hlslOpMap.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\HLSL\hlslParseables.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\HLSL\hlslParseHelper.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\HLSL\hlslScanContext.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\HLSL\hlslTokenStream.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\attribute.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\Constant.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\glslang_tab.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\InfoSink.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\Initialize.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\Intermediate.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\intermOut.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\IntermTraverse.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">Disabled</Optimization>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
+      <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">Disabled</InlineFunctionExpansion>
+      <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</InlineFunctionExpansion>
+    </ClCompile>
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\iomapper.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\limits.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\linkValidate.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\parseConst.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\ParseContextBase.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\ParseHelper.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\PoolAlloc.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\preprocessor\Pp.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\preprocessor\PpAtom.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\preprocessor\PpContext.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\preprocessor\PpScanner.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\preprocessor\PpTokens.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\propagateNoContraction.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\reflection.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\RemoveTree.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\Scan.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\ShaderLang.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\SpirvIntrinsics.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\SymbolTable.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\MachineIndependent\Versions.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\OSDependent\Windows\ossource.cpp" />
+    <ClCompile Include="..\deps\glslang\glslang\ResourceLimits\ResourceLimits.cpp" />
+    <ClCompile Include="..\deps\glslang\SPIRV\GlslangToSpv.cpp">
+      <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">Disabled</InlineFunctionExpansion>
+      <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</InlineFunctionExpansion>
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">false</WholeProgramOptimization>
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</WholeProgramOptimization>
+    </ClCompile>
+    <ClCompile Include="..\deps\glslang\SPIRV\InReadableOrder.cpp" />
+    <ClCompile Include="..\deps\glslang\SPIRV\Logger.cpp" />
+    <ClCompile Include="..\deps\glslang\SPIRV\SpvBuilder.cpp" />
+    <ClCompile Include="..\deps\glslang\SPIRV\SpvPostProcess.cpp" />
+    <ClCompile Include="..\deps\SPIRV-Cross\spirv_cfg.cpp" />
+    <ClCompile Include="..\deps\SPIRV-Cross\spirv_cross.cpp" />
+    <ClCompile Include="..\deps\SPIRV-Cross\spirv_cross_parsed_ir.cpp" />
+    <ClCompile Include="..\deps\SPIRV-Cross\spirv_glsl.cpp" />
+    <ClCompile Include="..\deps\SPIRV-Cross\spirv_hlsl.cpp" />
+    <ClCompile Include="..\deps\SPIRV-Cross\spirv_parser.cpp" />
     <ClCompile Include="..\driver\audio\dsound.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -342,6 +407,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\driver\tools\ShaderCache.cpp" />
+    <ClCompile Include="..\driver\tools\spirvReflection.cpp" />
     <ClCompile Include="..\driver\video\d3d11\d3d11.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
@@ -1103,6 +1170,7 @@
     <ClCompile Include="..\emulation\tools\pia.cpp" />
     <ClCompile Include="..\emulation\tools\socket.cpp" />
     <ClCompile Include="..\guikit\api.cpp" />
+    <ClCompile Include="..\guikit\tools\decode\images.cpp" />
     <ClCompile Include="..\guikit\tools\file\file.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -1654,12 +1722,12 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\data\libs\static\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_win32);$(ProjectDir)..\data\libs\static\x86;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
@@ -1667,12 +1735,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
   </PropertyGroup>
@@ -1680,7 +1748,7 @@
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;ENABLE_HLSL;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -1689,12 +1757,15 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>freetype.lib;opengl32.lib;ws2_32.lib;winmm.lib;shlwapi.lib;msimg32.lib;comctl32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <StackReserveSize>4194304</StackReserveSize>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)..\data\translation\*.*" "$(TargetDir)translation\" /e /y /i /r
@@ -1711,7 +1782,7 @@ xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;ENABLE_HLSL;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -1721,6 +1792,8 @@ xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
       <OmitFramePointers>true</OmitFramePointers>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1743,7 +1816,7 @@ xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;ENABLE_HLSL;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <Optimization>Disabled</Optimization>
@@ -1754,12 +1827,15 @@ xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>freetype.lib;opengl32.lib;ws2_32.lib;winmm.lib;shlwapi.lib;msimg32.lib;comctl32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <StackReserveSize>4194304</StackReserveSize>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)..\data\translation\*.*" "$(TargetDir)translation\" /e /y /i /r
@@ -1776,7 +1852,7 @@ xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;ENABLE_HLSL;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1787,6 +1863,8 @@ xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DebugInformationFormat>None</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

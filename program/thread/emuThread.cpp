@@ -183,9 +183,9 @@ auto EmuThread::handleUIEvents() -> void {
     }
 
     if (presentShaderError) {
-        auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-        if (emuView && emuView->videoLayout)
-            emuView->videoLayout->presentShaderError();
+        auto manager = VideoManager::getInstance(activeEmulator);
+        if (manager)
+            manager->finishPreset();
 
         presentShaderError = false;
     }

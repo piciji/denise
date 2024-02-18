@@ -1,6 +1,7 @@
 
 #include "decode/png.h"
 #include "encode/png.h"
+#include "decode/images.h"
 
 Image::Image(unsigned width, unsigned height, uint8_t* src, Format format)
 : format(format) {
@@ -8,7 +9,8 @@ Image::Image(unsigned width, unsigned height, uint8_t* src, Format format)
 }
 
 Image::~Image() {
-    free();
+    if (!keepDataOnDestruction)
+        free();
 }
 
 Image::Image(const Image& source) {
@@ -43,7 +45,21 @@ Image& Image::operator=(Image&& source) {
     return *this;
 }
 
-auto Image::loadPng(const uint8_t* src, unsigned size) -> bool {
+auto Image::load(const uint8_t* src, unsigned size, bool keepDataOnDestruction) -> bool {
+    this->keepDataOnDestruction = keepDataOnDestruction;
+    ImageDecoder decoder;
+
+    if (decoder.decode(src, size)) {
+        data = decoder.data;
+        width = decoder.width;
+        height = decoder.height;
+        return true;
+    }
+    return false;
+}
+
+auto Image::loadPng(const uint8_t* src, unsigned size, bool keepDataOnDestruction) -> bool {
+    this->keepDataOnDestruction = keepDataOnDestruction;
     Png png;
     if (!png.load(src, size)) return false;
 

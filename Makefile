@@ -22,7 +22,7 @@ include data/Makefile
 
 objects := program view config emuconfig emumodel mediaview archiveviewer states firmware cmd statusbar
 objects += input audio video palette bass reverb panning audiorecord wavwriter sinc cosine cosineSSE driveSounds
-objects += guikit libAmi libC64 autoloader fileloader renderthread emuthread shaderParser
+objects += guikit stbImages libAmi libC64 autoloader fileloader renderthread emuthread shaderParser
 objects += driver
 ifeq ($(platform),windows)
     objects += dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29
@@ -35,14 +35,28 @@ objects += m93c86 mx29lv640eb icons logos fonts socket fpaq0 dmspacker DLLoader
 
 objects += m68000 m68000Core
 
+# deps
+objects += SLGlslangToSpv SLInReadableOrder SLLogger SLSpvBuilder SLCodeGen SLLink SLSpvPostProcess
+objects += SLattribute SLConstant SLglslang_tab SLInfoSink SLInitialize SLIntermediate SLintermOut SLIntermTraverse
+objects += SLiomapper SLlimits SLlinkValidate SLparseConst SLParseContextBase SLParseHelper SLPoolAlloc
+objects += SLpropagateNoContraction SLreflection SLRemoveTree SLScan SLShaderLang SLSymbolTable SLVersions
+objects += SLSpirvIntrinsics SLResourceLimits
+objects += SLPp SLPpAtom SLPpContext SLPpScanner SLPpTokens
+ifeq ($(platform),windows)
+objects += SLhlslAttributes SLhlslGrammar SLhlslOpMap SLhlslParseables SLhlslParseHelper SLhlslScanContext SLhlslTokenStream
+objects += SCspirv_cross SCspirv_cfg SCspirv_hlsl SCspirv_glsl SCspirv_parser SCspirv_cross_parsed_ir
+endif
+objects += spirvReflection shaderCache
+
 deps = $(objects)
 
 prgflags := -DAPP_NAME="\"$(name)\"" -DTRANSLATION_FOLDER="\"$(translationFolder)/\"" -DDATA_FOLDER="\"$(dataFolder)/\"" -DSHADER_FOLDER="\"$(shaderFolder)/\"" -DIMG_FOLDER="\"$(imgFolder)/\"" -DSOUND_FOLDER="\"$(soundFolder)/\""
-flags :=
+flags := -I deps/glslang
 link := $(architecture)
 
 ifeq ($(platform),windows)
     link += -static -lws2_32
+    flags += -DENABLE_HLSL
 else ifeq ($(platform),macosx)
     flags += -w -stdlib=libc++
     link += -lc++ -lobjc
@@ -103,6 +117,8 @@ obj/resource.o: data/resource_mingw.rc
 endif
 
 %.o: $<; $(call compile)
+
+obj/stbImages.o: guikit/tools/decode/images.cpp
 
 obj/guikit.o: guikit/api.cpp
 	$(compiler) $(uiflags) $(flags) -c $< -o $@
@@ -235,7 +251,10 @@ obj/cmd.o:		program/cmd/cmd.cpp
 obj/palette.o:		program/video/palette.cpp
 obj/video.o:		program/video/manager.cpp
 obj/shaderParser.o: program/video/shaderParser.cpp
+obj/spirvReflection.o: driver/tools/spirvReflection.cpp
+obj/shaderCache.o: driver/tools/shaderCache.cpp
 
+include deps/Makefile
 deps := $(patsubst %,obj/%.d,$(deps))
 objects := $(patsubst %,obj/%.o,$(objects))
 -include $(wildcard $(deps))

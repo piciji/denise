@@ -8,7 +8,8 @@ struct InScreenTextLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct CrtEmulationLayout : GUIKIT::FramedVerticalLayout {
-    GUIKIT::CheckBox threadMode;
+    GUIKIT::CheckBox cpuFilterThreaded;
+    GUIKIT::CheckBox shaderCache;
     
     CrtEmulationLayout();
 };

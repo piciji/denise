@@ -3,8 +3,14 @@
 #include <cstdio>
 #include <cstring>
 #include <cmath>
+#include <sstream>
 #include "shaderParser.h"
+#include "../tools/chronos.h"
+#include "../tools/dataStorage.h"
 #include "luts.cpp"
+#include "../view/status.h"
+
+DataStorage* ShaderParser::dataStorage = new DataStorage(2 * 1024 * 1024);
 
 auto ShaderParser::loadPreset(std::string path) -> bool {
     clear();
@@ -25,23 +31,32 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
     if (!passCount)
         return false;
 
-    shaderPreset.feedback = rootSettings.get<int>("feedback", -1);
     shaderPreset.lumaChroma = rootSettings.get<bool>("luma_chroma", false);
+    if (shaderPreset.lumaChroma || rootSettings.get<bool>("small_margin", false))
+        shaderPreset.smallMargin.set({1,4,0,4});
+
+    auto ts = Chronos::getTimestampInMilliseconds();
 
     for(int i = 0; i < passCount; i++)
         parsePass(i);
+
+    dataStorage->cleanUp();
 
     if (shaderPreset.passes.empty()) // wtf
         return false;
 
     parseTextures();
 
+    auto ts2 = Chronos::getTimestampInMilliseconds();
+
+    auto rests = ts2 - ts;
+
     if (path != rootSettings.getPath()) { // there is at least one reference to root config
         std::vector<GUIKIT::Settings*> settingsList;
         applyOverrides(path, settingsList);
     }
 
-    updateCrop();
+   // updateCrop();
     return true;
 }
 
@@ -58,10 +73,11 @@ auto ShaderParser::savePreset(std::string path) -> bool {
         fputs( out.c_str(), fp );
     } else {
         writeLine(fp, "shaders", std::to_string(shaderPreset.passes.size()));
-        if (shaderPreset.feedback >= 0)
-            writeLine(fp, "feedback", std::to_string(shaderPreset.feedback) );
+
         if (shaderPreset.lumaChroma)
             writeLine(fp, "luma_chroma", "true" );
+        else if (shaderPreset.smallMargin.active)
+            writeLine(fp, "small_margin", "true" );
 
         fputs( "\n", fp );
 
@@ -136,16 +152,18 @@ inline auto ShaderParser::writeLine(FILE* fp, unsigned passId, std::string key, 
     fputs( out.c_str(), fp );
 }
 
-auto ShaderParser::createSinglePass(std::string path) -> bool {
+auto ShaderParser::createSinglePass(std::string& path) -> bool {
     ShaderPreset::Pass pass;
     pass.src = path;
+    pass.bufferType = ShaderPreset::BufferType::UNKNOWN;
     pass.alias = "";
     pass.error = "";
-    if (!fetchShaderSource<false>(path, pass))
+    std::vector<Stage> stages = {Stage::Fragment, Stage::Vertex};
+    if (!fetchShaderSource(path, pass, stages))
         return false;
     pass.filter = ShaderPreset::Filter::FILTER_UNSPEC;
-    pass.scaleTypeX = ShaderPreset::ScaleType::SCALE_INPUT;
-    pass.scaleTypeY = ShaderPreset::ScaleType::SCALE_INPUT;
+    pass.scaleTypeX = ShaderPreset::ScaleType::SCALE_VIEWPORT;
+    pass.scaleTypeY = ShaderPreset::ScaleType::SCALE_VIEWPORT;
     pass.wrap = ShaderPreset::WrapMode::WRAP_EDGE;
     pass.frameModulo = 0;
     if (pass.bufferType == ShaderPreset::BufferType::UNKNOWN)
@@ -193,7 +211,8 @@ auto ShaderParser::parseTextures() -> void {
         ShaderPreset::Lut lut;
         lut.id = id;
         lut.path = rootSettings.get<std::string>(id, "");
-        lut.data = nullptr;
+        lut.error = false;
+
         if (lut.path.empty())
             continue;
         lut.path = GUIKIT::File::resolveRelativePath( rootSettings.getPath(), lut.path );
@@ -206,7 +225,7 @@ auto ShaderParser::parseTextures() -> void {
         lut.mipmap = rootSettings.get<bool>(id + "_mipmap", false);
         lut.wrap = translateWrapMode( rootSettings.get<std::string>(id + "_wrap_mode", "") );
 
-        if (!loadLUT(lut))
+        if (!checkLUT(lut))
             continue;
 
         shaderPreset.luts.push_back(lut);
@@ -215,7 +234,7 @@ auto ShaderParser::parseTextures() -> void {
 
 auto ShaderParser::parsePass(unsigned pos) -> bool {
     ShaderPreset::Pass pass;
-    pass.crop.release();
+    //pass.crop.release();
     std::string strPos = std::to_string(pos);
     std::string path = rootSettings.get<std::string>("shader" + strPos, "");
     if (path.empty())
@@ -225,8 +244,9 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
     pass.alias = rootSettings.get<std::string>("alias" + strPos, "");
     pass.bufferType = ShaderPreset::BufferType::UNKNOWN;
     pass.error = "";
-
-    if (!fetchShaderSource<false>(pass.src, pass))
+    pass.feedback = false;
+    std::vector<Stage> stages = {Stage::Fragment, Stage::Vertex};
+    if (!fetchShaderSource(pass.src, pass, stages))
         return false;
 
     pass.inUse = true;
@@ -477,7 +497,6 @@ auto ShaderParser::addPreset(ShaderParser* parser, bool prepend) -> void {
         GUIKIT::Vector::insert( entryPaths, parser->getPresetPath(), 0 );
 
         shaderPreset.lumaChroma = preset.lumaChroma;
-        shaderPreset.feedback = preset.feedback;
     } else {
         int nextId = shaderPreset.passes.size();
         for (auto& param : preset.params)
@@ -489,7 +508,7 @@ auto ShaderParser::addPreset(ShaderParser* parser, bool prepend) -> void {
     GUIKIT::Vector::combine<ShaderPreset::Pass>(shaderPreset.passes, preset.passes, prepend);
     GUIKIT::Vector::combine<ShaderPreset::Param>(shaderPreset.params, preset.params, prepend);
     GUIKIT::Vector::combine<ShaderPreset::Lut>(shaderPreset.luts, preset.luts, prepend);
-    updateCrop();
+    //updateCrop();
 }
 
 auto ShaderParser::movePass(unsigned& passId, bool up) -> void {
@@ -509,7 +528,7 @@ auto ShaderParser::movePass(unsigned& passId, bool up) -> void {
             modified = true;
         }
     }
-    updateCrop();
+    //updateCrop();
 }
 
 auto ShaderParser::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
@@ -519,7 +538,7 @@ auto ShaderParser::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
     ShaderPreset::Pass& pass = shaderPreset.passes[passId];
     pass.inUse ^= 1;
     modified = true;
-    updateCrop();
+    //updateCrop();
     return &pass;
 }
 
@@ -580,53 +599,78 @@ auto ShaderParser::needMetaData() -> bool {
     return false;
 }
 
-auto ShaderParser::loadLUT(ShaderPreset::Lut& lut) -> bool {
+auto ShaderParser::checkLUT(ShaderPreset::Lut& lut) -> bool {
     if (lut.path.empty())
         return false;
 
     GUIKIT::File file(lut.path);
-    if (!file.open()) {
+
+    if (!file.exists()) {
         brokenPaths.push_back(lut.path);
         return false;
     }
-
-    GUIKIT::Image png;
-    if (!png.loadPng(file.read(), file.getSize() )) {
-        brokenPaths.push_back(lut.path);
-        return false;
-    }
-
-    lut.data = new uint8_t[png.width * png.height * 4];
-    std::memcpy(lut.data, png.data, png.width * png.height * 4);
-
-    lut.width = png.width;
-    lut.height = png.height;
 
     return true;
 }
 
+auto ShaderParser::addBrokenLUT() -> void {
+    for(auto& lut : shaderPreset.luts) {
+        if (lut.error)
+            brokenPaths.push_back(lut.path);
+    }
+}
+
 auto ShaderParser::updateCrop() -> void {
-    for(auto& pass : shaderPreset.passes)
-        pass.crop.release();
+//    for(auto& pass : shaderPreset.passes)
+//        pass.crop.release();
+//
+//    if (!shaderPreset.lumaChroma)
+//        return;
+//
+//    for(int i = shaderPreset.passes.size() - 1; i >= 0; i--) {
+//        ShaderPreset::Pass& pass = shaderPreset.passes[i];
+//        if (!pass.inUse)
+//            continue;
+//
+//        if (GUIKIT::String::findString(pass.alias, "Mask") || GUIKIT::String::findString(pass.alias, "BloomVertical")
+//            || GUIKIT::String::findString(pass.alias, "Gamma") || GUIKIT::String::findString(pass.alias, "LumaChromaDecoding") ) {
+//            pass.crop.set({1, 4, 0, 4});
+//            break;
+//        }
+//    }
+}
 
-    if (!shaderPreset.lumaChroma)
-        return;
+template<bool checkNewLine>
+auto ShaderParser::addLineToStage(std::vector<Stage>& stages, const std::string& line, ShaderPreset::Pass& pass) -> void {
+    for(auto& stage : stages) {
+        switch(stage) {
+            case Stage::Fragment:
+                if constexpr(checkNewLine)
+                    addNewLine(pass.fragment);
 
-    for(int i = shaderPreset.passes.size() - 1; i >= 0; i--) {
-        ShaderPreset::Pass& pass = shaderPreset.passes[i];
-        if (!pass.inUse)
-            continue;
+                pass.fragment += line;
+                break;
+            case Stage::Vertex:
+                if constexpr(checkNewLine)
+                    addNewLine(pass.vertex);
 
-        if (GUIKIT::String::findString(pass.alias, "Mask") || GUIKIT::String::findString(pass.alias, "BloomVertical")
-            || GUIKIT::String::findString(pass.alias, "Gamma") || GUIKIT::String::findString(pass.alias, "LumaChromaDecoding") ) {
-            pass.crop.set({1, 4, 0, 4});
-            break;
+                pass.vertex += line;
+                break;
         }
     }
 }
 
-template <bool SLANG>
-auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass& pass, int depth) -> bool {
+inline auto ShaderParser::addNewLine(std::string& str) -> void {
+    if (str.empty())
+        return;
+
+    std::string newLine = str.substr(str.size() - 1);
+
+    if (newLine != "\n")
+        str += "\n";
+}
+
+auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass& pass, std::vector<Stage>& stages, int depth) -> bool {
     static const std::string versionPrefix = "#version";
     static const std::string includePrefix = "#include";
     static const std::string pragmaPrefix = "#pragma";
@@ -634,25 +678,34 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
     static const std::string paramPrefix = "#pragma parameter";
     static const std::string namePrefix = "#pragma name";
     static const std::string formatPrefix = "#pragma format";
-
+    static const std::string stagePrefix = "#pragma stage";
+    
     char chunk[1024];
+    unsigned chunkSize = sizeof(chunk);
     std::string line;
     int filled;
 
     if (depth > 16)
         return false;
 
-    GUIKIT::File file(path);
-    if(!file.open() || !file.getSize()) {
-        brokenPaths.push_back(path);
-        return false;
+    unsigned fileSize = 0;
+    uint8_t* fileData = dataStorage->get(path, fileSize);
+    if (!fileData) {
+        GUIKIT::File file(path, true);
+        if (!file.open() || !file.getSize()) {
+            brokenPaths.push_back(path);
+            return false;
+        }
+
+        fileData = file.read();
+        fileSize = file.getSize();
+        dataStorage->add(path, fileData, fileSize);
     }
 
-    auto fp = file.getHandle();
+    char* fp = (char*)fileData;
 
-    if (SLANG && !depth) {
-        pass.code = "";
-        if (!fgets(chunk, sizeof(chunk), fp)) {
+    if (!depth) {
+        if (!GUIKIT::String::sgets(chunk, chunkSize, fileSize, &fp)) {
             brokenPaths.push_back(path);
             return false;
         }
@@ -664,78 +717,94 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
             return false;
         }
 
-        pass.code += line;
-        if(SLANG) pass.code += "#extension GL_GOOGLE_cpp_style_line_directive : require\n";
+        addLineToStage(stages, line, pass);
+        addLineToStage<true>(stages, "#extension GL_GOOGLE_cpp_style_line_directive : require\n", pass);
     }
 
     unsigned pos = !depth ? 2 : 1;
-    if(SLANG) pass.code += "#line " + std::to_string(pos) + " \"" + GUIKIT::String::getFileName(path) + "\"\n";
+    addLineToStage<true>(stages, "#line " + std::to_string(pos) + " \"" + GUIKIT::String::getFileName(path) + "\"\n", pass);
 
-    while ( fgets(chunk, sizeof(chunk), fp) ) {
+    while (GUIKIT::String::sgets(chunk, chunkSize, fileSize, &fp)) {
         line = chunk;
         GUIKIT::String::remove(line, { "\r" });
         GUIKIT::String::trim(line);
 
         if (GUIKIT::String::startsWith(line, includePrefix)) {
             GUIKIT::String::remove(line, {includePrefix});
+            GUIKIT::String::remove(line, { "\n" });
             GUIKIT::String::trim(line);
             GUIKIT::String::removeQuote(line);
-            if (!fetchShaderSource<SLANG>( GUIKIT::File::resolveRelativePath(path, line), pass, depth + 1))
+            if (!fetchShaderSource( GUIKIT::File::resolveRelativePath(path, line), pass, stages, depth + 1))
                 return false;
 
-            if(SLANG) pass.code += "#line " + std::to_string(pos) + " \"" + GUIKIT::String::getFileName(path) + "\"\n";
+            addLineToStage<true>(stages, "#line " + std::to_string(pos) + " \"" + GUIKIT::String::getFileName(path) + "\"\n", pass);
+
         } else if (GUIKIT::String::startsWith(line, endifPrefix)) {
-            pass.code += line;
-            if(SLANG) pass.code += "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n";
+            addLineToStage(stages, line, pass);
+            addLineToStage<true>(stages, "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n", pass);
+
         } else if (GUIKIT::String::startsWith(line, pragmaPrefix)) {
-            pass.code += line;
-            if(SLANG) pass.code += "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n";
-
-            if (GUIKIT::String::startsWith(line, paramPrefix)) {
-                ShaderPreset::Param param;
-
-                char id[64];
-                char desc[64];
-                if ((filled = sscanf_s(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
-                                       id, sizeof(id), desc, sizeof(desc), &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
-                    goto End;
-
-                param.id = id;
-                param.desc = desc;
-
-                if (GUIKIT::String::foundSubStr(param.id, "EMPTY_LINE"))
-                    goto End;
-
-                GUIKIT::String::trim(param.desc);
-
-                if (filled == 5)
-                    param.step  = 0.1f * (param.maximum - param.minimum);
-
-                if (param.isDescriptor() && param.desc.empty())
-                    goto End;
-
-                param.pass = shaderPreset.passes.size();
-                param.value = rootSettings.get<float>(param.id, param.initial);
-                addParameter(param);
-            } else if (GUIKIT::String::startsWith(line, namePrefix)) {
-                if (pass.alias.empty()) {
-                    GUIKIT::String::remove(line, {namePrefix});
-                    GUIKIT::String::remove(line, { "\n" });
-                    GUIKIT::String::trim(line);
-                    GUIKIT::String::removeQuote(line);
-                    pass.alias = line;
-                }
-            } else if (GUIKIT::String::startsWith(line, formatPrefix)) {
-                GUIKIT::String::remove(line, {formatPrefix});
+            if (GUIKIT::String::startsWith(line, stagePrefix)) {
+                GUIKIT::String::remove(line, {stagePrefix});
                 GUIKIT::String::remove(line, { "\n" });
                 GUIKIT::String::trim(line);
-                pass.bufferType = translateBufferType( line );
+                if (line == "vertex") stages = {Stage::Vertex};
+                if (line == "fragment") stages = {Stage::Fragment};
+
+            } else {
+                addLineToStage(stages, line, pass);
+         //       addLineToStage<true>(stages, "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n", pass);
+
+                if (GUIKIT::String::startsWith(line, paramPrefix)) {
+                    ShaderPreset::Param param;
+
+                    char id[64];
+                    char desc[64];
+                    if ((filled = sscanf_s(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
+                                           id, sizeof(id), desc, sizeof(desc), &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
+                        goto End;
+
+                    param.id = id;
+                    param.desc = desc;
+
+                    if (GUIKIT::String::foundSubStr(param.id, "EMPTY_LINE"))
+                        goto End;
+
+                    GUIKIT::String::trim(param.desc);
+
+                    if (filled == 5)
+                        param.step  = 0.1f * (param.maximum - param.minimum);
+
+                    if (param.desc.empty()) {
+                        if (param.isDescriptor())
+                            goto End;
+                        if (param.maximum == param.step == 1)
+                            goto End;
+                    }
+
+                    param.pass = shaderPreset.passes.size();
+                    param.value = rootSettings.get<float>(param.id, param.initial);
+                    addParameter(param);
+
+                } else if (GUIKIT::String::startsWith(line, namePrefix)) {
+                    if (pass.alias.empty()) {
+                        GUIKIT::String::remove(line, {namePrefix});
+                        GUIKIT::String::remove(line, { "\n" });
+                        GUIKIT::String::trim(line);
+                        GUIKIT::String::removeQuote(line);
+                        pass.alias = line;
+                    }
+                } else if (GUIKIT::String::startsWith(line, formatPrefix)) {
+                    GUIKIT::String::remove(line, {formatPrefix});
+                    GUIKIT::String::remove(line, { "\n" });
+                    GUIKIT::String::trim(line);
+                    pass.bufferType = translateBufferType( line );
+                }
             }
-        }
-        else {
+        } else {
             line = chunk;
-            GUIKIT::String::remove(line, { "\r" }); 
-            pass.code += line;
+            GUIKIT::String::remove(line, { "\r" });
+            addLineToStage(stages, line, pass);
         }
 End:
         pos++;
@@ -744,11 +813,6 @@ End:
 }
 
 auto ShaderParser::clear() -> void {
-    for(auto& lut : shaderPreset.luts) {
-        if (lut.data)
-            delete[] lut.data;
-    }
-
     entryPaths.clear();
     brokenPaths.clear();
     shaderPreset.clear();
@@ -758,4 +822,8 @@ auto ShaderParser::clear() -> void {
 
 ShaderParser::ShaderParser() {
     clear();
+}
+
+ShaderParser::~ShaderParser() {
+
 }

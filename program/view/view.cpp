@@ -730,7 +730,7 @@ auto View::buildShader() -> void {
             i++;
         }
 
-        if (sM.shaderFavourites.size() <= 1) {
+        if (sM.shaderFavourites.size() == 0) {
             sM.shaderMenu->setEnabled( false );
             continue;
         }

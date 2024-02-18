@@ -539,6 +539,7 @@ auto Program::quit() -> void {
     for(auto emulator : emulators)
         delete emulator;
     emulators.clear();
+    VideoManager::unloadDataStorage();
 
     // in case of exit request from emulation core
     GUIKIT::Application::loop = nullptr;

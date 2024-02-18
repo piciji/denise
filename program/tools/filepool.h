@@ -91,8 +91,8 @@ struct FilePool {
 	}
 	
 	FilePool( unsigned slots ) {
-		for(unsigned i = 0; i < slots; i++)
-			files.push_back({});
+        files.reserve(slots);
+        files.resize(slots, {});
 	}
 	
 	~FilePool() {

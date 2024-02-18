@@ -1,6 +1,7 @@
 
 CrtEmulationLayout::CrtEmulationLayout() {
-    append( threadMode, {0u, 0u}, 5 );
+    append( cpuFilterThreaded, {0u, 0u}, 5 );
+    append( shaderCache, {0u, 0u} );
     
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -306,14 +307,21 @@ VideoLayout::VideoLayout() {
         emuThread->unlock();
     };
 
-	crtEmulation.threadMode.setChecked( globalSettings->get<bool>("crt_threaded", true) );
-	crtEmulation.threadMode.onToggle = [this](bool checked) {
+	crtEmulation.cpuFilterThreaded.setChecked( globalSettings->get<bool>("cpu_filter_threaded", true) );
+	crtEmulation.cpuFilterThreaded.onToggle = [this](bool checked) {
         emuThread->lock();
         globalSettings->set<bool>("crt_threaded", checked);
         VideoManager::setCrtThreaded( checked );
         emuThread->unlock();
     };
 
+    crtEmulation.shaderCache.setChecked( globalSettings->get<bool>("shader_cache", true) );
+    crtEmulation.shaderCache.onToggle = [this](bool checked) {
+        emuThread->lock();
+        globalSettings->set<bool>("shader_cache", checked);
+        videoDriver->useShaderCache(checked);
+        emuThread->unlock();
+    };
 }
 
 auto VideoLayout::translate() -> void {
@@ -335,7 +343,8 @@ auto VideoLayout::translate() -> void {
     screenTextLayout.option3.setText( trans->get("enabled") );
     screenTextLayout.setText( trans->get("screen_status") );
     
-    crtEmulation.threadMode.setText( trans->get("crt_threaded") );
+    crtEmulation.cpuFilterThreaded.setText( trans->get("cpu filter threaded") );
+    crtEmulation.shaderCache.setText( trans->get("shader cache") );
     crtEmulation.setText( trans->get("crt_emulation") );
 	
 	videoGeometry.setText(trans->get("geometry"));

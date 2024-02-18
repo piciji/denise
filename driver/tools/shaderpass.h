@@ -33,12 +33,17 @@ struct ShaderPreset {
         R32G32_SFLOAT, R32G32B32A32_UINT, R32G32B32A32_SINT, R32G32B32A32_SFLOAT
     };
 
-    int feedback;
     bool lumaChroma = false; // format of incoming frame data (uses floating point for YUV/YIC)
+
+    // add a small frame margin to let shader calculate neighboring pixel in the border area.
+    // will be cropped away after the last shader pass
+    CropPass smallMargin = {0,0,0,0};
 
     struct Pass {
         std::string src;
-        std::string code;
+        std::string fragment;
+        std::string vertex;
+
         Filter filter;
         WrapMode wrap;
         unsigned frameModulo;
@@ -46,8 +51,8 @@ struct ShaderPreset {
         bool mipmap;
         std::string alias;
         bool inUse;
-        CropPass crop;
         std::string error;
+        bool feedback;
 
         ScaleType scaleTypeX;
         ScaleType scaleTypeY;
@@ -64,10 +69,7 @@ struct ShaderPreset {
         std::string id;
         std::string path;
         bool mipmap;
-
-        uint8_t* data; // alternate
-        unsigned width;
-        unsigned height;
+        bool error;
     };
     std::vector<Lut> luts;
 
@@ -91,8 +93,8 @@ struct ShaderPreset {
         params.clear();
         luts.clear();
         passes.clear();
-        feedback = -1;
         lumaChroma = false;
+        smallMargin.set({0,0,0,0});
     }
 };
 

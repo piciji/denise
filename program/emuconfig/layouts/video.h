@@ -76,6 +76,7 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
         struct Info : GUIKIT::HorizontalLayout {
             GUIKIT::Label label;
             GUIKIT::Label loaded;
+            GUIKIT::Button clearCache;
             GUIKIT::Button toParams;
 
             Info();

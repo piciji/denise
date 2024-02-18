@@ -107,7 +107,7 @@ struct GeometryLayout : GUIKIT::VerticalLayout {
     auto updateBorderHotkeyUsage(unsigned bit, bool checked) -> void;
     auto updateScaleHotkeyUsage(unsigned bit, bool checked) -> void;
     auto updateBorderSlider() -> void;
-    auto setRotation(int degree) -> void;
+    auto setRotation(DRIVER::Rotation rotation) -> void;
 
     GeometryLayout(TabWindow* tabWindow);
 };

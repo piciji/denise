@@ -20,6 +20,8 @@ DiskDrive::DiskDrive(uint8_t number, System* system, Agnus& agnus, Cia<MOS_8520>
     media = &interface->mediaGroups[Interface::MediaGroupIdDisk].media[number];
     track = getDummyTrack();
     written = false;
+    cylinder = 0;
+    side = 0;
 
     structure.write = [this, system](uint8_t* buffer, unsigned length, unsigned offset) {
 

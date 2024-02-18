@@ -359,33 +359,33 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
 
     rotationLayout.degree0.onActivate = [this]() {
         emuThread->lock();
-        _settings->set<unsigned>("rotation", 0);
+        _settings->set<unsigned>("rotation", (unsigned)DRIVER::ROT_0);
         if (activeEmulator == emulator)
-            videoDriver->setRotation(0);
+            videoDriver->setRotation(DRIVER::ROT_0);
         emuThread->unlock();
     };
 
     rotationLayout.degree90.onActivate = [this]() {
         emuThread->lock();
-        _settings->set<unsigned>("rotation", 90);
+        _settings->set<unsigned>("rotation", (unsigned)DRIVER::ROT_90 );
         if (activeEmulator == emulator)
-            videoDriver->setRotation(90);
+            videoDriver->setRotation(DRIVER::ROT_90);
         emuThread->unlock();
     };
 
     rotationLayout.degree180.onActivate = [this]() {
         emuThread->lock();
-        _settings->set<unsigned>("rotation", 180);
+        _settings->set<unsigned>("rotation", (unsigned)DRIVER::ROT_180);
         if (activeEmulator == emulator)
-            videoDriver->setRotation(180);
+            videoDriver->setRotation(DRIVER::ROT_180);
         emuThread->unlock();
     };
 
     rotationLayout.degree270.onActivate = [this]() {
         emuThread->lock();
-        _settings->set<unsigned>("rotation", 270);
+        _settings->set<unsigned>("rotation", (unsigned)DRIVER::ROT_270);
         if (activeEmulator == emulator)
-            videoDriver->setRotation(270);
+            videoDriver->setRotation(DRIVER::ROT_270);
         emuThread->unlock();
     };
 
@@ -527,14 +527,8 @@ auto GeometryLayout::updateBorderSlider() -> void {
 auto GeometryLayout::loadSettings() -> void {
     typedef Emulator::Interface::CropType CropType;
 
-    auto rotation = _settings->get<unsigned>("rotation", 0);
-    switch(rotation) {
-        default:
-        case 0: rotationLayout.degree0.setChecked(); break;
-        case 90: rotationLayout.degree90.setChecked(); break;
-        case 180: rotationLayout.degree180.setChecked(); break;
-        case 270: rotationLayout.degree270.setChecked(); break;
-    }
+    DRIVER::Rotation rotation = (DRIVER::Rotation)_settings->get<unsigned>("rotation", (unsigned)DRIVER::ROT_0, {0u, 3u});
+    setRotation(rotation);
 
     auto valCropType = _settings->get<unsigned>("crop_type", (unsigned) CropType::Monitor, {0u, 11u});
 
@@ -594,11 +588,12 @@ auto GeometryLayout::loadSettings() -> void {
     updateVisibillity();
 }
 
-auto GeometryLayout::setRotation(int degree) -> void {
-    switch(degree) {
-        case 0: rotationLayout.degree0.setChecked(); break;
-        case 90: rotationLayout.degree90.setChecked(); break;
-        case 180: rotationLayout.degree180.setChecked(); break;
-        case 270: rotationLayout.degree270.setChecked(); break;
+auto GeometryLayout::setRotation(DRIVER::Rotation rotation) -> void {
+    switch(rotation) {
+        default:
+        case DRIVER::ROT_0: rotationLayout.degree0.setChecked(); break;
+        case DRIVER::ROT_90: rotationLayout.degree90.setChecked(); break;
+        case DRIVER::ROT_180: rotationLayout.degree180.setChecked(); break;
+        case DRIVER::ROT_270: rotationLayout.degree270.setChecked(); break;
     }
 }

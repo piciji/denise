@@ -4,14 +4,20 @@
 #include "../../guikit/api.h"
 #include "../../driver/driver.h"
 
+struct DataStorage;
+
 struct ShaderParser {
     ShaderParser();
+    ~ShaderParser();
+
+    enum class Stage { Vertex, Fragment };
 
     GUIKIT::Settings rootSettings;
     ShaderPreset shaderPreset;
     std::vector<std::string> entryPaths;
     std::vector<std::string> brokenPaths;
     bool modified;
+    static DataStorage* dataStorage;
 
     auto loadPreset(std::string path) -> bool;
 
@@ -38,7 +44,7 @@ struct ShaderParser {
 
     auto addParameter(ShaderPreset::Param& param) -> void;
 
-    auto createSinglePass(std::string path) -> bool;
+    auto createSinglePass(std::string& path) -> bool;
 
     auto applyOverrides(std::string& path, std::vector<GUIKIT::Settings*>& settingsList, int depth = 0) -> void;
 
@@ -63,11 +69,13 @@ struct ShaderParser {
 
     auto clear() -> void;
 
-    auto loadLUT(ShaderPreset::Lut& lut) -> bool;
+    auto checkLUT(ShaderPreset::Lut& lut) -> bool;
+    auto addBrokenLUT() -> void;
     auto updateCrop() -> void;
 
-    template <bool SLANG>
-    auto fetchShaderSource(const std::string& path, ShaderPreset::Pass& pass, int depth = 0) -> bool;
+    auto fetchShaderSource(const std::string& path, ShaderPreset::Pass& pass, std::vector<Stage>& stages, int depth = 0) -> bool;
+    template<bool checkNewLine = false> auto addLineToStage(std::vector<Stage>& stages, const std::string& line, ShaderPreset::Pass& pass) -> void;
+    auto addNewLine(std::string& str) -> void;
 
     static auto buildLutBloom() -> void;
     static auto buildLutMask() -> void;

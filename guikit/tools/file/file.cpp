@@ -3,8 +3,9 @@
 #include "../decode/zip.h"
 #include "../decode/gzip.h"
 
-File::File( std::string filePath ) {
+File::File( std::string filePath, bool keepDataOnDestruction ) {
     setFile( filePath );
+    this->keepDataOnDestruction = keepDataOnDestruction;
     tar = new Tar;
     zip = new Zip;
     gzip = new Gzip;
@@ -74,7 +75,9 @@ auto File::close() -> void {
 }
 
 auto File::unload() -> void {
-    freeData(&data);
+    if (!keepDataOnDestruction)
+        freeData(&data);
+
     if(type == Type::Zip) {
         for(auto& file : zip->files)
             freeData(&file.data);
@@ -385,6 +388,19 @@ auto File::del( ) -> bool {
         int result = unlink( filePath.c_str() );
     #endif
     return result == 0;
+}
+
+auto File::removeDirectory(const std::string& _folder) -> void {
+#ifdef canCPP17
+    namespace fs = std::filesystem;
+#else
+    namespace fs = std::experimental::filesystem;
+#endif
+    const std::filesystem::path _path = std::filesystem::u8path(_folder);
+
+    if (fs::is_directory(_path)) {
+        fs::remove_all(_path);
+    }
 }
 
 //static

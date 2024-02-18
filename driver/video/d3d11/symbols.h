@@ -14,6 +14,8 @@ typedef HRESULT (__stdcall *D3DReflect_t)(const void *data, SIZE_T data_size, RE
 
 typedef HRESULT (__stdcall *D3DCreateDXGIFactory1_t)(REFIID riid, void **factory);
 
+typedef HRESULT (__stdcall *D3DCreateBlob_t)(SIZE_T Size, ID3DBlob **ppBlob);
+
 struct D3D11Symbols {
     HMODULE library = nullptr;
     HMODULE libraryCompiler = nullptr;
@@ -23,6 +25,7 @@ struct D3D11Symbols {
     D3DCompile_t D3DCompile = nullptr;
     D3DReflect_t D3DReflect = nullptr;
     D3DCreateDXGIFactory1_t CreateDXGIFactory1 = nullptr;
+    D3DCreateBlob_t D3DCreateBlob = nullptr;
 
     auto initializeSymbols() -> bool {
         library = LoadLibraryA("d3d11.dll");
@@ -58,6 +61,10 @@ struct D3D11Symbols {
         if (!D3DReflect)
             return false;
 
+        D3DCreateBlob = (D3DCreateBlob_t)GetProcAddress(libraryCompiler, "D3DCreateBlob");
+        if (!D3DCreateBlob)
+            return false;
+
         CreateDXGIFactory1 = (D3DCreateDXGIFactory1_t)GetProcAddress(libraryDXGI, "CreateDXGIFactory1");
         if (!CreateDXGIFactory1)
             return false;
@@ -66,12 +73,12 @@ struct D3D11Symbols {
     }
 
     virtual ~D3D11Symbols() {
-        if (library)
-            FreeLibrary(library);
         if (libraryCompiler)
             FreeLibrary(libraryCompiler);
         if (libraryDXGI)
             FreeLibrary(libraryDXGI);
+        if (library)
+            FreeLibrary(library);
     }
 };
 

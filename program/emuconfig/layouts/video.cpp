@@ -128,6 +128,7 @@ VideoShaderLayout::Main::Control::Control() {
 VideoShaderLayout::Main::Info::Info() {
     append(label,{0u, 0u}, 5);
     append(loaded,{~0u, 0u});
+    append(clearCache,{0u, 0u}, 5);
     append(toParams,{0u, 0u});
 
     setAlignment(0.5);
@@ -509,6 +510,14 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         }
     };
 
+    layShader.main.control.internal.onActivate = [this]() {
+        _settings->set<bool>("shader_internal", true);
+    };
+
+    layShader.main.control.external.onActivate = [this]() {
+        _settings->set<bool>("shader_internal", false);
+    };
+
     layShader.favourite.control.add.onActivate = [this]() {
         std::string path = vManager()->getPresetPath();
 
@@ -747,6 +756,10 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         moduleSwitch.setSelection( 3 );
     };
 
+    layShader.main.info.clearCache.onActivate = [this]() {
+        GUIKIT::File::removeDirectory( program->shaderFolder() + "cache" );
+    };
+
     layPass.settings.data.filter.nearest.onActivate = [this]() {
         emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_NEAREST);
@@ -924,7 +937,7 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool expand) -> void {
 
     //if (expand) {
         tviShader.setExpanded();
-        tviParams.setExpanded();
+    //    tviParams.setExpanded();
     //}
 }
 
@@ -947,6 +960,10 @@ auto VideoLayout::buildParams(TviParam& tviParam) -> void {
         int offset = tviParam.offsets[i];
         auto& shaderParam = preset->params[offset];
 
+        if (shaderParam.isDescriptor())
+            sliderLay->name.setFont(GUIKIT::Font::system("bold"));
+        else
+            sliderLay->name.setFont(GUIKIT::Font::system());
 
         std::string _desc = shaderParam.desc;
         if (GUIKIT::Application::isWinApi())
@@ -1014,7 +1031,7 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
 
     if (useRadioX) {
         useRadioX->setChecked();
-        scaleX = "Input";
+        scaleX = pass.scaleTypeX == ShaderPreset::SCALE_INPUT ? "Input" : "Viewport";
     } else {
         switch(pass.scaleTypeX) {
             default:
@@ -1037,7 +1054,7 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
 
     if (useRadioY) {
         useRadioY->setChecked();
-        scaleY = "Input";
+        scaleY = pass.scaleTypeY == ShaderPreset::SCALE_INPUT ? "Input" : "Viewport";
     } else {
         switch(pass.scaleTypeY) {
             default:
@@ -1055,9 +1072,12 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
     if (!pass.error.empty()) {
         std::string _error = pass.error;
         GUIKIT::String::replace(_error, "\n", "\r\n");
+        layPass.errorLabel.setForegroundColor(0xff4500);
         layPass.errorMessage.setText(_error);
-    } else
+    } else {
         layPass.errorMessage.setText("");
+        layPass.errorLabel.setForegroundColor(0);
+    }
 
     layPass.settings.setEnabled(pass.inUse);
 
@@ -1244,9 +1264,9 @@ auto VideoLayout::translate() -> void {
     layBase.view.mode.spectrum.setText( trans->get("color_spectrum") );
     layBase.view.mode.reset.setText( trans->get("reset") );
     layBase.view.mode.rgb.setText( trans->get("RGB") );
-    layBase.view.mode.svideoCpu.setText( trans->get("S/C-Video") );
+    layBase.view.mode.svideoCpu.setText( trans->get("S/C-Video CPU") );
     layBase.view.mode.svideoCpu.setTooltip( trans->get("S/C-Video tooltip") );
-    layBase.view.mode.svideoGpu.setText( trans->get("Shader") );
+    layBase.view.mode.svideoGpu.setText( trans->get("Shader GPU") );
     layBase.view.scanlines.active.setText( trans->get("scanlines", {}, true) );
     layBase.view.interlace.active.setText( trans->get("interlace", {}, true) );
 
@@ -1273,6 +1293,7 @@ auto VideoLayout::translate() -> void {
     layShader.favourite.list.setHeaderText({trans->getA("selection")});
 
     layShader.main.info.label.setText( trans->getA("loaded", true) );
+    layShader.main.info.clearCache.setText( trans->getA("Clear Shader Cache") );
     layShader.main.info.toParams.setText( trans->getA("Parameter") );
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
@@ -1355,6 +1376,13 @@ auto VideoLayout::loadSettings(bool init) -> void {
     updatePresets(!init, true);
 
     layBase.view.option.linearInterpolation.setChecked( _settings->get<bool>("video_filter", true) );
+
+    bool shaderInternal = _settings->get<bool>("shader_internal", true);
+
+    if (shaderInternal)
+        layShader.main.control.internal.setChecked();
+    else
+        layShader.main.control.external.setChecked();
 }
 
 auto VideoLayout::clearBrokenPaths() -> void {
@@ -1389,6 +1417,9 @@ auto VideoLayout::showBrokenPaths(std::vector<std::string>& brokenPaths) -> void
 
     if (hasLabels || brokenPaths.size())
         layShader.synchronizeLayout();
+
+    tviShader.setImage(brokenPaths.size() ? imgError : imgFolderClosed);
+    tviShader.setImageExpanded(brokenPaths.size() ? imgError : imgFolderOpen);
 }
 
 auto VideoLayout::loadShader(std::string path) -> bool {
@@ -1438,7 +1469,10 @@ auto VideoLayout::openShaderFileDialog() -> std::string {
 }
 
 auto VideoLayout::presentShaderError() -> void {
-    auto preset = vManager()->getPreset();
+    std::vector<std::string> brokenPaths;
+    auto preset = vManager()->getPreset(brokenPaths);
+    if (!preset)
+        return;
 
     unsigned passId = 0;
     for(auto& pass : preset->passes) {
@@ -1454,4 +1488,6 @@ auto VideoLayout::presentShaderError() -> void {
 
         passId++;
     }
+
+    showBrokenPaths(brokenPaths);
 }

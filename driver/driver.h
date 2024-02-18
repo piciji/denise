@@ -1,6 +1,6 @@
 
 /**
- * v 1.3
+ * v 1.5
  */
 
 #pragma once
@@ -12,6 +12,9 @@
 
 #include "tools/hid.h"
 #include "tools/shaderpass.h"
+#define MAX_SHADERS 64
+#define MAX_TEXTURES 64
+#define MAX_FRAME_HISTORY 128
 
 namespace DRIVER {
 
@@ -22,13 +25,23 @@ struct Viewport {
     int y = 0;
 };
 
+struct DiskFile {
+    std::string ident = "";
+    std::string path = "";
+    bool isLUT = false;
+    uint8_t* data = nullptr;
+    unsigned size = 0;
+    unsigned width = 0;
+    unsigned height = 0;
+};
+
 enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4 };
+enum Rotation { ROT_0, ROT_90, ROT_180, ROT_270 };
 
 struct Video {
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
 
-    // options: bit 0: hold last frame, 7: shader params dirty
     virtual auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
     virtual auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
     virtual auto redraw(bool disallowShader = false) -> void {}
@@ -37,6 +50,8 @@ struct Video {
     virtual auto setLinearFilter(bool state) -> void {}
     virtual auto setShader(ShaderPreset* preset) -> void {}
     virtual auto setShaderProgressCallback( std::function<void (int pass, bool hasErrors)> onCallback ) -> void {}
+    virtual auto setShaderCacheCallback( std::function<void (DiskFile& diskFile)> onCallback ) -> void {}
+    virtual auto useShaderCache(bool state) -> void {}
     virtual auto synchronize(bool state) -> void {}
 	virtual auto hasSynchronized() -> bool { return false; }
     virtual auto hardSync(bool state) -> void {}
@@ -81,8 +96,8 @@ struct Video {
 
     virtual auto canHardSync() -> bool { return false; }
     virtual auto canExclusiveFullscreen() -> bool { return false; }
-    virtual auto setRotation(unsigned degree) -> void {}
-    virtual auto getRotation() -> unsigned { return 0; }
+    virtual auto setRotation(Rotation rotation) -> void {}
+    virtual auto getRotation() -> Rotation { return ROT_0; }
 
     virtual ~Video() = default;
     static auto create(const std::string& driver) -> Video*;

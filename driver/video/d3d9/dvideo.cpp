@@ -58,7 +58,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         float exclusiveFullscreenRate = 0.0;
         bool exclusiveFullscreen = false;
         bool threaded = false;
-        unsigned degree;
+        Rotation rotation;
         bool vrr = false;
     } settings;
 
@@ -392,8 +392,8 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             resizeMutex.unlock();
         } else {
             resizeMutex.lock();
-            if (settings.degree)
-                applyRotation(settings.degree, tempBuffer);
+            if (settings.rotation != ROT_0)
+                applyRotation(settings.rotation, tempBuffer);
 
             if (surface) {
                 surface->UnlockRect();
@@ -406,26 +406,26 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         }
     }
 
-    auto applyRotation(unsigned degree, unsigned* dataS, unsigned pitchS = 0) -> void {
+    auto applyRotation(Rotation rotation, unsigned* dataS, unsigned pitchS = 0) -> void {
         texture->GetSurfaceLevel(0, &surface);
         surface->LockRect(&d3dlr, 0, flags.lock);
         unsigned pitch = d3dlr.Pitch >> 2;
         unsigned* dataD = (unsigned*) d3dlr.pBits;
 
-        switch(degree) {
-            case 270:
+        switch(rotation) {
+            case ROT_270:
                 for(int y = 0; y < inputWidth; y++) {
                     for(int x = 0; x < inputHeight; x++)
                         *(dataD + pitch * x + (inputWidth - y - 1)) = *dataS++;
                     dataS += pitchS;
                 } break;
-            case 90:
+            case ROT_90:
                 for(int y = 0; y < inputWidth; y++) {
                     for(int x = 0; x < inputHeight; x++)
                         *(dataD + pitch * (inputHeight - x - 1) + y) = *dataS++;
                     dataS += pitchS;
                 } break;
-            case 180:
+            case ROT_180:
                 for(int y = 0; y < inputHeight; y++) {
                     for(int x = 0; x < inputWidth; x++)
                         *(dataD + pitch * (inputHeight - y - 1) + (inputWidth - x - 1)) = *dataS++;
@@ -506,10 +506,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if (renderBuffer && renderBuffer->data) {
             renderBuffer->sharedMutex.lock();
 
-            if (settings.degree) {
+            if (settings.rotation != ROT_0) {
                 int _width = renderBuffer->width;
                 int _height = renderBuffer->height;
-                if (settings.degree == 90 || settings.degree == 270) {
+                if (settings.rotation == ROT_90 || settings.rotation == ROT_270) {
                     auto _t = _width;
                     _width = _height;
                     _height = _t;
@@ -518,7 +518,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
                 if ( (inputWidth != _width) || (inputHeight != _height) )
                     resize(inputWidth = _width, inputHeight = _height);
 
-                applyRotation(settings.degree, renderBuffer->data, renderBuffer->pitch - renderBuffer->width);
+                applyRotation(settings.rotation, renderBuffer->data, renderBuffer->pitch - renderBuffer->width);
             } else {
                 if ((inputWidth != renderBuffer->width) || (inputHeight != renderBuffer->height))
                     resize(inputWidth = renderBuffer->width, inputHeight = renderBuffer->height);
@@ -640,9 +640,9 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         }
 
         this->options = options;
-        if (settings.degree) {
+        if (settings.rotation) {
             pitch = _width;
-            if (settings.degree == 90 || settings.degree == 270) {
+            if (settings.rotation == ROT_90 || settings.rotation == ROT_270) {
                 auto _t = _width;
                 _width = _height;
                 _height = _t;
@@ -846,15 +846,15 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
     auto getViewport() -> Viewport& { return viewport; }
 
-    auto getRotation() -> unsigned { return settings.degree; }
+    auto getRotation() -> Rotation { return settings.rotation; }
 
-    auto setRotation(unsigned degree) -> void {
-        if (settings.degree == degree)
+    auto setRotation(Rotation rotation) -> void {
+        if (settings.rotation == rotation)
             return;
         wait();
-        viewScreen.flipped = degree == 90 || degree == 270;
+        viewScreen.flipped = rotation == ROT_90 || rotation == ROT_270;
         viewScreen.update(viewport);
-        settings.degree = degree;
+        settings.rotation = rotation;
         inputWidth = inputHeight = 0;
         _clear();
     }
@@ -929,7 +929,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         settings.exclusiveFullscreen = false;
         settings.threaded = false;
 		settings.vrr = false;
-        settings.degree = 0;
+        settings.rotation = ROT_0;
 
         #include "../../tools/fonts.c"
         DWORD nFonts;

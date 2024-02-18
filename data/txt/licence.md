@@ -22,16 +22,17 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * "Sid" emulation code, especially SID filter, is taken from VICE http://vice-emu.sourceforge.net
 * "VIC-II" cycle emulation code is based on VICE implementation http://vice-emu.sourceforge.net
 * Dynamic Rate Control (DRC) formula is copyrighted by RetroArch. https://github.com/libretro/RetroArch
-* cosine resampler is copyrighted by RetroArch
-* sinc resampler is copyrighted by RetroArch
+* cosine resampler is copyrighted by RetroArch https://github.com/libretro/RetroArch
+* sinc resampler is copyrighted by RetroArch https://github.com/libretro/RetroArch
 * C64 TrueType v1.2.1/Style font is copyrighted by https://style64.org/c64-truetype
 * freetype is a library for opengl to render text fonts https://www.freetype.org/
-* bundled opengl Shader were created by following copyright holders: guest(r) - guest.r@gmail.com
+* bundled Shader were created by following copyright holders: guest(r) - guest.r@gmail.com
 * application logo and icon were created by Retrofan
 * French translation was created by Ben
 * Japanese translation was created by Ulgon
 * Hungarian translation was created by Ferenc
 * Spanish translation was created by thecodeblasters
+* Italian translation was created by Luigi
 * Chamberlin Filter is copyrighted by Hoxs64
 * fpaq0 - Stationary order 0 file compressor by Matt Mahoney
 * P64 format is copyrighted by BeRo
@@ -42,3 +43,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * vAmiga inspirations for a 64-bit event counter, 68k and handling sector blocks https://dirkwhoffmann.github.io/vAmiga/
 * 68k simulator/wrapper around FX68K from emoon https://github.com/emoon/fx68k
 * bundled AROS kickrom and extrom  https://aros.sourceforge.io/ 
+* use RetroArch shader system https://github.com/libretro/RetroArch
+* glslang from Khronos Group https://github.com/KhronosGroup/glslang
+* SPIRV-Cross from Khronos Group https://github.com/KhronosGroup/SPIRV-Cross

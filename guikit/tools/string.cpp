@@ -450,3 +450,27 @@ auto String::removeExtension(std::string str, int maxParts, int maxPartSize) -> 
 
     return str;
 }
+
+auto String::sgets(char* buf, unsigned& bufSize, unsigned& n, char** str) -> char* {
+    if (n == 0)
+        return nullptr;
+
+    const char* s = *str;
+    const char* lf = strchr(s, '\n');
+    int len = (lf == nullptr) ? n : (lf - s) + 1;
+
+    if (len == 0)
+        return nullptr;
+
+    if (len > bufSize - 1)
+        len = bufSize - 1;
+
+    if (len > n)
+        len = n;
+
+    memcpy(buf, s, len);
+    buf[len] = 0;
+    *str += len;
+    n -= len;
+    return buf;
+}

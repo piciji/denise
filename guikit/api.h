@@ -71,11 +71,13 @@ struct Image {
     unsigned width;
     unsigned height;
     uint8_t* data = nullptr;
+    bool keepDataOnDestruction = false;
     bool alphaBlendApplied = false;
     int resourceId = -1; // win xp only 
     enum Format : unsigned { RGBA, BGRA } format;
 
-    auto loadPng(const uint8_t* src, unsigned size) -> bool;
+    auto loadPng(const uint8_t* src, unsigned size, bool keepDataOnDestruction = false) -> bool;
+    auto load(const uint8_t* src, unsigned size, bool keepDataOnDestruction = false) -> bool;
     auto generatePng( uint8_t* rgbData, unsigned width, unsigned height, unsigned channels, unsigned& pngSize ) -> uint8_t*;
     auto alphaBlend(unsigned alphaColor) -> void;
 	auto alphaMultiply() -> void;
@@ -88,7 +90,7 @@ struct Image {
     //helper to convert binary file to comma separated hardcoded unsigned char sequence
     static auto getCharDataStringFromBinary(std::string inFile, std::string outFile) -> bool;    
 
-    Image() : width(0), height(0), data(nullptr), format(RGBA) {}
+    Image() : width(0), height(0), data(nullptr), keepDataOnDestruction(false), format(RGBA) {}
     Image(unsigned width, unsigned height, uint8_t* src, Format format = RGBA);
     Image(const Image& source);
     Image(Image&& source);
@@ -1366,12 +1368,13 @@ struct File {
     static auto resolveRelativePath(std::string _fn, std::string relPath ) -> std::string;
     static auto buildRelativePath(std::string refPath, std::string targetPath) -> std::string;
     static auto isAbsolute(const std::string& path) -> bool;
+    static auto removeDirectory(const std::string& _folder) -> void;
 
     auto setFile(std::string filePath) -> void;
     auto getFile() const -> std::string { return filePath; }
     auto unload() -> void;
     auto reset() -> void;
-    File(std::string filePath = "");
+    File(std::string filePath = "", bool keepDataOnDestruction = false);
     ~File();
     File(const File& source);
     File& operator=(const File& source);
@@ -1392,6 +1395,7 @@ private:
     uint8_t* data = nullptr;
     bool dataChanged = false;
     bool readOnly = false;
+    bool keepDataOnDestruction = false;
     
     Zip* zip;
     Gzip* gzip;
@@ -1542,6 +1546,7 @@ struct String {
     static auto getFileName(std::string path, bool removeExtension = false) -> std::string;
     static auto getExtension(const std::string& str, const std::string& defaultExt, int maxParts = 1, int maxPartSize = 3) -> std::string;
     static auto removeExtension(std::string str, int maxParts = 1, int maxPartSize = 3) -> std::string;
+    static auto sgets(char* buf, unsigned& bufSize, unsigned& n, char** str) -> char*;
 
     template<typename T> static auto addThousandSeparator(T digit) -> std::string {
         return addThousandSeparator( std::to_string( digit ) );

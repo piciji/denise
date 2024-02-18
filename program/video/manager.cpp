@@ -13,6 +13,7 @@
 #include "shaderParser.h"
 #include "props.cpp"
 #include "sync.cpp"
+#include "../tools/dataStorage.h"
 
 #include "../tools/chronos.h"
 #include "../view/status.h"
@@ -47,6 +48,10 @@ auto VideoManager::updateAll() -> void {
             videoManager->update();
     }
     needAUpdate = false;
+}
+
+auto VideoManager::unloadDataStorage() -> void {
+    ShaderParser::dataStorage->unload();
 }
 
 auto VideoManager::setFrameRender(uint8_t limit) -> void {
@@ -592,14 +597,18 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     bool cropCoordUpdated = emulator->cropCoordUpdated(cropTop, cropLeft);
     if (!placeHolderFrames) { 
         if (rebuildShader) {
-            setData("autoEmu_cropTop", (float)cropTop);
-            setData("autoEmu_cropLeft", (float)cropLeft);
-            setData("autoEmu_lace", (float)interlace);
-            setData("autoEmu_pal", (float)pal);
-            setData("autoEmu_subRegion", emulator->getSubRegion());
-            setData("autoEmu_tvGamma", (float)(colorSpectrum || crtRealGamma));
-            setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
-            videoDriver->setShader( (crtMode == CrtMode::Gpu) ? &parser->shaderPreset : nullptr);
+            if (crtMode == CrtMode::Gpu) {
+                setData("autoEmu_cropTop", (float)cropTop);
+                setData("autoEmu_cropLeft", (float)cropLeft);
+                setData("autoEmu_lace", (float)interlace);
+                setData("autoEmu_pal", (float)pal);
+                setData("autoEmu_subRegion", emulator->getSubRegion());
+                setData("autoEmu_tvGamma", (float)(colorSpectrum || crtRealGamma));
+                setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
+                videoDriver->setShader( &parser->shaderPreset);
+            } else
+                videoDriver->setShader(nullptr);
+
             rebuildShader  = false;
         } else if (cropCoordUpdated) {
             setData("autoEmu_cropTop", (float)cropTop);
@@ -1592,6 +1601,13 @@ auto VideoManager::getPreset(std::vector<std::string>& brokenPaths) -> ShaderPre
 
 auto VideoManager::getPreset() -> ShaderPreset* {
     return &parser->shaderPreset;
+}
+
+auto VideoManager::finishPreset() -> void {
+    parser->addBrokenLUT();
+    auto emuView = EmuConfigView::TabWindow::getView(emulator);
+    if (emuView && emuView->videoLayout)
+        emuView->videoLayout->presentShaderError();
 }
 
 auto VideoManager::clearPreset() -> void {

@@ -347,7 +347,7 @@ struct WGL : Video, OpenGL, RenderThread {
         return (int)viewScreen.mode;
     }
 
-    auto getRotation() -> unsigned { return mvp.rotation; }
+   // auto getRotation() -> unsigned { return mvp.rotation; }
 
     auto setRotation(unsigned degree) -> void {
         if (mvp.rotation == degree)

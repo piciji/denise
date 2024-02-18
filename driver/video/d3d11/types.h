@@ -25,23 +25,7 @@ namespace DRIVER {
         float color[4];
     };
 
-    struct D3DShaderVariable {
-        unsigned int byteOffset;
-        unsigned int size;
-        std::string name;
-        void* value;
-    };
-
-    struct D3DConstantBuffer {
-        std::string name;
-        unsigned int size;
-        unsigned int bindIndex;
-        ID3D11Buffer* constantBuffer;
-        std::vector<D3DShaderVariable> variables;
-    };
-
     struct D3DTexture {
-        std::string ident;
         D3D11_TEXTURE2D_DESC desc;
         ID3D11Texture2D* ptr = nullptr;
         ID3D11Texture2D* staging = nullptr;
@@ -50,38 +34,36 @@ namespace DRIVER {
         Float4 size;
     };
 
-    struct D3DTextureBind {
-        std::string ident;
-        int index = -1;
-        int indexSampler = -1;
-        D3DTexture* texture = nullptr;
-        ID3D11SamplerState* sampler;
-        ShaderPreset::Filter filter;
-        ShaderPreset::WrapMode wrap;
-    };
-
     struct D3DShader {
         ID3D11VertexShader* vs = nullptr;
         ID3D11PixelShader* ps = nullptr;
         ID3D11GeometryShader* gs = nullptr;
         ID3D11InputLayout* layout = nullptr;
         std::string error = "";
-        ID3D11ShaderReflection* reflPS = nullptr;
+        SpirvReflection reflection;
 
-        D3DConstantBuffer* constantBuffers = nullptr;
-        int constantBufferCount = 0;
+        ID3DBlob* psCode = nullptr;
+        ID3DBlob* vsCode = nullptr;
     };
 
     struct D3DProgram {
+        bool inUse;
         D3DShader shader;
         std::string ident;
         DXGI_FORMAT format;
+
         bool mipmap = false;
-        std::vector<D3DTextureBind> bindTextures;
+        bool feedback = false;
+        unsigned frameCount = 0;
+        unsigned frameModulo = 0;
+
         D3DTexture renderTarget;
-        D3DTexture cropTarget;
-        std::string src;
-        unsigned passId;
+        D3DTexture feedbackTarget;
+        std::string codeFragment;
+        std::string codeVertex;
+        std::vector<SemanticTexture> semanticTextures;
+        SemanticBuffer semanticBuffer[2];
+        ID3D11Buffer* buffers[2] = {nullptr};
 
         ShaderPreset::ScaleType scaleTypeX;
         ShaderPreset::ScaleType scaleTypeY;
@@ -91,8 +73,6 @@ namespace DRIVER {
         unsigned absY;
         ShaderPreset::Filter filter;
         ShaderPreset::WrapMode wrap;
-        CropPass crop;
-        D3D11_BOX cropBox;
     };
 
 }
