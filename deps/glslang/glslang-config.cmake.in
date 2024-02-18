@@ -1,0 +1,4 @@
+        @PACKAGE_INIT@
+        @INSTALL_CONFIG_UNIX@
+        include("@PACKAGE_PATH_EXPORT_TARGETS@")
+    
