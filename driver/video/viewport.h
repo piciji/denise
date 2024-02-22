@@ -47,7 +47,7 @@ struct ViewScreen {
         if (native && flipped)
             nativeFree = true;
 
-        bool useIntegerScaling = (hasIntegerScaling || native) && !flipped;
+        bool useIntegerScaling = (hasIntegerScaling || native) /*&& !flipped*/;
         bool fraction = scaling.height & 1;
         int scalingHeight = scaling.height;
         int scalingWidth = scaling.width;

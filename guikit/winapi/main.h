@@ -530,6 +530,7 @@ struct pTreeViewItem {
     auto append(TreeViewItem& item) -> void;
     auto remove(TreeViewItem& item) -> void;
     auto reset() -> void;
+    auto invalidateParent() -> void;
 	auto init() -> void {}
     auto update(TreeViewItem* parent) -> void;
     auto setText(std::string text) -> void;

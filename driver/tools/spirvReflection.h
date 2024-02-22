@@ -24,6 +24,7 @@ struct SemanticTexture {
     uintptr_t sampler;
     ShaderPreset::Filter filter;
     ShaderPreset::WrapMode wrap;
+    int feedbackPass;
 };
 
 struct SemanticMap {

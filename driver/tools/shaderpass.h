@@ -52,7 +52,6 @@ struct ShaderPreset {
         std::string alias;
         bool inUse;
         std::string error;
-        bool feedback;
 
         ScaleType scaleTypeX;
         ScaleType scaleTypeY;

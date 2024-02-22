@@ -1,56 +1,51 @@
+#version 450
 
-uniform sampler SourceS;
-uniform Texture2D <float4> Source;
+layout(push_constant) uniform Push
+{
+    vec4 SourceSize;
 
-struct UBO {
-    float4x4 projection;
-};
-uniform UBO ubo;
-
-struct VSInput {
-    float2 pos : TEXCOORD0;
-    float2 tex : TEXCOORD1;
-};
-
-struct PSInput {
-    float4 pos : SV_POSITION;
-    float2 tex : TEXCOORD0;
-};
-
-cbuffer Scene {
-    float4 SourceSize : packoffset(c0);
-};
-
-cbuffer Push {
     float radial_distortion;
-};
+} params;
+
+layout(std140, set = 0, binding = 0) uniform UBO
+{
+    mat4 MVP;
+} global;
 
 #pragma parameter radial_distortion     "Radial Distortion"     5 0 100 1
 
+#pragma stage vertex
+layout(location = 0) in vec4 Position;
+layout(location = 1) in vec2 TexCoord;
+layout(location = 0) out vec2 vTexCoord;
 
-float2 radialDistortion( float2 xy, float intensity ) {
-    float2 center = xy - float2(0.5, 0.5);
+void main() {
+    gl_Position = global.MVP * Position;
+    vTexCoord = TexCoord;
+}
+
+#pragma stage fragment
+layout(location = 0) in vec2 vTexCoord;
+layout(location = 0) out vec4 FragColor;
+layout(set = 0, binding = 2) uniform sampler2D Source;
+
+
+vec2 radialDistortion( vec2 xy, float intensity ) {
+    vec2 center = xy - vec2(0.5, 0.5);
     float dist = dot(center,center) * intensity;
     return xy + (center * (1.0 + dist) * dist);
 }
 
-PSInput VS(VSInput input) {
-    PSInput output;
-    output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
-    output.tex = input.tex;
-    return output;
-}
-
-float4 PS(PSInput input) : SV_TARGET {
-    float intensity = radial_distortion / 100.0;
+void main() {
+    float intensity = params.radial_distortion / 100.0;
     float offset = 4.0;
-    float width = (float)(SourceSize.x);
+    float width = float(params.SourceSize.x);
     float xL = offset / width;
     float xR = (width - offset) / width;
 
-    float Scale = 1.0f / sqrt( distance( radialDistortion( float2(xL * intensity, 0.0), intensity ), radialDistortion( float2(1.0 - intensity + xR * intensity, 0.0), intensity ) ) );
+    float Scale = 1.0f / sqrt( distance( radialDistortion( vec2(xL * intensity, 0.0), intensity ), radialDistortion( vec2(1.0 - intensity + xR * intensity, 0.0), intensity ) ) );
 
-    float2 xy = ((radialDistortion(input.tex.xy, intensity) - float2(0.5, 0.5)) * Scale) + float2(0.5, 0.5);
+    vec2 xy = ((radialDistortion(vTexCoord.xy, intensity) - vec2(0.5, 0.5)) * Scale) + vec2(0.5, 0.5);
 
-    return Source.Sample(SourceS, xy);
+    FragColor = texture(Source, xy);
 }

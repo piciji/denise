@@ -52,6 +52,8 @@ struct Video {
     virtual auto setShaderProgressCallback( std::function<void (int pass, bool hasErrors)> onCallback ) -> void {}
     virtual auto setShaderCacheCallback( std::function<void (DiskFile& diskFile)> onCallback ) -> void {}
     virtual auto useShaderCache(bool state) -> void {}
+    virtual auto getShaderNativeVertexCode(std::string& slang, std::string& out) -> bool { return false; }
+    virtual auto getShaderNativeFragmentCode(std::string& slang, std::string& out) -> bool { return false; }
     virtual auto synchronize(bool state) -> void {}
 	virtual auto hasSynchronized() -> bool { return false; }
     virtual auto hardSync(bool state) -> void {}

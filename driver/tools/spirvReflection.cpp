@@ -95,6 +95,11 @@ auto SpirvReflection::process(spirv_cross::Compiler& vCompiler, spirv_cross::Com
         push.mask = 0;
     }
 
+    if (push.size > 128) {
+        error = "exceeded maximum size of 128 bytes for push constant buffer";
+        return false;
+    }
+
     if (vUbo.mask && fUbo.mask) {
         if (fUbo.binding != vUbo.binding) {
             error = "expect same binding for Vertex and Fragment uniform buffer";
@@ -384,6 +389,7 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
         semTex.binding = tex.binding;
         semTex.filter = curPass.filter;
         semTex.wrap = curPass.wrap;
+        semTex.feedbackPass = -1;
 
         for(int l = 0; l < preset->luts.size(); l++) {
             auto& lut = preset->luts[l];
@@ -418,7 +424,8 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
                     assignNextUsablePass = true;
                     continue;
                 }
-                pass.feedback = true;
+                //pass.feedback = true;
+                semTex.feedbackPass = p;
                 semTex.data = map.textures[SemanticMap::PassFeedback].image + p * map.textures[SemanticMap::PassFeedback].stride;
                 goto Next;
             }
@@ -467,6 +474,9 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
 
                     if ( (n == 0) && (index > curHistorySize)) // OriginalHistory
                         curHistorySize = index;
+
+                    if (n == 2)
+                        semTex.feedbackPass = p;
 
                     semTex.data = ((uintptr_t)map.textures[n].image + index * map.textures[n].stride);
                     goto Next;

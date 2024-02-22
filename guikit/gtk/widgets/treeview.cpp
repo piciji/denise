@@ -14,15 +14,15 @@ auto pTreeViewItem::append(TreeViewItem& item) -> void {
 auto pTreeViewItem::remove(TreeViewItem& item) -> void {
     if(!parentTreeView()) return;
     gtk_tree_store_remove(parentTreeView()->p.gtkTreeStore, &item.p.iter);
-    invalidateParent();
+    item.p.invalidateParent();
 }
 
 auto pTreeViewItem::reset() -> void {
     if(!parentTreeView()) return;
     for(auto item : treeViewItem.state.items) {
         gtk_tree_store_remove(parentTreeView()->p.gtkTreeStore, &item->p.iter);
+        item->p.invalidateParent();
     }
-    invalidateParent();
 }
 
 auto pTreeViewItem::invalidateParent() -> void {

@@ -249,10 +249,18 @@ VideoPassLayout::Control::Control() {
     setAlignment(0.5);
 }
 
+VideoPassLayout::Generated::Generated() {
+    append(errorLabel,{0u, 0u});
+    append(spacer,{~0u, 0u});
+    append(vertex,{0u, 0u}, 10);
+    append(fragment,{0u, 0u});
+    setAlignment(0.5);
+}
+
 VideoPassLayout::VideoPassLayout() {
     append(settings,{0u, 0u}, 20);
     append(control,{0u, 0u}, 20);
-    append(errorLabel,{0u, 0u}, 5);
+    append(generated,{~0u, 0u}, 5);
     append(errorMessage, {~0u, 70u});
     setPadding(8);
     setFont(GUIKIT::Font::system("bold"));
@@ -588,6 +596,46 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (vManager()->getPreset())
             layShader.favourite.control.add.setEnabled();
         layShader.favourite.control.remove.setEnabled();
+    };
+
+    codeWindow.setGeometry({ 100, 100, 600, 350 });
+    codeLayout.append(codeViewer, {~0u, ~0u} );
+    codeLayout.setMargin(10);
+    codeWindow.append(codeLayout);
+
+    codeWindow.onClose = [this]() {
+        codeWindow.setVisible(false);
+        this->tabWindow->setFocused(100);
+    };
+
+    layPass.generated.vertex.onActivate = [this]() {
+        std::string code;
+        ShaderPreset::Pass pass;
+        if (vManager()->fetchShader(pass, selectedPassId)) {
+            if (videoDriver->getShaderNativeVertexCode(pass.vertex, code))
+                codeViewer.setText( code );
+            else
+                codeViewer.setText( code + "\n" + pass.vertex );
+
+            codeWindow.setTitle( "Vertex" );
+            codeWindow.setVisible();
+            codeWindow.setFocused();
+        }
+    };
+
+    layPass.generated.fragment.onActivate = [this]() {
+        std::string code;
+        ShaderPreset::Pass pass;
+        if (vManager()->fetchShader(pass, selectedPassId)) {
+            if (videoDriver->getShaderNativeFragmentCode(pass.fragment, code))
+                codeViewer.setText( code );
+            else
+                codeViewer.setText( code + "\n" + pass.fragment );
+
+            codeWindow.setTitle("Fragment");
+            codeWindow.setVisible();
+            codeWindow.setFocused();
+        }
     };
 
     layPass.control.disable.onActivate = [this]() {
@@ -1071,12 +1119,11 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
 
     if (!pass.error.empty()) {
         std::string _error = pass.error;
-        GUIKIT::String::replace(_error, "\n", "\r\n");
-        layPass.errorLabel.setForegroundColor(0xff4500);
+        layPass.generated.errorLabel.setForegroundColor(0xff4500);
         layPass.errorMessage.setText(_error);
     } else {
         layPass.errorMessage.setText("");
-        layPass.errorLabel.setForegroundColor(0);
+        layPass.generated.errorLabel.setForegroundColor(0);
     }
 
     layPass.settings.setEnabled(pass.inUse);
@@ -1322,7 +1369,9 @@ auto VideoLayout::translate() -> void {
     layPass.settings.data.filter.linear.setText( trans->getA("linear") );
     layPass.settings.data.filter.unspec.setText( trans->getA("unspecified") );
 
-    layPass.errorLabel.setText( trans->getA("error output", true) );
+    layPass.generated.errorLabel.setText( trans->getA("error output", true) );
+    layPass.generated.vertex.setText( trans->getA("native Vertex code") );
+    layPass.generated.fragment.setText( trans->getA("native Fragment code") );
 
     for(int i = 0; i < PARAMS_PER_PAGE; i++) {
         paramSliders[i]->defaultButton.setText( trans->getA("default") );
@@ -1481,7 +1530,6 @@ auto VideoLayout::presentShaderError() -> void {
 
             if (selectedPassId == passId) {
                 std::string _error = pass.error;
-                GUIKIT::String::replace(_error, "\n", "\r\n");
                 layPass.errorMessage.setText(_error);
             }
         }

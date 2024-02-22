@@ -1,17 +1,9 @@
+#version 450
 
-uniform sampler SourceS;
-uniform Texture2D <float4> Source;
+layout(push_constant) uniform Push
+{
+    vec4 SourceSize;
 
-struct UBO {
-    float4x4 projection;
-};
-uniform UBO ubo;
-
-cbuffer Scene {
-    float4 SourceSize : packoffset(c0);
-};
-
-cbuffer Push {
     float glitch_cas;
     float glitch_ras;
     float glitch_phi;
@@ -19,17 +11,12 @@ cbuffer Push {
     float glitch_ba;
     float autoEmu_cropLeft;
     float autoEmu_pal;
-};
+} params;
 
-struct VSInput {
-    float2 pos : TEXCOORD0;
-    float2 tex : TEXCOORD1;
-};
-
-struct PSInput {
-    float4 pos : SV_POSITION;
-    float2 tex : TEXCOORD0;
-};
+layout(std140, set = 0, binding = 0) uniform UBO
+{
+    mat4 MVP;
+} global;
 
 // luma will be darkened when some vic lines changes their state
 // AEC and BA state will be transferred in unused alpha channel for each pixel
@@ -48,25 +35,35 @@ struct PSInput {
 #pragma parameter autoEmu_cropLeft      "Crop Left"          0 0 100 1
 #pragma parameter autoEmu_pal           "PAL"                1 0 1 1
 
-PSInput VS(VSInput input) {
-    PSInput output;
-    output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
-    output.tex = input.tex;
-    return output;
+
+#pragma stage vertex
+layout(location = 0) in vec4 Position;
+layout(location = 1) in vec2 TexCoord;
+layout(location = 0) out vec2 vTexCoord;
+
+void main() {
+    gl_Position = global.MVP * Position;
+    vTexCoord = TexCoord;
 }
 
-float4 PS(PSInput input) : SV_TARGET {
-    float4 color = Source.Sample(SourceS, input.tex);
-    float AEC = glitch_aec * glitch_aec * 0.0001;
-    float BA = glitch_ba * glitch_ba * 0.0001;
-    float PHI0 = glitch_phi * glitch_phi * 0.0001;
-    float CAS = glitch_cas * glitch_cas * 0.0001;
-    float RAS = glitch_ras * glitch_ras * 0.0001;
+#pragma stage fragment
+layout(location = 0) in vec2 vTexCoord;
+layout(location = 0) out vec4 FragColor;
+layout(set = 0, binding = 2) uniform sampler2D Source;
 
-    float3 lumaChroma = color.xyz;
-    float xposF = input.tex.x * SourceSize.x;
+
+void main() {
+    vec4 color = texture(Source, vTexCoord);
+    float AEC = params.glitch_aec * params.glitch_aec * 0.0001;
+    float BA = params.glitch_ba * params.glitch_ba * 0.0001;
+    float PHI0 = params.glitch_phi * params.glitch_phi * 0.0001;
+    float CAS = params.glitch_cas * params.glitch_cas * 0.0001;
+    float RAS = params.glitch_ras * params.glitch_ras * 0.0001;
+
+    vec3 lumaChroma = color.xyz;
+    float xposF = vTexCoord.x * params.SourceSize.x;
     int xpos = int(xposF);
-    xpos += int(autoEmu_cropLeft) + (2 << (int(autoEmu_pal) ^ 1));
+    xpos += int(params.autoEmu_cropLeft) + (2 << (int(params.autoEmu_pal) ^ 1));
     xpos &= 7;
     int flags = int( color.w );
     lumaChroma.x *= 1.0 - ((flags & 1) * BA);
@@ -75,5 +72,5 @@ float4 PS(PSInput input) : SV_TARGET {
     lumaChroma.x *= 1.0 - (((xpos >> 1) & 1) * CAS);
     lumaChroma.x *= 1.0 - (((((~xpos >> 1) & 1) & (~xpos & 1)) ^ 1) * RAS);
 
-    return float4(lumaChroma, 1.0);
+    FragColor = vec4(lumaChroma, 1.0);
 }

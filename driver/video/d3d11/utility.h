@@ -235,6 +235,8 @@ struct D3D11Utility {
         dxRelease(shader.vs)
         dxRelease(shader.ps)
         dxRelease(shader.gs)
+        dxRelease(shader.psCode)
+        dxRelease(shader.vsCode)
         shader.reflection.clear();
     }
 
@@ -261,6 +263,41 @@ struct D3D11Utility {
 
         prg.semanticBuffer[SemanticBuffer::Ubo].mask = 0;
         prg.semanticBuffer[SemanticBuffer::Push].mask = 0;
+    }
+
+    static auto translate(D3D_FEATURE_LEVEL& featureLevel, std::string& code, std::string& out, bool isFragment) -> bool {
+        GLSlang glSlang;
+        std::string error;
+        std::vector<unsigned> spirv;
+        spirv_cross::CompilerHLSL* compiler = nullptr;
+        bool success = isFragment ? glSlang.compileFragment(code, spirv, error) : glSlang.compileVertex(code, spirv, error);
+
+        if (!success) {
+            out = "SLANG Shader to SPIRV conversion error:\n" + error;
+            return false;
+        }
+
+        try {
+            compiler = new spirv_cross::CompilerHLSL(spirv);
+
+            spirv_cross::ShaderResources resources = compiler->get_shader_resources();
+            if (!resources.uniform_buffers.empty())
+                compiler->set_decoration( resources.uniform_buffers[0].id, spv::DecorationBinding, 0);
+            if (!resources.push_constant_buffers.empty())
+                compiler->set_decoration( resources.push_constant_buffers[0].id, spv::DecorationBinding, 1);
+
+            spirv_cross::CompilerHLSL::Options options;
+            options.shader_model = featureLevel >= D3D_FEATURE_LEVEL_11_0 ? 50 : 40;
+            compiler->set_hlsl_options(options);
+            out = compiler->compile();
+        } catch (const std::exception& e) {
+            error = e.what();
+            out = "SPIRV Shader to HLSL conversion error:\n" + error;
+            if (compiler) delete compiler;
+            return false;
+        }
+        if (compiler) delete compiler;
+        return true;
     }
 };
 

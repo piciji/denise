@@ -43,6 +43,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         ID3D11Buffer* vbo;
         Float4 size;
         Matrix4x4 mvp;
+        Matrix4x4 mvpRotated;
     } frame;
 
     Rectangle overlay;
@@ -326,6 +327,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         viewScreen.hasIntegerScaling = integerScaling;
         if (settings.handle) {
             viewScreen.update(viewport);
+            updateRTS = true;
+            updateHistory = true;
         }
     }
 
@@ -352,6 +355,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         viewScreen.scaling.width = _w;
         viewScreen.scaling.height = _h;
         viewScreen.scaling.doubleSize = _ds;
+        // we don't need to update now because the input dimension will be changed too
     }
 
     auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void {
@@ -734,13 +738,13 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
                     success = D3D11Utility::createShader(symbols, featureLevel, device, nativeV, "", "main", "", desc, countof(desc), &p->shader, useCache);
                     if (!success) {
-                        p->shader.error = "HLSL Vertex Shader #" + std::to_string(i) + " compilation error:\n" + p->shader.error;
+                        p->shader.error = "HLSL Vertex Shader #" + std::to_string(i) + " compilation error: " + p->shader.error + "\n";
                         goto Next;
                     }
 
                     success = D3D11Utility::createShader(symbols, featureLevel, device, nativeF, "main", "", "", nullptr, 0, &p->shader, useCache);
                     if (!success) {
-                        p->shader.error = "HLSL Fragment Shader #" + std::to_string(i) + " compilation error:\n" + p->shader.error;
+                        p->shader.error = "HLSL Fragment Shader #" + std::to_string(i) + " compilation error: " + p->shader.error + "\n";
                         goto Next;
                     }
 
@@ -828,6 +832,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             auto& program = programs[i];
             auto& pass = preset->passes[i];
 
+            program.feedback = false;
             program.shader.layout = p->shader.layout;
             program.shader.vs = p->shader.vs;
             program.shader.ps = p->shader.ps;
@@ -905,7 +910,13 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if (shaderPasses) {
             for(int i = 0; i < shaderPasses; i++) {
                 auto& p = programs[i];
-                p.feedback = p.inUse ? preset->passes[i].feedback : false;
+
+                if (p.inUse) {
+                    for(auto& tex : p.semanticTextures) {
+                        if ( (tex.feedbackPass != -1) && (tex.feedbackPass < shaderPasses))
+                            programs[tex.feedbackPass].feedback = true;
+                    }
+                }
             }
 
             for (int l = 0; l < preset->luts.size(); l++) {
@@ -950,6 +961,14 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         onShaderProgressCallback(-1, !shaderPasses);
         updateRTS = true;
         updateHistory = true;
+    }
+
+    auto getShaderNativeVertexCode(std::string& slang, std::string& out) -> bool {
+        return D3D11Utility::translate(featureLevel, slang, out, false);
+    }
+
+    auto getShaderNativeFragmentCode(std::string& slang, std::string& out) -> bool {
+        return D3D11Utility::translate(featureLevel, slang, out, true);
     }
 
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
@@ -1301,6 +1320,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     auto updateRenderTargets(unsigned width, unsigned height) -> void {
         unsigned sourceWidth = width;
         unsigned sourceHeight = height;
+        frame.mvp = projection; // assume: last shader pass is NOT final pass
 
         for(int i = 0; i < shaderPasses; i++) {
             auto& p = programs[i];
@@ -1328,6 +1348,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
             D3D11Utility::releaseTexture(p.renderTarget);
 
+            //if(1) {
             if (!lastPass || p.feedback || (width != viewport.width) || (height != viewport.height) ) {
                 p.renderTarget.desc.Width = width;
                 p.renderTarget.desc.Height = height;
@@ -1346,13 +1367,14 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                         continue;
                 }
             } else {
-                if (settings.rotation == ROT_90 || settings.rotation == ROT_270) {
+                if (viewScreen.flipped && (viewScreen.mode != ViewScreen::Mode::Window)) {
                     unsigned tmp = width;
                     width = height;
                     height = tmp;
                 }
 
                 p.renderTarget.size = {(float)width, (float)height, 1.0f / float(width), 1.0f / float(height)};
+                frame.mvp = frame.mvpRotated; // last shader pass is final pass
             }
 
             if (lastPass && settings.crop.active) {
@@ -1704,9 +1726,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                   0.0f, 0.0f, 0.0f, 0.0f ,
                   0.0f, 0.0f, 0.0f, 1.0f }};
 
-        MatrixMultiply(frame.mvp.data, projection.data, 4, 4, rot.data, 4, 4);
+        MatrixMultiply(frame.mvpRotated.data, projection.data, 4, 4, rot.data, 4, 4);
         context->Map( (ID3D11Resource*)uboRotated, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-        *(Matrix4x4*)mapped.pData = frame.mvp;
+        *(Matrix4x4*)mapped.pData = frame.mvpRotated;
         context->Unmap((ID3D11Resource*)uboRotated, 0);
     }
 };

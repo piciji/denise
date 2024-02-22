@@ -1665,6 +1665,17 @@ auto VideoManager::translateShaderBufferType(ShaderPreset::BufferType& bufferTyp
     return parser->translateBufferType(bufferType);
 }
 
+auto VideoManager::fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool {
+    auto& preset = parser->shaderPreset;
+    if (passId >= preset.passes.size())
+        return false;
+
+    ShaderParser::dataStorage->unload();
+    ShaderParser temp;
+    pass.src = preset.passes[passId].src;
+    return temp.fetchShaderSource( pass );
+}
+
 VideoManager::~VideoManager() {
     enableCrtThread(false);
     free();

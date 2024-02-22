@@ -813,3 +813,5 @@ S/C-Video CPU = S/C-Video (CPU)
 Shader GPU = Shader (GPU)
 cpu filter threaded = extra thread für CPU Filter
 shader cache = Cache für GPU Shader
+native Fragment code = nativer Fragment Code
+native Vertex code = nativer Vertex Code

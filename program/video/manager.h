@@ -267,6 +267,8 @@ struct VideoManager {
     auto setPassScaleY(unsigned passId, float scale) -> void;
     auto shaderLumaChromaInput() -> bool;
     auto translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string;
+
+    auto fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool;
 };
 
 extern std::vector<VideoManager*> videoManagers;

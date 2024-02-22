@@ -10,12 +10,21 @@ auto pTreeViewItem::append(TreeViewItem& item) -> void {
 auto pTreeViewItem::remove(TreeViewItem& item) -> void {
     if(!parentTreeView()) return;
     SendMessage(parentTreeView()->p.hwnd, TVM_DELETEITEM, (WPARAM)0, (LPARAM)item.p.hTreeItem);
+    item.p.invalidateParent();
 }
 
 auto pTreeViewItem::reset() -> void {
     if(!parentTreeView()) return;
     for(auto item : treeViewItem.state.items) {
         SendMessage(parentTreeView()->p.hwnd, TVM_DELETEITEM, (WPARAM)0, (LPARAM)item->p.hTreeItem);
+        item->p.invalidateParent();
+    }
+}
+
+auto pTreeViewItem::invalidateParent() -> void {
+    treeViewItem.state.parentTreeView = nullptr;
+    for(auto item : treeViewItem.state.items) {
+        item->p.invalidateParent();
     }
 }
 
@@ -136,10 +145,12 @@ auto pTreeView::append(TreeViewItem& item) -> void {
 
 auto pTreeView::remove(TreeViewItem& item) -> void {
     if(hwnd) SendMessage(hwnd, TVM_DELETEITEM, (WPARAM)0, (LPARAM)item.p.hTreeItem);
+    item.p.invalidateParent();
 }
 
 auto pTreeView::reset() -> void {
     if (!hwnd) return;
+    for(auto item : treeView.state.items) item->p.invalidateParent();
     SendMessage(hwnd, TVM_DELETEITEM, (WPARAM)0, (LPARAM)TVI_ROOT);
     buildImageList();
 }

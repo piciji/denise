@@ -1,35 +1,20 @@
+#version 450
 
-uniform sampler SourceS;
-uniform Texture2D <float4> Source;
+layout(push_constant) uniform Push
+{
+    vec4 OutputSize;
 
-struct UBO {
-    float4x4 projection;
-};
-uniform UBO ubo;
-
-#define mod(x, y) (x - y * floor(x / y))
-
-struct VSInput {
-    float2 pos : TEXCOORD0;
-    float2 tex : TEXCOORD1;
-};
-
-struct PSInput {
-    float4 pos : SV_POSITION;
-    float2 tex : TEXCOORD0;
-};
-
-cbuffer Scene {
-    float4 OutputSize : packoffset(c0);
-};
-
-cbuffer Push {
     float hanoverBars;
     float noEncoding;
     float autoEmu_cropTop;
     float autoEmu_lace;
     float autoEmu_pal;
-};
+} params;
+
+layout(std140, set = 0, binding = 0) uniform UBO
+{
+    mat4 MVP;
+} global;
 
 #pragma parameter hanoverBars      "Hanover Bars"       10 -100 100 1
 #pragma parameter noEncoding       "Disable Encoding"   0 0 1 1
@@ -37,36 +22,45 @@ cbuffer Push {
 #pragma parameter autoEmu_pal      "PAL"                1 0 1 1
 #pragma parameter autoEmu_lace     "Interlace"          0 0 1 1
 
-PSInput VS(VSInput input) {
-    PSInput output;
-    output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
-    output.tex = input.tex;
-    return output;
+#pragma stage vertex
+layout(location = 0) in vec4 Position;
+layout(location = 1) in vec2 TexCoord;
+layout(location = 0) out vec2 vTexCoord;
+
+void main() {
+    gl_Position = global.MVP * Position;
+    vTexCoord = TexCoord;
 }
 
-float4 PS(PSInput input) : SV_TARGET {
-    float3 color;
+#pragma stage fragment
+layout(location = 0) in vec2 vTexCoord;
+layout(location = 0) out vec4 FragColor;
+layout(set = 0, binding = 2) uniform sampler2D Source;
 
-    if (autoEmu_pal) {
-        if (noEncoding) {
-            color = mul(float3x3(1.0,0.0,1.140251,1.0,-0.39393070,-0.58080921,1.0,2.0283976,0.0), Source.Sample(SourceS, input.tex.xy).xyz);
+
+void main() {
+    vec3 color;
+
+    if (bool(params.autoEmu_pal)) {
+        if (bool(params.noEncoding)) {
+            color = texture(Source, vTexCoord.xy).xyz * mat3(1.0,0.0,1.140251,1.0,-0.39393070,-0.58080921,1.0,2.0283976,0.0);
         } else {
-            int oddLine = (int(autoEmu_cropTop) >> int(autoEmu_lace)) & 1;
-            int lineFactor = int(floor(mod(floor(input.tex.y * OutputSize.y / float( 1 << int(autoEmu_lace) )), 2.0)));
-            float _hanoverBars = (100.0 - abs(hanoverBars)) / 100.0;
+            int oddLine = (int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1;
+            int lineFactor = int(floor(mod(floor(vTexCoord.y * params.OutputSize.y / float( 1 << int(params.autoEmu_lace) )), 2.0)));
+            float _hanoverBars = (100.0 - abs(params.hanoverBars)) / 100.0;
             float _hanoverBarsAlt = 1.0;
-            if (hanoverBars > 0)
-                _hanoverBarsAlt = (100.0 + hanoverBars) / 100.0;
+            if (params.hanoverBars > 0)
+                _hanoverBarsAlt = (100.0 + params.hanoverBars) / 100.0;
 
-            float3 yuv = (Source.Sample(SourceS, input.tex.xy).xyz);
-            float3 yuvLineBefore = (Source.Sample(SourceS, input.tex.xy + float2(0.0, -1.0 * float( 1 << int(autoEmu_lace) ) / OutputSize.y )).xyz);
+            vec3 yuv = (texture(Source, vTexCoord.xy).xyz);
+            vec3 yuvLineBefore = (texture(Source, vTexCoord.xy + vec2(0.0, -1.0 * float( 1 << int(params.autoEmu_lace) ) / params.OutputSize.y )).xyz);
 
-            float2 merged = float2(yuv.y + yuvLineBefore.y, yuv.z + yuvLineBefore.z) * lerp(_hanoverBars, _hanoverBarsAlt, lineFactor ^ int(oddLine)) * 0.5;
-            color = mul(float3x3(1.0,0.0,1.140251,1.0,-0.39393070,-0.58080921,1.0,2.0283976,0.0), float3(yuv.x, merged.x, merged.y));
+            vec2 merged = vec2(yuv.y + yuvLineBefore.y, yuv.z + yuvLineBefore.z) * mix(_hanoverBars, _hanoverBarsAlt, lineFactor ^ int(oddLine)) * 0.5;
+            color = vec3(yuv.x, merged.x, merged.y) * mat3(1.0,0.0,1.140251,1.0,-0.39393070,-0.58080921,1.0,2.0283976,0.0);
         }
     } else {
-        color = mul(float3x3(1.0, 1.630, 0.317, 1.0, -0.378, -0.466, 1.0, -1.089, 1.677), Source.Sample(SourceS, input.tex.xy).xyz);
+        color = texture(Source, vTexCoord.xy).xyz * mat3(1.0, 1.630, 0.317, 1.0, -0.378, -0.466, 1.0, -1.089, 1.677);
     }
 
-    return float4(color, 1.0);
+    FragColor = vec4(color, 1.0);
 }

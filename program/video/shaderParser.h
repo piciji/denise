@@ -74,6 +74,7 @@ struct ShaderParser {
     auto updateCrop() -> void;
 
     auto fetchShaderSource(const std::string& path, ShaderPreset::Pass& pass, std::vector<Stage>& stages, int depth = 0) -> bool;
+    auto fetchShaderSource(ShaderPreset::Pass& pass) -> bool;
     template<bool checkNewLine = false> auto addLineToStage(std::vector<Stage>& stages, const std::string& line, ShaderPreset::Pass& pass) -> void;
     auto addNewLine(std::string& str) -> void;
 

@@ -174,7 +174,15 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
         Control();
     } control;
 
-    GUIKIT::Label errorLabel;
+    struct Generated : GUIKIT::HorizontalLayout {
+        GUIKIT::Label errorLabel;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button vertex;
+        GUIKIT::Button fragment;
+
+        Generated();
+    } generated;
+
     GUIKIT::MultilineEdit errorMessage;
 
     VideoPassLayout();
@@ -212,6 +220,10 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     VideoShaderLayout layShader;
     VideoPassLayout layPass;
     VideoParamLayout layParam;
+
+    GUIKIT::Window codeWindow;
+    GUIKIT::VerticalLayout codeLayout;
+    GUIKIT::MultilineEdit codeViewer;
 
     GUIKIT::Image imgFolderOpen;
     GUIKIT::Image imgFolderClosed;

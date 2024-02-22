@@ -25,6 +25,7 @@ auto pMultilineEdit::setForegroundColor(unsigned color) -> void {
 
 auto pMultilineEdit::setText(std::string text) -> void {
     locked = true;
+    GUIKIT::String::replace(text, "\n", "\r\n");
     pWidget::setText(text);
     locked = false;
 }

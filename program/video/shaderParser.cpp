@@ -14,6 +14,7 @@ DataStorage* ShaderParser::dataStorage = new DataStorage(2 * 1024 * 1024);
 
 auto ShaderParser::loadPreset(std::string path) -> bool {
     clear();
+    dataStorage->unload();
     entryPaths.push_back(path);
     bool res = rootSettings.loadEx(path);
     int passCount;
@@ -39,8 +40,6 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
 
     for(int i = 0; i < passCount; i++)
         parsePass(i);
-
-    dataStorage->cleanUp();
 
     if (shaderPreset.passes.empty()) // wtf
         return false;
@@ -158,8 +157,7 @@ auto ShaderParser::createSinglePass(std::string& path) -> bool {
     pass.bufferType = ShaderPreset::BufferType::UNKNOWN;
     pass.alias = "";
     pass.error = "";
-    std::vector<Stage> stages = {Stage::Fragment, Stage::Vertex};
-    if (!fetchShaderSource(path, pass, stages))
+    if (!fetchShaderSource(pass))
         return false;
     pass.filter = ShaderPreset::Filter::FILTER_UNSPEC;
     pass.scaleTypeX = ShaderPreset::ScaleType::SCALE_VIEWPORT;
@@ -244,9 +242,7 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
     pass.alias = rootSettings.get<std::string>("alias" + strPos, "");
     pass.bufferType = ShaderPreset::BufferType::UNKNOWN;
     pass.error = "";
-    pass.feedback = false;
-    std::vector<Stage> stages = {Stage::Fragment, Stage::Vertex};
-    if (!fetchShaderSource(pass.src, pass, stages))
+    if (!fetchShaderSource(pass))
         return false;
 
     pass.inUse = true;
@@ -749,8 +745,9 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
                 GUIKIT::String::remove(line, { "\n" });
                 GUIKIT::String::trim(line);
                 if (line == "vertex") stages = {Stage::Vertex};
-                if (line == "fragment") stages = {Stage::Fragment};
+                else if (line == "fragment") stages = {Stage::Fragment};
 
+                addLineToStage<true>(stages, "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n", pass);
             } else {
                 addLineToStage(stages, line, pass);
          //       addLineToStage<true>(stages, "#line " + std::to_string(pos + 1) + " \"" + GUIKIT::String::getFileName(path) + "\"\n", pass);
@@ -810,6 +807,11 @@ End:
         pos++;
     }
     return true;
+}
+
+auto ShaderParser::fetchShaderSource(ShaderPreset::Pass& pass) -> bool {
+    std::vector<Stage> stages = {Stage::Fragment, Stage::Vertex};
+    return fetchShaderSource(pass.src, pass, stages);
 }
 
 auto ShaderParser::clear() -> void {

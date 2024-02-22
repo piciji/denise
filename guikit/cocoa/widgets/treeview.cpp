@@ -277,18 +277,29 @@ namespace GUIKIT {
     }
     
     auto pTreeViewItem::remove(TreeViewItem& item) -> void {
+        item.p.invalidateParent();
         @autoreleasepool {
             if (parentTreeView()) [[parentTreeView()->p.cocoaView content] reloadData];
         }
     }
     
     auto pTreeViewItem::reset() -> void {
+        for(auto item : treeViewItem.state.items) {
+            item->p.invalidateParent();
+        }
         treeViewItem.state.items.clear();
         @autoreleasepool {
             if (parentTreeView()) [[parentTreeView()->p.cocoaView content] reloadData];
         }
     }
-    
+
+    auto pTreeViewItem::invalidateParent() -> void {
+        treeViewItem.state.parentTreeView = nullptr;
+        for(auto item : treeViewItem.state.items) {
+            item->p.invalidateParent();
+        }
+    }
+
     auto pTreeViewItem::setText(std::string text) -> void {
         @autoreleasepool {
             if (parentTreeView()) [[parentTreeView()->p.cocoaView content] reloadItem:wrapper];
@@ -370,12 +381,16 @@ namespace GUIKIT {
     }
     
     auto pTreeView::remove(TreeViewItem& item) -> void {
+        item.p.invalidateParent();
         @autoreleasepool {
             [[cocoaView content] reloadData];
         }
     }
     
     auto pTreeView::reset() -> void {
+        for(auto item : treeViewItem.state.items) {
+            item->p.invalidateParent();
+        }
         treeView.state.items.clear();
         @autoreleasepool {
             [[cocoaView content] reloadData];

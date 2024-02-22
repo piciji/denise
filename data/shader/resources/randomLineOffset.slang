@@ -1,57 +1,54 @@
+#version 450
 
-uniform sampler SourceS;
-uniform Texture2D <float4> Source;
+layout(push_constant) uniform Push
+{
+    vec4 OutputSize;
+    float Seed;
 
-struct VSInput {
-    float2 pos : TEXCOORD0;
-    float2 tex : TEXCOORD1;
-};
-
-struct PSInput {
-    float4 pos : SV_POSITION;
-    float2 tex : TEXCOORD0;
-};
-
-struct UBO {
-    float4x4 projection;
-};
-uniform UBO ubo;
-
-cbuffer Scene {
-    float Seed : packoffset(c0);
-    float4 OutputSize : packoffset(c1);
-};
-
-cbuffer Push {
     float randomLineOffset;
-};
+} params;
+
+layout(std140, set = 0, binding = 0) uniform UBO
+{
+    mat4 MVP;
+} global;
 
 #pragma parameter randomLineOffset      "Random Line Offset"    0 0 10.0 0.01
 
-float random( float2 seed ) {
+#pragma stage vertex
+layout(location = 0) in vec4 Position;
+layout(location = 1) in vec2 TexCoord;
+layout(location = 0) out vec2 vTexCoord;
+
+void main() {
+    gl_Position = global.MVP * Position;
+    vTexCoord = TexCoord;
+}
+
+#pragma stage fragment
+layout(location = 0) in vec2 vTexCoord;
+layout(location = 0) out vec4 FragColor;
+layout(set = 0, binding = 2) uniform sampler2D Source;
+
+
+float random( vec2 seed ) {
     int n = int((seed.x * 40.0) + (seed.y * 6400.0));
     n = (n<<13) ^ n;
     return 1.0 - float((n * (((n * n) * 15731) + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0;
 }
 
-PSInput VS(VSInput input) {
-    PSInput output;
-    output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
-    output.tex = input.tex;
-    return output;
-}
 
-float4 PS(PSInput input) : SV_TARGET {
-    if (randomLineOffset > 0) {
-        float lineFactor = pow(randomLineOffset, 2.0) / 10000.0;
-        float2 xy = input.tex.xy;
-        float offset = random(float2(Seed * xy.y, xy.y + (Seed * xy.y))) * lineFactor;
+void main() {
+    if (params.randomLineOffset > 0) {
+        float lineFactor = pow(params.randomLineOffset, 2.0) / 10000.0;
+        vec2 xy = vTexCoord.xy;
+        float offset = random(vec2(params.Seed * xy.y, xy.y + (params.Seed * xy.y))) * lineFactor;
         float x0 = xy.x + offset;
-        float x1 = x0 + OutputSize.z;
-        float4 tex0 = Source.Sample(SourceS, float2( frac(x0), xy.y )).xyzw;
-        float4 tex1 = Source.Sample(SourceS, float2( frac(x1), xy.y )).xyzw;
-        return lerp(tex0, tex1, frac(x0 * OutputSize.x));
+        float x1 = x0 + params.OutputSize.z;
+        vec4 tex0 = texture(Source, vec2( fract(x0), xy.y )).xyzw;
+        vec4 tex1 = texture(Source, vec2( fract(x1), xy.y )).xyzw;
+        FragColor = mix(tex0, tex1, fract(x0 * params.OutputSize.x));
     } else {
-        return Source.Sample(SourceS, input.tex.xy).xyzw;
+        FragColor = texture(Source, vTexCoord.xy).xyzw;
     }
 }

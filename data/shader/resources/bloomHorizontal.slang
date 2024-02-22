@@ -1,33 +1,18 @@
+#version 450
 
-uniform sampler SourceS;
-uniform Texture2D <float4> Source;
-uniform sampler lutBloomS;
-uniform Texture2D lutBloom;
+layout(push_constant) uniform Push
+{
+    vec4 OutputSize;
 
-struct UBO {
-    float4x4 projection;
-};
-uniform UBO ubo;
-
-struct VSInput {
-    float2 pos : TEXCOORD0;
-    float2 tex : TEXCOORD1;
-};
-
-struct PSInput {
-    float4 pos : SV_POSITION;
-    float2 tex : TEXCOORD0;
-};
-
-cbuffer Scene {
-    float4 OutputSize : packoffset(c0);
-};
-
-cbuffer Push {
     float bloom_glow;
     float bloom_radius;
     float bloom_variance;
-};
+} params;
+
+layout(std140, set = 0, binding = 0) uniform UBO
+{
+    mat4 MVP;
+} global;
 
 #pragma parameter bloom_head       "[BLOOM]"            0 0 0.001 0.001
 #pragma parameter bloom_glow       "Bloom Glow"         0 0 200 1
@@ -38,44 +23,56 @@ cbuffer Push {
 #define lutBloomTexWidth 1553.0
 #define lutBloomTexHeight 6.0
 
-float bloomTex( float pos, float posY ) {
-    float4 packed = lutBloom.Sample(lutBloomS, float2(pos / lutBloomTexWidth, posY / lutBloomTexHeight) ).rgba;
+#pragma stage vertex
+layout(location = 0) in vec4 Position;
+layout(location = 1) in vec2 TexCoord;
+layout(location = 0) out vec2 vTexCoord;
 
-    int unpacked = (uint(packed.r * 255.0) & 0xff)
+void main() {
+    gl_Position = global.MVP * Position;
+    vTexCoord = TexCoord;
+}
+
+#pragma stage fragment
+layout(location = 0) in vec2 vTexCoord;
+layout(location = 0) out vec4 FragColor;
+layout(set = 0, binding = 2) uniform sampler2D Source;
+layout(set = 0, binding = 3) uniform sampler2D lutBloom;
+
+
+float bloomTex( float pos, float posY ) {
+    vec4 packed = texture(lutBloom, vec2(pos / lutBloomTexWidth, posY / lutBloomTexHeight) ).rgba;
+
+    int unpacked = int((uint(packed.r * 255.0) & 0xff)
                    | ((uint(packed.g * 255.0) & 0xff) << 8)
                    | ((uint(packed.b * 255.0) & 0xff) << 16)
-                   | ((uint(packed.a * 255.0) & 0xff) << 24);
+                   | ((uint(packed.a * 255.0) & 0xff) << 24));
 
-    return (float)unpacked / 1000000.0f;
+    return float(unpacked) / 1000000.0f;
 }
 
-PSInput VS(VSInput input) {
-    PSInput output;
-    output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
-    output.tex = input.tex;
-    return output;
-}
 
-float4 PS(PSInput input) : SV_TARGET {
+void main() {
 
-    if (bloom_glow == 0) {
-        return float4(Source.Sample(SourceS, input.tex).rgb, 1.0);
+    if (params.bloom_glow == 0) {
+        FragColor = vec4( texture(Source, vTexCoord).rgb, 1.0);
+        return;
     }
 
-    float3 sum = float3(0.0, 0.0, 0.0);
+    vec3 sum = vec3(0.0, 0.0, 0.0);
 
-    int n = int(bloom_radius) << 1;
-    int offset = int((bloom_variance - 1.0) * 10.0) * 14;
-    float offsetY = int(bloom_radius) - 1;
+    int n = int(params.bloom_radius) << 1;
+    int offset = int((params.bloom_variance - 1.0) * 10.0) * 14;
+    float offsetY = int(params.bloom_radius) - 1;
 
     do {
-        sum += (Source.Sample(SourceS, input.tex + float2(-1.0 * float(n) / OutputSize.x, 0.0) ).rgb
-            + Source.Sample(SourceS, input.tex + float2(float(n) / OutputSize.x, 0.0) ).rgb) * bloomTex(offset + n, offsetY);
+        sum += (texture(Source, vTexCoord + vec2(-1.0 * float(n) / params.OutputSize.x, 0.0) ).rgb
+            + texture(Source, vTexCoord + vec2(float(n) / params.OutputSize.x, 0.0) ).rgb) * bloomTex(offset + n, offsetY);
 
         n -= 1;
     } while(n > 0);
 
-    sum += Source.Sample(SourceS, input.tex).rgb * bloomTex(offset + n, offsetY);
+    sum += texture(Source, vTexCoord).rgb * bloomTex(offset + n, offsetY);
 
-    return float4( sum.rgb, 1.0 );
+    FragColor = vec4( sum.rgb, 1.0 );
 }

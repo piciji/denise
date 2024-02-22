@@ -60,5 +60,6 @@ struct DataStorage {
         for(auto& s : stores) {
             delete[] s.data;
         }
+        stores.clear();
     }
 };

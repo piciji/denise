@@ -1,51 +1,46 @@
+#version 450
 
-uniform sampler SourceS;
-uniform Texture2D <float4> Source;
+layout(push_constant) uniform Push
+{
+    float Seed;
 
-struct VSInput {
-    float2 pos : TEXCOORD0;
-    float2 tex : TEXCOORD1;
-};
-
-struct PSInput {
-    float4 pos : SV_POSITION;
-    float2 tex : TEXCOORD0;
-};
-
-struct UBO {
-    float4x4 projection;
-};
-uniform UBO ubo;
-
-cbuffer Scene {
-    float Seed : packoffset(c0);
-};
-
-cbuffer Push {
     float lumaNoise;
     float chromaNoise;
-};
+} params;
 
-float random( float2 seed ) {
+layout(std140, set = 0, binding = 0) uniform UBO
+{
+    mat4 MVP;
+} global;
+
+#pragma parameter lumaNoise     "Luma Noise"        0 0 100.0 0.1
+#pragma parameter chromaNoise   "Chroma Noise"      0 0 100.0 0.1
+
+#pragma stage vertex
+layout(location = 0) in vec4 Position;
+layout(location = 1) in vec2 TexCoord;
+layout(location = 0) out vec2 vTexCoord;
+
+void main() {
+    gl_Position = global.MVP * Position;
+    vTexCoord = TexCoord;
+}
+
+#pragma stage fragment
+layout(location = 0) in vec2 vTexCoord;
+layout(location = 0) out vec4 FragColor;
+layout(set = 0, binding = 2) uniform sampler2D Source;
+
+float random( vec2 seed ) {
     int n = int((seed.x * 40.0) + (seed.y * 6400.0));
     n = (n<<13) ^ n;
     return 1.0 - float((n * (((n * n) * 15731) + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0;
 }
 
-#pragma parameter lumaNoise     "Luma Noise"        0 0 100.0 0.1
-#pragma parameter chromaNoise   "Chroma Noise"      0 0 100.0 0.1
-
-PSInput VS(VSInput input) {
-    PSInput output;
-    output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
-    output.tex = input.tex;
-    return output;
-}
-
-float4 PS(PSInput input) : SV_TARGET {
-    float2 xy = input.tex.xy;
-    float y = random(xy + float2(Seed * xy.x, Seed * xy.y)) * (lumaNoise / 100.0);
-    float u = random(xy + float2(Seed * xy.y, Seed * xy.x)) * (chromaNoise / 100.0);
-    float v = random(xy - float2(Seed * xy.x, Seed * xy.y)) * (chromaNoise / 100.0);
-    return Source.Sample(SourceS, xy).xyzw + float4(y, u, v, 0.0);
+void main() {
+    vec2 xy = vTexCoord.xy;
+    float y = random(xy + vec2(params.Seed * xy.x, params.Seed * xy.y)) * (params.lumaNoise / 100.0);
+    float u = random(xy + vec2(params.Seed * xy.y, params.Seed * xy.x)) * (params.chromaNoise / 100.0);
+    float v = random(xy - vec2(params.Seed * xy.x, params.Seed * xy.y)) * (params.chromaNoise / 100.0);
+    FragColor = texture(Source, xy).xyzw + vec4(y, u, v, 0.0);
 }

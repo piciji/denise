@@ -1,33 +1,9 @@
+#version 450
 
-uniform sampler SourceS;
-uniform Texture2D <float4> Source;
-uniform Texture2D lutMaskAperture;
-uniform sampler lutMaskApertureS;
-uniform Texture2D lutMaskShadow;
-uniform sampler lutMaskShadowS;
-uniform Texture2D lutMaskSlot;
-uniform sampler lutMaskSlotS;
+layout(push_constant) uniform Push
+{
+    vec4 OriginalSize;
 
-struct UBO {
-    float4x4 projection;
-};
-uniform UBO ubo;
-
-struct VSInput {
-    float2 pos : TEXCOORD0;
-    float2 tex : TEXCOORD1;
-};
-
-struct PSInput {
-    float4 pos : SV_POSITION;
-    float2 tex : TEXCOORD0;
-};
-
-cbuffer Scene {
-    float4 OriginalSize : packoffset(c0);
-};
-
-cbuffer Push {
     float mask_level;
     float mask_layer;
     float mask_dpi;
@@ -35,7 +11,12 @@ cbuffer Push {
     float luminance;
     float light_center;
     float light_distance;
-};
+} params;
+
+layout(std140, set = 0, binding = 0) uniform UBO
+{
+    mat4 MVP;
+} global;
 
 #pragma parameter mask_head         "[MASK]"                                                0 0 0.001 0.001
 #pragma parameter mask_layer        "Mask Layer 0 (Aperture) 1 (Shadow) 2 (Slot) 3 (Off)"   0 0 3 1
@@ -46,38 +27,51 @@ cbuffer Push {
 #pragma parameter light_center      "Light From Center"                                     0 0 1 1
 #pragma parameter light_distance    "Light Distance"                                        100 1 300 1
 
-PSInput VS(VSInput input) {
-    PSInput output;
-    output.pos = mul(ubo.projection, float4(input.pos.xy, 0.f, 1.f));
-    output.tex = input.tex;
-    return output;
+
+#pragma stage vertex
+layout(location = 0) in vec4 Position;
+layout(location = 1) in vec2 TexCoord;
+layout(location = 0) out vec2 vTexCoord;
+
+void main() {
+    gl_Position = global.MVP * Position;
+    vTexCoord = TexCoord;
 }
 
-float4 PS(PSInput input) : SV_TARGET {
-    float3 color = Source.Sample(SourceS, input.tex).xyz;
+#pragma stage fragment
+layout(location = 0) in vec2 vTexCoord;
+layout(location = 0) out vec4 FragColor;
+layout(set = 0, binding = 2) uniform sampler2D Source;
+layout(set = 0, binding = 3) uniform sampler2D lutMaskAperture;
+layout(set = 0, binding = 4) uniform sampler2D lutMaskShadow;
+layout(set = 0, binding = 5) uniform sampler2D lutMaskSlot;
 
-    float scaleX = (OriginalSize.x * (25.4 / mask_dpi)) / mask_pitch;
-    float scaleY = (OriginalSize.x * scaleX) / OriginalSize.y;
-    int layer = int(mask_layer);
-    float _luminance = luminance;
+
+void main() {
+    vec3 color = texture(Source, vTexCoord).xyz;
+
+    float scaleX = (params.OriginalSize.x * (25.4 / params.mask_dpi)) / params.mask_pitch;
+    float scaleY = (params.OriginalSize.x * scaleX) / params.OriginalSize.y;
+    int layer = int(params.mask_layer);
+    float _luminance = params.luminance;
 
     if (layer == 0) {
-        color *= lerp( float3(1.0, 1.0, 1.0), lutMaskAperture.Sample( lutMaskApertureS, input.tex * float2(scaleX, scaleY) ).xyz, mask_level / 100.0 );
-        if (mask_level) _luminance += 55.0;
+        color *= mix( vec3(1.0, 1.0, 1.0), texture( lutMaskAperture, vTexCoord * vec2(scaleX, scaleY) ).xyz, params.mask_level / 100.0 );
+        if (bool(params.mask_level)) _luminance += 55.0;
     } else if (layer == 1) {
-        color *= lerp( float3(1.0, 1.0, 1.0), lutMaskShadow.Sample( lutMaskShadowS, input.tex * float2(scaleX, scaleY) ).xyz, mask_level / 100.0 );
-        if (mask_level) _luminance += 60.0;
+        color *= mix( vec3(1.0, 1.0, 1.0), texture( lutMaskShadow, vTexCoord * vec2(scaleX, scaleY) ).xyz, params.mask_level / 100.0 );
+        if (bool(params.mask_level)) _luminance += 60.0;
     } else if (layer == 2) {
-        color *= lerp( float3(1.0, 1.0, 1.0), lutMaskSlot.Sample( lutMaskSlotS, input.tex * float2(scaleX, scaleY) ).xyz, mask_level / 100.0 );
-        if (mask_level) _luminance += 60.0;
+        color *= mix( vec3(1.0, 1.0, 1.0), texture( lutMaskSlot, vTexCoord * vec2(scaleX, scaleY) ).xyz, params.mask_level / 100.0 );
+        if (bool(params.mask_level)) _luminance += 60.0;
     }
 
-    if (light_center) {
-        float2 lightVector = (input.tex - float2(0.5, 0.5)) * (100.0 / light_distance);
+    if (bool(params.light_center)) {
+        vec2 lightVector = (vTexCoord - vec2(0.5, 0.5)) * (100.0 / params.light_distance);
         color *= exp(-dot(lightVector, lightVector));
     }
 
     color *= _luminance / 100.0;
 
-    return float4( color, 1.0 );
+    FragColor = vec4( color, 1.0 );
 }
