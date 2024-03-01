@@ -29,7 +29,7 @@ auto ShaderParser::buildLutBloom() -> void {
 auto ShaderParser::buildLutBandwidth() -> void {
     typedef Emulator::Interface::SubRegion SubRegion;
     unsigned width = 25 * 3 * 4;
-    unsigned height = 4 * 22 + 1; // one more, hence CLAMP_TO_BORDER already uses the border color at the edge of texture
+    unsigned height = 4 * 22 + 1;
     uint8_t* bwLUT = new uint8_t[ width * height ];
     std::memset(bwLUT, 0, width * height);
 

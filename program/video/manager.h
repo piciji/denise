@@ -157,7 +157,8 @@ struct VideoManager {
     ColorLumaChroma* evenTable = nullptr;
     ColorLumaChroma* oddTable = nullptr;
 
-    bool laceMode = false;
+    ShaderPreset::Param* driveLedParam = nullptr;
+    uint8_t frameOptions = 0;
     bool colorTableUpdated = false;
     inline auto needUpdate() -> bool { return !colorTableUpdated; }
     auto requestUpdate() -> void;
@@ -245,18 +246,19 @@ struct VideoManager {
     template<typename T> auto updateData(std::string ident, T data) -> void;
     auto setData(const std::string& ident, float value) -> void;
     auto setData( unsigned offset, float value) -> void;
+    auto getData(const std::string& ident) -> ShaderPreset::Param*;
     auto applyDataUpdates() -> void;
 
-    auto loadPreset(const std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto loadPreset(const std::string& path, std::vector<std::string>& errors) -> ShaderPreset*;
     auto loadPreset(const std::string& path) -> void;
     auto loadPreset() -> bool;
 
-    auto addPreset(std::string path, bool prepend, std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto addPreset(std::string path, bool prepend, std::vector<std::string>& errors) -> ShaderPreset*;
     auto savePreset(std::string path) -> bool;
     auto getPreset() -> ShaderPreset*;
-    auto getPreset(std::vector<std::string>& brokenPaths) -> ShaderPreset*;
+    auto getPreset(std::vector<std::string>& errors) -> ShaderPreset*;
     auto getPresetPath() -> std::string;
-    auto getPresetPathCombined() -> std::string;
+    auto getPresetPathDetailed() -> std::string;
     auto clearPreset() -> void;
     auto finishPreset() -> void;
     auto movePass(unsigned& passId, bool up) -> void;

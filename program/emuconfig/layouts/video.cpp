@@ -455,19 +455,19 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             return;
 
         emuThread->lock();
-        std::vector<std::string> brokenPaths;
-        ShaderPreset* preset = vManager()->addPreset(path, true, brokenPaths);
+        std::vector<std::string> errors;
+        ShaderPreset* preset = vManager()->addPreset(path, true, errors);
 
         if (preset) {
             buildShaderUI(preset);
-            layShader.main.info.loaded.setText( GUIKIT::String::getFileName( vManager()->getPresetPathCombined() ) );
+            layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             if (externalFolder())
                 _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.favourite.control.add.setEnabled();
             layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
         emuThread->unlock();
-        showBrokenPaths(brokenPaths);
+        showErrors(errors);
     };
 
     layShader.main.control.appendPreset.onActivate = [this]() {
@@ -476,19 +476,19 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             return;
 
         emuThread->lock();
-        std::vector<std::string> brokenPaths;
-        ShaderPreset* preset = vManager()->addPreset(path, false, brokenPaths);
+        std::vector<std::string> errors;
+        ShaderPreset* preset = vManager()->addPreset(path, false, errors);
 
         if (preset) {
             buildShaderUI(preset);
-            layShader.main.info.loaded.setText( GUIKIT::String::getFileName( vManager()->getPresetPathCombined() ) );
+            layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             if (externalFolder())
                 _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.favourite.control.add.setEnabled();
             layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
         emuThread->unlock();
-        showBrokenPaths(brokenPaths);
+        showErrors(errors);
     };
 
     layShader.main.control.unload.onActivate = [this]() {
@@ -513,7 +513,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             path += ".slangp";
 
         if (vManager()->savePreset(path)) {
-            layShader.main.info.loaded.setText( GUIKIT::String::getFileName( path, true ) );
+            layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder_save", GUIKIT::File::getPath(path));
         }
     };
@@ -805,7 +805,11 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layShader.main.info.clearCache.onActivate = [this]() {
-        GUIKIT::File::removeDirectory( program->shaderFolder() + "cache" );
+        std::string shaderFolder = program->shaderFolder();
+        if (shaderFolder == SHADER_FOLDER)
+            return;
+
+        GUIKIT::File::removeDirectory( shaderFolder + "cache" );
     };
 
     layPass.settings.data.filter.nearest.onActivate = [this]() {
@@ -1234,14 +1238,14 @@ auto VideoLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> void {
     layBase.lumaDelay.lumaFall.slider.setPosition( (unsigned)((_lumaFall - 1.0) * 10.0) );
     layBase.lumaDelay.lumaFall.value.setText( GUIKIT::String::formatFloatingPoint(_lumaFall, 1) + " px" );
 
-    std::vector<std::string> brokenPaths;
-    ShaderPreset* preset = vManager()->getPreset(brokenPaths);
+    std::vector<std::string> errors;
+    ShaderPreset* preset = vManager()->getPreset(errors);
     if (preset) {
         buildShaderUI(preset, false);
-        layShader.main.info.loaded.setText(GUIKIT::String::getFileName(vManager()->getPresetPath(), true));
+        layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
         layShader.favourite.control.add.setEnabled();
-        showBrokenPaths(brokenPaths);
+        showErrors(errors);
     } else
         unloadShader();
 	
@@ -1328,7 +1332,7 @@ auto VideoLayout::translate() -> void {
     layShader.main.control.prependPreset.setText( trans->getA("prepend preset") );
     layShader.main.control.appendPreset.setText( trans->getA("append preset") );
 
-    layShader.main.control.folder.setText( trans->getA("shader folder", true) );
+    layShader.main.control.folder.setText( trans->getA("folder", true) );
     layShader.main.control.internal.setText( trans->getA("internal") );
     layShader.main.control.external.setText( trans->getA("external") );
     layShader.main.control.unload.setText( trans->getA("unload") );
@@ -1340,7 +1344,7 @@ auto VideoLayout::translate() -> void {
     layShader.favourite.list.setHeaderText({trans->getA("selection")});
 
     layShader.main.info.label.setText( trans->getA("loaded", true) );
-    layShader.main.info.clearCache.setText( trans->getA("Clear Shader Cache") );
+    layShader.main.info.clearCache.setText( trans->getA("clear cache") );
     layShader.main.info.toParams.setText( trans->getA("Parameter") );
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
@@ -1434,55 +1438,57 @@ auto VideoLayout::loadSettings(bool init) -> void {
         layShader.main.control.external.setChecked();
 }
 
-auto VideoLayout::clearBrokenPaths() -> void {
-    std::vector<std::string> brokenPaths;
-    showBrokenPaths(brokenPaths);
+auto VideoLayout::clearErrors() -> void {
+    showErrors({});
 }
 
-auto VideoLayout::showBrokenPaths(std::vector<std::string>& brokenPaths) -> void {
-    bool hasLabels = layShader.main.brokenLabels.size();
-    for(auto brokenLabel : layShader.main.brokenLabels) {
-        layShader.main.remove(*brokenLabel);
-        delete brokenLabel;
+auto VideoLayout::showErrors(const std::vector<std::string>& errors) -> void {
+    bool hasLabels = layShader.main.errorLabels.size();
+    for(auto errorLabel : layShader.main.errorLabels) {
+        layShader.main.remove(*errorLabel);
+        delete errorLabel;
     }
-    layShader.main.brokenLabels.clear();
+    layShader.main.errorLabels.clear();
+    unsigned errSize = errors.size();
 
-    if (brokenPaths.size()) {
+    if (errSize) {
         auto label = new GUIKIT::Label;
-        label->setText( trans->getA("broken paths", true) );
+        label->setText( trans->getA("error output", true) );
         label->setForegroundColor(0xff4500);
         label->setFont(GUIKIT::Font::system("bold"));
-        layShader.main.brokenLabels.push_back(label);
+        layShader.main.errorLabels.push_back(label);
         layShader.main.append(*label, {0u, 0u}, 2);
     }
 
-    for (auto& brokenPath : brokenPaths) {
+    for (auto& error : errors) {
         auto label = new GUIKIT::Label;
-        label->setText(brokenPath);
+        label->setText(error);
         label->setForegroundColor(0xff4500);
-        layShader.main.brokenLabels.push_back(label);
+        layShader.main.errorLabels.push_back(label);
         layShader.main.append(*label, {0u, 0u}, 2);
     }
 
-    if (hasLabels || brokenPaths.size())
+    if (hasLabels || errSize)
         layShader.synchronizeLayout();
 
-    tviShader.setImage(brokenPaths.size() ? imgError : imgFolderClosed);
-    tviShader.setImageExpanded(brokenPaths.size() ? imgError : imgFolderOpen);
+    tviShader.setImage(errSize ? imgError : imgFolderClosed);
+    tviShader.setImageExpanded(errSize ? imgError : imgFolderOpen);
 }
 
 auto VideoLayout::loadShader(std::string path) -> bool {
-    std::vector<std::string> brokenPaths;
-    ShaderPreset* preset = vManager()->loadPreset(path, brokenPaths);
+    std::vector<std::string> errors;
+    ShaderPreset* preset = vManager()->loadPreset(path, errors);
 
     if (preset) {
         buildShaderUI(preset);
-        layShader.main.info.loaded.setText( GUIKIT::String::getFileName( path, true ) );
+        layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
         layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
         view->updateShader(emulator);
+        if (!layBase.view.mode.svideoGpu.checked())
+            layBase.view.mode.svideoGpu.activate();
     }
-    showBrokenPaths(brokenPaths);
+    showErrors(errors);
     return preset != nullptr;
 }
 
@@ -1497,7 +1503,7 @@ auto VideoLayout::unloadShader() -> void {
     layShader.main.control.external.setEnabled();
     layShader.favourite.control.add.setEnabled(false);
     layBase.view.gamma.setEnabled();
-    clearBrokenPaths();
+    clearErrors();
 }
 
 auto VideoLayout::getShaderFolder() -> std::string {
@@ -1518,8 +1524,8 @@ auto VideoLayout::openShaderFileDialog() -> std::string {
 }
 
 auto VideoLayout::presentShaderError() -> void {
-    std::vector<std::string> brokenPaths;
-    auto preset = vManager()->getPreset(brokenPaths);
+    std::vector<std::string> errors;
+    auto preset = vManager()->getPreset(errors);
     if (!preset)
         return;
 
@@ -1537,5 +1543,5 @@ auto VideoLayout::presentShaderError() -> void {
         passId++;
     }
 
-    showBrokenPaths(brokenPaths);
+    showErrors(errors);
 }

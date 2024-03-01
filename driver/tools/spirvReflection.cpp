@@ -316,9 +316,6 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
         } else if (var.name == "Rotation") {
             semUniform.data = map.uniforms[SemanticMap::Rotation];
             goto Next;
-        } else if (var.name == "Seed") {
-            semUniform.data = map.uniforms[SemanticMap::Seed];
-            goto Next;
         } else if (var.name == "OriginalSize") {
             semUniform.data = map.textures[SemanticMap::History].size;
             goto Next;
@@ -347,18 +344,35 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
                     if (isNumber(strIndex))
                         index = stoi(strIndex);
 
-                    if ((n == 1) && (index >= passId)) {
-                        error = var.name + " cannot use output of pass " + std::to_string(passId);
-                        return false;
-                    }
+                    if (n == SemanticMap::History) {
+                        if (index >= map.textures[SemanticMap::History].maxElements) {
+                            error = var.name + " exceeds max history frames of " + std::to_string(map.textures[SemanticMap::History].maxElements);
+                            return false;
+                        }
 
-                    for(int p = index; p >= 0; p--) {
-                        auto& pass = preset->passes[p];
-                        if (!pass.inUse)
-                            continue;
-
-                        semUniform.data = (void*)((uintptr_t)map.textures[n].size + index * map.textures[n].stride);
+                        semUniform.data = (void*)((uintptr_t)map.textures[SemanticMap::History].size + index * map.textures[SemanticMap::History].stride);
                         goto Next;
+                    } else {
+                        index += getSubChainIndex(preset, passId);
+
+                        if ((n == SemanticMap::PassOutput) && (index >= passId)) {
+                            error = var.name + " cannot use output size of future pass " + std::to_string(passId);
+                            return false;
+                        }
+
+                        if (index >= map.textures[n].maxElements) {
+                            error = var.name + " exceeds max textures of " + std::to_string(map.textures[n].maxElements);
+                            return false;
+                        }
+
+                        for(int p = index; p >= 0; p--) {
+                            auto& pass = preset->passes[p];
+                            if (!pass.inUse)
+                                continue;
+
+                            semUniform.data = (void*)((uintptr_t)map.textures[n].size + index * map.textures[n].stride);
+                            goto Next;
+                        }
                     }
                 }
             }
@@ -375,6 +389,17 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
     semanticBuffer->binding = spirvBuffer.binding;
     semanticBuffer->size = (spirvBuffer.size + 0xf) & ~0xf;
     return true;
+}
+
+inline auto SpirvReflection::getSubChainIndex(ShaderPreset* preset, unsigned start) -> unsigned {
+    if (start >= preset->passes.size())
+        return 0;
+
+    for(int i = start; i >= 0; i--) {
+        if (preset->passes[i].subChain)
+            return i;
+    }
+    return 0;
 }
 
 auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, SemanticMap& map, std::vector<SemanticTexture>& semanticTextures) -> bool {
@@ -462,24 +487,41 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
                 if (isNumber(strIndex))
                     index = stoi(strIndex);
 
-                if ((n == 1) && (index >= passId)) {
-                    error = tex.name + " cannot use output of pass " + std::to_string(passId);
-                    return false;
-                }
+                if (n == SemanticMap::History) {
+                    if (index >= map.textures[SemanticMap::History].maxElements) {
+                        error = tex.name + " exceeds max history frames of " + std::to_string(map.textures[SemanticMap::History].maxElements);
+                        return false;
+                    }
 
-                for(int p = index; p >= 0; p--) {
-                    auto& pass = preset->passes[p];
-                    if (!pass.inUse)
-                        continue;
-
-                    if ( (n == 0) && (index > curHistorySize)) // OriginalHistory
+                    if (index > curHistorySize)
                         curHistorySize = index;
 
-                    if (n == 2)
-                        semTex.feedbackPass = p;
-
-                    semTex.data = ((uintptr_t)map.textures[n].image + index * map.textures[n].stride);
+                    semTex.data = ((uintptr_t)map.textures[SemanticMap::History].image + index * map.textures[SemanticMap::History].stride);
                     goto Next;
+                } else {
+                    index += getSubChainIndex(preset, passId);
+
+                    if ((n == SemanticMap::PassOutput) && (index >= passId)) {
+                        error = tex.name + " cannot use output of future pass " + std::to_string(passId);
+                        return false;
+                    }
+
+                    if (index >= map.textures[n].maxElements) {
+                        error = tex.name + " exceeds max textures of " + std::to_string(map.textures[n].maxElements);
+                        return false;
+                    }
+
+                    for(int p = index; p >= 0; p--) {
+                        auto& pass = preset->passes[p];
+                        if (!pass.inUse)
+                            continue;
+
+                        if (n == SemanticMap::PassFeedback)
+                            semTex.feedbackPass = p;
+
+                        semTex.data = ((uintptr_t)map.textures[n].image + index * map.textures[n].stride);
+                        goto Next;
+                    }
                 }
             }
         }

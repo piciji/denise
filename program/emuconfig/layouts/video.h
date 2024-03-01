@@ -84,7 +84,7 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
 
         Main();
 
-        std::vector<GUIKIT::Label*> brokenLabels;
+        std::vector<GUIKIT::Label*> errorLabels;
     } main;
 
     struct Favourite : GUIKIT::FramedVerticalLayout {
@@ -255,8 +255,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto buildParams(TviParam& tviParam) -> void;
     auto countFloatingPoint(ShaderPreset::Param& param, int& places, int& decimalPlaces) -> void;
     auto updateMoveImg() -> void;
-    auto clearBrokenPaths() -> void;
-    auto showBrokenPaths(std::vector<std::string>& brokenPaths) -> void;
+    auto clearErrors() -> void;
+    auto showErrors(const std::vector<std::string>& errors) -> void;
     auto loadShader(std::string path) -> bool;
     auto unloadShader() -> void;
     auto getShaderFolder() -> std::string;

@@ -5,7 +5,6 @@
 #include <cmath>
 #include <sstream>
 #include "shaderParser.h"
-#include "../tools/chronos.h"
 #include "../tools/dataStorage.h"
 #include "luts.cpp"
 #include "../view/status.h"
@@ -18,7 +17,7 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
     entryPaths.push_back(path);
     bool res = rootSettings.loadEx(path);
     int passCount;
-    GUIKIT::Vector::combine(brokenPaths, rootSettings.getBrokenPaths());
+    GUIKIT::Vector::combine(errors, rootSettings.getBrokenPaths());
 
     if (!res)
         return false;
@@ -32,11 +31,12 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
     if (!passCount)
         return false;
 
-    shaderPreset.lumaChroma = rootSettings.get<bool>("luma_chroma", false);
-    if (shaderPreset.lumaChroma || rootSettings.get<bool>("small_margin", false))
-        shaderPreset.smallMargin.set({1,4,0,4});
+    if (passCount > MAX_SHADERS) {
+        errors.push_back( trans->get("too much shaders", {{"%count%", std::to_string(MAX_SHADERS)}}) );
+        return false;
+    }
 
-    auto ts = Chronos::getTimestampInMilliseconds();
+    shaderPreset.lumaChroma = rootSettings.get<bool>("luma_chroma", false);
 
     for(int i = 0; i < passCount; i++)
         parsePass(i);
@@ -46,16 +46,17 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
 
     parseTextures();
 
-    auto ts2 = Chronos::getTimestampInMilliseconds();
-
-    auto rests = ts2 - ts;
+    if (shaderPreset.luts.size() > MAX_TEXTURES) {
+        errors.push_back( trans->get("too much textures", {{"%count%", std::to_string(MAX_TEXTURES)}}) );
+        return false;
+    }
 
     if (path != rootSettings.getPath()) { // there is at least one reference to root config
         std::vector<GUIKIT::Settings*> settingsList;
         applyOverrides(path, settingsList);
     }
 
-   // updateCrop();
+    updateCrop();
     return true;
 }
 
@@ -75,8 +76,6 @@ auto ShaderParser::savePreset(std::string path) -> bool {
 
         if (shaderPreset.lumaChroma)
             writeLine(fp, "luma_chroma", "true" );
-        else if (shaderPreset.smallMargin.active)
-            writeLine(fp, "small_margin", "true" );
 
         fputs( "\n", fp );
 
@@ -87,6 +86,9 @@ auto ShaderParser::savePreset(std::string path) -> bool {
                 writeLine(fp, i, "hide", "true");
             if (pass.filter != ShaderPreset::FILTER_UNSPEC)
                 writeLine(fp, i, "filter_linear", pass.filter == ShaderPreset::FILTER_NEAREST ? "false" : "true");
+            if (pass.subChain)
+                writeLine(fp, i, "sub_chain", "true");
+
             writeLine(fp, i, "wrap_mode", translateWrapMode(pass.wrap));
             writeLine(fp, i, "mipmap_input", pass.mipmap ? "true" : "false");
             writeLine(fp, i, "alias", pass.alias);
@@ -172,6 +174,7 @@ auto ShaderParser::createSinglePass(std::string& path) -> bool {
     pass.absX = 0;
     pass.absY = 0;
     pass.inUse = true;
+    pass.subChain = false;
     shaderPreset.passes.push_back(pass);
     return true;
 }
@@ -185,7 +188,6 @@ auto ShaderParser::addParameter(ShaderPreset::Param& param) -> void {
             _param.maximum = param.maximum;
             _param.minimum = param.minimum;
             _param.step = param.step;
-            _param.pass = param.pass;
             return;
         }
     }
@@ -195,6 +197,7 @@ auto ShaderParser::addParameter(ShaderPreset::Param& param) -> void {
 
 auto ShaderParser::parseTextures() -> void {
     std::string lutList = rootSettings.get<std::string>("textures", "");
+    GUIKIT::String::removeQuote(lutList, true);
 
     if (lutList.empty())
         return;
@@ -232,7 +235,7 @@ auto ShaderParser::parseTextures() -> void {
 
 auto ShaderParser::parsePass(unsigned pos) -> bool {
     ShaderPreset::Pass pass;
-    //pass.crop.release();
+    pass.crop.release();
     std::string strPos = std::to_string(pos);
     std::string path = rootSettings.get<std::string>("shader" + strPos, "");
     if (path.empty())
@@ -266,6 +269,7 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
 
     pass.mipmap = rootSettings.get<bool>("mipmap_input" + strPos, false);
     pass.inUse = !rootSettings.get<bool>("hide" + strPos, false);
+    pass.subChain = rootSettings.get<bool>("sub_chain" + strPos, false);
 
     pass.scaleTypeX = ShaderPreset::SCALE_NONE;
     pass.scaleTypeY = ShaderPreset::SCALE_NONE;
@@ -441,7 +445,7 @@ auto ShaderParser::findRootConfig(GUIKIT::Settings& settings, int depth) -> bool
 
     for(auto& reference : references) {
         bool res = settings.loadEx(reference);
-        GUIKIT::Vector::combine(brokenPaths, settings.getBrokenPaths());
+        GUIKIT::Vector::combine(errors, settings.getBrokenPaths());
 
         if (res) {
             if (findRootConfig(settings, depth + 1))
@@ -482,29 +486,34 @@ auto ShaderParser::applyOverrides(std::string& path, std::vector<GUIKIT::Setting
     }
 }
 
-auto ShaderParser::addPreset(ShaderParser* parser, bool prepend) -> void {
+auto ShaderParser::addPreset(ShaderParser* parser, bool prepend) -> bool {
     ShaderPreset& preset = parser->shaderPreset;
 
-    if (prepend) {
-        int nextId = preset.passes.size();
-        for (auto& param : shaderPreset.params)
-            param.pass += nextId;
+    if ((shaderPreset.passes.size() + preset.passes.size()) > MAX_SHADERS) {
+        errors.push_back( trans->get("too much shaders", {{"%count%", std::to_string(MAX_SHADERS)}}) );
+        return false;
+    }
 
+    if ((shaderPreset.luts.size() + preset.luts.size()) > MAX_TEXTURES) {
+        errors.push_back( trans->get("too much textures", {{"%count%", std::to_string(MAX_TEXTURES)}}) );
+        return false;
+    }
+
+    if (prepend) {
+        shaderPreset.passes[0].subChain = true;
         GUIKIT::Vector::insert( entryPaths, parser->getPresetPath(), 0 );
 
         shaderPreset.lumaChroma = preset.lumaChroma;
     } else {
-        int nextId = shaderPreset.passes.size();
-        for (auto& param : preset.params)
-            param.pass += nextId;
-
+        preset.passes[0].subChain = true;
         entryPaths.push_back( parser->getPresetPath() );
     }
 
     GUIKIT::Vector::combine<ShaderPreset::Pass>(shaderPreset.passes, preset.passes, prepend);
     GUIKIT::Vector::combine<ShaderPreset::Param>(shaderPreset.params, preset.params, prepend);
     GUIKIT::Vector::combine<ShaderPreset::Lut>(shaderPreset.luts, preset.luts, prepend);
-    //updateCrop();
+    updateCrop();
+    return true;
 }
 
 auto ShaderParser::movePass(unsigned& passId, bool up) -> void {
@@ -524,7 +533,7 @@ auto ShaderParser::movePass(unsigned& passId, bool up) -> void {
             modified = true;
         }
     }
-    //updateCrop();
+    updateCrop();
 }
 
 auto ShaderParser::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
@@ -534,16 +543,26 @@ auto ShaderParser::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
     ShaderPreset::Pass& pass = shaderPreset.passes[passId];
     pass.inUse ^= 1;
     modified = true;
-    //updateCrop();
+    updateCrop();
     return &pass;
 }
 
-auto ShaderParser::getPresetPathCombined() -> std::string {
+auto ShaderParser::getPresetPathDetailed() -> std::string {
     std::string out = "";
-    for(auto& path : entryPaths)
-        out += GUIKIT::String::getFileName( path, true ) + " + ";
+    if (entryPaths.size() == 1) {
+        out = GUIKIT::String::getFileName( entryPaths[0], true );
 
-    return out.size() ? out.substr(0, out.size() - 3) : "";
+    } else if (entryPaths.size() > 1) {
+        for(auto& path : entryPaths)
+            out += GUIKIT::String::getFileName( path, true ) + " + ";
+
+        out = out.substr(0, out.size() - 3);
+    }
+
+    if (out.size() && shaderPreset.luts.size())
+        out += " (" + std::to_string(shaderPreset.luts.size()) + " LUTS)";
+
+    return out;
 }
 
 auto ShaderParser::setPassFilter(unsigned passId, ShaderPreset::Filter filter) -> void {
@@ -602,7 +621,7 @@ auto ShaderParser::checkLUT(ShaderPreset::Lut& lut) -> bool {
     GUIKIT::File file(lut.path);
 
     if (!file.exists()) {
-        brokenPaths.push_back(lut.path);
+        errors.push_back(lut.path);
         return false;
     }
 
@@ -612,28 +631,28 @@ auto ShaderParser::checkLUT(ShaderPreset::Lut& lut) -> bool {
 auto ShaderParser::addBrokenLUT() -> void {
     for(auto& lut : shaderPreset.luts) {
         if (lut.error)
-            brokenPaths.push_back(lut.path);
+            errors.push_back(lut.path);
     }
 }
 
 auto ShaderParser::updateCrop() -> void {
-//    for(auto& pass : shaderPreset.passes)
-//        pass.crop.release();
-//
-//    if (!shaderPreset.lumaChroma)
-//        return;
-//
-//    for(int i = shaderPreset.passes.size() - 1; i >= 0; i--) {
-//        ShaderPreset::Pass& pass = shaderPreset.passes[i];
-//        if (!pass.inUse)
-//            continue;
-//
-//        if (GUIKIT::String::findString(pass.alias, "Mask") || GUIKIT::String::findString(pass.alias, "BloomVertical")
-//            || GUIKIT::String::findString(pass.alias, "Gamma") || GUIKIT::String::findString(pass.alias, "LumaChromaDecoding") ) {
-//            pass.crop.set({1, 4, 0, 4});
-//            break;
-//        }
-//    }
+    for(auto& pass : shaderPreset.passes)
+        pass.crop.release();
+
+    if (!shaderPreset.lumaChroma)
+        return;
+
+    for(int i = shaderPreset.passes.size() - 1; i >= 0; i--) {
+        ShaderPreset::Pass& pass = shaderPreset.passes[i];
+        if (!pass.inUse)
+            continue;
+
+        if (GUIKIT::String::findString(pass.alias, "BloomVertical")
+            || GUIKIT::String::findString(pass.alias, "GammaOrShades") || GUIKIT::String::findString(pass.alias, "LumaChromaDecoding") ) {
+            pass.crop.set({1, 4, 0, 4});
+            break;
+        }
+    }
 }
 
 template<bool checkNewLine>
@@ -689,7 +708,7 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
     if (!fileData) {
         GUIKIT::File file(path, true);
         if (!file.open() || !file.getSize()) {
-            brokenPaths.push_back(path);
+            errors.push_back(path);
             return false;
         }
 
@@ -702,14 +721,14 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
 
     if (!depth) {
         if (!GUIKIT::String::sgets(chunk, chunkSize, fileSize, &fp)) {
-            brokenPaths.push_back(path);
+            errors.push_back(path);
             return false;
         }
         line = chunk;
         GUIKIT::String::remove(line, { "\r" });
 
         if (!GUIKIT::String::startsWith(line, versionPrefix)) {
-            brokenPaths.push_back("version string missing in " + path);
+            errors.push_back("version string missing in " + path);
             return false;
         }
 
@@ -779,7 +798,6 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
                             goto End;
                     }
 
-                    param.pass = shaderPreset.passes.size();
                     param.value = rootSettings.get<float>(param.id, param.initial);
                     addParameter(param);
 
@@ -816,7 +834,7 @@ auto ShaderParser::fetchShaderSource(ShaderPreset::Pass& pass) -> bool {
 
 auto ShaderParser::clear() -> void {
     entryPaths.clear();
-    brokenPaths.clear();
+    errors.clear();
     shaderPreset.clear();
     rootSettings.clear();
     modified = false;

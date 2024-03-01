@@ -37,8 +37,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
     struct {
         D3DTexture textures[MAX_FRAME_HISTORY + 1];
-        D3DTexture crop;
-        D3D11_BOX cropBox;
         D3DShader shader;
         ID3D11Buffer* vbo;
         Float4 size;
@@ -73,7 +71,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     ID3D11SamplerState* samplers[3][4];
     ID3D11SamplerState* sampler;
     DXGI_FORMAT format;
-    float seed;
     bool updateRTS;
     bool updateHistory;
     uint8_t options;
@@ -144,7 +141,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         bool hintExclusiveFullscreen = false;
         Rotation rotation = ROT_0;
         int direction = 1; // reserved for rewind support
-        CropPass crop;
         bool useShaderCache = false;
     } settings;
 
@@ -178,8 +174,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
         settings.rotation = ROT_0;
-        settings.direction = 1;
-        settings.crop.release();
+        settings.direction = 1;;
         settings.useShaderCache = false;
         options = 0;
         progressDegree = 0;
@@ -195,6 +190,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         shaderId++;
         while(threadAlive)
             std::this_thread::yield();
+        wait();
         RenderThread::enable(false);
         term();
     }
@@ -624,7 +620,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         shaderId++;
 
         this->preset = preset;
-        if (!preset)
+        if (!preset || (preset->passes.size() > MAX_SHADERS) || (preset->luts.size() > MAX_TEXTURES))
             return;
 
         bool todo = false;
@@ -672,7 +668,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 if (!p->inUse)
                     continue;
 
-                bool success = false;
+                bool success;
                 bool cacheSuccess = false;
                 std::string nativeV;
                 std::string nativeF;
@@ -820,11 +816,11 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     auto shaderPostBuild() -> void {
         bool lastPass = true;
         SemanticMap map = {{
-           {(uintptr_t)(&frame.textures[0].view), &frame.textures[0].size, sizeof(D3DTexture)},
-           {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(D3DProgram)},
-           {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(D3DProgram)},
-           {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(D3DTexture)},
-        }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &settings.rotation, &seed, &historySize} };
+           {(uintptr_t)(&frame.textures[0].view), &frame.textures[0].size, sizeof(D3DTexture), MAX_FRAME_HISTORY},
+           {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(D3DProgram), MAX_SHADERS},
+           {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(D3DProgram), MAX_SHADERS},
+           {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(D3DTexture), MAX_TEXTURES},
+        }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &settings.rotation, &historySize} };
 
         shaderPasses = 0;
         for(int i = programsTemp.size() - 1; i >= 0; i--) {
@@ -851,6 +847,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             program.wrap = pass.wrap;
             program.frameModulo = pass.frameModulo;
             program.format = D3D11Utility::getFormat( pass.bufferType );
+            program.crop = pass.crop;
 
             if (!pass.inUse)
                 goto Next;
@@ -906,6 +903,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             Next:
             delete p;
         }
+        programsTemp.clear();
 
         if (shaderPasses) {
             for(int i = 0; i < shaderPasses; i++) {
@@ -956,8 +954,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             if(lutPtr->data) delete[] lutPtr->data;
             delete lutPtr;
         }
+        lutsTemp.clear();
 
-        settings.crop.set(preset->smallMargin);
         onShaderProgressCallback(-1, !shaderPasses);
         updateRTS = true;
         updateHistory = true;
@@ -1169,7 +1167,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
         if (!disallowShader && shaderPasses) {
             frameCount += 1;
-            seed = (float)Chronos::getTimestampInMilliseconds() / 1000.0;
 
             for(int i = 0; i < shaderPasses; i++) {
                 auto& p = programs[i];
@@ -1244,11 +1241,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 if (p.mipmap)
                     context->GenerateMips( p.renderTarget.view);
 
-                if (lastPass && settings.crop.active) {
-                    context->CopySubresourceRegion((ID3D11Resource*)frame.crop.ptr, 0, 0, 0, 0, (ID3D11Resource*)p.renderTarget.ptr, 0, &frame.cropBox);
-                    texture = &frame.crop;
-                } else
-                    texture = &p.renderTarget;
+                if (p.crop.active)
+                    context->CopySubresourceRegion((ID3D11Resource*)p.renderTarget.ptr, 0, 0, 0, 0, (ID3D11Resource*)p.renderTarget.staging, 0, &p.cropBox);
+
+                texture = &p.renderTarget;
             }
         }
 
@@ -1366,6 +1362,40 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                     if (!D3D11Utility::initTexture(device, p.feedbackTarget))
                         continue;
                 }
+
+                if (p.crop.active) {
+                    auto& crop = p.crop;
+                    uint8_t interlace = (options & OPT_Interlace) ? 1 : 0;
+                    unsigned croppedLeft = (width * crop.left) / sourceWidth;
+                    unsigned croppedRight = (width * crop.right) / sourceWidth;
+                    unsigned croppedTop = (height * (crop.top << interlace) ) / sourceHeight;
+                    unsigned croppedBottom = (height * (crop.bottom << interlace) ) / sourceHeight;
+
+                    width -= croppedLeft + croppedRight;
+                    height -= croppedTop + croppedBottom;
+
+                    p.cropBox.left = croppedLeft;
+                    p.cropBox.right = width + croppedLeft;
+                    p.cropBox.top = croppedTop;
+                    p.cropBox.bottom = height + croppedTop;
+                    p.cropBox.front  = 0;
+                    p.cropBox.back   = 1;
+
+                    D3DTexture cropTex;
+                    D3D11Utility::releaseTexture(cropTex);
+                    cropTex.desc.Width = width;
+                    cropTex.desc.Height = height;
+                    cropTex.desc.Format = p.format;
+                    if (!D3D11Utility::initTexture(device, cropTex, false))
+                        continue;
+
+                    dxRelease(p.renderTarget.view)
+                    p.renderTarget.view = cropTex.view;
+                    // todo: SourceSize of following pass isn't OutputSize (non cropped) of this pass.
+                    // only internal shader use this feature and relevant passes don't access SourceSize
+                    p.renderTarget.staging = p.renderTarget.ptr;
+                    p.renderTarget.ptr = cropTex.ptr;
+                }
             } else {
                 if (viewScreen.flipped && (viewScreen.mode != ViewScreen::Mode::Window)) {
                     unsigned tmp = width;
@@ -1377,30 +1407,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 frame.mvp = frame.mvpRotated; // last shader pass is final pass
             }
 
-            if (lastPass && settings.crop.active) {
-                auto& crop = settings.crop;
-                uint8_t interlace = (options & OPT_Interlace) ? 1 : 0;
-                unsigned croppedLeft = (width * crop.left) / sourceWidth;
-                unsigned croppedRight = (width * crop.right) / sourceWidth;
-                unsigned croppedTop = (height * (crop.top << interlace) ) / sourceHeight;
-                unsigned croppedBottom = (height * (crop.bottom << interlace) ) / sourceHeight;
-
-                frame.cropBox.left = croppedLeft;
-                frame.cropBox.right = width - croppedRight;
-                frame.cropBox.top = croppedTop;
-                frame.cropBox.bottom = height - croppedBottom;
-                frame.cropBox.front  = 0;
-                frame.cropBox.back   = 1;
-
-                if(width != frame.crop.desc.Width || height != frame.crop.desc.Height) {
-                    D3D11Utility::releaseTexture(frame.crop);
-                    frame.crop.desc.Width = width;
-                    frame.crop.desc.Height = height;
-                    frame.crop.desc.Format = p.format;
-                    if (!D3D11Utility::initTexture(device, frame.crop, false))
-                        continue;
-                }
-            }
         }
     }
 
@@ -1466,6 +1472,16 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             context->Flush();
         }
 
+        for(auto p : programsTemp) {
+            D3D11Utility::releaseShader(p->shader);
+            delete p;
+        }
+
+        for(auto l : lutsTemp) {
+            if (l->data) delete[] l->data;
+            delete l;
+        }
+
         for(auto& texture : frame.textures)
             D3D11Utility::releaseTexture(texture);
 
@@ -1478,7 +1494,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         D3D11Utility::releaseTexture(message.texture);
         D3D11Utility::releaseTexture(overlay.texture);
         D3D11Utility::releaseTexture(progress.texture);
-        D3D11Utility::releaseTexture(frame.crop);
 
         dxRelease(frame.vbo)
         dxRelease(message.vbo)
@@ -1501,6 +1516,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         D3D11Utility::releaseShader(frame.shader);
         D3D11Utility::releaseShader(message.shader);
         D3D11Utility::releaseShader(overlay.shader);
+        D3D11Utility::releaseShader(progress.shader);
 
         dxRelease(debugInfoQueue)
         dxRelease(debug)

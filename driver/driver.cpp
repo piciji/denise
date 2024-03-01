@@ -86,9 +86,9 @@ auto Video::available() -> std::vector<std::string> {
 		"Direct3D9",
 	#endif
 
-	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
-		"OpenGL",
-	#endif
+//	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
+//		"OpenGL",
+//	#endif
 	};
 }
 
@@ -101,9 +101,9 @@ auto Video::preferred() -> std::string {
 		return "Direct3D9";
 	#endif
 
-	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
-		return "OpenGL";
-	#endif
+//	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
+//		return "OpenGL";
+//	#endif
 
 	return "";
 }
@@ -117,17 +117,17 @@ auto Video::create(const std::string& driver) -> Video* {
         if(driver == "Direct3D9") return new D3D9( !Win::hasAppThemed() || (Win::getVersion() <= Win::WindowsXP) );
 	#endif
 
-	#ifdef DRV_WGL
-		if(driver == "OpenGL") return new WGL();
-	#endif
-
-	#ifdef DRV_CGL
-		if(driver == "OpenGL") return new CGL();
-	#endif
-
-	#ifdef DRV_GLX
-		if(driver == "OpenGL") return new GLX();
-	#endif
+//	#ifdef DRV_WGL
+//		if(driver == "OpenGL") return new WGL();
+//	#endif
+//
+//	#ifdef DRV_CGL
+//		if(driver == "OpenGL") return new CGL();
+//	#endif
+//
+//	#ifdef DRV_GLX
+//		if(driver == "OpenGL") return new GLX();
+//	#endif
 
     return new Video;
 }

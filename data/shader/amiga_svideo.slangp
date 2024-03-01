@@ -4,6 +4,7 @@ luma_chroma = true
 
 shader0 = resources/colorEncoding.slang
 alias0 = "LumaChromaEncoding"
+wrap_mode0 = "clamp_to_edge"
 filter_linear0 = false
 float_framebuffer0 = true
 scale_type0 = source
@@ -11,6 +12,7 @@ scale0 = 1.0
 
 shader1 = resources/randomLineOffset.slang
 alias1 = "RandomLineOffset"
+wrap_mode1 = "clamp_to_edge"
 filter_linear1 = false
 float_framebuffer1 = true
 scale_type1 = source
@@ -18,6 +20,7 @@ scale1 = 1.0
 
 shader2 = resources/lumaLatency.slang
 alias2 = "LumaLatency"
+wrap_mode2 = "clamp_to_edge"
 filter_linear2 = false
 float_framebuffer2 = true
 scale_type2 = source
@@ -25,6 +28,7 @@ scale2 = 1.0
 
 shader3 = resources/noise.slang
 alias3 = "LumaChromaNoise"
+wrap_mode3 = "clamp_to_edge"
 filter_linear3 = false
 float_framebuffer3 = true
 scale_type3 = source
@@ -32,6 +36,7 @@ scale3 = 1.0
 
 shader4 = resources/bandwidth.slang
 alias4 = "BandwidthReduction"
+wrap_mode4 = "clamp_to_edge"
 filter_linear4 = false
 float_framebuffer4 = true
 scale_type4 = source
@@ -40,13 +45,15 @@ scale_y4 = 1.0
 
 shader5 = resources/colorDecoding.slang
 alias5 = "LumaChromaDecoding"
+wrap_mode5 = "clamp_to_edge"
 filter_linear5 = false
 float_framebuffer5 = true
 scale_type5 = source
 scale5 = 1.0
 
 shader6 = resources/gamma.slang
-alias6 = "Gamma"
+alias6 = "GammaOrShades"
+wrap_mode6 = "clamp_to_edge"
 filter_linear6 = false
 float_framebuffer6 = true
 scale_type6 = source
@@ -54,21 +61,22 @@ scale6 = 1.0
 
 shader7 = resources/bloomHorizontal.slang
 alias7 = "BloomHorizontal"
+wrap_mode7 = "clamp_to_edge"
 float_framebuffer7 = true
 scale_type7 = source
 scale_x7 = 1.0
 scale_y7 = 2.0
-mipmap_input7 = true
 
 shader8 = resources/bloomVertical.slang
 alias8 = "BloomVertical"
-filter_linear8 = false
+wrap_mode8 = "clamp_to_edge"
 float_framebuffer8 = true
 scale_type8 = source
 scale8 = 1.0
 
 shader9 = resources/mask.slang
 alias9 = "Mask"
+wrap_mode9 = "clamp_to_edge"
 float_framebuffer9 = true
 scale_type9 = source
 scale_x9 = 1.0
@@ -77,13 +85,16 @@ mipmap_input9 = true
 
 shader10 = resources/radialDistortion.slang
 alias10 = "RadialDistortion"
+wrap_mode10 = "clamp_to_border"
 float_framebuffer10 = true
 scale_type10 = source
 scale10 = 1.0
 mipmap_input10 = true
 
 phaseErrorPAL = 3.5
+firTaps = 7
 lumaRise = 1.2
+mask_dpi = 126
 
 
 # LUT generation: program/video/luts.cpp

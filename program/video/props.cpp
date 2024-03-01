@@ -127,7 +127,7 @@ auto VideoManager::setInterlace(unsigned intensity) -> void {
 
 auto VideoManager::setCrtRealGamma(bool state) -> void {
     crtRealGamma = state;
-    setData("autoEmu_tvGamma", (float)(colorSpectrum || state));
+    setData("autoEmu_tvGamma", (float)(shaderLumaChromaInput() && (colorSpectrum || crtRealGamma)));
     requestUpdate();
 }
 
@@ -154,6 +154,14 @@ auto VideoManager::setData( unsigned offset, float value) -> void {
             params[offset].value = value;
         }
     }
+}
+
+auto VideoManager::getData(const std::string& ident) -> ShaderPreset::Param* {
+    for(auto& param : parser->shaderPreset.params) {
+        if (param.id == ident)
+            return &param;
+    }
+    return nullptr;
 }
 
 auto VideoManager::resetSettings() -> void {

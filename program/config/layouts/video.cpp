@@ -310,7 +310,7 @@ VideoLayout::VideoLayout() {
 	crtEmulation.cpuFilterThreaded.setChecked( globalSettings->get<bool>("cpu_filter_threaded", true) );
 	crtEmulation.cpuFilterThreaded.onToggle = [this](bool checked) {
         emuThread->lock();
-        globalSettings->set<bool>("crt_threaded", checked);
+        globalSettings->set<bool>("cpu_filter_threaded", checked);
         VideoManager::setCrtThreaded( checked );
         emuThread->unlock();
     };

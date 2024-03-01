@@ -1,8 +1,13 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+*/
+
 layout(push_constant) uniform Push
 {
-    float Seed;
+    uint FrameCount;
 
     float lumaNoise;
     float chromaNoise;
@@ -39,8 +44,10 @@ float random( vec2 seed ) {
 
 void main() {
     vec2 xy = vTexCoord.xy;
-    float y = random(xy + vec2(params.Seed * xy.x, params.Seed * xy.y)) * (params.lumaNoise / 100.0);
-    float u = random(xy + vec2(params.Seed * xy.y, params.Seed * xy.x)) * (params.chromaNoise / 100.0);
-    float v = random(xy - vec2(params.Seed * xy.x, params.Seed * xy.y)) * (params.chromaNoise / 100.0);
+    float _seed = float(params.FrameCount) * (20.0 / 100.0);
+
+    float y = random(xy + vec2(_seed * xy.x, _seed * xy.y)) * (params.lumaNoise / 100.0);
+    float u = random(xy + vec2(_seed * xy.y, _seed * xy.x)) * (params.chromaNoise / 100.0);
+    float v = random(xy - vec2(_seed * xy.x, _seed * xy.y)) * (params.chromaNoise / 100.0);
     FragColor = texture(Source, xy).xyzw + vec4(y, u, v, 0.0);
 }

@@ -4,6 +4,7 @@ luma_chroma = true
 
 shader0 = resources/colorEncoding.slang
 alias0 = "LumaChromaEncoding"
+wrap_mode0 = "clamp_to_edge"
 filter_linear0 = false
 float_framebuffer0 = true
 scale_type0 = source
@@ -11,6 +12,7 @@ scale0 = 1.0
 
 shader1 = resources/vicGlitches.slang
 alias1 = "VICIIGlitches"
+wrap_mode1 = "clamp_to_edge"
 filter_linear1 = false
 float_framebuffer1 = true
 scale_type1 = source
@@ -18,6 +20,7 @@ scale1 = 1.0
 
 shader2 = resources/randomLineOffset.slang
 alias2 = "RandomLineOffset"
+wrap_mode2 = "clamp_to_edge"
 filter_linear2 = false
 float_framebuffer2 = true
 scale_type2 = source
@@ -25,6 +28,7 @@ scale2 = 1.0
 
 shader3 = resources/lumaLatency.slang
 alias3 = "LumaLatency"
+wrap_mode3 = "clamp_to_edge"
 filter_linear3 = false
 float_framebuffer3 = true
 scale_type3 = source
@@ -32,6 +36,7 @@ scale3 = 1.0
 
 shader4 = resources/noise.slang
 alias4 = "LumaChromaNoise"
+wrap_mode4 = "clamp_to_edge"
 filter_linear4 = false
 float_framebuffer4 = true
 scale_type4 = source
@@ -39,6 +44,7 @@ scale4 = 1.0
 
 shader5 = resources/bandwidth.slang
 alias5 = "BandwidthReduction"
+wrap_mode5 = "clamp_to_edge"
 filter_linear5 = false
 float_framebuffer5 = true
 scale_type5 = source
@@ -47,13 +53,15 @@ scale_y5 = 1.0
 
 shader6 = resources/colorDecoding.slang
 alias6 = "LumaChromaDecoding"
+wrap_mode6 = "clamp_to_edge"
 filter_linear6 = false
 float_framebuffer6 = true
 scale_type6 = source
 scale6 = 1.0
 
 shader7 = resources/gamma.slang
-alias7 = "Gamma"
+alias7 = "GammaOrShades"
+wrap_mode7 = "clamp_to_edge"
 filter_linear7 = false
 float_framebuffer7 = true
 scale_type7 = source

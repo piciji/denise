@@ -190,12 +190,11 @@ struct D3D11Utility {
 
         if (tex.desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS) {
             tex.desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-            unsigned width = tex.desc.Width >> 1;
-            unsigned height = tex.desc.Height >> 1;
+            unsigned size = std::max(tex.desc.Width, tex.desc.Height);
+            size >>= 1;
 
-            while (width && height) { // based on log2
-                width >>= 1;
-                height >>= 1;
+            while (size) { // based on log2
+                size >>= 1;
                 tex.desc.MipLevels++;
             }
         }

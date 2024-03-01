@@ -56,6 +56,8 @@ namespace DRIVER {
         bool feedback = false;
         unsigned frameCount = 0;
         unsigned frameModulo = 0;
+        CropPass crop;
+        D3D11_BOX cropBox;
 
         D3DTexture renderTarget;
         D3DTexture feedbackTarget;

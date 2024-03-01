@@ -1432,7 +1432,6 @@ protected:
 
 struct Settings {
     auto find(const std::string& ident) -> Setting*;
-	auto findMulti(const std::string& ident) -> std::vector<Setting*>;
     auto add(const std::string& ident) -> Setting*;
     auto add(Setting* setting) -> void;
     auto remove(const std::string& ident) -> bool;
@@ -1461,7 +1460,6 @@ struct Settings {
     }
 
     auto setSaveable( const std::string& ident, bool state ) -> void;
-    //auto load(const std::string& path, unsigned maxFileSize = 1 * 1024 * 1024, bool themed = false) -> bool;
     auto load(const std::string& path) -> bool { return loadEx(path, -1, ':'); }
     auto loadEx(const std::string& path, int depth = 0, const char separator = '=') -> bool;
     auto save(const std::string& path) -> bool;
@@ -1528,7 +1526,7 @@ struct String {
     static auto findString(const std::string& strHaystack, const std::string& strNeedle) -> bool; // ignore case
     static auto endsWith(std::string& str, std::string suffix) -> bool;
     static auto startsWith(const std::string& str, const std::string& prefix) -> bool;
-    static auto removeQuote(std::string& str) -> std::string&;
+    static auto removeQuote(std::string& str, bool oneSideOnly = false) -> std::string&;
     static auto remove(std::string& str, const std::vector<std::string>& subStr) -> std::string&;
     static auto replace(std::string& str, const std::string& search, const std::string& replace) -> std::string&;
     static auto isNumber(const std::string& str) -> bool;

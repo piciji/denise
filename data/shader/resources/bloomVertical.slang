@@ -1,5 +1,11 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+   lutBloom (Gaussian Blur) texture generation in Denise source: program/video/luts.cpp
+*/
+
 layout(push_constant) uniform Push
 {
     vec4 OutputSize;
@@ -37,7 +43,7 @@ void main() {
 layout(location = 0) in vec2 vTexCoord;
 layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
-layout(set = 0, binding = 3) uniform sampler2D BloomHorizontal;
+layout(set = 0, binding = 3) uniform sampler2D GammaOrShades;
 layout(set = 0, binding = 4) uniform sampler2D lutBloom;
 
 
@@ -74,5 +80,5 @@ void main() {
 
     sum += texture(Source, vTexCoord).rgb * bloomTex(offset + n, offsetY);
 
-    FragColor = vec4(clamp(texture(BloomHorizontal, vTexCoord).rgb + ( pow(sum.rgb, vec3(_weight, _weight, _weight)) * (params.bloom_glow / 100.0) ), 0.0, 1.0), 1.0);
+    FragColor = vec4(clamp(texture(GammaOrShades, vTexCoord ).rgb + ( pow(sum.rgb, vec3(_weight, _weight, _weight)) * (params.bloom_glow / 100.0) ), 0.0, 1.0), 1.0);
 }

@@ -1,5 +1,11 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+   lutBandwidth (FIR filter) texture generation in Denise source: program/video/luts.cpp
+*/
+
 layout(push_constant) uniform Push
 {
     vec4 OutputSize;

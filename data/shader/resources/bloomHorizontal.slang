@@ -1,5 +1,11 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+   lutBloom (Gaussian Blur) texture generation in Denise source: program/video/luts.cpp
+*/
+
 layout(push_constant) uniform Push
 {
     vec4 OutputSize;

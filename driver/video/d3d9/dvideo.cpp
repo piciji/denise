@@ -937,6 +937,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     }
 
     ~D3D9() {
+        wait();
         RenderThread::enable(false);
         term();
     }

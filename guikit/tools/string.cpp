@@ -160,14 +160,20 @@ auto String::startsWith(const std::string& str, const std::string& prefix) -> bo
     return (prefix.size() <= str.size()) && std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 
-auto String::removeQuote(std::string& str) -> std::string& {
+auto String::removeQuote(std::string& str, bool oneSideOnly) -> std::string& {
     int s = str.length();
     if(s < 2) return str;
 
-    if (    (str.at(0) == '\"' && str.at(s - 1) == '\"')
-        ||  (str.at(0) == '\'' && str.at(s - 1) == '\'') ) {
+    if (  (str[0] == '\"' && str[s - 1] == '\"')
+        ||  (str[0] == '\'' && str[s - 1] == '\'') ) {
         str = str.substr( 1, s - 2 );
+    } else if (oneSideOnly) {
+        if ((str[0] == '\"') || (str[0] == '\'') )
+            str = str.substr( 1, s - 1 );
+        else if ((str[s - 1] == '\"') || (str[s - 1] == '\'') )
+            str = str.substr( 0, s - 1 );
     }
+
     return str;
 }
 

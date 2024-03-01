@@ -1,5 +1,10 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+*/
+
 layout(push_constant) uniform Push
 {
     vec4 SourceSize;
@@ -11,6 +16,7 @@ layout(push_constant) uniform Push
     float glitch_ba;
     float autoEmu_cropLeft;
     float autoEmu_pal;
+    float autoEmu_lumaChroma;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -18,7 +24,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
     mat4 MVP;
 } global;
 
-// luma will be darkened when some vic lines changes their state
+// luma will be darkened when some VIC lines changes their state
 // AEC and BA state will be transferred in unused alpha channel for each pixel
 // PHI0, CAS, RAS have the same behavior within each cycle.
 // PHI0: second half cycle is darkened
@@ -27,13 +33,14 @@ layout(std140, set = 0, binding = 0) uniform UBO
 // RAS: first pixel of each half cycle will be non darkened
 
 #pragma parameter vicGlitches_head      "[VICII GLITCHES]"   0 0 0.001 0.001
-#pragma parameter glitch_aec            "AEC"                10.5 0 100 0.1
-#pragma parameter glitch_ba             "BA"                 10.5 0 100 0.1
-#pragma parameter glitch_phi            "PHI"                10.5 0 100 0.1
-#pragma parameter glitch_ras            "RAS"                10.5 0 100 0.1
-#pragma parameter glitch_cas            "CAS"                10.5 0 100 0.1
-#pragma parameter autoEmu_cropLeft      "Crop Left"          0 0 100 1
+#pragma parameter glitch_aec            "AEC"                10.5 0 50 0.1
+#pragma parameter glitch_ba             "BA"                 10.5 0 50 0.1
+#pragma parameter glitch_phi            "PHI"                10.5 0 50 0.1
+#pragma parameter glitch_ras            "RAS"                10.5 0 50 0.1
+#pragma parameter glitch_cas            "CAS"                10.5 0 50 0.1
+#pragma parameter autoEmu_cropLeft      "Crop Left"          6 0 100 1
 #pragma parameter autoEmu_pal           "PAL"                1 0 1 1
+#pragma parameter autoEmu_lumaChroma    "Luma Chroma Input"  0 0 1 1
 
 
 #pragma stage vertex
@@ -64,6 +71,9 @@ void main() {
     float xposF = vTexCoord.x * params.SourceSize.x;
     int xpos = int(xposF);
     xpos += int(params.autoEmu_cropLeft) + (2 << (int(params.autoEmu_pal) ^ 1));
+    if (!(bool(params.autoEmu_lumaChroma)))
+        xpos += 4; // no crop
+
     xpos &= 7;
     int flags = int( color.w );
     lumaChroma.x *= 1.0 - ((flags & 1) * BA);

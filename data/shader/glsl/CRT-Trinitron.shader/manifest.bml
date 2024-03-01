@@ -1,9 +1,0 @@
-input
-  filter: nearest
-
-program
-	filter: linear
-	fragment: crt-trinitron.fs
-
-output
-  filter: nearest

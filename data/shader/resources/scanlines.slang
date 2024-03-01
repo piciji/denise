@@ -1,5 +1,10 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+*/
+
 layout(push_constant) uniform Push
 {
     vec4 OutputSize;
@@ -19,7 +24,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter scanline_head    "[SCANLINES AND GAMMA]"  0 0 0.001 0.001
 #pragma parameter scanlineShade    "Scanline Shade"         20 0 100 1
 #pragma parameter gamma            "Gamma"                  100 30 280 1
-#pragma parameter autoEmu_tvGamma  "TV Gamma"               1 0 1 1
+#pragma parameter autoEmu_tvGamma  "TV Gamma"               0 0 1 1
 #pragma parameter autoEmu_pal      "PAL"                    1 0 1 1
 #pragma parameter autoEmu_lace     "Interlace"              0 0 1 1
 
@@ -45,7 +50,7 @@ void main() {
     vec3 colorDown = texture(Source, vTexCoord.xy + vec2( 0.0, 1.0 / params.OutputSize.y ) ).rgb;
     float shade = 1.0 - (params.scanlineShade / 100.0);
     float _gamma = params.gamma / 100.0;
-    if (params.autoEmu_tvGamma && params.autoEmu_pal)
+    if (bool(params.autoEmu_tvGamma) && bool(params.autoEmu_pal))
         _gamma *= 2.8 / 2.2;
 
     int lineFactor = 0;
@@ -57,5 +62,6 @@ void main() {
     color.g = mix( pow(color.g, _gamma), pow((colorUp.g + colorDown.g) / 2.0, _gamma) * shade, lineFactor );
     color.b = mix( pow(color.b, _gamma), pow((colorUp.b + colorDown.b) / 2.0, _gamma) * shade, lineFactor );
 
+    color = clamp(color, 0.0, 1.0);
     FragColor = vec4( color, 1.0 );
 }

@@ -601,10 +601,12 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
                 setData("autoEmu_cropTop", (float)cropTop);
                 setData("autoEmu_cropLeft", (float)cropLeft);
                 setData("autoEmu_lace", (float)interlace);
+                setData("autoEmu_hires", (float)hires);
                 setData("autoEmu_pal", (float)pal);
                 setData("autoEmu_subRegion", emulator->getSubRegion());
-                setData("autoEmu_tvGamma", (float)(colorSpectrum || crtRealGamma));
+                setData("autoEmu_tvGamma", (float)(shaderLumaChromaInput() && (colorSpectrum || crtRealGamma)));
                 setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
+                setData("autoEmu_driveLED", (float)0);
                 videoDriver->setShader( &parser->shaderPreset);
             } else
                 videoDriver->setShader(nullptr);
@@ -616,12 +618,13 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         }
     }
 
-    if (laceMode != interlace) {
-        laceMode = interlace;
-        if (interlace)
+    if (frameOptions != ( (hires << 1) | interlace) ) {
+        if (interlace && ((frameOptions & 1) == 0) )
             resetTempData(0, true);
 
         setData("autoEmu_lace", (float)interlace);
+        setData("autoEmu_hires", (float)hires);
+        frameOptions = (hires << 1) | interlace;
     }
 
     if (++frameRenderPos != frameRenderTrigger) {
@@ -869,6 +872,7 @@ template<typename T> auto VideoManager::createWorker(Render* re) -> void {
 					return re->ready.load() || re->kill.load();
 				})) {
 					if (re->kill) {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(20));
 						re->kill = false;
 						return;
 					}
@@ -1225,9 +1229,9 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& r
         if ((re.options & 0x80) == 0) {
             lineBeforeDest = &lineBefore[0];
             for (unsigned w = 0; w < re.width; w++) {
-                *re.scanlineDest++ = 255 << 24 | preCalcScanline[lineBeforeDest->rInt + 512] << 16
-                                     | preCalcScanline[lineBeforeDest->gInt + 512] << 8
-                                     | preCalcScanline[lineBeforeDest->bInt + 512];
+                *re.scanlineDest++ = 255 << 24 | preCalcScanline[(lineBeforeDest->rInt << 1) + 512] << 16
+                                     | preCalcScanline[(lineBeforeDest->gInt << 1) + 512] << 8
+                                     | preCalcScanline[(lineBeforeDest->bInt << 1) + 512];
 
                 lineBeforeDest++;
             }
@@ -1358,9 +1362,9 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render& 
         if ((re.options & 0x80) == 0) {
             lineBeforeDest = &lineBefore[0];
             for (unsigned w = 0; w < re.width; w++) {
-                *re.scanlineDest++ = 255 << 24 | preCalcScanline[lineBeforeDest->rInt + 512] << 16
-                                     | preCalcScanline[lineBeforeDest->gInt + 512] << 8
-                                     | preCalcScanline[lineBeforeDest->bInt + 512];
+                *re.scanlineDest++ = 255 << 24 | preCalcScanline[(lineBeforeDest->rInt << 1) + 512] << 16
+                                     | preCalcScanline[(lineBeforeDest->gInt << 1) + 512] << 8
+                                     | preCalcScanline[(lineBeforeDest->bInt << 1) + 512];
 
                 lineBeforeDest++;
             }
@@ -1534,20 +1538,20 @@ auto VideoManager::loadPreset() -> bool {
         return false;
     }
 
-    std::vector<std::string> brokenPaths;
-    return loadPreset(path, brokenPaths) != nullptr;
+    std::vector<std::string> errors;
+    return loadPreset(path, errors) != nullptr;
 }
 
 auto VideoManager::loadPreset(const std::string& path) -> void {
-    std::vector<std::string> brokenPaths;
-    loadPreset(path, brokenPaths);
+    std::vector<std::string> errors;
+    loadPreset(path, errors);
 }
 
-auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>& errors) -> ShaderPreset* {
     ShaderParser* tempParser = new ShaderParser;
 
     bool res = tempParser->loadPreset(path);
-    GUIKIT::Vector::combine(brokenPaths, tempParser->brokenPaths);
+    GUIKIT::Vector::combine(errors, tempParser->errors);
 
     if (!res) {
         delete tempParser;
@@ -1562,26 +1566,32 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
     rebuildShader = true;
     requestUpdate(); // check for FP mode
     applyMeta();
+    driveLedParam = getData("autoEmu_driveLED");
 
     return &parser->shaderPreset;
 }
 
-auto VideoManager::addPreset(std::string path, bool prepend, std::vector<std::string>& brokenPaths) -> ShaderPreset* {
+auto VideoManager::addPreset(std::string path, bool prepend, std::vector<std::string>& errors) -> ShaderPreset* {
     ShaderParser* tempParser = new ShaderParser;
     bool res = tempParser->loadPreset(path);
-    GUIKIT::Vector::combine(brokenPaths, tempParser->brokenPaths);
+    GUIKIT::Vector::combine(errors, tempParser->errors);
 
     if (!res) {
         delete tempParser;
         return nullptr;
     }
 
-    parser->addPreset( tempParser, prepend );
+    if (!parser->addPreset( tempParser, prepend )) {
+        GUIKIT::Vector::combine(errors, parser->errors);
+        delete tempParser;
+        return nullptr;
+    }
 
     delete tempParser;
     rebuildShader = true;
     requestUpdate(); // check for FP mode
     applyMeta();
+    driveLedParam = getData("autoEmu_driveLED");
     return &parser->shaderPreset;
 }
 
@@ -1594,8 +1604,8 @@ auto VideoManager::savePreset(std::string path) -> bool {
     return res;
 }
 
-auto VideoManager::getPreset(std::vector<std::string>& brokenPaths) -> ShaderPreset* {
-    GUIKIT::Vector::combine(brokenPaths, parser->brokenPaths);
+auto VideoManager::getPreset(std::vector<std::string>& errors) -> ShaderPreset* {
+    GUIKIT::Vector::combine(errors, parser->errors);
     return parser->entryPaths.size() ? &parser->shaderPreset : nullptr;
 }
 
@@ -1613,6 +1623,7 @@ auto VideoManager::finishPreset() -> void {
 auto VideoManager::clearPreset() -> void {
     parser->clear();
     applyMeta();
+    driveLedParam = nullptr;
     settings->set<std::string>("slang_loaded", "");
     rebuildShader = true;
 }
@@ -1621,8 +1632,8 @@ auto VideoManager::getPresetPath() -> std::string {
     return parser->getPresetPath();
 }
 
-auto VideoManager::getPresetPathCombined() -> std::string {
-    return parser->getPresetPathCombined();
+auto VideoManager::getPresetPathDetailed() -> std::string {
+    return parser->getPresetPathDetailed();
 }
 
 auto VideoManager::movePass(unsigned& passId, bool up) -> void {

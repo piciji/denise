@@ -1,9 +1,14 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+*/
+
 layout(push_constant) uniform Push
 {
     vec4 OutputSize;
-    float Seed;
+    uint FrameCount;
 
     float randomLineOffset;
 } params;
@@ -42,7 +47,9 @@ void main() {
     if (params.randomLineOffset > 0) {
         float lineFactor = pow(params.randomLineOffset, 2.0) / 10000.0;
         vec2 xy = vTexCoord.xy;
-        float offset = random(vec2(params.Seed * xy.y, xy.y + (params.Seed * xy.y))) * lineFactor;
+        float _seed = float(params.FrameCount) * (20.0 / 100.0);
+
+        float offset = random(vec2(_seed * xy.y, xy.y + (_seed * xy.y))) * lineFactor;
         float x0 = xy.x + offset;
         float x1 = x0 + params.OutputSize.z;
         vec4 tex0 = texture(Source, vec2( fract(x0), xy.y )).xyzw;

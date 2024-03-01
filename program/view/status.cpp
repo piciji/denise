@@ -396,6 +396,9 @@ auto StatusHandler::update() -> void {
                                 image = &(view->ledGreenImage);
                         }
                     }
+                    if (activeVideoManager->driveLedParam) {
+                        activeVideoManager->driveLedParam->value = deviceState.LED & 1;
+                    }
 
                     updateImage(media->id * 2 + 2, image);
 

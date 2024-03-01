@@ -1,5 +1,10 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+*/
+
 layout(push_constant) uniform Push
 {
     vec4 OutputSize;
@@ -15,7 +20,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 } global;
 
 #pragma parameter gamma            "Gamma"              100 30 280 1
-#pragma parameter autoEmu_tvGamma  "TV Gamma"           1 0 1 1
+#pragma parameter autoEmu_tvGamma  "TV Gamma"           0 0 1 1
 #pragma parameter autoEmu_pal      "PAL"                1 0 1 1
 
 #pragma stage vertex

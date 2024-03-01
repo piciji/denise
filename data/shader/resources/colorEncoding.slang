@@ -1,5 +1,10 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+*/
+
 #define PI 3.14159265358979323846
 
 layout(push_constant) uniform Push
@@ -25,7 +30,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter phaseErrorPAL         "Phase Error PAL"    22.5 -45 45 0.5
 #pragma parameter phaseErrorNTSC        "Phase Error NTSC"   0 -45 45 0.5
 #pragma parameter autoEmu_lumaChroma    "Luma Chroma Input"  0 0 1 1
-#pragma parameter autoEmu_cropTop       "Crop Top"           0 0 100 1
+#pragma parameter autoEmu_cropTop       "Crop Top"           1 0 100 1
 #pragma parameter autoEmu_pal           "PAL"                1 0 1 1
 #pragma parameter autoEmu_lace          "Interlace"          0 0 1 1
 
@@ -72,7 +77,7 @@ void main() {
             float _phaseError = params.phaseErrorPAL * PI / 180.0;
             float rotU = cos(_phaseError);
             float rotV = sin(_phaseError);
-            int oddLine = (int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1;
+            int oddLine = ((int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1) ^ (int(params.autoEmu_lumaChroma) ^ 1);
 
             vec3 yuvEven = vec3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV, lumaChroma.z * rotU + lumaChroma.y * rotV);
             vec3 yuvOdd = vec3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV * -1, lumaChroma.z * rotU + lumaChroma.y * rotV * -1);

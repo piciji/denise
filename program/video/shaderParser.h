@@ -15,13 +15,13 @@ struct ShaderParser {
     GUIKIT::Settings rootSettings;
     ShaderPreset shaderPreset;
     std::vector<std::string> entryPaths;
-    std::vector<std::string> brokenPaths;
+    std::vector<std::string> errors;
     bool modified;
     static DataStorage* dataStorage;
 
     auto loadPreset(std::string path) -> bool;
 
-    auto addPreset(ShaderParser* parser, bool prepend) -> void;
+    auto addPreset(ShaderParser* parser, bool prepend) -> bool;
 
     auto savePreset(std::string path) -> bool;
 
@@ -50,7 +50,7 @@ struct ShaderParser {
 
     auto getPresetPath() -> std::string { return entryPaths.size() ? entryPaths[0] : ""; }
 
-    auto getPresetPathCombined() -> std::string;
+    auto getPresetPathDetailed() -> std::string;
 
     auto movePass(unsigned& passId, bool up) -> void;
 

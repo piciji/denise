@@ -1,5 +1,10 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+*/
+
 layout(push_constant) uniform Push
 {
     vec4 OriginalSize;
@@ -8,9 +13,11 @@ layout(push_constant) uniform Push
     float mask_layer;
     float mask_dpi;
     float mask_pitch;
+    float mask_pitch_hires;
     float luminance;
     float light_center;
     float light_distance;
+    float autoEmu_hires;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -22,10 +29,12 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter mask_layer        "Mask Layer 0 (Aperture) 1 (Shadow) 2 (Slot) 3 (Off)"   0 0 3 1
 #pragma parameter mask_level        "Mask Level"                                            45 0 100 1
 #pragma parameter mask_dpi          "Mask DPI"                                              124 1 200 1
-#pragma parameter mask_pitch        "Mask Pitch"                                            0.28 0.01 1.0 0.01
-#pragma parameter luminance         "Luminance"                                             100 1 500 1
-#pragma parameter light_center      "Light From Center"                                     0 0 1 1
-#pragma parameter light_distance    "Light Distance"                                        100 1 300 1
+#pragma parameter autoEmu_hires     "Hires"                                                 0 0 1 1
+#pragma parameter mask_pitch        "Mask Pitch"                                            0.31 0.01 1.0 0.01
+#pragma parameter mask_pitch_hires  "Mask Pitch Hires"                                      0.41 0.01 1.0 0.01
+#pragma parameter luminance         "Luminance"                                             100 5 500 5
+#pragma parameter light_center      "Light From Center"                                     1 0 1 1
+#pragma parameter light_distance    "Light Distance"                                        100 2 300 2
 
 
 #pragma stage vertex
@@ -49,9 +58,14 @@ layout(set = 0, binding = 5) uniform sampler2D lutMaskSlot;
 
 void main() {
     vec3 color = texture(Source, vTexCoord).xyz;
+    float sizeX = int(params.OriginalSize.x) >> int(params.autoEmu_hires);
+    float pitch = params.mask_pitch;
+    if (bool(params.autoEmu_hires)) {
+        pitch = params.mask_pitch_hires;
+    }
 
-    float scaleX = (params.OriginalSize.x * (25.4 / params.mask_dpi)) / params.mask_pitch;
-    float scaleY = (params.OriginalSize.x * scaleX) / params.OriginalSize.y;
+    float scaleX = (sizeX * (25.4 / params.mask_dpi)) / pitch;
+    float scaleY = (sizeX * scaleX) / params.OriginalSize.y;
     int layer = int(params.mask_layer);
     float _luminance = params.luminance;
 

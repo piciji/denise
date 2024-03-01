@@ -35,10 +35,6 @@ struct ShaderPreset {
 
     bool lumaChroma = false; // format of incoming frame data (uses floating point for YUV/YIC)
 
-    // add a small frame margin to let shader calculate neighboring pixel in the border area.
-    // will be cropped away after the last shader pass
-    CropPass smallMargin = {0,0,0,0};
-
     struct Pass {
         std::string src;
         std::string fragment;
@@ -52,6 +48,8 @@ struct ShaderPreset {
         std::string alias;
         bool inUse;
         std::string error;
+        CropPass crop;
+        bool subChain; // in the case of combined shader chains
 
         ScaleType scaleTypeX;
         ScaleType scaleTypeY;
@@ -73,7 +71,6 @@ struct ShaderPreset {
     std::vector<Lut> luts;
 
     struct Param {
-        int pass;
         float value;
         float minimum;
         float maximum;
@@ -93,7 +90,6 @@ struct ShaderPreset {
         luts.clear();
         passes.clear();
         lumaChroma = false;
-        smallMargin.set({0,0,0,0});
     }
 };
 

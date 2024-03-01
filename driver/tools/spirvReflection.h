@@ -29,12 +29,13 @@ struct SemanticTexture {
 
 struct SemanticMap {
     enum TexTypes { History = 0, PassOutput, PassFeedback, PassLuts, TextureNum };
-    enum UniformTypes { MVP, Output, FinalViewport, FrameCount, FrameDirection, Rotation, Seed, HistorySize, UniformNum };
+    enum UniformTypes { MVP, Output, FinalViewport, FrameCount, FrameDirection, Rotation, HistorySize, UniformNum };
 
     struct ImageMap {
         uintptr_t image;
         void* size;
         size_t stride;
+        unsigned maxElements;
     };
 
     ImageMap textures[TextureNum];
@@ -82,4 +83,5 @@ struct SpirvReflection {
 
     auto findString(const std::string& strHaystack, const std::string& strNeedle) -> bool;
     auto isNumber(const std::string& str) -> bool;
+    auto getSubChainIndex(ShaderPreset* preset, unsigned start) -> unsigned;
 };

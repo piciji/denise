@@ -1,8 +1,13 @@
 #version 450
 
+/*
+   Author: PiCiJi
+   License: Public domain
+*/
+
 layout(push_constant) uniform Push
 {
-    vec4 SourceSize;
+    vec4 OriginalSize;
 
     float radial_distortion;
 } params;
@@ -13,6 +18,8 @@ layout(std140, set = 0, binding = 0) uniform UBO
 } global;
 
 #pragma parameter radial_distortion     "Radial Distortion"     5 0 100 1
+
+#define borderOffset 4.0
 
 #pragma stage vertex
 layout(location = 0) in vec4 Position;
@@ -38,10 +45,10 @@ vec2 radialDistortion( vec2 xy, float intensity ) {
 
 void main() {
     float intensity = params.radial_distortion / 100.0;
-    float offset = 4.0;
-    float width = float(params.SourceSize.x);
-    float xL = offset / width;
-    float xR = (width - offset) / width;
+    float _s = params.OriginalSize.x;
+
+    float xL = borderOffset / _s;
+    float xR = (_s - borderOffset) / _s;
 
     float Scale = 1.0f / sqrt( distance( radialDistortion( vec2(xL * intensity, 0.0), intensity ), radialDistortion( vec2(1.0 - intensity + xR * intensity, 0.0), intensity ) ) );
 
