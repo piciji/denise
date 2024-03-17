@@ -1160,6 +1160,10 @@ auto TreeView::remove(TreeViewItem& item) -> void {
     }
 }
 
+auto TreeView::has(TreeViewItem& item) -> bool {
+    return Vector::find(state.items, &item);
+}
+
 auto TreeView::reset() -> void {
     state.selected = nullptr;
     p.reset();

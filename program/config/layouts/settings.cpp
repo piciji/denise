@@ -41,7 +41,6 @@ SwitchesLayout::SwitchesLayout() {
         append(splashScreen, {~0u, 0u});
 
     setFont(GUIKIT::Font::system("bold"));
-    threadedEmu.setForegroundColor( 0xff4500 );
 }
 
 EmuSelectionLayout::EmuSelectionLayout() {

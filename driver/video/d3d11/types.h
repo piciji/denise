@@ -2,16 +2,6 @@
 #pragma once
 
 namespace DRIVER {
-    struct Matrix4x4 {
-        float data[16];
-    };
-
-    struct Float4 {
-        float x;
-        float y;
-        float z;
-        float w;
-    };
 
     struct SwapChain {
         UINT flags = 0;
@@ -61,6 +51,7 @@ namespace DRIVER {
 
         D3DTexture renderTarget;
         D3DTexture feedbackTarget;
+        D3DTexture cropTarget;
         std::string codeFragment;
         std::string codeVertex;
         std::vector<SemanticTexture> semanticTextures;

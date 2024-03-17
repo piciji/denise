@@ -55,6 +55,13 @@
     <ClInclude Include="..\driver\video\d3d9\symbols.h" />
     <ClInclude Include="..\driver\video\dragnDropOverlay.h" />
     <ClInclude Include="..\driver\video\freetype.h" />
+    <ClInclude Include="..\driver\video\opengl3\bind.h" />
+    <ClInclude Include="..\driver\video\opengl3\dragndropOverlay.h" />
+    <ClInclude Include="..\driver\video\opengl3\progress.h" />
+    <ClInclude Include="..\driver\video\opengl3\shaders.h" />
+    <ClInclude Include="..\driver\video\opengl3\text.h" />
+    <ClInclude Include="..\driver\video\opengl3\types.h" />
+    <ClInclude Include="..\driver\video\opengl3\utility.h" />
     <ClInclude Include="..\driver\video\opengl\bind.h" />
     <ClInclude Include="..\driver\video\opengl\main.h" />
     <ClInclude Include="..\driver\video\opengl\opengl.h" />
@@ -420,6 +427,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\opengl3\gl3.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\driver\video\thread\renderThread.cpp" />
     <ClCompile Include="..\driver\video\wgl.cpp">

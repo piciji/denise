@@ -258,14 +258,8 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
     pass.wrap = translateWrapMode( rootSettings.get<std::string>("wrap_mode" + strPos, "") );
     pass.frameModulo = rootSettings.get<unsigned>("frame_count_mod" + strPos, 0);
 
-    if (pass.bufferType == ShaderPreset::BufferType::UNKNOWN) {
-        if (rootSettings.get<bool>("srgb_framebuffer" + strPos, false))
-            pass.bufferType = ShaderPreset::BufferType::R8G8B8A8_SRGB;
-        else if (rootSettings.get<bool>("float_framebuffer" + strPos, false))
-            pass.bufferType = ShaderPreset::BufferType::R16G16B16A16_SFLOAT;
-        else
-            pass.bufferType = ShaderPreset::BufferType::R8G8B8A8_UNORM;
-    }
+    if (pass.bufferType == ShaderPreset::BufferType::UNKNOWN)
+        pass.bufferType = ShaderPreset::BufferType::R8G8B8A8_UNORM;
 
     pass.mipmap = rootSettings.get<bool>("mipmap_input" + strPos, false);
     pass.inUse = !rootSettings.get<bool>("hide" + strPos, false);
@@ -287,6 +281,11 @@ auto ShaderParser::parsePass(unsigned pos) -> bool {
         shaderPreset.passes.push_back(pass);
         return true;
     }
+
+    if (rootSettings.get<bool>("srgb_framebuffer" + strPos, false))
+        pass.bufferType = ShaderPreset::BufferType::R8G8B8A8_SRGB;
+    else if (rootSettings.get<bool>("float_framebuffer" + strPos, false))
+        pass.bufferType = ShaderPreset::BufferType::R16G16B16A16_SFLOAT;
 
     if (!scaleTypeX.empty())
         pass.scaleTypeX = translateScaleType(scaleTypeX);
@@ -830,6 +829,10 @@ End:
 auto ShaderParser::fetchShaderSource(ShaderPreset::Pass& pass) -> bool {
     std::vector<Stage> stages = {Stage::Fragment, Stage::Vertex};
     return fetchShaderSource(pass.src, pass, stages);
+}
+
+auto ShaderParser::useScale(ShaderPreset::Pass& pass) -> bool {
+    return pass.scaleTypeX != ShaderPreset::SCALE_NONE || pass.scaleTypeY != ShaderPreset::SCALE_NONE;
 }
 
 auto ShaderParser::clear() -> void {

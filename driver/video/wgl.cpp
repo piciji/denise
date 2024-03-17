@@ -1,6 +1,6 @@
 
 #include "thread/renderThread.h"
-#include "opengl/opengl.h"
+#include "opengl3/gl3.cpp"
 
 #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092
@@ -10,8 +10,10 @@
 
 namespace DRIVER {	
 
-struct WGL : Video, OpenGL, RenderThread {
+struct WGL : Video, GL3, RenderThread {
 	~WGL() {
+        GL3::stopShaderBuilding();
+        wait();
         RenderThread::enable(false);
         term();
     }
@@ -42,6 +44,18 @@ struct WGL : Video, OpenGL, RenderThread {
         return dndOverlay.sendDragnDropOverlayCoordinates(x, y);
     }
 
+    auto setShaderCacheCallback( std::function<void (DiskFile& diskFile)> onCallback ) -> void {
+        onShaderCacheCallback = onCallback;
+    }
+
+    auto setShaderProgressCallback( std::function<void (int pass, bool hasErrors)> onCallback ) -> void {
+        onShaderProgressCallback = onCallback;
+    }
+
+    auto useShaderCache(bool state) -> void {
+        settings.useShaderCache = state;
+    }
+
 	auto synchronize(bool state) -> void {
         wait();
         settings.synchronize = state;
@@ -55,7 +69,7 @@ struct WGL : Video, OpenGL, RenderThread {
     auto hasSynchronized() -> bool { return settings.synchronize; }
     
     auto shaderSupport() -> bool { return true; }
-    
+
     auto hardSync(bool state) -> void {
         wait();
         settings.hardSync = state;
@@ -69,7 +83,8 @@ struct WGL : Video, OpenGL, RenderThread {
             RenderThread::enable(state);
 
             RenderThread::reset();
-            width = 0, height = 0;
+            auto& tex = frame.textures[0];
+            tex.width = 0, tex.height = 0;
 
             settings.threaded = state;
         }
@@ -77,86 +92,84 @@ struct WGL : Video, OpenGL, RenderThread {
 
     auto hasThreaded() -> bool { return settings.threaded; }
 
-	auto setShader(std::vector<ShaderPass*> passes) -> void {
+	auto setShader(ShaderPreset* preset) -> void {
         wait();
         makeCurrent();
-		settings.passes = passes;
-		OpenGL::shader( passes );
-        RenderThread::reset();
+		GL3::shader( preset );
         clearCurrent();
-	}   
-    
-    auto setShaderAttribute( std::string _program, std::string attribute, float value ) -> void {
-        wait();
-        makeCurrent();
-        OpenGL::shaderAttribute( _program, attribute, value );
-        clearCurrent();
-    }
-    
-    auto setShaderAttribute( std::string _program, std::string attribute, int value ) -> void {
-        wait();
-        makeCurrent();
-        OpenGL::shaderAttribute( _program, attribute, value );
-        clearCurrent();
-    }
-    
-    auto setShaderAttribute(std::string _program, std::string attribute, float* data, unsigned size) -> void {
-        wait();
-        makeCurrent();
-        OpenGL::shaderAttribute( _program, attribute, data, size );
-        clearCurrent();
-    }
-    
-    auto setShaderAttribute(std::string _program, std::string attribute, uint32_t* data, unsigned _width, unsigned _height) -> void {
-        wait();
-        makeCurrent();
-        OpenGL::shaderAttribute( _program, attribute, data, _width, _height );
-        clearCurrent();
-    }
+	}
 
     auto setLinearFilter(bool state) -> void {
         if (state == settings.linearFilter)
             return;
         wait();
         settings.linearFilter = state;
-     //   makeCurrent();
-		OpenGL::filter = state ? GL_LINEAR : GL_NEAREST;
-//        clearCurrent();
+        // makeCurrent();
+        GL3::updateFilter();
+        // clearCurrent();
 	}
 
     auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
+        if (shaderReady) {
+            wait();
+            makeCurrent();
+            GL3::shaderPostBuild();
+            clearCurrent();
+            shaderReady = false;
+        }
+
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
         this->options = options;
         makeCurrent(true);
-        if (OpenGL::size(_width, _height))
-            viewScreen.update(viewport);
 
-        return OpenGL::lock(data, pitch);
+        if (GL3::initTexture(_width, _height, GL_RGBA8)) {
+            updateRTS = true;
+            updateHistory = true;
+            viewScreen.update(viewport);
+        }
+
+        return GL3::lock(data, pitch);
     }
 
     auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
+        if (shaderReady) {
+            wait();
+            makeCurrent();
+            GL3::shaderPostBuild();
+            clearCurrent();
+            shaderReady = false;
+        }
+
+        if (!shaderPasses) // YUV input needs a shader to progress it
+            return false;
+
         if (settings.threaded)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
         this->options = options;
         makeCurrent(true);
-        if (OpenGL::size(_width, _height))
-            viewScreen.update(viewport);
 
-        return OpenGL::lock(data, pitch);
+        if (GL3::initTexture(_width, _height, GL_RGBA32F)) {
+            updateRTS = true;
+            updateHistory = true;
+            viewScreen.update(viewport);
+        }
+
+        return GL3::lock(data, pitch);
     }
 
-    auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void {
-        OpenGL::resize( _buffer, _width, _height );
+    auto adjustSize(unsigned& w, unsigned& h) -> void {
         viewScreen.update(viewport);
+        updateRTS = true;
+        updateHistory = true;
     }
 
 	auto clear() -> void {
         wait();
         makeCurrent();
-		OpenGL::clear();
+		GL3::clear();
 		SwapBuffers(display);
         clearCurrent();
 	}
@@ -177,6 +190,7 @@ struct WGL : Video, OpenGL, RenderThread {
         }
 
         viewScreen.update(viewport, _windowWidth, _windowHeight);
+        GL3::updateFrameSize();
     }
 
     auto unlockAndRedraw() -> void {
@@ -201,15 +215,19 @@ struct WGL : Video, OpenGL, RenderThread {
 		resizeMutex.lock();
         resizeWindow();
         makeCurrent(true);
-        OpenGL::clear();
-        OpenGLSurface::updateTexture( settings.threaded ? getLastBufferToRender() : nullptr );
-		OpenGL::refresh(disallowShader);
+        GL3::clear();
+        GL3::updateMainTexture( settings.threaded ? getLastBufferToRender() : nullptr );
+        GL3::_redraw(disallowShader, options & OPT_Interlace);
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
 #ifdef DRV_FREETYPE
         screenText.showText(viewport.width, viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
+
+        if (progressVisible && progress.initialized)
+            progress.show(viewport, 20, 20);
+
         if (settings.vrr) {
             glFinish();
             waitVRR();
@@ -222,22 +240,16 @@ struct WGL : Video, OpenGL, RenderThread {
 	}
 
     auto refresh() -> void {
-		
         makeCurrent();
-        OpenGL::clear();
+        GL3::clear();
 
         options = 0;
         RenderBuffer* renderBuffer = getBufferToRender();
         if (renderBuffer && renderBuffer->height) {
             renderBuffer->sharedMutex.lock();
+            GL3::initTexture(renderBuffer->width, renderBuffer->height, renderBuffer->floatFormat ? GL_RGBA32F : GL_RGBA8);
 
-            if ( (width != renderBuffer->width) || (height != renderBuffer->height) ) {
-                width = renderBuffer->width;
-                height = renderBuffer->height;
-                createTexture(renderBuffer);
-            }
-
-            OpenGL::updateTexture(renderBuffer);
+            updateMainTexture(renderBuffer);
             options = renderBuffer->options;
             renderBuffer->sharedMutex.unlock();
 
@@ -247,7 +259,7 @@ struct WGL : Video, OpenGL, RenderThread {
         }
 		resizeMutexThreaded.lock();
         resizeWindow();
-        OpenGL::refresh(options & OPT_DisallowShader);
+        GL3::_redraw(options & OPT_DisallowShader, options & OPT_Interlace);
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
@@ -255,6 +267,9 @@ struct WGL : Video, OpenGL, RenderThread {
         screenText.updateMessage();
         screenText.showText(viewport.width, viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
+        if (progressVisible && progress.initialized)
+            progress.show(viewport, 20, 20);
+
         if (settings.vrr) {
             glFinish();
             waitVRR();
@@ -266,7 +281,6 @@ struct WGL : Video, OpenGL, RenderThread {
 
 		resizeMutexThreaded.unlock();
         clearCurrent();
-		
     }
 	
 	bool init(uintptr_t _handle) {
@@ -297,29 +311,56 @@ struct WGL : Video, OpenGL, RenderThread {
         glGetIntegerv(GL_MINOR_VERSION, &version.minor);
         version.glsl = glGetString( GL_SHADING_LANGUAGE_VERSION );
 
-        if(wglCreateContextAttribs) {
-			int attributes[] = {
-				WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-				WGL_CONTEXT_MINOR_VERSION_ARB, (version.major == 3 && version.minor == 1) ? 1 : 2,
-				0
-			};
-			HGLRC context = wglCreateContextAttribs(display, 0, attributes);
-			if(context) {
-				wglMakeCurrent(NULL, NULL);
-				wglDeleteContext(wglcontext);
-				wglMakeCurrent(display, wglcontext = context);
-			}
-		}
+        wglMakeCurrent(NULL, NULL);
+        wglDeleteContext(wglcontext);
+        wglcontext = (HGLRC)getContext(false);
+        wglMakeCurrent(display, wglcontext);
 
 		if(wglSwapInterval) {
 			wglSwapInterval(settings.synchronize ? 1 : 0);
 		}
 
         RenderThread::reset();
-        bool res = OpenGL::init();
+        bool res = GL3::init();
         clearCurrent();
         return res;
 	}
+
+    auto getContext(bool shared = true) -> uintptr_t {
+        GLUtility::sharedMutex.lock();
+        HGLRC context = nullptr;
+
+        if(wglCreateContextAttribs) {
+            int attributes[] = {
+                WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+                WGL_CONTEXT_MINOR_VERSION_ARB, (version.major == 3 && version.minor == 1) ? 1 : 2,
+                0
+            };
+
+            context = wglCreateContextAttribs(display, shared ? wglcontext : 0, attributes);
+        }
+
+        if(!context)
+            context = wglCreateContext(display);
+
+        GLUtility::sharedMutex.unlock();
+        return (uintptr_t)context;
+    }
+
+    auto deleteContext(uintptr_t context) -> void {
+        if(context) {
+            GLUtility::sharedMutex.lock();
+            //wglMakeCurrent(display, nullptr);
+            wglDeleteContext((HGLRC)context);
+            GLUtility::sharedMutex.unlock();
+        }
+    }
+
+    auto makeContextCurrent(uintptr_t context) -> void {
+        GLUtility::sharedMutex.lock();
+        wglMakeCurrent(display, (HGLRC)context);
+        GLUtility::sharedMutex.unlock();
+    }
 	
 	auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
@@ -341,22 +382,26 @@ struct WGL : Video, OpenGL, RenderThread {
         viewScreen.hasIntegerScaling = _integerScaling;
 
         viewScreen.update(viewport);
+        updateRTS = true;
+        updateHistory = true;
     }
 
     auto getAspectRatio() -> int {
         return (int)viewScreen.mode;
     }
 
-   // auto getRotation() -> unsigned { return mvp.rotation; }
+    auto getRotation() -> Rotation { return settings.rotation; }
 
-    auto setRotation(unsigned degree) -> void {
-        if (mvp.rotation == degree)
+    auto setRotation(Rotation rotation) -> void {
+        if (settings.rotation == rotation)
             return;
         wait();
-        viewScreen.flipped = degree == 90 || degree == 270;
-        viewScreen.update(viewport);
-        mvp.rotation = degree;
-        mvp.width = 0;
+        settings.rotation = rotation;
+        makeCurrent();
+        GL3::updateRotation();
+        clearCurrent();
+        updateRTS = true;
+        updateHistory = true;
     }
 
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
@@ -383,12 +428,27 @@ struct WGL : Video, OpenGL, RenderThread {
 
     auto hasVRR() -> bool { return settings.vrr; }
 
+    auto getShaderNativeVertexCode(std::string& slang, std::string& out) -> bool {
+        return GLUtility::translate(version, slang, out, false);
+    }
+
+    auto getShaderNativeFragmentCode(std::string& slang, std::string& out) -> bool {
+        return GLUtility::translate(version, slang, out, true);
+    }
+
+    auto setProgressAnimation(uint8_t* _data, unsigned _width, unsigned _height) -> void {
+        wait();
+        makeCurrent();
+        progress.setIcon(_data, _width, _height);
+        clearCurrent();
+    }
+
 	auto term() -> void {
         wait();
-		OpenGL::term();
-
-		if(wglcontext) wglDeleteContext(wglcontext);
-		wglcontext = nullptr;
+		GL3::term();
+        deleteContext((uintptr_t)wglcontext);
+		//if(wglcontext) wglDeleteContext(wglcontext);
+		//wglcontext = nullptr;
 	}
 
     auto makeCurrent(bool usePermanent = false) -> void {
@@ -396,7 +456,7 @@ struct WGL : Video, OpenGL, RenderThread {
             if(!hasRendererContext) {
                 hasRendererContext = true;
             } else
-                // for non threaded mode, we don't want to bind context each frame for speed reasons
+                // for non threaded mode, we don't want to bind context each frame. it's costly.
                 return;
         }
 

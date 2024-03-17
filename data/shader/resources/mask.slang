@@ -34,7 +34,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter mask_pitch_hires  "Mask Pitch Hires"                                      0.41 0.01 1.0 0.01
 #pragma parameter luminance         "Luminance"                                             100 5 500 5
 #pragma parameter light_center      "Light From Center"                                     1 0 1 1
-#pragma parameter light_distance    "Light Distance"                                        100 2 300 2
+#pragma parameter light_distance    "Light Distance"                                        150 2 300 2
 
 
 #pragma stage vertex

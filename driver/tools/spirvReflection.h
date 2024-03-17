@@ -1,12 +1,19 @@
 
+#pragma once
+
 #include "../../deps/SPIRV-Cross/spirv_cross.hpp"
 #include "shaderpass.h"
 #define SPIRV_MAX_BINDINGS 16
 
-struct SemanticUniform {
+struct SemanticVariable {
     void* data;
     unsigned size;
+    spirv_cross::SPIRType::BaseType type;
     unsigned offset;
+    std::string name;
+
+    int vertexLocation;
+    int fragmentLocation;
 };
 
 struct SemanticBuffer {
@@ -15,7 +22,7 @@ struct SemanticBuffer {
     unsigned mask;
     unsigned binding;
     unsigned size;
-    std::vector<SemanticUniform> uniforms;
+    std::vector<SemanticVariable> variables;
 };
 
 struct SemanticTexture {
@@ -24,6 +31,7 @@ struct SemanticTexture {
     uintptr_t sampler;
     ShaderPreset::Filter filter;
     ShaderPreset::WrapMode wrap;
+    bool mipmap;
     int feedbackPass;
 };
 
@@ -70,6 +78,8 @@ struct SpirvReflection {
 
     std::string error = "";
 
+    auto preProcessBindNames(const std::string& prefix, const std::string& stage, spirv_cross::Compiler& compiler, spirv_cross::ShaderResources& resources) -> void;
+    auto preProcess(spirv_cross::Compiler& compiler, spirv_cross::ShaderResources& resources) -> void;
     auto process(spirv_cross::Compiler& vCompiler, spirv_cross::Compiler& fCompiler,spirv_cross::ShaderResources& vResources,spirv_cross::ShaderResources& fResources) -> bool;
     auto clear() -> void;
 

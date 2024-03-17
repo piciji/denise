@@ -190,13 +190,7 @@ struct D3D11Utility {
 
         if (tex.desc.MiscFlags & D3D11_RESOURCE_MISC_GENERATE_MIPS) {
             tex.desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-            unsigned size = std::max(tex.desc.Width, tex.desc.Height);
-            size >>= 1;
-
-            while (size) { // based on log2
-                size >>= 1;
-                tex.desc.MipLevels++;
-            }
+            tex.desc.MipLevels = getMipLevels(tex.desc.Width, tex.desc.Height);
         }
 
         if (FAILED(device->CreateTexture2D(&tex.desc, nullptr, &tex.ptr)))
@@ -251,14 +245,15 @@ struct D3D11Utility {
         releaseShader(prg.shader);
         releaseTexture(prg.renderTarget);
         releaseTexture(prg.feedbackTarget);
+        releaseTexture(prg.cropTarget);
 
         for (int b = 0; b < SemanticBuffer::Max; b++) {
             dxRelease(prg.buffers[b])
         }
 
         prg.semanticTextures.clear();
-        prg.semanticBuffer[SemanticBuffer::Ubo].uniforms.clear();
-        prg.semanticBuffer[SemanticBuffer::Push].uniforms.clear();
+        prg.semanticBuffer[SemanticBuffer::Ubo].variables.clear();
+        prg.semanticBuffer[SemanticBuffer::Push].variables.clear();
 
         prg.semanticBuffer[SemanticBuffer::Ubo].mask = 0;
         prg.semanticBuffer[SemanticBuffer::Push].mask = 0;
@@ -269,6 +264,7 @@ struct D3D11Utility {
         std::string error;
         std::vector<unsigned> spirv;
         spirv_cross::CompilerHLSL* compiler = nullptr;
+        SpirvReflection reflection;
         bool success = isFragment ? glSlang.compileFragment(code, spirv, error) : glSlang.compileVertex(code, spirv, error);
 
         if (!success) {
@@ -278,12 +274,8 @@ struct D3D11Utility {
 
         try {
             compiler = new spirv_cross::CompilerHLSL(spirv);
-
             spirv_cross::ShaderResources resources = compiler->get_shader_resources();
-            if (!resources.uniform_buffers.empty())
-                compiler->set_decoration( resources.uniform_buffers[0].id, spv::DecorationBinding, 0);
-            if (!resources.push_constant_buffers.empty())
-                compiler->set_decoration( resources.push_constant_buffers[0].id, spv::DecorationBinding, 1);
+            reflection.preProcess( *compiler, resources );
 
             spirv_cross::CompilerHLSL::Options options;
             options.shader_model = featureLevel >= D3D_FEATURE_LEVEL_11_0 ? 50 : 40;

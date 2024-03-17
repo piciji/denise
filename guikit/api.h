@@ -754,6 +754,8 @@ struct TreeViewItem {
     auto parentItem() -> TreeViewItem* { return state.parentTreeViewItem; }
     auto parentView() -> TreeView* { return state.parentTreeView; }
 
+    auto image() -> Image* { return state.image; }
+
     struct {
         TreeView* parentTreeView = nullptr;
         TreeViewItem* parentTreeViewItem = nullptr;
@@ -779,6 +781,7 @@ struct TreeView : Widget {
 
     auto append(TreeViewItem& item) -> void;
     auto remove(TreeViewItem& item) -> void;
+    auto has(TreeViewItem& item) -> bool;
     auto reset() -> void;
     auto selected() -> TreeViewItem* { return state.selected; }
     auto itemCount() -> unsigned { return state.items.size(); }

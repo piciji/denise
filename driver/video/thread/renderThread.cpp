@@ -24,12 +24,12 @@ namespace DRIVER {
         if ((options & 1) && fillPos) {
             _width = lockedBuffer->pitch;
             RenderBuffer* srcBuffer = getReuseBuffer(_width, _height);
-            if (srcBuffer && srcBuffer->dataFloat)
-                std::memcpy(lockedBuffer->dataFloat, srcBuffer->dataFloat, _width * _height * 4 * 4);
+            if (srcBuffer && srcBuffer->data)
+                std::memcpy(lockedBuffer->data, srcBuffer->data, _width * _height * 4 * 4);
         }
 
         pitch = lockedBuffer->pitch;
-        data = lockedBuffer->dataFloat;
+        data = (float*)lockedBuffer->data;
 
         return true;
     }
@@ -48,7 +48,7 @@ namespace DRIVER {
         }
 
         pitch = lockedBuffer->pitch;
-        data = lockedBuffer->data;
+        data = (unsigned*)lockedBuffer->data;
 
         return true;
     }
@@ -80,7 +80,8 @@ namespace DRIVER {
             lockedBuffer->height = _height;
             lockedBuffer->pitch = calcPitch( _width );
             lockedBuffer->floatFormat = floatFormat;
-            resize( lockedBuffer, _width, _height );
+            adjustSize(_width, _height);
+            lockedBuffer->data = new uint8_t[_width * _height * 4 * (floatFormat ? 4 : 1) ]();
         }
 
         return true;
@@ -122,11 +123,6 @@ namespace DRIVER {
         if(buffer->data) {
             delete[] buffer->data;
             buffer->data = nullptr;
-        }
-
-        if(buffer->dataFloat) {
-            delete[] buffer->dataFloat;
-            buffer->dataFloat = nullptr;
         }
     }
 

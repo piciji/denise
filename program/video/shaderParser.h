@@ -78,6 +78,8 @@ struct ShaderParser {
     template<bool checkNewLine = false> auto addLineToStage(std::vector<Stage>& stages, const std::string& line, ShaderPreset::Pass& pass) -> void;
     auto addNewLine(std::string& str) -> void;
 
+    auto useScale(ShaderPreset::Pass& pass) -> bool;
+
     static auto buildLutBloom() -> void;
     static auto buildLutMask() -> void;
     static auto buildLutBandwidth() -> void;

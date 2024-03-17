@@ -7,6 +7,17 @@
 #define countof(arr) (sizeof(arr) / sizeof(arr[0]))
 #endif
 
+struct Matrix4x4 {
+    float data[16];
+};
+
+struct Float4 {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
 template<unsigned bits> inline auto sclamp(const signed x) -> signed {
     enum : signed { b = 1U << (bits - 1), m = b - 1 };
     return (x > m) ? m : (x < -b) ? -b : x;
@@ -24,6 +35,20 @@ template<typename T> inline auto MatrixMultiply(T* output, const T* xdata, unsig
 			*output++ = sum;
 		}
 	}
+}
+
+static auto getMipLevels(unsigned width, unsigned height) -> unsigned {
+    unsigned levels = 0;
+    unsigned size = width > height ? width : height;
+    if (!size)
+        size = 1;
+
+    while (size) { // based on log2
+        size >>= 1;
+        levels++;
+    }
+
+    return levels;
 }
 
 template<typename T> auto uniqueDeviceId(std::vector<T>& devices, uint64_t id) -> uint64_t {

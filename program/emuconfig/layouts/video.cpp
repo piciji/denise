@@ -100,8 +100,9 @@ view(withSpectrum) {
 
     append(view, {~0u, 0u}, 5);
     append(encoding, {~0u, 0u}, 5);
-    append(lumaDelay, {~0u, 0u});
 
+    if (withSpectrum)
+        append(lumaDelay, {~0u, 0u});
 }
 
 VideoShaderLayout::Main::Control::Control() {
@@ -111,6 +112,7 @@ VideoShaderLayout::Main::Control::Control() {
     append(folder,{0u, 0u}, 5);
     append(internal,{0u, 0u}, 5);
     append(external,{0u, 0u}, 10);
+    append(downloadSlang,{0u, 0u}, 10);
     append(prependPreset,{0u, 0u}, 10);
     append(appendPreset,{0u, 0u}, 10);
     append(load,{0u, 0u});
@@ -293,9 +295,14 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     pageDown.loadPng((uint8_t*)Icons::pageDown, sizeof(Icons::pageDown) );
     pageUpGray.loadPng((uint8_t*)Icons::pageUpGray, sizeof(Icons::pageUpGray) );
     pageDownGray.loadPng((uint8_t*)Icons::pageDownGray, sizeof(Icons::pageDownGray) );
+    retroarch.loadPng((uint8_t*)Icons::retroarch, sizeof(Icons::retroarch) );
+    colorImage.loadPng((uint8_t*)Icons::color, sizeof(Icons::color));
+
+    layShader.main.control.downloadSlang.setImage( &retroarch );
+    layShader.main.control.downloadSlang.setUri( "https://buildbot.libretro.com/assets/frontend/shaders_slang.zip" );
 
     tviBase.setUserData( (uintptr_t)1 );
-    tviBase.setImage( imgDocument );
+    tviBase.setImage( colorImage );
 
     tviShader.setUserData( (uintptr_t)2 );
     tviShader.setImage(imgFolderClosed);
@@ -306,7 +313,8 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     tviParams.setImageExpanded(imgFolderOpen);
 
     moduleTree.append(tviBase);
-    moduleTree.append(tviShader);
+    if (videoDriver->shaderSupport())
+        moduleTree.append(tviShader);
 
     moduleSwitch.setLayout(1, layBase, {~0u, ~0u});
     moduleSwitch.setLayout(2, layShader, {~0u, ~0u});
@@ -652,6 +660,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             layPass.control.disable.setText( trans->getA("enable") );
             layPass.settings.setEnabled(false);
         }
+        clearShaderError();
         layPass.control.synchronizeLayout();
     };
 
@@ -679,7 +688,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             }
             updateMoveImg();
         }
-
+        clearShaderError();
         tviPasses[selectedPassId]->setSelected();
     };
 
@@ -707,7 +716,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             }
             updateMoveImg();
         }
-
+        clearShaderError();
         tviPasses[selectedPassId]->setSelected();
     };
 
@@ -816,24 +825,28 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_NEAREST);
         emuThread->unlock();
+        clearShaderError();
     };
 
     layPass.settings.data.filter.linear.onActivate = [this]() {
         emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_LINEAR);
         emuThread->unlock();
+        clearShaderError();
     };
 
     layPass.settings.data.filter.unspec.onActivate = [this]() {
         emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_UNSPEC);
         emuThread->unlock();
+        clearShaderError();
     };
 
     layPass.settings.data.mipmap.onToggle = [this](bool checked) {
         emuThread->lock();
         vManager()->setPassMipmap(selectedPassId, checked);
         emuThread->unlock();
+        clearShaderError();
     };
 
     for(int i = 0; i < 5; i++) {
@@ -844,12 +857,14 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             emuThread->lock();
             vManager()->setPassScaleX(selectedPassId, float(i+1));
             emuThread->unlock();
+            clearShaderError();
         };
 
         radioY.onActivate = [this, i]() {
             emuThread->lock();
             vManager()->setPassScaleY(selectedPassId, float(i+1));
             emuThread->unlock();
+            clearShaderError();
         };
     }
 
@@ -1291,10 +1306,12 @@ auto VideoLayout::updateVisibillity() -> void {
         layBase.encoding.blur.slider.setEnabled(  layBase.encoding.blur.active.checked() );
     }
 
-    layBase.lumaDelay.setEnabled(isC64 && crtCpuChecked);
-    if (isC64 && crtCpuChecked) {
-        layBase.lumaDelay.lumaRise.slider.setEnabled(layBase.lumaDelay.lumaRise.active.checked());
-        layBase.lumaDelay.lumaFall.slider.setEnabled(layBase.lumaDelay.lumaFall.active.checked());
+    if (isC64) {
+        layBase.lumaDelay.setEnabled(crtCpuChecked);
+        if (crtCpuChecked) {
+            layBase.lumaDelay.lumaRise.slider.setEnabled(layBase.lumaDelay.lumaRise.active.checked());
+            layBase.lumaDelay.lumaFall.slider.setEnabled(layBase.lumaDelay.lumaFall.active.checked());
+        }
     }
     
     layBase.view.option.tvGamma.setEnabled( (crtCpuChecked || crtGpuChecked) && layBase.view.mode.palette.checked() && _pal );
@@ -1335,6 +1352,7 @@ auto VideoLayout::translate() -> void {
     layShader.main.control.folder.setText( trans->getA("folder", true) );
     layShader.main.control.internal.setText( trans->getA("internal") );
     layShader.main.control.external.setText( trans->getA("external") );
+    layShader.main.control.external.setTooltip( trans->getA("shader hints") );
     layShader.main.control.unload.setText( trans->getA("unload") );
     layShader.main.control.save.setText( trans->getA("save") );
     layShader.main.control.load.setText( trans->getA("load") );
@@ -1376,6 +1394,8 @@ auto VideoLayout::translate() -> void {
     layPass.generated.errorLabel.setText( trans->getA("error output", true) );
     layPass.generated.vertex.setText( trans->getA("native Vertex code") );
     layPass.generated.fragment.setText( trans->getA("native Fragment code") );
+
+    layShader.main.control.downloadSlang.setTooltip( trans->getA("shader download") );
 
     for(int i = 0; i < PARAMS_PER_PAGE; i++) {
         paramSliders[i]->defaultButton.setText( trans->getA("default") );
@@ -1485,7 +1505,7 @@ auto VideoLayout::loadShader(std::string path) -> bool {
         layShader.main.control.setEnabled();
         layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
         view->updateShader(emulator);
-        if (!layBase.view.mode.svideoGpu.checked())
+        if (!layBase.view.mode.svideoGpu.checked() && videoDriver->shaderSupport())
             layBase.view.mode.svideoGpu.activate();
     }
     showErrors(errors);
@@ -1496,14 +1516,27 @@ auto VideoLayout::unloadShader() -> void {
     vManager()->clearPreset();
     buildShaderUI(nullptr);
     layShader.main.info.loaded.setText( "" );
-    layShader.main.control.setEnabled(false);
-    layShader.main.control.load.setEnabled();
-    layShader.main.control.folder.setEnabled();
-    layShader.main.control.internal.setEnabled();
-    layShader.main.control.external.setEnabled();
+
+    layShader.main.control.unload.setEnabled(false);
+    layShader.main.control.save.setEnabled(false);
+    layShader.main.control.appendPreset.setEnabled(false);
+    layShader.main.control.prependPreset.setEnabled(false);
+
     layShader.favourite.control.add.setEnabled(false);
     layBase.view.gamma.setEnabled();
     clearErrors();
+
+    if (!videoDriver->shaderSupport()) {
+        moduleTree.remove(tviParams);
+        moduleTree.remove(tviShader);
+        tviBase.setSelected();
+    }
+}
+
+auto VideoLayout::addShaderUI() -> void {
+    if (!moduleTree.has(tviShader)) {
+        moduleTree.append(tviShader);
+    }
 }
 
 auto VideoLayout::getShaderFolder() -> std::string {
@@ -1521,6 +1554,19 @@ auto VideoLayout::openShaderFileDialog() -> std::string {
             .setPath( getShaderFolder() )
             .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
             .open();
+}
+
+auto VideoLayout::clearShaderError() -> void {
+    auto preset = vManager()->getPreset();
+    if (!preset)
+        return;
+
+    for(auto pass : tviPasses) {
+        if (pass->image() != &imgDocument)
+            pass->setImage(imgDocument);
+    }
+
+    layPass.errorMessage.setText("");
 }
 
 auto VideoLayout::presentShaderError() -> void {

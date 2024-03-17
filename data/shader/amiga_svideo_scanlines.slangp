@@ -79,16 +79,14 @@ alias9 = "Mask"
 wrap_mode9 = "clamp_to_edge"
 float_framebuffer9 = true
 scale_type9 = source
-scale_x9 = 1.0
-scale_y9 = 1.0
-mipmap_input9 = true
+scale9 = 1.0
 
 shader10 = resources/radialDistortion.slang
 alias10 = "RadialDistortion"
 wrap_mode10 = "clamp_to_border"
 float_framebuffer10 = true
 scale_type10 = source
-scale10 = 1.0
+scale10 = 2.0
 mipmap_input10 = true
 
 phaseErrorPAL = 3.5

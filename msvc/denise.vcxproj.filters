@@ -308,6 +308,9 @@
     <Filter Include="deps\glslang\glslang\ResourceLimits">
       <UniqueIdentifier>{08243727-f299-4c6d-b58b-e3991445a9ff}</UniqueIdentifier>
     </Filter>
+    <Filter Include="driver\video\opengl3">
+      <UniqueIdentifier>{78d7f9df-e365-4494-894e-a11973844adc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1041,6 +1044,27 @@
     </ClInclude>
     <ClInclude Include="..\guikit\tools\decode\images.h">
       <Filter>guikit\tools\decode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl3\bind.h">
+      <Filter>driver\video\opengl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl3\dragndropOverlay.h">
+      <Filter>driver\video\opengl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl3\shaders.h">
+      <Filter>driver\video\opengl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl3\text.h">
+      <Filter>driver\video\opengl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl3\types.h">
+      <Filter>driver\video\opengl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl3\utility.h">
+      <Filter>driver\video\opengl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl3\progress.h">
+      <Filter>driver\video\opengl3</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2072,6 +2096,9 @@
     </ClCompile>
     <ClCompile Include="..\guikit\tools\decode\images.cpp">
       <Filter>guikit\tools\decode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\opengl3\gl3.cpp">
+      <Filter>driver\video\opengl3</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

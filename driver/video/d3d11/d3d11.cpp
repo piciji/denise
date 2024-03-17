@@ -127,9 +127,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         HWND handle;
         bool threaded = false;
 
-        int aspectMode = 1;
-        bool integerScaling = false;
-
         bool vrr = false;
 
         std::string message = "";
@@ -601,6 +598,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     }
 
     auto shader(ShaderPreset* preset) -> void {
+        shaderId++;
         shaderReady = false;
         progressVisible = false;
         shaderPasses = 0;
@@ -617,8 +615,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         for(auto& lut : luts)
             D3D11Utility::releaseTexture( lut );
 
-        shaderId++;
-
         this->preset = preset;
         if (!preset || (preset->passes.size() > MAX_SHADERS) || (preset->luts.size() > MAX_TEXTURES))
             return;
@@ -630,6 +626,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             program->inUse = pass.inUse;
             program->codeVertex = pass.vertex;
             program->codeFragment = pass.fragment;
+            pass.error = "";
             _programs.push_back(program);
             todo |= pass.inUse;
         }
@@ -701,22 +698,13 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                         spirv_cross::ShaderResources vResources = vCompiler->get_shader_resources();
                         spirv_cross::ShaderResources fResources = fCompiler->get_shader_resources();
 
-                        if (!vResources.uniform_buffers.empty())
-                            vCompiler->set_decoration( vResources.uniform_buffers[0].id, spv::DecorationBinding, 0);
+                        p->shader.reflection.preProcess( *vCompiler, vResources );
+                        p->shader.reflection.preProcess( *fCompiler, fResources );
 
-                        if (!fResources.uniform_buffers.empty())
-                            fCompiler->set_decoration( fResources.uniform_buffers[0].id, spv::DecorationBinding, 0);
-
-                        if (!vResources.push_constant_buffers.empty())
-                            vCompiler->set_decoration( vResources.push_constant_buffers[0].id, spv::DecorationBinding, 1);
-
-                        if (!fResources.push_constant_buffers.empty())
-                            fCompiler->set_decoration( fResources.push_constant_buffers[0].id, spv::DecorationBinding, 1);
-
-                        spirv_cross::CompilerHLSL::Options options;
-                        options.shader_model = featureLevel >= D3D_FEATURE_LEVEL_11_0 ? 50 : 40;
-                        vCompiler->set_hlsl_options(options);
-                        fCompiler->set_hlsl_options(options);
+                        spirv_cross::CompilerHLSL::Options opt;
+                        opt.shader_model = featureLevel >= D3D_FEATURE_LEVEL_11_0 ? 50 : 40;
+                        vCompiler->set_hlsl_options(opt);
+                        fCompiler->set_hlsl_options(opt);
                         nativeV = vCompiler->compile();
                         nativeF = fCompiler->compile();
 
@@ -815,6 +803,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
     auto shaderPostBuild() -> void {
         bool lastPass = true;
+        bool mipMapInput = false;
+
         SemanticMap map = {{
            {(uintptr_t)(&frame.textures[0].view), &frame.textures[0].size, sizeof(D3DTexture), MAX_FRAME_HISTORY},
            {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(D3DProgram), MAX_SHADERS},
@@ -836,7 +826,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
             program.inUse = pass.inUse;
             program.ident = pass.alias;
-            program.mipmap = pass.mipmap;
             program.scaleX = pass.scaleX;
             program.absX = pass.absX;
             program.scaleTypeX = pass.scaleTypeX;
@@ -848,9 +837,18 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             program.frameModulo = pass.frameModulo;
             program.format = D3D11Utility::getFormat( pass.bufferType );
             program.crop = pass.crop;
+            program.mipmap = false;
 
             if (!pass.inUse)
                 goto Next;
+
+            if (mipMapInput) {
+                program.mipmap = true;
+                mipMapInput = false;
+            }
+
+            if (pass.mipmap)
+                mipMapInput = true;
 
             if (!p->shader.error.empty()) {
                 pass.error = p->shader.error;
@@ -1044,12 +1042,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         return true;
     }
 
-    auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
-        if (renderBuffer->floatFormat)
-            renderBuffer->dataFloat = new float[w * h * 4]();
-        else
-            renderBuffer->data = new uint32_t[w * h]();
-
+    auto adjustSize(unsigned& w, unsigned& h) -> void {
         viewScreen.update(viewport);
         updateRTS = true;
         updateHistory = true;
@@ -1086,7 +1079,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 return;
 
             int srcPitch = renderBuffer->width << (renderBuffer->floatFormat ? 4 : 2);
-            uint8_t* src = renderBuffer->floatFormat ? (uint8_t*)renderBuffer->dataFloat : (uint8_t*)renderBuffer->data;
+            uint8_t* src = renderBuffer->data;
 
             unsigned pitch = mappedTexture.RowPitch;
             uint8_t* dest = (uint8_t*)mappedTexture.pData;
@@ -1199,9 +1192,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                         D3D11_MAPPED_SUBRESOURCE res;
                         context->Map((ID3D11Resource*)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
 
-                        for(auto& uniform : semBuffer.uniforms) {
-                            if (uniform.data)
-                                memcpy((uint8_t*)res.pData + uniform.offset, uniform.data, uniform.size);
+                        for(auto& var : semBuffer.variables) {
+                            if (var.data)
+                                memcpy((uint8_t*)res.pData + var.offset, var.data, var.size);
                         }
                         context->Unmap((ID3D11Resource*)buffer, 0);
 
@@ -1239,10 +1232,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                 context->Draw(4, lastPass ? 0 : 4 );
 
                 if (p.mipmap)
-                    context->GenerateMips( p.renderTarget.view);
+                    context->GenerateMips( p.crop.active ? p.cropTarget.view : p.renderTarget.view);
 
                 if (p.crop.active)
-                    context->CopySubresourceRegion((ID3D11Resource*)p.renderTarget.ptr, 0, 0, 0, 0, (ID3D11Resource*)p.renderTarget.staging, 0, &p.cropBox);
+                    context->CopySubresourceRegion((ID3D11Resource*)p.renderTarget.ptr, 0, 0, 0, 0, (ID3D11Resource*)p.cropTarget.ptr, 0, &p.cropBox);
 
                 texture = &p.renderTarget;
             }
@@ -1381,20 +1374,20 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                     p.cropBox.front  = 0;
                     p.cropBox.back   = 1;
 
-                    D3DTexture cropTex;
-                    D3D11Utility::releaseTexture(cropTex);
-                    cropTex.desc.Width = width;
-                    cropTex.desc.Height = height;
-                    cropTex.desc.Format = p.format;
-                    if (!D3D11Utility::initTexture(device, cropTex, false))
+                    D3D11Utility::releaseTexture(p.cropTarget);
+                    p.cropTarget.desc.Width = width;
+                    p.cropTarget.desc.Height = height;
+                    p.cropTarget.desc.Format = p.format;
+                    if (p.mipmap)
+                        p.renderTarget.desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+                    if (!D3D11Utility::initTexture(device, p.cropTarget, false))
                         continue;
 
-                    dxRelease(p.renderTarget.view)
-                    p.renderTarget.view = cropTex.view;
                     // todo: SourceSize of following pass isn't OutputSize (non cropped) of this pass.
                     // only internal shader use this feature and relevant passes don't access SourceSize
-                    p.renderTarget.staging = p.renderTarget.ptr;
-                    p.renderTarget.ptr = cropTex.ptr;
+                    std::swap(p.renderTarget.view, p.cropTarget.view);
+                    std::swap(p.renderTarget.ptr, p.cropTarget.ptr);
                 }
             } else {
                 if (viewScreen.flipped && (viewScreen.mode != ViewScreen::Mode::Window)) {

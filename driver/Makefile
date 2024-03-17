@@ -1,12 +1,4 @@
 
-# remove drivers you don't need
-# it's possible to remove all drivers
-
-# sdlinput covers joypad support only and is not supported for windows and macOS anymore
-# openAL is not supported for windows anymore
-
-# some drivers like dinput (5, 7, 8) and xaudio (2.7, 2.8, 2.9) are supported in multiple versions.
-
 ifeq ($(platform),windows)
     drv += wgl direct3d9 direct3d11 dsound dinput5 dinput7 dinput8 xaudio27 xaudio28 xaudio29 wasapi rawinput
 

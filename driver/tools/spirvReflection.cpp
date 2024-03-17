@@ -10,6 +10,36 @@ auto SpirvReflection::clear() -> void {
     ubo.binding = push.binding = ~0;
 }
 
+auto SpirvReflection::preProcess(spirv_cross::Compiler& compiler, spirv_cross::ShaderResources& resources) -> void {
+    if (!resources.uniform_buffers.empty())
+        compiler.set_decoration( resources.uniform_buffers[0].id, spv::DecorationBinding, 0);
+
+    if (!resources.push_constant_buffers.empty())
+        compiler.set_decoration( resources.push_constant_buffers[0].id, spv::DecorationBinding, 1);
+}
+
+auto SpirvReflection::preProcessBindNames(const std::string& prefix, const std::string& stage, spirv_cross::Compiler& compiler, spirv_cross::ShaderResources& resources) -> void {
+    for (auto& res : resources.push_constant_buffers) {
+        compiler.set_name(res.id, prefix + "_PUSH_" + stage + "_INSTANCE");
+        compiler.set_name(res.base_type_id, prefix + "_PUSH_" + stage);
+    }
+
+    for (auto& res : resources.uniform_buffers) {
+        compiler.set_name(res.id, prefix + "_UBO_" + stage + "_INSTANCE");
+        compiler.set_name(res.base_type_id, prefix + "_UBO_" + stage);
+        compiler.unset_decoration(res.id, spv::DecorationDescriptorSet);
+        compiler.unset_decoration(res.id, spv::DecorationBinding);
+    }
+
+    if (stage == "FRAGMENT")
+        for (auto& res : resources.sampled_images) {
+            uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
+            compiler.set_name(res.id, prefix + "_TEXTURE_" + std::to_string(binding));
+            compiler.unset_decoration(res.id, spv::DecorationDescriptorSet);
+            compiler.unset_decoration(res.id, spv::DecorationBinding);
+    }
+}
+
 auto SpirvReflection::process(spirv_cross::Compiler& vCompiler, spirv_cross::Compiler& fCompiler,spirv_cross::ShaderResources& vResources,spirv_cross::ShaderResources& fResources) -> bool {
     clear();
     SpirvBuffer vUbo;
@@ -245,19 +275,23 @@ auto SpirvReflection::bindPush(ShaderPreset* preset, unsigned passId, SemanticMa
 }
 
 auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* preset, unsigned passId, SemanticMap& map, SemanticBuffer* semanticBuffer) -> bool {
-    semanticBuffer->uniforms.clear();
+    semanticBuffer->variables.clear();
 
     for(auto& var : spirvBuffer.variables) {
         bool assignNextUsablePass = false;
-        SemanticUniform semUniform;
-        semUniform.offset = var.offset;
-        semUniform.size = var.size;
+        SemanticVariable semVar;
+        semVar.offset = var.offset;
+        semVar.size = var.size;
+        semVar.type = var.type;
+        semVar.name = var.name;
+        semVar.fragmentLocation = -1;
+        semVar.vertexLocation = -1;
 
         for(int l = 0; l < preset->luts.size(); l++) {
             auto& lut = preset->luts[l];
             std::string name = lut.id  + "Size";
             if (name == var.name) {
-                semUniform.data = (void*)((uintptr_t)map.textures[SemanticMap::PassLuts].size + l * map.textures[SemanticMap::PassLuts].stride);
+                semVar.data = (void*)((uintptr_t)map.textures[SemanticMap::PassLuts].size + l * map.textures[SemanticMap::PassLuts].stride);
                 goto Next;
             }
         }
@@ -271,7 +305,7 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
                     continue;
                 }
 
-                semUniform.data = (void*)((uintptr_t)map.textures[SemanticMap::PassOutput].size + p * map.textures[SemanticMap::PassOutput].stride);
+                semVar.data = (void*)((uintptr_t)map.textures[SemanticMap::PassOutput].size + p * map.textures[SemanticMap::PassOutput].stride);
                 goto Next;
             }
         }
@@ -286,38 +320,38 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
                     continue;
                 }
 
-                semUniform.data = (void*)((uintptr_t)map.textures[SemanticMap::PassFeedback].size + p * map.textures[SemanticMap::PassFeedback].stride);
+                semVar.data = (void*)((uintptr_t)map.textures[SemanticMap::PassFeedback].size + p * map.textures[SemanticMap::PassFeedback].stride);
                 goto Next;
             }
         }
 
         for(auto& param : preset->params) {
             if (var.name == param.id) {
-                semUniform.data = &param.value;
+                semVar.data = &param.value;
                 goto Next;
             }
         }
 
         if (var.name == "MVP") {
-            semUniform.data = map.uniforms[SemanticMap::MVP];
+            semVar.data = map.uniforms[SemanticMap::MVP];
             goto Next;
         } else if (var.name == "OutputSize") {
-            semUniform.data = map.uniforms[SemanticMap::Output];
+            semVar.data = map.uniforms[SemanticMap::Output];
             goto Next;
         } else if (var.name == "FinalViewportSize") {
-            semUniform.data = map.uniforms[SemanticMap::FinalViewport];
+            semVar.data = map.uniforms[SemanticMap::FinalViewport];
             goto Next;
         } else if (var.name == "FrameCount") {
-            semUniform.data = map.uniforms[SemanticMap::FrameCount];
+            semVar.data = map.uniforms[SemanticMap::FrameCount];
             goto Next;
         } else if (var.name == "FrameDirection") {
-            semUniform.data = map.uniforms[SemanticMap::FrameDirection];
+            semVar.data = map.uniforms[SemanticMap::FrameDirection];
             goto Next;
         } else if (var.name == "Rotation") {
-            semUniform.data = map.uniforms[SemanticMap::Rotation];
+            semVar.data = map.uniforms[SemanticMap::Rotation];
             goto Next;
         } else if (var.name == "OriginalSize") {
-            semUniform.data = map.textures[SemanticMap::History].size;
+            semVar.data = map.textures[SemanticMap::History].size;
             goto Next;
         } else if (var.name == "SourceSize") {
             if (passId > 0) {
@@ -326,11 +360,11 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
                     if (!pass.inUse)
                         continue;
 
-                    semUniform.data = (void*)((uintptr_t)map.textures[SemanticMap::PassOutput].size + p * map.textures[SemanticMap::PassOutput].stride);
+                    semVar.data = (void*)((uintptr_t)map.textures[SemanticMap::PassOutput].size + p * map.textures[SemanticMap::PassOutput].stride);
                     goto Next;
                 }
             }
-            semUniform.data = map.textures[SemanticMap::History].size;
+            semVar.data = map.textures[SemanticMap::History].size;
             goto Next;
         } else {
             static const std::string names[] = {"OriginalHistorySize", "PassOutputSize", "PassFeedbackSize"};
@@ -345,20 +379,15 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
                         index = stoi(strIndex);
 
                     if (n == SemanticMap::History) {
-                        if (index >= map.textures[SemanticMap::History].maxElements) {
+                        if (index > map.textures[SemanticMap::History].maxElements) {
                             error = var.name + " exceeds max history frames of " + std::to_string(map.textures[SemanticMap::History].maxElements);
                             return false;
                         }
 
-                        semUniform.data = (void*)((uintptr_t)map.textures[SemanticMap::History].size + index * map.textures[SemanticMap::History].stride);
+                        semVar.data = (void*)((uintptr_t)map.textures[SemanticMap::History].size + index * map.textures[SemanticMap::History].stride);
                         goto Next;
                     } else {
                         index += getSubChainIndex(preset, passId);
-
-                        if ((n == SemanticMap::PassOutput) && (index >= passId)) {
-                            error = var.name + " cannot use output size of future pass " + std::to_string(passId);
-                            return false;
-                        }
 
                         if (index >= map.textures[n].maxElements) {
                             error = var.name + " exceeds max textures of " + std::to_string(map.textures[n].maxElements);
@@ -370,7 +399,7 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
                             if (!pass.inUse)
                                 continue;
 
-                            semUniform.data = (void*)((uintptr_t)map.textures[n].size + index * map.textures[n].stride);
+                            semVar.data = (void*)((uintptr_t)map.textures[n].size + index * map.textures[n].stride);
                             goto Next;
                         }
                     }
@@ -382,7 +411,7 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
         return false;
 
         Next:
-        semanticBuffer->uniforms.push_back(semUniform);
+        semanticBuffer->variables.push_back(semVar);
     }
 
     semanticBuffer->mask = spirvBuffer.mask;
@@ -412,8 +441,6 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
         bool assignNextUsablePass = false;
         SemanticTexture semTex;
         semTex.binding = tex.binding;
-        semTex.filter = curPass.filter;
-        semTex.wrap = curPass.wrap;
         semTex.feedbackPass = -1;
 
         for(int l = 0; l < preset->luts.size(); l++) {
@@ -423,6 +450,7 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
                 semTex.data = map.textures[SemanticMap::PassLuts].image + l * map.textures[SemanticMap::PassLuts].stride;
                 semTex.filter = lut.filter;
                 semTex.wrap = lut.wrap;
+                semTex.mipmap = lut.mipmap;
                 goto Next;
             }
         }
@@ -430,11 +458,20 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
         for(int p = preset->passes.size() - 1; p >= 0; p--) {
             auto& pass = preset->passes[p];
             if (assignNextUsablePass || (pass.alias == tex.name)) {
+                if (p >= passId) {
+                    error = tex.name + " is output of future pass " + std::to_string(p) + ". but this is pass " + std::to_string(passId);
+                    return false;
+                }
+
                 if (!pass.inUse) {
                     assignNextUsablePass = true;
                     continue;
                 }
 
+                auto& nextPass = preset->passes[p + 1];
+                semTex.filter = nextPass.filter;
+                semTex.wrap = nextPass.wrap;
+                semTex.mipmap = nextPass.mipmap;
                 semTex.data = map.textures[SemanticMap::PassOutput].image + p * map.textures[SemanticMap::PassOutput].stride;
                 goto Next;
             }
@@ -449,19 +486,31 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
                     assignNextUsablePass = true;
                     continue;
                 }
-                //pass.feedback = true;
+
                 semTex.feedbackPass = p;
+                auto& outputPass = preset->passes[p];
+                semTex.filter = outputPass.filter;
+                semTex.wrap = outputPass.wrap;
+                semTex.mipmap = outputPass.mipmap;
                 semTex.data = map.textures[SemanticMap::PassFeedback].image + p * map.textures[SemanticMap::PassFeedback].stride;
                 goto Next;
             }
         }
 
         if (tex.name == "Original") {
+            auto& firstPass = preset->passes[0];
+            semTex.filter = firstPass.filter;
+            semTex.wrap = firstPass.wrap;
+            semTex.mipmap = firstPass.mipmap;
             semTex.data = (uintptr_t)map.textures[SemanticMap::History].image;
             goto Next;
         }
 
         if (tex.name == "Source") {
+            semTex.filter = curPass.filter;
+            semTex.wrap = curPass.wrap;
+            semTex.mipmap = curPass.mipmap;
+
             if (passId > 0) {
                 for(int p = passId - 1; p >= 0; p--) {
                     auto& pass = preset->passes[p];
@@ -488,7 +537,7 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
                     index = stoi(strIndex);
 
                 if (n == SemanticMap::History) {
-                    if (index >= map.textures[SemanticMap::History].maxElements) {
+                    if (index > map.textures[SemanticMap::History].maxElements) {
                         error = tex.name + " exceeds max history frames of " + std::to_string(map.textures[SemanticMap::History].maxElements);
                         return false;
                     }
@@ -496,13 +545,17 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
                     if (index > curHistorySize)
                         curHistorySize = index;
 
+                    auto& firstPass = preset->passes[0];
+                    semTex.filter = firstPass.filter;
+                    semTex.wrap = firstPass.wrap;
+                    semTex.mipmap = firstPass.mipmap;
                     semTex.data = ((uintptr_t)map.textures[SemanticMap::History].image + index * map.textures[SemanticMap::History].stride);
                     goto Next;
                 } else {
                     index += getSubChainIndex(preset, passId);
 
                     if ((n == SemanticMap::PassOutput) && (index >= passId)) {
-                        error = tex.name + " cannot use output of future pass " + std::to_string(passId);
+                        error = tex.name + " is output of future pass " + std::to_string(index) + ". but this is pass " + std::to_string(passId);
                         return false;
                     }
 
@@ -519,6 +572,10 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
                         if (n == SemanticMap::PassFeedback)
                             semTex.feedbackPass = p;
 
+                        auto& usePass = preset->passes[p + (n == SemanticMap::PassFeedback ? 0 : 1)];
+                        semTex.filter = usePass.filter;
+                        semTex.wrap = usePass.wrap;
+                        semTex.mipmap = usePass.mipmap;
                         semTex.data = ((uintptr_t)map.textures[n].image + index * map.textures[n].stride);
                         goto Next;
                     }

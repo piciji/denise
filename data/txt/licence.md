@@ -18,15 +18,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 
 # copyright holders
 
-* module "driver" is based of "ruby" used in higan, it's rewritten
-* "Sid" emulation code, especially SID filter, is taken from VICE http://vice-emu.sourceforge.net
+* SID emulation code, especially SID filter, is taken from VICE http://vice-emu.sourceforge.net
 * "VIC-II" cycle emulation code is based on VICE implementation http://vice-emu.sourceforge.net
 * Dynamic Rate Control (DRC) formula is copyrighted by RetroArch. https://github.com/libretro/RetroArch
 * cosine resampler is copyrighted by RetroArch https://github.com/libretro/RetroArch
 * sinc resampler is copyrighted by RetroArch https://github.com/libretro/RetroArch
 * C64 TrueType v1.2.1/Style font is copyrighted by https://style64.org/c64-truetype
 * freetype is a library for opengl to render text fonts https://www.freetype.org/
-* bundled Shader were created by following copyright holders: guest(r) - guest.r@gmail.com
+* bundled Shader were created by following copyright holders: Timothy Lottes, guest(r) - guest.r@gmail.com
 * application logo and icon were created by Retrofan
 * French translation was created by Ben
 * Japanese translation was created by Ulgon

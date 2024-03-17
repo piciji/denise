@@ -518,7 +518,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
                 if ( (inputWidth != _width) || (inputHeight != _height) )
                     resize(inputWidth = _width, inputHeight = _height);
 
-                applyRotation(settings.rotation, renderBuffer->data, renderBuffer->pitch - renderBuffer->width);
+                applyRotation(settings.rotation, (unsigned*)renderBuffer->data, renderBuffer->pitch - renderBuffer->width);
             } else {
                 if ((inputWidth != renderBuffer->width) || (inputHeight != renderBuffer->height))
                     resize(inputWidth = renderBuffer->width, inputHeight = renderBuffer->height);
@@ -678,6 +678,21 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         return true;
     }
 
+    auto adjustSize(unsigned& w, unsigned& h) -> void {
+        w = roundUpPowerOfTwo( w + 1 );
+        h = roundUpPowerOfTwo( h );
+
+        if(d3dcaps.MaxTextureWidth < w)
+            w = d3dcaps.MaxTextureWidth;
+
+        if (d3dcaps.MaxTextureHeight < h)
+            h = d3dcaps.MaxTextureHeight;
+
+        RECT windowSize = Win::getDimension( settings.handle );
+        viewScreen.update( viewport, windowSize.right, windowSize.bottom );
+        lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
+    }
+
     auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
 
         w = roundUpPowerOfTwo( w + 1 );
@@ -689,7 +704,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if (d3dcaps.MaxTextureHeight < h)
             h = d3dcaps.MaxTextureHeight;
 
-        renderBuffer->data = new uint32_t[w * h]();
+        renderBuffer->data = new uint8_t[w * h * 4]();
         RECT windowSize = Win::getDimension( settings.handle );
         viewScreen.update( viewport, windowSize.right, windowSize.bottom );
         lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);

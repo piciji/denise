@@ -46,7 +46,8 @@ namespace DRIVER {
         copyIntToBuffer<unsigned>(memory + 8, strLength);
 
         std::memcpy(memory + 12, vs, vsSize);
-        std::memcpy(memory + 12 + vsSize, ps, psSize);
+        if (ps && psSize)
+            std::memcpy(memory + 12 + vsSize, ps, psSize);
         std::memcpy(memory + 12 + vsSize + psSize, strData, strLength);
 
         DiskFile diskFile;

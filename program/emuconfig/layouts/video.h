@@ -65,6 +65,7 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Label folder;
             GUIKIT::RadioBox internal;
             GUIKIT::RadioBox external;
+            GUIKIT::ImageView downloadSlang;
 
             GUIKIT::Button prependPreset;
             GUIKIT::Button appendPreset;
@@ -233,6 +234,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image pageDown;
     GUIKIT::Image pageUpGray;
     GUIKIT::Image pageDownGray;
+    GUIKIT::Image retroarch;
+    GUIKIT::Image colorImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;
@@ -263,6 +266,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto externalFolder() -> bool { return layShader.main.control.external.checked(); }
     auto openShaderFileDialog() -> std::string;
     auto presentShaderError() -> void;
+    auto clearShaderError() -> void;
+    auto addShaderUI() -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

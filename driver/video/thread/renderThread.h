@@ -10,8 +10,7 @@ namespace DRIVER {
 
     struct RenderBuffer {
         std::mutex sharedMutex;
-        unsigned* data = nullptr;
-        float* dataFloat = nullptr;
+        uint8_t* data = nullptr;
         bool floatFormat = false;
         unsigned width = 0;
         unsigned height = 0;
@@ -61,7 +60,7 @@ namespace DRIVER {
         auto wait() -> void;
 
         virtual auto refresh() -> void = 0;
-        virtual auto resize(RenderBuffer* _buffer, unsigned _width, unsigned _height) -> void = 0;
+        virtual auto adjustSize(unsigned& _width, unsigned& _height) -> void = 0;
         virtual auto calcPitch( unsigned _width ) -> unsigned { return _width; }
     };
 

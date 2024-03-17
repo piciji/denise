@@ -512,13 +512,24 @@ auto Program::setRotation() -> void {
 }
 
 auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {
-    if (videoDriver->shaderSupport())
+    auto emuView = EmuConfigView::TabWindow::getView(emulator);
+
+    if (videoDriver->shaderSupport()) {
+        if (emuView && emuView->videoLayout)
+            emuView->videoLayout->addShaderUI();
         return;
+    }
 
     auto settings = program->getSettings( emulator );
     auto crtMode = settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
-    if ((VideoManager::CrtMode)crtMode == VideoManager::CrtMode::Gpu) {
+    if ((VideoManager::CrtMode)crtMode == VideoManager::CrtMode::Gpu)
         settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
-    }
+
+    auto vManager = VideoManager::getInstance(emulator);
+
+    if (emuView && emuView->videoLayout)
+        emuView->videoLayout->unloadShader();
+    else if (vManager)
+        vManager->clearPreset();
 }
