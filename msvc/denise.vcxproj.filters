@@ -155,9 +155,6 @@
     <Filter Include="driver\input\dinput">
       <UniqueIdentifier>{f17f82cb-c347-4e16-94dc-0827e8223b85}</UniqueIdentifier>
     </Filter>
-    <Filter Include="driver\video\opengl">
-      <UniqueIdentifier>{329949e5-ad45-4982-b9df-dfe4a6e10001}</UniqueIdentifier>
-    </Filter>
     <Filter Include="driver\video\thread">
       <UniqueIdentifier>{ee662aa0-0121-4ce8-ad6d-843089d57379}</UniqueIdentifier>
     </Filter>
@@ -687,30 +684,6 @@
     </ClInclude>
     <ClInclude Include="..\driver\video\thread\renderThread.h">
       <Filter>driver\video\thread</Filter>
-    </ClInclude>
-    <ClInclude Include="..\driver\video\opengl\opengl.h">
-      <Filter>driver\video\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\driver\video\opengl\program.h">
-      <Filter>driver\video\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\driver\video\opengl\shaders.h">
-      <Filter>driver\video\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\driver\video\opengl\surface.h">
-      <Filter>driver\video\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\driver\video\opengl\text.h">
-      <Filter>driver\video\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\driver\video\opengl\utility.h">
-      <Filter>driver\video\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\driver\video\opengl\bind.h">
-      <Filter>driver\video\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\driver\video\opengl\main.h">
-      <Filter>driver\video\opengl</Filter>
     </ClInclude>
     <ClInclude Include="..\program\program.h">
       <Filter>program</Filter>

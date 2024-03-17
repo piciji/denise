@@ -62,14 +62,6 @@
     <ClInclude Include="..\driver\video\opengl3\text.h" />
     <ClInclude Include="..\driver\video\opengl3\types.h" />
     <ClInclude Include="..\driver\video\opengl3\utility.h" />
-    <ClInclude Include="..\driver\video\opengl\bind.h" />
-    <ClInclude Include="..\driver\video\opengl\main.h" />
-    <ClInclude Include="..\driver\video\opengl\opengl.h" />
-    <ClInclude Include="..\driver\video\opengl\program.h" />
-    <ClInclude Include="..\driver\video\opengl\shaders.h" />
-    <ClInclude Include="..\driver\video\opengl\surface.h" />
-    <ClInclude Include="..\driver\video\opengl\text.h" />
-    <ClInclude Include="..\driver\video\opengl\utility.h" />
     <ClInclude Include="..\driver\video\thread\renderThread.h" />
     <ClInclude Include="..\driver\video\viewport.h" />
     <ClInclude Include="..\emulation\cia\base.h" />
