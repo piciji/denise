@@ -18,15 +18,15 @@
 
 #include <thread>
 #include <atomic>
+#include "../../tools/tools.h"
+#include "../../tools/spirvReflection.h"
+#include "../../tools/glslang.h"
+#include "../../../deps/SPIRV-Cross/spirv_glsl.hpp"
 #include "bind.h"
 #include "types.h"
 #include "utility.h"
-#include "../../tools/glslang.h"
-#include "../../tools/spirvReflection.h"
-#include "../../../deps/SPIRV-Cross/spirv_glsl.hpp"
 #include "../../tools/ShaderCache.h"
 #include "../viewport.h"
-#include "../../tools/tools.h"
 #include "../../tools/chronos.h"
 
 namespace DRIVER {
@@ -71,8 +71,8 @@ struct GL3 {
         Float4 size;
         Matrix4x4 mvp;
         Matrix4x4 mvpRotated;
-        GLuint vao;
-        GLuint vbo;
+        GLuint vao = 0;
+        GLuint vbo = 0;
         GLuint filter;
     } frame;
 
@@ -102,7 +102,6 @@ struct GL3 {
         bool synchronize = false;
         bool hardSync = false;
         bool linearFilter = true;
-        HWND handle;
         bool threaded = false;
         bool vrr = false;
         Rotation rotation = ROT_0;
@@ -125,7 +124,6 @@ struct GL3 {
         settings.synchronize = false;
         settings.hardSync = false;
         settings.linearFilter = true;
-        settings.handle = nullptr;
         settings.threaded = false;
         settings.vrr = false;
         settings.rotation = ROT_0;

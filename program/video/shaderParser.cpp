@@ -68,7 +68,11 @@ auto ShaderParser::savePreset(std::string path) -> bool {
 
     auto fp = file.getHandle();
 
-    if (!modified && (entryPaths.size() == 1)) {
+    bool simplePreset = !modified && (entryPaths.size() == 1);
+    if (simplePreset && (path == entryPaths[0]))
+        simplePreset = false;
+
+    if (simplePreset) {
         out = "#reference \"" + GUIKIT::File::buildRelativePath(path, entryPaths[0]) + "\"\n";
         fputs( out.c_str(), fp );
     } else {
@@ -125,6 +129,7 @@ auto ShaderParser::savePreset(std::string path) -> bool {
                 writeLine(fp, lut.id + "_wrap_mode",  translateWrapMode(lut.wrap) );
                 writeLine(fp, lut.id + "_mipmap",  lut.mipmap ? "true" : "false" );
             }
+            fputs( "\n", fp );
         }
     }
 
@@ -775,8 +780,8 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
 
                     char id[64];
                     char desc[64];
-                    if ((filled = sscanf_s(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
-                                           id, sizeof(id), desc, sizeof(desc), &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
+                    if ((filled = sscanf(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
+                                           id, desc, &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
                         goto End;
 
                     param.id = id;

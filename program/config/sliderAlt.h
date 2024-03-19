@@ -75,11 +75,12 @@ struct SliderLayoutAlt : GUIKIT::VerticalLayout {
             hLayout.remove(boxes[i]);
 
         hLayout.reset();
+        remove(hLayout);
 
-        if (descriptor || (steps == 1) ) {
-            remove(hLayout);
+        if (descriptor || (steps == 1) )
             return;
-        } else if (steps <= MAX_RADIO_BOXES) {
+
+        if (steps <= MAX_RADIO_BOXES) {
             std::vector<GUIKIT::RadioBox*> groupBoxes;
             std::vector<float> distances;
             float _minimum = minimum;
@@ -98,13 +99,13 @@ struct SliderLayoutAlt : GUIKIT::VerticalLayout {
 
             hLayout.append(spacer, {~0u, 0u});
         } else {
-            hLayout.append(valueLabel, {0u, 0u}, 8);
-            hLayout.append(slider, {~0u, 0u}, withButton ? 8 : 0 );
-
             slider.setLength(steps);
             unsigned position = (unsigned) ((value - minimum) / step);
             slider.setPosition(position);
             valueLabel.setText(GUIKIT::String::formatFloatingPoint(value, decimalPlaces, decimalPlaces == 0));
+
+            hLayout.append(valueLabel, {0u, 0u}, 8);
+            hLayout.append(slider, {~0u, 0u}, withButton ? 8 : 0 );
         }
 
         if (withButton)

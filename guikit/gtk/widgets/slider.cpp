@@ -9,12 +9,16 @@ auto pSlider::minimumSize() -> Size {
 
 auto pSlider::setLength(unsigned length) -> void {
     length += length == 0;
+    locked = true;
     gtk_range_set_range(GTK_RANGE(gtkWidget), 0, std::max(1u, length - 1));
     gtk_range_set_increments(GTK_RANGE(gtkWidget), 1, length >> 3);
+    locked = false;
 }
 
 auto pSlider::setPosition(unsigned position) -> void {
+    locked = true;
     gtk_range_set_value(GTK_RANGE(gtkWidget), position);
+    locked = false;
 }
 
 auto pSlider::create() -> void {
@@ -40,5 +44,5 @@ auto pSlider::onChange(GtkRange* gtkRange, Slider* self) -> void {
     unsigned position = (unsigned)gtk_range_get_value(gtkRange);
     if(self->state.position == position) return;
     self->state.position = position;
-    if(self->onChange) self->onChange(position);
+    if(self->onChange && !self->p.locked) self->onChange(position);
 }

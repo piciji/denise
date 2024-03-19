@@ -125,9 +125,9 @@ auto Video::create(const std::string& driver) -> Video* {
 //		if(driver == "OpenGL") return new CGL();
 //	#endif
 //
-//	#ifdef DRV_GLX
-//		if(driver == "OpenGL") return new GLX();
-//	#endif
+	#ifdef DRV_GLX
+		if(driver == "OpenGL") return new GLX();
+	#endif
 
     return new Video;
 }

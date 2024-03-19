@@ -88,15 +88,15 @@ auto Program::initVideo(bool driverChange) -> void {
             return;
         }
 
-        std::string _shaderFolder = shaderFolder();
-        std::string absPath = _shaderFolder + diskFile.path;
+        std::string cacheFolder = GUIKIT::System::getUserDataFolder(appFolder());
+        std::string absPath = cacheFolder + diskFile.path;
         GUIKIT::File f(absPath, true);
 
         if (diskFile.data && diskFile.size) {
             std::string subPath = GUIKIT::File::getPath(diskFile.path);
 
             if ( !GUIKIT::File::isDir( GUIKIT::File::getPath(absPath) ) )
-                GUIKIT::File::createDir(subPath, _shaderFolder);
+                GUIKIT::File::createDir(subPath, cacheFolder);
 
             if (f.open(GUIKIT::File::Mode::Write))
                 f.write(diskFile.data, diskFile.size);

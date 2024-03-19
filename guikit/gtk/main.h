@@ -472,7 +472,6 @@ struct pTreeViewItem {
     auto find( char* _iter ) -> TreeViewItem*;
     auto parentTreeView() -> TreeView*;
     auto addItem(TreeViewItem* parent) -> void;
-    auto invalidateParent() -> void;
 
     pTreeViewItem(TreeViewItem& treeViewItem) : treeViewItem(treeViewItem) {}
 };

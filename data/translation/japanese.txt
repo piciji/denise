@@ -818,3 +818,4 @@ too much shaders = max. %count% shader allowed
 too much textures = max. %count% textures allowed
 shader download = download RetroArch Shader
 shader hints = To use external shaders, the file "shaders_slang.zip" is required. After this has been unzipped, the shaders are available. Alternatively, RetroArch is already installed. Then the shaders can be updated automatically via the RetroArch interface and are usually located in a subfolder of RetroArch. It is important that only the folder "shaders_slang" is required or accepted. This also applies if you use openGL as a driver. The folder "shaders_glsl" is intended for older openGL versions (< 3), which are not supported in Denise.
+corrupted files = corrupted files

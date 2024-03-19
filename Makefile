@@ -44,9 +44,9 @@ objects += SLSpirvIntrinsics SLResourceLimits
 objects += SLPp SLPpAtom SLPpContext SLPpScanner SLPpTokens
 ifeq ($(platform),windows)
 objects += SLhlslAttributes SLhlslGrammar SLhlslOpMap SLhlslParseables SLhlslParseHelper SLhlslScanContext SLhlslTokenStream
-objects += SCspirv_cross SCspirv_cfg SCspirv_hlsl SCspirv_glsl SCspirv_parser SCspirv_cross_parsed_ir
+objects += SCspirv_hlsl
 endif
-objects += spirvReflection shaderCache
+objects += SCspirv_cross SCspirv_cross_parsed_ir SCspirv_cfg SCspirv_glsl SCspirv_parser spirvReflection shaderCache
 
 deps = $(objects)
 
@@ -252,7 +252,7 @@ obj/palette.o:		program/video/palette.cpp
 obj/video.o:		program/video/manager.cpp
 obj/shaderParser.o: program/video/shaderParser.cpp
 obj/spirvReflection.o: driver/tools/spirvReflection.cpp
-obj/shaderCache.o: driver/tools/shaderCache.cpp
+obj/shaderCache.o: driver/tools/ShaderCache.cpp
 
 include deps/Makefile
 deps := $(patsubst %,obj/%.d,$(deps))

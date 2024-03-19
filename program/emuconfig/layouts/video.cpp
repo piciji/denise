@@ -130,7 +130,7 @@ VideoShaderLayout::Main::Control::Control() {
 VideoShaderLayout::Main::Info::Info() {
     append(label,{0u, 0u}, 5);
     append(loaded,{~0u, 0u});
-    append(clearCache,{0u, 0u}, 5);
+    append(clearCache,{0u, 0u}, 10);
     append(toParams,{0u, 0u});
 
     setAlignment(0.5);
@@ -170,78 +170,55 @@ VideoShaderLayout::VideoShaderLayout() {
     append(favourite,{~0u, ~0u});
 }
 
-VideoPassLayout::Settings::Identifier::Identifier() {
-    append(fileIdent,{0u, 0u}, 10);
-    append(filter,{0u, 0u}, 12);
-    append(wrap,{0u, 0u}, 10);
-    append(bufferType,{0u, 0u}, 12);
-    append(mipmap,{0u, 0u}, 10);
-    append(modulo,{0u, 0u}, 12);
-    append(scaleX,{0u, 0u}, 12);
-    append(scaleY,{0u, 0u});
+VideoPassLayout::Settings::Line::Line() {
+    append(ident,{0u, 0u}, 10);
+    append(value,{0u, 0u});
+
+    setAlignment(0.5);
 }
 
-VideoPassLayout::Settings::Data::Filter::Filter() {
+VideoPassLayout::Settings::FilterLine::FilterLine() {
+    append(ident,{0u, 0u}, 10);
     append(unspec,{0u, 0u}, 10);
     append(linear,{0u, 0u}, 10);
-    append(nearest,{0u, 0u});
+    append(nearest,{0u, 0u}, 10);
 
     GUIKIT::RadioBox::setGroup( unspec, linear, nearest );
     setAlignment(0.5);
 }
 
-VideoPassLayout::Settings::Data::ScaleX::Control::Control() {
+VideoPassLayout::Settings::MipmapLine::MipmapLine() {
+    append(ident,{0u, 0u}, 10);
+    append(checkBox,{0u, 0u});
+
+    setAlignment(0.5);
+}
+
+VideoPassLayout::Settings::ScaleLine::ScaleLine() {
+    append(ident,{0u, 0u}, 10);
+    append(value,{0u, 0u}, 10);
+
     std::vector<GUIKIT::RadioBox*> boxes;
-    for(int i = 0; i < 5; i++) {
+    for(int i = 0; i < SCALE_BOXES; i++) {
         radios[i].setText( std::to_string(i+1) + "x" );
         append(radios[i], {0u, 0u}, 10);
         boxes.push_back(&radios[i]);
     }
 
     GUIKIT::RadioBox::setGroup( boxes );
-    setAlignment(0.5);
-}
-
-VideoPassLayout::Settings::Data::ScaleX::ScaleX() {
-    append(label, {0u, 0u}, 10);
-    append(control, {0u, 0u});
 
     setAlignment(0.5);
-}
-
-VideoPassLayout::Settings::Data::ScaleY::Control::Control() {
-    std::vector<GUIKIT::RadioBox*> boxes;
-    for(int i = 0; i < 5; i++) {
-        radios[i].setText( std::to_string(i+1) + "x" );
-        append(radios[i], {0u, 0u}, 10);
-        boxes.push_back(&radios[i]);
-    }
-
-    GUIKIT::RadioBox::setGroup( boxes );
-    setAlignment(0.5);
-}
-
-VideoPassLayout::Settings::Data::ScaleY::ScaleY() {
-    append(label, {0u, 0u}, 10);
-    append(control, {0u, 0u});
-
-    setAlignment(0.5);
-}
-
-VideoPassLayout::Settings::Data::Data() {
-    append(fileIdent,{0u, 0u}, 10);
-    append(filter,{0u, 0u}, 10);
-    append(wrap,{0u, 0u}, 10);
-    append(bufferType,{0u, 0u}, 10);
-    append(mipmap,{0u, 0u}, 10);
-    append(modulo,{0u, 0u}, 10);
-    append(scaleX,{0u, 0u}, 10);
-    append(scaleY,{0u, 0u});
 }
 
 VideoPassLayout::Settings::Settings() {
-    append(identifier, {0u, 0u}, 20);
-    append(data, {0u, 0u});
+    append(file, {0u, 0u}, 10);
+    append(filter, {0u, 0u}, 10);
+    append(wrap, {0u, 0u}, 10);
+    append(bufferType, {0u, 0u}, 10);
+    append(mipmap, {0u, 0u}, 10);
+    append(modulo, {0u, 0u}, 10);
+    append(scaleX, {0u, 0u}, 10);
+    append(scaleY, {0u, 0u});
 }
 
 VideoPassLayout::Control::Control() {
@@ -263,7 +240,7 @@ VideoPassLayout::VideoPassLayout() {
     append(settings,{0u, 0u}, 20);
     append(control,{0u, 0u}, 20);
     append(generated,{~0u, 0u}, 5);
-    append(errorMessage, {~0u, 70u});
+    append(errorMessage, {~0u, ~0u});
     setPadding(8);
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -814,44 +791,44 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layShader.main.info.clearCache.onActivate = [this]() {
-        std::string shaderFolder = program->shaderFolder();
-        if (shaderFolder == SHADER_FOLDER)
+        std::string cacheFolder = GUIKIT::System::getUserDataFolder(program->appFolder());
+        if (cacheFolder == "./")
             return;
 
-        GUIKIT::File::removeDirectory( shaderFolder + "cache" );
+        GUIKIT::File::removeDirectory( cacheFolder + "cache" );
     };
 
-    layPass.settings.data.filter.nearest.onActivate = [this]() {
+    layPass.settings.filter.nearest.onActivate = [this]() {
         emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_NEAREST);
         emuThread->unlock();
         clearShaderError();
     };
 
-    layPass.settings.data.filter.linear.onActivate = [this]() {
+    layPass.settings.filter.linear.onActivate = [this]() {
         emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_LINEAR);
         emuThread->unlock();
         clearShaderError();
     };
 
-    layPass.settings.data.filter.unspec.onActivate = [this]() {
+    layPass.settings.filter.unspec.onActivate = [this]() {
         emuThread->lock();
         vManager()->setPassFilter(selectedPassId, ShaderPreset::FILTER_UNSPEC);
         emuThread->unlock();
         clearShaderError();
     };
 
-    layPass.settings.data.mipmap.onToggle = [this](bool checked) {
+    layPass.settings.mipmap.checkBox.onToggle = [this](bool checked) {
         emuThread->lock();
         vManager()->setPassMipmap(selectedPassId, checked);
         emuThread->unlock();
         clearShaderError();
     };
 
-    for(int i = 0; i < 5; i++) {
-        auto& radioX = layPass.settings.data.scaleX.control.radios[i];
-        auto& radioY = layPass.settings.data.scaleY.control.radios[i];
+    for(int i = 0; i < SCALE_BOXES; i++) {
+        auto& radioX = layPass.settings.scaleX.radios[i];
+        auto& radioY = layPass.settings.scaleY.radios[i];
 
         radioX.onActivate = [this, i]() {
             emuThread->lock();
@@ -1059,36 +1036,36 @@ auto VideoLayout::buildParams(TviParam& tviParam) -> void {
 }
 
 auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> void {
-    layPass.settings.data.fileIdent.setText( GUIKIT::String::getFileName( pass.src ) );
+    layPass.settings.file.value.setText( GUIKIT::String::getFileName( pass.src ) );
     layPass.control.disable.setText( trans->getA(pass.inUse ? "disable" : "enable") );
-    layPass.control.synchronizeLayout();
+   // layPass.control.synchronizeLayout();
 
     switch(pass.filter) {
         default:
-        case ShaderPreset::FILTER_UNSPEC: layPass.settings.data.filter.unspec.setChecked(); break;
-        case ShaderPreset::FILTER_LINEAR: layPass.settings.data.filter.linear.setChecked(); break;
-        case ShaderPreset::FILTER_NEAREST: layPass.settings.data.filter.nearest.setChecked(); break;
+        case ShaderPreset::FILTER_UNSPEC: layPass.settings.filter.unspec.setChecked(); break;
+        case ShaderPreset::FILTER_LINEAR: layPass.settings.filter.linear.setChecked(); break;
+        case ShaderPreset::FILTER_NEAREST: layPass.settings.filter.nearest.setChecked(); break;
     }
 
     switch(pass.wrap) {
         default:
-        case ShaderPreset::WRAP_EDGE: layPass.settings.data.wrap.setText("edge"); break;
-        case ShaderPreset::WRAP_BORDER: layPass.settings.data.wrap.setText("border"); break;
-        case ShaderPreset::WRAP_REPEAT: layPass.settings.data.wrap.setText("repeat"); break;
-        case ShaderPreset::WRAP_MIRRORED_REPEAT: layPass.settings.data.wrap.setText("mirror"); break;
+        case ShaderPreset::WRAP_EDGE: layPass.settings.wrap.value.setText("edge"); break;
+        case ShaderPreset::WRAP_BORDER: layPass.settings.wrap.value.setText("border"); break;
+        case ShaderPreset::WRAP_REPEAT: layPass.settings.wrap.value.setText("repeat"); break;
+        case ShaderPreset::WRAP_MIRRORED_REPEAT: layPass.settings.wrap.value.setText("mirror"); break;
     }
 
-    layPass.settings.data.bufferType.setText( vManager()->translateShaderBufferType(pass.bufferType) );
-    layPass.settings.data.mipmap.setChecked(pass.mipmap);
-    layPass.settings.data.modulo.setText( std::to_string( pass.frameModulo ));
+    layPass.settings.bufferType.value.setText( vManager()->translateShaderBufferType(pass.bufferType) );
+    layPass.settings.mipmap.checkBox.setChecked(pass.mipmap);
+    layPass.settings.modulo.value.setText( std::to_string( pass.frameModulo ));
 
     std::string scaleX = "";
     std::string scaleY = "";
 
     GUIKIT::RadioBox* useRadioX = nullptr;
     if (pass.scaleTypeX != ShaderPreset::SCALE_ABSOLUTE) {
-        for (int i = 0; i < 5; i++) {
-            auto& radio = layPass.settings.data.scaleX.control.radios[i];
+        for (int i = 0; i < SCALE_BOXES; i++) {
+            auto& radio = layPass.settings.scaleX.radios[i];
             if (pass.scaleX == float(i+1)) {
                 useRadioX = &radio;
                 break;
@@ -1110,8 +1087,8 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
 
     GUIKIT::RadioBox* useRadioY = nullptr;
     if (pass.scaleTypeY != ShaderPreset::SCALE_ABSOLUTE) {
-        for (int i = 0; i < 5; i++) {
-            auto& radio = layPass.settings.data.scaleY.control.radios[i];
+        for (int i = 0; i < SCALE_BOXES; i++) {
+            auto& radio = layPass.settings.scaleY.radios[i];
             if (pass.scaleY == float(i+1)) {
                 useRadioY = &radio;
                 break;
@@ -1131,10 +1108,10 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
         }
     }
 
-    layPass.settings.data.scaleX.label.setText( scaleX );
-    layPass.settings.data.scaleY.label.setText( scaleY );
-    layPass.settings.data.scaleX.synchronizeLayout();
-    layPass.settings.data.scaleY.synchronizeLayout();
+    layPass.settings.scaleX.value.setText( scaleX );
+    layPass.settings.scaleY.value.setText( scaleY );
+   // layPass.settings.scaleX.synchronizeLayout();
+   // layPass.settings.scaleY.synchronizeLayout();
 
     if (!pass.error.empty()) {
         std::string _error = pass.error;
@@ -1142,17 +1119,27 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
         layPass.errorMessage.setText(_error);
     } else {
         layPass.errorMessage.setText("");
-        layPass.generated.errorLabel.setForegroundColor(0);
+        layPass.generated.errorLabel.resetForegroundColor();
     }
 
     layPass.settings.setEnabled(pass.inUse);
 
     if (pass.inUse) {
-        layPass.settings.data.scaleX.control.setEnabled(useRadioX != nullptr);
-        layPass.settings.data.scaleY.control.setEnabled(useRadioY != nullptr);
+        layPass.settings.scaleX.setEnabled(useRadioX != nullptr);
+        layPass.settings.scaleY.setEnabled(useRadioY != nullptr);
+        layPass.settings.scaleX.ident.setEnabled();
+        layPass.settings.scaleY.ident.setEnabled();
+        layPass.settings.scaleX.value.setEnabled();
+        layPass.settings.scaleY.value.setEnabled();
     }
 
     updateMoveImg();
+
+    GUIKIT::HorizontalLayout::alignChildrenVertically({&layPass.settings.file,&layPass.settings.filter,&layPass.settings.wrap,
+                                                       &layPass.settings.bufferType,&layPass.settings.mipmap,&layPass.settings.modulo,
+                                                       &layPass.settings.scaleX,&layPass.settings.scaleY}, 0, 20);
+
+  //  layPass.synchronizeLayout();
 }
 
 auto VideoLayout::updateMoveImg() -> void {
@@ -1367,14 +1354,14 @@ auto VideoLayout::translate() -> void {
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
 
-    layPass.settings.identifier.fileIdent.setText( trans->getA("file", true) );
-    layPass.settings.identifier.filter.setText( trans->getA("filter", true) );
-    layPass.settings.identifier.wrap.setText( trans->getA("Wrap", true) );
-    layPass.settings.identifier.bufferType.setText( trans->getA("buffer format", true) );
-    layPass.settings.identifier.mipmap.setText( trans->getA("Mipmap", true) );
-    layPass.settings.identifier.modulo.setText( trans->getA("Modulo", true) );
-    layPass.settings.identifier.scaleX.setText( trans->getA("Scaling X", true) );
-    layPass.settings.identifier.scaleY.setText( trans->getA("Scaling Y", true) );
+    layPass.settings.file.ident.setText( trans->getA("file", true) );
+    layPass.settings.filter.ident.setText( trans->getA("filter", true) );
+    layPass.settings.wrap.ident.setText( trans->getA("Wrap", true) );
+    layPass.settings.bufferType.ident.setText( trans->getA("buffer format", true) );
+    layPass.settings.mipmap.ident.setText( trans->getA("Mipmap", true) );
+    layPass.settings.modulo.ident.setText( trans->getA("Modulo", true) );
+    layPass.settings.scaleX.ident.setText( trans->getA("Scaling X", true) );
+    layPass.settings.scaleY.ident.setText( trans->getA("Scaling Y", true) );
 
     layParam.control.previous.setText( trans->getA("previous") );
     layParam.control.next.setText( trans->getA("next") );
@@ -1387,9 +1374,9 @@ auto VideoLayout::translate() -> void {
     layPass.setText( trans->getA("Pass") );
     layParam.setText( trans->getA("Parameter") );
 
-    layPass.settings.data.filter.nearest.setText( trans->getA("nearest") );
-    layPass.settings.data.filter.linear.setText( trans->getA("linear") );
-    layPass.settings.data.filter.unspec.setText( trans->getA("unspecified") );
+    layPass.settings.filter.nearest.setText( trans->getA("nearest") );
+    layPass.settings.filter.linear.setText( trans->getA("linear") );
+    layPass.settings.filter.unspec.setText( trans->getA("unspecified") );
 
     layPass.generated.errorLabel.setText( trans->getA("error output", true) );
     layPass.generated.vertex.setText( trans->getA("native Vertex code") );
@@ -1473,7 +1460,7 @@ auto VideoLayout::showErrors(const std::vector<std::string>& errors) -> void {
 
     if (errSize) {
         auto label = new GUIKIT::Label;
-        label->setText( trans->getA("error output", true) );
+        label->setText( trans->getA("corrupted files", true) );
         label->setForegroundColor(0xff4500);
         label->setFont(GUIKIT::Font::system("bold"));
         layShader.main.errorLabels.push_back(label);
