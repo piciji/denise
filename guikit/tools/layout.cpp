@@ -13,6 +13,8 @@ auto Layout::resetSynchronisation() -> void {
 }
 
 auto Layout::synchronizeLayout() -> void {
+    if (!visible())
+        return;
     resetSynchronisation();
     setGeometry( state.geometry );
 }
@@ -768,7 +770,7 @@ auto Layout::getAllChildWidgets() -> std::vector<Widget*> {
     return widgets;
 }
 
-auto HorizontalLayout::alignChildrenVertically( std::vector<HorizontalLayout*> layouts ) -> void {
+auto HorizontalLayout::alignChildrenVertically( std::vector<HorizontalLayout*> layouts, unsigned stopAtChild, unsigned margin ) -> void {
     
     std::vector<unsigned> neededWidths;
     
@@ -780,8 +782,9 @@ auto HorizontalLayout::alignChildrenVertically( std::vector<HorizontalLayout*> l
                 neededWidths.push_back(0);
             
             neededWidths[i] = std::max<unsigned>(neededWidths[i], child.sizable->minimumSize().width);
-            
-            i++;
+
+            if (++i > stopAtChild)
+                break;
         }                
     }
 
@@ -790,8 +793,11 @@ auto HorizontalLayout::alignChildrenVertically( std::vector<HorizontalLayout*> l
         unsigned i = 0;
         
         for (auto& child : layout->children) {
-            child.size.width = neededWidths[i];
-            i++;
+
+            child.size.width = neededWidths[i] + margin;
+
+            if (++i > stopAtChild)
+                break;
         }
     }
 }

@@ -27,10 +27,12 @@ auto pListView::remove(unsigned selection) -> void {
 }
 
 auto pListView::reset() -> void {
+    locked = true;
     gtk_list_store_clear(GTK_LIST_STORE(store));
     gtk_tree_view_set_model(GTK_TREE_VIEW(subWidget), GTK_TREE_MODEL(store));
     gtk_scrolled_window_set_hadjustment(GTK_SCROLLED_WINDOW(gtkWidget), 0);
     gtk_scrolled_window_set_vadjustment(GTK_SCROLLED_WINDOW(gtkWidget), 0);
+    locked = false;
 }
 
 auto pListView::setHeaderText(std::vector<std::string> list) -> void { 
@@ -236,7 +238,7 @@ auto pListView::onChange(GtkTreeView* treeView, ListView* self) -> void {
     if(!self->state.selected || self->state.selection != selection) {
         self->state.selected = true;
         self->state.selection = selection;
-        if(self->onChange) self->onChange();
+        if(self->onChange && !self->p.locked) self->onChange();
     }
 }
 

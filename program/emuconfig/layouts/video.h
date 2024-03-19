@@ -1,5 +1,6 @@
 
 #define PARAMS_PER_PAGE 13
+#define SCALE_BOXES 5
 
 struct VideoBaseLayout : GUIKIT::VerticalLayout {
 
@@ -107,62 +108,44 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
 
 struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
 
-    struct Settings : GUIKIT::HorizontalLayout {
-        struct Identifier : GUIKIT::VerticalLayout {
-            GUIKIT::Label fileIdent;
-            GUIKIT::Label filter;
-            GUIKIT::Label wrap;
-            GUIKIT::Label bufferType;
-            GUIKIT::Label mipmap;
-            GUIKIT::Label modulo;
-            GUIKIT::Label scaleX;
-            GUIKIT::Label scaleY;
+    struct Settings : GUIKIT::VerticalLayout {
+        struct Line : GUIKIT::HorizontalLayout {
+            GUIKIT::Label ident;
+            GUIKIT::Label value;
 
-            Identifier();
-        } identifier;
+            Line();
+        };
 
-        struct Data : GUIKIT::VerticalLayout {
-            GUIKIT::Label fileIdent;
+        Line file;
 
-            struct Filter : GUIKIT::HorizontalLayout {
-                GUIKIT::RadioBox unspec;
-                GUIKIT::RadioBox linear;
-                GUIKIT::RadioBox nearest;
+        struct FilterLine : GUIKIT::HorizontalLayout {
+            GUIKIT::Label ident;
+            GUIKIT::RadioBox unspec;
+            GUIKIT::RadioBox linear;
+            GUIKIT::RadioBox nearest;
 
-                Filter();
-            } filter;
+            FilterLine();
+        } filter;
 
-            GUIKIT::Label wrap;
-            GUIKIT::Label bufferType;
-            GUIKIT::CheckBox mipmap;
-            GUIKIT::Label modulo;
+        Line wrap;
+        Line bufferType;
 
-            struct ScaleX : GUIKIT::HorizontalLayout {
-                GUIKIT::Label label;
+        struct MipmapLine : GUIKIT::HorizontalLayout {
+            GUIKIT::Label ident;
+            GUIKIT::CheckBox checkBox;
 
-                struct Control : GUIKIT::HorizontalLayout {
-                    GUIKIT::RadioBox radios[5];
+            MipmapLine();
+        } mipmap;
 
-                    Control();
-                } control;
+        Line modulo;
 
-                ScaleX();
-            } scaleX;
+        struct ScaleLine : GUIKIT::HorizontalLayout {
+            GUIKIT::Label ident;
+            GUIKIT::Label value;
+            GUIKIT::RadioBox radios[SCALE_BOXES];
 
-            struct ScaleY : GUIKIT::HorizontalLayout {
-                GUIKIT::Label label;
-
-                struct Control : GUIKIT::HorizontalLayout {
-                    GUIKIT::RadioBox radios[5];
-
-                    Control();
-                } control;
-
-                ScaleY();
-            } scaleY;
-
-            Data();
-        } data;
+            ScaleLine();
+        } scaleX, scaleY;
 
         Settings();
     } settings;

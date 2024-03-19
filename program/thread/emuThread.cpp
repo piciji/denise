@@ -94,6 +94,11 @@ auto EmuThread::initWorker() -> void {
 
             if (kill) {
                 videoDriver->freeContext();
+#if defined(_WIN32) || defined(__APPLE__)
+#else
+                // linux hack to prevent slowdown when killing thread
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+#endif
                 kill = false;
                 return;
             }

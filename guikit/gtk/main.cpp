@@ -64,6 +64,7 @@ auto pApplication::initialize() -> void {
     XInitThreads();
     gdk_set_allowed_backends("x11");
     gtk_init(nullptr, nullptr);
+    setlocale(LC_NUMERIC, "C");
 
 // don't apply global CSS because of micro stutter
 //    #include "css.cpp"

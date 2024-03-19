@@ -959,7 +959,7 @@ protected:
 
 struct HorizontalLayout : Layout {
     auto minimumSize() -> Size;
-    static auto alignChildrenVertically( std::vector<HorizontalLayout*> layouts ) -> void;
+    static auto alignChildrenVertically( std::vector<HorizontalLayout*> layouts, unsigned stopAtChild = ~0, unsigned margin = 0 ) -> void;
 protected:
     auto setGeometry(Geometry geometry) -> void;
 };
