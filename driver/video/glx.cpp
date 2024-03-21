@@ -59,8 +59,6 @@ struct GLX : public Video, GL3, RenderThread {
     }
 
     struct {
-        signed version_major = 0;
-        signed version_minor = 0;
         bool doubleBuffer = false;
         bool isDirect = false;
     } glx;
@@ -80,9 +78,12 @@ struct GLX : public Video, GL3, RenderThread {
 
 		screen = DefaultScreen(display);
 
-        glXQueryVersion(display, &glx.version_major, &glx.version_minor);
+        glXQueryVersion(display, &version.major, &version.minor);
+        glGetIntegerv(GL_MAJOR_VERSION, &version.major);
+        glGetIntegerv(GL_MINOR_VERSION, &version.minor);
+        version.glsl = glGetString( GL_SHADING_LANGUAGE_VERSION );
         //require GLX 1.3+ API
-        if(glx.version_major < 1 || (glx.version_major == 1 && glx.version_minor < 3))
+        if(version.major < 1 || (version.major == 1 && version.minor < 3))
             return false;
 
         XWindowAttributes window_attributes;
@@ -134,10 +135,6 @@ struct GLX : public Video, GL3, RenderThread {
             glXSwapInterval = (int (*)(int))glGetProcAddress("glXSwapIntervalMESA");
             if(!glXSwapInterval) glXSwapInterval = (int (*)(int))glGetProcAddress("glXSwapIntervalSGI");
         }
-
-        glGetIntegerv(GL_MAJOR_VERSION, &version.major);
-        glGetIntegerv(GL_MINOR_VERSION, &version.minor);
-        version.glsl = glGetString( GL_SHADING_LANGUAGE_VERSION );
 
         glXMakeCurrent(display, 0, nullptr);
         glXDestroyContext(display, glxcontext);

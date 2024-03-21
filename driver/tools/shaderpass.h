@@ -75,6 +75,7 @@ struct ShaderPreset {
         float minimum;
         float maximum;
         float initial;
+        float initialOverridden;
         float step;
         std::string id;
         std::string desc;

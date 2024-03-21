@@ -731,7 +731,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
                 if (offset < preset->params.size()) {
                     ShaderPreset::Param& param = preset->params[offset];
-                    val = param.initial;
+                    val = param.initialOverridden;
                     vManager()->updateData(offset, val);
                 }
             }
@@ -1038,7 +1038,6 @@ auto VideoLayout::buildParams(TviParam& tviParam) -> void {
 auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> void {
     layPass.settings.file.value.setText( GUIKIT::String::getFileName( pass.src ) );
     layPass.control.disable.setText( trans->getA(pass.inUse ? "disable" : "enable") );
-   // layPass.control.synchronizeLayout();
 
     switch(pass.filter) {
         default:
@@ -1110,8 +1109,6 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
 
     layPass.settings.scaleX.value.setText( scaleX );
     layPass.settings.scaleY.value.setText( scaleY );
-   // layPass.settings.scaleX.synchronizeLayout();
-   // layPass.settings.scaleY.synchronizeLayout();
 
     if (!pass.error.empty()) {
         std::string _error = pass.error;
@@ -1139,7 +1136,6 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
                                                        &layPass.settings.bufferType,&layPass.settings.mipmap,&layPass.settings.modulo,
                                                        &layPass.settings.scaleX,&layPass.settings.scaleY}, 0, 20);
 
-  //  layPass.synchronizeLayout();
 }
 
 auto VideoLayout::updateMoveImg() -> void {

@@ -134,5 +134,5 @@ extern uint8_t pageUpGray[286];
 
 extern uint8_t error[338];
 
-extern uint8_t retroarch[559];
+extern uint8_t retroarch[843];
 }

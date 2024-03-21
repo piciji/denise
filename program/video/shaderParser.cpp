@@ -134,7 +134,7 @@ auto ShaderParser::savePreset(std::string path) -> bool {
     }
 
     for (auto& param : shaderPreset.params) {
-        if (param.initial != param.value) {
+        if ( (simplePreset ? param.initialOverridden : param.initial) != param.value) {
             if (!GUIKIT::String::findString(param.id, "autoEmu_")) {
                 out = param.id + " = " + std::to_string(param.value) + "\n";
                 fputs( out.c_str(), fp );
@@ -190,6 +190,7 @@ auto ShaderParser::addParameter(ShaderPreset::Param& param) -> void {
             _param.desc = param.desc;
             _param.value = param.value;
             _param.initial = param.initial;
+            _param.initialOverridden = param.initialOverridden;
             _param.maximum = param.maximum;
             _param.minimum = param.minimum;
             _param.step = param.step;
@@ -477,7 +478,7 @@ auto ShaderParser::applyOverrides(std::string& path, std::vector<GUIKIT::Setting
             if (!settings->find("shaders")) {
                 for(auto& param : shaderPreset.params) {
                     if (settings->find(param.id))
-                        param.value = settings->get<float>(param.id);
+                        param.initialOverridden = param.value = settings->get<float>(param.id);
                 }
                 for(auto& lut : shaderPreset.luts) {
                     if (settings->find(lut.id))
@@ -780,8 +781,13 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
 
                     char id[64];
                     char desc[64];
+#ifdef _MSC_VER
+                    if ((filled = sscanf_s(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
+                                           id, sizeof(id), desc, sizeof(desc), &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
+#else
                     if ((filled = sscanf(line.c_str(), "#pragma parameter %63s \"%63[^\"]\" %f %f %f %f",
-                                           id, desc, &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
+                                         id, desc, &param.initial, &param.minimum, &param.maximum, &param.step)) < 5)
+#endif
                         goto End;
 
                     param.id = id;
@@ -802,7 +808,7 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
                             goto End;
                     }
 
-                    param.value = rootSettings.get<float>(param.id, param.initial);
+                    param.value = param.initialOverridden = rootSettings.get<float>(param.id, param.initial);
                     addParameter(param);
 
                 } else if (GUIKIT::String::startsWith(line, namePrefix)) {
