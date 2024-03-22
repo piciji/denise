@@ -42,7 +42,7 @@
 #include <variant>
 
 #ifdef __clang__
-#if __clang_major__ < 11
+#if __clang_major__ < 13
 #define CLANG_FALLBACK
 #endif
 #endif
