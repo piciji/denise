@@ -1039,6 +1039,9 @@
     <ClInclude Include="..\driver\video\opengl3\progress.h">
       <Filter>driver\video\opengl3</Filter>
     </ClInclude>
+    <ClInclude Include="..\guikit\tools\file\directory.h">
+      <Filter>guikit\tools\file</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">

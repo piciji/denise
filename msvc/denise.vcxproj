@@ -196,6 +196,7 @@
     <ClInclude Include="..\guikit\tools\decode\zip.h" />
     <ClInclude Include="..\guikit\tools\encode\png.h" />
     <ClInclude Include="..\guikit\tools\file\chunk.h" />
+    <ClInclude Include="..\guikit\tools\file\directory.h" />
     <ClInclude Include="..\guikit\tools\file\tar.h" />
     <ClInclude Include="..\guikit\winapi\dirent.h" />
     <ClInclude Include="..\guikit\winapi\main.h" />
