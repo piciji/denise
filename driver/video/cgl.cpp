@@ -45,6 +45,18 @@ struct CGL : public Video, GL3, RenderThread {
         return dndOverlay.sendDragnDropOverlayCoordinates(x, y);
     }
 
+    auto setShaderCacheCallback( std::function<void (DiskFile& diskFile)> onCallback ) -> void {
+        onShaderCacheCallback = onCallback;
+    }
+    
+    auto setShaderProgressCallback( std::function<void (int pass, bool hasErrors)> onCallback ) -> void {
+        onShaderProgressCallback = onCallback;
+    }
+    
+    auto useShaderCache(bool state) -> void {
+        settings.useShaderCache = state;
+    }
+    
     bool init() {
         term();
         bool res;
@@ -63,7 +75,7 @@ struct CGL : public Video, GL3, RenderThread {
             auto size = [handle frame].size;
             format = [[[NSOpenGLPixelFormat alloc] initWithAttributes:attributes] autorelease];
             //auto context = [[[NSOpenGLContext alloc] initWithFormat:format shareContext:nil] autorelease];
-            cglContext = getContext(false);
+            cglContext = (NSOpenGLContext*)getContext(false);
 
             view = [[VideoCGL alloc] initWith:this pixelFormat:format];
             [view setOpenGLContext:cglContext];
@@ -77,7 +89,7 @@ struct CGL : public Video, GL3, RenderThread {
 
             [[view openGLContext] makeCurrentContext];
             
-            res = OpenGL::init();
+            res = GL3::init();
 
             glGetIntegerv(GL_MAJOR_VERSION, &version.major);
             glGetIntegerv(GL_MINOR_VERSION, &version.minor);
@@ -137,7 +149,7 @@ struct CGL : public Video, GL3, RenderThread {
 
     void term() {
         wait();
-        OpenGL::term();
+        GL3::term();
 
         @autoreleasepool {
             [view removeFromSuperview];
@@ -224,7 +236,7 @@ struct CGL : public Video, GL3, RenderThread {
         @autoreleasepool {
             makeCurrent();
             [view lockFocus];
-            OpenGL::clear();
+            GL3::clear();
             [[view openGLContext] flushBuffer];
             [view unlockFocus];
             clearCurrent();
@@ -365,7 +377,7 @@ struct CGL : public Video, GL3, RenderThread {
         @autoreleasepool {
             makeCurrent();
             if ([view lockFocusIfCanDraw]) {
-                OpenGL::clear();
+                GL3::clear();
 
                 options = 0;
                 RenderBuffer* renderBuffer = getBufferToRender();
@@ -457,7 +469,7 @@ struct CGL : public Video, GL3, RenderThread {
 
     auto hasThreaded() -> bool { return settings.threaded; }
 
-    auto setShader(std::vector<ShaderPass*> passes) -> void {
+    auto setShader(ShaderPreset* preset) -> void {
         wait();
         resizeMutex.lock();
         makeCurrent();
@@ -630,7 +642,7 @@ struct CGL : public Video, GL3, RenderThread {
     return;
 
     video->makeCurrent();
-    video->_redraw(video->options & OPT_DisallowShader, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
+    video->_redraw(video->options & DRIVER::OPT_DisallowShader, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
     video->clearCurrent();
 }
 

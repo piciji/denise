@@ -1,6 +1,7 @@
 
 #ifdef __APPLE__
     #include <OpenGL/gl3.h>
+    #include <OpenGL/gl3ext.h>
 #elif _WIN32
     #include <GL/gl.h>
     #include <GL/glext.h>
@@ -47,8 +48,8 @@ namespace DRIVER {
 
 struct GL3 {
     ShaderPreset* preset;
-    std::atomic<bool> shaderReady = false;
-    std::atomic<int> shaderId = 0;
+    std::atomic<bool> shaderReady;
+    std::atomic<int> shaderId;
     std::function<void (int pass, bool hasErrors)> onShaderProgressCallback = nullptr;
     std::function<void (DiskFile& diskFile)> onShaderCacheCallback = nullptr;
 
@@ -120,6 +121,8 @@ struct GL3 {
         updateRTS = false;
         updateHistory = false;
         frameCount = 0;
+        shaderReady = false;
+        shaderId = 0;
 
         settings.synchronize = false;
         settings.hardSync = false;

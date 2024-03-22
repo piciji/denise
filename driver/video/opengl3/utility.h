@@ -201,7 +201,7 @@ struct GLUtility {
         }
     }
 
-    static auto createProgram(GLuint vertex, GLuint fragment, std::string& error, bool noValidation = false) -> GLuint {
+    static auto createProgram(GLuint vertex, GLuint fragment, std::string& error, bool noValidation = true) -> GLuint {
         sharedMutex.lock();
         GLuint program = glCreateProgram();
         glAttachShader(program, vertex);

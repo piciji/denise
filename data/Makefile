@@ -46,8 +46,8 @@ ifneq ($(Arch),)
 endif
 
 ifeq ($(platform),macosx)
-    cppflags := $(architecture) -x c++ -std=c++14 -MD
-    objcppflags := $(architecture) -x objective-c++ -std=c++14 -MD
+    cppflags := $(architecture) -x c++ -std=c++17 -MD
+    objcppflags := $(architecture) -x objective-c++ -std=c++17 -MD
 else	
     cppflags := $(architecture) -x c++ -std=c++17 -MD
 endif

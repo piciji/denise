@@ -55,7 +55,7 @@
     
     NSRect textRect = NSMakeRect(
         frame.origin.x + textDisplacement, frame.origin.y,
-        frame.size.width - textDisplacement, frame.size.height);
+        frame.size.width + textDisplacement, frame.size.height);
     
     NSColor* textColor = [self isHighlighted] ? [NSColor alternateSelectedControlTextColor] : [NSColor textColor];
     
@@ -330,6 +330,7 @@ namespace GUIKIT {
     auto pTreeViewItem::setImage(Image& image) -> void {
         @autoreleasepool {
             usensimage = nsimage = NSMakeImage(image);
+            if (parentTreeView()) [[parentTreeView()->p.cocoaView content] reloadItem:wrapper];
         }
     }
     
@@ -388,7 +389,7 @@ namespace GUIKIT {
     }
     
     auto pTreeView::reset() -> void {
-        for(auto item : treeViewItem.state.items) {
+        for(auto item : treeView.state.items) {
             item->p.invalidateParent();
         }
         treeView.state.items.clear();

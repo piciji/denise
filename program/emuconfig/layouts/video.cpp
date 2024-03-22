@@ -1355,6 +1355,7 @@ auto VideoLayout::translate() -> void {
     layPass.settings.wrap.ident.setText( trans->getA("Wrap", true) );
     layPass.settings.bufferType.ident.setText( trans->getA("buffer format", true) );
     layPass.settings.mipmap.ident.setText( trans->getA("Mipmap", true) );
+    layPass.settings.mipmap.checkBox.setText( trans->getA("enabled") );
     layPass.settings.modulo.ident.setText( trans->getA("Modulo", true) );
     layPass.settings.scaleX.ident.setText( trans->getA("Scaling X", true) );
     layPass.settings.scaleY.ident.setText( trans->getA("Scaling Y", true) );

@@ -391,16 +391,13 @@ auto File::del( ) -> bool {
 }
 
 auto File::removeDirectory(const std::string& _folder) -> void {
-#ifdef canCPP17
-    namespace fs = std::filesystem;
-#else
-    namespace fs = std::experimental::filesystem;
-#endif
-    const std::filesystem::path _path = std::filesystem::u8path(_folder);
+    //namespace fs = std::filesystem;
 
-    if (fs::is_directory(_path)) {
-        fs::remove_all(_path);
-    }
+    //const std::filesystem::path _path = std::filesystem::u8path(_folder);
+
+    //if (fs::is_directory(_path)) {
+      //  fs::remove_all(_path);
+   // }
 }
 
 //static

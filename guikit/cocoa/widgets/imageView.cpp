@@ -16,10 +16,15 @@
 
 -(void) mouseButton:(NSEvent*)event down:(BOOL)isDown {
     
-    if(isDown && !imageView->state.uri.empty()) {
+    if(isDown) {
         switch([event buttonNumber]) {
             case 0:
-                [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString: [NSString stringWithUTF8String:imageView->state.uri.c_str()]]];
+                if(imageView->onClick)
+                    imageView->onClick();
+                    
+                if (!imageView->state.uri.empty()) {
+                    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString: [NSString stringWithUTF8String:imageView->state.uri.c_str()]]];
+                }
                 break;
         }
     }

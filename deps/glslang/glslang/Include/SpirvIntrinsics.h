@@ -41,6 +41,12 @@
 #include "Common.h"
 #include <variant>
 
+#ifdef __clang__
+#if __clang_major__ < 11
+#define CLANG_FALLBACK
+#endif
+#endif
+
 namespace glslang {
 
 class TIntermTyped;
@@ -103,13 +109,23 @@ struct TSpirvTypeParameter {
     const TIntermConstantUnion* getAsConstant() const
     {
         if (value.index() == 0)
+        #ifdef CLANG_FALLBACK
+            if (auto p = std::get_if<const TIntermConstantUnion*>(&value))
+                return *p;
+        #else
             return std::get<const TIntermConstantUnion*>(value);
+        #endif
         return nullptr;
     }
     const TType* getAsType() const
     {
         if (value.index() == 1)
+        #ifdef CLANG_FALLBACK
+            if(auto p = std::get_if<const TType*>(&value))
+                return *p;
+        #else
             return std::get<const TType*>(value);
+        #endif
         return nullptr;
     }
 
