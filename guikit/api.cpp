@@ -1,14 +1,6 @@
 
 #include <cstring>
 
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
-#define canCPP17
-#endif
-
-//#ifdef canCPP17
-//    #include <filesystem>
-//#endif
-
 #ifdef _MSC_VER
 #include <io.h>
 #include "winapi/dirent.h"

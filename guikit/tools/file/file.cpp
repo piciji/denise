@@ -391,16 +391,6 @@ auto File::del( ) -> bool {
     return result == 0;
 }
 
-//auto File::removeDirectory(const std::string& _folder) -> void {
-    //namespace fs = std::filesystem;
-
-    //const std::filesystem::path _path = std::filesystem::u8path(_folder);
-
-    //if (fs::is_directory(_path)) {
-      //  fs::remove_all(_path);
-   // }
-//}
-
 //static
 auto File::getPath( std::string _fn, bool returnSlashIfError ) -> std::string {
        

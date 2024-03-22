@@ -56,7 +56,7 @@ auto File::removeDirectory( const std::string& path ) -> void {
 
 #ifdef GUIKIT_WINAPI
     _wclosedir( dir );
-    _wunlink( utf16_t( path ) );
+    RemoveDirectoryW( utf16_t( path ) );
 #else
     closedir( dir );
     remove( path.c_str() );
