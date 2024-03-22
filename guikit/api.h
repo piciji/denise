@@ -1371,7 +1371,7 @@ struct File {
     static auto resolveRelativePath(std::string _fn, std::string relPath ) -> std::string;
     static auto buildRelativePath(std::string refPath, std::string targetPath) -> std::string;
     static auto isAbsolute(const std::string& path) -> bool;
-    static auto removeDirectory(const std::string& _folder) -> void;
+    static auto removeDirectory( const std::string& path ) -> void;
 
     auto setFile(std::string filePath) -> void;
     auto getFile() const -> std::string { return filePath; }
