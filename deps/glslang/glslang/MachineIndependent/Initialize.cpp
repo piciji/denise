@@ -55,12 +55,6 @@
 #include "Initialize.h"
 #include "span.h"
 
-#ifdef __clang__
-#if __clang_major__ < 11
-#define CLANG_FALLBACK
-#endif
-#endif
-
 namespace glslang {
 
 // TODO: ARB_Compatability: do full extension support
@@ -147,7 +141,7 @@ struct Versioning {
 EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECompatibilityProfile);
 
 // Declare pointers to put into the table for versioning.
-    #ifdef CLANG_FALLBACK
+    #ifdef MACOSX_DEPLOYMENT_TARGET109
     const std::array<Versioning, 2> Es300Desktop130Version =
     #else
     const std::array Es300Desktop130Version =
@@ -155,7 +149,7 @@ EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECo
     { Versioning{ EEsProfile,      0, 300, 0, nullptr },
                                                 Versioning{ EDesktopProfile, 0, 130, 0, nullptr },
                                               };
-    #ifdef CLANG_FALLBACK
+    #ifdef MACOSX_DEPLOYMENT_TARGET109
     const std::array<Versioning, 2> Es310Desktop400Version =
     #else
     const std::array Es310Desktop400Version =
@@ -164,7 +158,7 @@ EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECo
                                                 Versioning{ EDesktopProfile, 0, 400, 0, nullptr },
                                               };
 
-    #ifdef CLANG_FALLBACK
+    #ifdef MACOSX_DEPLOYMENT_TARGET109
     const std::array<Versioning, 2> Es310Desktop450Version =
     #else
     const std::array Es310Desktop450Version =
@@ -193,7 +187,7 @@ struct BuiltInFunction {
 //
 // Table is terminated by an OpNull TOperator.
 
-#ifdef CLANG_FALLBACK
+#ifdef MACOSX_DEPLOYMENT_TARGET109
 const std::array<BuiltInFunction,79> BaseFunctions = {
 #else
 const std::array BaseFunctions = {
@@ -281,7 +275,7 @@ const std::array BaseFunctions = {
     BuiltInFunction{ EOpMix,              "mix",              3,   TypeIU,    ClassLB,      {Es310Desktop450Version} },
 };
 
-#ifdef CLANG_FALLBACK
+#ifdef MACOSX_DEPLOYMENT_TARGET109
 const std::array<BuiltInFunction, 3> DerivativeFunctions = {
 #else
 const std::array DerivativeFunctions = {

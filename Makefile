@@ -63,8 +63,10 @@ else ifeq ($(platform),macosx)
     nativeArch := $(shell uname -a)
     ifneq ($(findstring arm64,$(nativeArch)),)
         export MACOSX_DEPLOYMENT_TARGET=11
+        flags += -DMACOSX_DEPLOYMENT_TARGET11
     else
         export MACOSX_DEPLOYMENT_TARGET=10.9
+        flags += -DMACOSX_DEPLOYMENT_TARGET109
     endif
 else ifeq ($(platform),BSD)
     link += -static-libgcc -static-libstdc++ -lpthread -no-pie
