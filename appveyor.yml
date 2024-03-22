@@ -201,7 +201,6 @@ for:
   install:      
     - sh: test -e freetype-2.13.0.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.0.tar.gz --output freetype-2.13.0.tar.gz
     - tar -zxf freetype-2.13.0.tar.gz
-    - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
     - sh: test -e sshpass-1.08.tar.gz && echo "File exists" || curl -L https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz --output sshpass-1.08.tar.gz
     - tar -zxf sshpass-1.08.tar.gz
@@ -256,7 +255,6 @@ for:
   install:
     - sh: test -e freetype-2.13.0.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.0.tar.gz --output freetype-2.13.0.tar.gz
     - tar -zxf freetype-2.13.0.tar.gz
-    - sh: sudo python -m pip install biplist
     - sh: sudo pip install dmgbuild
     - sh: test -e sshpass-1.08.tar.gz && echo "File exists" || curl -L https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz --output sshpass-1.08.tar.gz
     - tar -zxf sshpass-1.08.tar.gz
