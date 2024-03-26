@@ -43,12 +43,12 @@ auto Keyboard::processEvent() -> void {
                 addEvent(KBD_Wait_For_Timeout, agnus.msecToDMACycles(143) );
             else
                 // put next bit onto SP line
-                addEvent(KBD_Transfer1, agnus.usecToDMACycles(20));
+                addEvent(KBD_Transfer1, agnus.usecToDMACycles(10));
             break;
 
         case KBD_Transfer1:
             cia.setCNTAndSP(false);
-            addEvent(KBD_Transfer2, agnus.usecToDMACycles(20));
+            addEvent(KBD_Transfer2, agnus.usecToDMACycles(10));
             break;
 
         case KBD_Transfer2:
@@ -56,7 +56,7 @@ auto Keyboard::processEvent() -> void {
             cia.setCNTAndSP(true, shiftOut & 0x80);
             shiftOut <<= 1;
             shiftPos--;
-            addEvent(KBD_Transfer, agnus.usecToDMACycles(20));
+            addEvent(KBD_Transfer, agnus.usecToDMACycles(10));
             break;
 
         case KBD_Wait_For_Timeout:
@@ -137,13 +137,13 @@ auto Keyboard::sendCode(uint8_t code) -> void {
     shiftPos = 8;
     // press/release Bit is sent last
     shiftOut = ~((code << 1) | (code >> 7)) & 0xff;
-    addEvent(KBD_Transfer, agnus.usecToDMACycles(20));
+    addEvent(KBD_Transfer, agnus.usecToDMACycles(10));
 }
 
 auto Keyboard::resync() -> void {
     shiftPos = 1;
     shiftOut = 0;
-    addEvent(KBD_Transfer1, agnus.usecToDMACycles(20));
+    addEvent(KBD_Transfer1, agnus.usecToDMACycles(10));
 }
 
 auto Keyboard::reset() -> void {
