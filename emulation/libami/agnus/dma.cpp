@@ -147,12 +147,12 @@ template<uint8_t pos, bool addMod> auto Agnus::fetchPlane() -> void {
     busUsage = BUS_USAGE_BPL;
 }
 
-auto Agnus::diskDma(bool writeMode) -> void {
+auto Agnus::diskDma(uint8_t slot, bool writeMode) -> void {
     if (writeMode) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + dskpt));
         paula.setDskDat(dataBus);
     } else {
-        uint16_t value = paula.dskDatR();
+        uint16_t value = paula.dskDatR(slot);
         if (trackMemChanges)
             rememberChipMem(dskpt);
 

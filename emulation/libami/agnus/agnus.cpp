@@ -418,19 +418,19 @@ inline auto Agnus::dmaCycle() -> void {
             break;
         case 0xb:
             if (dmal & 3)
-                diskDma(dmal & 2);
+                diskDma(0, dmal & 2);
             break;
         case 0xc:
             startHblank();
             break;
         case 0xd:
             if (dmal & 0xc)
-                diskDma(dmal & 8);
+                diskDma(1, dmal & 8);
             bplQueue = 0; // hsync start
             break;
         case 0xf:
             if (dmal & 0x30)
-                diskDma(dmal & 0x20);
+                diskDma(2, dmal & 0x20);
             break;
 
         case 0x11:
