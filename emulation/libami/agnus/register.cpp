@@ -47,6 +47,10 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
         case 0x1e:
             return paula.getIntreq();
 
+        case 0x7c:
+            if (system->fakeECSDenise)
+                return 0xfffc;
+            // fallthrough
         default:
             if (!triggeredByWrite) {
                 if constexpr (byteAccess)

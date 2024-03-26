@@ -29,6 +29,7 @@ struct Interface : Emulator::Interface  {
         ModelIdFastMem,
         ModelIdRTC,
         ModelIdSerialLoopback,
+        ModelIdFakeECSDenise,
     };
 
     enum MediaGroupId {

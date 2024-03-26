@@ -50,6 +50,7 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdRTC, "RTC", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdSerialLoopback, "Serial Loopback", Model::Type::Switch, Model::Purpose::Misc, 0});
+    models.push_back({ModelIdFakeECSDenise, "Fake ECS Denise", Model::Type::Switch, Model::Purpose::Misc, 0});
 }
 
 auto Interface::prepareMedia() -> void {
@@ -429,6 +430,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdSerialLoopback:
             system->paula.loopBack = !!value;
             break;
+        case ModelIdFakeECSDenise:
+            system->fakeECSDenise = !!value;
+            break;
     }
 }
 
@@ -449,6 +453,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdFastMem:                        return system->getFastmem();
         case ModelIdRTC:                            return (int)system->useRTC();
         case ModelIdSerialLoopback:                 return (int)system->paula.loopBack;
+        case ModelIdFakeECSDenise:                  return (int)system->fakeECSDenise;
     }
 
     return 0;
