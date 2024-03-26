@@ -821,6 +821,9 @@ auto Drive::updateIdleDeviceState() -> void {
 
     if (structure.autoStarted)
         system->hintObserverMotorChange( false );
+
+    if (system->driveSounds.useFloppy)
+        system->interface->mixDriveSound( this->media, DriveSound::FloppySpinDown );
 }
 
 auto Drive::updateBus() -> void {

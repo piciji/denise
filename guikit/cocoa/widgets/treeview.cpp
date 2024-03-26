@@ -55,7 +55,7 @@
     
     NSRect textRect = NSMakeRect(
         frame.origin.x + textDisplacement, frame.origin.y,
-        frame.size.width + textDisplacement, frame.size.height);
+        frame.size.width + (textDisplacement << 1), frame.size.height);
     
     NSColor* textColor = [self isHighlighted] ? [NSColor alternateSelectedControlTextColor] : [NSColor textColor];
     

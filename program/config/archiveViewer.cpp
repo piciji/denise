@@ -137,7 +137,7 @@ auto ArchiveViewer::setView(std::vector<GUIKIT::File::Item>& items, bool multiSe
     mtimer.onFinished = [this]() {
         mtimer.setEnabled(false);
         setVisible();
-        setFocused();
+        setFocused(100);
     };
     mtimer.setEnabled();
 }

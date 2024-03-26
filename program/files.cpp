@@ -1,6 +1,7 @@
 
 #include "program.h"
 #include "../data/fonts.h"
+#include "tools/chronos.h"
 
 auto Program::showOpenError( std::vector<std::string>& paths, bool warning ) -> void {
     if ( paths.empty() )
@@ -504,14 +505,20 @@ auto Program::addCustomFont() -> void {
 }
 
 auto Program::libraryMissing(std::string plugin) -> void {
+    static unsigned ts = 0;
     if (!initialized)
         return;
 
+    unsigned tsTemp = Chronos::getTimestampInMilliseconds();
+    if (tsTemp - ts < 1000)
+        return;
+
     if (plugin == "CAPS") {
-        static bool informed = false;
-        if (view && !informed) {
+        static int informed = 0;
+        if (view && (informed < 20) ) {
             view->message->error(trans->get("SPS plugin missing"));
-            informed = true;
+            ts = Chronos::getTimestampInMilliseconds();
+            informed++;
         }
     }
 }

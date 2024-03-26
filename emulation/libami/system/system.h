@@ -34,6 +34,7 @@ struct System {
     DiskDrive diskDrives[4];
     bool ntsc;
     bool firmwareChanged;
+    bool fakeECSDenise = false;
 
     Emulator::Crop<uint16_t> crop;
 

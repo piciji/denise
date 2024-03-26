@@ -9,8 +9,8 @@ namespace LIBAMI {
 Emulator::DLLoader DiskStructure::dlLoader;
 
 auto DiskStructure::initIPF() -> bool {
-    if (dlLoader.hasError())
-        return false;
+ //   if (dlLoader.hasError())
+   //     return false;
 
     if (!dlLoader.hasOpened()) {
 

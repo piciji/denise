@@ -276,6 +276,8 @@ namespace Mixer {
                 break;
 
             case DriveSound::FloppySpinDown:
+                if (!device->second)
+                    break;
             case DriveSound::FloppySpinUp:
                 lastStep = Chronos::getTimestampInMilliseconds();
             case DriveSound::FloppySpin:

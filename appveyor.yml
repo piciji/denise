@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
+  - Visual Studio 2019
   - macos-bigsur
   - macos
-  - Visual Studio 2019
   - Ubuntu2004
 
 stack: python 3.8
@@ -19,7 +19,6 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
-    - new_shader
   
 environment:
   matrix:
