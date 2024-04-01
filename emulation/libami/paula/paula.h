@@ -168,7 +168,7 @@ struct Paula {
     auto fast() -> bool const { return adkcon & 0x100; }
     auto useInstantDriveAccess() -> bool { return turbo == 4; }
     auto instantDriveAccess() -> void;
-    template<bool resetTiming = true> auto finishDMA() -> void;
+    auto finishDMA() -> void;
 
     template<uint8_t nr> auto audxDat(uint16_t value) -> void;
     template<uint8_t nr> auto audxLen(uint16_t value) -> void;
@@ -197,13 +197,13 @@ struct Paula {
     auto setDskDat(uint16_t value) -> void;
     auto setDskSync(uint16_t value) -> void;
     auto dskDatR(uint8_t slot) -> uint16_t;
-    auto setFdcEvent() -> void;
     auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE; }
     auto setDskState(DiskState next) -> void;
     auto handleFDControllerIdle() -> void;
     auto diskEvent() -> void;
     auto setActiveDrive(DiskDrive* drive) -> void;
     auto setTurbo(int value) -> void;
+    auto fdcByteMode() -> bool;
 
     auto getFromFifo(uint16_t& data) -> bool;
     auto addToFifo(uint16_t data) -> void;

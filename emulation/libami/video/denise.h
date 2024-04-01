@@ -19,7 +19,7 @@ struct Denise {
     ~Denise();
 
     enum Model : uint8_t { OCS_A1000_NO_EHB = 1, OCS_A1000 = 2, OCS = 4 } model = OCS;
-    enum { PF1_SHIFT = 1, PF2_SHIFT = 2, RESET_HPOS = 4, UPD_COLOR = 8, BPL1_WRITTEN = 0x10, SET_HPOS = 0x20 };
+    enum { PF1_SHIFT = 1, PF2_SHIFT = 2, RESET_HPOS = 4, UPD_COLOR = 8, BPL1_WRITTEN = 0x10 };
 
     System* system;
     Agnus& agnus;
@@ -101,6 +101,7 @@ struct Denise {
     uint16_t hStop;
 
     bool hBlank;
+    bool vBlank;
     bool hiresFrame;
 
     auto strhor() -> void;

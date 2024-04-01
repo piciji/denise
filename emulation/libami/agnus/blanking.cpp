@@ -10,8 +10,10 @@ auto Agnus::startHblank() -> void {
         if (laceFrame & 1)
             lineVCounter--;
 
-        if (lineVCounter < 100) // could happen, if beam position has been changed or uncontrolled register usage
+        if (lineVCounter < 100) {// could happen, if beam position has been changed or uncontrolled register usage
             lineVCounter = 100; // otherwise video driver could crash
+            std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
+        }
 
         int width = denise.hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
         sanitizeCrop(width, lineVCounter);

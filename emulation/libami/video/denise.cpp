@@ -88,6 +88,7 @@ auto Denise::power(bool softReset) -> void {
         pf1PrioIllegal = false;
         pf2PrioIllegal = false;
         hBlank = true;
+        vBlank = true;
         borderFlipFlop = true;
         hiresFrame = false;
     }
@@ -114,6 +115,8 @@ auto Denise::strhor() -> void {
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
         upd.actions |= RESET_HPOS;
+        if (vBlank)
+            vBlank = false;
     }
 }
 
@@ -123,6 +126,8 @@ auto Denise::strvbl() -> void {
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
         upd.actions |= RESET_HPOS;
+        if (!vBlank)
+            vBlank = true;
     }
 }
 
@@ -301,7 +306,7 @@ auto Denise::process(int offset) -> void {
 
     BplUpdate& upd = bplUpdate[cycles];
     if (upd.actions) {
-        // both supported actions are scheduled a cycle later, so it could happen that synchronisation miss this
+        // actions are scheduled a cycle later, so it could happen that synchronization misses this
         bplUpdate[0] = upd;
         upd.actions = 0; // disable for this position
     }
@@ -329,6 +334,7 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
     uint8_t colIndexHam;
     uint8_t cMask1 = pf1PrioIllegal ? 0 : 0xf;
     uint8_t cMask2 = pf2PrioIllegal ? 0 : 0xf;
+    bool _hBlank = hBlank;
 
     Sprite& spr0 = sprites[0];
     Sprite& spr1 = sprites[1];
@@ -453,7 +459,7 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
                 if (!borderFlipFlop) {
                     if (hPos == hStop) {
                         borderFlipFlop = true;
-                        if (!hBlank && !agnus.crop.right)
+                        if (!_hBlank && !agnus.crop.right)
                             agnus.updateCropRight(linePos);
                     }
                 } else {
@@ -615,7 +621,7 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
                                 color = colors[colIndex];
                         }
                     } else
-                        color = hBlank ? 0 : colors[0];
+                        color = _hBlank ? 0 : colors[0];
 
                     *(linePtr + linePos++) = color;
 
@@ -676,7 +682,7 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
 
         if (upd.actions) {
             if (upd.actions & BPL1_WRITTEN) {
-                if (!hBlank) {
+                if (!_hBlank && !vBlank) {
                     dat1 = upd.dat1;
                     dat2 = upd.dat2;
                     dat3 = upd.dat3;
@@ -705,12 +711,12 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
         }
 
         hPos &= 0x1ff;
-        if (hBlank) {
+        if (_hBlank) {
             if (hPos == 84)     // 456 - 2 - 384 (CRT Monitor) = 70 blanking pixel
-                hBlank = false;
+                hBlank = _hBlank = false;
         } else {
             if (hPos == 14) {
-                hBlank = true;
+                hBlank = _hBlank = true;
                 enableDisplay = false;
             }
         }
@@ -772,6 +778,7 @@ auto Denise::serialize(Emulator::Serializer& s) -> void {
     s.integer(hStart);
     s.integer(hStop);
     s.integer(hBlank);
+    s.integer(vBlank);
     s.integer(hiresFrame);
 }
 
