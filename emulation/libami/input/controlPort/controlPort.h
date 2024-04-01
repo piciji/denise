@@ -7,14 +7,17 @@ namespace LIBAMI  {
 
 // interface for all control port connected devices
 
+struct Input;
+
 struct ControlPort {
 
-    ControlPort( Emulator::Interface* interface, Emulator::Interface::Device* device = nullptr );
+    ControlPort( Emulator::Interface* interface, Input& input, Emulator::Interface::Device* device = nullptr );
 
     Emulator::Interface* interface;
+    Input& input;
     Emulator::Interface::Device* device;
 
-    static auto create( Emulator::Interface* interface, Emulator::Interface::Device* device ) -> ControlPort*;
+    static auto create( Emulator::Interface* interface, Input& input, Emulator::Interface::Device* device ) -> ControlPort*;
 
     virtual auto readButton1( ) -> uint8_t { return 0; }
     virtual auto readDirection( ) -> uint16_t { return 0; }

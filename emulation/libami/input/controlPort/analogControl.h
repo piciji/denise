@@ -7,7 +7,7 @@ namespace LIBAMI {
 
 struct AnalogControl : ControlPort {
 
-    AnalogControl( Emulator::Interface* interface, Emulator::Interface::Device* device ) : ControlPort( interface, device ) {}
+    AnalogControl( Emulator::Interface* interface, Input& input, Emulator::Interface::Device* device ) : ControlPort( interface, input, device ) {}
 
     int16_t posX;
     int16_t posY;

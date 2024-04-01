@@ -6,7 +6,7 @@ namespace LIBAMI {
 struct Joypad : ControlPort {
     uint16_t out = 0;
 
-    Joypad( Emulator::Interface* interface, Emulator::Interface::Device* device ) : ControlPort( interface, device ) {}
+    Joypad( Emulator::Interface* interface, Input& input, Emulator::Interface::Device* device ) : ControlPort( interface, input, device ) {}
 
     auto readButton1( ) -> uint8_t {
 

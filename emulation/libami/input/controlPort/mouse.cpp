@@ -4,11 +4,11 @@
 
 namespace LIBAMI {
 
-#define MOUSE_DELTA_LIMIT 126
+#define MOUSE_DELTA_LIMIT (255 >> 2)
 
 struct Mouse : AnalogControl {
 
-    Mouse( Emulator::Interface* interface, Emulator::Interface::Device* device ) : AnalogControl( interface, device ) {}
+    Mouse( Emulator::Interface* interface, Input& input, Emulator::Interface::Device* device ) : AnalogControl( interface, input, device ) {}
 
     auto poll( ) -> void {
 
@@ -29,6 +29,10 @@ struct Mouse : AnalogControl {
 
         posX += deltaX;
         posY += deltaY;
+
+        if (_dx > 1 || _dy > 1)
+            if (input.sampling.mode != Input::SamplingMode::Static_Sampling)
+                input.setJitLock();
     }
 
     auto readButton1( ) -> uint8_t {

@@ -2076,6 +2076,9 @@
     <ClCompile Include="..\driver\video\opengl3\gl3.cpp">
       <Filter>driver\video\opengl3</Filter>
     </ClCompile>
+    <ClCompile Include="..\emulation\libami\agnus\blanking.cpp">
+      <Filter>emulation\libami\agnus</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\emulation\libc64\sid\filter\circuit">

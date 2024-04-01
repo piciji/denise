@@ -17,8 +17,8 @@ Input::Input(System* system, Agnus& agnus, Cia<MOS_8520>& cia1)
 : system(system), cia1(cia1), agnus(agnus), keyboard(system->interface, agnus, cia1) {
     this->interface = system->interface;
 
-    controlPort1 = new ControlPort(interface);
-    controlPort2 = new ControlPort(interface);
+    controlPort1 = new ControlPort(interface, *this);
+    controlPort2 = new ControlPort(interface, *this);
 }
 
 auto Input::readCiaPortA( ) -> uint8_t {
@@ -32,9 +32,7 @@ auto Input::readCiaPortA( ) -> uint8_t {
 auto Input::readDenisePortA() -> uint16_t {
     system->observeInputFetches();
     jitPoll();
-    uint16_t out = 0;
-    out |= controlPort1->readDirection();
-    return out;
+    return controlPort1->readDirection();
 }
 
 auto Input::writeDeniseJoytest(uint16_t data) -> void {
@@ -45,9 +43,7 @@ auto Input::writeDeniseJoytest(uint16_t data) -> void {
 auto Input::readDenisePortB() -> uint16_t {
     system->observeInputFetches();
     jitPoll();
-    uint16_t out = 0;
-    out |= controlPort2->readDirection();
-    return out;
+    return controlPort2->readDirection();
 }
 
 auto Input::observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void {
@@ -74,6 +70,20 @@ auto Input::checkForEmergencyPoll() -> void {
 }
 
 inline auto Input::jitPoll() -> void {
+
+    if (sampling.lockClock) {
+        if (sampling.allow) {
+            if (agnus.clock < sampling.lockClock)
+                sampling.allow = false;
+            else
+                sampling.lockClock = 0;
+        } else {
+            if (agnus.clock > sampling.lockClock) {
+                updateSampling();
+                sampling.lockClock = 0;
+            }
+        }
+    }
 
     if (sampling.allow && (sampling.emergencyPolling || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
         if (interface->jitPoll(sampling.emergencyPolling ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
@@ -128,7 +138,7 @@ auto Input::connectControlport( Emulator::Interface::Connector* connector, Emula
     if (*controlPort)
         delete *controlPort;
 
-    *controlPort = ControlPort::create( interface, device );
+    *controlPort = ControlPort::create( interface, *this, device );
 
     updateSampling();
 
@@ -137,14 +147,12 @@ auto Input::connectControlport( Emulator::Interface::Connector* connector, Emula
 
 auto Input::setSampling(uint8_t mode) -> void {
     sampling.mode = (SamplingMode)mode;
+    sampling.lockClock = 0;
     updateSampling();
 }
 
 auto Input::updateSampling() -> void {
-    if (system->runAhead.preventJit && system->runAhead.frames)
-        sampling.allow = false;
-    else
-        sampling.allow = (sampling.mode != 0) && controlPort1->useJitPolling() && controlPort2->useJitPolling();
+    sampling.allow = (sampling.mode != Static_Sampling) && !system->runAheadPreventJit();
 }
 
 auto Input::getConnectedDevice( Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {
@@ -163,6 +171,10 @@ auto Input::getCursorPosition( Emulator::Interface::Device* device, int16_t& x, 
         return controlPort2->getCursorPosition( x, y );
 
     return false;
+}
+
+auto Input::setJitLock() -> void {
+    sampling.lockClock = agnus.clock + Agnus::msecToDMACycles(1500);
 }
 
 auto Input::serialize(Emulator::Serializer& s) -> void {

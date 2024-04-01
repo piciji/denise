@@ -40,7 +40,7 @@ auto Keyboard::processEvent() -> void {
                 // set SP line high (logical 0)
                 // there is no emulation of SP line without context of CNT, because it's sampled only when CNT is rising
                 // wait for handshake
-                addEvent(KBD_Wait_For_Timeout, agnus.msecToDMACycles(143) );
+                addEvent(KBD_Wait_For_Timeout, Agnus::msecToDMACycles(143) );
             else
                 // put next bit onto SP line
                 addEvent(KBD_Transfer1, agnus.usecToDMACycles(10));
@@ -158,7 +158,7 @@ auto Keyboard::reset() -> void {
     interface->informCapsLock( true );
     queue.reset();
     // bypass keyboard selftest
-    addEvent(KBD_Selftest, agnus.msecToDMACycles(1000));
+    addEvent(KBD_Selftest, Agnus::msecToDMACycles(1000));
 }
 
 auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* input) -> void {
@@ -197,7 +197,7 @@ auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* i
     if ( keyState[0x63] && keyState[0x66] && keyState[0x67] ) { // independent of normal processing with overflow check
         if (!hardReset) {
             hardReset = true;
-            addEvent(KBD_Hardreset, agnus.msecToDMACycles(500));
+            addEvent(KBD_Hardreset, Agnus::msecToDMACycles(500));
             agnus.pullResetLine();
         }
     } else if (hardReset && (!agnus.hasActiveEvent<Agnus::EVENT_KBD>() || (waitState != KBD_Hardreset))) {// 500 ms minimum

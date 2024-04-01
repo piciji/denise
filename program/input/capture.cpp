@@ -56,7 +56,7 @@ auto InputManager::jitPoll(int delay) -> bool {
 
     if ((ts - jit.lastTimestamp) >= ( (delay >= 0) ? delay : jit.rescanDelay)) {
         jit.lastTimestamp = ts;
-        
+        //statusHandler->setMessage("jit", 3);
         fetch();
         if (activeInputManager->sendKeyChange)
             activeInputManager->update<true>();

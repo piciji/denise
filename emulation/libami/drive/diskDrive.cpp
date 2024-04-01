@@ -6,9 +6,9 @@
 #include "../system/system.h"
 #include "instantDiskDrive.cpp"
 
-#define LIBAMI_MOTOR_ACCELERATION_CYCLES agnus.msecToDMACycles(360)
-#define LIBAMI_MOTOR_DECELERATION_CYCLES agnus.msecToDMACycles(480)
-#define LIBAMI_DSK_CHANGE_CYCLES agnus.msecToDMACycles(1700)
+#define LIBAMI_MOTOR_ACCELERATION_CYCLES Agnus::msecToDMACycles(360)
+#define LIBAMI_MOTOR_DECELERATION_CYCLES Agnus::msecToDMACycles(480)
+#define LIBAMI_DSK_CHANGE_CYCLES Agnus::msecToDMACycles(1700)
 
 namespace LIBAMI {
 
