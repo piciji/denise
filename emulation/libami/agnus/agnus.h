@@ -47,7 +47,7 @@ struct Agnus {
         AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
         AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
         DMACON_3, SER_DAT, DMACON_1, DIW_START, DIW_STOP, BLT_MODA, BLT_MODB, BLT_MODC, BLT_MODD,
-        VPOSW, VHPOSW, UPD_V_DIW, UPD_DENISE_VHPOS,
+        VPOSW, VHPOSW, UPD_V_DIW, UPD_DENISE_VHPOS, STROBE,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -198,6 +198,7 @@ struct Agnus {
     uint16_t bplCon0;
     unsigned countWaitCycles;
     uint32_t rDmaPtr;
+    uint32_t rasAdder;
 
     int64_t eClockCycle;
     bool lol;
@@ -251,6 +252,8 @@ struct Agnus {
     auto aga() -> bool const { return model == Model::AGA; }
     auto a1000() -> bool const { return model == Model::OCS_A1000; }
     auto womLocked() -> bool const { return (model != OCS_A1000) || womLock; }
+    auto setRas() -> void;
+    template<uint8_t slot> auto refreshCycle() -> void;
 
     auto useSpriteDMA() -> bool const { return (dmaConImm & 0x220) == 0x220; }
     auto useBlitterDMA() -> bool const { return (dmaConImm & 0x240) == 0x240; }
@@ -286,7 +289,7 @@ struct Agnus {
     auto resetOut() -> void;
     auto pullResetLine(bool state = true) -> void;
 
-    auto msecToDMACycles(unsigned ms) -> unsigned { return 3550 * ms; } // average for PAL/NTSC, todo: check if more accuracy is needed
+    constexpr static auto msecToDMACycles(const unsigned ms) -> unsigned { return 3550 * ms; } // average for PAL/NTSC, todo: check if more accuracy is needed
     auto usecToDMACycles(unsigned us) -> unsigned { return 3.55f * (float)us + 0.5f; }
 
     auto dmaCyclesToSec(int64_t cycles) -> unsigned { return cycles / 3'550'000; }
@@ -332,6 +335,7 @@ struct Agnus {
     auto waitKeyboardReset() -> void;
     template<bool onlyProgressQueue = false> auto fetchPlanes() -> void;
     template<uint8_t pos, bool addMod> auto fetchPlane() -> void;
+    template<uint8_t pos, bool addMod, bool strobe> auto fetchPlaneConflict() -> void;
     template<uint8_t nr, bool first> auto spriteControl() -> void;
     template<bool _ecs, bool start> auto bplControl() -> void;
     auto fetchSprites() -> void;

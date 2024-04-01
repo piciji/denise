@@ -141,6 +141,8 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
                 //interface->log(fps, 0);
                 interface->fpsChanged();
             }
+
+            setRas();
         } else {
             s.integer(chipMemMask);
             s.integer(slowMemSize);

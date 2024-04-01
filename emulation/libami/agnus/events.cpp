@@ -312,6 +312,20 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
             denise.process(tooSoon ? 0 : -1);
             denise.hPos = data;
             break;
+        case STROBE:
+            if (isEquLine()) {
+                paula.strequ();
+            } else if (vBlank) {
+                paula.strvbl();
+                denise.strvbl();
+            } else {
+                paula.strhor();
+                denise.strhor();
+            }
+            // DMAL is fetched serial bit by bit (14 cycles). It is ok to do this in one step,
+            // because the value of all bits is fixed (really ?) at the time of the first push.
+            dmal = paula.dmal();
+            break;
     }
 }
 

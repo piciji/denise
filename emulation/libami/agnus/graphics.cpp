@@ -234,6 +234,34 @@ template<bool onlyProgressQueue> inline auto Agnus::fetchPlanes() -> void {
         case 0x84: fetchPlane<4, true>(); break;
         case 0x85: fetchPlane<5, true>(); break;
         case 0x86: fetchPlane<6, true>(); break;
+
+        case 0x41: fetchPlaneConflict<1, false, false>(); break;
+        case 0x42: fetchPlaneConflict<2, false, false>(); break;
+        case 0x43: fetchPlaneConflict<3, false, false>(); break;
+        case 0x44: fetchPlaneConflict<4, false, false>(); break;
+        case 0x45: fetchPlaneConflict<5, false, false>(); break;
+        case 0x46: fetchPlaneConflict<6, false, false>(); break;
+
+        case 0xc1: fetchPlaneConflict<1, true, false>(); break;
+        case 0xc2: fetchPlaneConflict<2, true, false>(); break;
+        case 0xc3: fetchPlaneConflict<3, true, false>(); break;
+        case 0xc4: fetchPlaneConflict<4, true, false>(); break;
+        case 0xc5: fetchPlaneConflict<5, true, false>(); break;
+        case 0xc6: fetchPlaneConflict<6, true, false>(); break;
+
+        case 0x61: fetchPlaneConflict<1, false, true>(); break;
+        case 0x62: fetchPlaneConflict<2, false, true>(); break;
+        case 0x63: fetchPlaneConflict<3, false, true>(); break;
+        case 0x64: fetchPlaneConflict<4, false, true>(); break;
+        case 0x65: fetchPlaneConflict<5, false, true>(); break;
+        case 0x66: fetchPlaneConflict<6, false, true>(); break;
+
+        case 0xe1: fetchPlaneConflict<1, true, true>(); break;
+        case 0xe2: fetchPlaneConflict<2, true, true>(); break;
+        case 0xe3: fetchPlaneConflict<3, true, true>(); break;
+        case 0xe4: fetchPlaneConflict<4, true, true>(); break;
+        case 0xe5: fetchPlaneConflict<5, true, true>(); break;
+        case 0xe6: fetchPlaneConflict<6, true, true>(); break;
     }
 
     bplQueue >>= 8;

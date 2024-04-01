@@ -91,6 +91,16 @@ auto Agnus::dmaControl(uint16_t data) -> void {
         dmaConImm &= ~data; // no masking needed, unused upper 5 bits will never be set
 }
 
+auto Agnus::setRas() -> void {
+    if (aga()) {
+        rasAdder = 0;
+    } else if (ecs()) {
+        rasAdder = 0x200;
+    } else {
+        rasAdder = 0x2;
+    }
+}
+
 auto Agnus::power(bool softReset) -> void {
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
@@ -108,7 +118,11 @@ auto Agnus::power(bool softReset) -> void {
             std::memset(fastMem, 0, fastMemSize);
         if (model == OCS_A1000)
             std::memset(wom, 0, 256 * 1024);
+
+        rDmaPtr = 0;
     }
+
+    setRas();
 
     actions = 0;
     busUsage = BUS_FREE;
@@ -178,7 +192,6 @@ auto Agnus::power(bool softReset) -> void {
     dmaConSpr = false;
     bplCon0 = 0;
     countWaitCycles = 1;
-    rDmaPtr = 0;
 
     lol = false;
     lof = true;
@@ -350,6 +363,39 @@ auto Agnus::updateVCounter() -> void {
     }
 }
 
+template<uint8_t slot> inline auto Agnus::refreshCycle() -> void {
+    busUsage = BUS_USAGE_REFRESH;
+    constexpr bool firstStrobe = slot == 0;
+    bool secondStrobe = slot == 1 && ecsAndHigher() && lol;
+
+    // For AGA chipset, DRAM use internal refresh counter.
+    // AGA chipset only triggers Refresh but can't control the refresh position.
+    // OCS: if (someAdr & 0x201fe == rDmaPtr & 0x201fe )  // not interested in CAS, so we mask it out
+    //          1024 bytes to refresh for each rDmaPtr (same ptr is used for slow mem)
+
+    // ECS: RAS and CAS were replaced. To increase RAS, the "adder" must be moved 8 bits
+
+    // We don't need this pointer in an emulator to prevent memory locations from losing their charge.
+    // However, Bitplane Fetch and Refresh Slot can overlap.
+    // In this case, the Refresh DMA pointer affects the current Bitplane DMA address.
+    if (bplQueue & 0xff) {
+        if (firstStrobe || secondStrobe)
+            bplQueue |= 0x20;
+
+        bplQueue |= 0x40;
+        return;
+    }
+
+    rDmaPtr += rasAdder;
+    rDmaPtr &= dmaChipMemMask;
+
+    if (firstStrobe) {
+        addOneCycleEvent(STROBE);
+    } else if (secondStrobe) {
+        // todo strlong (OCS denise ignores it)
+    }
+}
+
 inline auto Agnus::dmaCycle() -> void {
     busUsage = BUS_FREE;
 
@@ -369,73 +415,35 @@ inline auto Agnus::dmaCycle() -> void {
             actions |= ACT_COPPER; // if Copper waits for next line
             break;
 
-        case 5:
-            // because of some internal delays in denise chip
-            if (isEquLine());
-            else if (vBlank)
-                denise.strvbl();
-            else
-                denise.strhor();
+        case 3: refreshCycle<0>(); break;
+        case 5: refreshCycle<1>(); break;
+        case 7: refreshCycle<2>(); break;
+        case 9: refreshCycle<3>(); break;
 
-            if (ecsAndHigher() && lol) {
-                // todo strlong (OCS denise ignores it)
-            }
-        case 3:
-        case 7:
-        case 9:
-            // for AGA chipset, DRAM use internal refresh counter. AGA chipset only triggers Refresh but can't control the refresh position.
-            // We don't need this pointer in an emulator to prevent memory locations from losing their charge.
-            // However, Bitplane Fetch and Refresh Slot can overlap. In this case, the Refresh DMA pointer affects the current Bitplane DMA address.
-            if (!ecs()) {
-                // if (someAdr & 0x201fe == rDmaPtr & 0x201fe )  // not interested in CAS, so we mask it out
-                    // 1024 bytes to refresh for each rDmaPtr (same ptr is used for slow mem)
-
-                rDmaPtr += 2; // 16-bit memory access
-                rDmaPtr &= chipMemMask;
-            } else if (!aga()) {
-                rDmaPtr += 0x200; // RAS and CAS were replaced. To increase RAS, the "adder" must be moved 8 bits
-                rDmaPtr &= chipMemMask;
-            }
-
-            busUsage = BUS_USAGE_REFRESH;
-            break;
-
-        case 4:
-            if (isEquLine()) {
-                paula.strequ();
-            } else if (vBlank) {
-                paula.strvbl();
-            } else {
-                paula.strhor();
-            }
-            // DMAL is fetched serial bit by bit (14 cycles). It is ok to do this in one step,
-            // because the value of all bits is fixed (really ?) at the time of the first push.
-            dmal = paula.dmal();
-            break;
-
-        case 0xa:
-//            startHblank();
-            break;
         case 0xb:
             if (dmal & 3)
                 diskDma(0, dmal & 2);
+            dmal >>= 2;
             break;
         case 0xc:
             startHblank();
             break;
         case 0xd:
-            if (dmal & 0xc)
-                diskDma(1, dmal & 8);
+            if (dmal & 3)
+                diskDma(1, dmal & 2);
             bplQueue = 0; // hsync start
+            dmal >>= 2;
             break;
         case 0xf:
-            if (dmal & 0x30)
-                diskDma(2, dmal & 0x20);
+            if (dmal & 3)
+                diskDma(2, dmal & 2);
+            dmal >>= 2;
             break;
 
         case 0x11:
-            if (dmal & 0xc0)
-                fetchSample<0>( dmal & 0x40 );
+            if (dmal & 0x3)
+                fetchSample<0>( dmal & 0x1 );
+            dmal >>= 2;
             break;
 
         case 0x12:
@@ -443,20 +451,23 @@ inline auto Agnus::dmaCycle() -> void {
             break;
 
         case 0x13:
-            if (dmal & 0x300)
-                fetchSample<1>( dmal & 0x100 );
+            if (dmal & 0x3)
+                fetchSample<1>( dmal & 0x1 );
+            dmal >>= 2;
 
             if (!lof && (ERSY == 0) && (vPos == (ntsc ? 6 : 5) ) ) {
                 if (model != OCS_A1000) cia1.tod(); // hardwired vsync end
             }
             break;
         case 0x15:
-            if (dmal & 0xc00)
-                fetchSample<2>( dmal & 0x400 );
+            if (dmal & 0x3)
+                fetchSample<2>( dmal & 0x1 );
+            dmal >>= 2;
             break;
         case 0x17:
-            if (dmal & 0x3000)
-                fetchSample<3>( dmal & 0x1000 );
+            if (dmal & 0x3)
+                fetchSample<3>( dmal & 0x1 );
+            dmal >>= 2;
 
             if (!vBlank) spriteControl<0, true>();
             break;

@@ -106,41 +106,96 @@ auto Agnus::setDskPtL(uint16_t value) -> void {
 
 template<uint8_t pos, bool addMod> auto Agnus::fetchPlane() -> void {
     if constexpr ( pos == 1) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl1pt));
+        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl1pt & dmaChipMemMask)));
         denise.setBpl1Dat( dataBus );
         bpl1pt += 2;
         if constexpr (addMod) bpl1pt += bpl1Mod;
-        bpl1pt &= dmaChipMemMask;
     } else if constexpr ( pos == 2) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl2pt));
+        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl2pt & dmaChipMemMask)));
         denise.setBpl2Dat( dataBus );
         bpl2pt += 2;
         if constexpr (addMod) bpl2pt += bpl2Mod;
-        bpl2pt &= dmaChipMemMask;
     } else if constexpr ( pos == 3) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl3pt));
+        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl3pt & dmaChipMemMask)));
         denise.setBpl3Dat( dataBus );
         bpl3pt += 2;
         if constexpr (addMod) bpl3pt += bpl1Mod;
-        bpl3pt &= dmaChipMemMask;
     } else if constexpr ( pos == 4) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl4pt));
+        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl4pt & dmaChipMemMask)));
         denise.setBpl4Dat( dataBus );
         bpl4pt += 2;
         if constexpr (addMod) bpl4pt += bpl2Mod;
-        bpl4pt &= dmaChipMemMask;
     } else if constexpr ( pos == 5) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl5pt));
+        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl5pt & dmaChipMemMask)));
         denise.setBpl5Dat( dataBus );
         bpl5pt += 2;
         if constexpr (addMod) bpl5pt += bpl1Mod;
-        bpl5pt &= dmaChipMemMask;
     } else if constexpr ( pos == 6) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + bpl6pt));
+        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl6pt & dmaChipMemMask)));
         denise.setBpl6Dat( dataBus );
         bpl6pt += 2;
         if constexpr (addMod) bpl6pt += bpl2Mod;
-        bpl6pt &= dmaChipMemMask;
+    }
+
+    dmaClock = clock;
+    busUsage = BUS_USAGE_BPL;
+}
+
+template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict() -> void {
+    if constexpr ( pos == 1) {
+        if constexpr (!strobe) {
+            dataBus = 0xffff;
+            denise.setBpl1Dat(dataBus);
+        }
+        bpl1pt |= rDmaPtr;
+        if constexpr (addMod) bpl1pt += bpl1Mod | rasAdder;
+        else bpl1pt += rasAdder;
+        rDmaPtr = bpl1pt;
+    } else if constexpr ( pos == 2) {
+        if constexpr (!strobe) {
+            dataBus = 0xffff;
+            denise.setBpl2Dat(dataBus);
+        }
+        bpl2pt |= rDmaPtr;
+        if constexpr (addMod) bpl2pt += bpl2Mod | rasAdder;
+        else bpl2pt += rasAdder;
+        rDmaPtr = bpl2pt;
+    } else if constexpr ( pos == 3) {
+        if constexpr (!strobe) {
+            dataBus = 0xffff;
+            denise.setBpl3Dat(dataBus);
+        }
+        bpl3pt |= rDmaPtr;
+        if constexpr (addMod) bpl3pt += bpl1Mod | rasAdder;
+        else bpl3pt += rasAdder;
+        rDmaPtr = bpl3pt;
+    } else if constexpr ( pos == 4) {
+        if constexpr (!strobe) {
+            dataBus = 0xffff;
+            denise.setBpl4Dat(dataBus);
+        }
+        bpl4pt |= rDmaPtr;
+        if constexpr (addMod) bpl4pt += bpl2Mod | rasAdder;
+        else bpl4pt += rasAdder;
+        rDmaPtr = bpl4pt;
+    } else if constexpr ( pos == 5) {
+        if constexpr (!strobe) {
+            dataBus = 0xffff;
+            denise.setBpl5Dat(dataBus);
+        }
+        bpl5pt |= rDmaPtr;
+        if constexpr (addMod) bpl5pt += bpl1Mod | rasAdder;
+        else bpl5pt += rasAdder;
+        rDmaPtr = bpl5pt;
+    } else if constexpr ( pos == 6) {
+        if constexpr (!strobe) {
+            dataBus = 0xffff;
+            denise.setBpl6Dat(dataBus);
+        }
+        bpl6pt |= rDmaPtr;
+        if constexpr (addMod) bpl6pt += bpl2Mod | rasAdder;
+        else bpl6pt += rasAdder;
+        rDmaPtr = bpl6pt;
     }
 
     dmaClock = clock;
@@ -165,6 +220,7 @@ auto Agnus::diskDma(uint8_t slot, bool writeMode) -> void {
     dskpt += 2;
     dskpt &= dmaChipMemMask;
     dmaClock = clock;
+    bplQueue &= ~0xff; // no BPL fetch
     busUsage = BUS_USAGE_DMAL;
 }
 
@@ -207,6 +263,7 @@ template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
     addOneCycleEvent(AUD_DAT0 + nr, dataBus); // put on RGA BUS
 
     dmaClock = clock;
+    bplQueue &= ~0xff; // no BPL fetch
     busUsage = BUS_USAGE_DMAL;
 }
 
