@@ -499,6 +499,7 @@ auto Program::hasFocus() -> bool {
 }
 
 auto Program::quit() -> void {
+    videoDriver->disableExclusiveFullscreen();
     quitInProgress = true;
     emuThread->lock();
     powerOff();
