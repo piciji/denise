@@ -1,20 +1,23 @@
 
 #include "structure.h"
+#include "../../prg/prg.h"
 
 namespace LIBC64 {
 	
-auto DiskStructure::createD64FromPRG( std::string name, uint8_t* prgData, unsigned prgSize ) -> uint8_t* {
-	
+auto DiskStructure::createD64FromPRG( System* system, std::string name, uint8_t* prgData, unsigned prgSize ) -> uint8_t* {
+    Prg prg(system);
+    prg.set( prgData, prgSize );
+
 	uint8_t buffer[256];
 	uint8_t* data = createDxx("empty", 1);
 	uint8_t track = 18;
 	uint8_t sector = 0;
 	uint8_t startTrack;
 	uint8_t startSector;
-	unsigned pos = 2;
+	unsigned pos;
 	uint8_t* bamPtr;
 	uint8_t* dirPtr;
-	unsigned i;
+	int i;
 	int sectors;
 	Emulator::PetciiConversion conv;
 	
@@ -23,61 +26,117 @@ auto DiskStructure::createD64FromPRG( std::string name, uint8_t* prgData, unsign
 	
 	sectors = countSectors( 18, 1 );	
 	dirPtr = data + (sectors << 8);
-	
-	if (!allocateFreeSector(bamPtr, track, sector))
-		goto fail;
-	
-	startTrack = track;
-	startSector = sector;
-	
-	for (i = 0; i < prgSize; i++) {		
-		
-		if (pos == 256) {
-			pos = 2;
-			
-			uint8_t curTrack = track;
-			uint8_t curSector = sector;
-			
+
+    unsigned chunkCounter = 0;
+    for(auto& chunk : prg.chunks) {
+//        bool firstChunk = &prg.chunks.front() == &chunk;
+
+		if (chunkCounter == 0) {
+			if (!allocateFreeSector(bamPtr, track, sector))
+				goto fail;
+		} else {
 			if (!allocateNextFreeSector(bamPtr, track, sector))
 				goto fail;
-			
-			// target to next sector;
-			buffer[0] = track;
-			buffer[1] = sector;
-			
-			sectors = countSectors( curTrack, curSector );
-			std::memcpy( data + (sectors << 8), buffer, 256 );
-			
-			if ( !(++dirPtr[0x1e]) )
-				dirPtr[0x1f]++; 
-		}				
-		
-		buffer[pos++] = prgData[i];
-	}
-	
-	buffer[0] = 0;
-	buffer[1] = pos - 1;
-	
-	sectors = countSectors( track, sector );
-	std::memcpy( data + (sectors << 8), buffer, pos );
+		}
 
-	if (!(++dirPtr[0x1e]))
-		dirPtr[0x1f]++; 
+        startTrack = track;
+        startSector = sector;
+		pos = 2;
+
+        for (i = -2; i < (int)chunk.size; i++) {
+
+            if (pos == 256) {
+                pos = 2;
+
+                uint8_t curTrack = track;
+                uint8_t curSector = sector;
+
+                if (!allocateNextFreeSector(bamPtr, track, sector))
+                    goto fail;
+
+                // target to next sector;
+                buffer[0] = track;
+                buffer[1] = sector;
+
+                sectors = countSectors(curTrack, curSector);
+                std::memcpy(data + (sectors << 8), buffer, 256);
+
+                if (!(++dirPtr[0x1e]))
+                    dirPtr[0x1f]++;
+            }
+
+            if (i == -2)
+                buffer[pos++] = chunk.offset & 0xff;
+            else if (i == -1)
+                buffer[pos++] = (chunk.offset >> 8) & 0xff;
+            else
+                buffer[pos++] = chunk.data[i];
+        }
+
+        buffer[0] = 0;
+        buffer[1] = pos - 1;
+
+        sectors = countSectors(track, sector);
+        std::memcpy(data + (sectors << 8), buffer, pos);
+
+        if (!(++dirPtr[0x1e]))
+            dirPtr[0x1f]++;
+
+        if ((chunkCounter & 7) == 0) {
+            if (chunkCounter != 0) {
+                dirPtr[-256] = 18;
+                dirPtr[-255] = (chunkCounter >> 3) + 1;
+            }
+
+            dirPtr[0] = 0;
+            dirPtr[1] = 0xff;
+        } else {
+            dirPtr[0] = 0;
+            dirPtr[1] = 0;
+        }
+
+        dirPtr[2] = 0x82;
+        dirPtr[3] = startTrack;
+        dirPtr[4] = startSector;
+        std::memset(dirPtr + 5, 0xa0, 16);
+
+		bool noChar = true;
+        if (chunk.namePtr) {
+            for (i = 15; i >= 0; i--) {
+				uint8_t code = chunk.namePtr[i];
+				if (code == 0 || code > 95 )
+					code = 32;
+
+				if (noChar && (code == 32))
+					continue;
+			
+				noChar = false;
 	
-	dirPtr[0] = 0;
-	dirPtr[1] = 0Xff;
-	dirPtr[2] = 0x82;
-	dirPtr[3] = startTrack;
-	dirPtr[4] = startSector;	
-	std::memset( dirPtr + 5, 0xa0, 16 );
-		
-	for(i = 0; i < name.size(); i++) {
-		if (i == 16)
-			break;
-		
-		*(dirPtr + 5 + i) = conv.encode( name[i] );
-	}	
-	
+                *(dirPtr + 5 + i) = code;
+            }
+        } else {
+			int _start = name.size() - 1;
+			if (_start > 15)
+				_start = 15;
+
+            for (i = _start; i >= 0; i--) {
+				uint8_t code = conv.encode(name[i]);
+				if (code == 0 || code > 95)
+					code = 32;
+
+				if (noChar && (code == 32))
+					continue;
+
+				noChar = false;
+
+                *(dirPtr + 5 + i) = code;
+            }
+        }
+
+        dirPtr += 32;
+        chunkCounter++;
+    }
+
 	return data;
 	
 fail:

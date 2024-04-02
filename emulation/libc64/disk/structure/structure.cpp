@@ -181,7 +181,7 @@ auto DiskStructure::analyze() -> bool {
     if ( analyzeP71() )
         return true;
 
-    created = DiskStructure::createD64FromPRG( system->interface->getFileNameFromMedia(media), rawData, rawSize );
+    created = DiskStructure::createD64FromPRG( system, system->interface->getFileNameFromMedia(media), rawData, rawSize );
     
 	if (created) {
 		

@@ -121,7 +121,7 @@ struct DiskStructure {
     auto getStateImageSize() -> unsigned;
     auto serialize(Emulator::Serializer& s, bool written) -> void; 
 	
-	static auto createD64FromPRG( std::string name, uint8_t* prgData, unsigned prgSize ) -> uint8_t*;
+	static auto createD64FromPRG( System* system, std::string name, uint8_t* prgData, unsigned prgSize ) -> uint8_t*;
 	static auto getBamTrackEntry( uint8_t* bamPtr, uint8_t track ) -> uint8_t*;
 	static auto clrBam(uint8_t* bamTrackPtr, unsigned sector) -> void;
 	static auto setBam(uint8_t* bamTrackPtr, unsigned sector) -> void;
