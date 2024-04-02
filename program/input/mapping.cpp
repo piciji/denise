@@ -64,8 +64,11 @@ inline auto InputMapping::applyMouseSensitivity( int16_t value ) -> int16_t {
 }
 
 inline auto InputMapping::applyAxisSensitivity( int16_t value ) -> int16_t {
-	
-	value = (value * analogSensitivity / 50) >> 10;
+
+    if (emuDevice->isPaddles())
+        value = (value * analogSensitivity / 50) >> 8;
+    else
+	    value = (value * analogSensitivity / 50) >> 10;
     
     // some analog joypads show minimal movement in resting state.
     if ( value == 1 || value == -1 )
