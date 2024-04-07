@@ -7,7 +7,7 @@ struct FileSetting;
 
 struct FirmwareManager {
     
-    const unsigned maxSets = 5;
+    const unsigned maxSets = 6;
     
     Emulator::Interface* emulator;
     

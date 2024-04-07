@@ -134,7 +134,7 @@ auto States::loadFirmwarePaths( GUIKIT::Settings* loadSettings ) -> void {
 
         // savestate was generated with different firmware
         // use a store level not used for preconfigured firmware sets
-        unsigned storeLevel = firmwareManager->maxSets + 10;
+        unsigned storeLevel = firmwareManager->maxSets + 9;
         
         FileSetting* storeSetting = firmwareManager->getSetting( &firmware, storeLevel );
         storeSetting->id = setting->id;
