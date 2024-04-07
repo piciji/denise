@@ -12,6 +12,10 @@ struct AnalogControl : ControlPort {
     int16_t posX;
     int16_t posY;
 
+    int16_t deltaX;
+    int16_t deltaY;
+
+
     virtual auto poll( ) -> void {
         // driver reported deltas will be added one time after each single global input polling in vsync
         posX += interface->inputPoll( device->id, 0);
@@ -21,6 +25,8 @@ struct AnalogControl : ControlPort {
     virtual auto reset() -> void {
         posX = 0;
         posY = 0;
+        deltaX = 0;
+        deltaY = 0;
     }
 
     virtual auto serialize(Emulator::Serializer& s) -> void {

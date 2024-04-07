@@ -71,19 +71,19 @@ auto Input::checkForEmergencyPoll() -> void {
 
 inline auto Input::jitPoll() -> void {
 
-    if (sampling.lockClock) {
-        if (sampling.allow) {
-            if (agnus.clock < sampling.lockClock)
-                sampling.allow = false;
-            else
-                sampling.lockClock = 0;
-        } else {
-            if (agnus.clock > sampling.lockClock) {
-                updateSampling();
-                sampling.lockClock = 0;
-            }
-        }
-    }
+//    if (sampling.lockClock) {
+//        if (sampling.allow) {
+//            if (agnus.clock < sampling.lockClock)
+//                sampling.allow = false;
+//            else
+//                sampling.lockClock = 0;
+//        } else {
+//            if (agnus.clock > sampling.lockClock) {
+//                updateSampling();
+//                sampling.lockClock = 0;
+//            }
+//        }
+//    }
 
     if (sampling.allow && (sampling.emergencyPolling || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
         if (interface->jitPoll(sampling.emergencyPolling ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
@@ -102,7 +102,7 @@ auto Input::initFrame() -> void {
     //interface->log("jit ", true);
     //interface->log( !jitDisable ? "on" : "off", false );
 
-    if (!sampling.allow) {
+    if (!sampling.midscreen) {
         controlPort1->poll();
         controlPort2->poll();
     }
@@ -147,7 +147,7 @@ auto Input::connectControlport( Emulator::Interface::Connector* connector, Emula
 
 auto Input::setSampling(uint8_t mode) -> void {
     sampling.mode = (SamplingMode)mode;
-    sampling.lockClock = 0;
+  //  sampling.lockClock = 0;
     updateSampling();
 }
 
@@ -173,9 +173,9 @@ auto Input::getCursorPosition( Emulator::Interface::Device* device, int16_t& x, 
     return false;
 }
 
-auto Input::setJitLock() -> void {
-    sampling.lockClock = agnus.clock + Agnus::msecToDMACycles(1500);
-}
+//auto Input::setJitLock() -> void {
+//    sampling.lockClock = agnus.clock + Agnus::msecToDMACycles(1500);
+//}
 
 auto Input::serialize(Emulator::Serializer& s) -> void {
 
