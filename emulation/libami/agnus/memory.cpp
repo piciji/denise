@@ -53,6 +53,7 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             dataBus = readZorro(adr);
             break;
         case Unmapped:
+            dataBus = 0;
             break;
     }
 
@@ -113,6 +114,7 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
             dataBus |= readZorro(adr + 1);
             break;
         case Unmapped:
+            dataBus = 0;
             break;
     }
 
