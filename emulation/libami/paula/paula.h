@@ -175,9 +175,6 @@ struct Paula {
     template<uint8_t nr> auto audxPer(uint16_t value) -> void;
     template<uint8_t nr> auto audxVol(uint16_t value) -> void;
     auto dmaCon(uint16_t value) -> void;
-    auto strhor() -> void;
-    auto strequ() -> void;
-    auto strvbl() -> void;
 
     auto dmal() -> uint16_t; // Paula transfers DMA usage bit by bit to Agnus (clocked each DMA cycle)
     auto scheduleIntreqCia1(bool state) -> void;

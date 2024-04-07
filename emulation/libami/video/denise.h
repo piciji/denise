@@ -105,7 +105,7 @@ struct Denise {
     bool hiresFrame;
 
     auto strhor() -> void;
-    auto strequ() -> void { /* no hpos reset */ }
+    auto strequ() -> void;
     auto strvbl() -> void;
 
     auto process(int offset = 0) -> void;

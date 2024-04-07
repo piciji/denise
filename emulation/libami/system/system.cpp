@@ -97,10 +97,10 @@ rtc(agnus) {
             right <<= 1;
         }
 
-        bool _ntsc = this->interface->stats.isNtsc();
+    //    bool _ntsc = this->interface->stats.isNtsc();
 
-        top = _ntsc ? 7 : 7;
-        bottom = _ntsc ? 1 : 1;
+        top = 7;
+        bottom = 2;
 
         if (agnus.laceFrame) {
             top <<= 1;

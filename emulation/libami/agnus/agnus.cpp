@@ -654,10 +654,25 @@ auto Agnus::updateHarddis() -> void {
 }
 
 auto Agnus::isEquLine() -> bool {
-    if (ntsc)
-        return (vPos <= 10) && ((model != OCS_A1000) || !!vPos);
+    if (model != OCS_A1000) {
+        if (ntsc)
+            return vPos <= 10;
 
-    return (vPos < (lof ? 9 : 8)) && ((model != OCS_A1000) || !!vPos);
+        return vPos < (lof ? 9 : 8);
+    }
+
+    if (!vPos)
+        return false;
+
+    if (ntsc)
+        return vPos <= 11;
+
+    return vPos < (lof ? 10 : 9);
+
+//    if (ntsc)
+//        return (vPos <= 10) && ((model != OCS_A1000) || !!vPos);
+//
+//    return (vPos < (lof ? 9 : 8)) && ((model != OCS_A1000) || !!vPos);
 }
 
 auto Agnus::setDiwStrt(uint16_t value) -> void {

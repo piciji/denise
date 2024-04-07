@@ -67,29 +67,6 @@ auto Paula::dmal() -> uint16_t {
     return out;
 }
 
-auto Paula::strhor() -> void {
-    if (vBlankIntr)
-        vBlankIntr = false;
-
-    if (pot.running)
-        progressPot();
-}
-
-auto Paula::strequ() -> void {
-    if (!vBlankIntr) {
-        vBlankIntr = true;
-        setVblInt();
-    }
-
-    if (pot.running)
-        progressPot();
-}
-
-auto Paula::strvbl() -> void {
-    if (pot.running)
-        progressPot();
-}
-
 auto Paula::getIntena() -> uint16_t {
     return intena;
 }

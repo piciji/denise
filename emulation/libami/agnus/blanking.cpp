@@ -4,8 +4,9 @@
 namespace LIBAMI {
 
 auto Agnus::startHblank() -> void {
+    bool _vblank = vBlank && !vBlankStart;
 
-    if (vBlankStart) {
+    if (_vblank && lineVCounter) {
         denise.process();
         if (laceFrame & 1)
             lineVCounter--;
@@ -29,7 +30,7 @@ auto Agnus::startHblank() -> void {
         lineCallback.called = true;
     }
 
-    if (vBlank) {
+    if (_vblank) {
         hBlank = false;
     } else {
         if (beamCon & VARHSYEN) { // Alcatraz-Blitter ECS

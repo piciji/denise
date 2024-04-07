@@ -110,13 +110,22 @@ auto Denise::setBpl1Dat(uint16_t value) -> void {
     }
 }
 
+auto Denise::strequ() -> void {
+    process(-1);
+    hBlank = true;
+    vBlank = true;
+    enableDisplay = false;
+}
+
 auto Denise::strhor() -> void {
     if (disableSequencer != 1) {
+        if (vBlank) {
+            process(-1);
+            vBlank = false;
+        }
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
         upd.actions |= RESET_HPOS;
-        if (vBlank)
-            vBlank = false;
     }
 }
 
@@ -126,8 +135,6 @@ auto Denise::strvbl() -> void {
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
         upd.actions |= RESET_HPOS;
-        if (!vBlank)
-            vBlank = true;
     }
 }
 
@@ -335,6 +342,7 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
     uint8_t cMask1 = pf1PrioIllegal ? 0 : 0xf;
     uint8_t cMask2 = pf2PrioIllegal ? 0 : 0xf;
     bool _hBlank = hBlank;
+    bool _vBlank = vBlank;
 
     Sprite& spr0 = sprites[0];
     Sprite& spr1 = sprites[1];
@@ -682,7 +690,7 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
 
         if (upd.actions) {
             if (upd.actions & BPL1_WRITTEN) {
-                if (!_hBlank && !vBlank) {
+                if (!_hBlank) {
                     dat1 = upd.dat1;
                     dat2 = upd.dat2;
                     dat3 = upd.dat3;
@@ -712,7 +720,7 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
 
         hPos &= 0x1ff;
         if (_hBlank) {
-            if (hPos == 84)     // 456 - 2 - 384 (CRT Monitor) = 70 blanking pixel
+            if ((hPos == 84) && !_vBlank)     // 456 - 2 - 384 (CRT Monitor) = 70 blanking pixel
                 hBlank = _hBlank = false;
         } else {
             if (hPos == 14) {
