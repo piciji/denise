@@ -37,7 +37,7 @@ struct Input {
         SamplingMode mode = Dynamic_Sampling;
         bool allow = false;
         uint8_t midscreen = 0;
-        bool emergencyPolling = false;
+        bool externalKeyEvent = false;
       //  int64_t lockClock = 0;
     } sampling;
 
@@ -61,7 +61,7 @@ struct Input {
 
     auto jitPoll() -> void;
 
-    auto checkForEmergencyPoll() -> void;
+    auto emergencyPoll() -> void;
 
     auto drawCursor(bool midScreen = false) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
@@ -69,6 +69,7 @@ struct Input {
     auto setSampling(uint8_t mode) -> void;
     auto updateSampling() -> void;
     //auto setJitLock() -> void;
+    inline auto externalKeyEvent() -> bool const { return sampling.externalKeyEvent; }
 };
 
 }

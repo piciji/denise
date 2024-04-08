@@ -388,6 +388,9 @@ auto Agnus::HTotalEvent() -> void {
         if (lolToggle) lol ^= 1;
         updateEvent<EVENT_HTOTAL>((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol));
         hTotalFirst = true;
+
+        if (((vPos & 3) == 0) && input.externalKeyEvent() && system->isProcessFrame())
+            input.emergencyPoll();
     }
 }
 

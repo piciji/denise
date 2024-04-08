@@ -229,7 +229,7 @@ auto System::run() -> void {
 }
 
 auto System::informAboutKeyUpdate() -> void {
-    input.sampling.emergencyPolling = true; // call from another thread
+    input.sampling.externalKeyEvent = true; // call from another thread
 }
 
 auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void {

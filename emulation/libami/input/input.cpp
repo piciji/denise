@@ -62,11 +62,12 @@ auto Input::observePotPort2(uint8_t& x1, uint8_t& y1) -> void {
     controlPort2->observePot(x1, y1);
 }
 
-auto Input::checkForEmergencyPoll() -> void {
-    if (sampling.emergencyPolling) {
-        interface->jitPoll(0);
-        sampling.emergencyPolling = false;
-    }
+auto Input::emergencyPoll() -> void {
+    interface->jitPoll(0);
+    sampling.midscreen++;
+    controlPort1->poll();
+    controlPort2->poll();
+    sampling.externalKeyEvent = false;
 }
 
 inline auto Input::jitPoll() -> void {
@@ -85,9 +86,9 @@ inline auto Input::jitPoll() -> void {
 //        }
 //    }
 
-    if (sampling.allow && (sampling.emergencyPolling || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
-        if (interface->jitPoll(sampling.emergencyPolling ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
-            sampling.emergencyPolling = false;
+    if (sampling.allow && (sampling.externalKeyEvent || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
+        if (interface->jitPoll(sampling.externalKeyEvent ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
+            sampling.externalKeyEvent = false;
             sampling.midscreen++;
             controlPort1->poll();
             controlPort2->poll();
@@ -98,17 +99,17 @@ inline auto Input::jitPoll() -> void {
 
 auto Input::initFrame() -> void {
 
-    // bool jitDisable = !sampling.allow || (sampling.midscreen == 0);
+    bool jitDisable = !sampling.allow || (sampling.midscreen == 0);
     //interface->log("jit ", true);
     //interface->log( !jitDisable ? "on" : "off", false );
 
-    if (!sampling.midscreen) {
+    if (jitDisable) {
         controlPort1->poll();
         controlPort2->poll();
     }
 
     sampling.midscreen = 0;
-    sampling.emergencyPolling = false;
+    sampling.externalKeyEvent = false;
 }
 
 auto Input::drawCursor(bool midScreen) -> void {

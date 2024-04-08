@@ -4,7 +4,6 @@
 DRIVER::Input::KeyCallback InputManager::keyCallback = []() {
     if (Program::focused && activeEmulator) {
         activeEmulator->informAboutKeyUpdate();
-        jit.enable = false;
         //statusHandler->setMessage("key change");
     }
 };

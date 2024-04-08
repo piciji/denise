@@ -280,7 +280,9 @@ auto Agnus::waitKeyboardReset() -> void {
     while(true) { // CPU and most chips on hold, Denise hasn't a reset line
         dmaCycle();
 
-        input.checkForEmergencyPoll();
+        if (input.externalKeyEvent())
+            input.emergencyPoll();
+
         if (!resetFromKeyboard) {
             system->power(true);
             break;
