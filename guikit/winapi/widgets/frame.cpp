@@ -379,7 +379,7 @@ inline auto pFrame::getBorderColor() -> COLORREF {
 	return RGB(0xd5, 0xdf, 0xe5);
 }
 
-auto pFrame::setText(std::string text) -> void {
+auto pFrame::setText(const std::string& text) -> void {
     pWidget::setText(text);
     
     if (hwnd)

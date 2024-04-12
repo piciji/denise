@@ -62,7 +62,7 @@ auto pComboButton::setSelection(unsigned selection) -> void {
         SendMessage(hwnd, CB_SETCURSEL, selection, 0);
 }
 
-auto pComboButton::setText(unsigned selection, std::string text) -> void {
+auto pComboButton::setText(unsigned selection, const std::string& text) -> void {
     if(!hwnd)
         return;
     

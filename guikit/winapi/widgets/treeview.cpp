@@ -28,7 +28,7 @@ auto pTreeViewItem::invalidateParent() -> void {
     }
 }
 
-auto pTreeViewItem::setText(std::string text) -> void {
+auto pTreeViewItem::setText(const std::string& text) -> void {
     if (!parentTreeView() || !hTreeItem) return;
 
     utf16_t wtext( text );

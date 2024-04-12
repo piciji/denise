@@ -58,7 +58,7 @@ inline auto pWidget::getMinimumSize() -> Size {
     return calculatedMinimumSize.minimumSize;
 }
 
-auto pWidget::setText(std::string text) -> void {
+auto pWidget::setText(const std::string& text) -> void {
     if(hwnd) {
         SetWindowText(hwnd, utf16_t(text));
         calculatedMinimumSize.updated = false;

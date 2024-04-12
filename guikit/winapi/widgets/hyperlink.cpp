@@ -30,7 +30,7 @@ auto CALLBACK pHyperlink::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
     return CallWindowProc(hyperlink->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
-auto pHyperlink::setText(std::string text) -> void {
+auto pHyperlink::setText(const std::string& text) -> void {
     calculatedMinimumSize.updated = false;
     destroy(hwnd);
     rebuild();
