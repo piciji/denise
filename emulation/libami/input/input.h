@@ -38,7 +38,6 @@ struct Input {
         bool allow = false;
         uint8_t midscreen = 0;
         bool externalKeyEvent = false;
-      //  int64_t lockClock = 0;
     } sampling;
 
     auto connectControlport( Emulator::Interface::Connector* connector, Emulator::Interface::Device* device ) -> void;
@@ -68,7 +67,6 @@ struct Input {
 
     auto setSampling(uint8_t mode) -> void;
     auto updateSampling() -> void;
-    //auto setJitLock() -> void;
     inline auto externalKeyEvent() -> bool const { return sampling.externalKeyEvent; }
 };
 

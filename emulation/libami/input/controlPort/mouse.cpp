@@ -33,10 +33,6 @@ struct Mouse : AnalogControl {
 
         deltaX += interface->inputPoll( device->id, 0);
         deltaY += interface->inputPoll( device->id, 1);
-
-//        if (_dx > 1 || _dy > 1)
-//            if (input.sampling.mode != Input::SamplingMode::Static_Sampling)
-//                input.setJitLock();
     }
 
     auto readButton1( ) -> uint8_t {

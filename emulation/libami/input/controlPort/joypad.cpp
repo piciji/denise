@@ -35,10 +35,6 @@ struct Joypad : ControlPort {
         out |= data & 0xfcfc;
     }
 
-    auto useJitPolling() -> bool {
-        return true;
-    }
-
     auto observePot(uint8_t& x, uint8_t& y) -> void {
         y = (interface->inputPoll( device->id, 5 ) & 1) ? 0 : 0xff;
     }

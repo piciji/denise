@@ -34,10 +34,6 @@ struct AnalogControl : ControlPort {
         s.integer( posX );
         s.integer( posY );
     }
-
-    auto useJitPolling() -> bool {
-        return true;
-    }
 };
 
 }

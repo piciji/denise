@@ -36,12 +36,12 @@ auto Keyboard::processEvent() -> void {
 
         case KBD_Transfer:
 
-            if (shiftPos == 0) // finish
+            if (shiftPos == 0) { // finish
                 // set SP line high (logical 0)
                 // there is no emulation of SP line without context of CNT, because it's sampled only when CNT is rising
                 // wait for handshake
                 addEvent(KBD_Wait_For_Timeout, Agnus::msecToDMACycles(143) );
-            else
+            } else
                 // put next bit onto SP line
                 addEvent(KBD_Transfer1, agnus.usecToDMACycles(20));
             break;
@@ -94,7 +94,7 @@ auto Keyboard::handshake(bool spLine) -> void {
         handshakeClock = agnus.clock;
     else { // CIA switches back to input.
         if (agnus.fallBackCycles(handshakeClock) > agnus.usecToDMACycles(1)) { // recognized
-            if (agnus.hasActiveEvent<Agnus::EVENT_KBD>() && (waitState == KBD_Wait_For_Timeout)) {
+            if (agnus.hasActiveEvent<Agnus::EVENT_KBD>() /*&& (waitState == KBD_Wait_For_Timeout)*/) {
                 if (overflow) {
                     overflow = false;
                     sendCode( 0xfa );
@@ -120,10 +120,13 @@ auto Keyboard::handshake(bool spLine) -> void {
                         state = KBD_Send;
                     }
 
-                    if (!queue.empty())
-                        sendCode( queue.read() );
-                    else
-                        agnus.setEventInactive<Agnus::EVENT_KBD>();
+                    if(waitState == KBD_Wait_For_Timeout) {
+                        if (!queue.empty())
+                            sendCode(queue.read());
+                        else
+                            agnus.setEventInactive<Agnus::EVENT_KBD>();
+                    } else
+                        sendCode(curCode);
                 }
             }
         }
@@ -225,7 +228,7 @@ auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* i
             stroke |= 0x80;
     }
 
-    if (agnus.hasActiveEvent<Agnus::EVENT_KBD>())
+    if (!queue.empty() || (agnus.hasActiveEvent<Agnus::EVENT_KBD>() ))
         queue.write(stroke);
     else
         sendCode(stroke);
