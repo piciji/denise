@@ -624,9 +624,11 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if ( !GUIKIT::String::foundSubStr( filePath, "." ))
             filePath += ".sav";
         
-        _settings->set<std::string>( "save_direct_folder",  GUIKIT::File::getPath( filePath ) );            
-            
-        States::getInstance( emulator )->save( filePath );                
+        _settings->set<std::string>( "save_direct_folder",  GUIKIT::File::getPath( filePath ) );
+
+        emuThread->lock();
+        States::getInstance( emulator )->save( filePath );
+        emuThread->unlock();
 	};
     
     stateFolder.select.onActivate = [this]() {

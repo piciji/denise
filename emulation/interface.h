@@ -752,7 +752,6 @@ struct Interface {
     }
 
 	auto getDiskMediaGroup() -> MediaGroup* {
-		
 		for (auto& group : mediaGroups) {
 			
 			if (group.isDisk())
@@ -763,10 +762,19 @@ struct Interface {
 	}
 
     auto getTapeMediaGroup() -> MediaGroup* {
-
         for (auto& group : mediaGroups) {
 
             if (group.isTape())
+                return &group;
+        }
+
+        return nullptr;
+    }
+
+    auto getPRGMediaGroup() -> MediaGroup* {
+        for (auto& group : mediaGroups) {
+
+            if (group.isProgram())
                 return &group;
         }
 

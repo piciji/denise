@@ -46,6 +46,12 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         emuView->setFocused();
     }
 
+    if (group->isDisk()) {
+        auto prgGroup = emulator->getPRGMediaGroup();
+        if (prgGroup)
+            GUIKIT::Vector::combine(suffix, prgGroup->suffix);
+    }
+
     GUIKIT::Vector::combine(suffix, GUIKIT::File::suppportedCompressionExtensions());
 
     if (fileDialogPtr) {
@@ -546,6 +552,13 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
                         listings = emulator->getDiskPreview(data, file.archiveDataSize(0), media);
                         group = &mediaGroup;
                         break;
+                    } else if (media) {
+                        auto prgGroup = emulator->getPRGMediaGroup();
+                        if (prgGroup && GUIKIT::Vector::find(prgGroup->suffix, extension)) {
+                            listings = emulator->getProgramPreview(data, file.archiveDataSize(0));
+                            group = &mediaGroup;
+                            break;
+                        }
                     }
                 }
 
