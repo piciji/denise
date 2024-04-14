@@ -130,7 +130,7 @@ struct pStatusBar {
     auto destroy() -> void;
     
     auto setFont(std::string font) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
         
     auto update() -> void;
     auto updatePart( StatusBar::Part& part ) -> void;
@@ -167,7 +167,7 @@ struct pWidget {
     virtual auto setVisible(bool visible) -> void;
     virtual auto setFont(std::string font) -> void;
     virtual auto setGeometry(Geometry geometry) -> void;
-    virtual auto setText(std::string text) -> void {}
+    virtual auto setText(const std::string& text) -> void {}
     virtual auto destroy() -> void;
     virtual auto setForegroundColor(unsigned color) -> void;
     virtual auto setBackgroundColor(unsigned color) -> void;
@@ -189,7 +189,7 @@ struct pLineEdit : pWidget {
 
     auto minimumSize() -> Size;
     auto setEditable(bool editable) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto text() -> std::string;
     auto setMaxLength( unsigned maxLength ) -> void;
     auto init() -> void;
@@ -208,7 +208,7 @@ struct pMultilineEdit : pWidget {
 	GtkTextBuffer* buffer = nullptr;
 
     auto setEditable(bool editable) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto text() -> std::string;
 	auto setForegroundColor(unsigned color) -> void;
 	auto destroy() -> void;
@@ -225,7 +225,7 @@ struct pLabel : pWidget {
     Label& label;
 
     auto minimumSize() -> Size;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto init() -> void;
     auto create() -> void;
     auto setAlign( Label::Align align ) -> void;
@@ -237,7 +237,7 @@ struct pHyperlink : pWidget {
     Hyperlink& hyperlink;
 
     auto minimumSize() -> Size;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto setUri( std::string uri, std::string wrap ) -> void;
     auto init() -> void;
     auto create() -> void;
@@ -289,7 +289,7 @@ struct pButton : pWidget {
 
     auto minimumSize() -> Size;
     static auto onActivate(Button* self) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto init() -> void;
     auto create() -> void;
 
@@ -316,7 +316,7 @@ struct pCheckButton : pWidget {
 
     auto minimumSize() -> Size;
     auto setChecked(bool checked) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     static auto onToggle(GtkToggleButton* toggleButton, CheckButton* self) -> void;
     auto init() -> void;
     auto create() -> void;
@@ -330,7 +330,7 @@ struct pCheckBox : pWidget {
     auto minimumSize() -> Size;
 	auto setGeometry(Geometry geometry) -> void;
     auto setChecked(bool checked) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     static auto onToggle(GtkToggleButton* toggleButton, CheckBox* self) -> void;
     auto init() -> void;
     auto create() -> void;
@@ -346,7 +346,7 @@ struct pComboButton : pWidget {
     auto minimumSize() -> Size;
     auto reset() -> void;
     auto setSelection(unsigned selection) -> void;
-    auto setText(unsigned selection, std::string text) -> void;
+    auto setText(unsigned selection, const std::string& text) -> void;
     auto init() -> void;
     auto create() -> void;
     static auto onChange(ComboButton* self) -> void;
@@ -378,7 +378,7 @@ struct pRadioBox : pWidget {
 
     auto init() -> void;
     auto create() -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     static auto onActivate(GtkToggleButton* toggleButton, RadioBox* self) -> void;
     auto parent() -> pRadioBox&;
 
@@ -461,7 +461,7 @@ struct pTreeViewItem {
     auto invalidateParent() -> void;
     auto init() -> void {}
     auto update(TreeViewItem* parent) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto setSelected() -> void;
     auto setExpanded(bool expanded) -> void;
     auto setImage(Image& image) -> void;
@@ -546,7 +546,7 @@ struct pFrame : pWidget {
 
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto init() -> void;
     auto create() -> void;
     auto setFont(std::string font) -> void;
@@ -577,7 +577,7 @@ struct pTabFrame : pWidget {
     auto create() -> void;
     auto append(std::string text, Image* image) -> void;
     auto remove(unsigned selection) -> void;
-    auto setText(unsigned selection, std::string text) -> void;
+    auto setText(unsigned selection, const std::string& text) -> void;
     auto setSelection(unsigned selection) -> void;
     static auto onChange(GtkNotebook* notebook, GtkWidget* page, unsigned selection, TabFrameLayout::TabFrame* self) -> void;
     auto setImage(unsigned selection, Image& image) -> void;

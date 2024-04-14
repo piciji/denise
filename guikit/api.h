@@ -337,7 +337,7 @@ struct StatusBar : Base {
 	auto updateSeparator( unsigned id, bool append ) -> bool;
     
     auto setFont(std::string font) -> void;
-    auto setText(std::string text) -> void; // simple single part usage
+    auto setText(const std::string& text) -> void; // simple single part usage
     auto clear() -> void;
     auto hideContent() -> void;
     auto update(bool force = false) -> void;

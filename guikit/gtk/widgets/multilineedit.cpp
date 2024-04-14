@@ -13,7 +13,7 @@ auto pMultilineEdit::setEditable(bool editable) -> void {
     gtk_text_view_set_editable(GTK_TEXT_VIEW(subWidget), editable);
 }
 
-auto pMultilineEdit::setText(std::string text) -> void {
+auto pMultilineEdit::setText(const std::string& text) -> void {
     locked = true;
 	calculatedMinimumSize.updated = false;
     gtk_text_buffer_set_text( buffer, text.c_str(), -1 );

@@ -4,7 +4,7 @@ auto pLabel::minimumSize() -> Size {
     return {size.width, size.height};
 }
 
-auto pLabel::setText(std::string text) -> void {
+auto pLabel::setText(const std::string& text) -> void {
 	calculatedMinimumSize.updated = false;
     gtk_label_set_text(GTK_LABEL(gtkWidget), text.c_str());
 }

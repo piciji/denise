@@ -450,7 +450,7 @@ auto StatusBar::setFont(std::string font) -> void {
     p.setFont(font);    
 }
 
-auto StatusBar::setText(std::string text) -> void {
+auto StatusBar::setText(const std::string& text) -> void {
     state.text = text;
     p.setText(text);
 }

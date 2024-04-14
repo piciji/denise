@@ -4,7 +4,7 @@ auto pHyperlink::minimumSize() -> Size {
     return {size.width, size.height};
 }
 
-auto pHyperlink::setText(std::string text) -> void {
+auto pHyperlink::setText(const std::string& text) -> void {
 	
 	updateLink();
 }

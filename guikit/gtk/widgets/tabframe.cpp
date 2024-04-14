@@ -95,7 +95,7 @@ auto pTabFrame::setImage(unsigned selection, Image& image) -> void {
     }
 }
 
-auto pTabFrame::setText(unsigned selection, std::string text) -> void {
+auto pTabFrame::setText(unsigned selection, const std::string& text) -> void {
 	calculatedMinimumSize.updated = false;
     gtk_label_set_text(GTK_LABEL(tabs[selection].title), text.c_str());
 }

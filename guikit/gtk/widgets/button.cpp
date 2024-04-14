@@ -4,7 +4,7 @@ auto pButton::minimumSize() -> Size {
     return {size.width, size.height};
 }
 
-auto pButton::setText(std::string text) -> void {
+auto pButton::setText(const std::string& text) -> void {
     gtk_button_set_label(GTK_BUTTON(gtkWidget), text.c_str());
     //setFont( widget.font() );
     calculatedMinimumSize.updated = false;
