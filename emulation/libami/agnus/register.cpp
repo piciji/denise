@@ -501,6 +501,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                 beamCon = value;
                 bool _ntscBefore = ntsc;
                 ntsc = (value & BEAM_PAL) == 0;
+                setLines();
                 bool lolToggleBefore = lolToggle;
                 lolToggle = !(value & LOLDIS) && !(value & BEAM_PAL);
                 if (lolToggleBefore != lolToggle)
@@ -580,6 +581,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x1c8:
             if (ecsAndHigher()) {
                 vTotal = value & 0x7ff;
+                setLines();
                 fpsChange |= 1;
             }
             break;
