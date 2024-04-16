@@ -168,7 +168,7 @@ struct pStatusBar {
     auto destroy() -> void;
     
     auto setFont(std::string font) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
         
     auto drawItem(WPARAM wparam, LPARAM lparam) -> void;
     auto update() -> void;

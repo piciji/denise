@@ -152,7 +152,7 @@ auto pStatusBar::setFont(std::string font) -> void {
         SendMessage(hwnd, WM_SETFONT, (WPARAM)hfont, 0);
 }
 
-auto pStatusBar::setText(std::string text) -> void {
+auto pStatusBar::setText(const std::string& text) -> void {
     if (hwnd)
         SendMessage(hwnd, SB_SETTEXT, 0 | SBT_NOBORDERS, (LPARAM)(wchar_t*)utf16_t(text));
     
