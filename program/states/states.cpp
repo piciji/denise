@@ -144,8 +144,13 @@ auto States::loadFirmwarePaths( GUIKIT::Settings* loadSettings ) -> void {
         firmwareManager->insertFirmware(&firmware, storeLevel);
     }
 
-    if (!firmwareManager->missingFirmware.empty())
+    if (!firmwareManager->missingFirmware.empty()) {
         GUIKIT::Vector::combine( errorPaths, firmwareManager->missingFirmware );
+
+        if ( dynamic_cast<LIBAMI::Interface*>(emulator) ) {
+            FirmwareManager::getInstance( emulator )->insert();
+        }
+    }
 }
 
 auto States::oneMediumOnly(Emulator::Interface::MediaGroup* group, Emulator::Interface::Media* mediaInUse) -> void {
