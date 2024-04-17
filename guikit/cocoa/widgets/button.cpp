@@ -30,7 +30,7 @@ auto pButton::setGeometry(Geometry geometry) -> void {
     });
 }
     
-auto pButton::setText(std::string text) -> void {
+auto pButton::setText(const std::string& text) -> void {
     @autoreleasepool {
         [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }

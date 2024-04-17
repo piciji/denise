@@ -85,7 +85,7 @@ auto pLineEdit::text() -> std::string {
     }
 }
 
-auto pLineEdit::setText(std::string text) -> void {
+auto pLineEdit::setText(const std::string& text) -> void {
     @autoreleasepool{
         [cocoaView setStringValue : [NSString stringWithUTF8String : text.c_str()]];
     }

@@ -53,7 +53,7 @@ auto pRadioBox::setChecked() -> void {
     }
 }
     
-auto pRadioBox::setText(std::string text) -> void {
+auto pRadioBox::setText(const std::string& text) -> void {
     @autoreleasepool {
         [inner setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }

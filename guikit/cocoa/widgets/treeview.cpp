@@ -300,7 +300,7 @@ namespace GUIKIT {
         }
     }
 
-    auto pTreeViewItem::setText(std::string text) -> void {
+    auto pTreeViewItem::setText(const std::string& text) -> void {
         @autoreleasepool {
             if (parentTreeView()) [[parentTreeView()->p.cocoaView content] reloadItem:wrapper];
         }

@@ -105,7 +105,7 @@ auto pStatusBar::reposition() -> void {
     }
 }
 
-auto pStatusBar::setText(std::string text) -> void {
+auto pStatusBar::setText(const std::string& text) -> void {
     @autoreleasepool {
         if (!cocoaView)
             return;

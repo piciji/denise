@@ -38,7 +38,7 @@ auto pFrame::setGeometry(Geometry geometry) -> void {
     });
 }
 
-auto pFrame::setText(std::string text) -> void {
+auto pFrame::setText(const std::string& text) -> void {
     @autoreleasepool {
         [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }

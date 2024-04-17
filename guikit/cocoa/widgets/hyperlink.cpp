@@ -44,7 +44,7 @@ auto pHyperlink::setGeometry(Geometry geometry) -> void {
     });
 }
     
-auto pHyperlink::setText(std::string text) -> void {
+auto pHyperlink::setText(const std::string& text) -> void {
     @autoreleasepool {
         [cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
     }

@@ -122,7 +122,7 @@ auto pTabFrame::setImage(unsigned selection, Image& image) -> void {
     calculatedMinimumSize.updated = false;
 }
 
-auto pTabFrame::setText(unsigned selection, std::string text) -> void {
+auto pTabFrame::setText(unsigned selection, const std::string& text) -> void {
     @autoreleasepool {
         CocoaTabFrameItem* item = tabs[selection];
         [item setLabel:[NSString stringWithUTF8String:text.c_str()]];
