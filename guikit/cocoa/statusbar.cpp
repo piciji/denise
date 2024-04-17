@@ -114,7 +114,7 @@ auto pStatusBar::setText(const std::string& text) -> void {
     }
 }
 
-auto pStatusBar::setFont(std::string font) -> void {
+auto pStatusBar::setFont(const std::string& font) -> void {
     @autoreleasepool {
         if (!cocoaView)
             return;

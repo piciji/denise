@@ -167,7 +167,7 @@ struct pStatusBar {
     auto create() -> void;
     auto destroy() -> void;
     
-    auto setFont(std::string font) -> void;
+    auto setFont(const std::string& font) -> void;
     auto setText(const std::string& text) -> void;
         
     auto drawItem(WPARAM wparam, LPARAM lparam) -> void;
@@ -833,11 +833,11 @@ struct pMessageWindow {
 
 struct pFont {
     static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
-    static auto create(std::string desc) -> HFONT;
+    static auto create(const std::string& desc) -> HFONT;
 	static auto create(uint8_t* data, unsigned size) -> HFONT;
     static auto free(HFONT& hfont) -> void;
     static auto size(HFONT hfont, std::string text) -> Size;
-    static auto size(std::string font, std::string text) -> Size;
+    static auto size(const std::string& font, const std::string& text) -> Size;
 	static auto findMemoryFont(std::string name) -> HFONT;
     static auto dpi() -> Position;
     static auto scale( unsigned pixel ) -> unsigned;

@@ -39,7 +39,7 @@ auto pStatusBar::create() -> void {
 	setFont( statusBar.font().empty() ? Font::system() : statusBar.font() );		
 }
 
-auto pStatusBar::setFont(std::string font) -> void {
+auto pStatusBar::setFont(const std::string& font) -> void {
 	if (!gridWidget)
 		return;
 	

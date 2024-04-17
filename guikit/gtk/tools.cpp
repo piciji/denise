@@ -367,7 +367,7 @@ auto pFont::size(std::string font, std::string text) -> Size {
     return size;
 }
 
-auto pFont::setFont(GtkWidget* widget, std::string font) -> PangoFontDescription* {
+auto pFont::setFont(GtkWidget* widget, const std::string& font) -> PangoFontDescription* {
     auto gtkFont = pFont::create(font);
     pFont::setFont(widget, (gpointer)gtkFont);
     return gtkFont;

@@ -53,7 +53,7 @@ struct pWindow {
     auto moveEvent() -> void;
     auto sizeEvent() -> void;
     auto fullScreenToggleDelayed() -> bool { return fullScreenToggleDelay; }
-    auto setTitleForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, std::string title) -> void;
+    auto setTitleForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, const std::string& title) -> void;
     auto setHiddenForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, bool state) -> void;
     auto isOffscreen() -> bool { return false; } 
     auto handle() -> uintptr_t;
@@ -86,7 +86,7 @@ struct pStatusBar {
     auto create() -> void;
     auto destroy() -> void;
     
-    auto setFont(std::string font) -> void;
+    auto setFont(const std::string& font) -> void;
     auto setText(const std::string& text) -> void;
     
     auto update() -> void;
@@ -567,7 +567,7 @@ struct pMessageWindow {
 struct pFont {
     static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
     static auto size(std::string font, std::string text) -> Size;
-    static auto cocoaFont(std::string desc) -> NSFont*;
+    static auto cocoaFont(const std::string& desc) -> NSFont*;
     static auto size(NSFont* font, std::string text) -> Size;
     static auto add( CustomFont* customFont ) -> bool;
     static auto scale( unsigned pixel ) -> unsigned;

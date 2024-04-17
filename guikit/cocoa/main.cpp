@@ -493,7 +493,7 @@ auto pWindow::applyAspectRatio() -> void {
     }
 }
     
-auto pWindow::setTitleForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, std::string title) -> void {
+auto pWindow::setTitleForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, const std::string& title) -> void {
     [[[[[cocoaWindow menuBar] itemAtIndex:0] submenu] itemAtIndex:appMenuItem] setTitle:[NSString stringWithUTF8String:title.c_str()]];
 }
     

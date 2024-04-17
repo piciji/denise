@@ -129,7 +129,7 @@ struct pStatusBar {
     auto create() -> void;
     auto destroy() -> void;
     
-    auto setFont(std::string font) -> void;
+    auto setFont(const std::string& font) -> void;
     auto setText(const std::string& text) -> void;
         
     auto update() -> void;

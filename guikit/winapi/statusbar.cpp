@@ -143,7 +143,7 @@ auto pStatusBar::destroy() -> void {
     hwndTip = 0;
 }
 
-auto pStatusBar::setFont(std::string font) -> void {
+auto pStatusBar::setFont(const std::string& font) -> void {
     
     pFont::free(hfont);
     hfont = pFont::create(font);    

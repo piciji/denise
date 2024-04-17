@@ -412,7 +412,7 @@ auto Window::handle() -> uintptr_t {
     return p.handle();
 }
 
-auto Window::Cocoa::setTitleForAppMenuItem(AppMenuItem appMenuItem, std::string title) -> void {
+auto Window::Cocoa::setTitleForAppMenuItem(AppMenuItem appMenuItem, const std::string& title) -> void {
 #if GUIKIT_COCOA
     window.p.setTitleForAppMenuItem(appMenuItem, title);
 #endif
@@ -445,7 +445,7 @@ StatusBar::StatusBar() : p(*new pStatusBar(*this)), Base() {}
 
 StatusBar::~StatusBar() { delete &p; }
 
-auto StatusBar::setFont(std::string font) -> void {    
+auto StatusBar::setFont(const std::string& font) -> void {
     state.font = font;
     p.setFont(font);    
 }

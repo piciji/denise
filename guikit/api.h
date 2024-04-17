@@ -204,7 +204,7 @@ struct Window : Base {
     struct Cocoa {
         Window& window;
         enum AppMenuItem : unsigned { About = 0, Preferences = 2, Custom1 = 3, Hide = 5, HideOthers = 6, ShowAll = 7, Quit = 9 };
-        auto setTitleForAppMenuItem(AppMenuItem appMenuItem, std::string title) -> void;
+        auto setTitleForAppMenuItem(AppMenuItem appMenuItem, const std::string& title) -> void;
         auto setHiddenForAppMenuItem(AppMenuItem appMenuItem, bool state) -> void;
         auto keepMenuVisibilityOnDisplay(bool state = true) -> void;
         auto setDisableIconsInTopMenu(bool state) -> void;
@@ -336,7 +336,7 @@ struct StatusBar : Base {
 	auto updateTooltip( unsigned id, std::string tooltip ) -> bool;
 	auto updateSeparator( unsigned id, bool append ) -> bool;
     
-    auto setFont(std::string font) -> void;
+    auto setFont(const std::string& font) -> void;
     auto setText(const std::string& text) -> void; // simple single part usage
     auto clear() -> void;
     auto hideContent() -> void;
