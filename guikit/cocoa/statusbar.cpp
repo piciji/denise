@@ -131,7 +131,7 @@ auto pStatusBar::setFont(std::string font) -> void {
     reposition();
 }
     
-auto pStatusBar::getWidth(std::string text) -> unsigned {
+auto pStatusBar::getWidth(const std::string& text) -> unsigned {
     if (text == "")
         return 0;
     

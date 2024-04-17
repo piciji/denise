@@ -137,7 +137,7 @@ struct pStatusBar {
     //auto updateTooltip( StatusBar::Part& part ) -> void;
     auto setVisible(bool visible) -> void;
     auto getHeight() -> unsigned;    
-	auto getWidth(std::string text) -> unsigned { return 0; }
+	auto getWidth(const std::string& text) -> unsigned { return 0; }
 	
 	static auto onClick(GtkWidget* widget, GdkEventButton* event, StatusBar::Part* part) -> void;
 	static auto onEnter(GtkWidget* widget, GdkEventButton* event, StatusBar::Part* part) -> void;

@@ -325,13 +325,13 @@ struct StatusBar : Base {
     auto font() const -> std::string { return state.font; }
     auto text() const -> std::string { return state.text; }
     auto updatePending() const -> bool { return state.updatePending; }
-	auto append(unsigned id, std::string text, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;
+	auto append(unsigned id, const std::string& text, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;
 	auto append(unsigned id, Image* image, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;	  
     auto removePart( unsigned id ) -> void;
     
     auto updateText( unsigned id, std::string text, bool alignRight = false, int overrideForegroundColor = -1 ) -> bool;
     auto updateImage( unsigned id, Image* image ) -> bool;
-    auto updateDimension( unsigned id, std::string text ) -> void;
+    auto updateDimension( unsigned id, const std::string& text ) -> void;
     auto updateVisible( unsigned id, bool visible ) -> bool;
 	auto updateTooltip( unsigned id, std::string tooltip ) -> bool;
 	auto updateSeparator( unsigned id, bool append ) -> bool;

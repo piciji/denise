@@ -183,7 +183,7 @@ auto pStatusBar::getHeight() -> unsigned {
     return src.bottom - src.top;
 }
 
-auto pStatusBar::getWidth(std::string text) -> unsigned {
+auto pStatusBar::getWidth(const std::string& text) -> unsigned {
     
     if (text == "")
         return 0;

@@ -455,7 +455,7 @@ auto StatusBar::setText(const std::string& text) -> void {
     p.setText(text);
 }
 
-auto StatusBar::append(unsigned id, std::string text, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
+auto StatusBar::append(unsigned id, const std::string& text, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
 	Part part;
 	part.id = id;
     part.width = p.getWidth( text );
@@ -506,7 +506,7 @@ auto StatusBar::removePart( unsigned id ) -> void {
     state.updatePending = true;
 }
 
-auto StatusBar::updateDimension( unsigned id, std::string text ) -> void {
+auto StatusBar::updateDimension( unsigned id, const std::string& text ) -> void {
     for(auto& part : state.parts) {
         if (part.id == id) {
             part.width = p.getWidth( text );

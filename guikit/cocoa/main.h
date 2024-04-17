@@ -95,7 +95,7 @@ struct pStatusBar {
     auto setVisible(bool visible) -> void;
     auto getHeight() -> unsigned;
     auto reposition() -> void;
-    auto getWidth(std::string text) -> unsigned;
+    auto getWidth(const std::string& text) -> unsigned;
     
     pStatusBar(StatusBar& statusBar);
     ~pStatusBar();
