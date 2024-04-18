@@ -22,6 +22,7 @@ struct DiskDrive {
 
     auto attach(uint8_t* data, unsigned size) -> bool;
     auto detach() -> void;
+    auto writeProtect(bool state) -> void;
     auto power() -> void;
     auto powerOff() -> void;
 

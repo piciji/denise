@@ -281,6 +281,15 @@ auto DiskDrive::detach() -> void {
     track = getDummyTrack();
 }
 
+auto DiskDrive::writeProtect(bool state) -> void {
+    structure.writeProtected = state;
+    // simulate disk out -> in (Final Mission expects this)
+    if (system->powerOn) {
+        dskChangeClock = system->agnus.clock;
+        dskChange = true;
+    }
+}
+
 auto DiskDrive::write() -> void {
     if (!written)
         return;
@@ -482,18 +491,18 @@ inline auto DiskDrive::updateTrack() -> void {
     unsigned oldHeadOffset = headOffset;
     DiskStructure::Track* oldTrack = track;
     accum = 0;
-    headOffset = 0;
     track = &structure.tracks[(cylinder << 1) | side];
 
-    if (oldTrack && oldHeadOffset) {
+    if (oldTrack && oldTrack->bits && oldHeadOffset) {
         if (structure.type == DiskStructure::ADF) {
-            if (oldTrack->length && (oldTrack->length != track->length))
-                headOffset = (unsigned)(((oldHeadOffset >> 3) * track->length) / oldTrack->length) << 3;
+            if (oldTrack->length != track->length)
+                headOffset = ((((uint64_t)oldHeadOffset >> 3) * (uint64_t)track->length) / (uint64_t)oldTrack->length) << 3;
         } else {
-            if (oldTrack->bits && (oldTrack->bits != track->bits))
-                headOffset = (oldHeadOffset * track->bits) / oldTrack->bits;
+            if (oldTrack->bits != track->bits)
+                 headOffset = ((uint64_t)oldHeadOffset * (uint64_t)track->bits) / (uint64_t)oldTrack->bits;
         }
-    }
+    } else
+        headOffset = 0;
 
     paula.turbo = ((structure.type != DiskStructure::IPF) || !track->cellWidth) ? paula.turboRequested : 0;
 
