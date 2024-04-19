@@ -1068,7 +1068,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         
         media->guid = uintptr_t(file);
         emulator->insertMedium(media, data, size);
-        emulator->writeProtect(media, false);
+        emulator->writeProtect(media, file->isArchived() || file->isReadOnly());
         if (!mediaGroup->isProgram())
             filePool->assign( _ident(emulator, media->name), file);
     } else {        
@@ -1101,7 +1101,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     fSetting->setPath(file->getFile(), !cmd->autoload);
     fSetting->setFile(item->info.name, !cmd->autoload);
     fSetting->setId(item->id, !cmd->autoload);
-    fSetting->setWriteProtect(false, !cmd->autoload);
+    fSetting->setWriteProtect(file->isArchived() || file->isReadOnly(), !cmd->autoload);
 
     filePool->unloadOrphaned();
 
