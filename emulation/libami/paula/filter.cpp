@@ -27,6 +27,18 @@ namespace LIBAMI {
 
 auto Paula::setLedFilter(bool state) -> void {
     useLedFilter = state;
+    informPowerLED();
+}
+
+auto Paula::informPowerLED() -> void {
+    bool powerLed = useLedFilter;
+
+    if (filterMode == 1 || filterMode == 4)
+        powerLed = false;
+    else if ( (filterMode == 3) || (filterMode == 6) || (!filterMode && agnus.a1000()))
+        powerLed = true;
+
+    system->interface->informPowerLED( powerLed );
 }
 
 auto Paula::setFilter() -> void {

@@ -148,6 +148,7 @@ struct Paula {
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
     auto disableAudioOut(bool state) -> void { audioOut = !state; }
     auto setLedFilter(bool state) -> void;
+    auto informPowerLED() -> void;
     auto setFilter() -> void;
     auto setFilterMode( int val ) -> void;
     auto audioEvent() -> void;

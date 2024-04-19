@@ -541,6 +541,7 @@ auto States::updateModels() -> void {
         view->updateSpeedLabels();
 
     activeVideoManager->resetTempData(0, true);
+    view->updatePowerMenu();
 }
 
 auto States::updateExpansionJumper() -> void {
