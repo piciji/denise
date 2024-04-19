@@ -309,7 +309,7 @@ auto pFont::add( CustomFont* customFont ) -> bool {
     return FcConfigAppFontAddFile(FcConfigGetCurrent(), file);
 }
 
-auto pFont::create(std::string desc) -> PangoFontDescription* {
+auto pFont::create(const std::string& desc) -> PangoFontDescription* {
     std::vector<std::string> tokens = String::split(desc, ',');
 	
     std::string family = "Sans";
