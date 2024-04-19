@@ -8,7 +8,7 @@
 
 #define LIBAMI_MOTOR_ACCELERATION_CYCLES Agnus::msecToDMACycles(360)
 #define LIBAMI_MOTOR_DECELERATION_CYCLES Agnus::msecToDMACycles(480)
-#define LIBAMI_DSK_CHANGE_CYCLES Agnus::msecToDMACycles(1700)
+#define LIBAMI_DSK_CHANGE_CYCLES Agnus::msecToDMACycles(1900)
 
 namespace LIBAMI {
 
@@ -252,6 +252,7 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     if (!structure.attach(data, size))
         return false;
 
+    headOffset = 0;
     inserted = true;
     stepSettleClock = 0;
     accum = 0;
@@ -278,6 +279,15 @@ auto DiskDrive::detach() -> void {
     dskChange = true;
     inserted = false;
     track = getDummyTrack();
+}
+
+auto DiskDrive::writeProtect(bool state) -> void {
+    structure.writeProtected = state;
+    // simulate disk out -> in (Final Mission expects this)
+    if (system->powerOn) {
+        dskChangeClock = system->agnus.clock;
+        dskChange = true;
+    }
 }
 
 auto DiskDrive::write() -> void {
@@ -478,8 +488,21 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
 }
 
 inline auto DiskDrive::updateTrack() -> void {
+    unsigned oldHeadOffset = headOffset;
+    DiskStructure::Track* oldTrack = track;
     accum = 0;
     track = &structure.tracks[(cylinder << 1) | side];
+
+    if (oldTrack && oldTrack->bits && oldHeadOffset) {
+        if (structure.type == DiskStructure::ADF) {
+            if (oldTrack->length != track->length)
+                headOffset = ((((uint64_t)oldHeadOffset >> 3) * (uint64_t)track->length) / (uint64_t)oldTrack->length) << 3;
+        } else {
+            if (oldTrack->bits != track->bits)
+                 headOffset = ((uint64_t)oldHeadOffset * (uint64_t)track->bits) / (uint64_t)oldTrack->bits;
+        }
+    } else
+        headOffset = 0;
 
     paula.turbo = ((structure.type != DiskStructure::IPF) || !track->cellWidth) ? paula.turboRequested : 0;
 

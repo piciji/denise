@@ -288,6 +288,7 @@ struct Agnus {
     auto iackCycle(uint8_t level, uint8_t& vector) -> int;
     auto resetOut() -> void;
     auto pullResetLine(bool state = true) -> void;
+    auto setLines() -> void;
 
     constexpr static auto msecToDMACycles(const unsigned ms) -> unsigned { return 3550 * ms; } // average for PAL/NTSC, todo: check if more accuracy is needed
     auto usecToDMACycles(unsigned us) -> unsigned { return 3.55f * (float)us + 0.5f; }

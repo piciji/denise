@@ -477,7 +477,7 @@ auto Interface::writeProtectDisk(Media* media, bool state) -> void {
     if (!media || !media->group->isDisk())
         return;
 
-    system->diskDrives[ media->id ].structure.writeProtected = state;
+    system->diskDrives[ media->id ].writeProtect(state);
 }
 
 auto Interface::isWriteProtectedDisk(Media* media) -> bool {

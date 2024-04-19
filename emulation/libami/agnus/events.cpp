@@ -362,7 +362,6 @@ auto Agnus::HTotalEvent() -> void {
             } else
                 laceMode = 0;
             initVCounter = true;
-            lines = (beamCon & VARBEAMEN) ? vTotal : (ntsc ? 261 : 311);
         }
         updateEvent<EVENT_HTOTAL>(1);
         hTotalFirst = false;

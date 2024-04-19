@@ -4,8 +4,8 @@
 namespace DRIVER {
 
     struct Version {
-        GLint major;
-        GLint minor;
+        GLint major = 0;
+        GLint minor = 0;
         const GLubyte* glsl;
     };
 

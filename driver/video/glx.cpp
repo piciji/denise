@@ -78,12 +78,10 @@ struct GLX : public Video, GL3, RenderThread {
 
 		screen = DefaultScreen(display);
 
-        glXQueryVersion(display, &version.major, &version.minor);
-        glGetIntegerv(GL_MAJOR_VERSION, &version.major);
-        glGetIntegerv(GL_MINOR_VERSION, &version.minor);
-        version.glsl = glGetString( GL_SHADING_LANGUAGE_VERSION );
+        int glxMajor = 0, glxMinor = 0;
+        glXQueryVersion(display, &glxMajor, &glxMinor);
         //require GLX 1.3+ API
-        if(version.major < 1 || (version.major == 1 && version.minor < 3))
+        if(glxMajor < 1 || (glxMajor == 1 && glxMinor < 3))
             return false;
 
         XWindowAttributes window_attributes;
@@ -140,6 +138,19 @@ struct GLX : public Video, GL3, RenderThread {
         glXDestroyContext(display, glxcontext);
         glxcontext = (GLXContext)getContext(false);
         glXMakeCurrent(display, glxwindow, glxcontext);
+
+        glGetIntegerv(GL_MAJOR_VERSION, &version.major);
+        glGetIntegerv(GL_MINOR_VERSION, &version.minor);
+        version.glsl = glGetString( GL_SHADING_LANGUAGE_VERSION );
+
+        if (version.major == 0) {
+            const char* _version = (const char*) glGetString(GL_VERSION);
+
+            if (!_version || sscanf(_version, "%u.%u", &version.major, &version.minor) != 2) {
+                version.major = 3;
+                version.minor = 2;
+            }
+        }
 
         if(glXSwapIntervalEXT) glXSwapIntervalEXT(display, glXGetCurrentDrawable(), settings.synchronize ? 1 : 0);
         else if(glXSwapInterval) glXSwapInterval(settings.synchronize ? 1 : 0);

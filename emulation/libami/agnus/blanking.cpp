@@ -14,6 +14,9 @@ auto Agnus::startHblank() -> void {
         if (lineVCounter < 100) {// could happen, if beam position has been changed or uncontrolled register usage
             lineVCounter = 100; // otherwise video driver could crash
             std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
+        } else if (lineVCounter > (laceFrame ? 600 : 300) ) {
+            lineVCounter = laceFrame ? 600 : 300;
+            std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
         }
 
         int width = denise.hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;

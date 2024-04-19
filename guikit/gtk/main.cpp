@@ -248,6 +248,7 @@ auto pWindow::dragDrop(GtkWidget* widget, GdkDragContext* context, gint x, gint 
     if(self->viewport && self->viewport->viewport.onDrop && self->viewport->viewport.onDragEnter)
         self->viewport->viewport.onDrop(self->viewport->paths);
 
+    gtk_drag_finish(context, TRUE, FALSE, time);
     return TRUE;
 }
 

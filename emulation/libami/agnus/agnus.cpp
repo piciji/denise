@@ -52,7 +52,7 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
     wom = new uint8_t[256 * 1024];
     ntsc = false;
 
-    frameBuffer = new uint16_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT];
+    frameBuffer = new uint16_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT + LINE_RENDER_OFFSET];
     lineCallback.use = false;
     lineCallback.called = true;
     lineCallback.line = 0;
@@ -871,6 +871,10 @@ auto Agnus::resetFps() -> void {
         fps = (double)frequency() / (227.5 * 263.0); // start with lol toggling
     else
         fps = (double)frequency() / (227.0 * 313.0);
+}
+
+inline auto Agnus::setLines() -> void {
+    lines = (beamCon & VARBEAMEN) ? vTotal : (ntsc ? 261 : 311);
 }
 
 template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_A_H>(uint32_t adr, uint16_t& result) -> void;
