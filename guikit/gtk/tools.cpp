@@ -309,7 +309,7 @@ auto pFont::add( CustomFont* customFont ) -> bool {
     return FcConfigAppFontAddFile(FcConfigGetCurrent(), file);
 }
 
-auto pFont::create(std::string desc) -> PangoFontDescription* {
+auto pFont::create(const std::string& desc) -> PangoFontDescription* {
     std::vector<std::string> tokens = String::split(desc, ',');
 	
     std::string family = "Sans";
@@ -367,7 +367,7 @@ auto pFont::size(std::string font, std::string text) -> Size {
     return size;
 }
 
-auto pFont::setFont(GtkWidget* widget, std::string font) -> PangoFontDescription* {
+auto pFont::setFont(GtkWidget* widget, const std::string& font) -> PangoFontDescription* {
     auto gtkFont = pFont::create(font);
     pFont::setFont(widget, (gpointer)gtkFont);
     return gtkFont;

@@ -68,7 +68,7 @@ auto pLabel::setGeometry(Geometry geometry) -> void {
     });
 }
     
-auto pLabel::setText(std::string text) -> void {
+auto pLabel::setText(const std::string& text) -> void {
     @autoreleasepool {
         [cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
     }

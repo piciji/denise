@@ -66,7 +66,7 @@ auto pFont::create(uint8_t* data, unsigned size) -> HFONT {
 	return (HFONT)AddFontMemResourceEx( data, size, NULL, &nFonts );
 }
 
-auto pFont::create(std::string desc) -> HFONT {
+auto pFont::create(const std::string& desc) -> HFONT {
     static float dpiX = dpi().x;
     std::vector<std::string> tokens = String::split(desc, ',');
 
@@ -108,7 +108,7 @@ auto pFont::free(HFONT& hfont) -> void {
     hfont = 0;
 }
 
-auto pFont::size(std::string font, std::string text) -> Size {
+auto pFont::size(const std::string& font, const std::string& text) -> Size {
     HFONT hfont = pFont::create(font);
     Size size = pFont::size(hfont, text);
     free(hfont);

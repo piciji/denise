@@ -412,7 +412,7 @@ auto Window::handle() -> uintptr_t {
     return p.handle();
 }
 
-auto Window::Cocoa::setTitleForAppMenuItem(AppMenuItem appMenuItem, std::string title) -> void {
+auto Window::Cocoa::setTitleForAppMenuItem(AppMenuItem appMenuItem, const std::string& title) -> void {
 #if GUIKIT_COCOA
     window.p.setTitleForAppMenuItem(appMenuItem, title);
 #endif
@@ -445,17 +445,17 @@ StatusBar::StatusBar() : p(*new pStatusBar(*this)), Base() {}
 
 StatusBar::~StatusBar() { delete &p; }
 
-auto StatusBar::setFont(std::string font) -> void {    
+auto StatusBar::setFont(const std::string& font) -> void {
     state.font = font;
     p.setFont(font);    
 }
 
-auto StatusBar::setText(std::string text) -> void {
+auto StatusBar::setText(const std::string& text) -> void {
     state.text = text;
     p.setText(text);
 }
 
-auto StatusBar::append(unsigned id, std::string text, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
+auto StatusBar::append(unsigned id, const std::string& text, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {
 	Part part;
 	part.id = id;
     part.width = p.getWidth( text );
@@ -506,7 +506,7 @@ auto StatusBar::removePart( unsigned id ) -> void {
     state.updatePending = true;
 }
 
-auto StatusBar::updateDimension( unsigned id, std::string text ) -> void {
+auto StatusBar::updateDimension( unsigned id, const std::string& text ) -> void {
     for(auto& part : state.parts) {
         if (part.id == id) {
             part.width = p.getWidth( text );

@@ -143,7 +143,7 @@ auto pStatusBar::destroy() -> void {
     hwndTip = 0;
 }
 
-auto pStatusBar::setFont(std::string font) -> void {
+auto pStatusBar::setFont(const std::string& font) -> void {
     
     pFont::free(hfont);
     hfont = pFont::create(font);    
@@ -152,7 +152,7 @@ auto pStatusBar::setFont(std::string font) -> void {
         SendMessage(hwnd, WM_SETFONT, (WPARAM)hfont, 0);
 }
 
-auto pStatusBar::setText(std::string text) -> void {
+auto pStatusBar::setText(const std::string& text) -> void {
     if (hwnd)
         SendMessage(hwnd, SB_SETTEXT, 0 | SBT_NOBORDERS, (LPARAM)(wchar_t*)utf16_t(text));
     
@@ -183,7 +183,7 @@ auto pStatusBar::getHeight() -> unsigned {
     return src.bottom - src.top;
 }
 
-auto pStatusBar::getWidth(std::string text) -> unsigned {
+auto pStatusBar::getWidth(const std::string& text) -> unsigned {
     
     if (text == "")
         return 0;

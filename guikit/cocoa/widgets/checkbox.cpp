@@ -38,7 +38,7 @@ auto pCheckBox::setChecked(bool checked) -> void {
     }
 }
 
-auto pCheckBox::setText(std::string text) -> void {
+auto pCheckBox::setText(const std::string& text) -> void {
     @autoreleasepool {
         [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }

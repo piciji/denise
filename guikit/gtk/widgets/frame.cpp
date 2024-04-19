@@ -56,7 +56,7 @@ auto pFrame::getDisplacement() -> Position {
 }
 
 
-auto pFrame::setText(std::string text) -> void {
+auto pFrame::setText(const std::string& text) -> void {
     gtk_frame_set_label(GTK_FRAME(gtkWidget), text.c_str());
 	setFont(widget.font());
 }

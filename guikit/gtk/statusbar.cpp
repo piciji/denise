@@ -39,7 +39,7 @@ auto pStatusBar::create() -> void {
 	setFont( statusBar.font().empty() ? Font::system() : statusBar.font() );		
 }
 
-auto pStatusBar::setFont(std::string font) -> void {
+auto pStatusBar::setFont(const std::string& font) -> void {
 	if (!gridWidget)
 		return;
 	
@@ -50,7 +50,7 @@ auto pStatusBar::setFont(std::string font) -> void {
 	statusHeight += 6; // add top and bottom margin
 }
 
-auto pStatusBar::setText(std::string text) -> void {
+auto pStatusBar::setText(const std::string& text) -> void {
 	
 	if (!gridWidget)
 		return;

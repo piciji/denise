@@ -10,7 +10,7 @@ auto pCheckButton::setChecked(bool checked) -> void {
     locked = false;
 }
 
-auto pCheckButton::setText(std::string text) -> void {
+auto pCheckButton::setText(const std::string& text) -> void {
     gtk_button_set_label(GTK_BUTTON(gtkWidget), text.c_str());
     //setFont( widget.font() );
     calculatedMinimumSize.updated = false;

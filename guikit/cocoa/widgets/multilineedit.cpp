@@ -89,7 +89,7 @@ auto pMultilineEdit::text() -> std::string {
     }
 }
 
-auto pMultilineEdit::setText(std::string text) -> void {
+auto pMultilineEdit::setText(const std::string& text) -> void {
     @autoreleasepool{
         [[cocoaView content] setString: [NSString stringWithUTF8String: text.c_str()]];
         [cocoaView configure];

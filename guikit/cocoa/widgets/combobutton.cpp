@@ -70,7 +70,7 @@ auto pComboButton::setSelection(unsigned selection) -> void {
     }
 }
 
-auto pComboButton::setText(unsigned selection, std::string text) -> void {
+auto pComboButton::setText(unsigned selection, const std::string& text) -> void {
     @autoreleasepool {
         [[cocoaView itemAtIndex:selection] setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }

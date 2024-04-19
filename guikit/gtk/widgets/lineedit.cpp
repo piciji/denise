@@ -35,7 +35,7 @@ auto pLineEdit::setEditable(bool editable) -> void {
     gtk_editable_set_editable(GTK_EDITABLE(gtkWidget), editable);
 }
 
-auto pLineEdit::setText(std::string text) -> void {
+auto pLineEdit::setText(const std::string& text) -> void {
     locked = true;
 	calculatedMinimumSize.updated = false;
     gtk_entry_set_text(GTK_ENTRY(gtkWidget), text.c_str());

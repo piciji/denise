@@ -73,7 +73,7 @@ auto pTabFrame::buildImageList() -> void {
     }
 }
 
-auto pTabFrame::setText(unsigned selection, std::string text) -> void {
+auto pTabFrame::setText(unsigned selection, const std::string& text) -> void {
     calculatedMinimumSize.updated = false;
     utf16_t wtext(text);
     TCITEM item;

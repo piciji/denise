@@ -27,7 +27,7 @@ auto pLineEdit::setEditable(bool editable) -> void {
         SendMessage(hwnd, EM_SETREADONLY, !editable, 0);
 }
 
-auto pLineEdit::setText(std::string text) -> void {
+auto pLineEdit::setText(const std::string& text) -> void {
     locked = true;
     pWidget::setText(text);
     locked = false;

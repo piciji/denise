@@ -29,7 +29,7 @@ auto pRadioBox::setChecked() -> void {
     parent().locked = false;
 }
 
-auto pRadioBox::setText(std::string text) -> void {
+auto pRadioBox::setText(const std::string& text) -> void {
     gtk_button_set_label(GTK_BUTTON(gtkWidget), text.c_str());
     //setFont( widget.font() );
     calculatedMinimumSize.updated = false;

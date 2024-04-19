@@ -167,8 +167,8 @@ struct pStatusBar {
     auto create() -> void;
     auto destroy() -> void;
     
-    auto setFont(std::string font) -> void;
-    auto setText(std::string text) -> void;
+    auto setFont(const std::string& font) -> void;
+    auto setText(const std::string& text) -> void;
         
     auto drawItem(WPARAM wparam, LPARAM lparam) -> void;
     auto update() -> void;
@@ -177,7 +177,7 @@ struct pStatusBar {
     auto updatePosition() -> void;
     auto setStatusVisible(bool visible) -> void;
     auto getHeight() -> unsigned;
-    auto getWidth(std::string text) -> unsigned;
+    auto getWidth(const std::string& text) -> unsigned;
     auto setTooltip(StatusBar::Part* part) -> void;
     auto setComposited(bool state) -> void;
 	auto setLockDisabled(bool state) -> void;
@@ -217,7 +217,7 @@ struct pWidget {
     virtual auto setEnabled(bool enabled) -> void;
     virtual auto setVisible(bool visible) -> void;
     virtual auto setFont(std::string font) -> void;
-    virtual auto setText(std::string text) -> void;
+    virtual auto setText(const std::string& text) -> void;
     virtual auto setGeometry(Geometry geometry) -> void;
     virtual auto rebuild() -> void;
 	virtual auto setForegroundColor(unsigned color) -> void {}
@@ -248,7 +248,7 @@ struct pLineEdit : pWidget {
 
     auto minimumSize() -> Size;
     auto setEditable(bool editable) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto text() -> std::string;
     auto setDroppable(bool droppable) -> void;
     auto setMaxLength( unsigned maxLength ) -> void;
@@ -267,7 +267,7 @@ struct pMultilineEdit : pWidget {
     MultilineEdit& multilineEdit;
 
     auto setEditable(bool editable) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto text() -> std::string;
     auto setForegroundColor(unsigned color) -> void;
 
@@ -284,7 +284,7 @@ struct pLabel : pWidget {
     Label& label;
 
     auto minimumSize() -> Size;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
 	auto setEnabled(bool enabled) -> void;
 	auto setForegroundColor(unsigned color) -> void;
     auto setFont(std::string font) -> void;
@@ -301,7 +301,7 @@ struct pHyperlink : pWidget {
     
     pHyperlink(Hyperlink& hyperlink) : pWidget(hyperlink), hyperlink(hyperlink) {}
     auto minimumSize() -> Size;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto rebuild() -> void;
     auto create() -> void;
     auto generate() -> std::string;
@@ -415,7 +415,7 @@ struct pComboButton : pWidget {
     auto reset() -> void;
     auto setGeometry(Geometry geometry) -> void;
     auto setSelection(unsigned selection) -> void;
-    auto setText(unsigned selection, std::string text) -> void;
+    auto setText(unsigned selection, const std::string& text) -> void;
     auto rebuild() -> void;
     auto create() -> void;
     auto onChange() -> void;
@@ -533,7 +533,7 @@ struct pTreeViewItem {
     auto invalidateParent() -> void;
 	auto init() -> void {}
     auto update(TreeViewItem* parent) -> void;
-    auto setText(std::string text) -> void;
+    auto setText(const std::string& text) -> void;
     auto setSelected() -> void;
     auto setExpanded(bool expanded) -> void;
     auto setImage(Image& image) -> void;
@@ -607,7 +607,7 @@ struct pFrame : pWidget {
 	auto getBorderColor() -> COLORREF;
     auto setEnabled(bool enabled) -> void;
 	
-	auto setText(std::string text) -> void;
+	auto setText(const std::string& text) -> void;
 	auto setFont(std::string font) -> void;
     
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
@@ -629,7 +629,7 @@ struct pTabFrame : pWidget {
     auto create() -> void;
     auto append(std::string text, Image* image) -> void;
     auto remove(unsigned selection) -> void;
-    auto setText(unsigned selection, std::string text) -> void;
+    auto setText(unsigned selection, const std::string& text) -> void;
     auto setSelection(unsigned selection) -> void;
     auto onChange() -> void;
     auto setImage(unsigned selection, Image& image) -> void;
@@ -833,11 +833,11 @@ struct pMessageWindow {
 
 struct pFont {
     static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
-    static auto create(std::string desc) -> HFONT;
+    static auto create(const std::string& desc) -> HFONT;
 	static auto create(uint8_t* data, unsigned size) -> HFONT;
     static auto free(HFONT& hfont) -> void;
     static auto size(HFONT hfont, std::string text) -> Size;
-    static auto size(std::string font, std::string text) -> Size;
+    static auto size(const std::string& font, const std::string& text) -> Size;
 	static auto findMemoryFont(std::string name) -> HFONT;
     static auto dpi() -> Position;
     static auto scale( unsigned pixel ) -> unsigned;

@@ -245,7 +245,7 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
     }
 }
 
-auto pFont::cocoaFont(std::string desc) -> NSFont* {
+auto pFont::cocoaFont(const std::string& desc) -> NSFont* {
     std::vector<std::string> tokens = String::split(desc, ',');
 
     NSString* family = @"Lucida Grande";

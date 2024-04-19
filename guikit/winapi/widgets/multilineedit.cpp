@@ -23,10 +23,11 @@ auto pMultilineEdit::setForegroundColor(unsigned color) -> void {
         InvalidateRect(hwnd, 0, false);
 }
 
-auto pMultilineEdit::setText(std::string text) -> void {
+auto pMultilineEdit::setText(const std::string& text) -> void {
     locked = true;
-    GUIKIT::String::replace(text, "\n", "\r\n");
-    pWidget::setText(text);
+    std::string _text = text;
+    GUIKIT::String::replace(_text, "\n", "\r\n");
+    pWidget::setText(_text);
     locked = false;
 }
 

@@ -32,7 +32,7 @@ auto pTreeViewItem::invalidateParent() -> void {
     }
 }
 
-auto pTreeViewItem::setText(std::string text) -> void {
+auto pTreeViewItem::setText(const std::string& text) -> void {
     if (!parentTreeView()) return;
 
     gtk_tree_store_set(parentTreeView()->p.gtkTreeStore, &iter, 1, treeViewItem.text().c_str(), -1);

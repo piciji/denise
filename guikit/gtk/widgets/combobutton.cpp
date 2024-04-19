@@ -30,7 +30,7 @@ auto pComboButton::setSelection(unsigned selection) -> void {
     locked = false;
 }
 
-auto pComboButton::setText(unsigned selection, std::string text) -> void {
+auto pComboButton::setText(unsigned selection, const std::string& text) -> void {
     locked = true;
     gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(gtkWidget), selection);
     gtk_combo_box_text_insert_text(GTK_COMBO_BOX_TEXT(gtkWidget), selection, text.c_str());

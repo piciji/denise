@@ -105,7 +105,7 @@ auto pStatusBar::reposition() -> void {
     }
 }
 
-auto pStatusBar::setText(std::string text) -> void {
+auto pStatusBar::setText(const std::string& text) -> void {
     @autoreleasepool {
         if (!cocoaView)
             return;
@@ -114,7 +114,7 @@ auto pStatusBar::setText(std::string text) -> void {
     }
 }
 
-auto pStatusBar::setFont(std::string font) -> void {
+auto pStatusBar::setFont(const std::string& font) -> void {
     @autoreleasepool {
         if (!cocoaView)
             return;
@@ -131,7 +131,7 @@ auto pStatusBar::setFont(std::string font) -> void {
     reposition();
 }
     
-auto pStatusBar::getWidth(std::string text) -> unsigned {
+auto pStatusBar::getWidth(const std::string& text) -> unsigned {
     if (text == "")
         return 0;
     
