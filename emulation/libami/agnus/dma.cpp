@@ -368,67 +368,191 @@ auto Agnus::canBlitterUseBus() -> bool {
     return true;
 };
 
-template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& result) -> bool {
-    if(!canBlitterUseBus())
-        return false;
+// template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& result) -> bool {
+//     if(!canBlitterUseBus())
+//         return false;
+//
+//     busUsage = BUS_USAGE_BLITTER;
+//
+//     result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
+//
+//     dataBus = result;
+//     dmaClock = clock;
+//
+//     // if a modified pointer is used for DMA in the next cycle, the change is ignored.
+//     inactivateOneCycleEvent<true>(ptrEvent);
+//
+//     return true;
+// }
+//
+// auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
+//     if(!canBlitterUseBus())
+//         return false;
+//
+//     busUsage = BUS_USAGE_BLITTER;
+//
+//     adr &= dmaChipMemMask;
+//     if (trackMemChanges)
+//         rememberChipMem(adr);
+//
+//     *(uint16_t*)(chipMem + adr) = _swapWord(value);
+//
+//     dataBus = value;
+//     dmaClock = clock;
+//
+//     inactivateOneCycleEvent<true>(PTR_BLT_D_H);
+//
+//     return true;
+// }
 
+// template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
+//     busUsage = BUS_USAGE_BLITTER;
+//
+//     result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
+//
+//     dataBus = result;
+//     dmaClock = clock;
+//
+//     inactivateOneCycleEvent<true>(ptrEvent);
+// }
+//
+// auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
+//     busUsage = BUS_USAGE_BLITTER;
+//
+//     adr &= dmaChipMemMask;
+//     if (trackMemChanges)
+//         rememberChipMem(adr);
+//
+//     *(uint16_t*)(chipMem + adr) = _swapWord(value);
+//
+//     dataBus = value;
+//     dmaClock = clock;
+//
+//     inactivateOneCycleEvent<true>(PTR_BLT_D_H);
+// }
+
+template<uint8_t ptrEvent, bool desc, bool add> auto Agnus::fetchBlitterDma(uint32_t& adr, uint16_t& result, int16_t& modVal ) -> void {
     busUsage = BUS_USAGE_BLITTER;
+    bool buggy = copper.state == Copper::Read1Buggy;
+
+    if (buggy) {
+        adr |= copper.copPtrBefore;
+
+        if constexpr (desc)  copper.copPtr += -modVal;
+        else                 copper.copPtr += modVal;
+    }
 
     result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
+
+    if (!buggy) {
+        if constexpr (add) {
+            if constexpr (desc)  adr += -2;
+            else                 adr += +2;
+        }
+    } else
+        adr = copper.copPtrBefore;
+
+    if constexpr (desc)  adr += -modVal;
+    else                 adr += modVal;
 
     dataBus = result;
     dmaClock = clock;
 
-    // if a modified pointer is used for DMA in the next cycle, the change is ignored.
     inactivateOneCycleEvent<true>(ptrEvent);
-
-    return true;
 }
 
-auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
-    if(!canBlitterUseBus())
-        return false;
-
+template<uint8_t ptrEvent, bool desc, bool add> auto Agnus::fetchBlitterDma(uint32_t& adr, uint16_t& result ) -> void {
     busUsage = BUS_USAGE_BLITTER;
+    bool buggy = copper.state == Copper::Read1Buggy;
+
+    if (buggy) {
+        adr |= copper.copPtrBefore;
+    }
+
+    result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
+
+    if (!buggy) {
+        if constexpr (add) {
+            if constexpr (desc)  adr += -2;
+            else                 adr += +2;
+        }
+    } else
+        adr = copper.copPtrBefore;
+
+    dataBus = result;
+    dmaClock = clock;
+
+    inactivateOneCycleEvent<true>(ptrEvent);
+}
+
+template<bool desc, bool add> auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, int16_t& modVal) -> void {
+    busUsage = BUS_USAGE_BLITTER;
+    bool buggy = copper.state == Copper::Read1Buggy;
 
     adr &= dmaChipMemMask;
     if (trackMemChanges)
         rememberChipMem(adr);
 
+    if (buggy) {
+        adr |= copper.copPtrBefore;
+
+        if constexpr (desc)  copper.copPtr += -modVal;
+        else                 copper.copPtr += modVal;
+    }
+
     *(uint16_t*)(chipMem + adr) = _swapWord(value);
+
+    if (!buggy) {
+        if constexpr (add) {
+            if constexpr (desc)  adr += -2;
+            else                 adr += +2;
+        }
+    } else
+        adr = copper.copPtrBefore;
+
+    if constexpr (desc)  adr += -modVal;
+    else                 adr += modVal;
 
     dataBus = value;
     dmaClock = clock;
 
     inactivateOneCycleEvent<true>(PTR_BLT_D_H);
-
-    return true;
 }
 
-template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
+template<bool desc, bool add> auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value) -> void {
     busUsage = BUS_USAGE_BLITTER;
-
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
-
-    dataBus = result;
-    dmaClock = clock;
-
-    inactivateOneCycleEvent<true>(ptrEvent);
-}
-
-auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
-    busUsage = BUS_USAGE_BLITTER;
+    bool buggy = copper.state == Copper::Read1Buggy;
 
     adr &= dmaChipMemMask;
     if (trackMemChanges)
         rememberChipMem(adr);
 
+    if (buggy) {
+        adr |= copper.copPtrBefore;
+    }
+
     *(uint16_t*)(chipMem + adr) = _swapWord(value);
+
+    if (!buggy) {
+        if constexpr (add) {
+            if constexpr (desc)  adr += -2;
+            else                 adr += +2;
+        }
+    } else
+        adr = copper.copPtrBefore;
 
     dataBus = value;
     dmaClock = clock;
 
     inactivateOneCycleEvent<true>(PTR_BLT_D_H);
+}
+
+auto Agnus::checkCopperBlitterConflict(uint32_t& ptr) -> bool {
+    if (useCopperDMAForQueue() && ((bplQueue >> 16) & 0xff)) { // DMAL, Refresh is out of way
+        return true;
+    }
+
+    return false;
 }
 
 }

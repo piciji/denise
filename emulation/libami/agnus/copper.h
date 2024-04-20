@@ -49,6 +49,7 @@ struct Copper {
         WARMUP                          = 22,
         WARMUP2                         = 23,
         Read1FromSkip                   = 24 | 0x80,
+        Read1Buggy                      = 25 | 0x80,
     } state, prevState;
 
     Agnus& agnus;
@@ -59,6 +60,7 @@ struct Copper {
     uint32_t cop1lc;
     uint32_t cop2lc;
     uint32_t copPtr;
+    uint32_t copPtrBefore;
 
     uint16_t ir1;
     uint16_t ir2;

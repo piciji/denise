@@ -301,13 +301,19 @@ struct Agnus {
     auto canBlitterUseBus() -> bool;
     template<bool oddCycle1 = false> auto canCopperUseBus() -> bool;
     template<bool oddCycle1 = false> auto allocateCopper() -> bool;
-    template<uint8_t ptrEvent> auto fetchBlitterDma(uint32_t adr, uint16_t& result) -> bool;
+    //template<uint8_t ptrEvent> auto fetchBlitterDma(uint32_t adr, uint16_t& result) -> bool;
     auto fetchCopperDma(uint32_t adr, uint16_t& result) -> bool;
     auto fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void;
-    auto writeBlitterDma(uint32_t adr, uint16_t value) -> bool;
+    //auto writeBlitterDma(uint32_t adr, uint16_t value) -> bool;
+    auto checkCopperBlitterConflict(uint32_t& ptr) -> bool;
 
-    template<uint8_t ptrEvent> auto fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void;
-    auto writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void;
+   // template<uint8_t ptrEvent> auto fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void;
+   // auto writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void;
+
+    template<uint8_t ptrEvent, bool desc, bool add> auto fetchBlitterDma(uint32_t& adr, uint16_t& result, int16_t& modVal) -> void;
+    template<uint8_t ptrEvent, bool desc, bool add> auto fetchBlitterDma(uint32_t& adr, uint16_t& result) -> void;
+    template<bool desc, bool add> auto writeBlitterDma(uint32_t& adr, uint16_t& value, int16_t& modVal ) -> void;
+    template<bool desc, bool add> auto writeBlitterDma(uint32_t& adr, uint16_t& value ) -> void;
 
     auto setRefPtr(uint16_t value) -> void;
 

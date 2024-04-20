@@ -877,13 +877,45 @@ inline auto Agnus::setLines() -> void {
     lines = (beamCon & VARBEAMEN) ? vTotal : (ntsc ? 261 : 311);
 }
 
-template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_A_H>(uint32_t adr, uint16_t& result) -> void;
-template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_B_H>(uint32_t adr, uint16_t& result) -> void;
-template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_C_H>(uint32_t adr, uint16_t& result) -> void;
+//template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_A_H>(uint32_t adr, uint16_t& result) -> void;
+//template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_B_H>(uint32_t adr, uint16_t& result) -> void;
+//template auto Agnus::fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_C_H>(uint32_t adr, uint16_t& result) -> void;
 
-template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H>(uint32_t adr, uint16_t& result) -> bool;
-template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_B_H>(uint32_t adr, uint16_t& result) -> bool;
-template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_C_H>(uint32_t adr, uint16_t& result) -> bool;
+// template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H>(uint32_t adr, uint16_t& result) -> bool;
+// template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_B_H>(uint32_t adr, uint16_t& result) -> bool;
+// template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_C_H>(uint32_t adr, uint16_t& result) -> bool;
+
+
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,true,true>(uint32_t& adr, uint16_t& result, int16_t& mod) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_B_H,true,true>(uint32_t& adr, uint16_t& result, int16_t& mod) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_C_H,true,true>(uint32_t& adr, uint16_t& result, int16_t& mod) -> void;
+template auto Agnus::writeBlitterDma<true,true>(uint32_t& adr, uint16_t& value, int16_t& mod) -> void;
+
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true>(uint32_t& adr, uint16_t& result, int16_t& mod) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_B_H,false,true>(uint32_t& adr, uint16_t& result, int16_t& mod) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_C_H,false,true>(uint32_t& adr, uint16_t& result, int16_t& mod) -> void;
+template auto Agnus::writeBlitterDma<false,true>(uint32_t& adr, uint16_t& value, int16_t& mod) -> void;
+
+//template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,false>(uint32_t& adr, uint16_t& result, int16_t& mod) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_B_H,false,false>(uint32_t& adr, uint16_t& result, int16_t& mod) -> void;
+//template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_C_H,false,false>(uint32_t& adr, uint16_t& result, int16_t& mod) -> void;
+//template auto Agnus::writeBlitterDma<false,false>(uint32_t& adr, uint16_t& value, int16_t& mod) -> void;
+
+
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true>(uint32_t& adr, uint16_t& result) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_B_H,false,true>(uint32_t& adr, uint16_t& result) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_C_H,false,true>(uint32_t& adr, uint16_t& result) -> void;
+template auto Agnus::writeBlitterDma<false,true>(uint32_t& adr, uint16_t& value) -> void;
+
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,true,true>(uint32_t& adr, uint16_t& result) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_B_H,true,true>(uint32_t& adr, uint16_t& result) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_C_H,true,true>(uint32_t& adr, uint16_t& result) -> void;
+template auto Agnus::writeBlitterDma<true,true>(uint32_t& adr, uint16_t& value) -> void;
+
+//template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,false>(uint32_t& adr, uint16_t& result) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_B_H,false,false>(uint32_t& adr, uint16_t& result) -> void;
+template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_C_H,false,false>(uint32_t& adr, uint16_t& result) -> void;
+template auto Agnus::writeBlitterDma<false,false>(uint32_t& adr, uint16_t& value) -> void;
 
 template auto Agnus::setEventInactive<Agnus::EVENT_KBD>() -> void;
 template auto Agnus::updateEvent<Agnus::EVENT_KBD>(int delay) -> void;
