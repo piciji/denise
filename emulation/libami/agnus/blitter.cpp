@@ -299,8 +299,10 @@ auto Blitter::setBltCon1(uint16_t value) -> void {
         shifter |= STAGE_CHANGE;
     else {
         flags &= ~0x300;
-        if (desc)           flags |= 0x200;
-        if (isFillMode())   flags |= 0x100;
+        if ((flags & LINE_MODE) == 0) {
+            if (desc)           flags |= 0x200;
+            if (isFillMode())   flags |= 0x100;
+        }
     }
 }
 
