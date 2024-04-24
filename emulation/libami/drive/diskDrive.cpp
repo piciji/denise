@@ -259,6 +259,7 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     wobblePos = 0;
     wobbleLimit = wobble >> 1;
     cellSpeed = 1000;
+    randomizeRpm(agnus.frequency(), true);
     updateRpm();
 
     if (driveSound && system->powerOn && system->isDisplayFrame())
@@ -417,6 +418,9 @@ inline auto DiskDrive::motorSpinning() -> bool {
     if (motor && (speed == 100)) motorSpeed = 100;
     else if (!motor && (speed == 0)) motorSpeed = 0;
 
+    if (paula.turbo > 2)
+        return motor || (speed > 40);
+
     return motor || (speed > 20);
 }
 
@@ -524,7 +528,7 @@ auto DiskDrive::setWobble(unsigned wobbleScaled) -> void {
     wobbleLimit = wobble >> 1;
 }
 
-auto DiskDrive::randomizeRpm(unsigned frequency) -> void {
+auto DiskDrive::randomizeRpm(unsigned frequency, bool prevent) -> void {
     // drive speed is 300 rounds per minute
     // more realistic speed wobbles between 299,75 - 300,25
     // so we could generate a random number in a range of 0.5
@@ -535,7 +539,7 @@ auto DiskDrive::randomizeRpm(unsigned frequency) -> void {
 
     unsigned long long cyclesPerRevolution = frequency / 5;
 
-    if (wobble) {
+    if (!prevent && wobble) {
         if (wobbleLimit < 0) { // neg
             if (--wobblePos < wobbleLimit) {
                 wobbleLimit = wobble >> 1;

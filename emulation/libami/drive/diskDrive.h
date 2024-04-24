@@ -106,7 +106,7 @@ struct DiskDrive {
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
 
     auto updateRpm() -> void;
-    static auto randomizeRpm(unsigned frequency) -> void;
+    static auto randomizeRpm(unsigned frequency, bool prevent) -> void;
     static auto setSpeed( unsigned rpmScaled ) -> void;
     static auto setWobble( unsigned wobbleScaled ) -> void;
     static auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;

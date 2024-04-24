@@ -217,7 +217,7 @@ auto System::run() -> void {
         unserializeLight();
     }
 
-    DiskDrive::randomizeRpm(agnus.frequency());
+    DiskDrive::randomizeRpm(agnus.frequency(), paula.turbo);
     for(auto& drive : diskDrives)
         drive.updateRpm();
 
