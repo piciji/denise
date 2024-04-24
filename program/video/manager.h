@@ -63,13 +63,13 @@ struct VideoManager {
     ShaderParser* parser = nullptr;
         
 	static bool synchronized;
-    static bool crtThreaded;
+    bool crtThreaded;
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
     static unsigned placeHolderFrames;
     static bool needAUpdate;
 	
-    static auto setCrtThreaded(bool state) -> void;
+    auto setCrtThreaded(bool state) -> void;
     static auto setFrameRender(uint8_t limit) -> void;
     static auto setSynchronize() -> void;
     static auto setHardSync() -> void;
@@ -202,7 +202,7 @@ struct VideoManager {
     auto calculateLumaDelay() -> void;
     template<typename T> auto createWorker(Render* re) -> void;
     auto enableCrtThread( bool state) -> void;
-    auto updateCrtThreads() -> void;
+    static auto updateCrtThreads(bool light = false) -> void;
 	auto waitForCrtRenderer() -> void;
     template<uint8_t options, typename T> auto renderPalCrt( Render& re ) -> void;
     template<uint8_t options, typename T> auto renderNtscCrt( Render& re ) -> void;

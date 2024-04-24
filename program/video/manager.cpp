@@ -19,7 +19,6 @@
 #include "../view/status.h"
 
 bool VideoManager::synchronized = true;
-bool VideoManager::crtThreaded = true;
 uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
 unsigned VideoManager::placeHolderFrames = 0;
@@ -808,16 +807,22 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     }
 }
 
-auto VideoManager::updateCrtThreads() -> void {
+auto VideoManager::updateCrtThreads(bool light) -> void {
     for (auto videoManager : videoManagers) {
         bool useRenderThread = false;
 
-        if (videoManager == this) {
-            if ((crtMode == CrtMode::Cpu) && crtThreaded)
+        if (videoManager == activeVideoManager) {
+            if ((videoManager->crtMode == CrtMode::Cpu) && videoManager->crtThreaded)
                 useRenderThread = true;
         }
 
-        videoManager->enableCrtThread(useRenderThread);
+        if (!light) {
+            videoManager->emulator->setLineCallback(useRenderThread);
+            videoManager->reinitCrtThread(true);
+        }
+
+        if (!program->warp.active)
+            videoManager->enableCrtThread(useRenderThread);
     }
 }
 

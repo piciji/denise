@@ -1203,12 +1203,45 @@ auto View::buildMenu() -> void {
     };
     if ( globalSettings->get<bool>("audio_mute", false) ) muteItem.setChecked();
     optionsMenu.append(muteItem);
+
+    screenStatusEnabledItem.onActivate = [&]() {
+        emuThread->lock();
+        globalSettings->set("video_screen_text", 2);
+        statusHandler->setMessage("");
+        emuThread->unlock();
+    };
+    statusTextMenu.append(screenStatusEnabledItem);
+
+    screenStatusDisabledItem.onActivate = [&]() {
+        emuThread->lock();
+        globalSettings->set("video_screen_text", 0);
+        statusHandler->setMessage("");
+        emuThread->unlock();
+    };
+    statusTextMenu.append(screenStatusDisabledItem);
+
+    screenStatusAutoItem.onActivate = [&]() {
+        emuThread->lock();
+        globalSettings->set("video_screen_text", 1);
+        statusHandler->setMessage("");
+        emuThread->unlock();
+    };
+    statusTextMenu.append(screenStatusAutoItem);
+
+    GUIKIT::MenuRadioItem::setGroup( screenStatusEnabledItem, screenStatusDisabledItem, screenStatusAutoItem );
+    auto statusText = globalSettings->get<unsigned>("video_screen_text", 0);
+    if (statusText == 1) screenStatusAutoItem.setChecked();
+    else if (statusText == 2) screenStatusEnabledItem.setChecked();
+    else screenStatusDisabledItem.setChecked();
+
+    statusTextMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
     fpsItem.onToggle = [&]() {
         globalSettings->set<bool>("fps", fpsItem.checked() );
         statusHandler->updateFPS( fpsItem.checked() );
     };
     if ( globalSettings->get<bool>("fps", false) ) fpsItem.setChecked();
-    optionsMenu.append(fpsItem);
+    statusTextMenu.append(fpsItem);
     
     audioBufferItem.onToggle = [&]() {
         globalSettings->set<bool>("show_audio_buffer", audioBufferItem.checked() );
@@ -1216,9 +1249,9 @@ auto View::buildMenu() -> void {
         statusHandler->updateDRC( audioBufferItem.checked() );
     };
     if ( globalSettings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
-    optionsMenu.append(audioBufferItem);
+    statusTextMenu.append(audioBufferItem);
 
-    optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
+    optionsMenu.append(statusTextMenu);
 
     saveItem.onActivate = []() {
         program->saveSettings();
@@ -1645,7 +1678,12 @@ auto View::translate() -> void {
     dynamicRateControl.setText( trans->get("dynamic_rate_control"));
 
     fullscreenItem.setText( trans->get("fullscreen"));
-    
+
+    statusTextMenu.setText(trans->get("screen_status"));
+    screenStatusEnabledItem.setText(trans->get("enabled"));
+    screenStatusDisabledItem.setText(trans->get("disabled"));
+    screenStatusAutoItem.setText("intelligent");
+
     muteItem.setText( trans->get("mute_audio"));
     fpsItem.setText( trans->get("show_fps"));
     audioBufferItem.setText( trans->get("show_audio_buffer"));

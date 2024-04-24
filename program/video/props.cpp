@@ -4,16 +4,7 @@
 
 auto VideoManager::setCrtThreaded(bool state) -> void {
     crtThreaded = state;
-	
-	for (auto videoManager : videoManagers) {
-        bool useRenderThread = (videoManager->crtMode == CrtMode::Cpu) && crtThreaded;
-
-		videoManager->emulator->setLineCallback( useRenderThread );
-		videoManager->reinitCrtThread(true);
-
-        if (!program->warp.active)
-            videoManager->enableCrtThread(useRenderThread && (videoManager == activeVideoManager));
-	}
+    updateCrtThreads();
 }
 
 auto VideoManager::usePal(bool state) -> void {
@@ -272,7 +263,7 @@ auto VideoManager::reloadSettings(bool reloadPreset) -> void {
     setCrtRealGamma( _tvGamma );
 	
 	// update only, crt mode could be changed
-    VideoManager::setCrtThreaded( VideoManager::crtThreaded );
+    setCrtThreaded( settings->get<bool>("cpu_filter_threaded", true) );
 
     if (reloadPreset)
         loadPreset();

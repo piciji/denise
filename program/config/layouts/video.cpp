@@ -1,22 +1,4 @@
 
-CrtEmulationLayout::CrtEmulationLayout() {
-    append( cpuFilterThreaded, {0u, 0u}, 5 );
-    append( shaderCache, {0u, 0u} );
-    
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
-InScreenTextLayout::InScreenTextLayout() {
-    append(option1, {0u, 0u}, 5);
-    append(option2, {0u, 0u}, 5);
-    append(option3, {0u, 0u});
-    
-    GUIKIT::RadioBox::setGroup(option1, option2, option3 );
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
 VideoGeometryLayout::Dimension::Dimension() {
     append(label, {0u, 0u}, 5);
     append(width, {50, 0u}, 10);
@@ -174,9 +156,7 @@ VideoLayout::VideoLayout() {
     videoSettingsLayout.trAuto.setChecked( globalSettings->get("adaptive_sync", false) );
     videoSettingsLayout.trAuto.setEnabled( !globalSettings->get("threaded_renderer", true) );
 
-	hLayout.append(videoGeometry, {~0u, 0u}, 20);
-    hLayout.append(screenTextLayout, {~0u, 0u}, 20);
-    hLayout.append(crtEmulation, {~0u, 0u});
+	hLayout.append(videoGeometry, {~0u, 0u});
     append(hLayout, {~0u, 0u}, 10);
     append(videoFps, {~0u, 0u});
 
@@ -232,31 +212,6 @@ VideoLayout::VideoLayout() {
         case 3: videoFps.options.Three.setChecked(); break;
     }
 
-    screenTextLayout.option1.onActivate = [this]() {
-        emuThread->lock();
-        globalSettings->set("video_screen_text", 0);
-        statusHandler->setMessage("");
-        emuThread->unlock();
-    };
-    
-    screenTextLayout.option2.onActivate = [this]() {
-        emuThread->lock();
-        globalSettings->set("video_screen_text", 1);
-        statusHandler->setMessage("");
-        emuThread->unlock();
-    };
-    
-    screenTextLayout.option3.onActivate = [this]() {
-        emuThread->lock();
-        globalSettings->set("video_screen_text", 2);
-        statusHandler->setMessage("");
-        emuThread->unlock();
-    };
-    
-    if(globalSettings->get("video_screen_text", 0) == 0) screenTextLayout.option1.setChecked();
-    if(globalSettings->get("video_screen_text", 0) == 1) screenTextLayout.option2.setChecked();
-    if(globalSettings->get("video_screen_text", 0) == 2) screenTextLayout.option3.setChecked();
-
     videoGeometry.aspectCorrectResizing.setChecked( globalSettings->get<bool>("aspect_correct_resizing", false) );
     videoGeometry.aspectCorrectResizing.onToggle = [&](bool checked) {
         emuThread->lock();
@@ -306,22 +261,6 @@ VideoLayout::VideoLayout() {
         view->updateGeometry(true);
         emuThread->unlock();
     };
-
-	crtEmulation.cpuFilterThreaded.setChecked( globalSettings->get<bool>("cpu_filter_threaded", true) );
-	crtEmulation.cpuFilterThreaded.onToggle = [this](bool checked) {
-        emuThread->lock();
-        globalSettings->set<bool>("cpu_filter_threaded", checked);
-        VideoManager::setCrtThreaded( checked );
-        emuThread->unlock();
-    };
-
-    crtEmulation.shaderCache.setChecked( globalSettings->get<bool>("shader_cache", true) );
-    crtEmulation.shaderCache.onToggle = [this](bool checked) {
-        emuThread->lock();
-        globalSettings->set<bool>("shader_cache", checked);
-        videoDriver->useShaderCache(checked);
-        emuThread->unlock();
-    };
 }
 
 auto VideoLayout::translate() -> void {
@@ -336,17 +275,7 @@ auto VideoLayout::translate() -> void {
     videoSettingsLayout.trOn.setTooltip( trans->getA("Threaded Renderer tooltip") );
     videoSettingsLayout.trAuto.setText( trans->getA("Threaded Renderer Auto") );
     videoSettingsLayout.setText( trans->get("driver_properties") );
-    
-    screenTextLayout.option1.setText( trans->get("disabled") );
-    screenTextLayout.option2.setText( trans->get("intelligent") );
-    screenTextLayout.option2.setTooltip( trans->get("tip_intelligent_screentext") );
-    screenTextLayout.option3.setText( trans->get("enabled") );
-    screenTextLayout.setText( trans->get("screen_status") );
-    
-    crtEmulation.cpuFilterThreaded.setText( trans->get("cpu filter threaded") );
-    crtEmulation.shaderCache.setText( trans->get("shader cache") );
-    crtEmulation.setText( trans->get("crt_emulation") );
-	
+
 	videoGeometry.setText(trans->get("geometry"));
     videoGeometry.aspectCorrectResizing.setText(trans->get("lock aspect ratio"));
     videoGeometry.dimension.label.setText(trans->getA("resolution", true));

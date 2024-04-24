@@ -121,8 +121,13 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem fullscreenItem;
     
         GUIKIT::MenuCheckItem muteItem;
-        GUIKIT::MenuCheckItem fpsItem;
-        GUIKIT::MenuCheckItem audioBufferItem;
+        GUIKIT::Menu statusTextMenu;
+            GUIKIT::MenuRadioItem screenStatusEnabledItem;
+            GUIKIT::MenuRadioItem screenStatusDisabledItem;
+            GUIKIT::MenuRadioItem screenStatusAutoItem;
+
+            GUIKIT::MenuCheckItem fpsItem;
+            GUIKIT::MenuCheckItem audioBufferItem;
 
         GUIKIT::MenuItem settingsItem;		
         GUIKIT::MenuItem saveItem;	

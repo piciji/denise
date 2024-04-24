@@ -252,8 +252,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     activeVideoManager = VideoManager::getInstance( emulator );
     activeInputManager = InputManager::getManager(emulator);
 
-    if (activeVideoManager)
-        activeVideoManager->updateCrtThreads();
+    VideoManager::updateCrtThreads(true);
 
     if (activeInputManager)
         activeInputManager->setupKeycodeTransfer();
@@ -341,6 +340,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             activeVideoManager->rebuildShader = true;
             statusHandler->updateDiskDriveSpace();
             setVideoDimension(activeEmulator);
+            videoDriver->useShaderCache( settings->get<bool>("shader_cache", true) );
         }
 
 		resetRunAhead();

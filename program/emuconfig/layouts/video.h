@@ -22,6 +22,7 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
             GUIKIT::CheckBox newLuma;
             GUIKIT::CheckBox tvGamma;
             GUIKIT::CheckBox linearInterpolation;
+            GUIKIT::CheckBox cpuFilterThreaded;
 
             Option(bool withSpectrum);
         } option;
@@ -78,6 +79,7 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
         struct Info : GUIKIT::HorizontalLayout {
             GUIKIT::Label label;
             GUIKIT::Label loaded;
+            GUIKIT::CheckBox shaderCache;
             GUIKIT::Button clearCache;
             GUIKIT::Button toParams;
 

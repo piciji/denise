@@ -39,15 +39,18 @@ auto Program::initVideo(bool driverChange) -> void {
         
     for( auto emulator : emulators ) {
         checkShaderSupport(emulator);
+        auto videoManager =  VideoManager::getInstance(emulator);
+        auto settings = program->getSettings( emulator );
+
+        videoManager->setCrtThreaded( settings->get<bool>("cpu_filter_threaded", true) );
 
         auto emuView = EmuConfigView::TabWindow::getView(emulator);
         if (emuView && emuView->videoLayout)
             emuView->videoLayout->updatePresets(true, true);
         else
-            VideoManager::getInstance(emulator)->reloadSettings(true);
+            videoManager->reloadSettings(true);
     }
 
-	VideoManager::setCrtThreaded( globalSettings->get<bool>("cpu_filter_threaded", true) );
     view->buildShader();
     view->loadDragnDropOverlay();
     videoDriver->setShaderProgressCallback( [](int pass, bool hasErrors) {

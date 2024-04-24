@@ -1,19 +1,4 @@
 
-struct InScreenTextLayout : GUIKIT::FramedVerticalLayout {
-    GUIKIT::RadioBox option1;
-    GUIKIT::RadioBox option2;
-    GUIKIT::RadioBox option3;
-
-    InScreenTextLayout();
-};
-
-struct CrtEmulationLayout : GUIKIT::FramedVerticalLayout {
-    GUIKIT::CheckBox cpuFilterThreaded;
-    GUIKIT::CheckBox shaderCache;
-    
-    CrtEmulationLayout();
-};
-
 struct VideoGeometryLayout : GUIKIT::FramedVerticalLayout {
     GUIKIT::CheckBox aspectCorrectResizing;
 
@@ -63,8 +48,6 @@ struct VideoFpsLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct VideoLayout : GUIKIT::VerticalLayout {
-    InScreenTextLayout screenTextLayout;
-    CrtEmulationLayout crtEmulation;
 	VideoGeometryLayout videoGeometry;
     VideoFpsLayout videoFps;
 

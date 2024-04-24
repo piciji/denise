@@ -26,7 +26,8 @@ VideoBaseLayout::View::Option::Option(bool withSpectrum) {
         append(tvGamma, {0u, 0u}, 10);
     }
 
-    append(linearInterpolation, {0u, 0u});
+    append(linearInterpolation, {0u, 0u}, 10);
+    append(cpuFilterThreaded, {0u, 0u});
 
     setAlignment(0.5);
 }
@@ -130,6 +131,7 @@ VideoShaderLayout::Main::Control::Control() {
 VideoShaderLayout::Main::Info::Info() {
     append(label,{0u, 0u}, 5);
     append(loaded,{~0u, 0u});
+    append(shaderCache, {0u, 0u}, 10);
     append(clearCache,{0u, 0u}, 10);
     append(toParams,{0u, 0u});
 
@@ -374,6 +376,13 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         program->setVideoFilter();
         emuThread->unlock();
 	};
+
+    layBase.view.option.cpuFilterThreaded.onToggle = [this](bool checked) {
+        emuThread->lock();
+        _settings->set<bool>("cpu_filter_threaded", checked);
+        vManager()->setCrtThreaded( checked );
+        emuThread->unlock();
+    };
 
     layBase.view.mode.reset.onActivate = [this]() {
         vManager()->resetSettings();
@@ -796,6 +805,14 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             return;
 
         GUIKIT::File::removeDirectory( cacheFolder + "cache" );
+    };
+
+    layShader.main.info.shaderCache.onToggle = [this](bool checked) {
+        emuThread->lock();
+        _settings->set<bool>("shader_cache", checked);
+        if (emulator == activeEmulator)
+            videoDriver->useShaderCache(checked);
+        emuThread->unlock();
     };
 
     layPass.settings.filter.nearest.onActivate = [this]() {
@@ -1298,6 +1315,8 @@ auto VideoLayout::updateVisibillity() -> void {
     }
     
     layBase.view.option.tvGamma.setEnabled( (crtCpuChecked || crtGpuChecked) && layBase.view.mode.palette.checked() && _pal );
+
+    layBase.view.option.cpuFilterThreaded.setEnabled( crtCpuChecked );
 }
 
 auto VideoLayout::translate() -> void {
@@ -1311,6 +1330,7 @@ auto VideoLayout::translate() -> void {
     layBase.view.option.newLuma.setText( trans->get("new_luma") );
     layBase.view.option.tvGamma.setText( trans->get("TV gamma") );
     layBase.view.option.linearInterpolation.setText( trans->get("linear_interpolation") );
+    layBase.view.option.cpuFilterThreaded.setText( trans->get("own thread") );
     layBase.view.mode.palette.setText( trans->get("palette") );
     layBase.view.mode.spectrum.setText( trans->get("color_spectrum") );
     layBase.view.mode.reset.setText( trans->get("reset") );
@@ -1346,6 +1366,7 @@ auto VideoLayout::translate() -> void {
 
     layShader.main.info.label.setText( trans->getA("loaded", true) );
     layShader.main.info.clearCache.setText( trans->getA("clear cache") );
+    layShader.main.info.shaderCache.setText( trans->get("shader cache") );
     layShader.main.info.toParams.setText( trans->getA("Parameter") );
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
@@ -1433,6 +1454,10 @@ auto VideoLayout::loadSettings(bool init) -> void {
     updatePresets(!init, true);
 
     layBase.view.option.linearInterpolation.setChecked( _settings->get<bool>("video_filter", true) );
+
+    layBase.view.option.cpuFilterThreaded.setChecked( _settings->get<bool>("cpu_filter_threaded", true) );
+
+    layShader.main.info.shaderCache.setChecked( _settings->get<bool>("shader_cache", true) );
 
     bool shaderInternal = _settings->get<bool>("shader_internal", true);
 
