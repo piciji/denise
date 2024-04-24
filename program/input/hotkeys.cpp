@@ -70,13 +70,13 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Savestate, "Savestate", true} );
 	customHotkeys.push_back( {Hotkey::Id::IncSlot, "Incslot", true} );
     customHotkeys.push_back( {Hotkey::Id::DecSlot, "Decslot", true} );
-    customHotkeys.push_back( {Hotkey::Id::SwapPortDevices, "swap Ports", true} );
 	customHotkeys.push_back( {Hotkey::Id::Power, "Hard Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::PowerWithUnplugCart, "Hard Reset + Unplug Cart", true} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::AnyLoad, "load software", true} );
 
 	if (dynamic_cast<LIBC64::Interface*>(emulator) ) {
+	    customHotkeys.push_back( {Hotkey::Id::SwapPortDevices, "swap Ports", false} );
 		customHotkeys.push_back( {Hotkey::Id::ToggleSidFilter, "sid_filter_toggle", false} );
 		customHotkeys.push_back( {Hotkey::Id::SwapSid, "Swap_sid", false} );
 		customHotkeys.push_back( {Hotkey::Id::DigiBoost, "Digi_boost", false} );	
@@ -219,6 +219,9 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         } break;
 
         case Hotkey::Id::SwapJoypadsPort2: {
+            if (activeEmulator != emulator)
+                break;
+
             emuThread->lock();
             auto settings = program->getSettings( emulator );
             auto connector = emulator->getConnector( 1 );
@@ -246,6 +249,9 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 emuView->inputLayout->updateConnectorButtons();
         } break;
 		case Hotkey::Id::SwapPortDevices: {
+		    if (activeEmulator != emulator)
+		        break;
+
             emuThread->lock();
             auto settings = program->getSettings( emulator );
 			auto connector1 = emulator->getConnector( 0 );
@@ -422,16 +428,20 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
         case Hotkey::IncSlot:
         case Hotkey::DecSlot:
-            emuThread->lock();
-            States::getInstance( emulator )->changeSlot( id == Hotkey::DecSlot );
+            if (emulator == activeEmulator) {
+                emuThread->lock();
+                States::getInstance( activeEmulator )->changeSlot( id == Hotkey::DecSlot );
+            }
             break;
         case Hotkey::Loadstate:
             emuThread->lock();
             States::getInstance( emulator )->load();
             break;
         case Hotkey::Savestate:
-            emuThread->lock();
-            States::getInstance( emulator )->save();
+            if (emulator == activeEmulator) {
+                emuThread->lock();
+                States::getInstance( activeEmulator )->save();
+            }
             break;
         case Hotkey::ToggleMenu:
             if(!view->fullScreen()) view->updateMenuBar( true );
@@ -800,7 +810,6 @@ auto InputManager::pollHotkeys() -> void {
 	InputMapping* starter = nullptr;
     InputMapping* anyLoad = nullptr;
     InputMapping* lastAutostart = nullptr;
-    InputMapping* swapPorts = nullptr;
 	
 	auto useEmu = activeEmulator;
     if (!useEmu)
@@ -812,14 +821,6 @@ auto InputManager::pollHotkeys() -> void {
             case Hotkey::Id::FastForward:
             case Hotkey::Id::FastForwardOff:
                 fastForwardAutostart = trigger; // use last event
-                break;
-
-            case Hotkey::Id::SwapJoypadsPort2:
-            case Hotkey::Id::SwapPortDevices:
-                if (!swapPorts)
-                    swapPorts = trigger;
-                else if (useEmu == trigger->inputManager->emulator)
-                    swapPorts = trigger;
                 break;
 
 			case Hotkey::Id::DiskSwapper:
@@ -845,18 +846,18 @@ auto InputManager::pollHotkeys() -> void {
 				if(!fastForward)
 					fastForward = trigger;
 				break;
-				
+
 			case Hotkey::IncSlot:
-			case Hotkey::DecSlot: 
+			case Hotkey::DecSlot:
 			case Hotkey::Loadstate:
 			case Hotkey::Savestate:
 				if (!stateHandler)
-					stateHandler = trigger;				
-				
+					stateHandler = trigger;
+
 				else if (useEmu == trigger->inputManager->emulator)
 					stateHandler = trigger;
 				break;
-				
+
 			case Hotkey::Power:
 			case Hotkey::SoftReset:
 				if (!starter)
@@ -913,9 +914,6 @@ auto InputManager::pollHotkeys() -> void {
     
     if (anyLoad)
 		useTrigger.push_back( anyLoad );
-
-    if (swapPorts)
-        useTrigger.push_back( swapPorts );
 
 	for( auto trigger : useTrigger )
         fireHotkey( trigger );
