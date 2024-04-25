@@ -80,9 +80,27 @@ auto StatusHandler::resetFrameCounter() -> void {
     program->loopFrames = 0;
 }
 
+auto StatusHandler::setFpsRefresh() -> void {
+    if (!activeEmulator)
+        return;
+    auto settings = program->getSettings( activeEmulator );
+    fpsCounter.updateIntervall = settings->get<unsigned>("fps_refresh", 1000, {200u, 5000u});
+
+    auto pointsBefore = fpsCounter.decimalPoints;
+    fpsCounter.decimalPoints = settings->get<unsigned>("fps_decimal_point", 3u, {0u, 3u});
+
+    if (pointsBefore != fpsCounter.decimalPoints) {
+        switch(fpsCounter.decimalPoints) {
+            case 0: statusBar->updateDimension( 0, "1000" ); break;
+            case 1: statusBar->updateDimension( 0, "1000.9" ); break;
+            case 2: statusBar->updateDimension( 0, "1000.99" ); break;
+            case 3: statusBar->updateDimension( 0, "1000.999" ); break;
+        }
+    }
+}
+
 auto StatusHandler::updateFrameCounter() -> void {
     float deviation;
-    static auto updateIntervall = globalSettings->getOrInit<unsigned>("fps_update", 1000, {200u, 5000u});
 
     if (fpsCounter.measures == FPS_MEASUREMENTS) {
         fpsCounter.sum -= fpsCounter.deltas[fpsCounter.pos];
@@ -100,12 +118,6 @@ auto StatusHandler::updateFrameCounter() -> void {
 
     fpsCounter.sum += delta;
 
-    // FPS_MEASUREMENTS = sum
-    // x = 1s
-
-    // FPS_MEASUREMENTS * 1 = sum * x
-    // x = FPS_MEASUREMENTS / sum
-
     fpsCounter.fps = (deviation * fpsCounter.fps) + (1.0 - deviation) * ((double)fpsCounter.measures / ((double)fpsCounter.sum / 1000000.0) );
 
     if (fpsCounter.pos == FPS_MEASUREMENTS) {
@@ -114,11 +126,7 @@ auto StatusHandler::updateFrameCounter() -> void {
 
     fpsCounter.last = cur;
 
-    // fps = 1000
-    // x   = interval
-    // x = fps * interval / 1000
-
-    unsigned limit = ((unsigned)fpsCounter.fps * (unsigned) *updateIntervall) / 1000;
+    unsigned limit = ((unsigned)fpsCounter.fps * fpsCounter.updateIntervall) / 1000;
 
     if (++fpsCounter.updateDelay >= limit) {
         if (!VideoManager::synchronized)
@@ -259,20 +267,11 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
     powerLED.enable = globalSettings->get<bool>("power_led", true);
-    auto countDecimalPoint = globalSettings->get<unsigned>("fps_decimal_point", 3, {0u, 3u});
     recordAudio = false;
+    fpsCounter.decimalPoints = 3;
 	control = 0;
 
-    std::string exampleText = "1000";
-    if (countDecimalPoint) {
-        exampleText += ".";
-
-        for (unsigned i = 0; i < countDecimalPoint; i++)
-            exampleText += "9";
-    }
-
-    statusBar->append( 0, exampleText, nullptr, &(view->speedControlMenu ) );    // FPS
-
+    statusBar->append( 0, "1000.999", nullptr, &(view->speedControlMenu ) );    // FPS
     statusBar->append( 16, "Power", nullptr, &(view->power.menu ) );
     statusBar->append( 17, &(view->ledGreenImage), nullptr, &(view->power.menu ) ); // Power LED
     // up to 4 disk drives
@@ -345,9 +344,7 @@ auto StatusHandler::transferToOSD( std::string text ) -> void {
 }
 
 auto StatusHandler::update() -> void {
-
     uint16_t clearMask = ~0;
-    static auto countDecimalPoint = globalSettings->getOrInit<unsigned>("fps_decimal_point", 3u, {0u, 3u});
 
     emuThread->lockStatus();
     
@@ -460,7 +457,7 @@ auto StatusHandler::update() -> void {
             OSDText += " REC ";
         
         if (showFPS) {
-            unsigned decimalPoints = (unsigned)*countDecimalPoint;
+            unsigned decimalPoints = fpsCounter.decimalPoints;
             std::string _FPS = decimalPoints
                     ? GUIKIT::String::formatFloatingPoint(fpsCounter.fps, decimalPoints)
                     : std::to_string((unsigned)round(fpsCounter.fps));

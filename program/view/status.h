@@ -23,6 +23,8 @@ struct FpsCounter {
     uint32_t measures;
     float fps;
     unsigned updateDelay;
+    unsigned updateIntervall = 1000;
+    unsigned decimalPoints = 3;
 };
 
 struct StatusHandler {
@@ -53,6 +55,7 @@ struct StatusHandler {
 	auto hideTape() -> void;
     auto updateFrameCounter() -> void;
     auto resetFrameCounter() -> void;
+    auto setFpsRefresh() -> void;
 
     auto updateVisible(unsigned id, bool visible) -> void;
     auto updateText(unsigned id, std::string text, bool alignRight = false, int overrideForegroundColor = -1) -> void;

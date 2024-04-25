@@ -120,9 +120,7 @@ auto View::build() -> void {
 		    audioDriver->clear();
     };
 
-    GUIKIT::Setting* aspectSetting = globalSettings->getOrInit("aspect_correct_resizing", false);
-
-    onResizeStart = [this, aspectSetting] {
+    onResizeStart = [this] {
         videoDriver->hintResizing(true);
 
         if (activeVideoManager /*&& !fullScreen() && !requestFullscreenSwitch*/) {
@@ -134,7 +132,9 @@ auto View::build() -> void {
             }
         }
         GUIKIT::Size screenRatio = {0,0};
-        if (aspectSetting && *aspectSetting) {
+        auto settings = program->getSettings( activeEmulator );
+
+        if (settings->get<bool>("aspect_correct_resizing", false)) {
             switch(videoDriver->getAspectRatio()) {
                 case 1: screenRatio = {4,3}; break;
                 case 2:

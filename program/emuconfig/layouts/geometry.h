@@ -88,6 +88,20 @@ struct RatioLayout : GUIKIT::FramedVerticalLayout {
         Hotkey();
     } hotkey;
 
+    struct Dimension : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::LineEdit width;
+        GUIKIT::LineEdit height;
+
+        GUIKIT::Button refresh;
+        GUIKIT::Button apply;
+
+        GUIKIT::Widget spacer;
+        GUIKIT::CheckBox aspectCorrectResizing;
+
+        Dimension();
+    } dimension;
+
     RatioLayout();
 };
 

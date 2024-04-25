@@ -1,12 +1,29 @@
 
-struct SpeedLayout : GUIKIT::FramedHorizontalLayout {
-    GUIKIT::Label label;
-    GUIKIT::RadioBox fps;
-    GUIKIT::RadioBox percent;
-    GUIKIT::LineEdit speed;
-    GUIKIT::Button apply;
+struct FpsLayout : GUIKIT::FramedVerticalLayout {
 
-    SpeedLayout();
+    struct CustomRate : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox fps;
+        GUIKIT::RadioBox percent;
+        GUIKIT::LineEdit speed;
+        GUIKIT::Button apply;
+
+        CustomRate();
+    } customRate;
+
+    struct Refresh : GUIKIT::HorizontalLayout {
+        SliderLayout updateDelay;
+
+        GUIKIT::Label labelDecimalPlace;
+        GUIKIT::RadioBox Zero;
+        GUIKIT::RadioBox One;
+        GUIKIT::RadioBox Two;
+        GUIKIT::RadioBox Three;
+
+        Refresh();
+    } refresh;
+
+    FpsLayout();
 };
 
 struct InputSamplingLayout : GUIKIT::FramedVerticalLayout {
@@ -88,7 +105,7 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
-    SpeedLayout speedLayout;
+    FpsLayout fpsLayout;
     InputSamplingLayout inputSamplingLayout;
     RunAheadLayout runAheadLayout;
     AutostartLayout autostartLayout;

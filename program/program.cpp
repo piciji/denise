@@ -357,6 +357,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		globalSettings->set("last_used_emu", activeEmulator->ident);
 
         statusHandler->resetFrameCounter();
+        statusHandler->setFpsRefresh();
         statusHandler->initPowerLED();
 
         view->updateSpeedLabels();

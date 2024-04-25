@@ -1,30 +1,5 @@
 
-VideoGeometryLayout::Dimension::Dimension() {
-    append(label, {0u, 0u}, 5);
-    append(width, {50, 0u}, 10);
-    append(height, {50, 0u});
-
-    setAlignment(0.5);
-}
-
-VideoGeometryLayout::Control::Control() {
-    append(refresh, {0u, 0u}, 10);
-    append(apply, {0u, 0u});
-
-    setAlignment(0.5);
-}
-
-VideoGeometryLayout::VideoGeometryLayout() {
-    append( aspectCorrectResizing, {0u, 0u}, 5 );
-    append( dimension, {0u, 0u}, 5 );
-    append( control, {0u, 0u} );
-	
-	setPadding(10);
-	setFont(GUIKIT::Font::system("bold"));
-}
-
 VideoSettingsLayout::VideoSettingsLayout() {
-    
     append(exclusiveFullscreen, {0u, 0u}, 10);
     append(hardSync, {0u, 0u}, 10);
     append(threadedRenderer, {0u, 0u}, 10);
@@ -33,30 +8,6 @@ VideoSettingsLayout::VideoSettingsLayout() {
     setAlignment(0.5);
     setPadding( 10 );
     setFont(GUIKIT::Font::system("bold"));
-}
-
-VideoFpsLayout::Options::Options() {
-    append(labelDecimalPlace, {0u, 0u}, 5);
-    append(Zero, {0u, 0u}, 5);
-    append(One, {0u, 0u}, 5);
-    append(Two, {0u, 0u}, 5);
-    append(Three, {0u, 0u});
-
-    GUIKIT::RadioBox::setGroup( Zero, One, Two, Three );
-
-    setAlignment(0.5);
-}
-
-VideoFpsLayout::VideoFpsLayout() : updateDelay("ms") {
-
-    append(updateDelay, {~0u, 0u}, 2);
-    append(options, {~0u, 0u}, 2);
-
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-
-    updateDelay.slider.setLength(25);
-    updateDelay.updateValueWidth( "5000 " + updateDelay.unit );
 }
 
 VideoLayout::VideoLayout() {
@@ -155,112 +106,6 @@ VideoLayout::VideoLayout() {
 
     videoSettingsLayout.trAuto.setChecked( globalSettings->get("adaptive_sync", false) );
     videoSettingsLayout.trAuto.setEnabled( !globalSettings->get("threaded_renderer", true) );
-
-	hLayout.append(videoGeometry, {~0u, 0u});
-    append(hLayout, {~0u, 0u}, 10);
-    append(videoFps, {~0u, 0u});
-
-    videoFps.updateDelay.slider.onChange = [this](unsigned position) {
-        emuThread->lock();
-
-        position = (position + 1) * 200;
-
-        globalSettings->set<unsigned>("fps_update", position);
-
-        videoFps.updateDelay.value.setText( std::to_string(position) + " " + videoFps.updateDelay.unit );
-        emuThread->unlock();
-    };
-
-    unsigned fpsUpdate = globalSettings->get<unsigned>("fps_update", 1000u, {200u, 5000u});
-    videoFps.updateDelay.slider.setPosition( fpsUpdate / 200 - 1 );
-    videoFps.updateDelay.value.setText( std::to_string( fpsUpdate ) + " " + videoFps.updateDelay.unit );
-
-    videoFps.options.Zero.setText("0");
-    videoFps.options.Zero.onActivate = [this]() {
-        emuThread->lock();
-        globalSettings->set<unsigned>("fps_decimal_point", 0);
-        statusHandler->statusBar->updateDimension( 0, "1000" );
-        emuThread->unlock();
-    };
-    videoFps.options.One.setText("1");
-    videoFps.options.One.onActivate = [this]() {
-        emuThread->lock();
-        globalSettings->set<unsigned>("fps_decimal_point", 1);
-        statusHandler->statusBar->updateDimension( 0, "1000.9" );
-        emuThread->unlock();
-    };
-    videoFps.options.Two.setText("2");
-    videoFps.options.Two.onActivate = [this]() {
-        emuThread->lock();
-        globalSettings->set<unsigned>("fps_decimal_point", 2);
-        statusHandler->statusBar->updateDimension( 0, "1000.99" );
-        emuThread->unlock();
-    };
-    videoFps.options.Three.setText("3");
-    videoFps.options.Three.onActivate = [this]() {
-        emuThread->lock();
-        globalSettings->set<unsigned>("fps_decimal_point", 3);
-        statusHandler->statusBar->updateDimension( 0, "1000.999" );
-        emuThread->unlock();
-    };
-
-    unsigned countDecimal = globalSettings->get<unsigned>("fps_decimal_point", 3, {0u, 3u});
-    switch (countDecimal) {
-        case 0: videoFps.options.Zero.setChecked(); break;
-        case 1: videoFps.options.One.setChecked(); break;
-        case 2: videoFps.options.Two.setChecked(); break;
-        case 3: videoFps.options.Three.setChecked(); break;
-    }
-
-    videoGeometry.aspectCorrectResizing.setChecked( globalSettings->get<bool>("aspect_correct_resizing", false) );
-    videoGeometry.aspectCorrectResizing.onToggle = [&](bool checked) {
-        emuThread->lock();
-        globalSettings->set<bool>("aspect_correct_resizing", checked);
-        view->updateViewport();
-        emuThread->unlock();
-    };
-
-    videoGeometry.dimension.width.onChange = [this]() {
-        int val = videoGeometry.dimension.width.value();
-        if (val < 100) val = 100;
-        globalSettings->set<unsigned>("view_hold_width", val);
-    };
-    videoGeometry.dimension.width.setValue( globalSettings->get<unsigned>("view_hold_width", 800) );
-
-    videoGeometry.dimension.height.onChange = [this]() {
-        int val = videoGeometry.dimension.height.value();
-        if (val < 100) val = 100;
-        globalSettings->set<unsigned>("view_hold_height", val);
-    };
-    videoGeometry.dimension.height.setValue( globalSettings->get<unsigned>("view_hold_height", 600) );
-
-    videoGeometry.control.refresh.onActivate = [this]() {
-        if (view->fullScreen())
-            return;
-
-        emuThread->lock();
-        auto w = globalSettings->get<unsigned>("screen_width", 800);
-        auto h = globalSettings->get<unsigned>("screen_height", 600);
-
-        globalSettings->set<unsigned>("view_hold_width", w);
-        globalSettings->set<unsigned>("view_hold_height", h);
-
-        videoGeometry.dimension.width.setValue(w);
-        videoGeometry.dimension.height.setValue(h);
-        emuThread->unlock();
-    };
-
-    videoGeometry.control.apply.onActivate = [this]() {
-        if (view->fullScreen())
-            return;
-
-        emuThread->lock();
-        globalSettings->set<unsigned>("screen_width", globalSettings->get<unsigned>("view_hold_width", 800));
-        globalSettings->set<unsigned>("screen_height", globalSettings->get<unsigned>("view_hold_height", 600));
-
-        view->updateGeometry(true);
-        emuThread->unlock();
-    };
 }
 
 auto VideoLayout::translate() -> void {
@@ -275,18 +120,8 @@ auto VideoLayout::translate() -> void {
     videoSettingsLayout.trOn.setTooltip( trans->getA("Threaded Renderer tooltip") );
     videoSettingsLayout.trAuto.setText( trans->getA("Threaded Renderer Auto") );
     videoSettingsLayout.setText( trans->get("driver_properties") );
-
-	videoGeometry.setText(trans->get("geometry"));
-    videoGeometry.aspectCorrectResizing.setText(trans->get("lock aspect ratio"));
-    videoGeometry.dimension.label.setText(trans->getA("resolution", true));
-    videoGeometry.control.refresh.setText(trans->getA("refresh"));
-    videoGeometry.control.apply.setText(trans->getA("apply"));
     
     driverLayout.name.setText( trans->get("driver", {}, true) );
-
-    videoFps.setText( trans->get("FPS") );
-    videoFps.updateDelay.name.setText( trans->get("Refresh", {}, true) );
-    videoFps.options.labelDecimalPlace.setText( trans->get("Decimal Place", {}, true) );
 }
 
 
