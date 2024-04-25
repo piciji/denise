@@ -141,7 +141,7 @@ auto Blitter::activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void
     if (flags == LLE)
         return; // already activated
 
-    if (!(agnus.actions & Agnus::ACT_BLITTER))
+    if (!(agnus.actions & Agnus::ACT_BLITTER) || !flags)
         return; // LLE is only needed when channel/line/fill mode is changed while Blitter is running
 
     uint8_t cycle = flags & 7;
@@ -297,7 +297,7 @@ auto Blitter::setBltCon1(uint16_t value) -> void {
 
     if (flags == LLE)
         shifter |= STAGE_CHANGE;
-    else {
+    else if (flags) {
         flags &= ~0x300;
         if ((flags & LINE_MODE) == 0) {
             if (desc)           flags |= 0x200;
