@@ -838,7 +838,7 @@ auto Agnus::observeFrameDuration() -> void {
         double linesPerField;
         double cyclesPerLine;
 
-        if (laceMode)
+        if (laceMode & 3)
             linesPerField = lines + 1.5;
         else
             linesPerField = lines + (lof ? 2.0 : 1.0);

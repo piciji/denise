@@ -332,8 +332,7 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
 
             if (paula.pot.running)
                 paula.progressPot();
-            // DMAL is fetched serial bit by bit (14 cycles). It is ok to do this in one step,
-            // because the value of all bits is fixed (really ?) at the time of the first push.
+            // DMAL is fetched serial bit by bit (14 cycles).
             dmal = paula.dmal();
             break;
     }

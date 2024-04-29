@@ -418,8 +418,8 @@ inline auto DiskDrive::motorSpinning() -> bool {
     if (motor && (speed == 100)) motorSpeed = 100;
     else if (!motor && (speed == 0)) motorSpeed = 0;
 
-    if (paula.turbo > 2)
-        return motor || (speed > 40);
+    if (paula.turbo >= 2)
+        return motor || (speed > 60);
 
     return motor || (speed > 20);
 }

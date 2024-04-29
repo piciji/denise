@@ -203,11 +203,19 @@ template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict()
 }
 
 auto Agnus::diskDma(uint8_t slot, bool writeMode) -> void {
+    dmaClock = clock;
+    bplQueue &= ~0xff; // no BPL fetch
+    busUsage = BUS_USAGE_DMAL;
+
     if (writeMode) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + dskpt));
-        paula.setDskDat(dataBus);
+        if (!paula.setDskDat(dataBus))
+            return;
     } else {
-        uint16_t value = paula.dskDatR(slot);
+        uint16_t value;
+        if (!paula.dskDatR(slot, value))
+            return;
+
         if (trackMemChanges)
             rememberChipMem(dskpt);
 
@@ -219,12 +227,9 @@ auto Agnus::diskDma(uint8_t slot, bool writeMode) -> void {
 
     dskpt += 2;
     dskpt &= dmaChipMemMask;
-    dmaClock = clock;
-    bplQueue &= ~0xff; // no BPL fetch
-    busUsage = BUS_USAGE_DMAL;
 }
 
-auto Agnus::fakeDiskDma(uint16_t word) -> void {
+auto Agnus::fakeDiskDma(uint16_t& word) -> void {
     if (trackMemChanges)
         rememberChipMem(dskpt);
 

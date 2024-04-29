@@ -136,7 +136,6 @@ namespace LIBAMI {
         if (start) {
             fifoPos = 0;
             fifoReady = false;
-            dskShifter = 0;
 
             if (wordSync()) {
                 if(dskShifter == dskSync)
@@ -146,7 +145,7 @@ namespace LIBAMI {
             } else if (diskState == DiskState::WRITE) {
                 dskShifterPos = 16;
             } else
-                dskShifterPos = 0;
+                dskShifterPos &= 15;
 
             if (useInstantDriveAccess()) {
                 activeDrive->reset();
@@ -162,8 +161,10 @@ namespace LIBAMI {
     auto Paula::finishDMA() -> void {
         setDskBlkInt();
         dskLen = 0;
-        agnus.dmal = 0; // prevent endless loop in turbo mode
         dskTransferLength = 0;
+
+        fifoPos = 0;
+        fifoReady = false;
 
         if (fdcByteMode()) {
             agnus.updateEvent<Agnus::EVENT_FLOPPY>(fdcCycles = FDC_BIT);
@@ -201,33 +202,31 @@ namespace LIBAMI {
         }
     }
 
-    auto Paula::setDskDat(uint16_t value) -> void {
-        addToFifo(value);
+    auto Paula::setDskDat(uint16_t& value) -> bool {
+        return addToFifo(value);
     }
 
-    auto Paula::dskDatR(uint8_t slot) -> uint16_t {
+    auto Paula::dskDatR(uint8_t& slot, uint16_t& out) -> bool {
         uint8_t repeat = 1 << ((diskState == DiskState::READ) ? turbo : 0);
-        uint16_t out = 0;
 
         do {
             if(getFromFifo(out)) {
-                if (dskTransferLength == 0) {
-                    if (fifoEmpty() || ((slot == 2) && (fifoPos == 1)) ) {
+                if ((dskTransferLength == 0) && (diskState == DiskState::READ)) {
+                    if (fifoEmpty() || ((slot == 2) && (fifoPos == 1)) )
                         finishDMA();
-                        break;
-                    }
+                    break;
                 }
                 if (repeat == 1)
                     break;
                 agnus.fakeDiskDma(out);
                 repeat--;
             } else if (!turbo || (diskState != DiskState::READ))
-                break;
+                return false;
 
             handleFDControllerRead<true>();
         } while (1);
 
-        return out;
+        return true;
     }
 
     auto Paula::instantDriveAccess() -> void {
@@ -254,7 +253,7 @@ namespace LIBAMI {
         fdcCycles = FDC_BIT;
 
         if (out & 2) {
-            agnus.updateEvent<Agnus::EVENT_FLOPPY>( 120 ); // some more delay, to increase compatibility. e.g. Jim Power
+            agnus.updateEvent<Agnus::EVENT_FLOPPY>( 12000 ); // some more delay, to increase compatibility. e.g. Jim Power
             setDskState(DiskState::INSTANT_BLK_INT);
         } else {
             agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles );
@@ -520,13 +519,14 @@ namespace LIBAMI {
         return true;
     }
 
-    inline auto Paula::addToFifo(uint16_t data) -> void {
+    inline auto Paula::addToFifo(const uint16_t& data) -> bool {
         if (fifoPos == 3)
-            return; // overflow
+            return false; // overflow
 
         fifo = (fifo << 16) | data;
         fifoPos++;
         fifoReady = true;
+        return true;
     }
 
     auto Paula::setDskState(DiskState next) -> void {
@@ -566,7 +566,7 @@ namespace LIBAMI {
                 }
             } break;
             case DiskState::INSTANT_BLK_INT:
-                if (useInstantDriveAccess())
+                if (useInstantDriveAccess() && diskState != DiskState::OFF)
                     setDskBlkInt();
                 setDskState(DiskState::OFF);
             default:
