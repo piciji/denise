@@ -69,13 +69,11 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
 	
 	if (isC64()) {
         countColorBits = 4;
-        tempDestHold = nullptr;
         softwareViewForegroundColorRef = 14;
         softwareViewBackgroundColorRef = 6;
 		
 	} else if (isAmiga()) {
         countColorBits = 12;
-        tempDestHold = new uint32_t[ 1024 * 600 ];
         softwareViewForegroundColorRef = 4095;
         softwareViewBackgroundColorRef = 90;
 	}
@@ -617,13 +615,19 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         }
     }
 
+    frameOptions &= ~0x80; // init lace toggle
     if (frameOptions != ( (hires << 1) | interlace) ) {
-        if (interlace && ((frameOptions & 1) == 0) )
-            resetTempData(0, true);
+        frameOptions = 0;
+        if (interlace && ((frameOptions & 1) == 0) ) {
+            gpuOptions &= ~1; // prevent hold in first lace frame
+            frameOptions |= 0x80; // lace off -> on
+            iHold = false;
+        } //else
+            //resetTempData(0, true);
 
         setData("autoEmu_lace", (float)interlace);
         setData("autoEmu_hires", (float)hires);
-        frameOptions = (hires << 1) | interlace;
+        frameOptions |= (hires << 1) | interlace;
     }
 
     if (++frameRenderPos != frameRenderTrigger) {
@@ -693,8 +697,11 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     if constexpr (interlace) {
         unsigned color;
         ColorRgbLight colorDecayed;
+        bool laceToggle = !!(frameOptions & 0x80);
         unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
-        if (!field && !interlaceDecay) // hold -> update full frames only
+        if (laceToggle)
+            iRate = 100;
+        if (!laceToggle && !field && !interlaceDecay) // hold -> update full frames only
             return;
 
         for(unsigned h = 0; h < height; h++) {
@@ -740,8 +747,9 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
 	unsigned _dp = destPitch * 4;
     unsigned metaShift = countColorBits;
     unsigned mask = (1 << metaShift) - 1;
+    bool laceToggle = !!(frameOptions & 0x80);
 
-    if (interlace && !field && !interlaceDecay) // hold -> update full frames only
+    if (interlace && !field && !laceToggle && !interlaceDecay) // hold -> update full frames only
         return;
 
     if(cropTop) {
@@ -763,7 +771,7 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
         srcDelay += srcPitch;
     }
 
-    if (interlace && interlaceDecay) {
+    if (interlace && interlaceDecay && !laceToggle) {
         float iRate = (float)(100 - interlaceDecay);
 
         for (unsigned h = 0; h < height; h++) {
@@ -906,13 +914,13 @@ auto VideoManager::waitForCrtRenderer() -> void {
 
 // half screen
 template<uint8_t options> auto VideoManager::renderMidScreen() -> void {
-	
+    constexpr bool interlace = options & 3;
 	Render* re = &render[0];
 	
 	if (!colorTableUpdated)
 		reinitCrtThread();
 	
-	if (!re->dest || frameRenderPos || placeHolderFrames)
+	if (interlace || !re->dest || frameRenderPos || placeHolderFrames)
 		return;
 
     re->options = getRenderOptions<options>();
@@ -940,8 +948,6 @@ auto VideoManager::resetTempData( int offset, bool onlyIfUsed ) -> void {
         return;
 
     std::memset(tempDest + (offset * 1024), 0, 1024 * (600 - offset) * 4);
-    if (tempDestHold && (!onlyIfUsed || crtThreaded))
-        std::memset(tempDestHold + (offset * 1024), 0, 1024 * (600 - offset) * 4);
 }
 
 template<typename T, uint8_t options> auto VideoManager::renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop ) -> void {
@@ -961,7 +967,7 @@ template<typename T, uint8_t options> auto VideoManager::renderCrt(unsigned widt
 }
 
 template<typename T> inline auto VideoManager::renderCrtSelection(Render& re) -> void {
-    switch(re.options & 0x1f) {
+    switch(re.options & 0x5f) {
         default:
         case 0: pal ? renderPalCrt<0, T>(re) : renderNtscCrt<0, T>(re); break;
         case 1: pal ? renderPalCrt<1, T>(re) : renderNtscCrt<1, T>(re); break; // Scanlines
@@ -976,6 +982,9 @@ template<typename T> inline auto VideoManager::renderCrtSelection(Render& re) ->
         case 22: pal ? renderPalCrt<22, T>(re) : renderNtscCrt<22, T>(re); break; // Interlace(Hold) + RF
         case 28: pal ? renderPalCrt<28, T>(re) : renderNtscCrt<28, T>(re); break; // Interlace(Hold) other field
         case 30: pal ? renderPalCrt<30, T>(re) : renderNtscCrt<30, T>(re); break; // Interlace(Hold) other field + RF
+
+        case 68: pal ? renderPalCrt<68, T>(re) : renderNtscCrt<68, T>(re); break; // Interlace toggle
+        case 70: pal ? renderPalCrt<70, T>(re) : renderNtscCrt<70, T>(re); break; // Interlace toggle + RF
 
         // other combinations don't make sense, like Scanlines + Interlace
     }
@@ -1020,13 +1029,15 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
     unsigned heightFirstHalfScreen = ((height * scaler) >> 8) & ~1;
 	unsigned destOffset = (width + destPitch) * (heightFirstHalfScreen << ((!interlace && scanlines) ? 1 : 0));
     
-    if (!re.dest || ((re.options ^ re1.options) & (1 | 4 | 32)) ) { // mostly to check if mid-screen callback is lores and switches to hires later on
+    if (interlace || !re.dest || ((re.options ^ re1.options) & (1 | 4 | 32)) ) { // mostly to check if mid-screen callback is lores and switches to hires later on
         while (re.ready.load())
             std::this_thread::yield();
 
         renderCrt<T, options>( width, height, src, srcPitch, dest, destPitch, cropTop );
         re.dest = nullptr;
-        
+
+        if constexpr (interlace)
+            return;
     } else {                
         re1.width = width;
         re1.srcPitch = srcPitch;
@@ -1045,7 +1056,7 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
         
 		re1.src = re.src;
 		re1.oddLine = re.oddLine;
-        re1.fieldDest = (!interlaceDecay ? tempDest : tempDestHold) + destOffset;
+        re1.fieldDest = tempDest + destOffset;
         renderCrtSelection<T>( re1 );
 	}
     
@@ -1063,7 +1074,7 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
 	re.dest = tempDest;
 	re.scanlineDest = nullptr;
     re.oddLine = !cropTop ? 0x80 : ((cropTop >> interlace) & 1);
-    re.fieldDest = !interlaceDecay ? tempDest : tempDestHold;
+    re.fieldDest = tempDest;
 }
 
 template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& re ) -> void {
@@ -1078,6 +1089,7 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& r
     constexpr bool interlace = options & 4;
     constexpr bool field = options & 8;
     constexpr bool iHold = options & 16;
+    constexpr bool laceToggle = options & 64;
 
 	bool secondHalf = &re == &render[1];
     unsigned iRate = (100 - interlaceDecay);
@@ -1127,7 +1139,7 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& r
 	
 	for(unsigned h = 0; h < re.height; h++) {
 
-        if (interlace && ((!field && (h & 1)) || (field && !(h & 1)))) {
+        if (interlace && !laceToggle && ((!field && (h & 1)) || (field && !(h & 1)))) {
             if (!iHold || field) {
                 if (re.fieldDest) {
                     std::memcpy(re.dest, re.fieldDest, re.width * 4);
@@ -1185,7 +1197,10 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( Render& r
                     colorI.b = preCalcGamma[ b + 256 ];
                     *re.dest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
 
-                    if (!iHold) {
+                    if constexpr(laceToggle)
+                        *re.fieldDest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
+
+                    else if constexpr(!iHold) {
                         colorI.r = (colorI.r * iRate) / 100;
                         colorI.g = (colorI.g * iRate) / 100;
                         colorI.b = (colorI.b * iRate) / 100;
@@ -1260,6 +1275,7 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render& 
     constexpr bool interlace = options & 4;
     constexpr bool field = options & 8;
     constexpr bool iHold = options & 16;
+    constexpr bool laceToggle = options & 64;
 
 	ColorLumaChroma yiq;
     ColorRgbLight colorI;
@@ -1277,7 +1293,7 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render& 
 	
 	for(unsigned h = 0; h < re.height; h++) {
 
-        if (interlace && ((!field && (h & 1)) || (field && !(h & 1)))) {
+        if (interlace && !laceToggle && ((!field && (h & 1)) || (field && !(h & 1)))) {
             if (!iHold || field) {
                 std::memcpy(re.dest, re.fieldDest, re.width * 4);
                 re.fieldDest += re.width;
@@ -1319,7 +1335,10 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( Render& 
                     colorI.b = preCalcGamma[ b + 256 ];
                     *re.dest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
 
-                    if (!iHold) {
+                    if constexpr(laceToggle)
+                        *re.fieldDest++ = 255 << 24 | colorI.r << 16 | colorI.g << 8 | colorI.b;
+
+                    else if constexpr (!iHold) {
                         colorI.r = (colorI.r * iRate) / 100;
                         colorI.g = (colorI.g * iRate) / 100;
                         colorI.b = (colorI.b * iRate) / 100;
@@ -1497,9 +1516,12 @@ template<uint8_t options> auto VideoManager::getRenderOptions() -> uint8_t {
     if (scanlines && !interlace) out |= 1; // surpress user requested scanlines if software requests interlace
     if ((countColorBits == 4) && useLumaDelay()) out |= 2;
     if (interlace) {
+        bool laceToggle = !!(frameOptions & 0x80);
         out |= 4;
-        if (field) out |= 8;
-        if (!interlaceDecay) out |= 16;
+        if (laceToggle) out |= 64;
+        else if (field) out |= 8;
+
+        if (!interlaceDecay && !laceToggle) out |= 16;
     }
     if (hires) out |= 32;
     return out;
@@ -1531,9 +1553,6 @@ auto VideoManager::free() -> void {
 	
 	if (tempDest)
 		delete[] tempDest;
-
-    if (tempDestHold)
-        delete[] tempDestHold;
 }
 
 auto VideoManager::loadPreset() -> bool {

@@ -101,7 +101,7 @@ rtc(agnus) {
         top = 7;
         bottom = 2;
 
-        if (agnus.laceFrame) {
+        if (agnus.laceFrame & 3) {
             top <<= 1;
             bottom <<= 1;
         }
@@ -259,7 +259,7 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool all
 
 auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
     if (!runAhead.pos && frame) {
-        crop.apply( frame, width, height, linePitch, options );
+        crop.apply( frame, width, height, linePitch, options & 7 );
         // for lightguns
         // input.drawCursor();
     }
@@ -272,7 +272,8 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
         denise.setDisableSequencer( (fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer) ? 1 : 2 );
 
     } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
-        frame = nullptr;
+        if ((options & 0xc0) == 0)
+            frame = nullptr;
 
         if ((++fastForward.frameCounter & 15) == 0) {
             fastForward.frameCounter = 0;
@@ -282,7 +283,7 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
     }
 
     if (!runAhead.pos) {
-        this->interface->videoRefresh(frame, width, height, linePitch, options);
+        this->interface->videoRefresh(frame, width, height, linePitch, options & 7);
     }
 
     leaveEmulation = true;
@@ -300,7 +301,7 @@ auto System::videoMidScreenCallback(uint8_t options) -> void {
 
   //  input.drawCursor(true);
 
-    interface->midScreenCallback(options);
+    interface->midScreenCallback(options & 7);
 }
 
 auto System::setModel(uint8_t model) -> void {

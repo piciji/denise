@@ -109,7 +109,6 @@ struct VideoManager {
     bool workerCreated = false;
 
     uint32_t* tempDest = nullptr;
-    uint32_t* tempDestHold = nullptr;
     ColorLumaChroma delayLine[ 1024 ];
 	ColorRgb lineBefore[ 1024 ];
     

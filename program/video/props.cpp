@@ -113,7 +113,6 @@ auto VideoManager::setScanlines(unsigned intensity) -> void {
 auto VideoManager::setInterlace(unsigned intensity) -> void {
     this->interlaceDecay = intensity;
     requestUpdate();
-    requestUpdate();
 }
 
 auto VideoManager::setCrtRealGamma(bool state) -> void {
