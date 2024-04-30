@@ -142,9 +142,14 @@ auto pStatusBar::update() -> void {
 		} else if (part.sliderLength) {
 			Slider* slider = new Slider(Slider::Orientation::HORIZONTAL);
 			slider->setLength( part.sliderLength );
-			slider->setPositon( part.sliderPosition );
+			slider->setPosition( part.sliderPosition );
 			slider->onChange = part.onChange;
 			gtkWidget = slider->p.gtkWidget;
+
+			pSystem::addCssClass(gtkWidget, "smallerOne");
+			pSystem::applyCss( gtkWidget, ".smallerOne { padding-top: 0px; padding-bottom: 0px; padding-left: 7px; padding-right: 7px; }" );
+
+			gtk_widget_set_size_request(gtkWidget, part.width - 14, 0);
 
 			usedWidgets.push_back( slider );
 
@@ -181,6 +186,7 @@ auto pStatusBar::update() -> void {
 		}
 				
 		gtk_grid_attach_next_to (GTK_GRID(gridWidget), gtkWidget, nullptr, GtkPositionType::GTK_POS_RIGHT, 1, 1);
+
 		if (!part.tooltip.empty())
 			gtk_widget_set_tooltip_text(gtkWidget, part.tooltip.c_str());
 		gtk_widget_set_vexpand( gtkWidget, true );
@@ -232,7 +238,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 	} else if (part.sliderLength) {
 		Slider* slider = (Slider*)widget;
 		if (slider->position() != part.sliderPosition)
-			slider->setPositon( part.sliderPosition );
+			slider->setPosition( part.sliderPosition );
 
 	} else {
 		
