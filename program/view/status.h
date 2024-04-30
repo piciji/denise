@@ -49,6 +49,7 @@ struct StatusHandler {
     auto setMessage(std::string txt, unsigned duration = 3, bool critical = false) -> void;
     auto transferToOSD( std::string text ) -> void;
     auto updateFPS( bool state ) -> void;
+    auto updateVolume( bool state ) -> void;
     auto updateDRC( bool state ) -> void;
     auto updateAudioRecord( bool state ) -> void;
     auto updateTapeImage( GUIKIT::Image* image ) -> void;
@@ -76,6 +77,7 @@ struct StatusHandler {
 
     bool showFPS = false;
     bool recordAudio = false;
+    bool showVolume = false;
 
     struct {
         bool enable;

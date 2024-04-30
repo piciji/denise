@@ -272,7 +272,10 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
         case WM_HSCROLL:
         case WM_VSCROLL: {
             base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);
-            if(base == nullptr) break;
+            if(base == nullptr) {
+
+                break;
+            }
             if(dynamic_cast<Slider*>(base)) { ((Slider*)base)->p.onChange(); return true; }
             break;
         }

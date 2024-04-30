@@ -305,14 +305,17 @@ struct Window : Base {
     ~Window();
 };
 
-struct StatusBar : Base {    
+struct StatusBar : Base {
     struct Part {
         unsigned id;
         unsigned width;
         std::string text = "";
 		std::string tooltip = "";
-        Image* image = nullptr;        
+        Image* image = nullptr;
+        unsigned sliderLength = 0;
+        unsigned sliderPosition = 0;
         std::function<void ()> onClick = nullptr;
+        std::function<void (unsigned position)> onChange = nullptr;
         Menu* popupMenu = nullptr;
         int overrideForegroundColor = -1;
         bool alignRight = false;
@@ -326,11 +329,13 @@ struct StatusBar : Base {
     auto text() const -> std::string { return state.text; }
     auto updatePending() const -> bool { return state.updatePending; }
 	auto append(unsigned id, const std::string& text, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;
-	auto append(unsigned id, Image* image, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;	  
+	auto append(unsigned id, Image* image, std::function<void ()> onClick = nullptr, Menu* popupMenu = nullptr, int pos = -1) -> void;
+    auto append(unsigned id, unsigned sliderLength, unsigned width, std::function<void (unsigned position)> onChange, Menu* popupMenu = nullptr, int pos = -1) -> void;
     auto removePart( unsigned id ) -> void;
     
     auto updateText( unsigned id, std::string text, bool alignRight = false, int overrideForegroundColor = -1 ) -> bool;
     auto updateImage( unsigned id, Image* image ) -> bool;
+    auto updateSlider( unsigned id, unsigned position ) -> bool;
     auto updateDimension( unsigned id, const std::string& text ) -> void;
     auto updateVisible( unsigned id, bool visible ) -> bool;
 	auto updateTooltip( unsigned id, std::string tooltip ) -> bool;

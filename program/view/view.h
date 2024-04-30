@@ -127,6 +127,7 @@ struct View : public GUIKIT::Window {
             GUIKIT::MenuRadioItem screenStatusAutoItem;
 
             GUIKIT::MenuCheckItem fpsItem;
+			GUIKIT::MenuCheckItem volumeItem;
             GUIKIT::MenuCheckItem audioBufferItem;
 
         GUIKIT::MenuItem settingsItem;		

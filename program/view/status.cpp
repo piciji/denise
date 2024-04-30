@@ -49,6 +49,7 @@ auto StatusHandler::setMessage(std::string txt, unsigned duration, bool critical
 auto StatusHandler::clear() -> void {    
     statusBar->hideContent();
     statusBar->updateText(15, "");
+    statusBar->updateVisible(18, showVolume);
     statusBar->update();
     message.clear();
     clearUpdates();
@@ -160,6 +161,13 @@ auto StatusHandler::updateFPS( bool state ) -> void {
     emuThread->unlockStatus();
 }
 
+auto StatusHandler::updateVolume( bool state ) -> void {
+    emuThread->lockStatus();
+    updateVisible(18, showVolume = state);
+    updateStatusBar();
+    emuThread->unlockStatus();
+}
+
 auto StatusHandler::updateDRC( bool state ) -> void {
     emuThread->lockStatus();
     if (!state) {
@@ -267,6 +275,8 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
     powerLED.enable = globalSettings->get<bool>("power_led", true);
+    showVolume = globalSettings->get<bool>("volume_control", false );
+    unsigned volume = globalSettings->get<unsigned>("audio_volume", 100u, {0u, 100u});
     recordAudio = false;
     fpsCounter.decimalPoints = 3;
 	control = 0;
@@ -290,6 +300,14 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
     statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
     statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
+    statusBar->append( 18, 20, 60, [](unsigned position) {
+        globalSettings->set<unsigned>("audio_volume", position * 5);
+        emuThread->lock();
+        audioManager->setVolume();
+        emuThread->unlock();
+    } );
+    statusBar->updateSlider(18, volume / 5);
+    statusBar->updateVisible(18, showVolume);
 
     statusBar->append( 15, "" );    // status text
     statusBar->updateVisible(15, true);
@@ -304,6 +322,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->updateSeparator( 13, true );
     statusBar->updateSeparator( 14, true );
     statusBar->updateSeparator( 17, true );
+    statusBar->updateSeparator( 18, true );
 
     powerLED.timer.setInterval(1000);
     powerLED.timer.onFinished = [this]() {

@@ -202,28 +202,14 @@ auto pStatusBar::update() -> void {
     delete label;
     
     unsigned countVisible = 0;
-   // unsigned width = area.size.width;
-   // width -= 8;
-    
+
     for(unsigned i = 0; i < parts.size(); i++) {
-    //for (int i = parts.size() - 1; i >= 0; i-- ) {
-        
         auto& part = parts[i];
         
         if (!part.visible)
             continue;
         
         countVisible++;
-        
-//        if (part.image)
-//            width -= part.image->width + 3;
-//        else
-//            width -= part.width;
-//
-//        if (part.appendSeparator && (countVisible > 1) ) {
-//            width -= 1;
-//        }
-            
     }
     
     unsigned xPos = 5;
@@ -256,7 +242,23 @@ auto pStatusBar::update() -> void {
             xPos += part.image->width + 4;
             
             usedWidgets.push_back( widget );
-            
+
+        } else if (part.sliderLength) {
+            Slider* slider = new Slider(Slider::Orientation::HORIZONTAL);
+            slider->setLength( part.sliderLength );
+            slider->setPositon( part.sliderPosition );
+            slider->onChange = part.onChange;
+            view = slider->p.cocoaView;
+
+            if (i == countVisible && (area.size.width > xPos) )
+                [view setFrame:NSMakeRect(xPos, -2, area.size.width - xPos, getHeight())];
+            else
+                [view setFrame:NSMakeRect(xPos, -2, part.width, getHeight())];
+
+            xPos += part.width;
+
+            usedWidgets.push_back( slider );
+
         } else {
             Label* label = new Label;
             label->setText( part.text );
@@ -267,12 +269,7 @@ auto pStatusBar::update() -> void {
                 label->setForegroundColor( part.overrideForegroundColor );
 
             label->setAlign( part.alignRight ? Label::Align::Right : Label::Align::Left );
-                
-//            if (xPos == 0)
-//                width += part.width;
-//            else
-//                width = part.width;
-                
+
             view = label->p.cocoaView;
                 
             if (i == countVisible && (area.size.width > xPos) )
@@ -326,6 +323,11 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
             NSImage* image = NSMakeImage( *part.image );
             
             [widget->p.cocoaView setImage: image];
+
+        } else if (part.sliderLength) {
+            Slider* slider = (Slider*)widget;
+            if (slider->position() != part.sliderPosition)
+                slider->setPositon( part.sliderPosition );
 
         } else {
             Label* label = (Label*)widget;

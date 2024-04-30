@@ -12,18 +12,15 @@ AudioControlLayout::AudioControlLayout() {
 }
 
 AudioLayout::AudioLayout() : 
-latency("ms"),
-volume("%", false, true) {
+latency("ms") {
     setMargin(10);
 
     frame.append(control, {~0u, 0u}, 20);
     frame.append(latency, {~0u, 0u}, 10);
-    frame.append(volume, {~0u, 0u});
 	frame.setPadding(10);
     
 	append(frame, {~0u, 0u}, 10);
 
-    volume.slider.setLength(101);
     latency.slider.setLength(120);
 
     control.frequencyCombo.append( "44100 Hz", 44100 );
@@ -72,23 +69,6 @@ volume("%", false, true) {
         emuThread->unlock();
     };
     
-    volume.slider.onChange = [this](unsigned position) {
-        emuThread->lock();
-        globalSettings->set<unsigned>("audio_volume", position);
-        volume.value.setText( std::to_string( position ) + " %" );
-        audioManager->setVolume();
-        emuThread->unlock();
-    };
-    
-    volume.defaultButton.onActivate = [this]() {
-        emuThread->lock();
-        globalSettings->set<unsigned>("audio_volume", 100);
-        volume.value.setText( std::to_string( 100 ) + " %" );
-        volume.slider.setPosition( 100 );
-        audioManager->setVolume();
-        emuThread->unlock();
-    };    
-    
     control.maxRateEdit.onChange = [this]() {
         emuThread->lock();
         globalSettings->set<std::string>("rate_control_delta", control.maxRateEdit.text() );
@@ -106,10 +86,6 @@ volume("%", false, true) {
     };
     
     control.priorityCheckbox.setChecked( globalSettings->get<bool>("audio_priority", false) );
-    
-    auto valVolume = globalSettings->get<unsigned>("audio_volume", 100u, {0u, 100u});
-    volume.value.setText(std::to_string( valVolume ) + " %" );
-    volume.slider.setPosition( valVolume );
         
     auto valFre = globalSettings->get<unsigned>("audio_frequency_v2", 48000);
     for(unsigned i = 0; i < control.frequencyCombo.rows(); i++) {
@@ -135,20 +111,16 @@ auto AudioLayout::updateLatencySlider() -> void {
     latency.slider.setPosition(valLatency - minimumLatency);
 }
 
-auto AudioLayout::translate() -> void {    
-    volume.name.setText( trans->get("volume", {}, true) );
-
+auto AudioLayout::translate() -> void {
     latency.name.setText( trans->get("latency", {}, true) );
     control.frequencyLabel.setText( trans->get("frequency", {}, true) );
     control.priorityCheckbox.setText( trans->get("audio high priority") );
     control.priorityCheckbox.setTooltip( trans->get("audio high priority tooltip") );
 
-    volume.defaultButton.setText( trans->get("Max") );
-    
     control.driverLayout.name.setText( trans->get("driver", {}, true) );
     
     control.maxRateLabel.setText( trans->get("drc_delta", {}, true) );
     control.maxRateLabel.setTooltip( trans->get("drc_delta_tooltip") );
     
-    SliderLayout::scale({&latency, &volume}, "120 ms");      
+    SliderLayout::scale({&latency}, "120 ms");
 }

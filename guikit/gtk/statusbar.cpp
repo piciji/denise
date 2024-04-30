@@ -138,7 +138,16 @@ auto pStatusBar::update() -> void {
                 gtk_widget_set_margin_top(gtkWidget, 1);
 #endif
 			usedWidgets.push_back( widget );
-			
+
+		} else if (part.sliderLength) {
+			Slider* slider = new Slider(Slider::Orientation::HORIZONTAL);
+			slider->setLength( part.sliderLength );
+			slider->setPositon( part.sliderPosition );
+			slider->onChange = part.onChange;
+			gtkWidget = slider->p.gtkWidget;
+
+			usedWidgets.push_back( slider );
+
 		} else {
 			Label* label = new Label;
 
@@ -219,7 +228,12 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 	if ( part.image ) {
 		
 		setImage( GTK_IMAGE(widget->p.gtkWidget), *part.image );
-		
+
+	} else if (part.sliderLength) {
+		Slider* slider = (Slider*)widget;
+		if (slider->position() != part.sliderPosition)
+			slider->setPositon( part.sliderPosition );
+
 	} else {
 		
 		Label* label = (Label*)widget;

@@ -1,4 +1,6 @@
 
+#define TRACKBAR_SLIDER 10000
+
 pStatusBar::pStatusBar(StatusBar& statusBar) : statusBar(statusBar) {
     
     hwnd = nullptr;    
@@ -104,6 +106,37 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
             break;
         }
 
+        case WM_HSCROLL:
+        case WM_VSCROLL: {
+            auto& p = statusBar->p;
+
+            for(auto& trackBar : p.trackBars) {
+                if (trackBar.hwnd == (HWND)lparam) {
+                    if (trackBar.part.onChange)
+                        trackBar.part.onChange( SendMessage(trackBar.hwnd, TBM_GETPOS, 0, 0) );
+                    break;
+                }
+            }
+        } break;
+
+        case WM_NOTIFY: {
+            NMHDR* nmhdr = (NMHDR*)lparam;
+            if (!nmhdr)
+                break;
+            auto& p = statusBar->p;
+
+            for(auto& trackBar : p.trackBars) {
+                if (trackBar.hwnd == nmhdr->hwndFrom) {
+                    if (nmhdr->code == NM_CUSTOMDRAW) {
+                        NMCUSTOMDRAW* lpNMCustomDraw = (NMCUSTOMDRAW*)lparam;
+                        lpNMCustomDraw->uItemState &= ~CDIS_FOCUS;
+                    }
+                    break;
+                }
+            }
+
+        } break;
+
         case WM_CONTEXTMENU:
             return 0;
     }
@@ -132,7 +165,11 @@ auto pStatusBar::setTooltip(StatusBar::Part* part) -> void {
 }
 
 auto pStatusBar::destroy() -> void {
-    
+    for(auto& trackBar : trackBars)
+        DestroyWindow(trackBar.hwnd);
+
+    trackBars.clear();
+
     if (hwnd)
         DestroyWindow(hwnd);
     
@@ -201,6 +238,12 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
     }
 
     if (hwnd) {
+        if (part.sliderLength) {
+            HWND trackBar = getSlider(part);
+            if (trackBar && (SendMessage(trackBar, TBM_GETPOS, 0, 0) != part.sliderPosition) )
+                SendMessage(trackBar, TBM_SETPOS, (WPARAM)true, (LPARAM)part.sliderPosition);
+        }
+
 //		if (part.image) {
 //			// alpha blend transparent part, because of winapi draws some 3D effect
 //			HICON hIcon = CreateHIconWithAlphaBlend( *part.image, GetSysColor(COLOR_MENU) );
@@ -212,6 +255,14 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
             SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
 //      }
 	}
+}
+
+auto pStatusBar::getSlider(StatusBar::Part& part) -> HWND {
+    for(auto& trackBar : trackBars) {
+        if (trackBar.part.id == part.id)
+            return trackBar.hwnd;
+    }
+    return nullptr;
 }
 
 auto pStatusBar::update() -> void {
@@ -231,12 +282,43 @@ auto pStatusBar::update() -> void {
     std::vector<int> _widths;
 
     unsigned countVisible = 0;
+
+    HWND trackBar;
         
     for( i = 0; i < parts.size(); i++ ) {
         auto& part = parts[i];
-        
-        if (!part.visible)
+
+        if (part.sliderLength) {
+            trackBar = getSlider(part);
+
+            if (!trackBar) {
+                trackBar = CreateWindow(
+                    TRACKBAR_CLASS, L"", WS_CHILD | TBS_NOTICKS | TBS_BOTH | TBS_HORZ,
+                    0, 0, 0, 0, hwnd, (HMENU)(long long)(part.id + TRACKBAR_SLIDER), GetModuleHandle(0), 0);
+
+                SendMessage(trackBar, TBM_SETRANGE, (WPARAM)true, (LPARAM)MAKELONG(0, part.sliderLength));
+                //SendMessage(trackBar, TBM_SETPAGESIZE, 0, (LPARAM)(part.sliderLength >> 3));
+
+                trackBars.push_back({part, trackBar});
+            }
+
+            if (SendMessage(trackBar, TBM_GETPOS, 0, 0) != part.sliderPosition)
+                SendMessage(trackBar, TBM_SETPOS, (WPARAM)true, (LPARAM)part.sliderPosition);
+        } else
+            trackBar = nullptr;
+
+        if (!part.visible) {
+            if (trackBar && IsWindowVisible(trackBar))
+                ShowWindow(trackBar, SW_HIDE);
             continue;
+        }
+
+        if (trackBar) {
+            MoveWindow(trackBar,  pos, 2, part.width - 1, getHeight() - 2, true);
+
+            if (!IsWindowVisible(trackBar))
+                ShowWindow(trackBar, SW_SHOWNORMAL);
+        }
 
         countVisible++;
         
@@ -322,17 +404,18 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
 // same with bitmaps
 //        if (!image->alphaBlendApplied)
 //            image->alphaBlend( GetSysColor(COLOR_MENU) );
-//        
-//        HBITMAP hbitmap = CreateBitmap( *image );      
+//
+//        HBITMAP hbitmap = CreateBitmap( *image );
 //        HDC hdcMem = CreateCompatibleDC(hDC);
-//        
+//
 //        SelectObject(hdcMem, hbitmap);
-//        
+//
 //        StretchBlt( hDC, rect.left, yPos - 1, image->width, image->height, hdcMem, 0, 0, image->width, image->height, SRCCOPY );
-//                   
+//
 //        DeleteObject(hbitmap);
 //        DeleteDC( hdcMem );
-        
+    } else if (part.sliderLength) {
+
     } else {
 		
         if (part.overrideForegroundColor != -1) {

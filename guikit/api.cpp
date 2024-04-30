@@ -463,18 +463,18 @@ auto StatusBar::append(unsigned id, const std::string& text, std::function<void 
 	part.image = nullptr;
 	part.popupMenu = popupMenu;
 	part.onClick = onClick;
+    part.sliderLength = 0;
 	part.overrideForegroundColor = -1;
 	part.visible = false;
 	
 	if ( (pos == -1) || (pos >= state.parts.size()) )
 		state.parts.push_back(part);
 	else
-		GUIKIT::Vector::insert<Part>(state.parts, part, pos);
+		Vector::insert<Part>(state.parts, part, pos);
 
 	state.updatePending = true;
 }
-    
-    
+
 auto StatusBar::append(unsigned id, Image* image, std::function<void ()> onClick, Menu* popupMenu, int pos) -> void {	
 	Part part;
 	part.id = id;
@@ -483,21 +483,41 @@ auto StatusBar::append(unsigned id, Image* image, std::function<void ()> onClick
 	part.image = image;
 	part.popupMenu = popupMenu;
 	part.onClick = onClick;
+    part.sliderLength = 0;
 	part.visible = false;
 	
 	if ( (pos == -1) || (pos >= state.parts.size()) )
 		state.parts.push_back(part);
 	else
-		GUIKIT::Vector::insert<Part>(state.parts, part, pos);
+		Vector::insert<Part>(state.parts, part, pos);
 
 	state.updatePending = true;
+}
+
+auto StatusBar::append(unsigned id, unsigned sliderLength, unsigned width, std::function<void (unsigned position)> onChange, Menu* popupMenu, int pos) -> void {
+    Part part;
+    part.id = id;
+    part.width = width;
+    part.text = "";
+    part.image = nullptr;
+    part.popupMenu = popupMenu;
+    part.onChange = onChange;
+    part.visible = false;
+    part.sliderLength = sliderLength;
+
+    if ( (pos == -1) || (pos >= state.parts.size()) )
+        state.parts.push_back(part);
+    else
+        Vector::insert<Part>(state.parts, part, pos);
+
+    state.updatePending = true;
 }
     
 auto StatusBar::removePart( unsigned id ) -> void {    
     unsigned pos = 0;
     for(auto& part : state.parts) {
         if (part.id == id) {
-            GUIKIT::Vector::eraseVectorPos( state.parts, pos );
+            Vector::eraseVectorPos( state.parts, pos );
             break;
         }
         pos++;
@@ -557,8 +577,26 @@ auto StatusBar::updateImage( unsigned id, Image* image ) -> bool {
     }
     return false;
 }
+
+auto StatusBar::updateSlider( unsigned id, unsigned position ) -> bool {
+    for (auto& part : state.parts) {
+        if (part.id == id) {
+            if (!part.visible) {
+                part.sliderPosition = position;
+                part.visible = true;
+                state.updatePending = true;
+
+            } else if (part.sliderPosition != position) {
+                part.sliderPosition = position;
+                p.updatePart( part );
+            }
+            return true;
+        }
+    }
+    return false;
+}
     
-auto StatusBar::updateVisible( unsigned id, bool visible ) -> bool {    
+auto StatusBar::updateVisible( unsigned id, bool visible ) -> bool {
     for(auto& part : state.parts) {
         if (part.id == id) {
             if (part.visible != visible) {
