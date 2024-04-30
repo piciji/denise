@@ -2,6 +2,7 @@
 struct InputSelector : GUIKIT::HorizontalLayout {
     GUIKIT::ComboButton device;
 	GUIKIT::CheckButton hotkeys;
+    GUIKIT::CheckButton globalHotkeys;
 	GUIKIT::Widget spacer;
     GUIKIT::Label plugin;
     
@@ -86,6 +87,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto translate() -> void;
     auto loadDeviceList() -> void;
 	auto loadHotkeyList() -> void;
+    auto loadGlobalHotkeyList() -> void;
     auto loadInputList(unsigned deviceId) -> void;
     auto appendListEntry(std::string& name, Emulator::Interface::Device::Input& input, GUIKIT::Image* image) -> void;
     auto updateListEntry(unsigned selection, InputMapping* mapping, bool setFocus = true) -> void;
@@ -103,6 +105,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto mapSelected( bool alternate = false ) -> void;
     auto updateAnalogSensitivity() -> void;
 	auto hotkeyMode() -> bool;
+    auto globalHotkeyMode() -> bool;
 	auto triggerHotkeyMode() -> void;
     auto updateAssigner() -> void;
     auto loadSettings() -> void;

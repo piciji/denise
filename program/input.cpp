@@ -20,9 +20,6 @@ auto Program::initInput() -> void {
     }
 	InputManager::init();
 
-    if (configView)
-	    configView->inputLayout->loadInputList();
-
 	for( auto emuView : emuConfigViews ) {
         if (emuView->inputLayout)
             emuView->inputLayout->loadDeviceList();

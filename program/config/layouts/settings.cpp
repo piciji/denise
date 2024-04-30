@@ -409,7 +409,6 @@ auto SettingsLayout::changeLang() -> void {
 
     if (configView) {
         configView->translate();
-        configView->inputLayout->loadInputList();
         configView->synchronizeLayout();
     }
 	
