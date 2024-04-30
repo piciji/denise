@@ -1242,6 +1242,13 @@ auto View::buildMenu() -> void {
     };
     if ( globalSettings->get<bool>("fps", false) ) fpsItem.setChecked();
     statusTextMenu.append(fpsItem);
+
+    volumeItem.onToggle = [&]() {
+        globalSettings->set<bool>("volume_control", volumeItem.checked() );
+        statusHandler->updateVolume( volumeItem.checked() );
+    };
+    if ( globalSettings->get<bool>("volume_control", false) ) volumeItem.setChecked();
+    statusTextMenu.append(volumeItem);
     
     audioBufferItem.onToggle = [&]() {
         globalSettings->set<bool>("show_audio_buffer", audioBufferItem.checked() );
@@ -1686,6 +1693,7 @@ auto View::translate() -> void {
 
     muteItem.setText( trans->get("mute_audio"));
     fpsItem.setText( trans->get("show_fps"));
+    volumeItem.setText( trans->get("show volume"));
     audioBufferItem.setText( trans->get("show_audio_buffer"));
     
     saveItem.setText( trans->get("save_preferences"));

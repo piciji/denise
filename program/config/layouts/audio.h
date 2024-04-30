@@ -13,8 +13,7 @@ struct AudioControlLayout : GUIKIT::HorizontalLayout {
 struct AudioLayout : GUIKIT::VerticalLayout {
 
     AudioControlLayout control;
-    SliderLayout latency;    
-    SliderLayout volume;                
+    SliderLayout latency;
     
 	GUIKIT::FramedVerticalLayout frame;    
 

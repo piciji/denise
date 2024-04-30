@@ -161,8 +161,14 @@ struct pStatusBar {
     StatusBar::Part* hoverPart;
     bool locked = false;
 	bool disableLock = false;
+
+    struct Trackbar {
+        StatusBar::Part& part;
+        HWND hwnd;
+    };
     
     std::vector<StatusBar::Part*> usedParts;
+    std::vector<Trackbar> trackBars;
     
     auto create() -> void;
     auto destroy() -> void;
@@ -181,6 +187,7 @@ struct pStatusBar {
     auto setTooltip(StatusBar::Part* part) -> void;
     auto setComposited(bool state) -> void;
 	auto setLockDisabled(bool state) -> void;
+    auto getSlider(StatusBar::Part& part) -> HWND;
     
     auto onClick(LPARAM lparam) -> void;
     auto getHoverPart(int xPos) -> StatusBar::Part*;
