@@ -584,7 +584,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     constexpr bool interlace = options & 3;
     constexpr bool field = options & 2;
     constexpr bool hires = options & 4;
-    bool iHold = interlace && !field && !interlaceDecay;
+    bool iHold = interlace && !field && !interlaceFields;
     bool warp = program->warp.active;
     uint8_t gpuOptions = iHold | (interlace << 1) | (warp << 2);
 
@@ -701,7 +701,7 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
         unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
         if (laceToggle)
             iRate = 100;
-        if (!laceToggle && !field && !interlaceDecay) // hold -> update full frames only
+        if (!laceToggle && !field && !interlaceFields) // hold -> update full frames only
             return;
 
         for(unsigned h = 0; h < height; h++) {
@@ -749,7 +749,7 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     unsigned mask = (1 << metaShift) - 1;
     bool laceToggle = !!(frameOptions & 0x80);
 
-    if (interlace && !field && !laceToggle && !interlaceDecay) // hold -> update full frames only
+    if (interlace && !field && !laceToggle && !interlaceFields) // hold -> update full frames only
         return;
 
     if(cropTop) {
@@ -771,7 +771,7 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
         srcDelay += srcPitch;
     }
 
-    if (interlace && interlaceDecay && !laceToggle) {
+    if (interlace && !laceToggle) {
         float iRate = (float)(100 - interlaceDecay);
 
         for (unsigned h = 0; h < height; h++) {
@@ -1483,6 +1483,7 @@ auto VideoManager::applyDataUpdates() -> void {
         else if (dataUpdate.ident == "phase")               setPhase( dataUpdate.dataI );
         else if (dataUpdate.ident == "scanlines")           setScanlines( dataUpdate.dataU );
         else if (dataUpdate.ident == "interlace")           setInterlace( dataUpdate.dataU );
+        else if (dataUpdate.ident == "interlace_fields")    setInterlaceFields( dataUpdate.dataB );
         else if (dataUpdate.ident == "blur")                setBlur( dataUpdate.dataU );
         else if (dataUpdate.ident == "phase_error")         setPhaseError( dataUpdate.dataF );
         else if (dataUpdate.ident == "hanover_bars")        setHanoverBars( dataUpdate.dataI );
@@ -1521,7 +1522,7 @@ template<uint8_t options> auto VideoManager::getRenderOptions() -> uint8_t {
         if (laceToggle) out |= 64;
         else if (field) out |= 8;
 
-        if (!interlaceDecay && !laceToggle) out |= 16;
+        if (!interlaceFields && !laceToggle) out |= 16;
     }
     if (hires) out |= 32;
     return out;

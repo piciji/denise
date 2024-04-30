@@ -111,7 +111,12 @@ auto VideoManager::setScanlines(unsigned intensity) -> void {
 }
 
 auto VideoManager::setInterlace(unsigned intensity) -> void {
-    this->interlaceDecay = intensity;
+    interlaceDecay = intensity;
+    requestUpdate();
+}
+
+auto VideoManager::setInterlaceFields(bool state) -> void {
+    interlaceFields = state;
     requestUpdate();
 }
 
@@ -228,7 +233,7 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     bool _useScanlines = settings->get<bool>("video_scanlines_use" + modeIdent, false);
     unsigned _scanlines = settings->get<unsigned>("video_scanlines" + modeIdent, 33, {0, 100});
     bool _useInterlace = settings->get<bool>("video_interlace_use" + modeIdent, true);
-    unsigned _interlace = settings->get<unsigned>("video_interlace" + modeIdent, 30, {0u, 100});
+    unsigned _interlace = settings->get<unsigned>("video_interlace" + modeIdent, 0, {0u, 100});
 
     bool _useLumaRise = settings->get<bool>("video_luma_rise_use" + modeIdent, moreError);
 	float _lumaRise = settings->get<float>("video_luma_rise" + modeIdent, 2.0, {1.0, 4.0}); 
@@ -251,6 +256,7 @@ auto VideoManager::reloadSettings(bool reloadPreset) -> void {
     setHanoverBars( _useHanoverBars ? _hanoverBars : 0);
     setScanlines(_useScanlines ? _scanlines : 0);
     setInterlace(_useInterlace ? _interlace : 0);
+    setInterlaceFields( _useInterlace );
     setBlur( _useBlur ? _blur : 0 );    
 	setLumaRise( _useLumaRise ? _lumaRise : 0.0 );
 	setLumaFall( _useLumaFall ? _lumaFall : 0.0 );

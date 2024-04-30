@@ -125,6 +125,7 @@ struct VideoManager {
     bool colorSpectrum;
     bool pal;
     unsigned interlaceDecay;
+    bool interlaceFields;
     
     double saturation;
     double contrast;
@@ -231,6 +232,7 @@ struct VideoManager {
     auto setBlur( unsigned blur ) -> void;
     auto setScanlines(unsigned intensity) -> void;
     auto setInterlace(unsigned intensity) -> void;
+    auto setInterlaceFields(bool state) -> void;
 
     auto setLumaRise( float pixel ) -> void;
     auto setLumaFall( float pixel ) -> void;

@@ -353,7 +353,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     setSliderAction<unsigned>( &layBase.view.contrast, "contrast" );
     setSliderAction<int>( &layBase.view.phase, "phase", [](unsigned position) { return (int)position - 180; } );
     setSliderAction<unsigned>( &layBase.view.scanlines, "scanlines", [](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &layBase.view.interlace, "interlace", [](unsigned position) { return std::max(position, 1u); } );
+    setSliderAction<unsigned>( &layBase.view.interlace, "interlace", [](unsigned position) { return std::max(position, 0u); } );
     setSliderAction<unsigned>( &layBase.encoding.blur, "blur" );
     setSliderAction<float>( &layBase.encoding.phaseError, "phase_error", [](unsigned position) { return (float)((int)position - 90) / 2.0f; } );
     setSliderAction<int>( &layBase.encoding.hanoverBars, "hanover_bars", [](unsigned position) { return (int)position - 100; } );
@@ -1189,6 +1189,10 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
 			T value = callTransfer( position );
 
             vManager()->updateData(baseIdent, checked ? value : T(0));
+
+            if (baseIdent == "interlace") {
+                vManager()->updateData<bool>("interlace_fields", checked);
+            }
         };
 
     layout->slider.onChange = [this, layout, baseIdent, callTransfer](unsigned position) {
