@@ -81,7 +81,7 @@ auto pStatusBar::getHeight() -> unsigned {
             
             if([view respondsToSelector:@selector(setFont:)]) {
                 NSFont* font = [view font];
-                return pFont::size(font, " ").height + 3;
+                return pFont::size(font, " ").height + 4;
             }
         }
         return 0;
@@ -251,9 +251,9 @@ auto pStatusBar::update() -> void {
             view = slider->p.cocoaView;
 
             if (i == countVisible && (area.size.width > xPos) )
-                [view setFrame:NSMakeRect(xPos, -1, area.size.width - xPos, getHeight() - 1)];
+                [view setFrame:NSMakeRect(xPos, 0, area.size.width - xPos, getHeight() - 1)];
             else
-                [view setFrame:NSMakeRect(xPos, -1, part.width, getHeight() - 1)];
+                [view setFrame:NSMakeRect(xPos, 0, part.width, getHeight() - 1)];
 
             xPos += part.width;
 
