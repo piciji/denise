@@ -246,14 +246,14 @@ auto pStatusBar::update() -> void {
         } else if (part.sliderLength) {
             Slider* slider = new Slider(Slider::Orientation::HORIZONTAL);
             slider->setLength( part.sliderLength );
-            slider->setPositon( part.sliderPosition );
+            slider->setPosition( part.sliderPosition );
             slider->onChange = part.onChange;
             view = slider->p.cocoaView;
 
             if (i == countVisible && (area.size.width > xPos) )
-                [view setFrame:NSMakeRect(xPos, -2, area.size.width - xPos, getHeight())];
+                [view setFrame:NSMakeRect(xPos, -1, area.size.width - xPos, getHeight() - 1)];
             else
-                [view setFrame:NSMakeRect(xPos, -2, part.width, getHeight())];
+                [view setFrame:NSMakeRect(xPos, -1, part.width, getHeight() - 1)];
 
             xPos += part.width;
 
@@ -327,7 +327,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
         } else if (part.sliderLength) {
             Slider* slider = (Slider*)widget;
             if (slider->position() != part.sliderPosition)
-                slider->setPositon( part.sliderPosition );
+                slider->setPosition( part.sliderPosition );
 
         } else {
             Label* label = (Label*)widget;
