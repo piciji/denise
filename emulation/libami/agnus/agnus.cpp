@@ -901,6 +901,8 @@ template auto Agnus::updateEventAbs<Agnus::EVENT_INTREQ>(int64_t absClock) -> vo
 
 template auto Agnus::updateEvent<Agnus::EVENT_FLOPPY>( int delay ) -> void;
 
+template auto Agnus::getEventDelay<Agnus::EVENT_FLOPPY>() -> unsigned;
+
 template auto Agnus::allocateCopper<false>() -> bool;
 template auto Agnus::allocateCopper<true>() -> bool;
 

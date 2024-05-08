@@ -58,8 +58,10 @@ auto DiskStructure::prepareEXT2(uint8_t *data, unsigned size) -> void {
                     if (!hd && (bits > (13000 * 8)))
                         hd = true; // ((512 + 32) * 11) * 2 (Clock + Data bit) = 11968 + a few more gap bytes
 
-                    initTrack(track, (bits + 7) / 8, bits, 0xaa);
-                    std::memcpy(track.data, data + dataOffset, track.length);
+                    unsigned length = (bits + 7) / 8;
+                    initTrack(track, std::max(length, getTrackByteLength()), bits, 0xaa);
+                    std::memcpy(track.data, data + dataOffset, length);
+                    track.length = length;
                     track.written = 0;
                 }
                 track.storage = storage;

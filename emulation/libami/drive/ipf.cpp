@@ -130,8 +130,11 @@ auto DiskStructure::prepareIPF(uint8_t* data, unsigned size) -> void {
             void* _ti = reinterpret_cast<void*>(&ti);
 
             if (dlLoader.execute(CAPSLockTrack, _ti, capsImageId, t / 2, t & 1, flags) == imgeOk) {
-                initTrack(track, (ti.tracklen + 7) / 8, ti.tracklen);
-                std::memcpy(track.data, ti.trackbuf, track.length);
+                unsigned length = (ti.tracklen + 7) / 8;
+                // We create the buffer at least in the size for standard bitcell timing, because this size is needed for any writes.
+                initTrack(track, std::max(length, getTrackByteLength()), ti.tracklen);
+                std::memcpy(track.data, ti.trackbuf, length);
+                track.length = length;
 
                 if (ti.timebuf)
                     addTimingIPF(track, ti.timelen, ti.timebuf);
@@ -170,7 +173,7 @@ auto DiskStructure::loadNextRevIPF(Track& track) -> void {
     }
 }
 
-inline auto DiskStructure::deleteTimingIPF(Track& track) -> void {
+auto DiskStructure::deleteTimingIPF(Track& track) -> void {
     if (track.cellWidth) {
         delete[] track.cellWidth;
         track.cellWidth = nullptr;

@@ -209,6 +209,7 @@ struct Paula {
     auto fifoEmpty() -> bool { return fifoPos == 0; }
 
     template<bool readWord = false, bool waitTurbo = false> auto handleFDControllerRead() -> void;
+    template<bool readWord = false> auto handleFDControllerReadByte() -> void;
     auto handleFDControllerWrite() -> void;
 
     auto progressPot() -> void;

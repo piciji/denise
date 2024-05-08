@@ -46,9 +46,11 @@ auto DiskStructure::prepareEXT(uint8_t* data, unsigned size) -> void {
                         encodeTrack(track, i, data + dataOffset);
 
                 } else {
-                    initTrack(track, storage + 2, (storage + 2) << 3, 0xaa);
+                    unsigned length = storage + 2;
+                    initTrack(track, std::max(length, getTrackByteLength()), (storage + 2) << 3, 0xaa);
                     std::memcpy(track.data + 2, data + dataOffset, storage);
                     Emulator::copyIntToBufferBigEndian<uint16_t>(&track.data[0], syncWord);
+                    track.length = length;
                 }
                 track.storage = storage;
 

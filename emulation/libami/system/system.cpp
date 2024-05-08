@@ -20,6 +20,14 @@ agnus(this, cpu, denise, paula, cia1, cia2, input, rtc),
 input(this, agnus, cia1),
 rtc(agnus) {
 
+    cia1.logOut = [this, interface](const char* info, bool newLine , bool hex ) {
+        interface->log("CIA1:" + (std::string)info, newLine);
+    };
+
+    cia2.logOut = [this, interface](const char* info, bool newLine , bool hex ) {
+        interface->log("CIA2:" + (std::string)info, newLine);
+    };
+
     cia1.serialOut = [this](bool spLine, bool cntLine) {
         // Keyboard computer is not interested in CNT line changes, triggered by CIA
         input.keyboard.handshake(spLine);
