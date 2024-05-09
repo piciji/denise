@@ -821,3 +821,6 @@ shader hints = Um externer Shader zu benutzen, wird die Datei "shaders_slang.zip
 corrupted files = fehlerhafte Dateien
 show volume = Lautstärke anzeigen
 global hotkeys = globale Hotkeys
+video driver = Video Treiber
+audio driver = Audio Treiber
+input driver = Eingabe Treiber

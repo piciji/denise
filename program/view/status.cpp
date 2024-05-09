@@ -281,7 +281,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
     powerLED.enable = globalSettings->get<bool>("power_led", true);
-    showVolume = globalSettings->get<bool>("volume_control", false );
+    showVolume = globalSettings->get<bool>("volume_control", true );
     unsigned volume = globalSettings->get<unsigned>("volume", 100u, {0u, 100u});
     recordAudio = false;
     fpsCounter.decimalPoints = 3;

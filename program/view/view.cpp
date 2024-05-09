@@ -870,6 +870,10 @@ auto View::loadImages() -> void {
     hideImage.setResourceId( ID_HIDE );
     fullscreenImage.loadPng((uint8_t*)Icons::fullscreen, sizeof(Icons::fullscreen));
     fullscreenImage.setResourceId( ID_FULLSCREEN );
+    infoImage.loadPng((uint8_t*)Icons::info, sizeof(Icons::info));
+    infoImage.setResourceId( ID_INFO );
+    gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
+    gearsImage.setResourceId( ID_GEARS );
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -993,6 +997,55 @@ auto View::buildMenu() -> void {
            // emuView->mediaLayout->setMediaView();
 	    };
         sM.system->append( *sM.media );
+
+        sM.states = new GUIKIT::Menu;
+        sM.states->setIcon( scriptImage );
+
+        sM.save = new GUIKIT::MenuItem;
+        sM.save->onActivate = [emulator]() {
+            if (emulator == activeEmulator) {
+                emuThread->lock();
+                States::getInstance( emulator )->save();
+                emuThread->unlock();
+            }
+        };
+        sM.states->append( *sM.save );
+
+        sM.slotUp = new GUIKIT::MenuItem;
+        sM.slotUp->onActivate = [emulator]() {
+            if (emulator == activeEmulator) {
+                emuThread->lock();
+                States::getInstance( activeEmulator )->changeSlot( false );
+                emuThread->unlock();
+            }
+        };
+        sM.states->append( *sM.slotUp );
+
+        sM.slotDown = new GUIKIT::MenuItem;
+        sM.slotDown->onActivate = [emulator]() {
+            if (emulator == activeEmulator) {
+                emuThread->lock();
+                States::getInstance( activeEmulator )->changeSlot( true );
+                emuThread->unlock();
+            }
+        };
+        sM.states->append( *sM.slotDown );
+
+        sM.load = new GUIKIT::MenuItem;
+        sM.load->onActivate = [emulator]() {
+            emuThread->lock();
+            States::getInstance( emulator )->load();
+            emuThread->unlock();
+        };
+        sM.states->append( *sM.load );
+
+        sM.system->append( *sM.states );
+
+        sM.system->append(*GUIKIT::MenuSeparator::getInstance());
+
+        sM.shaderMenu = new GUIKIT::Menu;
+        sM.shaderMenu->setIcon( colorImage );
+        sM.system->append( *sM.shaderMenu );
 		
 		sM.system->append(*GUIKIT::MenuSeparator::getInstance());
         
@@ -1061,12 +1114,6 @@ auto View::buildMenu() -> void {
             emuView->show(EmuConfigView::TabWindow::Layout::Misc);
         };
         sM.system->append( *sM.misc );
-		
-		sM.system->append(*GUIKIT::MenuSeparator::getInstance());						
-                	
-		sM.shaderMenu = new GUIKIT::Menu;
-        sM.shaderMenu->setIcon( colorImage );
-        sM.system->append( *sM.shaderMenu );		
         
         sysMenus.push_back( sM );
 
@@ -1105,24 +1152,12 @@ auto View::buildMenu() -> void {
     optionsMenu.setIcon(toolsImage);
     append(optionsMenu);
 
-    globalVideoItem.setIcon( displayImage );
-    globalVideoItem.onActivate = []() {
-        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Video);
+    driversItem.setIcon( gearsImage );
+    driversItem.onActivate = []() {
+        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Drivers);
     };
 
-    optionsMenu.append(globalVideoItem);
-
-    globalAudioItem.onActivate = []() {
-        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Audio);
-    };
-    globalAudioItem.setIcon( volumeImage );
-    optionsMenu.append(globalAudioItem);
-
-    globalInputItem.onActivate = []() {
-        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Input);
-    };
-    globalInputItem.setIcon( keyboardImage );
-    optionsMenu.append(globalInputItem);
+    optionsMenu.append(driversItem);
 
     settingsItem.onActivate = []() {
         ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Settings);
@@ -1247,7 +1282,7 @@ auto View::buildMenu() -> void {
         globalSettings->set<bool>("volume_control", volumeItem.checked() );
         statusHandler->updateVolume( volumeItem.checked() );
     };
-    if ( globalSettings->get<bool>("volume_control", false) ) volumeItem.setChecked();
+    if ( globalSettings->get<bool>("volume_control", true) ) volumeItem.setChecked();
     statusTextMenu.append(volumeItem);
     
     audioBufferItem.onToggle = [&]() {
@@ -1258,6 +1293,7 @@ auto View::buildMenu() -> void {
     if ( globalSettings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
     statusTextMenu.append(audioBufferItem);
 
+    statusTextMenu.setIcon(infoImage);
     optionsMenu.append(statusTextMenu);
 
     saveItem.onActivate = []() {
@@ -1654,6 +1690,12 @@ auto View::translate() -> void {
             sysMenu.powerLED->setText(trans->get("toggle Power LED"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
+        sysMenu.states->setText(trans->get("states"));
+        sysMenu.save->setText(trans->get("Savestate"));
+        sysMenu.slotUp->setText(trans->get("Incslot"));
+        sysMenu.slotDown->setText(trans->get("Decslot"));
+        sysMenu.load->setText(trans->get("Loadstate"));
+
         sysMenu.systemManagement->setText(trans->get("system_management"));
 
         sysMenu.audio->setText(trans->get("Audio"));
@@ -1675,9 +1717,7 @@ auto View::translate() -> void {
     
     optionsMenu.setText( trans->get("options"));
 
-    globalVideoItem.setText( trans->get("video") );
-    globalAudioItem.setText( trans->get("audio") );
-    globalInputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
+    driversItem.setText( trans->get("driver") );
     settingsItem.setText( trans->get("settings"));
 
     videoSyncItem.setText( trans->get("Video Sync"));

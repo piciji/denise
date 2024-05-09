@@ -35,6 +35,11 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem* firmware;
         GUIKIT::MenuItem* loadSoftware;
         GUIKIT::MenuItem* media;
+        GUIKIT::Menu* states;
+    		GUIKIT::MenuItem* save;
+    		GUIKIT::MenuItem* slotUp;
+    		GUIKIT::MenuItem* slotDown;
+    		GUIKIT::MenuItem* load;
         GUIKIT::MenuItem* systemManagement;
         GUIKIT::MenuItem* audio;
         GUIKIT::MenuItem* configurations;
@@ -109,10 +114,8 @@ struct View : public GUIKIT::Window {
 
     GUIKIT::Menu controlMenu;
     GUIKIT::Menu optionsMenu;
-			
-		GUIKIT::MenuItem globalAudioItem;
-        GUIKIT::MenuItem globalVideoItem;
-        GUIKIT::MenuItem globalInputItem;
+        GUIKIT::MenuItem driversItem;
+		GUIKIT::MenuItem settingsItem;
 
         GUIKIT::MenuCheckItem videoSyncItem;
         GUIKIT::MenuCheckItem vrrItem;
@@ -130,7 +133,6 @@ struct View : public GUIKIT::Window {
 			GUIKIT::MenuCheckItem volumeItem;
             GUIKIT::MenuCheckItem audioBufferItem;
 
-        GUIKIT::MenuItem settingsItem;		
         GUIKIT::MenuItem saveItem;	
 
 		GUIKIT::MenuItem exit; 
@@ -192,6 +194,8 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image fanImage;
     GUIKIT::Image hideImage;
     GUIKIT::Image fullscreenImage;
+	GUIKIT::Image gearsImage;
+	GUIKIT::Image infoImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;

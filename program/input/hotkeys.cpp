@@ -380,8 +380,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 view->threadedRendererWasToggled(checked);
 
             if (configView) {
-                configView->videoLayout->videoSettingsLayout.trOn.setChecked(checked);
-                configView->videoLayout->videoSettingsLayout.trAuto.setEnabled(!checked);
+                configView->driversLayout->vdl.bottom.trOn.setChecked(checked);
+                configView->driversLayout->vdl.bottom.trAuto.setEnabled(!checked);
             }
 
             if (statusHandler)

@@ -17,9 +17,7 @@ ConfigView::TabWindow* configView = nullptr;
 namespace ConfigView {
 
 #include "layouts/settings.cpp"
-#include "layouts/input.cpp"
-#include "layouts/audio.cpp"
-#include "layouts/video.cpp"
+#include "layouts/drivers.cpp"
 
 TabWindow::TabWindow() {
     message = new Message(this);
@@ -45,28 +43,20 @@ auto TabWindow::build() -> void {
     
     if (isOffscreen())        
         setGeometry( defaultGeometry ); 
-    
-    volumeImage.loadPng((uint8_t*)Icons::volume, sizeof(Icons::volume));
-    displayImage.loadPng((uint8_t*)Icons::display, sizeof(Icons::display));    
-    keyboardImage.loadPng((uint8_t*)Icons::keyboard, sizeof(Icons::keyboard));
+
+    gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
     toolsImage.loadPng((uint8_t*)Icons::tools, sizeof(Icons::tools));
 
     append(tab);
     
     settingsLayout = new SettingsLayout;
-    audioLayout = new AudioLayout;
-    videoLayout = new VideoLayout;
-    inputLayout = new InputLayout;
+    driversLayout = new DriversLayout;
 
-	tab.appendHeader("", displayImage);
-    tab.appendHeader("", volumeImage);    
-    tab.appendHeader("", keyboardImage);
-    tab.appendHeader("", toolsImage);                                
+	tab.appendHeader("", gearsImage);
+    tab.appendHeader("", toolsImage);
 
-	tab.setLayout(Layout::Video, *videoLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Audio, *audioLayout, {~0u, ~0u} );    
-    tab.setLayout(Layout::Input, *inputLayout, {~0u, ~0u} );
-    tab.setLayout(Layout::Settings, *settingsLayout, {~0u, ~0u} );                               
+	tab.setLayout(Layout::Drivers, *driversLayout, {~0u, ~0u} );
+    tab.setLayout(Layout::Settings, *settingsLayout, {~0u, ~0u} );
 
     tab.setMargin(10);
     tab.setSelection(0);        
@@ -102,14 +92,10 @@ auto TabWindow::build() -> void {
 auto TabWindow::translate() -> void {
     setTitle( trans->get("app settings", {{"%app%", APP_NAME}} ) );
 
-	inputLayout->translate();
     settingsLayout->translate();
-    videoLayout->translate();
-    audioLayout->translate();    
+    driversLayout->translate();
     
-    tab.setHeader(Layout::Video, trans->get("video"));
-    tab.setHeader(Layout::Audio, trans->get("audio"));
-    tab.setHeader(Layout::Input, trans->get("input"));
+    tab.setHeader(Layout::Drivers, trans->get("driver"));
 	tab.setHeader(Layout::Settings, trans->get( "generic" ));
 }
 

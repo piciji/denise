@@ -28,7 +28,7 @@ auto Program::initAudio() -> void {
     audioManager->setAudioDsp();
 
     if (configView)
-        configView->audioLayout->updateLatencySlider();
+        configView->driversLayout->updateLatencySlider();
 }
 
 auto Program::getAudioDriver() -> std::string {
