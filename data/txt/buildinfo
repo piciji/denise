@@ -97,6 +97,12 @@ gtk3: pacman -Sy gtk3
 pkg-config: pacman -Sy pkgconf
 ---------------------------------------------
 
-in denise root folder:
-make
-make install
+change in denise root folder:
+cmake -B builds/release [-DCMAKE_INSTALL_PREFIX=~/.local] [-DINSTALL_FILE_ASSOCIATIONS=1] [-DCMAKE_BUILD_TYPE=Debug]
+cmake --build builds/release --target clean
+cmake --build builds/release -j=10 [--verbose]
+
+[sudo] cmake --install builds/release
+[sudo] cmake --build builds/release --target uninstall
+
+
