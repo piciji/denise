@@ -16,7 +16,7 @@ import os.path
 
 # .. Useful stuff ..............................................................
 
-application = defines.get('app', 'out/Denise.app')
+application = defines.get('app', 'builds/release/denise.app')
 appname = os.path.basename(application)
 
 # .. Basics ....................................................................

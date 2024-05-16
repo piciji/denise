@@ -3,11 +3,14 @@ cmake_minimum_required(VERSION 3.16)
 project(denise LANGUAGES CXX)
 
 find_package(PkgConfig REQUIRED)
-find_package(SDL2 REQUIRED)
 find_package(Freetype REQUIRED)
-find_package(OpenAL REQUIRED)
 
-pkg_check_modules(GTK REQUIRED gtk+-3.0)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(SDL2 REQUIRED)
+    pkg_check_modules(GTK REQUIRED gtk+-3.0)
+endif()
+
+find_package(OpenAL REQUIRED)
 pkg_check_Modules(FREETYPE2 REQUIRED freetype2)
 
 set(AppName "Denise")
@@ -22,19 +25,21 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CMAKE_CXX_COMPILER clang++)
+    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ARM")
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "11")
+    else()
+        set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
+    endif()
 else()
-
+    set(CMAKE_CXX_COMPILER g++)
 endif()
-
-set(CMAKE_CXX_COMPILER g++)
 
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Setting build type to 'Release' as none was specified.")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL Release)
@@ -44,7 +49,10 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3") # prevents NDEBUG, which slightly decrease execution speed
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 
-message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
+endif()
+message(STATUS "compile for ${CMAKE_SYSTEM_PROCESSOR}")
 
 set(srcs
         guikit/tools/decode/images.cpp
@@ -160,25 +168,43 @@ set(depSrcs)
 add_subdirectory(deps)
 
 SET_SOURCE_FILES_PROPERTIES(${depSrcs}
-        PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
+    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
 
-SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
         PROPERTIES COMPILE_FLAGS "${GTK_CFLAGS_OTHER} -DGUIKIT_GTK -DINSTALL_FOLDER=\"\\\"${CMAKE_INSTALL_PREFIX}\\\"\" ")
 
-SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
+    SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
         PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS}")
+else()
+    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ARM")
+        SET_SOURCE_FILES_PROPERTIES(${depSrcs}
+            PROPERTIES COMPILE_FLAGS "-DMACOSX_DEPLOYMENT_TARGET11")
+    else()
+        SET_SOURCE_FILES_PROPERTIES(${depSrcs}
+            PROPERTIES COMPILE_FLAGS "-DMACOSX_DEPLOYMENT_TARGET109")
+    endif()
 
-SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
+    SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
+        PROPERTIES COMPILE_FLAGS "-x objective-c++ -DGUIKIT_COCOA")
+endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
         PROPERTIES COMPILE_FLAGS "${GTK_CFLAGS_OTHER} -DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_UDEV -DDRV_FREETYPE -DDRV_SDLINPUT")
 
-SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
+    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
         PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${SDL2_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang")
+else()
+    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
+        PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_CGL -DDRV_OPENAL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_FREETYPE")
+
+    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang")
+endif()
 
 SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/filter/chamberlin.cpp
         PROPERTIES COMPILE_FLAGS "-ffast-math -fno-exceptions")
-
-SET_SOURCE_FILES_PROPERTIES(emulation/libc64/disk/structure/structure.cpp
-        PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
 
 SET_SOURCE_FILES_PROPERTIES(program/program.cpp
         PROPERTIES COMPILE_FLAGS "-DAPP_NAME=\"\\\"${AppName}\\\"\" -DTRANSLATION_FOLDER=\"\\\"${translationFolder}/\\\"\" -DDATA_FOLDER=\"\\\"${dataFolder}/\\\"\" -DSHADER_FOLDER=\"\\\"${shaderFolder}/\\\"\" -DIMG_FOLDER=\"\\\"${imgFolder}/\\\"\" -DSOUND_FOLDER=\"\\\"${soundFolder}/\\\"\" ")
@@ -187,13 +213,22 @@ SET_SOURCE_FILES_PROPERTIES(program/program.cpp
 set(srcs ${srcs} ${depSrcs})
 add_executable( ${PROJECT_NAME} ${srcs} )
 
-target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr -lrt")
-target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
-target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} "-lXext -ldl -lXfixes -lGL -ludev -lpulse")
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr -lrt")
+    target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} "-lXext -ldl -lXfixes -lGL -ludev -lpulse")
+else()
+    target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework OpenAL -framework IOKit -framework Carbon -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit")
+    target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
+# target_link_libraries(${PROJECT_NAME} "-lc++ -lobjc")
+    target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
+endif()
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
 install(DIRECTORY data/${dataFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
 install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
@@ -211,6 +246,25 @@ if(INSTALL_FILE_ASSOCIATIONS STREQUAL 1)
 endif()
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+else()
+install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+install(DIRECTORY data/${dataFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+install(DIRECTORY data/${imgFolder}/bundle/ DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources/${imgFolder})
+install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+
+install(FILES data/Info.plist DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents)
+install(FILES data/txt/licence.md DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+install(FILES readme.md DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+install(FILES data/img/${PROJECT_NAME}.icns DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+
+install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/MacOS PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+
+install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE2_LIBRARY_DIRS} lib${FREETYPE2_LIBRARIES}.dylib ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app ${PROJECT_NAME})")
+
+install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app)")
+endif()
 
 add_custom_target("uninstall" COMMENT "Uninstall installed files")
 add_custom_command(
