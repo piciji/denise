@@ -1,8 +1,8 @@
 
 WINDOWS (7 and higher)
 -----------
-download ans install mingw32 or 64
-https://github.com/niXman/mingw-builds-binaries/releases
+download CMAKE
+download and install mingw32 or 64: https://github.com/niXman/mingw-builds-binaries/releases
 
 open a CMD:
 set Path=<mingw_path>\bin;%Path%
