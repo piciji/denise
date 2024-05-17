@@ -46,23 +46,9 @@ there is a solution file in folder msvc
 
 OSX
 ---
-opengl, openal should already installed (system frameworks)
-don't forget to update SDK (commandline tools), when upgrading OS: xcode-select --install
-
-when using XCode
-disable 'New Build System' or 'clean' command will not working anymore. [File->Project Settings->Build System]
-set execution directory by 'edit scheme'. it's the button aside the play/stop buttons in top left.
-
-sudo ln -s /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/* /usr/local/include/
-xcrun --show-sdk-path
-export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/
-export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/
-
 install brew first: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 brew install pkg-config
 cp /opt/homebrew/bin/pkg-config /usr/local/bin
-
-sudo easy_install pip && sudo pip install dmgbuild
 
 compile freetype
   download latest source
@@ -70,9 +56,12 @@ compile freetype
   make
   sudo make install
 
-in denise root folder:
-make
-make install
+git clone https://piciji@bitbucket.org/piciji/denise.git denise
+cd denise
+cmake -B builds/release
+cmake --build builds/release -j=<number of usable CPU cores>
+cmake --install builds/release
+
 
 LINUX
 -----
