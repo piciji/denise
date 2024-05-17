@@ -1,5 +1,5 @@
 
-set(depSrcs
+set(_depSrcs
         deps/glslang/SPIRV/GlslangToSpv.cpp
         deps/glslang/SPIRV/InReadableOrder.cpp
         deps/glslang/SPIRV/Logger.cpp
@@ -42,5 +42,21 @@ set(depSrcs
         deps/SPIRV-Cross/spirv_glsl.cpp
         deps/SPIRV-Cross/spirv_parser.cpp
         deps/SPIRV-Cross/spirv_cross_parsed_ir.cpp
-        PARENT_SCOPE
 )
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(_depSrcsHLSL
+        deps/glslang/glslang/HLSL/hlslAttributes.cpp
+        deps/glslang/glslang/HLSL/hlslGrammar.cpp
+        deps/glslang/glslang/HLSL/hlslOpMap.cpp
+        deps/glslang/glslang/HLSL/hlslParseables.cpp
+        deps/glslang/glslang/HLSL/hlslParseHelper.cpp
+        deps/glslang/glslang/HLSL/hlslScanContext.cpp
+        deps/glslang/glslang/HLSL/hlslTokenStream.cpp
+        deps/SPIRV-Cross/spirv_hlsl.cpp
+    )
+else()
+    set(_depSrcsHLSL )
+endif()
+
+set(depSrcs ${_depSrcs} ${_depSrcsHLSL} PARENT_SCOPE)

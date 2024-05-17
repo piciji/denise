@@ -1,47 +1,43 @@
 
 WINDOWS (7 and higher)
 -----------
-[install MSYS2 and start]
+download ans install mingw32 or 64
+https://github.com/niXman/mingw-builds-binaries/releases
+
+open a CMD:
+set Path=<mingw_path>\bin;%Path%
+git clone https://piciji@bitbucket.org/piciji/denise.git denise
+cd denise
+
+cmake -G "MinGW Makefiles" -B builds/release
+cmake --build builds/release -j=<number of usable CPU cores>
+cmake --install builds/release
+.\builds\release\out\denise.exe
+
+-----------
+MSYS2 to fake a Unix environment
+-----------
+install MSYS2 and open shell
 pacman --noconfirm -Sy
 pacman --needed --noconfirm -S bash pacman pacman-mirrors msys2-runtime
 [restart shell]
 pacman --noconfirm -Su
 [64 bit]
-pacman -S --noconfirm --needed wget git make mingw-w64-x86_64-toolchain mingw-w64-x86_64-ntldd mingw-w64-x86_64-zlib mingw-w64-x86_64-pkg-config mingw-w64-x86_64-libxml2 mingw-w64-x86_64-freetype mingw-w64-x86_64-python3 mingw-w64-x86_64-drmingw mingw-w64-x86_64-harfbuzz
+pacman -S --noconfirm --needed wget git make mingw-w64-x86_64-toolchain mingw-w64-x86_64-ntldd mingw-w64-x86_64-zlib mingw-w64-x86_64-pkg-config mingw-w64-x86_64-libxml2 mingw-w64-x86_64-freetype mingw-w64-x86_64-python3 mingw-w64-x86_64-drmingw mingw-w64-x86_64-harfbuzz mingw-w64-x86_64-cmake
 [32 bit]
-pacman -S --noconfirm --needed wget git make mingw-w64-i686-toolchain mingw-w64-i686-ntldd mingw-w64-i686-zlib mingw-w64-i686-pkg-config mingw-w64-i686-libxml2 mingw-w64-i686-freetype mingw-w64-i686-python3 mingw-w64-i686-drmingw mingw-w64-i686-harfbuzz
-[start MinGW 32 or 64 ]
+pacman -S --noconfirm --needed wget git make mingw-w64-i686-toolchain mingw-w64-i686-ntldd mingw-w64-i686-zlib mingw-w64-i686-pkg-config mingw-w64-i686-libxml2 mingw-w64-i686-freetype mingw-w64-i686-python3 mingw-w64-i686-drmingw mingw-w64-i686-harfbuzz mingw-w64-i686-cmake
+
+[open shell MinGW 32 or 64 ]
 pacman -S make
 pacman -S gcc
+
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
-make -j*            (*) concurrent tasks: replace this with the number of your CPU cores
-make install
-./out/Denise.exe
------------
-without MSYS2
------------
-IDE's like CLion don't support MSYS and therefore no posix shell.
-download mingw32 or 64
-https://github.com/niXman/mingw-builds-binaries/releases
-expand assets and download/unpack
-download or git clone denise
-in the following we need to include more headers / libraries to our mingw installation folder.
-the first include / lib folders you see in mingw main folder are NOT the target folders,
-therefore change to subfolder: x86_64-w64-mingw32 (64 bit) or i686-w64-mingw32 (32 bit)
-from denise folder
-  copy: data/libs/static/win(32)64/libfreetype.a to mingw lib folder
-  copy: data/libs/include/ft2build.h to mingw include folder
-  copy folder with contents: data/libs/include/freetype to mingw include folder
+cd denise
+cmake -G "MSYS Makefiles" -B builds/release
+cmake --build builds/release -j=<number of usable CPU cores>
+cmake --install builds/release
+./builds/release/out/denise.exe
 
-open a cmd:
-  we need to set mingw 32 or 64 bit to system environment variables
-  input: set Path=<mingw_path>\mingw(32)64\bin;%Path%
-  replace <mingw_path> with your specific mingw installation path
-  i recommend to rename 'bin\mingw32-make.exe' to 'make.exe'
-
-in denise root folder
-make SubSystem=win32
-make SubSystem=win32 install
 ---------------
 Visual Studio
 ---------------
@@ -104,5 +100,3 @@ cmake --build builds/release -j=10 [--verbose]
 
 [sudo] cmake --install builds/release
 [sudo] cmake --build builds/release --target uninstall
-
-
