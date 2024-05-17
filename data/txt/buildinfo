@@ -93,10 +93,13 @@ gtk3: pacman -Sy gtk3
 pkg-config: pacman -Sy pkgconf
 ---------------------------------------------
 
-change in denise root folder:
-cmake -B builds/release [-DCMAKE_INSTALL_PREFIX=~/.local] [-DINSTALL_FILE_ASSOCIATIONS=1] [-DCMAKE_BUILD_TYPE=Debug]
-cmake --build builds/release --target clean
-cmake --build builds/release -j=10 [--verbose]
+git clone https://piciji@bitbucket.org/piciji/denise.git denise
+cd denise
+cmake -B builds/release [-DCMAKE_INSTALL_PREFIX=~/.local] [-DINSTALL_FILE_ASSOCIATIONS=1]
+cmake --build builds/release --target clean [optional]
+cmake --build builds/release -j=<number of usable CPU cores>
 
 [sudo] cmake --install builds/release
 [sudo] cmake --build builds/release --target uninstall
+
+NOTE: changing install prefix needs a complete App rebuild, otherwise assets will not be found
