@@ -13,7 +13,7 @@ elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
     pkg_check_modules(FREETYPE2 REQUIRED freetype2)
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_package(SDL2 REQUIRED)
     pkg_check_modules(GTK REQUIRED gtk+-3.0)
 endif()
@@ -54,7 +54,7 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3") # prevents NDEBUG, which slightly decrease execution speed
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
 endif()
 message(STATUS "compile for ${CMAKE_SYSTEM_PROCESSOR}")
@@ -232,13 +232,18 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang")
 else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
-            PROPERTIES COMPILE_FLAGS "${GTK_CFLAGS_OTHER} -DGUIKIT_GTK -DINSTALL_FOLDER=\"\\\"${CMAKE_INSTALL_PREFIX}\\\"\" ")
+            PROPERTIES COMPILE_FLAGS "-DGUIKIT_GTK -DINSTALL_FOLDER=\"\\\"${CMAKE_INSTALL_PREFIX}\\\"\" ")
 
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS}")
 
-    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES COMPILE_FLAGS "${GTK_CFLAGS_OTHER} -DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_UDEV -DDRV_FREETYPE -DDRV_SDLINPUT")
+    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev
+        SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_FREETYPE -DDRV_SDLINPUT")
+    else()
+        SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_UDEV -DDRV_FREETYPE -DDRV_SDLINPUT")
+    endif()
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${SDL2_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang")
@@ -285,7 +290,11 @@ else()
     target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} "-lXext -ldl -lXfixes -lGL -ludev -lpulse")
+    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev
+        target_link_libraries(${PROJECT_NAME} "-Wl,-R,/usr/X11R7/lib -lXext -lXfixes -lGL -lpulse")
+    else()
+        target_link_libraries(${PROJECT_NAME} "-lXext -ldl -lXfixes -lGL -ludev -lpulse")
+    endif()
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
