@@ -291,7 +291,7 @@ else()
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev
-        target_link_libraries(${PROJECT_NAME} "-Wl,-R,/usr/X11R7/lib -lXext -lXfixes -lGL -lpulse")
+        target_link_libraries(${PROJECT_NAME} "-static-libgcc -static-libstdc++ -Wl,-R,/usr/X11R7/lib -lXext -lXfixes -lGL -lpulse")
     else()
         target_link_libraries(${PROJECT_NAME} "-lXext -ldl -lXfixes -lGL -ludev -lpulse")
     endif()
