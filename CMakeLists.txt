@@ -295,6 +295,8 @@ else()
     target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev
         target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R7/lib -L/usr/X11R7/lib -lXext -lXfixes -lGL -lpulse")
+        # otherwise CMAKE removes runtime paths when installing to final location, check shared libs with ldd command
+        set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
     else()
         target_link_libraries(${PROJECT_NAME} "-lXext -ldl -lXfixes -lGL -ludev -lpulse")
     endif()
