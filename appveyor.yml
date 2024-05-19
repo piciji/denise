@@ -5,7 +5,6 @@ skip_commits:
   files:
     - 'data/**/*'
     - '**/*.md'
-    - cmake
 
 image:
   - Visual Studio 2019
@@ -20,7 +19,8 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
-  
+    - cmake
+
 environment:
   matrix:
     - Job: macOS ARM 64-bit
