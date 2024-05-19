@@ -104,9 +104,7 @@ for:
           $zipTarget = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME, ".zip");
           $zipSrc = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME);                  
         }
-        cd builds
-        cd release
-        ren out $zipSrc; Compress-Archive -Path $zipSrc -DestinationPath $zipTarget 
+        ren builds/release/out $zipSrc; Compress-Archive -Path $zipSrc -DestinationPath $zipTarget 
 
   deploy_script:
     - ps: |
@@ -214,7 +212,7 @@ for:
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
-    - sh: cmake -B builds/release && cmake --build builds/release && cmake --install builds/release
+    - sh: cmake -B builds/release && cmake --build builds/release --verbose && cmake --install builds/release
     - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
     
   after_build:
