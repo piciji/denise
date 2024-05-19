@@ -7,7 +7,7 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - macos
+#  - macos
   - Visual Studio 2019
 #  - macos-bigsur
 #  - Ubuntu2004
@@ -104,7 +104,7 @@ for:
           $zipTarget = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME, ".zip");
           $zipSrc = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME);                  
         }
-        ren builds/release/out $zipSrc; Compress-Archive -Path $zipSrc -DestinationPath $zipTarget 
+        move builds/release/out $zipSrc; Compress-Archive -Path $zipSrc -DestinationPath $zipTarget 
 
   deploy_script:
     - ps: |
