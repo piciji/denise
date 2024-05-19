@@ -5,6 +5,7 @@ skip_commits:
   files:
     - 'data/**/*'
     - '**/*.md'
+    - cmake
 
 image:
   - Visual Studio 2019

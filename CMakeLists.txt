@@ -237,7 +237,7 @@ else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS}")
 
-    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev
+    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev, GhostBSD (OpenBSD) has udev, FreeBSD untested
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
                 PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_FREETYPE -DDRV_SDLINPUT")
     else()
@@ -285,7 +285,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
 else()
-    if (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+    if (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD") # fixme
         target_link_libraries(${PROJECT_NAME} "-static-libgcc -static-libstdc++")
     endif()
     target_link_libraries(${PROJECT_NAME} "-lpthread -no-pie -lfontconfig -lX11 -lXrandr -lrt")
@@ -293,9 +293,9 @@ else()
     target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
-    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev
+    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
         target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R7/lib -L/usr/X11R7/lib -lXext -lXfixes -lGL -lpulse")
-        # otherwise CMAKE removes runtime paths when installing to final location, check shared libs with ldd command
+        # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs
         set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
     else()
         target_link_libraries(${PROJECT_NAME} "-lXext -ldl -lXfixes -lGL -ludev -lpulse")
