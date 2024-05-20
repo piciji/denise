@@ -1023,5 +1023,7 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Configurations ); break;
         case Hotkey::Id::Audio:
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Audio ); break;
+        default:
+            break;
     }
 }

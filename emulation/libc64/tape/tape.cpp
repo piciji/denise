@@ -137,6 +137,8 @@ auto Tape::setMotorSound() -> void {
             case Mode::Forward:
                 system->interface->mixDriveSound(media, DriveSound::TapeForwardSpin);
                 break;
+            default:
+                break;
         }
     }
 }
@@ -159,6 +161,8 @@ auto Tape::updateMotorSound(bool soft) -> void {
                 break;
             case Mode::Stop:
                 system->interface->mixDriveSound(media, DriveSound::TapeSpinDown, 1);
+                break;
+            default:
                 break;
         }
     } else {

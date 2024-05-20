@@ -28,7 +28,7 @@ auto pHyperlink::minimumSize() -> Size {
 }
     
 auto pHyperlink::setGeometry(Geometry geometry) -> void {
-    unsigned height = pFont::size([cocoaView font], " ").height;
+    unsigned height = pFont::size([(id)cocoaView font], " ").height;
     unsigned widgetHeight = geometry.height + 4;
     auto offset = geometry;
     
@@ -46,7 +46,7 @@ auto pHyperlink::setGeometry(Geometry geometry) -> void {
     
 auto pHyperlink::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }
@@ -72,7 +72,7 @@ auto pHyperlink::updateLink() -> void {
     @autoreleasepool {
         NSURL* url = [NSURL URLWithString:[NSString stringWithUTF8String:uri.c_str()]];
 
-        NSAttributedString* attrString = [cocoaView attributedStringValue];
+        NSAttributedString* attrString = [(id)cocoaView attributedStringValue];
 
         NSMutableAttributedString* attr = [[NSMutableAttributedString alloc] initWithAttributedString:attrString];
         
@@ -95,7 +95,7 @@ auto pHyperlink::updateLink() -> void {
         [attr addAttribute:NSForegroundColorAttributeName value:[NSColor blueColor] range:range ];
         [attr addAttribute:NSUnderlineStyleAttributeName value:[NSNumber numberWithInt:NSUnderlineStyleSingle] range:range];
 
-        [cocoaView setAttributedStringValue:attr];
+        [(id)cocoaView setAttributedStringValue:attr];
     }
 }
     
@@ -108,7 +108,7 @@ auto pHyperlink::setEnabled(bool enabled) -> void {
         textColor = pHelper::getColor( color );
     }
     
-    [cocoaView setTextColor: enabled ? textColor : [NSColor grayColor]];
+    [(id)cocoaView setTextColor: enabled ? textColor : [NSColor grayColor]];
     pWidget::setEnabled(enabled);
 }
     

@@ -14,7 +14,7 @@
     auto character = [[event characters] characterAtIndex:0];
     if(character == NSEnterCharacter || character == NSCarriageReturnCharacter) {
         if([self selectedRow] >= 0) {
-            [[self delegate] activate:self];
+            [(CocoaListView*)[self delegate] activate:self];
             return;
         }
     }
@@ -127,7 +127,7 @@
         
         [hicol set];
         if (listView->columnCount() > 1) {
-            NSSize spacing = [[listView->p.cocoaView content] intercellSpacing];
+            NSSize spacing = [[(id)listView->p.cocoaView content] intercellSpacing];
             frame.size.width += spacing.width;
         } else
             frame.size.width = listView->geometry().width;
@@ -169,7 +169,7 @@
         [content setAllowsMultipleSelection:NO];
         [content setColumnAutoresizingStyle:NSTableViewLastColumnOnlyAutoresizingStyle];
         
-        font = nil;
+        _font = nil;
         [self setFont:nil];
     }
     return self;
@@ -177,7 +177,7 @@
 
 -(void) dealloc {
     [content release];
-    [font release];
+    [_font release];
     [super dealloc];
 }
 
@@ -186,7 +186,7 @@
 }
 
 -(NSFont*) font {
-    return font;
+    return _font;
 }
 
 -(void) setFont:(NSFont*)fontPointer {
@@ -243,11 +243,11 @@
     if(!fontPointer)
         fontPointer = [NSFont systemFontOfSize:18];
     [fontPointer retain];
-    if(font) [font release];
-    font = fontPointer;
+    if(_font) [_font release];
+    _font = fontPointer;
     
-    unsigned fontHeight = GUIKIT::pFont::size(font, "O").height;
-    [content setFont:font];
+    unsigned fontHeight = GUIKIT::pFont::size(_font, "O").height;
+    [content setFont:_font];
     [content setRowHeight:fontHeight + listView->p.fontAdjust.rowHeight ];
     
     if (listView->specialFont()) {
@@ -354,12 +354,12 @@ namespace GUIKIT {
 
 auto pListView::autoSizeColumns() -> void {
     @autoreleasepool {
-        unsigned height = [[cocoaView content] rowHeight];
+        unsigned height = [[(id)cocoaView content] rowHeight];
         for(unsigned column = 0; column < listView.columnCount(); column++) {
-            NSTableColumn* tableColumn = [[cocoaView content] tableColumnWithIdentifier:[[NSNumber numberWithInteger:column] stringValue]];
+            NSTableColumn* tableColumn = [[(id)cocoaView content] tableColumnWithIdentifier:[[NSNumber numberWithInteger:column] stringValue]];
             unsigned minimumWidth = pFont::size([[tableColumn headerCell] font], listView.state.header.at(column)).width + 4;
             for(unsigned row = 0; row < listView.rowCount(); row++) {
-                unsigned width = pFont::size([cocoaView font], listView.text(row, column)).width + 4;
+                unsigned width = pFont::size([(id)cocoaView font], listView.text(row, column)).width + 4;
                 GUIKIT::Image* img = listView.state.images.at(row).at(column);
 
                 if(img && !img->empty()) width += height + 2;
@@ -375,7 +375,7 @@ auto pListView::autoSizeColumns() -> void {
 auto pListView::append(const std::vector<std::string>& list) -> void {
     @autoreleasepool {
 
-        [[cocoaView content] reloadData];
+        [[(id)cocoaView content] reloadData];
     }
     std::vector<NSImage*> image;
     for (unsigned i = 0; i < list.size(); i++) image.push_back(nil);
@@ -385,7 +385,7 @@ auto pListView::append(const std::vector<std::string>& list) -> void {
 
 auto pListView::remove(unsigned selection) -> void {
     @autoreleasepool {
-        [[cocoaView content] reloadData];
+        [[(id)cocoaView content] reloadData];
     }
     releaseRowImages(selection);
     autoSizeColumns();
@@ -394,13 +394,13 @@ auto pListView::remove(unsigned selection) -> void {
 auto pListView::reset() -> void {
     releaseAllImages();
     @autoreleasepool {
-        [[cocoaView content] reloadData];
+        [[(id)cocoaView content] reloadData];
     }
 }
 
 auto pListView::setHeaderText(std::vector<std::string> list) -> void {
     @autoreleasepool {
-        [cocoaView reloadColumns];
+        [(id)cocoaView reloadColumns];
     }
     autoSizeColumns();
 }
@@ -408,9 +408,9 @@ auto pListView::setHeaderText(std::vector<std::string> list) -> void {
 auto pListView::setHeaderVisible(bool visible) -> void {
     @autoreleasepool {
         if(visible) {
-            [[cocoaView content] setHeaderView:[[[NSTableHeaderView alloc] init] autorelease]];
+            [[(id)cocoaView content] setHeaderView:[[[NSTableHeaderView alloc] init] autorelease]];
         } else {
-            [[cocoaView content] setHeaderView:nil];
+            [[(id)cocoaView content] setHeaderView:nil];
         }
     }
 }
@@ -418,7 +418,7 @@ auto pListView::setHeaderVisible(bool visible) -> void {
 auto pListView::setSelected(bool selected) -> void {
     @autoreleasepool {
         if(!selected) {
-            [[cocoaView content] deselectAll:nil];
+            [[(id)cocoaView content] deselectAll:nil];
         } else {
             setSelection(listView.selection());
         }
@@ -427,15 +427,15 @@ auto pListView::setSelected(bool selected) -> void {
 
 auto pListView::setSelection(unsigned selection) -> void {
     @autoreleasepool {
-        [[cocoaView content] selectRowIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(selection, 1)] byExtendingSelection:NO];
+        [[(id)cocoaView content] selectRowIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(selection, 1)] byExtendingSelection:NO];
         
-        [[cocoaView content] scrollRowToVisible: selection];
+        [[(id)cocoaView content] scrollRowToVisible: selection];
     }
 }
 
 auto pListView::setText(unsigned selection, unsigned position, const std::string& text) -> void {
     @autoreleasepool {
-        [[cocoaView content] reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:selection]
+        [[(id)cocoaView content] reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:selection]
                                        columnIndexes:[NSIndexSet indexSetWithIndex:position]];
     }
     autoSizeColumns();
@@ -453,7 +453,7 @@ auto pListView::setImage(unsigned selection, unsigned position, Image& image) ->
         [images.at(selection).at(position) release];
         images.at(selection).at(position) = NSMakeImage(image);
         
-        [[cocoaView content] reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:selection]
+        [[(id)cocoaView content] reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:selection]
                              columnIndexes:[NSIndexSet indexSetWithIndex:position]];
     }
     autoSizeColumns();
@@ -461,8 +461,8 @@ auto pListView::setImage(unsigned selection, unsigned position, Image& image) ->
     
 auto pListView::setEnabled(bool enabled) -> void {
     @autoreleasepool {
-        if([[cocoaView content] respondsToSelector:@selector(setEnabled:)]) {
-            [[cocoaView content] setEnabled:enabled];
+        if([[(id)cocoaView content] respondsToSelector:@selector(setEnabled:)]) {
+            [[(id)cocoaView content] setEnabled:enabled];
         }
     }
 }
@@ -471,7 +471,7 @@ auto pListView::setGeometry(Geometry geometry) -> void {
     pWidget::setGeometry(geometry);
     autoSizeColumns();
     if (useCustomTooltip)
-        [[cocoaView content] updateTrackingAreas];
+        [[(id)cocoaView content] updateTrackingAreas];
 }
     
 auto pListView::releaseAllImages() -> void {
@@ -495,8 +495,8 @@ auto pListView::setBackgroundColor(unsigned color) -> void {
     
     @autoreleasepool {
         if (cocoaView) {
-            [cocoaView setBackgroundColor: bg];
-            [[cocoaView content] setBackgroundColor: bg];
+            [(id)cocoaView setBackgroundColor: bg];
+            [[(id)cocoaView content] setBackgroundColor: bg];
         }
     }
     updateTooltipUsage();
@@ -508,7 +508,7 @@ auto pListView::setForegroundColor(unsigned color) -> void {
 
 auto pListView::setFont(std::string font) -> void {
     if (!listView.specialFont() && GUIKIT::hasMinimumVersion(10, 10))
-        [cocoaView setContentInsets:NSEdgeInsetsMake(0, 2, 0, 2)];
+        [(id)cocoaView setContentInsets:NSEdgeInsetsMake(0, 2, 0, 2)];
     
     updateTooltipUsage();
     pWidget::setFont(font);
@@ -521,7 +521,7 @@ auto pListView::createCustomTooltip() -> void {
         tooltip = [[TooltipWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO];
         
         if (cocoaView)
-            [tooltip setFont: [cocoaView font] ];
+            [tooltip setFont: [(id)cocoaView font] ];
         
         if (listView.state.colorRowTooltips) {
             

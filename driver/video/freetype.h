@@ -97,7 +97,7 @@ struct Freetype {
         unsigned upHeight = 0;
         unsigned downHeight = 0;
 
-        while (code = utf8decode(text, index)) {
+        while ((code = utf8decode(text, index)) != 0) {
 
             if (FT_Load_Char(face, code, FT_LOAD_RENDER)) {
                 continue;
@@ -130,7 +130,7 @@ struct Freetype {
         unsigned writePos = 0;
         unsigned curPos;
 
-        while (code = utf8decode(text, index)) {
+        while ((code = utf8decode(text, index)) != 0) {
             if (FT_Load_Char(face, code, FT_LOAD_RENDER)) {
                 continue;
             }

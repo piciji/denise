@@ -34,13 +34,13 @@ auto pCheckBox::setGeometry(Geometry geometry) -> void {
 
 auto pCheckBox::setChecked(bool checked) -> void {
     @autoreleasepool {
-        [cocoaView setState:checked ? NSOnState : NSOffState];
+        [(id)cocoaView setState:checked ? NSOnState : NSOffState];
     }
 }
 
 auto pCheckBox::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }

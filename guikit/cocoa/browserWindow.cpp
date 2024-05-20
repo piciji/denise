@@ -10,17 +10,20 @@
 
 - (void)panelSelectionDidChange:(id)sender {
     auto& state = browserWindow->state;
-    NSArray* curFiles = [sender filenames];
+    NSArray* curFiles = [sender URLs];
     auto& pBW = browserWindow->p;
     
     if (pBW.multi) {
         std::vector<std::string> curSelectedFiles;
         for(unsigned i = 0; i < [curFiles count]; i++) {
-            NSString* curPath = [curFiles objectAtIndex:i];
+            NSURL* curPath = [curFiles objectAtIndex:i];
             if (curPath == nil)
                 continue;
-            const char* name = [curPath UTF8String];
-            curSelectedFiles.push_back(name);
+            const char* name = [curPath fileSystemRepresentation];
+            if (name) {
+                curSelectedFiles.push_back(name);
+              //  delete name;
+            }
         }
         
         if (state.orderBySelected) {
@@ -54,11 +57,13 @@
     if (curPath == nil)
         return;
     
-    const char* name = [curPath UTF8String];
+    const char* name = [curPath fileSystemRepresentation];
     std::string path = "";
     
-    if(name)
+    if(name) {
         path = name;
+      //  delete name; don't do it or autorelease causes a crash
+    }
 
     auto listView = browserWindow->p.listView;
 
@@ -71,7 +76,7 @@
             if (informInsertion) {
                 auto listings = state.onSelectionChange( "" );
                 int i = 0;
-                auto _s = GUIKIT::pFont::size([listView->p.cocoaView font], " ");
+                auto _s = GUIKIT::pFont::size([(id)listView->p.cocoaView font], " ");
                 int maxChars = state.contentView.width / _s.width;
                 
                 for(auto& file : pBW.sortedFiles) {
@@ -148,11 +153,11 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
 
         } else {
             panel = [NSOpenPanel openPanel];
-            [panel setCanChooseDirectories:NO];
-            [panel setCanChooseFiles:YES];
+            [(id)panel setCanChooseDirectories:NO];
+            [(id)panel setCanChooseFiles:YES];
             if (multi) {
                 sortedFiles.clear();
-                [panel setAllowsMultipleSelection:YES];
+                [(id)panel setAllowsMultipleSelection:YES];
             }
 
             if(!state.title.empty()) [panel setMessage:[NSString stringWithUTF8String:state.title.c_str()]];
@@ -165,7 +170,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         if (!state.textOk.empty())
             [panel setPrompt:[NSString stringWithUTF8String:state.textOk.c_str()]];
         
-        buildView();
+        buildView(save);
         
         dialogDelegate = [[CocoaFileDialog alloc] initWith: browserWindow];
         [panel setDelegate: dialogDelegate];
@@ -176,31 +181,49 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
              
                 if (result == NSFileHandlingPanelOKButton) {
                     std::vector<std::string> out;
-                    NSArray* paths = [panel filenames];
-             
-                    if( (paths != nil) && ([paths count] > 0)) {
-                        for(auto path : paths) {
-                            const char* name = [path UTF8String];
-                            out.push_back((std::string)name);
+                    if (save) {
+                        NSURL* uri = [panel URL];
+                        if (uri) {
+                            const char* name = [uri fileSystemRepresentation];
+                            //const char* name = [path UTF8String];
+                            if (name) {
+                                out.push_back((std::string)name);
+                             //   delete name;
+                            }
+                            [uri release];
                         }
-                        if (state.orderBySelected && state.orderBySelected->checked && sortedFiles.size()) {
-                            std::vector<std::string> temp;
-         
-                            for (auto& sSortedFile : sortedFiles) {
-                                for(auto& sFile : out ) {
-                                    if (GUIKIT::String::findString(sFile, sSortedFile))
-                                        temp.push_back( sFile );
+                    } else {
+                        NSArray* paths = [(id)panel URLs];
+             
+                        if( (paths != nil) && ([paths count] > 0)) {
+                            for(NSURL* uri : paths) {
+                                //const char* name = [path UTF8String];
+                                const char* name = [uri fileSystemRepresentation];
+                                if (name) {
+                                    out.push_back((std::string)name);
+                                    //delete name;
                                 }
                             }
-                            out = temp;
+                            if (state.orderBySelected && state.orderBySelected->checked && sortedFiles.size()) {
+                                std::vector<std::string> temp;
+             
+                                for (auto& sSortedFile : sortedFiles) {
+                                    for(auto& sFile : out ) {
+                                        if (GUIKIT::String::findString(sFile, sSortedFile))
+                                            temp.push_back( sFile );
+                                    }
+                                }
+                                out = temp;
+                            }
                         }
+                        if (paths != nil)
+                            [paths release];
+             
+                        if (_browserWindow->state.onOkClick)
+                            _browserWindow->state.onOkClick(out, _browserWindow->p.contentViewSelection());
+             
+                        panel = nil;
                     }
-             
-                    if (_browserWindow->state.onOkClick)
-                        _browserWindow->state.onOkClick(out, _browserWindow->p.contentViewSelection());
-             
-                    panel = nil;
-             
                 } else if (result == NSFileHandlingPanelCancelButton) {
                     if (_browserWindow->state.onCancelClick)
                         _browserWindow->state.onCancelClick();
@@ -214,12 +237,12 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
             return {""};
         }
         
-        NSString* path = nil;
+        NSURL* pathUri = nil;
         if([panel runModal] == NSFileHandlingPanelOKButton) {
-            if (multi) {
-                auto uris = [panel URLs];
-                for(auto uri : uris) {
-                    result = [uri fileSystemRepresentation] ;
+            NSArray* uris = [(id)panel URLs];
+            if (multi && !save) {
+                for(NSURL* uri : uris) {
+                    result = [uri fileSystemRepresentation];
                     out.push_back(result);
                 }
                 
@@ -235,16 +258,20 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
                     out = temp;
                 }
             } else
-                path = [panel filename];
+                pathUri = [panel URL];
         }
         
-        if(path != nil) {
-            const char* name = [path UTF8String];
-            if(name) result = name;
+        if(pathUri != nil) {
+            const char* name = [pathUri fileSystemRepresentation];
+            //const char* name = [path UTF8String];
+            if(name) {
+                result = name;
+              //  delete name;
+            }
         }
     }
     
-    if (!multi)
+    if (!multi || save)
         out.push_back(result);
     
     panel = nil;
@@ -264,7 +291,7 @@ auto pBrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings 
     }
 }
 
-auto pBrowserWindow::buildView() -> void {
+auto pBrowserWindow::buildView(bool save) -> void {
     auto& state = browserWindow.state;
 
     if ( (state.buttons.size() == 0) && !state.contentView.id && !state.orderBySelected )
@@ -408,14 +435,14 @@ auto pBrowserWindow::buildView() -> void {
     
     [panel setAccessoryView: accessoryView];
    
-    if (GUIKIT::hasMinimumVersion(10, 11)) {
+    if (!save && GUIKIT::hasMinimumVersion(10, 11)) {
         if (state.contentView.id || state.buttons.size() || state.orderBySelected)
-            [panel setAccessoryViewDisclosed:YES];
+            [(id)panel setAccessoryViewDisclosed:YES];
         else
-            [panel setAccessoryViewDisclosed:NO];
+            [(id)panel setAccessoryViewDisclosed:NO];
     }
 }
-    
+
 auto pBrowserWindow::directory() -> std::string {
     auto& state = browserWindow.state;
     std::string result;
@@ -430,8 +457,8 @@ auto pBrowserWindow::directory() -> std::string {
         [panel setDirectoryURL:url];
 
         if([panel runModal] == NSOKButton) {
-            NSArray* names = [panel filenames];
-            const char* name = [[names objectAtIndex:0] UTF8String];
+            NSArray* names = [panel URLs];
+            const char* name = [[names objectAtIndex:0] fileSystemRepresentation];
             if(name) result = name;
         }
     }

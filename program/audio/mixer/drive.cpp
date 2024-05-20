@@ -359,6 +359,8 @@ namespace Mixer {
 
                 lastStep = ts;
                 break;
+            default:
+                break;
         }
     }
 

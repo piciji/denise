@@ -112,6 +112,9 @@
         NSBundle* bundle = [NSBundle mainBundle];
         NSDictionary* dictionary = [bundle infoDictionary];
         NSString* applicationName = [dictionary objectForKey:@"CFBundleDisplayName"];
+        
+        if (applicationName == nil)
+            applicationName = [NSString stringWithUTF8String:GUIKIT::Application::name.c_str()];
 
         menuBar = [[NSMenu alloc] init];
         menuBarContext = [[NSMenu alloc] init];
@@ -174,7 +177,7 @@
                     GUIKIT::pApplication::observeMenu( menuBarContext );
                 }
               //  [[menuBar itemAtIndex:0] setHidden: TRUE];
-                [NSMenu popUpContextMenu:menuBarContext withEvent:event forView:NULL];
+                [NSMenu popUpContextMenu:menuBarContext withEvent:event forView:[self contentView]];
                 //[[menuBar itemAtIndex:0] setHidden: FALSE];
                 [self resetCursorRects];
             }

@@ -59,8 +59,6 @@
     PFNGLUNIFORMBLOCKBINDINGPROC glUniformBlockBinding = nullptr;
 #else
     #define GL_GENERATE_MIPMAP_HINT 0x8192
-    #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0X84ff
-    #define GL_TEXTURE_MAX_ANISOTROPY_EXT 0x84fe
 #endif
 #if defined(_WIN32)
     PFNGLACTIVETEXTUREPROC glActiveTexture = nullptr;

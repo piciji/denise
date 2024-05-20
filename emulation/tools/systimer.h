@@ -219,7 +219,7 @@ struct SystemTimer {
             }
         }
         
-        delete temp;
+        delete[] temp;
     }	
 };
 

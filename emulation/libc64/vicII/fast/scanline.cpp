@@ -182,7 +182,7 @@ inline auto VicIIFast::mode2() -> void {
     for (unsigned i = 0; i < 40; i++) {
         
         fetch(i);       
-        _col1 = 0x80 | (dataC >> 4) & 15;
+        _col1 = 0x80 | ((dataC >> 4) & 15);
         _col2 = dataC & 15;
         
         *ptr++ = (dataG & 0x80) ? _col1 : _col2;

@@ -36,7 +36,7 @@
 
 -(id) initWith:(bool)allowNegative {
     if(self = [super init]) {
-        allowNegative = allowNegative;
+        bAllowNegative = allowNegative;
     }
     return self;
 }
@@ -46,7 +46,7 @@ newEditingString:(NSString *__autoreleasing *)newString
 errorDescription:(NSString *__autoreleasing *)error {
     for (int i = 0; i < [partialString length]; i++) {
         unichar c = [partialString characterAtIndex:i];
-        if (!allowNegative) {
+        if (!bAllowNegative) {
             if (!(c >= '0' && c <= '9')) return NO;
         } else {
             if (!(c >= '0' && c <= '9') && !(i == 0 && c == '-')) return NO;
@@ -90,13 +90,12 @@ auto NSMakeImage(Image& image, unsigned width, unsigned height) -> NSImage* {
     if (![cocoaImage isValid]) return nil;
 
     if(width && height) {
-        [cocoaImage setScalesWhenResized:YES];
         NSSize newSize = NSMakeSize(width, height);
         NSImage* resizedImage = [[[NSImage alloc] initWithSize: newSize] autorelease];
         [resizedImage lockFocus];
         [cocoaImage setSize: newSize];
         [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
-        [cocoaImage compositeToPoint:NSZeroPoint operation:NSCompositeCopy];
+        [cocoaImage drawAtPoint:NSZeroPoint fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
         [resizedImage unlockFocus];
         return resizedImage;
     }
@@ -180,7 +179,7 @@ auto pSystem::sleep(unsigned milliSeconds) -> void {
 
 auto pSystem::printToCmd( std::string str ) -> void {
 	
-	fprintf(stdout, str.c_str() );
+	fprintf(stdout, "%s", str.c_str() );
 }
 
 //drag'n'drop

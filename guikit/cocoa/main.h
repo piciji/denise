@@ -550,7 +550,7 @@ struct pBrowserWindow {
     auto visible() -> bool;
     auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
 
-    auto buildView() -> void;
+    auto buildView(bool save) -> void;
     pBrowserWindow(BrowserWindow& browserWindow);
     ~pBrowserWindow();
 };
@@ -623,6 +623,8 @@ struct pMonitor {
     static auto getCurrentRefreshRate() -> float;
     static auto getCurrentResolution() -> Size { return {0,0}; }
     static auto getRefreshRate( unsigned displayId, unsigned settingId ) -> float { return 0.0; }
+    
+    static auto IOServicePortFromCGDisplayID(CGDirectDisplayID displayID) -> io_service_t;
 };
 
 struct pThreadPriority {

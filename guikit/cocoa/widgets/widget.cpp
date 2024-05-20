@@ -29,7 +29,7 @@ auto pWidget::setFont(std::string font) -> void {
             NSFont* nsfont = pFont::cocoaFont(font);
 
             if (nsfont != nil)
-                [cocoaView setFont:nsfont];
+                [(id)cocoaView setFont:nsfont];
         }
     }
     calculatedMinimumSize.updated = false;
@@ -39,7 +39,7 @@ inline auto pWidget::getMinimumSize() -> Size {
     if (calculatedMinimumSize.updated)
         return calculatedMinimumSize.minimumSize;        
     
-    calculatedMinimumSize.minimumSize = pFont::size([cocoaView font], widget.text());
+    calculatedMinimumSize.minimumSize = pFont::size([(id)cocoaView font], widget.text());
 
     calculatedMinimumSize.updated = true;
     
@@ -49,7 +49,7 @@ inline auto pWidget::getMinimumSize() -> Size {
 auto pWidget::setEnabled(bool enabled) -> void {
     @autoreleasepool {
         if([cocoaView respondsToSelector:@selector(setEnabled:)]) {
-            [cocoaView setEnabled:enabled];
+            [(id)cocoaView setEnabled:enabled];
         }
     }
 }

@@ -11,9 +11,9 @@
 - (void)mouseDown:(NSEvent*)event {
     
     if (part && part->popupMenu) {
-        GUIKIT::pApplication::observeMenu([part->popupMenu->p.cocoaBase cocoaMenu]);
+        GUIKIT::pApplication::observeMenu([(id)part->popupMenu->p.cocoaBase cocoaMenu]);
         
-        [NSMenu popUpContextMenu: [part->popupMenu->p.cocoaBase cocoaMenu] withEvent:event forView:NULL];
+        [NSMenu popUpContextMenu: [(id)part->popupMenu->p.cocoaBase cocoaMenu] withEvent:event forView:self];
     }
     
     if (part && part->onClick)
@@ -58,7 +58,7 @@ auto pStatusBar::create() -> void {
         
         [cocoaView setWantsLayer:YES];
 
-        [cocoaView setBackgroundColor: [NSColor textBackgroundColor]];
+        [(id)cocoaView setBackgroundColor: [NSColor textBackgroundColor]];
 
         [[statusBar.window()->p.cocoaWindow contentView] addSubview:cocoaView positioned:NSWindowBelow relativeTo:nil];
     }
@@ -80,7 +80,7 @@ auto pStatusBar::getHeight() -> unsigned {
         for (NSView* view in subviews) {
             
             if([view respondsToSelector:@selector(setFont:)]) {
-                NSFont* font = [view font];
+                NSFont* font = [(id)view font];
                 return pFont::size(font, " ").height + 4;
             }
         }
@@ -110,7 +110,7 @@ auto pStatusBar::setText(const std::string& text) -> void {
         if (!cocoaView)
             return;
         
-        [usedWidgets[0]->p.cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)usedWidgets[0]->p.cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
     }
 }
 
@@ -124,7 +124,7 @@ auto pStatusBar::setFont(const std::string& font) -> void {
         for (NSView* view in subviews) {
             
             if([view respondsToSelector:@selector(setFont:)])
-                [view setFont:pFont::cocoaFont(font)];
+                [(id)view setFont:pFont::cocoaFont(font)];
         }
     }
     
@@ -163,7 +163,7 @@ auto pStatusBar::update() -> void {
         NSView* view = [[cocoaView subviews] objectAtIndex:0];
         
         if([view respondsToSelector:@selector(setImage:)])
-            [[view image] release];
+            [[(id)view image] release];
         
         [view removeFromSuperview];
     }
@@ -237,7 +237,7 @@ auto pStatusBar::update() -> void {
             
             [view setFrame:NSMakeRect(xPos, yPos, part.image->width, part.image->height)];
             
-            [view setImage: image];
+            [(id)view setImage: image];
             
             xPos += part.image->width + 4;
             
@@ -318,11 +318,11 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
         
         if ( part.image ) {
             
-            [[widget->p.cocoaView image] release];
+            [[(id)widget->p.cocoaView image] release];
             
             NSImage* image = NSMakeImage( *part.image );
             
-            [widget->p.cocoaView setImage: image];
+            [(id)widget->p.cocoaView setImage: image];
 
         } else if (part.sliderLength) {
             Slider* slider = (Slider*)widget;

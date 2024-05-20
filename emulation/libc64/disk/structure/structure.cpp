@@ -213,6 +213,8 @@ auto DiskStructure::prepare() -> void {
         case Type::P71:
             preparePxx();
             break;
+        case Type::Unknown:
+            break;
     }            
 }
 
@@ -541,6 +543,8 @@ auto DiskStructure::create( Type newType, std::string diskName ) -> Emulator::In
             return createPxx( diskName, 1 );
         case Type::P71:
             return createPxx( diskName, 2 );
+        default:
+            break;
     } 
     
     return {nullptr, 0};
@@ -667,6 +671,8 @@ auto DiskStructure::storeWrittenTracks() -> void {
                     // can't overwrite single tracks, need to write whole disk.
                     // convert to gcr to update listing outside of emulation
                     encodeGCR(gcrTrack, halfTrack);
+                    break;
+                case Type::Unknown:
                     break;
             }
 

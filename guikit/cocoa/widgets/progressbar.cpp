@@ -30,7 +30,7 @@ auto pProgressBar::setPosition(unsigned position) -> void {
     @autoreleasepool {
         [NSAnimationContext beginGrouping];
         [[NSAnimationContext currentContext] setDuration:0.0];
-        [cocoaView setDoubleValue : (double)position ];
+        [(id)cocoaView setDoubleValue : (double)position ];
         [cocoaView displayIfNeeded];
         [NSAnimationContext endGrouping];
     }

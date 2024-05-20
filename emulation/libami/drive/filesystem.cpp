@@ -297,7 +297,7 @@ auto Filesystem::referenceDataBlock(SectorBlock* fhBlock, SectorBlock* dataBlock
     std::set<SectorBlock*> sanityCheck;
     SectorBlock* extBlock = fhBlock;
 
-    while(extBlock = getExtensionBlock(extBlock->getNextExtension())) {
+    while(nullptr != (extBlock = getExtensionBlock(extBlock->getNextExtension()))) {
         if (sanityCheck.find(extBlock) != sanityCheck.end())
             return false;
 

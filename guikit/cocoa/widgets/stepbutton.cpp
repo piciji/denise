@@ -17,7 +17,7 @@
     stepButton->state.value = [sender integerValue];
     stepButton->Widget::state.text = std::to_string(stepButton->state.value);
     
-    [stepButton->p.editView setStringValue: [NSString stringWithUTF8String : stepButton->Widget::state.text.c_str()] ];
+    [(id)stepButton->p.editView setStringValue: [NSString stringWithUTF8String : stepButton->Widget::state.text.c_str()] ];
     
     if(stepButton->onChange) stepButton->onChange();
 }
@@ -57,7 +57,7 @@
     }
     stepButton->state.value = value;
     
-    [stepButton->p.stepView setIntegerValue: value];
+    [(id)stepButton->p.stepView setIntegerValue: value];
     
     if(stepButton->onChange) stepButton->onChange();
 }
@@ -74,7 +74,7 @@ auto pStepButton::minimumSize() -> Size {
     if (calculatedMinimumSize.updated)
         size = calculatedMinimumSize.minimumSize;
     else {
-        calculatedMinimumSize.minimumSize = pFont::size([editView font], widget.text());
+        calculatedMinimumSize.minimumSize = pFont::size([(id)editView font], widget.text());
     
         calculatedMinimumSize.updated = true;
     }
@@ -85,7 +85,7 @@ auto pStepButton::minimumSize() -> Size {
 auto pStepButton::setFont(std::string font) -> void {
     @autoreleasepool {
         if([editView respondsToSelector:@selector(setFont:)]) {
-            [editView setFont:pFont::cocoaFont(font)];
+            [(id)editView setFont:pFont::cocoaFont(font)];
         }
     }
     calculatedMinimumSize.updated = false;
@@ -93,16 +93,16 @@ auto pStepButton::setFont(std::string font) -> void {
 
 auto pStepButton::setValue( int16_t value ) -> void {
     @autoreleasepool {
-        [stepView setIntegerValue: value];
-        [editView setStringValue : [NSString stringWithUTF8String : stepButton.Widget::state.text.c_str()]];
+        [(id)stepView setIntegerValue: value];
+        [(id)editView setStringValue : [NSString stringWithUTF8String : stepButton.Widget::state.text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }
 
 auto pStepButton::updateRange() -> void {
     @autoreleasepool {
-        [stepView setMinValue: stepButton.state.minValue];
-        [stepView setMaxValue: stepButton.state.maxValue];
+        [(id)stepView setMinValue: stepButton.state.minValue];
+        [(id)stepView setMaxValue: stepButton.state.maxValue];
     }
 }
     
@@ -123,7 +123,7 @@ auto pStepButton::init() -> void {
         editView = [[CocoaStepEdit alloc] initWith : stepButton];
         
         formatter = [[IntegerFormatter alloc] initWith: false];
-        [editView setFormatter: formatter];
+        [(id)editView setFormatter: formatter];
         
         [cocoaView addSubview: editView];
         [cocoaView addSubview: stepView];

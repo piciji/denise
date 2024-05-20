@@ -497,6 +497,8 @@ namespace LIBAMI {
                 }
 
             } break;
+            default:
+                break;
         }
 
         if (dskTransferLength && (dskShifterPos == 16)) {

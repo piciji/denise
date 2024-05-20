@@ -137,8 +137,8 @@ auto pMenuBase::setIcon(Image& icon) -> void {
 pMenu::pMenu(Menu& menu) : pMenuBase(menu), menu(menu) { }
 pMenu::~pMenu() {
     @autoreleasepool {
-        [[cocoaBase cocoaMenu] release];
-        [[cocoaBaseContext cocoaMenu] release];
+        [[(id)cocoaBase cocoaMenu] release];
+        [[(id)cocoaBaseContext cocoaMenu] release];
     }
 }
     
@@ -162,23 +162,23 @@ auto pMenu::init() -> void {
     
 auto pMenu::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [[cocoaBase cocoaMenu]setTitle:[NSString stringWithUTF8String:text.c_str()]];
-        [[cocoaBaseContext cocoaMenu]setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [[(id)cocoaBase cocoaMenu] setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [[(id)cocoaBaseContext cocoaMenu]setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     pMenuBase::setText(text);
 }
 
 auto pMenu::append(MenuBase& item) -> void {
     @autoreleasepool {
-        [[cocoaBase cocoaMenu] addItem:item.p.cocoaBase];
-        [[cocoaBaseContext cocoaMenu] addItem:item.p.cocoaBaseContext];
+        [[(id)cocoaBase cocoaMenu] addItem:item.p.cocoaBase];
+        [[(id)cocoaBaseContext cocoaMenu] addItem:item.p.cocoaBaseContext];
     }
 }
 
 auto pMenu::remove(MenuBase& item) -> void {
     @autoreleasepool {
-        [[cocoaBase cocoaMenu] removeItem:item.p.cocoaBase];
-        [[cocoaBaseContext cocoaMenu] removeItem:item.p.cocoaBaseContext];
+        [[(id)cocoaBase cocoaMenu] removeItem:item.p.cocoaBase];
+        [[(id)cocoaBaseContext cocoaMenu] removeItem:item.p.cocoaBaseContext];
     }
 }
 

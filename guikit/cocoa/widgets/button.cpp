@@ -32,7 +32,7 @@ auto pButton::setGeometry(Geometry geometry) -> void {
     
 auto pButton::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }

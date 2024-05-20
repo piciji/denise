@@ -61,6 +61,8 @@ auto M93C86::chipSelect(bool state) -> void {
                     status = Status::Busy;
                 }
                 break;
+            default:
+                break;
         }
     }
 

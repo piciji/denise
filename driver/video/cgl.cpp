@@ -124,14 +124,14 @@ struct CGL : public Video, GL3, RenderThread {
     auto deleteContext(uintptr_t context) -> void {
         if(context) {
             GLUtility::sharedMutex.lock();
-            [context release];
+            [(id)context release];
             GLUtility::sharedMutex.unlock();
         }
     }
 
     auto makeContextCurrent(uintptr_t context) -> void {
         GLUtility::sharedMutex.lock();
-        [context makeCurrentContext];
+        [(id)context makeCurrentContext];
         GLUtility::sharedMutex.unlock();
     }
 

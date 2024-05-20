@@ -76,6 +76,7 @@
 @public
     GUIKIT::MultilineEdit* multilineEdit;
 }
+-(id) initWith:(GUIKIT::MultilineEdit&)multilineEditReference;
 @end
 
 @interface CocoaMultilineEdit : NSScrollView {
@@ -180,8 +181,9 @@
 @public
     GUIKIT::ListView* listView;
     CocoaListViewContent* content;
-    NSFont* font;
+    NSFont* _font;
 }
+-(IBAction) activate:(id)sender;
 @end
 
 @interface CocoaFrame : NSBox {}
@@ -215,6 +217,7 @@
     NSOutlineView* content;
     NSFont* font;
 }
+-(IBAction) activate:(id)sender;
 @end
 
 @interface TreeViewWrapper : NSObject {
@@ -249,7 +252,7 @@
 
 @interface IntegerFormatter : NSNumberFormatter {
 @public
-    bool allowNegative;
+    bool bAllowNegative;
 }
 @end
 

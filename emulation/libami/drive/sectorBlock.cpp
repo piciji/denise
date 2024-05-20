@@ -62,6 +62,8 @@ auto SectorBlock::init() -> void {
         case DATA_BLOCK_OFS:
             write(0, 8);
             break;
+        default:
+            break;
     }
 }
 
@@ -73,6 +75,8 @@ auto SectorBlock::setName(std::string name) -> void {
             if (name == "")
                 name = "empty";
             writeName(-80, name, 30);
+            break;
+        default:
             break;
     }
 }
@@ -119,6 +123,8 @@ auto SectorBlock::setBitmapBlock(unsigned pos, unsigned value) -> void {
         case BITMAP_EXT_BLOCK:
             write(pos << 2, value);
             break;
+        default:
+            break;
     }
 }
 
@@ -142,6 +148,8 @@ auto SectorBlock::setBitmapExtBlock(unsigned value) -> void {
         case BITMAP_EXT_BLOCK:
             write(-4, value);
             break;
+        default:
+            break;
     }
 }
 
@@ -162,6 +170,8 @@ auto SectorBlock::setParentDir(unsigned pos) -> void {
         case FILE_HEADER_BLOCK:
         case DIR_BLOCK:
             write(-12, pos);
+            break;
+        default:
             break;
     }
 }
@@ -195,6 +205,8 @@ auto SectorBlock::setHashTable(unsigned pos, unsigned nr) -> void {
             if (pos < tableEntries())
                 write( (6 + pos) << 2, nr );
             break;
+        default:
+            break;
     }
 }
 
@@ -214,6 +226,8 @@ auto SectorBlock::setHashChain(unsigned nr) -> void {
         case DIR_BLOCK:
         case FILE_HEADER_BLOCK:
             write(-16, nr);
+            break;
+        default:
             break;
     }
 }
@@ -237,6 +251,8 @@ auto SectorBlock::setFileHeader(unsigned nr) -> void {
             break;
         case DATA_BLOCK_OFS:
             write(4, nr);
+            break;
+        default:
             break;
     }
 }
@@ -391,6 +407,8 @@ auto SectorBlock::setDataTable(int pos, unsigned value) -> void {
         case EXTENSION_BLOCK:
             write( -204 - (pos << 2), value);
             break;
+        default:
+            break;
     }
 }
 
@@ -410,6 +428,8 @@ auto SectorBlock::getChecksumOffset() -> int {
 
         case BITMAP_BLOCK:
             return 0;
+        default:
+            break;
     }
     return -1;
 }
