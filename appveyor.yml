@@ -7,7 +7,7 @@ skip_commits:
     - '**/*.md'
 
 image:
-#  - Visual Studio 2019
+  - Visual Studio 2019
   - macos-bigsur
   - macos
 #  - Ubuntu2004
@@ -19,7 +19,6 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
-    - cmake
 
 environment:
   matrix:
