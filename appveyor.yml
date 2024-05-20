@@ -268,11 +268,11 @@ for:
     - sh: cd ..
     - sh: sudo rm -rf /Library/Frameworks/Mono.framework
     - sh: install -m 755 data/libs/static/macArm/libfreetype.a /usr/local/lib/
-    - sh: install -m 755 data/libs/shared/macArm/libfreetype.dylib /usr/local/lib/
+    - sh: install -m 755 data/libs/shared/macArm/libfreetype.6.dylib /usr/local/lib/
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
-    - sh: cmake -B builds/release -DCMAKE_SYSTEM_PROCESSOR=arm64 && cmake --build builds/release && cmake --install builds/release
+    - sh: cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 && cmake --build builds/release && cmake --install builds/release
     - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
 
   after_build:

@@ -33,7 +33,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(CMAKE_CXX_COMPILER clang++)
-    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")
+    if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
         set(CMAKE_OSX_DEPLOYMENT_TARGET "11")
     else()
         set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
@@ -58,7 +58,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
 endif()
-message(STATUS "compile for ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "compile for architecture ${CMAKE_OSX_ARCHITECTURES}")
 message(STATUS "freetype includes ${FREETYPE2_INCLUDE_DIRS}")
 message(STATUS "freetype libs ${FREETYPE2_LIBRARY_DIRS}")
 
@@ -217,7 +217,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     SET_SOURCE_FILES_PROPERTIES(driver/audio/xaudio2/xaudio29.cpp PROPERTIES COMPILE_FLAGS "-DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -Wno-attributes")
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")
+    if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
         SET_SOURCE_FILES_PROPERTIES(${depSrcs}
                 PROPERTIES COMPILE_FLAGS "-DMACOSX_DEPLOYMENT_TARGET11")
     else()
@@ -288,7 +288,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # target_link_libraries(${PROJECT_NAME} "-lc++ -lobjc")
     target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
-    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")
+    if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
         set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES "arm64")
     endif()
 
@@ -335,8 +335,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/MacOS PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
 
-    install(CODE "execute_process(COMMAND ls -lah ${FREETYPE2_LIBRARY_DIRS}/libfreetype.dylib)")
-    install(CODE "execute_process(COMMAND ls -lah ${FREETYPE2_INCLUDE_DIRS})")
     install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE2_LIBRARY_DIRS} lib${FREETYPE2_LIBRARIES}.6.dylib ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app ${PROJECT_NAME})")
 
     install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app)")
