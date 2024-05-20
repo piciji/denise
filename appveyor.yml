@@ -7,8 +7,8 @@ skip_commits:
     - '**/*.md'
 
 image:
-#  - macos
-  - Visual Studio 2019
+  - macos
+#  - Visual Studio 2019
 #  - macos-bigsur
 #  - Ubuntu2004
 
@@ -212,19 +212,21 @@ for:
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
-    - sh: cmake -B builds/release && cmake --build builds/release --verbose && cmake --install builds/release
-    - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
+    - sh: sudo rm -rf /Library/Frameworks/Mono.framework
+    - sh: cmake -B builds/release
+    #- sh: cmake -B builds/release && cmake --build builds/release --verbose && cmake --install builds/release
+    #- sh: dmgbuild -s data/dmgSettings.py "Denise" builds/denise.dmg
     
   after_build:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
-          export gzSrc=builds/release/denise.dmg
+          export gzSrc=builds/denise.dmg
           
         else        
           export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg
-          export gzSrc=builds/release/denise.dmg
+          export gzSrc=builds/denise.dmg
         fi
         
         sudo mv "${gzSrc}" "${gzTarget}"
