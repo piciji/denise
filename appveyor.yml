@@ -9,7 +9,7 @@ skip_commits:
 image:
 #  - macos
 #  - Visual Studio 2019
-  - macos-arm
+  - macos-bigsur
 #  - Ubuntu2004
 
 stack: python 3.8
@@ -58,13 +58,13 @@ matrix:
       Target: linux
     - image: macos
       Target: macos-arm
-    - image: macos-arm
+    - image: macos-bigsur
       Target: win64
-    - image: macos-arm
+    - image: macos-bigsur
       Target: win32
-    - image: macos-arm
+    - image: macos-bigsur
       Target: linux
-    - image: macos-arm
+    - image: macos-bigsur
       Target: macos
 for:
 -    
@@ -246,7 +246,7 @@ for:
 -
   matrix:
     only:
-      - image: macos-arm
+      - image: macos-bigsur
 
   install:
     - sh: test -e freetype-2.13.0.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.0.tar.gz --output freetype-2.13.0.tar.gz
