@@ -330,6 +330,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/MacOS PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
 
     install(CODE "execute_process(COMMAND ls -lah ${FREETYPE2_LIBRARY_DIRS}/libfreetype.dylib)")
+    install(CODE "execute_process(COMMAND ls -lah ${FREETYPE2_INCLUDE_DIRS})")
     install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE2_LIBRARY_DIRS} lib${FREETYPE2_LIBRARIES}.6.dylib ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app ${PROJECT_NAME})")
 
     install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app)")
