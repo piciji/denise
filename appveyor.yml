@@ -228,19 +228,20 @@ for:
           export gzSrc=builds/denise.dmg
         fi
         
-        sudo mv "${gzSrc}" "${gzTarget}"
+        mv "${gzSrc}" "${gzTarget}"
+        bzip2 -z "${gzTarget}"
 
   deploy_script:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "true" ]
         then
-          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg
+          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg.bz2
           echo ${FTP_PSW} > ftp.txt 2>&1
           sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/deniseemu/v\\ 2.2.1/"
         fi
 
   artifacts:
-    - path: 'denise*.dmg'
+    - path: 'denise*.dmg.bz2'
 
 -
   matrix:
@@ -270,7 +271,7 @@ for:
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
-    - sh: cmake -B builds/release -DCMAKE_CXX_COMPILER=arm64-apple-macos11 && cmake --build builds/release && cmake --install builds/release
+    - sh: cmake -B builds/release -DCMAKE_SYSTEM_PROCESSOR=arm64 && cmake --build builds/release && cmake --install builds/release
     - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
 
   after_build:

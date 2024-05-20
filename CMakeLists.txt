@@ -33,7 +33,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(CMAKE_CXX_COMPILER clang++)
-    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ARM")
+    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")
         set(CMAKE_OSX_DEPLOYMENT_TARGET "11")
     else()
         set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
@@ -59,6 +59,8 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCH
     message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
 endif()
 message(STATUS "compile for ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "freetype includes ${FREETYPE2_INCLUDE_DIRS}")
+message(STATUS "freetype libs ${FREETYPE2_LIBRARY_DIRS}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(STATUS "32 bit build")
@@ -215,7 +217,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     SET_SOURCE_FILES_PROPERTIES(driver/audio/xaudio2/xaudio29.cpp PROPERTIES COMPILE_FLAGS "-DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -Wno-attributes")
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ARM")
+    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")
         SET_SOURCE_FILES_PROPERTIES(${depSrcs}
                 PROPERTIES COMPILE_FLAGS "-DMACOSX_DEPLOYMENT_TARGET11")
     else()
@@ -285,6 +287,10 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     # target_link_libraries(${PROJECT_NAME} "-lc++ -lobjc")
     target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
+
+    if (${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")
+        set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES "arm64")
+    endif()
 
 else()
     if (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD") # fixme

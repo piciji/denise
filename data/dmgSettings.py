@@ -28,7 +28,7 @@ appname = os.path.basename(application)
 # volume_name = 'Test'
 
 # Volume format (see hdiutil create -help)
-format = defines.get('format', 'UDBZ')
+format = defines.get('format', 'UDRO')
 
 # Compression level (if relevant)
 # compression_level = 9
