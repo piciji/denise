@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - macos
+#  - macos
 #  - Visual Studio 2019
-#  - macos-bigsur
+  - macos-arm
 #  - Ubuntu2004
 
 stack: python 3.8
@@ -58,13 +58,13 @@ matrix:
       Target: linux
     - image: macos
       Target: macos-arm
-    - image: macos-bigsur
+    - image: macos-arm
       Target: win64
-    - image: macos-bigsur
+    - image: macos-arm
       Target: win32
-    - image: macos-bigsur
+    - image: macos-arm
       Target: linux
-    - image: macos-bigsur
+    - image: macos-arm
       Target: macos
 for:
 -    
@@ -246,7 +246,7 @@ for:
 -
   matrix:
     only:
-      - image: macos-bigsur
+      - image: macos-arm
 
   install:
     - sh: test -e freetype-2.13.0.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.0.tar.gz --output freetype-2.13.0.tar.gz
@@ -266,6 +266,7 @@ for:
     - sh: cd freetype-2.13.0
     - sh: ./configure --host=arm64-apple-macos11 --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..
+    - sh: sudo rm -rf /Library/Frameworks/Mono.framework
     - sh: install -m 755 data/libs/static/macArm/libfreetype.a /usr/local/lib/
     - sh: install -m 755 data/libs/shared/macArm/libfreetype.dylib /usr/local/lib/
     - sh: cd sshpass*
@@ -286,17 +287,18 @@ for:
           export gzSrc=builds/release/denise.dmg
         fi
         
-        sudo mv "${gzSrc}" "${gzTarget}"
+        mv "${gzSrc}" "${gzTarget}"
+        bzip2 -z "${gzTarget}"
 
   deploy_script:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "true" ]
         then
-          export gzTarget=denise_osx_arm64_${APPVEYOR_REPO_TAG_NAME}.dmg
+          export gzTarget=denise_osx_arm64_${APPVEYOR_REPO_TAG_NAME}.dmg.bz2
           echo ${FTP_PSW} > ftp.txt 2>&1        
           sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/deniseemu/v\\ 2.2.1/"
         fi
 
   artifacts:
-    - path: 'denise*.dmg'
+    - path: 'denise*.dmg.bz2'
 
