@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
-#  - macos
 #  - Visual Studio 2019
   - macos-bigsur
+  - macos
 #  - Ubuntu2004
 
 stack: python 3.8
@@ -272,7 +272,7 @@ for:
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
-    - sh: cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 && cmake --build builds/release && cmake --install builds/release
+    - sh: cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 && cmake --build builds/release --verbose && cmake --install builds/release
     - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
 
   after_build:
