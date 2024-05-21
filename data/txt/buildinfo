@@ -1,7 +1,7 @@
 
 WINDOWS (7 and higher)
 -----------
-download CMAKE
+download and install CMAKE, GIT
 download and install mingw32 or 64: https://github.com/niXman/mingw-builds-binaries/releases
 
 open a CMD:
@@ -58,12 +58,12 @@ compile freetype
 
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
-cmake -B builds/release
+cmake -B builds/release [-DCMAKE_OSX_ARCHITECTURES=arm64]  (flag is for cross compiling only)
 cmake --build builds/release -j=<number of usable CPU cores>
 cmake --install builds/release
 
 
-LINUX
+LINUX / BSD (tested on NetBSD and OpenBSD, not FreeBSD)
 -----
 install following dependencies if you haven't already
 
@@ -81,12 +81,19 @@ make: pacman -Sy make
 gtk3: pacman -Sy gtk3
 pkg-config: pacman -Sy pkgconf
 ---------------------------------------------
+FreeBSD
+---------------------------------------------
+pkgin in pkg-config
+pkgin in openal-soft
+pkgin in SDL2
+pkgin in pulseaudio
+---------------------------------------------
 
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 cmake -B builds/release [-DCMAKE_INSTALL_PREFIX=~/.local] [-DINSTALL_FILE_ASSOCIATIONS=1]
 cmake --build builds/release --target clean [optional]
-cmake --build builds/release -j=<number of usable CPU cores>
+cmake --build builds/release -j=<number of usable CPU cores> [--verbose]
 
 [sudo] cmake --install builds/release
 [sudo] cmake --build builds/release --target uninstall

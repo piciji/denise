@@ -107,13 +107,19 @@ AutostartLayout::StartWrapper::Option::Option() {
     append(tapeWithStandardKernal, {0u, 0u} );
 }
 
+AutostartLayout::DragnDrop::DragnDrop(Emulator::Interface* emulator) {
+    append(power, {0u, 0u}, 10);
+    if (dynamic_cast<LIBAMI::Interface*>(emulator))
+        append(captureMouse, {0u, 0u});
+}
+
 AutostartLayout::StartWrapper::Option::DiskOptions::DiskOptions() {
     append(loadWithColumn, {0u, 0u}, 5 );
     append(speederTraps, {0u, 0u}, 10 );
     setAlignment( 0.5 );
 }
 
-AutostartLayout::AutostartLayout(Emulator::Interface* emulator) : autoWarp(emulator) {
+AutostartLayout::AutostartLayout(Emulator::Interface* emulator) : autoWarp(emulator), dragnDrop(emulator) {
     setPadding(10);
 
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
@@ -126,7 +132,7 @@ AutostartLayout::AutostartLayout(Emulator::Interface* emulator) : autoWarp(emula
         append(manuellOverAutowarp, {0u, 0u}, 5 );
     }
 
-    append(autostartDragnDrop, {~0u, 0u});
+    append(dragnDrop, {~0u, 0u});
 
     setFont(GUIKIT::Font::system("bold"));
 }
@@ -273,8 +279,12 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) : autostartLayout(tabWindow->emulat
         };
     }
 
-    autostartLayout.autostartDragnDrop.onToggle = [&](bool checked) {
+    autostartLayout.dragnDrop.power.onToggle = [&](bool checked) {
         _settings->set<bool>("autostart_dragndrop", checked);
+    };
+
+    autostartLayout.dragnDrop.captureMouse.onToggle = [&](bool checked) {
+        _settings->set<bool>("dragndrop_capture_mouse", checked);
     };
 
     runAheadLayout.control.slider.onChange = [this](unsigned position) {
@@ -479,7 +489,8 @@ auto MiscLayout::translate() -> void {
         autostartLayout.startWrapper->start.tapeTrapsOnDblClick.setText(trans->get("VDT Tape Autostart on dblclick"));
     }
 
-    autostartLayout.autostartDragnDrop.setText(trans->get("autostart_dragndrop"));
+    autostartLayout.dragnDrop.power.setText(trans->get("dragndrop power"));
+    autostartLayout.dragnDrop.captureMouse.setText(trans->get("dragndrop capture mouse"));
 
     fpsLayout.setText( trans->get("Speed") );
     fpsLayout.customRate.label.setText( trans->get("Set speed", {}, true) );
@@ -535,7 +546,8 @@ auto MiscLayout::loadSettings() -> void {
         autostartLayout.startWrapper->start.tapeTrapsOnDblClick.setChecked(_settings->get<bool>("autostart_tape_traps_on_dblclick", false));
     }
 
-    autostartLayout.autostartDragnDrop.setChecked(_settings->get<bool>("autostart_dragndrop", dynamic_cast<LIBC64::Interface*>(emulator)));
+    autostartLayout.dragnDrop.power.setChecked(_settings->get<bool>("autostart_dragndrop", dynamic_cast<LIBC64::Interface*>(emulator)));
+    autostartLayout.dragnDrop.captureMouse.setChecked(_settings->get<bool>("dragndrop_capture_mouse",false));
 
     setRunAheadPerformance(_settings->get<bool>("runahead_performance", dynamic_cast<LIBAMI::Interface*>(emulator)));
 
