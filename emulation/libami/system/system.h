@@ -41,6 +41,14 @@ struct System {
     Cia<MOS_8520> cia1;
     Cia<MOS_8520> cia2;
 
+    enum Dongle { DongleNone = 0, DongleRoboCop3, DongleBat2, DongleCricketCaptain, DongleLeaderBoard, DongleRugbyCoach };
+    struct {
+        Dongle type;
+        uint8_t control;
+        int64_t clock;
+        auto connected() -> bool { return type != DongleNone; }
+    } dongle;
+
     struct {
         unsigned config = 0;
         unsigned frameCounter;
@@ -117,6 +125,10 @@ struct System {
 
     auto isDisplayFrame() -> const bool { return !runAhead.pos; }
     auto isProcessFrame() -> const bool { return !allowRunAhead() || (runAhead.frames == runAhead.pos); }
+
+    template<bool CIA2> auto dongleCiaWrite(Cia<MOS_8520>::Lines* lines) -> void;
+    template<bool CIA2> auto dongleCiaRead(Cia<MOS_8520>::Lines* lines, uint8_t& val) -> void;
+    template<bool portB> auto dongleJoydat(uint16_t& val) -> void;
 };
 
 

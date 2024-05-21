@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "218";
+const std::string Interface::Version = "219";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -51,6 +51,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdRTC, "RTC", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdSerialLoopback, "Serial Loopback", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdFakeECSDenise, "Fake ECS Denise", Model::Type::Switch, Model::Purpose::Misc, 0});
+    models.push_back({ModelIdDongle, "Plugin Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,5}, {"None", "RoboCop 3", "B.A.T. II", "Cricket Captain", "Leader Board", "Rugby Coach"}});
 }
 
 auto Interface::prepareMedia() -> void {
@@ -433,6 +434,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdFakeECSDenise:
             system->fakeECSDenise = !!value;
             break;
+        case ModelIdDongle:
+            system->dongle.type = static_cast <System::Dongle>(value);
+            break;
     }
 }
 
@@ -454,6 +458,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdRTC:                            return (int)system->useRTC();
         case ModelIdSerialLoopback:                 return (int)system->paula.loopBack;
         case ModelIdFakeECSDenise:                  return (int)system->fakeECSDenise;
+        case ModelIdDongle:                         return (int)system->dongle.type;
     }
 
     return 0;

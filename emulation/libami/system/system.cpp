@@ -5,6 +5,7 @@
 #include "../../tools/sanitizer.h"
 #include  "../../tools/macros.h"
 #include "serialization.cpp"
+#include "dongle.cpp"
 
 namespace LIBAMI {
 
@@ -61,6 +62,8 @@ rtc(agnus) {
                 paula.setLedFilter((lines->ioa & 2) == 0 );
             }
 
+            if (dongle.connected())
+                dongleCiaWrite<false>(lines);
         } else {
             // parallel port
         }
@@ -70,9 +73,24 @@ rtc(agnus) {
         paula.scheduleIntreqCia1(state);
     };
 
+    cia2.readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+
+        if ( port == Cia<MOS_8520>::PORTA ) {
+            uint8_t out = lines->ioa;
+            if (dongle.connected())
+                dongleCiaRead<true>(lines, out);
+            return out;
+        }
+
+        return lines->iob; // parallel port
+    };
+
     cia2.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
+            if (dongle.connected())
+                dongleCiaWrite<true>(lines);
+
             cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
 
         } else if (lines->iob != lines->iobOld) {
@@ -125,6 +143,9 @@ rtc(agnus) {
     paula.activeDrive = &diskDrives[0];
     ntsc = false;
     firmwareChanged = true;
+    dongle.type = DongleNone;
+    dongle.control = 0;
+    dongle.clock = 0;
 }
 
 System::~System() {
@@ -166,6 +187,8 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
         interface->fpsChanged();
     }
 
+    dongle.control = 0;
+    dongle.clock = 0;
     powerOn = true;
 }
 
@@ -536,5 +559,8 @@ auto System::setRTC(bool state) -> void {
 auto System::useRTC() -> bool {
     return agnus.useRTC;
 }
+
+template auto System::dongleJoydat<false>(uint16_t& val) -> void;
+template auto System::dongleJoydat<true>(uint16_t& val) -> void;
 
 }

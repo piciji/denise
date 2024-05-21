@@ -32,7 +32,10 @@ auto Input::readCiaPortA( ) -> uint8_t {
 auto Input::readDenisePortA() -> uint16_t {
     system->observeInputFetches();
     jitPoll();
-    return controlPort1->readDirection();
+    uint16_t out = controlPort1->readDirection();
+    if (system->dongle.connected())
+        system->dongleJoydat<false>(out);
+    return out;
 }
 
 auto Input::writeDeniseJoytest(uint16_t data) -> void {
@@ -43,7 +46,10 @@ auto Input::writeDeniseJoytest(uint16_t data) -> void {
 auto Input::readDenisePortB() -> uint16_t {
     system->observeInputFetches();
     jitPoll();
-    return controlPort2->readDirection();
+    uint16_t out = controlPort2->readDirection();
+    if (system->dongle.connected())
+        system->dongleJoydat<true>(out);
+    return out;
 }
 
 auto Input::observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void {
