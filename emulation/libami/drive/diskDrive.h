@@ -58,7 +58,7 @@ struct DiskDrive {
     unsigned refCyclesPerRevolution;
 
     int accum;
-    int cellSpeed;
+    int cellSpeedDeprecated;
 
     int64_t stepClock; // minimum delay between steps
     int64_t stepSettleClock; // time to read reliable from next track

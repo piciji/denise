@@ -193,22 +193,21 @@ template<bool update> auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
     dmaCycles = 7;
 
     if constexpr(update) {
-        int _bits;
+        int _bits = track->bits;
 
         if (track->cellWidth) {
-            _bits = structure.getTrackBitLength();
             int cellSpeed = track->cellWidth[headOffset >> 3];
+            int oneCycle = (_bits * cellSpeed) / 1000;
             accum += (int)refCyclesPerRevolution - ((_bits * 7 * cellSpeed) / 1000);
 
-            if (accum > _bits) {
+            if (accum > oneCycle) {
                 dmaCycles -= 1;
-                accum -= _bits * cellSpeed / 1000;
-            } else if (accum < (-1 * _bits)) {
+                accum -= oneCycle;
+            } else if (accum < (-1 * oneCycle)) {
                 dmaCycles += 1;
-                accum += _bits * cellSpeed / 1000;
+                accum += oneCycle;
             }
         } else {
-            _bits = track->bits;
             accum += (int)refCyclesPerRevolution - _bits * 7;
 
             if (accum > _bits) {
@@ -654,7 +653,7 @@ auto DiskDrive::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(stepperMinTime);
     s.integer(randomizer.xorShift32);
     s.integer(randCounter);
-    s.integer(cellSpeed);
+    s.integer(cellSpeedDeprecated);
 
     if (s.mode() == Emulator::Serializer::Mode::Load)
         track = &structure.tracks[(cylinder << 1) | side];
