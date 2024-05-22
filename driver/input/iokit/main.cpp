@@ -29,7 +29,7 @@ struct Iokit : Input {
         if (!keyboard.init())
             return false;
         
-        mouse.init();
+        mouse.init( handle );
                 
         if(!joypad()->init()) {}
         

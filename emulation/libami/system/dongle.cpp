@@ -17,6 +17,7 @@ template<bool CIA2> auto System::dongleCiaWrite(Cia<MOS_8520>::Lines* lines) -> 
                 }
             }
             break;
+        default: break;
 
     }
 }
@@ -32,6 +33,7 @@ template<bool CIA2> auto System::dongleCiaRead(Cia<MOS_8520>::Lines* lines, uint
                     val |= 0x10;
             }
             break;
+        default: break;
     }
 }
 
@@ -65,6 +67,7 @@ template<bool portB> auto System::dongleJoydat(uint16_t& val) -> void {
                 val |= 0x301;
             }
             break;
+        default: break;
     }
 }
 
