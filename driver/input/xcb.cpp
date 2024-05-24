@@ -19,6 +19,7 @@ struct XCBInput : public Input {
 
 	std::string joypadDriver = "";
 	unsigned char _keycode[256];
+	std::atomic<bool> kill;
 
 #ifdef DRV_SDLINPUT
     SdlInput* sdl;
@@ -58,6 +59,7 @@ struct XCBInput : public Input {
 		hidMouse = new Hid::Mouse;
 		hidKeyboard->id = 0;
 		hidMouse->id = 1;
+    	kill = false;
 
 	#ifdef DRV_SDLINPUT
 		if (joypadDriver == "sdl")
@@ -286,6 +288,7 @@ struct XCBInput : public Input {
     auto initWorker() -> void {
 
         std::thread worker([this] {
+        	kill = false;
         	//setvbuf (stdout, NULL, _IONBF, 0);
 
 			xcb_generic_event_t* event;
@@ -373,9 +376,8 @@ struct XCBInput : public Input {
 
 			 	free(event);
 			}
-
-        	if(conn)
-        		xcb_disconnect(conn), conn = nullptr;
+        	
+        	kill = true;
         });
 
         worker.detach();
@@ -387,7 +389,7 @@ struct XCBInput : public Input {
 
     auto mAcquire() -> void {
 		if (mIsAcquired()) return;
-    	
+
     	auto cookie = xcb_grab_pointer(conn, 1, GDK_WINDOW_XID( (GdkWindow*)handle ),
 						  XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_LEAVE_WINDOW,
 						  XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC,
@@ -442,8 +444,12 @@ struct XCBInput : public Input {
 	}
 	~XCBInput() {
     	sendCloseEvent();
-    	if(hidMouse) delete hidMouse, hidMouse = nullptr;
-    	if(hidKeyboard) delete hidKeyboard, hidKeyboard = nullptr;
+    	//if(hidMouse) delete hidMouse, hidMouse = nullptr;
+    	//if(hidKeyboard) delete hidKeyboard, hidKeyboard = nullptr;
+    	while (!kill) {
+    		std::this_thread::yield();
+    	}
+    	term();
 
 		#ifdef DRV_SDLINPUT
 			if (joypadDriver == "sdl") delete sdl;
