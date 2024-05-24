@@ -17,6 +17,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCH
     find_package(SDL2 REQUIRED)
     find_package(PulseAudio REQUIRED)
     pkg_check_modules(GTK REQUIRED gtk+-3.0)
+    pkg_check_modules(XCB REQUIRED xcb xcb-xinput xcb-xfixes xkbcommon)
 endif()
 
 set(AppName "Denise")
@@ -250,10 +251,10 @@ else()
 
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev, GhostBSD (OpenBSD) has udev, FreeBSD untested
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_FREETYPE -DDRV_SDLINPUT")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_FREETYPE -DDRV_SDLINPUT")
     else()
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_UDEV -DDRV_FREETYPE -DDRV_SDLINPUT")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV -DDRV_FREETYPE -DDRV_SDLINPUT")
     endif()
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
@@ -309,6 +310,7 @@ else()
     target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
         target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R7/lib -L/usr/X11R7/lib -lXext -lXfixes -lGL -lpulse")
         # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs

@@ -78,7 +78,7 @@ auto Input::emergencyPoll() -> void {
 
 inline auto Input::jitPoll() -> void {
 
-    if (sampling.allow && (sampling.externalKeyEvent || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
+    if (sampling.allow && (sampling.externalKeyEvent || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 3))) {
         if (interface->jitPoll(sampling.externalKeyEvent ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
             sampling.externalKeyEvent = false;
             sampling.midscreen++;

@@ -74,6 +74,10 @@
 	#include "input/xlib.cpp"
 #endif
 
+#ifdef DRV_XCB
+	#include "input/xcb.cpp"
+#endif
+
 namespace DRIVER {
 
 auto Video::available() -> std::vector<std::string> {
@@ -276,6 +280,14 @@ auto Input::available() -> std::vector<std::string> {
         "IoKit",
     #endif
 
+	#if defined(DRV_XCB) && defined(DRV_UDEV)
+		"XCB/Udev",
+	#endif
+
+	#if defined(DRV_XCB) && defined(DRV_SDLINPUT)
+		"XCB/Sdl",
+	#endif
+
     #if defined(DRV_XLIB) && defined(DRV_UDEV)
 		"Xlib/Udev",
 	#endif
@@ -284,9 +296,6 @@ auto Input::available() -> std::vector<std::string> {
 		"Xlib/Sdl",
 	#endif
 
-	#if defined(DRV_XLIB) && !defined(DRV_SDLINPUT) && !defined(DRV_UDEV)
-		"Xlib",
-	#endif
 	};
 }
 
@@ -311,16 +320,20 @@ auto Input::preferred() -> std::string {
         return "IoKit";
     #endif
 
+	#if defined(DRV_XCB) && defined(DRV_UDEV)
+		return "XCB/Udev";
+	#endif
+
+	#if defined(DRV_XCB) && defined(DRV_SDLINPUT)
+		return "XCB/Sdl";
+	#endif
+
 	#if defined(DRV_XLIB) && defined(DRV_UDEV)
 		return "Xlib/Udev";
 	#endif
 
 	#if defined(DRV_XLIB) && defined(DRV_SDLINPUT)
 		return "Xlib/Sdl";
-	#endif
-
-	#ifdef DRV_XLIB
-		return "Xlib";
 	#endif
 
 	return "";
@@ -347,16 +360,20 @@ auto Input::create(const std::string& driver) -> Input* {
         if(driver == "IoKit") return new Iokit();
 	#endif
 
+	#if defined(DRV_XCB) && defined(DRV_UDEV)
+		if(driver == "XCB/Udev") return new XCBInput("udev");
+	#endif
+
+	#if defined(DRV_XCB) && defined(DRV_SDLINPUT)
+		if(driver == "XCB/Sdl") return new XCBInput("sdl");
+	#endif
+
 	#if defined(DRV_XLIB) && defined(DRV_UDEV)
 		if(driver == "Xlib/Udev") return new XInput("udev");
 	#endif
 
 	#if defined(DRV_XLIB) && defined(DRV_SDLINPUT)
 		if(driver == "Xlib/Sdl") return new XInput("sdl");
-	#endif
-
-	#ifdef DRV_XLIB
-		if(driver == "Xlib") return new XInput();
 	#endif
 
     return new Input;

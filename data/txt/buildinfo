@@ -73,6 +73,7 @@ OpenAL: apt-get install libopenal-dev
 Pulseaudio: apt-get install libpulse-dev
 SDL2: apt-get install libsdl2-dev
 Udev: apt-get install libudev-dev
+XCB: apt install libxcb-xinput-dev && apt install libxcb-xfixes0
 ---------------------------------------------
 ARCH Linux
 ----------
