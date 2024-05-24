@@ -251,9 +251,9 @@ auto pStatusBar::update() -> void {
             view = slider->p.cocoaView;
 
             if (i == countVisible && (area.size.width > xPos) )
-                [view setFrame:NSMakeRect(xPos, 0, area.size.width - xPos, getHeight() - 1)];
+                [view setFrame:NSMakeRect(xPos, 1, area.size.width - xPos, getHeight() - 3)];
             else
-                [view setFrame:NSMakeRect(xPos, 0, part.width, getHeight() - 1)];
+                [view setFrame:NSMakeRect(xPos, 1, part.width, getHeight() - 3)];
 
             xPos += part.width;
 

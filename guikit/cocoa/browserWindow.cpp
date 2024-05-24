@@ -190,7 +190,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
                                 out.push_back((std::string)name);
                              //   delete name;
                             }
-                            [uri release];
+                         //   [uri release];
                         }
                     } else {
                         NSArray* paths = [(id)panel URLs];
@@ -216,8 +216,8 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
                                 out = temp;
                             }
                         }
-                        if (paths != nil)
-                            [paths release];
+                      //  if (paths != nil)
+                        //    [paths release];
              
                         if (_browserWindow->state.onOkClick)
                             _browserWindow->state.onOkClick(out, _browserWindow->p.contentViewSelection());
