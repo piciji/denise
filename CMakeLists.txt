@@ -35,8 +35,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(CMAKE_CXX_COMPILER clang++)
     if(NOT CMAKE_OSX_ARCHITECTURES)
-        set(CMAKE_OSX_ARCHITECTURES x86_64 CACHE STRING "Choose the architecture." FORCE)
-        set_property(CACHE CMAKE_OSX_ARCHITECTURES PROPERTY STRINGS "x86_64" "arm64")
+        set(CMAKE_OSX_ARCHITECTURES ${CMAKE_HOST_SYSTEM_PROCESSOR})
     endif()
 
     if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
@@ -297,10 +296,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # target_link_libraries(${PROJECT_NAME} "-lc++ -lobjc")
     target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
-    if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
-        set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES "arm64")
-    endif()
-
+    set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
 else()
     if (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD") # fixme
         target_link_libraries(${PROJECT_NAME} "-static-libgcc -static-libstdc++")
@@ -345,6 +341,8 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/MacOS PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
 
+    install(FILES ${FREETYPE2_LIBRARY_DIRS}/lib${FREETYPE2_LIBRARIES}.6.dylib DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Frameworks)
+
     install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE2_LIBRARY_DIRS} lib${FREETYPE2_LIBRARIES}.6.dylib ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app ${PROJECT_NAME})")
 
     install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app)")
@@ -374,7 +372,7 @@ add_custom_target(install_${PROJECT_NAME}
         DEPENDS ${PROJECT_NAME}
         COMMENT "Installing ${PROJECT_NAME}")
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_target("uninstall" COMMENT "Uninstall installed files")
     add_custom_command(
             TARGET "uninstall"

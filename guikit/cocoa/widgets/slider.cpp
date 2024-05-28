@@ -8,6 +8,9 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
+        
+        if (GUIKIT::hasMinimumVersion(11, 0))
+            [self setControlSize:NSControlSizeSmall];
     
     }
     return self;

@@ -13,7 +13,7 @@
 }
 
 -(IBAction) activate:(id)sender {
-    checkButton->state.checked = [self state] != NSOffState;
+    checkButton->state.checked = [self state] != NSControlStateValueOff;
     if(checkButton->onToggle) checkButton->onToggle();
 }
 @end
@@ -41,7 +41,7 @@ auto pCheckButton::setText(const std::string& text) -> void {
 
 auto pCheckButton::setChecked(bool checked) -> void {
     @autoreleasepool {
-        [(id)cocoaView setState:checked ? NSOnState : NSOffState];
+        [(id)cocoaView setState:checked ? NSControlStateValueOn : NSControlStateValueOff];
     }
 }
     

@@ -72,16 +72,16 @@ namespace GUIKIT {
 
 #include "versioning.cpp"
     
-auto NSMakeImage(Image& image, unsigned width, unsigned height) -> NSImage* {
+auto NSMakeImage(Image& image, unsigned width, unsigned height, unsigned addLines) -> NSImage* {
     if(image.empty()) return nil;
 
     NSImage* cocoaImage = [[NSImage alloc] initWithSize:NSMakeSize(image.width, image.height)];
     NSBitmapImageRep* bitmap = [[[NSBitmapImageRep alloc]
                             initWithBitmapDataPlanes:nil
-                            pixelsWide:image.width pixelsHigh:image.height
+                            pixelsWide:image.width pixelsHigh:image.height + addLines
                             bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES
                             isPlanar:NO colorSpaceName:NSCalibratedRGBColorSpace
-                            bitmapFormat:NSAlphaNonpremultipliedBitmapFormat
+                            bitmapFormat:NSBitmapFormatAlphaNonpremultiplied
                             bytesPerRow:image.width * 4 bitsPerPixel:32
                             ] autorelease];
     memcpy([bitmap bitmapData], image.data, image.height * image.width * 4);
@@ -95,7 +95,7 @@ auto NSMakeImage(Image& image, unsigned width, unsigned height) -> NSImage* {
         [resizedImage lockFocus];
         [cocoaImage setSize: newSize];
         [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
-        [cocoaImage drawAtPoint:NSZeroPoint fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
+        [cocoaImage drawAtPoint:NSZeroPoint fromRect:NSZeroRect operation:NSCompositingOperationMultiply fraction:1.0];
         [resizedImage unlockFocus];
         return resizedImage;
     }

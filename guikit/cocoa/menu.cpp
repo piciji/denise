@@ -124,11 +124,11 @@ auto pMenuBase::setIcon(Image& icon) -> void {
             else if (dynamic_cast<pMenuRadioItem*>(this)) [cocoaBaseContext setOnStateImage:[NSImage imageNamed:@"NSMenuCheckmark"]];
             else [cocoaBaseContext setImage:nil];
         } else {
-            if (dynamic_cast<pMenuCheckItem*>(this) || dynamic_cast<pMenuRadioItem*>(this)) [cocoaBase setOnStateImage:NSMakeImage(icon, 15, 15)];
-            else [cocoaBase setImage:NSMakeImage(icon, 15, 15)];
+            if (dynamic_cast<pMenuCheckItem*>(this) || dynamic_cast<pMenuRadioItem*>(this)) [cocoaBase setOnStateImage:NSMakeImage(icon, 0, 0, 1)];
+            else [cocoaBase setImage:NSMakeImage(icon, 0, 0, 1)];
             
-            if (dynamic_cast<pMenuCheckItem*>(this) || dynamic_cast<pMenuRadioItem*>(this)) [cocoaBaseContext setOnStateImage:NSMakeImage(icon, 15, 15)];
-            else [cocoaBaseContext setImage:NSMakeImage(icon, 15, 15)];
+            if (dynamic_cast<pMenuCheckItem*>(this) || dynamic_cast<pMenuRadioItem*>(this)) [cocoaBaseContext setOnStateImage:NSMakeImage(icon, 0, 0, 1)];
+            else [cocoaBaseContext setImage:NSMakeImage(icon, 0, 0, 1)];
         }
     }
 }
@@ -204,7 +204,7 @@ auto pMenuCheckItem::init() -> void {
 
 auto pMenuCheckItem::setChecked(bool checked) -> void {
     @autoreleasepool {
-        auto state = checked ? NSOnState : NSOffState;
+        auto state = checked ? NSControlStateValueOn : NSControlStateValueOff;
         [cocoaBase setState:state];
         [cocoaBaseContext setState:state];
     }
@@ -223,7 +223,7 @@ auto pMenuRadioItem::init() -> void {
 auto pMenuRadioItem::setChecked() -> void {
     @autoreleasepool {
         for(auto& item : menuRadioItem.group) {
-            auto state = (item == &menuRadioItem) ? NSOnState : NSOffState;
+            auto state = (item == &menuRadioItem) ? NSControlStateValueOn : NSControlStateValueOff;
             [item->p.cocoaBase setState:state];
             [item->p.cocoaBaseContext setState:state];
         }

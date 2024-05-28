@@ -4,33 +4,52 @@
 
 #define CAPS_FLAGS (DI_LOCK_DENVAR | DI_LOCK_DENNOISE | DI_LOCK_NOISE | DI_LOCK_UPDATEFD | DI_LOCK_TYPE | DI_LOCK_OVLBIT | DI_LOCK_TRKBIT)
 
+#define DLPTR(arg) dlLoader.getPtr(arg)
+
+#ifdef _WIN32
+#define PROCCALL __cdecl
+#else
+#define PROCCALL
+#endif
+
 namespace LIBAMI {
+
+typedef int (PROCCALL* pInit)();
+typedef int (PROCCALL* pExit)();
+typedef int (PROCCALL* pAddImage)();
+typedef int (PROCCALL* pRemImage)(int);
+typedef int (PROCCALL* pGetVersionInfo)(void*, unsigned);
+typedef int (PROCCALL* pLockImageMemory)(int, uint8_t*, unsigned, unsigned);
+typedef int (PROCCALL* pGetImageInfo)(void*, int);
+typedef int (PROCCALL* pLoadImage)(int, unsigned);
+typedef int (PROCCALL* pLockTrack)(void*, int, unsigned, unsigned, unsigned);
+typedef int (PROCCALL* pUnlockAllTracks)(int);
+typedef int (PROCCALL* pUnlockImage)(int);
 
 Emulator::DLLoader DiskStructure::dlLoader;
 
 auto DiskStructure::initIPF() -> bool {
- //   if (dlLoader.hasError())
-   //     return false;
-
     if (!dlLoader.hasOpened()) {
 
 #if defined(_WIN32)
         std::string plugins[] = {"CAPSImg", "CAPSImg_x64"};
 #elif defined( __APPLE__ )
-        std::string plugins[] = {"CAPSImage.framework/CAPSImage", "libcapsimage.5.dylib", "libcapsimage.4.dylib"};
+        std::string plugins[] = {"CAPSImage.framework/CAPSImage","CAPSImg.framework/CAPSImg", "libcapsimage.5.dylib", "libcapsimage.4.dylib","/Library/Frameworks/CAPSImage.framework/CAPSImage","/Library/Frameworks/CAPSImg.framework/CAPSImg", "/usr/local/lib/libcapsimage.5.dylib", "/usr/local/lib/libcapsimage.4.dylib", "/usr/local/lib/libcapsimage.dylib"};
 #else
         std::string plugins[] = {"libcapsimage.so.5", "libcapsimage.so.4"};
 #endif
-
+        
         for (auto& plugin: plugins) {
             dlLoader.setPath(plugin);
             if (dlLoader.open())
                 break;
         }
-
+        
         if (!dlLoader.hasOpened())
             return false;
+    }
 
+    if (!dlLoader.markInitialized) {
         std::string calls[CAPS_METHOD_COUNT];
         calls[CAPSInit] = "CAPSInit";
         calls[CAPSExit] = "CAPSExit";
@@ -43,24 +62,22 @@ auto DiskStructure::initIPF() -> bool {
         calls[CAPSGetImageInfo] = "CAPSGetImageInfo";
         calls[CAPSLockTrack] = "CAPSLockTrack";
         calls[CAPSUnlockAllTracks] = "CAPSUnlockAllTracks";
-
-
         int id = 0;
         for (auto& call: calls) {
             if (!dlLoader.load(id++, call))
                 return false;
         }
-
-        if (dlLoader.execute(CAPSInit) != imgeOk) {
-            dlLoader.markCallError();
+        
+        if (pInit(DLPTR(CAPSInit))() != imgeOk)
             return false;
-        }
+        
+        dlLoader.markInitialized = true;
     }
 
     CapsVersionInfo vi;
     void* _vi = reinterpret_cast<void*>(&vi);
-
-    if (dlLoader.execute(CAPSGetVersionInfo, _vi, 0) == imgeOk) {
+    
+    if (pGetVersionInfo(DLPTR(CAPSGetVersionInfo))(_vi, 0) == imgeOk) {
         if ( (vi.release < 4) || (vi.release == 4 && vi.revision < 2))
             return false;
         if ((vi.flag & (DI_LOCK_TRKBIT | DI_LOCK_OVLBIT)) != (DI_LOCK_TRKBIT | DI_LOCK_OVLBIT))
@@ -73,13 +90,23 @@ auto DiskStructure::initIPF() -> bool {
 }
 
 auto DiskStructure::removeIPF() -> void {
-    if (capsImageId >= 0)
-        dlLoader.execute(CAPSRemImage, capsImageId);
+    if (capsImageId >= 0) {
+        // not needed CPASExit deletes all images
+        // fixme: crash on Apple ARM because of destruction order "destroyIPF" calls first
+        // pRemImage(DLPTR(CAPSRemImage))(capsImageId);
+        capsImageId = -1;
+    }
 }
 
 auto DiskStructure::destroyIPF() -> void {
-    dlLoader.execute(CAPSExit);
-    dlLoader.close();
+    
+    if (dlLoader.hasOpened()) {
+        void* ptr = DLPTR(CAPSExit);
+        if (ptr)
+            pExit(DLPTR(CAPSExit))();
+        
+        dlLoader.close();
+    }
 }
 
 auto DiskStructure::analyzeIPF(uint8_t* data, unsigned size) -> bool {
@@ -92,20 +119,23 @@ auto DiskStructure::analyzeIPF(uint8_t* data, unsigned size) -> bool {
     }
 
     if (capsImageId < 0) {
-        capsImageId = dlLoader.execute(CAPSAddImage);
+        capsImageId = pAddImage(DLPTR(CAPSAddImage))();
         if (capsImageId < 0)
             return false;
     }
 
-    if (dlLoader.execute(CAPSLockImageMemory, capsImageId, data, size, (unsigned)DI_LOCK_MEMREF ) != imgeOk)
+    if(pLockImageMemory(DLPTR(CAPSLockImageMemory))(capsImageId, data, size, DI_LOCK_MEMREF) != imgeOk)
         return false;
 
     CapsImageInfo ii;
     void* _ii = reinterpret_cast<void*>(&ii);
 
-    if (dlLoader.execute(CAPSGetImageInfo, _ii, capsImageId) != imgeOk)
+    if(pGetImageInfo(DLPTR(CAPSGetImageInfo))(_ii, capsImageId) != imgeOk)
         return false;
 
+    if (pLoadImage(DLPTR(CAPSLoadImage))(capsImageId, CAPS_FLAGS) != imgeOk)
+        return false;
+    
     trackCount = (ii.maxcylinder - ii.mincylinder + 1) * (ii.maxhead - ii.minhead + 1);
     if (trackCount > LIBAMI_MAX_TRACKS)
         trackCount = LIBAMI_MAX_TRACKS;
@@ -117,8 +147,7 @@ auto DiskStructure::analyzeIPF(uint8_t* data, unsigned size) -> bool {
 }
 
 auto DiskStructure::prepareIPF(uint8_t* data, unsigned size) -> void {
-    dlLoader.execute( CAPSLoadImage, (int)CAPS_FLAGS );
-
+    
     for(int t = 0; t < LIBAMI_MAX_TRACKS; t++) {
         Track& track = tracks[t];
 
@@ -129,7 +158,8 @@ auto DiskStructure::prepareIPF(uint8_t* data, unsigned size) -> void {
             ti.wseed = rand();
             void* _ti = reinterpret_cast<void*>(&ti);
 
-            if (dlLoader.execute(CAPSLockTrack, _ti, capsImageId, t / 2, t & 1, flags) == imgeOk) {
+            if (pLockTrack(DLPTR(CAPSLockTrack))(_ti, capsImageId, t / 2, t & 1, flags) == imgeOk) {
+
                 unsigned length = (ti.tracklen + 7) / 8;
                 // We create the buffer at least in the size for standard bitcell timing, because this size is needed for any writes.
                 initTrack(track, std::max(length, getTrackByteLength()), ti.tracklen);
@@ -159,7 +189,8 @@ auto DiskStructure::loadNextRevIPF(Track& track) -> void {
     ti.type = 2;
 
     void* _ti = reinterpret_cast<void*>(&ti);
-    if (dlLoader.execute(CAPSLockTrack, _ti, capsImageId, track.pos / 2, track.pos & 1, (int)CAPS_FLAGS) == imgeOk) {
+    
+    if(pLockTrack(DLPTR(CAPSLockTrack))(_ti, capsImageId, track.pos / 2, track.pos & 1, CAPS_FLAGS) == imgeOk) {
         // if mutli REV, next revolution will be fetched to emulate weak bits (oscillation)
         // note: get next REV only, if DI_LOCK_NOUPDATE is not set
         deleteTimingIPF(track);
@@ -193,8 +224,8 @@ auto DiskStructure::addTimingIPF(Track& track, unsigned tiLength, uint32_t* tiDa
 auto DiskStructure::unloadIPF() -> void {
 
     if (capsImageId >= 0) {
-        dlLoader.execute(CAPSUnlockAllTracks, capsImageId);
-        dlLoader.execute(CAPSUnlockImage, capsImageId);
+        pUnlockAllTracks(DLPTR(CAPSUnlockAllTracks))(capsImageId);
+        pUnlockImage(DLPTR(CAPSUnlockImage))(capsImageId);
     }
 }
 

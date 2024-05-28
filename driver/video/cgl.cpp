@@ -20,6 +20,7 @@ namespace DRIVER {
     
 struct CGL : public Video, GL3, RenderThread {
     VideoCGL* view = nullptr;
+    NSRect area;
     NSView* handle;
     NSOpenGLPixelFormat* format = nullptr;
     NSOpenGLContext* cglContext = nullptr;
@@ -101,6 +102,7 @@ struct CGL : public Video, GL3, RenderThread {
             [view unlockFocus];
         }
 
+        area = [view frame];
         resizeWindow();
         RenderThread::reset();
         clear();
@@ -244,7 +246,7 @@ struct CGL : public Video, GL3, RenderThread {
     }
 
     auto resizeWindow(bool _force = false) -> void {
-        auto area = [view frame];
+        //auto area = [view frame];
 
         unsigned _windowWidth = area.size.width;
         unsigned _windowHeight = area.size.height;
@@ -635,6 +637,7 @@ struct CGL : public Video, GL3, RenderThread {
 }
 
 -(void) update {
+    video->area = [self frame];
     video->innerUpdate();
 }
 

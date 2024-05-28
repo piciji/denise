@@ -5,8 +5,8 @@
 # 3 : app path
 # 4 : app name
 
-mkdir $3/Contents/Frameworks
-cp $1/$2 $3/Contents/Frameworks/
+# mkdir $3/Contents/Frameworks
+# cp $1/$2 $3/Contents/Frameworks/
 
 # reference dylib to itself
 install_name_tool -id @executable_path/../Frameworks/$2 $3/Contents/Frameworks/$2

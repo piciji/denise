@@ -9,17 +9,25 @@
 }
 
 - (void)panelSelectionDidChange:(id)sender {
+    NSArray* curFiles = nullptr;
+    NSString* curPath = nullptr;
+    
     auto& state = browserWindow->state;
-    NSArray* curFiles = [sender URLs];
+    
     auto& pBW = browserWindow->p;
     
-    if (pBW.multi) {
+    if (pBW.save) {
+        curPath = (NSString*)[sender URL];
+    } else
+        curFiles = [sender URLs];
+    
+    if (pBW.multi && !pBW.save) {
         std::vector<std::string> curSelectedFiles;
         for(unsigned i = 0; i < [curFiles count]; i++) {
-            NSURL* curPath = [curFiles objectAtIndex:i];
-            if (curPath == nil)
+            NSURL* uri = [curFiles objectAtIndex:i];
+            if (uri == nil)
                 continue;
-            const char* name = [curPath fileSystemRepresentation];
+            const char* name = [uri fileSystemRepresentation];
             if (name) {
                 curSelectedFiles.push_back(name);
               //  delete name;
@@ -49,12 +57,14 @@
             pBW.sortedFiles = curSelectedFiles;
     }
     
-    if ([curFiles count] == 0)
-        return;
-    
-    NSString* curPath = [curFiles objectAtIndex:0];
-    
-    if (curPath == nil)
+    if (!pBW.save) {
+        if ([curFiles count] == 0)
+            return;
+        
+        curPath = [curFiles objectAtIndex:0];
+    }
+
+    if (!curPath || curPath == nil)
         return;
     
     const char* name = [curPath fileSystemRepresentation];
@@ -113,6 +123,7 @@ namespace GUIKIT {
 auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::string> {
     auto& state = browserWindow.state;
     this->multi = multi;
+    this->save = save;
     std::string result = "";
     std::vector<std::string> out;
 
@@ -144,7 +155,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         NSUInteger filtersLength = [filters count];
 
         NSString* urlString = [NSString stringWithUTF8String:state.path.c_str()];
-        NSURL* url = [NSURL URLWithString:[urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+        NSURL* url = [NSURL URLWithString:[urlString stringByRemovingPercentEncoding]];
         
         if (save) {
             panel = [NSSavePanel savePanel];
@@ -179,7 +190,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
             __block BrowserWindow* _browserWindow = &browserWindow;
             [panel beginWithCompletionHandler:^(NSInteger result){
              
-                if (result == NSFileHandlingPanelOKButton) {
+                if (result == NSModalResponseOK) {
                     std::vector<std::string> out;
                     if (save) {
                         NSURL* uri = [panel URL];
@@ -217,14 +228,14 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
                             }
                         }
                       //  if (paths != nil)
-                        //    [paths release];
+                        //    [paths release]; 
              
                         if (_browserWindow->state.onOkClick)
                             _browserWindow->state.onOkClick(out, _browserWindow->p.contentViewSelection());
              
                         panel = nil;
                     }
-                } else if (result == NSFileHandlingPanelCancelButton) {
+                } else if (result == NSModalResponseCancel) {
                     if (_browserWindow->state.onCancelClick)
                         _browserWindow->state.onCancelClick();
              
@@ -238,9 +249,9 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         }
         
         NSURL* pathUri = nil;
-        if([panel runModal] == NSFileHandlingPanelOKButton) {
-            NSArray* uris = [(id)panel URLs];
+        if([panel runModal] == NSModalResponseOK) {
             if (multi && !save) {
+                NSArray* uris = [(id)panel URLs];
                 for(NSURL* uri : uris) {
                     result = [uri fileSystemRepresentation];
                     out.push_back(result);
@@ -263,7 +274,6 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         
         if(pathUri != nil) {
             const char* name = [pathUri fileSystemRepresentation];
-            //const char* name = [path UTF8String];
             if(name) {
                 result = name;
               //  delete name;
@@ -453,10 +463,10 @@ auto pBrowserWindow::directory() -> std::string {
         [panel setCanChooseDirectories:YES];
         [panel setCanChooseFiles:NO];
         NSString* urlString = [NSString stringWithUTF8String:state.path.c_str()];
-        NSURL* url = [NSURL URLWithString:[urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+        NSURL* url = [NSURL URLWithString:[urlString stringByRemovingPercentEncoding]];
         [panel setDirectoryURL:url];
 
-        if([panel runModal] == NSOKButton) {
+        if([panel runModal] == NSModalResponseOK) {
             NSArray* names = [panel URLs];
             const char* name = [[names objectAtIndex:0] fileSystemRepresentation];
             if(name) result = name;
