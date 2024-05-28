@@ -47,7 +47,7 @@ auto pRadioBox::setGeometry(Geometry geometry) -> void {
 auto pRadioBox::setChecked() -> void {
     @autoreleasepool {
         for(auto& item : radioBox.state.group) {
-            auto state = (item == &radioBox) ? NSOnState : NSOffState;
+            auto state = (item == &radioBox) ? NSControlStateValueOn : NSControlStateValueOff;
             [(id)item->p.inner setState:state];
         }
     }

@@ -5,7 +5,7 @@
     if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
         label = &labelReference;
         
-        [self setAlignment:NSLeftTextAlignment];
+        [self setAlignment:NSTextAlignmentLeft];
         [self setBordered:NO];
         [self setDrawsBackground:NO];
         [self setEditable:NO];
@@ -46,9 +46,9 @@ auto pLabel::minimumSize() -> Size {
 
 auto pLabel::setAlign( Label::Align align ) -> void {
     if (align == Label::Align::Left)
-        [(id)cocoaView setAlignment:NSLeftTextAlignment];
+        [(id)cocoaView setAlignment:NSTextAlignmentLeft];
     else
-        [(id)cocoaView setAlignment:NSRightTextAlignment];
+        [(id)cocoaView setAlignment:NSTextAlignmentRight];
 }
     
 auto pLabel::setGeometry(Geometry geometry) -> void {

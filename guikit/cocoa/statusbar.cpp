@@ -57,10 +57,11 @@ auto pStatusBar::create() -> void {
     //    [cocoaView setHidden:YES];
         
         [cocoaView setWantsLayer:YES];
+        [cocoaView setClipsToBounds:YES];
 
         [(id)cocoaView setBackgroundColor: [NSColor textBackgroundColor]];
 
-        [[statusBar.window()->p.cocoaWindow contentView] addSubview:cocoaView positioned:NSWindowBelow relativeTo:nil];
+        [[statusBar.window()->p.cocoaWindow contentView] addSubview:cocoaView positioned:NSWindowAbove relativeTo:nil];
     }
     update();
 }

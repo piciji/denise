@@ -20,8 +20,7 @@
 }
 
 -(void) configure {
-    [content setMinSize:NSMakeSize(0,0)];
-    //[content setMaxSize:NSMakeSize:(FLT_MAX, FLT_MAX)];
+//    [content setMinSize:NSMakeSize(0,0)];
     
     [[content textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
     [[content textContainer] setWidthTracksTextView:YES];

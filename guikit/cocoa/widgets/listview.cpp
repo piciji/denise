@@ -98,7 +98,7 @@
         
         NSRect targetRect = NSMakeRect(frame.origin.x, frame.origin.y, frame.size.height, frame.size.height);
         NSRect sourceRect = NSMakeRect(0, 0, [image size].width, [image size].height);
-        [image drawInRect:targetRect fromRect:sourceRect operation:NSCompositeSourceOver fraction:1.0 respectFlipped:YES hints:nil];
+        [image drawInRect:targetRect fromRect:sourceRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
         
         [[NSGraphicsContext currentContext] restoreGraphicsState];
         textDisplacement = frame.size.height + 2;

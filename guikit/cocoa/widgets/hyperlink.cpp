@@ -5,7 +5,7 @@
     if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
         hyperlink = &hyperlinkReference;
         
-        [self setAlignment:NSLeftTextAlignment];
+        [self setAlignment:NSTextAlignmentLeft];
         [self setBordered:NO];
         [self setDrawsBackground:NO];
         [self setEditable:NO];

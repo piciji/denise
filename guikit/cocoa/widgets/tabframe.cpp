@@ -51,7 +51,7 @@
             
                 [[NSGraphicsContext currentContext] saveGraphicsState];
                 NSRect targetRect = NSMakeRect(tabRect.origin.x, tabRect.origin.y + 1, iconSize, iconSize);
-                [image drawInRect:targetRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0 respectFlipped:YES hints:nil];
+                [image drawInRect:targetRect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
                 [[NSGraphicsContext currentContext] restoreGraphicsState];
             
                 tabRect.origin.x += iconSize + 2;

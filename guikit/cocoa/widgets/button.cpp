@@ -6,7 +6,7 @@
         button = &buttonReference;
         [self setTarget:self];
         [self setAction:@selector(activate:)];
-        [self setBezelStyle:NSRegularSquareBezelStyle];
+     //   [self setBezelStyle:NSRegularSquareBezelStyle];
     }
     return self;
 }
