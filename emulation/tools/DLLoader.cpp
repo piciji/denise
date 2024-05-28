@@ -25,8 +25,6 @@ auto DLLoader::open() -> bool {
     handle = dlopen( pathToLib.c_str(), RTLD_NOW | RTLD_LAZY);
 #endif
     if (!handle) {
-        auto f = dlerror();
-        std::string ff = f;
         return false;
     }
 
