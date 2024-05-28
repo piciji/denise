@@ -4,14 +4,6 @@
 #include <pthread.h>
 #include "../tools/crc32.h"
 
-#if __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_14
-    #ifndef NSControlStateValueOff
-      #define NSControlStateValueOff NSOffState
-    #endif
-    #ifndef NSControlStateValueOn
-      #define NSControlStateValueOn NSOnState
-    #endif
-#endif
 
 namespace GUIKIT {
 
