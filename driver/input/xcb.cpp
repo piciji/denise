@@ -376,7 +376,7 @@ struct XCBInput : public Input {
 
 			 	free(event);
 			}
-        	
+
         	kill = true;
         });
 
@@ -444,11 +444,9 @@ struct XCBInput : public Input {
 	}
 	~XCBInput() {
     	sendCloseEvent();
-    	//if(hidMouse) delete hidMouse, hidMouse = nullptr;
-    	//if(hidKeyboard) delete hidKeyboard, hidKeyboard = nullptr;
-    	while (!kill) {
+    	while (!kill)
     		std::this_thread::yield();
-    	}
+
     	term();
 
 		#ifdef DRV_SDLINPUT
