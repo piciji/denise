@@ -11,8 +11,8 @@ auto Agnus::startHblank() -> void {
         if (laceFrame & 1)
             lineVCounter--;
 
-        if (lineVCounter < 100) {// could happen, if beam position has been changed or uncontrolled register usage
-            lineVCounter = 100; // otherwise video driver could crash
+        if (lineVCounter < 150) {// could happen, if beam position has been changed or uncontrolled register usage
+            lineVCounter = 150; // otherwise video driver could crash
             std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
         } else if (lineVCounter > ((laceFrame & 3) ? 600 : 300) ) {
             lineVCounter = (laceFrame & 3) ? 600 : 300;
