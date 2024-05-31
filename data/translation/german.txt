@@ -826,3 +826,7 @@ input driver = Eingabe Treiber
 dragndrop power = aktiviere immer Neustart bei drag'n'drop
 dragndrop capture mouse = drag'n'drop versteckt Maus Cursor
 Plugin Dongle = Dongle einstecken
+disksave = Disk Speicherungen
+select_disksave_folder = Disketten Speicher Verzeichnis auswählen
+clear save file = Speicherdatei löschen
+save file deleted = Die Speicherdatei wurde gelöscht.

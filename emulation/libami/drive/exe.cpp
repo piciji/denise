@@ -1,7 +1,9 @@
 
 namespace LIBAMI {
 
-auto DiskStructure::analyzeEXE(uint8_t* data, unsigned size) -> bool {
+auto DiskStructure::analyzeEXE(uint8_t*& data, unsigned& size) -> bool {
+    unsigned rawSize;
+    uint8_t* rawData;
     hd = false;
 
     while(true) {
@@ -29,6 +31,8 @@ auto DiskStructure::analyzeEXE(uint8_t* data, unsigned size) -> bool {
         fs.exportMedia(rawData, rawSize);
 
         if (analyzeADF(rawData, rawSize)) {
+            data = rawData;
+            size = rawSize;
             virtualCreated = true;
             return true;
         }

@@ -24,8 +24,15 @@ DiskDrive::DiskDrive(uint8_t number, System* system, Agnus& agnus, Cia<MOS_8520>
     side = 0;
 
     structure.write = [this, system](uint8_t* buffer, unsigned length, unsigned offset) {
-
         return system->interface->writeMedia( media, buffer, length, offset );
+    };
+
+    structure.readAssigned = [this, system](uint8_t*& buffer) {
+        return system->interface->readAssignedMedia( media, buffer );
+    };
+
+    structure.writeAssigned = [this, system](uint8_t* buffer, unsigned length) {
+        return system->interface->writeAssignedMedia( media, buffer, length );
     };
 }
 
@@ -119,7 +126,7 @@ auto DiskDrive::writeByte(uint8_t byte) -> void {
 
     if (!written)
         written = true;
-    track->written |= 1; // track data has changed, host have to write back
+    track->options |= 1; // track data has changed, host have to write back
 }
 
 template<bool update> auto DiskDrive::readBit(int& dmaCycles) -> bool {
@@ -256,19 +263,12 @@ auto DiskDrive::writeBit(bool state) -> void {
 
     if (!written)
         written = true;
-    track->written |= 1; // track data has changed, host have to write back
+    track->options |= 1; // track data has changed, host have to write back
 }
 
 auto DiskDrive::setStandardTiming() -> void {
-    if (structure.type == DiskStructure::ADF || structure.type == DiskStructure::Unknown)
-        return;
-    unsigned standardBitLength = structure.getTrackBitLength();
-    structure.deleteTimingIPF(*track);
-
-    if (standardBitLength != track->bits) {
+    if (structure.setStandardTiming(*track))
         reset();
-        track->bits = structure.getTrackBitLength();
-    }
 }
 
 auto DiskDrive::reset() -> void {

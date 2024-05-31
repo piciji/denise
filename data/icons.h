@@ -141,4 +141,6 @@ extern uint8_t bolt[436];
 extern uint8_t gears[553];
 
 extern uint8_t info[419];
+
+extern uint8_t del[282];
 }

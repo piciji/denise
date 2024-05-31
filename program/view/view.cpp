@@ -676,6 +676,11 @@ auto View::updateShader(Emulator::Interface* emulator) -> void {
 
         auto vManager = VideoManager::getInstance( sM.emulator );
         std::string loaded = vManager->getPresetPath();
+        if (vManager->crtMode != VideoManager::CrtMode::Gpu) {
+            sM.shaderFavourites[0].item->setChecked();
+            break;
+        }
+
         bool found = false;
 
         for(auto& fav : sM.shaderFavourites) {
@@ -699,6 +704,8 @@ auto View::buildShader() -> void {
         auto emulator = sM.emulator;
         auto settings = program->getSettings(emulator);
 		auto vManager = VideoManager::getInstance( emulator );
+        bool shaderActive = vManager->crtMode == VideoManager::CrtMode::Gpu;
+
         std::string loaded = vManager->getPresetPath();
         sM.shaderFavourites.clear();
         std::vector<GUIKIT::MenuRadioItem*> items;
@@ -748,10 +755,13 @@ auto View::buildShader() -> void {
             fav.item->onActivate = [emulator, vManager, shaderPath]() {
                 emuThread->lock();
                 auto emuView = EmuConfigView::TabWindow::getView(emulator);
+
                 if (emuView && emuView->videoLayout)
                     emuView->videoLayout->loadShader(shaderPath);
-                else
+                else {
+                    program->activateGPU(emulator, true);
                     vManager->loadPreset(shaderPath);
+                }
                 emuThread->unlock();
             };
             sM.shaderMenu->append(*fav.item);
@@ -761,7 +771,7 @@ auto View::buildShader() -> void {
         sM.shaderFavourites.insert(sM.shaderFavourites.begin(), {"none", noneItem});
 
         GUIKIT::MenuRadioItem::setGroup(items);
-        if (checkedItem)
+        if (checkedItem && shaderActive)
             checkedItem->setChecked();
 
         for(auto child : sM.shaderMenu->childs)
@@ -874,6 +884,8 @@ auto View::loadImages() -> void {
     infoImage.setResourceId( ID_INFO );
     gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
     gearsImage.setResourceId( ID_GEARS );
+    delImage.loadPng((uint8_t*) Icons::del, sizeof (Icons::del));
+    delImage.setResourceId( ID_DEL );
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1474,6 +1486,19 @@ auto View::buildMenu() -> void {
 
         diskControlMenu.menu.append( *GUIKIT::MenuSeparator::getInstance() );
 
+        diskControlMenu.clearSave.setIcon( delImage );
+
+        diskControlMenu.clearSave.onActivate = [i]() {
+            auto path = program->getAssignedSaveFile( activeEmulator->getDisk(i) );
+            GUIKIT::File file(path);
+            if (file.exists()) {
+                if (file.del())
+                    statusHandler->setMessage("save file deleted", 3, true);
+            }
+        };
+
+        diskControlMenu.menu.append( diskControlMenu.clearSave );
+
         diskControlMenu.reset.setIcon( powerImage );
 
         diskControlMenu.reset.onActivate = [i]() {
@@ -1618,6 +1643,8 @@ auto View::updateDiskMenu() -> void {
     bool showResetAndHide = dynamic_cast<LIBC64::Interface*>(activeEmulator);
 
     for(auto& d : diskControlMenus) {
+        d.clearSave.setEnabled(!showResetAndHide);
+
         if (d.reset.enabled() != showResetAndHide) {
             d.reset.setEnabled(showResetAndHide);
             d.inactive.setEnabled(showResetAndHide);
@@ -1749,6 +1776,7 @@ auto View::translate() -> void {
         diskControlMenu.eject.setText( trans->get("eject") );
         diskControlMenu.reset.setText( trans->get("Reset Floppy") );
         diskControlMenu.inactive.setText( trans->get("inactive until reset") );
+        diskControlMenu.clearSave.setText( trans->get("clear save file") );
     }
 
     power.power.setText( trans->get("Hard Reset") );
@@ -1870,16 +1898,21 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     auto file = (GUIKIT::File*)media->guid;
     
-    if (cmd->debug || cmd->noGui || !file || file->isArchived() || file->isReadOnly())
-        // archive, removing of write protection is not supported
+    if (cmd->debug || cmd->noGui || !file)
         return false;
-    
-    if (videoDriver && videoDriver->hasExclusiveFullscreen())
-        switchFullScreen( false );
+
+    if (activeEmulator && dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
+        if (file->isArchived() || file->isReadOnly())
+            // for C64 archive, removing of write protection is not supported
+            return false;
+    }
     
     bool state = !globalSettings->get<bool>("question_media_write", true);
     
     if (!state) {
+        if (videoDriver && videoDriver->hasExclusiveFullscreen())
+            switchFullScreen( false );
+
         bool _acquired = inputDriver->mIsAcquired();
 
         if (_acquired)

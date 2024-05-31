@@ -36,9 +36,9 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
         GUIKIT::File* file = filePool->get(fSetting->path);
 
         if (file)
-            (file->isArchived() || file->isReadOnly()) ? forceWP() : updateWP(fSetting->writeProtect);
+            updateWP(fSetting->writeProtect);
         else
-            forceWP();
+            updateWP(true);
 	};
 	
 	listView.onActivate = [this](){
@@ -112,7 +112,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                     fSetting->setFile(item->info.name);
                     fSetting->setId(item->id);
                     listView.setText(pos - 1, {std::to_string(pos), file->getFile(), item->info.name});
-                    (file->isArchived() || file->isReadOnly()) ? forceWP() : updateWP(false);
+                    updateWP(false);
 
                     if (++pos == SWAPPER_SLOTS)
                         archiveViewer->setVisible(false);
@@ -143,7 +143,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                     listView.setText(pos - 1, {std::to_string(pos), file->getFile(), item.info.name});
 
                     if (pos == startPos)
-                        (file->isArchived() || file->isReadOnly()) ? forceWP() : updateWP(false);
+                        updateWP(false);
 
                     if (++pos == SWAPPER_SLOTS)
                         return;
@@ -241,15 +241,10 @@ auto SwapperLayout::clearSlot(unsigned pos) -> void {
     fSetting->init();
 
     listView.setText(pos - 1, {std::to_string(pos), "", ""});
-    forceWP();
+    updateWP(true);
 }
 
-auto SwapperLayout::updateWP(bool state, bool force) -> void {
-    if (force) state = true;
-
+auto SwapperLayout::updateWP(bool state) -> void {
     if (controls.writeProtect.checked() != state)
         controls.writeProtect.setChecked(state);
-
-   // if (controls.writeProtect.enabled() != !force)
-     //   controls.writeProtect.setEnabled(!force);
 }

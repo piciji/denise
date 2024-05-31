@@ -50,6 +50,7 @@ ID_HIDE         ICON    "ico/hide.ico"
 ID_FULLSCREEN   ICON    "ico/fullscreen.ico"
 ID_INFO         ICON    "ico/info.ico"
 ID_GEARS        ICON    "ico/gears.ico"
+ID_DEL          ICON    "ico/delete.ico"
 
 IDD_FILE_TEMPLATE DIALOG DISCARDABLE 0, 0, 486, 205
 STYLE WS_CHILD | WS_CLIPSIBLINGS | DS_3DLOOK | DS_CONTROL | WS_VISIBLE | NOT WS_BORDER | NOT WS_POPUP | NOT WS_SYSMENU

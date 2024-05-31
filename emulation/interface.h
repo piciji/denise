@@ -188,7 +188,7 @@ struct Interface {
     struct MediaGroup {
         unsigned id;
         std::string name;        
-		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Program } type;
+		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Program, DiskSave } type;
         std::vector<std::string> suffix;
         std::vector<std::string> creatable;
         Media* selected;
@@ -307,6 +307,8 @@ struct Interface {
         virtual auto audioFlush() -> void {}
         virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
         virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
+        virtual auto readAssignedMedia(Media*, uint8_t*&) -> unsigned { return 0; }
+        virtual auto writeAssignedMedia(Media*, uint8_t*, unsigned) -> unsigned { return 0; }
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
         virtual auto truncateMedia(Media* ) -> bool { return false; }
         virtual auto updateDeviceState(Media*, bool, unsigned, bool, bool ) -> void {}
@@ -361,6 +363,14 @@ struct Interface {
 
     auto writeMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
         return bind->writeMedia(media, buffer, length, offset);
+    }
+
+    auto readAssignedMedia(Media* media, uint8_t*& buffer) -> unsigned {
+        return bind->readAssignedMedia(media, buffer);
+    }
+
+    auto writeAssignedMedia(Media* media, uint8_t* buffer, unsigned length) -> unsigned {
+        return bind->writeAssignedMedia(media, buffer, length);
     }
 	
 	auto getFileNameFromMedia(Media* media) -> std::string {

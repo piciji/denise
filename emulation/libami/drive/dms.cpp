@@ -3,7 +3,7 @@
 
 namespace LIBAMI {
 
-auto DiskStructure::analyzeDMS(uint8_t* data, unsigned size) -> bool {
+auto DiskStructure::analyzeDMS(uint8_t*& data, unsigned& size) -> bool {
     unsigned foSize = 0;
     unsigned char* fo = nullptr;
 
@@ -11,8 +11,8 @@ auto DiskStructure::analyzeDMS(uint8_t* data, unsigned size) -> bool {
 
     if (result == 0 || result == 1) {
         if (analyzeADF(fo, foSize)) {
-            rawData = fo;
-            rawSize = foSize;
+            data = fo;
+            size = foSize;
             virtualCreated = true;
             return true;
         }

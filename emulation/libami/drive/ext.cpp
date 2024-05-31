@@ -52,7 +52,6 @@ auto DiskStructure::prepareEXT(uint8_t* data, unsigned size) -> void {
                     Emulator::copyIntToBufferBigEndian<uint16_t>(&track.data[0], syncWord);
                     track.length = length;
                 }
-                track.storage = storage;
 
             } else {
                 initTrack(track, getTrackByteLength());
@@ -64,9 +63,6 @@ auto DiskStructure::prepareEXT(uint8_t* data, unsigned size) -> void {
         } else {
             initTrack(track, getTrackByteLength());
         }
-
-        // if any track is written, we recreate the whole image as EXT2 for simplicity
-        track.written = 0x80;
     }
 }
 

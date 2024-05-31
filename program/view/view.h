@@ -161,6 +161,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem eject;
         GUIKIT::MenuItem reset;
         GUIKIT::MenuItem inactive;
+    	GUIKIT::MenuItem clearSave;
     } diskControlMenus[4];
 
     struct {
@@ -231,6 +232,8 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image ledGreen2DimImage;
     GUIKIT::Image ledRed2Image;
     GUIKIT::Image ledYellowImage;
+
+	GUIKIT::Image delImage;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels() -> void;

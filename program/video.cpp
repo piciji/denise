@@ -162,6 +162,17 @@ auto Program::getVideoDriver() -> std::string {
 	return DRIVER::Video::preferred();
 }
 
+auto Program::activateGPU(Emulator::Interface* emulator, bool state) -> void {
+    auto vManager = VideoManager::getInstance( emulator );
+    bool shaderActive = vManager->crtMode == VideoManager::CrtMode::Gpu;
+
+    if (state != shaderActive) {
+        auto settings = program->getSettings(emulator);
+        settings->set<unsigned>("video_crt", state ? (unsigned)VideoManager::CrtMode::Gpu : (unsigned)VideoManager::CrtMode::None);
+        vManager->reloadSettings(true);
+    }
+}
+
 auto Program::midScreenCallback(uint8_t options) -> void {
 
     switch(options) {

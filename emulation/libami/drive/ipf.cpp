@@ -169,7 +169,7 @@ auto DiskStructure::prepareIPF(uint8_t* data, unsigned size) -> void {
                 if (ti.timebuf)
                     addTimingIPF(track, ti.timelen, ti.timebuf);
 
-                track.storage |= (ti.type & CTIT_FLAG_FLAKEY) ? 1 : 0;
+                track.options |= (ti.type & CTIT_FLAG_FLAKEY) ? 2 : 0;
 
                 //agnus.interface->log(ti.overlap);
                 //agnus.interface->log(ti.type & CTIT_FLAG_FLAKEY ? 1 : 0, 0);
@@ -182,7 +182,7 @@ auto DiskStructure::prepareIPF(uint8_t* data, unsigned size) -> void {
 }
 
 auto DiskStructure::loadNextRevIPF(Track& track) -> void {
-    if ((type != DiskStructure::IPF) || track.written || ((track.storage & 1) == 0))
+    if ((type != DiskStructure::IPF) || (track.options & 1) || ((track.options & 2) == 0))
         return;
 
     CapsTrackInfoT2 ti;
@@ -200,7 +200,7 @@ auto DiskStructure::loadNextRevIPF(Track& track) -> void {
         if (ti.timebuf)
             addTimingIPF(track, ti.timelen, ti.timebuf);
 
-        track.storage |= (ti.type & CTIT_FLAG_FLAKEY) ? 1 : 0;
+        track.options |= (ti.type & CTIT_FLAG_FLAKEY) ? 2 : 0;
     }
 }
 

@@ -826,3 +826,7 @@ input driver = Input Driver
 dragndrop power = Húzd és ejtsd módszerrel mindig automatikus indulás
 dragndrop capture mouse = drag'n'drop captures mouse
 Plugin Dongle = Plugin Dongle
+disksave = Disk Saves
+select_disksave_folder = select disk saves folder
+clear save file = clear save file
+save file deleted = The save file has been deleted.

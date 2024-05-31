@@ -213,8 +213,8 @@ auto DiskStructure::markAppendedADFTracks() -> void {
 
         if (i > trackCount) {
             if (appended)
-                track.written = 1;
-            else if (track.written)
+                track.options |= 1;
+            else if (track.options & 1)
                 appended = true;
         } else
             break;

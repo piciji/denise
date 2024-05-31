@@ -56,6 +56,7 @@ AudioDriverLayout::AudioDriverLayout() {
 
 InputDriverLayout::Top::Top() {
 	append(driver, {~0u, 0u});
+	setAlignment( 0.5 );
 }
 
 InputDriverLayout::InputDriverLayout() {

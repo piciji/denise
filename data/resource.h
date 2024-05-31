@@ -51,3 +51,4 @@
 #define ID_FULLSCREEN   32039
 #define ID_INFO         32040
 #define ID_GEARS        32041
+#define ID_DEL          32042

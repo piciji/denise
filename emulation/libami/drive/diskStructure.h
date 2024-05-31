@@ -31,14 +31,15 @@ struct DiskStructure {
             CAPS_METHOD_COUNT};
 
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };
+    std::function<unsigned (uint8_t*&)> readAssigned = [](uint8_t*& buffer){ return 0; };
+    std::function<unsigned (uint8_t*, unsigned)> writeAssigned = [](uint8_t* buffer, unsigned length){ return 0; };
 
     struct Track {
         int pos;
         uint8_t* data = nullptr;
         unsigned length = 0;
         unsigned bits = 0;
-        unsigned storage = 0; // ext adf track space, IPF Bit 0: multi Revs (weak bits)
-        uint8_t written = 0; // MSB: if set and track has changed, the entire image must be rewritten
+        uint8_t options = 0; // Bit 0: written, Bit 1: IPF Weak Bit Track
         uint16_t* cellWidth = nullptr; // flux formats like IPF
     };
 
@@ -47,8 +48,6 @@ struct DiskStructure {
     uint8_t trackCount;
     Track tracks[ LIBAMI_MAX_TRACKS ];
 
-    uint8_t* rawData = nullptr;
-    unsigned rawSize = 0;
     bool writeProtected = true;
     unsigned serializationSize = 0;
     bool virtualCreated = false;
@@ -57,13 +56,13 @@ struct DiskStructure {
 
     auto attach(uint8_t* data, unsigned size) -> bool;
     auto detach() -> void;
-    auto analyze(uint8_t* data, unsigned size) -> bool;
+    auto analyze(uint8_t*& data, unsigned& size) -> bool;
     auto analyzeEXT(uint8_t* data, unsigned size) -> bool;
     auto analyzeEXT2(uint8_t* data, unsigned size) -> bool;
     auto analyzeADF(uint8_t* data, unsigned size) -> bool;
-    auto analyzeDMS(uint8_t* data, unsigned size) -> bool;
+    auto analyzeDMS(uint8_t*& data, unsigned& size) -> bool;
     auto analyzeIPF(uint8_t* data, unsigned size) -> bool;
-    auto analyzeEXE(uint8_t* data, unsigned size) -> bool;
+    auto analyzeEXE(uint8_t*& data, unsigned& size) -> bool;
 
     auto prepareADF(uint8_t* data, unsigned size) -> void;
     auto prepareEXT(uint8_t* data, unsigned size) -> void;
@@ -101,9 +100,12 @@ struct DiskStructure {
     auto getEXT2CreationImageSize() -> unsigned;
 
     auto markAppendedADFTracks() -> void;
-    auto EXT2ImageNeedsCompleteRebuild() -> bool;
+    auto updateTrackCount() -> void;
 
     auto updateSerializationSize() -> void;
+    auto applyAssignedSave() -> void;
+    auto updateWrittenTracks(uint8_t* data, unsigned size) -> void;
+    auto setStandardTiming(Track& track) -> bool;
 
     static auto create(System* system, Type type, std::string name, bool hd, bool ffs, bool bootable) -> Emulator::Interface::Data;
     static auto getPreview(System* system, uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing>;

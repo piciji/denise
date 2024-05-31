@@ -9,8 +9,8 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
             GUIKIT::RadioBox palette;
             GUIKIT::RadioBox spectrum;
             GUIKIT::RadioBox rgb;
-            GUIKIT::RadioBox svideoCpu;
-            GUIKIT::RadioBox svideoGpu;
+            GUIKIT::RadioBox cpu;
+            GUIKIT::RadioBox gpu;
 
             GUIKIT::Widget spacer;
             GUIKIT::Button reset;
@@ -253,6 +253,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto presentShaderError() -> void;
     auto clearShaderError() -> void;
     auto addShaderUI() -> void;
+    auto enableGPUMode(bool state) -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

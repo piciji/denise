@@ -7,13 +7,13 @@ VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
     }
 
     append(rgb,{0u, 0u}, 10);
-    append(svideoCpu,{0u, 0u}, 10);
-    append(svideoGpu,{0u, 0u});
+    append(cpu,{0u, 0u}, 10);
+    append(gpu,{0u, 0u});
 
     append(spacer,{~0u, 0u});
     append(reset,{0u, 0u});
 
-    GUIKIT::RadioBox::setGroup(rgb, svideoCpu, svideoGpu);
+    GUIKIT::RadioBox::setGroup(rgb, cpu, gpu);
 
     setAlignment(0.5);
 }
@@ -410,22 +410,25 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         emuThread->lock();
         program->fastForward( false );
         updatePresets(true, false);
+        view->updateShader(emulator);
         emuThread->unlock();
     };
 
-    layBase.view.mode.svideoCpu.onActivate = [this]() {
+    layBase.view.mode.cpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         emuThread->lock();
         program->fastForward( false );
 		updatePresets(true, false);
+        view->updateShader(emulator);
         emuThread->unlock();
     };
 
-    layBase.view.mode.svideoGpu.onActivate = [this]() {
+    layBase.view.mode.gpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
         emuThread->lock();
         program->fastForward( false );
 		updatePresets(true, false);
+        view->updateShader(emulator);
         emuThread->unlock();
     };
 
@@ -458,7 +461,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             if (externalFolder())
                 _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.favourite.control.add.setEnabled();
-            layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
+            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
         emuThread->unlock();
         showErrors(errors);
@@ -479,7 +482,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             if (externalFolder())
                 _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.favourite.control.add.setEnabled();
-            layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
+            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
         emuThread->unlock();
         showErrors(errors);
@@ -1274,17 +1277,17 @@ auto VideoLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> void {
 auto VideoLayout::updateVisibillity() -> void {
 	bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
     bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
-    bool crtCpuChecked = layBase.view.mode.svideoCpu.checked();
-    bool crtGpuChecked = layBase.view.mode.svideoGpu.checked();
+    bool crtCpuChecked = layBase.view.mode.cpu.checked();
+    bool crtGpuChecked = layBase.view.mode.gpu.checked();
 
     if (!videoDriver->shaderSupport()) {
         if(crtGpuChecked) {
             layBase.view.mode.rgb.setChecked();
             crtGpuChecked = false;
         }
-        layBase.view.mode.svideoGpu.setEnabled(false);
+        layBase.view.mode.gpu.setEnabled(false);
     } else
-        layBase.view.mode.svideoGpu.setEnabled();
+        layBase.view.mode.gpu.setEnabled();
 	
 	if (layBase.view.mode.spectrum.checked()) {
         layBase.view.phase.setEnabled();
@@ -1339,9 +1342,9 @@ auto VideoLayout::translate() -> void {
     layBase.view.mode.spectrum.setText( trans->get("color_spectrum") );
     layBase.view.mode.reset.setText( trans->get("reset") );
     layBase.view.mode.rgb.setText( trans->get("RGB") );
-    layBase.view.mode.svideoCpu.setText( trans->get("S/C-Video CPU") );
-    layBase.view.mode.svideoCpu.setTooltip( trans->get("S/C-Video tooltip") );
-    layBase.view.mode.svideoGpu.setText( trans->get("Shader GPU") );
+    layBase.view.mode.cpu.setText( trans->get("S/C-Video CPU") );
+    layBase.view.mode.cpu.setTooltip( trans->get("S/C-Video tooltip") );
+    layBase.view.mode.gpu.setText( trans->get("Shader GPU") );
     layBase.view.scanlines.active.setText( trans->get("scanlines", {}, true) );
     layBase.view.interlace.active.setText( trans->get("interlace", {}, true) );
 
@@ -1421,9 +1424,9 @@ auto VideoLayout::sliderIdent() -> std::string {
     if (dynamic_cast<LIBC64::Interface*>(emulator) && layBase.view.mode.spectrum.checked())
         ident += "_spectrum";
 
-	if (layBase.view.mode.svideoCpu.checked())
+	if (layBase.view.mode.cpu.checked())
 		ident += "_crtcpu";
-	else if (layBase.view.mode.svideoGpu.checked())
+	else if (layBase.view.mode.gpu.checked())
 		ident += "_crtgpu";
 
 	return ident;
@@ -1433,9 +1436,9 @@ auto VideoLayout::loadSettings(bool init) -> void {
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
     
     if (crtMode == VideoManager::CrtMode::Gpu)
-        layBase.view.mode.svideoGpu.setChecked();
+        layBase.view.mode.gpu.setChecked();
     else if (crtMode == VideoManager::CrtMode::Cpu)
-        layBase.view.mode.svideoCpu.setChecked();
+        layBase.view.mode.cpu.setChecked();
     else
         layBase.view.mode.rgb.setChecked();
     
@@ -1516,13 +1519,20 @@ auto VideoLayout::loadShader(std::string path) -> bool {
         buildShaderUI(preset);
         layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
-        layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
+        layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         view->updateShader(emulator);
-        if (!layBase.view.mode.svideoGpu.checked() && videoDriver->shaderSupport())
-            layBase.view.mode.svideoGpu.activate();
+        enableGPUMode(true);
     }
     showErrors(errors);
     return preset != nullptr;
+}
+
+auto VideoLayout::enableGPUMode(bool state) -> void {
+    if (state) {
+        if (!layBase.view.mode.gpu.checked() && videoDriver->shaderSupport())
+            layBase.view.mode.gpu.activate();
+    } else if (!layBase.view.mode.rgb.checked())
+        layBase.view.mode.rgb.activate();
 }
 
 auto VideoLayout::unloadShader() -> void {

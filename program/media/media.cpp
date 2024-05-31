@@ -777,44 +777,62 @@ auto MediaLayout::prepareCreator() -> void {
     }
 }
 
+auto MediaLayout::getDiskSaveGroup() -> Emulator::Interface::MediaGroup* {
+    for(auto& block : pathsLayout.blocks) {
+        if (block->mediaGroup->type == Emulator::Interface::MediaGroup::Type::DiskSave)
+            return block->mediaGroup;
+    }
+    return nullptr;
+}
+
+auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void {
+    if (mediaGroup.isExpansion() && mediaGroup.expansion->isRS232())
+        return;
+
+    auto settingFolderIdent = _underscore(mediaGroup.name) + "_folder";
+
+    auto block = new PathsLayout::Block( &mediaGroup );
+
+    pathsLayout.blocks.push_back( block );
+    pathsLayout.append( *block,{~0u, 0u}, 5 );
+
+    std::string title = "select_" + mediaGroup.name + "_folder";
+
+    if (mediaGroup.isExpansion())
+        title = "select_cartridge_folder";
+
+    block->select.onActivate = [this, block, title, settingFolderIdent]() {
+        auto path = GUIKIT::BrowserWindow()
+            .setTitle(trans->get(title))
+            .setPath( settings->get<std::string>(settingFolderIdent, "") )
+            .setWindow(*this->tabWindow)
+            .directory();
+
+        if (!path.empty()) {
+            settings->set<std::string>(settingFolderIdent, path);
+            block->edit.setText(path);
+        }
+    };
+
+    block->empty.onActivate = [this, block, settingFolderIdent]() {
+        settings->set<std::string>(settingFolderIdent, "");
+        block->edit.setText("");
+    };
+
+    block->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
+}
+
 auto MediaLayout::preparePaths() -> void {
-    
-    for (auto& mediaGroup : emulator->mediaGroups) {
+    for (auto& mediaGroup : emulator->mediaGroups)
+        preparePath(mediaGroup);
 
-        if (mediaGroup.isExpansion() && mediaGroup.expansion->isRS232())
-            continue;
-
-        auto settingFolderIdent = _underscore(mediaGroup.name) + "_folder";
-        
-        auto block = new PathsLayout::Block( &mediaGroup );
-        
-        pathsLayout.blocks.push_back( block );                
-        pathsLayout.append( *block,{~0u, 0u}, &mediaGroup != &emulator->mediaGroups.back() ? 5 : 0 );
-        
-        std::string title = "select_" + mediaGroup.name + "_folder";
-        
-        if (mediaGroup.isExpansion())
-            title = "select_cartridge_folder";        
-
-        block->select.onActivate = [this, block, title, settingFolderIdent]() {
-            auto path = GUIKIT::BrowserWindow()
-                .setTitle(trans->get(title))
-				.setPath( settings->get<std::string>(settingFolderIdent, "") )
-                .setWindow(*this->tabWindow)
-                .directory();
-
-            if (!path.empty()) {
-                settings->set<std::string>(settingFolderIdent, path);
-                block->edit.setText(path);
-            }
-        };
-
-        block->empty.onActivate = [this, block, settingFolderIdent]() {
-            settings->set<std::string>(settingFolderIdent, "");
-            block->edit.setText("");
-        };
-
-        block->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
+    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        auto saveImage = new Emulator::Interface::MediaGroup;
+        saveImage->id = emulator->mediaGroups.size();
+        saveImage->name = "disksave";
+        saveImage->suffix.push_back("sav");
+        saveImage->type = Emulator::Interface::MediaGroup::Type::DiskSave;
+        preparePath(*saveImage);
     }
 }
 
@@ -826,7 +844,7 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
 
     if (!IPMode) {
         block->header.fileName.setText(fSetting->file);
-        updateWriteProtection(block->media, fSetting->writeProtect);
+        block->header.writeprotect.setChecked( fSetting->writeProtect );
     }
 }
 
@@ -1045,6 +1063,7 @@ auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* f
 auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
     bool fromState = options & 1;
     bool dontUpdateSelected = options & 2;
+    bool asWP = options & 4;
 
     if (!block)
         return;
@@ -1063,12 +1082,17 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr
         : file->archiveData(item->id);
 
+    fSetting->setPath(file->getFile(), !cmd->autoload);
+    fSetting->setFile(item->info.name, !cmd->autoload);
+    fSetting->setId(item->id, !cmd->autoload);
+    fSetting->setWriteProtect(asWP, !cmd->autoload);
+
     if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
         
         media->guid = uintptr_t(file);
         emulator->insertMedium(media, data, size);
-        emulator->writeProtect(media, file->isArchived() || file->isReadOnly());
+        emulator->writeProtect(media, asWP);
         if (!mediaGroup->isProgram())
             filePool->assign( _ident(emulator, media->name), file);
     } else {        
@@ -1097,11 +1121,6 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
 
     if (!mediaGroup->isProgram())
         filePool->assign( _ident(emulator, media->name + "store"), file);
-
-    fSetting->setPath(file->getFile(), !cmd->autoload);
-    fSetting->setFile(item->info.name, !cmd->autoload);
-    fSetting->setId(item->id, !cmd->autoload);
-    fSetting->setWriteProtect(file->isArchived() || file->isReadOnly(), !cmd->autoload);
 
     filePool->unloadOrphaned();
 
@@ -1256,36 +1275,15 @@ auto MediaLayout::updateVisibility( Emulator::Interface::MediaGroup* mediaGroup,
 }
 
 auto MediaLayout::updateWriteProtection( Emulator::Interface::Media* media, bool state ) -> void {
-            
-    bool enabled = false;
-    
-    auto file = (GUIKIT::File*)media->guid;
-    
-    if (!file)
-        enabled = true;    
-    else if (file->isArchived() || file->isReadOnly())
-        state = true;
-    else
-        enabled = true;
-        
     auto layout = getMediaGroupLayout(media->group);
     
     if (!layout)
         return;
-    
-    for(auto block : layout->blocks) {
-        
-        if (block->media == media) {
 
-            if (state != block->header.writeprotect.checked())            
-                block->header.writeprotect.setChecked( state );                            
-            
-           // if (enabled != block->header.writeprotect.enabled())
-             //   block->header.writeprotect.setEnabled( enabled );
+    auto block = layout->getBlock(media);
 
-            break;
-        }
-    }
+    if (block && (state != block->header.writeprotect.checked()))
+        block->header.writeprotect.setChecked( state );
 }
 
 auto MediaLayout::updateJumper(Emulator::Interface::Media* media) -> void {

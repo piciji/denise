@@ -58,8 +58,7 @@ struct SwapperLayout : GUIKIT::VerticalLayout {
 	auto savePath( std::string path ) -> void;
     auto loadSettings() -> void;
     auto clearSlot(unsigned pos) -> void;
-    auto updateWP(bool state, bool force = false) -> void;
-    auto forceWP() -> void { updateWP(true, true); }
+    auto updateWP(bool state) -> void;
     
     SwapperLayout(MediaLayout* mediaLayout);
 };
@@ -249,7 +248,8 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto updateOptionsVisibility() -> void;
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
     auto prepareCreator() -> void;
-    auto preparePaths() -> void;	
+    auto preparePaths() -> void;
+    auto preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void;
     auto updateListing( Emulator::Interface::Media* media ) -> void;
 	auto savePath( std::string& groupName, std::string path ) -> void;
     auto showListing( MediaGroupLayout* layout ) -> bool;
@@ -273,6 +273,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto updateListingFont( unsigned fontSize ) -> void;
     auto updateListings( ) -> void;
     auto loadSettings() -> void;
+    auto getDiskSaveGroup() -> Emulator::Interface::MediaGroup*;
 
     MediaLayout(EmuConfigView::TabWindow* tabWindow);
 };
