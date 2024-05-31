@@ -382,7 +382,7 @@ struct WGL : Video, GL3, RenderThread {
         viewScreen.hasIntegerScaling = _integerScaling;
 
         viewScreen.update(viewport);
-        updateRTS = true;
+        GL3::updateFrameSize();
         updateHistory = true;
     }
 

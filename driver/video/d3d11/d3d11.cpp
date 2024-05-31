@@ -320,7 +320,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         viewScreen.hasIntegerScaling = integerScaling;
         if (settings.handle) {
             viewScreen.update(viewport);
-            updateRTS = true;
+            updateFrameSize();
+            updateMessageParameter();
             updateHistory = true;
         }
     }
@@ -1120,13 +1121,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             resizeMutexThreaded.unlock();
             viewScreen.update(viewport, windowSize.right, windowSize.bottom);
 
-            frame.size.x = viewport.width;
-            frame.size.y = viewport.height;
-            frame.size.z = 1.0f / (float)viewport.width;
-            frame.size.w = 1.0f / (float)viewport.height;
-
+            updateFrameSize();
             updateMessageParameter();
-            updateRTS = true; // in the case of passes scaled by viewport
         }
 
         if (updateRTS) {
@@ -1739,6 +1735,14 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         context->Map( (ID3D11Resource*)uboRotated, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
         *(Matrix4x4*)mapped.pData = frame.mvpRotated;
         context->Unmap((ID3D11Resource*)uboRotated, 0);
+    }
+
+    auto updateFrameSize() -> void {
+        frame.size.x = viewport.width;
+        frame.size.y = viewport.height;
+        frame.size.z = 1.0f / (float)viewport.width;
+        frame.size.w = 1.0f / (float)viewport.height;
+        updateRTS = true; // in the case of passes scaled by viewport
     }
 };
 

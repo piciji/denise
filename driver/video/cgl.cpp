@@ -514,6 +514,8 @@ struct CGL : public Video, GL3, RenderThread {
         viewScreen.hasIntegerScaling = _integerScaling;
 
         viewScreen.update(viewport);
+        GL3::updateFrameSize();
+        updateHistory = true;
     }
 
     auto getAspectRatio() -> int {
