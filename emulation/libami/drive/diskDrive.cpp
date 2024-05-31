@@ -303,7 +303,7 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     if (driveSound && system->powerOn && system->isDisplayFrame())
         interface->mixDriveSound( media, DriveSound::FloppyInsert );
 
-    updateTrack();
+    updateTrack(true);
     return true;
 }
 
@@ -359,7 +359,6 @@ auto DiskDrive::power() -> void {
     nextStep = 0;
     cylinder = 0;
     side = 0;
-    headOffset = 0;
     accum = 0;
     stepperSeekTime = (stepperSeekTimeBase * agnus.frequency()) / 10000;
     stepperMinTime = (stepperMinTimeBase * agnus.frequency()) / 10000;
@@ -433,7 +432,7 @@ auto DiskDrive::writeCiaPortB(uint8_t value, uint8_t oldValue) -> void {
             stepSettleClock = agnus.clock;
         }
     } else if (side != sideBefore)
-        updateTrack();
+        updateTrack(false);
 }
 
 auto DiskDrive::getId() -> unsigned { // no emulation of a HD drive with inserted DD disk.
@@ -520,24 +519,28 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
         interface->mixDriveSound( media, DriveSound::FloppyStep, cylinder );
 
     if (updTrack)
-        updateTrack();
+        updateTrack(false);
 }
 
-inline auto DiskDrive::updateTrack() -> void {
+inline auto DiskDrive::updateTrack(bool init) -> void {
     unsigned oldHeadOffset = headOffset;
     DiskStructure::Track* oldTrack = track;
     track = &structure.tracks[(cylinder << 1) | side];
 
-    if (oldTrack && oldTrack->bits && oldHeadOffset) {
-        if (structure.type == DiskStructure::ADF) {
-            if (oldTrack->length != track->length)
-                headOffset = ((((uint64_t)oldHeadOffset >> 3) * (uint64_t)track->length) / (uint64_t)oldTrack->length) << 3;
-        } else {
-            if (oldTrack->bits != track->bits)
-                 headOffset = ((uint64_t)oldHeadOffset * (uint64_t)track->bits) / (uint64_t)oldTrack->bits;
-        }
-    } else
-        headOffset = 0;
+    if (init)
+        headOffset = rand() % track->bits;
+    else {
+        if (oldTrack && oldTrack->bits && oldHeadOffset) {
+            if (structure.type == DiskStructure::ADF) {
+                if (oldTrack->length != track->length)
+                    headOffset = ((((uint64_t)oldHeadOffset >> 3) * (uint64_t)track->length) / (uint64_t)oldTrack->length) << 3;
+            } else {
+                if (oldTrack->bits != track->bits)
+                    headOffset = ((uint64_t)oldHeadOffset * (uint64_t)track->bits) / (uint64_t)oldTrack->bits;
+            }
+        } else
+            headOffset = 0;
+    }
 
     paula.turbo = ((structure.type != DiskStructure::IPF) || !track->cellWidth) ? paula.turboRequested : 0;
     randCounter = 0;

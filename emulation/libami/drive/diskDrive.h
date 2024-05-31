@@ -85,7 +85,7 @@ struct DiskDrive {
         return !motor && !motorSpeed;
     }
     auto getId() -> unsigned;
-    auto updateTrack() -> void;
+    auto updateTrack(bool init) -> void;
     auto progressStepper() -> void;
 
     template<bool update> auto readByte(int& dmaCycles) -> uint8_t;
