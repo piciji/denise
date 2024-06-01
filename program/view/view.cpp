@@ -1490,10 +1490,13 @@ auto View::buildMenu() -> void {
 
         diskControlMenu.clearSave.onActivate = [i]() {
             auto path = program->getAssignedSaveFile( activeEmulator->getDisk(i) );
+            if (path.empty())
+                return;
+
             GUIKIT::File file(path);
             if (file.exists()) {
                 if (file.del())
-                    statusHandler->setMessage("save file deleted", 3, true);
+                    statusHandler->setMessage(trans->getA("save file deleted"), 3, true);
             }
         };
 

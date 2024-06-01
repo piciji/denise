@@ -188,7 +188,7 @@ struct Interface {
     struct MediaGroup {
         unsigned id;
         std::string name;        
-		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Program, DiskSave } type;
+		enum class Type : unsigned { Disk, HardDisk, Tape, Expansion, Program } type;
         std::vector<std::string> suffix;
         std::vector<std::string> creatable;
         Media* selected;

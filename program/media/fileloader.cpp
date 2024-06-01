@@ -766,6 +766,13 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     }
 }
 
+auto Fileloader::updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GUIKIT::File::Item* item, bool& wp ) -> void {
+    fSetting->setPath(file->getFile(), !cmd->autoload);
+    fSetting->setFile(item->info.name, !cmd->autoload);
+    fSetting->setId(item->id, !cmd->autoload);
+    fSetting->setWriteProtect(wp, !cmd->autoload);
+}
+
 auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
     bool fromState = options & 1;
     bool dontUpdateSelected = options & 2;
@@ -781,15 +788,11 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr : file->archiveData(item->id);
 
-    fSetting->setPath(file->getFile(), !cmd->autoload);
-    fSetting->setFile(item->info.name, !cmd->autoload);
-    fSetting->setId(item->id, !cmd->autoload);
-    fSetting->setWriteProtect(asWP, !cmd->autoload);
-
     if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
-
+        updateFileSetting(fSetting, file, item, asWP);
         media->guid = uintptr_t(file);
+
         emulator->insertMedium(media, data, size);
         emulator->writeProtect(media, asWP);
         if (!mediaGroup->isProgram())
@@ -798,6 +801,8 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
         if (mediaGroup->expansion->pcbs.size())
             settings->set<unsigned>( _underscore(media->name) + "_pcb", 0);
+
+        updateFileSetting(fSetting, file, item, asWP);
     }
 
     emulator->getListing(media);

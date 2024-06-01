@@ -291,7 +291,6 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     if (!structure.attach(data, size))
         return false;
 
-    headOffset = 0;
     inserted = true;
     stepSettleClock = 0;
     accum = 0;

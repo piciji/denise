@@ -142,10 +142,9 @@ auto DiskStructure::applyAssignedSave() -> void {
         updateWrittenTracks(buffer, length);
         if (_type == Type::IPF)
             type = Type::IPF;
-        else if (_type == Type::ADF) {
+        else if (_type == Type::ADF)
             type = Type::ADF;
             // when use EXT2 dont forget to increase bits to be byte aligned
-        }
     }
 
     delete[] buffer;

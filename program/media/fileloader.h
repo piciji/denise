@@ -43,6 +43,7 @@ struct Fileloader {
     auto insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> Emulator::Interface::Media*;
     auto getSwapPos(Emulator::Interface* emulator) -> unsigned;
     auto getSwapMedia(Emulator::Interface* emulator, int swapPos, FileSetting* fSetting) -> Emulator::Interface::Media*;
+    auto updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GUIKIT::File::Item* item, bool& wp ) -> void;
 };
 
 extern Fileloader* fileloader;

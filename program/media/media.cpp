@@ -777,14 +777,6 @@ auto MediaLayout::prepareCreator() -> void {
     }
 }
 
-auto MediaLayout::getDiskSaveGroup() -> Emulator::Interface::MediaGroup* {
-    for(auto& block : pathsLayout.blocks) {
-        if (block->mediaGroup->type == Emulator::Interface::MediaGroup::Type::DiskSave)
-            return block->mediaGroup;
-    }
-    return nullptr;
-}
-
 auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void {
     if (mediaGroup.isExpansion() && mediaGroup.expansion->isRS232())
         return;
@@ -831,7 +823,7 @@ auto MediaLayout::preparePaths() -> void {
         saveImage->id = emulator->mediaGroups.size();
         saveImage->name = "disksave";
         saveImage->suffix.push_back("sav");
-        saveImage->type = Emulator::Interface::MediaGroup::Type::DiskSave;
+        saveImage->type = Emulator::Interface::MediaGroup::Type::Disk;
         preparePath(*saveImage);
     }
 }
@@ -1082,15 +1074,11 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr
         : file->archiveData(item->id);
 
-    fSetting->setPath(file->getFile(), !cmd->autoload);
-    fSetting->setFile(item->info.name, !cmd->autoload);
-    fSetting->setId(item->id, !cmd->autoload);
-    fSetting->setWriteProtect(asWP, !cmd->autoload);
-
     if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
-        
+        fileloader->updateFileSetting(fSetting, file, item, asWP);
         media->guid = uintptr_t(file);
+
         emulator->insertMedium(media, data, size);
         emulator->writeProtect(media, asWP);
         if (!mediaGroup->isProgram())
@@ -1100,6 +1088,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
             block->selector.combo.setSelection(0);
             block->selector.combo.onChange();        
         }
+        fileloader->updateFileSetting(fSetting, file, item, asWP);
     }
 
     if (showListing(layout)) {
