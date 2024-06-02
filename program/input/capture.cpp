@@ -187,7 +187,7 @@ auto InputManager::preventSharingOfAutoFireMappings(InputMapping* captureObject,
     if (!emulator)
         return;
 
-    if (!captureObject->emuDevice || !captureObject->emuDevice->isJoypad())
+    if (!captureObject->emuDevice || !captureObject->emuDevice->isJoypadOrMultiAdapter())
         return;
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );

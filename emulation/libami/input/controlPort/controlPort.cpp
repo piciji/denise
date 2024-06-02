@@ -5,6 +5,7 @@
 
 #include "joypad.cpp"
 #include "mouse.cpp"
+#include "fourPlayerAdapter.cpp"
 
 namespace LIBAMI  {
 
@@ -20,6 +21,9 @@ auto ControlPort::create( Emulator::Interface* interface, Input& input, Emulator
 
     if (device->isJoypad())
         return new Joypad( interface, input, device );
+
+    if (device->isFourPlayerAdapter())
+        return new FourPlayerAdapter( interface, input, device );
 
     if ( device->isMouse())
         return new Mouse( interface, input, device );

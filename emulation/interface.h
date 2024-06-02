@@ -79,12 +79,14 @@ struct Interface {
     struct Device {
         unsigned id;
         std::string name;
-		enum Type : unsigned { None, Joypad, Mouse, Paddles, LightGun, LightPen, Keyboard } type;
+		enum Type : unsigned { None, Joypad, Mouse, Paddles, LightGun, LightPen, Keyboard, FourPlayerAdapter } type;
         unsigned userData; // free to use, easy way to transfer data for a specific device from external
                 
         auto isMouse() const -> bool { return type == Type::Mouse; }
         auto isPaddles() const -> bool { return type == Type::Paddles; }
         auto isJoypad() const -> bool { return type == Type::Joypad; }
+        auto isFourPlayerAdapter() const -> bool { return type == Type::FourPlayerAdapter; }
+        auto isJoypadOrMultiAdapter() const -> bool { return isJoypad() || isFourPlayerAdapter(); }
         auto isLightGun() const -> bool { return type == Type::LightGun; }
         auto isLightPen() const -> bool { return type == Type::LightPen; }
         auto isLightDevice() const -> bool { return isLightGun() || isLightPen(); }

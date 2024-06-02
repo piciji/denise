@@ -36,9 +36,9 @@ rtc(agnus) {
 
 
     cia1.readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
-
+        uint8_t out;
         if ( port == Cia<MOS_8520>::PORTA ) {
-            uint8_t out = input.readCiaPortA();
+            out = input.readCiaPortA();
 
             for(auto& drive : diskDrives) {
                 if (drive.connected)
@@ -49,7 +49,10 @@ rtc(agnus) {
             return out;
         }
 
-        return lines->iob; // parallel port
+        out = 0xff;
+        input.readParallelportCIA1B(out);
+        out = (lines->prb & lines->ddrb) | (out & ~lines->ddrb);
+        return out;
     };
 
     cia1.writePort = [this, interface]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
@@ -79,10 +82,12 @@ rtc(agnus) {
             uint8_t out = lines->ioa;
             if (dongle.connected())
                 dongleCiaRead<true>(lines, out);
+
+            input.readParallelportCIA2A(out);
             return out;
         }
 
-        return lines->iob; // parallel port
+        return lines->iob;
     };
 
     cia2.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {

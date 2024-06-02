@@ -21,7 +21,19 @@ Input::Input(System* system, Agnus& agnus, Cia<MOS_8520>& cia1)
     controlPort2 = new ControlPort(interface, *this);
 }
 
-auto Input::readCiaPortA( ) -> uint8_t {
+auto Input::readParallelportCIA1B(uint8_t& res) -> void {
+    jitPoll();
+    controlPort1->readParallelFromCIA1B(res);
+    controlPort2->readParallelFromCIA1B(res);
+}
+
+auto Input::readParallelportCIA2A(uint8_t& res) -> void {
+    jitPoll();
+    controlPort1->readParallelFromCIA2A(res);
+    controlPort2->readParallelFromCIA2A(res);
+}
+
+auto Input::readCiaPortA() -> uint8_t {
     jitPoll();
     uint8_t out = 0xff;
     if (controlPort1->readButton1()) out &= ~0x40;

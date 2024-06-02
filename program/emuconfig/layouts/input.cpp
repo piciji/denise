@@ -466,7 +466,7 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
     auto& device = emulator->devices[deviceId];
     GUIKIT::Image* image = nullptr;
     
-    if (device.isJoypad())
+    if (device.isJoypadOrMultiAdapter())
         image = &controllerImage;
     else if (device.isMouse() || device.isPaddles())
         image = &mouseImage;
@@ -622,14 +622,26 @@ auto InputLayout::appendListEntry(std::string& name, Emulator::Interface::Device
 
     if (image && mapping->shadowMap.size() > 0)
         image = &virtualKeyImage;
-    
-    inputList.append({ "", trans->get( name ), mapping->getDescription(), 
+
+    std::string transName = "";
+    if (mapping->emuDevice->isFourPlayerAdapter()) {
+        auto parts = GUIKIT::String::explode(name, ":");
+        if (parts.size() == 2) {
+            transName = trans->getA( parts[0], true ) + " " + trans->get( parts[1] );
+            name = parts[1];
+        }
+    }
+
+    if (transName.empty())
+        transName = trans->get( name );
+
+    inputList.append({ "", transName, mapping->getDescription(),
         mapping->alternate ? mapping->alternate->getDescription() : "" });
 		
 	if (image)
 		inputList.setImage( inputList.rowCount() - 1, 0, *image );
 
-    if (mapping->emuDevice && mapping->emuDevice->isJoypad()) {
+    if (mapping->emuDevice && mapping->emuDevice->isJoypadOrMultiAdapter()) {
         if (input.key == Emulator::Interface::Key::Direction);
         else if (input.key == Emulator::Interface::Key::Button) {
             if (name == "Button 2")

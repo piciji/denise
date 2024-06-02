@@ -2079,6 +2079,9 @@
     <ClCompile Include="..\emulation\libami\agnus\blanking.cpp">
       <Filter>emulation\libami\agnus</Filter>
     </ClCompile>
+    <ClCompile Include="..\emulation\libami\input\controlPort\fourPlayerAdapter.cpp">
+      <Filter>emulation\libami\input\controlPort</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\emulation\libc64\sid\filter\circuit">
