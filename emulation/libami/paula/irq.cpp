@@ -27,6 +27,7 @@ auto Paula::setIntreq(uint16_t value) -> void {
 }
 
 auto Paula::setVblInt() -> void {
+    vBlankIntr = true;
     intreq |= 0x20;
     prepareIpl();
 }

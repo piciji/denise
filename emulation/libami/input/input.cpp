@@ -22,15 +22,23 @@ Input::Input(System* system, Agnus& agnus, Cia<MOS_8520>& cia1)
 }
 
 auto Input::readParallelportCIA1B(uint8_t& res) -> void {
-    jitPoll();
-    controlPort1->readParallelFromCIA1B(res);
-    controlPort2->readParallelFromCIA1B(res);
+    if (controlPort2->device->isFourPlayerAdapter()) {
+        jitPoll();
+        controlPort2->readParallelFromCIA1B(res);
+    } else if (controlPort1->device->isFourPlayerAdapter()) {
+        jitPoll();
+        controlPort1->readParallelFromCIA1B(res);
+    }
 }
 
 auto Input::readParallelportCIA2A(uint8_t& res) -> void {
-    jitPoll();
-    controlPort1->readParallelFromCIA2A(res);
-    controlPort2->readParallelFromCIA2A(res);
+    if (controlPort2->device->isFourPlayerAdapter()) {
+        jitPoll();
+        controlPort2->readParallelFromCIA2A(res);
+    } else if (controlPort1->device->isFourPlayerAdapter()) {
+        jitPoll();
+        controlPort1->readParallelFromCIA2A(res);
+    }
 }
 
 auto Input::readCiaPortA() -> uint8_t {
