@@ -13,27 +13,20 @@ namespace Emulator {
 namespace ConfigView {
 
 #include "slider.h"
-#include "layouts/driver.h"
-#include "layouts/audio.h"
-#include "layouts/video.h"
-#include "layouts/input.h"
+#include "layouts/drivers.h"
 #include "layouts/settings.h"
 
 struct TabWindow : public GUIKIT::Window {
     
-    enum Layout : unsigned { Video, Audio, Input, Settings };
+    enum Layout : unsigned { Drivers, Settings };
     
     Message* message;
-	VideoLayout* videoLayout = nullptr;
-    AudioLayout* audioLayout = nullptr;    
-    InputLayout* inputLayout = nullptr;    
+	DriversLayout* driversLayout = nullptr;
     SettingsLayout* settingsLayout = nullptr;    
 
     GUIKIT::TabFrameLayout tab;
     
-	GUIKIT::Image displayImage;
-    GUIKIT::Image volumeImage;    
-    GUIKIT::Image keyboardImage;
+	GUIKIT::Image gearsImage;
     GUIKIT::Image toolsImage;
 
     auto build() -> void;	

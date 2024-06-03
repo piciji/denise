@@ -46,11 +46,12 @@ auto DiskStructure::prepareEXT(uint8_t* data, unsigned size) -> void {
                         encodeTrack(track, i, data + dataOffset);
 
                 } else {
-                    initTrack(track, storage + 2, (storage + 2) << 3, 0xaa);
+                    unsigned length = storage + 2;
+                    initTrack(track, std::max(length, getTrackByteLength()), (storage + 2) << 3, 0xaa);
                     std::memcpy(track.data + 2, data + dataOffset, storage);
                     Emulator::copyIntToBufferBigEndian<uint16_t>(&track.data[0], syncWord);
+                    track.length = length;
                 }
-                track.storage = storage;
 
             } else {
                 initTrack(track, getTrackByteLength());
@@ -62,9 +63,6 @@ auto DiskStructure::prepareEXT(uint8_t* data, unsigned size) -> void {
         } else {
             initTrack(track, getTrackByteLength());
         }
-
-        // if any track is written, we recreate the whole image as EXT2 for simplicity
-        track.written = 0x80;
     }
 }
 

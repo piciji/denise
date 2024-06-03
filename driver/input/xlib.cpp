@@ -73,6 +73,7 @@ struct XInput : public Input {
 		rootwindow = DefaultRootWindow(display);
 
 		memset(&_keycode, 0, sizeof _keycode);
+    	memset(&keyState, 0, sizeof keyState);
 		unsigned _count = 0;
         char* ident = nullptr;
         
@@ -86,7 +87,7 @@ struct XInput : public Input {
                 continue;
 					
 			hidKeyboard->buttons().append( (std::string)ident, getKeyCode( (std::string)ident, (uint8_t)keycode ) );
-            //printf("%s %d \n", ident, keycode);
+         //   printf("%s %d %d \n", ident, keycode, keySym);
             
 			_keycode[_count++] = keycode;
         }
@@ -230,10 +231,6 @@ struct XInput : public Input {
         devices.push_back(hidKeyboard);
         devices.push_back(hidMouse);
 
-		//pollKeyboard( devices );
-
-        //pollMouse( devices );
-		
 	#ifdef DRV_SDLINPUT
 		if (joypadDriver == "sdl") sdl->pollJoypad(devices);
 	#endif
@@ -243,35 +240,6 @@ struct XInput : public Input {
 			
 		return devices;
 	}
-    
-    auto pollMouse(std::vector<Hid::Device*>& devices) -> void {
-
-        Window root_return, child_return;
-        int root_x_return = 0, root_y_return = 0;
-        int win_x_return = 0, win_y_return = 0;
-        unsigned int mask_return = 0;
-
-        XQueryPointer(display, rootwindow,
-                &root_return, &child_return, &root_x_return, &root_y_return,
-                &win_x_return, &win_y_return, &mask_return);        
-        
-        hidMouse->axes().inputs[0].setValue((int16_t) ((root_x_return - relativex)));
-        hidMouse->axes().inputs[1].setValue((int16_t) ((root_y_return - relativey)));
-
-        relativex = root_x_return;
-        relativey = root_y_return;
-        
-        if (mIsAcquired())            
-            warpMouse( root_x_return, root_y_return );        
-
-        hidMouse->buttons().inputs[0].setValue((bool)(mask_return & Button1Mask));
-        hidMouse->buttons().inputs[1].setValue((bool)(mask_return & Button2Mask));
-        hidMouse->buttons().inputs[2].setValue((bool)(mask_return & Button3Mask));
-        hidMouse->buttons().inputs[3].setValue((bool)(mask_return & Button4Mask));
-        hidMouse->buttons().inputs[4].setValue((bool)(mask_return & Button5Mask));
-
-        devices.push_back( hidMouse );
-    }
     
     auto warpMouse( int absX, int absY ) -> void {
         
@@ -306,18 +274,6 @@ struct XInput : public Input {
             XWarpPointer(display, None, rootwindow, 0, 0, 0, 0, absX, relativey);
         }            
     }
-	
-	auto pollKeyboard(std::vector<Hid::Device*>& devices) -> void {
-		if (!display) return;
-
-		char state[32];
-		XQueryKeymap(display, state);		
-		
-		for (auto& input : hidKeyboard->buttons().inputs)
-			input.setValue( (bool)(state[_keycode[input.id] >> 3] & (1 << (_keycode[input.id] & 7))) );	
-		
-		devices.push_back(hidKeyboard);
-	}
 
     auto initWorker() -> void {
 
@@ -335,7 +291,7 @@ struct XInput : public Input {
                     return;
                 }
 
-                usleep( 10000 );
+                usleep( 7000 );
 
                 XQueryKeymap(display, state);
 

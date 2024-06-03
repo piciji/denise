@@ -192,9 +192,9 @@ struct Paula {
     auto scheduleIntreqRbf() -> void;
 
     auto setDskLen(uint16_t value) -> void;
-    auto setDskDat(uint16_t value) -> void;
+    auto setDskDat(uint16_t& value) -> bool;
     auto setDskSync(uint16_t value) -> void;
-    auto dskDatR(uint8_t slot) -> uint16_t;
+    auto dskDatR(uint8_t& slot, uint16_t& out) -> bool;
     auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE; }
     auto setDskState(DiskState next) -> void;
     auto handleFDControllerIdle() -> void;
@@ -204,11 +204,12 @@ struct Paula {
     auto fdcByteMode() -> bool;
 
     auto getFromFifo(uint16_t& data) -> bool;
-    auto addToFifo(uint16_t data) -> void;
+    auto addToFifo(const uint16_t& data) -> bool;
     auto fifoFull() -> bool { return fifoPos == 3; }
     auto fifoEmpty() -> bool { return fifoPos == 0; }
 
     template<bool readWord = false, bool waitTurbo = false> auto handleFDControllerRead() -> void;
+    template<bool readWord = false> auto handleFDControllerReadByte() -> void;
     auto handleFDControllerWrite() -> void;
 
     auto progressPot() -> void;

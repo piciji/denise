@@ -189,7 +189,7 @@ SettingsLayout::SettingsLayout() {
     switches.threadedEmu.setChecked(globalSettings->get<bool>("threaded_emu", false));
     switches.threadedEmu.onToggle = [](bool checked) {
         globalSettings->set<bool>("threaded_emu", checked);
-        configView->videoLayout->updateDriverPropsVisibility();
+        configView->driversLayout->updateDriverPropsVisibility();
         program->hintExclusiveFullscreen();
         program->initUserInterface();
     };
@@ -409,7 +409,6 @@ auto SettingsLayout::changeLang() -> void {
 
     if (configView) {
         configView->translate();
-        configView->inputLayout->loadInputList();
         configView->synchronizeLayout();
     }
 	

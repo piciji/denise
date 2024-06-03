@@ -14,7 +14,7 @@
     auto character = [[event characters] characterAtIndex:0];
     if(character == NSEnterCharacter || character == NSCarriageReturnCharacter) {
         if([self selectedRow] >= 0) {
-            [[self delegate] activate:self];
+            [(CocoaTreeView*)[self delegate] activate:self];
             return;
         }
     }
@@ -47,7 +47,7 @@
         
         NSRect targetRect = NSMakeRect(frame.origin.x + 2, frame.origin.y, frame.size.height, frame.size.height);
         NSRect sourceRect = NSMakeRect(0, 0, [image size].width, [image size].height);
-        [image drawInRect:targetRect fromRect:sourceRect operation:NSCompositeSourceOver fraction:1.0 respectFlipped:YES hints:nil];
+        [image drawInRect:targetRect fromRect:sourceRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
         
         [[NSGraphicsContext currentContext] restoreGraphicsState];
         textDisplacement = frame.size.height + 4;
@@ -106,7 +106,7 @@
 }
 
 -(CocoaTreeViewContent*) content {
-    return content;
+    return (CocoaTreeViewContent*)content;
 }
 
 -(NSFont*) font {
@@ -270,7 +270,7 @@ namespace GUIKIT {
 
         @autoreleasepool {
             if (parentTreeView()) {
-                [[parentTreeView()->p.cocoaView content] reloadData];
+                [[(id)parentTreeView()->p.cocoaView content] reloadData];
                 parentTreeView()->p.update();
             }
         }
@@ -279,7 +279,7 @@ namespace GUIKIT {
     auto pTreeViewItem::remove(TreeViewItem& item) -> void {
         item.p.invalidateParent();
         @autoreleasepool {
-            if (parentTreeView()) [[parentTreeView()->p.cocoaView content] reloadData];
+            if (parentTreeView()) [[(id)parentTreeView()->p.cocoaView content] reloadData];
         }
     }
     
@@ -289,7 +289,7 @@ namespace GUIKIT {
         }
         treeViewItem.state.items.clear();
         @autoreleasepool {
-            if (parentTreeView()) [[parentTreeView()->p.cocoaView content] reloadData];
+            if (parentTreeView()) [[(id)parentTreeView()->p.cocoaView content] reloadData];
         }
     }
 
@@ -302,7 +302,7 @@ namespace GUIKIT {
 
     auto pTreeViewItem::setText(const std::string& text) -> void {
         @autoreleasepool {
-            if (parentTreeView()) [[parentTreeView()->p.cocoaView content] reloadItem:wrapper];
+            if (parentTreeView()) [[(id)parentTreeView()->p.cocoaView content] reloadItem:wrapper];
         }
     }
     
@@ -310,10 +310,10 @@ namespace GUIKIT {
         if (!parentTreeView()) return;
         
         @autoreleasepool {
-            NSInteger itemIndex = [[parentTreeView()->p.cocoaView content] rowForItem:wrapper];
+            NSInteger itemIndex = [[(id)parentTreeView()->p.cocoaView content] rowForItem:wrapper];
             if (itemIndex < 0) return;
             
-            [[parentTreeView()->p.cocoaView content] selectRowIndexes:[NSIndexSet indexSetWithIndex:itemIndex] byExtendingSelection:NO];
+            [[(id)parentTreeView()->p.cocoaView content] selectRowIndexes:[NSIndexSet indexSetWithIndex:itemIndex] byExtendingSelection:NO];
         }
     }
     
@@ -321,16 +321,16 @@ namespace GUIKIT {
         if (!parentTreeView()) return;
         @autoreleasepool {
             if (expanded)
-                [[parentTreeView()->p.cocoaView content] expandItem:wrapper];
+                [[(id)parentTreeView()->p.cocoaView content] expandItem:wrapper];
             else
-                [[parentTreeView()->p.cocoaView content] collapseItem:wrapper];
+                [[(id)parentTreeView()->p.cocoaView content] collapseItem:wrapper];
         }
     }
     
     auto pTreeViewItem::setImage(Image& image) -> void {
         @autoreleasepool {
             usensimage = nsimage = NSMakeImage(image);
-            if (parentTreeView()) [[parentTreeView()->p.cocoaView content] reloadItem:wrapper];
+            if (parentTreeView()) [[(id)parentTreeView()->p.cocoaView content] reloadItem:wrapper];
         }
     }
     
@@ -376,7 +376,7 @@ namespace GUIKIT {
         item.state.parentTreeView = &treeView;
 
         @autoreleasepool {
-            [[cocoaView content] reloadData];
+            [[(id)cocoaView content] reloadData];
             update();
         }
     }
@@ -384,7 +384,7 @@ namespace GUIKIT {
     auto pTreeView::remove(TreeViewItem& item) -> void {
         item.p.invalidateParent();
         @autoreleasepool {
-            [[cocoaView content] reloadData];
+            [[(id)cocoaView content] reloadData];
         }
     }
     
@@ -394,7 +394,7 @@ namespace GUIKIT {
         }
         treeView.state.items.clear();
         @autoreleasepool {
-            [[cocoaView content] reloadData];
+            [[(id)cocoaView content] reloadData];
         }
     }
     
@@ -404,7 +404,7 @@ namespace GUIKIT {
         
         @autoreleasepool {
             if (cocoaView)
-                [[cocoaView content] setBackgroundColor: bg];
+                [[(id)cocoaView content] setBackgroundColor: bg];
         }
     }
 

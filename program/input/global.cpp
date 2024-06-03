@@ -131,8 +131,8 @@ auto InputManager::setMappings() -> void {
                     mapper->inputManager = manager;
                     mapper->isShadowed = false;
 
-                    mapper->autoFire = device.isJoypad() && (input.key == Emulator::Interface::Key::Autofire || input.key == Emulator::Interface::Key::AutofireDirection);
-                    if (device.isJoypad() && (input.key == Emulator::Interface::Key::ToggleAutofire)) {
+                    mapper->autoFire = device.isJoypadOrMultiAdapter() && (input.key == Emulator::Interface::Key::Autofire || input.key == Emulator::Interface::Key::AutofireDirection);
+                    if (device.isJoypadOrMultiAdapter() && (input.key == Emulator::Interface::Key::ToggleAutofire)) {
                         mapper->type = InputMapping::Type::Switch;
                         mapper->inputManager = manager;
                         mapper->hotkeyId = Hotkey::Id::Autofire; // share id, later identified by mapping
@@ -684,7 +684,7 @@ auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDe
 
 		int sense = sensePercent;
 				
-		if (device.isJoypad() || device.isKeyboard()) {
+		if (device.isJoypadOrMultiAdapter() || device.isKeyboard()) {
 			sense = (sensePercent * 32768) / 100;
 
 			sense = std::min(std::max(sense, tresholdLo), 32768 - tresholdHi);		

@@ -338,5 +338,12 @@ auto TabWindow::getView( Emulator::Interface* emulator, bool createIfNotExist ) 
 	return emuView;
 }
 
+auto TabWindow::updateGlobalHotkeys(TabWindow* exclude) -> void {
+    for (auto view : emuConfigViews) {
+        if ((view != exclude) && view->inputLayout && view->inputLayout->globalHotkeyMode())
+            view->inputLayout->loadGlobalHotkeyList();
+    }
+}
+
 }
 

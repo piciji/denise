@@ -11,9 +11,9 @@
 - (void)mouseDown:(NSEvent*)event {
     
     if (part && part->popupMenu) {
-        GUIKIT::pApplication::observeMenu([part->popupMenu->p.cocoaBase cocoaMenu]);
+        GUIKIT::pApplication::observeMenu([(id)part->popupMenu->p.cocoaBase cocoaMenu]);
         
-        [NSMenu popUpContextMenu: [part->popupMenu->p.cocoaBase cocoaMenu] withEvent:event forView:NULL];
+        [NSMenu popUpContextMenu: [(id)part->popupMenu->p.cocoaBase cocoaMenu] withEvent:event forView:self];
     }
     
     if (part && part->onClick)
@@ -57,10 +57,13 @@ auto pStatusBar::create() -> void {
     //    [cocoaView setHidden:YES];
         
         [cocoaView setWantsLayer:YES];
+        #if __MAC_OS_X_VERSION_MIN_REQUIRED > __MAC_10_13
+        [cocoaView setClipsToBounds:YES];
+        #endif
 
-        [cocoaView setBackgroundColor: [NSColor textBackgroundColor]];
+        [(id)cocoaView setBackgroundColor: [NSColor textBackgroundColor]];
 
-        [[statusBar.window()->p.cocoaWindow contentView] addSubview:cocoaView positioned:NSWindowBelow relativeTo:nil];
+        [[statusBar.window()->p.cocoaWindow contentView] addSubview:cocoaView positioned:NSWindowAbove relativeTo:nil];
     }
     update();
 }
@@ -80,8 +83,8 @@ auto pStatusBar::getHeight() -> unsigned {
         for (NSView* view in subviews) {
             
             if([view respondsToSelector:@selector(setFont:)]) {
-                NSFont* font = [view font];
-                return pFont::size(font, " ").height + 3;
+                NSFont* font = [(id)view font];
+                return pFont::size(font, " ").height + 4;
             }
         }
         return 0;
@@ -110,7 +113,7 @@ auto pStatusBar::setText(const std::string& text) -> void {
         if (!cocoaView)
             return;
         
-        [usedWidgets[0]->p.cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)usedWidgets[0]->p.cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
     }
 }
 
@@ -124,7 +127,7 @@ auto pStatusBar::setFont(const std::string& font) -> void {
         for (NSView* view in subviews) {
             
             if([view respondsToSelector:@selector(setFont:)])
-                [view setFont:pFont::cocoaFont(font)];
+                [(id)view setFont:pFont::cocoaFont(font)];
         }
     }
     
@@ -163,7 +166,7 @@ auto pStatusBar::update() -> void {
         NSView* view = [[cocoaView subviews] objectAtIndex:0];
         
         if([view respondsToSelector:@selector(setImage:)])
-            [[view image] release];
+            [[(id)view image] release];
         
         [view removeFromSuperview];
     }
@@ -202,28 +205,14 @@ auto pStatusBar::update() -> void {
     delete label;
     
     unsigned countVisible = 0;
-   // unsigned width = area.size.width;
-   // width -= 8;
-    
+
     for(unsigned i = 0; i < parts.size(); i++) {
-    //for (int i = parts.size() - 1; i >= 0; i-- ) {
-        
         auto& part = parts[i];
         
         if (!part.visible)
             continue;
         
         countVisible++;
-        
-//        if (part.image)
-//            width -= part.image->width + 3;
-//        else
-//            width -= part.width;
-//
-//        if (part.appendSeparator && (countVisible > 1) ) {
-//            width -= 1;
-//        }
-            
     }
     
     unsigned xPos = 5;
@@ -251,12 +240,28 @@ auto pStatusBar::update() -> void {
             
             [view setFrame:NSMakeRect(xPos, yPos, part.image->width, part.image->height)];
             
-            [view setImage: image];
+            [(id)view setImage: image];
             
             xPos += part.image->width + 4;
             
             usedWidgets.push_back( widget );
-            
+
+        } else if (part.sliderLength) {
+            Slider* slider = new Slider(Slider::Orientation::HORIZONTAL);
+            slider->setLength( part.sliderLength );
+            slider->setPosition( part.sliderPosition );
+            slider->onChange = part.onChange;
+            view = slider->p.cocoaView;
+
+            if (i == countVisible && (area.size.width > xPos) )
+                [view setFrame:NSMakeRect(xPos, 1, area.size.width - xPos, getHeight() - 3)];
+            else
+                [view setFrame:NSMakeRect(xPos, 1, part.width, getHeight() - 3)];
+
+            xPos += part.width;
+
+            usedWidgets.push_back( slider );
+
         } else {
             Label* label = new Label;
             label->setText( part.text );
@@ -267,12 +272,7 @@ auto pStatusBar::update() -> void {
                 label->setForegroundColor( part.overrideForegroundColor );
 
             label->setAlign( part.alignRight ? Label::Align::Right : Label::Align::Left );
-                
-//            if (xPos == 0)
-//                width += part.width;
-//            else
-//                width = part.width;
-                
+
             view = label->p.cocoaView;
                 
             if (i == countVisible && (area.size.width > xPos) )
@@ -321,11 +321,16 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
         
         if ( part.image ) {
             
-            [[widget->p.cocoaView image] release];
+            [[(id)widget->p.cocoaView image] release];
             
             NSImage* image = NSMakeImage( *part.image );
             
-            [widget->p.cocoaView setImage: image];
+            [(id)widget->p.cocoaView setImage: image];
+
+        } else if (part.sliderLength) {
+            Slider* slider = (Slider*)widget;
+            if (slider->position() != part.sliderPosition)
+                slider->setPosition( part.sliderPosition );
 
         } else {
             Label* label = (Label*)widget;

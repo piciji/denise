@@ -7,13 +7,13 @@ VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
     }
 
     append(rgb,{0u, 0u}, 10);
-    append(svideoCpu,{0u, 0u}, 10);
-    append(svideoGpu,{0u, 0u});
+    append(cpu,{0u, 0u}, 10);
+    append(gpu,{0u, 0u});
 
     append(spacer,{~0u, 0u});
     append(reset,{0u, 0u});
 
-    GUIKIT::RadioBox::setGroup(rgb, svideoCpu, svideoGpu);
+    GUIKIT::RadioBox::setGroup(rgb, cpu, gpu);
 
     setAlignment(0.5);
 }
@@ -26,7 +26,8 @@ VideoBaseLayout::View::Option::Option(bool withSpectrum) {
         append(tvGamma, {0u, 0u}, 10);
     }
 
-    append(linearInterpolation, {0u, 0u});
+    append(linearInterpolation, {0u, 0u}, 10);
+    append(cpuFilterThreaded, {0u, 0u});
 
     setAlignment(0.5);
 }
@@ -130,6 +131,7 @@ VideoShaderLayout::Main::Control::Control() {
 VideoShaderLayout::Main::Info::Info() {
     append(label,{0u, 0u}, 5);
     append(loaded,{~0u, 0u});
+    append(shaderCache, {0u, 0u}, 10);
     append(clearCache,{0u, 0u}, 10);
     append(toParams,{0u, 0u});
 
@@ -351,7 +353,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     setSliderAction<unsigned>( &layBase.view.contrast, "contrast" );
     setSliderAction<int>( &layBase.view.phase, "phase", [](unsigned position) { return (int)position - 180; } );
     setSliderAction<unsigned>( &layBase.view.scanlines, "scanlines", [](unsigned position) { return std::max(position, 1u); } );
-    setSliderAction<unsigned>( &layBase.view.interlace, "interlace", [](unsigned position) { return std::max(position, 1u); } );
+    setSliderAction<unsigned>( &layBase.view.interlace, "interlace", [](unsigned position) { return std::max(position, 0u); } );
     setSliderAction<unsigned>( &layBase.encoding.blur, "blur" );
     setSliderAction<float>( &layBase.encoding.phaseError, "phase_error", [](unsigned position) { return (float)((int)position - 90) / 2.0f; } );
     setSliderAction<int>( &layBase.encoding.hanoverBars, "hanover_bars", [](unsigned position) { return (int)position - 100; } );
@@ -374,6 +376,13 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         program->setVideoFilter();
         emuThread->unlock();
 	};
+
+    layBase.view.option.cpuFilterThreaded.onToggle = [this](bool checked) {
+        emuThread->lock();
+        _settings->set<bool>("cpu_filter_threaded", checked);
+        vManager()->setCrtThreaded( checked );
+        emuThread->unlock();
+    };
 
     layBase.view.mode.reset.onActivate = [this]() {
         vManager()->resetSettings();
@@ -401,22 +410,25 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         emuThread->lock();
         program->fastForward( false );
         updatePresets(true, false);
+        view->updateShader(emulator);
         emuThread->unlock();
     };
 
-    layBase.view.mode.svideoCpu.onActivate = [this]() {
+    layBase.view.mode.cpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         emuThread->lock();
         program->fastForward( false );
 		updatePresets(true, false);
+        view->updateShader(emulator);
         emuThread->unlock();
     };
 
-    layBase.view.mode.svideoGpu.onActivate = [this]() {
+    layBase.view.mode.gpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
         emuThread->lock();
         program->fastForward( false );
 		updatePresets(true, false);
+        view->updateShader(emulator);
         emuThread->unlock();
     };
 
@@ -449,7 +461,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             if (externalFolder())
                 _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.favourite.control.add.setEnabled();
-            layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
+            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
         emuThread->unlock();
         showErrors(errors);
@@ -470,7 +482,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             if (externalFolder())
                 _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
             layShader.favourite.control.add.setEnabled();
-            layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
+            layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
         emuThread->unlock();
         showErrors(errors);
@@ -796,6 +808,14 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             return;
 
         GUIKIT::File::removeDirectory( cacheFolder + "cache" );
+    };
+
+    layShader.main.info.shaderCache.onToggle = [this](bool checked) {
+        emuThread->lock();
+        _settings->set<bool>("shader_cache", checked);
+        if (emulator == activeEmulator)
+            videoDriver->useShaderCache(checked);
+        emuThread->unlock();
     };
 
     layPass.settings.filter.nearest.onActivate = [this]() {
@@ -1172,6 +1192,10 @@ template<typename T> auto VideoLayout::setSliderAction( SliderLayout* layout, st
 			T value = callTransfer( position );
 
             vManager()->updateData(baseIdent, checked ? value : T(0));
+
+            if (baseIdent == "interlace") {
+                vManager()->updateData<bool>("interlace_fields", checked);
+            }
         };
 
     layout->slider.onChange = [this, layout, baseIdent, callTransfer](unsigned position) {
@@ -1253,17 +1277,17 @@ auto VideoLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> void {
 auto VideoLayout::updateVisibillity() -> void {
 	bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
     bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
-    bool crtCpuChecked = layBase.view.mode.svideoCpu.checked();
-    bool crtGpuChecked = layBase.view.mode.svideoGpu.checked();
+    bool crtCpuChecked = layBase.view.mode.cpu.checked();
+    bool crtGpuChecked = layBase.view.mode.gpu.checked();
 
     if (!videoDriver->shaderSupport()) {
         if(crtGpuChecked) {
             layBase.view.mode.rgb.setChecked();
             crtGpuChecked = false;
         }
-        layBase.view.mode.svideoGpu.setEnabled(false);
+        layBase.view.mode.gpu.setEnabled(false);
     } else
-        layBase.view.mode.svideoGpu.setEnabled();
+        layBase.view.mode.gpu.setEnabled();
 	
 	if (layBase.view.mode.spectrum.checked()) {
         layBase.view.phase.setEnabled();
@@ -1298,6 +1322,8 @@ auto VideoLayout::updateVisibillity() -> void {
     }
     
     layBase.view.option.tvGamma.setEnabled( (crtCpuChecked || crtGpuChecked) && layBase.view.mode.palette.checked() && _pal );
+
+    layBase.view.option.cpuFilterThreaded.setEnabled( crtCpuChecked );
 }
 
 auto VideoLayout::translate() -> void {
@@ -1311,13 +1337,14 @@ auto VideoLayout::translate() -> void {
     layBase.view.option.newLuma.setText( trans->get("new_luma") );
     layBase.view.option.tvGamma.setText( trans->get("TV gamma") );
     layBase.view.option.linearInterpolation.setText( trans->get("linear_interpolation") );
+    layBase.view.option.cpuFilterThreaded.setText( trans->get("own thread") );
     layBase.view.mode.palette.setText( trans->get("palette") );
     layBase.view.mode.spectrum.setText( trans->get("color_spectrum") );
     layBase.view.mode.reset.setText( trans->get("reset") );
     layBase.view.mode.rgb.setText( trans->get("RGB") );
-    layBase.view.mode.svideoCpu.setText( trans->get("S/C-Video CPU") );
-    layBase.view.mode.svideoCpu.setTooltip( trans->get("S/C-Video tooltip") );
-    layBase.view.mode.svideoGpu.setText( trans->get("Shader GPU") );
+    layBase.view.mode.cpu.setText( trans->get("S/C-Video CPU") );
+    layBase.view.mode.cpu.setTooltip( trans->get("S/C-Video tooltip") );
+    layBase.view.mode.gpu.setText( trans->get("Shader GPU") );
     layBase.view.scanlines.active.setText( trans->get("scanlines", {}, true) );
     layBase.view.interlace.active.setText( trans->get("interlace", {}, true) );
 
@@ -1346,6 +1373,7 @@ auto VideoLayout::translate() -> void {
 
     layShader.main.info.label.setText( trans->getA("loaded", true) );
     layShader.main.info.clearCache.setText( trans->getA("clear cache") );
+    layShader.main.info.shaderCache.setText( trans->get("shader cache") );
     layShader.main.info.toParams.setText( trans->getA("Parameter") );
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
@@ -1396,9 +1424,9 @@ auto VideoLayout::sliderIdent() -> std::string {
     if (dynamic_cast<LIBC64::Interface*>(emulator) && layBase.view.mode.spectrum.checked())
         ident += "_spectrum";
 
-	if (layBase.view.mode.svideoCpu.checked())
+	if (layBase.view.mode.cpu.checked())
 		ident += "_crtcpu";
-	else if (layBase.view.mode.svideoGpu.checked())
+	else if (layBase.view.mode.gpu.checked())
 		ident += "_crtgpu";
 
 	return ident;
@@ -1408,9 +1436,9 @@ auto VideoLayout::loadSettings(bool init) -> void {
     VideoManager::CrtMode crtMode = (VideoManager::CrtMode)_settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
     
     if (crtMode == VideoManager::CrtMode::Gpu)
-        layBase.view.mode.svideoGpu.setChecked();
+        layBase.view.mode.gpu.setChecked();
     else if (crtMode == VideoManager::CrtMode::Cpu)
-        layBase.view.mode.svideoCpu.setChecked();
+        layBase.view.mode.cpu.setChecked();
     else
         layBase.view.mode.rgb.setChecked();
     
@@ -1433,6 +1461,10 @@ auto VideoLayout::loadSettings(bool init) -> void {
     updatePresets(!init, true);
 
     layBase.view.option.linearInterpolation.setChecked( _settings->get<bool>("video_filter", true) );
+
+    layBase.view.option.cpuFilterThreaded.setChecked( _settings->get<bool>("cpu_filter_threaded", true) );
+
+    layShader.main.info.shaderCache.setChecked( _settings->get<bool>("shader_cache", true) );
 
     bool shaderInternal = _settings->get<bool>("shader_internal", true);
 
@@ -1487,13 +1519,20 @@ auto VideoLayout::loadShader(std::string path) -> bool {
         buildShaderUI(preset);
         layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
-        layBase.view.gamma.setEnabled( !layBase.view.mode.svideoGpu.checked() || !vManager()->shaderLumaChromaInput() );
+        layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         view->updateShader(emulator);
-        if (!layBase.view.mode.svideoGpu.checked() && videoDriver->shaderSupport())
-            layBase.view.mode.svideoGpu.activate();
+        enableGPUMode(true);
     }
     showErrors(errors);
     return preset != nullptr;
+}
+
+auto VideoLayout::enableGPUMode(bool state) -> void {
+    if (state) {
+        if (!layBase.view.mode.gpu.checked() && videoDriver->shaderSupport())
+            layBase.view.mode.gpu.activate();
+    } else if (!layBase.view.mode.rgb.checked())
+        layBase.view.mode.rgb.activate();
 }
 
 auto VideoLayout::unloadShader() -> void {

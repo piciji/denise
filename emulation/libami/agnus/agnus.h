@@ -367,7 +367,7 @@ struct Agnus {
     template<uint8_t nr> auto setAudPtL(uint16_t value) -> void;
 
     auto diskDma(uint8_t slot, bool writeMode) -> void;
-    auto fakeDiskDma(uint16_t word) -> void;
+    auto fakeDiskDma(uint16_t& word) -> void;
     auto fakeDiskDmaNoTracking(uint16_t word) -> void;
     auto fakeDiskDma() -> uint16_t;
 

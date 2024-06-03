@@ -21,7 +21,7 @@
 -(id) initWith:(GUIKIT::pTabFrame&)pTabFrameReference {
     if(self = [super initWithIdentifier:nil]) {
         p = &pTabFrameReference;
-        cocoaTabFrame = p->cocoaView;
+        cocoaTabFrame = (CocoaTabFrame*)p->cocoaView;
     }
     return self;
 }
@@ -51,7 +51,7 @@
             
                 [[NSGraphicsContext currentContext] saveGraphicsState];
                 NSRect targetRect = NSMakeRect(tabRect.origin.x, tabRect.origin.y + 1, iconSize, iconSize);
-                [image drawInRect:targetRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0 respectFlipped:YES hints:nil];
+                [image drawInRect:targetRect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
                 [[NSGraphicsContext currentContext] restoreGraphicsState];
             
                 tabRect.origin.x += iconSize + 2;
@@ -77,7 +77,7 @@ auto pTabFrame::minimumSize() -> Size {
         return calculatedMinimumSize.minimumSize; 
         
     std::string text = tabFrame.text(0);
-    Size size = pFont::size([cocoaView font], text);
+    Size size = pFont::size([(id)cocoaView font], text);
     
     calculatedMinimumSize.updated = true;   
     calculatedMinimumSize.minimumSize = {size.width + (borderSize() << 1) + 55, size.height + (borderSize() << 1) + 4 };
@@ -96,7 +96,7 @@ auto pTabFrame::append(std::string text, Image* image) -> void {
     @autoreleasepool {
         CocoaTabFrameItem* item = [[CocoaTabFrameItem alloc] initWith:*this];
         [item setLabel:[NSString stringWithUTF8String:text.c_str()]];
-        [cocoaView addTabViewItem:item];
+        [(id)cocoaView addTabViewItem:item];
         tabs.push_back(item);
         cocoaImages.push_back(nil);
     }
@@ -107,7 +107,7 @@ auto pTabFrame::append(std::string text, Image* image) -> void {
 auto pTabFrame::remove(unsigned selection) -> void {
     @autoreleasepool {
         CocoaTabFrameItem* item = tabs[selection];
-        [cocoaView removeTabViewItem:item];
+        [(id)cocoaView removeTabViewItem:item];
         tabs.erase(tabs.begin() + selection);
         [cocoaImages.at(selection) release];
         cocoaImages.erase(cocoaImages.begin() + selection);
@@ -134,7 +134,7 @@ auto pTabFrame::setSelection(unsigned selection) -> void {
     @autoreleasepool {
         CocoaTabFrameItem* item = tabs[selection];
         locked = true;
-        [cocoaView selectTabViewItem:item];
+        [(id)cocoaView selectTabViewItem:item];
         locked = false;
     }
 }

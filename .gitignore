@@ -1,8 +1,4 @@
 nbproject/
-obj/*
-!obj/.gitkeep
-out/*
-!out/.gitkeep
 denise.xcodeproj
 .idea/
 ._*
@@ -12,3 +8,6 @@ emulation/libami/altCpu/*
 msvc/.vs/
 msvc/x64/
 msvc/win32/
+builds/
+!builds/debug/.gitkeep
+!builds/release/.gitkeep

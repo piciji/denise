@@ -10,7 +10,7 @@
     return singleton;
 }
 
--(id) initWithContentRect:(NSRect)contentRect styleMask:(unsigned int)styleMask backing:(NSBackingStoreType)backing defer:(BOOL)defer {
+-(id) initWithContentRect:(NSRect)contentRect styleMask:(unsigned long)styleMask backing:(NSBackingStoreType)backing defer:(BOOL)defer {
 
     [super initWithContentRect:contentRect styleMask:styleMask backing:backing defer:defer];
 

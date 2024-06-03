@@ -9,7 +9,7 @@
 
 -(void) drawRect:(NSRect)rect {
     [[NSColor blackColor] setFill];
-    NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 }
 
 -(BOOL) acceptsFirstResponder {

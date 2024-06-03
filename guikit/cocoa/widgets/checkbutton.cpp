@@ -13,7 +13,7 @@
 }
 
 -(IBAction) activate:(id)sender {
-    checkButton->state.checked = [self state] != NSOffState;
+    checkButton->state.checked = [self state] != NSControlStateValueOff;
     if(checkButton->onToggle) checkButton->onToggle();
 }
 @end
@@ -34,14 +34,14 @@ auto pCheckButton::setGeometry(Geometry geometry) -> void {
 
 auto pCheckButton::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }
 
 auto pCheckButton::setChecked(bool checked) -> void {
     @autoreleasepool {
-        [cocoaView setState:checked ? NSOnState : NSOffState];
+        [(id)cocoaView setState:checked ? NSControlStateValueOn : NSControlStateValueOff];
     }
 }
     

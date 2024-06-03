@@ -226,6 +226,8 @@ struct Flash040 {
 
                 return (state != State::SectorEraseTimeout) ? (value | 8) : value;
             }
+            default:
+                break;
         }
         
         return data[addr];

@@ -80,6 +80,7 @@ struct Program : Emulator::Interface::Bind {
     auto soundFolder() -> std::string;
     auto shaderFolder() -> std::string;
 	auto appFolder() -> std::string;
+	auto diskSaveFolder(Emulator::Interface* emulator) -> std::string;
     auto getSystemLangFile() -> std::string;
     auto saveSettings(bool onExit = false) -> void;
     auto loadSettings() -> void;
@@ -101,6 +102,9 @@ struct Program : Emulator::Interface::Bind {
     auto powerOff() -> void;
     auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
     auto writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
+	auto readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer) -> unsigned override;
+	auto writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length) -> unsigned override;
+
     auto truncateMedia(Emulator::Interface::Media* media) -> bool override;
     auto updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void override;
     auto informPowerLED(bool state) -> void override;
@@ -115,6 +119,7 @@ struct Program : Emulator::Interface::Bind {
     auto finishStartup() -> void;
     auto trapsResult(Emulator::Interface::Media* media, bool error) -> void override;
     auto libraryMissing(std::string plugin) -> void override;
+	auto getAssignedSaveFile(Emulator::Interface::Media* media) -> std::string;
 
     auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
@@ -170,6 +175,7 @@ struct Program : Emulator::Interface::Bind {
     auto setRotation() -> void;
     auto checkShaderSupport(Emulator::Interface* emulator) -> void;
     auto loadProgress() -> void;
+	auto activateGPU(Emulator::Interface* emulator, bool state) -> void;
 	
     //input
     auto initInput() -> void;

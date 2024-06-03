@@ -120,9 +120,7 @@ auto View::build() -> void {
 		    audioDriver->clear();
     };
 
-    GUIKIT::Setting* aspectSetting = globalSettings->getOrInit("aspect_correct_resizing", false);
-
-    onResizeStart = [this, aspectSetting] {
+    onResizeStart = [this] {
         videoDriver->hintResizing(true);
 
         if (activeVideoManager /*&& !fullScreen() && !requestFullscreenSwitch*/) {
@@ -134,7 +132,9 @@ auto View::build() -> void {
             }
         }
         GUIKIT::Size screenRatio = {0,0};
-        if (aspectSetting && *aspectSetting) {
+        auto settings = program->getSettings( activeEmulator );
+
+        if (settings->get<bool>("aspect_correct_resizing", false)) {
             switch(videoDriver->getAspectRatio()) {
                 case 1: screenRatio = {4,3}; break;
                 case 2:
@@ -676,6 +676,11 @@ auto View::updateShader(Emulator::Interface* emulator) -> void {
 
         auto vManager = VideoManager::getInstance( sM.emulator );
         std::string loaded = vManager->getPresetPath();
+        if (vManager->crtMode != VideoManager::CrtMode::Gpu) {
+            sM.shaderFavourites[0].item->setChecked();
+            break;
+        }
+
         bool found = false;
 
         for(auto& fav : sM.shaderFavourites) {
@@ -699,6 +704,8 @@ auto View::buildShader() -> void {
         auto emulator = sM.emulator;
         auto settings = program->getSettings(emulator);
 		auto vManager = VideoManager::getInstance( emulator );
+        bool shaderActive = vManager->crtMode == VideoManager::CrtMode::Gpu;
+
         std::string loaded = vManager->getPresetPath();
         sM.shaderFavourites.clear();
         std::vector<GUIKIT::MenuRadioItem*> items;
@@ -748,10 +755,13 @@ auto View::buildShader() -> void {
             fav.item->onActivate = [emulator, vManager, shaderPath]() {
                 emuThread->lock();
                 auto emuView = EmuConfigView::TabWindow::getView(emulator);
+
                 if (emuView && emuView->videoLayout)
                     emuView->videoLayout->loadShader(shaderPath);
-                else
+                else {
+                    program->activateGPU(emulator, true);
                     vManager->loadPreset(shaderPath);
+                }
                 emuThread->unlock();
             };
             sM.shaderMenu->append(*fav.item);
@@ -761,7 +771,7 @@ auto View::buildShader() -> void {
         sM.shaderFavourites.insert(sM.shaderFavourites.begin(), {"none", noneItem});
 
         GUIKIT::MenuRadioItem::setGroup(items);
-        if (checkedItem)
+        if (checkedItem && shaderActive)
             checkedItem->setChecked();
 
         for(auto child : sM.shaderMenu->childs)
@@ -870,6 +880,12 @@ auto View::loadImages() -> void {
     hideImage.setResourceId( ID_HIDE );
     fullscreenImage.loadPng((uint8_t*)Icons::fullscreen, sizeof(Icons::fullscreen));
     fullscreenImage.setResourceId( ID_FULLSCREEN );
+    infoImage.loadPng((uint8_t*)Icons::info, sizeof(Icons::info));
+    infoImage.setResourceId( ID_INFO );
+    gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
+    gearsImage.setResourceId( ID_GEARS );
+    delImage.loadPng((uint8_t*) Icons::del, sizeof (Icons::del));
+    delImage.setResourceId( ID_DEL );
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -993,6 +1009,55 @@ auto View::buildMenu() -> void {
            // emuView->mediaLayout->setMediaView();
 	    };
         sM.system->append( *sM.media );
+
+        sM.states = new GUIKIT::Menu;
+        sM.states->setIcon( scriptImage );
+
+        sM.save = new GUIKIT::MenuItem;
+        sM.save->onActivate = [emulator]() {
+            if (emulator == activeEmulator) {
+                emuThread->lock();
+                States::getInstance( emulator )->save();
+                emuThread->unlock();
+            }
+        };
+        sM.states->append( *sM.save );
+
+        sM.slotUp = new GUIKIT::MenuItem;
+        sM.slotUp->onActivate = [emulator]() {
+            if (emulator == activeEmulator) {
+                emuThread->lock();
+                States::getInstance( activeEmulator )->changeSlot( false );
+                emuThread->unlock();
+            }
+        };
+        sM.states->append( *sM.slotUp );
+
+        sM.slotDown = new GUIKIT::MenuItem;
+        sM.slotDown->onActivate = [emulator]() {
+            if (emulator == activeEmulator) {
+                emuThread->lock();
+                States::getInstance( activeEmulator )->changeSlot( true );
+                emuThread->unlock();
+            }
+        };
+        sM.states->append( *sM.slotDown );
+
+        sM.load = new GUIKIT::MenuItem;
+        sM.load->onActivate = [emulator]() {
+            emuThread->lock();
+            States::getInstance( emulator )->load();
+            emuThread->unlock();
+        };
+        sM.states->append( *sM.load );
+
+        sM.system->append( *sM.states );
+
+        sM.system->append(*GUIKIT::MenuSeparator::getInstance());
+
+        sM.shaderMenu = new GUIKIT::Menu;
+        sM.shaderMenu->setIcon( colorImage );
+        sM.system->append( *sM.shaderMenu );
 		
 		sM.system->append(*GUIKIT::MenuSeparator::getInstance());
         
@@ -1061,12 +1126,6 @@ auto View::buildMenu() -> void {
             emuView->show(EmuConfigView::TabWindow::Layout::Misc);
         };
         sM.system->append( *sM.misc );
-		
-		sM.system->append(*GUIKIT::MenuSeparator::getInstance());						
-                	
-		sM.shaderMenu = new GUIKIT::Menu;
-        sM.shaderMenu->setIcon( colorImage );
-        sM.system->append( *sM.shaderMenu );		
         
         sysMenus.push_back( sM );
 
@@ -1105,24 +1164,12 @@ auto View::buildMenu() -> void {
     optionsMenu.setIcon(toolsImage);
     append(optionsMenu);
 
-    globalVideoItem.setIcon( displayImage );
-    globalVideoItem.onActivate = []() {
-        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Video);
+    driversItem.setIcon( gearsImage );
+    driversItem.onActivate = []() {
+        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Drivers);
     };
 
-    optionsMenu.append(globalVideoItem);
-
-    globalAudioItem.onActivate = []() {
-        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Audio);
-    };
-    globalAudioItem.setIcon( volumeImage );
-    optionsMenu.append(globalAudioItem);
-
-    globalInputItem.onActivate = []() {
-        ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Input);
-    };
-    globalInputItem.setIcon( keyboardImage );
-    optionsMenu.append(globalInputItem);
+    optionsMenu.append(driversItem);
 
     settingsItem.onActivate = []() {
         ConfigView::TabWindow::open(ConfigView::TabWindow::Layout::Settings);
@@ -1203,12 +1250,52 @@ auto View::buildMenu() -> void {
     };
     if ( globalSettings->get<bool>("audio_mute", false) ) muteItem.setChecked();
     optionsMenu.append(muteItem);
+
+    screenStatusEnabledItem.onActivate = [&]() {
+        emuThread->lock();
+        globalSettings->set("video_screen_text", 2);
+        statusHandler->setMessage("");
+        emuThread->unlock();
+    };
+    statusTextMenu.append(screenStatusEnabledItem);
+
+    screenStatusDisabledItem.onActivate = [&]() {
+        emuThread->lock();
+        globalSettings->set("video_screen_text", 0);
+        statusHandler->setMessage("");
+        emuThread->unlock();
+    };
+    statusTextMenu.append(screenStatusDisabledItem);
+
+    screenStatusAutoItem.onActivate = [&]() {
+        emuThread->lock();
+        globalSettings->set("video_screen_text", 1);
+        statusHandler->setMessage("");
+        emuThread->unlock();
+    };
+    statusTextMenu.append(screenStatusAutoItem);
+
+    GUIKIT::MenuRadioItem::setGroup( screenStatusEnabledItem, screenStatusDisabledItem, screenStatusAutoItem );
+    auto statusText = globalSettings->get<unsigned>("video_screen_text", 0);
+    if (statusText == 1) screenStatusAutoItem.setChecked();
+    else if (statusText == 2) screenStatusEnabledItem.setChecked();
+    else screenStatusDisabledItem.setChecked();
+
+    statusTextMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
     fpsItem.onToggle = [&]() {
         globalSettings->set<bool>("fps", fpsItem.checked() );
         statusHandler->updateFPS( fpsItem.checked() );
     };
     if ( globalSettings->get<bool>("fps", false) ) fpsItem.setChecked();
-    optionsMenu.append(fpsItem);
+    statusTextMenu.append(fpsItem);
+
+    volumeItem.onToggle = [&]() {
+        globalSettings->set<bool>("volume_control", volumeItem.checked() );
+        statusHandler->updateVolume( volumeItem.checked() );
+    };
+    if ( globalSettings->get<bool>("volume_control", true) ) volumeItem.setChecked();
+    statusTextMenu.append(volumeItem);
     
     audioBufferItem.onToggle = [&]() {
         globalSettings->set<bool>("show_audio_buffer", audioBufferItem.checked() );
@@ -1216,9 +1303,10 @@ auto View::buildMenu() -> void {
         statusHandler->updateDRC( audioBufferItem.checked() );
     };
     if ( globalSettings->get<bool>("show_audio_buffer", false) ) audioBufferItem.setChecked();
-    optionsMenu.append(audioBufferItem);
+    statusTextMenu.append(audioBufferItem);
 
-    optionsMenu.append(*GUIKIT::MenuSeparator::getInstance());
+    statusTextMenu.setIcon(infoImage);
+    optionsMenu.append(statusTextMenu);
 
     saveItem.onActivate = []() {
         program->saveSettings();
@@ -1398,6 +1486,22 @@ auto View::buildMenu() -> void {
 
         diskControlMenu.menu.append( *GUIKIT::MenuSeparator::getInstance() );
 
+        diskControlMenu.clearSave.setIcon( delImage );
+
+        diskControlMenu.clearSave.onActivate = [i]() {
+            auto path = program->getAssignedSaveFile( activeEmulator->getDisk(i) );
+            if (path.empty())
+                return;
+
+            GUIKIT::File file(path);
+            if (file.exists()) {
+                if (file.del())
+                    statusHandler->setMessage(trans->getA("save file deleted"), 3, true);
+            }
+        };
+
+        diskControlMenu.menu.append( diskControlMenu.clearSave );
+
         diskControlMenu.reset.setIcon( powerImage );
 
         diskControlMenu.reset.onActivate = [i]() {
@@ -1542,6 +1646,8 @@ auto View::updateDiskMenu() -> void {
     bool showResetAndHide = dynamic_cast<LIBC64::Interface*>(activeEmulator);
 
     for(auto& d : diskControlMenus) {
+        d.clearSave.setEnabled(!showResetAndHide);
+
         if (d.reset.enabled() != showResetAndHide) {
             d.reset.setEnabled(showResetAndHide);
             d.inactive.setEnabled(showResetAndHide);
@@ -1614,6 +1720,12 @@ auto View::translate() -> void {
             sysMenu.powerLED->setText(trans->get("toggle Power LED"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
+        sysMenu.states->setText(trans->get("states"));
+        sysMenu.save->setText(trans->get("Savestate"));
+        sysMenu.slotUp->setText(trans->get("Incslot"));
+        sysMenu.slotDown->setText(trans->get("Decslot"));
+        sysMenu.load->setText(trans->get("Loadstate"));
+
         sysMenu.systemManagement->setText(trans->get("system_management"));
 
         sysMenu.audio->setText(trans->get("Audio"));
@@ -1635,9 +1747,7 @@ auto View::translate() -> void {
     
     optionsMenu.setText( trans->get("options"));
 
-    globalVideoItem.setText( trans->get("video") );
-    globalAudioItem.setText( trans->get("audio") );
-    globalInputItem.setText( trans->get("input") + " / " + trans->get("hotkeys") );
+    driversItem.setText( trans->get("driver") );
     settingsItem.setText( trans->get("settings"));
 
     videoSyncItem.setText( trans->get("Video Sync"));
@@ -1645,9 +1755,15 @@ auto View::translate() -> void {
     dynamicRateControl.setText( trans->get("dynamic_rate_control"));
 
     fullscreenItem.setText( trans->get("fullscreen"));
-    
+
+    statusTextMenu.setText(trans->get("screen_status"));
+    screenStatusEnabledItem.setText(trans->get("enabled"));
+    screenStatusDisabledItem.setText(trans->get("disabled"));
+    screenStatusAutoItem.setText("intelligent");
+
     muteItem.setText( trans->get("mute_audio"));
     fpsItem.setText( trans->get("show_fps"));
+    volumeItem.setText( trans->get("show volume"));
     audioBufferItem.setText( trans->get("show_audio_buffer"));
     
     saveItem.setText( trans->get("save_preferences"));
@@ -1663,6 +1779,7 @@ auto View::translate() -> void {
         diskControlMenu.eject.setText( trans->get("eject") );
         diskControlMenu.reset.setText( trans->get("Reset Floppy") );
         diskControlMenu.inactive.setText( trans->get("inactive until reset") );
+        diskControlMenu.clearSave.setText( trans->get("clear save file") );
     }
 
     power.power.setText( trans->get("Hard Reset") );
@@ -1784,16 +1901,21 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
     
     auto file = (GUIKIT::File*)media->guid;
     
-    if (cmd->debug || cmd->noGui || !file || file->isArchived() || file->isReadOnly())
-        // archive, removing of write protection is not supported
+    if (cmd->debug || cmd->noGui || !file)
         return false;
-    
-    if (videoDriver && videoDriver->hasExclusiveFullscreen())
-        switchFullScreen( false );
+
+    if (activeEmulator && dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
+        if (file->isArchived() || file->isReadOnly())
+            // for C64 archive, removing of write protection is not supported
+            return false;
+    }
     
     bool state = !globalSettings->get<bool>("question_media_write", true);
     
     if (!state) {
+        if (videoDriver && videoDriver->hasExclusiveFullscreen())
+            switchFullScreen( false );
+
         bool _acquired = inputDriver->mIsAcquired();
 
         if (_acquired)

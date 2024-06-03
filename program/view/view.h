@@ -35,6 +35,11 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem* firmware;
         GUIKIT::MenuItem* loadSoftware;
         GUIKIT::MenuItem* media;
+        GUIKIT::Menu* states;
+    		GUIKIT::MenuItem* save;
+    		GUIKIT::MenuItem* slotUp;
+    		GUIKIT::MenuItem* slotDown;
+    		GUIKIT::MenuItem* load;
         GUIKIT::MenuItem* systemManagement;
         GUIKIT::MenuItem* audio;
         GUIKIT::MenuItem* configurations;
@@ -109,10 +114,8 @@ struct View : public GUIKIT::Window {
 
     GUIKIT::Menu controlMenu;
     GUIKIT::Menu optionsMenu;
-			
-		GUIKIT::MenuItem globalAudioItem;
-        GUIKIT::MenuItem globalVideoItem;
-        GUIKIT::MenuItem globalInputItem;
+        GUIKIT::MenuItem driversItem;
+		GUIKIT::MenuItem settingsItem;
 
         GUIKIT::MenuCheckItem videoSyncItem;
         GUIKIT::MenuCheckItem vrrItem;
@@ -121,10 +124,15 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem fullscreenItem;
     
         GUIKIT::MenuCheckItem muteItem;
-        GUIKIT::MenuCheckItem fpsItem;
-        GUIKIT::MenuCheckItem audioBufferItem;
+        GUIKIT::Menu statusTextMenu;
+            GUIKIT::MenuRadioItem screenStatusEnabledItem;
+            GUIKIT::MenuRadioItem screenStatusDisabledItem;
+            GUIKIT::MenuRadioItem screenStatusAutoItem;
 
-        GUIKIT::MenuItem settingsItem;		
+            GUIKIT::MenuCheckItem fpsItem;
+			GUIKIT::MenuCheckItem volumeItem;
+            GUIKIT::MenuCheckItem audioBufferItem;
+
         GUIKIT::MenuItem saveItem;	
 
 		GUIKIT::MenuItem exit; 
@@ -153,6 +161,7 @@ struct View : public GUIKIT::Window {
         GUIKIT::MenuItem eject;
         GUIKIT::MenuItem reset;
         GUIKIT::MenuItem inactive;
+    	GUIKIT::MenuItem clearSave;
     } diskControlMenus[4];
 
     struct {
@@ -186,6 +195,8 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image fanImage;
     GUIKIT::Image hideImage;
     GUIKIT::Image fullscreenImage;
+	GUIKIT::Image gearsImage;
+	GUIKIT::Image infoImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;
@@ -221,6 +232,8 @@ struct View : public GUIKIT::Window {
     GUIKIT::Image ledGreen2DimImage;
     GUIKIT::Image ledRed2Image;
     GUIKIT::Image ledYellowImage;
+
+	GUIKIT::Image delImage;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels() -> void;

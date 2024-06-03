@@ -5,9 +5,9 @@
 	<key>CFBundleDisplayName</key>
 	<string>Denise</string>
 	<key>CFBundleExecutable</key>
-	<string>Denise</string>
+	<string>denise</string>
 	<key>CFBundleIconFile</key>
-	<string>Denise.icns</string>
+	<string>denise.icns</string>
     <key>CFBundleIdentifier</key>
     <string>com.PiCiJi.Denise</string>
     <key>NSHighResolutionCapable</key>

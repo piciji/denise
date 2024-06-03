@@ -299,11 +299,11 @@ private:
 
     // low level logic operations
     static inline uint4 F(uint4 x, uint4 y, uint4 z) {
-        return x&y | ~x&z;
+        return (x&y) | (~x&z);
     }
 
     static inline uint4 G(uint4 x, uint4 y, uint4 z) {
-        return x&z | y&~z;
+        return (x&z) | (y&~z);
     }
 
     static inline uint4 H(uint4 x, uint4 y, uint4 z) {

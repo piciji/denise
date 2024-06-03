@@ -122,6 +122,12 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( observer.inputFetches );
 
     s.integer(ntsc);
+    s.integer(fakeECSDenise);
+    s.integer((uint8_t&)dongle.type);
+    if (dongle.type) {
+        s.integer(dongle.clock);
+        s.integer(dongle.control);
+    }
 }
 
 // for runahead

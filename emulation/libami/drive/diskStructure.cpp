@@ -38,11 +38,9 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
 
     switch(type) {
         case Type::ADF:
-            if (virtualCreated) {
-                data = rawData;
-                size = rawSize;
-            }
             prepareADF(data, size);
+            if (virtualCreated) // virtual created: DMS, EXE
+                delete[] data;
             break;
         case Type::EXT:
             prepareEXT(data, size);
@@ -57,27 +55,21 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
             return false;
     }
 
-    rawData = data;
-    rawSize = size;
-
+    applyAssignedSave();
     return true;
 }
 
 auto DiskStructure::detach() -> void {
-    rawSize = 0;
     if (type == Type::IPF)
         unloadIPF();
 
     type = Type::Unknown;
     writeProtected = false;
     hd = false;
-    if (virtualCreated && rawData)
-        delete[] rawData;
     virtualCreated = false;
-    rawData = nullptr;
 }
 
-auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
+auto DiskStructure::analyze(uint8_t*& data, unsigned& size) -> bool {
     if (!data || !size)
         return false;
 
@@ -103,43 +95,58 @@ auto DiskStructure::analyze(uint8_t* data, unsigned size) -> bool {
 }
 
 auto DiskStructure::storeWrittenTracks(Emulator::Interface::Media* media) -> void {
-    if (virtualCreated || (type == Type::IPF) )
-        return;
+    uint8_t* buffer;
+    unsigned sectors = hd ? 22 : 11;
 
     if (!agnus.interface->questionToWrite(media))
         return;
 
-    if (type == Type::EXT || type == Type::EXT2) {
-        if (EXT2ImageNeedsCompleteRebuild()) {
-            unsigned extSize = getEXT2CreationImageSize();
-            uint8_t* extData = createEXT2(extSize);
-            write( extData, extSize, 0 );
-            delete[] extData;
-            return;
-        }
-    } else if (type == Type::ADF)
+    if ((type == Type::ADF) && !virtualCreated) {
         markAppendedADFTracks();
+        buffer = new uint8_t[sectors * 512];
 
-    unsigned sectors = hd ? 22 : 11;
-    unsigned trackLength = 0;
-    uint8_t* buffer = new uint8_t[sectors * 512];
-
-    for(unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
-        Track& track = tracks[i];
-        if (track.written & 1) {
-            if (type == Type::ADF) {
+        for(unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
+            Track& track = tracks[i];
+            if (track.options & 1) {
                 std::memset(buffer, 0, sectors * 512);
                 decodeTrack(track, buffer);
-                write(buffer, sectors * 512, sectors * 512 * i);
-            } else if (type == Type::EXT) {
-                write(track.data, track.length, 8 + trackCount * 4 + trackLength);
-            } else if (type == Type::EXT2) {
-                write(track.data, track.length, 12 + trackCount * 12 + trackLength);
+                if (!write(buffer, sectors * 512, sectors * 512 * i)) {
+                    delete[] buffer;
+                    goto ExtraSaveImage; // ADF is compressed or was openend read only
+                }
+                track.options &= ~1;
             }
-            track.written = 0;
         }
-        trackLength += track.storage;
+        delete[] buffer;
+        return;
     }
+
+ExtraSaveImage:
+    updateTrackCount();
+    unsigned extSize = getEXT2CreationImageSize();
+    uint8_t* extData = createEXT2(extSize);
+    writeAssigned( extData, extSize );
+    delete[] extData;
+}
+
+auto DiskStructure::applyAssignedSave() -> void {
+    uint8_t* buffer = nullptr;
+    auto length = readAssigned(buffer);
+
+    if (!length || !buffer)
+        return;
+
+    auto _type = type;
+
+    if (analyzeEXT2(buffer, length)) {
+        updateWrittenTracks(buffer, length);
+        if (_type == Type::IPF)
+            type = Type::IPF;
+        else if (_type == Type::ADF)
+            type = Type::ADF;
+            // when use EXT2 dont forget to increase bits to be byte aligned
+    }
+
     delete[] buffer;
 }
 
@@ -215,9 +222,24 @@ auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits, u
     std::memset( track.data, initVal, newLength );
     track.length = newLength;
     track.bits = bits == 0 ? getTrackBitLength() : bits;
-    track.storage = 0;
-    track.written = 0;
+    track.options = 0;
     deleteTimingIPF(track);
+}
+
+auto DiskStructure::setStandardTiming(Track& track) -> bool {
+    if (type == DiskStructure::ADF || type == DiskStructure::Unknown)
+        return false;
+
+    unsigned standardBitLength = getTrackBitLength();
+    deleteTimingIPF(track);
+    track.options &= ~2; // disable possible multi rev behaviour
+
+    if (standardBitLength != track.bits) {
+        track.bits = standardBitLength;
+        track.length = getTrackByteLength();
+        return true;
+    }
+    return false;
 }
 
 auto DiskStructure::getTrackBitLength() -> unsigned {
@@ -236,7 +258,7 @@ auto DiskStructure::updateSerializationSize() -> void {
     for (unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
         Track& track = tracks[i];
         serializationSize += 1;
-        if (!(track.written & 1))
+        if (!(track.options & 1))
             continue;
 
         serializationSize += 4 + 4 + 4 + track.length;
@@ -249,7 +271,6 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
     s.integer( (int&)type );
     s.integer( hd );
     s.integer( trackCount );
-    s.integer( rawSize );
     s.integer( writeProtected );
     s.integer( virtualCreated );
     s.integer( serializationSize );
@@ -259,15 +280,14 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
 
     for (unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
         Track& track = tracks[i];
-        s.integer(track.written);
+        s.integer(track.options);
 
-        if (!(track.written & 1))
+        if (!(track.options & 1))
             continue;
 
         unsigned _trackLength = track.length;
         s.integer(track.length);
         s.integer(track.bits);
-        s.integer(track.storage);
 
         if (s.mode() == Emulator::Serializer::Mode::Load) {
             if (_trackLength != track.length) {

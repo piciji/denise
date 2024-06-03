@@ -313,7 +313,7 @@ struct Sid {
             
 			unsigned short gain[16][1 << 16];
 			unsigned short summer[ (6 + 5 + 4 + 3 + 2) << 16 ];
-			unsigned short mixer[ ( 7 + 6 + 5 + 4 + 3 + 2 + 1) << 16 + 1 ];			
+			unsigned short mixer[ ( 7 + 6 + 5 + 4 + 3 + 2 + 1) << (16 + 1) ];			
             
             unsigned short f0_dac[1 << 11];
             unsigned short opamp_rev[1 << 16];

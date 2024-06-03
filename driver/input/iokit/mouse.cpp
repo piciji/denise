@@ -3,8 +3,10 @@ struct CocoaMouse {
     
     Hid::Mouse* hidMouse = nullptr;
     bool mouseAcquired;
+    NSWindow* window = nullptr;
     
-    auto init() -> void {
+    auto init(uintptr_t handle) -> void {
+        window = (NSWindow*)handle;
         term();
         
         hidMouse = new Hid::Mouse;
@@ -47,6 +49,11 @@ struct CocoaMouse {
         if(mIsAcquired()) return;
         CGAssociateMouseAndMouseCursorPosition(false);
         CGDisplayHideCursor(0);
+        
+        NSRect frame = [window frame];
+        NSRect screen = [[NSScreen mainScreen] frame];
+        CGWarpMouseCursorPosition( {CGRectGetMidX(frame), (screen.size.height - frame.origin.y) - frame.size.height * 0.5 } );
+
         mouseAcquired = true;
     }
     

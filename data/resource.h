@@ -49,3 +49,6 @@
 #define ID_FAN			32037
 #define ID_HIDE			32038
 #define ID_FULLSCREEN   32039
+#define ID_INFO         32040
+#define ID_GEARS        32041
+#define ID_DEL          32042

@@ -20,6 +20,38 @@ auto DiskStructure::analyzeEXT2(uint8_t *data, unsigned size) -> bool {
     return true;
 }
 
+auto DiskStructure::updateWrittenTracks(uint8_t* data, unsigned size) -> void {
+    uint8_t* ptr = data + 12;
+    unsigned dataOffset = 12 + trackCount * 12;
+
+    bool written;
+    unsigned storage;
+    unsigned bits;
+
+    for (unsigned i = 0; i < LIBAMI_MAX_TRACKS; i++) {
+        Track& track = tracks[i];
+
+        if (i < trackCount) {
+            written = ptr[3] & 0x80;
+            storage = (ptr[5] << 16) | (ptr[6] << 8) | ptr[7]; // ignore the MSB for sanity reasons
+            bits = (ptr[9] << 16) | (ptr[10] << 8) | ptr[11]; // ignore the MSB for sanity reasons
+
+            if ( written && storage && bits && ((dataOffset + storage) <= size)) {
+                if (bits > (storage << 3))
+                    bits = storage << 3;
+
+                unsigned length = (bits + 7) / 8;
+                initTrack(track, std::max(length, getTrackByteLength()), bits, 0xaa);
+                std::memcpy(track.data, data + dataOffset, length);
+                track.length = length;
+            }
+
+            ptr += 12;
+            dataOffset += storage;
+        }
+    }
+}
+
 auto DiskStructure::prepareEXT2(uint8_t *data, unsigned size) -> void {
     hd = false;
     uint8_t* ptr = data + 12;
@@ -52,21 +84,18 @@ auto DiskStructure::prepareEXT2(uint8_t *data, unsigned size) -> void {
                     if (storage >= ((512 * 11) << hd))
                         encodeTrack(track, i, data + dataOffset);
 
-                    // if ADF track is written, we recreate the whole image for simplicity
-                    track.written = 0x80;
                 } else {
                     if (!hd && (bits > (13000 * 8)))
                         hd = true; // ((512 + 32) * 11) * 2 (Clock + Data bit) = 11968 + a few more gap bytes
 
-                    initTrack(track, (bits + 7) / 8, bits, 0xaa);
-                    std::memcpy(track.data, data + dataOffset, track.length);
-                    track.written = 0;
+                    unsigned length = (bits + 7) / 8;
+                    initTrack(track, std::max(length, getTrackByteLength()), bits, 0xaa);
+                    std::memcpy(track.data, data + dataOffset, length);
+                    track.length = length;
                 }
-                track.storage = storage;
 
             } else {
                 initTrack(track, getTrackByteLength());
-                track.written = 0x80;
             }
 
             ptr += 12;
@@ -74,7 +103,6 @@ auto DiskStructure::prepareEXT2(uint8_t *data, unsigned size) -> void {
 
         } else {
             initTrack(track, getTrackByteLength());
-            track.written = 0x80; // if empty track is written, we recreate the whole image
         }
     }
 }
@@ -92,6 +120,8 @@ auto DiskStructure::createEXT2(unsigned size) -> uint8_t* {
         Track& track = tracks[i];
 
         ptr[3] = 1; // MFM
+        if(track.options & 1)
+            ptr[3] |= 0x80; // was written
         Emulator::copyIntToBufferBigEndian<uint32_t>(&ptr[4], track.length);
         Emulator::copyIntToBufferBigEndian<uint32_t>(&ptr[8], track.bits);
         ptr += 12;
@@ -101,22 +131,21 @@ auto DiskStructure::createEXT2(unsigned size) -> uint8_t* {
         Track& track = tracks[i];
         std::memcpy(ptr, track.data, track.length);
         ptr += track.length;
-        track.written = 0;
+        track.options &= ~1;
     }
     return dest;
 }
 
-auto DiskStructure::EXT2ImageNeedsCompleteRebuild() -> bool {
+auto DiskStructure::updateTrackCount() -> void {
     for (int i = LIBAMI_MAX_TRACKS; i > 0; i--) {
         Track& track = tracks[i - 1];
 
-        if ((track.written & 0x81) == 0x81) {
+        if (track.options & 1) {
             if (i > trackCount)
                 trackCount = i;
-            return true;
+            return;
         }
     }
-    return false;
 }
 
 auto DiskStructure::getEXT2CreationImageSize() -> unsigned {

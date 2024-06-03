@@ -13,6 +13,8 @@
 #define NSAppKitVersionNumber10_15  1700
 #define NSAppKitVersionNumber11  2022
 #define NSAppKitVersionNumber12  2113
+#define NSAppKitVersionNumber13  2299
+#define NSAppKitVersionNumber14  2487
 
 auto isBigSur() -> bool {    
     return (NSAppKitVersionNumber >= NSAppKitVersionNumber11) && (NSAppKitVersionNumber < NSAppKitVersionNumber12);
@@ -36,7 +38,21 @@ auto hasMinimumVersion(unsigned major, unsigned minor) -> bool {
                 return _internalVersion >= NSAppKitVersionNumber12;
 
         }
-            
+    } else if (major == 13) {
+        switch(minor) {
+            default:
+            case 0: // Ventura 13.0
+                return _internalVersion >= NSAppKitVersionNumber13;
+                
+        }
+    } else if (major == 14) {
+        switch(minor) {
+            default:
+            case 0: // Ventura 14.0
+                return _internalVersion >= NSAppKitVersionNumber14;
+                
+        }
+        
     } else if (major == 10) {
         
         switch(minor) {

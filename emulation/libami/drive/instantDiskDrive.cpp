@@ -106,7 +106,7 @@ auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -
 
     headOffset = offset;
     written = true;
-    track->written |= 1;
+    track->options |= 1;
     return out | 2;
 }
 

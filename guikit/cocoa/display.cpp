@@ -109,12 +109,12 @@ auto pMonitor::fetchDisplays() -> void {
 
         std::string name( screenUUID );
         
-        NSDictionary* deviceInfo = (__bridge NSDictionary *)IODisplayCreateInfoDictionary(CGDisplayIOServicePort(screen), kIODisplayOnlyPreferredName);
+        NSDictionary* deviceInfo = (__bridge NSDictionary *)IODisplayCreateInfoDictionary(IOServicePortFromCGDisplayID(screen), kIODisplayOnlyPreferredName);
         
         NSDictionary* localizedNames = [deviceInfo objectForKey:[NSString stringWithUTF8String:kDisplayProductName]];
         
         if([localizedNames count] > 0) {
-            auto _title = [localizedNames objectForKey:[[localizedNames allKeys] objectAtIndex:0]];
+            NSString* _title = [localizedNames objectForKey:[[localizedNames allKeys] objectAtIndex:0]];
             
             name = [_title UTF8String];
         }
@@ -355,5 +355,58 @@ auto pMonitor::resetSetting() -> bool {
 
     return true;
 }
+    
+    auto pMonitor::IOServicePortFromCGDisplayID(CGDirectDisplayID displayID) -> io_service_t {
+        io_iterator_t iter;
+        io_service_t serv, servicePort = 0;
+        
+        CFMutableDictionaryRef matching = IOServiceMatching("IODisplayConnect");
+        
+        kern_return_t err = IOServiceGetMatchingServices( kIOMasterPortDefault, matching, &iter );
+        if ( err )
+            return 0;
+        
+        while ( (serv = IOIteratorNext(iter)) != 0 ) {
+            CFDictionaryRef displayInfo;
+            CFNumberRef vendorIDRef;
+            CFNumberRef productIDRef;
+            CFNumberRef serialNumberRef;
+            
+            displayInfo = IODisplayCreateInfoDictionary( serv, kIODisplayOnlyPreferredName );
+            
+            Boolean success;
+            success =  CFDictionaryGetValueIfPresent( displayInfo, CFSTR(kDisplayVendorID),  (const void**) & vendorIDRef );
+            success &= CFDictionaryGetValueIfPresent( displayInfo, CFSTR(kDisplayProductID), (const void**) & productIDRef );
+            
+            if ( !success ) {
+                CFRelease(displayInfo);
+                continue;
+            }
+            
+            SInt32 vendorID;
+            CFNumberGetValue( vendorIDRef, kCFNumberSInt32Type, &vendorID );
+            SInt32 productID;
+            CFNumberGetValue( productIDRef, kCFNumberSInt32Type, &productID );
+            
+            SInt32 serialNumber = 0;
+            if ( CFDictionaryGetValueIfPresent(displayInfo, CFSTR(kDisplaySerialNumber), (const void**) & serialNumberRef) ) {
+                CFNumberGetValue( serialNumberRef, kCFNumberSInt32Type, &serialNumber );
+            }
+            
+            if( CGDisplayVendorNumber(displayID) != vendorID ||
+               CGDisplayModelNumber(displayID)  != productID ||
+               CGDisplaySerialNumber(displayID) != serialNumber ) {
+                CFRelease(displayInfo);
+                continue;
+            }
+            
+            servicePort = serv;
+            CFRelease(displayInfo);
+            break;
+        }
+        
+        IOObjectRelease(iter);
+        return servicePort;
+    }
 
 }

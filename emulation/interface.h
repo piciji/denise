@@ -79,12 +79,14 @@ struct Interface {
     struct Device {
         unsigned id;
         std::string name;
-		enum Type : unsigned { None, Joypad, Mouse, Paddles, LightGun, LightPen, Keyboard } type;
+		enum Type : unsigned { None, Joypad, Mouse, Paddles, LightGun, LightPen, Keyboard, FourPlayerAdapter } type;
         unsigned userData; // free to use, easy way to transfer data for a specific device from external
                 
         auto isMouse() const -> bool { return type == Type::Mouse; }
         auto isPaddles() const -> bool { return type == Type::Paddles; }
         auto isJoypad() const -> bool { return type == Type::Joypad; }
+        auto isFourPlayerAdapter() const -> bool { return type == Type::FourPlayerAdapter; }
+        auto isJoypadOrMultiAdapter() const -> bool { return isJoypad() || isFourPlayerAdapter(); }
         auto isLightGun() const -> bool { return type == Type::LightGun; }
         auto isLightPen() const -> bool { return type == Type::LightPen; }
         auto isLightDevice() const -> bool { return isLightGun() || isLightPen(); }
@@ -307,6 +309,8 @@ struct Interface {
         virtual auto audioFlush() -> void {}
         virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
         virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
+        virtual auto readAssignedMedia(Media*, uint8_t*&) -> unsigned { return 0; }
+        virtual auto writeAssignedMedia(Media*, uint8_t*, unsigned) -> unsigned { return 0; }
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
         virtual auto truncateMedia(Media* ) -> bool { return false; }
         virtual auto updateDeviceState(Media*, bool, unsigned, bool, bool ) -> void {}
@@ -361,6 +365,14 @@ struct Interface {
 
     auto writeMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
         return bind->writeMedia(media, buffer, length, offset);
+    }
+
+    auto readAssignedMedia(Media* media, uint8_t*& buffer) -> unsigned {
+        return bind->readAssignedMedia(media, buffer);
+    }
+
+    auto writeAssignedMedia(Media* media, uint8_t* buffer, unsigned length) -> unsigned {
+        return bind->writeAssignedMedia(media, buffer, length);
     }
 	
 	auto getFileNameFromMedia(Media* media) -> std::string {

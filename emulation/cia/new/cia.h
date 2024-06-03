@@ -35,6 +35,7 @@ struct Cia {
 
     std::function<void (bool spLine, bool cntLine)> serialOut;
     std::function<void (bool state)> irqCall;
+    std::function<void (const char* info, bool newLine, bool hex)> logOut;
 
     auto read(unsigned pos) -> uint8_t;
     auto write(unsigned pos, uint8_t value) -> void;

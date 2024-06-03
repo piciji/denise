@@ -5,6 +5,7 @@
 #include "../../tools/sanitizer.h"
 #include  "../../tools/macros.h"
 #include "serialization.cpp"
+#include "dongle.cpp"
 
 namespace LIBAMI {
 
@@ -20,6 +21,14 @@ agnus(this, cpu, denise, paula, cia1, cia2, input, rtc),
 input(this, agnus, cia1),
 rtc(agnus) {
 
+    cia1.logOut = [this, interface](const char* info, bool newLine , bool hex ) {
+        interface->log("CIA1:" + (std::string)info, newLine);
+    };
+
+    cia2.logOut = [this, interface](const char* info, bool newLine , bool hex ) {
+        interface->log("CIA2:" + (std::string)info, newLine);
+    };
+
     cia1.serialOut = [this](bool spLine, bool cntLine) {
         // Keyboard computer is not interested in CNT line changes, triggered by CIA
         input.keyboard.handshake(spLine);
@@ -27,9 +36,9 @@ rtc(agnus) {
 
 
     cia1.readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
-
+        uint8_t out;
         if ( port == Cia<MOS_8520>::PORTA ) {
-            uint8_t out = input.readCiaPortA();
+            out = input.readCiaPortA();
 
             for(auto& drive : diskDrives) {
                 if (drive.connected)
@@ -40,7 +49,10 @@ rtc(agnus) {
             return out;
         }
 
-        return lines->iob; // parallel port
+        out = 0xff;
+        input.readParallelportCIA1B(out);
+        out = (lines->prb & lines->ddrb) | (out & ~lines->ddrb);
+        return out;
     };
 
     cia1.writePort = [this, interface]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
@@ -53,6 +65,8 @@ rtc(agnus) {
                 paula.setLedFilter((lines->ioa & 2) == 0 );
             }
 
+            if (dongle.connected())
+                dongleCiaWrite<false>(lines);
         } else {
             // parallel port
         }
@@ -62,9 +76,26 @@ rtc(agnus) {
         paula.scheduleIntreqCia1(state);
     };
 
+    cia2.readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+
+        if ( port == Cia<MOS_8520>::PORTA ) {
+            uint8_t out = lines->ioa;
+            if (dongle.connected())
+                dongleCiaRead<true>(lines, out);
+
+            input.readParallelportCIA2A(out);
+            return out;
+        }
+
+        return lines->iob;
+    };
+
     cia2.writePort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
+            if (dongle.connected())
+                dongleCiaWrite<true>(lines);
+
             cia2.setCNTAndSP( lines->ioa & 2, lines->ioa & 1 );
 
         } else if (lines->iob != lines->iobOld) {
@@ -101,7 +132,7 @@ rtc(agnus) {
         top = 7;
         bottom = 2;
 
-        if (agnus.laceFrame) {
+        if (agnus.laceFrame & 3) {
             top <<= 1;
             bottom <<= 1;
         }
@@ -117,6 +148,9 @@ rtc(agnus) {
     paula.activeDrive = &diskDrives[0];
     ntsc = false;
     firmwareChanged = true;
+    dongle.type = DongleNone;
+    dongle.control = 0;
+    dongle.clock = 0;
 }
 
 System::~System() {
@@ -158,6 +192,8 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
         interface->fpsChanged();
     }
 
+    dongle.control = 0;
+    dongle.clock = 0;
     powerOn = true;
 }
 
@@ -217,7 +253,7 @@ auto System::run() -> void {
         unserializeLight();
     }
 
-    DiskDrive::randomizeRpm(agnus.frequency());
+    DiskDrive::randomizeRpm(agnus.frequency(), paula.turbo);
     for(auto& drive : diskDrives)
         drive.updateRpm();
 
@@ -259,7 +295,7 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool all
 
 auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
     if (!runAhead.pos && frame) {
-        crop.apply( frame, width, height, linePitch, options );
+        crop.apply( frame, width, height, linePitch, options & 7 );
         // for lightguns
         // input.drawCursor();
     }
@@ -272,7 +308,8 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
         denise.setDisableSequencer( (fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer) ? 1 : 2 );
 
     } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
-        frame = nullptr;
+        if ((options & 0xc0) == 0)
+            frame = nullptr;
 
         if ((++fastForward.frameCounter & 15) == 0) {
             fastForward.frameCounter = 0;
@@ -282,7 +319,7 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
     }
 
     if (!runAhead.pos) {
-        this->interface->videoRefresh(frame, width, height, linePitch, options);
+        this->interface->videoRefresh(frame, width, height, linePitch, options & 7);
     }
 
     leaveEmulation = true;
@@ -300,7 +337,7 @@ auto System::videoMidScreenCallback(uint8_t options) -> void {
 
   //  input.drawCursor(true);
 
-    interface->midScreenCallback(options);
+    interface->midScreenCallback(options & 7);
 }
 
 auto System::setModel(uint8_t model) -> void {
@@ -527,5 +564,8 @@ auto System::setRTC(bool state) -> void {
 auto System::useRTC() -> bool {
     return agnus.useRTC;
 }
+
+template auto System::dongleJoydat<false>(uint16_t& val) -> void;
+template auto System::dongleJoydat<true>(uint16_t& val) -> void;
 
 }

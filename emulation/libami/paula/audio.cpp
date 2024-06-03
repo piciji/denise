@@ -141,11 +141,13 @@ template<uint8_t nr> auto Paula::audxLen(uint16_t value) -> void {
 }
 
 template<uint8_t nr> auto Paula::audxPer(uint16_t value) -> void {
+    if constexpr (nr == 4) return;
     Channel& cha = channels[nr];
     cha.perLatch = value;
 }
 
 template<uint8_t nr> auto Paula::audxVol(uint16_t value) -> void {
+    if constexpr (nr == 4) return; // make clang happy
     Channel& cha = channels[nr];
     value &= 127;
     if (value & 0x40) value = 0x40;

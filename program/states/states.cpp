@@ -570,15 +570,6 @@ auto States::updateWriteProtection(std::vector<Emulator::Interface::Media*> load
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     for (auto media : loadedMedia) {
-        
-        auto file = (GUIKIT::File*)media->guid;
-        
-        bool forceWp = file && (file->isArchived() || file->isReadOnly());
-        
-        if (forceWp)
-            // override write protection of state, i.e. file permissions were changed between saving and loading a state
-            emulator->writeProtect( media, true );
-
         bool state = emulator->isWriteProtected(media);
         auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name) );
         fSetting->setWriteProtect( state );

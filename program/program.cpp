@@ -252,8 +252,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
     activeVideoManager = VideoManager::getInstance( emulator );
     activeInputManager = InputManager::getManager(emulator);
 
-    if (activeVideoManager)
-        activeVideoManager->updateCrtThreads();
+    VideoManager::updateCrtThreads(true);
 
     if (activeInputManager)
         activeInputManager->setupKeycodeTransfer();
@@ -297,11 +296,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                 media.guid = uintptr_t(file);
 
                 emulator->insertMedium(&media, data, file->archiveDataSize(fSetting->id));
-                emulator->writeProtect(&media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
-
-                auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-                if (emuView && emuView->mediaLayout)
-                    emuView->mediaLayout->updateWriteProtection( &media, fSetting->writeProtect );
+                emulator->writeProtect(&media, fSetting->writeProtect);
 
                 if (!mediaGroup.isProgram()) {
                     filePool->assign(_ident(emulator, media.name + "store"), file);
@@ -341,6 +336,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             activeVideoManager->rebuildShader = true;
             statusHandler->updateDiskDriveSpace();
             setVideoDimension(activeEmulator);
+            videoDriver->useShaderCache( settings->get<bool>("shader_cache", true) );
         }
 
 		resetRunAhead();
@@ -357,6 +353,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		globalSettings->set("last_used_emu", activeEmulator->ident);
 
         statusHandler->resetFrameCounter();
+        statusHandler->setFpsRefresh();
         statusHandler->initPowerLED();
 
         view->updateSpeedLabels();
@@ -606,6 +603,23 @@ auto Program::imgFolder() -> std::string {
 
 auto Program::soundFolder() -> std::string {
     return GUIKIT::System::getResourceFolder(appFolder()) + SOUND_FOLDER;
+}
+
+auto Program::diskSaveFolder(Emulator::Interface* emulator) -> std::string {
+    auto settings = getSettings( emulator );
+    auto path = settings->get<std::string>( "disksave_folder", "");
+
+    if (path.empty()) {
+        std::string _emuIdent = emulator->ident;
+        path = program->appFolder() + "/disksave/" + GUIKIT::String::toLowerCase(_emuIdent);
+        std::string basePath = GUIKIT::System::getUserDataFolder( );
+
+        GUIKIT::File::createDir( path, basePath );
+
+        path = basePath + path;
+    }
+
+    return GUIKIT::File::beautifyPath(path);
 }
 
 auto Program::log(std::string data, bool newLine) -> void {

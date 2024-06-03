@@ -5,7 +5,7 @@
     if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
         label = &labelReference;
         
-        [self setAlignment:NSLeftTextAlignment];
+        [self setAlignment:NSTextAlignmentLeft];
         [self setBordered:NO];
         [self setDrawsBackground:NO];
         [self setEditable:NO];
@@ -17,9 +17,9 @@
         label->p.part->onClick();
             
     if (label->p.part && label->p.part->popupMenu) {
-        GUIKIT::pApplication::observeMenu([label->p.part->popupMenu->p.cocoaBase cocoaMenu]);
+        GUIKIT::pApplication::observeMenu([(id)label->p.part->popupMenu->p.cocoaBase cocoaMenu]);
         
-        [NSMenu popUpContextMenu: [label->p.part->popupMenu->p.cocoaBase cocoaMenu] withEvent:event forView:NULL];
+        [NSMenu popUpContextMenu: [(id)label->p.part->popupMenu->p.cocoaBase cocoaMenu] withEvent:event forView:self];
     }
 }
 
@@ -34,11 +34,11 @@
 @end
 
 namespace GUIKIT {
-    
+
 auto pLabel::minimumSize() -> Size {
     Size size = getMinimumSize();
     
-    if ([[cocoaView font] isFixedPitch])
+    if ([[(id)cocoaView font] isFixedPitch])
         return {size.width + 1, size.height};
 
     return {size.width + 1, size.height + 4};
@@ -46,9 +46,9 @@ auto pLabel::minimumSize() -> Size {
 
 auto pLabel::setAlign( Label::Align align ) -> void {
     if (align == Label::Align::Left)
-        [cocoaView setAlignment:NSLeftTextAlignment];
+        [(id)cocoaView setAlignment:NSTextAlignmentLeft];
     else
-        [cocoaView setAlignment:NSRightTextAlignment];
+        [(id)cocoaView setAlignment:NSTextAlignmentRight];
 }
     
 auto pLabel::setGeometry(Geometry geometry) -> void {
@@ -70,7 +70,7 @@ auto pLabel::setGeometry(Geometry geometry) -> void {
     
 auto pLabel::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }
@@ -84,7 +84,7 @@ auto pLabel::setEnabled(bool enabled) -> void {
         textColor = pHelper::getColor( color );
     }
     
-    [cocoaView setTextColor: enabled ? textColor : [NSColor grayColor]];
+    [(id)cocoaView setTextColor: enabled ? textColor : [NSColor grayColor]];
     pWidget::setEnabled(enabled);
 }
     

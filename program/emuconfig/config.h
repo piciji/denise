@@ -77,6 +77,7 @@ struct TabWindow : public GUIKIT::Window {
     auto appendTab(Layout layout, GUIKIT::Image& image) -> void;
     auto getTabPos(Layout layout) -> int;
 	static auto getView( Emulator::Interface* emulator, bool createIfNotExist = false ) -> TabWindow*;
+	static auto updateGlobalHotkeys(TabWindow* exclude = nullptr) -> void;
 
     TabWindow(Emulator::Interface* emulator);
 };

@@ -245,6 +245,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
 auto Paula::power() -> void {
     intena = 0;
     intreq = 0;
+    intreqLast = 0;
     intUpdClock = 0;
     adkcon = 0;
     int2Current = false;

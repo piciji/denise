@@ -16,7 +16,7 @@ import os.path
 
 # .. Useful stuff ..............................................................
 
-application = defines.get('app', 'out/Denise.app')
+application = defines.get('app', 'builds/release/denise.app')
 appname = os.path.basename(application)
 
 # .. Basics ....................................................................
@@ -28,7 +28,7 @@ appname = os.path.basename(application)
 # volume_name = 'Test'
 
 # Volume format (see hdiutil create -help)
-format = defines.get('format', 'UDBZ')
+format = defines.get('format', 'UDRO')
 
 # Compression level (if relevant)
 # compression_level = 9

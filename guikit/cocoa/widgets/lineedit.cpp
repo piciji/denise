@@ -81,13 +81,13 @@ auto pLineEdit::setDroppable(bool droppable) -> void {
 
 auto pLineEdit::text() -> std::string {
     @autoreleasepool{
-        return [[cocoaView stringValue] UTF8String];
+        return [[(id)cocoaView stringValue] UTF8String];
     }
 }
 
 auto pLineEdit::setText(const std::string& text) -> void {
     @autoreleasepool{
-        [cocoaView setStringValue : [NSString stringWithUTF8String : text.c_str()]];
+        [(id)cocoaView setStringValue : [NSString stringWithUTF8String : text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }

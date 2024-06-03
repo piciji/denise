@@ -16,7 +16,7 @@ auto pFrame::minimumSize() -> Size {
     if (calculatedMinimumSize.updated)
         return calculatedMinimumSize.minimumSize; 
     
-    Size size = pFont::size([cocoaView titleFont], widget.text());
+    Size size = pFont::size([(id)cocoaView titleFont], widget.text());
     size.width += 4 + (borderSize() << 1);
     if (widget.text().empty()) size.height = 0;
     
@@ -29,7 +29,7 @@ auto pFrame::minimumSize() -> Size {
 }
 
 auto pFrame::setGeometry(Geometry geometry) -> void {
-    Size size = pFont::size([cocoaView titleFont], widget.text());
+    Size size = pFont::size([(id)cocoaView titleFont], widget.text());
     bool empty = widget.text().empty();
   
     pWidget::setGeometry({
@@ -40,14 +40,14 @@ auto pFrame::setGeometry(Geometry geometry) -> void {
 
 auto pFrame::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }
 
 auto pFrame::setFont(std::string font) -> void {
     @autoreleasepool {
-        [cocoaView setTitleFont:pFont::cocoaFont(font)];
+        [(id)cocoaView setTitleFont:pFont::cocoaFont(font)];
     }
     calculatedMinimumSize.updated = false;
 }

@@ -21,7 +21,27 @@ Input::Input(System* system, Agnus& agnus, Cia<MOS_8520>& cia1)
     controlPort2 = new ControlPort(interface, *this);
 }
 
-auto Input::readCiaPortA( ) -> uint8_t {
+auto Input::readParallelportCIA1B(uint8_t& res) -> void {
+    if (controlPort2->device->isFourPlayerAdapter()) {
+        jitPoll();
+        controlPort2->readParallelFromCIA1B(res);
+    } else if (controlPort1->device->isFourPlayerAdapter()) {
+        jitPoll();
+        controlPort1->readParallelFromCIA1B(res);
+    }
+}
+
+auto Input::readParallelportCIA2A(uint8_t& res) -> void {
+    if (controlPort2->device->isFourPlayerAdapter()) {
+        jitPoll();
+        controlPort2->readParallelFromCIA2A(res);
+    } else if (controlPort1->device->isFourPlayerAdapter()) {
+        jitPoll();
+        controlPort1->readParallelFromCIA2A(res);
+    }
+}
+
+auto Input::readCiaPortA() -> uint8_t {
     jitPoll();
     uint8_t out = 0xff;
     if (controlPort1->readButton1()) out &= ~0x40;
@@ -32,7 +52,10 @@ auto Input::readCiaPortA( ) -> uint8_t {
 auto Input::readDenisePortA() -> uint16_t {
     system->observeInputFetches();
     jitPoll();
-    return controlPort1->readDirection();
+    uint16_t out = controlPort1->readDirection();
+    if (system->dongle.connected())
+        system->dongleJoydat<false>(out);
+    return out;
 }
 
 auto Input::writeDeniseJoytest(uint16_t data) -> void {
@@ -43,7 +66,10 @@ auto Input::writeDeniseJoytest(uint16_t data) -> void {
 auto Input::readDenisePortB() -> uint16_t {
     system->observeInputFetches();
     jitPoll();
-    return controlPort2->readDirection();
+    uint16_t out = controlPort2->readDirection();
+    if (system->dongle.connected())
+        system->dongleJoydat<true>(out);
+    return out;
 }
 
 auto Input::observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void {
@@ -72,7 +98,7 @@ auto Input::emergencyPoll() -> void {
 
 inline auto Input::jitPoll() -> void {
 
-    if (sampling.allow && (sampling.externalKeyEvent || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
+    if (sampling.allow && (sampling.externalKeyEvent || (sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 3))) {
         if (interface->jitPoll(sampling.externalKeyEvent ? 0 : (sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1))) {
             sampling.externalKeyEvent = false;
             sampling.midscreen++;

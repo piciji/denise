@@ -7,13 +7,13 @@
         
         [self setTarget:self];
         [self setAction:@selector(activate:)];
-        [self setButtonType:NSSwitchButton];
+        [self setButtonType:NSButtonTypeSwitch];
     }
     return self;
 }
 
 -(IBAction) activate:(id)sender {
-    checkBox->state.checked = [self state] != NSOffState;
+    checkBox->state.checked = [self state] != NSControlStateValueOff;
     if(checkBox->onToggle) checkBox->onToggle( checkBox->state.checked );
 }
 @end
@@ -34,13 +34,13 @@ auto pCheckBox::setGeometry(Geometry geometry) -> void {
 
 auto pCheckBox::setChecked(bool checked) -> void {
     @autoreleasepool {
-        [cocoaView setState:checked ? NSOnState : NSOffState];
+        [(id)cocoaView setState:checked ? NSControlStateValueOn : NSControlStateValueOff];
     }
 }
 
 auto pCheckBox::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }

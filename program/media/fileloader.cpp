@@ -766,9 +766,17 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     }
 }
 
+auto Fileloader::updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GUIKIT::File::Item* item, bool& wp ) -> void {
+    fSetting->setPath(file->getFile(), !cmd->autoload);
+    fSetting->setFile(item->info.name, !cmd->autoload);
+    fSetting->setId(item->id, !cmd->autoload);
+    fSetting->setWriteProtect(wp, !cmd->autoload);
+}
+
 auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
     bool fromState = options & 1;
     bool dontUpdateSelected = options & 2;
+    bool asWP = options & 4;
 
     auto mediaGroup = media->group;
 
@@ -782,16 +790,19 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
-
+        updateFileSetting(fSetting, file, item, asWP);
         media->guid = uintptr_t(file);
+
         emulator->insertMedium(media, data, size);
-        emulator->writeProtect(media, false);
+        emulator->writeProtect(media, asWP);
         if (!mediaGroup->isProgram())
             filePool->assign(_ident(emulator, media->name), file);
     } else {
 
         if (mediaGroup->expansion->pcbs.size())
             settings->set<unsigned>( _underscore(media->name) + "_pcb", 0);
+
+        updateFileSetting(fSetting, file, item, asWP);
     }
 
     emulator->getListing(media);
@@ -806,11 +817,6 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     if (!mediaGroup->isProgram())
         filePool->assign(_ident(emulator, media->name + "store"), file);
-
-    fSetting->setPath(file->getFile(), !cmd->autoload);
-    fSetting->setFile(item->info.name, !cmd->autoload);
-    fSetting->setId(item->id, !cmd->autoload);
-    fSetting->setWriteProtect(false, !cmd->autoload);
 
     filePool->unloadOrphaned();
 
@@ -1044,16 +1050,11 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
     if (emuView && emuView->mediaLayout)
-        emuView->mediaLayout->insertImage( media, file, &item );
+        emuView->mediaLayout->insertImage( media, file, &item, fSetting->writeProtect ? 4 : 0 );
     else
-        fileloader->insertImage( emulator, media, file, &item );
-
-    emulator->writeProtectDisk(media, (file->isArchived() || file->isReadOnly()) ? true : fSetting->writeProtect);
+        fileloader->insertImage( emulator, media, file, &item, fSetting->writeProtect ? 4 : 0 );
 
     autoloader->setOnlyForFirstDrive(emulator, media);
-
-    if (emuView && emuView->mediaLayout)
-        emuView->mediaLayout->updateWriteProtection( media, fSetting->writeProtect );
 
     statusHandler->setMessage( trans->get("insert drive", {{"%drive%", media->name},{"%file%", fSetting->file}}) );
 

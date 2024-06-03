@@ -58,7 +58,7 @@ struct DiskDrive {
     unsigned refCyclesPerRevolution;
 
     int accum;
-    int cellSpeed;
+    int cellSpeedDeprecated;
 
     int64_t stepClock; // minimum delay between steps
     int64_t stepSettleClock; // time to read reliable from next track
@@ -85,17 +85,18 @@ struct DiskDrive {
         return !motor && !motorSpeed;
     }
     auto getId() -> unsigned;
-    auto updateTrack() -> void;
+    auto updateTrack(bool init) -> void;
     auto progressStepper() -> void;
 
     template<bool update> auto readByte(int& dmaCycles) -> uint8_t;
     auto writeByte(uint8_t byte) -> void;
     template<bool update> auto readBit(int& dmaCycles) -> bool;
-    auto readBitIPF(int& dmaCycles) -> bool;
+    template<bool update> auto readBitIPF(int& dmaCycles) -> bool;
     auto writeBit(bool state) -> void;
     auto reset() -> void;
 
     auto getDummyTrack() -> DiskStructure::Track*;
+    auto setStandardTiming() -> void;
 
     auto instantWrite(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;
     auto instantRead(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;
@@ -106,7 +107,7 @@ struct DiskDrive {
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
 
     auto updateRpm() -> void;
-    static auto randomizeRpm(unsigned frequency) -> void;
+    static auto randomizeRpm(unsigned frequency, bool prevent) -> void;
     static auto setSpeed( unsigned rpmScaled ) -> void;
     static auto setWobble( unsigned wobbleScaled ) -> void;
     static auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;

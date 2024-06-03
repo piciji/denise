@@ -24,7 +24,7 @@ auto pRadioBox::minimumSize() -> Size {
     if (calculatedMinimumSize.updated)
         return calculatedMinimumSize.minimumSize; 
         
-    Size size = pFont::size([inner font], widget.text());
+    Size size = pFont::size([(id)inner font], widget.text());
     
     calculatedMinimumSize.updated = true;   
     calculatedMinimumSize.minimumSize = {size.width + 22, size.height + 0};
@@ -47,15 +47,15 @@ auto pRadioBox::setGeometry(Geometry geometry) -> void {
 auto pRadioBox::setChecked() -> void {
     @autoreleasepool {
         for(auto& item : radioBox.state.group) {
-            auto state = (item == &radioBox) ? NSOnState : NSOffState;
-            [item->p.inner setState:state];
+            auto state = (item == &radioBox) ? NSControlStateValueOn : NSControlStateValueOff;
+            [(id)item->p.inner setState:state];
         }
     }
 }
     
 auto pRadioBox::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [inner setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)inner setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }
@@ -94,7 +94,7 @@ auto pRadioBox::setFocused() -> void {
 auto pRadioBox::setFont(std::string font) -> void {
 	@autoreleasepool {
 		if([inner respondsToSelector:@selector(setFont:)]) {
-			[inner setFont:pFont::cocoaFont(font)];
+			[(id)inner setFont:pFont::cocoaFont(font)];
 		}
 	}
     calculatedMinimumSize.updated = false;
@@ -103,7 +103,7 @@ auto pRadioBox::setFont(std::string font) -> void {
 auto pRadioBox::setEnabled(bool enabled) -> void {
 	@autoreleasepool {
 		if([inner respondsToSelector:@selector(setEnabled:)]) {
-			[inner setEnabled:enabled];
+			[(id)inner setEnabled:enabled];
 		}
 	}
 }

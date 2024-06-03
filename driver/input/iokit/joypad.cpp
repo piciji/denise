@@ -182,7 +182,7 @@ struct IokitJoypad {
         }
         
         if(refCF) {
-            displayname = [refCF UTF8String];
+            displayname = [(id)refCF UTF8String];
         }
         
         if(displayname.empty()) displayname = "Joypad";			
@@ -193,7 +193,7 @@ struct IokitJoypad {
 
         refCF = IOHIDDeviceGetProperty(hidDevice, CFSTR(kIOHIDSerialNumberKey));
         if (refCF) {
-            serial = [refCF UTF8String];
+            serial = [(id)refCF UTF8String];
         }
 
         CRC32 crc32((uint8_t*)serial.c_str(), serial.size());

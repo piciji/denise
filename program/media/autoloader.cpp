@@ -139,9 +139,13 @@ auto Autoloader::postProcessing() -> void {
             if (slotMode() || (ddControl.mode == Mode::Open))
                 activateDrive( ddControl.emulator, mediaGroup, countImagesFor(mediaGroup) + (slotMode() ? ddControl.selection : 0), activeEmulator == ddControl.emulator );
 
-            if (view && activeEmulator && (ddControl.mode == Mode::Open || ddControl.mode == Mode::OpenWithSlot) )
-                view->setFocused(300);
-            else if ( emuView && emuView->visible())
+            if (view && activeEmulator && (ddControl.mode == Mode::Open || ddControl.mode == Mode::OpenWithSlot || ddControl.mode == Mode::DragnDrop) ) {
+                if (shouldCaptureMouse(ddControl.emulator, settings)) {
+                    view->cursorHideTimer.setInterval(200);
+                    view->cursorHideTimer.setEnabled();
+                }
+                view->setForeground();
+            } else if ( emuView && emuView->visible())
                 emuView->setFocused();
 
             autoloader->setOnlyForFirstDrive(ddControl.emulator, &mediaGroup->media[0]);
@@ -268,13 +272,23 @@ auto Autoloader::postProcessing() -> void {
 			if (mediaGroup->isTape())
 				view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
 
-			view->setFocused(300);
+            if (shouldCaptureMouse(ddControl.emulator, settings)) {
+		        view->cursorHideTimer.setInterval(200);
+		        view->cursorHideTimer.setEnabled();
+		    }
+			view->setForeground();
 
 			if (!cmd->debug && (mediaGroup->isTape() || mediaGroup->isDisk()) ) {
                 program->initAutoWarp(mediaGroup);
 			}
 		}
     }
+}
+
+auto Autoloader::shouldCaptureMouse(Emulator::Interface* emulator, GUIKIT::Settings* settings) -> bool {
+    return dynamic_cast<LIBAMI::Interface*>(emulator)
+        && program->isAnalogDeviceConnected()
+        && settings->get<bool>("dragndrop_capture_mouse",false);
 }
 
 auto Autoloader::loadFiles() -> void {

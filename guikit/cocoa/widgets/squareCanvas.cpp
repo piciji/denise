@@ -101,7 +101,7 @@ auto pSquareCanvas::redraw() -> void {
 
     @autoreleasepool {
         if (surface) {
-            [cocoaView setImage:nil];
+            [(id)cocoaView setImage:nil];
             [surface release];
             [bitmap release];
         }
@@ -122,7 +122,7 @@ auto pSquareCanvas::redraw() -> void {
         
         [surface addRepresentation : bitmap];
         
-        [cocoaView setImage : surface];
+        [(id)cocoaView setImage : surface];
 
         auto target = (uint32_t*)[bitmap bitmapData];
     

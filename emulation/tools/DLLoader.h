@@ -11,13 +11,12 @@ struct DLLoader {
     DLLoader() {
         this->pathToLib = "";
         handle = nullptr;
-        lastError = OK;
+        markInitialized = false;
     }
 
-    enum Error {OK, ERROR_PATH, ERROR_OPEN, ERROR_LOAD, ERROR_CALL} lastError = OK;
-
     std::string pathToLib;
-    void* handle;
+    void* handle = nullptr;
+    bool markInitialized = false; // free to use
 
     struct Call {
         unsigned id;
@@ -30,18 +29,11 @@ struct DLLoader {
 
     auto hasOpened() -> bool { return handle != nullptr; }
 
-    auto hasError() -> bool { return lastError != OK; }
-
-    auto markCallError() -> void { lastError = ERROR_CALL; }
-
     auto close() -> void;
 
     auto load(unsigned id, std::string ident) -> bool;
-
-    auto execute(unsigned id) -> int;
-
-    template<typename... Args>
-    auto execute(unsigned id, Args... args) -> int;
+    
+    auto getPtr(unsigned id) -> void*;
 
     auto getCall(unsigned id) -> Call*;
 

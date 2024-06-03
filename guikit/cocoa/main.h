@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include "../tools/crc32.h"
 
+
 namespace GUIKIT {
 
 struct pApplication {
@@ -533,6 +534,7 @@ struct pBrowserWindow {
     BrowserWindow& browserWindow;
     std::string selectedPath = "";
     bool multi = false;
+    bool save = false;
     
     NSView* accessoryView = nil;
     ListView* listView = nullptr;
@@ -550,7 +552,7 @@ struct pBrowserWindow {
     auto visible() -> bool;
     auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
 
-    auto buildView() -> void;
+    auto buildView(bool save) -> void;
     pBrowserWindow(BrowserWindow& browserWindow);
     ~pBrowserWindow();
 };
@@ -562,6 +564,7 @@ struct pMessageWindow {
     static auto warning(MessageWindow::State& state) -> MessageWindow::Response;
 
     static auto message(MessageWindow::State& state, NSAlertStyle style) -> MessageWindow::Response;
+    static auto callAlert(MessageWindow::State& state, NSAlertStyle style) -> NSInteger;
 };
 
 struct pFont {
@@ -623,6 +626,8 @@ struct pMonitor {
     static auto getCurrentRefreshRate() -> float;
     static auto getCurrentResolution() -> Size { return {0,0}; }
     static auto getRefreshRate( unsigned displayId, unsigned settingId ) -> float { return 0.0; }
+    
+    static auto IOServicePortFromCGDisplayID(CGDirectDisplayID displayID) -> io_service_t;
 };
 
 struct pThreadPriority {
@@ -637,7 +642,7 @@ struct pHelper {
     static auto getColor(unsigned color) -> NSColor*;
 };
 
-auto NSMakeImage(Image& image, unsigned width = 0, unsigned height = 0) -> NSImage*;
+auto NSMakeImage(Image& image, unsigned width = 0, unsigned height = 0, unsigned addLines = 0) -> NSImage*;
 static auto DropPathsOperation(id<NSDraggingInfo> sender) -> NSDragOperation;
 auto getDropPaths(id<NSDraggingInfo> sender) -> std::vector<std::string>;
 }

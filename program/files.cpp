@@ -104,12 +104,53 @@ auto Program::readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsi
     return file->read(buffer, length, offset);
 }
 
+auto Program::readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer) -> unsigned {
+    if (!activeEmulator)
+        return 0;
+
+    auto path = getAssignedSaveFile(media);
+    if (path.empty())
+        return 0;
+
+    GUIKIT::File f( path, true );
+    if (f.open()) {
+        buffer = f.read();
+        return f.getSize();
+    }
+    return 0;
+}
+
 auto Program::writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
 	if (!activeEmulator || !media->guid)
 		return 0;
     
     auto file = (GUIKIT::File*)media->guid;
+    if (file->isArchived() || file->isReadOnly())
+        return 0;
+
     return file->write(buffer, length, offset);
+}
+
+auto Program::writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length) -> unsigned {
+    if (!activeEmulator)
+        return 0;
+
+    auto path = getAssignedSaveFile(media);
+    if (path.empty())
+        return 0;
+
+    GUIKIT::File f( path );
+    if (f.open(GUIKIT::File::Mode::Write, true))
+        return f.write(buffer, length, 0);
+    return 0;
+}
+
+auto Program::getAssignedSaveFile(Emulator::Interface::Media* media) -> std::string {
+    auto fSetting = FileSetting::getInstance( activeEmulator, _underscore(media->name ) );
+    if (!fSetting || fSetting->file.empty())
+        return "";
+    auto path = diskSaveFolder(activeEmulator);
+    return path + "/" + fSetting->file + ".sav";
 }
 
 auto Program::truncateMedia(Emulator::Interface::Media* media) -> bool {

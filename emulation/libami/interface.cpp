@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "219";
+const std::string Interface::Version = "220";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -38,7 +38,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdAudioFilter, "PAULA Filter", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 6}, {"Auto", "Off (A500)", "Software (A500)", "On (A500)", "Off (A1200)", "Software (A1200)", "On (A1200)"}});
     models.push_back({ModelIdRegion, "Region", Model::Type::Radio, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
-    models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
+    models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {29500, 30500}, {}, 100, 100.0 });
     models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
     models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 180}, {}, 180, 10.0 });
     models.push_back({ModelIdDiskDriveStepperAccessTime, "Stepper Access Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 30}, {}, 30, 10.0 });
@@ -51,6 +51,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdRTC, "RTC", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdSerialLoopback, "Serial Loopback", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdFakeECSDenise, "Fake ECS Denise", Model::Type::Switch, Model::Purpose::Misc, 0});
+    models.push_back({ModelIdDongle, "Plugin Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,5}, {"None", "RoboCop 3", "B.A.T. II", "Cricket Captain", "Leader Board", "Rugby Coach"}});
 }
 
 auto Interface::prepareMedia() -> void {
@@ -280,6 +281,67 @@ auto Interface::prepareDevices() -> void {
         devices.push_back(device);
     }
 
+    {   Device device{ id++, "4 Player Adapter", Device::Type::FourPlayerAdapter };
+        device.inputs.push_back( {0, "Up", Key::Direction} );
+        device.inputs.push_back( {1, "Down", Key::Direction} );
+        device.inputs.push_back( {2, "Left", Key::Direction} );
+        device.inputs.push_back( {3, "Right", Key::Direction} );
+        device.inputs.push_back( {4, "Button 1", Key::Button} );
+        device.inputs.push_back( {5, "Button 2", Key::Button} );
+
+        device.inputs.push_back( {6, "Port3: Up", Key::Direction} );
+        device.inputs.push_back( {7, "Port3: Down", Key::Direction} );
+        device.inputs.push_back( {8, "Port3: Left", Key::Direction} );
+        device.inputs.push_back( {9, "Port3: Right", Key::Direction} );
+        device.inputs.push_back( {10, "Port3: Button 1", Key::Button} );
+        device.inputs.push_back( {11, "Port3: Button 2", Key::Button} );
+
+        device.inputs.push_back( {12, "Port4: Up", Key::Direction} );
+        device.inputs.push_back( {13, "Port4: Down", Key::Direction} );
+        device.inputs.push_back( {14, "Port4: Left", Key::Direction} );
+        device.inputs.push_back( {15, "Port4: Right", Key::Direction} );
+        device.inputs.push_back( {16, "Port4: Button 1", Key::Button} );
+        device.inputs.push_back( {17, "Port4: Button 2", Key::Button} );
+
+        device.addVirtual( "Button 1 Turbo", { 4 }, Key::Autofire );
+        device.addVirtual( "Button 1 Autofire", { 4 }, Key::ToggleAutofire );
+        device.addVirtual( "Button 2 Turbo", { 5 }, Key::Autofire );
+        device.addVirtual( "Button 2 Autofire", { 5 }, Key::ToggleAutofire );
+        device.addVirtual( "Left Turbo", { 2 }, Key::AutofireDirection );
+        device.addVirtual( "Right Turbo", { 3 }, Key::AutofireDirection );
+
+        device.addVirtual( "Port3: Button 1 Turbo", { 10 }, Key::Autofire );
+        device.addVirtual( "Port3: Button 1 Autofire", { 10 }, Key::ToggleAutofire );
+        device.addVirtual( "Port3: Button 2 Turbo", { 11 }, Key::Autofire );
+        device.addVirtual( "Port3: Button 2 Autofire", { 11 }, Key::ToggleAutofire );
+        device.addVirtual( "Port3: Left Turbo", { 8 }, Key::AutofireDirection );
+        device.addVirtual( "Port3: Right Turbo", { 9 }, Key::AutofireDirection );
+
+        device.addVirtual( "Port4: Button 1 Turbo", { 16 }, Key::Autofire );
+        device.addVirtual( "Port4: Button 1 Autofire", { 16 }, Key::ToggleAutofire );
+        device.addVirtual( "Port4: Button 2 Turbo", { 17 }, Key::Autofire );
+        device.addVirtual( "Port4: Button 2 Autofire", { 17 }, Key::ToggleAutofire );
+        device.addVirtual( "Port4: Left Turbo", { 14 }, Key::AutofireDirection );
+        device.addVirtual( "Port4: Right Turbo", { 15 }, Key::AutofireDirection );
+
+        device.addVirtual( "Diagonal Up-Right", { 0, 3 }, Key::JoyUpRight );
+        device.addVirtual( "Diagonal Down-Right", { 1, 3 }, Key::JoyDownRight );
+        device.addVirtual( "Diagonal Up-Left", { 0, 2 }, Key::JoyUpLeft );
+        device.addVirtual( "Diagonal Down-Left", { 1, 2 }, Key::JoyDownLeft );
+
+        device.addVirtual( "Port3: Diagonal Up-Right", { 6, 9 }, Key::JoyUpRight );
+        device.addVirtual( "Port3: Diagonal Down-Right", { 7, 9 }, Key::JoyDownRight );
+        device.addVirtual( "Port3: Diagonal Up-Left", { 6, 8 }, Key::JoyUpLeft );
+        device.addVirtual( "Port3: Diagonal Down-Left", { 7, 8 }, Key::JoyDownLeft );
+
+        device.addVirtual( "Port4: Diagonal Up-Right", { 12, 15 }, Key::JoyUpRight );
+        device.addVirtual( "Port4: Diagonal Down-Right", { 13, 15 }, Key::JoyDownRight );
+        device.addVirtual( "Port4: Diagonal Up-Left", { 12, 14 }, Key::JoyUpLeft );
+        device.addVirtual( "Port4: Diagonal Down-Left", { 13, 14 }, Key::JoyDownLeft );
+
+        devices.push_back(device);
+    }
+
     for (auto& device : devices) {
         device.userData = 0;
 
@@ -433,6 +495,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdFakeECSDenise:
             system->fakeECSDenise = !!value;
             break;
+        case ModelIdDongle:
+            system->dongle.type = static_cast <System::Dongle>(value);
+            break;
     }
 }
 
@@ -454,6 +519,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdRTC:                            return (int)system->useRTC();
         case ModelIdSerialLoopback:                 return (int)system->paula.loopBack;
         case ModelIdFakeECSDenise:                  return (int)system->fakeECSDenise;
+        case ModelIdDongle:                         return (int)system->dongle.type;
     }
 
     return 0;

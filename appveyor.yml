@@ -10,7 +10,7 @@ image:
   - Visual Studio 2019
   - macos-bigsur
   - macos
-  - Ubuntu2004
+#  - Ubuntu2004
 
 stack: python 3.8
   
@@ -19,7 +19,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
-  
+
 environment:
   matrix:
     - Job: macOS ARM 64-bit
@@ -76,12 +76,8 @@ for:
     - if "%Target%"=="win32" ( set mingw_archive=i686-12.2.0-release-posix-dwarf-msvcrt-rt_v10-rev2.7z)
     - if "%Target%"=="win64" ( set mingw_dir=mingw64)
     - if "%Target%"=="win32" ( set mingw_dir=mingw32)
-    - if "%Target%"=="win64" ( set mingw_libs=%mingw_dir%\x86_64-w64-mingw32)
-    - if "%Target%"=="win32" ( set mingw_libs=%mingw_dir%\i686-w64-mingw32)
     - if "%Target%"=="win64" ( set mingw_url=https://github.com/niXman/mingw-builds-binaries/releases/download/12.2.0-rt_v10-rev2/%mingw_archive%)
     - if "%Target%"=="win32" ( set mingw_url=https://github.com/niXman/mingw-builds-binaries/releases/download/12.2.0-rt_v10-rev2/%mingw_archive%)
-    - if "%Target%"=="win64" ( set arch=x64)
-    - if "%Target%"=="win32" ( set arch=x86)
 
   cache:
     - '%mingw_archive%'
@@ -92,13 +88,10 @@ for:
   
   before_build:  
     - set Path=%CD%\%mingw_dir%\bin;%Path%
-    - cmd: xcopy /I /Y /S "data\libs\include" "%mingw_libs%\include"
-    - cmd: xcopy /I /Y "data\libs\static\%arch%\libfreetype.a" "%mingw_libs%\lib"
-    - cmd: del out\.gitkeep
     - cmd: g++ -v
   
   build_script:
-    - cmd: mingw32-make SubSystem=win32 && mingw32-make SubSystem=win32 install
+    - cmd: cmake -G "MinGW Makefiles" -B builds/release && cmake --build builds/release && cmake --install builds/release
    
   after_build:
     - ps: |
@@ -110,7 +103,7 @@ for:
           $zipTarget = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME, ".zip");
           $zipSrc = -join("denise_", $env:Target, "_", $env:APPVEYOR_REPO_TAG_NAME);                  
         }
-        ren out $zipSrc; Compress-Archive -Path $zipSrc -DestinationPath $zipTarget 
+        move builds/release/out $zipSrc; Compress-Archive -Path $zipSrc -DestinationPath $zipTarget 
 
   deploy_script:
     - ps: |
@@ -218,33 +211,36 @@ for:
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
-    - sh: make && make install
+    - sh: sudo rm -rf /Library/Frameworks/Mono.framework
+    - sh: cmake -B builds/release && cmake --build builds/release --verbose && cmake --install builds/release
+    - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/denise.dmg
     
   after_build:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_osx_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
-          export gzSrc=out/Denise.dmg
+          export gzSrc=builds/denise.dmg
           
         else        
           export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg
-          export gzSrc=out/Denise.dmg
+          export gzSrc=builds/denise.dmg
         fi
         
-        sudo mv "${gzSrc}" "${gzTarget}"
+        mv "${gzSrc}" "${gzTarget}"
+        bzip2 -z "${gzTarget}"
 
   deploy_script:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "true" ]
         then
-          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg
+          export gzTarget=denise_osx_${APPVEYOR_REPO_TAG_NAME}.dmg.bz2
           echo ${FTP_PSW} > ftp.txt 2>&1
           sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/deniseemu/v\\ 2.2.1/"
         fi
 
   artifacts:
-    - path: 'denise*.dmg'
+    - path: 'denise*.dmg.bz2'
 
 -
   matrix:
@@ -269,36 +265,39 @@ for:
     - sh: cd freetype-2.13.0
     - sh: ./configure --host=arm64-apple-macos11 --enable-static --without-zlib --without-bzip2 --without-png && make && make install
     - sh: cd ..
+    - sh: sudo rm -rf /Library/Frameworks/Mono.framework
     - sh: install -m 755 data/libs/static/macArm/libfreetype.a /usr/local/lib/
     - sh: install -m 755 data/libs/shared/macArm/libfreetype.6.dylib /usr/local/lib/
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
-    - sh: make Arch=arm64-apple-macos11 && make install
+    - sh: cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 && cmake --build builds/release --verbose && cmake --install builds/release
+    - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
 
   after_build:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "false" ]
         then
           export gzTarget=denise_osx_arm64_build_$(echo ${APPVEYOR_REPO_COMMIT} | cut -c 1-7).dmg
-          export gzSrc=out/Denise.dmg
+          export gzSrc=builds/release/denise.dmg
         
         else        
           export gzTarget=denise_osx_arm64_${APPVEYOR_REPO_TAG_NAME}.dmg
-          export gzSrc=out/Denise.dmg
+          export gzSrc=builds/release/denise.dmg
         fi
         
-        sudo mv "${gzSrc}" "${gzTarget}"
+        mv "${gzSrc}" "${gzTarget}"
+        bzip2 -z "${gzTarget}"
 
   deploy_script:
     - sh: |
         if [ "${APPVEYOR_REPO_TAG}" == "true" ]
         then
-          export gzTarget=denise_osx_arm64_${APPVEYOR_REPO_TAG_NAME}.dmg
+          export gzTarget=denise_osx_arm64_${APPVEYOR_REPO_TAG_NAME}.dmg.bz2
           echo ${FTP_PSW} > ftp.txt 2>&1        
           sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/deniseemu/v\\ 2.2.1/"
         fi
 
   artifacts:
-    - path: 'denise*.dmg'
+    - path: 'denise*.dmg.bz2'
 

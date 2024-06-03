@@ -9,24 +9,14 @@
 
 #include "DLLoader.h"
 
-#ifdef _WIN32
-#define PROCCALL __cdecl
-#else
-#define PROCCALL
-#endif
-
-typedef signed long (PROCCALL* PROCHOOKN)(...);
-
 namespace Emulator {
 
 auto DLLoader::open() -> bool {
     if (handle)
         return true;
 
-    if (!pathToLib.size()) {
-        lastError = ERROR_PATH;
+    if (!pathToLib.size())
         return false;
-    }
 
 #ifdef _WIN32
     std::wstring wpath = std::wstring(pathToLib.begin(), pathToLib.end());
@@ -35,11 +25,9 @@ auto DLLoader::open() -> bool {
     handle = dlopen( pathToLib.c_str(), RTLD_NOW | RTLD_LAZY);
 #endif
     if (!handle) {
-        lastError = ERROR_OPEN;
         return false;
     }
 
-    lastError = OK;
     return true;
 }
 
@@ -53,6 +41,7 @@ auto DLLoader::close() -> void {
         handle = nullptr;
     }
     calls.clear();
+    markInitialized = false;
 }
 
 auto DLLoader::load(unsigned id, std::string ident) -> bool {
@@ -74,37 +63,18 @@ auto DLLoader::load(unsigned id, std::string ident) -> bool {
 #else
         call->ptr = dlsym(handle, call->ident.c_str());
 #endif
-        if (!call->ptr) {
-            lastError = ERROR_LOAD;
+        if (!call->ptr)
             return false;
-        }
     }
 
-    lastError = OK;
     return true;
 }
 
-auto DLLoader::execute(unsigned id) -> int {
-    Call* call;
-    if ((call = getCall(id)) == nullptr)
-        return -1;
-
-    if (!call->ptr)
-        return -1;
-
-    return PROCHOOKN(call->ptr)();
-}
-
-template<typename... Args>
-auto DLLoader::execute(unsigned id, Args... args) -> int {
-    Call* call;
-    if ((call = getCall(id)) == nullptr)
-        return -1;
-
-    if (!call->ptr)
-        return -1;
-
-    return PROCHOOKN(call->ptr)(args...);
+auto DLLoader::getPtr(unsigned id) -> void* {
+    Call* call = getCall(id);
+    if (call)
+        return call->ptr;
+    return nullptr;
 }
 
 auto DLLoader::getCall(unsigned id) -> Call* {
@@ -114,14 +84,5 @@ auto DLLoader::getCall(unsigned id) -> Call* {
     }
     return nullptr;
 }
-
-
-template auto DLLoader::execute<int>(unsigned id, int) -> int;
-template auto DLLoader::execute<int, int>(unsigned id, int, int) -> int;
-template auto DLLoader::execute<int, uint8_t*, unsigned, unsigned>(unsigned id, int, uint8_t*, unsigned, unsigned ) -> int;
-template auto DLLoader::execute<void*, int>(unsigned id, void*, int) -> int;
-template auto DLLoader::execute<void*, int, int, int, int>(unsigned id, void*, int, int, int, int) -> int;
-
-
 
 }

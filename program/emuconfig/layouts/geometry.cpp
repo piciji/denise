@@ -122,11 +122,26 @@ RatioLayout::Hotkey::Hotkey() {
         append( *checkBox, {0u, 0u}, i < 3 ? 10 : 0 );
         boxes.push_back(checkBox);
     }
+
+    setAlignment(0.5);
+}
+
+RatioLayout::Dimension::Dimension() {
+    append(label, {0u, 0u}, 10);
+    append(width, {0u, 0u}, 10);
+    append(height, {0u, 0u}, 10);
+    append(refresh, {0u, 0u}, 10);
+    append(apply, {0u, 0u});
+    append(spacer, {~0u, 0u});
+    append(aspectCorrectResizing, {0u, 0u});
+
+    setAlignment(0.5);
 }
 
 RatioLayout::RatioLayout() {
     append(control, {~0u, 0u}, 10);
-    append(hotkey, {0u, 0u});
+    append(hotkey, {~0u, 0u}, 10);
+    append(dimension, {0u, 0u});
 
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -389,6 +404,55 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
+    ratioLayout.dimension.width.onChange = [this]() {
+        int val = ratioLayout.dimension.width.value();
+        if (val < 100) val = 100;
+        _settings->set<unsigned>("view_hold_width", val);
+    };
+
+
+    ratioLayout.dimension.height.onChange = [this]() {
+        int val = ratioLayout.dimension.height.value();
+        if (val < 100) val = 100;
+        _settings->set<unsigned>("view_hold_height", val);
+    };
+
+    ratioLayout.dimension.refresh.onActivate = [this]() {
+        if (view->fullScreen())
+            return;
+
+        emuThread->lock();
+        auto w = globalSettings->get<unsigned>("screen_width", 800);
+        auto h = globalSettings->get<unsigned>("screen_height", 600);
+
+        _settings->set<unsigned>("view_hold_width", w);
+        _settings->set<unsigned>("view_hold_height", h);
+
+        ratioLayout.dimension.width.setValue(w);
+        ratioLayout.dimension.height.setValue(h);
+        emuThread->unlock();
+    };
+
+    ratioLayout.dimension.apply.onActivate = [this]() {
+        if (view->fullScreen() || (emulator != activeEmulator))
+            return;
+
+        emuThread->lock();
+        globalSettings->set<unsigned>("screen_width", _settings->get<unsigned>("view_hold_width", 800));
+        globalSettings->set<unsigned>("screen_height", _settings->get<unsigned>("view_hold_height", 600));
+
+        view->updateGeometry(true);
+        emuThread->unlock();
+    };
+
+    ratioLayout.dimension.aspectCorrectResizing.onToggle = [&](bool checked) {
+        emuThread->lock();
+        _settings->set<bool>("aspect_correct_resizing", checked);
+        if (emulator == activeEmulator)
+            view->updateViewport();
+        emuThread->unlock();
+    };
+
     for( auto& display : GUIKIT::Monitor::getDisplays() )
         monitorResolutionLayout.display.append(display.name, display.id);
 
@@ -502,6 +566,10 @@ auto GeometryLayout::translate() -> void {
     ratioLayout.control.integerScaling.setText( trans->getA("integer_scaling") );
     ratioLayout.control.cropWindow.setText( trans->getA("crop window") );
     ratioLayout.hotkey.label.setText( trans->getA("switchable by Hotkey", true) );
+    ratioLayout.dimension.aspectCorrectResizing.setText(trans->get("lock aspect ratio"));
+    ratioLayout.dimension.label.setText(trans->getA("resolution", true));
+    ratioLayout.dimension.refresh.setText(trans->getA("refresh"));
+    ratioLayout.dimension.apply.setText(trans->getA("apply"));
 
     monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
     monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );
@@ -584,6 +652,10 @@ auto GeometryLayout::loadSettings() -> void {
 
     monitorResolutionLayout.display.setEnabled( monitorResolutionLayout.active.checked() );
     monitorResolutionLayout.displaySettings.setEnabled( monitorResolutionLayout.active.checked() );
+
+    ratioLayout.dimension.width.setValue( _settings->get<unsigned>("view_hold_width", 800) );
+    ratioLayout.dimension.height.setValue( _settings->get<unsigned>("view_hold_height", 600) );
+    ratioLayout.dimension.aspectCorrectResizing.setChecked( _settings->get<bool>("aspect_correct_resizing", false) );
 
     updateVisibillity();
 }

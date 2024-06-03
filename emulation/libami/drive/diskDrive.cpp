@@ -24,8 +24,15 @@ DiskDrive::DiskDrive(uint8_t number, System* system, Agnus& agnus, Cia<MOS_8520>
     side = 0;
 
     structure.write = [this, system](uint8_t* buffer, unsigned length, unsigned offset) {
-
         return system->interface->writeMedia( media, buffer, length, offset );
+    };
+
+    structure.readAssigned = [this, system](uint8_t*& buffer) {
+        return system->interface->readAssignedMedia( media, buffer );
+    };
+
+    structure.writeAssigned = [this, system](uint8_t* buffer, unsigned length) {
+        return system->interface->writeAssignedMedia( media, buffer, length );
     };
 }
 
@@ -47,16 +54,20 @@ template<bool update> auto DiskDrive::readByte(int& dmaCycles) -> uint8_t {
 
     if (stepSettleClock) progressStepper();
 
+    dmaCycles = 8 * 7;
     if constexpr (update) {
+        int _bits = track->bits;
         int refCyclesPerRevolutionScaled = refCyclesPerRevolution << 3;
-        accum += track->bits * dmaCycles;
-        accum -= refCyclesPerRevolutionScaled;
 
-        int todo = refCyclesPerRevolutionScaled - accum;
-        // Depending on the current motor speed, it is determined how many DMA cycles are necessary until the next byte is read.
-        // That way, we don't have to work with fractional numbers. carry is remembered in "accum".
+        accum += refCyclesPerRevolutionScaled - _bits * 8 * 7;
 
-        dmaCycles = (todo + (track->bits >> 1)) / track->bits;
+        if (accum > _bits) {
+            dmaCycles -= 1;
+            accum -= _bits;
+        } else if (accum < (-1 * _bits)) {
+            dmaCycles += 1;
+            accum += _bits;
+        }
     }
 
     unsigned byteOffset = headOffset >> 3;
@@ -115,7 +126,7 @@ auto DiskDrive::writeByte(uint8_t byte) -> void {
 
     if (!written)
         written = true;
-    track->written |= 1; // track data has changed, host have to write back
+    track->options |= 1; // track data has changed, host have to write back
 }
 
 template<bool update> auto DiskDrive::readBit(int& dmaCycles) -> bool {
@@ -124,15 +135,18 @@ template<bool update> auto DiskDrive::readBit(int& dmaCycles) -> bool {
 
     if (stepSettleClock) progressStepper();
 
+    dmaCycles = 7;
     if constexpr(update) {
-        // track bit field in header determines bit cell width
-        accum += track->bits * dmaCycles;
-        accum -= refCyclesPerRevolution;
+        int _bits = track->bits;
+        accum += (int)refCyclesPerRevolution - _bits * 7;
 
-        unsigned todo = refCyclesPerRevolution - accum;
-        // Depending on the current motor speed and bit cell width noted in the header, it is determined how many DMA cycles are necessary
-        // until the next bit is read. That way, we don't have to work with fractional numbers. Transfer is remembered in "accum".
-        dmaCycles = (todo + (track->bits >> 1) ) / track->bits;
+        if (accum > _bits) {
+            dmaCycles -= 1;
+            accum -= _bits;
+        } else if (accum < (-1 * _bits)) {
+            dmaCycles += 1;
+            accum += _bits;
+        }
     }
 
     unsigned byte = headOffset >> 3;
@@ -153,22 +167,20 @@ template<bool update> auto DiskDrive::readBit(int& dmaCycles) -> bool {
     bool state = (track->data[byte] >> bit) & 1;
 
     // weak bits (no magnetization)
-    if (state)
+    if (!state) {
         // after a flux change it takes a while until first oscillation happens.
-        randCounter = ( (randomizer.xorShift() >> 16 ) & 7) + 51; // 14.5 - 16.5 us
-    else if (randCounter) {
-        if (dmaCycles >= randCounter) {
+        if (++randCounter == 7) {
             state = true; // oscillation
             // continuous oscillation without any new flux change happens much faster
-            randCounter = ( (randomizer.xorShift() >> 16 ) & 7) + (7 - (dmaCycles - randCounter) );
-        } else
-            randCounter -= dmaCycles;
-    }
+            randCounter -= ((randomizer.xorShift() >> 16) & 3) + 1;
+        }
+    } else
+        randCounter = 0;
 
     return state;
 }
 
-auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
+template<bool update> auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
     if (!motorSpinning() || !inserted)
         return false;
 
@@ -185,13 +197,35 @@ auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
             cia.setFlag();
     }
 
-    accum += track->bits * dmaCycles;
-    accum -= (refCyclesPerRevolution * cellSpeed) / 1000;
+    dmaCycles = 7;
 
-    cellSpeed = track->cellWidth ? track->cellWidth[headOffset >> 3] : 1000;
+    if constexpr(update) {
+        int _bits = track->bits;
 
-    unsigned todo = ((refCyclesPerRevolution * cellSpeed) / 1000) - accum;
-    dmaCycles = (todo + (track->bits >> 1) ) / track->bits;
+        if (track->cellWidth) {
+            int cellSpeed = track->cellWidth[headOffset >> 3];
+            int oneCycle = (_bits * cellSpeed) / 1000;
+            accum += (int)refCyclesPerRevolution - ((_bits * 7 * cellSpeed) / 1000);
+
+            if (accum > oneCycle) {
+                dmaCycles -= 1;
+                accum -= oneCycle;
+            } else if (accum < (-1 * oneCycle)) {
+                dmaCycles += 1;
+                accum += oneCycle;
+            }
+        } else {
+            accum += (int)refCyclesPerRevolution - _bits * 7;
+
+            if (accum > _bits) {
+                dmaCycles -= 1;
+                accum -= _bits;
+            } else if (accum < (-1 * _bits)) {
+                dmaCycles += 1;
+                accum += _bits;
+            }
+        }
+    }
 
     if (!selected)
         return false;
@@ -229,7 +263,12 @@ auto DiskDrive::writeBit(bool state) -> void {
 
     if (!written)
         written = true;
-    track->written |= 1; // track data has changed, host have to write back
+    track->options |= 1; // track data has changed, host have to write back
+}
+
+auto DiskDrive::setStandardTiming() -> void {
+    if (structure.setStandardTiming(*track))
+        reset();
 }
 
 auto DiskDrive::reset() -> void {
@@ -252,19 +291,18 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     if (!structure.attach(data, size))
         return false;
 
-    headOffset = 0;
     inserted = true;
     stepSettleClock = 0;
     accum = 0;
     wobblePos = 0;
     wobbleLimit = wobble >> 1;
-    cellSpeed = 1000;
+    randomizeRpm(agnus.frequency(), true);
     updateRpm();
 
     if (driveSound && system->powerOn && system->isDisplayFrame())
         interface->mixDriveSound( media, DriveSound::FloppyInsert );
 
-    updateTrack();
+    updateTrack(true);
     return true;
 }
 
@@ -320,9 +358,7 @@ auto DiskDrive::power() -> void {
     nextStep = 0;
     cylinder = 0;
     side = 0;
-    headOffset = 0;
     accum = 0;
-    cellSpeed = 1000;
     stepperSeekTime = (stepperSeekTimeBase * agnus.frequency()) / 10000;
     stepperMinTime = (stepperMinTimeBase * agnus.frequency()) / 10000;
     structure.serializationSize = 0;
@@ -395,7 +431,7 @@ auto DiskDrive::writeCiaPortB(uint8_t value, uint8_t oldValue) -> void {
             stepSettleClock = agnus.clock;
         }
     } else if (side != sideBefore)
-        updateTrack();
+        updateTrack(false);
 }
 
 auto DiskDrive::getId() -> unsigned { // no emulation of a HD drive with inserted DD disk.
@@ -410,14 +446,14 @@ auto DiskDrive::getId() -> unsigned { // no emulation of a HD drive with inserte
 
 inline auto DiskDrive::motorSpinning() -> bool {
     if (motor && (motorSpeed == 100)) return true;
-    else if (!motor && (motorSpeed == 0)) return false;
+    if (!motor && (motorSpeed == 0)) return false;
 
     unsigned speed = getMotorSpeed();
 
     if (motor && (speed == 100)) motorSpeed = 100;
     else if (!motor && (speed == 0)) motorSpeed = 0;
 
-    return motor || (speed > 20);
+    return motor || (speed > 87);
 }
 
 auto DiskDrive::getMotorSpeed() -> unsigned {
@@ -448,7 +484,7 @@ auto DiskDrive::setMotor(bool state) -> void {
     motorClock = agnus.clock;
     motor = state;
     if (motor)
-        accum = 0;
+        reset();
 
     updateDeviceState();
     if (driveSound && system->isDisplayFrame())
@@ -482,29 +518,31 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
         interface->mixDriveSound( media, DriveSound::FloppyStep, cylinder );
 
     if (updTrack)
-        updateTrack();
-
-    randCounter = 0;
+        updateTrack(false);
 }
 
-inline auto DiskDrive::updateTrack() -> void {
+inline auto DiskDrive::updateTrack(bool init) -> void {
     unsigned oldHeadOffset = headOffset;
     DiskStructure::Track* oldTrack = track;
-    accum = 0;
     track = &structure.tracks[(cylinder << 1) | side];
 
-    if (oldTrack && oldTrack->bits && oldHeadOffset) {
-        if (structure.type == DiskStructure::ADF) {
-            if (oldTrack->length != track->length)
-                headOffset = ((((uint64_t)oldHeadOffset >> 3) * (uint64_t)track->length) / (uint64_t)oldTrack->length) << 3;
-        } else {
-            if (oldTrack->bits != track->bits)
-                 headOffset = ((uint64_t)oldHeadOffset * (uint64_t)track->bits) / (uint64_t)oldTrack->bits;
-        }
-    } else
-        headOffset = 0;
+    if (init)
+        headOffset = rand() % track->bits;
+    else {
+        if (oldTrack && oldTrack->bits && oldHeadOffset) {
+            if (structure.type == DiskStructure::ADF) {
+                if (oldTrack->length != track->length)
+                    headOffset = ((((uint64_t)oldHeadOffset >> 3) * (uint64_t)track->length) / (uint64_t)oldTrack->length) << 3;
+            } else {
+                if (oldTrack->bits != track->bits)
+                    headOffset = ((uint64_t)oldHeadOffset * (uint64_t)track->bits) / (uint64_t)oldTrack->bits;
+            }
+        } else
+            headOffset = 0;
+    }
 
     paula.turbo = ((structure.type != DiskStructure::IPF) || !track->cellWidth) ? paula.turboRequested : 0;
+    randCounter = 0;
 
     updateDeviceState();
 }
@@ -524,7 +562,7 @@ auto DiskDrive::setWobble(unsigned wobbleScaled) -> void {
     wobbleLimit = wobble >> 1;
 }
 
-auto DiskDrive::randomizeRpm(unsigned frequency) -> void {
+auto DiskDrive::randomizeRpm(unsigned frequency, bool prevent) -> void {
     // drive speed is 300 rounds per minute
     // more realistic speed wobbles between 299,75 - 300,25
     // so we could generate a random number in a range of 0.5
@@ -535,7 +573,7 @@ auto DiskDrive::randomizeRpm(unsigned frequency) -> void {
 
     unsigned long long cyclesPerRevolution = frequency / 5;
 
-    if (wobble) {
+    if (!prevent && wobble) {
         if (wobbleLimit < 0) { // neg
             if (--wobblePos < wobbleLimit) {
                 wobbleLimit = wobble >> 1;
@@ -617,7 +655,7 @@ auto DiskDrive::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(stepperMinTime);
     s.integer(randomizer.xorShift32);
     s.integer(randCounter);
-    s.integer(cellSpeed);
+    s.integer(cellSpeedDeprecated);
 
     if (s.mode() == Emulator::Serializer::Mode::Load)
         track = &structure.tracks[(cylinder << 1) | side];
@@ -647,5 +685,8 @@ template auto DiskDrive::readByte<true>(int& dmaCycles) -> uint8_t;
 
 template auto DiskDrive::readBit<false>(int& dmaCycles) -> bool;
 template auto DiskDrive::readBit<true>(int& dmaCycles) -> bool;
+
+template auto DiskDrive::readBitIPF<false>(int& dmaCycles) -> bool;
+template auto DiskDrive::readBitIPF<true>(int& dmaCycles) -> bool;
 
 }

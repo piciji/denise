@@ -8,6 +8,9 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
+        
+        if (GUIKIT::hasMinimumVersion(11, 0))
+            [self setControlSize:NSControlSizeSmall];
     
     }
     return self;
@@ -29,14 +32,14 @@
     [super stopTracking:lastPoint at:stopPoint inView:controlView mouseIsUp:flag];
 }
 
--(void)startTrackingAt:(NSPoint)startPoint inView:(NSView*)controlView {
+-(BOOL)startTrackingAt:(NSPoint)startPoint inView:(NSView*)controlView {
     
     using GUIKIT::pApplication;
     pApplication::setAppTimer();
     
     [[NSRunLoop currentRunLoop] addTimer:pApplication::appTimer forMode:NSRunLoopCommonModes];
     
-    [super startTrackingAt:startPoint inView:controlView];
+    return [super startTrackingAt:startPoint inView:controlView];
 }
 
 -(IBAction) activate:(id)sender {
@@ -98,7 +101,7 @@ auto pSlider::minimumSize() -> Size {
     unsigned thickness = 18;
     if (GUIKIT::hasMinimumVersion(10, 10)) {
         // don't access knob thickness in Mavericks or slider will be always vertical... wtf
-        thickness = (unsigned)[cocoaView knobThickness];
+        thickness = (unsigned)[(id)cocoaView knobThickness];
     }
     
     if (slider.orientation == Slider::Orientation::VERTICAL)
@@ -123,13 +126,13 @@ auto pSlider::setGeometry(Geometry geometry) -> void {
 
 auto pSlider::setLength(unsigned length) -> void {
     @autoreleasepool {
-        [cocoaView setMaxValue:length - 1];
+        [(id)cocoaView setMaxValue:length - 1];
     }
 }
 
 auto pSlider::setPosition(unsigned position) -> void {
     @autoreleasepool {
-        [cocoaView setDoubleValue:position];
+        [(id)cocoaView setDoubleValue:position];
     }
 }
 

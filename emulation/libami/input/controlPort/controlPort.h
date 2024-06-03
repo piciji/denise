@@ -34,6 +34,9 @@ struct ControlPort {
 
     virtual auto getCursorPosition( int16_t& x, int16_t& y ) -> bool { return false; }
 
+    virtual auto readParallelFromCIA1B(uint8_t& res) -> void { }
+    virtual auto readParallelFromCIA2A(uint8_t& res) -> void { }
+
     virtual auto serialize(Emulator::Serializer& s) -> void;
 };
 

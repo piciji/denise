@@ -6,9 +6,9 @@
     if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
         multilineEdit = &multilineEditReference;
         
-        content = [[CocoaTextView alloc] initWith : multilineEditReference];
+        content = [(CocoaTextView*)[CocoaTextView alloc] initWith: multilineEditReference];
         
-        [self setDelegate:self];
+       // [self setDelegate:self];
         [self setDocumentView:content];
         [self configure];
     }
@@ -20,8 +20,7 @@
 }
 
 -(void) configure {
-    [content setMinSize:NSMakeSize(0,0)];
-    //[content setMaxSize:NSMakeSize:(FLT_MAX, FLT_MAX)];
+//    [content setMinSize:NSMakeSize(0,0)];
     
     [[content textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
     [[content textContainer] setWidthTracksTextView:YES];
@@ -79,20 +78,20 @@ namespace GUIKIT {
 auto pMultilineEdit::setEditable(bool editable) -> void {
     
     @autoreleasepool{
-        [[cocoaView content] setEditable : editable];
+        [[(id)cocoaView content] setEditable : editable];
     }
 }
 
 auto pMultilineEdit::text() -> std::string {
     @autoreleasepool{
-        return [[[cocoaView content] stringValue] UTF8String];
+        return [[[(id)cocoaView content] stringValue] UTF8String];
     }
 }
 
 auto pMultilineEdit::setText(const std::string& text) -> void {
     @autoreleasepool{
-        [[cocoaView content] setString: [NSString stringWithUTF8String: text.c_str()]];
-        [cocoaView configure];
+        [[(id)cocoaView content] setString: [NSString stringWithUTF8String: text.c_str()]];
+        [(id)cocoaView configure];
     }
     calculatedMinimumSize.updated = false;
 }
@@ -113,21 +112,21 @@ auto pMultilineEdit::setForegroundColor(unsigned color) -> void {
             textColor = pHelper::getColor( color );
         }
         
-        [[cocoaView content] setTextColor: textColor];
+        [[(id)cocoaView content] setTextColor: textColor];
     }
 }
     
 auto pMultilineEdit::setGeometry(Geometry geometry) -> void {
     
     pWidget::setGeometry(geometry);
-    [cocoaView configure];
+    [(id)cocoaView configure];
 }
     
 auto pMultilineEdit::setFont(std::string font) -> void {
     @autoreleasepool {
         NSFont* nsfont = pFont::cocoaFont(font);
         if (nsfont != nil)
-            [[cocoaView content] setFont:nsfont];
+            [[(id)cocoaView content] setFont:nsfont];
     }
     calculatedMinimumSize.updated = false;
 }

@@ -39,15 +39,18 @@ auto Program::initVideo(bool driverChange) -> void {
         
     for( auto emulator : emulators ) {
         checkShaderSupport(emulator);
+        auto videoManager =  VideoManager::getInstance(emulator);
+        auto settings = program->getSettings( emulator );
+
+        videoManager->setCrtThreaded( settings->get<bool>("cpu_filter_threaded", true) );
 
         auto emuView = EmuConfigView::TabWindow::getView(emulator);
         if (emuView && emuView->videoLayout)
             emuView->videoLayout->updatePresets(true, true);
         else
-            VideoManager::getInstance(emulator)->reloadSettings(true);
+            videoManager->reloadSettings(true);
     }
 
-	VideoManager::setCrtThreaded( globalSettings->get<bool>("cpu_filter_threaded", true) );
     view->buildShader();
     view->loadDragnDropOverlay();
     videoDriver->setShaderProgressCallback( [](int pass, bool hasErrors) {
@@ -157,6 +160,17 @@ auto Program::getVideoDriver() -> std::string {
 		if(curDriver == driver) return driver;
 	}
 	return DRIVER::Video::preferred();
+}
+
+auto Program::activateGPU(Emulator::Interface* emulator, bool state) -> void {
+    auto vManager = VideoManager::getInstance( emulator );
+    bool shaderActive = vManager->crtMode == VideoManager::CrtMode::Gpu;
+
+    if (state != shaderActive) {
+        auto settings = program->getSettings(emulator);
+        settings->set<unsigned>("video_crt", state ? (unsigned)VideoManager::CrtMode::Gpu : (unsigned)VideoManager::CrtMode::None);
+        vManager->reloadSettings(true);
+    }
 }
 
 auto Program::midScreenCallback(uint8_t options) -> void {

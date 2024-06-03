@@ -656,6 +656,9 @@ auto Agnus::updateHarddis() -> void {
 }
 
 auto Agnus::isEquLine() -> bool {
+    if (!vPos && (model == OCS_A1000 || model == OCS))
+        return false;
+
     if (model != OCS_A1000) {
         if (ntsc)
             return vPos <= 10;
@@ -663,18 +666,10 @@ auto Agnus::isEquLine() -> bool {
         return vPos < (lof ? 9 : 8);
     }
 
-    if (!vPos)
-        return false;
-
     if (ntsc)
         return vPos <= 11;
 
     return vPos < (lof ? 10 : 9);
-
-//    if (ntsc)
-//        return (vPos <= 10) && ((model != OCS_A1000) || !!vPos);
-//
-//    return (vPos < (lof ? 9 : 8)) && ((model != OCS_A1000) || !!vPos);
 }
 
 auto Agnus::setDiwStrt(uint16_t value) -> void {
@@ -838,7 +833,7 @@ auto Agnus::observeFrameDuration() -> void {
         double linesPerField;
         double cyclesPerLine;
 
-        if (laceMode)
+        if (laceMode & 3)
             linesPerField = lines + 1.5;
         else
             linesPerField = lines + (lof ? 2.0 : 1.0);
@@ -932,6 +927,8 @@ template auto Agnus::updateEventAbs<Agnus::EVENT_SERIAL>( int64_t absClock ) -> 
 template auto Agnus::updateEventAbs<Agnus::EVENT_INTREQ>(int64_t absClock) -> void;
 
 template auto Agnus::updateEvent<Agnus::EVENT_FLOPPY>( int delay ) -> void;
+
+template auto Agnus::getEventDelay<Agnus::EVENT_FLOPPY>() -> unsigned;
 
 template auto Agnus::allocateCopper<false>() -> bool;
 template auto Agnus::allocateCopper<true>() -> bool;

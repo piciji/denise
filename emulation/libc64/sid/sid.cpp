@@ -142,6 +142,8 @@ auto Sid::volumeCorrection( bool state ) -> void {
             correction = 0.7;
             
         } break;
+        default:
+            break;
     }
 }
 

@@ -6,7 +6,8 @@
         button = &buttonReference;
         [self setTarget:self];
         [self setAction:@selector(activate:)];
-        [self setBezelStyle:NSRegularSquareBezelStyle];
+        if (!GUIKIT::hasMinimumVersion(14,0))
+            [self setBezelStyle:NSRegularSquareBezelStyle];
     }
     return self;
 }
@@ -32,7 +33,7 @@ auto pButton::setGeometry(Geometry geometry) -> void {
     
 auto pButton::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        [(id)cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
 }

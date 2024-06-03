@@ -77,13 +77,13 @@ namespace GUIKIT {
         
         @autoreleasepool {
             if (surface) {
-                [cocoaView setImage:nil];
+                [(id)cocoaView setImage:nil];
                 [surface release];
             }
             
             surface = NSMakeImage(*imageView.state.image);
             
-            [cocoaView setImage : surface];
+            [(id)cocoaView setImage : surface];
         }
     }
     

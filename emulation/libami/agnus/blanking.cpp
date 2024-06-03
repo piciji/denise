@@ -11,16 +11,26 @@ auto Agnus::startHblank() -> void {
         if (laceFrame & 1)
             lineVCounter--;
 
-        if (lineVCounter < 100) {// could happen, if beam position has been changed or uncontrolled register usage
-            lineVCounter = 100; // otherwise video driver could crash
+        if (lineVCounter < 150) {// could happen, if beam position has been changed or uncontrolled register usage
+            lineVCounter = 150; // otherwise video driver could crash
             std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
-        } else if (lineVCounter > (laceFrame ? 600 : 300) ) {
-            lineVCounter = laceFrame ? 600 : 300;
+        } else if (lineVCounter > ((laceFrame & 3) ? 600 : 300) ) {
+            lineVCounter = (laceFrame & 3) ? 600 : 300;
             std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
         }
 
         int width = denise.hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
         sanitizeCrop(width, lineVCounter);
+
+		if (laceFrame & 0x80) {
+		    if (laceFrame & 1) {
+		        for(unsigned h = 0; h < lineVCounter; h += 2)
+		            std::memcpy(frameBuffer + LINE_RENDER_OFFSET + ((h + 1) * LINE_BUFFER_WIDTH), frameBuffer + LINE_RENDER_OFFSET + (h + 0) * LINE_BUFFER_WIDTH, LINE_BUFFER_WIDTH << 1 );
+		    } else {
+		        for(unsigned h = 0; h < lineVCounter; h += 2)
+		            std::memcpy(frameBuffer + LINE_RENDER_OFFSET + ((h + 0) * LINE_BUFFER_WIDTH), frameBuffer + LINE_RENDER_OFFSET + (h + 1) * LINE_BUFFER_WIDTH, LINE_BUFFER_WIDTH << 1 );
+		    }
+		}
 
         system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter,
                              LINE_BUFFER_WIDTH - width, laceFrame | (denise.hiresFrame ? 4 : 0));
@@ -83,16 +93,22 @@ auto Agnus::endHblank() -> void {
             if (hTotalChanged) {
                 hTotalChanged = false;
                 std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT );
-            } else if (!laceFrame && laceMode) {
-                // remove old interlace data, non-lace frame wouldn't overwrite, to prevent artifacts.
-                std::memset(frameBuffer + 240 * LINE_BUFFER_WIDTH, 0, LINE_BUFFER_WIDTH * (LINE_BUFFER_HEIGHT - 240) * 2);
+            } else if (!(laceFrame & 3) && (laceMode & 3)) {
+				laceMode |= 0x80; // first lace frame
+                denise.setDisableSequencer( 0 );
+            } else if ((laceFrame & 3) && !(laceMode & 3)) {
+                laceMode |= 0x40; // first non lace frame
+                denise.setDisableSequencer( 0 );
             }
 
             laceFrame = laceMode;
             if (laceFrame & 2)
                 lineVCounter = 1;
 
-            lineCallback.called = !lineCallback.use /*|| !lineCallback.line*/;
+            if (laceMode & 3)
+                lineCallback.called = true; // no interlace support for threaded CPU renderer
+            else
+                lineCallback.called = !lineCallback.use /*|| !lineCallback.line*/;
 
             if (secureRA) {
                 secureRA = false;
@@ -107,7 +123,7 @@ auto Agnus::endHblank() -> void {
             lineVCounter = LINE_BUFFER_HEIGHT - 1;
 
         denise.linePtr = frameBuffer + lineVCounter * LINE_BUFFER_WIDTH + LINE_RENDER_OFFSET;
-        lineVCounter += laceFrame ? 2 : 1;
+        lineVCounter += (laceFrame & 3) ? 2 : 1;
         hBlank = false;
     }
 }
@@ -151,7 +167,7 @@ auto Agnus::sanitizeCrop(int width, int height) -> void {
     width >>= 1;
     height >>= 1;
 
-    if (!denise.useSequencer() || laceFrame ) {
+    if (!denise.useSequencer() || (laceFrame & 3) ) {
         crop.reset();
     } else {
         if (crop.left > width) crop.left = 0;
@@ -165,7 +181,7 @@ auto Agnus::switchToHiresMidframe() -> void {
     uint16_t* curLinePtr;
     unsigned xStart;
     int y = (laceFrame & 2) ? 1 : 0;
-    int inc = laceFrame ? 2 : 1;
+    int inc = (laceFrame & 3) ? 2 : 1;
 
     for (; y < lineVCounter; y = y + inc ) {
         curLinePtr = frameBuffer + y * LINE_BUFFER_WIDTH + LINE_RENDER_OFFSET;
