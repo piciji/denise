@@ -36,7 +36,9 @@ struct Crop {
 	unsigned bottom;
 	unsigned left;
 	unsigned right;
-		
+
+	auto active() -> bool { return settings.type != CropType::Off; }
+
 	auto updateBorder(uint8_t& options ) -> bool {
         
 		if ( settings.type == CropType::Off ) {
