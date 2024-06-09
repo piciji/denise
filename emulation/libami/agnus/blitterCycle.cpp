@@ -13,67 +13,42 @@
 namespace LIBAMI {
 
 template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
-    if constexpr ((jobs & BLT_IDLE) == 0) {
-        if (!agnus.canBlitterUseBus())
+    if constexpr (!!(jobs & BLT_FETCH_A)) {
+        if(curW == 1) {
+            if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_A_H, !!(jobs & BLT_DESC), true, true>(bltApt, bltAdat, bltAmod))
+                return;
+        } else {
+            if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_A_H, !!(jobs & BLT_DESC), true, false>(bltApt, bltAdat))
+                return;
+        }
+    } else if constexpr (!!(jobs & BLT_FETCH_B)) {
+        if(curW == 1) {
+            if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, !!(jobs & BLT_DESC), true, true>(bltBpt, bltBdat, bltBmod))
+                return;
+        } else {
+            if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, !!(jobs & BLT_DESC), true, false>(bltBpt, bltBdat))
+                return;
+        }
+    } else if constexpr (!!(jobs & BLT_FETCH_C)) {
+        if(curW == 1) {
+            if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H, !!(jobs & BLT_DESC), true, true>(bltCpt, bltCdat, bltCmod))
+                return;
+        } else {
+            if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H, !!(jobs & BLT_DESC), true, false>(bltCpt, bltCdat))
+                return;
+        }
+    } else if constexpr (!!( jobs & BLT_WRITE_D )) {
+        if(curW == bltSizeW) {
+            if (!agnus.writeBlitterDma<!!(jobs & BLT_DESC), true, true>(bltDpt, doff ? agnus.dataBus : bltDdat, bltDmod))
+                return;
+        } else {
+            if (!agnus.writeBlitterDma<!!(jobs & BLT_DESC), true, false>(bltDpt, doff ? agnus.dataBus : bltDdat))
+                return;
+        }
+    } else if constexpr ((jobs & BLT_IDLE) == 0) {
+        if (!agnus.canBlitterUseBusExt())
             return;
     }
-
-    if constexpr (!!(jobs & BLT_FETCH_A)) {
-        if(curW == 1)
-            agnus.fetchBlitterDma<Agnus::PTR_BLT_A_H, !!(jobs & BLT_DESC), true>(bltApt, bltAdat, bltAmod);
-        else
-            agnus.fetchBlitterDma<Agnus::PTR_BLT_A_H, !!(jobs & BLT_DESC), true>(bltApt, bltAdat);
-        //
-        // if constexpr (!!(jobs & BLT_DESC))  bltApt += -2;
-        // else                                bltApt += +2;
-        //
-        // if (curW == 1) {
-        //     if constexpr (!!(jobs & BLT_DESC))  bltApt += -bltAmod;
-        //     else                                bltApt += bltAmod;
-        // }
-    } else if constexpr (!!(jobs & BLT_FETCH_B)) {
-        if(curW == 1)
-            agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, !!(jobs & BLT_DESC), true>(bltBpt, bltBdat, bltBmod);
-        else
-            agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, !!(jobs & BLT_DESC), true>(bltBpt, bltBdat);
-
-        // if constexpr (!!(jobs & BLT_DESC))  bltBpt += -2;
-        // else                                bltBpt += +2;
-        //
-        // if (curW == 1) {
-        //     if constexpr (!!(jobs & BLT_DESC))  bltBpt += -bltBmod;
-        //     else                                bltBpt += bltBmod;
-        // }
-    } else if constexpr (!!(jobs & BLT_FETCH_C)) {
-        if(curW == 1)
-            agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H, !!(jobs & BLT_DESC), true>(bltCpt, bltCdat, bltCmod);
-        else
-            agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H, !!(jobs & BLT_DESC), true>(bltCpt, bltCdat);
-
-        // if constexpr (!!(jobs & BLT_DESC))  bltCpt += -2;
-        // else                                bltCpt += +2;
-        //
-        // if (curW == 1) {
-        //     if constexpr (!!(jobs & BLT_DESC))  bltCpt += -bltCmod;
-        //     else                                bltCpt += bltCmod;
-        // }
-    } else if constexpr (!!( jobs & BLT_WRITE_D )) {
-        if(curW == bltSizeW)
-            agnus.writeBlitterDma<!!(jobs & BLT_DESC), true>(bltDpt, doff ? agnus.dataBus : bltDdat, bltDmod);
-        else
-            agnus.writeBlitterDma<!!(jobs & BLT_DESC), true>(bltDpt, doff ? agnus.dataBus : bltDdat);
-
-        // if constexpr (!!(jobs & BLT_DESC))  bltDpt += -2;
-        // else                                bltDpt += 2;
-        //
-        // if (curW == bltSizeW) {
-        //     if constexpr (!!(jobs & BLT_DESC))  bltDpt += -bltDmod;
-        //     else                                bltDpt += bltDmod;
-        // }
-    } /*else if constexpr ((jobs & BLT_IDLE) == 0) {
-        if (!agnus.canBlitterUseBus())
-            return;
-    }*/
 
     if constexpr (!!(jobs & BLT_IDLE)) {
         if (!agnus.aga() || !nextCycle) {
@@ -176,41 +151,30 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
 // if channel A is not in use, Bresenham logic in cycle 1 of first blit never happens. no other changes
 
 template<uint16_t jobs, uint8_t nextCycle> auto Blitter::lineMode() -> void {
-    if constexpr ((jobs & BLT_IDLE) == 0) {
-        if (!agnus.canBlitterUseBus())
-            return;
-    }
-
     if constexpr (!!(jobs & BLT_FETCH_B)) {
 
-        if constexpr (!!(jobs & BLT_B_MOD))
-            agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, false, false>(bltBpt, bltBdat, bltBmod);
-        else
-            agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, false, false>(bltBpt, bltBdat);
-
-        // if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat))
-        //     return;
-        //
-        // if constexpr (!!(jobs & BLT_B_MOD))
-        //     bltBpt += bltBmod;
-
+        if constexpr (!!(jobs & BLT_B_MOD)) {
+            if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, false, false, true>(bltBpt, bltBdat, bltBmod))
+                return;
+        } else {
+            if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, false, false, false>(bltBpt, bltBdat))
+                return;
+        }
     } else if constexpr (!!(jobs & BLT_FETCH_C)) {
-        agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H, false, false>(bltCpt, bltCdat);
-        //if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat))
-          //  return;
+        if (!agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H, false, false, false>(bltCpt, bltCdat))
+            return;
 
     } else if constexpr (!!(jobs & BLT_WRITE_D)) {
         if (writeLineDot) {
-            agnus.writeBlitterDma<false, false>(bltDpt, doff ? agnus.dataBus : bltDdat);
-            //if (!agnus.writeBlitterDma(bltDpt, doff ? agnus.dataBus : bltDdat))
-              //  return;
-        } //else if (!agnus.canBlitterUseBus())
-            //return;
-
-    } /*else if constexpr ((jobs & BLT_IDLE) == 0) {
-        if (!agnus.canBlitterUseBus())
+            if (!agnus.writeBlitterDma<false, false, false>(bltDpt, doff ? agnus.dataBus : bltDdat))
+                return;
+        } else if (!agnus.canBlitterUseBusExt())
             return;
-    }*/
+
+    } else if constexpr ((jobs & BLT_IDLE) == 0) {
+        if (!agnus.canBlitterUseBusExt())
+            return;
+    }
 
     if constexpr (!!(jobs & BLT_SHIFT_A)) {
         bltADatShifted = (bltAdat & bltAfwm) >> SHIFTA;

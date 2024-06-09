@@ -112,6 +112,7 @@ auto Copper::process() -> void {
                 copPtrBefore = copPtr;
                 assignCopPtr();
                 state = Read1Buggy;
+                agnus.setCopBltConflictThisCycle();
                 break;
             }
 

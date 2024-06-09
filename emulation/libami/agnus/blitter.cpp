@@ -43,7 +43,7 @@ auto Blitter::initBlit() -> void {
 
 auto Blitter::startBlit() -> void {
     if (restartTimer) {
-        if ( (agnus.busUsage == Agnus::BUS_USAGE_BLITTER) || agnus.canBlitterUseBus()) {
+        if ( (agnus.busUsage == Agnus::BUS_USAGE_BLITTER) || agnus.canBlitterUseBusExt()) {
             if ((restartTimer == 2) && (agnus.model == Agnus::OCS_A1000) ) // if A1000 Blitter get this cycle
                 busy = true;
 

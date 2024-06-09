@@ -47,7 +47,7 @@ struct Agnus {
         AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
         AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
         DMACON_3, SER_DAT, DMACON_1, DIW_START, DIW_STOP, BLT_MODA, BLT_MODB, BLT_MODC, BLT_MODD,
-        VPOSW, VHPOSW, UPD_V_DIW, UPD_DENISE_VHPOS, STROBE,
+        VPOSW, VHPOSW, UPD_V_DIW, UPD_DENISE_VHPOS, STROBE, COP_BLT_CONFLICT
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -298,22 +298,16 @@ struct Agnus {
     auto writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy = Trigger_CPU) -> void;
     template<bool byteAccess = false> auto readCustom(uint16_t adr, bool triggeredByWrite = false) -> uint16_t;
 
-    auto canBlitterUseBus() -> bool;
+    inline auto canBlitterUseBus() -> bool;
+    auto canBlitterUseBusExt() -> bool;
     template<bool oddCycle1 = false> auto canCopperUseBus() -> bool;
     template<bool oddCycle1 = false> auto allocateCopper() -> bool;
-    //template<uint8_t ptrEvent> auto fetchBlitterDma(uint32_t adr, uint16_t& result) -> bool;
     auto fetchCopperDma(uint32_t adr, uint16_t& result) -> bool;
     auto fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void;
-    //auto writeBlitterDma(uint32_t adr, uint16_t value) -> bool;
     auto checkCopperBlitterConflict(uint32_t& ptr) -> bool;
 
-   // template<uint8_t ptrEvent> auto fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void;
-   // auto writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void;
-
-    template<uint8_t ptrEvent, bool desc, bool add> auto fetchBlitterDma(uint32_t& adr, uint16_t& result, int16_t& modVal) -> void;
-    template<uint8_t ptrEvent, bool desc, bool add> auto fetchBlitterDma(uint32_t& adr, uint16_t& result) -> void;
-    template<bool desc, bool add> auto writeBlitterDma(uint32_t& adr, uint16_t& value, int16_t& modVal ) -> void;
-    template<bool desc, bool add> auto writeBlitterDma(uint32_t& adr, uint16_t& value ) -> void;
+    template<uint8_t ptrEvent, bool desc, bool add, bool mod, bool check = true> auto fetchBlitterDma(uint32_t& adr, uint16_t& result, const int16_t& modVal = 0) -> bool;
+    template<bool desc, bool add, bool mod, bool check = true> auto writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVal = 0) -> bool;
 
     auto setRefPtr(uint16_t value) -> void;
 
@@ -398,6 +392,7 @@ struct Agnus {
     auto clearEvents() -> void;
     template<bool tooSoon = false> auto processOneCycleEvent(RapidJob& rJob) -> void;
     template<uint8_t Channel> auto getEventDelay() -> unsigned;
+    auto setCopBltConflictThisCycle() -> void ;
     inline auto addOneCycleEvent(int job, uint16_t data = 0, int delay = 2) -> void;
     auto forceOneCycleEvent(int job) -> void;
     template<bool isPtr> auto inactivateOneCycleEvent(int job) -> void;
