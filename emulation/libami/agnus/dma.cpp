@@ -389,14 +389,14 @@ auto Agnus::fetchBlitterDma(uint32_t& adr, uint16_t& result, const int16_t& modV
     if (copper.state == Copper::Read1Buggy) {
         adr |= copper.copPtrBefore;
 
+        result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
+
+        adr = copper.copPtr;
+
         if constexpr (mod) {
             if constexpr (desc)  copper.copPtr += -modVal;
             else                 copper.copPtr += modVal;
         }
-
-        result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
-
-        adr = copper.copPtr;
     } else {
         result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
@@ -434,14 +434,14 @@ auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVa
     if (copper.state == Copper::Read1Buggy) {
         adr |= copper.copPtrBefore;
 
+        *(uint16_t*)(chipMem + adr) = _swapWord(value);
+
+        adr = copper.copPtr;
+
         if constexpr (mod) {
             if constexpr (desc)  copper.copPtr += -modVal;
             else                 copper.copPtr += modVal;
         }
-
-        *(uint16_t*)(chipMem + adr) = _swapWord(value);
-
-        adr = copper.copPtr;
     } else {
         *(uint16_t*)(chipMem + adr) = _swapWord(value);
 
