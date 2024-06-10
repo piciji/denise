@@ -112,8 +112,9 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 
             for(auto& trackBar : p.trackBars) {
                 if (trackBar.hwnd == (HWND)lparam) {
+                    trackBar.part.sliderPosition =  SendMessage(trackBar.hwnd, TBM_GETPOS, 0, 0);
                     if (trackBar.part.onChange)
-                        trackBar.part.onChange( SendMessage(trackBar.hwnd, TBM_GETPOS, 0, 0) );
+                        trackBar.part.onChange( trackBar.part.sliderPosition );
                     break;
                 }
             }

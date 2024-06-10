@@ -12,6 +12,46 @@
 Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trademarks of JetBrains s.r.o.
 
 # changelog
+
+## 2.3
+* added RetroArch Shader support
+    * targets: openGL, D3D11
+    * converted existing Shaders to SLANG
+    * fast switching of shaders from a favourite list (shader cache and compilation without blocking APP)
+    * looking for Shader authors, read more in the next paragraph
+* thanks to amilo3438 for testing a huge number of IPF games
+    * improved Amiga emulation, especially the disk drive
+* emulated Amiga Bitplane <> Refresh conflicts
+* written Amiga floppy disks are now saved in a second file
+    * this does not apply to uncompressed ADF (don't worry, emulator asks if ADF can be changed)
+    * permanent writes are now possible for IPF, compressed images, EXT ADF, DMS
+    * the folder for the save files can be customized under Amiga > Software > Paths
+* added Amiga 4-player adapter
+* added Amiga copy protection dongle support
+* besides PRG, P00 and T64 are loadable as D64
+* fixed a bug not finishing Drag'n'Drop in GTK 
+* UI changes
+    * many global options (apply equally to C64/Amiga) are distributed among the individual emulator options
+    * volume slider has moved to status bar
+* changed BuildSystem to CMAKE
+* added Linux/BSD XCB input driver for keyboard/mouse
+
+[looking for Shader authors]
+* interested in shaders for
+  * [Luma/Chroma crosstalk, probably last unsupported C64 effect](https://bitbucket.org/piciji/denise/issues/1/video-old-vic2-chroma-effect-on-odd-chars)
+  * wrap image with monitor, floppy drive and optional keyboard
+* added option for SLANGP files: luma_chroma = true
+    * Luma Chroma input to prevent lossy conversion from RGB
+    * Alpha Channel is used for Pixel meta data (C64 VIC2 AEC and BA signal affect luminance)
+    * 
+* there are parameters that are not visible to the user or can be operated by user
+    * the emulator sets them automatically and can be used by the shader author if necessary
+    * autoEmu_driveLED, autoEmu_cropTop, autoEmu_cropLeft, autoEmu_lace, autoEmu_hires, autoEmu_pal, autoEmu_subRegion
+* if someone is interested in creating a shader with a virtual keyboard, the appropriate "auto" parameters are added (e.g., relative click X/Y)
+* still missing RA features
+  * path wildcards
+  * sub-frames for BFI 
+
 ## 2.2.1
 * fixed spanish translation
 

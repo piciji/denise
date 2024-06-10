@@ -6,13 +6,22 @@ namespace LIBAMI {
 auto Agnus::startHblank() -> void {
     bool _vblank = vBlank && !vBlankStart;
 
+    if (!vPos) { // line 0
+        // https://eab.abime.net/showpost.php?p=1682826&postcount=340
+
+        if ((model == OCS) && !system->crop.active())
+            _vblank = false; // without crop -> we want to see last shorter line
+        if ((model == OCS_A1000) && system->crop.active())
+            _vblank = true; // with crop -> we need to drop last shorter line to get same cropped image size like the other models
+    }
+
     if (_vblank && lineVCounter) {
         denise.process();
         if (laceFrame & 1)
             lineVCounter--;
 
-        if (lineVCounter < 150) {// could happen, if beam position has been changed or uncontrolled register usage
-            lineVCounter = 150; // otherwise video driver could crash
+        if (lineVCounter < ((laceFrame & 3) ? 300 : 150)) {// could happen, if beam position has been changed or uncontrolled register usage
+            lineVCounter = (laceFrame & 3) ? 300 : 150; // otherwise video driver could crash
             std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
         } else if (lineVCounter > ((laceFrame & 3) ? 600 : 300) ) {
             lineVCounter = (laceFrame & 3) ? 600 : 300;
