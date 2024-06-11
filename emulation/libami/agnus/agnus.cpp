@@ -275,7 +275,7 @@ auto Agnus::waitKeyboardReset() -> void {
         interface->informPowerLED(false);
     }
 
-    updateEvent<EVENT_LEAVE_EMULATION>(100000);
+    //updateEvent<EVENT_LEAVE_EMULATION>(100000);
 
     while(true) { // CPU and most chips on hold, Denise hasn't a reset line
         dmaCycle();
@@ -748,8 +748,8 @@ auto Agnus::vposw(uint16_t value) -> void {
     if (vPosBefore != vPos)
         fpsChange |= 2;
 
-    if (fpsChange && !hasActiveEvent<EVENT_LEAVE_EMULATION>())
-        updateEvent<EVENT_LEAVE_EMULATION>(150000);
+    //if (fpsChange && !hasActiveEvent<EVENT_LEAVE_EMULATION>())
+      //  updateEvent<EVENT_LEAVE_EMULATION>(150000);
 }
 
 auto Agnus::vhposw(uint16_t value) -> void {
@@ -802,8 +802,8 @@ auto Agnus::vhposw(uint16_t value) -> void {
         hPos = hPos ? (hPos - 1) : 0xff;
     }
 
-    if (fpsChange && !hasActiveEvent<EVENT_LEAVE_EMULATION>())
-        updateEvent<EVENT_LEAVE_EMULATION>(150000);
+   // if (fpsChange && !hasActiveEvent<EVENT_LEAVE_EMULATION>())
+     //   updateEvent<EVENT_LEAVE_EMULATION>(150000);
 }
 
 auto Agnus::observeFrameDuration() -> void {
@@ -945,6 +945,8 @@ template auto Agnus::updateEventAbs<Agnus::EVENT_SERIAL>( int64_t absClock ) -> 
 template auto Agnus::updateEventAbs<Agnus::EVENT_INTREQ>(int64_t absClock) -> void;
 
 template auto Agnus::updateEvent<Agnus::EVENT_FLOPPY>( int delay ) -> void;
+
+template auto Agnus::updateEvent<Agnus::EVENT_LEAVE_EMULATION>(int delay) -> void;
 
 template auto Agnus::getEventDelay<Agnus::EVENT_FLOPPY>() -> unsigned;
 

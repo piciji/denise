@@ -143,7 +143,12 @@ auto pStatusBar::update() -> void {
 			Slider* slider = new Slider(Slider::Orientation::HORIZONTAL);
 			slider->setLength( part.sliderLength );
 			slider->setPosition( part.sliderPosition );
-			slider->onChange = part.onChange;
+			StatusBar::Part* _part = &part;
+			slider->onChange = [_part](unsigned position) {
+				_part->sliderPosition = position;
+				if (_part->onChange)
+					_part->onChange(position);
+			};
 			gtkWidget = slider->p.gtkWidget;
 
 			pSystem::addCssClass(gtkWidget, "smallerOne");

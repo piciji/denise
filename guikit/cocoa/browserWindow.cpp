@@ -80,35 +80,41 @@
     bool informInsertion = pBW.multi && (pBW.sortedFiles.size() > 1);
 
     if ((path != browserWindow->p.selectedPath) || informInsertion) {
-        if (state.onSelectionChange && listView) {
-            listView->reset();
+        if (state.onSelectionChange) {
+            if (listView)
+                listView->reset();
             
             if (informInsertion) {
                 auto listings = state.onSelectionChange( "" );
-                int i = 0;
-                auto _s = GUIKIT::pFont::size([(id)listView->p.cocoaView font], " ");
-                int maxChars = state.contentView.width / _s.width;
                 
-                for(auto& file : pBW.sortedFiles) {
-                    if (i >= listings.size())
-                        break;
+                if (listView) {
+                    int i = 0;
+                    auto _s = GUIKIT::pFont::size([(id)listView->p.cocoaView font], " ");
+                    int maxChars = state.contentView.width / _s.width;
                     
-                    std::string ident = GUIKIT::String::removeExtension(file, 2);
-                    ident += "  " + listings[i++].entry + ": ";
-                    if (ident.size() > maxChars)
-                        ident = ident.substr( ident.size() - maxChars );
+                    for(auto& file : pBW.sortedFiles) {
+                        if (i >= listings.size())
+                            break;
                         
-                    listView->append({ident});
+                        std::string ident = GUIKIT::String::removeExtension(file, 2);
+                        ident += "  " + listings[i++].entry + ": ";
+                        if (ident.size() > maxChars)
+                            ident = ident.substr( ident.size() - maxChars );
+                        
+                        listView->append({ident});
+                    }
                 }
             } else {
                 auto rows = state.onSelectionChange(path);
                 
-                for(auto& row : rows) {
-                    listView->append({row.entry});
-                }
-                unsigned i = 0;
-                for(auto& row : rows) {
-                    listView->setRowTooltip(i++, row.tooltip);
+                if (listView) {
+                    for(auto& row : rows) {
+                        listView->append({row.entry});
+                    }
+                    unsigned i = 0;
+                    for(auto& row : rows) {
+                        listView->setRowTooltip(i++, row.tooltip);
+                    }
                 }
             }
         }
