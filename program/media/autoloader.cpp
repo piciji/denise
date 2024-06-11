@@ -139,12 +139,13 @@ auto Autoloader::postProcessing() -> void {
             if (slotMode() || (ddControl.mode == Mode::Open))
                 activateDrive( ddControl.emulator, mediaGroup, countImagesFor(mediaGroup) + (slotMode() ? ddControl.selection : 0), activeEmulator == ddControl.emulator );
 
-            if (view && activeEmulator && (ddControl.mode == Mode::Open || ddControl.mode == Mode::OpenWithSlot || ddControl.mode == Mode::DragnDrop) ) {
-                if (shouldCaptureMouse(ddControl.emulator, settings)) {
-                    view->cursorHideTimer.setInterval(200);
-                    view->cursorHideTimer.setEnabled();
-                }
+            if (view && activeEmulator && (ddControl.mode == Mode::OpenWithSlot || ddControl.mode == Mode::DragnDrop) ) {
                 view->setForeground();
+                if (shouldCaptureMouse(ddControl.emulator, settings)) {
+                    //view->cursorHideTimer.setInterval(200);
+                    //view->cursorHideTimer.setEnabled();
+                    inputDriver->mAcquire();
+                }
             } else if ( emuView && emuView->visible())
                 emuView->setFocused();
 
@@ -272,11 +273,16 @@ auto Autoloader::postProcessing() -> void {
 			if (mediaGroup->isTape())
 				view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
 
-            if (shouldCaptureMouse(ddControl.emulator, settings)) {
-		        view->cursorHideTimer.setInterval(200);
-		        view->cursorHideTimer.setEnabled();
+            view->setForeground();
+            view->setFocused();
+            
+            if (ddControl.mode == Mode::AutoStartWithSlot || ddControl.mode == Mode::DragnDrop) {
+                if (shouldCaptureMouse(ddControl.emulator, settings)) {
+                    //view->cursorHideTimer.setInterval(200);
+                    //view->cursorHideTimer.setEnabled();
+                    inputDriver->mAcquire();
+                }
 		    }
-			view->setForeground();
 
 			if (!cmd->debug && (mediaGroup->isTape() || mediaGroup->isDisk()) ) {
                 program->initAutoWarp(mediaGroup);

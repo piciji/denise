@@ -250,7 +250,13 @@ auto pStatusBar::update() -> void {
             Slider* slider = new Slider(Slider::Orientation::HORIZONTAL);
             slider->setLength( part.sliderLength );
             slider->setPosition( part.sliderPosition );
-            slider->onChange = part.onChange;
+            StatusBar::Part* _part = &part;
+            slider->onChange = [_part](unsigned position) {
+                _part->sliderPosition = position;
+                if (_part->onChange)
+                    _part->onChange(position);
+            };
+            
             view = slider->p.cocoaView;
 
             if (i == countVisible && (area.size.width > xPos) )
@@ -329,6 +335,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 
         } else if (part.sliderLength) {
             Slider* slider = (Slider*)widget;
+            
             if (slider->position() != part.sliderPosition)
                 slider->setPosition( part.sliderPosition );
 

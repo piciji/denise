@@ -516,8 +516,10 @@ auto pWindow::setDroppable(bool droppable) -> void {
 
 auto pWindow::setFocused() -> void {
     @autoreleasepool {
-        //[cocoaWindow makeKeyAndOrderFront:nil];
-        [cocoaWindow orderFrontRegardless];
+        [cocoaWindow makeKeyAndOrderFront:nil];
+        //[cocoaWindow orderFrontRegardless];
+        //[cocoaWindow makeKeyWindow];
+        [NSApp activateIgnoringOtherApps:YES];
     }
 }
 
