@@ -220,7 +220,10 @@ auto System::run() -> void {
         runAhead.pos = runAhead.frames;
         denise.setDisableSequencer( runAhead.performance ? 1 : 2 );
         paula.disableAudioOut( runAhead.frames > 1 );
-    }
+
+        agnus.updateEvent<Agnus::EVENT_LEAVE_EMULATION>(((227 * 312) * (runAhead.frames + 1)) + 30000);
+    } else
+        agnus.updateEvent<Agnus::EVENT_LEAVE_EMULATION>(227 * 312 + 30000); // Blitter could block CPU too long
 
     labelRunAhead:
 
@@ -260,7 +263,7 @@ auto System::run() -> void {
     if (observer.stateChange)
         informAboutStateChange();
 
-    agnus.setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
+    //agnus.setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
 }
 
 auto System::informAboutKeyUpdate() -> void {

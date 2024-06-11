@@ -348,7 +348,9 @@ auto Agnus::leaveEmulationEvent() -> void {
     // Frequent changes in position (VHPOSW) can cause this to never happen or only after a very long time. In order to keep the user interface responsive,
     // control must be returned in a timely manner.
     // todo: blank screen in such cases
+    interface->log("frame is too long, force back to UI");
     system->leaveEmulation = true;
+    system->runAhead.pos = 0;
     setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
 }
 
