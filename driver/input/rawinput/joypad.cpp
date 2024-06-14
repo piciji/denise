@@ -18,7 +18,7 @@ struct RawJoypad {
 		};
 		std::vector<Hats> hats;
         
-        int16_t axis[6] = {0};
+        long axis[6] = {0};
         uint8_t axisMap[6];
 	};
 	std::vector<Joypad> joypads;
@@ -208,18 +208,19 @@ struct RawJoypad {
                 case 0x34:
                 case 0x35: {
                     if (pJoypad->isXInputDevice) {
-                        
-                        pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( value - 32767 );
-                        
+                    	InterlockedExchange(&(pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7]), sclamp<16>( value - 32767 ));
+                        //pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( value - 32767 );
                     } else {
                         signed range = data.pValueCaps[i].LogicalMax - data.pValueCaps[i].LogicalMin;
                         if (range == 0) {
-                            pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( ((value & 0xff) - 128) << 8 );
+                        	InterlockedExchange(&(pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7]), sclamp<16>( ((value & 0xff) - 128) << 8 ));
+                            //pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( ((value & 0xff) - 128) << 8 );
                             
                         } else {                            
                             int32_t _value = ((((int32_t)value - data.pValueCaps[i].LogicalMin) * 65535ll) / range) - 32767;
 
-                            pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( _value);
+                        	InterlockedExchange(&(pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7]), sclamp<16>( _value) );
+                            //pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( _value);
                         }
                             
                     }

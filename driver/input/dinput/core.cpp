@@ -432,7 +432,7 @@ struct DI_IDENT_CORE : DI_IDENT {
 	}
 	
     auto mAcquire() -> void {
-		if (!dinMouse) return;
+		if (!dinMouse || (GetForegroundWindow() != hwndMain)) return;
 		if (!mAcquired) {
 			dinMouse->Unacquire();
 			dinMouse->SetCooperativeLevel(hwndMain, DISCL_EXCLUSIVE | DISCL_FOREGROUND);

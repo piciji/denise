@@ -550,14 +550,13 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
     if (!state)
         return false;
 
-    context->hDlg = hDlg;
-    HWND listBox = GetDlgItem(hDlg, state->contentView.id);
+    context->hDlg = hDlg;   
     
     static HFONT okFont = nullptr;    
     
     switch (uMsg) {
         case WM_INITDIALOG: {
-            
+            HWND listBox = GetDlgItem(hDlg, state->contentView.id);
             if (okFont) {
                 pFont::free( okFont );
                 okFont = nullptr;
@@ -771,6 +770,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 
             } else if ( ((OFNOTIFY*)lParam)->hdr.code == CDN_SELCHANGE ) {
                 bool _hit = false;
+                HWND listBox = GetDlgItem(hDlg, state->contentView.id);
                 if (listBox) {
                     SendMessage( listBox, WM_SETREDRAW, 0, 0);
                     SendMessage( listBox, LB_RESETCONTENT, 0, 0);
@@ -878,7 +878,8 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
         
         case WM_COMMAND: {
             auto widgetId = LOWORD(wParam);
-            
+            HWND listBox = GetDlgItem(hDlg, state->contentView.id);
+
             for (auto& button : context->browserWindow.state.buttons) {
                 
                 if (widgetId == button.id) {

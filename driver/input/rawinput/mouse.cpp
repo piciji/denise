@@ -8,12 +8,12 @@ struct RawMouse {
         HANDLE handle = nullptr;
         HANDLE ntHandle = nullptr;
 
-        signed lastX = 0;
-        signed lastY = 0;
+        long lastX = 0;
+        long lastY = 0;
 
-        signed relativeX = 0;
-        signed relativeY = 0;
-        signed relativeZ = 0;
+        long relativeX = 0;
+        long relativeY = 0;
+        long relativeZ = 0;
         bool buttons[5] = {0};
         Hid::Mouse* hid = nullptr;        
     };
@@ -21,7 +21,7 @@ struct RawMouse {
     std::vector<Mouse> mice;
     
 	auto mAcquire() -> void {
-		if (!mAcquired) {
+		if (!mAcquired && (GetForegroundWindow() == handle)) {
 			mAcquired = true;
 			ShowCursor(false);
 			SetFocus(handle);
@@ -113,8 +113,8 @@ struct RawMouse {
             return;                
         
 		if ((iMouse.usFlags & 1) == MOUSE_MOVE_RELATIVE) {
-			pMouse->relativeX += iMouse.lLastX;
-			pMouse->relativeY += iMouse.lLastY;
+			InterlockedExchangeAdd(&pMouse->relativeX, iMouse.lLastX);
+			InterlockedExchangeAdd(&pMouse->relativeY, iMouse.lLastY);
 
 		} else if (iMouse.lLastX || iMouse.lLastY) {
             bool vDesktop = (iMouse.usFlags & MOUSE_VIRTUAL_DESKTOP) ? true : false;
@@ -123,8 +123,8 @@ struct RawMouse {
             int x = (int)(((float)iMouse.lLastX / 65535.0f) * w);
             int y = (int)(((float)iMouse.lLastY / 65535.0f) * h);
 
-            pMouse->relativeX += (int)(x - pMouse->lastX);
-            pMouse->relativeY += (int)(y - pMouse->lastY);
+			InterlockedExchangeAdd(&pMouse->relativeX, x - pMouse->lastX);
+			InterlockedExchangeAdd(&pMouse->relativeY, y - pMouse->lastY);
 
             pMouse->lastX = x;
             pMouse->lastY = y;
@@ -133,7 +133,7 @@ struct RawMouse {
         auto bFlags = iMouse.usButtonFlags;
 
 		if (bFlags & RI_MOUSE_WHEEL) {
-			pMouse->relativeZ += (int16_t) iMouse.usButtonData;
+			InterlockedExchangeAdd(&pMouse->relativeZ, iMouse.usButtonData);
 		}
 
 		if (bFlags & RI_MOUSE_BUTTON_1_DOWN) pMouse->buttons[0] = 1;
