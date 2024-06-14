@@ -557,7 +557,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         emuThread->lock();
         States::getInstance( emulator )->load( stateFast.listView.text(selection, 1), true );
         emuThread->unlock();
-        view->setFocused(300);
+        view->setFocused(100);
 	};	
 		
 	stateFast.top.find.onActivate = [this]() {
@@ -604,7 +604,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         emuThread->lock();
         States::getInstance(emulator)->load(filePath);
         emuThread->unlock();
-        view->setFocused(300);
+        view->setFocused(100);
 	};
 	
 	stateDirect.save.onActivate = [this]() {

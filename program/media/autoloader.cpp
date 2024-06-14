@@ -139,15 +139,20 @@ auto Autoloader::postProcessing() -> void {
             if (slotMode() || (ddControl.mode == Mode::Open))
                 activateDrive( ddControl.emulator, mediaGroup, countImagesFor(mediaGroup) + (slotMode() ? ddControl.selection : 0), activeEmulator == ddControl.emulator );
 
-            if (view && activeEmulator && (ddControl.mode == Mode::OpenWithSlot || ddControl.mode == Mode::DragnDrop) ) {
-                view->setForeground();
-                if (shouldCaptureMouse(ddControl.emulator, settings)) {
-                    //view->cursorHideTimer.setInterval(200);
-                    //view->cursorHideTimer.setEnabled();
-                    inputDriver->mAcquire();
+            if (view) {
+                if (activeEmulator && (ddControl.mode == Mode::OpenWithSlot || ddControl.mode == Mode::DragnDrop) ) {
+
+                    if (shouldCaptureMouse(ddControl.emulator, settings))
+                        view->prepareCursorHide(200, true);
+                    else {
+                        view->setForeground();
+                        view->setFocused(100 );
+                    }
+                } else {
+                    view->setForeground();
+                    view->setFocused(100);
                 }
-            } else if ( emuView && emuView->visible())
-                emuView->setFocused();
+            }
 
             autoloader->setOnlyForFirstDrive(ddControl.emulator, &mediaGroup->media[0]);
             settings->set<int>("swap_pos", -1, false);
@@ -274,15 +279,16 @@ auto Autoloader::postProcessing() -> void {
 				view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
 
             view->setForeground();
-            view->setFocused();
-            
+
+		    bool acqMouse = false;
             if (ddControl.mode == Mode::AutoStartWithSlot || ddControl.mode == Mode::DragnDrop) {
-                if (shouldCaptureMouse(ddControl.emulator, settings)) {
-                    //view->cursorHideTimer.setInterval(200);
-                    //view->cursorHideTimer.setEnabled();
-                    inputDriver->mAcquire();
-                }
+                if (shouldCaptureMouse(ddControl.emulator, settings))
+                    acqMouse = true;
 		    }
+		    if (acqMouse)
+		        view->prepareCursorHide(100, true);
+		    else
+		        view->setFocused(100 );
 
 			if (!cmd->debug && (mediaGroup->isTape() || mediaGroup->isDisk()) ) {
                 program->initAutoWarp(mediaGroup);

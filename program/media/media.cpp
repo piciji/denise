@@ -504,7 +504,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     statusHandler->setMessage( trans->get( "tape spooled" ) );
                 else
                     statusHandler->setMessage( trans->get( "program_injected" ) );
-                view->setFocused( 300 );                
+                view->setFocused( 100 );
             }
             emuThread->unlock();
         };
@@ -537,7 +537,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         program->power( emulator );
         emuThread->unlock();
         
-        view->setFocused( 300 );                
+        view->setFocused( 100 );
     };
     
     deactivateCart.onActivate = [this]() {        
@@ -551,7 +551,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         program->power( emulator );
         emuThread->unlock();
         
-        view->setFocused( 300 );                
+        view->setFocused( 100 );
     };
 }
 

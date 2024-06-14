@@ -65,6 +65,7 @@ struct View : public GUIKIT::Window {
     auto updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void;
     auto updateCartButtons( Emulator::Interface* emulator ) -> void;
 	auto setAnyload(Emulator::Interface* emulator) -> void;
+	auto prepareCursorHide(unsigned interval, bool withFocus = false) -> void;
 
     auto buildMenu() -> void;
     auto updateViewport() -> void;

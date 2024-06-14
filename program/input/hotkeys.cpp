@@ -333,12 +333,10 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 inputDriver->mUnacquire();					
             } else if (view->fullScreen()) {
                 // dinput needs this, when grab button is mapped to mouse
-                view->cursorHideTimer.setInterval(200);
-                view->cursorHideTimer.setEnabled();
+                view->prepareCursorHide(200);
                 //inputDriver->mAcquire();
             } else if (!program->isPause && program->isAnalogDeviceConnected()) {
-                view->cursorHideTimer.setInterval(200);
-                view->cursorHideTimer.setEnabled();
+                view->prepareCursorHide(200);
                 // inputDriver->mAcquire();
                 view->setFocused();
             }
