@@ -830,3 +830,4 @@ disksaves = Disk Saves
 select_disksave_folder = select disk saves folder
 clear save file = clear save file
 save file deleted = The save file has been deleted.
+left click grabs mouse = left click grabs mouse

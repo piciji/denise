@@ -315,20 +315,25 @@ auto View::build() -> void {
     };
 	
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
-        if ((button == GUIKIT::Mouse::Button::Left) && VideoManager::placeHolderFrames) {
-            emuThread->lock();
+	    if (button == GUIKIT::Mouse::Button::Left) {
 
-            int result = cursorForPlaceholderInUpperTriangle();
-            if (result != -1)
-                VideoManager::hidePlaceHolder();
+	        if (VideoManager::placeHolderFrames) {
+	            emuThread->lock();
 
-            if (result == 1)
-                program->power(program->getEmulator("C64"));
-            else if (result == 0)
-                program->power(program->getEmulator("Amiga"));
+	            int result = cursorForPlaceholderInUpperTriangle();
+	            if (result != -1)
+	                VideoManager::hidePlaceHolder();
 
-            emuThread->unlock();
-        }
+	            if (result == 1)
+	                program->power(program->getEmulator("C64"));
+	            else if (result == 0)
+	                program->power(program->getEmulator("Amiga"));
+
+	            emuThread->unlock();
+	        } else if ( !inputDriver->mIsAcquired() && grabMouseLeft) {
+	            prepareCursorHide(200);
+	        }
+	    }
 	};
     
     viewport.onMouseMove = [this](GUIKIT::Position& pos) {
@@ -1668,6 +1673,11 @@ auto View::updateDiskMenu() -> void {
             d.inactive.setEnabled(showResetAndHide);
         }
     }
+}
+
+auto View::updateMouseGrab() -> void {
+    auto settings = program->getSettings( activeEmulator );
+    grabMouseLeft = settings->get<bool>("grab_mouse_left", false);
 }
 
 auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void {

@@ -4,7 +4,7 @@
 #include "../../guikit/api.h"
 #include "message.h"
 
-struct View : public GUIKIT::Window {
+struct View : GUIKIT::Window {
     Message* message;
 	GUIKIT::Timer anyloadTimer;
 	GUIKIT::Timer displayChangeTimer;
@@ -16,6 +16,7 @@ struct View : public GUIKIT::Window {
 	bool requestFullscreenSwitch = false;
     bool customResizeMode = false;
     int dropZone = 0;
+	bool grabMouseLeft = false;
 
     struct ShaderFavourites {
         std::string path;
@@ -90,6 +91,7 @@ struct View : public GUIKIT::Window {
     auto updateFastforwardCheck() -> void;
     auto updateEmuUsage() -> void;
     auto updateDiskMenu() -> void;
+	auto updateMouseGrab() -> void;
 
     GUIKIT::Viewport viewport;    
     

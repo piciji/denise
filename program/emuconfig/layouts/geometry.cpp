@@ -105,8 +105,6 @@ RatioLayout::Control::Control() {
     append(native, {0u, 0u}, 5);
     append(nativeFree, {0u, 0u}, 20);
     append(integerScaling, {0u, 0u});
-    append(spacer, {~0u, 0u});
-    append(cropWindow, {0u, 0u});
 
     GUIKIT::RadioBox::setGroup( window, tv, native, nativeFree );
 
@@ -131,7 +129,8 @@ RatioLayout::Dimension::Dimension() {
     append(width, {0u, 0u}, 10);
     append(height, {0u, 0u}, 10);
     append(refresh, {0u, 0u}, 10);
-    append(apply, {0u, 0u});
+    append(apply, {0u, 0u}, 10);
+    append(cropWindow, {0u, 0u});
     append(spacer, {~0u, 0u});
     append(aspectCorrectResizing, {0u, 0u});
 
@@ -141,7 +140,7 @@ RatioLayout::Dimension::Dimension() {
 RatioLayout::RatioLayout() {
     append(control, {~0u, 0u}, 10);
     append(hotkey, {~0u, 0u}, 10);
-    append(dimension, {0u, 0u});
+    append(dimension, {~0u, 0u});
 
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -324,7 +323,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
-    ratioLayout.control.cropWindow.onActivate = [this]() {
+    ratioLayout.dimension.cropWindow.onActivate = [this]() {
         view->adjustToEmu(true);
     };
 
@@ -564,12 +563,12 @@ auto GeometryLayout::translate() -> void {
     ratioLayout.control.native.setTooltip( trans->getA("Native tooltip") );
     ratioLayout.control.nativeFree.setText( trans->getA("Native free") + " (3)" );
     ratioLayout.control.integerScaling.setText( trans->getA("integer_scaling") );
-    ratioLayout.control.cropWindow.setText( trans->getA("crop window") );
     ratioLayout.hotkey.label.setText( trans->getA("switchable by Hotkey", true) );
     ratioLayout.dimension.aspectCorrectResizing.setText(trans->get("lock aspect ratio"));
     ratioLayout.dimension.label.setText(trans->getA("resolution", true));
     ratioLayout.dimension.refresh.setText(trans->getA("refresh"));
     ratioLayout.dimension.apply.setText(trans->getA("apply"));
+    ratioLayout.dimension.cropWindow.setText( trans->getA("crop window") );
 
     monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
     monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );

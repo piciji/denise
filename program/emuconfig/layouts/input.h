@@ -3,6 +3,7 @@ struct InputSelector : GUIKIT::HorizontalLayout {
     GUIKIT::ComboButton device;
 	GUIKIT::CheckButton hotkeys;
     GUIKIT::CheckButton globalHotkeys;
+    GUIKIT::CheckBox grabMouseLeft;
 	GUIKIT::Widget spacer;
     GUIKIT::Label plugin;
     

@@ -76,8 +76,6 @@ struct RatioLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::RadioBox native;
         GUIKIT::RadioBox nativeFree;
         GUIKIT::CheckBox integerScaling;
-        GUIKIT::Widget spacer;
-        GUIKIT::Button cropWindow;
         Control();
     } control;
 
@@ -96,6 +94,7 @@ struct RatioLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::Button refresh;
         GUIKIT::Button apply;
 
+        GUIKIT::Button cropWindow;
         GUIKIT::Widget spacer;
         GUIKIT::CheckBox aspectCorrectResizing;
 
