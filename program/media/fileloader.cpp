@@ -329,8 +329,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     }, [this, emulator, mIsAcquiredBefore]() {
         this->resetPreview(emulator);
 
-        if (view)
-            view->setFocused(300);
+        if (view) {
+            view->setForeground();
+            view->setFocused();
+        }
 
         HideMouseIfWasBefore
     } );
@@ -382,11 +384,12 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         autoloader->loadFiles();
         emuThread->unlock();
     } else if (view) {
-        view->setFocused(300);
+        view->setFocused(100);
     }
 
     resetPreview(emulator);
-
+    view->setForeground();
+    view->setFocused();
     if (mIsAcquiredBefore && view->fullScreen())
         inputDriver->mAcquire();
 }
@@ -758,7 +761,7 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     if (mediaGroup->isTape())
         view->updateTapeIcons(Emulator::Interface::TapeMode::Play);
 
-    view->setFocused(300);
+    view->setFocused(100);
 
     if (mediaGroup->isDrive()) {
         program->initAutoWarp(mediaGroup);

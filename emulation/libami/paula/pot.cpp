@@ -46,6 +46,8 @@ auto Paula::potGoR() -> uint16_t {
 
 auto Paula::potGo(uint16_t value) -> void {
     pot.go = value;
+    if (system->dongle.connected())
+        system->donglePotGo(value);
 
     if (value & POT_DIR_X0) pot.capX0 = (value & POT_DAT_X0) ? 255 : 0;
     if (value & POT_DIR_Y0) pot.capY0 = (value & POT_DAT_Y0) ? 255 : 0;

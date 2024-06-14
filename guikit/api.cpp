@@ -269,7 +269,7 @@ auto Window::setFocused(unsigned delay) -> void {
     if (!focusTimer)
         focusTimer = new Timer;
     
-	focusTimer->setInterval(100);
+	focusTimer->setInterval(delay);
 	
 	focusTimer->onFinished = [this]() {
 		focusTimer->setEnabled(false);		

@@ -191,6 +191,11 @@ auto View::build() -> void {
 		updateViewport();
         program->finishStartup();
     };
+
+    onUnFocus = [this]() {
+        if (inputDriver->mIsAcquired())
+            inputDriver->mUnacquire();
+    };
 	
 	winapi.onMenu = []() {
 	//	audioDriver->clear();
@@ -302,6 +307,10 @@ auto View::build() -> void {
     cursorHideTimer.setInterval(1000);
     cursorHideTimer.onFinished = [this]() {
         cursorHideTimer.setEnabled(false);
+        if (cursorHideTimer.data() & 1) {
+            view->setForeground();
+            view->setFocused();
+        }
         inputDriver->mAcquire();
     };
 	
@@ -409,7 +418,7 @@ auto View::setDragnDrop() -> void {
         autoloader->init( files, false, mode, selection );
         autoloader->loadFiles();
 
-        view->setFocused(300);
+        view->setFocused(100);
         emuThread->unlock();
     };
 
@@ -421,9 +430,9 @@ auto View::setDragnDrop() -> void {
 auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 	requestFullscreenSwitch = true;
     if(!forceUnacquire && fullScreen) {
-        if (GUIKIT::Application::isCocoa()) {
-            cursorHideTimer.setEnabled();
-        } else
+        if (GUIKIT::Application::isCocoa())
+            prepareCursorHide(1000);
+        else
             inputDriver->mAcquire();
     } else {
         cursorHideTimer.setEnabled(false);
@@ -440,6 +449,12 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
+}
+
+auto View::prepareCursorHide(unsigned interval, bool withFocus) -> void {
+    cursorHideTimer.setInterval(interval);
+    cursorHideTimer.setData(withFocus ? 1 : 0);
+    cursorHideTimer.setEnabled();
 }
 
 auto View::updateMenuBar( bool toggle ) -> void {

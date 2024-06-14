@@ -67,6 +67,32 @@ template<bool portB> auto System::dongleJoydat(uint16_t& val) -> void {
                 val |= 0x301;
             }
             break;
+        case DongleStrikerManager:
+            if (portB) {
+                if (dongle.control >= 4) {
+                    val &= ~0x0303;
+                    val |= 0x0203;
+                    dongle.control--;
+                } else if (dongle.control > 0) {
+                    val &= ~0x0303;
+                    val |= 0x0200;
+                }
+            }
+            break;
+        default: break;
+    }
+}
+
+auto System::donglePotGo(uint16_t& val) -> void {
+    switch(dongle.type) {
+        case DongleStrikerManager:
+            if ((val & 0x0500) == 0x0500) {
+                dongle.control++;
+            } else {
+                if (dongle.control > 0)
+                    dongle.control--;
+            }
+            break;
         default: break;
     }
 }

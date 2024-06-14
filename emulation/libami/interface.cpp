@@ -51,7 +51,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdRTC, "RTC", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdSerialLoopback, "Serial Loopback", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdFakeECSDenise, "Fake ECS Denise", Model::Type::Switch, Model::Purpose::Misc, 0});
-    models.push_back({ModelIdDongle, "Plugin Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,5}, {"None", "RoboCop 3", "B.A.T. II", "Cricket Captain", "Leader Board", "Rugby Coach"}});
+    models.push_back({ModelIdDongle, "Plugin Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,6}, {"None", "RoboCop 3", "B.A.T. II", "Cricket Captain", "Leader Board", "Rugby Coach", "Striker Manager"}});
 }
 
 auto Interface::prepareMedia() -> void {

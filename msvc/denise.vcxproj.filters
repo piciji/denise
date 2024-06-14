@@ -1491,9 +1491,6 @@
     <ClCompile Include="..\driver\input\rawinput\mouse.cpp">
       <Filter>driver\input\rawinput</Filter>
     </ClCompile>
-    <ClCompile Include="..\driver\input\rawinput\worker.cpp">
-      <Filter>driver\input\rawinput</Filter>
-    </ClCompile>
     <ClCompile Include="..\driver\input\rawinput\hid.cpp">
       <Filter>driver\input\rawinput</Filter>
     </ClCompile>

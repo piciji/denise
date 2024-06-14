@@ -9,73 +9,188 @@
 
 namespace DRIVER {
 	
-#include "hid.cpp"    
-#include "worker.cpp"
+#include "hid.cpp"
+#include "keyboard.cpp"
+#include "mouse.cpp"
+#include "joypad.cpp"
 	
 struct RawInput : Input {
-	RawWorker rawWorker;
-	HANDLE workerThread = nullptr;    
-		
+	HWND hwnd = nullptr;
+	bool deviceChanged = false;
+	bool libError = false;
+
+	RawMouse mouse;
+	RawKeyboard keyboard;
+	RawJoypad joypad;
+
+	RawInput() {
+		libError = !lookupHidLibrary();
+	}
+
 	auto poll() -> std::vector<Hid::Device*> {		
 		std::vector<Hid::Device*> devices;				
-		
-		EnterCriticalSection( &rawWorker.mcsSc );
-		
-		if(rawWorker.deviceChanged) {
-            rawWorker.initDevices();
-		}
-		
-		rawWorker.keyboard.poll( devices );
 
-		rawWorker.mouse.poll( devices );
+		if(deviceChanged)
+            initDevices();
 		
-		rawWorker.joypad.poll( devices );
-				
-		LeaveCriticalSection( &rawWorker.mcsSc );
+		keyboard.poll( devices );
+
+		mouse.poll( devices );
 		
+		joypad.poll( devices );
+
 		return devices;
 	}
 	
 	auto init( uintptr_t handle ) -> bool {
 		term();
-		
-		rawWorker.mouse.handle = (HWND)handle;
-		
-		InitializeCriticalSection( &rawWorker.mcsSc );
-		
-		workerThread = CreateThread(NULL, 0, RawWorker::EntryPoint, (void*)&rawWorker, 0, NULL);
 
-		while(true) {
-			Sleep(1);
-			EnterCriticalSection( &rawWorker.mcsSc );
-			bool ready = rawWorker.ready;
-			LeaveCriticalSection( &rawWorker.mcsSc );
-			if (ready) break;
+		WNDCLASS wc = {0};
+		wc.lpfnWndProc   = RawInputWndProc;
+		wc.lpszClassName = L"RawInputClass";
+		wc.hInstance = GetModuleHandle(0);
+
+		if (!RegisterClass(&wc) && (GetLastError() != ERROR_CLASS_ALREADY_EXISTS))
+			return false;
+
+		if (!(hwnd = CreateWindowEx(0, wc.lpszClassName,
+			NULL, 0, 0, 0, 0, 0,
+			HWND_MESSAGE, NULL, NULL, NULL))) {
+			UnregisterClass(wc.lpszClassName, NULL);
+			return false;
 		}
-		
+
+		SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)this);
+
+		mouse.handle = (HWND)handle;
+
+		initDevices();
+		keyboard.init(); // no multi keyboard support (at the moment)
+
+		RAWINPUTDEVICE riDevice[ 4 ];
+
+		riDevice[0].usUsagePage = 1;
+		riDevice[0].usUsage = 6; //Keyboard
+		riDevice[0].dwFlags = RIDEV_INPUTSINK | RIDEV_NOHOTKEYS | RIDEV_DEVNOTIFY;
+		riDevice[0].hwndTarget = hwnd;
+
+		riDevice[1].usUsagePage = 1;
+		riDevice[1].usUsage = 2; //Mouse
+		riDevice[1].dwFlags = RIDEV_INPUTSINK | RIDEV_DEVNOTIFY;
+		riDevice[1].hwndTarget = hwnd;
+
+		riDevice[2].usUsagePage = 1;
+		riDevice[2].usUsage = 4; //Joypads
+		riDevice[2].dwFlags = RIDEV_INPUTSINK | RIDEV_DEVNOTIFY;
+		riDevice[2].hwndTarget = hwnd;
+
+		riDevice[3].usUsagePage = 1;
+		riDevice[3].usUsage = 5; //Joysticks
+		riDevice[3].dwFlags = RIDEV_INPUTSINK | RIDEV_DEVNOTIFY;
+		riDevice[3].hwndTarget = hwnd;
+
+		RegisterRawInputDevices(riDevice, 4, sizeof(RAWINPUTDEVICE));
+
 		return true;
-	}	
+	}
+
+	auto initDevices() -> void {
+		deviceChanged = false;
+		joypad.init();
+		mouse.init();
+
+		unsigned deviceCount = 0;
+		GetRawInputDeviceList(NULL, &deviceCount, sizeof (RAWINPUTDEVICELIST));
+		RAWINPUTDEVICELIST* list = new RAWINPUTDEVICELIST[deviceCount];
+		GetRawInputDeviceList(list, &deviceCount, sizeof (RAWINPUTDEVICELIST));
+
+		for (unsigned n = 0; n < deviceCount; n++) {
+
+			unsigned pos = deviceCount - n - 1; // add devices in reverse
+			RID_DEVICE_INFO info;
+			unsigned size;
+			info.cbSize = size = sizeof (RID_DEVICE_INFO);
+			GetRawInputDeviceInfo(list[pos].hDevice, RIDI_DEVICEINFO, &info, &size);
+
+			if (info.dwType == RIM_TYPEHID) {
+				if (info.hid.usUsagePage != 1 || (info.hid.usUsage != 4 && info.hid.usUsage != 5))
+					continue;
+
+				if (!libError)
+					joypad.add( list[pos].hDevice );
+
+			} else if (info.dwType == RIM_TYPEMOUSE) {
+
+				mouse.add( list[pos].hDevice );
+			}
+		}
+
+		delete[] list;
+	}
 	
 	auto mAcquire() -> void {
-		rawWorker.mouse.mAcquire();
+		mouse.mAcquire();
 	}
 	
 	auto mUnacquire() -> void {
-		rawWorker.mouse.mUnacquire();
+		mouse.mUnacquire();
 	}
 	
 	auto mIsAcquired() -> bool {
-		return rawWorker.mouse.mIsAcquired();
+		return mouse.mIsAcquired();
 	}
 
     auto setKeyboardCallback( KeyCallback* callback ) -> void {
-        rawWorker.keyboard.keyCallback = callback;
+        keyboard.keyCallback = callback;
     }
 		
 	auto term() -> void {
-		if(workerThread) TerminateThread(workerThread, 0);
-		rawWorker.term();
+		if (hwnd) DestroyWindow(hwnd);
+		deviceChanged = false;
 	}
+
+	auto wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+		if (msg == WM_INPUT_DEVICE_CHANGE) {
+			deviceChanged = true;
+		}
+
+		if (msg != WM_INPUT)
+			return DefWindowProc(hwnd, msg, wparam, lparam);
+
+		unsigned size = 0;
+		GetRawInputData((HRAWINPUT) lparam, RID_INPUT, NULL, &size, sizeof (RAWINPUTHEADER));
+
+		if (size) {
+			RAWINPUT* input = new RAWINPUT[size];
+			GetRawInputData((HRAWINPUT) lparam, RID_INPUT, input, &size, sizeof (RAWINPUTHEADER));
+
+			if (input->header.dwType == RIM_TYPEKEYBOARD) {
+				keyboard.update(input);
+			}
+
+			if (input->header.dwType == RIM_TYPEMOUSE) {
+				mouse.update(input);
+			}
+
+			if (input->header.dwType == RIM_TYPEHID) {
+				if (!libError)
+					joypad.update(input);
+			}
+
+			LRESULT result = DefRawInputProc(&input, size, sizeof (RAWINPUTHEADER));
+			delete[] input;
+
+			return result;
+		}
+
+		return DefWindowProc(hwnd, msg, wparam, lparam);
+	}
+
+	static auto CALLBACK RawInputWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+		RawInput* worker = (RawInput*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+		return worker->wndProc(hwnd, msg, wparam, lparam);
+	}
+
 	
 	~RawInput() { term(); } 
 };

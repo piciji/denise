@@ -246,6 +246,8 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             break;
         }
 		case WM_CONTEXTMENU: {
+            if (lparam == -1)
+                return 0; // by keyboard
 			if (!window.onContext) break;
 			if (GetMenuItemCount(window.p.contextmenu) <= 0) break;			
 			if (!window.onContext()) break;
@@ -494,6 +496,10 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 
             if (window.onFocus)
                 window.onFocus();
+            break;
+        case WM_KILLFOCUS:
+            if (window.onUnFocus)
+                window.onUnFocus();
             break;
         case WM_SETCURSOR:
             if (LOWORD(lparam) == HTCLIENT) {
