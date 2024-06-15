@@ -330,7 +330,7 @@ auto View::build() -> void {
 	                program->power(program->getEmulator("Amiga"));
 
 	            emuThread->unlock();
-	        } else if ( !inputDriver->mIsAcquired() && grabMouseLeft) {
+	        } else if ( grabMouseLeft && !inputDriver->mIsAcquired()) {
 	            prepareCursorHide(200);
 	        }
 	    }
@@ -1509,15 +1509,19 @@ auto View::buildMenu() -> void {
         diskControlMenu.clearSave.setIcon( delImage );
 
         diskControlMenu.clearSave.onActivate = [i]() {
+            emuThread->lock();
             auto path = program->getAssignedSaveFile( activeEmulator->getDisk(i) );
-            if (path.empty())
+            if (path.empty()) {
+                emuThread->unlock();
                 return;
+            }
 
             GUIKIT::File file(path);
             if (file.exists()) {
                 if (file.del())
                     statusHandler->setMessage(trans->getA("save file deleted"), 3, true);
             }
+            emuThread->unlock();
         };
 
         diskControlMenu.menu.append( diskControlMenu.clearSave );

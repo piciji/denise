@@ -680,7 +680,7 @@ auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDe
 		if (updateDevice && updateDevice != &device)
 			continue;		        
         
-        auto sensePercent = program->getSettings(emulator)->get<unsigned>( "analog_sensitivity_" + _underscore(device.name), 50u, { 0u, 100u});
+        auto sensePercent = program->getSettings(emulator)->get<unsigned>( "analog_sensitivity_" + _underscore(device.name), 40u, { 0u, 100u});
 
 		int sense = sensePercent;
 				

@@ -598,7 +598,7 @@ auto InputLayout::updateAnalogSensitivity() -> void {
     
     auto& device = emulator->devices[ deviceId() ];
     
-    auto position = _settings->get<unsigned>("analog_sensitivity_" + _underscore(device.name), 50u, {0u, 100u});
+    auto position = _settings->get<unsigned>("analog_sensitivity_" + _underscore(device.name), 40u, {0u, 100u});
         
     mapControl.analogSensitivity.value.setText( std::to_string(position) + " " + mapControl.analogSensitivity.unit );
     

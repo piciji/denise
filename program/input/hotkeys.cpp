@@ -366,7 +366,9 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             _str += audioManager->dynamicRateControl ? "DRC  " : "";
             float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
             _str += GUIKIT::String::convertDoubleToString(monitorFrequency, 3 );
-            statusHandler->setMessage(_str, 5);
+            emuThread->lock();
+            if (statusHandler)
+                statusHandler->setMessage(_str, 5);
         } break;
         case Hotkey::Id::ThreadedRenderer: {
             bool checked = globalSettings->get("threaded_renderer", true);
@@ -382,10 +384,10 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 configView->driversLayout->vdl.bottom.trAuto.setEnabled(!checked);
             }
 
+            emuThread->lock();
             if (statusHandler)
                 statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA(checked ? "enabled" : "disabled"), 3 );
 
-            emuThread->lock();
             VideoManager::setSynchronize();
         } break;
         case Hotkey::Id::ToggleShader:
@@ -491,6 +493,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                     case 2: emuView->geometryLayout->ratioLayout.control.native.activate(); break;
                     case 3: emuView->geometryLayout->ratioLayout.control.nativeFree.activate(); break;
                 }
+                emuThread->lock();
             } else {
                 emuThread->lock();
                 settings->set<unsigned>("aspect_mode", aspectMode);
@@ -539,6 +542,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 else if (cropType == ((int)CropType::Free + 3) ) emuView->geometryLayout->cropLayout.type4.cropFree4.activate();
                 else if (cropType == ((int)CropType::Free + 4) ) emuView->geometryLayout->cropLayout.type4.cropFree5.activate();
                 else if (cropType == ((int)CropType::Free + 5) ) emuView->geometryLayout->cropLayout.type4.cropFree6.activate();
+                emuThread->lock();
             } else {
                 settings->set<unsigned>("crop_type", cropType);
                 emuThread->lock();
@@ -608,9 +612,10 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             bool state = false;
 
-            if (emuView && emuView->audioLayout)
+            if (emuView && emuView->audioLayout) {
                 state = emuView->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdDigiboost );
-            else {
+                emuThread->lock();
+            } else {
                 emuThread->lock();
                 auto model = activeEmulator->getModel( C64Interface::ModelIdDigiboost );
                 if (model) {
@@ -631,6 +636,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
             if (emuView && emuView->systemLayout) {
                 val = emuView->systemLayout->modelLayout.nextOption( C64Interface::ModelIdSid );
+                emuThread->lock();
             } else {
                 emuThread->lock();
                 auto model = activeEmulator->getModel( C64Interface::ModelIdSid );
@@ -656,9 +662,10 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             bool state = false;
 
-            if (emuView && emuView->audioLayout)
+            if (emuView && emuView->audioLayout) {
                 state = emuView->audioLayout->settingsLayout.toggleCheckbox( C64Interface::ModelIdFilter );
-            else {
+                emuThread->lock();
+            } else {
                 emuThread->lock();
                 auto model = activeEmulator->getModel( C64Interface::ModelIdFilter );
                 if (model) {
@@ -679,10 +686,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             int state;
 
-            if (emuView && emuView->audioLayout)
+            if (emuView && emuView->audioLayout) {
                 state = emuView->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581,
                         id == Hotkey::AdjustBiasUp ? 100: -100 );
-            else {
+
+                emuThread->lock();
+            } else {
                 emuThread->lock();
                 auto model = activeEmulator->getModel( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581);
 
