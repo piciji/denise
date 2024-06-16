@@ -291,7 +291,8 @@ auto pStatusBar::update() -> void {
             usedWidgets.push_back( label );
         }
         
-        [view setToolTip:[NSString stringWithUTF8String:part.tooltip.c_str()]];
+       // one tooltip for NSImageView, need tooltip.m to position a tooltips for single parts
+       // [view setToolTip:[NSString stringWithUTF8String:part.tooltip.c_str()]];
         
         [cocoaView addSubview: view ];
         
@@ -354,7 +355,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
                 label->resetForegroundColor();
         }
         
-        [widget->p.cocoaView setToolTip:[NSString stringWithUTF8String:part.tooltip.c_str()]];
+     //   [widget->p.cocoaView setToolTip:[NSString stringWithUTF8String:part.tooltip.c_str()]];
     }
     
 }

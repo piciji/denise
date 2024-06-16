@@ -1000,7 +1000,8 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool expand) -> void {
     }
 
     //if (expand) {
-        tviShader.setExpanded();
+    tviShader.setExpanded();
+    tviShader.setSelected();
     //    tviParams.setExpanded();
     //}
 }
@@ -1553,7 +1554,8 @@ auto VideoLayout::unloadShader() -> void {
         moduleTree.remove(tviParams);
         moduleTree.remove(tviShader);
         tviBase.setSelected();
-    }
+    } else
+        tviShader.setSelected();
 }
 
 auto VideoLayout::addShaderUI() -> void {
