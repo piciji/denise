@@ -343,6 +343,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         } 
 
         moduleSwitch.setSelection( navIdent );
+        moduleSwitch.synchronizeLayout();
     };
 
     setMargin(10);
@@ -886,7 +887,8 @@ auto VideoLayout::countFloatingPoint(ShaderPreset::Param& param, int& places, in
     places = std::max(places, placesStep);
 }
 
-auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool expand) -> void {
+auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> void {
+
     for(auto tviPass : tviPasses) {
         tviShader.remove(*tviPass);
         delete tviPass;
@@ -999,11 +1001,9 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool expand) -> void {
         layShader.main.info.toParams.setEnabled();
     }
 
-    //if (expand) {
     tviShader.setExpanded();
-    tviShader.setSelected();
-    //    tviParams.setExpanded();
-    //}
+    if (selectIt)
+        tviShader.setSelected();
 }
 
 auto VideoLayout::buildParams(TviParam& tviParam) -> void {
@@ -1023,6 +1023,9 @@ auto VideoLayout::buildParams(TviParam& tviParam) -> void {
     for(int i = 0; i < tviParam.offsets.size(); i++) {
         auto sliderLay = paramSliders[i];
         int offset = tviParam.offsets[i];
+        if (offset >= preset->params.size())
+            break;
+
         auto& shaderParam = preset->params[offset];
 
         if (shaderParam.isDescriptor())
@@ -1517,7 +1520,7 @@ auto VideoLayout::loadShader(std::string path) -> bool {
     ShaderPreset* preset = vManager()->loadPreset(path, errors);
 
     if (preset) {
-        buildShaderUI(preset);
+        buildShaderUI(preset, true);
         layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
         layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
@@ -1554,7 +1557,7 @@ auto VideoLayout::unloadShader() -> void {
         moduleTree.remove(tviParams);
         moduleTree.remove(tviShader);
         tviBase.setSelected();
-    } else
+    } else if (!tviBase.selected())
         tviShader.setSelected();
 }
 

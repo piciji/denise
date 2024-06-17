@@ -238,7 +238,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto updatePresets(bool reloadDriver, bool reloadPreset) -> void;
     auto updateVisibillity() -> void;
     auto loadSettings(bool init = false) -> void;
-    auto buildShaderUI(ShaderPreset* preset, bool expand = true) -> void;
+    auto buildShaderUI(ShaderPreset* preset, bool selectIt = true) -> void;
     auto buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> void;
     auto buildParams(TviParam& tviParam) -> void;
     auto countFloatingPoint(ShaderPreset::Param& param, int& places, int& decimalPlaces) -> void;
