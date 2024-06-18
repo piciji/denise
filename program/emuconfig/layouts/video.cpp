@@ -931,7 +931,6 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> void {
     }
 
     GUIKIT::TreeViewItem* tviParam = nullptr;
-    unsigned paramCount = preset->params.size();
     unsigned pageElement = 0;
     std::vector<unsigned> offsets;
     bool isDescriptor;
@@ -1102,9 +1101,9 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
     } else {
         switch(pass.scaleTypeX) {
             default:
-            case ShaderPreset::SCALE_INPUT: scaleX = "Input - " + GUIKIT::String::formatFloatingPoint(pass.scaleX, 2); break;
-            case ShaderPreset::SCALE_VIEWPORT: scaleX = "Viewport - " + GUIKIT::String::formatFloatingPoint(pass.scaleX, 2); break;
-            case ShaderPreset::SCALE_ABSOLUTE: scaleX = "Absolute - " + std::to_string( pass.absX ); break;
+            case ShaderPreset::SCALE_INPUT: scaleX = "Input: " + GUIKIT::String::formatFloatingPoint(pass.scaleX, 2); break;
+            case ShaderPreset::SCALE_VIEWPORT: scaleX = "Viewport: " + GUIKIT::String::formatFloatingPoint(pass.scaleX, 2); break;
+            case ShaderPreset::SCALE_ABSOLUTE: scaleX = "Absolute: " + std::to_string( pass.absX ); break;
         }
     }
 
@@ -1125,9 +1124,9 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
     } else {
         switch(pass.scaleTypeY) {
             default:
-            case ShaderPreset::SCALE_INPUT: scaleY = "Input - " + GUIKIT::String::formatFloatingPoint(pass.scaleY, 2); break;
-            case ShaderPreset::SCALE_VIEWPORT: scaleY = "Viewport - " + GUIKIT::String::formatFloatingPoint(pass.scaleY, 2); break;
-            case ShaderPreset::SCALE_ABSOLUTE: scaleY = "Absolute - " + std::to_string( pass.absY ); break;
+            case ShaderPreset::SCALE_INPUT: scaleY = "Input: " + GUIKIT::String::formatFloatingPoint(pass.scaleY, 2); break;
+            case ShaderPreset::SCALE_VIEWPORT: scaleY = "Viewport: " + GUIKIT::String::formatFloatingPoint(pass.scaleY, 2); break;
+            case ShaderPreset::SCALE_ABSOLUTE: scaleY = "Absolute: " + std::to_string( pass.absY ); break;
         }
     }
 
@@ -1136,7 +1135,7 @@ auto VideoLayout::buildPass(ShaderPreset* preset, ShaderPreset::Pass& pass) -> v
 
     if (!pass.error.empty()) {
         std::string _error = pass.error;
-        layPass.generated.errorLabel.setForegroundColor(0xff4500);
+        layPass.generated.errorLabel.setForegroundColor(ERROR_COLOR);
         layPass.errorMessage.setText(_error);
     } else {
         layPass.errorMessage.setText("");
@@ -1267,7 +1266,7 @@ auto VideoLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> void {
     std::vector<std::string> errors;
     ShaderPreset* preset = vManager()->getPreset(errors);
     if (preset) {
-        buildShaderUI(preset, false);
+        buildShaderUI(preset, reloadPreset);
         layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
         layShader.main.control.setEnabled();
         layShader.favourite.control.add.setEnabled();
@@ -1494,7 +1493,7 @@ auto VideoLayout::showErrors(const std::vector<std::string>& errors) -> void {
     if (errSize) {
         auto label = new GUIKIT::Label;
         label->setText( trans->getA("corrupted files", true) );
-        label->setForegroundColor(0xff4500);
+        label->setForegroundColor(ERROR_COLOR);
         label->setFont(GUIKIT::Font::system("bold"));
         layShader.main.errorLabels.push_back(label);
         layShader.main.append(*label, {0u, 0u}, 2);
@@ -1503,7 +1502,7 @@ auto VideoLayout::showErrors(const std::vector<std::string>& errors) -> void {
     for (auto& error : errors) {
         auto label = new GUIKIT::Label;
         label->setText(error);
-        label->setForegroundColor(0xff4500);
+        label->setForegroundColor(ERROR_COLOR);
         layShader.main.errorLabels.push_back(label);
         layShader.main.append(*label, {0u, 0u}, 2);
     }
@@ -1611,6 +1610,7 @@ auto VideoLayout::presentShaderError() -> void {
             if (selectedPassId == passId) {
                 std::string _error = pass.error;
                 layPass.errorMessage.setText(_error);
+                layPass.generated.errorLabel.setForegroundColor(ERROR_COLOR);
             }
         }
 

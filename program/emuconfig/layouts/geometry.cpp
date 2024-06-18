@@ -6,7 +6,6 @@ MonitorResolutionLayout::MonitorResolutionLayout() : displaySettings(true) {
     setAlignment(0.5);
     setPadding( 10 );
     setFont(GUIKIT::Font::system("bold"));
-    active.setForegroundColor( 0xff4500 );
 }
 
 RotationLayout::RotationLayout() {

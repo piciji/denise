@@ -403,7 +403,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                                 if (!layout->hint) {
                                     layout->hint = new GUIKIT::MultilineEdit;                                                                
 
-                                    layout->hint->setForegroundColor( 0xff4500 );
+                                    layout->hint->setForegroundColor( ERROR_COLOR );
 									
 									layout->hint->setEditable( false );
 
@@ -1203,7 +1203,7 @@ auto MediaLayout::fillListing(Emulator::Interface::Media* media, std::vector<GUI
     if (block) {
         block->header.fileName.setText(trans->get("Preview"));
         block->header.fileName.setFont(GUIKIT::Font::system("bold"));
-        block->header.fileName.setForegroundColor(0xff4500);
+        block->header.fileName.setForegroundColor(ERROR_COLOR);
     }
 }
 

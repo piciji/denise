@@ -33,6 +33,8 @@
 #define MAX_FIRMWARE_SIZE (512u * 1024u + 11)
 #define MAX_HARDDISK_SIZE (4096u * 1024u * 1024u)
 
+#define ERROR_COLOR 0xff4500
+
 #include <vector>
 #include <time.h>
 #include "../guikit/api.h"
