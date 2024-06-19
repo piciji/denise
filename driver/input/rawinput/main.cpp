@@ -6,6 +6,7 @@
 #include "../../tools/chronos.h"
 
 #include <hidsdi.h>
+#include <dbt.h>
 
 namespace DRIVER {
 	
@@ -30,8 +31,10 @@ struct RawInput : Input {
 	auto poll() -> std::vector<Hid::Device*> {		
 		std::vector<Hid::Device*> devices;				
 
-		if(deviceChanged)
-            initDevices();
+		if(deviceChanged) {
+			initDevices();
+			deviceChanged = false;
+		}
 		
 		keyboard.poll( devices );
 
@@ -62,6 +65,15 @@ struct RawInput : Input {
 
 		SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)this);
 
+		DEV_BROADCAST_DEVICEINTERFACE notificationFilter;
+		ZeroMemory(&notificationFilter, sizeof (notificationFilter));
+		notificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+		notificationFilter.dbcc_size = sizeof (notificationFilter);
+
+		RegisterDeviceNotification(hwnd, &notificationFilter,
+				DEVICE_NOTIFY_WINDOW_HANDLE |
+				DEVICE_NOTIFY_ALL_INTERFACE_CLASSES);
+
 		mouse.handle = (HWND)handle;
 
 		initDevices();
@@ -71,22 +83,22 @@ struct RawInput : Input {
 
 		riDevice[0].usUsagePage = 1;
 		riDevice[0].usUsage = 6; //Keyboard
-		riDevice[0].dwFlags = RIDEV_INPUTSINK | RIDEV_NOHOTKEYS | RIDEV_DEVNOTIFY;
+		riDevice[0].dwFlags = RIDEV_INPUTSINK | RIDEV_NOHOTKEYS;
 		riDevice[0].hwndTarget = hwnd;
 
 		riDevice[1].usUsagePage = 1;
 		riDevice[1].usUsage = 2; //Mouse
-		riDevice[1].dwFlags = RIDEV_INPUTSINK | RIDEV_DEVNOTIFY;
+		riDevice[1].dwFlags = RIDEV_INPUTSINK;
 		riDevice[1].hwndTarget = hwnd;
 
 		riDevice[2].usUsagePage = 1;
 		riDevice[2].usUsage = 4; //Joypads
-		riDevice[2].dwFlags = RIDEV_INPUTSINK | RIDEV_DEVNOTIFY;
+		riDevice[2].dwFlags = RIDEV_INPUTSINK;
 		riDevice[2].hwndTarget = hwnd;
 
 		riDevice[3].usUsagePage = 1;
 		riDevice[3].usUsage = 5; //Joysticks
-		riDevice[3].dwFlags = RIDEV_INPUTSINK | RIDEV_DEVNOTIFY;
+		riDevice[3].dwFlags = RIDEV_INPUTSINK;
 		riDevice[3].hwndTarget = hwnd;
 
 		RegisterRawInputDevices(riDevice, 4, sizeof(RAWINPUTDEVICE));
@@ -95,7 +107,6 @@ struct RawInput : Input {
 	}
 
 	auto initDevices() -> void {
-		deviceChanged = false;
 		joypad.init();
 		mouse.init();
 
@@ -150,8 +161,13 @@ struct RawInput : Input {
 	}
 
 	auto wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
-		if (msg == WM_INPUT_DEVICE_CHANGE) {
+		if ( (msg == WM_DEVICECHANGE)) {
 			deviceChanged = true;
+		}
+
+		if (deviceChanged) {
+			DefWindowProc(hwnd, msg, wparam, lparam);
+			return 0;
 		}
 
 		if (msg != WM_INPUT)
@@ -177,17 +193,18 @@ struct RawInput : Input {
 					joypad.update(input);
 			}
 
-			LRESULT result = DefRawInputProc(&input, size, sizeof (RAWINPUTHEADER));
 			delete[] input;
-
-			return result;
 		}
 
-		return DefWindowProc(hwnd, msg, wparam, lparam);
+		DefWindowProc(hwnd, msg, wparam, lparam);
+		return 0;
 	}
 
 	static auto CALLBACK RawInputWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
 		RawInput* worker = (RawInput*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+		if (!worker)
+			return DefWindowProc(hwnd, msg, wparam, lparam);
+
 		return worker->wndProc(hwnd, msg, wparam, lparam);
 	}
 

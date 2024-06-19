@@ -453,7 +453,7 @@ inline auto DiskDrive::motorSpinning() -> bool {
     if (motor && (speed == 100)) motorSpeed = 100;
     else if (!motor && (speed == 0)) motorSpeed = 0;
 
-    return motor || (speed > 87);
+    return motor || (speed > 75);
 }
 
 auto DiskDrive::getMotorSpeed() -> unsigned {
