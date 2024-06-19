@@ -41,7 +41,7 @@ namespace DRIVER {
         CropPass cropBox;
         GLuint indexUboVertex;
         GLuint indexUboFragment;
-        GLuint uboBuffer;
+        GLuint uboBuffer = 0;
         uint8_t* uboData = nullptr;
 
         GLTexture renderTarget;

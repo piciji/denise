@@ -497,6 +497,15 @@ End:
             frame.vbo = 0;
         }
         GLUtility::deleteProgram(frame.prg);
+
+        for(auto& program : programs)
+            GLUtility::releaseProgram(program);
+       
+        for (int i = 0; i <= MAX_FRAME_HISTORY; i++)
+            GLUtility::releaseTexture(frame.textures[i]);
+
+        for(auto& lut : luts)
+            GLUtility::releaseTexture( lut );
     }
 
     auto updateFilter() -> void {

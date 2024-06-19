@@ -638,8 +638,10 @@ auto StatusBar::updateSeparator( unsigned id, bool append ) -> bool {
 }
 
 auto StatusBar::hideContent() -> void {
-    for(auto& part : state.parts)
+    for(auto& part : state.parts) {
         part.visible = false;
+        part.position = -1;
+    }
     
     state.updatePending = true;
 }
@@ -1125,6 +1127,8 @@ auto TreeViewItem::append(TreeViewItem& item) -> void {
 
 auto TreeViewItem::remove(TreeViewItem& item) -> void {
     if (Vector::eraseVectorElement<TreeViewItem*>(state.items, &item)) {
+        if(item.selected())
+            item.state.parentTreeView->state.selected = nullptr;
         item.state.parentTreeViewItem = nullptr;
         p.remove(item);
     }
@@ -1184,6 +1188,8 @@ auto TreeView::append(TreeViewItem& item) -> void {
 
 auto TreeView::remove(TreeViewItem& item) -> void {
     if (Vector::eraseVectorElement<TreeViewItem*>(state.items, &item)) {
+        if(item.selected())
+            item.state.parentTreeView->state.selected = nullptr;
         p.remove(item);
     }
 }

@@ -830,3 +830,4 @@ disksaves = Disk Speicherungen
 select_disksave_folder = Disketten Speicher Verzeichnis auswählen
 clear save file = Speicherdatei löschen
 save file deleted = Die Speicherdatei wurde gelöscht.
+left click grabs mouse = Linksklick greift Maus

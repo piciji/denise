@@ -306,6 +306,9 @@ auto pWindow::stateChange(GtkWidget* widget, GdkEventWindowState* event, Window*
 
             window->p.isMinimized = false;
         }
+	} else {
+	    if(window->onUnFocus)
+	        window->onUnFocus();
 	}
 
 	return false;

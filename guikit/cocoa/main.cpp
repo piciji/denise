@@ -259,6 +259,11 @@
         window->onUnminimize();
 }
 
+-(void)windowDidResignMain:(NSNotification*)notification {
+    if (window->onUnFocus)
+        window->onUnFocus();
+}
+
 -(void) windowWillEnterFullScreen:(NSNotification*)notification {
     window->state.fullScreen = true;
     window->p.fullScreenToggleDelay = true;

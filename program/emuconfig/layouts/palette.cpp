@@ -266,8 +266,11 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         
         if ( !paletteManager->save() )
             mes->warning( trans->get("file_creation_error", {{"%path%", paletteManager->path()}} ));
-        else
+        else {
+            emuThread->lock();
             statusHandler->setMessage( trans->get("file_creation_success", {{"%path%", paletteManager->path()}} ) );
+            emuThread->unlock();
+        }
     };
     
     saveLayout.onExit.onToggle = [this](bool checked) {

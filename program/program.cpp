@@ -360,6 +360,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
         view->updateDiskMenu();
         view->updatePowerMenu();
+	    view->updateMouseGrab();
 	}
 	
 	activeEmulator->power();

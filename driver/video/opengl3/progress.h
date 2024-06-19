@@ -83,6 +83,8 @@ namespace DRIVER {
 
             glUniform1i(locSource, 0);
 
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
             initialized = true;
 
             End:

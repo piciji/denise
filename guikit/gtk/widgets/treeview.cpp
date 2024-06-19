@@ -13,16 +13,20 @@ auto pTreeViewItem::append(TreeViewItem& item) -> void {
 
 auto pTreeViewItem::remove(TreeViewItem& item) -> void {
     if(!parentTreeView()) return;
+    parentTreeView()->p.locked = true;
     gtk_tree_store_remove(parentTreeView()->p.gtkTreeStore, &item.p.iter);
+    parentTreeView()->p.locked = false;
     item.p.invalidateParent();
 }
 
 auto pTreeViewItem::reset() -> void {
     if(!parentTreeView()) return;
+    parentTreeView()->p.locked = true;
     for(auto item : treeViewItem.state.items) {
         gtk_tree_store_remove(parentTreeView()->p.gtkTreeStore, &item->p.iter);
         item->p.invalidateParent();
     }
+    parentTreeView()->p.locked = false;
 }
 
 auto pTreeViewItem::invalidateParent() -> void {
@@ -42,6 +46,9 @@ auto pTreeViewItem::setSelected() -> void {
     if (!parentTreeView() ) return;
 
     gtk_tree_selection_select_iter(parentTreeView()->p.gtkTreeSelection, &iter);
+
+    if (parentTreeView()->onChange)
+        parentTreeView()->onChange();
 }
 
 auto pTreeViewItem::setExpanded(bool expanded) -> void {
@@ -138,7 +145,9 @@ auto pTreeView::append(TreeViewItem& item) -> void {
 }
 
 auto pTreeView::remove(TreeViewItem& item) -> void {
+    locked = true;
     gtk_tree_store_remove(gtkTreeStore, &item.p.iter);
+    locked = false;
     item.p.invalidateParent();
 }
 
@@ -275,7 +284,7 @@ auto pTreeView::onExpand(GtkTreeView* treeView, GtkTreeIter* iter, GtkTreePath* 
 }
 
 auto pTreeView::onChange(GtkTreeSelection* selection, TreeView* self) -> void {
-    if(self->state.items.empty()) return;
+    if(self->state.items.empty() || self->p.locked) return;
     
     GtkTreeIter iter;
     if(!gtk_tree_selection_get_selected(selection, &self->p.gtkTreeModel, &iter)) return;

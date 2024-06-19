@@ -30,9 +30,10 @@ AutofireControl::AutofireControl(Emulator::Interface* emulator) : autofireSlider
 }
 
 InputSelector::InputSelector() {
-    append(device, {0u, 0u}, 20);
-	append(hotkeys, {0u, 0u}, 20);
-    append(globalHotkeys, {0u, 0u});
+    append(device, {0u, 0u}, 10);
+	append(hotkeys, {0u, 0u}, 10);
+    append(globalHotkeys, {0u, 0u}, 10);
+    append(grabMouseLeft, {0u, 0u}, 10);
 	append(spacer, {~0u, 0u});
     append(plugin, {0u, 0u}, 10);
     setAlignment(0.5);
@@ -351,6 +352,15 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
         emuThread->unlock();
     };
 
+    selector.grabMouseLeft.onToggle = [this](bool checked) {
+        emuThread->lock();
+        stopCapture();
+        _settings->set<bool>("grab_mouse_left", checked);
+        if (emulator == activeEmulator)
+            view->updateMouseGrab();
+        emuThread->unlock();
+    };
+
     control.optionControl.oppositeDirections.onToggle = [this](bool checked) {
         emuThread->lock();
         _settings->set<bool>("allow_opposite_directions", checked);
@@ -417,6 +427,8 @@ auto InputLayout::updateMiscSettings() -> void {
         case 1: control.optionControl.prioritiseLayout.controlPort.setChecked(); break;
         case 2: control.optionControl.prioritiseLayout.keyboard.setChecked(); break;
     }
+
+    selector.grabMouseLeft.setChecked( _settings->get<bool>("grab_mouse_left", false) );
 }
 
 auto InputLayout::stopCapture() -> void {
@@ -586,7 +598,7 @@ auto InputLayout::updateAnalogSensitivity() -> void {
     
     auto& device = emulator->devices[ deviceId() ];
     
-    auto position = _settings->get<unsigned>("analog_sensitivity_" + _underscore(device.name), 50u, {0u, 100u});
+    auto position = _settings->get<unsigned>("analog_sensitivity_" + _underscore(device.name), 40u, {0u, 100u});
         
     mapControl.analogSensitivity.value.setText( std::to_string(position) + " " + mapControl.analogSensitivity.unit );
     
@@ -669,6 +681,7 @@ auto InputLayout::translate() -> void {
     stopCapture();
 	selector.hotkeys.setText( trans->get("hotkeys") );
     selector.globalHotkeys.setText( trans->get("global hotkeys") );
+    selector.grabMouseLeft.setText( trans->getA("left click grabs mouse") );
     selector.plugin.setText( trans->get("plugin", {}, true) );
     control.optionControl.oppositeDirections.setText( trans->get("allow opposite directions") );
     control.optionControl.prioritiseLayout.label.setText( trans->get("prioritise double mappings", {}, true) );

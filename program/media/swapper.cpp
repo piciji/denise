@@ -14,7 +14,7 @@ SwapperControlLayout::SwapperControlLayout() {
 SwapperInfoLayout::SwapperInfoLayout() {
     append(info1, {0u, 0u}, 20);
     append(info2, {0u, 0u}, 0);
-    info2.setForegroundColor(0xff4500);
+    info2.setForegroundColor(ERROR_COLOR);
     setAlignment(0.5);
 }
 
