@@ -116,8 +116,8 @@ auto View::build() -> void {
             }
         }
 
-        if (!emuThread->enabled)
-		    audioDriver->clear();
+    //    if (!emuThread->enabled)
+	//	    audioDriver->clear();
     };
 
     onResizeStart = [this] {
