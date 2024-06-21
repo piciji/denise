@@ -449,7 +449,6 @@ struct GLX : public Video, GL3, RenderThread {
 #ifdef DRV_FREETYPE
         screenText.showText(viewport.width, viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
 #endif
-        if(glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
         clearCurrent();
     }
 
