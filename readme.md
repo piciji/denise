@@ -19,23 +19,25 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
     * converted existing GLSL/HLSL Shaders to SLANG
     * fast switching of shaders from a favourite list (shader cache and compilation without blocking APP)
     * looking for Shader authors, read more in the next paragraph
-* thanks to amilo3438 for testing a huge number of IPF games
-* improved Amiga emulation, especially the disk drive
-* emulated Amiga Bitplane <> Refresh conflicts
-* added option to fake ECS Denise to support Final Fight Enhanced
-* written Amiga floppy disks are now saved in a second file
+* Amiga: improved emulation, especially the disk drive
+    * thanks to amilo3438 for testing a huge number of IPF games 
+* Amiga: emulated Bitplane <> Refresh conflicts
+* Amiga: Final Fight Enhanced supported by temporary option to fake ECS Denise  
+* Amiga: written floppy disks are now saved in a second file
     * this does not apply to uncompressed ADF (don't worry, emulator asks if ADF can be changed)
     * permanent writes are now possible for IPF, compressed images, EXT ADF, DMS
     * the folder for the save files can be customized under Amiga > Software > Paths
-* added Amiga 4-player adapter
-* added Amiga copy protection dongle support
+* Amiga: added 4-player adapter
+* Amiga: added copy protection dongle support
 * C64: besides PRG, P00 and T64 are loadable as D64
+* C64: fixed Hucky Cart emulation (thanks to Claus)
 * fixed a bug not finishing Drag'n'Drop in Linux GTK
-* fixed some OSX bugs/crashes
+* fixed some OSX bugs/crashes [looking for a maintainer/tester]
 * improved mouse capture handling for all OSes
 * UI changes
     * many global options are distributed among the individual emulator options
     * volume slider has moved to status bar
+    * added option to capture pointer by left mouse button
 * changed BuildSystem to CMAKE
 * added Linux/BSD XCB input driver for keyboard/mouse
 

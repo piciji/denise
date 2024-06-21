@@ -238,6 +238,10 @@ auto Denise::getClxDat() -> uint16_t {
 
 auto Denise::setBplCon0( uint16_t value ) -> void {
     process(-1);
+
+    // if (hires != !!(value & 0x8000))
+    //     agnus.interface->log((value & 0x8000) ? "hires" : "lores");
+
     hires = value & 0x8000;
     if (hires) {
         if (!hiresFrame)

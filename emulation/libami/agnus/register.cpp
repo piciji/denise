@@ -384,6 +384,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
         case 0x100: {
             if ((value ^ bplCon0) & 4) { // lace change
                 fpsChange |= 1;
+                // interface->log((value & 4) ? "lace" : "non lace");
             }
 
             if ((ERSY == 0) && (value & 2)) {
