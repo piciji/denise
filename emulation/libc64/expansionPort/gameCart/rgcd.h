@@ -23,7 +23,10 @@ namespace LIBC64 {
 
         auto reset(bool softReset = false) -> void {
 
-            cRomL = getChip(0);
+            if (version == 0x101) // hucky
+                cRomL = getChip(chips.size() - 1);
+            else
+                cRomL = getChip(0);
 
             if (softReset)
                 exRom = false;
