@@ -137,6 +137,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(fifo);
     s.integer(fifoPos);
     s.integer(dskSyncCycle);
+    s.integer(wordEqual);
     s.integer(dskShifter);
     s.integer(dskShifterPos);
     s.integer(fdcCycles);
@@ -292,6 +293,7 @@ auto Paula::power() -> void {
 
     dskLen = 0;
     dskSync = 0;
+    wordEqual = false;
     dskTransferLength = 0;
     fifo = 0;
     fifoPos = 0;

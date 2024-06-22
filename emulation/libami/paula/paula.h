@@ -45,6 +45,7 @@ struct Paula {
 
     uint16_t dskLen;
     uint16_t dskSync;
+    bool wordEqual;
     uint16_t dskTransferLength;
     uint64_t fifo;
     uint8_t fifoPos;

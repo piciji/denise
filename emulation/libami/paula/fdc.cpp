@@ -294,12 +294,19 @@ namespace LIBAMI {
         if ((dskShifterPos & 7) == 7)
             dskBytr = (dskShifter & 0xff) | 0x8000;
 
-        if ((dskShifter == dskSync) && !msbSync()) {
-            setDskSyncInt();
 
-            if (wordSync())
-                dskShifterPos = 15;
-        }
+        if (dskShifter == dskSync) {
+            if (!msbSync()) {
+                if (!wordEqual) {
+                    setDskSyncInt();
+                    wordEqual = true;
+                }
+
+                if (wordSync())
+                    dskShifterPos = 15;
+            }
+        } else
+            wordEqual = false;
 
         dskShifterPos++;
         dskShifterPos &= 15;
@@ -331,7 +338,10 @@ namespace LIBAMI {
                 }
 
                 if (dskShifter == dskSync) {
-                    setDskSyncInt();
+                    if (!wordEqual) {
+                        setDskSyncInt();
+                        wordEqual = true;
+                    }
                     // When reading "DiskbytR" the sync status is displayed 2 (fast) or 4 (slow) micro seconds,
                     // until the next bit follows and the sync status is probably no longer given.
                     // Since whole bytes are read in one piece, we have to store a timestamp to calculate the duration of one bit.
@@ -343,7 +353,8 @@ namespace LIBAMI {
 
                     if (wordSync())
                         dskShifterPos = 15;
-                }
+                } else
+                    wordEqual = false;
 
                 dskShifterPos++;
                 dskShifterPos &= 15;
@@ -393,32 +404,38 @@ namespace LIBAMI {
             if ((dskShifterPos & 7) == 7)
                 dskBytr = (dskShifter & 0xff) | 0x8000;
 
-            if ((dskShifter == dskSync) && !_msb) {
-                setDskSyncInt();
+            if (dskShifter == dskSync) {
+                if (!_msb) {
+                    if (!wordEqual) {
+                        setDskSyncInt();
+                        wordEqual = true;
+                    }
 
-                if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
-                    if (dskTransferLength == 0)
-                        finishDMA();
-                    else {
-                        setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
+                    if (diskState == DiskState::WAIT_SYNC_READ || diskState == DiskState::WAIT_SYNC_WRITE) {
+                        if (dskTransferLength == 0)
+                            finishDMA();
+                        else {
+                            setDskState(diskState == DiskState::WAIT_SYNC_READ ? DiskState::READ : DiskState::WRITE);
 
-                        if (fdcByteMode()) {
-                            activeDrive->reset();
-                            fdcCycles = FDC_BYTE;
+                            if (fdcByteMode()) {
+                                activeDrive->reset();
+                                fdcCycles = FDC_BYTE;
+                            }
+                        }
+
+                        if constexpr (waitTurbo || readWord) iterations = 0;
+
+                        if (diskState == DiskState::WRITE) {
+                            dskShifterPos = 16;
+                            break;
                         }
                     }
 
-                    if constexpr (waitTurbo || readWord) iterations = 0;
-
-                    if (diskState == DiskState::WRITE) {
-                        dskShifterPos = 16;
-                        break;
-                    }
+                    if (wordSync())
+                        dskShifterPos = 15;
                 }
-
-                if (wordSync())
-                    dskShifterPos = 15;
-            }
+            } else
+                wordEqual = false;
 
             dskShifterPos++;
             dskShifterPos &= 15;
