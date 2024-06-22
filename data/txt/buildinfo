@@ -10,7 +10,7 @@ git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 
 cmake -G "MinGW Makefiles" -B builds/release
-cmake --build builds/release -j=<number of usable CPU cores>
+cmake --build builds/release -j <number of usable CPU cores>
 cmake --build builds/release --target install
 .\builds\release\out\denise.exe
 
@@ -34,7 +34,7 @@ pacman -S gcc
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 cmake -G "MSYS Makefiles" -B builds/release
-cmake --build builds/release -j=<number of usable CPU cores>
+cmake --build builds/release -j <number of usable CPU cores>
 cmake --build builds/release --target install
 ./builds/release/out/denise.exe
 
@@ -59,7 +59,7 @@ compile freetype
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 cmake -B builds/release [-DCMAKE_OSX_ARCHITECTURES=arm64]  (flag is for cross compiling only)
-cmake --build builds/release -j=<number of usable CPU cores>
+cmake --build builds/release -j <number of usable CPU cores>
 cmake --build builds/release --target install
 
 
@@ -92,7 +92,7 @@ pkgin in pulseaudio
 
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
-cmake -B builds/release [-DCMAKE_INSTALL_PREFIX=~/.local] [-DINSTALL_FILE_ASSOCIATIONS=1]
+cmake -B builds/release [-DCMAKE_INSTALL_PREFIX=~/.local] [-DINSTALL_FILE_ASSOCIATIONS=1] [-DCMAKE_BUILD_TYPE=Debug]
 cmake --build builds/release --target clean [optional]
 cmake --build builds/release -j <number of usable CPU cores> [--verbose]
 
