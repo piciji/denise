@@ -477,6 +477,7 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
                 } else {
                     if (hPos == hStart) {
                         borderFlipFlop = false;
+                        hamColor = colors[0];
                         if (!agnus.crop.left)
                             agnus.updateCropLeft(linePos);
                     }
