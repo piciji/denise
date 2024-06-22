@@ -292,6 +292,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     tviParams.setImageExpanded(imgFolderOpen);
 
     moduleTree.append(tviBase);
+    tviBase.setSelected();
     if (videoDriver->shaderSupport())
         moduleTree.append(tviShader);
 
@@ -1001,7 +1002,7 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> void {
     }
 
     tviShader.setExpanded();
-    if (selectIt)
+    if (selectIt && !tviBase.selected())
         tviShader.setSelected();
 }
 

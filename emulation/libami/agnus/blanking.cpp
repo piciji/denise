@@ -97,7 +97,7 @@ auto Agnus::endHblank() -> void {
         if (lineVCounter == 0) {
             crop.reset();
 
-            denise.hiresFrame = denise.hires; // can switch to hires mid-frame
+            denise.hiresFrame = (laceMode & 3) ? true : denise.hires; // can switch to hires mid-frame
             // Denise doesn't need to know of interlace or vertical position.
             if (hTotalChanged) {
                 hTotalChanged = false;
