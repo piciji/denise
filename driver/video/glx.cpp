@@ -385,7 +385,7 @@ struct GLX : public Video, GL3, RenderThread {
     }
 
     auto unlockResize() -> void {
-        redrawCustom();
+        resizeWindow();
 
         resizeMutexThreaded.unlock();
         resizeMutex.unlock();
