@@ -63,32 +63,38 @@ cmake --build builds/release -j <number of usable CPU cores>
 cmake --build builds/release --target install
 
 
-LINUX / BSD (tested on NetBSD and OpenBSD, not FreeBSD)
------
-install following dependencies if you haven't already
-
-GTK+ 3: apt-get install libgtk-3-dev
-OpenGL: apt-get install mesa-common-dev
-OpenAL: apt-get install libopenal-dev
-Pulseaudio: apt-get install libpulse-dev
-SDL2: apt-get install libsdl2-dev
-Udev: apt-get install libudev-dev
-XCB: apt install libxcb-xinput-dev && apt install libxcb-xfixes0
+Debian LINUX (Ubuntu, Mint)
 ---------------------------------------------
-ARCH Linux
-----------
-gcc: pacman -Sy gcc
-make: pacman -Sy make
-gtk3: pacman -Sy gtk3
-pkg-config: pacman -Sy pkgconf
+apt install libgtk-3-dev
+apt install mesa-common-dev
+apt install libopenal-dev
+apt install libpulse-dev
+apt install libsdl2-dev
+apt install libudev-dev
+apt install libxcb-xinput-dev && apt install libxcb-xfixes0
 ---------------------------------------------
-FreeBSD
+ARCH Linux (Manjaro, Endeavour)
 ---------------------------------------------
+pacman -Sy gcc
+pacman -Sy make
+pacman -Sy gtk3
+pacman -Sy pkgconf
+---------------------------------------------
+FreeBSD (GhostBSD)
+---------------------------------------------
+pkg install cmake
+pkg install os-generic-userland-devtools
+pkg install pkgconf
+pkg install openal-soft
+pkg install SDL2
+---------------------------------------------
+NetBSD
+---------------------------------------------
+pkgin in cmake
 pkgin in pkg-config
 pkgin in openal-soft
 pkgin in SDL2
 pkgin in pulseaudio
----------------------------------------------
 
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
