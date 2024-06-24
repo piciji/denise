@@ -20,6 +20,7 @@ struct pApplication {
     static auto setClipboardText( std::string text ) -> void;
 	static auto pasteClipboardCallback(GtkClipboard* clipboard, const gchar* text, gpointer data) -> void;
     static auto fetchDesktopSession() -> void;
+	static auto canGrabInputFocusAfterDnDFromOtherApp() -> bool;
 
     enum class DesktopSession { Cinnamon, KDE, Gnome, XFCE, Mate, Unity, Unknown };
 

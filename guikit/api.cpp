@@ -432,6 +432,15 @@ auto Window::getScrollbarWidth() -> unsigned {
     return p.getScrollbarWidth();
 }
 
+auto Window::canGrabInputFocusAfterDnDFromOtherApp() -> bool {
+#ifdef GUIKIT_GTK
+    return Application::canGrabInputFocusAfterDnDFromOtherApp();
+#else
+    return true;
+#endif
+
+}
+
 //statusbar
 StatusBar::StatusBar() : p(*new pStatusBar(*this)), Base() {}
 

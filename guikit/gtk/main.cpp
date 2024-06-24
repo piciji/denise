@@ -99,6 +99,10 @@ auto pApplication::fetchDesktopSession() -> void {
         desktopSession = DesktopSession::Unity;
 }
 
+auto pApplication::canGrabInputFocusAfterDnDFromOtherApp() -> bool {
+    return desktopSession != DesktopSession::Gnome;
+}
+
 auto pApplication::pasteClipboardCallback(GtkClipboard* clipboard, const gchar* text, gpointer data) -> void {
 	
 	if (text && Application::onClipboardRequest)
