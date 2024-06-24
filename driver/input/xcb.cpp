@@ -421,7 +421,8 @@ struct XCBInput : public Input {
     }
 
     auto mAcquire() -> void {
-		if (mIsAcquired()) return;
+		if (mIsAcquired() || ((gdk_window_get_state((GdkWindow*)handle) & GDK_WINDOW_STATE_FOCUSED) == 0) )
+			return;
 
     	auto cookie = xcb_grab_pointer(conn, 1, GDK_WINDOW_XID( (GdkWindow*)handle ),
 						  XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_LEAVE_WINDOW,
