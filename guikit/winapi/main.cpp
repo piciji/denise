@@ -387,10 +387,6 @@ auto pWindow::handle() -> uintptr_t {
     return (uintptr_t)hwnd;
 }
 
-auto pWindow::tellMeShouldICreateTheUIRightAway() -> bool {
-	return XPOrBelowOrWin7InXPMode();
-}
-
 inline auto pWindow::XPOrBelowOrWin7InXPMode() -> bool {
 	// in Win8 and above visual styles can't be turned off anymore, so App is always themed.
 	// when App is not themed, it means Win7 visual styles looks and behaves as XP (classic mode)

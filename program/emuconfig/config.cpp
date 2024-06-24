@@ -108,35 +108,6 @@ auto TabWindow::build() -> void {
     appendTab(Layout::Audio, volumeImage);
     appendTab(Layout::Firmware, memoryImage);
     appendTab(Layout::Misc, miscImage);
-	
-	if (tellMeShouldICreateTheUIRightAway()) {
-		inputLayout = new InputLayout( this );
-		systemLayout = new SystemLayout( this );
-		mediaLayout = new MediaView::MediaLayout( this );
-		configurationsLayout = new ConfigurationsLayout( this );
-		firmwareLayout = new FirmwareLayout( this );
-		videoLayout = new VideoLayout( this );
-		if (dynamic_cast<LIBC64::Interface*>(emulator))
-			paletteLayout = new PaletteLayout( this );
-
-		audioLayout = new AudioLayout( this );
-        geometryLayout = new GeometryLayout( this );
-		miscLayout = new MiscLayout( this );
-		mediaLayout->build();
-		
-		tab.setLayout( getTabPos(Layout::System), *systemLayout, {~0u, ~0u}, false );
-		tab.setLayout( getTabPos(Layout::Media), *mediaLayout, {~0u, ~0u}, false );
-		tab.setLayout( getTabPos(Layout::Configurations), *configurationsLayout, {~0u, ~0u}, false );
-		tab.setLayout( getTabPos(Layout::Control), *inputLayout, {~0u, ~0u}, false );
-		tab.setLayout( getTabPos(Layout::Presentation), *videoLayout, {~0u, ~0u}, false );
-		if (dynamic_cast<LIBC64::Interface*>(emulator))
-			tab.setLayout( getTabPos(Layout::Palette), *paletteLayout, {~0u, ~0u}, false );
-
-		tab.setLayout( getTabPos(Layout::Audio), *audioLayout, {~0u, ~0u}, false );
-		tab.setLayout( getTabPos(Layout::Firmware), *firmwareLayout, {~0u, ~0u}, false );
-		tab.setLayout( getTabPos(Layout::Geometry), *geometryLayout, {~0u, ~0u}, false );
-		tab.setLayout( getTabPos(Layout::Misc), *miscLayout, {~0u, ~0u} );
-	}
     
     onClose = [this]() {
         emuThread->lock();
