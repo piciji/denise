@@ -33,10 +33,13 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * C64: fixed Hucky Cart emulation (thanks to Claus)
 * fixed a bug not finishing Drag'n'Drop in Linux GTK
 * fixed some OSX bugs/crashes [looking for a maintainer/tester]
+    * ARM builds can now handle capsimg library
+    * fix UI file dialog crashes
 * improved mouse capture handling for all OSes
 * UI changes
     * many global options are distributed among the individual emulator options
     * volume slider has moved to status bar
+    * Shader controls have been reworked
     * added option to capture pointer by left mouse button
 * changed BuildSystem to CMAKE
 * added Linux/BSD XCB input driver for keyboard/mouse
