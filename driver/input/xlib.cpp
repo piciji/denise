@@ -336,7 +336,7 @@ struct XInput : public Input {
     }
 		
     auto mAcquire() -> void {
-    	if (mIsAcquired() || ((gdk_window_get_state((GdkWindow*)handle) & GDK_WINDOW_STATE_FOCUSED) == 0) )
+    	if (mIsAcquired() /*|| ((gdk_window_get_state((GdkWindow*)handle) & GDK_WINDOW_STATE_FOCUSED) == 0)*/ )
     		return;
 
 		int result = XGrabPointer(display, GDK_WINDOW_XID( (GdkWindow*)handle ), True, 0, GrabModeAsync, GrabModeAsync,
