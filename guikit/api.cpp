@@ -434,7 +434,7 @@ auto Window::getScrollbarWidth() -> unsigned {
 
 auto Window::canGrabInputFocusAfterDnDFromOtherApp() -> bool {
 #ifdef GUIKIT_GTK
-    return Application::canGrabInputFocusAfterDnDFromOtherApp();
+    return pApplication::canGrabInputFocusAfterDnDFromOtherApp();
 #else
     return true;
 #endif
