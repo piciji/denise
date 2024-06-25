@@ -17,10 +17,11 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * added RetroArch Shader support
     * targets: openGL, D3D11
     * converted existing GLSL/HLSL Shaders to SLANG
-    * fast switching of shaders from a favourite list (shader cache and compilation without blocking APP)
+    * fast switching of shaders from a favourite list (shader cache and compilation without blocking App)
+    * for shader development, compilation errors and translated native code are displayed in the UI
     * looking for Shader authors, read more in the next paragraph
 * Amiga: improved emulation, especially the disk drive
-    * thanks to amilo3438 for testing a huge number of IPF games 
+    * thanks to amilo3438 for testing a huge number of games and demos
 * Amiga: emulated Bitplane <> Refresh conflicts
 * Amiga: Final Fight Enhanced supported by temporary option to fake ECS Denise  
 * Amiga: written floppy disks are now saved in a second file
@@ -32,17 +33,19 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * C64: besides PRG, P00 and T64 are loadable as D64
 * C64: fixed Hucky Cart emulation (thanks to Claus)
 * fixed a bug not finishing Drag'n'Drop in Linux GTK
-* fixed some OSX bugs/crashes [looking for a maintainer/tester]
-    * ARM builds can now handle capsimg library
+* fixed some OSX bugs/crashes [looking for tester]
+    * ARM builds can now handle IPF capsimg library
     * fix UI file dialog crashes
 * improved mouse capture handling for all OSes
 * UI changes
     * many global options are distributed among the individual emulator options
     * volume slider has moved to status bar
     * Shader controls have been reworked
+    * all hotkey assignments are now in the same place
     * added option to capture pointer by left mouse button
 * changed BuildSystem to CMAKE
 * added Linux/BSD XCB input driver for keyboard/mouse
+* improved GTK window resizing in some desktop environments 
 
 [looking for Shader authors]
 * interested in shaders for
