@@ -145,14 +145,6 @@ Window::~Window() {
     delete focusTimer;
 }
 
-auto Window::tellMeShouldICreateTheUIRightAway() -> bool {
-#ifdef GUIKIT_WINAPI
-    return p.tellMeShouldICreateTheUIRightAway();
-#else
-    return false;
-#endif 
-}
-
 auto Window::append(Menu& menu) -> void {
     state.menus.push_back(&menu);
     menu.MenuBase::state.parentWindow = this;
@@ -438,6 +430,15 @@ auto Window::Cocoa::setDisableIconsInTopMenu(bool state) -> void {
 
 auto Window::getScrollbarWidth() -> unsigned {
     return p.getScrollbarWidth();
+}
+
+auto Window::canGrabInputFocusAfterDnDFromOtherApp() -> bool {
+#ifdef GUIKIT_GTK
+    return pApplication::canGrabInputFocusAfterDnDFromOtherApp();
+#else
+    return true;
+#endif
+
 }
 
 //statusbar

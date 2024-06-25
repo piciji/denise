@@ -299,6 +299,7 @@ auto Autoloader::postProcessing() -> void {
 
 auto Autoloader::shouldCaptureMouse(Emulator::Interface* emulator, GUIKIT::Settings* settings) -> bool {
     return dynamic_cast<LIBAMI::Interface*>(emulator)
+        && view->canGrabInputFocusAfterDnDFromOtherApp()
         && program->isAnalogDeviceConnected()
         && settings->get<bool>("dragndrop_capture_mouse",false);
 }

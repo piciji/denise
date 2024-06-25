@@ -170,7 +170,7 @@ struct CGL : public Video, GL3, RenderThread {
         }
 
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, options & 1);
+            return RenderThread::lock(data, pitch, _width, _height, options);
         
         bool _useResizing = useResizing;
         if (_useResizing)
@@ -205,7 +205,7 @@ struct CGL : public Video, GL3, RenderThread {
             return false;
 
         if (settings.threaded)
-            return RenderThread::lock(data, pitch, _width, _height, options & 1);
+            return RenderThread::lock(data, pitch, _width, _height, options);
 
         bool _useResizing = useResizing;
         if (_useResizing)

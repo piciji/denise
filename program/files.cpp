@@ -247,6 +247,12 @@ auto Program::updateSaveIdent( Emulator::Interface* emulator, GUIKIT::File* file
     auto settings = getSettings( emulator );
     std::string filePath = file->getPath();
     std::string fileName = file->getFileName(true, true);
+    auto end = fileName.find_last_of(".");
+    if (end != std::string::npos) {
+        auto tempFn = fileName.erase(end);
+        if ((fileName.size() - tempFn.size()) <= 3)
+            fileName = tempFn;
+    }
 
     // for wav record
     settings->set<std::string>( "record_ident", fileName, false);
@@ -254,21 +260,22 @@ auto Program::updateSaveIdent( Emulator::Interface* emulator, GUIKIT::File* file
     if (!settings->get<bool>( "auto_save_ident", true))
         return;
 
-    std::string tempFn = fileName;
+    auto list = GUIKIT::File::getFolderListAlt( filePath, fileName, 10 );
 
+    int matches = list.size();
+
+    std::string tempFn = fileName;
     while(1) {
         if (tempFn.size() < 5)
             break;
 
         tempFn.pop_back();
 
-        auto list = GUIKIT::File::getFolderListAlt( filePath, tempFn, 3 );
-
-        if (list.size() < 2)
-            continue;
-
-        fileName = GUIKIT::String::trim( tempFn );
-        break;
+        auto list = GUIKIT::File::getFolderListAlt( filePath, tempFn, 10 );
+        if (list.size() != matches) {
+            fileName = GUIKIT::String::trim( tempFn );
+            break;
+        }
     }
 
     settings->set<std::string>( "save_ident", fileName);

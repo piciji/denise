@@ -250,6 +250,7 @@ struct Window : Base {
     auto setForeground() -> void;
     auto setFullscreenSetting( bool inUse, unsigned displayId = 0, unsigned settingId = 0 ) -> void;
     auto getCustomFullscreenRefreshRate() -> float;
+    auto canGrabInputFocusAfterDnDFromOtherApp() -> bool;
 
     auto focused() -> bool;
     auto visible() const -> bool { return state.visible; }
@@ -268,7 +269,6 @@ struct Window : Base {
     auto setDefaultCursor( ) -> void;
     auto setPointerCursor( ) -> void;
     auto getScrollbarWidth() -> unsigned;
-	auto tellMeShouldICreateTheUIRightAway() -> bool;
     auto setAspectRatio(Size ratio) -> void;
     auto applyMaximizeCorrection(Geometry& geo) -> void;
 	

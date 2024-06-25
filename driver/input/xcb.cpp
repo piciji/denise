@@ -285,6 +285,40 @@ struct XCBInput : public Input {
 		return devices;
 	}
 
+    auto warpMouse( int absX, int absY ) -> void {
+
+        // 1. a hidden cursor generates hover effects, hence we capture it in application window
+        // 2. if cursor reaches screen border there will be no more deltas generated, hence we wrap
+        //    cursor around. this way the cursor is always moving.
+
+        gint x, y, w, h;
+        gdk_window_get_origin((GdkWindow*)handle, &x, &y);
+        w = gdk_window_get_width((GdkWindow*)handle);
+        h = gdk_window_get_height((GdkWindow*)handle);
+
+        if (absX > ((x + w) - warpMargin)) {
+            // right to left
+            relativex = x + warpMargin;
+            xcb_warp_pointer(conn, None, screen->root, 0, 0, 0, 0, relativex, absY);
+
+        } else if( absX < (x + warpMargin)) {
+            // left to right
+            relativex = x + w - warpMargin;
+            xcb_warp_pointer(conn, None, screen->root, 0, 0, 0, 0, relativex, absY);
+        }
+
+        if (absY > ((y + h) - warpMargin)) {
+            // bottom to top
+            relativey = y + warpMargin;
+            xcb_warp_pointer(conn, None, screen->root, 0, 0, 0, 0, absX, relativey);
+
+        } else if( absY < (y + warpMargin)) {
+            // top to bottom
+            relativey = y + h - warpMargin;
+            xcb_warp_pointer(conn, None, screen->root, 0, 0, 0, 0, absX, relativey);
+        }
+    }
+
     auto initWorker() -> void {
 
         std::thread worker([this] {
@@ -361,15 +395,14 @@ struct XCBInput : public Input {
 							}
 						}
 
-				//		xcb_query_pointer_reply_t* reply = xcb_query_pointer_reply(conn, xcb_query_pointer(conn, screen->root), 0);
 						keyMutex.lock();
-				//		mouseState.x += (int16_t) (reply->root_x - relativex);
-				//		mouseState.y += (int16_t) (reply->root_y - relativey);
 						mouseState.x += rx;
 						mouseState.y += ry;
 						keyMutex.unlock();
-				//		relativex = reply->root_x;
-				//		relativey = reply->root_y;
+                        if (mIsAcquired()) {
+                        	xcb_query_pointer_reply_t* reply = xcb_query_pointer_reply(conn, xcb_query_pointer(conn, screen->root), 0);
+	                        warpMouse( reply->root_x, reply->root_y );
+                        }
 					} break;
 
 				}
@@ -388,7 +421,8 @@ struct XCBInput : public Input {
     }
 
     auto mAcquire() -> void {
-		if (mIsAcquired()) return;
+		if (mIsAcquired() /*|| ((gdk_window_get_state((GdkWindow*)handle) & GDK_WINDOW_STATE_FOCUSED) == 0)*/ )
+			return;
 
     	auto cookie = xcb_grab_pointer(conn, 1, GDK_WINDOW_XID( (GdkWindow*)handle ),
 						  XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_LEAVE_WINDOW,
