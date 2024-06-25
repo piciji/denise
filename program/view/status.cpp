@@ -530,4 +530,3 @@ auto StatusHandler::updateStatusBar() -> void {
     if (!emuThread->enabled)
         statusBar->update();
 }
-
