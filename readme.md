@@ -31,6 +31,8 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * Amiga: added 4-player adapter
 * Amiga: added copy protection dongle support
 * C64: besides PRG, P00 and T64 are loadable as D64
+    * Drag'n'Drop PRG on Software TAB -> Disk file slot OR
+    * use filedialog and change file type to "all files"
 * C64: fixed Hucky Cart emulation (thanks to Claus)
 * fixed a bug not finishing Drag'n'Drop in Linux GTK
 * fixed some OSX bugs/crashes [looking for tester]
@@ -47,10 +49,10 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * added Linux/BSD XCB input driver for keyboard/mouse
 * improved GTK window resizing in some desktop environments 
 
-[looking for Shader authors]
+## looking for Shader authors
 * interested in shaders for
-  * [Luma/Chroma crosstalk, probably last unsupported C64 effect](https://bitbucket.org/piciji/denise/issues/1/video-old-vic2-chroma-effect-on-odd-chars)
-  * wrap image with 1702/1084S/... monitor and C64/Amiga floppy drive
+    * [Luma/Chroma crosstalk, probably last unsupported C64 effect](https://bitbucket.org/piciji/denise/issues/1/video-old-vic2-chroma-effect-on-odd-chars)
+    * wrap image with 1702/1084S/... monitor and C64/Amiga floppy drive
 * new option for SLANGP files: luma_chroma
     * Luma Chroma input to prevent lossy conversion from RGB
     * Alpha Channel is used for Pixel meta data: C64 VIC2 AEC and BA signal (affect luminance)
