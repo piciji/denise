@@ -49,7 +49,7 @@ typedef double doublePoint[2];
 struct Sid {
     
     enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;    
-    enum FilterType { Standard = 0, VICE24 = 1, Chamberlin = 2 } filterType;
+    enum FilterType { Resid = 0, Chamberlin = 1 } filterType;
     Sid( System* system, SidManager& sidManager, Type type);
 
     static std::vector<std::string> adrOptions;
@@ -214,8 +214,6 @@ struct Sid {
 		
 		Filter(Sid* sid);
 		
-        bool old24 = false; // VICE 2.4 filter behaviour for 8580
-        bool use24 = false;      
         bool digiBoost = false;
         
         // Sid control
@@ -350,9 +348,7 @@ struct Sid {
 		auto writeModeVol( uint8_t data ) -> void;
 		auto updateSumMix() -> void;
 		auto setType( Type type ) -> void;
-        auto setOldFilter(bool state) -> void;
 		auto clock(int voice1, int voice2, int voice3) -> void;
-        auto clock24(int voice1, int voice2, int voice3) -> void;
 		auto clockMulti(int voice1, int voice2, int voice3) -> void;
 		auto output() -> short;
 		auto outputMulti() -> short;

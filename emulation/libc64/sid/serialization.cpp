@@ -112,8 +112,6 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( filter.Vw_bias );
     s.integer( filter.VbpRes );
     s.integer( filter.w0 );
-    s.integer( filter.old24 );
-    s.integer( filter.use24 );
     
     s.floatingpoint( chamberlinFilter.svfQ );
     s.floatingpoint( chamberlinFilter.svfF );

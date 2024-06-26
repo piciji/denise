@@ -820,15 +820,6 @@ auto Sid::Filter::setType( Type type ) -> void {
 	Vhp = 0;
 	Vbp = Vbp_x = Vbp_vc = 0;
 	Vlp = Vlp_x = Vlp_vc = 0;
-    
-    use24 = (old24 && (type == MOS_8580)) ? true : false;
-}
-
-auto Sid::Filter::setOldFilter(bool state) -> void {
-   
-    old24 = state;
-    
-    use24 = (old24 && (type == MOS_8580)) ? true : false;
 }
 
 // Filter kann unabhängig von der Software deakiviert werden.

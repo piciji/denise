@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "202";
+const std::string Interface::Version = "203";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -462,9 +462,8 @@ auto Interface::prepareModels() -> void {
     // strengthen pseudo stereo effect
     models.push_back({ModelIdIntensifyPseudoStereo, "intensify Pseudo Stereo", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
 
-    // use old 2.4 Filter for 8580 or digital filter
     models.push_back({ModelIdSidFilterType, "SID Filter Type", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, 2},
-	{ "Standard", "VICE 2.4", "Chamberlin" }});     
+	{ "reSID", "Chamberlin" }});
 
 	// adjust center frequency for Sid 6581
 	models.push_back({ModelIdBias6581, "SID 6581 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 500, {-5000, 5000}, {}, 400, 1.0 });

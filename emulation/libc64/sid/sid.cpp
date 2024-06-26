@@ -30,7 +30,7 @@ chamberlinFilter(filter) {
 	
     setType( type );
     
-    filterType = FilterType::Standard;
+    filterType = FilterType::Resid;
 	
 	Envelope::dac6581.generate();	
 	Envelope::dac8580.generate();
@@ -116,9 +116,7 @@ auto Sid::setIoMask( uint8_t pos ) -> void {
 auto Sid::setFilterType( FilterType filterType ) -> void {
     
     this->filterType = filterType;
-    
-    filter.setOldFilter( filterType == FilterType::VICE24 );
-    
+
     for( unsigned i = 0; i < 3; i++ )
         voice[i].setType( this->type, this->filterType == FilterType::Chamberlin );
     
@@ -132,7 +130,7 @@ auto Sid::volumeCorrection( bool state ) -> void {
         return;
     
     switch (filterType) {
-        case Sid::FilterType::Standard: {
+        case Sid::FilterType::Resid: {
             
             if (type == Type::MOS_8580)
                 correction = 2.0;
