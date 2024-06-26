@@ -107,9 +107,19 @@ auto Copper::process() -> void {
                 state = Strobe_VBL_2;
                 break;
             }
+
+            if (agnus.checkCopperBlitterConflict(copPtr)) {
+                copPtrBefore = copPtr;
+                assignCopPtr();
+                state = Read1Buggy;
+                agnus.setCopBltConflictThisCycle();
+                break;
+            }
+
             state = Strobe_CPU_5;
-            // fallthrough
+            break;
         case Strobe_CPU_5:
+
             if (agnus.allocateCopper()) {
                 assignCopPtr();
                 state = Read1;
@@ -130,6 +140,7 @@ auto Copper::process() -> void {
                 break;
             }
             // fallthrough
+        case Read1Buggy:
         case Read1:
             if (agnus.fetchCopperDma(copPtr, ir1)) {
                 copPtr += 2;
@@ -343,6 +354,7 @@ auto Copper::reset() -> void {
     ir1 = ir2 = 0;
     cop1lc = cop2lc = 0;
     copPtr = 0;
+    copPtrBefore = 0;
 }
 
 auto Copper::serialize(Emulator::Serializer& s) -> void {
@@ -353,6 +365,7 @@ auto Copper::serialize(Emulator::Serializer& s) -> void {
     s.integer(cop1lc);
     s.integer(cop2lc);
     s.integer(copPtr);
+    s.integer(copPtrBefore);
     s.integer(ir1);
     s.integer(ir2);
     s.integer(comp.hPos);

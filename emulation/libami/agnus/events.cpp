@@ -335,6 +335,10 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
             // DMAL is fetched serial bit by bit (14 cycles).
             dmal = paula.dmal();
             break;
+        case COP_BLT_CONFLICT:
+            if (copper.state == Copper::State::Read1Buggy)
+                copper.state = Copper::State::Read1;
+            break;
     }
 }
 

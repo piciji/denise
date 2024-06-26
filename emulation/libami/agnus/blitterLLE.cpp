@@ -30,8 +30,34 @@ namespace LIBAMI {
                         bltcon0 &= 0x0fff;  \
                     } else bltcon0 += 0x1000; }
 
+#define BLITTER_DMA_FETCH(useMod, Cha)  \
+    if(useMod) {    \
+        if (desc)   \
+            agnus.fetchBlitterDma<Agnus::PTR_BLT_##Cha##_H, true, true, true, false>(blt##Cha##pt, blt##Cha##dat, blt##Cha##mod);    \
+        else    \
+            agnus.fetchBlitterDma<Agnus::PTR_BLT_##Cha##_H, false, true, true, false>(blt##Cha##pt, blt##Cha##dat, blt##Cha##mod);   \
+    } else {    \
+        if (desc)   \
+            agnus.fetchBlitterDma<Agnus::PTR_BLT_##Cha##_H, true, true, false, false>(blt##Cha##pt, blt##Cha##dat);     \
+        else    \
+            agnus.fetchBlitterDma<Agnus::PTR_BLT_##Cha##_H, false, true, false, false>(blt##Cha##pt, blt##Cha##dat);    \
+    }
+
+#define BLITTER_DMA_WRITE(useMod)  \
+    if(useMod) {    \
+        if (desc)   \
+            agnus.writeBlitterDma<true, true, true, false>(bltDpt, doff ? agnus.dataBus : bltDdat, bltDmod);    \
+        else    \
+            agnus.writeBlitterDma<false, true, true, false>(bltDpt, doff ? agnus.dataBus : bltDdat, bltDmod);   \
+    } else {    \
+        if (desc)   \
+            agnus.writeBlitterDma<true, true, false, false>(bltDpt, doff ? agnus.dataBus : bltDdat);     \
+        else    \
+            agnus.writeBlitterDma<false, true, false, false>(bltDpt, doff ? agnus.dataBus : bltDdat);    \
+    }
+
 auto Blitter::stateMachine() -> void {
-    if (!agnus.canBlitterUseBus())
+    if (!agnus.canBlitterUseBusExt())
         return;
 
     if (shiftOut) {
@@ -96,16 +122,16 @@ auto Blitter::stateMachine() -> void {
             }
 
         } else if (shifter & STAGE_B) { // B (optional)
-            agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat);
-
             if (curW == 1) // last, or first if horizontal size is one
-                bltBpt += bltBmod;
+                agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, false, false, true, false>(bltBpt, bltBdat, bltBmod);
+            else
+                agnus.fetchBlitterDma<Agnus::PTR_BLT_B_H, false, false, false, false>(bltBpt, bltBdat);
 
         } else if (shifter & STAGE_X) {
             if (curW == 1) { // last, or first if horizontal size is one
                 if (shifter & BLT_C) {
                     if (writeLineDot)
-                        agnus.writeBlitterDmaNoBUSCheck(bltDpt, doff ? agnus.dataBus : bltDdat);
+                        agnus.writeBlitterDma<false, false, false, false>(bltDpt, doff ? agnus.dataBus : bltDdat);
 
                     agnus.forceOneCycleEvent(Agnus::PTR_BLT_C_H);
 
@@ -158,7 +184,7 @@ auto Blitter::stateMachine() -> void {
                 if (shifter & BLT_C) {
                     // /vAmigaTS/Agnus/Blitter/line/line12
                     if ((curW == bltSizeW) || ((bltcon1 & (BLT_SUD | BLT_SUL | BLT_AUL)) != (BLT_SUL)))
-                        agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat);
+                        agnus.fetchBlitterDma<Agnus::PTR_BLT_C_H, false, false, false, false>(bltCpt, bltCdat);
 
                     if (curW == bltSizeW) {
                         if (bltcon1 & BLT_SUD) {
@@ -214,45 +240,13 @@ auto Blitter::stateMachine() -> void {
         uint8_t channel = channels[shifter & 0x3ff];
 
         if (channel == 1) {
-            agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_A_H>(bltApt, bltAdat);
-
-            if (desc)  bltApt += -2;
-            else       bltApt += +2;
-
-            if (curW == 1) {
-                if (desc)  bltApt += -bltAmod;
-                else       bltApt += bltAmod;
-            }
+            BLITTER_DMA_FETCH(curW == 1, A)
         } else if (channel == 2) {
-            agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_B_H>(bltBpt, bltBdat);
-
-            if (desc)  bltBpt += -2;
-            else       bltBpt += +2;
-
-            if (curW == 1) {
-                if (desc)  bltBpt += -bltBmod;
-                else       bltBpt += bltBmod;
-            }
+            BLITTER_DMA_FETCH(curW == 1, B)
         } else if (channel == 3) {
-            agnus.fetchBlitterDmaNoBUSCheck<Agnus::PTR_BLT_C_H>(bltCpt, bltCdat);
-
-            if  (desc)  bltCpt += -2;
-            else        bltCpt += +2;
-
-            if (curW == 1) {
-                if (desc)  bltCpt += -bltCmod;
-                else       bltCpt += bltCmod;
-            }
+            BLITTER_DMA_FETCH(curW == 1, C)
         } else if (channel == 4) {
-            agnus.writeBlitterDmaNoBUSCheck(bltDpt, doff ? agnus.dataBus : bltDdat);
-
-            if (desc)  bltDpt += -2;
-            else       bltDpt += 2;
-
-            if (curW == bltSizeW) {
-                if (desc)  bltDpt += -bltDmod;
-                else       bltDpt += bltDmod;
-            }
+            BLITTER_DMA_WRITE(curW == bltSizeW)
         }
     }
 
@@ -377,3 +371,6 @@ auto Blitter::prepareChannel() -> void {
 }
 
 }
+
+#undef BLITTER_DMA_FETCH
+#undef BLITTER_DMA_WRITE

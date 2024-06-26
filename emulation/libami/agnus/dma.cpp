@@ -360,7 +360,7 @@ auto Agnus::fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
     dataBus = result;
 }
 
-auto Agnus::canBlitterUseBus() -> bool {
+inline auto Agnus::canBlitterUseBus() -> bool {
     if (busUsage != BUS_FREE)
         return false; // a higher DMA
 
@@ -371,28 +371,59 @@ auto Agnus::canBlitterUseBus() -> bool {
         return false; // if blitter has no priority over CPU all wait cycles matter, not only the cycles when blitter can proceed
 
     return true;
-};
+}
 
-template<uint8_t ptrEvent> auto Agnus::fetchBlitterDma(uint32_t adr, uint16_t& result) -> bool {
-    if(!canBlitterUseBus())
-        return false;
+auto Agnus::canBlitterUseBusExt() -> bool {
+    return canBlitterUseBus();
+}
+
+template<uint8_t ptrEvent, bool desc, bool add, bool mod, bool check>
+auto Agnus::fetchBlitterDma(uint32_t& adr, uint16_t& result, const int16_t& modVal) -> bool {
+    if constexpr (check) {
+        if(!canBlitterUseBus())
+            return false;
+    }
 
     busUsage = BUS_USAGE_BLITTER;
 
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
+    if (copper.state == Copper::Read1Buggy) {
+        adr |= copper.copPtrBefore;
+
+        result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
+
+        adr = copper.copPtr;
+
+        if constexpr (mod) {
+            if constexpr (desc)  copper.copPtr += -modVal;
+            else                 copper.copPtr += modVal;
+        }
+    } else {
+        result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
+
+        if constexpr (add) {
+            if constexpr (desc)  adr += -2;
+            else                 adr += +2;
+        }
+    }
+
+    if constexpr (mod) {
+        if constexpr (desc)  adr += -modVal;
+        else                 adr += modVal;
+    }
 
     dataBus = result;
     dmaClock = clock;
 
-    // if a modified pointer is used for DMA in the next cycle, the change is ignored.
     inactivateOneCycleEvent<true>(ptrEvent);
-
     return true;
 }
 
-auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
-    if(!canBlitterUseBus())
-        return false;
+template<bool desc, bool add, bool mod, bool check>
+auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVal) -> bool {
+    if constexpr (check) {
+        if(!canBlitterUseBus())
+            return false;
+    }
 
     busUsage = BUS_USAGE_BLITTER;
 
@@ -400,40 +431,44 @@ auto Agnus::writeBlitterDma(uint32_t adr, uint16_t value) -> bool {
     if (trackMemChanges)
         rememberChipMem(adr);
 
-    *(uint16_t*)(chipMem + adr) = _swapWord(value);
+    if (copper.state == Copper::Read1Buggy) {
+        adr |= copper.copPtrBefore;
+
+        *(uint16_t*)(chipMem + adr) = _swapWord(value);
+
+        adr = copper.copPtr;
+
+        if constexpr (mod) {
+            if constexpr (desc)  copper.copPtr += -modVal;
+            else                 copper.copPtr += modVal;
+        }
+    } else {
+        *(uint16_t*)(chipMem + adr) = _swapWord(value);
+
+        if constexpr (add) {
+            if constexpr (desc)  adr += -2;
+            else                 adr += +2;
+        }
+    }
+
+    if constexpr (mod) {
+        if constexpr (desc)  adr += -modVal;
+        else                 adr += modVal;
+    }
 
     dataBus = value;
     dmaClock = clock;
 
     inactivateOneCycleEvent<true>(PTR_BLT_D_H);
-
     return true;
 }
 
-template<uint8_t ptrEvent> auto Agnus::fetchBlitterDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
-    busUsage = BUS_USAGE_BLITTER;
+auto Agnus::checkCopperBlitterConflict(uint32_t& ptr) -> bool {
+    if (useCopperDMAForQueue() && (((bplQueue >> 16) & 0xff) == 0) ) { // DMAL, Refresh is out of way
+        return true;
+    }
 
-    result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
-
-    dataBus = result;
-    dmaClock = clock;
-
-    inactivateOneCycleEvent<true>(ptrEvent);
-}
-
-auto Agnus::writeBlitterDmaNoBUSCheck(uint32_t adr, uint16_t value) -> void {
-    busUsage = BUS_USAGE_BLITTER;
-
-    adr &= dmaChipMemMask;
-    if (trackMemChanges)
-        rememberChipMem(adr);
-
-    *(uint16_t*)(chipMem + adr) = _swapWord(value);
-
-    dataBus = value;
-    dmaClock = clock;
-
-    inactivateOneCycleEvent<true>(PTR_BLT_D_H);
+    return false;
 }
 
 }
