@@ -428,11 +428,12 @@ auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVa
     busUsage = BUS_USAGE_BLITTER;
 
     adr &= dmaChipMemMask;
-    if (trackMemChanges)
-        rememberChipMem(adr);
 
     if (copper.state == Copper::Read1Buggy) {
         adr |= copper.copPtrBefore;
+
+        if (trackMemChanges)
+            rememberChipMem(adr);
 
         *(uint16_t*)(chipMem + adr) = _swapWord(value);
 
@@ -443,6 +444,9 @@ auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVa
             else                 copper.copPtr += modVal;
         }
     } else {
+        if (trackMemChanges)
+            rememberChipMem(adr);
+
         *(uint16_t*)(chipMem + adr) = _swapWord(value);
 
         if constexpr (add) {

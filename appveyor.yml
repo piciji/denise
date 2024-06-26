@@ -19,7 +19,6 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
-    - blitter_copper_conflict
 
 environment:
   matrix:
