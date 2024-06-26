@@ -104,11 +104,16 @@ auto Program::readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsi
     return file->read(buffer, length, offset);
 }
 
-auto Program::readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer) -> unsigned {
+auto Program::readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer, bool preview) -> unsigned {
+    std::string path;
     if (!activeEmulator)
         return 0;
 
-    auto path = getAssignedSaveFile(media);
+    if (preview)
+        path = diskSaveFolder(activeEmulator) + + "/" + fileloader->queuePreview.fileName + ".sav";
+    else
+        path = getAssignedSaveFile(media);
+
     if (path.empty())
         return 0;
 
@@ -140,8 +145,12 @@ auto Program::writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buf
         return 0;
 
     GUIKIT::File f( path );
-    if (f.open(GUIKIT::File::Mode::Write, true))
+    if (f.open(GUIKIT::File::Mode::Write, true)) {
+        auto file = (GUIKIT::File*)media->guid;
+        if (file)
+            file->forceDataChange(); // otherwise UI doesn't refresh preview listing
         return f.write(buffer, length, 0);
+    }
     return 0;
 }
 

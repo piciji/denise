@@ -199,8 +199,11 @@ auto DiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
     return {};
 }
 
-auto DiskStructure::getPreview(System* system, uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
+auto DiskStructure::getPreview(System* system, Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing> {
     DiskStructure disk(system->agnus);
+    disk.readAssigned = [system, media](uint8_t*& buffer) {
+        return system->interface->readAssignedMedia( media, buffer, true );
+    };
 
     if (!disk.attach( data, size ))
         return {};

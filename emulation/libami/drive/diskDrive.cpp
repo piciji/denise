@@ -28,7 +28,7 @@ DiskDrive::DiskDrive(uint8_t number, System* system, Agnus& agnus, Cia<MOS_8520>
     };
 
     structure.readAssigned = [this, system](uint8_t*& buffer) {
-        return system->interface->readAssignedMedia( media, buffer );
+        return system->interface->readAssignedMedia( media, buffer, false );
     };
 
     structure.writeAssigned = [this, system](uint8_t* buffer, unsigned length) {

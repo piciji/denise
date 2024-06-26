@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "221";
+const std::string Interface::Version = "230";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -572,7 +572,7 @@ auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface:
 }
 
 auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
-    return DiskStructure::getPreview( system, data, size);
+    return DiskStructure::getPreview( system, media, data, size);
 }
 
 

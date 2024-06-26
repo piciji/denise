@@ -1510,7 +1510,8 @@ auto View::buildMenu() -> void {
 
         diskControlMenu.clearSave.onActivate = [i]() {
             emuThread->lock();
-            auto path = program->getAssignedSaveFile( activeEmulator->getDisk(i) );
+            auto media = activeEmulator->getDisk(i);
+            auto path = program->getAssignedSaveFile( media );
             if (path.empty()) {
                 emuThread->unlock();
                 return;
@@ -1518,8 +1519,18 @@ auto View::buildMenu() -> void {
 
             GUIKIT::File file(path);
             if (file.exists()) {
-                if (file.del())
+                if (file.del()) {
+                    auto fSetting = FileSetting::getInstance( activeEmulator, _underscore( media->name ) );
+                    GUIKIT::File* _file = filePool->get(fSetting->path);
+
+                    activeEmulator->insertMedium(media, _file->archiveData( fSetting->id ), _file->archiveDataSize(fSetting->id));
+
+                    auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+                    if (emuView && emuView->mediaLayout)
+                        emuView->mediaLayout->updateListing( media );
+
                     statusHandler->setMessage(trans->getA("save file deleted"), 3, true);
+                }
             }
             emuThread->unlock();
         };

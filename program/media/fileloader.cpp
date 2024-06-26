@@ -542,6 +542,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
             }
 
             fileName = items[0].info.name;
+            queuePreview.fileName = fileName;
             extension = GUIKIT::String::getExtension(fileName, "exe");
             GUIKIT::String::toLowerCase( extension );
 

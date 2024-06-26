@@ -309,7 +309,7 @@ struct Interface {
         virtual auto audioFlush() -> void {}
         virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
         virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
-        virtual auto readAssignedMedia(Media*, uint8_t*&) -> unsigned { return 0; }
+        virtual auto readAssignedMedia(Media*, uint8_t*&, bool) -> unsigned { return 0; }
         virtual auto writeAssignedMedia(Media*, uint8_t*, unsigned) -> unsigned { return 0; }
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
         virtual auto truncateMedia(Media* ) -> bool { return false; }
@@ -367,8 +367,8 @@ struct Interface {
         return bind->writeMedia(media, buffer, length, offset);
     }
 
-    auto readAssignedMedia(Media* media, uint8_t*& buffer) -> unsigned {
-        return bind->readAssignedMedia(media, buffer);
+    auto readAssignedMedia(Media* media, uint8_t*& buffer, bool preview) -> unsigned {
+        return bind->readAssignedMedia(media, buffer, preview);
     }
 
     auto writeAssignedMedia(Media* media, uint8_t* buffer, unsigned length) -> unsigned {

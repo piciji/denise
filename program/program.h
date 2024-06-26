@@ -104,7 +104,7 @@ struct Program : Emulator::Interface::Bind {
     auto powerOff() -> void;
     auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
     auto writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
-	auto readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer) -> unsigned override;
+	auto readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer, bool preview) -> unsigned override;
 	auto writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length) -> unsigned override;
 
     auto truncateMedia(Emulator::Interface::Media* media) -> bool override;

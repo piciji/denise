@@ -108,7 +108,7 @@ struct DiskStructure {
     auto setStandardTiming(Track& track) -> bool;
 
     static auto create(System* system, Type type, std::string name, bool hd, bool ffs, bool bootable) -> Emulator::Interface::Data;
-    static auto getPreview(System* system, uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing>;
+    static auto getPreview(System* system, Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing>;
 
 };
 
