@@ -1080,7 +1080,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         media->guid = uintptr_t(file);
 
         emulator->insertMedium(media, data, size);
-        emulator->writeProtect(media, asWP);
+        emulator->writeProtect(media, fSetting->writeProtect);
         if (!mediaGroup->isProgram())
             filePool->assign( _ident(emulator, media->name), file);
     } else {        

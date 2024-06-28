@@ -644,7 +644,7 @@ auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::Media
     filePool->unloadOrphaned();
 
     auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
-    fSetting->init();
+    fSetting->init(false);
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
@@ -774,7 +774,7 @@ auto Fileloader::updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GU
     fSetting->setPath(file->getFile(), !cmd->autoload);
     fSetting->setFile(item->info.name, !cmd->autoload);
     fSetting->setId(item->id, !cmd->autoload);
-    fSetting->setWriteProtect(wp, !cmd->autoload);
+    //fSetting->setWriteProtect(wp, !cmd->autoload);
 }
 
 auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
@@ -798,7 +798,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         media->guid = uintptr_t(file);
 
         emulator->insertMedium(media, data, size);
-        emulator->writeProtect(media, asWP);
+        emulator->writeProtect(media, fSetting->writeProtect);
         if (!mediaGroup->isProgram())
             filePool->assign(_ident(emulator, media->name), file);
     } else {
@@ -1051,6 +1051,9 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
     }
 
     filePool->assign( _ident(emulator, "swapper_" + std::to_string(swapPos)), file);
+
+    auto fSetting2 = FileSetting::getInstance( emulator, _underscore(media->name ) );
+    fSetting2->setWriteProtect(fSetting->writeProtect);
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
     if (emuView && emuView->mediaLayout)

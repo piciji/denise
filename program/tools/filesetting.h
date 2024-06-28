@@ -87,10 +87,11 @@ struct FileSetting {
         useSettings->setSaveable( ident + "_wp", state );
     }
 	
-	auto init() -> void {
+	auto init(bool resetWP = true) -> void {
 		setPath("");
 		setFile("");
 		setId(0);
-		setWriteProtect(false);
+		if (resetWP)
+			setWriteProtect(false);
 	}
 };
