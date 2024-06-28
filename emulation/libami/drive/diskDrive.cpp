@@ -190,11 +190,17 @@ template<bool update> auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
     uint8_t bit = (~headOffset) & 7; // msb is next
 
     headOffset++;
+    if (headOffset == track->overlap)
+        headOffset += std::max(1, rand() & 3);
+
     if ( headOffset >= track->bits ) {
-        headOffset = 0;
+        headOffset -= track->bits;
         structure.loadNextRevIPF(*track);
         if (selected)
             cia.setFlag();
+
+        if (headOffset == track->overlap)
+            headOffset += std::max(1, rand() & 3);
     }
 
     dmaCycles = 7;

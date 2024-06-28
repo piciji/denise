@@ -226,6 +226,7 @@ auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits, u
     track.length = newLength;
     track.bits = bits == 0 ? getTrackBitLength() : bits;
     track.options = 0;
+    track.overlap = -1;
     deleteTimingIPF(track);
 }
 
@@ -236,6 +237,7 @@ auto DiskStructure::setStandardTiming(Track& track) -> bool {
     unsigned standardBitLength = getTrackBitLength();
     deleteTimingIPF(track);
     track.options &= ~2; // disable possible multi rev behaviour
+    track.overlap = -1;
 
     if (standardBitLength != track.bits) {
         track.bits = standardBitLength;

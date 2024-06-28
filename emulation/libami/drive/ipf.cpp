@@ -170,7 +170,7 @@ auto DiskStructure::prepareIPF(uint8_t* data, unsigned size) -> void {
                     addTimingIPF(track, ti.timelen, ti.timebuf);
 
                 track.options |= (ti.type & CTIT_FLAG_FLAKEY) ? 2 : 0;
-
+                track.overlap = ti.overlap;
                 //agnus.interface->log(ti.overlap);
                 //agnus.interface->log(ti.type & CTIT_FLAG_FLAKEY ? 1 : 0, 0);
 

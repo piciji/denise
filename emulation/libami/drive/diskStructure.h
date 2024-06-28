@@ -41,6 +41,7 @@ struct DiskStructure {
         unsigned bits = 0;
         uint8_t options = 0; // Bit 0: written, Bit 1: IPF Weak Bit Track
         uint16_t* cellWidth = nullptr; // flux formats like IPF
+        int32_t overlap = -1;
     };
 
     Agnus& agnus;
