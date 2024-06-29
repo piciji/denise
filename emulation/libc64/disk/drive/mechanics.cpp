@@ -137,8 +137,8 @@ auto Drive::byteFetched( bool overflowNotThisCycle ) -> void {
 inline auto Drive::readBit() -> bool {
     uint8_t* trackPtr = gcrTrack->data;
     
-    if (!loaded)
-        return 0;
+//    if (!loaded)
+  //      return 0;
 
     unsigned byte = headOffset >> 3;
     uint8_t bit = (~headOffset) & 7; // msb is next
@@ -220,7 +220,7 @@ auto Drive::motorRun() -> bool {
 
 auto Drive::motorOffInit() -> void {
 
-    motorOff.delay = 50000 + (rand() % 1000);
+    motorOff.delay = 50000 + (randomizer.xorShift() % 1000);
     unsigned slowDownCycles = 50000;
 
     if (use2Mhz()) {
@@ -365,7 +365,6 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
             // old head offset = new head offset
             // old size = new size
             // new head offset = old head * new size / old size
-            // i heard of games which rely on correct alignment of track data.
             headOffset = ( headOffset * gcrTrack->size ) / oldTrackSize;
 
          else

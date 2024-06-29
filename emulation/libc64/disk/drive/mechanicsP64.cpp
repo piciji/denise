@@ -5,7 +5,7 @@ namespace LIBC64 {
 
     auto Drive::rotateP64(  ) -> void {
         unsigned todo;
-        bool motorAdvance = motorRun() && loaded;
+        bool motorAdvance = motorRun();
 
 #define OVERFLOW_NOT_THIS_CYCLE \
         ((refCyclesInCpuCycle - refCycles + todo) > (refCyclesInCpuCycle >> 1))
@@ -47,8 +47,7 @@ namespace LIBC64 {
                     // is violated by some randomness. means the counter registers
                     // will be reset after some time but that doesn't mean it can
                     // be more than 3 zeros in row shifted in but fewer.
-                    //randCounter = randomizer.rand(0, 31) + 189; // 12 - 14 micro
-                    randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 194;
+                    randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 233;
                 } else {
 
                     randCounter -= todo;
@@ -62,9 +61,7 @@ namespace LIBC64 {
                             if (ue3Counter == 8)
                                 byteFetched(OVERFLOW_NOT_THIS_CYCLE);
                         }
-                       // randCounter = randomizer.rand(0, 367) + 33;  // 2 - 25 micro
-                       // randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33;
-                        randCounter = ( (randomizer.xorShift() >> 16 ) % 202) + 198;
+                        randCounter = ( (randomizer.xorShift() >> 16 ) % 369) + 31;
                     }
                 }
 

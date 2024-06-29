@@ -5,7 +5,7 @@ namespace LIBC64 {
 
     auto Drive::rotateG64( ) -> void {
         unsigned todo;
-        bool motorAdvance = motorRun() && loaded;
+        bool motorAdvance = motorRun();
 
         // the g64 format contains user and structure data, simply all bits of a track
         // but hasn't information about bit cell length. not quite true but read on.
@@ -92,9 +92,7 @@ namespace LIBC64 {
                             if (ue3Counter == 8)
                                 byteFetched(OVERFLOW_NOT_THIS_CYCLE);
                         }
-                        // freespin relies on that following random flux reversals don't prevent UE3 counter increments.
-                        // so a random flux reversal mustn't happen too soon. freespin use this to find out if disk was removed
-                        randCounter = ( (randomizer.xorShift() >> 16 ) % 202) + 198;
+                        randCounter = ( (randomizer.xorShift() >> 16 ) % 369) + 31;
                     }
 
                 } else {

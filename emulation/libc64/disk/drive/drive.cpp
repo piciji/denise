@@ -1072,6 +1072,8 @@ auto Drive::detach() -> void {
     wd1770.setDiskAccessible(false);
     pulseIndex = -1;
     pulseDelta = 1; // to reload quickly
+    operation &= ~(ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
+    operation |= USERDATA_LEVEL;
 }
 
 auto Drive::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> void {
