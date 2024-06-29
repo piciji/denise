@@ -187,14 +187,14 @@ auto Drive::motorRun() -> bool {
     if (motorOn)
         return true;
 
-    if (!motorOff.slowDown)
-        return false;
+   // if (!motorOff.slowDown)
+    //    return false;
 
     if (motorOff.delay) {
         motorOff.delay--;
         return true;
     }
-
+    return false;
     // Star Trekking game needs emulation of motor slow down
     unsigned decelerationPoint = motorOff.decelerationPoint;
     if (motorOff.chunkSize[decelerationPoint])
@@ -220,14 +220,15 @@ auto Drive::motorRun() -> bool {
 
 auto Drive::motorOffInit() -> void {
 
-    motorOff.delay = 50000 + (randomizer.xorShift() % 1000);
-    unsigned slowDownCycles = 50000;
+    motorOff.delay = 1300;
+
+    unsigned slowDownCycles = 20000;
 
     if (use2Mhz()) {
         motorOff.delay <<= 1;
         slowDownCycles <<= 1;
     }
-
+    return;
     unsigned chunkSize = slowDownCycles / motorOff.CHUNKS;
     unsigned rest = slowDownCycles % motorOff.CHUNKS;
 

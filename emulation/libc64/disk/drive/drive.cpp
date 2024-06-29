@@ -425,7 +425,7 @@ structure(system, this) {
 
 	structure.number = number;
 	type = Type::D1541II;
-	operation = 0;
+	operation = USERDATA_LEVEL;
     expandMemory = 0;
     speeder = 0;
     profDosAutoSpeed = 0;
@@ -1128,7 +1128,8 @@ auto Drive::postAttach() -> void {
     } else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71) {
         operation |= FLUXDATA_LEVEL;
         wd1770.setMode( WD1770::Mode::FLUX );
-    }
+    } else
+        operation |= USERDATA_LEVEL;
 }
 
 auto Drive::setWriteProtect(bool state) -> void {
