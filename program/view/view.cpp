@@ -423,6 +423,15 @@ auto View::setDragnDrop() -> void {
         autoloader->init( files, false, mode, selection );
         autoloader->loadFiles();
 
+        bool activeCore = globalSettings->get<bool>("core_" + activeEmulator->ident, true);
+        if (!activeCore) {
+            globalSettings->set<bool>("core_" + activeEmulator->ident, true);
+            view->updateEmuUsage();
+            if (configView && configView->settingsLayout) {
+                configView->settingsLayout->activateCore(activeEmulator);
+            }
+        }
+
         view->setFocused(100);
         emuThread->unlock();
     };

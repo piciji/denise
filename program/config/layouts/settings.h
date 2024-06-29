@@ -95,6 +95,8 @@ struct SettingsLayout : GUIKIT::VerticalLayout {
     auto setPreviewContent() -> void;
     auto translate() -> void;
     auto removePreview() -> void;
+    auto activateCore(Emulator::Interface* emulator) -> void;
+
     SettingsLayout();
     ~SettingsLayout();
 };

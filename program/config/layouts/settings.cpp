@@ -471,6 +471,15 @@ auto SettingsLayout::addLangImage(unsigned selection, std::string file) -> void 
     lang.listView.setImage(selection, 0, *image);
 }
 
+auto SettingsLayout::activateCore(Emulator::Interface* emulator) -> void {
+    for(auto& core : emuSelection.cores) {
+        if (core.emulator == emulator) {
+            core.checkBox->setChecked();
+            break;
+        }
+    }
+}
+
 auto SettingsLayout::translate() -> void {
     lang.setText( trans->get("language") );
     
