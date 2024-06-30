@@ -220,7 +220,7 @@ auto Drive::motorRun() -> bool {
 
 auto Drive::motorOffInit() -> void {
 
-    motorOff.delay = 1300;
+    motorOff.delay = 5900;
 
     unsigned slowDownCycles = 20000;
 

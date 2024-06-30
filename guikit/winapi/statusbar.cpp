@@ -447,6 +447,8 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
 auto pStatusBar::setLockDisabled(bool state) -> void {
 	disableLock = state;
 	locked = false;
+    if (!state && !hasAppThemed())
+        SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOREDRAW);
 }
 
 auto pStatusBar::onClick(LPARAM lparam) -> void {
