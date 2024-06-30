@@ -269,12 +269,12 @@ auto DiskDrive::writeBit(bool state) -> void {
 
     if (!written)
         written = true;
-    track->options |= 1; // track data has changed, host have to write back
-}
 
-auto DiskDrive::setStandardTiming() -> void {
-    if (structure.setStandardTiming(*track))
-        reset();
+    if ((track->options & 1) == 0) {
+        structure.setStandardTiming(*track);
+        randCounter = 0;
+        track->options |= 1; // track data has changed, host have to write back
+    }
 }
 
 auto DiskDrive::reset() -> void {

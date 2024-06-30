@@ -130,7 +130,6 @@ namespace LIBAMI {
 
             setDskState(wordSync() ? DiskState::WAIT_SYNC_WRITE : DiskState::WRITE);
             dskBytr &= ~0x8000;
-            activeDrive->setStandardTiming();
             start = true;
         }
 

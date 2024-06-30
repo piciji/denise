@@ -96,7 +96,6 @@ struct DiskDrive {
     auto reset() -> void;
 
     auto getDummyTrack() -> DiskStructure::Track*;
-    auto setStandardTiming() -> void;
 
     auto instantWrite(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;
     auto instantRead(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;

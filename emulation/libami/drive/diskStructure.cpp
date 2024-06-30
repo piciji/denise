@@ -231,8 +231,8 @@ auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits, u
 }
 
 auto DiskStructure::setStandardTiming(Track& track) -> bool {
-    if (type == DiskStructure::ADF || type == DiskStructure::Unknown)
-        return false;
+   // if (type == DiskStructure::ADF || type == DiskStructure::Unknown)
+     //   return false;
 
     unsigned standardBitLength = getTrackBitLength();
     deleteTimingIPF(track);
