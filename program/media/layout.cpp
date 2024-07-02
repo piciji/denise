@@ -1,4 +1,60 @@
 
+DialogPreviewLayout::DialogPreviewLayout() {
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
+
+    previewBox.setHeaderText( { "" } );
+    previewBox.setHeaderVisible( false );
+
+    append( mode, {0u, 0u}, 10 );
+    append( control, {0u, 0u}, 10 );
+    append( dimension, {~0u, 0u}, 10 );
+}
+
+DialogPreviewLayout::Mode::Mode() {
+    append(label,{0u, 0u}, 10);
+    append(noPreviewRadio,{0u, 0u}, 10);
+    append(dialogPreviewRadio,{0u, 0u}, 10);
+    append(softwarePreviewRadio,{0u, 0u});
+    GUIKIT::RadioBox::setGroup(noPreviewRadio, dialogPreviewRadio, softwarePreviewRadio);
+
+    setAlignment(0.5);
+}
+
+DialogPreviewLayout::Control::Control() {
+    append(fontSize,{0u, 0u}, 10);
+    append(fontSizeCombo,{0u, 0u}, 20);
+    append(option,{0u, 0u});
+
+    for(unsigned i = 8; i <= 16; i++)
+        fontSizeCombo.append(std::to_string(i), i);
+
+    setAlignment(0.5);
+}
+
+DialogPreviewLayout::Control::Option::Option() {
+    append(tooltips,{0u, 0u}, 2);
+    append(commodoreHighlight,{0u, 0u});
+}
+
+DialogPreviewLayout::Dimension::Dimension() :
+dialogWidth("px"),
+dialogHeight("px")
+{
+    append(dialogWidth,{~0u, 0u}, 10);
+
+    if (GUIKIT::Application::isCocoa())
+        append(dialogHeight,{~0u, 0u});
+
+    dialogWidth.updateValueWidth("600 px", 5);
+    dialogHeight.updateValueWidth("600 px", 5);
+
+    dialogWidth.slider.setLength(401);
+    dialogHeight.slider.setLength(501);
+
+    setAlignment(0.5);
+}
+
 PathsLayout::Block::Block(Emulator::Interface::MediaGroup* mediaGroup) {
     this->mediaGroup = mediaGroup;
         
@@ -248,7 +304,7 @@ auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& e
     listings.append(rows);
 	
     // first check is usefull, when App is quited and globalSettings object deleted at this point
-    if (!globalSettings || !globalSettings->get<bool>("software_preview_tooltips", true ))
+    if (!globalSettings || !mediaLayout->settings->get<bool>("software_preview_tooltips", true ))
         return;
         
 	unsigned i = 0;
@@ -266,7 +322,7 @@ auto MediaGroupLayout::fillListing( std::vector<GUIKIT::BrowserWindow::Listing>&
         
     listings.append(rows);
 		
-    if (!globalSettings->get<bool>("software_preview_tooltips", true ))
+    if (!mediaLayout->settings->get<bool>("software_preview_tooltips", true ))
         return;
         
 	unsigned i = 0;
@@ -279,7 +335,7 @@ auto MediaGroupLayout::showOnlyConnectedDevices() -> bool {
     return mediaGroup->isDrive() && mediaGroup->media.size() > 1;
 }
 
-auto MediaGroupLayout::build() -> void {
+auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
 
     auto addBlock = [&](Emulator::Interface::Media* media) -> MediaGroupLayout::Block* {
         auto block = new Block( media );
@@ -324,10 +380,7 @@ auto MediaGroupLayout::build() -> void {
     listings.setHeaderText( { "" } );
     listings.setHeaderVisible( false );
     listings.colorRowTooltips( true );
-
-    unsigned _fontSize = globalSettings->get<unsigned>("software_preview_fontsize", 12, {6, 14});
-
-    applyFont(_fontSize);
+    applyFont(previewFontSize);
 
     if ( mediaGroup->isProgram( ) || mediaGroup->isTape() )
         append( inject, {0u, 0u}, 3 );
@@ -389,4 +442,108 @@ auto MediaGroupLayout::loadSettings() -> void {
              selectedBlock = block;
         }       
     }
+}
+
+auto DialogPreviewLayout::updateWidgets(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void {
+    auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? 1 : 0, {0,2});
+    auto fontSize = settings->get<unsigned>("dialog_preview_fontsize", 11, {8, 16});
+    auto tooltips = settings->get<bool>("software_preview_tooltips", true);
+    auto commodoreHi = settings->get<bool>("software_preview_commodore_hi", true);
+    auto dialogWidth = settings->get<unsigned>("dialog_preview_width", 450, {200, 600});
+    auto dialogHeight = settings->get<unsigned>("dialog_preview_height", 200, {100, 600});
+
+    switch(prevMode) {
+        case 0: mode.noPreviewRadio.setChecked(); break;
+        default:
+        case 1: mode.dialogPreviewRadio.setChecked(); break;
+        case 2: mode.softwarePreviewRadio.setChecked(); break;
+    }
+
+    control.fontSizeCombo.setSelectionByUserId((int)fontSize);
+    control.option.tooltips.setChecked(tooltips);
+    control.option.commodoreHighlight.setChecked(commodoreHi);
+    dimension.dialogWidth.slider.setPosition( dialogWidth - 200 );
+    dimension.dialogHeight.slider.setPosition( dialogHeight - 100 );
+    dimension.dialogWidth.value.setText( std::to_string( dialogWidth ) + " px" );
+    dimension.dialogHeight.value.setText( std::to_string( dialogHeight ) + " px" );
+
+    if (has(previewBox))
+        remove( previewBox );
+}
+
+auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void {
+    std::string out;
+    std::string outTooltip  = "";
+
+    auto customFont = GUIKIT::Window::getCustomFont(emulator );
+
+    auto fontSize = settings->get<unsigned>("dialog_preview_fontsize", 11, {8, 16});
+
+    if (customFont)
+        previewBox.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust), true);
+    else
+        previewBox.setFont( GUIKIT::Font::system(fontSize) );
+
+    if (!previewBox.rowCount()) {
+        auto useTooltips = settings->get<bool>("software_preview_tooltips", true);
+
+        if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+            std::vector<uint8_t> line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x22, 0x20, 0x50, 0x52, 0x47, 0x3c};
+            std::vector<uint8_t> tooltipLine = { 0x4c, 0x4f, 0x41, 0x44, 0x20, 0x22, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x22, 0x2c, 0x38, 0x2c, 0x31 };
+
+            if(customFont) {
+                line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x22, 0x20, 0x10, 0x12, 7, 0x3c};
+                tooltipLine = { 0x0c, 0x0f, 0x01, 0x04, 0x20, 0x22, 0x4, 0x5, 0xe, 0x9, 0x13, 0x5, 0x22, 0x2c, 0x38, 0x2c, 0x31 };
+            }
+
+            std::vector<uint8_t> utf8;
+
+            for (auto& code : line) {
+
+                unsigned useCode = code;
+                if (customFont)
+                    useCode |= customFont->modifier;
+
+                GUIKIT::Utf8::encode(useCode, utf8);
+            }
+
+            out = std::string((const char*) utf8.data(), utf8.size());
+
+            if (useTooltips) {
+                utf8.clear();
+
+                for (auto& code : tooltipLine) {
+
+                    unsigned useCode = code;
+                    if (customFont)
+                        useCode |= customFont->modifier;
+
+                    GUIKIT::Utf8::encode(useCode, utf8);
+                }
+
+                outTooltip = std::string((const char*) utf8.data(), utf8.size());
+            }
+        } else {
+            out = "Amiga Disk Amiga Disk Amiga Disk Amiga Disk Amiga Disk";
+            outTooltip = "s/startup-sequence";
+        }
+
+        for (unsigned i = 0; i < 8; i++) {
+            previewBox.append( {out} );
+            if (useTooltips)
+                previewBox.setRowTooltip(i, outTooltip );
+        }
+    }
+
+    unsigned newWidth = settings->get<unsigned>("dialog_preview_width", 450, {200, 600});
+    unsigned newHeight = 80;
+    if (GUIKIT::Application::isCocoa())
+        newHeight = settings->get<unsigned>("dialog_preview_height", 200, {100, 600});
+
+    if (!has(previewBox))
+        append( previewBox, {0u, 0u} );
+
+    update( previewBox, {newWidth, newHeight} );
+
+    synchronizeLayout();
 }

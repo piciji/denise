@@ -1002,8 +1002,10 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> void {
     }
 
     tviShader.setExpanded();
-    if (selectIt && !tviBase.selected())
+    if (selectIt && !tviBase.selected()) {
         tviShader.setSelected();
+        moduleSwitch.setSelection( 2 );
+    }
 }
 
 auto VideoLayout::buildParams(TviParam& tviParam) -> void {
@@ -1557,8 +1559,11 @@ auto VideoLayout::unloadShader() -> void {
         moduleTree.remove(tviParams);
         moduleTree.remove(tviShader);
         tviBase.setSelected();
-    } else if (!tviBase.selected())
+        moduleSwitch.setSelection( 1 );
+    } else if (!tviBase.selected()) {
         tviShader.setSelected();
+        moduleSwitch.setSelection( 2 );
+    }
 }
 
 auto VideoLayout::addShaderUI() -> void {

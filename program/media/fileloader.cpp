@@ -36,13 +36,13 @@ Fileloader::Fileloader() {
 }
 
 auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void {
-    static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
     auto group = media->group;
     auto suffix = group->suffix;
     auto settings = program->getSettings( emulator );
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
+    auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? 1 : 0, {0,2});
 
-    if (*alternateFileDialog && emuView && emuView->visible()) {
+    if ((prevMode == PREV_SOFTWARE) && emuView && emuView->visible()) {
         emuView->setFocused();
     }
 
@@ -90,7 +90,8 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         return this->insertFile(emulator, media, filePath, 1, selection);
     }, IDC_BUTTON );
 
-    if (!*alternateFileDialog && group->isDrive() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
+    //if ((prevMode != PREV_ALTERNATE) && group->isDrive() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
+    if (group->isDrive() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
         fileDialogPtr->addCustomButton( trans->get("VDT Autostart"), [this, emulator, media](std::vector<std::string> filePaths, unsigned selection) {
             if (filePaths.size() == 0)
                 return false;
@@ -102,7 +103,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         }, IDC_BUTTON1 );
     }
 
-    if (!*alternateFileDialog) {
+    if (prevMode == PREV_DIALOG) {
         fileDialogPtr->addContentView(IDC_LIST, [this, media, emulator, settings](std::string filePath, unsigned selection) {
             auto _useTraps = false;
 
@@ -123,9 +124,9 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
             return insertFile(emulator, media, filePath, _a, selection);
         });
 
-        applyPreviewFont( emulator, globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
-        fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
-        fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
+        applyPreviewFont( emulator, settings->get<unsigned>("dialog_preview_fontsize", 11, {6, 14}) );
+        fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_preview_width", 450, {200, 600}) );
+        fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_preview_height", 200, {100, 600}) );
 
         auto videoManager = VideoManager::getInstance( emulator );
         unsigned foregroundColor = videoManager->getForegroundColor();
@@ -134,7 +135,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         fileDialogPtr->setContentViewBackground( backgroundColor );
         fileDialogPtr->setContentViewForeground( foregroundColor );
 
-        if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
+        if (settings->get<bool>("software_preview_commodore_hi", true ))
             fileDialogPtr->setContentViewSelection( backgroundColor, foregroundColor );
 
         fileDialogPtr->setContentViewColorTooltips(true);
@@ -169,14 +170,14 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
 auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void {
 	auto settings = program->getSettings( emulator );
-    static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
+    auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? 1 : 0, {0,2});
     bool trapped = false;
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         trapped = settings->get("autostart_traps_on_dblclick", false) || settings->get("autostart_tape_traps_on_dblclick", false);
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
-    if (*alternateFileDialog && emuView && emuView->visible()) {
+    if ((prevMode == PREV_SOFTWARE) && emuView && emuView->visible()) {
         emuView->setFocused();
     }	    
 
@@ -190,7 +191,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     fileDialogPtr->setTemplateId( IDD_FILE_TEMPLATE );
 
-    if (!*alternateFileDialog) {
+    if (prevMode == PREV_DIALOG) {
         fileDialogPtr->addContentView( IDC_LIST, [this, settings, emulator, mIsAcquiredBefore](std::string filePath, unsigned selection) {
             if (filePath.empty())
                 return false;
@@ -210,9 +211,9 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             return true;
         } );
 
-        applyPreviewFont( emulator, globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) );
-        fileDialogPtr->setContentViewWidth( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) );
-        fileDialogPtr->setContentViewHeight( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) );
+        applyPreviewFont( emulator, settings->get<unsigned>("dialog_preview_fontsize", 11, {6, 14}) );
+        fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_preview_width", 450, {200, 600}) );
+        fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_preview_height", 200, {100, 600}) );
 
         auto videoManager = VideoManager::getInstance( emulator );
         unsigned foregroundColor = videoManager->getForegroundColor();
@@ -220,7 +221,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         fileDialogPtr->setContentViewBackground( backgroundColor );
         fileDialogPtr->setContentViewForeground( foregroundColor );
 
-        if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
+        if (settings->get<bool>("software_preview_commodore_hi", true ))
             fileDialogPtr->setContentViewSelection( backgroundColor, foregroundColor );
 
         fileDialogPtr->setContentViewColorTooltips(true);
@@ -264,7 +265,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         return true;
     }, IDC_BUTTON );
 
-    if (!*alternateFileDialog && dynamic_cast<LIBC64::Interface*>(emulator) ) {
+    //if ((prevMode != PREV_ALTERNATE) && dynamic_cast<LIBC64::Interface*>(emulator) ) {
+    if (dynamic_cast<LIBC64::Interface*>(emulator) ) {
 				
         fileDialogPtr->addCustomButton( trans->get( "VDT Autostart" ), [this, emulator, settings, mIsAcquiredBefore](std::vector<std::string> filePaths, unsigned selection) {
             if (filePaths.size() == 0)
@@ -341,10 +343,10 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     std::string buttonTxt = "Autostart";
     if (trapped) {
-        if (!*alternateFileDialog) {
+      //  if (prevMode != PREV_ALTERNATE) {
             fileDialogPtr->hideOkButton();
             buttonTxt = "Ok";
-        }
+      //  }
     }
 	
 	fileDialogPtr->setDefaultButtonText( trans->get( buttonTxt ) );
@@ -404,8 +406,6 @@ auto Fileloader::applyPreviewFont(Emulator::Interface* emulator, unsigned fontSi
 }
 
 auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
-
-    static GUIKIT::Setting* alternateFileDialog = globalSettings->getOrInit("alternate_software_preview", false);
     Emulator::Interface::MediaGroup* mediaGroup = nullptr;
 
     if (media) {
@@ -430,6 +430,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
         previewTimer.onFinished = [this]() {
             std::unique_lock<std::mutex> lck(previewMutex);
             Emulator::Interface* emulator = queuePreview.emulator;
+            auto prevMode = program->getSettings( emulator )->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? 1 : 0, {0,2});
             uint8_t _status = queuePreview.status;
             std::string filePath = queuePreview.filePath;
             Emulator::Interface::Media* media = queuePreview.media;
@@ -451,13 +452,18 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
 
                 Emulator::Interface::MediaGroup* group = media->group;
 
-                auto emuView = EmuConfigView::TabWindow::getView( emulator, *alternateFileDialog );
-                if(emuView && emuView->mediaLayout)
-                    emuView->mediaLayout->fillListing(media, listings, !queuePreview.lastMedia);
+                auto emuView = EmuConfigView::TabWindow::getView( emulator, prevMode == PREV_SOFTWARE );
+                if (emuView) {
+                    if (!emuView->mediaLayout && (prevMode == PREV_SOFTWARE))
+                        emuView->prepareLayout( EmuConfigView::TabWindow::Layout::Media);
+
+                    if(emuView->mediaLayout)
+                        emuView->mediaLayout->fillListing(media, listings, !queuePreview.lastMedia);
+                }
 
                 queuePreview.lastMedia = media;
 
-                if (emuView && emuView->mediaLayout)
+                if (emuView && emuView->mediaLayout && (prevMode != PREV_OFF) )
                     emuView->mediaLayout->showMediaGroupLayout(group);
 
                 if (fileDialogPtr)
@@ -467,7 +473,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
                     program->getSettings( emulator )->set<std::string>("anyload_path", GUIKIT::File::getPath(filePath));
                 }
 
-                if (*alternateFileDialog && emuView) {
+                if ((prevMode == PREV_SOFTWARE) && emuView) {
                     emuView->setLayout( EmuConfigView::TabWindow::Layout::Media );
 
                     if ( !emuView->visible() ) {
@@ -839,8 +845,9 @@ auto Fileloader::convertListing( Emulator::Interface* emulator, std::vector<Emul
 
     std::vector<GUIKIT::BrowserWindow::Listing> list;
     auto customFont = GUIKIT::Window::getCustomFont(emulator);
+    auto settings = program->getSettings( emulator );
 
-    bool useTooltips = globalSettings->get<bool>("software_preview_tooltips", true );
+    bool useTooltips = settings->get<bool>("software_preview_tooltips", true );
 
     for (auto& listing : emuListings) {
 

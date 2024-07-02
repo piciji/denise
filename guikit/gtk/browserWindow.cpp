@@ -112,36 +112,42 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
     bool informInsertion = instance->multi && (instance->sortedFiles.size() > 1);
 
     if (!path.empty() && ((path != instance->selectedPath) || informInsertion )) {
-        if (state.onSelectionChange && instance->listView) {
-            if (!instance->selectedPath.empty())
+        if (state.onSelectionChange) {
+            if (!instance->selectedPath.empty() && instance->listView)
                 instance->listView->reset();
 
             if (informInsertion) {
                 auto listings = state.onSelectionChange( "" );
-                int i = 0;
-                auto _s = pFont::size(instance->listView->p.pfont, " ");
-                int maxChars = state.contentView.width / _s.width;
 
-                for(auto& file : instance->sortedFiles) {
-                    if (i >= listings.size())
-                        break;
+            	if (instance->listView) {
+            		int i = 0;
+            		auto _s = pFont::size(instance->listView->p.pfont, " ");
+            		int maxChars = state.contentView.width / _s.width;
 
-                    std::string ident = String::removeExtension(file, 2);
-                    ident += "  " + listings[i++].entry + ": ";
-                    if (ident.size() > maxChars)
-                        ident = ident.substr( ident.size() - maxChars );
+            		for(auto& file : instance->sortedFiles) {
+            			if (i >= listings.size())
+            				break;
 
-                    instance->listView->append({ident});
-                }
+            			std::string ident = String::removeExtension(file, 2);
+            			ident += "  " + listings[i++].entry + ": ";
+            			if (ident.size() > maxChars)
+            				ident = ident.substr( ident.size() - maxChars );
+
+            			instance->listView->append({ident});
+            		}
+            	}
             } else {
                 auto listings = state.onSelectionChange(path);
-                for(auto& listing : listings) {
-                    instance->listView->append({listing.entry});
-                }
-                unsigned i = 0;
-                for(auto& listing : listings) {
-                    instance->listView->setRowTooltip(i++, listing.tooltip);
-                }
+
+            	if (instance->listView) {
+            		for(auto& listing : listings) {
+            			instance->listView->append({listing.entry});
+            		}
+            		unsigned i = 0;
+            		for(auto& listing : listings) {
+            			instance->listView->setRowTooltip(i++, listing.tooltip);
+            		}
+            	}
             }
 		}
         instance->selectedPath = path;

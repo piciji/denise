@@ -81,6 +81,45 @@ struct PathsLayout : GUIKIT::FramedVerticalLayout {
     PathsLayout();
 };
 
+struct DialogPreviewLayout : GUIKIT::FramedVerticalLayout {
+    struct Mode : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox noPreviewRadio;
+        GUIKIT::RadioBox dialogPreviewRadio;
+        GUIKIT::RadioBox softwarePreviewRadio;
+
+        Mode();
+    } mode;
+
+    struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::Label fontSize;
+        GUIKIT::ComboButton fontSizeCombo;
+
+        struct Option : VerticalLayout {
+            GUIKIT::CheckBox tooltips;
+            GUIKIT::CheckBox commodoreHighlight;
+
+            Option();
+        } option;
+
+        Control();
+    } control;
+
+    struct Dimension : VerticalLayout {
+        SliderLayout dialogWidth;
+        SliderLayout dialogHeight;
+
+        Dimension();
+    } dimension;
+
+    GUIKIT::ListView previewBox;
+
+    DialogPreviewLayout();
+
+    auto updateWidgets(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void;
+    auto updatePreviewContent(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void;
+};
+
 struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
 
     struct Block : GUIKIT::VerticalLayout {
@@ -119,7 +158,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
     Block* selectedBlock = nullptr;
     MediaLayout* mediaLayout;
     
-    auto build() -> void;
+    auto build(unsigned previewFontSize) -> void;
     auto updateVisibility( unsigned count, bool init = false ) -> void;    
     auto updateListing(MediaGroupLayout::Block* block) -> void;
     auto fillListing( std::vector<Emulator::Interface::Listing>& emuListings ) -> void;
@@ -217,6 +256,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image imgFolderOpen;
     GUIKIT::Image imgFolderClosed;
     GUIKIT::Image imgDocument;
+    GUIKIT::Image settingsImage;
     
     std::vector<NavElement> navElements;
     
@@ -231,13 +271,21 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     GUIKIT::SwitchLayout moduleSwitch;
     GUIKIT::TreeView mediaTree;
     GUIKIT::CheckBox useTraps;
+    struct FontSizeLayout : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::ComboButton combo;
+
+        FontSizeLayout();
+    } fontSizeLayout;
+
     GUIKIT::Button bootCart;
     GUIKIT::Button deactivateCart;
     
     PathsLayout pathsLayout;
+    DialogPreviewLayout dialogPreviewLayout;
     SwapperLayout* swapperLayout = nullptr;
 
-    auto build() -> void;	
+    auto build() -> void;
     auto setMediaView() -> void;
     auto setDiskSwapperView() -> void;
     auto updateSwitchLayout() -> void;

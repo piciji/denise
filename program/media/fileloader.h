@@ -26,6 +26,10 @@ struct Fileloader {
     GUIKIT::Timer foregroundTimer;
     GUIKIT::Timer previewTimer;
 
+    static const unsigned PREV_OFF = 0;
+    static const unsigned PREV_DIALOG = 1;
+    static const unsigned PREV_SOFTWARE = 2;
+
     auto anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void;
     auto load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
     auto eject(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup, bool secondaryOnly) -> void;

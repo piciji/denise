@@ -26,6 +26,13 @@ namespace MediaView {
 #include "layout.cpp"
 #include "swapper.cpp"
 
+MediaLayout::FontSizeLayout::FontSizeLayout() {
+    append(label, {0u, 0u}, 10);
+    append(combo, {0u, 0u});
+
+    setAlignment(0.5);
+}
+
 MediaLayout::MediaLayout(EmuConfigView::TabWindow* tabWindow) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
@@ -132,8 +139,10 @@ auto MediaLayout::build() -> void {
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
     imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
     imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
+    settingsImage.loadPng((uint8_t*)Icons::settings, sizeof(Icons::settings) );
 
     GUIKIT::TreeViewItem* tvi;
+    unsigned previewFontSize = settings->get<unsigned>("software_preview_fontsize", 12, {8, 16});
     
     for( auto& mediaGroup : emulator->mediaGroups ) {            
         tvi = new GUIKIT::TreeViewItem;
@@ -184,7 +193,7 @@ auto MediaLayout::build() -> void {
         
         navElements.push_back( { tvi, mediaGroupLayout, nullptr } );
         
-        mediaGroupLayout->build( );
+        mediaGroupLayout->build(previewFontSize);
         
         if (mediaGroupLayout->showOnlyConnectedDevices()) {
 
@@ -200,11 +209,18 @@ auto MediaLayout::build() -> void {
 		bindSelectorAction( mediaGroupLayout );
     }
 
-    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(170), ~0u}, dynamic_cast<LIBC64::Interface*>(emulator) ? 10 : 0 );
+    moduleFrame.append( mediaTree, { GUIKIT::Font::scale(170), ~0u}, 10 );
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         moduleFrame.append(useTraps, {0u, 0u}, 10);
     }
 
+    for(unsigned i = 8; i <= 16; i++) {
+        fontSizeLayout.combo.append(std::to_string(i), i);
+    }
+    fontSizeLayout.combo.setSelectionByUserId((int)previewFontSize);
+    dialogPreviewLayout.updateWidgets(settings, emulator);
+
+    moduleFrame.append(fontSizeLayout, {0u, 0u}, 10);
     if (emulator->expansions.size() > 1) {
         moduleFrame.append(bootCart, {0u, 0u}, 10);
         moduleFrame.append(deactivateCart, {0u, 0u});
@@ -251,6 +267,14 @@ auto MediaLayout::build() -> void {
     moduleSwitch.setLayout( navElements.size(), pathsLayout, {~0u, ~0u} );    
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
     navElements.push_back( { tvi, nullptr, (Layout*)&pathsLayout } );
+
+    tvi = new GUIKIT::TreeViewItem;
+    tvi->setText( "dialog preview" );
+    tvi->setImage( settingsImage );
+    mediaTree.append(*tvi);
+    moduleSwitch.setLayout( navElements.size(), dialogPreviewLayout, {~0u, ~0u} );
+    tvi->setUserData( (uintptr_t)(navElements.size() ) );
+    navElements.push_back( { tvi, nullptr, (Layout*)&dialogPreviewLayout } );
 
     auto videoManager = VideoManager::getInstance(emulator);
     colorListing(videoManager->getForegroundColor(), videoManager->getBackgroundColor());
@@ -552,6 +576,55 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         emuThread->unlock();
         
         view->setFocused( 100 );
+    };
+
+    fontSizeLayout.combo.onChange = [this]() {
+        this->settings->set<unsigned>("software_preview_fontsize", fontSizeLayout.combo.userData());
+        updateListingFont(fontSizeLayout.combo.userData());
+    };
+
+    dialogPreviewLayout.mode.noPreviewRadio.onActivate = [this]() {
+        this->settings->set<unsigned>("dialog_preview_mode", Fileloader::PREV_OFF);
+    };
+
+    dialogPreviewLayout.mode.dialogPreviewRadio.onActivate = [this]() {
+        this->settings->set<unsigned>("dialog_preview_mode", Fileloader::PREV_DIALOG);
+    };
+
+    dialogPreviewLayout.mode.softwarePreviewRadio.onActivate = [this]() {
+        this->settings->set<unsigned>("dialog_preview_mode", Fileloader::PREV_SOFTWARE);
+    };
+    dialogPreviewLayout.control.fontSizeCombo.onChange = [this]() {
+        this->settings->set<unsigned>("dialog_preview_fontsize", dialogPreviewLayout.control.fontSizeCombo.userData());
+        dialogPreviewLayout.updatePreviewContent(settings, emulator);
+    };
+    dialogPreviewLayout.control.option.tooltips.onToggle = [this](bool checked) {
+        this->settings->set<bool>("software_preview_tooltips", checked );
+
+        updateListings();
+        dialogPreviewLayout.previewBox.reset();
+        dialogPreviewLayout.updatePreviewContent(settings, emulator);
+    };
+    dialogPreviewLayout.control.option.commodoreHighlight.onToggle = [this](bool checked) {
+        this->settings->set<bool>("software_preview_commodore_hi", checked );
+        selectionColorListing();
+    };
+    dialogPreviewLayout.dimension.dialogWidth.slider.onChange = [this](unsigned position) {
+
+        dialogPreviewLayout.dimension.dialogWidth.value.setText( std::to_string( position + 200 ) + " px" );
+
+        this->settings->set<unsigned>("dialog_preview_width", position + 200 );
+
+        dialogPreviewLayout.updatePreviewContent(settings, emulator);
+    };
+
+    dialogPreviewLayout.dimension.dialogHeight.slider.onChange = [this](unsigned position) {
+
+        dialogPreviewLayout.dimension.dialogHeight.value.setText( std::to_string( position + 100 ) + " px" );
+
+        globalSettings->set<unsigned>("dialog_preview_height", position + 100 );
+
+        dialogPreviewLayout.updatePreviewContent(settings, emulator);
     };
 }
 
@@ -878,6 +951,20 @@ auto MediaLayout::translate() -> void {
     useTraps.setText( trans->get("VDT Autostart") );
     useTraps.setTooltip( trans->get("VDT Autostart tooltip") );
     deactivateCart.setText( trans->get("deactivate cartridge") );
+
+    fontSizeLayout.label.setText( trans->getA("Font Size") );
+
+    dialogPreviewLayout.setText( trans->getA("Dialog Preview") );
+    dialogPreviewLayout.mode.label.setText( trans->getA("preview", true) );
+    dialogPreviewLayout.mode.noPreviewRadio.setText( trans->getA("off") );
+    dialogPreviewLayout.mode.dialogPreviewRadio.setText( trans->getA("Dialog Preview") );
+    dialogPreviewLayout.mode.softwarePreviewRadio.setText( trans->getA("Software Preview") );
+    dialogPreviewLayout.control.fontSize.setText( trans->get("Font Size", {}, true) );
+    dialogPreviewLayout.control.option.tooltips.setText( trans->get("Show Tooltips") );
+    dialogPreviewLayout.control.option.commodoreHighlight.setText( trans->get("Commodore Highlight Color" ) );
+    dialogPreviewLayout.dimension.dialogWidth.name.setText( trans->get("Width", {}, true) );
+    dialogPreviewLayout.dimension.dialogHeight.name.setText( trans->get("Height", {}, true) );
+
     if (expansionParent)
         expansionParent->setText( trans->get("cartridges") );
     
@@ -891,7 +978,9 @@ auto MediaLayout::translate() -> void {
             nav.tvi->setText( trans->get( "paths" ) );
         else if ( nav.altLayout == &creatorLayout )
             nav.tvi->setText( trans->get( "create" ) );
-        
+        else if ( nav.altLayout == &dialogPreviewLayout )
+            nav.tvi->setText( trans->get( "Dialog Preview" ) );
+
         if (!nav.mediaGroupLayout)
             continue;
         
@@ -968,7 +1057,7 @@ auto MediaLayout::translate() -> void {
 		flashCreatorLayout->setText( trans->get("flash_creator") );
         flashCreatorLayout->button.setText(trans->get("create"));         
     }
-    
+
 	unsigned neededWidth = 90;
 	
     for(auto block : pathsLayout.blocks) {
@@ -1167,7 +1256,7 @@ auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundCol
             nav.mediaGroupLayout->listings.setForegroundColor( foregroundColor );
             nav.mediaGroupLayout->listings.setBackgroundColor( backgroundColor );
 
-            if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
+            if (settings->get<bool>("software_preview_commodore_hi", true ))
                 nav.mediaGroupLayout->listings.setSelectionColor( backgroundColor, foregroundColor );
             else
                 nav.mediaGroupLayout->listings.resetSelectionColor();
@@ -1176,10 +1265,11 @@ auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundCol
 }
 
 auto MediaLayout::selectionColorListing( ) -> void {
+    bool comHi = settings->get<bool>("software_preview_commodore_hi", true );
 
     for (auto& nav : navElements) {
         if (nav.mediaGroupLayout && showListing( nav.mediaGroupLayout ) ) {
-            if (globalSettings->get<bool>("software_preview_commodore_hi", true ))
+            if (comHi)
                 nav.mediaGroupLayout->listings.setSelectionColor(
                     nav.mediaGroupLayout->listings.backgroundColor(), nav.mediaGroupLayout->listings.foregroundColor() );
             else
@@ -1427,7 +1517,18 @@ auto MediaLayout::loadSettings() -> void {
             }
         }
     }
-    
+
+    int previewFontSizeCur = fontSizeLayout.combo.userData();
+    int previewFontSize = settings->get<unsigned>("software_preview_fontsize", 12, {8, 16});
+
+    if (previewFontSize != previewFontSizeCur) {
+        fontSizeLayout.combo.setSelectionByUserId(previewFontSize);
+        updateListingFont(previewFontSize);
+    }
+    dialogPreviewLayout.updateWidgets(settings, emulator);
+    selectionColorListing();
+    updateListings();
+
     swapperLayout->loadSettings();
 }
 

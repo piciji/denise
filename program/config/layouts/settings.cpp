@@ -30,7 +30,6 @@ SwitchesLayout::SwitchesLayout() {
 	append(pause, {~0u, 0u}, 3);
     append(saveSettingsOnExit, {~0u, 0u}, 3);
     append(openFullscreen, {~0u, 0u}, 3);
-    append(alternateSoftwarePreview, {~0u, 0u}, 3);
     append(questionMediaWrite, {~0u, 0u}, 3);
     append(threadedEmu, {~0u, 0u}, 3);
 
@@ -56,52 +55,6 @@ EmuSelectionLayout::EmuSelectionLayout() {
     setAlignment(0.5);
 }
 
-PreviewLayout::PreviewLayout() {
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-    
-    previewBox.setHeaderText( { "" } );
-    previewBox.setHeaderVisible( false );
-    
-    append( top, {0u, 0u}, 5 );    
-    append( bottom, {~0u, 0u} );    
-}
-
-PreviewLayout::Top::Top() {
-    append(fontSize,{0u, 0u}, 5);
-    append(fontSizeCombo,{0u, 0u}, 5);
-    append(dialogFontSize,{0u, 0u}, 5);
-    append(dialogFontSizeCombo,{0u, 0u}, 20);
-    append(option,{0u, 0u});
-
-    setAlignment(0.5);    
-}
-
-PreviewLayout::Top::Option::Option() {
-    append(tooltips,{0u, 0u}, 2);
-    append(commodoreHighlight,{0u, 0u});
-}
-
-PreviewLayout::Bottom::Bottom() :
-dialogWidth("px"),
-dialogHeight("px")
-{
-    append(dialog,{0u, 0u}, 5);
-    append(dialogWidth,{~0u, 0u}, 10);
-    
-    if (GUIKIT::Application::isCocoa())
-        append(dialogHeight,{~0u, 0u});
-        
-    dialogWidth.updateValueWidth("600 px", 5);
-    dialogHeight.updateValueWidth("600 px", 5);
-    
-    dialogWidth.slider.setLength(401);
-    dialogWidth.slider.setLength(401);
-	dialogHeight.slider.setLength(501);
-    
-    setAlignment(0.5);
-}
-
 SettingsLayout::SettingsLayout() {
     setMargin(10);
 
@@ -114,7 +67,6 @@ SettingsLayout::SettingsLayout() {
     upperLayout.append(switches, {~0u, 0u});
     append(upperLayout, {~0u, 0u}, 10);
     append(emuSelection, {~0u, 0u}, 10);
-    append(previewLayout, {~0u, 0u}, 10);
     append(about, {~0u, 0u});    
 
     for(auto& core : emuSelection.cores) {
@@ -175,11 +127,6 @@ SettingsLayout::SettingsLayout() {
     switches.openFullscreen.onToggle = [&](bool checked) {
         globalSettings->set<bool>("open_fullscreen", checked);
     };
-    
-    switches.alternateSoftwarePreview.setChecked(globalSettings->get<bool>("alternate_software_preview", false));
-    switches.alternateSoftwarePreview.onToggle = [&](bool checked) {
-        globalSettings->set<bool>("alternate_software_preview", checked);
-    };
 
     switches.questionMediaWrite.setChecked(globalSettings->get<bool>("question_media_write", true));
     switches.questionMediaWrite.onToggle = [](bool checked) {
@@ -213,174 +160,6 @@ SettingsLayout::SettingsLayout() {
         changeLang();
         emuThread->unlock();
     };
-    
-    for(unsigned i = 6; i <= 14; i++) {
-        previewLayout.top.fontSizeCombo.append(std::to_string(i), i);
-        previewLayout.top.dialogFontSizeCombo.append(std::to_string(i), i);
-    }
-    
-    previewLayout.top.fontSizeCombo.onChange = [this]() {
-        
-        globalSettings->set<unsigned>("software_preview_fontsize", previewLayout.top.fontSizeCombo.userData());
-        
-        for( auto emuView : emuConfigViews ) {
-            if (emuView->mediaLayout)
-                emuView->mediaLayout->updateListingFont(previewLayout.top.fontSizeCombo.userData());
-        }
-    };
-    
-    previewLayout.top.fontSizeCombo.setSelection( globalSettings->get<unsigned>("software_preview_fontsize", 12, {6, 14}) - 6 );
-    
-    
-    previewLayout.top.dialogFontSizeCombo.onChange = [this]() {
-        
-        globalSettings->set<unsigned>("dialog_software_preview_fontsize", previewLayout.top.dialogFontSizeCombo.userData());
-        
-        previewTimer.setEnabled(true);
-    };
-    
-    previewLayout.top.dialogFontSizeCombo.setSelection( globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14}) - 6 );
-    
-    previewLayout.bottom.dialogWidth.slider.onChange = [this](unsigned position) {
-
-        previewLayout.bottom.dialogWidth.value.setText( std::to_string( position + 200 ) + " px" );
-        
-        globalSettings->set<unsigned>("dialog_software_preview_width", position + 200 );
-        
-        previewTimer.setEnabled(true);
-    };
-    
-    previewLayout.bottom.dialogWidth.slider.setPosition( globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600}) - 200 );
-    
-    previewLayout.bottom.dialogWidth.value.setText( std::to_string( previewLayout.bottom.dialogWidth.slider.position() + 200 ) + " px" );            
-    
-    
-    previewLayout.bottom.dialogHeight.slider.onChange = [this](unsigned position) {
-
-        previewLayout.bottom.dialogHeight.value.setText( std::to_string( position + 100 ) + " px" );
-        
-        globalSettings->set<unsigned>("dialog_software_preview_height", position + 100 );
-    };
-    
-    previewLayout.bottom.dialogHeight.slider.setPosition( globalSettings->get<unsigned>("dialog_software_preview_height", 200, {100, 600}) - 100 );
-    
-    previewLayout.bottom.dialogHeight.value.setText( std::to_string( previewLayout.bottom.dialogHeight.slider.position() + 100 ) + " px" );
-         
-    previewLayout.top.option.tooltips.onToggle = [this](bool checked) {
-        globalSettings->set<bool>("software_preview_tooltips", checked );
-        
-        for( auto emuView : emuConfigViews ) {
-            if(emuView->mediaLayout)
-                emuView->mediaLayout->updateListings();
-        }
-        
-        previewLayout.previewBox.reset();
-        
-        previewTimer.setEnabled(true);
-    };
-    
-    previewLayout.top.option.tooltips.setChecked( globalSettings->get<bool>("software_preview_tooltips", true ) );
-
-    previewLayout.top.option.commodoreHighlight.onToggle = [](bool checked) {
-        globalSettings->set<bool>("software_preview_commodore_hi", checked );
-
-        for( auto emuView : emuConfigViews ) {
-            if(emuView->mediaLayout)
-                emuView->mediaLayout->selectionColorListing();
-        }
-    };
-
-    previewLayout.top.option.commodoreHighlight.setChecked( globalSettings->get<bool>("software_preview_commodore_hi", true ) );
-    
-    previewLayout.previewBox.setBackgroundColor( 0xaaaaaa );
-    
-    previewTimer.setInterval( 100 );
-    
-    previewTimer.onFinished = [this]() {
-        previewTimer.setEnabled(false);
-        
-        setPreviewContent();
-        
-        unsigned newWidth = globalSettings->get<unsigned>("dialog_software_preview_width", 450, {200, 600});
-
-        if (previewLayout.has(previewLayout.previewBox))
-            previewLayout.update( previewLayout.previewBox, {newWidth, 60u} );
-        else {
-            previewLayout.update( previewLayout.bottom, 10 );
-            previewLayout.append( previewLayout.previewBox, {newWidth, 60u} );
-        }
-
-        synchronizeLayout();
-    };    
-}
-
-auto SettingsLayout::removePreview() -> void {
-    
-    if (previewLayout.remove( previewLayout.previewBox )) { 
-        previewLayout.update( previewLayout.bottom, 0 );
-        synchronizeLayout();
-    }
-}
-
-auto SettingsLayout::setPreviewContent() -> void {
-
-    auto customFont = GUIKIT::Window::getCustomFont(program->getEmulator("C64"));
-
-    auto fontSize = globalSettings->get<unsigned>("dialog_software_preview_fontsize", 11, {6, 14});
-    
-    if (customFont)
-        previewLayout.previewBox.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust), true);
-    else
-        previewLayout.previewBox.setFont( GUIKIT::Font::system(fontSize) );          
-    
-    if (previewLayout.previewBox.rowCount())
-        return;
-    
-    bool useTooltips = globalSettings->get<bool>("software_preview_tooltips", true );
-    
-    std::vector<uint8_t> line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x20, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x20, 0x22, 0x20, 0x50, 0x52, 0x47, 0x3c};
-    std::vector<uint8_t> tooltipLine = { 0x4c, 0x4f, 0x41, 0x44, 0x20, 0x22, 0x44, 0x45, 0x4e, 0x49, 0x53, 0x45, 0x22, 0x2c, 0x38, 0x2c, 0x31 };
-    
-    if(customFont) {
-        line = {0x30, 0x20, 0x20, 0x20, 0x20, 0x22, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x20, 4, 5, 0xe, 9, 0x13, 5, 0x20, 0x22, 0x20, 0x10, 0x12, 7, 0x3c};
-        tooltipLine = { 0x0c, 0x0f, 0x01, 0x04, 0x20, 0x22, 0x4, 0x5, 0xe, 0x9, 0x13, 0x5, 0x22, 0x2c, 0x38, 0x2c, 0x31 };
-    }
-    
-    std::vector<uint8_t> utf8;
-    
-    for (auto& code : line) {
-
-        unsigned useCode = code;
-        if (customFont)
-            useCode |= customFont->modifier;
-
-        GUIKIT::Utf8::encode(useCode, utf8);
-    }
-        
-    std::string out = std::string((const char*) utf8.data(), utf8.size());
-    std::string outTooltip  = "";
-    
-    if (useTooltips) {
-        utf8.clear();
-
-        for (auto& code : tooltipLine) {
-
-            unsigned useCode = code;
-            if (customFont)
-                useCode |= customFont->modifier;
-
-            GUIKIT::Utf8::encode(useCode, utf8);
-        }
-
-        outTooltip = std::string((const char*) utf8.data(), utf8.size());
-    }
-    
-    for (unsigned i = 0; i < 8; i++) {
-        
-        previewLayout.previewBox.append( {out} );        
-        if (useTooltips)
-            previewLayout.previewBox.setRowTooltip(i, outTooltip );
-    }
 }
 
 auto SettingsLayout::changeLang() -> void {
@@ -496,7 +275,6 @@ auto SettingsLayout::translate() -> void {
     switches.saveSettingsOnExit.setText(trans->get("save_changes_on_exit"));
     switches.saveSettingsOnExit.setTooltip(trans->get("save changes on exit tooltip"));
     switches.openFullscreen.setText(trans->get("open_fullscreen"));
-    switches.alternateSoftwarePreview.setText(trans->get("alternate software preview"));
     switches.questionMediaWrite.setText(trans->get("confirm writes"));
     switches.threadedEmu.setText(trans->get("Threaded Emulation"));
     switches.threadedEmu.setTooltip(trans->get("Threaded Emulation tooltip"));
@@ -517,17 +295,6 @@ auto SettingsLayout::translate() -> void {
     about.right.trackersWorld.setText("Trackers-World.NET: " + link);
     about.right.trackersWorld.setUri("https://www.twdotnet.de/wp/2016/11/c64-floppy-sounds/", link);
     about.right.trackersWorld.setTooltip("Trackers-World.NET");
-    
-    previewLayout.setText( trans->get("Software Preview") );
-    previewLayout.top.fontSize.setText( trans->get("Font Size", {}, true) );
-    previewLayout.top.dialogFontSize.setText( trans->get("Dialog Font Size", {}, true) );    
-    previewLayout.top.option.tooltips.setText( trans->get("Show Tooltips") );
-    previewLayout.top.option.commodoreHighlight.setText( trans->get("Commodore Highlight Color" ) );
-    
-    previewLayout.bottom.dialog.setText( trans->get("Dialog Preview")  );
-    previewLayout.bottom.dialogWidth.name.setText( trans->get("Width", {}, true) );
-    previewLayout.bottom.dialogHeight.name.setText( trans->get("Height", {}, true) );
 
     emuSelection.setText( trans->get("Core Selection") );
 }
-

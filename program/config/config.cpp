@@ -62,7 +62,7 @@ auto TabWindow::build() -> void {
     tab.setSelection(0);        
     
     tab.onChange = [this]() {
-        settingsLayout->removePreview();
+
     };
 
     onClose = [this]() {

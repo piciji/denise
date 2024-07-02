@@ -46,9 +46,6 @@ auto pTreeViewItem::setSelected() -> void {
     if (!parentTreeView() ) return;
 
     gtk_tree_selection_select_iter(parentTreeView()->p.gtkTreeSelection, &iter);
-
-    if (parentTreeView()->onChange)
-        parentTreeView()->onChange();
 }
 
 auto pTreeViewItem::setExpanded(bool expanded) -> void {

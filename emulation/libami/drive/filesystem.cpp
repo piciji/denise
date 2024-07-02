@@ -320,6 +320,8 @@ auto Filesystem::getDirectory() -> std::vector<Emulator::Interface::Listing> {
     if (!rootBlock)
         rootBlock = getBlock( getRootBlockRef() );
 
+    listing.push_back({rootBlock->nr, rootBlock->getNameRaw(), {}});
+
     rootBlock->depth = -1;
     traverse( rootBlock, dir );
 
