@@ -7,6 +7,23 @@
 
 HWND pBrowserWindow::dummyParent = nullptr;
 
+STDMETHODIMP FileDialogEventHandler::OnFolderChange ( IFileDialog* pfd ) {
+    pBrowserWindow& p = browserWindow->p;
+
+    if (state->hideOkButton) {
+        HWND dialogHwnd = nullptr;
+        if (!p.dialogHwnd)
+            dialogHwnd = p.getIFileParent();
+
+        if (dialogHwnd) {
+            HWND openButton = GetDlgItem(dialogHwnd, IDOK);
+            if (openButton)
+                ShowWindow(openButton, SW_HIDE);
+        }
+    }
+    return S_OK;
+}
+
 STDMETHODIMP FileDialogEventHandler::OnSelectionChange ( IFileDialog* pfd ) {
     std::vector<std::string> curSelectedFiles;
     std::vector<std::string> resultFiles;
@@ -254,8 +271,8 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
         if ( SUCCEEDED(hr) ) {
             unsigned i = 0;
             for(auto& button : state.buttons) {                                
-                pDlgc->AddPushButton(1000 + i, utf16_t(button.text) );
-                pDlgc->MakeProminent(1000 + i++);
+                pDlgc->AddPushButton(1000 + i++, utf16_t(button.text) );
+                //pDlgc->MakeProminent(1000 + i++);
             }
         }    
     }

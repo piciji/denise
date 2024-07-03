@@ -9,16 +9,20 @@ auto pTreeViewItem::append(TreeViewItem& item) -> void {
 
 auto pTreeViewItem::remove(TreeViewItem& item) -> void {
     if(!parentTreeView()) return;
+    parentTreeView()->p.locked = true;
     SendMessage(parentTreeView()->p.hwnd, TVM_DELETEITEM, (WPARAM)0, (LPARAM)item.p.hTreeItem);
+    parentTreeView()->p.locked = false;
     item.p.invalidateParent();
 }
 
 auto pTreeViewItem::reset() -> void {
     if(!parentTreeView()) return;
+    parentTreeView()->p.locked = true;
     for(auto item : treeViewItem.state.items) {
         SendMessage(parentTreeView()->p.hwnd, TVM_DELETEITEM, (WPARAM)0, (LPARAM)item->p.hTreeItem);
         item->p.invalidateParent();
     }
+    parentTreeView()->p.locked = false;
 }
 
 auto pTreeViewItem::invalidateParent() -> void {
@@ -144,14 +148,18 @@ auto pTreeView::append(TreeViewItem& item) -> void {
 }
 
 auto pTreeView::remove(TreeViewItem& item) -> void {
+    locked = true;
     if(hwnd) SendMessage(hwnd, TVM_DELETEITEM, (WPARAM)0, (LPARAM)item.p.hTreeItem);
+    locked = false;
     item.p.invalidateParent();
 }
 
 auto pTreeView::reset() -> void {
     if (!hwnd) return;
     for(auto item : treeView.state.items) item->p.invalidateParent();
+    locked = true;
     SendMessage(hwnd, TVM_DELETEITEM, (WPARAM)0, (LPARAM)TVI_ROOT);
+    locked = false;
     buildImageList();
 }
 
@@ -297,7 +305,7 @@ auto pTreeView::onActivate() -> void {
 }
 
 auto pTreeView::onChange() -> void {
-    if(treeView.state.items.empty()) return;
+    if(treeView.state.items.empty() || locked) return;
 
     HTREEITEM hTreeItem = (HTREEITEM)SendMessage(hwnd, TVM_GETNEXTITEM, TVGN_CARET, (LPARAM)0);
     TreeViewItem* changed;

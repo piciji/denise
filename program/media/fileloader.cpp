@@ -265,9 +265,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         return true;
     }, IDC_BUTTON );
 
-    //if ((prevMode != PREV_ALTERNATE) && dynamic_cast<LIBC64::Interface*>(emulator) ) {
     if (dynamic_cast<LIBC64::Interface*>(emulator) ) {
-				
         fileDialogPtr->addCustomButton( trans->get( "VDT Autostart" ), [this, emulator, settings, mIsAcquiredBefore](std::vector<std::string> filePaths, unsigned selection) {
             if (filePaths.size() == 0)
                 return false;
@@ -343,10 +341,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     std::string buttonTxt = "Autostart";
     if (trapped) {
-      //  if (prevMode != PREV_ALTERNATE) {
-            fileDialogPtr->hideOkButton();
-            buttonTxt = "Ok";
-      //  }
+        fileDialogPtr->hideOkButton();
+        buttonTxt = "Ok";
     }
 	
 	fileDialogPtr->setDefaultButtonText( trans->get( buttonTxt ) );

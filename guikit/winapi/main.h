@@ -741,7 +741,7 @@ struct FileDialogEventHandler :
     // IFileDialogEvents
     STDMETHODIMP OnFileOk(IFileDialog* pfd) { return S_OK; }
     STDMETHODIMP OnFolderChanging(IFileDialog* pfd, IShellItem* psiFolder) { return S_OK; }
-    STDMETHODIMP OnFolderChange(IFileDialog* pfd) { return S_OK; }
+    STDMETHODIMP OnFolderChange(IFileDialog* pfd);
     STDMETHODIMP OnSelectionChange(IFileDialog* pfd);
     STDMETHODIMP OnShareViolation(IFileDialog* pfd, IShellItem* psi, FDE_SHAREVIOLATION_RESPONSE* pResponse) { return S_OK; }
     STDMETHODIMP OnTypeChange(IFileDialog* pfd) { return S_OK; }
