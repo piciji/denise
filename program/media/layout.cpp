@@ -5,6 +5,7 @@ DialogPreviewLayout::DialogPreviewLayout() {
 
     previewBox.setHeaderText( { "" } );
     previewBox.setHeaderVisible( false );
+    previewBox.colorRowTooltips( true );
 
     append( mode, {0u, 0u}, 10 );
     append( control, {0u, 0u}, 10 );
@@ -50,7 +51,7 @@ dialogHeight("px")
     dialogHeight.updateValueWidth("600 px", 5);
 
     dialogWidth.slider.setLength(401);
-    dialogHeight.slider.setLength(501);
+    dialogHeight.slider.setLength(351);
 
     setAlignment(0.5);
 }
@@ -450,7 +451,7 @@ auto DialogPreviewLayout::updateWidgets(GUIKIT::Settings* settings, Emulator::In
     auto tooltips = settings->get<bool>("software_preview_tooltips", true);
     auto commodoreHi = settings->get<bool>("software_preview_commodore_hi", true);
     auto dialogWidth = settings->get<unsigned>("dialog_preview_width", 450, {200, 600});
-    auto dialogHeight = settings->get<unsigned>("dialog_preview_height", 200, {100, 600});
+    auto dialogHeight = settings->get<unsigned>("dialog_preview_height", 200, {50, 400});
 
     switch(prevMode) {
         case 0: mode.noPreviewRadio.setChecked(); break;
@@ -463,7 +464,7 @@ auto DialogPreviewLayout::updateWidgets(GUIKIT::Settings* settings, Emulator::In
     control.option.tooltips.setChecked(tooltips);
     control.option.commodoreHighlight.setChecked(commodoreHi);
     dimension.dialogWidth.slider.setPosition( dialogWidth - 200 );
-    dimension.dialogHeight.slider.setPosition( dialogHeight - 100 );
+    dimension.dialogHeight.slider.setPosition( dialogHeight - 50 );
     dimension.dialogWidth.value.setText( std::to_string( dialogWidth ) + " px" );
     dimension.dialogHeight.value.setText( std::to_string( dialogHeight ) + " px" );
 
@@ -528,6 +529,16 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
             outTooltip = "s/startup-sequence";
         }
 
+        auto videoManager = VideoManager::getInstance(emulator);
+        unsigned foregroundColor = videoManager->getForegroundColor();
+        unsigned backgroundColor = videoManager->getBackgroundColor();
+        previewBox.setForegroundColor( foregroundColor );
+        previewBox.setBackgroundColor( backgroundColor );
+        if (settings->get<bool>("software_preview_commodore_hi", true ))
+            previewBox.setSelectionColor( backgroundColor, foregroundColor );
+        else
+            previewBox.resetSelectionColor();
+        
         for (unsigned i = 0; i < 8; i++) {
             previewBox.append( {out} );
             if (useTooltips)
@@ -538,7 +549,7 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
     unsigned newWidth = settings->get<unsigned>("dialog_preview_width", 450, {200, 600});
     unsigned newHeight = 80;
     if (GUIKIT::Application::isCocoa())
-        newHeight = settings->get<unsigned>("dialog_preview_height", 200, {100, 600});
+        newHeight = settings->get<unsigned>("dialog_preview_height", 200, {50, 400});
 
     if (!has(previewBox))
         append( previewBox, {0u, 0u} );

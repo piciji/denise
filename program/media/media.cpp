@@ -608,6 +608,8 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
     dialogPreviewLayout.control.option.commodoreHighlight.onToggle = [this](bool checked) {
         this->settings->set<bool>("software_preview_commodore_hi", checked );
         selectionColorListing();
+        dialogPreviewLayout.previewBox.reset();
+        dialogPreviewLayout.updatePreviewContent(settings, emulator);
     };
     dialogPreviewLayout.dimension.dialogWidth.slider.onChange = [this](unsigned position) {
 
@@ -620,9 +622,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
     dialogPreviewLayout.dimension.dialogHeight.slider.onChange = [this](unsigned position) {
 
-        dialogPreviewLayout.dimension.dialogHeight.value.setText( std::to_string( position + 100 ) + " px" );
+        dialogPreviewLayout.dimension.dialogHeight.value.setText( std::to_string( position + 50 ) + " px" );
 
-        globalSettings->set<unsigned>("dialog_preview_height", position + 100 );
+        this->settings->set<unsigned>("dialog_preview_height", position + 50 );
 
         dialogPreviewLayout.updatePreviewContent(settings, emulator);
     };

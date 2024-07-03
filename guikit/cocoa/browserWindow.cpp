@@ -426,6 +426,8 @@ auto pBrowserWindow::buildView(bool save) -> void {
     if (state.orderBySelected) {
         if (listView)
             _y -= 13;
+        else if (state.buttons.size())
+            _y += 4;
         
         auto gCheckBox = new CheckBox;
         gCheckBox->setText(state.orderBySelected->text);

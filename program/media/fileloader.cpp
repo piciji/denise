@@ -126,7 +126,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
         applyPreviewFont( emulator, settings->get<unsigned>("dialog_preview_fontsize", 11, {6, 14}) );
         fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_preview_width", 450, {200, 600}) );
-        fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_preview_height", 200, {100, 600}) );
+        fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_preview_height", 200, {50, 400}) );
 
         auto videoManager = VideoManager::getInstance( emulator );
         unsigned foregroundColor = videoManager->getForegroundColor();
@@ -213,7 +213,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
         applyPreviewFont( emulator, settings->get<unsigned>("dialog_preview_fontsize", 11, {6, 14}) );
         fileDialogPtr->setContentViewWidth( settings->get<unsigned>("dialog_preview_width", 450, {200, 600}) );
-        fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_preview_height", 200, {100, 600}) );
+        fileDialogPtr->setContentViewHeight( settings->get<unsigned>("dialog_preview_height", 200, {50, 400}) );
 
         auto videoManager = VideoManager::getInstance( emulator );
         unsigned foregroundColor = videoManager->getForegroundColor();

@@ -154,7 +154,7 @@ struct CGL : public Video, GL3, RenderThread {
         GL3::term();
 
         @autoreleasepool {
-            [view removeFromSuperview];
+            //[view removeFromSuperview];
             [view release];
             view = nil;
         }

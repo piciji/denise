@@ -218,7 +218,8 @@
     [self setImage: item];
     
     treeView->state.selected = ((TreeViewWrapper*)item)->treeViewItem;
-    if(treeView->onChange) treeView->onChange();
+    if(!treeView->p.locked && treeView->onChange)
+        treeView->onChange();
 }
 
 - (void) outlineViewSelectionIsChanging:(NSNotification *)notification {
@@ -310,10 +311,12 @@ namespace GUIKIT {
         if (!parentTreeView()) return;
         
         @autoreleasepool {
+            parentTreeView()->p.locked = true;
             NSInteger itemIndex = [[(id)parentTreeView()->p.cocoaView content] rowForItem:wrapper];
             if (itemIndex < 0) return;
             
             [[(id)parentTreeView()->p.cocoaView content] selectRowIndexes:[NSIndexSet indexSetWithIndex:itemIndex] byExtendingSelection:NO];
+            parentTreeView()->p.locked = false;
         }
     }
     
