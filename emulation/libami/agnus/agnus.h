@@ -311,7 +311,6 @@ struct Agnus {
 
     auto setRefPtr(uint16_t value) -> void;
 
-    auto copperLongGap() -> bool { return shortLineBefore && (hPos == 2); }
     auto POSR(bool vhpos) -> uint16_t;
 
     auto setBpl1ptH(uint16_t value) -> void;

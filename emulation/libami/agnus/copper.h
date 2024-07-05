@@ -31,7 +31,7 @@ struct Copper {
         Strobe_VBL_7                    = 7 | 0x80,
 
         Strobe_CPU_1                    = 8,
-        Strobe_CPU_2                    = 9 | 0x40,
+        Strobe_CPU_2                    = 9 | 0x80,
         Strobe_CPU_3                    = 10,
         Strobe_CPU_4                    = 11,
         Strobe_CPU_5                    = 12 | 0x80,
@@ -89,7 +89,6 @@ struct Copper {
     auto cycle1() -> void;
 
     auto blitterBusyUpdate() -> void;
-    auto allocationCycle() -> bool;
     auto reset() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
 

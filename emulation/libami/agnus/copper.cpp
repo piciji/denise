@@ -7,19 +7,19 @@ namespace LIBAMI {
 
 Copper::Copper(Agnus& agnus) : agnus(agnus), blitter(agnus.blitter) {}
 
-inline auto Copper::allocationCycle() -> bool {
-    // if strobe interrupts Copper, an already requested DMA access will be used and saves a Copper cycle
-    if (prevState & (0x40 | 0x80))
-        return ((prevState & 0x80) != 0) || !agnus.copperLongGap();
-
-    return false;
-}
-
 auto Copper::cycle1() -> void { // only gets here, if short line before
     // Copper requests BUS each second cycle, so we end here in a NON Copper cycle
     // if DMA is requested, it does nothing, but prevents Blitter und CPU to use it (waste cycle)
     // following Copper cycle 2 handles the request.
-    if(state == Strobe_CPU_6) {
+
+    if(state == Strobe_CPU_2) { // Exception
+        if (agnus.canCopperUseBus()) {
+            assignCopPtr(); // Vortex: from Read2 in 312, 226
+            state = Read1;
+        } else
+            state = Strobe_VBL_2;
+
+    } else if(state == Strobe_CPU_6) {
         if (prevState & 0x80)
             agnus.allocateCopper<true>();
     } else if (state & 0x80) {
@@ -46,7 +46,7 @@ auto Copper::process() -> void {
 // Strobe Vblank
         case Strobe_VBL_1:
             state = Strobe_VBL_2;
-            if (!allocationCycle())
+            if ((prevState & 0x80) == 0)
                 break;
             // take over already requested DMA
             // fallthrough
@@ -58,7 +58,7 @@ auto Copper::process() -> void {
             break;
         case Strobe_VBL_3:
             state = Strobe_VBL_4;
-            if (!allocationCycle())
+            if ((prevState & 0x80) == 0)
                 break;
         case Strobe_VBL_4:
             if (agnus.fetchCopperDma(copPtr, ir1)) {
@@ -69,7 +69,7 @@ auto Copper::process() -> void {
             break;
         case Strobe_VBL_5:
             state = Strobe_VBL_6;
-            if (!allocationCycle())
+            if ((prevState & 0x80) == 0)
                 break;
         case Strobe_VBL_6:
             if (agnus.fetchCopperDma(copPtr, ir2)) {
@@ -87,16 +87,10 @@ auto Copper::process() -> void {
             break;
         case Strobe_CPU_2:
             if (agnus.canCopperUseBus()) {
-                if (agnus.copperLongGap()) {
-                    assignCopPtr();
-                    state = Read1;
-                } else {
-                    agnus.fetchCopperDmaNoBUSCheck(copPtr, ir1); // can not happen in cycle 1 (short lines only)
-                    copPtr += 2;
-                    state = Strobe_VBL_2;
-                }
-            } else
-                state = Strobe_VBL_2;
+                agnus.fetchCopperDmaNoBUSCheck(copPtr, ir1); // can not happen in cycle 1 (short lines only)
+                copPtr += 2;
+            }
+            state = Strobe_VBL_2;
             break;
 // Strobe Wait Unaligned
         case Strobe_CPU_3:
@@ -127,7 +121,7 @@ auto Copper::process() -> void {
             break;
 // Strobe Read
         case Strobe_CPU_6:
-            if (allocationCycle())
+            if (prevState & 0x80)
                 agnus.allocateCopper();
 
             state = Strobe_CPU_1;
@@ -333,8 +327,7 @@ auto Copper::strobeCOPJMP(uint8_t pos, uint8_t triggeredBy) -> void {
         if ((state == Wait1 || state == Wait2 || state == Wait4) && agnus.useCopperDMA()) {
             state = (agnus.hPos & 1) ? Strobe_CPU_3 : Strobe_CPU_1;
         } else {
-            if (!strobeCop)
-                prevState = state;
+            prevState = state;
             state = Strobe_CPU_6;
         }
     }
