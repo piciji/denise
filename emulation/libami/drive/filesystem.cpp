@@ -320,7 +320,10 @@ auto Filesystem::getDirectory() -> std::vector<Emulator::Interface::Listing> {
     if (!rootBlock)
         rootBlock = getBlock( getRootBlockRef() );
 
-    listing.push_back({rootBlock->nr, rootBlock->getNameRaw(), {}});
+    static std::vector<uint16_t> _preLabel = {'L','a','b','e','l',':',' '};
+    auto label = rootBlock->getNameRaw();
+    combine(label, _preLabel);
+    listing.push_back({rootBlock->nr, label, {}});
 
     rootBlock->depth = -1;
     traverse( rootBlock, dir );

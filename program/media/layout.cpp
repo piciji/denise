@@ -445,7 +445,7 @@ auto MediaGroupLayout::loadSettings() -> void {
 }
 
 auto DialogPreviewLayout::updateWidgets(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void {
-    auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? 1 : 0, {0,2});
+    auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? Fileloader::PREV_DIALOG : Fileloader::PREV_OFF, {0,2});
     auto fontSize = settings->get<unsigned>("dialog_preview_fontsize", 11, {8, 16});
     auto tooltips = settings->get<bool>("software_preview_tooltips", true);
     auto commodoreHi = settings->get<bool>("software_preview_commodore_hi", true);

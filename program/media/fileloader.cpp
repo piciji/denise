@@ -40,7 +40,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
     auto suffix = group->suffix;
     auto settings = program->getSettings( emulator );
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
-    auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? 1 : 0, {0,2});
+    auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? PREV_DIALOG : PREV_OFF, {0,2});
 
     if ((prevMode == PREV_SOFTWARE) && emuView && emuView->visible()) {
         emuView->setFocused();
@@ -170,7 +170,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
 auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void {
 	auto settings = program->getSettings( emulator );
-    auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? 1 : 0, {0,2});
+    auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? PREV_DIALOG : PREV_OFF, {0,2});
     bool trapped = false;
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         trapped = settings->get("autostart_traps_on_dblclick", false) || settings->get("autostart_tape_traps_on_dblclick", false);
@@ -426,7 +426,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
         previewTimer.onFinished = [this]() {
             std::unique_lock<std::mutex> lck(previewMutex);
             Emulator::Interface* emulator = queuePreview.emulator;
-            auto prevMode = program->getSettings( emulator )->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? 1 : 0, {0,2});
+            auto prevMode = program->getSettings( emulator )->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? PREV_DIALOG : PREV_OFF, {0,2});
             uint8_t _status = queuePreview.status;
             std::string filePath = queuePreview.filePath;
             Emulator::Interface::Media* media = queuePreview.media;
