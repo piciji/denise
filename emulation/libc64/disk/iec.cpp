@@ -101,11 +101,25 @@ auto IecBus::initThread() -> void {
 
                 if (idle.load()) {
                     if (cv.wait_for(lk, duration, [this](){ return ready.load() || kill.load(); })) {
+                        if (kill) {
+#if defined(_WIN32) || defined(__APPLE__)
+#else
+                            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+#endif
+                            kill = false;
+                            return;
+                        }
                         break;
                     }
                 } else {
-                    if (kill)
+                    if (kill) {
+#if defined(_WIN32) || defined(__APPLE__)
+#else
+                        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+#endif
+                        kill = false;
                         return;
+                    }
                     std::this_thread::yield();
                 }
             }
@@ -128,7 +142,9 @@ auto IecBus::updateIdleState() -> void {
     cpuBurner = ((cpuBurnerRequested == 2) && (drivesConnected > 2)) ? 1 : cpuBurnerRequested;
     idle = (powerOn && drivesConnected > 0) ? (cpuBurner != 1) : true;
 
-    if (_idle && !idle)
+    if (!threadInitialized && cpuBurner)
+        initThread();
+    else if (_idle && !idle)
         cv.notify_one();
 }
 
@@ -333,9 +349,6 @@ auto IecBus::powerOff() -> void {
 }
 
 auto IecBus::power() -> void {
-    if (!threadInitialized)
-        initThread();
-
     atnOut = clockOut = dataOut = 1;
     
     port = 0xc0;
