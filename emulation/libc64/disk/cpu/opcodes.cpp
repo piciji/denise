@@ -603,11 +603,11 @@ SWITCH0 \
 	READ_PC_INC					\
 	absolute = dataBus;			\
 	READ( pc )					\
-	absolute |= dataBus << 8;	\
 	PUSH( pc >> 8 )				\
 	PUSH( pc & 0xff )			\
 SWITCH1 \
 	READ_LAST( pc )				\
+	absolute |= dataBus << 8;	\
 	pc = absolute;      \
 SWITCH_END    
 	

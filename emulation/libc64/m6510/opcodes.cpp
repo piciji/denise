@@ -456,10 +456,10 @@ auto M6510::process() -> void {
 	READ_PC_INC					\
 	absolute = dataBus;			\
 	READ( pc )					\
-	absolute |= dataBus << 8;	\
 	PUSH( pc >> 8 )				\
 	PUSH( pc & 0xff )			\
 	READ_LAST( pc )				\
+	absolute |= dataBus << 8;	\
 	pc = absolute;
 	
 #define JMP_ABS	\

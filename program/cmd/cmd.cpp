@@ -377,6 +377,8 @@ auto Cmd::parse() -> void {
                             useCustomICGlueLogic = true;
                         else if (!emulateD64WithMoreAccuracy && GUIKIT::String::foundSubStr( temp, "rpm3." ))
                             emulateD64WithMoreAccuracy = true;
+                        else if (fastTestbench && GUIKIT::String::foundSubStr( temp, "reu/cpuport" ))
+                            fastTestbench = false;
 
                         // todo: dirty hack for Testbench to prevent injection of test.prg instead of loading "test",8,1
                         else if (GUIKIT::String::foundSubStr( temp, "defaults" ) && GUIKIT::String::foundSubStr( temp, "test." )) {
