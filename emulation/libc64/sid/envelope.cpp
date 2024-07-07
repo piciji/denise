@@ -84,37 +84,27 @@ auto Sid::Envelope::control( bool gate ) -> void {
     
     if (gate) {       
 
-        //if ( events->delay(&callExponentialCounter) == 2 )
         if ( delay & DELAY_EXPONENTIAL0 )
-            //events->add( &callEnvelope, 2, Emulator::Events::Action::UpdateExisting );  
             delay = (delay & ~DELAY_ENVELOPE) | DELAY_ENVELOPE2;
         
         else if (resetRateCounter)
-            //events->add( &callEnvelope, exponentialPeriod == 1 ? 2 : 4, Emulator::Events::Action::UpdateExisting );      
             delay = (delay & ~DELAY_ENVELOPE) | ( (exponentialPeriod == 1) ? DELAY_ENVELOPE2 : DELAY_ENVELOPE0);
-            
-         //else if (events->delay(&callExponentialCounter) == 1)
+
         else if ( delay & DELAY_EXPONENTIAL1 )
             add = 1;        
-        
-        //events->add( &callDecay, 1, Emulator::Events::Action::BeforeOthers ); // accidently called in next cycle
 
         state = S_DECAY;
         ratePeriod = ratePeriodLookup[ decay ];
-            
-        //events->add( &callAttack, 2 + add, Emulator::Events::Action::BeforeOthers );
-        
+
         delay |= add ? DELAY_ATTACK0 : DELAY_ATTACK1;
         
     } else {
         
-        //if ( events->has( &callEnvelope ) )
         if (delay & DELAY_ENVELOPE)
             // allow pending counter update
             add = 1;
         
         if (state == S_ATTACK) {
-            //events->add( &callRelease, 2 + add, Emulator::Events::Action::BeforeOthers ); 
             delay |= add ? DELAY_RELEASE0 : DELAY_RELEASE1;
         }
         
@@ -177,7 +167,6 @@ auto Sid::Envelope::callExponentialCounter() -> void {
     if (((state == S_DECAY) && (counter != sustainComparator())) // decrease volume untill seted sustain value
             || (state == S_RELEASE)) { // decrease volume untill silence
 
-        //events->add( &callEnvelope, 1 );
         delay = (delay & ~DELAY_ENVELOPE) | DELAY_ENVELOPE3;
     }
 }
@@ -213,13 +202,11 @@ inline auto Sid::Envelope::clock() -> void {
 		
 		if ( state == S_ATTACK ) {
             exponentialCounter = 0;
-			//events->add( &callEnvelope, 2 );  
             delay = (delay & ~DELAY_ENVELOPE) | DELAY_ENVELOPE2;
 			
 		} else if (!lockEnvCounter) {
 			
             if (unlikely(++exponentialCounter == exponentialPeriod)) //non linear volume decrease
-                //events->add( &callExponentialCounter, exponentialPeriod != 1 ? 2 : 1 );
                 delay |= (exponentialPeriod != 1) ? DELAY_EXPONENTIAL0 : DELAY_EXPONENTIAL1;
 		}
 	}	
