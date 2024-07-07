@@ -655,7 +655,8 @@ auto Program::updateDeviceState( Emulator::Interface::Media* media, bool write, 
 }
 
 auto Program::informPowerLED(bool state) -> void {
-    statusHandler->updatePowerLED(state);
+    if (statusHandler)
+        statusHandler->updatePowerLED(state);
 }
 
 auto Program::appFolder() -> std::string {
