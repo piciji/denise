@@ -9,9 +9,15 @@ auto M6526::tod() -> void {
 		return;	
 	
 	++tickCounter &= 7;
+	unsigned _compare = ( cra & 0x80 ) ? 5 : 6;
 
-	if ( tickCounter != ( ( cra & 0x80 ) ? 5 : 6 ) )
+	if ( tickCounter < _compare )
 		return;
+
+	if ( tickCounter > _compare ) {
+		tickCounter = 0;
+		return;
+	}
 
 	tickCounter = 0;
 	

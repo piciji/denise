@@ -8,11 +8,16 @@ auto Cia<model>::tod() -> void {
         return;
 
     if constexpr(model == MOS_6526) {
-        // todo: calculation needs a lot of cycles
         ++tickCounter &= 7;
+        unsigned _compare = ( timerA.control & 0x80 ) ? 5 : 6;
 
-        if (tickCounter != ((timerA.control & 0x80) ? 5 : 6))
+        if ( tickCounter < _compare )
             return;
+
+        if ( tickCounter > _compare ) {
+            tickCounter = 0;
+            return;
+        }
 
         tickCounter = 0;
 
