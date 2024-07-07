@@ -161,6 +161,9 @@ struct Sid {
 		inline auto synchronize() -> void;
         auto reset() -> void;		
         auto output() -> int;
+
+    	inline auto noisePulse6581(uint16_t noise) -> uint16_t;
+    	inline auto noisePulse8580(uint16_t noise) -> uint16_t;
         
     } voice[ 3 ];
     

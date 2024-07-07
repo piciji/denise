@@ -137,7 +137,8 @@ auto Sid::Voice::setControl( uint8_t value ) -> void {
     if ( !testPrev && test ) {
         accumulator = 0;
 		shiftPipeline = 0;
-        shiftReset = type == Type::MOS_6581 ? 0x8000 : 0x950000;
+        shiftReset = type == Type::MOS_6581 ? 35000 : 2519864;
+    	pulseOutput = 0xfff;
         
     } else if ( testPrev && !test ) {        
 
@@ -160,8 +161,13 @@ inline auto Sid::Voice::clock() -> void {
     
 	if(unlikely(test)) {
         if (unlikely(shiftReset) && unlikely(!--shiftReset)) {
-            shiftRegister = 0x7fffff;
+        	shiftRegister |= 1;
+        	shiftRegister |= shiftRegister << 1;
+
             setNoiseOutput();
+
+        	if (shiftRegister != 0x7fffff)
+        		shiftReset = (type == Type::MOS_6581) ? 1000 : 315000;
         }
         
         pulseOutput = 0xfff;
@@ -191,6 +197,10 @@ inline auto Sid::Voice::setWaveformOutput() -> void {
 		int ix = (accumulator ^ (~syncSource->accumulator & ringMsbMask)) >> 12;
 
 		waveformOutput = wave[ix & 0xfff] & ( noPulse | pulseOutput ) & noNoiseOrNoiseOutput;
+
+		if (unlikely((waveform & 0xc) == 0xc)) {
+			waveformOutput = (type == Type::MOS_6581) ? noisePulse6581(waveformOutput) : noisePulse8580(waveformOutput);
+		}
 
 		if ((waveform & 3) && (type == Type::MOS_8580)) {
 			osc3 = waveTemp & ( noPulse | pulseOutput ) & noNoiseOrNoiseOutput;
@@ -279,6 +289,14 @@ inline auto Sid::Voice::doPreWriteback( uint8_t waveformPrev ) -> bool {
         return false;
 
     return true;
+}
+
+inline auto Sid::Voice::noisePulse6581(uint16_t noise) -> uint16_t {
+	return (noise < 0xf00) ? 0x000 : noise & (noise << 1) & (noise << 2);
+}
+
+inline auto Sid::Voice::noisePulse8580(uint16_t noise) -> uint16_t {
+	return (noise < 0xfc0) ? noise & (noise << 1) : 0xfc0;
 }
 
 auto Sid::Voice::reset() -> void {

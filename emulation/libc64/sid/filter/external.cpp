@@ -63,10 +63,10 @@ Sid::ExternalFilter::ExternalFilter() {
     // dt = 1 Mikro Sekunde = 1e-6
     
     // 1. Tiefpass: skaliert: 2^7
-    w0lp_1_s7 = int(100000 * 1.0e-6 * (1 << 7) + 0.5);
-    
-    // 2. Tiefpass: skaliert: 2^17
-    w0hp_1_s17 = int(100 * 1.0e-6 * (1 << 17) + 0.5);    
+	w0lp_1_s7 = int(1e-6 / (1e-6+1e4*1e-9) * (1 << 7) + 0.5);
+
+	// 2. Tiefpass: skaliert: 2^17
+	w0hp_1_s17 = int(1e-6 / (1e-6+1e3*1e-5) * (1 << 17) + 0.5);
 }
 
 auto Sid::ExternalFilter::reset() -> void {
