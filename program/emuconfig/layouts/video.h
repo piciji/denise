@@ -178,6 +178,7 @@ struct VideoParamLayout : GUIKIT::FramedVerticalLayout {
     GUIKIT::VerticalLayout params;
 
     struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::Button save;
         GUIKIT::Widget spacer;
         GUIKIT::Button previous;
         GUIKIT::Button next;

@@ -248,6 +248,7 @@ VideoPassLayout::VideoPassLayout() {
 }
 
 VideoParamLayout::Control::Control() {
+    append(save, {0u, 0u});
     append(spacer, {~0u, 0u});
     append(previous, {0u, 0u}, 20);
     append(next, {0u, 0u});
@@ -515,6 +516,10 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             _settings->set<std::string>("slang_folder_save", GUIKIT::File::getPath(path));
         }
+    };
+
+    layParam.control.save.onActivate = [this]() {
+        layShader.main.control.save.onActivate();
     };
 
     layShader.main.control.internal.onActivate = [this]() {
@@ -1372,6 +1377,7 @@ auto VideoLayout::translate() -> void {
     layShader.main.control.unload.setText( trans->getA("unload") );
     layShader.main.control.save.setText( trans->getA("save") );
     layShader.main.control.load.setText( trans->getA("load") );
+    layShader.main.control.save.setTooltip( trans->getA("save parameter tooltip") );
 
     layShader.main.setText( trans->getA("Shader") );
     layShader.favourite.setText( trans->getA("favourites") );
@@ -1394,6 +1400,8 @@ auto VideoLayout::translate() -> void {
     layPass.settings.scaleX.ident.setText( trans->getA("Scaling X", true) );
     layPass.settings.scaleY.ident.setText( trans->getA("Scaling Y", true) );
 
+    layParam.control.save.setText( trans->getA("save parameter") );
+    layParam.control.save.setTooltip( trans->getA("save parameter tooltip") );
     layParam.control.previous.setText( trans->getA("previous") );
     layParam.control.next.setText( trans->getA("next") );
 
