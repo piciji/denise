@@ -300,6 +300,8 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
 		listView->setForegroundColor( state.contentView.foregroundColor );
     if (state.contentView.overrideSelectionColor)
         listView->setSelectionColor( state.contentView.selectionForegroundColor, state.contentView.selectionBackgroundColor );
+	if (state.contentView.overrideFirstRowColor)
+		listView->setFirstRowColor( state.contentView.firstRowForegroundColor, state.contentView.firstRowBackgroundColor );
 
 	listView->colorRowTooltips( state.contentView.colorTooltips );
 	listView->onActivate = [this]() {

@@ -537,6 +537,11 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
             previewBox.setSelectionColor( backgroundColor, foregroundColor );
         else
             previewBox.resetSelectionColor();
+
+        if (dynamic_cast<LIBAMI::Interface*>(emulator))
+            previewBox.setFirstRowColor( backgroundColor, foregroundColor );
+        else
+            previewBox.resetFirstRowColor();
         
         for (unsigned i = 0; i < 8; i++) {
             previewBox.append( {out} );

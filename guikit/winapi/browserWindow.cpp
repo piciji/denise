@@ -632,9 +632,9 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 SendMessage(listBox, LB_SETITEMHEIGHT, 0, size.height);
 
                 if (!state->contentView.hint.empty()) {
-                    SendMessage(listBox, LB_ADDSTRING, 0, (LPARAM) (wchar_t*) L"");
+                   // SendMessage(listBox, LB_ADDSTRING, 0, (LPARAM) (wchar_t*) L"");
                     SendMessage(listBox, LB_ADDSTRING, 0, (LPARAM) (wchar_t*) utf16_t(state->contentView.hint));
-                    context->toolTips.push_back("");
+                    //context->toolTips.push_back("");
                     context->toolTips.push_back(state->contentView.hintTooltip);
                 }
             }
@@ -645,6 +645,13 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     context->listBgBrush = CreateSolidBrush(RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff));
                 else
                     context->listBgBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+            }
+
+            if (!context->firstRowBrush) {
+                auto colorBg = state->contentView.firstRowBackgroundColor;
+
+                if (state->contentView.overrideFirstRowColor)
+                    context->firstRowBrush = CreateSolidBrush(RGB((colorBg >> 16) & 0xff, (colorBg >> 8) & 0xff, colorBg & 0xff));
             }
 
             if (!context->listHiBrush) {
@@ -741,9 +748,15 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                             hBrush = context->listHiBrush;
 
                         } else {
-                            hBrush = context->listBgBrush;
+                            if (lDraw->itemID == 0 && state->contentView.overrideFirstRowColor && context->firstRowBrush)
+                                hBrush = context->firstRowBrush;
+                            else
+                                hBrush = context->listBgBrush;
 
-                            if (state->contentView.overrideForegroundColor) {
+                            if (lDraw->itemID == 0 && state->contentView.overrideFirstRowColor) {
+                                auto colorFg = state->contentView.firstRowForegroundColor;
+                                colorRef = RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff);
+                            } else if (state->contentView.overrideForegroundColor) {
                                 auto colorFg = state->contentView.foregroundColor;
                                 colorRef = RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff);
                             } else
@@ -1340,6 +1353,9 @@ pBrowserWindow::~pBrowserWindow() {
 
     if (listHiBrush)
         DeleteObject(listHiBrush);
+
+    if (firstRowBrush)
+        DeleteObject(firstRowBrush);
     
     if (listFont)
         pFont::free(listFont);
@@ -1360,6 +1376,8 @@ pBrowserWindow::~pBrowserWindow() {
     listBgBrush = nullptr;
 
     listHiBrush = nullptr;
+
+    firstRowBrush = nullptr;
     
     listFont = nullptr;
     

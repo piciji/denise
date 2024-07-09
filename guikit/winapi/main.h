@@ -484,7 +484,8 @@ struct pListView : pWidget {
     
     // for ownerdraw
     HBRUSH bgBrush = nullptr;
-    HBRUSH hiBrush = nullptr;    
+    HBRUSH hiBrush = nullptr;
+    HBRUSH firstRowBrush = nullptr;
 
     auto append(const std::vector<std::string>& list) -> void;
     auto autoSizeColumns() -> void;
@@ -525,6 +526,7 @@ struct pListView : pWidget {
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
     auto clearBrush() -> void;
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
+    auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) {}
 };
@@ -765,6 +767,7 @@ struct pBrowserWindow {
     HFONT listFont = nullptr;
     HBRUSH listBgBrush = nullptr;
     HBRUSH listHiBrush = nullptr;
+    HBRUSH firstRowBrush = nullptr;
     std::string selectedPath = "";
     BrowserWindow::CustomButton* selectedButton = nullptr;
     unsigned contentSelection = 0;

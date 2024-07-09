@@ -138,6 +138,9 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         if (settings->get<bool>("software_preview_commodore_hi", true ))
             fileDialogPtr->setContentViewSelection( backgroundColor, foregroundColor );
 
+        if (dynamic_cast<LIBAMI::Interface*>(emulator) )
+            fileDialogPtr->setContentViewFirstRow( backgroundColor, foregroundColor );
+
         fileDialogPtr->setContentViewColorTooltips(true);
     }
 
@@ -223,6 +226,9 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
         if (settings->get<bool>("software_preview_commodore_hi", true ))
             fileDialogPtr->setContentViewSelection( backgroundColor, foregroundColor );
+
+        if (dynamic_cast<LIBAMI::Interface*>(emulator) )
+            fileDialogPtr->setContentViewFirstRow( backgroundColor, foregroundColor );
 
         fileDialogPtr->setContentViewColorTooltips(true);
     }

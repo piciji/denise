@@ -1118,6 +1118,21 @@ auto ListView::resetSelectionColor() -> void {
     p.setSelectionColor();
 }
 
+auto ListView::setFirstRowColor(unsigned foregroundColor, unsigned backgroundColor) -> void {
+    state.overrideFirstRowColor = true;
+    state.firstRowForegroundColor = foregroundColor;
+    state.firstRowBackgroundColor = backgroundColor;
+    p.setFirstRowColor(foregroundColor, backgroundColor);
+}
+
+
+auto ListView::resetFirstRowColor() -> void {
+    state.overrideFirstRowColor = false;
+    state.firstRowForegroundColor = 0;
+    state.firstRowBackgroundColor = 0;
+    p.setFirstRowColor();
+}
+
 ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) { p.init(); }
 
 auto TreeViewItem::append(TreeViewItem& item) -> void {
@@ -1439,17 +1454,27 @@ auto BrowserWindow::setContentViewBackground(unsigned color) -> BrowserWindow& {
     state.contentView.overrideBackgroundColor = true;
     return *this;
 }
+
 auto BrowserWindow::setContentViewForeground(unsigned color) -> BrowserWindow& {
     state.contentView.foregroundColor = color;
     state.contentView.overrideForegroundColor = true;
     return *this;
 }
+
 auto BrowserWindow::setContentViewSelection(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow& {
     state.contentView.selectionForegroundColor = foregroundColor;
     state.contentView.selectionBackgroundColor = backgroundColor;
     state.contentView.overrideSelectionColor = true;
     return *this;
 }
+
+auto BrowserWindow::setContentViewFirstRow(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow& {
+    state.contentView.firstRowForegroundColor = foregroundColor;
+    state.contentView.firstRowBackgroundColor = backgroundColor;
+    state.contentView.overrideFirstRowColor = true;
+    return *this;
+}
+
 auto BrowserWindow::setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow& {
     state.contentView.colorTooltips = colorTooltips;
     return *this;

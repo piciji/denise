@@ -215,9 +215,12 @@ auto pListView::clearBrush() -> void {
         DeleteObject(bgBrush);
     if (hiBrush)
         DeleteObject(hiBrush);
+    if (firstRowBrush)
+        DeleteObject(firstRowBrush);
                 
     bgBrush = nullptr;
     hiBrush = nullptr;
+    firstRowBrush = nullptr;
 }
 
 auto pListView::create() -> void {
@@ -447,6 +450,11 @@ auto pListView::setSelectionColor(unsigned foregroundColor, unsigned backgroundC
     clearBrush();
 }
 
+auto pListView::setFirstRowColor(unsigned foregroundColor, unsigned backgroundColor) -> void {
+    if (!hwnd) return;
+    clearBrush();
+}
+
 auto pListView::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
     
     if (!hfont)
@@ -459,7 +467,7 @@ auto pListView::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
 
 auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     
-    HBRUSH hBrush;
+    HBRUSH hBrush = nullptr;
     COLORREF colorRef;
     
     if (lDraw->itemState & ODS_SELECTED) {
@@ -479,6 +487,17 @@ auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
 
         hBrush = hiBrush;
     } else {
+        if (lDraw->itemID == 0) {
+            if (!firstRowBrush) {
+                if (listView.overrideFirstRowColor()) {
+                    unsigned color = listView.firstRowBackgroundColor();
+                    firstRowBrush = CreateSolidBrush( RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+                }
+            }
+            if (firstRowBrush)
+                hBrush = firstRowBrush;
+        }
+
         if (!bgBrush) {
             if (listView.Widget::state.overrideBackgroundColor) {
                 unsigned color = listView.Widget::state.backgroundColor;
@@ -486,10 +505,15 @@ auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
             } else
                 bgBrush = CreateSolidBrush( GetSysColor( COLOR_WINDOW ) );                                    
         }
-        
-        hBrush = bgBrush;
-        
-        if (listView.Widget::state.overrideForegroundColor) {
+
+        if (!hBrush)
+            hBrush = bgBrush;
+
+        if (lDraw->itemID == 0 && listView.overrideFirstRowColor()) {
+            unsigned color = listView.firstRowForegroundColor();
+
+            colorRef = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+        } else if (listView.Widget::state.overrideForegroundColor) {
             unsigned color = listView.Widget::state.foregroundColor;
 
             colorRef = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);

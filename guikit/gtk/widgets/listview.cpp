@@ -349,15 +349,29 @@ auto pListView::setBackgroundColor(unsigned color) -> void {
 	
 	pSystem::addCssClass(subWidget, "customBackgroundColor");
 
+	std::string useCSS = ".customBackgroundColor { background-color: " + pSystem::getColorCss(color) + "; } ";
+
     if ( !listView.overrideSelectionColor() ) {
-        pSystem::applyCss(subWidget,
-          ".customBackgroundColor { background-color: " + pSystem::getColorCss(color) + "; } " +
-          "treeview:selected { border: 1px solid " + pSystem::getColorCss(color, true) + "; background-color: inherit; color: inherit;} ");
+    	useCSS += "treeview:selected { border: 1px solid " + pSystem::getColorCss(color, true) + "; background-color: inherit; color: inherit;} ";
+
+     //   pSystem::applyCss(subWidget,
+       //   ".customBackgroundColor { background-color: " + pSystem::getColorCss(color) + "; } " +
+       //   "treeview:selected { border: 1px solid " + pSystem::getColorCss(color, true) + "; background-color: inherit; color: inherit;} ");
     } else {
-        pSystem::applyCss(subWidget,
-          ".customBackgroundColor { background-color: " + pSystem::getColorCss(color) + "; } " +
-          "treeview:selected { border: 0px; background-color: " + pSystem::getColorCss( listView.selectionBackgroundColor() ) + "; color: " + pSystem::getColorCss( listView.selectionForegroundColor() ) + "; } ");
+    	useCSS += "treeview:selected { border: 0px; background-color: " + pSystem::getColorCss( listView.selectionBackgroundColor() ) + "; color: " + pSystem::getColorCss( listView.selectionForegroundColor() ) + "; } ";
+
+      //  pSystem::applyCss(subWidget,
+        //  ".customBackgroundColor { background-color: " + pSystem::getColorCss(color) + "; } " +
+        //  "treeview:selected { border: 0px; background-color: " + pSystem::getColorCss( listView.selectionBackgroundColor() ) + "; color: " + pSystem::getColorCss( listView.selectionForegroundColor() ) + "; } ");
     }
+
+	if ( !listView.overrideFirstRowColor() ) {
+		useCSS += "treeview:first-child { background-color: inherit; color: inherit;} ";
+	} else {
+		useCSS += "treeview:first-child { background-color: " + pSystem::getColorCss( listView.firstRowBackgroundColor() ) + "; color: " + pSystem::getColorCss( listView.firstRowForegroundColor() ) + "; } ";
+	}
+
+	pSystem::applyCss(subWidget, useCSS);
 }
 
 auto pListView::setForegroundColor(unsigned color) -> void {
@@ -382,4 +396,14 @@ auto pListView::setSelectionColor(unsigned foregroundColor, unsigned backgroundC
         pSystem::applyCss( subWidget, "treeview:selected { border: 1px solid " + pSystem::getColorCss( widget.backgroundColor(), true ) + "; background-color: inherit; color: inherit; } ");
     else
         pSystem::applyCss( subWidget, "treeview:selected { border: 0px; background-color: " + pSystem::getColorCss( backgroundColor ) + "; color: " + pSystem::getColorCss( foregroundColor ) + "; } ");
+}
+
+auto pListView::setFirstRowColor(unsigned foregroundColor, unsigned backgroundColor) -> void {
+	if (!subWidget)
+		return;
+
+	if ( !listView.overrideFirstRowColor() )
+		pSystem::applyCss( subWidget, "treeview:first-child { background-color: inherit; color: inherit; } ");
+	else
+		pSystem::applyCss( subWidget, "treeview:first-child { background-color: " + pSystem::getColorCss( backgroundColor ) + "; color: " + pSystem::getColorCss( foregroundColor ) + "; } ");
 }

@@ -718,9 +718,14 @@ struct ListView : Widget {
     auto colorRowTooltips(bool colorTip) -> void;
     auto setSelectionColor(unsigned foregroundColor, unsigned backgroundColor) -> void;
     auto resetSelectionColor() -> void;
+    auto setFirstRowColor(unsigned foregroundColor, unsigned backgroundColor) -> void;
+    auto resetFirstRowColor() -> void;
     auto overrideSelectionColor() -> bool { return state.overrideSelectionColor; }
     auto selectionForegroundColor() -> unsigned { return state.selectionForegroundColor; }
     auto selectionBackgroundColor() -> unsigned { return state.selectionBackgroundColor; }
+    auto overrideFirstRowColor() -> bool { return state.overrideFirstRowColor; }
+    auto firstRowForegroundColor() -> unsigned { return state.firstRowForegroundColor; }
+    auto firstRowBackgroundColor() -> unsigned { return state.firstRowBackgroundColor; }
 
     struct {
         bool headerVisible = false;
@@ -731,6 +736,9 @@ struct ListView : Widget {
         bool overrideSelectionColor = false;
         unsigned selectionForegroundColor;
         unsigned selectionBackgroundColor;
+        bool overrideFirstRowColor = false;
+        unsigned firstRowForegroundColor;
+        unsigned firstRowBackgroundColor;
         std::vector<std::string> header;
         std::vector<std::vector<std::string>> rows;
 		std::vector<std::string> rowTooltips;
@@ -1155,6 +1163,7 @@ struct BrowserWindow {
     auto setContentViewBackground(unsigned color) -> BrowserWindow&;
     auto setContentViewForeground(unsigned color) -> BrowserWindow&;
     auto setContentViewSelection(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
+    auto setContentViewFirstRow(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
     auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
     auto setContentViewHint(std::string hint, std::string tooltip = "") -> BrowserWindow&;
 
@@ -1194,6 +1203,10 @@ struct BrowserWindow {
         bool overrideSelectionColor = false;
         unsigned selectionForegroundColor = 0;
         unsigned selectionBackgroundColor = 0;
+
+        bool overrideFirstRowColor = false;
+        unsigned firstRowForegroundColor = 0;
+        unsigned firstRowBackgroundColor = 0;
 
         bool colorTooltips = false;
         std::function<bool (std::string filePath, unsigned selection)> onDblClick = nullptr;

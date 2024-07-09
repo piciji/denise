@@ -1262,6 +1262,11 @@ auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundCol
                 nav.mediaGroupLayout->listings.setSelectionColor( backgroundColor, foregroundColor );
             else
                 nav.mediaGroupLayout->listings.resetSelectionColor();
+
+            if (dynamic_cast<LIBAMI::Interface*>(emulator))
+                nav.mediaGroupLayout->listings.setFirstRowColor( backgroundColor, foregroundColor );
+            else
+                nav.mediaGroupLayout->listings.resetFirstRowColor();
         }
     }
 }
