@@ -336,6 +336,8 @@ auto pBrowserWindow::buildView(bool save) -> void {
             listView->setSelectionColor( state.contentView.selectionForegroundColor, state.contentView.selectionBackgroundColor );
 
         listView->colorRowTooltips( state.contentView.colorTooltips );
+        if (state.contentView.overrideFirstRowColor)
+            listView->setFirstRowColor( state.contentView.firstRowForegroundColor, state.contentView.firstRowBackgroundColor );
         listView->onActivate = [this]() {
             if (browserWindow.state.contentView.onDblClick) {
                 if (browserWindow.state.contentView.onDblClick( selectedPath, contentViewSelection() ) )
@@ -358,9 +360,9 @@ auto pBrowserWindow::buildView(bool save) -> void {
         maxContentWidth = maxListWidth;
         
         if (!state.contentView.hint.empty()) {
-            listView->append({""});
+          //  listView->append({""});
             listView->append({state.contentView.hint});
-            listView->setRowTooltip(0, "");
+            //listView->setRowTooltip(0, "");
             listView->setRowTooltip(1, state.contentView.hintTooltip);
         }
 

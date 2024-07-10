@@ -91,6 +91,10 @@
 -(void) drawWithFrame:(NSRect)frame inView:(NSView*)view {
     NSString* text = [[self objectValue] objectForKey:@"text"];
     NSImage* image = [[self objectValue] objectForKey:@"image"];
+    NSNumber* row = [[self objectValue] objectForKey:@"row"];
+    
+    int _row = [row intValue];
+    
     unsigned textDisplacement = 0;
     
     if(image) {
@@ -116,7 +120,13 @@
         else
             textColor = [NSColor alternateSelectedControlTextColor];
     } else {
-        if(listView->overrideForegroundColor()) {
+        if (_row == 0 && listView->overrideFirstRowColor()) {
+            NSColor* frcol = GUIKIT::pHelper::getColor( listView->firstRowBackgroundColor() );
+            
+            [frcol set];
+            textColor = GUIKIT::pHelper::getColor( listView->firstRowForegroundColor() );
+            NSRectFill(frame);
+        } else if(listView->overrideForegroundColor()) {
             textColor = GUIKIT::pHelper::getColor( listView->foregroundColor() );
         } else
             textColor = [NSColor textColor];
@@ -192,10 +202,10 @@
 -(void) setFont:(NSFont*)fontPointer {
     
     listView->p.fontAdjust.rowHeight = 0;
-    listView->p.fontAdjust.yOffset = -1;
+    listView->p.fontAdjust.yOffset = 0;
     listView->p.fontAdjust.height = 0;
     
-    if (listView->specialFont()) {
+    if (0 && listView->specialFont()) {
         // this is a hack to completly remove row spacing
         unsigned fontSize = GUIKIT::pFont::getSizeFromString( listView->font() );
         
@@ -290,9 +300,10 @@
     
     NSString* text = [NSString stringWithUTF8String:listView->text(row, column).c_str()];    
     NSImage* image = listView->p.images.at(row).at(column);
+    NSNumber* _row = [NSNumber numberWithInt:row];
     
-    if(image) return @{ @"text":text, @"image":image };
-    return @{ @"text":text };
+    if(image) return @{ @"text":text, @"image":image, @"row":_row };
+    return @{ @"text":text, @"row":_row };
 }
 
 -(BOOL) tableView:(NSTableView*)table shouldShowCellExpansionForTableColumn:(NSTableColumn*)tableColumn row:(NSInteger)row {

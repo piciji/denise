@@ -373,6 +373,7 @@ struct pListView : pWidget {
     auto lockRedraw() -> void {}
     auto unlockRedraw() -> void {}
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
+    auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
     ~pListView();
