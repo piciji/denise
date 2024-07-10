@@ -205,7 +205,7 @@
     listView->p.fontAdjust.yOffset = 0;
     listView->p.fontAdjust.height = 0;
     
-    if (0 && listView->specialFont()) {
+    if (listView->specialFont()) {
         // this is a hack to completly remove row spacing
         unsigned fontSize = GUIKIT::pFont::getSizeFromString( listView->font() );
         
@@ -237,7 +237,7 @@
                 listView->p.fontAdjust.yOffset = -2;
                 listView->p.fontAdjust.height = 2;
                 
-            } else if ( fontSize == 8 || fontSize == 9 || fontSize == 12 || fontSize == 13 || fontSize == 14 ) {
+            } else if ( fontSize == 8 || fontSize == 9 || fontSize == 12 || fontSize == 13 || fontSize == 14 || fontSize == 16 ) {
                 listView->p.fontAdjust.rowHeight = -5;
                 listView->p.fontAdjust.yOffset = -4;
                 listView->p.fontAdjust.height = 4;
@@ -246,6 +246,10 @@
                 listView->p.fontAdjust.rowHeight = -4;
                 listView->p.fontAdjust.yOffset = -3;
                 listView->p.fontAdjust.height = 3;
+            } else if ( fontSize == 15 ) {
+                listView->p.fontAdjust.rowHeight = -6;
+                listView->p.fontAdjust.yOffset = -5;
+                listView->p.fontAdjust.height = 5;
             }
         }
     }
