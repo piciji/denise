@@ -74,6 +74,31 @@ auto pListView::setText(unsigned selection, unsigned position, const std::string
     gtk_list_store_set(store, &iter, position * 2 + 1, text.c_str(), -1);
 }
 
+auto pListView::dataFunc(GtkTreeViewColumn* column, GtkCellRenderer* renderer, GtkTreeModel* model, GtkTreeIter* iter, pListView* p) -> void {
+	return p->applyDataFunc(column, renderer, iter, model);
+}
+
+auto pListView::applyDataFunc(GtkTreeViewColumn* gtkColumn, GtkCellRenderer* renderer, GtkTreeIter* iter, GtkTreeModel* model) -> void {
+	auto path = gtk_tree_model_get_string_from_iter(model, iter);
+	unsigned selection;
+	try {
+		selection = std::stoi( path );
+	} catch( ... ) { g_free(path); return; }
+	g_free(path);
+
+	if (selection == 0 && listView.overrideFirstRowColor() ) {
+		unsigned col = listView.firstRowBackgroundColor();
+		GdkColor gdkColor = CreateColor(col >> 16,col >> 8,col & 0xff);
+		g_object_set(G_OBJECT(renderer), "cell-background-gdk", &gdkColor, nullptr);
+		col = listView.firstRowForegroundColor();
+		gdkColor = CreateColor(col >> 16,col >> 8,col & 0xff);
+		g_object_set(G_OBJECT(renderer), "foreground-gdk", &gdkColor, nullptr);
+	} else {
+		g_object_set(G_OBJECT(renderer), "cell-background-set", false, nullptr);
+		g_object_set(G_OBJECT(renderer), "foreground-set", false, nullptr);
+	}
+}
+
 auto pListView::create() -> void {
     destroy();
     gtkWidget = gtk_scrolled_window_new(0, 0);
@@ -106,6 +131,7 @@ auto pListView::create() -> void {
 		
         gtk_tree_view_column_pack_start(cell.column, cell.text, false);
         gtk_tree_view_column_set_attributes(cell.column, cell.text, "text", gtype.size(), nullptr);
+    	gtk_tree_view_column_set_cell_data_func(cell.column, GTK_CELL_RENDERER(cell.text), (GtkTreeCellDataFunc)dataFunc, (gpointer)this, nullptr );
         gtype.push_back(G_TYPE_STRING);
 
         column.push_back(cell);
@@ -270,8 +296,10 @@ auto pListView::onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_t
 			tooltipText = self->state.rowTooltips[hoverSelection];
 
 		if (!tooltipText.empty()) {
-			
-			if (self->state.colorRowTooltips) {
+
+			if (self->overrideFirstRowColor() && hoverSelection == 0)
+				gtk_tooltip_set_text(tooltip, tooltipText.c_str() );
+			else if (self->state.colorRowTooltips) {
 				if (!self->p.customTooltip)
 					self->p.createCustomTooltip();
 				
@@ -280,7 +308,7 @@ auto pListView::onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_t
 				gtk_window_resize(GTK_WINDOW(self->p.customTooltip), size.width, size.height );	
 												
 			} else
-				gtk_tooltip_set_text(tooltip, tooltipText.c_str() );	
+				gtk_tooltip_set_text(tooltip, tooltipText.c_str() );
 														
 			gtk_tree_view_set_tooltip_row(GTK_TREE_VIEW(widget), tooltip, path);
 			
@@ -365,12 +393,6 @@ auto pListView::setBackgroundColor(unsigned color) -> void {
         //  "treeview:selected { border: 0px; background-color: " + pSystem::getColorCss( listView.selectionBackgroundColor() ) + "; color: " + pSystem::getColorCss( listView.selectionForegroundColor() ) + "; } ");
     }
 
-	if ( !listView.overrideFirstRowColor() ) {
-		useCSS += "treeview:first-child { background-color: inherit; color: inherit;} ";
-	} else {
-		useCSS += "treeview:first-child { background-color: " + pSystem::getColorCss( listView.firstRowBackgroundColor() ) + "; color: " + pSystem::getColorCss( listView.firstRowForegroundColor() ) + "; } ";
-	}
-
 	pSystem::applyCss(subWidget, useCSS);
 }
 
@@ -398,12 +420,3 @@ auto pListView::setSelectionColor(unsigned foregroundColor, unsigned backgroundC
         pSystem::applyCss( subWidget, "treeview:selected { border: 0px; background-color: " + pSystem::getColorCss( backgroundColor ) + "; color: " + pSystem::getColorCss( foregroundColor ) + "; } ");
 }
 
-auto pListView::setFirstRowColor(unsigned foregroundColor, unsigned backgroundColor) -> void {
-	if (!subWidget)
-		return;
-
-	if ( !listView.overrideFirstRowColor() )
-		pSystem::applyCss( subWidget, "treeview:first-child { background-color: inherit; color: inherit; } ");
-	else
-		pSystem::applyCss( subWidget, "treeview:first-child { background-color: " + pSystem::getColorCss( backgroundColor ) + "; color: " + pSystem::getColorCss( foregroundColor ) + "; } ");
-}

@@ -323,10 +323,10 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
 	pSystem::applyCss( listView->p.gtkWidget, ".someMargin { margin-right: " + std::to_string(margin) + "px;} " );
 
     if (!state.contentView.hint.empty()) {
-        listView->append({""});
+        //listView->append({""});
         listView->append({state.contentView.hint});
-        listView->setRowTooltip(0, "");
-        listView->setRowTooltip(1, state.contentView.hintTooltip);
+        //listView->setRowTooltip(0, "");
+        listView->setRowTooltip(0, state.contentView.hintTooltip);
     }
 
 	return listView->p.gtkWidget;

@@ -438,13 +438,16 @@ struct pListView : pWidget {
     auto lockRedraw() -> void {}
     auto unlockRedraw() -> void {}
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
-	auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
+	auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
 
     auto destroy() -> void;
+	auto applyDataFunc(GtkTreeViewColumn* gtkColumn, GtkCellRenderer* renderer, GtkTreeIter* iter, GtkTreeModel* model) -> void;
+
     static auto onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeViewColumn* column, ListView* self) -> void;
     static auto onChange(GtkTreeView* treeView, ListView* self) -> void;
     static auto onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* self) -> gboolean;
 	static auto onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip* tooltip, ListView* self) -> gboolean;
+	static auto dataFunc(GtkTreeViewColumn* column, GtkCellRenderer* renderer, GtkTreeModel* model, GtkTreeIter* iter, pListView* p) -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
     ~pListView() { destroy(); }
