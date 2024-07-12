@@ -609,14 +609,47 @@ auto Autoloader::set(Emulator::Interface* emulator, Emulator::Interface::Media* 
 }
 
 auto Autoloader::get(Emulator::Interface* emulator, bool& trapped, unsigned& selection) -> Emulator::Interface::Media* {
+    Emulator::Interface::Media* useMedia = nullptr;
+
     for(auto& use : used) {
         if (use.emulator == emulator) {
             trapped = use.trapped;
             selection = use.selection;
-            return use.media;
+            useMedia = use.media;
+            break;
         }
     }
-    return nullptr;
+    if (useMedia) {
+        auto fSetting = FileSetting::getInstance( emulator, _underscore(useMedia->name ) );
+        if (fSetting->path.empty())
+            useMedia = nullptr;
+    }
+
+    if (!useMedia) {
+        for(auto& group : emulator->mediaGroups) {
+            for(auto& _media : group.media) {
+                auto fSetting = FileSetting::getInstance(emulator, _underscore(_media.name) );
+                if (!fSetting->path.empty()) {
+                    useMedia = &_media;
+                    selection = 0;
+                    GUIKIT::Settings* settings = program->getSettings( emulator );
+                    if (useMedia->group->isDisk())
+                        trapped = settings->get<bool>("use_disk_traps", false);
+                    else if (useMedia->group->isTape())
+                        trapped = settings->get<bool>("use_tape_traps", false);
+                    else
+                        trapped = false;
+
+                    set(emulator, useMedia, trapped, selection);
+                    break;
+                }
+            }
+            if (useMedia)
+                break;
+        }
+    }
+
+    return useMedia;
 }
 
 auto Autoloader::getLatestDrive(Emulator::Interface* emulator) -> Emulator::Interface::Media* {

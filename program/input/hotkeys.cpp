@@ -108,6 +108,9 @@ auto InputManager::setCustomHotkeys() -> void {
 
 auto InputManager::fireHotkey(InputMapping* trigger) -> void {
     Emulator::Interface* emulator = trigger->inputManager ? trigger->inputManager->emulator : nullptr;
+    if (emulator && !globalSettings->get<bool>("core_" + emulator->ident, true))
+        return;
+
     Hotkey::Id id = (Hotkey::Id)trigger->hotkeyId;
 
     typedef LIBC64::Interface C64Interface;
