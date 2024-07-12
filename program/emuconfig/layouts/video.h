@@ -61,7 +61,6 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
     struct Main : GUIKIT::FramedVerticalLayout {
         struct Control : GUIKIT::HorizontalLayout {
             GUIKIT::Button unload;
-            GUIKIT::Button save;
 
             GUIKIT::Widget spacer;
             GUIKIT::Label folder;
@@ -156,6 +155,8 @@ struct VideoPassLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::ImageView up;
         GUIKIT::ImageView down;
         GUIKIT::Button disable;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button save;
 
         Control();
     } control;

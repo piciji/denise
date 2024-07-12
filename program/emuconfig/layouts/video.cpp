@@ -108,7 +108,6 @@ view(withSpectrum) {
 
 VideoShaderLayout::Main::Control::Control() {
     append(unload,{0u, 0u}, 10);
-    append(save,{0u, 0u});
     append(spacer,{~0u, 0u});
     append(folder,{0u, 0u}, 5);
     append(internal,{0u, 0u}, 5);
@@ -121,7 +120,6 @@ VideoShaderLayout::Main::Control::Control() {
     GUIKIT::RadioBox::setGroup(internal, external);
     internal.setChecked();
     unload.setEnabled(false);
-    save.setEnabled(false);
     prependPreset.setEnabled(false);
     appendPreset.setEnabled(false);
 
@@ -227,6 +225,8 @@ VideoPassLayout::Control::Control() {
     append(up,{0u, 0u}, 10);
     append(down,{0u, 0u}, 10);
     append(disable,{0u, 0u});
+    append(spacer,{~0u, 0u});
+    append(save,{0u, 0u});
     setAlignment(0.5);
 }
 
@@ -240,7 +240,7 @@ VideoPassLayout::Generated::Generated() {
 
 VideoPassLayout::VideoPassLayout() {
     append(settings,{0u, 0u}, 20);
-    append(control,{0u, 0u}, 20);
+    append(control,{~0u, 0u}, 20);
     append(generated,{~0u, 0u}, 5);
     append(errorMessage, {~0u, ~0u});
     setPadding(8);
@@ -498,7 +498,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         view->updateShader(emulator);
     };
 
-    layShader.main.control.save.onActivate = [this]() {
+    layPass.control.save.onActivate = [this]() {
         static const std::vector<std::string> suffixList = {"slangp"};
         auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->getA("select slang shader"))
@@ -519,7 +519,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layParam.control.save.onActivate = [this]() {
-        layShader.main.control.save.onActivate();
+        layPass.control.save.onActivate();
     };
 
     layShader.main.control.internal.onActivate = [this]() {
@@ -1375,9 +1375,9 @@ auto VideoLayout::translate() -> void {
     layShader.main.control.external.setText( trans->getA("external") );
     layShader.main.control.external.setTooltip( trans->getA("shader hints") );
     layShader.main.control.unload.setText( trans->getA("unload") );
-    layShader.main.control.save.setText( trans->getA("save") );
+    layPass.control.save.setText( trans->getA("save") );
     layShader.main.control.load.setText( trans->getA("load") );
-    layShader.main.control.save.setTooltip( trans->getA("save parameter tooltip") );
+    layPass.control.save.setTooltip( trans->getA("save parameter tooltip") );
 
     layShader.main.setText( trans->getA("Shader") );
     layShader.favourite.setText( trans->getA("favourites") );
@@ -1555,7 +1555,6 @@ auto VideoLayout::unloadShader() -> void {
     layShader.main.info.loaded.setText( "" );
 
     layShader.main.control.unload.setEnabled(false);
-    layShader.main.control.save.setEnabled(false);
     layShader.main.control.appendPreset.setEnabled(false);
     layShader.main.control.prependPreset.setEnabled(false);
 
