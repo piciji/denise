@@ -26,6 +26,7 @@ struct GLX : public Video, GL3, RenderThread {
     bool useVRR = false;
     bool useResizing = false;
     uint8_t options = 0;
+    unsigned shaderResizeTimer = 0;
 
     bool hasRendererContext = false;
 
@@ -376,18 +377,18 @@ struct GLX : public Video, GL3, RenderThread {
         }
 
         viewScreen.update(viewport, _windowWidth, _windowHeight);
-        GL3::updateFrameSize();
+        shaderResizeTimer = 10;
     }
 
     auto lockResize() -> void {
         resizeMutex.lock();
-        resizeMutexThreaded.lock();
+    //    resizeMutexThreaded.lock();
     }
 
     auto unlockResize() -> void {
         resizeWindow();
 
-        resizeMutexThreaded.unlock();
+      //  resizeMutexThreaded.unlock();
         resizeMutex.unlock();
     }
 
@@ -456,7 +457,9 @@ struct GLX : public Video, GL3, RenderThread {
         resizeMutex.lock();
         makeCurrent(true);
 
-        //GL3::clear();
+        if (shaderResizeTimer && !--shaderResizeTimer) {
+            GL3::updateFrameSize();
+        }
         GL3::updateMainTexture( settings.threaded ? getLastBufferToRender() : nullptr );
         GL3::_redraw(disallowShader, options & OPT_Interlace);
 
@@ -486,7 +489,6 @@ struct GLX : public Video, GL3, RenderThread {
     auto refresh() -> void {
         resizeMutexThreaded.lock();
         makeCurrent();
-        //GL3::clear();
 
         options = 0;
         RenderBuffer* renderBuffer = getBufferToRender();
@@ -502,6 +504,9 @@ struct GLX : public Video, GL3, RenderThread {
             accessMutex.lock();
             frames--;
             accessMutex.unlock();
+        }
+        if (shaderResizeTimer && !--shaderResizeTimer) {
+            GL3::updateFrameSize();
         }
 
         GL3::_redraw(options & OPT_DisallowShader, options & OPT_Interlace);
