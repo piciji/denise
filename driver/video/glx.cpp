@@ -443,7 +443,6 @@ struct GLX : public Video, GL3, RenderThread {
     auto redrawCustom(bool disallowShader = false) -> void {
         resizeWindow();
         makeCurrent();
-       // OpenGL::clear();
         GL3::updateMainTexture( settings.threaded ? getLastBufferToRender() : nullptr );
         GL3::_redraw(disallowShader, options & OPT_Interlace);
 #ifdef DRV_FREETYPE
@@ -457,7 +456,7 @@ struct GLX : public Video, GL3, RenderThread {
         resizeMutex.lock();
         makeCurrent(true);
 
-        GL3::clear();
+        //GL3::clear();
         GL3::updateMainTexture( settings.threaded ? getLastBufferToRender() : nullptr );
         GL3::_redraw(disallowShader, options & OPT_Interlace);
 
@@ -487,7 +486,7 @@ struct GLX : public Video, GL3, RenderThread {
     auto refresh() -> void {
         resizeMutexThreaded.lock();
         makeCurrent();
-        GL3::clear();
+        //GL3::clear();
 
         options = 0;
         RenderBuffer* renderBuffer = getBufferToRender();

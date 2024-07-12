@@ -29,6 +29,7 @@ struct CGL : public Video, GL3, RenderThread {
     bool useResizing = false;
     bool oldResizeBehaviour = false;
     uint8_t options = 0;
+    unsigned shaderResizeTimer = 0;
 
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
         dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
@@ -257,7 +258,7 @@ struct CGL : public Video, GL3, RenderThread {
         }
 
         viewScreen.update(viewport, _windowWidth, _windowHeight);
-        GL3::updateFrameSize();
+        shaderResizeTimer = 10;
     }
     
     auto forceResize() -> void {
@@ -284,7 +285,10 @@ struct CGL : public Video, GL3, RenderThread {
     }
     
     auto changeThreadPriorityToRealtime(bool state) -> void {
-        changePriorityToRealtime(state);
+        if (settings.threaded) {
+            wait();
+            changePriorityToRealtime(state);
+        }
     }
     
     auto endResizing() -> void {
@@ -345,8 +349,11 @@ struct CGL : public Video, GL3, RenderThread {
         @autoreleasepool {
             if([view lockFocusIfCanDraw]) {
                 resizeWindow();
+                
+                if (shaderResizeTimer && !--shaderResizeTimer) {
+                    GL3::updateFrameSize();
+                }
 
-                GL3::clear();
                 GL3::updateMainTexture( renderBuffer );
                 GL3::_redraw(disallowShader, options & OPT_Interlace);
 
@@ -379,8 +386,6 @@ struct CGL : public Video, GL3, RenderThread {
         @autoreleasepool {
             makeCurrent();
             if ([view lockFocusIfCanDraw]) {
-                GL3::clear();
-
                 options = 0;
                 RenderBuffer* renderBuffer = getBufferToRender();
 
@@ -396,7 +401,9 @@ struct CGL : public Video, GL3, RenderThread {
                     frames--;
                     accessMutex.unlock();
                 }
-
+                if (shaderResizeTimer && !--shaderResizeTimer) {
+                    GL3::updateFrameSize();
+                }
                 GL3::_redraw(options & OPT_DisallowShader, options & OPT_Interlace);
 
                 if (dndOverlay.enabled())

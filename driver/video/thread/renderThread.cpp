@@ -193,6 +193,7 @@ namespace DRIVER {
 #ifdef __APPLE__
         realtime = state;
         updatePriority = true;
+        cv.notify_one();
 #endif
     }
 
@@ -214,19 +215,17 @@ namespace DRIVER {
             ready = false;
 
             while (1) {
-
-                while (!ready.load()) {
-
 #ifdef __APPLE__
-                    if (updatePriority) {
-                        updatePriority = false;
+                if (updatePriority) {
+                    updatePriority = false;
                         
-                        if (ThreadPriority::setPriority( realtime ? ThreadPriority::Mode::Realtime : ThreadPriority::Mode::Normal, 3.0, 5.0 )) {
+                    if (ThreadPriority::setPriority( realtime ? ThreadPriority::Mode::Realtime : ThreadPriority::Mode::Normal, 3.0, 5.0 )) {
                             // logger->log(realtime ? "render thread realtime prio" : "render thread normal prio");
-                        }
                     }
+                }
 #endif
-
+                while (!ready.load()) {
+                    
                     if (cv.wait_for(lk, duration, [this]() {
                         return ready.load() || kill.load();
                     })) {

@@ -215,7 +215,7 @@ struct WGL : Video, GL3, RenderThread {
 		resizeMutex.lock();
         resizeWindow();
         makeCurrent(true);
-        GL3::clear();
+        //GL3::clear();
         GL3::updateMainTexture( settings.threaded ? getLastBufferToRender() : nullptr );
         GL3::_redraw(disallowShader, options & OPT_Interlace);
 
@@ -241,7 +241,7 @@ struct WGL : Video, GL3, RenderThread {
 
     auto refresh() -> void {
         makeCurrent();
-        GL3::clear();
+        //GL3::clear();
 
         options = 0;
         RenderBuffer* renderBuffer = getBufferToRender();

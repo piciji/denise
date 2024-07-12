@@ -197,6 +197,8 @@ struct GL3 {
     }
 
     auto _redraw(bool disallowShader, bool interlace) -> void {
+        clear();
+        
         if (updateRTS)
             updateRenderTargets(frame.textures[0].width, frame.textures[0].height, interlace);
 
@@ -951,6 +953,7 @@ End:
         onShaderProgressCallback(-1, !shaderPasses);
         updateRTS = true;
         updateHistory = true;
+        updateFrameSize();
     }
 
     auto updateRenderTargets(unsigned width, unsigned height, bool interlace) -> void {

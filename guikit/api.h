@@ -197,6 +197,10 @@ struct Window : Base {
     std::function<void ()> onRealize = nullptr;
     std::function<void ()> onInactive = nullptr;
     std::function<void ()> onActive = nullptr;
+    std::function<void ()> onWillFullscreen = nullptr;
+    std::function<void ()> onWillUnfullscreen = nullptr;
+    std::function<void ()> onFullscreen = nullptr;
+    std::function<void ()> onUnfullscreen = nullptr;
 
     enum class Hints { Default, Video } hints = Hints::Default;
     

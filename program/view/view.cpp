@@ -127,6 +127,7 @@ auto View::build() -> void {
             if (videoDriver->needResizingPreparations(emuThread->enabled)) {
                 emuThread->lock();
                 videoDriver->prepareResizing();
+                videoDriver->changeThreadPriorityToRealtime(false);
                 emuThread->unlock();
                 customResizeMode = true;
             }
@@ -149,11 +150,36 @@ auto View::build() -> void {
         if (customResizeMode) {
             emuThread->lock();
             videoDriver->endResizing();
+            videoDriver->changeThreadPriorityToRealtime(true);
             emuThread->unlock();
             customResizeMode = false;
         }
         
         videoDriver->hintResizing(false);
+    };
+    
+    onWillFullscreen = [this]() {
+        emuThread->lock();
+        videoDriver->changeThreadPriorityToRealtime(false);
+      //  emuThread->unlock();
+    };
+    
+    onWillUnfullscreen = [this]() {
+        emuThread->lock();
+        videoDriver->changeThreadPriorityToRealtime(false);
+        //emuThread->unlock();
+    };
+    
+    onFullscreen = [this]() {
+        emuThread->lock();
+        videoDriver->changeThreadPriorityToRealtime(true);
+        emuThread->unlock();
+    };
+    
+    onUnfullscreen = [this]() {
+        emuThread->lock();
+        videoDriver->changeThreadPriorityToRealtime(true);
+        emuThread->unlock();
     };
 	
 	onContext = [this]() {
@@ -285,14 +311,6 @@ auto View::build() -> void {
 
         VideoManager::setSynchronize();
 		requestFullscreenSwitch = false;
-        emuThread->unlock();
-    };
-	
-    priorityTimer.setInterval(1500);
-    priorityTimer.onFinished = [this]() {
-        priorityTimer.setEnabled(false);
-        emuThread->lock();
-        videoDriver->changeThreadPriorityToRealtime(true);
         emuThread->unlock();
     };
     
@@ -455,10 +473,6 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 
     if (!fullScreen && videoDriver) {
         videoDriver->disableExclusiveFullscreen();
-        if (GUIKIT::Application::isCocoa()) {
-            videoDriver->changeThreadPriorityToRealtime(false);
-            priorityTimer.setEnabled();
-        }
     }
 
     GUIKIT::Window::setFullScreen(fullScreen);

@@ -160,7 +160,11 @@ struct GLUtility {
         }
 
         // for version 3.3 and above
-        return 100 * major + 10 * minor;
+        unsigned v = 100 * major + 10 * minor;
+        if (v == 410) // Apple hack, 410 is latest supported version but spirv has some problems with
+            v = 400;
+        
+        return v;
     }
 
     static auto createShader(GLuint type, const char* source, std::string& error) -> GLuint {

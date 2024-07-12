@@ -268,23 +268,27 @@
     window->state.fullScreen = true;
     window->p.fullScreenToggleDelay = true;
     [window->p.cocoaWindow setContentResizeIncrements:NSMakeSize(1, 1)];
+    if(window->onWillFullscreen) window->onWillFullscreen();
 }
 
 -(void) windowDidEnterFullScreen:(NSNotification*)notification {
     window->p.fullScreenToggleDelay = false;
     if (!window->menuVisible())
         window->setMenuVisible(true);
+    if(window->onFullscreen) window->onFullscreen();
 }
 
 -(void) windowWillExitFullScreen:(NSNotification*)notification {
     window->state.fullScreen = false;
     window->p.fullScreenToggleDelay = true;
+    if(window->onWillUnfullscreen) window->onWillUnfullscreen();
 }
 
 -(void) windowDidExitFullScreen:(NSNotification*)notification {    
     window->p.setGeometry( window->state.geometry );
     if(window->onSize) window->onSize(GUIKIT::Window::SIZE_MODE::Default);
     window->p.fullScreenToggleDelay = false;
+    if(window->onUnfullscreen) window->onUnfullscreen();
 }
 
 -(BOOL) windowShouldClose:(id)sender {
