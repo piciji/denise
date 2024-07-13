@@ -976,6 +976,7 @@ auto View::buildMenu() -> void {
                 emuThread->lock();
                 program->power(emulator);
                 program->removeExpansion(false);
+                view->updateCartButtons( emulator );
                 emuThread->unlock();
             };
             sM.system->append(*sM.poweronAndRemoveExpansions);

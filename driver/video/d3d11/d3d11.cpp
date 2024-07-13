@@ -958,6 +958,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         onShaderProgressCallback(-1, !shaderPasses);
         updateRTS = true;
         updateHistory = true;
+        updateFrameSize();
     }
 
     auto getShaderNativeVertexCode(std::string& slang, std::string& out) -> bool {
