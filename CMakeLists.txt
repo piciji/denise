@@ -250,7 +250,7 @@ else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS}")
 
-    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev, GhostBSD (OpenBSD) has udev, FreeBSD untested
+    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev, GhostBSD (FreeBSD) has udev, OpenBSD untested
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
                 PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_FREETYPE -DDRV_SDLINPUT")
     else()

@@ -215,30 +215,6 @@
         unsigned fontSize = GUIKIT::pFont::getSizeFromString( listView->font() );
         
         if (__MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_13 ) { // High Sierra
-        
-    //    if (__MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_13) { // build for Mojave and above
-     //       listView->p.fontAdjust.rowHeight = 0;
-       //     listView->p.fontAdjust.yOffset = 0;
-         //   listView->p.fontAdjust.height = 0;
-            
-           // if (fontSize == 8 || fontSize == 9) {
-           //     listView->p.fontAdjust.rowHeight = -1;
-           //     listView->p.fontAdjust.yOffset = 0;
-            //    listView->p.fontAdjust.height = 1;
-           // } else if (fontSize == 10) {
-           //     listView->p.fontAdjust.rowHeight = 0;
-           //     listView->p.fontAdjust.yOffset = 1;
-           //     listView->p.fontAdjust.height = 0;
-           // } else if (fontSize == 11) {
-           //     listView->p.fontAdjust.rowHeight = 0;
-           //     listView->p.fontAdjust.yOffset = 1;
-           //     listView->p.fontAdjust.height = 1;
-           // } else if (fontSize == 13 || fontSize == 14) {
-            //    listView->p.fontAdjust.rowHeight = 0;
-            //    listView->p.fontAdjust.yOffset = 1;
-            //    listView->p.fontAdjust.height = 0;
-           // }
-       // } else {
             if (fontSize == 6 || fontSize == 7 || fontSize == 11) {
                 listView->p.fontAdjust.rowHeight = -3;
                 listView->p.fontAdjust.yOffset = -2;
