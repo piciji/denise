@@ -45,10 +45,13 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     else()
         set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
     endif()
+elseif (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+    set(CMAKE_CXX_COMPILER clang++)
 else()
     set(CMAKE_CXX_COMPILER g++)
 endif()
 
+message(STATUS "System Name: ${CMAKE_SYSTEM_NAME}")
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Setting build type to 'Release' as none was specified.")
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
@@ -250,7 +253,7 @@ else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS}")
 
-    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD") # no udev, GhostBSD (FreeBSD) has udev, OpenBSD untested
+    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD") # no udev, GhostBSD (FreeBSD) has udev
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
                 PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_FREETYPE -DDRV_SDLINPUT")
     else()
@@ -300,21 +303,21 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
 else()
-    if (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD") # fixme
-        target_link_libraries(${PROJECT_NAME} "-static-libgcc -static-libstdc++")
-    endif()
-    target_link_libraries(${PROJECT_NAME} "-lpthread -no-pie -lfontconfig -lX11 -lXrandr -lrt")
+    target_link_libraries(${PROJECT_NAME} "-lpthread -no-pie -lfontconfig -lX11 -lXrandr")
     target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R7/lib -L/usr/X11R7/lib -lXext -lXfixes -lGL -lpulse")
+        target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R7/lib -L/usr/X11R7/lib -lrt -lXext -lXfixes -lGL -lpulse")
         # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs
         set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+    elseif (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+        target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R6/lib -L/usr/X11R6/lib -lXext -lXfixes -lGL -lpulse")
+        set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
     else()
-        target_link_libraries(${PROJECT_NAME} "-lXext -ldl -lXfixes -lGL -ludev -lpulse")
+        target_link_libraries(${PROJECT_NAME} "-lrt -lXext -ldl -lXfixes -lGL -ludev -lpulse")
     endif()
 endif()
 

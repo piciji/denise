@@ -104,7 +104,17 @@ pkgin in pkg-config
 pkgin in openal-soft
 pkgin in SDL2
 pkgin in pulseaudio
+---------------------------------------------
+OpenBSD
+---------------------------------------------
+pkg_add openal
+pkg_add sdl2
+pkg_add pulseaudio
+pkg_add gtk+3
 
+---------------------------------------------
+ALL
+---------------------------------------------
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 cmake -B builds/release [-DCMAKE_INSTALL_PREFIX=~/.local] [-DINSTALL_FILE_ASSOCIATIONS=1]
