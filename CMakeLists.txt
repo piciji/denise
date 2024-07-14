@@ -327,7 +327,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     install(DIRECTORY data/${imgFolder}/bundle/ DESTINATION ${CMAKE_BINARY_DIR}/out/${imgFolder})
 
     install(FILES readme.md DESTINATION ${CMAKE_BINARY_DIR}/out)
-    install(FILES data/txt/licence.md DESTINATION ${CMAKE_BINARY_DIR}/out)
+    install(FILES licence.md DESTINATION ${CMAKE_BINARY_DIR}/out)
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
@@ -338,7 +338,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
 
     install(FILES data/Info.plist DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents)
-    install(FILES data/txt/licence.md DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+    install(FILES licence.md DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
     install(FILES readme.md DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
     install(FILES data/img/${PROJECT_NAME}.icns DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
 
