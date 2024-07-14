@@ -92,10 +92,11 @@ dnf install libgudev-devel
 FreeBSD (GhostBSD)
 ---------------------------------------------
 pkg install cmake
-pkg install os-generic-userland-devtools
+pkg install os-generic-userland-devtools    (GhostBSD)
 pkg install pkgconf
 pkg install openal-soft
 pkg install SDL2
+pkg install pulseaudio
 ---------------------------------------------
 NetBSD
 ---------------------------------------------
