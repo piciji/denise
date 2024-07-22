@@ -36,7 +36,14 @@ namespace LIBC64 {
 
 // the distance between "overflow" checking and maximum "Read back" time is 8 ref cycles, phase shifted by 2 ref cycles.
 // the relative	distance matters, so we can step in 8 ref cycle chunks which is handled in rotateP64 and rotateG64
-    
+
+unsigned Drive::rpm = 30000;
+unsigned Drive::wobble = 50;
+int Drive::wobblePos = 0;
+int Drive::wobbleLimit = 25;
+uint32_t Drive::refCyclesPerRevolution = 0;
+bool Drive::enableDeceleration = false;
+
 #define SYNC \
     cpu.handleSo();                                                    \
     if (operation & USERDATA_LEVEL) {                   \
@@ -878,6 +885,9 @@ auto Drive::power( ) -> void {
     ca1Line = true;
     hidden = false;
     cpu.power();
+
+    wobblePos = 0;
+    wobbleLimit = wobble >> 1;
  
     ue7Counter = uf4Counter = 0;
     randCounter = 0;
@@ -906,7 +916,7 @@ auto Drive::power( ) -> void {
     nibble = 0;
     updateCycleSpeed(false);
     changeHalfTrack(0);
-    randomizeRpm();
+    randomizeRpm(iecBus.drivesEnabled);
     extendedMemoryMap = expandMemory || (speeder > 1);
     wd1770.setRateInMhz( 1, 16 );
 
@@ -1084,6 +1094,9 @@ auto Drive::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> void 
     uf4Counter = ue7Counter = 0;
     ue3Counter = 0;
 
+    wobblePos = 0;
+    wobbleLimit = wobble >> 1;
+
     wasAttachDetached = attachDelay != 0;
     attachDelay = DISC_DELAY * 3;
 
@@ -1181,11 +1194,13 @@ auto Drive::write() -> void {
 }
 
 auto Drive::setSpeed(unsigned rpmScaled) -> void {
-    this->rpm = rpmScaled;
+    rpm = rpmScaled;
 }
 
 auto Drive::setWobble(unsigned wobbleScaled) -> void {
-    this->wobble = wobbleScaled;
+    wobble = wobbleScaled;
+    wobblePos = 0;
+    wobbleLimit = wobble >> 1;
 }
 
 auto Drive::setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void {

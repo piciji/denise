@@ -72,7 +72,11 @@ struct IecBus {
 	auto hideDrive( Emulator::Interface::Media* media ) -> void;
     auto resetDrive( Emulator::Interface::Media* media ) -> void;
     auto setDriveSpeed(unsigned rpmScaled) -> void;
+    auto getDriveSpeed() -> unsigned;
     auto setDriveWobble(unsigned wobbleScaled) -> void;
+    auto enableDeceleration(bool state) -> void;
+    auto hasDeceleration() -> bool;
+    auto getDriveWobble() -> unsigned;
     auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
     auto randomizeRpm() -> void;

@@ -35,7 +35,6 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( headOffset );
     s.integer( coilDir );
     s.integer( ue3Counter );
-    s.integer( refCyclesPerRevolution );
     s.integer( uf6aFlipFlop );
     s.integer( comperatorFlipFlop );
     s.integer( ue7Counter );
@@ -74,8 +73,6 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( side );
     s.integer( operation );
     s.integer( syncPos );
-    s.integer( wobble );
-    s.integer( rpm );
     s.integer( nibble );
     s.integer( profDosAutoSpeed );
     s.integer( prologic40TrackMode );
@@ -85,6 +82,15 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( turboTransPage );
     s.integer( proSpeedControl );
     s.integer( hidden );
+
+    if (number == 0) {
+        s.integer(Drive::rpm);
+        s.integer(Drive::wobble);
+        s.integer(Drive::wobblePos);
+        s.integer(Drive::wobbleLimit);
+        s.integer(Drive::refCyclesPerRevolution);
+        s.integer(Drive::enableDeceleration);
+    }
 
     via1.serialize( s );
     via2.serialize( s );

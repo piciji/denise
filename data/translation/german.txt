@@ -832,3 +832,4 @@ left click grabs mouse = Linksklick greift Maus
 save parameter = Parameter speichern
 save parameter tooltip = veränderte Shader Parameter oder Verkettungen mehrerer Shader werden nicht in den Standard Einstellungen des Emulators abgespeichert, sondern in separaten ".slangp" Dateien. Hierbei sollte man nicht das originale Preset überschreiben, sondern eine neue Datei erstellen um bei Bedarf wieder auf die Original Einstellungen zugreifen zu können.
 select slang shader = SLANG Shader auswählen oder neu anlegen
+Emulate Motor Deceleration = Motorverzögerung emulieren

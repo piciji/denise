@@ -91,6 +91,10 @@ auto Drive::rotateD64() -> void {
 
         } else if (!ca1Line)
             via2.ca1In( ca1Line = true );
+
+        // switch to more accurate G64 handling: SpeedAlignTest_Equalizer.d64
+        operation &= ~USERDATA_LEVEL;
+        operation |= ENCODEDDATA_LEVEL;
     }
 }
 
@@ -220,7 +224,9 @@ auto Drive::motorRun() -> bool {
 
 auto Drive::motorOffInit() -> void {
 
-    motorOff.delay = 5900;
+    //motorOff.delay = enableDeceleration ? 5900 : 0;
+    //motorOff.delay = enableDeceleration ? 12500 : 0;
+    motorOff.delay = enableDeceleration ? 7100 : 0;
 
     unsigned slowDownCycles = 20000;
 
@@ -243,7 +249,7 @@ auto Drive::motorOffInit() -> void {
     motorOff.slowDown = true;
 }
 
-auto Drive::randomizeRpm() -> void {
+auto Drive::randomizeRpm(std::vector<Drive*>& drivesEnabled) -> void {
     
     // drive speed is 300 rounds per minute
     // more realistic speed wobbles between 299,75 - 300,25
@@ -251,7 +257,7 @@ auto Drive::randomizeRpm() -> void {
     // generating random integer numbers is easier, lets scale up
     // 0.5 rpm * 100 = 50
     // 300 rpm * 100 = 30000
-    unsigned adjusted = rpm + (rand() % (wobble + 1) ) - (wobble / 2);
+    // unsigned adjusted = rpm + (rand() % (wobble + 1) ) - (wobble / 2);
     // there are fixed values how many bits passed the r/w head each second within a speed zone.
     // however these values are valid for a rotation speed of exactly 300 rpm
     // we solve this by a simple proportion:
@@ -260,7 +266,7 @@ auto Drive::randomizeRpm() -> void {
     // then
     // 30000 = drive cycles per second
     // drive cycles per second = 30000 * 1000000 / adjusted
-    driveCycles = (30000ULL * frequency) / adjusted;
+    // driveCycles = (30000ULL * frequency) / adjusted;
     // so we get the amount of cycles per second for adjusted motor speed.
     // now we could calculate the amount of bits passed for any amount of cpu drive cycles
     // by following proportion:
@@ -270,7 +276,31 @@ auto Drive::randomizeRpm() -> void {
     // bits passed = bits per speedzone * cpu cycles passed / drive cycles per second
     
     // for g64 rotation, we apply the randomness for drive speed on reference cycles
-    refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjusted;
+    // refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjusted;
+
+    if (wobble) {
+        if (wobbleLimit < 0) { // neg
+            if (--wobblePos < wobbleLimit) {
+                wobbleLimit = wobble >> 1;
+            }
+        } else {
+            if (++wobblePos > wobbleLimit) {
+                wobbleLimit = -(int)(wobble >> 1);
+            }
+        }
+
+        unsigned adjusted = rpm + wobblePos;
+
+        for (auto drive : drivesEnabled)
+            drive->driveCycles = (30000ULL * drive->frequency) / adjusted;
+
+        refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjusted;
+    } else {
+        for (auto drive : drivesEnabled)
+            drive->driveCycles = (30000ULL * drive->frequency) / rpm;
+
+        refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / rpm;
+    }
 }
 
 auto Drive::updateStepper( uint8_t step ) -> bool {

@@ -473,13 +473,27 @@ auto IecBus::setDriveType(Drive::Type type) -> void {
 }
 
 auto IecBus::setDriveSpeed(unsigned rpmScaled) -> void {
-    for( auto drive : drives )
-        drive->setSpeed( rpmScaled );
+    Drive::setSpeed( rpmScaled );
+}
+
+auto IecBus::getDriveSpeed() -> unsigned {
+    return Drive::rpm;
+}
+
+auto IecBus::enableDeceleration(bool state) -> void {
+    Drive::enableDeceleration = state;
+}
+
+auto IecBus::hasDeceleration() -> bool {
+    return Drive::enableDeceleration;
 }
 
 auto IecBus::setDriveWobble(unsigned wobbleScaled) -> void {
-    for( auto drive : drives )
-        drive->setWobble( wobbleScaled );
+    Drive::setWobble( wobbleScaled );
+}
+
+auto IecBus::getDriveWobble() -> unsigned {
+    return Drive::wobble;
 }
 
 auto IecBus::setStepperSeekTime(unsigned stepperSeekTimeScaled) -> void {
@@ -516,9 +530,7 @@ auto IecBus::setCpuCyclesPerSecond( unsigned cycles ) -> void {
 }
 
 auto IecBus::randomizeRpm() -> void {
-
-    for (auto drive : drivesEnabled)
-        drive->randomizeRpm();
+    Drive::randomizeRpm(drivesEnabled);
 }
 
 auto IecBus::updateSerializationSize() -> void {

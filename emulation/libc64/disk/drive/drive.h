@@ -133,7 +133,7 @@ struct Drive {
     unsigned headOffset = 0; // one and only initialization
     uint8_t ue3Counter;
 
-    uint32_t refCyclesPerRevolution;
+    static uint32_t refCyclesPerRevolution;
 
     uint8_t ue7Counter;
     uint8_t uf4Counter;
@@ -166,10 +166,14 @@ struct Drive {
     bool clockOut;
     bool dataOut;
     bool atnOut;    
-    
-    unsigned rpm = 30000;
-    unsigned wobble = 50;
+
     unsigned stepperSeekTime = 0;
+
+    static unsigned rpm;
+    static unsigned wobble;
+    static int wobblePos;
+    static int wobbleLimit;
+    static bool enableDeceleration;
 
     auto sync() -> void;
     auto setSyncPos(int direction) -> void;
@@ -187,7 +191,7 @@ struct Drive {
     auto rotateD64() -> void;
     auto rotateG64() -> void;
     auto rotateP64(  ) -> void;
-    auto randomizeRpm() -> void;
+    static auto randomizeRpm(std::vector<Drive*>& drivesEnabled) -> void;
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
     auto changeHalfTrack( uint8_t step ) -> void;
@@ -195,8 +199,8 @@ struct Drive {
     auto postAttach() -> void;
     auto detach() -> void;
     auto setWriteProtect(bool state) -> void;
-    auto setSpeed( unsigned rpmScaled ) -> void;
-    auto setWobble( unsigned wobbleScaled ) -> void;
+    static auto setSpeed( unsigned rpmScaled ) -> void;
+    static auto setWobble( unsigned wobbleScaled ) -> void;
     auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
 
     auto syncFound() -> uint8_t;
