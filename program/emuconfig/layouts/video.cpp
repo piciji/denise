@@ -1590,6 +1590,7 @@ auto VideoLayout::openShaderFileDialog() -> std::string {
     static const std::vector<std::string> suffixList = {"slang", "slangp"};
 
     return GUIKIT::BrowserWindow()
+            .setWindow( *(this->tabWindow) )
             .setTitle(trans->getA("select slang shader"))
             .setPath( getShaderFolder() )
             .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
