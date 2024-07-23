@@ -118,7 +118,6 @@ struct Drive {
     DiskStructure::MTrack* gcrTrack;
     DiskStructure::MTrack* dummyTrack;
 
-    bool emulateDxxMoreAccurate = false;
     uint8_t currentHalftrack;
     bool coilDir = 0;
 

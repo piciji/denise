@@ -438,7 +438,6 @@ structure(system, this) {
     profDosAutoSpeed = 0;
     extendedMemoryMap = false;
 
-	emulateDxxMoreAccurate = false;
     wasAttachDetached = false;
     stepperDelay = 0;
     delayInProgress = !!attachDelay;
@@ -1129,12 +1128,7 @@ auto Drive::postAttach() -> void {
     wd1770.setMode( WD1770::Mode::None );
 
     if (structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::D71) {
-        if (emulateDxxMoreAccurate)
-            operation |= ENCODEDDATA_LEVEL;
-        else
-            operation |= USERDATA_LEVEL;
-
-        // no MFM support
+        operation |= USERDATA_LEVEL;
     } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71) {
         operation |= ENCODEDDATA_LEVEL;
         wd1770.setMode( WD1770::Mode::USERDATA ); // MFM is included as user data

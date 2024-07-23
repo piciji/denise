@@ -101,7 +101,6 @@ struct IecBus {
     auto insertDiskGracefully() -> void;
 
     auto setDriveType(Drive::Type type) -> void;
-    auto emulateDxxMoreAccurate(bool state) -> void;
     auto disalignTracks(bool state) -> void;
     auto setSpeeder(uint8_t speeder) -> void;
     auto updateDriveSounds() -> void;

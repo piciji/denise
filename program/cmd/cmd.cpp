@@ -170,7 +170,6 @@ auto Cmd::parse() -> void {
 	bool hasViciiTest = false;
 	bool hasRam0001Test = false;
 	bool hasDefaultTest = false;
-	bool emulateD64WithMoreAccuracy = false; // use G64 emulation
     bool useCustomICGlueLogic = false;
     Emulator::Interface::Media* attachMedia = nullptr;
 
@@ -375,8 +374,6 @@ auto Cmd::parse() -> void {
                             hasRam0001Test = true;
                         else if (!useCustomICGlueLogic && GUIKIT::String::foundSubStr( temp, "reutiming2" ) && !GUIKIT::String::foundSubStr( temp, "m2." ) )
                             useCustomICGlueLogic = true;
-                        else if (!emulateD64WithMoreAccuracy && GUIKIT::String::foundSubStr( temp, "rpm3." ))
-                            emulateD64WithMoreAccuracy = true;
                         else if (fastTestbench && GUIKIT::String::foundSubStr( temp, "reu/cpuport" ))
                             fastTestbench = false;
 
@@ -442,9 +439,6 @@ auto Cmd::parse() -> void {
 	
 	if (hasFuxxorTest)
 		settingsC64->set<unsigned>("memory_value", 0);
-
-    if(emulateD64WithMoreAccuracy)
-        settingsC64->set<unsigned>("Emulate_D64_More_Accurate", 1);
 
     if(useCustomICGlueLogic)
         settingsC64->set<bool>("Custom_IC_Glue_Logic", true);

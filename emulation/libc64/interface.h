@@ -26,7 +26,7 @@ struct Interface : Emulator::Interface {
         ModelIdCiaBurstMode, ModelIdDriveParallelCable, ModelIdDiskDriveModel, ModelIdDiskDrivesConnected, ModelIdTapeDrivesConnected,
         ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble, ModelIdDriveFastLoader, ModelIdDiskDriveStepperSeekTime,
         ModelIdDriveRam20To3F, ModelIdDriveRam40To5F, ModelIdDriveRam60To7F, ModelIdDriveRam80To9F, ModelIdDriveRamA0ToBF,
-        ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64Accuracy, ModelIdDisalignTrack,
+        ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64AccuracyDeprecated, ModelIdDisalignTrack,
 
         ModelIdReuRam, ModelIdGeoRam, ModelIdIntensifyPseudoStereo, ModelIdEnableMotorDeceleration,
     };

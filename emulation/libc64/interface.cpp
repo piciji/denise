@@ -565,8 +565,6 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 1 });
 
-    models.push_back({ModelIdD64Accuracy, "Emulate D64 More Accurate", Model::Type::Switch, Model::Purpose::Hidden, 0});
-
     models.push_back({ModelIdDisalignTrack, "Disalign Tracks", Model::Type::Switch, Model::Purpose::Hidden, 0});
 
     models.push_back({ModelIdReuRam, "REU Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 7}, { "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB", "16 MB" }});
@@ -1415,9 +1413,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->diskSilence.active = value & 1;
             system->diskIdleOff();
             break;
-        case ModelIdD64Accuracy:
-            system->iecBus.emulateDxxMoreAccurate( value & 1 );
-            break;
         case ModelIdDisalignTrack:
             system->iecBus.disalignTracks( value & 1 );
             break;
@@ -1521,7 +1516,6 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
         case ModelIdDiskThread:             return (int)system->iecBus.cpuBurnerRequested;
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
-        case ModelIdD64Accuracy:            return (int)system->iecBus.drives[0]->emulateDxxMoreAccurate;
         case ModelIdDisalignTrack:          return (int)system->iecBus.drives[0]->structure.disalignTracks;
 
         case ModelIdDriveRam20To3F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M20);
