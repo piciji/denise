@@ -167,9 +167,9 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
 
             cpu.power();
 
-            fastForward.config = 0;
-            fastForward.frameCounter = 0;
-            fastForward.renderNext = false;
+            warp.config = 0;
+            warp.frameCounter = 0;
+            warp.renderNext = false;
 
         } else {
             cpu.reset();
@@ -303,21 +303,21 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
         // input.drawCursor();
     }
 
-    if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
+    if (warp.config & (unsigned)Interface::WarpMode::NoVideoOut)
         frame = nullptr;
 
-    else if (fastForward.renderNext) {
-        fastForward.renderNext = false;
-        denise.setDisableSequencer( (fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer) ? 1 : 2 );
+    else if (warp.renderNext) {
+        warp.renderNext = false;
+        denise.setDisableSequencer( (warp.config & (unsigned)Interface::WarpMode::NoVideoSequencer) ? 1 : 2 );
 
-    } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
+    } else if (warp.config & (unsigned)Interface::WarpMode::ReduceVideoOutput) {
         if ((options & 0xc0) == 0)
             frame = nullptr;
 
-        if ((++fastForward.frameCounter & 15) == 0) {
-            fastForward.frameCounter = 0;
+        if ((++warp.frameCounter & 15) == 0) {
+            warp.frameCounter = 0;
             denise.setDisableSequencer( 0 );
-            fastForward.renderNext = true;
+            warp.renderNext = true;
         }
     }
 
@@ -380,9 +380,9 @@ auto System::updateStats() -> void {
 
 auto System::hintSlowSpeed(bool state) -> void {
     if (state)
-        fastForward.config |= (unsigned)Interface::FastForward::SlowSpeed;
+        warp.config |= (unsigned)Interface::WarpMode::SlowSpeed;
     else
-        fastForward.config &= ~(unsigned)Interface::FastForward::SlowSpeed;
+        warp.config &= ~(unsigned)Interface::WarpMode::SlowSpeed;
 }
 
 auto System::setRegion( int region ) -> void {
@@ -404,16 +404,16 @@ auto System::setRunAhead(unsigned frames) -> void {
     updateDriveSounds();
 }
 
-auto System::setFastForward( unsigned config ) -> void {
-    fastForward.config = config | (fastForward.config & (unsigned)Interface::FastForward::SlowSpeed);
-    paula.disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
+auto System::setWarpMode( unsigned config ) -> void {
+    warp.config = config | (warp.config & (unsigned)Interface::WarpMode::SlowSpeed);
+    paula.disableAudioOut(config & (unsigned) Emulator::Interface::WarpMode::NoAudioOut);
 
-    if (config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer) denise.setDisableSequencer( 1 );
-    else if (config & (unsigned) Emulator::Interface::FastForward::ReduceVideoOutput) denise.setDisableSequencer( 2 );
+    if (config & (unsigned) Emulator::Interface::WarpMode::NoVideoSequencer) denise.setDisableSequencer( 1 );
+    else if (config & (unsigned) Emulator::Interface::WarpMode::ReduceVideoOutput) denise.setDisableSequencer( 2 );
     else denise.setDisableSequencer( 0 );
 
-    fastForward.frameCounter = 0;
-    fastForward.renderNext = false;
+    warp.frameCounter = 0;
+    warp.renderNext = false;
 
     updateDriveSounds();
 }
@@ -424,7 +424,7 @@ auto System::setFloppySounds(bool state) -> void {
 }
 
 auto System::updateDriveSounds() -> void {
-    bool state = requestFloppySound && !fastForward.config;
+    bool state = requestFloppySound && !warp.config;
 
     for(auto& drive : diskDrives)
         drive.enableSounds(state);

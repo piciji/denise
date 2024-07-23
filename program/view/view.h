@@ -87,7 +87,7 @@ struct View : GUIKIT::Window {
     auto loadDragnDropOverlay() -> void;
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
-    auto updateFastforwardCheck() -> void;
+    auto updateWarpCheck() -> void;
     auto updateEmuUsage() -> void;
     auto updateDiskMenu() -> void;
 	auto updateMouseGrab() -> void;
@@ -150,8 +150,8 @@ struct View : GUIKIT::Window {
 		GUIKIT::MenuItem tapeResetCounterItem;
 
     GUIKIT::Menu speedControlMenu;
-        GUIKIT::MenuCheckItem fastForwardItem;
-        GUIKIT::MenuCheckItem aggressiveFastForwardItem;
+        GUIKIT::MenuCheckItem warpItem;
+        GUIKIT::MenuCheckItem aggressiveWarpItem;
         GUIKIT::MenuCheckItem pauseItem;
         std::vector<GUIKIT::MenuRadioItem*> speedItems;
         GUIKIT::MenuRadioItem maximumSpeedItem;

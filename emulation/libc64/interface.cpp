@@ -1589,12 +1589,12 @@ auto Interface::activateDebugCart( unsigned limitCycles ) -> void {
     system->activateDebugCart( limitCycles );
 }
 
-auto Interface::fastForward(unsigned config) -> void {
-    system->setFastForward( config );
+auto Interface::setWarpMode(unsigned config) -> void {
+    system->setWarpMode( config );
 }
 
-auto Interface::getForward() -> unsigned {
-	return system->fastForward.config;
+auto Interface::getWarpMode() -> unsigned {
+	return system->warp.config;
 }
 
 auto Interface::getLuma(uint8_t index, bool newRevision) -> double {

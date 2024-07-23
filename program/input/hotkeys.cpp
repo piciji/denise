@@ -11,8 +11,8 @@ std::vector<InputMapping*> InputManager::hotkeyTriggers;
 auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::Pause, "Pause"} );
     hotkeys.push_back( {Hotkey::Id::Fullscreen, "Fullscreen"} );
-    hotkeys.push_back( {Hotkey::Id::ToggleFastForward, "Toggle_fastforward"} );
-    hotkeys.push_back( {Hotkey::Id::ToggleFastForwardAggressive, "Toggle_fastforward_aggressive"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleWarp, "Toggle Warp"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleWarpAggressive, "Toggle Warp Aggressive"} );
     
     hotkeys.push_back( {Hotkey::Id::ToggleMenu, "Toggle_menu"} );
     hotkeys.push_back( {Hotkey::Id::ToggleStatus, "Toggle_status"} );	
@@ -59,8 +59,8 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::DiskSwap14, "swap media14"} );
 
     // not assignable, not saveable
-    hiddenHotkeys.push_back( {Hotkey::Id::FastForward, ""} );
-    hiddenHotkeys.push_back( {Hotkey::Id::FastForwardOff, ""} );
+    hiddenHotkeys.push_back( {Hotkey::Id::Warp, ""} );
+    hiddenHotkeys.push_back( {Hotkey::Id::WarpOff, ""} );
 }
 
 auto InputManager::setCustomHotkeys() -> void {
@@ -197,7 +197,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                     bool val = activeEmulator->getModelValue( model->id );
                     settings->set<bool>( _underscore(model->name), !val );
                     activeEmulator->setModelValue( model->id, !val );
-                    program->fastForward(false);
+                    program->setWarp(false);
                     program->power(activeEmulator);
                 }
             }
@@ -276,23 +276,23 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (emuView && emuView->inputLayout)
                 emuView->inputLayout->updateConnectorButtons();
 		} break;
-        case Hotkey::Id::ToggleFastForward:
-        case Hotkey::Id::ToggleFastForwardAggressive:
+        case Hotkey::Id::ToggleWarp:
+        case Hotkey::Id::ToggleWarpAggressive:
             emuThread->lock();
-            program->toggleFastForward( id == Hotkey::Id::ToggleFastForwardAggressive );
+            program->toggleWarp( id == Hotkey::Id::ToggleWarpAggressive );
             break;
 
-        case Hotkey::Id::FastForward:
+        case Hotkey::Id::Warp:
             if (!program->warp.active) {
                 emuThread->lock();
-                program->fastForward(true, program->warp.aggressive);
+                program->setWarp(true, program->warp.aggressive);
             }
             break;
 
-        case Hotkey::Id::FastForwardOff:
+        case Hotkey::Id::WarpOff:
             if (program->warp.active) {
                 emuThread->lock();
-                program->fastForward(false);
+                program->setWarp(false);
             }
             break;
 
@@ -410,7 +410,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             }
 
             settings->set<unsigned>("video_crt", _mode);
-            program->fastForward( false );
+            program->setWarp( false );
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             if (emuView && emuView->videoLayout)
                 emuView->videoLayout->loadSettings();
@@ -814,8 +814,8 @@ auto InputManager::pollHotkeys() -> void {
 
 	std::vector<InputMapping*> useTrigger;
 	InputMapping* viewOpen = nullptr;
-	InputMapping* fastForward = nullptr;
-    InputMapping* fastForwardAutostart = nullptr;
+	InputMapping* warp = nullptr;
+    InputMapping* warpAutostart = nullptr;
 	InputMapping* stateHandler = nullptr;
 	InputMapping* starter = nullptr;
     InputMapping* anyLoad = nullptr;
@@ -828,9 +828,9 @@ auto InputManager::pollHotkeys() -> void {
     for( auto trigger : _hotkeyTriggers ) {
 		
 		switch(trigger->hotkeyId) {
-            case Hotkey::Id::FastForward:
-            case Hotkey::Id::FastForwardOff:
-                fastForwardAutostart = trigger; // use last event
+            case Hotkey::Id::Warp:
+            case Hotkey::Id::WarpOff:
+                warpAutostart = trigger; // use last event
                 break;
 
 			case Hotkey::Id::DiskSwapper:
@@ -851,10 +851,10 @@ auto InputManager::pollHotkeys() -> void {
 				
 				break;
 				
-			case Hotkey::Id::ToggleFastForward:
-			case Hotkey::Id::ToggleFastForwardAggressive:
-				if(!fastForward)
-					fastForward = trigger;
+			case Hotkey::Id::ToggleWarp:
+			case Hotkey::Id::ToggleWarpAggressive:
+				if(!warp)
+					warp = trigger;
 				break;
 
 			case Hotkey::IncSlot:
@@ -900,7 +900,7 @@ auto InputManager::pollHotkeys() -> void {
 		}		
 	}
 
-    if (!fastForwardAutostart || fastForward) {
+    if (!warpAutostart || warp) {
         if (!Program::hasFocus())
             return;
     }
@@ -908,10 +908,10 @@ auto InputManager::pollHotkeys() -> void {
 	if (viewOpen)
 		useTrigger.push_back( viewOpen );
 
-	if(fastForward)
-		useTrigger.push_back( fastForward );
-    else if(fastForwardAutostart)
-        useTrigger.push_back( fastForwardAutostart );
+	if(warp)
+		useTrigger.push_back( warp );
+    else if(warpAutostart)
+        useTrigger.push_back( warpAutostart );
 	
 	if(stateHandler)
 		useTrigger.push_back( stateHandler );

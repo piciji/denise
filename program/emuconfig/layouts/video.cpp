@@ -411,7 +411,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layBase.view.mode.rgb.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None);
         emuThread->lock();
-        program->fastForward( false );
+        program->setWarp( false );
         updatePresets(true, false);
         view->updateShader(emulator);
         emuThread->unlock();
@@ -420,7 +420,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layBase.view.mode.cpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Cpu);
         emuThread->lock();
-        program->fastForward( false );
+        program->setWarp( false );
 		updatePresets(true, false);
         view->updateShader(emulator);
         emuThread->unlock();
@@ -429,7 +429,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layBase.view.mode.gpu.onActivate = [this]() {
         _settings->set<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::Gpu);
         emuThread->lock();
-        program->fastForward( false );
+        program->setWarp( false );
 		updatePresets(true, false);
         view->updateShader(emulator);
         emuThread->unlock();

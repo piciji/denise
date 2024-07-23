@@ -101,8 +101,8 @@ struct Interface : Emulator::Interface  {
     // jit
     auto setInputSampling(uint8_t mode) -> void;
 
-    auto fastForward(unsigned config) -> void;
-    auto getForward() -> unsigned;
+    auto setWarpMode(unsigned config) -> void;
+    auto getWarpMode() -> unsigned;
 
     auto enableFloppySounds(bool state) -> void;
 

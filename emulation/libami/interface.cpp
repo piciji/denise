@@ -668,12 +668,12 @@ auto Interface::enableFloppySounds(bool state) -> void {
     system->setFloppySounds( state );
 }
 
-auto Interface::fastForward(unsigned config) -> void {
-    system->setFastForward( config );
+auto Interface::setWarpMode(unsigned config) -> void {
+    system->setWarpMode( config );
 }
 
-auto Interface::getForward() -> unsigned {
-    return system->fastForward.config;
+auto Interface::getWarpMode() -> unsigned {
+    return system->warp.config;
 }
 
 auto Interface::autoStartedByMediaGroup() -> MediaGroup* {

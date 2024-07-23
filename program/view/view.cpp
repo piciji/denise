@@ -828,15 +828,15 @@ auto View::updatePauseCheck() -> void {
         pauseItem.setChecked(program->isPause);
 }
 
-auto View::updateFastforwardCheck() -> void {
+auto View::updateWarpCheck() -> void {
     bool ff = program->warp.active && !program->warp.aggressive;
     bool ffa = program->warp.active && program->warp.aggressive;
 
-    if (ff != fastForwardItem.checked())
-        fastForwardItem.setChecked(ff);
+    if (ff != warpItem.checked())
+        warpItem.setChecked(ff);
 
-    if (ffa != aggressiveFastForwardItem.checked())
-        aggressiveFastForwardItem.setChecked(ffa);
+    if (ffa != aggressiveWarpItem.checked())
+        aggressiveWarpItem.setChecked(ffa);
 }
 
 auto View::togglePause() -> void {
@@ -1226,7 +1226,7 @@ auto View::buildMenu() -> void {
     videoSyncItem.onToggle = [&]() {
         globalSettings->set<bool>("video_sync", videoSyncItem.checked() );
         emuThread->lock();
-        program->fastForward( false );
+        program->setWarp( false );
         VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
         emuThread->unlock();
@@ -1438,19 +1438,19 @@ auto View::buildMenu() -> void {
     speedControlMenu.setIcon( fanImage );
     speedControlMenu.showContextOnly(true);
 
-    fastForwardItem.onToggle = []() {
+    warpItem.onToggle = []() {
         emuThread->lock();
-        program->toggleFastForward( false );
+        program->toggleWarp( false );
         emuThread->unlock();
     };
-    speedControlMenu.append( fastForwardItem );
+    speedControlMenu.append( warpItem );
 
-    aggressiveFastForwardItem.onToggle = []() {
+    aggressiveWarpItem.onToggle = []() {
         emuThread->lock();
-        program->toggleFastForward( true );
+        program->toggleWarp( true );
         emuThread->unlock();
     };
-    speedControlMenu.append( aggressiveFastForwardItem );
+    speedControlMenu.append( aggressiveWarpItem );
 
     pauseItem.onToggle = [this]() {
         this->togglePause();
@@ -1883,8 +1883,8 @@ auto View::translate() -> void {
 	statusBar.updateTooltip(12, trans->get("cartridges") );
 	statusBar.updateTooltip(15, trans->get("FPS") );
     pauseItem.setText( trans->get("Pause") );
-    fastForwardItem.setText( trans->get("Toggle_fastforward") );
-    aggressiveFastForwardItem.setText( trans->get("Toggle_fastforward_aggressive") );
+    warpItem.setText( trans->get("Toggle Warp") );
+    aggressiveWarpItem.setText( trans->get("Toggle Warp aggressive") );
 
     maximumSpeedItem.setText( trans->get("maximum speed") );
     customizeSpeedItem.setText( trans->get("customize speed") );

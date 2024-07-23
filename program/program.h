@@ -169,8 +169,8 @@ struct Program : Emulator::Interface::Bind {
     auto getScaleMessage(Emulator::Interface* emulator, int aspectMode ) -> std::string;
     auto setPalette( Emulator::Interface* emulator ) -> void;
     auto midScreenCallback(uint8_t interlace) -> void override;
-    auto toggleFastForward(bool aggressive) -> void;
-    auto fastForward( bool activate, bool aggressive = false ) -> void;
+    auto toggleWarp(bool aggressive) -> void;
+    auto setWarp( bool activate, bool aggressive = false ) -> void;
     auto updateOverallSynchronize() -> void;
     auto updateFullscreenSetting() -> void;
     auto fpsChanged() -> void override;

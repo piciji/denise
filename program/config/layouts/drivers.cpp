@@ -92,10 +92,10 @@ DriversLayout::DriversLayout() {
 		globalSettings->set<std::string>("video_driver", vdl.top.driver.combo.text() );
 
         emuThread->lock();
-        // disable fastforward before, otherwise if threaded CPU CRT is selected, the midline callback would be active with fastforward.
-        // fastforward will not render all frames but mid scanline callback runs without finishing the frame
+        // disable warp before, otherwise if threaded CPU CRT is selected, the midline callback would be active with warp.
+        // warp will not render all frames but mid scanline callback runs without finishing the frame
         // todo: solve this better, more self-acting
-        program->fastForward(false);
+        program->setWarp(false);
         program->initVideo(true);
         updateDriverPropsVisibility();
         emuThread->unlock();
@@ -149,7 +149,7 @@ DriversLayout::DriversLayout() {
     vdl.bottom.trAuto.onToggle = [this](bool checked) {
         emuThread->lock();
         globalSettings->set("adaptive_sync", checked);
-        program->fastForward( false );
+        program->setWarp( false );
         VideoManager::setSynchronize();
         emuThread->unlock();
 

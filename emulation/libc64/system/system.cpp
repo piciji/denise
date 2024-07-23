@@ -563,9 +563,9 @@ auto System::power( bool softReset ) -> void {
         if (requestedSids)
             serializationSize += sidManager.serializationSizeForSevenMoreSids;
 
-        fastForward.config = 0;
-        fastForward.frameCounter = 0;
-        fastForward.renderNext = false;
+        warp.config = 0;
+        warp.frameCounter = 0;
+        warp.renderNext = false;
     }
 
     tapeNoise.reset();
@@ -669,7 +669,7 @@ auto System::run() -> void {
     cpu.setNmi(nmiIncomming != 0);
     iecBus.randomizeRpm();
 
-    runAhead.active = !fastForward.config && runAhead.frames && !traps.installed
+    runAhead.active = !warp.config && runAhead.frames && !traps.installed
         && !keyBuffer->isPrgInjectionInQueue() && !iecBus.diskInsertInProgress;
 
     if (runAhead.active) {
@@ -735,15 +735,15 @@ auto System::changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimax
 
 auto System::hintSlowSpeed(bool state) -> void {
     if (state)
-        fastForward.config |= (unsigned)Interface::FastForward::SlowSpeed;
+        warp.config |= (unsigned)Interface::WarpMode::SlowSpeed;
     else
-        fastForward.config &= ~(unsigned)Interface::FastForward::SlowSpeed;
+        warp.config &= ~(unsigned)Interface::WarpMode::SlowSpeed;
 }
 
-auto System::setFastForward( unsigned config ) -> void {
-    fastForward.config = config | (fastForward.config & (unsigned)Interface::FastForward::SlowSpeed);
-    sidManager.disableAudioOut(config & (unsigned) Emulator::Interface::FastForward::NoAudioOut);
-    vicII->disableSequencer(config & (unsigned) Emulator::Interface::FastForward::NoVideoSequencer);
+auto System::setWarpMode( unsigned config ) -> void {
+    warp.config = config | (warp.config & (unsigned)Interface::WarpMode::SlowSpeed);
+    sidManager.disableAudioOut(config & (unsigned) Emulator::Interface::WarpMode::NoAudioOut);
+    vicII->disableSequencer(config & (unsigned) Emulator::Interface::WarpMode::NoVideoSequencer);
     updateDriveSounds();
 
     if (!config && sidManager.hasIntensifiedPseudoStereo())
@@ -761,8 +761,8 @@ auto System::setTapeSounds(bool state) -> void {
 }
 
 auto System::updateDriveSounds() -> void {
-    driveSounds.useFloppy = driveSounds.requestFloppy && !fastForward.config;
-    driveSounds.useTape = driveSounds.requestTape && !fastForward.config;
+    driveSounds.useFloppy = driveSounds.requestFloppy && !warp.config;
+    driveSounds.useTape = driveSounds.requestTape && !warp.config;
 
     if (powerOn) {
         if (driveSounds.useFloppy)
@@ -849,20 +849,20 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
         input.drawCursor();
     }
 
-    if (fastForward.config & (unsigned)Interface::FastForward::NoVideoOut)
+    if (warp.config & (unsigned)Interface::WarpMode::NoVideoOut)
         frame = nullptr;
 
-    else if (fastForward.renderNext) {
-        fastForward.renderNext = false;
-        vicII->disableSequencer( fastForward.config & (unsigned)Interface::FastForward::NoVideoSequencer );
+    else if (warp.renderNext) {
+        warp.renderNext = false;
+        vicII->disableSequencer( warp.config & (unsigned)Interface::WarpMode::NoVideoSequencer );
 
-    } else if (fastForward.config & (unsigned)Interface::FastForward::ReduceVideoOutput) {
+    } else if (warp.config & (unsigned)Interface::WarpMode::ReduceVideoOutput) {
         frame = nullptr;
 
-        if ((++fastForward.frameCounter & 15) == 0) {
-            fastForward.frameCounter = 0;
+        if ((++warp.frameCounter & 15) == 0) {
+            warp.frameCounter = 0;
             vicII->disableSequencer( false );
-            fastForward.renderNext = true;
+            warp.renderNext = true;
         }
     }
 

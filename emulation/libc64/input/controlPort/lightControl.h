@@ -143,7 +143,7 @@ struct LightControl : ControlPort {
     template<bool midScreen = false> auto draw( uint16_t color ) -> void {
         
         if (device->userData & 1) {
-            if (!midScreen && !system->fastForward.config)
+            if (!midScreen && !system->warp.config)
                 device->userData &= ~1; 
             
             return;

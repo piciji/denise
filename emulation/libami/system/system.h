@@ -53,7 +53,7 @@ struct System {
         unsigned config = 0;
         unsigned frameCounter;
         bool renderNext;
-    } fastForward;
+    } warp;
 
     struct {
         unsigned frames = 0;
@@ -94,10 +94,10 @@ struct System {
 
     auto setRegion( int region ) -> void;
     auto setResampleQuality( int value ) -> void;
-    auto setFastForward( unsigned config ) -> void;
+    auto setWarpMode( unsigned config ) -> void;
     auto setRunAhead(unsigned frames) -> void;
     auto runAheadPreventJit() -> bool { return runAhead.preventJit && runAhead.frames; }
-    auto allowRunAhead() -> const bool { return !fastForward.config && runAhead.frames && !agnus.resetFromKeyboard && agnus.womLocked(); }
+    auto allowRunAhead() -> const bool { return !warp.config && runAhead.frames && !agnus.resetFromKeyboard && agnus.womLocked(); }
     auto hintSlowSpeed(bool state) -> void;
 
     auto calcSerializationSize() -> void;

@@ -27,7 +27,7 @@ struct Cmd {
     bool noDriver = false;
     bool noGui = false;
     bool debug = false;
-	bool aggressiveFastforward = false;
+	bool aggressiveWarp = false;
     bool helpRequested = false;
     bool versionRequested = false;
 	uint8_t autostartPrg = 1;

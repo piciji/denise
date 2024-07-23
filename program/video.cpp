@@ -392,7 +392,7 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
     }
 }
 
-auto Program::toggleFastForward(bool aggressive) -> void {
+auto Program::toggleWarp(bool aggressive) -> void {
     if (!activeEmulator)
         return;
 
@@ -404,23 +404,23 @@ auto Program::toggleFastForward(bool aggressive) -> void {
 
     if ( (!aggressive && ffa) || (aggressive && ff) ) {
         // switch modes (already active)
-        unsigned val = (unsigned)Emulator::Interface::FastForward::NoAudioOut | (unsigned)Emulator::Interface::FastForward::ReduceVideoOutput;
+        unsigned val = (unsigned)Emulator::Interface::WarpMode::NoAudioOut | (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutput;
         if (aggressive)
-            val |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
+            val |= (unsigned)Emulator::Interface::WarpMode::NoVideoSequencer;
 
-        activeEmulator->fastForward( val );
+        activeEmulator->setWarpMode( val );
         warp.aggressive = aggressive;
 
         if (view)
-            view->updateFastforwardCheck();
+            view->updateWarpCheck();
     } else {
         bool toggleOn = !ff && !ffa;
-        fastForward( toggleOn, aggressive);
+        setWarp( toggleOn, aggressive);
         warp.manuell = toggleOn;
     }
 }
 
-auto Program::fastForward( bool activate, bool aggressive ) -> void {
+auto Program::setWarp( bool activate, bool aggressive ) -> void {
     if (!activeEmulator)
         return;
 
@@ -443,9 +443,9 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
         if (videoDriver->hasVRR())
             videoDriver->setVRR(false);
 
-        forward = (unsigned)Emulator::Interface::FastForward::NoAudioOut | (unsigned)Emulator::Interface::FastForward::ReduceVideoOutput;
+        forward = (unsigned)Emulator::Interface::WarpMode::NoAudioOut | (unsigned)Emulator::Interface::WarpMode::ReduceVideoOutput;
         if (aggressive)
-            forward |= (unsigned)Emulator::Interface::FastForward::NoVideoSequencer;
+            forward |= (unsigned)Emulator::Interface::WarpMode::NoVideoSequencer;
 
     } else {
         warp.active = false;
@@ -463,20 +463,18 @@ auto Program::fastForward( bool activate, bool aggressive ) -> void {
     if (statusHandler)
         statusHandler->resetFrameCounter();
 
-    activeEmulator->fastForward( forward );
+    activeEmulator->setWarpMode( forward );
 
     if (view)
-        view->updateFastforwardCheck();
+        view->updateWarpCheck();
 	
 	updateOverallSynchronize();
 }
 
 auto Program::updateOverallSynchronize() -> void {
 	VideoManager::synchronized = false;
-	
-	bool fastForward = activeEmulator && activeEmulator->getForward();
-	
-	if (fastForward)
+
+	if (activeEmulator && activeEmulator->getWarpMode())
 		return;	
 	
 	bool vSync = videoDriver->hasSynchronized();

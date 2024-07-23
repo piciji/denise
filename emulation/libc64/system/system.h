@@ -166,7 +166,7 @@ struct System {
         unsigned config = 0;
         unsigned frameCounter;
         bool renderNext;
-    } fastForward;
+    } warp;
     
     struct {
         unsigned frames = 0;
@@ -260,7 +260,7 @@ struct System {
     auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Emulator::Interface::Expansion*;
 
     auto hintSlowSpeed(bool state) -> void;
-    auto setFastForward( unsigned config ) -> void;
+    auto setWarpMode( unsigned config ) -> void;
     auto setFloppySounds(bool state) -> void;
 	auto setTapeSounds(bool state) -> void;
     auto updateDriveSounds() -> void;

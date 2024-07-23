@@ -134,8 +134,8 @@ auto Cmd::printHelp() -> void {
 	options.push_back({"-no-driver", "Run without video, audio, input drivers", ""});
 	options.push_back({"-no-gui", "Open without graphical user interface and force -no-driver", ""});
 	options.push_back({"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"});
-	options.push_back({"-aggressive-fastforward", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""});
-	options.push_back({"-fast-testbench", "analyze passed options and then decides on the use of aggressive fastforward and/or PRG memory injection", ""});
+	options.push_back({"-aggressive-warp", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""});
+	options.push_back({"-fast-testbench", "analyze passed options and then decides on the use of aggressive warp and/or PRG memory injection", ""});
 	
     for(auto& option : options) {                
         
@@ -277,8 +277,8 @@ auto Cmd::parse() -> void {
 		else if (arg == "-lax-magic") {
             laxMagicNext = true;
         }
-		else if (arg == "-aggressive-fastforward") {
-			aggressiveFastforward = 1;
+		else if (arg == "-aggressive-warp") {
+			aggressiveWarp = 1;
         }
         else if (arg == "-exitscreenshot") {
             screenshotPathNext = true;
@@ -415,22 +415,22 @@ auto Cmd::parse() -> void {
 		globalSettings->set<bool>("fps", false );
 	
 	if (fastTestbench) {
-		aggressiveFastforward = true;
+		aggressiveWarp = true;
 		
 		if (!screenshotPath.empty())
-			aggressiveFastforward = false;
+			aggressiveWarp = false;
 		
 		else {
 			if (hasViciiTest)
-				aggressiveFastforward = false;
+				aggressiveWarp = false;
 			
 			if (hasFuxxorTest) {
 				fastTestbench = false;
-				aggressiveFastforward = false;
+				aggressiveWarp = false;
 			}
 				
 			if (hasRam0001Test)
-				aggressiveFastforward = false;
+				aggressiveWarp = false;
 			
 			if (hasDefaultTest)
 				fastTestbench = false;
@@ -507,12 +507,12 @@ auto Cmd::autoloadImages() -> void {
     if (activeEmulator) {
         typedef Emulator::Interface EmuInt;
 
-        if (aggressiveFastforward)
-            activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::ReduceVideoOutput | (unsigned)EmuInt::FastForward::NoVideoSequencer );
+        if (aggressiveWarp)
+            activeEmulator->setWarpMode( (unsigned)EmuInt::WarpMode::NoAudioOut | (unsigned)EmuInt::WarpMode::ReduceVideoOutput | (unsigned)EmuInt::WarpMode::NoVideoSequencer );
         else if (noDriver || noGui)
-            activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut | (unsigned)EmuInt::FastForward::NoVideoOut );
+            activeEmulator->setWarpMode( (unsigned)EmuInt::WarpMode::NoAudioOut | (unsigned)EmuInt::WarpMode::NoVideoOut );
         else if (debug)
-            activeEmulator->fastForward( (unsigned)EmuInt::FastForward::NoAudioOut );
+            activeEmulator->setWarpMode( (unsigned)EmuInt::WarpMode::NoAudioOut );
     }
 
     if (GUIKIT::Application::exitCode)

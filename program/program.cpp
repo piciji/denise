@@ -380,7 +380,7 @@ auto Program::reset( Emulator::Interface* emulator ) -> void {
 
 auto Program::powerOff() -> void {
     if ( activeEmulator ) {
-        fastForward( false );
+        setWarp( false );
         activeEmulator->powerOff();
         
         for(auto& mediaGroup : activeEmulator->mediaGroups) {
@@ -679,7 +679,7 @@ auto Program::autoStartFinish(bool soft) -> void {
     if (soft && warp.motorControlled)
         return;
 
-    InputManager::activateHiddenHotkey( Hotkey::Id::FastForwardOff );
+    InputManager::activateHiddenHotkey( Hotkey::Id::WarpOff );
 }
 
 auto Program::hintAutoWarp(uint8_t state) -> void {
@@ -697,9 +697,9 @@ auto Program::hintAutoWarp(uint8_t state) -> void {
     }
 
     if (suggestWarp)
-        InputManager::activateHiddenHotkey( Hotkey::Id::FastForward );
+        InputManager::activateHiddenHotkey( Hotkey::Id::Warp );
     else
-        InputManager::activateHiddenHotkey( Hotkey::Id::FastForwardOff );
+        InputManager::activateHiddenHotkey( Hotkey::Id::WarpOff );
 }
 
 auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool initOnly) -> void {
@@ -726,7 +726,7 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool ini
         }
 
         if (!initOnly)
-            fastForward(true, _autoWarp == 2);
+            setWarp(true, _autoWarp == 2);
         else if (warp.motorControlled)
             warp.aggressive = _autoWarp == 2;
     }
