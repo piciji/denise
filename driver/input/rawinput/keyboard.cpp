@@ -3,9 +3,13 @@ using KeyCallback = std::function<void ()>;
 
 struct RawKeyboard {
 	Hid::Keyboard* hidKeyboard = nullptr;
-	bool keys[256] = {0};
+	bool keys[256] = {false};
     KeyCallback* keyCallback = nullptr;
-	
+
+	auto initKeys() -> void {
+		std::fill_n(keys, 256, false);
+	}
+
 	auto init() -> void {
 		term();
 		

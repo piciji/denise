@@ -109,6 +109,7 @@ struct RawInput : Input {
 	auto initDevices() -> void {
 		joypad.init();
 		mouse.init();
+		keyboard.initKeys();
 
 		unsigned deviceCount = 0;
 		GetRawInputDeviceList(NULL, &deviceCount, sizeof (RAWINPUTDEVICELIST));
@@ -161,7 +162,7 @@ struct RawInput : Input {
 	}
 
 	auto wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
-		if ( (msg == WM_DEVICECHANGE)) {
+		if (msg == WM_DEVICECHANGE) {
 			deviceChanged = true;
 		}
 
