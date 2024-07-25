@@ -656,6 +656,10 @@ auto Interface::cropPitch() -> unsigned {
     return system->crop.latest.linePitch;
 }
 
+auto Interface::cropOptions() -> uint8_t {
+    return system->crop.latest.options;
+}
+
 auto Interface::requestImmediateReturn() -> void {
     system->leaveEmulation = true;
 }

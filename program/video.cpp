@@ -220,6 +220,35 @@ auto Program::videoRefresh8(const uint8_t* frame, unsigned width, unsigned heigh
         activeVideoManager->renderFrame<uint8_t>(frame, width, height, linePitch);
 }
 
+auto Program::repeatLastFrame() -> void {
+    if (cmd->noGui)
+        return;
+
+    auto cropData = activeEmulator->cropData();
+
+    if (cropData)
+        return activeVideoManager->renderFrame<uint8_t>(cropData, activeEmulator->cropWidth(), activeEmulator->cropHeight(), activeEmulator->cropPitch());
+
+    auto cropData16 = activeEmulator->cropData16();
+
+    if (cropData16) {
+        unsigned _width = activeEmulator->cropWidth();
+        unsigned _height = activeEmulator->cropHeight();
+        unsigned _pitch = activeEmulator->cropPitch();
+        unsigned _options = activeEmulator->cropOptions();
+
+        switch(_options) {
+            case 0: activeVideoManager->renderFrame<uint16_t, 0>(cropData16, _width, _height, _pitch); break;
+            case 1: activeVideoManager->renderFrame<uint16_t, 1>(cropData16, _width, _height, _pitch); break;
+            case 2: activeVideoManager->renderFrame<uint16_t, 2>(cropData16, _width, _height, _pitch); break;
+
+            case 4: activeVideoManager->renderFrame<uint16_t, 4>(cropData16, _width, _height, _pitch); break;
+            case 5: activeVideoManager->renderFrame<uint16_t, 5>(cropData16, _width, _height, _pitch); break;
+            case 6: activeVideoManager->renderFrame<uint16_t, 6>(cropData16, _width, _height, _pitch); break;
+        }
+    }
+}
+
 auto Program::canExclusiveFullscreen() -> bool {
 
     return !isPause && videoDriver->canExclusiveFullscreen()

@@ -458,8 +458,7 @@ auto Program::loop() -> void {
 	else {
         GUIKIT::System::sleep( 10 );
 		audioDriver->clear();
-        if (VideoManager::needAUpdate)
-            VideoManager::updateAll();
+	    repeatLastFrame();
 	}
 
     if (statusHandler->hasUpdates())

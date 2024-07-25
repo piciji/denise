@@ -572,6 +572,7 @@ struct Interface {
     virtual auto cropData() -> uint8_t* { return nullptr; }
     virtual auto cropData16() -> uint16_t* { return nullptr; }
     virtual auto cropPitch() -> unsigned { return 0; }
+    virtual auto cropOptions() -> uint8_t { return 0; }
     
     virtual auto videoAddMeta(bool state) -> void {}
     

@@ -27,6 +27,7 @@ struct Crop {
         unsigned left;
         unsigned linePitch;
         bool topLeftChanged;
+    	uint8_t options;
     } latest;
     
 	unsigned croppedWidth;
@@ -88,7 +89,7 @@ struct Crop {
 	auto apply(T*& frame, unsigned& width, unsigned& height, unsigned& linePitch, uint8_t options = 0) -> void {
 		
 		if ( !updateBorder(options) ) {
-            memoryLatest( frame, width, height, linePitch );
+            memoryLatest( frame, width, height, linePitch, options );
 			return;
 		}
         
@@ -108,15 +109,17 @@ struct Crop {
 		height = croppedHeight;
 		width = croppedWidth;
         
-        memoryLatest( frame, width, height, linePitch );
+        memoryLatest( frame, width, height, linePitch, options );
 	}
     
-    auto memoryLatest( T*& frame, unsigned& width, unsigned& height, unsigned& linePitch ) -> void {
+    auto memoryLatest( T*& frame, unsigned& width, unsigned& height, unsigned& linePitch, uint8_t& options ) -> void {
         // remember result of last crop for post processing ( e.g. lightgun )
         latest.frame = frame;
         latest.width = width;
         latest.height = height;
         latest.linePitch = linePitch;
+		latest.options = options;
+
         if ( (latest.top != top) || (latest.left != left) ) {
             latest.top = top;
             latest.left = left;
