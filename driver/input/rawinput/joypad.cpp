@@ -35,7 +35,7 @@ struct RawJoypad {
 	auto add( HANDLE handle ) -> void {
 		
 		if (!updatePreparsedData(handle)) return;
-		
+		logger->log("preparsed");
 		Joypad jp;		
 		jp.handle = handle;
 		jp.dPadHatPos = -1;
@@ -56,13 +56,13 @@ struct RawJoypad {
 			OPEN_EXISTING, 0u, nullptr
 		);
 		if (!jp.ntHandle) return;
-
+		logger->log("opened");
 		wchar_t nameBuffer[PATH_MAX];
 
 		if (!HidD_GetProductString(jp.ntHandle, nameBuffer, 100)) {
 			wcscpy(nameBuffer, L"Joypad");
 		}				
-				
+
 		jp.hid = new Hid::Joypad;
 		CRC32 crc32((uint8_t*)_path.c_str(), _path.size());		
 				
@@ -72,7 +72,7 @@ struct RawJoypad {
 		jp.hid->name = uniqueDeviceName(joypads, joyname);
 		
 		unsigned buttonCount = data.pButtonCaps->Range.UsageMax - data.pButtonCaps->Range.UsageMin + 1;
-		
+		logger->log("buttons " + std::to_string(buttonCount));
 		for(unsigned button = 0; button < buttonCount; button++) {
 			jp.hid->buttons().append( std::to_string(button) );
 			jp.buttons.push_back(0);
@@ -90,26 +90,32 @@ struct RawJoypad {
         for (auto& usage : usages) {
             switch (usage) {
                 case 0x30:
+                	logger->log("add axis X");
                     jp.hid->axes().append( "X" );                    
                     jp.axisMap[axes++] = 0;
                     break;
                 case 0x31:
+                	logger->log("add axis Y");
                     jp.hid->axes().append( "Y" );
                     jp.axisMap[axes++] = 1;
                     break;
                 case 0x32:
+                	logger->log("add axis Z");
                     jp.hid->axes().append( "Z" );
                     jp.axisMap[axes++] = 2;
                     break;
                 case 0x33:
+                	logger->log("add axis X|Rot");
                     jp.hid->axes().append( "X|Rot" );
                     jp.axisMap[axes++] = 3;
                     break;
                 case 0x34:
+                	logger->log("add axis Y|Rot");
                     jp.hid->axes().append( "Y|Rot" );
                     jp.axisMap[axes++] = 4;
                     break;
-                case 0x35: 
+                case 0x35:
+                	logger->log("add axis Z|Rot");
                     jp.hid->axes().append( "Z|Rot" );
                     jp.axisMap[axes++] = 5;
                     break;
@@ -153,7 +159,6 @@ struct RawJoypad {
             	case 0xba:
             		logger->log("add Rudder");
             		break;
-
             }            
         }
         				
@@ -321,6 +326,9 @@ struct RawJoypad {
 					logger->log("upd D-pad left");
 					if (dPadHatPos >= 0)
 						pJoypad->hats[dPadHatPos].x = -32768;
+					break;
+				default:
+					logger->log("upd misc" + std::to_string(data.pValueCaps[i].Range.UsageMin));
 					break;
 			}
 		}
