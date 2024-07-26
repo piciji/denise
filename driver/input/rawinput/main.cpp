@@ -162,9 +162,8 @@ struct RawInput : Input {
 	}
 
 	auto wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
-		if (msg == WM_DEVICECHANGE) {
+		if (msg == WM_DEVICECHANGE)
 			deviceChanged = true;
-		}
 
 		if (deviceChanged) {
 			DefWindowProc(hwnd, msg, wparam, lparam);

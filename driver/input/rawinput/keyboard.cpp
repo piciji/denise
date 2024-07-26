@@ -3,11 +3,11 @@ using KeyCallback = std::function<void ()>;
 
 struct RawKeyboard {
 	Hid::Keyboard* hidKeyboard = nullptr;
-	long keys[256] = {0};
+	bool keys[256] = {false};
     KeyCallback* keyCallback = nullptr;
 
 	auto initKeys() -> void {
-		std::fill_n(keys, 256, 0);
+		std::fill_n(keys, 256, false);
 	}
 
 	auto init() -> void {
@@ -57,10 +57,12 @@ struct RawKeyboard {
 
 		if (isE0) scanCode |= 0x80;
 
-		auto _old = InterlockedExchange(&(keys[scanCode & 0xff]), pressed);
+		bool _old = keys[scanCode & 0xff];
 
         if (keyCallback && (_old != pressed))
             (*keyCallback)();
+
+		keys[scanCode & 0xff] = pressed;
 	}
 	
 	auto poll(std::vector<Hid::Device*>& devices) -> void {

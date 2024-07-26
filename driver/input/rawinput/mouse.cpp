@@ -14,7 +14,7 @@ struct RawMouse {
         long relativeX = 0;
         long relativeY = 0;
         long relativeZ = 0;
-        long buttons[5] = {0};
+        bool buttons[5] = {false};
         Hid::Mouse* hid = nullptr;        
     };
     
@@ -136,27 +136,29 @@ struct RawMouse {
 			InterlockedExchangeAdd(&pMouse->relativeZ, iMouse.usButtonData);
 		}
 
-		if (bFlags & RI_MOUSE_BUTTON_1_DOWN) InterlockedExchange(&(pMouse->buttons[0]), 1);
-		if (bFlags & RI_MOUSE_BUTTON_1_UP) InterlockedExchange(&(pMouse->buttons[0]), 0);
-		if (bFlags & RI_MOUSE_BUTTON_2_DOWN) InterlockedExchange(&(pMouse->buttons[1]), 1);
-		if (bFlags & RI_MOUSE_BUTTON_2_UP) InterlockedExchange(&(pMouse->buttons[1]), 0);
-		if (bFlags & RI_MOUSE_BUTTON_3_DOWN) InterlockedExchange(&(pMouse->buttons[2]), 1);
-		if (bFlags & RI_MOUSE_BUTTON_3_UP) InterlockedExchange(&(pMouse->buttons[2]), 0);
-		if (bFlags & RI_MOUSE_BUTTON_4_DOWN) InterlockedExchange(&(pMouse->buttons[3]), 1);
-		if (bFlags & RI_MOUSE_BUTTON_4_UP) InterlockedExchange(&(pMouse->buttons[3]), 0);
-		if (bFlags & RI_MOUSE_BUTTON_5_DOWN) InterlockedExchange(&(pMouse->buttons[4]), 1);
-		if (bFlags & RI_MOUSE_BUTTON_5_UP) InterlockedExchange(&(pMouse->buttons[4]), 0);
+		if (bFlags & RI_MOUSE_BUTTON_1_DOWN) pMouse->buttons[0] = true;
+		if (bFlags & RI_MOUSE_BUTTON_1_UP) pMouse->buttons[0] = false;
+		if (bFlags & RI_MOUSE_BUTTON_2_DOWN) pMouse->buttons[1] = true;
+		if (bFlags & RI_MOUSE_BUTTON_2_UP) pMouse->buttons[1] = false;
+		if (bFlags & RI_MOUSE_BUTTON_3_DOWN) pMouse->buttons[2] = true;
+		if (bFlags & RI_MOUSE_BUTTON_3_UP) pMouse->buttons[2] = false;
+		if (bFlags & RI_MOUSE_BUTTON_4_DOWN) pMouse->buttons[3] = true;
+		if (bFlags & RI_MOUSE_BUTTON_4_UP) pMouse->buttons[3] = false;
+		if (bFlags & RI_MOUSE_BUTTON_5_DOWN) pMouse->buttons[4] = true;
+		if (bFlags & RI_MOUSE_BUTTON_5_UP) pMouse->buttons[4] = false;
 	}
 
 	auto poll(std::vector<Hid::Device*>& devices) -> void {
 		
         for( auto& mouse : mice ) {
-            
-            mouse.hid->axes().inputs[0].setValue( mouse.relativeX );
-            mouse.hid->axes().inputs[1].setValue( mouse.relativeY );
-            mouse.hid->axes().inputs[2].setValue( mouse.relativeZ );
 
-            mouse.relativeX = mouse.relativeY = mouse.relativeZ = 0;
+			long _x = InterlockedExchange(&mouse.relativeX, 0);
+        	long _y = InterlockedExchange(&mouse.relativeY, 0);
+        	long _z = InterlockedExchange(&mouse.relativeZ, 0);
+
+            mouse.hid->axes().inputs[0].setValue( _x );
+            mouse.hid->axes().inputs[1].setValue( _y );
+            mouse.hid->axes().inputs[2].setValue( _z );
 
             for (auto& input : mouse.hid->buttons().inputs)
                 input.setValue( mouse.buttons[input.id] );

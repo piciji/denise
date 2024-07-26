@@ -13,11 +13,12 @@ struct RawJoypad {
 		std::vector<uint8_t> buttons;
 		
 		struct Hats {
-			int16_t x;
-			int16_t y;
+			volatile int16_t x;
+			volatile int16_t y;
 		};
 		std::vector<Hats> hats;
-        
+		int dPadHatPos = -1;
+
         long axis[6] = {0};
         uint8_t axisMap[6];
 	};
@@ -37,6 +38,8 @@ struct RawJoypad {
 		
 		Joypad jp;		
 		jp.handle = handle;
+		jp.dPadHatPos = -1;
+		jp.isXInputDevice = false;
 		
 		wchar_t path[PATH_MAX];
 		unsigned size = sizeof (path) - 1;
@@ -45,6 +48,8 @@ struct RawJoypad {
 		std::string _path = Win::utf8_t(path);
 		if (_path.find("IG_") != std::string::npos)
 			jp.isXInputDevice = true;
+
+		logger->log(jp.isXInputDevice ? "x mode" : "d mode");
 		
 		jp.ntHandle = CreateFileW(
 			path, 0u, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
@@ -109,11 +114,46 @@ struct RawJoypad {
                     jp.axisMap[axes++] = 5;
                     break;
                 case 0x39: // Hat Switch
+                	logger->log("add Hat Switch");
                     jp.hid->hats().append( std::to_string(hat) + ".X" );
                     jp.hid->hats().append( std::to_string(hat) + ".Y" );
                     jp.hats.push_back({0,0});
                     hat++;
                     break;
+            	case 0x90:
+            		logger->log("add Dpad Up");
+            		jp.hid->hats().append( std::to_string(hat) + ".D-pad X" );
+            		jp.hid->hats().append( std::to_string(hat) + ".D-pad Y" );
+            		jp.hats.push_back({0,0});
+            		jp.dPadHatPos = hat;
+            		hat++;
+            		break;
+            	case 0x91:
+            		logger->log("add Dpad Down");
+            		break;
+            	case 0x92:
+            		logger->log("add Dpad Right");
+            		break;
+            	case 0x93:
+            		logger->log("add Dpad Left");
+            		break;
+
+            	case 0x36:
+            		logger->log("add Slider");
+            		break;
+            	case 0x37:
+            		logger->log("add Dial");
+            		break;
+            	case 0x38:
+            		logger->log("add Wheel");
+            		break;
+            	case 0xbb:
+            		logger->log("add Throttle");
+            		break;
+            	case 0xba:
+            		logger->log("add Rudder");
+            		break;
+
             }            
         }
         				
@@ -168,10 +208,16 @@ struct RawJoypad {
 	auto update(RAWINPUT* input) -> void {
 		
 		Joypad* pJoypad = nullptr;
+		int dPadHatPos = -1;
 		
 		for( auto& joypad : joypads ) {
 			if (joypad.handle == input->header.hDevice) {
 				pJoypad = &joypad;
+				dPadHatPos = pJoypad->dPadHatPos;
+				if (pJoypad->dPadHatPos >= 0) {
+					pJoypad->hats[dPadHatPos].x = 0;
+					pJoypad->hats[dPadHatPos].y = 0;
+				}
 				break;
 			}
 		}
@@ -186,13 +232,13 @@ struct RawJoypad {
 		RJ_STEP( HidP_GetUsages( HidP_Input, data.pButtonCaps->UsagePage, 0, usage, &usageLength, data.pPreparsedData,
 			(PCHAR) input->data.hid.bRawData, input->data.hid.dwSizeHid) == HIDP_STATUS_SUCCESS )
 
-		for(auto& button : pJoypad->buttons)	
-			button = 0;
+		std::fill(pJoypad->buttons.begin(), pJoypad->buttons.end(), 0);
 		
 		unsigned pos;
 		for(unsigned i = 0; i < usageLength; i++) {
 			pos = usage[i] - data.pButtonCaps->Range.UsageMin;
-			if (pos >= pJoypad->buttons.size()) continue;
+			if (pos >= pJoypad->buttons.size())
+				continue;
 			pJoypad->buttons[pos] = 1;
 		}
 		
@@ -227,32 +273,60 @@ struct RawJoypad {
                 } break;
                 
 				case 0x39: // Hat Switch
+					if (hat == pJoypad->dPadHatPos)
+						hat++;
 					if (hat == pJoypad->hats.size())
 						break;
-                    
+
+					logger->log("upd Hat");
                     if (pJoypad->isXInputDevice) {
-                        pJoypad->hats[hat].x = (value == 6 || value == 7 || value == 8) ? -32768
-                                : ( (value == 2 || value == 3 || value == 4) ? +32767 : 0 );
-                        
-                        pJoypad->hats[hat].y = (value == 4 || value == 5 || value == 6) ? -32768
-                                : ( (value == 8 || value == 1 || value == 2) ? +32767 : 0 );                                                
+                    	int16_t _x = (value == 6 || value == 7 || value == 8) ? -32768
+								: ( (value == 2 || value == 3 || value == 4) ? +32767 : 0 );
+
+                    	int16_t _y = (value == 4 || value == 5 || value == 6) ? -32768
+								: ( (value == 8 || value == 1 || value == 2) ? +32767 : 0 );
+
+                        pJoypad->hats[hat].x = _x;
+                        pJoypad->hats[hat].y = _y;
+
                     } else {
-                    
-                        pJoypad->hats[hat].x = (value == 5 || value == 6 || value == 7) ? -32768
-                                : ( (value == 1 || value == 2 || value == 3) ? +32767 : 0 );
-                        pJoypad->hats[hat].y = (value == 7 || value == 0 || value == 1) ? -32768
-                                : ( (value == 3 || value == 4 || value == 5) ? +32767 : 0 );                                          
+                    	int16_t _x = (value == 5 || value == 6 || value == 7) ? -32768
+								: ( (value == 1 || value == 2 || value == 3) ? +32767 : 0 );
+
+                    	int16_t _y = (value == 7 || value == 0 || value == 1) ? -32768
+								: ( (value == 3 || value == 4 || value == 5) ? +32767 : 0 );
+
+                    	pJoypad->hats[hat].x = _x;
+                    	pJoypad->hats[hat].y = _y;
                     }
                     
                     hat++;
-                    
+					break;
+				case 0x90:
+					logger->log("upd D-pad up");
+					if (dPadHatPos >= 0)
+						pJoypad->hats[dPadHatPos].y = 32767;
+					break;
+				case 0x91:
+					logger->log("upd D-pad down");
+					if (dPadHatPos >= 0)
+						pJoypad->hats[dPadHatPos].y = -32768;
+					break;
+				case 0x92:
+					logger->log("upd D-pad right");
+					if (dPadHatPos >= 0)
+						pJoypad->hats[dPadHatPos].x = 32767;
+					break;
+				case 0x93:
+					logger->log("upd D-pad left");
+					if (dPadHatPos >= 0)
+						pJoypad->hats[dPadHatPos].x = -32768;
 					break;
 			}
 		}
 
 	End:
 		delete[] usage;
-		return;					
 	}
 	
 	auto poll(std::vector<Hid::Device*>& devices) -> void {								
@@ -260,14 +334,13 @@ struct RawJoypad {
 		for(auto& jp : joypads) {
 			auto& hats = jp.hid->hats();
 			
-			for (unsigned hat = 0; hat < hats.inputs.size() / 2; hat++ ) {							
+			for (unsigned hat = 0; hat < hats.inputs.size() / 2; hat++ ) {
 				hats.inputs[hat * 2 + 0].setValue( jp.hats[hat].x );
 				hats.inputs[hat * 2 + 1].setValue( jp.hats[hat].y );
 			}
             
 			for(auto& input : jp.hid->axes().inputs) {
-                
-                input.setValue( jp.axis[ jp.axisMap[ input.id ] ] );                
+                input.setValue( jp.axis[ jp.axisMap[ input.id ] ] );
 			}
 
 			for(auto& input : jp.hid->buttons().inputs)
