@@ -35,7 +35,7 @@ struct RawJoypad {
 	auto add( HANDLE handle ) -> void {
 		
 		if (!updatePreparsedData(handle)) return;
-		logger->log("preparsed");
+		//logger->log("preparsed");
 		Joypad jp;		
 		jp.handle = handle;
 		jp.dPadHatPos = -1;
@@ -49,14 +49,14 @@ struct RawJoypad {
 		if (_path.find("IG_") != std::string::npos)
 			jp.isXInputDevice = true;
 
-		logger->log(jp.isXInputDevice ? "x mode" : "d mode");
+		//logger->log(jp.isXInputDevice ? "x mode" : "d mode");
 		
 		jp.ntHandle = CreateFileW(
 			path, 0u, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
 			OPEN_EXISTING, 0u, nullptr
 		);
 		if (!jp.ntHandle) return;
-		logger->log("opened");
+		//logger->log("opened");
 		wchar_t nameBuffer[PATH_MAX];
 
 		if (!HidD_GetProductString(jp.ntHandle, nameBuffer, 100)) {
@@ -72,7 +72,7 @@ struct RawJoypad {
 		jp.hid->name = uniqueDeviceName(joypads, joyname);
 		
 		unsigned buttonCount = data.pButtonCaps->Range.UsageMax - data.pButtonCaps->Range.UsageMin + 1;
-		logger->log("buttons " + std::to_string(buttonCount));
+		//logger->log("buttons " + std::to_string(buttonCount));
 		for(unsigned button = 0; button < buttonCount; button++) {
 			jp.hid->buttons().append( std::to_string(button) );
 			jp.buttons.push_back(0);
@@ -90,44 +90,44 @@ struct RawJoypad {
         for (auto& usage : usages) {
             switch (usage) {
                 case 0x30:
-                	logger->log("add axis X");
+                	//logger->log("add axis X");
                     jp.hid->axes().append( "X" );                    
                     jp.axisMap[axes++] = 0;
                     break;
                 case 0x31:
-                	logger->log("add axis Y");
+                	//logger->log("add axis Y");
                     jp.hid->axes().append( "Y" );
                     jp.axisMap[axes++] = 1;
                     break;
                 case 0x32:
-                	logger->log("add axis Z");
+                	//logger->log("add axis Z");
                     jp.hid->axes().append( "Z" );
                     jp.axisMap[axes++] = 2;
                     break;
                 case 0x33:
-                	logger->log("add axis X|Rot");
+                	//logger->log("add axis X|Rot");
                     jp.hid->axes().append( "X|Rot" );
                     jp.axisMap[axes++] = 3;
                     break;
                 case 0x34:
-                	logger->log("add axis Y|Rot");
+                	//logger->log("add axis Y|Rot");
                     jp.hid->axes().append( "Y|Rot" );
                     jp.axisMap[axes++] = 4;
                     break;
                 case 0x35:
-                	logger->log("add axis Z|Rot");
+                	//logger->log("add axis Z|Rot");
                     jp.hid->axes().append( "Z|Rot" );
                     jp.axisMap[axes++] = 5;
                     break;
                 case 0x39: // Hat Switch
-                	logger->log("add Hat Switch");
+                	//logger->log("add Hat Switch");
                     jp.hid->hats().append( std::to_string(hat) + ".X" );
                     jp.hid->hats().append( std::to_string(hat) + ".Y" );
                     jp.hats.push_back({0,0});
                     hat++;
                     break;
             	case 0x90:
-            		logger->log("add Dpad Up");
+            		//logger->log("add Dpad Up");
             		jp.hid->hats().append( std::to_string(hat) + ".D-pad X" );
             		jp.hid->hats().append( std::to_string(hat) + ".D-pad Y" );
             		jp.hats.push_back({0,0});
@@ -135,29 +135,31 @@ struct RawJoypad {
             		hat++;
             		break;
             	case 0x91:
-            		logger->log("add Dpad Down");
+            		//logger->log("add Dpad Down");
             		break;
             	case 0x92:
-            		logger->log("add Dpad Right");
+            		//logger->log("add Dpad Right");
             		break;
             	case 0x93:
-            		logger->log("add Dpad Left");
+            		//logger->log("add Dpad Left");
             		break;
 
             	case 0x36:
-            		logger->log("add Slider");
+            		//logger->log("add Slider");
+					jp.hid->axes().append( "Slider" );
+            		jp.axisMap[axes++] = 6;
             		break;
             	case 0x37:
-            		logger->log("add Dial");
+            		//logger->log("add Dial");
             		break;
             	case 0x38:
-            		logger->log("add Wheel");
+            		//logger->log("add Wheel");
             		break;
             	case 0xbb:
-            		logger->log("add Throttle");
+            		//logger->log("add Throttle");
             		break;
             	case 0xba:
-            		logger->log("add Rudder");
+            		//logger->log("add Rudder");
             		break;
             }            
         }
@@ -250,32 +252,49 @@ struct RawJoypad {
 		for (unsigned i = 0; i < data.Caps.NumberInputValueCaps; i++) {
 			RJ_STEP( HidP_GetUsageValue( HidP_Input, data.pValueCaps[i].UsagePage, 0, data.pValueCaps[i].Range.UsageMin, &value, data.pPreparsedData,
 				(PCHAR) input->data.hid.bRawData, input->data.hid.dwSizeHid) == HIDP_STATUS_SUCCESS )					
-                    
-			switch (data.pValueCaps[i].Range.UsageMin) {
+
+			unsigned short usageMin = data.pValueCaps[i].Range.UsageMin;
+
+			switch (usageMin) {
                 case 0x30:
                 case 0x31:
                 case 0x32:
                 case 0x33:
                 case 0x34:
-                case 0x35: {
+                case 0x35:
+				case 0x36: {
+                	if (usageMin == 0x36) {
+                		logger->log("slider");
+                		logger->log(std::to_string(value), 0);
+                		logger->log(std::to_string(data.pValueCaps[i].LogicalMin), 0);
+                		logger->log(std::to_string(data.pValueCaps[i].LogicalMax), 0);
+                	}
+
                     if (pJoypad->isXInputDevice) {
-                    	InterlockedExchange(&(pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7]), sclamp<16>( value - 32767 ));
-                        //pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( value - 32767 );
+                    	InterlockedExchange(&(pJoypad->axis[usageMin & 7]), sclamp<16>( value - 32767 ));
+                        //pJoypad->axis[usageMin & 7] = sclamp<16>( value - 32767 );
                     } else {
                         signed range = data.pValueCaps[i].LogicalMax - data.pValueCaps[i].LogicalMin;
                         if (range == 0) {
-                        	InterlockedExchange(&(pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7]), sclamp<16>( ((value & 0xff) - 128) << 8 ));
-                            //pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( ((value & 0xff) - 128) << 8 );
+                        	InterlockedExchange(&(pJoypad->axis[usageMin & 7]), sclamp<16>( ((value & 0xff) - 128) << 8 ));
+                            //pJoypad->axis[usageMin & 7] = sclamp<16>( ((value & 0xff) - 128) << 8 );
                             
                         } else {                            
                             int32_t _value = ((((int32_t)value - data.pValueCaps[i].LogicalMin) * 65535ll) / range) - 32767;
 
-                        	InterlockedExchange(&(pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7]), sclamp<16>( _value) );
-                            //pJoypad->axis[data.pValueCaps[i].Range.UsageMin & 7] = sclamp<16>( _value);
+                        	InterlockedExchange(&(pJoypad->axis[usageMin & 7]), sclamp<16>( _value) );
+                            //pJoypad->axis[usageMin & 7] = sclamp<16>( _value);
                         }
                             
                     }
                 } break;
+
+				case 0x37:
+					logger->log("dial");
+					logger->log(std::to_string(value), 0);
+					logger->log(std::to_string(data.pValueCaps[i].LogicalMin), 0);
+					logger->log(std::to_string(data.pValueCaps[i].LogicalMax), 0);
+					break;
                 
 				case 0x39: // Hat Switch
 					if (hat == pJoypad->dPadHatPos)
@@ -283,7 +302,7 @@ struct RawJoypad {
 					if (hat == pJoypad->hats.size())
 						break;
 
-					logger->log("upd Hat");
+					//logger->log("upd Hat");
                     if (pJoypad->isXInputDevice) {
                     	int16_t _x = (value == 6 || value == 7 || value == 8) ? -32768
 								: ( (value == 2 || value == 3 || value == 4) ? +32767 : 0 );
@@ -308,27 +327,27 @@ struct RawJoypad {
                     hat++;
 					break;
 				case 0x90:
-					logger->log("upd D-pad up");
+					//logger->log("upd D-pad up");
 					if (dPadHatPos >= 0)
 						pJoypad->hats[dPadHatPos].y = 32767;
 					break;
 				case 0x91:
-					logger->log("upd D-pad down");
+					//logger->log("upd D-pad down");
 					if (dPadHatPos >= 0)
 						pJoypad->hats[dPadHatPos].y = -32768;
 					break;
 				case 0x92:
-					logger->log("upd D-pad right");
+					//logger->log("upd D-pad right");
 					if (dPadHatPos >= 0)
 						pJoypad->hats[dPadHatPos].x = 32767;
 					break;
 				case 0x93:
-					logger->log("upd D-pad left");
+					//logger->log("upd D-pad left");
 					if (dPadHatPos >= 0)
 						pJoypad->hats[dPadHatPos].x = -32768;
 					break;
 				default:
-					logger->log("upd misc" + std::to_string(data.pValueCaps[i].Range.UsageMin));
+					logger->log("upd misc " + std::to_string(data.pValueCaps[i].Range.UsageMin));
 					break;
 			}
 		}
