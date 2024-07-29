@@ -643,10 +643,12 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
         if (window.statusBar())
             statusHeight = window.statusBar()->p.getHeight();
         
+        int _y = pSystem::getDesktopSize().height - statusHeight - geometry.height - geometry.y;
+            
         [cocoaWindow
              setFrame:[cocoaWindow
                     frameRectForContentRect:NSMakeRect(
-                        geometry.x, pSystem::getDesktopSize().height - statusHeight - geometry.height - geometry.y,
+                        geometry.x, _y,
                         geometry.width, geometry.height + statusHeight )
                        ]
         display:YES];
