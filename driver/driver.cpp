@@ -85,7 +85,7 @@
 namespace DRIVER {
 
 auto Video::available() -> std::vector<std::string> {
-	return {
+    std::vector<std::string> out = {
     #ifdef DRV_DIRECT3D11
         "Direct3D11",
     #endif
@@ -93,15 +93,19 @@ auto Video::available() -> std::vector<std::string> {
 	#ifdef DRV_DIRECT3D9
 		"Direct3D9",
 	#endif
-
+    };
+    
     #ifdef DRV_METAL
-        "Metal",
+    if (@available(macOS 10.13, *)) {
+        out.push_back("Metal");
+    }
     #endif
         
 	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
-		"OpenGL",
+    out.push_back("OpenGL");
 	#endif
-	};
+	
+    return out;
 }
 
 auto Video::preferred() -> std::string {
@@ -114,7 +118,9 @@ auto Video::preferred() -> std::string {
 	#endif
 
     #ifdef DRV_METAL
+    if (@available(macOS 10.13, *)) {
         return "Metal";
+    }
     #endif
     
 	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
@@ -146,7 +152,9 @@ auto Video::create(const std::string& driver) -> Video* {
 	#endif
     
     #ifdef DRV_METAL
+    if (@available(macOS 10.13, *)) {
         if(driver == "Metal") return new METAL();
+    }
     #endif
 
     return new Video;

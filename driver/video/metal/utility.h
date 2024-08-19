@@ -172,7 +172,9 @@ namespace DRIVER {
             td.usage = MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite;
             if (renderTarget) {
                 td.usage = MTLTextureUsageShaderRead | MTLTextureUsageRenderTarget;
-              //  td.storageMode = MTLStorageModeManaged; // private causes problems while swapping feedbacks
+                // td.storageMode = MTLStorageModeShared;
+                // use default: Managed on Intel, Shared on Silicon
+                // private causes problems while swapping feedbacks
             } else {
                 tex.bytesPerRow = newWidth;
                 if (newFormat == MTLPixelFormatBGRA8Unorm || newFormat == MTLPixelFormatRGBA8Unorm)
