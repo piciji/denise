@@ -103,7 +103,6 @@ struct GL3 {
         bool synchronize = false;
         bool hardSync = false;
         bool linearFilter = true;
-        bool threaded = false;
         bool vrr = false;
         Rotation rotation = ROT_0;
         int direction = 1; // reserved for rewind support
@@ -127,7 +126,6 @@ struct GL3 {
         settings.synchronize = false;
         settings.hardSync = false;
         settings.linearFilter = true;
-        settings.threaded = false;
         settings.vrr = false;
         settings.rotation = ROT_0;
         settings.direction = 1;
@@ -1047,6 +1045,7 @@ End:
     auto updateRotation() -> void {
         viewScreen.flipped = settings.rotation == ROT_90 || settings.rotation == ROT_270;
         viewScreen.update(viewport);
+        updateFrameSize();
 
         auto _projection = projection;
         _projection.data[10] = -1.0;

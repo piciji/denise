@@ -55,8 +55,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         deps/glslang/glslang/HLSL/hlslTokenStream.cpp
         deps/SPIRV-Cross/spirv_hlsl.cpp
     )
+    set(_depSrcsMSL )
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(_depSrcsMSL
+        deps/SPIRV-Cross/spirv_msl.cpp
+    )
+    set(_depSrcsHLSL )
 else()
     set(_depSrcsHLSL )
+    set(_depSrcsMSL )
 endif()
 
-set(depSrcs ${_depSrcs} ${_depSrcsHLSL} PARENT_SCOPE)
+set(depSrcs ${_depSrcs} ${_depSrcsHLSL} ${_depSrcsMSL} PARENT_SCOPE)

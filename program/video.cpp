@@ -113,7 +113,11 @@ auto Program::initVideo(bool driverChange) -> void {
             }
         }
     } );
-    videoDriver->useShaderCache( globalSettings->get<bool>("shader_cache", true) );
+    
+    if (activeEmulator) {
+        videoDriver->useShaderCache( getSettings( activeEmulator )->get<bool>("shader_cache", true) );
+    }
+    
 
     loadProgress();
 }

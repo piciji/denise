@@ -232,21 +232,18 @@ struct GLX : public Video, GL3, RenderThread {
 
     auto setThreaded(bool state) -> void {
 
-        if (state != settings.threaded) {
-            wait();
+        if (state != threadEnabled) {
             RenderThread::enable(state);
 
             RenderThread::reset();
             auto& tex = frame.textures[0];
             tex.width = 0, tex.height = 0;
 
-            settings.threaded = state;
-
             clearCurrent();
         }
     }
 
-    auto hasThreaded() -> bool { return settings.threaded; }
+    auto hasThreaded() -> bool { return threadEnabled; }
 
     auto shaderSupport() -> bool { return true; }
     
@@ -282,7 +279,7 @@ struct GLX : public Video, GL3, RenderThread {
             shaderReady = false;
         }
 
-        if (settings.threaded)
+        if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
         // resizing could generate 2 "makeCurrent" in a row without "clear" in between,
@@ -318,7 +315,7 @@ struct GLX : public Video, GL3, RenderThread {
         if (!shaderPasses) // YUV input needs a shader to progress it
             return false;
 
-        if (settings.threaded)
+        if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
         bool _useResizing = useResizing;
@@ -426,7 +423,7 @@ struct GLX : public Video, GL3, RenderThread {
     }
 
     auto unlockAndRedraw() -> void {
-        if (settings.threaded) {
+        if (threadEnabled) {
             resizeWindow();
             RenderThread::unlock();
         } else
@@ -444,7 +441,7 @@ struct GLX : public Video, GL3, RenderThread {
     auto redrawCustom(bool disallowShader = false) -> void {
         resizeWindow();
         makeCurrent();
-        GL3::updateMainTexture( settings.threaded ? getLastBufferToRender() : nullptr );
+        GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
         GL3::_redraw(disallowShader, options & OPT_Interlace);
 #ifdef DRV_FREETYPE
         screenText.showText(viewport.width, viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
@@ -460,7 +457,7 @@ struct GLX : public Video, GL3, RenderThread {
         if (shaderResizeTimer && !--shaderResizeTimer) {
             GL3::updateFrameSize();
         }
-        GL3::updateMainTexture( settings.threaded ? getLastBufferToRender() : nullptr );
+        GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
         GL3::_redraw(disallowShader, options & OPT_Interlace);
 
         if (dndOverlay.enabled())
@@ -647,7 +644,7 @@ struct GLX : public Video, GL3, RenderThread {
 
     auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        if (settings.threaded) {
+        if (threadEnabled) {
             screenText.updateMessage(message, critical, false);
         } else {
             makeCurrent(true);

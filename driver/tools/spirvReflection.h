@@ -2,6 +2,9 @@
 #pragma once
 
 #include "../../deps/SPIRV-Cross/spirv_cross.hpp"
+#ifdef __APPLE__
+#include "../../deps/SPIRV-Cross/spirv_msl.hpp"
+#endif
 #include "shaderpass.h"
 #define SPIRV_MAX_BINDINGS 16
 
@@ -80,6 +83,11 @@ struct SpirvReflection {
 
     auto preProcessBindNames(const std::string& prefix, const std::string& stage, spirv_cross::Compiler& compiler, spirv_cross::ShaderResources& resources) -> void;
     auto preProcess(spirv_cross::Compiler& compiler, spirv_cross::ShaderResources& resources) -> void;
+    
+#ifdef __APPLE__
+    auto preProcessRemapPush(spirv_cross::CompilerMSL& compiler, spirv_cross::ShaderResources& resources) -> void;
+    auto preProcessGenericResources(spirv_cross::CompilerMSL& compiler, spirv_cross::SmallVector<spirv_cross::Resource>& resources) -> void;
+#endif
     auto process(spirv_cross::Compiler& vCompiler, spirv_cross::Compiler& fCompiler,spirv_cross::ShaderResources& vResources,spirv_cross::ShaderResources& fResources) -> bool;
     auto clear() -> void;
 

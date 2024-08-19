@@ -1,0 +1,1609 @@
+
+#include "../../tools/tools.h"
+#include "interface.h"
+#include "utility.h"
+#include "../viewport.h"
+#include "shaders.h"
+#include "../../tools/tools.h"
+#include "../thread/renderThread.h"
+#include "../../tools/ShaderCache.h"
+#include "../../tools/glslang.h"
+#include "../../tools/spirvReflection.h"
+#include "../../../deps/SPIRV-Cross/spirv_msl.hpp"
+
+#ifdef DRV_FREETYPE
+#include "../freetype.h"
+#endif
+
+namespace DRIVER {
+
+struct METAL : public Video, RenderThread {
+    NSView* handle;
+    MetalView* view;
+    ViewScreen viewScreen;
+    Viewport viewport;
+    CGSize area;
+    
+    bool resizeWithEmuThread;
+    uint8_t options;
+    uint8_t* frameData;
+    unsigned shaderResizeTimer = 0;
+    
+    int64_t lastCapTime;
+    int64_t minimumCapTime;
+    
+    ShaderPreset* preset;
+    std::atomic<int> shaderId;
+    bool shaderReady;
+    unsigned progressDegree;
+    bool progressVisible;
+    NSUInteger shaderPasses;
+    NSUInteger historySize;
+    bool threadAlive;
+    unsigned frameCount;
+    
+    GLSlang glSlang;
+    MTLTexture luts[MAX_TEXTURES];
+    MTLProgram programs[MAX_SHADERS];
+    
+    std::vector<MTLProgram*> programsTemp;
+    std::vector<DiskFile*> lutsTemp;
+    
+    bool updateRTS;
+    bool updateHistory;
+    
+    std::function<void (int pass, bool hasErrors)> onShaderProgressCallback = nullptr;
+    std::function<void (DiskFile& diskFile)> onShaderCacheCallback = nullptr;
+    
+#ifdef DRV_FREETYPE
+    Freetype ft;
+#endif
+    DragndropOverlay dndOverlay;
+    
+    id<MTLDevice> device;
+    CAMetalLayer* layer;
+    id<MTLCommandQueue> commandQueue;
+    MTLClearColor clearColor;
+    
+    id<MTLRenderPipelineState> outputPipelineState;
+    id<MTLRenderPipelineState> messagePipelineState;
+    id<MTLRenderPipelineState> dndOverlayPipelineState;
+    id<MTLRenderPipelineState> progressPipelineState;
+    
+    matrix_float4x4 projectionMatrix;
+    matrix_float4x4 rotatedMatrix;
+    
+    MTLVertex vertices[4];
+    MTLVertex verticesMessage[4];
+    MTLVertex verticesDndOverlay[4];
+    MTLVertex verticesProgress[4];
+    MTLVertexSlang verticesSlang[4];
+    
+    dispatch_semaphore_t semaphore;
+    id<CAMetalDrawable> drawable;
+    
+    MTLRenderPassDescriptor* rpd;
+    
+    id<MTLSamplerState> samplers[3][4][2];
+    id<MTLSamplerState> sampler;
+
+    struct {
+        MTLTexture textures[MAX_FRAME_HISTORY + 1];
+        Float4 size;
+        MTLViewport viewport;
+        matrix_float4x4 mvp;
+    } frame;
+    
+    MTLTexture messageTex;
+    MTLTexture dndOverlayTex;
+    MTLTexture progressTex;
+    
+    vector_float4 messageCol;
+    
+    METAL() {
+        view = nil;
+        handle = nil;
+        layer = nullptr;
+        resizeWithEmuThread = false;
+        settings.rotation = ROT_0;
+        settings.msgUpdated = 0;
+        settings.hardSync = false;
+        settings.synchronize = false;
+        settings.linearFilter = true;
+        settings.vrr = false;
+        settings.useShaderCache = false;
+        settings.direction = 1;
+        options = 0;
+        shaderId = 0;
+        preset = nullptr;
+        shaderReady = false;
+        progressVisible = false;
+        progressDegree = 0;
+        shaderPasses = 0;
+        frameCount = 0;
+        historySize = 0;
+        threadAlive = false;
+        frameData = nullptr;
+        updateRTS = false;
+        updateHistory = false;
+        
+        for(auto& program : programs) {
+            program.renderTarget.view = nil;
+            program.feedbackTarget.view = nil;
+            program.cropTarget.view = nil;
+            program.pipelineState = nil;
+            program.buffers[0] = nil;
+            program.buffers[1] = nil;
+        }
+        
+        for(auto& lut : luts)
+            lut.view = nil;
+
+        for(auto& tex : frame.textures)
+            tex.view = nil;
+    }
+    
+    ~METAL() {
+        shaderId++;
+        while(threadAlive)
+            std::this_thread::yield();
+        wait();
+        RenderThread::enable(false);
+        term();
+    }
+    
+    struct {
+        bool linearFilter;
+        bool synchronize;
+        bool vrr;
+        Rotation rotation;
+        std::string message = "";
+        bool msgCritical = false;
+        std::atomic<int> msgUpdated;
+        bool hardSync;
+        bool useShaderCache = false;
+        int direction = 1; // reserved for rewind support
+    } settings;
+    
+    auto needResizingPreparations(bool useEmuThread) -> bool {
+        resizeWithEmuThread = useEmuThread;
+        return false;
+    }
+
+    auto init(uintptr_t _handle) -> bool {
+        handle = (NSView*)_handle;
+        return init();
+    }
+    
+    auto init() -> bool {
+        area = [handle frame].size;
+        view = [[MetalView alloc] initWithDriver:this];
+       
+        device = MTLCreateSystemDefaultDevice();
+        
+        view.device = device;
+        layer = (CAMetalLayer*)view.layer;
+        
+        layer.framebufferOnly = YES;
+        layer.displaySyncEnabled = settings.synchronize ? YES : NO;
+    //     layer.needsDisplayOnBoundsChange = true;
+        commandQueue = [device newCommandQueue];
+        clearColor = MTLClearColorMake(0, 0, 0, 1);
+        semaphore = dispatch_semaphore_create(1);
+        
+        messageTex.view = nil;
+        dndOverlayTex.view = nil;
+        
+        if (!initStockShader())
+            return false;
+        
+        MTLSamplerDescriptor* sd = [MTLSamplerDescriptor new];
+
+        for (int i = 0; i < 4; i++) {
+            switch(i) {
+               case 0: sd.sAddressMode = MTLSamplerAddressModeClampToBorderColor; break;
+               case 1: sd.sAddressMode = MTLSamplerAddressModeClampToEdge; break;
+               case 2: sd.sAddressMode = MTLSamplerAddressModeRepeat; break;
+               case 3: sd.sAddressMode = MTLSamplerAddressModeMirrorRepeat; break;
+            }
+
+            sd.tAddressMode = sd.sAddressMode;
+            sd.rAddressMode = sd.sAddressMode;
+            
+            sd.minFilter = MTLSamplerMinMagFilterLinear;
+            sd.magFilter = MTLSamplerMinMagFilterLinear;
+            sd.mipFilter = MTLSamplerMipFilterNotMipmapped;
+
+            samplers[ShaderPreset::FILTER_LINEAR][i][0] = [device newSamplerStateWithDescriptor:sd];
+            
+            sd.mipFilter = MTLSamplerMipFilterLinear;
+            samplers[ShaderPreset::FILTER_LINEAR][i][1] = [device newSamplerStateWithDescriptor:sd];
+            
+            
+            sd.minFilter = MTLSamplerMinMagFilterNearest;
+            sd.magFilter = MTLSamplerMinMagFilterNearest;
+            sd.mipFilter = MTLSamplerMipFilterNotMipmapped;
+
+            samplers[ShaderPreset::FILTER_NEAREST][i][0] = [device newSamplerStateWithDescriptor:sd];
+            
+            sd.mipFilter = MTLSamplerMipFilterNearest;
+            samplers[ShaderPreset::FILTER_NEAREST][i][1] = [device newSamplerStateWithDescriptor:sd];
+        }
+        [sd release];
+        
+        updateFilter();
+
+        projectionMatrix = {
+            simd_make_float4( 2.0,  0.0,  0.0, 0.0),
+            simd_make_float4( 0.0,  2.0,  0.0, 0.0),
+            simd_make_float4( 0.0,  0.0, -1.0, 0.0),
+            simd_make_float4(-1.0, -1.0,  0.0, 1.0)
+        };
+          
+        updateRotation();
+        
+        vertices[0] = {simd_make_float2(0, 0), simd_make_float2(0, 1)};
+        vertices[1] = {simd_make_float2(0, 1), simd_make_float2(0, 0)};
+        vertices[2] = {simd_make_float2(1, 0), simd_make_float2(1, 1)};
+        vertices[3] = {simd_make_float2(1, 1), simd_make_float2(1, 0)};
+        
+        verticesSlang[0] = {simd_make_float4(0, 0, 0, 1), simd_make_float2(0, 1)};
+        verticesSlang[1] = {simd_make_float4(0, 1, 0, 1), simd_make_float2(0, 0)};
+        verticesSlang[2] = {simd_make_float4(1, 0, 0, 1), simd_make_float2(1, 1)};
+        verticesSlang[3] = {simd_make_float4(1, 1, 0, 1), simd_make_float2(1, 0)};
+        
+        rpd = [MTLRenderPassDescriptor new];
+        rpd.colorAttachments[0].clearColor = clearColor;
+        rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
+
+        [handle addSubview:view];
+        resizeWindow(true);
+        
+        [view setFrame:NSMakeRect(0, 0, area.width, area.height)];
+        [view setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        
+#ifdef DRV_FREETYPE
+        if (ft.init())
+            ft.setFontSize(12);
+#endif
+        dndOverlay.initialized = true;
+        return true;
+    }
+    
+    auto initStockShader() -> bool {
+        @autoreleasepool {
+            NSError* error;
+            MTLRenderPipelineDescriptor* psd;
+            MTLRenderPipelineColorAttachmentDescriptor* ca;
+            MTLVertexDescriptor* vd = [MTLVertexDescriptor new];
+            vd.attributes[0].offset = 0;
+            vd.attributes[0].format = MTLVertexFormatFloat2;
+            vd.attributes[1].offset = offsetof(MTLVertex, texCoord);
+            vd.attributes[1].format = MTLVertexFormatFloat2;
+            vd.layouts[0].stride = sizeof(MTLVertex);
+
+            psd = [[MTLRenderPipelineDescriptor new] autorelease];
+            psd.label = @"output";
+
+            ca = psd.colorAttachments[0];
+            ca.pixelFormat = layer.pixelFormat;
+            ca.blendingEnabled = NO;
+            ca.sourceAlphaBlendFactor= MTLBlendFactorSourceAlpha;
+            ca.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
+            ca.destinationAlphaBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+            ca.destinationRGBBlendFactor = MTLBlendFactorOneMinusSourceAlpha;
+
+            psd.sampleCount = 1;
+            psd.vertexDescriptor = vd;
+            
+            NSString* outputShaderStr = [[NSString stringWithUTF8String:MTLOutputShader.c_str()] autorelease];
+            NSString* messageShaderStr = [[NSString stringWithUTF8String:MTLMessageShader.c_str()] autorelease];
+            NSString* dndOverlayShaderStr = [[NSString stringWithUTF8String:MTLDndOverlayShader.c_str()] autorelease];
+            NSString* progressShaderStr = [[NSString stringWithUTF8String:MTLprogressShader.c_str()] autorelease];
+            
+            //MTLCompileOptions* compileOptions = [MTLCompileOptions new];
+            //compileOptions.languageVersion = MTLLanguageVersion2_0;
+            
+            id<MTLLibrary> lib = [device newLibraryWithSource:outputShaderStr options:nil error:&error];
+            if (error != nil)
+                return false;
+            
+            psd.vertexFunction = [lib newFunctionWithName:@"_vertex"];
+            psd.fragmentFunction = [lib newFunctionWithName:@"_fragment"];
+
+            outputPipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
+            if (error != nil)
+                return false;
+            
+            lib = [device newLibraryWithSource:messageShaderStr options:nil error:&error];
+            if (error != nil)
+                return false;
+            
+            psd.vertexFunction = [lib newFunctionWithName:@"_vertex"];
+            psd.fragmentFunction = [lib newFunctionWithName:@"_fragment"];
+
+            psd.label = @"blend msg";
+            ca.blendingEnabled = YES;
+            
+            messagePipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
+            if (error != nil)
+                return false;
+            
+            lib = [device newLibraryWithSource:dndOverlayShaderStr options:nil error:&error];
+            if (error != nil)
+                return false;
+            
+            psd.vertexFunction = [lib newFunctionWithName:@"_vertex"];
+            psd.fragmentFunction = [lib newFunctionWithName:@"_fragment"];
+
+            psd.label = @"blend dnd overlay";
+            
+            dndOverlayPipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
+            if (error != nil)
+                return false;
+            
+            lib = [device newLibraryWithSource:progressShaderStr options:nil error:&error];
+            if (error != nil)
+                return false;
+            
+            psd.vertexFunction = [lib newFunctionWithName:@"_vertex"];
+            psd.fragmentFunction = [lib newFunctionWithName:@"_fragment"];
+
+            psd.label = @"blend progress";
+            
+            progressPipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
+            if (error != nil)
+                return false;
+        }
+        return true;
+    }
+    
+    auto term() -> void {
+        wait();
+        
+        dndOverlay.term();
+#ifdef DRV_FREETYPE
+        ft.term();
+#endif
+        [rpd release]; rpd = nil;
+        [outputPipelineState release]; outputPipelineState = nil;
+        [messagePipelineState release]; messagePipelineState = nil;
+        [dndOverlayPipelineState release]; dndOverlayPipelineState = nil;
+        [progressPipelineState release]; progressPipelineState = nil;
+        
+        [commandQueue release]; commandQueue = nil;
+        [device release]; device = nil;
+        
+        for(int i = 0; i < 4; i++) {
+            [samplers[ShaderPreset::FILTER_LINEAR][i][0] release];
+            [samplers[ShaderPreset::FILTER_NEAREST][i][0] release];
+            
+            [samplers[ShaderPreset::FILTER_LINEAR][i][1] release];
+            [samplers[ShaderPreset::FILTER_NEAREST][i][1] release];
+        }
+        
+        releaseShader(true);
+
+        if (frameData) {
+            delete[] frameData;
+            frameData = nil;
+        }
+        
+        if (view) {
+            [view removeFromSuperview];
+            [view release];
+            view = nil;
+        }
+    }
+    
+    auto releaseShader(bool withMainTexture = false) -> void {
+        for(auto& program : programs)
+            MTLUtility::releaseProgram(program);
+
+        for (int i = (withMainTexture ? 0 : 1); i <= MAX_FRAME_HISTORY; i++)
+            MTLUtility::releaseTexture(frame.textures[i]);
+
+        for(auto& lut : luts)
+            MTLUtility::releaseTexture(lut);
+    }
+    
+    auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
+        
+        if (shaderReady) {
+            wait();
+            RenderThread::reset();
+            shaderPostBuild();
+            shaderReady = false;
+        }
+        
+        if (threadEnabled)
+            return RenderThread::lock(data, pitch, _width, _height, options);
+        
+        this->options = options;
+        MTLTexture& tex = frame.textures[0];
+        
+        if (MTLUtility::initTexture(tex, _width, _height, MTLPixelFormatBGRA8Unorm, device)) {
+            if (frameData)
+                delete[] frameData;
+            frameData = new uint8_t[tex.bytesPerRow * tex.height];
+            
+            viewScreen.update(viewport);
+            updateViewport();
+            updateRTS = true;
+            updateHistory = true;
+        }
+        
+        data = (unsigned*)frameData;
+        pitch = tex.width;
+
+        return true;
+    }
+    
+    auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
+        
+        if (shaderReady) {
+            wait();
+           // @autoreleasepool {
+                shaderPostBuild();
+          //  }
+            shaderReady = false;
+        }
+        
+        if (!shaderPasses) // YUV input needs a shader to progress it
+            return false;
+        
+        if (threadEnabled)
+            return RenderThread::lock(data, pitch, _width, _height, options);
+        
+        this->options = options;
+        MTLTexture& tex = frame.textures[0];
+        
+        if (MTLUtility::initTexture(tex, _width, _height, MTLPixelFormatRGBA32Float, device)) {
+            if (frameData)
+                delete[] frameData;
+            frameData = new uint8_t[tex.bytesPerRow * tex.height];
+            
+            viewScreen.update(viewport);
+            updateViewport();
+            updateRTS = true;
+            updateHistory = true;
+        }
+        
+        data = (float*)frameData;
+        pitch = tex.width;
+
+        return true;
+    }
+    
+    auto unlockAndRedraw() -> void {
+        if (threadEnabled) {
+            resizeWindow();
+            RenderThread::unlock();
+        } else {
+            resizeMutex.lock();
+            resizeWindow();
+            
+            MTLTexture& tex = frame.textures[0];
+
+            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.width, (NSUInteger)tex.height)
+                        mipmapLevel:0 withBytes:frameData bytesPerRow: tex.bytesPerRow];
+            
+            redrawBase(options & OPT_DisallowShader);
+            
+            resizeMutex.unlock();
+        }
+    }
+    
+    auto refresh() -> void {
+        resizeMutexThreaded.lock();
+        options = 0;
+        RenderBuffer* renderBuffer = getBufferToRender();
+        
+        if (renderBuffer && renderBuffer->height) {
+            MTLTexture& tex = frame.textures[0];
+            renderBuffer->sharedMutex.lock();
+            MTLUtility::initTexture(tex, renderBuffer->width, renderBuffer->height, renderBuffer->floatFormat ? MTLPixelFormatRGBA32Float : MTLPixelFormatBGRA8Unorm, device);
+
+            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.width, (NSUInteger)tex.height)
+                        mipmapLevel:0 withBytes:renderBuffer->data bytesPerRow: tex.bytesPerRow];
+            
+            options = renderBuffer->options;
+            renderBuffer->sharedMutex.unlock();
+
+            accessMutex.lock();
+            frames--;
+            accessMutex.unlock();
+        }
+        
+        redrawBase(options & OPT_DisallowShader);
+     
+        resizeMutexThreaded.unlock();
+    }
+    
+    auto redraw(CGSize _size) -> void {
+        resizeMutex.lock();
+        area = _size;
+        if (!resizeWithEmuThread) {
+            resizeWindow();
+            redrawBase();
+        }
+        resizeMutex.unlock();
+    }
+    
+    auto setLinearFilter(bool state) -> void {
+        if (state == settings.linearFilter)
+            return;
+        wait();
+        settings.linearFilter = state;
+        updateFilter();
+    }
+    
+    auto adjustSize(unsigned& w, unsigned& h) -> void {
+        viewScreen.update(viewport);
+        updateViewport();
+        updateRTS = true;
+        updateHistory = true;
+    }
+    
+    auto setAspectRatio(int mode, bool integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
+        if ((int)viewScreen.mode == mode && viewScreen.hasIntegerScaling == integerScaling)
+            return;
+        wait();
+        viewScreen.mode = (ViewScreen::Mode)mode;
+        viewScreen.hasIntegerScaling = integerScaling;
+        if (handle) {
+            viewScreen.update(viewport);
+            settings.msgUpdated |= 2;
+            updateViewport();
+            updateFrameSize();
+            updateHistory = true;
+        }
+    }
+
+    auto getAspectRatio() -> int {
+        return (int)viewScreen.mode;
+    }
+    
+    auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
+        viewScreen.scaling.width = _w;
+        viewScreen.scaling.height = _h;
+        viewScreen.scaling.doubleSize = _ds;
+        // we don't need to update now because the input dimension will be changed too
+    }
+
+    auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void {
+        _w = viewScreen.scaling.width >> 1;
+        _h = viewScreen.scaling.height >> 1;
+    }
+    
+    auto resizeWindow(bool _force = false) -> void {
+        unsigned _windowWidth = area.width;
+        unsigned _windowHeight = area.height;
+
+        if (!_force) {
+            if ( (_windowWidth == viewScreen.windowWidth) && (_windowHeight == viewScreen.windowHeight) )
+                return;
+        }
+
+        viewScreen.update(viewport, _windowWidth, _windowHeight);
+        
+        shaderResizeTimer = 5;
+        //updateFrameSize();
+        updateViewport();
+        
+        settings.msgUpdated |= 2;
+    }
+    
+    void synchronize(bool state) {
+        wait();
+        resizeMutex.lock();
+        settings.synchronize = state;
+        if (layer && handle)
+            layer.displaySyncEnabled = state ? YES : NO;
+        resizeMutex.unlock();
+    }
+    
+    auto hasSynchronized() -> bool { return settings.synchronize; }
+    
+    auto getViewport() -> Viewport& { return viewport; }
+    
+    auto getRotation() -> Rotation { return settings.rotation; }
+
+    auto setRotation(Rotation rotation) -> void {
+        if (settings.rotation == rotation)
+            return;
+        wait();
+        settings.rotation = rotation;
+        viewScreen.flipped = settings.rotation == ROT_90 || settings.rotation == ROT_270;
+        viewScreen.update(viewport);
+        
+        updateFrameSize();
+        updateViewport();
+        updateRotation();
+        
+        updateRTS = true;
+        updateHistory = true;
+    }
+    
+    auto changeThreadPriorityToRealtime(bool state) -> void {
+        if (threadEnabled) {
+            wait();
+            changePriorityToRealtime(state);
+        }
+    }
+    
+    auto setThreaded(bool state) -> void {
+        if (state != threadEnabled) {
+            RenderThread::enable(state);
+            RenderThread::reset();
+            
+            auto& tex = frame.textures[0];
+            if (tex.view) {
+                [tex.view release];
+                tex.view = nil;
+            }
+            
+        }
+    }
+
+    auto hasThreaded() -> bool { return threadEnabled; }
+    
+    auto showMessage(std::string message, bool critical = false) -> void {
+#ifdef DRV_FREETYPE
+        if (settings.message != message || settings.msgCritical != critical) {
+            settings.message = message;
+            settings.msgCritical = critical;
+            settings.msgUpdated = 1;
+        }
+#endif
+    }
+    
+    auto hardSync(bool state) -> void {
+        wait();
+        settings.hardSync = state;
+    }
+    
+    auto canHardSync() -> bool { return true; }
+    
+    auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
+        dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
+    }
+
+    auto setDragnDropOverlaySlots(unsigned slots) -> void {
+        dndOverlay.setSlots(slots);
+    }
+
+    auto enableDragnDropOverlay(bool state) -> void {
+        dndOverlay.setEnable(state);
+    }
+
+    auto sendDragnDropOverlayCoordinates(int x, int y) -> int {
+        return dndOverlay.sendDragnDropOverlayCoordinates(x, y);
+    }
+    
+    auto setVRR(bool state, float speed = 0.0) -> void {
+        wait();
+        settings.vrr = state;
+
+        if (state) {
+            minimumCapTime = (1000000.0 / speed) + 0.5;
+            lastCapTime = Chronos::getTimestampInMicroseconds();
+        }
+    }
+
+    auto hasVRR() -> bool { return settings.vrr; }
+
+    auto waitVRR() -> void {
+        lastCapTime += minimumCapTime;
+        int64_t remaining  = lastCapTime - Chronos::getTimestampInMicroseconds();
+
+        if (remaining <= 0) {
+            lastCapTime = Chronos::getTimestampInMicroseconds();
+            return;
+        }
+
+        if (remaining >= 3000) {
+
+            remaining -= 1500;
+
+            unsigned sleepInMilli = (unsigned) ((float) remaining / 1000.0);
+
+            usleep( sleepInMilli * 1000 );
+            
+            remaining = lastCapTime - Chronos::getTimestampInMicroseconds();
+        }
+
+        // we need exact frame pacing
+        while(remaining > 0) {
+            //std::this_thread::yield();
+            remaining = lastCapTime - Chronos::getTimestampInMicroseconds();
+        }
+    }
+    
+    auto setShaderProgressCallback( std::function<void (int pass, bool hasErrors)> onCallback ) -> void {
+        onShaderProgressCallback = onCallback;
+    }
+
+    auto setShaderCacheCallback( std::function<void (DiskFile& diskFile)> onCallback ) -> void {
+        onShaderCacheCallback = onCallback;
+    }
+
+    auto useShaderCache(bool state) -> void {
+        settings.useShaderCache = state;
+    }
+    
+    auto shaderSupport() -> bool { return true; }
+    
+    auto redrawBase(bool disallowShader = false) -> void {
+        @autoreleasepool {
+            if (shaderResizeTimer && !--shaderResizeTimer) {
+                updateFrameSize();
+            }
+            
+            MTLTexture& mainTex = frame.textures[0];
+            
+            if (updateRTS)
+                updateRenderTargets(mainTex.width, mainTex.height);
+            
+            id<MTLRenderCommandEncoder> rce;
+            dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+            id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+            drawable = layer.nextDrawable;
+            
+            MTLTexture* texture = &frame.textures[0];
+            
+            if (!disallowShader && shaderPasses) {
+                frameCount += 1;
+
+              // if (!updateRTS) {
+                    for(int i = 0; i < shaderPasses; i++) {
+                        auto& p = programs[i];
+                        if (!p.inUse || !p.feedback)
+                            continue;
+
+                        MTLTexture tmp = p.feedbackTarget;
+                        p.feedbackTarget = p.renderTarget;
+                        p.renderTarget = tmp;
+                    }
+             //   }
+                
+                rpd.colorAttachments[0].loadAction = MTLLoadActionDontCare;
+                //rpd.colorAttachments[0].storeAction = MTLStoreActionStore;
+
+                for(int i = 0; i < shaderPasses; i++) {
+                    auto& p = programs[i];
+                    if (!p.inUse)
+                        continue;
+                    bool lastPass = i == (shaderPasses - 1);
+                    
+                    if (p.renderTarget.view == nil) { // shader handles last pass
+                        rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
+                        rpd.colorAttachments[0].texture = drawable.texture;
+                    } else if (p.crop.active)
+                        rpd.colorAttachments[0].texture = p.cropTarget.view;
+                    else
+                        rpd.colorAttachments[0].texture = p.renderTarget.view;
+                    
+                    rce = [commandBuffer renderCommandEncoderWithDescriptor:rpd];
+                    [rce setRenderPipelineState:p.pipelineState];
+
+                    if (p.frameModulo)
+                        p.frameCount = frameCount % p.frameModulo;
+                    else
+                        p.frameCount = frameCount;
+
+                    for (int b = 0; b < SemanticBuffer::Max; b++) {
+                        id<MTLBuffer> buffer = p.buffers[b];
+                        auto& semBuffer = p.semanticBuffer[b];
+                        void* bufData = buffer.contents;
+
+                        if (semBuffer.mask && bufData) {
+            
+                            for(auto& var : semBuffer.variables) {
+                                if (var.data)
+                                    memcpy((uint8_t*)bufData + var.offset, var.data, var.size);
+                            }
+
+                            if(semBuffer.mask & SpirvReflection::Vertex)
+                                [rce setVertexBuffer:buffer offset:0 atIndex:semBuffer.binding];
+                            if(semBuffer.mask & SpirvReflection::Fragment)
+                                [rce setFragmentBuffer:buffer offset:0 atIndex:semBuffer.binding];
+                            
+                         // next command informs GPU, required only for storageModeManaged
+                         // [buffer didModifyRange:NSMakeRange(0, buffer.length)];
+                        }
+                    }
+
+                    id<MTLTexture> textures[SPIRV_MAX_BINDINGS] = { nil };
+                    id<MTLSamplerState> _samplers[SPIRV_MAX_BINDINGS] = { nil };
+
+                    for(auto& semTex : p.semanticTextures) {
+                        textures[semTex.binding] = ( id<MTLTexture>)*(void**)semTex.data;
+                        _samplers[semTex.binding] = (id<MTLSamplerState>)semTex.sampler;
+                    }
+
+                    [rce setFragmentTextures:textures withRange:NSMakeRange(0, SPIRV_MAX_BINDINGS)];
+                    [rce setFragmentSamplerStates:_samplers withRange:NSMakeRange(0, SPIRV_MAX_BINDINGS)];
+                    [rce setVertexBytes:&verticesSlang length:sizeof(verticesSlang) atIndex:4];
+
+                    if (p.renderTarget.view == nil) {
+                        texture = nullptr;
+                        break;
+                    }
+
+                    [rce setViewport:p.viewport];
+                    
+                    [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+
+                    [rce endEncoding];
+                    
+                    if (p.mipmap || p.crop.active) {
+                        // note: one encoder at a time for same commandbuffer, so "[rce endEncoding]" before
+                        id<MTLBlitCommandEncoder> bce = [commandBuffer blitCommandEncoder];
+                        
+                        if (p.mipmap)
+                            [bce generateMipmapsForTexture:(p.crop.active ? p.cropTarget.view : p.renderTarget.view)];
+                        
+                        if (p.crop.active) {
+                            [bce copyFromTexture:p.cropTarget.view sourceSlice:0 sourceLevel:0
+                               sourceOrigin:p.cropOrigin sourceSize:p.cropSize
+                               toTexture:p.renderTarget.view
+                               destinationSlice:0 destinationLevel:0
+                               destinationOrigin:MTLOriginMake(0, 0, 0)];
+                        }
+                        
+                        [bce endEncoding];
+                        bce = nil;
+                    }
+
+                    texture = &p.renderTarget;
+                }
+                
+                if (historySize) {
+                    if (updateHistory) {
+                        for(int i = 1; i <= historySize; i++) {
+                            MTLUtility::releaseTexture(frame.textures[i]);
+                            MTLUtility::initTexture(frame.textures[i], mainTex.width, mainTex.height, mainTex.view.pixelFormat, device);
+                        }
+                        
+                        updateHistory = false;
+                    } else {
+                        MTLTexture tmp = frame.textures[historySize];
+                        for (int i = historySize; i > 0; i--)
+                            frame.textures[i] = frame.textures[i - 1];
+                        frame.textures[0] = tmp;
+                    }
+                }
+                
+                updateRTS = false;
+            }
+            
+            if (texture) {
+                rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
+                rpd.colorAttachments[0].texture = drawable.texture;
+                rce = [commandBuffer renderCommandEncoderWithDescriptor:rpd];
+                
+                [rce setRenderPipelineState:outputPipelineState];
+                [rce setVertexBytes:&rotatedMatrix length:sizeof(matrix_float4x4) atIndex:1];
+                [rce setFragmentSamplerState:sampler atIndex:0];
+                [rce setVertexBytes:&vertices length:sizeof(vertices) atIndex:0];
+                [rce setFragmentTexture:texture->view atIndex:0];
+            }
+            
+            [rce setViewport:frame.viewport];
+            [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+            
+    #ifdef DRV_FREETYPE
+                if (settings.msgUpdated) {
+                    if (settings.msgUpdated & 1) {
+                        settings.msgUpdated = 0;
+                        buildMessageTexture(settings.message, settings.msgCritical);
+                    } else {
+                        settings.msgUpdated = 0;
+                        updateMessageCoords();
+                    }
+                }
+            
+                if (ft.hasText())
+                    showMessage(rce);
+            
+    #endif
+            if (dndOverlay.enabled()) {
+                buildDndOverlayTexture();
+                showDndOverlay(rce);
+            }
+            
+            if (progressVisible && progressTex.view) {
+                setProgressPosition();
+                showProgress(rce);
+            }
+            
+            if (rce) {
+                [rce endEncoding];
+                rce = nil;
+            }
+            
+            __block dispatch_semaphore_t _semaphore = semaphore;
+            [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _buf) {
+                dispatch_semaphore_signal(_semaphore);
+            }];
+            
+            if (drawable) {
+                [commandBuffer presentDrawable:drawable];
+            }
+            
+            if (settings.vrr) {
+                //MTLCommandBufferStatus s = [commandBuffer status];
+                //if (s != MTLCommandBufferStatusNotEnqueued)
+                    //[_commandBuffer waitUntilCompleted];
+                waitVRR();
+                [commandBuffer commit];
+                [commandBuffer waitUntilCompleted];
+            } else {
+                [commandBuffer commit];
+                if (settings.hardSync && settings.synchronize)
+                    [commandBuffer waitUntilCompleted];
+            }
+
+            commandBuffer = nil;
+            drawable = nil;
+        }
+    }
+    
+    auto updateMessageCoords() -> void {
+    #ifdef DRV_FREETYPE
+        if (!ft.hasText())
+            return;
+
+        float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
+        float textx = (float)ft.totalWidth * screenx;
+        float texty = (float)ft.totalHeight * screeny;
+
+        float adjust = 0.01;
+        float x = 1.0 - textx - adjust;
+        float y = -1.0 + texty + adjust;
+        
+        verticesMessage[0] = {simd_make_float2(x, y),                  simd_make_float2(0, 0)};
+        verticesMessage[1] = {simd_make_float2(x + textx, y),          simd_make_float2(1, 0)};
+        verticesMessage[2] = {simd_make_float2(x, y - texty),          simd_make_float2(0, 1)};
+        verticesMessage[3] = {simd_make_float2(x + textx, y - texty),  simd_make_float2(1, 1)};
+    #endif
+    }
+
+    auto buildMessageTexture(std::string& text, bool hilight) -> void {
+    #ifdef DRV_FREETYPE
+        if (!ft.buildTexture(text))
+            return;
+        
+        MTLUtility::initTexture(messageTex, ft.totalWidth, ft.totalHeight, MTLPixelFormatA8Unorm, device);
+        
+        [messageTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)ft.totalWidth, (NSUInteger)ft.totalHeight) mipmapLevel:0 withBytes:ft.textBuffer bytesPerRow: ft.totalWidth];
+        
+        if (hilight)
+            messageCol = {0.7f, 0.0f, 0.0f, 1.0f};
+        else
+            messageCol = {1.0f, 1.0f, 1.0f, 0.8f};
+        
+        updateMessageCoords();
+    #endif
+    }
+
+    auto showMessage(id<MTLRenderCommandEncoder> rce) -> void {
+        [rce setRenderPipelineState:messagePipelineState];
+        [rce setVertexBytes:&messageCol length:sizeof(vector_float4) atIndex:1];
+        [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE][0] atIndex:0];
+        
+        [rce setVertexBytes:&verticesMessage length:sizeof(verticesMessage) atIndex:0];
+        [rce setFragmentTexture:messageTex.view atIndex:0];
+
+        [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+    }
+
+    auto buildDndOverlayTexture() -> void {
+        dndOverlay.update(viewport);
+        if (!dndOverlay.buffer)
+            return;
+        
+        dndOverlay.updateAlpha();
+        
+        MTLUtility::initTexture(dndOverlayTex, dndOverlay.texWidth, dndOverlay.texHeight, MTLPixelFormatRGBA8Unorm, device);
+        
+        [dndOverlayTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)dndOverlay.texWidth, (NSUInteger)dndOverlay.texHeight) mipmapLevel:0 withBytes:dndOverlay.buffer bytesPerRow: dndOverlay.texWidth * 4];
+        
+        float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
+        float x = -1.0 + dndOverlay.texX * screenx;
+        float y = 1.0 - dndOverlay.texY * screeny;
+
+        float w = (float)dndOverlay.texWidth * screenx;
+        float h = (float)dndOverlay.texHeight * screeny;
+        
+        verticesDndOverlay[0] = {simd_make_float2(x    , y),      simd_make_float2(0, 0)};
+        verticesDndOverlay[1] = {simd_make_float2(x + w, y),      simd_make_float2(1, 0)};
+        verticesDndOverlay[2] = {simd_make_float2(x    , y - h),  simd_make_float2(0, 1)};
+        verticesDndOverlay[3] = {simd_make_float2(x + w, y - h),  simd_make_float2(1, 1)};
+    }
+    
+    auto setProgressAnimation(uint8_t* _data, unsigned _width, unsigned _height) -> void {
+        MTLUtility::releaseTexture(progressTex);
+        MTLUtility::initTexture(progressTex, _width, _height, MTLPixelFormatRGBA8Unorm, device);
+        
+        [progressTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)_width, (NSUInteger)_height) mipmapLevel:0 withBytes:_data bytesPerRow: progressTex.bytesPerRow];
+    }
+    
+    auto setProgressPosition() -> void {
+        float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
+        
+        float x = -1.0 + (viewport.width - progressTex.width - 20) * screenx;
+        float y = 1.0 -  20.0 * screeny;
+
+        float w = progressTex.size.x * screenx;
+        float h = progressTex.size.y * screeny;
+        
+        verticesProgress[0] = {simd_make_float2(x    , y),      simd_make_float2(0, 0)};
+        verticesProgress[1] = {simd_make_float2(x + w, y),      simd_make_float2(1, 0)};
+        verticesProgress[2] = {simd_make_float2(x    , y - h),  simd_make_float2(0, 1)};
+        verticesProgress[3] = {simd_make_float2(x + w, y - h),  simd_make_float2(1, 1)};
+    }
+
+    auto showDndOverlay(id<MTLRenderCommandEncoder> rce) -> void {
+        [rce setRenderPipelineState:dndOverlayPipelineState];
+        [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE][0] atIndex:0];
+        [rce setVertexBytes:&verticesDndOverlay length:sizeof(verticesDndOverlay) atIndex:0];
+        [rce setFragmentTexture:dndOverlayTex.view atIndex:0];
+
+        [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+    }
+    
+    auto showProgress(id<MTLRenderCommandEncoder> rce) -> void {
+        [rce setRenderPipelineState:progressPipelineState];
+        [rce setVertexBytes:&progressDegree length:sizeof(unsigned) atIndex:1];
+        [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE][0] atIndex:0];
+        [rce setVertexBytes:&verticesProgress length:sizeof(verticesProgress) atIndex:0];
+        [rce setFragmentTexture:progressTex.view atIndex:0];
+        
+        if (++progressDegree == 360)
+            progressDegree = 0;
+        
+        [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+    }
+
+    auto updateFrameSize() -> void {
+        frame.size.x = viewport.width;
+        frame.size.y = viewport.height;
+        frame.size.z = 1.0f / (float)viewport.width;
+        frame.size.w = 1.0f / (float)viewport.height;
+        updateRTS = true; // in the case of passes scaled by viewport
+    }
+    
+    auto updateViewport() -> void {
+        layer.drawableSize = CGSizeMake(viewScreen.windowWidth, viewScreen.windowHeight);
+        
+        frame.viewport.originX = viewport.x;
+        frame.viewport.originY = viewport.y;
+        frame.viewport.width   = viewport.width;
+        frame.viewport.height  = viewport.height;
+        frame.viewport.znear   = 0.0f;
+        frame.viewport.zfar    = 1.0f;
+    }
+    
+    auto updateFilter() -> void {
+        ShaderPreset::Filter filter = settings.linearFilter ? ShaderPreset::FILTER_LINEAR : ShaderPreset::FILTER_NEAREST;
+
+        for (int i = 0; i < 4; i++) {
+            samplers[ShaderPreset::FILTER_UNSPEC][i][0] = samplers[filter][i][0];
+            samplers[ShaderPreset::FILTER_UNSPEC][i][1] = samplers[filter][i][1];
+        }
+
+        sampler = samplers[filter][ShaderPreset::WRAP_EDGE][0];
+        
+        for(int i = 0; i < shaderPasses; i++) {
+            auto& p = programs[i];
+            if (!p.inUse)
+                continue;
+
+            for(auto& tex : p.semanticTextures) {
+                tex.sampler = (uintptr_t)samplers[tex.filter][tex.wrap][tex.mipmap];
+            }
+        }
+    }
+    
+    auto updateRotation() -> void {
+        float radian = (float)settings.rotation * 90.0 * (M_PI / 180.0f);
+        
+        float cz, sz;
+        __sincosf(radian, &sz, &cz);
+
+        matrix_float4x4 rot = {
+            simd_make_float4(cz, -sz, 0, 0),
+            simd_make_float4(sz,  cz, 0, 0),
+            simd_make_float4( 0,   0, 1, 0),
+            simd_make_float4( 0,   0, 0, 1)
+        };
+
+        rotatedMatrix = simd_mul(rot, projectionMatrix);
+    }
+    
+    auto updateRenderTargets(unsigned width, unsigned height) -> void {
+        unsigned sourceWidth = width;
+        unsigned sourceHeight = height;
+        frame.mvp = projectionMatrix; // assume: last shader pass is NOT final pass
+
+        for(int i = 0; i < shaderPasses; i++) {
+            auto& p = programs[i];
+            if (!p.inUse)
+                continue;
+
+            bool lastPass = i == (shaderPasses - 1);
+
+            if (p.scaleTypeX != ShaderPreset::SCALE_NONE || p.scaleTypeY != ShaderPreset::SCALE_NONE) {
+                if (p.scaleTypeX == ShaderPreset::SCALE_INPUT) width *= p.scaleX;
+                else if (p.scaleTypeX == ShaderPreset::SCALE_VIEWPORT) width = viewport.width * p.scaleX;
+                else if (p.scaleTypeX == ShaderPreset::SCALE_ABSOLUTE) width = p.absX;
+
+                if (!width) width = viewport.width;
+
+                if (p.scaleTypeY == ShaderPreset::SCALE_INPUT) height *= p.scaleY;
+                else if (p.scaleTypeY == ShaderPreset::SCALE_VIEWPORT) height = viewport.height * p.scaleY;
+                else if (p.scaleTypeY == ShaderPreset::SCALE_ABSOLUTE) height = p.absY;
+
+                if (!height) height = viewport.height;
+            } else if (lastPass) {
+                width = viewport.width;
+                height = viewport.height;
+            }
+
+            if (!lastPass || p.feedback || (width != viewport.width) || (height != viewport.height) ) {
+                if (p.mipmap)
+                    MTLUtility::releaseTexture(p.renderTarget);
+                
+                if (!MTLUtility::initTexture(p.renderTarget, width, height, p.format, device, p.mipmap, true))
+                    continue;
+
+                if (p.feedback) {
+                    MTLUtility::releaseTexture(p.feedbackTarget);
+                    MTLUtility::initTexture(p.feedbackTarget, width, height, p.format, device, p.mipmap, true);
+                }
+                
+                p.viewport.originX = 0;
+                p.viewport.originY = 0;
+                p.viewport.width   = width;
+                p.viewport.height  = height;
+                p.viewport.znear   = 0.0f;
+                p.viewport.zfar    = 1.0f;
+
+                if (p.crop.active) {
+                    auto& crop = p.crop;
+                    uint8_t interlace = (options & OPT_Interlace) ? 1 : 0;
+                    unsigned croppedLeft = (width * crop.left) / sourceWidth;
+                    unsigned croppedRight = (width * crop.right) / sourceWidth;
+                    unsigned croppedTop = (height * (crop.top << interlace) ) / sourceHeight;
+                    unsigned croppedBottom = (height * (crop.bottom << interlace) ) / sourceHeight;
+
+                    width -= croppedLeft + croppedRight;
+                    height -= croppedTop + croppedBottom;
+                    
+                    p.cropOrigin.x = croppedLeft;
+                    p.cropOrigin.y = croppedTop;
+                    p.cropOrigin.z = 0;
+                    
+                    p.cropSize.width = width;
+                    p.cropSize.height = height;
+                    p.cropSize.depth = 1;
+
+                    MTLUtility::releaseTexture(p.cropTarget);
+                    MTLUtility::initTexture(p.cropTarget, width, height, p.format, device, p.mipmap, true);
+
+                    // todo: SourceSize of following pass isn't OutputSize (non cropped) of this pass.
+                    // only internal shader use this feature and relevant passes don't access SourceSize
+                    std::swap(p.renderTarget.view, p.cropTarget.view);
+                }
+            } else {
+                MTLUtility::releaseTexture(p.renderTarget);
+                
+                if (viewScreen.flipped && (viewScreen.mode != ViewScreen::Mode::Window)) {
+                    unsigned tmp = width;
+                    width = height;
+                    height = tmp;
+                }
+
+                p.renderTarget.size = {(float)width, (float)height, 1.0f / float(width), 1.0f / float(height)};
+                
+                frame.mvp = rotatedMatrix; // last shader pass is final pass
+            }
+        }
+    }
+    
+    auto setShader(ShaderPreset* preset) -> void {
+        wait();
+        resizeMutex.lock();
+     //   @autoreleasepool {
+            loadShader( preset );
+        //}
+        RenderThread::reset();
+        resizeMutex.unlock();
+    }
+    
+    auto loadShader(ShaderPreset* preset) -> void {
+        shaderId++;
+        shaderReady = false;
+        progressVisible = false;
+        shaderPasses = 0;
+        historySize = 0;
+        std::vector<MTLProgram*> _programs;
+        std::vector<DiskFile*> _luts;
+        
+        releaseShader();
+        
+        this->preset = preset;
+        
+        if (!preset || (preset->passes.size() > MAX_SHADERS) || (preset->luts.size() > MAX_TEXTURES))
+            return;
+        
+        bool todo = false;
+        _programs.reserve(preset->passes.size());
+
+        for (auto& pass : preset->passes) {
+            MTLProgram* program = new MTLProgram;
+            program->inUse = pass.inUse;
+            program->codeVertex = pass.vertex;
+            program->codeFragment = pass.fragment;
+            program->format =   MTLUtility::getFormat(pass.bufferType);
+            pass.error = "";
+            _programs.push_back(program);
+            todo |= pass.inUse;
+        }
+
+        if (!todo)
+            return;
+
+        _luts.reserve(preset->luts.size());
+        for (auto& lut : preset->luts) {
+            DiskFile* diskFile = new DiskFile;
+            diskFile->path = lut.path;
+            diskFile->ident = lut.id;
+            diskFile->data = nullptr;
+            diskFile->size = 0;
+            diskFile->isLUT = true;
+            _luts.push_back(diskFile);
+        }
+
+        progressVisible = true;
+        int _sid = shaderId;
+        bool useCache = settings.useShaderCache;
+        
+        std::thread worker([this, _programs, _luts, _sid, useCache] {
+            DRIVER::ShaderCache shaderCache("msl");
+            shaderCache.onShaderCacheCallback = onShaderCacheCallback;
+            
+            auto ts = Chronos::getTimestampInMilliseconds();
+            
+            for(int i = 0; i < _programs.size(); i++) {
+                auto p = _programs[i];
+                if (!p->inUse)
+                    continue;
+                
+                bool success;
+                bool cacheSuccess = false;
+                std::string nativeV;
+                std::string nativeF;
+                spirv_cross::CompilerMSL* vCompiler = nullptr;
+                spirv_cross::CompilerMSL* fCompiler = nullptr;
+                
+                if (useCache)
+                    cacheSuccess = shaderCache.read(p->codeVertex, p->codeFragment, p->reflection);
+                
+                if (!cacheSuccess) {
+                    std::vector<unsigned> spirvVertex;
+                    std::vector<unsigned> spirvFragment;
+
+                    success = glSlang.compileVertex(p->codeVertex, spirvVertex, p->error);
+                    if (!success) {
+                        p->error = "SLANG Vertex Shader #" + std::to_string(i) + " to SPIRV conversion error:\n" + p->error;
+                        goto Next;
+                    }
+
+                    success = glSlang.compileFragment(p->codeFragment, spirvFragment, p->error);
+                    if (!success) {
+                        p->error = "SLANG Fragment Shader #" + std::to_string(i) + " to SPIRV conversion error:\n" + p->error;
+                        goto Next;
+                    }
+
+                    try {
+                        vCompiler = new spirv_cross::CompilerMSL( spirvVertex );
+                        fCompiler = new spirv_cross::CompilerMSL( spirvFragment );
+
+                        spirv_cross::ShaderResources vResources = vCompiler->get_shader_resources();
+                        spirv_cross::ShaderResources fResources = fCompiler->get_shader_resources();
+
+                        p->reflection.preProcess( *vCompiler, vResources );
+                        p->reflection.preProcess( *fCompiler, fResources );
+
+                        spirv_cross::CompilerMSL::Options opt;
+                        opt.msl_version = 20000;
+                        vCompiler->set_msl_options(opt);
+                        fCompiler->set_msl_options(opt);
+                        
+                        p->reflection.preProcessRemapPush(*vCompiler, vResources);
+                        p->reflection.preProcessRemapPush(*fCompiler, fResources);
+                        p->reflection.preProcessGenericResources(*vCompiler, vResources.uniform_buffers);
+                        p->reflection.preProcessGenericResources(*fCompiler, fResources.uniform_buffers);
+                        p->reflection.preProcessGenericResources(*vCompiler, vResources.sampled_images);
+                        p->reflection.preProcessGenericResources(*fCompiler, fResources.sampled_images);
+                        
+                        nativeV = vCompiler->compile();
+                        nativeF = fCompiler->compile();
+
+                        success = p->reflection.process( *vCompiler, *fCompiler, vResources, fResources );
+                        if (!success) {
+                            p->error = "SPIRV Shader #" + std::to_string(i) + " reflection error:\n" + p->reflection.error;
+                            goto Next;
+                        }
+
+                    } catch (const std::exception& e) {
+                        p->error = "SPIRV Shader #" + std::to_string(i) + " to MSL conversion error:\n" + e.what();
+                        success = false;
+                        goto Next;
+                    }
+                    
+                    success = MTLUtility::createProgram(nativeV, nativeF, device, *p);
+                    
+                    if (!success) {
+                        p->error = "MSL Shader #" + std::to_string(i) + " compilation error: " + p->error + "\n";
+                        goto Next;
+                    }
+
+                    if (useCache)
+                        shaderCache.write((uint8_t*)nativeV.data(), nativeV.size(), (uint8_t*)nativeF.data(), nativeF.size(), p->reflection);
+
+                } else {
+                    nativeV.assign((char*)shaderCache.nativeV, shaderCache.vertexSize);
+                    nativeF.assign((char*)shaderCache.nativeF, shaderCache.fragmentSize);
+                    
+                    success = MTLUtility::createProgram(nativeV, nativeF, device, *p);
+
+                    if (!success) {
+                        p->error = "MSL Shader #" + std::to_string(i) + " from cache creation error:\n" + p->error;
+                        goto Next;
+                    }
+                }
+
+                Next:
+                if (vCompiler) delete vCompiler;
+                if (fCompiler) delete fCompiler;
+
+                if (shaderId != _sid)
+                    break;
+
+                if (!success)
+                    MTLUtility::releaseShader(*p);
+
+                auto tsNow = Chronos::getTimestampInMilliseconds();
+                if (!success || ((tsNow - ts) >= 1000)) {
+                    onShaderProgressCallback(i, !success);
+                    ts = tsNow;
+                }
+            }
+            
+            for(auto lut : _luts) {
+                onShaderCacheCallback(*lut);
+
+                if (shaderId != _sid)
+                    break;
+            }
+
+            if (shaderId != _sid) { // the user is impatient
+                for(auto p : _programs) {
+                    MTLUtility::releaseShader(*p);
+                    delete p;
+                }
+                for(auto l : _luts) {
+                    if (l->data) delete[] l->data;
+                    delete l;
+                }
+                threadAlive = false;
+                return;
+            }
+
+            while(shaderReady)
+                std::this_thread::yield();
+
+            programsTemp = _programs;
+            lutsTemp = _luts;
+            shaderReady = true;
+            progressVisible = false;
+            threadAlive = false;
+        });
+        
+        threadAlive = true;
+        worker.detach();
+    }
+    
+    auto shaderPostBuild() -> void {
+        bool lastPass = true;
+        bool mipMapInput = false;
+
+        SemanticMap map = {{
+           {(uintptr_t)(&frame.textures[0].view), &frame.textures[0].size, sizeof(MTLTexture), MAX_FRAME_HISTORY},
+           {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(MTLProgram), MAX_SHADERS},
+           {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(MTLProgram), MAX_SHADERS},
+           {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(MTLTexture), MAX_TEXTURES},
+        }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &settings.rotation, &historySize} };
+
+        shaderPasses = 0;
+        for(int i = programsTemp.size() - 1; i >= 0; i--) {
+            auto p = programsTemp[i];
+            auto& program = programs[i];
+            auto& pass = preset->passes[i];
+
+            program.feedback = false;
+            program.pipelineState = p->pipelineState;
+            program.format = p->format;
+
+            program.inUse = pass.inUse;
+            program.ident = pass.alias;
+            program.scaleX = pass.scaleX;
+            program.absX = pass.absX;
+            program.scaleTypeX = pass.scaleTypeX;
+            program.scaleY = pass.scaleY;
+            program.absY = pass.absY;
+            program.scaleTypeY = pass.scaleTypeY;
+            program.filter = pass.filter;
+            program.wrap = pass.wrap;
+            program.frameModulo = pass.frameModulo;
+            program.crop = pass.crop;
+            program.mipmap = false;
+
+            if (!pass.inUse)
+                goto Next;
+
+            if (mipMapInput) {
+                program.mipmap = true;
+                mipMapInput = false;
+            }
+
+            if (pass.mipmap)
+                mipMapInput = true;
+
+            if (!p->error.empty()) {
+                pass.error = p->error;
+                shaderPasses = 0;
+                lastPass = false;
+                goto Next;
+            }
+
+            map.uniforms[SemanticMap::MVP] = lastPass ? (void*)&frame.mvp : &projectionMatrix;
+            map.uniforms[SemanticMap::Output] = &program.renderTarget.size;
+            map.uniforms[SemanticMap::FrameCount] = &program.frameCount;
+
+            if (lastPass) {
+                lastPass = false;
+                shaderPasses = i + 1;
+            }
+
+            if (!p->reflection.bindTextures(preset, i, map, program.semanticTextures)) {
+                pass.error = "Shader #" + std::to_string(i) + " texture resolve error:\n" + p->reflection.error;
+                shaderPasses = 0;
+                goto Next;
+            }
+
+            if (!p->reflection.bindUbo(preset, i, map, &program.semanticBuffer[SemanticBuffer::Ubo])) {
+                pass.error = "Shader #" + std::to_string(i) + " ubo uniform resolve error:\n" + p->reflection.error;
+                shaderPasses = 0;
+                goto Next;
+            }
+
+            if (!p->reflection.bindPush(preset, i, map, &program.semanticBuffer[SemanticBuffer::Push])) {
+                pass.error = "Shader #" + std::to_string(i) + " push uniform resolve error:\n" + p->reflection.error;
+                shaderPasses = 0;
+                goto Next;
+            }
+
+            for (int b = 0; b < SemanticBuffer::Max; b++) {
+                unsigned _size = program.semanticBuffer[b].size;
+                
+                if (_size) {
+                    program.buffers[b] = [device newBufferWithLength:_size options:MTLResourceStorageModeManaged];
+                }
+            }
+
+            Next:
+            delete p;
+        }
+        programsTemp.clear();
+        
+        if (shaderPasses) {
+            for(int i = 0; i < shaderPasses; i++) {
+                auto& p = programs[i];
+
+                if (p.inUse) {
+                    for(auto& tex : p.semanticTextures) {
+                        if ( (tex.feedbackPass != -1) && (tex.feedbackPass < shaderPasses))
+                            programs[tex.feedbackPass].feedback = true;
+                    }
+                }
+            }
+            id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+            id<MTLBlitCommandEncoder> bce = [commandBuffer blitCommandEncoder];
+            
+            for (int l = 0; l < preset->luts.size(); l++) {
+                auto& lut = preset->luts[l];
+                DiskFile* lutFile = nullptr;
+                for(auto lutPtr : lutsTemp) {
+                    if (lutPtr->ident == lut.id) {
+                        lutFile = lutPtr;
+                        break;
+                    }
+                }
+                if (!lutFile || !lutFile->data) {
+                    preset->luts[l].error = true;
+                    shaderPasses = 0;
+                    continue;
+                }
+
+                MTLTexture& lutTex = luts[l];
+                MTLUtility::releaseTexture(lutTex);
+                MTLUtility::initTexture(lutTex, lutFile->width, lutFile->height, MTLPixelFormatRGBA8Unorm, device, lut.mipmap);
+                
+                [lutTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)lutTex.width, (NSUInteger)lutTex.height)
+                            mipmapLevel:0 // fill in original texture, next command generates mips for the requested mipmapLevelCount
+                            withBytes:lutFile->data bytesPerRow: lutTex.bytesPerRow];
+                
+                if (lut.mipmap)
+                    [bce generateMipmapsForTexture:lutTex.view];
+            }
+            
+            updateFilter();
+            
+            // in case we have mips
+            [bce endEncoding];
+            [commandBuffer commit];
+            [commandBuffer waitUntilCompleted];
+            commandBuffer = nil;
+        }
+
+        for(auto lutPtr : lutsTemp) {
+            if(lutPtr->data) delete[] lutPtr->data;
+            delete lutPtr;
+        }
+        lutsTemp.clear();
+
+        onShaderProgressCallback(-1, !shaderPasses);
+        updateRTS = true;
+        updateHistory = true;
+        updateFrameSize();
+    }
+    
+    auto getShaderNativeVertexCode(std::string& slang, std::string& out) -> bool {
+        return MTLUtility::translate(slang, out, false);
+    }
+
+    auto getShaderNativeFragmentCode(std::string& slang, std::string& out) -> bool {
+        return MTLUtility::translate(slang, out, true);
+    }
+};
+
+}
+
+
+@implementation MetalView {
+    DRIVER::METAL* driver;
+}
+-(id) initWithDriver:(DRIVER::METAL*)_driver {
+    if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
+        driver = _driver;
+        self.paused = NO;
+        self.enableSetNeedsDisplay = NO;
+        [self setDelegate:self];
+    }
+    return self;
+}
+
+- (void)mtkView:(MTKView*)view drawableSizeWillChange:(CGSize)size {
+    driver->redraw(size);
+}
+
+- (void)drawInMTKView:(MTKView*)view {
+   // driver->redraw( [view drawableSize]);
+}
+
+@end

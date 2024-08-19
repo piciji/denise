@@ -768,6 +768,7 @@ struct TreeViewItem {
     auto expanded() -> bool { return state.expanded; }
     auto selected() -> bool;
     auto itemCount() -> unsigned { return state.items.size(); }
+    auto items() -> std::vector<TreeViewItem*>& { return state.items; }
     auto userData() -> uintptr_t { return state.userData; }
     auto parentItem() -> TreeViewItem* { return state.parentTreeViewItem; }
     auto parentView() -> TreeView* { return state.parentTreeView; }

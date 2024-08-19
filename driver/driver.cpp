@@ -4,7 +4,7 @@
 #include <cmath>
 #include "driver.h"
 #include "video/dragnDropOverlay.h"
-#include "../program/tools/logger.h"
+//#include "../program/tools/logger.h"
 
 #ifdef DRV_DIRECT3D9
 	#include "video/d3d9/dvideo.cpp"
@@ -40,6 +40,10 @@
 
 #ifdef DRV_GLX
 	#include "video/glx.cpp"
+#endif
+
+#ifdef DRV_METAL
+    #include "video/metal/metal.cpp"
 #endif
 
 #ifdef DRV_OPENAL
@@ -90,6 +94,10 @@ auto Video::available() -> std::vector<std::string> {
 		"Direct3D9",
 	#endif
 
+    #ifdef DRV_METAL
+        "Metal",
+    #endif
+        
 	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
 		"OpenGL",
 	#endif
@@ -105,6 +113,10 @@ auto Video::preferred() -> std::string {
 		return "Direct3D9";
 	#endif
 
+    #ifdef DRV_METAL
+        return "Metal";
+    #endif
+    
 	#if defined(DRV_WGL) || defined(DRV_CGL) || defined(DRV_GLX)
 		return "OpenGL";
 	#endif
@@ -132,6 +144,10 @@ auto Video::create(const std::string& driver) -> Video* {
 	#ifdef DRV_GLX
 		if(driver == "OpenGL") return new GLX();
 	#endif
+    
+    #ifdef DRV_METAL
+        if(driver == "Metal") return new METAL();
+    #endif
 
     return new Video;
 }

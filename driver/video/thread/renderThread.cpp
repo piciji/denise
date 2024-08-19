@@ -10,6 +10,7 @@ namespace DRIVER {
 
         kill = false;
         ready = false;
+        threadEnabled = false;
         lockedBuffer = nullptr;
 
         reset();
@@ -175,15 +176,25 @@ namespace DRIVER {
 
     auto RenderThread::enable(bool state) -> void {
 
+        if (state == threadEnabled)
+            return;
+        
+        wait();
+        
         if (state) {
-            while (kill) {
+            while (kill)
                 std::this_thread::yield();
-            }
+            
             initWorker();
         } else {
             kill = true;
             cv.notify_one();
+            while (kill) {
+                std::this_thread::yield();
+            }
         }
+        
+        threadEnabled = state;
     }
     
     auto RenderThread::changePriorityToRealtime(bool state) -> void {
@@ -200,7 +211,6 @@ namespace DRIVER {
     auto RenderThread::initWorker() -> void {
 
         std::thread worker([this] {
-
             std::chrono::milliseconds duration(5);
             std::mutex cvM;
             std::unique_lock<std::mutex> lk(cvM);
@@ -213,7 +223,7 @@ namespace DRIVER {
 #endif
             kill = false;
             ready = false;
-
+            
             while (1) {
 #ifdef __APPLE__
                 if (updatePriority) {

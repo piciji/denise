@@ -77,7 +77,7 @@ struct WGL : Video, GL3, RenderThread {
 
     auto setThreaded(bool state) -> void {
 
-        if (state != settings.threaded) {
+        if (state != threadEnabled) {
             wait();
 			clearCurrent();
             RenderThread::enable(state);
@@ -85,12 +85,10 @@ struct WGL : Video, GL3, RenderThread {
             RenderThread::reset();
             auto& tex = frame.textures[0];
             tex.width = 0, tex.height = 0;
-
-            settings.threaded = state;
         }
     }
 
-    auto hasThreaded() -> bool { return settings.threaded; }
+    auto hasThreaded() -> bool { return threadEnabled; }
 
 	auto setShader(ShaderPreset* preset) -> void {
         wait();
@@ -118,7 +116,7 @@ struct WGL : Video, GL3, RenderThread {
             shaderReady = false;
         }
 
-        if (settings.threaded)
+        if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
         this->options = options;
@@ -145,7 +143,7 @@ struct WGL : Video, GL3, RenderThread {
         if (!shaderPasses) // YUV input needs a shader to progress it
             return false;
 
-        if (settings.threaded)
+        if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
         this->options = options;
@@ -194,7 +192,7 @@ struct WGL : Video, GL3, RenderThread {
     }
 
     auto unlockAndRedraw() -> void {
-        if (settings.threaded) {
+        if (threadEnabled) {
             RenderThread::unlock();
         } else {
             redraw(options & OPT_DisallowShader);
@@ -216,7 +214,7 @@ struct WGL : Video, GL3, RenderThread {
         resizeWindow();
         makeCurrent(true);
         //GL3::clear();
-        GL3::updateMainTexture( settings.threaded ? getLastBufferToRender() : nullptr );
+        GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
         GL3::_redraw(disallowShader, options & OPT_Interlace);
 
         if (dndOverlay.enabled())
@@ -364,7 +362,7 @@ struct WGL : Video, GL3, RenderThread {
 	
 	auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        if (settings.threaded) {
+        if (threadEnabled) {
             screenText.updateMessage(message, critical, false);
         } else {
             makeCurrent(true);

@@ -65,6 +65,19 @@
     }
     
     [text drawInRect:textRect withAttributes:@{ NSForegroundColorAttributeName:textColor, NSFontAttributeName:[self font] }];
+    
+    if ([text length] > treeView->p.maximumLength) {
+        treeView->p.maximumLength = [text length];
+        NSSize size = [text sizeWithAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[self font], NSFontAttributeName, nil]];
+        
+        unsigned maxiumWidth = size.width;
+        if (image)
+            maxiumWidth += [image size].width;
+        
+        NSTableColumn* tableColumn = [[(id)treeView->p.cocoaView content] tableColumnWithIdentifier:[[NSNumber numberWithInteger:0] stringValue]];
+
+        [tableColumn setWidth:maxiumWidth + 20];
+    }
 }
 @end
 
@@ -78,6 +91,7 @@
         [self setDocumentView:content];
         [self setBorderType:NSBezelBorder];
         [self setHasVerticalScroller:YES];
+        [self setHasHorizontalScroller:YES];
         
         [content setDataSource:self];
         [content setDelegate:self];
@@ -280,7 +294,10 @@ namespace GUIKIT {
     auto pTreeViewItem::remove(TreeViewItem& item) -> void {
         item.p.invalidateParent();
         @autoreleasepool {
-            if (parentTreeView()) [[(id)parentTreeView()->p.cocoaView content] reloadData];
+            if (parentTreeView()) {
+                parentTreeView()->p.maximumLength = 0;
+                [[(id)parentTreeView()->p.cocoaView content] reloadData];
+            }
         }
     }
     
@@ -290,7 +307,10 @@ namespace GUIKIT {
         }
         treeViewItem.state.items.clear();
         @autoreleasepool {
-            if (parentTreeView()) [[(id)parentTreeView()->p.cocoaView content] reloadData];
+            if (parentTreeView()) {
+                parentTreeView()->p.maximumLength = 0;
+                [[(id)parentTreeView()->p.cocoaView content] reloadData];
+            }
         }
     }
 
@@ -386,6 +406,7 @@ namespace GUIKIT {
     
     auto pTreeView::remove(TreeViewItem& item) -> void {
         item.p.invalidateParent();
+        maximumLength = 0;
         @autoreleasepool {
             [[(id)cocoaView content] reloadData];
         }
@@ -396,6 +417,7 @@ namespace GUIKIT {
             item->p.invalidateParent();
         }
         treeView.state.items.clear();
+        maximumLength = 0;
         @autoreleasepool {
             [[(id)cocoaView content] reloadData];
         }

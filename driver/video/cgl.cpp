@@ -1,5 +1,6 @@
 
 #define GL_ALPHA_TEST 0x0bc0
+#define GL_SILENCE_DEPRECATION
 #include "thread/renderThread.h"
 #include <Cocoa/Cocoa.h>
 #include "opengl3/gl3.cpp"
@@ -22,8 +23,8 @@ struct CGL : public Video, GL3, RenderThread {
     VideoCGL* view = nullptr;
     NSRect area;
     NSView* handle;
-    NSOpenGLPixelFormat* format = nullptr;
-    NSOpenGLContext* cglContext = nullptr;
+    NSOpenGLPixelFormat* format = nil;
+    NSOpenGLContext* cglContext = nil;
     bool hasRendererContext = false;
     bool useVRR = false;
     bool useResizing = false;
@@ -59,7 +60,7 @@ struct CGL : public Video, GL3, RenderThread {
         settings.useShaderCache = state;
     }
     
-    bool init() {
+    auto init() -> bool {
         term();
         bool res;
         // before Mojave
@@ -138,7 +139,7 @@ struct CGL : public Video, GL3, RenderThread {
         GLUtility::sharedMutex.unlock();
     }
 
-    bool init(uintptr_t _handle) {
+    auto init(uintptr_t _handle) -> bool {
         handle = (NSView*) _handle;
         return init();
     }
@@ -150,14 +151,23 @@ struct CGL : public Video, GL3, RenderThread {
         useResizing = state;
     }
 
-    void term() {
+    auto term() -> void {
         wait();
         GL3::term();
 
-        @autoreleasepool {
-            //[view removeFromSuperview];
-            [view release];
+        if (view) {
+            [view removeFromSuperview]; // releases view too
             view = nil;
+        }
+        
+        if (format) {
+            [format release];
+            format = nil;
+        }
+        
+        if (cglContext) {
+            [cglContext release];
+            cglContext = nil;
         }
     }
 
@@ -170,7 +180,7 @@ struct CGL : public Video, GL3, RenderThread {
             shaderReady = false;
         }
 
-        if (settings.threaded)
+        if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
         
         bool _useResizing = useResizing;
@@ -205,7 +215,7 @@ struct CGL : public Video, GL3, RenderThread {
         if (!shaderPasses) // YUV input needs a shader to progress it
             return false;
 
-        if (settings.threaded)
+        if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
         bool _useResizing = useResizing;
@@ -285,7 +295,7 @@ struct CGL : public Video, GL3, RenderThread {
     }
     
     auto changeThreadPriorityToRealtime(bool state) -> void {
-        if (settings.threaded) {
+        if (threadEnabled) {
             wait();
             changePriorityToRealtime(state);
         }
@@ -318,7 +328,7 @@ struct CGL : public Video, GL3, RenderThread {
             return;
 
 //        if (NSAppKitVersionNumber < NSAppKitVersionNumber10_14) // before Mojave
-        _redraw(false, settings.threaded ? getLastBufferToRender() : nullptr);
+        _redraw(false, threadEnabled ? getLastBufferToRender() : nullptr);
         
         resizeMutexThreaded.unlock();
         resizeMutex.unlock();
@@ -326,14 +336,14 @@ struct CGL : public Video, GL3, RenderThread {
 
     void redraw(bool disallowShader = false) {
         makeCurrent(true);
-        _redraw(disallowShader, settings.threaded ? getLastBufferToRender() : nullptr);
+        _redraw(disallowShader, threadEnabled ? getLastBufferToRender() : nullptr);
         
         if (useResizing)
             clearCurrent();
     }
     
     auto unlockAndRedraw() -> void {
-        if (settings.threaded) {
+        if (threadEnabled) {
             resizeWindow();
             RenderThread::unlock();
         } else {
@@ -462,21 +472,18 @@ struct CGL : public Video, GL3, RenderThread {
     
     auto setThreaded(bool state) -> void {
 
-        if (state != settings.threaded) {
-            wait();
+        if (state != threadEnabled) {
             RenderThread::enable(state);
-
             RenderThread::reset();
+            
             auto& tex = frame.textures[0];
             tex.width = 0, tex.height = 0;
-
-            settings.threaded = state;
 
             clearCurrent();
         }
     }
 
-    auto hasThreaded() -> bool { return settings.threaded; }
+    auto hasThreaded() -> bool { return threadEnabled; }
 
     auto setShader(ShaderPreset* preset) -> void {
         wait();
@@ -502,7 +509,7 @@ struct CGL : public Video, GL3, RenderThread {
     
     auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        if (settings.threaded) {
+        if (threadEnabled) {
             screenText.updateMessage(message, critical, false);
         } else {
             makeCurrent(true);
@@ -651,11 +658,7 @@ struct CGL : public Video, GL3, RenderThread {
 }
 
 -(void) reshape {
-    return;
 
-    video->makeCurrent();
-    video->_redraw(video->options & DRIVER::OPT_DisallowShader, video->settings.threaded ? video->getLastBufferToRender() : nullptr);
-    video->clearCurrent();
 }
 
 @end

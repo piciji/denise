@@ -859,6 +859,8 @@ auto VideoManager::enableCrtThread( bool state) -> void {
         } else {
             re->kill = true;
             re->cv.notify_one();
+            while (re->kill)
+                std::this_thread::yield();
         }
     }
 

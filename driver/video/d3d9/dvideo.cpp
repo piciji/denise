@@ -57,7 +57,6 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         bool hintExclusiveFullscreen = false;
         float exclusiveFullscreenRate = 0.0;
         bool exclusiveFullscreen = false;
-        bool threaded = false;
         Rotation rotation;
         bool vrr = false;
     } settings;
@@ -386,7 +385,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 	
     auto unlockAndRedraw() -> void {
 
-        if (settings.threaded) {
+        if (threadEnabled) {
             resizeMutex.lock();
             RenderThread::unlock();
             resizeMutex.unlock();
@@ -630,7 +629,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
                 return false;
         }
 
-        if (settings.threaded) {
+        if (threadEnabled) {
             if( settings.synchronize && IsIconic( settings.parent ) ) {
                 wait();
                 return false;
@@ -781,8 +780,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
     auto setThreaded(bool state) -> void {
 
-        if (state != settings.threaded) {
-            wait();
+        if (state != threadEnabled) {
             RenderThread::enable(state);
 
             textureWidth = 0, textureHeight = 0;
@@ -793,15 +791,13 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
                 else
                     init();
             }
-			
-            settings.threaded = state;
         }
     }
 
-    auto hasThreaded() -> bool { return settings.threaded; }
+    auto hasThreaded() -> bool { return threadEnabled; }
 
     auto showMessage(std::string message, bool critical = false) -> void {
-        if (settings.threaded)
+        if (threadEnabled)
             noteMutex.lock();
 
         note.enable = !message.empty();
@@ -817,7 +813,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             note.fontColor = D3DCOLOR_ARGB(155, 255, 255, 255);
 
         out:
-        if (settings.threaded)
+        if (threadEnabled)
             noteMutex.unlock();
     }
 
@@ -942,7 +938,6 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         settings.handle = nullptr;
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
-        settings.threaded = false;
 		settings.vrr = false;
         settings.rotation = ROT_0;
 

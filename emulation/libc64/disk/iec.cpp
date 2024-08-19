@@ -75,6 +75,8 @@ IecBus::~IecBus() {
         idle.store(0);
         kill.store(1);
         cv.notify_one();
+        while (kill)
+            std::this_thread::yield();
     }
 
     for( auto drive : drives )

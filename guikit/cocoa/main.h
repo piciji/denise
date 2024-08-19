@@ -407,6 +407,7 @@ struct pTreeViewItem {
     
 struct pTreeView : pWidget {
     TreeView& treeView;
+    unsigned maximumLength = 0;
     
     auto append(TreeViewItem& item) -> void;
     auto remove(TreeViewItem& item) -> void;

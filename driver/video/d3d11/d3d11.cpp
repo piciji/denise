@@ -125,8 +125,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         bool linearFilter = true;
 
         HWND handle;
-        bool threaded = false;
-
         bool vrr = false;
 
         std::string message = "";
@@ -171,7 +169,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
         settings.rotation = ROT_0;
-        settings.direction = 1;;
+        settings.direction = 1;
         settings.useShaderCache = false;
         options = 0;
         progressDegree = 0;
@@ -331,19 +329,17 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     }
 
     auto setThreaded(bool state) -> void {
-        if (state != settings.threaded) {
-            wait();
+        if (state != threadEnabled) {
             RenderThread::enable(state);
             RenderThread::reset();
             frame.textures[0].desc.Width = 0;
             frame.textures[0].desc.Height = 0;
-            settings.threaded = state;
         }
     }
 
-    auto hasThreaded() -> bool { return settings.threaded; }
+    auto hasThreaded() -> bool { return threadEnabled; }
 
-    auto waitRenderThread() -> void { if (settings.threaded) wait(); }
+    auto waitRenderThread() -> void { if (threadEnabled) wait(); }
 
     auto setIntegerScalingDimension( unsigned _w, unsigned _h, bool _ds) -> void {
         viewScreen.scaling.width = _w;
@@ -979,7 +975,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             shaderReady = false;
         }
 
-        if (settings.threaded)
+        if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
         this->options = options;
@@ -1018,7 +1014,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if (!shaderPasses) // YUV input needs a shader to progress it
             return false;
 
-        if (settings.threaded)
+        if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
         this->options = options;
@@ -1051,7 +1047,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     }
 
     auto unlockAndRedraw() -> void {
-        if (settings.threaded) {
+        if (threadEnabled) {
             RenderThread::unlock();
             return;
         }
@@ -1534,7 +1530,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if (settings.message != message || settings.msgCritical != critical) {
             settings.message = message;
             settings.msgCritical = critical;
-            if (settings.threaded)
+            if (threadEnabled)
                 settings.msgUpdated = true;
             else
                 buildMessageTexture(message);

@@ -39,7 +39,42 @@ auto SpirvReflection::preProcessBindNames(const std::string& prefix, const std::
             compiler.unset_decoration(res.id, spv::DecorationBinding);
     }
 }
+#ifdef __APPLE__
+auto SpirvReflection::preProcessRemapPush(spirv_cross::CompilerMSL& compiler, spirv_cross::ShaderResources& resources) -> void {
+    
+    for (const spirv_cross::Resource& resource : resources.push_constant_buffers) {
+        spirv_cross::MSLResourceBinding binding;
+        binding.stage = compiler.get_execution_model();
+        binding.desc_set = spirv_cross::kPushConstDescSet;
+        binding.binding = spirv_cross::kPushConstBinding;
 
+        binding.basetype = spirv_cross::SPIRType::Unknown;
+        binding.count = 0;
+        binding.msl_buffer = compiler.get_decoration(resource.id, spv::DecorationBinding);
+        binding.msl_texture = 0;
+        binding.msl_sampler = 0;
+        compiler.add_msl_resource_binding(binding);
+    }
+}
+
+auto SpirvReflection::preProcessGenericResources(spirv_cross::CompilerMSL& compiler, spirv_cross::SmallVector<spirv_cross::Resource>& resources) -> void {
+    
+    for (const spirv_cross::Resource& resource : resources) {
+        spirv_cross::MSLResourceBinding binding;
+        binding.stage = compiler.get_execution_model();
+        binding.desc_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+        binding.basetype = spirv_cross::SPIRType::Unknown;
+        binding.count = 0;
+
+        uint32_t msl_binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+        binding.binding = msl_binding;
+        binding.msl_buffer = msl_binding;
+        binding.msl_texture = msl_binding;
+        binding.msl_sampler = msl_binding;
+        compiler.add_msl_resource_binding(binding);
+    }
+}
+#endif
 auto SpirvReflection::process(spirv_cross::Compiler& vCompiler, spirv_cross::Compiler& fCompiler,spirv_cross::ShaderResources& vResources,spirv_cross::ShaderResources& fResources) -> bool {
     clear();
     SpirvBuffer vUbo;

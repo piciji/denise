@@ -238,7 +238,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             PROPERTIES COMPILE_FLAGS "-x objective-c++ -DGUIKIT_COCOA")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_CGL -DDRV_OPENAL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_FREETYPE")
+            PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_OPENAL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_FREETYPE")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang")
@@ -290,11 +290,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/out")
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework OpenAL -framework IOKit -framework Carbon -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit")
+    target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework OpenAL -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit")
     target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
     target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
-    # target_link_libraries(${PROJECT_NAME} "-lc++ -lobjc")
     target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
