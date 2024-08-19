@@ -296,10 +296,10 @@ struct METAL : public Video, RenderThread {
             psd.sampleCount = 1;
             psd.vertexDescriptor = vd;
             
-            NSString* outputShaderStr = [[NSString stringWithUTF8String:MTLOutputShader.c_str()] autorelease];
-            NSString* messageShaderStr = [[NSString stringWithUTF8String:MTLMessageShader.c_str()] autorelease];
-            NSString* dndOverlayShaderStr = [[NSString stringWithUTF8String:MTLDndOverlayShader.c_str()] autorelease];
-            NSString* progressShaderStr = [[NSString stringWithUTF8String:MTLprogressShader.c_str()] autorelease];
+            NSString* outputShaderStr = [NSString stringWithUTF8String:MTLOutputShader.c_str()];
+            NSString* messageShaderStr = [NSString stringWithUTF8String:MTLMessageShader.c_str()];
+            NSString* dndOverlayShaderStr = [NSString stringWithUTF8String:MTLDndOverlayShader.c_str()];
+            NSString* progressShaderStr = [NSString stringWithUTF8String:MTLprogressShader.c_str()];
             
             //MTLCompileOptions* compileOptions = [MTLCompileOptions new];
             //compileOptions.languageVersion = MTLLanguageVersion2_0;
@@ -809,8 +809,8 @@ struct METAL : public Video, RenderThread {
                             if(semBuffer.mask & SpirvReflection::Fragment)
                                 [rce setFragmentBuffer:buffer offset:0 atIndex:semBuffer.binding];
                             
-                         // next command informs GPU, required only for storageModeManaged
-                         // [buffer didModifyRange:NSMakeRange(0, buffer.length)];
+                         // next command informs GPU, required only for storageModeManaged (default on Intel)
+                          [buffer didModifyRange:NSMakeRange(0, buffer.length)];
                         }
                     }
 

@@ -52,7 +52,7 @@ static const std::string MTLMessageShader = R"(
     };
 
     struct UBO {
-        float4 col;
+        vector_float4 col;
     };
 
     using namespace metal;
