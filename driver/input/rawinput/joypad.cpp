@@ -264,10 +264,10 @@ struct RawJoypad {
                 case 0x35:
 				case 0x36: {
                 	if (usageMin == 0x36) {
-                		logger->log("slider");
-                		logger->log(std::to_string(value), 0);
-                		logger->log(std::to_string(data.pValueCaps[i].LogicalMin), 0);
-                		logger->log(std::to_string(data.pValueCaps[i].LogicalMax), 0);
+                		//logger->log("slider");
+                		//logger->log(std::to_string(value), 0);
+                		//logger->log(std::to_string(data.pValueCaps[i].LogicalMin), 0);
+                		//logger->log(std::to_string(data.pValueCaps[i].LogicalMax), 0);
                 	}
 
                     if (pJoypad->isXInputDevice) {
@@ -290,10 +290,10 @@ struct RawJoypad {
                 } break;
 
 				case 0x37:
-					logger->log("dial");
-					logger->log(std::to_string(value), 0);
-					logger->log(std::to_string(data.pValueCaps[i].LogicalMin), 0);
-					logger->log(std::to_string(data.pValueCaps[i].LogicalMax), 0);
+					//logger->log("dial");
+					//logger->log(std::to_string(value), 0);
+					//logger->log(std::to_string(data.pValueCaps[i].LogicalMin), 0);
+					//logger->log(std::to_string(data.pValueCaps[i].LogicalMax), 0);
 					break;
                 
 				case 0x39: // Hat Switch
@@ -347,7 +347,7 @@ struct RawJoypad {
 						pJoypad->hats[dPadHatPos].x = -32768;
 					break;
 				default:
-					logger->log("upd misc " + std::to_string(data.pValueCaps[i].Range.UsageMin));
+					//logger->log("upd misc " + std::to_string(data.pValueCaps[i].Range.UsageMin));
 					break;
 			}
 		}
