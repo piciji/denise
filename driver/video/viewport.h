@@ -38,6 +38,14 @@ struct ViewScreen {
         windowWidth = outputWidth;
         windowHeight = outputHeight;
 
+        if (!outputWidth || !outputHeight) {
+            viewport.x = 0;
+            viewport.y = 0;
+            viewport.width = outputWidth;
+            viewport.height = outputHeight;
+            return;
+        }
+
         unsigned outputTop = 0;
         unsigned outputLeft = 0;
 

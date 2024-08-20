@@ -1503,9 +1503,6 @@
     <ClCompile Include="..\driver\input\rawinput\main.cpp">
       <Filter>driver\input\rawinput</Filter>
     </ClCompile>
-    <ClCompile Include="..\driver\video\wgl.cpp">
-      <Filter>driver\video</Filter>
-    </ClCompile>
     <ClCompile Include="..\driver\video\thread\renderThread.cpp">
       <Filter>driver\video\thread</Filter>
     </ClCompile>
@@ -2078,6 +2075,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libami\input\controlPort\fourPlayerAdapter.cpp">
       <Filter>emulation\libami\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\driver\video\opengl3\wgl.cpp">
+      <Filter>driver\video\opengl3</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

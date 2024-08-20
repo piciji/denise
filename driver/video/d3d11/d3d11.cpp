@@ -584,8 +584,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         descR.ScissorEnable         = false;
         device->CreateRasterizerState(&descR, &scissorDisable);
 
-        viewScreen.update(viewport);
-        setViewport(viewport);
 #ifdef DRV_FREETYPE
         if (ft.init())
             ft.setFontSize(12);
@@ -1127,20 +1125,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             updateRTS = false;
         }
 
-        if (historySize) {
-            if (updateHistory) {
-                auto& mainTex = frame.textures[0];
-                for(int i = 1; i <= historySize; i++)
-                    initMainTexture( mainTex.desc.Width, mainTex.desc.Height, i );
-                updateHistory = false;
-            } else {
-                D3DTexture tmp = frame.textures[historySize];
-                for (int i = historySize; i > 0; i--)
-                    frame.textures[i] = frame.textures[i - 1];
-                frame.textures[0] = tmp;
-            }
-        }
-
         context->RSSetState(scissorDisable);
         context->OMSetBlendState(blendDisable, nullptr, D3D11_DEFAULT_SAMPLE_MASK);
         context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -1231,6 +1215,20 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
                     context->CopySubresourceRegion((ID3D11Resource*)p.renderTarget.ptr, 0, 0, 0, 0, (ID3D11Resource*)p.cropTarget.ptr, 0, &p.cropBox);
 
                 texture = &p.renderTarget;
+            }
+
+            if (historySize) {
+                if (updateHistory) {
+                    auto& mainTex = frame.textures[0];
+                    for(int i = 1; i <= historySize; i++)
+                        initMainTexture( mainTex.desc.Width, mainTex.desc.Height, i );
+                    updateHistory = false;
+                } else {
+                    D3DTexture tmp = frame.textures[historySize];
+                    for (int i = historySize; i > 0; i--)
+                        frame.textures[i] = frame.textures[i - 1];
+                    frame.textures[0] = tmp;
+                }
             }
         }
 
@@ -1720,6 +1718,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     auto updateRotation() -> void {
         viewScreen.flipped = settings.rotation == ROT_90 || settings.rotation == ROT_270;
         viewScreen.update(viewport);
+        updateFrameSize();
+
         float radian = (float)settings.rotation * 90.0 * (M_PI / 180.0f);
         D3D11_MAPPED_SUBRESOURCE mapped;
         Matrix4x4 rot = {
@@ -1735,6 +1735,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     }
 
     auto updateFrameSize() -> void {
+        if (!viewport.width || !viewport.height)
+            return;
+
         frame.size.x = viewport.width;
         frame.size.y = viewport.height;
         frame.size.z = 1.0f / (float)viewport.width;

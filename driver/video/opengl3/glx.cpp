@@ -1,6 +1,6 @@
 
-#include "thread/renderThread.h"
-#include "opengl3/gl3.cpp"
+#include "../thread/renderThread.h"
+#include "gl3.cpp"
 #include <gdk/gdkx.h>
 
 #define GLX_CONTEXT_MAJOR_VERSION_ARB 0x2091

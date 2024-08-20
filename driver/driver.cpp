@@ -31,15 +31,15 @@
 #endif
 
 #ifdef DRV_WGL
-	#include "video/wgl.cpp"
+	#include "video/opengl3/wgl.cpp"
 #endif
 
 #ifdef DRV_CGL
-	#include "video/cgl.cpp"
+	#include "video/opengl3/cgl.cpp"
 #endif
 
 #ifdef DRV_GLX
-	#include "video/glx.cpp"
+	#include "video/opengl3/glx.cpp"
 #endif
 
 #ifdef DRV_METAL

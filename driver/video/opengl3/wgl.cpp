@@ -1,6 +1,6 @@
 
-#include "thread/renderThread.h"
-#include "opengl3/gl3.cpp"
+#include "../thread/renderThread.h"
+#include "gl3.cpp"
 
 #define WGL_CONTEXT_MAJOR_VERSION_ARB 0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB 0x2092

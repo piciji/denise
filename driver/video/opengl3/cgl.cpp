@@ -1,9 +1,9 @@
 
 #define GL_ALPHA_TEST 0x0bc0
 #define GL_SILENCE_DEPRECATION
-#include "thread/renderThread.h"
+#include "../thread/renderThread.h"
 #include <Cocoa/Cocoa.h>
-#include "opengl3/gl3.cpp"
+#include "gl3.cpp"
 #define NSAppKitVersionNumber10_14 1671
 
 namespace DRIVER { struct CGL; }

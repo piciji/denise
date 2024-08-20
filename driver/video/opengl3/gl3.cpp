@@ -579,15 +579,16 @@ End:
 
         progressVisible = true;
         int _sid = shaderId;
-        bool useCache = settings.useShaderCache;
-        if (useCache) {
+        int cacheMode = !!settings.useShaderCache;
+        if (cacheMode) {
             GLint formats = 0;
             glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &formats);
-            useCache = formats > 0; // no support for shader cache
+            if (formats > 0) // check support for shader binary cache
+                cacheMode = 2;
         }
         uintptr_t context = getContext();
 
-        std::thread worker([this, _programs, _luts, _sid, useCache, context] {
+        std::thread worker([this, _programs, _luts, _sid, cacheMode, context] {
             static std::string prefix = "glsl";
 
             ShaderCache shaderCache( prefix );
@@ -610,7 +611,7 @@ End:
                 GLuint vCompiled = 0;
                 GLuint fCompiled = 0;
 
-                if (useCache)
+                if (cacheMode)
                     cacheSuccess = shaderCache.read(p->codeVertex, p->codeFragment, p->reflection);
 
                 if (!cacheSuccess) {
@@ -684,26 +685,54 @@ End:
                         goto Next;
                     }
 
-                    if (useCache) {
-                        uint8_t* binary = nullptr;
-                        GLsizei binaryLength = 0;
-                        GLenum binaryFormat = 0;
-                        if (GLUtility::getBinary(p->prg, binaryFormat, binary, binaryLength)) {
-                            shaderCache.write(binary, binaryLength, (uint8_t*) (uintptr_t) &binaryFormat,
-                                              sizeof(binaryFormat), p->reflection);
+                    if (cacheMode) {
+                        if (cacheMode == 2) {
+                            uint8_t* binary = nullptr;
+                            GLsizei binaryLength = 0;
+                            GLenum binaryFormat = 0;
+                            if (GLUtility::getBinary(p->prg, binaryFormat, binary, binaryLength)) {
+                                shaderCache.write(binary, binaryLength, (uint8_t*) (uintptr_t) &binaryFormat,
+                                                  sizeof(binaryFormat), p->reflection);
 
-                            if (binary)
-                                delete[] binary;
+                                if (binary)
+                                    delete[] binary;
+                            }
+                        } else {
+                            shaderCache.write((uint8_t*)nativeV.data(), nativeV.size(), (uint8_t*)nativeF.data(), nativeF.size(), p->reflection);
                         }
                     }
 
                 } else {
-                    GLenum binaryFormat = copyBufferToInt<GLenum>(shaderCache.nativeF);
-                    const void* binary = (const void*)shaderCache.nativeV;
-                    GLsizei binaryLength = shaderCache.vertexSize;
-                    p->prg = GLUtility::createProgram(binaryFormat, binary, binaryLength, p->error);
+                    if (cacheMode == 2) {
+                        GLenum binaryFormat = copyBufferToInt<GLenum>(shaderCache.nativeF);
+                        const void* binary = (const void*)shaderCache.nativeV;
+                        GLsizei binaryLength = shaderCache.vertexSize;
+                        p->prg = GLUtility::createProgram(binaryFormat, binary, binaryLength, p->error);
+
+                    } else {
+                        nativeV.assign((char*)shaderCache.nativeV, shaderCache.vertexSize);
+                        nativeF.assign((char*)shaderCache.nativeF, shaderCache.fragmentSize);
+
+                        vCompiled = GLUtility::createShader(GL_VERTEX_SHADER, nativeV.c_str(), p->error);
+
+                        if (!vCompiled) {
+                            p->error = "GLSL Vertex Shader #" + std::to_string(i) + " from cache (CLEAR CACHE!) compilation error: " + p->error + "\n";
+                            success = false;
+                            goto Next;
+                        }
+
+                        fCompiled = GLUtility::createShader(GL_FRAGMENT_SHADER, nativeF.c_str(), p->error);
+                        if (!fCompiled) {
+                            p->error = "GLSL Fragment Shader #" + std::to_string(i) + " from cache (CLEAR CACHE!) compilation error: " + p->error + "\n";
+                            success = false;
+                            goto Next;
+                        }
+
+                        p->prg = GLUtility::createProgram(vCompiled, fCompiled, p->error);
+                    }
+
                     if (!p->prg) {
-                        p->error = "GLSL Program #" + std::to_string(i) + " create from binary error: " + p->error + "\n";
+                        p->error = "GLSL Program #" + std::to_string(i) + " create from cache (CLEAR CACHE!) error: " + p->error + "\n";
                         success = false;
                         goto Next;
                     }
