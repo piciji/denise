@@ -12,9 +12,7 @@ MemoryPatternLayout::FirstLine::FirstLine() {
     
     unsigned i = 2;
     while(i < (64 * 1024)) {
-        
         invertValueEveryCombo.append( std::to_string(i) + " bytes", i );
-        
         i <<= 1;
     }
     
@@ -22,6 +20,26 @@ MemoryPatternLayout::FirstLine::FirstLine() {
 }
 
 MemoryPatternLayout::SecondLine::SecondLine() {
+    append( valueLabel, {0u, 0u}, 10 );
+    append( valueStepper, {0u, 0u}, 10 );
+    append( invertValueEveryLabel, {0u, 0u}, 10 );
+    append( invertValueEveryCombo, {0u, 0u} );
+
+    valueStepper.setRange(0, 0xff);
+
+    invertValueEveryCombo.append( "0 bytes", 0 );
+    invertValueEveryCombo.append( "1 byte", 1 );
+
+    unsigned i = 2;
+    while(i < (64 * 1024)) {
+        invertValueEveryCombo.append( std::to_string(i) + " bytes", i );
+        i <<= 1;
+    }
+
+    setAlignment(0.5);
+}
+
+MemoryPatternLayout::ThirdLine::ThirdLine() {
     
     append( lengthRandomLabel, {0u, 0u}, 10 );
     append( lengthRandomCombo, {0u, 0u}, 10 );
@@ -35,7 +53,6 @@ MemoryPatternLayout::SecondLine::SecondLine() {
     
     unsigned i = 2;
     while (i < (64 * 1024)) {
-
         lengthRandomCombo.append(std::to_string(i) + " bytes", i);
         repeatRandomEveryCombo.append(std::to_string(i) + " bytes", i);
 
@@ -45,20 +62,32 @@ MemoryPatternLayout::SecondLine::SecondLine() {
     setAlignment(0.5);
 }
 
-MemoryPatternLayout::ThirdLine::ThirdLine() {
+MemoryPatternLayout::FourthLine::FourthLine() {
     
     append( randomChanceLabel, {0u, 0u}, 10 );
-    append( randomChanceStepper, {0u, 0u} );
+    append( randomChanceStepper, {0u, 0u}, 10 );
+    append( offsetLabel, {0u, 0u}, 10 );
+    append( offsetCombo, {0u, 0u} );
     
     randomChanceStepper.setRange(0, 1000);
+
+    offsetCombo.append( "0 bytes", 0 );
+    offsetCombo.append( "1 byte", 1 );
+
+    unsigned i = 2;
+    while(i < (64 * 1024)) {
+        offsetCombo.append( std::to_string(i) + " bytes", i );
+        i <<= 1;
+    }
     
     setAlignment(0.5);
 }
 
-MemoryPatternLayout::FourthLine::FourthLine() {
+MemoryPatternLayout::FifthLine::FifthLine() {
 
     append( preConfigured1, {0u, 0u}, 10 );
-    append( preConfigured2, {0u, 0u} );
+    append( preConfigured2, {0u, 0u}, 10 );
+    append( preConfigured3, {0u, 0u} );
 
     setAlignment(0.5);
 }
@@ -75,8 +104,9 @@ MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     append( firstLine, {0u, 0u}, 10 );
     append( secondLine, {0u, 0u}, 10 );
     append( thirdLine, {0u, 0u}, 10 );
+    append( fourthLine, {0u, 0u}, 10 );
     append( preview, {size.width + tabWindow->getScrollbarWidth(), size.height * 17}, 10 );
-    append( fourthLine, {0u, 0u} );
+    append( fifthLine, {0u, 0u} );
     
     preview.setFont( GUIKIT::Font::system("", true) );
     preview.setForegroundColor( 0x5a5e63 );
@@ -242,58 +272,111 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
             this->updateMemoryPreview();
         };
+
+        memoryPattern->secondLine.valueStepper.onChange = [this]() {
+
+            _settings->set<unsigned>("memory_second_value", (unsigned)(memoryPattern->secondLine.valueStepper.getValue()));
+
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->secondLine.invertValueEveryCombo.onChange = [this]() {
+
+            _settings->set<unsigned>("memory_second_invert_every", (unsigned)(memoryPattern->secondLine.invertValueEveryCombo.userData()));
+
+            this->updateMemoryPreview();
+        };
         
-        memoryPattern->secondLine.lengthRandomCombo.onChange = [this]() {
+        memoryPattern->thirdLine.lengthRandomCombo.onChange = [this]() {
 
-            _settings->set<unsigned>("memory_random_pattern", (unsigned)(memoryPattern->secondLine.lengthRandomCombo.userData()));
-
-            this->updateMemoryPreview();
-        };
-
-        memoryPattern->secondLine.repeatRandomEveryCombo.onChange = [this]() {
-
-            _settings->set<unsigned>("memory_random_repeat", (unsigned) (memoryPattern->secondLine.repeatRandomEveryCombo.userData()));
+            _settings->set<unsigned>("memory_random_pattern", (unsigned)(memoryPattern->thirdLine.lengthRandomCombo.userData()));
 
             this->updateMemoryPreview();
         };
 
-        memoryPattern->thirdLine.randomChanceStepper.onChange = [this]() {
+        memoryPattern->thirdLine.repeatRandomEveryCombo.onChange = [this]() {
 
-            _settings->set<unsigned>("random_chance", (unsigned) (memoryPattern->thirdLine.randomChanceStepper.getValue()));
+            _settings->set<unsigned>("memory_random_repeat", (unsigned) (memoryPattern->thirdLine.repeatRandomEveryCombo.userData()));
 
             this->updateMemoryPreview();
         };
 
-        memoryPattern->fourthLine.preConfigured1.onActivate = [this]() {
+        memoryPattern->fourthLine.randomChanceStepper.onChange = [this]() {
 
+            _settings->set<unsigned>("random_chance", (unsigned) (memoryPattern->fourthLine.randomChanceStepper.getValue()));
+
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->fourthLine.offsetCombo.onChange = [this]() {
+
+            _settings->set<unsigned>("memory_offset", (unsigned) (memoryPattern->fourthLine.offsetCombo.userData()));
+
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->fifthLine.preConfigured1.onActivate = [this]() {
+            memoryPattern->firstLine.valueStepper.setValue(0);
+            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(4);
+            memoryPattern->secondLine.valueStepper.setValue(255);
+            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(16384);
+            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(0);
+            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(0);
+            memoryPattern->fourthLine.randomChanceStepper.setValue(1);
+            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(2);
+
+            _settings->set<unsigned>("memory_value", 0);
+            _settings->set<unsigned>("memory_invert_every", 4);
+            _settings->set<unsigned>("memory_second_value", 255);
+            _settings->set<unsigned>("memory_second_invert_every", 16384);
+            _settings->set<unsigned>("memory_random_pattern", 0);
+            _settings->set<unsigned>("memory_random_repeat", 0);
+            _settings->set<unsigned>("random_chance", 1);
+            _settings->set<unsigned>("memory_offset", 2);
+
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->fifthLine.preConfigured2.onActivate = [this]() {
             memoryPattern->firstLine.valueStepper.setValue(0);
             memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(64);
-            memoryPattern->secondLine.lengthRandomCombo.setSelectionByUserId(0);
-            memoryPattern->secondLine.repeatRandomEveryCombo.setSelectionByUserId(0);
-            memoryPattern->thirdLine.randomChanceStepper.setValue(0);
+            memoryPattern->secondLine.valueStepper.setValue(0);
+            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(0);
+            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(0);
+            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(0);
+            memoryPattern->fourthLine.randomChanceStepper.setValue(0);
+            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(0);
 
             _settings->set<unsigned>("memory_value", 0);
             _settings->set<unsigned>("memory_invert_every", 64);
+            _settings->set<unsigned>("memory_second_value", 0);
+            _settings->set<unsigned>("memory_second_invert_every", 0);
             _settings->set<unsigned>("memory_random_pattern", 0);
             _settings->set<unsigned>("memory_random_repeat", 0);
             _settings->set<unsigned>("random_chance", 0);
+            _settings->set<unsigned>("memory_offset", 0);
 
             this->updateMemoryPreview();
         };
 
-        memoryPattern->fourthLine.preConfigured2.onActivate = [this]() {
-
+        memoryPattern->fifthLine.preConfigured3.onActivate = [this]() {
             memoryPattern->firstLine.valueStepper.setValue(256);
             memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(64);
-            memoryPattern->secondLine.lengthRandomCombo.setSelectionByUserId(1);
-            memoryPattern->secondLine.repeatRandomEveryCombo.setSelectionByUserId(256);
-            memoryPattern->thirdLine.randomChanceStepper.setValue(0);
+            memoryPattern->secondLine.valueStepper.setValue(0);
+            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(0);
+            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(1);
+            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(256);
+            memoryPattern->fourthLine.randomChanceStepper.setValue(0);
+            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(0);
 
             _settings->set<unsigned>("memory_value", 255);
             _settings->set<unsigned>("memory_invert_every", 64);
+            _settings->set<unsigned>("memory_second_value", 0);
+            _settings->set<unsigned>("memory_second_invert_every", 0);
             _settings->set<unsigned>("memory_random_pattern", 1);
             _settings->set<unsigned>("memory_random_repeat", 256);
             _settings->set<unsigned>("random_chance", 0);
+            _settings->set<unsigned>("memory_offset", 0);
 
             this->updateMemoryPreview();
         };
@@ -787,38 +870,31 @@ auto ConfigurationsLayout::loadSettings() -> void {
     stateFolder.pathEdit.setText(_settings->get<std::string>("states_folder", ""));
     
     if(memoryPattern) {
-        uint8_t value = _settings->get<unsigned>("memory_value", 255);
-        unsigned invertEvery = _settings->get<unsigned>("memory_invert_every", 64);
-        unsigned randomPatternLength = _settings->get<unsigned>("memory_random_pattern", 1);
-        unsigned repeatRandomPattern = _settings->get<unsigned>("memory_random_repeat", 256);
-        unsigned randomChance = _settings->get<unsigned>("random_chance", 0);
+        Emulator::Interface::MemoryPattern pattern;
+        program->getMemoryPatternFromConfig(emulator, pattern);
         
-        memoryPattern->firstLine.valueStepper.setValue( value );
-        memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId( invertEvery );
+        memoryPattern->firstLine.valueStepper.setValue( pattern.value );
+        memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId( pattern.invertEvery );
+        memoryPattern->secondLine.valueStepper.setValue( pattern.secondValue );
+        memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId( pattern.secondInvertEvery );
         
-        memoryPattern->secondLine.lengthRandomCombo.setSelectionByUserId( randomPatternLength );
-        memoryPattern->secondLine.repeatRandomEveryCombo.setSelectionByUserId( repeatRandomPattern );
+        memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId( pattern.randomPatternLength );
+        memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId( pattern.repeatRandomPattern );
         
-        memoryPattern->thirdLine.randomChanceStepper.setValue( randomChance );
+        memoryPattern->fourthLine.randomChanceStepper.setValue( pattern.randomChance );
+        memoryPattern->fourthLine.offsetCombo.setSelectionByUserId( pattern.offset );
         
         updateMemoryPreview();
     }
 }
 
 auto ConfigurationsLayout::updateMemoryPreview() -> void {
-    
-    uint8_t value = _settings->get<unsigned>("memory_value", 255);
-    unsigned invertEvery = _settings->get<unsigned>("memory_invert_every", 64);
-    unsigned randomPatternLength = _settings->get<unsigned>("memory_random_pattern", 1);
-    unsigned repeatRandomPattern = _settings->get<unsigned>("memory_random_repeat", 256);
-    unsigned randomChance = _settings->get<unsigned>("random_chance", 0);
-    
+    program->setMemoryPattern(emulator);
+
     unsigned size = emulator->getMemorySize();
     
     uint8_t* pattern = new uint8_t[ size ];
-    
-    emulator->setMemoryInitParams( value, invertEvery, randomPatternLength, repeatRandomPattern, randomChance );
-    
+
     emulator->getMemoryInitPattern( pattern );
     
     char hex[6];
@@ -905,18 +981,23 @@ auto ConfigurationsLayout::translate() -> void {
     if(memoryPattern) {
         memoryPattern->setText( trans->get("memory reset initialisation") );
 
-        memoryPattern->firstLine.valueLabel.setText( trans->get( "value memory cell", {}, true ) );
-        memoryPattern->firstLine.invertValueEveryLabel.setText( trans->get( "invert value every", {}, true ) );
+        memoryPattern->firstLine.valueLabel.setText( trans->getA( "value memory cell", true ) );
+        memoryPattern->firstLine.invertValueEveryLabel.setText( trans->getA( "invert value every", true ) );
 
-        memoryPattern->secondLine.lengthRandomLabel.setText( trans->get( "length random pattern", {}, true ) );
-        memoryPattern->secondLine.repeatRandomEveryLabel.setText( trans->get( "repeat random every", {}, true ) );
+        memoryPattern->secondLine.valueLabel.setText( trans->getA( "second value memory cell", true ) );
+        memoryPattern->secondLine.invertValueEveryLabel.setText( trans->getA( "invert second value every", true ) );
 
-        memoryPattern->thirdLine.randomChanceLabel.setText( trans->get( "random chance", {}, true ) );
+        memoryPattern->thirdLine.lengthRandomLabel.setText( trans->getA( "length random pattern", true ) );
+        memoryPattern->thirdLine.repeatRandomEveryLabel.setText( trans->getA( "repeat random every", true ) );
 
-        memoryPattern->fourthLine.preConfigured1.setText( trans->get( "pre-configured 1" ) );
-        memoryPattern->fourthLine.preConfigured2.setText( trans->get( "pre-configured 2" ) );
+        memoryPattern->fourthLine.randomChanceLabel.setText( trans->getA( "random chance", true ) );
+        memoryPattern->fourthLine.offsetLabel.setText( trans->getA( "first byte offset", true ) );
 
-        GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine} );
+        memoryPattern->fifthLine.preConfigured1.setText( trans->get( "pre-configured 1" ) );
+        memoryPattern->fifthLine.preConfigured2.setText( trans->get( "pre-configured 2" ) );
+        memoryPattern->fifthLine.preConfigured3.setText( trans->get( "pre-configured 3" ) );
+
+        GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine, &memoryPattern->fourthLine} );
 
         memoryPattern->updateLayout();
     }

@@ -619,30 +619,35 @@ auto System::powerOff() -> void {
 
 auto System::initRam(uint8_t*& mem) -> void {
     uint8_t j, k, value;
+    Emulator::Rand rand;
+    rand.initXorShift(0x1234abcd + (Emulator::Rand::rand() & 0xffff) );
 
     for (unsigned i = 0; i <= 0xffff; i++) {
 
-        j = 0;
+        j = k = 0;
 
         if (memoryInit.invertEvery)
-            j = ((i / memoryInit.invertEvery) & 1) ? 0xff : 0x00;
+            j = (((i + memoryInit.offset) / memoryInit.invertEvery) & 1) ? 0xff : 0x00;
 
-        value = memoryInit.value ^ j;
+        if (memoryInit.secondInvertEvery)
+            k = ((i / memoryInit.secondInvertEvery) & 1) ? memoryInit.secondValue : 0x00;
+
+        value = memoryInit.value ^ j ^ k;
 
         j = k = 0;
 
         if (memoryInit.randomPatternLength && memoryInit.repeatRandomPattern)
-            k = ((i % memoryInit.repeatRandomPattern) < memoryInit.randomPatternLength) ? Emulator::Rand::rand(0, 0xff) : 0;
+            k = ((i % memoryInit.repeatRandomPattern) < memoryInit.randomPatternLength) ? (Emulator::Rand::rand() & 0xff) : 0;
 
         if (memoryInit.randomChance) {
-            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x80 : 0;
-            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x40 : 0;
-            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x20 : 0;
-            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x10 : 0;
-            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x08 : 0;
-            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x04 : 0;
-            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x02 : 0;
-            j |= Emulator::Rand::rand(0, 1000) < memoryInit.randomChance ? 0x01 : 0;
+            j |= rand.xorShift(0, 1000) < memoryInit.randomChance ? 0x80 : 0;
+            j |= rand.xorShift(0, 1000) < memoryInit.randomChance ? 0x40 : 0;
+            j |= rand.xorShift(0, 1000) < memoryInit.randomChance ? 0x20 : 0;
+            j |= rand.xorShift(0, 1000) < memoryInit.randomChance ? 0x10 : 0;
+            j |= rand.xorShift(0, 1000) < memoryInit.randomChance ? 0x08 : 0;
+            j |= rand.xorShift(0, 1000) < memoryInit.randomChance ? 0x04 : 0;
+            j |= rand.xorShift(0, 1000) < memoryInit.randomChance ? 0x02 : 0;
+            j |= rand.xorShift(0, 1000) < memoryInit.randomChance ? 0x01 : 0;
         }
 
         value ^= k ^ j;

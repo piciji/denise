@@ -299,6 +299,17 @@ struct Interface {
         unsigned size;
     };
 
+    struct MemoryPattern {
+        uint8_t value = 0;
+        unsigned invertEvery = 2;
+        unsigned offset = 4;
+        uint8_t secondValue = 255;
+        unsigned secondInvertEvery = 16384;
+        unsigned randomPatternLength = 0;
+        unsigned repeatRandomPattern = 0;
+        unsigned randomChance = 1;
+    };
+
     //callbacks
     struct Bind {
         virtual auto jitPoll(int) -> bool { return false; }
@@ -544,7 +555,7 @@ struct Interface {
     virtual auto informAboutKeyUpdate() -> void {}
     virtual auto sendKeyChange(bool pressed, Device::Input* input) -> void {}
 
-    virtual auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void {}
+    virtual auto setMemoryInitParams(MemoryPattern& pattern) -> void {}
     virtual auto getMemoryInitPattern( uint8_t* pattern ) -> void {}
     virtual auto getMemorySize() -> unsigned { return 0; }
     virtual auto setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void {}

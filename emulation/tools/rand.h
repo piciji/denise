@@ -25,6 +25,11 @@ struct Rand {
         return xorShift32 ^= (xorShift32 << 5);
     }
 
+    auto xorShift( unsigned min, unsigned max ) -> unsigned {
+
+        return min + xorShift() % (( max + 1 ) - min);
+    }
+
     static auto rand( unsigned min, unsigned max ) -> unsigned {
         
         return min + ::rand() / (RAND_MAX / (max - min + 1) + 1);

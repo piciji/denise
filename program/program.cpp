@@ -230,16 +230,24 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
         setMemoryPattern( emulator );
 }
 
-auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
+auto Program::getMemoryPatternFromConfig(Emulator::Interface* emulator, Emulator::Interface::MemoryPattern& pattern) -> void {
     auto settings = getSettings( emulator );
-    
-    uint8_t value = settings->get<unsigned>("memory_value", 255);
-    unsigned invertEvery = settings->get<unsigned>("memory_invert_every", 64);
-    unsigned randomPatternLength = settings->get<unsigned>("memory_random_pattern", 1);
-    unsigned repeatRandomPattern = settings->get<unsigned>("memory_random_repeat", 256);
-    unsigned randomChance = settings->get<unsigned>("random_chance", 0);
 
-    emulator->setMemoryInitParams( value, invertEvery, randomPatternLength, repeatRandomPattern, randomChance );
+    pattern.value = settings->get<unsigned>("memory_value", 0);
+    pattern.offset = settings->get<unsigned>("memory_offset", 2);
+    pattern.invertEvery = settings->get<unsigned>("memory_invert_every", 4);
+    pattern.secondValue = settings->get<unsigned>("memory_second_value", 255);
+    pattern.secondInvertEvery = settings->get<unsigned>("memory_second_invert_every", 16384);
+
+    pattern.randomPatternLength = settings->get<unsigned>("memory_random_pattern", 0);
+    pattern.repeatRandomPattern = settings->get<unsigned>("memory_random_repeat", 0);
+    pattern.randomChance = settings->get<unsigned>("random_chance", 1);
+}
+
+auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
+    Emulator::Interface::MemoryPattern pattern;
+    getMemoryPatternFromConfig(emulator, pattern);
+    emulator->setMemoryInitParams( pattern );
 }
 
 auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {

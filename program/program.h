@@ -94,6 +94,7 @@ struct Program : Emulator::Interface::Bind {
     auto getCustomSettingsFolder( Emulator::Interface* emulator, bool createFolder = false ) -> std::string;
     auto initEmulator( Emulator::Interface* emulator ) -> void;
     auto setMemoryPattern( Emulator::Interface* emulator ) -> void;
+	auto getMemoryPatternFromConfig(Emulator::Interface* emulator, Emulator::Interface::MemoryPattern& pattern) -> void;
     auto getC64ModelValue(LIBC64::Interface::ModelId modelId) -> int;
     auto getAMIModelValue(LIBAMI::Interface::ModelId modelId) -> int;
 

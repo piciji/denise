@@ -201,14 +201,6 @@ struct System {
         bool parallelExpansion = false;
         bool cycleSyncing = false;
     } secondDriveCable;
-    
-    struct {
-        uint8_t value = 255;
-        unsigned invertEvery = 64;
-        unsigned randomPatternLength = 1;
-        unsigned repeatRandomPattern = 256;
-        unsigned randomChance = 0;
-    } memoryInit;
 
     struct {
         bool enterRom = false;
@@ -228,6 +220,8 @@ struct System {
 
         auto reset() -> void;
     } tapeNoise;
+
+	Emulator::Interface::MemoryPattern memoryInit;
     
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
     

@@ -833,3 +833,6 @@ select slang shader = SLANG Shader auswählen oder neu anlegen
 Emulate Motor Deceleration = Motorverzögerung emulieren
 Toggle Warp = Warp umschalten
 Toggle Warp aggressive = Warp umschalten (aggressiv)
+second value memory cell = zweiter Wert in Speicherzelle
+invert second value every = zweiten Wert invertieren alle
+first byte offset = Versatz erstes Byte

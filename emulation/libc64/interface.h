@@ -191,7 +191,7 @@ struct Interface : Emulator::Interface {
     
     auto setLineCallback(bool state, unsigned scanline = 0) -> void;
 
-    auto setMemoryInitParams(uint8_t value, unsigned invertEvery, unsigned randomPatternLength, unsigned repeatRandomPattern, unsigned randomChance) -> void;
+    auto setMemoryInitParams(MemoryPattern& pattern) -> void;
 	auto getMemoryInitPattern( uint8_t* pattern ) -> void;
     auto getMemorySize() -> unsigned { return 64 * 1024; }
     

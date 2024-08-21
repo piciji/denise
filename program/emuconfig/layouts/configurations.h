@@ -61,7 +61,6 @@ struct ConfigurationsFolderLayout : GUIKIT::HorizontalLayout {
 struct MemoryPatternLayout : GUIKIT::FramedVerticalLayout {
 
     struct FirstLine : GUIKIT::HorizontalLayout {
-
         GUIKIT::Label valueLabel;
         GUIKIT::StepButton valueStepper;
         GUIKIT::Label invertValueEveryLabel;
@@ -71,28 +70,39 @@ struct MemoryPatternLayout : GUIKIT::FramedVerticalLayout {
     } firstLine;
 
     struct SecondLine : GUIKIT::HorizontalLayout {
-
-        GUIKIT::Label lengthRandomLabel;
-        GUIKIT::ComboButton lengthRandomCombo;
-        GUIKIT::Label repeatRandomEveryLabel;
-        GUIKIT::ComboButton repeatRandomEveryCombo;
+        GUIKIT::Label valueLabel;
+        GUIKIT::StepButton valueStepper;
+        GUIKIT::Label invertValueEveryLabel;
+        GUIKIT::ComboButton invertValueEveryCombo;
 
         SecondLine();
     } secondLine;
 
     struct ThirdLine : GUIKIT::HorizontalLayout {
-        GUIKIT::Label randomChanceLabel;
-        GUIKIT::StepButton randomChanceStepper;
+        GUIKIT::Label lengthRandomLabel;
+        GUIKIT::ComboButton lengthRandomCombo;
+        GUIKIT::Label repeatRandomEveryLabel;
+        GUIKIT::ComboButton repeatRandomEveryCombo;
 
         ThirdLine();
     } thirdLine;
 
     struct FourthLine : GUIKIT::HorizontalLayout {
-        GUIKIT::Button preConfigured1;
-        GUIKIT::Button preConfigured2;
+        GUIKIT::Label randomChanceLabel;
+        GUIKIT::StepButton randomChanceStepper;
+        GUIKIT::Label offsetLabel;
+        GUIKIT::ComboButton offsetCombo;
 
         FourthLine();
     } fourthLine;
+
+    struct FifthLine : GUIKIT::HorizontalLayout {
+        GUIKIT::Button preConfigured1;
+        GUIKIT::Button preConfigured2;
+        GUIKIT::Button preConfigured3;
+
+        FifthLine();
+    } fifthLine;
     
     GUIKIT::MultilineEdit preview;
     

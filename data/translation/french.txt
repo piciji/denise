@@ -833,3 +833,6 @@ select slang shader = Choisir le Shader SLANG
 Emulate Motor Deceleration = Emulate Motor Deceleration
 Toggle Warp = Toggle Warp
 Toggle Warp aggressive = Toggle Warp (aggressive)
+second value memory cell = second value of memory cell
+invert second value every = invert second value every
+first byte offset = first byte offset
