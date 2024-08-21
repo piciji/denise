@@ -297,7 +297,7 @@ auto pStatusBar::update() -> void {
                     TRACKBAR_CLASS, L"", WS_CHILD | TBS_NOTICKS | TBS_BOTH | TBS_HORZ,
                     0, 0, 0, 0, hwnd, (HMENU)(long long)(part.id + TRACKBAR_SLIDER), GetModuleHandle(0), 0);
 
-                SendMessage(trackBar, TBM_SETRANGE, (WPARAM)true, (LPARAM)MAKELONG(0, part.sliderLength));
+                SendMessage(trackBar, TBM_SETRANGE, (WPARAM)true, (LPARAM)MAKELONG(0, part.sliderLength - 1));
                 //SendMessage(trackBar, TBM_SETPAGESIZE, 0, (LPARAM)(part.sliderLength >> 3));
 
                 trackBars.push_back({part, trackBar});

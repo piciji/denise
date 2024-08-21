@@ -203,7 +203,7 @@ PanningControlLayout::PanningControlLayout() {
 
 VolumeControlLayout::Info::Info() {
     append(label, {0u, 0u}, 10);
-    append(value, {0u, 0u});
+    append(value, {50u, 0u});
 
     setMargin(10);
 }

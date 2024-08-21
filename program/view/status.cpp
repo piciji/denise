@@ -172,7 +172,7 @@ auto StatusHandler::updateVolume( bool state ) -> void {
 
     emuThread->lock();
     if (state)
-        statusBar->updateSlider(18, volume / 20);
+        statusBar->updateSlider(18, volume / 5);
     audioManager->setVolume();
     updateVisible(18, showVolume = state);
     updateStatusBar();
