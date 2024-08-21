@@ -69,6 +69,8 @@ struct StatusHandler {
     auto hidePowerLED() -> void;
     auto togglePowerLED() -> void;
     auto hasPowerLED() -> bool;
+    auto setVolumeSlider(unsigned value) -> void;
+    auto setVolumeSlider(Emulator::Interface* emulator) -> void;
 
     GUIKIT::StatusBar* statusBar = nullptr;
     uint16_t control;

@@ -363,6 +363,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
         statusHandler->resetFrameCounter();
         statusHandler->setFpsRefresh();
         statusHandler->initPowerLED();
+	    statusHandler->setVolumeSlider(activeEmulator);
 
         view->updateSpeedLabels();
 

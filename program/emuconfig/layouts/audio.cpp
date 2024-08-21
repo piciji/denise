@@ -201,6 +201,19 @@ PanningControlLayout::PanningControlLayout() {
     setPadding( 10 );
 }
 
+VolumeControlLayout::Info::Info() {
+    append(label, {0u, 0u}, 10);
+    append(value, {0u, 0u});
+
+    setMargin(10);
+}
+
+VolumeControlLayout::VolumeControlLayout() {
+    append( volumeSlider, {30, ~0u}, 5 );
+    append( info, {0u, 0u});
+    volumeSlider.setLength(101);
+}
+
 AudioLayout::AudioLayout(TabWindow* tabWindow) {
     
     this->tabWindow = tabWindow;
@@ -228,7 +241,8 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     moduleList.setImage(moduleList.rowCount() - 1, 0, recordAudioImage);
         
     moduleList.setSelection(0);
-    moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(100)} );
+    moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(100)}, 15 );
+    moduleFrame.append( volumeLayout, {0u, ~0u} );
     moduleFrame.setPadding(10);
     moduleFrame.setFont( GUIKIT::Font::system("bold") );
     
@@ -240,7 +254,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         moduleSwitch.setSelection( moduleList.selection() );
     };
     
-    append( moduleFrame, {0u, 0u}, 10 );    
+    append( moduleFrame, {0u, ~0u}, 10 );
 
     std::vector<unsigned> dim;
     if (dynamic_cast<LIBC64::Interface*>(emulator))
@@ -543,11 +557,34 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
 
+    volumeLayout.volumeSlider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>("audio_volume", position);
+
+        volumeLayout.info.value.setText( std::to_string(position) + "%");
+
+        emuThread->lock();
+
+        if (activeEmulator == emulator) {
+            if (statusHandler)
+                statusHandler->setVolumeSlider(position);
+
+            audioManager->setVolume();
+        }
+
+        emuThread->unlock();
+    };
+
     updateFloppyProfileList();
 
     updateTapeProfileList();
 
     loadSettings();
+}
+
+auto AudioLayout::updateVolumeSlider() -> void {
+    unsigned volume = _settings->get<unsigned>("audio_volume", 100, {0, 100});
+    volumeLayout.volumeSlider.setPosition(volume);
+    volumeLayout.info.value.setText( std::to_string(volume) + "%");
 }
 
 auto AudioLayout::updateFloppyProfileList() -> void {
@@ -696,6 +733,8 @@ auto AudioLayout::translate() -> void {
     moduleList.setText(3, 0, trans->get("Audio Record"));
     moduleList.setRowTooltip(2, trans->get("Digital Signal Processing"));
 
+    volumeLayout.info.label.setText( trans->getA("volume") );
+
     unsigned neededWidth = driveLayout->floppySelection.label.minimumSize().width;
     neededWidth = std::max(neededWidth, driveLayout->tapeSelection.label.minimumSize().width);
     neededWidth = SliderLayout::scale({&driveLayout->floppyVolume, &driveLayout->tapeVolume, &driveLayout->tapeNoiseVolume}, "300 %", neededWidth);
@@ -796,6 +835,8 @@ auto AudioLayout::loadSettings() -> void {
     driveLayout->tapeNoiseVolume.slider.setPosition( tapeVolume );
 
     driveLayout->tapeNoiseVolume.value.setText(std::to_string(tapeVolume) + " %");
+
+    updateVolumeSlider();
 
     updateVisibility();
 }

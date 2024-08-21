@@ -1,4 +1,6 @@
 
+#include "../../../guikit/api.h"
+
 struct AudioRecordLayout : GUIKIT::FramedVerticalLayout {
     
     struct Location : GUIKIT::HorizontalLayout {
@@ -114,6 +116,19 @@ struct PanningControlLayout : GUIKIT::FramedVerticalLayout {
     PanningControlLayout();
 };
 
+struct VolumeControlLayout : GUIKIT::HorizontalLayout {
+    GUIKIT::VerticalSlider volumeSlider;
+
+    struct Info : GUIKIT::VerticalLayout {
+        GUIKIT::Label label;
+        GUIKIT::Label value;
+
+        Info();
+    } info;
+
+    VolumeControlLayout();
+};
+
 struct AudioLayout : GUIKIT::HorizontalLayout {
     
     TabWindow* tabWindow;
@@ -136,6 +151,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     ReverbControlLayout reverb;
     PanningControlLayout panning;
     AudioDriveLayout* driveLayout;
+    VolumeControlLayout volumeLayout;
     
     AudioRecordLayout audioRecord;
     
@@ -160,4 +176,6 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
 
     auto initSeparation() -> void;
     auto setSeparation() -> void;
+
+    auto updateVolumeSlider() -> void;
 };

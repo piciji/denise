@@ -5,6 +5,7 @@
 #include "../cmd/cmd.h"
 #include "../tools/chronos.h"
 #include "../thread/emuThread.h"
+#include "../emuconfig/config.h"
 
 StatusHandler* statusHandler = nullptr;
 
@@ -162,12 +163,16 @@ auto StatusHandler::updateFPS( bool state ) -> void {
 }
 
 auto StatusHandler::updateVolume( bool state ) -> void {
-    globalSettings->remove("audio_volume");
-    globalSettings->remove("volume");
+    unsigned volume = 100;
+
+    if (activeEmulator) {
+        auto settings = program->getSettings(activeEmulator);
+        volume = settings->get<unsigned>("audio_volume", 100u, {0u, 100u});
+    }
 
     emuThread->lock();
     if (state)
-        statusBar->updateSlider(18, 20);
+        statusBar->updateSlider(18, volume / 20);
     audioManager->setVolume();
     updateVisible(18, showVolume = state);
     updateStatusBar();
@@ -275,6 +280,18 @@ auto StatusHandler::hideTape() -> void {
     updateStatusBar();
 }
 
+auto StatusHandler::setVolumeSlider(Emulator::Interface* emulator) -> void {
+    auto settings = program->getSettings(emulator);
+    auto volume = settings->get<unsigned>("audio_volume", 100, {0, 100});
+
+    setVolumeSlider(volume);
+}
+
+auto StatusHandler::setVolumeSlider(unsigned value) -> void {
+    if (showVolume)
+        statusBar->updateSlider(18, value / 5);
+}
+
 auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->clear();
     
@@ -282,7 +299,6 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     showFPS = globalSettings->get<bool>("fps", false);
     powerLED.enable = globalSettings->get<bool>("power_led", true);
     showVolume = globalSettings->get<bool>("volume_control", true );
-    unsigned volume = globalSettings->get<unsigned>("volume", 100u, {0u, 100u});
     recordAudio = false;
     fpsCounter.decimalPoints = 3;
 	control = 0;
@@ -306,13 +322,21 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
     statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
     statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
-    statusBar->append( 18, 20, 60, [](unsigned position) {
-        globalSettings->set<unsigned>("volume", position * 5);
+    statusBar->append( 18, 21, 60, [](unsigned position) {
+        if (!activeEmulator)
+            return;
+        auto settings = program->getSettings(activeEmulator);
+        settings->set<unsigned>("audio_volume", position * 5);
+
         emuThread->lock();
+        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+        if (emuView && emuView->audioLayout)
+            emuView->audioLayout->updateVolumeSlider();
+
         audioManager->setVolume();
         emuThread->unlock();
     } );
-    statusBar->updateSlider(18, volume / 5);
+    statusBar->updateSlider(18, 100 / 5);
     statusBar->updateVisible(18, showVolume);
 
     statusBar->append( 15, "" );    // status text

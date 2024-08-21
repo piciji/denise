@@ -127,8 +127,11 @@ auto AudioManager::setBufferSize() -> void {
 }
 
 auto AudioManager::setVolume() -> void {
-    
-    unsigned volume = globalSettings->get<unsigned>("volume", 100u, {0u, 100u});
+    if (!activeEmulator)
+        return;
+
+    auto settings = program->getSettings(activeEmulator);
+    unsigned volume = settings->get<unsigned>("audio_volume", 100u, {0u, 100u});
     bool mute = globalSettings->get<bool>("audio_mute", false);
         
     floatConversion = 0.0;    
