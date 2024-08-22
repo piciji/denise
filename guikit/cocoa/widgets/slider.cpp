@@ -58,6 +58,7 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
+        [self setVertical:1];
         
         CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
         [self setCell:notifySliderCell];
