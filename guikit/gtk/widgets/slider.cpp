@@ -26,6 +26,7 @@ auto pSlider::create() -> void {
 
     if (slider.orientation == Slider::Orientation::VERTICAL) {
         gtkWidget = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL, 0, 100, 1);
+        gtk_range_set_inverted(GTK_RANGE(gtkWidget), true);
     } else {
         gtkWidget = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 100, 1);
     }
