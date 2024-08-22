@@ -30,8 +30,17 @@ auto pSlider::setLength(unsigned length) -> void {
 }
 
 auto pSlider::setPosition(unsigned position) -> void {
-    if(hwnd)
-        SendMessage(hwnd, TBM_SETPOS, (WPARAM)true, (LPARAM)position);
+    if(!hwnd)
+        return;
+
+    if(slider.orientation == Slider::Orientation::VERTICAL) {
+        int _pos = int(slider.length() - 1) - (int)position;
+        if (_pos < 0)
+            _pos = 0;
+        position = _pos;
+    }
+
+    SendMessage(hwnd, TBM_SETPOS, (WPARAM)true, (LPARAM)position);
 }
 
 auto pSlider::create() -> void {
@@ -73,9 +82,17 @@ auto pSlider::rebuild() -> void {
 
 auto pSlider::onChange() -> void {
     unsigned position = SendMessage(hwnd, TBM_GETPOS, 0, 0);
+
+    if(slider.orientation == Slider::Orientation::VERTICAL) {
+        int _pos = int(slider.length() - 1) - (int)position;
+        if (_pos < 0)
+            _pos = 0;
+        position = _pos;
+    }
+
     if(position == slider.state.position)
         return;
-    
+
     slider.state.position = position;
     
     if(slider.onChange)
