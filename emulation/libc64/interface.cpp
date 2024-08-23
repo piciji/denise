@@ -534,7 +534,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDriveModel, "Model", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "1541", "1541-II", "1541-C", "1570", "1571" }});
 
-    models.push_back({ModelIdEnableMotorDeceleration, "Emulate Motor Deceleration", Model::Type::Switch, Model::Purpose::DriveSettings, 1});
+    models.push_back({ModelIdEnableMotorDeceleration, "Motor Deceleration", Model::Type::Switch, Model::Purpose::DriveSettings, 1});
 
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
 
