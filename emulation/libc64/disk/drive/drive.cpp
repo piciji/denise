@@ -18,24 +18,24 @@ namespace LIBC64 {
 
 // valid for 1 MHz operation
 // one cpu cycle is 16 reference(drive) cycles.
-// we do only progress 6 instead of 8 in first half cycle because of a possible
-// external overflow is recognized by cpu within 400 ns.
+// we do only progress 6 instead of 8 in the first half-cycle, because of a possible
+// external overflow is recognized by CPU within 400 ns.
  
-// in case of a VIA READ there is more time a change can be read back ~ 875 ns within cycle.
-// 6 ref cycles are progressed in first half cycle already, so we need 8 more to get 14 of 16 ref cycles.
+// in the case of a VIA READ, there is more time a change can be read back ~ 875 ns within a cycle.
+// 6 ref cycles are progressed in the first half-cycle already, so we need 8 more to get 14 of 16 ref cycles.
     
 // for each cycle:
 
-// 6 ref cycles:    check for external overflow
-// + 8    
-// 14 ref cycles:   VIA2 read back Changes
-// + 2    
-// 16 ref cycles:   complete cycle
+// 6 ref cycles: heck for external overflow
+// + 8
+// 14 ref cycles: VIA2 read back Changes
+// + 2
+// 16 ref cycles: complete cycle
 // + 6
 // repeat this pattern    
 
 // the distance between "overflow" checking and maximum "Read back" time is 8 ref cycles, phase shifted by 2 ref cycles.
-// the relative	distance matters, so we can step in 8 ref cycle chunks which is handled in rotateP64 and rotateG64
+// the relative	distance matters, so we can step in 8 ref cycle chunks that are handled in rotateP64 and rotateG64
 
 unsigned Drive::rpm = 30000;
 unsigned Drive::wobble = 50;

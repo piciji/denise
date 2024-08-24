@@ -3,75 +3,29 @@
 
 namespace LIBC64 {
 
-    auto Drive::rotateG64( ) -> void {
-        unsigned todo;
-        bool motorAdvance = motorRun();
-
-        // the g64 format contains user and structure data, simply all bits of a track
-        // but hasn't information about bit cell length. not quite true but read on.
-
-        // reading a g64 image:
-        // the bit cell length is calculated by divding the amount of ref cycles
-        // per revolution by the amount of bits per track.
-        // this way each bit cell on a track has the exact same duration.
-        // it's possible to master a disk with variable bit cell length.
-        // therefore a speedzone area in gcr specs exists, where
-        // each byte can be assigned by a different speedzone.
-        // there is no g64 image out there using this feature.
-        // a copy protection which relies on exact bit cell duration works only when
-        // the track size matches the original track length. so a carefully prepared g64
-        // image is needed.
-        //
-        // writing a g64 image:
-        // when creating a blank g64 image there are used standard track sizes.
-        // when writing it back later during emulation the original track size
-        // isn't changed anymore, even when the bits will be written with a non standard
-        // track speedzone. there is simply no reliable way to find out the new size when
-        // not writing the complete track or if a complete track at once was written at all.
-        // writing a non standard g64 image in emulation could possibly not readed correctly.
-        // it seems the speedzone area of a g64 image can not fill this gap fully.
-        // a real bit cell duration would be better instead of a speedzone value
-        // per byte (not bit).
-        // in practice this limitation could be a problem when duplicating copy protected
-        // disks within emulation.
-        // Note: a real 1541 can not duplicate each possible pattern 1:1
-
-        // we know the amount of bit cells for any track and the amount of ref cycles for a
-        // complete revolution. ref cycles / bit cells = ref cycles for a single bit cell.
-        // the fraction of the division would be a problem, so we scale each ref cycle up
-        // by the amount of bit cells for the current track. that way we sum up the scaled
-        // ref cycles and compare this value with the total amount of ref cycles per revolution.
-        // if exceeded we reach a new bit cell.
-
 #define OVERFLOW_NOT_THIS_CYCLE \
-        ((refCyclesInCpuCycle - refCycles + todo) > (refCyclesInCpuCycle >> 1))
+    ((refCyclesInCpuCycle - refCycles + todo) > (refCyclesInCpuCycle >> 1))
 
-        uint8_t refCycles = refCyclesInCpuCycle;
+    auto Drive::rotateG64( ) -> void {
+        if (!motorRun())
+            return;
+
+        unsigned refCycles = refCyclesInCpuCycle;
         unsigned delta;
+        unsigned todo;
 
         if (readMode) {
             do {
                 todo = 1;
 
-                if ( uf6aFlipFlop == comperatorFlipFlop ) {
+                //if (motorAdvance) {
+                    delta = refCyclesPerRevolution - accum;
 
-                    if (motorAdvance) {
-                        delta = refCyclesPerRevolution - accum;
+                    if ((gcrTrack->bits << 1) <= delta) {
+                        todo = delta / gcrTrack->bits;
 
-                        if ((gcrTrack->bits << 1) <= delta) {
-                            todo = delta / gcrTrack->bits;
-
-                            if (refCycles < todo)
-                                todo = refCycles;
-
-                            if ((16 - ue7Counter) < todo)
-                                todo = 16 - ue7Counter;
-
-                            if (randCounter && (randCounter < todo))
-                                todo = randCounter;
-                        }
-                    } else {
-                        todo = refCycles;
+                        if (refCycles < todo)
+                            todo = refCycles;
 
                         if ((16 - ue7Counter) < todo)
                             todo = 16 - ue7Counter;
@@ -79,8 +33,17 @@ namespace LIBC64 {
                         if (randCounter && (randCounter < todo))
                             todo = randCounter;
                     }
+                // } else {
+                //     todo = refCycles;
+                //
+                //     if ((16 - ue7Counter) < todo)
+                //         todo = 16 - ue7Counter;
+                //
+                //     if (randCounter && (randCounter < todo))
+                //         todo = randCounter;
+                // }
 
-                    ue7Counter += todo;
+                if ( uf6aFlipFlop == comperatorFlipFlop ) {
                     randCounter -= todo;
 
                     if (!randCounter) {
@@ -92,34 +55,25 @@ namespace LIBC64 {
                             if (ue3Counter == 8)
                                 byteFetched(OVERFLOW_NOT_THIS_CYCLE);
                         }
-                        randCounter = ( (randomizer.xorShift() >> 16 ) % 369) + 31;
+                        randCounter = ( (randomizer.xorShift() >> 16 ) % 367) + 33; // continuous oscillation happens faster
                     }
 
                 } else {
                     uf6aFlipFlop = comperatorFlipFlop;
                     ue7Counter = speedZone & 3;
                     uf4Counter = 0;
+                    todo = 1;
 
                     if (ue3Counter == 8)
                         byteFetched( OVERFLOW_NOT_THIS_CYCLE );
-                    // after an amount of time without a flux reversal,
-                    // the rule that a one is shifted in after 3 zeros in a row
-                    // is violated by some randomness. means the counter registers
-                    // will be reset after some time but that doesn't mean it can
-                    // be more than 3 zeros in row shifted in but fewer.
-                    // Rubicon timex protection relies on FIRST random flux reversal
+
                     randCounter = ( (randomizer.xorShift() >> 16 ) % 31) + 233; // 14.5 - 16.5
                 }
 
+                ue7Counter += todo;
                 if (ue7Counter == 16) {
                     ue7Counter = speedZone & 3;
 
-                    // uf4 is a 4 bit counter.
-                    // every 16 ref cycles uf4 is incremented, at least for speedzone 0.
-                    // when uf4 == 2 a one is shifted in.
-                    // when uf4 == (6 or 10 or 14) a zero is shifted in.
-                    // if there is no further flux reversal, a one will be shifted in each 3 zeros.
-                    // because of magnetic mediums cannot read too many zeros in row reliable.
                     uf4Counter = (uf4Counter + 1) & 0xf;
 
                     if ((uf4Counter & 3) == 2) {
@@ -144,7 +98,7 @@ namespace LIBC64 {
                     }
                 }
 
-                if (motorAdvance) {
+            //    if (motorAdvance) {
                     accum += gcrTrack->bits * todo;
 
                     if (accum >= refCyclesPerRevolution) {
@@ -156,14 +110,14 @@ namespace LIBC64 {
                             // NOTE: gcr images are almost clean already
                             comperatorFlipFlop ^= 1;
                     }
-                }
+              //  }
 
                 refCycles -= todo;
             } while ( refCycles );
 
         } else { // write
             do {
-                if (motorAdvance) {
+              //  if (motorAdvance) {
                     todo = 1;
                     delta = refCyclesPerRevolution - accum;
 
@@ -182,12 +136,12 @@ namespace LIBC64 {
                     if (accum >= refCyclesPerRevolution)
                         accum -= refCyclesPerRevolution;
 
-                } else {
-                    todo = refCycles;
-
-                    if ((16 - ue7Counter) < todo)
-                        todo = 16 - ue7Counter;
-                }
+                // } else {
+                //     todo = refCycles;
+                //
+                //     if ((16 - ue7Counter) < todo)
+                //         todo = 16 - ue7Counter;
+                // }
 
                 // ue7 and uf4 work same like reading
                 ue7Counter += todo;
