@@ -226,6 +226,10 @@ auto View::build() -> void {
 	winapi.onMenu = []() {
 	//	audioDriver->clear();
 	};
+    
+    onKeyPress = [this](bool keyDown, uint16_t keyCode) {
+        inputDriver->sentUIKeyPresses(keyDown, keyCode);
+    };
 	
 	GUIKIT::BrowserWindow::onCall = []() {
         if (!globalSettings->get<bool>("threaded_emu", false) || !videoDriver->hasThreaded())

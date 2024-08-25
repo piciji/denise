@@ -5,6 +5,7 @@
     if(self = [super initWithFrame:NSMakeRect(0, 0, 0, 0)]) {
         lineEdit = &lineEditReference;
         
+        [self setRefusesFirstResponder:YES];
         [self setDelegate:self];
         [self setTarget:self];
     }

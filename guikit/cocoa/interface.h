@@ -1,6 +1,10 @@
 
 #import <Cocoa/Cocoa.h>
 
+@interface MyNSApplication : NSApplication {
+}
+@end
+
 @interface StatusImageView : NSImageView {
 @public
     GUIKIT::StatusBar::Part* part;

@@ -6,13 +6,13 @@ struct IokitKeyboard {
     OsxKeyNames keyNames;
     Input::KeyCallback* keyCallback = nullptr;
     
-    auto init() -> bool {
+    auto init(bool useCocoa) -> bool {
         term();
         
         hidKeyboard = new Hid::Keyboard;
         hidKeyboard->id = 0;
         
-        if (!initHID())
+        if (!useCocoa && !initHID())
             return false;
         
         for(unsigned keycode = 0; keycode <= 0xff; keycode++) {
@@ -215,6 +215,26 @@ struct IokitKeyboard {
         
         keysPressed[scancode] = pressed ? true : false;
 
+        if (keyCallback)
+            (*keyCallback)();
+    }
+    
+    auto sentUIKeyPresses(bool keyDown, uint16_t keyCode) -> void {
+        
+        static const unsigned char cocoaToHidMap[128] = {
+            4, 22,  7,  9, 11, 10, 29, 27, 6, 25,255, 5, 20, 26, 8, 21,
+            28, 23, 30, 31, 32, 33, 35, 34, 46, 38, 36, 45, 37, 39, 48, 18,
+            24, 47, 12, 19, 40, 15, 13, 52, 14, 51, 49, 54, 56, 17, 16, 55,
+            43, 44, 53, 42,255, 41, 231, 227, 225, 57, 226, 224, 229, 230, 228, 255,
+            108, 99, 255, 85, 255, 87, 255, 83, 255, 255, 255, 84, 88, 255, 86, 109,
+            110, 103, 98, 89, 90, 91, 92, 93, 94, 95,111, 96, 97, 255, 255, 255,
+            62, 63, 64, 60, 65, 66, 255, 68, 255, 104, 107, 105, 255, 67, 255, 69,
+            255, 106, 117, 74, 75, 76, 61, 77, 59, 78, 58, 80, 79, 81, 82, 255
+        };
+        
+        unsigned scancode = cocoaToHidMap[keyCode & 0x7f];
+        keysPressed[scancode] = keyDown;
+        
         if (keyCallback)
             (*keyCallback)();
     }

@@ -201,6 +201,7 @@ struct Window : Base {
     std::function<void ()> onWillUnfullscreen = nullptr;
     std::function<void ()> onFullscreen = nullptr;
     std::function<void ()> onUnfullscreen = nullptr;
+    std::function<void (bool keyDown, uint16_t keyCode)> onKeyPress = nullptr;
 
     enum class Hints { Default, Video } hints = Hints::Default;
     

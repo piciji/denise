@@ -300,6 +300,10 @@ auto Input::available() -> std::vector<std::string> {
 		"RawInput",
 	#endif
 
+    #ifdef DRV_COCOA_IOKIT
+        "Cocoa/IoKit",
+    #endif
+        
     #ifdef DRV_IOKIT
         "IoKit",
     #endif
@@ -340,6 +344,10 @@ auto Input::preferred() -> std::string {
 		return "DirectInput 5";
 	#endif
 
+    #ifdef DRV_COCOA_IOKIT
+        return "Cocoa/IoKit";
+    #endif
+    
     #ifdef DRV_IOKIT
         return "IoKit";
     #endif
@@ -380,6 +388,10 @@ auto Input::create(const std::string& driver) -> Input* {
 		if (driver == "RawInput") return new RawInput();
 	#endif
 
+    #ifdef DRV_COCOA_IOKIT
+        if(driver == "Cocoa/IoKit") return new Iokit(true);
+    #endif
+    
 	#ifdef DRV_IOKIT
         if(driver == "IoKit") return new Iokit();
 	#endif

@@ -22,11 +22,12 @@ namespace DRIVER {
 struct Iokit : Input {
     CocoaMouse mouse;
     IokitKeyboard keyboard;
+    bool useCocoa = false;
     
     auto init( uintptr_t handle ) -> bool {
         term();
         
-        if (!keyboard.init())
+        if (!keyboard.init(useCocoa))
             return false;
         
         mouse.init( handle );
@@ -70,6 +71,15 @@ struct Iokit : Input {
         
     auto joypad() -> IokitJoypad* {
         return IokitJoypad::getInstance();
+    }
+    
+    auto sentUIKeyPresses(bool keyDown, uint16_t keyCode) -> void {
+        if (useCocoa)
+            keyboard.sentUIKeyPresses(keyDown, keyCode);
+    }
+    
+    Iokit(bool useCocoa = false) {
+        this->useCocoa = useCocoa;
     }
     
     ~Iokit() {

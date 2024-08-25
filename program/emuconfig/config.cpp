@@ -144,6 +144,10 @@ auto TabWindow::build() -> void {
         unsigned tabPos = tab.selection();
         prepareLayout( tabPos );
     };
+    
+    onKeyPress = [this](bool keyDown, uint16_t keyCode) {
+        inputDriver->sentUIKeyPresses(keyDown, keyCode);
+    };
 
     translate();
 }

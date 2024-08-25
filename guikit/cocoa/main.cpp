@@ -30,6 +30,19 @@
 #include "widgets/hyperlink.cpp"
 #include "widgets/imageView.cpp"
 
+@implementation MyNSApplication : NSApplication
+    
+- (void)sendEvent:(NSEvent*)event {
+    if ([event type] == NSEventTypeKeyUp) { // otherwise CMD will not send keyup for other keys pressed same time
+        [[[self mainWindow] firstResponder] tryToPerform:@selector(sendEvent:) with:event ];
+        return;
+    }
+
+    [super sendEvent:event];
+}
+
+@end
+
 @implementation CocoaDelegate : NSObject
 
 -(NSApplicationTerminateReply) applicationShouldTerminate:(NSApplication*)sender {
@@ -88,7 +101,6 @@
 
     if (Application::onDisplayChange)
         Application::onDisplayChange();
-    
 }
 
 @end
@@ -168,20 +180,40 @@
 
 -(void)sendEvent:(NSEvent*)event {
     static bool initMenuRunLoop = false;
+    NSEventType eventType = [event type];
     
-    if([event type] == NSRightMouseDown) {
-        if (window->onContext) {
-            if (window->onContext() && window->state.menus.size() > 0) {
-                if (!initMenuRunLoop) {
-                    initMenuRunLoop = true;
-                    GUIKIT::pApplication::observeMenu( menuBarContext );
+    switch(eventType) {
+        case NSEventTypeRightMouseDown:
+            if (window->onContext) {
+                if (window->onContext() && window->state.menus.size() > 0) {
+                    if (!initMenuRunLoop) {
+                        initMenuRunLoop = true;
+                        GUIKIT::pApplication::observeMenu( menuBarContext );
+                    }
+                  //  [[menuBar itemAtIndex:0] setHidden: TRUE];
+                    [NSMenu popUpContextMenu:menuBarContext withEvent:event forView:[self contentView]];
+                    //[[menuBar itemAtIndex:0] setHidden: FALSE];
+                    [self resetCursorRects];
                 }
-              //  [[menuBar itemAtIndex:0] setHidden: TRUE];
-                [NSMenu popUpContextMenu:menuBarContext withEvent:event forView:[self contentView]];
-                //[[menuBar itemAtIndex:0] setHidden: FALSE];
-                [self resetCursorRects];
-            }
-        }
+            } break;
+        
+        case NSEventTypeKeyDown:
+        case NSEventTypeKeyUp: {
+            uint16_t keyCode = [event keyCode];
+            if (window->onKeyPress)
+                window->onKeyPress(eventType == NSEventTypeKeyDown, keyCode);
+        } break;
+        case NSEventTypeFlagsChanged: {
+            uint16_t keyCode = [event keyCode];
+            static NSUInteger flagsBefore = 0;
+            NSUInteger flags = event.modifierFlags;
+            bool keyDown = (flags & flagsBefore) == flagsBefore;
+            flagsBefore = flags;
+            if (window->onKeyPress)
+                window->onKeyPress(keyDown, keyCode);
+        } break;
+        default:
+            break;
     }
     [super sendEvent:event];
 }
@@ -436,13 +468,13 @@ auto pApplication::initialize() -> void {
     
     @autoreleasepool {
         
-        [NSApplication sharedApplication];
+        [MyNSApplication sharedApplication];
         cocoaDelegate = [[CocoaDelegate alloc] init];
         [NSApp setDelegate:cocoaDelegate];
         
         NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
 
-        [notificationCenter addObserver:cocoaDelegate selector:@selector(changeDisplay:) name:NSApplicationDidChangeScreenParametersNotification object: [NSApplication sharedApplication] ];
+        [notificationCenter addObserver:cocoaDelegate selector:@selector(changeDisplay:) name:NSApplicationDidChangeScreenParametersNotification object: NSApp ];
     }
 }
 

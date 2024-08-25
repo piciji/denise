@@ -138,6 +138,7 @@ struct Input {
     virtual auto mIsAcquired() -> bool { return false; }
 	virtual auto poll() -> std::vector<Hid::Device*> { return {}; }
     virtual auto setKeyboardCallback( KeyCallback* callback ) -> void {}
+    virtual auto sentUIKeyPresses(bool keyDown, uint16_t keyCode) -> void {}
 	
 	virtual ~Input() = default;
     static auto create(const std::string& driver) -> Input*;
