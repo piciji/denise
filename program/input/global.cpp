@@ -45,7 +45,9 @@ auto InputManager::init() -> void {
     }           
 
 	bindHidsGlobal();
-    //activeInputManager->setupKeycodeTransfer();
+    
+    if (activeInputManager)
+        activeInputManager->setupKeycodeTransfer();
 }
 
 auto InputManager::assumeLayoutType() -> KeyboardLayout::Type {

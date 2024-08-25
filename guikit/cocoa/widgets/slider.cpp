@@ -99,7 +99,7 @@
 namespace GUIKIT {
     
 auto pSlider::minimumSize() -> Size {
-    unsigned thickness = 18;
+    unsigned thickness = 16;
     if (GUIKIT::hasMinimumVersion(10, 10)) {
         // don't access knob thickness in Mavericks or slider will be always vertical... wtf
         thickness = (unsigned)[(id)cocoaView knobThickness];

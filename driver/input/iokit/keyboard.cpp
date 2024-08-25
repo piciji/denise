@@ -5,6 +5,7 @@ struct IokitKeyboard {
     bool keysPressed[256] = {0};
     OsxKeyNames keyNames;
     Input::KeyCallback* keyCallback = nullptr;
+    IOHIDManagerRef hidManager = nil;
     
     auto init(bool useCocoa) -> bool {
         term();
@@ -12,8 +13,10 @@ struct IokitKeyboard {
         hidKeyboard = new Hid::Keyboard;
         hidKeyboard->id = 0;
         
+        @autoreleasepool {
         if (!useCocoa && !initHID())
             return false;
+        }
         
         for(unsigned keycode = 0; keycode <= 0xff; keycode++) {
             if (keycode < 3 || keycode > 231) {
@@ -123,6 +126,11 @@ struct IokitKeyboard {
     }
     
     auto term() -> void {
+        keyCallback = nullptr;
+        if(hidManager)
+            IOHIDManagerClose(hidManager,0);
+        
+        hidManager = nil;
         if(hidKeyboard) delete hidKeyboard, hidKeyboard = nullptr;
     }
     
@@ -135,7 +143,7 @@ struct IokitKeyboard {
     }
     
     auto initHID() -> bool {
-        IOHIDManagerRef hidManager = IOHIDManagerCreate(kCFAllocatorDefault,kIOHIDOptionsTypeNone);
+        hidManager = IOHIDManagerCreate(kCFAllocatorDefault,kIOHIDOptionsTypeNone);
         
         if (hidManager == NULL)
             return false;
