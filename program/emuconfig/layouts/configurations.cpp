@@ -317,28 +317,6 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         memoryPattern->fifthLine.preConfigured1.onActivate = [this]() {
             memoryPattern->firstLine.valueStepper.setValue(0);
-            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(4);
-            memoryPattern->secondLine.valueStepper.setValue(255);
-            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(16384);
-            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(0);
-            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(0);
-            memoryPattern->fourthLine.randomChanceStepper.setValue(1);
-            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(2);
-
-            _settings->set<unsigned>("memory_value", 0);
-            _settings->set<unsigned>("memory_invert_every", 4);
-            _settings->set<unsigned>("memory_second_value", 255);
-            _settings->set<unsigned>("memory_second_invert_every", 16384);
-            _settings->set<unsigned>("memory_random_pattern", 0);
-            _settings->set<unsigned>("memory_random_repeat", 0);
-            _settings->set<unsigned>("random_chance", 1);
-            _settings->set<unsigned>("memory_offset", 2);
-
-            this->updateMemoryPreview();
-        };
-
-        memoryPattern->fifthLine.preConfigured2.onActivate = [this]() {
-            memoryPattern->firstLine.valueStepper.setValue(0);
             memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(64);
             memoryPattern->secondLine.valueStepper.setValue(0);
             memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(0);
@@ -359,7 +337,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             this->updateMemoryPreview();
         };
 
-        memoryPattern->fifthLine.preConfigured3.onActivate = [this]() {
+        memoryPattern->fifthLine.preConfigured2.onActivate = [this]() {
             memoryPattern->firstLine.valueStepper.setValue(256);
             memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(64);
             memoryPattern->secondLine.valueStepper.setValue(0);
@@ -377,6 +355,28 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             _settings->set<unsigned>("memory_random_repeat", 256);
             _settings->set<unsigned>("random_chance", 0);
             _settings->set<unsigned>("memory_offset", 0);
+
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->fifthLine.preConfigured3.onActivate = [this]() {
+            memoryPattern->firstLine.valueStepper.setValue(0);
+            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(4);
+            memoryPattern->secondLine.valueStepper.setValue(255);
+            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(16384);
+            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(0);
+            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(0);
+            memoryPattern->fourthLine.randomChanceStepper.setValue(1);
+            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(2);
+
+            _settings->set<unsigned>("memory_value", 0);
+            _settings->set<unsigned>("memory_invert_every", 4);
+            _settings->set<unsigned>("memory_second_value", 255);
+            _settings->set<unsigned>("memory_second_invert_every", 16384);
+            _settings->set<unsigned>("memory_random_pattern", 0);
+            _settings->set<unsigned>("memory_random_repeat", 0);
+            _settings->set<unsigned>("random_chance", 1);
+            _settings->set<unsigned>("memory_offset", 2);
 
             this->updateMemoryPreview();
         };

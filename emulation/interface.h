@@ -300,14 +300,14 @@ struct Interface {
     };
 
     struct MemoryPattern {
-        uint8_t value = 0;
-        unsigned invertEvery = 2;
-        unsigned offset = 4;
-        uint8_t secondValue = 255;
-        unsigned secondInvertEvery = 16384;
-        unsigned randomPatternLength = 0;
-        unsigned repeatRandomPattern = 0;
-        unsigned randomChance = 1;
+        uint8_t value = 255;
+        unsigned invertEvery = 64;
+        unsigned offset = 0;
+        uint8_t secondValue = 0;
+        unsigned secondInvertEvery = 0;
+        unsigned randomPatternLength = 1;
+        unsigned repeatRandomPattern = 256;
+        unsigned randomChance = 0;
     };
 
     //callbacks
