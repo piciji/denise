@@ -58,7 +58,7 @@
         [self setTarget:self];
         [self setAction:@selector(activate:)];
         [self setMinValue:0];
-        [self setVertical:1];
+        [self setVertical:-1];
         
         CocoaSliderCell* notifySliderCell = [[[CocoaSliderCell alloc] initWith: *slider] autorelease];
         [self setCell:notifySliderCell];
@@ -99,7 +99,7 @@
 namespace GUIKIT {
     
 auto pSlider::minimumSize() -> Size {
-    unsigned thickness = 16;
+    unsigned thickness = 19;
     if (GUIKIT::hasMinimumVersion(10, 10)) {
         // don't access knob thickness in Mavericks or slider will be always vertical... wtf
         thickness = (unsigned)[(id)cocoaView knobThickness];
