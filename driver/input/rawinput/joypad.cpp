@@ -56,7 +56,7 @@ struct RawJoypad {
 			OPEN_EXISTING, 0u, nullptr
 		);
 		if (!jp.ntHandle) return;
-		//logger->log("opened");
+		// logger->log("opened");
 		wchar_t nameBuffer[PATH_MAX];
 
 		if (!HidD_GetProductString(jp.ntHandle, nameBuffer, 100)) {
@@ -146,8 +146,6 @@ struct RawJoypad {
 
             	case 0x36:
             		//logger->log("add Slider");
-					jp.hid->axes().append( "Slider" );
-            		jp.axisMap[axes++] = 6;
             		break;
             	case 0x37:
             		//logger->log("add Dial");
@@ -221,7 +219,7 @@ struct RawJoypad {
 			if (joypad.handle == input->header.hDevice) {
 				pJoypad = &joypad;
 				dPadHatPos = pJoypad->dPadHatPos;
-				if (pJoypad->dPadHatPos >= 0) {
+				if (dPadHatPos >= 0) {
 					pJoypad->hats[dPadHatPos].x = 0;
 					pJoypad->hats[dPadHatPos].y = 0;
 				}
@@ -261,15 +259,7 @@ struct RawJoypad {
                 case 0x32:
                 case 0x33:
                 case 0x34:
-                case 0x35:
-				case 0x36: {
-                	if (usageMin == 0x36) {
-                		//logger->log("slider");
-                		//logger->log(std::to_string(value), 0);
-                		//logger->log(std::to_string(data.pValueCaps[i].LogicalMin), 0);
-                		//logger->log(std::to_string(data.pValueCaps[i].LogicalMax), 0);
-                	}
-
+                case 0x35: {
                     if (pJoypad->isXInputDevice) {
                     	InterlockedExchange(&(pJoypad->axis[usageMin & 7]), sclamp<16>( value - 32767 ));
                         //pJoypad->axis[usageMin & 7] = sclamp<16>( value - 32767 );
