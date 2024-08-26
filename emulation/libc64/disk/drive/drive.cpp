@@ -899,7 +899,7 @@ auto Drive::power( ) -> void {
     latchedByte = 0x55;
     ue3Counter = 0;
     accum = 0;
-    headOffset = 0;
+    //headOffset = 0;
     currentHalftrack = 17 * 2;
     coilDir = 0;
     structure.autoStarted = false;
@@ -1114,7 +1114,7 @@ auto Drive::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> void 
 }
 
 auto Drive::postAttach() -> void {
-    headOffset = 0;
+    headOffset %= gcrTrack->bits;
     pulseIndex = gcrTrack->firstPulse;
     wd1770.setPulseIndex(pulseIndex, pulseDelta);
 
