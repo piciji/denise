@@ -7,7 +7,7 @@
 #include <errno.h>
 
 //#include <usb.h>
-//#include <dev/usb/usb.h>
+#include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
 #include <usbhid.h>
@@ -220,7 +220,7 @@ printf("joy ok: %s \n", node.c_str());
 	    fcntl(jp.fd, F_SETFL, O_NONBLOCK);
 
 	#ifdef __NetBSD__
-		while (read(fd, jp.report.data, jp.report.size) == jp.report.size) {}
+		while (read(jp.fd, jp.report.data, jp.report.size) == jp.report.size) {}
 	#endif
 
 	    return true;
