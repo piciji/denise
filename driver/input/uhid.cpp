@@ -14,7 +14,9 @@
 
 //#include <osreldate.h>
 
+#ifdef __FreeBSD__
 #include <dev/usb/usb_ioctl.h>
+#endif
 
 //#include <sys/joystick.h>
 
