@@ -70,6 +70,10 @@
 	#include "input/udev.cpp"
 #endif
 
+#ifdef DRV_UHID
+	#include "input/uhid.cpp"
+#endif
+
 #ifdef DRV_IOKIT
 	#include "input/iokit/main.cpp"
 #endif
@@ -312,16 +316,16 @@ auto Input::available() -> std::vector<std::string> {
 		"XCB/Udev",
 	#endif
 
-	#if defined(DRV_XCB) && defined(DRV_SDLINPUT)
-		"XCB/Sdl",
+	#if defined(DRV_XCB) && defined(DRV_UHID)
+		"XCB/Uhid",
 	#endif
 
     #if defined(DRV_XLIB) && defined(DRV_UDEV)
 		"Xlib/Udev",
 	#endif
 
-	#if defined(DRV_XLIB) && defined(DRV_SDLINPUT)
-		"Xlib/Sdl",
+	#if defined(DRV_XLIB) && defined(DRV_UHID)
+		"Xlib/Uhid",
 	#endif
 
 	};
@@ -356,16 +360,16 @@ auto Input::preferred() -> std::string {
 		return "XCB/Udev";
 	#endif
 
-	#if defined(DRV_XCB) && defined(DRV_SDLINPUT)
-		return "XCB/Sdl";
+	#if defined(DRV_XCB) && defined(DRV_UHID)
+		return "XCB/Uhid";
 	#endif
 
 	#if defined(DRV_XLIB) && defined(DRV_UDEV)
 		return "Xlib/Udev";
 	#endif
 
-	#if defined(DRV_XLIB) && defined(DRV_SDLINPUT)
-		return "Xlib/Sdl";
+	#if defined(DRV_XLIB) && defined(DRV_UHID)
+		return "Xlib/Uhid";
 	#endif
 
 	return "";
@@ -400,16 +404,16 @@ auto Input::create(const std::string& driver) -> Input* {
 		if(driver == "XCB/Udev") return new XCBInput("udev");
 	#endif
 
-	#if defined(DRV_XCB) && defined(DRV_SDLINPUT)
-		if(driver == "XCB/Sdl") return new XCBInput("sdl");
+	#if defined(DRV_XCB) && defined(DRV_UHID)
+		if(driver == "XCB/Uhid") return new XCBInput("uhid");
 	#endif
 
 	#if defined(DRV_XLIB) && defined(DRV_UDEV)
 		if(driver == "Xlib/Udev") return new XInput("udev");
 	#endif
 
-	#if defined(DRV_XLIB) && defined(DRV_SDLINPUT)
-		if(driver == "Xlib/Sdl") return new XInput("sdl");
+	#if defined(DRV_XLIB) && defined(DRV_UHID)
+		if(driver == "Xlib/Uhid") return new XInput("uhid");
 	#endif
 
     return new Input;
