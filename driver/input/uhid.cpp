@@ -6,19 +6,17 @@
 #include <fcntl.h>
 #include <errno.h>
 
-//#include <usb.h>
+
 #include <dev/usb/usb.h>
+
+extern "C" {
 #include <dev/usb/usbhid.h>
-
+}
 #include <usbhid.h>
-
-//#include <osreldate.h>
 
 #ifdef __FreeBSD__
 #include <dev/usb/usb_ioctl.h>
 #endif
-
-//#include <sys/joystick.h>
 
 #include "../tools/hid.h"
 #include "../tools/tools.h"
@@ -60,8 +58,11 @@ struct Uhid {
 
 		for (int joy = 0; joy < 16; joy++) {
 			Joypad jp;
+#ifdef __OpenBSD__
+			node = "/dev/ujoy/" + std::to_string(joy);
+#else
 			node = "/dev/uhid" + std::to_string(joy);
-
+#endif
 			if (stat(node.c_str(), &st) == -1)
     			continue;
 
@@ -193,7 +194,7 @@ printf("joy ok: %s \n", node.c_str());
 						break;
 					case HUG_HAT_SWITCH:
 				#ifdef __OpenBSD__
-					case HUG_DPAD_UP:
+					case 0x90:
 				#endif
 						jp.hats.push_back({usage, hats});
 						jp.hid->hats().append( std::to_string(hats) + ".X" );
