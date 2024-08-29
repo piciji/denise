@@ -9,10 +9,11 @@
 
 #include <dev/usb/usb.h>
 
-extern "C" {
 #include <dev/usb/usbhid.h>
-}
+
+extern "C" {
 #include <usbhid.h>
+}
 
 #ifdef __FreeBSD__
 #include <dev/usb/usb_ioctl.h>
