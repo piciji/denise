@@ -132,7 +132,6 @@ for:
     - sh: sudo apt-get install libgtk-3-dev -y
     - sh: sudo apt-get install libopenal-dev -y
     - sh: sudo apt-get install libpulse-dev -y
-    - sh: sudo apt-get install libsdl2-dev -y
     - sh: sudo apt-get install libudev-dev -y
     - sh: sudo apt-get install sshpass -y
     

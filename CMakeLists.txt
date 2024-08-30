@@ -14,7 +14,6 @@ endif()
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_package(OpenAL REQUIRED)
-    find_package(SDL2 REQUIRED)
     find_package(PulseAudio REQUIRED)
     pkg_check_modules(GTK REQUIRED gtk+-3.0)
     pkg_check_modules(XCB REQUIRED xcb xcb-xinput xcb-xfixes xkbcommon)
@@ -251,14 +250,14 @@ else()
 
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # no udev
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_FREETYPE -DDRV_SDLINPUT")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID -DDRV_FREETYPE")
     else()
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV -DDRV_FREETYPE -DDRV_SDLINPUT")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV -DDRV_FREETYPE")
     endif()
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${SDL2_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang")
+            PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang")
 
 endif()
 
@@ -298,23 +297,27 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
 else()
-    target_link_libraries(${PROJECT_NAME} "-lpthread -no-pie -lfontconfig -lX11 -lXrandr")
+    target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr")
+    target_link_directories(${PROJECT_NAME} PUBLIC ${GTK_LIBRARY_DIRS})
+    target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
+    target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})
     target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
+
+    # use -Wl,--verbose for detailed linker problems
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R7/lib -L/usr/X11R7/lib -lrt -lXext -lXfixes -lGL -lpulse")
+        target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R7/lib -L/usr/X11R7/lib -lrt -lXext -lXfixes -lGL -lpulse -lusbhid")
         # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs
         set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
     elseif (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-        target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R6/lib -L/usr/X11R6/lib -lXext -lXfixes -lGL -lpulse")
+        target_link_libraries(${PROJECT_NAME} "-Wl,-rpath,/usr/X11R6/lib -L/usr/X11R6/lib -lXext -lXfixes -lGL -lpulse -lusbhid")
         set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
     elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-        target_link_libraries(${PROJECT_NAME} "-L/usr/local/lib -lrt -lXext -ldl -lXfixes -lGL -ludev -lpulse")
+        target_link_libraries(${PROJECT_NAME} "-L/usr/local/lib -lrt -lXext -ldl -lXfixes -lGL -ludev -lpulse -lusbhid")
     else()
-        target_link_libraries(${PROJECT_NAME} "-lrt -lXext -ldl -lXfixes -lGL -ludev -lpulse")
+        target_link_libraries(${PROJECT_NAME} "-no-pie -lrt -lXext -ldl -lXfixes -lGL -ludev -lpulse")
     endif()
 endif()
 

@@ -508,6 +508,10 @@ auto Program::quit() -> void {
     videoDriver->disableExclusiveFullscreen();
     quitInProgress = true;
     emuThread->lock();
+    for(auto emuView : emuConfigViews) {
+        if (emuView->inputLayout)
+            emuView->inputLayout->stopCapture();
+    }
     powerOff();
     if (statusHandler)
         statusHandler->clearUpdates();

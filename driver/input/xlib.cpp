@@ -22,8 +22,8 @@ struct XInput : public Input {
 
     std::atomic<bool> kill;
     
-#ifdef DRV_SDLINPUT
-    SdlInput* sdl;
+#ifdef DRV_UHID
+    Uhid* uhid;
 #endif
 #ifdef DRV_UDEV
 	Udev* udev;
@@ -61,9 +61,9 @@ struct XInput : public Input {
 		hidKeyboard->id = 0;
 		hidMouse->id = 1;
 
-	#ifdef DRV_SDLINPUT
-		if (joypadDriver == "sdl")
-			if (!sdl->init()) {}
+	#ifdef DRV_UHID
+		if (joypadDriver == "uhid")
+			if (!uhid->init()) {}
 	#endif
 	#ifdef DRV_UDEV
 		if (joypadDriver == "udev")
@@ -231,8 +231,8 @@ struct XInput : public Input {
         devices.push_back(hidKeyboard);
         devices.push_back(hidMouse);
 
-	#ifdef DRV_SDLINPUT
-		if (joypadDriver == "sdl") sdl->pollJoypad(devices);
+	#ifdef DRV_UHID
+		if (joypadDriver == "uhid") uhid->pollJoypad(devices);
 	#endif
 	#ifdef DRV_UDEV
 		if (joypadDriver == "udev") udev->pollJoypad(devices);
@@ -386,8 +386,8 @@ struct XInput : public Input {
 	XInput(std::string joypadDriver = "") {
 		this->joypadDriver = joypadDriver;
 		
-		#ifdef DRV_SDLINPUT
-			if (this->joypadDriver == "sdl") sdl = new SdlInput();
+		#ifdef DRV_UHID
+			if (this->joypadDriver == "uhid") uhid = new Uhid();
 		#endif
 		#ifdef DRV_UDEV
 			if (this->joypadDriver == "udev") udev = new Udev();
@@ -403,8 +403,8 @@ struct XInput : public Input {
 
 		term();
 
-		#ifdef DRV_SDLINPUT
-			if (joypadDriver == "sdl") delete sdl;
+		#ifdef DRV_UHID
+			if (joypadDriver == "uhid") delete uhid;
 		#endif
 		#ifdef DRV_UDEV
 			if (joypadDriver == "udev") delete udev;
