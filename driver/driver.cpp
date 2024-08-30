@@ -62,10 +62,6 @@
 	#include "audio/coreaudio.cpp"
 #endif
 
-#ifdef DRV_SDLINPUT
-	#include "input/sdl.cpp"
-#endif
-
 #ifdef DRV_UDEV
 	#include "input/udev.cpp"
 #endif
