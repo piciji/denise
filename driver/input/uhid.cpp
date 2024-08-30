@@ -4,11 +4,8 @@
 
 #include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
-
 
 #include <dev/usb/usb.h>
-
 #include <dev/usb/usbhid.h>
 
 extern "C" {
@@ -71,7 +68,7 @@ struct Uhid {
 				free(jp);
 				continue;
 			}
-printf("joy ok: %s \n", node.c_str());
+//printf("joy ok: %s \n", node.c_str());
 			usb_device_info di;
 			std::string buf = "";
 			std::string joyName = "";
@@ -148,12 +145,8 @@ printf("joy ok: %s \n", node.c_str());
     		return false;
 
     	jp.report.data = new uint8_t[jp.report.size];
-	    
-//	#ifdef __FreeBSD__
+
 	    hdata = hid_start_parse(jp.desc, 1 << hid_input, jp.report.id);
-	//#else
-	  //  hdata = hid_start_parse(jp.desc, 1 << hid_input);
-//	#endif
 
 	    if (!hdata)
 	        return false;
@@ -194,9 +187,6 @@ printf("joy ok: %s \n", node.c_str());
 						jp.hid->axes().append("Z|Rot");
 						break;
 					case HUG_HAT_SWITCH:
-				#ifdef __OpenBSD__
-					case 0x90:
-				#endif
 						jp.hats.push_back({usage, hats});
 						jp.hid->hats().append( std::to_string(hats) + ".X" );
 						jp.hid->hats().append( std::to_string(hats) + ".Y" );
