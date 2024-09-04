@@ -45,8 +45,9 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( readBuffer );
     s.integer( writeBuffer );
     s.integer( attachDelay );
-    s.integer( stepperSeekTime );
-    s.integer( stepperDelay );
+    s.integer( mechanics.stepperDelay );
+    s.integer( mechanics.motorDelay );
+    s.integer( mechanics.refCycles );
     s.integer( delayInProgress );
     s.integer( nextStep );
     s.integer( wasAttachDetached );
@@ -56,11 +57,6 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( clockOut );
     s.integer( dataOut );
     s.integer( atnOut );
-    s.integer( motorOff.slowDown );
-    s.integer( motorOff.decelerationPoint );
-    s.integer( motorOff.delay );
-    s.integer( motorOff.pos );
-    s.vector( motorOff.chunkSize );
     s.integer( writeProtected );
     s.integer( pulseIndex );
     s.integer( pulseDelta );
@@ -89,7 +85,10 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         s.integer(Drive::wobblePos);
         s.integer(Drive::wobbleLimit);
         s.integer(Drive::refCyclesPerRevolution);
-        s.integer(Drive::enableDeceleration);
+        s.integer(Drive::Mechanics::enabled);
+        s.integer(Drive::Mechanics::acceleration);
+        s.integer(Drive::Mechanics::deceleration);
+        s.integer(Drive::Mechanics::stepperSeekTime);
     }
 
     via1.serialize( s );

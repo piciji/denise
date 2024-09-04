@@ -8,7 +8,9 @@ namespace EmuConfigView {
 struct TabWindow;
     
 struct ModelLayout : GUIKIT::FramedVerticalLayout {
-    
+
+    GUIKIT::Image* curve = nullptr;
+
     struct Line : GUIKIT::HorizontalLayout {
         
         struct Block : GUIKIT::HorizontalLayout {
@@ -19,6 +21,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
 			std::vector<GUIKIT::RadioBox*> options;
             GUIKIT::Label* label = nullptr;
             GUIKIT::LineEdit* lineEdit = nullptr;
+            GUIKIT::Button* button = nullptr;
+            GUIKIT::ImageView* imageView = nullptr;
 
             Block(Emulator::Interface::Model* model, ModelLayout* layout);
         };
@@ -79,11 +83,15 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
 
     auto updateBurstVisibillity() -> void;
 
+    auto updateMechanicsVisibillity() -> void;
+
     auto getAlignedWidth(Emulator::Interface::Model* model = nullptr) -> unsigned;
 
     auto getUnit(unsigned id) -> std::string;
 
     auto setVisibility( Emulator::Interface::Model* model ) -> void;
+
+    auto setImageUri(Line::Block* block, float val) -> void;
     
     ModelLayout();
 };

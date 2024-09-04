@@ -10,6 +10,7 @@
 #include "../../thread/emuThread.h"
 #include "../../view/view.h"
 #include "model.h"
+#include "../../../data/icons.h"
 
 namespace EmuConfigView {   
     
@@ -63,10 +64,17 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
             sliderLayout->updateValueWidth(longest);
             sliderLayout->slider.setLength( sOptions.size() );
         } else {
-            sliderLayout->updateValueWidth( std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] ) );
+            std::string longest = std::to_string( model->range[0] < 0 ? model->range[0] : model->range[1] );
+            if (model->scaler != 1.0)
+                longest += ".0";
+            longest += layout->getUnit(model->id);
+
+            sliderLayout->updateValueWidth( longest );
             sliderLayout->slider.setLength( model->steps + 1 );
         }
-
+    } else if (model->isButton()) {
+        button = new GUIKIT::Button;
+        append(*button, {0u, 0u} );
 	} else {
         GUIKIT::LineEdit tester;
         tester.setText( model->isHex() ? "0xAA" : std::to_string(model->range[0]) );
@@ -102,6 +110,7 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
     unsigned blockPos = 0;
 
     bool useMultiAudioChipSelector = dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find(purposes, Emulator::Interface::Model::AudioSettings);
+    bool useWolframAlpha = dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find(purposes, Emulator::Interface::Model::DriveMechanics);
   
     for( auto& model : models ) {
         
@@ -124,6 +133,17 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
         
         auto block = new Line::Block(&model, this);
         line->blocks.push_back(block);
+
+        if (useWolframAlpha && (model.id == LIBC64::Interface::ModelIdDriveAcceleration || model.id == LIBC64::Interface::ModelIdDriveDeceleration)) {
+            if (!curve) {
+                curve = new GUIKIT::Image;
+                curve->loadPng((uint8_t*)Icons::sine, sizeof(Icons::sine));
+            }
+            block->imageView = new GUIKIT::ImageView;
+            block->imageView->setImage( curve );
+            line->append(*block->imageView, {0u, 0u}, 5 );
+        }
+
         if (model.isSlider())
             line->append(*block,{~0u, 0u}, 15);
         else
@@ -160,6 +180,14 @@ auto ModelLayout::setEvents( ) -> void {
                         emuThread->unlock();
                 };
 
+            } else if (model->isButton() ) {
+                block->button->onActivate = [this, block, model]() {
+                    bool locked = emuThread->lock();
+                    emulator->setModelValue( model->id, 1 );
+                    applyCustomStuff( block, model );
+                    if (locked) // nested (e.g. changing speeder)
+                        emuThread->unlock();
+                };
 			} else if (model->isRadio() ) {	
 				unsigned val = 0;
 				for( auto option : block->options ) {
@@ -218,7 +246,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<int>( _underscore(model->name), val );
 
-                    if (model->isDriveSettings())
+                    if (model->isDriveSettings() || model->isDriveMechanics())
                         unit = getUnit(model->id);
 
                     block->sliderLayout->value.setText( displayText + unit );
@@ -295,6 +323,8 @@ auto ModelLayout::updateWidgets( ) -> void {
         updateBiasVisibillity();
     } else if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::DriveSettings )) {
         updateBurstVisibillity();
+    } else if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::DriveMechanics )) {
+        updateMechanicsVisibillity();
     }
 }
 
@@ -349,10 +379,13 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 
         block->sliderLayout->slider.setPosition( pos );
 
-        if (model->isDriveSettings())
+        if (model->isDriveSettings() || model->isDriveMechanics())
             unit = getUnit(model->id);
 
         block->sliderLayout->value.setText( displayText + unit );
+
+        if (block->imageView)
+            setImageUri(block, (float)val / model->scaler);
         
         return;
     }
@@ -376,13 +409,36 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 		block->combo->setSelection( usedVal );
 		return;
 	}
-	
+
+    if (model->isButton())
+        return;
+
 	auto _val = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 
-	if ( model->isHex() )                 
+	if ( model->isHex() )
 		block->lineEdit->setText( GUIKIT::String::convertIntToHex( _val ) );
-	else            
+	else
 		block->lineEdit->setValue( _val );
+}
+
+auto ModelLayout::setImageUri(Line::Block* block, float val) -> void {
+    if (block->imageView) {
+        std::string uri = "";
+
+        if (dynamic_cast<LIBC64::Interface*> (this->emulator)) {
+            if (block->model->id == LIBC64::Interface::ModelIdDriveDeceleration) {
+                uri = "https://www.wolframalpha.com/input?i=plot+%5B%2F%2Fmath%3A300.0+*+%280.4+%5E%28%28";
+                uri += std::to_string( val );
+                uri += "%2F65536.0%29*%28x%2F256.0%29+%29%29%2F%2F%5D+from+%5B%2F%2Fnumber%3A0%2F%2F%5D+to+%5B%2F%2Fnumber%3A500000%2F%2F%5D";
+            } else if (block->model->id == LIBC64::Interface::ModelIdDriveAcceleration) {
+                uri = "https://www.wolframalpha.com/input?i=plot+%5B%2F%2Fmath%3A300.0+*+%28-0.4+%5E%28%28";
+                uri += std::to_string( val );
+                uri += "%2F65536.0%29*%28x%2F256.0%29+%29%29+%2B+300.0%2F%2F%5D+from+%5B%2F%2Fnumber%3A0%2F%2F%5D+to+%5B%2F%2Fnumber%3A500000%2F%2F%5D";
+            }
+        }
+
+        block->imageView->setUri( uri );
+    }
 }
 
 auto ModelLayout::toggleCheckbox(unsigned id) -> bool {
@@ -531,6 +587,9 @@ auto ModelLayout::translate( std::string theme ) -> void {
             } else if (model->isSlider()) {
                 block->sliderLayout->name.setText(trans->getA( name, true ));
                 block->sliderLayout->name.setTooltip(trans->getA(tooltip));
+
+            } else if (model->isButton()) {
+                block->button->setText( trans->getA( name ) );
             }
 
             if (block->label) {
@@ -638,6 +697,27 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdDiskOnDemand:
                 program->setWarp(false);
                 break;
+            case LIBC64::Interface::ModelIdDriveMechanicsReset: {
+                std::vector<Emulator::Interface::Model*> _models;
+                _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDiskDriveStepperSeekTime ) );
+                _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDriveAcceleration ) );
+                _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDriveDeceleration ) );
+                for(auto _model : _models) {
+                    int value = emulator->getModelValue( _model->id );
+                    tabWindow->settings->set<int>( _underscore( _model->name), value );
+                }
+                updateWidgets();
+            } break;
+
+            case LIBC64::Interface::ModelIdEmulateDriveMechanics:
+                updateMechanicsVisibillity();
+                break;
+
+            case LIBC64::Interface::ModelIdDriveAcceleration:
+            case LIBC64::Interface::ModelIdDriveDeceleration:
+                if (block->imageView)
+                    setImageUri(block, (float)emulator->getModelValue( model->id ) / model->scaler);
+                break;
         }
     } else {
         switch(model->id) {
@@ -677,6 +757,20 @@ auto ModelLayout::updateBurstVisibillity() -> void {
     auto selection = blockDriveModel->combo->selection();
 
     blockBurstMode->checkBox->setEnabled( selection == 3 || selection == 4 );
+}
+
+auto ModelLayout::updateMechanicsVisibillity() -> void {
+    auto blockEnable = getBlock( LIBC64::Interface::ModelIdEmulateDriveMechanics );
+    auto blockReset = getBlock( LIBC64::Interface::ModelIdDriveMechanicsReset );
+    auto blockStepper = getBlock( LIBC64::Interface::ModelIdDiskDriveStepperSeekTime );
+    auto blockAcc = getBlock( LIBC64::Interface::ModelIdDriveAcceleration );
+    auto blockDec = getBlock( LIBC64::Interface::ModelIdDriveDeceleration );
+    bool enabled = blockEnable->checkBox->checked();
+
+    blockReset->button->setEnabled( enabled );
+    blockStepper->sliderLayout->setEnabled( enabled );
+    blockAcc->sliderLayout->setEnabled( enabled );
+    blockDec->sliderLayout->setEnabled( enabled );
 }
 
 auto ModelLayout::hintDriveSettings() -> void {
@@ -982,12 +1076,17 @@ auto ModelLayout::getUnit(unsigned id) -> std::string {
     if (dynamic_cast<LIBC64::Interface*>(this->emulator)) {
         if (id == LIBC64::Interface::ModelIdDiskDriveStepperSeekTime)
             return " ms";
+        if (id == LIBC64::Interface::ModelIdDiskDriveSpeed || id == LIBC64::Interface::ModelIdDiskDriveWobble)
+            return " RPM";
     } else {
         if (id == LIBAMI::Interface::ModelIdDiskDriveStepperSeekTime || id == LIBAMI::Interface::ModelIdDiskDriveStepperAccessTime)
             return " ms";
+
+        if (id == LIBAMI::Interface::ModelIdDiskDriveSpeed || id == LIBAMI::Interface::ModelIdDiskDriveWobble)
+            return " RPM";
     }
 
-    return " RPM";
+    return "";
 }
 
 }

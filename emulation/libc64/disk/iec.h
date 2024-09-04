@@ -74,10 +74,16 @@ struct IecBus {
     auto setDriveSpeed(unsigned rpmScaled) -> void;
     auto getDriveSpeed() -> unsigned;
     auto setDriveWobble(unsigned wobbleScaled) -> void;
-    auto enableDeceleration(bool state) -> void;
-    auto hasDeceleration() -> bool;
+    auto enableMechanics(bool state) -> void;
+    auto hasMechanics() -> bool;
+    auto setMotorAcceleration(uint16_t value) -> void;
+    auto getMotorAcceleration() -> uint16_t;
+    auto setMotorDeceleration(uint16_t value) -> void;
+    auto getMotorDeceleration() -> uint16_t;
+    auto resetMechanics() -> void;
     auto getDriveWobble() -> unsigned;
     auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
+    auto getStepperSeekTime( ) -> unsigned;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
     auto randomizeRpm() -> void;
     auto setCpuCyclesPerSecond( unsigned cycles ) -> void;

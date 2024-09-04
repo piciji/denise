@@ -6,6 +6,7 @@
 // drive speed is 300 rounds per minute, means 300 / 60 = 5 rounds per second.
 // one revolution has 16.000.000 / 5 reference cycles
 #define CyclesPerRevolution300Rpm 3200000
+#define MaxAccDecMotorTime 700000
 
 #include "../via/via.h"
 
@@ -74,14 +75,17 @@ struct Drive {
 
 	Emulator::Interface::Media* media;
 
-    struct MotorOff {
-        bool slowDown = false;
-        const unsigned CHUNKS = 20;
-        std::vector<unsigned> chunkSize;
-        unsigned decelerationPoint;
-        unsigned delay;
-        unsigned pos;
-    } motorOff;
+    struct Mechanics {
+        static bool enabled;
+        static uint16_t acceleration;
+        static uint16_t deceleration;
+        static uint16_t stepperSeekTime;
+
+        unsigned motorDelay = 0;
+        unsigned refCycles = 0;
+
+        unsigned stepperDelay = 0;
+    } mechanics;
         
     Via via1;
     Via via2;
@@ -152,7 +156,6 @@ struct Drive {
 
     bool delayInProgress = false;
     unsigned attachDelay = 0;
-    unsigned stepperDelay = 0;
     uint8_t nextStep;
 
     bool wasAttachDetached;
@@ -164,15 +167,12 @@ struct Drive {
     
     bool clockOut;
     bool dataOut;
-    bool atnOut;    
-
-    unsigned stepperSeekTime = 0;
+    bool atnOut;
 
     static unsigned rpm;
     static unsigned wobble;
     static int wobblePos;
     static int wobbleLimit;
-    static bool enableDeceleration;
 
     auto sync() -> void;
     auto setSyncPos(int direction) -> void;
@@ -200,14 +200,14 @@ struct Drive {
     auto setWriteProtect(bool state) -> void;
     static auto setSpeed( unsigned rpmScaled ) -> void;
     static auto setWobble( unsigned wobbleScaled ) -> void;
-    auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
+    static auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
 
     auto syncFound() -> uint8_t;
     auto writeprotectSense() -> uint8_t;
     auto write() -> void;
     auto updateStepper( uint8_t step ) -> bool;
-    auto motorRun() -> bool;
-    auto motorOffInit() -> void;
+    auto motorRun(unsigned& refCycles) -> bool;
+    auto motorChangeInit() -> void;
 
     auto serialize(Emulator::Serializer& s) -> void;
     auto updateDeviceState() -> void;

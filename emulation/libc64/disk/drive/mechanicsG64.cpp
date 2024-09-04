@@ -7,41 +7,36 @@ namespace LIBC64 {
     ((refCyclesInCpuCycle - refCycles + todo) > (refCyclesInCpuCycle >> 1))
 
     auto Drive::rotateG64( ) -> void {
-        if (!motorRun())
-            return;
-
+        unsigned _refCyclesPerRevolution = refCyclesPerRevolution;
         unsigned refCycles = refCyclesInCpuCycle;
         unsigned delta;
         unsigned todo;
+
+        if (!mechanics.motorDelay) {
+            if (!motorOn)
+                return;
+        } else
+            if(!motorRun(_refCyclesPerRevolution))
+                return;
 
         if (readMode) {
             do {
                 todo = 1;
 
-                //if (motorAdvance) {
-                    delta = refCyclesPerRevolution - accum;
+                delta = _refCyclesPerRevolution - accum;
 
-                    if ((gcrTrack->bits << 1) <= delta) {
-                        todo = delta / gcrTrack->bits;
+                if ((gcrTrack->bits << 1) <= delta) {
+                    todo = delta / gcrTrack->bits;
 
-                        if (refCycles < todo)
-                            todo = refCycles;
+                    if (refCycles < todo)
+                        todo = refCycles;
 
-                        if ((16 - ue7Counter) < todo)
-                            todo = 16 - ue7Counter;
+                    if ((16 - ue7Counter) < todo)
+                        todo = 16 - ue7Counter;
 
-                        if (randCounter && (randCounter < todo))
-                            todo = randCounter;
-                    }
-                // } else {
-                //     todo = refCycles;
-                //
-                //     if ((16 - ue7Counter) < todo)
-                //         todo = 16 - ue7Counter;
-                //
-                //     if (randCounter && (randCounter < todo))
-                //         todo = randCounter;
-                // }
+                    if (randCounter && (randCounter < todo))
+                        todo = randCounter;
+                }
 
                 if ( uf6aFlipFlop == comperatorFlipFlop ) {
                     randCounter -= todo;
@@ -98,50 +93,40 @@ namespace LIBC64 {
                     }
                 }
 
-            //    if (motorAdvance) {
-                    accum += gcrTrack->bits * todo;
+                accum += gcrTrack->bits * todo;
 
-                    if (accum >= refCyclesPerRevolution) {
-                        accum -= refCyclesPerRevolution;
+                if (accum >= _refCyclesPerRevolution) {
+                    accum -= _refCyclesPerRevolution;
 
-                        if (readBit())
-                            // too short (< 2.5 microseconds) flux reversals will be removed by a filter
-                            // not emulated, because variable bit cell length isn't emulated either but necessary for this
-                            // NOTE: gcr images are almost clean already
-                            comperatorFlipFlop ^= 1;
-                    }
-              //  }
+                    if (readBit())
+                        // too short (< 2.5 microseconds) flux reversals will be removed by a filter
+                        // not emulated, because variable bit cell length isn't emulated either but necessary for this
+                        // NOTE: gcr images are almost clean already
+                        comperatorFlipFlop ^= 1;
+                }
 
                 refCycles -= todo;
             } while ( refCycles );
 
         } else { // write
             do {
-              //  if (motorAdvance) {
-                    todo = 1;
-                    delta = refCyclesPerRevolution - accum;
+                todo = 1;
+                delta = _refCyclesPerRevolution - accum;
 
-                    if ((gcrTrack->bits << 1) <= delta) {
-                        todo = delta / gcrTrack->bits;
+                if ((gcrTrack->bits << 1) <= delta) {
+                    todo = delta / gcrTrack->bits;
 
-                        if (refCycles < todo)
-                            todo = refCycles;
+                    if (refCycles < todo)
+                        todo = refCycles;
 
-                        if ((16 - ue7Counter) < todo)
-                            todo = 16 - ue7Counter;
-                    }
+                    if ((16 - ue7Counter) < todo)
+                        todo = 16 - ue7Counter;
+                }
 
-                    accum += gcrTrack->bits * todo;
+                accum += gcrTrack->bits * todo;
 
-                    if (accum >= refCyclesPerRevolution)
-                        accum -= refCyclesPerRevolution;
-
-                // } else {
-                //     todo = refCycles;
-                //
-                //     if ((16 - ue7Counter) < todo)
-                //         todo = 16 - ue7Counter;
-                // }
+                if (accum >= _refCyclesPerRevolution)
+                    accum -= _refCyclesPerRevolution;
 
                 // ue7 and uf4 work same like reading
                 ue7Counter += todo;

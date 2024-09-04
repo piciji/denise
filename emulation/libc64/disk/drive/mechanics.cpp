@@ -4,65 +4,54 @@
 namespace LIBC64 {   
     
 auto Drive::rotateD64() -> void {
-    
-    if (!motorRun())
-        return;
+    static unsigned _driveCycles;
 
-    // the images were created in standard cbm dos format.
-    // for cbm dos we know the amount of bits passed the
-    // read/write head every second according to the speedzone.
-    
-    // 1.000.000 cpu cycles = bps ( bits per second for current speedzone )
-    // 1 cpu cycle          = x bits
-    // x bits for one cpu cycle = bps / 1.000.000 drive cpu cycles
-    
+    if (!mechanics.motorDelay) {
+        if (!motorOn)
+            return;
+        _driveCycles = driveCycles;
+    } else {
+        _driveCycles = driveCycles;
+        if(!motorRun(_driveCycles))
+            return;
+    }
+
     accum += rotSpeedBps[speedZone];
     
-    if (accum < driveCycles)
+    if (accum < _driveCycles)
         return;
     // one bit has moved
-    accum -= driveCycles;
+    accum -= _driveCycles;
     
     uint8_t byte;
     uint8_t* trackPtr = gcrTrack->data;
     
     if (readMode) {
-                
-        if ( !loaded || !trackPtr ) 
-            // no image loaded or track not present
+        if ( !loaded || !trackPtr )
             byte = 0;
         else
-            // headOffset is the bit position within a track.            
-            // we move the actual bit to the most significant bit.
             byte = trackPtr[ headOffset >> 3 ] << (headOffset & 7);
             
         headOffset++;
-        // move next bit to msb.
-        byte <<= 1;
+        byte <<= 1; // move next bit to msb.
 
         if  ( !( headOffset & 7 ) ) {
 
-            if ( (headOffset >> 3) >= gcrTrack->size) {
-                // revolution complete ... wrap around
+            if ( (headOffset >> 3) >= gcrTrack->size)
                 headOffset = 0;
-            }
-            // fetch next byte
+
             byte = (!loaded || !trackPtr) ? 0 : trackPtr[ headOffset >> 3 ];
         }
 
-        // make room for incoming bit
         readBuffer <<= 1;
         writeBuffer <<= 1;
-        // append incoming bit
+
         readBuffer |= (byte >> 7) & 1;
         readBuffer &= 0x3ff; // 10 bit buffer
 
         if ((readBuffer & 0xf) == 0)
-            // when there are more than three zeros in a row, a one will be injected by drive mechanic
-            readBuffer |= 1;
+            readBuffer |= 1; // simulate oscillation
 
-        // if last 10 bits in a row are non-zero then there is a sync.
-        // in this case data is not moving.
         if (~readBuffer & 0x3ff) {
             // no sync 
             if (++ue3Counter == 8)
@@ -71,7 +60,7 @@ auto Drive::rotateD64() -> void {
                 via2.ca1In( ca1Line = true );
 
         } else {
-            ue3Counter = 0; //reset when sync mark detected
+            ue3Counter = 0;
             if (!ca1Line)
                 via2.ca1In( ca1Line = true );
         }
@@ -186,67 +175,61 @@ inline auto Drive::writeBit( bool state ) -> void {
     gcrTrack->written = 1; // track data has changed, host have to write back
 }
 
-auto Drive::motorRun() -> bool {
+auto Drive::motorRun(unsigned& refCycles) -> bool {
+    unsigned fallBackCycles = MaxAccDecMotorTime - --mechanics.motorDelay;
 
-    if (motorOn)
-        return true;
-
-   // if (!motorOff.slowDown)
-    //    return false;
-
-    if (motorOff.delay) {
-        motorOff.delay--;
+    if (fallBackCycles & 0xff) {
+        refCycles = mechanics.refCycles;
         return true;
     }
-    return false;
-    // Star Trekking game needs emulation of motor slow down
-    unsigned decelerationPoint = motorOff.decelerationPoint;
-    if (motorOff.chunkSize[decelerationPoint])
-        motorOff.chunkSize[decelerationPoint]--;
 
-    if (motorOff.chunkSize[decelerationPoint] == 0) {
-        if (motorOff.decelerationPoint)
-            motorOff.decelerationPoint--;
-        else {
-            motorOff.slowDown = false;
+    if (use2Mhz())
+        fallBackCycles >>= 1;
+
+    float timeScaled = (float)fallBackCycles / 256.0f;
+    float slopeFactor;
+    float rpmFactor;
+
+    if (motorOn) {
+        slopeFactor = (float)(mechanics.acceleration) / 65536.0f;
+        rpmFactor = -powf(0.40f, timeScaled * slopeFactor) + 1.0f;
+
+        if (rpmFactor >= 0.999) {
+           // system->interface->log("fullspeed");
+           // system->interface->log(fallBackCycles / 1000, 0);
+            mechanics.motorDelay = 0;
+        }
+
+    } else {
+        slopeFactor = (float)(mechanics.deceleration) / 65536.0f;
+        rpmFactor = powf(0.40f, timeScaled * slopeFactor);
+
+        if (rpmFactor <= 0.001) {
+           // system->interface->log("stopped");
+           // system->interface->log(fallBackCycles / 1000, 0);
+            mechanics.motorDelay = 0;
             return false;
         }
     }
 
-    if (motorOff.pos++ <= decelerationPoint)
-        return true;
+    refCycles = (unsigned)( (float)refCycles * rpmFactor );
 
-    if (motorOff.pos == (motorOff.CHUNKS + 1) )
-        motorOff.pos = 0;
+    mechanics.refCycles = refCycles; // to speed things up use this for next 255 cycles
 
-    return false;
+    return true;
 }
 
-auto Drive::motorOffInit() -> void {
+auto Drive::motorChangeInit() -> void {
+    //system->interface->log(motorOn ? "Motor ON" : "Motor OFF");
 
-    //motorOff.delay = enableDeceleration ? 5900 : 0;
-    //motorOff.delay = enableDeceleration ? 12500 : 0;
-    motorOff.delay = enableDeceleration ? 7100 : 0;
-
-    unsigned slowDownCycles = 20000;
-
-    if (use2Mhz()) {
-        motorOff.delay <<= 1;
-        slowDownCycles <<= 1;
-    }
-    return;
-    unsigned chunkSize = slowDownCycles / motorOff.CHUNKS;
-    unsigned rest = slowDownCycles % motorOff.CHUNKS;
-
-    for(unsigned i = 0; i < motorOff.CHUNKS; i++)
-        motorOff.chunkSize[i] = chunkSize;
-
-    for(unsigned i = 0; i < rest; i++)
-        motorOff.chunkSize[i % motorOff.CHUNKS]++;
-
-    motorOff.decelerationPoint = motorOff.CHUNKS - 1;
-    motorOff.pos = 0;
-    motorOff.slowDown = true;
+    if (mechanics.enabled) {
+        if ((motorOn && mechanics.acceleration) || (!motorOn && mechanics.deceleration)) {
+            mechanics.motorDelay = MaxAccDecMotorTime - mechanics.motorDelay;
+            mechanics.refCycles = (operation & USERDATA_LEVEL) ? driveCycles : refCyclesPerRevolution;
+        } else
+            mechanics.motorDelay = 0;
+    } else
+        mechanics.motorDelay = 0;
 }
 
 auto Drive::randomizeRpm(std::vector<Drive*>& drivesEnabled) -> void {

@@ -482,12 +482,34 @@ auto IecBus::getDriveSpeed() -> unsigned {
     return Drive::rpm;
 }
 
-auto IecBus::enableDeceleration(bool state) -> void {
-    Drive::enableDeceleration = state;
+auto IecBus::resetMechanics() -> void {
+    Drive::Mechanics::acceleration = 688;
+    Drive::Mechanics::deceleration = 288;
+    Drive::setStepperSeekTime( 90 );
 }
 
-auto IecBus::hasDeceleration() -> bool {
-    return Drive::enableDeceleration;
+auto IecBus::setMotorAcceleration(uint16_t value) -> void {
+    Drive::Mechanics::acceleration = value;
+}
+
+auto IecBus::getMotorAcceleration() -> uint16_t {
+    return Drive::Mechanics::acceleration;
+}
+
+auto IecBus::setMotorDeceleration(uint16_t value) -> void {
+    Drive::Mechanics::deceleration = value;
+}
+
+auto IecBus::getMotorDeceleration() -> uint16_t {
+    return Drive::Mechanics::deceleration;
+}
+
+auto IecBus::enableMechanics(bool state) -> void {
+    Drive::Mechanics::enabled = state;
+}
+
+auto IecBus::hasMechanics() -> bool {
+    return Drive::Mechanics::enabled;
 }
 
 auto IecBus::setDriveWobble(unsigned wobbleScaled) -> void {
@@ -499,8 +521,11 @@ auto IecBus::getDriveWobble() -> unsigned {
 }
 
 auto IecBus::setStepperSeekTime(unsigned stepperSeekTimeScaled) -> void {
-    for( auto drive : drives )
-        drive->setStepperSeekTime( stepperSeekTimeScaled );
+    Drive::setStepperSeekTime( stepperSeekTimeScaled );
+}
+
+auto IecBus::getStepperSeekTime( ) -> unsigned {
+    return Drive::Mechanics::stepperSeekTime / 100;
 }
     
 auto IecBus::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {

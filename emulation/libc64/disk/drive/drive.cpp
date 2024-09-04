@@ -42,7 +42,10 @@ unsigned Drive::wobble = 50;
 int Drive::wobblePos = 0;
 int Drive::wobbleLimit = 25;
 uint32_t Drive::refCyclesPerRevolution = 0;
-bool Drive::enableDeceleration = false;
+bool Drive::Mechanics::enabled = false;
+uint16_t Drive::Mechanics::acceleration = 0;
+uint16_t Drive::Mechanics::deceleration = 0;
+uint16_t Drive::Mechanics::stepperSeekTime = 0;
 
 #define SYNC \
     cpu.handleSo();                                                    \
@@ -68,12 +71,12 @@ bool Drive::enableDeceleration = false;
 auto Drive::progressDelay() -> void {
     if (attachDelay) {
         if (--attachDelay == 0) {
-            delayInProgress = stepperDelay;
+            delayInProgress = mechanics.stepperDelay;
         }
     }
 
-    if (stepperDelay) {
-        if (--stepperDelay == 0) {
+    if (mechanics.stepperDelay) {
+        if (--mechanics.stepperDelay == 0) {
             changeHalfTrack(nextStep);
             delayInProgress = attachDelay;
         }
@@ -439,8 +442,11 @@ structure(system, this) {
     extendedMemoryMap = false;
 
     wasAttachDetached = false;
-    stepperDelay = 0;
-    delayInProgress = !!attachDelay;
+    mechanics.stepperDelay = 0;
+    mechanics.motorDelay = 0;
+    mechanics.refCycles = 0;
+
+    delayInProgress = false;
     motorOn = false;
     hidden = false;
 
@@ -691,7 +697,7 @@ structure(system, this) {
             
             if (lines->iob & 4) { // stepper motor works only when drive motor is active
 
-                if (stepperDelay) {
+                if (mechanics.stepperDelay) {
                     bool headBang = (currentHalftrack == 0) && ((nextStep == 3) || ( (nextStep == 2) && !coilDir));
 
                     updateStepper( nextStep );
@@ -704,18 +710,18 @@ structure(system, this) {
 
                 if (_step != 0) {
 
-                    if (!stepperSeekTime) {
+                    if (!Mechanics::stepperSeekTime || !Mechanics::enabled) {
                         changeHalfTrack(_step);
                     } else {
                         nextStep = _step;
-                        stepperDelay = stepperSeekTime;
+                        mechanics.stepperDelay = Mechanics::stepperSeekTime;
                         if ( use2Mhz() )
-                            stepperDelay <<= 1;
+                            mechanics.stepperDelay <<= 1;
 
                         delayInProgress = true;
                     }
-                } else if (stepperDelay) {
-                    stepperDelay = 0;
+                } else if (mechanics.stepperDelay) {
+                    mechanics.stepperDelay = 0;
                     changeHalfTrack(0);
                 }
             }                            
@@ -726,8 +732,7 @@ structure(system, this) {
                 // motor switched between on/off 
                 motorOn = (lines->iob & 4) != 0;
                 wd1770.setDiskAccessible(motorOn & loaded);
-                if (!motorOn)
-                    motorOffInit();
+                motorChangeInit();
 
                 if (system->driveSounds.useFloppy) {
                     if (motorOn)
@@ -798,9 +803,6 @@ structure(system, this) {
 		
 		return system->interface->writeMedia( this->media, buffer, length, offset );
 	};
-    
-    for(unsigned i = 0; i < motorOff.CHUNKS; i++)
-        motorOff.chunkSize.push_back( 0 );
 }
 
 Drive::~Drive() {
@@ -893,7 +895,8 @@ auto Drive::power( ) -> void {
     randomizer.initXorShift( 0x1234abcd );
     
     motorOn = true;
-    motorOff.slowDown = false;
+    mechanics.stepperDelay = 0;
+    mechanics.motorDelay = 0;
     readBuffer = writeBuffer = 0;
     writeValue = 0x55;
     latchedByte = 0x55;
@@ -935,7 +938,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         if (!init) {
             cycleCounter *= 2;
             attachDelay <<= 1;
-            stepperDelay <<= 1;
+            mechanics.stepperDelay <<= 1;
             driveCycles = frequency;
         }
         syncPosRead = (int64_t)(-0.875 * (double)iecBus.cpuCylcesPerSecond);
@@ -948,7 +951,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         if (!init) {
             cycleCounter /= 2;
             attachDelay >>= 1;
-            stepperDelay >>= 1;
+            mechanics.stepperDelay >>= 1;
             driveCycles = frequency;
         }
         syncPosRead = (int64_t)(-0.455 * (double)iecBus.cpuCylcesPerSecond);
@@ -1071,10 +1074,9 @@ auto Drive::detach() -> void {
     if (iecBus.powerOn && use2Mhz() )
         attachDelay <<= 1;
 
-    delayInProgress = attachDelay || stepperDelay;
+    delayInProgress = attachDelay || mechanics.stepperDelay;
     
     structure.detach();
-    motorOff.slowDown = false;
     wasAttachDetached = false;
     
     loaded = false;
@@ -1102,7 +1104,7 @@ auto Drive::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> void 
     if (iecBus.powerOn && use2Mhz() )
         attachDelay <<= 1;
 
-    delayInProgress = attachDelay || stepperDelay;
+    delayInProgress = attachDelay || mechanics.stepperDelay;
 
     if (iecBus.powerOn && system->driveSounds.useFloppy)
         system->interface->mixDriveSound( media, DriveSound::FloppyInsert );
@@ -1198,7 +1200,7 @@ auto Drive::setWobble(unsigned wobbleScaled) -> void {
 }
 
 auto Drive::setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void {
-    this->stepperSeekTime = stepperSeekTimeScaled * 100;
+    Mechanics::stepperSeekTime = stepperSeekTimeScaled * 100;
 }
 
 auto Drive::setType( Type type ) -> void {

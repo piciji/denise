@@ -24,11 +24,12 @@ struct Interface : Emulator::Interface {
         ModelIdSid5, ModelIdSid5Left, ModelIdSid5Right, ModelIdSid5Adr, ModelIdSid6, ModelIdSid6Left, ModelIdSid6Right, ModelIdSid6Adr,
         ModelIdSid7, ModelIdSid7Left, ModelIdSid7Right, ModelIdSid7Adr, ModelIdSid8, ModelIdSid8Left, ModelIdSid8Right, ModelIdSid8Adr,
         ModelIdCiaBurstMode, ModelIdDriveParallelCable, ModelIdDiskDriveModel, ModelIdDiskDrivesConnected, ModelIdTapeDrivesConnected,
-        ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble, ModelIdDriveFastLoader, ModelIdDiskDriveStepperSeekTime,
+        ModelIdDiskDriveSpeed, ModelIdDiskDriveWobble, ModelIdTapeDriveWobble, ModelIdDriveFastLoader, PlaceHolderYouCanReuse,
         ModelIdDriveRam20To3F, ModelIdDriveRam40To5F, ModelIdDriveRam60To7F, ModelIdDriveRam80To9F, ModelIdDriveRamA0ToBF,
         ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64AccuracyDeprecated, ModelIdDisalignTrack,
 
-        ModelIdReuRam, ModelIdGeoRam, ModelIdIntensifyPseudoStereo, ModelIdEnableMotorDeceleration,
+        ModelIdReuRam, ModelIdGeoRam, ModelIdIntensifyPseudoStereo,
+    	ModelIdEmulateDriveMechanics, ModelIdDriveMechanicsReset, ModelIdDiskDriveStepperSeekTime, ModelIdDriveAcceleration, ModelIdDriveDeceleration
     };
     
     enum MediaGroupId {

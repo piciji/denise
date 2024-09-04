@@ -69,12 +69,13 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     Emulator::Interface::Model::Purpose::Cia, Emulator::Interface::Model::Purpose::SubModels, Emulator::Interface::Model::Purpose::Misc}, dim );
 
     if (dynamic_cast<LIBC64::Interface*>(emulator))
-        dim = { 3, 1, 1, 1, 3, 2, 2, 1, 2 };
+        dim = { 2, 1, 1, 3, 2, 2, 1, 2 };
     else
         dim = { 1, 1, 1, 1, 1, 1 };
 
     memoryModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Memory}, { 1, 1, 1 } );
     driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveSettings}, dim );
+    driveMechanicsLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveMechanics}, {3, 2} );
     performanceModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Performance}, { 3 } );
 
     expansionLayout.build( emulator );
@@ -90,14 +91,17 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     upperLayout.append(leftLayout, {~0u, 0u}, 10);
 
     if (driveModelLayout.hasElements())
-        rightLayout.append(driveModelLayout, {~0u, 0u}, 10);
+        rightLayout.append(driveModelLayout, {~0u, 0u}, 0);
 
     upperLayout.append(rightLayout, {~0u, 0u});
 
     append(upperLayout, {~0u, 0u}, 10);
-    
+
     if (modelLayout.hasElements())
         append(modelLayout, {~0u, 0u}, 10);
+
+    if (driveMechanicsLayout.hasElements())
+        append(driveMechanicsLayout, {~0u, 0u}, 10);
 
     if (performanceModelLayout.hasElements())
         append(performanceModelLayout, {~0u, 0u});
@@ -105,6 +109,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     modelLayout.setEvents();
     memoryModelLayout.setEvents();
     driveModelLayout.setEvents();
+    driveMechanicsLayout.setEvents();
     performanceModelLayout.setEvents();
 
     for ( auto line : expansionLayout.lines ) {
@@ -129,6 +134,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 auto SystemLayout::translate() -> void {
     modelLayout.translate();
     driveModelLayout.translate( "drives" );
+    driveMechanicsLayout.translate( "drive mechanics" );
     performanceModelLayout.translate( "accuracy and performance" );
     memoryModelLayout.translate( "memory" );
     
@@ -216,6 +222,8 @@ auto SystemLayout::loadSettings() -> void {
     modelLayout.updateWidgets();
 
     driveModelLayout.updateWidgets();
+
+    driveMechanicsLayout.updateWidgets();
 
     performanceModelLayout.updateWidgets();
 

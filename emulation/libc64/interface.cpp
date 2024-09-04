@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "204";
+const std::string Interface::Version = "205";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -531,16 +531,12 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "0", "1", "2", "3", "4" }});
 
-    models.push_back({ModelIdDiskDriveModel, "Model", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
+    models.push_back({ModelIdDiskDriveModel, "Drive Model", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "1541", "1541-II", "1541-C", "1570", "1571" }});
-
-    models.push_back({ModelIdEnableMotorDeceleration, "Motor Deceleration", Model::Type::Switch, Model::Purpose::DriveSettings, 1});
 
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
 
     models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
-
-    models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 140}, {}, 140, 10.0 });
 
     models.push_back({ModelIdDriveRam20To3F, "RAM $2000-$3FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
     models.push_back({ModelIdDriveRam40To5F, "RAM $4000-$5FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
@@ -569,6 +565,12 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdReuRam, "REU Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 7}, { "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB", "16 MB" }});
     models.push_back({ModelIdGeoRam, "Geo Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 6}, { "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB" }});
+
+    models.push_back({ModelIdEmulateDriveMechanics, "Emulate Mechanics", Model::Type::Switch, Model::Purpose::DriveMechanics, 0});
+    models.push_back({ModelIdDriveMechanicsReset, "Reset Mechanics", Model::Type::Button, Model::Purpose::DriveMechanics, 0});
+    models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveMechanics, 90, {0, 140}, {}, 140, 10.0 });
+    models.push_back({ModelIdDriveAcceleration, "Motor Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 688, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveDeceleration, "Motor Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 288, {0, 1024}, {}, 256, 1.0 });
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1384,8 +1386,17 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDriveFastLoader:
             system->iecBus.setSpeeder( value );
             break;
-        case ModelIdEnableMotorDeceleration:
-            system->iecBus.enableDeceleration(value & 1);
+        case ModelIdEmulateDriveMechanics:
+            system->iecBus.enableMechanics(value & 1);
+            break;
+        case ModelIdDriveAcceleration:
+            system->iecBus.setMotorAcceleration(value);
+            break;
+        case ModelIdDriveDeceleration:
+            system->iecBus.setMotorDeceleration(value);
+            break;
+        case ModelIdDriveMechanicsReset:
+            system->iecBus.resetMechanics();
             break;
         case ModelIdDriveRam20To3F:
             system->iecBus.setExpandedMemory( Drive::ExpandedMemMode::M20, value & 1 );
@@ -1422,6 +1433,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdGeoRam:
             system->geoRam->setRamSize( value );
             break;
+
     }    
 }
 
@@ -1506,12 +1518,14 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdTapeDriveWobble:        return system->tape.hasWobble() ? 1 : 0;
         case ModelIdDiskDriveWobble:        return (int)system->iecBus.getDriveWobble();
         case ModelIdDiskDriveSpeed:         return (int)system->iecBus.getDriveSpeed();
-        case ModelIdDiskDriveStepperSeekTime:return (int)(system->iecBus.drives[0]->stepperSeekTime / 100);
+        case ModelIdDiskDriveStepperSeekTime:return (int)(system->iecBus.getStepperSeekTime());
 
         case ModelIdCiaBurstMode:           return system->secondDriveCable.burstRequested;
         case ModelIdDriveParallelCable:     return system->secondDriveCable.parallelRequested;
         case ModelIdDriveFastLoader:        return (int)system->iecBus.drives[0]->speeder;
-        case ModelIdEnableMotorDeceleration:return system->iecBus.hasDeceleration() ? 1 : 0;
+        case ModelIdEmulateDriveMechanics:  return system->iecBus.hasMechanics() ? 1 : 0;
+        case ModelIdDriveAcceleration:      return system->iecBus.getMotorAcceleration();
+        case ModelIdDriveDeceleration:      return system->iecBus.getMotorDeceleration();
 
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
         case ModelIdDiskThread:             return (int)system->iecBus.cpuBurnerRequested;

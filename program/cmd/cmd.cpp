@@ -404,7 +404,7 @@ auto Cmd::parse() -> void {
 		globalSettings->set<bool>("fps", true);
 		globalSettings->set("video_screen_text", 0);
 		settingsC64->set<bool>("video_cycle_accuracy", true);
-        settingsC64->set<unsigned>("Stepper_Seek_Time", 90);
+        settingsC64->set<bool>("Emulate_Mechanics", true);
         settingsC64->set<unsigned>("Disalign_Tracks", 1);
         settingsC64->set<unsigned>("video_crt", 0);
 		

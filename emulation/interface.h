@@ -219,8 +219,8 @@ struct Interface {
 	struct Model {
 		unsigned id;
 		std::string name;		
-		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider } type;
-		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Hidden, Memory, SubModels } purpose;
+		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider, Button } type;
+		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Hidden, Memory, SubModels, DriveMechanics } purpose;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;
@@ -233,12 +233,14 @@ struct Interface {
         auto isHex() const -> bool { return type == Type::Hex; }
 		auto isRange() const -> bool { return type == Type::Range; }
         auto isSlider() const -> bool { return type == Type::Slider; }
+	    auto isButton() const -> bool { return type == Type::Button; }
 		
 		auto isGraphicChip() const -> bool { return purpose == Purpose::GraphicChip; }
         auto isSoundChip() const -> bool { return purpose == Purpose::SoundChip; }
         auto isAudioResampler() const -> bool { return purpose == Purpose::AudioResampler; }
         auto isAudioSettings() const -> bool { return purpose == Purpose::AudioSettings; }
         auto isDriveSettings() const -> bool { return purpose == Purpose::DriveSettings; }
+	    auto isDriveMechanics() const -> bool { return purpose == Purpose::DriveMechanics; }
         auto isPerformance() const -> bool { return purpose == Purpose::Performance; }
         auto isHidden() const -> bool { return purpose == Purpose::Hidden; }
 	};

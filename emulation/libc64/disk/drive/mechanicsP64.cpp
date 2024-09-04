@@ -5,7 +5,6 @@ namespace LIBC64 {
 
     auto Drive::rotateP64(  ) -> void {
         unsigned todo;
-        bool motorAdvance = motorRun();
 
 #define OVERFLOW_NOT_THIS_CYCLE \
         ((refCyclesInCpuCycle - refCycles + todo) > (refCyclesInCpuCycle >> 1))
@@ -14,7 +13,7 @@ namespace LIBC64 {
 
         if (readMode) {
             do {
-                if (motorAdvance) {
+                if (motorOn) {
                     todo = pulseDelta;
 
                     if (refCycles < todo)
@@ -98,7 +97,7 @@ namespace LIBC64 {
                         byteFetched( OVERFLOW_NOT_THIS_CYCLE );
                 }
 
-                if (motorAdvance) {
+                if (motorOn) {
                     pulseDelta -= todo;
 
                     if (!pulseDelta) {
@@ -130,7 +129,7 @@ namespace LIBC64 {
             do {
                 flux = false;
 
-                if (motorAdvance) {
+                if (motorOn) {
                     todo = pulseDelta;
 
                     if (refCycles < todo)
@@ -167,7 +166,7 @@ namespace LIBC64 {
                     }
                 }
 
-                if (motorAdvance) {
+                if (motorOn) {
                     pulseDelta -= todo;
 
                     if (pulseDelta) {

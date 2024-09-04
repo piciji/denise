@@ -33,6 +33,7 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     ModelLayout memoryModelLayout;
     ModelLayout modelLayout;
     ModelLayout driveModelLayout;
+    ModelLayout driveMechanicsLayout;
     ModelLayout performanceModelLayout;
     ExpansionLayout expansionLayout;
 
