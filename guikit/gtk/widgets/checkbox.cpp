@@ -18,7 +18,7 @@ auto pCheckBox::minimumSize() -> Size {
 }
 
 auto pCheckBox::setGeometry(Geometry geometry) -> void {
-	//geometry.x -= 2;
+	geometry.x -= 2;
 	pWidget::setGeometry( geometry );
 }
 

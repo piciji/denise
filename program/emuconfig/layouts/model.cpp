@@ -141,14 +141,14 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
             }
             block->imageView = new GUIKIT::ImageView;
             block->imageView->setImage( curve );
-            line->append(*block->imageView, {0u, 0u}, 5 );
+            line->append(*block->imageView, {curve->width, curve->height}, 3 );
         }
 
         if (model.isSlider())
             line->append(*block,{~0u, 0u}, 15);
         else
             line->append(*block,{0u, 0u}, 15);
-        
+
         blockPos++;
     }    
 
@@ -699,7 +699,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 break;
             case LIBC64::Interface::ModelIdDriveMechanicsReset: {
                 std::vector<Emulator::Interface::Model*> _models;
-                _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDiskDriveStepperSeekTime ) );
+                _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDriveStepperDelay ) );
                 _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDriveAcceleration ) );
                 _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDriveDeceleration ) );
                 for(auto _model : _models) {
@@ -762,7 +762,7 @@ auto ModelLayout::updateBurstVisibillity() -> void {
 auto ModelLayout::updateMechanicsVisibillity() -> void {
     auto blockEnable = getBlock( LIBC64::Interface::ModelIdEmulateDriveMechanics );
     auto blockReset = getBlock( LIBC64::Interface::ModelIdDriveMechanicsReset );
-    auto blockStepper = getBlock( LIBC64::Interface::ModelIdDiskDriveStepperSeekTime );
+    auto blockStepper = getBlock( LIBC64::Interface::ModelIdDriveStepperDelay );
     auto blockAcc = getBlock( LIBC64::Interface::ModelIdDriveAcceleration );
     auto blockDec = getBlock( LIBC64::Interface::ModelIdDriveDeceleration );
     bool enabled = blockEnable->checkBox->checked();
@@ -1074,12 +1074,12 @@ auto ModelLayout::getIdent( Emulator::Interface::Model* model, std::string& tool
 
 auto ModelLayout::getUnit(unsigned id) -> std::string {
     if (dynamic_cast<LIBC64::Interface*>(this->emulator)) {
-        if (id == LIBC64::Interface::ModelIdDiskDriveStepperSeekTime)
+        if (id == LIBC64::Interface::ModelIdDriveStepperDelay)
             return " ms";
         if (id == LIBC64::Interface::ModelIdDiskDriveSpeed || id == LIBC64::Interface::ModelIdDiskDriveWobble)
             return " RPM";
     } else {
-        if (id == LIBAMI::Interface::ModelIdDiskDriveStepperSeekTime || id == LIBAMI::Interface::ModelIdDiskDriveStepperAccessTime)
+        if (id == LIBAMI::Interface::ModelIdDriveStepperDelay || id == LIBAMI::Interface::ModelIdDriveStepperAccess)
             return " ms";
 
         if (id == LIBAMI::Interface::ModelIdDiskDriveSpeed || id == LIBAMI::Interface::ModelIdDiskDriveWobble)

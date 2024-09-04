@@ -40,8 +40,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {29500, 30500}, {}, 100, 100.0 });
     models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
-    models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 180}, {}, 180, 10.0 });
-    models.push_back({ModelIdDiskDriveStepperAccessTime, "Stepper Access Time", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 30}, {}, 30, 10.0 });
+    models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 180}, {}, 180, 10.0 });
+    models.push_back({ModelIdDriveStepperAccess, "Drive Stepper Access", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 30}, {}, 30, 10.0 });
     models.push_back({ModelIdDiskTurbo, "Disk Turbo", Model::Type::Radio, Model::Purpose::DriveSettings, 0, {0, 4}, { "1x", "2x", "4x", "8x", "MAX" }});
 
     models.push_back({ModelIdChipMem, "Chip Mem", Model::Type::Slider, Model::Purpose::Memory, 1, {0, 3}, { "256 KB", "512 KB", "1 MB", "2 MB" }});
@@ -468,10 +468,10 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDiskDriveSpeed:
             DiskDrive::setSpeed( value );
             break;
-        case ModelIdDiskDriveStepperSeekTime:
+        case ModelIdDriveStepperDelay:
             DiskDrive::setStepperSeekTime( value );
             break;
-        case ModelIdDiskDriveStepperAccessTime:
+        case ModelIdDriveStepperAccess:
             DiskDrive::setStepperMinTime( value );
             break;
         case ModelIdDiskTurbo:
@@ -510,8 +510,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDiskDrivesConnected:            return system->getDrivesEnabled();
         case ModelIdDiskDriveWobble:                return (int)DiskDrive::wobble;
         case ModelIdDiskDriveSpeed:                 return (int)DiskDrive::rpm;
-        case ModelIdDiskDriveStepperSeekTime:       return (int)(DiskDrive::stepperSeekTimeBase);
-        case ModelIdDiskDriveStepperAccessTime:     return (int)(DiskDrive::stepperMinTimeBase);
+        case ModelIdDriveStepperDelay:              return (int)(DiskDrive::stepperSeekTimeBase);
+        case ModelIdDriveStepperAccess:             return (int)(DiskDrive::stepperMinTimeBase);
         case ModelIdDiskTurbo:                      return (int)system->paula.turboRequested;
         case ModelIdChipMem:                        return system->getChipmem();
         case ModelIdSlowMem:                        return system->getSlowmem();

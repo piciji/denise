@@ -568,9 +568,9 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdEmulateDriveMechanics, "Emulate Mechanics", Model::Type::Switch, Model::Purpose::DriveMechanics, 0});
     models.push_back({ModelIdDriveMechanicsReset, "Reset Mechanics", Model::Type::Button, Model::Purpose::DriveMechanics, 0});
-    models.push_back({ModelIdDiskDriveStepperSeekTime, "Stepper Seek Time", Model::Type::Slider, Model::Purpose::DriveMechanics, 90, {0, 140}, {}, 140, 10.0 });
-    models.push_back({ModelIdDriveAcceleration, "Motor Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 688, {0, 1024}, {}, 256, 1.0 });
-    models.push_back({ModelIdDriveDeceleration, "Motor Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 288, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveMechanics, 90, {0, 140}, {}, 140, 10.0 });
+    models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 688, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 288, {0, 1024}, {}, 256, 1.0 });
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1369,7 +1369,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDiskDriveWobble:
             system->iecBus.setDriveWobble( value );
             break;
-        case ModelIdDiskDriveStepperSeekTime:
+        case ModelIdDriveStepperDelay:
             system->iecBus.setStepperSeekTime( value );
             break;
         case ModelIdDiskDriveSpeed:
@@ -1518,7 +1518,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdTapeDriveWobble:        return system->tape.hasWobble() ? 1 : 0;
         case ModelIdDiskDriveWobble:        return (int)system->iecBus.getDriveWobble();
         case ModelIdDiskDriveSpeed:         return (int)system->iecBus.getDriveSpeed();
-        case ModelIdDiskDriveStepperSeekTime:return (int)(system->iecBus.getStepperSeekTime());
+        case ModelIdDriveStepperDelay:      return (int)(system->iecBus.getStepperSeekTime());
 
         case ModelIdCiaBurstMode:           return system->secondDriveCable.burstRequested;
         case ModelIdDriveParallelCable:     return system->secondDriveCable.parallelRequested;
