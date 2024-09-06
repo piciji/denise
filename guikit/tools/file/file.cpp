@@ -408,7 +408,7 @@ auto File::getPath( std::string _fn, bool returnSlashIfError ) -> std::string {
     return _fn.erase(end + 1);
 }
 
-auto File::getFolderListAlt( std::string path, const std::string& subStr, unsigned limit ) -> std::vector<std::string> {
+auto File::getFolderListAlt( std::string path, const std::string& subStr, bool fromBeginning, unsigned limit ) -> std::vector<std::string> {
     std::vector<std::string> list;
     std::string file;
     
@@ -429,9 +429,18 @@ auto File::getFolderListAlt( std::string path, const std::string& subStr, unsign
     while ((ent = readdir (dir)) != NULL) {
         file = (std::string)ent->d_name;
 #endif
-        if (file == "." || file == "..") continue;
+        if (file == "." || file == "..")
+            continue;
+
 		if (!subStr.empty()) {
-			if(!String::findString(file, subStr)) continue;
+		    if (fromBeginning) {
+		        if(!String::startsWith(file, subStr))
+		            continue;
+		    } else {
+		        if(!String::findString(file, subStr))
+		            continue;
+		    }
+
 		}
 
         list.push_back( file );

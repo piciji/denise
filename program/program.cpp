@@ -311,8 +311,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                     filePool->assign(_ident(emulator, media.name), file);
                 }
 
-                if (regular)
-                    updateSaveIdent(&media, file);
+                if (regular && fSetting)
+                    updateSaveIdent(&media, fSetting);
 
             } else { // IP socket mode
                 program->prepareSocket( &media, emulator, fSetting->path );

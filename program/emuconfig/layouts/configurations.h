@@ -8,8 +8,16 @@ struct StateFastLayout : GUIKIT::FramedVerticalLayout {
         
         Top();
     } top;
-    
-    GUIKIT::CheckBox autoSaveIdent;
+
+    struct Options : GUIKIT::HorizontalLayout {
+        GUIKIT::Label autoLabel;
+        GUIKIT::RadioBox autoIdentOff;
+        GUIKIT::RadioBox autoIdentOn;
+        GUIKIT::RadioBox autoIdentCutFollowUp;
+
+        Options();
+    } options;
+
     GUIKIT::ListView listView;
     
     StateFastLayout();

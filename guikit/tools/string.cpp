@@ -419,6 +419,31 @@ auto String::getFileName(std::string path, bool removeExtension) -> std::string 
     return path;
 }
 
+auto String::getFileNameA(std::string path, bool removeExtension) -> std::string {
+    std::replace( path.begin(), path.end(), '\\', '/');
+    std::size_t start = path.find_last_of("/");
+    if (start != std::string::npos)
+        path = path.substr(start + 1);
+    if (!removeExtension)
+        return path;
+
+    for (int i = 0; i < 2; i++) {
+        auto end = path.find_last_of(".");
+        if (end != std::string::npos) {
+            auto tempFn = path;
+            tempFn.erase(end);
+
+            if ((path.size() - tempFn.size()) <= 4)
+                path = tempFn;
+            else
+                break;
+        } else
+            break;
+    }
+
+    return path;
+}
+
 auto String::getExtension(const std::string& str, const std::string& defaultExt, int maxParts, int maxPartSize) -> std::string {
     std::string copy = str;
     size_t lastdot = str.size();

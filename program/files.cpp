@@ -217,7 +217,7 @@ auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
     }
 }
 
-auto Program::updateSaveIdent(Emulator::Interface::Media* media, GUIKIT::File* file) -> void {
+auto Program::updateSaveIdent(Emulator::Interface::Media* media, FileSetting* fSetting) -> void {
     
     static Emulator::Interface::Media* _media = nullptr;
     
@@ -229,7 +229,7 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, GUIKIT::File* f
     if ( (media->group->isExpansion() && !media->secondary) || (!_media && !media->group->isProgram())
     || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
     || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {
-        updateSaveIdent( activeEmulator, file );
+        updateSaveIdent( activeEmulator, fSetting );
         _media = media;
     }
 }
@@ -252,41 +252,53 @@ auto Program::updateSaveIdentFromSav( Emulator::Interface* emulator, GUIKIT::Fil
         emuView->configurationsLayout->updateSaveIdent( fileName );
 }
 
-auto Program::updateSaveIdent( Emulator::Interface* emulator, GUIKIT::File* file ) -> void {
+auto Program::updateSaveIdent( Emulator::Interface* emulator, FileSetting* fSetting ) -> void {
+    auto filePath = GUIKIT::File::getPath(fSetting->path);
     auto settings = getSettings( emulator );
-    std::string filePath = file->getPath();
-    std::string fileName = file->getFileName(true, true);
-    auto end = fileName.find_last_of(".");
-    if (end != std::string::npos) {
-        auto tempFn = fileName.erase(end);
-        if ((fileName.size() - tempFn.size()) <= 3)
-            fileName = tempFn;
-    }
+    auto autoSaveMode = settings->get<unsigned>( "auto_save_mode", 2);
+    std::string fileName;
+    std::string fileNameCompare;
+
+    if (autoSaveMode == 2) {
+        fileName = fSetting->path;
+        fileNameCompare = GUIKIT::String::getFileNameA(fileName, false);
+    } else
+        fileName = fSetting->file;
+
+    fileName = GUIKIT::String::getFileNameA(fileName, true);
 
     // for wav record
     settings->set<std::string>( "record_ident", fileName, false);
 
-    if (!settings->get<bool>( "auto_save_ident", true))
+    if (!autoSaveMode)
         return;
 
-    auto list = GUIKIT::File::getFolderListAlt( filePath, fileName, 10 );
+    if (autoSaveMode == 2) {
+        auto list = GUIKIT::File::getFolderListAlt( filePath, fileName, true, 10 );
+        int matches = list.size();
 
-    int matches = list.size();
+        std::string tempFn = fileName;
+        while(true) {
+            if (tempFn.size() < 5)
+                break;
 
-    std::string tempFn = fileName;
-    while(1) {
-        if (tempFn.size() < 5)
-            break;
+            tempFn.pop_back();
 
-        tempFn.pop_back();
+            auto list = GUIKIT::File::getFolderListAlt( filePath, tempFn, true, 10 );
+            if (list.size() != matches) {
 
-        auto list = GUIKIT::File::getFolderListAlt( filePath, tempFn, 10 );
-        if (list.size() != matches) {
-            fileName = GUIKIT::String::trim( tempFn );
-            break;
+                for(auto& str : list) {
+                    if (str != fileNameCompare) {
+                        if (str.size() == fileNameCompare.size()) {
+                            fileName = GUIKIT::String::trim( tempFn );
+                            goto End;
+                        }
+                    }
+                }
+            }
         }
     }
-
+End:
     settings->set<std::string>( "save_ident", fileName);
     settings->set<unsigned>( "save_slot", 0);
 

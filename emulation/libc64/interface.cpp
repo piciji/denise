@@ -466,9 +466,9 @@ auto Interface::prepareModels() -> void {
 	{ "reSID", "Chamberlin" }});
 
 	// adjust center frequency for Sid 6581
-	models.push_back({ModelIdBias6581, "SID 6581 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 500, {-5000, 5000}, {}, 400, 1.0 });
+	models.push_back({ModelIdBias6581, "SID 6581 Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 500, {-5000, 5000}, {}, 400, 1.0 });
     // adjust center frequency for Sid 8580
-	models.push_back({ModelIdBias8580, "SID 8580 Filter Bias", Model::Type::Slider, Model::Purpose::AudioSettings, -3000, {-5000, 5000}, {}, 400, 1.0 });
+	models.push_back({ModelIdBias8580, "SID 8580 Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 0, {-5000, 5000}, {}, 400, 1.0 });
     // use each 'x' sample. lower value means better quality but high cpu usage by resampler
     models.push_back({ModelIdSidSampleFetch, "SID Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 1, {0, 3}, {"1", "2", "7", "18"}});
     // equals volume of filter types
@@ -567,7 +567,6 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdGeoRam, "Geo Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 6}, { "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB" }});
 
     models.push_back({ModelIdEmulateDriveMechanics, "Emulate Mechanics", Model::Type::Switch, Model::Purpose::DriveMechanics, 0});
-    models.push_back({ModelIdDriveMechanicsReset, "Reset Mechanics", Model::Type::Button, Model::Purpose::DriveMechanics, 0});
     models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveMechanics, 90, {0, 140}, {}, 140, 10.0 });
     models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 688, {0, 1024}, {}, 256, 1.0 });
     models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 288, {0, 1024}, {}, 256, 1.0 });
@@ -1394,9 +1393,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             break;
         case ModelIdDriveDeceleration:
             system->iecBus.setMotorDeceleration(value);
-            break;
-        case ModelIdDriveMechanicsReset:
-            system->iecBus.resetMechanics();
             break;
         case ModelIdDriveRam20To3F:
             system->iecBus.setExpandedMemory( Drive::ExpandedMemMode::M20, value & 1 );

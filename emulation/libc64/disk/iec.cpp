@@ -482,12 +482,6 @@ auto IecBus::getDriveSpeed() -> unsigned {
     return Drive::rpm;
 }
 
-auto IecBus::resetMechanics() -> void {
-    Drive::Mechanics::acceleration = 688;
-    Drive::Mechanics::deceleration = 288;
-    Drive::setStepperSeekTime( 90 );
-}
-
 auto IecBus::setMotorAcceleration(uint16_t value) -> void {
     Drive::Mechanics::acceleration = value;
 }

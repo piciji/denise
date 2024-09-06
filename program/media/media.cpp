@@ -1211,8 +1211,8 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
 
     updateMediaBlock(block, fSetting);
     
-    if (!fromState && mediaGroup->isDrive())
-        program->updateSaveIdent( emulator, file );
+    if (!fromState && fSetting && mediaGroup->isDrive())
+        program->updateSaveIdent( emulator, fSetting );
 }
 
 auto MediaLayout::getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout* {

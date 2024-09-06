@@ -1386,7 +1386,7 @@ struct File {
     }
     static auto suppportedCompressionFilter() -> std::string { return "zip, gz, tar, tgz, tar.gz (*.zip,*.gz,*.tar,*.tgz,*.tar.gz)"; }
     static auto getFolderList( std::string path, const std::string& subStr = "") -> std::vector<Info>;
-    static auto getFolderListAlt( std::string path, const std::string& subStr = "", unsigned limit = 0 ) -> std::vector<std::string>;
+    static auto getFolderListAlt( std::string path, const std::string& subStr, bool fromBeginning, unsigned limit = 0 ) -> std::vector<std::string>;
     static auto isDir( std::string path ) -> bool;
     static auto createDir( std::string path, std::string basePath = "" ) -> bool;
     static auto beautifyPath(std::string path) -> std::string;
@@ -1570,6 +1570,7 @@ struct String {
     static auto convertDoubleToString(double value, unsigned precision = 18) -> std::string;
     static auto findOccurencesOf( std::string str, std::string subStr ) -> unsigned;
     static auto getFileName(std::string path, bool removeExtension = false) -> std::string;
+    static auto getFileNameA(std::string path, bool removeExtension = false) -> std::string;
     static auto getExtension(const std::string& str, const std::string& defaultExt, int maxParts = 1, int maxPartSize = 3) -> std::string;
     static auto removeExtension(std::string str, int maxParts = 1, int maxPartSize = 3) -> std::string;
     static auto sgets(char* buf, unsigned& bufSize, unsigned& n, char** str) -> char*;

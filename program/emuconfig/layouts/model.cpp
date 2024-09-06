@@ -47,9 +47,10 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
 		append( *combo, {0u, 0u} );
 
     } else if (model->isSlider()) {
-        sliderLayout = new ::SliderLayout;
-        append(*sliderLayout, {~0u, 0u});
         auto& sOptions = model->options;
+        sliderLayout = new ::SliderLayout("", false, !sOptions.size());
+        append(*sliderLayout, {~0u, 0u});
+
         if (sOptions.size()) {
             GUIKIT::Label tester;
             int w = 0;
@@ -72,9 +73,6 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
             sliderLayout->updateValueWidth( longest );
             sliderLayout->slider.setLength( model->steps + 1 );
         }
-    } else if (model->isButton()) {
-        button = new GUIKIT::Button;
-        append(*button, {0u, 0u} );
 	} else {
         GUIKIT::LineEdit tester;
         tester.setText( model->isHex() ? "0xAA" : std::to_string(model->range[0]) );
@@ -180,15 +178,7 @@ auto ModelLayout::setEvents( ) -> void {
                         emuThread->unlock();
                 };
 
-            } else if (model->isButton() ) {
-                block->button->onActivate = [this, block, model]() {
-                    bool locked = emuThread->lock();
-                    emulator->setModelValue( model->id, 1 );
-                    applyCustomStuff( block, model );
-                    if (locked) // nested (e.g. changing speeder)
-                        emuThread->unlock();
-                };
-			} else if (model->isRadio() ) {	
+			} else if (model->isRadio() ) {
 				unsigned val = 0;
 				for( auto option : block->options ) {
 					
@@ -257,7 +247,19 @@ auto ModelLayout::setEvents( ) -> void {
                     if (locked)
                         emuThread->unlock();
                 };
-                
+
+                block->sliderLayout->defaultButton.onActivate = [this, block, model]() {
+                    int defaultVal = model->defaultValue;
+                    tabWindow->settings->set<int>( _underscore(model->name), defaultVal );
+                    updateWidget(block);
+
+                    bool locked = emuThread->lock();
+                    emulator->setModelValue( model->id, defaultVal );
+                    applyCustomStuff( block, model );
+                    if (locked)
+                        emuThread->unlock();
+                };
+
             } else {
 
                 block->lineEdit->onChange = [this, block, model]() {
@@ -409,9 +411,6 @@ auto ModelLayout::updateWidget( Line::Block* block ) -> void {
 		block->combo->setSelection( usedVal );
 		return;
 	}
-
-    if (model->isButton())
-        return;
 
 	auto _val = tabWindow->settings->get<int>( _underscore(model->name), model->defaultValue, model->range );
 
@@ -587,9 +586,10 @@ auto ModelLayout::translate( std::string theme ) -> void {
             } else if (model->isSlider()) {
                 block->sliderLayout->name.setText(trans->getA( name, true ));
                 block->sliderLayout->name.setTooltip(trans->getA(tooltip));
-
-            } else if (model->isButton()) {
-                block->button->setText( trans->getA( name ) );
+                if (block->sliderLayout->withButton) {
+                    block->sliderLayout->defaultButton.setText("...");
+                    block->sliderLayout->defaultButton.setTooltip( trans->getA(trans->getA("default") ) );
+                }
             }
 
             if (block->label) {
@@ -697,17 +697,6 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdDiskOnDemand:
                 program->setWarp(false);
                 break;
-            case LIBC64::Interface::ModelIdDriveMechanicsReset: {
-                std::vector<Emulator::Interface::Model*> _models;
-                _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDriveStepperDelay ) );
-                _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDriveAcceleration ) );
-                _models.push_back( emulator->getModel( LIBC64::Interface::ModelIdDriveDeceleration ) );
-                for(auto _model : _models) {
-                    int value = emulator->getModelValue( _model->id );
-                    tabWindow->settings->set<int>( _underscore( _model->name), value );
-                }
-                updateWidgets();
-            } break;
 
             case LIBC64::Interface::ModelIdEmulateDriveMechanics:
                 updateMechanicsVisibillity();
@@ -761,13 +750,11 @@ auto ModelLayout::updateBurstVisibillity() -> void {
 
 auto ModelLayout::updateMechanicsVisibillity() -> void {
     auto blockEnable = getBlock( LIBC64::Interface::ModelIdEmulateDriveMechanics );
-    auto blockReset = getBlock( LIBC64::Interface::ModelIdDriveMechanicsReset );
     auto blockStepper = getBlock( LIBC64::Interface::ModelIdDriveStepperDelay );
     auto blockAcc = getBlock( LIBC64::Interface::ModelIdDriveAcceleration );
     auto blockDec = getBlock( LIBC64::Interface::ModelIdDriveDeceleration );
     bool enabled = blockEnable->checkBox->checked();
 
-    blockReset->button->setEnabled( enabled );
     blockStepper->sliderLayout->setEnabled( enabled );
     blockAcc->sliderLayout->setEnabled( enabled );
     blockDec->sliderLayout->setEnabled( enabled );

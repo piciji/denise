@@ -80,7 +80,6 @@ struct IecBus {
     auto getMotorAcceleration() -> uint16_t;
     auto setMotorDeceleration(uint16_t value) -> void;
     auto getMotorDeceleration() -> uint16_t;
-    auto resetMechanics() -> void;
     auto getDriveWobble() -> unsigned;
     auto setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void;
     auto getStepperSeekTime( ) -> unsigned;

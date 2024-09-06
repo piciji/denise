@@ -269,10 +269,8 @@ auto Autoloader::postProcessing() -> void {
         if (audioManager)
             audioManager->drive.reset(mediaGroup, true);
         
-        if (fSetting) {
-            GUIKIT::File temp(fSetting->path);
-            program->updateSaveIdent(ddControl.emulator, &temp);
-        }
+        if (fSetting)
+            program->updateSaveIdent(ddControl.emulator, fSetting);
         
 		if (view) {
 			if (mediaGroup->isTape())

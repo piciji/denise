@@ -21,7 +21,6 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
 			std::vector<GUIKIT::RadioBox*> options;
             GUIKIT::Label* label = nullptr;
             GUIKIT::LineEdit* lineEdit = nullptr;
-            GUIKIT::Button* button = nullptr;
             GUIKIT::ImageView* imageView = nullptr;
 
             Block(Emulator::Interface::Model* model, ModelLayout* layout);

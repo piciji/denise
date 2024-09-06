@@ -761,10 +761,8 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 
     if (emuView) {
         auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
-        if (fSetting) {
-            GUIKIT::File temp( fSetting->path );
-            program->updateSaveIdent(emulator, &temp);
-        }
+        if (fSetting)
+            program->updateSaveIdent(emulator, fSetting);
     }
 
     if (mediaGroup->isTape())
@@ -838,8 +836,8 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         else
             States::getInstance(emulator)->forcePowerNextLoad = true;
 
-        if (!fromState && mediaGroup->isDrive())
-            program->updateSaveIdent( emulator, file );
+        if (!fromState && mediaGroup->isDrive() && fSetting)
+            program->updateSaveIdent( emulator, fSetting );
     }
 }
 

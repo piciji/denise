@@ -169,6 +169,16 @@ StateFastLayout::Top::Top() {
     setAlignment(0.5);
 }
 
+StateFastLayout::Options::Options() {
+    append(autoLabel,{0u, 0u}, 20);
+    append(autoIdentOff,{0u, 0u}, 5);
+    append(autoIdentOn,{0u, 0u}, 5);
+    append(autoIdentCutFollowUp,{0u, 0u});
+
+    GUIKIT::RadioBox::setGroup(autoIdentOff, autoIdentOn, autoIdentCutFollowUp);
+    setAlignment(0.5);
+}
+
 StateFastLayout::StateFastLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
@@ -176,7 +186,7 @@ StateFastLayout::StateFastLayout() {
 	listView.setHeaderText( { "", "", "" } );
     
     append(top,{~0u, 0u}, 5);
-    append(autoSaveIdent,{~0u, 0u}, 5);
+    append(options,{0u, 0u}, 5);
     append(listView,{~0u, ~0u});
 }
 
@@ -622,9 +632,16 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 		_settings->set<unsigned>( "save_slot", 0);
 	};
     
-    stateFast.autoSaveIdent.onToggle = [this](bool checked) {
-        
-        _settings->set<bool>( "auto_save_ident", checked);
+    stateFast.options.autoIdentOff.onActivate = [this]() {
+        _settings->set<unsigned>( "auto_save_mode", 0);
+    };
+
+    stateFast.options.autoIdentOn.onActivate = [this]() {
+        _settings->set<unsigned>( "auto_save_mode", 1);
+    };
+
+    stateFast.options.autoIdentCutFollowUp.onActivate = [this]() {
+        _settings->set<unsigned>( "auto_save_mode", 2);
     };
     
     stateFast.listView.onActivate = [this]() {
@@ -864,8 +881,14 @@ auto ConfigurationsLayout::updateSaveIdent( std::string fileName ) -> void {
 }
 
 auto ConfigurationsLayout::loadSettings() -> void {
-    
-    stateFast.autoSaveIdent.setChecked( _settings->get<bool>( "auto_save_ident", true) );
+    auto autoSaveMode = _settings->get<unsigned>( "auto_save_mode", 2);
+    switch(autoSaveMode) {
+        case 0: stateFast.options.autoIdentOff.setChecked(); break;
+        case 1: stateFast.options.autoIdentOn.setChecked(); break;
+        default:
+        case 2: stateFast.options.autoIdentCutFollowUp.setChecked(); break;
+    }
+
     stateFast.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
     stateFolder.pathEdit.setText(_settings->get<std::string>("states_folder", ""));
     
@@ -960,7 +983,11 @@ auto ConfigurationsLayout::translate() -> void {
     stateFast.top.find.setText( trans->get("find") );
 	stateFast.top.hotkeys.setText( trans->get("hotkeys") );
     stateFast.listView.setHeaderText({"#", trans->get("file"), trans->get("date")});
-    stateFast.autoSaveIdent.setText( trans->get("auto_savestate_identifier") );
+
+    stateFast.options.autoLabel.setText( trans->getA("automatic savestate identifier", true) );
+    stateFast.options.autoIdentOff.setText( trans->getA("off") );
+    stateFast.options.autoIdentOn.setText( trans->get("on") );
+    stateFast.options.autoIdentCutFollowUp.setText( trans->get("cut off follow-up disks") );
     
     stateDirect.load.setText( trans->get("load") );
     stateDirect.save.setText( trans->get("save") );

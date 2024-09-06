@@ -75,7 +75,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
 
     memoryModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Memory}, { 1, 1, 1 } );
     driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveSettings}, dim );
-    driveMechanicsLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveMechanics}, {3, 2} );
+    driveMechanicsLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveMechanics}, {2, 2} );
     performanceModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Performance}, { 3 } );
 
     expansionLayout.build( emulator );

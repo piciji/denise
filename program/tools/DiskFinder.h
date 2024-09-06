@@ -82,7 +82,7 @@ struct DiskFinder {
             std::string last = temp.substr(temp.length() - 1, 1);
             temp.pop_back();
 
-            auto list = GUIKIT::File::getFolderListAlt( filePath, temp, 20 );
+            auto list = GUIKIT::File::getFolderListAlt( filePath, temp, false, 20 );
 
             if (list.size() < 2)
                 continue;
@@ -147,7 +147,7 @@ struct DiskFinder {
 
             temp.pop_back();
 
-            auto list = GUIKIT::File::getFolderListAlt( filePath, temp, 20 );
+            auto list = GUIKIT::File::getFolderListAlt( filePath, temp, false, 20 );
 
             if (list.size() < 2)
                 continue;

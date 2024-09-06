@@ -219,7 +219,7 @@ struct Interface {
 	struct Model {
 		unsigned id;
 		std::string name;		
-		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider, Button } type;
+		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider } type;
 		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Hidden, Memory, SubModels, DriveMechanics } purpose;
 		int defaultValue;
 		std::vector<int> range;
@@ -233,7 +233,6 @@ struct Interface {
         auto isHex() const -> bool { return type == Type::Hex; }
 		auto isRange() const -> bool { return type == Type::Range; }
         auto isSlider() const -> bool { return type == Type::Slider; }
-	    auto isButton() const -> bool { return type == Type::Button; }
 		
 		auto isGraphicChip() const -> bool { return purpose == Purpose::GraphicChip; }
         auto isSoundChip() const -> bool { return purpose == Purpose::SoundChip; }
