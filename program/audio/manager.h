@@ -26,6 +26,7 @@ struct AudioManager {
     Resampler::Data rData;
     AudioRecord::Handler record;
     Mixer::Drive drive;
+    GUIKIT::Timer muteTimer;
 
     bool mixDriveSounds = false;
 
@@ -78,7 +79,7 @@ struct AudioManager {
     auto setPriority() -> void;
     
     auto setBufferSize() -> void;
-    auto setResampler() -> void;
+    auto setResampler(float overrideRate = 0.0f) -> void;
     auto setStatistics() -> void;
     auto calcStatistics( float adjust ) -> void;
     auto power() -> void;

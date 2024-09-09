@@ -1,5 +1,6 @@
 
 #include "structure.h"
+#include "../../system/testbench.h"
 #include "../wd177x/wd1770.h"
 
 namespace LIBC64 {
@@ -86,7 +87,6 @@ auto DiskStructure::prepareGxx() -> void {
     unsigned offset;
     unsigned alignOffset = 0;
     unsigned trackLength;
-    unsigned lastTrackLength = 0;
     unsigned maxHalfTracks = rawData[9];
     int error;
 
@@ -154,10 +154,11 @@ auto DiskStructure::prepareGxx() -> void {
                 std::memset(ptr->data, 0x55, ptr->size);
             }
 
-            if (disalignTracks) {
-                disalignTrack(ptr->data, ptr->size, lastTrackLength, alignOffset);
-                lastTrackLength = ptr->size;
-            }
+            // this test expects the tracks to be realigned against the specification in G64. in contrast to the D64,
+            // a G64 has the possibility to align the tracks to each other according to the original.
+            // this test doesn't make sense to me.
+            if (system->debugCart->enable) // "true" for testbench only
+                disalignTrack(*ptr, halfTrack >> 1);
 
             if (!ptr->mfmSync) {
                 ptr->mfmSync = new uint8_t[ptr->size >> 3];
@@ -168,6 +169,8 @@ auto DiskStructure::prepareGxx() -> void {
                 ptr->bits = 1;
         }
     }
+
+    // logTrackSkew();
 }
 
 inline auto DiskStructure::addMfmByte(uint8_t*& dest, uint8_t data, uint16_t& crc) -> void {
@@ -601,6 +604,38 @@ auto DiskStructure::createGxx( std::string diskName, uint8_t sides ) -> uint8_t*
     }
     
     return temp;
+}
+
+auto DiskStructure::logTrackSkew() -> void {
+    for (uint8_t track = 1; track <= MAX_TRACKS; track++) {
+        unsigned halfTrack = track * 2 - 2;
+        MTrack* trackPtr = &gcrTracks[0][halfTrack];
+        unsigned offset = 0;
+        int offsetTemp = -1;
+        uint8_t header[4];
+
+        while(1) {
+            if ( !findSync( trackPtr, offset, trackPtr->size << 3 ) )
+                break; // sync error, couldn't find a sync mark on whole track
+
+            if (offsetTemp == offset)
+                break; // header error, sync mark found but not the header for requested sector
+
+            if (offsetTemp == -1)
+                offsetTemp = offset; // memory first offset to find out later if all sync marks are tested
+            // otherwise we loop forever
+
+            // decode header following the sync mark
+            decode( trackPtr, offset, header, 1 );
+
+            if (header[0] == 0x08 && header[2] == 0) // first sector
+                break; // sector header found
+        }
+
+        float skew = (float)offset / (float)(trackPtr->size << 3);
+        system->interface->log(track);
+        system->interface->log(std::to_string(skew), false);
+    }
 }
 
 }

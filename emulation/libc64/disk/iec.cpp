@@ -528,12 +528,6 @@ auto IecBus::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void 
         drive->setFirmware( typeId, data, size );
 }
 
-auto IecBus::disalignTracks(bool state) -> void {
-
-    for( auto drive : drives )
-        drive->structure.disalignTracks = state;
-}
-
 auto IecBus::resetDriveState() -> void {
     
     for( auto drive : drivesEnabled )

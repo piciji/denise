@@ -536,7 +536,7 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
 
-    models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
+    models.push_back({ModelIdDiskDriveWobble, "Drive Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 20, {0, 500}, {}, 50, 100.0 });
 
     models.push_back({ModelIdDriveRam20To3F, "RAM $2000-$3FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
     models.push_back({ModelIdDriveRam40To5F, "RAM $4000-$5FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
@@ -561,15 +561,13 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 1 });
 
-    models.push_back({ModelIdDisalignTrack, "Disalign Tracks", Model::Type::Switch, Model::Purpose::Hidden, 0});
-
     models.push_back({ModelIdReuRam, "REU Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 7}, { "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB", "16 MB" }});
     models.push_back({ModelIdGeoRam, "Geo Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 6}, { "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB" }});
 
     models.push_back({ModelIdEmulateDriveMechanics, "Emulate Mechanics", Model::Type::Switch, Model::Purpose::DriveMechanics, 0});
     models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveMechanics, 90, {0, 140}, {}, 140, 10.0 });
-    models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 688, {0, 1024}, {}, 256, 1.0 });
-    models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 288, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 500, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 316, {0, 1024}, {}, 256, 1.0 });
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1420,9 +1418,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->diskSilence.active = value & 1;
             system->diskIdleOff();
             break;
-        case ModelIdDisalignTrack:
-            system->iecBus.disalignTracks( value & 1 );
-            break;
         case ModelIdReuRam:
             system->reu->setRamSize( value );
             break;
@@ -1526,7 +1521,6 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
         case ModelIdDiskThread:             return (int)system->iecBus.cpuBurnerRequested;
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
-        case ModelIdDisalignTrack:          return (int)system->iecBus.drives[0]->structure.disalignTracks;
 
         case ModelIdDriveRam20To3F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M20);
         case ModelIdDriveRam40To5F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M40);

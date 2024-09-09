@@ -1031,7 +1031,7 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
     unsigned heightFirstHalfScreen = ((height * scaler) >> 8) & ~1;
 	unsigned destOffset = (width + destPitch) * (heightFirstHalfScreen << ((!interlace && scanlines) ? 1 : 0));
     
-    if (interlace || !re.dest || ((re.options ^ re1.options) & (1 | 4 | 32)) ) { // mostly to check if mid-screen callback is lores and switches to hires later on
+    if (interlace || program->isPause || !re.dest || ((re.options ^ re1.options) & (1 | 4 | 32)) ) { // mostly to check if mid-screen callback is lores and switches to hires later on
         while (re.ready.load())
             std::this_thread::yield();
 
@@ -1039,6 +1039,8 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
         re.dest = nullptr;
 
         if constexpr (interlace)
+            return;
+        if (program->isPause)
             return;
     } else {                
         re1.width = width;

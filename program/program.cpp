@@ -337,6 +337,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
 		filePool->unloadOrphaned();
 
+	    audioManager->muteTimer.setEnabled();
 		audioManager->power();
 
 		if (emuSwap) {

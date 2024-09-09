@@ -894,7 +894,7 @@ auto Drive::power( ) -> void {
     randCounter = 0;
     randomizer.initXorShift( 0x1234abcd );
     
-    motorOn = true;
+    motorOn = false;
     mechanics.stepperDelay = 0;
     mechanics.motorDelay = 0;
     readBuffer = writeBuffer = 0;

@@ -16,7 +16,15 @@ AudioManager::AudioManager() : drive(*this) {
     
     rData.out = new float[65536];
     
-    cosine.setData( &rData );    
+    cosine.setData( &rData );
+
+    muteTimer.setInterval(180);
+
+    // prevent RESID crack on power up
+    muteTimer.onFinished = [this]() {
+        muteTimer.setEnabled(false);
+        setVolume();
+    };
 }
 
 AudioManager::~AudioManager() {
@@ -58,7 +66,7 @@ auto AudioManager::setSynchronize() -> void {
     setBufferSize();
 }
 
-auto AudioManager::setResampler() -> void {
+auto AudioManager::setResampler(float overrideRate) -> void {
     if (!activeEmulator)
         return;
     
@@ -73,7 +81,15 @@ auto AudioManager::setResampler() -> void {
 
     float speed;
     bool percent;
-    unsigned speedProfile = view->getSpeedBySelectedProfile(speed, percent);
+    unsigned speedProfile;
+
+    if (overrideRate == 0.0f)
+        speedProfile = view->getSpeedBySelectedProfile(speed, percent);
+    else {
+        speedProfile = ~0;
+        percent = false;
+        speed = overrideRate;
+    }
 
     if (speedProfile != 0) {
         if (percent) {
@@ -132,7 +148,7 @@ auto AudioManager::setVolume() -> void {
 
     auto settings = program->getSettings(activeEmulator);
     unsigned volume = settings->get<unsigned>("audio_volume", 100u, {0u, 100u});
-    bool mute = globalSettings->get<bool>("audio_mute", false);
+    bool mute = muteTimer.enabled() || globalSettings->get<bool>("audio_mute", false);
         
     floatConversion = 0.0;    
     

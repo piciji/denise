@@ -39,7 +39,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdRegion, "Region", Model::Type::Radio, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {29500, 30500}, {}, 100, 100.0 });
-    models.push_back({ModelIdDiskDriveWobble, "Disk Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 50, {0, 500}, {}, 50, 100.0 });
+    models.push_back({ModelIdDiskDriveWobble, "Drive Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 20, {0, 500}, {}, 50, 100.0 });
     models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 180}, {}, 180, 10.0 });
     models.push_back({ModelIdDriveStepperAccess, "Drive Stepper Access", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 30}, {}, 30, 10.0 });
     models.push_back({ModelIdDiskTurbo, "Disk Turbo", Model::Type::Radio, Model::Purpose::DriveSettings, 0, {0, 4}, { "1x", "2x", "4x", "8x", "MAX" }});

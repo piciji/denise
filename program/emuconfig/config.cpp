@@ -20,6 +20,7 @@
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
 #include "../media/fileloader.h"
+#include "../media/autoloader.h"
 
 #include <vector>
 #include <algorithm>

@@ -405,7 +405,6 @@ auto Cmd::parse() -> void {
 		globalSettings->set("video_screen_text", 0);
 		settingsC64->set<bool>("video_cycle_accuracy", true);
         settingsC64->set<bool>("Emulate_Mechanics", true);
-        settingsC64->set<unsigned>("Disalign_Tracks", 1);
         settingsC64->set<unsigned>("video_crt", 0);
 		
 		updateModel(emuC64, LIBC64::Interface::ModelIdDisableGreyDotBug, 0);

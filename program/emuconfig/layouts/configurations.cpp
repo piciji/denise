@@ -849,6 +849,8 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
 
     program->power(this->emulator);
 
+    autoloader->set(this->emulator, nullptr, false, 0);
+
     return true;
 }
 

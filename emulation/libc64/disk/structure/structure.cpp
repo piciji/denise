@@ -27,6 +27,16 @@ const unsigned DiskStructure::TYPICAL_SIZE = 174848;  // for 35 tracks in cbm do
 const uint8_t DiskStructure::SECTORS_IN_SPEEDZONE[4] = { 17, 18, 19, 21 };
 const unsigned DiskStructure::BYTES_IN_SPEEDZONE[4] = { 6250, 6666, 7142, 7692 };
 const uint8_t DiskStructure::GAPS_IN_SPEEDZONE[4] = { 9, 12, 17, 8 };
+const float DiskStructure::SKEW[42] = { // measured with CBM DOS 35 track format: logTrackSkew() in gxx.cpp
+    // speed DOS 40 track format or disk master 42 track format have not the same SKEWs
+    0.903942, 0.359481, 0.815003, 0.270541, 0.726079, 0.181617, 0.637172, 0.092710, 0.548232, 0.003786,
+    0.459308, 0.914863, 0.370385, 0.825939, 0.281461, 0.737016, 0.192538, 0.593304, 0.154281, 0.715328,
+    0.276376, 0.837423, 0.398470, 0.959518, 0.768827, 0.440875, 0.112924, 0.785010, 0.457096, 0.129144,
+    0.351180, 0.129900, 0.908620, 0.687180, 0.463340,
+    0.8, 0.4, 0.9, 0.5, 0.1, 0.8, 0.4 // we guess here (tracks > 35)
+};
+
+
     
 DiskStructure::DiskStructure(System* system, Drive* drive) :
 system(system),
@@ -875,38 +885,27 @@ auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector )
     return err == ERR_OK;
 }
 
-auto DiskStructure::disalignTrack(uint8_t* ptr, unsigned trackSize, unsigned lastTrackSize, unsigned& offset) -> void {
-    // used to pass skew tests only. like real disks the track alignment doesn't change later on.
-    // to do it right, the stepper emulation should be enabled when writing disks.
-    // the skew tests should be reworked.
+auto DiskStructure::disalignTrack(MTrack& track, unsigned pos) -> void {
     static uint8_t* tempData = nullptr;
     static unsigned tempSize = 0;
 
-    if (!trackSize)
+    if (!track.size)
         return;
 
-    if (trackSize > tempSize) {
+    if (track.size > tempSize) {
         if (tempData)
             delete[] tempData;
 
-        tempData = new uint8_t[trackSize];
-        tempSize = trackSize;
+        tempData = new uint8_t[track.size]; // todo: will be deleted when APP is closed
+        tempSize = track.size;
     }
 
-    // 200 ms = 1 round
-    //  14 ms = x  (step time)
-    //  x = 14 / 200
-    if (lastTrackSize) {
-        offset += (lastTrackSize * 14) / 200;
-        offset %= lastTrackSize;
-        if (offset)
-            offset = (offset * trackSize) / lastTrackSize;
-    }
-    offset %= trackSize;
+    unsigned offset = SKEW[pos] * float(track.size);
+    offset %= track.size;
 
-    std::memcpy(tempData, ptr, trackSize);
-    std::memcpy(ptr + offset, tempData, trackSize - offset);
-    std::memcpy(ptr, tempData + (trackSize - offset), offset);
+    std::memcpy(tempData, track.data, track.size);
+    std::memcpy(track.data + offset, tempData, track.size - offset);
+    std::memcpy(track.data, tempData + (track.size - offset), offset);
 }
 
 }

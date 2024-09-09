@@ -31,6 +31,8 @@ struct DiskStructure {
     static const uint8_t SECTORS_IN_SPEEDZONE[4];
     static const unsigned BYTES_IN_SPEEDZONE[4];
     static const uint8_t GAPS_IN_SPEEDZONE[4];
+
+	static const float SKEW[42];
     
     enum class Type { D64, G64, P64, D71, G71, P71, Unknown = -1 } type;
 
@@ -39,7 +41,6 @@ struct DiskStructure {
 	Emulator::Interface::Media* media = nullptr;
 	bool autoStarted = false;
     unsigned serializationSize = 0;
-    bool disalignTracks = false;
     
     std::function<unsigned (uint8_t*, unsigned, unsigned)> write = [](uint8_t* buffer, unsigned length, unsigned offset){ return 0; };    
     
@@ -146,6 +147,7 @@ struct DiskStructure {
     auto prepareP64Graceful() -> void;
 
     auto readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
+	auto logTrackSkew() -> void;
     
 private:    
     uint8_t* rawData;
@@ -210,7 +212,7 @@ private:
     auto prepareTracksNotInUse(bool* inUse) -> void;
     auto createPulsesFromGCR(MTrack* gcrTrack) -> void;
     static auto allocatePulse( std::vector<Pulse>& pulses ) -> unsigned;
-    static auto disalignTrack(uint8_t* ptr, unsigned trackSize, unsigned lastTrackSize, unsigned& offset) -> void;
+    static auto disalignTrack(MTrack& track, unsigned pos) -> void;
 };
 
 }

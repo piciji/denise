@@ -90,7 +90,6 @@ auto DiskStructure::prepareDxx() -> void {
     unsigned sectorOffset = 0;
     unsigned trackOffset = 0;
     bool doubleSideFlag = false;
-    unsigned alignOffset = 0;
     unsigned trackSize = 0;
 
     // first we fetch the bam sector to extract the id, needed for all sector headers
@@ -161,9 +160,8 @@ auto DiskStructure::prepareDxx() -> void {
                     // + speedzone dependant gap
                     ptr += 340 + 9 + gaps + 5;
                 }
-
-                if (disalignTracks)
-                    disalignTrack(trackPtr->data, trackSize, lastTrackSize, alignOffset);
+                // a D64 doesn't contain track alignment. we use typical CBM DOS track alignment (format disc)
+                disalignTrack(*trackPtr, track - 1);
             }
             // half tracks are not supported by D64
             trackPtr = &gcrTracks[side][++halfTrack];
