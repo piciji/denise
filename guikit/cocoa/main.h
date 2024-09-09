@@ -610,6 +610,7 @@ struct pMonitor {
         CGDisplayModeRef mode;
 #endif
         Device* parentDevice;
+        float rate;
     };
 
     static std::vector<Device> devices;

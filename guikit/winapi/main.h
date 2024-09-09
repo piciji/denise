@@ -888,6 +888,7 @@ struct pMonitor {
         std::string ident;
         Device* parentDevice;
         DEVMODE devMode;
+        float rate;
     };
 
     static std::vector<Device> devices;

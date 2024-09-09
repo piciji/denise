@@ -69,6 +69,8 @@ std::function<void ()> Application::Cocoa::onQuit;
 std::function<void ()> Application::Cocoa::onDock;
 std::function<void (std::string fileName)> Application::Cocoa::onOpenFile;
 
+std::function<void (float rate)> Monitor::onFullscreenRefreshChange = nullptr;
+
 auto Application::isCocoa() -> bool {
 #ifdef GUIKIT_COCOA
     return true;

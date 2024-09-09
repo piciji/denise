@@ -197,7 +197,7 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
         if (found)
             continue;
 
-        settings.push_back({ crc32.value(), name, device, mode->id });
+        settings.push_back({ crc32.value(), name, device, mode->id, (float)refresh });
     }
 }
 
@@ -334,6 +334,9 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
 
     XUngrabServer(display);
     XSync(display, false);
+
+    if ((setting->rate != 0.0f) && Monitor::onFullscreenRefreshChange)
+        Monitor::onFullscreenRefreshChange(setting->rate);
 
     return true;
 }

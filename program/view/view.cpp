@@ -296,6 +296,15 @@ auto View::build() -> void {
 			displayChangeTimer.setEnabled();
 		}
     };
+
+    GUIKIT::Monitor::onFullscreenRefreshChange = [this](float rate) {
+        useFullscreenRefreshAsEmuSpeed = true;
+        emuThread->lock();
+        audioManager->setSynchronize();
+        audioManager->setResampler(rate);
+        statusHandler->resetFrameCounter();
+        emuThread->unlock();
+    };
 	
 	anyloadTimer.setInterval(40);
     displayChangeTimer.setInterval(500);
@@ -481,6 +490,12 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
 
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
+
+    if (!fullScreen && useFullscreenRefreshAsEmuSpeed) {
+        useFullscreenRefreshAsEmuSpeed = false;
+        audioManager->setResampler();
+        statusHandler->resetFrameCounter();
+    }
 }
 
 auto View::prepareCursorHide(unsigned interval, bool withFocus) -> void {
@@ -1480,6 +1495,7 @@ auto View::buildMenu() -> void {
             audioManager->setSynchronize();
             audioManager->setResampler();
             statusHandler->resetFrameCounter();
+            useFullscreenRefreshAsEmuSpeed = false;
             emuThread->unlock();
         };
         speedControlMenu.append( *speedItem );

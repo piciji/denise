@@ -156,6 +156,7 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
         
     settings.clear();
     CRC32 crc32;
+    float frequency = 0.0f;
 
     settings.push_back({ 0, "-", 0, device });
 
@@ -192,8 +193,10 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
         
         std::string freq = "";
         double _freq = CGDisplayModeGetRefreshRate(mode);
-        if (_freq)
+        if (_freq) {
             freq = String::convertDoubleToString(_freq, 2) + " Hz";
+            frequency = (float)_freq;
+		}
             
 #else
     int modeCount;
@@ -213,8 +216,10 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
         bool scaled = mode.derived.density == 2.0;
 
         std::string freq = "";
-        if (_freq)
+        if (_freq) {
             freq = std::to_string(_freq) + " Hz";
+			frequency = (float)_freq;
+        }
 #endif
             
         if (_width == 1 && _height == 1) {
@@ -257,9 +262,9 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
         }
 
 #ifdef UNDOCUMENTED_RETINA_SUPPORT
-    settings.push_back( {crc32.value(), name, i, device} );
+    settings.push_back( {crc32.value(), name, i, device, frequency} );
 #else
-    settings.push_back( {(uint32_t)modeId, name, mode, device} );
+    settings.push_back( {(uint32_t)modeId, name, mode, device, frequency} );
 #endif
         
     }
@@ -336,6 +341,10 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
 #endif
     
     CGCompleteDisplayConfiguration(configRef, kCGConfigureForAppOnly);
+
+	if ((setting->rate != 0.0f) && Monitor::onFullscreenRefreshChange)
+        Monitor::onFullscreenRefreshChange(setting->rate);
+
     return true;
 }
 

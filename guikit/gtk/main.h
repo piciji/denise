@@ -772,6 +772,7 @@ struct pMonitor {
         std::string ident;
         Device* parentDevice;
         RRMode rrMode;
+    	float rate;
     };
 
     static Display* display;

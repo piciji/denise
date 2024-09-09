@@ -16,6 +16,7 @@ struct View : GUIKIT::Window {
     bool customResizeMode = false;
     int dropZone = 0;
 	bool grabMouseLeft = false;
+	bool useFullscreenRefreshAsEmuSpeed = false;
 
     struct ShaderFavourites {
         std::string path;

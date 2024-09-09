@@ -1306,6 +1306,8 @@ struct System {
 
 struct Monitor {
 
+    static std::function<void (float rate)> onFullscreenRefreshChange;
+
     struct Property {
         unsigned id;
         std::string name;

@@ -165,7 +165,7 @@ auto pMonitor::fetchSettings( Device* device ) -> void {
         if (found)
             continue;
 
-        settings.push_back({ crc32.value(), name, device, devSetting });
+        settings.push_back({ crc32.value(), name, device, devSetting, (float)devSetting.dmDisplayFrequency });
     }
 }
 
@@ -270,7 +270,12 @@ auto pMonitor::setSetting( unsigned displayId, unsigned settingId ) -> bool {
         0
     );
 
-    return result == DISP_CHANGE_SUCCESSFUL;
+    bool success = result == DISP_CHANGE_SUCCESSFUL;
+
+    if (success && (activeSetting->rate != 0.0f) && Monitor::onFullscreenRefreshChange)
+        Monitor::onFullscreenRefreshChange(activeSetting->rate);
+
+    return success;
 }
 
 auto pMonitor::resetSetting() -> void {
