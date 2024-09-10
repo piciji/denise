@@ -224,6 +224,7 @@ struct pImageView : pWidget {
 struct pButton : pWidget {
     Button& button;
 
+    auto setImage(Image* image) -> void;
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void;
     auto setText(const std::string& text) -> void;

@@ -595,7 +595,7 @@ auto ModelLayout::translate( std::string theme ) -> void {
                 block->sliderLayout->name.setText(trans->getA( name, true ));
                 block->sliderLayout->name.setTooltip(trans->getA(tooltip));
                 if (block->sliderLayout->withButton) {
-                     block->sliderLayout->defaultButton.setText(trans->getA("Back"));
+                    //block->sliderLayout->defaultButton.setText(trans->getA("Back"));
                     block->sliderLayout->defaultButton.setTooltip( trans->getA(trans->getA("default") ) );
                 }
             }

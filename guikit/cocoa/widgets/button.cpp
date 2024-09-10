@@ -21,7 +21,14 @@ namespace GUIKIT {
     
 auto pButton::minimumSize() -> Size {
     Size size = getMinimumSize();
-    return {size.width + 22, size.height + 6};
+
+    if (!button.image())
+        return {size.width + 22, size.height + 6};
+
+    if (button.text().empty())
+        return {button.image()->width + 22, button.image()->height + 8};
+
+    return {size.width + button.image()->width + 22, size.height + 6};
 }
     
 auto pButton::setGeometry(Geometry geometry) -> void {
@@ -31,6 +38,13 @@ auto pButton::setGeometry(Geometry geometry) -> void {
     });
 }
     
+auto pButton::setImage(Image* image) -> void {
+    @autoreleasepool {
+        [(id)cocoaView setImage:NSMakeImage(*image)];
+        [(id)cocoaView setImagePosition:NSImageLeft];
+    }
+}
+
 auto pButton::setText(const std::string& text) -> void {
     @autoreleasepool {
         [(id)cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
