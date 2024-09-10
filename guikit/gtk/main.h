@@ -288,6 +288,7 @@ struct pImageView : pWidget {
 struct pButton : pWidget {
     Button& button;
 
+	auto setImage(Image* image) -> void;
     auto minimumSize() -> Size;
     static auto onActivate(Button* self) -> void;
     auto setText(const std::string& text) -> void;
