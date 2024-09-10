@@ -141,9 +141,9 @@ auto pTreeViewItem::find( HTREEITEM _hTreeItem ) -> TreeViewItem* {
     return nullptr;
 }
 
-auto pTreeView::append(TreeViewItem& item) -> void {
-    if(!hwnd) return;
+auto pTreeView::append(TreeViewItem& item) -> void {    
     item.state.parentTreeView = &treeView;
+    if (!hwnd) return;
     item.p.update( nullptr );
 }
 
