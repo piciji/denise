@@ -26,7 +26,7 @@ auto pButton::minimumSize() -> Size {
         return {size.width + 22, size.height + 6};
 
     if (button.text().empty())
-        return {button.image()->width + 22, button.image()->height + 8};
+        return {button.image()->width + 12, button.image()->height + 6};
 
     return {size.width + button.image()->width + 22, size.height + 6};
 }
@@ -42,6 +42,8 @@ auto pButton::setImage(Image* image) -> void {
     @autoreleasepool {
         [(id)cocoaView setImage:NSMakeImage(*image)];
         [(id)cocoaView setImagePosition:NSImageLeft];
+        if (widget.text().empty())
+            setText("");
     }
 }
 
