@@ -109,7 +109,7 @@ auto pButton::customDraw(HWND hwnd, PAINTSTRUCT& ps) -> void {
         int _x, _y = 0;
 
         if(button.text().empty()) {
-            _x = 11;
+            _x = 10;
             _y = 5;
         } else {
             _x = 8;
