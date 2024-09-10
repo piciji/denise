@@ -54,7 +54,7 @@ if(NOT CMAKE_BUILD_TYPE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo")
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL Release)
+if(CMAKE_BUILD_TYPE STREQUAL Release AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_link_options( -s )
 endif()
 
