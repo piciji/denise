@@ -17,7 +17,7 @@ struct AudioManager {
     unsigned bufferPos = 0;
     unsigned bufferSize = 0;
     float buffer[2048];        
-    float floatConversion;
+    float volumeAdjust;
     std::vector<DSP::Base*> dsps;
     
     int16_t outBuffer[65536];

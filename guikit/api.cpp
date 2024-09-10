@@ -813,6 +813,11 @@ auto ImageView::setUri( std::string uri ) -> void {
 
 ImageView::ImageView() : Widget(*new pImageView(*this)), p((pImageView&)Widget::p) { p.init(); }
 
+auto Button::setImage(Image* image) -> void {
+    state.image = image;
+    p.setImage(image);
+}
+
 Button::Button() : Widget(*new pButton(*this)), p((pButton&)Widget::p) { p.init(); }
 
 auto StepButton::setRange(int16_t minValue, int16_t maxValue) -> void {    

@@ -9,7 +9,8 @@ struct TabWindow;
     
 struct ModelLayout : GUIKIT::FramedVerticalLayout {
 
-    GUIKIT::Image* curve = nullptr;
+    static GUIKIT::Image* curveImg;
+    static GUIKIT::Image* backImg;
 
     struct Line : GUIKIT::HorizontalLayout {
         

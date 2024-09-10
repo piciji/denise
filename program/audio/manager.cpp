@@ -12,7 +12,7 @@ AudioManager* audioManager = nullptr;
 
 AudioManager::AudioManager() : drive(*this) {
     
-    floatConversion = 1.0 / 32768.0;
+    volumeAdjust = 1.0 / 32768.0;
     
     rData.out = new float[65536];
     
@@ -150,10 +150,10 @@ auto AudioManager::setVolume() -> void {
     unsigned volume = settings->get<unsigned>("audio_volume", 100u, {0u, 100u});
     bool mute = muteTimer.enabled() || globalSettings->get<bool>("audio_mute", false);
         
-    floatConversion = 0.0;    
+    volumeAdjust = 0.0;
     
     if (!mute)
-        floatConversion = ( (float)volume * 0.01 ) / 32768.0;
+        volumeAdjust = ( (float)volume * 0.01 ) / 32768.0;
 }
 
 auto AudioManager::setTapeNoise( ) -> void {
@@ -351,10 +351,10 @@ auto AudioManager::applyDsp() -> void {
 
 auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
     
-    buffer[bufferPos++] = sampleLeft * floatConversion;
+    buffer[bufferPos++] = sampleLeft * volumeAdjust;
     
     if (stat.stereoSound)
-        buffer[bufferPos++] = sampleRight * floatConversion;    
+        buffer[bufferPos++] = sampleRight * volumeAdjust;
 
     if (bufferPos < bufferSize)
         return;   

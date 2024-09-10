@@ -14,7 +14,10 @@
 
 namespace EmuConfigView {   
     
-#define mes this->tabWindow->message    
+#define mes this->tabWindow->message
+
+GUIKIT::Image* ModelLayout::curveImg = nullptr;
+GUIKIT::Image* ModelLayout::backImg = nullptr;
     
 ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* layout) {
     
@@ -49,6 +52,11 @@ ModelLayout::Line::Block::Block(Emulator::Interface::Model* model, ModelLayout* 
     } else if (model->isSlider()) {
         auto& sOptions = model->options;
         sliderLayout = new ::SliderLayout("", false, !sOptions.size());
+        if (!backImg) {
+            backImg = new GUIKIT::Image;
+            backImg->loadPng((uint8_t*)Icons::back, sizeof(Icons::back));
+        }
+        sliderLayout->defaultButton.setImage(backImg);
         append(*sliderLayout, {~0u, 0u});
 
         if (sOptions.size()) {
@@ -133,13 +141,13 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
         line->blocks.push_back(block);
 
         if (useWolframAlpha && (model.id == LIBC64::Interface::ModelIdDriveAcceleration || model.id == LIBC64::Interface::ModelIdDriveDeceleration)) {
-            if (!curve) {
-                curve = new GUIKIT::Image;
-                curve->loadPng((uint8_t*)Icons::sine, sizeof(Icons::sine));
+            if (!curveImg) {
+                curveImg = new GUIKIT::Image;
+                curveImg->loadPng((uint8_t*)Icons::sine, sizeof(Icons::sine));
             }
             block->imageView = new GUIKIT::ImageView;
-            block->imageView->setImage( curve );
-            line->append(*block->imageView, {curve->width, curve->height}, 3 );
+            block->imageView->setImage( curveImg );
+            line->append(*block->imageView, {curveImg->width, curveImg->height}, 3 );
         }
 
         if (model.isSlider())
@@ -587,7 +595,6 @@ auto ModelLayout::translate( std::string theme ) -> void {
                 block->sliderLayout->name.setText(trans->getA( name, true ));
                 block->sliderLayout->name.setTooltip(trans->getA(tooltip));
                 if (block->sliderLayout->withButton) {
-                    block->sliderLayout->defaultButton.setText("...");
                     block->sliderLayout->defaultButton.setTooltip( trans->getA(trans->getA("default") ) );
                 }
             }

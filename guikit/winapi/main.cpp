@@ -98,6 +98,9 @@ FN_BeginBufferedPaint pApplication::pfnBeginBufferedPaint = nullptr;
 FN_EndBufferedPaint pApplication::pfnEndBufferedPaint = nullptr;
 DrawThemeParentBackground_t pApplication::drawThemeParentBackground = nullptr;
 ProcessReference pApplication::g_pProcRef;
+DrawThemeBackground_t pApplication::drawThemeBackground = nullptr;
+OpenThemeData_t pApplication::openThemeData = nullptr;
+CloseThemeData_t pApplication::closeThemeData = nullptr;
 
 auto pApplication::initialize() -> void {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED); // same as CoInitialize(0)
@@ -134,6 +137,9 @@ auto pApplication::initialize() -> void {
             pfnBeginBufferedPaint = (FN_BeginBufferedPaint)::GetProcAddress(uxTheme, "BeginBufferedPaint");
             pfnEndBufferedPaint = (FN_EndBufferedPaint)::GetProcAddress(uxTheme, "EndBufferedPaint");
             drawThemeParentBackground = (DrawThemeParentBackground_t)::GetProcAddress(uxTheme, "DrawThemeParentBackground");
+            drawThemeBackground = (DrawThemeBackground_t)::GetProcAddress(uxTheme, "DrawThemeBackground");
+            openThemeData = (OpenThemeData_t)::GetProcAddress(uxTheme, "OpenThemeData");
+            closeThemeData = (CloseThemeData_t)::GetProcAddress(uxTheme, "CloseThemeData");
         }
     }
 }

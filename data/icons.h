@@ -143,4 +143,6 @@ extern uint8_t gears[553];
 extern uint8_t info[419];
 
 extern uint8_t del[282];
+
+extern uint8_t back[360];
 }

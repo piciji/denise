@@ -16,6 +16,7 @@
 #include <Commdlg.h>
 #include <direct.h>
 #include <dwmapi.h>
+#include <windowsx.h>
 #include "processref.h"
 
 DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
@@ -24,6 +25,9 @@ typedef HPAINTBUFFER (WINAPI *FN_BeginBufferedPaint) (HDC hdcTarget, const RECT 
 typedef HRESULT (WINAPI *FN_EndBufferedPaint) (HPAINTBUFFER hBufferedPaint, BOOL fUpdateTarget);
 typedef HRESULT (WINAPI *DwmGetCompositionTimingInfo_t)(HWND hwnd, DWM_TIMING_INFO *pTimingInfo);
 typedef HRESULT (WINAPI *DrawThemeParentBackground_t)(HWND hwnd, HDC hdc, const RECT *prc);
+typedef HRESULT (WINAPI *DrawThemeBackground_t)(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT pRect, LPCRECT pClipRect);
+typedef HTHEME  (WINAPI *OpenThemeData_t)(HWND hwnd, LPCWSTR pszClassList);
+typedef HRESULT (WINAPI *CloseThemeData_t)(HTHEME hTheme);
 
 namespace GUIKIT {
 
@@ -78,6 +82,9 @@ struct pApplication {
     static FN_BeginBufferedPaint pfnBeginBufferedPaint;
     static FN_EndBufferedPaint pfnEndBufferedPaint;
     static DrawThemeParentBackground_t drawThemeParentBackground;
+    static DrawThemeBackground_t drawThemeBackground;
+    static OpenThemeData_t openThemeData;
+    static CloseThemeData_t closeThemeData;
 };
 
 struct pWindow {
@@ -345,7 +352,12 @@ struct pImageView : pWidget {
 
 struct pButton : pWidget {
     Button& button;
+    HBITMAP hbitmap = nullptr;
 
+    auto setImage(Image* image) -> void;
+    auto setText(const std::string& text) -> void;
+    auto setEnabled(bool enabled) -> void;
+    auto customDraw(HWND hwnd, PAINTSTRUCT& ps) -> void;
     auto minimumSize() -> Size;
     auto onActivate() -> void;
     auto rebuild() -> void;

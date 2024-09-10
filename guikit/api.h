@@ -549,6 +549,14 @@ struct ImageView : Widget {
 
 struct Button : Widget {
     std::function<void ()> onActivate = nullptr;
+
+    auto setImage(Image* image) -> void;
+    auto image() -> Image* { return state.image; }
+
+    struct {
+        Image* image = nullptr;
+    } state;
+
     pButton& p;
     Button();
 };
