@@ -298,6 +298,8 @@ auto View::build() -> void {
     };
 
     GUIKIT::Monitor::onFullscreenRefreshChange = [this](float rate) {
+        if (!globalSettings->get<bool>("video_sync", true))
+            return;
         useFullscreenRefreshAsEmuSpeed = true;
         emuThread->lock();
         audioManager->setSynchronize();
