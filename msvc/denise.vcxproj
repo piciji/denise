@@ -53,6 +53,7 @@
     <ClInclude Include="..\driver\video\d3d11\utility.h" />
     <ClInclude Include="..\driver\video\d3d9\dragnDropOverlay.h" />
     <ClInclude Include="..\driver\video\d3d9\symbols.h" />
+    <ClInclude Include="..\driver\video\d3d9\text.h" />
     <ClInclude Include="..\driver\video\dragnDropOverlay.h" />
     <ClInclude Include="..\driver\video\freetype.h" />
     <ClInclude Include="..\driver\video\opengl3\bind.h" />

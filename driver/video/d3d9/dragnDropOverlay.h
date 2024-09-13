@@ -70,6 +70,31 @@ struct D3d9DragndropOverlay : DragndropOverlay {
         updateBuffer();
     }
 
+    auto updateCoord(Viewport& viewport, LPDIRECT3DVERTEXBUFFER9& vertexBuffer) -> void {
+        // todo: don't refresh this each frame
+        LPDIRECT3DVERTEXBUFFER9* vertexPtr;
+        d3d9vertex vertex[4];
+
+        vertex[0].x = vertex[2].x = ((float) (viewport.x + texX) - 0.5f);
+        vertex[1].x = vertex[3].x = ((float) (viewport.x + texX) + (float) texWidth - 0.5f);
+        vertex[0].y = vertex[1].y = ((float) (viewport.y + texY) - 0.5f);
+        vertex[2].y = vertex[3].y = ((float) (viewport.y + texY) + (float) texHeight - 0.5f);
+
+        vertex[0].z = vertex[1].z = 1.0;
+        vertex[2].z = vertex[3].z = 1.0;
+        vertex[0].rhw = vertex[1].rhw = 1.0;
+        vertex[2].rhw = vertex[3].rhw = 1.0;
+
+        vertex[0].u = vertex[2].u = 0.0f;
+        vertex[1].u = vertex[3].u = ((float) (texWidth) - 0.5f) / (float) texStorageWidth;
+        vertex[0].v = vertex[1].v = 0.0f;
+        vertex[2].v = vertex[3].v = ((float) (texHeight) - 0.5f) / (float) texStorageHeight;
+
+        vertexBuffer->Lock(0, sizeof (d3d9vertex) * 4, (void**) &vertexPtr, 0);
+        std::memcpy(vertexPtr, vertex, sizeof (d3d9vertex) * 4);
+        vertexBuffer->Unlock();
+    }
+
     auto term() -> void {
         dxRelease(surface);
         dxRelease(texture);

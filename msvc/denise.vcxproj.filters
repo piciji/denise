@@ -1042,6 +1042,9 @@
     <ClInclude Include="..\guikit\tools\file\directory.h">
       <Filter>guikit\tools\file</Filter>
     </ClInclude>
+    <ClInclude Include="..\driver\video\d3d9\text.h">
+      <Filter>driver\video\d3d9</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">

@@ -5,17 +5,15 @@
 #include "../../tools/tools.h"
 #include "../../tools/chronos.h"
 #include <d3d9.h>
-#include <d3dx9.h>
 #include "symbols.h"
-#include <math.h>
 #include <uxtheme.h>
 #include <cstring>
+#include "text.h"
 
 namespace DRIVER {
 
 #include "dragnDropOverlay.h"
 
-#define D3DVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
 #ifndef MAX_MONITORS
 #define MAX_MONITORS 9
 #endif
@@ -24,25 +22,24 @@ auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
 
 struct D3D9 : Video, RenderThread, D3D9Symbols {
     D3d9DragndropOverlay dndOverlay;
+    D3d9Freetype freetype;
     LPDIRECT3D9 lpD3D;
     D3DPRESENT_PARAMETERS d3dpp;
     LPDIRECT3DDEVICE9 lpD3DDevice;
     D3DCAPS9 d3dcaps;
     LPDIRECT3DSURFACE9 surface;
     LPDIRECT3DTEXTURE9 texture;
-    LPDIRECT3DVERTEXBUFFER9 vertex_buffer, *vertex_ptr;
+    LPDIRECT3DVERTEXBUFFER9 vertexBuffer, vertexBufferText, vertexBufferOverlay;
     D3DLOCKED_RECT d3dlr;
-    ID3DXFont* mFont;
-    const unsigned FONT_WIDTH = 1024;
     unsigned textureWidth = 0;
     unsigned textureHeight = 0;
     unsigned* tempBuffer;
+    bool updVertex = false;
 
     ViewScreen viewScreen;
     Viewport viewport;
 
     unsigned inputWidth, inputHeight;
-    std::mutex noteMutex;
 	const bool XPMode;
 
     int64_t lastCapTime;
@@ -59,6 +56,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         bool exclusiveFullscreen = false;
         Rotation rotation;
         bool vrr = false;
+
+        std::string message = "";
+        bool msgCritical = false;
+        std::atomic<int> msgUpdated;
     } settings;
 
     struct {
@@ -73,25 +74,14 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         unsigned filter;
     } flags;
 
-    struct {
-        wchar_t* message;
-        bool enable = false;
-        D3DCOLOR fontColor;
-    } note;
-
-    struct d3dvertex {
-        float x, y, z, rhw; //screen coords
-        unsigned color; //diffuse color
-        float u, v; //texture coords
-    };
-
     bool lost;
 
     auto releaseResources() -> void {
         dxRelease(surface);
         dxRelease(texture);
-        dxRelease(vertex_buffer);
-        dxRelease(mFont);
+        dxRelease(vertexBuffer);
+        dxRelease(vertexBufferText);
+        dxRelease(vertexBufferOverlay);
     }
 
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
@@ -127,7 +117,8 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     }
 
     auto setVertex(unsigned src_w, unsigned src_h, unsigned tex_w, unsigned tex_h, unsigned dest_x, unsigned dest_y, unsigned dest_w, unsigned dest_h) -> void {
-        d3dvertex vertex[4];
+        d3d9vertex vertex[4];
+        LPDIRECT3DVERTEXBUFFER9* vertexPtr;
 
         vertex[0].x = vertex[2].x = ((float) dest_x - 0.5f);
         vertex[1].x = vertex[3].x = ((float) dest_x + (float) dest_w - 0.5f);
@@ -151,11 +142,12 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             vertex[2].v = vertex[3].v = ((float) (src_h) + 0.0f) / (float) tex_h;
         }
 
-        vertex_buffer->Lock(0, sizeof (d3dvertex) * 4, (void**) &vertex_ptr, 0);
-        std::memcpy(vertex_ptr, vertex, sizeof (d3dvertex) * 4);
-        vertex_buffer->Unlock();
+        vertexBuffer->Lock(0, sizeof (d3d9vertex) * 4, (void**) &vertexPtr, 0);
+        std::memcpy(vertexPtr, vertex, sizeof (d3d9vertex) * 4);
+        vertexBuffer->Unlock();
 
-        lpD3DDevice->SetStreamSource(0, vertex_buffer, 0, sizeof (d3dvertex));
+        updVertex = false;
+        //lpD3DDevice->SetStreamSource(0, vertexBuffer, 0, sizeof (d3d9vertex));
     }
 
     auto reset(bool exclusiveFullscreenNeedInit = true) -> bool {
@@ -164,6 +156,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         HWND handle = settings.handle;
         RECT windowSize = Win::getDimension( handle );
         viewScreen.update( viewport, windowSize.right, windowSize.bottom );
+        updVertex = true;
 
         RECT outScreenParent;
 		settings.parent = Win::getParentHandle( handle );
@@ -239,20 +232,17 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         lpD3DDevice->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
         lpD3DDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, true);
 
-        lpD3DDevice->SetFVF(D3DVERTEX); //set vertex format
+        lpD3DDevice->SetFVF(D3D9VERTEX); //set vertex format
 
-        lpD3DDevice->CreateVertexBuffer(sizeof (d3dvertex) * 4, flags.v_usage, D3DVERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertex_buffer, NULL);
+        lpD3DDevice->CreateVertexBuffer(sizeof (d3d9vertex) * 4, flags.v_usage, D3D9VERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertexBuffer, NULL);
+        lpD3DDevice->CreateVertexBuffer(sizeof (d3d9vertex) * 4, flags.v_usage, D3D9VERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertexBufferText, NULL);
+        lpD3DDevice->CreateVertexBuffer(sizeof (d3d9vertex) * 4, flags.v_usage, D3D9VERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertexBufferOverlay, NULL);
 
         textureWidth = 0;
         textureHeight = 0;
         resize(inputWidth, inputHeight);
 
-        if (D3D9CreateFont)
-            D3D9CreateFont(lpD3DDevice, 15, 0, 0, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
-                           DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Source Code Pro"), &mFont);
-
-        note.enable = false;
-
+        settings.msgUpdated |= 2;
         updateFilter();
         //RenderThread::reset();
         return true;
@@ -285,6 +275,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         HWND handle = settings.handle;
         RECT windowSize = Win::getDimension( handle );
         viewScreen.update( viewport, windowSize.right, windowSize.bottom );
+        updVertex = true;
 
         RECT outScreenParent;
         settings.parent = Win::getParentHandle( handle );
@@ -358,6 +349,13 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         RenderThread::reset();
 
         dndOverlay.init(lpD3DDevice);
+
+#ifdef DRV_FREETYPE
+        freetype.reset();
+        freetype.setDevice(lpD3DDevice);
+        settings.msgUpdated = 1;
+#endif
+
         return true;
     }
 
@@ -365,6 +363,12 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if (!initializeSymbols())
             return false;
         settings.handle = (HWND) handle;
+
+#ifdef DRV_FREETYPE
+            if (freetype.init())
+                freetype.setFontSize(12);
+#endif
+
         return init(true);
     }
 
@@ -471,19 +475,35 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             return;
 
         lpD3DDevice->BeginScene();
-        setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
+        if (updVertex)
+            setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
+        lpD3DDevice->SetStreamSource(0, vertexBuffer, 0, sizeof (d3d9vertex));
         lpD3DDevice->SetTexture(0, texture);
 
         lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 
         if (dndOverlay.enabled()) {
             dndOverlay.show(viewport);
-            setVertex(dndOverlay.texWidth, dndOverlay.texHeight, dndOverlay.texStorageWidth, dndOverlay.texStorageHeight, dndOverlay.texX + viewport.x, dndOverlay.texY + viewport.y, dndOverlay.texWidth, dndOverlay.texHeight);
+            dndOverlay.updateCoord(viewport, vertexBufferOverlay);
+            lpD3DDevice->SetStreamSource(0, vertexBufferOverlay, 0, sizeof (d3d9vertex));
             lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         }
 
-        if (note.enable && mFont)
-            applyNote(viewport.width, viewport.height, viewport.x, viewport.y);
+#ifdef DRV_FREETYPE
+        if (settings.msgUpdated) {
+            if (settings.msgUpdated & 1)
+                freetype.buildTexture(settings.message, settings.msgCritical);
+
+            freetype.updateCoord(viewport, vertexBufferText);
+            settings.msgUpdated = 0;
+        }
+
+        if (freetype.ft.hasText()) {
+            lpD3DDevice->SetTexture(0, freetype.texture);
+            lpD3DDevice->SetStreamSource(0, vertexBufferText, 0, sizeof (d3d9vertex));
+            lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        }
+#endif
 
         lpD3DDevice->EndScene();
 
@@ -541,21 +561,35 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         }
 
         lpD3DDevice->BeginScene();
-        setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
+        if (updVertex)
+            setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
+        lpD3DDevice->SetStreamSource(0, vertexBuffer, 0, sizeof (d3d9vertex));
         lpD3DDevice->SetTexture(0, texture);
 
         lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 
         if (dndOverlay.enabled()) {
             dndOverlay.show(viewport);
-            setVertex(dndOverlay.texWidth, dndOverlay.texHeight, dndOverlay.texStorageWidth, dndOverlay.texStorageHeight, dndOverlay.texX + viewport.x, dndOverlay.texY + viewport.y, dndOverlay.texWidth, dndOverlay.texHeight);
+            dndOverlay.updateCoord(viewport, vertexBufferOverlay);
+            lpD3DDevice->SetStreamSource(0, vertexBufferOverlay, 0, sizeof (d3d9vertex));
             lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         }
 
-        noteMutex.lock();
-        if (note.enable && mFont)
-            applyNote(viewport.width, viewport.height, viewport.x, viewport.y);
-        noteMutex.unlock();
+#ifdef DRV_FREETYPE
+        if (settings.msgUpdated) {
+            if (settings.msgUpdated & 1)
+                freetype.buildTexture(settings.message, settings.msgCritical);
+
+            freetype.updateCoord(viewport, vertexBufferText);
+            settings.msgUpdated = 0;
+        }
+
+        if (freetype.ft.hasText()) {
+            lpD3DDevice->SetTexture(0, freetype.texture);
+            lpD3DDevice->SetStreamSource(0, vertexBufferText, 0, sizeof (d3d9vertex));
+            lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        }
+#endif
 
         lpD3DDevice->EndScene();
 
@@ -568,15 +602,6 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         }
 
         resizeMutexThreaded.unlock();
-    }
-
-    inline auto applyNote(unsigned outWidth, unsigned outHeight, unsigned outLeft, unsigned outTop ) -> void {
-        RECT fontRect;
-        int pos = outLeft + outWidth - FONT_WIDTH;
-        if (pos < 0)
-            pos = 0;
-        SetRect(&fontRect, pos, outHeight + outTop - 18, outLeft + outWidth - 5, outHeight + outTop - 0);
-        mFont->DrawTextW(NULL, note.message, -1, &fontRect, DT_RIGHT, note.fontColor);
     }
 
     auto clear() -> void {
@@ -651,6 +676,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
                 RECT windowSize = Win::getDimension( settings.handle );
                 viewScreen.update( viewport, windowSize.right, windowSize.bottom );
+                updVertex = true;
                 lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
 
                 if (tempBuffer)
@@ -665,6 +691,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             resize( inputWidth = _width, inputHeight = _height );
             RECT windowSize = Win::getDimension( settings.handle );
             viewScreen.update( viewport, windowSize.right, windowSize.bottom );
+            updVertex = true;
             lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
         }
 
@@ -689,23 +716,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
         RECT windowSize = Win::getDimension( settings.handle );
         viewScreen.update( viewport, windowSize.right, windowSize.bottom );
-        lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
-    }
-
-    auto resize(RenderBuffer* renderBuffer, unsigned w, unsigned h) -> void {
-
-        w = roundUpPowerOfTwo( w + 1 );
-        h = roundUpPowerOfTwo( h );
-
-        if(d3dcaps.MaxTextureWidth < w)
-            w = d3dcaps.MaxTextureWidth;
-
-        if (d3dcaps.MaxTextureHeight < h)
-            h = d3dcaps.MaxTextureHeight;
-
-        renderBuffer->data = new uint8_t[w * h * 4]();
-        RECT windowSize = Win::getDimension( settings.handle );
-        viewScreen.update( viewport, windowSize.right, windowSize.bottom );
+        updVertex = true;
         lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
     }
 
@@ -736,6 +747,9 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
         lpD3DDevice->CreateTexture( textureWidth, textureHeight, 1, flags.t_usage, D3DFMT_X8R8G8B8,
                                     static_cast<D3DPOOL> (flags.t_pool), &texture, nullptr);
+
+        settings.msgUpdated |= 2;
+        updVertex = true;
     }
 
     auto synchronize(bool state) -> void {
@@ -797,24 +811,15 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     auto hasThreaded() -> bool { return threadEnabled; }
 
     auto showMessage(std::string message, bool critical = false) -> void {
-        if (threadEnabled)
-            noteMutex.lock();
 
-        note.enable = !message.empty();
-        if (!note.enable) {
-            goto out;
+#ifdef DRV_FREETYPE
+        if (settings.message != message || settings.msgCritical != critical) {
+            settings.message = message;
+            settings.msgCritical = critical;
+            settings.msgUpdated = 1;
         }
+#endif
 
-        note.message = Win::utf16_t( message );
-
-        if (critical)
-            note.fontColor = D3DCOLOR_ARGB(255, 155, 0, 0);
-        else
-            note.fontColor = D3DCOLOR_ARGB(155, 255, 255, 255);
-
-        out:
-        if (threadEnabled)
-            noteMutex.unlock();
     }
 
     auto lockResize() -> void {
@@ -865,6 +870,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         wait();
         viewScreen.flipped = rotation == ROT_90 || rotation == ROT_270;
         viewScreen.update(viewport);
+        updVertex = true;
         settings.rotation = rotation;
         inputWidth = inputHeight = 0;
         _clear();
@@ -924,9 +930,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     D3D9(bool XPMode) : XPMode(XPMode) {
         lpD3DDevice = 0;
         lpD3D = 0;
-        mFont = 0;
 
-        vertex_buffer = 0;
+        vertexBuffer = 0;
+        vertexBufferText = 0;
+        vertexBufferOverlay = 0;
         surface = 0;
         texture = 0;
         tempBuffer = nullptr;
@@ -941,18 +948,17 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 		settings.vrr = false;
         settings.rotation = ROT_0;
 
-        #include "../../tools/fonts.c"
-        DWORD nFonts;
-        AddFontMemResourceEx( &sourceCodePro, sizeof(sourceCodePro), NULL, &nFonts );
+        updVertex = false;
     }
 
     ~D3D9() {
         wait();
         RenderThread::enable(false);
+        freetype.term();
         term();
     }
 };
 
-#undef D3DVERTEX
-
 }
+
+#undef D3D9VERTEX
