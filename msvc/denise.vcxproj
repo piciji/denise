@@ -1784,6 +1784,7 @@ xcopy "$(ProjectDir)..\data\img\bundle\*.*" "$(TargetDir)img\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\data\*.*" "$(TargetDir)data\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\shader\*.*" "$(TargetDir)shader\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -1820,6 +1821,7 @@ xcopy "$(ProjectDir)..\data\img\bundle\*.*" "$(TargetDir)img\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\data\*.*" "$(TargetDir)data\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\shader\*.*" "$(TargetDir)shader\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -1854,6 +1856,7 @@ xcopy "$(ProjectDir)..\data\img\bundle\*.*" "$(TargetDir)img\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\data\*.*" "$(TargetDir)data\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\shader\*.*" "$(TargetDir)shader\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -1891,6 +1894,7 @@ xcopy "$(ProjectDir)..\data\img\bundle\*.*" "$(TargetDir)img\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\data\*.*" "$(TargetDir)data\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\shader\*.*" "$(TargetDir)shader\" /e /y /i /r
 xcopy "$(ProjectDir)..\data\sounds\*.*" "$(TargetDir)sounds\" /e /y /i /r
+xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
