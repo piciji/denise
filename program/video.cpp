@@ -606,16 +606,26 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
     std::string screenTextFontPath = "";
 
     if (!keepFontPath) {
-        screenTextFontPath = fontFolder() + "/" + _settings->get<std::string>("screen_text_font", "");
+        std::string _fontFile = _settings->get<std::string>("screen_text_font", "");
+        bool found = false;
 
-        GUIKIT::File file(screenTextFontPath);
-        if (!file.exists()) {
+        if (!_fontFile.empty()) {
+            screenTextFontPath = fontFolder() + _fontFile;
+            GUIKIT::File file(screenTextFontPath);
+            found = file.exists();
+        }
+
+        if (!found) {
             if (systemFont == "inv") // one time only
                 systemFont = GUIKIT::Font::systemFontFile();
 
-            screenTextFontPath = systemFont;
-            GUIKIT::File file2(screenTextFontPath);
-            if (!file2.exists()) {
+            if (!systemFont.empty()) {
+                screenTextFontPath = systemFont;
+                GUIKIT::File file2(screenTextFontPath);
+                found = file2.exists();
+            }
+
+            if (!found) {
                 screenTextFontPath = fontFolder() + "/SourceCodePro-Semibold.ttf";
             }
         }

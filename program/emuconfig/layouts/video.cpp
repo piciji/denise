@@ -302,7 +302,7 @@ VideoScreenTextLayout::ColorBoxLayout::Selection::ComponentBox::ComponentBox() {
 }
 
 VideoScreenTextLayout::ColorBoxLayout::Selection::Selection() {
-    append(control, {55u, 0u}, 10);
+    append(control, {60u, 0u}, 10);
     append(componentBox[COM_BOX_FG], {~0u, 0u}, 5);
     append(componentBox[COM_BOX_BG], {~0u, 0u});
 }
@@ -1824,6 +1824,9 @@ auto VideoLayout::loadSettings(bool init) -> void {
 
     bool paddingSeparate = _settings->get<bool>("screen_text_padding_separate", true);
     bool marginSeparate = _settings->get<bool>("screen_text_margin_separate", false);
+
+    layScreenText.options.textPadding.paddingVertical.active.setChecked( paddingSeparate );
+    layScreenText.options.textMargin.marginVertical.active.setChecked( marginSeparate );
 
     layScreenText.options.textPadding.paddingVertical.slider.setEnabled(paddingSeparate);
     layScreenText.options.textPadding.paddingVertical.value.setEnabled(paddingSeparate);

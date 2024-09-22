@@ -303,7 +303,50 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
 }
 
 auto pFont::systemFontFile() -> std::string {
-	  
+	std::string fontFile = ""; // Linux Mint
+
+	gchar* fontName = 0;
+	g_object_get(gtk_settings_get_default(), "gtk-font-name", &fontName, NULL);
+	std::string defaultFont = fontName;
+
+	if (!defaultFont.empty()) {
+		std::vector<std::string> tokens = String::split(defaultFont, ' ');
+
+		if (tokens.size() && String::isNumber(tokens[tokens.size() - 1])) {
+			Vector::eraseVectorPos(tokens, tokens.size() - 1);
+			defaultFont = String::unsplit(tokens, " ");
+		}
+	}
+
+	if (!defaultFont.empty()) {
+		FcConfig* config = FcInitLoadConfigAndFonts();
+		FcPattern* pat = FcPatternCreate();
+		FcObjectSet* os = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_LANG, FC_FILE, (char *) 0);
+		FcFontSet* fs = FcFontList(config, pat, os);
+
+		for (int i = 0; fs && i < fs->nfont; ++i) {
+			FcPattern* font = fs->fonts[i];
+			FcChar8 *file, *style, *family;
+
+			if (FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch &&
+				FcPatternGetString(font, FC_FAMILY, 0, &family) == FcResultMatch &&
+				FcPatternGetString(font, FC_STYLE, 0, &style) == FcResultMatch) {
+
+				std::string sStyle(reinterpret_cast<char*> (style));
+				std::string sFamily(reinterpret_cast<char*> (family));
+
+				if (String::findString(sStyle, "regular") && (sFamily == defaultFont)) {
+					std::string temp(reinterpret_cast<char*> (file));
+					fontFile = temp;
+					break;
+				}
+			}
+		}
+		if (fs)
+			FcFontSetDestroy(fs);
+	}
+
+	return fontFile;
 }
 
 auto pFont::add( CustomFont* customFont ) -> bool {
