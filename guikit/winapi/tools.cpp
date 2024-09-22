@@ -60,10 +60,81 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
     return family + ", " + std::to_string(size) + ", " + style;
 }
 
-auto pFont::create(uint8_t* data, unsigned size) -> HFONT {
-	DWORD nFonts;
-	
-	return (HFONT)AddFontMemResourceEx( data, size, NULL, &nFonts );
+auto pFont::systemFontFile() -> std::string {
+    NONCLIENTMETRICS metrics;
+    metrics.cbSize = sizeof(NONCLIENTMETRICS);
+    ::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &metrics, 0);
+    std::wstring wsFaceName(metrics.lfMessageFont.lfFaceName);
+
+    HKEY hKey;
+    LONG result;
+
+    result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", 0, KEY_READ, &hKey);
+    if (result != ERROR_SUCCESS) {
+        return "";
+    }
+
+    DWORD maxValueNameSize, maxValueDataSize;
+    result = RegQueryInfoKey(hKey, 0, 0, 0, 0, 0, 0, 0, &maxValueNameSize, &maxValueDataSize, 0, 0);
+    if (result != ERROR_SUCCESS) {
+        return "";
+    }
+
+    DWORD valueIndex = 0;
+    LPWSTR valueName = new WCHAR[maxValueNameSize];
+    LPBYTE valueData = new BYTE[maxValueDataSize];
+    DWORD valueNameSize, valueDataSize, valueType;
+    std::wstring wsFontFile;
+
+    do {
+        wsFontFile.clear();
+        valueDataSize = maxValueDataSize;
+        valueNameSize = maxValueNameSize;
+
+        result = RegEnumValue(hKey, valueIndex, valueName, &valueNameSize, 0, &valueType, valueData, &valueDataSize);
+
+        valueIndex++;
+
+        if (result != ERROR_SUCCESS || valueType != REG_SZ) {
+            continue;
+        }
+
+        std::wstring wsValueName(valueName, valueNameSize);
+
+        if (_wcsnicmp(wsFaceName.c_str(), wsValueName.c_str(), wsFaceName.length()) == 0) {
+
+            wsFontFile.assign((LPWSTR)valueData, valueDataSize);
+            break;
+        }
+    }
+    while (result != ERROR_NO_MORE_ITEMS);
+
+    delete[] valueName;
+    delete[] valueData;
+
+    RegCloseKey(hKey);
+
+    if (wsFontFile.empty()) {
+        return "";
+    }
+
+    WCHAR winDir[MAX_PATH];
+    GetWindowsDirectory(winDir, MAX_PATH);
+
+    std::wstringstream ss;
+    ss << winDir << "\\Fonts\\" << wsFontFile;
+    wsFontFile = ss.str();
+
+    std::string str(wsFontFile.length(), 0);
+    std::transform(wsFontFile.begin(), wsFontFile.end(), str.begin(), [](wchar_t c) {
+        return (char)c;
+    });
+
+    return str;
+}
+
+auto pFont::add(CustomFont* customFont) -> bool {
+    return AddFontResourceW( utf16_t(customFont->filePath.c_str()) );
 }
 
 auto pFont::create(const std::string& desc) -> HFONT {

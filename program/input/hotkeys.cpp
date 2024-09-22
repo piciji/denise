@@ -36,6 +36,8 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ToggleBorder, "toggle border"} );
     hotkeys.push_back( {Hotkey::Id::ToggleBorderPrev, "toggle border prev"} );
     hotkeys.push_back( {Hotkey::Id::ToggleScaling, "toggle scaling"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleFPS, "show_fps"} );
+    hotkeys.push_back( {Hotkey::Id::ToggleAudioStats, "show_audio_buffer"} );
     hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
     hotkeys.push_back( {Hotkey::Id::CropWindow, "crop window"} );
 
@@ -326,6 +328,26 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             emuThread->lock();
 			program->reset(emulator);
 			break;
+
+        case Hotkey::ToggleFPS: {
+            if (statusHandler) {
+                statusHandler->showFPSScreen ^= 1;
+                if (!statusHandler->showFPSScreen)
+                    videoDriver->showScreenText( "", 0 );
+                else
+                    statusHandler->setFpsCounterUpdate();
+            }
+        } break;
+
+        case Hotkey::ToggleAudioStats: {
+            if (audioManager) {
+                audioManager->statistics.enable ^= 1;
+                if (!audioManager->statistics.enable)
+                    videoDriver->showScreenText( "", 0 );
+                else
+                    statusHandler->setDrcBufferUpdate();
+            }
+        } break;
 			
         case Hotkey::AnyLoad:           
             view->setAnyload( emulator );

@@ -729,6 +729,7 @@ struct pFont {
     static auto setFont(GtkWidget* widget, const std::string& font) -> PangoFontDescription*;
     static auto setFont(GtkWidget* widget, gpointer font) -> void;
     static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
+	static auto systemFontFile() -> std::string;
     static auto create(const std::string& desc) -> PangoFontDescription*;
     static auto add( CustomFont* customFont ) -> bool;
     static auto free(PangoFontDescription* font) -> void;

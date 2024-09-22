@@ -35,7 +35,7 @@ namespace DRIVER {
 }
 
 #ifdef DRV_FREETYPE
-    #include "text.h"
+    #include "screenText.h"
 #endif
 
 #include "progress.h"
@@ -89,7 +89,7 @@ struct GL3 {
     GLDragndropOverlay dndOverlay;
     OpenGLProgress progress;
 #ifdef DRV_FREETYPE
-        OpenGLText screenText;
+        GlScreenText screenText;
 #endif
 
     bool updateRTS;
@@ -382,14 +382,6 @@ struct GL3 {
 #ifdef DRV_FREETYPE
         if (!screenText.init()) {
             screenText.term();
-
-        } else {
-            screenText.setColor(1.0f, 1.0f, 1.0f, 0.8f);
-#ifdef DRV_WGL
-            screenText.setFontSize(12);
-#else
-            screenText.setFontSize(13);
-#endif
         }
 #endif
 

@@ -12,7 +12,6 @@ namespace DRIVER {
     struct D3DVertex {
         float position[2];
         float texcoord[2];
-        float color[4];
     };
 
     struct D3DTexture {

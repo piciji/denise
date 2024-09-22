@@ -1,6 +1,6 @@
 
 /**
- * v 2.1
+ * v 2.2
  */
 
 #pragma once
@@ -35,6 +35,21 @@ struct DiskFile {
     unsigned height = 0;
 };
 
+struct ScreenTextDescription {
+	enum Position { POSITION_BOTTOM_RIGHT, POSITION_BOTTOM_CENTER, POSITION_BOTTOM_LEFT, POSITION_TOP_RIGHT, POSITION_TOP_CENTER, POSITION_TOP_LEFT };
+	Position position = POSITION_BOTTOM_RIGHT;
+	std::string fontPath;
+	unsigned fontSize;
+	unsigned fontColor;
+	unsigned backgroundColor;
+	unsigned warnColor;
+	unsigned warnBackgroundColor;
+	unsigned paddingHorizontal;
+	int paddingVertical;
+	unsigned marginHorizontal;
+	int marginVertical;
+};
+
 enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4 };
 enum Rotation { ROT_0, ROT_90, ROT_180, ROT_270 };
 
@@ -62,7 +77,8 @@ struct Video {
     virtual auto waitRenderThread() -> void {}
     virtual auto setProgressAnimation(uint8_t* _data, unsigned _width, unsigned _height) -> void {}
 
-	virtual auto showMessage(std::string message, bool critical = false) -> void {}
+	virtual auto showScreenText(std::string text, unsigned duration, bool warn = false) -> void {}
+	virtual auto setScreenTextDescription(ScreenTextDescription& desc) -> void {}
     virtual auto forceResize() -> void {}
     virtual auto freeContext() -> void {}
     virtual auto lockResize() -> void {}

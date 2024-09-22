@@ -137,13 +137,11 @@ struct CustomFont {
 	std::string name;
     void* refPtr = nullptr;
     unsigned modifier = 0;
-	uint8_t* data = nullptr;
-	unsigned size;
     std::string filePath;
     int sizeAdjust = 0;
 };
 
-struct Application {    
+struct Application {
     static std::function<void ()> loop;
 	static std::function<void (std::string text)> onClipboardRequest;
     static std::function<void ()> onDisplayChange;
@@ -1294,6 +1292,7 @@ struct MessageWindow {
 struct Font {
     static auto system(unsigned size, const std::string& style = "", bool monospaced = false) -> std::string;
     static auto system(const std::string& style = "", bool monospaced = false) -> std::string;
+    static auto systemFontFile() -> std::string;
     static auto size(const std::string& font, const std::string& text) -> Size;
 	static auto scale( unsigned pixel ) -> unsigned;
     Font() = delete;

@@ -80,7 +80,6 @@ struct AudioManager {
     
     auto setBufferSize() -> void;
     auto setResampler(float overrideRate = 0.0f) -> void;
-    auto setStatistics() -> void;
     auto calcStatistics( float adjust ) -> void;
     auto power() -> void;
     auto powerOff() -> void;

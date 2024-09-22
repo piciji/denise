@@ -128,13 +128,8 @@ struct View : GUIKIT::Window {
     
         GUIKIT::MenuCheckItem muteItem;
         GUIKIT::Menu statusTextMenu;
-            GUIKIT::MenuRadioItem screenStatusEnabledItem;
-            GUIKIT::MenuRadioItem screenStatusDisabledItem;
-            GUIKIT::MenuRadioItem screenStatusAutoItem;
-
             GUIKIT::MenuCheckItem fpsItem;
 			GUIKIT::MenuCheckItem volumeItem;
-            GUIKIT::MenuCheckItem audioBufferItem;
 
         GUIKIT::MenuItem saveItem;	
 

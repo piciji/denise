@@ -262,6 +262,124 @@ VideoParamLayout::VideoParamLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
+VideoScreenTextLayout::ColorBoxLayout::Type::Type() {
+    append(label, {0u, 0u}, 10);
+    append(normal, {0u, 0u}, 10);
+    append(warning, {0u, 0u});
+    append(spacer, {~0u, 0u});
+    append(reset, {0u, 0u});
+
+    setAlignment(0.5);
+    GUIKIT::RadioBox::setGroup( normal, warning );
+    normal.setChecked();
+}
+
+VideoScreenTextLayout::ColorBoxLayout::Selection::Control::Control() {
+    append(canvas[CONTROL_FG], {~0u, 30u}, 5);
+    append(hex[CONTROL_FG], {~0u, 0u}, 5);
+    append(canvas[CONTROL_BG], {~0u, 30u}, 5);
+    append(hex[CONTROL_BG], {~0u, 0u});
+
+    canvas[CONTROL_FG].setBorderColor(1, 0x333333);
+    canvas[CONTROL_BG].setBorderColor(1, 0x333333);
+}
+
+VideoScreenTextLayout::ColorBoxLayout::Selection::ComponentBox::ComponentBox() {
+    append(components[COMPONENT_R], {~0u, 0u}, 3);
+    append(components[COMPONENT_G], {~0u, 0u}, 3);
+    append(components[COMPONENT_B], {~0u, 0u}, 3);
+    append(components[COMPONENT_A], {~0u, 0u});
+
+    components[COMPONENT_R].slider.setLength(256);
+    components[COMPONENT_G].slider.setLength(256);
+    components[COMPONENT_B].slider.setLength(256);
+    components[COMPONENT_A].slider.setLength(256);
+
+    components[COMPONENT_R].updateValueWidth("999");
+    components[COMPONENT_G].updateValueWidth("999");
+    components[COMPONENT_B].updateValueWidth("999");
+    components[COMPONENT_A].updateValueWidth("999");
+}
+
+VideoScreenTextLayout::ColorBoxLayout::Selection::Selection() {
+    append(control, {55u, 0u}, 10);
+    append(componentBox[COM_BOX_FG], {~0u, 0u}, 5);
+    append(componentBox[COM_BOX_BG], {~0u, 0u});
+}
+
+VideoScreenTextLayout::ColorBoxLayout::ColorBoxLayout() {
+    append(type, {~0u, 0u}, 5);
+    append(selection, {~0u, 0u});
+
+    setFont(GUIKIT::Font::system("bold"));
+    setPadding(10);
+}
+
+VideoScreenTextLayout::Options::Font::Font() {
+    append(labelFontSize, {0u, 0u}, 10);
+    append(fontSize, {0u, 0u}, 10);
+    append(labelFontType, {0u, 0u}, 10);
+    append(fontType, {0u, 0u});
+
+    for(unsigned s = 8; s <= 36; s++) {
+        fontSize.append(std::to_string(s), s);
+    }
+
+    fontType.append("Standard");
+
+    setAlignment(0.5);
+}
+
+VideoScreenTextLayout::Options::Position::Position() {
+    append(label, {0u, 0u}, 10);
+    append(bottomLeft, {0u, 0u}, 10);
+    append(bottomCenter, {0u, 0u}, 10);
+    append(bottomRight, {0u, 0u}, 10);
+    append(topLeft, {0u, 0u}, 10);
+    append(topCenter, {0u, 0u}, 10);
+    append(topRight, {0u, 0u});
+
+    GUIKIT::RadioBox::setGroup(bottomLeft, bottomCenter, bottomRight, topLeft, topCenter, topRight);
+
+    setAlignment(0.5);
+}
+
+VideoScreenTextLayout::Options::TextPadding::TextPadding() :
+paddingVertical("", true) {
+    append(paddingHorizontal, {~0u, 0u}, 10);
+    append(paddingVertical, {~0u, 0u});
+
+    paddingHorizontal.slider.setLength(61);
+    paddingVertical.slider.setLength(31);
+    setAlignment(0.5);
+}
+
+VideoScreenTextLayout::Options::TextMargin::TextMargin() :
+marginHorizontal("%"),
+marginVertical("%", true) {
+    append(marginHorizontal, {~0u, 0u}, 10);
+    append(marginVertical, {~0u, 0u});
+
+    marginHorizontal.slider.setLength(101);
+    marginVertical.slider.setLength(101);
+    setAlignment(0.5);
+}
+
+VideoScreenTextLayout::Options::Options() {
+    append(font, {0u, 0u}, 10);
+    append(position, {0u, 0u}, 10);
+    append(textPadding, {~0u, 0u}, 10);
+    append(textMargin, {~0u, 0u});
+
+    setFont(GUIKIT::Font::system("bold"));
+    setPadding(10);
+}
+
+VideoScreenTextLayout::VideoScreenTextLayout() {
+    append(colorBox, {~0u, 0u}, 10);
+    append(options, {~0u, 0u});
+}
+
 VideoLayout::VideoLayout(TabWindow* tabWindow) :
 layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     GUIKIT::TreeViewItem* tvi;
@@ -277,12 +395,16 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     pageDownGray.loadPng((uint8_t*)Icons::pageDownGray, sizeof(Icons::pageDownGray) );
     retroarch.loadPng((uint8_t*)Icons::retroarch, sizeof(Icons::retroarch) );
     colorImage.loadPng((uint8_t*)Icons::color, sizeof(Icons::color));
+    menuImage.loadPng((uint8_t*)Icons::menu, sizeof(Icons::menu));
 
     layShader.main.control.downloadSlang.setImage( &retroarch );
     layShader.main.control.downloadSlang.setUri( "https://buildbot.libretro.com/assets/frontend/shaders_slang.zip" );
 
     tviBase.setUserData( (uintptr_t)1 );
     tviBase.setImage( colorImage );
+
+    tviScreenText.setUserData( (uintptr_t)11 );
+    tviScreenText.setImage( menuImage );
 
     tviShader.setUserData( (uintptr_t)2 );
     tviShader.setImage(imgFolderClosed);
@@ -293,11 +415,13 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     tviParams.setImageExpanded(imgFolderOpen);
 
     moduleTree.append(tviBase);
+    moduleTree.append(tviScreenText);
     tviBase.setSelected();
     if (videoDriver->shaderSupport())
         moduleTree.append(tviShader);
 
     moduleSwitch.setLayout(1, layBase, {~0u, ~0u});
+    moduleSwitch.setLayout(11, layScreenText, {~0u, ~0u});
     moduleSwitch.setLayout(2, layShader, {~0u, ~0u});
     moduleSwitch.setLayout(21, layPass, {~0u, ~0u});
     moduleSwitch.setLayout(3, layParam, {~0u, ~0u});
@@ -872,7 +996,146 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         };
     }
 
+    layScreenText.colorBox.type.normal.onActivate = [this]() {
+        prepareColBox(false);
+        updateScreenText(true, false);
+    };
+
+    layScreenText.colorBox.type.warning.onActivate = [this]() {
+        prepareColBox(true);
+        updateScreenText(true, true);
+    };
+
+    layScreenText.colorBox.type.reset.onActivate = [this]() {
+        _settings->remove("screen_text_color");
+        _settings->remove("screen_text_bgcolor");
+        _settings->remove("screen_warn_color");
+        _settings->remove("screen_warn_bgcolor");
+        bool warn = layScreenText.colorBox.type.warning.checked();
+        prepareColBox( warn );
+        updateScreenText(true, warn);
+    };
+
+    for(int compBox = 0; compBox < 2; compBox++) {
+        for(int component = 0; component < 4; component++) {
+            layScreenText.colorBox.selection.componentBox[compBox].components[component].slider.onChange = [this, compBox, component](unsigned position) {
+                unsigned shifter;
+                switch(component & 3) {
+                    case 0: shifter = 16; break;
+                    case 1: shifter = 8; break;
+                    case 2: shifter = 0; break;
+                    case 3: shifter = 24; break;
+                }
+                std::string& ident = layScreenText.colorBox.selection.componentBox[compBox].ident;
+                unsigned& defaultCol = layScreenText.colorBox.selection.componentBox[compBox].defaultCol;
+                unsigned col = _settings->get<unsigned>(ident, defaultCol);
+                col &= ~(0xff << shifter);
+                col |= position << shifter;
+                _settings->set<unsigned>(ident, col);
+                layScreenText.colorBox.selection.componentBox[compBox].components[component].value.setText( std::to_string(position) );
+                layScreenText.colorBox.selection.control.canvas[compBox].setBackgroundColor(col);
+                layScreenText.colorBox.selection.control.hex[compBox].setText( GUIKIT::String::convertIntToHex(col & 0xffffff, true) );
+                updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+            };
+        }
+    }
+
+    layScreenText.options.textPadding.paddingHorizontal.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>("screen_text_padding_horizontal", position);
+        layScreenText.options.textPadding.paddingHorizontal.value.setText( std::to_string(position) );
+        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+    };
+
+    layScreenText.options.textPadding.paddingVertical.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>("screen_text_padding_vertical", position);
+        layScreenText.options.textPadding.paddingVertical.value.setText( std::to_string(position) );
+        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+    };
+
+    layScreenText.options.textPadding.paddingVertical.active.onToggle = [this](bool checked) {
+        _settings->set<bool>("screen_text_padding_separate", checked);
+        layScreenText.options.textPadding.paddingVertical.slider.setEnabled(checked);
+        layScreenText.options.textPadding.paddingVertical.value.setEnabled(checked);
+        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+    };
+
+    layScreenText.options.textMargin.marginHorizontal.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>("screen_text_margin_horizontal", position);
+        layScreenText.options.textMargin.marginHorizontal.setValue( GUIKIT::String::formatFloatingPoint((float)position / 5.0f, 2, true) );
+        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+    };
+
+    layScreenText.options.textMargin.marginVertical.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>("screen_text_margin_vertical", position);
+        layScreenText.options.textMargin.marginVertical.setValue( GUIKIT::String::formatFloatingPoint((float)position / 5.0f, 2, true) );
+        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+    };
+
+    layScreenText.options.textMargin.marginVertical.active.onToggle = [this](bool checked) {
+        _settings->set<bool>("screen_text_margin_separate", checked);
+        layScreenText.options.textMargin.marginVertical.slider.setEnabled(checked);
+        layScreenText.options.textMargin.marginVertical.value.setEnabled(checked);
+        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+    };
+
+    layScreenText.options.font.fontSize.onChange = [this]() {
+        unsigned fontSize = layScreenText.options.font.fontSize.userData();
+        _settings->set<unsigned>("screen_text_fontsize", fontSize);
+        updateScreenText(true);
+    };
+
+    layScreenText.options.font.fontType.onChange = [this]() {
+        std::string fontType = layScreenText.options.font.fontType.text();
+        _settings->set<std::string>("screen_text_font", fontType);
+        updateScreenText(false);
+    };
+
+    layScreenText.options.position.bottomRight.onActivate = [this]() {
+        _settings->set<unsigned>("screen_text_position", DRIVER::ScreenTextDescription::POSITION_BOTTOM_RIGHT);
+        updateScreenText(true);
+    };
+
+    layScreenText.options.position.bottomCenter.onActivate = [this]() {
+        _settings->set<unsigned>("screen_text_position", DRIVER::ScreenTextDescription::POSITION_BOTTOM_CENTER);
+        updateScreenText(true);
+    };
+
+    layScreenText.options.position.bottomLeft.onActivate = [this]() {
+        _settings->set<unsigned>("screen_text_position", DRIVER::ScreenTextDescription::POSITION_BOTTOM_LEFT);
+        updateScreenText(true);
+    };
+
+    layScreenText.options.position.topRight.onActivate = [this]() {
+        _settings->set<unsigned>("screen_text_position", DRIVER::ScreenTextDescription::POSITION_TOP_RIGHT);
+        updateScreenText(true);
+    };
+
+    layScreenText.options.position.topCenter.onActivate = [this]() {
+        _settings->set<unsigned>("screen_text_position", DRIVER::ScreenTextDescription::POSITION_TOP_CENTER);
+        updateScreenText(true);
+    };
+
+    layScreenText.options.position.topLeft.onActivate = [this]() {
+        _settings->set<unsigned>("screen_text_position", DRIVER::ScreenTextDescription::POSITION_TOP_LEFT);
+        updateScreenText(true);
+    };
+
+    auto list = GUIKIT::File::getFolderList(program->fontFolder(), ".ttf");
+
+    for(auto& info : list) {
+        layScreenText.options.font.fontType.append( info.name );
+    }
+
     loadSettings(true);
+}
+
+auto VideoLayout::updateScreenText(bool keepFontPath, bool warn) -> void {
+    if (emulator != activeEmulator)
+        return;
+
+    program->updateOnScreenText(keepFontPath);
+    if (statusHandler)
+        statusHandler->setMessage( trans->getA("changes applied"), 4, warn );
 }
 
 auto VideoLayout::countFloatingPoint(ShaderPreset::Param& param, int& places, int& decimalPlaces) -> void {
@@ -1007,7 +1270,7 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> void {
     }
 
     tviShader.setExpanded();
-    if (selectIt && !tviBase.selected()) {
+    if (selectIt && !tviBase.selected() && !tviScreenText.selected()) {
         tviShader.setSelected();
         moduleSwitch.setSelection( 2 );
     }
@@ -1405,7 +1668,33 @@ auto VideoLayout::translate() -> void {
     layParam.control.previous.setText( trans->getA("previous") );
     layParam.control.next.setText( trans->getA("next") );
 
+    layScreenText.colorBox.setText( trans->getA("color selection") );
+    layScreenText.colorBox.type.label.setText( trans->getA("selection", true) );
+    layScreenText.colorBox.type.normal.setText( trans->getA("text color") );
+    layScreenText.colorBox.type.warning.setText( trans->getA("warn color") );
+    layScreenText.colorBox.type.reset.setText( trans->getA("reset") );
+
+    layScreenText.colorBox.selection.componentBox[COM_BOX_FG].components[COMPONENT_R].name.setText(trans->getA("red"));
+    layScreenText.colorBox.selection.componentBox[COM_BOX_FG].components[COMPONENT_G].name.setText(trans->getA("green"));
+    layScreenText.colorBox.selection.componentBox[COM_BOX_FG].components[COMPONENT_B].name.setText(trans->getA("blue"));
+    layScreenText.colorBox.selection.componentBox[COM_BOX_FG].components[COMPONENT_A].name.setText(trans->getA("alpha"));
+
+    layScreenText.options.setText(trans->getA("options"));
+    layScreenText.options.font.fontType.setText(0, trans->getA("default"));
+    layScreenText.options.font.labelFontSize.setText( trans->getA("Font Size", true) );
+    layScreenText.options.font.labelFontType.setText( trans->getA("font", true) );
+    layScreenText.options.position.label.setText( trans->getA("position", true) );
+    layScreenText.options.position.bottomLeft.setText( trans->getA("bottom left") );
+    layScreenText.options.position.bottomCenter.setText( trans->getA("bottom center") );
+    layScreenText.options.position.bottomRight.setText( trans->getA("bottom right") );
+    layScreenText.options.position.topLeft.setText( trans->getA("top left") );
+    layScreenText.options.position.topCenter.setText( trans->getA("top center") );
+    layScreenText.options.position.topRight.setText( trans->getA("top right") );
+    layScreenText.options.textPadding.paddingHorizontal.name.setText( trans->getA("Padding", true) );
+    layScreenText.options.textMargin.marginHorizontal.name.setText( trans->getA("Margin", true) );
+
     tviBase.setText( trans->getA("overview") );
+    tviScreenText.setText( trans->getA("screen text") );
     tviShader.setText( trans->getA("Shader") );
     tviParams.setText( trans->getA("Parameter") );
 
@@ -1429,6 +1718,17 @@ auto VideoLayout::translate() -> void {
 
     SliderLayout::scale({&layBase.view.saturation, &layBase.view.gamma, &layBase.view.brightness, &layBase.view.contrast, &layBase.view.phase, &layBase.view.scanlines, &layBase.view.interlace, &layBase.encoding.phaseError, &layBase.encoding.hanoverBars, &layBase.encoding.blur, &layBase.lumaDelay.lumaRise, &layBase.lumaDelay.lumaFall},
                         "-100 %");
+
+    for(int compBox = 0; compBox < 2; compBox++) {
+        std::vector<SliderLayout*> sliders;
+        for(int component = 0; component < 4; component++) {
+            sliders.push_back(&layScreenText.colorBox.selection.componentBox[compBox].components[component]);
+        }
+        SliderLayout::scale(sliders, "999");
+    }
+
+    SliderLayout::scale({&layScreenText.options.textPadding.paddingHorizontal, &layScreenText.options.textMargin.marginHorizontal}, "99.9 %");
+    SliderLayout::scale({&layScreenText.options.textPadding.paddingVertical, &layScreenText.options.textMargin.marginVertical}, "99.9 %");
 }
 
 auto VideoLayout::sliderIdent() -> std::string {
@@ -1486,6 +1786,88 @@ auto VideoLayout::loadSettings(bool init) -> void {
         layShader.main.control.internal.setChecked();
     else
         layShader.main.control.external.setChecked();
+
+    unsigned screenTextFontSize = _settings->get<unsigned>("screen_text_fontsize", 18, {8, 36});
+    std::string screenTextFont = _settings->get<std::string>("screen_text_font", "");
+    unsigned screenTextPosition = _settings->get<unsigned>("screen_text_position", 0);
+
+    layScreenText.options.font.fontSize.setSelectionByUserId(screenTextFontSize);
+    layScreenText.options.font.fontType.setSelectionByRow(screenTextFont);
+
+    switch((DRIVER::ScreenTextDescription::Position)screenTextPosition) {
+        default:
+        case DRIVER::ScreenTextDescription::POSITION_BOTTOM_RIGHT: layScreenText.options.position.bottomRight.setChecked(); break;
+        case DRIVER::ScreenTextDescription::POSITION_BOTTOM_CENTER: layScreenText.options.position.bottomCenter.setChecked(); break;
+        case DRIVER::ScreenTextDescription::POSITION_BOTTOM_LEFT: layScreenText.options.position.bottomLeft.setChecked(); break;
+        case DRIVER::ScreenTextDescription::POSITION_TOP_RIGHT: layScreenText.options.position.topRight.setChecked(); break;
+        case DRIVER::ScreenTextDescription::POSITION_TOP_CENTER: layScreenText.options.position.topCenter.setChecked(); break;
+        case DRIVER::ScreenTextDescription::POSITION_TOP_LEFT: layScreenText.options.position.topLeft.setChecked(); break;
+    }
+
+    prepareColBox( layScreenText.colorBox.type.warning.checked() );
+
+    unsigned screenTextPaddingHorizontal = _settings->get<unsigned>("screen_text_padding_horizontal", 10, {0, 60});
+    unsigned screenTextPaddingVertical = _settings->get<unsigned>("screen_text_padding_vertical", 8, {0, 30});
+
+    layScreenText.options.textPadding.paddingHorizontal.slider.setPosition( screenTextPaddingHorizontal );
+    layScreenText.options.textPadding.paddingHorizontal.value.setText( std::to_string(screenTextPaddingHorizontal) );
+    layScreenText.options.textPadding.paddingVertical.slider.setPosition( screenTextPaddingVertical );
+    layScreenText.options.textPadding.paddingVertical.value.setText( std::to_string(screenTextPaddingVertical) );
+
+    unsigned screenTextMarginHorizontal = _settings->get<unsigned>("screen_text_margin_horizontal", 10, {0, 100});
+    unsigned screenTextMarginVertical = _settings->get<unsigned>("screen_text_margin_vertical", 12, {0, 100});
+
+    layScreenText.options.textMargin.marginHorizontal.slider.setPosition( screenTextMarginHorizontal );
+    layScreenText.options.textMargin.marginHorizontal.setValue( GUIKIT::String::formatFloatingPoint((float)screenTextMarginHorizontal / 5.0, 2, true) );
+    layScreenText.options.textMargin.marginVertical.slider.setPosition( screenTextMarginVertical );
+    layScreenText.options.textMargin.marginVertical.setValue( GUIKIT::String::formatFloatingPoint((float)screenTextMarginVertical / 5.0, 2, true) );
+
+    bool paddingSeparate = _settings->get<bool>("screen_text_padding_separate", true);
+    bool marginSeparate = _settings->get<bool>("screen_text_margin_separate", false);
+
+    layScreenText.options.textPadding.paddingVertical.slider.setEnabled(paddingSeparate);
+    layScreenText.options.textPadding.paddingVertical.value.setEnabled(paddingSeparate);
+    layScreenText.options.textMargin.marginVertical.slider.setEnabled(marginSeparate);
+    layScreenText.options.textMargin.marginVertical.value.setEnabled(marginSeparate);
+}
+
+auto VideoLayout::prepareColBox(bool warning) -> void {
+    auto& area = layScreenText.colorBox.selection;
+
+    if (warning) {
+        area.componentBox[COM_BOX_FG].ident = "screen_warn_color";
+        area.componentBox[COM_BOX_BG].ident = "screen_warn_bgcolor";
+        area.componentBox[COM_BOX_FG].defaultCol = (255 << 24) | (177 << 16) | (3 << 8) | (23 << 0);
+        area.componentBox[COM_BOX_BG].defaultCol = (255 << 24) | (95 << 16) | (169 << 8) | (132 << 0);
+    } else {
+        area.componentBox[COM_BOX_FG].ident = "screen_text_color";
+        area.componentBox[COM_BOX_BG].ident = "screen_text_bgcolor";
+        area.componentBox[COM_BOX_FG].defaultCol = ~0;
+        area.componentBox[COM_BOX_BG].defaultCol = (255 << 24) | (69 << 16) | (128 << 8) | (116 << 0);
+    }
+
+    for(int compBox = 0; compBox < 2; compBox++) {
+        std::string& ident = area.componentBox[compBox].ident;
+        unsigned& defaultCol = area.componentBox[compBox].defaultCol;
+        unsigned color = _settings->get<unsigned>(ident, defaultCol);
+
+        for(int component = 0; component < 4; component++) {
+            uint8_t colComponent;
+
+            switch(component & 3) {
+                case 0: colComponent = (color >> 16) & 0xff; break;
+                case 1: colComponent = (color >> 8) & 0xff; break;
+                case 2: colComponent = (color >> 0) & 0xff; break;
+                case 3: colComponent = (color >> 24) & 0xff; break;
+            }
+
+            area.componentBox[compBox].components[component].slider.setPosition( colComponent );
+            area.componentBox[compBox].components[component].value.setText( std::to_string(colComponent) );
+        }
+
+        area.control.canvas[compBox].setBackgroundColor(color);
+        area.control.hex[compBox].setText( GUIKIT::String::convertIntToHex(color & 0xffffff, true) );
+    }
 }
 
 auto VideoLayout::clearErrors() -> void {
@@ -1565,9 +1947,11 @@ auto VideoLayout::unloadShader() -> void {
     if (!videoDriver->shaderSupport()) {
         moduleTree.remove(tviParams);
         moduleTree.remove(tviShader);
-        tviBase.setSelected();
-        moduleSwitch.setSelection( 1 );
-    } else if (!tviBase.selected()) {
+        if (!tviScreenText.selected()) {
+            tviBase.setSelected();
+            moduleSwitch.setSelection( 1 );
+        }
+    } else if (!tviBase.selected() && !tviScreenText.selected()) {
         tviShader.setSelected();
         moduleSwitch.setSelection( 2 );
     }

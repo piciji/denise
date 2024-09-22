@@ -1650,6 +1650,10 @@ auto Font::system(const std::string& style, bool monospaced) -> std::string {
     return pFont::system(0, style, monospaced);
 }
 
+auto Font::systemFontFile() -> std::string {
+    return pFont::systemFontFile();
+}
+
 auto Font::size(const std::string& font, const std::string& text) -> Size {
     return pFont::size(font, text);
 }

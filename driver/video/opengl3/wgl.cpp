@@ -188,6 +188,9 @@ struct WGL : Video, GL3, RenderThread {
         }
 
         viewScreen.update(viewport, _windowWidth, _windowHeight);
+#ifdef DRV_FREETYPE
+        screenText.ftUpdateCoords();
+#endif
         GL3::updateFrameSize();
     }
 
@@ -220,7 +223,7 @@ struct WGL : Video, GL3, RenderThread {
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
 #ifdef DRV_FREETYPE
-        screenText.showText(viewport.width, viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
+        screenText.showText(viewport);
 #endif
 
         if (progressVisible && progress.initialized)
@@ -262,8 +265,7 @@ struct WGL : Video, GL3, RenderThread {
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
 #ifdef DRV_FREETYPE
-        screenText.updateMessage();
-        screenText.showText(viewport.width, viewport.height, -0.01, 0.01, OpenGLText::ALIGN_RIGHT | OpenGLText::VALIGN_BOTTOM);
+        screenText.showText(viewport);
 #endif
         if (progressVisible && progress.initialized)
             progress.show(viewport, 20, 20);
@@ -359,18 +361,15 @@ struct WGL : Video, GL3, RenderThread {
         wglMakeCurrent(display, (HGLRC)context);
         GLUtility::sharedMutex.unlock();
     }
-	
-	auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        if (threadEnabled) {
-            screenText.updateMessage(message, critical, false);
-        } else {
-            makeCurrent(true);
-            screenText.updateMessage(message, critical, true);
-        }
-#endif
+    auto showScreenText(std::string text, unsigned duration, bool warn = false) -> void {
+        screenText.ftUpdateMessage(text, duration, warn);
     }
 
+    auto setScreenTextDescription(ScreenTextDescription& desc) -> void {
+        screenText.ftSetScreenTextDescription(desc);
+    }
+#endif
     auto setAspectRatio(int mode, bool _integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
         if ((int)viewScreen.mode == mode && viewScreen.hasIntegerScaling == _integerScaling)
             return;
@@ -380,6 +379,9 @@ struct WGL : Video, GL3, RenderThread {
         viewScreen.hasIntegerScaling = _integerScaling;
 
         viewScreen.update(viewport);
+#ifdef DRV_FREETYPE
+        screenText.ftUpdateCoords();
+#endif
         GL3::updateFrameSize();
         updateHistory = true;
     }

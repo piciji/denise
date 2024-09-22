@@ -29,20 +29,13 @@ auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool w
     deviceStates.push_back({media, write, position, LED, motorOff, 1, true});
 }
 
-auto StatusHandler::setMessage(std::string txt, unsigned duration, bool critical ) -> void {
-
-    if (txt == "")
+auto StatusHandler::setMessage(const std::string& txt, unsigned duration, bool warn ) -> void {
+    if (txt.empty())
         duration = 0;
-    else {
-        if (duration == 0)
-            duration = 1;
-
-        duration *= (unsigned)audioManager->inputFPS;
-    }
 
     message.txt = txt;
     message.duration = duration;
-    message.critical = critical;
+    message.warn = warn;
     
     setMessageUpdate();
 }
@@ -54,7 +47,7 @@ auto StatusHandler::clear() -> void {
     statusBar->update();
     message.clear();
     clearUpdates();
-    statusHandler->setMessage("");
+    setMessage("");
 }
 
 auto StatusHandler::resetFrameCounter() -> void {
@@ -98,6 +91,8 @@ auto StatusHandler::setFpsRefresh() -> void {
             case 2: statusBar->updateDimension( 0, "1000.99" ); break;
             case 3: statusBar->updateDimension( 0, "1000.999" ); break;
         }
+        videoDriver->showScreenText( "", 0 );
+        statusHandler->setFpsCounterUpdate();
     }
 }
 
@@ -143,13 +138,6 @@ auto StatusHandler::updateFrameCounter() -> void {
             setFpsCounterUpdate();
         }
     }
-
-    if (message.duration) {
-        if (--message.duration == 0) {
-            message.clear();
-            setMessageUpdate();
-        }
-    }
 }
 
 auto StatusHandler::updateFPS( bool state ) -> void {
@@ -179,20 +167,9 @@ auto StatusHandler::updateVolume( bool state ) -> void {
     emuThread->unlock();
 }
 
-auto StatusHandler::updateDRC( bool state ) -> void {
-    emuThread->lockStatus();
-    if (!state) {
-        clearUpdates( 8 );
-        updateVisible(13, false);
-        updateStatusBar();
-    }
-    emuThread->unlockStatus();
-}
-
 auto StatusHandler::updateAudioRecord( bool state ) -> void {
     emuThread->lockStatus();
-    recordAudio = state;
-    updateVisible(14, recordAudio);
+    updateVisible(14, state);
     updateStatusBar();
     emuThread->unlockStatus();
 }
@@ -299,7 +276,6 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     showFPS = globalSettings->get<bool>("fps", false);
     powerLED.enable = globalSettings->get<bool>("power_led", true);
     showVolume = globalSettings->get<bool>("volume_control", true );
-    recordAudio = false;
     fpsCounter.decimalPoints = 3;
 	control = 0;
 
@@ -320,7 +296,6 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 10, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
 	statusBar->append( 11, "CRT" );    // expansion label
     statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
-    statusBar->append( 13, "DRC DRC DRC DRC DRC DRC DRC DRC D" );    // DRC Status
     statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
     statusBar->append( 18, 21, 60, [](unsigned position) {
         if (!activeEmulator)
@@ -349,7 +324,6 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->updateSeparator( 8, true );
     statusBar->updateSeparator( 10, true );
     statusBar->updateSeparator( 12, true );
-    statusBar->updateSeparator( 13, true );
     statusBar->updateSeparator( 14, true );
     statusBar->updateSeparator( 17, true );
     statusBar->updateSeparator( 18, true );
@@ -375,32 +349,12 @@ auto StatusHandler::updateDiskDriveSpace() -> void {
         statusBar->updateDimension( 7, "11 00.0" );
     }
 }
-            
-auto StatusHandler::transferToOSD( std::string text ) -> void {
-	static auto option = globalSettings->getOrInit("video_screen_text", 0, {0u, 2u});
-
-    if (*option == 0) {
-        videoDriver->showMessage("");
-
-    } else if (*option == 1) {
-        if (!view->statusVisible())
-            videoDriver->showMessage( text, message.critical );
-        else
-            videoDriver->showMessage("");        
-
-    } else
-        videoDriver->showMessage( text, message.critical );
-}
 
 auto StatusHandler::update() -> void {
     uint16_t clearMask = ~0;
+    auto& drcS = audioManager->statistics;
 
     emuThread->lockStatus();
-    
-    std::string OSDText = message.txt;
-    
-    if (messageUpdate())        
-        updateText(15, message.txt, false, message.critical ? 0xe92828 : -1 );
 
     if (activeEmulator) {
         if (deviceUpdate()) {
@@ -485,37 +439,32 @@ auto StatusHandler::update() -> void {
                     updateImage(12, image);
                 }                
             }
-        }                        
-
-        auto& drcS = audioManager->statistics;
-
-        if (drcS.enable) {
-            std::string out = "DRC: ";
-            out += GUIKIT::String::formatFloatingPoint(drcS.current, 2) + "% ";
-            out += "[ " + GUIKIT::String::formatFloatingPoint(drcS.min, 2) + " : " + GUIKIT::String::formatFloatingPoint(drcS.max, 2) + " ]";
-            out += " Ø " + GUIKIT::String::formatFloatingPoint(drcS.average, 2) + "%";
-
-            if (drcBufferUpdate())
-                updateText(13, out, true);
-
-            if (message.txt.empty())
-                OSDText += out;
         }
-        
-        if (recordAudio && message.txt.empty())
-            OSDText += " REC ";
-        
-        if (showFPS) {
-            unsigned decimalPoints = fpsCounter.decimalPoints;
-            std::string _FPS = decimalPoints
-                    ? GUIKIT::String::formatFloatingPoint(fpsCounter.fps, decimalPoints)
+
+        std::string _FPS;
+        if (fpsCounterUpdate() && (showFPS || showFPSScreen) ) {
+            _FPS = fpsCounter.decimalPoints
+                    ? GUIKIT::String::formatFloatingPoint(fpsCounter.fps, fpsCounter.decimalPoints)
                     : std::to_string((unsigned)round(fpsCounter.fps));
 
-            if (fpsCounterUpdate())
+            if (showFPS)
                 updateText(0, _FPS);
+        }
 
-            if (message.txt.empty())
-                OSDText += " " + _FPS;            
+        if (messageUpdate()) {
+            videoDriver->showScreenText( message.txt, message.duration, message.warn );
+
+        } else if (drcS.enable) {
+            if (drcBufferUpdate()) {
+                std::string OSDText = "DRC: ";
+                OSDText += GUIKIT::String::formatFloatingPoint(drcS.current, 2) + "% ";
+                OSDText += "[ " + GUIKIT::String::formatFloatingPoint(drcS.min, 2) + " : " + GUIKIT::String::formatFloatingPoint(drcS.max, 2) + " ]";
+                OSDText += " Ø " + GUIKIT::String::formatFloatingPoint(drcS.average, 2) + "%";
+                videoDriver->showScreenText( OSDText, 0 );
+            }
+        } else if (showFPSScreen) {
+            if (fpsCounterUpdate())
+                videoDriver->showScreenText( _FPS, 0 );
         }
     }
 
@@ -524,9 +473,6 @@ auto StatusHandler::update() -> void {
     clearUpdates( clearMask );
 
     emuThread->unlockStatus();
-
-    if (!cmd->noDriver)
-		transferToOSD( OSDText );
 }
 
 auto StatusHandler::updateVisible(unsigned id, bool visible) -> void {

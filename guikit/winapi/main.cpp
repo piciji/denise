@@ -985,7 +985,7 @@ auto pWindow::setPointerCursor() -> void {
 
 auto pWindow::addCustomFont( CustomFont* customFont ) -> bool {
 	
-	return pFont::create( customFont->data, customFont->size ) != nullptr;
+	return pFont::add( customFont );
 }
 
 }

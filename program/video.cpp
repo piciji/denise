@@ -117,7 +117,8 @@ auto Program::initVideo(bool driverChange) -> void {
     if (activeEmulator) {
         videoDriver->useShaderCache( getSettings( activeEmulator )->get<bool>("shader_cache", true) );
     }
-    
+
+    updateOnScreenText();
 
     loadProgress();
 }
@@ -580,4 +581,58 @@ auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {
         emuView->videoLayout->unloadShader();
     else if (vManager)
         vManager->clearPreset();
+}
+
+auto Program::updateOnScreenText(bool keepFontPath) -> void {
+    static std::string systemFont = "inv";
+
+    if (!activeEmulator)
+        return;
+
+    auto _settings = getSettings(activeEmulator);
+    unsigned screenTextColor = _settings->get<unsigned>("screen_text_color", ~0);
+    unsigned screenTextBgColor = _settings->get<unsigned>("screen_text_bgcolor", (255 << 24) | (69 << 16) | (128 << 8) | (116 << 0));
+    unsigned screenWarnColor = _settings->get<unsigned>("screen_warn_color", (255 << 24) | (177 << 16) | (3 << 8) | (23 << 0));
+    unsigned screenWarnBgColor = _settings->get<unsigned>("screen_warn_bgcolor", (255 << 24) | (95 << 16) | (169 << 8) | (132 << 0));
+    unsigned screenTextFontSize = _settings->get<unsigned>("screen_text_fontsize", 18, {8, 36});
+    unsigned screenTextPosition = _settings->get<unsigned>("screen_text_position", 0);
+    unsigned screenTextPaddingHorizontal = _settings->get<unsigned>("screen_text_padding_horizontal", 10, {0, 60});
+    unsigned screenTextPaddingVertical = _settings->get<unsigned>("screen_text_padding_vertical", 8, {0, 30});
+    unsigned screenTextMarginHorizontal = _settings->get<unsigned>("screen_text_margin_horizontal", 10, {0, 100});
+    unsigned screenTextMarginVertical = _settings->get<unsigned>("screen_text_margin_vertical", 12, {0, 100});
+    bool paddingSeparate = _settings->get<bool>("screen_text_padding_separate", true);
+    bool marginSeparate = _settings->get<bool>("screen_text_margin_separate", false);
+
+    std::string screenTextFontPath = "";
+
+    if (!keepFontPath) {
+        screenTextFontPath = fontFolder() + "/" + _settings->get<std::string>("screen_text_font", "");
+
+        GUIKIT::File file(screenTextFontPath);
+        if (!file.exists()) {
+            if (systemFont == "inv") // one time only
+                systemFont = GUIKIT::Font::systemFontFile();
+
+            screenTextFontPath = systemFont;
+            GUIKIT::File file2(screenTextFontPath);
+            if (!file2.exists()) {
+                screenTextFontPath = fontFolder() + "/SourceCodePro-Semibold.ttf";
+            }
+        }
+    }
+
+    DRIVER::ScreenTextDescription desc;
+    desc.position = static_cast<DRIVER::ScreenTextDescription::Position>(screenTextPosition);
+    desc.fontSize = screenTextFontSize;
+    desc.fontColor = screenTextColor;
+    desc.backgroundColor = screenTextBgColor;
+    desc.warnColor = screenWarnColor;
+    desc.warnBackgroundColor = screenWarnBgColor;
+    desc.fontPath = screenTextFontPath;
+    desc.paddingHorizontal = screenTextPaddingHorizontal;
+    desc.paddingVertical = paddingSeparate ? (int)screenTextPaddingVertical : -1;
+    desc.marginHorizontal = screenTextMarginHorizontal;
+    desc.marginVertical = marginSeparate ? (int)screenTextMarginVertical : -1;
+
+    videoDriver->setScreenTextDescription(desc);
 }

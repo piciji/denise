@@ -77,7 +77,7 @@ struct Hotkey {
         RunAheadUp, RunAheadDown, RunAheadToggleMode, AudioRecord, ToggleCycleRenderer, EF3Menu, Freeze, ToggleBorder,
         SyncStatus, ThreadedRenderer, ToggleSCVideo, ToggleShader, DiskSwapUp, DiskSwapDown, AutoStart,
         Warp, WarpOff, Quit, Audio, SwapJoypadsPort2, ApplyWindowSize, ToggleBorderPrev,
-        Rotation, CropWindow, PowerWithUnplugCart, ToggleScaling,
+        Rotation, CropWindow, PowerWithUnplugCart, ToggleScaling, ToggleFPS, ToggleAudioStats,
         Autofire = 1000,
     } id;
     std::string name;

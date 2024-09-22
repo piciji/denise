@@ -346,6 +346,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             statusHandler->updateDiskDriveSpace();
             setVideoDimension(activeEmulator);
             videoDriver->useShaderCache( settings->get<bool>("shader_cache", true) );
+		    updateOnScreenText();
         }
 
 		resetRunAhead();

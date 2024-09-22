@@ -1,6 +1,5 @@
 
 #include "program.h"
-#include "../data/fonts.h"
 #include "tools/chronos.h"
 
 auto Program::showOpenError( std::vector<std::string>& paths, bool warning ) -> void {
@@ -544,8 +543,6 @@ auto Program::addCustomFont() -> void {
             font = new GUIKIT::CustomFont;
             font->name = "C64 Pro";
             font->refPtr = (void*)emulator;
-            font->data = (uint8_t*) Fonts::c64Pro;
-            font->size = sizeof(Fonts::c64Pro);
             font->filePath = fontFolder() + "C64_Pro-STYLE121.ttf";
             font->modifier = 0xee << 8;
             bool useCustomFont = GUIKIT::Window::addCustomFont( font );
@@ -557,13 +554,8 @@ auto Program::addCustomFont() -> void {
             font->name = "TopazPlus a500a1000a2000";
             //font->name = "Topaz a500a1000a2000";
             font->refPtr = (void*)emulator;
-
-            font->data = (uint8_t*)Fonts::amigaTopazPlus;
-            font->size = sizeof(Fonts::amigaTopazPlus);
             font->filePath = fontFolder() + "TopazPlus_a500_v1.0.ttf";
 
-//            font->data = (uint8_t*)Fonts::amigaTopaz;
-//            font->size = sizeof(Fonts::amigaTopaz);
 //            font->filePath = fontFolder() + "Topaz_a500_v1.0.ttf";
 
             font->sizeAdjust = 1;

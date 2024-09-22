@@ -297,11 +297,6 @@ auto AudioManager::setRateControl() -> void {
         rData.ratio = ratio;
 }
 
-auto AudioManager::setStatistics() -> void {
-    
-    statistics.enable = globalSettings->get<bool>("show_audio_buffer", false);
-}
-
 auto AudioManager::power() -> void {
     setSynchronize();
     setResampler();

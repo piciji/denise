@@ -33,33 +33,39 @@ static std::string OpenGLTextVertexShader = R"(
   #version 140
 
   in vec4 fontCoords;
- 
+
   uniform vec4 color;
- 
+  uniform vec4 bgColor;
+
   out vec4 fragColor;
+  out vec4 fragBgColor;
   out vec2 fontTexCoords;
 
   void main() {
     fragColor = color;
+    fragBgColor = bgColor;
     fontTexCoords = fontCoords.zw;
-     
+
     gl_Position = vec4(fontCoords.xy, 0.0, 1.0);
 }
 )";
 
 static std::string OpenGLTextFragmentShader = R"(
-#version 140
+  #version 140
 
-in vec4 fragColor; // fragment color
-in vec2 fontTexCoords; // texture coords for th glyph
-out vec4 glFragColor;
- 
-uniform sampler2D tex; // texture id
- 
-void main() {
-    // draw pixel with fragColor's red, green and blue, and texture's alpha
-    glFragColor = vec4(1.0, 1.0, 1.0, texture(tex, fontTexCoords).r) * fragColor;
-}
+  in vec4 fragColor;
+  in vec4 fragBgColor;
+  in vec2 fontTexCoords;
+  out vec4 glFragColor;
+
+  uniform sampler2D tex;
+
+  void main() {
+    if(fragBgColor.a == 0.0)
+      glFragColor = vec4(1.0, 1.0, 1.0, texture(tex, fontTexCoords).r) * fragColor;
+    else
+      glFragColor = vec4( mix(fragBgColor.rgb, fragColor.rgb, texture(tex, fontTexCoords).r), fragBgColor.a);
+  }
 )";
 
 static std::string OpenGLDragnDropVertexShader = R"(

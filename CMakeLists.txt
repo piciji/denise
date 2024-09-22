@@ -152,7 +152,6 @@ set(srcs
         emulation/tools/mx29lv640eb.cpp
         data/icons/icons.cpp
         data/icons/logos.cpp
-        data/fonts/fonts.cpp
         emulation/tools/socket.cpp
         emulation/tools/fpaq0.cpp
 
@@ -327,6 +326,7 @@ endif()
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
     install(DIRECTORY data/${dataFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
+    install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_BINARY_DIR}/out FILES_MATCHING PATTERN "*.ttf")
     install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
     install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
     install(DIRECTORY data/${imgFolder}/bundle/ DESTINATION ${CMAKE_BINARY_DIR}/out/${imgFolder})

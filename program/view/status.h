@@ -46,11 +46,9 @@ struct StatusHandler {
     auto clear() -> void;
     auto update() -> void;
     auto updateDeviceState(Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff) -> void;
-    auto setMessage(std::string txt, unsigned duration = 3, bool critical = false) -> void;
-    auto transferToOSD( std::string text ) -> void;
+    auto setMessage(const std::string& txt, unsigned duration = 3, bool warn = false) -> void;
     auto updateFPS( bool state ) -> void;
     auto updateVolume( bool state ) -> void;
-    auto updateDRC( bool state ) -> void;
     auto updateAudioRecord( bool state ) -> void;
     auto updateTapeImage( GUIKIT::Image* image ) -> void;
 	auto hideTape() -> void;
@@ -78,7 +76,7 @@ struct StatusHandler {
     FpsCounter fpsCounter;
 
     bool showFPS = false;
-    bool recordAudio = false;
+    bool showFPSScreen = false;
     bool showVolume = false;
 
     struct {
@@ -90,12 +88,12 @@ struct StatusHandler {
     struct {
         std::string txt = "";
         unsigned duration = 0;
-        bool critical = false;
+        bool warn = false;
         
         auto clear() -> void {
             txt = "";
             duration = 0;
-            critical = false;
+            warn = false;
         }
     } message;
 };

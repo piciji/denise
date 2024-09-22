@@ -5,58 +5,97 @@
 #include <string>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include "../tools/font.h"
+
+#define MES_ANIMATION_DURATION 400 // ms
+#define MES_ANIMATION_MOVEMENT 0.05f // 1.0 = full display height
+#define MES_ANIMATION_FADE_FKT(x) powf(0.7f, 0.014f * (x)) // exponential function curve
 
 namespace DRIVER {
 
-#include "../tools/fonts.c"
 #include "../tools/utf8.h"
 
 struct Freetype {
-    ~Freetype() {
-        term();
-    }
-
     FT_Library ft = nullptr;
-    FT_Face face = nullptr;
-    FT_GlyphSlot glyph;
-    FT_Byte* data = nullptr;
-    bool initialized = false;
+    FT_Face ftFace = nullptr;
+    FT_GlyphSlot ftGlyph;
+    bool ftLoaded = false;
 
-    unsigned char* textBuffer = nullptr;
-    unsigned totalWidth = 0;
-    unsigned totalHeight = 0;
+    unsigned char* ftTextBuffer = nullptr;
+    unsigned ftTotalWidth = 0;
+    unsigned ftTotalHeight = 0;
 
-    auto hasText() -> bool {
-        return textBuffer != nullptr;
+    unsigned ftPaddingHorizontal = 10;
+    int ftPaddingVertical = 8;
+    float ftMarginHorizontal = 0.02f;
+    float ftMarginVertical = -1.0;
+
+    std::string ftText;
+    bool ftWarn;
+    unsigned ftDuration;
+    int ftPosition;
+    int ftUpdated;
+    unsigned ftTs;
+    unsigned ftTsStart;
+
+    struct FtColNorm {
+        float r;
+        float g;
+        float b;
+        float a;
+    } ftColNorm, ftColBgNorm;
+
+    ScreenTextDescription ftDesc;
+
+    std::mutex ftUpdateMutex;
+
+    float ftCoords[4][4] = {
+        {0, 0, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 1},
+        {0, 0, 1, 1}
+    };
+
+    bool ftInitialized = false;
+
+    virtual ~Freetype() {
+        ftUnload();
     }
 
-    auto init() -> bool {
-        term();
+    Freetype() {
+        ftText = "";
+        ftUpdated = 0;
+        ftWarn = false;
+        ftDuration = 0;
+        ftPosition = 0;
+        ftTs = 0;
+        ftTsStart = 0;
+    }
+
+    virtual auto ftSetColor(FtColNorm& _colNorm, FtColNorm& _colBgNorm) -> void = 0;
+    virtual auto ftBuildTexture(std::string text, bool keepOldSize = false) -> void = 0;
+    virtual auto ftSetCoords() -> void {}
+
+    auto ftLoadFont(const std::string& fontPath) -> bool {
+        ftUnload();
 
         if (FT_Init_FreeType( &ft ))
             return false;
 
-        if (FT_New_Face(ft, getFontFile().c_str(), 0, &face)) {
-            data = new FT_Byte[ sizeof (sourceCodePro) ];
-            std::memcpy(data, &sourceCodePro, sizeof (sourceCodePro));
+        if (FT_New_Face(ft, fontPath.c_str(), 0, &ftFace))
+            return false;
 
-            if (FT_New_Memory_Face(ft, data, sizeof(sourceCodePro), 0, &face))
-                return false;
-        }
+        FT_Set_Pixel_Sizes(ftFace, 0, 1);
 
-        FT_Set_Pixel_Sizes(face, 0, 1);
+        ftGlyph = ftFace->glyph;
 
-        glyph = face->glyph;
-
-        initialized = true;
+        ftLoaded = true;
         return true;
     }
 
-    auto term() -> void {
-        if(face) {
-            FT_Done_Face(face);
-            face = nullptr;
+    auto ftUnload() -> void {
+        if(ftFace) {
+            FT_Done_Face(ftFace);
+            ftFace = nullptr;
         }
 
         if(ft) {
@@ -64,100 +103,363 @@ struct Freetype {
             ft = nullptr;
         }
 
-        if (textBuffer) {
-            delete[] textBuffer;
-            textBuffer = nullptr;
-        }
+        ftDeleteTexture();
 
-        if (data) {
-            delete[] data;
-            data = nullptr;
-        }
-        initialized = false;
+        ftLoaded = false;
     }
 
-    auto setFontSize(int value) -> void {
-        if (face)
-            FT_Set_Pixel_Sizes(face, 0, value);
+    auto ftDeleteTexture() -> void {
+        if (ftTextBuffer) {
+            delete[] ftTextBuffer;
+            ftTextBuffer = nullptr;
+        }
     }
 
-    auto buildTexture(std::string& text) -> bool {
-        if (textBuffer) {
-            delete[] textBuffer;
-            textBuffer = nullptr;
+    auto ftSetFontSize(int value) -> void {
+        if (ftFace)
+            FT_Set_Pixel_Sizes(ftFace, 0, value);
+    }
+
+    auto ftProcessUpdates(Viewport& viewport) -> void {
+        ftUpdateMutex.lock();
+
+        if (ftUpdated & 8) {
+            ftUpdated = 0;
+            ScreenTextDescription _desc = ftDesc;
+            std::string _text = ftText;
+            bool _warn = ftWarn;
+            unsigned _duration = ftDuration;
+            ftUpdateMutex.unlock();
+
+            if (!_desc.fontPath.empty())
+                ftLoadFont(_desc.fontPath);
+
+            ftPaddingHorizontal = _desc.paddingHorizontal;
+            ftPaddingVertical = _desc.paddingVertical;
+            ftMarginHorizontal = (float)_desc.marginHorizontal / 500.0f;
+            ftMarginVertical = (float)_desc.marginVertical / 500.0f;
+
+            ftSelectColor(_desc, _warn);
+            ftSetFontSize(_desc.fontSize);
+            ftSetPosition(_desc.position);
+            ftSetDuration(_duration * 1000);
+            ftBuildTexture(_text, _duration == 0);
+            ftCalcCoords(viewport);
+            ftSetColor(ftColNorm, ftColBgNorm);
+        } else if (ftUpdated & 4) {
+            if (ftUpdated & 16)
+                ftSelectColor(ftDesc, ftWarn);
+            ftUpdated = 0;
+            std::string _text = ftText;
+            unsigned _duration = ftDuration;
+            ftUpdateMutex.unlock();
+            ftSetDuration(_duration * 1000);
+            ftBuildTexture(_text, _duration == 0);
+            ftCalcCoords(viewport);
+            ftSetColor(ftColNorm, ftColBgNorm);
+        } else if (ftUpdated & 16) {
+            ftUpdated = 0;
+            ftSelectColor(ftDesc, ftWarn);
+            ftUpdateMutex.unlock();
+            ftSetColor(ftColNorm, ftColBgNorm);
+        } else if (ftUpdated & 2) {
+            ftUpdated = 0;
+            unsigned _duration = ftDuration;
+            ftUpdateMutex.unlock();
+            ftSetDuration(_duration * 1000);
+        } else if (ftUpdated & 1) {
+            ftUpdated = 0;
+            ftUpdateMutex.unlock();
+            ftCalcCoords(viewport);
+        } else
+            ftUpdateMutex.unlock();
+    }
+
+    auto ftSelectColor(ScreenTextDescription& _desc, bool _warn) -> void {
+        if (_warn) {
+            ftTransformCol(_desc.warnColor, ftColNorm);
+            ftTransformCol(_desc.warnBackgroundColor, ftColBgNorm);
+        } else {
+            ftTransformCol(_desc.fontColor, ftColNorm);
+            ftTransformCol(_desc.backgroundColor, ftColBgNorm);
+        }
+    }
+
+    static auto ftTransformCol(unsigned& source, FtColNorm& dest) -> void {
+        dest.r = ftNormComponent(source, 16);
+        dest.g = ftNormComponent(source, 8);
+        dest.b = ftNormComponent(source, 0);
+        dest.a = ftNormComponent(source, 24);
+    }
+
+    static auto ftNormComponent(const unsigned& value, unsigned shift) -> float {
+        uint8_t col = (value >> shift) & 0xff;
+        return float(col) / 255.0;
+    }
+
+    auto ftSetPosition(ScreenTextDescription::Position& pos) -> void {
+        ftPosition = 0;
+        if (pos == ScreenTextDescription::POSITION_BOTTOM_CENTER || pos == ScreenTextDescription::POSITION_TOP_CENTER)
+            ftPosition |= 1;
+        else if (pos == ScreenTextDescription::POSITION_BOTTOM_RIGHT || pos == ScreenTextDescription::POSITION_TOP_RIGHT)
+            ftPosition |= 2;
+        if (pos == ScreenTextDescription::POSITION_BOTTOM_RIGHT || pos == ScreenTextDescription::POSITION_BOTTOM_CENTER || pos == ScreenTextDescription::POSITION_BOTTOM_LEFT)
+            ftPosition |= 4;
+    }
+
+    auto ftSetDuration(unsigned _duration) -> void {
+        if (_duration) {
+            if (!ftTs) {
+                ftTsStart = Chronos::getTimestampInMilliseconds();
+                ftTs = ftTsStart + _duration + MES_ANIMATION_DURATION;
+            } else {
+                auto _temp = Chronos::getTimestampInMilliseconds();
+                if (ftTs > _temp) {
+                    _temp = ftTs - _temp;
+                    if (_duration > _temp)
+                        ftTs += _duration - _temp;
+                } else
+                    ftTs = _temp + _duration;
+            }
+        } else
+            ftTs = 0;
+    }
+
+    virtual auto ftCalcCoords(Viewport& viewport, float fade = 0.0) -> void {
+        float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
+        float textx = (float)ftTotalWidth * screenx;
+        float texty = (float)ftTotalHeight * screeny;
+
+        float x = -1.0f;
+        float y = 1.0f;
+
+        if (ftPosition & 1) { // center
+            x = 0.0f - textx / 2.0;
+        } else if(ftPosition & 2) { // right
+            x = 1.0f - textx - ftMarginHorizontal;
+        } else
+            x += ftMarginHorizontal;
+
+        float _vert;
+        if (ftMarginVertical < 0.0f)
+            _vert = (float)viewport.width * (ftMarginHorizontal / (float)viewport.height);
+        else
+            _vert = ftMarginVertical;
+
+        if (ftPosition & 4) { // bottom
+            y = -1.0f + texty + _vert - fade;
+        } else
+            y -= _vert - fade;
+
+        ftCoords[0][0] = x;
+        ftCoords[0][1] = y;
+        ftCoords[1][0] = x + textx;
+        ftCoords[1][1] = y;
+        ftCoords[2][0] = x;
+        ftCoords[2][1] = y - texty;
+        ftCoords[3][0] = x + textx;
+        ftCoords[3][1] = y - texty;
+
+        ftSetCoords();
+    }
+
+    auto ftHandleAnimation(Viewport& viewport) -> bool {
+        unsigned curTs = Chronos::getTimestampInMilliseconds();
+        if (curTs >= ftTs) {
+            ftTs = 0;
+            ftSetColor(ftColNorm, ftColBgNorm);
+            ftUpdateMutex.lock();
+            ftText = "";
+            ftUpdated |= 4;
+            ftDuration = 0;
+            ftUpdateMutex.unlock();
+            return true;
         }
 
-        if (!initialized || text.empty())
+        if ((ftTs - curTs) < MES_ANIMATION_DURATION) {
+            int left = ftTs - curTs;
+            float yFadeOutAdjust = -(MES_ANIMATION_MOVEMENT / (float)MES_ANIMATION_DURATION) * (float)(left - MES_ANIMATION_DURATION);
+            ftCalcCoords(viewport, yFadeOutAdjust);
+            auto _colA = ftColNorm.a;
+            auto _colBgA = ftColBgNorm.a;
+            float _f = MES_ANIMATION_FADE_FKT((float)(MES_ANIMATION_DURATION - left));
+            ftColNorm.a = ftColNorm.a * _f;
+            ftColBgNorm.a = ftColBgNorm.a * _f;
+
+            ftSetColor(ftColNorm, ftColBgNorm);
+            ftColNorm.a = _colA;
+            ftColBgNorm.a = _colBgA;
+        } else if ((curTs - ftTsStart) < MES_ANIMATION_DURATION) {
+            int left = curTs - ftTsStart;
+            float yFadeOutAdjust = -(MES_ANIMATION_MOVEMENT / (float)MES_ANIMATION_DURATION) * (float)(left - MES_ANIMATION_DURATION);
+            ftCalcCoords(viewport, yFadeOutAdjust);
+            auto _colA = ftColNorm.a;
+            auto _colBgA = ftColBgNorm.a;
+            float _f = MES_ANIMATION_FADE_FKT((float)left);
+            ftColNorm.a = ftColNorm.a * -_f + ftColNorm.a;
+            ftColBgNorm.a = ftColBgNorm.a * -_f + ftColBgNorm.a;
+
+            ftSetColor(ftColNorm, ftColBgNorm);
+            ftColNorm.a = _colA;
+            ftColBgNorm.a = _colBgA;
+        } else if (ftTsStart) {
+            ftCalcCoords(viewport);
+            ftSetColor(ftColNorm, ftColBgNorm);
+            ftTsStart = 0;
+        }
+        return false;
+    }
+
+    auto ftBuildText(std::string text, bool& keepOldSize) -> bool {
+        if (!ftLoaded || text.empty()) {
+            ftTotalWidth = ftTotalHeight = 0;
+            ftDeleteTexture();
             return false;
+        }
 
         unsigned index = 0;
         unsigned code;
-        totalWidth = 0;
-        totalHeight = 0;
+        auto _totalWidth = ftTotalWidth;
+        auto _totalHeight = ftTotalHeight;
+        ftTotalWidth = 0;
+        ftTotalHeight = 0;
         unsigned upHeight = 0;
         unsigned downHeight = 0;
 
         while ((code = utf8decode(text, index)) != 0) {
 
-            if (FT_Load_Char(face, code, FT_LOAD_RENDER)) {
+            if (FT_Load_Char(ftFace, code, FT_LOAD_RENDER)) {
                 continue;
             }
 
-            totalWidth += (glyph->advance.x >> 6 );
+            ftTotalWidth += (ftGlyph->advance.x >> 6 );
 
-            upHeight = std::max<unsigned>(upHeight, (unsigned)(glyph->bitmap.rows ));
+            upHeight = std::max<unsigned>(upHeight, (unsigned)(ftGlyph->bitmap.rows ));
 
-            if (glyph->bitmap_top < 0)
+            if (ftGlyph->bitmap_top < 0)
                 continue;
 
-            if (glyph->bitmap.rows > glyph->bitmap_top)
-                downHeight = std::max<unsigned>(downHeight, glyph->bitmap.rows - glyph->bitmap_top);
+            if (ftGlyph->bitmap.rows > ftGlyph->bitmap_top)
+                downHeight = std::max<unsigned>(downHeight, ftGlyph->bitmap.rows - ftGlyph->bitmap_top);
         }
 
-        upHeight += 1;
-        downHeight += 1;
-        totalHeight = upHeight + downHeight;
+        ftTotalHeight = upHeight + downHeight;
+        ftTotalWidth += ftPaddingHorizontal << 1;
+        unsigned _totalHeightPadded = ftTotalHeight;
 
-        unsigned _size = totalWidth * totalHeight;
+        if (ftPaddingVertical < 0) {
+            ftTotalHeight += ftPaddingHorizontal << 1;
+            upHeight += ftPaddingHorizontal;
+            _totalHeightPadded -= ftPaddingHorizontal;
+        } else {
+            ftTotalHeight += ftPaddingVertical << 1;
+            upHeight += ftPaddingVertical;
+            _totalHeightPadded -= ftPaddingVertical;
+        }
 
-        if (_size == 0)
+        unsigned _size = ftTotalWidth * ftTotalHeight;
+
+        if (_size == 0) {
+            ftTotalWidth = ftTotalHeight = 0;
+            ftDeleteTexture();
             return false;
+        }
 
-        textBuffer = new unsigned char[ _size ];
-        std::memset(textBuffer, 0, _size );
+        if (keepOldSize) {
+            if (_totalWidth < ftTotalWidth || _totalHeight < ftTotalHeight) {
+                ftDeleteTexture();
+                ftTextBuffer = new unsigned char[ _size ];
+                keepOldSize = false;
+            } else {
+                ftTotalWidth = _totalWidth;
+                ftTotalHeight = _totalHeight;
+                _size = _totalWidth * _totalHeight;
+            }
+        } else {
+            ftDeleteTexture();
+            ftTextBuffer = new unsigned char[ _size ];
+        }
+
+        std::memset(ftTextBuffer, 0, _size );
 
         index = 0;
-        unsigned writePos = 0;
+        unsigned writePos = ftPaddingHorizontal;
         unsigned curPos;
 
         while ((code = utf8decode(text, index)) != 0) {
-            if (FT_Load_Char(face, code, FT_LOAD_RENDER)) {
+            if (FT_Load_Char(ftFace, code, FT_LOAD_RENDER)) {
                 continue;
             }
 
-            for(unsigned i = 0; i < glyph->bitmap.rows; i++) {
+            for(unsigned i = 0; i < ftGlyph->bitmap.rows; i++) {
 
-                for(unsigned j = 0; j < glyph->bitmap.width; j++) {
+                for(unsigned j = 0; j < ftGlyph->bitmap.width; j++) {
 
-                    if (glyph->bitmap_top < 0) {
-                        curPos = (totalHeight + glyph->bitmap_top + i) * totalWidth + writePos + j + glyph->bitmap_left;
+                    if (ftGlyph->bitmap_top < 0) {
+                        curPos = (_totalHeightPadded + ftGlyph->bitmap_top + i) * ftTotalWidth + writePos + j + ftGlyph->bitmap_left;
 
                     } else {
-                        curPos = (upHeight - glyph->bitmap_top + i) * totalWidth + writePos + j + glyph->bitmap_left;
+                        curPos = (upHeight - ftGlyph->bitmap_top + i) * ftTotalWidth + writePos + j + ftGlyph->bitmap_left;
                     }
 
                     if (curPos >= _size)
                         break;
 
-                    *( textBuffer + curPos ) = glyph->bitmap.buffer[i * glyph->bitmap.width + j ];
+                    *( ftTextBuffer + curPos ) = ftGlyph->bitmap.buffer[i * ftGlyph->bitmap.width + j ];
                 }
             }
-            writePos += (glyph->advance.x >> 6);
+            writePos += (ftGlyph->advance.x >> 6);
         }
 
         return true;
     }
 
+    auto ftSetScreenTextDescription(ScreenTextDescription& _desc) -> void {
+        if (!ftInitialized)
+            return;
+
+        ftUpdateMutex.lock();
+        ftDesc = _desc;
+        ftUpdated |= 8;
+        ftUpdateMutex.unlock();
+    }
+
+    auto ftUpdateMessage( std::string& _text, unsigned _duration, bool _warn) -> void {
+        if (!ftInitialized)
+            return;
+
+        ftUpdateMutex.lock();
+        if (!_duration && ftDuration) {
+            ftUpdateMutex.unlock();
+            return;
+        }
+
+        if (ftText != _text) {
+            ftText = _text;
+            ftUpdated |= 4;
+        }
+
+        if (ftWarn != _warn) {
+            ftWarn = _warn;
+            ftUpdated |= 16;
+        }
+
+        if (_duration) {
+            ftDuration = _duration;
+            ftUpdated |= 2;
+        }
+
+        ftUpdateMutex.unlock();
+    }
+
+    auto ftUpdateCoords() -> void {
+        if (!ftInitialized)
+            return;
+
+        ftUpdateMutex.lock();
+        ftUpdated |= 1;
+        ftUpdateMutex.unlock();
+    }
 };
 
 }

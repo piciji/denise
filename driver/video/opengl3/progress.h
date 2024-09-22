@@ -1,7 +1,4 @@
 
-#include <thread>
-#include "../freetype.h"
-
 namespace DRIVER {
 
     struct OpenGLProgress {

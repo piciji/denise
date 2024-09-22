@@ -221,9 +221,6 @@
     <Filter Include="data\icons">
       <UniqueIdentifier>{babab93d-d2a1-4d13-82d9-48c3f9a308ee}</UniqueIdentifier>
     </Filter>
-    <Filter Include="data\fonts">
-      <UniqueIdentifier>{8f540149-3aee-4fa1-9674-10ab1bd0d948}</UniqueIdentifier>
-    </Filter>
     <Filter Include="emulation\libami\agnus">
       <UniqueIdentifier>{7f4773fa-bac0-424d-8519-1ca9e784ab75}</UniqueIdentifier>
     </Filter>
@@ -1027,9 +1024,6 @@
     <ClInclude Include="..\driver\video\opengl3\shaders.h">
       <Filter>driver\video\opengl3</Filter>
     </ClInclude>
-    <ClInclude Include="..\driver\video\opengl3\text.h">
-      <Filter>driver\video\opengl3</Filter>
-    </ClInclude>
     <ClInclude Include="..\driver\video\opengl3\types.h">
       <Filter>driver\video\opengl3</Filter>
     </ClInclude>
@@ -1042,7 +1036,10 @@
     <ClInclude Include="..\guikit\tools\file\directory.h">
       <Filter>guikit\tools\file</Filter>
     </ClInclude>
-    <ClInclude Include="..\driver\video\d3d9\text.h">
+    <ClInclude Include="..\driver\video\opengl3\screenText.h">
+      <Filter>driver\video\opengl3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\d3d9\screenText.h">
       <Filter>driver\video\d3d9</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1692,9 +1689,6 @@
     <ClCompile Include="..\data\icons\logos.cpp">
       <Filter>data\icons</Filter>
     </ClCompile>
-    <ClCompile Include="..\data\fonts\fonts.cpp">
-      <Filter>data\fonts</Filter>
-    </ClCompile>
     <ClCompile Include="..\emulation\libc64\tape\structure.cpp">
       <Filter>emulation\libc64\tape</Filter>
     </ClCompile>
@@ -2086,9 +2080,6 @@
   <ItemGroup>
     <None Include="..\emulation\libc64\sid\filter\circuit">
       <Filter>emulation\libc64\sid\filter</Filter>
-    </None>
-    <None Include="..\data\shader\resources\bandwidth.slang">
-      <Filter>data</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

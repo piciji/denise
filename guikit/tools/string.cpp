@@ -258,7 +258,7 @@ auto String::convertToNumber(std::string str) -> int {
 auto String::convertIntToHex( int number, bool prepend_0x ) -> std::string {
     
     std::string _out = prepend_0x ? "0x" : "";
-    char hex[8];
+    char hex[10];
     sprintf( hex, "%x", number );
     _out += (std::string)hex;
     

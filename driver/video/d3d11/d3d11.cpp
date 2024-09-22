@@ -27,12 +27,17 @@
 
 namespace DRIVER {
 
-struct D3D11 : Video, RenderThread, DXGIHandler {
+#ifdef DRV_FREETYPE
+    struct D3D11 : Video, RenderThread, DXGIHandler, Freetype {
+#else
+    struct D3D11 : Video, RenderThread, DXGIHandler {
+#endif
 
     struct Rectangle {
         D3DTexture texture;
         D3DShader shader;
         ID3D11Buffer* vbo;
+        ID3D11Buffer* buffer;
     };
 
     struct {
@@ -54,9 +59,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     D3DTexture luts[MAX_TEXTURES];
     unsigned shaderPasses = 0;
 
-#ifdef DRV_FREETYPE
-    Freetype ft;
-#endif
     DragndropOverlay dndOverlay;
     ViewScreen viewScreen;
     Viewport viewport;
@@ -81,7 +83,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
     unsigned progressDegree;
     bool progressVisible;
     bool threadAlive;
-    ID3D11Buffer* constantBufferProgress;
 
     ShaderPreset* preset;
     std::atomic<int> shaderId = 0;
@@ -127,10 +128,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         HWND handle;
         bool vrr = false;
 
-        std::string message = "";
-        bool msgCritical = false;
-        std::atomic<bool> msgUpdated = false;
-
         bool exclusiveFullscreen = false;
         float exclusiveFullscreenRate = 0.0;
         bool hintExclusiveFullscreen = false;
@@ -149,11 +146,12 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         context = nullptr;
         ubo = nullptr;
         uboRotated = nullptr;
-        constantBufferProgress = nullptr;
         frame.vbo = nullptr;
         message.vbo = nullptr;
+        message.buffer = nullptr;
         overlay.vbo = nullptr;
         progress.vbo = nullptr;
+        progress.buffer = nullptr;
         updateRTS = false;
         updateHistory = false;
         shaderPasses = 0;
@@ -165,7 +163,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         scissorEnable = nullptr;
         scissorDisable = nullptr;
         settings.handle = nullptr;
-        settings.msgUpdated = false;
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
         settings.rotation = ROT_0;
@@ -319,7 +316,9 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if (settings.handle) {
             viewScreen.update(viewport);
             updateFrameSize();
-            updateMessageParameter();
+#ifdef DRV_FREETYPE
+            ftUpdateCoords();
+#endif
             updateHistory = true;
         }
     }
@@ -460,9 +459,15 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         if (FAILED(device->CreateBuffer(&descP, nullptr, &uboRotated)))
             return term(), false;
 
-        if (FAILED(device->CreateBuffer(&descP, nullptr, &constantBufferProgress)))
+        descP.ByteWidth = 16;
+        if (FAILED(device->CreateBuffer(&descP, nullptr, &progress.buffer)))
             return term(), false;
 
+#ifdef DRV_FREETYPE
+        descP.ByteWidth = 4 * 4 * 2;
+        if (FAILED(device->CreateBuffer(&descP, nullptr, &message.buffer)))
+            return term(), false;
+#endif
         updateRotation();
 
         D3D11_SAMPLER_DESC descS;
@@ -496,15 +501,15 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         D3D11_SUBRESOURCE_DATA vertexData;
         D3D11_BUFFER_DESC descV;
         D3DVertex vertices[] = {
-            {{0.0f,  0.0f},  {0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-            {{0.0f,  1.0f},  {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-            {{1.0f,  0.0f},  {1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
-            {{1.0f,  1.0f},  {1.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}},
+            {{0.0f,  0.0f},  {0.0f, 1.0f}},
+            {{0.0f,  1.0f},  {0.0f, 0.0f}},
+            {{1.0f,  0.0f},  {1.0f, 1.0f}},
+            {{1.0f,  1.0f},  {1.0f, 0.0f}},
 
-            { { -1.0f, -1.0f }, { 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-            { { -1.0f,  1.0f }, { 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-            { { 1.0f,  -1.0f }, { 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
-            { { 1.0f,   1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f } },
+            { { -1.0f, -1.0f }, { 0.0f, 1.0f } },
+            { { -1.0f,  1.0f }, { 0.0f, 0.0f } },
+            { { 1.0f,  -1.0f }, { 1.0f, 1.0f } },
+            { { 1.0f,   1.0f }, { 1.0f, 0.0f } },
         };
 
         vertexData.pSysMem = vertices;
@@ -533,22 +538,24 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
         D3D11_INPUT_ELEMENT_DESC descShader[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, position), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(D3DVertex, color), D3D11_INPUT_PER_VERTEX_DATA, 0 }
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(D3DVertex, texcoord), D3D11_INPUT_PER_VERTEX_DATA, 0 }
         };
 
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11outputShader, "PS", "VS", "", descShader, countof(descShader), &frame.shader))
             return term(), false;
-
+#ifdef DRV_FREETYPE
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11messageShader, "PS", "VS", "", descShader, countof(descShader), &message.shader))
             return term(), false;
-
+#endif
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11overlayShader, "PS", "VS", "", descShader, countof(descShader), &overlay.shader))
             return term(), false;
 
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11progressShader, "PS", "VS", "", descShader, countof(descShader), &progress.shader))
             return term(), false;
 
+#ifdef DRV_FREETYPE
+        ftInitialized = true;
+#endif
         dndOverlay.initialized = true;
         D3D11_BLEND_DESC blendDesc;
         std::memset(&blendDesc, 0, sizeof(blendDesc));
@@ -584,10 +591,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         descR.ScissorEnable         = false;
         device->CreateRasterizerState(&descR, &scissorDisable);
 
-#ifdef DRV_FREETYPE
-        if (ft.init())
-            ft.setFontSize(12);
-#endif
         RenderThread::reset();
         return true;
     }
@@ -1096,12 +1099,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             frames--;
             accessMutex.unlock();
         }
-#ifdef DRV_FREETYPE
-        if (settings.msgUpdated) {
-            settings.msgUpdated = false;
-            buildMessageTexture(settings.message);
-        }
-#endif
+
         redraw(options & OPT_DisallowShader);
     }
 
@@ -1115,9 +1113,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
             swapChain.ptr->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, swapChain.flags );
             resizeMutexThreaded.unlock();
             viewScreen.update(viewport, windowSize.right, windowSize.bottom);
-
+#ifdef DRV_FREETYPE
+            ftUpdateCoords();
+#endif
             updateFrameSize();
-            updateMessageParameter();
         }
 
         if (updateRTS) {
@@ -1259,9 +1258,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
         context->VSSetConstantBuffers(0, 1, &ubo);
 #ifdef DRV_FREETYPE
-        if (ft.hasText()) {
-            blendRect(message);
-        }
+        showText();
 #endif
         if (dndOverlay.enabled()) {
             buildOverlayTexture();
@@ -1401,7 +1398,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         context->GSSetShader(shader.gs, nullptr, 0);
     }
 
-    auto blendRect(Rectangle& rect) -> void {
+    auto blendRect(Rectangle& rect, ShaderPreset::Filter _filter = ShaderPreset::FILTER_LINEAR) -> void {
         applyShader(rect.shader);
         context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
         UINT stride = sizeof(D3DVertex);
@@ -1409,7 +1406,7 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         context->IASetVertexBuffers(0, 1, &rect.vbo, &stride, &offset);
 
         context->PSSetShaderResources(0, 1, &rect.texture.view);
-        context->PSSetSamplers(0, 1, &samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE]);
+        context->PSSetSamplers(0, 1, &samplers[_filter][ShaderPreset::WRAP_EDGE]);
         context->OMSetBlendState(blendEnable, nullptr, D3D11_DEFAULT_SAMPLE_MASK);
         context->Draw(4, 0);
     }
@@ -1425,10 +1422,10 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         context->PSSetSamplers(0, 1, &samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE]);
 
         D3D11_MAPPED_SUBRESOURCE subRes;
-        if (SUCCEEDED(context->Map((ID3D11Resource*)constantBufferProgress, 0, D3D11_MAP_WRITE_DISCARD, 0, &subRes))) {
+        if (SUCCEEDED(context->Map((ID3D11Resource*)progress.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &subRes))) {
             std::memcpy((uint8_t*)subRes.pData, (uint8_t*)&progressDegree, 4);
-            context->Unmap((ID3D11Resource*)constantBufferProgress, 0);
-            context->PSSetConstantBuffers(0, 1, &constantBufferProgress);
+            context->Unmap((ID3D11Resource*)progress.buffer, 0);
+            context->PSSetConstantBuffers(0, 1, &progress.buffer);
         }
 
         if (++progressDegree == 360)
@@ -1486,7 +1483,8 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
 
         dxRelease(ubo)
         dxRelease(uboRotated)
-        dxRelease(constantBufferProgress)
+        dxRelease(message.buffer)
+        dxRelease(progress.buffer)
         dxRelease(blendEnable)
         dxRelease(blendDisable)
         dxRelease(scissorEnable)
@@ -1510,9 +1508,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         dxRelease(device)
 
         dndOverlay.term();
-#ifdef DRV_FREETYPE
-        ft.term();
-#endif
     }
 
     auto initMainTexture(unsigned w, unsigned h, unsigned pos = 0) -> bool {
@@ -1523,75 +1518,75 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         return D3D11Utility::initTexture(device, frame.textures[pos]);
     }
 
-    auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        if (settings.message != message || settings.msgCritical != critical) {
-            settings.message = message;
-            settings.msgCritical = critical;
-            if (threadEnabled)
-                settings.msgUpdated = true;
-            else
-                buildMessageTexture(message);
-        }
-#endif
+    auto showScreenText(std::string text, unsigned duration, bool warn = false) -> void {
+        ftUpdateMessage(text, duration, warn);
     }
 
-    auto updateMessageParameter() -> void {
-#ifdef DRV_FREETYPE
-        if (!ft.hasText())
+    auto setScreenTextDescription(ScreenTextDescription& desc) -> void {
+        ftSetScreenTextDescription(desc);
+    }
+
+    auto showText() -> void {
+        if (ftUpdated)
+            ftProcessUpdates(viewport);
+
+        if (!ftTextBuffer || !message.texture.ptr)
             return;
+
+        if (ftTs) // animations
+            if (ftHandleAnimation(viewport))
+                return;
+
+        blendRect(message, ShaderPreset::FILTER_NEAREST);
+    }
+
+    auto ftBuildTexture(std::string text, bool keepOldSize = false) -> void {
+        if (!ftBuildText(text, keepOldSize))
+            return;
+
+        if (!message.texture.ptr || !keepOldSize) {
+            D3D11Utility::releaseTexture(message.texture);
+
+            message.texture.desc.Width = ftTotalWidth;
+            message.texture.desc.Height = ftTotalHeight;
+            message.texture.desc.Format = DXGI_FORMAT_A8_UNORM;
+            if(!D3D11Utility::initTexture(device, message.texture, false))
+                return;
+        }
+
+        D3D11Utility::buildTexture(context, message.texture, ftTextBuffer);
+    }
+
+    auto ftSetCoords() -> void {
         D3D11_MAPPED_SUBRESOURCE mappedVbo;
         if (FAILED(context->Map((ID3D11Resource*)message.vbo, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedVbo)))
             return;
 
-        float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
-        float textx = (float)ft.totalWidth * screenx;
-        float texty = (float)ft.totalHeight * screeny;
-
-        float adjust = 0.01;
-        float x = 1.0 - textx - adjust;
-        float y = -1.0 + texty + adjust;
-
-        float box[4][4] = {
-            {x, y, 0, 0},
-            {x + textx, y, 1, 0},
-            {x, y - texty, 0, 1},
-            {x + textx, y - texty, 1, 1}
-        };
-
-        bool critical = settings.msgCritical;
         D3DVertex* vertex = (D3DVertex*)mappedVbo.pData;
 
         for(int i = 0; i < 4; i++) {
-            vertex->color[0] = critical ? 0.7 : 1.0;
-            vertex->color[1] = critical ? 0.0 : 1.0;
-            vertex->color[2] = critical ? 0.0 : 1.0;
-            vertex->color[3] = critical ? 1.0 : 0.8;
-            vertex->position[0] = box[i][0];
-            vertex->position[1] = box[i][1];
-            vertex->texcoord[0] = box[i][2];
-            vertex->texcoord[1] = box[i][3];
+            vertex->position[0] = ftCoords[i][0];
+            vertex->position[1] = ftCoords[i][1];
+            vertex->texcoord[0] = ftCoords[i][2];
+            vertex->texcoord[1] = ftCoords[i][3];
             vertex++;
         }
 
         context->Unmap((ID3D11Resource*)message.vbo, 0);
-#endif
     }
 
-    auto buildMessageTexture(std::string& text) -> void {
-#ifdef DRV_FREETYPE
-        D3D11Utility::releaseTexture(message.texture);
-        if (!ft.buildTexture(text))
-            return;
+    auto ftSetColor(FtColNorm& _colNorm, FtColNorm& _colBgNorm) -> void {
+        D3D11_MAPPED_SUBRESOURCE res;
+        context->Map((ID3D11Resource*)message.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &res);
 
-        message.texture.desc.Width = ft.totalWidth;
-        message.texture.desc.Height = ft.totalHeight;
-        message.texture.desc.Format = DXGI_FORMAT_A8_UNORM;
-        if(D3D11Utility::initTexture(device, message.texture, false))
-            D3D11Utility::buildTexture(context, message.texture, ft.textBuffer);
-#endif
-        updateMessageParameter();
+        memcpy((uint8_t*)res.pData + 0, &_colNorm, 16);
+        memcpy((uint8_t*)res.pData + 16, &_colBgNorm, 16);
+
+        context->Unmap((ID3D11Resource*)message.buffer, 0);
+        context->PSSetConstantBuffers(0, 1, &message.buffer);
     }
+#endif
 
     auto buildOverlayTexture() -> void {
         dndOverlay.update(viewport);
@@ -1628,10 +1623,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         D3DVertex* vertex = (D3DVertex*) mappedVbo.pData;
 
         for (int i = 0; i < 4; i++) {
-            vertex->color[0] = 1.0;
-            vertex->color[1] = 1.0;
-            vertex->color[2] = 1.0;
-            vertex->color[3] = 1.0;
             vertex->position[0] = box[i][0];
             vertex->position[1] = box[i][1];
             vertex->texcoord[0] = box[i][2];
@@ -1675,10 +1666,6 @@ struct D3D11 : Video, RenderThread, DXGIHandler {
         D3DVertex* vertex = (D3DVertex*) mappedVbo.pData;
 
         for (int i = 0; i < 4; i++) {
-            vertex->color[0] = 1.0;
-            vertex->color[1] = 1.0;
-            vertex->color[2] = 1.0;
-            vertex->color[3] = 1.0;
             vertex->position[0] = box[i][0];
             vertex->position[1] = box[i][1];
             vertex->texcoord[0] = box[i][2];

@@ -302,6 +302,10 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
     return family + ", " + std::to_string(size) + ", " + style;
 }
 
+auto pFont::systemFontFile() -> std::string {
+	  
+}
+
 auto pFont::add( CustomFont* customFont ) -> bool {
 
     const FcChar8* file = (const FcChar8 *) customFont->filePath.c_str();

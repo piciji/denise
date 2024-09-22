@@ -190,6 +190,92 @@ struct VideoParamLayout : GUIKIT::FramedVerticalLayout {
     VideoParamLayout();
 };
 
+#define CONTROL_FG 0
+#define CONTROL_BG 1
+#define COM_BOX_FG 0
+#define COM_BOX_BG 1
+#define COMPONENT_R 0
+#define COMPONENT_G 1
+#define COMPONENT_B 2
+#define COMPONENT_A 3
+
+struct VideoScreenTextLayout : GUIKIT::VerticalLayout {
+
+    struct ColorBoxLayout : GUIKIT::FramedVerticalLayout {
+
+        struct Type : GUIKIT::HorizontalLayout {
+            GUIKIT::Label label;
+            GUIKIT::RadioBox normal;
+            GUIKIT::RadioBox warning;
+            GUIKIT::Widget spacer;
+            GUIKIT::Button reset;
+
+            Type();
+        } type;
+
+        struct Selection : GUIKIT::HorizontalLayout {
+            struct Control : GUIKIT::VerticalLayout {
+                GUIKIT::SquareCanvas canvas[2];
+                GUIKIT::Label hex[2];
+                Control();
+            } control;
+
+            struct ComponentBox : GUIKIT::VerticalLayout {
+                SliderLayout components[4];
+
+                std::string ident;
+                unsigned defaultCol;
+                ComponentBox();
+            } componentBox[2];
+
+            Selection();
+        } selection;
+
+        ColorBoxLayout();
+    } colorBox;
+
+    struct Options : GUIKIT::FramedVerticalLayout {
+        struct Font : GUIKIT::HorizontalLayout {
+            GUIKIT::Label labelFontSize;
+            GUIKIT::ComboButton fontSize;
+            GUIKIT::Label labelFontType;
+            GUIKIT::ComboButton fontType;
+
+            Font();
+        } font;
+
+        struct Position : GUIKIT::HorizontalLayout {
+            GUIKIT::Label label;
+            GUIKIT::RadioBox bottomLeft;
+            GUIKIT::RadioBox bottomCenter;
+            GUIKIT::RadioBox bottomRight;
+            GUIKIT::RadioBox topLeft;
+            GUIKIT::RadioBox topCenter;
+            GUIKIT::RadioBox topRight;
+
+            Position();
+        } position;
+
+        struct TextPadding : GUIKIT::HorizontalLayout {
+            SliderLayout paddingHorizontal;
+            SliderLayout paddingVertical;
+
+            TextPadding();
+        } textPadding;
+
+        struct TextMargin : GUIKIT::HorizontalLayout {
+            SliderLayout marginHorizontal;
+            SliderLayout marginVertical;
+
+            TextMargin();
+        } textMargin;
+
+        Options();
+    } options;
+
+    VideoScreenTextLayout();
+};
+
 struct VideoLayout : GUIKIT::HorizontalLayout {
 
     TabWindow* tabWindow;
@@ -198,16 +284,17 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::TreeView moduleTree;
     GUIKIT::SwitchLayout moduleSwitch;
     GUIKIT::TreeViewItem tviBase;
+    GUIKIT::TreeViewItem tviScreenText;
 
     GUIKIT::TreeViewItem tviShader;
     std::vector<GUIKIT::TreeViewItem*> tviPasses;
     GUIKIT::TreeViewItem tviParams;
 
     VideoBaseLayout layBase;
-
     VideoShaderLayout layShader;
     VideoPassLayout layPass;
     VideoParamLayout layParam;
+    VideoScreenTextLayout layScreenText;
 
     GUIKIT::Window codeWindow;
     GUIKIT::VerticalLayout codeLayout;
@@ -223,6 +310,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image pageDownGray;
     GUIKIT::Image retroarch;
     GUIKIT::Image colorImage;
+    GUIKIT::Image menuImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;
@@ -256,6 +344,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto clearShaderError() -> void;
     auto addShaderUI() -> void;
     auto enableGPUMode(bool state) -> void;
+    auto updateScreenText(bool keepFontPath, bool warn = false) -> void;
+    auto prepareColBox(bool warning) -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

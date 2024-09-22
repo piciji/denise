@@ -855,13 +855,14 @@ struct pMessageWindow {
 struct pFont {
     static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
     static auto create(const std::string& desc) -> HFONT;
-	static auto create(uint8_t* data, unsigned size) -> HFONT;
+	static auto add(CustomFont* customFont) -> bool;
     static auto free(HFONT& hfont) -> void;
     static auto size(HFONT hfont, std::string text) -> Size;
     static auto size(const std::string& font, const std::string& text) -> Size;
 	static auto findMemoryFont(std::string name) -> HFONT;
     static auto dpi() -> Position;
     static auto scale( unsigned pixel ) -> unsigned;
+    static auto systemFontFile() -> std::string;
 };
 
 typedef void (WINAPI *SetWindowTheme_t)(HWND hwnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
