@@ -572,6 +572,7 @@ struct pMessageWindow {
 
 struct pFont {
     static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
+    static auto systemFontFile() -> std::string;
     static auto size(std::string font, std::string text) -> Size;
     static auto cocoaFont(const std::string& desc) -> NSFont*;
     static auto size(NSFont* font, std::string text) -> Size;

@@ -244,6 +244,23 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
     }
 }
 
+auto pFont::systemFontFile() -> std::string {
+    @autoreleasepool {
+        NSFont* font = [NSFont systemFontOfSize: [NSFont systemFontSize]];
+        
+        CTFontRef aFont = CTFontCreateWithName((CFStringRef) [font fontName], 0.0, NULL);
+
+        CFTypeRef attribute = CTFontCopyAttribute(aFont, kCTFontURLAttribute);
+        
+        if(!attribute)
+            return "";
+        
+        NSURL* fontFileURL = [(NSURL*) attribute autorelease];
+        
+        return fontFileURL.fileSystemRepresentation;
+    }
+}
+
 auto pFont::cocoaFont(const std::string& desc) -> NSFont* {
     std::vector<std::string> tokens = String::split(desc, ',');
 

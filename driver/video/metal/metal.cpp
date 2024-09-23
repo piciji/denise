@@ -76,7 +76,6 @@ namespace DRIVER {
     matrix_float4x4 rotatedMatrix;
     
     MTLVertex vertices[4];
-    MTLVertex verticesMessage[4];
     MTLVertex verticesDndOverlay[4];
     MTLVertex verticesProgress[4];
     MTLVertexSlang verticesSlang[4];
@@ -108,7 +107,6 @@ namespace DRIVER {
         layer = nullptr;
         resizeWithEmuThread = false;
         settings.rotation = ROT_0;
-        settings.msgUpdated = 0;
         settings.hardSync = false;
         settings.synchronize = false;
         settings.linearFilter = true;
@@ -310,21 +308,20 @@ namespace DRIVER {
             if (error != nil)
                 return false;
             
-            lib = [device newLibraryWithSource:messageShaderStr options:nil error:&error];
-            if (error != nil)
-                return false;
-            
-            psd.vertexFunction = [lib newFunctionWithName:@"_vertex"];
-            psd.fragmentFunction = [lib newFunctionWithName:@"_fragment"];
-
-            psd.label = @"blend msg";
-            ca.blendingEnabled = YES;
-
 #ifdef DRV_FREETYPE
-            messageColBuffer = [device newBufferWithLength:32 options:MTLResourceStorageModeManaged];
-            messagePipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
-            if (error == nil)
-                ftInitialized = true;
+            lib = [device newLibraryWithSource:messageShaderStr options:nil error:&error];
+            if (error == nil) {
+                psd.vertexFunction = [lib newFunctionWithName:@"_vertex"];
+                psd.fragmentFunction = [lib newFunctionWithName:@"_fragment"];
+
+                psd.label = @"blend msg";
+                ca.blendingEnabled = YES;
+
+                messageColBuffer = [device newBufferWithLength:32 options:MTLResourceStorageModeManaged];
+                messagePipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
+                if (error == nil)
+                    ftInitialized = true;
+            }
 #endif
             lib = [device newLibraryWithSource:dndOverlayShaderStr options:nil error:&error];
             if (error != nil)
@@ -362,7 +359,8 @@ namespace DRIVER {
         [rpd release]; rpd = nil;
         [outputPipelineState release]; outputPipelineState = nil;
 #ifdef DRV_FREETYPE
-        [messagePipelineState release]; messagePipelineState = nil;
+        if (messagePipelineState)
+            [messagePipelineState release]; messagePipelineState = nil;
 #endif
         [dndOverlayPipelineState release]; dndOverlayPipelineState = nil;
         [progressPipelineState release]; progressPipelineState = nil;
@@ -939,13 +937,6 @@ namespace DRIVER {
     }
 
 #ifdef DRV_FREETYPE
-    auto ftSetCoordsPosition() -> void {
-        verticesMessage[0] = {simd_make_float2(ftPosCoords[0][0], ftPosCoords[0][1]), simd_make_float2(0, 0)};
-        verticesMessage[1] = {simd_make_float2(ftPosCoords[1][0], ftPosCoords[1][1]), simd_make_float2(1, 0)};
-        verticesMessage[2] = {simd_make_float2(ftPosCoords[2][0], ftPosCoords[2][1]), simd_make_float2(0, 1)};
-        verticesMessage[3] = {simd_make_float2(ftPosCoords[3][0], ftPosCoords[3][1]), simd_make_float2(1, 1)};
-    }
-
     auto ftBuildTexture(std::string text, bool keepOldSize = false) -> void {
         if (!ftBuildText(text, keepOldSize))
             return;
@@ -967,14 +958,22 @@ namespace DRIVER {
     }
 
     auto showText(id<MTLRenderCommandEncoder> rce) -> void {
-        [rce setRenderPipelineState:messagePipelineState];
+        if (ftUpdated)
+            ftProcessUpdates(viewport);
 
+        if (!ftTextBuffer)
+            return;
+
+        if (ftTs) // animations
+            if (ftHandleAnimation(viewport))
+                return;
+        
+        [rce setRenderPipelineState:messagePipelineState];
         [rce setFragmentBuffer:messageColBuffer offset:0 atIndex:1];
-      //  [rce setVertexBytes:&messageCol length:sizeof(vector_float4) atIndex:1];
 
         [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_NEAREST][ShaderPreset::WRAP_EDGE][0] atIndex:0];
 
-        [rce setVertexBytes:&verticesMessage length:sizeof(verticesMessage) atIndex:0];
+        [rce setVertexBytes:&ftPosCoords length:sizeof(ftPosCoords) atIndex:0];
         [rce setFragmentTexture:messageTex.view atIndex:0];
 
         [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];

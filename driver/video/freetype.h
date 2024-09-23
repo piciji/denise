@@ -234,7 +234,7 @@ struct Freetype {
         float y = 1.0f;
 
         if (ftAlignment & 1) { // center
-            x = 0.0f - textx / 2.0;
+            x = 0.0f - textx / 2.0f - 0.00001f;
         } else if(ftAlignment & 2) { // right
             x = 1.0f - textx - ftMarginHorizontal;
         } else

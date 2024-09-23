@@ -50,7 +50,7 @@ static const std::string MTLMessageShader = R"(
         vector_float2 texCoord;
     };
 
-    struct UBO {
+    struct Push {
         vector_float4 col;
         vector_float4 colBg;
     };
@@ -66,15 +66,13 @@ static const std::string MTLMessageShader = R"(
 
     fragment float4 _fragment(PSInput input [[stage_in]],
                                 texture2d<half> tex [[ texture(0) ]],
-                                sampler s0 [[ sampler(0) ],
-                                const device UBO &ubo [[ buffer(1) ]]]) {
+                                sampler s0 [[ sampler(0) ]],
+                                constant Push& params [[ buffer(1) ]]) {
 
-       // return float4(input.col.rgb, input.col.a * tex.sample(s0, input.texCoord.xy).a);
+        if(params.colBg.a == 0.0)
+            return float4(1.0, 1.0, 1.0, tex.sample(s0, input.texCoord.xy).a) * params.col;
 
-        if(ubo.colBg.a == 0.0)
-            return float4(1.0, 1.0, 1.0, tex.sample(s0, input.texCoord.xy).a) * ubo.col;
-
-        return float4( mix(ubo.colBg.rgb, ubo.col.rgb, tex.sample(s0, input.texCoord.xy).a), ubo.colBg.a);
+        return float4( mix(params.colBg.rgb, params.col.rgb, tex.sample(s0, input.texCoord.xy).a), params.colBg.a);
     }
 )";
 
