@@ -544,8 +544,8 @@ namespace DRIVER {
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11outputShader, "PS", "VS", "", descShader, countof(descShader), &frame.shader))
             return term(), false;
 #ifdef DRV_FREETYPE
-        if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11messageShader, "PS", "VS", "", descShader, countof(descShader), &message.shader))
-            return term(), false;
+        if (D3D11Utility::createShader(symbols, featureLevel, device, D3D11messageShader, "PS", "VS", "", descShader, countof(descShader), &message.shader))
+            ftInitialized = true;
 #endif
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11overlayShader, "PS", "VS", "", descShader, countof(descShader), &overlay.shader))
             return term(), false;
@@ -553,9 +553,6 @@ namespace DRIVER {
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11progressShader, "PS", "VS", "", descShader, countof(descShader), &progress.shader))
             return term(), false;
 
-#ifdef DRV_FREETYPE
-        ftInitialized = true;
-#endif
         dndOverlay.initialized = true;
         D3D11_BLEND_DESC blendDesc;
         std::memset(&blendDesc, 0, sizeof(blendDesc));
@@ -1519,7 +1516,7 @@ namespace DRIVER {
     }
 
 #ifdef DRV_FREETYPE
-    auto showScreenText(std::string text, unsigned duration, bool warn = false) -> void {
+    auto showScreenText(const std::string text, unsigned duration, bool warn = false) -> void {
         ftUpdateMessage(text, duration, warn);
     }
 
@@ -1558,21 +1555,12 @@ namespace DRIVER {
         D3D11Utility::buildTexture(context, message.texture, ftTextBuffer);
     }
 
-    auto ftSetCoords() -> void {
+    auto ftSetCoordsPosition() -> void {
         D3D11_MAPPED_SUBRESOURCE mappedVbo;
         if (FAILED(context->Map((ID3D11Resource*)message.vbo, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedVbo)))
             return;
 
-        D3DVertex* vertex = (D3DVertex*)mappedVbo.pData;
-
-        for(int i = 0; i < 4; i++) {
-            vertex->position[0] = ftCoords[i][0];
-            vertex->position[1] = ftCoords[i][1];
-            vertex->texcoord[0] = ftCoords[i][2];
-            vertex->texcoord[1] = ftCoords[i][3];
-            vertex++;
-        }
-
+        std::memcpy(mappedVbo.pData, ftPosCoords, 16 * 4);
         context->Unmap((ID3D11Resource*)message.vbo, 0);
     }
 

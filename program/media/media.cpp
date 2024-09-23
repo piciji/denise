@@ -471,7 +471,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
 		if ( showListing( layout ) ) { //preload last listing
 			GUIKIT::File* file = filePool->get( fSetting->path );
-			uint8_t* data;
+			uint8_t* data = nullptr;
 
             if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
 
@@ -1505,7 +1505,7 @@ auto MediaLayout::loadSettings() -> void {
             if ( showListing( layout ) ) {
                 
                 GUIKIT::File* file = filePool->get(fSetting->path);
-                uint8_t* data;
+                uint8_t* data = nullptr;
                
                 if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
                     block->media->guid = uintptr_t(file);

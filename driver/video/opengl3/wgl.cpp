@@ -362,7 +362,7 @@ struct WGL : Video, GL3, RenderThread {
         GLUtility::sharedMutex.unlock();
     }
 #ifdef DRV_FREETYPE
-    auto showScreenText(std::string text, unsigned duration, bool warn = false) -> void {
+    auto showScreenText(const std::string text, unsigned duration, bool warn = false) -> void {
         screenText.ftUpdateMessage(text, duration, warn);
     }
 

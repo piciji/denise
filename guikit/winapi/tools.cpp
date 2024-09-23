@@ -134,7 +134,24 @@ auto pFont::systemFontFile() -> std::string {
 }
 
 auto pFont::add(CustomFont* customFont) -> bool {
-    return AddFontResourceW( utf16_t(customFont->filePath.c_str()) );
+    DWORD nFonts;
+    File file(customFont->filePath);
+    bool success = false;
+
+    if (file.open()) {
+        if (AddFontMemResourceEx( file.read(), file.getSize(), NULL, &nFonts ))
+            success = true;
+        file.unload();
+    }
+
+    return success;
+    /* The following function should only be used for fonts that are not distributed by the APP, as the font will be locked by Windows.
+     * The font file cannot be overwritten or deleted for this session, and cannot even be transferred to GIT.
+     * The font can be unregistered when the APP is terminated, but in case of a crash, the font is locked.
+     * I would only use this function with fonts that are installed directly in the Windows Fonts folder.
+     */
+
+    // return AddFontResourceW( utf16_t(customFont->filePath.c_str()) );
 }
 
 auto pFont::create(const std::string& desc) -> HFONT {

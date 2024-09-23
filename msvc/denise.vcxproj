@@ -1748,12 +1748,14 @@
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">
     <ClCompile>
@@ -1806,6 +1808,9 @@ xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1814,6 +1819,7 @@ xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalDependencies>freetype.lib;opengl32.lib;ws2_32.lib;winmm.lib;shlwapi.lib;msimg32.lib;comctl32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ENTRY:"mainCRTStartup" %(AdditionalOptions)</AdditionalOptions>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)..\data\translation\*.*" "$(TargetDir)translation\" /e /y /i /r
@@ -1879,6 +1885,9 @@ xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -1887,6 +1896,7 @@ xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalDependencies>freetype.lib;opengl32.lib;ws2_32.lib;winmm.lib;shlwapi.lib;msimg32.lib;comctl32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ENTRY:"mainCRTStartup" %(AdditionalOptions)</AdditionalOptions>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>xcopy "$(ProjectDir)..\data\translation\*.*" "$(TargetDir)translation\" /e /y /i /r

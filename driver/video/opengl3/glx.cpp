@@ -648,7 +648,7 @@ struct GLX : public Video, GL3, RenderThread {
     }
 
 #ifdef DRV_FREETYPE
-    auto showScreenText(std::string text, unsigned duration, bool warn = false) -> void {
+    auto showScreenText(const std::string text, unsigned duration, bool warn = false) -> void {
         screenText.ftUpdateMessage(text, duration, warn);
     }
 

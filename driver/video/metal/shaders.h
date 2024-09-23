@@ -48,29 +48,33 @@ static const std::string MTLMessageShader = R"(
     struct PSInput {
         vector_float4 position [[position]];
         vector_float2 texCoord;
-        vector_float4 col;
     };
 
     struct UBO {
         vector_float4 col;
+        vector_float4 colBg;
     };
 
     using namespace metal;
 
-    vertex PSInput _vertex(const VSInput input [[ stage_in ]],
-                           const device UBO &ubo [[ buffer(1) ]]) {
+    vertex PSInput _vertex(const VSInput input [[ stage_in ]]) {
         PSInput output;
         output.position = float4(input.position, 0.0, 1.0);
         output.texCoord = input.texCoord;
-        output.col = ubo.col;
         return output;
     }
 
     fragment float4 _fragment(PSInput input [[stage_in]],
                                 texture2d<half> tex [[ texture(0) ]],
-                                sampler s0 [[ sampler(0) ]]) {
+                                sampler s0 [[ sampler(0) ],
+                                const device UBO &ubo [[ buffer(1) ]]]) {
 
-        return float4(input.col.rgb, input.col.a * tex.sample(s0, input.texCoord.xy).a);
+       // return float4(input.col.rgb, input.col.a * tex.sample(s0, input.texCoord.xy).a);
+
+        if(ubo.colBg.a == 0.0)
+            return float4(1.0, 1.0, 1.0, tex.sample(s0, input.texCoord.xy).a) * ubo.col;
+
+        return float4( mix(ubo.colBg.rgb, ubo.col.rgb, tex.sample(s0, input.texCoord.xy).a), ubo.colBg.a);
     }
 )";
 

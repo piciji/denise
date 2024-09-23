@@ -303,7 +303,7 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
 }
 
 auto pFont::systemFontFile() -> std::string {
-	std::string fontFile = ""; // Linux Mint
+	std::string fontFile = "";
 
 	gchar* fontName = 0;
 	g_object_get(gtk_settings_get_default(), "gtk-font-name", &fontName, NULL);

@@ -264,7 +264,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
     if (activeInputManager)
         activeInputManager->setupKeycodeTransfer();
-	uint8_t* data;
+	uint8_t* data = nullptr;
     std::vector<std::string> brokenPaths;
 
     emulator->setExpansion( settings->get<unsigned>("expansion", 0) );

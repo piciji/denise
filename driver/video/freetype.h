@@ -7,7 +7,7 @@
 #include FT_FREETYPE_H
 
 #define MES_ANIMATION_DURATION 400 // ms
-#define MES_ANIMATION_MOVEMENT 0.05f // 1.0 = full display height
+#define MES_ANIMATION_MOVEMENT 0.05f
 #define MES_ANIMATION_FADE_FKT(x) powf(0.7f, 0.014f * (x)) // exponential function curve
 
 namespace DRIVER {
@@ -32,7 +32,7 @@ struct Freetype {
     std::string ftText;
     bool ftWarn;
     unsigned ftDuration;
-    int ftPosition;
+    int ftAlignment;
     int ftUpdated;
     unsigned ftTs;
     unsigned ftTsStart;
@@ -48,7 +48,7 @@ struct Freetype {
 
     std::mutex ftUpdateMutex;
 
-    float ftCoords[4][4] = {
+    float ftPosCoords[4][4] = {
         {0, 0, 0, 0},
         {0, 0, 1, 0},
         {0, 0, 0, 1},
@@ -66,14 +66,14 @@ struct Freetype {
         ftUpdated = 0;
         ftWarn = false;
         ftDuration = 0;
-        ftPosition = 0;
+        ftAlignment = 0;
         ftTs = 0;
         ftTsStart = 0;
     }
 
     virtual auto ftSetColor(FtColNorm& _colNorm, FtColNorm& _colBgNorm) -> void = 0;
     virtual auto ftBuildTexture(std::string text, bool keepOldSize = false) -> void = 0;
-    virtual auto ftSetCoords() -> void {}
+    virtual auto ftSetCoordsPosition() -> void {}
 
     auto ftLoadFont(const std::string& fontPath) -> bool {
         ftUnload();
@@ -198,13 +198,13 @@ struct Freetype {
     }
 
     auto ftSetPosition(ScreenTextDescription::Position& pos) -> void {
-        ftPosition = 0;
+        ftAlignment = 0;
         if (pos == ScreenTextDescription::POSITION_BOTTOM_CENTER || pos == ScreenTextDescription::POSITION_TOP_CENTER)
-            ftPosition |= 1;
+            ftAlignment |= 1;
         else if (pos == ScreenTextDescription::POSITION_BOTTOM_RIGHT || pos == ScreenTextDescription::POSITION_TOP_RIGHT)
-            ftPosition |= 2;
+            ftAlignment |= 2;
         if (pos == ScreenTextDescription::POSITION_BOTTOM_RIGHT || pos == ScreenTextDescription::POSITION_BOTTOM_CENTER || pos == ScreenTextDescription::POSITION_BOTTOM_LEFT)
-            ftPosition |= 4;
+            ftAlignment |= 4;
     }
 
     auto ftSetDuration(unsigned _duration) -> void {
@@ -233,9 +233,9 @@ struct Freetype {
         float x = -1.0f;
         float y = 1.0f;
 
-        if (ftPosition & 1) { // center
+        if (ftAlignment & 1) { // center
             x = 0.0f - textx / 2.0;
-        } else if(ftPosition & 2) { // right
+        } else if(ftAlignment & 2) { // right
             x = 1.0f - textx - ftMarginHorizontal;
         } else
             x += ftMarginHorizontal;
@@ -246,21 +246,21 @@ struct Freetype {
         else
             _vert = ftMarginVertical;
 
-        if (ftPosition & 4) { // bottom
+        if (ftAlignment & 4) { // bottom
             y = -1.0f + texty + _vert - fade;
         } else
             y -= _vert - fade;
 
-        ftCoords[0][0] = x;
-        ftCoords[0][1] = y;
-        ftCoords[1][0] = x + textx;
-        ftCoords[1][1] = y;
-        ftCoords[2][0] = x;
-        ftCoords[2][1] = y - texty;
-        ftCoords[3][0] = x + textx;
-        ftCoords[3][1] = y - texty;
+        ftPosCoords[0][0] = x;
+        ftPosCoords[0][1] = y;
+        ftPosCoords[1][0] = x + textx;
+        ftPosCoords[1][1] = y;
+        ftPosCoords[2][0] = x;
+        ftPosCoords[2][1] = y - texty;
+        ftPosCoords[3][0] = x + textx;
+        ftPosCoords[3][1] = y - texty;
 
-        ftSetCoords();
+        ftSetCoordsPosition();
     }
 
     auto ftHandleAnimation(Viewport& viewport) -> bool {
@@ -345,16 +345,16 @@ struct Freetype {
 
         ftTotalHeight = upHeight + downHeight;
         ftTotalWidth += ftPaddingHorizontal << 1;
-        unsigned _totalHeightPadded = ftTotalHeight;
+        unsigned _totalHeightPadded;
 
         if (ftPaddingVertical < 0) {
             ftTotalHeight += ftPaddingHorizontal << 1;
             upHeight += ftPaddingHorizontal;
-            _totalHeightPadded -= ftPaddingHorizontal;
+            _totalHeightPadded = ftTotalHeight - ftPaddingHorizontal;
         } else {
             ftTotalHeight += ftPaddingVertical << 1;
             upHeight += ftPaddingVertical;
-            _totalHeightPadded -= ftPaddingVertical;
+            _totalHeightPadded = ftTotalHeight - ftPaddingVertical;
         }
 
         unsigned _size = ftTotalWidth * ftTotalHeight;
@@ -424,7 +424,7 @@ struct Freetype {
         ftUpdateMutex.unlock();
     }
 
-    auto ftUpdateMessage( std::string& _text, unsigned _duration, bool _warn) -> void {
+    auto ftUpdateMessage( const std::string _text, unsigned _duration, bool _warn) -> void {
         if (!ftInitialized)
             return;
 

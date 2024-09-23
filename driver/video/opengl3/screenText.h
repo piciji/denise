@@ -75,8 +75,14 @@ namespace DRIVER {
                 glDeleteTextures(1, &textTex);
                 textTex = 0;
             }
-
             ftInitialized = false;
+        }
+
+        auto ftSetCoordsPosition() -> void {
+            glUseProgram(program);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glBufferData(GL_ARRAY_BUFFER, sizeof ftPosCoords, ftPosCoords, GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
         }
 
         auto showText(Viewport& viewport) -> void {
@@ -96,9 +102,6 @@ namespace DRIVER {
             glUseProgram(program);
             glEnable(GL_BLEND);
             glBindVertexArray(vao);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-            glBufferData(GL_ARRAY_BUFFER, sizeof ftCoords, ftCoords, GL_DYNAMIC_DRAW);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             glDisable(GL_BLEND);
 

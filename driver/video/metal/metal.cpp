@@ -17,7 +17,12 @@
 
 namespace DRIVER {
 
-struct METAL : public Video, RenderThread {
+#ifdef DRV_FREETYPE
+    struct METAL : public Video, RenderThread, Freetype {
+#else
+    struct METAL : public Video, RenderThread {
+#endif
+
     NSView* handle;
     MetalView* view;
     ViewScreen viewScreen;
@@ -54,10 +59,7 @@ struct METAL : public Video, RenderThread {
     
     std::function<void (int pass, bool hasErrors)> onShaderProgressCallback = nullptr;
     std::function<void (DiskFile& diskFile)> onShaderCacheCallback = nullptr;
-    
-#ifdef DRV_FREETYPE
-    Freetype ft;
-#endif
+
     DragndropOverlay dndOverlay;
     
     id<MTLDevice> device;
@@ -97,8 +99,8 @@ struct METAL : public Video, RenderThread {
     MTLTexture messageTex;
     MTLTexture dndOverlayTex;
     MTLTexture progressTex;
-    
-    vector_float4 messageCol;
+
+    id<MTLBuffer> messageColBuffer;
     
     METAL() {
         view = nil;
@@ -157,9 +159,6 @@ struct METAL : public Video, RenderThread {
         bool synchronize;
         bool vrr;
         Rotation rotation;
-        std::string message = "";
-        bool msgCritical = false;
-        std::atomic<int> msgUpdated;
         bool hardSync;
         bool useShaderCache = false;
         int direction = 1; // reserved for rewind support
@@ -261,11 +260,7 @@ struct METAL : public Video, RenderThread {
         
         [view setFrame:NSMakeRect(0, 0, area.width, area.height)];
         [view setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        
-#ifdef DRV_FREETYPE
-        if (ft.init())
-            ft.setFontSize(12);
-#endif
+
         dndOverlay.initialized = true;
         return true;
     }
@@ -324,11 +319,13 @@ struct METAL : public Video, RenderThread {
 
             psd.label = @"blend msg";
             ca.blendingEnabled = YES;
-            
+
+#ifdef DRV_FREETYPE
+            messageColBuffer = [device newBufferWithLength:32 options:MTLResourceStorageModeManaged];
             messagePipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
-            if (error != nil)
-                return false;
-            
+            if (error == nil)
+                ftInitialized = true;
+#endif
             lib = [device newLibraryWithSource:dndOverlayShaderStr options:nil error:&error];
             if (error != nil)
                 return false;
@@ -362,12 +359,11 @@ struct METAL : public Video, RenderThread {
         wait();
         
         dndOverlay.term();
-#ifdef DRV_FREETYPE
-        ft.term();
-#endif
         [rpd release]; rpd = nil;
         [outputPipelineState release]; outputPipelineState = nil;
+#ifdef DRV_FREETYPE
         [messagePipelineState release]; messagePipelineState = nil;
+#endif
         [dndOverlayPipelineState release]; dndOverlayPipelineState = nil;
         [progressPipelineState release]; progressPipelineState = nil;
         
@@ -553,9 +549,11 @@ struct METAL : public Video, RenderThread {
         viewScreen.hasIntegerScaling = integerScaling;
         if (handle) {
             viewScreen.update(viewport);
-            settings.msgUpdated |= 2;
             updateViewport();
             updateFrameSize();
+#ifdef DRV_FREETYPE
+            ftUpdateCoords();
+#endif
             updateHistory = true;
         }
     }
@@ -591,7 +589,9 @@ struct METAL : public Video, RenderThread {
         //updateFrameSize();
         updateViewport();
         
-        settings.msgUpdated |= 2;
+#ifdef DRV_FREETYPE
+        ftUpdateCoords();
+#endif
     }
     
     void synchronize(bool state) {
@@ -648,15 +648,15 @@ struct METAL : public Video, RenderThread {
 
     auto hasThreaded() -> bool { return threadEnabled; }
     
-    auto showMessage(std::string message, bool critical = false) -> void {
 #ifdef DRV_FREETYPE
-        if (settings.message != message || settings.msgCritical != critical) {
-            settings.message = message;
-            settings.msgCritical = critical;
-            settings.msgUpdated = 1;
-        }
-#endif
+    auto showScreenText(const std::string text, unsigned duration, bool warn = false) -> void {
+        ftUpdateMessage(text, duration, warn);
     }
+
+    auto setScreenTextDescription(ScreenTextDescription& desc) -> void {
+        ftSetScreenTextDescription(desc);
+    }
+#endif
     
     auto hardSync(bool state) -> void {
         wait();
@@ -893,21 +893,9 @@ struct METAL : public Video, RenderThread {
             [rce setViewport:frame.viewport];
             [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
             
-    #ifdef DRV_FREETYPE
-                if (settings.msgUpdated) {
-                    if (settings.msgUpdated & 1) {
-                        settings.msgUpdated = 0;
-                        buildMessageTexture(settings.message, settings.msgCritical);
-                    } else {
-                        settings.msgUpdated = 0;
-                        updateMessageCoords();
-                    }
-                }
-            
-                if (ft.hasText())
-                    showMessage(rce);
-            
-    #endif
+#ifdef DRV_FREETYPE
+            showText(rce);
+#endif
             if (dndOverlay.enabled()) {
                 buildDndOverlayTexture();
                 showDndOverlay(rce);
@@ -949,55 +937,49 @@ struct METAL : public Video, RenderThread {
             drawable = nil;
         }
     }
-    
-    auto updateMessageCoords() -> void {
-    #ifdef DRV_FREETYPE
-        if (!ft.hasText())
-            return;
 
-        float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
-        float textx = (float)ft.totalWidth * screenx;
-        float texty = (float)ft.totalHeight * screeny;
-
-        float adjust = 0.01;
-        float x = 1.0 - textx - adjust;
-        float y = -1.0 + texty + adjust;
-        
-        verticesMessage[0] = {simd_make_float2(x, y),                  simd_make_float2(0, 0)};
-        verticesMessage[1] = {simd_make_float2(x + textx, y),          simd_make_float2(1, 0)};
-        verticesMessage[2] = {simd_make_float2(x, y - texty),          simd_make_float2(0, 1)};
-        verticesMessage[3] = {simd_make_float2(x + textx, y - texty),  simd_make_float2(1, 1)};
-    #endif
+#ifdef DRV_FREETYPE
+    auto ftSetCoordsPosition() -> void {
+        verticesMessage[0] = {simd_make_float2(ftPosCoords[0][0], ftPosCoords[0][1]), simd_make_float2(0, 0)};
+        verticesMessage[1] = {simd_make_float2(ftPosCoords[1][0], ftPosCoords[1][1]), simd_make_float2(1, 0)};
+        verticesMessage[2] = {simd_make_float2(ftPosCoords[2][0], ftPosCoords[2][1]), simd_make_float2(0, 1)};
+        verticesMessage[3] = {simd_make_float2(ftPosCoords[3][0], ftPosCoords[3][1]), simd_make_float2(1, 1)};
     }
 
-    auto buildMessageTexture(std::string& text, bool hilight) -> void {
-    #ifdef DRV_FREETYPE
-        if (!ft.buildTexture(text))
+    auto ftBuildTexture(std::string text, bool keepOldSize = false) -> void {
+        if (!ftBuildText(text, keepOldSize))
             return;
-        
-        MTLUtility::initTexture(messageTex, ft.totalWidth, ft.totalHeight, MTLPixelFormatA8Unorm, device);
-        
-        [messageTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)ft.totalWidth, (NSUInteger)ft.totalHeight) mipmapLevel:0 withBytes:ft.textBuffer bytesPerRow: ft.totalWidth];
-        
-        if (hilight)
-            messageCol = {0.7f, 0.0f, 0.0f, 1.0f};
-        else
-            messageCol = {1.0f, 1.0f, 1.0f, 0.8f};
-        
-        updateMessageCoords();
-    #endif
+
+        if (!messageTex.view || !keepOldSize)
+            MTLUtility::initTexture(messageTex, ftTotalWidth, ftTotalHeight, MTLPixelFormatA8Unorm, device);
+
+        [messageTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)ftTotalWidth, (NSUInteger)ftTotalHeight) mipmapLevel:0 withBytes:ftTextBuffer bytesPerRow: ftTotalWidth];
     }
 
-    auto showMessage(id<MTLRenderCommandEncoder> rce) -> void {
+    auto ftSetColor(FtColNorm& _colNorm, FtColNorm& _colBgNorm) -> void {
+        void* bufData = messageColBuffer.contents;
+        if (bufData) {
+            memcpy((uint8_t*)bufData + 0, &_colNorm, 16);
+            memcpy((uint8_t*)bufData +16, &_colBgNorm, 16);
+
+            [messageColBuffer didModifyRange:NSMakeRange(0, messageColBuffer.length)];
+        }
+    }
+
+    auto showText(id<MTLRenderCommandEncoder> rce) -> void {
         [rce setRenderPipelineState:messagePipelineState];
-        [rce setVertexBytes:&messageCol length:sizeof(vector_float4) atIndex:1];
-        [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE][0] atIndex:0];
-        
+
+        [rce setFragmentBuffer:messageColBuffer offset:0 atIndex:1];
+      //  [rce setVertexBytes:&messageCol length:sizeof(vector_float4) atIndex:1];
+
+        [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_NEAREST][ShaderPreset::WRAP_EDGE][0] atIndex:0];
+
         [rce setVertexBytes:&verticesMessage length:sizeof(verticesMessage) atIndex:0];
         [rce setFragmentTexture:messageTex.view atIndex:0];
 
         [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
     }
+#endif
 
     auto buildDndOverlayTexture() -> void {
         dndOverlay.update(viewport);

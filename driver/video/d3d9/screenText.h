@@ -81,9 +81,9 @@ namespace DRIVER {
                 marginVertical = (float)viewport.height * ftMarginVertical * 0.5 + 0.5f;
 
             if (viewport.width >= ftTotalWidth) {
-                if (ftPosition & 1) { // center
+                if (ftAlignment & 1) { // center
                     texX += (viewport.width - ftTotalWidth) / 2;
-                } else if(ftPosition & 2) { // right
+                } else if(ftAlignment & 2) { // right
                     texX += viewport.width - ftTotalWidth - marginHorizontal;
                 } else
                     texX += marginHorizontal;
@@ -93,7 +93,7 @@ namespace DRIVER {
             if (viewport.height >= ftTotalHeight) {
                 int _fade = (float)viewport.height * fade * 0.5;
 
-                if (ftPosition & 4) { // bottom
+                if (ftAlignment & 4) { // bottom
                     texY += viewport.height - ftTotalHeight - marginVertical - _fade;
                 } else
                     texY += marginVertical + _fade;

@@ -105,7 +105,9 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
                 return;
         }
         flags.filter = settings.linearFilter ? D3DTEXF_LINEAR : D3DTEXF_POINT;
+#ifdef DRV_FREETYPE
         screenText.linear = settings.linearFilter;
+#endif
 
 		lpD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP );
 		lpD3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP );
@@ -779,7 +781,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     auto hasThreaded() -> bool { return threadEnabled; }
 
 #ifdef DRV_FREETYPE
-    auto showScreenText(std::string text, unsigned duration, bool warn = false) -> void {
+    auto showScreenText(const std::string text, unsigned duration, bool warn = false) -> void {
         screenText.ftUpdateMessage(text, duration, warn);
     }
 

@@ -77,7 +77,7 @@ struct Video {
     virtual auto waitRenderThread() -> void {}
     virtual auto setProgressAnimation(uint8_t* _data, unsigned _width, unsigned _height) -> void {}
 
-	virtual auto showScreenText(std::string text, unsigned duration, bool warn = false) -> void {}
+	virtual auto showScreenText(const std::string text, unsigned duration, bool warn = false) -> void {}
 	virtual auto setScreenTextDescription(ScreenTextDescription& desc) -> void {}
     virtual auto forceResize() -> void {}
     virtual auto freeContext() -> void {}
