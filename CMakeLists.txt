@@ -269,6 +269,7 @@ SET_SOURCE_FILES_PROPERTIES(program/program.cpp
 
 set(srcs ${srcs} ${depSrcs})
 add_executable( ${PROJECT_NAME} ${srcs} )
+target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(${PROJECT_NAME} "-static -lws2_32 -lgdi32 -lcomdlg32 -lole32 -lcomctl32 -lshlwapi -lmsimg32 -lwinmm -lopengl32")
@@ -293,7 +294,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
     target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
-    target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
 else()
