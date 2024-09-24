@@ -69,10 +69,12 @@ static const std::string MTLMessageShader = R"(
                                 sampler s0 [[ sampler(0) ]],
                                 constant Push& params [[ buffer(1) ]]) {
 
+        float _pix = tex.sample(s0, input.texCoord.xy).a;
+        
         if(params.colBg.a == 0.0)
-            return float4(1.0, 1.0, 1.0, tex.sample(s0, input.texCoord.xy).a) * params.col;
+            return float4(1.0, 1.0, 1.0, _pix) * params.col;
 
-        return float4( mix(params.colBg.rgb, params.col.rgb, tex.sample(s0, input.texCoord.xy).a), params.colBg.a);
+        return float4( mix(params.colBg.rgb, params.col.rgb, float3(_pix)), params.colBg.a);
     }
 )";
 

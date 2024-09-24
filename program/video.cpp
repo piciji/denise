@@ -626,7 +626,7 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
             }
 
             if (!found) {
-                screenTextFontPath = fontFolder() + "/SourceCodePro-Semibold.ttf";
+                screenTextFontPath = fontFolder() + "/SourceCodePro-Regular.ttf";
             }
         }
     }

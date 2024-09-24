@@ -252,8 +252,8 @@ auto pFont::systemFontFile() -> std::string {
 
         CFTypeRef attribute = CTFontCopyAttribute(aFont, kCTFontURLAttribute);
         
-        if(!attribute)
-            return "";
+        if(!attribute) // don't know how to access Apple System Fonts
+            return "/Library/Fonts/Arial Unicode.ttf";
         
         NSURL* fontFileURL = [(NSURL*) attribute autorelease];
         
