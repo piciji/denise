@@ -304,6 +304,7 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
 
 auto pFont::systemFontFile() -> std::string {
 	std::string fontFile = "";
+	std::string alterFontFile = "";
 
 	gchar* fontName = 0;
 	g_object_get(gtk_settings_get_default(), "gtk-font-name", &fontName, NULL);
@@ -333,17 +334,27 @@ auto pFont::systemFontFile() -> std::string {
 				FcPatternGetString(font, FC_STYLE, 0, &style) == FcResultMatch) {
 
 				std::string sStyle(reinterpret_cast<char*> (style));
-				std::string sFamily(reinterpret_cast<char*> (family));
 
-				if (String::findString(sStyle, "regular") && (sFamily == defaultFont)) {
-					std::string temp(reinterpret_cast<char*> (file));
-					fontFile = temp;
-					break;
+				if (String::findString(sStyle, "regular")) {
+					std::string sFile(reinterpret_cast<char*> (file));
+					if (String::findString(sFile, ".otf") || String::findString(sFile, ".ttf")) {
+						std::string sFamily(reinterpret_cast<char*> (family));
+						if (sFamily == defaultFont) {
+							fontFile = sFile;
+							break;
+						}
+
+						if (alterFontFile.empty() && String::findString(sFamily, defaultFont))
+							alterFontFile = sFile;
+					}
 				}
 			}
 		}
 		if (fs)
 			FcFontSetDestroy(fs);
+
+		if (fontFile.empty())
+			fontFile = alterFontFile;
 	}
 
 	return fontFile;
