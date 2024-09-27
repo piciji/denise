@@ -71,19 +71,19 @@ auto TTF::getFontName() -> std::string {
 
                     if (strLen) {
                         if ( (plat == 3) && (enc == 0 || enc == 1) && (winPos == -1 || langId == 0x409) ) {
-                            if (nameId > winName) {
+                          //  if (nameId >= winName) {
                                 winPos = strOffset;
                                 winName = nameId;
                                 winLen = strLen;
-                            }
+                            //}
                         }
 
                         if ( (plat == 1) && (enc == 0) && (macPos == -1 || langId == 0) ) {
-                            if (nameId > macName) {
+                           // if (nameId >= macName) {
                                 macPos = strOffset;
                                 macName = nameId;
                                 macLen = strLen;
-                            }
+                           // }
                         }
                     }
                 } else

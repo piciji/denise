@@ -1272,6 +1272,7 @@ auto VideoLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
                     out = _fontFile;
             }
         }
+        file.unload();
     }
 
     ident += counter++;
