@@ -79,6 +79,7 @@ struct Video {
 
 	virtual auto showScreenText(const std::string text, unsigned duration, bool warn = false) -> void {}
 	virtual auto setScreenTextDescription(ScreenTextDescription& desc) -> void {}
+	virtual auto freeFont() -> void {}
     virtual auto forceResize() -> void {}
     virtual auto freeContext() -> void {}
     virtual auto lockResize() -> void {}

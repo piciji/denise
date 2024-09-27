@@ -1509,6 +1509,11 @@ namespace DRIVER {
         ftSetScreenTextDescription(desc);
     }
 
+    auto freeFont() -> void {
+        wait();
+        ftUnload();
+    }
+
     auto showText() -> void {
         if (ftUpdated)
             ftProcessUpdates(viewport);

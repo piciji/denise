@@ -788,6 +788,11 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     auto setScreenTextDescription(ScreenTextDescription& desc) -> void {
         screenText.ftSetScreenTextDescription(desc);
     }
+
+    auto freeFont() -> void {
+        wait();
+        screenText.ftUnload();
+    }
 #endif
 
     auto lockResize() -> void {

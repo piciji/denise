@@ -654,6 +654,11 @@ namespace DRIVER {
     auto setScreenTextDescription(ScreenTextDescription& desc) -> void {
         ftSetScreenTextDescription(desc);
     }
+
+    auto freeFont() -> void {
+        wait();
+        ftUnload();
+    }
 #endif
     
     auto hardSync(bool state) -> void {

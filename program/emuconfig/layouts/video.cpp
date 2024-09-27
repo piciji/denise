@@ -1150,13 +1150,18 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (_fn.empty())
             return;
 
-        if (!removeTTF(userData))
-            return;
-
         std::string _path = program->getCustomFontsFolder();
 
         if (_path.empty())
             return;
+
+        if (!removeTTF(userData))
+            return;
+
+        emuThread->lock();
+        // let freetype free this file first, otherwise we can't delete it.
+        // we need the result immediately. that's why we wait for the emulator and the render thread beforehand.
+        videoDriver->freeFont();
 
         GUIKIT::File file(_path + _fn);
         if (file.exists()) {
@@ -1174,6 +1179,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
                     updateScreenText(false);
             }
         }
+        emuThread->unlock();
     };
 
     layScreenText.options.position.bottomRight.onActivate = [this]() {

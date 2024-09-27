@@ -369,6 +369,11 @@ struct WGL : Video, GL3, RenderThread {
     auto setScreenTextDescription(ScreenTextDescription& desc) -> void {
         screenText.ftSetScreenTextDescription(desc);
     }
+
+    auto freeFont() -> void {
+        wait();
+        screenText.ftUnload();
+    }
 #endif
     auto setAspectRatio(int mode, bool _integerScaling) -> void { // mode: 0: off, 1: TV, 2: Native
         if ((int)viewScreen.mode == mode && viewScreen.hasIntegerScaling == _integerScaling)

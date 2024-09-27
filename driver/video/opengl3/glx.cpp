@@ -655,6 +655,11 @@ struct GLX : public Video, GL3, RenderThread {
     auto setScreenTextDescription(ScreenTextDescription& desc) -> void {
         screenText.ftSetScreenTextDescription(desc);
     }
+
+    auto freeFont() -> void {
+        wait();
+        screenText.ftUnload();
+    }
 #endif
 
     auto freeContext() -> void {
