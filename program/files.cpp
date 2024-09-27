@@ -273,7 +273,7 @@ auto Program::updateSaveIdent( Emulator::Interface* emulator, FileSetting* fSett
         return;
 
     if (autoSaveMode == 2) {
-        auto list = GUIKIT::File::getFolderListAlt( filePath, fileName, true, 10 );
+        auto list = GUIKIT::File::getFolderListAlt( filePath, {fileName}, true, 10 );
         int matches = list.size();
 
         std::string tempFn = fileName;
@@ -283,7 +283,7 @@ auto Program::updateSaveIdent( Emulator::Interface* emulator, FileSetting* fSett
 
             tempFn.pop_back();
 
-            auto list = GUIKIT::File::getFolderListAlt( filePath, tempFn, true, 10 );
+            auto list = GUIKIT::File::getFolderListAlt( filePath, {tempFn}, true, 10 );
             if (list.size() != matches) {
 
                 for(auto& str : list) {
@@ -507,7 +507,6 @@ auto Program::forceSavingSomeGlobalSettings( ) -> void {
 }
 
 auto Program::getCustomSettingsFolder( Emulator::Interface* emulator, bool createFolder ) -> std::string {
-
     std::string _emuIdent = emulator->ident;
     std::string path = globalSettings->get<std::string>( _emuIdent + "_settings_path", "");
     std::string basePath;
@@ -521,6 +520,18 @@ auto Program::getCustomSettingsFolder( Emulator::Interface* emulator, bool creat
 
         path = basePath + path;
     }
+
+    return GUIKIT::File::beautifyPath(path);
+}
+
+auto Program::getCustomFontsFolder(bool createFolder) -> std::string {
+    std::string basePath = GUIKIT::System::getUserDataFolder();
+    std::string path = program->appFolder() + "/fonts/";
+
+    if (createFolder)
+        GUIKIT::File::createDir( path, basePath );
+
+    path = basePath + path;
 
     return GUIKIT::File::beautifyPath(path);
 }
@@ -555,8 +566,7 @@ auto Program::addCustomFont() -> void {
             //font->name = "Topaz a500a1000a2000";
             font->refPtr = (void*)emulator;
             font->filePath = fontFolder() + "TopazPlus_a500_v1.0.ttf";
-
-//            font->filePath = fontFolder() + "Topaz_a500_v1.0.ttf";
+            //font->filePath = fontFolder() + "Topaz_a500_v1.0.ttf";
 
             font->sizeAdjust = 1;
             font->modifier = 0;

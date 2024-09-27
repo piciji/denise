@@ -1,4 +1,6 @@
 
+std::vector<DisplayFont> VideoLayout::displayFonts;
+
 VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
     if (withSpectrum) {
         append(palette,{0u, 0u}, 10);
@@ -319,13 +321,13 @@ VideoScreenTextLayout::Options::Font::Font() {
     append(labelFontSize, {0u, 0u}, 10);
     append(fontSize, {0u, 0u}, 10);
     append(labelFontType, {0u, 0u}, 10);
-    append(fontType, {0u, 0u});
+    append(fontType, {0u, 0u}, 10);
+    append(removeFont, {0u, 0u}, 10);
+    append(addFont, {0u, 0u});
 
     for(unsigned s = 8; s <= 36; s++) {
         fontSize.append(std::to_string(s), s);
     }
-
-    fontType.append("Standard");
 
     setAlignment(0.5);
 }
@@ -396,6 +398,11 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     retroarch.loadPng((uint8_t*)Icons::retroarch, sizeof(Icons::retroarch) );
     colorImage.loadPng((uint8_t*)Icons::color, sizeof(Icons::color));
     menuImage.loadPng((uint8_t*)Icons::menu, sizeof(Icons::menu));
+    addImage.loadPng((uint8_t*)Icons::add, sizeof(Icons::add));
+    delImage.loadPng((uint8_t*)Icons::del, sizeof(Icons::del));
+
+    layScreenText.options.font.addFont.setImage(&addImage);
+    layScreenText.options.font.removeFont.setImage(&delImage);
 
     layShader.main.control.downloadSlang.setImage( &retroarch );
     layShader.main.control.downloadSlang.setUri( "https://buildbot.libretro.com/assets/frontend/shaders_slang.zip" );
@@ -1085,9 +1092,83 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layScreenText.options.font.fontType.onChange = [this]() {
-        std::string fontType = layScreenText.options.font.fontType.text();
-        _settings->set<std::string>("screen_text_font", fontType);
+        int userData = layScreenText.options.font.fontType.userData();
+
+        if (!userData) {
+            _settings->set<std::string>("screen_text_font", "");
+        } else {
+            auto displayFont = getTTF(userData);
+            if (displayFont)
+                _settings->set<std::string>("screen_text_font", displayFont->file);
+        }
+
         updateScreenText(false);
+        updateFontVisibilities();
+    };
+
+    layScreenText.options.font.addFont.onActivate = [this]() {
+        std::string filePath = GUIKIT::BrowserWindow()
+            .setWindow(*this->tabWindow)
+            .setTitle(trans->getA("select font"))
+            .setFilters( { trans->getA("font") + " (*.ttf,*.otf)"} )
+            .allowSystemFiles()
+            .open();
+
+        if (filePath.empty())
+            return;
+
+        auto _fn = GUIKIT::String::getFileNameA(filePath);
+
+        if (_fn.empty() || (!GUIKIT::String::findString(_fn, ".ttf") && !GUIKIT::String::findString(_fn, ".otf")))
+            return;
+
+        std::string _path = program->getCustomFontsFolder(true);
+
+        if (GUIKIT::File::xcopy(filePath, _path + _fn)) {
+            for (auto view : emuConfigViews) {
+                if (view->videoLayout)
+                    view->videoLayout->fillFontTypeList();
+            }
+        }
+    };
+
+    layScreenText.options.font.removeFont.onActivate = [this]() {
+        int userData = layScreenText.options.font.fontType.userData();
+        if (!userData)
+            return;
+
+        auto displayFont = getTTF(userData);
+        if (!displayFont)
+            return;
+
+        auto _fn = displayFont->file;
+        if (_fn.empty())
+            return;
+
+        if (!removeTTF(userData))
+            return;
+
+        std::string _path = program->getCustomFontsFolder();
+
+        if (_path.empty())
+            return;
+
+        GUIKIT::File file(_path + _fn);
+        if (file.exists()) {
+            if (file.del()) {
+                for (auto view : emuConfigViews) {
+                    if (view->videoLayout) {
+                        view->videoLayout->fillFontTypeList();
+                        view->videoLayout->updateFontVisibilities();
+                    }
+                }
+
+                if (emulator != activeEmulator)
+                    program->updateOnScreenText(false);
+                else
+                    updateScreenText(false);
+            }
+        }
     };
 
     layScreenText.options.position.bottomRight.onActivate = [this]() {
@@ -1120,13 +1201,109 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         updateScreenText(true);
     };
 
-    auto list = GUIKIT::File::getFolderList(program->fontFolder(), ".ttf");
-
-    for(auto& info : list) {
-        layScreenText.options.font.fontType.append( info.name );
-    }
+    fillFontTypeList();
 
     loadSettings(true);
+}
+
+auto VideoLayout::fillFontTypeList() -> void {
+    std::vector<std::string> list;
+    auto& fontTypes = layScreenText.options.font.fontType;
+
+    int selUserId = 0;
+    if (fontTypes.rows())
+        selUserId = fontTypes.userData();
+
+    fontTypes.reset();
+    fontTypes.append( trans->getA("default"), 0 );
+
+    list = GUIKIT::File::getFolderListAlt(program->fontFolder(), {".ttf", ".otf"}, false);
+    for(auto& file : list)
+        addTTF(1, file);
+
+    list = GUIKIT::File::getFolderListAlt(program->getCustomFontsFolder(), {".ttf", ".otf"}, false);
+    for(auto& file : list)
+        addTTF(2, file);
+
+    std::sort(displayFonts.begin(), displayFonts.end(), [](DisplayFont& a, DisplayFont& b) -> bool {
+        std::string _sA = a.name;
+        std::string _sB = b.name;
+        GUIKIT::String::toLowerCase(_sA);
+        GUIKIT::String::toLowerCase(_sB);
+        return _sA < _sB;
+    });
+
+    for(auto& displayFont : displayFonts)
+        fontTypes.append( displayFont.name, displayFont.ident );
+
+    fontTypes.setSelectionByUserId(selUserId);
+}
+
+auto VideoLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
+    static int counter = 0;
+    uint16_t ident = mode << 14;
+
+    for(auto& displayFont : displayFonts) {
+        if ((displayFont.ident & 0xc000) == ident && displayFont.file == _fontFile)
+            return;
+    }
+    std::string out = _fontFile;
+    std::string screenTextFontPath = "";
+
+    if (mode == 1) {
+        screenTextFontPath = program->fontFolder() + _fontFile;
+    } else if (mode == 2) {
+        screenTextFontPath = program->getCustomFontsFolder() + _fontFile;
+    }
+
+    if (!screenTextFontPath.empty()) {
+        GUIKIT::File file(screenTextFontPath);
+        if (file.open()) {
+            uint8_t* _data = file.read();
+            if (_data) {
+                GUIKIT::TTF ttf(_data, file.getSize());
+                out = ttf.getFontName();
+                if (out.empty())
+                    out = _fontFile;
+            }
+        }
+    }
+
+    ident += counter++;
+    displayFonts.push_back({_fontFile, out, ident});
+}
+
+auto VideoLayout::getTTF(uint16_t ident) -> DisplayFont* {
+    for(auto& displayFont : displayFonts) {
+        if (displayFont.ident == ident)
+            return &displayFont;
+    }
+    return nullptr;
+}
+
+auto VideoLayout::getTTF(std::string _file) -> DisplayFont* {
+    for(auto& displayFont : displayFonts) {
+        if (displayFont.file == _file)
+            return &displayFont;
+    }
+    return nullptr;
+}
+
+auto VideoLayout::removeTTF(uint16_t ident) -> bool {
+    for(int i = 0; i < displayFonts.size(); i++) {
+        DisplayFont& displayFont = displayFonts[i];
+        if (displayFont.ident == ident) {
+            return GUIKIT::Vector::eraseVectorPos(displayFonts, i);
+        }
+    }
+    return false;
+}
+
+auto VideoLayout::updateFontVisibilities() -> void {
+    int userId = layScreenText.options.font.fontType.userData();
+    if (!userId)
+        _settings->set<std::string>("screen_text_font", "");
+    layScreenText.options.font.removeFont.setEnabled( (userId >> 14) == 2 );
 }
 
 auto VideoLayout::updateScreenText(bool keepFontPath, bool warn) -> void {
@@ -1683,6 +1860,8 @@ auto VideoLayout::translate() -> void {
     layScreenText.options.font.fontType.setText(0, trans->getA("default"));
     layScreenText.options.font.labelFontSize.setText( trans->getA("Font Size", true) );
     layScreenText.options.font.labelFontType.setText( trans->getA("font", true) );
+    layScreenText.options.font.addFont.setText( trans->getA("add") );
+    layScreenText.options.font.removeFont.setText( trans->getA("remove") );
     layScreenText.options.position.label.setText( trans->getA("position", true) );
     layScreenText.options.position.bottomLeft.setText( trans->getA("bottom left") );
     layScreenText.options.position.bottomCenter.setText( trans->getA("bottom center") );
@@ -1792,7 +1971,12 @@ auto VideoLayout::loadSettings(bool init) -> void {
     unsigned screenTextPosition = _settings->get<unsigned>("screen_text_position", 0);
 
     layScreenText.options.font.fontSize.setSelectionByUserId(screenTextFontSize);
-    layScreenText.options.font.fontType.setSelectionByRow(screenTextFont);
+
+    auto displayFont = getTTF(screenTextFont);
+    if (displayFont)
+        layScreenText.options.font.fontType.setSelectionByUserId(displayFont->ident);
+
+    updateFontVisibilities();
 
     switch((DRIVER::ScreenTextDescription::Position)screenTextPosition) {
         default:

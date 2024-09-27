@@ -613,6 +613,14 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
             screenTextFontPath = fontFolder() + _fontFile;
             GUIKIT::File file(screenTextFontPath);
             found = file.exists();
+            file.unload();
+
+            if (!found) {
+                screenTextFontPath = getCustomFontsFolder() + _fontFile;
+                file.setFile(screenTextFontPath);
+                found = file.exists();
+                file.unload();
+            }
         }
 
         if (!found) {
@@ -621,8 +629,9 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
 
             if (!systemFont.empty()) {
                 screenTextFontPath = systemFont;
-                GUIKIT::File file2(screenTextFontPath);
-                found = file2.exists();
+                GUIKIT::File file(screenTextFontPath);
+                found = file.exists();
+                file.unload();
             }
 
             if (!found) {

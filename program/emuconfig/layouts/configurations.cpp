@@ -170,9 +170,9 @@ StateFastLayout::Top::Top() {
 }
 
 StateFastLayout::Options::Options() {
-    append(autoLabel,{0u, 0u}, 20);
-    append(autoIdentOff,{0u, 0u}, 5);
-    append(autoIdentOn,{0u, 0u}, 5);
+    append(autoLabel,{0u, 0u}, 10);
+    append(autoIdentOff,{0u, 0u}, 10);
+    append(autoIdentOn,{0u, 0u}, 10);
     append(autoIdentCutFollowUp,{0u, 0u});
 
     GUIKIT::RadioBox::setGroup(autoIdentOff, autoIdentOn, autoIdentCutFollowUp);

@@ -408,7 +408,7 @@ auto File::getPath( std::string _fn, bool returnSlashIfError ) -> std::string {
     return _fn.erase(end + 1);
 }
 
-auto File::getFolderListAlt( std::string path, const std::string& subStr, bool fromBeginning, unsigned limit ) -> std::vector<std::string> {
+auto File::getFolderListAlt( std::string path, std::vector<std::string> subStrs, bool fromBeginning, unsigned limit ) -> std::vector<std::string> {
     std::vector<std::string> list;
     std::string file;
     
@@ -432,15 +432,25 @@ auto File::getFolderListAlt( std::string path, const std::string& subStr, bool f
         if (file == "." || file == "..")
             continue;
 
-		if (!subStr.empty()) {
+		if (subStrs.size()) {
+		    bool found = false;
 		    if (fromBeginning) {
-		        if(!String::startsWith(file, subStr))
-		            continue;
+		        for(auto& subStr : subStrs) {
+		            if(String::startsWith(file, subStr)) {
+		                found = true;
+		                break;
+		            }
+		        }
 		    } else {
-		        if(!String::findString(file, subStr))
-		            continue;
+		        for(auto& subStr : subStrs) {
+		            if(String::findString(file, subStr)) {
+		                found = true;
+		                break;
+		            }
+		        }
 		    }
-
+		    if (!found)
+		        continue;
 		}
 
         list.push_back( file );
@@ -707,4 +717,25 @@ auto File::buildRelativePath(std::string refPath, std::string targetPath) -> std
     }
 
     return targetPath;
+}
+
+auto File::xcopy(const std::string& src, const std::string& dest) -> bool {
+    File inFile(src);
+
+    if(!inFile.open())
+        return false;
+
+    auto data = inFile.read();
+
+    if(data == nullptr)
+        return false;
+
+    File outFile(dest);
+    if (!outFile.open(Mode::Write))
+        return false;
+
+    if (!outFile.write(data, inFile.getSize()))
+        return false;
+
+    return true;
 }

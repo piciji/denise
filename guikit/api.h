@@ -104,6 +104,15 @@ protected:
     auto normalize(uint64_t color, unsigned sourceDepth, unsigned targetDepth) -> uint64_t;
 };
 
+struct TTF {
+    uint8_t* data = nullptr;
+    unsigned size = 0;
+
+    TTF(uint8_t* data, unsigned size);
+
+    auto getFontName() -> std::string;
+};
+
 struct Size {
     static const unsigned Maximum = ~0u;
     static const unsigned Minimum =  0u;
@@ -618,7 +627,7 @@ struct ComboButton : Widget {
     auto setSelection(unsigned selection) -> void;
     auto activate(unsigned selection) -> void;
     auto setSelectionByUserId(int userId) -> void;
-    auto setSelectionByRow(std::string row) -> void;
+    auto setSelectionByRow(const std::string& row) -> void;
     auto setText(unsigned selection, const std::string& text) -> void;
     auto setUserData(unsigned selection, int userData) -> void;
     auto setText(const std::string& text) -> void = delete;
@@ -1178,6 +1187,7 @@ struct BrowserWindow {
     auto setContentViewFirstRow(unsigned foregroundColor, unsigned backgroundColor) -> BrowserWindow&;
     auto setContentViewColorTooltips(bool colorTooltips) -> BrowserWindow&;
     auto setContentViewHint(std::string hint, std::string tooltip = "") -> BrowserWindow&;
+    auto allowSystemFiles() -> BrowserWindow&; // e.g. c:/Windows/Fonts
 
     auto setCallbacks( std::function<void (std::vector<std::string> filePaths, unsigned selection)> onOkClick, std::function<void ()> onCancelClick ) -> BrowserWindow&;
     auto getContentViewSelection() -> unsigned;
@@ -1245,6 +1255,7 @@ struct BrowserWindow {
 		bool modal = true;
         bool hideOkButton = false;
         CheckButton* orderBySelected = nullptr;
+        bool allowSystemFiles = false;
     } state;
 
     pBrowserWindow& p;    
@@ -1395,7 +1406,7 @@ struct File {
     }
     static auto suppportedCompressionFilter() -> std::string { return "zip, gz, tar, tgz, tar.gz (*.zip,*.gz,*.tar,*.tgz,*.tar.gz)"; }
     static auto getFolderList( std::string path, const std::string& subStr = "") -> std::vector<Info>;
-    static auto getFolderListAlt( std::string path, const std::string& subStr, bool fromBeginning, unsigned limit = 0 ) -> std::vector<std::string>;
+    static auto getFolderListAlt( std::string path, std::vector<std::string> subStrs, bool fromBeginning, unsigned limit = 0 ) -> std::vector<std::string>;
     static auto isDir( std::string path ) -> bool;
     static auto createDir( std::string path, std::string basePath = "" ) -> bool;
     static auto beautifyPath(std::string path) -> std::string;
@@ -1406,6 +1417,7 @@ struct File {
     static auto buildRelativePath(std::string refPath, std::string targetPath) -> std::string;
     static auto isAbsolute(const std::string& path) -> bool;
     static auto removeDirectory( const std::string& path ) -> void;
+    static auto xcopy(const std::string& src, const std::string& dest) -> bool;
 
     auto setFile(std::string filePath) -> void;
     auto getFile() const -> std::string { return filePath; }

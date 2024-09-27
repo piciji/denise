@@ -150,6 +150,7 @@ namespace DRIVER {
         message.vbo = nullptr;
         message.buffer = nullptr;
         overlay.vbo = nullptr;
+        overlay.buffer = nullptr;
         progress.vbo = nullptr;
         progress.buffer = nullptr;
         updateRTS = false;
@@ -1259,12 +1260,13 @@ namespace DRIVER {
 #endif
         if (dndOverlay.enabled()) {
             buildOverlayTexture();
-            blendRect(overlay);
+            blendRect<false, true>(overlay);
         }
 
         if (progressVisible && progress.texture.ptr) {
             setProgressPosition();
-            blendRectProgress(progress);
+            setProgressRotation();
+            blendRect<true, true>(progress);
         }
 
         if (settings.vrr) {
@@ -1395,7 +1397,8 @@ namespace DRIVER {
         context->GSSetShader(shader.gs, nullptr, 0);
     }
 
-    auto blendRect(Rectangle& rect, ShaderPreset::Filter _filter = ShaderPreset::FILTER_LINEAR) -> void {
+    template<bool hasFragmentBuffer, bool hasLinearFilter>
+    auto blendRect(Rectangle& rect) -> void {
         applyShader(rect.shader);
         context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
         UINT stride = sizeof(D3DVertex);
@@ -1403,31 +1406,13 @@ namespace DRIVER {
         context->IASetVertexBuffers(0, 1, &rect.vbo, &stride, &offset);
 
         context->PSSetShaderResources(0, 1, &rect.texture.view);
-        context->PSSetSamplers(0, 1, &samplers[_filter][ShaderPreset::WRAP_EDGE]);
-        context->OMSetBlendState(blendEnable, nullptr, D3D11_DEFAULT_SAMPLE_MASK);
-        context->Draw(4, 0);
-    }
+        if constexpr (hasLinearFilter)
+            context->PSSetSamplers(0, 1, &samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE]);
+        else
+            context->PSSetSamplers(0, 1, &samplers[ShaderPreset::FILTER_NEAREST][ShaderPreset::WRAP_EDGE]);
 
-    auto blendRectProgress(Rectangle& rect) -> void {
-        applyShader(rect.shader);
-        context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-        UINT stride = sizeof(D3DVertex);
-        UINT offset = 0;
-        context->IASetVertexBuffers(0, 1, &rect.vbo, &stride, &offset);
-
-        context->PSSetShaderResources(0, 1, &rect.texture.view);
-        context->PSSetSamplers(0, 1, &samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE]);
-
-        D3D11_MAPPED_SUBRESOURCE subRes;
-        if (SUCCEEDED(context->Map((ID3D11Resource*)progress.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &subRes))) {
-            std::memcpy((uint8_t*)subRes.pData, (uint8_t*)&progressDegree, 4);
-            context->Unmap((ID3D11Resource*)progress.buffer, 0);
-            context->PSSetConstantBuffers(0, 1, &progress.buffer);
-        }
-
-        if (++progressDegree == 360)
-            progressDegree = 0;
-
+        if constexpr (hasFragmentBuffer)
+            context->PSSetConstantBuffers(0, 1, &rect.buffer);
         context->OMSetBlendState(blendEnable, nullptr, D3D11_DEFAULT_SAMPLE_MASK);
         context->Draw(4, 0);
     }
@@ -1535,7 +1520,7 @@ namespace DRIVER {
             if (ftHandleAnimation(viewport))
                 return;
 
-        blendRect(message, ShaderPreset::FILTER_NEAREST);
+        blendRect<true, false>(message);
     }
 
     auto ftBuildTexture(std::string text, bool keepOldSize = false) -> void {
@@ -1572,7 +1557,7 @@ namespace DRIVER {
         memcpy((uint8_t*)res.pData + 16, &_colBgNorm, 16);
 
         context->Unmap((ID3D11Resource*)message.buffer, 0);
-        context->PSSetConstantBuffers(0, 1, &message.buffer);
+        //context->PSSetConstantBuffers(0, 1, &message.buffer);
     }
 #endif
 
@@ -1630,6 +1615,17 @@ namespace DRIVER {
             if (!D3D11Utility::buildTexture(context, progress.texture, _data))
                 return;
         }
+    }
+
+
+    auto setProgressRotation() -> void {
+        D3D11_MAPPED_SUBRESOURCE subRes;
+        if (SUCCEEDED(context->Map((ID3D11Resource*)progress.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &subRes))) {
+            std::memcpy((uint8_t*)subRes.pData, (uint8_t*)&progressDegree, 4);
+            context->Unmap((ID3D11Resource*)progress.buffer, 0);
+        }
+        if (++progressDegree == 360)
+            progressDegree = 0;
     }
 
     auto setProgressPosition() -> void {

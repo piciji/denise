@@ -35,6 +35,7 @@ namespace GUIKIT {
 #include "tools/string.cpp"
 #include "tools/utf8.cpp"
 #include "tools/layout.cpp"
+#include "tools/ttf.cpp"
 
 std::vector<Base*> Base::objects;
 
@@ -905,7 +906,7 @@ auto ComboButton::setSelectionByUserId(int userId) -> void {
     setSelection( selection );
 }
 
-auto ComboButton::setSelectionByRow(std::string row) -> void {
+auto ComboButton::setSelectionByRow(const std::string& row) -> void {
     unsigned selection = 0;
 
     bool found = false;
@@ -1490,6 +1491,11 @@ auto BrowserWindow::setContentViewColorTooltips(bool colorTooltips) -> BrowserWi
 auto BrowserWindow::setContentViewHint(std::string hint, std::string tooltip) -> BrowserWindow& {
     state.contentView.hint = hint;
     state.contentView.hintTooltip = tooltip;
+    return *this;
+}
+
+auto BrowserWindow::allowSystemFiles() -> BrowserWindow& {
+    state.allowSystemFiles = true;
     return *this;
 }
 

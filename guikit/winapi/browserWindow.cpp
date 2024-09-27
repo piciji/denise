@@ -5,6 +5,8 @@
 #define IDC_BUTTON2         1115
 #define IDC_CHECKBOX        1116
 
+DEFINE_GUID(BHID_DataObject, 0xb8c0bd9f, 0xed24, 0x455c, 0x83, 0xe6, 0xd5, 0x39, 0xc, 0x4f, 0xe8, 0xc4);
+
 HWND pBrowserWindow::dummyParent = nullptr;
 
 STDMETHODIMP FileDialogEventHandler::OnFolderChange ( IFileDialog* pfd ) {
@@ -235,8 +237,9 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
     pDialogEventHandler->state = &state;
     pDialogEventHandler->browserWindow = &browserWindow;
     pDialogEventHandler->pDlg = pDlg;
-    
-    pDlg->SetFileTypes ( state.filters.size(), aFileTypes );
+
+    if (!state.allowSystemFiles)
+        pDlg->SetFileTypes ( state.filters.size(), aFileTypes );
     
     for (i = 0; i < state.filters.size(); i++) {
         delete aFileTypes[i].pszName;
@@ -262,6 +265,10 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
         DWORD dwFlags;
         pDlg->GetOptions(&dwFlags);
         pDlg->SetOptions(dwFlags | FOS_ALLOWMULTISELECT);
+    } else if (state.allowSystemFiles) {
+        DWORD dwFlags;
+        pDlg->GetOptions(&dwFlags);
+        pDlg->SetOptions(dwFlags | FOS_ALLNONSTORAGEITEMS);
     }
 
     IFileDialogCustomize* pDlgc = nullptr;
@@ -313,6 +320,32 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
                 name = utf8_t(pwsz);
                 std::replace( name.begin(), name.end(), '\\', '/');
                 CoTaskMemFree ( pwsz );
+            } else if (state.allowSystemFiles) {
+                SFGAOF attribs;
+                hr = pItem->GetAttributes(~0, &attribs);
+                if ( SUCCEEDED(hr) ) {
+                    if ((attribs & SFGAO_STREAM) == 0) {
+                        IDataObject* ppdtobj;
+                        hr = pItem->BindToHandler(0, BHID_DataObject, IID_IDataObject, reinterpret_cast<void**>(&ppdtobj));
+                        FORMATETC ftec;
+                        std::memset(&ftec, 0, sizeof(FORMATETC));
+                        ftec.cfFormat = CF_HDROP;
+                        ftec.dwAspect = DVASPECT_CONTENT;
+                        ftec.lindex = -1;
+                        ftec.tymed = TYMED_HGLOBAL;
+                        STGMEDIUM stg;
+                        hr = ppdtobj->GetData(&ftec, &stg);
+                        if ( SUCCEEDED(hr) ) {
+                            TCHAR szNextFile[MAX_PATH];
+                            HDROP hdrop = static_cast<HDROP>(stg.hGlobal);
+                            auto numFiles = DragQueryFile(hdrop, -1, NULL, 0);
+                            if (numFiles) {
+                                if (DragQueryFile(hdrop, 0, szNextFile, MAX_PATH) > 0)
+                                    name = utf8_t(szNextFile);
+                            }
+                        }
+                    }
+                }
             }
         }
         if(pItem) pItem->Release();

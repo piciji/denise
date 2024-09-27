@@ -240,6 +240,8 @@ struct VideoScreenTextLayout : GUIKIT::VerticalLayout {
             GUIKIT::ComboButton fontSize;
             GUIKIT::Label labelFontType;
             GUIKIT::ComboButton fontType;
+            GUIKIT::Button removeFont;
+            GUIKIT::Button addFont;
 
             Font();
         } font;
@@ -274,6 +276,12 @@ struct VideoScreenTextLayout : GUIKIT::VerticalLayout {
     } options;
 
     VideoScreenTextLayout();
+};
+
+struct DisplayFont {
+    std::string file;
+    std::string name;
+    uint16_t ident;
 };
 
 struct VideoLayout : GUIKIT::HorizontalLayout {
@@ -311,9 +319,12 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image retroarch;
     GUIKIT::Image colorImage;
     GUIKIT::Image menuImage;
+    GUIKIT::Image addImage;
+    GUIKIT::Image delImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;
+    static std::vector<DisplayFont> displayFonts;
 
     struct TviParam {
         GUIKIT::TreeViewItem* tvi;
@@ -346,6 +357,12 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto enableGPUMode(bool state) -> void;
     auto updateScreenText(bool keepFontPath, bool warn = false) -> void;
     auto prepareColBox(bool warning) -> void;
+    auto fillFontTypeList() -> void;
+    auto updateFontVisibilities() -> void;
+    static auto addTTF(unsigned mode, const std::string& _fontFile) -> void;
+    static auto getTTF(uint16_t ident) -> DisplayFont*;
+    static auto getTTF(std::string _file) -> DisplayFont*;
+    static auto removeTTF(uint16_t ident) -> bool;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

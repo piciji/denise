@@ -856,3 +856,4 @@ screen text = On-screen Text
 color selection = Color Selection
 Padding = Padding
 Margin = Margin
+select font = select font

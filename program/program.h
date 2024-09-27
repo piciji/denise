@@ -92,6 +92,7 @@ struct Program : Emulator::Interface::Bind {
     auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
     auto forceSavingSomeGlobalSettings() -> void;
     auto getCustomSettingsFolder( Emulator::Interface* emulator, bool createFolder = false ) -> std::string;
+	auto getCustomFontsFolder(bool createFolder = false) -> std::string;
     auto initEmulator( Emulator::Interface* emulator ) -> void;
     auto setMemoryPattern( Emulator::Interface* emulator ) -> void;
 	auto getMemoryPatternFromConfig(Emulator::Interface* emulator, Emulator::Interface::MemoryPattern& pattern) -> void;
