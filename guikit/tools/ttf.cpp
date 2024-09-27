@@ -12,6 +12,17 @@ auto TTF::getFontName() -> std::string {
         return "";
 
     uint8_t* ptr = data;
+    if (std::memcmp(ptr, "ttcf", 4) == 0) {
+        ptr += 8;
+        unsigned numFonts = (*ptr << 24) | (*(ptr + 1) << 16) | (*(ptr + 2) << 8) | *(ptr + 3);
+        if (numFonts == 0)
+            return "";
+
+        ptr += 4;
+        unsigned firstFontOffset = (*ptr << 24) | (*(ptr + 1) << 16) | (*(ptr + 2) << 8) | *(ptr + 3);
+        ptr = data + firstFontOffset;
+    }
+
     uint8_t* ptr2;
     ptr += 4;
 
