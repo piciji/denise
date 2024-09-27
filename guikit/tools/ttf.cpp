@@ -8,7 +8,7 @@ TTF::TTF(uint8_t* data, unsigned size) {
 
 auto TTF::getFontName() -> std::string {
     std::string out = "";
-    if (size < 12)
+    if (size < 16)
         return "";
 
     uint8_t* ptr = data;
@@ -21,6 +21,7 @@ auto TTF::getFontName() -> std::string {
         ptr += 4;
         unsigned firstFontOffset = (*ptr << 24) | (*(ptr + 1) << 16) | (*(ptr + 2) << 8) | *(ptr + 3);
         ptr = data + firstFontOffset;
+        TTF_CHECK_SIZE(ptr)
     }
 
     uint8_t* ptr2;
@@ -90,8 +91,8 @@ auto TTF::getFontName() -> std::string {
             }
 
             if (winPos >= 0 || macPos >= 0) {
-                uint8_t* ptr3 = data + offset + winPos + so;                
                 if (winPos >= 0) {
+                    uint8_t* ptr3 = data + offset + winPos + so;
                     TTF_CHECK_SIZE(ptr3 + winLen)
                     uint8_t* buffer = new uint8_t[winLen / 2];
                     for (int c = 0; c < winLen / 2; c += 1) {
@@ -100,7 +101,8 @@ auto TTF::getFontName() -> std::string {
                     }
                     out.assign((char*)buffer, winLen / 2);
                     delete[] buffer;
-                } else {
+                } else if (macPos >= 0) {
+                    uint8_t* ptr3 = data + offset + macPos + so;
                     TTF_CHECK_SIZE(ptr3 + macLen)
                     out.assign((char*)ptr3, macLen);
                 }
