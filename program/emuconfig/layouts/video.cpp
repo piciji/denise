@@ -1110,16 +1110,21 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
             .setTitle(trans->getA("select font"))
-            .setFilters( { trans->getA("font") + " (*.ttf,*.otf)"} )
+            .setFilters( { trans->getA("font") + " (*.ttf,*.otf,*.ttc)"} )
+            .setPath( globalSettings->get<std::string>("font_path", "") )
             .allowSystemFiles()
             .open();
 
         if (filePath.empty())
             return;
 
+        globalSettings->set<std::string>("font_path", GUIKIT::File::getPath(filePath), true);
+
         auto _fn = GUIKIT::String::getFileNameA(filePath);
 
-        if (_fn.empty() || (!GUIKIT::String::findString(_fn, ".ttf") && !GUIKIT::String::findString(_fn, ".otf")))
+        if (_fn.empty() || (!GUIKIT::String::findString(_fn, ".ttf")
+                && !GUIKIT::String::findString(_fn, ".otf")
+                && !GUIKIT::String::findString(_fn, ".ttc")))
             return;
 
         std::string _path = program->getCustomFontsFolder(true);
@@ -1217,11 +1222,11 @@ auto VideoLayout::fillFontTypeList() -> void {
     fontTypes.reset();
     fontTypes.append( trans->getA("default"), 0 );
 
-    list = GUIKIT::File::getFolderListAlt(program->fontFolder(), {".ttf", ".otf"}, false);
+    list = GUIKIT::File::getFolderListAlt(program->fontFolder(), {".ttf", ".otf", ".ttc"}, false);
     for(auto& file : list)
         addTTF(1, file);
 
-    list = GUIKIT::File::getFolderListAlt(program->getCustomFontsFolder(), {".ttf", ".otf"}, false);
+    list = GUIKIT::File::getFolderListAlt(program->getCustomFontsFolder(), {".ttf", ".otf", ".ttc"}, false);
     for(auto& file : list)
         addTTF(2, file);
 

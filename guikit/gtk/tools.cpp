@@ -337,7 +337,7 @@ auto pFont::systemFontFile() -> std::string {
 
 				if (String::findString(sStyle, "regular")) {
 					std::string sFile(reinterpret_cast<char*> (file));
-					if (String::findString(sFile, ".otf") || String::findString(sFile, ".ttf")) {
+					if (String::findString(sFile, ".otf") || String::findString(sFile, ".ttf") || String::findString(sFile, ".ttc")) {
 						std::string sFamily(reinterpret_cast<char*> (family));
 						if (sFamily == defaultFont) {
 							fontFile = sFile;
