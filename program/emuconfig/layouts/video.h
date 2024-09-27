@@ -355,8 +355,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto clearShaderError() -> void;
     auto addShaderUI() -> void;
     auto enableGPUMode(bool state) -> void;
-    auto updateScreenText(bool keepFontPath, bool warn = false) -> void;
-    auto prepareColBox(bool warning) -> void;
+    auto updateScreenText(bool keepFontPath) -> void;
+    auto prepareColBox() -> void;
     auto fillFontTypeList() -> void;
     auto updateFontVisibilities() -> void;
     static auto addTTF(unsigned mode, const std::string& _fontFile) -> void;

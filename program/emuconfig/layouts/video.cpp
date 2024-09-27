@@ -1004,13 +1004,13 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     }
 
     layScreenText.colorBox.type.normal.onActivate = [this]() {
-        prepareColBox(false);
-        updateScreenText(true, false);
+        prepareColBox();
+        updateScreenText(true);
     };
 
     layScreenText.colorBox.type.warning.onActivate = [this]() {
-        prepareColBox(true);
-        updateScreenText(true, true);
+        prepareColBox();
+        updateScreenText(true);
     };
 
     layScreenText.colorBox.type.reset.onActivate = [this]() {
@@ -1018,9 +1018,9 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         _settings->remove("screen_text_bgcolor");
         _settings->remove("screen_warn_color");
         _settings->remove("screen_warn_bgcolor");
-        bool warn = layScreenText.colorBox.type.warning.checked();
-        prepareColBox( warn );
-        updateScreenText(true, warn);
+
+        prepareColBox();
+        updateScreenText(true);
     };
 
     for(int compBox = 0; compBox < 2; compBox++) {
@@ -1042,7 +1042,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
                 layScreenText.colorBox.selection.componentBox[compBox].components[component].value.setText( std::to_string(position) );
                 layScreenText.colorBox.selection.control.canvas[compBox].setBackgroundColor(col);
                 layScreenText.colorBox.selection.control.hex[compBox].setText( GUIKIT::String::convertIntToHex(col & 0xffffff, true) );
-                updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+                updateScreenText(true);
             };
         }
     }
@@ -1050,39 +1050,39 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layScreenText.options.textPadding.paddingHorizontal.slider.onChange = [this](unsigned position) {
         _settings->set<unsigned>("screen_text_padding_horizontal", position);
         layScreenText.options.textPadding.paddingHorizontal.value.setText( std::to_string(position) );
-        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+        updateScreenText(true);
     };
 
     layScreenText.options.textPadding.paddingVertical.slider.onChange = [this](unsigned position) {
         _settings->set<unsigned>("screen_text_padding_vertical", position);
         layScreenText.options.textPadding.paddingVertical.value.setText( std::to_string(position) );
-        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+        updateScreenText(true);
     };
 
     layScreenText.options.textPadding.paddingVertical.active.onToggle = [this](bool checked) {
         _settings->set<bool>("screen_text_padding_separate", checked);
         layScreenText.options.textPadding.paddingVertical.slider.setEnabled(checked);
         layScreenText.options.textPadding.paddingVertical.value.setEnabled(checked);
-        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+        updateScreenText(true);
     };
 
     layScreenText.options.textMargin.marginHorizontal.slider.onChange = [this](unsigned position) {
         _settings->set<unsigned>("screen_text_margin_horizontal", position);
         layScreenText.options.textMargin.marginHorizontal.setValue( GUIKIT::String::formatFloatingPoint((float)position / 5.0f, 2, true) );
-        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+        updateScreenText(true);
     };
 
     layScreenText.options.textMargin.marginVertical.slider.onChange = [this](unsigned position) {
         _settings->set<unsigned>("screen_text_margin_vertical", position);
         layScreenText.options.textMargin.marginVertical.setValue( GUIKIT::String::formatFloatingPoint((float)position / 5.0f, 2, true) );
-        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+        updateScreenText(true);
     };
 
     layScreenText.options.textMargin.marginVertical.active.onToggle = [this](bool checked) {
         _settings->set<bool>("screen_text_margin_separate", checked);
         layScreenText.options.textMargin.marginVertical.slider.setEnabled(checked);
         layScreenText.options.textMargin.marginVertical.value.setEnabled(checked);
-        updateScreenText(true, layScreenText.colorBox.type.warning.checked());
+        updateScreenText(true);
     };
 
     layScreenText.options.font.fontSize.onChange = [this]() {
@@ -1311,13 +1311,13 @@ auto VideoLayout::updateFontVisibilities() -> void {
     layScreenText.options.font.removeFont.setEnabled( (userId >> 14) == 2 );
 }
 
-auto VideoLayout::updateScreenText(bool keepFontPath, bool warn) -> void {
+auto VideoLayout::updateScreenText(bool keepFontPath) -> void {
     if (emulator != activeEmulator)
         return;
 
     program->updateOnScreenText(keepFontPath);
     if (statusHandler)
-        statusHandler->setMessage( trans->getA("changes applied"), 4, warn );
+        statusHandler->setMessage( trans->getA("changes applied"), 4, layScreenText.colorBox.type.warning.checked() );
 }
 
 auto VideoLayout::countFloatingPoint(ShaderPreset::Param& param, int& places, int& decimalPlaces) -> void {
@@ -1993,7 +1993,7 @@ auto VideoLayout::loadSettings(bool init) -> void {
         case DRIVER::ScreenTextDescription::POSITION_TOP_LEFT: layScreenText.options.position.topLeft.setChecked(); break;
     }
 
-    prepareColBox( layScreenText.colorBox.type.warning.checked() );
+    prepareColBox();
 
     unsigned screenTextPaddingHorizontal = _settings->get<unsigned>("screen_text_padding_horizontal", 10, {0, 60});
     unsigned screenTextPaddingVertical = _settings->get<unsigned>("screen_text_padding_vertical", 8, {0, 30});
@@ -2023,10 +2023,11 @@ auto VideoLayout::loadSettings(bool init) -> void {
     layScreenText.options.textMargin.marginVertical.value.setEnabled(marginSeparate);
 }
 
-auto VideoLayout::prepareColBox(bool warning) -> void {
+auto VideoLayout::prepareColBox() -> void {
     auto& area = layScreenText.colorBox.selection;
+    bool warn = layScreenText.colorBox.type.warning.checked();
 
-    if (warning) {
+    if (warn) {
         area.componentBox[COM_BOX_FG].ident = "screen_warn_color";
         area.componentBox[COM_BOX_BG].ident = "screen_warn_bgcolor";
         area.componentBox[COM_BOX_FG].defaultCol = (255 << 24) | (177 << 16) | (3 << 8) | (23 << 0);
