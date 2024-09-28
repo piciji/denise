@@ -328,7 +328,7 @@ struct Freetype {
 
         while ((code = utf8decode(text, index)) != 0) {
 
-            if (FT_Load_Char(ftFace, code, FT_LOAD_RENDER)) {
+            if (FT_Load_Char(ftFace, code, FT_LOAD_RENDER | FT_LOAD_NO_BITMAP)) {
                 continue;
             }
 
@@ -387,7 +387,7 @@ struct Freetype {
         unsigned curPos;
 
         while ((code = utf8decode(text, index)) != 0) {
-            if (FT_Load_Char(ftFace, code, FT_LOAD_RENDER)) {
+            if (FT_Load_Char(ftFace, code, FT_LOAD_RENDER | FT_LOAD_NO_BITMAP)) {
                 continue;
             }
 
