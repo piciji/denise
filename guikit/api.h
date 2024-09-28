@@ -57,6 +57,7 @@ struct pImageView;
 struct Zip;
 struct Gzip;
 struct Tar;
+struct File;
 
 struct Base {
     unsigned id;
@@ -105,12 +106,15 @@ protected:
 };
 
 struct TTF {
-    uint8_t* data = nullptr;
-    unsigned size = 0;
+    File* file = nullptr;
 
-    TTF(uint8_t* data, unsigned size);
+    TTF(const std::string& path);
+    ~TTF();
 
     auto getFontName() -> std::string;
+protected:
+    template<typename T> auto readData(unsigned& offset, T& result ) -> bool;
+    auto readBuffer(uint8_t* buffer, unsigned& offset, unsigned length) -> bool;
 };
 
 struct Size {

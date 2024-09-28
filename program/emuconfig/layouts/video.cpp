@@ -1268,17 +1268,10 @@ auto VideoLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
     }
 
     if (!screenTextFontPath.empty()) {
-        GUIKIT::File file(screenTextFontPath);
-        if (file.open()) {
-            uint8_t* _data = file.read();
-            if (_data) {
-                GUIKIT::TTF ttf(_data, file.getSize());
-                out = ttf.getFontName();
-                if (out.empty())
-                    out = _fontFile;
-            }
-        }
-        file.unload();
+        GUIKIT::TTF ttf(screenTextFontPath);
+        out = ttf.getFontName();
+        if (out.empty())
+            out = _fontFile;
     }
 
     ident += counter++;
