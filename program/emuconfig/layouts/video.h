@@ -281,7 +281,12 @@ struct VideoScreenTextLayout : GUIKIT::VerticalLayout {
 struct DisplayFont {
     std::string file;
     std::string name;
+    unsigned index;
     uint16_t ident;
+
+    auto getMode() -> uint8_t {
+        return (ident >> 14) & 3;
+    }
 };
 
 struct VideoLayout : GUIKIT::HorizontalLayout {
@@ -361,8 +366,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto updateFontVisibilities() -> void;
     static auto addTTF(unsigned mode, const std::string& _fontFile) -> void;
     static auto getTTF(uint16_t ident) -> DisplayFont*;
-    static auto getTTF(std::string _file) -> DisplayFont*;
-    static auto removeTTF(uint16_t ident) -> bool;
+    static auto getTTF(const std::string& file, int fontIndex) -> DisplayFont*;
+    static auto removeTTF(const std::string& file, uint8_t mode) -> bool;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

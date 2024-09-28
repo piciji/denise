@@ -604,9 +604,11 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
     bool marginSeparate = _settings->get<bool>("screen_text_margin_separate", false);
 
     std::string screenTextFontPath = "";
+    unsigned fIndex = 0;
 
     if (!keepFontPath) {
         std::string _fontFile = _settings->get<std::string>("screen_text_font", "");
+        fIndex = _settings->get<unsigned>("screen_text_findex", 0);
         bool found = false;
 
         if (!_fontFile.empty()) {
@@ -624,6 +626,7 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
         }
 
         if (!found) {
+            fIndex = 0;
             if (systemFont == "inv") // one time only
                 systemFont = GUIKIT::Font::systemFontFile();
 
@@ -648,6 +651,7 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
     desc.warnColor = screenWarnColor;
     desc.warnBackgroundColor = screenWarnBgColor;
     desc.fontPath = screenTextFontPath;
+    desc.fontIndex = fIndex;
     desc.paddingHorizontal = screenTextPaddingHorizontal;
     desc.paddingVertical = paddingSeparate ? (int)screenTextPaddingVertical : -1;
     desc.marginHorizontal = screenTextMarginHorizontal;

@@ -111,7 +111,8 @@ struct TTF {
     TTF(const std::string& path);
     ~TTF();
 
-    auto getFontName() -> std::string;
+    auto getFontNames() -> std::vector<std::string>;
+    auto getFontName(unsigned offset) -> std::string;
 protected:
     template<typename T> auto readData(unsigned& offset, T& result ) -> bool;
     auto readBuffer(uint8_t* buffer, unsigned& offset, unsigned length) -> bool;

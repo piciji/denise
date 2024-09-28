@@ -1098,8 +1098,10 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             _settings->set<std::string>("screen_text_font", "");
         } else {
             auto displayFont = getTTF(userData);
-            if (displayFont)
+            if (displayFont) {
                 _settings->set<std::string>("screen_text_font", displayFont->file);
+                _settings->set<unsigned>("screen_text_findex", displayFont->index);
+            }
         }
 
         updateScreenText(false);
@@ -1125,6 +1127,9 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (_fn.empty() || (!GUIKIT::String::findString(_fn, ".ttf")
                 && !GUIKIT::String::findString(_fn, ".otf")
                 && !GUIKIT::String::findString(_fn, ".ttc")))
+            return;
+
+        if (getTTF(_fn, -1))
             return;
 
         std::string _path = program->getCustomFontsFolder(true);
@@ -1155,7 +1160,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (_path.empty())
             return;
 
-        if (!removeTTF(userData))
+        if (!removeTTF(_fn, displayFont->getMode()))
             return;
 
         emuThread->lock();
@@ -1258,24 +1263,36 @@ auto VideoLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
         if ((displayFont.ident & 0xc000) == ident && displayFont.file == _fontFile)
             return;
     }
-    std::string out = _fontFile;
+
+    std::vector<std::string> fontNames;
     std::string screenTextFontPath = "";
 
     if (mode == 1) {
         screenTextFontPath = program->fontFolder() + _fontFile;
     } else if (mode == 2) {
         screenTextFontPath = program->getCustomFontsFolder() + _fontFile;
-    }
+    } else
+        return;
 
     if (!screenTextFontPath.empty()) {
         GUIKIT::TTF ttf(screenTextFontPath);
-        out = ttf.getFontName();
-        if (out.empty())
-            out = _fontFile;
+        fontNames = ttf.getFontNames();
     }
 
-    ident += counter++;
-    displayFonts.push_back({_fontFile, out, ident});
+    bool found = false;
+    for(unsigned fIndex = 0; fIndex < fontNames.size(); fIndex++) {
+        auto& fontName = fontNames[fIndex];
+        if (!fontName.empty()) {
+            uint16_t _ident = ident + counter++;
+            displayFonts.push_back({_fontFile, fontName, fIndex, _ident});
+            found = true;
+        }
+    }
+
+    if (!found) {
+        ident += counter++;
+        displayFonts.push_back({_fontFile, _fontFile, 0, ident});
+    }
 }
 
 auto VideoLayout::getTTF(uint16_t ident) -> DisplayFont* {
@@ -1286,19 +1303,23 @@ auto VideoLayout::getTTF(uint16_t ident) -> DisplayFont* {
     return nullptr;
 }
 
-auto VideoLayout::getTTF(std::string _file) -> DisplayFont* {
+auto VideoLayout::getTTF(const std::string& file, int fontIndex) -> DisplayFont* {
     for(auto& displayFont : displayFonts) {
-        if (displayFont.file == _file)
+        if ((displayFont.file == file) && ((fontIndex < 0) || (displayFont.index == fontIndex)))
             return &displayFont;
     }
+    if (fontIndex > 0)
+        return getTTF(file, 0);
+
     return nullptr;
 }
 
-auto VideoLayout::removeTTF(uint16_t ident) -> bool {
+auto VideoLayout::removeTTF(const std::string& file, uint8_t mode) -> bool {
     for(int i = 0; i < displayFonts.size(); i++) {
         DisplayFont& displayFont = displayFonts[i];
-        if (displayFont.ident == ident) {
-            return GUIKIT::Vector::eraseVectorPos(displayFonts, i);
+        if (displayFont.getMode() == mode && displayFont.file == file) {
+            bool result = GUIKIT::Vector::eraseVectorPos(displayFonts, i);
+            return result | removeTTF(file, mode);
         }
     }
     return false;
@@ -1973,11 +1994,12 @@ auto VideoLayout::loadSettings(bool init) -> void {
 
     unsigned screenTextFontSize = _settings->get<unsigned>("screen_text_fontsize", 18, {8, 36});
     std::string screenTextFont = _settings->get<std::string>("screen_text_font", "");
+    unsigned fontIndex = _settings->get<unsigned>("screen_text_findex", 0);
     unsigned screenTextPosition = _settings->get<unsigned>("screen_text_position", 0);
 
     layScreenText.options.font.fontSize.setSelectionByUserId(screenTextFontSize);
 
-    auto displayFont = getTTF(screenTextFont);
+    auto displayFont = getTTF(screenTextFont, fontIndex);
     if (displayFont)
         layScreenText.options.font.fontType.setSelectionByUserId(displayFont->ident);
 

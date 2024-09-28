@@ -39,6 +39,7 @@ struct ScreenTextDescription {
 	enum Position { POSITION_BOTTOM_RIGHT, POSITION_BOTTOM_CENTER, POSITION_BOTTOM_LEFT, POSITION_TOP_RIGHT, POSITION_TOP_CENTER, POSITION_TOP_LEFT };
 	Position position = POSITION_BOTTOM_RIGHT;
 	std::string fontPath;
+	unsigned fontIndex;
 	unsigned fontSize;
 	unsigned fontColor;
 	unsigned backgroundColor;

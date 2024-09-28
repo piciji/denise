@@ -34,33 +34,40 @@ auto TTF::readBuffer(uint8_t* buffer, unsigned& offset, unsigned length) -> bool
     return true;
 }
 
-auto TTF::getFontName() -> std::string {
-    std::string out = "";
-    unsigned offset = 0;
-    unsigned offset2 = 0;
-    unsigned value;
-    unsigned nameOffset;
+auto TTF::getFontNames() -> std::vector<std::string> {
+    std::vector<std::string> out;
     uint8_t buffer[4];
-
+    unsigned offset = 0;
+    unsigned countFonts;
     if (!file->open())
-        return "";
+        return {};
 
     if (!readBuffer(buffer, offset, 4))
-        return "";
+        return {};
 
     if (std::memcmp(buffer, "ttcf", 4) == 0) {
         offset += 4;
-        if (!readData<uint32_t>(offset, value)) // count fonts
-            return "";
+        if (!readData<uint32_t>(offset, countFonts))
+            return {};
 
-        if (value == 0)
-            return "";
+        unsigned fontOffset;
+        for(unsigned i = 0; i < countFonts; i++) {
+            if (!readData<uint32_t>(offset, fontOffset)) // offset first font
+                return out;
 
-        if (!readData<uint32_t>(offset, value)) // offset first font
-            return "";
+            out.push_back(getFontName(fontOffset + 4));
+        }
+    } else
+        out.push_back(getFontName(4));
 
-        offset = value + 4;
-    }
+    return out;
+}
+
+auto TTF::getFontName(unsigned offset) -> std::string {
+    std::string out = "";
+    unsigned offset2 = 0;
+    unsigned nameOffset;
+    uint8_t buffer[4];
 
     uint16_t nT;
     uint16_t nC;

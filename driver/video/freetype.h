@@ -75,14 +75,19 @@ struct Freetype {
     virtual auto ftBuildTexture(std::string text, bool keepOldSize = false) -> void = 0;
     virtual auto ftSetCoordsPosition() -> void {}
 
-    auto ftLoadFont(const std::string& fontPath) -> bool {
+    auto ftLoadFont(const std::string& fontPath, unsigned fontIndex) -> bool {
         ftUnload();
 
         if (FT_Init_FreeType( &ft ))
             return false;
 
-        if (FT_New_Face(ft, fontPath.c_str(), 0, &ftFace))
-            return false;
+        if (FT_New_Face(ft, fontPath.c_str(), (FT_Long)fontIndex, &ftFace)) {
+            if (fontIndex > 0) {
+                if (FT_New_Face(ft, fontPath.c_str(), 0, &ftFace))
+                    return false;
+            } else
+                return false;
+        }
 
         FT_Set_Pixel_Sizes(ftFace, 0, 1);
 
@@ -132,7 +137,7 @@ struct Freetype {
             ftUpdateMutex.unlock();
 
             if (!_desc.fontPath.empty())
-                ftLoadFont(_desc.fontPath);
+                ftLoadFont(_desc.fontPath, _desc.fontIndex);
 
             ftPaddingHorizontal = _desc.paddingHorizontal;
             ftPaddingVertical = _desc.paddingVertical;
