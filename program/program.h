@@ -215,4 +215,3 @@ extern InputManager* activeInputManager;
 extern VideoManager* activeVideoManager;
 
 #endif
-
