@@ -52,12 +52,13 @@ struct Drive {
     struct Sound {
         Emulator::Interface* emulator;
         Emulator::Interface::MediaGroup* group;
+        bool externalDevice; // to be able to distinguish between internal and external drives
         DriveSound id;
         float* data;
         unsigned size;
         uint8_t channels;
         float volume;
-        unsigned playTime; // in milli seconds
+        unsigned playTime; // in milliseconds
     };
     std::vector<Sound> sounds;
 
@@ -72,6 +73,7 @@ struct Drive {
         unsigned thirdOffset;
         uint8_t state;      // bit 0,1,2: step counter, bit 7: detach+attach
         bool stepSilence;
+        bool hasExternalSound;
 
         Sound* steps[42];
         Sound* stepsShort[42];
@@ -79,21 +81,25 @@ struct Drive {
     std::vector<Device> devices;
     uint64_t lastStep;
 
-    auto readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void;
+    auto readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice = false) -> void;
     auto addSound(Emulator::Interface* emulator, Emulator::Interface::Media* media, DriveSound soundId, uint8_t data = 0) -> void;
     auto mixSound(float* buffer, unsigned bufferSize) -> void;
 
-    auto getSound(DriveSound soundId, Emulator::Interface* emulator) -> Sound*;
+    auto getSound(DriveSound soundId, Emulator::Interface* emulator, bool externalDevice) -> Sound*;
     auto reset(Emulator::Interface::MediaGroup* group = nullptr, bool exclude = false) -> void;
-    auto loaded(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> bool;
-    auto unload(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void;
+    auto loaded(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice = false) -> bool;
+    auto unload(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice) -> void;
     auto unload() -> void;
-    auto setVolume(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, float volume) -> void;
+    auto setVolume(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, float volume, bool externalDevice) -> void;
     auto assignSteps( Device& device ) -> void;
     auto initSeekStepFinishCounter(Device* device) -> void { checkSeekStepFinishCounter(device, true); }
     auto checkSeekStepFinishCounter(Device* device, bool init = false) -> bool;
+    auto updateExternal(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void;
+    auto getFloppyFolderDefault(Emulator::Interface* emulator, bool external) -> std::string;
+    auto getFloppyFolderIdent(Emulator::Interface* emulator, bool external) -> std::string;
+    auto getFloppyFolder(Emulator::Interface* emulator, bool external) -> std::string;
 
-    auto getFiles(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, std::string& fullPath) -> std::vector<GUIKIT::File::Info>;
+    auto getFiles(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice, std::string& fullPath) -> std::vector<GUIKIT::File::Info>;
     static auto mix(float s1, float s2) -> float;
 
 };

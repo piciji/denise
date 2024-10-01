@@ -1,6 +1,4 @@
 
-#include "../../../guikit/api.h"
-
 struct AudioRecordLayout : GUIKIT::FramedVerticalLayout {
     
     struct Location : GUIKIT::HorizontalLayout {
@@ -25,20 +23,27 @@ struct AudioRecordLayout : GUIKIT::FramedVerticalLayout {
 };
 
 struct AudioDriveLayout : GUIKIT::FramedVerticalLayout {
-    struct Selection : GUIKIT::HorizontalLayout {
+    struct TapeSelection : GUIKIT::HorizontalLayout {
         GUIKIT::Label label;
         GUIKIT::ComboButton combo;
         GUIKIT::Widget spacer;
         GUIKIT::Button reload;
-        Selection();
-    };
+        TapeSelection();
+    } tapeSelection;
+
+    struct FloppySelection : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::ComboButton combo;
+        GUIKIT::Label labelExt;
+        GUIKIT::ComboButton comboExt;
+        GUIKIT::Widget spacer;
+        GUIKIT::Button reload;
+        FloppySelection();
+    } floppySelection;
 
     SliderLayout floppyVolume;
-    Selection floppySelection;
-
+    SliderLayout floppyVolumeExt;
     SliderLayout tapeVolume;
-    Selection tapeSelection;
-
     SliderLayout tapeNoiseVolume;
 
     AudioDriveLayout(Emulator::Interface* emulator);

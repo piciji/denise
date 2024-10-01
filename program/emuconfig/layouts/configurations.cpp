@@ -781,7 +781,8 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
         return false;
     }
 
-    std::string _audioFloppyFolder = _settings->get<std::string>("audio_floppy_folder", "");
+    std::string _audioFloppyFolder = audioManager->drive.getFloppyFolder(emulator, false);
+    std::string _audioFloppyFolderExt = audioManager->drive.getFloppyFolder(emulator, true);
     std::string _audioTapeFolder = _settings->get<std::string>("audio_tape_folder", "");
 
     if (activeEmulator)
@@ -807,14 +808,18 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
     auto firmwareManager = FirmwareManager::getInstance(this->emulator);
     firmwareManager->reload();
 
-    std::string audioFloppyFolder = _settings->get<std::string>("audio_floppy_folder", "");
+    std::string audioFloppyFolder = audioManager->drive.getFloppyFolder(emulator, false);
+    std::string audioFloppyFolderExt = audioManager->drive.getFloppyFolder(emulator, true);
     std::string audioTapeFolder = _settings->get<std::string>("audio_tape_folder", "");
 
     if (_audioFloppyFolder != audioFloppyFolder)
-        audioManager->drive.unload(this->emulator, this->emulator->getDiskMediaGroup());
+        audioManager->drive.unload(this->emulator, this->emulator->getDiskMediaGroup(), false);
+
+    if (_audioFloppyFolderExt != audioFloppyFolderExt)
+        audioManager->drive.unload(this->emulator, this->emulator->getDiskMediaGroup(), true);
 
     if (_audioTapeFolder != audioTapeFolder)
-        audioManager->drive.unload(this->emulator, this->emulator->getTapeMediaGroup());
+        audioManager->drive.unload(this->emulator, this->emulator->getTapeMediaGroup(), false);
 
     view->updateDeviceSelection(this->emulator);
     

@@ -23,7 +23,7 @@ auto Program::initAudio() -> void {
     }
     // driver initialization could use different frequency than user requested
     audioManager->setResampler();
-    audioManager->setDriveSounds( false, true );
+    audioManager->resetDriveSounds();
     audioManager->setAudioDsp();
 
     if (configView)

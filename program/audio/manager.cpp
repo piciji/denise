@@ -169,10 +169,12 @@ auto AudioManager::setTapeNoise( ) -> void {
     activeEmulator->setTapeLoadingNoise( active ? volume : 0 );
 }
 
-auto AudioManager::setDriveSounds( bool init, bool unloadAll ) -> void {
-    if (unloadAll)
-        drive.unload();
+auto AudioManager::resetDriveSounds() -> void {
+    drive.unload();
+    setDriveSounds(false);
+}
 
+auto AudioManager::setDriveSounds( bool init ) -> void {
     if (!activeEmulator)
         return;
 
@@ -187,12 +189,22 @@ auto AudioManager::setDriveSounds( bool init, bool unloadAll ) -> void {
 
     if (group) {
         if (mixFloppySounds) {
-            unsigned volume = settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 300u});
+            unsigned volume = settings->get<unsigned>("audio_floppy_volume", 200u, {0u, 300u});
+            unsigned volumeExt = settings->get<unsigned>("audio_floppy_volume_external", 200u, {0u, 300u});
+            bool extIsSame = drive.getFloppyFolder(activeEmulator, false) == drive.getFloppyFolder(activeEmulator, true);
 
             if (!drive.loaded(activeEmulator, group))
                 drive.readPack(activeEmulator, group);
 
-            drive.setVolume(activeEmulator, group, (float) volume * 0.01);
+            if (extIsSame)
+                drive.unload(activeEmulator, group, true);
+            else {
+                if (!drive.loaded(activeEmulator, group, true))
+                    drive.readPack(activeEmulator, group, true);
+            }
+
+            drive.setVolume(activeEmulator, group, (float) volume * 0.01, false);
+            drive.setVolume(activeEmulator, group, (float) volumeExt * 0.01, true);
         } else
             drive.reset(group);
     }
@@ -209,7 +221,7 @@ auto AudioManager::setDriveSounds( bool init, bool unloadAll ) -> void {
             if (!drive.loaded(activeEmulator, group))
                 drive.readPack(activeEmulator, group);
 
-            drive.setVolume(activeEmulator, group, (float) volume * 0.01);
+            drive.setVolume(activeEmulator, group, (float) volume * 0.01, false);
         } else
             drive.reset(group);
     }

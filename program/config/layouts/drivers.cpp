@@ -186,7 +186,7 @@ DriversLayout::DriversLayout() {
         audioManager->record.finish();
         audioManager->setFrequency();
         audioManager->setResampler();
-        audioManager->setDriveSounds( false, true );
+        audioManager->resetDriveSounds( );
         audioManager->setAudioDsp();
         emuThread->unlock();
     };

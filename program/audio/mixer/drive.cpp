@@ -83,7 +83,7 @@ namespace Mixer {
         }
     }
 
-    // incomming: 4 bytes per channel * 2 channels = 8 byte per frame
+    // incoming: 4 bytes per channel * 2 channels = 8 bytes per frame
     auto Drive::mixSound(float* buffer, unsigned bufferSize) -> void {
 
         float _f;
@@ -107,7 +107,11 @@ namespace Mixer {
                         device.firstOffset = 0;
                         if (device.state & 0x80) {
                             device.state &= ~0x80;
-                            sound = getSound( device.media->group->isDisk() ? FloppyInsert : TapeInsert, activeEmulator );
+                            if (device.media->group->isDisk())
+                                sound = getSound( FloppyInsert, activeEmulator, device.hasExternalSound );
+                            else
+                                sound = getSound( TapeInsert, activeEmulator, false );
+
                             if (!sound || !sound->data) {
                                 device.first = nullptr;
                             } else
@@ -140,14 +144,14 @@ namespace Mixer {
                             device.second = nullptr;
                             break;
                         } else if (sound->id == FloppySpinUp) {
-                            sound = getSound( FloppySpin, activeEmulator );
+                            sound = getSound( FloppySpin, activeEmulator, device.hasExternalSound );
                             if (!sound || !sound->data) {
                                 device.second = nullptr;
                                 break;
                             }
                             device.second = sound;
                         } else if (sound->id == TapePlaySpinUp) {
-                            sound = getSound( TapePlaySpin, activeEmulator );
+                            sound = getSound( TapePlaySpin, activeEmulator, false );
                             if (!sound || !sound->data) {
                                 device.second = nullptr;
                                 break;
@@ -178,7 +182,7 @@ namespace Mixer {
 
                         if (device.media->group->isTape()) {
                             if (device.state & 0x1f) {
-                                sound = getSound( (DriveSound)(device.state & 0x1f), activeEmulator );
+                                sound = getSound( (DriveSound)(device.state & 0x1f), activeEmulator, false );
                                 if (sound && sound->data) {
                                     device.second = sound;
                                     device.secondOffset = 0;
@@ -213,14 +217,7 @@ namespace Mixer {
         uint8_t stepCounts;
         uint64_t ts;
         unsigned delta;
-
         Sound* sound = nullptr;
-
-        if (soundId != FloppyStep) {
-            sound = getSound( soundId, emulator );
-            if (!sound || !sound->data)
-                sound = nullptr;
-        }
 
         for(auto& _device : devices) {
             if (_device.media == media) {
@@ -230,12 +227,19 @@ namespace Mixer {
         }
 
         if (!device) {
-            devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0, dynamic_cast<LIBAMI::Interface*>( emulator ) ? true : false});
-            device = &devices.back();
+            devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0, dynamic_cast<LIBAMI::Interface*>( emulator ) ? true : false, false});
+            updateExternal(emulator, media->group);
 
+            device = &devices.back();
             if (media->group->isDisk()) {
                 assignSteps(*device);
             }
+        }
+
+        if (soundId != FloppyStep) {
+            sound = getSound( soundId, emulator, device->hasExternalSound );
+            if (!sound || !sound->data)
+                sound = nullptr;
         }
 
         switch(soundId) {
@@ -308,7 +312,7 @@ namespace Mixer {
 
                 sound = device->steps[data >> 1];
                 if (!sound || !sound->data) {
-                    sound = getSound(FloppyStep, emulator);
+                    sound = getSound(FloppyStep, emulator, device->hasExternalSound);
                     if (!sound || !sound->data) {
                         break;
                     }
@@ -321,7 +325,7 @@ namespace Mixer {
                     Sound* soundSeek = nullptr;
                     if ( (delta < 12) && device->third) {
                         if (device->third->id != FloppyStepSeek) {
-                            soundSeek = getSound( FloppyStepSeek, emulator );
+                            soundSeek = getSound( FloppyStepSeek, emulator, device->hasExternalSound );
                             if (soundSeek && soundSeek->data) {
                                 device->third = soundSeek;
                                 device->thirdOffset = 0;
@@ -364,33 +368,78 @@ namespace Mixer {
         }
     }
 
-    auto Drive::getSound(DriveSound soundId, Emulator::Interface* emulator) -> Sound* {
+    auto Drive::getSound(DriveSound soundId, Emulator::Interface* emulator, bool externalDevice) -> Sound* {
         for(auto& sound : sounds) {
-            if (sound.id == soundId && sound.emulator == emulator)
+            if (sound.id == soundId && sound.emulator == emulator && sound.externalDevice == externalDevice)
                 return &sound;
         }
         return nullptr;
     }
 
-    auto Drive::getFiles(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, std::string& fullPath) -> std::vector<GUIKIT::File::Info> {
+    auto Drive::updateExternal(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void {
+        bool hasExternalSound = false;
+        for(auto& sound : sounds) {
+            if (sound.externalDevice && sound.data && sound.emulator == emulator && sound.group == group) {
+                hasExternalSound = true;
+                break;
+            }
+        }
+
+        for(auto& device : devices) {
+            if (device.emulator == emulator && device.media->group == group && device.media->id > 0) {
+                device.hasExternalSound = hasExternalSound;
+            }
+        }
+    }
+
+    auto Drive::getFloppyFolderIdent(Emulator::Interface* emulator, bool external) -> std::string {
+        std::string ident = "audio_floppy_folder";
+
+        if (dynamic_cast<LIBAMI::Interface*>( emulator ) )
+            ident += "_new";
+
+        if (external)
+            ident += "_external";
+
+        return ident;
+    }
+
+    auto Drive::getFloppyFolderDefault(Emulator::Interface* emulator, bool external) -> std::string {
+        std::string defaultFolder = "";
+
+        if (dynamic_cast<LIBAMI::Interface*>( emulator ) ) {
+            defaultFolder = external ? "extern" : "intern";
+        }
+
+        return defaultFolder;
+    }
+
+    auto Drive::getFloppyFolder(Emulator::Interface* emulator, bool external) -> std::string {
+        GUIKIT::Settings* settings = program->getSettings( emulator );
+
+        return settings->get<std::string>(getFloppyFolderIdent(emulator, external), getFloppyFolderDefault(emulator, external));
+    }
+
+    auto Drive::getFiles(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice, std::string& fullPath) -> std::vector<GUIKIT::File::Info> {
         GUIKIT::Settings* settings = program->getSettings( emulator );
         std::string ident = "";
         std::string type = "";
         auto baseFolder = program->soundFolder();
         std::vector<GUIKIT::File::Info> list;
+        std::string subFolder;
 
         if (group->isDisk()) {
-            ident = "audio_floppy_folder";
+            ident = getFloppyFolderIdent(emulator, externalDevice);
             type = "floppy";
+            subFolder = settings->get<std::string>(ident, getFloppyFolderDefault(emulator, externalDevice));
         } else if (group->isTape()) {
             ident = "audio_tape_folder";
             type = "tape";
+            subFolder = settings->get<std::string>(ident, "");
         } else
             return {};
 
-        auto subFolder = settings->get<std::string>(ident, "");
-
-        if (subFolder == "") {
+        if (subFolder.empty()) {
             Here:
             fullPath = baseFolder + type + "/" + emulator->ident + "/";
             list = GUIKIT::File::getFolderList( fullPath );
@@ -418,7 +467,7 @@ namespace Mixer {
         return list;
     }
 
-    auto Drive::readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void {
+    auto Drive::readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice) -> void {
         Assign* assign;
         uint8_t* data;
         unsigned size;
@@ -432,7 +481,7 @@ namespace Mixer {
         unsigned frequency = audioDriver->getFrequency();
 
         std::string fullPath;
-        auto list = getFiles(emulator, group, fullPath);
+        auto list = getFiles(emulator, group, externalDevice, fullPath);
 
         for(auto& info : list) {
             GUIKIT::File file;
@@ -458,15 +507,15 @@ namespace Mixer {
                     continue;
 
                 Sound* sound = nullptr;
-                for (auto& _sound: sounds) {
-                    if (_sound.id == assign->id && _sound.emulator == emulator) {
+                for (auto& _sound : sounds) {
+                    if (_sound.id == assign->id && _sound.emulator == emulator && _sound.externalDevice == externalDevice) {
                         sound = &_sound;
                         break;
                     }
                 }
 
                 if (!sound) {
-                    sounds.push_back({emulator, group, assign->id, nullptr, 0, 0, 0.0, 0});
+                    sounds.push_back({emulator, group, externalDevice, assign->id, nullptr, 0, 0, 0.0, 0});
                     sound = &sounds.back();
                 }
 
@@ -614,8 +663,9 @@ namespace Mixer {
 
         reset( group );
 
-        // update all devices (other groups/emulators too) because "push_back" to a vector can change memory position of existing elements.
-        // element pointer become invalid (beware the traps)
+        if (externalDevice)
+            updateExternal(emulator, group);
+
         for (auto& device: devices) {
             if (device.media->group->isDisk())
                 assignSteps(device);
@@ -638,8 +688,8 @@ namespace Mixer {
         Sound* soundShort;
 
         for (unsigned t = 1; t <= 42; t++) {
-            sound = getSound( (DriveSound)(FloppySteps + t), device.emulator );
-            soundShort = getSound( (DriveSound)(FloppyStepsShort + t), device.emulator );
+            sound = getSound( (DriveSound)(FloppySteps + t), device.emulator, device.hasExternalSound );
+            soundShort = getSound( (DriveSound)(FloppyStepsShort + t), device.emulator, device.hasExternalSound );
 
             if (!sound || !sound->data) {
                 device.steps[t-1] = nullptr;
@@ -652,12 +702,12 @@ namespace Mixer {
                 device.stepsShort[t-1] = soundShort;
         }
 
-        sound = getSound( FloppyStep, device.emulator );
+        sound = getSound( FloppyStep, device.emulator, device.hasExternalSound );
         if (!sound || !sound->data) {
             sound = nullptr;
         }
 
-        soundShort = getSound( FloppyStepShort, device.emulator );
+        soundShort = getSound( FloppyStepShort, device.emulator, device.hasExternalSound );
         if (!soundShort || !soundShort->data) {
             soundShort = nullptr;
         }
@@ -691,23 +741,25 @@ namespace Mixer {
         }
     }
 
-    auto Drive::loaded(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> bool {
+    auto Drive::loaded(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice) -> bool {
         for(auto& sound : sounds) {
-            if (sound.emulator == emulator && sound.group == group && sound.data)
+            if (sound.emulator == emulator && sound.group == group && sound.externalDevice == externalDevice && sound.data)
                 return true;
         }
         return false;
     }
 
-    auto Drive::unload(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group) -> void {
+    auto Drive::unload(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice) -> void {
         for(auto& sound : sounds) {
-            if (sound.emulator == emulator && sound.group == group) {
+            if (sound.emulator == emulator && sound.group == group && sound.externalDevice == externalDevice) {
                 if (sound.data) {
                     delete[] sound.data;
                     sound.data = nullptr;
                 }
             }
         }
+        if (externalDevice)
+            updateExternal(emulator, group);
     }
 
     auto Drive::unload() -> void {
@@ -735,9 +787,9 @@ namespace Mixer {
         return timeUp;
     }
 
-    auto Drive::setVolume(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, float volume) -> void {
+    auto Drive::setVolume(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, float volume, bool externalDevice) -> void {
         for(auto& sound : sounds) {
-            if (sound.emulator == emulator && sound.group == group) {
+            if (sound.emulator == emulator && sound.group == group && sound.externalDevice == externalDevice) {
                 sound.volume = volume;
             }
         }

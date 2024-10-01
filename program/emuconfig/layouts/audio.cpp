@@ -1,5 +1,5 @@
 
-AudioDriveLayout::Selection::Selection() {
+AudioDriveLayout::TapeSelection::TapeSelection() {
     append( label, {0u, 0u}, 10 );
     append( combo, {0u, 0u} );
     append( spacer, {~0u, 0u} );
@@ -8,8 +8,24 @@ AudioDriveLayout::Selection::Selection() {
     setAlignment( 0.5 );
 }
 
-AudioDriveLayout::AudioDriveLayout(Emulator::Interface* emulator) : floppyVolume("%", true), tapeVolume("%", true), tapeNoiseVolume("%", true) {
+AudioDriveLayout::FloppySelection::FloppySelection() {
+    append( label, {0u, 0u}, 10 );
+    append( combo, {0u, 0u}, 10 );
+    append( labelExt, {0u, 0u}, 10 );
+    append( comboExt, {0u, 0u} );
+    append( spacer, {~0u, 0u} );
+    append( reload, {0u, 0u} );
+
+    setAlignment( 0.5 );
+}
+
+AudioDriveLayout::AudioDriveLayout(Emulator::Interface* emulator) :
+floppyVolume("%", true),
+floppyVolumeExt("%", false),
+tapeVolume("%", true),
+tapeNoiseVolume("%", true) {
     append( floppyVolume, {~0u, 0u}, 10 );
+    append( floppyVolumeExt, {~0u, 0u}, 10 );
     append( floppySelection, {~0u, 0u}, 10 );
     auto tapeMediaGroup = emulator->getTapeMediaGroup();
 
@@ -24,6 +40,9 @@ AudioDriveLayout::AudioDriveLayout(Emulator::Interface* emulator) : floppyVolume
 
     floppyVolume.slider.setLength( 301 );
     floppyVolume.updateValueWidth( "300 %" );
+
+    floppyVolumeExt.slider.setLength( 301 );
+    floppyVolumeExt.updateValueWidth( "300 %" );
 
     if(tapeMediaGroup) {
         tapeVolume.slider.setLength(301);
@@ -446,7 +465,19 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
         if (activeEmulator) {
             emuThread->lock();
-            audioManager->drive.setVolume(activeEmulator, activeEmulator->getDiskMediaGroup(), (float) position * 0.01);
+            audioManager->drive.setVolume(activeEmulator, activeEmulator->getDiskMediaGroup(), (float) position * 0.01, false);
+            emuThread->unlock();
+        }
+    };
+
+    driveLayout->floppyVolumeExt.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>( "audio_floppy_volume_external", position );
+
+        driveLayout->floppyVolumeExt.value.setText( std::to_string( position ) + " %" );
+
+        if (activeEmulator) {
+            emuThread->lock();
+            audioManager->drive.setVolume(activeEmulator, activeEmulator->getDiskMediaGroup(), (float) position * 0.01, true);
             emuThread->unlock();
         }
     };
@@ -455,10 +486,23 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
         std::string folder = driveLayout->floppySelection.combo.text();
 
-        _settings->set<std::string>( "audio_floppy_folder", folder );
+        _settings->set<std::string>( audioManager->drive.getFloppyFolderIdent(emulator, false), folder );
 
         emuThread->lock();
-        audioManager->drive.unload( emulator, emulator->getDiskMediaGroup() );
+        audioManager->drive.unload( emulator, emulator->getDiskMediaGroup(), false );
+        if (emulator == activeEmulator)
+            audioManager->setDriveSounds( false );
+        emuThread->unlock();
+    };
+
+    driveLayout->floppySelection.comboExt.onChange = [this]() {
+
+        std::string folder = driveLayout->floppySelection.comboExt.text();
+
+        _settings->set<std::string>( audioManager->drive.getFloppyFolderIdent(emulator, true), folder );
+
+        emuThread->lock();
+        audioManager->drive.unload( emulator, emulator->getDiskMediaGroup(), true );
         if (emulator == activeEmulator)
             audioManager->setDriveSounds( false );
         emuThread->unlock();
@@ -467,13 +511,16 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     driveLayout->floppySelection.reload.onActivate = [this]() {
         updateFloppyProfileList();
 
-        driveLayout->floppySelection.combo.setSelectionByRow( _settings->get<std::string>("audio_floppy_folder", "") );
+        driveLayout->floppySelection.combo.setSelectionByRow( audioManager->drive.getFloppyFolder(emulator, false) );
+        driveLayout->floppySelection.comboExt.setSelectionByRow( audioManager->drive.getFloppyFolder(emulator, true) );
 
         // in case if content doesn't match setting anymore
-        _settings->set<std::string>("audio_floppy_folder", driveLayout->floppySelection.combo.text() );
+        _settings->set<std::string>(audioManager->drive.getFloppyFolderIdent(emulator, false), driveLayout->floppySelection.combo.text() );
+        _settings->set<std::string>(audioManager->drive.getFloppyFolderIdent(emulator, true), driveLayout->floppySelection.comboExt.text() );
 
         emuThread->lock();
-        audioManager->drive.unload( emulator, emulator->getDiskMediaGroup() );
+        audioManager->drive.unload( emulator, emulator->getDiskMediaGroup(), false );
+        audioManager->drive.unload( emulator, emulator->getDiskMediaGroup(), true );
         if (emulator == activeEmulator)
             audioManager->setDriveSounds( false );
         emuThread->unlock();
@@ -498,7 +545,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
         if (activeEmulator) {
             emuThread->lock();
-            audioManager->drive.setVolume(activeEmulator, activeEmulator->getTapeMediaGroup(), (float)position * 0.01);
+            audioManager->drive.setVolume(activeEmulator, activeEmulator->getTapeMediaGroup(), (float)position * 0.01, false);
             emuThread->unlock();
         }
     };
@@ -534,7 +581,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<std::string>( "audio_tape_folder", folder );
 
         emuThread->lock();
-        audioManager->drive.unload( emulator, emulator->getTapeMediaGroup() );
+        audioManager->drive.unload( emulator, emulator->getTapeMediaGroup(), false );
         if (emulator == activeEmulator)
             audioManager->setDriveSounds( false );
         emuThread->unlock();
@@ -549,7 +596,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         _settings->set<std::string>("audio_tape_folder", driveLayout->tapeSelection.combo.text() );
 
         emuThread->lock();
-        audioManager->drive.unload( emulator, emulator->getTapeMediaGroup() );
+        audioManager->drive.unload( emulator, emulator->getTapeMediaGroup(), false );
         if (emulator == activeEmulator)
             audioManager->setDriveSounds( false );
         emuThread->unlock();
@@ -588,6 +635,7 @@ auto AudioLayout::updateVolumeSlider() -> void {
 auto AudioLayout::updateFloppyProfileList() -> void {
 
     driveLayout->floppySelection.combo.reset();
+    driveLayout->floppySelection.comboExt.reset();
 
     auto baseFolder = program->soundFolder();
 
@@ -595,6 +643,7 @@ auto AudioLayout::updateFloppyProfileList() -> void {
 
     for (auto& info : list) {
         driveLayout->floppySelection.combo.append( info.name );
+        driveLayout->floppySelection.comboExt.append( info.name );
     }
 }
 
@@ -707,7 +756,9 @@ auto AudioLayout::translate() -> void {
 
     driveLayout->setText( trans->get("Drive Noise") );
     driveLayout->floppyVolume.active.setText( trans->get("Floppy") );
+    driveLayout->floppyVolumeExt.name.setText( trans->get("external") );
     driveLayout->floppySelection.label.setText( trans->get("Floppy Profile") );
+    driveLayout->floppySelection.labelExt.setText( trans->get("External Floppy Profile") );
     driveLayout->floppySelection.reload.setText( trans->get("Reload") );
     driveLayout->floppySelection.reload.setTooltip( trans->get("reload samples tooltip") );
     driveLayout->tapeVolume.active.setText( trans->get("Tape") );
@@ -735,7 +786,7 @@ auto AudioLayout::translate() -> void {
 
     unsigned neededWidth = driveLayout->floppySelection.label.minimumSize().width;
     neededWidth = std::max(neededWidth, driveLayout->tapeSelection.label.minimumSize().width);
-    neededWidth = SliderLayout::scale({&driveLayout->floppyVolume, &driveLayout->tapeVolume, &driveLayout->tapeNoiseVolume}, "300 %", neededWidth);
+    neededWidth = SliderLayout::scale({&driveLayout->floppyVolume, &driveLayout->floppyVolumeExt, &driveLayout->tapeVolume, &driveLayout->tapeNoiseVolume}, "300 %", neededWidth);
 
     driveLayout->floppySelection.children[ 0 ].size.width = neededWidth;
     driveLayout->tapeSelection.children[ 0 ].size.width = neededWidth;
@@ -791,23 +842,35 @@ auto AudioLayout::loadSettings() -> void {
                  
     audioRecord.duration.useTimeLimit.setChecked( _settings->get<bool>( "audio_record_timelimit", false) );
 
-
     driveLayout->floppyVolume.active.setChecked( _settings->get<bool>( "audio_floppy", false) );
 
-    unsigned floppyVolume = _settings->get<unsigned>("audio_floppy_volume", 100u, {0u, 300u});
+    unsigned floppyVolume = _settings->get<unsigned>("audio_floppy_volume", 200u, {0u, 300u});
 
     driveLayout->floppyVolume.slider.setPosition( floppyVolume );
 
     driveLayout->floppyVolume.value.setText(std::to_string(floppyVolume) + " %");
 
-    std::string folder = _settings->get<std::string>("audio_floppy_folder", "");
+    unsigned floppyVolumeExt = _settings->get<unsigned>("audio_floppy_volume_external", 200u, {0u, 300u});
+
+    driveLayout->floppyVolumeExt.slider.setPosition( floppyVolumeExt );
+
+    driveLayout->floppyVolumeExt.value.setText(std::to_string(floppyVolumeExt) + " %");
+
+    std::string folder = audioManager->drive.getFloppyFolder(emulator, false);;
 
     driveLayout->floppySelection.combo.setSelectionByRow( folder );
 
     folder = driveLayout->floppySelection.combo.text();
 
-    _settings->set<std::string>("audio_floppy_folder", folder);
+    _settings->set<std::string>(audioManager->drive.getFloppyFolderIdent(emulator, false), folder);
 
+    folder = audioManager->drive.getFloppyFolder(emulator, true);
+
+    driveLayout->floppySelection.comboExt.setSelectionByRow( folder );
+
+    folder = driveLayout->floppySelection.comboExt.text();
+
+    _settings->set<std::string>(audioManager->drive.getFloppyFolderIdent(emulator, true), folder);
 
     driveLayout->tapeVolume.active.setChecked( _settings->get<bool>( "audio_tape", false) );
 

@@ -857,3 +857,4 @@ color selection = Farbauswahl
 Padding = Innenabstand
 Margin = Außenabstand
 select font = Schriftart auswählen
+External Floppy Profile = Floppy Profil (extern)

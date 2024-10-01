@@ -857,3 +857,4 @@ color selection = Color Selection
 Padding = Padding
 Margin = Margin
 select font = select font
+External Floppy Profile = Floppy Profile (external)
