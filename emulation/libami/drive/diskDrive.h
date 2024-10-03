@@ -37,6 +37,7 @@ struct DiskDrive {
     Emulator::Interface::Media* media;
     bool selected = false;
     bool motor = false;
+    bool snatched = false;
     bool connected = false;
     bool inserted = false;
     Emulator::Rand randomizer;

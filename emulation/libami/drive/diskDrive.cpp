@@ -300,6 +300,7 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     inserted = true;
     stepSettleClock = 0;
     accum = 0;
+    snatched = false;
     wobblePos = 0;
     wobbleLimit = wobble >> 1;
     randomizeRpm(agnus.frequency(), true);
@@ -322,6 +323,7 @@ auto DiskDrive::detach() -> void {
 
     dskChange = true;
     inserted = false;
+    snatched = true;
     track = getDummyTrack();
 }
 
@@ -494,8 +496,9 @@ auto DiskDrive::setMotor(bool state) -> void {
 
     updateDeviceState();
     if (driveSound && system->isDisplayFrame())
-        interface->mixDriveSound( media, state ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown );
+        interface->mixDriveSound( media, state ? (snatched ? DriveSound::FloppySpinUp : DriveSound::FloppySnatch) : DriveSound::FloppySpinDown );
 
+    snatched = true;
     system->hintObserverMotorChange( motor );
 }
 
