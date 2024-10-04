@@ -2,7 +2,8 @@
 MonitorResolutionLayout::MonitorResolutionLayout() : displaySettings(true) {
     append(active, {0u, 0u}, 10 );
     append(display, {0u, 0u}, 10 );
-    append(displaySettings, {0u, 0u} );
+    append(displaySettings, {0u, 0u}, 20 );
+    append(adjustEmuSpeed, {0u, 0u} );
     setAlignment(0.5);
     setPadding( 10 );
     setFont(GUIKIT::Font::system("bold"));
@@ -367,6 +368,13 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
 
         monitorResolutionLayout.display.setEnabled( checked );
         monitorResolutionLayout.displaySettings.setEnabled( checked );
+        monitorResolutionLayout.adjustEmuSpeed.setEnabled( checked );
+        emuThread->unlock();
+    };
+
+    monitorResolutionLayout.adjustEmuSpeed.onToggle = [this](bool checked) {
+        emuThread->lock();
+        _settings->set<bool>("fullscreen_setting_adjust_emu_speed", checked);
         emuThread->unlock();
     };
 
@@ -572,6 +580,8 @@ auto GeometryLayout::translate() -> void {
     monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
     monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );
     monitorResolutionLayout.active.setText( trans->get("enable") );
+    monitorResolutionLayout.adjustEmuSpeed.setText( trans->get("adjust speed to monitor") );
+    monitorResolutionLayout.adjustEmuSpeed.setTooltip( trans->get("adjust speed to monitor tooltip") );
     
     SliderLayout::scale({&cropLayout.cropLeft, &cropLayout.cropRight, &cropLayout.cropTop, &cropLayout.cropBottom}, "100 px");
 }
@@ -637,6 +647,7 @@ auto GeometryLayout::loadSettings() -> void {
     }
 
     monitorResolutionLayout.active.setChecked( _settings->get<bool>("fullscreen_setting_active", false) );
+    monitorResolutionLayout.adjustEmuSpeed.setChecked( _settings->get<bool>("fullscreen_setting_adjust_emu_speed", false) );
 
     auto displayId = _settings->get<unsigned>("fullscreen_display", 0 );
 
@@ -650,6 +661,7 @@ auto GeometryLayout::loadSettings() -> void {
 
     monitorResolutionLayout.display.setEnabled( monitorResolutionLayout.active.checked() );
     monitorResolutionLayout.displaySettings.setEnabled( monitorResolutionLayout.active.checked() );
+    monitorResolutionLayout.adjustEmuSpeed.setEnabled( monitorResolutionLayout.active.checked() );
 
     ratioLayout.dimension.width.setValue( _settings->get<unsigned>("view_hold_width", 800) );
     ratioLayout.dimension.height.setValue( _settings->get<unsigned>("view_hold_height", 600) );

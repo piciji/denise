@@ -3,6 +3,7 @@ struct MonitorResolutionLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::CheckBox active;
     GUIKIT::ComboButton display;
     GUIKIT::ComboButton displaySettings;
+    GUIKIT::CheckBox adjustEmuSpeed;
 
     MonitorResolutionLayout();
 };

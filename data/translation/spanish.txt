@@ -858,3 +858,5 @@ Padding = Padding
 Margin = Margin
 select font = select font
 External Floppy Profile = Floppy Profile (external)
+adjust speed to monitor = Adjust speed to refresh rate
+adjust speed to monitor tooltip = The emulator speed is temporarily adjusted to the refresh rate when switching to fullscreen. The speed set by the user becomes active again when switching back to window.
