@@ -10,7 +10,7 @@ git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 
 cmake -G "MinGW Makefiles" -B builds/release
-cmake --build builds/release -j <number of usable CPU cores>
+cmake --build builds/release --parallel
 cmake --build builds/release --target install
 .\builds\release\out\denise.exe
 
@@ -34,7 +34,7 @@ pacman -S gcc
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 cmake -G "MSYS Makefiles" -B builds/release
-cmake --build builds/release -j <number of usable CPU cores>
+cmake --build builds/release --parallel
 cmake --build builds/release --target install
 ./builds/release/out/denise.exe
 
@@ -58,12 +58,13 @@ compile freetype
 
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
-cmake -B builds/release [-DCMAKE_OSX_ARCHITECTURES=arm64]  (flag is for cross compiling only)
-cmake --build builds/release -j <number of usable CPU cores>
+cmake -B builds/release
+cmake --build builds/release --parallel
 cmake --build builds/release --target install
 
-
-Debian Linux (Ubuntu, Mint, ...)
+Linux/BSD
+---------
+Debian (Ubuntu, Mint, ...)
 ---------------------------------------------
 apt install libgtk-3-dev
 apt install mesa-common-dev
@@ -72,20 +73,27 @@ apt install libpulse-dev
 apt install libudev-dev
 apt install libxcb-xinput-dev && apt install libxcb-xfixes0
 ---------------------------------------------
-ARCH Linux (Manjaro, Endeavour, ...)
+ARCH (Manjaro, Endeavour, ...)
 ---------------------------------------------
 pacman -Sy gcc
 pacman -Sy make
 pacman -Sy gtk3
 pacman -Sy pkgconf
 ---------------------------------------------
-RPM Linux (Fedora, SUSE, ...)
+RPM (Fedora, SUSE, ...)
 ---------------------------------------------
 dnf install freetype-devel
 dnf install openal-soft-devel
 dnf install pulseaudio-libs-devel
 dnf install gtk3-devel
 dnf install libgudev-devel
+---------------------------------------------
+Gentoo
+---------------------------------------------
+emerge --ask dev-vcs/git
+emerge --ask cmake
+emerge --ask media-libs/openal
+emerge --ask media-sound/pulseaudio
 ---------------------------------------------
 FreeBSD (GhostBSD)
 ---------------------------------------------
@@ -108,17 +116,32 @@ pkg_add openal
 pkg_add pulseaudio
 pkg_add gtk+3
 
----------------------------------------------
-ALL
----------------------------------------------
+----------------------------------------------
+ALL: GET, CONFIGURE, BUILD AND INSTALL DENISE
+----------------------------------------------
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
-cmake -B builds/release [-DCMAKE_INSTALL_PREFIX=~/.local] [-DINSTALL_FILE_ASSOCIATIONS=1]
-Debug only: cmake -B builds/debug [-DCMAKE_INSTALL_PREFIX=~/.local] -DCMAKE_BUILD_TYPE=Debug
-cmake --build builds/release -j <number of usable CPU cores> [--verbose]
+cmake -B builds/release
+cmake --build builds/release --parallel
+sudo cmake --build builds/release --target install
 
-[sudo] cmake --build builds/release --target install
-[sudo] cmake --build builds/release --target uninstall
+----------------------------------------------
+UPDATES: repeat it from time to time
+----------------------------------------------
+cd denise
+git pull
+cmake --build builds/release --parallel
+sudo cmake --build builds/release --target install
 
-NOTE: changing install prefix needs a complete App rebuild, otherwise assets will not be found
+----------------------------------------------
+UNINSTALL
+----------------------------------------------
+sudo cmake --build builds/release --target uninstall
+
+----------------------------------------------
+OPTIONAL: build and install denise locally without sudo privileges
+----------------------------------------------
 cmake --build builds/release --target clean
+cmake -B builds/release -DCMAKE_INSTALL_PREFIX=~/.local
+cmake --build builds/release --parallel
+cmake --build builds/release --target install
