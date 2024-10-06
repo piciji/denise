@@ -371,7 +371,7 @@ struct Freetype {
         }
 
         if (keepOldSize) {
-            if (_totalWidth < ftTotalWidth || _totalHeight < ftTotalHeight) {
+            if (!ftTextBuffer || (_totalWidth < ftTotalWidth) || (_totalHeight < ftTotalHeight)) {
                 ftDeleteTexture();
                 ftTextBuffer = new unsigned char[ _size ];
                 keepOldSize = false;
