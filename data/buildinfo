@@ -10,7 +10,7 @@ git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 
 cmake -G "MinGW Makefiles" -B builds/release
-cmake --build builds/release --parallel
+cmake --build builds/release -j 8
 cmake --build builds/release --target install
 .\builds\release\out\denise.exe
 
@@ -34,7 +34,7 @@ pacman -S gcc
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 cmake -G "MSYS Makefiles" -B builds/release
-cmake --build builds/release --parallel
+cmake --build builds/release -j 8
 cmake --build builds/release --target install
 ./builds/release/out/denise.exe
 
@@ -59,7 +59,7 @@ compile freetype
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 cmake -B builds/release
-cmake --build builds/release --parallel
+cmake --build builds/release -j 8
 cmake --build builds/release --target install
 
 Linux/BSD
@@ -122,7 +122,7 @@ ALL: GET, CONFIGURE, BUILD AND INSTALL DENISE
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
 cmake -B builds/release
-cmake --build builds/release --parallel
+cmake --build builds/release -j 8
 sudo cmake --build builds/release --target install
 
 ----------------------------------------------
@@ -130,7 +130,7 @@ UPDATES: repeat it from time to time
 ----------------------------------------------
 cd denise
 git pull
-cmake --build builds/release --parallel
+cmake --build builds/release -j 8
 sudo cmake --build builds/release --target install
 
 ----------------------------------------------
@@ -143,5 +143,5 @@ OPTIONAL: build and install denise locally without sudo privileges
 ----------------------------------------------
 cmake --build builds/release --target clean
 cmake -B builds/release -DCMAKE_INSTALL_PREFIX=~/.local
-cmake --build builds/release --parallel
+cmake --build builds/release -j 8
 cmake --build builds/release --target install

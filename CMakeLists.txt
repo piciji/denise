@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.14)
 
 project(denise LANGUAGES CXX)
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_package(Freetype REQUIRED)
     find_package(PkgConfig REQUIRED)
+    find_package(OpenAL)
     pkg_check_modules(FREETYPE2 REQUIRED freetype2)
 elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
     find_package(Freetype REQUIRED)
@@ -13,7 +14,6 @@ elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
 endif()
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    find_package(OpenAL REQUIRED)
     find_package(PulseAudio REQUIRED)
     pkg_check_modules(GTK REQUIRED gtk+-3.0)
     pkg_check_modules(X11 REQUIRED x11 xfixes xext)
@@ -237,10 +237,10 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             PROPERTIES COMPILE_FLAGS "-x objective-c++ -DGUIKIT_COCOA")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_OPENAL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_FREETYPE")
+            PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_FREETYPE")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang")
+            PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
 else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES COMPILE_FLAGS "-DGUIKIT_GTK -DINSTALL_FOLDER=\"\\\"${CMAKE_INSTALL_PREFIX}\\\"\" ")
@@ -250,15 +250,20 @@ else()
 
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # no udev
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID -DDRV_FREETYPE")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID -DDRV_FREETYPE")
     else()
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_OPENAL -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV -DDRV_FREETYPE")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV -DDRV_FREETYPE")
     endif()
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang")
+            PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
 
+endif()
+
+if(OPENAL_FOUND)
+    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${OPENAL_INCLUDE_DIRS};")
+    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DDRV_OPENAL ")
 endif()
 
 SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/filter/chamberlin.cpp
@@ -290,8 +295,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/out")
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework OpenAL -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit")
-    target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit")
     target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
 
@@ -303,7 +307,6 @@ else()
     target_link_directories(${PROJECT_NAME} PUBLIC ${X11_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})
     target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
@@ -321,6 +324,11 @@ else()
     else()
         target_link_libraries(${PROJECT_NAME} "-no-pie -lrt -ldl -lGL -ludev -lpulse")
     endif()
+endif()
+
+if(OPENAL_FOUND)
+    target_link_directories(${PROJECT_NAME} PUBLIC ${OPENAL_LIBRARY_DIRS})
+    target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
