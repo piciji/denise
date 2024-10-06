@@ -73,7 +73,8 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::IncSlot, "Incslot", true} );
     customHotkeys.push_back( {Hotkey::Id::DecSlot, "Decslot", true} );
 	customHotkeys.push_back( {Hotkey::Id::Power, "Hard Reset", true} );
-    customHotkeys.push_back( {Hotkey::Id::PowerWithUnplugCart, "Hard Reset + Unplug Cart", true} );
+    if (dynamic_cast<LIBC64::Interface*>(emulator) )
+        customHotkeys.push_back( {Hotkey::Id::PowerWithUnplugCart, "Hard Reset + Unplug Cart", false} );
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::AnyLoad, "load software", true} );
 
