@@ -31,7 +31,7 @@ addons:
       - sshpass
 
 script:
-  - cmake -B builds/release || travis_terminate 1;
+  - cmake -B builds/release -DCMAKE_CXX_COMPILER=/usr/bin/g++-12 || travis_terminate 1;
   - cmake --build builds/release -j 2 || travis_terminate 1;
   - cd data
   - chmod +x build_deb.sh
