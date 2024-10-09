@@ -12,7 +12,6 @@ dist: focal
 jobs:
   include:
     - compiler: gcc
-      addons: true
 
 before_install:
   - sudo apt-get -q update
@@ -28,7 +27,6 @@ addons:
       - libpulse-dev
       - libudev-dev
       - sshpass
-
 
 script:
   - cmake -B builds/release || travis_terminate 1;
