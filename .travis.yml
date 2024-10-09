@@ -6,9 +6,10 @@ branches:
     - /v\d*\.\d*\.\d*/
     - travis_integration
 
+language: generic
 dist: focal
 
-matrix:
+jobs:
   include:
     - compiler: gcc
       addons: true
@@ -30,12 +31,12 @@ addons:
 
 
 script:
-  - cmake -B builds/release
-  - cmake --build builds/release -j 2
+  - cmake -B builds/release || travis_terminate 1;
+  - cmake --build builds/release -j 2 || travis_terminate 1;
   - cd data
   - chmod +x build_deb.sh
   - ./build_deb.sh
-  - dpkg-deb --build ./denisepackage
+  - dpkg-deb --build ./denisepackage || travis_terminate 1;
   - tar -zcf denisepackage.tar.gz denisepackage.deb
 
 deploy:
