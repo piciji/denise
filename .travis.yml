@@ -26,6 +26,8 @@ addons:
       - libopenal-dev
       - libpulse-dev
       - libudev-dev
+      - libxcb-xinput-dev
+      - libxcb-xfixes0
       - sshpass
 
 script:
