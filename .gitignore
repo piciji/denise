@@ -11,3 +11,5 @@ msvc/win32/
 builds/
 !builds/debug/.gitkeep
 !builds/release/.gitkeep
+data/denisepackage/
+data/denisepackage.deb
