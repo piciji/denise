@@ -17,8 +17,8 @@
 #ifndef SHADER_FOLDER
 #define SHADER_FOLDER "shader/"
 #endif
-#ifndef IMG_FOLDER
-#define IMG_FOLDER "img/"
+#ifndef IMAGES_FOLDER
+#define IMAGES_FOLDER "images/"
 #endif
 #ifndef SOUND_FOLDER
 #define SOUND_FOLDER "sounds/"
