@@ -93,6 +93,10 @@ struct TSpirvInstruction {
     int     id;
 };
 
+#ifndef __MAC_10_14
+#define __MAC_10_14 101400
+#endif
+    
 // SPIR-V type parameter
 struct TSpirvTypeParameter {
     POOL_ALLOCATOR_NEW_DELETE(GetThreadPoolAllocator())
@@ -103,7 +107,7 @@ struct TSpirvTypeParameter {
     const TIntermConstantUnion* getAsConstant() const
     {
         if (value.index() == 0)
-        #if  __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_14
+        #if defined __MAC_OS_X_VERSION_MIN_REQUIRED && (__MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_14)
             if (auto p = std::get_if<const TIntermConstantUnion*>(&value))
                 return *p;
         #else
@@ -114,7 +118,7 @@ struct TSpirvTypeParameter {
     const TType* getAsType() const
     {
         if (value.index() == 1)
-        #if  __MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_14
+        #if defined __MAC_OS_X_VERSION_MIN_REQUIRED && (__MAC_OS_X_VERSION_MIN_REQUIRED < __MAC_10_14)
             if(auto p = std::get_if<const TType*>(&value))
                 return *p;
         #else
