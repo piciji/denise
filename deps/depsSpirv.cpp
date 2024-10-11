@@ -12,3 +12,14 @@
 #ifdef _WIN32
 #include "SPIRV-Cross/spirv_hlsl.cpp"
 #endif
+
+
+#ifdef _WIN32
+#include "glslang/glslang/HLSL/hlslAttributes.cpp"
+#include "glslang/glslang/HLSL/hlslGrammar.cpp"
+#include "glslang/glslang/HLSL/hlslOpMap.cpp"
+#include "glslang/glslang/HLSL/hlslParseables.cpp"
+#include "glslang/glslang/HLSL/hlslParseHelper.cpp"
+#include "glslang/glslang/HLSL/hlslScanContext.cpp"
+#include "glslang/glslang/HLSL/hlslTokenStream.cpp"
+#endif
