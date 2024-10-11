@@ -182,8 +182,6 @@ set(srcs
         program/video/palette.cpp
         program/video/manager.cpp
         program/video/shaderParser.cpp
-        deps/depsSlang.cpp
-        deps/depsSpirv.cpp
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -200,16 +198,14 @@ endif()
 
 SET_SOURCE_FILES_PROPERTIES(deps/depsSlang.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
 
-#set(depSrcs)
-#add_subdirectory(deps)
+set(depSrcs)
+add_subdirectory(deps)
 
-#SET_SOURCE_FILES_PROPERTIES(${depSrcs}
-  #  PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
+SET_SOURCE_FILES_PROPERTIES(${depSrcs}
+    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    # SET_SOURCE_FILES_PROPERTIES(${depSrcs} PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
-    SET_SOURCE_FILES_PROPERTIES(deps/depsSlang.cpp PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
-    SET_SOURCE_FILES_PROPERTIES(deps/depsSpirv.cpp PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
+    SET_SOURCE_FILES_PROPERTIES(${depSrcs} PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
 
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp PROPERTIES COMPILE_FLAGS "-DGUIKIT_WINAPI")
 
@@ -270,7 +266,7 @@ SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/filter/chamberlin.cpp
 SET_SOURCE_FILES_PROPERTIES(program/program.cpp
         PROPERTIES COMPILE_FLAGS "-DAPP_NAME=\"\\\"${AppName}\\\"\" -DTRANSLATION_FOLDER=\"\\\"${translationFolder}/\\\"\" -DDATA_FOLDER=\"\\\"${dataFolder}/\\\"\" -DSHADER_FOLDER=\"\\\"${shaderFolder}/\\\"\" -DIMAGES_FOLDER=\"\\\"${imagesFolder}/\\\"\" -DSOUND_FOLDER=\"\\\"${soundFolder}/\\\"\" ")
 
-#set(srcs ${srcs} ${depSrcs})
+set(srcs ${srcs} ${depSrcs})
 add_executable( ${PROJECT_NAME} ${srcs} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
