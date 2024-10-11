@@ -139,7 +139,6 @@
 		9D0C38122CB586BE00363301 /* sounds */ = {isa = PBXFileReference; lastKnownFileType = folder; name = sounds; path = data/sounds; sourceTree = "<group>"; };
 		9D0C38232CB59D9B00363301 /* data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = data; path = data/data; sourceTree = "<group>"; };
 		9D0C38272CB5A66F00363301 /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = data/images; sourceTree = "<group>"; };
-		9D0C382B2CB5C0FD00363301 /* libfreetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype.a; path = data/libs/static/macArm/libfreetype.a; sourceTree = "<group>"; };
 		9D0C382D2CB5C17900363301 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		9D8FA9322CB3D7A7006905BE /* denise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = denise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D8FA9532CB3DF78006905BE /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -672,9 +671,6 @@
 		9D8FB4D72CB472BA006905BE /* depsSlang.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = depsSlang.cpp; path = deps/depsSlang.cpp; sourceTree = "<group>"; };
 		9D8FB4E02CB47539006905BE /* icons.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = icons.cpp; path = data/icons/icons.cpp; sourceTree = "<group>"; };
 		9D8FB4E12CB47539006905BE /* logos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = logos.cpp; path = data/icons/logos.cpp; sourceTree = "<group>"; };
-		9DE7FAFA2CB85D8700B8FECC /* libfreetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype.a; path = data/libs/static/macArm/libfreetype.a; sourceTree = "<group>"; };
-		9DE7FB002CB8676300B8FECC /* libfreetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype.a; path = data/libs/static/macArm/libfreetype.a; sourceTree = "<group>"; };
-		9DE7FB882CB86B1D00B8FECC /* libfreetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype.a; path = data/libs/static/macIntel/libfreetype.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -724,11 +720,7 @@
 		9D8FA9522CB3DF78006905BE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				9DE7FAFA2CB85D8700B8FECC /* libfreetype.a */,
-				9DE7FB002CB8676300B8FECC /* libfreetype.a */,
-				9DE7FB882CB86B1D00B8FECC /* libfreetype.a */,
 				9D0C382D2CB5C17900363301 /* OpenAL.framework */,
-				9D0C382B2CB5C0FD00363301 /* libfreetype.a */,
 				9D8FAEB22CB415E3006905BE /* AudioUnit.framework */,
 				9D8FAEB02CB415DD006905BE /* AudioToolbox.framework */,
 				9D8FAEAE2CB415D3006905BE /* CoreAudio.framework */,
@@ -2279,11 +2271,10 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/data/libs/static/macArm",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				"MACOSX_DEPLOYMENT_TARGET[arch=arm64]" = 11.0;
+				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.9;
 				MARKETING_VERSION = 2.4;
 				"OTHER_LDFLAGS[arch=arm64]" = data/libs/static/macArm/libfreetype.a;
 				"OTHER_LDFLAGS[arch=x86_64]" = data/libs/static/macIntel/libfreetype.a;
@@ -2315,11 +2306,10 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PROJECT_DIR)/data/libs/static/macArm",
-				);
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				"MACOSX_DEPLOYMENT_TARGET[arch=arm64]" = 11.0;
+				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.9;
 				MARKETING_VERSION = 2.4;
 				"OTHER_LDFLAGS[arch=arm64]" = data/libs/static/macArm/libfreetype.a;
 				"OTHER_LDFLAGS[arch=x86_64]" = data/libs/static/macIntel/libfreetype.a;
