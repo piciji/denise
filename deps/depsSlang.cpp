@@ -1,11 +1,13 @@
 
+#include "glslang/glslang/MachineIndependent/Scan.cpp"
+#include "glslang/glslang/MachineIndependent/ShaderLang.cpp"
+
 #include "glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"
 #include "glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"
 #include "glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"
 #include "glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"
 #include "glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"
-#include "glslang/glslang/MachineIndependent/Scan.cpp"
-#include "glslang/glslang/MachineIndependent/ShaderLang.cpp"
+
 
 #include "glslang/SPIRV/GlslangToSpv.cpp"
 #include "glslang/SPIRV/InReadableOrder.cpp"
