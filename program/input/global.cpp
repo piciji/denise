@@ -110,8 +110,6 @@ auto InputManager::setIllegalMappings() -> void {
 }
 
 auto InputManager::setMappings() -> void {
-    Emulator::Interface::Device::Input* alternateInput;
-
 	for (auto manager : inputManagers) {
 		if (manager->emulator) {
             auto settings = program->getSettings( manager->emulator );

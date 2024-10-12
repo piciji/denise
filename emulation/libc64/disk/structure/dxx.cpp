@@ -109,7 +109,6 @@ auto DiskStructure::prepareDxx() -> void {
             // track 2 -> means half track 2
             // ... d64 doesn't support halftracks 1.5, 2.5 ...
 
-            unsigned lastTrackSize = trackSize;
             unsigned halfTrack = track * 2 - 2;
             trackSize = countBytes(track);
             MTrack* trackPtr = &gcrTracks[side][halfTrack];

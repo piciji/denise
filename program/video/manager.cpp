@@ -1014,7 +1014,7 @@ template<typename T> auto VideoManager::renderCrtThreadedBlank(unsigned width, u
 
 template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop ) -> void {
     constexpr bool interlace = options & 3;
-    constexpr bool field = options & 2;
+    //constexpr bool field = options & 2;
 
     static unsigned scaler = (2.0 / 3.0) * 256.0;
 	Render& re = render[0];

@@ -384,7 +384,6 @@ VideoScreenTextLayout::VideoScreenTextLayout() {
 
 VideoLayout::VideoLayout(TabWindow* tabWindow) :
 layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
-    GUIKIT::TreeViewItem* tvi;
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
@@ -1030,6 +1029,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
                 switch(component & 3) {
                     case 0: shifter = 16; break;
                     case 1: shifter = 8; break;
+                    default:
                     case 2: shifter = 0; break;
                     case 3: shifter = 24; break;
                 }
@@ -2067,7 +2067,7 @@ auto VideoLayout::prepareColBox() -> void {
         unsigned color = _settings->get<unsigned>(ident, defaultCol);
 
         for(int component = 0; component < 4; component++) {
-            uint8_t colComponent;
+            uint8_t colComponent = 0;
 
             switch(component & 3) {
                 case 0: colComponent = (color >> 16) & 0xff; break;

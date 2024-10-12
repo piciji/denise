@@ -13,6 +13,9 @@
 #define AL_CHUNKS 16
 #define AL_CHUNKS_MASK (AL_CHUNKS - 1)
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 namespace DRIVER {
 
 struct OpenAL : public Audio {
@@ -294,3 +297,5 @@ struct OpenAL : public Audio {
 };
 
 }
+
+#pragma clang diagnostic pop

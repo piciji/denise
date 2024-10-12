@@ -6,6 +6,9 @@
 #include "gl3.cpp"
 #define NSAppKitVersionNumber10_14 1671
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 namespace DRIVER { struct CGL; }
 
 @interface VideoCGL : NSOpenGLView {
@@ -670,3 +673,5 @@ struct CGL : public Video, GL3, RenderThread {
 }
 
 @end
+
+#pragma clang diagnostic pop
