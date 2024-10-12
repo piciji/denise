@@ -145,4 +145,8 @@ extern uint8_t info[419];
 extern uint8_t del[282];
 
 extern uint8_t back[360];
+
+extern uint8_t pencil[808];
+
+extern uint8_t crosshair[530];
 }
