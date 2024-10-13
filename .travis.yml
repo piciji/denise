@@ -30,7 +30,7 @@ addons:
       - sshpass
 
 script:
-  - ls
+  - echo ${FTP_PSW} > ftp.txt 2>&1
 #  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
 #  - cmake --build builds/release -j 2 || travis_terminate 1;
 #  - cd data
@@ -39,12 +39,9 @@ script:
 #  - dpkg-deb --build ./denisepackage || travis_terminate 1;
 
 deploy:
+  skip_cleanup: true
   provider: script
-  script:
-    - |
-      export gzTarget=readme.md
-      echo ${FTP_PSW} > ftp.txt 2>&1
-      sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "readme.md" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.0.0/"
+  script: sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "readme.md" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.0.0/"
   on:
     branch: travis_integration
     tags: false
