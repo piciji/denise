@@ -19,31 +19,36 @@ before_install:
 addons:
   apt:
     packages:
-      - g++-10
-      - cmake
-      - mesa-common-dev
-      - libgtk-3-dev
-      - libopenal-dev
-      - libpulse-dev
-      - libudev-dev
-      - libxcb-xinput-dev
-      - libxcb-xfixes0
+#      - g++-10
+#      - cmake
+#      - mesa-common-dev
+#      - libgtk-3-dev
+#      - libpulse-dev
+#      - libudev-dev
+#      - libxcb-xinput-dev
+#      - libxcb-xfixes0
       - sshpass
 
 script:
-  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
-  - cmake --build builds/release -j 2 || travis_terminate 1;
-  - cd data
-  - chmod +x build_deb.sh
-  - ./build_deb.sh
-  - dpkg-deb --build ./denisepackage || travis_terminate 1;
-  - tar -zcf denisepackage.tar.gz denisepackage.deb
+#  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
+#  - cmake --build builds/release -j 2 || travis_terminate 1;
+#  - cd data
+#  - chmod +x build_deb.sh
+#  - ./build_deb.sh
+#  - dpkg-deb --build ./denisepackage || travis_terminate 1;
 
 deploy:
   provider: script
   script:
     - |
-      export gzTarget=denisepackage.tar.gz
+      if [ -z "$TRAVIS_TAG" ];
+      then
+#        tar -zcf denise_ubuntu2004.tar.gz denisepackage.deb
+#        export gzTarget=denise_ubuntu2004.tar.gz
+        export gzTarget=readme.md
+        echo ${FTP_PSW} > ftp.txt 2>&1
+        sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.0.0/"
+      fi
 # todo
   on:
     tags: false
