@@ -42,7 +42,7 @@ deploy:
   provider: script
   script:
     - |
-      if [ -z "$TRAVIS_TAG" ];
+      if [ -z "$TRAVIS_TAG" ]
       then
 #        tar -zcf denise_ubuntu2004.tar.gz denisepackage.deb
 #        export gzTarget=denise_ubuntu2004.tar.gz
