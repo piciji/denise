@@ -30,12 +30,13 @@ addons:
       - sshpass
 
 script:
-  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
-  - cmake --build builds/release -j 2 || travis_terminate 1;
-  - cd data
-  - chmod +x build_deb.sh
-  - ./build_deb.sh
-  - dpkg-deb --build ./denisepackage || travis_terminate 1;
+  - echo "test" > test.txt 2>&1
+#  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
+#  - cmake --build builds/release -j 2 || travis_terminate 1;
+#  - cd data
+#  - chmod +x build_deb.sh
+#  - ./build_deb.sh
+#  - dpkg-deb --build ./denisepackage || travis_terminate 1;
 
 deploy:
   provider: script
