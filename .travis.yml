@@ -13,8 +13,8 @@ jobs:
   include:
     - compiler: gcc
 
-before_install:
-  - sudo apt-get -q update
+# before_install:
+#  - sudo apt-get -q update
 
 addons:
   apt:
@@ -30,8 +30,8 @@ addons:
       - sshpass
 
 script:
-  - echo "hmmm" > test.txt 2>&1
-  - cat test.txt
+  - echo ${FTP_PSW} > file.txt 2>&1
+  - cat file.txt
 #  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
 #  - cmake --build builds/release -j 2 || travis_terminate 1;
 #  - cd data
