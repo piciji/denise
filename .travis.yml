@@ -46,5 +46,5 @@ deploy:
       echo ${FTP_PSW} > ftp.txt 2>&1
       sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "readme.md" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.0.0/"
   on:
-    branches: travis_integration
+    branch: travis_integration
     tags: false
