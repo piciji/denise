@@ -42,13 +42,12 @@ deploy:
   provider: script
   script:
     - |
-      if [ -z "$TRAVIS_TAG" ]
-      then
+ #      if [ -z "$TRAVIS_TAG" ]; then
 #        tar -zcf denise_ubuntu2004.tar.gz denisepackage.deb
 #        export gzTarget=denise_ubuntu2004.tar.gz
-        export gzTarget=readme.md
+#        export gzTarget=readme.md
         echo ${FTP_PSW} > ftp.txt 2>&1
-        sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.0.0/"
-      fi
+        sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "readme.md" piciji@frs.sourceforge.net:"/home/frs/project/portable68000/v\\ 1.0.0/"
+#      fi
   on:
     tags: false
