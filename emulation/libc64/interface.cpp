@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "205";
+const std::string Interface::Version = "206";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -463,7 +463,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdIntensifyPseudoStereo, "intensify Pseudo Stereo", Model::Type::Switch, Model::Purpose::AudioSettings, 0});
 
     models.push_back({ModelIdSidFilterType, "SID Filter Type", Model::Type::Combo, Model::Purpose::AudioSettings, 0, {0, 2},
-	{ "reSID", "Chamberlin" }});
+	{ "reSID", "reSID VICE 2.4", "Chamberlin" }});
 
 	// adjust center frequency for Sid 6581
 	models.push_back({ModelIdBias6581, "SID 6581 Bias", Model::Type::Slider, Model::Purpose::AudioSettings, 500, {-5000, 5000}, {}, 400, 1.0 });
@@ -1279,7 +1279,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->sidManager.adjustFilterBias8580All( value );
 			break;
         case ModelIdSidExternal:
-            system->sidManager.useExternalFilter = value & 1;
+            system->sidManager.setExternalFilter(value & 1);
             break;
         case ModelIdSidSampleFetch:
             system->sidManager.setResampleQuality( (uint8_t)value );

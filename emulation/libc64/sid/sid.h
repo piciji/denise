@@ -49,7 +49,7 @@ typedef double doublePoint[2];
 struct Sid {
     
     enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;    
-    enum FilterType { Resid = 0, Chamberlin = 1 } filterType;
+    enum FilterType { Resid = 0, ResidVice24 = 1, Chamberlin = 2 } filterType;
     Sid( System* system, SidManager& sidManager, Type type);
 
     static std::vector<std::string> adrOptions;
@@ -352,8 +352,9 @@ struct Sid {
 		auto updateSumMix() -> void;
 		auto setType( Type type ) -> void;
 		auto clock(int voice1, int voice2, int voice3) -> void;
+		auto clock24(int voice1, int voice2, int voice3) -> void;
 		auto clockMulti(int voice1, int voice2, int voice3) -> void;
-		auto output() -> short;
+		template<bool use24> auto output() -> short;
 		auto outputMulti() -> short;
         auto multiPrecalculate() -> void;
         auto setVoiceMask( uint8_t mask ) -> void;

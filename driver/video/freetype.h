@@ -429,7 +429,7 @@ struct Freetype {
         ftUpdateMutex.unlock();
     }
 
-    auto ftUpdateMessage( const std::string _text, unsigned _duration, bool _warn) -> void {
+    auto ftUpdateMessage( const std::string& _text, unsigned _duration, bool _warn) -> void {
         if (!ftInitialized)
             return;
 
