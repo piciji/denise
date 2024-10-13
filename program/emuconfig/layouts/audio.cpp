@@ -888,14 +888,13 @@ auto AudioLayout::loadSettings() -> void {
 
     _settings->set<std::string>("audio_tape_folder", folder);
 
-
     driveLayout->tapeNoiseVolume.active.setChecked( _settings->get<bool>( "audio_tape_noise", false) );
 
     unsigned tapeNoiseVolume = _settings->get<unsigned>("audio_tape_noise_volume", 100u, {0u, 300u});
 
-    driveLayout->tapeNoiseVolume.slider.setPosition( tapeVolume );
+    driveLayout->tapeNoiseVolume.slider.setPosition( tapeNoiseVolume );
 
-    driveLayout->tapeNoiseVolume.value.setText(std::to_string(tapeVolume) + " %");
+    driveLayout->tapeNoiseVolume.value.setText(std::to_string(tapeNoiseVolume) + " %");
 
     updateVolumeSlider();
 

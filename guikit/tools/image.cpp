@@ -100,6 +100,9 @@ auto Image::loadPng(const uint8_t* src, unsigned size, bool keepDataOnDestructio
                 b = png.readbits(sp);
                 a = png.readbits(sp);
                 break;
+            default:
+                r = g = b = a = 0;
+                break;
         }
 
         a = normalize(a, png.info.bitDepth, 8);
@@ -288,7 +291,7 @@ auto Image::getCharDataStringFromBinary(std::string inFile, std::string outFile)
 
         auto fp = fileOut.getHandle();
         std::string out = "";
-        char hex[8];
+        //char hex[8];
 
         for(int i = 0; i < fileIn.getSize(); i++) {
 

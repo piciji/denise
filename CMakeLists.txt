@@ -26,7 +26,7 @@ set(translationFolder "translation")
 set(dataFolder "data")
 set(fontFolder "fonts")
 set(shaderFolder "shader")
-set(imgFolder "img")
+set(imagesFolder "images")
 set(soundFolder "sounds")
 
 set(CMAKE_CXX_STANDARD 17)
@@ -196,6 +196,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     )
 endif()
 
+SET_SOURCE_FILES_PROPERTIES(deps/depsSlang.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
+
 set(depSrcs)
 add_subdirectory(deps)
 
@@ -225,14 +227,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     SET_SOURCE_FILES_PROPERTIES(driver/audio/xaudio2/xaudio29.cpp PROPERTIES COMPILE_FLAGS "-DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -Wno-attributes")
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
-        SET_SOURCE_FILES_PROPERTIES(${depSrcs}
-                PROPERTIES COMPILE_FLAGS "-DMACOSX_DEPLOYMENT_TARGET11")
-    else()
-        SET_SOURCE_FILES_PROPERTIES(${depSrcs}
-                PROPERTIES COMPILE_FLAGS "-DMACOSX_DEPLOYMENT_TARGET109")
-    endif()
-
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES COMPILE_FLAGS "-x objective-c++ -DGUIKIT_COCOA")
 
@@ -270,7 +264,7 @@ SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/filter/chamberlin.cpp
         PROPERTIES COMPILE_FLAGS "-ffast-math -fno-exceptions")
 
 SET_SOURCE_FILES_PROPERTIES(program/program.cpp
-        PROPERTIES COMPILE_FLAGS "-DAPP_NAME=\"\\\"${AppName}\\\"\" -DTRANSLATION_FOLDER=\"\\\"${translationFolder}/\\\"\" -DDATA_FOLDER=\"\\\"${dataFolder}/\\\"\" -DSHADER_FOLDER=\"\\\"${shaderFolder}/\\\"\" -DIMG_FOLDER=\"\\\"${imgFolder}/\\\"\" -DSOUND_FOLDER=\"\\\"${soundFolder}/\\\"\" ")
+        PROPERTIES COMPILE_FLAGS "-DAPP_NAME=\"\\\"${AppName}\\\"\" -DTRANSLATION_FOLDER=\"\\\"${translationFolder}/\\\"\" -DDATA_FOLDER=\"\\\"${dataFolder}/\\\"\" -DSHADER_FOLDER=\"\\\"${shaderFolder}/\\\"\" -DIMAGES_FOLDER=\"\\\"${imagesFolder}/\\\"\" -DSOUND_FOLDER=\"\\\"${soundFolder}/\\\"\" ")
 
 set(srcs ${srcs} ${depSrcs})
 add_executable( ${PROJECT_NAME} ${srcs} )
@@ -337,7 +331,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_BINARY_DIR}/out FILES_MATCHING PATTERN "*.ttf")
     install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
     install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
-    install(DIRECTORY data/${imgFolder}/bundle/ DESTINATION ${CMAKE_BINARY_DIR}/out/${imgFolder})
+    install(DIRECTORY data/${imagesFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
 
     install(FILES readme.md DESTINATION ${CMAKE_BINARY_DIR}/out)
     install(FILES licence.md DESTINATION ${CMAKE_BINARY_DIR}/out)
@@ -347,7 +341,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     install(DIRECTORY data/${dataFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
     install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources FILES_MATCHING PATTERN "*.ttf")
     install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
-    install(DIRECTORY data/${imgFolder}/bundle/ DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources/${imgFolder})
+    install(DIRECTORY data/${imagesFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
     install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
 
     install(FILES data/Info.plist DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents)
@@ -369,7 +363,7 @@ else()
     install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME} FILES_MATCHING PATTERN "*.ttf")
     install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
     install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
-    install(DIRECTORY data/${imgFolder}/bundle/ DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/${imgFolder})
+    install(DIRECTORY data/${imagesFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
 
     install(FILES data/img/${PROJECT_NAME}.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons)
     install(FILES data/${PROJECT_NAME}.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)

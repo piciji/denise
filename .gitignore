@@ -1,5 +1,7 @@
 nbproject/
-denise.xcodeproj
+deniseExtBuild.xcodeproj/
+denise.xcodeproj/xcuserdata/
+denise.xcodeproj/project.xcworkspace/xcuserdata/
 .idea/
 ._*
 Build/
@@ -11,5 +13,6 @@ msvc/win32/
 builds/
 !builds/debug/.gitkeep
 !builds/release/.gitkeep
+DerivedData/
 data/denisepackage/
 data/denisepackage.deb

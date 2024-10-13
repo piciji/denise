@@ -85,7 +85,6 @@ auto DiskStructure::prepareGxx() -> void {
     
     uint8_t buf[2];
     unsigned offset;
-    unsigned alignOffset = 0;
     unsigned trackLength;
     unsigned maxHalfTracks = rawData[9];
     int error;

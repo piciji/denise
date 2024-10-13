@@ -667,7 +667,6 @@ auto VirtualDrive::finish(bool sendFinishEvent) -> void {
 
 auto VirtualDrive::vdrive_read_sector(uint8_t *buf, unsigned int track, unsigned int sector) -> int {
     disk_addr_t dadr;
-    int ret;
 
     /* check image mode */
     if (!structure->media) {
@@ -786,11 +785,8 @@ auto VirtualDrive::iec_open_read_directory(unsigned int secondary, cbmdos_cmd_pa
 }
 
 auto VirtualDrive::vdrive_command_switchtraverse(cbmdos_cmd_parse_plus_t *cmd) -> int {
-    int status, rc;
-    uint8_t* slot, * next;
+    int status;
     //vdrive_dir_context_t dir;
-    int i, skip;
-    uint8_t buffer[256];
 
     status = CBMDOS_IPE_NOT_READY;
 
@@ -863,9 +859,6 @@ auto VirtualDrive::cbmdos_dir_slot_create(const char *name, unsigned int len) ->
 auto VirtualDrive::vdrive_dir_find_next_slot(vdrive_dir_context_t *dir) -> uint8_t* {
     static uint8_t return_slot[32];
     //vdrive_t *vdrive = dir->vdrive;
-    uint8_t *tmp;
-    int j;
-    unsigned int t, s, c;
     uint8_t *dirbuf = nullptr;
 
 
@@ -1414,9 +1407,7 @@ auto VirtualDrive::cbmdos_command_parse_plus(cbmdos_cmd_parse_plus_t *cmd_parse)
 
 // command
 auto VirtualDrive::vdrive_command_execute(const uint8_t *buf, unsigned int length) -> int {
-    int status = CBMDOS_IPE_INVAL, statret1 = 0;
-    uint8_t* p;
-    cbmdos_cmd_parse_plus_t cmd;
+    int status = CBMDOS_IPE_INVAL;
 
     if (!length) {
         return CBMDOS_IPE_OK;

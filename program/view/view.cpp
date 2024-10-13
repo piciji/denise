@@ -1877,12 +1877,10 @@ auto View::getViewportHandle(bool driverChange) -> uintptr_t {
 }
 
 auto View::loadCursor() -> void {
-    
-    #include "../../data/img/cursor.data"
 
-    pencilImage.loadPng((uint8_t*)pencil, sizeof(pencil));  
+    pencilImage.loadPng((uint8_t*)Icons::pencil, sizeof(Icons::pencil));
     
-    crosshairImage.loadPng((uint8_t*)crosshair, sizeof(crosshair));
+    crosshairImage.loadPng((uint8_t*)Icons::crosshair, sizeof(Icons::crosshair));
 }
 
 auto View::setCursor( Emulator::Interface* emulator ) -> void {

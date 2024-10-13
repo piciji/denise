@@ -29,10 +29,25 @@ SidManager::SidManager(LIBC64::System* system) : system(system) {
         updateClock();
     };
 
-    audioOut = true;
     extraSids = false;
     leftSids = 0;
     rightSids = 0;
+    updateOptionsInUse();
+}
+
+auto SidManager::setExternalFilter(bool state) -> void {
+    useExternalFilter = state;
+    updateOptionsInUse();
+}
+
+auto SidManager::updateOptionsInUse() -> void {
+    optionsInUse = audioOut;
+    if (useExternalFilter)
+        optionsInUse |= 2;
+    if (sid->filterType == Sid::FilterType::Chamberlin)
+        optionsInUse |= 4;
+    else if (sid->filterType == Sid::FilterType::ResidVice24)
+        optionsInUse |= 16;
 }
 
 auto SidManager::intensifyPseudoStereo(bool state) -> void {
@@ -73,23 +88,26 @@ auto SidManager::getIoPos(int nr) -> int {
 }
 
 auto SidManager::updateClock() -> void {
-    int options = audioOut | (useExternalFilter << 1);
-    if (sid->filterType == Sid::FilterType::Chamberlin) // same filter for all SID's
-        options |= 4;
+    switch(optionsInUse) {
+        case 3: updateClockT<3>(); break;
+        case 7: updateClockT<7>(); break;
+        case 0x13: updateClockT<0x13>(); break;
 
-    switch(options) {
         case 0: updateClockT<0>(); break;
         case 1: updateClockT<1>(); break;
         case 2: updateClockT<2>(); break;
-        case 3: updateClockT<3>(); break;
+
         case 4: updateClockT<4>(); break;
         case 5: updateClockT<5>(); break;
         case 6: updateClockT<6>(); break;
-        case 7: updateClockT<7>(); break;
+
+        case 0x10: updateClockT<0x10>(); break;
+        case 0x11: updateClockT<0x11>(); break;
+        case 0x12: updateClockT<0x12>(); break;
     }
 }
 
-template<int options> inline auto SidManager::updateClockT() -> void {
+template<int options> auto SidManager::updateClockT() -> void {
     system->sysTimer.add( &callAlarm, 200, Emulator::SystemTimer::Action::UpdateExisting );
 
     int _delay = system->sysTimer.fallBackCycles( sysClock );
@@ -122,12 +140,14 @@ auto SidManager::disableAudioOut(bool state) -> void {
 //    }
 
     audioOut = !state;
+    updateOptionsInUse();
 }
 
 template<int options> auto SidManager::clockMultiChips(int cycles) -> void {
     constexpr bool _audioOut = options & 1;
     //constexpr bool _useExtFilter = options & 2;
     //constexpr bool _useChamberlain = options & 4;
+    //constexpr bool _useResid24 = options & 16;
     constexpr bool _delayed = options & 8;
 
     double sampleLeft, sampleRight;
@@ -323,6 +343,7 @@ auto SidManager::setFilterTypeAll( Sid::FilterType filterType ) -> void {
         sids[i]->setFilterType(filterType);
         sids[i]->volumeCorrection(useVolumeCorrection);
     }
+    updateOptionsInUse();
 }
 
 auto SidManager::getFilterType( ) -> Sid::FilterType {
@@ -508,6 +529,8 @@ auto SidManager::searializeActiveSids(Emulator::Serializer& s, bool light) -> vo
 
         if (sampleLimitBefore != sampleLimit)
             system->updateStats();
+
+        updateOptionsInUse();
     }
 }
 

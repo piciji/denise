@@ -141,28 +141,17 @@ struct Versioning {
 EProfile EDesktopProfile = static_cast<EProfile>(ENoProfile | ECoreProfile | ECompatibilityProfile);
 
 // Declare pointers to put into the table for versioning.
-    #ifdef MACOSX_DEPLOYMENT_TARGET109
     const std::array<Versioning, 2> Es300Desktop130Version =
-    #else
-    const std::array Es300Desktop130Version =
-    #endif
     { Versioning{ EEsProfile,      0, 300, 0, nullptr },
                                                 Versioning{ EDesktopProfile, 0, 130, 0, nullptr },
                                               };
-    #ifdef MACOSX_DEPLOYMENT_TARGET109
+                                              
     const std::array<Versioning, 2> Es310Desktop400Version =
-    #else
-    const std::array Es310Desktop400Version =
-    #endif
     { Versioning{ EEsProfile,      0, 310, 0, nullptr },
                                                 Versioning{ EDesktopProfile, 0, 400, 0, nullptr },
                                               };
 
-    #ifdef MACOSX_DEPLOYMENT_TARGET109
     const std::array<Versioning, 2> Es310Desktop450Version =
-    #else
-    const std::array Es310Desktop450Version =
-    #endif
     { Versioning{ EEsProfile,      0, 310, 0, nullptr },
                                                 Versioning{ EDesktopProfile, 0, 450, 0, nullptr },
                                               };
@@ -187,11 +176,7 @@ struct BuiltInFunction {
 //
 // Table is terminated by an OpNull TOperator.
 
-#ifdef MACOSX_DEPLOYMENT_TARGET109
 const std::array<BuiltInFunction,79> BaseFunctions = {
-#else
-const std::array BaseFunctions = {
-#endif
 //    TOperator,           name,       arg-count,   ArgType,   ArgClass,     versioning
 //    ---------            ----        ---------    -------    --------      ----------
     BuiltInFunction{ EOpRadians,          "radians",          1,   TypeF,     ClassRegular, {} },
@@ -275,11 +260,7 @@ const std::array BaseFunctions = {
     BuiltInFunction{ EOpMix,              "mix",              3,   TypeIU,    ClassLB,      {Es310Desktop450Version} },
 };
 
-#ifdef MACOSX_DEPLOYMENT_TARGET109
 const std::array<BuiltInFunction, 3> DerivativeFunctions = {
-#else
-const std::array DerivativeFunctions = {
-#endif
     BuiltInFunction{ EOpDPdx,             "dFdx",             1,   TypeF,     ClassRegular, {} },
     BuiltInFunction{ EOpDPdy,             "dFdy",             1,   TypeF,     ClassRegular, {} },
     BuiltInFunction{ EOpFwidth,           "fwidth",           1,   TypeF,     ClassRegular, {} },

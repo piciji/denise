@@ -613,7 +613,7 @@ auto Program::shaderFolder() -> std::string {
 }
 
 auto Program::imgFolder() -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + IMG_FOLDER;
+    return GUIKIT::System::getResourceFolder(appFolder()) + IMAGES_FOLDER;
 }
 
 auto Program::soundFolder() -> std::string {

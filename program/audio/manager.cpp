@@ -18,7 +18,7 @@ AudioManager::AudioManager() : drive(*this) {
     
     cosine.setData( &rData );
 
-    muteTimer.setInterval(180);
+    muteTimer.setInterval(200);
 
     // prevent RESID crack on power up
     muteTimer.onFinished = [this]() {

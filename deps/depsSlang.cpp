@@ -1,0 +1,43 @@
+
+#include "glslang/glslang/MachineIndependent/Scan.cpp"
+#include "glslang/glslang/MachineIndependent/ShaderLang.cpp"
+
+#include "glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"
+#include "glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"
+#include "glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"
+#include "glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"
+#include "glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"
+
+
+#include "glslang/SPIRV/GlslangToSpv.cpp"
+#include "glslang/SPIRV/InReadableOrder.cpp"
+#include "glslang/SPIRV/Logger.cpp"
+#include "glslang/SPIRV/SpvBuilder.cpp"
+#include "glslang/SPIRV/SpvPostProcess.cpp"
+#include "glslang/glslang/GenericCodeGen/CodeGen.cpp"
+#include "glslang/glslang/GenericCodeGen/Link.cpp"
+#include "glslang/glslang/MachineIndependent/attribute.cpp"
+#include "glslang/glslang/MachineIndependent/Constant.cpp"
+#include "glslang/glslang/MachineIndependent/glslang_tab.cpp"
+#include "glslang/glslang/MachineIndependent/InfoSink.cpp"
+#include "glslang/glslang/MachineIndependent/Initialize.cpp"
+#include "glslang/glslang/MachineIndependent/Intermediate.cpp"
+#include "glslang/glslang/MachineIndependent/intermOut.cpp"
+#include "glslang/glslang/MachineIndependent/IntermTraverse.cpp"
+#include "glslang/glslang/MachineIndependent/iomapper.cpp"
+#include "glslang/glslang/MachineIndependent/limits.cpp"
+#include "glslang/glslang/MachineIndependent/linkValidate.cpp"
+#include "glslang/glslang/MachineIndependent/parseConst.cpp"
+#include "glslang/glslang/MachineIndependent/ParseContextBase.cpp"
+#include "glslang/glslang/MachineIndependent/ParseHelper.cpp"
+#include "glslang/glslang/MachineIndependent/PoolAlloc.cpp"
+#include "glslang/glslang/MachineIndependent/propagateNoContraction.cpp"
+#include "glslang/glslang/MachineIndependent/reflection.cpp"
+#include "glslang/glslang/MachineIndependent/RemoveTree.cpp"
+
+#include "glslang/glslang/MachineIndependent/SymbolTable.cpp"
+#include "glslang/glslang/MachineIndependent/Versions.cpp"
+#include "glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp"
+#include "glslang/glslang/ResourceLimits/ResourceLimits.cpp"
+
+

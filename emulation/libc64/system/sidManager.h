@@ -32,6 +32,7 @@ struct SidManager {
     bool useExternalFilter;
     bool useVolumeCorrection;
     bool extraSids;
+    int optionsInUse;
 
     Callback callAlarm;
     Callback callPotUpdate;
@@ -51,6 +52,8 @@ struct SidManager {
     Sid* sid;
     Sid* sids[7];
 
+    auto updateOptionsInUse() -> void;
+    auto setExternalFilter(bool state) -> void;
     template<int options> auto clockMultiChips(int cycles) -> void;
     auto getSidByAdr(uint16_t addr, bool ioArea = false) -> Sid*;
     auto writeSid(uint16_t addr, uint8_t value) -> void;
