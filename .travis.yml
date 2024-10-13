@@ -30,6 +30,7 @@ addons:
       - sshpass
 
 script:
+  - echo "test" > test.txt 2>&1
 #  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
 #  - cmake --build builds/release -j 2 || travis_terminate 1;
 #  - cd data
