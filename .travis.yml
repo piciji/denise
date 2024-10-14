@@ -13,32 +13,31 @@ jobs:
   include:
     - compiler: gcc
 
-# before_install:
-#  - sudo apt-get -q update
+before_install:
+  - sudo apt-get -q update
 
 addons:
   apt:
     packages:
-#      - g++-10
-#      - cmake
-#      - mesa-common-dev
-#      - libgtk-3-dev
-#      - libpulse-dev
-#      - libudev-dev
-#      - libxcb-xinput-dev
-#      - libxcb-xfixes0
+      - g++-10
+      - cmake
+      - mesa-common-dev
+      - libgtk-3-dev
+      - libpulse-dev
+      - libudev-dev
+      - libxcb-xinput-dev
+      - libxcb-xfixes0
       - sshpass
 
 script:
+  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
+  - cmake --build builds/release -j 2 || travis_terminate 1;
+  - cd data
+  - chmod +x build_deb.sh
+  - ./build_deb.sh
+  - dpkg-deb --build ./denisepackage || travis_terminate 1;
   - export gzTarget=denise_ubuntu2004_v2.x.tar.gz
-  - tar -zcf "${gzTarget}" readme.md
-  - ls
-#  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
-#  - cmake --build builds/release -j 2 || travis_terminate 1;
-#  - cd data
-#  - chmod +x build_deb.sh
-#  - ./build_deb.sh
-#  - dpkg-deb --build ./denisepackage || travis_terminate 1;
+  - tar -zcf "${gzTarget}" denisepackage.deb
 
 after_success:
   - echo ${FTP_PSW} > ftp.txt 2>&1
@@ -48,6 +47,9 @@ deploy:
   skip_cleanup: true
   provider: script
   script: sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"${FTP_FOLDER}"
+  edge: true
   on:
     branch: travis_integration
     tags: false
+
+# hint for env FTP_FOLDER: v\\\ 1.0
