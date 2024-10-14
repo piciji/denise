@@ -30,7 +30,8 @@ addons:
       - sshpass
 
 script:
-  ls
+  - export gzTarget=denise_ubuntu2004_v2.x.tar.gz
+  - tar -zcf "${gzTarget}" readme.md
 #  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
 #  - cmake --build builds/release -j 2 || travis_terminate 1;
 #  - cd data
@@ -40,8 +41,7 @@ script:
 
 after_success:
   - echo ${FTP_PSW} > ftp.txt 2>&1
-  - export gzTarget=denise_ubuntu2004_v2.x.tar.gz
-  - tar -zcf "${gzTarget}" readme.md
+
 
 deploy:
   skip_cleanup: true
@@ -50,4 +50,3 @@ deploy:
   on:
     branch: travis_integration
     tags: false
-    
