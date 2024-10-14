@@ -31,7 +31,7 @@ addons:
 
 script:
   - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
-  - cmake --build builds/release -j 2 || travis_terminate 1;
+  - cmake --build builds/release -j 4 || travis_terminate 1;
   - cd data
   - chmod +x build_deb.sh
   - ./build_deb.sh
@@ -57,6 +57,5 @@ deploy:
   edge: true
   on:
     branch: travis_integration
-    tags: false
 
 # hint for env FTP_FOLDER: v\\\ 1.0
