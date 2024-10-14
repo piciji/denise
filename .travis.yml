@@ -36,8 +36,15 @@ script:
   - chmod +x build_deb.sh
   - ./build_deb.sh
   - dpkg-deb --build ./denisepackage || travis_terminate 1;
-  - export gzTarget=denise_ubuntu2004_v2.x.tar.gz
-  - tar -zcf "${gzTarget}" denisepackage.deb
+  - |
+    if [ -z "$TRAVIS_TAG" ]; then
+      export debFile=denise_ubuntu2004_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).deb
+      export debTarget=${FTP_NIGHTLIES}
+    else
+      export debFile=denise_ubuntu2004_${TRAVIS_TAG}.deb
+      export debTarget=${FTP_TAGS}
+    fi
+  - mv denisepackage.deb "${debFile}"
 
 after_success:
   - echo ${FTP_PSW} > ftp.txt 2>&1
@@ -46,7 +53,7 @@ after_success:
 deploy:
   skip_cleanup: true
   provider: script
-  script: sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${gzTarget}" piciji@frs.sourceforge.net:"${FTP_FOLDER}"
+  script: sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${debFile}" piciji@frs.sourceforge.net:"${debTarget}"
   edge: true
   on:
     branch: travis_integration
