@@ -3,6 +3,43 @@
 
 namespace LIBC64 {
 
+auto DiskStructure::analyzeD81() -> bool {
+    tracksInDxx = 80;
+    unsigned blocksInTrack = 40; // one sector = two blocks
+    unsigned compareSize = 256 * blocksInTrack * tracksInDxx;
+
+    if (errorMap)
+        delete[] errorMap;
+
+    errorMapSize = 0;
+    errorMap = nullptr;
+
+    while(1) {
+        if (compareSize == rawSize)
+            break;
+
+        if ((compareSize + (blocksInTrack * tracksInDxx)) == rawSize) { // one error byte each block
+            errorMapSize = blocksInTrack * tracksInDxx;
+            break;
+        }
+
+        compareSize += 256 * blocksInTrack;
+        tracksInDxx++;
+
+        if (tracksInDxx > 83)
+            return false;
+    }
+
+    if (errorMapSize) {
+        errorMap = new uint8_t[ errorMapSize ];
+        std::memcpy( errorMap, rawData + compareSize, errorMapSize );
+    }
+
+    type = Type::D81;
+    sides = 2;
+    return true;
+}
+
 auto DiskStructure::analyzeD71() -> bool {
 
     uint32_t compareSize = TYPICAL_SIZE << 1;
@@ -82,7 +119,96 @@ auto DiskStructure::analyzeD64() -> bool {
     
     return true;
 }
-    
+
+auto DiskStructure::prepareD81() -> void {
+    uint16_t crc = 0;
+    unsigned pos;
+    unsigned offset = 0;
+
+    for (uint8_t track = 0; track < tracksInDxx; track++) {
+        for( uint8_t side = 0; side < sides; side++ ) {
+            MTrack* trackPtr = &gcrTracks[side][track];
+
+            if (trackPtr->data)
+                delete[] trackPtr->data;
+
+            if (trackPtr->mfmSync)
+                delete[] trackPtr->mfmSync;
+
+            trackPtr->size = 6250;
+            trackPtr->bits = trackPtr->size << 3;
+            trackPtr->data = new uint8_t[trackPtr->size];
+            trackPtr->mfmSync = new uint8_t[trackPtr->size >> 3];
+
+            std::memset(trackPtr->data, 0x4e, trackPtr->size);
+            std::memset(trackPtr->mfmSync, 0x00, trackPtr->size >> 3);
+
+            uint8_t* ptr = trackPtr->data;
+            memset(ptr, 0x4e, 80); ptr += 80;
+            memset(ptr, 0x0, 12); ptr += 12;
+
+            pos = ptr - trackPtr->data;
+            trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+            trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+            trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+
+            addMfmByte(ptr, 0xc2, crc);
+            addMfmByte(ptr, 0xc2, crc);
+            addMfmByte(ptr, 0xc2, crc);
+            addMfmByte(ptr, 0xfc, crc);
+
+            memset(ptr, 0x4e, 50); ptr += 50;
+
+            for (unsigned sector = 0; sector < 10; sector++) {
+                memset(ptr, 0x0, 12); ptr += 12;
+
+                pos = ptr - trackPtr->data;
+                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+
+                crc = 0xffff;
+                addMfmByte(ptr, 0xa1, crc);
+                addMfmByte(ptr, 0xa1, crc);
+                addMfmByte(ptr, 0xa1, crc);
+                addMfmByte(ptr, 0xfe, crc);
+
+                addMfmByte(ptr, track, crc);
+                addMfmByte(ptr, side, crc);
+                addMfmByte(ptr, sector, crc);
+                addMfmByte(ptr, 2, crc); // sector size: 2 => 128 << 2
+                *ptr++ = crc >> 8;
+                *ptr++ = crc & 0xff;
+                memset(ptr, 0x4e, 22); ptr += 22;
+                memset(ptr, 0x0, 12); ptr += 12;
+
+                pos = ptr - trackPtr->data;
+                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+                pos++;
+                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+                pos++;
+                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+
+                crc = 0xffff;
+                addMfmByte(ptr, 0xa1, crc);
+                addMfmByte(ptr, 0xa1, crc);
+                addMfmByte(ptr, 0xa1, crc);
+                addMfmByte(ptr, 0xfb, crc);
+
+                for (unsigned j = 0; j < 512; j++) {
+                    addMfmByte(ptr, rawData[offset++], crc);
+                }
+
+                *ptr++ = crc >> 8;
+                *ptr++ = crc & 0xff;
+
+                memset(ptr, 0x4e, 22); ptr += 22;
+            }
+        }
+    }
+}
+
+
 auto DiskStructure::prepareDxx() -> void {
     
     uint8_t errorCode;

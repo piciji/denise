@@ -138,7 +138,7 @@ auto DiskStructure::prepareGxx() -> void {
                 ptr->size = trackLength;
                 ptr->bits = ptr->size << 3;
                 ptr->data = new uint8_t[ptr->size];
-                ptr->mfmSync = new uint8_t[ptr->size >> 3];
+                //ptr->mfmSync = new uint8_t[ptr->size >> 3];
 
                 if (mfm) {
                     parseMfm(ptr, offset + 2);

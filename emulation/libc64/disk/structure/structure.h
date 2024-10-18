@@ -34,7 +34,7 @@ struct DiskStructure {
 
 	static const float SKEW[42];
     
-    enum class Type { D64, G64, P64, D71, G71, P71, Unknown = -1 } type;
+    enum class Type { D64, G64, P64, D71, G71, P71, D81, Unknown = -1 } type;
 
     System* system;
 	uint8_t number;
@@ -166,6 +166,7 @@ private:
 
     auto analyzeD64() -> bool;
     auto analyzeD71() -> bool;
+	auto analyzeD81() -> bool;
     auto analyzeG64() -> bool;
     auto analyzeG71() -> bool;
     auto analyzeP64() -> bool;
@@ -183,6 +184,7 @@ private:
         
     auto prepareGxx() -> void;
     auto prepareDxx() -> void;
+	auto prepareD81() -> void;
     auto preparePxx() -> void;
     auto getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t;
     auto handleAppendedTracksInDxx() -> bool;

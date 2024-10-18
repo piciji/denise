@@ -178,6 +178,9 @@ auto DiskStructure::analyze() -> bool {
 
     if ( analyzeD71() )
         return true;
+
+    if ( analyzeD81() )
+        return true;
     
     if ( analyzeG64() )
         return true;
@@ -214,6 +217,9 @@ auto DiskStructure::prepare() -> void {
         case Type::D64:
         case Type::D71:
             prepareDxx();
+            break;
+        case Type::D81:
+            prepareD81();
             break;
         case Type::G64:
         case Type::G71:
