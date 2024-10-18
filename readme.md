@@ -27,6 +27,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * improved handling of shader UI
 * added possibility to assign a different floppy sound profile for external drives
 * Amiga: added new floppy sound profile
+* Amiga: emulate Blitter<>Copper conflict
 * C64: fixed a bug in G64 emulation
 * C64: added exponential function to simulate drive motor acc/deceleration
 * C64: improved D64 track alignment

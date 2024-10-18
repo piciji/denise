@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * Amiga Fonts is copyrighted by rewtnull https://github.com/rewtnull/amigafonts
 * Amiga low pass audio filter is taken from WinUAE https://github.com/tonioni/WinUAE
 * WinUAE findings for handling blitter low level emulation
+* WinUAE floppy step noise
 * vAmiga inspirations for a 64-bit event counter, 68k and handling sector blocks https://dirkwhoffmann.github.io/vAmiga/
 * 68k simulator/wrapper around FX68K from emoon https://github.com/emoon/fx68k
 * bundled AROS kickrom and extrom  https://aros.sourceforge.io/ 
