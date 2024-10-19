@@ -532,7 +532,7 @@ auto Interface::prepareModels() -> void {
                       { "0", "1", "2", "3", "4" }});
 
     models.push_back({ModelIdDiskDriveModel, "Drive Model", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
-                      { "1541", "1541-II", "1541-C", "1570", "1571" }});
+                      { "1541", "1541-II", "1541-C", "1570", "1571", "1581" }});
 
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
 
@@ -579,6 +579,7 @@ auto Interface::prepareFirmware() -> void {
     firmwares.push_back({FirmwareIdVC1541C, "VC1541-C"});
     firmwares.push_back({FirmwareIdVC1571, "VC1571"});
     firmwares.push_back({FirmwareIdVC1570, "VC1570"});
+    firmwares.push_back({FirmwareIdVC1581, "VC1581"});
     firmwares.push_back({FirmwareIdExpanded, "Expanded"});
 }
 

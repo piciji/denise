@@ -47,26 +47,39 @@ uint16_t Drive::Mechanics::acceleration = 0;
 uint16_t Drive::Mechanics::deceleration = 0;
 uint16_t Drive::Mechanics::stepperSeekTime = 0;
 
-#define SYNC \
-    cpu.handleSo();                                                    \
-    if (operation & USERDATA_LEVEL) {                   \
-        rotateD64();                                                        \
-    } else if (operation & ENCODEDDATA_LEVEL) {            \
-        rotateG64();                                                  \
-    } else {                                                                \
-        rotateP64();                                                  \
-    }                                                                       \
-    via1.process();                                                        \
-    via2.process();                                                        \
-    if (operation & DRIVE_MODE_157x) {                                       \
-        wd1770.clock();                                                    \
-        cia.clock();                                                   \
-        if (operation & DRIVE_HAS_EXTRA_CIA)                                    \
-            ciaSpeeder.clock();                                                \
-    }                                                                           \
-    cycleCounter += iecBus.cpuCylcesPerSecond;             \
-    if (delayInProgress)              \
+#define SYNC_ROTATE \
+    if (operation & USERDATA_LEVEL) \
+        rotateD64();    \
+    else if (operation & ENCODEDDATA_LEVEL) \
+        rotateG64();    \
+    else \
+        rotateP64();
+
+#define SYNC_TAIL   \
+    cycleCounter += iecBus.cpuCylcesPerSecond;  \
+    if (delayInProgress)    \
         progressDelay();
+
+#define SYNC_1541 \
+    cpu.handleSo(); \
+    SYNC_ROTATE \
+    via1.process(); \
+    via2.process(); \
+    SYNC_TAIL
+
+#define SYNC_1571 \
+    SYNC_1541 \
+    wd1770.clock(); \
+    cia.clock();    \
+    if (operation & DRIVE_HAS_EXTRA_CIA)    \
+        ciaSpeeder.clock(); \
+    SYNC_TAIL
+
+#define SYNC_1581 \
+    SYNC_ROTATE \
+    wd1770.clock(); \
+    cia.clock(); \
+    SYNC_TAIL
     
 auto Drive::progressDelay() -> void {
     if (attachDelay) {
@@ -84,13 +97,19 @@ auto Drive::progressDelay() -> void {
 }
 
 auto Drive::sync() -> void {
-    SYNC 
+    if (operation & DRIVE_MODE_154x) {
+        SYNC_1541
+    } else if (operation & DRIVE_MODE_157x) {
+        SYNC_1571
+    } else { // DRIVE_MODE_158x
+        SYNC_1581
+    }
 }
 
 auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
-    SYNC
-
     if (operation & DRIVE_MODE_154x) {
+        SYNC_1541
+
         if (extendedMemoryMap) {
             if (speeder == 4) { // dolphin v3
                 if ((addr & 0xf000) == 0x5000) {
@@ -161,8 +180,9 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
         else if ((addr & 0x9c00) == 0x1c00)
             via2.write(addr, data);
 
-    } else {
-        // 157x
+    } else if (operation & DRIVE_MODE_157x) {
+        SYNC_1571
+
         if (extendedMemoryMap) {
             if (speeder == 5) { // dolphin v3
                 if ((addr & 0xf000) == 0x5000) {
@@ -204,12 +224,15 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
         } else if ((addr & 0xe000) == 0x2000) {
             wd1770.write(addr, data);
         }
+    } else { // DRIVE_MODE_158x
+        SYNC_1581
+
     }
 }
 
 auto Drive::cpuRead(uint16_t addr) -> uint8_t {
-    SYNC
     if (operation & DRIVE_MODE_154x) {
+        SYNC_1541
         if (extendedMemoryMap) {
             if (speeder == 4) {
                 if ((addr & 0xf000) == 0x5000) {
@@ -334,80 +357,84 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
         return cpu.dataBus;
     }
 
-    // 157x
-    if (extendedMemoryMap) {
-        if (speeder == 5) {
-            if ((addr & 0xf000) == 0x5000) {
-                return pia.read( addr & 3 );
-            }
-        }
-        else if (speeder == 8 || speeder == 9) { // profdos R5, R6
-            if ((addr & 0xe000) == 0x6000)
-                return readProfDosEncoder( addr );
-        }
-        else if (speeder == 13) { // proSpeed 1571
-
-            if (proSpeedControl & (1 | 2 | 0x80)) {
-
-                if ((addr & 0xfff0) == 0x9e20) {
-                    return ciaSpeeder.read(addr);
+    if (operation & DRIVE_MODE_157x) {
+        SYNC_1571
+        if (extendedMemoryMap) {
+            if (speeder == 5) {
+                if ((addr & 0xf000) == 0x5000) {
+                    return pia.read( addr & 3 );
                 }
+            }
+            else if (speeder == 8 || speeder == 9) { // profdos R5, R6
+                if ((addr & 0xe000) == 0x6000)
+                    return readProfDosEncoder( addr );
+            }
+            else if (speeder == 13) { // proSpeed 1571
 
-                if (proSpeedControl & 0x2) {
-                    if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000)) {
-                        return this->ram80To9F[addr & 0x1fff];
+                if (proSpeedControl & (1 | 2 | 0x80)) {
+
+                    if ((addr & 0xfff0) == 0x9e20) {
+                        return ciaSpeeder.read(addr);
                     }
 
-                    if ((addr & 0xe000) == 0xc000) {
-                        if ((proSpeedControl & 0x80) == 0) {
-                            // copy programs
-                            return this->romExpanded[(0x8000 | (addr & 0x1fff)) & romExpandedMask];
+                    if (proSpeedControl & 0x2) {
+                        if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000)) {
+                            return this->ram80To9F[addr & 0x1fff];
+                        }
+
+                        if ((addr & 0xe000) == 0xc000) {
+                            if ((proSpeedControl & 0x80) == 0) {
+                                // copy programs
+                                return this->romExpanded[(0x8000 | (addr & 0x1fff)) & romExpandedMask];
+                            }
+                        }
+
+                        if ((addr & 0xf800) == 0xf800) {
+                            // 35/40 track mode
+                            if ((proSpeedControl & 0x1) == 0x0) {
+                                return this->romExpanded[(0x8000 + 0x3800 + (addr & 0x7ff)) & romExpandedMask];
+                            }
+
+                            return this->romExpanded[(0x8000 + 0x7800 + (addr & 0x7ff)) & romExpandedMask];
                         }
                     }
 
-                    if ((addr & 0xf800) == 0xf800) {
-                        // 35/40 track mode
-                        if ((proSpeedControl & 0x1) == 0x0) {
-                            return this->romExpanded[(0x8000 + 0x3800 + (addr & 0x7ff)) & romExpandedMask];
-                        }
-
-                        return this->romExpanded[(0x8000 + 0x7800 + (addr & 0x7ff)) & romExpandedMask];
+                    if (addr & 0x8000) {
+                        return this->romExpanded[(((proSpeedControl & 2) ? 0x8000 : 0x0) | (addr & 0x7fff)) & romExpandedMask];
                     }
                 }
+            }
 
-                if (addr & 0x8000) {
-                    return this->romExpanded[(((proSpeedControl & 2) ? 0x8000 : 0x0) | (addr & 0x7fff)) & romExpandedMask];
-                }
+            if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
+                return this->ram40To5F[addr & 0x1fff];
+            } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
+                return this->ram60To7F[addr & 0x1fff];
             }
         }
 
-        if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && (((addr & 0xf000) == 0x5000) || ((addr & 0xf800) == 0x4800) )) { // $4800 - $5ffff
-            return this->ram40To5F[addr & 0x1fff];
-        } else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000)) {
-            return this->ram60To7F[addr & 0x1fff];
+        if (addr & 0x8000)
+            return rom[addr & romMask];
+
+        if ((addr & 0xf000) == 0)
+            return ram[addr & 0x7ff];
+
+        if ((addr & 0xfc00) == 0x1800)
+            return via1.read(addr);
+
+        if ((addr & 0xfc00) == 0x1c00) {
+            // TED line of U6 clears the Byte line in 2 Mhz mode.
+            // Line is connected to Chip select of VIA 2. any access of VIA2 clears the line.
+            byteReady = false;
+            return via2.read(addr);
         }
-    }
+        if ((addr & 0xc000) == 0x4000)
+            return cia.read(addr);
 
-    if (addr & 0x8000)
-        return rom[addr & romMask];
+        if ((addr & 0xe000) == 0x2000)
+            return wd1770.read(addr);
 
-    else if ((addr & 0xf000) == 0)
-        return ram[addr & 0x7ff];
-
-    else if ((addr & 0xfc00) == 0x1800)
-        return via1.read(addr);
-
-    else if ((addr & 0xfc00) == 0x1c00) {
-        // TED line of U6 clears the Byte line in 2 Mhz mode.
-        // Line is connected to Chip select of VIA 2. any access of VIA2 clears the line.
-        byteReady = false;
-        return via2.read(addr);
-
-    } else if ((addr & 0xc000) == 0x4000) {
-        return cia.read(addr);
-    }
-    else if ((addr & 0xe000) == 0x2000) {
-        return wd1770.read(addr);
+    } else { // DRIVE_MODE_158x
+        SYNC_1581
     }
 
     return cpu.dataBus;
@@ -916,7 +943,7 @@ auto Drive::power( ) -> void {
     dataDirection = true;
     syncPos = 0;
     nibble = 0;
-    updateCycleSpeed(false);
+    updateCycleSpeed(type == Type::D1581);
     changeHalfTrack(0);
     randomizeRpm(iecBus.drivesEnabled);
     extendedMemoryMap = expandMemory || (speeder > 1);
@@ -1024,6 +1051,14 @@ auto Drive::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
             }
             rom1570 = data;
             rom1570Size = size;
+            break;
+        case Interface::FirmwareIdVC1581:
+            if (!data) {
+                data = (uint8_t*) Firmware::drive1581Rom;
+                size = sizeof( Firmware::drive1581Rom );
+            }
+            rom1581 = data;
+            rom1581Size = size;
             break;
         case Interface::FirmwareIdExpanded:
             romExpanded = data;
@@ -1206,15 +1241,18 @@ auto Drive::setStepperSeekTime( unsigned stepperSeekTimeScaled ) -> void {
 auto Drive::setType( Type type ) -> void {
     this->type = type;
 
-    updateCycleSpeed(false);
+    updateCycleSpeed(type == Type::D1581);
 
-    operation &= ~(DRIVE_MODE_154x | DRIVE_MODE_157x);
+    operation &= ~(DRIVE_MODE_154x | DRIVE_MODE_157x | DRIVE_MODE_158x);
 
     if (type == Type::D1541II || type == Type::D1541 || type == Type::D1541C)
         operation |= DRIVE_MODE_154x;
 
     else if (type == Type::D1571 || type == Type::D1570)
         operation |= DRIVE_MODE_157x;
+
+    else if (type == Type::D1581)
+        operation |= DRIVE_MODE_158x;
 
     setFirmwareByType();
 }
@@ -1241,6 +1279,10 @@ auto Drive::setFirmwareByType( ) -> void {
         case Type::D1570:
             rom = rom1570;
             romMask = rom1570Size - 1;
+            break;
+        case Type::D1581:
+            rom = rom1581;
+            romMask = rom1581Size - 1;
             break;
     }
 

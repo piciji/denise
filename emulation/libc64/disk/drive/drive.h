@@ -25,6 +25,7 @@
 
 #define DRIVE_MODE_154x 8u
 #define DRIVE_MODE_157x 16u
+#define DRIVE_MODE_158x 128u
 
 #define DRIVE_HAS_PIA 32u
 #define DRIVE_HAS_EXTRA_CIA 64u  // besides the builtin CIA
@@ -40,7 +41,7 @@ struct Drive {
     Drive( uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* media );
     ~Drive();
 
-    enum class Type { D1541, D1541II, D1541C, D1570, D1571 } type;
+    enum class Type { D1541, D1541II, D1541C, D1570, D1571, D1581 } type;
 
     enum class ExpandedMemMode  { M20 = 1, M40 = 2, M60 = 4, M80 = 8, MA0 = 16 };
 
@@ -63,6 +64,8 @@ struct Drive {
     uint16_t rom1571Size = 0;
     uint8_t* rom1570 = nullptr;
     uint16_t rom1570Size = 0;
+    uint8_t* rom1581 = nullptr;
+    uint16_t rom1581Size = 0;
     uint8_t* romExpanded = nullptr;
     uint16_t romExpandedMask = 0;
 

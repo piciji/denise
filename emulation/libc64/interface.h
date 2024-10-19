@@ -63,8 +63,8 @@ struct Interface : Emulator::Interface {
 
     enum FirmwareId {
         FirmwareIdKernal, FirmwareIdBasic, FirmwareIdChar,
-        FirmwareIdVC1541II, FirmwareIdVC1541, FirmwareIdVC1541C, FirmwareIdVC1571, FirmwareIdVC1570,
-        FirmwareIdExpanded,
+        FirmwareIdVC1541II, FirmwareIdVC1541, FirmwareIdVC1541C, FirmwareIdVC1571, FirmwareIdVC1570, FirmwareIdVC1581,
+        FirmwareIdExpanded
     };
     
     static const std::string Version;
