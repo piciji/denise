@@ -18,31 +18,31 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 
 # copyright holders
 
-* SID emulation code, especially SID filter, is taken from VICE http://vice-emu.sourceforge.net
+* SID emulation code, especially SID filter, is taken by VICE http://vice-emu.sourceforge.net
 * "VIC-II" cycle emulation code is based on VICE implementation http://vice-emu.sourceforge.net
-* Dynamic Rate Control (DRC) formula is copyrighted by RetroArch. https://github.com/libretro/RetroArch
-* cosine resampler is copyrighted by RetroArch https://github.com/libretro/RetroArch
-* sinc resampler is copyrighted by RetroArch https://github.com/libretro/RetroArch
-* C64 TrueType v1.2.1/Style font is copyrighted by https://style64.org/c64-truetype
+* cosine resampler by RetroArch https://github.com/libretro/RetroArch
+* sinc resampler by RetroArch https://github.com/libretro/RetroArch
+* C64 TrueType v1.2.1/Style font by https://style64.org/c64-truetype
 * freetype is a library for opengl to render text fonts https://www.freetype.org/
-* bundled Shader were created by following copyright holders: Timothy Lottes, guest(r) - guest.r@gmail.com
+* bundled Shader were created by following people: Timothy Lottes, guest(r) - guest.r@gmail.com
 * application logo and icon were created by Retrofan
-* French translation was created by Ben
-* Japanese translation was created by Ulgon
-* Hungarian translation was created by Ferenc
-* Spanish translation was created by thecodeblasters
-* Italian translation was created by Luigi
-* Chamberlin Filter is copyrighted by Hoxs64
-* fpaq0 - Stationary order 0 file compressor by Matt Mahoney
-* P64 format is copyrighted by BeRo
-* Floppy Sounds are taken from Trackers-World.NET ([Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/)) samples were cutted
-* Amiga Fonts is copyrighted by rewtnull https://github.com/rewtnull/amigafonts
-* Amiga low pass audio filter is taken from WinUAE https://github.com/tonioni/WinUAE
-* WinUAE findings for handling blitter low level emulation
-* WinUAE floppy step noise
+* French translation by Ben
+* Japanese translation by Ulgon
+* Hungarian translation by Ferenc
+* Spanish translation by thecodeblasters
+* Italian translation by Luigi
+* Esperanto translation by Diego
+* Chamberlin Filter by Hoxs64 https://www.hoxs64.net/
+* fpaq0 - Stationary order 0 file compressor by Matt Mahoney (used for P64 compression)
+* P64 by BeRo https://blog.rosseaux.net/page/986c1ab5667d2dfa6ef552e6dd42fe27/micro64
+* Floppy Sounds are taken by Trackers-World.NET ([Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/))
+* Amiga Fonts by rewtnull https://github.com/rewtnull/amigafonts
+* Amiga low pass audio filter by WinUAE https://github.com/tonioni/WinUAE
+* findings for handling Blitter low level emulation by WinUAE https://www.winuae.net/
+* floppy step noise by WinUAE https://www.winuae.net/
 * vAmiga inspirations for a 64-bit event counter, 68k and handling sector blocks https://dirkwhoffmann.github.io/vAmiga/
-* 68k simulator/wrapper around FX68K from emoon https://github.com/emoon/fx68k
+* 68k simulator/wrapper around FX68K by emoon https://github.com/emoon/fx68k
 * bundled AROS kickrom and extrom  https://aros.sourceforge.io/ 
-* use RetroArch shader system https://github.com/libretro/RetroArch
-* glslang from Khronos Group https://github.com/KhronosGroup/glslang
-* SPIRV-Cross from Khronos Group https://github.com/KhronosGroup/SPIRV-Cross
+* RetroArch shader system by https://github.com/libretro/RetroArch
+* glslang by Khronos Group https://github.com/KhronosGroup/glslang
+* SPIRV-Cross by Khronos Group https://github.com/KhronosGroup/SPIRV-Cross
