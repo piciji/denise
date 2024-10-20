@@ -756,7 +756,7 @@ auto Program::jam( Emulator::Interface::Media* media ) -> void {
         out = "CPU " + media->name + " Jam";
 
     emuThread->lockStatus();
-    statusHandler->setMessage( out, 10, true );
+    statusHandler->setMessage( out, 4, true );
     emuThread->unlockStatus();
 }
 
