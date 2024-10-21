@@ -227,6 +227,15 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
     } else { // DRIVE_MODE_158x
         SYNC_1581
 
+        if ((addr & 0xe000) == 0)
+            ram[addr & 0x1fff] = data;
+
+        else if ((addr & 0xf000) == 0x4000) {
+            cia.write(addr, data);
+
+        } else if ((addr & 0xf000) == 0x6000) {
+            wd1770.write(addr, data);
+        }
     }
 }
 
@@ -435,6 +444,17 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
 
     } else { // DRIVE_MODE_158x
         SYNC_1581
+        if (addr & 0x8000)
+            return rom[addr & romMask];
+
+        if ((addr & 0xe000) == 0)
+            return ram[addr & 0x7ff];
+
+        if ((addr & 0xf000) == 0x4000)
+            return cia.read(addr);
+
+        if ((addr & 0xf000) == 0x6000)
+            return wd1770.read(addr);
     }
 
     return cpu.dataBus;
@@ -594,11 +614,18 @@ structure(system, this) {
 
         if ( lines->prbChange && (port == Cia<MOS_8520>::PORTB )) {
 
-            if ((operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA) ) == 0)
+            if (operation & DRIVE_MODE_158x) {
+                updateCiaBus();
+
+                this->iecBus.updatePort();
+            } else if ((operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA) ) == 0)
                 system->writeParallelHandshake();
         }
 
         else if (port == Cia<MOS_8520>::PORTA ) {
+            uint8_t _side = side;
+            side = !!(lines->ioa & 1);
+
 
         }
     };
@@ -606,6 +633,9 @@ structure(system, this) {
     cia.readPort = [this, system]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTB ) {
+
+            if (operation & DRIVE_MODE_158x)
+                return (uint8_t)( (((lines->iob & 0x1a) | this->iecBus.readPort()) ^ 0x85) | (writeProtected ? 0 : 0x40) );
 
             if (!system->secondDriveCable.parallelUse || (operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA)) )
                 return lines->iob;
@@ -662,7 +692,7 @@ structure(system, this) {
             
             if (lines->iob != lines->iobOld) {
             
-                updateBus();
+                updateViaBus();
                                             
                 system->iecBus.updatePort();
             }
@@ -693,7 +723,7 @@ structure(system, this) {
         
         if (port == Via::Port::B) {
             // invert the three input bits, add device number  
-            return (uint8_t)( ((0x1a | system->iecBus.readVia()) ^ 0x85) | (this->number << 5) );
+            return (uint8_t)( ((0x1a | this->iecBus.readPort()) ^ 0x85) | (this->number << 5) );
         }
 
         // port A
@@ -849,6 +879,11 @@ auto Drive::updateDeviceState() -> void {
     system->interface->updateDeviceState( media, !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, via2.lines.iob & 8, !motorOn );
 }
 
+auto Drive::updateDeviceState1581() -> void {
+    system->diskSilence.idleFrames = 0;
+    system->interface->updateDeviceState( media, !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, cia.lines.iob & 0x40, !motorOn );
+}
+
 // missing BUS communication
 auto Drive::updateIdleDeviceState() -> void {
     
@@ -861,14 +896,22 @@ auto Drive::updateIdleDeviceState() -> void {
         system->interface->mixDriveSound( this->media, DriveSound::FloppySpinDown );
 }
 
-auto Drive::updateBus() -> void {
-    
+auto Drive::updateViaBus() -> void {
     clockOut = !((via1.lines.iob >> 3) & 1);
     dataOut =  !((via1.lines.iob >> 1) & 1);
     atnOut =  (via1.lines.iob >> 4) & 1;
 
     if ( iecBus.atnOut == atnOut )
-        dataOut = 0;
+        dataOut = false;
+}
+
+auto Drive::updateCiaBus() -> void {
+    clockOut = !((cia.lines.iob >> 3) & 1);
+    dataOut =  !((cia.lines.iob >> 1) & 1);
+    atnOut =  (cia.lines.iob >> 4) & 1;
+
+    if ( !iecBus.atnOut && atnOut )
+        dataOut = false;
 }
 
 auto Drive::power( ) -> void {
@@ -904,7 +947,7 @@ auto Drive::power( ) -> void {
     turboTransPage = 0;
     prologic2Mhz = 0;
     irqIncomming = 0;
-    clockOut = dataOut = atnOut = 1;  
+    clockOut = dataOut = atnOut = true;
     cycleCounter = 0;
     speedZone = 0;
     byteReadyOverflow = false;

@@ -351,7 +351,7 @@ auto IecBus::powerOff() -> void {
 }
 
 auto IecBus::power() -> void {
-    atnOut = clockOut = dataOut = 1;
+    atnOut = clockOut = dataOut = true;
     
     port = 0xc0;
     lastByte = 0;
@@ -371,29 +371,35 @@ auto IecBus::writeCia( uint8_t byte ) -> bool {
     bool result = syncDrives<true>( 1 );
     
     bool atnBefore = atnOut;
-    // for better readability we put out signals on separate variables
     atnOut = (byte >> 3) & 1;
     clockOut = (byte >> 4) & 1;
     dataOut = (byte >> 5) & 1;
-    
-    if (result) {
-        if (atnBefore != atnOut) { 
-            for( auto drive : drivesEnabled ) {
-                // attention please :-) there is a transition of ca1 pin ( via 1 chip )
-                // for all connected drives.
-                // NOTE: drive cpus can't give back control after each single cycle,
-                // means drive cpus could run ahead a few cycles when syncing back.
-                // but a drive cpu can give back control before an interrupt sample cycle,
-                // so we can not miss an interrupt when main thread triggers a ca1 transition
-                // and drive thread runs ahead.
-                drive->setViaTransition( atnOut ? 0 : 1 );
-            }
-        }                               
 
-        for (auto drive : drivesEnabled)       
-            drive->updateBus(); // because of possible atn change 
+    if (result) {
+        for( auto drive : drivesEnabled ) {
+            if (drive->operation & DRIVE_MODE_158x) {
+                if (!atnOut && atnBefore)
+                    drive->cia.setFlag();
+
+                drive->updateCiaBus();
+
+            } else {
+                if (atnBefore != atnOut) {
+                    // attention please :-) there is a transition of ca1 pin ( via 1 chip )
+                    // for all connected drives.
+                    // NOTE: drive cpus can't give back control after each single cycle,
+                    // means drive cpus could run ahead a few cycles when syncing back.
+                    // but a drive cpu can give back control before an interrupt sample cycle,
+                    // so we can not miss an interrupt when main thread triggers a ca1 transition
+                    // and drive thread runs ahead.
+                    drive->setViaTransition( !atnOut );
+                }
+
+                drive->updateViaBus();
+            }
+        }
     }
-    
+
     updatePort();  
     
     byte &= 0x38;
@@ -421,11 +427,6 @@ auto IecBus::updatePort() -> void {
         // a line will become "true" (pulled down) if one or more devices signal true
         port &= (drive->dataOut << 7) | (drive->clockOut << 6);
     }        
-}
-
-auto IecBus::readVia() -> uint8_t {
-    // bit 0: data in, bit 2: clock in, bit 7: atn in    
-    return (port >> 7) | ((port >> 4) & 4) | (atnOut << 7);
 }
 
 auto IecBus::readCia() -> uint8_t {

@@ -188,7 +188,8 @@ struct Drive {
     auto progressDelay() -> void;
     auto hide() -> void;
     
-    auto updateBus() -> void;
+    auto updateViaBus() -> void;
+    auto updateCiaBus() -> void;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
     auto rotateD64() -> void;
     auto rotateG64() -> void;
@@ -214,6 +215,7 @@ struct Drive {
 
     auto serialize(Emulator::Serializer& s) -> void;
     auto updateDeviceState() -> void;
+    auto updateDeviceState1581() -> void;
     auto updateIdleDeviceState() -> void;
 
     auto byteFetched( bool overflowNotThisCycle ) -> void;

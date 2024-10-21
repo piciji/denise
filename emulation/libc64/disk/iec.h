@@ -50,7 +50,10 @@ struct IecBus {
     
     auto writeCia( uint8_t byte ) -> bool;
     auto readCia() -> uint8_t;
-    auto readVia() -> uint8_t;
+    auto readPort() -> uint8_t {
+        // bit 0: data in, bit 2: clock in, bit 7: atn in
+        return (port >> 7) | ((port >> 4) & 4) | (atnOut << 7);
+    }
     auto serialShift(bool bit) -> void;
     auto readParallel() -> uint8_t;
     auto readParallelWithHandshake() -> uint8_t;
