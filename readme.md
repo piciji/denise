@@ -22,6 +22,7 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 * reworked on-screen status messages
     * adjust position, font size, font type, foreground/background color, transparency, box padding/margin
     * download TTF/OTF/TTC fonts or add OS installed fonts for win c:/Windows/Fonts, mac /Library/Fonts, linux /usr/share/fonts
+* added esperanto translation (thanks to Diego)
 * separated(C64/Amiga) file dialog preview options and moved to Software UI
 * improved openGL shader cache
 * improved handling of shader UI
