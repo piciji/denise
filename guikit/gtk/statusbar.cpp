@@ -150,6 +150,7 @@ auto pStatusBar::update() -> void {
 					_part->onChange(position);
 			};
 			gtkWidget = slider->p.gtkWidget;
+			gtk_widget_set_can_focus(gtkWidget, false);
 
 			pSystem::addCssClass(gtkWidget, "smallerOne");
 			pSystem::applyCss( gtkWidget, ".smallerOne { padding-top: 0px; padding-bottom: 0px; padding-left: 7px; padding-right: 7px; }" );
