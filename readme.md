@@ -13,6 +13,25 @@ Copyright © 2021 JetBrains s.r.o. CLion and the CLion logo are registered trade
 
 # changelog
 
+## 2.4
+* support macOS Metal graphics driver with shaders
+* added Cocoa as a keyboard driver for macOS
+    * avoid the system dialog to allow input
+* added BSD UHID joypad driver
+    * supported on FreeBSD, NetBSD and OpenBSD
+* reworked on-screen status messages
+    * adjust position, font size, font type, foreground/background color, transparency, box padding/margin
+    * download TTF/OTF/TTC fonts or add OS installed fonts for win c:/Windows/Fonts, mac /Library/Fonts, linux /usr/share/fonts
+* separated(C64/Amiga) file dialog preview options and moved to Software UI
+* improved openGL shader cache
+* improved handling of shader UI
+* added possibility to assign a different floppy sound profile for external drives
+* Amiga: added new floppy sound profile
+* Amiga: emulate Blitter<>Copper conflict
+* C64: fixed a bug in G64 emulation
+* C64: added exponential function to simulate drive motor acc/deceleration
+* C64: improved D64 track alignment
+
 ## 2.3
 * added RetroArch Shader support
     * targets: openGL, D3D11

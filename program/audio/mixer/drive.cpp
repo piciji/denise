@@ -117,6 +117,16 @@ namespace Mixer {
                                 device.first = nullptr;
                             } else
                                 device.first = sound;
+
+                        } else if (device.state & 0x40) {
+                            device.state &= ~0x40;
+                            if (device.media->group->isDisk())
+                                sound = getSound( FloppySnatch, activeEmulator, device.hasExternalSound );
+
+                            if (!sound || !sound->data) {
+                                device.first = nullptr;
+                            } else
+                                device.first = sound;
                         } else
                             device.first = nullptr;
 
@@ -144,7 +154,7 @@ namespace Mixer {
                         if (sound->id == FloppySpinDown) {
                             device.second = nullptr;
                             break;
-                        } else if (sound->id == FloppySpinUp || sound->id == FloppySnatch) {
+                        } else if (sound->id == FloppySpinUp) {
                             sound = getSound( FloppySpin, activeEmulator, device.hasExternalSound );
                             if (!sound || !sound->data) {
                                 device.second = nullptr;
@@ -252,7 +262,16 @@ namespace Mixer {
                 }
             case DriveSound::TapeEject:
             case DriveSound::FloppyEject:
-                device->state &= ~0x80;
+                device->state &= ~(0x80 | 0x40);
+                device->first = sound;
+                device->firstOffset = 0;
+                break;
+
+            case DriveSound::FloppySnatch:
+                if (device->first) {
+                    device->state |= 0x40;
+                    break;
+                }
                 device->first = sound;
                 device->firstOffset = 0;
                 break;
@@ -284,14 +303,8 @@ namespace Mixer {
                 if (!device->second)
                     break;
             case DriveSound::FloppySpinUp:
-            case DriveSound::FloppySnatch:
                 lastStep = Chronos::getTimestampInMilliseconds();
             case DriveSound::FloppySpin:
-                if (!sound && (soundId == FloppySnatch)) {
-                    sound = getSound( FloppySpinUp, emulator, device->hasExternalSound );
-                    if (!sound || !sound->data)
-                        sound = nullptr;
-                }
                 if (!sound && (soundId != FloppySpinDown)) {
                     sound = getSound( FloppySpin, emulator, device->hasExternalSound );
                     if (!sound || !sound->data)

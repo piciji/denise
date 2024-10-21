@@ -495,8 +495,11 @@ auto DiskDrive::setMotor(bool state) -> void {
         reset();
 
     updateDeviceState();
-    if (driveSound && system->isDisplayFrame())
-        interface->mixDriveSound( media, state ? (snatched ? DriveSound::FloppySpinUp : DriveSound::FloppySnatch) : DriveSound::FloppySpinDown );
+    if (driveSound && system->isDisplayFrame()) {
+        interface->mixDriveSound( media, state ?  DriveSound::FloppySpinUp : DriveSound::FloppySpinDown );
+        if (!snatched)
+            interface->mixDriveSound( media, DriveSound::FloppySnatch );
+    }
 
     snatched = true;
     system->hintObserverMotorChange( motor );
