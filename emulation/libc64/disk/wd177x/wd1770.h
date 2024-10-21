@@ -1,7 +1,10 @@
 
-// for 1571 following PIN's are not connected and not emulated at the moment:
-// Motor, Step, Direction, Drq, Intrq, Tr00, DDEN (FM support)
-// no support for write precompensation ( needed to increase lifetime of real disks )
+// for 1571 following Pins are not used
+// Motor, Step, Direction, Drq, Intrq, Tr00, DDEN (force to MFM)
+
+// for 1581 following Pins are not used
+// Motor, Drq, Intrq, DDEN (force to MFM)
+
 /*
 data	0xA1	1   0   1   0   0   0   0   1
 MFM sync	    1 0 0 0 1 0 0 1 0 1 0 1 0 0 1 ?
@@ -18,6 +21,8 @@ MFM sync	    1 0 1 0 0 1 0 1 0 1 0 0 1 0 0 ?
 namespace LIBC64 {
 
 struct WD1770 {
+
+    enum Type {T1770, T1772};
 
     enum Mode { None = 0, USERDATA = 1, ENCODED = 2, FLUX = 4 };
     // MFM encoding
@@ -49,10 +54,14 @@ struct WD1770 {
     auto serialize(Emulator::Serializer& s) -> void;
     auto setWriteProtected(bool state) -> void;
     auto setMode(WD1770::Mode mode) -> void;
+    auto setType(WD1770::Type type) -> void;
     auto setTrackZero(bool state) -> void;
+
+    std::function<void (bool direction)> stepCall;
 
 protected:
     uint8_t mode;
+    Type type = T1770;
     uint8_t refCycles = 8;
     uint8_t callerMhz = 2;
     unsigned callerHz = 2000000;

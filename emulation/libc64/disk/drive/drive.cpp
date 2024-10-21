@@ -68,7 +68,10 @@ uint16_t Drive::Mechanics::stepperSeekTime = 0;
     SYNC_TAIL
 
 #define SYNC_1571 \
-    SYNC_1541 \
+    cpu.handleSo(); \
+    SYNC_ROTATE \
+    via1.process(); \
+    via2.process(); \
     wd1770.clock(); \
     cia.clock();    \
     if (operation & DRIVE_HAS_EXTRA_CIA)    \
@@ -496,6 +499,7 @@ structure(system, this) {
     delayInProgress = false;
     motorOn = false;
     hidden = false;
+    dskChange = true;
 
     frequency = 1000000;
     refCyclesInCpuCycle = 16;
@@ -623,15 +627,19 @@ structure(system, this) {
         }
 
         else if (port == Cia<MOS_8520>::PORTA ) {
-            uint8_t _side = side;
-            side = !!(lines->ioa & 1);
+            if (operation & DRIVE_MODE_158x) {
+                uint8_t _side = side;
+                side = !!(lines->ioa & 1);
+                motorOn = (lines->ioa & 4) != 0;
+                wd1770.setDiskAccessible(motorOn & loaded);
 
-
+                changeHalfTrack(0);
+            }
         }
     };
 
     cia.readPort = [this, system]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
-
+        uint8_t out;
         if ( port == Cia<MOS_8520>::PORTB ) {
 
             if (operation & DRIVE_MODE_158x)
@@ -640,7 +648,7 @@ structure(system, this) {
             if (!system->secondDriveCable.parallelUse || (operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA)) )
                 return lines->iob;
 
-            uint8_t out = system->readParallelWithHandshake();
+            out = system->readParallelWithHandshake();
 
             for (auto drive : system->iecBus.drivesEnabled) {
                 out &= drive->cia.lines.iob;
@@ -648,7 +656,40 @@ structure(system, this) {
 
             return out;
         }
+
+        if (operation & DRIVE_MODE_158x) {
+            out = this->number << 3;
+
+            if (!motorOn) // RDY: todo: check for minimum delay when motor switching off (like Amiga)
+                out |= 2;
+            if (!dskChange) // DSK CHANGE: todo: check for minimum delay in case of stepping too fast after inserting disk (like Amiga)
+                out |= 0x80;
+
+            out = (lines->pra & lines->ddra) | (out & ~lines->ddra);
+            return out;
+        }
+
         return lines->ioa;
+    };
+
+    wd1770.stepCall = [this](bool direction) {
+        if (this->operation & DRIVE_MODE_158x) { // step/dir are not connected for 1571
+            if (loaded)
+                dskChange = false;
+
+            if (direction) {
+                if (currentHalftrack > 0)
+                    currentHalftrack--;
+
+            } else {
+                if (currentHalftrack < MAX_TRACKS_1581 )
+                    currentHalftrack++;
+            }
+
+            changeHalfTrack(0);
+
+            wd1770.setTrackZero( currentHalftrack == 0 );
+        }
     };
 
     cia.irqCall = [this](bool state) {
@@ -1163,6 +1204,7 @@ auto Drive::detach() -> void {
     pulseDelta = 1; // to reload quickly
     operation &= ~(ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
     operation |= USERDATA_LEVEL;
+    dskChange = true;
 }
 
 auto Drive::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> void {
@@ -1285,6 +1327,7 @@ auto Drive::setType( Type type ) -> void {
     this->type = type;
 
     updateCycleSpeed(type == Type::D1581);
+    wd1770.setType( type == Type::D1581 ? WD1770::T1772 : WD1770::T1770);
 
     operation &= ~(DRIVE_MODE_154x | DRIVE_MODE_157x | DRIVE_MODE_158x);
 

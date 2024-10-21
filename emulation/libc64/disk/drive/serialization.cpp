@@ -78,6 +78,7 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( turboTransPage );
     s.integer( proSpeedControl );
     s.integer( hidden );
+    s.integer( dskChange );
 
     if (number == 0) {
         s.integer(Drive::rpm);

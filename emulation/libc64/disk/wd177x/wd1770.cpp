@@ -12,6 +12,10 @@ auto WD1770::setMode(WD1770::Mode mode) -> void {
     this->mode = mode;
 }
 
+auto WD1770::setType(WD1770::Type type) -> void {
+    this->type = type;
+}
+
 auto WD1770::setTrack(DiskStructure::MTrack* trackPtr, bool dummyTrack) -> void {
     this->trackPtr = trackPtr;
     this->dummyTrack = dummyTrack;
@@ -353,6 +357,8 @@ auto WD1770::clock() -> void {
                         else
                             trackReg++;
 
+                        stepCall(direction);
+
                         commandSubStage = 3;
                         break;
 
@@ -365,8 +371,8 @@ auto WD1770::clock() -> void {
                                 default:
                                 case 0: delay = 6000 << getTimeFactor(); break;
                                 case 1: delay = 12000 << getTimeFactor(); break;
-                                case 2: delay = 20000 << getTimeFactor(); break;
-                                case 3: delay = 30000 << getTimeFactor(); break;
+                                case 2: delay = (type == T1772 ? 2000 : 20000) << getTimeFactor(); break;
+                                case 3: delay = (type == T1772 ? 3000 : 30000) << getTimeFactor(); break;
                             }
                             commandSubStage = 4;
                         }
@@ -1438,6 +1444,7 @@ uint16_t WD1770::CRC1021[] = {
 
 auto WD1770::serialize(Emulator::Serializer& s) -> void {
     s.integer(mode);
+    s.integer((uint8_t&)type);
     s.integer(commandType);
     s.integer(command);
     s.integer(status);

@@ -467,7 +467,7 @@ auto IecBus::resetDrive( Emulator::Interface::Media* media) -> void {
 
 auto IecBus::setDriveType(Drive::Type type) -> void {
 
-    system->secondDriveCable.burstPossible = (type == Drive::Type::D1570) || (type == Drive::Type::D1571);
+    system->secondDriveCable.burstPossible = (type == Drive::Type::D1570) || (type == Drive::Type::D1571) || (type == Drive::Type::D1581);
     system->secondDriveCable.parallelPossible = true;
     system->burstOrParallelUpdate();
 

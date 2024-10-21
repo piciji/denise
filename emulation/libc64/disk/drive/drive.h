@@ -121,6 +121,7 @@ struct Drive {
     uint8_t turboTransPage;
     uint8_t proSpeedControl;
     bool hidden;
+    bool dskChange;
         
     DiskStructure::MTrack* gcrTrack;
     DiskStructure::MTrack* dummyTrack;

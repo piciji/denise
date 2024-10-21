@@ -15,6 +15,7 @@
 namespace LIBC64 {
 
 #define MAX_TRACKS_1541 42
+#define MAX_TRACKS_1581 83
 
 struct VirtualDrive;
 struct System;
