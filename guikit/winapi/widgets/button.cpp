@@ -61,6 +61,8 @@ auto pButton::onActivate() -> void {
 auto pButton::setText(const std::string& text) -> void {
     if (!button.image())
         pWidget::setText(text);
+    else
+        calculatedMinimumSize.updated = false;
 }
 
 auto pButton::setEnabled(bool enabled) -> void {
