@@ -305,19 +305,19 @@ auto WD1770::clock() -> void {
                         commandSubStage = 2;
                         switch(baseCommand()) {
                             case STEP_IN:
-                                direction = 1;
+                                direction = true;
                                 commandSubStage = 3;
                                 break;
                             case STEP_IN + 1:
-                                direction = 1;
+                                direction = true;
                                 commandSubStage = 2;
                                 break;
                             case STEP_OUT:
-                                direction = 0;
+                                direction = false;
                                 commandSubStage = 3;
                                 break;
                             case STEP_OUT + 1:
-                                direction = 0;
+                                direction = false;
                                 commandSubStage = 2;
                                 break;
                             case STEP:
@@ -330,8 +330,6 @@ auto WD1770::clock() -> void {
                             case RESTORE:
                                 trackReg = 0xff;
                                 dataReg = 0;
-                                commandSubStage = 1;
-                                break;
                             case SEEK:
                                 commandSubStage = 1;
                                 break;
@@ -339,26 +337,17 @@ auto WD1770::clock() -> void {
                         break;
 
                     case 1:
-                        if (trackReg == dataReg) {
+                        DSR = dataReg;
+                        if (trackReg == DSR) {
                             CHECK_VERIFY
                         } else {
-                            if (dataReg < trackReg) {
-                                direction = 1;
-                            } else
-                                direction = 0;
-
+                            direction = DSR > trackReg;
                             commandSubStage = 2;
                         }
                         break;
 
                     case 2:
-                        if (direction)
-                            trackReg--;
-                        else
-                            trackReg++;
-
-                        stepCall(direction);
-
+                        direction ? trackReg++ : trackReg--;
                         commandSubStage = 3;
                         break;
 
@@ -367,6 +356,8 @@ auto WD1770::clock() -> void {
                             trackReg = 0;
                             CHECK_VERIFY
                         } else {
+                            stepCall(direction);
+
                             switch(command & 3) {
                                 default:
                                 case 0: delay = 6000 << getTimeFactor(); break;

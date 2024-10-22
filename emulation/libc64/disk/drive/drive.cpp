@@ -451,7 +451,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
             return rom[addr & romMask];
 
         if ((addr & 0xe000) == 0)
-            return ram[addr & 0x7ff];
+            return ram[addr & 0x1fff];
 
         if ((addr & 0xf000) == 0x4000)
             return cia.read(addr);
@@ -504,7 +504,7 @@ structure(system, this) {
     frequency = 1000000;
     refCyclesInCpuCycle = 16;
     
-    ram = new uint8_t[ 2 * 1024 ];
+    ram = new uint8_t[ 8 * 1024 ]; // 154x, 157x need 2k, 1581 need 8k
     ram20To3F = new uint8_t[ 8 * 1024 ];
     ram40To5F = new uint8_t[ 8 * 1024 ];
     ram60To7F = new uint8_t[ 8 * 1024 ];
@@ -517,11 +517,13 @@ structure(system, this) {
     rom1541C = (uint8_t*)Firmware::drive1541CRom;
     rom1571 = (uint8_t*)Firmware::drive1571Rom;
     rom1570 = (uint8_t*)Firmware::drive1570Rom;
+    rom1581 = (uint8_t*)Firmware::drive1581Rom;
     rom1541IISize = sizeof( Firmware::drive1541IIRom );
     rom1541Size = sizeof( Firmware::drive1541Rom );
     rom1541CSize = sizeof( Firmware::drive1541CRom );
     rom1571Size = sizeof( Firmware::drive1571Rom );
     rom1570Size = sizeof( Firmware::drive1570Rom );
+    rom1581Size = sizeof( Firmware::drive1581Rom );
 
     rom = rom1541II;
     romMask = rom1541IISize - 1;
@@ -629,8 +631,8 @@ structure(system, this) {
         else if (port == Cia<MOS_8520>::PORTA ) {
             if (operation & DRIVE_MODE_158x) {
                 uint8_t _side = side;
-                side = !!(lines->ioa & 1);
-                motorOn = (lines->ioa & 4) != 0;
+                side = lines->ioa & 1;
+                motorOn = (lines->ioa & 4) == 0;
                 wd1770.setDiskAccessible(motorOn & loaded);
 
                 changeHalfTrack(0);
@@ -660,7 +662,7 @@ structure(system, this) {
         if (operation & DRIVE_MODE_158x) {
             out = this->number << 3;
 
-            if (!motorOn) // RDY: todo: check for minimum delay when motor switching off (like Amiga)
+           if (!motorOn) // RDY: todo: check for minimum delay when motor switching off (like Amiga)
                 out |= 2;
             if (!dskChange) // DSK CHANGE: todo: check for minimum delay in case of stepping too fast after inserting disk (like Amiga)
                 out |= 0x80;
@@ -677,7 +679,7 @@ structure(system, this) {
             if (loaded)
                 dskChange = false;
 
-            if (direction) {
+            if (!direction) {
                 if (currentHalftrack > 0)
                     currentHalftrack--;
 
@@ -957,7 +959,7 @@ auto Drive::updateCiaBus() -> void {
 
 auto Drive::power( ) -> void {
 
-    std::memset(ram, 0, 2 * 1024);
+    std::memset(ram, 0, 8 * 1024);
     if (expandMemory & (uint8_t)ExpandedMemMode::M20)
         std::memset(ram20To3F, 0, 8 * 1024);
     if (expandMemory & (uint8_t)ExpandedMemMode::M40)
@@ -1031,7 +1033,7 @@ auto Drive::power( ) -> void {
     changeHalfTrack(0);
     randomizeRpm(iecBus.drivesEnabled);
     extendedMemoryMap = expandMemory || (speeder > 1);
-    wd1770.setRateInMhz( 1, 16 );
+    wd1770.setRateInMhz( type == Type::D1581 ? 2 : 1, 16 );
 
     if (system->driveSounds.useFloppy) {
         if (loaded && !iecBus.powerOn)
@@ -1249,8 +1251,10 @@ auto Drive::postAttach() -> void {
     operation &= ~(USERDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
     wd1770.setMode( WD1770::Mode::None );
 
-    if (structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::D71) {
+    if (structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::D71 || structure.type == DiskStructure::Type::D81) {
         operation |= USERDATA_LEVEL;
+        if (structure.type == DiskStructure::Type::D81)
+            wd1770.setMode( WD1770::Mode::USERDATA );
     } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71) {
         operation |= ENCODEDDATA_LEVEL;
         wd1770.setMode( WD1770::Mode::USERDATA ); // MFM is included as user data

@@ -26,7 +26,7 @@ auto DiskStructure::analyzeD81() -> bool {
         compareSize += 256 * blocksInTrack;
         tracksInDxx++;
 
-        if (tracksInDxx > 83)
+        if (tracksInDxx > MAX_TRACKS_1581)
             return false;
     }
 
@@ -159,7 +159,7 @@ auto DiskStructure::prepareD81() -> void {
 
             memset(ptr, 0x4e, 50); ptr += 50;
 
-            for (unsigned sector = 0; sector < 10; sector++) {
+            for (unsigned sector = 1; sector <= 10; sector++) {
                 memset(ptr, 0x0, 12); ptr += 12;
 
                 pos = ptr - trackPtr->data;
