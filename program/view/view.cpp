@@ -218,9 +218,18 @@ auto View::build() -> void {
         program->finishStartup();
     };
 
+    onFocus = [this]() {
+        program->isPause &= ~2;
+    };
+
     onUnFocus = [this]() {
+        static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
+
         if (inputDriver->mIsAcquired())
             inputDriver->mUnacquire();
+
+        program->isPause &= ~2;
+        program->isPause |= (!!*pauseFocusLoss) << 1;
     };
 	
 	winapi.onMenu = []() {
@@ -849,8 +858,8 @@ auto View::buildShader() -> void {
 
 auto View::updatePauseCheck() -> void {
 
-    if (program->isPause != pauseItem.checked() )
-        pauseItem.setChecked(program->isPause);
+    if ((program->isPause & 1) != pauseItem.checked() )
+        pauseItem.setChecked(program->isPause & 1);
 }
 
 auto View::updateWarpCheck() -> void {

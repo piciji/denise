@@ -50,7 +50,7 @@ struct Message;
 struct InputManager;
 
 struct Program : Emulator::Interface::Bind {
-	bool isPause = false;
+	unsigned isPause = 0;
     bool quitInProgress = false;
     bool initialized = false;
     static bool focused;
@@ -73,7 +73,6 @@ struct Program : Emulator::Interface::Bind {
     auto loop() -> void;
 	auto loopNoGui() -> void;
     auto loopUserInterface() -> void;
-	auto willRun() -> bool;
     auto loadTranslation(std::string file) -> bool;
     auto translationFolder() -> std::string;
     auto dataFolder() -> std::string;

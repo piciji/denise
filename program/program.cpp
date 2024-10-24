@@ -251,7 +251,7 @@ auto Program::setMemoryPattern(Emulator::Interface* emulator) -> void {
 }
 
 auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
-    isPause = false;
+    isPause = 0;
     bool emuSwap = activeEmulator != emulator;
     powerOff();
     
@@ -453,7 +453,7 @@ auto Program::loop() -> void {
 
     InputManager::poll();
 
-	if( willRun() ) {
+    if (!isPause) {
 		unsigned frames = loopFrames;
 		
 		if (frames) {
@@ -465,8 +465,7 @@ auto Program::loop() -> void {
 			}
 		} else
 			activeEmulator->run();
-	}
-	else {
+	} else {
         GUIKIT::System::sleep( 10 );
 		audioDriver->clear();
 	    repeatLastFrame();
@@ -481,18 +480,6 @@ auto Program::loopUserInterface() -> void {
     focused = view->focused();
     emuThread->handleStatusUpdate();
     emuThread->handleUIEvents();
-}
-
-auto Program::willRun() -> bool {
-	static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
-	
-	if (isPause) return false;
-	if (focused) return true;
-	//no focus
-	if (*pauseFocusLoss) return false;
-	//if (videoDriver && videoDriver->hasExclusiveFullscreen()) return false; //exclusive fullscreen can't run in background
-	
-	return true;
 }
 
 auto Program::hasFocus() -> bool {
