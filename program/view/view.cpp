@@ -208,6 +208,12 @@ auto View::build() -> void {
         videoDriver->activateApp(true);
     };
 
+    onMinimize = [this]() {
+        static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
+        program->isPause &= ~2;
+        program->isPause |= (!!*pauseFocusLoss) << 1;
+    };
+
     onUnminimize = [this]() {
         this->updateViewport();
         statusHandler->resetFrameCounter();
