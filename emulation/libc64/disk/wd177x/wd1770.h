@@ -56,8 +56,10 @@ struct WD1770 {
     auto setMode(WD1770::Mode mode) -> void;
     auto setType(WD1770::Type type) -> void;
     auto setTrackZero(bool state) -> void;
+    auto writeMode() -> bool { return writeGate; }
 
     std::function<void (bool direction)> stepCall;
+    std::function<void ()> toggleWrite;
 
 protected:
     uint8_t mode;

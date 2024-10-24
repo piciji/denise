@@ -391,7 +391,7 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
     } else
         wd1770.setTrack(gcrTrack);
 
-    updateDeviceState( );
+    (operation & DRIVE_MODE_158x) ? updateDeviceState1581() : updateDeviceState();
 
 }
 

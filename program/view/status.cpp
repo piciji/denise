@@ -374,9 +374,10 @@ auto StatusHandler::update() -> void {
                     if (chunks.size() > 1)
                         name = chunks.back();
 
-                    name += " " + GUIKIT::String::prependZero( std::to_string((unsigned)(deviceState.position / 2)), 2 );
+                    unsigned track = (deviceState.position >> 1) & 0xff;
+                    name += " " + GUIKIT::String::prependZero( std::to_string(track), 2 );
 
-                    if (dynamic_cast<LIBC64::Interface*> (activeEmulator))
+                    if (deviceState.position & 0x8000)
                         name += (deviceState.position & 1) ? ".5" : ".0";
                     else
                         name += (deviceState.position & 1) ? ":1" : ":0";

@@ -651,7 +651,10 @@ auto WD1770::clock() -> void {
                                 fluxPending = false;
                                 lastMfmPattern = M10;
                                 pulseDuration = 1;
-                                writeGate = true;
+                                if (!writeGate) {
+                                    writeGate = true;
+                                    toggleWrite();
+                                }
                                 F7WriteMode = 0;
                                 DSR = 0;
                             }
@@ -732,7 +735,10 @@ auto WD1770::clock() -> void {
                         break;
                     case 17:
                         if (newByte()) {
-                            writeGate = false;
+                            if (writeGate) {
+                                writeGate = false;
+                                toggleWrite();
+                            }
                             if (command & 0x10) {
                                 commandSubStage = 0;
                                 indexHoleCounter = 0;
@@ -858,7 +864,10 @@ auto WD1770::clock() -> void {
                                     fluxPending = false;
                                     lastMfmPattern = M10;
                                     pulseDuration = 1;
-                                    writeGate = true;
+                                    if (!writeGate) {
+                                        writeGate = true;
+                                        toggleWrite();
+                                    }
                                     F7WriteMode = 0;
                                     byteReady = false;
                                     prepareNextByteToWrite();
@@ -867,7 +876,10 @@ auto WD1770::clock() -> void {
                             case 3:
                                 if (indexHoleTransition) {
                                     indexHoleTransition = false;
-                                    writeGate = false;
+                                    if (writeGate) {
+                                        writeGate = false;
+                                        toggleWrite();
+                                    }
                                     complete();
                                 } else if (newByte()) {
                                     prepareNextByteToWrite();
@@ -909,7 +921,10 @@ inline auto WD1770::newByte() -> bool {
 }
 
 auto WD1770::complete() -> void {
-    writeGate = false;
+    if (writeGate) {
+        writeGate = false;
+        toggleWrite();
+    }
     syncMarkDetector = false;
     syncMarkDetectorC2 = false;
     commandStage = 9;

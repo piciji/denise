@@ -215,8 +215,8 @@ struct Drive {
     auto motorChangeInit() -> void;
 
     auto serialize(Emulator::Serializer& s) -> void;
-    auto updateDeviceState() -> void;
-    auto updateDeviceState1581() -> void;
+    auto updateDeviceState(bool forceOff = false) -> void;
+    auto updateDeviceState1581(bool forceOff = false) -> void;
     auto updateIdleDeviceState() -> void;
 
     auto byteFetched( bool overflowNotThisCycle ) -> void;

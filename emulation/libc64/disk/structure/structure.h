@@ -112,6 +112,8 @@ struct DiskStructure {
     auto attach( uint8_t* data, unsigned size, bool loadGracefully = false ) -> bool;
     auto detach() -> void;
     auto createListing() -> void;
+	auto createListingMfm() -> void;
+	auto getMfmPtr(unsigned _track, unsigned _sector) -> uint8_t*;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto selectListing( unsigned pos, uint8_t options = 0 ) -> void;
     auto selectListing( std::string fileName, uint8_t options = 0 ) -> void;

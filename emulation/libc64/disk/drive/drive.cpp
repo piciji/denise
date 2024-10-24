@@ -630,12 +630,34 @@ structure(system, this) {
 
         else if (port == Cia<MOS_8520>::PORTA ) {
             if (operation & DRIVE_MODE_158x) {
-                uint8_t _side = side;
-                side = lines->ioa & 1;
-                motorOn = (lines->ioa & 4) == 0;
-                wd1770.setDiskAccessible(motorOn & loaded);
+                if ((lines->ioa ^ lines->ioaOld) & 4) {
+                    motorOn = (lines->ioa & 4) == 0;
 
-                changeHalfTrack(0);
+                    bool _loadingState = false;
+                    for( auto drive : system->iecBus.drivesEnabled ) {
+                        if (drive->motorOn) {
+                            _loadingState = true;
+                            break;
+                        }
+                    }
+
+                    if (structure.autoStarted)
+                        system->hintObserverMotorChange( _loadingState );
+
+                    wd1770.setDiskAccessible(motorOn & loaded);
+                    updateDeviceState1581();
+                }
+
+                if ((lines->ioa ^ lines->ioaOld) & 0x40) { // act LED change
+                    updateDeviceState1581();
+                    if (structure.autoStarted)
+                        system->hintObserverLEDChange(lines->ioa & 0x40);
+                }
+
+                if ((lines->ioa ^ lines->ioaOld) & 1) {
+                    side = lines->ioa & 1;
+                    changeHalfTrack(0);
+                }
             }
         }
     };
@@ -692,6 +714,13 @@ structure(system, this) {
 
             wd1770.setTrackZero( currentHalftrack == 0 );
         }
+    };
+
+    wd1770.toggleWrite = [this]() {
+        if (this->operation & DRIVE_MODE_158x)
+            updateDeviceState1581();
+        else
+            updateDeviceState();
     };
 
     cia.irqCall = [this](bool state) {
@@ -917,20 +946,23 @@ Drive::~Drive() {
     delete dummyTrack;
 }
 
-auto Drive::updateDeviceState() -> void {
+auto Drive::updateDeviceState(bool forceOff) -> void {
     system->diskSilence.idleFrames = 0;
-    system->interface->updateDeviceState( media, !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, via2.lines.iob & 8, !motorOn );
+    bool _led = forceOff ? false : !!(via2.lines.iob & 8);
+    bool _motorOff = forceOff ? true : !motorOn;
+    system->interface->updateDeviceState( media, !readMode || wd1770.writeMode(), 0x8000 | ((side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2), _led, _motorOff );
 }
 
-auto Drive::updateDeviceState1581() -> void {
+auto Drive::updateDeviceState1581(bool forceOff) -> void {
     system->diskSilence.idleFrames = 0;
-    system->interface->updateDeviceState( media, !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, cia.lines.iob & 0x40, !motorOn );
+    bool _led = forceOff ? false : !!(cia.lines.ioa & 0x40);
+    bool _motorOff = forceOff ? true : !motorOn;
+    system->interface->updateDeviceState( media, wd1770.writeMode(), (currentHalftrack << 1) | side, _led, _motorOff );
 }
 
 // missing BUS communication
 auto Drive::updateIdleDeviceState() -> void {
-    
-    system->interface->updateDeviceState( media, !readMode, (side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2, false, true );
+    (operation & DRIVE_MODE_158x) ? updateDeviceState1581(true) : updateDeviceState(true);
 
     if (structure.autoStarted)
         system->hintObserverMotorChange( false );

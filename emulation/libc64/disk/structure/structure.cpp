@@ -9,6 +9,7 @@
 #include "gxx.cpp"
 #include "pxx.cpp"
 #include "prg.cpp"
+#include "listing.cpp"
 #include "../../../tools/listing.h"
 #include "../../system/keyBuffer.h"
 #include "../iec.h"
@@ -259,6 +260,9 @@ auto DiskStructure::createListing() -> void {
 
     if (!rawData || (type == Type::Unknown))
         return;
+
+    if (type == Type::D81)
+        return createListingMfm();
     
     Emulator::C64Listing listing;
     listing.convertToScreencode = system->convertToScreencode;
