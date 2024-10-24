@@ -82,6 +82,7 @@ sudo pacman -Sy pkgconf
 ---------------------------------------------
 RPM (Fedora, SUSE, ...)
 ---------------------------------------------
+sudo dnf install gcc
 sudo dnf install freetype-devel
 sudo dnf install pulseaudio-libs-devel
 sudo dnf install gtk3-devel
