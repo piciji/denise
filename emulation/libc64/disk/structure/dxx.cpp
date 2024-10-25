@@ -624,6 +624,52 @@ auto DiskStructure::imageSizeD71() -> unsigned {
     return TYPICAL_SIZE << 1;
 }
 
+auto DiskStructure::imageSizeD81() -> unsigned {
+
+    return 80*40*256;
+}
+
+auto DiskStructure::createD81( std::string diskName ) -> uint8_t* {
+    Emulator::PetciiConversion petciiConversion;
+    uint8_t* temp = new uint8_t[ imageSizeD81() ];
+    std::memset( temp, 0, imageSizeD81() );
+    uint8_t buffer[256];
+    std::memset(buffer, 0, 256);
+    buffer[0] = 0x28; buffer[1] = 0x3; buffer[2] = 0x44;
+    buffer[0x14] = buffer[0x15] = buffer[0x18] = buffer[0x1b] = buffer[0x1c] = 0xa0;
+    buffer[0x19] = 0x33; buffer[0x1a] = 0x44;
+
+    diskName = petciiConversion.encode( diskName );
+    auto id = cutId( diskName );
+    std::memset( buffer + 4, 0xa0, 16 );
+    std::memcpy( buffer + 4, diskName.c_str(), diskName.size() );
+    std::memcpy( buffer + 0x16, id.c_str(), id.size() );
+    writeSectorD81(temp, buffer, 40, 0);
+
+    std::memset(buffer, 0, 256);
+    buffer[0] = 0x0; buffer[1] = 0xff;
+    buffer[2] = 0x44; buffer[3] = 0xbb;
+    std::memcpy( buffer + 0x4, id.c_str(), id.size() );
+    buffer[6] = 0xc0; buffer[7] = 0x0;
+
+    uint8_t* ptr = buffer + 0x10;
+    for(int t = 1; t <= 40; t++) {
+        ptr[0] = 0x28; ptr[1] = ptr[2] = ptr[3] = ptr[4] = ptr[5] = 0xff;
+        ptr += 6;
+    }
+    writeSectorD81(temp, buffer, 40, 2);
+
+    buffer[0] = 0x28; buffer[1] = 0x02;
+    buffer[0xfa] = 0x24; buffer[0xfb] = 0xf0; // allocate sector 0 - 3 on track 40 (header, bam1, bam2, dir)
+    writeSectorD81(temp, buffer, 40, 1);
+
+    std::memset(buffer, 0, 256);
+    buffer[1] = 0xff;
+    writeSectorD81(temp, buffer, 40, 3);
+
+    return temp;
+}
+
 auto DiskStructure::createDxx( std::string diskName, uint8_t sides ) -> uint8_t* {
     
     uint8_t buffer[256];    
@@ -643,6 +689,10 @@ auto DiskStructure::createDxx( std::string diskName, uint8_t sides ) -> uint8_t*
         writeSector( temp, bufferBamExtended, 18, 0, imageSizeD64() );
 
     return temp;    
+}
+
+auto DiskStructure::writeSectorD81( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector) -> void {
+    std::memcpy(  target + (track - 1) * 40 * 256 + sector * 256, buffer, 256 );
 }
 
 auto DiskStructure::writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset) -> void {

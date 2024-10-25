@@ -176,6 +176,7 @@ private:
     auto analyzeP71() -> bool;
     
     static auto createDxx( std::string diskName, uint8_t sides = 1 ) -> uint8_t*;
+	static auto createD81( std::string diskName ) -> uint8_t*;
     static auto createGxx( std::string diskName, uint8_t sides = 1 ) -> uint8_t*;
     static auto createPxx( std::string diskName, uint8_t sides = 1 ) -> Emulator::Interface::Data;
     static auto cutId( std::string& diskName ) -> std::string;
@@ -184,6 +185,7 @@ private:
     static auto imageSizeG71() -> unsigned;
     static auto imageSizeD64() -> unsigned;
     static auto imageSizeD71() -> unsigned;
+	static auto imageSizeD81() -> unsigned;
         
     auto prepareGxx() -> void;
     auto prepareDxx() -> void;
@@ -202,6 +204,7 @@ private:
     auto writePxx() -> bool;
     
     static auto writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset = 0) -> void;
+	static auto writeSectorD81( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector) -> void;
     static auto readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset = 0 ) -> bool;
     static auto createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide = nullptr ) -> void;
 

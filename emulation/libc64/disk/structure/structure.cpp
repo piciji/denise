@@ -555,6 +555,8 @@ auto DiskStructure::create( Type newType, std::string diskName ) -> Emulator::In
             return {createDxx( diskName, 1 ), imageSizeD64() };
         case Type::D71:
             return {createDxx( diskName, 2 ), imageSizeD71() };
+        case Type::D81:
+            return {createD81( diskName ), imageSizeD81() };
         case Type::G64:
             return { createGxx( diskName, 1 ), imageSizeG64() };
         case Type::G71:
