@@ -493,6 +493,7 @@ auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool al
 }
 
 auto System::power( bool softReset ) -> void {
+    crop->latest.frame = nullptr;
     sysTimer.clear();
 
     if( !softReset )
