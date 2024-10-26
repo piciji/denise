@@ -330,10 +330,12 @@ auto View::build() -> void {
 	anyloadTimer.setInterval(40);
     displayChangeTimer.setInterval(500);
     displayChangeTimer.onFinished = [this]() {
+        displayChangeTimer.setInterval(500);
         displayChangeTimer.setEnabled(false);
         //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
         emuThread->lock();
-        
+        videoDriver->waitRenderThread();
+
 		if (videoDriver && fullscreenSetting.inUse
 			&& globalSettings->get<bool>("threaded_emu", false)
 			&& videoDriver->hasThreaded())
@@ -509,8 +511,9 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
         videoDriver->disableExclusiveFullscreen();
     }
 
-    videoDriver->waitRenderThread();
     GUIKIT::Window::setFullScreen(fullScreen);
+    if (videoDriver->hasExclusiveFullscreen())
+        displayChangeTimer.setInterval(600);
     displayChangeTimer.setEnabled();
 
     if (!fullScreen && useFullscreenRefreshAsEmuSpeed) {
