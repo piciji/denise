@@ -509,6 +509,7 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
         videoDriver->disableExclusiveFullscreen();
     }
 
+    videoDriver->waitRenderThread();
     GUIKIT::Window::setFullScreen(fullScreen);
     displayChangeTimer.setEnabled();
 
