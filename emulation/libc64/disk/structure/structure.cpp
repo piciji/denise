@@ -670,11 +670,13 @@ auto DiskStructure::storeWrittenTracks() -> void {
         writePxx( );
     else if (type == Type::D64 || type == Type::D71)
         appendedTracks = handleAppendedTracksInDxx();
+    else if (type == Type::D81)
+        appendedTracks = handleAppendedTracksInD81();
 
     for (uint8_t side = 0; side < sides; side++) {
-        for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
+        for (unsigned track = 0; track < (MAX_TRACKS * 2); track++) {
 
-            MTrack* gcrTrack = getTrackPtr(side, halfTrack);
+            MTrack* gcrTrack = getTrackPtr(side, track);
 
             if (!(gcrTrack->written & 1) || !gcrTrack->size)
                 continue;
@@ -682,17 +684,20 @@ auto DiskStructure::storeWrittenTracks() -> void {
             switch (type) {
                 case Type::D64:
                 case Type::D71:
-                    writeDxx(gcrTrack, side, (halfTrack + 2) / 2, errorMapChanged);
+                    writeDxx(gcrTrack, side, (track + 2) / 2, errorMapChanged);
+                    break;
+                case Type::D81:
+                    writeD81(gcrTrack, side, track, errorMapChanged);
                     break;
                 case Type::G64:
                 case Type::G71:
-                    writeGxx(gcrTrack, side, halfTrack);
+                    writeGxx(gcrTrack, side, track);
                     break;
                 case Type::P64:
                 case Type::P71:
                     // can't overwrite single tracks, need to write whole disk.
                     // convert to gcr to update listing outside of emulation
-                    encodeGCR(gcrTrack, halfTrack);
+                    encodeGCR(gcrTrack, track);
                     break;
                 case Type::Unknown:
                     break;
@@ -702,7 +707,7 @@ auto DiskStructure::storeWrittenTracks() -> void {
         }
     }
 
-    if ((type == Type::D64 || type == Type::D71) && errorMap && (errorMapChanged || appendedTracks )) {
+    if ((type == Type::D64 || type == Type::D71 || type == Type::D81) && errorMap && (errorMapChanged || appendedTracks )) {
         // error map size is the count of all sectors of this disk. so we use
         // it as an offset for appending the error map data
         write( errorMap, errorMapSize, errorMapSize * 256 );

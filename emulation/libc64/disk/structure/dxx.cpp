@@ -208,6 +208,107 @@ auto DiskStructure::prepareD81() -> void {
     }
 }
 
+auto DiskStructure::writeD81(const MTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool {
+    std::function<void (bool& errorMapChanged)> createErrorMapIfNeeded = [&](bool& errorMapChanged) -> void {
+        if (!errorMap) {
+            errorMapSize = 40 * tracksInDxx;
+            errorMap = new uint8_t[errorMapSize];
+            std::memset( errorMap, ERR_OK, errorMapSize );
+            errorMapChanged = true;
+        }
+    };
+
+    unsigned offset = track * 20 * 512 + (side ? (10 * 512) : 0);
+    uint16_t crc;
+    uint16_t crcFetched;
+    bool isSync = false;
+    bool align = false;
+    uint8_t* ptr = trackPtr->data;
+    unsigned sector = 1;
+    unsigned i = 0;
+    unsigned tries = 0;
+    unsigned errPos = (side ? 20 : 0) + track * 40;
+
+    while(true) {
+        if (isSync && (ptr[i] == 0xfc || ptr[i] == 0xfd || ptr[i] == 0xfe || ptr[i] == 0xff) ) {
+
+            if (ptr[i + 1 + 2] == sector) {
+                if ((ptr[i + 1 + 3] & 3) != 2) { // expects 512 byte sectors
+                    createErrorMapIfNeeded(errorMapChanged);
+                    errorMap[errPos] = errorMap[errPos+1] = ERR_VERIFY;
+                }
+
+                crc = 0xffff;
+                calcMfmCrc( 0xa1, crc );
+                calcMfmCrc( 0xa1, crc );
+                calcMfmCrc( 0xa1, crc );
+                calcMfmCrc( ptr[i], crc );
+                calcMfmCrc( ptr[i + 1], crc );
+                calcMfmCrc( ptr[i + 2], crc );
+                calcMfmCrc( ptr[i + 3], crc );
+                calcMfmCrc( ptr[i + 4], crc );
+
+                uint8_t* _dataCrc = ptr + i + 5;
+                crcFetched = (_dataCrc[0] << 8) | _dataCrc[1];
+
+                if(crc != crcFetched) {
+                    createErrorMapIfNeeded(errorMapChanged);
+                    errorMap[errPos] = errorMap[errPos+1] = ERR_HEADER_CHECKSUM;
+                }
+                align = true;
+            }
+        } else if (align && isSync && (ptr[i] == 0xf8 || ptr[i] == 0xf9 || ptr[i] == 0xfa || ptr[i] == 0xfb) ) {
+            align = false;
+
+            if (ptr[i] == 0xf8 || ptr[i] == 0xf9) { // deleted data address mark
+                createErrorMapIfNeeded(errorMapChanged);
+                errorMap[errPos] = errorMap[errPos+1] = ERR_VERIFY_FORMAT;
+            }
+
+            crc = 0xffff;
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( ptr[i], crc );
+
+            for (unsigned j = 0; j < 512; j++)
+                calcMfmCrc( *(ptr + i + 1 + j), crc);
+
+            if ( write( ptr + i + 1, 512, offset ) != 512)
+                return false;
+
+            uint8_t* _dataCrc = ptr + i + 1 + 512;
+            crcFetched = (_dataCrc[0] << 8) | _dataCrc[1];
+
+            if(crc != crcFetched) {
+                createErrorMapIfNeeded(errorMapChanged);
+                errorMap[errPos] = errorMap[errPos+1] = ERR_CHECKSUM;
+            }
+            offset += 512;
+
+            if (++sector > 10)
+                break;
+            errPos += 2;
+            tries = 0;
+        }
+
+        isSync = ((trackPtr->mfmSync[i >> 3] & (1 << (i & 7))) != 0);
+        if (isSync && (ptr[i] != 0xa1))
+            isSync = false;
+
+        if (++i == trackPtr->size) {
+            i = 0;
+            if (++tries == 2) {
+                createErrorMapIfNeeded(errorMapChanged);
+                errorMap[errPos] = errorMap[errPos+1] = ERR_SYNC;
+                if (++sector > 10)
+                    break;
+                errPos += 2;
+            }
+        }
+    }
+    return true;
+}
 
 auto DiskStructure::prepareDxx() -> void {
     
@@ -361,6 +462,47 @@ auto DiskStructure::encodeSector(const uint8_t* src, uint8_t* target, uint8_t tr
     buf[1] = chksum ^ src[0]; // checksum of complete raw data
     buf[2] = buf[3] = 0;    // 2 off bytes
     gcr.encode(buf, target);
+}
+
+auto DiskStructure::handleAppendedTracksInD81() -> bool {
+    bool appended = false;
+
+    for (uint8_t side = 0; side < sides; side++) {
+        for (unsigned track = 81; track <= MAX_TRACKS_1581; track++) {
+            MTrack* mTrack = getTrackPtr(side, track - 1);
+
+            if (mTrack->written & 1) {
+                if (track > tracksInDxx) {
+                    appended = true;
+                    tracksInDxx = track;
+                }
+            }
+        }
+    }
+
+    if (!appended)
+        return false;
+
+    if (errorMap) {
+        unsigned newMapSize = 40 * tracksInDxx;
+        uint8_t* errorMapTemp = new uint8_t[newMapSize];
+        std::memset( errorMapTemp, ERR_OK, newMapSize );
+        memcpy(errorMapTemp, errorMap, errorMapSize);
+        delete[] errorMap;
+        errorMap = errorMapTemp;
+        errorMapSize = newMapSize;
+    }
+
+    for (uint8_t side = 0; side < sides; side++) {
+        for (unsigned track = 1; track <= MAX_TRACKS_1581; track++) {
+            MTrack* gcrTrack = getTrackPtr(side, track - 1);
+
+            if (track <= tracksInDxx)
+                gcrTrack->written = 1;
+        }
+    }
+
+    return true;
 }
 
 auto DiskStructure::handleAppendedTracksInDxx() -> bool {

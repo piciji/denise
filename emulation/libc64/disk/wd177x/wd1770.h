@@ -5,6 +5,8 @@
 // for 1581 following Pins are not used
 // Motor, Drq, Intrq, DDEN (force to MFM)
 
+// unused stuff is not emulated at the moment
+
 /*
 data	0xA1	1   0   1   0   0   0   0   1
 MFM sync	    1 0 0 0 1 0 0 1 0 1 0 1 0 0 1 ?

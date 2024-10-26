@@ -15,7 +15,7 @@
 namespace LIBC64 {
 
 #define MAX_TRACKS_1541 42
-#define MAX_TRACKS_1581 83
+#define MAX_TRACKS_1581 84
 
 struct VirtualDrive;
 struct System;
@@ -193,12 +193,14 @@ private:
     auto preparePxx() -> void;
     auto getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t;
     auto handleAppendedTracksInDxx() -> bool;
+	auto handleAppendedTracksInD81() -> bool;
     auto addMfmByte(uint8_t*& dest, uint8_t data, uint16_t& crc) -> void;
     auto calcMfmCrc(uint8_t data, uint16_t& crc) -> void;
     auto parseMfm(MTrack* trackPtr, unsigned offset) -> void;
     auto writeMfm(const MTrack* trackPtr, unsigned offset) -> bool;
         
     auto writeDxx(const MTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool;
+	auto writeD81(const MTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool;
     auto writeGxx(const MTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool;
     auto writeP64ToMem(unsigned& memSize) -> uint8_t*;
     auto writePxx() -> bool;
