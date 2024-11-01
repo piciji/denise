@@ -675,7 +675,7 @@ auto System::run() -> void {
     iecBus.randomizeRpm();
 
     runAhead.active = !warp.config && runAhead.frames && !traps.installed
-        && !keyBuffer->isPrgInjectionInQueue() && !iecBus.diskInsertInProgress;
+        && !keyBuffer->isPrgInjectionInQueue();
 
     if (runAhead.active) {
         runAhead.pos = runAhead.frames;
@@ -873,9 +873,6 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 
     if (!runAhead.pos) {
         this->interface->videoRefresh8(frame, width, height, linePitch);
-
-        if (iecBus.diskInsertInProgress)
-            iecBus.insertDiskGracefully();
     }
 
     leaveEmulation = true;

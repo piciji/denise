@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "206";
+const std::string Interface::Version = "207";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -44,7 +44,7 @@ Interface::~Interface() {
 }
 
 auto Interface::prepareMedia() -> void {
-	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64", "p64", "d71", "g71", "p71", "d81"}, {"d64", "g64", "p64", "d71", "g71", "p71", "d81"} });
+	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64", "p64", "d71", "g71", "p71", "d81", "p81"}, {"d64", "g64", "p64", "d71", "g71", "p71", "d81", "p81"} });
 	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
 	mediaGroups.push_back({MediaGroupIdProgram, "Program", MediaGroup::Type::Program, {"prg", "p00", "t64"}, {"prg"} });
     mediaGroups.push_back({MediaGroupIdExpansionGame, "Cartridge", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt", "bin"} });
@@ -878,12 +878,12 @@ auto Interface::getSubRegion() -> SubRegion {
 	return SubRegion::Pal_B;
 }
 
-auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully) -> void {
+auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
     
     if (!media || !media->group->isDisk())
         return;
     
-    system->iecBus.attach( media, data, size, loadGracefully );
+    system->iecBus.attach( media, data, size );
 }
 
 auto Interface::writeProtectDisk(Media* media, bool state) -> void {
@@ -936,7 +936,7 @@ auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> st
     DiskStructure structure(system);
 	structure.number = media ? media->id : 0;
     
-    if (!structure.attach( data, size, false ))
+    if (!structure.attach( data, size ))
         return {};
         
     return structure.getListing();

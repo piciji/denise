@@ -51,7 +51,7 @@ auto Program::audioFlush() -> void {
         audioManager->flush();
 }
 
-auto Program::mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, uint8_t data ) -> void {
+auto Program::mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, bool alternate, uint8_t data ) -> void {
     if (cmd->noDriver || cmd->debug)
         return;
 
@@ -62,5 +62,5 @@ auto Program::mixDriveSound( Emulator::Interface::Media* media, Emulator::Interf
             audioManager->flush();
     }
 
-    audioManager->drive.addSound( activeEmulator, media, (Mixer::Drive::DriveSound)driveSound, data );
+    audioManager->drive.addSound( activeEmulator, media, (Mixer::Drive::DriveSound)driveSound, alternate, data );
 }

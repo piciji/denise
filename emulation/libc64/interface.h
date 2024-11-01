@@ -93,7 +93,7 @@ struct Interface : Emulator::Interface {
 	//disk drive handling
     //options: Bit 0 -> use traps, 1 -> send trap finish event, 7 -> temporarly disable a possible hardware speeder
 
-	auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void;
+	auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
 	auto writeProtectDisk(Media* media, bool state) -> void;
     auto isWriteProtectedDisk(Media* media) -> bool;
 	auto ejectDisk(Media* media) -> void;

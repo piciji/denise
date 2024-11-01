@@ -6,7 +6,6 @@
 namespace LIBC64 {
   
 auto DiskStructure::analyzeG64() -> bool {
-
     if (rawSize < 32)
         return false; // too small
     
@@ -33,7 +32,6 @@ auto DiskStructure::analyzeG64() -> bool {
 }
 
 auto DiskStructure::analyzeG71() -> bool {
-
     if (rawSize < 32)
         return false; // too small
 
@@ -50,7 +48,7 @@ auto DiskStructure::analyzeG71() -> bool {
 
     maxTrackLength = rawData[10] | (rawData[11] << 8);
 
-    if (maxHalfTracks > (MAX_TRACKS * 2 * 2) ) // more tracks than a 1541 drive can handle
+    if (maxHalfTracks > (MAX_TRACKS * 2 * 2) ) // more tracks than a 1571 drive can handle
         return false;
 
     sides = 2;
@@ -59,12 +57,38 @@ auto DiskStructure::analyzeG71() -> bool {
     return true;
 }
 
-auto DiskStructure::getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t {
+auto DiskStructure::analyzeG81() -> bool {
+    if (rawSize < 32)
+        return false; // too small
+
+    if (rawData[8] != 0) // unknown version
+        return false;
+
+    if (rawData[9] < 1) // 0 tracks ? wtf
+        return false;
+
+    if (std::memcmp(rawData, "MFM-1581", 8)) // missing this ident ?
+        return false;
+
+    unsigned maxTracks = rawData[9];
+
+    maxTrackLength = rawData[10] | (rawData[11] << 8);
+
+    if (maxTracks > (MAX_TRACKS_1581 * 2) ) // more tracks than a 1581 drive can handle
+        return false;
+
+    sides = 2;
+    type = Type::G81;
+
+    return true;
+}
+
+auto DiskStructure::getTrackOffsetGxx( uint8_t _track, int& error ) -> uint32_t {
     uint8_t buf[4];
     error = 0;
     
-    // for each half track there is a 4 byte offset
-    uint32_t offset = 12 + (halfTrack * 4);
+    // for each track there is a 4 byte offset
+    uint32_t offset = 12 + (_track * 4);
 
     if (rawSize < (offset + 4)) { // raw file too small
         error = -1;
@@ -80,7 +104,63 @@ auto DiskStructure::getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32
         
     return offset;
 }
-    
+
+auto DiskStructure::prepareG81() -> void {
+    uint8_t buf[4];
+    unsigned offset;
+    unsigned bitLength;
+    unsigned maxTracks = rawData[9];
+    int error;
+
+    for (uint8_t track = 0; track < MAX_TRACKS_1581; track++) {
+        for( uint8_t side = 0; side < sides; side++ ) {
+            MTrack* trackPtr = &gcrTracks[side][track];
+            unsigned trackPos = (track << 1) | side;
+
+            if (trackPtr->data)
+                delete[] trackPtr->data;
+            if (trackPtr->mfmSync)
+                delete[] trackPtr->mfmSync;
+
+            trackPtr->mfmSync = nullptr;
+            trackPtr->data = nullptr;
+            trackPtr->size = 0;
+            trackPtr->bits = 0;
+
+            if (trackPos >= maxTracks)
+                continue;
+
+            offset = getTrackOffsetGxx(trackPos, error);
+            if (error < 0)
+                continue;
+
+            if (offset > 0) {
+                std::memcpy(buf, rawData + offset, 4);
+
+                bitLength = Emulator::copyBufferToInt<uint32_t>(&buf[0]);
+                unsigned trackLength = (bitLength + 7) / 8;
+
+                if ((bitLength == 0) || (trackLength > maxTrackLength))
+                    continue;
+
+                if (rawSize < (offset + 4 + trackLength)) // rawfile too small
+                    continue;
+
+                trackPtr->size = trackLength;
+                trackPtr->bits = bitLength;
+                trackPtr->data = new uint8_t[trackLength];
+                std::memcpy(trackPtr->data, rawData + offset + 4, trackLength);
+
+            } else { // if track doesn't exist
+                trackPtr->size = 6250 * 2; // for clock bits
+                trackPtr->bits = trackPtr->size << 3;
+                trackPtr->data = new uint8_t[trackPtr->size];
+                std::memset(trackPtr->data, 0x4e, trackPtr->size);
+            }
+        }
+    }
+}
+
 auto DiskStructure::prepareGxx() -> void {
     
     uint8_t buf[2];
@@ -488,6 +568,65 @@ auto DiskStructure::writeGxx(const MTrack* trackPtr, uint8_t side, unsigned half
     return true;
 }
 
+auto DiskStructure::writeG81(const MTrack* trackPtr, uint8_t side, unsigned track) -> bool {
+    int error;
+    uint8_t buf[4];
+    bool appendTrack = false;
+
+    unsigned trackPos = (track << 1) | side;
+
+    uint32_t offset = getTrackOffsetGxx( trackPos, error );
+
+    if (error < 0)
+        return false;
+
+    if (trackPtr->size > maxTrackLength)
+        // the changed track is bigger than max length ?
+        return false;
+
+    if (offset == 0) { // track doesn't exist. we append track at the end of raw file
+        offset = rawSize;
+        rawSize += 4 + maxTrackLength; // update image size
+        appendTrack = true;
+    }
+
+    // now we write the changed track out to raw file, either overwrite the old one
+    // or append it at end of file, see above
+    Emulator::copyIntToBuffer<uint32_t>( &buf[0], (uint16_t)trackPtr->bits );
+
+    // first 2 bytes are track length
+    if ( write( &buf[0], 4, offset ) != 4)
+        return false;
+
+    if ( write( trackPtr->data, trackPtr->size, offset + 4 ) != trackPtr->size )
+        return false;
+
+    // we need to fill the gap between this track and next one with zeros
+    unsigned gapSize = maxTrackLength - trackPtr->size;
+
+    if (gapSize > 0) {
+        auto tempGap = new uint8_t[gapSize];
+        std::memset(tempGap, 0, gapSize);
+
+        unsigned bytesWritten = write( tempGap, gapSize, offset + 4 + trackPtr->size );
+
+        delete[] tempGap;
+
+        if (bytesWritten != gapSize)
+            return false;
+    }
+
+    if (appendTrack) {
+        // for a new appended track we need to update the offset in header area
+        Emulator::copyIntToBuffer<uint32_t>( &buf[0], offset );
+
+        if ( write( &buf[0], 4, 12 + (trackPos * 4) ) != 4 )
+            return false;
+    }
+
+    return true;
+}
+
 auto DiskStructure::imageSizeG64() -> unsigned {
     
     unsigned maxBytes = 7928;
@@ -500,6 +639,51 @@ auto DiskStructure::imageSizeG71() -> unsigned {
     unsigned maxBytes = 7928;
 
     return 12 + MAX_TRACKS_1541 * 2 * 2 * 8 + TYPICAL_TRACKS * 2 * (maxBytes + 2);
+}
+
+auto DiskStructure::imageSizeG81() -> unsigned {
+    return 12 + MAX_TRACKS_1581 * 2 * 4 + 80 * 2 * ( (6250 << 1) + 4 );
+}
+
+auto DiskStructure::createG81(const std::string& diskName) -> uint8_t* {
+    uint8_t* temp = createD81(diskName);
+
+    DiskStructure structure(nullptr);
+    structure.rawData = temp;
+    structure.rawSize = imageSizeD81();
+
+    if (!structure.analyzeD81())
+        return nullptr;
+
+    structure.prepareD81();
+
+    auto temp2 = new uint8_t[ imageSizeG81() ];
+    uint8_t* ptr = temp2;
+    std::memcpy( ptr, "MFM-1581", 8 );
+    ptr[8] = 0;
+    ptr[9] = MAX_TRACKS_1581 * 2;
+    unsigned maxBytes = 6250 << 1;
+
+    Emulator::copyIntToBuffer<uint16_t>( &ptr[10], maxBytes );
+    ptr += 12;
+
+    for (uint8_t track = 0; track < 80; track++) {
+        for( uint8_t side = 0; side < 2; side++ ) {
+            unsigned trackPos = (track << 1) | side;
+            unsigned trackOffset = 12 + MAX_TRACKS_1581 * 2 * 4 + trackPos * (maxBytes + 4);
+            MTrack* trackPtr = &structure.gcrTracks[side][track];
+            structure.encodeMfm(trackPtr);
+
+            Emulator::copyIntToBuffer<uint32_t>(&ptr[trackPos * 4], trackOffset);
+
+            Emulator::copyIntToBuffer<uint16_t>(temp2 + trackOffset, trackPtr->bits);
+
+            std::memcpy( temp2 + trackOffset + 4, trackPtr->data, maxBytes );
+        }
+    }
+
+    delete[] temp;
+    return temp2;
 }
 
 auto DiskStructure::createGxx( std::string diskName, uint8_t sides ) -> uint8_t* {
@@ -603,6 +787,50 @@ auto DiskStructure::createGxx( std::string diskName, uint8_t sides ) -> uint8_t*
     }
     
     return temp;
+}
+
+auto DiskStructure::encodeMfm(MTrack* mTrack) -> void {
+    uint16_t word;
+    bool dataZeroBefore = true;
+    auto temp = new uint8_t[mTrack->size << 1];
+
+    for(unsigned i = 0; i < mTrack->size; i++) {
+        uint8_t _data = mTrack->data[i];
+        bool _sync = mTrack->mfmSync[i >> 3] & (1 << (i & 7));
+
+        word = ((_data & 0x80) >> 1) | ((_data & 0x40) >> 2) | ((_data & 0x20) >> 3) | ((_data & 0x10) >> 4);
+        word <<= 8;
+        word |= ((_data & 0x8) << 3) | ((_data & 0x4) << 2) | ((_data & 0x2) << 1) | ((_data & 0x1) << 0);
+
+        for(int j = 14; j >= 0; j -= 2) {
+            if ((word >> i) & 1) // data bit "one"
+                dataZeroBefore = false;
+            else { // data bit "zero"
+                if (dataZeroBefore)
+                    word |= 2 << i; // in MFM clock bit becomes "one" only, if data bit 0 follows another data bit 0
+
+                dataZeroBefore = true;
+            }
+        }
+
+        if (_sync) {
+            if (_data == 0xa1)
+                word &= ~0x20;
+            else if (_data == 0xc2)
+                word &= ~0x80;
+        }
+
+        temp[i << 1] = word >> 8;
+        temp[(i << 1) + 1] = word & 0xff;
+    }
+
+    if (!dataZeroBefore)
+        temp[0] &= 0x7f;
+
+    delete[] mTrack->data;
+    mTrack->data = temp;
+    mTrack->size <<= 1;
+    mTrack->bits <<= 1;
 }
 
 auto DiskStructure::logTrackSkew() -> void {

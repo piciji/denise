@@ -82,7 +82,7 @@ auto Drive::rotateD64() -> void {
             via2.ca1In( ca1Line = true );
 
         // switch to more accurate G64 handling: SpeedAlignTest_Equalizer.d64
-        operation &= ~USERDATA_LEVEL;
+        operation &= ~DECODEDDATA_LEVEL;
         operation |= ENCODEDDATA_LEVEL;
     }
 }
@@ -225,7 +225,7 @@ auto Drive::motorChangeInit() -> void {
     if (mechanics.enabled) {
         if ((motorOn && mechanics.acceleration) || (!motorOn && mechanics.deceleration)) {
             mechanics.motorDelay = MaxAccDecMotorTime - mechanics.motorDelay;
-            mechanics.refCycles = (operation & USERDATA_LEVEL) ? driveCycles : refCyclesPerRevolution;
+            mechanics.refCycles = (operation & DECODEDDATA_LEVEL) ? driveCycles : refCyclesPerRevolution;
         } else
             mechanics.motorDelay = 0;
     } else
@@ -233,7 +233,7 @@ auto Drive::motorChangeInit() -> void {
 }
 
 auto Drive::randomizeRpm(std::vector<Drive*>& drivesEnabled) -> void {
-    
+    unsigned adjustedRpm = rpm;
     // drive speed is 300 rounds per minute
     // more realistic speed wobbles between 299,75 - 300,25
     // so we could generate a random number in a range of 0.5
@@ -260,30 +260,23 @@ auto Drive::randomizeRpm(std::vector<Drive*>& drivesEnabled) -> void {
     
     // for g64 rotation, we apply the randomness for drive speed on reference cycles
     // refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjusted;
-
     if (wobble) {
         if (wobbleLimit < 0) { // neg
-            if (--wobblePos < wobbleLimit) {
+            if (--wobblePos < wobbleLimit)
                 wobbleLimit = wobble >> 1;
-            }
         } else {
-            if (++wobblePos > wobbleLimit) {
+            if (++wobblePos > wobbleLimit)
                 wobbleLimit = -(int)(wobble >> 1);
-            }
         }
-
-        unsigned adjusted = rpm + wobblePos;
-
-        for (auto drive : drivesEnabled)
-            drive->driveCycles = (30000ULL * drive->frequency) / adjusted;
-
-        refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjusted;
-    } else {
-        for (auto drive : drivesEnabled)
-            drive->driveCycles = (30000ULL * drive->frequency) / rpm;
-
-        refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / rpm;
+        adjustedRpm += wobblePos;
     }
+
+    for (auto drive : drivesEnabled) {
+        drive->driveCycles = (30000ULL * drive->frequency) / adjustedRpm;
+        if (drive->operation & (DRIVE_MODE_157x | DRIVE_MODE_158x))
+            drive->wd1770.setTiming(drive->frequency == 2000000, adjustedRpm);
+    }
+    refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjustedRpm;
 }
 
 auto Drive::updateStepper( uint8_t step ) -> bool {
@@ -399,7 +392,7 @@ auto Drive::stepSound(bool headBang) -> void {
 
     DriveSound sound = headBang ? DriveSound::FloppyHeadBang : DriveSound::FloppyStep;
 
-    system->interface->mixDriveSound( media, sound, currentHalftrack );
+    system->interface->mixDriveSound( media, sound, false, currentHalftrack );
 }
 
 inline auto Drive::syncFound() -> uint8_t {

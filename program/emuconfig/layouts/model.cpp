@@ -753,7 +753,7 @@ auto ModelLayout::updateBurstVisibillity() -> void {
     auto blockDriveModel = getBlock( LIBC64::Interface::ModelIdDiskDriveModel );
     auto selection = blockDriveModel->combo->selection();
 
-    blockBurstMode->checkBox->setEnabled( selection == 3 || selection == 4 );
+    blockBurstMode->checkBox->setEnabled( selection == 3 || selection == 4 || selection == 5 );
 }
 
 auto ModelLayout::updateMechanicsVisibillity() -> void {

@@ -19,7 +19,7 @@
 #include "../wd177x/wd1770.h"
 #include <cstdlib>
 
-#define USERDATA_LEVEL 1u
+#define DECODEDDATA_LEVEL 1u
 #define ENCODEDDATA_LEVEL 2u
 #define FLUXDATA_LEVEL 4u
 
@@ -199,7 +199,7 @@ struct Drive {
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
     auto changeHalfTrack( uint8_t step ) -> void;
-    auto attach( uint8_t* data, unsigned size, bool loadGracefully = false ) -> void;
+    auto attach( uint8_t* data, unsigned size) -> void;
     auto postAttach() -> void;
     auto detach() -> void;
     auto setWriteProtect(bool state) -> void;
@@ -227,6 +227,7 @@ struct Drive {
     auto use2Mhz() -> bool { return frequency == 2000000; }
     auto setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state  ) -> void;
     auto setSpeeder(uint8_t speeder) -> void;
+    auto changeModelByType() -> bool;
 
     auto readProfDosEncoder(uint16_t addr) -> uint8_t;
     auto readProfDosEncoderV1(uint16_t addr) -> uint8_t;

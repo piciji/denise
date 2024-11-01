@@ -125,7 +125,7 @@ auto DiskStructure::prepareD81() -> void {
     unsigned pos;
     unsigned offset = 0;
 
-    for (uint8_t track = 0; track < tracksInDxx; track++) {
+    for (uint8_t track = 0; track < MAX_TRACKS_1581; track++) {
         for( uint8_t side = 0; side < sides; side++ ) {
             MTrack* trackPtr = &gcrTracks[side][track];
 
@@ -143,66 +143,68 @@ auto DiskStructure::prepareD81() -> void {
             std::memset(trackPtr->data, 0x4e, trackPtr->size);
             std::memset(trackPtr->mfmSync, 0x00, trackPtr->size >> 3);
 
-            uint8_t* ptr = trackPtr->data;
-            memset(ptr, 0x4e, 80); ptr += 80;
-            memset(ptr, 0x0, 12); ptr += 12;
-
-            pos = ptr - trackPtr->data;
-            trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
-            trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
-            trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
-
-            addMfmByte(ptr, 0xc2, crc);
-            addMfmByte(ptr, 0xc2, crc);
-            addMfmByte(ptr, 0xc2, crc);
-            addMfmByte(ptr, 0xfc, crc);
-
-            memset(ptr, 0x4e, 50); ptr += 50;
-
-            for (unsigned sector = 1; sector <= 10; sector++) {
+            if (track < tracksInDxx) {
+                uint8_t* ptr = trackPtr->data;
+                memset(ptr, 0x4e, 80); ptr += 80;
                 memset(ptr, 0x0, 12); ptr += 12;
 
                 pos = ptr - trackPtr->data;
                 trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
                 trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
-                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
-
-                crc = 0xffff;
-                addMfmByte(ptr, 0xa1, crc);
-                addMfmByte(ptr, 0xa1, crc);
-                addMfmByte(ptr, 0xa1, crc);
-                addMfmByte(ptr, 0xfe, crc);
-
-                addMfmByte(ptr, track, crc);
-                addMfmByte(ptr, side, crc);
-                addMfmByte(ptr, sector, crc);
-                addMfmByte(ptr, 2, crc); // sector size: 2 => 128 << 2
-                *ptr++ = crc >> 8;
-                *ptr++ = crc & 0xff;
-                memset(ptr, 0x4e, 22); ptr += 22;
-                memset(ptr, 0x0, 12); ptr += 12;
-
-                pos = ptr - trackPtr->data;
-                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
-                pos++;
-                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
-                pos++;
                 trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
 
-                crc = 0xffff;
-                addMfmByte(ptr, 0xa1, crc);
-                addMfmByte(ptr, 0xa1, crc);
-                addMfmByte(ptr, 0xa1, crc);
-                addMfmByte(ptr, 0xfb, crc);
+                addMfmByte(ptr, 0xc2, crc);
+                addMfmByte(ptr, 0xc2, crc);
+                addMfmByte(ptr, 0xc2, crc);
+                addMfmByte(ptr, 0xfc, crc);
 
-                for (unsigned j = 0; j < 512; j++) {
-                    addMfmByte(ptr, rawData[offset++], crc);
+                memset(ptr, 0x4e, 50); ptr += 50;
+
+                for (unsigned sector = 1; sector <= 10; sector++) {
+                    memset(ptr, 0x0, 12); ptr += 12;
+
+                    pos = ptr - trackPtr->data;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+
+                    crc = 0xffff;
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xfe, crc);
+
+                    addMfmByte(ptr, track, crc);
+                    addMfmByte(ptr, side, crc);
+                    addMfmByte(ptr, sector, crc);
+                    addMfmByte(ptr, 2, crc); // sector size: 2 => 128 << 2
+                    *ptr++ = crc >> 8;
+                    *ptr++ = crc & 0xff;
+                    memset(ptr, 0x4e, 22); ptr += 22;
+                    memset(ptr, 0x0, 12); ptr += 12;
+
+                    pos = ptr - trackPtr->data;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+                    pos++;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+                    pos++;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+
+                    crc = 0xffff;
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xfb, crc);
+
+                    for (unsigned j = 0; j < 512; j++) {
+                        addMfmByte(ptr, rawData[offset++], crc);
+                    }
+
+                    *ptr++ = crc >> 8;
+                    *ptr++ = crc & 0xff;
+
+                    memset(ptr, 0x4e, 22); ptr += 22;
                 }
-
-                *ptr++ = crc >> 8;
-                *ptr++ = crc & 0xff;
-
-                memset(ptr, 0x4e, 22); ptr += 22;
             }
         }
     }
@@ -333,8 +335,6 @@ auto DiskStructure::prepareDxx() -> void {
             // tracks count from 1 upwards and are stored in memory as half tracks
             // track 1 -> means half track 0
             // track 1.5 -> means half track 1
-            // track 2 -> means half track 2
-            // ... d64 doesn't support halftracks 1.5, 2.5 ...
 
             unsigned halfTrack = track * 2 - 2;
             trackSize = countBytes(track);

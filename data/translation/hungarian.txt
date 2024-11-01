@@ -857,3 +857,5 @@ External Floppy Profile = Floppy profil (külső)
 adjust speed to monitor = Sebesség igazítása a képfrissítési rátához
 adjust speed to monitor tooltip = Az emulátor sebessége átmenetileg a képfrissítési sebességhez igazodik teljes képernyőre váltáskor. A felhasználó által beállított sebesség újra aktívvá válik az ablakra való visszaváltáskor.
 esperanto = Eszperantó
+3.5-inch = 3.5-inch
+Floppy 3.5-inch Profile = Floppy Profile (3.5-inch, e.g. VC1581)

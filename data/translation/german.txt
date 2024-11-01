@@ -857,3 +857,5 @@ External Floppy Profile = Floppy Profil (extern)
 adjust speed to monitor = Geschwindigkeit an Bildwiederholrate angleichen
 adjust speed to monitor tooltip = Die Emulator Geschwindigkeit wird beim Wechsel ins Vollbild zeitweise an die Bildwiederholrate angeglichen. Die vom Anwender eingestellte Geschwindigkeit wird beim Zurückschalten in den Fenster Modus wieder aktiv.
 esperanto = Esperanto
+3.5-inch = 3.5-Zoll
+Floppy 3.5-inch Profile = Floppy Profile (3.5-Zoll, e.g. VC1581)

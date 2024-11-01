@@ -48,7 +48,7 @@ uint16_t Drive::Mechanics::deceleration = 0;
 uint16_t Drive::Mechanics::stepperSeekTime = 0;
 
 #define SYNC_ROTATE \
-    if (operation & USERDATA_LEVEL) \
+    if (operation & DECODEDDATA_LEVEL) \
         rotateD64();    \
     else if (operation & ENCODEDDATA_LEVEL) \
         rotateG64();    \
@@ -79,7 +79,6 @@ uint16_t Drive::Mechanics::stepperSeekTime = 0;
     SYNC_TAIL
 
 #define SYNC_1581 \
-    SYNC_ROTATE \
     wd1770.clock(); \
     cia.clock(); \
     SYNC_TAIL
@@ -485,7 +484,7 @@ structure(system, this) {
 
 	structure.number = number;
 	type = Type::D1541II;
-	operation = USERDATA_LEVEL;
+	operation = DECODEDDATA_LEVEL;
     expandMemory = 0;
     speeder = 0;
     profDosAutoSpeed = 0;
@@ -633,6 +632,10 @@ structure(system, this) {
                 if ((lines->ioa ^ lines->ioaOld) & 4) {
                     motorOn = (lines->ioa & 4) == 0;
 
+                    if (system->driveSounds.useFloppy) {
+                        system->interface->mixDriveSound( this->media, motorOn ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown, true );
+                    }
+
                     bool _loadingState = false;
                     for( auto drive : system->iecBus.drivesEnabled ) {
                         if (drive->motorOn) {
@@ -710,7 +713,12 @@ structure(system, this) {
                     currentHalftrack++;
             }
 
+            if (this->system->driveSounds.useFloppy)
+                this->system->interface->mixDriveSound( this->media, DriveSound::FloppyStep, true, currentHalftrack );
+
+            headOffset = wd1770.getHeadOffset();
             changeHalfTrack(0);
+            wd1770.setHeadOffset( headOffset );
 
             wd1770.setTrackZero( currentHalftrack == 0 );
         }
@@ -863,12 +871,8 @@ structure(system, this) {
                 wd1770.setDiskAccessible(motorOn & loaded);
                 motorChangeInit();
 
-                if (system->driveSounds.useFloppy) {
-                    if (motorOn)
-                        system->interface->mixDriveSound( this->media, DriveSound::FloppySpinUp );
-                    else
-                        system->interface->mixDriveSound( this->media, DriveSound::FloppySpinDown );
-                }
+                if (system->driveSounds.useFloppy)
+                    system->interface->mixDriveSound( this->media, motorOn ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown );
                 
                 updateDeviceState();
 
@@ -957,7 +961,7 @@ auto Drive::updateDeviceState1581(bool forceOff) -> void {
     system->diskSilence.idleFrames = 0;
     bool _led = forceOff ? false : !!(cia.lines.ioa & 0x40);
     bool _motorOff = forceOff ? true : !motorOn;
-    system->interface->updateDeviceState( media, wd1770.writeMode(), (currentHalftrack << 1) | side, _led, _motorOff );
+    system->interface->updateDeviceState( media, wd1770.writeMode(), ((currentHalftrack + 1) << 1) | side, _led, _motorOff );
 }
 
 // missing BUS communication
@@ -968,7 +972,7 @@ auto Drive::updateIdleDeviceState() -> void {
         system->hintObserverMotorChange( false );
 
     if (system->driveSounds.useFloppy)
-        system->interface->mixDriveSound( this->media, DriveSound::FloppySpinDown );
+        system->interface->mixDriveSound( this->media, DriveSound::FloppySpinDown, operation & DRIVE_MODE_158x );
 }
 
 auto Drive::updateViaBus() -> void {
@@ -1039,7 +1043,7 @@ auto Drive::power( ) -> void {
     randCounter = 0;
     randomizer.initXorShift( 0x1234abcd );
     
-    motorOn = false;
+    motorOn = (operation & DRIVE_MODE_158x) ? false : true;
     mechanics.stepperDelay = 0;
     mechanics.motorDelay = 0;
     readBuffer = writeBuffer = 0;
@@ -1063,15 +1067,18 @@ auto Drive::power( ) -> void {
     nibble = 0;
     updateCycleSpeed(type == Type::D1581);
     changeHalfTrack(0);
-    randomizeRpm(iecBus.drivesEnabled);
+    driveCycles = (30000ULL * frequency) / rpm;
+    refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / rpm;
+
     extendedMemoryMap = expandMemory || (speeder > 1);
-    wd1770.setRateInMhz( type == Type::D1581 ? 2 : 1, 16 );
+    wd1770.setTiming(type == Type::D1581, rpm);
 
     if (system->driveSounds.useFloppy) {
         if (loaded && !iecBus.powerOn)
-            system->interface->mixDriveSound(media, DriveSound::FloppyInsert);
+            system->interface->mixDriveSound(media, DriveSound::FloppyInsert, operation & DRIVE_MODE_158x);
 
-        system->interface->mixDriveSound( media, DriveSound::FloppySpinUp );
+        if (motorOn)
+            system->interface->mixDriveSound( media, DriveSound::FloppySpinUp, operation & DRIVE_MODE_158x );
     }
 }
 
@@ -1088,7 +1095,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         }
         syncPosRead = (int64_t)(-0.875 * (double)iecBus.cpuCylcesPerSecond);
         syncPosWrite = (int64_t)(0.875 * (double)iecBus.cpuCylcesPerSecond);
-        wd1770.setRateInMhz( 2, 16 );
+        wd1770.setTiming( true, rpm + wobblePos );
     } else {
         //system->interface->log("1 mhz", 1);
         refCyclesInCpuCycle = 16;
@@ -1101,7 +1108,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         }
         syncPosRead = (int64_t)(-0.455 * (double)iecBus.cpuCylcesPerSecond);
         syncPosWrite = (int64_t)(0.455 * (double)iecBus.cpuCylcesPerSecond);
-        wd1770.setRateInMhz( 1, 16 );
+        wd1770.setTiming( false, rpm + wobblePos );
     }
 
     setSyncPos( syncPos );
@@ -1221,7 +1228,7 @@ auto Drive::detach() -> void {
     if (loaded) {
         attachDelay = DISC_DELAY;
         if (iecBus.powerOn && system->driveSounds.useFloppy)
-            system->interface->mixDriveSound( media, DriveSound::FloppyEject );
+            system->interface->mixDriveSound( media, DriveSound::FloppyEject, operation & DRIVE_MODE_158x );
     }
 
     if (iecBus.powerOn && use2Mhz() )
@@ -1237,11 +1244,11 @@ auto Drive::detach() -> void {
     pulseIndex = -1;
     pulseDelta = 1; // to reload quickly
     operation &= ~(ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
-    operation |= USERDATA_LEVEL;
+    operation |= DECODEDDATA_LEVEL;
     dskChange = true;
 }
 
-auto Drive::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> void {
+auto Drive::attach( uint8_t* data, unsigned size ) -> void {
     detach();
     accum = 0;
     randCounter = 0;
@@ -1255,18 +1262,48 @@ auto Drive::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> void 
     wasAttachDetached = attachDelay != 0;
     attachDelay = DISC_DELAY * 3;
 
-    if (iecBus.powerOn && use2Mhz() )
-        attachDelay <<= 1;
-
     delayInProgress = attachDelay || mechanics.stepperDelay;
 
     if (iecBus.powerOn && system->driveSounds.useFloppy)
-        system->interface->mixDriveSound( media, DriveSound::FloppyInsert );
+        system->interface->mixDriveSound( media, DriveSound::FloppyInsert, operation & DRIVE_MODE_158x );
 
-    if ( !structure.attach( data, size, loadGracefully ) )
+    if ( !structure.attach( data, size ) )
         return;
 
+    bool changed = changeModelByType();
+
+    if (iecBus.powerOn && use2Mhz() )
+        attachDelay <<= 1;
+
     postAttach();
+
+    if (iecBus.powerOn && changed)
+        power();
+}
+
+auto Drive::changeModelByType() -> bool {
+    bool _f1541 = type == Type::D1541 || type == Type::D1541C || type == Type::D1541II;
+    bool _f1571 = type == Type::D1570 || type == Type::D1571;
+    bool _f1581 = type == Type::D1581;
+
+    bool _d1541 = structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::P64;
+    bool _d1571 = structure.type == DiskStructure::Type::D71 || structure.type == DiskStructure::Type::G71 || structure.type == DiskStructure::Type::P71;
+    bool _d1581 = structure.type == DiskStructure::Type::D81;
+
+    if (_f1541 && _d1571)
+        return iecBus.setDriveType(Type::D1571, media), true;
+    if (_f1541 && _d1581)
+        return iecBus.setDriveType(Type::D1581, media), true;
+    //if (_f1571 && _d1541)
+      //  return iecBus.setDriveType(Type::D1541II, media), true;
+    if (_f1571 && _d1581)
+        return iecBus.setDriveType(Type::D1581, media), true;
+    if (_f1581 && _d1541)
+        return iecBus.setDriveType(Type::D1541II, media), true;
+    if (_f1581 && _d1571)
+        return iecBus.setDriveType(Type::D1571, media), true;
+
+    return false;
 }
 
 auto Drive::postAttach() -> void {
@@ -1280,21 +1317,21 @@ auto Drive::postAttach() -> void {
     if (writeProtected && (type == Type::D1570 || type == Type::D1571))
         via1.ca2In( false );
 
-    operation &= ~(USERDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
+    operation &= ~(DECODEDDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
     wd1770.setMode( WD1770::Mode::None );
 
     if (structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::D71 || structure.type == DiskStructure::Type::D81) {
-        operation |= USERDATA_LEVEL;
+        operation |= DECODEDDATA_LEVEL;
         if (structure.type == DiskStructure::Type::D81)
-            wd1770.setMode( WD1770::Mode::USERDATA );
+            wd1770.setMode( WD1770::Mode::DECODED );
     } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71) {
         operation |= ENCODEDDATA_LEVEL;
-        wd1770.setMode( WD1770::Mode::USERDATA ); // MFM is included as user data
+        wd1770.setMode( WD1770::Mode::DECODED ); // MFM is decoded
     } else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71) {
         operation |= FLUXDATA_LEVEL;
         wd1770.setMode( WD1770::Mode::FLUX );
     } else
-        operation |= USERDATA_LEVEL;
+        operation |= DECODEDDATA_LEVEL;
 }
 
 auto Drive::setWriteProtect(bool state) -> void {

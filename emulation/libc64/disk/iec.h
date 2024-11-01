@@ -46,7 +46,6 @@ struct IecBus {
     unsigned cpuBurnerRequested;
     unsigned cpuBurner;
     bool powerOn;
-    bool diskInsertInProgress = false;
     
     auto writeCia( uint8_t byte ) -> bool;
     auto readCia() -> uint8_t;
@@ -89,7 +88,7 @@ struct IecBus {
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
     auto randomizeRpm() -> void;
     auto setCpuCyclesPerSecond( unsigned cycles ) -> void;
-    auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully = false ) -> void;
+    auto attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void;
     auto detach( Emulator::Interface::Media* media ) -> void;
     auto writeProtect( Emulator::Interface::Media* media, bool state ) -> void;    
     auto isWriteProtected( Emulator::Interface::Media* media ) -> bool;    
@@ -106,9 +105,8 @@ struct IecBus {
 	inline auto checkForIdleWrite(uint8_t byte) -> bool  { return (byte & 0x38) == lastByte; }
 
     auto updateSerializationSize() -> void;
-    auto insertDiskGracefully() -> void;
 
-    auto setDriveType(Drive::Type type) -> void;
+    auto setDriveType(Drive::Type type, Emulator::Interface::Media* media = nullptr) -> void;
     auto setSpeeder(uint8_t speeder) -> void;
     auto updateDriveSounds() -> void;
     auto wasAutostarted() -> bool;

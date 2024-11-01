@@ -26,7 +26,7 @@ struct WD1770 {
 
     enum Type {T1770, T1772};
 
-    enum Mode { None = 0, USERDATA = 1, ENCODED = 2, FLUX = 4 };
+    enum Mode { None = 0, DECODED = 1, ENCODED = 2, FLUX = 4 };
     // MFM encoding
     // 1 -> 01
     // 0 -> 00 (when 1 before) or 10 (when 0 before)
@@ -52,13 +52,15 @@ struct WD1770 {
     auto resetWritten() -> void { written = false; }
     auto setTrack(DiskStructure::MTrack* trackPtr, bool dummyTrack = false) -> void;
     auto setPulseIndex(int index, unsigned delta) -> void;
-    auto setRateInMhz(uint8_t caller, uint8_t fluxSamplingRate) -> void;
+    auto setTiming(bool cpu2Mhz, unsigned rpmScaled) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto setWriteProtected(bool state) -> void;
     auto setMode(WD1770::Mode mode) -> void;
     auto setType(WD1770::Type type) -> void;
     auto setTrackZero(bool state) -> void;
     auto writeMode() -> bool { return writeGate; }
+    auto getHeadOffset() -> unsigned { return headOffset; }
+    auto setHeadOffset( unsigned offset ) -> void { headOffset = offset; }
 
     std::function<void (bool direction)> stepCall;
     std::function<void ()> toggleWrite;
@@ -67,8 +69,9 @@ protected:
     uint8_t mode;
     Type type = T1770;
     uint8_t refCycles = 8;
-    uint8_t callerMhz = 2;
-    unsigned callerHz = 2000000;
+    bool cpu2Mhz = true;
+    unsigned driveCycles = 2000000;
+    unsigned refCyclesPerRevolution;
 
     uint8_t commandType;
     uint8_t command;
@@ -114,7 +117,7 @@ protected:
     bool written;
     bool writeGate;
     uint8_t F7WriteMode;
-    bool fluxRemove;
+    bool clockRemove;
 
     uint32_t accum;
     unsigned headOffset;
@@ -131,13 +134,16 @@ protected:
     unsigned indexHoleDelay;
 
     auto readFlux() -> void;
-    auto readUserData() -> void;
+    auto readEncoded() -> void;
+    auto readDecoded() -> void;
     auto writeFlux() -> void;
-    auto writeUserData() -> void;
+    auto writeEncoded() -> void;
+    auto writeDecoded() -> void;
     auto complete() -> void;
     auto updateDR() -> void;
     auto newByte() -> bool;
     auto prepareNextByteToWrite() -> void;
+    auto encodeBit() -> bool;
 
     auto baseCommand() -> uint8_t { return command >> 4; }
     auto decodeMFM( bool bit ) -> void;

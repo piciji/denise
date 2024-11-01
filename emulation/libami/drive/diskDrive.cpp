@@ -307,7 +307,7 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
     updateRpm();
 
     if (driveSound && system->powerOn && system->isDisplayFrame())
-        interface->mixDriveSound( media, DriveSound::FloppyInsert );
+        interface->mixDriveSound( media, DriveSound::FloppyInsert, media->id > 0 );
 
     updateTrack(true);
     return true;
@@ -319,7 +319,7 @@ auto DiskDrive::detach() -> void {
     dskChangeClock = agnus.clock;
     stepSettleClock = 0;
     if (driveSound && inserted && system->powerOn && system->isDisplayFrame())
-        interface->mixDriveSound( media, DriveSound::FloppyEject );
+        interface->mixDriveSound( media, DriveSound::FloppyEject, media->id > 0 );
 
     dskChange = true;
     inserted = false;
@@ -376,7 +376,7 @@ auto DiskDrive::power() -> void {
     wobbleLimit = wobble >> 1;
 
     if (driveSound && inserted && !system->powerOn)
-        interface->mixDriveSound(media, DriveSound::FloppyInsert);
+        interface->mixDriveSound(media, DriveSound::FloppyInsert, media->id > 0);
 }
 
 auto DiskDrive::powerOff() -> void {
@@ -496,9 +496,9 @@ auto DiskDrive::setMotor(bool state) -> void {
 
     updateDeviceState();
     if (driveSound && system->isDisplayFrame()) {
-        interface->mixDriveSound( media, state ?  DriveSound::FloppySpinUp : DriveSound::FloppySpinDown );
+        interface->mixDriveSound( media, state ?  DriveSound::FloppySpinUp : DriveSound::FloppySpinDown, media->id > 0 );
         if (!snatched)
-            interface->mixDriveSound( media, DriveSound::FloppySnatch );
+            interface->mixDriveSound( media, DriveSound::FloppySnatch, media->id > 0 );
     }
 
     snatched = true;
@@ -527,7 +527,7 @@ auto DiskDrive::step(bool dir, bool updTrack) -> void {
     stepClock = agnus.clock;
 
     if (driveSound && system->isDisplayFrame())
-        interface->mixDriveSound( media, DriveSound::FloppyStep, cylinder );
+        interface->mixDriveSound( media, DriveSound::FloppyStep, media->id > 0, cylinder );
 
     if (updTrack)
         updateTrack(false);
@@ -627,7 +627,7 @@ auto DiskDrive::enableSounds(bool state) -> void {
     driveSound = state;
 
     if (state && motor)
-        interface->mixDriveSound( media, DriveSound::FloppySpin );
+        interface->mixDriveSound( media, DriveSound::FloppySpin, media->id > 0 );
 }
 
 auto DiskDrive::getDummyTrack() -> DiskStructure::Track* {

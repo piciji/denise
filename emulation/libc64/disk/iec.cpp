@@ -465,14 +465,20 @@ auto IecBus::resetDrive( Emulator::Interface::Media* media) -> void {
     drives[media->id]->power();
 }
 
-auto IecBus::setDriveType(Drive::Type type) -> void {
-
-    system->secondDriveCable.burstPossible = (type == Drive::Type::D1570) || (type == Drive::Type::D1571) || (type == Drive::Type::D1581);
+auto IecBus::setDriveType(Drive::Type type, Emulator::Interface::Media* media ) -> void {
+    system->secondDriveCable.burstPossible = false;
     system->secondDriveCable.parallelPossible = true;
-    system->burstOrParallelUpdate();
 
-    for( auto drive : drives )
-        drive->setType( type );
+    for( auto drive : drives ) {
+        if (!media || (media == drive->media))
+            drive->setType( type );
+    }
+
+    for( auto drive : drivesEnabled ) {
+        if ((drive->type == Drive::Type::D1570) || (drive->type == Drive::Type::D1571) || (drive->type == Drive::Type::D1581))
+            system->secondDriveCable.burstPossible = true;
+    }
+    system->burstOrParallelUpdate();
 }
 
 auto IecBus::setDriveSpeed(unsigned rpmScaled) -> void {
@@ -551,27 +557,11 @@ auto IecBus::updateSerializationSize() -> void {
     }
 }
 
-auto IecBus::insertDiskGracefully() -> void {
-
-    diskInsertInProgress = false;
-    for (auto drive : drivesEnabled) {
-        if (drive->structure.encodingGraceful.status) {
-            drive->structure.prepareP64Graceful();
-
-            if (drive->structure.encodingGraceful.status) {
-                diskInsertInProgress = true;
-            } else {
-                drive->postAttach();
-            }
-        }
-    }
-}
-
-auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
+auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
 
     system->diskIdleOff();
     
-    drives[ media->id ]->attach( data, size, loadGracefully );
+    drives[ media->id ]->attach( data, size );
 }
 
 auto IecBus::detach( Emulator::Interface::Media* media ) -> void {
@@ -673,7 +663,7 @@ auto IecBus::setSpeeder(uint8_t speeder) -> void {
 auto IecBus::updateDriveSounds() -> void {
     for( auto drive : drives ) {
         if (drive->motorOn)
-            system->interface->mixDriveSound( drive->media, Emulator::Interface::DriveSound::FloppySpin );
+            system->interface->mixDriveSound( drive->media, Emulator::Interface::DriveSound::FloppySpin, drive->operation & DRIVE_MODE_158x );
     }
 }
 

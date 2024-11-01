@@ -331,7 +331,7 @@ struct Interface {
         virtual auto questionToWrite(Media*) -> bool { return false; }
         virtual auto hintAutoWarp(uint8_t) -> void {}
         virtual auto autoStartFinish(bool) -> void {}
-        virtual auto mixDriveSound( Media*, DriveSound, uint8_t ) -> void {}
+        virtual auto mixDriveSound( Media*, DriveSound, bool, uint8_t ) -> void {}
         virtual auto jam(Media*) -> void {}
         virtual auto setThreadPriority(ThreadPriority, float, float) -> bool { return false; }
         virtual auto informCapsLock(bool) -> void {}
@@ -418,8 +418,8 @@ struct Interface {
         bind->autoStartFinish(soft);
     }
 
-    auto mixDriveSound( Media* media, DriveSound driveSound, uint8_t data = 0 ) -> void {
-        bind->mixDriveSound( media, driveSound, data );
+    auto mixDriveSound( Media* media, DriveSound driveSound, bool alternate = false, uint8_t data = 0 ) -> void {
+        bind->mixDriveSound( media, driveSound, alternate, data );
     }
 
     auto jam( Media* media = nullptr ) -> void {
@@ -472,7 +472,7 @@ struct Interface {
     }
 
     // disk handling
-    virtual auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void {}
+    virtual auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void {}
     virtual auto writeProtectDisk(Media* media, bool state) -> void {}
     virtual auto isWriteProtectedDisk(Media* media) -> bool { return false; }
     virtual auto ejectDisk(Media* media) -> void { }
@@ -620,9 +620,9 @@ struct Interface {
     virtual auto setMonitorFpsRatio(double ratio) -> void {}
     
 	//shortcuts
-	auto insertMedium(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void {
+	auto insertMedium(Media* media, uint8_t* data, unsigned size) -> void {
 		switch(media->group->type) {
-			case MediaGroup::Type::Disk: insertDisk(media, data, size, loadGracefully); break;
+			case MediaGroup::Type::Disk: insertDisk(media, data, size); break;
 			case MediaGroup::Type::Tape: insertTape(media, data, size); break;
 			case MediaGroup::Type::Expansion: insertExpansionImage(media, data, size); break;
 			case MediaGroup::Type::Program: insertProgram(media, data, size); break;

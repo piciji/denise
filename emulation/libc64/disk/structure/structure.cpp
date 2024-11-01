@@ -64,18 +64,12 @@ DiskStructure::~DiskStructure() {
     clearTrackData();
 }
 
-auto DiskStructure::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> bool {
+auto DiskStructure::attach( uint8_t* data, unsigned size ) -> bool {
     rawData = data;
     rawSize = size;
     
     if ( !analyze() )
         return false;
-
-    if (loadGracefully && (type == Type::P64) ) {
-        encodingGraceful.status = 1;
-        system->iecBus.diskInsertInProgress = true;
-        return false;
-    }
     
     prepare();
     
@@ -92,7 +86,6 @@ auto DiskStructure::detach() -> void {
     rawSize = 0;
     
     clearTrackData();
-    encodingGraceful.reset();
 }
 
 auto DiskStructure::clearTrackData() -> void {
@@ -189,10 +182,16 @@ auto DiskStructure::analyze() -> bool {
     if ( analyzeG71() )
         return true;
 
-    if ( analyzeP64() )
+    if ( analyzeG81() )
         return true;
 
-    if ( analyzeP71() )
+    if ( analyzePxx("P64-1541", Type::P64) )
+        return true;
+
+    if ( analyzePxx("P71-1571", Type::P71) )
+        return true;
+
+    if ( analyzePxx("P81-1581", Type::P81) )
         return true;
 
     created = DiskStructure::createD64FromPRG( system, system->interface->getFileNameFromMedia(media), rawData, rawSize );
@@ -228,6 +227,7 @@ auto DiskStructure::prepare() -> void {
             break;
         case Type::P64:
         case Type::P71:
+        case Type::P81:
             preparePxx();
             break;
         case Type::Unknown:
@@ -533,19 +533,6 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
         system->traps.reset( options & 2 ); // trap send success event to host, error event will be always send
         system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
     }
-
-//    if (useTraps) {
-//        if (!(useTraps & 0x80)) {
-//            // override a possible speeder
-//            drive->extendedMemoryMap = false;
-//            system->secondDriveCable.parallelPossible = false;
-//            system->burstOrParallelUpdate();
-//            drive->setFirmwareByType();
-//        }
-//        traps->installSerial();
-//        traps->reset(useTraps & 0x80);
-//        system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
-//    }
 }
 
 auto DiskStructure::create( Type newType, std::string diskName ) -> Emulator::Interface::Data {
@@ -692,6 +679,9 @@ auto DiskStructure::storeWrittenTracks() -> void {
                 case Type::G64:
                 case Type::G71:
                     writeGxx(gcrTrack, side, track);
+                    break;
+                case Type::G81:
+                    writeG81(gcrTrack, side, track);
                     break;
                 case Type::P64:
                 case Type::P71:
@@ -913,7 +903,7 @@ auto DiskStructure::disalignTrack(MTrack& track, unsigned pos) -> void {
         if (tempData)
             delete[] tempData;
 
-        tempData = new uint8_t[track.size]; // todo: will be deleted when APP is closed
+        tempData = new uint8_t[track.size];
         tempSize = track.size;
     }
 

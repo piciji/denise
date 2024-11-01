@@ -98,8 +98,6 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     }
     cpu.serialize( s );
 
-    s.integer( structure.encodingGraceful.status );
-
     if (operation & (DRIVE_MODE_157x | DRIVE_MODE_158x) ) {
         cia.serialize(s);
         wd1770.serialize(s);
@@ -121,19 +119,13 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
             gcrTrack = dummyTrack;
         }
 
-        if (operation & DRIVE_MODE_157x) {
+        if (operation & (DRIVE_MODE_157x  | DRIVE_MODE_158x) ) {
             wd1770.setTrack( gcrTrack, gcrTrack == dummyTrack );
             wd1770.setDiskAccessible( motorOn && loaded );
         }
 
         // unserialize VIA, CIA before to get state of LED
         (operation & DRIVE_MODE_158x) ? updateDeviceState1581() : updateDeviceState();
-
-        if (structure.encodingGraceful.status)
-            // state was generated during attaching P64 (gracefully)
-            postAttach();
-
-        structure.encodingGraceful.reset();
     }
        
     structure.serialize( s, written );

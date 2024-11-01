@@ -106,6 +106,40 @@ namespace LIBC64 {
         return true;
     }
 
+    auto DiskStructure::analyzePxx(const std::string& ident, Type newType ) -> bool {
+
+        uint8_t* ptr = rawData;
+
+        if (rawSize < 32)
+            return false; // too small
+
+        if (std::memcmp(rawData, ident.c_str(), 8)) // missing this ident ?
+            return false;
+
+        ptr += 12;
+        uint32_t flags = Emulator::copyBufferToInt<uint32_t>( ptr );
+        // flag bit 0 is write protection, we ignore it and let the user decide
+        sides = 1 + !!(flags & 2);
+
+        ptr += 4;
+        uint32_t size = Emulator::copyBufferToInt<uint32_t>( ptr );
+        ptr += 4;
+        uint32_t checkSum = Emulator::copyBufferToInt<uint32_t>( ptr );
+        ptr += 4;
+
+        if ((size + 24) > rawSize)
+            return false;
+
+        Emulator::CRC32 crc32( ptr, size, ~0 );
+
+        if (crc32.value() != checkSum)
+            return false;
+
+        type = newType;
+
+        return true;
+    }
+
     auto DiskStructure::writeP64ToMem(unsigned& memSize) -> uint8_t* {
 
 #define BOUND_CHECK(length) \
@@ -422,67 +456,6 @@ namespace LIBC64 {
         }
 
         return res;
-    }
-
-    auto DiskStructure::prepareP64Graceful() -> void {
-
-        if (encodingGraceful.status == 0)
-            return;
-
-        if (encodingGraceful.status == 2) {
-            prepareTracksNotInUse( &encodingGraceful.inUse[0] );
-            encodingGraceful.status = 0;
-            return;
-        }
-
-        bool* usePtr = &encodingGraceful.inUse[0];
-        std::vector<uint8_t*> vec;
-
-        uint8_t* ptr = rawData;
-        unsigned offset = 0;
-        uint32_t size = 0;
-
-        if (!encodingGraceful.ptr) {
-            std::memset(usePtr, 0, MAX_TRACKS_1541 * 2 * 2);
-            ptr += 8; // header ident, already checked
-            ptr += 4; // version: only 0 is known, don't check for it
-
-            // already checked
-            ptr += 12;
-
-            offset = 24;
-        } else {
-            ptr = encodingGraceful.ptr;
-            offset = encodingGraceful.offset;
-        }
-
-        offset += 12;
-        if (offset >= rawSize) {
-            encodingGraceful.status = 2;
-            return;
-        }
-
-        vec.push_back( ptr );
-        bool res = this->decodeJob( &vec, usePtr );
-
-        ptr += 4;
-        size = Emulator::copyBufferToInt<uint32_t>( ptr );
-        ptr += 4;
-        ptr += 4;
-
-        offset += size;
-        if (offset >= rawSize) {
-            encodingGraceful.status = 2;
-            return;
-        }
-
-        ptr += size;
-
-        encodingGraceful.ptr = ptr;
-        encodingGraceful.offset = offset;
-
-        if (!res)
-            prepareP64Graceful();
     }
 
     auto DiskStructure::preparePxx() -> void {

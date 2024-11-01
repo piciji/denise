@@ -857,3 +857,5 @@ External Floppy Profile = Diskeda Profilo (ekstera)
 adjust speed to monitor = Alĝustigi rapidon por refreŝigi indicon
 adjust speed to monitor tooltip = La emuladrapideco estas provizore alĝustigita al la refreŝiga indico kiam ŝanĝas al plenekrano. La rapido fiksita de la uzanto fariĝas aktiva denove kiam ŝanĝas reen al fenestro.
 esperanto = Esperanto
+3.5-inch = 3.5-inch
+Floppy 3.5-inch Profile = Floppy Profile (3.5-inch, e.g. VC1581)
