@@ -859,5 +859,57 @@ auto DiskStructure::readSector( uint8_t* src, uint8_t* buffer, uint8_t track, ui
     return true;
 }
 
+auto DiskStructure::readSectorMfm(MTrack* mTrack, uint8_t _track, uint8_t _sector, uint8_t* _data) -> bool {
+    uint8_t byte;
+    bool syncMark;
+    uint8_t countA1 = 0;
+    uint8_t state = 0;
+    unsigned delay = 0;
+    unsigned _offset = 0;
+
+    if (!mTrack->data)
+        return false;
+
+    for(int i = 0; i < mTrack->size; i++) {
+        syncMark = (mTrack->mfmSync[i >> 3] & (1 << (i & 7))) != 0;
+        byte = mTrack->data[i];
+
+        if (syncMark && (byte == 0xa1)) {
+            if (++countA1 == 2) {
+                state = state == 8 ? 9 : 1;
+                countA1 = 0;
+                _offset = 0;
+            }
+        } else {
+            countA1 = 0;
+
+            switch (state) {
+                case 0:
+                default:
+                    break;
+                case 1: state = (byte == 0xfc || byte == 0xfd || byte == 0xfe || byte == 0xff) ? 2 : 0; break;
+                case 2: state = byte == _track ? 3 : 0; break;
+                case 3: state++; break; // side
+                case 4: state = byte == _sector ? 5 : 0; break;
+                case 5: state = byte == 2 ? 6 : 0; break; // sector size 2: 128 << 2 = 512 byte
+                case 6:
+                case 7: state++; // don't check CRC
+                    delay = 44;
+                    break;
+                case 8:
+                    if (!--delay)
+                        state = 0;
+                    break;
+                case 9: state = (byte == 0xf8 || byte == 0xf9 || byte == 0xfa || byte == 0xfb) ? 10 : 0; break;
+                case 10:
+                    _data[_offset++] = byte;
+                    if (_offset == 512)
+                        return true;
+                    break;
+            }
+        }
+    }
+    return false;
+}
 
 }

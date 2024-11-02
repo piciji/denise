@@ -124,7 +124,6 @@ struct Drive {
     bool dskChange;
         
     DiskStructure::MTrack* gcrTrack;
-    DiskStructure::MTrack* dummyTrack;
 
     uint8_t currentHalftrack;
     bool coilDir = 0;

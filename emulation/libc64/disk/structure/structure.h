@@ -100,7 +100,7 @@ struct DiskStructure {
     auto detach() -> void;
     auto createListing() -> void;
 	auto createListingMfm() -> void;
-	auto getMfmPtr(unsigned _track, unsigned _sector) -> uint8_t*;
+	auto getDecodedMfmLogical(unsigned _track, unsigned _sector) -> uint8_t*;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto selectListing( unsigned pos, uint8_t options = 0 ) -> void;
     auto selectListing( std::string fileName, uint8_t options = 0 ) -> void;
@@ -136,6 +136,7 @@ struct DiskStructure {
     auto updateSerializationSize() -> void;
 
     auto readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
+	auto readSectorMfm(MTrack* mTrack, uint8_t _track, uint8_t _sector, uint8_t* _data) -> bool;
 	auto logTrackSkew() -> void;
     
 private:    
@@ -203,7 +204,7 @@ private:
     static auto createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide = nullptr ) -> void;
 
     static auto encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void;
-	static auto encodeSectorMfm(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector) -> void;
+	static auto decodeSectorMfm(MTrack* mTrack, uint8_t _track, uint8_t _sector, uint8_t* _data) -> bool;
     auto decodeSector( const MTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int;
     auto findSync( const MTrack* trackPtr, unsigned& offset, unsigned size ) -> bool;
     auto decode( const MTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void;

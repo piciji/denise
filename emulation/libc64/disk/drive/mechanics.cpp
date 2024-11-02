@@ -361,7 +361,7 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
         wd1770.setPulseIndex(pulseIndex, pulseDelta);
 
     } else {    // D64, G64
-        unsigned oldTrackSize = gcrTrack->size;
+        unsigned oldTrackSize = gcrTrack ? gcrTrack->size : 0;
 
         // pointer to next track
         gcrTrack = structure.getTrackPtr( side, currentHalftrack );
@@ -378,14 +378,9 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
             headOffset = 0;
     }
 
-    if ( (type == Type::D1570) && (side == 1) ) {
-        gcrTrack = dummyTrack;
-        wd1770.setTrack( dummyTrack, true );
-    } else
-        wd1770.setTrack(gcrTrack);
+    wd1770.setTrack(gcrTrack);
 
     (operation & DRIVE_MODE_158x) ? updateDeviceState1581() : updateDeviceState();
-
 }
 
 auto Drive::stepSound(bool headBang) -> void {

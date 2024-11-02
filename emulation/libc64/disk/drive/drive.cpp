@@ -475,12 +475,8 @@ structure(system, this) {
     this->number = number; 
 	this->media = media;
     structure.media = media;
-
-	dummyTrack = new DiskStructure::MTrack;
-    dummyTrack->pulses.push_back({0,0,1,1});
-    dummyTrack->pulses.push_back({1000,0,0,0});
-    dummyTrack->firstPulse = 0;
-    gcrTrack = dummyTrack;
+    gcrTrack = nullptr;
+    headOffset = 0;
 
 	structure.number = number;
 	type = Type::D1541II;
@@ -526,8 +522,6 @@ structure(system, this) {
 
     rom = rom1541II;
     romMask = rom1541IISize - 1;
-
-    wd1770.setTrack(dummyTrack, true);
 
     pia.ca2Out = [this, system](bool direction) {
         if (direction)
@@ -778,7 +772,7 @@ structure(system, this) {
             }
         } else {
 
-            if (type == Type::D1570 || type == Type::D1571) {
+            if (operation & DRIVE_MODE_157x) {
                 dataDirection = !!(lines->ioa & 2);
 
                 if ((lines->ioa ^ lines->ioaOld) & 0x20) {
@@ -788,7 +782,7 @@ structure(system, this) {
                 uint8_t _side = side;
                 side = !!(lines->ioa & 4);
 
-                if (!structure.hasSecondSide())
+                if (!structure.hasSecondSide() || (type == Type::D1570))
                     side = 0;
 
                 if (side != _side) {
@@ -947,7 +941,6 @@ Drive::~Drive() {
     delete[] ram80To9F;
     delete[] ramA0ToBF;
     delete[] turboTrans;
-    delete dummyTrack;
 }
 
 auto Drive::updateDeviceState(bool forceOff) -> void {
@@ -1052,7 +1045,7 @@ auto Drive::power( ) -> void {
     ue3Counter = 0;
     accum = 0;
     //headOffset = 0;
-    currentHalftrack = 17 * 2;
+    currentHalftrack = (type == Type::D1581) ? 40 : (17 * 2);
     coilDir = 0;
     structure.autoStarted = false;
     structure.serializationSize = 0;
@@ -1288,7 +1281,7 @@ auto Drive::changeModelByType() -> bool {
 
     bool _d1541 = structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::P64;
     bool _d1571 = structure.type == DiskStructure::Type::D71 || structure.type == DiskStructure::Type::G71 || structure.type == DiskStructure::Type::P71;
-    bool _d1581 = structure.type == DiskStructure::Type::D81;
+    bool _d1581 = structure.type == DiskStructure::Type::D81 || structure.type == DiskStructure::Type::G81;
 
     if (_f1541 && _d1571)
         return iecBus.setDriveType(Type::D1571, media), true;
@@ -1307,9 +1300,11 @@ auto Drive::changeModelByType() -> bool {
 }
 
 auto Drive::postAttach() -> void {
-    headOffset %= gcrTrack->bits;
-    pulseIndex = gcrTrack->firstPulse;
-    wd1770.setPulseIndex(pulseIndex, pulseDelta);
+    if (gcrTrack) {
+        headOffset %= gcrTrack->bits;
+        pulseIndex = gcrTrack->firstPulse;
+        wd1770.setPulseIndex(pulseIndex, pulseDelta);
+    }
 
     loaded = true;
     wd1770.setDiskAccessible(motorOn);
@@ -1324,9 +1319,9 @@ auto Drive::postAttach() -> void {
         operation |= DECODEDDATA_LEVEL;
         if (structure.type == DiskStructure::Type::D81)
             wd1770.setMode( WD1770::Mode::DECODED );
-    } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71) {
+    } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71 || structure.type == DiskStructure::Type::G81) {
         operation |= ENCODEDDATA_LEVEL;
-        wd1770.setMode( WD1770::Mode::DECODED ); // MFM is decoded
+        wd1770.setMode( WD1770::Mode::ENCODED ); // MFM is decoded
     } else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71) {
         operation |= FLUXDATA_LEVEL;
         wd1770.setMode( WD1770::Mode::FLUX );

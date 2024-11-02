@@ -113,14 +113,13 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         updateCycleSpeed( use2Mhz() );
 
         setFirmwareByType();
+        if ( (type == Type::D1570) && (side == 1) )
+            side = 0;
+
         gcrTrack = structure.getTrackPtr( side, currentHalftrack );
 
-        if ( (type == Type::D1570) && (side == 1) ) {
-            gcrTrack = dummyTrack;
-        }
-
         if (operation & (DRIVE_MODE_157x  | DRIVE_MODE_158x) ) {
-            wd1770.setTrack( gcrTrack, gcrTrack == dummyTrack );
+            wd1770.setTrack( gcrTrack );
             wd1770.setDiskAccessible( motorOn && loaded );
         }
 

@@ -225,6 +225,9 @@ auto DiskStructure::prepare() -> void {
         case Type::G71:
             prepareGxx();
             break;
+        case Type::G81:
+            prepareG81();
+            break;
         case Type::P64:
         case Type::P71:
         case Type::P81:
@@ -261,7 +264,7 @@ auto DiskStructure::createListing() -> void {
     if (!rawData || (type == Type::Unknown))
         return;
 
-    if (type == Type::D81)
+    if (type == Type::D81 || type == Type::G81)
         return createListingMfm();
     
     Emulator::C64Listing listing;
@@ -548,6 +551,8 @@ auto DiskStructure::create( Type newType, std::string diskName ) -> Emulator::In
             return { createGxx( diskName, 1 ), imageSizeG64() };
         case Type::G71:
             return { createGxx( diskName, 2 ), imageSizeG71() };
+        case Type::G81:
+            return { createG81( diskName ), imageSizeG81() };
         case Type::P64:
             return createPxx( diskName, 1 );
         case Type::P71:

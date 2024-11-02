@@ -50,7 +50,7 @@ struct WD1770 {
     auto reset() -> void;
     auto wasWritten() -> bool { return written; }
     auto resetWritten() -> void { written = false; }
-    auto setTrack(DiskStructure::MTrack* trackPtr, bool dummyTrack = false) -> void;
+    auto setTrack(DiskStructure::MTrack* trackPtr) -> void;
     auto setPulseIndex(int index, unsigned delta) -> void;
     auto setTiming(bool cpu2Mhz, unsigned rpmScaled) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
@@ -102,7 +102,6 @@ protected:
     uint16_t crcFetched;
 
     DiskStructure::MTrack* trackPtr = nullptr;
-    bool dummyTrack = true;
 
     uint16_t readBuffer;
     uint8_t DSR;

@@ -592,7 +592,7 @@ auto DiskStructure::writeG81(const MTrack* trackPtr, uint8_t side, unsigned trac
 
     // now we write the changed track out to raw file, either overwrite the old one
     // or append it at end of file, see above
-    Emulator::copyIntToBuffer<uint32_t>( &buf[0], (uint16_t)trackPtr->bits );
+    Emulator::copyIntToBuffer<uint32_t>( &buf[0], trackPtr->bits );
 
     // first 2 bytes are track length
     if ( write( &buf[0], 4, offset ) != 4)
@@ -628,21 +628,21 @@ auto DiskStructure::writeG81(const MTrack* trackPtr, uint8_t side, unsigned trac
 }
 
 auto DiskStructure::imageSizeG64() -> unsigned {
-    
     unsigned maxBytes = 7928;
     
     return 12 + MAX_TRACKS_1541 * 2 * 8 + TYPICAL_TRACKS * (maxBytes + 2);
 }
 
 auto DiskStructure::imageSizeG71() -> unsigned {
-
     unsigned maxBytes = 7928;
 
     return 12 + MAX_TRACKS_1541 * 2 * 2 * 8 + TYPICAL_TRACKS * 2 * (maxBytes + 2);
 }
 
 auto DiskStructure::imageSizeG81() -> unsigned {
-    return 12 + MAX_TRACKS_1581 * 2 * 4 + 80 * 2 * ( (6250 << 1) + 4 );
+    unsigned maxBytes = 6250 << 1;
+
+    return 12 + MAX_TRACKS_1581 * 2 * 4 + 80 * 2 * (maxBytes + 4 );
 }
 
 auto DiskStructure::createG81(const std::string& diskName) -> uint8_t* {
@@ -676,7 +676,7 @@ auto DiskStructure::createG81(const std::string& diskName) -> uint8_t* {
 
             Emulator::copyIntToBuffer<uint32_t>(&ptr[trackPos * 4], trackOffset);
 
-            Emulator::copyIntToBuffer<uint16_t>(temp2 + trackOffset, trackPtr->bits);
+            Emulator::copyIntToBuffer<uint32_t>(temp2 + trackOffset, trackPtr->bits);
 
             std::memcpy( temp2 + trackOffset + 4, trackPtr->data, maxBytes );
         }
@@ -789,6 +789,91 @@ auto DiskStructure::createGxx( std::string diskName, uint8_t sides ) -> uint8_t*
     return temp;
 }
 
+auto DiskStructure::decodeSectorMfm(MTrack* mTrack, uint8_t _track, uint8_t _sector, uint8_t* _data) -> bool {
+    bool clockBit = true;
+    uint8_t byte = 0;
+    unsigned readBuffer = 0;
+    bool syncMark;
+    uint8_t bitCounter = 0;
+    uint8_t countA1 = 0;
+    uint8_t state = 0;
+    unsigned delay = 0;
+    unsigned _offset = 0;
+    unsigned head = 0;
+    bool overlap = false;
+
+    if (!mTrack->data)
+        return false;
+
+    while(true) {
+        syncMark = false;
+        readBuffer <<= 1;
+        readBuffer |= (mTrack->data[head>> 3] >> ((~head) & 7)) & 1;
+
+        if ((readBuffer & 0x7fff) == 0x4489) // a1
+            syncMark = true;
+
+        if (!clockBit) {
+            byte <<= 1;
+            byte |= readBuffer & 1;
+
+            if (++bitCounter == 8) {
+                bitCounter = 0;
+
+                if (syncMark && (byte == 0xa1)) {
+                    if (++countA1 == 2) {
+                        state = state == 8 ? 9 : 1;
+                        countA1 = 0;
+                        _offset = 0;
+                    }
+                } else {
+                    countA1 = 0;
+
+                    switch (state) {
+                        case 0:
+                        default:
+                            break;
+                        case 1: state = (byte == 0xfc || byte == 0xfd || byte == 0xfe || byte == 0xff) ? 2 : 0; break;
+                        case 2: state = byte == _track ? 3 : 0; break;
+                        case 3: state++; break; // side
+                        case 4: state = byte == _sector ? 5 : 0; break;
+                        case 5: state = byte == 2 ? 6 : 0; break; // sector size 2: 128 << 2 = 512 byte
+                        case 6:
+                        case 7: state++; // don't check CRC
+                            delay = 44;
+                            break;
+                        case 8:
+                            if (!--delay)
+                                state = 0;
+                            break;
+                        case 9: state = (byte == 0xf8 || byte == 0xf9 || byte == 0xfa || byte == 0xfb) ? 10 : 0; break;
+                        case 10:
+                            _data[_offset++] = byte;
+                            if (_offset == 512)
+                                return true;
+                            break;
+                    }
+                }
+            }
+        }
+
+        clockBit ^= 1;
+        if (syncMark) {
+            clockBit = true;
+            bitCounter = 0;
+        }
+
+        if (++head == mTrack->bits) {
+            head = 0;
+            overlap = true;
+        } else if (overlap) {
+            if (head > 2048)
+               break; // no overlapped sector
+        }
+    }
+    return false;
+}
+
 auto DiskStructure::encodeMfm(MTrack* mTrack) -> void {
     uint16_t word;
     bool dataZeroBefore = true;
@@ -803,11 +888,11 @@ auto DiskStructure::encodeMfm(MTrack* mTrack) -> void {
         word |= ((_data & 0x8) << 3) | ((_data & 0x4) << 2) | ((_data & 0x2) << 1) | ((_data & 0x1) << 0);
 
         for(int j = 14; j >= 0; j -= 2) {
-            if ((word >> i) & 1) // data bit "one"
+            if ((word >> j) & 1) // data bit "one"
                 dataZeroBefore = false;
             else { // data bit "zero"
                 if (dataZeroBefore)
-                    word |= 2 << i; // in MFM clock bit becomes "one" only, if data bit 0 follows another data bit 0
+                    word |= 2 << j; // in MFM clock bit becomes "one" only, if data bit 0 follows another data bit 0
 
                 dataZeroBefore = true;
             }

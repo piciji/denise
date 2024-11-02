@@ -1,16 +1,32 @@
 
 namespace LIBC64 {
 
-// tracks: 1 - 40, sectors per track: 0 - 39
-auto DiskStructure::getMfmPtr(unsigned _track, unsigned _sector) -> uint8_t* {
-    if (_track == 0)
+// tracks: 1 - 80, sectors per track: 0 - 39
+auto DiskStructure::getDecodedMfmLogical(unsigned _track, unsigned _sector) -> uint8_t* {
+    static uint8_t buffer[512];
+
+    if (_track == 0 || _track > 80)
         return nullptr;
 
-    unsigned _size = (_track - 1) * 40 * 256 + _sector * 256;
-    if ((_size + 256) > rawSize)
-        return nullptr;
+    uint8_t _side = 0;
+    // convert logical to physical sector
+    if (_sector >= 20) {
+        _side = 1;
+        _sector -= 20;
+    }
 
-    return rawData + _size;
+    auto _mTrack = getTrackPtr(_side, _track-1);
+    if (type == Type::G81) {
+        if (!decodeSectorMfm( _mTrack, _track - 1, (_sector >> 1) + 1, &buffer[0]))
+            return nullptr;
+    } else { // D81
+        if (!readSectorMfm( _mTrack, _track - 1, (_sector >> 1) + 1, &buffer[0]))
+            return nullptr;
+    }
+
+    if (_sector & 1)
+        return buffer + 256;
+    return buffer;
 }
 
 auto DiskStructure::createListingMfm() -> void {
@@ -27,7 +43,7 @@ auto DiskStructure::createListingMfm() -> void {
     if (system->loadWithColumn)
         _headlineCmd = {':', '*'};
 
-    if ((ptr = getMfmPtr(_track, _sector++)) == nullptr)
+    if ((ptr = getDecodedMfmLogical(_track, _sector++)) == nullptr)
         return;
 
     listings.push_back( { id++, listing.buildHeadline( ptr + 0x4, ptr + 0x19, ptr + 0x16 ), listing.decodeToScreencode( buildLoadCommand(_headlineCmd, true) ) } );
@@ -36,7 +52,7 @@ auto DiskStructure::createListingMfm() -> void {
     unsigned freeBlocks = 0;
     for (uint8_t t = 1; t <= 80; t++) {
         if (t == 1 || t == 41) {
-            if ((ptr = getMfmPtr(_track, _sector++)) == nullptr)
+            if ((ptr = getDecodedMfmLogical(_track, _sector++)) == nullptr)
                 return;
 
             ptr += 0x10;
@@ -47,7 +63,7 @@ auto DiskStructure::createListingMfm() -> void {
         ptr += 6;
     }
 
-    if ((ptr = getMfmPtr(_track, _sector++)) == nullptr)
+    if ((ptr = getDecodedMfmLogical(_track, _sector++)) == nullptr)
         return;
 
     _track = ptr[0];
@@ -82,7 +98,7 @@ auto DiskStructure::createListingMfm() -> void {
             if (entry > 250 || _track > 80 || _track == 0)
                 break;
 
-            if ((ptr = getMfmPtr(_track, _sector)) == nullptr)
+            if ((ptr = getDecodedMfmLogical(_track, _sector)) == nullptr)
                 return;
 
             _track = ptr[0];

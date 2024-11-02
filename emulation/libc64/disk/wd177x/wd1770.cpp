@@ -16,9 +16,8 @@ auto WD1770::setType(WD1770::Type type) -> void {
     this->type = type;
 }
 
-auto WD1770::setTrack(DiskStructure::MTrack* trackPtr, bool dummyTrack) -> void {
+auto WD1770::setTrack(DiskStructure::MTrack* trackPtr) -> void {
     this->trackPtr = trackPtr;
-    this->dummyTrack = dummyTrack;
 }
 
 auto WD1770::setPulseIndex(int index, unsigned delta) -> void {
@@ -1001,7 +1000,7 @@ auto WD1770::readDecoded() -> void {
     accum -= driveCycles;
 
     uint8_t* ptr = trackPtr->data;
-    if (!ptr || dummyTrack) {
+    if (!ptr) {
         DSR = 0;
         syncMark = false;
         return;
@@ -1040,7 +1039,7 @@ auto WD1770::writeDecoded() -> void {
     accum -= driveCycles;
 
     uint8_t* ptr = trackPtr->data;
-    if (!ptr || dummyTrack)
+    if (!ptr)
         return;
 
     if (++headOffset >= trackPtr->size) {
@@ -1079,7 +1078,7 @@ auto WD1770::readEncoded() -> void {
         return;
 
     uint8_t* ptr = trackPtr->data;
-    if (!ptr || dummyTrack) {
+    if (!ptr) {
         DSR = 0;
         return;
     }
@@ -1114,7 +1113,7 @@ auto WD1770::writeEncoded() -> void {
         return;
 
     uint8_t* ptr = trackPtr->data;
-    if (!ptr || dummyTrack)
+    if (!ptr)
         return;
 
     accum += trackPtr->bits * refCycles;
@@ -1361,13 +1360,6 @@ auto WD1770::decodeMFM( bool bit ) -> void {
     clockBit ^= 1;
 
     if (syncMark) {
-//        if (indexHole) {
-//            indexHole = false;
-//            indexHoleWaitBegin = false;
-//            indexHoleDelay = 0;
-//            if (commandType == 1 || commandType == 4)
-//                status &= ~DATA_REQUEST_INDEX;
-//        }
         clockBit = true;
         bitCounter = 0;
     }
@@ -1436,14 +1428,12 @@ auto WD1770::writeFlux() -> void {
                         else
                             position = pulse.position - pulseDelta;
 
-                        if (!dummyTrack) {
-                            DiskStructure::addPulse(trackPtr, position, 0xffffffff);
+                        DiskStructure::addPulse(trackPtr, position, 0xffffffff);
 
-                            if (!written)
-                                written = true;
+                        if (!written)
+                            written = true;
 
-                            trackPtr->written = 0x81;
-                        }
+                        trackPtr->written = 0x81;
                     }
                 }
                 // else
@@ -1452,7 +1442,7 @@ auto WD1770::writeFlux() -> void {
 
                 DiskStructure::Pulse& pulse = trackPtr->pulses[pulseIndex];
 
-                if (!writeProtected && !dummyTrack) {
+                if (!writeProtected) {
                     if (flux) {
                         if (pulse.strength != 0xffffffff)
                             // 1541 always write strong pulses

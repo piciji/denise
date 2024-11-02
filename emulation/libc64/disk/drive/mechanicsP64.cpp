@@ -181,14 +181,12 @@ namespace LIBC64 {
                                 else
                                     position = pulse.position - pulseDelta;
 
-                                if (gcrTrack != dummyTrack) {
-                                    DiskStructure::addPulse(gcrTrack, position, 0xffffffff);
+                                DiskStructure::addPulse(gcrTrack, position, 0xffffffff);
 
-                                    if (!written)
-                                        written = true;
+                                if (!written)
+                                    written = true;
 
-                                    gcrTrack->written |= 1;
-                                }
+                                gcrTrack->written |= 1;
                             }
                         }
                         // else
@@ -197,7 +195,7 @@ namespace LIBC64 {
 
                         DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
-                        if (!writeProtected && (gcrTrack != dummyTrack)) {
+                        if (!writeProtected) {
                             if (flux) {
                                 if (pulse.strength != 0xffffffff)
                                     // 1541 always write strong pulses
