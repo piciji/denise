@@ -1445,8 +1445,7 @@ auto WD1770::writeFlux() -> void {
                 if (!writeProtected) {
                     if (flux) {
                         if (pulse.strength != 0xffffffff)
-                            // 1541 always write strong pulses
-                            pulse.strength = 0xffffffff;
+                            pulse.strength = 0xffffffff; // write strong pulses
 
                     } else
                         DiskStructure::freePulse(trackPtr, pulseIndex);

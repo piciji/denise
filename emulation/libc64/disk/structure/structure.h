@@ -159,8 +159,6 @@ private:
 	auto analyzeD81() -> bool;
     auto analyzeG64() -> bool;
     auto analyzeG71() -> bool;
-    auto analyzeP64() -> bool;
-    auto analyzeP71() -> bool;
 	auto analyzeG81() -> bool;
 	auto analyzePxx(const std::string& ident, Type newType ) -> bool;
     
@@ -169,6 +167,7 @@ private:
     static auto createGxx( std::string diskName, uint8_t sides = 1 ) -> uint8_t*;
 	static auto createG81(const std::string& diskName) -> uint8_t*;
     static auto createPxx( std::string diskName, uint8_t sides = 1 ) -> Emulator::Interface::Data;
+	static auto createP81( const std::string diskName ) -> Emulator::Interface::Data;
     static auto cutId( std::string& diskName ) -> std::string;
     
     static auto imageSizeG64() -> unsigned;
@@ -212,9 +211,10 @@ private:
 	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned;
     inline auto encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void;
     auto decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> bool;
-    auto encodeGCR(MTrack* gcrTrack, uint8_t halfTrack) -> void;
+    auto encodeGCRFromPulse(MTrack* gcrTrack, uint8_t halfTrack) -> void;
+	auto encodeMfmFromPulse(MTrack* gcrTrack) -> void;
     auto prepareTracksNotInUse(bool* inUse) -> void;
-    auto createPulsesFromGCR(MTrack* gcrTrack) -> void;
+    auto createPulsesFromEncoded(MTrack* gcrTrack) -> void;
     static auto allocatePulse( std::vector<Pulse>& pulses ) -> unsigned;
     static auto disalignTrack(MTrack& track, unsigned pos) -> void;
 	auto encodeMfm(MTrack* mTrack) -> void;

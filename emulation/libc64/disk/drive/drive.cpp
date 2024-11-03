@@ -1281,7 +1281,7 @@ auto Drive::changeModelByType() -> bool {
 
     bool _d1541 = structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::P64;
     bool _d1571 = structure.type == DiskStructure::Type::D71 || structure.type == DiskStructure::Type::G71 || structure.type == DiskStructure::Type::P71;
-    bool _d1581 = structure.type == DiskStructure::Type::D81 || structure.type == DiskStructure::Type::G81;
+    bool _d1581 = structure.type == DiskStructure::Type::D81 || structure.type == DiskStructure::Type::G81 || structure.type == DiskStructure::Type::P81;
 
     if (_f1541 && _d1571)
         return iecBus.setDriveType(Type::D1571, media), true;
@@ -1322,7 +1322,7 @@ auto Drive::postAttach() -> void {
     } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71 || structure.type == DiskStructure::Type::G81) {
         operation |= ENCODEDDATA_LEVEL;
         wd1770.setMode( WD1770::Mode::ENCODED ); // MFM is decoded
-    } else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71) {
+    } else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71 || structure.type == DiskStructure::Type::P81) {
         operation |= FLUXDATA_LEVEL;
         wd1770.setMode( WD1770::Mode::FLUX );
     } else

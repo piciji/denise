@@ -16,7 +16,7 @@ auto DiskStructure::getDecodedMfmLogical(unsigned _track, unsigned _sector) -> u
     }
 
     auto _mTrack = getTrackPtr(_side, _track-1);
-    if (type == Type::G81) {
+    if (type == Type::G81 || type == Type::P81) {
         if (!decodeSectorMfm( _mTrack, _track - 1, (_sector >> 1) + 1, &buffer[0]))
             return nullptr;
     } else { // D81

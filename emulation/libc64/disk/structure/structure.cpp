@@ -264,7 +264,7 @@ auto DiskStructure::createListing() -> void {
     if (!rawData || (type == Type::Unknown))
         return;
 
-    if (type == Type::D81 || type == Type::G81)
+    if (type == Type::D81 || type == Type::G81 || type == Type::P81)
         return createListingMfm();
     
     Emulator::C64Listing listing;
@@ -557,6 +557,8 @@ auto DiskStructure::create( Type newType, std::string diskName ) -> Emulator::In
             return createPxx( diskName, 1 );
         case Type::P71:
             return createPxx( diskName, 2 );
+        case Type::P81:
+            return createP81( diskName );
         default:
             break;
     } 
@@ -658,7 +660,7 @@ auto DiskStructure::storeWrittenTracks() -> void {
     bool appendedTracks = false;
     bool errorMapChanged = false;
 
-    if (type == Type::P64 || type == Type::P71)
+    if (type == Type::P64 || type == Type::P71 || type == Type::P81)
         writePxx( );
     else if (type == Type::D64 || type == Type::D71)
         appendedTracks = handleAppendedTracksInDxx();
@@ -692,7 +694,10 @@ auto DiskStructure::storeWrittenTracks() -> void {
                 case Type::P71:
                     // can't overwrite single tracks, need to write whole disk.
                     // convert to gcr to update listing outside of emulation
-                    encodeGCR(gcrTrack, track);
+                    encodeGCRFromPulse(gcrTrack, track);
+                    break;
+                case Type::P81:
+                    encodeMfmFromPulse(gcrTrack);
                     break;
                 case Type::Unknown:
                     break;
