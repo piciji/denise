@@ -134,8 +134,8 @@ struct Drive {
     bool dataDirection = 0;
     
     unsigned speedZone = 0;
-    bool byteReadyOverflow = true; // random initialization ?
-    bool readMode = true; // random initialization ?
+    bool byteReadyOverflow = true;
+    bool readMode = true;
     unsigned headOffset = 0; // one and only initialization
     uint8_t ue3Counter;
 

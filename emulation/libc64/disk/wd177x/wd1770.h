@@ -19,6 +19,7 @@ MFM sync	    1 0 1 0 0 1 0 1 0 1 0 0 1 0 0 ?
 #pragma once
 
 #include "../structure/structure.h"
+#include "../../../tools/rand.h"
 
 namespace LIBC64 {
 
@@ -41,18 +42,16 @@ struct WD1770 {
 
     static uint16_t CRC1021[256];
 
-    // if motor is NOT controlled by WD177x, then this method is used to inform about a disk is inserted AND motor is running.
-    // if motor is controlled by WD177x, then this method is used to inform about a disk is inserted.
     auto setDiskAccessible(bool state) -> void;
     auto read(uint16_t address) -> uint8_t;
     auto write(uint16_t address, uint8_t value) -> void;
-    auto clock() -> void;
+    auto rotate(unsigned revolutionCycles) -> void;
     auto reset() -> void;
     auto wasWritten() -> bool { return written; }
     auto resetWritten() -> void { written = false; }
     auto setTrack(DiskStructure::MTrack* trackPtr) -> void;
     auto setPulseIndex(int index, unsigned delta) -> void;
-    auto setTiming(bool cpu2Mhz, unsigned rpmScaled) -> void;
+    auto set2Mhz(bool state) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto setWriteProtected(bool state) -> void;
     auto setMode(WD1770::Mode mode) -> void;
@@ -70,8 +69,6 @@ protected:
     Type type = T1770;
     uint8_t refCycles = 8;
     bool cpu2Mhz = true;
-    unsigned driveCycles = 2000000;
-    unsigned refCyclesPerRevolution;
 
     uint8_t commandType;
     uint8_t command;
@@ -107,7 +104,7 @@ protected:
     uint8_t DSR;
 
     bool writeProtected = false;
-    bool motorAdvance;
+    bool diskInserted = false;
 
     uint16_t sectorLength;
 
@@ -131,13 +128,14 @@ protected:
 
     unsigned forceInterruptDelay;
     unsigned indexHoleDelay;
+    Emulator::Rand randomizer;
 
-    auto readFlux() -> void;
-    auto readEncoded() -> void;
-    auto readDecoded() -> void;
-    auto writeFlux() -> void;
-    auto writeEncoded() -> void;
-    auto writeDecoded() -> void;
+    auto readFlux(unsigned revolutionCycles) -> void;
+    auto readEncoded(unsigned revolutionCycles) -> void;
+    auto readDecoded(unsigned revolutionCycles) -> void;
+    auto writeFlux(unsigned revolutionCycles) -> void;
+    auto writeEncoded(unsigned revolutionCycles) -> void;
+    auto writeDecoded(unsigned revolutionCycles) -> void;
     auto complete() -> void;
     auto updateDR() -> void;
     auto newByte() -> bool;

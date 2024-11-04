@@ -55,6 +55,16 @@ uint16_t Drive::Mechanics::stepperSeekTime = 0;
     else \
         rotateP64();
 
+#define SYNC_ROTATE_1581 \
+unsigned _cycles = operation & DECODEDDATA_LEVEL ? driveCycles : refCyclesPerRevolution; \
+if (!mechanics.motorDelay) { \
+    if (!motorOn) \
+        _cycles = 0; \
+} else if(!motorRun(_cycles)) \
+    _cycles = 0; \
+wd1770.rotate(_cycles);
+
+
 #define SYNC_TAIL   \
     cycleCounter += iecBus.cpuCylcesPerSecond;  \
     if (delayInProgress)    \
@@ -72,14 +82,14 @@ uint16_t Drive::Mechanics::stepperSeekTime = 0;
     SYNC_ROTATE \
     via1.process(); \
     via2.process(); \
-    wd1770.clock(); \
+    wd1770.rotate(0); \
     cia.clock();    \
     if (operation & DRIVE_HAS_EXTRA_CIA)    \
         ciaSpeeder.clock(); \
     SYNC_TAIL
 
 #define SYNC_1581 \
-    wd1770.clock(); \
+    SYNC_ROTATE_1581 \
     cia.clock(); \
     SYNC_TAIL
     
@@ -625,6 +635,7 @@ structure(system, this) {
             if (operation & DRIVE_MODE_158x) {
                 if ((lines->ioa ^ lines->ioaOld) & 4) {
                     motorOn = (lines->ioa & 4) == 0;
+                    motorChangeInit();
 
                     if (system->driveSounds.useFloppy) {
                         system->interface->mixDriveSound( this->media, motorOn ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown, true );
@@ -641,7 +652,7 @@ structure(system, this) {
                     if (structure.autoStarted)
                         system->hintObserverMotorChange( _loadingState );
 
-                    wd1770.setDiskAccessible(motorOn & loaded);
+                    //wd1770.setDiskAccessible(motorOn & loaded);
                     updateDeviceState1581();
                 }
 
@@ -862,7 +873,7 @@ structure(system, this) {
             if ((lines->iob ^ lines->iobOld) & 4) {
                 // motor switched between on/off 
                 motorOn = (lines->iob & 4) != 0;
-                wd1770.setDiskAccessible(motorOn & loaded);
+                //wd1770.setDiskAccessible(motorOn & loaded);
                 motorChangeInit();
 
                 if (system->driveSounds.useFloppy)
@@ -1064,7 +1075,7 @@ auto Drive::power( ) -> void {
     refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / rpm;
 
     extendedMemoryMap = expandMemory || (speeder > 1);
-    wd1770.setTiming(type == Type::D1581, rpm);
+    wd1770.set2Mhz(type == Type::D1581);
 
     if (system->driveSounds.useFloppy) {
         if (loaded && !iecBus.powerOn)
@@ -1088,7 +1099,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         }
         syncPosRead = (int64_t)(-0.875 * (double)iecBus.cpuCylcesPerSecond);
         syncPosWrite = (int64_t)(0.875 * (double)iecBus.cpuCylcesPerSecond);
-        wd1770.setTiming( true, rpm + wobblePos );
+        wd1770.set2Mhz( true);
     } else {
         //system->interface->log("1 mhz", 1);
         refCyclesInCpuCycle = 16;
@@ -1101,7 +1112,7 @@ auto Drive::updateCycleSpeed(bool mhz2x, bool init) -> void {
         }
         syncPosRead = (int64_t)(-0.455 * (double)iecBus.cpuCylcesPerSecond);
         syncPosWrite = (int64_t)(0.455 * (double)iecBus.cpuCylcesPerSecond);
-        wd1770.setTiming( false, rpm + wobblePos );
+        wd1770.set2Mhz( false );
     }
 
     setSyncPos( syncPos );
@@ -1119,7 +1130,7 @@ auto Drive::setSyncPos(int direction) -> void {
 auto Drive::powerOff( ) -> void {
     write();  
     motorOn = false;
-    wd1770.setDiskAccessible(false);
+    //wd1770.setDiskAccessible(false);
 }
 
 auto Drive::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
@@ -1307,7 +1318,7 @@ auto Drive::postAttach() -> void {
     }
 
     loaded = true;
-    wd1770.setDiskAccessible(motorOn);
+    wd1770.setDiskAccessible(true);
 
     if (writeProtected && (type == Type::D1570 || type == Type::D1571))
         via1.ca2In( false );
