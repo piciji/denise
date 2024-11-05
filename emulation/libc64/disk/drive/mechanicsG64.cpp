@@ -6,18 +6,31 @@ namespace LIBC64 {
 #define OVERFLOW_NOT_THIS_CYCLE \
     ((refCyclesInCpuCycle - refCycles + todo) > (refCyclesInCpuCycle >> 1))
 
-    auto Drive::rotateG64( ) -> void {
+    template<bool withWd1770> auto Drive::rotateEncoded( ) -> void {
         unsigned _refCyclesPerRevolution = refCyclesPerRevolution;
         unsigned refCycles = refCyclesInCpuCycle;
         unsigned delta;
         unsigned todo;
 
         if (!mechanics.motorDelay) {
+            if constexpr (withWd1770)
+                wd1770.rotateEncoded(motorOn ? _refCyclesPerRevolution : 0);
+
             if (!motorOn)
                 return;
-        } else
-            if(!motorRun(_refCyclesPerRevolution))
-                return;
+        } else {
+            if constexpr (withWd1770) {
+                if(!motorRun(_refCyclesPerRevolution))
+                    _refCyclesPerRevolution = 0;
+
+                wd1770.rotateEncoded( _refCyclesPerRevolution );
+                if (!_refCyclesPerRevolution)
+                    return;
+            } else {
+                if(!motorRun(_refCyclesPerRevolution))
+                    return;
+            }
+        }
 
         if (readMode) {
             do {

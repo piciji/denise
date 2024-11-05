@@ -191,15 +191,14 @@ struct Drive {
     auto updateViaBus() -> void;
     auto updateCiaBus() -> void;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
-    auto rotateD64() -> void;
-    auto rotateG64() -> void;
-    auto rotateP64(  ) -> void;
+    template<bool withWd1770 = false> auto rotateDecoded() -> void;
+    template<bool withWd1770 = false> auto rotateEncoded() -> void;
+    template<bool withWd1770 = false> auto rotateFlux() -> void;
     static auto randomizeRpm(std::vector<Drive*>& drivesEnabled) -> void;
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
     auto changeHalfTrack( uint8_t step ) -> void;
     auto attach( uint8_t* data, unsigned size) -> void;
-    auto postAttach() -> void;
     auto detach() -> void;
     auto setWriteProtect(bool state) -> void;
     static auto setSpeed( unsigned rpmScaled ) -> void;

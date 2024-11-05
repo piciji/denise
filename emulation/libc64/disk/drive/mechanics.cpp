@@ -3,17 +3,32 @@
 
 namespace LIBC64 {   
     
-auto Drive::rotateD64() -> void {
+template<bool withWd1770> auto Drive::rotateDecoded() -> void {
     static unsigned _driveCycles;
 
+    if constexpr (withWd1770)
+        wd1770.rotateDecoded(0);
+
     if (!mechanics.motorDelay) {
+        //if constexpr (withWd1770)
+          //  wd1770.rotateDecoded(motorOn ? refCyclesPerRevolution : 0);
+
         if (!motorOn)
             return;
         _driveCycles = driveCycles;
     } else {
         _driveCycles = driveCycles;
-        if(!motorRun(_driveCycles))
-            return;
+        // if constexpr (withWd1770) {
+        //     if(!motorRun(_driveCycles))
+        //         _driveCycles = 0;
+        //
+        //     wd1770.rotateDecoded( ((unsigned long long)refCyclesPerRevolution * (unsigned long long)_driveCycles) / (unsigned long long)driveCycles  );
+        //     if (!_driveCycles)
+        //         return;
+        // } else {
+            if(!motorRun(_driveCycles))
+                return;
+        //}
     }
 
     accum += rotSpeedBps[speedZone];
@@ -129,17 +144,17 @@ auto Drive::byteFetched( bool overflowNotThisCycle ) -> void {
 
 inline auto Drive::readBit() -> bool {
     uint8_t* trackPtr = gcrTrack->data;
-    
-//    if (!loaded)
-  //      return 0;
 
     unsigned byte = headOffset >> 3;
     uint8_t bit = (~headOffset) & 7; // msb is next
     
     headOffset++;
 
-    if ( headOffset >= gcrTrack->bits )
-        headOffset = 0; // wrap around the ring buffer 
+    if ( headOffset >= gcrTrack->bits ) {
+        if (headOffset > gcrTrack->bits)
+            byte = bit = 0;
+        headOffset = 0;
+    }
     
     if (!trackPtr)
         return 0;
@@ -158,8 +173,11 @@ inline auto Drive::writeBit( bool state ) -> void {
     
     headOffset++;
 
-    if ( headOffset >= gcrTrack->bits )
-        headOffset = 0; // wrap around the ring buffer 
+    if ( headOffset >= gcrTrack->bits ) {
+        if (headOffset > gcrTrack->bits)
+            byte = bit = 0;
+        headOffset = 0;
+    }
     
     if (!trackPtr || writeProtected)
         return;
@@ -304,7 +322,6 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
     }
 
     if (operation & FLUXDATA_LEVEL) {
-
         unsigned position = 0;
 
         if (pulseIndex >= 0) {
@@ -333,7 +350,7 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
         wd1770.setPulseIndex(pulseIndex, pulseDelta);
 
-    } else {    // D64, G64
+    } else if ((operation & DRIVE_MODE_158x) == 0) {
         unsigned oldTrackSize = gcrTrack ? gcrTrack->size : 0;
 
         // pointer to next track
@@ -351,7 +368,8 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
             headOffset = 0;
     }
 
-    wd1770.setTrack(gcrTrack);
+    if (operation & (DRIVE_MODE_157x | DRIVE_MODE_158x))
+        wd1770.setTrack(gcrTrack);
 
     (operation & DRIVE_MODE_158x) ? updateDeviceState1581() : updateDeviceState();
 }

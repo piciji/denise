@@ -8,16 +8,18 @@
 
 namespace LIBC64 {
 
-auto WD1770::setMode(WD1770::Mode mode) -> void {
-    this->mode = mode;
-}
-
 auto WD1770::setType(WD1770::Type type) -> void {
     this->type = type;
 }
 
-auto WD1770::setTrack(DiskStructure::MTrack* trackPtr) -> void {
-    this->trackPtr = trackPtr;
+auto WD1770::setTrack(DiskStructure::MTrack* _trackPtr) -> void {
+    unsigned oldTrackSize = this->trackPtr ? this->trackPtr->size : 0;
+    this->trackPtr = _trackPtr;
+
+    if ( oldTrackSize != 0 )
+        headOffset = ( headOffset * _trackPtr->size ) / oldTrackSize;
+    else
+        headOffset = 0;
 }
 
 auto WD1770::setPulseIndex(int index, unsigned delta) -> void {
@@ -28,6 +30,7 @@ auto WD1770::setPulseIndex(int index, unsigned delta) -> void {
 auto WD1770::set2Mhz(bool state) -> void {
     this->cpu2Mhz = state;
     this->refCycles = state ? 8 : 16;
+    this->refCyclesBit = state ? 50000 : 100000;
 }
 
 auto WD1770::setWriteProtected(bool state) -> void {
@@ -151,7 +154,6 @@ auto WD1770::reset() -> void {
     crcFetched = 0;
     readBuffer = 0;
     DSR = 0;
-   // motorAdvance = false;
     sectorLength = 128;
     fluxPending = false;
     lastMfmPattern = M10;
@@ -167,8 +169,6 @@ auto WD1770::reset() -> void {
     trackZero = false;
     forceInterruptDelay = 0;
     indexHoleDelay = 0;
-    //driveCycles = 2000000;
-    //refCyclesPerRevolution = CyclesPerRevolution300Rpm;
     randomizer.initXorShift( 0x1234abcd );
 }
 
@@ -182,7 +182,7 @@ auto WD1770::reset() -> void {
         if (--forceInterruptDelay == 0) { \
             if (commandSubStage == 16) {    /*hack*/ \
                 forceInterruptDelay = 1;    \
-            } else if ( (mode == Mode::FLUX) && (commandSubStage == 17) && (bitCounter < 2))  { /* in flux mode, mfm encoding delays write */ \
+            } else if ( /*(mode == Mode::FLUX) &&*/ (commandSubStage == 17) && (bitCounter < 2))  { \
                 forceInterruptDelay = 1;      \
             } else {                  \
                 complete(); \
@@ -201,28 +201,49 @@ auto WD1770::reset() -> void {
     } else  \
         complete();
 
-auto WD1770::rotate(unsigned revolutionCycles) -> void {
+auto WD1770::rotateDecoded(const unsigned revolutionCycles) -> void {
     if (!commandType)
         return;
 
     if (revolutionCycles) { // includes drive speed, wobble, acc/deceleration, 0 = motor stopped
-        if (writeGate) {
-            if(mode == Mode::DECODED)
-                writeDecoded(revolutionCycles);
-            else if (mode == Mode::ENCODED)
-                writeEncoded(revolutionCycles);
-            else if (mode == Mode::FLUX)
-                writeFlux(revolutionCycles);
-        } else {
-            if(mode == Mode::DECODED)
-                readDecoded(revolutionCycles);
-            else if (mode == Mode::ENCODED)
-                readEncoded(revolutionCycles);
-            else if (mode == Mode::FLUX)
-                readFlux(revolutionCycles);
-        }
+        if (writeGate)
+            writeDecoded(revolutionCycles);
+        else
+            readDecoded(revolutionCycles);
     }
 
+    rotate();
+}
+
+auto WD1770::rotateEncoded(const unsigned revolutionCycles) -> void {
+    if (!commandType)
+        return;
+
+    if (revolutionCycles) { // includes drive speed, wobble, acc/deceleration, 0 = motor stopped
+        if (writeGate)
+            writeEncoded(revolutionCycles);
+        else
+            readEncoded(revolutionCycles);
+    }
+
+    rotate();
+}
+
+auto WD1770::rotateFlux(const unsigned revolutionCycles) -> void {
+    if (!commandType)
+        return;
+
+    if (revolutionCycles) { // includes drive speed, wobble, acc/deceleration, 0 = motor stopped
+        if (writeGate)
+            writeFlux(revolutionCycles);
+        else
+            readFlux(revolutionCycles);
+    }
+
+    rotate();
+}
+
+inline auto WD1770::rotate() -> void {
     switch (commandStage) {
         default:
         case 0: // idle
@@ -988,8 +1009,8 @@ auto WD1770::prepareNextByteToWrite() -> void {
     status |= DATA_REQUEST_INDEX;
 }
 
-auto WD1770::readDecoded(unsigned revolutionCycles) -> void {
-    accum += 31250; // 250 (kbits per second)
+auto WD1770::readDecoded(const unsigned revolutionCycles) -> void {
+    accum += refCyclesBit; // 250 (kbits per second)
 
     if (accum < revolutionCycles)
         return;
@@ -1082,6 +1103,8 @@ auto WD1770::readEncoded(unsigned revolutionCycles) -> void {
         uint8_t bit = (~headOffset) & 7;
 
         if (++headOffset >= trackPtr->bits) {
+            if (headOffset > trackPtr->bits) // safety first
+                byte = bit = 0;
             headOffset = 0;
             indexHole = true;
             indexHoleTransition = true;
@@ -1112,6 +1135,8 @@ auto WD1770::writeEncoded(unsigned revolutionCycles) -> void {
         uint8_t bit = (~headOffset) & 7; // msb is next
 
         if (++headOffset >= trackPtr->bits) {
+            if (headOffset > trackPtr->bits) // safety first
+                byte = bit = 0;
             headOffset = 0;
             indexHole = true;
             indexHoleTransition = true;
@@ -1502,7 +1527,6 @@ uint16_t WD1770::CRC1021[] = {
 };
 
 auto WD1770::serialize(Emulator::Serializer& s) -> void {
-    s.integer(mode);
     s.integer((uint8_t&)type);
     s.integer(commandType);
     s.integer(command);

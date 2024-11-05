@@ -113,8 +113,6 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         updateCycleSpeed( use2Mhz() );
 
         setFirmwareByType();
-        if ( (type == Type::D1570) && (side == 1) )
-            side = 0;
 
         gcrTrack = structure.getTrackPtr( side, currentHalftrack );
 

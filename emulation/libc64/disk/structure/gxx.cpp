@@ -226,7 +226,7 @@ auto DiskStructure::prepareGxx() -> void {
                     std::memcpy(ptr->data, rawData + offset + 2, trackLength);
                 }
 
-            } else { // if track doesn't exists
+            } else { // if track doesn't exist
                 ptr->size = countBytes((halfTrack + 2) / 2); // standard length
                 ptr->bits = ptr->size << 3;
                 ptr->data = new uint8_t[ptr->size];

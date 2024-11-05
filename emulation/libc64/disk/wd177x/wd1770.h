@@ -1,11 +1,9 @@
 
-// for 1571 following Pins are not used
+// for 1571 following lines are not used
 // Motor, Step, Direction, Drq, Intrq, Tr00, DDEN (force to MFM)
 
-// for 1581 following Pins are not used
+// for 1581 following pins are not used
 // Motor, Drq, Intrq, DDEN (force to MFM)
-
-// unused stuff is not emulated at the moment
 
 /*
 data	0xA1	1   0   1   0   0   0   0   1
@@ -26,8 +24,6 @@ namespace LIBC64 {
 struct WD1770 {
 
     enum Type {T1770, T1772};
-
-    enum Mode { None = 0, DECODED = 1, ENCODED = 2, FLUX = 4 };
     // MFM encoding
     // 1 -> 01
     // 0 -> 00 (when 1 before) or 10 (when 0 before)
@@ -45,29 +41,29 @@ struct WD1770 {
     auto setDiskAccessible(bool state) -> void;
     auto read(uint16_t address) -> uint8_t;
     auto write(uint16_t address, uint8_t value) -> void;
-    auto rotate(unsigned revolutionCycles) -> void;
+    auto rotate() -> void;
+    auto rotateDecoded(unsigned revolutionCycles) -> void;
+    auto rotateEncoded(unsigned revolutionCycles) -> void;
+    auto rotateFlux(unsigned revolutionCycles) -> void;
     auto reset() -> void;
     auto wasWritten() -> bool { return written; }
     auto resetWritten() -> void { written = false; }
-    auto setTrack(DiskStructure::MTrack* trackPtr) -> void;
+    auto setTrack(DiskStructure::MTrack* _trackPtr) -> void;
     auto setPulseIndex(int index, unsigned delta) -> void;
     auto set2Mhz(bool state) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto setWriteProtected(bool state) -> void;
-    auto setMode(WD1770::Mode mode) -> void;
     auto setType(WD1770::Type type) -> void;
     auto setTrackZero(bool state) -> void;
     auto writeMode() -> bool { return writeGate; }
-    auto getHeadOffset() -> unsigned { return headOffset; }
-    auto setHeadOffset( unsigned offset ) -> void { headOffset = offset; }
 
     std::function<void (bool direction)> stepCall;
     std::function<void ()> toggleWrite;
 
 protected:
-    uint8_t mode;
     Type type = T1770;
     uint8_t refCycles = 8;
+    unsigned refCyclesBit = 50000;
     bool cpu2Mhz = true;
 
     uint8_t commandType;

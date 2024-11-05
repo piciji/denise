@@ -47,23 +47,28 @@ uint16_t Drive::Mechanics::acceleration = 0;
 uint16_t Drive::Mechanics::deceleration = 0;
 uint16_t Drive::Mechanics::stepperSeekTime = 0;
 
-#define SYNC_ROTATE \
-    if (operation & DECODEDDATA_LEVEL) \
-        rotateD64();    \
-    else if (operation & ENCODEDDATA_LEVEL) \
-        rotateG64();    \
-    else \
-        rotateP64();
+#define SYNC_ROTATE_1541 \
+    if (operation & DECODEDDATA_LEVEL) rotateDecoded();    \
+    else if (operation & ENCODEDDATA_LEVEL) rotateEncoded();    \
+    else rotateFlux();
+
+#define SYNC_ROTATE_1571 \
+    if (operation & DECODEDDATA_LEVEL) rotateDecoded<true>();   \
+    else if (operation & ENCODEDDATA_LEVEL) rotateEncoded<true>();  \
+    else rotateFlux<true>();
 
 #define SYNC_ROTATE_1581 \
-unsigned _cycles = operation & DECODEDDATA_LEVEL ? driveCycles : refCyclesPerRevolution; \
 if (!mechanics.motorDelay) { \
-    if (!motorOn) \
-        _cycles = 0; \
-} else if(!motorRun(_cycles)) \
-    _cycles = 0; \
-wd1770.rotate(_cycles);
-
+    if (operation & DECODEDDATA_LEVEL) wd1770.rotateDecoded(motorOn ? refCyclesPerRevolution : 0); \
+    else if (operation & ENCODEDDATA_LEVEL) wd1770.rotateEncoded(motorOn ? refCyclesPerRevolution : 0); \
+    else wd1770.rotateFlux(motorOn ? refCyclesPerRevolution : 0); \
+} else { \
+    unsigned _cycles = refCyclesPerRevolution; \
+    if(!motorRun(_cycles)) _cycles = 0; \
+    if (operation & DECODEDDATA_LEVEL) wd1770.rotateDecoded(_cycles); \
+    else if (operation & ENCODEDDATA_LEVEL) wd1770.rotateEncoded(_cycles); \
+    else wd1770.rotateFlux(_cycles); \
+}
 
 #define SYNC_TAIL   \
     cycleCounter += iecBus.cpuCylcesPerSecond;  \
@@ -72,17 +77,16 @@ wd1770.rotate(_cycles);
 
 #define SYNC_1541 \
     cpu.handleSo(); \
-    SYNC_ROTATE \
+    SYNC_ROTATE_1541 \
     via1.process(); \
     via2.process(); \
     SYNC_TAIL
 
 #define SYNC_1571 \
     cpu.handleSo(); \
-    SYNC_ROTATE \
+    SYNC_ROTATE_1571 \
     via1.process(); \
     via2.process(); \
-    wd1770.rotate(0); \
     cia.clock();    \
     if (operation & DRIVE_HAS_EXTRA_CIA)    \
         ciaSpeeder.clock(); \
@@ -721,9 +725,7 @@ structure(system, this) {
             if (this->system->driveSounds.useFloppy)
                 this->system->interface->mixDriveSound( this->media, DriveSound::FloppyStep, true, currentHalftrack );
 
-            headOffset = wd1770.getHeadOffset();
             changeHalfTrack(0);
-            wd1770.setHeadOffset( headOffset );
 
             wd1770.setTrackZero( currentHalftrack == 0 );
         }
@@ -1279,7 +1281,28 @@ auto Drive::attach( uint8_t* data, unsigned size ) -> void {
     if (iecBus.powerOn && use2Mhz() )
         attachDelay <<= 1;
 
-    postAttach();
+    if (gcrTrack) {
+        headOffset %= gcrTrack->bits;
+        pulseIndex = gcrTrack->firstPulse;
+        wd1770.setPulseIndex(pulseIndex, pulseDelta);
+    }
+
+    loaded = true;
+    wd1770.setDiskAccessible(true);
+
+    if (writeProtected && (type == Type::D1570 || type == Type::D1571))
+        via1.ca2In( false );
+
+    operation &= ~(DECODEDDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
+
+    if (structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::D71 || structure.type == DiskStructure::Type::D81) {
+        operation |= DECODEDDATA_LEVEL;
+    } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71 || structure.type == DiskStructure::Type::G81) {
+        operation |= ENCODEDDATA_LEVEL;
+    } else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71 || structure.type == DiskStructure::Type::P81) {
+        operation |= FLUXDATA_LEVEL;
+    } else
+        operation |= DECODEDDATA_LEVEL;
 
     if (iecBus.powerOn && changed)
         power();
@@ -1308,36 +1331,6 @@ auto Drive::changeModelByType() -> bool {
         return iecBus.setDriveType(Type::D1571, media), true;
 
     return false;
-}
-
-auto Drive::postAttach() -> void {
-    if (gcrTrack) {
-        headOffset %= gcrTrack->bits;
-        pulseIndex = gcrTrack->firstPulse;
-        wd1770.setPulseIndex(pulseIndex, pulseDelta);
-    }
-
-    loaded = true;
-    wd1770.setDiskAccessible(true);
-
-    if (writeProtected && (type == Type::D1570 || type == Type::D1571))
-        via1.ca2In( false );
-
-    operation &= ~(DECODEDDATA_LEVEL | ENCODEDDATA_LEVEL | FLUXDATA_LEVEL);
-    wd1770.setMode( WD1770::Mode::None );
-
-    if (structure.type == DiskStructure::Type::D64 || structure.type == DiskStructure::Type::D71 || structure.type == DiskStructure::Type::D81) {
-        operation |= DECODEDDATA_LEVEL;
-        if (structure.type == DiskStructure::Type::D81)
-            wd1770.setMode( WD1770::Mode::DECODED );
-    } else if (structure.type == DiskStructure::Type::G64 || structure.type == DiskStructure::Type::G71 || structure.type == DiskStructure::Type::G81) {
-        operation |= ENCODEDDATA_LEVEL;
-        wd1770.setMode( WD1770::Mode::ENCODED ); // MFM is decoded
-    } else if (structure.type == DiskStructure::Type::P64 || structure.type == DiskStructure::Type::P71 || structure.type == DiskStructure::Type::P81) {
-        operation |= FLUXDATA_LEVEL;
-        wd1770.setMode( WD1770::Mode::FLUX );
-    } else
-        operation |= DECODEDDATA_LEVEL;
 }
 
 auto Drive::setWriteProtect(bool state) -> void {
