@@ -143,7 +143,7 @@ auto DiskStructure::prepareG81() -> void {
                 if ((bitLength == 0) || (trackLength > maxTrackLength))
                     continue;
 
-                if (rawSize < (offset + 4 + trackLength)) // rawfile too small
+                if (rawSize < (offset + 4 + trackLength)) // raw file too small
                     continue;
 
                 trackPtr->size = trackLength;
@@ -212,13 +212,12 @@ auto DiskStructure::prepareGxx() -> void {
                 if ((trackLength < 1) || (trackLength > maxTrackLength))
                     continue;
 
-                if (rawSize < (offset + 2 + trackLength)) // rawfile too small
+                if (rawSize < (offset + 2 + trackLength)) // raw file too small
                     continue;
 
                 ptr->size = trackLength;
                 ptr->bits = ptr->size << 3;
                 ptr->data = new uint8_t[ptr->size];
-                //ptr->mfmSync = new uint8_t[ptr->size >> 3];
 
                 if (mfm) {
                     parseMfm(ptr, offset + 2);
@@ -243,9 +242,6 @@ auto DiskStructure::prepareGxx() -> void {
                 ptr->mfmSync = new uint8_t[ptr->size >> 3];
                 std::memset(ptr->mfmSync, 0x00, ptr->size >> 3);
             }
-
-            if (ptr->bits == 0)
-                ptr->bits = 1;
         }
     }
 

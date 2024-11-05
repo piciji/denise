@@ -13,8 +13,10 @@ namespace LIBC64 {
         unsigned todo;
 
         if (!mechanics.motorDelay) {
+            // MFM in G71 is supported. However, MFM is only saved decoded to prevent G71 from having to be enlarged later
+            // or created with an atypical size. G81, on the other hand, contains encoded data.
             if constexpr (withWd1770)
-                wd1770.rotateEncoded(motorOn ? _refCyclesPerRevolution : 0);
+                wd1770.rotateDecoded(motorOn ? _refCyclesPerRevolution : 0);
 
             if (!motorOn)
                 return;
@@ -23,7 +25,7 @@ namespace LIBC64 {
                 if(!motorRun(_refCyclesPerRevolution))
                     _refCyclesPerRevolution = 0;
 
-                wd1770.rotateEncoded( _refCyclesPerRevolution );
+                wd1770.rotateDecoded( _refCyclesPerRevolution );
                 if (!_refCyclesPerRevolution)
                     return;
             } else {

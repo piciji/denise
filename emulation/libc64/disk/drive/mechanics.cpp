@@ -7,28 +7,16 @@ template<bool withWd1770> auto Drive::rotateDecoded() -> void {
     static unsigned _driveCycles;
 
     if constexpr (withWd1770)
-        wd1770.rotateDecoded(0);
+        wd1770.rotateDecoded(0); // D71 is GCR only
 
     if (!mechanics.motorDelay) {
-        //if constexpr (withWd1770)
-          //  wd1770.rotateDecoded(motorOn ? refCyclesPerRevolution : 0);
-
         if (!motorOn)
             return;
         _driveCycles = driveCycles;
     } else {
         _driveCycles = driveCycles;
-        // if constexpr (withWd1770) {
-        //     if(!motorRun(_driveCycles))
-        //         _driveCycles = 0;
-        //
-        //     wd1770.rotateDecoded( ((unsigned long long)refCyclesPerRevolution * (unsigned long long)_driveCycles) / (unsigned long long)driveCycles  );
-        //     if (!_driveCycles)
-        //         return;
-        // } else {
-            if(!motorRun(_driveCycles))
-                return;
-        //}
+        if(!motorRun(_driveCycles))
+            return;
     }
 
     accum += rotSpeedBps[speedZone];

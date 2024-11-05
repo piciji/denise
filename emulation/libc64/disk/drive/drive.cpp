@@ -519,7 +519,6 @@ structure(system, this) {
     ram60To7F = new uint8_t[ 8 * 1024 ];
     ram80To9F = new uint8_t[ 8 * 1024 ];
     ramA0ToBF = new uint8_t[ 8 * 1024 ];
-    turboTrans = new uint8_t[ 512 * 1024 ];
 
     rom1541II = (uint8_t*)Firmware::drive1541IIRom;
     rom1541 = (uint8_t*)Firmware::drive1541Rom;
@@ -953,7 +952,8 @@ Drive::~Drive() {
     delete[] ram60To7F;
     delete[] ram80To9F;
     delete[] ramA0ToBF;
-    delete[] turboTrans;
+    if (turboTrans)
+        delete[] turboTrans;
 }
 
 auto Drive::updateDeviceState(bool forceOff) -> void {
@@ -1013,7 +1013,7 @@ auto Drive::power( ) -> void {
     if (expandMemory & (uint8_t)ExpandedMemMode::MA0)
         std::memset(ramA0ToBF, 0, 8 * 1024);
 
-    if (speeder == 12)
+    if (turboTrans && (speeder == 12))
         std::memset(turboTrans, 0, 512 * 1024);
 
     setFirmwareByType();
@@ -1464,6 +1464,9 @@ auto Drive::setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state ) ->
 auto Drive::setSpeeder(uint8_t speeder) -> void {
 
     this->speeder = speeder;
+
+    if (speeder == 12 && !turboTrans)
+        turboTrans = new uint8_t[ 512 * 1024 ];
 
     extendedMemoryMap = expandMemory || (speeder > 1);
 
