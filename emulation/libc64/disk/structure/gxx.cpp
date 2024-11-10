@@ -235,7 +235,7 @@ auto DiskStructure::prepareGxx() -> void {
             // this test expects the tracks to be realigned against the specification in G64. in contrast to the D64,
             // a G64 has the possibility to align the tracks to each other according to the original.
             // this test doesn't make sense to me.
-            if (system->debugCart->enable) // "true" for testbench only
+            if (system && system->debugCart->enable) // "true" for testbench only
                 disalignTrack(*ptr, halfTrack >> 1);
 
             if (!ptr->mfmSync) {
@@ -654,6 +654,7 @@ auto DiskStructure::createG81(const std::string& diskName) -> uint8_t* {
     structure.prepareD81();
 
     auto temp2 = new uint8_t[ imageSizeG81() ];
+    std::memset( temp2, 0, imageSizeG81() );
     uint8_t* ptr = temp2;
     std::memcpy( ptr, "MFM-1581", 8 );
     ptr[8] = 0;

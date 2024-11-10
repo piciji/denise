@@ -56,6 +56,7 @@ struct WD1770 {
     auto setType(WD1770::Type type) -> void;
     auto setTrackZero(bool state) -> void;
     auto writeMode() -> bool { return writeGate; }
+    auto updateAccum(float factor) -> void { accum = (float)accum * factor + 0.5; }
 
     std::function<void (bool direction)> stepCall;
     std::function<void ()> toggleWrite;
@@ -63,7 +64,7 @@ struct WD1770 {
 protected:
     Type type = T1770;
     uint8_t refCycles = 8;
-    unsigned refCyclesBit = 50000;
+    unsigned refCyclesByte = 50000;
     bool cpu2Mhz = true;
 
     uint8_t commandType;

@@ -58,6 +58,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdWestermann = 11, CartridgeIdPagefox = 53,
         CartridgeIdSwiftlink = 270, CartridgeIdTurbo232 = 271, CartridgeIdDinamic = 17, CartridgeIdDiashowMaker = 52,
         CartridgeIdSuperSnapshotV5 = 20, CartridgeIdComal80 = 21, CartridgeIdSilverrock = 55, CartridgeIdRGCD = 57,
+    	CartridgeIdStarDos = 31, CartridgeIdProfDos = 1000, CartridgeIdPrologicDos = 1001, CartridgeIdTurboTrans = 1002,
         CartridgeIdRGCDHucky = 571,
     };
 

@@ -103,7 +103,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
     readKernalRom = [this](uint16_t addr) {
 
         if (expansionPort->hasHiramCableConnected())
-            return expansionPort->readRomH(addr);
+            return expansionPort->readRomH(addr & 0x1fff);
 
         return (uint8_t) this->kernalRom[ addr & 0x1fff ];
     };

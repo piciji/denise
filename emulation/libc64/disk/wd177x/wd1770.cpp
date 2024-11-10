@@ -30,7 +30,7 @@ auto WD1770::setPulseIndex(int index, unsigned delta) -> void {
 auto WD1770::set2Mhz(bool state) -> void {
     this->cpu2Mhz = state;
     this->refCycles = state ? 8 : 16;
-    this->refCyclesBit = state ? 50000 : 100000;
+    this->refCyclesByte = state ? 50000 : 100000;
 }
 
 auto WD1770::setWriteProtected(bool state) -> void {
@@ -71,7 +71,7 @@ auto WD1770::write(uint16_t address, uint8_t value) -> void {
             if (status & BUSY) {
                 if ((value >> 4) == FORCE_INTERRUPT) {
                     if (!forceInterruptDelay)
-                        forceInterruptDelay = 16 << getTimeFactor();
+                        forceInterruptDelay = 32 << getTimeFactor();
                 } else
                     // too soon: nullifies pending forced interrupt, old command keeps running
                     forceInterruptDelay = 0;
@@ -172,24 +172,13 @@ auto WD1770::reset() -> void {
     randomizer.initXorShift( 0x1234abcd );
 }
 
-// real chip kill commands between micro cycles and not after a fixed delay.
-// exact amount of cycles for checksum calculations and comparisons are unknown. it needs to be done before next byte is ready.
-// for time being, we delay for documented worst case instead of interrupting without any delay.
-// includes a hack to not interrupt internal CRC writing, otherwise Big Blue Reader interrupts shortly before second CRC byte is written
-// maybe the documented 16 micro are not the worst case delay in all situations.
 #define CHECK_FORCE_INTERRUPT \
     if (forceInterruptDelay) { \
         if (--forceInterruptDelay == 0) { \
-            if (commandSubStage == 16) {    /*hack*/ \
-                forceInterruptDelay = 1;    \
-            } else if ( /*(mode == Mode::FLUX) &&*/ (commandSubStage == 17) && (bitCounter < 2))  { \
-                forceInterruptDelay = 1;      \
-            } else {                  \
                 complete(); \
                 delay = 1; \
                 commandType = 4;  \
                 break; \
-            }   \
         } \
     }
 
@@ -1010,7 +999,7 @@ auto WD1770::prepareNextByteToWrite() -> void {
 }
 
 auto WD1770::readDecoded(const unsigned revolutionCycles) -> void {
-    accum += refCyclesBit; // 250 (kbits per second)
+    accum += refCyclesByte; // 250 (kbits per second)
 
     if (accum < revolutionCycles)
         return;
@@ -1046,7 +1035,7 @@ auto WD1770::readDecoded(const unsigned revolutionCycles) -> void {
 }
 
 auto WD1770::writeDecoded(unsigned revolutionCycles) -> void {
-    accum += 31250;
+    accum += refCyclesByte;
 
     if (accum < revolutionCycles)
         return;
@@ -1309,10 +1298,7 @@ auto WD1770::readFlux(unsigned revolutionCycles) -> void {
                 indexHoleDelay = CyclesPerRevolution300Rpm - pulse.position;
             }
 
-            // delta * refCyclesPerRevolution = x * CyclesPerRevolution300Rpm
-            accum += _delta * revolutionCycles;
-            pulseDelta = accum / CyclesPerRevolution300Rpm;
-            accum -= pulseDelta * CyclesPerRevolution300Rpm;
+            pulseDelta = _delta * ((float)revolutionCycles / CyclesPerRevolution300Rpm) + 0.5;
 
             if ((pulse.strength == 0xffffffff) || ( randomizer.xorShift() < pulse.strength)) {
                 if (pulseWidth & 1) {
@@ -1478,9 +1464,7 @@ auto WD1770::writeFlux(unsigned revolutionCycles) -> void {
                 indexHoleDelay = CyclesPerRevolution300Rpm - pulse.position;
             }
 
-            accum += _delta * revolutionCycles;
-            pulseDelta = accum / CyclesPerRevolution300Rpm;
-            accum -= pulseDelta * CyclesPerRevolution300Rpm;
+            pulseDelta = _delta * ((float)revolutionCycles / CyclesPerRevolution300Rpm) + 0.5;
         }
 
         useCycles -= todo;

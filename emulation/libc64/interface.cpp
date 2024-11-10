@@ -55,7 +55,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionGeoRam, "GeoRam", MediaGroup::Type::Expansion, {"bin"}, {"bin"} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg", "reu"}, {""} });
     mediaGroups.push_back({MediaGroupIdExpansionRS232, "RS-232", MediaGroup::Type::Expansion });
-    mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion,{"bin", "rom"} });
+    mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion,{"bin", "crt","rom"} });
         	
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -161,9 +161,10 @@ auto Interface::prepareMedia() -> void {
     }
 
     {	auto& group = mediaGroups[MediaGroupIdExpansionFastloader];
-        group.media.push_back({0, "ProfDOS", 0, &group});
-        group.media.push_back({1, "PrologicDOS", 0, &group});
-        group.media.push_back({2, "TurboTrans", 0, &group});
+        group.media.push_back({0, "Fast Loader 1", 0, &group});
+        group.media.push_back({1, "Fast Loader 2", 0, &group});
+        group.media.push_back({2, "Fast Loader 3", 0, &group});
+	    group.media.push_back({3, "Fast Loader 4", 0, &group});
         group.selected = &group.media[0];
     }
     
@@ -294,7 +295,11 @@ auto Interface::prepareExpansions() -> void {
     }
 
     {   auto& expansion = expansions[ExpansionIdFastloader];
-        expansion.jumpers.push_back( {0, "Kernal Replacement", false} );
+        expansion.jumpers.push_back( {0, "Kernal Replacement", true} );
+        expansion.pcbs.push_back( {CartridgeIdProfDos, "ProfDOS"} );
+        expansion.pcbs.push_back( {CartridgeIdPrologicDos, "PrologicDOS"} );
+        expansion.pcbs.push_back( {CartridgeIdTurboTrans, "Turbo Trans"} );
+        expansion.pcbs.push_back( {CartridgeIdStarDos, "StarDOS"} );
         mediaGroups[MediaGroupIdExpansionFastloader].expansion = &expansion;
     }
 
@@ -547,9 +552,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDriveParallelCable, "Parallel Cable", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
     models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
-    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 13},
+    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 15},
         { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "DolphinDOS v2 Ultimate", "DolphinDOS v3 1541", "DolphinDOS v3 157x",
-          "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans", "ProSpeed 1571 v2.0"}});
+          "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans", "ProSpeed 1571 v2.0", "StarDOS", "SuperCard+"}});
 
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});
@@ -566,8 +571,8 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdEmulateDriveMechanics, "Emulate Mechanics", Model::Type::Switch, Model::Purpose::DriveMechanics, 0});
     models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveMechanics, 90, {0, 140}, {}, 140, 10.0 });
-    models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 500, {0, 1024}, {}, 256, 1.0 });
-    models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 316, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 700, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 256, {0, 1024}, {}, 256, 1.0 });
 }
 
 auto Interface::prepareFirmware() -> void {

@@ -725,7 +725,7 @@ namespace LIBC64 {
     auto DiskStructure::encodeMfmFromPulse(MTrack* gcrTrack) -> void {
         uint32_t lastPosition = 0;
         uint32_t delta;
-        unsigned accum = 0;
+        uint64_t accum = 0;
         unsigned bits = 0;
         unsigned trackSize = 6250 * 2;
 
@@ -758,7 +758,7 @@ namespace LIBC64 {
             delta = pulse.position - lastPosition;
             lastPosition = pulse.position;
 
-            accum += delta * gcrTrack->bits;
+            accum = (uint64_t)delta * (uint64_t)gcrTrack->bits;
             while(accum >= CyclesPerRevolution300Rpm) {
                 accum -= CyclesPerRevolution300Rpm;
 

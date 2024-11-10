@@ -132,9 +132,7 @@ namespace LIBC64 {
                                      + (CyclesPerRevolution300Rpm - pulse.position);
                     }
 
-                    accum += _delta * _refCyclesPerRevolution;
-                    pulseDelta = accum / CyclesPerRevolution300Rpm;
-                    accum -= pulseDelta * CyclesPerRevolution300Rpm;
+                    pulseDelta = _delta * ((float)_refCyclesPerRevolution / CyclesPerRevolution300Rpm) + 0.5;
 
                     if ((pulse.strength == 0xffffffff) || (randomizer.xorShift() < pulse.strength)) {
                         comperatorFlipFlop ^= 1;
@@ -239,9 +237,7 @@ namespace LIBC64 {
                                      + (CyclesPerRevolution300Rpm - pulse.position);
                     }
 
-                    accum += _delta * _refCyclesPerRevolution;
-                    pulseDelta = accum / CyclesPerRevolution300Rpm;
-                    accum -= pulseDelta * CyclesPerRevolution300Rpm;
+                    pulseDelta = _delta * ((float)_refCyclesPerRevolution / CyclesPerRevolution300Rpm) + 0.5;
                 }
 
                 refCycles -= todo;

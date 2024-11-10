@@ -218,7 +218,11 @@ auto Drive::motorRun(unsigned& refCycles) -> bool {
         }
     }
 
-    refCycles = (unsigned)( (float)refCycles * rpmFactor );
+    refCycles = (unsigned)( (float)refCycles / rpmFactor );
+
+    float factor = (float)refCycles / (float)mechanics.refCycles;
+    accum = (float)accum * factor + 0.5;
+    wd1770.updateAccum(factor);
 
     mechanics.refCycles = refCycles; // to speed things up use this for next 255 cycles
 
@@ -338,22 +342,24 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
         wd1770.setPulseIndex(pulseIndex, pulseDelta);
 
-    } else if ((operation & DRIVE_MODE_158x) == 0) {
+    } else {
         unsigned oldTrackSize = gcrTrack ? gcrTrack->size : 0;
 
         // pointer to next track
         gcrTrack = structure.getTrackPtr( side, currentHalftrack );
 
-        if ( oldTrackSize != 0 )
-            // we want to keep alignment between old and new track.
-            // head offset doesn't change if both tracks have same size, otherwise we use a simple proportion
-            // old head offset = new head offset
-            // old size = new size
-            // new head offset = old head * new size / old size
-            headOffset = ( headOffset * gcrTrack->size ) / oldTrackSize;
+        if ((operation & DRIVE_MODE_158x) == 0) {
+            if ( oldTrackSize != 0 )
+                // we want to keep alignment between old and new track.
+                // head offset doesn't change if both tracks have same size, otherwise we use a simple proportion
+                // old head offset = new head offset
+                // old size = new size
+                // new head offset = old head * new size / old size
+                headOffset = ( headOffset * gcrTrack->size ) / oldTrackSize;
 
-         else
-            headOffset = 0;
+             else
+                headOffset = 0;
+        }
     }
 
     if (operation & (DRIVE_MODE_157x | DRIVE_MODE_158x))

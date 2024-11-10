@@ -838,6 +838,13 @@ auto ModelLayout::hintDriveSettings() -> void {
     } else if (selection == 13) { // Pro Speed 1571
         blockRam80->checkBox->toggle();
         blockDriveModel->combo->setSelection(4);
+    } else if (selection == 14) { // StarDOS
+        blockParallel->checkBox->toggle();
+        blockDriveModel->combo->setSelection(1);
+    } else if (selection == 15) { // Supercard
+        blockParallel->checkBox->toggle();
+        blockRam60->checkBox->toggle();
+        blockDriveModel->combo->setSelection(1);
     }
 
     blockDriveModel->combo->onChange();

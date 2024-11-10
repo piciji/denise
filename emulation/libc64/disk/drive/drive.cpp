@@ -353,6 +353,14 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                     // disable RAM by software, avoid expand mem usage
                     return rom[addr & romMask];
                 }
+            } else if (speeder == 14) {
+                if ((addr & 0xe000) == 0xa000) {
+                    return this->romExpanded[ (addr & 0x1fff) & romExpandedMask];
+                }
+            } else if (speeder == 15) {
+                if ((addr & 0xf800) == 0x1000) {
+                    return this->romExpanded[ (addr & 0x7ff) & romExpandedMask];
+                }
             }
 
             if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000))
@@ -427,6 +435,10 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                     if (addr & 0x8000) {
                         return this->romExpanded[(((proSpeedControl & 2) ? 0x8000 : 0x0) | (addr & 0x7fff)) & romExpandedMask];
                     }
+                }
+            } else if (speeder == 15) {
+                if ((addr & 0xf800) == 0x1000) {
+                    return this->romExpanded[ (addr & 0x7ff) & romExpandedMask];
                 }
             }
 

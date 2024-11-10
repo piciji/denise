@@ -386,15 +386,22 @@ auto StatusHandler::update() -> void {
 
                     GUIKIT::Image* image = &(view->ledOffImage);
                     if (deviceState.LED & 1) {
-                        if (deviceState.write)
-                            image = &(view->ledRedImage);
-                        else {
-                            int _col = 0;
-                            if (dynamic_cast<LIBAMI::Interface*>(activeEmulator)) {
-                                _col = activeEmulator->getModelValue(LIBAMI::Interface::ModelId::ModelIdSystem);
-                                image = (_col > 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
+                        int _driveModel;
+
+                        if (deviceState.write) {
+                            if (dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
+                                _driveModel = activeEmulator->getModelValue(LIBC64::Interface::ModelId::ModelIdDiskDriveModel);
+                                image = (_driveModel == 1 || _driveModel == 4 || _driveModel == 5) ? &(view->ledRedImage) : &(view->ledYellowImage);
                             } else
-                                image = &(view->ledGreenImage);
+                                image = &(view->ledRedImage);
+                        } else {
+                            if (dynamic_cast<LIBAMI::Interface*>(activeEmulator)) {
+                                _driveModel = activeEmulator->getModelValue(LIBAMI::Interface::ModelId::ModelIdSystem);
+                                image = (_driveModel > 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
+                            } else {
+                                _driveModel = activeEmulator->getModelValue(LIBC64::Interface::ModelId::ModelIdDiskDriveModel);
+                                image = (_driveModel == 1 || _driveModel == 4 || _driveModel == 5) ? &(view->ledGreenImage) : &(view->ledRedImage);
+                            }
                         }
                     }
                     if (activeVideoManager->driveLedParam) {

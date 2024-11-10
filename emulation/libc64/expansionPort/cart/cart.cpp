@@ -264,7 +264,7 @@ auto Cart::serialize(Emulator::Serializer& s) -> void {
         // state file of a standard cartridge was created from a CRT and reloaded from a BIN.
         // don't recreate because standard CRT cart id is same for 8k, 16k and ultimax.
         // serialization frame is identical for these cartridges, so no problem
-        else if (cartridgeId != _cartridgeId) { // oh kacke
+        else if (cartridgeId != _cartridgeId) {
             // cartridge id of state file mismatches with loaded one.
             // it seems the cart which was loaded while creating this save state isn't present anymore.
             // we need to recreate the expected cartridge in order to unserialize the right data.
@@ -306,7 +306,7 @@ auto Cart::serializeStep2(Emulator::Serializer& s) -> void {
     if (s.mode() == Emulator::Serializer::Mode::Load) {
 
         cRomL = ((romLId >= 0) && (romLId < chips.size())) ? &chips[romLId] : nullptr;
-        cRomH = ((romLId >= 0) && (romHId < chips.size())) ? &chips[romHId] : nullptr;
+        cRomH = ((romHId >= 0) && (romHId < chips.size())) ? &chips[romHId] : nullptr;
     }
 
     ExpansionPort::serialize(s);

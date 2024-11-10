@@ -6,7 +6,7 @@
 
 namespace LIBC64 {
 
-#define MOUSE_DELTA_LIMIT 62
+#define MOUSE_DELTA_LIMIT 56
 
 struct Mouse1351 : AnalogControl {
     
