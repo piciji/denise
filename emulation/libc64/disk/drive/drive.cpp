@@ -653,9 +653,8 @@ structure(system, this) {
                     motorOn = (lines->ioa & 4) == 0;
                     motorChangeInit();
 
-                    if (system->driveSounds.useFloppy) {
+                    if (system->driveSounds.useFloppy)
                         system->interface->mixDriveSound( this->media, motorOn ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown, true );
-                    }
 
                     bool _loadingState = false;
                     for( auto drive : system->iecBus.drivesEnabled ) {
@@ -1289,13 +1288,16 @@ auto Drive::attach( uint8_t* data, unsigned size ) -> void {
 
     delayInProgress = attachDelay || mechanics.stepperDelay;
 
-    if (iecBus.powerOn && system->driveSounds.useFloppy)
-        system->interface->mixDriveSound( media, DriveSound::FloppyInsert, operation & DRIVE_MODE_158x );
-
     if ( !structure.attach( data, size ) )
         return;
 
     bool changed = changeModelByType();
+
+    if (iecBus.powerOn && system->driveSounds.useFloppy) {
+        system->interface->mixDriveSound( media, DriveSound::FloppyInsert, operation & DRIVE_MODE_158x );
+        if (motorOn)
+            system->interface->mixDriveSound( this->media, DriveSound::FloppySpinUp, operation & DRIVE_MODE_158x );
+    }
 
     if (iecBus.powerOn && use2Mhz() )
         attachDelay <<= 1;
