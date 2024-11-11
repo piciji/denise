@@ -1,7 +1,10 @@
 
-// for 1571 following PIN's are not connected and not emulated at the moment:
-// Motor, Step, Direction, Drq, Intrq, Tr00, DDEN (FM support)
-// no support for write precompensation ( needed to increase lifetime of real disks )
+// for 1571 following lines are not used
+// Motor, Step, Direction, Drq, Intrq, Tr00, DDEN (force to MFM)
+
+// for 1581 following pins are not used
+// Motor, Drq, Intrq, DDEN (force to MFM)
+
 /*
 data	0xA1	1   0   1   0   0   0   0   1
 MFM sync	    1 0 0 0 1 0 0 1 0 1 0 1 0 0 1 ?
@@ -14,12 +17,13 @@ MFM sync	    1 0 1 0 0 1 0 1 0 1 0 0 1 0 0 ?
 #pragma once
 
 #include "../structure/structure.h"
+#include "../../../tools/rand.h"
 
 namespace LIBC64 {
 
 struct WD1770 {
 
-    enum Mode { None = 0, USERDATA = 1, ENCODED = 2, FLUX = 4 };
+    enum Type {T1770, T1772};
     // MFM encoding
     // 1 -> 01
     // 0 -> 00 (when 1 before) or 10 (when 0 before)
@@ -34,28 +38,34 @@ struct WD1770 {
 
     static uint16_t CRC1021[256];
 
-    // if motor is NOT controlled by WD177x, then this method is used to inform about a disk is inserted AND motor is running.
-    // if motor is controlled by WD177x, then this method is used to inform about a disk is inserted.
     auto setDiskAccessible(bool state) -> void;
     auto read(uint16_t address) -> uint8_t;
     auto write(uint16_t address, uint8_t value) -> void;
-    auto clock() -> void;
+    auto rotate() -> void;
+    auto rotateDecoded(unsigned revolutionCycles) -> void;
+    auto rotateEncoded(unsigned revolutionCycles) -> void;
+    auto rotateFlux(unsigned revolutionCycles) -> void;
     auto reset() -> void;
     auto wasWritten() -> bool { return written; }
     auto resetWritten() -> void { written = false; }
-    auto setTrack(DiskStructure::MTrack* trackPtr, bool dummyTrack = false) -> void;
+    auto setTrack(DiskStructure::MTrack* _trackPtr) -> void;
     auto setPulseIndex(int index, unsigned delta) -> void;
-    auto setRateInMhz(uint8_t caller, uint8_t fluxSamplingRate) -> void;
+    auto set2Mhz(bool state) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto setWriteProtected(bool state) -> void;
-    auto setMode(WD1770::Mode mode) -> void;
+    auto setType(WD1770::Type type) -> void;
     auto setTrackZero(bool state) -> void;
+    auto writeMode() -> bool { return writeGate; }
+    auto updateAccum(float factor) -> void { accum = (float)accum * factor + 0.5; }
+
+    std::function<void (bool direction)> stepCall;
+    std::function<void ()> toggleWrite;
 
 protected:
-    uint8_t mode;
+    Type type = T1770;
     uint8_t refCycles = 8;
-    uint8_t callerMhz = 2;
-    unsigned callerHz = 2000000;
+    unsigned refCyclesByte = 50000;
+    bool cpu2Mhz = true;
 
     uint8_t commandType;
     uint8_t command;
@@ -86,13 +96,12 @@ protected:
     uint16_t crcFetched;
 
     DiskStructure::MTrack* trackPtr = nullptr;
-    bool dummyTrack = true;
 
     uint16_t readBuffer;
     uint8_t DSR;
 
     bool writeProtected = false;
-    bool motorAdvance;
+    bool diskInserted = false;
 
     uint16_t sectorLength;
 
@@ -101,7 +110,7 @@ protected:
     bool written;
     bool writeGate;
     uint8_t F7WriteMode;
-    bool fluxRemove;
+    bool clockRemove;
 
     uint32_t accum;
     unsigned headOffset;
@@ -116,15 +125,19 @@ protected:
 
     unsigned forceInterruptDelay;
     unsigned indexHoleDelay;
+    Emulator::Rand randomizer;
 
-    auto readFlux() -> void;
-    auto readUserData() -> void;
-    auto writeFlux() -> void;
-    auto writeUserData() -> void;
+    auto readFlux(unsigned revolutionCycles) -> void;
+    auto readEncoded(unsigned revolutionCycles) -> void;
+    auto readDecoded(unsigned revolutionCycles) -> void;
+    auto writeFlux(unsigned revolutionCycles) -> void;
+    auto writeEncoded(unsigned revolutionCycles) -> void;
+    auto writeDecoded(unsigned revolutionCycles) -> void;
     auto complete() -> void;
     auto updateDR() -> void;
     auto newByte() -> bool;
     auto prepareNextByteToWrite() -> void;
+    auto encodeBit() -> bool;
 
     auto baseCommand() -> uint8_t { return command >> 4; }
     auto decodeMFM( bool bit ) -> void;

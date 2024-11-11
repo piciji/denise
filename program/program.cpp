@@ -648,7 +648,7 @@ auto Program::exit(int code) -> void {
     // other possible exit calls (e.g. broken autostart path) happen before emu thread is spawned
 }
 
-auto Program::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {
+auto Program::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, uint8_t LED, bool motorOff ) -> void {
 	if (!media || cmd->noGui)
 		return;
 

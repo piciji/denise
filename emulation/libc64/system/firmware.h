@@ -27,4 +27,6 @@ extern uint8_t drive1570Rom[32768];
 
 extern uint8_t drive1571Rom[32768];
 
+extern uint8_t drive1581Rom[32768];
+
 };

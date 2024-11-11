@@ -45,7 +45,7 @@ struct StatusHandler {
     auto init(GUIKIT::StatusBar* statusBar) -> void;
     auto clear() -> void;
     auto update() -> void;
-    auto updateDeviceState(Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff) -> void;
+    auto updateDeviceState(Emulator::Interface::Media* media, bool write, unsigned position, uint8_t LED, bool motorOff) -> void;
     auto setMessage(const std::string& txt, unsigned duration = 3, bool warn = false) -> void;
     auto updateFPS( bool state ) -> void;
     auto updateVolume( bool state ) -> void;

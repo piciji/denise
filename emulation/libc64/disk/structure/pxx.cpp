@@ -38,14 +38,14 @@
 
 namespace LIBC64 {
 
-    auto DiskStructure::analyzeP64() -> bool {
+    auto DiskStructure::analyzePxx(const std::string& ident, Type newType ) -> bool {
 
         uint8_t* ptr = rawData;
 
         if (rawSize < 32)
             return false; // too small
 
-        if (std::memcmp(rawData, "P64-1541", 8)) // missing this ident ?
+        if (std::memcmp(rawData, ident.c_str(), 8)) // missing this ident ?
             return false;
 
         ptr += 12;
@@ -67,41 +67,7 @@ namespace LIBC64 {
         if (crc32.value() != checkSum)
             return false;
 
-        type = Type::P64;
-
-        return true;
-    }
-
-    auto DiskStructure::analyzeP71() -> bool {
-
-        uint8_t* ptr = rawData;
-
-        if (rawSize < 32)
-            return false; // too small
-
-        if (std::memcmp(rawData, "P71-1571", 8)) // missing this ident ?
-            return false;
-
-        ptr += 12;
-        uint32_t flags = Emulator::copyBufferToInt<uint32_t>( ptr );
-        // flag bit 0 is write protection, we ignore it and let the user decide
-        sides = 1 + !!(flags & 2);
-
-        ptr += 4;
-        uint32_t size = Emulator::copyBufferToInt<uint32_t>( ptr );
-        ptr += 4;
-        uint32_t checkSum = Emulator::copyBufferToInt<uint32_t>( ptr );
-        ptr += 4;
-
-        if ((size + 24) > rawSize)
-            return false;
-
-        Emulator::CRC32 crc32( ptr, size, ~0 );
-
-        if (crc32.value() != checkSum)
-            return false;
-
-        type = Type::P71;
+        type = newType;
 
         return true;
     }
@@ -407,7 +373,10 @@ namespace LIBC64 {
                     if (count != pulses)
                         break;
 
-                    encodeGCR(gcrPtr, halfTrack);
+                    if (type == Type::P81)
+                        encodeMfmFromPulse(gcrPtr);
+                    else
+                        encodeGCRFromPulse(gcrPtr, halfTrack);
 
                     usePtr[ (side == 1 ? (MAX_TRACKS_1541 * 2) : 0) + halfTrack ] = pulses > 0;
 
@@ -422,67 +391,6 @@ namespace LIBC64 {
         }
 
         return res;
-    }
-
-    auto DiskStructure::prepareP64Graceful() -> void {
-
-        if (encodingGraceful.status == 0)
-            return;
-
-        if (encodingGraceful.status == 2) {
-            prepareTracksNotInUse( &encodingGraceful.inUse[0] );
-            encodingGraceful.status = 0;
-            return;
-        }
-
-        bool* usePtr = &encodingGraceful.inUse[0];
-        std::vector<uint8_t*> vec;
-
-        uint8_t* ptr = rawData;
-        unsigned offset = 0;
-        uint32_t size = 0;
-
-        if (!encodingGraceful.ptr) {
-            std::memset(usePtr, 0, MAX_TRACKS_1541 * 2 * 2);
-            ptr += 8; // header ident, already checked
-            ptr += 4; // version: only 0 is known, don't check for it
-
-            // already checked
-            ptr += 12;
-
-            offset = 24;
-        } else {
-            ptr = encodingGraceful.ptr;
-            offset = encodingGraceful.offset;
-        }
-
-        offset += 12;
-        if (offset >= rawSize) {
-            encodingGraceful.status = 2;
-            return;
-        }
-
-        vec.push_back( ptr );
-        bool res = this->decodeJob( &vec, usePtr );
-
-        ptr += 4;
-        size = Emulator::copyBufferToInt<uint32_t>( ptr );
-        ptr += 4;
-        ptr += 4;
-
-        offset += size;
-        if (offset >= rawSize) {
-            encodingGraceful.status = 2;
-            return;
-        }
-
-        ptr += size;
-
-        encodingGraceful.ptr = ptr;
-        encodingGraceful.offset = offset;
-
-        if (!res)
-            prepareP64Graceful();
     }
 
     auto DiskStructure::preparePxx() -> void {
@@ -707,14 +615,14 @@ namespace LIBC64 {
 
                     gcrPtr->pulses.clear();
 
-                    createPulsesFromGCR( gcrPtr );
+                    createPulsesFromEncoded( gcrPtr );
                 }
                 inUse++;
             }
         }
     }
 
-    auto DiskStructure::createPulsesFromGCR( MTrack* gcrTrack ) -> void {
+    auto DiskStructure::createPulsesFromEncoded( MTrack* gcrTrack ) -> void {
         uint32_t positionHi, positionLo, incrementHi, incrementLo, bit;
 
         incrementHi = CyclesPerRevolution300Rpm / gcrTrack->bits;
@@ -738,7 +646,7 @@ namespace LIBC64 {
     }
 
     // this is needed to generate content list (TOC) outside emulation
-    inline auto DiskStructure::encodeGCR(MTrack* gcrTrack, uint8_t halfTrack) -> void {
+    auto DiskStructure::encodeGCRFromPulse(MTrack* gcrTrack, uint8_t halfTrack) -> void {
         uint8_t track = (halfTrack >> 1) + 1;
         unsigned trackSize = countBytes( track );
         uint8_t _speedzone = speedzone( track );
@@ -814,6 +722,54 @@ namespace LIBC64 {
         }
     }
 
+    auto DiskStructure::encodeMfmFromPulse(MTrack* gcrTrack) -> void {
+        uint32_t lastPosition = 0;
+        uint32_t delta;
+        uint64_t accum = 0;
+        unsigned bits = 0;
+        unsigned trackSize = 6250 * 2;
+
+        if ( !gcrTrack->data )
+            gcrTrack->data = new uint8_t[ trackSize ];
+
+        else if ( trackSize != gcrTrack->size ) {
+            delete[] gcrTrack->data;
+            gcrTrack->data = new uint8_t[ trackSize ];
+        }
+
+        gcrTrack->size = trackSize;
+        gcrTrack->bits = trackSize * 8;
+
+        // these tracks exist from beginning and need to write back if any BIT on disk was written.
+        // in P64 we can not write back updated tracks only
+        gcrTrack->written = 0x80;
+        uint8_t* ptr = gcrTrack->data;
+        std::memset( ptr, 0, trackSize );
+
+        int32_t index = gcrTrack->firstPulse;
+
+        while (index >= 0) {
+            DiskStructure::Pulse& pulse = gcrTrack->pulses[index];
+            index = pulse.next;
+
+            if (pulse.strength < 0x80000000)
+                continue;
+
+            delta = pulse.position - lastPosition;
+            lastPosition = pulse.position;
+
+            accum = (uint64_t)delta * (uint64_t)gcrTrack->bits;
+            while(accum >= CyclesPerRevolution300Rpm) {
+                accum -= CyclesPerRevolution300Rpm;
+
+                if (++bits == gcrTrack->bits)
+                    return;
+            }
+
+            ptr[bits >> 3] |= 1 << (~bits & 7);
+        }
+    }
+
     auto DiskStructure::createPxx( std::string diskName, uint8_t sides ) -> Emulator::Interface::Data {
 
         auto temp = createGxx( diskName, sides );
@@ -839,7 +795,7 @@ namespace LIBC64 {
                 gcrPtr->written = gcrPtr->bits > 0;
 
                 if (gcrPtr->written)
-                    structure.createPulsesFromGCR(gcrPtr);
+                    structure.createPulsesFromEncoded(gcrPtr);
             }
         }
 
@@ -852,7 +808,45 @@ namespace LIBC64 {
 
         uint8_t* temp2 = structure.writeP64ToMem(memSize);
 
-        delete[] temp;
+        delete[] structure.rawData;
+
+        return {temp2, memSize};
+    }
+
+    auto DiskStructure::createP81( const std::string diskName ) -> Emulator::Interface::Data {
+
+        auto temp = createG81( diskName );
+
+        DiskStructure structure(nullptr);
+
+        structure.rawData = temp;
+
+        structure.rawSize = imageSizeG81();
+
+        if (!structure.analyzeG81())
+            return {nullptr, 0};
+
+        structure.prepareG81();
+
+        for (unsigned track = 0; track < 80; track++) {
+            for (int side = 0; side < 2; side++) {
+
+                MTrack* mTrack = &structure.gcrTracks[side][track];
+
+                mTrack->written = mTrack->bits > 0;
+
+                if (mTrack->written)
+                    structure.createPulsesFromEncoded(mTrack);
+            }
+        }
+
+        std::memcpy( structure.rawData, "P81-1581", 8 );
+
+        unsigned memSize = 0;
+
+        uint8_t* temp2 = structure.writeP64ToMem(memSize);
+
+        delete[] structure.rawData;
 
         return {temp2, memSize};
     }

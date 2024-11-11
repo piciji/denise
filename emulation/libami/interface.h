@@ -66,7 +66,7 @@ struct Interface : Emulator::Interface  {
     auto setMonitorFpsRatio(double ratio) -> void;
 
     // disk drive handling
-    auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void;
+    auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
     auto writeProtectDisk(Media* media, bool state) -> void;
     auto isWriteProtectedDisk(Media* media) -> bool;
     auto ejectDisk(Media* media) -> void;

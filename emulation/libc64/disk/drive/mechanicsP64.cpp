@@ -3,8 +3,30 @@
 
 namespace LIBC64 {
 
-    auto Drive::rotateP64(  ) -> void {
+    template<bool withWd1770> auto Drive::rotateFlux(  ) -> void {
         unsigned todo;
+        unsigned _delta;
+        unsigned _refCyclesPerRevolution = refCyclesPerRevolution;
+
+        if (!mechanics.motorDelay) {
+            if constexpr (withWd1770)
+                wd1770.rotateFlux(motorOn ? _refCyclesPerRevolution : 0);
+
+            if (!motorOn)
+                return;
+        } else {
+            if constexpr (withWd1770) {
+                if(!motorRun(_refCyclesPerRevolution))
+                    _refCyclesPerRevolution = 0;
+
+                wd1770.rotateFlux( _refCyclesPerRevolution );
+                if (!_refCyclesPerRevolution)
+                    return;
+            } else {
+                if(!motorRun(_refCyclesPerRevolution))
+                    return;
+            }
+        }
 
 #define OVERFLOW_NOT_THIS_CYCLE \
         ((refCyclesInCpuCycle - refCycles + todo) > (refCyclesInCpuCycle >> 1))
@@ -13,12 +35,9 @@ namespace LIBC64 {
 
         if (readMode) {
             do {
-                if (motorOn) {
-                    todo = pulseDelta;
+                todo = pulseDelta;
 
-                    if (refCycles < todo)
-                        todo = refCycles;
-                } else
+                if (refCycles < todo)
                     todo = refCycles;
 
                 if ((16 - ue7Counter) < todo)
@@ -97,29 +116,30 @@ namespace LIBC64 {
                         byteFetched( OVERFLOW_NOT_THIS_CYCLE );
                 }
 
-                if (motorOn) {
-                    pulseDelta -= todo;
+                pulseDelta -= todo;
 
-                    if (!pulseDelta) {
-                        DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
+                if (!pulseDelta) {
+                    DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
-                        pulseIndex = pulse.next;
+                    pulseIndex = pulse.next;
 
-                        if (pulseIndex >= 0)
-                            pulseDelta = gcrTrack->pulses[pulseIndex].position - pulse.position;
-                        else {
-                            pulseIndex = gcrTrack->firstPulse;
+                    if (pulseIndex >= 0)
+                        _delta = gcrTrack->pulses[pulseIndex].position - pulse.position;
+                    else {
+                        pulseIndex = gcrTrack->firstPulse;
 
-                            pulseDelta = gcrTrack->pulses[pulseIndex].position
-                                         + (CyclesPerRevolution300Rpm - pulse.position);
-                        }
+                        _delta = gcrTrack->pulses[pulseIndex].position
+                                     + (CyclesPerRevolution300Rpm - pulse.position);
+                    }
 
-                        if ((pulse.strength == 0xffffffff) || (randomizer.rand() < pulse.strength)) {
-                            comperatorFlipFlop ^= 1;
-                            pulseDuration = 0;
-                        }
+                    pulseDelta = _delta * ((float)_refCyclesPerRevolution / CyclesPerRevolution300Rpm) + 0.5;
+
+                    if ((pulse.strength == 0xffffffff) || (randomizer.xorShift() < pulse.strength)) {
+                        comperatorFlipFlop ^= 1;
+                        pulseDuration = 0;
                     }
                 }
+
                 refCycles -= todo;
             } while (refCycles);
         // write mode
@@ -129,12 +149,9 @@ namespace LIBC64 {
             do {
                 flux = false;
 
-                if (motorOn) {
-                    todo = pulseDelta;
+                todo = pulseDelta;
 
-                    if (refCycles < todo)
-                        todo = refCycles;
-                } else
+                if (refCycles < todo)
                     todo = refCycles;
 
                 if ((16 - ue7Counter) < todo)
@@ -166,64 +183,61 @@ namespace LIBC64 {
                     }
                 }
 
-                if (motorOn) {
-                    pulseDelta -= todo;
+                pulseDelta -= todo;
 
-                    if (pulseDelta) {
+                if (pulseDelta) {
 
-                        if (flux) {
-                            if (!writeProtected) {
-                                DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
-                                unsigned position;
+                    if (flux) {
+                        if (!writeProtected) {
+                            DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
+                            unsigned position;
 
-                                if (pulseDelta >= pulse.position)
-                                    position = CyclesPerRevolution300Rpm - (pulseDelta - pulse.position);
-                                else
-                                    position = pulse.position - pulseDelta;
+                            if (pulseDelta >= pulse.position)
+                                position = CyclesPerRevolution300Rpm - (pulseDelta - pulse.position);
+                            else
+                                position = pulse.position - pulseDelta;
 
-                                if (gcrTrack != dummyTrack) {
-                                    DiskStructure::addPulse(gcrTrack, position, 0xffffffff);
-
-                                    if (!written)
-                                        written = true;
-
-                                    gcrTrack->written |= 1;
-                                }
-                            }
-                        }
-                        // else
-                        // no new flux at this position ... there is already no flux here ... nothing to do
-                    } else {
-
-                        DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
-
-                        if (!writeProtected && (gcrTrack != dummyTrack)) {
-                            if (flux) {
-                                if (pulse.strength != 0xffffffff)
-                                    // 1541 always write strong pulses
-                                    pulse.strength = 0xffffffff;
-
-                            } else
-                                DiskStructure::freePulse(gcrTrack, pulseIndex);
+                            DiskStructure::addPulse(gcrTrack, position, 0xffffffff);
 
                             if (!written)
                                 written = true;
 
                             gcrTrack->written |= 1;
                         }
+                    }
+                    // else
+                    // no new flux at this position ... there is already no flux here ... nothing to do
+                } else {
 
-                        pulseIndex = pulse.next;
+                    DiskStructure::Pulse& pulse = gcrTrack->pulses[pulseIndex];
 
-                        if (pulseIndex >= 0)
-                            pulseDelta = gcrTrack->pulses[pulseIndex].position - pulse.position;
-                        else {
-                            pulseIndex = gcrTrack->firstPulse;
+                    if (!writeProtected) {
+                        if (flux) {
+                            if (pulse.strength != 0xffffffff)
+                                // 1541 always write strong pulses
+                                pulse.strength = 0xffffffff;
 
-                            pulseDelta = gcrTrack->pulses[pulseIndex].position
-                                         + (CyclesPerRevolution300Rpm - pulse.position);
-                        }
+                        } else
+                            DiskStructure::freePulse(gcrTrack, pulseIndex);
+
+                        if (!written)
+                            written = true;
+
+                        gcrTrack->written |= 1;
                     }
 
+                    pulseIndex = pulse.next;
+
+                    if (pulseIndex >= 0)
+                        _delta = gcrTrack->pulses[pulseIndex].position - pulse.position;
+                    else {
+                        pulseIndex = gcrTrack->firstPulse;
+
+                        _delta = gcrTrack->pulses[pulseIndex].position
+                                     + (CyclesPerRevolution300Rpm - pulse.position);
+                    }
+
+                    pulseDelta = _delta * ((float)_refCyclesPerRevolution / CyclesPerRevolution300Rpm) + 0.5;
                 }
 
                 refCycles -= todo;

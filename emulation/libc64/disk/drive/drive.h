@@ -19,12 +19,13 @@
 #include "../wd177x/wd1770.h"
 #include <cstdlib>
 
-#define USERDATA_LEVEL 1u
+#define DECODEDDATA_LEVEL 1u
 #define ENCODEDDATA_LEVEL 2u
 #define FLUXDATA_LEVEL 4u
 
 #define DRIVE_MODE_154x 8u
 #define DRIVE_MODE_157x 16u
+#define DRIVE_MODE_158x 128u
 
 #define DRIVE_HAS_PIA 32u
 #define DRIVE_HAS_EXTRA_CIA 64u  // besides the builtin CIA
@@ -40,7 +41,7 @@ struct Drive {
     Drive( uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* media );
     ~Drive();
 
-    enum class Type { D1541, D1541II, D1541C, D1570, D1571 } type;
+    enum class Type { D1541, D1541II, D1541C, D1570, D1571, D1581 } type;
 
     enum class ExpandedMemMode  { M20 = 1, M40 = 2, M60 = 4, M80 = 8, MA0 = 16 };
 
@@ -63,6 +64,8 @@ struct Drive {
     uint16_t rom1571Size = 0;
     uint8_t* rom1570 = nullptr;
     uint16_t rom1570Size = 0;
+    uint8_t* rom1581 = nullptr;
+    uint16_t rom1581Size = 0;
     uint8_t* romExpanded = nullptr;
     uint16_t romExpandedMask = 0;
 
@@ -118,9 +121,9 @@ struct Drive {
     uint8_t turboTransPage;
     uint8_t proSpeedControl;
     bool hidden;
+    bool dskChange;
         
     DiskStructure::MTrack* gcrTrack;
-    DiskStructure::MTrack* dummyTrack;
 
     uint8_t currentHalftrack;
     bool coilDir = 0;
@@ -131,12 +134,13 @@ struct Drive {
     bool dataDirection = 0;
     
     unsigned speedZone = 0;
-    bool byteReadyOverflow = true; // random initialization ?
-    bool readMode = true; // random initialization ?
+    bool byteReadyOverflow = true;
+    bool readMode = true;
     unsigned headOffset = 0; // one and only initialization
     uint8_t ue3Counter;
 
     static uint32_t refCyclesPerRevolution;
+    static Type globalType;
 
     uint8_t ue7Counter;
     uint8_t uf4Counter;
@@ -185,17 +189,17 @@ struct Drive {
     auto progressDelay() -> void;
     auto hide() -> void;
     
-    auto updateBus() -> void;
+    auto updateViaBus() -> void;
+    auto updateCiaBus() -> void;
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void;
-    auto rotateD64() -> void;
-    auto rotateG64() -> void;
-    auto rotateP64(  ) -> void;
+    template<bool withWd1770 = false> auto rotateDecoded() -> void;
+    template<bool withWd1770 = false> auto rotateEncoded() -> void;
+    template<bool withWd1770 = false> auto rotateFlux() -> void;
     static auto randomizeRpm(std::vector<Drive*>& drivesEnabled) -> void;
     auto writeBit( bool state ) -> void;
     auto readBit() -> bool;
     auto changeHalfTrack( uint8_t step ) -> void;
-    auto attach( uint8_t* data, unsigned size, bool loadGracefully = false ) -> void;
-    auto postAttach() -> void;
+    auto attach( uint8_t* data, unsigned size) -> void;
     auto detach() -> void;
     auto setWriteProtect(bool state) -> void;
     static auto setSpeed( unsigned rpmScaled ) -> void;
@@ -210,7 +214,8 @@ struct Drive {
     auto motorChangeInit() -> void;
 
     auto serialize(Emulator::Serializer& s) -> void;
-    auto updateDeviceState() -> void;
+    auto updateDeviceState(bool forceOff = false) -> void;
+    auto updateDeviceState1581(bool forceOff = false) -> void;
     auto updateIdleDeviceState() -> void;
 
     auto byteFetched( bool overflowNotThisCycle ) -> void;
@@ -221,6 +226,7 @@ struct Drive {
     auto use2Mhz() -> bool { return frequency == 2000000; }
     auto setExpandedMemory( ExpandedMemMode& expandedMemMode, bool state  ) -> void;
     auto setSpeeder(uint8_t speeder) -> void;
+    auto changeModelByType() -> bool;
 
     auto readProfDosEncoder(uint16_t addr) -> uint8_t;
     auto readProfDosEncoderV1(uint16_t addr) -> uint8_t;

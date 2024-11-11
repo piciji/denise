@@ -756,9 +756,10 @@ auto AudioLayout::translate() -> void {
 
     driveLayout->setText( trans->get("Drive Noise") );
     driveLayout->floppyVolume.active.setText( trans->get("Floppy") );
-    driveLayout->floppyVolumeExt.name.setText( trans->get("external") );
+    driveLayout->floppyVolumeExt.name.setText( trans->get(dynamic_cast<LIBC64::Interface*>(emulator) ? "3.5-inch" : "external") );
     driveLayout->floppySelection.label.setText( trans->get("Floppy Profile") );
-    driveLayout->floppySelection.labelExt.setText( trans->get("External Floppy Profile") );
+    driveLayout->floppySelection.labelExt.setText( dynamic_cast<LIBC64::Interface*>(emulator)
+        ? trans->get("Floppy 3.5-inch Profile") : trans->get("External Floppy Profile") );
     driveLayout->floppySelection.reload.setText( trans->get("Reload") );
     driveLayout->floppySelection.reload.setTooltip( trans->get("reload samples tooltip") );
     driveLayout->tapeVolume.active.setText( trans->get("Tape") );

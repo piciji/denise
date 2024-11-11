@@ -72,17 +72,20 @@ struct Drive {
         unsigned secondOffset;
         unsigned thirdOffset;
         uint8_t state;      // bit 0,1,2: step counter, bit 7: detach+attach
-        bool stepSilence;
+        bool stepSeek;
         bool hasExternalSound;
+        bool requestExternalSound;
 
         Sound* steps[42];
         Sound* stepsShort[42];
+
+        auto altSound() -> bool { return hasExternalSound && requestExternalSound; }
     };
     std::vector<Device> devices;
     uint64_t lastStep;
 
     auto readPack(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice = false) -> void;
-    auto addSound(Emulator::Interface* emulator, Emulator::Interface::Media* media, DriveSound soundId, uint8_t data = 0) -> void;
+    auto addSound(Emulator::Interface* emulator, Emulator::Interface::Media* media, DriveSound soundId, bool alternate, uint8_t data = 0) -> void;
     auto mixSound(float* buffer, unsigned bufferSize) -> void;
 
     auto getSound(DriveSound soundId, Emulator::Interface* emulator, bool externalDevice) -> Sound*;

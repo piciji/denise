@@ -857,3 +857,5 @@ External Floppy Profile = Perfil de disquete (externo)
 adjust speed to monitor = Ajustar la velocidad a la frecuencia de actualización.
 adjust speed to monitor tooltip = La velocidad del emulador se ajusta temporalmente a la frecuencia de actualización cuando se cambia a pantalla completa. La velocidad establecida por el usuario vuelve a activarse al volver a la ventana.
 esperanto = Esperanto
+3.5-inch = 3.5-inch
+Floppy 3.5-inch Profile = Floppy Profile (3.5-inch, e.g. VC1581)

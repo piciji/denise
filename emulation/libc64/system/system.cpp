@@ -103,7 +103,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
     readKernalRom = [this](uint16_t addr) {
 
         if (expansionPort->hasHiramCableConnected())
-            return expansionPort->readRomH(addr);
+            return expansionPort->readRomH(addr & 0x1fff);
 
         return (uint8_t) this->kernalRom[ addr & 0x1fff ];
     };
@@ -676,7 +676,7 @@ auto System::run() -> void {
     iecBus.randomizeRpm();
 
     runAhead.active = !warp.config && runAhead.frames && !traps.installed
-        && !keyBuffer->isPrgInjectionInQueue() && !iecBus.diskInsertInProgress;
+        && !keyBuffer->isPrgInjectionInQueue();
 
     if (runAhead.active) {
         runAhead.pos = runAhead.frames;
@@ -874,9 +874,6 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 
     if (!runAhead.pos) {
         this->interface->videoRefresh8(frame, width, height, linePitch);
-
-        if (iecBus.diskInsertInProgress)
-            iecBus.insertDiskGracefully();
     }
 
     leaveEmulation = true;

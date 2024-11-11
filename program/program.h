@@ -109,7 +109,7 @@ struct Program : Emulator::Interface::Bind {
 	auto writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length) -> unsigned override;
 
     auto truncateMedia(Emulator::Interface::Media* media) -> bool override;
-    auto updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void override;
+    auto updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, uint8_t LED, bool motorOff ) -> void override;
     auto informPowerLED(bool state) -> void override;
 	auto log(std::string data, bool newLine = true) -> void override;
     auto questionToWrite(Emulator::Interface::Media* media) -> bool override;
@@ -148,7 +148,7 @@ struct Program : Emulator::Interface::Bind {
 	auto getAudioDriver() -> std::string;
     auto audioSample(int16_t sampleLeft, int16_t sampleRight) -> void override;
     auto audioFlush() -> void override;
-    auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, uint8_t data = 0) -> void override;
+    auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, bool alternate, uint8_t data = 0) -> void override;
     
     //video
     auto setVideoDimension(Emulator::Interface* emulator = nullptr) -> void;

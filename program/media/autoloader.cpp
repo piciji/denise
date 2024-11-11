@@ -513,10 +513,11 @@ auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interfa
         if(emuView->mediaLayout) emuView->mediaLayout->updateVisibility( mediaGroup, requestedCount );
     }
 
+    bool halfTrackMode = dynamic_cast<LIBC64::Interface*>(emulator);
     if (updateStatus && statusHandler) {
         for (auto& media: mediaGroup->media) {
             if (media.id >= counter) {
-                statusHandler->updateDeviceState(&media, false, 0, false, true);
+                statusHandler->updateDeviceState(&media, false, halfTrackMode ? 0x8000 : 0, 0, true);
             }
         }
     }

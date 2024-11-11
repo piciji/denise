@@ -158,6 +158,9 @@ auto System::analyzeExpansion(uint8_t* data, unsigned size, std::string suffix) 
         case Interface::CartridgeIdRetroReplay:
             useExpansion = &interface->expansions[Interface::ExpansionIdRetroReplay];
             break;
+        case Interface::CartridgeIdStarDos:
+            useExpansion = &interface->expansions[Interface::ExpansionIdFastloader];
+            break;
         default:
             break;
     }    

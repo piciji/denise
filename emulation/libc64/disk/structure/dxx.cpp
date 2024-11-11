@@ -3,6 +3,43 @@
 
 namespace LIBC64 {
 
+auto DiskStructure::analyzeD81() -> bool {
+    tracksInDxx = 80;
+    unsigned blocksInTrack = 40; // one sector = two blocks
+    unsigned compareSize = 256 * blocksInTrack * tracksInDxx;
+
+    if (errorMap)
+        delete[] errorMap;
+
+    errorMapSize = 0;
+    errorMap = nullptr;
+
+    while(1) {
+        if (compareSize == rawSize)
+            break;
+
+        if ((compareSize + (blocksInTrack * tracksInDxx)) == rawSize) { // one error byte each block
+            errorMapSize = blocksInTrack * tracksInDxx;
+            break;
+        }
+
+        compareSize += 256 * blocksInTrack;
+        tracksInDxx++;
+
+        if (tracksInDxx > MAX_TRACKS_1581)
+            return false;
+    }
+
+    if (errorMapSize) {
+        errorMap = new uint8_t[ errorMapSize ];
+        std::memcpy( errorMap, rawData + compareSize, errorMapSize );
+    }
+
+    type = Type::D81;
+    sides = 2;
+    return true;
+}
+
 auto DiskStructure::analyzeD71() -> bool {
 
     uint32_t compareSize = TYPICAL_SIZE << 1;
@@ -82,7 +119,199 @@ auto DiskStructure::analyzeD64() -> bool {
     
     return true;
 }
-    
+
+auto DiskStructure::prepareD81() -> void {
+    uint16_t crc = 0;
+    unsigned pos;
+    unsigned offset = 0;
+
+    for (uint8_t track = 0; track < MAX_TRACKS_1581; track++) {
+        for( uint8_t side = 0; side < sides; side++ ) {
+            MTrack* trackPtr = &gcrTracks[side][track];
+
+            if (trackPtr->data)
+                delete[] trackPtr->data;
+
+            if (trackPtr->mfmSync)
+                delete[] trackPtr->mfmSync;
+
+            trackPtr->size = 6250;
+            trackPtr->bits = trackPtr->size << 3;
+            trackPtr->data = new uint8_t[trackPtr->size];
+            trackPtr->mfmSync = new uint8_t[trackPtr->size >> 3];
+
+            std::memset(trackPtr->data, 0x4e, trackPtr->size);
+            std::memset(trackPtr->mfmSync, 0x00, trackPtr->size >> 3);
+
+            if (track < tracksInDxx) {
+                uint8_t* ptr = trackPtr->data;
+                memset(ptr, 0x4e, 80); ptr += 80;
+                memset(ptr, 0x0, 12); ptr += 12;
+
+                pos = ptr - trackPtr->data;
+                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+                trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+
+                addMfmByte(ptr, 0xc2, crc);
+                addMfmByte(ptr, 0xc2, crc);
+                addMfmByte(ptr, 0xc2, crc);
+                addMfmByte(ptr, 0xfc, crc);
+
+                memset(ptr, 0x4e, 50); ptr += 50;
+
+                for (unsigned sector = 1; sector <= 10; sector++) {
+                    memset(ptr, 0x0, 12); ptr += 12;
+
+                    pos = ptr - trackPtr->data;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7); pos++;
+
+                    crc = 0xffff;
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xfe, crc);
+
+                    addMfmByte(ptr, track, crc);
+                    addMfmByte(ptr, side, crc);
+                    addMfmByte(ptr, sector, crc);
+                    addMfmByte(ptr, 2, crc); // sector size: 2 => 128 << 2
+                    *ptr++ = crc >> 8;
+                    *ptr++ = crc & 0xff;
+                    memset(ptr, 0x4e, 22); ptr += 22;
+                    memset(ptr, 0x0, 12); ptr += 12;
+
+                    pos = ptr - trackPtr->data;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+                    pos++;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+                    pos++;
+                    trackPtr->mfmSync[pos >> 3] |= 1 << (pos & 7);
+
+                    crc = 0xffff;
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xa1, crc);
+                    addMfmByte(ptr, 0xfb, crc);
+
+                    for (unsigned j = 0; j < 512; j++) {
+                        addMfmByte(ptr, rawData[offset++], crc);
+                    }
+
+                    *ptr++ = crc >> 8;
+                    *ptr++ = crc & 0xff;
+
+                    memset(ptr, 0x4e, 22); ptr += 22;
+                }
+            }
+        }
+    }
+}
+
+auto DiskStructure::writeD81(const MTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool {
+    std::function<void (bool& errorMapChanged)> createErrorMapIfNeeded = [&](bool& errorMapChanged) -> void {
+        if (!errorMap) {
+            errorMapSize = 40 * tracksInDxx;
+            errorMap = new uint8_t[errorMapSize];
+            std::memset( errorMap, ERR_OK, errorMapSize );
+            errorMapChanged = true;
+        }
+    };
+
+    unsigned offset = track * 20 * 512 + (side ? (10 * 512) : 0);
+    uint16_t crc;
+    uint16_t crcFetched;
+    bool isSync = false;
+    bool align = false;
+    uint8_t* ptr = trackPtr->data;
+    unsigned sector = 1;
+    unsigned i = 0;
+    unsigned tries = 0;
+    unsigned errPos = (side ? 20 : 0) + track * 40;
+
+    while(true) {
+        if (isSync && (ptr[i] == 0xfc || ptr[i] == 0xfd || ptr[i] == 0xfe || ptr[i] == 0xff) ) {
+
+            if (ptr[i + 1 + 2] == sector) {
+                if ((ptr[i + 1 + 3] & 3) != 2) { // expects 512 byte sectors
+                    createErrorMapIfNeeded(errorMapChanged);
+                    errorMap[errPos] = errorMap[errPos+1] = ERR_VERIFY;
+                }
+
+                crc = 0xffff;
+                calcMfmCrc( 0xa1, crc );
+                calcMfmCrc( 0xa1, crc );
+                calcMfmCrc( 0xa1, crc );
+                calcMfmCrc( ptr[i], crc );
+                calcMfmCrc( ptr[i + 1], crc );
+                calcMfmCrc( ptr[i + 2], crc );
+                calcMfmCrc( ptr[i + 3], crc );
+                calcMfmCrc( ptr[i + 4], crc );
+
+                uint8_t* _dataCrc = ptr + i + 5;
+                crcFetched = (_dataCrc[0] << 8) | _dataCrc[1];
+
+                if(crc != crcFetched) {
+                    createErrorMapIfNeeded(errorMapChanged);
+                    errorMap[errPos] = errorMap[errPos+1] = ERR_HEADER_CHECKSUM;
+                }
+                align = true;
+            }
+        } else if (align && isSync && (ptr[i] == 0xf8 || ptr[i] == 0xf9 || ptr[i] == 0xfa || ptr[i] == 0xfb) ) {
+            align = false;
+
+            if (ptr[i] == 0xf8 || ptr[i] == 0xf9) { // deleted data address mark
+                createErrorMapIfNeeded(errorMapChanged);
+                errorMap[errPos] = errorMap[errPos+1] = ERR_VERIFY_FORMAT;
+            }
+
+            crc = 0xffff;
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( 0xa1, crc );
+            calcMfmCrc( ptr[i], crc );
+
+            for (unsigned j = 0; j < 512; j++)
+                calcMfmCrc( *(ptr + i + 1 + j), crc);
+
+            if ( write( ptr + i + 1, 512, offset ) != 512)
+                return false;
+
+            uint8_t* _dataCrc = ptr + i + 1 + 512;
+            crcFetched = (_dataCrc[0] << 8) | _dataCrc[1];
+
+            if(crc != crcFetched) {
+                createErrorMapIfNeeded(errorMapChanged);
+                errorMap[errPos] = errorMap[errPos+1] = ERR_CHECKSUM;
+            }
+            offset += 512;
+
+            if (++sector > 10)
+                break;
+            errPos += 2;
+            tries = 0;
+        }
+
+        isSync = ((trackPtr->mfmSync[i >> 3] & (1 << (i & 7))) != 0);
+        if (isSync && (ptr[i] != 0xa1))
+            isSync = false;
+
+        if (++i == trackPtr->size) {
+            i = 0;
+            if (++tries == 2) {
+                createErrorMapIfNeeded(errorMapChanged);
+                errorMap[errPos] = errorMap[errPos+1] = ERR_SYNC;
+                if (++sector > 10)
+                    break;
+                errPos += 2;
+            }
+        }
+    }
+    return true;
+}
+
 auto DiskStructure::prepareDxx() -> void {
     
     uint8_t errorCode;
@@ -106,8 +335,6 @@ auto DiskStructure::prepareDxx() -> void {
             // tracks count from 1 upwards and are stored in memory as half tracks
             // track 1 -> means half track 0
             // track 1.5 -> means half track 1
-            // track 2 -> means half track 2
-            // ... d64 doesn't support halftracks 1.5, 2.5 ...
 
             unsigned halfTrack = track * 2 - 2;
             trackSize = countBytes(track);
@@ -235,6 +462,47 @@ auto DiskStructure::encodeSector(const uint8_t* src, uint8_t* target, uint8_t tr
     buf[1] = chksum ^ src[0]; // checksum of complete raw data
     buf[2] = buf[3] = 0;    // 2 off bytes
     gcr.encode(buf, target);
+}
+
+auto DiskStructure::handleAppendedTracksInD81() -> bool {
+    bool appended = false;
+
+    for (uint8_t side = 0; side < sides; side++) {
+        for (unsigned track = 81; track <= MAX_TRACKS_1581; track++) {
+            MTrack* mTrack = getTrackPtr(side, track - 1);
+
+            if (mTrack->written & 1) {
+                if (track > tracksInDxx) {
+                    appended = true;
+                    tracksInDxx = track;
+                }
+            }
+        }
+    }
+
+    if (!appended)
+        return false;
+
+    if (errorMap) {
+        unsigned newMapSize = 40 * tracksInDxx;
+        uint8_t* errorMapTemp = new uint8_t[newMapSize];
+        std::memset( errorMapTemp, ERR_OK, newMapSize );
+        memcpy(errorMapTemp, errorMap, errorMapSize);
+        delete[] errorMap;
+        errorMap = errorMapTemp;
+        errorMapSize = newMapSize;
+    }
+
+    for (uint8_t side = 0; side < sides; side++) {
+        for (unsigned track = 1; track <= MAX_TRACKS_1581; track++) {
+            MTrack* gcrTrack = getTrackPtr(side, track - 1);
+
+            if (track <= tracksInDxx)
+                gcrTrack->written = 1;
+        }
+    }
+
+    return true;
 }
 
 auto DiskStructure::handleAppendedTracksInDxx() -> bool {
@@ -498,6 +766,52 @@ auto DiskStructure::imageSizeD71() -> unsigned {
     return TYPICAL_SIZE << 1;
 }
 
+auto DiskStructure::imageSizeD81() -> unsigned {
+
+    return 80*40*256;
+}
+
+auto DiskStructure::createD81( std::string diskName ) -> uint8_t* {
+    Emulator::PetciiConversion petciiConversion;
+    uint8_t* temp = new uint8_t[ imageSizeD81() ];
+    std::memset( temp, 0, imageSizeD81() );
+    uint8_t buffer[256];
+    std::memset(buffer, 0, 256);
+    buffer[0] = 0x28; buffer[1] = 0x3; buffer[2] = 0x44;
+    buffer[0x14] = buffer[0x15] = buffer[0x18] = buffer[0x1b] = buffer[0x1c] = 0xa0;
+    buffer[0x19] = 0x33; buffer[0x1a] = 0x44;
+
+    diskName = petciiConversion.encode( diskName );
+    auto id = cutId( diskName );
+    std::memset( buffer + 4, 0xa0, 16 );
+    std::memcpy( buffer + 4, diskName.c_str(), diskName.size() );
+    std::memcpy( buffer + 0x16, id.c_str(), id.size() );
+    writeSectorD81(temp, buffer, 40, 0);
+
+    std::memset(buffer, 0, 256);
+    buffer[0] = 0x0; buffer[1] = 0xff;
+    buffer[2] = 0x44; buffer[3] = 0xbb;
+    std::memcpy( buffer + 0x4, id.c_str(), id.size() );
+    buffer[6] = 0xc0; buffer[7] = 0x0;
+
+    uint8_t* ptr = buffer + 0x10;
+    for(int t = 1; t <= 40; t++) {
+        ptr[0] = 0x28; ptr[1] = ptr[2] = ptr[3] = ptr[4] = ptr[5] = 0xff;
+        ptr += 6;
+    }
+    writeSectorD81(temp, buffer, 40, 2);
+
+    buffer[0] = 0x28; buffer[1] = 0x02;
+    buffer[0xfa] = 0x24; buffer[0xfb] = 0xf0; // allocate sector 0 - 3 on track 40 (header, bam1, bam2, dir)
+    writeSectorD81(temp, buffer, 40, 1);
+
+    std::memset(buffer, 0, 256);
+    buffer[1] = 0xff;
+    writeSectorD81(temp, buffer, 40, 3);
+
+    return temp;
+}
+
 auto DiskStructure::createDxx( std::string diskName, uint8_t sides ) -> uint8_t* {
     
     uint8_t buffer[256];    
@@ -517,6 +831,10 @@ auto DiskStructure::createDxx( std::string diskName, uint8_t sides ) -> uint8_t*
         writeSector( temp, bufferBamExtended, 18, 0, imageSizeD64() );
 
     return temp;    
+}
+
+auto DiskStructure::writeSectorD81( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector) -> void {
+    std::memcpy(  target + (track - 1) * 40 * 256 + sector * 256, buffer, 256 );
 }
 
 auto DiskStructure::writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset) -> void {
@@ -541,5 +859,57 @@ auto DiskStructure::readSector( uint8_t* src, uint8_t* buffer, uint8_t track, ui
     return true;
 }
 
+auto DiskStructure::readSectorMfm(MTrack* mTrack, uint8_t _track, uint8_t _sector, uint8_t* _data) -> bool {
+    uint8_t byte;
+    bool syncMark;
+    uint8_t countA1 = 0;
+    uint8_t state = 0;
+    unsigned delay = 0;
+    unsigned _offset = 0;
+
+    if (!mTrack->data)
+        return false;
+
+    for(int i = 0; i < mTrack->size; i++) {
+        syncMark = (mTrack->mfmSync[i >> 3] & (1 << (i & 7))) != 0;
+        byte = mTrack->data[i];
+
+        if (syncMark && (byte == 0xa1)) {
+            if (++countA1 == 2) {
+                state = state == 8 ? 9 : 1;
+                countA1 = 0;
+                _offset = 0;
+            }
+        } else {
+            countA1 = 0;
+
+            switch (state) {
+                case 0:
+                default:
+                    break;
+                case 1: state = (byte == 0xfc || byte == 0xfd || byte == 0xfe || byte == 0xff) ? 2 : 0; break;
+                case 2: state = byte == _track ? 3 : 0; break;
+                case 3: state++; break; // side
+                case 4: state = byte == _sector ? 5 : 0; break;
+                case 5: state = byte == 2 ? 6 : 0; break; // sector size 2: 128 << 2 = 512 byte
+                case 6:
+                case 7: state++; // don't check CRC
+                    delay = 44;
+                    break;
+                case 8:
+                    if (!--delay)
+                        state = 0;
+                    break;
+                case 9: state = (byte == 0xf8 || byte == 0xf9 || byte == 0xfa || byte == 0xfb) ? 10 : 0; break;
+                case 10:
+                    _data[_offset++] = byte;
+                    if (_offset == 512)
+                        return true;
+                    break;
+            }
+        }
+    }
+    return false;
+}
 
 }

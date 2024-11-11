@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "206";
+const std::string Interface::Version = "208";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -44,7 +44,7 @@ Interface::~Interface() {
 }
 
 auto Interface::prepareMedia() -> void {
-	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64", "p64", "d71", "g71", "p71"}, {"d64", "g64", "p64", "d71", "g71", "p71"} });
+	mediaGroups.push_back({MediaGroupIdDisk, "Disk", MediaGroup::Type::Disk, {"d64", "g64", "p64", "d71", "g71", "p71", "d81", "g81", "p81"}, {"d64", "g64", "p64", "d71", "g71", "p71", "d81", "g81", "p81"} });
 	mediaGroups.push_back({MediaGroupIdTape, "Tape", MediaGroup::Type::Tape, {"tap"}, {"tap"} });	
 	mediaGroups.push_back({MediaGroupIdProgram, "Program", MediaGroup::Type::Program, {"prg", "p00", "t64"}, {"prg"} });
     mediaGroups.push_back({MediaGroupIdExpansionGame, "Cartridge", MediaGroup::Type::Expansion, {"bin", "crt"}, {"crt", "bin"} });
@@ -55,7 +55,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionGeoRam, "GeoRam", MediaGroup::Type::Expansion, {"bin"}, {"bin"} });
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg", "reu"}, {""} });
     mediaGroups.push_back({MediaGroupIdExpansionRS232, "RS-232", MediaGroup::Type::Expansion });
-    mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion,{"bin", "rom"} });
+    mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion,{"bin", "crt","rom"} });
         	
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -161,9 +161,10 @@ auto Interface::prepareMedia() -> void {
     }
 
     {	auto& group = mediaGroups[MediaGroupIdExpansionFastloader];
-        group.media.push_back({0, "ProfDOS", 0, &group});
-        group.media.push_back({1, "PrologicDOS", 0, &group});
-        group.media.push_back({2, "TurboTrans", 0, &group});
+        group.media.push_back({0, "Fast Loader 1", 0, &group});
+        group.media.push_back({1, "Fast Loader 2", 0, &group});
+        group.media.push_back({2, "Fast Loader 3", 0, &group});
+	    group.media.push_back({3, "Fast Loader 4", 0, &group});
         group.selected = &group.media[0];
     }
     
@@ -294,7 +295,11 @@ auto Interface::prepareExpansions() -> void {
     }
 
     {   auto& expansion = expansions[ExpansionIdFastloader];
-        expansion.jumpers.push_back( {0, "Kernal Replacement", false} );
+        expansion.jumpers.push_back( {0, "Kernal Replacement", true} );
+        expansion.pcbs.push_back( {CartridgeIdProfDos, "ProfDOS"} );
+        expansion.pcbs.push_back( {CartridgeIdPrologicDos, "PrologicDOS"} );
+        expansion.pcbs.push_back( {CartridgeIdTurboTrans, "Turbo Trans"} );
+        expansion.pcbs.push_back( {CartridgeIdStarDos, "StarDOS"} );
         mediaGroups[MediaGroupIdExpansionFastloader].expansion = &expansion;
     }
 
@@ -531,8 +536,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "0", "1", "2", "3", "4" }});
 
-    models.push_back({ModelIdDiskDriveModel, "Drive Model", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
-                      { "1541", "1541-II", "1541-C", "1570", "1571" }});
+    models.push_back({ModelIdDiskDriveModel, "Drive Model", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 5},
+                      { "1541", "1541-II", "1541-C", "1570", "1571", "1581" }});
 
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
 
@@ -547,9 +552,9 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDriveParallelCable, "Parallel Cable", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
     models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
-    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 13},
+    models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 15},
         { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "DolphinDOS v2 Ultimate", "DolphinDOS v3 1541", "DolphinDOS v3 157x",
-          "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans", "ProSpeed 1571 v2.0"}});
+          "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans", "ProSpeed 1571 v2.0", "StarDOS", "SuperCard+"}});
 
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});
@@ -566,8 +571,8 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdEmulateDriveMechanics, "Emulate Mechanics", Model::Type::Switch, Model::Purpose::DriveMechanics, 0});
     models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveMechanics, 90, {0, 140}, {}, 140, 10.0 });
-    models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 500, {0, 1024}, {}, 256, 1.0 });
-    models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 316, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 700, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 256, {0, 1024}, {}, 256, 1.0 });
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -579,6 +584,7 @@ auto Interface::prepareFirmware() -> void {
     firmwares.push_back({FirmwareIdVC1541C, "VC1541-C"});
     firmwares.push_back({FirmwareIdVC1571, "VC1571"});
     firmwares.push_back({FirmwareIdVC1570, "VC1570"});
+    firmwares.push_back({FirmwareIdVC1581, "VC1581"});
     firmwares.push_back({FirmwareIdExpanded, "Expanded"});
 }
 
@@ -877,12 +883,12 @@ auto Interface::getSubRegion() -> SubRegion {
 	return SubRegion::Pal_B;
 }
 
-auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully) -> void {
+auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
     
     if (!media || !media->group->isDisk())
         return;
     
-    system->iecBus.attach( media, data, size, loadGracefully );
+    system->iecBus.attach( media, data, size );
 }
 
 auto Interface::writeProtectDisk(Media* media, bool state) -> void {
@@ -935,7 +941,7 @@ auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> st
     DiskStructure structure(system);
 	structure.number = media ? media->id : 0;
     
-    if (!structure.attach( data, size, false ))
+    if (!structure.attach( data, size ))
         return {};
         
     return structure.getListing();
@@ -1248,10 +1254,6 @@ auto Interface::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool 
     system->setFirmware( typeId, data, size, allowPatching );
 }
 
-auto Interface::getCharRom() -> Firmware* {
-    return &firmwares[2];
-}
-
 auto Interface::setModelValue(unsigned modelId, int value) -> void {
     switch (modelId) {
 		case ModelIdSid:
@@ -1290,11 +1292,11 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->cia2.setNewVersion( value & 1 );
             break;
         case ModelIdCpuAneMagic:
-            //this is annoying ... look in 6502 cpu code for more informations
+            //this is annoying ... look in 6502 cpu code for more information
             system->cpu.setMagicForAne( value & 0xff );
             break;
 		case ModelIdCpuLaxMagic:
-            //this is annoying ... look in 6502 cpu code for more informations
+            //this is annoying ... look in 6502 cpu code for more information
             system->cpu.setMagicForLax( value & 0xff );
             break;
         case ModelIdGlueLogic:
@@ -1503,7 +1505,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdSid7: return system->sidManager.getType(6) == Sid::Type::MOS_6581 ? 1 : 0;
         case ModelIdSid8: return system->sidManager.getType(7) == Sid::Type::MOS_6581 ? 1 : 0;
 
-        case ModelIdDiskDriveModel:         return (int)system->iecBus.drives[0]->type;
+        case ModelIdDiskDriveModel:         return (int)Drive::globalType;
         case ModelIdDiskDrivesConnected:    return system->iecBus.drivesConnected;
         case ModelIdTapeDrivesConnected:    return system->tape.isEnabled() ? 1 : 0;
         case ModelIdTapeDriveWobble:        return system->tape.hasWobble() ? 1 : 0;

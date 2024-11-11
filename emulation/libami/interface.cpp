@@ -532,7 +532,7 @@ auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
     return ~0;
 }
 
-auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully) -> void {
+auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
     if (!media || !media->group->isDisk())
         return;
 

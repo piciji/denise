@@ -36,7 +36,7 @@ struct FirmwareManager {
     auto insertDefault(bool onlyKernal = false) -> void;
     auto insertFirmware(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> void;
     auto getSetting( Emulator::Interface::Firmware* firmware, unsigned storeLevel ) -> FileSetting*;
-	auto swapIn(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> std::vector<std::string>;
+	auto swapIn(unsigned storeLevel, int firmwareId = -1) -> std::vector<std::string>;
     auto clear() -> void;
     auto reload() -> void;
     

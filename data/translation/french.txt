@@ -857,3 +857,5 @@ External Floppy Profile = Profil de disquette (externe)
 adjust speed to monitor = Ajuster la vitesse au taux de rafraîchissement
 adjust speed to monitor tooltip = La vitesse de l'émulateur est temporairement ajustée au taux de rafraîchissement lors du passage en mode plein écran. La vitesse définie par l'utilisateur redevient active lors du retour en mode fenêtre.
 esperanto = Esperanto
+3.5-inch = 3.5-inch
+Floppy 3.5-inch Profile = Floppy Profile (3.5-inch, e.g. VC1581)
