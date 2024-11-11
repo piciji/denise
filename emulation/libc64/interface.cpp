@@ -24,7 +24,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "207";
+const std::string Interface::Version = "208";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -1254,10 +1254,6 @@ auto Interface::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool 
     system->setFirmware( typeId, data, size, allowPatching );
 }
 
-auto Interface::getCharRom() -> Firmware* {
-    return &firmwares[2];
-}
-
 auto Interface::setModelValue(unsigned modelId, int value) -> void {
     switch (modelId) {
 		case ModelIdSid:
@@ -1296,11 +1292,11 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->cia2.setNewVersion( value & 1 );
             break;
         case ModelIdCpuAneMagic:
-            //this is annoying ... look in 6502 cpu code for more informations
+            //this is annoying ... look in 6502 cpu code for more information
             system->cpu.setMagicForAne( value & 0xff );
             break;
 		case ModelIdCpuLaxMagic:
-            //this is annoying ... look in 6502 cpu code for more informations
+            //this is annoying ... look in 6502 cpu code for more information
             system->cpu.setMagicForLax( value & 0xff );
             break;
         case ModelIdGlueLogic:
@@ -1509,7 +1505,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdSid7: return system->sidManager.getType(6) == Sid::Type::MOS_6581 ? 1 : 0;
         case ModelIdSid8: return system->sidManager.getType(7) == Sid::Type::MOS_6581 ? 1 : 0;
 
-        case ModelIdDiskDriveModel:         return (int)system->iecBus.drives[0]->type;
+        case ModelIdDiskDriveModel:         return (int)Drive::globalType;
         case ModelIdDiskDrivesConnected:    return system->iecBus.drivesConnected;
         case ModelIdTapeDrivesConnected:    return system->tape.isEnabled() ? 1 : 0;
         case ModelIdTapeDriveWobble:        return system->tape.hasWobble() ? 1 : 0;

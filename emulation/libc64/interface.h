@@ -150,7 +150,6 @@ struct Interface : Emulator::Interface {
 
 	//firmware
 	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void;
-    auto getCharRom() -> Firmware*;
 	
 	//models
     auto setModelValue(unsigned modelId, int value) -> void;

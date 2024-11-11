@@ -140,6 +140,7 @@ struct Drive {
     uint8_t ue3Counter;
 
     static uint32_t refCyclesPerRevolution;
+    static Type globalType;
 
     uint8_t ue7Counter;
     uint8_t uf4Counter;

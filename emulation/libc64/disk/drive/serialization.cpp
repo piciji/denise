@@ -23,8 +23,11 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         s.array( ram80To9F, 8 * 1024);
     if (expandMemory & (uint8_t)ExpandedMemMode::MA0)
         s.array( ramA0ToBF, 8 * 1024);
-    if (speeder == 12)
+    if (speeder == 12) {
+        if (!turboTrans)
+            turboTrans = new uint8_t[ 512 * 1024 ];
         s.array( turboTrans, 512 * 1024);
+    }
 
     s.integer( driveCycles );
     s.integer( accum );
@@ -90,6 +93,7 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         s.integer(Drive::Mechanics::acceleration);
         s.integer(Drive::Mechanics::deceleration);
         s.integer(Drive::Mechanics::stepperSeekTime);
+        s.integer((uint8_t&)Drive::globalType);
     }
 
     if ((operation & DRIVE_MODE_158x) == 0) {

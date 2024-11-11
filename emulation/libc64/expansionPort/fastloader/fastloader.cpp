@@ -208,6 +208,8 @@ auto Fastloader::getJumper( ) -> bool {
 }
 
 auto Fastloader::serialize(Emulator::Serializer& s) -> void {
+    unsigned _cartridgeId = cartridgeId;
+    s.integer(_cartridgeId);
     Cart::serializeStep2( s );
 
     s.integer(kernalJumper);
@@ -221,8 +223,6 @@ auto Fastloader::serialize(Emulator::Serializer& s) -> void {
         s.integer(voltage);
         s.integer(chargeClock);
     }
-
-    ExpansionPort::serialize( s );
 }
 
 auto Fastloader::reset(bool softReset) -> void {

@@ -108,8 +108,8 @@ struct Interface {
             
             // layout of host keyboard and emulated keyboard are different for some keys.
             // to input some key combinations on host keyboard you need a print out of emulated keyboard.
-            // that would be cumbersome. its easier to overmap some key combinations of emulated system.            
-            // you could assign a single host key to input a emulated key combination.
+            // that would be cumbersome. it's easier to over map some key combinations of emulated system.
+            // you could assign a single host key to input an emulated key combination.
             // i.e. left and up cursor are secondary functions on c64 but host keyboard have all 4 keys.            
             std::vector<unsigned> shadowMap;            
             
@@ -324,7 +324,7 @@ struct Interface {
         virtual auto writeAssignedMedia(Media*, uint8_t*, unsigned) -> unsigned { return 0; }
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
         virtual auto truncateMedia(Media* ) -> bool { return false; }
-        virtual auto updateDeviceState(Media*, bool, unsigned, bool, bool ) -> void {}
+        virtual auto updateDeviceState(Media*, bool, unsigned, uint8_t, bool ) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
         virtual auto exit( int code ) -> void {}
         virtual auto midScreenCallback(uint8_t) -> void {}
@@ -394,7 +394,7 @@ struct Interface {
         return bind->truncateMedia( media );
     }
     
-    auto updateDeviceState(Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {
+    auto updateDeviceState(Media* media, bool write, unsigned position, uint8_t LED, bool motorOff ) -> void {
         bind->updateDeviceState(media, write, position, LED, motorOff);
     }
     
@@ -559,7 +559,6 @@ struct Interface {
     virtual auto getMemoryInitPattern( uint8_t* pattern ) -> void {}
     virtual auto getMemorySize() -> unsigned { return 0; }
     virtual auto setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void {}
-    virtual auto getCharRom() -> Firmware* { return nullptr; }
     
     virtual auto power() -> void {} //hard reset
 	virtual auto reset() -> void {} //soft reset

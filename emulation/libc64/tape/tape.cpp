@@ -121,7 +121,7 @@ auto Tape::registerCallbacks() -> void {
 
 auto Tape::updateDeviceState() -> void {
     if (system->processFrame())
-        system->interface->updateDeviceState( media, mode == Mode::Record, counter, false, !motorIn );
+        system->interface->updateDeviceState( media, mode == Mode::Record, counter, 0, !motorIn );
 }
 
 auto Tape::setMotorSound() -> void {

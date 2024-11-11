@@ -619,8 +619,12 @@ auto DiskDrive::updateDeviceState(bool force) -> void {
     if (!connected)
         return;
 
-    if (force || (selected && system->isDisplayFrame()))
-        interface->updateDeviceState( media, paula.fdcWriteMode(), (cylinder << 1) | side, motor, !motor );
+    if (force || (selected && system->isDisplayFrame())) {
+        uint8_t LED = 0;
+        if (motor)
+            LED = system->getModel() > 1 ? 1 : 2;
+        interface->updateDeviceState( media, paula.fdcWriteMode(), (cylinder << 1) | side, LED, !motor );
+    }
 }
 
 auto DiskDrive::enableSounds(bool state) -> void {

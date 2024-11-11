@@ -46,6 +46,7 @@ bool Drive::Mechanics::enabled = false;
 uint16_t Drive::Mechanics::acceleration = 0;
 uint16_t Drive::Mechanics::deceleration = 0;
 uint16_t Drive::Mechanics::stepperSeekTime = 0;
+Drive::Type Drive::globalType = Drive::Type::D1541II;
 
 #define SYNC_ROTATE_1541 \
     if (operation & DECODEDDATA_LEVEL) rotateDecoded();    \
@@ -970,14 +971,17 @@ Drive::~Drive() {
 
 auto Drive::updateDeviceState(bool forceOff) -> void {
     system->diskSilence.idleFrames = 0;
-    bool _led = forceOff ? false : !!(via2.lines.iob & 8);
+    uint8_t _led = (!forceOff && (via2.lines.iob & 8)) ? 1 : 0;
+    if (_led && (type == Type::D1570 || type == Type::D1541 || type == Type::D1541C))
+        _led = 2;
+
     bool _motorOff = forceOff ? true : !motorOn;
     system->interface->updateDeviceState( media, !readMode || wd1770.writeMode(), 0x8000 | ((side * MAX_TRACKS_1541 * 2) + currentHalftrack + 2), _led, _motorOff );
 }
 
 auto Drive::updateDeviceState1581(bool forceOff) -> void {
     system->diskSilence.idleFrames = 0;
-    bool _led = forceOff ? false : !!(cia.lines.ioa & 0x40);
+    uint8_t _led = (!forceOff && (cia.lines.ioa & 0x40)) ? 1 : 0;
     bool _motorOff = forceOff ? true : !motorOn;
     system->interface->updateDeviceState( media, wd1770.writeMode(), ((currentHalftrack + 1) << 1) | side, _led, _motorOff );
 }
@@ -1208,6 +1212,9 @@ auto Drive::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
             romExpandedMask = size ? (size - 1) : 0;
             break;
     }
+
+    if (iecBus.powerOn)
+        setFirmwareByType();
 }
 
 auto Drive::setViaTransition( bool direction ) -> void {
@@ -1330,7 +1337,7 @@ auto Drive::changeModelByType() -> bool {
     bool _d1581 = structure.type == DiskStructure::Type::D81 || structure.type == DiskStructure::Type::G81 || structure.type == DiskStructure::Type::P81;
 
     if (_f1541 && _d1571)
-        return iecBus.setDriveType(Type::D1571, media), true;
+        return iecBus.setDriveType((globalType == Type::D1570) ? globalType : Type::D1571, media), true;
     if (_f1541 && _d1581)
         return iecBus.setDriveType(Type::D1581, media), true;
     //if (_f1571 && _d1541)
@@ -1338,9 +1345,9 @@ auto Drive::changeModelByType() -> bool {
     if (_f1571 && _d1581)
         return iecBus.setDriveType(Type::D1581, media), true;
     if (_f1581 && _d1541)
-        return iecBus.setDriveType(Type::D1541II, media), true;
+        return iecBus.setDriveType((globalType == Type::D1541 || globalType == Type::D1541C) ? globalType : Type::D1541II, media), true;
     if (_f1581 && _d1571)
-        return iecBus.setDriveType(Type::D1571, media), true;
+        return iecBus.setDriveType((globalType == Type::D1570) ? globalType : Type::D1571, media), true;
 
     return false;
 }
