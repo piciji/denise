@@ -112,10 +112,11 @@ auto DiskStructure::prepareG81() -> void {
     unsigned maxTracks = rawData[9];
     int error;
 
-    for (uint8_t track = 0; track < MAX_TRACKS_1581; track++) {
-        for( uint8_t side = 0; side < sides; side++ ) {
+    for( uint8_t side = 0; side < sides; side++ ) {
+        for (uint8_t track = 0; track < MAX_TRACKS_1581; track++) {
             MTrack* trackPtr = &gcrTracks[side][track];
-            unsigned trackPos = (track << 1) | side;
+            //unsigned trackPos = (track << 1) | side;
+            unsigned trackPos = side * MAX_TRACKS_1581 + track;
 
             if (trackPtr->data)
                 delete[] trackPtr->data;
@@ -569,7 +570,8 @@ auto DiskStructure::writeG81(const MTrack* trackPtr, uint8_t side, unsigned trac
     uint8_t buf[4];
     bool appendTrack = false;
 
-    unsigned trackPos = (track << 1) | side;
+    //unsigned trackPos = (track << 1) | side;
+    unsigned trackPos = side * MAX_TRACKS_1581 + track;
 
     uint32_t offset = getTrackOffsetGxx( trackPos, error );
 
@@ -664,10 +666,12 @@ auto DiskStructure::createG81(const std::string& diskName) -> uint8_t* {
     Emulator::copyIntToBuffer<uint16_t>( &ptr[10], maxBytes );
     ptr += 12;
 
-    for (uint8_t track = 0; track < 80; track++) {
-        for( uint8_t side = 0; side < 2; side++ ) {
-            unsigned trackPos = (track << 1) | side;
-            unsigned trackOffset = 12 + MAX_TRACKS_1581 * 2 * 4 + trackPos * (maxBytes + 4);
+    for( uint8_t side = 0; side < 2; side++ ) {
+        for (uint8_t track = 0; track < TYPICAL_TRACKS_1581; track++) {
+            //unsigned trackPos = (track << 1) | side;
+            unsigned trackPos = side * MAX_TRACKS_1581 + track;
+            unsigned trackOffset = 12 + MAX_TRACKS_1581 * 2 * 4 + ((side * TYPICAL_TRACKS_1581) + track) * (maxBytes + 4);
+
             MTrack* trackPtr = &structure.gcrTracks[side][track];
             structure.encodeMfm(trackPtr);
 

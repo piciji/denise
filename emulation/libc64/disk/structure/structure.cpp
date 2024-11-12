@@ -742,6 +742,28 @@ auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector )
             track -= tracksInDxx;
         }
         return readSector(rawData, buffer, track, sector, offset);
+
+    } else if (type == Type::D81) {
+        offset = (track - 1) * 40 * 256 + sector * 256;
+        if ((offset + 256) > rawSize)
+            return false;
+
+        std::memcpy( buffer, rawData + offset, 256 );
+        return true;
+    } else if (type == Type::G81 || type == Type::P81) {
+        uint8_t _side = 0;
+        // convert logical to physical sector
+        if (sector >= 20) {
+            _side = 1;
+            sector -= 20;
+        }
+        auto _mTrack = getTrackPtr(_side, track-1);
+        uint8_t _buf[512];
+        if (!decodeSectorMfm( _mTrack, track - 1, (sector >> 1) + 1, &_buf[0]))
+            return false;
+
+        std::memcpy( buffer, sector & 1 ? _buf + 256 : _buf, 256);
+        return true;
     }
 
     if (track > 35) {

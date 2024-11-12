@@ -828,8 +828,8 @@ namespace LIBC64 {
 
         structure.prepareG81();
 
-        for (unsigned track = 0; track < 80; track++) {
-            for (int side = 0; side < 2; side++) {
+        for (int side = 0; side < 2; side++) {
+            for (unsigned track = 0; track < 80; track++) {
 
                 MTrack* mTrack = &structure.gcrTracks[side][track];
 

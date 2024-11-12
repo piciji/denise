@@ -667,7 +667,6 @@ structure(system, this) {
                     if (structure.autoStarted)
                         system->hintObserverMotorChange( _loadingState );
 
-                    //wd1770.setDiskAccessible(motorOn & loaded);
                     updateDeviceState1581();
                 }
 

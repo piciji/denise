@@ -208,6 +208,7 @@ struct VirtualDrive : BaseDevice {
 
     unsigned int last_read_track, last_read_sector;
     uint8_t last_read_buffer[256];
+    bool x81 = false;
 
     using Callback = std::function<void ()>;
     Callback finishEvent;
