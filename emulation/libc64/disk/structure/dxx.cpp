@@ -127,7 +127,7 @@ auto DiskStructure::prepareD81() -> void {
 
     for (uint8_t track = 0; track < MAX_TRACKS_1581; track++) {
         for( uint8_t side = 0; side < sides; side++ ) {
-            MTrack* trackPtr = &gcrTracks[side][track];
+            MTrack* trackPtr = &gcrTracks[1 - side][track];
 
             if (trackPtr->data)
                 delete[] trackPtr->data;
@@ -220,7 +220,8 @@ auto DiskStructure::writeD81(const MTrack* trackPtr, uint8_t side, unsigned trac
         }
     };
 
-    unsigned offset = track * 20 * 512 + (side ? (10 * 512) : 0);
+    //unsigned offset = track * 20 * 512 + (side ? (10 * 512) : 0);
+    unsigned offset = track * 20 * 512 + (side ? 0 : (10 * 512));
     uint16_t crc;
     uint16_t crcFetched;
     bool isSync = false;
@@ -229,7 +230,8 @@ auto DiskStructure::writeD81(const MTrack* trackPtr, uint8_t side, unsigned trac
     unsigned sector = 1;
     unsigned i = 0;
     unsigned tries = 0;
-    unsigned errPos = (side ? 20 : 0) + track * 40;
+    //unsigned errPos = (side ? 20 : 0) + track * 40;
+    unsigned errPos = (side ? 0 : 20) + track * 40;
 
     while(true) {
         if (isSync && (ptr[i] == 0xfc || ptr[i] == 0xfd || ptr[i] == 0xfe || ptr[i] == 0xff) ) {

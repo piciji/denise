@@ -162,10 +162,10 @@ auto DiskStructure::getDecodedMfmLogical(unsigned _track, unsigned _sector) -> u
     if (_track == 0 || _track > 80)
         return nullptr;
 
-    uint8_t _side = 0;
+    uint8_t _side = 1;
     // convert logical to physical sector
     if (_sector >= 20) {
-        _side = 1;
+        _side = 0;
         _sector -= 20;
     }
 

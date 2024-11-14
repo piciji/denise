@@ -96,7 +96,7 @@ namespace LIBC64 {
 
         std::memset( buf, 0, maxSize );
 
-        // dont change P64-1541 in P71-1571 in case of two sides, keep existing ident
+        // don't change P64-1541 in P64-1571 in case of two sides, keep existing ident
         std::memcpy( buf, rawData, 8 );
         offset += 8;
         // version = 0
@@ -724,10 +724,14 @@ namespace LIBC64 {
 
     auto DiskStructure::encodeMfmFromPulse(MTrack* gcrTrack) -> void {
         uint32_t lastPosition = 0;
-        uint32_t delta;
-        uint64_t accum = 0;
+        uint32_t delta = 1;
+        unsigned pulseDuration = 0;
         unsigned bits = 0;
         unsigned trackSize = 6250 * 2;
+        int pulseWidth;
+        unsigned todo;
+        Emulator::Rand randomizer;
+        randomizer.initXorShift( 0x1234abcd );
 
         if ( !gcrTrack->data )
             gcrTrack->data = new uint8_t[ trackSize ];
@@ -745,28 +749,67 @@ namespace LIBC64 {
         gcrTrack->written = 0x80;
         uint8_t* ptr = gcrTrack->data;
         std::memset( ptr, 0, trackSize );
-
         int32_t index = gcrTrack->firstPulse;
 
         while (index >= 0) {
-            DiskStructure::Pulse& pulse = gcrTrack->pulses[index];
-            index = pulse.next;
+            todo = delta;
 
-            if (pulse.strength < 0x80000000)
-                continue;
+            if (pulseDuration && (pulseDuration < todo))
+                todo = pulseDuration;
 
-            delta = pulse.position - lastPosition;
-            lastPosition = pulse.position;
+            if (pulseDuration) {
+                pulseDuration -= todo;
 
-            accum = (uint64_t)delta * (uint64_t)gcrTrack->bits;
-            while(accum >= CyclesPerRevolution300Rpm) {
-                accum -= CyclesPerRevolution300Rpm;
+                if (!pulseDuration) {
+                    switch(pulseWidth++) {
+                        case 0: pulseDuration = 16; break;  // 2.375 + 1.0 = 3.375
+                        case 1: pulseDuration = 16; bits++; break;  // 3.375 + 1.0 = 4.375
+                        // fuzzy bits (4 or 6 micro)
+                        case 2: pulseDuration = 16; break;  // 4.375 + 1.0 = 5.375
+                        case 3: pulseDuration = 16; bits++; break; // 5.375 + 1.0 = 6.375
+                        // fuzzy bits (6 or 8 micro)
+                        case 4: pulseDuration = 16; break;  // 6.375 + 1.0 = 7.375
+                        case 5: pulseDuration = 16; bits++; break; // 7.375 + 1.0 = 8.375
 
-                if (++bits == gcrTrack->bits)
-                    return;
+                        case 6: pulseDuration = 16; if ( (randomizer.xorShift() >> 16 ) & 1) pulseWidth = 9; break;  // 8.375 + 1.0 = 9.375
+                        case 7: pulseDuration = 16; bits++; break; // 9.375 + 1.0 = 10.375
+                        case 8: pulseDuration = 16; break;  // 10.375 + 1.0 = 11.375
+                        case 9: pulseDuration = 16; bits++; break; // 11.375 + 1.0 = 12.375
+                        case 10: pulseDuration = 16; if ((randomizer.xorShift() >> 16 ) & 1) pulseWidth = 13; break;  // 12.375 + 1.0 = 13.375
+                        case 11: pulseDuration = 16; bits++; break; // 13.375 + 1.0 = 14.375
+                        case 12: pulseDuration = 16; break;  // 14.375 + 1.0 = 15.375
+                        case 13: pulseDuration = 16; bits++; pulseWidth = 0; break; // 15.375 + 1.0 = 16.375
+                    }
+                }
             }
 
-            ptr[bits >> 3] |= 1 << (~bits & 7);
+            delta -= todo;
+            if (!delta) {
+                DiskStructure::Pulse& pulse = gcrTrack->pulses[index];
+                index = pulse.next;
+
+                if (pulse.strength < 0x80000000)
+                    continue;
+
+                delta = pulse.position - lastPosition;
+                lastPosition = pulse.position;
+
+                if (pulse.strength == 0xffffffff) {
+                    if (bits >= gcrTrack->bits)
+                        return;
+
+                    if (pulseWidth & 1) {
+                        ptr[bits >> 3] |= 1 << (~bits & 7);
+                    } else if (pulseWidth == 0) {
+                        // no flux area
+                    } else
+                        ptr[bits >> 3] |= 1 << (~bits & 7);
+
+                    bits++;
+                    pulseDuration = 38;    // 2.375
+                    pulseWidth = 0;
+                }
+            }
         }
     }
 
@@ -800,7 +843,7 @@ namespace LIBC64 {
         }
 
         if (sides == 2)
-            std::memcpy( structure.rawData, "P71-1571", 8 );
+            std::memcpy( structure.rawData, "P64-1571", 8 );
         else
             std::memcpy( structure.rawData, "P64-1541", 8 );
 
@@ -840,7 +883,7 @@ namespace LIBC64 {
             }
         }
 
-        std::memcpy( structure.rawData, "P81-1581", 8 );
+        std::memcpy( structure.rawData, "P64-1581", 8 );
 
         unsigned memSize = 0;
 

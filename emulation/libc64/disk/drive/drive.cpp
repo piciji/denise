@@ -677,7 +677,7 @@ structure(system, this) {
                 }
 
                 if ((lines->ioa ^ lines->ioaOld) & 1) {
-                    side = lines->ioa & 1;
+                    side = 1 - (lines->ioa & 1);
                     changeHalfTrack(0);
                 }
             }
@@ -1054,7 +1054,6 @@ auto Drive::power( ) -> void {
     byteReady = true;
     ca1Line = true;
     hidden = false;
-    cpu.power();
 
     wobblePos = 0;
     wobbleLimit = wobble >> 1;
@@ -1092,6 +1091,7 @@ auto Drive::power( ) -> void {
 
     extendedMemoryMap = expandMemory || (speeder > 1);
     wd1770.set2Mhz(type == Type::D1581);
+    cpu.power();
 
     if (system->driveSounds.useFloppy) {
         if (loaded && !iecBus.powerOn)

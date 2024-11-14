@@ -188,10 +188,10 @@ auto DiskStructure::analyze() -> bool {
     if ( analyzePxx("P64-1541", Type::P64) )
         return true;
 
-    if ( analyzePxx("P71-1571", Type::P71) )
+    if ( analyzePxx("P64-1571", Type::P71) )
         return true;
 
-    if ( analyzePxx("P81-1581", Type::P81) )
+    if ( analyzePxx("P64-1581", Type::P81) )
         return true;
 
     created = DiskStructure::createD64FromPRG( system, system->interface->getFileNameFromMedia(media), rawData, rawSize );
@@ -751,10 +751,10 @@ auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector )
         std::memcpy( buffer, rawData + offset, 256 );
         return true;
     } else if (type == Type::G81 || type == Type::P81) {
-        uint8_t _side = 0;
+        uint8_t _side = 1;
         // convert logical to physical sector
         if (sector >= 20) {
-            _side = 1;
+            _side = 0;
             sector -= 20;
         }
         auto _mTrack = getTrackPtr(_side, track-1);

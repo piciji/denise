@@ -668,7 +668,6 @@ auto DiskStructure::createG81(const std::string& diskName) -> uint8_t* {
 
     for( uint8_t side = 0; side < 2; side++ ) {
         for (uint8_t track = 0; track < TYPICAL_TRACKS_1581; track++) {
-            //unsigned trackPos = (track << 1) | side;
             unsigned trackPos = side * MAX_TRACKS_1581 + track;
             unsigned trackOffset = 12 + MAX_TRACKS_1581 * 2 * 4 + ((side * TYPICAL_TRACKS_1581) + track) * (maxBytes + 4);
 
