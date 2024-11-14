@@ -5,6 +5,8 @@
 #include "emuThread.h"
 #include "../emuconfig/config.h"
 #include "../input/manager.h"
+#include "../media/autoloader.h"
+#include "../media/fileloader.h"
 
 EmuThread* emuThread = nullptr;
 
@@ -14,10 +16,13 @@ EmuThread::EmuThread() {
     acknowledged = false;
     finishAudioRecord = false;
     pollHotkeys = false;
+    updatePaletteForSoftwareView = false;
     updateBorder = false;
     updateFps = false;
     dismissPlaceholder = false;
     enabled = false;
+    presentShaderError = false;
+    disableTraps = false;
 }
 
 EmuThread::~EmuThread() {
@@ -194,6 +199,11 @@ auto EmuThread::handleUIEvents() -> void {
 
         presentShaderError = false;
     }
+
+    if (disableTraps) {
+        disableTraps = false;
+        fileloader->autoload(activeEmulator, autoloader->getLatestDrive(activeEmulator), 0, false, true );
+    }
 }
 
 auto EmuThread::clearEvents() -> void {
@@ -202,6 +212,7 @@ auto EmuThread::clearEvents() -> void {
     updatePaletteForSoftwareView = false;
     updateBorder = false;
     pollHotkeys = false;
+    disableTraps = false;
 }
 
 auto EmuThread::lockHotkeys() -> void {

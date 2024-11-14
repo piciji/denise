@@ -749,9 +749,12 @@ auto Program::jam( Emulator::Interface::Media* media ) -> void {
 
 auto Program::trapsResult(Emulator::Interface::Media* media, bool error) -> void {
     if (activeEmulator && media && media->group->isDisk()) {
-        if (error)
-            fileloader->autoload(activeEmulator, media, 0, false, true );
-        else {
+        if (error) {
+            if (emuThread->enabled)
+                emuThread->disableTraps = true;
+            else
+                fileloader->autoload(activeEmulator, media, 0, false, true );
+        } else {
             auto manager = FirmwareManager::getInstance( activeEmulator );
             if (manager->getStoreLevelInConfig() != 0) {
                 manager->insert(true);
