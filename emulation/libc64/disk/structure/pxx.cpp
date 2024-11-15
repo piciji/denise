@@ -319,7 +319,7 @@ namespace LIBC64 {
 
                     halfTrack -= 2;
 
-                    MTrack* gcrPtr = &gcrTracks[side][halfTrack];
+                    MTrack* gcrPtr = &mTracks[side][halfTrack];
                     gcrPtr->pulses.clear();
 
                     uint32_t pulses = Emulator::copyBufferToInt<uint32_t>(_ptr);
@@ -602,7 +602,7 @@ namespace LIBC64 {
             for (int halfTrack = 0; halfTrack < (MAX_TRACKS_1541 * 2); halfTrack++) {
 
                 if ( !*inUse) {
-                    MTrack* gcrPtr = &gcrTracks[side][halfTrack];
+                    MTrack* gcrPtr = &mTracks[side][halfTrack];
 
                     if (gcrPtr->data)
                         delete[] gcrPtr->data;
@@ -833,7 +833,7 @@ namespace LIBC64 {
 
                 unsigned halfTrack = track << 1;
 
-                MTrack* gcrPtr = &structure.gcrTracks[side][halfTrack];
+                MTrack* gcrPtr = &structure.mTracks[side][halfTrack];
 
                 gcrPtr->written = gcrPtr->bits > 0;
 
@@ -874,7 +874,7 @@ namespace LIBC64 {
         for (int side = 0; side < 2; side++) {
             for (unsigned track = 0; track < 80; track++) {
 
-                MTrack* mTrack = &structure.gcrTracks[side][track];
+                MTrack* mTrack = &structure.mTracks[side][track];
 
                 mTrack->written = mTrack->bits > 0;
 

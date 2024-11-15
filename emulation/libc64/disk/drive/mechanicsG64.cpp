@@ -124,6 +124,7 @@ namespace LIBC64 {
             } while ( refCycles );
 
         } else { // write
+            // todo: set standard bit length depending on drive speed
             do {
                 todo = 1;
                 delta = _refCyclesPerRevolution - accum;

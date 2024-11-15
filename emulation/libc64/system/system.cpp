@@ -368,9 +368,12 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
             }
 
             if (iecBus.writeCia( ~lines->ioa )) {
-                diskSilence.idle = false;
+                if (diskSilence.idle) {
+                    diskSilence.idle = false;
+                    driveCycleSyncingUpdate();
+                }
+
                 diskSilence.idleFrames = 0;
-                driveCycleSyncingUpdate();
             }
         } else if (secondDriveCable.parallelUserport && lines->prbChange) {
             diskIdleOff();

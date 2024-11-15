@@ -48,11 +48,11 @@ drive(drive) {
 
     for( unsigned side = 0; side < 2; side++) {
         for (unsigned i = 0; i < (MAX_TRACKS * 2); i++) {
-            gcrTracks[side][i].data = nullptr;
-            gcrTracks[side][i].size = 0;
-            gcrTracks[side][i].bits = 1;
-            gcrTracks[side][i].written = 0;
-            gcrTracks[side][i].mfmSync = nullptr;
+            mTracks[side][i].data = nullptr;
+            mTracks[side][i].size = 0;
+            mTracks[side][i].bits = 1;
+            mTracks[side][i].written = 0;
+            mTracks[side][i].mfmSync = nullptr;
         }
     }
 
@@ -91,7 +91,7 @@ auto DiskStructure::detach() -> void {
 auto DiskStructure::clearTrackData() -> void {
     for( unsigned side = 0; side < 2; side++) {
         for (unsigned i = 0; i < (MAX_TRACKS * 2); i++) {
-            auto trackPtr = &gcrTracks[side][i];
+            auto trackPtr = &mTracks[side][i];
 
             if (trackPtr->data)
                 delete[] trackPtr->data;
@@ -590,8 +590,10 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
     if (!written || (s.mode() == Emulator::Serializer::Mode::Size))
         return;
 
-    bool fluxMode = (type == Type::P64) || (type == Type::P71);
-    bool mfmDecodedMode = (drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL);
+    bool fluxMode = (type == Type::P64) || (type == Type::P71) || (type == Type::P81);
+    // 1571 use decoded MFM data in G71
+    bool mfmDecodedMode = ((drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) ||
+        ((drive->operation & (DRIVE_MODE_158x | DECODEDDATA_LEVEL)) == (DRIVE_MODE_158x | DECODEDDATA_LEVEL));
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
@@ -693,8 +695,9 @@ auto DiskStructure::updateSerializationSize() -> void {
 auto DiskStructure::getStateImageSize() -> unsigned {
     
     unsigned neededSize = 0;
-    bool fluxMode = (type == Type::P64) || (type == Type::P71);
-    bool mfmDecodedMode = (drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL);
+    bool fluxMode = (type == Type::P64) || (type == Type::P71) || (type == Type::P81);
+    bool mfmDecodedMode = ((drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) ||
+    ((drive->operation & (DRIVE_MODE_158x | DECODEDDATA_LEVEL)) == (DRIVE_MODE_158x | DECODEDDATA_LEVEL));
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
@@ -723,7 +726,7 @@ auto DiskStructure::getStateImageSize() -> unsigned {
 
 auto DiskStructure::getTrackPtr( uint8_t side, uint8_t halfTrack ) -> MTrack* {
     
-    return &gcrTracks[ side ][ halfTrack ];
+    return &mTracks[ side ][ halfTrack ];
 }
 
 auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
@@ -773,7 +776,7 @@ auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector )
 
     track = track * 2 - 2;
 
-    MTrack* trackPtr = &gcrTracks[side][track];
+    MTrack* trackPtr = &mTracks[side][track];
 
     int err = decodeSector(trackPtr, buffer, sector);
 

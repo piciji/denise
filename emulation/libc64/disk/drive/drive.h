@@ -238,6 +238,7 @@ struct Drive {
     auto prologicControlClassic(uint8_t addr, uint8_t data) -> void;
     auto prologicControl(uint16_t addr) -> void;
     auto stepSound(bool headBang) -> void;
+    auto atLeastOneLoading() -> bool;
 };
   
 }

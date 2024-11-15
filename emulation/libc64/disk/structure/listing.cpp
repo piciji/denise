@@ -3,8 +3,8 @@ namespace LIBC64 {
 
 // support for following DIR chain to second side (don't know if C64 DOS using this)
 #define GTP(_T) \
-    (sides == 1) ? &gcrTracks[0][(_T - 1) * 2] \
-    : &gcrTracks[ (_T > TYPICAL_TRACKS) ? 1 : 0][ (((_T > TYPICAL_TRACKS) ? (_T - TYPICAL_TRACKS) : _T) - 1) * 2]
+    (sides == 1) ? &mTracks[0][(_T - 1) * 2] \
+    : &mTracks[ (_T > TYPICAL_TRACKS) ? 1 : 0][ (((_T > TYPICAL_TRACKS) ? (_T - TYPICAL_TRACKS) : _T) - 1) * 2]
 
 // C64 DOS (support 35 tracks per side)
 auto DiskStructure::createListing() -> void {

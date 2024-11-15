@@ -127,7 +127,7 @@ auto DiskStructure::prepareD81() -> void {
 
     for (uint8_t track = 0; track < MAX_TRACKS_1581; track++) {
         for( uint8_t side = 0; side < sides; side++ ) {
-            MTrack* trackPtr = &gcrTracks[1 - side][track];
+            MTrack* trackPtr = &mTracks[1 - side][track];
 
             if (trackPtr->data)
                 delete[] trackPtr->data;
@@ -340,7 +340,7 @@ auto DiskStructure::prepareDxx() -> void {
 
             unsigned halfTrack = track * 2 - 2;
             trackSize = countBytes(track);
-            MTrack* trackPtr = &gcrTracks[side][halfTrack];
+            MTrack* trackPtr = &mTracks[side][halfTrack];
 
             // there wasn't loaded any image before
             if (!trackPtr->data)
@@ -392,7 +392,7 @@ auto DiskStructure::prepareDxx() -> void {
                 disalignTrack(*trackPtr, track - 1);
             }
             // half tracks are not supported by D64
-            trackPtr = &gcrTracks[side][++halfTrack];
+            trackPtr = &mTracks[side][++halfTrack];
 
             if (trackPtr->data)
                 delete[] trackPtr->data;

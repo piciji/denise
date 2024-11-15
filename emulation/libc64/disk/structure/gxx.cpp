@@ -114,7 +114,7 @@ auto DiskStructure::prepareG81() -> void {
 
     for( uint8_t side = 0; side < sides; side++ ) {
         for (uint8_t track = 0; track < MAX_TRACKS_1581; track++) {
-            MTrack* trackPtr = &gcrTracks[side][track];
+            MTrack* trackPtr = &mTracks[side][track];
             //unsigned trackPos = (track << 1) | side;
             unsigned trackPos = side * MAX_TRACKS_1581 + track;
 
@@ -172,7 +172,7 @@ auto DiskStructure::prepareGxx() -> void {
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
-            MTrack* ptr = &gcrTracks[side][halfTrack];
+            MTrack* ptr = &mTracks[side][halfTrack];
             unsigned totalHalfTrack = side * MAX_TRACKS * 2 + halfTrack;
 
             if (ptr->data)
@@ -638,7 +638,7 @@ auto DiskStructure::imageSizeG71() -> unsigned {
 }
 
 auto DiskStructure::imageSizeG81() -> unsigned {
-    unsigned maxBytes = 6250 << 1;
+    unsigned maxBytes = 6450 << 1; // worst case
 
     return 12 + MAX_TRACKS_1581 * 2 * 4 + 80 * 2 * (maxBytes + 4 );
 }
@@ -661,7 +661,7 @@ auto DiskStructure::createG81(const std::string& diskName) -> uint8_t* {
     std::memcpy( ptr, "MFM-1581", 8 );
     ptr[8] = 0;
     ptr[9] = MAX_TRACKS_1581 * 2;
-    unsigned maxBytes = 6250 << 1;
+    unsigned maxBytes = 6450 << 1;
 
     Emulator::copyIntToBuffer<uint16_t>( &ptr[10], maxBytes );
     ptr += 12;
@@ -671,14 +671,14 @@ auto DiskStructure::createG81(const std::string& diskName) -> uint8_t* {
             unsigned trackPos = side * MAX_TRACKS_1581 + track;
             unsigned trackOffset = 12 + MAX_TRACKS_1581 * 2 * 4 + ((side * TYPICAL_TRACKS_1581) + track) * (maxBytes + 4);
 
-            MTrack* trackPtr = &structure.gcrTracks[side][track];
+            MTrack* trackPtr = &structure.mTracks[side][track];
             structure.encodeMfm(trackPtr);
 
             Emulator::copyIntToBuffer<uint32_t>(&ptr[trackPos * 4], trackOffset);
 
             Emulator::copyIntToBuffer<uint32_t>(temp2 + trackOffset, trackPtr->bits);
 
-            std::memcpy( temp2 + trackOffset + 4, trackPtr->data, maxBytes );
+            std::memcpy( temp2 + trackOffset + 4, trackPtr->data, trackPtr->size );
         }
     }
 
@@ -726,7 +726,7 @@ auto DiskStructure::createGxx( std::string diskName, uint8_t sides ) -> uint8_t*
 
         for (unsigned track = 0; track < TYPICAL_TRACKS; track++) {
 
-            // not to waste space we dont't include half tracks during image creation.
+            // not to waste space we don't include half tracks during image creation.
             // therefore we leave room (4 bytes) between the offset values. offsets for half tracks will be
             // added later if needed.
             // to calculate the offset value we have to keep in mind that a speed map is following the
@@ -921,7 +921,7 @@ auto DiskStructure::encodeMfm(MTrack* mTrack) -> void {
 auto DiskStructure::logTrackSkew() -> void {
     for (uint8_t track = 1; track <= MAX_TRACKS; track++) {
         unsigned halfTrack = track * 2 - 2;
-        MTrack* trackPtr = &gcrTracks[0][halfTrack];
+        MTrack* trackPtr = &mTracks[0][halfTrack];
         unsigned offset = 0;
         int offsetTemp = -1;
         uint8_t header[4];

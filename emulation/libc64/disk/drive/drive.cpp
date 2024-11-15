@@ -656,16 +656,8 @@ structure(system, this) {
                     if (system->driveSounds.useFloppy)
                         system->interface->mixDriveSound( this->media, motorOn ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown, true );
 
-                    bool _loadingState = false;
-                    for( auto drive : system->iecBus.drivesEnabled ) {
-                        if (drive->motorOn) {
-                            _loadingState = true;
-                            break;
-                        }
-                    }
-
                     if (structure.autoStarted)
-                        system->hintObserverMotorChange( _loadingState );
+                        system->hintObserverMotorChange( atLeastOneLoading() );
 
                     updateDeviceState1581();
                 }
@@ -893,16 +885,8 @@ structure(system, this) {
                 
                 updateDeviceState();
 
-                bool _loadingState = false;
-                for( auto drive : system->iecBus.drivesEnabled ) {
-                    if (drive->motorOn) {
-                        _loadingState = true;
-                        break;
-                    }
-                }
-
                 if (structure.autoStarted)
-                    system->hintObserverMotorChange( _loadingState );
+                    system->hintObserverMotorChange( atLeastOneLoading() );
             }
             
             // LED status change
@@ -1501,6 +1485,14 @@ auto Drive::setSpeeder(uint8_t speeder) -> void {
 
 auto Drive::hide() -> void {
     hidden = true;
+}
+
+auto Drive::atLeastOneLoading() -> bool {
+    for( auto drive : iecBus.drivesEnabled ) {
+        if (drive->motorOn)
+            return true;
+    }
+    return false;
 }
 
 }

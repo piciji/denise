@@ -145,7 +145,7 @@ private:
     uint32_t rawSize;
 	uint8_t* created = nullptr;
     uint8_t sides;
-    MTrack gcrTracks[2][ MAX_TRACKS_1541 * 2 ];
+    MTrack mTracks[2][ MAX_TRACKS_1541 * 2 ];
 
     // G64 / G71
     unsigned maxTrackLength;
