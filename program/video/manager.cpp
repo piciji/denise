@@ -310,7 +310,8 @@ auto VideoManager::convertLumaChromaToRGB() -> void {
         else
 			convertYIQToRGB( &rgb, &lumaChromaTable[c] );
 
-		if (pal && colorSpectrum) {
+		//if (pal && colorSpectrum) {
+        if (pal && (colorSpectrum || crtRealGamma)) {
 			normalizeColorSpectrumPalGamma(rgb.r);
 			normalizeColorSpectrumPalGamma(rgb.g);
 			normalizeColorSpectrumPalGamma(rgb.b);
