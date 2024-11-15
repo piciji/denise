@@ -1235,8 +1235,10 @@ namespace DRIVER {
             return;
         }
 
-        if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)backBuffer, nullptr, &rtv)))
+        if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)backBuffer, nullptr, &rtv))) {
+            resizeMutexThreaded.unlock();
             return;
+        }
 
         dxRelease(backBuffer)
 

@@ -728,7 +728,7 @@ namespace LIBC64 {
         unsigned pulseDuration = 0;
         unsigned bits = 0;
         unsigned trackSize = 6250 * 2;
-        int pulseWidth;
+        int pulseWidth = 0;
         unsigned todo;
         Emulator::Rand randomizer;
         randomizer.initXorShift( 0x1234abcd );
