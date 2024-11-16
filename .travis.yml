@@ -1,4 +1,4 @@
-# TEST RUN
+
 branches:
   only:
     - master
@@ -8,6 +8,7 @@ branches:
 
 language: generic
 dist: focal
+os: linux
 
 jobs:
   include:
@@ -51,7 +52,6 @@ after_success:
 
 
 deploy:
-  skip_cleanup: true
   provider: script
   script: sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${debFile}" piciji@frs.sourceforge.net:"${debTarget}"
   edge: true
