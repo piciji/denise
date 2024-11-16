@@ -19,6 +19,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
+    - fse_test
 
 environment:
   matrix:
