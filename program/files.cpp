@@ -225,7 +225,7 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, FileSetting* fS
         return;
     }        
     
-    if ( (media->group->isExpansion() && !media->secondary) || (!_media && !media->group->isProgram())
+    if ( (media->group->isExpansion() && !media->group->expansion->isFastloader() && !media->secondary) || (!_media && !media->group->isProgram())
     || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
     || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {
         updateSaveIdent( activeEmulator, fSetting );

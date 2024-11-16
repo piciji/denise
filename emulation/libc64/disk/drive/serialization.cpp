@@ -23,8 +23,11 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         s.array( ram80To9F, 8 * 1024);
     if (expandMemory & (uint8_t)ExpandedMemMode::MA0)
         s.array( ramA0ToBF, 8 * 1024);
-    if (speeder == 12)
+    if (speeder == 12) {
+        if (!turboTrans)
+            turboTrans = new uint8_t[ 512 * 1024 ];
         s.array( turboTrans, 512 * 1024);
+    }
 
     s.integer( driveCycles );
     s.integer( accum );
@@ -78,6 +81,7 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( turboTransPage );
     s.integer( proSpeedControl );
     s.integer( hidden );
+    s.integer( dskChange );
 
     if (number == 0) {
         s.integer(Drive::rpm);
@@ -89,15 +93,16 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         s.integer(Drive::Mechanics::acceleration);
         s.integer(Drive::Mechanics::deceleration);
         s.integer(Drive::Mechanics::stepperSeekTime);
+        s.integer((uint8_t&)Drive::globalType);
     }
 
-    via1.serialize( s );
-    via2.serialize( s );
+    if ((operation & DRIVE_MODE_158x) == 0) {
+        via1.serialize( s );
+        via2.serialize( s );
+    }
     cpu.serialize( s );
 
-    s.integer( structure.encodingGraceful.status );
-
-    if (operation & DRIVE_MODE_157x) {
+    if (operation & (DRIVE_MODE_157x | DRIVE_MODE_158x) ) {
         cia.serialize(s);
         wd1770.serialize(s);
     }
@@ -112,25 +117,16 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         updateCycleSpeed( use2Mhz() );
 
         setFirmwareByType();
+
         gcrTrack = structure.getTrackPtr( side, currentHalftrack );
 
-        if ( (type == Type::D1570) && (side == 1) ) {
-            gcrTrack = dummyTrack;
-        }
-
-        if (operation & DRIVE_MODE_157x) {
-            wd1770.setTrack( gcrTrack, gcrTrack == dummyTrack );
+        if (operation & (DRIVE_MODE_157x  | DRIVE_MODE_158x) ) {
+            wd1770.setTrack( gcrTrack );
             wd1770.setDiskAccessible( motorOn && loaded );
         }
 
-        // unserialize VIA before to get state of LED
-        updateDeviceState();
-
-        if (structure.encodingGraceful.status)
-            // state was generated during attaching P64 (gracefully)
-            postAttach();
-
-        structure.encodingGraceful.reset();
+        // unserialize VIA, CIA before to get state of LED
+        (operation & DRIVE_MODE_158x) ? updateDeviceState1581() : updateDeviceState();
     }
        
     structure.serialize( s, written );

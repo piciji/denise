@@ -3,8 +3,11 @@
 
 namespace LIBC64 {   
     
-auto Drive::rotateD64() -> void {
+template<bool withWd1770> auto Drive::rotateDecoded() -> void {
     static unsigned _driveCycles;
+
+    if constexpr (withWd1770)
+        wd1770.rotateDecoded(0); // D71 is GCR only
 
     if (!mechanics.motorDelay) {
         if (!motorOn)
@@ -82,7 +85,7 @@ auto Drive::rotateD64() -> void {
             via2.ca1In( ca1Line = true );
 
         // switch to more accurate G64 handling: SpeedAlignTest_Equalizer.d64
-        operation &= ~USERDATA_LEVEL;
+        operation &= ~DECODEDDATA_LEVEL;
         operation |= ENCODEDDATA_LEVEL;
     }
 }
@@ -129,17 +132,17 @@ auto Drive::byteFetched( bool overflowNotThisCycle ) -> void {
 
 inline auto Drive::readBit() -> bool {
     uint8_t* trackPtr = gcrTrack->data;
-    
-//    if (!loaded)
-  //      return 0;
 
     unsigned byte = headOffset >> 3;
     uint8_t bit = (~headOffset) & 7; // msb is next
     
     headOffset++;
 
-    if ( headOffset >= gcrTrack->bits )
-        headOffset = 0; // wrap around the ring buffer 
+    if ( headOffset >= gcrTrack->bits ) {
+        if (headOffset > gcrTrack->bits)
+            byte = bit = 0;
+        headOffset = 0;
+    }
     
     if (!trackPtr)
         return 0;
@@ -158,8 +161,11 @@ inline auto Drive::writeBit( bool state ) -> void {
     
     headOffset++;
 
-    if ( headOffset >= gcrTrack->bits )
-        headOffset = 0; // wrap around the ring buffer 
+    if ( headOffset >= gcrTrack->bits ) {
+        if (headOffset > gcrTrack->bits)
+            byte = bit = 0;
+        headOffset = 0;
+    }
     
     if (!trackPtr || writeProtected)
         return;
@@ -212,7 +218,11 @@ auto Drive::motorRun(unsigned& refCycles) -> bool {
         }
     }
 
-    refCycles = (unsigned)( (float)refCycles * rpmFactor );
+    refCycles = (unsigned)( (float)refCycles / rpmFactor );
+
+    float factor = (float)refCycles / (float)mechanics.refCycles;
+    accum = (float)accum * factor + 0.5;
+    wd1770.updateAccum(factor);
 
     mechanics.refCycles = refCycles; // to speed things up use this for next 255 cycles
 
@@ -225,7 +235,7 @@ auto Drive::motorChangeInit() -> void {
     if (mechanics.enabled) {
         if ((motorOn && mechanics.acceleration) || (!motorOn && mechanics.deceleration)) {
             mechanics.motorDelay = MaxAccDecMotorTime - mechanics.motorDelay;
-            mechanics.refCycles = (operation & USERDATA_LEVEL) ? driveCycles : refCyclesPerRevolution;
+            mechanics.refCycles = (operation & DECODEDDATA_LEVEL) ? driveCycles : refCyclesPerRevolution;
         } else
             mechanics.motorDelay = 0;
     } else
@@ -233,57 +243,23 @@ auto Drive::motorChangeInit() -> void {
 }
 
 auto Drive::randomizeRpm(std::vector<Drive*>& drivesEnabled) -> void {
-    
-    // drive speed is 300 rounds per minute
-    // more realistic speed wobbles between 299,75 - 300,25
-    // so we could generate a random number in a range of 0.5
-    // generating random integer numbers is easier, lets scale up
-    // 0.5 rpm * 100 = 50
-    // 300 rpm * 100 = 30000
-    // unsigned adjusted = rpm + (rand() % (wobble + 1) ) - (wobble / 2);
-    // there are fixed values how many bits passed the r/w head each second within a speed zone.
-    // however these values are valid for a rotation speed of exactly 300 rpm
-    // we solve this by a simple proportion:
-    // when
-    // adjusted = 1000000 cpu cycles
-    // then
-    // 30000 = drive cycles per second
-    // drive cycles per second = 30000 * 1000000 / adjusted
-    // driveCycles = (30000ULL * frequency) / adjusted;
-    // so we get the amount of cycles per second for adjusted motor speed.
-    // now we could calculate the amount of bits passed for any amount of cpu drive cycles
-    // by following proportion:
-    // bits per speedzone [bps] = drive cycles per second
-    // bits passed              = cpu cycles passed
-    
-    // bits passed = bits per speedzone * cpu cycles passed / drive cycles per second
-    
-    // for g64 rotation, we apply the randomness for drive speed on reference cycles
-    // refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjusted;
+    unsigned adjustedRpm = rpm;
 
-    if (wobble) {
+    if (wobble) { // todo: How does the wobble really behave? sine wave or more random ?
         if (wobbleLimit < 0) { // neg
-            if (--wobblePos < wobbleLimit) {
+            if (--wobblePos < wobbleLimit)
                 wobbleLimit = wobble >> 1;
-            }
         } else {
-            if (++wobblePos > wobbleLimit) {
+            if (++wobblePos > wobbleLimit)
                 wobbleLimit = -(int)(wobble >> 1);
-            }
         }
-
-        unsigned adjusted = rpm + wobblePos;
-
-        for (auto drive : drivesEnabled)
-            drive->driveCycles = (30000ULL * drive->frequency) / adjusted;
-
-        refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjusted;
-    } else {
-        for (auto drive : drivesEnabled)
-            drive->driveCycles = (30000ULL * drive->frequency) / rpm;
-
-        refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / rpm;
+        adjustedRpm += wobblePos;
     }
+
+    for (auto drive : drivesEnabled)
+        drive->driveCycles = (30000ULL * drive->frequency) / adjustedRpm;
+
+    refCyclesPerRevolution = (30000ULL * CyclesPerRevolution300Rpm) / adjustedRpm;
 }
 
 auto Drive::updateStepper( uint8_t step ) -> bool {
@@ -338,7 +314,6 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
     }
 
     if (operation & FLUXDATA_LEVEL) {
-
         unsigned position = 0;
 
         if (pulseIndex >= 0) {
@@ -367,39 +342,37 @@ auto Drive::changeHalfTrack( uint8_t step ) -> void {
 
         wd1770.setPulseIndex(pulseIndex, pulseDelta);
 
-    } else {    // D64, G64
-        unsigned oldTrackSize = gcrTrack->size;
+    } else {
+        unsigned oldTrackSize = gcrTrack ? gcrTrack->size : 0;
 
         // pointer to next track
         gcrTrack = structure.getTrackPtr( side, currentHalftrack );
 
-        if ( oldTrackSize != 0 )
-            // we want to keep alignment between old and new track.
-            // head offset doesn't change if both tracks have same size, otherwise we use a simple proportion
-            // old head offset = new head offset
-            // old size = new size
-            // new head offset = old head * new size / old size
-            headOffset = ( headOffset * gcrTrack->size ) / oldTrackSize;
+        if ((operation & DRIVE_MODE_158x) == 0) {
+            if ( oldTrackSize != 0 )
+                // we want to keep alignment between old and new track.
+                // head offset doesn't change if both tracks have same size, otherwise we use a simple proportion
+                // old head offset = new head offset
+                // old size = new size
+                // new head offset = old head * new size / old size
+                headOffset = ( headOffset * gcrTrack->size ) / oldTrackSize;
 
-         else
-            headOffset = 0;
+             else
+                headOffset = 0;
+        }
     }
 
-    if ( (type == Type::D1570) && (side == 1) ) {
-        gcrTrack = dummyTrack;
-        wd1770.setTrack( dummyTrack, true );
-    } else
+    if (operation & (DRIVE_MODE_157x | DRIVE_MODE_158x))
         wd1770.setTrack(gcrTrack);
 
-    updateDeviceState( );
-
+    (operation & DRIVE_MODE_158x) ? updateDeviceState1581() : updateDeviceState();
 }
 
 auto Drive::stepSound(bool headBang) -> void {
 
     DriveSound sound = headBang ? DriveSound::FloppyHeadBang : DriveSound::FloppyStep;
 
-    system->interface->mixDriveSound( media, sound, currentHalftrack );
+    system->interface->mixDriveSound( media, sound, false, currentHalftrack );
 }
 
 inline auto Drive::syncFound() -> uint8_t {
@@ -411,4 +384,3 @@ inline auto Drive::syncFound() -> uint8_t {
 }
 
 }
-

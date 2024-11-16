@@ -252,7 +252,7 @@ namespace DRIVER {
             HWND parent = Win::getParentHandle(settings.handle);
             int adapterId = Win::getFullscreenAdapter(parent);
             if (adapterId >= 0) {
-             //   wait();
+                //wait();
                 settings.exclusiveFullscreen = true;
                 resizeMutexThreaded.lock();
                 initSwapChain(symbols, device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
@@ -1235,8 +1235,11 @@ namespace DRIVER {
             return;
         }
 
-        if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)backBuffer, nullptr, &rtv)))
+        if (FAILED(device->CreateRenderTargetView((ID3D11Resource*)backBuffer, nullptr, &rtv))) {
+            dxRelease(backBuffer)
+            resizeMutexThreaded.unlock();
             return;
+        }
 
         dxRelease(backBuffer)
 

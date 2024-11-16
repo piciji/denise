@@ -859,6 +859,8 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         }
     }
 
+    auto waitRenderThread() -> void { if (threadEnabled) wait(); }
+
     auto hasVRR() -> bool { return settings.vrr; }
 
     auto waitVRR() -> void {

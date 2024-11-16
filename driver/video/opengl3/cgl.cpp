@@ -583,6 +583,8 @@ struct CGL : public Video, GL3, RenderThread {
             initVRR(speed);
     }
 
+    auto waitRenderThread() -> void { if (threadEnabled) wait(); }
+
     auto hasVRR() -> bool { return settings.vrr; }
 
     auto getShaderNativeVertexCode(std::string& slang, std::string& out) -> bool {

@@ -15,6 +15,8 @@
 namespace LIBC64 {
 
 #define MAX_TRACKS_1541 42
+#define MAX_TRACKS_1581 84
+#define TYPICAL_TRACKS_1581 80
 
 struct VirtualDrive;
 struct System;
@@ -34,7 +36,7 @@ struct DiskStructure {
 
 	static const float SKEW[42];
     
-    enum class Type { D64, G64, P64, D71, G71, P71, Unknown = -1 } type;
+    enum class Type { D64, G64, P64, D71, G71, P71, D81, G81, P81, Unknown = -1 } type;
 
     System* system;
 	uint8_t number;
@@ -72,7 +74,7 @@ struct DiskStructure {
         unsigned bits = 1;
         uint8_t written = 0;
 
-        // not needed for flux based MFM
+        // not needed for MFM or Flux
         uint8_t* mfmSync = nullptr;
 
         int32_t firstPulse = -1;
@@ -80,19 +82,6 @@ struct DiskStructure {
         int32_t currentPulse = -1;
         std::vector<Pulse> pulses;
     };
-
-    struct {
-        uint8_t* ptr = nullptr;
-        unsigned offset = 0;
-        bool inUse[MAX_TRACKS_1541 * 2 * 2] = { 0 };
-        uint8_t status = 0;
-
-        auto reset() -> void {
-            ptr = nullptr;
-            offset = 0;
-            status = 0;
-        }
-    } encodingGraceful;
 
     std::vector<Emulator::Interface::Listing> listings;
     std::vector<std::vector<uint8_t>> loader;
@@ -108,9 +97,11 @@ struct DiskStructure {
     static auto create( Type newType, std::string diskName ) -> Emulator::Interface::Data;
     
     auto getTrackPtr( uint8_t side, uint8_t halfTrack ) -> MTrack*;
-    auto attach( uint8_t* data, unsigned size, bool loadGracefully = false ) -> bool;
+    auto attach( uint8_t* data, unsigned size ) -> bool;
     auto detach() -> void;
     auto createListing() -> void;
+	auto createListingMfm() -> void;
+	auto getDecodedMfmLogical(unsigned _track, unsigned _sector) -> uint8_t*;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto selectListing( unsigned pos, uint8_t options = 0 ) -> void;
     auto selectListing( std::string fileName, uint8_t options = 0 ) -> void;
@@ -144,9 +135,9 @@ struct DiskStructure {
     static auto freePulse( MTrack* gcrTrack, int32_t index ) -> void;
 
     auto updateSerializationSize() -> void;
-    auto prepareP64Graceful() -> void;
 
     auto readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool;
+	auto readSectorMfm(MTrack* mTrack, uint8_t _track, uint8_t _sector, uint8_t* _data) -> bool;
 	auto logTrackSkew() -> void;
     
 private:    
@@ -154,7 +145,7 @@ private:
     uint32_t rawSize;
 	uint8_t* created = nullptr;
     uint8_t sides;
-    MTrack gcrTracks[2][ MAX_TRACKS_1541 * 2 ];
+    MTrack mTracks[2][ MAX_TRACKS_1541 * 2 ];
 
     // G64 / G71
     unsigned maxTrackLength;
@@ -166,41 +157,54 @@ private:
 
     auto analyzeD64() -> bool;
     auto analyzeD71() -> bool;
+	auto analyzeD81() -> bool;
     auto analyzeG64() -> bool;
     auto analyzeG71() -> bool;
-    auto analyzeP64() -> bool;
-    auto analyzeP71() -> bool;
+	auto analyzeG81() -> bool;
+	auto analyzePxx(const std::string& ident, Type newType ) -> bool;
     
     static auto createDxx( std::string diskName, uint8_t sides = 1 ) -> uint8_t*;
+	static auto createD81( std::string diskName ) -> uint8_t*;
     static auto createGxx( std::string diskName, uint8_t sides = 1 ) -> uint8_t*;
+	static auto createG81(const std::string& diskName) -> uint8_t*;
     static auto createPxx( std::string diskName, uint8_t sides = 1 ) -> Emulator::Interface::Data;
+	static auto createP81( const std::string diskName ) -> Emulator::Interface::Data;
     static auto cutId( std::string& diskName ) -> std::string;
     
     static auto imageSizeG64() -> unsigned;
     static auto imageSizeG71() -> unsigned;
+	static auto imageSizeG81() -> unsigned;
     static auto imageSizeD64() -> unsigned;
     static auto imageSizeD71() -> unsigned;
+	static auto imageSizeD81() -> unsigned;
         
     auto prepareGxx() -> void;
+	auto prepareG81() -> void;
     auto prepareDxx() -> void;
+	auto prepareD81() -> void;
     auto preparePxx() -> void;
-    auto getTrackOffsetGxx( uint8_t halfTrack, int& error ) -> uint32_t;
+    auto getTrackOffsetGxx( uint8_t _track, int& error ) -> uint32_t;
     auto handleAppendedTracksInDxx() -> bool;
+	auto handleAppendedTracksInD81() -> bool;
     auto addMfmByte(uint8_t*& dest, uint8_t data, uint16_t& crc) -> void;
     auto calcMfmCrc(uint8_t data, uint16_t& crc) -> void;
     auto parseMfm(MTrack* trackPtr, unsigned offset) -> void;
     auto writeMfm(const MTrack* trackPtr, unsigned offset) -> bool;
         
     auto writeDxx(const MTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool;
+	auto writeD81(const MTrack* trackPtr, uint8_t side, unsigned track, bool& errorMapChanged) -> bool;
     auto writeGxx(const MTrack* trackPtr, uint8_t side, unsigned halfTrack) -> bool;
+	auto writeG81(const MTrack* trackPtr, uint8_t side, unsigned track) -> bool;
     auto writeP64ToMem(unsigned& memSize) -> uint8_t*;
     auto writePxx() -> bool;
     
     static auto writeSector( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset = 0) -> void;
+	static auto writeSectorD81( uint8_t* target, uint8_t* buffer, uint8_t track, uint8_t sector) -> void;
     static auto readSector( uint8_t* src, uint8_t* buffer, uint8_t track, uint8_t sector, unsigned offset = 0 ) -> bool;
     static auto createBAM( std::string diskName, uint8_t* buffer, uint8_t* bufferSecondSide = nullptr ) -> void;
 
-    static auto encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void;    
+    static auto encodeSector(const uint8_t* src, uint8_t* target, uint8_t track, uint8_t sector, uint8_t id1, uint8_t id2, int errorCode) -> void;
+	static auto decodeSectorMfm(MTrack* mTrack, uint8_t _track, uint8_t _sector, uint8_t* _data) -> bool;
     auto decodeSector( const MTrack* trackPtr, uint8_t* dest, uint8_t sector ) -> int;
     auto findSync( const MTrack* trackPtr, unsigned& offset, unsigned size ) -> bool;
     auto decode( const MTrack* trackPtr, unsigned offset, uint8_t* buffer, unsigned blockCount ) -> void;
@@ -208,11 +212,13 @@ private:
 	inline auto decodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors ) -> unsigned;
     inline auto encodeP64( Emulator::Fpaq0& fpaq0, std::vector<Emulator::PredictorEightBitWithPrefix*>& predictors, unsigned value ) -> void;
     auto decodeJob( std::vector<uint8_t*>* workLoad, bool* usePtr ) -> bool;
-    auto encodeGCR(MTrack* gcrTrack, uint8_t halfTrack) -> void;
+    auto encodeGCRFromPulse(MTrack* gcrTrack, uint8_t halfTrack) -> void;
+	auto encodeMfmFromPulse(MTrack* gcrTrack) -> void;
     auto prepareTracksNotInUse(bool* inUse) -> void;
-    auto createPulsesFromGCR(MTrack* gcrTrack) -> void;
+    auto createPulsesFromEncoded(MTrack* gcrTrack) -> void;
     static auto allocatePulse( std::vector<Pulse>& pulses ) -> unsigned;
     static auto disalignTrack(MTrack& track, unsigned pos) -> void;
+	auto encodeMfm(MTrack* mTrack) -> void;
 };
 
 }

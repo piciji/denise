@@ -208,6 +208,12 @@ auto View::build() -> void {
         videoDriver->activateApp(true);
     };
 
+    onMinimize = [this]() {
+        static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
+        program->isPause &= ~2;
+        program->isPause |= (!!*pauseFocusLoss) << 1;
+    };
+
     onUnminimize = [this]() {
         this->updateViewport();
         statusHandler->resetFrameCounter();
@@ -218,9 +224,18 @@ auto View::build() -> void {
         program->finishStartup();
     };
 
+    onFocus = [this]() {
+        program->isPause &= ~2;
+    };
+
     onUnFocus = [this]() {
+        static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
+
         if (inputDriver->mIsAcquired())
             inputDriver->mUnacquire();
+
+        program->isPause &= ~2;
+        program->isPause |= (!!*pauseFocusLoss) << 1;
     };
 	
 	winapi.onMenu = []() {
@@ -315,10 +330,12 @@ auto View::build() -> void {
 	anyloadTimer.setInterval(40);
     displayChangeTimer.setInterval(500);
     displayChangeTimer.onFinished = [this]() {
+        displayChangeTimer.setInterval(500);
         displayChangeTimer.setEnabled(false);
         //statusHandler->setMessage( std::to_string(GUIKIT::Monitor::getCurrentRefreshRate()) );
         emuThread->lock();
-        
+        videoDriver->waitRenderThread();
+
 		if (videoDriver && fullscreenSetting.inUse
 			&& globalSettings->get<bool>("threaded_emu", false)
 			&& videoDriver->hasThreaded())
@@ -495,6 +512,8 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
     }
 
     GUIKIT::Window::setFullScreen(fullScreen);
+    if (videoDriver->hasExclusiveFullscreen())
+        displayChangeTimer.setInterval(600);
     displayChangeTimer.setEnabled();
 
     if (!fullScreen && useFullscreenRefreshAsEmuSpeed) {
@@ -849,8 +868,8 @@ auto View::buildShader() -> void {
 
 auto View::updatePauseCheck() -> void {
 
-    if (program->isPause != pauseItem.checked() )
-        pauseItem.setChecked(program->isPause);
+    if ((program->isPause & 1) != pauseItem.checked() )
+        pauseItem.setChecked(program->isPause & 1);
 }
 
 auto View::updateWarpCheck() -> void {

@@ -351,7 +351,7 @@ auto IecBus::powerOff() -> void {
 }
 
 auto IecBus::power() -> void {
-    atnOut = clockOut = dataOut = 1;
+    atnOut = clockOut = dataOut = true;
     
     port = 0xc0;
     lastByte = 0;
@@ -371,29 +371,35 @@ auto IecBus::writeCia( uint8_t byte ) -> bool {
     bool result = syncDrives<true>( 1 );
     
     bool atnBefore = atnOut;
-    // for better readability we put out signals on separate variables
     atnOut = (byte >> 3) & 1;
     clockOut = (byte >> 4) & 1;
     dataOut = (byte >> 5) & 1;
-    
-    if (result) {
-        if (atnBefore != atnOut) { 
-            for( auto drive : drivesEnabled ) {
-                // attention please :-) there is a transition of ca1 pin ( via 1 chip )
-                // for all connected drives.
-                // NOTE: drive cpus can't give back control after each single cycle,
-                // means drive cpus could run ahead a few cycles when syncing back.
-                // but a drive cpu can give back control before an interrupt sample cycle,
-                // so we can not miss an interrupt when main thread triggers a ca1 transition
-                // and drive thread runs ahead.
-                drive->setViaTransition( atnOut ? 0 : 1 );
-            }
-        }                               
 
-        for (auto drive : drivesEnabled)       
-            drive->updateBus(); // because of possible atn change 
+    if (result) {
+        for( auto drive : drivesEnabled ) {
+            if (drive->operation & DRIVE_MODE_158x) {
+                if (!atnOut && atnBefore)
+                    drive->cia.setFlag();
+
+                drive->updateCiaBus();
+
+            } else {
+                if (atnBefore != atnOut) {
+                    // attention please :-) there is a transition of ca1 pin ( via 1 chip )
+                    // for all connected drives.
+                    // NOTE: drive cpus can't give back control after each single cycle,
+                    // means drive cpus could run ahead a few cycles when syncing back.
+                    // but a drive cpu can give back control before an interrupt sample cycle,
+                    // so we can not miss an interrupt when main thread triggers a ca1 transition
+                    // and drive thread runs ahead.
+                    drive->setViaTransition( !atnOut );
+                }
+
+                drive->updateViaBus();
+            }
+        }
     }
-    
+
     updatePort();  
     
     byte &= 0x38;
@@ -421,11 +427,6 @@ auto IecBus::updatePort() -> void {
         // a line will become "true" (pulled down) if one or more devices signal true
         port &= (drive->dataOut << 7) | (drive->clockOut << 6);
     }        
-}
-
-auto IecBus::readVia() -> uint8_t {
-    // bit 0: data in, bit 2: clock in, bit 7: atn in    
-    return (port >> 7) | ((port >> 4) & 4) | (atnOut << 7);
 }
 
 auto IecBus::readCia() -> uint8_t {
@@ -464,14 +465,22 @@ auto IecBus::resetDrive( Emulator::Interface::Media* media) -> void {
     drives[media->id]->power();
 }
 
-auto IecBus::setDriveType(Drive::Type type) -> void {
-
-    system->secondDriveCable.burstPossible = (type == Drive::Type::D1570) || (type == Drive::Type::D1571);
+auto IecBus::setDriveType(Drive::Type type, Emulator::Interface::Media* media ) -> void {
+    if (!media)
+        Drive::globalType = type;
+    system->secondDriveCable.burstPossible = false;
     system->secondDriveCable.parallelPossible = true;
-    system->burstOrParallelUpdate();
 
-    for( auto drive : drives )
-        drive->setType( type );
+    for( auto drive : drives ) {
+        if (!media || (media == drive->media))
+            drive->setType( type );
+    }
+
+    for( auto drive : drivesEnabled ) {
+        if ((drive->type == Drive::Type::D1570) || (drive->type == Drive::Type::D1571) || (drive->type == Drive::Type::D1581))
+            system->secondDriveCable.burstPossible = true;
+    }
+    system->burstOrParallelUpdate();
 }
 
 auto IecBus::setDriveSpeed(unsigned rpmScaled) -> void {
@@ -550,27 +559,11 @@ auto IecBus::updateSerializationSize() -> void {
     }
 }
 
-auto IecBus::insertDiskGracefully() -> void {
-
-    diskInsertInProgress = false;
-    for (auto drive : drivesEnabled) {
-        if (drive->structure.encodingGraceful.status) {
-            drive->structure.prepareP64Graceful();
-
-            if (drive->structure.encodingGraceful.status) {
-                diskInsertInProgress = true;
-            } else {
-                drive->postAttach();
-            }
-        }
-    }
-}
-
-auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size, bool loadGracefully ) -> void {
+auto IecBus::attach( Emulator::Interface::Media* media, uint8_t* data, unsigned size ) -> void {
 
     system->diskIdleOff();
     
-    drives[ media->id ]->attach( data, size, loadGracefully );
+    drives[ media->id ]->attach( data, size );
 }
 
 auto IecBus::detach( Emulator::Interface::Media* media ) -> void {
@@ -672,7 +665,7 @@ auto IecBus::setSpeeder(uint8_t speeder) -> void {
 auto IecBus::updateDriveSounds() -> void {
     for( auto drive : drives ) {
         if (drive->motorOn)
-            system->interface->mixDriveSound( drive->media, Emulator::Interface::DriveSound::FloppySpin );
+            system->interface->mixDriveSound( drive->media, Emulator::Interface::DriveSound::FloppySpin, drive->operation & DRIVE_MODE_158x );
     }
 }
 

@@ -56,7 +56,7 @@ auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned
     
 	if (!image)
         return false;
-	
+
 	if (!cmd->debug && !image->data)
 		return false;
     
@@ -81,7 +81,8 @@ auto FirmwareManager::useImage(Emulator::Interface::Firmware* firmware, unsigned
     emulator->setFirmware(firmware->id, image->data, image->size,
         dynamic_cast<LIBC64::Interface*>(emulator) ? (storeLevel == 0) : slotChanged);
 
-    States::getInstance( emulator )->updateFirmware( !storeLevel ? nullptr : getSetting( firmware, storeLevel ), firmware );
+    // C64 don't store default firmware in state file
+    States::getInstance( emulator )->updateFirmware( (!storeLevel && fallbackToDefaultFirmware) ? nullptr : getSetting( firmware, storeLevel ), firmware );
     
     return true;
 }
@@ -107,15 +108,6 @@ auto FirmwareManager::addImage(Emulator::Interface::Firmware* firmware, unsigned
     }    
 }
 
-auto FirmwareManager::swapIn(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> std::vector<std::string> {
-	
-	missingFirmware.clear();
-	    
-    insertFirmware( firmware, storeLevel );
-	
-	return missingFirmware;
-}
-
 auto FirmwareManager::insertFirmware(Emulator::Interface::Firmware* firmware, unsigned storeLevel) -> void {
     
     while(1) {
@@ -138,6 +130,7 @@ auto FirmwareManager::insertFirmware(Emulator::Interface::Firmware* firmware, un
     }
 
     emulator->setFirmware(firmware->id, nullptr, 0, 0);
+    States::getInstance( emulator )->updateFirmware(nullptr, firmware );
 }
 
 auto FirmwareManager::dataInStore( Image* forImage ) -> bool {
@@ -203,6 +196,19 @@ auto FirmwareManager::insert(bool onlyKernal) -> std::vector<std::string> {
             insertFirmware(&firmware, storeLevel);
     }   
     
+    return missingFirmware;
+}
+
+auto FirmwareManager::swapIn(unsigned storeLevel, int firmwareId) -> std::vector<std::string> {
+
+    missingFirmware.clear();
+
+    for (auto& firmware : emulator->firmwares ) {
+
+        if ((firmwareId == -1) || (firmware.id == firmwareId))
+            insertFirmware(&firmware, storeLevel);
+    }
+
     return missingFirmware;
 }
 

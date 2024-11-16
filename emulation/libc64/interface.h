@@ -58,13 +58,14 @@ struct Interface : Emulator::Interface {
         CartridgeIdWestermann = 11, CartridgeIdPagefox = 53,
         CartridgeIdSwiftlink = 270, CartridgeIdTurbo232 = 271, CartridgeIdDinamic = 17, CartridgeIdDiashowMaker = 52,
         CartridgeIdSuperSnapshotV5 = 20, CartridgeIdComal80 = 21, CartridgeIdSilverrock = 55, CartridgeIdRGCD = 57,
+    	CartridgeIdStarDos = 31, CartridgeIdProfDos = 1000, CartridgeIdPrologicDos = 1001, CartridgeIdTurboTrans = 1002,
         CartridgeIdRGCDHucky = 571,
     };
 
     enum FirmwareId {
         FirmwareIdKernal, FirmwareIdBasic, FirmwareIdChar,
-        FirmwareIdVC1541II, FirmwareIdVC1541, FirmwareIdVC1541C, FirmwareIdVC1571, FirmwareIdVC1570,
-        FirmwareIdExpanded,
+        FirmwareIdVC1541II, FirmwareIdVC1541, FirmwareIdVC1541C, FirmwareIdVC1571, FirmwareIdVC1570, FirmwareIdVC1581,
+        FirmwareIdExpanded
     };
     
     static const std::string Version;
@@ -93,7 +94,7 @@ struct Interface : Emulator::Interface {
 	//disk drive handling
     //options: Bit 0 -> use traps, 1 -> send trap finish event, 7 -> temporarly disable a possible hardware speeder
 
-	auto insertDisk(Media* media, uint8_t* data, unsigned size, bool loadGracefully = false) -> void;
+	auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
 	auto writeProtectDisk(Media* media, bool state) -> void;
     auto isWriteProtectedDisk(Media* media) -> bool;
 	auto ejectDisk(Media* media) -> void;
@@ -149,7 +150,6 @@ struct Interface : Emulator::Interface {
 
 	//firmware
 	auto setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void;
-    auto getCharRom() -> Firmware*;
 	
 	//models
     auto setModelValue(unsigned modelId, int value) -> void;

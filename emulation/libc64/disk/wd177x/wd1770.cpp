@@ -1,6 +1,5 @@
 
 #include "wd1770.h"
-#include <random>
 #include "../../system/system.h"
 #include "../../../tools/macros.h"
 
@@ -8,13 +7,18 @@
 
 namespace LIBC64 {
 
-auto WD1770::setMode(WD1770::Mode mode) -> void {
-    this->mode = mode;
+auto WD1770::setType(WD1770::Type type) -> void {
+    this->type = type;
 }
 
-auto WD1770::setTrack(DiskStructure::MTrack* trackPtr, bool dummyTrack) -> void {
-    this->trackPtr = trackPtr;
-    this->dummyTrack = dummyTrack;
+auto WD1770::setTrack(DiskStructure::MTrack* _trackPtr) -> void {
+    unsigned oldTrackSize = this->trackPtr ? this->trackPtr->size : 0;
+    this->trackPtr = _trackPtr;
+
+    if ( oldTrackSize != 0 )
+        headOffset = ( headOffset * _trackPtr->size ) / oldTrackSize;
+    else
+        headOffset = 0;
 }
 
 auto WD1770::setPulseIndex(int index, unsigned delta) -> void {
@@ -22,19 +26,19 @@ auto WD1770::setPulseIndex(int index, unsigned delta) -> void {
     this->pulseDelta = delta;
 }
 
-auto WD1770::setRateInMhz(uint8_t caller, uint8_t fluxSamplingRate) -> void {
-    this->callerMhz = (caller < 1) ? 1 : caller;
-    this->callerHz = this->callerMhz * 1000000;
-    this->refCycles = fluxSamplingRate >> getTimeFactor();
+auto WD1770::set2Mhz(bool state) -> void {
+    this->cpu2Mhz = state;
+    this->refCycles = state ? 8 : 16;
+    this->refCyclesByte = state ? 50000 : 100000;
 }
 
 auto WD1770::setWriteProtected(bool state) -> void {
     writeProtected = state;
 }
 
-auto WD1770::setDiskAccessible(bool state) -> void { // if motor is not controlled by WD177x
-    motorAdvance = state;
-    indexHole = !motorAdvance && (commandType == 1 || commandType == 4);
+auto WD1770::setDiskAccessible(bool state) -> void { // removed disk should cause a permanent index hole
+    diskInserted = state;
+    indexHole = !diskInserted && (commandType == 1 || commandType == 4);
 }
 
 auto WD1770::read(uint16_t address) -> uint8_t {
@@ -57,7 +61,7 @@ auto WD1770::read(uint16_t address) -> uint8_t {
 #define SET_TYPE(_type, _ident) \
     /*system->interface->log("type "#_type" "#_ident);*/ \
     commandType = _type;        \
-    indexHole = !motorAdvance && (commandType == 1 || commandType == 4);
+    indexHole = !diskInserted && (commandType == 1 || commandType == 4);
 
 auto WD1770::write(uint16_t address, uint8_t value) -> void {
 
@@ -66,7 +70,7 @@ auto WD1770::write(uint16_t address, uint8_t value) -> void {
             if (status & BUSY) {
                 if ((value >> 4) == FORCE_INTERRUPT) {
                     if (!forceInterruptDelay)
-                        forceInterruptDelay = 16 << getTimeFactor();
+                        forceInterruptDelay = 32 << getTimeFactor();
                 } else
                     // too soon: nullifies pending forced interrupt, old command keeps running
                     forceInterruptDelay = 0;
@@ -149,13 +153,12 @@ auto WD1770::reset() -> void {
     crcFetched = 0;
     readBuffer = 0;
     DSR = 0;
-    motorAdvance = false;
     sectorLength = 128;
     fluxPending = false;
     lastMfmPattern = M10;
     writeGate = false;
     F7WriteMode = 0;
-    fluxRemove = false;
+    clockRemove = false;
     accum = 0;
     headOffset = 0;
     direction = 0;
@@ -165,26 +168,16 @@ auto WD1770::reset() -> void {
     trackZero = false;
     forceInterruptDelay = 0;
     indexHoleDelay = 0;
+    randomizer.initXorShift( 0x1234abcd );
 }
 
-// real chip kill commands between micro cycles and not after a fixed delay.
-// exact amount of cycles for checksum calculations and comparisons are unknown. it needs to be done before next byte is ready.
-// for time being, we delay for documented worst case instead of interrupting without any delay.
-// includes a hack to not interrupt internal CRC writing, otherwise Big Blue Reader interrupts shortly before second CRC byte is written
-// maybe the documented 16 micro are not the worst case delay in all situations.
 #define CHECK_FORCE_INTERRUPT \
     if (forceInterruptDelay) { \
         if (--forceInterruptDelay == 0) { \
-            if (commandSubStage == 16) {    /*hack*/ \
-                forceInterruptDelay = 1;    \
-            } else if ( (mode != USERDATA) && (commandSubStage == 17) && (bitCounter < 2))  { /* in flux mode, mfm encoding delays write */ \
-                forceInterruptDelay = 1;      \
-            } else {                  \
                 complete(); \
                 delay = 1; \
                 commandType = 4;  \
                 break; \
-            }   \
         } \
     }
 
@@ -196,23 +189,49 @@ auto WD1770::reset() -> void {
     } else  \
         complete();
 
-auto WD1770::clock() -> void {
-
+auto WD1770::rotateDecoded(const unsigned revolutionCycles) -> void {
     if (!commandType)
         return;
 
-    if (writeGate) {
-        if (mode == Mode::FLUX)
-            writeFlux();
+    if (revolutionCycles) { // includes drive speed, wobble, acc/deceleration, 0 = motor stopped
+        if (writeGate)
+            writeDecoded(revolutionCycles);
         else
-            writeUserData();
-    } else {
-        if (mode == Mode::FLUX)
-            readFlux();
-        else
-            readUserData();
+            readDecoded(revolutionCycles);
     }
 
+    rotate();
+}
+
+auto WD1770::rotateEncoded(const unsigned revolutionCycles) -> void {
+    if (!commandType)
+        return;
+
+    if (revolutionCycles) { // includes drive speed, wobble, acc/deceleration, 0 = motor stopped
+        if (writeGate)
+            writeEncoded(revolutionCycles);
+        else
+            readEncoded(revolutionCycles);
+    }
+
+    rotate();
+}
+
+auto WD1770::rotateFlux(const unsigned revolutionCycles) -> void {
+    if (!commandType)
+        return;
+
+    if (revolutionCycles) { // includes drive speed, wobble, acc/deceleration, 0 = motor stopped
+        if (writeGate)
+            writeFlux(revolutionCycles);
+        else
+            readFlux(revolutionCycles);
+    }
+
+    rotate();
+}
+
+inline auto WD1770::rotate() -> void {
     switch (commandStage) {
         default:
         case 0: // idle
@@ -301,19 +320,19 @@ auto WD1770::clock() -> void {
                         commandSubStage = 2;
                         switch(baseCommand()) {
                             case STEP_IN:
-                                direction = 1;
+                                direction = true;
                                 commandSubStage = 3;
                                 break;
                             case STEP_IN + 1:
-                                direction = 1;
+                                direction = true;
                                 commandSubStage = 2;
                                 break;
                             case STEP_OUT:
-                                direction = 0;
+                                direction = false;
                                 commandSubStage = 3;
                                 break;
                             case STEP_OUT + 1:
-                                direction = 0;
+                                direction = false;
                                 commandSubStage = 2;
                                 break;
                             case STEP:
@@ -326,8 +345,6 @@ auto WD1770::clock() -> void {
                             case RESTORE:
                                 trackReg = 0xff;
                                 dataReg = 0;
-                                commandSubStage = 1;
-                                break;
                             case SEEK:
                                 commandSubStage = 1;
                                 break;
@@ -335,24 +352,17 @@ auto WD1770::clock() -> void {
                         break;
 
                     case 1:
-                        if (trackReg == dataReg) {
+                        DSR = dataReg;
+                        if (trackReg == DSR) {
                             CHECK_VERIFY
                         } else {
-                            if (dataReg < trackReg) {
-                                direction = 1;
-                            } else
-                                direction = 0;
-
+                            direction = DSR > trackReg;
                             commandSubStage = 2;
                         }
                         break;
 
                     case 2:
-                        if (direction)
-                            trackReg--;
-                        else
-                            trackReg++;
-
+                        direction ? trackReg++ : trackReg--;
                         commandSubStage = 3;
                         break;
 
@@ -361,12 +371,14 @@ auto WD1770::clock() -> void {
                             trackReg = 0;
                             CHECK_VERIFY
                         } else {
+                            stepCall(direction);
+
                             switch(command & 3) {
                                 default:
                                 case 0: delay = 6000 << getTimeFactor(); break;
                                 case 1: delay = 12000 << getTimeFactor(); break;
-                                case 2: delay = 20000 << getTimeFactor(); break;
-                                case 3: delay = 30000 << getTimeFactor(); break;
+                                case 2: delay = (type == T1772 ? 2000 : 20000) << getTimeFactor(); break;
+                                case 3: delay = (type == T1772 ? 3000 : 30000) << getTimeFactor(); break;
                             }
                             commandSubStage = 4;
                         }
@@ -654,7 +666,10 @@ auto WD1770::clock() -> void {
                                 fluxPending = false;
                                 lastMfmPattern = M10;
                                 pulseDuration = 1;
-                                writeGate = true;
+                                if (!writeGate) {
+                                    writeGate = true;
+                                    toggleWrite();
+                                }
                                 F7WriteMode = 0;
                                 DSR = 0;
                             }
@@ -665,7 +680,7 @@ auto WD1770::clock() -> void {
                             byteCount++;
                             if (byteCount == 12) {
                                 DSR = 0xa1;
-                                fluxRemove = true;
+                                clockRemove = true;
                                 commandSubStage = 12;
                                 byteCount = 0;
                             }
@@ -681,7 +696,7 @@ auto WD1770::clock() -> void {
                                 commandSubStage = 13;
                             } else {
                                 DSR = 0xa1;
-                                fluxRemove = true;
+                                clockRemove = true;
                                 crc = 0xcdb4;
                             }
                         }
@@ -735,7 +750,10 @@ auto WD1770::clock() -> void {
                         break;
                     case 17:
                         if (newByte()) {
-                            writeGate = false;
+                            if (writeGate) {
+                                writeGate = false;
+                                toggleWrite();
+                            }
                             if (command & 0x10) {
                                 commandSubStage = 0;
                                 indexHoleCounter = 0;
@@ -861,7 +879,10 @@ auto WD1770::clock() -> void {
                                     fluxPending = false;
                                     lastMfmPattern = M10;
                                     pulseDuration = 1;
-                                    writeGate = true;
+                                    if (!writeGate) {
+                                        writeGate = true;
+                                        toggleWrite();
+                                    }
                                     F7WriteMode = 0;
                                     byteReady = false;
                                     prepareNextByteToWrite();
@@ -870,7 +891,10 @@ auto WD1770::clock() -> void {
                             case 3:
                                 if (indexHoleTransition) {
                                     indexHoleTransition = false;
-                                    writeGate = false;
+                                    if (writeGate) {
+                                        writeGate = false;
+                                        toggleWrite();
+                                    }
                                     complete();
                                 } else if (newByte()) {
                                     prepareNextByteToWrite();
@@ -912,7 +936,10 @@ inline auto WD1770::newByte() -> bool {
 }
 
 auto WD1770::complete() -> void {
-    writeGate = false;
+    if (writeGate) {
+        writeGate = false;
+        toggleWrite();
+    }
     syncMarkDetector = false;
     syncMarkDetectorC2 = false;
     commandStage = 9;
@@ -951,10 +978,10 @@ auto WD1770::prepareNextByteToWrite() -> void {
             } else if (DSR == 0xf5) {
                 DSR = 0xa1;
                 crc = 0xcdb4;
-                fluxRemove = true;
+                clockRemove = true;
             } else if (DSR == 0xf6) {
                 DSR = 0xc2;
-                fluxRemove = true;
+                clockRemove = true;
             } else {
                 updateCRC();
             }
@@ -970,27 +997,22 @@ auto WD1770::prepareNextByteToWrite() -> void {
     status |= DATA_REQUEST_INDEX;
 }
 
-auto WD1770::readUserData() -> void {
+auto WD1770::readDecoded(const unsigned revolutionCycles) -> void {
+    accum += refCyclesByte; // 250 (kbits per second)
 
-    if (!motorAdvance)
-        return;
-
-    accum += 31250; // 250 (kbits per second)
-
-    if (accum < this->callerHz)
+    if (accum < revolutionCycles)
         return;
     // one byte has moved
-    accum -= this->callerHz;
+    accum -= revolutionCycles;
 
     uint8_t* ptr = trackPtr->data;
-    unsigned _maxPos = 6250;
-
-    if (ptr) {
-        if (trackPtr->size < 6250)
-            _maxPos = trackPtr->size;
+    if (!ptr) {
+        DSR = 0;
+        syncMark = false;
+        return;
     }
 
-    if (++headOffset >= _maxPos) {
+    if (++headOffset >= trackPtr->size) {
         headOffset = 0;
         indexHole = true;
         indexHoleTransition = true;
@@ -1004,46 +1026,26 @@ auto WD1770::readUserData() -> void {
             status &= ~DATA_REQUEST_INDEX;
     }
 
-    if (!ptr || (mode == None)) {
-        DSR = 0;
-        syncMark = false;
+    DSR = ptr[ headOffset ];
 
-    } else {
-        DSR = ptr[ headOffset ];
-
-        syncMark = syncMarkDetector && ((trackPtr->mfmSync[headOffset >> 3] & (1 << (headOffset & 7))) != 0);
-
-//        if (syncMark && indexHole) {
-//            indexHole = false;
-//            if (commandType == 1 || commandType == 4)
-//                status &= ~DATA_REQUEST_INDEX;
-//        }
-    }
+    syncMark = syncMarkDetector && ((trackPtr->mfmSync[headOffset >> 3] & (1 << (headOffset & 7))) != 0);
 
     byteReady = true;
 }
 
-auto WD1770::writeUserData() -> void {
+auto WD1770::writeDecoded(unsigned revolutionCycles) -> void {
+    accum += refCyclesByte;
 
-    if (!motorAdvance)
-        return;
-
-    accum += 31250;
-
-    if (accum < this->callerHz)
+    if (accum < revolutionCycles)
         return;
     // one byte has moved
-    accum -= this->callerHz;
+    accum -= revolutionCycles;
 
     uint8_t* ptr = trackPtr->data;
-    unsigned _maxPos = 6250;
+    if (!ptr)
+        return;
 
-    if (ptr) {
-        if (trackPtr->size < 6250)
-            _maxPos = trackPtr->size;
-    }
-
-    if (++headOffset >= _maxPos) {
+    if (++headOffset >= trackPtr->size) {
         headOffset = 0;
         indexHole = true;
         indexHoleTransition = true;
@@ -1057,17 +1059,100 @@ auto WD1770::writeUserData() -> void {
             status &= ~DATA_REQUEST_INDEX;
     }
 
-    if ( (mode == None) || dummyTrack) {
+    ptr[ headOffset ] = DSR;
 
+    if (clockRemove) {
+        clockRemove = false;
+        trackPtr->mfmSync[headOffset >> 3] |= 1 << (headOffset & 7);
     } else {
-        ptr[ headOffset ] = DSR;
+        trackPtr->mfmSync[headOffset >> 3] &= ~(1 << (headOffset & 7));
+    }
 
-        if (fluxRemove) {
-            fluxRemove = false;
-            trackPtr->mfmSync[headOffset >> 3] |= 1 << (headOffset & 7);
-        } else {
-            trackPtr->mfmSync[headOffset >> 3] &= ~(1 << (headOffset & 7));
+    if (!written)
+        written = true;
+
+    trackPtr->written = 0x81;
+
+    byteReady = true;
+}
+
+auto WD1770::readEncoded(unsigned revolutionCycles) -> void {
+    uint8_t* ptr = trackPtr->data;
+    if (!ptr) {
+        DSR = 0;
+        return;
+    }
+
+    accum += trackPtr->bits * refCycles;
+    if (accum >= revolutionCycles) {
+        accum -= revolutionCycles;
+
+        unsigned byte = headOffset >> 3;
+        uint8_t bit = (~headOffset) & 7;
+
+        if (++headOffset >= trackPtr->bits) {
+            if (headOffset > trackPtr->bits) // safety first
+                byte = bit = 0;
+            headOffset = 0;
+            indexHole = true;
+            indexHoleTransition = true;
+            indexHoleCounter++;
+            if (commandType == 1 || commandType == 4)
+                status |= DATA_REQUEST_INDEX;
+        } else if (indexHole && (headOffset == (100 << 3) )) {
+            indexHole = false;
+            indexHoleTransition = false;
+            if (commandType == 1 || commandType == 4)
+                status &= ~DATA_REQUEST_INDEX;
         }
+
+        decodeMFM((ptr[byte] >> bit) & 1 );
+    }
+}
+
+auto WD1770::writeEncoded(unsigned revolutionCycles) -> void {
+    uint8_t* ptr = trackPtr->data;
+    if (!ptr)
+        return;
+
+    accum += trackPtr->bits * refCycles;
+    if (accum >= revolutionCycles) {
+        accum -= revolutionCycles;
+
+        unsigned byte = headOffset >> 3;
+        uint8_t bit = (~headOffset) & 7; // msb is next
+
+        if (++headOffset >= trackPtr->bits) {
+            if (headOffset > trackPtr->bits) // safety first
+                byte = bit = 0;
+            headOffset = 0;
+            indexHole = true;
+            indexHoleTransition = true;
+            indexHoleCounter++;
+            if (commandType == 1 || commandType == 4)
+                status |= DATA_REQUEST_INDEX;
+        } else if (indexHole && (headOffset == (100 << 3) )) {
+            indexHole = false;
+            indexHoleTransition = false;
+            if (commandType == 1 || commandType == 4)
+                status &= ~DATA_REQUEST_INDEX;
+        }
+
+        bool encodedBit;
+        if (pulseDuration == (4 * 16)) {
+            pulseDuration = 0;
+            encodedBit = false;
+        } else {
+            encodedBit = encodeBit();
+        }
+
+        if (writeProtected)
+            return;
+
+        if (encodedBit)
+            ptr[byte] |= 1 << bit;
+        else
+            ptr[byte] &= ~(1 << bit);
 
         if (!written)
             written = true;
@@ -1075,29 +1160,76 @@ auto WD1770::writeUserData() -> void {
         trackPtr->written = 0x81;
     }
 
-    byteReady = true;
 }
 
-auto WD1770::readFlux() -> void {
+auto WD1770::encodeBit() -> bool {
+    bool encodedBit;
+
+    if (fluxPending) {
+        encodedBit = true;
+        pulseDuration = 4 * 16;
+        fluxPending = false;
+    } else {
+        encodedBit = false;
+        bool decodedBit = (DSR & 0x80) != 0;
+        DSR <<= 1;
+
+        if (++bitCounter == 8) {
+            bitCounter = 0;
+            byteReady = true;
+        }
+
+        if (decodedBit) {
+            if (lastMfmPattern == M01) { // 0101
+                encodedBit = true;
+                pulseDuration = 4 * 16;
+            } else if (lastMfmPattern == M00) {  //10001
+                fluxPending = true;
+                pulseDuration = 2 * 16;
+            } else /*if (lastMfmPattern == M10)*/ { // 1001
+                fluxPending = true;
+                pulseDuration = 2 * 16;
+            }
+
+            lastMfmPattern = M01;
+        } else {
+            if (lastMfmPattern == M01) { // 0100x
+                pulseDuration = 2 * 16;
+                lastMfmPattern = M00;
+            } else if (lastMfmPattern == M00) {  //10010
+                encodedBit = true;
+                pulseDuration = 4 * 16;
+                lastMfmPattern = M10;
+            } else /*if (lastMfmPattern == M10)*/ { // 1010
+                if (!clockRemove)
+                    encodedBit = true;
+                else
+                    clockRemove = false;
+
+                pulseDuration = 4 * 16;
+                lastMfmPattern = M10;
+            }
+        }
+    }
+    return encodedBit;
+}
+
+auto WD1770::readFlux(unsigned revolutionCycles) -> void {
     uint8_t useCycles = refCycles;
     unsigned todo;
+    unsigned _delta;
 
     do {
-        if (motorAdvance) {
-            todo = pulseDelta;
+        todo = pulseDelta;
 
-            if (useCycles < todo)
-                todo = useCycles;
-
-            if (indexHoleDelay && (indexHoleDelay < todo) )
-                todo = indexHoleDelay;
-
-        } else
+        if (useCycles < todo)
             todo = useCycles;
 
-        if (pulseDuration && (pulseDuration < todo)) {
+        if (indexHoleDelay && (indexHoleDelay < todo) )
+            todo = indexHoleDelay;
+
+        if (pulseDuration && (pulseDuration < todo))
             todo = pulseDuration;
-        }
 
         if (indexHoleDelay) {
             indexHoleDelay -= todo;
@@ -1136,11 +1268,11 @@ auto WD1770::readFlux() -> void {
                     case 4: pulseDuration = 16; break;  // 6.375 + 1.0 = 7.375
                     case 5: pulseDuration = 16; decodeMFM(0); break; // 7.375 + 1.0 = 8.375
 
-                    case 6: pulseDuration = 16; if (rand() & 1) pulseWidth = 9; break;  // 8.375 + 1.0 = 9.375
+                    case 6: pulseDuration = 16; if ( (randomizer.xorShift() >> 16 ) & 1) pulseWidth = 9; break;  // 8.375 + 1.0 = 9.375
                     case 7: pulseDuration = 16; decodeMFM(0); break; // 9.375 + 1.0 = 10.375
                     case 8: pulseDuration = 16; break;  // 10.375 + 1.0 = 11.375
                     case 9: pulseDuration = 16; decodeMFM(0); break; // 11.375 + 1.0 = 12.375
-                    case 10: pulseDuration = 16; if (rand() & 1) pulseWidth = 13; break;  // 12.375 + 1.0 = 13.375
+                    case 10: pulseDuration = 16; if ((randomizer.xorShift() >> 16 ) & 1) pulseWidth = 13; break;  // 12.375 + 1.0 = 13.375
                     case 11: pulseDuration = 16; decodeMFM(0); break; // 13.375 + 1.0 = 14.375
                     case 12: pulseDuration = 16; break;  // 14.375 + 1.0 = 15.375
                     case 13: pulseDuration = 16; decodeMFM(1); pulseWidth = 0; break; // 15.375 + 1.0 = 16.375
@@ -1148,40 +1280,40 @@ auto WD1770::readFlux() -> void {
             }
         }
 
-        if (motorAdvance) {
-            pulseDelta -= todo;
-            if (!pulseDelta) {
-                DiskStructure::Pulse& pulse = trackPtr->pulses[pulseIndex];
+        pulseDelta -= todo;
+        if (!pulseDelta) {
+            DiskStructure::Pulse& pulse = trackPtr->pulses[pulseIndex];
 
-                pulseIndex = pulse.next;
+            pulseIndex = pulse.next;
 
-                if (pulseIndex >= 0) {
-                    pulseDelta = trackPtr->pulses[pulseIndex].position - pulse.position;
-                } else {
-                    pulseIndex = trackPtr->firstPulse;
+            if (pulseIndex >= 0) {
+                _delta = trackPtr->pulses[pulseIndex].position - pulse.position;
+            } else {
+                pulseIndex = trackPtr->firstPulse;
 
-                    pulseDelta = trackPtr->pulses[pulseIndex].position + (CyclesPerRevolution300Rpm - pulse.position);
-                    indexHole = false;
-                    indexHoleWaitBegin = true;
-                    indexHoleDelay = CyclesPerRevolution300Rpm - pulse.position;
-                }
+                _delta = trackPtr->pulses[pulseIndex].position + (CyclesPerRevolution300Rpm - pulse.position);
+                indexHole = false;
+                indexHoleWaitBegin = true;
+                indexHoleDelay = CyclesPerRevolution300Rpm - pulse.position;
+            }
 
-                if ((pulse.strength == 0xffffffff) || (rand() < pulse.strength)) {
-                    if (pulseWidth & 1) {
-                        // fuzzy bits
-                        if (rand() & 1)
-                            // todo: adjust randomness by distance to border of inspection window
-                            decodeMFM(0);
+            pulseDelta = _delta * ((float)revolutionCycles / CyclesPerRevolution300Rpm) + 0.5;
 
-                        decodeMFM(1);
-                    } else if (pulseWidth == 0) {
-                        decodeMFM(0); // no flux area
-                    } else
-                        decodeMFM(1);
+            if ((pulse.strength == 0xffffffff) || ( randomizer.xorShift() < pulse.strength)) {
+                if (pulseWidth & 1) {
+                    // fuzzy bits
+                    if ( (randomizer.xorShift() >> 16) & 1)
+                        // todo: adjust randomness by distance to border of inspection window
+                        decodeMFM(0);
 
-                    pulseDuration = 38;    // 2.375
-                    pulseWidth = 0;
-                }
+                    decodeMFM(1);
+                } else if (pulseWidth == 0) {
+                    decodeMFM(0); // no flux area
+                } else
+                    decodeMFM(1);
+
+                pulseDuration = 38;    // 2.375
+                pulseWidth = 0;
             }
         }
 
@@ -1205,10 +1337,10 @@ auto WD1770::decodeMFM( bool bit ) -> void {
     if (syncMarkDetectorC2) {
         if ((readBuffer & 0x7fff) == 0x5224) { // c2
             // C2 (missing clock between 3 & 4), a bug in Controller because data can produce this pattern
-            // only a problem during read track, because during read sector AM detector will be disabled on datafield
+            // only a problem during read track, because during read sector AM detector will be disabled on data field
             syncMark = true;
         } else if ((readBuffer & 0x1ff) == 0x29) {
-            // Bug in Controller
+            // bug in Controller
             syncMark = true;
         }
     }
@@ -1225,42 +1357,32 @@ auto WD1770::decodeMFM( bool bit ) -> void {
     clockBit ^= 1;
 
     if (syncMark) {
-//        if (indexHole) {
-//            indexHole = false;
-//            indexHoleWaitBegin = false;
-//            indexHoleDelay = 0;
-//            if (commandType == 1 || commandType == 4)
-//                status &= ~DATA_REQUEST_INDEX;
-//        }
         clockBit = true;
         bitCounter = 0;
     }
 }
 
-auto WD1770::writeFlux() -> void {
-
+auto WD1770::writeFlux(unsigned revolutionCycles) -> void {
     uint8_t useCycles = refCycles;
     bool flux;
     unsigned todo;
+    unsigned _delta;
 
     do {
         flux = false;
 
-        if (motorAdvance) {
-            todo = pulseDelta;
+        todo = pulseDelta;
 
-            if (useCycles < todo)
-                todo = useCycles;
-
-            if (indexHoleDelay && (indexHoleDelay < todo) )
-                todo = indexHoleDelay;
-        } else
+        if (useCycles < todo)
             todo = useCycles;
+
+        if (indexHoleDelay && (indexHoleDelay < todo) )
+            todo = indexHoleDelay;
 
         if (indexHoleDelay) {
             indexHoleDelay -= todo;
             if (!indexHoleDelay) {
-                if (indexHoleWaitBegin && !fluxRemove) {
+                if (indexHoleWaitBegin && !clockRemove) {
                     indexHoleWaitBegin = false;
                     indexHoleDelay = 51555;
                     indexHole = true;
@@ -1283,114 +1405,65 @@ auto WD1770::writeFlux() -> void {
             todo = pulseDuration;
 
         pulseDuration -= todo;
-        if (!pulseDuration) {
+        if (!pulseDuration)
+            flux = encodeBit();
 
-            if (fluxPending) {
-                flux = true;
-                pulseDuration = 4 * 16;
-                fluxPending = false;
-            } else {
-                bool bit = (DSR & 0x80) != 0;
-                DSR <<= 1;
+        pulseDelta -= todo;
 
-                if (++bitCounter == 8) {
-                    bitCounter = 0;
-                    byteReady = true;
-                }
+        if (pulseDelta) {
+            if (flux) {
+                if (!writeProtected) {
+                    DiskStructure::Pulse& pulse = trackPtr->pulses[pulseIndex];
+                    unsigned position;
 
-                if (bit) {
-                    if (lastMfmPattern == M01) { // 0101
-                        flux = true;
-                        pulseDuration = 4 * 16;
-                    } else if (lastMfmPattern == M00) {  //10001
-                        fluxPending = true;
-                        pulseDuration = 2 * 16;
-                    } else /*if (lastMfmPattern == M10)*/ { // 1001
-                        fluxPending = true;
-                        pulseDuration = 2 * 16;
-                    }
+                    if (pulseDelta >= pulse.position)
+                        position = CyclesPerRevolution300Rpm - (pulseDelta - pulse.position);
+                    else
+                        position = pulse.position - pulseDelta;
 
-                    lastMfmPattern = M01;
-                } else {
-                    if (lastMfmPattern == M01) { // 0100x
-                        pulseDuration = 2 * 16;
-                        lastMfmPattern = M00;
-                    } else if (lastMfmPattern == M00) {  //10010
-                        flux = true;
-                        pulseDuration = 4 * 16;
-                        lastMfmPattern = M10;
-                    } else /*if (lastMfmPattern == M10)*/ { // 1010
-                        if (!fluxRemove)
-                            flux = true;
-                        else
-                            fluxRemove = false;
-
-                        pulseDuration = 4 * 16;
-                        lastMfmPattern = M10;
-                    }
-                }
-            }
-        }
-
-        if (motorAdvance) {
-            pulseDelta -= todo;
-
-            if (pulseDelta) {
-                if (flux) {
-                    if (!writeProtected) {
-                        DiskStructure::Pulse& pulse = trackPtr->pulses[pulseIndex];
-                        unsigned position;
-
-                        if (pulseDelta >= pulse.position)
-                            position = CyclesPerRevolution300Rpm - (pulseDelta - pulse.position);
-                        else
-                            position = pulse.position - pulseDelta;
-
-                        if (!dummyTrack) {
-                            DiskStructure::addPulse(trackPtr, position, 0xffffffff);
-
-                            if (!written)
-                                written = true;
-
-                            trackPtr->written = 0x81;
-                        }
-                    }
-                }
-                // else
-                // no new flux at this position ... there is already no flux here ... nothing to do
-            } else {
-
-                DiskStructure::Pulse& pulse = trackPtr->pulses[pulseIndex];
-
-                if (!writeProtected && !dummyTrack) {
-                    if (flux) {
-                        if (pulse.strength != 0xffffffff)
-                            // 1541 always write strong pulses
-                            pulse.strength = 0xffffffff;
-
-                    } else
-                        DiskStructure::freePulse(trackPtr, pulseIndex);
+                    DiskStructure::addPulse(trackPtr, position, 0xffffffff);
 
                     if (!written)
                         written = true;
 
                     trackPtr->written = 0x81;
                 }
-
-                pulseIndex = pulse.next;
-
-                if (pulseIndex >= 0) {
-                    pulseDelta = trackPtr->pulses[pulseIndex].position - pulse.position;
-                } else {
-                    pulseIndex = trackPtr->firstPulse;
-
-                    pulseDelta = trackPtr->pulses[pulseIndex].position + (CyclesPerRevolution300Rpm - pulse.position);
-
-                    indexHole = false;
-                    indexHoleWaitBegin = true;
-                    indexHoleDelay = CyclesPerRevolution300Rpm - pulse.position;
-                }
             }
+            // else
+            // no new flux at this position ... there is already no flux here ... nothing to do
+        } else {
+
+            DiskStructure::Pulse& pulse = trackPtr->pulses[pulseIndex];
+
+            if (!writeProtected) {
+                if (flux) {
+                    if (pulse.strength != 0xffffffff)
+                        pulse.strength = 0xffffffff; // write strong pulses
+
+                } else
+                    DiskStructure::freePulse(trackPtr, pulseIndex);
+
+                if (!written)
+                    written = true;
+
+                trackPtr->written = 0x81;
+            }
+
+            pulseIndex = pulse.next;
+
+            if (pulseIndex >= 0) {
+                _delta = trackPtr->pulses[pulseIndex].position - pulse.position;
+            } else {
+                pulseIndex = trackPtr->firstPulse;
+
+                _delta = trackPtr->pulses[pulseIndex].position + (CyclesPerRevolution300Rpm - pulse.position);
+
+                indexHole = false;
+                indexHoleWaitBegin = true;
+                indexHoleDelay = CyclesPerRevolution300Rpm - pulse.position;
+            }
+
+            pulseDelta = _delta * ((float)revolutionCycles / CyclesPerRevolution300Rpm) + 0.5;
         }
 
         useCycles -= todo;
@@ -1410,7 +1483,7 @@ auto WD1770::setTrackZero(bool state) -> void {
 }
 
 inline auto WD1770::getTimeFactor() -> uint8_t {
-    return callerMhz - 1;
+    return cpu2Mhz ? 1 : 0;
 }
 
 inline auto WD1770::updateCRC() -> void {
@@ -1437,7 +1510,7 @@ uint16_t WD1770::CRC1021[] = {
 };
 
 auto WD1770::serialize(Emulator::Serializer& s) -> void {
-    s.integer(mode);
+    s.integer((uint8_t&)type);
     s.integer(commandType);
     s.integer(command);
     s.integer(status);
@@ -1471,7 +1544,7 @@ auto WD1770::serialize(Emulator::Serializer& s) -> void {
     s.integer(written);
     s.integer(writeGate);
     s.integer(F7WriteMode);
-    s.integer(fluxRemove);
+    s.integer(clockRemove);
     s.integer(accum);
     s.integer(headOffset);
     s.integer(direction);
@@ -1483,6 +1556,8 @@ auto WD1770::serialize(Emulator::Serializer& s) -> void {
     s.integer(trackZero);
     s.integer(forceInterruptDelay);
     s.integer(indexHoleDelay);
+
+    s.integer( randomizer.xorShift32 );
 }
 
 }

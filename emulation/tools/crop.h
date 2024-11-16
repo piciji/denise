@@ -20,7 +20,7 @@ struct Crop {
 	} settings;
     
     struct Latest {
-        T* frame;
+        T* frame = nullptr; // important, if focus loss happens before any frame is repeatable
         unsigned width;
         unsigned height;
         unsigned top;

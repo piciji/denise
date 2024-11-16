@@ -9,6 +9,7 @@
 #include "gxx.cpp"
 #include "pxx.cpp"
 #include "prg.cpp"
+#include "listing.cpp"
 #include "../../../tools/listing.h"
 #include "../../system/keyBuffer.h"
 #include "../iec.h"
@@ -47,11 +48,11 @@ drive(drive) {
 
     for( unsigned side = 0; side < 2; side++) {
         for (unsigned i = 0; i < (MAX_TRACKS * 2); i++) {
-            gcrTracks[side][i].data = nullptr;
-            gcrTracks[side][i].size = 0;
-            gcrTracks[side][i].bits = 1;
-            gcrTracks[side][i].written = 0;
-            gcrTracks[side][i].mfmSync = nullptr;
+            mTracks[side][i].data = nullptr;
+            mTracks[side][i].size = 0;
+            mTracks[side][i].bits = 1;
+            mTracks[side][i].written = 0;
+            mTracks[side][i].mfmSync = nullptr;
         }
     }
 
@@ -63,18 +64,12 @@ DiskStructure::~DiskStructure() {
     clearTrackData();
 }
 
-auto DiskStructure::attach( uint8_t* data, unsigned size, bool loadGracefully ) -> bool {
+auto DiskStructure::attach( uint8_t* data, unsigned size ) -> bool {
     rawData = data;
     rawSize = size;
     
     if ( !analyze() )
         return false;
-
-    if (loadGracefully && (type == Type::P64) ) {
-        encodingGraceful.status = 1;
-        system->iecBus.diskInsertInProgress = true;
-        return false;
-    }
     
     prepare();
     
@@ -91,13 +86,12 @@ auto DiskStructure::detach() -> void {
     rawSize = 0;
     
     clearTrackData();
-    encodingGraceful.reset();
 }
 
 auto DiskStructure::clearTrackData() -> void {
     for( unsigned side = 0; side < 2; side++) {
         for (unsigned i = 0; i < (MAX_TRACKS * 2); i++) {
-            auto trackPtr = &gcrTracks[side][i];
+            auto trackPtr = &mTracks[side][i];
 
             if (trackPtr->data)
                 delete[] trackPtr->data;
@@ -178,6 +172,9 @@ auto DiskStructure::analyze() -> bool {
 
     if ( analyzeD71() )
         return true;
+
+    if ( analyzeD81() )
+        return true;
     
     if ( analyzeG64() )
         return true;
@@ -185,10 +182,16 @@ auto DiskStructure::analyze() -> bool {
     if ( analyzeG71() )
         return true;
 
-    if ( analyzeP64() )
+    if ( analyzeG81() )
         return true;
 
-    if ( analyzeP71() )
+    if ( analyzePxx("P64-1541", Type::P64) )
+        return true;
+
+    if ( analyzePxx("P64-1571", Type::P71) )
+        return true;
+
+    if ( analyzePxx("P64-1581", Type::P81) )
         return true;
 
     created = DiskStructure::createD64FromPRG( system, system->interface->getFileNameFromMedia(media), rawData, rawSize );
@@ -215,12 +218,19 @@ auto DiskStructure::prepare() -> void {
         case Type::D71:
             prepareDxx();
             break;
+        case Type::D81:
+            prepareD81();
+            break;
         case Type::G64:
         case Type::G71:
             prepareGxx();
             break;
+        case Type::G81:
+            prepareG81();
+            break;
         case Type::P64:
         case Type::P71:
+        case Type::P81:
             preparePxx();
             break;
         case Type::Unknown:
@@ -241,147 +251,6 @@ auto DiskStructure::getLogicalTrack(uint8_t _track, int offset) -> uint8_t {
         logicalTrack += tracks;
 
     return (uint8_t)logicalTrack;        
-}
-
-// support for following DIR chain to second side (don't know if C64 DOS using this)
-#define GTP(_T) \
-    (sides == 1) ? &gcrTracks[0][(_T - 1) * 2] \
-    : &gcrTracks[ (_T > TYPICAL_TRACKS) ? 1 : 0][ (((_T > TYPICAL_TRACKS) ? (_T - TYPICAL_TRACKS) : _T) - 1) * 2]
-
-// C64 DOS (support 35 tracks per side)
-auto DiskStructure::createListing() -> void {
-
-    if (!rawData || (type == Type::Unknown))
-        return;
-    
-    Emulator::C64Listing listing;
-    listing.convertToScreencode = system->convertToScreencode;
-        
-    unsigned id = 0;
-    
-    uint8_t buffer[256];  
-    uint8_t _track = 18;
-    uint8_t _sector = 0;
-    int trackOffset = 0;
-    uint8_t tries = TYPICAL_TRACKS * sides + 1;
-
-    while (--tries) {        
-        decodeSector( GTP( _track ), buffer, _sector );
-        uint8_t _trackLogical = buffer[0];
-        
-        if (_trackLogical == 18)
-            break;
-        
-        if ((_trackLogical == 0) || (_trackLogical > (TYPICAL_TRACKS * sides))) {
-            _track = getLogicalTrack(_track, 1);
-
-        } else {
-            trackOffset = _track - _trackLogical;
-        
-            _track = getLogicalTrack(_track, trackOffset);
-        }        
-    }    
-    
-    if (!tries) {
-        trackOffset = 0;
-        _track = 18;
-        decodeSector( GTP( _track ), buffer, _sector );
-    }
-    
-    unsigned freeBlocks = 0;
-
-    // c64 DOS count free sectors for 35 tracks only
-    for (uint8_t track = 1; track <= TYPICAL_TRACKS; track++) {
-        
-        uint8_t* bamPtr = &buffer[4 + 4 * (track - 1)];
-        
-        if (track != 18) {
-            freeBlocks += *bamPtr;
-        }
-    }
-
-    if (sides == 2) {
-        for (uint8_t track = 1; track <= TYPICAL_TRACKS; track++) {
-            freeBlocks += buffer[0xdd + (track - 1)];
-        }
-    }
-
-    uint8_t buffer2[256];
-    decodeSector( GTP( _track ), buffer2, ++_sector );
-    uint8_t* ptr = &buffer2[0];
-
-    bool addedHeadline = false;
-
-    std::vector<uint8_t> _headlineCmd = {'*'};
-    if (system->loadWithColumn)
-        _headlineCmd = {':', '*'};
-
-    unsigned entry = 0;
-    
-    while(1) {
-        
-        unsigned listingSize = *(ptr + 0x1f) * 256 + *(ptr + 0x1e);        
-        
-        if ( *(ptr + 0x2) != 0 ) {
-
-            if (!addedHeadline) {
-                addedHeadline = true;
-                uint8_t type = *(ptr + 0x2);
-
-                if (system->loadWithColumn && ((type & 7) != 2) ) // when first file is not a PRG
-                    _headlineCmd = {'*'};
-
-                listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand(_headlineCmd, true) ) } );
-                loader.push_back( _headlineCmd );
-            }
-
-            uint8_t type = *(ptr + 0x2);
-            std::vector<uint16_t> entry = listing.buildListing( ptr + 0x5, listingSize, type & ~0x30 );
-            
-            std::vector<uint16_t> loadCommand;
-            
-            if (listingSize)
-                loadCommand = listing.decodeToScreencode( buildLoadCommand( listing.loader, true ) );
-            
-            listings.push_back( { id++, entry, loadCommand } );
-			loader.push_back( listing.loader );
-        }
-        
-        ptr += 0x20;
-        entry++;
-        
-        if ((entry & 7) == 0) {
-            
-            // if the disk doesn't use the dir track, it could produce an endless loop
-            if (entry > 250)                
-                break;
-            
-            _track = buffer2[0];
-            _sector = buffer2[1];
-            
-            if (trackOffset)
-                _track = getLogicalTrack(_track, trackOffset);
-                        
-            if (_track > (TYPICAL_TRACKS * sides))
-                break;
-            
-            if (_track == 0)
-                break;
-
-            if ( decodeSector(GTP( _track ), buffer2, _sector) != ERR_OK)
-                break;
-            
-            ptr = &buffer2[0];
-        }        
-    }
-
-    if (!addedHeadline) {
-        listings.push_back( { 0, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ) } );
-        loader.push_back( {'*'} );
-    }
-    
-    listings.push_back( { id++, listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand( _headlineCmd, true) ) } );
-	loader.push_back( _headlineCmd );
 }
 
 auto DiskStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& {
@@ -523,19 +392,6 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
         system->traps.reset( options & 2 ); // trap send success event to host, error event will be always send
         system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
     }
-
-//    if (useTraps) {
-//        if (!(useTraps & 0x80)) {
-//            // override a possible speeder
-//            drive->extendedMemoryMap = false;
-//            system->secondDriveCable.parallelPossible = false;
-//            system->burstOrParallelUpdate();
-//            drive->setFirmwareByType();
-//        }
-//        traps->installSerial();
-//        traps->reset(useTraps & 0x80);
-//        system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
-//    }
 }
 
 auto DiskStructure::create( Type newType, std::string diskName ) -> Emulator::Interface::Data {
@@ -545,14 +401,20 @@ auto DiskStructure::create( Type newType, std::string diskName ) -> Emulator::In
             return {createDxx( diskName, 1 ), imageSizeD64() };
         case Type::D71:
             return {createDxx( diskName, 2 ), imageSizeD71() };
+        case Type::D81:
+            return {createD81( diskName ), imageSizeD81() };
         case Type::G64:
             return { createGxx( diskName, 1 ), imageSizeG64() };
         case Type::G71:
             return { createGxx( diskName, 2 ), imageSizeG71() };
+        case Type::G81:
+            return { createG81( diskName ), imageSizeG81() };
         case Type::P64:
             return createPxx( diskName, 1 );
         case Type::P71:
             return createPxx( diskName, 2 );
+        case Type::P81:
+            return createP81( diskName );
         default:
             break;
     } 
@@ -654,15 +516,17 @@ auto DiskStructure::storeWrittenTracks() -> void {
     bool appendedTracks = false;
     bool errorMapChanged = false;
 
-    if (type == Type::P64 || type == Type::P71)
+    if (type == Type::P64 || type == Type::P71 || type == Type::P81)
         writePxx( );
     else if (type == Type::D64 || type == Type::D71)
         appendedTracks = handleAppendedTracksInDxx();
+    else if (type == Type::D81)
+        appendedTracks = handleAppendedTracksInD81();
 
     for (uint8_t side = 0; side < sides; side++) {
-        for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
+        for (unsigned track = 0; track < (MAX_TRACKS * 2); track++) {
 
-            MTrack* gcrTrack = getTrackPtr(side, halfTrack);
+            MTrack* gcrTrack = getTrackPtr(side, track);
 
             if (!(gcrTrack->written & 1) || !gcrTrack->size)
                 continue;
@@ -670,17 +534,26 @@ auto DiskStructure::storeWrittenTracks() -> void {
             switch (type) {
                 case Type::D64:
                 case Type::D71:
-                    writeDxx(gcrTrack, side, (halfTrack + 2) / 2, errorMapChanged);
+                    writeDxx(gcrTrack, side, (track + 2) / 2, errorMapChanged);
+                    break;
+                case Type::D81:
+                    writeD81(gcrTrack, side, track, errorMapChanged);
                     break;
                 case Type::G64:
                 case Type::G71:
-                    writeGxx(gcrTrack, side, halfTrack);
+                    writeGxx(gcrTrack, side, track);
+                    break;
+                case Type::G81:
+                    writeG81(gcrTrack, side, track);
                     break;
                 case Type::P64:
                 case Type::P71:
                     // can't overwrite single tracks, need to write whole disk.
                     // convert to gcr to update listing outside of emulation
-                    encodeGCR(gcrTrack, halfTrack);
+                    encodeGCRFromPulse(gcrTrack, track);
+                    break;
+                case Type::P81:
+                    encodeMfmFromPulse(gcrTrack);
                     break;
                 case Type::Unknown:
                     break;
@@ -690,7 +563,7 @@ auto DiskStructure::storeWrittenTracks() -> void {
         }
     }
 
-    if ((type == Type::D64 || type == Type::D71) && errorMap && (errorMapChanged || appendedTracks )) {
+    if ((type == Type::D64 || type == Type::D71 || type == Type::D81) && errorMap && (errorMapChanged || appendedTracks )) {
         // error map size is the count of all sectors of this disk. so we use
         // it as an offset for appending the error map data
         write( errorMap, errorMapSize, errorMapSize * 256 );
@@ -717,8 +590,10 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
     if (!written || (s.mode() == Emulator::Serializer::Mode::Size))
         return;
 
-    bool fluxMode = (type == Type::P64) || (type == Type::P71);
-    bool mfmDecodedMode = (drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL);
+    bool fluxMode = (type == Type::P64) || (type == Type::P71) || (type == Type::P81);
+    // 1571 use decoded MFM data in G71
+    bool mfmDecodedMode = ((drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) ||
+        ((drive->operation & (DRIVE_MODE_158x | DECODEDDATA_LEVEL)) == (DRIVE_MODE_158x | DECODEDDATA_LEVEL));
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
@@ -820,8 +695,9 @@ auto DiskStructure::updateSerializationSize() -> void {
 auto DiskStructure::getStateImageSize() -> unsigned {
     
     unsigned neededSize = 0;
-    bool fluxMode = (type == Type::P64) || (type == Type::P71);
-    bool mfmDecodedMode = (drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL);
+    bool fluxMode = (type == Type::P64) || (type == Type::P71) || (type == Type::P81);
+    bool mfmDecodedMode = ((drive->operation & (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) == (DRIVE_MODE_157x | ENCODEDDATA_LEVEL)) ||
+    ((drive->operation & (DRIVE_MODE_158x | DECODEDDATA_LEVEL)) == (DRIVE_MODE_158x | DECODEDDATA_LEVEL));
 
     for (uint8_t side = 0; side < sides; side++) {
         for (unsigned halfTrack = 0; halfTrack < (MAX_TRACKS * 2); halfTrack++) {
@@ -850,7 +726,7 @@ auto DiskStructure::getStateImageSize() -> unsigned {
 
 auto DiskStructure::getTrackPtr( uint8_t side, uint8_t halfTrack ) -> MTrack* {
     
-    return &gcrTracks[ side ][ halfTrack ];
+    return &mTracks[ side ][ halfTrack ];
 }
 
 auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector ) -> bool {
@@ -869,6 +745,28 @@ auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector )
             track -= tracksInDxx;
         }
         return readSector(rawData, buffer, track, sector, offset);
+
+    } else if (type == Type::D81) {
+        offset = (track - 1) * 40 * 256 + sector * 256;
+        if ((offset + 256) > rawSize)
+            return false;
+
+        std::memcpy( buffer, rawData + offset, 256 );
+        return true;
+    } else if (type == Type::G81 || type == Type::P81) {
+        uint8_t _side = 1;
+        // convert logical to physical sector
+        if (sector >= 20) {
+            _side = 0;
+            sector -= 20;
+        }
+        auto _mTrack = getTrackPtr(_side, track-1);
+        uint8_t _buf[512];
+        if (!decodeSectorMfm( _mTrack, track - 1, (sector >> 1) + 1, &_buf[0]))
+            return false;
+
+        std::memcpy( buffer, sector & 1 ? _buf + 256 : _buf, 256);
+        return true;
     }
 
     if (track > 35) {
@@ -878,7 +776,7 @@ auto DiskStructure::readSector( uint8_t* buffer, uint8_t track, uint8_t sector )
 
     track = track * 2 - 2;
 
-    MTrack* trackPtr = &gcrTracks[side][track];
+    MTrack* trackPtr = &mTracks[side][track];
 
     int err = decodeSector(trackPtr, buffer, sector);
 
@@ -896,7 +794,7 @@ auto DiskStructure::disalignTrack(MTrack& track, unsigned pos) -> void {
         if (tempData)
             delete[] tempData;
 
-        tempData = new uint8_t[track.size]; // todo: will be deleted when APP is closed
+        tempData = new uint8_t[track.size];
         tempSize = track.size;
     }
 

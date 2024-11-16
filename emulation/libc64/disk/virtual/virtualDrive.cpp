@@ -176,6 +176,8 @@ VirtualDrive::VirtualDrive(System* system, DiskStructure* structure) : system(sy
 }
 
 auto VirtualDrive::reset() -> void {
+    x81 = structure->type == DiskStructure::Type::D81 || structure->type == DiskStructure::Type::G81 || structure->type == DiskStructure::Type::P81;
+
     for (unsigned i = 0; i < 15; i++) {
         vdrive.buffers[i].mode = BUFFER_NOT_IN_USE;
         if (vdrive.buffers[i].buffer) {
@@ -190,7 +192,7 @@ auto VirtualDrive::reset() -> void {
 
     vdrive.dir_part = 0;
     vdrive.last_code = CBMDOS_IPE_OK;
-    last_read_track = 18;
+    last_read_track = x81 ? 40 : 18;
 }
 
 auto VirtualDrive::open(const uint8_t* name, unsigned int length, unsigned int secondary) -> int {
@@ -641,22 +643,42 @@ auto VirtualDrive::finish(bool sendFinishEvent) -> void {
     uint8_t bam[256];
     uint8_t id[2];
 
-    if (structure->readSector( &bam[0], 18, 0 )) {
-        std::memcpy(id, bam + 162, 2);
-        structure->drive->ram[0x12] = id[0];
-        structure->drive->ram[0x13] = id[1];
-        structure->drive->ram[0x16] = id[0];
-        structure->drive->ram[0x17] = id[1];
-        structure->drive->ram[0x18] = last_read_track;
-        structure->drive->ram[0x19] = last_read_sector;
-        structure->drive->ram[0x22] = last_read_track;
-        structure->drive->ram[0x42] = 239;
+    if (x81) {
+        if (structure->readSector( &bam[0], 40, 0 )) {
+            std::memcpy(id, bam + 0x16, 2);
+            structure->drive->ram[0x12] = id[0];
+            structure->drive->ram[0x13] = id[1];
+            structure->drive->ram[0x16] = id[0];
+            structure->drive->ram[0x17] = id[1];
+            structure->drive->ram[0x18] = last_read_track;
+            structure->drive->ram[0x19] = last_read_sector;
+            structure->drive->ram[0x22] = last_read_track;
+            structure->drive->ram[0x42] = 239;
 
-        std::memcpy(&(structure->drive->ram[0x400]), last_read_buffer, 256);
+            std::memcpy(&(structure->drive->ram[0x400]), last_read_buffer, 256);
 
-        structure->drive->currentHalftrack = last_read_track * 2 - 2 + 1;
+            structure->drive->currentHalftrack = last_read_track;
 
-        structure->drive->changeHalfTrack( 0 );
+            structure->drive->changeHalfTrack( 0 );
+        }
+    } else {
+        if (structure->readSector( &bam[0], 18, 0 )) {
+            std::memcpy(id, bam + 162, 2);
+            structure->drive->ram[0x12] = id[0];
+            structure->drive->ram[0x13] = id[1];
+            structure->drive->ram[0x16] = id[0];
+            structure->drive->ram[0x17] = id[1];
+            structure->drive->ram[0x18] = last_read_track;
+            structure->drive->ram[0x19] = last_read_sector;
+            structure->drive->ram[0x22] = last_read_track;
+            structure->drive->ram[0x42] = 239;
+
+            std::memcpy(&(structure->drive->ram[0x400]), last_read_buffer, 256);
+
+            structure->drive->currentHalftrack = last_read_track * 2 - 2 + 1;
+
+            structure->drive->changeHalfTrack( 0 );
+        }
     }
 
     if (sendFinishEvent) {
@@ -762,6 +784,9 @@ auto VirtualDrive::iec_open_read_directory(unsigned int secondary, cbmdos_cmd_pa
 
     /* we should already be in the proper partition at this point */
     if (secondary > 0) {
+        if (x81)
+            return iec_open_read_sequential(secondary, 40, 0);
+
         return iec_open_read_sequential(secondary, vdrive.Header_Track, vdrive.Header_Sector);
     }
 
@@ -824,8 +849,14 @@ auto VirtualDrive::vdrive_dir_find_first_slot(const uint8_t *name, int length, u
     dir->find_length = length;
     dir->find_type = type;
 
-    dir->track = vdrive.Header_Track;
-    dir->sector = vdrive.Header_Sector;
+    if (x81) {
+        dir->track = 40;
+        dir->sector = 3;
+    } else {
+        dir->track = vdrive.Header_Track;
+        dir->sector = vdrive.Header_Sector;
+    }
+
     dir->slot = 7;
 
     /* date comparisons; show everything */
@@ -836,8 +867,13 @@ auto VirtualDrive::vdrive_dir_find_first_slot(const uint8_t *name, int length, u
 
     /* old drives may have needed this, but NP's keep their info correct */
    // if (vdrive->image_format != VDRIVE_IMAGE_FORMAT_NP) {
+    if (x81) {
+        dir->buffer[0] = 40;
+        dir->buffer[1] = 3;
+    } else {
         dir->buffer[0] = vdrive.Dir_Track;
         dir->buffer[1] = vdrive.Dir_Sector;
+    }
     //}
 }
 
@@ -913,11 +949,17 @@ auto VirtualDrive::vdrive_dir_find_next_slot(vdrive_dir_context_t *dir) -> uint8
         int i, h, h2;
         unsigned int sector, max_sector, max_sector_all;
 
-        max_sector = DiskStructure::countSectors(dir->track);
-        max_sector_all = DiskStructure::countSectors(dir->track);
+        if (x81) {
+            max_sector = 40;
+            max_sector_all = 40;
+        } else {
+            max_sector = DiskStructure::countSectors(dir->track);
+            max_sector_all = DiskStructure::countSectors(dir->track);
+        }
+
         h = (dir->sector / max_sector) * max_sector;
         sector = dir->sector % max_sector;
-        sector += 3;
+        sector += x81 ? 1 : 3; // interleave
         if (sector >= max_sector) {
             sector -= max_sector;
             if (sector != 0) {

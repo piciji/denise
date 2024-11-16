@@ -109,7 +109,7 @@ namespace Mixer {
                         if (device.state & 0x80) {
                             device.state &= ~0x80;
                             if (device.media->group->isDisk())
-                                sound = getSound( FloppyInsert, activeEmulator, device.hasExternalSound );
+                                sound = getSound( FloppyInsert, activeEmulator, device.altSound() );
                             else
                                 sound = getSound( TapeInsert, activeEmulator, false );
 
@@ -121,7 +121,7 @@ namespace Mixer {
                         } else if (device.state & 0x40) {
                             device.state &= ~0x40;
                             if (device.media->group->isDisk())
-                                sound = getSound( FloppySnatch, activeEmulator, device.hasExternalSound );
+                                sound = getSound( FloppySnatch, activeEmulator, device.altSound() );
 
                             if (!sound || !sound->data) {
                                 device.first = nullptr;
@@ -155,7 +155,7 @@ namespace Mixer {
                             device.second = nullptr;
                             break;
                         } else if (sound->id == FloppySpinUp) {
-                            sound = getSound( FloppySpin, activeEmulator, device.hasExternalSound );
+                            sound = getSound( FloppySpin, activeEmulator, device.altSound() );
                             if (!sound || !sound->data) {
                                 device.second = nullptr;
                                 break;
@@ -223,7 +223,7 @@ namespace Mixer {
         }
     }
 
-    auto Drive::addSound(Emulator::Interface* emulator, Emulator::Interface::Media* media, DriveSound soundId, uint8_t data) -> void {
+    auto Drive::addSound(Emulator::Interface* emulator, Emulator::Interface::Media* media, DriveSound soundId, bool alternate, uint8_t data) -> void {
         Device* device = nullptr;
         uint8_t stepCounts;
         uint64_t ts;
@@ -238,17 +238,22 @@ namespace Mixer {
         }
 
         if (!device) {
-            devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0, false, false});
+            devices.push_back({emulator, media, nullptr, nullptr,  nullptr, 0, 0, 0, 0, false, false, alternate});
             updateExternal(emulator, media->group);
 
             device = &devices.back();
-            if (media->group->isDisk()) {
+            if (media->group->isDisk())
                 assignSteps(*device);
+        } else {
+            if (alternate != device->requestExternalSound) {
+                device->requestExternalSound = alternate;
+                if (media->group->isDisk())
+                    assignSteps(*device);
             }
         }
 
         if (soundId != FloppyStep) {
-            sound = getSound( soundId, emulator, device->hasExternalSound );
+            sound = getSound( soundId, emulator, device->altSound() );
             if (!sound || !sound->data)
                 sound = nullptr;
         }
@@ -306,7 +311,7 @@ namespace Mixer {
                 lastStep = Chronos::getTimestampInMilliseconds();
             case DriveSound::FloppySpin:
                 if (!sound && (soundId != FloppySpinDown)) {
-                    sound = getSound( FloppySpin, emulator, device->hasExternalSound );
+                    sound = getSound( FloppySpin, emulator, device->altSound() );
                     if (!sound || !sound->data)
                         sound = nullptr;
                 }
@@ -319,25 +324,20 @@ namespace Mixer {
                 device->thirdOffset = 0;
                 break;
             case DriveSound::FloppyHeadBang:
-                device->state &= ~7;
-                if (device->third && (device->third->id == FloppyHeadBang))
-                    break;
                 device->third = sound;
                 device->thirdOffset = 0;
                 break;
             case DriveSound::FloppyStep:
-                if (device->third && (device->third->id == FloppyHeadBang)) {
-                    stepCounts = (device->state + 1) & 7;
-                    if (stepCounts <= 4) {
-                        device->state = (device->state & ~7) | stepCounts;
-                        lastStep = Chronos::getTimestampInMilliseconds();
-                        break;
-                    }
-                }
+                 if (device->third && (device->third->id == FloppyHeadBang)) {
+                     if (device->thirdOffset > (device->third->size >> 3) ) {
+                         lastStep = Chronos::getTimestampInMilliseconds();
+                         break;
+                     }
+                 }
 
                 sound = device->steps[data >> 1];
                 if (!sound || !sound->data) {
-                    sound = getSound(FloppyStep, emulator, device->hasExternalSound);
+                    sound = getSound(FloppyStep, emulator, device->altSound());
                     if (!sound || !sound->data) {
                         break;
                     }
@@ -346,11 +346,11 @@ namespace Mixer {
                 ts = Chronos::getTimestampInMilliseconds();
                 delta = ts - lastStep;
 
-                if (device->stepSilence) {
+                if (device->stepSeek) {
                     Sound* soundSeek = nullptr;
                     if ( (delta < 12) && device->third) {
                         if (device->third->id != FloppyStepSeek) {
-                            soundSeek = getSound( FloppyStepSeek, emulator, device->hasExternalSound );
+                            soundSeek = getSound( FloppyStepSeek, emulator, device->altSound() );
                             if (soundSeek && soundSeek->data) {
                                 device->third = soundSeek;
                                 device->thirdOffset = 0;
@@ -411,7 +411,7 @@ namespace Mixer {
         }
 
         for(auto& device : devices) {
-            if (device.emulator == emulator && device.media->group == group && device.media->id > 0) {
+            if (device.emulator == emulator && device.media->group == group) {
                 device.hasExternalSound = hasExternalSound;
             }
         }
@@ -691,7 +691,7 @@ namespace Mixer {
         if (externalDevice)
             updateExternal(emulator, group);
 
-        for (auto& device: devices) {
+        for (auto& device : devices) {
             if (device.media->group->isDisk())
                 assignSteps(device);
         }
@@ -701,7 +701,7 @@ namespace Mixer {
             unsigned id = loopedSounds[l++];
 
             if (id == FloppySpin || id == TapePlaySpin || id == TapeForwardSpin || id == TapeRewindSpin)
-                addSound(device.emulator, device.media, (DriveSound)id);
+                addSound(device.emulator, device.media, (DriveSound)id, device.requestExternalSound);
         }
 
         delete[] loopedSounds;
@@ -713,8 +713,8 @@ namespace Mixer {
         Sound* soundShort;
 
         for (unsigned t = 1; t <= 42; t++) {
-            sound = getSound( (DriveSound)(FloppySteps + t), device.emulator, device.hasExternalSound );
-            soundShort = getSound( (DriveSound)(FloppyStepsShort + t), device.emulator, device.hasExternalSound );
+            sound = getSound( (DriveSound)(FloppySteps + t), device.emulator, device.altSound() );
+            soundShort = getSound( (DriveSound)(FloppyStepsShort + t), device.emulator, device.altSound() );
 
             if (!sound || !sound->data) {
                 device.steps[t-1] = nullptr;
@@ -727,12 +727,12 @@ namespace Mixer {
                 device.stepsShort[t-1] = soundShort;
         }
 
-        sound = getSound( FloppyStep, device.emulator, device.hasExternalSound );
+        sound = getSound( FloppyStep, device.emulator, device.altSound() );
         if (!sound || !sound->data) {
             sound = nullptr;
         }
 
-        soundShort = getSound( FloppyStepShort, device.emulator, device.hasExternalSound );
+        soundShort = getSound( FloppyStepShort, device.emulator, device.altSound()  );
         if (!soundShort || !soundShort->data) {
             soundShort = nullptr;
         }
@@ -751,7 +751,7 @@ namespace Mixer {
             }
         }
 
-        device.stepSilence = getSound(FloppyStepSeek, device.emulator, device.hasExternalSound ) != nullptr;
+        device.stepSeek = getSound(FloppyStepSeek, device.emulator, device.altSound() ) != nullptr;
     }
 
     auto Drive::reset(Emulator::Interface::MediaGroup* group, bool exclude) -> void {

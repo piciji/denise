@@ -6,18 +6,33 @@ namespace LIBC64 {
 #define OVERFLOW_NOT_THIS_CYCLE \
     ((refCyclesInCpuCycle - refCycles + todo) > (refCyclesInCpuCycle >> 1))
 
-    auto Drive::rotateG64( ) -> void {
+    template<bool withWd1770> auto Drive::rotateEncoded( ) -> void {
         unsigned _refCyclesPerRevolution = refCyclesPerRevolution;
         unsigned refCycles = refCyclesInCpuCycle;
         unsigned delta;
         unsigned todo;
 
         if (!mechanics.motorDelay) {
+            // MFM in G71 is supported. However, MFM is only saved decoded to prevent G71 from having to be enlarged later
+            // or created with an atypical size. G81, on the other hand, contains encoded data.
+            if constexpr (withWd1770)
+                wd1770.rotateDecoded(motorOn ? _refCyclesPerRevolution : 0);
+
             if (!motorOn)
                 return;
-        } else
-            if(!motorRun(_refCyclesPerRevolution))
-                return;
+        } else {
+            if constexpr (withWd1770) {
+                if(!motorRun(_refCyclesPerRevolution))
+                    _refCyclesPerRevolution = 0;
+
+                wd1770.rotateDecoded( _refCyclesPerRevolution );
+                if (!_refCyclesPerRevolution)
+                    return;
+            } else {
+                if(!motorRun(_refCyclesPerRevolution))
+                    return;
+            }
+        }
 
         if (readMode) {
             do {
@@ -109,6 +124,7 @@ namespace LIBC64 {
             } while ( refCycles );
 
         } else { // write
+            // todo: set standard bit length depending on drive speed
             do {
                 todo = 1;
                 delta = _refCyclesPerRevolution - accum;

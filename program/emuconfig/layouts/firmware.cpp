@@ -77,7 +77,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
             fSetting->init();
             this->manager->addImage(&firmware, storeLevel, nullptr, 0);
             selectedBlock = block;
-            hotSwap( storeLevel );
+            hotSwap( storeLevel, firmware.id );
             emuThread->unlock();
         };
 
@@ -124,16 +124,11 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     setMargin( 10 );    
 }
 
-auto FirmwareLayout::hotSwap( unsigned storeLevel ) -> void {
-    if (emulator == activeEmulator) {
+auto FirmwareLayout::hotSwap( unsigned storeLevel, int firmwareId ) -> void {
 
-        auto firmware = emulator->getCharRom();
-
-        if (firmware) {
-            auto missigFirmware = this->manager->swapIn( firmware, storeLevel );
-
-            program->showOpenError( missigFirmware );              
-        }
+    if ((emulator == activeEmulator) && dynamic_cast<LIBC64::Interface*>(emulator)) {
+        auto missigFirmware = this->manager->swapIn( storeLevel, firmwareId  );
+        program->showOpenError( missigFirmware );
     }
 }
 
@@ -204,7 +199,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         
         filePool->unloadOrphaned();
         
-        hotSwap( storeLevel );
+        hotSwap( storeLevel, firmware.id );
         emuThread->unlock();
     };
 

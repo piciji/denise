@@ -233,6 +233,9 @@
 -(void) windowDidBecomeMain:(NSNotification*)notification {
     if (window->state.menus.size() > 0)
         [NSApp setMainMenu:menuBar];
+    
+    if (window->onFocus)
+        window->onFocus();
 }
 
 -(void) windowDidMove:(NSNotification*)notification {

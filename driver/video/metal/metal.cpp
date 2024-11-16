@@ -694,6 +694,8 @@ namespace DRIVER {
         }
     }
 
+    auto waitRenderThread() -> void { if (threadEnabled) wait(); }
+
     auto hasVRR() -> bool { return settings.vrr; }
 
     auto waitVRR() -> void {

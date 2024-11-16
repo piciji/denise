@@ -9,7 +9,7 @@
 
 StatusHandler* statusHandler = nullptr;
 
-auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, bool LED, bool motorOff ) -> void {
+auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, uint8_t LED, bool motorOff ) -> void {
 
     setDeviceUpdate();
     
@@ -17,8 +17,11 @@ auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool w
         if (deviceState.media == media) {
             deviceState.write = write;
             deviceState.position = position;
-            deviceState.LED <<= 1;
-            deviceState.LED |= LED;
+            if (media->group->isExpansion()) { // can be changed more times a frame
+                deviceState.LED <<= 1;
+                deviceState.LED |= LED;
+            } else
+                deviceState.LED = LED;
             deviceState.inputsPerFrame++;
             deviceState.motorOff = motorOff;
             deviceState.update = true;
@@ -374,9 +377,10 @@ auto StatusHandler::update() -> void {
                     if (chunks.size() > 1)
                         name = chunks.back();
 
-                    name += " " + GUIKIT::String::prependZero( std::to_string((unsigned)(deviceState.position / 2)), 2 );
+                    unsigned track = (deviceState.position >> 1) & 0xff;
+                    name += " " + GUIKIT::String::prependZero( std::to_string(track), 2 );
 
-                    if (dynamic_cast<LIBC64::Interface*> (activeEmulator))
+                    if (deviceState.position & 0x8000)
                         name += (deviceState.position & 1) ? ".5" : ".0";
                     else
                         name += (deviceState.position & 1) ? ":1" : ":0";
@@ -384,16 +388,17 @@ auto StatusHandler::update() -> void {
                     updateText(media->id * 2 + 1, name);
 
                     GUIKIT::Image* image = &(view->ledOffImage);
-                    if (deviceState.LED & 1) {
-                        if (deviceState.write)
-                            image = &(view->ledRedImage);
-                        else {
-                            int _col = 0;
-                            if (dynamic_cast<LIBAMI::Interface*>(activeEmulator)) {
-                                _col = activeEmulator->getModelValue(LIBAMI::Interface::ModelId::ModelIdSystem);
-                                image = (_col > 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
-                            } else
-                                image = &(view->ledGreenImage);
+                    if (deviceState.LED) {
+                        if (deviceState.write) {
+                            if (dynamic_cast<LIBC64::Interface*>(activeEmulator))
+                                image = (deviceState.LED & 1) ? &(view->ledRedImage) : &(view->ledYellowImage);
+                            else
+                                image = &(view->ledRedImage);
+                        } else {
+                            if (dynamic_cast<LIBAMI::Interface*>(activeEmulator))
+                                image = (deviceState.LED & 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
+                            else
+                                image = (deviceState.LED & 1) ? &(view->ledGreenImage) : &(view->ledRedImage);
                         }
                     }
                     if (activeVideoManager->driveLedParam) {
