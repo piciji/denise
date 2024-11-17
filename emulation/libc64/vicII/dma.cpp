@@ -153,18 +153,6 @@ inline auto VicIICycle::advanceCycle() -> void {
     sprite0DmaLateBA = false;
 }
 
-inline auto VicIICycle::updateCollisions() -> void {
-
-    spriteSpriteCollidedRead = spriteSpriteCollided;
-    spriteForegroundCollidedRead = spriteForegroundCollided;
-	
-	if (canSpriteSpriteCollisionIrq && spriteSpriteCollided)
-		updateIrq( Interrupt::MMC );
-	
-	if (canSpriteForegroundCollisionIrq && spriteForegroundCollided)
-		updateIrq( Interrupt::MBC );
-}
-
 inline auto VicIICycle::clearCollisions() -> void {
 	if (clearCollision == 0x1e)
 		spriteSpriteCollided = 0;

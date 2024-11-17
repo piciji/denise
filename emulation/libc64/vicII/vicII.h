@@ -89,8 +89,7 @@ protected:
      	
 	//dma        
 	auto advanceCycle() -> void;	
-	auto clearCollisions() -> void;	
-	auto updateCollisions() -> void;
+	auto clearCollisions() -> void;
 	auto spriteUpdateBase() -> void;
 	auto spriteDmaCheck() -> void;
 	auto spriteExpand() -> void;

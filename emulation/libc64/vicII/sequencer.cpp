@@ -64,7 +64,7 @@ const uint8_t VicIICycle::colorLUT[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };	
 	
-inline auto VicIICycle::sequencer( uint32_t flags ) -> void {            	    
+inline auto VicIICycle::sequencer( uint32_t flags ) -> void {
     
     sequencerPix0<true>(  );
     
@@ -94,7 +94,6 @@ inline auto VicIICycle::sequencer( uint32_t flags ) -> void {
 		spriteDmaCheck();		
 	
     borderControl();
-    updateCollisions();
     updateBAState( flags );    
     
 	// like graphic processing, sprite processing is delayed 8 pixel too.
@@ -111,9 +110,9 @@ inline auto VicIICycle::sequencer( uint32_t flags ) -> void {
 	if (unlikely(lpTrigger))
 		checkLightPen();
 	
-	canSpriteSpriteCollisionIrq = spriteSpriteCollided == 0;
-	canSpriteForegroundCollisionIrq = spriteForegroundCollided == 0;
-	
+	spriteSpriteCollidedRead = spriteSpriteCollided;
+	spriteForegroundCollidedRead = spriteForegroundCollided;
+
 	pipeGraphic( flags );
 	
     sequencerPix0<false>();
@@ -141,7 +140,16 @@ inline auto VicIICycle::sequencer( uint32_t flags ) -> void {
 	}
 	
 	if (unlikely(clearCollision))
-		clearCollisions();	
+		clearCollisions();
+
+	if (canSpriteSpriteCollisionIrq && spriteSpriteCollided)
+		updateIrq( Interrupt::MMC );
+
+	if (canSpriteForegroundCollisionIrq && spriteForegroundCollided)
+		updateIrq( Interrupt::MBC );
+
+	canSpriteSpriteCollisionIrq = spriteSpriteCollided == 0;
+	canSpriteForegroundCollisionIrq = spriteForegroundCollided == 0;
 }
 
 template<bool phi1> inline auto VicIICycle::sequencerPix0( ) -> void {   
