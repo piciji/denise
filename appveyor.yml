@@ -8,8 +8,8 @@ skip_commits:
 
 image:
   - Visual Studio 2019
-  - macos-bigsur
-  - macos
+  - macos-sonoma
+  - macos-monterey
 #  - Ubuntu2004
 
 stack: python 3.8
@@ -49,21 +49,21 @@ matrix:
       Target: macos
     - image: Ubuntu2004
       Target: macos-arm
-    - image: macos
+    - image: macos-monterey
       Target: win64
-    - image: macos
+    - image: macos-monterey
       Target: win32
-    - image: macos
+    - image: macos-monterey
       Target: linux
-    - image: macos
+    - image: macos-monterey
       Target: macos-arm
-    - image: macos-bigsur
+    - image: macos-sonoma
       Target: win64
-    - image: macos-bigsur
+    - image: macos-sonoma
       Target: win32
-    - image: macos-bigsur
+    - image: macos-sonoma
       Target: linux
-    - image: macos-bigsur
+    - image: macos-sonoma
       Target: macos
 for:
 -    
