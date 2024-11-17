@@ -14,7 +14,7 @@ struct DiskFinder {
         GUIKIT::File tempFile( path );
 
         filePath = tempFile.getPath();
-        fileName = tempFile.getFileName(true);
+        fileName = tempFile.getFileName(true, true);
         suffix = tempFile.getExtension();
     }
 
