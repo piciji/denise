@@ -398,7 +398,7 @@ auto StatusHandler::update() -> void {
                             if (dynamic_cast<LIBAMI::Interface*>(activeEmulator))
                                 image = (deviceState.LED & 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
                             else
-                                image = (deviceState.LED & 1) ? &(view->ledGreenImage) : &(view->ledRedImage);
+                                image = (deviceState.LED & 1) ? &(view->ledGreenImage) : &(view->ledRed2Image);
                         }
                     }
                     if (activeVideoManager->driveLedParam) {

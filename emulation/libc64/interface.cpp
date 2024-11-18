@@ -528,7 +528,7 @@ auto Interface::prepareModels() -> void {
     // c64c use custom ic instead of discrete glue logic
     models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Purpose::Misc, 0});
 	// disable grey dot bug for 85xx VIC-II
-	models.push_back({ModelIdDisableGreyDotBug, "Disable Grey Dot Bug", Model::Type::Switch, Model::Purpose::Misc, 0});
+	models.push_back({ModelIdDisableGreyDotBug, "Disable Grey Dot Bug", Model::Type::Switch, Model::Purpose::Misc, 1});
     // emulate the buggy vertical line in first two border pixels
     models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Combo, Model::Purpose::Misc, 0, {0, 2},
                       {"Off", "Solid White", "Register Color"}});
@@ -841,9 +841,7 @@ auto Interface::run() -> void {
 }
 
 auto Interface::runAhead(unsigned frames) -> void {
-    system->runAhead.frames = frames;
-    system->input.updateSampling();
-    system->updateDriveSounds();
+    system->setRunAhead(frames);
 }
 
 auto Interface::runAheadPerformance(bool state) -> void {

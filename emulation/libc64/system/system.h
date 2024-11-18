@@ -255,10 +255,12 @@ struct System {
 
     auto hintSlowSpeed(bool state) -> void;
     auto setWarpMode( unsigned config ) -> void;
+	auto setRunAhead(unsigned frames) -> void;
     auto setFloppySounds(bool state) -> void;
 	auto setTapeSounds(bool state) -> void;
     auto updateDriveSounds() -> void;
     auto setTapeLoadingNoise(unsigned volume) -> void;
+	auto runAheadPreventJit() -> bool { return runAhead.preventJit && runAhead.frames; }
     
     auto setCycleRenderer(bool state = true) -> void;
 	auto updateStats() -> void;

@@ -110,6 +110,7 @@ struct IecBus {
     auto setSpeeder(uint8_t speeder) -> void;
     auto updateDriveSounds() -> void;
     auto wasAutostarted() -> bool;
+    auto has1581() -> bool;
     auto initThread() -> void;
 };
 

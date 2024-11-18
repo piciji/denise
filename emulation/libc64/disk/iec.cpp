@@ -602,6 +602,14 @@ auto IecBus::wasAutostarted() -> bool {
     return false;
 }
 
+auto IecBus::has1581() -> bool {
+    for (auto drive : drivesEnabled) {
+        if (drive->type == Drive::Type::D1581)
+            return true;
+    }
+    return false;
+}
+
 auto IecBus::serialize(Emulator::Serializer& s) -> void {
     // depends on region, enabled drives, firmware and disk images.
     

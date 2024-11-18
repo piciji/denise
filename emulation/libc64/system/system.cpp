@@ -749,6 +749,12 @@ auto System::hintSlowSpeed(bool state) -> void {
         warp.config &= ~(unsigned)Interface::WarpMode::SlowSpeed;
 }
 
+auto System::setRunAhead(unsigned frames) -> void {
+    runAhead.frames = frames;
+    input.updateSampling();
+    updateDriveSounds();
+}
+
 auto System::setWarpMode( unsigned config ) -> void {
     warp.config = config | (warp.config & (unsigned)Interface::WarpMode::SlowSpeed);
     sidManager.disableAudioOut(config & (unsigned) Emulator::Interface::WarpMode::NoAudioOut);
@@ -843,11 +849,13 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
 
     if (diskSilence.active) {
         if (!diskSilence.idle) {
-            if (++diskSilence.idleFrames > 200) {
-                diskSilence.idle = true;
-                diskSilence.idleFrames = 0;
-                driveCycleSyncingUpdate();
-                iecBus.resetDriveState();
+            if ((++diskSilence.idleFrames & 3) == 0) {
+                if (diskSilence.idleFrames > (iecBus.has1581() ? 600 : 200) ) {
+                    diskSilence.idle = true;
+                    diskSilence.idleFrames = 0;
+                    driveCycleSyncingUpdate();
+                    iecBus.resetDriveState();
+                }
             }
         }
     }
