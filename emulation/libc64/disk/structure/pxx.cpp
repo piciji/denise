@@ -656,7 +656,7 @@ namespace LIBC64 {
         bool flipFlop = false;
         bool lastFlipFlop = false;
         unsigned delay;
-        uint8_t ue7Counter;
+        uint8_t ue7Counter = 0;
         uint8_t uf4Counter;
         unsigned bits = 0;
 
