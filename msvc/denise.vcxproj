@@ -182,7 +182,6 @@
     <ClInclude Include="..\emulation\tools\petcii.h" />
     <ClInclude Include="..\emulation\tools\pia.h" />
     <ClInclude Include="..\emulation\tools\powersupply.h" />
-    <ClInclude Include="..\emulation\tools\quadratureEncoder.h" />
     <ClInclude Include="..\emulation\tools\rand.h" />
     <ClInclude Include="..\emulation\tools\serializer.h" />
     <ClInclude Include="..\emulation\tools\socket.h" />

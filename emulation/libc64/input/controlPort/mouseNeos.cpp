@@ -26,7 +26,7 @@ struct MouseNeos : AnalogControl {
         out &= ~0xf;
 
         if ( (neosState != NeosState::XH) && !sysTimer.has( &neosTimer ) ) {
-            // too much cycles elapsed between polling the half bytes ... reinit
+            // too many cycles elapsed between polling the half bytes ... reinit
             neosState = NeosState::XH;
             neosFetchMovement( );
         }

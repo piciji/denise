@@ -237,7 +237,7 @@ struct LightControl : ControlPort {
         unsigned cycles = vicII->getCyclesForNextLightTrigger( x, y, cyclePixel );
         
         if ( cycles )
-            sysTimer.add( &triggerOn, cycles );                
+            sysTimer.add( &triggerOn, cycles );
     }
     
     auto setBoundaries( ) -> void {
@@ -290,11 +290,6 @@ struct LightControl : ControlPort {
         s.integer( button1Pressed );
         s.integer( button2Pressed );
     }
-    
-    auto useJitPolling() -> bool {
-        return false;
-    }
-
 };
 
 }
