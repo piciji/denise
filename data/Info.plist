@@ -22,6 +22,10 @@
                 <string>P64</string>
                 <string>D71</string>
                 <string>G71</string>
+                <string>P71</string>
+                <string>D81</string>
+                <string>G81</string>
+                <string>P81</string>
             </array>
             <key>CFBundleTypeIconFile</key>
             <string></string>
@@ -35,6 +39,8 @@
             <array>
                 <string>ADF</string>
                 <string>ADZ</string>
+                <string>DMS</string>
+                <string>IPF</string>
             </array>
             <key>CFBundleTypeIconFile</key>
             <string></string>
