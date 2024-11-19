@@ -137,7 +137,7 @@ auto Input::poll() -> void {
         controlPort1->poll();
         controlPort2->poll();
 
-        // changed keyboard or joyport state can trigger lightpen    
+        // changed keyboard or joyport state can trigger lightpen
         updateLightpen( !lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob );
     }
     sampling.midscreen = 0;
@@ -242,7 +242,8 @@ auto Input::updateSampling() -> void {
     if (system->runAheadPreventJit())
         sampling.allow = false;
     else
-        sampling.allow = (sampling.mode != Static_Sampling) && !system->enabledDebugCart();
+        sampling.allow = (sampling.mode != Static_Sampling) && !system->enabledDebugCart()
+            && controlPort1->allowJit() && controlPort2->allowJit();
 }
 
 auto Input::getConnectedDevice( Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {

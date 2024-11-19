@@ -290,6 +290,8 @@ struct LightControl : ControlPort {
         s.integer( button1Pressed );
         s.integer( button2Pressed );
     }
+
+    auto allowJit() -> bool { return false; }
 };
 
 }
