@@ -657,7 +657,7 @@ namespace LIBC64 {
         bool lastFlipFlop = false;
         unsigned delay;
         uint8_t ue7Counter = 0;
-        uint8_t uf4Counter;
+        uint8_t uf4Counter = 0;
         unsigned bits = 0;
 
         if ( !gcrTrack->data )
