@@ -2,14 +2,18 @@ cmake_minimum_required(VERSION 3.14)
 
 project(denise LANGUAGES CXX)
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    cmake_minimum_required(VERSION 3.15)
     find_package(Freetype REQUIRED)
-    find_package(PkgConfig REQUIRED)
     find_package(OpenAL)
-    pkg_check_modules(FREETYPE2 REQUIRED freetype2)
 elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
     find_package(Freetype REQUIRED)
     find_package(PkgConfig REQUIRED)
+    pkg_check_modules(FREETYPE2 REQUIRED freetype2)
+elseif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    find_package(Freetype REQUIRED)
+    find_package(PkgConfig REQUIRED)
+    find_package(OpenAL)
     pkg_check_modules(FREETYPE2 REQUIRED freetype2)
 endif()
 
@@ -67,8 +71,8 @@ endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "compile for architecture ${CMAKE_OSX_ARCHITECTURES}")
-    message(STATUS "freetype include dir ${FREETYPE2_INCLUDE_DIRS}")
-    message(STATUS "freetype lib dir ${FREETYPE2_LIBRARY_DIRS}")
+    message(STATUS "freetype include dir ${FREETYPE_INCLUDE_DIRS}")
+    message(STATUS "freetype lib ${FREETYPE_LIBRARY}")
 endif()
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -234,7 +238,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_FREETYPE")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
+            PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
 else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES COMPILE_FLAGS "-DGUIKIT_GTK -DINSTALL_FOLDER=\"\\\"${CMAKE_INSTALL_PREFIX}\\\"\" ")
@@ -293,8 +297,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit")
-    target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
-    target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARY})
 
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
 else()
@@ -354,9 +357,9 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/MacOS PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
 
-    install(FILES ${FREETYPE2_LIBRARY_DIRS}/lib${FREETYPE2_LIBRARIES}.6.dylib DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Frameworks)
+    file(COPY "${FREETYPE_LIBRARY}" DESTINATION "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Frameworks" FOLLOW_SYMLINK_CHAIN)
 
-    install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE2_LIBRARY_DIRS} lib${FREETYPE2_LIBRARIES}.6.dylib ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app ${PROJECT_NAME})")
+    install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE_LIBRARY} libfreetype.dylib ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app ${PROJECT_NAME})")
 
     install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app)")
 

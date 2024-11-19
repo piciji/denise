@@ -1,5 +1,8 @@
-
+###########################
 WINDOWS (7 and higher)
+###########################
+-----------
+MINGW
 -----------
 download and install CMAKE, GIT
 download and install mingw32 or 64: https://github.com/niXman/mingw-builds-binaries/releases
@@ -43,13 +46,12 @@ Visual Studio
 ---------------
 there is a solution file in folder msvc
 
-
+###########################
 OSX
----
-install brew first: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-brew install pkg-config
-cp /opt/homebrew/bin/pkg-config /usr/local/bin
-
+###########################
+-----------
+Console
+-----------
 compile freetype
   download latest source
   ./configure --enable-static --without-zlib --without-bzip2
@@ -62,9 +64,16 @@ cmake -B builds/release
 cmake --build builds/release -j 8
 cmake --build builds/release --target install
 
+-----------
+Xcode
+-----------
+there is a solution file in folder denise.xcodeproj
 
+
+###########################
 Linux/BSD
----------
+###########################
+---------------------------------------------
 Debian (Ubuntu, Mint, ...)
 ---------------------------------------------
 sudo apt install libgtk-3-dev
