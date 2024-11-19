@@ -252,7 +252,7 @@ namespace DRIVER {
             HWND parent = Win::getParentHandle(settings.handle);
             int adapterId = Win::getFullscreenAdapter(parent);
             if (adapterId >= 0) {
-                //wait();
+                wait();
                 settings.exclusiveFullscreen = true;
                 resizeMutexThreaded.lock();
                 initSwapChain(symbols, device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
@@ -1045,7 +1045,29 @@ namespace DRIVER {
         updateHistory = true;
     }
 
+    auto checkForResize() -> void {
+        RECT windowSize = Win::getDimension( settings.handle );
+        if ((windowSize.right != viewScreen.windowWidth) || (windowSize.bottom != viewScreen.windowHeight)) {
+            resizeMutexThreaded.lock();
+            swapChain.ptr->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, swapChain.flags );
+            viewScreen.update(viewport, windowSize.right, windowSize.bottom);
+#ifdef DRV_FREETYPE
+            ftUpdateCoords();
+#endif
+            updateFrameSize();
+            resizeMutexThreaded.unlock();
+        }
+    }
+
+    auto redraw(bool disallowShader = false) -> void {
+        checkForResize();
+
+        _redraw(disallowShader);
+    }
+
     auto unlockAndRedraw() -> void {
+        checkForResize();
+
         if (threadEnabled) {
             RenderThread::unlock();
             return;
@@ -1053,7 +1075,7 @@ namespace DRIVER {
         context->Unmap((ID3D11Resource*)frame.textures[0].staging, 0);
         context->CopyResource((ID3D11Resource*)frame.textures[0].ptr, (ID3D11Resource*)frame.textures[0].staging);
 
-        redraw(options & OPT_DisallowShader);
+        _redraw(options & OPT_DisallowShader);
     }
 
     auto refresh() -> void {
@@ -1098,24 +1120,24 @@ namespace DRIVER {
             accessMutex.unlock();
         }
 
-        redraw(options & OPT_DisallowShader);
+        _redraw(options & OPT_DisallowShader);
     }
 
-    auto redraw(bool disallowShader = false) -> void {
+    auto _redraw(bool disallowShader = false) -> void {
         ID3D11RenderTargetView* rtv = nullptr;
         ID3D11Texture2D* backBuffer = nullptr;
-        RECT windowSize = Win::getDimension( settings.handle );
-
-        if ((windowSize.right != viewScreen.windowWidth) || (windowSize.bottom != viewScreen.windowHeight)) {
-            resizeMutexThreaded.lock();
-            swapChain.ptr->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, swapChain.flags );
-            resizeMutexThreaded.unlock();
-            viewScreen.update(viewport, windowSize.right, windowSize.bottom);
-#ifdef DRV_FREETYPE
-            ftUpdateCoords();
-#endif
-            updateFrameSize();
-        }
+//         RECT windowSize = Win::getDimension( settings.handle );
+//
+//         if ((windowSize.right != viewScreen.windowWidth) || (windowSize.bottom != viewScreen.windowHeight)) {
+//             resizeMutexThreaded.lock();
+//             swapChain.ptr->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, swapChain.flags );
+//             resizeMutexThreaded.unlock();
+//             viewScreen.update(viewport, windowSize.right, windowSize.bottom);
+// #ifdef DRV_FREETYPE
+//             ftUpdateCoords();
+// #endif
+//             updateFrameSize();
+//         }
 
         if (updateRTS) {
             updateRenderTargets(frame.textures[0].desc.Width, frame.textures[0].desc.Height);

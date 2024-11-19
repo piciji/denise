@@ -247,7 +247,7 @@ auto View::build() -> void {
     };
 	
 	GUIKIT::BrowserWindow::onCall = []() {
-        if (!globalSettings->get<bool>("threaded_emu", false) || !videoDriver->hasThreaded())
+        if (!emuThread->enabled || !videoDriver->hasThreaded())
 		    audioDriver->clear();
 	};
 
@@ -337,7 +337,7 @@ auto View::build() -> void {
         videoDriver->waitRenderThread();
 
 		if (videoDriver && fullscreenSetting.inUse
-			&& globalSettings->get<bool>("threaded_emu", false)
+			&& emuThread->enabled
 			&& videoDriver->hasThreaded())
             videoDriver->forceResize();
 		

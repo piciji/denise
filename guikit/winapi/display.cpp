@@ -86,7 +86,7 @@ auto pMonitor::fetchDisplays() -> void {
 
     while( EnumDisplayDevices(NULL, i++, &device, 0 ) ) {
 
-        if (device.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER)
+        if (!device.StateFlags || (device.StateFlags & (DISPLAY_DEVICE_MIRRORING_DRIVER | DISPLAY_DEVICE_MODESPRUNED)))
             continue;
 
         std::string devStr = utf8_t(device.DeviceString);
