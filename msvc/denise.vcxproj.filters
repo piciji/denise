@@ -331,9 +331,6 @@
     <ClInclude Include="..\emulation\tools\powersupply.h">
       <Filter>emulation\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\emulation\tools\quadratureEncoder.h">
-      <Filter>emulation\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\emulation\tools\rand.h">
       <Filter>emulation\tools</Filter>
     </ClInclude>

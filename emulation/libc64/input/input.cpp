@@ -100,6 +100,7 @@ auto Input::readCiaPortB( CIA::Base::Lines* lines ) -> uint8_t {
 
 auto Input::writeCiaPortA( CIA::Base::Lines* lines ) -> void {
     this->lines = lines;
+    jitPoll();
 	updateLightpen( lines->ioa, lines->iob );
     potMask = (lines->ioa >> 6) & 3;
     
@@ -108,16 +109,18 @@ auto Input::writeCiaPortA( CIA::Base::Lines* lines ) -> void {
 
 auto Input::writeCiaPortB( CIA::Base::Lines* lines ) -> void {
     this->lines = lines;
-    
+    jitPoll();
 	updateLightpen( lines->ioa, lines->iob );
     
     controlPort1->write( lines->iob );
 }
 
 inline auto Input::jitPoll() -> void {
-    if (sampling.allow && ((sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 2))) {
+    if (sampling.allow && ((sampling.mode == Dynamic_Sampling) || (sampling.midscreen < 3))) {
         if (interface->jitPoll(sampling.mode == Restricted_Dynamic_Sampling ? 5 : -1)) {
             keyboard.poll();
+            controlPort1->poll();
+            controlPort2->poll();
             updateLightpen(!lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob);
             sampling.midscreen++;
             //interface->log(vicII->getVcounter(), false);
@@ -126,19 +129,17 @@ inline auto Input::jitPoll() -> void {
 }
 
 auto Input::poll() -> void {
-	
     bool jitDisable = !sampling.allow || (sampling.midscreen == 0);
 
-    if ( jitDisable )
+    if ( jitDisable ) {
         keyboard.poll(); 
     
-    controlPort1->poll();
-    controlPort2->poll();
-    
-    if (jitDisable)
-        // changed keyboard or joyport state can trigger lightpen    
-        updateLightpen( !lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob );
+        controlPort1->poll();
+        controlPort2->poll();
 
+        // changed keyboard or joyport state can trigger lightpen
+        updateLightpen( !lines ? 0xff : lines->ioa, !lines ? 0xff : lines->iob );
+    }
     sampling.midscreen = 0;
 }
 
@@ -167,7 +168,7 @@ auto Input::updateLightpen( uint8_t ioa, uint8_t iob ) -> void {
 }
 
 auto Input::readPotX() -> uint8_t {    
-    
+    jitPoll();
     switch(potMask) {
         case 1:
             return controlPort1->getPotX();
@@ -181,7 +182,7 @@ auto Input::readPotX() -> uint8_t {
 }
 
 auto Input::readPotY() -> uint8_t {    
-    
+    jitPoll();
     switch(potMask) {
         case 1:
             return controlPort1->getPotY();
@@ -238,10 +239,11 @@ auto Input::setSampling(uint8_t mode) -> void {
 }
 
 auto Input::updateSampling() -> void {
-    if (system->runAhead.preventJit && system->runAhead.frames)
+    if (system->runAheadPreventJit())
         sampling.allow = false;
     else
-        sampling.allow = (sampling.mode != 0) && !system->enabledDebugCart() && controlPort1->useJitPolling() && controlPort2->useJitPolling();
+        sampling.allow = (sampling.mode != Static_Sampling) && !system->enabledDebugCart()
+            && controlPort1->allowJit() && controlPort2->allowJit();
 }
 
 auto Input::getConnectedDevice( Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {
