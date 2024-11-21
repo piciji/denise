@@ -65,7 +65,13 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3") # prevents NDEBUG, which slightly decrease execution speed
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+        set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE ${CMAKE_BINARY_DIR}/out)
+    endif()
+endif()
+
+if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
 endif()
 
@@ -293,7 +299,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     else()
         target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x64/libfreetype.a")
     endif()
-    set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/out")
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit")
@@ -332,15 +337,16 @@ if(OPENAL_FOUND)
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
-    install(DIRECTORY data/${dataFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
-    install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_BINARY_DIR}/out FILES_MATCHING PATTERN "*.ttf")
-    install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
-    install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
-    install(DIRECTORY data/${imagesFolder} DESTINATION ${CMAKE_BINARY_DIR}/out)
+    install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(DIRECTORY data/${dataFolder} DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_INSTALL_PREFIX} FILES_MATCHING PATTERN "*.ttf")
+    install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(DIRECTORY data/${imagesFolder} DESTINATION ${CMAKE_INSTALL_PREFIX})
 
-    install(FILES readme.md DESTINATION ${CMAKE_BINARY_DIR}/out)
-    install(FILES licence.md DESTINATION ${CMAKE_BINARY_DIR}/out)
+    install(FILES readme.md DESTINATION ${CMAKE_INSTALL_PREFIX})
+    install(FILES licence.md DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
@@ -388,13 +394,22 @@ add_custom_target(install_${PROJECT_NAME}
         DEPENDS ${PROJECT_NAME}
         COMMENT "Installing ${PROJECT_NAME}")
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_target("uninstall" COMMENT "Uninstall installed files")
     add_custom_command(
             TARGET "uninstall"
             POST_BUILD
             COMMENT "Uninstall files with install_manifest.txt"
-            COMMAND xargs rm -vf < install_manifest.txt || echo Nothing in
-            install_manifest.txt to be uninstalled!
+            COMMAND xargs rm -vf < install_manifest.txt || echo Nothing to be uninstalled!
+    )
+elseif (${CMAKE_GENERATOR} STREQUAL "MSYS Makefiles")
+    add_custom_target("uninstall" COMMENT "Uninstall installed files")
+    add_custom_command(
+            TARGET "uninstall"
+            POST_BUILD
+            COMMENT "Uninstall files with install_manifest.txt"
+            COMMAND tr -d '\\r' < install_manifest.txt > im2.txt
+            COMMAND xargs rm -vf < im2.txt || echo Nothing to be uninstalled!
+            COMMAND rm im2.txt
     )
 endif()
