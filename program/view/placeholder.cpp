@@ -41,30 +41,66 @@ auto View::loadPlaceholder() -> void {
 		return;
 
     VideoManager::placeHolderFrames = 84;
+    VideoManager::placeHolderSplashScreen = true;
 }
 
 auto View::renderPlaceholder() -> bool {
-    if (GUIKIT::Application::isQuit)
-		return false;
-
-    videoDriver->setLinearFilter( true );
-
-	unsigned gpu_pitch;
-    unsigned* gpu_data = 0;
+    unsigned _width, _height;
+    uint8_t* _data;
+    uint8_t options = 0;
+    unsigned gpu_pitch;
+    unsigned* gpu_data = nullptr;
+    float* gpu_data_float = nullptr;
     unsigned _w, _h;
+    ColorLumaChroma clc;
+    ColorRgb rgb;
+    bool useImgViewer = imageViewer && imageViewer->overrideImage.data;
 
-    if (placeholder.empty())
+    if (GUIKIT::Application::isQuit)
         return false;
 
-	uint8_t* data = placeholder.data;
+    if (useImgViewer) {
+        _width = imageViewer->overrideImage.width;
+        _height = imageViewer->overrideImage.height;
+        _data = imageViewer->overrideImage.data;
+    } else if (!placeholder.empty()) {
+        _width = placeholder.width;
+        _height = placeholder.height;
+        _data = placeholder.data;
 
-    if (videoDriver->lock(gpu_data, gpu_pitch, placeholder.width, placeholder.height, DRIVER::OPT_DisallowShader)) {
-        for (_h = 0; _h < placeholder.height; _h++) {
-            for (_w = 0; _w < placeholder.width; _w++) {
-                *gpu_data++ = data[0] << 16 | data[1] << 8 | data[2];
-                data += 4;
+        videoDriver->setLinearFilter( true );
+        options = DRIVER::OPT_DisallowShader;
+    } else
+        return false;
+
+    if (useImgViewer && (activeVideoManager->crtMode == VideoManager::CrtMode::Gpu) && activeVideoManager->shaderLumaChromaInput()) {
+        if (videoDriver->lock(gpu_data_float, gpu_pitch, _width, _height, options)) {
+            for (_h = 0; _h < _height; _h++) {
+                for (_w = 0; _w < _width; _w++) {
+                    rgb.r = _data[0];
+                    rgb.g = _data[1];
+                    rgb.b = _data[2];
+                    VideoManager::convertRGBToYUV(&clc, &rgb);
+
+                    *gpu_data_float++ = clc.y / 255.0;
+                    *gpu_data_float++ = clc.u_i / 255.0;
+                    *gpu_data_float++ = clc.v_q / 255.0;
+                    *gpu_data_float++ = 0;
+
+                    _data += 4;
+                }
+                gpu_data_float += gpu_pitch - _width;
             }
-            gpu_data += gpu_pitch - (placeholder.width );
+
+            videoDriver->unlockAndRedraw();
+        }
+    } else if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, options)) {
+        for (_h = 0; _h < _height; _h++) {
+            for (_w = 0; _w < _width; _w++) {
+                *gpu_data++ = _data[0] << 16 | _data[1] << 8 | _data[2];
+                _data += 4;
+            }
+            gpu_data += gpu_pitch - _width;
         }
 
         videoDriver->unlockAndRedraw();

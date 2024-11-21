@@ -63,6 +63,7 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Button unload;
 
             GUIKIT::Widget spacer;
+            GUIKIT::Button imgReplacer;
             GUIKIT::Label folder;
             GUIKIT::RadioBox internal;
             GUIKIT::RadioBox external;
@@ -326,6 +327,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image menuImage;
     GUIKIT::Image addImage;
     GUIKIT::Image delImage;
+    GUIKIT::Image gearsImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;

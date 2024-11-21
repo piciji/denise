@@ -859,3 +859,4 @@ adjust speed to monitor tooltip = エミュレータの速度は全画面モー�
 esperanto = エスペラント語
 3.5-inch = 3.5-inch
 Floppy 3.5-inch Profile = Floppy Profile (3.5-inch, e.g. VC1581)
+select image to test shader = Image selection for testing shaders

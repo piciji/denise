@@ -111,6 +111,7 @@ view(withSpectrum) {
 VideoShaderLayout::Main::Control::Control() {
     append(unload,{0u, 0u}, 10);
     append(spacer,{~0u, 0u});
+    append(imgReplacer, {0u, 0u}, 5);
     append(folder,{0u, 0u}, 5);
     append(internal,{0u, 0u}, 5);
     append(external,{0u, 0u}, 10);
@@ -399,6 +400,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     menuImage.loadPng((uint8_t*)Icons::menu, sizeof(Icons::menu));
     addImage.loadPng((uint8_t*)Icons::add, sizeof(Icons::add));
     delImage.loadPng((uint8_t*)Icons::del, sizeof(Icons::del));
+    gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
 
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
@@ -737,6 +739,8 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     codeLayout.setMargin(10);
     codeWindow.append(codeLayout);
 
+    layShader.main.control.imgReplacer.setImage( &gearsImage );
+
     codeWindow.onClose = [this]() {
         codeWindow.setVisible(false);
         this->tabWindow->setFocused(100);
@@ -945,6 +949,14 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             return;
 
         GUIKIT::File::removeDirectory( cacheFolder + "cache" );
+    };
+
+    layShader.main.control.imgReplacer.onActivate = [this]() {
+        if (!view->imageViewer) {
+            view->imageViewer = new ImageViewer;
+            view->imageViewer->build();
+        }
+        view->imageViewer->setVisible();
     };
 
     layShader.main.info.shaderCache.onToggle = [this](bool checked) {

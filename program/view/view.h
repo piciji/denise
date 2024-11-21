@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../../guikit/api.h"
+#include "imageViewer.h"
 #include "message.h"
 
 struct View : GUIKIT::Window {
@@ -17,6 +18,7 @@ struct View : GUIKIT::Window {
     int dropZone = 0;
 	bool grabMouseLeft = false;
 	bool useFullscreenRefreshAsEmuSpeed = false;
+	ImageViewer* imageViewer = nullptr;
 
     struct ShaderFavourites {
         std::string path;

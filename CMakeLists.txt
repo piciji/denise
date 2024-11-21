@@ -192,6 +192,7 @@ set(srcs
         program/video/palette.cpp
         program/video/manager.cpp
         program/video/shaderParser.cpp
+        program/view/imageViewer.cpp
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")

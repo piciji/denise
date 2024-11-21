@@ -1,6 +1,5 @@
 
-#ifndef MESSAGE_H
-#define MESSAGE_H
+#pragma once
 
 #include "../program.h"
 
@@ -42,5 +41,3 @@ struct Message {
 
     Message(GUIKIT::Window* window) : window(window) {}
 };
-
-#endif

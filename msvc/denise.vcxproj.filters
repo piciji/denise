@@ -1039,6 +1039,9 @@
     <ClInclude Include="..\driver\video\d3d9\screenText.h">
       <Filter>driver\video\d3d9</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\view\imageViewer.h">
+      <Filter>program\view</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2072,6 +2075,9 @@
     </ClCompile>
     <ClCompile Include="..\driver\video\opengl3\wgl.cpp">
       <Filter>driver\video\opengl3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\view\imageViewer.cpp">
+      <Filter>program\view</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

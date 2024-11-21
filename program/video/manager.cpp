@@ -22,6 +22,7 @@ bool VideoManager::synchronized = true;
 uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
 unsigned VideoManager::placeHolderFrames = 0;
+bool VideoManager::placeHolderSplashScreen = false;
 bool VideoManager::needAUpdate = true;
 
 std::vector<VideoManager*> videoManagers;
@@ -593,7 +594,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         updateAll();
 
     bool cropCoordUpdated = emulator->cropCoordUpdated(cropTop, cropLeft);
-    if (!placeHolderFrames) { 
+    if (!placeHolderSplashScreen) {
         if (rebuildShader) {
             if (crtMode == CrtMode::Gpu) {
                 setData("autoEmu_cropTop", (float)cropTop);
@@ -639,15 +640,16 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     videoDriver->setIntegerScalingDimension( hires ? width : (width << 1), interlace ? height : (height << 1), hires | interlace);
 
     if (placeHolderFrames) {
-        if ((placeHolderFrames & 3) == 0)
-            view->renderPlaceholder();
+        if (!placeHolderSplashScreen || ((placeHolderFrames & 3) == 0)) {
+            if (!view->renderPlaceholder())
+                return hidePlaceHolder();
+        }
 
         if (!--placeHolderFrames) {
             if (emuThread->enabled) {
                 emuThread->dismissPlaceholder = true;
             } else {
-                program->setVideoFilter();
-                view->setDefaultCursor();
+                hidePlaceHolder();
             }
         }
         return;
@@ -1534,11 +1536,12 @@ template<uint8_t options> auto VideoManager::getRenderOptions() -> uint8_t {
 }
 
 auto VideoManager::hidePlaceHolder() -> void {
-    if (placeHolderFrames) {
-        placeHolderFrames = 0;
+    if (placeHolderSplashScreen) {
+        placeHolderSplashScreen = false;
         program->setVideoFilter();
         view->setDefaultCursor();
     }
+    placeHolderFrames = 0;
 }
 
 auto VideoManager::free() -> void {

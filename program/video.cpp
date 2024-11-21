@@ -83,13 +83,13 @@ auto Program::initVideo(bool driverChange) -> void {
             if (!file.open())
                 return;
 
-            GUIKIT::Image png;
-            if (!png.load(file.read(), file.getSize(), true ))
+            GUIKIT::Image img;
+            if (!img.load(file.read(), file.getSize(), true ))
                 return;
 
-            diskFile.data = png.data;
-            diskFile.width = png.width;
-            diskFile.height = png.height;
+            diskFile.data = img.data;
+            diskFile.width = img.width;
+            diskFile.height = img.height;
 
             return;
         }

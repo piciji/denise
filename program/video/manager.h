@@ -67,6 +67,7 @@ struct VideoManager {
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
     static unsigned placeHolderFrames;
+    static bool placeHolderSplashScreen;
     static bool needAUpdate;
 	
     auto setCrtThreaded(bool state) -> void;
@@ -170,8 +171,8 @@ struct VideoManager {
     auto getBackgroundColor() -> unsigned;
        
     static auto uclamp8(double x) -> uint8_t;
-    auto convertRGBToYIQ(ColorLumaChroma* dest, ColorRgb* src) -> void;
-    auto convertRGBToYUV(ColorLumaChroma* dest, ColorRgb* src) -> void;
+    static auto convertRGBToYIQ(ColorLumaChroma* dest, ColorRgb* src) -> void;
+    static auto convertRGBToYUV(ColorLumaChroma* dest, ColorRgb* src) -> void;
     auto setPalette(Emulator::Interface::Palette* palette) -> void;
 
     template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch, unsigned& cropTop) -> void;

@@ -125,7 +125,7 @@ auto Program::finishStartup() -> void {
     if (!activeEmulator)
         power(getLastUsedEmu(), false);
 
-    if (view && VideoManager::placeHolderFrames)
+    if (view && VideoManager::placeHolderSplashScreen)
         view->setPointerCursor();
 
 	initUserInterface();

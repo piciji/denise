@@ -821,8 +821,7 @@ clear save file = rimuovi file di salvataggio
 save file deleted = Il file di salvataggio è stato cancellato.
 left click grabs mouse = Cattura il clic sinistro del mouse
 save parameter = Salva Parametro
-save parameter tooltip = 
-I parametri modificati degli shader non si trovano all'interno delle impostazioni dell'emulatore, ma in file ".slangp" separati. Non dovresti sovrascrivere la preimpostazione originale, ma devi creare un nuovo file che sia in grado di accedere ancora alle impostazioni originali se necessario.
+save parameter tooltip = I parametri modificati degli shader non si trovano all'interno delle impostazioni dell'emulatore, ma in file ".slangp" separati. Non dovresti sovrascrivere la preimpostazione originale, ma devi creare un nuovo file che sia in grado di accedere ancora alle impostazioni originali se necessario.
 select slang shader = Seleziona shader SLANG
 Toggle Warp = Attiva/Disattiva Warp
 Toggle Warp aggressive = Attiva/Disattiva Warp (aggressivo)
@@ -835,8 +834,7 @@ Drive Stepper Delay = Ritardo avanzamento motore
 Drive Stepper Access = Accesso avanzamento motore
 Drive Acceleration = Accelerazione del motore
 Drive Deceleration = Decelerazione del motore
-cut off follow-up disks = 
-taglio della sequenza dei dischi nell'identificatore
+cut off follow-up disks = taglio della sequenza dei dischi nell'identificatore
 text color = colore del testo
 warn color = colore di avviso
 background color = colore di sfondo
@@ -861,3 +859,4 @@ adjust speed to monitor tooltip = Quando si passa a schermo intero la velocità 
 esperanto = Esperanto
 3.5-inch = 3.5-inch
 Floppy 3.5-inch Profile = Floppy Profile (3.5-inch, e.g. VC1581)
+select image to test shader = Image selection for testing shaders

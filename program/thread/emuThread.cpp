@@ -187,8 +187,7 @@ auto EmuThread::handleUIEvents() -> void {
     }
 
     if (dismissPlaceholder) {
-        program->setVideoFilter();
-        view->setDefaultCursor();
+        VideoManager::hidePlaceHolder();
         dismissPlaceholder = false;
     }
 

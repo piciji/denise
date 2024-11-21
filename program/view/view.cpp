@@ -371,7 +371,7 @@ auto View::build() -> void {
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
 	    if (button == GUIKIT::Mouse::Button::Left) {
 
-	        if (VideoManager::placeHolderFrames) {
+	        if (VideoManager::placeHolderSplashScreen) {
 	            emuThread->lock();
 
 	            int result = cursorForPlaceholderInUpperTriangle();
@@ -391,7 +391,7 @@ auto View::build() -> void {
 	};
     
     viewport.onMouseMove = [this](GUIKIT::Position& pos) {
-        if (!VideoManager::placeHolderFrames)
+        if (!VideoManager::placeHolderSplashScreen)
             return;
 
         int result = cursorForPlaceholderInUpperTriangle(pos);
