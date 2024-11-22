@@ -65,15 +65,16 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3") # prevents NDEBUG, which slightly decrease execution speed
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE ${CMAKE_BINARY_DIR}/out)
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE /Applications)
     endif()
 endif()
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
-endif()
+message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "compile for architecture ${CMAKE_OSX_ARCHITECTURES}")
@@ -350,25 +351,25 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     install(FILES licence.md DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
-    install(DIRECTORY data/${dataFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
-    install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources FILES_MATCHING PATTERN "*.ttf")
-    install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
-    install(DIRECTORY data/${imagesFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
-    install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+    install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
+    install(DIRECTORY data/${dataFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
+    install(DIRECTORY data/${fontFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources FILES_MATCHING PATTERN "*.ttf")
+    install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
+    install(DIRECTORY data/${imagesFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
+    install(DIRECTORY data/${soundFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
 
-    install(FILES data/Info.plist DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents)
-    install(FILES licence.md DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
-    install(FILES readme.md DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
-    install(FILES data/img/${PROJECT_NAME}.icns DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Resources)
+    install(FILES data/Info.plist DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents)
+    install(FILES licence.md DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
+    install(FILES readme.md DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
+    install(FILES data/img/${PROJECT_NAME}.icns DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
 
-    install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/MacOS PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+    install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/MacOS PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
 
-    file(COPY "${FREETYPE_LIBRARY}" DESTINATION "${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app/Contents/Frameworks" FOLLOW_SYMLINK_CHAIN)
+    file(COPY "${FREETYPE_LIBRARY}" DESTINATION "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks" FOLLOW_SYMLINK_CHAIN)
 
-    install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE_LIBRARY} libfreetype.dylib ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app ${PROJECT_NAME})")
+    install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE_LIBRARY} libfreetype.dylib ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app ${PROJECT_NAME})")
 
-    install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.app)")
+    install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app)")
 
 else()
     install(DIRECTORY data/${translationFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})

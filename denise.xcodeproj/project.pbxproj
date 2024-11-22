@@ -15,6 +15,7 @@
 		9D0C38242CB59D9B00363301 /* data in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38232CB59D9B00363301 /* data */; };
 		9D0C38282CB5A66F00363301 /* images in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38272CB5A66F00363301 /* images */; };
 		9D0C382E2CB5C17900363301 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D0C382D2CB5C17900363301 /* OpenAL.framework */; };
+		9D5FAF2D2CF07001002B0C34 /* imageViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */; };
 		9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FA9532CB3DF78006905BE /* Cocoa.framework */; };
 		9D8FAAF72CB3F6EF006905BE /* cmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA702CB3F6EF006905BE /* cmd.cpp */; };
 		9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA722CB3F6EF006905BE /* program.cpp */; };
@@ -180,6 +181,8 @@
 		9D0C38232CB59D9B00363301 /* data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = data; path = data/data; sourceTree = "<group>"; };
 		9D0C38272CB5A66F00363301 /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = data/images; sourceTree = "<group>"; };
 		9D0C382D2CB5C17900363301 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imageViewer.cpp; sourceTree = "<group>"; };
+		9D5FAF2C2CF07000002B0C34 /* imageViewer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imageViewer.h; sourceTree = "<group>"; };
 		9D8FA9322CB3D7A7006905BE /* denise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = denise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D8FA9532CB3DF78006905BE /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		9D8FAA702CB3F6EF006905BE /* cmd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cmd.cpp; sourceTree = "<group>"; };
@@ -1017,6 +1020,8 @@
 		9D8FAACB2CB3F6EF006905BE /* view */ = {
 			isa = PBXGroup;
 			children = (
+				9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */,
+				9D5FAF2C2CF07000002B0C34 /* imageViewer.h */,
 				9D8FAACC2CB3F6EF006905BE /* status.h */,
 				9D8FAACD2CB3F6EF006905BE /* status.cpp */,
 				9D8FAACE2CB3F6EF006905BE /* placeholder.cpp */,
@@ -2258,6 +2263,7 @@
 				9D8FAE792CB40DF9006905BE /* structure.cpp in Sources */,
 				9DF6948B2CBA74FF0095D273 /* PoolAlloc.cpp in Sources */,
 				9D8FAB2A2CB3F6F0006905BE /* config.cpp in Sources */,
+				9D5FAF2D2CF07001002B0C34 /* imageViewer.cpp in Sources */,
 				9D8FAB192CB3F6EF006905BE /* panning.cpp in Sources */,
 				9D8FAE4C2CB40DF9006905BE /* prg.cpp in Sources */,
 				9DF694562CBA74350095D273 /* InReadableOrder.cpp in Sources */,
