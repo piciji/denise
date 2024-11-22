@@ -211,7 +211,7 @@ for:
     - sh: ./configure && make install
     - sh: cd ..
     - sh: sudo rm -rf /Library/Frameworks/Mono.framework
-    - sh: cmake -B builds/release -DCMAKE_INSTALL_PREFIX=/builds/release && cmake --build builds/release --verbose && cmake --install builds/release
+    - sh: cmake -B builds/release -DCMAKE_INSTALL_PREFIX=builds/release && cmake --build builds/release --verbose && cmake --install builds/release
     - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/denise.dmg
     
   after_build:
@@ -270,7 +270,7 @@ for:
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
-    - sh: cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_INSTALL_PREFIX=/builds/release && cmake --build builds/release --verbose && cmake --install builds/release
+    - sh: cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_INSTALL_PREFIX=builds/release && cmake --build builds/release --verbose && cmake --install builds/release
     - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
 
   after_build:
