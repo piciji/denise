@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.14)
 project(denise LANGUAGES CXX)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    cmake_minimum_required(VERSION 3.15)
     find_package(Freetype REQUIRED)
     find_package(OpenAL)
 elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
@@ -363,9 +362,13 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     install(FILES readme.md DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
     install(FILES data/img/${PROJECT_NAME}.icns DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Resources)
 
-    install(FILES ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/MacOS PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+    install(PROGRAMS ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/MacOS)
 
-    file(COPY "${FREETYPE_LIBRARY}" DESTINATION "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks" FOLLOW_SYMLINK_CHAIN)
+    set (ft_resolved "")
+    get_filename_component(ft_resolved "${FREETYPE_LIBRARY}" REALPATH)
+
+    install(FILES ${FREETYPE_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
+    install(FILES ${ft_resolved} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
 
     install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE_LIBRARY} libfreetype.dylib ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app ${PROJECT_NAME})")
 
