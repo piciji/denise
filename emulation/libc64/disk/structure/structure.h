@@ -161,7 +161,7 @@ private:
     auto analyzeG64() -> bool;
     auto analyzeG71() -> bool;
 	auto analyzeG81() -> bool;
-	auto analyzePxx(const std::string& ident, Type newType ) -> bool;
+	auto analyzePxx(Type newType ) -> bool;
     
     static auto createDxx( std::string diskName, uint8_t sides = 1 ) -> uint8_t*;
 	static auto createD81( std::string diskName ) -> uint8_t*;

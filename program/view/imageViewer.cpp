@@ -4,8 +4,6 @@
 #include "../thread/emuThread.h"
 
 auto ImageViewer::build() -> void {
-    this->emulator = emulator;
-
     openFolder.setText( trans->getA("folder") );
     label.setText( trans->getA("select image to test shader") );
 

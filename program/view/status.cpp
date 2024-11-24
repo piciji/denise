@@ -402,7 +402,7 @@ auto StatusHandler::update() -> void {
                         }
                     }
                     if (activeVideoManager->driveLedParam) {
-                        activeVideoManager->driveLedParam->value = deviceState.LED & 1;
+                        activeVideoManager->driveLedParam->value = (deviceState.LED & 3) ? 1 : 0;
                     }
 
                     updateImage(media->id * 2 + 2, image);

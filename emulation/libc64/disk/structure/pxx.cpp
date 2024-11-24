@@ -38,20 +38,37 @@
 
 namespace LIBC64 {
 
-    auto DiskStructure::analyzePxx(const std::string& ident, Type newType ) -> bool {
-
+    auto DiskStructure::analyzePxx(Type newType) -> bool {
+        bool found = false;
         uint8_t* ptr = rawData;
 
         if (rawSize < 32)
             return false; // too small
 
-        if (std::memcmp(rawData, ident.c_str(), 8)) // missing this ident ?
+        if (newType == Type::P64) {
+            const std::vector<std::string> idents = {"P64-1541", "P64-1571", "P71-1571"};
+            for(auto& ident : idents) {
+                if (std::memcmp(rawData, ident.c_str(), 8) == 0) {
+                    found = true;
+                    break;
+                }
+            }
+        } if (newType == Type::P81) {
+            if (std::memcmp(rawData, "P64-1581", 8) == 0)
+                found = true;
+        }
+
+        if (!found)
             return false;
+
 
         ptr += 12;
         uint32_t flags = Emulator::copyBufferToInt<uint32_t>( ptr );
         // flag bit 0 is write protection, we ignore it and let the user decide
         sides = 1 + !!(flags & 2);
+
+        if ((newType == Type::P64) && (sides == 2))
+            newType = Type::P71;
 
         ptr += 4;
         uint32_t size = Emulator::copyBufferToInt<uint32_t>( ptr );
@@ -96,7 +113,6 @@ namespace LIBC64 {
 
         std::memset( buf, 0, maxSize );
 
-        // don't change P64-1541 in P64-1571 in case of two sides, keep existing ident
         std::memcpy( buf, rawData, 8 );
         offset += 8;
         // version = 0
@@ -304,6 +320,9 @@ namespace LIBC64 {
                 if (checkSum == 0 && (std::memcmp(_ptr - 12, "DONE", 4) == 0))
                     break;
             } else {
+                if (((_ptr - rawData) + size) > rawSize)
+                    break;
+
                 Emulator::CRC32 crc32(_ptr, size, ~0);
 
                 if (crc32.value() != checkSum)
@@ -842,10 +861,7 @@ namespace LIBC64 {
             }
         }
 
-        if (sides == 2)
-            std::memcpy( structure.rawData, "P64-1571", 8 );
-        else
-            std::memcpy( structure.rawData, "P64-1541", 8 );
+        std::memcpy( structure.rawData, "P64-1541", 8 );
 
         unsigned memSize = 0;
 

@@ -185,14 +185,14 @@ auto DiskStructure::analyze() -> bool {
     if ( analyzeG81() )
         return true;
 
-    if ( analyzePxx("P64-1541", Type::P64) )
+    if ( analyzePxx(Type::P64) ) // set P71 in case of two sides
         return true;
 
-    if ( analyzePxx("P64-1571", Type::P71) )
+    if ( analyzePxx(Type::P81) )
         return true;
 
-    if ( analyzePxx("P64-1581", Type::P81) )
-        return true;
+    if (!media) // preview
+        return false;
 
     created = DiskStructure::createD64FromPRG( system, system->interface->getFileNameFromMedia(media), rawData, rawSize );
     
