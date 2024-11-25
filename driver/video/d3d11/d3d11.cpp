@@ -100,7 +100,7 @@ namespace DRIVER {
     ID3D11Debug* debug;
     D3D11Symbols symbols;
 
-    float clearColor[4] = {0.0, 0.0, 0.0, 1.0};
+    float clearColor[4] = {0.0, 0.0, 0.0, 0.0};
 
     int64_t lastCapTime;
     int64_t minimumCapTime;
@@ -1204,6 +1204,7 @@ namespace DRIVER {
                 }
 
                 context->OMSetRenderTargets( 1, &p.renderTarget.rtView, nullptr);
+            //    context->ClearRenderTargetView(p.renderTarget.rtView, clearColor);
 
                 setViewport({p.renderTarget.desc.Width, p.renderTarget.desc.Height, 0, 0});
 
