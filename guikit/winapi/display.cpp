@@ -86,7 +86,7 @@ auto pMonitor::fetchDisplays() -> void {
 
     while( EnumDisplayDevices(NULL, i++, &device, 0 ) ) {
 
-        if (!device.StateFlags || (device.StateFlags & (DISPLAY_DEVICE_MIRRORING_DRIVER | DISPLAY_DEVICE_MODESPRUNED)))
+        if (/*!device.StateFlags ||*/ (device.StateFlags & (DISPLAY_DEVICE_MIRRORING_DRIVER /*| DISPLAY_DEVICE_MODESPRUNED*/)))
             continue;
 
         std::string devStr = utf8_t(device.DeviceString);
@@ -99,13 +99,23 @@ auto pMonitor::fetchDisplays() -> void {
 
         crc32.calc( (uint8_t*)devName.c_str(), devName.size() );
 
-        DEVMODE originalSetting;
-        ZeroMemory(&originalSetting, sizeof(originalSetting));
-        originalSetting.dmSize = sizeof(DEVMODE);
+        DEVMODE devSetting;
+        ZeroMemory(&devSetting, sizeof(devSetting));
+        devSetting.dmSize = sizeof(DEVMODE);
+        int i = 0;
+        while( EnumDisplaySettingsEx( device.DeviceName, i++, &devSetting, 0 ) ) {
+            if ((devSetting.dmDisplayFlags & DM_INTERLACED) || (devSetting.dmBitsPerPel != 32))
+               continue;
 
-        EnumDisplaySettings(device.DeviceName, ENUM_CURRENT_SETTINGS, &originalSetting);
+            DEVMODE originalSetting;
+            ZeroMemory(&originalSetting, sizeof(originalSetting));
+            originalSetting.dmSize = sizeof(DEVMODE);
+            EnumDisplaySettings(device.DeviceName, ENUM_CURRENT_SETTINGS, &originalSetting);
 
-        devices.push_back({crc32.value(), devStr, device, originalSetting});
+            devices.push_back({crc32.value(), devStr, device, originalSetting});
+
+            break;
+        }
     }
 }
 
