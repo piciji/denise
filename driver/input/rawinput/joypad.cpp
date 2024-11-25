@@ -1,7 +1,7 @@
 
 struct RawJoypad {
 	#define RJ_STEP(exp) { if( !(exp) ) goto End; }
-	#define RJ_FREE(p)  if( p ) HeapFree(data.heap, 0, p), p = nullptr;
+	#define RJ_FREE(p, h)  if( p ) HeapFree(h, 0, p), p = nullptr;
 
 	struct Joypad {
 		HANDLE handle = nullptr;
@@ -21,25 +21,25 @@ struct RawJoypad {
 
         long axis[6] = {0};
         uint8_t axisMap[6];
-	};
-	std::vector<Joypad> joypads;
 
-	struct {
-		PHIDP_PREPARSED_DATA pPreparsedData = nullptr;
 		HIDP_CAPS Caps;
 		PHIDP_BUTTON_CAPS pButtonCaps = nullptr;
 		PHIDP_VALUE_CAPS pValueCaps = nullptr;
+		PHIDP_PREPARSED_DATA pPreparsedData = nullptr;
 		HANDLE heap;
-	} data;
-	
+	};
+	std::vector<Joypad> joypads;
+
 	auto add( HANDLE handle ) -> void {
-		
-		if (!updatePreparsedData(handle)) return;
+
 		//logger->log("preparsed");
 		Joypad jp;		
 		jp.handle = handle;
 		jp.dPadHatPos = -1;
 		jp.isXInputDevice = false;
+
+		if (!parseCaps(jp, handle))
+			return;
 		
 		wchar_t path[PATH_MAX];
 		unsigned size = sizeof (path) - 1;
@@ -71,7 +71,7 @@ struct RawJoypad {
 		if (joyname.empty()) joyname = "Joypad";
 		jp.hid->name = uniqueDeviceName(joypads, joyname);
 		
-		unsigned buttonCount = data.pButtonCaps->Range.UsageMax - data.pButtonCaps->Range.UsageMin + 1;
+		unsigned buttonCount = jp.pButtonCaps->Range.UsageMax - jp.pButtonCaps->Range.UsageMin + 1;
 		//logger->log("buttons " + std::to_string(buttonCount));
 		for(unsigned button = 0; button < buttonCount; button++) {
 			jp.hid->buttons().append( std::to_string(button) );
@@ -82,8 +82,8 @@ struct RawJoypad {
 		unsigned axes = 0;
 		std::vector<uint8_t> usages;
         
-		for (unsigned i = 0; i < data.Caps.NumberInputValueCaps; i++)            
-            usages.push_back( data.pValueCaps[i].Range.UsageMin );		
+		for (unsigned i = 0; i < jp.Caps.NumberInputValueCaps; i++)
+            usages.push_back( jp.pValueCaps[i].Range.UsageMin );
         
         std::sort(usages.begin(), usages.end()); 
         
@@ -170,43 +170,54 @@ struct RawJoypad {
 	}
 	
 	auto term() -> void {		
-		for(auto& joypad : joypads ) {			
-			if(joypad.hid) delete joypad.hid;
-			if(joypad.ntHandle) CloseHandle( joypad.ntHandle );
+		for(auto& jp : joypads ) {
+			if(jp.hid) delete jp.hid;
+			if(jp.ntHandle) CloseHandle( jp.ntHandle );
+
+			RJ_FREE(jp.pPreparsedData, jp.heap);
+			RJ_FREE(jp.pButtonCaps, jp.heap);
+			RJ_FREE(jp.pValueCaps, jp.heap);
 		}
 		joypads.clear();
-		
-		RJ_FREE(data.pPreparsedData);	
-		RJ_FREE(data.pButtonCaps);
-		RJ_FREE(data.pValueCaps);
+	}
+
+	auto getValByRange(unsigned long value, USHORT bits, bool neg) -> int32_t {
+		if (neg)
+			return (value & (bits >= 32 ? 0x80000000 : (1 << (bits - 1)))) ? value | (bits >= 32 ? 0x80000000 : (-1 << bits)) : value;
+
+		return value & (bits >= 32 ? 0xffffffff : ((1 << bits) - 1));
 	}
 	
-	auto updatePreparsedData( HANDLE handle ) -> bool {
-		RJ_FREE(data.pPreparsedData);	
-		RJ_FREE(data.pButtonCaps);
-		RJ_FREE(data.pValueCaps);
-		
-		UINT bufferSize;
+	auto parseCaps( Joypad& jp, HANDLE handle ) -> bool {
 		USHORT length;
-		data.heap = GetProcessHeap();
+		UINT bufferSize;
+		jp.heap = GetProcessHeap();
 		
 		RJ_STEP( GetRawInputDeviceInfo(handle, RIDI_PREPARSEDDATA, NULL, &bufferSize) == 0)
-		RJ_STEP( data.pPreparsedData = (PHIDP_PREPARSED_DATA) HeapAlloc(data.heap, 0, bufferSize) )
-		RJ_STEP( (int)GetRawInputDeviceInfo(handle, RIDI_PREPARSEDDATA, data.pPreparsedData, &bufferSize) >= 0)
+		RJ_STEP( jp.pPreparsedData = (PHIDP_PREPARSED_DATA) HeapAlloc(jp.heap, 0, bufferSize) )
+		RJ_STEP( (int)GetRawInputDeviceInfo(handle, RIDI_PREPARSEDDATA, jp.pPreparsedData, &bufferSize) >= 0)
 			
-		RJ_STEP( HidP_GetCaps(data.pPreparsedData, &data.Caps) == HIDP_STATUS_SUCCESS )
-		RJ_STEP( data.pButtonCaps = (PHIDP_BUTTON_CAPS) HeapAlloc(data.heap, 0, sizeof (HIDP_BUTTON_CAPS) * data.Caps.NumberInputButtonCaps) )
+		RJ_STEP( HidP_GetCaps(jp.pPreparsedData, &jp.Caps) == HIDP_STATUS_SUCCESS )
+		RJ_STEP( jp.pButtonCaps = (PHIDP_BUTTON_CAPS) HeapAlloc(jp.heap, 0, sizeof (HIDP_BUTTON_CAPS) * jp.Caps.NumberInputButtonCaps) )
 
-		length = data.Caps.NumberInputButtonCaps;
-		RJ_STEP( HidP_GetButtonCaps(HidP_Input, data.pButtonCaps, &length, data.pPreparsedData) == HIDP_STATUS_SUCCESS )
+		length = jp.Caps.NumberInputButtonCaps;
+		RJ_STEP( HidP_GetButtonCaps(HidP_Input, jp.pButtonCaps, &length, jp.pPreparsedData) == HIDP_STATUS_SUCCESS )
 				
-		RJ_STEP( data.pValueCaps = (PHIDP_VALUE_CAPS) HeapAlloc(data.heap, 0, sizeof (HIDP_VALUE_CAPS) * data.Caps.NumberInputValueCaps) )
-		length = data.Caps.NumberInputValueCaps;
-		RJ_STEP( HidP_GetValueCaps(HidP_Input, data.pValueCaps, &length, data.pPreparsedData) == HIDP_STATUS_SUCCESS )
-				
+		RJ_STEP( jp.pValueCaps = (PHIDP_VALUE_CAPS) HeapAlloc(jp.heap, 0, sizeof (HIDP_VALUE_CAPS) * jp.Caps.NumberInputValueCaps) )
+		length = jp.Caps.NumberInputValueCaps;
+		RJ_STEP( HidP_GetValueCaps(HidP_Input, jp.pValueCaps, &length, jp.pPreparsedData) == HIDP_STATUS_SUCCESS )
+
+		for (unsigned i = 0; i < jp.Caps.NumberInputValueCaps; i++) {
+			jp.pValueCaps[i].LogicalMin = getValByRange(jp.pValueCaps[i].LogicalMin, jp.pValueCaps->BitSize, jp.pValueCaps[i].LogicalMin < 0);
+			jp.pValueCaps[i].LogicalMax = getValByRange(jp.pValueCaps[i].LogicalMax, jp.pValueCaps->BitSize, jp.pValueCaps[i].LogicalMin < 0);
+		}
+
 		return true;
 		
-		End:			
+		End:
+		RJ_FREE(jp.pPreparsedData, jp.heap);
+		RJ_FREE(jp.pButtonCaps, jp.heap);
+		RJ_FREE(jp.pValueCaps, jp.heap);
 		return false;
 	}
 	
@@ -226,32 +237,33 @@ struct RawJoypad {
 				break;
 			}
 		}
-		if (!pJoypad) return;
-		if (!updatePreparsedData(pJoypad->handle)) return;
+		if (!pJoypad)
+			return;
+
 		unsigned long value;
 		unsigned hat = 0;
 		
-		unsigned long usageLength = data.pButtonCaps->Range.UsageMax - data.pButtonCaps->Range.UsageMin + 1;
+		unsigned long usageLength = pJoypad->pButtonCaps->Range.UsageMax - pJoypad->pButtonCaps->Range.UsageMin + 1;
 		USAGE* usage = new USAGE[usageLength];
 		
-		RJ_STEP( HidP_GetUsages( HidP_Input, data.pButtonCaps->UsagePage, 0, usage, &usageLength, data.pPreparsedData,
+		RJ_STEP( HidP_GetUsages( HidP_Input, pJoypad->pButtonCaps->UsagePage, 0, usage, &usageLength, pJoypad->pPreparsedData,
 			(PCHAR) input->data.hid.bRawData, input->data.hid.dwSizeHid) == HIDP_STATUS_SUCCESS )
 
 		std::fill(pJoypad->buttons.begin(), pJoypad->buttons.end(), 0);
 		
 		unsigned pos;
 		for(unsigned i = 0; i < usageLength; i++) {
-			pos = usage[i] - data.pButtonCaps->Range.UsageMin;
+			pos = usage[i] - pJoypad->pButtonCaps->Range.UsageMin;
 			if (pos >= pJoypad->buttons.size())
 				continue;
 			pJoypad->buttons[pos] = 1;
 		}
 		
-		for (unsigned i = 0; i < data.Caps.NumberInputValueCaps; i++) {
-			RJ_STEP( HidP_GetUsageValue( HidP_Input, data.pValueCaps[i].UsagePage, 0, data.pValueCaps[i].Range.UsageMin, &value, data.pPreparsedData,
+		for (unsigned i = 0; i < pJoypad->Caps.NumberInputValueCaps; i++) {
+			RJ_STEP( HidP_GetUsageValue( HidP_Input, pJoypad->pValueCaps[i].UsagePage, 0, pJoypad->pValueCaps[i].Range.UsageMin, &value, pJoypad->pPreparsedData,
 				(PCHAR) input->data.hid.bRawData, input->data.hid.dwSizeHid) == HIDP_STATUS_SUCCESS )					
 
-			unsigned short usageMin = data.pValueCaps[i].Range.UsageMin;
+			unsigned short usageMin = pJoypad->pValueCaps[i].Range.UsageMin;
 
 			switch (usageMin) {
                 case 0x30:
@@ -260,30 +272,28 @@ struct RawJoypad {
                 case 0x33:
                 case 0x34:
                 case 0x35: {
-                    if (pJoypad->isXInputDevice) {
-                    	InterlockedExchange(&(pJoypad->axis[usageMin & 7]), sclamp<16>( value - 32767 ));
-                        //pJoypad->axis[usageMin & 7] = sclamp<16>( value - 32767 );
-                    } else {
-                        signed range = data.pValueCaps[i].LogicalMax - data.pValueCaps[i].LogicalMin;
-                        if (range == 0) {
-                        	InterlockedExchange(&(pJoypad->axis[usageMin & 7]), sclamp<16>( ((value & 0xff) - 128) << 8 ));
-                            //pJoypad->axis[usageMin & 7] = sclamp<16>( ((value & 0xff) - 128) << 8 );
-                            
-                        } else {                            
-                            int32_t _value = ((((int32_t)value - data.pValueCaps[i].LogicalMin) * 65535ll) / range) - 32767;
+                    auto& pCaps = pJoypad->pValueCaps[i];
 
-                        	InterlockedExchange(&(pJoypad->axis[usageMin & 7]), sclamp<16>( _value) );
-                            //pJoypad->axis[usageMin & 7] = sclamp<16>( _value);
-                        }
+                    signed range = pCaps.LogicalMax - pCaps.LogicalMin;
+                    if (range == 0) { // todo fixme
+                        InterlockedExchange(&(pJoypad->axis[usageMin & 7]), sclamp<16>( ((value & 0xff) - 128) << 8 ));
+                        //pJoypad->axis[usageMin & 7] = sclamp<16>( ((value & 0xff) - 128) << 8 );
                             
-                    }
+                    } else {
+                        int32_t _value = getValByRange(value, pCaps.BitSize, pCaps.LogicalMin < 0);
+
+                        _value = (((long long)(_value - pCaps.LogicalMin) * 65535ll) / (long long)range) - 32767ll;
+
+                        InterlockedExchange(&(pJoypad->axis[usageMin & 7]), sclamp<16>( _value) );
+                        //pJoypad->axis[usageMin & 7] = sclamp<16>( _value);
+                    }                                            
                 } break;
 
 				case 0x37:
 					//logger->log("dial");
 					//logger->log(std::to_string(value), 0);
-					//logger->log(std::to_string(data.pValueCaps[i].LogicalMin), 0);
-					//logger->log(std::to_string(data.pValueCaps[i].LogicalMax), 0);
+					//logger->log(std::to_string(pJoypad->pValueCaps[i].LogicalMin), 0);
+					//logger->log(std::to_string(pJoypad->pValueCaps[i].LogicalMax), 0);
 					break;
                 
 				case 0x39: // Hat Switch
