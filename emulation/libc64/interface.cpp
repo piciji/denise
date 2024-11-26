@@ -320,7 +320,7 @@ auto Interface::preparePalettes() -> void {
     
     palettes.push_back({ 0, "Colodore PAL", false, {
         {"Black", 0}, {"White", 0xffffff}, {"Red", 0x813338}, {"Cyan", 0x75cec8},
-        {"Purple", 0x8e3c97}, {"Green", 0x56ac4d}, {"Blue", 0x2e2c9b}, {"Yellow", 0xedf071},
+        {"Purple", 0x8e3c97}, {"Green", 0x56ac4d}, {"Blue", 0x2e2c9b}, {"Yellow", 0xedf171},
         {"Orange", 0x8e5029}, {"Brown", 0x553800}, {"Light Red", 0xc46c71}, {"Dark Gray", 0x4a4a4a},
         {"Medium Gray", 0x7b7b7b}, {"Light Green", 0xa9ff9f}, {"Light Blue", 0x706deb}, {"Light Gray", 0xb2b2b2}
     } });
@@ -444,6 +444,13 @@ auto Interface::preparePalettes() -> void {
         {"Medium Gray", 0x696869}, {"Light Green", 0x9bdd82}, {"Light Blue", 0x6958bf}, {"Light Gray", 0x999899}
     } });
 
+    palettes.push_back({ 18, "Michiel PAL Board 1", false, {
+        {"Black", 0x0},{"White", 0xfefefe},{"Red", 0x8b2c3f},{"Cyan", 0x62bdac},
+        {"Purple", 0x9132a1},{"Green", 0x45a546},{"Blue", 0x3326ae},{"Yellow", 0xcad653},
+        {"Orange", 0x8f4e13},{"Brown", 0x5d3a00},{"Light Red", 0xbf5e71},{"Dark Gray", 0x4a4a4a},
+        {"Medium Gray", 0x747474},{"Light Green", 0x8bea8d},{"Light Blue", 0x705fea},{"Light Gray", 0xa0a0a0}}
+    });
+
     for( auto& palette : palettes )
         for( auto& paletteColor : palette.paletteColors )
             paletteColor.updateChannels();
@@ -539,7 +546,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskDriveModel, "Drive Model", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 5},
                       { "1541", "1541-II", "1541-C", "1570", "1571", "1581" }});
 
-    models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {27500, 32500}, {}, 500, 100.0 });
+    models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {26000, 34000}, {}, 8000, 100.0 });
 
     models.push_back({ModelIdDiskDriveWobble, "Drive Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 20, {0, 500}, {}, 50, 100.0 });
 
