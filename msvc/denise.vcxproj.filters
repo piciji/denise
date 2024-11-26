@@ -1042,6 +1042,15 @@
     <ClInclude Include="..\program\view\imageViewer.h">
       <Filter>program\view</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\businessBasic.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\easycalc.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\hyperBasic.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">

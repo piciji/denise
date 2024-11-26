@@ -120,9 +120,12 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridge3.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridgePlus.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\freezer\freezer.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\businessBasic.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\cart16k.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\easycalc.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\funplay.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\gameCart.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\hyperBasic.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\mach5.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\magicDesk.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\ocean.h" />

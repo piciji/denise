@@ -18,6 +18,7 @@
 #include "../../expansionPort/gameCart/warpSpeed.h"
 #include "../../expansionPort/gameCart/mach5.h"
 #include "../../expansionPort/gameCart/supergames.h"
+#include "../../expansionPort/gameCart/BusinessBasic.h"
 #include "../../input/input.h"
 
 namespace LIBC64 {
@@ -348,12 +349,15 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
 
     action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
-    action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
-    action.delay = 180;    
+    if (dynamic_cast<BusinessBasic*>(system->expansionPort))
+        action.buffer = {'O', 'K', '.'};
+    else
+        action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
+    action.delay = 180;
     action.alternateBuffer.clear();
     action.blinkingCursor = true;
     action.waitCallback = [this](KeyBuffer::Action* action) {
-        if (system->checkForAutoStarter()) {
+        if (system->checkForAutoStarter() && !dynamic_cast<BusinessBasic*>(system->expansionPort)) {
             system->keyBuffer->reset();
             system->autoStartFinish(true);
         }

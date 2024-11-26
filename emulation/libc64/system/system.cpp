@@ -17,6 +17,7 @@
 #include "expansion.cpp"
 #include "serialization.cpp"
 #include "map.cpp"
+#include "../expansionPort/gameCart/businessBasic.h"
 #include "../traps/traps.h"
 
 namespace LIBC64 {
@@ -595,6 +596,8 @@ auto System::power( bool softReset ) -> void {
 
         if (dynamic_cast<ActionReplayMK2*>(expansionPort))
             action.buffer = {'L', 'O', 'A', 'D', 'E', 'R'};
+        else if (dynamic_cast<BusinessBasic*>(expansionPort))
+            action.buffer = {'O', 'K', '.'};
 
         action.delay = 0;
         action.blinkingCursor = true;

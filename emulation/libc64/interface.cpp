@@ -217,6 +217,9 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdSilverrock, "Silverrock"} );
         expansion.pcbs.push_back( {CartridgeIdRGCD, "RGCD"} );
         expansion.pcbs.push_back( {CartridgeIdRGCDHucky, "RGCD-Hucky"} );
+        expansion.pcbs.push_back( {CartridgeIdEasyCalc, "Easy Calc"} );
+        expansion.pcbs.push_back( {CartridgeIdHyperBasic, "Hyper-Basic"} );
+        expansion.pcbs.push_back( {CartridgeIdBusinessBasic, "Kingsoft"} );
 
 		expansion.creationIdents.push_back( "Gmod2 Flash" );
         expansion.creationIdents.push_back( "Gmod2 Eeprom" );

@@ -22,8 +22,8 @@ struct Ocean : GameCart {
                 cRomL = &chip;
                 cRomH = &chip;
                 break;
-            }            
-        }        
+            }
+        }
     }
     
     auto reset(bool softReset = false) -> void {

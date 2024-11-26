@@ -18,6 +18,9 @@
 #include "dinamic.h"
 #include "comal80.h"
 #include "silverrock.h"
+#include "easycalc.h"
+#include "hyperBasic.h"
+#include "businessBasic.h"
 #include "rgcd.h"
 
 namespace LIBC64 {
@@ -125,6 +128,18 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
         case Interface::CartridgeIdRGCDHucky: // only when user selected for BIN file
             cart = new RGCD(system);
             cart->version = 0x101;
+            break;
+
+        case Interface::CartridgeIdEasyCalc:
+            cart = new EasyCalc(system);
+            break;
+
+        case Interface::CartridgeIdHyperBasic:
+            cart = new HyperBasic(system);
+            break;
+
+        case Interface::CartridgeIdBusinessBasic:
+            cart = new BusinessBasic(system);
             break;
 
         default:
