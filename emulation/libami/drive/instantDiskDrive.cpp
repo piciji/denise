@@ -4,7 +4,7 @@
 namespace LIBAMI {
 
 auto DiskDrive::instantWrite(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t {
-    // support for shifted sync words. could be happen in a ADF too, if track is written during emulation
+    // support for shifted sync words. could be happened in an ADF too, if track is written during emulation
     int byte;
     int bit;
     bool synced = !needSync;

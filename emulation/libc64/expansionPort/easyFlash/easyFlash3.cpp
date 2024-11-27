@@ -397,7 +397,7 @@ auto EasyFlash3::didFreeze() -> void {
 
 auto EasyFlash3::updateDeviceState() -> void {
     
-    system->interface->updateDeviceState( media, false, 0, LED, true );
+    system->interface->updateDeviceState( media, false, 0, 0x80 | LED, true );
 }
 
 auto EasyFlash3::isBootable( ) -> bool {

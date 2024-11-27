@@ -209,7 +209,7 @@ auto EasyFlash::reset(bool softReset) -> void {
 
 auto EasyFlash::updateDeviceState() -> void {
     
-    system->interface->updateDeviceState( media, false, 0, LED, true );
+    system->interface->updateDeviceState( media, false, 0, 0x80 | LED, true );
 }
 
 auto EasyFlash::isBootable( ) -> bool {

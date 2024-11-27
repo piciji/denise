@@ -267,7 +267,8 @@ namespace LIBAMI {
 
         if (out & 2) {
             agnus.updateEvent<Agnus::EVENT_FLOPPY>( 12500 ); // some more delay, to increase compatibility. e.g. Jim Power, Hanse
-            setDskState(DiskState::INSTANT_BLK_INT);
+            //setDskState(DiskState::INSTANT_BLK_INT);
+            diskState = DiskState::INSTANT_BLK_INT;
         } else {
             agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles );
             setDskState(DiskState::OFF);
@@ -377,7 +378,7 @@ namespace LIBAMI {
             else
                 dskShifter |= activeDrive->readBit<!readWord>(fdcCycles);
 
-             if ( (dskShifterPos == 15) && dmaDisk && (diskState == DiskState::READ)) {
+            if ( (dskShifterPos == 15) && dmaDisk && (diskState == DiskState::READ)) {
                 if (dskTransferLength) {
                     if (!fifoFull()) {
                         dskTransferLength--;

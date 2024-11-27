@@ -9,7 +9,7 @@ struct DeviceState {
     Emulator::Interface::Media* media = nullptr;
     bool write;
     unsigned position;
-    uint8_t LED;    
+    uint16_t LED;
     bool motorOff;
     uint8_t inputsPerFrame;
     bool update = true;

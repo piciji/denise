@@ -17,19 +17,25 @@ auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool w
         if (deviceState.media == media) {
             deviceState.write = write;
             deviceState.position = position;
-            if (media->group->isExpansion()) { // can be changed more times a frame
-                deviceState.LED <<= 1;
-                deviceState.LED |= LED;
-            } else
-                deviceState.LED = LED;
-            deviceState.inputsPerFrame++;
+            if (LED & 0x80) { // can be changed more times a frame
+                deviceState.LED <<= 2;
+                deviceState.LED |= LED & 3;
+                deviceState.inputsPerFrame++;
+            } else {
+                deviceState.LED = LED & 3;
+                deviceState.inputsPerFrame = 0;
+            }
+
             deviceState.motorOff = motorOff;
             deviceState.update = true;
             return;
         }
     }
 
-    deviceStates.push_back({media, write, position, LED, motorOff, 1, true});
+    uint16_t _led = LED & 3;
+    uint8_t _inputsPerFrame = (LED & 0x80) ? 1 : 0;
+
+    deviceStates.push_back({media, write, position, _led, motorOff, _inputsPerFrame, true});
 }
 
 auto StatusHandler::setMessage(const std::string& txt, unsigned duration, bool warn ) -> void {
@@ -365,8 +371,14 @@ auto StatusHandler::update() -> void {
 
                 if (!deviceState.update)
                     continue;
-                
-                deviceState.update = false;
+
+                if (deviceState.inputsPerFrame)
+                    deviceState.inputsPerFrame--;
+
+                if (deviceState.inputsPerFrame)
+                    clearMask &= ~2;
+                else
+                    deviceState.update = false;
 
                 auto media = deviceState.media;
                 auto group = media->group;
@@ -388,22 +400,24 @@ auto StatusHandler::update() -> void {
                     updateText(media->id * 2 + 1, name);
 
                     GUIKIT::Image* image = &(view->ledOffImage);
-                    if (deviceState.LED) {
+                    uint8_t _led = (deviceState.LED >> (deviceState.inputsPerFrame << 1) ) & 3;
+
+                    if (_led) {
                         if (deviceState.write) {
                             if (dynamic_cast<LIBC64::Interface*>(activeEmulator))
-                                image = (deviceState.LED & 1) ? &(view->ledRedImage) : &(view->ledYellowImage);
+                                image = (_led & 1) ? &(view->ledRedImage) : &(view->ledYellowImage);
                             else
                                 image = &(view->ledRedImage);
                         } else {
                             if (dynamic_cast<LIBAMI::Interface*>(activeEmulator))
-                                image = (deviceState.LED & 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
+                                image = (_led & 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
                             else
-                                image = (deviceState.LED & 1) ? &(view->ledGreenImage) : &(view->ledRed2Image);
+                                image = (_led & 1) ? &(view->ledGreenImage) : &(view->ledRed2Image);
                         }
                     }
-                    if (activeVideoManager->driveLedParam) {
-                        activeVideoManager->driveLedParam->value = (deviceState.LED & 3) ? 1 : 0;
-                    }
+
+                    if (activeVideoManager->driveLedParam)
+                        activeVideoManager->driveLedParam->value = (_led & 3) ? 1 : 0;
 
                     updateImage(media->id * 2 + 2, image);
 
@@ -430,14 +444,8 @@ auto StatusHandler::update() -> void {
                 } else if (group->isExpansion()) {
 
                     GUIKIT::Image* image = &(view->ledOffImage);
-
-                    if (deviceState.inputsPerFrame) {
-                        deviceState.inputsPerFrame--;
-                        clearMask &= ~2;
-                        deviceState.update = true;
-                    }
                     
-                    if ((deviceState.LED >> deviceState.inputsPerFrame) & 1)
+                    if ((deviceState.LED >> (deviceState.inputsPerFrame << 1) ) & 3)
                         image = &(view->ledGreenImage); 
 
 					updateVisible(11, true);

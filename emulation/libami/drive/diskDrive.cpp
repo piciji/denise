@@ -623,6 +623,10 @@ auto DiskDrive::updateDeviceState(bool force) -> void {
         uint8_t LED = 0;
         if (motor)
             LED = system->getModel() > 1 ? 1 : 2;
+
+        if(paula.fdcWriteMode())
+            LED |= 0x80;
+
         interface->updateDeviceState( media, paula.fdcWriteMode(), (cylinder << 1) | side, LED, !motor );
     }
 }
