@@ -2,13 +2,6 @@
 #include <fontconfig/fontconfig.h>
 #include <clocale>
 
-#ifndef INSTALL_FOLDER
-	#if defined(__NetBSD__)
-		#define INSTALL_FOLDER "/usr/pkg"
-	#else
-		#define INSTALL_FOLDER "/usr"
-	#endif
-#endif
 
 //timer
 static auto Timer_trigger(pTimer* self) -> guint {
@@ -119,68 +112,56 @@ auto pSystem::getUserDataFolder() -> std::string {
     return out;
 }
 
-auto pSystem::getResourceFolder(std::string appIdent) -> std::string {
+auto pSystem::getIconFolder() -> std::string {
+	static std::string iconPath = "";
 
+	if (iconPath == "")
+		iconPath = getResourceFolderBase("icons");
+
+	return iconPath;
+}
+
+auto pSystem::getResourceFolder(std::string appIdent) -> std::string {
 	static std::string resPath = "";
 
-	if (resPath == "") {
-		resPath = std::string(INSTALL_FOLDER) + "/share/" + appIdent;
-
-		if (File::isDir(resPath))
-			return resPath;
-			
-		resPath = "/usr/share/" + appIdent;
-		
-		if (File::isDir(resPath))
-			return resPath;
-		
-		resPath = "/usr/pkg/share/" + appIdent;	// NET BSD
-		
-		if (File::isDir(resPath))
-			return resPath;
-		
-		struct passwd* userinfo = getpwuid(getuid());
-		resPath = userinfo->pw_dir;
-		resPath = File::beautifyPath(resPath);
-		if (resPath.length() == 0)
-			resPath = "./";
-		
-		resPath += ".local/share/" + appIdent;
-	}
+	if (resPath == "")
+		resPath = getResourceFolderBase(appIdent);
 
 	return resPath;
 }
 
-auto pSystem::getIconFolder() -> std::string {
+auto pSystem::getResourceFolderBase(const std::string& sub) -> std::string {
+	std::string resPath = "";
+	char result[PATH_MAX];
+	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+	if (count) {
+		resPath = std::string(result);
+		resPath = File::getPath(resPath);
+		resPath += "../share/" + sub;
 
-	static std::string iconPath = "";
-
-	if (iconPath == "") {
-		iconPath = std::string(INSTALL_FOLDER) + "/share/icons/";
-
-		if (File::isDir(iconPath))
-			return iconPath;
-
-		iconPath = "/usr/share/icons/";
-
-		if (File::isDir(iconPath))
-			return iconPath;
-
-		iconPath = "/usr/pkg/share/icons/"; // NET BSD
-
-		if (File::isDir(iconPath))
-			return iconPath;
-
-		struct passwd* userinfo = getpwuid(getuid());
-		iconPath = userinfo->pw_dir;
-		iconPath = File::beautifyPath(iconPath);
-		if (iconPath.length() == 0)
-			iconPath = "./";
-
-		iconPath += ".local/share/icons/";
+		if (File::isDir(resPath))
+			return resPath;
 	}
 
-	return iconPath;
+	std::vector<std::string> alternatePaths = {"/usr/local", "/usr", "/usr/pkg"};
+
+	for(auto& path : alternatePaths) {
+		resPath = path + "/share/" + sub;
+
+		if (File::isDir(resPath))
+			return resPath;
+	}
+
+	struct passwd* userinfo = getpwuid(getuid());
+	resPath = userinfo->pw_dir;
+	resPath = File::beautifyPath(resPath);
+	if (resPath.length() == 0)
+		resPath = "./";
+
+	resPath += ".local/share/" + sub;
+
+	//if (File::isDir(resPath))
+	return resPath;
 }
 
 auto pSystem::getWorkingDirectory() -> std::string {

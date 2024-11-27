@@ -742,6 +742,7 @@ struct pFont {
 struct pSystem {
     static auto getUserDataFolder() -> std::string;
     static auto getResourceFolder(std::string appIdent) -> std::string;
+	static auto getResourceFolderBase(const std::string& sub) -> std::string;
     static auto getWorkingDirectory() -> std::string;
     static auto getIconFolder() -> std::string;
     static auto getDesktopSize() -> Size;
