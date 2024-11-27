@@ -413,35 +413,34 @@ inline auto VideoManager::adjustSaturation(double& r, double& g, double& b) -> v
 
 auto VideoManager::injectPhaseTransferError() -> void {
     
-    // next we encode/decode PAL signal.
-    // sender(c64, amiga) transfers PAL's V component 180° phase shifted (change sign) each odd line.
-    // the receiver translates it back by changing sign of V component again.
-    // if there is no phase error during transmission, this process would be completely useless.
-    // you already assume it, the real world is not ideal.
-    // to explain this, let's have a look at what's the problem with NTSC.
-    // a sender adds some degree of hue(V component) errors while transmitting the signal.
-    // there is a setting, called tint, on each NTSC TV. this way you can correct a great portion
-    // of the hue error of a specific sender. of course, the hue error isn't constant, means you
-    // can't correct it completely. that's why NTSC is called: never the same color
+    // Next we encode/decode PAL signal.
+    // C64 transfers PAL's V component 180° phase shifted (change sign) each odd line.
+    // The receiver translates it back by changing the sign of V component again.
+    // If there is no phase error during transmission, this process would be useless.
+    // You already assume it, the real world is not ideal.
+    // To explain this, let's have a look at what's the problem with NTSC.
+    // A sender adds some degree of hue(V component) errors while transmitting the signal.
+    // There is a setting, called tint, on each NTSC TV.
+    // This way you can correct a great portion of the hue error of a specific sender.
+    // Of course, the hue error isn't constant, means you can't correct it completely.
+    // That's why NTSC is called: never the same color
     // back to PAL and the approach to stabilize hue.
-    // even lines: same transmission as NTSC, the transferred signal is received with an unknown
-    // phase shift error. in comparison to NTSC the information is stored in TV. (delay line)
+    // Even lines: same transmission as NTSC, the transferred signal is received with an unknown phase shift error.
+    // In comparison to NTSC the information is stored in TV(delay line)
     // odd lines: V component is phase shifted by 180° before transmission. (simply means the V value change sign).
-    // the transmission adds a similar phase shift error within such a short time of one display line.
-    // receiver (TV) reverses sign of V component, which includes a similar phase shift error like happened in
-    // even line. 
-    // now the receiver already has the U/V data of the even line, which is shifted by an unknown phase error from the 
-    // real U/V data and there is the U/V data of the odd line which is shifted by a similar phase error but in the other
-    // direction of the even line data. so we simply have to calculate the average between odd and even data to get
-    // the original value. a tint correction like NTSC would be unnecessary.
-    // the hue error is a lot of smaller than NTSC, because the error doesn't shift that much in the short
-    // period of a scanline.
-    // of course there are some disadvantages of this approach.
-    // 1. the vertical resolution is halved, because 2 lines will be blended together.
+    // The transmission adds a similar phase shift error within such a short time of one display line.
+    // Receiver (TV) reverses sign of V component, which includes a similar phase shift error like happened in even line.
+    // Now the receiver already has the U/V data of the even line, which is shifted by an unknown phase error from the real U/V data.
+    // And there is the U/V data of the odd line that is shifted by a similar phase error but in the other
+    // direction of the even line data. So we simply have to calculate the average between odd and even data to get
+    // the original value. A tint correction like NTSC would be unnecessary.
+    // The hue error is a lot smaller than NTSC, because the error doesn't shift that much in the short period of a scanline.
+    // Of course, there are some disadvantages of this approach.
+    // 1. the vertical resolution is halved, because in PAL 2 lines will be blended.
     // 2. if sender adds a huge phase shift error to U/V, the receiver can indeed reconstruct the original hue
-    // by averaging data from even and odd lines but the overall saturation will be lowered.
-    // delay lines will be saved in an analog way. depending on TV quality, adjacent lines are desaturated differently.
-	// this effect is known as (Hanover Bars)
+    // by averaging data from even and odd lines, but the overall saturation will be lowered.
+    // Delay lines will be saved in an analog way. Depending on TV quality, adjacent lines are desaturated differently.
+	// This effect is known as (Hanover Bars)
     
 	// we have already calculated the values for U and V
 	// U = cos( angle ) * modifier( contrast and/or saturation )
@@ -457,7 +456,7 @@ auto VideoManager::injectPhaseTransferError() -> void {
 	// i.e. sin( a + b ) * modifier = modifier * (sin a cos b + cos a sin b)
 	//								= modifier * sin a cos b + modifier * cos a sin b
 	// we have already calculated: V = modifier * sin a , U = modifier * cos a
-	// so after substitution we get:
+	// after substitution we get:
 	//								= V * cos b + U * sin b
 	
     double rotU = std::cos( phaseError * M_PI / 180.0 );	// cos b
