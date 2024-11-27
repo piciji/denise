@@ -18,7 +18,7 @@
 #include "../../expansionPort/gameCart/warpSpeed.h"
 #include "../../expansionPort/gameCart/mach5.h"
 #include "../../expansionPort/gameCart/supergames.h"
-#include "../../expansionPort/gameCart/BusinessBasic.h"
+#include "../../expansionPort/gameCart/businessBasic.h"
 #include "../../input/input.h"
 
 namespace LIBC64 {
