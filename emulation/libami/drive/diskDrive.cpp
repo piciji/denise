@@ -191,7 +191,7 @@ template<bool update> auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
 
     headOffset++;
     if (headOffset == track->overlap)
-        headOffset += std::max(1, rand() & 3);
+        headOffset += std::max(1u, (unsigned)((randomizer.xorShift() >> 16) & 3));
 
     if ( headOffset >= track->bits ) {
         headOffset -= track->bits;
@@ -200,7 +200,7 @@ template<bool update> auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
             cia.setFlag();
 
         if (headOffset == track->overlap)
-            headOffset += std::max(1, rand() & 3);
+            headOffset += std::max(1u, (unsigned)((randomizer.xorShift() >> 16) & 3));
     }
 
     dmaCycles = 7;
