@@ -181,9 +181,6 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                             continue;
                     }
 
-                  //  if (!Program::focused && mapping->emuDevice && !hid.device->isJoypad() )
-                    //    continue;
-
                     if (hid.disable)
                         continue;
                     
@@ -200,7 +197,7 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                         if constexpr (changeTrigger)
                             activeEmulator->sendKeyChange(0, nullptr);
                         break;
-                    } else if (useMapping->autoFire && Program::focused) {
+                    } else if (useMapping->autoFire/* && Program::focused*/) {
                         handleAutofire(mapping, useMapping, mapping->adjustDigitalValue<true>(hid) == 0);
                     } else {
                         useMapping->state = value;
@@ -240,9 +237,6 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                 } else if (mapping->adjustDigitalValue<true>(hid) == 0)
                     atLeastOneKeyHasSwitched = true;
 
-                //if (!Program::focused && mapping->emuDevice && !hid.device->isJoypad() )
-                  //  goto Next;
-
                 emuDevice = mapping->emuDevice;
                 if (emuDevice) {
                     if (!Program::focused && !hid.device->isJoypad() )
@@ -269,7 +263,7 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                     emuThread->unlockHotkeys();
                     if constexpr (changeTrigger)
                         activeEmulator->sendKeyChange(0, nullptr);
-                } else if (useMapping->autoFire && Program::focused) {
+                } else if (useMapping->autoFire/* && Program::focused*/) {
                     handleAutofire(mapping, useMapping, atLeastOneKeyHasSwitched);
                 } else {
                     useMapping->state = 1;
@@ -320,7 +314,7 @@ template<bool changeTrigger> auto InputManager::update() -> void {
         }
     }
 
-    if (allowTouchlessAutofire && Program::focused)
+    if (allowTouchlessAutofire/* && Program::focused*/)
         handleTouchlessAutofire();
 }
 
