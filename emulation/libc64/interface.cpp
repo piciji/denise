@@ -454,6 +454,13 @@ auto Interface::preparePalettes() -> void {
         {"Medium Gray", 0x747474},{"Light Green", 0x8bea8d},{"Light Blue", 0x705fea},{"Light Gray", 0xa0a0a0}}
     });
 
+    palettes.push_back({ 19, "JAM PAL", false, {
+        {"Black", 0x0},{"White", 0xffffff},{"Red", 0x72202c},{"Cyan", 0x4fb3a5},
+        {"Purple", 0x84258c},{"Green", 0x339840},{"Blue", 0x2a1b9d},{"Yellow", 0xbfd04a},
+        {"Orange", 0x7f410d},{"Brown", 0x4c2e00},{"Light Red", 0xb44f5c},{"Dark Gray", 0x3c3c3c},
+        {"Medium Gray", 0x646464},{"Light Green", 0x7ce587},{"Light Blue", 0x6351db},{"Light Gray", 0x939393}}
+    });
+
     for( auto& palette : palettes )
         for( auto& paletteColor : palette.paletteColors )
             paletteColor.updateChannels();
