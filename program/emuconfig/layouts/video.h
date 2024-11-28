@@ -1,5 +1,5 @@
 
-#define PARAMS_PER_PAGE 12
+#define PARAMS_PER_PAGE 11
 #define SCALE_BOXES 5
 
 struct VideoBaseLayout : GUIKIT::VerticalLayout {
