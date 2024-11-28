@@ -141,6 +141,9 @@ auto MediaLayout::build() -> void {
     imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
     settingsImage.loadPng((uint8_t*)Icons::settings, sizeof(Icons::settings) );
 
+    openImg.loadPng((uint8_t*)Icons::open, sizeof(Icons::open) );
+    ejectImg.loadPng((uint8_t*)Icons::eject, sizeof(Icons::eject) );
+
     GUIKIT::TreeViewItem* tvi;
     unsigned previewFontSize = settings->get<unsigned>("software_preview_fontsize", 12, {8, 16});
     
@@ -336,7 +339,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
 			block->selector.edit.setText(fSetting->path);
 
-		} else {            
+		} else {
             
 			block->selector.open.onActivate = [this, block]() {
                 
@@ -447,6 +450,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     }
                 }                                
             };
+
+		    block->selector.open.setImage(&openImg);
+		    block->header.eject.setImage(&ejectImg);
 		}
 
         if (mediaGroup->expansion) {
@@ -996,15 +1002,12 @@ auto MediaLayout::translate() -> void {
 
         for ( auto block : nav.mediaGroupLayout->blocks ) {
             block->header.writeprotect.setText(trans->get("write_protected"));
-            block->header.eject.setText(trans->get("eject"));
-            block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );            
-            block->header.inUse.setText( trans->get( block->media->name, {}, true ) );            
-            
-            block->selector.open.setText("...");
-                
-            if (mediaGroup->isProgram()) {                
+            block->header.eject.setTooltip(trans->get("eject"));
+            block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );
+            block->header.inUse.setText( trans->get( block->media->name, {}, true ) );
+
+            if (mediaGroup->isProgram())
                 block->selector.open.setTooltip(trans->get("c64_list_tip"));
-            }
             
             if (mediaGroup->isExpansion()) {
                 unsigned id = 0;

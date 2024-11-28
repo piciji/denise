@@ -24,6 +24,9 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
     this->emulator = tabWindow->emulator;    
     this->manager = FirmwareManager::getInstance(this->emulator);
 
+    openImg.loadPng((uint8_t*)Icons::open, sizeof(Icons::open) );
+    ejectImg.loadPng((uint8_t*)Icons::eject, sizeof(Icons::eject) );
+
     for (unsigned i = 0; i <= manager->maxSets; i++) {
 
         auto radioBox = new GUIKIT::RadioBox;
@@ -113,6 +116,9 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
 
             assign( files[0], block, fSetting, storeLevel );
         };
+
+        block->open.setImage(&openImg);
+        block->eject.setImage(&ejectImg);
     }
         
     GUIKIT::RadioBox::setGroup( selectorBoxes );
@@ -211,8 +217,8 @@ auto FirmwareLayout::translate() -> void {
     unsigned storeLevel = 0;
 
     for( auto block : containerLayout.blocks ) {
-        block->open.setText( trans->get("open") );
-        block->eject.setText( trans->get("eject") );
+        block->open.setTooltip( trans->get("open") );
+        block->eject.setTooltip( trans->get("eject") );
         block->fileLabelTitle.setText(trans->get(emulator->firmwares[block->typeId].name));
     }
 

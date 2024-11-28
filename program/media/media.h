@@ -257,6 +257,9 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image imgFolderClosed;
     GUIKIT::Image imgDocument;
     GUIKIT::Image settingsImage;
+
+    GUIKIT::Image openImg;
+    GUIKIT::Image ejectImg;
     
     std::vector<NavElement> navElements;
     

@@ -26,8 +26,11 @@ struct FirmwareLayout : GUIKIT::VerticalLayout {
 
     FirmwareContainer containerLayout;
     FirmwareContainer::Block* selectedBlock = nullptr;
-    GUIKIT::HorizontalLayout customSelectorLayout;  
-	std::vector<GUIKIT::RadioBox*> selectorBoxes;  
+    GUIKIT::HorizontalLayout customSelectorLayout;
+	std::vector<GUIKIT::RadioBox*> selectorBoxes;
+
+    GUIKIT::Image openImg;
+    GUIKIT::Image ejectImg;
     
     auto assign( std::string path, FirmwareContainer::Block* block, FileSetting* fSetting, unsigned storeLevel ) -> void;
     auto translate() -> void;
