@@ -60,10 +60,19 @@ struct CropLayout : GUIKIT::FramedVerticalLayout {
         Hotkey();
     } hotkey;
 
-    SliderLayout cropLeft;
-    SliderLayout cropRight;
-    SliderLayout cropTop;
-    SliderLayout cropBottom;
+    struct CropHorizontal : GUIKIT::HorizontalLayout {
+        CropHorizontal();
+
+        SliderLayout cropLeft;
+        SliderLayout cropRight;
+    } cropHorizontal;
+
+    struct CropVertical : GUIKIT::HorizontalLayout {
+        CropVertical();
+
+        SliderLayout cropTop;
+        SliderLayout cropBottom;
+    } cropVertical;
 
     CropLayout();
 };

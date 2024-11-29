@@ -560,13 +560,13 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdDiskDriveWobble, "Drive Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 20, {0, 500}, {}, 50, 100.0 });
 
-    models.push_back({ModelIdDriveRam20To3F, "RAM $2000-$3FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
-    models.push_back({ModelIdDriveRam40To5F, "RAM $4000-$5FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
-    models.push_back({ModelIdDriveRam60To7F, "RAM $6000-$7FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
-    models.push_back({ModelIdDriveRam80To9F, "RAM $8000-$9FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
-    models.push_back({ModelIdDriveRamA0ToBF, "RAM $A000-$BFFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
-
     models.push_back({ModelIdDriveParallelCable, "Parallel Cable", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdDriveRam20To3F, "$2000-$3FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdDriveRam40To5F, "$4000-$5FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdDriveRam60To7F, "$6000-$7FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdDriveRam80To9F, "$8000-$9FFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+    models.push_back({ModelIdDriveRamA0ToBF, "$A000-$BFFF", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
+
     models.push_back({ModelIdCiaBurstMode, "CIA Burst Modification", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
     models.push_back({ModelIdDriveFastLoader, "Fast Loader", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 15},

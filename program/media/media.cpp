@@ -893,6 +893,9 @@ auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> vo
     };
 
     block->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
+
+    block->select.setImage(&openImg);
+    block->empty.setImage(&ejectImg);
 }
 
 auto MediaLayout::preparePaths() -> void {
@@ -1068,8 +1071,8 @@ auto MediaLayout::translate() -> void {
     for(auto block : pathsLayout.blocks) {
         				
         block->label.setText( trans->get( getMediaGroupTransIdent(block->mediaGroup) ) );
-        block->empty.setText( trans->get("remove") );
-        block->select.setText( trans->get("select") );
+      //  block->empty.setText( trans->get("remove") );
+        //block->select.setText( trans->get("select") );
 		
 		neededWidth = std::max(neededWidth, block->label.minimumSize().width );
     }

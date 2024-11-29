@@ -67,25 +67,34 @@ CropLayout::Hotkey::Hotkey() {
     setAlignment(0.5);
 }
 
-CropLayout::CropLayout() :
+CropLayout::CropHorizontal::CropHorizontal() :
 cropLeft("px"),
-cropRight("px"),
+cropRight("px") {
+    append( cropLeft, {~0u, 0u}, 10 );
+    append( cropRight, {~0u, 0u} );
+
+    cropLeft.slider.setLength(101);
+    cropRight.slider.setLength(101);
+}
+
+CropLayout::CropVertical::CropVertical() :
 cropTop("px"),
-cropBottom("px")
-{
+cropBottom("px") {
+    append( cropTop, {~0u, 0u}, 10 );
+    append( cropBottom, {~0u, 0u} );
+
+    cropTop.slider.setLength(101);
+    cropBottom.slider.setLength(101);
+}
+
+CropLayout::CropLayout() {
     append( type1, {0u, 0u}, 5 );
     append( type2, {0u, 0u}, 5 );
     append( type3, {0u, 0u}, 5 );
     append( type4, {0u, 0u}, 5 );
-    append( cropLeft, {~0u, 0u}, 5 );
-    append( cropRight, {~0u, 0u}, 5 );
-    append( cropTop, {~0u, 0u}, 5 );
-    append( cropBottom, {~0u, 0u}, 10 );
 
-    cropLeft.slider.setLength(101);
-    cropRight.slider.setLength(101);
-    cropTop.slider.setLength(101);
-    cropBottom.slider.setLength(101);
+    append( cropHorizontal, {~0u, 0u}, 5 );
+    append( cropVertical, {~0u, 0u}, 10 );
 
     GUIKIT::RadioBox::setGroup( type1.cropOff, type1.cropMonitor, type1.cropAutoAspect, type1.cropAuto,
                                 type2.cropAllSidesAspect, type2.cropAllSides,
@@ -239,28 +248,28 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         updateVisibillity();
     };
 
-    cropLayout.cropLeft.slider.onChange = [this](unsigned position) {
+    cropLayout.cropHorizontal.cropLeft.slider.onChange = [this](unsigned position) {
         updateCrop("crop_left", position);
 
-        cropLayout.cropLeft.value.setText( std::to_string( position ) + " px" );
+        cropLayout.cropHorizontal.cropLeft.value.setText( std::to_string( position ) + " px" );
 	};
 
-    cropLayout.cropRight.slider.onChange = [this](unsigned position) {
+    cropLayout.cropHorizontal.cropRight.slider.onChange = [this](unsigned position) {
         updateCrop("crop_right", position);
 
-        cropLayout.cropRight.value.setText( std::to_string( position ) + " px" );
+        cropLayout.cropHorizontal.cropRight.value.setText( std::to_string( position ) + " px" );
 	};
 
-    cropLayout.cropTop.slider.onChange = [this](unsigned position) {
+    cropLayout.cropVertical.cropTop.slider.onChange = [this](unsigned position) {
         updateCrop("crop_top", position);
 
-        cropLayout.cropTop.value.setText( std::to_string( position ) + " px" );
+        cropLayout.cropVertical.cropTop.value.setText( std::to_string( position ) + " px" );
 	};
 
-    cropLayout.cropBottom.slider.onChange = [this](unsigned position) {
+    cropLayout.cropVertical.cropBottom.slider.onChange = [this](unsigned position) {
         updateCrop("crop_bottom", position);
 
-        cropLayout.cropBottom.value.setText( std::to_string( position ) + " px" );
+        cropLayout.cropVertical.cropBottom.value.setText( std::to_string( position ) + " px" );
 	};
 
     for(int i = 0; i < 12; i++) {
@@ -503,10 +512,10 @@ auto GeometryLayout::updateCrop(std::string property, unsigned value) -> void {
 auto GeometryLayout::updateVisibillity() -> void {
 	auto val = _settings->get<unsigned>( "crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
 
-    cropLayout.cropLeft.setEnabled( val >= 4 );
-    cropLayout.cropRight.setEnabled( val >= 6 );
-    cropLayout.cropTop.setEnabled( val >= 6 );
-    cropLayout.cropBottom.setEnabled( val >= 6 );
+    cropLayout.cropHorizontal.cropLeft.setEnabled( val >= 4 );
+    cropLayout.cropHorizontal.cropRight.setEnabled( val >= 6 );
+    cropLayout.cropVertical.cropTop.setEnabled( val >= 6 );
+    cropLayout.cropVertical.cropBottom.setEnabled( val >= 6 );
     cropLayout.hotkey.reset.setEnabled( val >= 6 );
 }
 
@@ -519,10 +528,10 @@ auto GeometryLayout::translate() -> void {
     rotationLayout.degree270.setText("270 °");
     rotationLayout.setText( trans->getA("image rotation") );
 
-    cropLayout.cropLeft.name.setText( trans->get("left", {},true) );
-    cropLayout.cropRight.name.setText( trans->get("right", {},true) );
-    cropLayout.cropTop.name.setText( trans->get("up", {},true) );
-    cropLayout.cropBottom.name.setText( trans->get("down", {},true) );
+    cropLayout.cropHorizontal.cropLeft.name.setText( trans->get("left", {},true) );
+    cropLayout.cropHorizontal.cropRight.name.setText( trans->get("right", {},true) );
+    cropLayout.cropVertical.cropTop.name.setText( trans->get("up", {},true) );
+    cropLayout.cropVertical.cropBottom.name.setText( trans->get("down", {},true) );
 
     cropLayout.type1.cropOff.setText( trans->get("disabled") + " (0)" );
     cropLayout.type1.cropMonitor.setText( trans->get("monitor") + " (1)" );
@@ -583,20 +592,21 @@ auto GeometryLayout::translate() -> void {
     monitorResolutionLayout.adjustEmuSpeed.setText( trans->get("adjust speed to monitor") );
     monitorResolutionLayout.adjustEmuSpeed.setTooltip( trans->get("adjust speed to monitor tooltip") );
     
-    SliderLayout::scale({&cropLayout.cropLeft, &cropLayout.cropRight, &cropLayout.cropTop, &cropLayout.cropBottom}, "100 px");
+    SliderLayout::scale({&cropLayout.cropHorizontal.cropLeft, &cropLayout.cropVertical.cropTop}, "100 px");
+    SliderLayout::scale({&cropLayout.cropHorizontal.cropRight, &cropLayout.cropVertical.cropBottom}, "100 px");
 }
 
 auto GeometryLayout::updateBorderSlider() -> void {
     Emulator::Interface::Crop crop = {0};
     if (program->getCrop(emulator, crop)) {
-        cropLayout.cropLeft.slider.setPosition(crop.left);
-        cropLayout.cropLeft.value.setText(std::to_string(crop.left) + " px");
-        cropLayout.cropRight.slider.setPosition(crop.right);
-        cropLayout.cropRight.value.setText(std::to_string(crop.right) + " px");
-        cropLayout.cropTop.slider.setPosition(crop.top);
-        cropLayout.cropTop.value.setText(std::to_string(crop.top) + " px");
-        cropLayout.cropBottom.slider.setPosition(crop.bottom);
-        cropLayout.cropBottom.value.setText(std::to_string(crop.bottom) + " px");
+        cropLayout.cropHorizontal.cropLeft.slider.setPosition(crop.left);
+        cropLayout.cropHorizontal.cropLeft.value.setText(std::to_string(crop.left) + " px");
+        cropLayout.cropHorizontal.cropRight.slider.setPosition(crop.right);
+        cropLayout.cropHorizontal.cropRight.value.setText(std::to_string(crop.right) + " px");
+        cropLayout.cropVertical.cropTop.slider.setPosition(crop.top);
+        cropLayout.cropVertical.cropTop.value.setText(std::to_string(crop.top) + " px");
+        cropLayout.cropVertical.cropBottom.slider.setPosition(crop.bottom);
+        cropLayout.cropVertical.cropBottom.value.setText(std::to_string(crop.bottom) + " px");
     }
 }
 
