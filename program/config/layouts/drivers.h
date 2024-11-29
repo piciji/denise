@@ -23,14 +23,6 @@ struct VideoDriverLayout : GUIKIT::FramedVerticalLayout {
         Top();
     } top;
 
-    struct Bottom : GUIKIT::HorizontalLayout {
-        GUIKIT::Label threadedRenderer;
-        GUIKIT::CheckBox trOn;
-        GUIKIT::CheckBox trAuto;
-
-        Bottom();
-    } bottom;
-
     VideoDriverLayout();
 };
 

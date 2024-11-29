@@ -1274,33 +1274,25 @@ auto View::buildMenu() -> void {
         VideoManager::setSynchronize();
         statusHandler->resetFrameCounter();
         emuThread->unlock();
-        bool threadedRenderer = globalSettings->get("threaded_renderer", true);
-        bool adaptive = globalSettings->get<bool>("adaptive_sync", false);
-
-        dynamicRateControl.setEnabled( (videoSyncItem.checked() || vrrItem.checked()) && !threadedRenderer );
-        vrrItem.setEnabled( threadedRenderer || !(videoSyncItem.checked() && adaptive) );
     };
-    bool threadedRenderer = globalSettings->get("threaded_renderer", true);
+
     bool vsync = globalSettings->get<bool>("video_sync", true);
     bool vrr = globalSettings->get<bool>("vrr_sync", false);
-    bool adaptive = globalSettings->get<bool>("adaptive_sync", false);
 
     if (vsync)
         videoSyncItem.setChecked();
 
     optionsMenu.append(videoSyncItem);
 
-    vrrItem.setEnabled( threadedRenderer || !(vsync && adaptive) );
-
     vrrItem.onToggle = [&]() {
         globalSettings->set<bool>("vrr_sync", vrrItem.checked() );
         emuThread->lock();
         VideoManager::setSynchronize();
         emuThread->unlock();
-        bool threadedRenderer = globalSettings->get("threaded_renderer", true);
-        dynamicRateControl.setEnabled( (videoSyncItem.checked() || vrrItem.checked()) && !threadedRenderer );
     };
-    if ( vrr ) vrrItem.setChecked();
+    if (vrr)
+        vrrItem.setChecked();
+
     optionsMenu.append(vrrItem);
 
     dynamicRateControl.onToggle = [&]() {
@@ -1312,8 +1304,6 @@ auto View::buildMenu() -> void {
     };
     if ( globalSettings->get<bool>("dynamic_rate_control", false) )
         dynamicRateControl.setChecked();
-
-    dynamicRateControl.setEnabled( !threadedRenderer && (vsync || vrr) );
 
     optionsMenu.append(dynamicRateControl);
         
@@ -2047,15 +2037,6 @@ auto View::isMaximumSpeed() -> bool {
     unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
 
     return speedProfile == (speedItems.size() - 2);
-}
-
-auto View::threadedRendererWasToggled(bool state) -> void {
-    bool vsync = globalSettings->get<bool>("video_sync", true);
-    bool vrr = globalSettings->get<bool>("vrr_sync", false);
-    bool adaptive = globalSettings->get<bool>("adaptive_sync", false);
-
-    vrrItem.setEnabled(state || !(vsync && adaptive));
-    dynamicRateControl.setEnabled((vsync || vrr) && !state);
 }
 
 auto View::updateEmuUsage() -> void {

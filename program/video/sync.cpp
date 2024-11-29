@@ -6,35 +6,37 @@
 
 auto VideoManager::setSynchronize() -> void {
     bool vsync = globalSettings->get<bool>("video_sync", true);
-    bool threadedRenderer = globalSettings->get("threaded_renderer", true);
-    bool adaptive = globalSettings->get<bool>("adaptive_sync", false);
     bool vrr = globalSettings->get<bool>("vrr_sync", false);
-
-    unsigned frameRenderEach = 1;
-    float skew = 0.0;
 
     if (!activeEmulator)
         return;
 
+    auto _settings = program->getSettings( activeEmulator );
+    unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);
+
+    bool threadedRenderer = tr == 1;
+    bool adaptive = tr == 2;
+
+    unsigned frameRenderEach = 1;
+    float skew = 0.0;
+
     if (audioDriver->hasSynchronized()) {
         if (vsync && adaptive) {
-            if (!threadedRenderer) {
-                float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
-                vrr = false;
-                float ratio = (float)audioManager->inputFPS / monitorFrequency;
-                float intpart;
-                float fractpart = std::modf (ratio, &intpart);
+            float monitorFrequency = GUIKIT::Monitor::getCurrentRefreshRate();
+            vrr = false;
+            float ratio = (float)audioManager->inputFPS / monitorFrequency;
+            float intpart;
+            float fractpart = std::modf (ratio, &intpart);
 
-                if ((uint8_t)intpart <= 1) {
-                    skew = std::abs(1.0 - ratio );
-                    if ((skew > VIDEO_SKEW) /*&& ((float) audioManager->inputFPS > monitorFrequency)*/)
-                        threadedRenderer = true;
-                } else {
-                    if (fractpart > VIDEO_SKEW)
-                        threadedRenderer = true;
-                    else
-                        frameRenderEach = (uint8_t)intpart;
-                }
+            if ((uint8_t)intpart <= 1) {
+                skew = std::abs(1.0 - ratio );
+                if ((skew > VIDEO_SKEW) /*&& ((float) audioManager->inputFPS > monitorFrequency)*/)
+                    threadedRenderer = true;
+            } else {
+                if (fractpart > VIDEO_SKEW)
+                    threadedRenderer = true;
+                else
+                    frameRenderEach = (uint8_t)intpart;
             }
         }
     } else if (!threadedRenderer) {

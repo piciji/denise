@@ -243,7 +243,6 @@ struct View : GUIKIT::Window {
     auto isMaximumSpeed() -> bool;
     auto isCustomSpeed() -> bool;
 	auto activateCustomSpeed() -> void;
-	auto threadedRendererWasToggled(bool state) -> void;
     auto updateGeometry(bool withViewport = false) -> void;
     auto adjustToEmu(bool withViewport) -> void;
     

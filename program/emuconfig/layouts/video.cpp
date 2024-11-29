@@ -13,6 +13,7 @@ VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
     append(gpu,{0u, 0u});
 
     append(spacer,{~0u, 0u});
+    append(cpuFilterThreaded, {0u, 0u}, 5);
     append(reset,{0u, 0u});
 
     GUIKIT::RadioBox::setGroup(rgb, cpu, gpu);
@@ -21,15 +22,20 @@ VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
 }
 
 VideoBaseLayout::View::Option::Option(bool withSpectrum) {
-    if (withSpectrum) {
+    if (withSpectrum)
         append(newLuma, {0u, 0u}, 10);
-        append(tvGamma, {0u, 0u}, 10);
-    } else {
-        append(tvGamma, {0u, 0u}, 10);
-    }
 
-    append(linearInterpolation, {0u, 0u}, 10);
-    append(cpuFilterThreaded, {0u, 0u});
+    append(tvGamma, {0u, 0u}, 10);
+
+    append(linearInterpolation, {0u, 0u});
+    append(spacer, {~0u, 0u});
+
+    append(trLabel, {0u, 0u}, 5);
+    append(trOff, {0u, 0u}, 5);
+    append(trOn, {0u, 0u}, 5);
+    append(trAuto, {0u, 0u});
+
+    GUIKIT::RadioBox::setGroup(trOff, trOn, trAuto);
 
     setAlignment(0.5);
 }
@@ -401,6 +407,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     addImage.loadPng((uint8_t*)Icons::add, sizeof(Icons::add));
     delImage.loadPng((uint8_t*)Icons::del, sizeof(Icons::del));
     gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
+    backImage.loadPng((uint8_t*)Icons::back, sizeof(Icons::back));
 
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
@@ -445,6 +452,8 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layPass.control.up.setEnabled(false);
     layPass.control.down.setImage(&pageDownGray);
     layPass.control.down.setEnabled(false);
+
+    layBase.view.mode.reset.setImage(&backImage);
 
     moduleSwitch.setSelection( 1 );
 
@@ -512,7 +521,33 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         emuThread->unlock();
 	};
 
-    layBase.view.option.cpuFilterThreaded.onToggle = [this](bool checked) {
+    layBase.view.option.trOn.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned>("threaded_renderer", 1);
+        if (emulator == activeEmulator)
+            VideoManager::setSynchronize();
+        emuThread->unlock();
+    };
+
+    layBase.view.option.trAuto.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned>("threaded_renderer", 2);
+        if (emulator == activeEmulator) {
+            program->setWarp( false );
+            VideoManager::setSynchronize();
+        }
+        emuThread->unlock();
+    };
+
+    layBase.view.option.trOff.onActivate = [this]() {
+        emuThread->lock();
+        _settings->set<unsigned>("threaded_renderer", 0);
+        if (emulator == activeEmulator)
+            VideoManager::setSynchronize();
+        emuThread->unlock();
+    };
+
+    layBase.view.mode.cpuFilterThreaded.onToggle = [this](bool checked) {
         emuThread->lock();
         _settings->set<bool>("cpu_filter_threaded", checked);
         vManager()->setCrtThreaded( checked );
@@ -1812,7 +1847,7 @@ auto VideoLayout::updateVisibillity() -> void {
     
     layBase.view.option.tvGamma.setEnabled( (crtCpuChecked || crtGpuChecked) && layBase.view.mode.palette.checked() && _pal );
 
-    layBase.view.option.cpuFilterThreaded.setEnabled( crtCpuChecked );
+    layBase.view.mode.cpuFilterThreaded.setEnabled( crtCpuChecked );
 }
 
 auto VideoLayout::translate() -> void {
@@ -1826,10 +1861,16 @@ auto VideoLayout::translate() -> void {
     layBase.view.option.newLuma.setText( trans->get("new_luma") );
     layBase.view.option.tvGamma.setText( trans->get("TV gamma") );
     layBase.view.option.linearInterpolation.setText( trans->get("linear_interpolation") );
-    layBase.view.option.cpuFilterThreaded.setText( trans->get("own thread") );
+    layBase.view.option.trLabel.setText( trans->getA("Threaded Renderer", true) );
+    layBase.view.option.trOn.setText( trans->getA("On") );
+    layBase.view.option.trOn.setTooltip( trans->getA("Threaded Renderer tooltip") );
+    layBase.view.option.trAuto.setText( trans->getA("Auto") );
+    layBase.view.option.trAuto.setTooltip( trans->getA("Threaded Renderer Auto") );
+    layBase.view.option.trOff.setText( trans->getA("Off") );
+    layBase.view.mode.cpuFilterThreaded.setText( trans->get("concurrent") );
     layBase.view.mode.palette.setText( trans->get("palette") );
     layBase.view.mode.spectrum.setText( trans->get("color_spectrum") );
-    layBase.view.mode.reset.setText( trans->get("reset") );
+    layBase.view.mode.reset.setTooltip( trans->get("reset") );
     layBase.view.mode.rgb.setText( trans->get("RGB") );
     layBase.view.mode.cpu.setText( trans->get("S/C-Video CPU") );
     layBase.view.mode.cpu.setTooltip( trans->get("S/C-Video tooltip") );
@@ -1993,9 +2034,17 @@ auto VideoLayout::loadSettings(bool init) -> void {
 
     layBase.view.option.linearInterpolation.setChecked( _settings->get<bool>("video_filter", true) );
 
-    layBase.view.option.cpuFilterThreaded.setChecked( _settings->get<bool>("cpu_filter_threaded", true) );
+    layBase.view.mode.cpuFilterThreaded.setChecked( _settings->get<bool>("cpu_filter_threaded", true) );
 
     layShader.main.info.shaderCache.setChecked( _settings->get<bool>("shader_cache", true) );
+
+    unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);
+    switch(tr) {
+        case 0: layBase.view.option.trOff.setChecked(); break;
+        default:
+        case 1: layBase.view.option.trOn.setChecked(); break;
+        case 2: layBase.view.option.trAuto.setChecked(); break;
+    }
 
     bool shaderInternal = _settings->get<bool>("shader_internal", true);
 

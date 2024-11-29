@@ -399,13 +399,12 @@ auto Cmd::parse() -> void {
 	if (debug) {
 		dynamic_cast<LIBC64::Interface*> (emuC64)->activateDebugCart( cycles );
 		globalSettings->set<bool>("video_sync", false);
-        globalSettings->set<bool>("threaded_renderer", false);
         globalSettings->set<bool>("threaded_emu", false);
 		globalSettings->set<bool>("fps", true);
-		globalSettings->set("video_screen_text", 0);
 		settingsC64->set<bool>("video_cycle_accuracy", true);
         settingsC64->set<bool>("Emulate_Mechanics", true);
         settingsC64->set<unsigned>("video_crt", 0);
+	    settingsC64->set<unsigned>("threaded_renderer", 0);
 		
 		updateModel(emuC64, LIBC64::Interface::ModelIdDisableGreyDotBug, 0);
 	}	

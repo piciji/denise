@@ -397,24 +397,24 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 statusHandler->setMessage(_str, 5);
         } break;
         case Hotkey::Id::ThreadedRenderer: {
-            bool checked = globalSettings->get("threaded_renderer", true);
-            checked ^= 1;
-
-            globalSettings->set("threaded_renderer", checked);
-
-            if (view)
-                view->threadedRendererWasToggled(checked);
-
-            if (configView) {
-                configView->driversLayout->vdl.bottom.trOn.setChecked(checked);
-                configView->driversLayout->vdl.bottom.trAuto.setEnabled(!checked);
-            }
-
-            emuThread->lock();
-            if (statusHandler)
-                statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA(checked ? "enabled" : "disabled"), 3 );
-
-            VideoManager::setSynchronize();
+        //     auto _settings = program->getSettings( activeEmulator );
+        //     unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);
+        //
+        //     //bool checked = globalSettings->get("threaded_renderer", true);
+        //     checked ^= 1;
+        //
+        //     globalSettings->set("threaded_renderer", checked);
+        //
+        //     if (configView) {
+        //         configView->driversLayout->vdl.bottom.trOn.setChecked(checked);
+        //         configView->driversLayout->vdl.bottom.trAuto.setEnabled(!checked);
+        //     }
+        //
+        //     emuThread->lock();
+        //     if (statusHandler)
+        //         statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA(checked ? "enabled" : "disabled"), 3 );
+        //
+        //     VideoManager::setSynchronize();
         } break;
         case Hotkey::Id::ToggleShader:
             if(!videoDriver->shaderSupport())

@@ -7,16 +7,8 @@ VideoDriverLayout::Top::Top() {
     setAlignment(0.5);
 }
 
-VideoDriverLayout::Bottom::Bottom() {
-	append(threadedRenderer, {0u, 0u}, 10);
-	append(trOn, {0u, 0u}, 10);
-	append(trAuto, {0u, 0u});
-	setAlignment(0.5);
-}
-
 VideoDriverLayout::VideoDriverLayout() {
-	append(top, {~0u, 0u}, 10);
-	append(bottom, {0u, 0u});
+	append(top, {~0u, 0u});
 
 	setPadding( 10 );
 	setFont(GUIKIT::Font::system("bold"));
@@ -134,32 +126,6 @@ DriversLayout::DriversLayout() {
         emuThread->unlock();
 	};
 
-    vdl.bottom.trOn.onToggle = [this](bool checked) {
-        emuThread->lock();
-        globalSettings->set("threaded_renderer", checked);
-        VideoManager::setSynchronize();
-        emuThread->unlock();
-
-        vdl.bottom.trAuto.setEnabled( !checked );
-        view->threadedRendererWasToggled(checked);
-    };
-
-    vdl.bottom.trOn.setChecked( globalSettings->get("threaded_renderer", true) );
-
-    vdl.bottom.trAuto.onToggle = [this](bool checked) {
-        emuThread->lock();
-        globalSettings->set("adaptive_sync", checked);
-        program->setWarp( false );
-        VideoManager::setSynchronize();
-        emuThread->unlock();
-
-        view->threadedRendererWasToggled( vdl.bottom.trOn.checked() );
-    };
-
-    vdl.bottom.trAuto.setChecked( globalSettings->get("adaptive_sync", false) );
-    vdl.bottom.trAuto.setEnabled( !globalSettings->get("threaded_renderer", true) );
-
-
 	selectedDriver = program->getAudioDriver();
 	i = 0;
 	for(auto& driver : audioDriver->available()) {
@@ -267,10 +233,6 @@ auto DriversLayout::translate() -> void {
 	vdl.top.exclusiveFullscreen.setTooltip( trans->get("exclusive_fullscreen_tooltip") );
     vdl.top.hardSync.setText( trans->get("hard_sync") );
 	vdl.top.hardSync.setTooltip( trans->get("hard_sync_tooltip") );
-    vdl.bottom.threadedRenderer.setText( trans->getA("Threaded Renderer", true) );
-    vdl.bottom.trOn.setText( trans->getA("enabled") );
-    vdl.bottom.trOn.setTooltip( trans->getA("Threaded Renderer tooltip") );
-    vdl.bottom.trAuto.setText( trans->getA("Threaded Renderer Auto") );
 
 	adl.bottom.latency.name.setText( trans->get("latency", {}, true) );
 	adl.top.frequencyLabel.setText( trans->get("frequency", {}, true) );

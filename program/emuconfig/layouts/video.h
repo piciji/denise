@@ -13,6 +13,7 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
             GUIKIT::RadioBox gpu;
 
             GUIKIT::Widget spacer;
+            GUIKIT::CheckBox cpuFilterThreaded;
             GUIKIT::Button reset;
 
             Mode(bool withSpectrum);
@@ -22,7 +23,11 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
             GUIKIT::CheckBox newLuma;
             GUIKIT::CheckBox tvGamma;
             GUIKIT::CheckBox linearInterpolation;
-            GUIKIT::CheckBox cpuFilterThreaded;
+            GUIKIT::Widget spacer;
+            GUIKIT::Label trLabel;
+            GUIKIT::RadioBox trOff;
+            GUIKIT::RadioBox trOn;
+            GUIKIT::RadioBox trAuto;
 
             Option(bool withSpectrum);
         } option;
@@ -328,6 +333,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image addImage;
     GUIKIT::Image delImage;
     GUIKIT::Image gearsImage;
+    GUIKIT::Image backImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;
