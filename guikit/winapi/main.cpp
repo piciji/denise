@@ -611,7 +611,7 @@ auto pWindow::setGeometry(Geometry geometry) -> void {
         hwnd, NULL,
         geometry.x - margin.x, geometry.y - margin.y,
         geometry.width + margin.width, geometry.height + margin.height,
-        SWP_NOZORDER | SWP_FRAMECHANGED
+        SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOACTIVATE
     );
 
     if (window.statusBar())
