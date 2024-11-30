@@ -843,6 +843,7 @@ auto InputManager::pollHotkeys() -> void {
 	InputMapping* starter = nullptr;
     InputMapping* anyLoad = nullptr;
     InputMapping* lastAutostart = nullptr;
+    InputMapping* swapAutofire = nullptr;
 	
 	auto useEmu = activeEmulator;
     if (!useEmu)
@@ -915,6 +916,10 @@ auto InputManager::pollHotkeys() -> void {
                 else if (useEmu == trigger->inputManager->emulator)
                     lastAutostart = trigger;
                 break;
+
+		    case Hotkey::Autofire:
+		        swapAutofire = trigger;
+		        break;
                 
 			default:
 				if (!GUIKIT::Vector::find( useTrigger, trigger ))
@@ -924,7 +929,7 @@ auto InputManager::pollHotkeys() -> void {
 	}
 
     if (!warpAutostart || warp) {
-        if (!Program::hasFocus())
+        if (!Program::hasFocus() && !swapAutofire)
             return;
     }
 	
@@ -947,6 +952,9 @@ auto InputManager::pollHotkeys() -> void {
     
     if (anyLoad)
 		useTrigger.push_back( anyLoad );
+
+    if (swapAutofire)
+        useTrigger.push_back( swapAutofire );
 
 	for( auto trigger : useTrigger )
         fireHotkey( trigger );
