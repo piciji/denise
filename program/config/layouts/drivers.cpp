@@ -19,7 +19,6 @@ AudioDriverLayout::Top::Top() {
 	test.setText( "0.0005" );
 	append(frequencyLabel, {0u, 0u}, 5);
 	append(frequencyCombo, {0u, 0u}, 20);
-	append(priorityCheckbox, {0u, 0u}, 20);
 	append(maxRateLabel, {0u, 0u}, 5);
 	append(maxRateEdit, {test.minimumSize().width, 0u});
 	append(driver, {~0u, 0u});
@@ -177,15 +176,6 @@ DriversLayout::DriversLayout() {
 
     adl.top.maxRateEdit.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("rate_control_delta", 0.005, {0.0, 0.010}) ) );
 
-    adl.top.priorityCheckbox.onToggle = [this](bool checked) {
-        emuThread->lock();
-        globalSettings->set<bool>("audio_priority", checked);
-        audioDriver->setHighPriority( checked );
-        emuThread->unlock();
-    };
-
-    adl.top.priorityCheckbox.setChecked( globalSettings->get<bool>("audio_priority", false) );
-
     auto valFre = globalSettings->get<unsigned>("audio_frequency_v2", 48000);
     for(unsigned i = 0; i < adl.top.frequencyCombo.rows(); i++) {
         if(adl.top.frequencyCombo.userData(i) == valFre) {
@@ -236,8 +226,6 @@ auto DriversLayout::translate() -> void {
 
 	adl.bottom.latency.name.setText( trans->get("latency", {}, true) );
 	adl.top.frequencyLabel.setText( trans->get("frequency", {}, true) );
-	adl.top.priorityCheckbox.setText( trans->get("audio high priority") );
-	adl.top.priorityCheckbox.setTooltip( trans->get("audio high priority tooltip") );
 
 	adl.top.maxRateLabel.setText( trans->get("drc_delta", {}, true) );
 	adl.top.maxRateLabel.setTooltip( trans->get("drc_delta_tooltip") );

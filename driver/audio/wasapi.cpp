@@ -25,7 +25,6 @@ struct Wasapi : public Audio {
     }
     
 	struct {
-        bool priority;
         bool synchronize;
         unsigned latency;
         unsigned frequency;
@@ -107,12 +106,7 @@ struct Wasapi : public Audio {
     auto getFrequency() -> unsigned {
         return settings.frequency;
     }
-    
-    auto setHighPriority(bool state) -> void {
-        
-        settings.priority = state;
-    }
-    
+
     auto getMinimumLatency() -> unsigned {
         
         return settings.minimumLatency;
@@ -173,8 +167,8 @@ struct Wasapi : public Audio {
 
             if (unprocessedChunks >= WS_CHUNKS_MASK) {
                 if (settings.synchronize) {
-                    if (!settings.priority)
-                        std::this_thread::sleep_for( std::chrono::milliseconds(1) );
+                    std::this_thread::yield();
+                    // std::this_thread::sleep_for( std::chrono::milliseconds(1) );
                     continue;                    
                 }
             }
@@ -212,8 +206,9 @@ struct Wasapi : public Audio {
 				
 			if (settings.synchronize) {
 				while( 0 == (framesAvail = availableFrames())) {
-                    if (!settings.priority)
-                        std::this_thread::sleep_for( std::chrono::milliseconds(1) );
+				    std::this_thread::yield();
+				    //if (WaitForSingleObject(eventHandle, 256 ) == WAIT_OBJECT_0) {}
+                    // std::this_thread::sleep_for( std::chrono::milliseconds(1) );
 				}
 			} else 
 				if ( 0 == (framesAvail = availableFrames()) )
@@ -427,7 +422,6 @@ struct Wasapi : public Audio {
 	
 	Wasapi() {
         settings.synchronize = false;
-        settings.priority = false;
         settings.frequency = 48000;
         settings.latency = 32;
     }

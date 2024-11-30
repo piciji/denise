@@ -31,7 +31,6 @@ struct AudioDriverLayout : GUIKIT::FramedVerticalLayout {
     struct Top : GUIKIT::HorizontalLayout {
         GUIKIT::Label frequencyLabel;
         GUIKIT::ComboButton frequencyCombo;
-        GUIKIT::CheckBox priorityCheckbox;
         GUIKIT::Label maxRateLabel;
         GUIKIT::LineEdit maxRateEdit;
         DriverLayout driver;
