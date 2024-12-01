@@ -92,7 +92,8 @@ AudioRecordLayout::AudioRecordLayout() {
 BassControlLayout::TopLayout::TopLayout() :
 frequency( "Hz" ) {    
     append( active, {0u, 0u}, 10 );
-    append( frequency, {~0u, 0u} );
+    append( frequency, {~0u, 0u}, 10 );
+    append( reset, {0u, 0u} );
     
     frequency.slider.setLength( 181 );    
     frequency.updateValueWidth( "200 Hz" );
@@ -116,7 +117,41 @@ reduceClipping( "" ) {
 }
 
 BassControlLayout::BassControlLayout() {
-    
+    append( top, {~0u, 0u}, 10 );
+    append( bottom, {~0u, 0u} );
+    setFont(GUIKIT::Font::system("bold"));
+    setPadding( 10 );
+}
+
+EchoControlLayout::TopLayout::TopLayout() :
+amp( "" ) {
+    append( active, {0u, 0u}, 10 );
+    append( echoReverb, {0u, 0u}, 10 );
+    append( amp, {~0u, 0u}, 10 );
+    append( reset, {0u, 0u} );
+
+    amp.slider.setLength( 101 );
+    amp.updateValueWidth( "0.99" );
+
+    setAlignment( 0.5 );
+}
+
+EchoControlLayout::BottomLayout::BottomLayout() :
+delay( "ms" ),
+feedback( "" ) {
+    append( delay, {~0u, 0u}, 10 );
+    append( feedback, {~0u, 0u} );
+
+    delay.slider.setLength( 101 );
+    feedback.slider.setLength( 101 );
+
+    delay.updateValueWidth( "1000 ms" );
+    feedback.updateValueWidth( "0.99" );
+
+    setAlignment( 0.5 );
+}
+
+EchoControlLayout::EchoControlLayout() {
     append( top, {~0u, 0u}, 10 );
     append( bottom, {~0u, 0u} );
     setFont(GUIKIT::Font::system("bold"));
@@ -125,11 +160,11 @@ BassControlLayout::BassControlLayout() {
 
 ReverbControlLayout::TopLayout::TopLayout() :
 dryTime( "" ),
-wetTime( "" )
-{    
+wetTime( "" ) {
     append( active, {0u, 0u}, 10 );
     append( dryTime, {~0u, 0u}, 10 );
-    append( wetTime, {~0u, 0u} );
+    append( wetTime, {~0u, 0u}, 10 );
+    append( reset, {0u, 0u} );
     
     dryTime.slider.setLength( 101 );    
     dryTime.updateValueWidth( "0.99" );
@@ -159,7 +194,6 @@ damping( "" ) {
 }
 
 ReverbControlLayout::ReverbControlLayout() {
-    
     append( top, {~0u, 0u}, 10 );
     append( bottom, {~0u, 0u} );
     setFont(GUIKIT::Font::system("bold"));
@@ -169,7 +203,8 @@ ReverbControlLayout::ReverbControlLayout() {
 PanningControlLayout::TopLayout::TopLayout() :
 separation("%") {
     append( active, {0u, 0u}, 10 );
-    append( separation, {~0u, 0u} );
+    append( separation, {~0u, 0u}, 10 );
+    append( reset, {0u, 0u} );
     separation.slider.setLength(21);
     separation.updateValueWidth( "000%" );
 
@@ -246,6 +281,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     sineImage.loadPng((uint8_t*)Icons::sine, sizeof(Icons::sine));
     processorImage.loadPng((uint8_t*)Icons::processor, sizeof(Icons::processor));
     driveImage.loadPng((uint8_t*)Icons::drive, sizeof(Icons::drive));
+    resetImage.loadPng((uint8_t*)Icons::back, sizeof(Icons::back));
 
     moduleList.append( {"SID"} );
     moduleList.setImage(0, 0, processorImage);
@@ -256,6 +292,11 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     moduleList.setImage(moduleList.rowCount() - 1, 0, sineImage);    
     moduleList.append( {"Record"} );    
     moduleList.setImage(moduleList.rowCount() - 1, 0, recordAudioImage);
+
+    bass.top.reset.setImage(&resetImage);
+    echo.top.reset.setImage(&resetImage);
+    reverb.top.reset.setImage(&resetImage);
+    panning.top.reset.setImage(&resetImage);
         
     moduleList.setSelection(0);
     moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(100)}, 15 );
@@ -282,11 +323,12 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     settingsLayout.build(tabWindow, emulator,
         {Emulator::Interface::Model::Purpose::SoundChip,
          Emulator::Interface::Model::Purpose::AudioSettings,
-         Emulator::Interface::Model::Purpose::AudioResampler}, dim);
+         Emulator::Interface::Model::Purpose::AudioResampler}, dim, dynamic_cast<LIBC64::Interface*>(emulator) ? 5 : 8);
 
     settingsLayout.setEvents();
     
     dspFrame.append( bass, {~0u, 0u}, 5 );
+    dspFrame.append( echo, {~0u, 0u}, 5 );
     dspFrame.append( reverb, {~0u, 0u}, 5 );
     dspFrame.append( panning, {~0u, 0u} );
 
@@ -319,6 +361,23 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         audioManager->setAudioDsp();
         emuThread->unlock();
     };
+
+    bass.top.reset.onActivate = [this]() {
+        _settings->set<unsigned>("audio_bass_freq", 200 );
+        _settings->set<unsigned>("audio_bass_gain", 10 );
+        _settings->set<float>("audio_bass_clipping", 0.4);
+
+        bass.top.frequency.slider.setPosition(200 - 20);
+        bass.top.frequency.value.setText("200 Hz");
+        bass.bottom.gain.slider.setPosition(10);
+        bass.bottom.gain.value.setText("10");
+        bass.bottom.reduceClipping.slider.setPosition((unsigned) (0.4 * 10.0));
+        bass.bottom.reduceClipping.value.setText("0.4");
+
+        emuThread->lock();
+        audioManager->setAudioDsp();
+        emuThread->unlock();
+    };
     
     bass.bottom.gain.slider.onChange = [this](unsigned position) {
         _settings->set<unsigned>("audio_bass_gain", position );
@@ -331,7 +390,6 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     };
     
     bass.bottom.reduceClipping.slider.onChange = [this](unsigned position) {
-        
         float val = (float)position / 10.0;
         
         _settings->set<float>("audio_bass_clipping", val);
@@ -341,7 +399,79 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         emuThread->lock();
         audioManager->setAudioDsp();
         emuThread->unlock();
-    };    
+    };
+
+    // echo
+    echo.top.reset.onActivate = [this]() {
+        _settings->set<float>("audio_echo_amp", 0.2);
+        _settings->set<float>("audio_echo_feedback", 0.5);
+        _settings->set<unsigned>("audio_echo_delay", 200);
+
+        initDsp( &echo.top.amp, "audio_echo_amp", 0.2 );
+        initDsp( &echo.bottom.feedback, "audio_echo_feedback", 0.5 );
+        echo.bottom.delay.slider.setPosition(20);
+        echo.bottom.delay.value.setText("200 ms");
+
+        emuThread->lock();
+        audioManager->setAudioDsp();
+        emuThread->unlock();
+    };
+
+    echo.top.echoReverb.onActivate = [this]() {
+        _settings->set<float>("audio_echo_amp", 0.25);
+        _settings->set<float>("audio_echo_feedback", 0.6);
+        _settings->set<unsigned>("audio_echo_delay", 200);
+
+        _settings->set<float>("audio_reverb_drytime", 0.43);
+        _settings->set<float>("audio_reverb_wettime", 0.3);
+        _settings->set<float>("audio_reverb_damping", 1.0);
+        _settings->set<float>("audio_reverb_roomwidth", 0.75);
+        _settings->set<float>("audio_reverb_roomsize", 0.75);
+
+        initDsp( &echo.top.amp, "audio_echo_amp", 0.25 );
+        initDsp( &echo.bottom.feedback, "audio_echo_feedback", 0.6 );
+        echo.bottom.delay.slider.setPosition(20);
+        echo.bottom.delay.value.setText("200 ms");
+
+        initDsp( &reverb.top.dryTime, "audio_reverb_drytime", 0.43 );
+        initDsp( &reverb.top.wetTime, "audio_reverb_wettime", 0.3 );
+        initDsp( &reverb.bottom.damping, "audio_reverb_damping", 1.0 );
+        initDsp( &reverb.bottom.roomWidth, "audio_reverb_roomwidth", 0.75 );
+        initDsp( &reverb.bottom.roomSize, "audio_reverb_roomsize", 0.75 );
+
+        _settings->set<bool>("audio_reverb", true );
+        reverb.top.active.setChecked();
+        updateVisibility();
+
+        emuThread->lock();
+        audioManager->setAudioDsp();
+        emuThread->unlock();
+    };
+
+    echo.top.active.onToggle = [this](bool checked) {
+        _settings->set<bool>("audio_echo", checked );
+
+        updateVisibility();
+
+        emuThread->lock();
+        audioManager->setAudioDsp();
+        emuThread->unlock();
+    };
+
+    echo.bottom.delay.slider.onChange = [this](unsigned position) {
+        unsigned val = position * 10;
+
+        _settings->set<unsigned>("audio_echo_delay", val);
+
+        echo.bottom.delay.value.setText( std::to_string(val) + " ms" );
+
+        emuThread->lock();
+        audioManager->setAudioDsp();
+        emuThread->unlock();
+    };
+
+    setDspEvent( &echo.top.amp, "audio_echo_amp", 0.2 );
+    setDspEvent( &echo.bottom.feedback, "audio_echo_feedback", 0.5 );
     
     // reverb
     reverb.top.active.onToggle = [this](bool checked) {
@@ -360,6 +490,24 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     setDspEvent( &reverb.bottom.damping, "audio_reverb_damping", 0.8 );
     setDspEvent( &reverb.bottom.roomWidth, "audio_reverb_roomwidth", 0.56 );
     setDspEvent( &reverb.bottom.roomSize, "audio_reverb_roomsize", 0.56 );
+
+    reverb.top.reset.onActivate = [this]() {
+        _settings->set<float>("audio_reverb_drytime", 0.43);
+        _settings->set<float>("audio_reverb_wettime", 0.4);
+        _settings->set<float>("audio_reverb_damping", 0.8);
+        _settings->set<float>("audio_reverb_roomwidth", 0.56);
+        _settings->set<float>("audio_reverb_roomsize", 0.56);
+
+        initDsp( &reverb.top.dryTime, "audio_reverb_drytime", 0.43 );
+        initDsp( &reverb.top.wetTime, "audio_reverb_wettime", 0.4 );
+        initDsp( &reverb.bottom.damping, "audio_reverb_damping", 0.8 );
+        initDsp( &reverb.bottom.roomWidth, "audio_reverb_roomwidth", 0.56 );
+        initDsp( &reverb.bottom.roomSize, "audio_reverb_roomsize", 0.56 );
+
+        emuThread->lock();
+        audioManager->setAudioDsp();
+        emuThread->unlock();
+    };
     
     // panning
     panning.top.active.onToggle = [this](bool checked) {
@@ -377,6 +525,24 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     setDspEvent( &panning.middle.rightMix, "audio_panning_left1", 0.0 );
     setDspEvent( &panning.bottom.leftMix, "audio_panning_right0", 0.0 );
     setDspEvent( &panning.bottom.rightMix, "audio_panning_right1", 1.0 );
+
+    panning.top.reset.onActivate = [this]() {
+        _settings->set<float>("audio_panning_left0", 1.0);
+        _settings->set<float>("audio_panning_left1", 0.0);
+        _settings->set<float>("audio_panning_right0", 0.0);
+        _settings->set<float>("audio_panning_right1", 1.0);
+
+        initDsp( &panning.middle.leftMix, "audio_panning_left0", 1.0 );
+        initDsp( &panning.middle.rightMix, "audio_panning_left1", 0.0 );
+        initDsp( &panning.bottom.leftMix, "audio_panning_right0", 0.0 );
+        initDsp( &panning.bottom.rightMix, "audio_panning_right1", 1.0 );
+
+        initSeparation();
+
+        emuThread->lock();
+        audioManager->setAudioDsp();
+        emuThread->unlock();
+    };
 
     setSeparation();
         
@@ -736,6 +902,13 @@ auto AudioLayout::translate() -> void {
     bass.bottom.gain.name.setText(trans->get("Gain",{}, true));
     bass.bottom.reduceClipping.name.setText(trans->get("Reduce Clipping",{}, true));
 
+    echo.setText(trans->get("Echo"));
+    echo.top.active.setText(trans->get("enable"));
+    echo.top.echoReverb.setText(trans->get("Echo Reverb"));
+    echo.top.amp.name.setText(trans->getA("amplify", true));
+    echo.bottom.delay.name.setText(trans->getA("delay", true));
+    echo.bottom.feedback.name.setText(trans->getA("Feedback", true));
+
     reverb.setText(trans->get("Reverb"));
     reverb.top.active.setText(trans->get("enable"));
     reverb.top.wetTime.name.setText(trans->get("Wet Time",{}, true));
@@ -795,7 +968,14 @@ auto AudioLayout::translate() -> void {
 
 auto AudioLayout::loadSettings() -> void {
     settingsLayout.updateWidgets();
-    
+
+    initDsp( &echo.top.amp, "audio_echo_amp", 0.2 );
+    initDsp( &echo.bottom.feedback, "audio_echo_feedback", 0.5 );
+
+    auto echoDelay = _settings->get<unsigned>("audio_echo_delay", 200, {0, 1000});
+    echo.bottom.delay.slider.setPosition(echoDelay / 10);
+    echo.bottom.delay.value.setText( std::to_string(echoDelay) + " ms");
+
     initDsp( &reverb.top.dryTime, "audio_reverb_drytime", 0.43 );
     initDsp( &reverb.top.wetTime, "audio_reverb_wettime", 0.4 );
     initDsp( &reverb.bottom.damping, "audio_reverb_damping", 0.8 );
@@ -810,6 +990,7 @@ auto AudioLayout::loadSettings() -> void {
     initSeparation();
     
     panning.top.active.setChecked( _settings->get<bool>("audio_panning", false ) );
+    echo.top.active.setChecked( _settings->get<bool>("audio_echo", false ) );
     reverb.top.active.setChecked( _settings->get<bool>("audio_reverb", false ) );
     bass.top.active.setChecked(_settings->get<bool>("audio_bass", false));
 
@@ -903,17 +1084,16 @@ auto AudioLayout::loadSettings() -> void {
 }
 
 auto AudioLayout::updateVisibility() -> void {
-    
+    echo.setEnabled( echo.top.active.checked() );
+    echo.top.active.setEnabled();
+
     reverb.setEnabled( reverb.top.active.checked() );
-    
     reverb.top.active.setEnabled();
     
     panning.setEnabled( panning.top.active.checked() );
-    
     panning.top.active.setEnabled();
     
     bass.setEnabled( bass.top.active.checked() );
-    
     bass.top.active.setEnabled();
     
     audioRecord.duration.setEnabled( audioRecord.duration.useTimeLimit.checked() );

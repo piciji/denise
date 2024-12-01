@@ -102,7 +102,7 @@ ModelLayout::ModelLayout() {
     setFont(GUIKIT::Font::system("bold"));    
 }
 
-auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, std::vector<Emulator::Interface::Model::Purpose> purposes, std::vector<unsigned> dim ) -> void {
+auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, std::vector<Emulator::Interface::Model::Purpose> purposes, std::vector<unsigned> dim, unsigned lineSpace ) -> void {
     
     this->tabWindow = tabWindow;
     this->emulator = emulator;
@@ -130,7 +130,7 @@ auto ModelLayout::build( TabWindow* tabWindow, Emulator::Interface* emulator, st
                 blockPos = 0;
                 line = new Line();
                 lines.push_back( line );
-                append(*line, {~0u, 0u}, 5);     
+                append(*line, {~0u, 0u}, lineSpace);
                 
                 if ( useMultiAudioChipSelector && (lines.size() == 4) )
                     appendAudioSelectorLayout();

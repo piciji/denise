@@ -207,6 +207,7 @@
     <ClInclude Include="..\program\audio\dsp\base.h" />
     <ClInclude Include="..\program\audio\dsp\bass.h" />
     <ClInclude Include="..\program\audio\dsp\data.h" />
+    <ClInclude Include="..\program\audio\dsp\echo.h" />
     <ClInclude Include="..\program\audio\dsp\panning.h" />
     <ClInclude Include="..\program\audio\dsp\reverb.h" />
     <ClInclude Include="..\program\audio\manager.h" />
@@ -1417,6 +1418,7 @@
     <ClCompile Include="..\program\audio\dsp\bass.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\program\audio\dsp\echo.cpp" />
     <ClCompile Include="..\program\audio\dsp\panning.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>

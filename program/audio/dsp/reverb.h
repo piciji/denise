@@ -32,7 +32,8 @@ namespace DSP {
 
     
 struct Reverb : Base {
-       
+    Reverb();
+
     virtual ~Reverb() {
         reverb_free();
     }

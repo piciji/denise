@@ -1051,6 +1051,9 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\hyperBasic.h">
       <Filter>emulation\libc64\expansionPort\gameCart</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\audio\dsp\echo.h">
+      <Filter>program\audio\dsp</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2087,6 +2090,9 @@
     </ClCompile>
     <ClCompile Include="..\program\view\imageViewer.cpp">
       <Filter>program\view</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\dsp\echo.cpp">
+      <Filter>program\audio\dsp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

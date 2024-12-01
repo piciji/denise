@@ -9,6 +9,13 @@
 #include "record/handler.h"
 #include "mixer/drive.h"
 
+namespace DSP {
+    struct Bass;
+    struct Echo;
+    struct Reverb;
+    struct Panning;
+}
+
 struct AudioManager {
     
     AudioManager();
@@ -27,6 +34,11 @@ struct AudioManager {
     AudioRecord::Handler record;
     Mixer::Drive drive;
     GUIKIT::Timer muteTimer;
+
+    DSP::Bass* bass;
+    DSP::Echo* echo;
+    DSP::Reverb* reverb;
+    DSP::Panning* panning;
 
     bool mixDriveSounds = false;
 
@@ -77,8 +89,7 @@ struct AudioManager {
     auto resetDriveSounds() -> void;
     auto setDriveSounds(bool init = true) -> void;
     auto setTapeNoise( ) -> void;
-    auto setPriority() -> void;
-    
+
     auto setBufferSize() -> void;
     auto setResampler(float overrideRate = 0.0f) -> void;
     auto calcStatistics( float adjust ) -> void;

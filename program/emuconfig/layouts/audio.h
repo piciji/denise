@@ -54,7 +54,7 @@ struct BassControlLayout : GUIKIT::FramedVerticalLayout {
     struct TopLayout : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox active;
         SliderLayout frequency;                
-        
+        GUIKIT::Button reset;
         TopLayout();
         
     } top;
@@ -70,13 +70,35 @@ struct BassControlLayout : GUIKIT::FramedVerticalLayout {
     BassControlLayout();
 };
 
+struct EchoControlLayout : GUIKIT::FramedVerticalLayout {
+
+    struct TopLayout : GUIKIT::HorizontalLayout {
+        GUIKIT::CheckBox active;
+        GUIKIT::Button echoReverb;
+        SliderLayout amp;
+        GUIKIT::Button reset;
+
+        TopLayout();
+    } top;
+
+    struct BottomLayout : GUIKIT::HorizontalLayout {
+        SliderLayout delay;
+        SliderLayout feedback;
+
+        BottomLayout();
+
+    } bottom;
+
+    EchoControlLayout();
+};
+
 struct ReverbControlLayout : GUIKIT::FramedVerticalLayout {
     
     struct TopLayout : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox active;
         SliderLayout dryTime;                
         SliderLayout wetTime;
-        
+        GUIKIT::Button reset;
         TopLayout();
         
     } top;
@@ -98,7 +120,7 @@ struct PanningControlLayout : GUIKIT::FramedVerticalLayout {
     struct TopLayout : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox active;
         SliderLayout separation;
-
+        GUIKIT::Button reset;
         TopLayout();
     } top;
 
@@ -143,6 +165,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image sineImage;
     GUIKIT::Image processorImage;
     GUIKIT::Image driveImage;
+    GUIKIT::Image resetImage;
     
     GUIKIT::FramedVerticalLayout moduleFrame;
     GUIKIT::ListView moduleList;
@@ -153,6 +176,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     
     GUIKIT::VerticalLayout dspFrame;
     BassControlLayout bass;
+    EchoControlLayout echo;
     ReverbControlLayout reverb;
     PanningControlLayout panning;
     AudioDriveLayout* driveLayout;

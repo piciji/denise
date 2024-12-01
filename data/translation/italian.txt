@@ -860,3 +860,5 @@ esperanto = Esperanto
 Floppy 3.5-inch Profile = Floppy Profile (3.5-inch, e.g. VC1581)
 select image to test shader = Image selection for testing shaders
 concurrent = processo personalizzato
+Delay = Delay
+Amplify = Amplify

@@ -24,7 +24,23 @@
 #include "reverb.h"
 
 namespace DSP {
-    
+
+Reverb::Reverb() {
+    for (unsigned c = 0; c < numcombs; ++c) {
+        left.bufcomb[c] = left.combL[c].buffer = nullptr;
+        left.combL[c].bufsize = 0;
+        right.bufcomb[c] = right.combL[c].buffer = nullptr;
+        right.combL[c].bufsize = 0;
+    }
+
+    for (unsigned c = 0; c < numallpasses; ++c) {
+        left.allpassL[c].bufsize = 0;
+        left.bufallpass[c] = left.allpassL[c].buffer = nullptr;
+        right.allpassL[c].bufsize = 0;
+        right.bufallpass[c] = left.allpassL[c].buffer = nullptr;
+    }
+}
+
 auto Reverb::process( Data* output, Data* input ) -> void {
 
     if (mono)
@@ -103,8 +119,15 @@ void Reverb::revmodel_init(struct revmodel *rev, int srate) {
     unsigned c;
 
     for (c = 0; c < numcombs; ++c) {
-        rev->combL[c].bufsize = r * comb_lengths[c];
-        rev->bufcomb[c] = new float[rev->combL[c].bufsize];
+        unsigned newBufSize = r * comb_lengths[c];
+
+        if (newBufSize && (newBufSize != rev->combL[c].bufsize) ) {
+            rev->combL[c].bufsize = newBufSize;
+            if (rev->bufcomb[c])
+                delete[] rev->bufcomb[c];
+            rev->bufcomb[c] = new float[newBufSize];
+        }
+
         rev->combL[c].buffer = rev->bufcomb[c];
         std::memset(rev->combL[c].buffer, 0, rev->combL[c].bufsize * sizeof (float));        
         rev->combL[c].bufidx = 0;
@@ -112,8 +135,14 @@ void Reverb::revmodel_init(struct revmodel *rev, int srate) {
     }
 
     for (c = 0; c < numallpasses; ++c) {
-        rev->allpassL[c].bufsize = r * allpass_lengths[c];        
-        rev->bufallpass[c] = new float[rev->allpassL[c].bufsize];
+        unsigned newBufSize = r * allpass_lengths[c];
+        if (newBufSize && (newBufSize != rev->allpassL[c].bufsize) ) {
+            rev->allpassL[c].bufsize = newBufSize;
+            if (rev->bufallpass[c])
+                delete[] rev->bufallpass[c];
+            rev->bufallpass[c] = new float[newBufSize];
+        }
+
         rev->allpassL[c].buffer = rev->bufallpass[c];
         std::memset(rev->allpassL[c].buffer, 0, rev->allpassL[c].bufsize * sizeof (float));        
         rev->allpassL[c].feedback = 0.5f;
@@ -222,13 +251,17 @@ void Reverb::reverb_free()
     unsigned i;
 
     for (i = 0; i < numcombs; i++) {
-        delete[] left.bufcomb[i];
-        delete[] right.bufcomb[i];
+        if (left.bufcomb[i])
+            delete[] left.bufcomb[i];
+        if (right.bufcomb[i])
+            delete[] right.bufcomb[i];
     }
 
     for (i = 0; i < numallpasses; i++) {
-        delete[] left.bufallpass[i];
-        delete[] right.bufallpass[i];
+        if (left.bufallpass[i])
+            delete[] left.bufallpass[i];
+        if (right.bufallpass[i])
+            delete[] right.bufallpass[i];
     }        
 }
     

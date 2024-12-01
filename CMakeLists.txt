@@ -180,6 +180,7 @@ set(srcs
         program/audio/manager.cpp
         program/audio/dsp/bass.cpp
         program/audio/dsp/reverb.cpp
+        program/audio/dsp/echo.cpp
         program/audio/dsp/panning.cpp
         program/audio/resampler/cosine.cpp
         program/audio/resampler/cosineSSE.cpp

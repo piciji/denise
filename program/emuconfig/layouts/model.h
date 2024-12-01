@@ -45,7 +45,7 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
 
     std::vector<Emulator::Interface::Model::Purpose> purposes;
         
-    auto build( TabWindow* tabWindow, Emulator::Interface* emulator, std::vector<Emulator::Interface::Model::Purpose> purposes, std::vector<unsigned> dim ) -> void;
+    auto build( TabWindow* tabWindow, Emulator::Interface* emulator, std::vector<Emulator::Interface::Model::Purpose> purposes, std::vector<unsigned> dim, unsigned lineSpace = 5 ) -> void;
     
     auto setEvents( ) -> void;
 

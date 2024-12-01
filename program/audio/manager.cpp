@@ -2,6 +2,7 @@
 #include "manager.h"
 #include "../cmd/cmd.h"
 #include "dsp/bass.h"
+#include "dsp/echo.h"
 #include "dsp/reverb.h"
 #include "dsp/panning.h"
 #include "../view/status.h"
@@ -25,11 +26,20 @@ AudioManager::AudioManager() : drive(*this) {
         muteTimer.setEnabled(false);
         setVolume();
     };
+
+    bass = new DSP::Bass;
+    echo = new DSP::Echo;
+    reverb = new DSP::Reverb;
+    panning = new DSP::Panning;
 }
 
 AudioManager::~AudioManager() {
     
     delete[] rData.out;
+    delete bass;
+    delete echo;
+    delete reverb;
+    delete panning;
 }
 
 auto AudioManager::setLatency() -> void {
@@ -37,12 +47,6 @@ auto AudioManager::setLatency() -> void {
     unsigned latency = globalSettings->get<unsigned>("audio_latency", 30u, {1u, 120u});
 
     audioDriver->setLatency( latency );
-}
-
-auto AudioManager::setPriority() -> void {
-    
-    bool priority = globalSettings->get<bool>("audio_priority", false);
-    audioDriver->setHighPriority( priority );
 }
 
 auto AudioManager::setFrequency() -> void {
@@ -234,10 +238,7 @@ auto AudioManager::setAudioDsp() -> void {
     
     if (!activeEmulator)
         return;
-    
-    for(auto dsp : dsps)
-        delete dsp;
-    
+
     dsps.clear();
     
     stat = activeEmulator->getStatsForSelectedRegion();
@@ -247,9 +248,6 @@ auto AudioManager::setAudioDsp() -> void {
     bool useBass = settings->get<bool>("audio_bass", false );
     
     if (useBass) {
-        
-        DSP::Bass* bass = new DSP::Bass;                        
-        
         bass->setMono( !stat.stereoSound );
         bass->init( 
             (float)audioDriver->getFrequency(),
@@ -259,14 +257,25 @@ auto AudioManager::setAudioDsp() -> void {
         );
         
         dsps.push_back( (DSP::Base*)bass );
-    }    
-    
+    }
+
+    bool useEcho = settings->get<bool>("audio_echo", false );
+
+    if (useEcho) {
+        echo->setMono( !stat.stereoSound );
+        echo->init(
+            (float)audioDriver->getFrequency(),
+            settings->get<unsigned>("audio_echo_delay", 200, {0, 1000} ),
+            settings->get<float>("audio_echo_feedback", 0.5, {0.0, 1.0} ),
+            settings->get<float>("audio_echo_amp", 0.2, {0.0, 1.0} )
+        );
+
+        dsps.push_back( (DSP::Base*)echo );
+    }
+
     bool useReverb = settings->get<bool>("audio_reverb", false );
     
     if (useReverb) {
-        
-        DSP::Reverb* reverb = new DSP::Reverb;
-        
         reverb->setMono( !stat.stereoSound );
         reverb->init( 
             (float)audioDriver->getFrequency(),
@@ -283,9 +292,6 @@ auto AudioManager::setAudioDsp() -> void {
     bool usePanning = settings->get<bool>("audio_panning", false );
     
     if (usePanning) {
-        
-        DSP::Panning* panning = new DSP::Panning;
-        
         panning->init(
             settings->get<float>("audio_panning_left0", 1.0, {0.0, 1.0} ),
             settings->get<float>("audio_panning_left1", 0.0, {0.0, 1.0} ),

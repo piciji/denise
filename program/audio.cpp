@@ -15,7 +15,6 @@ auto Program::initAudio() -> void {
     audioManager->setLatency();
     audioManager->setSynchronize();
     audioManager->setRateControl();
-    audioManager->setPriority();
     
     if ( !audioDriver->init( view->handle() ) ) {
         delete audioDriver;

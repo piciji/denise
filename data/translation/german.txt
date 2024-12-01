@@ -861,3 +861,5 @@ Floppy 3.5-inch Profile = Floppy Profile (3.5-Zoll, e.g. VC1581)
 select image to test shader = Bild Auswahl zum Testen von Shadern
 concurrent = nebenläufig
 threaded renderer auto tooltip =
+Delay = Verzögerung
+Amplify = Verstärken
