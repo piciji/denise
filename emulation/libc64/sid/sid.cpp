@@ -187,15 +187,9 @@ template<int options> auto Sid::clock() -> void {
 
                 externalFilter.clock(filter.output24());
             } else {
-                if (type == Type::MOS_6581) {
-                    filter.clock<Type::MOS_6581>(voice[0].output(), voice[1].output(), voice[2].output());
+                filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
 
-                    externalFilter.clock(filter.output<Type::MOS_6581>());
-                } else {
-                    filter.clock<Type::MOS_8580>(voice[0].output(), voice[1].output(), voice[2].output());
-
-                    externalFilter.clock(filter.output<Type::MOS_8580>());
-                }
+                externalFilter.clock(filter.output());
             }
 
             if constexpr (needResult)
@@ -210,10 +204,7 @@ template<int options> auto Sid::clock() -> void {
                 filter.clock24(voice[0].output(), voice[1].output(), voice[2].output());
 
             } else {
-                if (type == Type::MOS_6581)
-                    filter.clock<Type::MOS_6581>(voice[0].output(), voice[1].output(), voice[2].output());
-                else
-                    filter.clock<Type::MOS_8580>(voice[0].output(), voice[1].output(), voice[2].output());
+                filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
             }
 
             if constexpr (needResult) {
@@ -221,10 +212,7 @@ template<int options> auto Sid::clock() -> void {
                     if constexpr(useResid24)
                         curSample = filter.output24();
                     else {
-                        if (type == Type::MOS_6581)
-                            curSample = filter.output<Type::MOS_6581>();
-                        else
-                            curSample = filter.output<Type::MOS_8580>();
+                        curSample = filter.output();
                     }
 
                 }
@@ -242,7 +230,6 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
     constexpr bool useExtFilter = options & 2;
     constexpr bool useChamberlain = options & 4;
     constexpr bool useResid24 = options & 16;
-    const bool T6581 = type == Type::MOS_6581;
 
     int i, c;
     double curSample;
@@ -277,15 +264,9 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
                     externalFilter.clock(filter.output24());
 
                 } else {
-                    if (T6581) {
-                        filter.clock<Type::MOS_6581>(voice[0].output(), voice[1].output(), voice[2].output());
+                    filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
 
-                        externalFilter.clock( filter.output<Type::MOS_6581>() );
-                    } else {
-                        filter.clock<Type::MOS_8580>(voice[0].output(), voice[1].output(), voice[2].output());
-
-                        externalFilter.clock( filter.output<Type::MOS_8580>() );
-                    }
+                    externalFilter.clock( filter.output() );
                 }
 
                 if (++sampleCounter == sampleLimit) {
@@ -302,10 +283,7 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
                     filter.clock24(voice[0].output(), voice[1].output(), voice[2].output());
 
                 } else {
-                    if (T6581)
-                        filter.clock<Type::MOS_6581>(voice[0].output(), voice[1].output(), voice[2].output());
-                    else
-                        filter.clock<Type::MOS_8580>(voice[0].output(), voice[1].output(), voice[2].output());
+                    filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
                 }
 
                 if (++sampleCounter == sampleLimit) {
@@ -313,10 +291,7 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
                         if constexpr(useResid24)
                             curSample = filter.output24();
                         else {
-                            if (T6581)
-                                curSample = filter.output<Type::MOS_6581>();
-                            else
-                                curSample = filter.output<Type::MOS_8580>();
+                            curSample = filter.output();
                         }
                     }
 

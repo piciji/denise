@@ -27,9 +27,8 @@
 
 namespace LIBC64 {
 
-template<Sid::Type _type>
 auto Sid::Filter::clock(int voice1, int voice2, int voice3) -> void {
-    Calculated& ca = calculated[ _type ];
+    Calculated& ca = calculated[ type ];
     // Skalierung: 20 bit * 14 bit = 34 / 18 = 16 bit
     v1 = (voice1 * ca.voiceScaleS14 >> 18) + ca.voiceDC;
     v2 = (voice2 * ca.voiceScaleS14 >> 18) + ca.voiceDC;
@@ -63,7 +62,7 @@ auto Sid::Filter::clock(int voice1, int voice2, int voice3) -> void {
 	// band pass und tief pass sind wiederum Eingänge für
 	// hoch pass.
 
-	if constexpr ( _type == Type::MOS_6581 ) {
+	if  ( type == Type::MOS_6581 ) {
         // Eingang: band pass, Ausgang: tief pass
         Vlp = solveIntegrate6581( Vbp, Vlp_x, Vlp_vc, ca );
         // Eingang: hoch pass, Ausgang: band pass
@@ -91,7 +90,6 @@ auto Sid::Filter::input(short sample) -> void {
     ve = (sample * ca.voiceScaleS14 * 3 >> 14) + ca.mixer[0];
 }
 
-template<Sid::Type _type>
 auto Sid::Filter::output() -> short {
 	// Der Mixer hat 7 Eingänge, 4 voices und 3 Filter.
 
@@ -150,7 +148,7 @@ auto Sid::Filter::output() -> short {
 	int Vi = 0;
 	int offset = 0;
 
-#define _t6581 constexpr(_type == Type::MOS_6581)
+#define _t6581 (type == Type::MOS_6581)
 #define _6581Gain (int)(0.93 * (1 << 12))
 
 	switch( mix & 0x7f ) {
@@ -284,7 +282,7 @@ case 126:  if _t6581 Vi = (((Vlp + Vbp + Vhp) * _6581Gain) >> 12) + v2 + v3 + ve
 case 127:  if _t6581 Vi = (((Vlp + Vbp + Vhp) * _6581Gain) >> 12) + v1 + v2 + v3 + ve; else Vi = v1 + v2 + v3 + ve + Vlp + Vbp + Vhp; offset = 1376257; break;
     }
 
-    Calculated& ca = calculated[ _type ];
+    Calculated& ca = calculated[ type ];
     return (short)(ca.gain[vol][ ca.mixer[offset + Vi] ] - (1 << 15) );
 }
 

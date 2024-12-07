@@ -309,10 +309,10 @@ struct Sid {
 		auto writeModeVol( uint8_t data ) -> void;
 		auto updateSumMix() -> void;
 		auto setType( Type type ) -> void;
-		template<Type _type> auto clock(int voice1, int voice2, int voice3) -> void;
+		auto clock(int voice1, int voice2, int voice3) -> void;
 		auto clock24(int voice1, int voice2, int voice3) -> void;
 		auto output24() -> short;
-		template<Type _type> auto output() -> short;
+		auto output() -> short;
         auto setVoiceMask( uint8_t mask ) -> void;
 		auto adjustFilterBias6581(int value) -> void;
         auto adjustFilterBias8580(int value) -> void;
