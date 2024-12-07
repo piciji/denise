@@ -1,5 +1,5 @@
 
-//  This code is a modification of the resid engine in VICE
+//  This code is a modification of the reSID engine in VICE
 //  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
 
 //  ---------------------------------------------------------------------------
@@ -27,15 +27,14 @@
 namespace LIBC64 {
     
 Sid::ExternalFilter::ExternalFilter() {
-    // Zwischen Ausgang am Sid und Ausgang am C64 findet noch eine weitere Filterung statt.
+    // Zwischen Ausgang am Sid und Ausgang C64 findet noch eine weitere Filterung statt.
     // Dabei werden nur Frequenzen zwischen 16 Hz u. 15.9 kHz durchgelassen.
     // Mittels 2 RC Gliedern findet zuerst die Tiefpass im Anschluß die Hochpass Filterung statt.
 	// Ein RC Glied besteht aus einem Widerstand und einem Kondensator.
-	// Ist der Kondensator parallel geschalten, sprechen wir von einem Tiefpass Filter.
-	// Ist der Widerstand parallel geschalten sprechen wir von einem Hochpass Filter.
+	// Ist der Kondensator parallel geschalten, spricht man von einem Tiefpass Filter.
+	// Ist der Widerstand parallel geschalten spricht man von einem Hochpass Filter.
 	// Die folgenden Formeln betrachten den Spannungsabfall am Kondensator für beide Filter.
 	// Bei einem Hochpass Filter muss jedoch der Spannungsabfall am Widerstand betrachtet werden.
-    // Durch einen Trick kännen wir mit 2 Tiefpass Filtern rechnen.
 	// Zieht man die Ausgangsspannung des 2. Filters von der des 1. ab
 	// wirkt der 2. Tiefpass Filter wie ein Hochpass Filter.
     // Beispiel:
@@ -59,7 +58,6 @@ Sid::ExternalFilter::ExternalFilter() {
     
     // Die Spannung am Kondesator wird derart berechnet:
     // Uc = 1/RC * dt * Ue(t)
-    // Wir berechnen die Konstanten vor: 1/RC * dt
     // dt = 1 Mikro Sekunde = 1e-6
     
     // 1. Tiefpass: skaliert: 2^7
@@ -75,7 +73,7 @@ auto Sid::ExternalFilter::reset() -> void {
 }
     
 inline auto Sid::ExternalFilter::clock( short Vi ) -> void {
-    // Wir berechnen die deltas für beide Filter in jeder Mikro Sekunde
+    // deltas für beide Filter in jeder Mikro Sekunde
     // vi: Eingangsspannung (skaliert: 16 bit)
     // vlp: Ausgangsspannung Filter 1 (skaliert: 27 bit)
     // vhp: Ausgangsspannung Filter 2 (skaliert: 27 bit)
@@ -93,13 +91,7 @@ inline auto Sid::ExternalFilter::output() -> int {
     
     // 2. Tiefpass Filter wirkt durch Subtraktion wie ein Hochpass Filter.
     // Skalierung: 27 - 11 = 16 bit
-    //int Vo = (Vlp - Vhp) >> 11;
-    
-    // Abschließend checken wir ob der Wertebereich überschritten wurde. Ist das der Fall
-    // schneiden wir am größten bzw. kleinsten Wert ab.
-    // Der Wertebereich umfasst 16 bit: 15 bit + Vorzeichenbit        
-    //return Emulator::sclamp(16, Vo);
-    
+    // Wertebereich umfasst 16 bit: 15 bit + Vorzeichenbit
     return (Vlp - Vhp) >> 11;
 }
     

@@ -8,6 +8,7 @@
 #include "voice.cpp"
 #include "filter/main.cpp"
 #include "filter/external.cpp"
+#include "filter/resid24.cpp"
 #include "serialization.cpp"
 #include "../../tools/clamp.h"
 #include "../../tools/systimer.h"
@@ -47,45 +48,6 @@ chamberlinFilter(filter) {
 	
     ioMask = 0xD420;
     ioPos = 1;
-	moreAccuracy = false;
-
-	//idle = true;
-	//ready = false;
-    powerOn = false;             
-	
-//	std::thread worker( [this] {
-//
-//        std::chrono::milliseconds duration(5);
-//            
-//		while(true) {
-//			
-//			while ( !ready.load() ) {
-//                
-//                if (idle.load())
-//                    std::this_thread::sleep_for( duration );                                            
-//                    
-//                // consumes thread fully in non idle mode.
-//                // even a thread::yield would slow down this thread too much to be usefull.
-//                // without a thread::yield there is no re scheduling possible, so be carefull.
-//                // this mode would crash a single core cpu hard.
-//			}
-//			
-//			filter.clockMulti(v1, v2, v3);
-//
-//			externalFilter.clock( filter.outputMulti() );	    
-//
-//            if (++sampleCounter == SID_SAMPLE_COUNTER ) {
-//                audioRefresh( externalFilter.output( ) );
-//                sampleCounter = 0;
-//            }
-//
-//			this->ready = false;
-//		}
-//	});	
-//    
-//  system->interface->setThreadPriority( Emulator::Interface::ThreadPriority::Realtime, 1.0, 1.0 );
-//	
-//	worker.detach();
 }
 
 auto Sid::useLeftChannel(bool state) -> void {
@@ -145,31 +107,6 @@ auto Sid::volumeCorrection( bool state ) -> void {
     }
 }
 
-auto Sid::setMoreAccuracy(bool state) -> void {
-    
-//    if (moreAccuracy && registerWrite.pipelined) {
-//        // wait for worker thread
-//        while (ready.load()) {}
-//        applyFilterWrite();
-//    }
-//    
-//	moreAccuracy = state;
-//    moreAccuracy = false;
-//    
-//	updateIdleState();
-//    
-//	ready = false;	
-//    applyFilterWrite();
-//    
-//    if (moreAccuracy)
-//        filter.multiPrecalculate();
-}
-
-auto Sid::updateIdleState() -> void {
-    
- //   idle = !powerOn ? true : !moreAccuracy;
-}
-
 auto Sid::setType( Type type ) -> void {
 
     this->type = type;
@@ -179,7 +116,7 @@ auto Sid::setType( Type type ) -> void {
         envelope[i].setType( type );
     }	
     filter.setType( type );
-    
+
     databusDecayTime = type == MOS_8580 ? 0xa2000 : 0x1d00;
 
     // update digi boost
@@ -199,7 +136,7 @@ auto Sid::setDigiBoost( bool state ) -> void {
 
 auto Sid::updateDigiBoost( bool state ) -> void {
     filter.setVoiceMask( state ? 0xf : 0x7 );
-    filter.input( state ? -32768 : 0 );    
+    filter.input( state ? -32768 : 0 );
 }
 
 auto Sid::reset() -> void {
@@ -214,16 +151,6 @@ auto Sid::reset() -> void {
     chamberlinFilter.reset();
     externalFilter.reset();
     databusDecay = 0;
-	//ready = false;	
-    
-	registerWrite.pipelined = false;
-    powerOn = true;
-    updateIdleState();
-}
-
-auto Sid::powerOff() -> void {
-//	idle = true;
-    powerOn = false;
 }
 
 template<int options> auto Sid::clock() -> void {
@@ -258,11 +185,17 @@ template<int options> auto Sid::clock() -> void {
             } else if constexpr (useResid24) {
                 filter.clock24(voice[0].output(), voice[1].output(), voice[2].output());
 
-                externalFilter.clock(filter.output<true>());
+                externalFilter.clock(filter.output24());
             } else {
-                filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+                if (type == Type::MOS_6581) {
+                    filter.clock<Type::MOS_6581>(voice[0].output(), voice[1].output(), voice[2].output());
 
-                externalFilter.clock(filter.output<false>());
+                    externalFilter.clock(filter.output<Type::MOS_6581>());
+                } else {
+                    filter.clock<Type::MOS_8580>(voice[0].output(), voice[1].output(), voice[2].output());
+
+                    externalFilter.clock(filter.output<Type::MOS_8580>());
+                }
             }
 
             if constexpr (needResult)
@@ -277,13 +210,24 @@ template<int options> auto Sid::clock() -> void {
                 filter.clock24(voice[0].output(), voice[1].output(), voice[2].output());
 
             } else {
-                filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+                if (type == Type::MOS_6581)
+                    filter.clock<Type::MOS_6581>(voice[0].output(), voice[1].output(), voice[2].output());
+                else
+                    filter.clock<Type::MOS_8580>(voice[0].output(), voice[1].output(), voice[2].output());
             }
 
             if constexpr (needResult) {
-                if constexpr (!(useChamberlain))
-                    curSample = filter.output<useResid24>();
+                if constexpr (!(useChamberlain)) {
+                    if constexpr(useResid24)
+                        curSample = filter.output24();
+                    else {
+                        if (type == Type::MOS_6581)
+                            curSample = filter.output<Type::MOS_6581>();
+                        else
+                            curSample = filter.output<Type::MOS_8580>();
+                    }
 
+                }
                 curSample *= correction;
             }
         }
@@ -298,6 +242,7 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
     constexpr bool useExtFilter = options & 2;
     constexpr bool useChamberlain = options & 4;
     constexpr bool useResid24 = options & 16;
+    const bool T6581 = type == Type::MOS_6581;
 
     int i, c;
     double curSample;
@@ -316,21 +261,6 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
             voice[i].setWaveformOutput();
 
         if constexpr (audioOut) {
-//        if (moreAccuracy) {            
-//            
-//            // filter calculations are threaded
-//            while ( ready.load() ) { }
-//
-//            applyFilterWrite();
-//
-//            v1 = voice[0].output();
-//            v2 = voice[1].output();
-//            v3 = voice[2].output();
-//
-//            ready = true;        
-//
-//        } else {
-
             if constexpr (useExtFilter) {
 
                 if constexpr (useChamberlain) {
@@ -344,13 +274,18 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
                 } else if constexpr (useResid24) {
                     filter.clock24(voice[0].output(), voice[1].output(), voice[2].output());
 
-                    externalFilter.clock(filter.output<true>());
+                    externalFilter.clock(filter.output24());
 
                 } else {
+                    if (T6581) {
+                        filter.clock<Type::MOS_6581>(voice[0].output(), voice[1].output(), voice[2].output());
 
-                    filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+                        externalFilter.clock( filter.output<Type::MOS_6581>() );
+                    } else {
+                        filter.clock<Type::MOS_8580>(voice[0].output(), voice[1].output(), voice[2].output());
 
-                    externalFilter.clock(filter.output<false>());
+                        externalFilter.clock( filter.output<Type::MOS_8580>() );
+                    }
                 }
 
                 if (++sampleCounter == sampleLimit) {
@@ -367,12 +302,23 @@ template<int options> auto Sid::clock(int cycles, int sampleCounter, int sampleL
                     filter.clock24(voice[0].output(), voice[1].output(), voice[2].output());
 
                 } else {
-                    filter.clock(voice[0].output(), voice[1].output(), voice[2].output());
+                    if (T6581)
+                        filter.clock<Type::MOS_6581>(voice[0].output(), voice[1].output(), voice[2].output());
+                    else
+                        filter.clock<Type::MOS_8580>(voice[0].output(), voice[1].output(), voice[2].output());
                 }
 
                 if (++sampleCounter == sampleLimit) {
-                    if constexpr (!(useChamberlain))
-                        curSample = filter.output<useResid24>();
+                    if constexpr (!(useChamberlain)) {
+                        if constexpr(useResid24)
+                            curSample = filter.output24();
+                        else {
+                            if (T6581)
+                                curSample = filter.output<Type::MOS_6581>();
+                            else
+                                curSample = filter.output<Type::MOS_8580>();
+                        }
+                    }
 
                     system->audioRefresh( Emulator::sclamp( 16, curSample * correction ) );
                     sampleCounter = 0;

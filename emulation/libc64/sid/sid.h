@@ -24,8 +24,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <thread>
 #include <functional>
 #include <cmath>
 #include <string>
@@ -47,8 +45,7 @@ struct SidManager;
 typedef double doublePoint[2];
 
 struct Sid {
-    
-    enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;    
+    enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;
     enum FilterType { Resid = 0, ResidVice24 = 1, Chamberlin = 2 } filterType;
     Sid( System* system, SidManager& sidManager, Type type);
 
@@ -60,16 +57,11 @@ struct Sid {
     auto updateDigiBoost( bool state ) -> void;
     auto readIO( uint8_t addr ) -> uint8_t;
     auto writeIO( uint8_t addr, uint8_t value ) -> void;
-	auto writeIOPipelined(uint8_t addr, uint8_t value) -> void;
 	auto writeIOFilter( uint8_t addr, uint8_t value ) -> void;
-    auto applyFilterWrite() -> void;
     auto reset() -> void;
-	auto powerOff() -> void;
     template<int options> auto clock(int cycles, int sampleCounter, int sampleLimit) -> int;
     template<int options> auto clock() -> void;
-	auto setMoreAccuracy(bool state) -> void;
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
-    auto updateIdleState() -> void;    
     auto setIoMask(uint8_t pos) -> void;
     auto useLeftChannel(bool state) -> void;
     auto useRightChannel(bool state) -> void;
@@ -90,18 +82,6 @@ struct Sid {
     unsigned databusDecay;
     unsigned databusDecayTime;
     struct Envelope;
-	
-	struct {
-		bool pipelined;
-		uint8_t addr;
-		uint8_t value;
-	} registerWrite;	       
-    
-	bool moreAccuracy = false;
-    bool powerOn;    
-    
-	//std::atomic<bool> ready;
-	//std::atomic<bool> idle;
 		
 	int v1;
 	int v2;
@@ -214,7 +194,7 @@ struct Sid {
     } envelope[ 3 ];
 			
 	struct Filter {
-		
+
 		Filter(Sid* sid);
 		
         bool digiBoost = false;
@@ -234,7 +214,6 @@ struct Sid {
 		uint8_t vol; // volume
 		
         // internal
-        uint8_t _8_div_Q;
         int _1024_div_Q;
         uint8_t sum;
         uint8_t mix;
@@ -255,18 +234,7 @@ struct Sid {
         
         int kVgt; // 8580 only
         int n_dac; // 8580 only
-        static int n_snake; // 6581 only   
-        
-        int* veP;
-        int* v3P;
-        int* v2P;
-        int* v1P;
-        int* VhpP;
-        int* VbpP;
-        int* VlpP;
-        int* VbpResP;
-        std::vector<int*> multiMix;
-        std::vector<int*> multiSum;
+        static int n_snake; // 6581 only
 				
 		static doublePoint opamp6581[];
 		static doublePoint opamp8580[];
@@ -310,38 +278,28 @@ struct Sid {
 			int bk;
             double tmp_n_param;                                 
 			double vo_N16;
-            double k;
-            
+
 			unsigned short gain[16][1 << 16];
 			unsigned short summer[ (6 + 5 + 4 + 3 + 2) << 16 ];
-			unsigned short mixer[ ( 7 + 6 + 5 + 4 + 3 + 2 + 1) << (16 + 1) ];			
+			unsigned short mixer[ ( 7 + 6 + 5 + 4 + 3 + 2 + 1) << (16 + 1) ];
+			unsigned short resonance[16][1 << 16];
             
             unsigned short f0_dac[1 << 11];
             unsigned short opamp_rev[1 << 16];
-			
-			int calcC[1 << 16];
-            int calcQ1[1 << 16];
-            int calcQ2[1 << 16];
-            
-            int nrXFilter;
-            int nrXMixer;            
-			
+
 			Opamp opamp[1 << 16];
 		};
 		
 		static Calculated calculated[2];
-        
-        // 8580 only
-        static unsigned short resonance[16][1 << 16];
+
         // 6581 only
         static unsigned short vcr_kVg[1 << 16];
         static unsigned short vcr_n_Ids_term[1 << 16];
 				
 		static auto build() -> void;
-		static auto solveOpamp( Opamp* opamp, int n, int vi, int& x, Calculated& ca ) -> int;
-		static auto solveOpampMulti(Opamp* opamp, int n, int c, int& x, Calculated& ca) -> int;
+		static auto solveOpamp(Opamp* opamp, double n, int vi, int& x, Calculated& ca) -> int;
         auto solveIntegrate8580(int vi, int& vx, int& vc, Calculated& ca) -> int;
-        auto solveIntegrate6581(int vi, int& vx, int& vc, Calculated& ca, bool moreAccuracy) -> int;
+        auto solveIntegrate6581(int vi, int& vx, int& vc, Calculated& ca) -> int;
 		
 		auto writeFcLow( uint8_t data ) -> void;
 		auto writeFcHi( uint8_t data ) -> void;
@@ -351,12 +309,10 @@ struct Sid {
 		auto writeModeVol( uint8_t data ) -> void;
 		auto updateSumMix() -> void;
 		auto setType( Type type ) -> void;
-		auto clock(int voice1, int voice2, int voice3) -> void;
+		template<Type _type> auto clock(int voice1, int voice2, int voice3) -> void;
 		auto clock24(int voice1, int voice2, int voice3) -> void;
-		auto clockMulti(int voice1, int voice2, int voice3) -> void;
-		template<bool use24> auto output() -> short;
-		auto outputMulti() -> short;
-        auto multiPrecalculate() -> void;
+		auto output24() -> short;
+		template<Type _type> auto output() -> short;
         auto setVoiceMask( uint8_t mask ) -> void;
 		auto adjustFilterBias6581(int value) -> void;
         auto adjustFilterBias8580(int value) -> void;

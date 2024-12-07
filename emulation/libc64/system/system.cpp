@@ -618,7 +618,6 @@ auto System::powerOff() -> void {
     powerOn = false;
     secondDriveCable.parallelPossible = true;
     keyBuffer->reset();
-    sidManager.sid->powerOff();
     iecBus.powerOff();
     if (traps.installed)
         traps.uninstall();

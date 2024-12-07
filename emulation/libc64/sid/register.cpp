@@ -33,22 +33,6 @@ auto Sid::readIO( uint8_t addr ) -> uint8_t {
     return lastBusValue;
 }
 
-inline auto Sid::writeIOPipelined(uint8_t addr, uint8_t value) -> void {
-	
-	registerWrite.addr = addr;
-	registerWrite.value = value;
-	registerWrite.pipelined = true;
-}
-
-inline auto Sid::applyFilterWrite() -> void {
-    
-    if (registerWrite.pipelined) {
-        registerWrite.pipelined = false;
-        // if filter update, do it now
-        writeIOFilter(this->registerWrite.addr, this->registerWrite.value);
-    }
-}
-
 auto Sid::writeIO( uint8_t addr, uint8_t value ) -> void {
  
     addr &= 0x1f;
@@ -144,11 +128,8 @@ auto Sid::writeIO( uint8_t addr, uint8_t value ) -> void {
             envelope[2].setSustainRelease( value );
             return;		
     }
-	
-	//if(!audioOut || !moreAccuracy)
-		writeIOFilter( addr, value );
-    //else
-      //  writeIOPipelined(addr, value);        
+
+    writeIOFilter( addr, value );
 }
 
 auto Sid::writeIOFilter( uint8_t addr, uint8_t value ) -> void {

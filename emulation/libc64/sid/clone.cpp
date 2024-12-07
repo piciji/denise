@@ -15,15 +15,12 @@ auto SidManager::clone( uint8_t start, uint8_t end ) -> void {
         ES->lastBusValue = sid->lastBusValue;        
         ES->databusDecay = sid->databusDecay;
         ES->databusDecayTime = sid->databusDecayTime;
-        ES->registerWrite.pipelined = sid->registerWrite.pipelined;
-        ES->registerWrite.addr = sid->registerWrite.addr;
-        ES->registerWrite.value = sid->registerWrite.value;
         ES->v1 = sid->v1;
         ES->v2 = sid->v2;
         ES->v3 = sid->v3;
         
         for ( unsigned i = 0; i < 3; i++ ) {
-            Sid::Voice& v = sid->voice[i];            
+            Sid::Voice& v = sid->voice[i];
             Sid::Voice& vES = ES->voice[i];
             
             vES.accumulator = v.accumulator;
@@ -74,7 +71,6 @@ auto SidManager::clone( uint8_t start, uint8_t end ) -> void {
         ES->filter.filt = sid->filter.filt;
         ES->filter.mode = sid->filter.mode;
         ES->filter.vol = sid->filter.vol;
-        ES->filter._8_div_Q = sid->filter._8_div_Q;
         ES->filter._1024_div_Q = sid->filter._1024_div_Q;
         ES->filter.sum = sid->filter.sum;
         ES->filter.mix = sid->filter.mix;

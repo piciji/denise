@@ -21,9 +21,6 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( lastBusValue );
     s.integer( databusDecay );
     s.integer( databusDecayTime );
-    s.integer( registerWrite.pipelined );
-    s.integer( registerWrite.addr );
-    s.integer( registerWrite.value );
     s.integer( v1 );
     s.integer( v2 );
     s.integer( v3 );
@@ -93,7 +90,6 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( filter.filt );
     s.integer( filter.mode );
     s.integer( filter.vol );
-    s.integer( filter._8_div_Q );
     s.integer( filter._1024_div_Q );
     s.integer( filter.sum );
     s.integer( filter.mix );

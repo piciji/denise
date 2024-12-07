@@ -14,7 +14,7 @@ namespace Emulator {
  *  I = I1 = I2
  * 
  * parallel connection of resistors
- *  R = R1 * R2 / (R1 + R2)  Note: formula is valid for two resitors in parallel only
+ *  R = R1 * R2 / (R1 + R2)  Note: formula is valid for two resistors in parallel only
  *  U = U1 = U2
  *  I = I1 + I2
  * 
@@ -51,7 +51,7 @@ struct DAC {
     ~DAC() {
 		free();
     }
-	// call free afterwards, if you change values
+
 	auto free() -> void {
 		if( result )
 			delete[] result;
@@ -69,10 +69,10 @@ struct DAC {
     
     auto generate( ) -> T* {
         
-        return generate( (T) ( (1 << bits) - 1 ), true );
+        return generate( (T) ( (1 << bits) - 1 ) );
     }
-    // scaler could be the incomming voltage value of the circuit
-    auto generate( T scaler, bool roundUp = false ) -> T* {
+    // scaler could be the incoming voltage value of the circuit
+    auto generate( T scaler ) -> T* {
 
 		free();
 		result = new T[ 1 << bits ];
@@ -93,19 +93,23 @@ struct DAC {
 
                 // check if circuit has a termination resistor
                 // calculates the final resistor value for parallel 2R and resistance so far
-                // the overall resistance in the circuit is independant from the seted bits
+                // the overall resistance in the circuit is independent of set bits
                 Ro = (bit == 0 && !terminated) ? R2 : R2 * Ro / (R2 + Ro);
 
                 Vo = Ro * I;
 
                 if (active)
-                    Vo += Vi * Ro / R2; //new incomming voltage	will be added to voltage so far	
+                    Vo += Vi * Ro / R2; //new incoming voltage	will be added to voltage so far
+            	else
+            		// Even in standard transistors a small amount of current leaks
+            		// even when they are technically switched off.
+            		Vo += (terminated ? 0.0035 : 0.0075) * (Vi * Ro / R2);
 
                 Ro += R;
                 I = Vo / Ro;
             }
 
-            result[i] = (T) ( scaler * Vo + (roundUp ? 0.5 : 0) ); //scale up 
+            result[i] = (T) ( scaler * Vo + 0.5 ); //scale up
         }
 
         return result;

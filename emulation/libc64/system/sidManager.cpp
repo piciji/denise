@@ -133,12 +133,6 @@ auto SidManager::registerCallbacks() -> void {
 
 
 auto SidManager::disableAudioOut(bool state) -> void {
-//    if (moreAccuracy && registerWrite.pipelined) {
-//        // wait for worker thread
-//        while (ready.load()) {}
-//        applyFilterWrite();
-//    }
-
     audioOut = !state;
     updateOptionsInUse();
 }
