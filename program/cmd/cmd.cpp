@@ -171,6 +171,7 @@ auto Cmd::parse() -> void {
 	bool hasRam0001Test = false;
 	bool hasDefaultTest = false;
     bool useCustomICGlueLogic = false;
+    bool emulateDriveMechanics = false;
     Emulator::Interface::Media* attachMedia = nullptr;
 
     for( auto& arg : arguments ) {
@@ -376,6 +377,10 @@ auto Cmd::parse() -> void {
                             useCustomICGlueLogic = true;
                         else if (fastTestbench && GUIKIT::String::foundSubStr( temp, "reu/cpuport" ))
                             fastTestbench = false;
+                        else if (fastTestbench && GUIKIT::String::foundSubStr( temp, "cpu_timing" ))
+                            fastTestbench = false;
+                        else if (!emulateDriveMechanics && GUIKIT::String::foundSubStr( temp, "drive-emu-check" ))
+                            emulateDriveMechanics = true;
 
                         // todo: dirty hack for Testbench to prevent injection of test.prg instead of loading "test",8,1
                         else if (GUIKIT::String::foundSubStr( temp, "defaults" ) && GUIKIT::String::foundSubStr( temp, "test." )) {
@@ -402,7 +407,7 @@ auto Cmd::parse() -> void {
         globalSettings->set<bool>("threaded_emu", false);
 		globalSettings->set<bool>("fps", true);
 		settingsC64->set<bool>("video_cycle_accuracy", true);
-        settingsC64->set<bool>("Emulate_Mechanics", true);
+        settingsC64->set<bool>("Emulate_Mechanics", emulateDriveMechanics);
         settingsC64->set<unsigned>("video_crt", 0);
 	    settingsC64->set<unsigned>("threaded_renderer", 0);
 		
