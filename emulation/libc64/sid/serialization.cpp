@@ -4,12 +4,7 @@
 namespace LIBC64 {
     
 auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
-    
-//    if (moreAccuracy) {
-//        // wait for worker thread
-//		while ( ready.load() ) { }
-//    }
-           
+
     s.integer( leftChannel );
     s.integer( rightChannel );
     s.integer( ioMask );
@@ -108,6 +103,8 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( filter.Vw_bias );
     s.integer( filter.VbpRes );
     s.integer( filter.w0 );
+    s.integer( filter.nrXFilter );
+    s.integer( filter.nrXMixer );
     
     s.floatingpoint( chamberlinFilter.svfQ );
     s.floatingpoint( chamberlinFilter.svfF );
@@ -127,13 +124,11 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         
         if (s.mode() == Emulator::Serializer::Mode::Load) {
             volumeCorrection(sidManager.useVolumeCorrection);
+
+            if (separateFilterInputs)
+                filter.prepareSeparate();
         }
     }
-    
-//    if (s.mode() == Emulator::Serializer::Mode::Load) {
-//        setMoreAccuracy( moreAccuracy );
-//    }
-        
 }
 
 }

@@ -24,6 +24,7 @@
 #include "../sid.h"
 #include "build.cpp"
 #include "opamp.cpp"
+#include "separateInput.cpp"
 
 namespace LIBC64 {
 

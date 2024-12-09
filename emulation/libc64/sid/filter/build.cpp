@@ -156,6 +156,15 @@ Sid::Filter::Filter( Sid* sid ) {
 	if ( !initialized )
 		build( ); // one time only, doesn't matter of instance count
 
+	v1P = &v1;
+	v2P = &v2;
+	v3P = &v3;
+	veP = &ve;
+	VhpP = &Vhp;
+	VlpP = &Vlp;
+	VbpP = &Vbp;
+	VbpResP = &VbpRes;
+
 	initialized = true;
 	Vw_bias = 0; 
     setEnable( true );
@@ -438,7 +447,7 @@ auto Sid::Filter::build( ) -> void {
 				// Dadurch kann es passieren, dass der Wertebereich überschritten (übersteuert) wird.
 				// Die Widerstände sollen dies verhindern nach dem Prinzip (v1 + v2) / 2 (Amplitude halbieren)
                 // Geschuldet der Tatsache, das alle aktiven Eingänge als ein Transistor behandelt werden,
-                // wird die Summe aller eingehenden Spannungen durch die Anzahl Eingänge geteilt und ermitteln
+                // wird die Summe aller eingehenden Spannungen durch die Anzahl Eingänge geteilt und ermittelt
                 // somit die Eingangsspannung des fiktiven Transistors.
 				ca.summer[offset + vi] = solveOpamp( ca.opamp, n_idiv, vi / idiv, x, ca );
 			}
@@ -447,12 +456,9 @@ auto Sid::Filter::build( ) -> void {
 		}				
 
 		// [ Impedanzwandler: Mixer ]
-		// Der Mixer unmfasst 7 zuschaltbare Eingänge mit den selben Einzel Widerständen 'R6'.
-		// Es handelt sich mathematisch um die gleiche Logik wie beim Filter.
-		// Inhaltlich werden voices direkt gemischt oder gefiltert gemischt.
+		// Der Mixer unmfasst 7 zuschaltbare Eingänge.
 		divider = m == 0 ? 6.0 : 5.0;
 		offset = 0;
-        // Wenn kein Eingang aktiviert ist, gibt es nur den Zustand vi = 0 V
 		size = 1;
 		for ( int l = 0; l < 8; l++ ) {
 			int idiv = l;
@@ -667,6 +673,9 @@ auto Sid::Filter::updateSumMix() -> void {
     }
     
     mix &= voiceMask;
+
+	if (sid->separateFilterInputs)
+		prepareSeparate();
 }
 
 auto Sid::Filter::setType( Type type ) -> void {
@@ -674,9 +683,12 @@ auto Sid::Filter::setType( Type type ) -> void {
 	this->type = type;
 	// Werte initialisieren, für den Fall das das Sid Model zur Laufzeit
 	// geändert wird.
-	Vhp = 0;
+	Vhp = VbpRes = 0;
 	Vbp = Vbp_x = Vbp_vc = 0;
 	Vlp = Vlp_x = Vlp_vc = 0;
+
+	if (sid->separateFilterInputs)
+		prepareSeparate();
 }
 
 // Filter kann unabhängig von der Software deakiviert werden.

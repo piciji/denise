@@ -221,7 +221,7 @@ auto Sid::Filter::solveOpamp(Opamp* opamp, double n, int vi, int& x, Calculated&
     // Zur Vereinfachung werden Konstanten durch kürzere Ausdrücke ersetzt.
     // a = n + 1
     // b = Vddt
-    // c = n*(Vddt - vi)^2
+    // c = n*(b - vi)^2
     // Die beiden "Nicht" Konstanten sind 'x' und 'vx'
     // f(x, vx) = a*(b - vx)^2 - c - (b - (vx + x))^2 = 0
     // Durch Interpolation der Messpunkte ist zu jedem 'x' das passende 'vx' bereits vorberechnet.
@@ -271,8 +271,9 @@ auto Sid::Filter::solveOpamp(Opamp* opamp, double n, int vi, int& x, Calculated&
         double b_vo = b > vo ? double(b - vo) : 0.0;
 
         double f = a * (b_vx * b_vx) - c - (b_vo * b_vo); // skaliert:  m^2 * 2^32
-        double df = 2.0 * (b_vo - a * b_vx) * double(dvx); // skaliert m * 2^27
-
+        // Da 'dv' Schrittgröße nicht "1" ist, muss mit delta multipliziert werden
+        // double df = 2.0 * (b_vo - a * b_vx) * double(dvx); // skaliert m * 2^27
+        double df = 2.0 * (a * b_vx - b_vo ) * double(dvx); // skaliert m * 2^27
         if (df) {
             x -= int(double(1 << 11) * f/df); // Der Quotient ist sklaiert: m^2 * 2^32 / m * 2^27 = m * 2^5.
         }

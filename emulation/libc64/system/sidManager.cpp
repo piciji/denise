@@ -87,6 +87,15 @@ auto SidManager::getIoPos(int nr) -> int {
     return sids[nr-1]->ioPos;
 }
 
+auto SidManager::setSeparateFilterInputs(bool state) -> void {
+    // only for primary SID
+    sid->setSeparateFilterInputs(state);
+}
+
+auto SidManager::hasSeparateFilterInputs() -> bool {
+    return sid->hasSeparateFilterInputs();
+}
+
 auto SidManager::updateClock() -> void {
     switch(optionsInUse) {
         case 3: updateClockT<3>(); break;
@@ -108,6 +117,9 @@ auto SidManager::updateClock() -> void {
 }
 
 template<int options> auto SidManager::updateClockT() -> void {
+    constexpr bool _useChamberlain = options & 4;
+    constexpr bool _useResid24 = options & 16;
+
     system->sysTimer.add( &callAlarm, 200, Emulator::SystemTimer::Action::UpdateExisting );
 
     int _delay = system->sysTimer.fallBackCycles( sysClock );
@@ -120,8 +132,16 @@ template<int options> auto SidManager::updateClockT() -> void {
             clockMultiChips<options | 8>(_delay);
         else
             clockMultiChips<options>(_delay);
-    } else
-        sampleCounter = sid->clock<options>(_delay, sampleCounter, sampleLimit);
+    } else {
+        if constexpr (_useChamberlain || _useResid24)
+            sampleCounter = sid->clock<options>(_delay, sampleCounter, sampleLimit);
+        else {
+            if (sid->separateFilterInputs)
+                sampleCounter = sid->clock<options | 32>(_delay, sampleCounter, sampleLimit);
+            else
+                sampleCounter = sid->clock<options>(_delay, sampleCounter, sampleLimit);
+        }
+    }
 
     sysClock = system->sysTimer.clock;
 }

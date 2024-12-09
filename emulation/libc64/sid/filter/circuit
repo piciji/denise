@@ -96,7 +96,7 @@ SID 6581 filter / mixer / output
                |   |                    +---Ri-- \--o !D6&!D7      |
                |   |                                |              |
  $17           |   |                    (CAP2B)     |  (CAP1B)     |
- 0=to mixer    |   +--R7--+  +---R8--+      +---C---o      +---C---o
+ 0=to mixer    |   +--R7--+  +---R7--+      +---C---o      +---C---o
  1=to filter   |          |  |       |      |       |      |       |
                +------R7--o--o--[A>--o--Rfc-o--[A>--o--Rfc-o--[A>--o
      ve (EXT IN)          |          |              |              |

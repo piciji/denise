@@ -98,6 +98,8 @@ struct SidManager {
     auto applyOffsetPseudoStereo() -> void;
     auto intensifyPseudoStereo(bool state) -> void;
     auto hasIntensifiedPseudoStereo() -> bool { return offsetPseudoStereo.allow; }
+    auto setSeparateFilterInputs(bool state) -> void;
+    auto hasSeparateFilterInputs() -> bool;
 };
 
 }

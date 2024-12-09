@@ -66,6 +66,8 @@ struct Sid {
     auto useLeftChannel(bool state) -> void;
     auto useRightChannel(bool state) -> void;
     auto volumeCorrection(bool state) -> void;
+	auto setSeparateFilterInputs(bool state) -> void;
+	auto hasSeparateFilterInputs() -> bool { return separateFilterInputs; }
 
     System* system;
     SidManager& sidManager;
@@ -86,6 +88,8 @@ struct Sid {
 	int v1;
 	int v2;
 	int v3;
+
+	bool separateFilterInputs = false;
     
     struct Voice {
         
@@ -310,8 +314,6 @@ struct Sid {
 		auto updateSumMix() -> void;
 		auto setType( Type type ) -> void;
 		auto clock(int voice1, int voice2, int voice3) -> void;
-		auto clock24(int voice1, int voice2, int voice3) -> void;
-		auto output24() -> short;
 		auto output() -> short;
         auto setVoiceMask( uint8_t mask ) -> void;
 		auto adjustFilterBias6581(int value) -> void;
@@ -319,6 +321,34 @@ struct Sid {
         auto updateQ() -> void;
         auto input(short sample) -> void;
         auto reset() -> void;
+
+		auto clock24(int voice1, int voice2, int voice3) -> void;
+		auto output24() -> short;
+
+		int* veP;
+        int* v3P;
+        int* v2P;
+        int* v1P;
+        int* VhpP;
+        int* VbpP;
+        int* VlpP;
+        int* VbpResP;
+
+		int nrXFilter;
+		int nrXMixer;
+
+		struct SeparateInput {
+			int* vi;
+			double n; // Verhältnis: R input / R output
+		};
+
+        std::vector<SeparateInput> separateMix;
+        std::vector<SeparateInput> separateFlt;
+        
+		auto clockSeparate(int voice1, int voice2, int voice3) -> void;
+		auto prepareSeparate() -> void;
+		auto outputSeparate() -> short;
+		auto solveOpampSeparate(Opamp* opamp, double a, double c, int& x, Calculated& ca) -> int;
 	} filter;
     
     struct ChamberlinFilter {

@@ -18,6 +18,7 @@ auto SidManager::clone( uint8_t start, uint8_t end ) -> void {
         ES->v1 = sid->v1;
         ES->v2 = sid->v2;
         ES->v3 = sid->v3;
+        ES->separateFilterInputs = false;
         
         for ( unsigned i = 0; i < 3; i++ ) {
             Sid::Voice& v = sid->voice[i];
