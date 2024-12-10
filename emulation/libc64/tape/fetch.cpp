@@ -151,7 +151,7 @@ inline auto Tape::randomizeGap( unsigned gap ) -> unsigned {
     if ( !wobble || (mode != Mode::Play) )
         return gap;
 
-	float factor = 1.0f + ( std::sin( (float)cycles * 2.0f * M_PI * TAPE_WOBBLE_FREQUENCY ) * TAPE_WOBBLE_AMPLITUDE );
+	float factor = 1.0f + ( ::sinf( (float)cycles * 2.0f * M_PI * TAPE_WOBBLE_FREQUENCY ) * TAPE_WOBBLE_AMPLITUDE );
 
 	return (unsigned)(float(gap) * factor + 0.5f);
 
