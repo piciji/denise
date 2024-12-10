@@ -283,6 +283,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
+    showFPSScreen = globalSettings->get<bool>("fps_screen", false);
     powerLED.enable = globalSettings->get<bool>("power_led", true);
     showVolume = globalSettings->get<bool>("volume_control", true );
     fpsCounter.decimalPoints = 3;

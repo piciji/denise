@@ -337,6 +337,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                     videoDriver->showScreenText( "", 0 );
                 else
                     statusHandler->setFpsCounterUpdate();
+
+                globalSettings->set<bool>("fps_screen", statusHandler->showFPSScreen);
             }
         } break;
 
@@ -397,24 +399,34 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 statusHandler->setMessage(_str, 5);
         } break;
         case Hotkey::Id::ThreadedRenderer: {
-        //     auto _settings = program->getSettings( activeEmulator );
-        //     unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);
-        //
-        //     //bool checked = globalSettings->get("threaded_renderer", true);
-        //     checked ^= 1;
-        //
-        //     globalSettings->set("threaded_renderer", checked);
-        //
-        //     if (configView) {
-        //         configView->driversLayout->vdl.bottom.trOn.setChecked(checked);
-        //         configView->driversLayout->vdl.bottom.trAuto.setEnabled(!checked);
-        //     }
-        //
-        //     emuThread->lock();
-        //     if (statusHandler)
-        //         statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA(checked ? "enabled" : "disabled"), 3 );
-        //
-        //     VideoManager::setSynchronize();
+            auto _settings = program->getSettings( activeEmulator );
+            unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);
+            if (++tr == 3)
+                tr = 0;
+
+            _settings->set<unsigned>("threaded_renderer", tr);
+
+            auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+            if (emuView && emuView->videoLayout) {
+                switch (tr) {
+                    default:
+                    case 0: emuView->videoLayout->layBase.view.option.trOff.setChecked(); break;
+                    case 1: emuView->videoLayout->layBase.view.option.trOn.setChecked(); break;
+                    case 2: emuView->videoLayout->layBase.view.option.trAuto.setChecked(); break;
+                }
+            }
+
+            emuThread->lock();
+            if (statusHandler) {
+                switch (tr) {
+                    default:
+                    case 0: statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA("disabled"), 3 ); break;
+                    case 1: statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA("enabled"), 3 ); break;
+                    case 2: statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA("auto"), 3 ); break;
+                }
+            }
+
+            VideoManager::setSynchronize();
         } break;
         case Hotkey::Id::ToggleShader:
             if(!videoDriver->shaderSupport())
