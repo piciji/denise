@@ -383,9 +383,13 @@ auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsign
                 }
             }
             if (prefered) { // no emu core mixing allowed
-                if (prefered->isDrive())
-                    return emulator->getModelValue( emulator->getModelIdOfEnabledDrives(prefered) );
                 int count = 0;
+
+                if (prefered->isDrive()) {
+                    count = emulator->getModelValue( emulator->getModelIdOfEnabledDrives(prefered) );
+                    return count ? count : 1;
+                }
+
                 for(auto& media : prefered->media) {
                     if (!media.secondary)
                         count++;
