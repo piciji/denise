@@ -154,10 +154,15 @@ inline auto VicIICycle::advanceCycle() -> void {
 }
 
 inline auto VicIICycle::clearCollisions() -> void {
-	if (clearCollision == 0x1e)
+	// collisions in the second half of the cycle are lost
+	if (clearCollision == 0x1e) {
 		spriteSpriteCollided = 0;
-	else /* if (clearCollision == 0x1f) */
+		canSpriteSpriteCollisionIrq = true;
+	} else {
+		/* if (clearCollision == 0x1f) */
 		spriteForegroundCollided = 0;
+		canSpriteForegroundCollisionIrq = true;
+	}
 
 	clearCollision = 0;
 }

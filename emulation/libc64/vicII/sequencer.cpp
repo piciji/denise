@@ -113,6 +113,17 @@ inline auto VicIICycle::sequencer( uint32_t flags ) -> void {
 	spriteSpriteCollidedRead = spriteSpriteCollided;
 	spriteForegroundCollidedRead = spriteForegroundCollided;
 
+	// collisions in the second half trigger IRQ next cycle
+	if (canSpriteSpriteCollisionIrq && spriteSpriteCollided) {
+		updateIrq( Interrupt::MMC );
+		canSpriteSpriteCollisionIrq = false;
+	}
+
+	if (canSpriteForegroundCollisionIrq && spriteForegroundCollided) {
+		updateIrq( Interrupt::MBC );
+		canSpriteForegroundCollisionIrq = false;
+	}
+
 	pipeGraphic( flags );
 	
     sequencerPix0<false>();
@@ -141,15 +152,6 @@ inline auto VicIICycle::sequencer( uint32_t flags ) -> void {
 	
 	if (unlikely(clearCollision))
 		clearCollisions();
-
-	if (canSpriteSpriteCollisionIrq && spriteSpriteCollided)
-		updateIrq( Interrupt::MMC );
-
-	if (canSpriteForegroundCollisionIrq && spriteForegroundCollided)
-		updateIrq( Interrupt::MBC );
-
-	canSpriteSpriteCollisionIrq = spriteSpriteCollided == 0;
-	canSpriteForegroundCollisionIrq = spriteForegroundCollided == 0;
 }
 
 template<bool phi1> inline auto VicIICycle::sequencerPix0( ) -> void {   

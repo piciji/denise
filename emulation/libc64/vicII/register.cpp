@@ -83,12 +83,12 @@ auto VicIICycle::readReg( uint8_t addr ) -> uint8_t {
         }        
         case 0x1e: {
 			value = spriteSpriteCollidedRead;
-			clearCollision = 0x1e;			
+			clearCollision = 0x1e;
 			break;
         }
         case 0x1f: {
 			value = spriteForegroundCollidedRead;
-			clearCollision = 0x1f;			
+			clearCollision = 0x1f;
 			break;
         }        
         case 0x20:
