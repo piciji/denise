@@ -153,7 +153,12 @@ inline auto Tape::randomizeGap( unsigned gap ) -> unsigned {
 
 	float factor = 1.0f + ( ::sinf( (float)cycles * 2.0f * M_PI * TAPE_WOBBLE_FREQUENCY ) * TAPE_WOBBLE_AMPLITUDE );
 
-	return (unsigned)(float(gap) * factor + 0.5f);
+	int result = (unsigned)(float(gap) * factor + 0.5f);
+
+	if (result < 1)
+		return 1;
+
+	return result;
 
     // for realistic behaviour we need some randomness
 	// beware of Jars of Revenge, Time Traveller
