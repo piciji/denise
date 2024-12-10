@@ -27,6 +27,7 @@
 #include <functional>
 #include <cmath>
 #include <string>
+#include <cstdint>
 
 #include "../../tools/dac.h"
 #include "../../tools/splines.h"
