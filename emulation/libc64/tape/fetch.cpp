@@ -1,5 +1,6 @@
 
 #include "tape.h"
+#include <cmath>
 
 namespace LIBC64 {
     
@@ -142,20 +143,27 @@ auto Tape::longGap( ) -> unsigned {
     return randomizeGap( gap );
 }
 
+#define TAPE_WOBBLE_AMPLITUDE ( 0.5f / 100.0f ) // 0.5 %
+#define TAPE_WOBBLE_FREQUENCY ( 3.0f )	// 3 Hz
+
 inline auto Tape::randomizeGap( unsigned gap ) -> unsigned {
   	
     if ( !wobble || (mode != Mode::Play) )
         return gap;
-    
+
+	float factor = 1.0f + ( std::sin( (float)cycles * 2.0f * M_PI * TAPE_WOBBLE_FREQUENCY ) * TAPE_WOBBLE_AMPLITUDE );
+
+	return (unsigned)(float(gap) * factor + 0.5f);
+
     // for realistic behaviour we need some randomness
 	// beware of Jars of Revenge, Time Traveller
-	int adjust = (rand() & 15 ) - 5;
+	// int adjust = (rand() & 15 ) - 5;
 	
-	if ( (adjust >= 0) || (gap > -adjust) )
-		return gap + adjust;
+	// if ( (adjust >= 0) || (gap > -adjust) )
+		// return gap + adjust;
 	
 	// gap would be zero or below	
-	return 1;
+	// return 1;
 }
 
 auto Tape::readForward( uint8_t& byte, unsigned count ) -> bool {
