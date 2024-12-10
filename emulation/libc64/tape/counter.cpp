@@ -16,10 +16,6 @@
 // so we take one thickness value for all tape sizes (not entirely correct)
 #define TAPE_RIBBON_THICKNESS 0.0000112 // unit: m
 
-#ifndef M_PI 
-#define M_PI    3.14159265358979323846f 
-#endif
-
 // [tape counter]
 // first we need a formula to transfer a position in virtual tape image 
 // to datasette counter.
