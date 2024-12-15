@@ -54,7 +54,7 @@ struct EasyFlash3 : FreezeButton {
     
     auto readIo2( uint16_t addr ) -> uint8_t;
     
-    auto create( Interface::CartridgeId cartridgeId ) -> Cart*;
+    auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
     
     auto assign( Cart* cart ) -> void;
     

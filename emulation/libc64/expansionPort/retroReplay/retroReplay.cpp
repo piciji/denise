@@ -50,7 +50,7 @@ auto RetroReplay::assign( Cart* cart ) -> void {
     // don't rebuild
 }
 
-auto RetroReplay::create( Interface::CartridgeId cartridgeId ) -> Cart* {
+auto RetroReplay::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
     // don't rebuild
     return this;
 }

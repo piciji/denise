@@ -10,7 +10,7 @@ struct Freezer : FreezeButton {
 
     Freezer(System* system, bool game = true, bool exrom = true);
     
-    auto create( Interface::CartridgeId cartridgeId ) -> Cart*;
+    auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
     
     auto assign(Cart* cart) -> void;
 

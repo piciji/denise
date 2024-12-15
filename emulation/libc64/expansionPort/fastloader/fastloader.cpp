@@ -250,7 +250,7 @@ auto Fastloader::customButton() -> void {
         system->iecBus.drives[0]->cpu.setNmi();
 }
 
-auto Fastloader::create( Interface::CartridgeId cartridgeId ) -> Cart* {
+auto Fastloader::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
     // don't rebuild
     return this;
 }

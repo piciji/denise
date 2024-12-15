@@ -48,7 +48,7 @@ struct Fastloader : Cart {
     auto readRomH( uint16_t addr ) -> uint8_t;
     auto clock() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
-    auto create( Interface::CartridgeId cartridgeId ) -> Cart*;
+    auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
     auto assign(Cart* cart) -> void {}
     auto protectFromDeletion() -> bool { return true; }
 

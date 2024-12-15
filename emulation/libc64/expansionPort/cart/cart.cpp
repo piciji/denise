@@ -46,7 +46,7 @@ auto Cart::rebuild( Interface::CartridgeId cartridgeId, uint8_t* _rom, unsigned 
     if (!_rom || (_romSize == 0) )
         cartridgeId = Interface::CartridgeIdNoRom;
     
-    Cart* cart = create( cartridgeId );
+    Cart* cart = create( cartridgeId, _romSize );
     
     cart->rom = _rom;
     cart->romSize = _romSize;
@@ -271,7 +271,7 @@ auto Cart::serialize(Emulator::Serializer& s) -> void {
             // probably the loaded state file is unusable but we don't want to crash the emulation
             // on top of that when data is unserialized in wrong order.
             
-            auto cart = create( (Interface::CartridgeId)_cartridgeId );
+            auto cart = create( (Interface::CartridgeId)_cartridgeId, 0 );
             
             if (_cartridgeId != Interface::CartridgeIdNoRom) {
                 cart->rom = rom;

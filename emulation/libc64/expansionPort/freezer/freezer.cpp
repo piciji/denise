@@ -33,7 +33,7 @@ auto Freezer::assign( Cart* cart ) -> void {
         ptrSystem->setExpansion( Interface::ExpansionIdFreezer );
 }
 
-auto Freezer::create( Interface::CartridgeId cartridgeId ) -> Cart* {
+auto Freezer::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
     Cart* cart = nullptr;
     
     switch(cartridgeId) {

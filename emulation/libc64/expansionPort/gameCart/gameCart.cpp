@@ -44,7 +44,7 @@ auto GameCart::assign( Cart* cart ) -> void {
         ptrSystem->setExpansion( Interface::ExpansionIdGame );
 }
 
-auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
+auto GameCart::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
     Cart* cart = nullptr;
     
     switch(cartridgeId) {
@@ -64,6 +64,11 @@ auto GameCart::create( Interface::CartridgeId cartridgeId ) -> Cart* {
             cart = new Zaxxon(system);
             break;
         case Interface::CartridgeIdDefault:
+            if (_size == 16384) {
+                cart = new Cart16k(system);
+                break;
+            }
+            // fall through
         case Interface::CartridgeIdDefault8k:
             cart = new GameCart(system, true, false);
             break;            

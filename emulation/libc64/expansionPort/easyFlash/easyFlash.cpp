@@ -189,7 +189,7 @@ auto EasyFlash::assign( Cart* cart ) -> void {
     // don't rebuild
 }
 
-auto EasyFlash::create( Interface::CartridgeId cartridgeId ) -> Cart* {
+auto EasyFlash::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart* {
     // don't rebuild
     return this;
 }

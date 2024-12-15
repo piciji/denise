@@ -32,7 +32,7 @@ struct RetroReplay : FreezeButton {
     bool requestedGame;
     bool requestedExRom;
     
-    auto create( Interface::CartridgeId cartridgeId ) -> Cart*;    
+    auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
     auto assign(Cart* cart) -> void;
     
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
