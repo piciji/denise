@@ -473,7 +473,7 @@ auto Interface::prepareModels() -> void {
 		"6569-R1 (PAL-B)", "6567-R56A (NTSC-M)", "6572 (PAL-N)", "6573 (PAL-M)" }});   		
 
     // use old or new ( 6526a ) cia chips
-    models.push_back({ModelIdCiaRev, "CIA", Model::Type::Radio, Model::Purpose::Cia, 1, {0, 1}, {"6526", "6526a"}});
+    models.push_back({ModelIdCiaRev, "CIA", Model::Type::Radio, Model::Purpose::Cia, 1, {0, 1}, {"6526", "8521"}});
 
 	// 0 - off, 1 - on, means software decides
     models.push_back({ModelIdFilter, "SID Filter", Model::Type::Switch, Model::Purpose::AudioSettings, 1});
