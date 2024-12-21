@@ -150,6 +150,8 @@ set(srcs
         emulation/libc64/input/controlPort/controlPort.cpp
         emulation/libc64/expansionPort/acia/acia.cpp
         emulation/libc64/disk/wd177x/wd1770.cpp
+        emulation/wdc/65816/w65816.cpp
+        emulation/wdc/65C02/w65C02.cpp
 
         emulation/libc64/traps/traps.cpp
         emulation/libc64/disk/virtual/virtualDrive.cpp
