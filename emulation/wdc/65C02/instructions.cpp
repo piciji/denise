@@ -56,16 +56,20 @@ template<uint8_t Inst, uint8_t Index> auto W65C02::opModifyAbsolute() -> void {
     addr |= readPC() << 8;
     if constexpr (Index == INDEX_X) {
         absIndexed = addr + x;
-        read( ((addr & 0xff00) | (absIndexed & 0xff)));
+        if (PAGE_CROSSED(addr, absIndexed))
+            read( ((addr & 0xff00) | (absIndexed & 0xff)));
+        SET_MEMORY_LOCK(true);
         data = read(absIndexed);
         write(absIndexed, data);
     } else {
+        SET_MEMORY_LOCK(true);
         data = read(addr);
         write(addr, data);
     }
     arithmeticM<Inst>(data);
     if constexpr (Index == INDEX_X) write<true>(absIndexed, data);
     if constexpr (Index == NONE)    write<true>(addr, data);
+    SET_MEMORY_LOCK(false);
 }
 
 // Absolute Indirect-(a)
@@ -111,10 +115,12 @@ template<uint8_t Inst, uint8_t Index> auto W65C02::opModifyZeroPage() -> void {
         if constexpr (Index == INDEX_Y) zeroPage += y;
     }
 
+    SET_MEMORY_LOCK(true);
     uint8_t data = read(zeroPage);
     write(zeroPage, data);
     arithmeticM<Inst>(data);
     write<true>(zeroPage, data);
+    SET_MEMORY_LOCK(false);
 }
 
 // Zero Page Indexed Indirect (zp,x)
@@ -243,7 +249,7 @@ auto W65C02::opRTI() -> void {
 
 auto W65C02::opPHP() -> void {
     read( pc );
-    push<true>( p | 0x10 | 0x20 );
+    push<true, true>( p | 0x10 | 0x20 );
 }
 
 auto W65C02::opPLP() -> void {
@@ -265,6 +271,7 @@ auto W65C02::opClearC() -> void {
 auto W65C02::opClearV() -> void {
     idle<true>();
     p.v = false;
+    lines |= SOB_BLOCK2;
 }
 
 auto W65C02::opSetC() -> void {
@@ -279,8 +286,10 @@ auto W65C02::opSetD() -> void {
 
 template<bool setI> auto W65C02::opUpdateI() -> void {
     SAMPLE_INTR
+    CHECK_SOB
     while (lines & RDY_LINE) {
         SAMPLE_INTR
+        CHECK_SOB
         REF_CALL READ_BYTE(pc);
         p.i = setI;
     }

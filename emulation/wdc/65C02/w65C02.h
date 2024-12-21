@@ -3,10 +3,17 @@
 
 #include <cstdint>
 
-//#define REF Placeholder
-//#define REF_NS LIBC64   // optional
+// SOB is tested in every cycle and this affects performance.
+// therefore, it should only be activated when it is actually being used.
+//#define SUPPORT_SOB
+
+// use this if you want communication to be about references instead of inheritance.
+// put reference in constructor
+
+//#define REF reference
+//#define REF_NS namespace of reference // optional
 //#define REF_TYPE struct // or class
-//#define REF_INCLUDE ""
+//#define REF_INCLUDE "include path of reference class"
 
 #ifdef REF
     #ifdef REF_NS
@@ -26,9 +33,11 @@ struct W65C02 {
     auto setNmiLineLow(bool state) -> void;
     auto setIrqLineLow(bool state) -> void;
     auto setRdyLineLow(bool state) -> void;
+    auto setSobLineLow(bool state) -> void;
 
-    enum {  RESET = 1, WAI = 2, STP = 4, IRQ_LINE = 8, NMI_LINE = 0x10, RDY_LINE = 0x20,
-            NMI_TRANSITION = 0x40, IRQ_PENDING = 0x80, NMI_PENDING = 0x100 };
+    enum {  RESET = 1, WAI = 2, STP = 4, IRQ_LINE = 8, NMI_LINE = 0x10, RDY_LINE = 0x20, SOB_LINE = 0x40,
+            NMI_TRANSITION = 0x80, IRQ_PENDING = 0x100, NMI_PENDING = 0x200,
+            SOB_TRANSITION = 0x400, SOB_BLOCK1 = 0x800, SOB_BLOCK2 = 0x1000};
 
     enum {  LDA = 1, LDX, LDY, LDD, ORA, AND, EOR, ADC, SBC, CMP, CPX, CPY,
             ROL, ROR, ASL, LSR, DEC, INC, TSB, TRB, BIT, BIT_IM,
@@ -40,7 +49,7 @@ struct W65C02 {
 
 protected:
 #ifdef REF
-    W65816(REF_NS::REF& ref) : ref(ref) { build(); }
+    W65816(REF_NS::REF& ref) : ref(ref) {}
     REF_NS::REF& ref;
 #else
     W65C02() { }
@@ -84,15 +93,15 @@ protected:
 
     template<bool hardware = true> auto interrupt(const uint16_t& vector) -> void;
     auto checkForInterrupt() -> void;
+    auto checkForSOB() -> void;
 
     template<bool sampleInterrupt = false> inline auto read(uint16_t addr) -> uint8_t;
-    template<bool sampleInterrupt = false> inline auto write(uint16_t addr, uint8_t value) -> void;
+    template<bool sampleInterrupt = false, bool writeStatus = false> inline auto write(uint16_t addr, uint8_t value) -> void;
 
     template<bool sampleInterrupt = false> inline auto readPC() -> uint8_t;
     template<bool sampleInterrupt = false> auto idle() -> void;
-    template<bool sampleInterrupt = false> auto push(uint8_t data) -> void;
+    template<bool sampleInterrupt = false, bool writeStatus = false> auto push(uint8_t data) -> void;
     template<bool sampleInterrupt = false> auto pull() -> uint8_t;
-
 
     template<uint8_t Inst> auto arithmetic(uint8_t data) -> void;
     template<uint8_t Inst> auto arithmeticM(uint8_t& reg) -> void;
@@ -143,6 +152,7 @@ protected:
     virtual auto readByte(uint32_t adr) -> uint8_t = 0;
     virtual auto writeByte(uint32_t adr, uint8_t value) -> void = 0;
     virtual auto updateRDY(bool state) -> void {} // RDY is bi-directional
+    virtual auto setMemoryLock(bool state) -> void {} // hint to other BUS participants not to interfere RMW
 #endif
 
 };

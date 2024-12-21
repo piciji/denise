@@ -13,8 +13,15 @@
 #define READ_BYTE       REF_CALL readByte
 #define WRITE_BYTE      REF_CALL writeByte
 #define UPDATE_RDY      REF_CALL updateRDY
+#define SET_MEMORY_LOCK REF_CALL setMemoryLock
 
 #define SAMPLE_INTR     { if(lines & (NMI_TRANSITION | IRQ_LINE)) checkForInterrupt(); }
+
+#ifdef SUPPORT_SOB
+#define CHECK_SOB       { if (lines & (SOB_TRANSITION | SOB_BLOCK1 | SOB_BLOCK2)) checkForSOB(); }
+#else
+#define CHECK_SOB
+#endif
 
 #define ___(id, ident, ...)         case id: op##ident(__VA_ARGS__); break;
 #define __M(id, ident, inst)        case id: op##ident<inst>(); break;
@@ -36,7 +43,7 @@ template<bool hardware> auto W65C02::interrupt(const uint16_t& vector) -> void {
     push(pc & 0xff);
 
     p.b = !hardware;
-    push( p | 0x20);
+    push<false, true>( p | 0x20);
     p.i = true;
     p.d = false;
     uint16_t newPC = read(vector);
@@ -65,17 +72,23 @@ auto W65C02::setNmiLineLow(bool state) -> void {
 }
 
 auto W65C02::setIrqLineLow(bool state) -> void {
-    if (state)
-        lines |= IRQ_LINE;
-    else
-        lines &= ~IRQ_LINE;
+    if (state)  lines |= IRQ_LINE;
+    else        lines &= ~IRQ_LINE;
 }
 
 auto W65C02::setRdyLineLow(bool state) -> void {
-    if (state)
-        lines |= RDY_LINE;
-    else
-        lines &= ~RDY_LINE;
+    if (state)  lines |= RDY_LINE;
+    else        lines &= ~RDY_LINE;
+}
+
+auto W65C02::setSobLineLow(bool state) -> void {
+    if (state) {
+        if ((lines & SOB_LINE) == 0)
+            lines |= SOB_TRANSITION;
+
+        lines |= SOB_LINE;
+    } else
+        lines &= ~SOB_LINE;
 }
 
 auto W65C02::checkForInterrupt() -> void {
@@ -95,15 +108,30 @@ auto W65C02::checkForInterrupt() -> void {
     }
 }
 
+auto W65C02::checkForSOB() -> void {
+    if (lines & SOB_BLOCK2) {
+        lines &= ~(SOB_BLOCK2 | SOB_TRANSITION); // prevent pending transition
+        lines |= SOB_BLOCK1;
+    } else if (lines & SOB_BLOCK1) {
+        lines &= ~(SOB_BLOCK1 | SOB_TRANSITION); // prevent pending transition
+    } else /* if (lines & SOB_TRANSITION) */ {
+        lines &= ~SOB_TRANSITION;
+        p.v = true;
+    }
+}
+
 template<bool sampleInterrupt> inline auto W65C02::read(uint16_t addr) -> uint8_t {
     if constexpr (sampleInterrupt) {
         SAMPLE_INTR
     }
 
+    CHECK_SOB
+
     while (lines & RDY_LINE) {
         if constexpr (sampleInterrupt) {
             SAMPLE_INTR
         }
+        CHECK_SOB
         REF_CALL READ_BYTE(addr); // process other BUS participants and hope someone clears RDY
     }
 
@@ -118,16 +146,26 @@ template<bool sampleInterrupt> inline auto W65C02::readPC() -> uint8_t {
     return read<sampleInterrupt>( pc++);
 }
 
-template<bool sampleInterrupt> inline auto W65C02::write(uint16_t addr, uint8_t value) -> void {
+template<bool sampleInterrupt, bool writeStatus> inline auto W65C02::write(uint16_t addr, uint8_t value) -> void {
     if constexpr (sampleInterrupt) {
         SAMPLE_INTR
     }
+    CHECK_SOB
 
-    REF_CALL WRITE_BYTE(addr, value);
+    while (lines & RDY_LINE) { // note: NMOS 6502 ignores RDY during writes, CMOS does not
+        if constexpr (sampleInterrupt) {
+            SAMPLE_INTR
+        }
+        CHECK_SOB
+        REF_CALL WRITE_BYTE(addr, value); // process other BUS participants and hope someone clears RDY
+    }
+
+    if constexpr (writeStatus)  REF_CALL WRITE_BYTE(addr, p | 0x10 | 0x20); // reflect a possible SOB transition
+    else                        REF_CALL WRITE_BYTE(addr, value);
 }
 
-template<bool sampleInterrupt> auto W65C02::push(uint8_t data) -> void {
-    write<sampleInterrupt>(0x100 | s--, data);
+template<bool sampleInterrupt, bool writeStatus> auto W65C02::push(uint8_t data) -> void {
+    write<sampleInterrupt, writeStatus>(0x100 | s--, data);
 }
 
 template<bool sampleInterrupt> auto W65C02::pull() -> uint8_t {

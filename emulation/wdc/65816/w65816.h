@@ -37,7 +37,7 @@ struct W65816 {
 
 protected:
 #ifdef REF
-    W65816(REF_NS::REF& ref) : ref(ref) { build(); }
+    W65816(REF_NS::REF& ref) : ref(ref) { }
     REF_NS::REF& ref;
 #else
     W65816() { }

@@ -121,6 +121,7 @@ template<uint8_t Inst> auto W65C02::arithmetic(uint8_t data) -> void {
             p.z = (data & a) == 0;
             p.v = data & 0x40;
             p.n = data & 0x80;
+            lines |= SOB_BLOCK1;
         } break;
         case BIT_IM: {
             p.z = (data & a) == 0;
@@ -143,7 +144,7 @@ template<uint8_t Inst> auto W65C02::arithmetic(uint8_t data) -> void {
             p.n = result & 0x80;
             p.z = (uint8_t)result == 0;
             a = result & 0xff;
-
+            lines |= SOB_BLOCK1;
         } break;
         case SBC: {
             int result;
@@ -164,6 +165,7 @@ template<uint8_t Inst> auto W65C02::arithmetic(uint8_t data) -> void {
             p.z = (uint8_t)result == 0;
             p.n = result & 0x80;
             a = result & 0xff;
+            lines |= SOB_BLOCK1;
         } break;
 
         default:
