@@ -1,44 +1,88 @@
 
 namespace WDCFAMILY {
 
-inline auto W65816::read(uint32_t addr) -> uint8_t {
-    return REF_CALL READ_BYTE(addr);
+template<uint8_t actions> inline auto W65816::idle() -> void {
+    if constexpr (actions & SAMPLE_INTR)
+        CHECK_INTR
+    SYNC();
+
+#ifdef SUPPORT_RDY
+    while (lines & RDY_LINE) {
+        if constexpr (actions & SET_FLAG_I)     p.i = true;
+        if constexpr (actions & CLEAR_FLAG_I)   p.i = false;
+
+        if constexpr (actions & SAMPLE_INTR)
+            CHECK_INTR
+        SYNC();
+    }
+#endif
 }
 
-inline auto W65816::readBank(uint32_t addr) -> uint8_t {
-    return read( ((dbr << 16) + addr) & 0xffffff );
+template<uint8_t actions> inline auto W65816::read(uint32_t addr) -> uint8_t {
+    if constexpr (actions & SAMPLE_INTR)
+        CHECK_INTR
+    SYNC();
+
+#ifdef SUPPORT_RDY
+    while (lines & RDY_LINE) {
+        if constexpr (actions & SET_FLAG_I)     p.i = true;
+        if constexpr (actions & CLEAR_FLAG_I)   p.i = false;
+
+        if constexpr (actions & SAMPLE_INTR)
+            CHECK_INTR
+        SYNC();
+    }
+#endif
+
+    return READ_BYTE(addr);
 }
 
-inline auto W65816::readPC() -> uint8_t {
-    return read((pbr << 16) | pc++);
+template<uint8_t actions> inline auto W65816::write(uint32_t addr, uint8_t value) -> void {
+    if constexpr (actions & SAMPLE_INTR)
+        CHECK_INTR
+    SYNC();
+
+#ifdef SUPPORT_RDY
+    while (lines & RDY_LINE) {
+        if constexpr (actions & SAMPLE_INTR)
+            CHECK_INTR
+        SYNC();
+    }
+#endif
+
+    WRITE_BYTE(addr, value);
 }
 
-inline auto W65816::readStack(uint32_t addr) -> uint8_t {
-    return read((s + addr) & 0xffff );
+template<uint8_t actions> inline auto W65816::readBank(uint32_t addr) -> uint8_t {
+    return read<actions>( ((dbr << 16) + addr) & 0xffffff );
 }
 
-inline auto W65816::write(uint32_t addr, uint8_t value) -> void {
-    REF_CALL WRITE_BYTE(addr, value);
+template<uint8_t actions> inline auto W65816::readPC() -> uint8_t {
+    return read<actions>((pbr << 16) | pc++);
 }
 
-inline auto W65816::writeBank(uint32_t addr, uint8_t data) -> void {
-    write( ((dbr << 16) + addr) & 0xffffff, data );
+template<uint8_t actions> inline auto W65816::readStack(uint32_t addr) -> uint8_t {
+    return read<actions>((s + addr) & 0xffff );
 }
 
-inline auto W65816::writeStack(uint32_t addr, uint8_t data) -> void {
-    write((s + addr) & 0xffff, data );
+template<uint8_t actions> inline auto W65816::writeBank(uint32_t addr, uint8_t data) -> void {
+    write<actions>( ((dbr << 16) + addr) & 0xffffff, data );
 }
 
-template<bool native> auto W65816::push(uint8_t data) -> void {
-    write(s, data);
-    if constexpr (native) s--;
+template<uint8_t actions> inline auto W65816::writeStack(uint32_t addr, uint8_t data) -> void {
+    write<actions>((s + addr) & 0xffff, data );
+}
+
+template<uint8_t actions> auto W65816::push(uint8_t data) -> void {
+    write<actions>(s, data);
+    if constexpr (actions & NATIVE) s--;
     else { modeE ? decByteL(s) : (void)s--; }
 }
 
-template<bool native> auto W65816::pull() -> uint8_t {
-    if constexpr (native) s++;
+template<uint8_t actions> auto W65816::pull() -> uint8_t {
+    if constexpr (actions & NATIVE) s++;
     else { modeE ? incByteL(s) : (void)s++; }
-    return read(s);
+    return read<actions>(s);
 }
 
 inline auto W65816::directAdr(uint32_t addr) -> uint32_t {

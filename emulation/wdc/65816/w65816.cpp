@@ -12,9 +12,11 @@
 
 #define READ_BYTE       REF_CALL readByte
 #define WRITE_BYTE      REF_CALL writeByte
-#define IDLE            REF_CALL sync
+#define SYNC            REF_CALL sync
+#define OUTPUT_RDY_LOW  REF_CALL outputRDYLineLow
+#define SET_MEMORY_LOCK REF_CALL setMemoryLock
 
-#define SAMPLE_INTR     { if(intrLine & (NMI_TRANSITION | IRQ_LINE)) checkForInterrupt(); }
+#define CHECK_INTR     { if(lines & (NMI_TRANSITION | IRQ_LINE)) checkForInterrupt(); }
 
 #include "memory.cpp"
 #include "instructions.cpp"
@@ -25,9 +27,13 @@ namespace WDCFAMILY {
 auto W65816::process()->void {
     if (control) {
         if (control & WAI) {
-            SAMPLE_INTR
-            if ((control & WAI) == 0) IDLE();
-            return IDLE();
+            // WAI sets RDY (bidirectional) low and repeats the same cycle. It's same behavior like external RDY change.
+            // Since "WAI" can last a very long time, it is covered here to keep the emulation responsive.
+            // Otherwise, the UI may not be refreshed in time. Furthermore, no "RDY" check is required in each cycle.
+            // This requires additional power and can be switched off if no external "RDY" change is planned.
+            // IRQ/NMI set RDY hi again and resume processing but only if RDY is not forced low from external.
+            CHECK_INTR
+            return SYNC();
         }
 
         if (control & NMI_PENDING) {
@@ -42,12 +48,11 @@ auto W65816::process()->void {
 
         // check STP and RESET last for performance reasons
         if (control & STP) {
-            return IDLE();
+            return idle();
         }
 
         if (control & RESET) {
             control &= ~RESET;
-            IDLE(132);
             return interrupt( 0xfffc );
         }
     }
@@ -60,7 +65,7 @@ auto W65816::process()->void {
 template<bool hardware> auto W65816::interrupt(const uint16_t& vector) -> void {
     if constexpr(hardware) {
         read( (pbr << 8) | pc );
-        IDLE();
+        idle();
     } else
         readPC();
 
@@ -73,8 +78,7 @@ template<bool hardware> auto W65816::interrupt(const uint16_t& vector) -> void {
     p.i = true;
     p.d = false;
     uint16_t newPC = read(vector);
-    SAMPLE_INTR
-    newPC |= read(vector + 1) << 8;
+    newPC |= read<SAMPLE_INTR>(vector + 1) << 8;
     pc = newPC;
     pbr = 0;
 }
@@ -90,34 +94,42 @@ auto W65816::power() -> void {
     s = 0x01ff;
     d = 0;
     p = 0x34;
-    intrLine = 0;
+    lines = 0;
     control = RESET;
 }
 
 auto W65816::setNmiLineLow(bool state) -> void {
     if (state) {
-        if ((intrLine & NMI_LINE) == 0)
-            intrLine |= NMI_TRANSITION;
-        intrLine |= NMI_LINE;
+        if ((lines & NMI_LINE) == 0)
+            lines |= NMI_TRANSITION;
+        lines |= NMI_LINE;
     } else
-        intrLine &= ~NMI_LINE;
+        lines &= ~NMI_LINE;
 }
 
 auto W65816::setIrqLineLow(bool state) -> void {
     if (state)
-        intrLine |= IRQ_LINE;
+        lines |= IRQ_LINE;
     else
-        intrLine &= ~IRQ_LINE;
+        lines &= ~IRQ_LINE;
+}
+
+auto W65816::setRdyLineLow(bool state) -> void {
+    if (state)  lines |= RDY_LINE;
+    else {
+        lines &= ~RDY_LINE;
+        control &= ~WAI;
+    }
 }
 
 auto W65816::checkForInterrupt() -> void {
-    if (intrLine & NMI_TRANSITION) {
-        intrLine &= ~NMI_TRANSITION;
+    if (lines & NMI_TRANSITION) {
+        lines &= ~NMI_TRANSITION;
         control &= ~WAI;
         control |= NMI_PENDING;
     }
 
-    if (intrLine & IRQ_LINE) {
+    if (lines & IRQ_LINE) {
         // will re-trigger if an external device doesn't change line before the next interrupt check
         if (!p.i)
             control |= IRQ_PENDING;
@@ -127,26 +139,27 @@ auto W65816::checkForInterrupt() -> void {
 
 inline auto W65816::idle2() -> void {
     if(d & 0xff)
-        IDLE();
+        idle();
 }
 
 #define PAGE_CROSSED(a1, a2) (((a1) ^ (a2)) & 0xff00)
 
 inline auto W65816::idle4(const uint16_t a1, const uint16_t a2) -> void {
     if(!p.x || PAGE_CROSSED(a1, a2))
-        IDLE();
+        idle();
 }
 
 inline auto W65816::idle6(uint16_t address) -> void {
     if(modeE && PAGE_CROSSED(pc, address))
-        IDLE();
+        idle();
 }
 
 inline auto W65816::idleIrq() -> void {
+    CHECK_INTR
     if (control & (IRQ_PENDING | NMI_PENDING))
-        read((pbr << 16) | pc);
+        read<SAMPLE_INTR>((pbr << 16) | pc);
     else
-        IDLE();
+        idle<SAMPLE_INTR>();
 }
 
 }

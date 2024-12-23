@@ -10,7 +10,7 @@ auto W65C02::opJmpAbsIndexedIndirect() -> void {
     uint16_t absIndexed = addr + x;
     read( ((addr & 0xff00) | (absIndexed & 0xff)));
     uint16_t newPC = read(absIndexed);
-    newPC |= read<true>((absIndexed + 1) & 0xffff) << 8;
+    newPC |= read<SAMPLE_INTR>((absIndexed + 1) & 0xffff) << 8;
     pc = newPC;
 }
 
@@ -32,18 +32,18 @@ template<uint8_t Inst, uint8_t Index> auto W65C02::opAbsolute() -> void {
     }
     if constexpr (storeMode) {
         if constexpr (Index != NONE) {
-            if constexpr (Inst == STZ) write<true>(absIndexed, 0);
-            if constexpr (Inst == STA) write<true>(absIndexed, a);
+            if constexpr (Inst == STZ) write<SAMPLE_INTR>(absIndexed, 0);
+            if constexpr (Inst == STA) write<SAMPLE_INTR>(absIndexed, a);
         } else {
-            if constexpr (Inst == STY) write<true>(addr, y);
-            if constexpr (Inst == STX) write<true>(addr, x);
-            if constexpr (Inst == STA) write<true>(addr, a);
-            if constexpr (Inst == STZ) write<true>(addr, 0);
+            if constexpr (Inst == STY) write<SAMPLE_INTR>(addr, y);
+            if constexpr (Inst == STX) write<SAMPLE_INTR>(addr, x);
+            if constexpr (Inst == STA) write<SAMPLE_INTR>(addr, a);
+            if constexpr (Inst == STZ) write<SAMPLE_INTR>(addr, 0);
         }
     } else {
         uint8_t data;
-        if constexpr (Index != NONE)    data = read<true>(absIndexed);
-        if constexpr (Index == NONE)    data = read<true>(addr);
+        if constexpr (Index != NONE)    data = read<SAMPLE_INTR>(absIndexed);
+        if constexpr (Index == NONE)    data = read<SAMPLE_INTR>(addr);
 
         arithmetic<Inst>(data);
     }
@@ -67,8 +67,8 @@ template<uint8_t Inst, uint8_t Index> auto W65C02::opModifyAbsolute() -> void {
         write(addr, data);
     }
     arithmeticM<Inst>(data);
-    if constexpr (Index == INDEX_X) write<true>(absIndexed, data);
-    if constexpr (Index == NONE)    write<true>(addr, data);
+    if constexpr (Index == INDEX_X) write<SAMPLE_INTR>(absIndexed, data);
+    if constexpr (Index == NONE)    write<SAMPLE_INTR>(addr, data);
     SET_MEMORY_LOCK(false);
 }
 
@@ -78,7 +78,7 @@ auto W65C02::opJmpIndirect() -> void {
     addr |= readPC() << 8;
     uint16_t newPC = read(addr);
     read(addr); // dummy here ?
-    newPC |= read<true>(addr + 1) << 8;
+    newPC |= read<SAMPLE_INTR>(addr + 1) << 8;
     pc = newPC;
 }
 
@@ -96,12 +96,12 @@ template<uint8_t Inst, uint8_t Index> auto W65C02::opZeroPage() -> void {
     }
 
     if constexpr (storeMode) {
-        if constexpr (Inst == STA) write<true>(zeroPage, a);
-        if constexpr (Inst == STX) write<true>(zeroPage, x);
-        if constexpr (Inst == STY) write<true>(zeroPage, y);
-        if constexpr (Inst == STZ) write<true>(zeroPage, 0);
+        if constexpr (Inst == STA) write<SAMPLE_INTR>(zeroPage, a);
+        if constexpr (Inst == STX) write<SAMPLE_INTR>(zeroPage, x);
+        if constexpr (Inst == STY) write<SAMPLE_INTR>(zeroPage, y);
+        if constexpr (Inst == STZ) write<SAMPLE_INTR>(zeroPage, 0);
     } else {
-        uint8_t data = read<true>(zeroPage);
+        uint8_t data = read<SAMPLE_INTR>(zeroPage);
         arithmetic<Inst>(data);
     }
 }
@@ -119,7 +119,7 @@ template<uint8_t Inst, uint8_t Index> auto W65C02::opModifyZeroPage() -> void {
     uint8_t data = read(zeroPage);
     write(zeroPage, data);
     arithmeticM<Inst>(data);
-    write<true>(zeroPage, data);
+    write<SAMPLE_INTR>(zeroPage, data);
     SET_MEMORY_LOCK(false);
 }
 
@@ -133,9 +133,9 @@ template<uint8_t Inst> auto W65C02::opZeroPageIndexedIndirect() -> void {
     addr |= read(zeroPage) << 8;
 
     if constexpr (Inst == STA)
-        write<true>( addr, a);
+        write<SAMPLE_INTR>( addr, a);
     else {
-        uint8_t data = read<true>(addr);
+        uint8_t data = read<SAMPLE_INTR>(addr);
         arithmetic<Inst>(data);
     }
 }
@@ -157,31 +157,31 @@ template<uint8_t Inst, uint8_t Index> auto W65C02::opZeroPageIndirect() -> void 
     }
 
     if constexpr (Inst == STA) {
-        if constexpr (Index == INDEX_Y) write<true>( absIndexed, a);
-        if constexpr (Index == NONE)    write<true>( addr, a);
+        if constexpr (Index == INDEX_Y) write<SAMPLE_INTR>( absIndexed, a);
+        if constexpr (Index == NONE)    write<SAMPLE_INTR>( addr, a);
     } else {
         uint8_t data;
-        if constexpr (Index == INDEX_Y) data = read<true>(absIndexed);
-        if constexpr (Index == NONE)    data = read<true>(addr);
+        if constexpr (Index == INDEX_Y) data = read<SAMPLE_INTR>(absIndexed);
+        if constexpr (Index == NONE)    data = read<SAMPLE_INTR>(addr);
         arithmetic<Inst>(data);
     }
 }
 
 // Immediate-#
 template<uint8_t Inst> auto W65C02::opImmediate() -> void {
-    uint8_t data = readPC<true>();
+    uint8_t data = readPC<SAMPLE_INTR>();
     arithmetic<Inst>(data);
 }
 
 // Program Counter Relative-r
 auto W65C02::opBranch(bool take) -> void {
-    uint8_t data = readPC<true>();
+    uint8_t data = readPC<SAMPLE_INTR>();
 
     if (take) {
         uint16_t addr = pc + int8_t(data);
         idle();
         if (PAGE_CROSSED(addr, pc))
-            read<true>( ((pc & 0xff00) | (addr & 0xff)));
+            read<SAMPLE_INTR>( ((pc & 0xff00) | (addr & 0xff)));
 
         pc = addr;
     }
@@ -190,7 +190,7 @@ auto W65C02::opBranch(bool take) -> void {
 template<uint8_t Inst> auto W65C02::opBB() -> void {
     uint8_t zeroPage = readPC();
     uint8_t offset = read(zeroPage);
-    uint8_t data = readPC<true>();
+    uint8_t data = readPC<SAMPLE_INTR>();
 
     bool take;
     if constexpr (Inst == BBR0) take = (offset & 1) == 0;
@@ -215,7 +215,7 @@ template<uint8_t Inst> auto W65C02::opBB() -> void {
         uint16_t addr = pc + int8_t(data);
         idle();
         if (PAGE_CROSSED(addr, pc))
-            read<true>( ((pc & 0xff00) | (addr & 0xff)));
+            read<SAMPLE_INTR>( ((pc & 0xff00) | (addr & 0xff)));
 
         pc = addr;
     }
@@ -226,7 +226,7 @@ auto W65C02::opJSR() -> void {
     idle();
     push(pc >> 8);
     push(pc & 0xff);
-    newPC |= read<true>(pc) << 8;
+    newPC |= read<SAMPLE_INTR>(pc) << 8;
     pc = newPC;
 }
 
@@ -236,7 +236,7 @@ auto W65C02::opRTS() -> void {
     uint16_t newPC = pull();
     newPC |= pull() << 8;
     pc = newPC;
-    readPC<true>();
+    readPC<SAMPLE_INTR>();
 }
 
 auto W65C02::opRTI() -> void {
@@ -244,62 +244,54 @@ auto W65C02::opRTI() -> void {
     read(0x100 | s);
     p = pull();
     pc = pull();
-    pc |= pull<true>() << 8;
+    pc |= pull<SAMPLE_INTR>() << 8;
 }
 
 auto W65C02::opPHP() -> void {
     read( pc );
-    push<true, true>( p | 0x10 | 0x20 );
+    push<SAMPLE_INTR | WRITE_LATE_P_REG>( p | 0x10 | 0x20 );
 }
 
 auto W65C02::opPLP() -> void {
     idle();
     read(0x100 | s);
-    p = pull<true>();
+    p = pull<SAMPLE_INTR>();
 }
 
 auto W65C02::opClearD() -> void {
-    idle<true>();
+    idle<SAMPLE_INTR>();
     p.d = false;
 }
 
 auto W65C02::opClearC() -> void {
-    idle<true>();
+    idle<SAMPLE_INTR>();
     p.c = false;
 }
 
 auto W65C02::opClearV() -> void {
-    idle<true>();
+    idle<SAMPLE_INTR>();
     p.v = false;
     lines |= SOB_BLOCK2;
 }
 
 auto W65C02::opSetC() -> void {
-    idle<true>();
+    idle<SAMPLE_INTR>();
     p.c = true;
 }
 
 auto W65C02::opSetD() -> void {
-    idle<true>();
+    idle<SAMPLE_INTR>();
     p.d = true;
 }
 
 template<bool setI> auto W65C02::opUpdateI() -> void {
-    SAMPLE_INTR
-    CHECK_SOB
-    while (lines & RDY_LINE) {
-        SAMPLE_INTR
-        CHECK_SOB
-        REF_CALL READ_BYTE(pc);
-        p.i = setI;
-    }
-    REF_CALL READ_BYTE(pc);
+    setI ? idle<SET_FLAG_I | SAMPLE_INTR>() : idle<CLEAR_FLAG_I | SAMPLE_INTR>();
     p.i = setI;
 }
 
 auto W65C02::opJmpAbsolute() -> void {
     uint16_t newPC = readPC();
-    newPC |= readPC<true>() << 8;
+    newPC |= readPC<SAMPLE_INTR>() << 8;
     pc = newPC;
 }
 
@@ -310,13 +302,13 @@ auto W65C02::opNoOp5c() -> void {
     read(0xffff);
     read(0xffff);
     read(0xffff);
-    read<true>(0xffff);
+    read<SAMPLE_INTR>(0xffff);
 }
 
 // Accumulator-A
 // Implied-i
 template<uint8_t Inst, uint8_t Index> auto W65C02::opImplied() -> void {
-    idle<true>();
+    idle<SAMPLE_INTR>();
     if constexpr (Index == 0) arithmeticM<Inst>(a);
     if constexpr (Index == INDEX_X) arithmeticM<Inst>(x);
     if constexpr (Index == INDEX_Y) arithmeticM<Inst>(y);
@@ -325,13 +317,13 @@ template<uint8_t Inst, uint8_t Index> auto W65C02::opImplied() -> void {
 // Stack-s
 template<uint8_t Inst> auto W65C02::opPush() -> void {
     idle();
-    if constexpr (Inst == STX) push<true>( x );
-    if constexpr (Inst == STY) push<true>( y );
-    if constexpr (Inst == STA) push<true>( a );
+    if constexpr (Inst == STX) push<SAMPLE_INTR>( x );
+    if constexpr (Inst == STY) push<SAMPLE_INTR>( y );
+    if constexpr (Inst == STA) push<SAMPLE_INTR>( a );
 }
 
 #define _PULL(reg) \
-    reg = pull<true>();  \
+    reg = pull<SAMPLE_INTR>();  \
     p.n = reg & 0x80;   \
     p.z = reg == 0;
 
@@ -344,12 +336,12 @@ template<uint8_t Inst> auto W65C02::opPull() -> void {
 }
 
 auto W65C02::opTXS() -> void {
-    idle<true>();
+    idle<SAMPLE_INTR>();
     s = x;
 }
 
 #define _TRANSFER(From, To) \
-    idle<true>();  \
+    idle<SAMPLE_INTR>();  \
     To = From;  \
     p.z = To == 0;   \
     p.n = To & 0x80;
@@ -361,11 +353,11 @@ auto W65C02::opTAY() -> void { _TRANSFER(a, y) }
 auto W65C02::opTAX() -> void { _TRANSFER(a, x) }
 
 inline auto W65C02::opInvalid() -> void {
-    readPC<true>();
+    readPC<SAMPLE_INTR>();
 }
 
 inline auto W65C02::opNOP() -> void {
-    idle<true>();
+    idle<SAMPLE_INTR>();
 }
 
 inline auto W65C02::opBRK() -> void {
@@ -373,9 +365,14 @@ inline auto W65C02::opBRK() -> void {
 }
 
 auto W65C02::opWait() -> void {
+    idle();
     control |= WAI;
-    UPDATE_RDY(true);
-    idle<true>();
+    // don't change internal RDY state because this line can be forced from external.
+    // if forced "hi" then WAI doesn't halt the CPU.
+    // if forced "lo" then IRQ/NMI can't resume CPU.
+    // external device can detect a WAI instruction by observing RDY line
+    OUTPUT_RDY_LOW(); // when set RDY to "hi" in this callback, WAI will not happen.
+    idle<SAMPLE_INTR>();
 }
 
 auto W65C02::opStop() -> void {

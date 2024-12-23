@@ -3,15 +3,15 @@
 
 #include <cstdint>
 
-// SOB is tested in every cycle and this affects performance.
+// RDY and SOB input lines are tested in every cycle, and this affects performance.
 // therefore, it should only be activated when it is actually being used.
-//#define SUPPORT_SOB
+#define SUPPORT_RDY
+#define SUPPORT_SOB
 
 // use this if you want communication to be about references instead of inheritance.
 // put reference in constructor
-
 //#define REF reference
-//#define REF_NS namespace of reference // optional
+//#define REF_NS namespace // optional
 //#define REF_TYPE struct // or class
 //#define REF_INCLUDE "include path of reference class"
 
@@ -46,6 +46,8 @@ struct W65C02 {
             BBR0, BBR1, BBR2, BBR3, BBR4, BBR5, BBR6, BBR7, BBS0, BBS1, BBS2, BBS3, BBS4, BBS5, BBS6, BBS7 };
 
     enum {  NONE = 0, INDEX_X = 1, INDEX_Y = 2 };
+
+    enum { SAMPLE_INTR = 1, SET_FLAG_I = 2, CLEAR_FLAG_I = 4, WRITE_LATE_P_REG = 8};
 
 protected:
 #ifdef REF
@@ -95,13 +97,13 @@ protected:
     auto checkForInterrupt() -> void;
     auto checkForSOB() -> void;
 
-    template<bool sampleInterrupt = false> inline auto read(uint16_t addr) -> uint8_t;
-    template<bool sampleInterrupt = false, bool writeStatus = false> inline auto write(uint16_t addr, uint8_t value) -> void;
+    template<uint8_t actions = 0> auto read(uint16_t addr) -> uint8_t;
+    template<uint8_t actions = 0> auto write(uint16_t addr, uint8_t value) -> void;
 
-    template<bool sampleInterrupt = false> inline auto readPC() -> uint8_t;
-    template<bool sampleInterrupt = false> auto idle() -> void;
-    template<bool sampleInterrupt = false, bool writeStatus = false> auto push(uint8_t data) -> void;
-    template<bool sampleInterrupt = false> auto pull() -> uint8_t;
+    template<uint8_t actions = 0> auto readPC() -> uint8_t;
+    template<uint8_t actions = 0> auto idle() -> void;
+    template<uint8_t actions = 0> auto push(uint8_t data) -> void;
+    template<uint8_t actions = 0> auto pull() -> uint8_t;
 
     template<uint8_t Inst> auto arithmetic(uint8_t data) -> void;
     template<uint8_t Inst> auto arithmeticM(uint8_t& reg) -> void;
@@ -151,8 +153,11 @@ protected:
 #ifndef REF
     virtual auto readByte(uint32_t adr) -> uint8_t = 0;
     virtual auto writeByte(uint32_t adr, uint8_t value) -> void = 0;
-    virtual auto updateRDY(bool state) -> void {} // RDY is bi-directional
-    virtual auto setMemoryLock(bool state) -> void {} // hint to other BUS participants not to interfere RMW
+    virtual auto sync() -> void = 0;
+
+    // optional
+    virtual auto outputRDYLineLow() -> void {} // RDY is bi-directional
+    virtual auto setMemoryLock(bool state) -> void {} // MLB hints other BUS participants not to interfere RMW
 #endif
 
 };

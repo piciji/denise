@@ -12,10 +12,11 @@
 
 #define READ_BYTE       REF_CALL readByte
 #define WRITE_BYTE      REF_CALL writeByte
-#define UPDATE_RDY      REF_CALL updateRDY
+#define SYNC            REF_CALL sync
+#define OUTPUT_RDY_LOW  REF_CALL outputRDYLineLow
 #define SET_MEMORY_LOCK REF_CALL setMemoryLock
 
-#define SAMPLE_INTR     { if(lines & (NMI_TRANSITION | IRQ_LINE)) checkForInterrupt(); }
+#define CHECK_INTR     { if(lines & (NMI_TRANSITION | IRQ_LINE)) checkForInterrupt(); }
 
 #ifdef SUPPORT_SOB
 #define CHECK_SOB       { if (lines & (SOB_TRANSITION | SOB_BLOCK1 | SOB_BLOCK2)) checkForSOB(); }
@@ -43,11 +44,11 @@ template<bool hardware> auto W65C02::interrupt(const uint16_t& vector) -> void {
     push(pc & 0xff);
 
     p.b = !hardware;
-    push<false, true>( p | 0x20);
+    push<WRITE_LATE_P_REG>( p | 0x20);
     p.i = true;
     p.d = false;
     uint16_t newPC = read(vector);
-    newPC |= read<true>(vector + 1) << 8;
+    newPC |= read<SAMPLE_INTR>(vector + 1) << 8;
     pc = newPC;
 }
 
@@ -78,7 +79,10 @@ auto W65C02::setIrqLineLow(bool state) -> void {
 
 auto W65C02::setRdyLineLow(bool state) -> void {
     if (state)  lines |= RDY_LINE;
-    else        lines &= ~RDY_LINE;
+    else {
+        lines &= ~RDY_LINE;
+        control &= ~WAI;
+    }
 }
 
 auto W65C02::setSobLineLow(bool state) -> void {
@@ -96,7 +100,6 @@ auto W65C02::checkForInterrupt() -> void {
         lines &= ~NMI_TRANSITION;
         control &= ~WAI;
         control |= NMI_PENDING;
-        UPDATE_RDY(false);
     }
 
     if (lines & IRQ_LINE) {
@@ -104,7 +107,6 @@ auto W65C02::checkForInterrupt() -> void {
         if (!p.i)
             control |= IRQ_PENDING;
         control &= ~WAI;
-        UPDATE_RDY(false);
     }
 }
 
@@ -120,64 +122,74 @@ auto W65C02::checkForSOB() -> void {
     }
 }
 
-template<bool sampleInterrupt> inline auto W65C02::read(uint16_t addr) -> uint8_t {
-    if constexpr (sampleInterrupt) {
-        SAMPLE_INTR
-    }
-
+template<uint8_t actions> inline auto W65C02::read(uint16_t addr) -> uint8_t {
+    if constexpr (actions & SAMPLE_INTR)
+        CHECK_INTR
     CHECK_SOB
+    SYNC();
 
+#ifdef SUPPORT_RDY
     while (lines & RDY_LINE) {
-        if constexpr (sampleInterrupt) {
-            SAMPLE_INTR
-        }
+        if constexpr (actions & SET_FLAG_I)     p.i = true;
+        if constexpr (actions & CLEAR_FLAG_I)   p.i = false;
+
+        if constexpr (actions & SAMPLE_INTR)
+            CHECK_INTR
         CHECK_SOB
-        REF_CALL READ_BYTE(addr); // process other BUS participants and hope someone clears RDY
+        SYNC(); // process other BUS participants and hope someone clears RDY
     }
+#endif
 
-    return REF_CALL READ_BYTE(addr);
+    return READ_BYTE(addr);
 }
 
-template<bool sampleInterrupt> inline auto W65C02::idle() -> void {
-    read<sampleInterrupt>(pc);
-}
-
-template<bool sampleInterrupt> inline auto W65C02::readPC() -> uint8_t {
-    return read<sampleInterrupt>( pc++);
-}
-
-template<bool sampleInterrupt, bool writeStatus> inline auto W65C02::write(uint16_t addr, uint8_t value) -> void {
-    if constexpr (sampleInterrupt) {
-        SAMPLE_INTR
-    }
+template<uint8_t actions> inline auto W65C02::write(uint16_t addr, uint8_t value) -> void {
+    if constexpr (actions & SAMPLE_INTR)
+        CHECK_INTR
     CHECK_SOB
+    SYNC();
 
+#ifdef SUPPORT_RDY
     while (lines & RDY_LINE) { // note: NMOS 6502 ignores RDY during writes, CMOS does not
-        if constexpr (sampleInterrupt) {
-            SAMPLE_INTR
-        }
+        if constexpr (actions & SAMPLE_INTR)
+            CHECK_INTR
         CHECK_SOB
-        REF_CALL WRITE_BYTE(addr, value); // process other BUS participants and hope someone clears RDY
+        SYNC(); // process other BUS participants and hope someone clears RDY
     }
 
-    if constexpr (writeStatus)  REF_CALL WRITE_BYTE(addr, p | 0x10 | 0x20); // reflect a possible SOB transition
-    else                        REF_CALL WRITE_BYTE(addr, value);
+    if constexpr (actions & WRITE_LATE_P_REG)  WRITE_BYTE(addr, p | 0x10 | 0x20); // reflect a possible SOB transition while RDY
+    else
+#endif
+        WRITE_BYTE(addr, value);
 }
 
-template<bool sampleInterrupt, bool writeStatus> auto W65C02::push(uint8_t data) -> void {
-    write<sampleInterrupt, writeStatus>(0x100 | s--, data);
+template<uint8_t actions> inline auto W65C02::idle() -> void {
+    read<actions>(pc);
 }
 
-template<bool sampleInterrupt> auto W65C02::pull() -> uint8_t {
-    return read<sampleInterrupt>(0x100 | ++s);
+template<uint8_t actions> inline auto W65C02::readPC() -> uint8_t {
+    return read<actions>( pc++);
+}
+
+template<uint8_t actions> auto W65C02::push(uint8_t data) -> void {
+    write<actions>(0x100 | s--, data);
+}
+
+template<uint8_t actions> auto W65C02::pull() -> uint8_t {
+    return read<actions>(0x100 | ++s);
 }
 
 auto W65C02::process()->void {
     if (control) {
         if (control & WAI) {
-            SAMPLE_INTR
-            if ((control & WAI) == 0) idle();
-            return idle();
+            // WAI sets RDY (bidirectional) low and repeats the same cycle. It's same behavior like external RDY change.
+            // Since "WAI" can last a very long time, it is covered here to keep the emulation responsive.
+            // Otherwise, the UI may not be refreshed in time. Furthermore, no "RDY" check is required in each cycle.
+            // This requires additional power and can be switched off if no external "RDY" change is planned.
+            // IRQ/NMI set RDY hi again and resume processing but only if RDY is not forced low from external.
+            CHECK_INTR
+            CHECK_SOB
+            return SYNC();
         }
 
         if (control & NMI_PENDING) {
@@ -430,7 +442,7 @@ auto W65C02::process()->void {
         __M(0xff, BB, BBS7)
 
         default:  // 30 opcodes: 0x*3   0x*b (except: 0xcb, 0xdb)
-            SAMPLE_INTR
+            CHECK_INTR
             break;
     }
 }

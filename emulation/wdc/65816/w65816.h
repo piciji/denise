@@ -3,6 +3,10 @@
 
 #include <cstdint>
 
+// RDY input line is tested in every cycle, and this affects performance.
+// therefore, it should only be activated when it is actually being used.
+#define SUPPORT_RDY
+
 //#define REF SuperCPU
 //#define REF_NS LIBC64   // optional
 //#define REF_TYPE struct // or class
@@ -25,15 +29,18 @@ struct W65816 {
     auto process() -> void;
     auto setNmiLineLow(bool state) -> void;
     auto setIrqLineLow(bool state) -> void;
+    auto setRdyLineLow(bool state) -> void;
 
-    enum {  RESET = 1, WAI = 2, STP = 4, IRQ_LINE = 8, NMI_LINE = 0x10,
-            NMI_TRANSITION = 0x20, IRQ_PENDING = 0x40, NMI_PENDING = 0x80 };
+    enum {  RESET = 1, WAI = 2, STP = 4, IRQ_LINE = 8, NMI_LINE = 0x10, RDY_LINE = 0x20,
+            NMI_TRANSITION = 0x40, IRQ_PENDING = 0x80, NMI_PENDING = 0x100 };
 
     enum {  LDA = 1, LDX, LDY, ORA, AND, EOR, ADC, SBC, CMP, CPX, CPY,
             ROL, ROR, ASL, LSR, DEC, INC, TSB, TRB, BIT, BIT_IM,
             STA, STZ, STX, STY };
 
     enum {  NONE = 0, INDEX_X = 1, INDEX_Y = 2 };
+
+    enum { SAMPLE_INTR = 1, SET_FLAG_I = 2, CLEAR_FLAG_I = 4, NATIVE = 8 };
 
 protected:
 #ifdef REF
@@ -82,22 +89,22 @@ protected:
 
     bool modeE;
     int control;
-    int intrLine;
+    int lines;
 
     template<bool hardware = true> auto interrupt(const uint16_t& vector) -> void;
 
     auto checkForInterrupt() -> void;
 
-    inline auto read(uint32_t addr) -> uint8_t;
-    inline auto write(uint32_t addr, uint8_t value) -> void;
-
-    inline auto readBank(uint32_t addr) -> uint8_t;
-    inline auto writeBank(uint32_t addr, uint8_t data) -> void;
-    inline auto readPC() -> uint8_t;
-    inline auto readStack(uint32_t addr) -> uint8_t;
-    auto writeStack(uint32_t addr, uint8_t data) -> void;
-    template<bool native = false> auto push(uint8_t data) -> void;
-    template<bool native = false> auto pull() -> uint8_t;
+    template<uint8_t actions = 0> inline auto idle() -> void;
+    template<uint8_t actions = 0> inline auto read(uint32_t addr) -> uint8_t;
+    template<uint8_t actions = 0> inline auto write(uint32_t addr, uint8_t value) -> void;
+    template<uint8_t actions = 0> inline auto readBank(uint32_t addr) -> uint8_t;
+    template<uint8_t actions = 0> inline auto writeBank(uint32_t addr, uint8_t data) -> void;
+    template<uint8_t actions = 0> inline auto readPC() -> uint8_t;
+    template<uint8_t actions = 0> auto readStack(uint32_t addr) -> uint8_t;
+    template<uint8_t actions = 0> auto writeStack(uint32_t addr, uint8_t data) -> void;
+    template<uint8_t actions = 0> auto push(uint8_t data) -> void;
+    template<uint8_t actions = 0> auto pull() -> uint8_t;
 
     inline auto directAdr(uint32_t addr) -> uint32_t;
     auto getDirectAddressIndirect(uint32_t offset) -> uint16_t;
@@ -184,11 +191,17 @@ protected:
 
     auto opBRK() -> void;
     auto opCOP() -> void;
+    template<bool setI> auto opUpdateI() -> void;
 
 #ifndef REF
     virtual auto readByte(uint32_t adr) -> uint8_t = 0;
     virtual auto writeByte(uint32_t adr, uint8_t value) -> void = 0;
-    virtual auto sync(unsigned cycles = 6) -> void {}
+    virtual auto sync() -> void = 0;
+
+    // optional
+    virtual auto outputRDYLineLow() -> void {} // RDY is bi-directional
+    virtual auto setMemoryLock(bool state) -> void {} // MLB hints other BUS participants not to interfere RMW
+
 #endif
 
 };
