@@ -5,22 +5,22 @@
 
 // RDY and SOB input lines are tested in every cycle, and this affects performance.
 // therefore, it should only be activated when it is actually being used.
-#define SUPPORT_RDY
-#define SUPPORT_SOB
+//#define SUPPORT_RDY
+//#define SUPPORT_SOB
 
 // use this if you want communication to be about references instead of inheritance.
 // put reference in constructor
-//#define REF reference
-//#define REF_NS namespace // optional
-//#define REF_TYPE struct // or class
-//#define REF_INCLUDE "include path of reference class"
+// #define W65C02_REF FinalChessCard
+// #define W65C02_REF_NS LIBC64 // optional
+// #define W65C02_REF_TYPE struct // or class
+// #define W65C02_REF_INCLUDE "../../libc64/expansionPort/finalChesscard/chessCard.h"
 
-#ifdef REF
-    #ifdef REF_NS
-        namespace REF_NS { REF_TYPE REF; }
+#ifdef W65C02_REF
+    #ifdef W65C02_REF_NS
+        namespace W65C02_REF_NS { W65C02_REF_TYPE W65C02_REF; }
     #else
-        REF_TYPE REF;
-        #define REF_NS
+        W65C02_REF_TYPE W65C02_REF;
+        #define W65C02_REF_NS
     #endif
 #endif
 
@@ -40,7 +40,7 @@ struct W65C02 {
             SOB_TRANSITION = 0x400, SOB_BLOCK1 = 0x800, SOB_BLOCK2 = 0x1000};
 
     enum {  LDA = 1, LDX, LDY, LDD, ORA, AND, EOR, ADC, SBC, CMP, CPX, CPY,
-            ROL, ROR, ASL, LSR, DEC, INC, TSB, TRB, BIT, BIT_IM,
+            ROL, ROR, ASL, LSR, DEC, INC, TSB, TRB, BIT, BIT_IM, JMP,
             STA, STZ, STX, STY,
             SMB0, SMB1, SMB2, SMB3, SMB4, SMB5, SMB6, SMB7, RMB0, RMB1, RMB2, RMB3, RMB4, RMB5, RMB6, RMB7,
             BBR0, BBR1, BBR2, BBR3, BBR4, BBR5, BBR6, BBR7, BBS0, BBS1, BBS2, BBS3, BBS4, BBS5, BBS6, BBS7 };
@@ -49,13 +49,14 @@ struct W65C02 {
 
     enum { SAMPLE_INTR = 1, SET_FLAG_I = 2, CLEAR_FLAG_I = 4, WRITE_LATE_P_REG = 8};
 
-protected:
-#ifdef REF
-    W65816(REF_NS::REF& ref) : ref(ref) {}
-    REF_NS::REF& ref;
+#ifdef W65C02_REF
+    W65C02(W65C02_REF_NS::W65C02_REF& ref) : ref(ref) {}
+    W65C02_REF_NS::W65C02_REF& ref;
 #else
     W65C02() { }
 #endif
+
+protected:
     struct RegP {
         bool c;
         bool z;
@@ -101,7 +102,7 @@ protected:
     template<uint8_t actions = 0> auto write(uint16_t addr, uint8_t value) -> void;
 
     template<uint8_t actions = 0> auto readPC() -> uint8_t;
-    template<uint8_t actions = 0> auto idle() -> void;
+    template<uint8_t actions = 0> auto readPCNoInc() -> uint8_t;
     template<uint8_t actions = 0> auto push(uint8_t data) -> void;
     template<uint8_t actions = 0> auto pull() -> uint8_t;
 
@@ -116,10 +117,10 @@ protected:
     template<uint8_t Inst> auto opImmediate() -> void;
     template<uint8_t Inst> auto opBB() -> void;
     auto opNoOp5c() -> void;
-    auto opJmpAbsIndexedIndirect() -> void;
     template<uint8_t Inst, uint8_t Index = 0> auto opAbsolute() -> void;
     template<uint8_t Inst, uint8_t Index = 0> auto opModifyAbsolute() -> void;
-    auto opJmpIndirect() -> void;
+    template<uint8_t Inst, uint8_t Index = 0> auto opJmpAbsIndirect() -> void;
+    auto opJmpAbsolute() -> void;
     auto opBranch(bool take) -> void;
     template<uint8_t Inst, uint8_t Index = 0> auto opImplied() -> void;
     auto opTXS() -> void;
@@ -137,7 +138,6 @@ protected:
     auto opJSR() -> void;
     auto opRTI() -> void;
     auto opRTS() -> void;
-    auto opJmpAbsolute() -> void;
     auto opWait() -> void;
     auto opStop() -> void;
     auto opNOP() -> void;
@@ -150,9 +150,9 @@ protected:
     template<bool setI> auto opUpdateI() -> void;
     auto opBRK() -> void;
 
-#ifndef REF
-    virtual auto readByte(uint32_t adr) -> uint8_t = 0;
-    virtual auto writeByte(uint32_t adr, uint8_t value) -> void = 0;
+#ifndef W65C02_REF
+    virtual auto readByte(uint32_t addr) -> uint8_t = 0;
+    virtual auto writeByte(uint32_t addr, uint8_t value) -> void = 0;
     virtual auto sync() -> void = 0;
 
     // optional

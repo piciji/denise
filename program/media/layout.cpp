@@ -85,7 +85,10 @@ MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media) {
         append(deviceName, {0u, 0u}, 10);
         
     if (group->isWritable())
-        append(writeprotect, {0u, 0u}, 10);
+        // hack... an additional type is needed for media.
+        if (group->expansion && group->expansion->isTurboCart() && (media->id < 4));
+        else
+            append(writeprotect, {0u, 0u}, 10);
 
     if (!IPMode) {
         append(eject, {0u, 0u}, 10);
@@ -111,7 +114,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
         append(combo, {0u, 0u}, 10);      
     }
                   
-    if (group->expansion && (group->expansion->jumpers.size() > 0) ) {
+    if (group->expansion && !media->secondary && (group->expansion->jumpers.size() > 0) ) {
         append(jumperLabel, {0u, 0u}, 5 );
         
         for(auto& jumper : group->expansion->jumpers) {
@@ -390,7 +393,9 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
 }
 
 auto MediaGroupLayout::setJumperSettings(Emulator::Interface::Media* media) -> void {
-            
+    if (media->secondary)
+        return;
+
     auto block = getBlock( media );
     
     auto& selector = block->selector;

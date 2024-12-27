@@ -7,17 +7,17 @@
 // therefore, it should only be activated when it is actually being used.
 #define SUPPORT_RDY
 
-//#define REF SuperCPU
-//#define REF_NS LIBC64   // optional
-//#define REF_TYPE struct // or class
-//#define REF_INCLUDE "../expansionPort/SuperCPU/SuperCPU.h"
+//#define W65816_REF SuperCPU
+//#define W65816_REF_NS LIBC64   // optional
+//#define W65816_REF_TYPE struct // or class
+//#define W65816_REF_INCLUDE "../expansionPort/SuperCPU/SuperCPU.h"
 
-#ifdef REF
-    #ifdef REF_NS
-        namespace REF_NS { REF_TYPE REF; }
+#ifdef W65816_REF
+    #ifdef W65816_REF_NS
+        namespace W65816_REF_NS { W65816_REF_TYPE W65816_REF; }
     #else
-        REF_TYPE REF;
-        #define REF_NS
+        W65816_REF_TYPE W65816_REF;
+        #define W65816_REF_NS
     #endif
 #endif
 
@@ -43,9 +43,9 @@ struct W65816 {
     enum { SAMPLE_INTR = 1, SET_FLAG_I = 2, CLEAR_FLAG_I = 4, NATIVE = 8 };
 
 protected:
-#ifdef REF
-    W65816(REF_NS::REF& ref) : ref(ref) { }
-    REF_NS::REF& ref;
+#ifdef W65816_REF
+    W65816(W65816_REF_NS::W65816_REF& ref) : ref(ref) { }
+    W65816_REF_NS::W65816_REF& ref;
 #else
     W65816() { }
 #endif
@@ -193,15 +193,14 @@ protected:
     auto opCOP() -> void;
     template<bool setI> auto opUpdateI() -> void;
 
-#ifndef REF
-    virtual auto readByte(uint32_t adr) -> uint8_t = 0;
-    virtual auto writeByte(uint32_t adr, uint8_t value) -> void = 0;
+#ifndef W65816_REF
+    virtual auto readByte(uint32_t addr) -> uint8_t = 0;
+    virtual auto writeByte(uint32_t addr, uint8_t value) -> void = 0;
     virtual auto sync() -> void = 0;
 
     // optional
     virtual auto outputRDYLineLow() -> void {} // RDY is bi-directional
     virtual auto setMemoryLock(bool state) -> void {} // MLB hints other BUS participants not to interfere RMW
-
 #endif
 
 };

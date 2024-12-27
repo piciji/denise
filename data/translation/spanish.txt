@@ -862,3 +862,7 @@ Delay = Delay
 Amplify = Amplify
 SID separate inputs = SID separate inputs (Test)
 SID separate inputs tooltip = only for testing, requires a lot of resources! Modelo experimental de todos los voltajes entrantes de Filter/Mixer como transistores individuales en lugar de uno virtual
+Final Chesscard_insert = Insert Final Chesscard
+select_Final Chesscard_image = select Final Chesscard image ...
+Final Chesscard_image = Final Chesscard image
+blank_Final Chesscard_image = select a new Final Chesscard image ...

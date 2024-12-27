@@ -305,6 +305,15 @@
     <Filter Include="driver\video\opengl3">
       <UniqueIdentifier>{78d7f9df-e365-4494-894e-a11973844adc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="emulation\libc64\expansionPort\finalChessCard">
+      <UniqueIdentifier>{50e4b575-a61c-455c-bdfb-a20e4ef5fdd7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\wdc">
+      <UniqueIdentifier>{34f94c63-7750-4bed-85a5-7743cdb2080d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="emulation\wdc\65C02">
+      <UniqueIdentifier>{6f32d15d-1649-461b-b650-93d66fea5a41}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1053,6 +1062,12 @@
     </ClInclude>
     <ClInclude Include="..\program\audio\dsp\echo.h">
       <Filter>program\audio\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\finalChessCard\chessCard.h">
+      <Filter>emulation\libc64\expansionPort\finalChessCard</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\wdc\65C02\w65C02.h">
+      <Filter>emulation\wdc\65C02</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2093,6 +2108,18 @@
     </ClCompile>
     <ClCompile Include="..\program\audio\dsp\echo.cpp">
       <Filter>program\audio\dsp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\expansionPort\finalChessCard\chessCard.cpp">
+      <Filter>emulation\libc64\expansionPort\finalChessCard</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\wdc\65C02\instructions.cpp">
+      <Filter>emulation\wdc\65C02</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\wdc\65C02\w65C02.cpp">
+      <Filter>emulation\wdc\65C02</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\wdc\65C02\alu.cpp">
+      <Filter>emulation\wdc\65C02</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

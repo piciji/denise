@@ -199,11 +199,11 @@ auto Fastloader::readRomH( uint16_t addr ) -> uint8_t {
     return *(cRomH->ptr + addr );
 }
 
-auto Fastloader::setJumper( bool state ) -> void {
+auto Fastloader::setJumper( unsigned jumperId, bool state ) -> void {
     kernalJumper = state;
 }
 
-auto Fastloader::getJumper( ) -> bool {
+auto Fastloader::getJumper(unsigned jumperId) -> bool {
     return kernalJumper;
 }
 

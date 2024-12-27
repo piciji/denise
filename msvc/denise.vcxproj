@@ -111,6 +111,7 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash3.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\expansionPort.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\fastloader\fastloader.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\finalChessCard\chessCard.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayMK2.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayMK3.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\freezer\actionReplayMK4.h" />
@@ -190,6 +191,7 @@
     <ClInclude Include="..\emulation\tools\socket.h" />
     <ClInclude Include="..\emulation\tools\splines.h" />
     <ClInclude Include="..\emulation\tools\systimer.h" />
+    <ClInclude Include="..\emulation\wdc\65C02\w65C02.h" />
     <ClInclude Include="..\guikit\api.h" />
     <ClInclude Include="..\guikit\tools\crc32.h" />
     <ClInclude Include="..\guikit\tools\decode\gzip.h" />
@@ -888,6 +890,7 @@
     <ClCompile Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash.cpp" />
     <ClCompile Include="..\emulation\libc64\expansionPort\easyFlash\easyFlash3.cpp" />
     <ClCompile Include="..\emulation\libc64\expansionPort\fastloader\fastloader.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\finalChessCard\chessCard.cpp" />
     <ClCompile Include="..\emulation\libc64\expansionPort\freezer\freezer.cpp" />
     <ClCompile Include="..\emulation\libc64\expansionPort\gameCart\gameCart.cpp" />
     <ClCompile Include="..\emulation\libc64\expansionPort\geoRam\geoRam.cpp" />
@@ -1185,6 +1188,19 @@
     <ClCompile Include="..\emulation\tools\mx29lv640eb.cpp" />
     <ClCompile Include="..\emulation\tools\pia.cpp" />
     <ClCompile Include="..\emulation\tools\socket.cpp" />
+    <ClCompile Include="..\emulation\wdc\65C02\alu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\wdc\65C02\instructions.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\wdc\65C02\w65C02.cpp" />
     <ClCompile Include="..\guikit\api.cpp" />
     <ClCompile Include="..\guikit\tools\decode\images.cpp" />
     <ClCompile Include="..\guikit\tools\file\file.cpp">

@@ -1,9 +1,9 @@
 
 #include "w65C02.h"
 
-#ifdef REF
-    #ifdef REF_INCLUDE
-        #include REF_INCLUDE
+#ifdef W65C02_REF
+    #ifdef W65C02_REF_INCLUDE
+        #include W65C02_REF_INCLUDE
     #endif
     #define REF_CALL ref.
 #else
@@ -35,8 +35,8 @@ namespace WDCFAMILY {
 
 template<bool hardware> auto W65C02::interrupt(const uint16_t& vector) -> void {
     if constexpr(hardware) {
-        idle();
-        idle();
+        readPCNoInc();
+        readPCNoInc();
     } else
         readPC();
 
@@ -163,12 +163,12 @@ template<uint8_t actions> inline auto W65C02::write(uint16_t addr, uint8_t value
         WRITE_BYTE(addr, value);
 }
 
-template<uint8_t actions> inline auto W65C02::idle() -> void {
-    read<actions>(pc);
-}
-
 template<uint8_t actions> inline auto W65C02::readPC() -> uint8_t {
     return read<actions>( pc++);
+}
+
+template<uint8_t actions> inline auto W65C02::readPCNoInc() -> uint8_t {
+    return read<actions>( pc);
 }
 
 template<uint8_t actions> auto W65C02::push(uint8_t data) -> void {
@@ -179,7 +179,7 @@ template<uint8_t actions> auto W65C02::pull() -> uint8_t {
     return read<actions>(0x100 | ++s);
 }
 
-auto W65C02::process()->void {
+auto W65C02::process() -> void {
     if (control) {
         if (control & WAI) {
             // WAI sets RDY (bidirectional) low and repeats the same cycle. It's same behavior like external RDY change.
@@ -204,7 +204,7 @@ auto W65C02::process()->void {
 
         // check STP and RESET last for performance reasons
         if (control & STP) {
-            return idle();
+            return SYNC();
         }
 
         if (control & RESET) {
@@ -308,7 +308,7 @@ auto W65C02::process()->void {
         __M(0x68, Pull, STA)
         __M(0x69, Immediate, ADC)
         __M(0x6a, Implied, ROR)
-        ___(0x6c, JmpIndirect)
+        __M(0x6c, JmpAbsIndirect, JMP)
         __M(0x6d, Absolute, ADC)
         __M(0x6e, ModifyAbsolute, ROR)
         __M(0x6f, BB, BBR6)
@@ -322,7 +322,7 @@ auto W65C02::process()->void {
         ___(0x78, UpdateI<true>)
         i_M(0x79, Absolute, ADC, INDEX_Y)
         __M(0x7a, Pull, STY)
-        ___(0x7c, JmpAbsIndexedIndirect)
+        i_M(0x7c, JmpAbsIndirect, JMP, INDEX_X)
         i_M(0x7d, Absolute, ADC, INDEX_X)
         i_M(0x7e, ModifyAbsolute, ROR, INDEX_X)
         __M(0x7f, BB, BBR7)
@@ -405,7 +405,7 @@ auto W65C02::process()->void {
         i_M(0xd6, ModifyZeroPage, DEC, INDEX_X)
         __M(0xd7, ModifyZeroPage, SMB5)
         ___(0xd8, ClearD)
-        i_M(0xd9, Absolute, CMP, INDEX_X)
+        i_M(0xd9, Absolute, CMP, INDEX_Y)
         __M(0xda, Push, STX)
         ___(0xdb, Stop)
         __M(0xdc, Absolute, LDD)

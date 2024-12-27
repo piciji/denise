@@ -52,8 +52,8 @@ struct Fastloader : Cart {
     auto assign(Cart* cart) -> void {}
     auto protectFromDeletion() -> bool { return true; }
 
-    auto setJumper( bool state ) -> void;
-    auto getJumper( ) -> bool;
+    auto setJumper( unsigned jumperId, bool state ) -> void;
+    auto getJumper( unsigned jumperId ) -> bool;
 
     auto hasHiramCableConnected() -> bool;
 

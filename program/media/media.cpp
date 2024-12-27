@@ -455,7 +455,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 		    block->header.eject.setImage(&ejectImg);
 		}
 
-        if (mediaGroup->expansion) {
+        if (mediaGroup->expansion && !block->media->secondary) {
             for (auto& jumper : mediaGroup->expansion->jumpers) {
 
                 unsigned jumperId = jumper.id;
@@ -463,7 +463,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                 auto jumperBox = block->selector.jumpers[jumperId];
 
                 std::string saveIdent = _underscore( block->media->name + "_jumper_" + jumper.name );
-                
+
                 jumperBox->onToggle = [this, jumperBox, saveIdent, block, jumperId](bool checked) {
 
                     this->settings->set<bool>( saveIdent, checked);
@@ -839,7 +839,6 @@ auto MediaLayout::prepareCreator() -> void {
 			creatorLayout.append(*memoryCreatorLayout, {~0u, 0u}, 5);
             
 		} else if (mediaGroup.isExpansion() && (mediaGroup.expansion->isFlash() || mediaGroup.expansion->isEprom() || mediaGroup.expansion->isBattery()) ) {
-
             
             if (!flashCreatorLayout) {
                 flashCreatorLayout = new FlashCreatorLayout;
@@ -1012,7 +1011,7 @@ auto MediaLayout::translate() -> void {
             if (mediaGroup->isProgram())
                 block->selector.open.setTooltip(trans->get("c64_list_tip"));
             
-            if (mediaGroup->isExpansion()) {
+            if (mediaGroup->isExpansion() && !block->media->secondary) {
                 unsigned id = 0;
                 for( auto& pcb : mediaGroup->expansion->pcbs ) {
                     block->selector.combo.setText(id++, trans->get( pcb.name ));
@@ -1379,7 +1378,9 @@ auto MediaLayout::updateWriteProtection( Emulator::Interface::Media* media, bool
 }
 
 auto MediaLayout::updateJumper(Emulator::Interface::Media* media) -> void {
-    
+    if (media->secondary)
+        return;
+
     auto layout = getMediaGroupLayout(media->group);
     
     if (!layout)

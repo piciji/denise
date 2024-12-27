@@ -139,6 +139,7 @@ set(srcs
         emulation/libc64/expansionPort/retroReplay/retroReplay.cpp
         emulation/libc64/expansionPort/gmod/gmod2.cpp
         emulation/libc64/expansionPort/fastloader/fastloader.cpp
+        emulation/libc64/expansionPort/finalChessCard/chessCard.cpp
         emulation/libc64/system/clipboard.cpp
         emulation/libc64/sid/sid.cpp
         emulation/libc64/system/sidManager.cpp

@@ -1,9 +1,9 @@
 
 #include "w65816.h"
 
-#ifdef REF
-    #ifdef REF_INCLUDE
-        #include REF_INCLUDE
+#ifdef W65816_REF
+    #ifdef W65816_REF_INCLUDE
+        #include W65816_REF_INCLUDE
     #endif
     #define REF_CALL ref.
 #else

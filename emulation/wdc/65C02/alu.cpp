@@ -87,33 +87,33 @@ template<uint8_t Inst> auto W65C02::arithmetic(uint8_t data) -> void {
         case ORA: {
             a |= data;
             p.n = a & 0x80;
-            p.z = (a & 0xff) == 0;
+            p.z = a == 0;
         } break;
         case AND: {
             a &= data;
             p.n = a & 0x80;
-            p.z = (a & 0xff) == 0;
+            p.z = a == 0;
         } break;
         case EOR: {
             a ^= data;
             p.n = a & 0x80;
-            p.z = (a & 0xff) == 0;
+            p.z = a == 0;
         } break;
         case CMP: {
-            int result = a - data;
-            p.c = result >= 0;
+            uint16_t result = a - data;
+            p.c = result < 0x100;
             p.z = (uint8_t)result == 0;
             p.n = result & 0x80;
         } break;
         case CPX: {
-            int result = x - data;
-            p.c = result >= 0;
+            uint16_t result = x - data;
+            p.c = result < 0x100;
             p.z = (uint8_t)result == 0;
             p.n = result & 0x80;
         } break;
         case CPY: {
-            int result = y - data;
-            p.c = result >= 0;
+            uint16_t result = y - data;
+            p.c = result < 0x100;
             p.z = (uint8_t)result == 0;
             p.n = result & 0x80;
         } break;

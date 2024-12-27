@@ -862,3 +862,7 @@ Delay = Delay
 Amplify = Amplify
 SID separate inputs = SID separate inputs (Test)
 SID separate inputs tooltip = only for testing, requires a lot of resources! 実験的に電圧高下によるフィルタ/ミキサーの変動を個々のトランジスタレベルで再現。デフォルトは擬似的にまとめて扱う
+Final Chesscard_insert = Insert Final Chesscard
+select_Final Chesscard_image = select Final Chesscard image ...
+Final Chesscard_image = Final Chesscard image
+blank_Final Chesscard_image = select a new Final Chesscard image ...

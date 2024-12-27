@@ -18,13 +18,14 @@
 #include "expansionPort/geoRam/geoRam.h"
 #include "expansionPort/acia/acia.h"
 #include "expansionPort/fastloader/fastloader.h"
+#include "expansionPort/finalChessCard/chessCard.h"
 #include "disk/structure/structure.h"
 #include "system/gluelogic.h"
 #include "../tools/crop.h"
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "209";
+const std::string Interface::Version = "210";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {        
     
@@ -56,6 +57,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionReu, "REU", MediaGroup::Type::Expansion, {"bin", "crt", "prg", "reu"}, {""} });
     mediaGroups.push_back({MediaGroupIdExpansionRS232, "RS-232", MediaGroup::Type::Expansion });
     mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion,{"bin", "crt","rom"} });
+    mediaGroups.push_back({MediaGroupIdExpansionFinalChessCard, "Final Chesscard", MediaGroup::Type::Expansion,{"bin","rom"}, {"bin"} });
         	
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -167,6 +169,17 @@ auto Interface::prepareMedia() -> void {
 	    group.media.push_back({3, "Fast Loader 4", 0, &group});
         group.selected = &group.media[0];
     }
+
+    {   auto& group = mediaGroups[MediaGroupIdExpansionFinalChessCard];
+	    group.media.push_back({0, "Final Chesscard 1", 0, &group});
+	    group.media.push_back({1, "Final Chesscard 2", 0, &group});
+	    group.media.push_back({2, "Chess Computer 1", 0, &group});
+	    group.media.push_back({3, "Chess Computer 2", 0, &group});
+	    group.media.push_back({4, "RAM 1", 0, &group});
+	    group.media.push_back({5, "RAM 2", 0, &group});
+
+	    group.selected = &group.media[0];
+    }
     
     for(auto& group : mediaGroups) {
         group.expansion = nullptr;
@@ -179,6 +192,10 @@ auto Interface::prepareMedia() -> void {
        
     mediaGroups[MediaGroupIdExpansionReu].media[4].secondary = true;
     mediaGroups[MediaGroupIdExpansionGame].media[6].secondary = true;
+    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[2].secondary = true;
+    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[3].secondary = true;
+    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[4].secondary = true;
+    mediaGroups[MediaGroupIdExpansionFinalChessCard].media[5].secondary = true;
 }
 
 auto Interface::prepareExpansions() -> void {
@@ -193,6 +210,7 @@ auto Interface::prepareExpansions() -> void {
 	expansions.push_back( { ExpansionIdReuRetroReplay, "REU + Retro Replay", Expansion::Type::Ram | Expansion::Type::Freezer | Expansion::Type::Flash, &mediaGroups[MediaGroupIdExpansionReu], &mediaGroups[MediaGroupIdExpansionRetroReplay] } );
 	expansions.push_back( { ExpansionIdRS232, "RS-232", Expansion::Type::RS232, &mediaGroups[MediaGroupIdExpansionRS232], nullptr } );
     expansions.push_back( { ExpansionIdFastloader, "Fast Loader", Expansion::Type::Fastloader, &mediaGroups[MediaGroupIdExpansionFastloader], nullptr } );
+    expansions.push_back( { ExpansionIdFinalChessCard, "Final Chesscard", Expansion::Type::TurboCart | Expansion::Type::Battery, &mediaGroups[MediaGroupIdExpansionFinalChessCard], nullptr } );
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -304,6 +322,15 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdTurboTrans, "Turbo Trans"} );
         expansion.pcbs.push_back( {CartridgeIdStarDos, "StarDOS"} );
         mediaGroups[MediaGroupIdExpansionFastloader].expansion = &expansion;
+    }
+
+    {   auto& expansion = expansions[ExpansionIdFinalChessCard];
+        expansion.jumpers.push_back({0, "+5 MHz"} );
+        expansion.jumpers.push_back({1, "+10 MHz"} );
+        expansion.jumpers.push_back({2, "+20 MHz"} );
+
+        expansion.creationIdents.push_back( "Final Chesscard" );
+        mediaGroups[MediaGroupIdExpansionFinalChessCard].expansion = &expansion;
     }
 
     for(auto& group : mediaGroups) {
@@ -1070,6 +1097,8 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
         system->geoRam->setRam(media, data, size);
     else if (group->expansion->id == ExpansionIdFastloader)
         system->fastloader->setRom(media, data, size);
+    else if (group->expansion->id == ExpansionIdFinalChessCard)
+        system->finalChessCard->setRom(media, data, size);
 }
 
 auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
@@ -1097,6 +1126,9 @@ auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
     } else if (group->expansion->id == ExpansionIdGeoRam) {
 		if (system->geoRam->media == media)
             system->geoRam->setWriteProtect( state );
+	} else if (group->expansion->id == ExpansionIdFinalChessCard) {
+	    if (system->finalChessCard->mediaWrite == media)
+	        system->finalChessCard->setWriteProtect( state );
 	}
 }
 
@@ -1125,7 +1157,10 @@ auto Interface::isWriteProtectedExpansion(Media* media) -> bool {
     } else if (group->expansion->id == ExpansionIdGeoRam) {
 		if (system->geoRam->media == media)
 			return system->geoRam->isWriteProtected();
-	}
+    } else if (group->expansion->id == ExpansionIdFinalChessCard) {
+        if (system->finalChessCard->mediaWrite == media)
+            system->finalChessCard->isWriteProtected();
+    }
 
     return false;
 }
@@ -1138,7 +1173,7 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         return;
     
     if (group->expansion->id == ExpansionIdGame)
-		// todo: write secondary rom for different cartridges, can't use gameCart because it's already removed by unseting primary ROM
+		// todo: write secondary ROM for different cartridges can't use gameCart, because primary ROM is already removed
         !media->secondary ? system->gameCart->setRom(media, nullptr, 0) : system->gmod2->setSecondaryRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdReu) {
         !media->secondary ? system->reu->unsetRam() : system->reu->setRom(media, nullptr, 0);
@@ -1156,10 +1191,11 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         system->acia->socket.disconnect();
     else if (group->expansion->id == ExpansionIdFastloader)
         system->fastloader->setRom(media, nullptr, 0);
+    else if (group->expansion->id == ExpansionIdFinalChessCard)
+        system->finalChessCard->setRom(media, nullptr, 0);
 }
 
 auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id) -> uint8_t* {
-    
     if (!group->isExpansion())
         return nullptr;
     
@@ -1174,6 +1210,9 @@ auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uin
 	
 	if (group->expansion->id == ExpansionIdGeoRam)
 		return system->geoRam->createImage( imageSize, id );
+
+    if (group->expansion->id == ExpansionIdFinalChessCard)
+        return system->finalChessCard->createImage(imageSize);
     
     return nullptr;
 }
@@ -1673,7 +1712,6 @@ auto Interface::getExpansion() -> Expansion* {
 }
 
 auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void {
-    
     auto group = media->group;
     
     if (!media || !group->isExpansion())
@@ -1682,22 +1720,22 @@ auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state 
     if (group->expansion->id == ExpansionIdEasyFlash) {
         if (system->easyFlash->media == media)
             system->easyFlash->setJumper( jumperId, state );
-    
     } else if (group->expansion->id == ExpansionIdRetroReplay) {        
         if (system->retroReplay->media == media)
             system->retroReplay->setJumper( jumperId, state );
-
     } else if (group->expansion->id == ExpansionIdRS232) {
         if (system->acia->media == media)
             system->acia->setJumper( jumperId, state );
-
     } else if (group->expansion->id == ExpansionIdFastloader) {
-        system->fastloader->setJumper( state );
+        if (system->fastloader->media == media)
+            system->fastloader->setJumper( jumperId, state );
+    } else if (group->expansion->id == ExpansionIdFinalChessCard) {
+        if (system->finalChessCard->media == media)
+            system->finalChessCard->setJumper( jumperId, state );
     }
 }
 
 auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
-    
     auto group = media->group;
     
     if (!media || !group->isExpansion())
@@ -1713,7 +1751,10 @@ auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
         return system->acia->getJumper(jumperId);
 
     else if (group->expansion->id == ExpansionIdFastloader)
-        return system->fastloader->getJumper();
+        return system->fastloader->getJumper(jumperId);
+
+    else if (group->expansion->id == ExpansionIdFinalChessCard)
+        return system->finalChessCard->getJumper(jumperId);
 
     return false;
 }

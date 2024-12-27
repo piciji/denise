@@ -10,6 +10,7 @@
 #include "../expansionPort/geoRam/geoRam.h"
 #include "../expansionPort/acia/acia.h"
 #include "../expansionPort/fastloader/fastloader.h"
+#include "../expansionPort/finalChessCard/chessCard.h"
 
 namespace LIBC64 {
  
@@ -81,6 +82,9 @@ auto System::setExpansion( Interface::ExpansionId id ) -> void {
         case Interface::ExpansionIdFastloader:
             expansionPort = fastloader;
             break;
+        case Interface::ExpansionIdFinalChessCard:
+            expansionPort = finalChessCard;
+            break;
     }
 
     cpu.expansionPort = expansionPort;
@@ -101,6 +105,7 @@ auto System::createExpansions() -> void {
 	geoRam = new GeoRam(this);
 	acia = new Acia(this);
 	fastloader = new Fastloader(this);
+    finalChessCard = new FinalChessCard(this);
     noExpansion = new ExpansionPort(this);
 
     setExpansion(Interface::ExpansionIdNone);
@@ -110,6 +115,7 @@ auto System::createExpansions() -> void {
     setExpansionCallbacks( retroReplay );    
     setExpansionCallbacks( easyFlash3 );
     setExpansionCallbacks( acia );
+    setExpansionCallbacks( finalChessCard );
 }
 
 auto System::destroyExpansions() -> void {
@@ -123,6 +129,7 @@ auto System::destroyExpansions() -> void {
 	delete gmod2;
 	delete geoRam;
 	delete acia;
+    delete finalChessCard;
     delete noExpansion;	
 }
 

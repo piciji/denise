@@ -42,6 +42,7 @@ struct GeoRam;
 struct Gmod2;
 struct RetroReplay;
 struct Reu;
+struct FinalChessCard;
 struct M6510;
 struct IecBus;
 struct Prg;
@@ -123,7 +124,7 @@ struct System {
     Gmod2* gmod2;
     RetroReplay* retroReplay;
     Reu* reu;
-
+	FinalChessCard* finalChessCard;
     M6510 cpu;
     VicIIBase* vicII;
     VicIICycle vicIICycle;

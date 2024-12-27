@@ -26,9 +26,7 @@ auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator
     
     if (!file)
         return false;
-    
-    // hard disks will not preloaded
-    // we check only for max size
+
     if ( group->isHardDisk() ) {        
         if (!file->exists() || file->isArchived() ||
             !file->isSizeValid(MAX_HARDDISK_SIZE) || 
@@ -49,8 +47,7 @@ auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator
 		auto items = file->scanArchive();
 		return !items.empty();
 	}
-	
-    // when archive, we extract requested file from archive 
+
 	data = file->archiveData( fileId );
 	
 	return data != nullptr;
