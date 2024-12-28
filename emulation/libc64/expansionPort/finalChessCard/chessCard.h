@@ -48,6 +48,7 @@ struct FinalChessCard : Cart, WDCFAMILY::W65C02 {
     auto serializeStep2(Emulator::Serializer& s) -> void;
     auto createImage(unsigned& imageSize) -> uint8_t*;
     auto hasSecondaryRom() -> bool { return true; }
+    auto isBootable( ) -> bool { return true; }
 };
 
 }
