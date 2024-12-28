@@ -519,8 +519,13 @@ auto View::switchFullScreen(bool fullScreen, bool forceUnacquire) -> void {
     if (!fullScreen && useFullscreenRefreshAsEmuSpeed) {
         useFullscreenRefreshAsEmuSpeed = false;
         audioManager->setResampler();
-        statusHandler->resetFrameCounter();
+        if (statusHandler)
+            statusHandler->resetFrameCounter();
+
     }
+
+    if (statusHandler)
+        statusHandler->updateOnScreenFPS();
 }
 
 auto View::prepareCursorHide(unsigned interval, bool withFocus) -> void {

@@ -105,6 +105,22 @@ auto StatusHandler::setFpsRefresh() -> void {
     }
 }
 
+auto StatusHandler::updateOnScreenFPS() -> void {
+    auto fpsScreen = globalSettings->get<unsigned>("fps_screen", 0);
+
+    bool _showFPSScreen = showFPSScreen;
+    if (fpsScreen & (1 << (view->fullScreen() ? 1 : 0)))    showFPSScreen = true;
+    else                                                    showFPSScreen = false;
+
+    if (_showFPSScreen == showFPSScreen)
+        return;
+
+    if (!showFPSScreen)
+        videoDriver->showScreenText( "", 0 );
+    else
+        statusHandler->setFpsCounterUpdate();
+}
+
 auto StatusHandler::updateFrameCounter() -> void {
     float deviation;
 
@@ -280,10 +296,11 @@ auto StatusHandler::setVolumeSlider(unsigned value) -> void {
 
 auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->clear();
+    updateOnScreenFPS();
     
     this->statusBar = statusBar;
     showFPS = globalSettings->get<bool>("fps", false);
-    showFPSScreen = globalSettings->get<bool>("fps_screen", false);
+    //showFPSScreen = globalSettings->get<bool>("fps_screen", false);
     powerLED.enable = globalSettings->get<bool>("power_led", true);
     showVolume = globalSettings->get<bool>("volume_control", true );
     fpsCounter.decimalPoints = 3;

@@ -338,7 +338,14 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 else
                     statusHandler->setFpsCounterUpdate();
 
-                globalSettings->set<bool>("fps_screen", statusHandler->showFPSScreen);
+                auto fpsScreen = globalSettings->get<unsigned>("fps_screen", 0);
+
+                if (statusHandler->showFPSScreen)
+                    fpsScreen |= 1 << (view->fullScreen() ? 1 : 0);
+                else
+                    fpsScreen &= ~(1 << (view->fullScreen() ? 1 : 0));
+
+                globalSettings->set<unsigned>("fps_screen", fpsScreen);
             }
         } break;
 
