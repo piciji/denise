@@ -988,6 +988,8 @@ auto Fileloader::getSwapMedia(Emulator::Interface* emulator, int swapPos, FileSe
         media = autoloader->getLatestDrive(emulator);
     } else {
         std::string fileSuffix = GUIKIT::String::getExtension(fSetting->file, "exe");
+        GUIKIT::String::toLowerCase( fileSuffix );
+
         auto driveGroups = emulator->getDriveMediaGroups();
         for (auto group: driveGroups) {
             for (auto& suffix: group->suffix) {

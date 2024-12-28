@@ -354,7 +354,6 @@ auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsign
             continue;
 
         std::string fileSuffix = GUIKIT::String::getExtension(item->info.name, "exe");
-
         GUIKIT::String::toLowerCase(fileSuffix);
 
         for (auto emulator : emulators) {
