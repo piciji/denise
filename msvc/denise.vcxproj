@@ -129,6 +129,7 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\hyperBasic.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\mach5.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\magicDesk.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\magicDesk2.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\ocean.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\pagefox.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\rgcd.h" />

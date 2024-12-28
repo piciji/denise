@@ -8,6 +8,7 @@
 #include "supergames.h"
 #include "cart16k.h"
 #include "magicDesk.h"
+#include "magicDesk2.h"
 #include "../gmod/gmod2.h"
 #include "simonsBasic.h"
 #include "warpSpeed.h"
@@ -140,7 +141,13 @@ auto GameCart::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> C
             break;
 
         case Interface::CartridgeIdHyperBasic:
-            cart = new HyperBasic(system);
+            if (_size < (2 * 1024 * 1024)) {
+                cart = new HyperBasic(system);
+                break;
+            }
+            // fallthrough ... CRT uses the already registered ID of HyperBasic
+        case Interface::CartridgeIdMagicDesk2:
+            cart = new MagicDesk2(system);
             break;
 
         case Interface::CartridgeIdBusinessBasic:

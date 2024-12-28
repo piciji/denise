@@ -14,6 +14,7 @@ Cart::Cart(System* system, bool game, bool exrom) : ExpansionPort(system) {
     cRomL = nullptr;
     
     rom = nullptr;
+    media = nullptr;
     romSize = 0;
     cartridgeId = Interface::CartridgeIdNoRom;
     

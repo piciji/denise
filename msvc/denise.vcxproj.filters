@@ -1069,6 +1069,9 @@
     <ClInclude Include="..\emulation\wdc\65C02\w65C02.h">
       <Filter>emulation\wdc\65C02</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\magicDesk2.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
