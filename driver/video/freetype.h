@@ -277,6 +277,8 @@ struct Freetype {
             ftText = "";
             ftUpdated |= 4;
             ftDuration = 0;
+            ftTotalWidth = 0;
+            ftTotalHeight = 0;
             ftUpdateMutex.unlock();
             return true;
         }

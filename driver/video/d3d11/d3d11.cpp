@@ -1555,7 +1555,7 @@ namespace DRIVER {
 
     auto ftSetCoordsPosition() -> void {
         D3D11_MAPPED_SUBRESOURCE mappedVbo;
-        if (FAILED(context->Map((ID3D11Resource*)message.vbo, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedVbo)))
+        if (FAILED(context->Map((ID3D11Resource*)message.vbo, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedVbo)))
             return;
 
         std::memcpy(mappedVbo.pData, ftPosCoords, 16 * 4);
