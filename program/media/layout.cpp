@@ -344,8 +344,14 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
         auto block = new Block( media );
         blocks.push_back(block);
         
-        if ( !showOnlyConnectedDevices() )
-            blockContainer.append(*block, {~0u, 0u}, 2);
+        if ( !showOnlyConnectedDevices() ) {
+            unsigned spacing = 2;
+            if (dynamic_cast<LIBC64::Interface*>(mediaLayout->emulator) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard)
+                && (media->id & 1))
+                spacing += 20;
+
+            blockContainer.append(*block, {~0u, 0u}, spacing);
+        }
             
         return block;
     };  

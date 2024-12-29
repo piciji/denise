@@ -1008,6 +1008,11 @@ auto MediaLayout::translate() -> void {
             block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );
             block->header.inUse.setText( trans->get( block->media->name, {}, true ) );
 
+            if ( (block->media->id > 3) && (block->media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard)) {
+                if (dynamic_cast<LIBC64::Interface*>(emulator))
+                    block->header.deviceName.setTooltip( trans->getA( "Final Chesscard Battery tooltip" ) );
+            }
+
             if (mediaGroup->isProgram())
                 block->selector.open.setTooltip(trans->get("c64_list_tip"));
             

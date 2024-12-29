@@ -171,12 +171,12 @@ auto Interface::prepareMedia() -> void {
     }
 
     {   auto& group = mediaGroups[MediaGroupIdExpansionFinalChessCard];
-	    group.media.push_back({0, "Final Chesscard 1", 0, &group});
-	    group.media.push_back({1, "Final Chesscard 2", 0, &group});
-	    group.media.push_back({2, "Chess Computer 1", 0, &group});
-	    group.media.push_back({3, "Chess Computer 2", 0, &group});
-	    group.media.push_back({4, "RAM 1", 0, &group});
-	    group.media.push_back({5, "RAM 2", 0, &group});
+	    group.media.push_back({0, "Final Chesscard CROM 1", 0, &group});
+	    group.media.push_back({1, "Final Chesscard CROM 2", 0, &group});
+	    group.media.push_back({2, "Final Chesscard BROM 1", 0, &group});
+	    group.media.push_back({3, "Final Chesscard BROM 2", 0, &group});
+	    group.media.push_back({4, "Final Chesscard RAM 1", 0, &group});
+	    group.media.push_back({5, "Final Chesscard RAM 2", 0, &group});
 
 	    group.selected = &group.media[0];
     }
@@ -224,6 +224,7 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdZaxxon, "Zaxxon"} );
         expansion.pcbs.push_back( {CartridgeIdGmod2, "Gmod2"} );
         expansion.pcbs.push_back( {CartridgeIdMagicDesk, "Magic Desk"} );
+        expansion.pcbs.push_back( {CartridgeIdMagicDesk2, "Magic Desk 2"} );
         expansion.pcbs.push_back( {CartridgeIdSimonsBasic, "Simons Basic"} );
         expansion.pcbs.push_back( {CartridgeIdWarpSpeed, "WarpSpeed"} );
         expansion.pcbs.push_back( {CartridgeIdMach5, "Mach 5"} );
