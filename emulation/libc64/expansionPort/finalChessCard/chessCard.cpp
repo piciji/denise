@@ -7,7 +7,7 @@ namespace LIBC64 {
 FinalChessCard::FinalChessCard(System* system) : Cart(system, false, false) {
     setId( Interface::ExpansionIdFinalChessCard );
     ram = new uint8_t[8 * 1024];
-    MHz = 5;
+    MHz = 5'000'000;
     jumpers = 0;
     writeProtectRAM = false;
     mediaWrite = nullptr;
@@ -72,12 +72,15 @@ auto FinalChessCard::reset(bool softReset) -> void {
     game = false;
     exRom = false;
     writeProtectIO = false;
+    frequency = vicII->frequency();
     if (!mediaWrite)
         std::memset(ram, 0, 8 * 1024);
     power();
 }
 
 inline auto FinalChessCard::readByte(uint32_t addr) -> uint8_t {
+    cycles += frequency;
+
     if (addr & 0x8000)
         return romFCC ? romFCC[addr & 0x7fff] : 0xff;
 
@@ -93,6 +96,8 @@ inline auto FinalChessCard::readByte(uint32_t addr) -> uint8_t {
 }
 
 inline auto FinalChessCard::writeByte(uint32_t addr, uint8_t value) -> void {
+    cycles += frequency;
+
     if ((addr & 0xe000) == 0)
         ram[addr & 0x1fff] = value;
 
@@ -102,8 +107,8 @@ inline auto FinalChessCard::writeByte(uint32_t addr, uint8_t value) -> void {
     }
 }
 
-inline auto FinalChessCard::sync() -> void {
-    cycles++;
+inline auto FinalChessCard::idleCycle() -> void {
+    cycles += frequency;
 }
 
 auto FinalChessCard::clock() -> void {
@@ -153,18 +158,17 @@ auto FinalChessCard::setJumper(unsigned jumperId, bool state) -> void {
     else
         jumpers &= ~(1 << jumperId);
 
-    MHz = 5;
+    MHz = 5'000'000;
     for(int i = 0; i < 8; i++) {
         if (jumpers & (1 << i)) {
             switch(i) {
                 default: break;
-                case 0: MHz += 5; break;
-                case 1: MHz += 10; break;
-                case 2: MHz += 20; break;
+                case 0: MHz += 5'000'000; break;
+                case 1: MHz += 10'000'000; break;
+                case 2: MHz += 20'000'000; break;
             }
         }
     }
-    system->interface->log(MHz);
 }
 
 auto FinalChessCard::getJumper(unsigned jumperId) -> bool {
@@ -186,6 +190,7 @@ auto FinalChessCard::serializeStep2(Emulator::Serializer& s) -> void {
     s.integer( writeProtectIO );
     s.integer( MHz );
     s.integer( jumpers );
+    s.integer( frequency );
     s.array(ram, 8 * 1024);
 
     // W65C02 context

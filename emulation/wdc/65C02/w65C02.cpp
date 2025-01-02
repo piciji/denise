@@ -12,7 +12,7 @@
 
 #define READ_BYTE       REF_CALL readByte
 #define WRITE_BYTE      REF_CALL writeByte
-#define SYNC            REF_CALL sync
+#define IDLE_CYCLE      REF_CALL idleCycle
 #define OUTPUT_RDY_LOW  REF_CALL outputRDYLineLow
 #define SET_MEMORY_LOCK REF_CALL setMemoryLock
 
@@ -126,17 +126,16 @@ template<uint8_t actions> inline auto W65C02::read(uint16_t addr) -> uint8_t {
     if constexpr (actions & SAMPLE_INTR)
         CHECK_INTR
     CHECK_SOB
-    SYNC();
 
 #ifdef SUPPORT_RDY
     while (lines & RDY_LINE) {
+        IDLE_CYCLE(); // process other BUS participants and hope someone clears RDY
         if constexpr (actions & SET_FLAG_I)     p.i = true;
         if constexpr (actions & CLEAR_FLAG_I)   p.i = false;
 
         if constexpr (actions & SAMPLE_INTR)
             CHECK_INTR
         CHECK_SOB
-        SYNC(); // process other BUS participants and hope someone clears RDY
     }
 #endif
 
@@ -147,14 +146,13 @@ template<uint8_t actions> inline auto W65C02::write(uint16_t addr, uint8_t value
     if constexpr (actions & SAMPLE_INTR)
         CHECK_INTR
     CHECK_SOB
-    SYNC();
 
 #ifdef SUPPORT_RDY
     while (lines & RDY_LINE) { // note: NMOS 6502 ignores RDY during writes, CMOS does not
+        IDLE_CYCLE(); // process other BUS participants and hope someone clears RDY
         if constexpr (actions & SAMPLE_INTR)
             CHECK_INTR
         CHECK_SOB
-        SYNC(); // process other BUS participants and hope someone clears RDY
     }
 
     if constexpr (actions & WRITE_LATE_P_REG)  WRITE_BYTE(addr, p | 0x10 | 0x20); // reflect a possible SOB transition while RDY
@@ -189,7 +187,7 @@ auto W65C02::process() -> void {
             // IRQ/NMI set RDY hi again and resume processing but only if RDY is not forced low from external.
             CHECK_INTR
             CHECK_SOB
-            return SYNC();
+            return IDLE_CYCLE();
         }
 
         if (control & NMI_PENDING) {
@@ -204,7 +202,7 @@ auto W65C02::process() -> void {
 
         // check STP and RESET last for performance reasons
         if (control & STP) {
-            return SYNC();
+            return IDLE_CYCLE();
         }
 
         if (control & RESET) {

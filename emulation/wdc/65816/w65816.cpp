@@ -12,7 +12,7 @@
 
 #define READ_BYTE       REF_CALL readByte
 #define WRITE_BYTE      REF_CALL writeByte
-#define SYNC            REF_CALL sync
+#define IDLE_CYCLE      REF_CALL idleCycle
 #define OUTPUT_RDY_LOW  REF_CALL outputRDYLineLow
 #define SET_MEMORY_LOCK REF_CALL setMemoryLock
 
@@ -33,7 +33,7 @@ auto W65816::process()->void {
             // This requires additional power and can be switched off if no external "RDY" change is planned.
             // IRQ/NMI set RDY hi again and resume processing but only if RDY is not forced low from external.
             CHECK_INTR
-            return SYNC();
+            return IDLE_CYCLE();
         }
 
         if (control & NMI_PENDING) {
@@ -48,7 +48,7 @@ auto W65816::process()->void {
 
         // check STP and RESET last for performance reasons
         if (control & STP) {
-            return idle();
+            return IDLE_CYCLE();
         }
 
         if (control & RESET) {
@@ -155,7 +155,6 @@ inline auto W65816::idle6(uint16_t address) -> void {
 }
 
 inline auto W65816::idleIrq() -> void {
-    CHECK_INTR
     if (control & (IRQ_PENDING | NMI_PENDING))
         read<SAMPLE_INTR>((pbr << 16) | pc);
     else

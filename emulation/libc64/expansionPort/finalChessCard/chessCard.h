@@ -18,6 +18,7 @@ struct FinalChessCard : Cart, WDCFAMILY::W65C02 {
     bool writeProtectIO;
     unsigned MHz;
     uint8_t jumpers;
+    unsigned frequency;
 
     uint8_t* ram = nullptr;
     uint8_t* romFCC = nullptr;
@@ -28,7 +29,7 @@ struct FinalChessCard : Cart, WDCFAMILY::W65C02 {
 
     auto readByte(uint32_t adr) -> uint8_t;
     auto writeByte(uint32_t adr, uint8_t value) -> void;
-    auto sync() -> void;
+    auto idleCycle() -> void;
 
     auto reset(bool softReset = false) -> void;
 

@@ -4,33 +4,33 @@ namespace WDCFAMILY {
 template<uint8_t actions> inline auto W65816::idle() -> void {
     if constexpr (actions & SAMPLE_INTR)
         CHECK_INTR
-    SYNC();
 
 #ifdef SUPPORT_RDY
     while (lines & RDY_LINE) {
+        IDLE_CYCLE();
         if constexpr (actions & SET_FLAG_I)     p.i = true;
         if constexpr (actions & CLEAR_FLAG_I)   p.i = false;
 
         if constexpr (actions & SAMPLE_INTR)
             CHECK_INTR
-        SYNC();
     }
 #endif
+
+    IDLE_CYCLE();
 }
 
 template<uint8_t actions> inline auto W65816::read(uint32_t addr) -> uint8_t {
     if constexpr (actions & SAMPLE_INTR)
         CHECK_INTR
-    SYNC();
 
 #ifdef SUPPORT_RDY
     while (lines & RDY_LINE) {
+        IDLE_CYCLE();
         if constexpr (actions & SET_FLAG_I)     p.i = true;
         if constexpr (actions & CLEAR_FLAG_I)   p.i = false;
 
         if constexpr (actions & SAMPLE_INTR)
             CHECK_INTR
-        SYNC();
     }
 #endif
 
@@ -40,13 +40,12 @@ template<uint8_t actions> inline auto W65816::read(uint32_t addr) -> uint8_t {
 template<uint8_t actions> inline auto W65816::write(uint32_t addr, uint8_t value) -> void {
     if constexpr (actions & SAMPLE_INTR)
         CHECK_INTR
-    SYNC();
 
 #ifdef SUPPORT_RDY
     while (lines & RDY_LINE) {
+        IDLE_CYCLE();
         if constexpr (actions & SAMPLE_INTR)
             CHECK_INTR
-        SYNC();
     }
 #endif
 

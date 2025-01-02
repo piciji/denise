@@ -705,12 +705,6 @@ auto W65816::opStop() -> void {
 }
 
 template<bool setI> auto W65816::opUpdateI() -> void {
-    CHECK_INTR
-    if (control & (IRQ_PENDING | NMI_PENDING))
-        setI ? read<SET_FLAG_I | SAMPLE_INTR>((pbr << 16) | pc) : read<CLEAR_FLAG_I | SAMPLE_INTR>((pbr << 16) | pc);
-    else
-        setI ? idle<SET_FLAG_I | SAMPLE_INTR>() : idle<CLEAR_FLAG_I | SAMPLE_INTR>();
-
     if (control & (IRQ_PENDING | NMI_PENDING))
         read<SAMPLE_INTR | (setI ? SET_FLAG_I : CLEAR_FLAG_I)>((pbr << 16) | pc);
     else

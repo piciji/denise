@@ -196,7 +196,7 @@ protected:
 #ifndef W65816_REF
     virtual auto readByte(uint32_t addr) -> uint8_t = 0;
     virtual auto writeByte(uint32_t addr, uint8_t value) -> void = 0;
-    virtual auto sync() -> void = 0;
+    virtual auto idleCycle() -> void = 0;
 
     // optional
     virtual auto outputRDYLineLow() -> void {} // RDY is bi-directional
