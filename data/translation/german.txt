@@ -868,3 +868,5 @@ Final Chesscard_image = Final Chesscard Abbild
 blank_Final Chesscard_image = neues Final Chesscard Abbild auswählen ...
 Final Chesscard Battery tooltip = speichert den batteriegestützten Arbeitsspeicher in eine Datei
 Final Chesscard ROMS tooltip = Software? google nach "World of Jani Final Chesscard" und scrolle runter
+SuperCPU Turbo = SuperCPU Turbo
+SuperCPU 1MHz = SuperCPU 1 MHz

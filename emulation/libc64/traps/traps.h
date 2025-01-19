@@ -10,6 +10,7 @@
 namespace LIBC64 {
     struct System;
     struct M6510;
+    struct SuperCpu;
     struct IecBus;
     struct Tape;
 
@@ -34,6 +35,7 @@ namespace LIBC64 {
 
         System* system;
         M6510& cpu;
+        SuperCpu* superCpu = nullptr;
         IecBus& iecBus;
         Tape& tape;
 
@@ -41,6 +43,7 @@ namespace LIBC64 {
         int SerialPtr;
 
         bool installed = false;
+        bool installDelayed = false;
         bool sendFinishEvent = false;
 
         uint8_t device;

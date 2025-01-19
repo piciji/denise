@@ -125,8 +125,18 @@ struct ExpansionPort {
     virtual auto memoryMapUpdated() -> void {} // for speed hacks ( expansion can not "directly" see, when CPU port is written)
 
     virtual auto hasHiramCableConnected() -> bool { return false; }
-    
-    auto setId(Interface::ExpansionId id) -> void { this->id = id; }         
+
+    virtual auto haltMainCpu() -> bool { return false; }
+
+    virtual auto observeRdy(bool state) -> void {}
+
+    virtual auto observeIrq(bool state) -> void {}
+
+    virtual auto observeNmi(bool state) -> void {}
+
+    auto setId(Interface::ExpansionId id) -> void { this->id = id; }
+
+    virtual auto bootSpeed() -> float { return 0.0; }
 };   
 
 }

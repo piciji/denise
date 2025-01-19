@@ -145,6 +145,7 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\gmod\gmod2.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\retroReplay\retroReplay.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\reu\reu.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\superCpu\superCpu.h" />
     <ClInclude Include="..\emulation\libc64\input\controlPort\analogControl.h" />
     <ClInclude Include="..\emulation\libc64\input\controlPort\controlPort.h" />
     <ClInclude Include="..\emulation\libc64\input\controlPort\lightControl.h" />
@@ -192,6 +193,8 @@
     <ClInclude Include="..\emulation\tools\socket.h" />
     <ClInclude Include="..\emulation\tools\splines.h" />
     <ClInclude Include="..\emulation\tools\systimer.h" />
+    <ClInclude Include="..\emulation\wdc\65816\optable.h" />
+    <ClInclude Include="..\emulation\wdc\65816\w65816.h" />
     <ClInclude Include="..\emulation\wdc\65C02\w65C02.h" />
     <ClInclude Include="..\guikit\api.h" />
     <ClInclude Include="..\guikit\tools\crc32.h" />
@@ -904,6 +907,7 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\expansionPort\retroReplay\retroReplay.cpp" />
     <ClCompile Include="..\emulation\libc64\expansionPort\reu\reu.cpp" />
+    <ClCompile Include="..\emulation\libc64\expansionPort\superCpu\superCpu.cpp" />
     <ClCompile Include="..\emulation\libc64\input\controlPort\controlPort.cpp" />
     <ClCompile Include="..\emulation\libc64\input\controlPort\GunStick.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -1189,6 +1193,19 @@
     <ClCompile Include="..\emulation\tools\mx29lv640eb.cpp" />
     <ClCompile Include="..\emulation\tools\pia.cpp" />
     <ClCompile Include="..\emulation\tools\socket.cpp" />
+    <ClCompile Include="..\emulation\wdc\65816\alu.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\wdc\65816\instructions.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\wdc\65816\w65816.cpp" />
     <ClCompile Include="..\emulation\wdc\65C02\alu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>

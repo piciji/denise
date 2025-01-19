@@ -1,6 +1,7 @@
 
 #include "keyBuffer.h"
 #include "system.h"
+#include "../expansionPort/superCpu/superCpu.h"
 
 namespace LIBC64 {
 
@@ -194,7 +195,7 @@ auto KeyBuffer::process() -> void {
 
 auto KeyBuffer::feed( uint8_t c ) -> bool {
 
-    uint8_t* ram = system->ram;
+    uint8_t* ram = dynamic_cast<SuperCpu*>(system->expansionPort) ? system->superCpu->sram : system->ram;
 
     uint8_t pos = ram[ countAdr ];
     // max 10 char to buffer
@@ -210,7 +211,7 @@ auto KeyBuffer::feed( uint8_t c ) -> bool {
 
 auto KeyBuffer::checkFor( std::vector<uint8_t> buffer, bool withBlinkingCursor ) -> Found {
 
-    uint8_t* ram = system->ram;
+    uint8_t* ram = dynamic_cast<SuperCpu*>(system->expansionPort) ? system->superCpu->sram : system->ram;
 
     uint16_t screenAdr = ram[currentScreenLineAdr] | (ram[currentScreenLineAdr + 1] << 8);
 

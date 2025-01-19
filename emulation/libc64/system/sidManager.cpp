@@ -1,6 +1,7 @@
 
 #include "sidManager.h"
 #include "system.h"
+#include "../expansionPort/expansionPort.h"
 #include "../sid/clone.cpp"
 
 namespace LIBC64 {
@@ -85,6 +86,41 @@ auto SidManager::getIoPos(int nr) -> int {
         return sid->ioPos;
 
     return sids[nr-1]->ioPos;
+}
+
+auto SidManager::readSidReg(uint16_t addr) -> uint8_t {
+    updateClock();
+    if (extraSids)
+        return getSidByAdr( addr )->readIO( addr );
+
+    return sid->readIO( addr );
+}
+
+auto SidManager::writeSidReg(uint16_t addr, uint8_t value) -> void {
+    updateClock();
+    if (extraSids)
+        return writeSid( addr, value );
+
+    sid->writeIO( addr, value );
+}
+
+auto SidManager::readIo(uint16_t& addr, uint8_t& value) -> bool {
+    if (extraSids) {
+        Sid* _sid = getSidByAdr( addr, true );
+        if (_sid) {
+            updateClock();
+            value = _sid->readIO( addr );
+            return true;
+        }
+    }
+    return false;
+}
+
+auto SidManager::writeIo(uint16_t addr, uint8_t value) -> void {
+    if (extraSids) {
+        updateClock();
+        writeSidIO( addr, value );
+    }
 }
 
 auto SidManager::setSeparateFilterInputs(bool state) -> void {

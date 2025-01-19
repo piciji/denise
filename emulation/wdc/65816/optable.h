@@ -221,7 +221,7 @@
     i_M(0xd6, ModifyDirect, DEC, INDEX_X)
     i_M(0xd7, IndirectLong, CMP, INDEX_Y)
     ___(0xd8, Clear, p.d)
-    i_M(0xd9, Absolute, CMP, INDEX_X)
+    i_M(0xd9, Absolute, CMP, INDEX_Y)
     __X(0xda, Push, STX)
     ___(0xdb, Stop)
     ___(0xdc, JmpIndirect<true>)

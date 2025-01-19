@@ -5,7 +5,11 @@
 
 // RDY input line is tested in every cycle, and this affects performance.
 // therefore, it should only be activated when it is actually being used.
-#define SUPPORT_RDY
+// #define SUPPORT_RDY
+
+// BUS participants could check for vector addresses to do special actions.
+// you can treat vector reading separately to improve performance
+#define SEPARATE_VECTOR_READ
 
 //#define W65816_REF SuperCPU
 //#define W65816_REF_NS LIBC64   // optional
@@ -30,6 +34,7 @@ struct W65816 {
     auto setNmiLineLow(bool state) -> void;
     auto setIrqLineLow(bool state) -> void;
     auto setRdyLineLow(bool state) -> void;
+    auto emulationMode() -> bool { return modeE; } // E-Line
 
     enum {  RESET = 1, WAI = 2, STP = 4, IRQ_LINE = 8, NMI_LINE = 0x10, RDY_LINE = 0x20,
             NMI_TRANSITION = 0x40, IRQ_PENDING = 0x80, NMI_PENDING = 0x100 };
@@ -40,7 +45,7 @@ struct W65816 {
 
     enum {  NONE = 0, INDEX_X = 1, INDEX_Y = 2 };
 
-    enum { SAMPLE_INTR = 1, SET_FLAG_I = 2, CLEAR_FLAG_I = 4, NATIVE = 8 };
+    enum { SAMPLE_INTR = 1, SET_FLAG_I = 2, CLEAR_FLAG_I = 4, NATIVE = 8, VECTOR = 16 };
 
 protected:
 #ifdef W65816_REF
@@ -95,12 +100,15 @@ protected:
 
     auto checkForInterrupt() -> void;
 
-    template<uint8_t actions = 0> inline auto idle() -> void;
+    template<uint8_t actions = 0> inline auto idle(uint32_t addr) -> void;
     template<uint8_t actions = 0> inline auto read(uint32_t addr) -> uint8_t;
     template<uint8_t actions = 0> inline auto write(uint32_t addr, uint8_t value) -> void;
     template<uint8_t actions = 0> inline auto readBank(uint32_t addr) -> uint8_t;
+    template<uint8_t actions = 0> inline auto readBankIdle(uint32_t addr) -> void;
     template<uint8_t actions = 0> inline auto writeBank(uint32_t addr, uint8_t data) -> void;
     template<uint8_t actions = 0> inline auto readPC() -> uint8_t;
+    template<uint8_t actions = 0> inline auto readPCNoInc() -> uint8_t;
+    template<uint8_t actions = 0> inline auto readPCIdle() -> void;
     template<uint8_t actions = 0> auto readStack(uint32_t addr) -> uint8_t;
     template<uint8_t actions = 0> auto writeStack(uint32_t addr, uint8_t data) -> void;
     template<uint8_t actions = 0> auto push(uint8_t data) -> void;
@@ -116,7 +124,6 @@ protected:
 
     inline auto idle2() -> void;
     inline auto idle4(const uint16_t a1, const uint16_t a2) -> void;
-    inline auto idle6(uint16_t address) -> void;
     inline auto idleIrq() -> void;
 
     template<bool M, uint8_t Inst> auto arithmetic(uint16_t data) -> void;
@@ -196,11 +203,15 @@ protected:
 #ifndef W65816_REF
     virtual auto readByte(uint32_t addr) -> uint8_t = 0;
     virtual auto writeByte(uint32_t addr, uint8_t value) -> void = 0;
-    virtual auto idleCycle() -> void = 0;
+    virtual auto idleCycle(uint32_t addr) -> void = 0;
 
     // optional
+#ifdef SEPARATE_VECTOR_READ
+    virtual auto readVectorByte(uint16_t addr) -> uint8_t = 0;
+#endif
     virtual auto outputRDYLineLow() -> void {} // RDY is bi-directional
     virtual auto setMemoryLock(bool state) -> void {} // MLB hints other BUS participants not to interfere RMW
+    virtual auto trapHandler() -> bool { return false; } // trap COP instruction
 #endif
 
 };

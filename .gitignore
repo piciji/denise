@@ -6,6 +6,7 @@ denise.xcodeproj/project.xcworkspace/xcuserdata/
 ._*
 Build/
 emulation/libami/altCpu/*
+emulation/wdc65816alt/*
 .DS_Store
 msvc/.vs/
 msvc/x64/

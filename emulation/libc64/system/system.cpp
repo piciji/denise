@@ -294,6 +294,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         else
             irqIncomming &= ~2;
 
+        expansionPort->observeIrq(irqIncomming != 0);
         cpu.setIrq( irqIncomming != 0 );
     };
 
@@ -311,6 +312,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         else
             nmiIncomming &= ~2;
 
+        expansionPort->observeNmi(nmiIncomming != 0);
         cpu.setNmi( nmiIncomming != 0 );
     };
 
@@ -579,8 +581,8 @@ auto System::power( bool softReset ) -> void {
     KeyBuffer::Action action;
     action.mode = KeyBuffer::Mode::WaitDelay;
 
-    if (!debugCart->enable && dynamic_cast<Freezer*>(expansionPort))
-        action.delay = (unsigned)(interface->stats.fps * dynamic_cast<Freezer*>(expansionPort)->bootSpeed());
+    if (!debugCart->enable && expansionPort->bootSpeed())
+        action.delay = (unsigned)(interface->stats.fps * expansionPort->bootSpeed());
     else if (iecBus.drives[0]->speeder && secondDriveCable.parallelUse)
         action.delay = (unsigned)(interface->stats.fps * ((iecBus.drives[0]->speeder == 10 || iecBus.drives[0]->speeder == 11)
             ? 0.9 : 0.5) );
@@ -602,7 +604,13 @@ auto System::power( bool softReset ) -> void {
         action.delay = 0;
         action.blinkingCursor = true;
         action.callbackId = 1;
-        action.callback = [this]() { kernalBootComplete = true; };
+        action.callback = [this]() {
+            kernalBootComplete = true;
+            if (traps.installDelayed) {
+                traps.installSerial();
+                traps.reset( false );
+            }
+        };
         keyBuffer->add( action );
 
     } else {
@@ -663,6 +671,7 @@ auto System::initRam(uint8_t*& mem) -> void {
 }
 
 auto System::run() -> void {
+    bool haltMainCpu = expansionPort->haltMainCpu();
     leaveEmulation = false;
     runAhead.pos = 0;
     acia->connectionLock = false;
@@ -678,6 +687,7 @@ auto System::run() -> void {
         nmiIncomming &= ~1;
 
     cpu.setNmi(nmiIncomming != 0);
+    expansionPort->observeNmi(nmiIncomming != 0);
     iecBus.randomizeRpm();
 
     runAhead.active = !warp.config && runAhead.frames && !traps.installed
@@ -691,10 +701,18 @@ auto System::run() -> void {
 
     labelRunAhead:
 
-    while( !leaveEmulation ) {
-        cpu.process();
-        if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
-            iecBus.syncDrives();
+    if (haltMainCpu) {
+        while( !leaveEmulation ) {
+            expansionPort->clock();
+            if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
+                iecBus.syncDrives();
+        }
+    } else {
+        while( !leaveEmulation ) {
+            cpu.process();
+            if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
+                iecBus.syncDrives();
+        }
     }
 
     if (runAhead.active) {
@@ -901,6 +919,7 @@ auto System::setVicIrq( bool state ) -> void {
     else
         irqIncomming &= ~1;
 
+    expansionPort->observeIrq(irqIncomming != 0);
     cpu.setIrq( irqIncomming != 0 );
 }
 
@@ -910,6 +929,7 @@ auto System::setVicRdy(bool state) -> void {
     else
         rdyIncomming &= ~1;
 
+    expansionPort->observeRdy(rdyIncomming != 0);
     cpu.setRdy( rdyIncomming != 0 );
 }
 

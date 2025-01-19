@@ -6,6 +6,7 @@
 #include "../tools/chronos.h"
 #include "../thread/emuThread.h"
 #include "../emuconfig/config.h"
+#include "../media/media.h"
 
 StatusHandler* statusHandler = nullptr;
 
@@ -235,6 +236,28 @@ auto StatusHandler::updatePowerLED(bool state) -> void {
     setPowerLED();
 }
 
+auto StatusHandler::setExpansionClick() -> void {
+    auto expansion = activeEmulator->getExpansion();
+
+    if (dynamic_cast<LIBC64::Interface*>(activeEmulator) && expansion->id == LIBC64::Interface::ExpansionId::ExpansionIdSuperCpu) {
+        emuThread->lock();
+        bool state = activeEmulator->getExpansionJumper(expansion->mediaGroup->selected, 0);
+        activeEmulator->setExpansionJumper(expansion->mediaGroup->selected, 0, !state);
+        setMessage( trans->get( state ? "SuperCPU 1Mhz" : "SuperCPU turbo"));
+
+        auto& jumper = expansion->jumpers[0];
+        auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
+        if (emuView && emuView->mediaLayout) {
+            auto block = emuView->mediaLayout->getBlock(expansion->mediaGroup->selected);
+            if (block)
+                block->selector.jumpers[0]->setChecked(!state);
+        }
+        std::string saveIdent = _underscore( expansion->mediaGroup->selected->name + "_jumper_" + jumper.name );
+        program->getSettings(activeEmulator)->set<bool>( saveIdent, !state);
+        emuThread->unlock();
+    }
+}
+
 auto StatusHandler::setPowerLED() -> void {
     GUIKIT::Image* image;
     int model = activeEmulator->getModelValue( LIBAMI::Interface::ModelId::ModelIdSystem );
@@ -321,8 +344,14 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     
     statusBar->append( 9, "000", nullptr, &(view->tapeControlMenu) );    // tape counter
     statusBar->append( 10, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
-	statusBar->append( 11, "CRT" );    // expansion label
-    statusBar->append( 12, &(view->ledOffImage) );    // expansion LED
+	statusBar->append( 11, "CRT", [this]() {
+	    if (activeEmulator)
+	        this->setExpansionClick();
+    } );
+    statusBar->append( 12, &(view->ledOffImage), [this]() {
+        if (activeEmulator)
+            this->setExpansionClick();
+    } );    // expansion LED
     statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
     statusBar->append( 18, 21, 60, [](unsigned position) {
         if (!activeEmulator)

@@ -10,13 +10,17 @@
     #define REF_CALL
 #endif
 
-#define READ_BYTE       REF_CALL readByte
-#define WRITE_BYTE      REF_CALL writeByte
-#define IDLE_CYCLE      REF_CALL idleCycle
-#define OUTPUT_RDY_LOW  REF_CALL outputRDYLineLow
-#define SET_MEMORY_LOCK REF_CALL setMemoryLock
+#define READ_BYTE           REF_CALL readByte
+#define READ_VECTOR_BYTE    REF_CALL readVectorByte
+#define WRITE_BYTE          REF_CALL writeByte
+#define IDLE_CYCLE          REF_CALL idleCycle
+#define OUTPUT_RDY_LOW      REF_CALL outputRDYLineLow
+#define SET_MEMORY_LOCK     REF_CALL setMemoryLock
+#define TRAP_HANDLER        REF_CALL trapHandler
 
 #define CHECK_INTR     { if(lines & (NMI_TRANSITION | IRQ_LINE)) checkForInterrupt(); }
+
+#define PAGE_CROSSED(a1, a2) (((a1) ^ (a2)) & 0xff00)
 
 #include "instructions.cpp"
 #include "alu.cpp"
@@ -32,7 +36,7 @@ auto W65816::process()->void {
             // This requires additional power and can be switched off if no external "RDY" change is planned.
             // IRQ/NMI set RDY hi again and resume processing but only if RDY is not forced low from external.
             CHECK_INTR
-            return IDLE_CYCLE();
+            return IDLE_CYCLE((pbr << 16) | pc);
         }
 
         if (control & NMI_PENDING) {
@@ -47,7 +51,7 @@ auto W65816::process()->void {
 
         // check STP and RESET last for performance reasons
         if (control & STP) {
-            return IDLE_CYCLE();
+            return IDLE_CYCLE((pbr << 16) | pc);
         }
 
         if (control & RESET) {
@@ -63,8 +67,8 @@ auto W65816::process()->void {
 
 template<bool hardware> auto W65816::interrupt(const uint16_t& vector) -> void {
     if constexpr(hardware) {
-        read( (pbr << 8) | pc );
-        idle();
+        readPCNoInc();
+        readPCIdle();
     } else
         readPC();
 
@@ -76,8 +80,8 @@ template<bool hardware> auto W65816::interrupt(const uint16_t& vector) -> void {
     (hardware && modeE) ? push(p & ~0x10) : push(p);
     p.i = true;
     p.d = false;
-    uint16_t newPC = read(vector);
-    newPC |= read<SAMPLE_INTR>(vector + 1) << 8;
+    uint16_t newPC = read<VECTOR>(vector);
+    newPC |= read<SAMPLE_INTR | VECTOR>(vector + 1) << 8;
     pc = newPC;
     pbr = 0;
 }
@@ -114,7 +118,7 @@ auto W65816::setIrqLineLow(bool state) -> void {
 }
 
 auto W65816::setRdyLineLow(bool state) -> void {
-    if (state)  lines |= RDY_LINE;
+    if (state) lines |= RDY_LINE;
     else {
         lines &= ~RDY_LINE;
         control &= ~WAI;
@@ -138,42 +142,28 @@ auto W65816::checkForInterrupt() -> void {
 
 inline auto W65816::idle2() -> void {
     if(d & 0xff)
-        idle();
+        readPCIdle();
 }
-
-#define PAGE_CROSSED(a1, a2) (((a1) ^ (a2)) & 0xff00)
 
 inline auto W65816::idle4(const uint16_t a1, const uint16_t a2) -> void {
     if(!p.x || PAGE_CROSSED(a1, a2))
-        idle();
-}
-
-inline auto W65816::idle6(uint16_t address) -> void {
-    if(modeE && PAGE_CROSSED(pc, address))
-        idle();
+        readBankIdle((a1 & 0xff00) | (a2 & 0xff));
 }
 
 inline auto W65816::idleIrq() -> void {
     if (control & (IRQ_PENDING | NMI_PENDING))
-        read<SAMPLE_INTR>((pbr << 16) | pc);
+        readPCNoInc<SAMPLE_INTR>();
     else
-        idle<SAMPLE_INTR>();
+        readPCIdle<SAMPLE_INTR>();
 }
 
-template<uint8_t actions> inline auto W65816::idle() -> void {
-    if constexpr (actions & SAMPLE_INTR)
-        CHECK_INTR
-
-    IDLE_CYCLE();
-}
-
-template<uint8_t actions> inline auto W65816::read(uint32_t addr) -> uint8_t {
+template<uint8_t actions> inline auto W65816::idle(uint32_t addr) -> void {
     if constexpr (actions & SAMPLE_INTR)
         CHECK_INTR
 
 #ifdef SUPPORT_RDY
     while (lines & RDY_LINE) {
-        IDLE_CYCLE();
+        IDLE_CYCLE(addr);
         if constexpr (actions & SET_FLAG_I)     p.i = true;
         if constexpr (actions & CLEAR_FLAG_I)   p.i = false;
 
@@ -182,6 +172,28 @@ template<uint8_t actions> inline auto W65816::read(uint32_t addr) -> uint8_t {
     }
 #endif
 
+    IDLE_CYCLE(addr);
+}
+
+template<uint8_t actions> inline auto W65816::read(uint32_t addr) -> uint8_t {
+    if constexpr (actions & SAMPLE_INTR)
+        CHECK_INTR
+
+#ifdef SUPPORT_RDY
+    while (lines & RDY_LINE) {
+        IDLE_CYCLE(addr);
+        if constexpr (actions & SET_FLAG_I)     p.i = true;
+        if constexpr (actions & CLEAR_FLAG_I)   p.i = false;
+
+        if constexpr (actions & SAMPLE_INTR)
+            CHECK_INTR
+    }
+#endif
+
+#ifdef SEPARATE_VECTOR_READ
+    if constexpr (actions & VECTOR)
+        return READ_VECTOR_BYTE((uint16_t)addr);
+#endif
     return READ_BYTE(addr);
 }
 
@@ -191,7 +203,7 @@ template<uint8_t actions> inline auto W65816::write(uint32_t addr, uint8_t value
 
 #ifdef SUPPORT_RDY
     while (lines & RDY_LINE) {
-        IDLE_CYCLE();
+        IDLE_CYCLE(addr);
         if constexpr (actions & SAMPLE_INTR)
             CHECK_INTR
     }
@@ -204,8 +216,20 @@ template<uint8_t actions> inline auto W65816::readBank(uint32_t addr) -> uint8_t
     return read<actions>( ((dbr << 16) + addr) & 0xffffff );
 }
 
+template<uint8_t actions> inline auto W65816::readBankIdle(uint32_t addr) -> void {
+    idle<actions>( ((dbr << 16) + addr) & 0xffffff );
+}
+
 template<uint8_t actions> inline auto W65816::readPC() -> uint8_t {
     return read<actions>((pbr << 16) | pc++);
+}
+
+template<uint8_t actions> inline auto W65816::readPCNoInc() -> uint8_t {
+    return read<actions>((pbr << 16) | pc);
+}
+
+template<uint8_t actions> inline auto W65816::readPCIdle() -> void {
+    idle<actions>((pbr << 16) | pc);
 }
 
 template<uint8_t actions> inline auto W65816::readStack(uint32_t addr) -> uint8_t {

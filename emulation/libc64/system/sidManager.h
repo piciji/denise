@@ -77,6 +77,10 @@ struct SidManager {
     auto resetAll() -> void;
     auto setIoMask(int nr, uint8_t pos) -> void;
     auto getIoPos(int nr) -> int;
+    auto readSidReg(uint16_t addr) -> uint8_t;
+    auto writeSidReg(uint16_t addr, uint8_t value) -> void;
+    auto readIo(uint16_t& addr, uint8_t& value) -> bool;
+    auto writeIo(uint16_t addr, uint8_t value) -> void;
 
     auto setResampleQuality( uint8_t val ) -> void;
     auto getResampleQuality( ) -> uint8_t;

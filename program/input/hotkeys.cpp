@@ -93,6 +93,7 @@ auto InputManager::setCustomHotkeys() -> void {
 		customHotkeys.push_back( {Hotkey::Id::RewindTape, "tape_rewind_key", false} );
 		customHotkeys.push_back( {Hotkey::Id::ResetTapeCounter, "tape_counter_reset_key", false} );
         customHotkeys.push_back( {Hotkey::Id::EF3Menu, "ef3 menu button", false} );
+	    customHotkeys.push_back( {Hotkey::Id::ToggleSuperCpuTurbo, "SuperCPU Turbo", false} );
 	} else
         customHotkeys.push_back( {Hotkey::Id::SwapJoypadsPort2, "swap joypads Port2", false} );
     
@@ -777,6 +778,10 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             emuThread->lock();
             if (activeEmulator)
                 activeEmulator->customCartridgeButton();
+            break;
+
+        case Hotkey::ToggleSuperCpuTurbo:
+            statusHandler->setExpansionClick();
             break;
 
         case Hotkey::AutoStart: {

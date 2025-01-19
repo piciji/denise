@@ -680,6 +680,7 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
             case LIBC64::Interface::ModelIdDriveRamA0ToBF:
             case LIBC64::Interface::ModelIdReuRam:
             case LIBC64::Interface::ModelIdGeoRam:
+            case LIBC64::Interface::ModelIdSuperCpuRam:
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);
 

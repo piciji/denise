@@ -209,6 +209,8 @@ auto View::build() -> void {
     };
 
     onMinimize = [this]() {
+        if (program->quitInProgress)
+            return;
         static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
         program->isPause &= ~2;
         program->isPause |= (!!*pauseFocusLoss) << 1;
@@ -229,9 +231,11 @@ auto View::build() -> void {
     };
 
     onUnFocus = [this]() {
+        if (program->quitInProgress)
+            return;
         static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
 
-        if (inputDriver->mIsAcquired())
+        if (inputDriver && inputDriver->mIsAcquired())
             inputDriver->mUnacquire();
 
         program->isPause &= ~2;

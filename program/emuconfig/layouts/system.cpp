@@ -1,6 +1,6 @@
 
 auto ExpansionLayout::build( Emulator::Interface* emulator ) -> void {
-    unsigned blocksPerLine = 4;
+    unsigned blocksPerLine = 5;
     auto& expansions = emulator->expansions;
 
     if (expansions.size() <= 1)
@@ -173,6 +173,8 @@ auto SystemLayout::updateExpansionMemory() -> void {
 
         } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdGeoRam) {
             useModel = emulator->getModel(LIBC64::Interface::ModelIdGeoRam);
+        } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdSuperCpu) {
+            useModel = emulator->getModel(LIBC64::Interface::ModelIdSuperCpuRam);
         }
     }
 

@@ -229,7 +229,7 @@ auto Autoloader::postProcessing() -> void {
         bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);
 
         useExpansion = ddControl.emulator->getExpansion();
-        if (trapped && (useExpansion && !useExpansion->isEmpty() && !useExpansion->isFastloader() && !useExpansion->isRS232()))
+        if (trapped && (useExpansion && !useExpansion->isEmpty() && !useExpansion->isFastloader() && !useExpansion->isRS232() && !useExpansion->isTurboCart()))
             trapped = false;
         else if (forceStandardKernal) {
             // temporary disable any speeders

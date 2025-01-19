@@ -10,10 +10,11 @@ template<bool JSR> auto W65816::opJmpAbsIndexedIndirect() -> void {
         push<NATIVE>(pc >> 8);
         push<NATIVE>(pc & 0xff);
     }
-    addr |= readPC() << 8;
-    idle();
-    uint16_t newPC = read((pbr << 16) | ((addr + x) & 0xffff) );
-    newPC |= read<SAMPLE_INTR>((pbr << 16) | ((addr + x + 1) & 0xffff) ) << 8;
+    addr |= readPCNoInc() << 8;
+    readPCIdle();
+    addr += x;
+    uint16_t newPC = read((pbr << 16) | addr );
+    newPC |= read<SAMPLE_INTR>((pbr << 16) | ((addr + 1) & 0xffff) ) << 8;
     pc = newPC;
     if constexpr (JSR) { if (modeE) setByteH(s, 1); }
 }
@@ -27,13 +28,9 @@ template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opAbsolute() -> void 
     constexpr bool storeMode = Inst == STA || Inst == STX || Inst == STY || Inst == STZ;
 
     if constexpr (storeMode) {
-        if constexpr (Index != NONE) idle();
-    } else {
-        if constexpr (Index == INDEX_X) idle4(addr, addr + x);
-        if constexpr (Index == INDEX_Y) idle4(addr, addr + y);
-    }
+        if constexpr (Index == INDEX_X) readBankIdle((addr & 0xff00) | ((addr + x) & 0xff));
+        if constexpr (Index == INDEX_Y) readBankIdle((addr & 0xff00) | ((addr + y) & 0xff));
 
-    if constexpr (storeMode) {
         if constexpr (Inst == STZ && Index == INDEX_X) writeBank<SI_IF_M>(addr + x, 0);
         if constexpr (Inst == STA && Index == INDEX_X) writeBank<SI_IF_M>(addr + x, a & 0xff);
         if constexpr (Inst == STA && Index == INDEX_Y) writeBank<SI_IF_M>(addr + y, a & 0xff);
@@ -53,6 +50,9 @@ template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opAbsolute() -> void 
         }
     } else {
         uint16_t data;
+        if constexpr (Index == INDEX_X) idle4(addr, addr + x);
+        if constexpr (Index == INDEX_Y) idle4(addr, addr + y);
+
         if constexpr (Index == INDEX_X) data = readBank<SI_IF_M>(addr + x);
         if constexpr (Index == INDEX_Y) data = readBank<SI_IF_M>(addr + y);
         if constexpr (Index == 0)       data = readBank<SI_IF_M>(addr);
@@ -69,25 +69,39 @@ template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opAbsolute() -> void 
 template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opModifyAbsolute() -> void {
     uint16_t data;
     uint16_t addr = readPC();
-    addr |= readPC() << 8;
-    if constexpr (Index != 0) idle();
+    addr |= readPCNoInc() << 8;
+    if constexpr (Index != NONE)  readBankIdle((addr & 0xff00) | ((addr + x) & 0xff) );
     SET_MEMORY_LOCK(true);
     if constexpr (Index == INDEX_X) data = readBank(addr + x);
-    if constexpr (Index == 0)       data = readBank(addr);
+    if constexpr (Index == NONE)    data = readBank(addr);
 
     if constexpr (!M) {
         if constexpr (Index == INDEX_X) data |= readBank(addr + x + 1) << 8;
-        if constexpr (Index == 0)       data |= readBank(addr + 1) << 8;
+        if constexpr (Index == NONE)    data |= readBank(addr + 1) << 8;
     }
-    idle();
+
+    if (modeE) { // M is always 1 in emulation mode
+        if constexpr (Index == INDEX_X) writeBank(addr + x, data & 0xff);
+        else                            writeBank(addr, data & 0xff);
+    } else {
+        if constexpr (!M) {
+            if constexpr (Index == INDEX_X) readBankIdle(addr + x + 1 );
+            if constexpr (Index == NONE)    readBankIdle(addr + 1);
+        } else {
+            if constexpr (Index == INDEX_X) readBankIdle(addr + x );
+            if constexpr (Index == NONE)    readBankIdle(addr);
+        }
+    }
+    pc++;
+
     arithmeticM<M, Inst>(data);
     if constexpr (!M) {
         if constexpr (Index == INDEX_X) writeBank(addr + x + 1, data >> 8);
-        if constexpr (Index == 0)       writeBank(addr + 1, data >> 8);
+        if constexpr (Index == NONE)    writeBank(addr + 1, data >> 8);
     }
 
     if constexpr (Index == INDEX_X) writeBank<SAMPLE_INTR>(addr + x, data & 0xff);
-    if constexpr (Index == 0)       writeBank<SAMPLE_INTR>(addr, data & 0xff);
+    if constexpr (Index == NONE)    writeBank<SAMPLE_INTR>(addr, data & 0xff);
     SET_MEMORY_LOCK(false);
 }
 
@@ -114,18 +128,18 @@ template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opLong() -> void {
 
     if constexpr (Inst == STA) {
         if constexpr (Index == INDEX_X) write<SI_IF_M>((addr + x) & 0xffffff, a & 0xff);
-        if constexpr (Index == 0)       write<SI_IF_M>(addr, a & 0xff);
+        if constexpr (Index == NONE)    write<SI_IF_M>(addr, a & 0xff);
         if constexpr (!M) {
             if constexpr (Index == INDEX_X) write<SAMPLE_INTR>( (addr + x + 1) & 0xffffff, a >> 8);
-            if constexpr (Index == 0)       write<SAMPLE_INTR>( (addr + 1) & 0xffffff, a >> 8);
+            if constexpr (Index == NONE)    write<SAMPLE_INTR>( (addr + 1) & 0xffffff, a >> 8);
         }
     } else {
         uint16_t data;
         if constexpr (Index == INDEX_X) data = read<SI_IF_M>( (addr + x) & 0xffffff );
-        if constexpr (Index == 0)       data = read<SI_IF_M>( addr );
+        if constexpr (Index == NONE)    data = read<SI_IF_M>( addr );
         if constexpr (!M) {
             if constexpr (Index == INDEX_X) data |= read<SAMPLE_INTR>( (addr + x + 1) & 0xffffff ) << 8;
-            if constexpr (Index == 0)       data |= read<SAMPLE_INTR>( (addr + 1) & 0xffffff ) << 8;
+            if constexpr (Index == NONE)    data |= read<SAMPLE_INTR>( (addr + 1) & 0xffffff ) << 8;
         }
         arithmetic<M, Inst>(data);
     }
@@ -136,8 +150,9 @@ template<bool M, bool Mvn> auto W65816::opMove() -> void {
     dbr = readPC();
     uint8_t data = readPC();
     data = read((data << 16) | x);
-    write((dbr << 16) | y, data);
-    idle();
+    uint32_t addr = (dbr << 16) | y;
+    write(addr, data);
+    idle(addr);
     if constexpr (Mvn) {
         if constexpr (M) {
             incByteL(x);
@@ -156,7 +171,7 @@ template<bool M, bool Mvn> auto W65816::opMove() -> void {
         }
     }
 
-    idle<SAMPLE_INTR>();
+    idle<SAMPLE_INTR>(addr);
     if(a--)
         pc -= 3;
 }
@@ -165,7 +180,7 @@ template<bool M, bool Mvn> auto W65816::opMove() -> void {
 template<bool M, uint8_t Inst> auto W65816::opIndexedIndirect() -> void {
     uint16_t data = readPC();
     idle2();
-    idle();
+    readPCIdle();
     uint16_t addr = getDirectAddressIndirect(data + x);
 
     if constexpr (Inst == STA) {
@@ -188,7 +203,7 @@ template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opDirect() -> void {
     constexpr bool storeMode = Inst == STA || Inst == STX || Inst == STY || Inst == STZ;
     uint8_t data = readPC();
     idle2();
-    if constexpr (Index != 0) idle();
+    if constexpr (Index != 0) readPCIdle();
 
     if constexpr (storeMode) {
         if constexpr (Inst == STZ && Index == 0)        write<SI_IF_M>( directAdr(data), 0 );
@@ -208,7 +223,7 @@ template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opDirect() -> void {
             if constexpr (Inst == STZ && Index == INDEX_X)  write<SAMPLE_INTR>( directAdr(data + x + 1), 0 );
             if constexpr (Inst == STY && Index == INDEX_X)  write<SAMPLE_INTR>( directAdr(data + x + 1), y >> 8 );
             if constexpr (Inst == STA && Index == INDEX_X)  write<SAMPLE_INTR>( directAdr(data + x + 1), a >> 8 );
-            if constexpr (Inst == STX && Index == INDEX_Y)  write<SAMPLE_INTR>( directAdr(data + x + 1), x >> 8 );
+            if constexpr (Inst == STX && Index == INDEX_Y)  write<SAMPLE_INTR>( directAdr(data + y + 1), x >> 8 );
         }
     } else {
         uint16_t operand;
@@ -226,22 +241,30 @@ template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opDirect() -> void {
 }
 
 template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opModifyDirect() -> void {
-    uint16_t addr1, addr2;
-    uint16_t data = readPC();
+      uint16_t addr1, addr2;
+    uint16_t data;
+    uint8_t offset = readPC();
     idle2();
-    if constexpr (Index != 0) idle();
+    if constexpr (Index != 0) readPCIdle();
 
     SET_MEMORY_LOCK(true);
-    if constexpr (Index == INDEX_X) addr1 = directAdr(data + x);
-    if constexpr (Index == 0)       addr1 = directAdr(data);
+    if constexpr (Index == INDEX_X) addr1 = directAdr(offset + x);
+    if constexpr (Index == 0)       addr1 = directAdr(offset);
     data = read(addr1);
 
     if constexpr (!M) {
-        if constexpr (Index == INDEX_X) addr2 = directAdr(data + x + 1);
-        if constexpr (Index == 0)       addr2 = directAdr(data + 1);
+        if constexpr (Index == INDEX_X) addr2 = directAdr(offset + x + 1);
+        if constexpr (Index == 0)       addr2 = directAdr(offset + 1);
         data |= read(addr2) << 8;
     }
-    idle();
+
+    if (modeE) {
+        write(addr1, data & 0xff);
+    } else {
+        if constexpr (!M)   idle(addr2);
+        else                idle(addr1);
+    }
+
     arithmeticM<M, Inst>(data);
     if constexpr (!M)
         write(addr2, data >> 8);
@@ -259,7 +282,7 @@ template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opIndirect() -> void 
     addr |= read(directAdr(data + 1)) << 8;
 
     if constexpr (Inst == STA) {
-        if constexpr (Index != 0) idle();
+        if constexpr (Index == INDEX_Y) readBankIdle((addr & 0xff00) | ((addr + y) & 0xff) );
         if constexpr (Index == INDEX_Y) writeBank<SI_IF_M>( addr + y, a & 0xff);
         if constexpr (Index == 0)       writeBank<SI_IF_M>( addr, a & 0xff);
         if constexpr (!M) {
@@ -321,29 +344,29 @@ template<bool M, uint8_t Inst> auto W65816::opImmediate() -> void {
 
 // Program Counter Relative-r
 auto W65816::opBranch(bool take) -> void {
+    uint8_t data = readPC<SAMPLE_INTR>();
+
     if (take) {
-        uint8_t data = readPC();
+        readPCIdle();
         uint16_t addr = pc + int8_t(data);
-        idle6(addr);
-        idle<SAMPLE_INTR>();
+        if(modeE && PAGE_CROSSED(pc, addr))
+            idle<SAMPLE_INTR>((pbr << 16) | (pc & 0xff00) | (addr & 0xff) );
         pc = addr;
-    } else
-        readPC<SAMPLE_INTR>();
+    }
 }
 
 // Program Counter Relative Long-rl
 auto W65816::opBranchLong() -> void {
     uint16_t data = readPC();
     data |= readPC() << 8;
-    uint16_t addr = pc + int16_t(data);
-    idle<SAMPLE_INTR>();
-    pc = addr;
+    readPCIdle<SAMPLE_INTR>();
+    pc += int16_t(data);
 }
 
 // Stack Relative-d,s
 template<bool M, uint8_t Inst> auto W65816::opStackRelative() -> void {
     uint8_t data = readPC();
-    idle();
+    readPCIdle();
     if constexpr (Inst == STA) {
         writeStack<SI_IF_M>(data, a & 0xff);
         if constexpr (!M)
@@ -361,10 +384,10 @@ template<bool M, uint8_t Inst> auto W65816::opStackRelative() -> void {
 // Stack Relative Indirect Indexed-(d,s),y
 template<bool M, uint8_t Inst, uint8_t Index> auto W65816::opStackRelativeIndirect() -> void {
     uint8_t data = readPC();
-    idle();
+    readPCIdle();
     uint16_t addr = readStack(data);
     addr |= readStack(data + 1) << 8;
-    idle();
+    idle((s + data + 1) & 0xffff);
 
     if constexpr (Inst == STA) {
         writeBank<SI_IF_M>(addr + y, a & 0xff);
@@ -428,7 +451,7 @@ auto W65816::opTAX() -> void { _TRANSFER(p.x, a, x) }
 
 // Stack-s
 template<bool M, uint8_t Inst> auto W65816::opPush() -> void {
-    idle();
+    readPCIdle();
     if constexpr (!M) {
         if constexpr (Inst == STX) push( (x >> 8) & 0xff );
         if constexpr (Inst == STY) push( (y >> 8) & 0xff );
@@ -441,30 +464,30 @@ template<bool M, uint8_t Inst> auto W65816::opPush() -> void {
 }
 
 auto W65816::opPHD() -> void {
-    idle();
+    readPCIdle();
     push<NATIVE>( (d >> 8) & 0xff );
     push<NATIVE | SAMPLE_INTR>( d & 0xff );
     if (modeE) setByteH(s, 1);
 }
 
 auto W65816::opPHP() -> void {
-    idle<SAMPLE_INTR>();
+    readPCIdle<SAMPLE_INTR>();
     push( p );
 }
 
 auto W65816::opPHK() -> void {
-    idle();
+    readPCIdle();
     push<SAMPLE_INTR>( pbr );
 }
 
 auto W65816::opPHB() -> void {
-    idle();
+    readPCIdle();
     push<SAMPLE_INTR>( dbr );
 }
 
 auto W65816::opPLP() -> void {
-    idle();
-    idle();
+    readPCIdle();
+    readPCIdle();
     p = pull<SAMPLE_INTR>();
     if (modeE) p.x = p.m = true;
     if (p.x) {
@@ -474,8 +497,8 @@ auto W65816::opPLP() -> void {
 }
 
 auto W65816::opPLD() -> void {
-    idle();
-    idle();
+    readPCIdle();
+    readPCIdle();
     d = pull<NATIVE>();
     d |= pull<NATIVE | SAMPLE_INTR>() << 8;
     p.z = d == 0;
@@ -484,11 +507,11 @@ auto W65816::opPLD() -> void {
 }
 
 auto W65816::opPLB() -> void {
-    idle();
-    idle();
-    pbr = pull<NATIVE | SAMPLE_INTR>();
-    p.z = pbr == 0;
-    p.n = pbr & 0x80;
+    readPCIdle();
+    readPCIdle();
+    dbr = pull<NATIVE | SAMPLE_INTR>();
+    p.z = dbr == 0;
+    p.n = dbr & 0x80;
     if (modeE) setByteH(s, 1);
 }
 
@@ -504,8 +527,8 @@ auto W65816::opPLB() -> void {
     p.z = reg == 0;
 
 template<bool M, uint8_t Inst> auto W65816::opPull() -> void {
-    idle();
-    idle();
+    readPCIdle();
+    readPCIdle();
     if constexpr (M) {
         if constexpr (Inst == STX) { _PULL8(x) }
         if constexpr (Inst == STY) { _PULL8(y) }
@@ -519,9 +542,8 @@ template<bool M, uint8_t Inst> auto W65816::opPull() -> void {
 
 auto W65816::opJSR() -> void {
     uint16_t newPC = readPC();
-    newPC |= readPC() << 8;
-    idle();
-    pc--;
+    newPC |= readPCNoInc() << 8;
+    readPCIdle();
     push(pc >> 8);
     push<SAMPLE_INTR>(pc & 0xff);
     pc = newPC;
@@ -531,9 +553,8 @@ auto W65816::opJSL() -> void {
     uint16_t newPC = readPC();
     newPC |= readPC() << 8;
     push<NATIVE>(pbr);
-    idle();
-    uint8_t newPbr = readPC();
-    pc--;
+    idle((s + 1) & 0xffff );
+    uint8_t newPbr = readPCNoInc();
     push<NATIVE>(pc >> 8);
     push<NATIVE | SAMPLE_INTR>(pc & 0xff);
     pc = newPC;
@@ -542,8 +563,8 @@ auto W65816::opJSL() -> void {
 }
 
 auto W65816::opRTI() -> void {
-    idle();
-    idle();
+    readPCIdle();
+    readPCIdle();
     p = pull();
     if (modeE)
         p.x = p.m = true;
@@ -563,18 +584,18 @@ auto W65816::opRTI() -> void {
 }
 
 auto W65816::opRTS() -> void {
-    idle();
-    idle();
+    readPCIdle();
+    readPCIdle();
     uint16_t newPC = pull();
     newPC |= pull() << 8;
-    idle<SAMPLE_INTR>();
+    idle<SAMPLE_INTR>(s);
     pc = newPC;
     pc++;
 }
 
 auto W65816::opRTL() -> void {
-    idle();
-    idle();
+    readPCIdle();
+    readPCIdle();
     uint16_t newPC = pull<NATIVE>();
     newPC |= pull<NATIVE>() << 8;
     pbr = pull<NATIVE | SAMPLE_INTR>();
@@ -617,7 +638,7 @@ auto W65816::opSet(bool& flag) -> void {
 auto W65816::opPer() -> void {
     uint16_t data = readPC();
     data |= readPC() << 8;
-    idle();
+    readPCIdle();
     data = pc + (int16_t)data;
     push<NATIVE>(data >> 8);
     push<NATIVE | SAMPLE_INTR>(data & 0xff);
@@ -625,8 +646,9 @@ auto W65816::opPer() -> void {
 }
 
 auto W65816::opResetP() -> void {
-    uint8_t data = readPC();
-    idle<SAMPLE_INTR>();
+    uint8_t data = readPCNoInc();
+    readPCIdle<SAMPLE_INTR>();
+    pc++;
     p = p & ~data;
     if (modeE) p.x = p.m = true;
     if (p.x) {
@@ -636,8 +658,9 @@ auto W65816::opResetP() -> void {
 }
 
 auto W65816::opSetP() -> void {
-    uint8_t data = readPC();
-    idle<SAMPLE_INTR>();
+    uint8_t data = readPCNoInc();
+    readPCIdle<SAMPLE_INTR>();
+    pc++;
     p = p | data;
     if (modeE) p.x = p.m = true;
     if (p.x) {
@@ -649,10 +672,10 @@ auto W65816::opSetP() -> void {
 auto W65816::opPushEffectiveIndirectAddress() -> void {
     uint8_t data = readPC();
     idle2();
-    uint16_t addr = read(directAdr(data));
-    addr |= read(directAdr(data + 1)) << 8;
-    push<NATIVE>(addr >> 8);
-    push<NATIVE | SAMPLE_INTR>(addr & 0xff);
+    uint16_t operand = read(uint16_t(d + data));
+    operand |= read(uint16_t(d + data + 1)) << 8;
+    push<NATIVE>(operand >> 8);
+    push<NATIVE | SAMPLE_INTR>(operand & 0xff);
     if (modeE) setByteH(s, 1);
 }
 
@@ -665,8 +688,8 @@ auto W65816::opPushEffectiveAddress() -> void {
 }
 
 inline auto W65816::opXBA() -> void {
-    idle();
-    idle<SAMPLE_INTR>();
+    readPCIdle();
+    readPCIdle<SAMPLE_INTR>();
     a = (a >> 8) | (a << 8);
     p.z = (a & 0xff) == 0;
     p.n = a & 0x80;
@@ -691,24 +714,25 @@ inline auto W65816::opBRK() -> void {
 }
 
 inline auto W65816::opCOP() -> void {
-    interrupt<false>(modeE ? 0xfff4 : 0xffe4);
+    if (!TRAP_HANDLER())
+        interrupt<false>(modeE ? 0xfff4 : 0xffe4);
 }
 
 auto W65816::opWait() -> void {
     control |= WAI;
-    idle<SAMPLE_INTR>();
+    readPCIdle<SAMPLE_INTR>();
 }
 
 auto W65816::opStop() -> void {
     control |= STP;
-    idle();
+    readPCIdle();
 }
 
 template<bool setI> auto W65816::opUpdateI() -> void {
     if (control & (IRQ_PENDING | NMI_PENDING))
-        read<SAMPLE_INTR | (setI ? SET_FLAG_I : CLEAR_FLAG_I)>((pbr << 16) | pc);
+        readPCNoInc<SAMPLE_INTR | (setI ? SET_FLAG_I : CLEAR_FLAG_I)>();
     else
-        idle<SAMPLE_INTR | (setI ? SET_FLAG_I : CLEAR_FLAG_I)>();
+        readPCIdle<SAMPLE_INTR | (setI ? SET_FLAG_I : CLEAR_FLAG_I)>();
 
     p.i = setI;
 }

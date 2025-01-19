@@ -19,6 +19,7 @@
 #include "../../expansionPort/gameCart/mach5.h"
 #include "../../expansionPort/gameCart/supergames.h"
 #include "../../expansionPort/gameCart/businessBasic.h"
+#include "../../expansionPort/superCpu/superCpu.h"
 #include "../../input/input.h"
 
 namespace LIBC64 {
@@ -368,6 +369,7 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
     action.waitCallback = nullptr;
     action.callback = [this]() {
         system->autoStartFinish(false);
+        //system->superCpu->takeOver();
     };
 
     if (mafiosino) {
@@ -392,9 +394,12 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
     }
 
     if (options & 1) { // traps
-        system->traps.installSerial();
-        system->traps.reset( options & 2 ); // trap send success event to host, error event will be always send
-        system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
+        if (!dynamic_cast<SuperCpu*>(system->expansionPort)) {
+            system->traps.installSerial();
+            system->traps.reset( options & 2 ); // trap send success event to host, error event will be always send
+            system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
+        } else
+            system->traps.installDelayed = true;
     }
 }
 

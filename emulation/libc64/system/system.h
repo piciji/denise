@@ -43,6 +43,7 @@ struct Gmod2;
 struct RetroReplay;
 struct Reu;
 struct FinalChessCard;
+struct SuperCpu;
 struct M6510;
 struct IecBus;
 struct Prg;
@@ -125,6 +126,7 @@ struct System {
     RetroReplay* retroReplay;
     Reu* reu;
 	FinalChessCard* finalChessCard;
+	SuperCpu* superCpu;
     M6510 cpu;
     VicIIBase* vicII;
     VicIICycle vicIICycle;

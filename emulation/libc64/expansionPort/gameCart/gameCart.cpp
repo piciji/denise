@@ -141,7 +141,7 @@ auto GameCart::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> C
             break;
 
         case Interface::CartridgeIdHyperBasic:
-            if (_size < (2 * 1024 * 1024)) {
+            if (_size < (1 * 1024 * 1024)) {
                 cart = new HyperBasic(system);
                 break;
             }

@@ -16,6 +16,7 @@
 #include "expansionPort/retroReplay/retroReplay.h"
 #include "expansionPort/gmod/gmod2.h"
 #include "expansionPort/geoRam/geoRam.h"
+#include "expansionPort/superCpu/superCpu.h"
 #include "expansionPort/acia/acia.h"
 #include "expansionPort/fastloader/fastloader.h"
 #include "expansionPort/finalChessCard/chessCard.h"
@@ -58,6 +59,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionRS232, "RS-232", MediaGroup::Type::Expansion });
     mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion,{"bin", "crt","rom"} });
     mediaGroups.push_back({MediaGroupIdExpansionFinalChessCard, "Final Chesscard", MediaGroup::Type::Expansion,{"bin","rom"}, {"bin"} });
+    mediaGroups.push_back({MediaGroupIdExpansionSuperCpu, "Super CPU", MediaGroup::Type::Expansion,{"bin","rom"} });
         	
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -177,7 +179,12 @@ auto Interface::prepareMedia() -> void {
 	    group.media.push_back({3, "Final Chesscard BROM 2", 0, &group});
 	    group.media.push_back({4, "Final Chesscard RAM 1", 0, &group});
 	    group.media.push_back({5, "Final Chesscard RAM 2", 0, &group});
+	    group.selected = &group.media[0];
+    }
 
+    {   auto& group = mediaGroups[MediaGroupIdExpansionSuperCpu];
+	    group.media.push_back({0, "SuperCPU 1", 0, &group});
+	    group.media.push_back({1, "SuperCPU 2", 0, &group});
 	    group.selected = &group.media[0];
     }
     
@@ -211,6 +218,7 @@ auto Interface::prepareExpansions() -> void {
 	expansions.push_back( { ExpansionIdRS232, "RS-232", Expansion::Type::RS232, &mediaGroups[MediaGroupIdExpansionRS232], nullptr } );
     expansions.push_back( { ExpansionIdFastloader, "Fast Loader", Expansion::Type::Fastloader, &mediaGroups[MediaGroupIdExpansionFastloader], nullptr } );
     expansions.push_back( { ExpansionIdFinalChessCard, "Final Chesscard", Expansion::Type::TurboCart | Expansion::Type::Battery, &mediaGroups[MediaGroupIdExpansionFinalChessCard], nullptr } );
+    expansions.push_back( { ExpansionIdSuperCpu, "SuperCPU", Expansion::Type::TurboCart | Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionSuperCpu], nullptr } );
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -332,6 +340,13 @@ auto Interface::prepareExpansions() -> void {
 
         expansion.creationIdents.push_back( "Final Chesscard" );
         mediaGroups[MediaGroupIdExpansionFinalChessCard].expansion = &expansion;
+    }
+
+    {   auto& expansion = expansions[ExpansionIdSuperCpu];
+        expansion.jumpers.push_back({0, "Turbo", true} );
+        expansion.jumpers.push_back({1, "JiffyDOS"} );
+
+        mediaGroups[MediaGroupIdExpansionSuperCpu].expansion = &expansion;
     }
 
     for(auto& group : mediaGroups) {
@@ -614,6 +629,7 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdReuRam, "REU Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 7}, { "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB", "16 MB" }});
     models.push_back({ModelIdGeoRam, "Geo Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 6}, { "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB" }});
+    models.push_back({ModelIdSuperCpuRam, "SuperCPU Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 4}, { "none", "1 MB","4 MB", "8 MB", "16 MB" }});
 
     models.push_back({ModelIdEmulateDriveMechanics, "Emulate Mechanics", Model::Type::Switch, Model::Purpose::DriveMechanics, 0});
     models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveMechanics, 90, {0, 140}, {}, 140, 10.0 });
@@ -1100,6 +1116,8 @@ auto Interface::insertExpansionImage(Media* media, uint8_t* data, unsigned size)
         system->fastloader->setRom(media, data, size);
     else if (group->expansion->id == ExpansionIdFinalChessCard)
         system->finalChessCard->setRom(media, data, size);
+    else if (group->expansion->id == ExpansionIdSuperCpu)
+        system->superCpu->setRom(media, data, size);
 }
 
 auto Interface::writeProtectExpansion(Media* media, bool state) -> void {
@@ -1194,6 +1212,8 @@ auto Interface::ejectExpansionImage(Media* media) -> void {
         system->fastloader->setRom(media, nullptr, 0);
     else if (group->expansion->id == ExpansionIdFinalChessCard)
         system->finalChessCard->setRom(media, nullptr, 0);
+    else if (group->expansion->id == ExpansionIdSuperCpu)
+        system->superCpu->setRom(media, nullptr, 0);
 }
 
 auto Interface::createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id) -> uint8_t* {
@@ -1486,7 +1506,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdGeoRam:
             system->geoRam->setRamSize( value );
             break;
-
+        case ModelIdSuperCpuRam:
+            system->superCpu->setRamSize( value );
+            break;
     }    
 }
 
@@ -1593,6 +1615,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDriveRamA0ToBF:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::MA0);
         case ModelIdReuRam:                 return (int)system->reu->getRamSize();
         case ModelIdGeoRam:                 return (int)system->geoRam->getRamSize();
+        case ModelIdSuperCpuRam:            return (int)system->superCpu->getRamSize();
     }
     return 0;
 }
@@ -1733,6 +1756,9 @@ auto Interface::setExpansionJumper( Media* media, unsigned jumperId, bool state 
     } else if (group->expansion->id == ExpansionIdFinalChessCard) {
         if (system->finalChessCard->media == media)
             system->finalChessCard->setJumper( jumperId, state );
+    } else if (group->expansion->id == ExpansionIdSuperCpu) {
+        if (system->superCpu->media == media)
+            system->superCpu->setJumper( jumperId, state );
     }
 }
 
@@ -1756,6 +1782,9 @@ auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
 
     else if (group->expansion->id == ExpansionIdFinalChessCard)
         return system->finalChessCard->getJumper(jumperId);
+
+    else if (group->expansion->id == ExpansionIdSuperCpu)
+        return system->superCpu->getJumper(jumperId);
 
     return false;
 }

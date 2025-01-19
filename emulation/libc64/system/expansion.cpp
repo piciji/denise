@@ -11,6 +11,7 @@
 #include "../expansionPort/acia/acia.h"
 #include "../expansionPort/fastloader/fastloader.h"
 #include "../expansionPort/finalChessCard/chessCard.h"
+#include "../expansionPort/superCpu/superCpu.h"
 
 namespace LIBC64 {
  
@@ -85,6 +86,9 @@ auto System::setExpansion( Interface::ExpansionId id ) -> void {
         case Interface::ExpansionIdFinalChessCard:
             expansionPort = finalChessCard;
             break;
+        case Interface::ExpansionIdSuperCpu:
+            expansionPort = superCpu;
+            break;
     }
 
     cpu.expansionPort = expansionPort;
@@ -106,6 +110,7 @@ auto System::createExpansions() -> void {
 	acia = new Acia(this);
 	fastloader = new Fastloader(this);
     finalChessCard = new FinalChessCard(this);
+    superCpu = new SuperCpu(this, sysTimer, cia1, cia2, sidManager, traps);
     noExpansion = new ExpansionPort(this);
 
     setExpansion(Interface::ExpansionIdNone);
@@ -130,6 +135,7 @@ auto System::destroyExpansions() -> void {
 	delete geoRam;
 	delete acia;
     delete finalChessCard;
+    delete superCpu;
     delete noExpansion;	
 }
 

@@ -158,7 +158,7 @@ inline auto M6510::updateLines() -> void {
 
 	ioLines = ( por & ddr ) | ( ~ddr & ( (pullup | ioLines) & ~pulldown ) );
 	
-    //external device can distingish between input and output because of voltage level 
+    //external device can distinguish between input and output because of voltage level
 	system->updatePort( ioLines, ddr );
 }
 
@@ -202,7 +202,7 @@ auto M6510::busWatch() -> uint8_t {
 	    iecBus.syncDrivesEachCycle();
 
 template<bool setI> auto M6510::busAccessUpdateFlagI( uint16_t addr ) -> void { 
-		
+
 	busState = addr;
 
 STEAL:	
@@ -231,7 +231,7 @@ STEAL:
 			
 	SYNC
 		
-	if( rdyLine ) {        
+	if( rdyLine ) {
 		if (rememberRdy) {
 			busState |= CPU_RDY_CYCLE;
 			// todo: special behaviour for LAX and ANE. use 0xee in case of RDY ... for now
@@ -249,7 +249,7 @@ STEAL:
 	if (unlikely(addr == 0x0001)) {
         
 		uint8_t data = ioLines;
-		
+
 		if ( !(ddr & 0x40) ) {
 			data &= ~0x40;
 			data |= bit6charge;
@@ -279,7 +279,7 @@ auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
 	if (addr == 0x0000) {						
 		
 		chargeUndefinedBits( data );
-		ddr = data;		
+		ddr = data;
 		updateLines();
 		
 		if (!expansionPort->isDma())

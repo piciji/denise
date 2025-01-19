@@ -27,8 +27,8 @@ struct FinalChessCard : Cart, WDCFAMILY::W65C02 {
     auto setWriteProtect( bool state ) -> void;
     auto isWriteProtected() -> bool;
 
-    auto readByte(uint32_t adr) -> uint8_t;
-    auto writeByte(uint32_t adr, uint8_t value) -> void;
+    auto readByte(uint16_t addr) -> uint8_t;
+    auto writeByte(uint16_t addr, uint8_t value) -> void;
     auto idleCycle() -> void;
 
     auto reset(bool softReset = false) -> void;

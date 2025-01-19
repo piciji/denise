@@ -737,7 +737,7 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 
     if (!dynamic_cast<LIBC64::Interface*>(emulator) )
         trapped = false;
-    else if (trapped && (useExpansion && !useExpansion->isEmpty() && !useExpansion->isFastloader() && !useExpansion->isRS232()))
+    else if (trapped && (useExpansion && !useExpansion->isEmpty() && !useExpansion->isFastloader() && !useExpansion->isRS232() && !useExpansion->isTurboCart()))
         trapped = false;
 
     bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);

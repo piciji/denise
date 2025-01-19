@@ -78,7 +78,7 @@ auto FinalChessCard::reset(bool softReset) -> void {
     power();
 }
 
-inline auto FinalChessCard::readByte(uint32_t addr) -> uint8_t {
+inline auto FinalChessCard::readByte(uint16_t addr) -> uint8_t {
     cycles += frequency;
 
     if (addr & 0x8000)
@@ -95,7 +95,7 @@ inline auto FinalChessCard::readByte(uint32_t addr) -> uint8_t {
     return 0;
 }
 
-inline auto FinalChessCard::writeByte(uint32_t addr, uint8_t value) -> void {
+inline auto FinalChessCard::writeByte(uint16_t addr, uint8_t value) -> void {
     cycles += frequency;
 
     if ((addr & 0xe000) == 0)

@@ -151,8 +151,8 @@ protected:
     auto opBRK() -> void;
 
 #ifndef W65C02_REF
-    virtual auto readByte(uint32_t addr) -> uint8_t = 0;
-    virtual auto writeByte(uint32_t addr, uint8_t value) -> void = 0;
+    virtual auto readByte(uint16_t addr) -> uint8_t = 0;
+    virtual auto writeByte(uint16_t addr, uint8_t value) -> void = 0;
     virtual auto idleCycle() -> void = 0;
 
     // optional

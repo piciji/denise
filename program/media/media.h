@@ -325,6 +325,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto updateListings( ) -> void;
     auto loadSettings() -> void;
     auto getDiskSaveGroup() -> Emulator::Interface::MediaGroup*;
+    auto getBlock(Emulator::Interface::Media* media) -> MediaGroupLayout::Block*;
 
     MediaLayout(EmuConfigView::TabWindow* tabWindow);
 };

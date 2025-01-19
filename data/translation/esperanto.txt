@@ -868,3 +868,5 @@ Final Chesscard_image = Final Chesscard image
 blank_Final Chesscard_image = select a new Final Chesscard image ...
 Final Chesscard Battery tooltip = saves the battery-backed RAM to a file
 Final Chesscard ROMS tooltip = software? google for "world of jani final chesscard" and scroll down
+SuperCPU Turbo = SuperCPU Turbo
+SuperCPU 1MHz = SuperCPU 1 MHz

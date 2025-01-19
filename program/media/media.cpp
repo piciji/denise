@@ -1555,6 +1555,18 @@ auto MediaLayout::loadSettings() -> void {
     swapperLayout->loadSettings();
 }
 
+auto MediaLayout::getBlock(Emulator::Interface::Media* media) -> MediaGroupLayout::Block* {
+    for (auto& child : moduleSwitch.children) {
+        if(dynamic_cast<MediaGroupLayout*>(child.sizable)) {
+            auto layout = ((MediaGroupLayout*)child.sizable);
+            auto block = layout->getBlock(media);
+            if (block)
+                return block;
+        }
+    }
+    return nullptr;
+}
+
 auto PathsLayout::getBlock(Emulator::Interface::MediaGroup* mediaGroup) -> PathsLayout::Block* {
     
     for(auto block : blocks) {
