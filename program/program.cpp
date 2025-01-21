@@ -226,8 +226,10 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
 
     setRunAhead( emulator );
 
-    if (dynamic_cast<LIBC64::Interface*>( emulator ))
+    if (dynamic_cast<LIBC64::Interface*>( emulator )) {
         setMemoryPattern( emulator );
+        initExpansionRom(emulator, "SuperCPU 1", "scpu64");
+    }
 }
 
 auto Program::getMemoryPatternFromConfig(Emulator::Interface* emulator, Emulator::Interface::MemoryPattern& pattern) -> void {

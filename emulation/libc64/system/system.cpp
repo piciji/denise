@@ -606,10 +606,8 @@ auto System::power( bool softReset ) -> void {
         action.callbackId = 1;
         action.callback = [this]() {
             kernalBootComplete = true;
-            if (traps.installDelayed) {
+            if (traps.installDelayed)
                 traps.installSerial();
-                traps.reset( false );
-            }
         };
         keyBuffer->add( action );
 
@@ -954,16 +952,22 @@ auto System::copyText( ) -> std::string {
 }
 
 auto System::checkForAutoStarter() -> bool {
+    bool isSuperCpu = dynamic_cast<SuperCpu*>(expansionPort);
 
     if (!observer.enterRom) {
-
-        if (memoryCpu.isLocation( cpu.pc >> 8, &readKernalRom ))
+        if (isSuperCpu) {
+            if (superCpu->executeKernalRom())
+                observer.enterRom = true;
+        } else if (memoryCpu.isLocation( cpu.pc >> 8, &readKernalRom ))
             observer.enterRom = true;
 
         observer.memoryAccesses = 0;
     } else {
 
-        if (memoryCpu.isLocation( cpu.pc >> 8, &readRam ))
+        if (isSuperCpu) {
+            if (superCpu->executeHostRam())
+                observer.memoryAccesses++;
+        } else if (memoryCpu.isLocation( cpu.pc >> 8, &readRam ))
             observer.memoryAccesses++;
 
         if (observer.memoryAccesses > 2)

@@ -123,6 +123,7 @@ struct Program : Emulator::Interface::Bind {
     auto trapsResult(Emulator::Interface::Media* media, bool error) -> void override;
     auto libraryMissing(std::string plugin) -> void override;
 	auto getAssignedSaveFile(Emulator::Interface::Media* media) -> std::string;
+	auto initExpansionRom(Emulator::Interface* emulator, const std::string& ident, const std::string& file) -> void;
 
     auto addCustomFont() -> void;
     auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;

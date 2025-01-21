@@ -149,6 +149,8 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto bootSpeed() -> float { return romMask > (65 * 1024) ? (jumper1Mhz ? 11.0f : 4.0f) : 1.0f; }
 
     auto serialize(Emulator::Serializer& s) -> void;
+    auto executeKernalRom() -> bool;
+    auto executeHostRam() -> bool;
 
     // some helper for traps
     auto getPC() -> uint16_t { return pc; }
@@ -158,15 +160,6 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto setRegP_N(bool state) -> void { p.n = state; }
     auto setRegP_Z(bool state) -> void { p.z = state; }
     auto setRegA(uint8_t data) -> void { a = (a & 0xff00) | data; }
-
-
-    // auto getPC() -> uint16_t { return r.pc.w; }
-    // auto setPC(uint16_t _pc) -> void { r.pc.w  = _pc; }
-    // auto setRegP_I(bool state) -> void { r.p.i = state; }
-    // auto setRegP_C(bool state) -> void { r.p.c = state; }
-    // auto setRegP_N(bool state) -> void { r.p.n = state; }
-    // auto setRegP_Z(bool state) -> void { r.p.z = state; }
-    // auto setRegA(uint8_t data) -> void { r.a.l = data; }
 };
 
 }

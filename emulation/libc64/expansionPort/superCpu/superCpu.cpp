@@ -103,18 +103,18 @@ auto SuperCpu::reset(bool softReset) -> void {
 
     // calculations based on suprtime.pdf
     // Host clock
-    float nsCycle = (float)1'000'000'000 / (float)frequency;
-    float nsMemoryCacheLatch = nsCycle / 2.0 + 90.0;
-    float nsIoAccess = nsCycle / 2.0 + 105.0;
-    float nsCycleWriteLimit = nsCycle - 70.0;
+    float nsCycle = 1'000'000'000.0 / (float)frequency;
+    float nsMemoryCacheLatch = 90.0;
+    float nsIoAccess = 105.0;
+    float nsCycleWriteLimit = nsCycle / 2.0 - 70.0;
 
     cycleCacheLatch = (unsigned)((float)SCPU_FREQ * (nsMemoryCacheLatch / nsCycle));
     cycleIoAccess = (unsigned)((float)SCPU_FREQ * (nsIoAccess / nsCycle));
     cycleWriteThroughLimit = (unsigned)((float)SCPU_FREQ * (nsCycleWriteLimit / nsCycle));
 
     // DOT clock
-    float nscycleDot = (float)1'000'000'000 / ((float)frequency * 8.0);
-    float nsCycleIoLong = 7.0 * nscycleDot + 24.0;
+    float nscycleDot = 1'000'000'000.0 / ((float)frequency * 8.0);
+    float nsCycleIoLong = 3.0 * nscycleDot + 24.0;
     cycleIoLong = (unsigned)(20'000'000.0 * (nsCycleIoLong / nsCycle));
 }
 
@@ -288,6 +288,27 @@ inline auto SuperCpu::readVectorByte(uint16_t addr) -> uint8_t {
         }
     }
     return (this->*ptr)(addr);
+}
+
+auto SuperCpu::executeKernalRom() -> bool {
+    if (pc & 0xff0000)
+        return false;
+
+    ReadTable ptr = readTable[memConf | (pc & 0xff00)];
+    if (ptr == &SuperCpu::readSramKernal)
+        return true;
+
+    if (((pc >> 8) >= 0xe0) && ptr == &SuperCpu::readSramB1)
+        return true;
+    return false;
+}
+
+auto SuperCpu::executeHostRam() -> bool {
+    if (pc & 0xff0000)
+        return false;
+
+    ReadTable ptr = readTable[memConf | (pc & 0xff00)];
+    return ptr == &SuperCpu::readSramB0 || ptr == &SuperCpu::readC64Ram;
 }
 
 inline auto SuperCpu::readByte(uint32_t addr) -> uint8_t {
@@ -900,12 +921,7 @@ auto SuperCpu::clockStretchWriteInternal(uint16_t addr, uint8_t value) -> void {
         writeBuffer.addr = addr;
         writeBuffer.value = value;
         writeBuffer.inProgress = true;
-        // change will be applied in the next C64 cycle, if happens up to ~70 ns before C64 cycles ends.
-        // cycle 1: not this cycle
-        // extra cycle: it happens one cycle later if the request is made very late and can no longer be clocked in time in the following host cycle
-        // cycle 2: write here, but read/write is expected to happen after VIC, SID, CIA processes
-        // cycle 3: do the "write" at the end of cycle before
-        sysTimer.add( &applyBuffer, cycles > cycleWriteThroughLimit ? 4 : 3);
+        sysTimer.add( &applyBuffer, cycles > cycleWriteThroughLimit ? 3 : 2);
     } else {
         syncStock();
         system->ram[addr] = value;
@@ -1012,7 +1028,9 @@ auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
     s.integer(d);
     s.integer(pbr);
     s.integer(dbr);
-    s.integer((uint8_t&)p);
+    uint8_t _p = this->p;
+    s.integer(_p);
+    this->p = _p;
     s.integer(modeE);
     s.integer(control);
     s.integer(lines);

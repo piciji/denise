@@ -199,7 +199,9 @@ auto FinalChessCard::serializeStep2(Emulator::Serializer& s) -> void {
     s.integer(x);
     s.integer(y);
     s.integer(this->s);
-    s.integer((uint8_t&)p);
+    uint8_t _p = this->p;
+    s.integer(_p);
+    this->p = _p;
     s.integer(control);
     s.integer(lines);
 

@@ -59,7 +59,7 @@ auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdExpansionRS232, "RS-232", MediaGroup::Type::Expansion });
     mediaGroups.push_back({MediaGroupIdExpansionFastloader, "Fast Loader", MediaGroup::Type::Expansion,{"bin", "crt","rom"} });
     mediaGroups.push_back({MediaGroupIdExpansionFinalChessCard, "Final Chesscard", MediaGroup::Type::Expansion,{"bin","rom"}, {"bin"} });
-    mediaGroups.push_back({MediaGroupIdExpansionSuperCpu, "Super CPU", MediaGroup::Type::Expansion,{"bin","rom"} });
+    mediaGroups.push_back({MediaGroupIdExpansionSuperCpu, "SuperCPU", MediaGroup::Type::Expansion,{"bin","rom"} });
         	
 
 	{   auto& group = mediaGroups[MediaGroupIdDisk];
@@ -217,7 +217,7 @@ auto Interface::prepareExpansions() -> void {
 	expansions.push_back( { ExpansionIdReuRetroReplay, "REU + Retro Replay", Expansion::Type::Ram | Expansion::Type::Freezer | Expansion::Type::Flash, &mediaGroups[MediaGroupIdExpansionReu], &mediaGroups[MediaGroupIdExpansionRetroReplay] } );
 	expansions.push_back( { ExpansionIdRS232, "RS-232", Expansion::Type::RS232, &mediaGroups[MediaGroupIdExpansionRS232], nullptr } );
     expansions.push_back( { ExpansionIdFastloader, "Fast Loader", Expansion::Type::Fastloader, &mediaGroups[MediaGroupIdExpansionFastloader], nullptr } );
-    expansions.push_back( { ExpansionIdFinalChessCard, "Final Chesscard", Expansion::Type::TurboCart | Expansion::Type::Battery, &mediaGroups[MediaGroupIdExpansionFinalChessCard], nullptr } );
+    expansions.push_back( { ExpansionIdFinalChessCard, "Final Chesscard", Expansion::Type::Battery, &mediaGroups[MediaGroupIdExpansionFinalChessCard], nullptr } );
     expansions.push_back( { ExpansionIdSuperCpu, "SuperCPU", Expansion::Type::TurboCart | Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionSuperCpu], nullptr } );
     
     {   auto& expansion = expansions[ExpansionIdGame];        

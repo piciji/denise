@@ -46,3 +46,4 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * RetroArch shader system by https://github.com/libretro/RetroArch
 * glslang by Khronos Group https://github.com/KhronosGroup/glslang
 * SPIRV-Cross by Khronos Group https://github.com/KhronosGroup/SPIRV-Cross
+* scpu64 ROM from Soci

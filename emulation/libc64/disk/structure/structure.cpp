@@ -398,8 +398,10 @@ auto DiskStructure::prepareKeyBufferActions( std::vector<uint8_t>& path, uint8_t
             system->traps.installSerial();
             system->traps.reset( options & 2 ); // trap send success event to host, error event will be always send
             system->keyBuffer->forceDefaultKernalDelay(); // a possible speeder use shorter boot time
-        } else
+        } else {
             system->traps.installDelayed = true;
+            system->traps.reset( options & 2 );
+        }
     }
 }
 

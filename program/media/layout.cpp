@@ -73,7 +73,7 @@ PathsLayout::PathsLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media) {
+MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media, Emulator::Interface* emulator) {
     auto group = media->group;
     bool IPMode = group->isExpansion() && group->expansion->isRS232();
 
@@ -84,11 +84,11 @@ MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media) {
     else
         append(deviceName, {0u, 0u}, 10);
         
-    if (group->isWritable())
-        // hack... an additional type is needed for media.
-        if (group->expansion && group->expansion->isTurboCart() && (media->id < 4));
+    if (group->isWritable()) {
+        if ( (media->id < 4) && dynamic_cast<LIBC64::Interface*>(emulator) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard));
         else
             append(writeprotect, {0u, 0u}, 10);
+    }
 
     if (!IPMode) {
         append(eject, {0u, 0u}, 10);
@@ -135,7 +135,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
     edit.setDroppable();
 }
 
-MediaGroupLayout::Block::Block(Emulator::Interface::Media* media) : media(media), header(media), selector(media) {
+MediaGroupLayout::Block::Block(Emulator::Interface::Media* media, Emulator::Interface* emulator) : media(media), header(media, emulator), selector(media) {
     append(header, {~0u, 0u}, 2);
     append(selector, {~0u, 0u});
 }
@@ -341,7 +341,7 @@ auto MediaGroupLayout::showOnlyConnectedDevices() -> bool {
 auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
 
     auto addBlock = [&](Emulator::Interface::Media* media) -> MediaGroupLayout::Block* {
-        auto block = new Block( media );
+        auto block = new Block( media, mediaLayout->emulator );
         blocks.push_back(block);
         
         if ( !showOnlyConnectedDevices() ) {

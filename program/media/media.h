@@ -130,7 +130,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
             GUIKIT::Button eject;
             GUIKIT::Label fileName;
 
-            Header(Emulator::Interface::Media* media);
+            Header(Emulator::Interface::Media* media, Emulator::Interface* emulator);
         } header;
 
         struct Selector : GUIKIT::HorizontalLayout {            
@@ -147,7 +147,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
         Emulator::Interface::Media* media;        
         std::vector<Emulator::Interface::Listing> listings;
         MediaGroupLayout* layout;
-        Block(Emulator::Interface::Media* media);
+        Block(Emulator::Interface::Media* media, Emulator::Interface* emulator);
     };
     std::vector<Block*> blocks;
     Emulator::Interface::MediaGroup* mediaGroup;
