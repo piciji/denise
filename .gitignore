@@ -3,6 +3,7 @@ deniseExtBuild.xcodeproj/
 denise.xcodeproj/xcuserdata/
 denise.xcodeproj/project.xcworkspace/xcuserdata/
 .idea/
+.vscode/
 ._*
 Build/
 emulation/libami/altCpu/*

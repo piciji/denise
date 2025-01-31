@@ -629,7 +629,11 @@ structure(system, this) {
 
     cia.serialOut = [this, system](bool spLine, bool cntLine) {
         if (dataDirection) {
-            if (!cntLine && system->secondDriveCable.burstUse) {
+              if(!cntLine && system->secondDriveCable.burstUse) {
+                dataOut = spLine;
+                this->iecBus.updatePort();               
+                // do a meaningful kind of fast serial for C64 without burst modification
+                system->cia1.setFlag(); // C64 SRQIN shared with cassette
                 system->cia1.serialIn(spLine);
             }
         }
@@ -640,8 +644,8 @@ structure(system, this) {
         if ( lines->prbChange && (port == Cia<MOS_8520>::PORTB )) {
 
             if (operation & DRIVE_MODE_158x) {
-                updateCiaBus();
-
+                dataDirection = !!(cia.lines.iob & 0x20);
+                updateCiaBus();                
                 this->iecBus.updatePort();
             } else if ((operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA) ) == 0)
                 system->writeParallelHandshake();

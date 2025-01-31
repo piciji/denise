@@ -10,7 +10,7 @@
 // RDY CMOS 65C02, 65816: Read and Write cycles hold CPU
 // todo: find out if RDY input or clock stretching is used for slow mode and/or VIC BA
 // todo: find out if incoming Interrupts are checked in clock stretched IRQ sample cycles (usually the last one)
-// hint: RDY repeats cycle and checks for incoming Interrupts (if IRQ sample cycle)
+// hint: RDY repeats cycle and checks for incoming Interrupts (in case of IRQ sample cycle)
 
 namespace LIBC64 {
 
@@ -28,7 +28,10 @@ SuperCpu::SuperCpu(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& 
 
     applyBuffer = [this]() {
         if ((baFlags & 2) == 0) {
-            this->system->ram[writeBuffer.addr] = writeBuffer.value;
+            if (writeBuffer.colram)
+                this->system->colorRam[writeBuffer.addr] = writeBuffer.value;
+            else
+                this->system->ram[writeBuffer.addr] = writeBuffer.value;
             writeBuffer.inProgress = false;
         } else
             this->sysTimer.add(&applyBuffer, 1, Emulator::SystemTimer::UpdateExisting);
@@ -43,7 +46,9 @@ SuperCpu::SuperCpu(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& 
     sysTimer.registerCallback( { {&applyBuffer, 1}, {&baStart, 1} } );
 
     jumperJiffyDos = false;
-    jumper1Mhz = true;
+    jumperDramBoost = false;
+    jumper1Mhz = false;
+    dma = true;
 }
 
 SuperCpu::~SuperCpu() {
@@ -67,8 +72,11 @@ auto SuperCpu::setDram() -> void {
 
 auto SuperCpu::reset(bool softReset) -> void {
     power();
-    frequency = vicII->frequency();
+    frequencyDRAM = frequency = vicII->frequency();
+    if (jumperDramBoost)
+        frequencyDRAM >>= 3;
     dramMask = dramSize ? (dramSize - 1) : 0;
+    randomizer.initXorShift(0x1234abcd);
     setDram();
 
     switch (dramSize >> 20) {
@@ -101,12 +109,11 @@ auto SuperCpu::reset(bool softReset) -> void {
     updateMirroring();
     updateSimm(4);
 
-    // calculations based on suprtime.pdf
     // Host clock
     float nsCycle = 1'000'000'000.0 / (float)frequency;
-    float nsMemoryCacheLatch = 90.0;
-    float nsIoAccess = 105.0;
-    float nsCycleWriteLimit = nsCycle / 2.0 - 70.0;
+    float nsMemoryCacheLatch = nsCycle / 2.0 + 90.0 - 65.0;
+    float nsIoAccess = nsCycle / 2.0 + 105.0 - 80.0;
+    float nsCycleWriteLimit = nsCycle - 70.0 - 31.0;
 
     cycleCacheLatch = (unsigned)((float)SCPU_FREQ * (nsMemoryCacheLatch / nsCycle));
     cycleIoAccess = (unsigned)((float)SCPU_FREQ * (nsIoAccess / nsCycle));
@@ -114,7 +121,7 @@ auto SuperCpu::reset(bool softReset) -> void {
 
     // DOT clock
     float nscycleDot = 1'000'000'000.0 / ((float)frequency * 8.0);
-    float nsCycleIoLong = 3.0 * nscycleDot + 24.0;
+    float nsCycleIoLong = 7.0 * nscycleDot - 86.0;
     cycleIoLong = (unsigned)(20'000'000.0 * (nsCycleIoLong / nsCycle));
 }
 
@@ -176,7 +183,7 @@ auto SuperCpu::getRamSize() -> int {
 
 auto SuperCpu::buildMap() -> void {
     const uint8_t mirrors[9][2] = {{0x80, 0xbf}, {0x00, 0x3f}, {0x02, 0x3f}, {0x40, 0x7f}, {0xc0, 0xff},
-        {0x04, 0x07}, {0x0, 0x0}, {0x00, 0xff}, {0x02, 0xff} };
+         {0x04, 0x07}, {0x0, 0x0}, {0x00, 0xff}, {0x02, 0xff} };
 
     for (int page = 0; page < 256; page++) {
         for (int mem = 0; mem < 8; mem++) { // todo: support EXROM and GAME, if a SuperCPU pass through expansion needs this
@@ -282,7 +289,7 @@ inline auto SuperCpu::readVectorByte(uint16_t addr) -> uint8_t {
     ReadTable ptr = readTable[memConf | (addr & 0xff00)];
 
     if (ptr == &SuperCpu::readSramB1 || ptr == &SuperCpu::readSramKernal) {
-        if ((memConf & (HW_ENABLE | DOS_EXT) ) || !modeE || system1Mhz) {
+        if ((memConf & (HW_ENABLE | DOS_EXT) ) || !emulationMode() || system1Mhz) {
             clockStretchRom();
             return rom[addr & romMask];
         }
@@ -356,7 +363,7 @@ inline auto SuperCpu::writeByte(uint32_t addr, uint8_t value) -> void {
         else                sram[addr & 1] = value;
         return;
     } if ((addr & 0xf80000) == 0xf80000) { // ROM
-        clockStretchRom();
+        clockStretchRom<true>();
         return;
     }
 
@@ -386,13 +393,13 @@ inline auto SuperCpu::idleCycle(uint32_t addr) -> void {
     // unlike NMOS/CMOS 6502 the 65816 has VDA/VPA lines to inform BUS participants about idle cycles.
     // this way there is no need to waste cycles for slow memory accesses
     // todo: find out if SuperCPU checks this
-    if (fastMode) {
-        cycles += frequency;
-        if (cycles >= SCPU_FREQ) {
-            cycles -= SCPU_FREQ;
-            syncStock();
-        }
-    } else
+    // if (fastMode) {
+    //     cycles += frequency;
+    //     if (cycles >= SCPU_FREQ) {
+    //         cycles -= SCPU_FREQ;
+    //         syncStock();
+    //     }
+    // } else
         // and/or if E-Line of 65816 signals emulation mode?
         readByte(addr);
 }
@@ -437,6 +444,8 @@ template<uint8_t mode, uint8_t addrArea> auto SuperCpu::writeSramAndOrHostRam(ui
             if (addr == 0xff00) {
                 clockStretchIOWriteLong();
                 system->ram[addr] = value;
+                if (fastMode)
+                    syncStockIO();
             } else
                 clockStretchWriteInternal(addr, value);
         } else
@@ -460,9 +469,9 @@ template<uint8_t mode, uint8_t addrArea> auto SuperCpu::writeSramAndOrHostRam(ui
 }
 
 auto SuperCpu::readIoSCPU(uint16_t addr) -> uint8_t {
-    cycles += frequency; // one more cycle to find out if IO
     if ((addr & 0xfff0) == 0xd0b0) {
-        stepCycle<true>();
+        stepCycle<true, true>();
+
         uint8_t value = optim & 7;
         switch (addr) {
             case 0xd0b0:    value |= 0x40; break; // version V2
@@ -504,13 +513,19 @@ auto SuperCpu::readIoColorRamInternal(uint16_t addr) -> uint8_t {
 }
 
 auto SuperCpu::readIoCIA1(uint16_t addr) -> uint8_t {
-    clockStretchIORead();
-    return cia1.read( addr );
+    bool postSync = clockStretchIOReadCIA();
+    uint8_t out = cia1.read( addr );
+    if (postSync)
+        syncStockIO();
+    return out;
 }
 
 auto SuperCpu::readIoCIA2(uint16_t addr) -> uint8_t {
-    clockStretchIORead();
-    return cia2.read( addr );
+    bool postSync = clockStretchIOReadCIA();
+    uint8_t out = cia2.read( addr );
+    if (postSync)
+        syncStockIO();
+    return out;
 }
 
 auto SuperCpu::readIo1(uint16_t addr) -> uint8_t {
@@ -532,11 +547,11 @@ auto SuperCpu::readIo2(uint16_t addr) -> uint8_t {
 }
 
 auto SuperCpu::writeIoSCPU(uint16_t addr, uint8_t value) -> void {
-    cycles += frequency; // one more cycle to find out if IO
     sram[0x10000 | addr] = value;
 
     if ((addr >= 0xd071 && addr < 0xd080) || (addr >= 0xd0b0 && addr < 0xd0c0)) {
-        stepCycle<true>();
+        stepCycle<false, true>();
+
         switch (addr) {
             case 0xd072:
                 if (!system1Mhz) {
@@ -640,6 +655,8 @@ auto SuperCpu::writeIoSCPU(uint16_t addr, uint8_t value) -> void {
     } else {
         clockStretchIOWrite();
         vicII->writeReg( addr & 0xff, value );
+        if (fastMode)
+            syncStockIO();
     }
 }
 
@@ -647,45 +664,56 @@ auto SuperCpu::writeIoVIC(uint16_t addr, uint8_t value) -> void {
     clockStretchIOWrite();
     sram[0x10000 | addr] = value;
     vicII->writeReg( addr & 0xff, value );
+    if (fastMode)
+        syncStockIO();
 }
 
 auto SuperCpu::writeIoStrange(uint16_t addr, uint8_t value) -> void {
-    stepCycle<true, true>();
+    stepCycle();
 
     if ((memConf & HW_ENABLE) || (addr == 0xd27e))
         sram[0x10000 | addr] = value;
 }
 
 template<bool withSram> auto SuperCpu::writeIoSID(uint16_t addr, uint8_t value) -> void {
-    clockStretchIOWrite();
     if constexpr (withSram)
         sram[0x10000 | addr] = value;
+
+    clockStretchIOWrite();
     sidManager.writeSidReg(addr, value);
+    if (fastMode)
+        syncStockIO();
 }
 
 template<bool withSram> auto SuperCpu::writeIoColorRam(uint16_t addr, uint8_t value) -> void {
-    clockStretchIOWrite();
+    clockStretchWriteInternal<true>(addr & 0x3ff, value & 0xf);
+    
     if constexpr (withSram)
         sram[0x10000 | addr] = value;
-    system->colorRam[ addr & 0x3ff ] = value & 0xf;
 }
 
 auto SuperCpu::writeIoCIA1(uint16_t addr, uint8_t value) -> void {
     clockStretchIOWriteCia();
     sram[0x10000 | addr] = value;
     cia1.write( addr, value );
+    if (fastMode)
+        syncStockIO();
 }
 
 auto SuperCpu::writeIoCIA2(uint16_t addr, uint8_t value) -> void {
     clockStretchIOWriteCia();
     sram[0x10000 | addr] = value;
     cia2.write( addr, value );
+    if (fastMode)
+        syncStockIO();
 }
 
 auto SuperCpu::writeIo1(uint16_t addr, uint8_t value) -> void {
     clockStretchIOWrite();
     sidManager.writeIo( addr, value );
     ExpansionPort::writeIo1(addr, value);
+    if (fastMode)
+        syncStockIO();
 }
 
 auto SuperCpu::writeIo2(uint16_t addr, uint8_t value) -> void {
@@ -696,6 +724,8 @@ auto SuperCpu::writeIo2(uint16_t addr, uint8_t value) -> void {
 
     sidManager.writeIo( addr, value );
     ExpansionPort::writeIo2(addr, value);
+    if (fastMode)
+        syncStockIO();
 }
 
 auto SuperCpu::updateFastmode(bool synced) -> void {
@@ -704,10 +734,10 @@ auto SuperCpu::updateFastmode(bool synced) -> void {
 
     if (fastMode != _fastMode) {
         if (synced) {
-            if (fastMode)
-                cycles = 15'500'000;
-            else
+            if (!fastMode)
                 syncStock();
+            else
+                cycles = 16'600'000;
         }
         system->interface->updateDeviceState( media, false, 0, 0x80 | fastMode, true );
     }
@@ -756,9 +786,13 @@ auto SuperCpu::updateMirroring() -> void {
     mirrorMemConf = (mirrorMemConf & 0xffff) | (x << 16);
 }
 
-template<bool checkBA, bool IsWrite> auto SuperCpu::stepCycle() -> void {
+template<bool checkBA, bool hardwareReg> auto SuperCpu::stepCycle() -> void {
     if (fastMode) {
-        cycles += frequency;
+        if constexpr(hardwareReg)
+            cycles += frequency * 2;
+        else
+            cycles += frequency;        
+
         if (cycles >= SCPU_FREQ) {
             cycles -= SCPU_FREQ;
             syncStock();
@@ -766,37 +800,39 @@ template<bool checkBA, bool IsWrite> auto SuperCpu::stepCycle() -> void {
     } else {
         syncStock();
         if constexpr (checkBA) {
-            if constexpr (IsWrite)
-                while (baFlags & 2) syncStock();
-            else
-                while (baFlags) syncStock();
+            while (baFlags) syncStock();
         }
     }
 }
 
-auto SuperCpu::clockStretchRom() -> void {
+template<bool IsWrite> auto SuperCpu::clockStretchRom() -> void {
     if (fastMode) {
         cycles += frequency * 4;
         if (cycles >= SCPU_FREQ) {
             cycles -= SCPU_FREQ;
             syncStock();
         }
-    } else
+    } else {
         syncStock();
+        if constexpr(!IsWrite) {
+            while (baFlags)
+                syncStock();
+        }
+    }
 }
 
 auto SuperCpu::clockStretchDramRead(uint32_t& addr) -> void {
     if (fastMode) {
         if (!((dramAddr ^ addr) & ~3)) { // same column (four bytes each)
-            cycles += frequency; // maximum speed like SRAM
+            cycles += frequencyDRAM; // maximum speed like SRAM
         } else if ((dramAddr ^ addr) & dramRowMask) { // different row
-            cycles += (frequency * 3) + (frequency >> 1); // 3.5 cycles
+            cycles += (frequencyDRAM * 3) + (frequencyDRAM >> 1); // 3.5 cycles
             dramAddr = addr;
         } else if (!(((dramAddr + 4) ^ addr) & ~3)) { // same row, next column
-            cycles += frequency; // maximum speed like SRAM
+            cycles += frequencyDRAM; // maximum speed like SRAM
             dramAddr = addr;
         } else { // same row but column is not the next one (non-sequential)
-            cycles += frequency * 2;
+            cycles += frequencyDRAM * 2;
             dramAddr = addr;
         }
 
@@ -804,38 +840,6 @@ auto SuperCpu::clockStretchDramRead(uint32_t& addr) -> void {
             cycles -= SCPU_FREQ;
             syncStock();
         }
-    } else
-        syncStock();
-}
-
-auto SuperCpu::clockStretchDramWrite(uint32_t& addr) -> void {
-    if (fastMode) {
-        if ((dramAddr ^ addr) & dramRowMask)
-            cycles += frequency * 3; // different row
-        else
-            cycles += frequency;
-
-        dramAddr = addr;
-
-        if (cycles >= SCPU_FREQ) {
-            cycles -= SCPU_FREQ;
-            syncStock();
-        }
-    } else
-        syncStock();
-}
-
-auto SuperCpu::clockStretchIORead() -> void {
-    if (fastMode) {
-        if (writeBuffer.inProgress)
-            waitForWriteBuffer();
-        else if (cycles > cycleWriteThroughLimit)
-            syncStock();
-
-        syncStock();
-        while (baFlags & 2)
-            syncStock();
-        cycles = cycleIoAccess;
     } else {
         syncStock();
         while (baFlags)
@@ -843,34 +847,95 @@ auto SuperCpu::clockStretchIORead() -> void {
     }
 }
 
-auto SuperCpu::clockStretchIOWrite() -> void {
+auto SuperCpu::clockStretchDramWrite(uint32_t& addr) -> void {
+    if (fastMode) {
+        if ((dramAddr ^ addr) & dramRowMask)
+            cycles += frequencyDRAM * 3; // different row
+        else
+            cycles += frequencyDRAM * 2;
+
+        dramAddr = addr;
+
+        if (cycles >= SCPU_FREQ) {
+            cycles -= SCPU_FREQ;
+            syncStock();
+        }
+    } else {
+        syncStock();
+    }
+}
+
+auto SuperCpu::clockStretchIORead() -> void {    
+    while (baFlags & 2)
+        syncStock();
+
     if (fastMode) {
         if (writeBuffer.inProgress)
             waitForWriteBuffer();
         else if (cycles > cycleWriteThroughLimit)
             syncStock();
 
-        cycles = cycleIoAccess;
-    }
+        syncStockIO();
 
-    syncStock();
+        cycles = cycleIoAccess - (randomizer.xorShift() & 0x1ffff);
+    } else
+        syncStockIO();
+}
+
+auto SuperCpu::clockStretchIOReadCIA() -> bool {
+    bool postSync = false;
+
     while (baFlags & 2)
         syncStock();
+
+    if (fastMode) {
+        if (writeBuffer.inProgress)
+            waitForWriteBuffer();
+        else if (cycles > cycleWriteThroughLimit)
+            syncStock();
+        else
+            postSync = cycles < 9'000'000; // fixme
+
+        if (!postSync)
+            syncStockIO();
+
+        cycles = cycleIoAccess - (randomizer.xorShift() & 0x1ffff);
+    } else
+        syncStockIO();
+
+    return postSync;
+}
+
+auto SuperCpu::clockStretchIOWrite() -> void {
+    if (fastMode) {
+        if (writeBuffer.inProgress)
+            waitForWriteBuffer();
+        else if (cycles > cycleWriteThroughLimit) {
+            syncStock();
+        }
+
+        cycles = cycleIoAccess - (randomizer.xorShift() & 0x1ffff);
+    } else
+        syncStockIO();
+
+    while (baFlags & 2)
+        syncStock();    
 }
 
 auto SuperCpu::clockStretchIOWriteLong() -> void {
     if (fastMode) {
         if (writeBuffer.inProgress)
             waitForWriteBuffer();
-        else if (cycles > cycleWriteThroughLimit) // too late, can't sync to the following host clock
+        else if (cycles > cycleWriteThroughLimit) // too late, can't sync to the current host clock
             syncStock();
 
         cycles = cycleIoLong;
-    }
+        
+    } else
+        syncStockIO();
 
-    syncStock();
     while (baFlags & 2)
-        syncStock();
+        syncStock();    
 }
 
 auto SuperCpu::clockStretchIOWriteCia() -> void {
@@ -880,36 +945,37 @@ auto SuperCpu::clockStretchIOWriteCia() -> void {
         else if (cycles > cycleWriteThroughLimit)
             syncStock();
 
-        syncStock();
+        syncStockIO();
         cycles = cycleIoLong;
 
-        syncStock();
         while (baFlags)
-            syncStock();
+             syncStock();
     } else
-        syncStock();
+        syncStockIO();
 }
 
 auto SuperCpu::waitForWriteBuffer() -> void {
     do {
         if ((baFlags & 2) == 0) { // SuperCPU can use the first three BA cycles, 6510 can't because RDY is ignored during "Write" cycles
             if (sysTimer.delay( &applyBuffer ) <= 1) {
-                system->ram[writeBuffer.addr] = writeBuffer.value;
+                if (writeBuffer.colram)
+                    system->colorRam[writeBuffer.addr] = writeBuffer.value;
+                else
+                    system->ram[writeBuffer.addr] = writeBuffer.value;
                 writeBuffer.inProgress = false;
                 sysTimer.remove(&applyBuffer);
                 break;
             }
         }
         syncStock();
-    } while(true);
-
-    cycles = cycleCacheLatch;
+    } while(true);    
 }
 
-auto SuperCpu::clockStretchWriteInternal(uint16_t addr, uint8_t value) -> void {
+template<bool inColRam> auto SuperCpu::clockStretchWriteInternal(uint16_t addr, uint8_t value) -> void {
     if (fastMode) {
         if (writeBuffer.inProgress) {
             waitForWriteBuffer();
+            cycles = cycleCacheLatch;
         } else {
             cycles += frequency;
             if (cycles >= SCPU_FREQ) {
@@ -918,13 +984,17 @@ auto SuperCpu::clockStretchWriteInternal(uint16_t addr, uint8_t value) -> void {
             }
         }
 
+        writeBuffer.colram = inColRam;
         writeBuffer.addr = addr;
         writeBuffer.value = value;
         writeBuffer.inProgress = true;
         sysTimer.add( &applyBuffer, cycles > cycleWriteThroughLimit ? 3 : 2);
     } else {
         syncStock();
-        system->ram[addr] = value;
+        if constexpr(inColRam)
+            system->colorRam[ addr & 0x3ff ] = value & 0xf;
+        else
+            system->ram[addr] = value;
     }
 }
 
@@ -939,9 +1009,15 @@ auto SuperCpu::observeNmi(bool state) -> void {
 auto SuperCpu::observeRdy(bool state) -> void {
     if (state) {
         baFlags = 1;
-        sysTimer.add( &baStart, 4, Emulator::SystemTimer::UpdateExisting);
+        sysTimer.add( &baStart, 3, Emulator::SystemTimer::UpdateExisting);
     } else
         baFlags = 0;
+}
+
+inline auto SuperCpu::syncStockIO() -> void {
+    ioOnHost = true;
+    syncStock();
+    ioOnHost = false;
 }
 
 inline auto SuperCpu::syncStock() -> void {
@@ -949,6 +1025,8 @@ inline auto SuperCpu::syncStock() -> void {
     cia1.clock();
     vicII->clock();
     cia2.clock();
+    if (system->secondDriveCable.cycleSyncing)
+	    system->iecBus.syncDrivesEachCycle();
 }
 
 auto SuperCpu::setJumper(unsigned jumperId, bool state) -> void {
@@ -959,11 +1037,18 @@ auto SuperCpu::setJumper(unsigned jumperId, bool state) -> void {
     }
     else if (jumperId == 1)
         jumperJiffyDos = state;
+    else if (jumperId == 2) {
+        jumperDramBoost = state;
+        frequencyDRAM = frequency;
+        if (state)
+            frequencyDRAM >>= 3;
+    }
 }
 
 auto SuperCpu::getJumper(unsigned jumperId) -> bool {
     if (jumperId == 0) return !jumper1Mhz;
     if (jumperId == 1) return jumperJiffyDos;
+    if (jumperId == 2) return jumperDramBoost;
     return false;
 }
 
@@ -989,15 +1074,13 @@ auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
             dramTracker.enable();
     }
 
-    if (!light)
-        s.array( dram, dramSize - ( ((dramSize >> 20) == 16) ? (512 * 1024) : 0) );
-
     s.array( sram, 128 * 1024 );
     s.integer(optim);
     s.integer(dramMask);
     s.integer(dramPageSize);
     s.integer(romMask);
     s.integer(frequency);
+    s.integer(frequencyDRAM);
     s.integer(cycles);
     s.integer(jumperJiffyDos);
     s.integer(jumper1Mhz);
@@ -1018,6 +1101,13 @@ auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
     s.integer(writeBuffer.addr);
     s.integer(writeBuffer.value);
     s.integer(writeBuffer.inProgress);
+    s.integer(writeBuffer.colram);
+    s.integer(randomizer.xorShift32);
+
+    if (!light) {
+        s.array(dram, dramSize - (((dramSize >> 20) == 16) ? (512 * 1024) : 0));
+        updateFastmode(false);
+    }
 
     // 65816 CPU
     s.integer(pc);

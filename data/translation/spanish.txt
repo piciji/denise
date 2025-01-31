@@ -870,3 +870,7 @@ Final Chesscard Battery tooltip = saves the battery-backed RAM to a file
 Final Chesscard ROMS tooltip = software? google for "world of jani final chesscard" and scroll down
 SuperCPU Turbo = SuperCPU Turbo
 SuperCPU 1MHz = SuperCPU 1 MHz
+SuperCPU DRAM Boost tooltip = faster DRAM accesses for more FPS in Wolf 3D
+SuperCPU_insert = Insert SuperCPU
+SuperCPU_image = SuperCPU image
+select_SuperCPU_image = select SuperCPU image ...

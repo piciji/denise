@@ -559,6 +559,10 @@ auto System::power( bool softReset ) -> void {
         // vic hasn't a reset line ... means no change ?
         cpu.reset();
     }
+    if (expansionPort->haltMainCpu())
+        cpu.callResetRoutine = false;
+
+
     // cpu doesn't leave halted state by reset request   
     //cpu->setRdy( false );
     vicII->setUltimax( isUltimax() );
@@ -1019,7 +1023,8 @@ auto System::burstOrParallelUpdate() -> void {
 
 auto System::driveCycleSyncingUpdate() -> void {
 
-    secondDriveCable.cycleSyncing = (secondDriveCable.burstUse || secondDriveCable.parallelExpansion || secondDriveCable.parallelUserport) && !diskSilence.idle;
+    secondDriveCable.cycleSyncing = (secondDriveCable.burstUse || secondDriveCable.parallelExpansion || secondDriveCable.parallelUserport)
+        && !diskSilence.idle;
 }
 
 auto System::diskIdleOff() -> void {

@@ -4,6 +4,7 @@
 #include "../system/keyBuffer.h"
 #include "../../tools/serializer.h"
 #include "../system/system.h"
+#include "../expansionPort/superCpu/superCpu.h"
 #include <cstring>
 
 namespace LIBC64 {
@@ -108,7 +109,21 @@ auto Prg::inject( ) -> void {
     ram[0x2b] = ram[0xac] = ram[0x2b];
     ram[0x2c] = ram[0xad] = ram[0x2c];
     ram[0x2d] = ram[0x2f] = ram[0x31] = ram[0xae] = end & 0xff;
-    ram[0x2e] = ram[0x30] = ram[0x32] = ram[0xaf] = end >> 8;				
+    ram[0x2e] = ram[0x30] = ram[0x32] = ram[0xaf] = end >> 8;
+
+    if (dynamic_cast<SuperCpu*>(system->expansionPort)) {
+        uint8_t* ram = system->superCpu->sram;
+        // put prg file in c64 memory
+        for (unsigned i = 0; i < useChunk->size; i++)
+            ram[ useChunk->offset + i ] = *(useChunk->data + i);
+
+        uint16_t end = useChunk->offset + useChunk->size;
+        // now we need to simulate the kernal load
+        ram[0x2b] = ram[0xac] = ram[0x2b];
+        ram[0x2c] = ram[0xad] = ram[0x2c];
+        ram[0x2d] = ram[0x2f] = ram[0x31] = ram[0xae] = end & 0xff;
+        ram[0x2e] = ram[0x30] = ram[0x32] = ram[0xaf] = end >> 8;
+    }
 }
 
 auto Prg::getMemory(unsigned& prgSize, uint8_t* ram) -> uint8_t* {

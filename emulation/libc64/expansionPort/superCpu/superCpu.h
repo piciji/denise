@@ -41,9 +41,11 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     unsigned dramPageSize;
     unsigned romMask;
     unsigned frequency;
+    unsigned frequencyDRAM;
     unsigned cycles;
     bool jumperJiffyDos;
     bool jumper1Mhz;
+    bool jumperDramBoost;
 
     bool software1Mhz;
     bool system1Mhz;
@@ -65,6 +67,8 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     unsigned cycleIoAccess;
     unsigned cycleIoLong;
     unsigned cycleWriteThroughLimit;
+    bool ioOnHost; // SuperCPU switch GAME/EXROM (indirectly emulated)
+    Emulator::Rand randomizer;
 
     typedef uint8_t (SuperCpu::*ReadTable)(uint16_t);
     typedef void (SuperCpu::*WriteTable)(uint16_t, uint8_t);
@@ -74,6 +78,7 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     struct {
         uint16_t addr;
         uint8_t value;
+        bool colram;
         bool inProgress;
     } writeBuffer;
 
@@ -105,7 +110,7 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto writeIo1(uint16_t addr, uint8_t value) -> void;
     auto writeIo2(uint16_t addr, uint8_t value) -> void;
 
-    template<bool checkBA = false, bool IsWrite = false> auto stepCycle() -> void;
+    template<bool checkBA = false, bool hardwareReg = false> auto stepCycle() -> void;
 
     auto updateFastmode(bool synced = true) -> void;
     auto updateMirroring() -> void;
@@ -126,16 +131,18 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
 
     auto trapHandler() -> bool;
 
-    auto clockStretchRom() -> void;
+    template<bool IsWrite = false> auto clockStretchRom() -> void;
     auto clockStretchDramRead(uint32_t& addr) -> void;
     auto clockStretchDramWrite(uint32_t& addr) -> void;
     auto clockStretchIORead() -> void;
+    auto clockStretchIOReadCIA() -> bool;
     auto clockStretchIOWrite() -> void;
     auto clockStretchIOWriteLong() -> void;
     auto clockStretchIOWriteCia() -> void;
     auto syncStock() -> void;
+    auto syncStockIO() -> void;
     auto waitForWriteBuffer() -> void;
-    auto clockStretchWriteInternal(uint16_t addr, uint8_t value) -> void;
+    template<bool inColRam = false> auto clockStretchWriteInternal(uint16_t addr, uint8_t value) -> void;
 
     auto observeRdy(bool state) -> void;
     auto observeIrq(bool state) -> void;
@@ -151,6 +158,16 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto serialize(Emulator::Serializer& s) -> void;
     auto executeKernalRom() -> bool;
     auto executeHostRam() -> bool;
+
+    // SuperCPU can change HOST memory map onyl by GAME/EXROM.
+    // 6510 runs only for a short time to set PPORT to a meaningfull setting.
+    // hence 6510 is permanently halted and can't change PPORT anymore.
+    // PPORT has setting to make it possible to map IO in only by GAME/EXROM.
+    // all PPORT related stuff is simulated by SuperCPU: switch in ROMS, RAM, ...
+    // means: GAME/EXROM of pass through expansion is not the same as C64.
+    // C64 GAME/EXROM is only used to toggle between all RAM or IO
+    // ROML, ROMH, Ultimax for pass through expansion is simulated by SuperCPU and never reach C64
+    auto hasIoOnHost() -> bool { return ioOnHost; } 
 
     // some helper for traps
     auto getPC() -> uint16_t { return pc; }

@@ -150,7 +150,12 @@ auto VicIICycle::fetchC() -> void {
 	if ( !aecDelay ) {
 		_color = system->colorRam[ vc ] & 0xf;
 		_dataC = readPhi<false>( _fullAdr((vm << 10) | vc) );
-		
+	} else if (expansionPort->haltMainCpu()) {
+		_color = 0;
+		if (expansionPort->hasIoOnHost())
+			_dataC = readPhi<false>( _fullAdr((vm << 10) | vc) );
+		else
+			_dataC = 0xff;
 	} else {
 		_color = readCpu() & 0xf;
 		_dataC = 0xff;

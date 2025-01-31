@@ -265,9 +265,9 @@ inline auto VicIICycle::updateBAState( uint32_t flags ) -> void {
 	
 	if (baLow) {
 		if(aecDelay)
-			aecDelay--;		
-	} else		
-		aecDelay = 4;	
+			aecDelay--;
+	} else
+		aecDelay = 4;
 }
 
 inline auto VicIICycle::updateBadLine() -> void {

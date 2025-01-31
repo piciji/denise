@@ -11,7 +11,11 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( synced );
     s.integer( irqIncomming );
     s.integer( speeder );
-    s.array( ram, 2 * 1024 );
+
+    if (operation & DRIVE_MODE_158x)
+        s.array( ram, 8 * 1024 );
+    else
+        s.array( ram, 2 * 1024 );
 
     if (expandMemory & (uint8_t)ExpandedMemMode::M20)
         s.array( ram20To3F, 8 * 1024 );

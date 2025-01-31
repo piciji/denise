@@ -68,7 +68,7 @@ struct IecBus {
             std::this_thread::yield();
     }
     template<bool ciaAccess = false> auto syncDrives( int direction = 0 ) -> bool;
-    auto syncDrivesEachCycle( ) -> void;
+    auto syncDrivesEachCycle() -> void;
     auto resetTicks() -> void;
     auto setDrivesEnabled( uint8_t count ) -> void;
 	auto hideDrive( Emulator::Interface::Media* media ) -> void;

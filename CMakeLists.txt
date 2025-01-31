@@ -154,7 +154,6 @@ set(srcs
         emulation/wdc/65816/w65816.cpp
         emulation/wdc/65C02/w65C02.cpp
         emulation/libc64/expansionPort/superCpu/superCpu.cpp
-
         emulation/libc64/traps/traps.cpp
         emulation/libc64/disk/virtual/virtualDrive.cpp
         emulation/libc64/disk/via/via.cpp

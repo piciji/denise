@@ -128,6 +128,8 @@ struct ExpansionPort {
 
     virtual auto haltMainCpu() -> bool { return false; }
 
+    virtual auto hasIoOnHost() -> bool { return false; }
+
     virtual auto observeRdy(bool state) -> void {}
 
     virtual auto observeIrq(bool state) -> void {}

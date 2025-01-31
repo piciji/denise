@@ -26,9 +26,9 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "210";
+const std::string Interface::Version = "211";
     
-Interface::Interface() : Emulator::Interface( "C64" ) {        
+Interface::Interface() : Emulator::Interface( "C64" ) {
     
 	prepareMedia();
 	prepareFirmware();
@@ -345,6 +345,7 @@ auto Interface::prepareExpansions() -> void {
     {   auto& expansion = expansions[ExpansionIdSuperCpu];
         expansion.jumpers.push_back({0, "Turbo", true} );
         expansion.jumpers.push_back({1, "JiffyDOS"} );
+        expansion.jumpers.push_back({2, "DRAM Boost"} );
 
         mediaGroups[MediaGroupIdExpansionSuperCpu].expansion = &expansion;
     }

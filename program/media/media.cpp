@@ -1033,6 +1033,11 @@ auto MediaLayout::translate() -> void {
                     auto jumperBox = block->selector.jumpers[jumper.id];
 
                     jumperBox->setText( trans->get( jumper.name ) );
+
+                    if ( isC64 && (block->media->group->id == LIBC64::Interface::MediaGroupIdExpansionSuperCpu)) {
+                        if (jumper.id == 2)
+                            jumperBox->setTooltip(trans->getA("SuperCPU DRAM Boost tooltip"));
+                    }
                 }        
             }
         }  
