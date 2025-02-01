@@ -252,7 +252,7 @@ struct DAudio : Audio {
 		settings.synchronize = false;
 		settings.frequency = 48000;
 		settings.latency = 64;
-        settings.minimumLatency = 25u;
+        settings.minimumLatency = 50u;
 		settings.handle = nullptr;
         cleared = false;
         library = nullptr;

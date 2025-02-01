@@ -33,7 +33,6 @@ struct Fastloader : Cart {
     unsigned mode;
     Emulator::Pia pia;
     Via via;
-    Emulator::Interface::Media* media = nullptr;
     unsigned voltage = 0;
     unsigned chargeClock = 0;
     bool kernalJumper; // 1: use expansion kernal with hiram line, 0: c64 kernal
