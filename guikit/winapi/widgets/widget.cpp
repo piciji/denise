@@ -142,7 +142,7 @@ auto pWidget::setGeometry(Geometry geometry) -> void {
 }
 
 auto pWidget::setTooltip(std::string tooltip) -> void {
-    if(!hwnd || tooltip.empty())
+    if(!hwnd)
         return;
     
     if (!hwndTip)
@@ -153,6 +153,13 @@ auto pWidget::setTooltip(std::string tooltip) -> void {
     TOOLINFO toolInfo = { 0 };
     toolInfo.cbSize = sizeof(toolInfo);
     toolInfo.hwnd = GetParent(hwnd);
+
+    while ( SendMessage(hwndTip, TTM_ENUMTOOLS, 0, (LPARAM)&toolInfo) )
+        SendMessage(hwndTip, TTM_DELTOOL, 0, (LPARAM)&toolInfo);
+
+    if(tooltip.empty())
+        return;
+
     toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
     toolInfo.uId = (UINT_PTR)hwnd;
     toolInfo.lpszText = wtooltip;

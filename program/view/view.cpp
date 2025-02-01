@@ -725,6 +725,8 @@ auto View::setConnectors() -> void {
                 }
 
                 emulator->connect( connector2, connectedDevice2 );
+                auto manager = InputManager::getManager(emulator);
+                manager->updateMappingsInUse();
                 emuThread->unlock();
 
                 settings->set<unsigned>( _underscore(connector2->name), connectedDevice2->id);

@@ -248,6 +248,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             }
 
             emulator->connect( connector, connectedDevice );
+            auto manager = InputManager::getManager(emulator);
+            manager->updateMappingsInUse();
             settings->set<unsigned>( _underscore(connector->name), connectedDevice->id);
             view->checkInputDevice(emulator, connector, connectedDevice);
 
