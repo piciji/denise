@@ -5,7 +5,8 @@ namespace LIBC64 {
 
 GeoRam::GeoRam(System* system) : ExpansionPort(system), system(system) {
 	setId( Interface::ExpansionIdGeoRam );
-	prepareRam( 64 );
+    data = nullptr;
+    size = 64 << 10;
 }	
 
 GeoRam::~GeoRam() {
@@ -77,15 +78,12 @@ auto GeoRam::prepareRam(unsigned size) -> void {
 	
 	maxBlocks = sizeInKb / 16;
 
-	if (data && (size == this->size))
-		return;
-
-	if (data)
-		delete[] data;
+    if (data && (size != this->size)) {
+        delete[] data;
+        data = nullptr;
+    }
 
 	this->size = size;
-
-	data = new uint8_t[size];   
 }
 
 auto GeoRam::setRam( Emulator::Interface::Media* media, uint8_t* dump, unsigned dumpSize ) -> void {
@@ -115,6 +113,9 @@ auto GeoRam::injectRam( ) -> void {
 }
 
 auto GeoRam::reset(bool softReset) -> void {
+
+    if (!data)
+        data = new uint8_t[size];
 
 	std::memset(data, 0, size);
 	
@@ -157,8 +158,11 @@ auto GeoRam::serialize(Emulator::Serializer& s) -> void {
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         if (light)
             memChangeTracker.applyAndDisable(data);
-        else
+        else {
             prepareRam(_size >> 10); // when size mismatches, recreate
+            if (!data)
+                data = new uint8_t[_size];
+        }
     } else {
         if (light)
             memChangeTracker.enable();
