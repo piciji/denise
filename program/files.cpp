@@ -472,6 +472,16 @@ auto Program::loadSettings() -> void {
                 settings->load(settingsFile("global_"));
             else
                 settings->set<bool>("undock", true, false);
+
+            if (GUIKIT::Application::isWinApi()) {
+                if (!globalSettings->get("unset_ds", false)) {
+                    if (globalSettings->get<std::string>("audio_driver", "") == "DirectSound") {
+                        globalSettings->remove("audio_driver");
+                        globalSettings->set<unsigned>("audio_latency", 30);
+                    }
+                    globalSettings->set("unset_ds", true);
+                }
+            }
         }
     }
 }
