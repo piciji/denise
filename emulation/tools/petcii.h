@@ -27,7 +27,7 @@ struct PetciiConversion {
                 checkTwoCharLineEnding = false;
             }
 
-            in.push_back( encode(c) );
+            in.push_back( encode<true>(c) );
         }
     }
 
@@ -47,7 +47,7 @@ struct PetciiConversion {
         return petcii;
     }    
     
-    auto encode( uint8_t ascii ) -> uint8_t {
+    template<bool convertToLowerCase = false> auto encode(uint8_t ascii) -> uint8_t {
 
         if (ascii == '\n')
             return 0x0d;
@@ -65,7 +65,7 @@ struct PetciiConversion {
             return (uint8_t) ((ascii - 'a') + 0x41);
         
         if ((ascii >= 'A') && (ascii <= 'Z'))
-            return (uint8_t) ((ascii - 'A') + 0xc1);
+            return (uint8_t)((ascii - 'A') + (convertToLowerCase ? 0x41 : 0xc1));
         
         if (ascii >= 0x7b)
             return PETSCII_UNMAPPED;
