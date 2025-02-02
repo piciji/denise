@@ -159,7 +159,7 @@ System::~System() {
 
 auto System::power(bool softReset, bool resetInstruction) -> void {
     crop.latest.frame = nullptr;
-    agnus.power(softReset);
+    agnus.power(softReset, resetInstruction);
 
     if (!resetInstruction) {
         if (!softReset) {

@@ -44,7 +44,7 @@ auto Blitter::initBlit() -> void {
 auto Blitter::startBlit() -> void {
     if (restartTimer) {
         if ( (agnus.busUsage == Agnus::BUS_USAGE_BLITTER) || agnus.canBlitterUseBusExt()) {
-            if ((restartTimer == 2) && (agnus.model == Agnus::OCS_A1000) ) // if A1000 Blitter get this cycle
+            if (!busy && (agnus.model == Agnus::OCS_A1000) ) // if A1000 Blitter get first cycle
                 busy = true;
 
             if (--restartTimer == 0) {
@@ -366,7 +366,7 @@ auto Blitter::setBltSize(uint16_t value) -> void {
     if (!bltSizeW) bltSizeW = 64;
 
     zero = true;
-    busy = agnus.model != Agnus::OCS_A1000;
+    busy = (agnus.model != Agnus::OCS_A1000) || agnus.useBlitterDMAForQueue();
 }
 
 auto Blitter::setBltSizeV(uint16_t value) -> void {
@@ -379,7 +379,7 @@ auto Blitter::setBltSizeH(uint16_t value) -> void {
     if (!bltSizeW) bltSizeW = 0x800;
 
     zero = true;
-    busy = agnus.model != Agnus::OCS_A1000;
+    busy = (agnus.model != Agnus::OCS_A1000) || agnus.useBlitterDMAForQueue();
 }
 
 auto Blitter::setBltCMod(uint16_t value) -> void {

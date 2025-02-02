@@ -263,7 +263,7 @@ struct Agnus {
     auto useBitplaneDMA() -> bool const { return (dmaConImm & 0x300) == 0x300; }
     auto blitterNasty() -> bool const { return dmaCon & 0x400; }
 
-    auto power(bool softReset) -> void;
+    auto power(bool softReset, bool resetInstruction) -> void;
     auto powerOff() -> void;
     auto mapMemory() -> void;
     auto mapRom(bool init = true) -> void;

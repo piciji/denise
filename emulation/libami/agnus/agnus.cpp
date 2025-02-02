@@ -101,7 +101,7 @@ auto Agnus::setRas() -> void {
     }
 }
 
-auto Agnus::power(bool softReset) -> void {
+auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
     dmaClock = 0;
@@ -214,8 +214,10 @@ auto Agnus::power(bool softReset) -> void {
     hardStop = false;
     diwFlipFlop = false;
 
-    if (!softReset) {
+    if (!softReset || resetInstruction)
         womLock = false;
+
+    if (!softReset) {
         resetFromKeyboard = 0;
     } else {
         if (resetFromKeyboard && resetDelay)
