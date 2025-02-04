@@ -214,7 +214,7 @@ template<bool ciaAccess> auto IecBus::syncDrives( int direction ) -> bool {
       
     unsigned _delay = sysTimer.fallBackCycles( sysClock );
     
-    if (!ciaAccess && (_delay < ((cpuBurner == 1) ? 100 : 3000) ) )
+    if (!ciaAccess && (_delay < ((cpuBurner == 2) ? 3000 : 100)))
         return true;
 
     if (cpuBurner)
