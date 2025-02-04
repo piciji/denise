@@ -281,7 +281,7 @@ auto Interface::prepareDevices() -> void {
         devices.push_back(device);
     }
 
-    {   Device device{ id++, "4 Player Adapter", Device::Type::FourPlayerAdapter };
+    {   Device device{ id++, "4 Player Adapter", Device::Type::MultiPlayerAdapter };
         device.inputs.push_back( {0, "Up", Key::Direction} );
         device.inputs.push_back( {1, "Down", Key::Direction} );
         device.inputs.push_back( {2, "Left", Key::Direction} );

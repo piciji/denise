@@ -307,4 +307,12 @@ auto Input::setKeycode(uint8_t row, uint8_t col) -> void {
     keyboard.setKeycode(row, col);
 }
 
+auto Input::connectUserPort() -> bool {
+    return controlPort1->connectUserPort() || controlPort2->connectUserPort();
+}
+
+auto Input::readUserPort() -> uint8_t {
+    return controlPort1->readUserPort() & controlPort2->readUserPort();
+}
+
 }

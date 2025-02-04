@@ -76,6 +76,10 @@ struct Input {
     auto updateSampling() -> void;
 
     auto setKeycode(uint8_t row, uint8_t col) -> void;
+
+    auto connectUserPort() -> bool;
+
+    auto readUserPort() -> uint8_t;
 };
 
 }

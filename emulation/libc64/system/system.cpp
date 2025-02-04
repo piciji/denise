@@ -349,7 +349,10 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
         } else if (secondDriveCable.parallelUserport) {
             diskIdleOff();
-            return (uint8_t)(cia2.lines.iob & iecBus.readParallelWithHandshake());
+            return (uint8_t)(lines->iob & iecBus.readParallelWithHandshake());
+        }
+        else if (input.connectUserPort()) {
+            return (uint8_t)(lines->iob & input.readUserPort());
         }
 
         return lines->iob;

@@ -636,7 +636,7 @@ auto InputLayout::appendListEntry(std::string& name, Emulator::Interface::Device
         image = &virtualKeyImage;
 
     std::string transName = "";
-    if (mapping->emuDevice->isFourPlayerAdapter()) {
+    if (mapping->emuDevice->isMultiPlayerAdapter()) {
         auto parts = GUIKIT::String::explode(name, ":");
         if (parts.size() == 2) {
             transName = trans->getA( parts[0], true ) + " " + trans->get( parts[1] );

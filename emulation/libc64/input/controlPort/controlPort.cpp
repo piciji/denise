@@ -10,6 +10,8 @@
 #include "GunStick.cpp"
 #include "StackLightpen.cpp"
 #include "InkwellLightpen.cpp"
+#include "cga.cpp"
+#include "inception.cpp"
 
 namespace LIBC64  {
   
@@ -25,6 +27,12 @@ auto ControlPort::create( System* system, Interface::Device* device ) -> Control
     
     if (device->isJoypad())        
         return new Joypad( system, device );
+
+    if (device->isMultiPlayerAdapter() && device->name.find("CGA") != std::string::npos)
+        return new CGA(system, device);
+
+    if (device->isMultiPlayerAdapter() && device->name.find("Inception") != std::string::npos)
+        return new Inception(system, device);
     
     if ( device->isMouse() && device->name.find( "1351" ) != std::string::npos )
         return new Mouse1351( system, device );

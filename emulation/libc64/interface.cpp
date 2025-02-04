@@ -246,7 +246,7 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdRGCDHucky, "RGCD-Hucky"} );
         expansion.pcbs.push_back( {CartridgeIdEasyCalc, "Easy Calc"} );
         expansion.pcbs.push_back( {CartridgeIdHyperBasic, "Hyper-Basic"} );
-        expansion.pcbs.push_back( {CartridgeIdBusinessBasic, "Kingsoft"} );
+        expansion.pcbs.push_back( {CartridgeIdBusinessBasic, "Kingsoft Business Basic"} );
 
 		expansion.creationIdents.push_back( "Gmod2 Flash" );
         expansion.creationIdents.push_back( "Gmod2 Eeprom" );
@@ -849,6 +849,158 @@ auto Interface::prepareDevices() -> void {
 		
         devices.push_back(device);         
 	}
+
+    {   Device device{ id++, "CGA 4 Player", Device::Type::MultiPlayerAdapter };
+        device.inputs.push_back({ 0, "Up", Key::Direction });
+        device.inputs.push_back({ 1, "Down", Key::Direction });
+        device.inputs.push_back({ 2, "Left", Key::Direction });
+        device.inputs.push_back({ 3, "Right", Key::Direction });
+        device.inputs.push_back({ 4, "Button 1", Key::Button });
+
+        device.inputs.push_back({ 5, "Port3: Up", Key::Direction });
+        device.inputs.push_back({ 6, "Port3: Down", Key::Direction });
+        device.inputs.push_back({ 7, "Port3: Left", Key::Direction });
+        device.inputs.push_back({ 8, "Port3: Right", Key::Direction });
+        device.inputs.push_back({ 9, "Port3: Button 1", Key::Button });
+
+        device.inputs.push_back({ 10, "Port4: Up", Key::Direction });
+        device.inputs.push_back({ 11, "Port4: Down", Key::Direction });
+        device.inputs.push_back({ 12, "Port4: Left", Key::Direction });
+        device.inputs.push_back({ 13, "Port4: Right", Key::Direction });
+        device.inputs.push_back({ 14, "Port4: Button 1", Key::Button });
+
+        device.addVirtual("Button 1 Turbo", { 4 }, Key::Autofire);
+        device.addVirtual("Button 1 Autofire", { 4 }, Key::ToggleAutofire);
+        device.addVirtual("Left Turbo", { 2 }, Key::AutofireDirection);
+        device.addVirtual("Right Turbo", { 3 }, Key::AutofireDirection);
+
+        device.addVirtual("Port3: Button 1 Turbo", { 9 }, Key::Autofire);
+        device.addVirtual("Port3: Button 1 Autofire", { 9 }, Key::ToggleAutofire);
+        device.addVirtual("Port3: Left Turbo", { 7 }, Key::AutofireDirection);
+        device.addVirtual("Port3: Right Turbo", { 8 }, Key::AutofireDirection);
+
+        device.addVirtual("Port4: Button 1 Turbo", { 14 }, Key::Autofire);
+        device.addVirtual("Port4: Button 1 Autofire", { 14 }, Key::ToggleAutofire);
+        device.addVirtual("Port4: Left Turbo", { 12 }, Key::AutofireDirection);
+        device.addVirtual("Port4: Right Turbo", { 13 }, Key::AutofireDirection);
+
+        device.addVirtual("Diagonal Up-Right", { 0, 3 }, Key::JoyUpRight);
+        device.addVirtual("Diagonal Down-Right", { 1, 3 }, Key::JoyDownRight);
+        device.addVirtual("Diagonal Up-Left", { 0, 2 }, Key::JoyUpLeft);
+        device.addVirtual("Diagonal Down-Left", { 1, 2 }, Key::JoyDownLeft);
+
+        device.addVirtual("Port3: Diagonal Up-Right", { 5, 8 }, Key::JoyUpRight);
+        device.addVirtual("Port3: Diagonal Down-Right", { 6, 8 }, Key::JoyDownRight);
+        device.addVirtual("Port3: Diagonal Up-Left", { 5, 7 }, Key::JoyUpLeft);
+        device.addVirtual("Port3: Diagonal Down-Left", { 6, 7 }, Key::JoyDownLeft);
+
+        device.addVirtual("Port4: Diagonal Up-Right", { 10, 13 }, Key::JoyUpRight);
+        device.addVirtual("Port4: Diagonal Down-Right", { 11, 13 }, Key::JoyDownRight);
+        device.addVirtual("Port4: Diagonal Up-Left", { 10, 12 }, Key::JoyUpLeft);
+        device.addVirtual("Port4: Diagonal Down-Left", { 11, 12 }, Key::JoyDownLeft);
+
+        devices.push_back(device);
+    }
+
+    {   Device device{ id++, "Inception 8 Player", Device::Type::MultiPlayerAdapter };
+        device.inputs.push_back({ 0, "Port1: Up", Key::Direction });
+        device.inputs.push_back({ 1, "Port1: Down", Key::Direction });
+        device.inputs.push_back({ 2, "Port1: Left", Key::Direction });
+        device.inputs.push_back({ 3, "Port1: Right", Key::Direction });
+        device.inputs.push_back({ 4, "Port1: Button 1", Key::Button });
+        device.inputs.push_back({ 5, "Port1: Button 2", Key::Button });
+
+        device.inputs.push_back({ 6, "Port2: Up", Key::Direction });
+        device.inputs.push_back({ 7, "Port2: Down", Key::Direction });
+        device.inputs.push_back({ 8, "Port2: Left", Key::Direction });
+        device.inputs.push_back({ 9, "Port2: Right", Key::Direction });
+        device.inputs.push_back({ 10, "Port2: Button 1", Key::Button });
+        device.inputs.push_back({ 11, "Port2: Button 2", Key::Button });
+
+        device.inputs.push_back({ 12, "Port3: Up", Key::Direction });
+        device.inputs.push_back({ 13, "Port3: Down", Key::Direction });
+        device.inputs.push_back({ 14, "Port3: Left", Key::Direction });
+        device.inputs.push_back({ 15, "Port3: Right", Key::Direction });
+        device.inputs.push_back({ 16, "Port3: Button 1", Key::Button });
+        device.inputs.push_back({ 17, "Port3: Button 2", Key::Button });
+
+        device.inputs.push_back({ 18, "Port4: Up", Key::Direction });
+        device.inputs.push_back({ 19, "Port4: Down", Key::Direction });
+        device.inputs.push_back({ 20, "Port4: Left", Key::Direction });
+        device.inputs.push_back({ 21, "Port4: Right", Key::Direction });
+        device.inputs.push_back({ 22, "Port4: Button 1", Key::Button });
+        device.inputs.push_back({ 23, "Port4: Button 2", Key::Button });
+
+        device.inputs.push_back({ 24, "Port5: Up", Key::Direction });
+        device.inputs.push_back({ 25, "Port5: Down", Key::Direction });
+        device.inputs.push_back({ 26, "Port5: Left", Key::Direction });
+        device.inputs.push_back({ 27, "Port5: Right", Key::Direction });
+        device.inputs.push_back({ 28, "Port5: Button 1", Key::Button });
+        device.inputs.push_back({ 29, "Port5: Button 2", Key::Button });
+
+        device.inputs.push_back({ 30, "Port6: Up", Key::Direction });
+        device.inputs.push_back({ 31, "Port6: Down", Key::Direction });
+        device.inputs.push_back({ 32, "Port6: Left", Key::Direction });
+        device.inputs.push_back({ 33, "Port6: Right", Key::Direction });
+        device.inputs.push_back({ 34, "Port6: Button 1", Key::Button });
+        device.inputs.push_back({ 35, "Port6: Button 2", Key::Button });
+
+        device.inputs.push_back({ 36, "Port7: Up", Key::Direction });
+        device.inputs.push_back({ 37, "Port7: Down", Key::Direction });
+        device.inputs.push_back({ 38, "Port7: Left", Key::Direction });
+        device.inputs.push_back({ 39, "Port7: Right", Key::Direction });
+        device.inputs.push_back({ 40, "Port7: Button 1", Key::Button });
+        device.inputs.push_back({ 41, "Port7: Button 2", Key::Button });
+
+        device.inputs.push_back({ 42, "Port8: Up", Key::Direction });
+        device.inputs.push_back({ 43, "Port8: Down", Key::Direction });
+        device.inputs.push_back({ 44, "Port8: Left", Key::Direction });
+        device.inputs.push_back({ 45, "Port8: Right", Key::Direction });
+        device.inputs.push_back({ 46, "Port8: Button 1", Key::Button });
+        device.inputs.push_back({ 47, "Port8: Button 2", Key::Button });
+
+        device.addVirtual("Port1: Button 1 Turbo", { 4 }, Key::Autofire);
+        device.addVirtual("Port1: Button 1 Autofire", { 4 }, Key::ToggleAutofire);
+        device.addVirtual("Port1: Button 2 Turbo", { 5 }, Key::Autofire);
+        device.addVirtual("Port1: Button 2 Autofire", { 5 }, Key::ToggleAutofire);
+
+        device.addVirtual("Port2: Button 1 Turbo", { 10 }, Key::Autofire);
+        device.addVirtual("Port2: Button 1 Autofire", { 10 }, Key::ToggleAutofire);
+        device.addVirtual("Port2: Button 2 Turbo", { 11 }, Key::Autofire);
+        device.addVirtual("Port2: Button 2 Autofire", { 11 }, Key::ToggleAutofire);
+
+        device.addVirtual("Port3: Button 1 Turbo", { 16 }, Key::Autofire);
+        device.addVirtual("Port3: Button 1 Autofire", { 16 }, Key::ToggleAutofire);
+        device.addVirtual("Port3: Button 2 Turbo", { 17 }, Key::Autofire);
+        device.addVirtual("Port3: Button 2 Autofire", { 17 }, Key::ToggleAutofire);
+
+        device.addVirtual("Port4: Button 1 Turbo", { 22 }, Key::Autofire);
+        device.addVirtual("Port4: Button 1 Autofire", { 22 }, Key::ToggleAutofire);
+        device.addVirtual("Port4: Button 2 Turbo", { 23 }, Key::Autofire);
+        device.addVirtual("Port4: Button 2 Autofire", { 23 }, Key::ToggleAutofire);
+
+        device.addVirtual("Port5: Button 1 Turbo", { 28 }, Key::Autofire);
+        device.addVirtual("Port5: Button 1 Autofire", { 28 }, Key::ToggleAutofire);
+        device.addVirtual("Port5: Button 2 Turbo", { 29 }, Key::Autofire);
+        device.addVirtual("Port5: Button 2 Autofire", { 29 }, Key::ToggleAutofire);
+
+        device.addVirtual("Port6: Button 1 Turbo", { 34 }, Key::Autofire);
+        device.addVirtual("Port6: Button 1 Autofire", { 34 }, Key::ToggleAutofire);
+        device.addVirtual("Port6: Button 2 Turbo", { 35 }, Key::Autofire);
+        device.addVirtual("Port6: Button 2 Autofire", { 35 }, Key::ToggleAutofire);
+
+        device.addVirtual("Port7: Button 1 Turbo", { 40 }, Key::Autofire);
+        device.addVirtual("Port7: Button 1 Autofire", { 40 }, Key::ToggleAutofire);
+        device.addVirtual("Port7: Button 2 Turbo", { 41 }, Key::Autofire);
+        device.addVirtual("Port7: Button 2 Autofire", { 41 }, Key::ToggleAutofire);
+
+        device.addVirtual("Port8: Button 1 Turbo", { 46 }, Key::Autofire);
+        device.addVirtual("Port8: Button 1 Autofire", { 46 }, Key::ToggleAutofire);
+        device.addVirtual("Port8: Button 2 Turbo", { 47 }, Key::Autofire);
+        device.addVirtual("Port8: Button 2 Autofire", { 47 }, Key::ToggleAutofire);
+
+        devices.push_back(device);
+    }
         
     for (auto& device : devices) {
         device.userData = 0;

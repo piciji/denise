@@ -22,7 +22,7 @@ auto ControlPort::create( Emulator::Interface* interface, Input& input, Emulator
     if (device->isJoypad())
         return new Joypad( interface, input, device );
 
-    if (device->isFourPlayerAdapter())
+    if (device->isMultiPlayerAdapter())
         return new FourPlayerAdapter( interface, input, device );
 
     if ( device->isMouse())

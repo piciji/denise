@@ -42,6 +42,10 @@ struct ControlPort {
     virtual auto serialize(Emulator::Serializer& s) -> void;
 
     virtual auto allowJit() -> bool { return true; }
+
+    virtual auto connectUserPort() -> bool { return false; }
+
+    virtual auto readUserPort() -> uint8_t { return 0xff; }
 };
 
 }
