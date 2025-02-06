@@ -1,3 +1,6 @@
+#include "media.h"
+
+namespace MediaView {
 
 DialogPreviewLayout::DialogPreviewLayout() {
     setPadding(10);
@@ -73,7 +76,7 @@ PathsLayout::PathsLayout() {
     setFont(GUIKIT::Font::system("bold"));
 }
 
-MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media, Emulator::Interface* emulator) {
+MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media, MediaGroupLayout* layout) {
     auto group = media->group;
     bool IPMode = group->isExpansion() && group->expansion->isRS232();
 
@@ -85,19 +88,21 @@ MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media, Emula
         append(deviceName, {0u, 0u}, 10);
         
     if (group->isWritable()) {
-        if ( (media->id < 4) && dynamic_cast<LIBC64::Interface*>(emulator) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard));
+        if ((media->id < 4) && dynamic_cast<LIBC64::Interface*>(layout->mediaLayout->emulator) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard));
         else
             append(writeprotect, {0u, 0u}, 10);
     }
 
+    eject = nullptr;
     if (!IPMode) {
-        append(eject, {0u, 0u}, 10);
+        eject = layout->mediaLayout->ejectButtons[media->id];
+        append(*eject, {0u, 0u}, 10);
         append(fileName, {~0u, 0u});
     }
     setAlignment(0.5);
 }
 
-MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
+MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media, MediaGroupLayout* layout) {
     auto group = media->group;
     bool IPMode = group->isExpansion() && group->expansion->isRS232();
 
@@ -127,15 +132,19 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
         }        
     }
 
-    if (!IPMode)
-        append(open, {0u, 0u});
+    open = nullptr;
+    if (!IPMode) {
+        open = layout->mediaLayout->openButtons[media->id];
+        append(*open, { 0u, 0u });
+    }
     
     setAlignment(0.5);
     edit.setEditable( IPMode );
     edit.setDroppable();
 }
 
-MediaGroupLayout::Block::Block(Emulator::Interface::Media* media, Emulator::Interface* emulator) : media(media), header(media, emulator), selector(media) {
+MediaGroupLayout::Block::Block(MediaGroupLayout* layout, Emulator::Interface::Media* media) : media(media), header(media, layout), selector(media, layout) {
+    this->layout = layout;
     append(header, {~0u, 0u}, 2);
     append(selector, {~0u, 0u});
 }
@@ -271,7 +280,7 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
             count--;
         } else {
             if (!init)
-                block->header.eject.onActivate();
+                fileloader->eject(mediaLayout->emulator, block->media);
         }
     }
 
@@ -341,7 +350,7 @@ auto MediaGroupLayout::showOnlyConnectedDevices() -> bool {
 auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
 
     auto addBlock = [&](Emulator::Interface::Media* media) -> MediaGroupLayout::Block* {
-        auto block = new Block( media, mediaLayout->emulator );
+        auto block = new Block( this, media );
         blocks.push_back(block);
         
         if ( !showOnlyConnectedDevices() ) {
@@ -360,8 +369,6 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
     
     for (auto& media : mediaGroup->media) {
         auto block = addBlock(&media);
-        block->layout = this;
-
         auto& header = block->header;
         
         if (!media.secondary && mediaGroup->selected)
@@ -572,4 +579,6 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
     update( previewBox, {newWidth, newHeight} );
 
     synchronizeLayout();
+}
+
 }
