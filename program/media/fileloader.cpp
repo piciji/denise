@@ -727,6 +727,8 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 
     if (!mediaGroup->isExpansion())
         program->removeExpansion();
+    else if (statusHandler && activeEmulator->isExpansionUnsupported())
+        statusHandler->setMessage(trans->getA("unsupported cartridge"), 3, true);
 
     bool forceStandardKernal = false;
     if (media->group->isTape()) {

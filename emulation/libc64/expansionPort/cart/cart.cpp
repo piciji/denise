@@ -356,4 +356,48 @@ auto Cart::checkForEmptyFlashBank(uint8_t* ptr) -> bool {
     return true;
 }
 
+auto Cart::isSupported() -> bool {
+    switch(cartridgeId) {
+        case LIBC64::Interface::CartridgeIdDefault:
+        case LIBC64::Interface::CartridgeIdOcean:
+        case LIBC64::Interface::CartridgeIdFunplay:
+        case LIBC64::Interface::CartridgeIdSuperGames:
+        case LIBC64::Interface::CartridgeIdSystem3:
+        case LIBC64::Interface::CartridgeIdZaxxon:
+        case LIBC64::Interface::CartridgeIdActionReplayMK2:
+        case LIBC64::Interface::CartridgeIdActionReplayMK3:
+        case LIBC64::Interface::CartridgeIdActionReplayMK4:
+        case LIBC64::Interface::CartridgeIdActionReplayV41AndHigher:
+        case LIBC64::Interface::CartridgeIdEasyFlash:
+        case LIBC64::Interface::CartridgeIdRetroReplay:
+        case LIBC64::Interface::CartridgeIdNordicReplay:
+        case LIBC64::Interface::CartridgeIdGmod2:
+        case LIBC64::Interface::CartridgeIdMagicDesk:
+        case LIBC64::Interface::CartridgeIdFinalCartridge:
+        case LIBC64::Interface::CartridgeIdFinalCartridge3:
+        case LIBC64::Interface::CartridgeIdFinalCartridgePlus:
+        case LIBC64::Interface::CartridgeIdSimonsBasic:
+        case LIBC64::Interface::CartridgeIdWarpSpeed:
+        case LIBC64::Interface::CartridgeIdAtomicPower:
+        case LIBC64::Interface::CartridgeIdMach5:
+        case LIBC64::Interface::CartridgeIdRoss:        
+        case LIBC64::Interface::CartridgeIdWestermann:
+        case LIBC64::Interface::CartridgeIdPagefox:
+        case LIBC64::Interface::CartridgeIdDinamic:
+        case LIBC64::Interface::CartridgeIdDiashowMaker:
+        case LIBC64::Interface::CartridgeIdSuperSnapshotV5:
+        case LIBC64::Interface::CartridgeIdComal80:
+        case LIBC64::Interface::CartridgeIdSilverrock:
+        case LIBC64::Interface::CartridgeIdRGCD:
+        case LIBC64::Interface::CartridgeIdStarDos:
+        case LIBC64::Interface::CartridgeIdEasyCalc:
+        case LIBC64::Interface::CartridgeIdHyperBasic:
+        case LIBC64::Interface::CartridgeIdBusinessBasic:
+            return true;
+        default:
+            break;
+    }
+    return false;
+}
+
 }

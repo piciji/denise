@@ -96,7 +96,15 @@ auto System::setExpansion( Interface::ExpansionId id ) -> void {
     vicIIFast.expansionPort = expansionPort;
     expansionPort->vicII = vicII;
 }  
-    
+
+auto System::isExpansionUnsupported() -> bool {
+    if (expansionPort == gameCart)
+        return gameCart->hasRom() && !gameCart->isSupported();
+    if (expansionPort == freezer)
+        return freezer->hasRom() && !freezer->isSupported();
+    return false;
+}
+
 auto System::createExpansions() -> void {
     
     reu = new Reu(this);

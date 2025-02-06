@@ -329,10 +329,10 @@ namespace Mixer {
                 break;
             case DriveSound::FloppyStep:
                  if (device->third && (device->third->id == FloppyHeadBang)) {
-                     if (device->thirdOffset > (device->third->size >> 3) ) {
+                    if (device->thirdOffset > (device->third->size >> 3) ) {
                          lastStep = Chronos::getTimestampInMilliseconds();
                          break;
-                     }
+                    }
                  }
 
                 sound = device->steps[data >> 1];

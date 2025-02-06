@@ -1747,8 +1747,11 @@ auto View::updateTapeIcons( Emulator::Interface::TapeMode mode ) -> void {
     tapeForwardItem.setIcon( mode == TapeMode::Forward ? forwardhiImage : forwardImage );
     tapeRewindItem.setIcon( mode == TapeMode::Rewind ? rewindhiImage : rewindImage );
 	tapeResetCounterItem.setIcon( counterImage );
-    
-    updateTapeStatusIcons( mode );
+
+    auto useExpansion = activeEmulator->getExpansion();
+
+    if (!useExpansion->isTurboCart())
+        updateTapeStatusIcons( mode );
 }
 
 auto View::updateTapeStatusIcons( Emulator::Interface::TapeMode mode ) -> void {

@@ -111,7 +111,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
                 combo.setSelection( combo.rows() - 1 );
         }
         
-        append(combo, {0u, 0u}, 10);      
+        append(combo, {0u, 0u}, 10);
     }
                   
     if (group->expansion && !media->secondary && (group->expansion->jumpers.size() > 0) ) {

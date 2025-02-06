@@ -255,6 +255,7 @@ struct System {
     auto destroyExpansions() -> void;
     auto setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void;
     auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Emulator::Interface::Expansion*;
+    auto isExpansionUnsupported() -> bool;
 
     auto hintSlowSpeed(bool state) -> void;
     auto setWarpMode( unsigned config ) -> void;
