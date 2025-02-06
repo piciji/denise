@@ -86,6 +86,7 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
     s.integer( proSpeedControl );
     s.integer( hidden );
     s.integer( dskChange );
+    s.integer( trackZeroSensor );
 
     if (number == 0) {
         s.integer(Drive::rpm);

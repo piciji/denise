@@ -103,6 +103,8 @@ struct IecBus {
     auto setExpandedMemory( Drive::ExpandedMemMode expandedMemMode, bool state ) -> void;
     auto getExpandedMemory( Drive::ExpandedMemMode expandedMemMode ) -> bool;
 	inline auto checkForIdleWrite(uint8_t byte) -> bool  { return (byte & 0x38) == lastByte; }
+    auto setTrackZeroSensor(bool state) -> void;
+    auto hasTrackZeroSensor() -> bool;
 
     auto updateSerializationSize() -> void;
 

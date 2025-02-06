@@ -874,3 +874,5 @@ SuperCPU DRAM Boost tooltip = faster DRAM accesses for more FPS in Wolf 3D
 SuperCPU_insert = Insert SuperCPU
 SuperCPU_image = SuperCPU image
 select_SuperCPU_image = select SuperCPU image ...
+unsupported cartridge = This cartridge may not be supported.
+1541C Track-0 Sensor = 1541C Track-0 Sensor

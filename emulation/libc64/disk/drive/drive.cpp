@@ -522,6 +522,7 @@ structure(system, this) {
     motorOn = false;
     hidden = false;
     dskChange = true;
+    trackZeroSensor = false;
 
     frequency = 1000000;
     refCyclesInCpuCycle = 16;
@@ -835,7 +836,7 @@ structure(system, this) {
             return out;
 
         } else if (type == Type::D1541C) {
-            return (uint8_t) ( ( ( ((currentHalftrack == 0) ? 1 : 0) | 0xfe ) & ~lines->ddra) | ( lines->pra & lines->ddra ) );
+            return (uint8_t)(((((trackZeroSensor && (currentHalftrack == 0)) ? 1 : 0) | 0xfe) & ~lines->ddra) | (lines->pra & lines->ddra));
         }
 
         return lines->ioa;

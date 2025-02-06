@@ -29,7 +29,7 @@ struct Interface : Emulator::Interface {
         ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64AccuracyDeprecated,
         ModelIdReuRam, ModelIdGeoRam, ModelIdIntensifyPseudoStereo,
     	ModelIdEmulateDriveMechanics, ModelIdDriveStepperDelay, ModelIdDriveAcceleration, ModelIdDriveDeceleration,
-    	ModelIdSidSeparateInput, ModelIdSuperCpuRam,
+    	ModelIdSidSeparateInput, ModelIdSuperCpuRam, ModelIdTrackZeroSensor,
     };
     
     enum MediaGroupId {
@@ -130,6 +130,7 @@ struct Interface : Emulator::Interface {
     auto createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id = 0) -> uint8_t*;    
     auto isExpansionBootable() -> bool;
 	auto hasExpansionSecondaryRom() -> bool;
+    auto isExpansionUnsupported() -> bool;
 	
 	//program
 	auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void;

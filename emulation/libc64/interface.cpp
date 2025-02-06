@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "211";
+const std::string Interface::Version = "212";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -617,6 +617,7 @@ auto Interface::prepareModels() -> void {
         { "Manual", "SpeedDOS 1541", "DolphinDOS v2 1541", "DolphinDOS v2 Ultimate", "DolphinDOS v3 1541", "DolphinDOS v3 157x",
           "ProfDOS v1 1541", "ProfDOS R3/R4 1541", "ProfDOS R5 1570", "ProfDOS R6 1571", "PrologicDOS Classic 1541", "PrologicDOS 1541", "Turbo Trans", "ProSpeed 1571 v2.0", "StarDOS", "SuperCard+"}});
 
+    models.push_back({ModelIdTrackZeroSensor, "1541C Track-0 Sensor", Model::Type::Switch, Model::Purpose::DriveSettings, 0 });
     models.push_back({ModelIdTapeDrivesConnected, "Tape Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 1},
                       { "0", "1" }});
 
@@ -635,7 +636,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdEmulateDriveMechanics, "Emulate Mechanics", Model::Type::Switch, Model::Purpose::DriveMechanics, 0});
     models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveMechanics, 90, {0, 140}, {}, 140, 10.0 });
     models.push_back({ModelIdDriveAcceleration, "Drive Acceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 704, {0, 1024}, {}, 256, 1.0 });
-    models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 256, {0, 1024}, {}, 256, 1.0 });
+    models.push_back({ModelIdDriveDeceleration, "Drive Deceleration", Model::Type::Slider, Model::Purpose::DriveMechanics, 256, {0, 1024}, {}, 256, 1.0 });    
 }
 
 auto Interface::prepareFirmware() -> void {
@@ -1642,7 +1643,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDriveRamA0ToBF:
             system->iecBus.setExpandedMemory( Drive::ExpandedMemMode::MA0, value & 1 );
             break;
-
+        case ModelIdTrackZeroSensor:
+            system->iecBus.setTrackZeroSensor(value & 1);
+            break;
         case ModelIdCycleAccurateVideo:
             system->cycleRendererNextBoot = value & 1;
             break;
@@ -1766,6 +1769,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDriveRam60To7F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M60);
         case ModelIdDriveRam80To9F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M80);
         case ModelIdDriveRamA0ToBF:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::MA0);
+        case ModelIdTrackZeroSensor:        return (int)system->iecBus.hasTrackZeroSensor();
         case ModelIdReuRam:                 return (int)system->reu->getRamSize();
         case ModelIdGeoRam:                 return (int)system->geoRam->getRamSize();
         case ModelIdSuperCpuRam:            return (int)system->superCpu->getRamSize();
@@ -1881,6 +1885,10 @@ auto Interface::setExpansion(unsigned expansionId) -> void {
 auto Interface::unsetExpansion() -> void {
     
     system->setExpansion( ExpansionIdNone );
+}
+
+auto Interface::isExpansionUnsupported() -> bool {
+    return system->isExpansionUnsupported();
 }
 
 auto Interface::getExpansion() -> Expansion* {

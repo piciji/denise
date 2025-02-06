@@ -508,6 +508,7 @@ struct Interface {
     virtual auto createExpansionImage(MediaGroup* group, unsigned& imageSize, uint8_t id = 0) -> uint8_t* { return nullptr; }
     virtual auto isExpansionBootable() -> bool { return false; }
 	virtual auto hasExpansionSecondaryRom() -> bool { return false; }
+    virtual auto isExpansionUnsupported() -> bool { return false; }
     
 	// program 
 	virtual auto insertProgram(Media* media, uint8_t* data, unsigned size) -> void {}

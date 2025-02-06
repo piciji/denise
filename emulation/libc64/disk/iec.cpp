@@ -677,6 +677,15 @@ auto IecBus::updateDriveSounds() -> void {
     }
 }
 
+auto IecBus::setTrackZeroSensor(bool state) -> void {
+    for (auto drive : drives)
+        drive->trackZeroSensor = state;
+}
+
+auto IecBus::hasTrackZeroSensor() -> bool {
+    return drives[0]->trackZeroSensor;
+}
+
 template auto IecBus::syncDrives<false>( int direction ) -> bool;
 
 }

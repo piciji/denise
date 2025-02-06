@@ -122,6 +122,7 @@ struct Drive {
     uint8_t proSpeedControl;
     bool hidden;
     bool dskChange;
+    bool trackZeroSensor;
         
     DiskStructure::MTrack* gcrTrack;
 
