@@ -25,6 +25,7 @@
 #include "../sid.h"
 
 #include <vector>
+#include <thread>
 
 namespace LIBC64 {
 
@@ -153,8 +154,13 @@ Sid::Filter::Filter( Sid* sid ) {
 	static bool initialized = false;
     digiBoost = false;
 
-	if ( !initialized )
-		build( ); // one time only, doesn't matter of instance count
+	if ( !initialized ) {
+		std::thread t1(Sid::Filter::build, 0);
+		build(1);
+		t1.join();
+
+		initialized = true; // one time only, doesn't matter of instance count
+	}
 
 	v1P = &v1;
 	v2P = &v2;
@@ -164,8 +170,7 @@ Sid::Filter::Filter( Sid* sid ) {
 	VlpP = &Vlp;
 	VbpP = &Vbp;
 	VbpResP = &VbpRes;
-
-	initialized = true;
+	
 	Vw_bias = 0; 
     setEnable( true );
     setType( MOS_6581 );
@@ -176,10 +181,10 @@ Sid::Filter::Filter( Sid* sid ) {
     reset();    
 }
 
-auto Sid::Filter::build( ) -> void {
+auto Sid::Filter::build(int m) -> void {
 	unsigned int* voltages = new unsigned int[ 1 << 16 ];
 
-	for ( unsigned m = 0; m < 2; m++ ) { // m = 0 -> 6581, m = 1 -> 8580
+	//for ( unsigned m = 0; m < 2; m++ ) { // m = 0 -> 6581, m = 1 -> 8580
 		Parameter& pa = parameter[m];
 		Calculated& ca = calculated[m];
 		// obige Tabellen zeigen einige Messpunkte am Original
@@ -571,7 +576,7 @@ auto Sid::Filter::build( ) -> void {
                 ca.f0_dac[n] = wl >> 8; // skaliert: 18 - 8 = 10 bit
             }
         }      
-	}
+	//}
 
 	delete[] voltages;       
 }

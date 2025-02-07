@@ -301,7 +301,7 @@ struct Sid {
         static unsigned short vcr_kVg[1 << 16];
         static unsigned short vcr_n_Ids_term[1 << 16];
 				
-		static auto build() -> void;
+		static auto build(int m) -> void;
 		static auto solveOpamp(Opamp* opamp, double n, int vi, int& x, Calculated& ca) -> int;
         auto solveIntegrate8580(int vi, int& vx, int& vc, Calculated& ca) -> int;
         auto solveIntegrate6581(int vi, int& vx, int& vc, Calculated& ca) -> int;
