@@ -21,10 +21,9 @@
 #include <cmath>
 #include <cstring>
 
-#include "layout.cpp"
-
 namespace MediaView {
 
+#include "layout.cpp"
 #include "swapper.cpp"
 
 MediaLayout::FontSizeLayout::FontSizeLayout() {
@@ -87,9 +86,6 @@ auto MediaLayout::updateSwitchLayout() -> void {
         return;
 
     unsigned navPos = (unsigned)item->userData();
-
-    if (navPos < navElements.size())
-        reuseWidgets(navElements[navPos]);
 		
     moduleSwitch.setSelection( navPos );
 }
@@ -147,13 +143,6 @@ auto MediaLayout::build() -> void {
 
     openImg.loadPng((uint8_t*)Icons::open, sizeof(Icons::open) );
     ejectImg.loadPng((uint8_t*)Icons::eject, sizeof(Icons::eject) );
-
-    for(int b = 0; b < 8; b++) {
-        openButtons[b] = new GUIKIT::Button;
-        openButtons[b]->setImage(&openImg);
-        ejectButtons[b] = new GUIKIT::Button;
-        ejectButtons[b]->setImage(&ejectImg);
-    }
 
     GUIKIT::TreeViewItem* tvi;
     unsigned previewFontSize = settings->get<unsigned>("software_preview_fontsize", 12, {8, 16});
@@ -293,8 +282,7 @@ auto MediaLayout::build() -> void {
     auto videoManager = VideoManager::getInstance(emulator);
     colorListing(videoManager->getForegroundColor(), videoManager->getBackgroundColor());
 
-    reuseWidgets(navElements[0]);
-    navElements[0].tvi->setSelected();    
+    navElements[0].tvi->setSelected();
 }
 
 auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
@@ -312,46 +300,62 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 					
 		if (mediaGroup->isHardDisk()) {
 
-			// block->selector.open.onActivate = [this, block, mediaGroup, fSetting]() {
+			block->selector.open.onActivate = [this, block, mediaGroup, fSetting]() {
 				
-			// 	std::string filePath = GUIKIT::BrowserWindow()
-            //         .setTitle(trans->get("select_" + mediaGroup->name + "_image"))
-            //         .setPath( fileloader->preselectPath( settings, mediaGroup->name ) )
-            //         .setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), mediaGroup->suffix), trans->get("all_files")})
-            //         .open();
+				std::string filePath = GUIKIT::BrowserWindow()
+                    .setTitle(trans->get("select_" + mediaGroup->name + "_image"))
+                    .setPath( fileloader->preselectPath( settings, mediaGroup->name ) )
+                    .setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), mediaGroup->suffix), trans->get("all_files")})
+                    .open();
 
-			// 	if (filePath.empty())
-			// 		return;
+				if (filePath.empty())
+					return;
 
-			// 	block->header.eject.onActivate();
-			// 	GUIKIT::File testFile(filePath);
+				block->header.eject.onActivate();
+				GUIKIT::File testFile(filePath);
                 
-			// 	savePath( mediaGroup->name, testFile.getPath() );
+				savePath( mediaGroup->name, testFile.getPath() );
 
-            //     if (!testFile.exists() || !testFile.isSizeValid(MAX_HARDDISK_SIZE)) {
-			// 		message->error(trans->get("file_size_error",{
-			// 			{"%path%", filePath},
-			// 			{"%size%", GUIKIT::File::SizeFormated(MAX_HARDDISK_SIZE)}
-			// 		}));
-			// 	} else if (testFile.isArchived()) {
-			// 		message->error(trans->get("archive_none"));
-			// 	} else if (!testFile.open(GUIKIT::File::Mode::Update)) {
-            //         program->errorOpen(&testFile, message);
-			// 	} else {
-			// 		fSetting->setPath(filePath);
-			// 		block->selector.edit.setText(filePath);
-			// 	}
-			// 	testFile.unload();
-			// };
+                if (!testFile.exists() || !testFile.isSizeValid(MAX_HARDDISK_SIZE)) {
+					message->error(trans->get("file_size_error",{
+						{"%path%", filePath},
+						{"%size%", GUIKIT::File::SizeFormated(MAX_HARDDISK_SIZE)}
+					}));
+				} else if (testFile.isArchived()) {
+					message->error(trans->get("archive_none"));
+				} else if (!testFile.open(GUIKIT::File::Mode::Update)) {
+                    program->errorOpen(&testFile, message);
+				} else {
+					fSetting->setPath(filePath);
+					block->selector.edit.setText(filePath);
+				}
+				testFile.unload();
+			};
 
-			// block->header.eject.onActivate = [fSetting, block]() {
-			// 	fSetting->setPath("");
-			// 	block->selector.edit.setText("");
-			// };
+			block->header.eject.onActivate = [fSetting, block]() {
+				fSetting->setPath("");
+				block->selector.edit.setText("");
+			};
 
-			//block->selector.edit.setText(fSetting->path);
+			block->selector.edit.setText(fSetting->path);
 
 		} else {
+            
+			block->selector.open.onActivate = [this, block]() {
+                
+                fileloader->load( this->emulator, block->media );
+			};
+
+			block->header.eject.onActivate = [this, block]() {
+
+                bool locked = emuThread->lock();
+			    fileloader->eject( emulator, block->media );
+
+                if (locked)
+                    // nested lock when changing drive count ... so don't unlock here
+                    emuThread->unlock();
+			};
+
 			block->header.writeprotect.onToggle = [this, block, fSetting, mediaGroup](bool checked) {
 
                 emuThread->lock();
@@ -446,6 +450,9 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                     }
                 }                                
             };
+
+		    block->selector.open.setImage(&openImg);
+		    block->header.eject.setImage(&ejectImg);
 		}
 
         if (mediaGroup->expansion && !block->media->secondary) {
@@ -970,9 +977,6 @@ auto MediaLayout::translate() -> void {
     dialogPreviewLayout.dimension.dialogWidth.name.setText( trans->get("Width", {}, true) );
     dialogPreviewLayout.dimension.dialogHeight.name.setText( trans->get("Height", {}, true) );
 
-    for(auto ejectButton : ejectButtons)
-        ejectButton->setTooltip(trans->getA("eject"));
-
     if (expansionParent)
         expansionParent->setText( trans->get("cartridges") );
 
@@ -1003,13 +1007,16 @@ auto MediaLayout::translate() -> void {
             nav.mediaGroupLayout->inject.setText( trans->get("tape spool") );
 
         for ( auto block : nav.mediaGroupLayout->blocks ) {
-            block->header.writeprotect.setText(trans->get("write_protected"));            
+            block->header.writeprotect.setText(trans->get("write_protected"));
+            block->header.eject.setTooltip(trans->get("eject"));
             block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );
             block->header.inUse.setText( trans->get( block->media->name, {}, true ) );
 
             if ( isC64 && (block->media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard)) {
                 if (block->media->id > 3)
                     block->header.deviceName.setTooltip( trans->getA( "Final Chesscard Battery tooltip" ) );
+                else if (block->media->id < 4)
+                    block->selector.open.setTooltip( trans->getA( "Final Chesscard ROMS tooltip" ) );
             }
             
             if (mediaGroup->isExpansion() && !block->media->secondary) {
@@ -1075,7 +1082,10 @@ auto MediaLayout::translate() -> void {
 	
     for(auto block : pathsLayout.blocks) {
         				
-        block->label.setText( trans->get( getMediaGroupTransIdent(block->mediaGroup) ) );	
+        block->label.setText( trans->get( getMediaGroupTransIdent(block->mediaGroup) ) );
+      //  block->empty.setText( trans->get("remove") );
+        //block->select.setText( trans->get("select") );
+		
 		neededWidth = std::max(neededWidth, block->label.minimumSize().width );
     }
 	
@@ -1083,43 +1093,6 @@ auto MediaLayout::translate() -> void {
 		block->update( block->label, { neededWidth, 0u }, 10 );	
         
     swapperLayout->translate();
-}
-
-auto MediaLayout::reuseWidgets(NavElement& navElement) -> void {
-    auto layout = navElement.mediaGroupLayout;
-    if (!layout)
-        return;
-
-    bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
-
-    for (auto block : layout->blocks) {
-        auto group = block->media->group;
-
-        if (block->header.eject) {
-            block->header.eject->onActivate = [this, block]() {
-                fileloader->eject(emulator, block->media);
-            };
-        }
-
-        if (block->selector.open) {
-            block->selector.open->onActivate = [this, block]() {
-                fileloader->load( this->emulator, block->media );
-            };
-
-            if (isC64) {
-                if (!block->selector.open->tooltip().empty())
-                    block->selector.open->setTooltip("");
-
-                if (group->isProgram())
-                    block->selector.open->setTooltip(trans->getA("c64_list_tip"));
-
-                else if (group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard) {
-                    if (block->media->id < 4)
-                        block->selector.open->setTooltip( trans->getA( "Final Chesscard ROMS tooltip" ) );
-                }
-            }
-        }
-    }
 }
 
 auto MediaLayout::getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string {

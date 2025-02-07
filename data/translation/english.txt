@@ -220,7 +220,6 @@ Swap_sid = swap SID models
 Digi_boost = SID 8580 digi boost
 adjust_bias_up = increase SID Bias 
 adjust_bias_down = decrease SID Bias
-c64_list_tip = 'Run' command is only auto executed by double click on prg. In the running system, the program is only placed in memory.
 french = French
 german = German
 english = English

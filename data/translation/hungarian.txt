@@ -220,7 +220,6 @@ Swap_sid = SID modell cseréje
 Digi_boost = SID 8580 digi boost
 adjust_bias_up = SID Bias növelése
 adjust_bias_down = SID Bias csökkentése
-c64_list_tip = A „Run” (futtatás) parancs csak akkor hajtódik automatikusan végre, ha duplán kattintasz a prg-re. Egyébként a program csak a memóriába kerül.
 french = francia
 german = német
 english = angol

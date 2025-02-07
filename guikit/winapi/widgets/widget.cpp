@@ -145,8 +145,11 @@ auto pWidget::setTooltip(std::string tooltip) -> void {
     if(!hwnd)
         return;
     
-    if (!hwndTip)
+    if (!hwndTip) {
+        if (tooltip.empty())
+            return;
         createTooltip();
+    }
     
     utf16_t wtooltip(tooltip);
 

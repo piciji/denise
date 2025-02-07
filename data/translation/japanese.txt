@@ -220,7 +220,6 @@ Swap_sid = SIDチップの変更
 Digi_boost = SID 8580のdigiブースト
 adjust_bias_up = SIDの適正閾値アップ 
 adjust_bias_down = SIDの適正閾値ダウン
-c64_list_tip = 'Run'コマンドはプログラムをダブルクリックした時のみ自動起動。既にシステムが起動している場合はメモリに読み込まれるのみとなります
 french = フランス語
 german = ドイツ語
 english = 英語

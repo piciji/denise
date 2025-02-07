@@ -127,10 +127,10 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
             GUIKIT::RadioBox inUse;
             GUIKIT::Label deviceName;
             GUIKIT::CheckBox writeprotect;
-            GUIKIT::Button* eject;
+            GUIKIT::Button eject;
             GUIKIT::Label fileName;
 
-            Header(Emulator::Interface::Media* media, MediaGroupLayout* layout);
+            Header(Emulator::Interface::Media* media, Emulator::Interface* emulator);
         } header;
 
         struct Selector : GUIKIT::HorizontalLayout {            
@@ -138,16 +138,16 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
             GUIKIT::ComboButton combo;          
             GUIKIT::Label jumperLabel;
             std::vector<GUIKIT::CheckBox*> jumpers;
-            GUIKIT::Button* open;
+            GUIKIT::Button open;
             GUIKIT::Widget spacer;          
 
-            Selector(Emulator::Interface::Media* media, MediaGroupLayout* layout);
+            Selector(Emulator::Interface::Media* media);
         } selector;
 
         Emulator::Interface::Media* media;        
         std::vector<Emulator::Interface::Listing> listings;
         MediaGroupLayout* layout;
-        Block(MediaGroupLayout* layout, Emulator::Interface::Media* media);
+        Block(Emulator::Interface::Media* media, Emulator::Interface* emulator);
     };
     std::vector<Block*> blocks;
     Emulator::Interface::MediaGroup* mediaGroup;
@@ -288,9 +288,6 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     DialogPreviewLayout dialogPreviewLayout;
     SwapperLayout* swapperLayout = nullptr;
 
-    GUIKIT::Button* openButtons[8];
-    GUIKIT::Button* ejectButtons[8];
-
     auto build() -> void;
     auto setMediaView() -> void;
     auto setDiskSwapperView() -> void;
@@ -329,7 +326,6 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto loadSettings() -> void;
     auto getDiskSaveGroup() -> Emulator::Interface::MediaGroup*;
     auto getBlock(Emulator::Interface::Media* media) -> MediaGroupLayout::Block*;
-    auto reuseWidgets(NavElement& navElement) -> void;
 
     MediaLayout(EmuConfigView::TabWindow* tabWindow);
 };

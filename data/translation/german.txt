@@ -220,7 +220,6 @@ Swap_sid = SID-Modell wechseln
 Digi_boost = SID 8580 Digi Boost
 adjust_bias_up = SID Bias erhöhen
 adjust_bias_down = SID Bias reduzieren
-c64_list_tip = 'Run' Befehl wird nur automatisch bei Doppelklick auf PRG ausgeführt. Im laufenden System wird das Programm nur in den Speicher geladen.
 french = Französisch
 german = Deutsch
 english = Englisch

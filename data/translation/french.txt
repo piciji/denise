@@ -220,7 +220,6 @@ Swap_sid = Echange des modèles de Sid
 Digi_boost = Sid 8580 digi boost
 adjust_bias_up = Augmenter le Bias du Sid 
 adjust_bias_down = Diminuer le Bias du Sid
-c64_list_tip = La commande 'Exécuter' n'est exécutée automatiquement qu'en double-cliquant sur prg. Dans le système en cours d'exécution, le programme est uniquement placé en mémoire.
 french = Français
 german = Allemand
 english = Anglais
