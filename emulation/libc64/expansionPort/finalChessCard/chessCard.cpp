@@ -163,9 +163,10 @@ auto FinalChessCard::setJumper(unsigned jumperId, bool state) -> void {
         if (jumpers & (1 << i)) {
             switch(i) {
                 default: break;
-                case 0: MHz += 5'000'000; break;
-                case 1: MHz += 10'000'000; break;
-                case 2: MHz += 20'000'000; break;
+                case 0: MHz += 10'000'000; break;
+                case 1: MHz += 20'000'000; break;
+                case 2: MHz += 30'000'000; break;
+                case 3: MHz += 50'000'000; break;
             }
         }
     }

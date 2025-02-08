@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "212";
+const std::string Interface::Version = "213";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -334,9 +334,10 @@ auto Interface::prepareExpansions() -> void {
     }
 
     {   auto& expansion = expansions[ExpansionIdFinalChessCard];
-        expansion.jumpers.push_back({0, "+5 MHz"} );
-        expansion.jumpers.push_back({1, "+10 MHz"} );
-        expansion.jumpers.push_back({2, "+20 MHz"} );
+        expansion.jumpers.push_back({0, "+10 MHz"} );
+        expansion.jumpers.push_back({1, "+20 MHz"} );
+        expansion.jumpers.push_back({2, "+30 MHz"} );
+        expansion.jumpers.push_back({3, "+50 MHz"} );
 
         expansion.creationIdents.push_back( "Final Chesscard" );
         mediaGroups[MediaGroupIdExpansionFinalChessCard].expansion = &expansion;
