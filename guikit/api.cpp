@@ -1244,6 +1244,10 @@ auto Viewport::getMousePosition() -> Position& {
     return state.mousePos;
 }
 
+auto Viewport::hideCursorByInactivity(unsigned delayMS) -> void {
+    p.hideCursorByInactivity(delayMS);
+}
+
 Viewport::Viewport() : Widget(*new pViewport(*this)), p((pViewport&)Widget::p) { p.init(); }
 
 //menu

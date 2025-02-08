@@ -594,6 +594,7 @@ struct pTreeView : pWidget {
 struct pViewport : public pWidget {
     Viewport& viewport;
     DropManager dropManager;
+    Timer hideTimer;
 
     auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
@@ -602,6 +603,7 @@ struct pViewport : public pWidget {
     auto rebuild() -> void;
     auto _rebuild() -> void;
     auto create() -> void;
+    auto hideCursorByInactivity(unsigned delayMS) -> void;
 
     auto callDrops(std::vector<std::string>& paths) -> void;
     auto callDragEnter(std::vector<std::string>& paths) -> void;

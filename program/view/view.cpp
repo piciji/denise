@@ -410,7 +410,9 @@ auto View::build() -> void {
 
 	};
 	
-    setDragnDrop();        
+    setDragnDrop();
+
+    viewport.hideCursorByInactivity(2000);
 }
 
 auto View::setAnyload( Emulator::Interface* emulator ) -> void {

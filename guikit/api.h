@@ -853,6 +853,7 @@ struct Viewport : Widget {
     auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable = true) -> void;
     auto getMousePosition() -> Position&;
+    auto hideCursorByInactivity(unsigned delayMS) -> void;
 
     struct {
         bool droppable = false;

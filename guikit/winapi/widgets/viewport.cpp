@@ -10,6 +10,12 @@ auto pViewport::create() -> void {
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)viewport.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&viewport);
+
+    hideTimer.onFinished = [this]() {
+        hideTimer.setEnabled(false);
+        if (viewport.window() && !viewport.window()->fullScreen())
+            SetCursor(NULL);        
+    };
 }
 
 auto pViewport::rebuild() -> void {
@@ -70,6 +76,10 @@ auto pViewport::callDragMove(POINTL ptl) -> void {
     }
 }
 
+auto pViewport::hideCursorByInactivity(unsigned delayMS) -> void {
+    hideTimer.setInterval(delayMS);    
+}
+
 auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
     Base* base = (Base*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     if(base == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
@@ -89,9 +99,14 @@ auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 
             if (viewport.onMouseMove)
                 viewport.onMouseMove(viewport.state.mousePos);
+
+            auto& hideTimer = viewport.p.hideTimer;
+            if (viewport.window() && !viewport.window()->fullScreen() && hideTimer.interval())
+                hideTimer.setEnabled();
         } break;
         
         case WM_MOUSELEAVE:
+            viewport.p.hideTimer.setEnabled(false);
             if(viewport.onMouseLeave) viewport.onMouseLeave();
             break;
             
