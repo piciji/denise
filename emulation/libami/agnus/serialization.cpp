@@ -8,12 +8,15 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( nextClock );
     s.integer( dmaClock );
 
-    s.integer( rapidJobs[0].job );
-    s.integer( rapidJobs[0].data );
-    s.integer( rapidJobs[0].clock );
-    s.integer( rapidJobs[1].job );
-    s.integer( rapidJobs[1].data );
-    s.integer( rapidJobs[1].clock );
+    s.integer(rJob1.job);
+    s.integer(rJob1.data);
+    s.integer(rJob1.clock);
+    s.integer(rJob2.job);
+    s.integer(rJob2.data);
+    s.integer(rJob2.clock);
+    s.integer(rJob3.job);
+    s.integer(rJob3.data);
+    s.integer(rJob3.clock);
 
     s.integer( hTotalFirst );
 

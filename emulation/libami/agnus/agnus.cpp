@@ -41,9 +41,6 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 
     this->interface = system->interface;
 
-    rapidJobs[0].sibling = &rapidJobs[1];
-    rapidJobs[1].sibling = &rapidJobs[0];
-
     chipMemChangeSize = slowMemChangeSize = fastMemChangeSize = 10 * 1024;
     chipMemChange = new MemChange[chipMemChangeSize];
     slowMemChange = new MemChange[slowMemChangeSize];
@@ -154,8 +151,9 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     beamCon = (ntsc || !ecsAndHigher()) ? 0 : BEAM_PAL;
     lines = ntsc ? 261 : 311;
 
-    rapidJobs[0].reset();
-    rapidJobs[1].reset();
+    rJob1.reset();
+    rJob2.reset();
+    rJob3.reset();
 
     for(auto& spr : sprites) {
         spr.ptr = 0;

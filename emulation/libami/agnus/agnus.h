@@ -82,7 +82,6 @@ struct Agnus {
     int64_t nextClock;
 
     struct RapidJob {
-        RapidJob* sibling;
         int job;
         uint16_t data;
         int64_t clock;
@@ -91,7 +90,7 @@ struct Agnus {
             job = -1;
             clock = INT64_MAX;
         }
-    } rapidJobs[2];
+    } rJob1, rJob2, rJob3;
 
     bool hTotalFirst;
 
@@ -395,6 +394,7 @@ struct Agnus {
     inline auto addOneCycleEvent(int job, uint16_t data = 0, int delay = 2) -> void;
     auto forceOneCycleEvent(int job) -> void;
     template<bool isPtr> auto inactivateOneCycleEvent(int job) -> void;
+    inline auto updateOneCycleEvent() -> void;
     auto powerSupplyEvent() -> void;
     auto leaveEmulationEvent() -> void;
     auto HTotalEvent() -> void;

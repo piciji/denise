@@ -1,4 +1,5 @@
 
+#include "agnus.h"
 namespace LIBAMI {
 // inspired by vAmiga, a 64 bit event counter is used.
 // By means of 8 byte counters no overflow handling is necessary. Theoretically, this could run into an overflow
@@ -27,10 +28,12 @@ auto Agnus::processEvents(int64_t curClock) -> void {
         HTotalEvent();
 
     if (curClock == eventClock[EVENT_ONE_CYCLE_DELAY]) {
-        if (curClock == rapidJobs[0].clock)
-            processOneCycleEvent(rapidJobs[0]);
-        if (curClock == rapidJobs[1].clock)
-            processOneCycleEvent(rapidJobs[1]);
+        if (curClock == rJob1.clock)
+            processOneCycleEvent(rJob1);
+        if (curClock == rJob2.clock)
+            processOneCycleEvent(rJob2);
+        if (curClock == rJob3.clock)
+            processOneCycleEvent(rJob3);
     }
 
     if (curClock == eventClock[EVENT_POWER_SUPPLY])
@@ -89,9 +92,6 @@ auto Agnus::getEventDelay() -> unsigned {
 }
 
 auto Agnus::addOneCycleEvent(int job, uint16_t data, int delay) -> void {
-    RapidJob& rJob1 = rapidJobs[0];
-    RapidJob& rJob2 = rapidJobs[1];
-
     if (rJob1.clock == INT64_MAX) {
         rJob1.job = job;
         rJob1.data = data;
@@ -110,27 +110,44 @@ auto Agnus::addOneCycleEvent(int job, uint16_t data, int delay) -> void {
             updateEventAbs<EVENT_ONE_CYCLE_DELAY>(useClock);
 
         rJob2.clock = useClock;
+    } else if (rJob3.clock == INT64_MAX) {
+        rJob3.job = job;
+        rJob3.data = data;
+        int64_t useClock = clock + delay;
+
+        if (useClock < eventClock[EVENT_ONE_CYCLE_DELAY])
+            updateEventAbs<EVENT_ONE_CYCLE_DELAY>(useClock);
+
+        rJob3.clock = useClock;
     } else {
         // interface->log("check one cycle event");
-        // We should never end up here. If it does, this does not mean that it necessarily leads to an error situation
+        // We should never end up here. If it does, this does not mean that it necessarily leads to an error situation,
         // if the event is executed early.
-        if (rJob1.clock <= rJob2.clock) {
-        //    interface->log(rJob1.job,0);
-            processOneCycleEvent<true>(rJob1);
-        } else {
-          //  interface->log(rJob2.job,0);
-            processOneCycleEvent<true>(rJob2);
+        RapidJob& rJob = rJob1;
+        int64_t nextClock = rJob1.clock;
+        if (rJob2.clock < nextClock) {
+            nextClock = rJob2.clock;
+            rJob = rJob2;
         }
+
+        if (rJob3.clock < nextClock) {
+            nextClock = rJob3.clock;
+            rJob = rJob3;
+        }
+
+        processOneCycleEvent<true>(rJob); // sooner than it should, but we need an empty slot
         addOneCycleEvent(job, data, delay);
     }
 }
 
 auto Agnus::forceOneCycleEvent(int job) -> void {
     if (hasActiveEvent<EVENT_ONE_CYCLE_DELAY>()) {
-        if ((rapidJobs[0].job & ~1) == job) {
-            processOneCycleEvent(rapidJobs[0]);
-        } else if ((rapidJobs[1].job & ~1) == job) {
-            processOneCycleEvent(rapidJobs[1]);
+        if ((rJob1.job & ~1) == job) {
+            processOneCycleEvent(rJob1);
+        } else if ((rJob2.job & ~1) == job) {
+            processOneCycleEvent(rJob2);
+        } else if ((rJob3.job & ~1) == job) {
+            processOneCycleEvent(rJob3);
         }
     }
 }
@@ -139,14 +156,28 @@ template<bool isPtr> auto Agnus::inactivateOneCycleEvent(int job) -> void {
     if (hasActiveEvent<EVENT_ONE_CYCLE_DELAY>()) {
         int mask = isPtr ? ~1 : ~0;
 
-        if ((rapidJobs[0].job & mask) == job) {
-            rapidJobs[0].clock = INT64_MAX;
-            updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(rapidJobs[0].sibling->clock);
-        } else if ((rapidJobs[1].job & mask) == job) {
-            rapidJobs[1].clock = INT64_MAX;
-            updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(rapidJobs[1].sibling->clock);
+        if ((rJob1.job & mask) == job) {
+            rJob1.clock = INT64_MAX;
+            updateOneCycleEvent();
+        } else if ((rJob2.job & mask) == job) {
+            rJob2.clock = INT64_MAX;
+            updateOneCycleEvent();
+        } else if ((rJob3.job & mask) == job) {
+            rJob3.clock = INT64_MAX;
+            updateOneCycleEvent();
         }
     }
+}
+
+inline auto Agnus::updateOneCycleEvent() -> void {
+    int64_t nextClock = rJob1.clock;
+    if (rJob2.clock < nextClock)
+        nextClock = rJob2.clock;
+
+    if (rJob3.clock < nextClock)
+        nextClock = rJob3.clock;
+
+    updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(nextClock);
 }
 
 template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void {
@@ -155,7 +186,7 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
 
     rJob.clock = INT64_MAX;
     rJob.job = -1;
-    updateEventAbs<Agnus::EVENT_ONE_CYCLE_DELAY>(rJob.sibling->clock);
+    updateOneCycleEvent();
 
     switch (job) {
         case PTR_BLT_A_H: blitter.setBltAptH(data); break;
