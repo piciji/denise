@@ -423,7 +423,7 @@ struct pTreeView : pWidget {
     
 struct pViewport : public pWidget {
     Viewport& viewport;
-    Timer hideTimer;
+    Timer cursorHideTimer;
 
     auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
