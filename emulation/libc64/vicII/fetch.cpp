@@ -192,7 +192,7 @@ auto VicIICycle::fetchIdleG() -> uint8_t {
 	else
 		data = modeEcmBmmDma; //is delayed one cycle for 85xx chips
 
-	if (badLine)
+	if (badLine && yScroll)
 		addr = rev65 ? 0x38ff : 0x3807;
 	else if (VIC_MODE_ECM(data) )
 		addr = 0x39ff;
