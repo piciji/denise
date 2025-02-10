@@ -73,7 +73,7 @@ struct PetciiConversion {
         return _fix( ascii );
     }
     
-    auto decode( uint8_t petcii ) -> uint8_t {
+    template<bool convertToUpperCase = false> auto decode( uint8_t petcii ) -> uint8_t {
 
         petcii = _fix( petcii );
 
@@ -96,7 +96,7 @@ struct PetciiConversion {
             return (uint8_t)((petcii - 0xc1) + 'A');
             
         if ((petcii >= 0x41) && (petcii <= 0x5a))
-            return (uint8_t)((petcii - 0x41) + 'a');
+            return (uint8_t)((petcii - 0x41) + (convertToUpperCase ? 'A' : 'a'));
 
         return isprint( petcii ) ? petcii : ASCII_UNMAPPED;
     }

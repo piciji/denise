@@ -30,7 +30,7 @@ namespace LIBC64 {
 
                 data = ram[addr++];
 
-                data = conv.decode( conv.encodeScreencode(data) );
+                data = conv.decode<true>( conv.encodeScreencode(data) );
 
                 *ptr++ = data;
 
