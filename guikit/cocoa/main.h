@@ -60,6 +60,7 @@ struct pWindow {
     auto handle() -> uintptr_t;
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
+    auto setBlankCursor() -> void;
     auto setPointerCursor() -> void;
     auto restore() -> void;
     auto minimized() -> bool;
@@ -422,10 +423,12 @@ struct pTreeView : pWidget {
     
 struct pViewport : public pWidget {
     Viewport& viewport;
+    Timer hideTimer;
 
     auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
     auto init() -> void;
+    auto hideCursorByInactivity(unsigned delayMS) -> void;
 
     pViewport(Viewport& viewport) : pWidget(viewport), viewport(viewport) { }
 };

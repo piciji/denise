@@ -13,7 +13,7 @@ auto pViewport::create() -> void {
 
     hideTimer.onFinished = [this]() {
         hideTimer.setEnabled(false);
-        if (viewport.window() && !viewport.window()->fullScreen())
+        if (viewport.window() && (viewport.window()->cursor == Window::Cursor::Default) && !viewport.window()->fullScreen())
             SetCursor(NULL);        
     };
 }
@@ -97,6 +97,9 @@ auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
             TrackMouseEvent(&tracker);
             viewport.state.mousePos = {(signed)LOWORD(lparam), (signed)HIWORD(lparam)};
 
+            if (Application::isQuit)
+                break;
+
             if (viewport.onMouseMove)
                 viewport.onMouseMove(viewport.state.mousePos);
 
@@ -107,33 +110,34 @@ auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         
         case WM_MOUSELEAVE:
             viewport.p.hideTimer.setEnabled(false);
-            if(viewport.onMouseLeave) viewport.onMouseLeave();
+            if(!Application::isQuit && viewport.onMouseLeave)
+                viewport.onMouseLeave();
             break;
             
         case WM_LBUTTONDOWN:
-            if (viewport.onMousePress) 
+            if (!Application::isQuit && viewport.onMousePress) 
                 viewport.onMousePress(Mouse::Button::Left);
             break;
                 
         case WM_MBUTTONDOWN:
-            if (viewport.onMousePress) 
+            if (!Application::isQuit && viewport.onMousePress) 
                 viewport.onMousePress(Mouse::Button::Middle);            
             break;
         case WM_RBUTTONDOWN:
-            if (viewport.onMousePress) 
+            if (!Application::isQuit && viewport.onMousePress) 
                 viewport.onMousePress(Mouse::Button::Right);
             break;
             
         case WM_LBUTTONUP:
-            if(viewport.onMouseRelease)
+            if(!Application::isQuit && viewport.onMouseRelease)
                 viewport.onMouseRelease(Mouse::Button::Left);
             break;
         case WM_MBUTTONUP:
-            if(viewport.onMouseRelease)
+            if(!Application::isQuit && viewport.onMouseRelease)
                 viewport.onMouseRelease(Mouse::Button::Middle);
             break;
         case WM_RBUTTONUP:
-            if(viewport.onMouseRelease)
+            if(!Application::isQuit && viewport.onMouseRelease)
                 viewport.onMouseRelease(Mouse::Button::Right);
             break;
     }

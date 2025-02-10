@@ -217,7 +217,7 @@ struct Window : Base {
 
     enum class Hints { Default, Video } hints = Hints::Default;
     
-    enum class Cursor { Default, Pointer, Image } cursor = Cursor::Default;
+    enum class Cursor { Default, Pointer, Image, Blank } cursor = Cursor::Default;
 
     struct Cocoa {
         Window& window;
@@ -285,6 +285,7 @@ struct Window : Base {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor( ) -> void;
     auto setPointerCursor( ) -> void;
+    auto setBlankCursor( ) -> void;
     auto getScrollbarWidth() -> unsigned;
     auto setAspectRatio(Size ratio) -> void;
     auto applyMaximizeCorrection(Geometry& geo) -> void;

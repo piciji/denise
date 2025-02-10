@@ -402,6 +402,17 @@ auto Window::setPointerCursor( ) -> void {
     
     p.setPointerCursor();
 }
+
+auto Window::setBlankCursor( ) -> void {    
+    if (cursor == Cursor::Blank)
+        return;
+    
+    cursor = Cursor::Blank;
+    
+    state.cursorImage = nullptr;
+    
+    p.setBlankCursor();
+}
     
 auto Window::handle() -> uintptr_t {
     return p.handle();

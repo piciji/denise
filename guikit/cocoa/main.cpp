@@ -902,6 +902,20 @@ auto pWindow::setPointerCursor() -> void {
         [cocoaWindow resetCursorRects];
     }
 }
+
+auto pWindow::setBlankCursor() -> void {
+    @autoreleasepool {
+        
+        if (customCursor)
+            [customCursor release];
+        
+        customCursor = nullptr;
+        
+        [NSCursor hide];
+        
+        [cocoaWindow resetCursorRects];
+    }
+}
  
 auto pWindow::minimized() -> bool {
     return [cocoaWindow isMiniaturized];

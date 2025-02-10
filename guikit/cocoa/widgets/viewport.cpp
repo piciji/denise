@@ -82,10 +82,22 @@
     viewport->state.mousePos.x = floor(mouseLoc.x);
     
     if(viewport->onMouseMove) viewport->onMouseMove(viewport->state.mousePos);
+
+    auto _window = viewport.window();
+    auto _timer = viewport->p.hideTimer;
+    if (_window && !_window->fullScreen() && _timer.interval())
+        _timer.setEnabled();
+    
+    if (_window && (_window->cursor == Window::Cursor::Blank))
+        _window->setDefaultCursor();
 }
 
 -(void) mouseExited:(NSEvent*)event {
     if(viewport->onMouseLeave) viewport->onMouseLeave();
+    viewport->p.hideTimer.setEnabled(false);
+    auto _window = viewport.window();
+    if (_window && (_window->cursor == Window::Cursor::Blank))
+        _window->setDefaultCursor();
 }
 
 -(void) updateTrackingAreas {
@@ -121,6 +133,17 @@ auto pViewport::init() -> void {
     @autoreleasepool {
         cocoaView = [[CocoaViewport alloc] initWith:viewport];
     }
+
+    hideTimer.onFinished = [this]() {
+        hideTimer.setEnabled(false);
+        if (viewport.window() && (viewport.window()->cursor == Window::Cursor::Default) && !viewport.window()->fullScreen()) {
+            viewport.window()->setBlankCursor();
+        }
+    };
+}
+
+auto pViewport::hideCursorByInactivity(unsigned delayMS) -> void {
+    hideTimer.setInterval(delayMS);
 }
 
 auto pViewport::setDroppable(bool droppable) -> void {

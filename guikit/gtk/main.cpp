@@ -140,6 +140,13 @@ auto pWindow::mouseMove(GtkWidget* widget, GdkEventButton* event, pWindow* self)
     return false;
 }
 
+auto pWindow::mouseLeave(GtkWidget* widget, GdkEventCrossing* event, pWindow* self) -> gboolean {
+    if (self->viewport)
+        return pViewport::mouseLeave( widget, event, self->viewport );
+
+    return false;
+}
+
 auto pWindow::mousePress(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean {
     if (self->viewport)
         return pViewport::mousePress( widget, event, self->viewport );
@@ -343,7 +350,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 
     if (hints == Window::Hints::Video) {
         mainDisplay = gtk_drawing_area_new();
-        gtk_widget_add_events(mainDisplay, GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
+        gtk_widget_add_events(mainDisplay, GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_LEAVE_NOTIFY_MASK);
     } else
         mainDisplay = gtk_fixed_new();
 
@@ -375,6 +382,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 
     if (hints == Window::Hints::Video) {
         g_signal_connect(G_OBJECT(mainDisplay), "motion-notify-event", G_CALLBACK(pWindow::mouseMove), (gpointer)this);
+        g_signal_connect(G_OBJECT(mainDisplay), "leave-notify-event", G_CALLBACK(pWindow::mouseLeave), (gpointer)this);
         g_signal_connect(G_OBJECT(mainDisplay), "button-press-event", G_CALLBACK(pWindow::mousePress), (gpointer)this);
         g_signal_connect(G_OBJECT(mainDisplay), "button-release-event", G_CALLBACK(pWindow::mouseRelease), (gpointer)this);
         g_signal_connect(gtk_widget_get_screen(mainDisplay), "monitors_changed", G_CALLBACK(pWindow::monitorsChanged), (gpointer)this);
@@ -596,6 +604,17 @@ auto pWindow::setPointerCursor() -> void {
         g_object_unref( cursor );
             
     cursor = gdk_cursor_new_for_display( gdk_screen_get_display(gdk_screen_get_default()), GDK_HAND2 );
+            
+    if (cursor)
+        SetCursor( widget, cursor );
+}
+
+auto pWindow::setBlankCursor() -> void {
+        
+    if (cursor)
+        g_object_unref( cursor );
+    
+    cursor = gdk_cursor_new_for_display( gdk_screen_get_display(gdk_screen_get_default()), GDK_BLANK_CURSOR );
             
     if (cursor)
         SetCursor( widget, cursor );

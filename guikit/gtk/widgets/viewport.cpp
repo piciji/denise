@@ -19,6 +19,13 @@ auto pViewport::create() -> void {
 auto pViewport::init() -> void {
     create();
     setDroppable(viewport.droppable());
+
+    hideTimer.onFinished = [this]() {
+        hideTimer.setEnabled(false);
+        if (viewport.window() && (viewport.window()->cursor == Window::Cursor::Default) && !viewport.window()->fullScreen()) {
+            viewport.window()->setBlankCursor();
+        }
+    };
 }
 
 auto pViewport::add() -> void {
@@ -41,6 +48,10 @@ auto pViewport::setGeometry(Geometry geometry) -> void {
 auto pViewport::setDroppable(bool droppable) -> void {
 
 
+}
+
+auto pViewport::hideCursorByInactivity(unsigned delayMS) -> void {
+    hideTimer.setInterval(delayMS);
 }
 
 auto pViewport::handle(bool hintRecreation) -> uintptr_t {
@@ -86,23 +97,42 @@ auto pViewport::dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gin
     return false;
 }
 
-auto pViewport::mouseLeave(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean {
+auto pViewport::mouseLeave(GtkWidget* widget, GdkEventCrossing* event, pViewport* self) -> gboolean {
+    if (Application::isQuit)
+        return false;
+    self->hideTimer.setEnabled(false);
+    auto _window = self->viewport.window();
+    if (_window && (_window->cursor == Window::Cursor::Blank))
+        _window->setDefaultCursor();
+
     if(self->viewport.onMouseLeave) self->viewport.onMouseLeave();
     return true;
 }
 
 auto pViewport::mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean {
-        
+    if (Application::isQuit)
+        return false;
+
     self->viewport.state.mousePos.x = event->x;
     self->viewport.state.mousePos.y = event->y;
 	
 	if(self->viewport.onMouseMove) 
         self->viewport.onMouseMove(self->viewport.state.mousePos);
-        
+
+    auto _window = self->viewport.window();
+    if (_window && !_window->fullScreen() && self->hideTimer.interval())
+        self->hideTimer.setEnabled();
+    
+    if (_window && (_window->cursor == Window::Cursor::Blank))
+        _window->setDefaultCursor();
+
     return true;
 }
 
 auto pViewport::mousePress(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean {
+    if (Application::isQuit)
+        return false;
+
     if(self->viewport.onMousePress) switch(event->button) {
         case 1: self->viewport.onMousePress(Mouse::Button::Left); break;
         case 2: self->viewport.onMousePress(Mouse::Button::Middle); break;
@@ -115,6 +145,9 @@ auto pViewport::mousePress(GtkWidget* widget, GdkEventButton* event, pViewport* 
 }
 
 auto pViewport::mouseRelease(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean {
+    if (Application::isQuit)
+        return false;
+    
     if(self->viewport.onMouseRelease) switch(event->button) {
         case 1: self->viewport.onMouseRelease(Mouse::Button::Left); break;
         case 2: self->viewport.onMouseRelease(Mouse::Button::Middle); break;
