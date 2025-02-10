@@ -82,6 +82,8 @@ struct SuperSnapshotV5 : Freezer {
         cRomH = cRomL = getChip(0);
         enable = true;
         bank = 0;
+        game = false;
+        exRom = true;
         std::memset(ram, 0, 32 * 1024);
     }
 
