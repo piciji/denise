@@ -87,39 +87,46 @@
     if(viewport->onMouseMove)
         viewport->onMouseMove(viewport->state.mousePos);
     
-    auto _window = viewport->window();
+    auto aWindow = viewport->window();
     auto& _timer = viewport->p.cursorHideTimer;
     
-    if (_window && !_window->fullScreen() && _timer.interval())
+    if (aWindow && !aWindow->fullScreen() && _timer.interval())
         _timer.setEnabled();
     
-    if (_window && (_window->cursor == GUIKIT::Window::Cursor::Blank)) {
+    if (aWindow && (aWindow->cursor == GUIKIT::Window::Cursor::Blank)) {
         [NSCursor unhide];
-        _window->cursor = GUIKIT::Window::Cursor::Default;
+        aWindow->cursor = GUIKIT::Window::Cursor::Default;
     }
 }
 
 -(void) mouseExited:(NSEvent*)event {
     if(viewport->onMouseLeave) viewport->onMouseLeave();
-    viewport->p.cursorHideTimer.setEnabled(false);
    // printf("exit");
   //  fflush(stdout);
-    auto _window = viewport->window();
-    if (_window && (_window->cursor == GUIKIT::Window::Cursor::Blank)) {
+    auto aWindow = viewport->window();
+    auto& _timer = viewport->p.cursorHideTimer;
+    _timer.setEnabled(false);
+
+    if (aWindow && (aWindow->cursor == GUIKIT::Window::Cursor::Blank)) {
         [NSCursor unhide];
-        _window->cursor = GUIKIT::Window::Cursor::Default;
+        aWindow->cursor = GUIKIT::Window::Cursor::Default;
     }
 }
 
-//-(void) mouseEntered:(NSEvent*)event {
-  //  printf("enter");
-  //  fflush(stdout);
-  //  auto _window = viewport->window();
-    //if (_window && (_window->cursor == GUIKIT::Window::Cursor::Blank)) {
-      //  [NSCursor unhide];
-        //_window->cursor = GUIKIT::Window::Cursor::Default;
-    //}
-//}
+-(void) mouseEntered:(NSEvent*)event {
+   // printf("enter");
+   // fflush(stdout);
+    auto aWindow = viewport->window();
+    auto& _timer = viewport->p.cursorHideTimer;
+
+    if (aWindow && !aWindow->fullScreen() && _timer.interval())
+       _timer.setEnabled();
+        
+    if (aWindow && (aWindow->cursor == GUIKIT::Window::Cursor::Blank)) {
+        [NSCursor unhide];
+        aWindow->cursor = GUIKIT::Window::Cursor::Default;
+    }
+}
 
 -(void) updateTrackingAreas {
     if(trackingArea != nil) {

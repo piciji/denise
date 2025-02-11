@@ -191,7 +191,7 @@ template<uint8_t actions> inline auto W65816::read(uint32_t addr) -> uint8_t {
 #endif
 
 #ifdef SEPARATE_VECTOR_READ
-    if constexpr (actions & VECTOR)
+    if constexpr (!!(actions & VECTOR))
         return READ_VECTOR_BYTE((uint16_t)addr);
 #endif
     return READ_BYTE(addr);
@@ -246,12 +246,12 @@ template<uint8_t actions> inline auto W65816::writeStack(uint32_t addr, uint8_t 
 
 template<uint8_t actions> auto W65816::push(uint8_t data) -> void {
     write<actions>(s, data);
-    if constexpr (actions & NATIVE) s--;
+    if constexpr (!!(actions & NATIVE)) s--;
     else { modeE ? decByteL(s) : (void)s--; }
 }
 
 template<uint8_t actions> auto W65816::pull() -> uint8_t {
-    if constexpr (actions & NATIVE) s++;
+    if constexpr (!!(actions & NATIVE)) s++;
     else { modeE ? incByteL(s) : (void)s++; }
     return read<actions>(s);
 }
