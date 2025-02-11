@@ -146,6 +146,7 @@ struct pWindow {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
     auto setPointerCursor() -> void;
+    auto setBlankCursor() -> void {}
 	static auto XPOrBelowOrWin7InXPMode() -> bool;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
