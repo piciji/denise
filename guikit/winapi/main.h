@@ -146,6 +146,7 @@ struct pWindow {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
     auto setPointerCursor() -> void;
+    auto setBlankCursor() -> void {}
 	static auto XPOrBelowOrWin7InXPMode() -> bool;
 	
 	static auto addCustomFont( CustomFont* customFont ) -> bool;
@@ -594,6 +595,7 @@ struct pTreeView : pWidget {
 struct pViewport : public pWidget {
     Viewport& viewport;
     DropManager dropManager;
+    Timer hideTimer;
 
     auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
@@ -602,6 +604,7 @@ struct pViewport : public pWidget {
     auto rebuild() -> void;
     auto _rebuild() -> void;
     auto create() -> void;
+    auto hideCursorByInactivity(unsigned delayMS) -> void;
 
     auto callDrops(std::vector<std::string>& paths) -> void;
     auto callDragEnter(std::vector<std::string>& paths) -> void;

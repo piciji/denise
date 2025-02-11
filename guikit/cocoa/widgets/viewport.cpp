@@ -76,16 +76,56 @@
 
 -(void) mouseMoved:(NSEvent*)event {
     NSPoint mouseLoc;
+    if (GUIKIT::Application::isQuit)
+        return;
     mouseLoc = [self convertPoint:[event locationInWindow] fromView:nil];
     GUIKIT::Geometry geo = viewport->GUIKIT::Widget::state.geometry;
-    viewport->state.mousePos.y = geo.height - ceil(mouseLoc.y);
-    viewport->state.mousePos.x = floor(mouseLoc.x);
+    auto& _pos = viewport->state.mousePos;
+    _pos.y = geo.height - ceil(mouseLoc.y);
+    _pos.x = floor(mouseLoc.x);
     
-    if(viewport->onMouseMove) viewport->onMouseMove(viewport->state.mousePos);
+    if(viewport->onMouseMove)
+        viewport->onMouseMove(viewport->state.mousePos);
+    
+    auto aWindow = viewport->window();
+    auto& _timer = viewport->p.cursorHideTimer;
+    
+    if (aWindow && !aWindow->fullScreen() && _timer.interval())
+        _timer.setEnabled();
+    
+    if (aWindow && (aWindow->cursor == GUIKIT::Window::Cursor::Blank)) {
+        [NSCursor unhide];
+        aWindow->cursor = GUIKIT::Window::Cursor::Default;
+    }
 }
 
 -(void) mouseExited:(NSEvent*)event {
     if(viewport->onMouseLeave) viewport->onMouseLeave();
+   // printf("exit");
+  //  fflush(stdout);
+    auto aWindow = viewport->window();
+    auto& _timer = viewport->p.cursorHideTimer;
+    _timer.setEnabled(false);
+
+    if (aWindow && (aWindow->cursor == GUIKIT::Window::Cursor::Blank)) {
+        [NSCursor unhide];
+        aWindow->cursor = GUIKIT::Window::Cursor::Default;
+    }
+}
+
+-(void) mouseEntered:(NSEvent*)event {
+   // printf("enter");
+   // fflush(stdout);
+    auto aWindow = viewport->window();
+    auto& _timer = viewport->p.cursorHideTimer;
+
+    if (aWindow && !aWindow->fullScreen() && _timer.interval())
+       _timer.setEnabled();
+        
+    if (aWindow && (aWindow->cursor == GUIKIT::Window::Cursor::Blank)) {
+        [NSCursor unhide];
+        aWindow->cursor = GUIKIT::Window::Cursor::Default;
+    }
 }
 
 -(void) updateTrackingAreas {
@@ -121,6 +161,18 @@ auto pViewport::init() -> void {
     @autoreleasepool {
         cocoaView = [[CocoaViewport alloc] initWith:viewport];
     }
+
+    cursorHideTimer.onFinished = [this]() {
+        cursorHideTimer.setEnabled(false);
+        if (viewport.window() && (viewport.window()->cursor == Window::Cursor::Default) && !viewport.window()->fullScreen()) {
+            [NSCursor hide];
+            viewport.window()->cursor =  Window::Cursor::Blank;
+        }
+    };
+}
+
+auto pViewport::hideCursorByInactivity(unsigned delayMS) -> void {
+    cursorHideTimer.setInterval(delayMS);
 }
 
 auto pViewport::setDroppable(bool droppable) -> void {

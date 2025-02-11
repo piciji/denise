@@ -61,6 +61,7 @@ struct CocoaMouse {
         if(mIsAcquired()) {
             CGAssociateMouseAndMouseCursorPosition(true);
             CGDisplayShowCursor(0);
+            [NSCursor unhide];
             mouseAcquired = false;
         }
     }

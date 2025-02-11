@@ -80,6 +80,7 @@ struct pWindow {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor() -> void;
     auto setPointerCursor() -> void;
+    auto setBlankCursor() -> void;
     auto setIcon( std::string path ) -> bool;
 	auto minimized() -> bool;
 	auto restore() -> void;
@@ -89,6 +90,8 @@ struct pWindow {
     auto applyMaximizeCorrection(Geometry& geo) -> void {}
     auto updateGeometryHint() -> void;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
+    static auto mouseEnter(GtkWidget* widget, GdkEventCrossing* event, pWindow* self) -> gboolean;
+    static auto mouseLeave(GtkWidget* widget, GdkEventCrossing* event, pWindow* self) -> gboolean;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
     static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
     static auto monitorsChanged(GdkScreen* screen, pWindow* self) -> void;
@@ -524,6 +527,7 @@ struct pViewport : public pWidget {
     Viewport& viewport;
     bool dragAnalyzed = false;
     std::vector<std::string> paths;
+    Timer cursorHideTimer;
 
     auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
@@ -533,12 +537,14 @@ struct pViewport : public pWidget {
     static auto dragEnd(GtkWidget* widget, GdkDragContext* context, Viewport* viewport) -> void;
     static auto dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void;
 
-    static auto mouseLeave(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
+    static auto mouseLeave(GtkWidget* widget, GdkEventCrossing* event, pViewport* self) -> gboolean;
+    static auto mouseEnter(GtkWidget* widget, GdkEventCrossing* event, pViewport* self) -> gboolean;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
 	static auto drawEvent(GtkWidget* widget, cairo_t* context, pViewport* self) -> gboolean;
     static auto monitorsChanged(GdkScreen* screen, pViewport* self) -> void;
+    auto hideCursorByInactivity(unsigned delayMS) -> void;
 
     auto init() -> void;
     auto create() -> void;

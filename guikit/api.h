@@ -217,7 +217,7 @@ struct Window : Base {
 
     enum class Hints { Default, Video } hints = Hints::Default;
     
-    enum class Cursor { Default, Pointer, Image } cursor = Cursor::Default;
+    enum class Cursor { Default, Pointer, Image, Blank } cursor = Cursor::Default;
 
     struct Cocoa {
         Window& window;
@@ -285,6 +285,7 @@ struct Window : Base {
     auto changeCursor( Image& image, unsigned hotSpotX, unsigned hotSpotY ) -> void;
     auto setDefaultCursor( ) -> void;
     auto setPointerCursor( ) -> void;
+    auto setBlankCursor( ) -> void;
     auto getScrollbarWidth() -> unsigned;
     auto setAspectRatio(Size ratio) -> void;
     auto applyMaximizeCorrection(Geometry& geo) -> void;
@@ -853,6 +854,7 @@ struct Viewport : Widget {
     auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable = true) -> void;
     auto getMousePosition() -> Position&;
+    auto hideCursorByInactivity(unsigned delayMS) -> void;
 
     struct {
         bool droppable = false;

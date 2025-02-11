@@ -402,6 +402,17 @@ auto Window::setPointerCursor( ) -> void {
     
     p.setPointerCursor();
 }
+
+auto Window::setBlankCursor( ) -> void {    
+    if (cursor == Cursor::Blank)
+        return;
+    
+    cursor = Cursor::Blank;
+    
+    state.cursorImage = nullptr;
+    
+    p.setBlankCursor();
+}
     
 auto Window::handle() -> uintptr_t {
     return p.handle();
@@ -1242,6 +1253,10 @@ auto Viewport::setDroppable(bool droppable) -> void {
 auto Viewport::getMousePosition() -> Position& {
     
     return state.mousePos;
+}
+
+auto Viewport::hideCursorByInactivity(unsigned delayMS) -> void {
+    p.hideCursorByInactivity(delayMS);
 }
 
 Viewport::Viewport() : Widget(*new pViewport(*this)), p((pViewport&)Widget::p) { p.init(); }
