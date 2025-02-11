@@ -76,16 +76,20 @@
 
 -(void) mouseMoved:(NSEvent*)event {
     NSPoint mouseLoc;
+    if (GUIKIT::Application::isQuit)
+        return;
     mouseLoc = [self convertPoint:[event locationInWindow] fromView:nil];
     GUIKIT::Geometry geo = viewport->GUIKIT::Widget::state.geometry;
-    viewport->state.mousePos.y = geo.height - ceil(mouseLoc.y);
-    viewport->state.mousePos.x = floor(mouseLoc.x);
+    auto& _pos = viewport->state.mousePos;
+    _pos.y = geo.height - ceil(mouseLoc.y);
+    _pos.x = floor(mouseLoc.x);
     
-    if(viewport->onMouseMove) viewport->onMouseMove(viewport->state.mousePos);
-  //  printf("move");
-    //fflush(stdout);
+    if(viewport->onMouseMove)
+        viewport->onMouseMove(viewport->state.mousePos);
+    
     auto _window = viewport->window();
     auto& _timer = viewport->p.cursorHideTimer;
+    
     if (_window && !_window->fullScreen() && _timer.interval())
         _timer.setEnabled();
     
@@ -107,15 +111,15 @@
     }
 }
 
--(void) mouseEntered:(NSEvent*)event {
+//-(void) mouseEntered:(NSEvent*)event {
   //  printf("enter");
   //  fflush(stdout);
-    auto _window = viewport->window();
-    if (_window && (_window->cursor == GUIKIT::Window::Cursor::Blank)) {
-        [NSCursor unhide];
-        _window->cursor = GUIKIT::Window::Cursor::Default;
-    }
-}
+  //  auto _window = viewport->window();
+    //if (_window && (_window->cursor == GUIKIT::Window::Cursor::Blank)) {
+      //  [NSCursor unhide];
+        //_window->cursor = GUIKIT::Window::Cursor::Default;
+    //}
+//}
 
 -(void) updateTrackingAreas {
     if(trackingArea != nil) {
