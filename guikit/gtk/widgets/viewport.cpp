@@ -4,11 +4,12 @@ auto pViewport::create() -> void {
     gtkWidget = gtk_drawing_area_new();
 
     gtk_widget_add_events(gtkWidget,
-    GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_POINTER_MOTION_MASK);
+    GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_ENTER_NOTIFY_MASK | GDK_POINTER_MOTION_MASK);
 
     g_signal_connect(G_OBJECT(gtkWidget), "button-press-event", G_CALLBACK(pViewport::mousePress), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "button-release-event", G_CALLBACK(pViewport::mouseRelease), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "leave-notify-event", G_CALLBACK(pViewport::mouseLeave), (gpointer)this);
+    g_signal_connect(G_OBJECT(gtkWidget), "enter-notify-event", G_CALLBACK(pViewport::mouseEnter), (gpointer)this);
     g_signal_connect(G_OBJECT(gtkWidget), "motion-notify-event", G_CALLBACK(pViewport::mouseMove), (gpointer)this);
     //g_signal_connect(G_OBJECT(gtkWidget), "draw", G_CALLBACK(pViewport::drawEvent), (gpointer)this);
 
@@ -20,8 +21,8 @@ auto pViewport::init() -> void {
     create();
     setDroppable(viewport.droppable());
 
-    hideTimer.onFinished = [this]() {
-        hideTimer.setEnabled(false);
+    cursorHideTimer.onFinished = [this]() {
+        cursorHideTimer.setEnabled(false);
         if (viewport.window() && (viewport.window()->cursor == Window::Cursor::Default) && !viewport.window()->fullScreen()) {
             viewport.window()->setBlankCursor();
         }
@@ -51,7 +52,7 @@ auto pViewport::setDroppable(bool droppable) -> void {
 }
 
 auto pViewport::hideCursorByInactivity(unsigned delayMS) -> void {
-    hideTimer.setInterval(delayMS);
+    cursorHideTimer.setInterval(delayMS);
 }
 
 auto pViewport::handle(bool hintRecreation) -> uintptr_t {
@@ -100,12 +101,27 @@ auto pViewport::dragMove(GtkWidget* widget, GdkDragContext* context, gint x, gin
 auto pViewport::mouseLeave(GtkWidget* widget, GdkEventCrossing* event, pViewport* self) -> gboolean {
     if (Application::isQuit)
         return false;
-    self->hideTimer.setEnabled(false);
+
+    self->cursorHideTimer.setEnabled(false);
     auto _window = self->viewport.window();
     if (_window && (_window->cursor == Window::Cursor::Blank))
         _window->setDefaultCursor();
 
     if(self->viewport.onMouseLeave) self->viewport.onMouseLeave();
+    return true;
+}
+
+auto pViewport::mouseEnter(GtkWidget* widget, GdkEventCrossing* event, pViewport* self) -> gboolean {
+    if (Application::isQuit)
+        return false;
+
+    auto _window = self->viewport.window();
+    if (_window && !_window->fullScreen() && self->cursorHideTimer.interval())
+        self->cursorHideTimer.setEnabled();
+
+    if (_window && (_window->cursor == Window::Cursor::Blank))
+        _window->setDefaultCursor();
+
     return true;
 }
 
@@ -120,8 +136,8 @@ auto pViewport::mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* s
         self->viewport.onMouseMove(self->viewport.state.mousePos);
 
     auto _window = self->viewport.window();
-    if (_window && !_window->fullScreen() && self->hideTimer.interval())
-        self->hideTimer.setEnabled();
+    if (_window && !_window->fullScreen() && self->cursorHideTimer.interval())
+        self->cursorHideTimer.setEnabled();
     
     if (_window && (_window->cursor == Window::Cursor::Blank))
         _window->setDefaultCursor();

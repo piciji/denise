@@ -147,6 +147,13 @@ auto pWindow::mouseLeave(GtkWidget* widget, GdkEventCrossing* event, pWindow* se
     return false;
 }
 
+auto pWindow::mouseEnter(GtkWidget* widget, GdkEventCrossing* event, pWindow* self) -> gboolean {
+    if (self->viewport)
+        return pViewport::mouseEnter( widget, event, self->viewport );
+
+    return false;
+}
+
 auto pWindow::mousePress(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean {
     if (self->viewport)
         return pViewport::mousePress( widget, event, self->viewport );
@@ -350,7 +357,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 
     if (hints == Window::Hints::Video) {
         mainDisplay = gtk_drawing_area_new();
-        gtk_widget_add_events(mainDisplay, GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_LEAVE_NOTIFY_MASK);
+        gtk_widget_add_events(mainDisplay, GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_ENTER_NOTIFY_MASK);
     } else
         mainDisplay = gtk_fixed_new();
 
@@ -383,6 +390,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     if (hints == Window::Hints::Video) {
         g_signal_connect(G_OBJECT(mainDisplay), "motion-notify-event", G_CALLBACK(pWindow::mouseMove), (gpointer)this);
         g_signal_connect(G_OBJECT(mainDisplay), "leave-notify-event", G_CALLBACK(pWindow::mouseLeave), (gpointer)this);
+        g_signal_connect(G_OBJECT(mainDisplay), "enter-notify-event", G_CALLBACK(pWindow::mouseEnter), (gpointer)this);
         g_signal_connect(G_OBJECT(mainDisplay), "button-press-event", G_CALLBACK(pWindow::mousePress), (gpointer)this);
         g_signal_connect(G_OBJECT(mainDisplay), "button-release-event", G_CALLBACK(pWindow::mouseRelease), (gpointer)this);
         g_signal_connect(gtk_widget_get_screen(mainDisplay), "monitors_changed", G_CALLBACK(pWindow::monitorsChanged), (gpointer)this);

@@ -90,6 +90,7 @@ struct pWindow {
     auto applyMaximizeCorrection(Geometry& geo) -> void {}
     auto updateGeometryHint() -> void;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
+    static auto mouseEnter(GtkWidget* widget, GdkEventCrossing* event, pWindow* self) -> gboolean;
     static auto mouseLeave(GtkWidget* widget, GdkEventCrossing* event, pWindow* self) -> gboolean;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
     static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pWindow* self) -> gboolean;
@@ -526,7 +527,7 @@ struct pViewport : public pWidget {
     Viewport& viewport;
     bool dragAnalyzed = false;
     std::vector<std::string> paths;
-    Timer hideTimer;
+    Timer cursorHideTimer;
 
     auto handle(bool hintRecreation) -> uintptr_t;
     auto setDroppable(bool droppable) -> void;
@@ -537,6 +538,7 @@ struct pViewport : public pWidget {
     static auto dragDataReceived(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, Viewport* viewport) -> void;
 
     static auto mouseLeave(GtkWidget* widget, GdkEventCrossing* event, pViewport* self) -> gboolean;
+    static auto mouseEnter(GtkWidget* widget, GdkEventCrossing* event, pViewport* self) -> gboolean;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
     static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pViewport* self) -> gboolean;
