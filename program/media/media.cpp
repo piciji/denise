@@ -1141,8 +1141,6 @@ auto MediaLayout::ejectImage( MediaGroupLayout::Block* block ) -> void {
         if (layout->selectedBlock->media == media)
             layout->listings.reset();
     }
-    if (dynamic_cast<LIBC64::Interface*>(emulator) && (media->id == 0) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionSuperCpu))
-        program->initExpansionRom(emulator, media->name, "scpu64");
 
     updateMediaBlock(block, fSetting);
 }

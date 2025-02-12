@@ -340,17 +340,24 @@ auto MediaGroupLayout::showOnlyConnectedDevices() -> bool {
 
 auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
 
-    auto addBlock = [&](Emulator::Interface::Media* media) -> MediaGroupLayout::Block* {
+    bool isC64 = dynamic_cast<LIBC64::Interface*>(mediaLayout->emulator);
+
+    auto addBlock = [&, isC64](Emulator::Interface::Media* media) -> MediaGroupLayout::Block* {
         auto block = new Block( media, mediaLayout->emulator );
         blocks.push_back(block);
         
         if ( !showOnlyConnectedDevices() ) {
             unsigned spacing = 2;
-            if (dynamic_cast<LIBC64::Interface*>(mediaLayout->emulator) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard)
+            if (isC64 && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard)
                 && (media->id & 1))
                 spacing += 20;
 
             blockContainer.append(*block, {~0u, 0u}, spacing);
+        }
+
+        if (isC64 && (media->id == 0) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionSuperCpu)) {
+            block->selector.open.setEnabled(false);
+            block->header.eject.setEnabled(false);
         }
             
         return block;

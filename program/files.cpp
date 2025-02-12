@@ -604,9 +604,8 @@ auto Program::libraryMissing(std::string plugin) -> void {
 
 auto Program::initExpansionRom(Emulator::Interface* emulator, const std::string& ident, const std::string& file) -> void {
     auto fSetting = FileSetting::getInstance( emulator, _underscore(ident) );
-    if (fSetting->path == "") {
-        fSetting->setPath(dataFolder() + file);
-        fSetting->setFile(file);
-        fSetting->setId(0);
-    }
+    fSetting->setPath(dataFolder() + file);
+    fSetting->setFile(file);
+    fSetting->setId(0);
+    fSetting->setSaveable(false);
 }
