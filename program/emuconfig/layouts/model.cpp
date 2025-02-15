@@ -552,10 +552,10 @@ auto ModelLayout::stepRange(unsigned id, int step) -> int {
 	return 0;
 }
 
-auto ModelLayout::setVisibility( Emulator::Interface::Model* model ) -> void {
+auto ModelLayout::setVisibility(Emulator::Interface::Model* model, Emulator::Interface::Model* model2) -> void {
     for (auto line : lines) {
         for (auto block : line->blocks)
-            block->setEnabled( model && (block->model->id == model->id) );
+            block->setEnabled((model && (block->model->id == model->id)) || (model2 && (block->model->id == model2->id)));
     }
 }
 

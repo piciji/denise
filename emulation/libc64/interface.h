@@ -44,7 +44,7 @@ struct Interface : Emulator::Interface {
         ExpansionIdNone = 0, ExpansionIdGame = 1, ExpansionIdEasyFlash = 2, ExpansionIdEasyFlash3 = 3,
         ExpansionIdFreezer = 4, ExpansionIdRetroReplay = 5, ExpansionIdGeoRam = 6, ExpansionIdReu = 7,
         ExpansionIdReuRetroReplay = 8, ExpansionIdRS232 = 9, ExpansionIdFastloader = 10,
-    	ExpansionIdFinalChessCard = 11, ExpansionIdSuperCpu = 12,
+        ExpansionIdFinalChessCard = 11, ExpansionIdSuperCpu = 12, ExpansionIdSuperCpuReu = 13,
     };
     
     enum CartridgeId {

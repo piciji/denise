@@ -89,7 +89,7 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
 
     auto getUnit(unsigned id) -> std::string;
 
-    auto setVisibility( Emulator::Interface::Model* model ) -> void;
+    auto setVisibility(Emulator::Interface::Model* model, Emulator::Interface::Model* model2 = nullptr) -> void;
 
     auto setImageUri(Line::Block* block, float val) -> void;
     

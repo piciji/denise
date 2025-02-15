@@ -88,6 +88,13 @@ auto System::setExpansion( Interface::ExpansionId id ) -> void {
             break;
         case Interface::ExpansionIdSuperCpu:
             expansionPort = superCpu;
+            superCpu->setExpander(nullptr);
+            break;
+        case Interface::ExpansionIdSuperCpuReu:
+            expansionPort = superCpu;
+            superCpu->setExpander(reu);
+            reu->setExpander(nullptr);
+            reu->vicII = vicII;
             break;
     }
 
@@ -209,7 +216,10 @@ auto System::setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void {
         else
             irqIncomming &= ~4;
 
-        cpu.setIrq(irqIncomming != 0);
+        if (expansionPort->id == Interface::ExpansionId::ExpansionIdSuperCpuReu)
+            superCpu->observeIrq(irqIncomming != 0);
+        else
+            cpu.setIrq(irqIncomming != 0);
     };
 
     expansionPtr->dmaCall = [this](bool state) {
@@ -218,7 +228,10 @@ auto System::setExpansionCallbacks( ExpansionPort* expansionPtr ) -> void {
         else
             rdyIncomming &= ~2;      
         
-        cpu.setRdy( rdyIncomming != 0 );
+        if (expansionPort->id == Interface::ExpansionId::ExpansionIdSuperCpuReu)
+            superCpu->observeRdy(rdyIncomming != 0);
+        else
+            cpu.setRdy( rdyIncomming != 0 );
     };
     
     if (expansionPtr->id == Interface::ExpansionIdReu)

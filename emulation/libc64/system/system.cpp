@@ -515,7 +515,8 @@ auto System::power( bool softReset ) -> void {
     vicBank = 0;
 
     mode <<= 3;
-    mode |= 7; // charen = hiram = loram = 1 
+    if (!dynamic_cast<SuperCpu*>(expansionPort))
+        mode |= 7; // charen = hiram = loram = 1 
     irqIncomming = 0;
     nmiIncomming = 0;
     rdyIncomming = 0;

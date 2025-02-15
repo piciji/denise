@@ -219,6 +219,7 @@ auto Interface::prepareExpansions() -> void {
     expansions.push_back( { ExpansionIdFastloader, "Fast Loader", Expansion::Type::Fastloader, &mediaGroups[MediaGroupIdExpansionFastloader], nullptr } );
     expansions.push_back( { ExpansionIdFinalChessCard, "Final Chesscard", Expansion::Type::Battery, &mediaGroups[MediaGroupIdExpansionFinalChessCard], nullptr } );
     expansions.push_back( { ExpansionIdSuperCpu, "SuperCPU", Expansion::Type::TurboCart | Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionSuperCpu], nullptr } );
+    expansions.push_back( { ExpansionIdSuperCpuReu, "SuperCPU + REU", Expansion::Type::TurboCart | Expansion::Type::Ram, &mediaGroups[MediaGroupIdExpansionSuperCpu], &mediaGroups[MediaGroupIdExpansionReu] });
     
     {   auto& expansion = expansions[ExpansionIdGame];        
         expansion.pcbs.push_back( {CartridgeIdDefault, "Default"} );
@@ -349,6 +350,12 @@ auto Interface::prepareExpansions() -> void {
         expansion.jumpers.push_back({2, "DRAM Boost"} );
 
         mediaGroups[MediaGroupIdExpansionSuperCpu].expansion = &expansion;
+    }
+
+    {   auto& expansion = expansions[ExpansionIdSuperCpuReu];
+        expansion.jumpers.push_back({ 0, "Turbo", true });
+        expansion.jumpers.push_back({ 1, "JiffyDOS" });
+        expansion.jumpers.push_back({ 2, "DRAM Boost" });
     }
 
     for(auto& group : mediaGroups) {

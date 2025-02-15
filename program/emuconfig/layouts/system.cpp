@@ -155,6 +155,7 @@ auto SystemLayout::updateExpansionMemory() -> void {
         return;
 
     Emulator::Interface::Model* useModel = nullptr;
+    Emulator::Interface::Model* useModel2 = nullptr;
     Emulator::Interface::Expansion* expansionSelected = nullptr;
     
     for ( auto line : expansionLayout.lines ) {
@@ -175,10 +176,13 @@ auto SystemLayout::updateExpansionMemory() -> void {
             useModel = emulator->getModel(LIBC64::Interface::ModelIdGeoRam);
         } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdSuperCpu) {
             useModel = emulator->getModel(LIBC64::Interface::ModelIdSuperCpuRam);
+        } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdSuperCpuReu) {
+            useModel = emulator->getModel(LIBC64::Interface::ModelIdSuperCpuRam);
+            useModel2 = emulator->getModel(LIBC64::Interface::ModelIdReuRam);
         }
     }
 
-    memoryModelLayout.setVisibility( useModel );
+    memoryModelLayout.setVisibility(useModel, useModel2);
 }
 
 auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void {

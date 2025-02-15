@@ -2,6 +2,7 @@
 #include <cstring>
 #include "superCpu.h"
 #include "../../system/system.h"
+#include "../reu/reu.h"
 #include "../../traps/traps.h"
 
 #define SCPU_FREQ 20'000'000
@@ -71,6 +72,8 @@ auto SuperCpu::setDram() -> void {
 }
 
 auto SuperCpu::reset(bool softReset) -> void {
+    if (expander)
+        expander->reset(softReset);
     power();
     frequencyDRAM = frequency = vicII->frequency();
     if (jumperDramBoost)
@@ -122,7 +125,7 @@ auto SuperCpu::reset(bool softReset) -> void {
     // DOT clock
     float nscycleDot = 1'000'000'000.0 / ((float)frequency * 8.0);
     float nsCycleIoLong = 7.0 * nscycleDot - 86.0;
-    cycleIoLong = (unsigned)(20'000'000.0 * (nsCycleIoLong / nsCycle));
+    cycleIoLong = (unsigned)((float)SCPU_FREQ * (nsCycleIoLong / nsCycle));
 }
 
 auto SuperCpu::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
@@ -190,95 +193,221 @@ auto SuperCpu::buildMap() -> void {
             for (int conf = 0; conf < 8; conf++) {
                 if (conf == 7) {
                     for (int m = 0; m < 9; m++) {
-                        if (page == 0) writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<MODE_INTERNAL, PAGE_ZERO>;
-                        else if (page == 0xff) writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<MODE_INTERNAL, PAGE_HI>;
-                        else writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<MODE_INTERNAL>;
+                        if (page == 0) {
+                            writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<false, MODE_INTERNAL, PAGE_ZERO>;
+                            writeTableReu[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<true, MODE_INTERNAL, PAGE_ZERO>;
+                        } else if (page == 0xff) {
+                            writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<false, MODE_INTERNAL, PAGE_HI>;
+                            writeTableReu[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<true, MODE_INTERNAL, PAGE_HI>;
+                        } else {
+                            writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<false, MODE_INTERNAL, PAGE_REGULAR>;
+                            writeTableReu[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<true, MODE_INTERNAL, PAGE_REGULAR>;
+                        }
                     }
                 } else {
                     for (int m = 0; m < 9; m++) {
                         if (mirrors[m][1] && (page >= mirrors[m][0] && page <= mirrors[m][1])) {
-                            if (page == 0) writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<MODE_MIRROR, PAGE_ZERO>;
-                            else if (page == 0xff) writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<MODE_MIRROR, PAGE_HI>;
-                            else writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<MODE_MIRROR>;
+                            if (page == 0) {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<false, MODE_MIRROR, PAGE_ZERO>;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<true, MODE_MIRROR, PAGE_ZERO>;
+                            } else if (page == 0xff) {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<false, MODE_MIRROR, PAGE_HI>;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<true, MODE_MIRROR, PAGE_HI>;
+                            } else {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<false, MODE_MIRROR, PAGE_REGULAR>;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<true, MODE_MIRROR, PAGE_REGULAR>;
+                            }
                         } else {
-                            if (page == 0) writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<MODE_SRAM, PAGE_ZERO>;
-                            else if (page == 0xff) writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<MODE_SRAM, PAGE_HI>;
-                            else writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<MODE_SRAM>;
+                            if (page == 0) {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<false, MODE_SRAM, PAGE_ZERO>;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<true, MODE_SRAM, PAGE_ZERO>;
+                            } else if (page == 0xff) {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<false, MODE_SRAM, PAGE_HI>;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<true, MODE_SRAM, PAGE_HI>;
+                            } else {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<false, MODE_SRAM, PAGE_REGULAR>;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeSramAndOrHostRam<true, MODE_SRAM, PAGE_REGULAR>;
+                            }
                         }
                     }
                 }
 
                 if (page <= 0x0f) {
-                    if (conf == 7)          readTable[SC_MAP] = &SuperCpu::readC64Ram;
-                    else                    readTable[SC_MAP] = &SuperCpu::readSramB0;
+                    if (conf == 7)          {
+                        readTable[SC_MAP] = &SuperCpu::readC64Ram;
+                        readTableReu[SC_MAP] = &SuperCpu::readC64Ram<true>;
+                    } else {
+                        readTable[SC_MAP] = &SuperCpu::readSramB0;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB0<true>;
+                    }
                 } else if (page <= 0x5f) {
-                    if (conf == 7)          readTable[SC_MAP] = &SuperCpu::readC64Ram;
-                    else if (conf & 2)      readTable[SC_MAP] = &SuperCpu::readSramB1;
-                    else                    readTable[SC_MAP] = &SuperCpu::readSramB0;
+                    if (conf == 7) {
+                        readTable[SC_MAP] = &SuperCpu::readC64Ram;
+                        readTableReu[SC_MAP] = &SuperCpu::readC64Ram<true>;
+                    } else if (conf & 2) {
+                        readTable[SC_MAP] = &SuperCpu::readSramB1;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB1<true>;
+                    } else {
+                        readTable[SC_MAP] = &SuperCpu::readSramB0;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB0<true>;
+                    }
                 } else if (page <= 0x7f) {
-                    if (conf == 7)          readTable[SC_MAP] = &SuperCpu::readC64Ram;
-                    else                    readTable[SC_MAP] = &SuperCpu::readSramB0;
+                    if (conf == 7) {
+                        readTable[SC_MAP] = &SuperCpu::readC64Ram;
+                        readTableReu[SC_MAP] = &SuperCpu::readC64Ram<true>;
+                    } else {
+                        readTable[SC_MAP] = &SuperCpu::readSramB0;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB0<true>;
+                    }
                 } else if (page <= 0x9f) {
-                    if (conf == 7)          readTable[SC_MAP] = &SuperCpu::readC64Ram;
-                    else if (conf & 4)      readTable[SC_MAP] = &SuperCpu::readRom;
-                    else if (conf & 2)      readTable[SC_MAP] = &SuperCpu::readSramB1;
-                    else                    readTable[SC_MAP] = &SuperCpu::readSramB0;
+                    if (conf == 7) {
+                        readTable[SC_MAP] = &SuperCpu::readC64Ram;
+                        readTableReu[SC_MAP] = &SuperCpu::readC64Ram<true>;
+                    } else if (conf & 4) {
+                        readTable[SC_MAP] = &SuperCpu::readRom;
+                        readTableReu[SC_MAP] = &SuperCpu::readRom<true>;
+                    } else if (conf & 2) {
+                        readTable[SC_MAP] = &SuperCpu::readSramB1;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB1<true>;
+                    } else {
+                        readTable[SC_MAP] = &SuperCpu::readSramB0;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB0<true>;
+                    }
                 } else if (page <= 0xbf) {
-                    if (conf & 4)           readTable[SC_MAP] = &SuperCpu::readRom;
-                    else if ((mem & 3) == 3)readTable[SC_MAP] = &SuperCpu::readSramB1;
-                    else                    readTable[SC_MAP] = &SuperCpu::readSramB0;
+                    if (conf & 4) {
+                        readTable[SC_MAP] = &SuperCpu::readRom;
+                        readTableReu[SC_MAP] = &SuperCpu::readRom<true>;
+                    } else if ((mem & 3) == 3) {
+                        readTable[SC_MAP] = &SuperCpu::readSramB1;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB1<true>;
+                    } else {
+                        readTable[SC_MAP] = &SuperCpu::readSramB0;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB0<true>;
+                    }
                 } else if (page <= 0xcf) {
-                    if (conf == 7)          readTable[SC_MAP] = &SuperCpu::readC64Ram;
-                    else if (conf & 4)      readTable[SC_MAP] = &SuperCpu::readRom;
-                    else                    readTable[SC_MAP] = &SuperCpu::readSramB0;
+                    if (conf == 7) {
+                        readTable[SC_MAP] = &SuperCpu::readC64Ram;
+                        readTableReu[SC_MAP] = &SuperCpu::readC64Ram<true>;
+                    } else if (conf & 4) {
+                        readTable[SC_MAP] = &SuperCpu::readRom;
+                        readTableReu[SC_MAP] = &SuperCpu::readRom<true>;
+                    } else {
+                        readTable[SC_MAP] = &SuperCpu::readSramB0;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB0<true>;
+                    }
                 } else if (page <= 0xdf) {
                     if ((mem & 3) == 0) {
-                        if (conf == 7)      readTable[SC_MAP] = &SuperCpu::readSramChar;
-                        else if (conf & 4)  readTable[SC_MAP] = &SuperCpu::readRom;
-                        else                readTable[SC_MAP] = &SuperCpu::readSramB0;
-                    } else if ((mem & 4) == 0)
-                                            readTable[SC_MAP] = &SuperCpu::readSramChar;
-                    else {
+                        if (conf == 7) {
+                            readTable[SC_MAP] = &SuperCpu::readSramChar;
+                            readTableReu[SC_MAP] = &SuperCpu::readSramChar<true>;
+                        } else if (conf & 4) {
+                            readTable[SC_MAP] = &SuperCpu::readRom;
+                            readTableReu[SC_MAP] = &SuperCpu::readRom<true>;
+                        } else {
+                            readTable[SC_MAP] = &SuperCpu::readSramB0;
+                            readTableReu[SC_MAP] = &SuperCpu::readSramB0<true>;
+                        }
+                    } else if ((mem & 4) == 0) {
+                        readTable[SC_MAP] = &SuperCpu::readSramChar;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramChar<true>;
+                    } else {
                         if (page == 0xd0) {
                             readTable[SC_MAP] = &SuperCpu::readIoSCPU;
-                            SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIoSCPU;
+                            readTableReu[SC_MAP] = &SuperCpu::readIoSCPU<true>;
+                            SC_NO_MIRROR {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeIoSCPU;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeIoSCPU<true>;
+                            }
                         } else if (page == 0xd1) {
                             readTable[SC_MAP] = &SuperCpu::readIoVIC;
-                            SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIoVIC;
+                            readTableReu[SC_MAP] = &SuperCpu::readIoVIC<true>;
+                            SC_NO_MIRROR {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeIoVIC;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeIoVIC<true>;
+                            }
                         } else if (page <= 0xd3) {
                             readTable[SC_MAP] = &SuperCpu::readSramB1;
-                            SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIoStrange;
+                            readTableReu[SC_MAP] = &SuperCpu::readSramB1<true>;
+                            SC_NO_MIRROR {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeIoStrange;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeIoStrange<true>;
+                            }
                         } else if (page <= 0xd5) {
                             readTable[SC_MAP] = &SuperCpu::readIoSID;
-                            SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIoSID<true>;
+                            readTableReu[SC_MAP] = &SuperCpu::readIoSID<true>;
+                            SC_NO_MIRROR {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeIoSID<true>;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeIoSID<true, true>;
+                            }
                         } else if (page <= 0xd7) {
                             readTable[SC_MAP] = &SuperCpu::readIoSID;
-                            SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIoSID<false>;
+                            readTableReu[SC_MAP] = &SuperCpu::readIoSID<true>;
+                            SC_NO_MIRROR {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeIoSID<false>;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeIoSID<false, true>;
+                            }
                         } else if (page <= 0xdb) {
-                            readTable[SC_MAP] = (conf == 7) ? &SuperCpu::readIoColorRamInternal : &SuperCpu::readSramB1;
-                            if (conf == 7) { SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIoColorRam<false>; }
-                            else { SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIoColorRam<true>; }
+                            if (conf == 7) {
+                                readTable[SC_MAP] = &SuperCpu::readIoColorRamInternal;
+                                readTableReu[SC_MAP] = &SuperCpu::readIoColorRamInternal<true>;
+                                SC_NO_MIRROR {
+                                    writeTable[SC_MAP_WR] = &SuperCpu::writeIoColorRam<false>;
+                                    writeTableReu[SC_MAP_WR] = &SuperCpu::writeIoColorRam<false, true>;
+                                }
+                            } else {
+                                readTable[SC_MAP] = &SuperCpu::readSramB1;
+                                readTableReu[SC_MAP] = &SuperCpu::readSramB1<true>;
+                                SC_NO_MIRROR {
+                                    writeTable[SC_MAP_WR] = &SuperCpu::writeIoColorRam<true>;
+                                    writeTableReu[SC_MAP_WR] = &SuperCpu::writeIoColorRam<true, true>;
+                                }
+                            }
                         } else if (page == 0xdc) {
                             readTable[SC_MAP] = &SuperCpu::readIoCIA1;
-                            SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIoCIA1;
+                            readTableReu[SC_MAP] = &SuperCpu::readIoCIA1<true>;
+                            SC_NO_MIRROR {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeIoCIA1;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeIoCIA1<true>;
+                            }
                         } else if (page == 0xdd) {
                             readTable[SC_MAP] = &SuperCpu::readIoCIA2;
-                            SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIoCIA2;
+                            readTableReu[SC_MAP] = &SuperCpu::readIoCIA2<true>;
+                            SC_NO_MIRROR {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeIoCIA2;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeIoCIA2<true>;
+                            }
                         } else if (page == 0xde) {
                             readTable[SC_MAP] = &SuperCpu::readIo1;
-                            SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIo1;
+                            readTableReu[SC_MAP] = &SuperCpu::readIo1<true>;
+                            SC_NO_MIRROR {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeIo1;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeIo1<true>;
+                            }
                         } else if (page == 0xdf) {
                             readTable[SC_MAP] = &SuperCpu::readIo2;
-                            SC_NO_MIRROR writeTable[SC_MAP_WR] = &SuperCpu::writeIo2;
+                            readTableReu[SC_MAP] = &SuperCpu::readIo2<true>;
+                            SC_NO_MIRROR {
+                                writeTable[SC_MAP_WR] = &SuperCpu::writeIo2;
+                                writeTableReu[SC_MAP_WR] = &SuperCpu::writeIo2<true>;
+                            }
                         }
                     }
                 } else if (page <= 0xff) {
-                    if (conf & 4)       readTable[SC_MAP] = &SuperCpu::readRom;
-                    else if (mem & 2) {
-                        if (conf & 1)   readTable[SC_MAP] = &SuperCpu::readSramKernal;
-                        else            readTable[SC_MAP] = &SuperCpu::readSramB1;
+                    if (conf & 4) {
+                        readTable[SC_MAP] = &SuperCpu::readRom;
+                        readTableReu[SC_MAP] = &SuperCpu::readRom<true>;
+                    } else if (mem & 2) {
+                        if (conf & 1) {
+                            readTable[SC_MAP] = &SuperCpu::readSramKernal;
+                            readTableReu[SC_MAP] = &SuperCpu::readSramKernal<true>;
+                        } else {
+                            readTable[SC_MAP] = &SuperCpu::readSramB1;
+                            readTableReu[SC_MAP] = &SuperCpu::readSramB1<true>;
+                        }
+                    } else {
+                        readTable[SC_MAP] = &SuperCpu::readSramB0;
+                        readTableReu[SC_MAP] = &SuperCpu::readSramB0<true>;
                     }
-                    else                readTable[SC_MAP] = &SuperCpu::readSramB0;
                 }
             }
         }
@@ -288,7 +417,7 @@ auto SuperCpu::buildMap() -> void {
 inline auto SuperCpu::readVectorByte(uint16_t addr) -> uint8_t {
     ReadTable ptr = readTable[memConf | (addr & 0xff00)];
 
-    if (ptr == &SuperCpu::readSramB1 || ptr == &SuperCpu::readSramKernal) {
+    if (ptr == &SuperCpu::readSramB1<false> || ptr == &SuperCpu::readSramKernal<false>) {
         if ((memConf & (HW_ENABLE | DOS_EXT) ) || !emulationMode() || system1Mhz) {
             clockStretchRom();
             return rom[addr & romMask];
@@ -302,10 +431,10 @@ auto SuperCpu::executeKernalRom() -> bool {
         return false;
 
     ReadTable ptr = readTable[memConf | (pc & 0xff00)];
-    if (ptr == &SuperCpu::readSramKernal)
+    if (ptr == &SuperCpu::readSramKernal<false>)
         return true;
 
-    if (((pc >> 8) >= 0xe0) && ptr == &SuperCpu::readSramB1)
+    if (((pc >> 8) >= 0xe0) && ptr == &SuperCpu::readSramB1<false>)
         return true;
     return false;
 }
@@ -315,7 +444,15 @@ auto SuperCpu::executeHostRam() -> bool {
         return false;
 
     ReadTable ptr = readTable[memConf | (pc & 0xff00)];
-    return ptr == &SuperCpu::readSramB0 || ptr == &SuperCpu::readC64Ram;
+    return ptr == &SuperCpu::readSramB0<false> || ptr == &SuperCpu::readC64Ram<false>;
+}
+
+auto SuperCpu::readByteReu(uint16_t addr) -> uint8_t {
+    return (this->*readTableReu[memConf | (addr & 0xff00)])(addr);
+}
+
+auto SuperCpu::writeByteReu(uint16_t addr, uint8_t value) -> void {
+    (this->*writeTableReu[mirrorMemConf | (addr & 0xff00)])(addr, value);
 }
 
 inline auto SuperCpu::readByte(uint32_t addr) -> uint8_t {
@@ -408,55 +545,85 @@ inline auto SuperCpu::trapHandler() -> bool {
     return traps.handler();
 }
 
-auto SuperCpu::readC64Ram(uint16_t addr) -> uint8_t {
-    clockStretchIORead();
+template<bool reuAccess> auto SuperCpu::readC64Ram(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        clockStretchIORead();        
     return system->ram[addr];
 }
 
-auto SuperCpu::readSramB0(uint16_t addr) -> uint8_t {
-    stepCycle<true>();
+template<bool reuAccess> auto SuperCpu::readSramB0(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        stepCycle<true>();
     return sram[addr];
 }
 
-auto SuperCpu::readSramB1(uint16_t addr) -> uint8_t {
-    stepCycle<true>();
+template<bool reuAccess> auto SuperCpu::readSramB1(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        stepCycle<true>();
     return sram[0x10000 | addr];
 }
 
-auto SuperCpu::readSramChar(uint16_t addr) -> uint8_t {
-    stepCycle<true>();
+template<bool reuAccess> auto SuperCpu::readSramChar(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        stepCycle<true>();
     return system->charRom[addr & 0xfff];
 }
 
-auto SuperCpu::readSramKernal(uint16_t addr) -> uint8_t {
-    stepCycle<true>();
+template<bool reuAccess> auto SuperCpu::readSramKernal(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        stepCycle<true>();
     return sram[0x8000 + addr];
 }
 
-auto SuperCpu::readRom(uint16_t addr) -> uint8_t {
-    clockStretchRom();
+template<bool reuAccess> auto SuperCpu::readRom(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        clockStretchRom();    
     return rom[addr & romMask];
 }
 
-template<uint8_t mode, uint8_t addrArea> auto SuperCpu::writeSramAndOrHostRam(uint16_t addr, uint8_t value) -> void {
+template<bool reuAccess, uint8_t mode, uint8_t addrArea> auto SuperCpu::writeSramAndOrHostRam(uint16_t addr, uint8_t value) -> void {
     if constexpr (mode == MODE_MIRROR || mode == MODE_INTERNAL) {
         if constexpr (addrArea == PAGE_HI) {
             if (addr == 0xff00) {
-                clockStretchIOWriteLong();
+                if constexpr (reuAccess) {
+                    system->ram[addr] = value;
+                } else {
+                    clockStretchIOWriteLong();
+                    system->ram[addr] = value;
+                    if (fastMode)
+                        syncStockIO();
+
+                    Reu* reu = dynamic_cast<Reu*>(expander);
+                    if (reu) {
+                        if (reu->waitForStart) {
+                            reu->setDma();
+                            reu->waitForStart = false;
+                            do {
+                                syncStock();
+                                reu->clockSCPU();
+                            } while (reu->dma);
+                        }
+                    }
+                }
+            } else {
+                if constexpr (reuAccess)
+                    system->ram[addr] = value;
+                else
+                    clockStretchWriteInternal(addr, value);
+            }
+        } else {
+            if constexpr (reuAccess) {
                 system->ram[addr] = value;
-                if (fastMode)
-                    syncStockIO();
             } else
                 clockStretchWriteInternal(addr, value);
-        } else
-            clockStretchWriteInternal(addr, value);
-    } else if constexpr (mode == MODE_SRAM)
+        }
+    } else if constexpr (!reuAccess && (mode == MODE_SRAM))
         stepCycle();
 
     if constexpr (mode == MODE_SRAM || mode == MODE_MIRROR)
         sram[addr] = value;
 
-    if constexpr (addrArea == PAGE_ZERO) { // templated for performance reasons: following "if" is checked only when the page is zero.
+    if constexpr (!reuAccess && (addrArea == PAGE_ZERO)) { // templated for performance reasons: following "if" is checked only when the page is zero.
         if (addr == 1) {
             // emulates port of 6510
             // "6510" is permanently stopped as soon as charen/hiram/loram is set to a pattern that allows expansion
@@ -468,9 +635,10 @@ template<uint8_t mode, uint8_t addrArea> auto SuperCpu::writeSramAndOrHostRam(ui
     }
 }
 
-auto SuperCpu::readIoSCPU(uint16_t addr) -> uint8_t {
+template<bool reuAccess> auto SuperCpu::readIoSCPU(uint16_t addr) -> uint8_t {
     if ((addr & 0xfff0) == 0xd0b0) {
-        stepCycle<true, true>();
+        if constexpr (!reuAccess)
+            stepCycle<true, true>();
 
         uint8_t value = optim & 7;
         switch (addr) {
@@ -493,26 +661,33 @@ auto SuperCpu::readIoSCPU(uint16_t addr) -> uint8_t {
         }
         return value;
     }
-    clockStretchIORead();
+    if constexpr (!reuAccess)
+        clockStretchIORead();
     return vicII->readReg( addr & 0xff );
 }
 
-auto SuperCpu::readIoVIC(uint16_t addr) -> uint8_t {
-    clockStretchIORead();
+template<bool reuAccess> auto SuperCpu::readIoVIC(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        clockStretchIORead();
     return vicII->readReg( addr & 0xff );
 }
 
-auto SuperCpu::readIoSID(uint16_t addr) -> uint8_t {
-    clockStretchIORead();
+template<bool reuAccess> auto SuperCpu::readIoSID(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        clockStretchIORead();
     return sidManager.readSidReg(addr);
 }
 
-auto SuperCpu::readIoColorRamInternal(uint16_t addr) -> uint8_t {
-    clockStretchIORead();
+template<bool reuAccess> auto SuperCpu::readIoColorRamInternal(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        clockStretchIORead();
     return vicII->lastReadPhase1();
 }
 
-auto SuperCpu::readIoCIA1(uint16_t addr) -> uint8_t {
+template<bool reuAccess> auto SuperCpu::readIoCIA1(uint16_t addr) -> uint8_t {
+    if constexpr (reuAccess)
+        return cia1.read(addr);
+
     bool postSync = clockStretchIOReadCIA();
     uint8_t out = cia1.read( addr );
     if (postSync)
@@ -520,7 +695,10 @@ auto SuperCpu::readIoCIA1(uint16_t addr) -> uint8_t {
     return out;
 }
 
-auto SuperCpu::readIoCIA2(uint16_t addr) -> uint8_t {
+template<bool reuAccess> auto SuperCpu::readIoCIA2(uint16_t addr) -> uint8_t {
+    if constexpr (reuAccess)
+        return cia2.read(addr);
+
     bool postSync = clockStretchIOReadCIA();
     uint8_t out = cia2.read( addr );
     if (postSync)
@@ -528,8 +706,9 @@ auto SuperCpu::readIoCIA2(uint16_t addr) -> uint8_t {
     return out;
 }
 
-auto SuperCpu::readIo1(uint16_t addr) -> uint8_t {
-    clockStretchIORead();
+template<bool reuAccess> auto SuperCpu::readIo1(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        clockStretchIORead();
     uint8_t value;
     if (sidManager.readIo(addr, value))
         return value;
@@ -537,31 +716,36 @@ auto SuperCpu::readIo1(uint16_t addr) -> uint8_t {
     return ExpansionPort::readIo1(addr);
 }
 
-auto SuperCpu::readIo2(uint16_t addr) -> uint8_t {
-    clockStretchIORead();
+template<bool reuAccess> auto SuperCpu::readIo2(uint16_t addr) -> uint8_t {
+    if constexpr (!reuAccess)
+        clockStretchIORead();
     uint8_t value;
     if (sidManager.readIo(addr, value))
         return value;
 
+    if (expander)
+        return expander->readIo2(addr);
+
     return ExpansionPort::readIo2(addr);
 }
 
-auto SuperCpu::writeIoSCPU(uint16_t addr, uint8_t value) -> void {
+template<bool reuAccess> auto SuperCpu::writeIoSCPU(uint16_t addr, uint8_t value) -> void {
     sram[0x10000 | addr] = value;
 
     if ((addr >= 0xd071 && addr < 0xd080) || (addr >= 0xd0b0 && addr < 0xd0c0)) {
-        stepCycle<false, true>();
+        if constexpr (!reuAccess)
+            stepCycle<false, true>();
 
         switch (addr) {
             case 0xd072:
                 if (!system1Mhz) {
                     system1Mhz = true;
-                    updateFastmode();
+                    updateFastmode<reuAccess>();
                 } break;
             case 0xd073:
                 if (system1Mhz) {
                     system1Mhz = false;
-                    updateFastmode();
+                    updateFastmode<reuAccess>();
                 } break;
             case 0xd074:
             case 0xd075:
@@ -578,26 +762,26 @@ auto SuperCpu::writeIoSCPU(uint16_t addr, uint8_t value) -> void {
             case 0xd07a:
                 if (!software1Mhz) {
                     software1Mhz = true;
-                    updateFastmode();
+                    updateFastmode<reuAccess>();
                 } break;
             case 0xd079:
             case 0xd07b:
                 if (software1Mhz) {
                     software1Mhz = false;
-                    updateFastmode();
+                    updateFastmode<reuAccess>();
                 } break;
             case 0xd07e:
                 if((memConf & HW_ENABLE) == 0) {
                     memConf |= HW_ENABLE;
                     mirrorMemConf |= HW_ENABLE;
-                    updateFastmode();
+                    updateFastmode<reuAccess>();
                 } break;
             case 0xd07d:
             case 0xd07f:
                 if (memConf & HW_ENABLE) {
                     memConf &= ~HW_ENABLE;
                     mirrorMemConf &= ~HW_ENABLE;
-                    updateFastmode();
+                    updateFastmode<reuAccess>();
                 } break;
             case 0xd0b2:
                 if (memConf & HW_ENABLE) {
@@ -606,7 +790,7 @@ auto SuperCpu::writeIoSCPU(uint16_t addr, uint8_t value) -> void {
                         memConf &= ~HW_ENABLE;
                         mirrorMemConf &= ~HW_ENABLE;
                     }
-                    updateFastmode();
+                    updateFastmode<reuAccess>();
                 } break;
             case 0xd0b3:
                 if (memConf & HW_ENABLE) {
@@ -631,7 +815,7 @@ auto SuperCpu::writeIoSCPU(uint16_t addr, uint8_t value) -> void {
             case 0xd0b8:
                 if (memConf & HW_ENABLE) {
                     software1Mhz = value >> 7;
-                    updateFastmode();
+                    updateFastmode<reuAccess>();
                 } break;
             case 0xd0bc:
                 if (memConf & HW_ENABLE) {
@@ -653,91 +837,143 @@ auto SuperCpu::writeIoSCPU(uint16_t addr, uint8_t value) -> void {
             default: break;
         }
     } else {
+        if constexpr (reuAccess) {
+            vicII->writeReg(addr & 0xff, value);
+        } else {
+            clockStretchIOWrite();
+            vicII->writeReg( addr & 0xff, value );
+            if (fastMode)
+                syncStockIO();
+        }
+    }
+}
+
+template<bool reuAccess> auto SuperCpu::writeIoVIC(uint16_t addr, uint8_t value) -> void {
+    if constexpr (reuAccess) {
+        sram[0x10000 | addr] = value;
+        vicII->writeReg(addr & 0xff, value);
+    } else {
         clockStretchIOWrite();
+        sram[0x10000 | addr] = value;
         vicII->writeReg( addr & 0xff, value );
         if (fastMode)
             syncStockIO();
     }
 }
 
-auto SuperCpu::writeIoVIC(uint16_t addr, uint8_t value) -> void {
-    clockStretchIOWrite();
-    sram[0x10000 | addr] = value;
-    vicII->writeReg( addr & 0xff, value );
-    if (fastMode)
-        syncStockIO();
-}
-
-auto SuperCpu::writeIoStrange(uint16_t addr, uint8_t value) -> void {
-    stepCycle();
-
+template<bool reuAccess> auto SuperCpu::writeIoStrange(uint16_t addr, uint8_t value) -> void {
+    if constexpr (!reuAccess)
+        stepCycle();
     if ((memConf & HW_ENABLE) || (addr == 0xd27e))
         sram[0x10000 | addr] = value;
 }
 
-template<bool withSram> auto SuperCpu::writeIoSID(uint16_t addr, uint8_t value) -> void {
+template<bool withSram, bool reuAccess> auto SuperCpu::writeIoSID(uint16_t addr, uint8_t value) -> void {
     if constexpr (withSram)
         sram[0x10000 | addr] = value;
 
-    clockStretchIOWrite();
-    sidManager.writeSidReg(addr, value);
-    if (fastMode)
-        syncStockIO();
+    if constexpr (reuAccess) {
+        sidManager.writeSidReg(addr, value);
+    } else {
+        clockStretchIOWrite();
+        sidManager.writeSidReg(addr, value);
+        if (fastMode)
+            syncStockIO();
+    }
 }
 
-template<bool withSram> auto SuperCpu::writeIoColorRam(uint16_t addr, uint8_t value) -> void {
-    clockStretchWriteInternal<true>(addr & 0x3ff, value & 0xf);
+template<bool withSram, bool reuAccess> auto SuperCpu::writeIoColorRam(uint16_t addr, uint8_t value) -> void {
+    if constexpr (reuAccess) {
+        system->colorRam[addr & 0x3ff] = value & 0xf;
+    } else
+        clockStretchWriteInternal<true>(addr & 0x3ff, value & 0xf);
     
     if constexpr (withSram)
         sram[0x10000 | addr] = value;
 }
 
-auto SuperCpu::writeIoCIA1(uint16_t addr, uint8_t value) -> void {
-    clockStretchIOWriteCia();
+template<bool reuAccess> auto SuperCpu::writeIoCIA1(uint16_t addr, uint8_t value) -> void {
+    if constexpr (!reuAccess)
+        clockStretchIOWriteCia();
     sram[0x10000 | addr] = value;
     cia1.write( addr, value );
-    if (fastMode)
-        syncStockIO();
+
+    if constexpr (!reuAccess) {
+        if (fastMode)
+            syncStockIO();
+    }
 }
 
-auto SuperCpu::writeIoCIA2(uint16_t addr, uint8_t value) -> void {
-    clockStretchIOWriteCia();
+template<bool reuAccess> auto SuperCpu::writeIoCIA2(uint16_t addr, uint8_t value) -> void {
+    if constexpr (!reuAccess)
+        clockStretchIOWriteCia();
     sram[0x10000 | addr] = value;
     cia2.write( addr, value );
-    if (fastMode)
-        syncStockIO();
+
+    if constexpr (!reuAccess) {
+        if (fastMode)
+            syncStockIO();
+    }
 }
 
-auto SuperCpu::writeIo1(uint16_t addr, uint8_t value) -> void {
-    clockStretchIOWrite();
+template<bool reuAccess> auto SuperCpu::writeIo1(uint16_t addr, uint8_t value) -> void {
+    if constexpr (!reuAccess)
+        clockStretchIOWrite();
     sidManager.writeIo( addr, value );
     ExpansionPort::writeIo1(addr, value);
-    if (fastMode)
-        syncStockIO();
+
+    if constexpr (!reuAccess) {
+        if (fastMode)
+            syncStockIO();
+    }
 }
 
-auto SuperCpu::writeIo2(uint16_t addr, uint8_t value) -> void {
-    if (addr == 0xdf01 || addr == 0xdf21)
-        clockStretchIOWriteLong();
-    else
-        clockStretchIOWrite();
+template<bool reuAccess> auto SuperCpu::writeIo2(uint16_t addr, uint8_t value) -> void {
+    if constexpr (reuAccess) {
+        sidManager.writeIo(addr, value);
+        ExpansionPort::writeIo2(addr, value);
 
-    sidManager.writeIo( addr, value );
-    ExpansionPort::writeIo2(addr, value);
-    if (fastMode)
-        syncStockIO();
+    } else {
+        if (addr == 0xdf01 || addr == 0xdf21)
+            clockStretchIOWriteLong();
+        else
+            clockStretchIOWrite();
+
+        sidManager.writeIo( addr, value );
+
+        if (expander) {
+            expander->writeIo2(addr, value);
+
+            Reu* reu = dynamic_cast<Reu*>(expander);
+            if (reu) {
+                if (sysTimer.has(&reu->setDma)) {
+                    do {
+                        syncStock();                        
+                        reu->clockSCPU();
+                    } while (reu->dma);
+                }
+            }
+        } else {
+            ExpansionPort::writeIo2(addr, value);
+
+            if (fastMode)
+                syncStockIO();
+        }
+    }
 }
 
-auto SuperCpu::updateFastmode(bool synced) -> void {
+template<bool reuAccess> auto SuperCpu::updateFastmode(bool synced) -> void {
     bool _fastMode = fastMode;
     fastMode = !(system1Mhz || software1Mhz || (jumper1Mhz && ((memConf & HW_ENABLE) == 0)));
 
     if (fastMode != _fastMode) {
-        if (synced) {
-            if (!fastMode)
-                syncStock();
-            else
-                cycles = 16'600'000;
+        if constexpr(!reuAccess) {
+            if (synced) {
+                if (!fastMode)
+                    syncStock();
+                else
+                    cycles = 16'600'000;
+            }
         }
         system->interface->updateDeviceState( media, false, 0, 0x80 | fastMode, true );
     }
@@ -1052,6 +1288,15 @@ auto SuperCpu::getJumper(unsigned jumperId) -> bool {
     return false;
 }
 
+auto SuperCpu::setExpander(ExpansionPort* expander) -> void {
+    this->expander = expander;
+
+    if (expander == system->reu)
+        setId(Interface::ExpansionIdSuperCpuReu);
+    else
+        setId(Interface::ExpansionIdSuperCpu);
+}
+
 auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
     bool light = s.lightUsage();
     unsigned _dramSize = dramSize;
@@ -1084,6 +1329,7 @@ auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
     s.integer(cycles);
     s.integer(jumperJiffyDos);
     s.integer(jumper1Mhz);
+    s.integer(jumperDramBoost);
     s.integer(software1Mhz);
     s.integer(system1Mhz);
     s.integer(fastMode);
@@ -1124,6 +1370,9 @@ auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
     s.integer(modeE);
     s.integer(control);
     s.integer(lines);
+
+    if (expander)
+        expander->serialize(s);
 }
 
 }

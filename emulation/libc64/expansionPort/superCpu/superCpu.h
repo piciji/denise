@@ -73,7 +73,9 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     typedef uint8_t (SuperCpu::*ReadTable)(uint16_t);
     typedef void (SuperCpu::*WriteTable)(uint16_t, uint8_t);
     ReadTable readTable[0x10000] = {nullptr};
+    ReadTable readTableReu[0x10000] = { nullptr };
     WriteTable writeTable[0x90000] = {nullptr};
+    WriteTable writeTableReu[0x90000] = { nullptr };
 
     struct {
         uint16_t addr;
@@ -82,37 +84,37 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
         bool inProgress;
     } writeBuffer;
 
-    auto readC64Ram(uint16_t addr) -> uint8_t;
-    auto readSramB0(uint16_t addr) -> uint8_t;
-    auto readSramB1(uint16_t addr) -> uint8_t;
-    auto readSramChar(uint16_t addr) -> uint8_t;
-    auto readSramKernal(uint16_t addr) -> uint8_t;
-    auto readRom(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readC64Ram(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readSramB0(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readSramB1(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readSramChar(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readSramKernal(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readRom(uint16_t addr) -> uint8_t;
 
-    template<uint8_t mode, uint8_t addrArea = PAGE_REGULAR> auto writeSramAndOrHostRam(uint16_t addr, uint8_t value) -> void;
+    template<bool reuAccess, uint8_t mode, uint8_t addrArea> auto writeSramAndOrHostRam(uint16_t addr, uint8_t value) -> void;
 
-    auto readIoSCPU(uint16_t addr) -> uint8_t;
-    auto readIoVIC(uint16_t addr) -> uint8_t;
-    auto readIoSID(uint16_t addr) -> uint8_t;
-    auto readIoColorRamInternal(uint16_t addr) -> uint8_t;
-    auto readIoCIA1(uint16_t addr) -> uint8_t;
-    auto readIoCIA2(uint16_t addr) -> uint8_t;
-    auto readIo1(uint16_t addr) -> uint8_t;
-    auto readIo2(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readIoSCPU(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readIoVIC(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readIoSID(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readIoColorRamInternal(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readIoCIA1(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readIoCIA2(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readIo1(uint16_t addr) -> uint8_t;
+    template<bool reuAccess = false> auto readIo2(uint16_t addr) -> uint8_t;
 
-    auto writeIoSCPU(uint16_t addr, uint8_t value) -> void;
-    auto writeIoVIC(uint16_t addr, uint8_t value) -> void;
-    auto writeIoStrange(uint16_t addr, uint8_t value) -> void;
-    template<bool withSram> auto writeIoSID(uint16_t addr, uint8_t value) -> void;
-    template<bool withSram> auto writeIoColorRam(uint16_t addr, uint8_t value) -> void;
-    auto writeIoCIA1(uint16_t addr, uint8_t value) -> void;
-    auto writeIoCIA2(uint16_t addr, uint8_t value) -> void;
-    auto writeIo1(uint16_t addr, uint8_t value) -> void;
-    auto writeIo2(uint16_t addr, uint8_t value) -> void;
+    template<bool reuAccess = false> auto writeIoSCPU(uint16_t addr, uint8_t value) -> void;
+    template<bool reuAccess = false> auto writeIoVIC(uint16_t addr, uint8_t value) -> void;
+    template<bool reuAccess = false> auto writeIoStrange(uint16_t addr, uint8_t value) -> void;
+    template<bool withSram, bool reuAccess = false> auto writeIoSID(uint16_t addr, uint8_t value) -> void;
+    template<bool withSram, bool reuAccess = false> auto writeIoColorRam(uint16_t addr, uint8_t value) -> void;
+    template<bool reuAccess = false> auto writeIoCIA1(uint16_t addr, uint8_t value) -> void;
+    template<bool reuAccess = false> auto writeIoCIA2(uint16_t addr, uint8_t value) -> void;
+    template<bool reuAccess = false> auto writeIo1(uint16_t addr, uint8_t value) -> void;
+    template<bool reuAccess = false> auto writeIo2(uint16_t addr, uint8_t value) -> void;
 
     template<bool checkBA = false, bool hardwareReg = false> auto stepCycle() -> void;
 
-    auto updateFastmode(bool synced = true) -> void;
+    template<bool reuAccess = false> auto updateFastmode(bool synced = true) -> void;
     auto updateMirroring() -> void;
     auto updateSimm(uint8_t value) -> void;
 
@@ -125,8 +127,10 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto setDram() -> void;
 
     auto readByte(uint32_t addr) -> uint8_t;
+    auto readByteReu(uint16_t addr) -> uint8_t;
     auto readVectorByte(uint16_t addr) -> uint8_t;
     auto writeByte(uint32_t addr, uint8_t value) -> void;
+    auto writeByteReu(uint16_t addr, uint8_t value) -> void;
     auto idleCycle(uint32_t addr) -> void;
 
     auto trapHandler() -> bool;
@@ -158,6 +162,8 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto serialize(Emulator::Serializer& s) -> void;
     auto executeKernalRom() -> bool;
     auto executeHostRam() -> bool;
+
+    auto setExpander(ExpansionPort* expander) -> void;
 
     // SuperCPU can change HOST memory map onyl by GAME/EXROM.
     // 6510 runs only for a short time to set PPORT to a meaningfull setting.
