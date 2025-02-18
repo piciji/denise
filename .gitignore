@@ -18,3 +18,4 @@ builds/
 DerivedData/
 data/denisepackage/
 data/denisepackage.deb
+.flatpak-builder

@@ -116,7 +116,7 @@ auto pSystem::getIconFolder() -> std::string {
 	static std::string iconPath = "";
 
 	if (iconPath == "")
-		iconPath = getResourceFolderBase("icons");
+		iconPath = getResourceFolderBase("icons") + "/";
 
 	return iconPath;
 }

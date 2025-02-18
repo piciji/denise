@@ -1,0 +1,31 @@
+id: org.bitbucket.Denise
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: denise
+rename-desktop-file: denise.desktop
+rename-icon: denise
+
+modules:
+  - name: denise
+    buildsystem: cmake
+    builddir: true
+    sources:
+      - type: dir
+        path: ../
+
+finish-args:
+  - --socket=x11
+  - --share=ipc
+  - --device=all
+  - --socket=pulseaudio
+  - --filesystem=host:rw
+
+
+# flatpak-builder --force-clean --user --install-deps-from=flathub --install .flatpak-builder/out data/org.bitbucket.Denise.yml
+# flatpak run org.bitbucket.Denise
+# flatpak uninstall org.bitbucket.Denise
+
+# share it
+# flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+# flatpak install --user denise.flatpak

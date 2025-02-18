@@ -1,9 +1,9 @@
 [Desktop Entry]
 Name=Denise
-Comment=c64, amiga500 emulator
+Comment=Commodore 64 and Amiga 500 Emulator
 Exec=denise %F
-Icon=denise.png
+Icon=denise
 Terminal=false
 Type=Application
-Categories=Game;Emulation;
+Categories=Game;Emulator;
 MimeType=application/x-commodore-d64;application/x-commodore-g64;application/x-commodore-p64;application/x-commodore-d71;application/x-commodore-g71;application/x-commodore-tape;application/x-commodore-crt;application/x-commodore-prg;application/x-denise-save;

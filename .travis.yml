@@ -2,6 +2,7 @@
 branches:
   only:
     - master
+    - flatpak
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
 
@@ -11,7 +12,43 @@ os: linux
 
 jobs:
   include:
-    - compiler: gcc
+    - name: Flatpak
+      compiler: gcc
+      script: flatpak-builder --force-clean --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
+
+      after_success:
+      - flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+
+
+    # - name: DEB package    
+    #   compiler: gcc
+    #   script:
+    #   - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
+    #   - cmake --build builds/release -j 4 || travis_terminate 1;
+    #   - cd data
+    #   - chmod +x build_deb.sh
+    #   - ./build_deb.sh
+    #   - dpkg-deb --build ./denisepackage || travis_terminate 1;
+    #   - |
+    #     if [ -z "$TRAVIS_TAG" ]; then
+    #       export debFile=denise_ubuntu2004_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).deb
+    #       export debTarget=${FTP_NIGHTLIES}
+    #     else
+    #       export debFile=denise_ubuntu2004_${TRAVIS_TAG}.deb
+    #       export debTarget=${FTP_TAGS}
+    #     fi
+    #   - mv denisepackage.deb "${debFile}"
+
+    #   after_success:
+    #   - echo ${FTP_PSW} > ftp.txt 2>&1
+
+    #   deploy:
+    #     provider: script
+    #     script: sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${debFile}" piciji@frs.sourceforge.net:"${debTarget}"
+    #     edge: true
+    #     on:
+    #       branch: master
+
 
 before_install:
   - sudo apt-get -q update
@@ -27,34 +64,8 @@ addons:
       - libudev-dev
       - libxcb-xinput-dev
       - libxcb-xfixes0
-      - sshpass
+      - sshpass      
+      - flatpak-builder
 
-script:
-  - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
-  - cmake --build builds/release -j 4 || travis_terminate 1;
-  - cd data
-  - chmod +x build_deb.sh
-  - ./build_deb.sh
-  - dpkg-deb --build ./denisepackage || travis_terminate 1;
-  - |
-    if [ -z "$TRAVIS_TAG" ]; then
-      export debFile=denise_ubuntu2004_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).deb
-      export debTarget=${FTP_NIGHTLIES}
-    else
-      export debFile=denise_ubuntu2004_${TRAVIS_TAG}.deb
-      export debTarget=${FTP_TAGS}
-    fi
-  - mv denisepackage.deb "${debFile}"
-
-after_success:
-  - echo ${FTP_PSW} > ftp.txt 2>&1
-
-
-deploy:
-  provider: script
-  script: sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${debFile}" piciji@frs.sourceforge.net:"${debTarget}"
-  edge: true
-  on:
-    branch: master
 
 # hint for env FTP_FOLDER: v\\\ 1.0

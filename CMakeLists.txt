@@ -386,8 +386,12 @@ else()
     install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
     install(DIRECTORY data/${imagesFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
 
-    install(FILES data/img/${PROJECT_NAME}.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons)
+    install(FILES data/img/${PROJECT_NAME}.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/256x256/apps)
+    install(FILES data/img/${PROJECT_NAME}_48.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/48x48/apps RENAME ${PROJECT_NAME}.png)
+    install(FILES data/img/${PROJECT_NAME}_48.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons RENAME ${PROJECT_NAME}.png)
+    install(FILES data/img/${PROJECT_NAME}_32.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/32x32/apps RENAME ${PROJECT_NAME}.png)
     install(FILES data/${PROJECT_NAME}.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE)
+    install(CODE "execute_process(COMMAND update-icon-caches ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor)")
 
     if(INSTALL_FILE_ASSOCIATIONS STREQUAL 1)
         install(FILES data/application-x-${PROJECT_NAME}.xml DESTINATION ${CMAKE_INSTALL_PREFIX}/share/mime/packages)
