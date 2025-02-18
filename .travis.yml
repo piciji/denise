@@ -14,7 +14,9 @@ jobs:
   include:
     - name: Flatpak
       compiler: gcc
-      script: flatpak-builder --force-clean --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
+      script:
+      - flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      - flatpak-builder --force-clean --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
 
       after_success:
       - flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
