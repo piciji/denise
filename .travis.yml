@@ -2,7 +2,6 @@
 branches:
   only:
     - master
-    - flatpak
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
 
