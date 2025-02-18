@@ -102,3 +102,15 @@ template<typename T> static auto copyBufferToInt( uint8_t* buf ) -> T {
 
     return value;
 }
+
+static auto startsWith(const std::string& str, const std::string& prefix) -> bool {
+    return (prefix.size() <= str.size()) && std::equal(prefix.begin(), prefix.end(), str.begin());
+}
+
+static auto isNumber(const std::string& str) -> bool {
+    std::string _str = str;
+    if (_str.substr(0,1) == "-") _str = _str.substr(1);
+
+    return !_str.empty() && std::find_if(_str.begin(),
+        _str.end(), [](char c) { return !std::isdigit(c); }) == _str.end();
+}
