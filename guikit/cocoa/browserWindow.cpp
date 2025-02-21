@@ -161,7 +161,10 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         NSUInteger filtersLength = [filters count];
 
         NSString* urlString = [NSString stringWithUTF8String:state.path.c_str()];
-        NSURL* url = [NSURL URLWithString:[urlString stringByRemovingPercentEncoding]];
+        
+        NSString* urlTextEscaped = [urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+
+        NSURL* url = [NSURL URLWithString:urlTextEscaped];
         
         if (save) {
             panel = [NSSavePanel savePanel];
@@ -473,7 +476,12 @@ auto pBrowserWindow::directory() -> std::string {
         [panel setCanChooseDirectories:YES];
         [panel setCanChooseFiles:NO];
         NSString* urlString = [NSString stringWithUTF8String:state.path.c_str()];
-        NSURL* url = [NSURL URLWithString:[urlString stringByRemovingPercentEncoding]];
+        
+        NSString* urlTextEscaped = [urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+        
+        NSURL* url = [NSURL URLWithString:urlTextEscaped];
+        
+//        NSURL* url = [NSURL URLWithString:[urlString stringByRemovingPercentEncoding]];
         [panel setDirectoryURL:url];
 
         if([panel runModal] == NSModalResponseOK) {
