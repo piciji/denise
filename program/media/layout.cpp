@@ -357,7 +357,7 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
 
         if (isC64 && (media->id == 0) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionSuperCpu)) {
             block->selector.open.setEnabled(false);
-            block->header.eject.setEnabled(false);
+            block->header.remove(block->header.eject);
         }
             
         return block;

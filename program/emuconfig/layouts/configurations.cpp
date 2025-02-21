@@ -612,6 +612,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
     settings.control.clear.onActivate = [this]() {
         settings.control.edit.setText("");
+        updateSettingsList();
     };
     
     settingsFolder.select.onActivate = [this]() {

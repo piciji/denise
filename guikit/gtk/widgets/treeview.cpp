@@ -54,7 +54,7 @@ auto pTreeViewItem::setExpanded(bool expanded) -> void {
     GtkTreePath* path = gtk_tree_model_get_path(parentTreeView()->p.gtkTreeModel, &iter);
     
     if (expanded)
-        gtk_tree_view_expand_row (parentTreeView()->p.gtkTreeView, path, false);
+        gtk_tree_view_expand_to_path (parentTreeView()->p.gtkTreeView, path);
     else
         gtk_tree_view_collapse_row (parentTreeView()->p.gtkTreeView, path);
 	
