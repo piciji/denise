@@ -173,9 +173,12 @@ auto CALLBACK pTreeView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         case WM_ERASEBKGND: 
             return 0;
         case WM_GETDLGCODE:
-            if (wparam == VK_RETURN) return DLGC_WANTALLKEYS;
+            if (wparam == VK_RETURN)
+                return DLGC_WANTALLKEYS;
+            break;
     }
-    return CallWindowProc(treeView->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    //return CallWindowProc(treeView->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return pApplication::wndProc(treeView->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pTreeView::create() -> void {

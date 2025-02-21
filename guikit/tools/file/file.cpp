@@ -408,6 +408,88 @@ auto File::getPath( std::string _fn, bool returnSlashIfError ) -> std::string {
     return _fn.erase(end + 1);
 }
 
+auto File::appendFolderToTreeView(std::string& basePath, TreeViewItem* tvi, const std::string& search, std::string treeFile) -> void {
+    static int counter = 0;
+    if (treeFile.empty())
+        counter = 0;
+    else if (counter > 500)
+        return;
+
+    std::string file;
+    std::vector<Info*> infos;
+    auto parts = String::split(treeFile, '/');
+    if (parts.size() > 4)
+        return;
+
+    bool filter = !search.empty();
+    std::string path = basePath + treeFile;
+    path = beautifyPath(path);
+
+#ifdef GUIKIT_WINAPI
+    _WDIR* dir = _wopendir(utf16_t(path));
+#else
+    DIR* dir = opendir(path.c_str());
+#endif
+    if (dir == NULL)
+        return;
+
+#ifdef GUIKIT_WINAPI
+    struct _wdirent* ent;
+    while ((ent = _wreaddir(dir)) != NULL) {
+        file = utf8_t(ent->d_name);
+#else
+    struct dirent* ent;
+    while ((ent = readdir(dir)) != NULL) {
+        file = (std::string)ent->d_name;
+#endif
+        if (file == "." || file == "..")
+            continue;
+
+        auto info = new File::Info;
+        info->name = file;
+        setStats(path + file, *info);
+
+        if (info->isDir || !filter || String::findString(file, search)) {
+            infos.push_back(info);
+            if (++counter > 500)
+                break;
+        } else {
+            delete info;
+        }
+    }
+
+    std::sort(infos.begin(), infos.end(), [](const GUIKIT::File::Info* lhs, const GUIKIT::File::Info* rhs) {
+        if (lhs->isDir && rhs->isDir)
+            return lhs->name < rhs->name;
+        
+        return lhs->isDir;
+    });
+
+    for(auto info : infos) {
+        auto aTvi = new TreeViewItem;
+
+        if (info->isDir)
+            aTvi->setText(info->name);
+        else
+            aTvi->setText(info->name + " (" + info->date + ")");
+        
+        if (!treeFile.empty())
+            info->name = treeFile + "/" + info->name;
+
+        if (info->isDir) {
+            appendFolderToTreeView(basePath, aTvi, search, info->name);
+            if (aTvi->itemCount() == 0) {
+                delete aTvi;
+                delete info;
+                continue;
+            }
+        }
+
+        aTvi->setUserData((uintptr_t)info);
+        tvi->append(*aTvi);
+    }
+}
+
 auto File::getFolderListAlt( std::string path, std::vector<std::string> subStrs, bool fromBeginning, unsigned limit ) -> std::vector<std::string> {
     std::vector<std::string> list;
     std::string file;
@@ -520,6 +602,7 @@ auto File::setStats(std::string path, Info& info) -> void {
     info.date = asctime( _tm );
     String::replace(info.date, "\n", "");
     info.size = statbuf.st_size;
+    info.isDir = !!(statbuf.st_mode & S_IFDIR);
 }
 
 auto File::isDir( std::string path ) -> bool {

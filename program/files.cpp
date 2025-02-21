@@ -402,12 +402,9 @@ auto Program::saveSettings(bool onExit) -> void {
                     if (!file.exists())
                         path = settingsFile(emulator->ident + "_");
 
-                } else if (onExit)
+                } else if (onExit) {
                     continue;
-                else {
-                    // remove absolute path (deprecated)
-                    path = GUIKIT::String::getFileName(path);
-
+                } else {
                     path = getCustomSettingsFolder(emulator) + path;
                 }
             }
@@ -452,9 +449,6 @@ auto Program::loadSettings() -> void {
             if (lastUsed) {
                 std::string path = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
                 if (path != "") {
-                    // remove absolute path (deprecated)
-                    path = GUIKIT::String::getFileName(path);
-
                     path = getCustomSettingsFolder(emulator) + path;
 
                     if (settings->load(path))

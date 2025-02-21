@@ -34,10 +34,12 @@ struct SettingsLayout : GUIKIT::FramedVerticalLayout {
     
     struct Control : GUIKIT::HorizontalLayout {    
         GUIKIT::Button load;
-        GUIKIT::Button save;
-        GUIKIT::LineEdit edit;
-        GUIKIT::Button create;
+        GUIKIT::Button save;        
         GUIKIT::Button remove;
+        GUIKIT::Button create;
+        GUIKIT::LineEdit edit;
+        GUIKIT::Button clear;
+        GUIKIT::Button search;
 
         Control();
     } control;
@@ -52,7 +54,7 @@ struct SettingsLayout : GUIKIT::FramedVerticalLayout {
     } active;
 
     GUIKIT::CheckBox startWithLastConfigCheckbox;
-    GUIKIT::ListView listView;
+    GUIKIT::TreeView treeView;
 
     SettingsLayout();
 };
@@ -141,20 +143,16 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image settingsImage;
     GUIKIT::Image scriptImage;
     GUIKIT::Image memImage;
-    
-    struct SettingLine {
-        std::string fileName;
-        std::string date;
+    GUIKIT::Image addImage;
+    GUIKIT::Image delImage;
+    GUIKIT::Image searchImage;
+    GUIKIT::Image clearImage;
+    GUIKIT::Image saveImage;
+    GUIKIT::Image openImage;
 
-        SettingLine(std::string fileName, std::string date)
-        : fileName(fileName), date(date) {
-        }
-
-        bool operator < (const SettingLine& line) const {
-            return fileName < line.fileName;
-        }
-    };
-    
+    GUIKIT::Image imgFolderOpen;
+    GUIKIT::Image imgFolderClosed;
+    GUIKIT::Image imgDocument;
     struct StateLine {
 		unsigned pos;
 		std::string fileName;
@@ -169,7 +167,7 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
 	}; 
     
     auto translate() -> void;
-    auto updateSettingsList() -> void;
+    auto updateSettingsList(const std::string& expandFile = "", const std::string& search = "") -> void;
     auto updateSaveIdent( std::string fileName ) -> void;
     auto splitFile( std::string file, unsigned& pos ) -> std::string;
     auto load( std::string path, bool showError = true ) -> bool;

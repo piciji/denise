@@ -1239,6 +1239,20 @@ auto TreeView::reset() -> void {
     state.items.clear();
 }
 
+auto TreeViewItem::itemsRecursive(std::vector<TreeViewItem*>& items) -> void {
+    for (auto item : state.items) {
+        items.push_back(item);
+        item->itemsRecursive(items);
+    }
+}
+
+auto TreeView::itemsRecursive(std::vector<TreeViewItem*>& items) -> void {
+    for (auto item : state.items) {
+        items.push_back(item);
+        item->itemsRecursive(items);
+    }
+}
+
 TreeView::TreeView() : Widget(*new pTreeView(*this)), p((pTreeView&)Widget::p) { p.init(); }
 
 auto Viewport::handle(bool hintRecreation) -> uintptr_t {

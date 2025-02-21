@@ -791,6 +791,7 @@ struct TreeViewItem {
     auto selected() -> bool;
     auto itemCount() -> unsigned { return state.items.size(); }
     auto items() -> std::vector<TreeViewItem*>& { return state.items; }
+    auto itemsRecursive(std::vector<TreeViewItem*>& items) -> void;
     auto userData() -> uintptr_t { return state.userData; }
     auto parentItem() -> TreeViewItem* { return state.parentTreeViewItem; }
     auto parentView() -> TreeView* { return state.parentTreeView; }
@@ -827,6 +828,7 @@ struct TreeView : Widget {
     auto selected() -> TreeViewItem* { return state.selected; }
     auto itemCount() -> unsigned { return state.items.size(); }
     auto items() -> std::vector<TreeViewItem*>& { return state.items; }
+    auto itemsRecursive(std::vector<TreeViewItem*>& items) -> void;
 
     struct {
         std::vector<TreeViewItem*> items;
@@ -1361,6 +1363,7 @@ struct File {
         std::string date = "";
         uint64_t size = 0;
         bool exists = true;
+        bool isDir = false;
     };
     struct Item {
         unsigned id;
@@ -1418,6 +1421,7 @@ struct File {
     static auto createDir( std::string path, std::string basePath = "" ) -> bool;
     static auto beautifyPath(std::string path) -> std::string;
     static auto getOffsetDataStringFromBinary( std::string inFile, std::string outFile ) -> bool;
+    static auto appendFolderToTreeView(std::string& basePath, TreeViewItem* tvi, const std::string& search = "", std::string treeFile = "") -> void;
 
     static auto getPath( std::string _fn, bool returnSlashIfError = false ) -> std::string;
     static auto resolveRelativePath(std::string _fn, std::string relPath ) -> std::string;

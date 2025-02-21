@@ -117,11 +117,12 @@ SettingsLayout::Control::Control() {
     append( load, {0u, 0u}, 10 );
     append( save, {0u, 0u}, 10 );
     append( remove, {0u, 0u}, 10 );
+    append( create, {0u, 0u}, 10);
     append( edit, {~0u, 0u}, 10 );
-    append( create, {0u, 0u} );
+    append( clear, { 0u, 0u }, 10);
+    append( search, { 0u, 0u });
     
     load.setEnabled(false);
-    save.setEnabled(false);
     
     setAlignment(0.5);
 }
@@ -140,13 +141,11 @@ SettingsLayout::Active::Active() {
 SettingsLayout::SettingsLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
-    listView.setHeaderVisible();
-	listView.setHeaderText( { "", "" } );
     
     append(control, {~0u, 0u}, 5);
     append(active, {~0u, 0u}, 5);
     append(startWithLastConfigCheckbox,{~0u, 0u}, 5);
-    append(listView, {~0u, ~0u}, 5);
+    append(treeView, { ~0u, ~0u }, 5);
 }
 
 ConfigurationsFolderLayout::ConfigurationsFolderLayout() {
@@ -215,11 +214,31 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     if (memoryPattern)
         moduleList.append( {"memory"} );
     
+    imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen));
+    imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed));
+    imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document));
+
     settingsImage.loadPng((uint8_t*)Icons::settings, sizeof(Icons::settings));
     scriptImage.loadPng((uint8_t*)Icons::script, sizeof(Icons::script));
     if (memoryPattern)
         memImage.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
+
+    searchImage.loadPng((uint8_t*)Icons::search, sizeof(Icons::search));
+    clearImage.loadPng((uint8_t*)Icons::clear, sizeof(Icons::clear));
+    addImage.loadPng((uint8_t*)Icons::add, sizeof(Icons::add));
+    delImage.loadPng((uint8_t*)Icons::del, sizeof(Icons::del));
+    saveImage.loadPng((uint8_t*)Icons::disk, sizeof(Icons::disk));
+    openImage.loadPng((uint8_t*)Icons::open, sizeof(Icons::open));
     
+    settings.control.load.setImage(&scriptImage);
+    settings.control.save.setImage(&saveImage);
+    settings.control.create.setImage(&addImage);
+    settings.control.remove.setImage(&delImage);
+    settings.control.clear.setImage(&clearImage);
+    settings.control.search.setImage(&searchImage);
+
+    settingsFolder.select.setImage(&openImage);
+
     moduleList.setImage(0, 0, settingsImage);
     moduleList.setImage(1, 0, scriptImage);
     if (memoryPattern)
@@ -391,11 +410,10 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             this->updateMemoryPreview();
         };
     }
-    settings.listView.onChange = [this]() {
+    settings.treeView.onChange = [this]() {
         
         if (!settings.control.load.enabled()) {
             settings.control.load.setEnabled();
-            settings.control.save.setEnabled();
         }
     };
 
@@ -405,7 +423,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
     settings.startWithLastConfigCheckbox.setChecked( globalSettings->get<bool>( this->emulator->ident + "_load_last_settings", false ) );
 
-    settings.listView.onActivate = [this]() {
+    settings.treeView.onActivate = [this]() {
         
         settings.control.load.onActivate();
     };
@@ -446,44 +464,44 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     };
     
     settings.control.load.onActivate = [this]() {
-        auto& _list = settings.listView;
-        
-        if (!_list.selected())
+        auto& _tree = settings.treeView;        
+        GUIKIT::TreeViewItem* selected = _tree.selected();
+        if (!selected)
             return;
-        
-        unsigned selection = _list.selection();
 
-        std::string fileName = _list.text(selection, 0);
+        GUIKIT::File::Info* info = (GUIKIT::File::Info*)selected->userData();
+        if (info->isDir)
+            return;
 
-        std::string path = program->getCustomSettingsFolder(emulator) + fileName;
+        std::string path = program->getCustomSettingsFolder(emulator) + info->name;
 
         emuThread->lock();
-        if (this->load( path )) {
-            globalSettings->set<std::string>(emulator->ident + "_custom_settings", fileName);
+        if (this->load(path)) {
+            globalSettings->set<std::string>(emulator->ident + "_custom_settings", info->name);
             cmd->removeCustomConfig(emulator);
-            settings.active.fileLabel.setText( fileName );
+            settings.active.fileLabel.setText(info->name);
         }
         emuThread->unlock();
     };
     
     settings.control.save.onActivate = [this]() {
-        auto& _list = settings.listView;
         std::string fileName;
+        GUIKIT::File::Info* info = nullptr;
+        auto& _tree = settings.treeView;
+        GUIKIT::TreeViewItem* selected = _tree.selected();
+        if (selected) {
+            info = (GUIKIT::File::Info*)selected->userData();
+        }
         
-        if (!_list.selected()) {
+        if (!selected || (info && info->isDir)) {
             if (cmd->hasCustomConfig(emulator))
                 return;
 
             fileName = globalSettings->get<std::string>(emulator->ident + "_custom_settings", "");
-            if (fileName == "")
+            if (fileName.empty())
                 return;
-            // remove absolute path (deprecated)
-            fileName = GUIKIT::String::getFileName(fileName);
-
         } else {
-            unsigned selection = _list.selection();
-
-            fileName = _list.text( selection, 0 );
+            fileName = info->name;
         }
 
         std::string path = program->getCustomSettingsFolder(emulator, true) + fileName;
@@ -501,44 +519,51 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                 {"%path%", path}}));
     };
     
-    settings.control.create.onActivate = [this]() {
+    settings.control.create.onActivate = [this]() {        
+        const std::string basePath = program->getCustomSettingsFolder(emulator, true);
+
+        std::string filePath = GUIKIT::BrowserWindow()
+            .setWindow(*this->tabWindow)
+            .setTitle(trans->get("select setting"))
+            .setPath(basePath)
+            .setFilters({ trans->get("all_files") })
+            .save();
+
+        if (filePath.empty())
+            return;
         
-        auto fileName = settings.control.edit.text();  
-        
-        if (fileName == "")
-            fileName = trans->get("alternate settings");
-        
-        std::string path = program->getCustomSettingsFolder(emulator, true) + fileName;
-        
-        GUIKIT::File file( path );
+        GUIKIT::File file(filePath);
         
         if (file.exists()) {
-            if (!mes->question( trans->get("file_exist_error", {{"%path%", path}}) ))
+            if (!mes->question(trans->get("file_exist_error", { {"%path%", filePath} })))
                 return;
         }
 
-        if (_settings->save( path)) {
-            mes->information( trans->get("file_creation_success", {{"%path%", path}}) );
-            globalSettings->set(emulator->ident + "_custom_settings", fileName);
+        if (_settings->save(filePath)) {
+            GUIKIT::String::remove(filePath, { basePath });
+            if (statusHandler)
+                statusHandler->setMessage(trans->get("file_creation_success", { {"%path%", filePath} }));
+            
+            globalSettings->set(emulator->ident + "_custom_settings", filePath);
             cmd->removeCustomConfig(emulator);
-            settings.active.fileLabel.setText( fileName );
-            updateSettingsList();
+            settings.active.fileLabel.setText(filePath);
+            updateSettingsList(filePath);
             
         } else
-            mes->error( trans->get("file_creation_error", {{"%path%", path}}) );
+            mes->error(trans->get("file_creation_error", { {"%path%", filePath} }));
     };
     
     settings.control.remove.onActivate = [this]() {
-        auto& _list = settings.listView;
-        
-        if (!_list.selected())
+        auto& _tree = settings.treeView;
+        GUIKIT::TreeViewItem* selected = _tree.selected();
+        if (!selected)
             return;
         
-        unsigned selection = _list.selection();
+        GUIKIT::File::Info* info = (GUIKIT::File::Info*)selected->userData();
+        if (info->isDir)
+            return;
 
-        std::string fileName = _list.text( selection, 0 );
-                
-        std::string path = program->getCustomSettingsFolder(emulator) + fileName;
+        std::string path = program->getCustomSettingsFolder(emulator) + info->name;
         
         GUIKIT::File file( path );
 
@@ -551,9 +576,8 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 		
         if (!file.del())
             mes->error( trans->get("file deletion error", {{"%path%", path}}) );
-        else {
-			
-			if (!cmd->hasCustomConfig(emulator) && (fileName == globalSettings->get<std::string>(emulator->ident + "_custom_settings", ""))) {
+        else {			
+            if (!cmd->hasCustomConfig(emulator) && (info->name == globalSettings->get<std::string>(emulator->ident + "_custom_settings", ""))) {
                 globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
 
                 emuThread->lock();
@@ -570,9 +594,25 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                 emuThread->unlock();
 			}
 			
-            updateSettingsList();
+            auto parent = selected->parentItem();
+            if (parent) {
+                parent->remove(*selected);
+                auto info = (GUIKIT::File::Info*)selected->userData();
+                parent->setSelected();
+                if (info)
+                    delete info;
+                delete selected;
+            }
 		}
-    };    
+    };
+
+    settings.control.search.onActivate = [this]() {
+        updateSettingsList("", settings.control.edit.text());
+    };
+
+    settings.control.clear.onActivate = [this]() {
+        settings.control.edit.setText("");
+    };
     
     settingsFolder.select.onActivate = [this]() {
 
@@ -618,7 +658,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     if (!settings.startWithLastConfigCheckbox.checked() || cmd->hasCustomConfig(emulator))
         settings.active.fileLabel.setText(trans->get("default"));
     else
-        settings.active.fileLabel.setText( GUIKIT::String::getFileName( globalSettings->get<std::string>(emulator->ident + "_custom_settings", trans->get("default"))));
+        settings.active.fileLabel.setText( globalSettings->get<std::string>(emulator->ident + "_custom_settings", trans->get("default")));
     
     // states
     
@@ -753,20 +793,53 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     updateSettingsList();
 }
 
-auto ConfigurationsLayout::updateSettingsList() -> void {    
-    settings.listView.reset();
+auto ConfigurationsLayout::updateSettingsList(const std::string& expandFile, const std::string& search) -> void {
+    bool filter = !search.empty();
+    std::vector<GUIKIT::TreeViewItem*> items;
+    settings.treeView.itemsRecursive(items);
+    settings.treeView.reset();
+    for(auto item : items) {
+        GUIKIT::File::Info* info = (GUIKIT::File::Info*)item->userData();
+        delete info;
+        delete item;
+    }
+        
+    std::string path = program->getCustomSettingsFolder(emulator);
+    auto treeViewItem = new GUIKIT::TreeViewItem;
+    auto info = new GUIKIT::File::Info;
+    treeViewItem->setText(path);
+    info->isDir = true;
+    treeViewItem->setUserData((uintptr_t)info);
+
+    GUIKIT::File::appendFolderToTreeView(path, treeViewItem, search);
     
-    auto infos = GUIKIT::File::getFolderList( program->getCustomSettingsFolder( emulator ) );
-    
-    std::vector<SettingLine> lines;
+    if (treeViewItem->itemCount() == 0) {
+        delete treeViewItem;
+        delete info;
+    } else {
+        items.clear();
+        treeViewItem->itemsRecursive(items);
+        for (auto item : items) {
+            GUIKIT::File::Info* info = (GUIKIT::File::Info*)item->userData();
+            if (info->isDir) {
+                item->setImage(imgFolderClosed);
+                item->setImageExpanded(imgFolderOpen);
+            } else {
+                item->setImage(imgDocument);
+                if (filter || (expandFile == info->name)) {
+                    auto _item = item;
+                    do {
+                        _item->setExpanded();
+                    } while (_item = _item->parentItem());
+                }
+            }
+        }
 
-    for (auto& info : infos)
-        lines.push_back({info.name, info.date});   
-
-    std::sort(lines.begin(), lines.end());
-
-    for (auto& line : lines)
-        settings.listView.append( {line.fileName, line.date} );    
+        treeViewItem->setImage(imgFolderClosed);
+        treeViewItem->setImageExpanded(imgFolderOpen);
+        treeViewItem->setExpanded();
+        settings.treeView.append(*treeViewItem);
+    }
 }
 
 auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
@@ -973,13 +1046,11 @@ auto ConfigurationsLayout::translate() -> void {
     
     settingsFolder.label.setText( trans->get("folder", {}, true) );
     settingsFolder.standard.setText( trans->get("home folder") );
-    settingsFolder.select.setText( trans->get("select") );
     
     settings.setText( trans->get("settings") );
     settings.active.activeLabel.setText( trans->get("active setting", {}, true) );
     settings.active.undockButton.setText( trans->get("undock") );
     settings.active.standardButton.setText( trans->get("default") );
-    settings.listView.setHeaderText({trans->get("file"), trans->get("date")});
     settings.startWithLastConfigCheckbox.setText( trans->get("Start with last loaded Settings") );
     
     stateFolder.label.setText( trans->get("folder", {}, true) );
