@@ -136,6 +136,7 @@
     unsigned fontHeight = GUIKIT::pFont::size(font, " ").height;
     [content setFont:font];
     [content setRowHeight:fontHeight];
+    [content setIntercellSpacing:NSMakeSize(0.0, 3.0)];
 }
 
 -(void) reloadColumns {

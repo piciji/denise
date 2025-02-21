@@ -819,6 +819,11 @@ auto ConfigurationsLayout::updateSettingsList(const std::string& expandFile, con
         delete info;
     } else {
         items.clear();
+        treeViewItem->setImage(imgFolderClosed);
+        treeViewItem->setImageExpanded(imgFolderOpen);
+        treeViewItem->setExpanded();
+        settings.treeView.append(*treeViewItem);
+        
         treeViewItem->itemsRecursive(items);
         for (auto item : items) {
             GUIKIT::File::Info* info = (GUIKIT::File::Info*)item->userData();
@@ -828,18 +833,18 @@ auto ConfigurationsLayout::updateSettingsList(const std::string& expandFile, con
             } else {
                 item->setImage(imgDocument);
                 if (filter || (expandFile == info->name)) {
-                    auto _item = item;
-                    do {
+                    std::vector<GUIKIT::TreeViewItem*> expandedItems;
+                    auto _item = item->parentItem();
+                    while (_item) {
+                        expandedItems.push_back(_item);
+                        _item = _item->parentItem();
+                    }
+                    std::reverse(expandedItems.begin(), expandedItems.end());
+                    for(auto _item : expandedItems)
                         _item->setExpanded();
-                    } while (_item = _item->parentItem());
                 }
             }
         }
-
-        treeViewItem->setImage(imgFolderClosed);
-        treeViewItem->setImageExpanded(imgFolderOpen);
-        treeViewItem->setExpanded();
-        settings.treeView.append(*treeViewItem);
     }
 }
 

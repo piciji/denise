@@ -249,7 +249,8 @@
     
     if (listView->specialFont()) {
         [content setIntercellSpacing:NSMakeSize(0.0, 0.0)];
-    }
+    } else
+        [content setIntercellSpacing:NSMakeSize(0.0, 3.0)];
     
     [self reloadColumns];
 }
