@@ -809,7 +809,13 @@ auto DiskStructure::disalignTrack(MTrack& track, unsigned pos) -> void {
         tempSize = track.size;
     }
 
-    unsigned offset = SKEW[pos] * float(track.size);
+    float _skew = SKEW[pos] - 0.05;
+    if (_skew < 0.0)
+        _skew = 1.0 - _skew;
+    else if (_skew > 1.0)
+        _skew = _skew - 1.0;
+
+    unsigned offset = _skew * float(track.size);
     offset %= track.size;
 
     std::memcpy(tempData, track.data, track.size);
