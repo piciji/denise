@@ -60,7 +60,7 @@ auto MediaLayout::setMediaView() -> void {
 
     if (diskItem) {
         diskItem->setSelected();
-        mediaTree.onChange();
+        mediaTree.onChange(nullptr);
     }
 }
 
@@ -71,7 +71,7 @@ auto MediaLayout::setDiskSwapperView() -> void {
         if ( nav.altLayout && (nav.altLayout == swapperLayout) ) {
             if (!nav.tvi->selected()) {
                 nav.tvi->setSelected();
-                mediaTree.onChange();
+                mediaTree.onChange(nullptr);
             }
 
             return;
@@ -234,7 +234,7 @@ auto MediaLayout::build() -> void {
     append( moduleFrame, {0u, ~0u}, 10 );
     append( moduleSwitch, {~0u, ~0u} );
     
-    mediaTree.onChange = [this]() {
+    mediaTree.onChange = [this](GUIKIT::TreeViewItem* selectedBefore) {
 
         if (fileloader->fileDialogPtr && fileloader->fileDialogPtr->visible()) {
             fileloader->resetPreview(emulator);

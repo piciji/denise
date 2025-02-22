@@ -457,7 +457,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
     moduleSwitch.setSelection( 1 );
 
-    moduleTree.onChange = [this]() {
+    moduleTree.onChange = [this](GUIKIT::TreeViewItem* selectedBefore) {
         auto item = moduleTree.selected();
         if (!item)
             return;

@@ -318,8 +318,9 @@ auto pTreeView::onChange() -> void {
         changed = item->p.find( hTreeItem );
 
         if (changed && (changed != treeView.state.selected) ) {
+            auto selectedBefore = treeView.state.selected;
             treeView.state.selected = changed;
-            if(treeView.onChange) treeView.onChange();
+            if (treeView.onChange) treeView.onChange(selectedBefore);
             return;
         }
     }

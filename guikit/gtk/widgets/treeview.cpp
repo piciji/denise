@@ -295,8 +295,9 @@ auto pTreeView::onChange(GtkTreeSelection* selection, TreeView* self) -> void {
             if(self->state.selected) self->state.selected->p.showImage(false);
             changed->p.showImage(true);
                     
+            auto selectedBefore = self->state.selected;
             self->state.selected = changed;
-            if(self->onChange) self->onChange();
+            if (self->onChange) self->onChange(selectedBefore);
             break;
         }
     }

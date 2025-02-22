@@ -467,11 +467,7 @@ auto File::appendFolderToTreeView(std::string& basePath, TreeViewItem* tvi, cons
 
     for(auto info : infos) {
         auto aTvi = new TreeViewItem;
-
-        if (info->isDir)
-            aTvi->setText(info->name);
-        else
-            aTvi->setText(info->name + " (" + info->date + ")");
+        aTvi->setText(info->name);
         
         if (!treeFile.empty())
             info->name = treeFile + "/" + info->name;

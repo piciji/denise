@@ -817,7 +817,7 @@ struct TreeViewItem {
 
 struct TreeView : Widget {
     std::function<void ()> onActivate = nullptr;
-    std::function<void ()> onChange = nullptr;
+    std::function<void(TreeViewItem* selectedBefore)> onChange = nullptr;
 	std::function<void (TreeViewItem*)> onCollapse = nullptr;
 	std::function<void (TreeViewItem*)> onExpand = nullptr;
 

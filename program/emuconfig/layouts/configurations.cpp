@@ -410,10 +410,22 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             this->updateMemoryPreview();
         };
     }
-    settings.treeView.onChange = [this]() {
-        
-        if (!settings.control.load.enabled()) {
+    settings.treeView.onChange = [this](GUIKIT::TreeViewItem* selectedBefore) {
+        if (!settings.control.load.enabled())
             settings.control.load.setEnabled();
+        
+        GUIKIT::File::Info* info;
+        GUIKIT::TreeViewItem* selected = settings.treeView.selected();
+        if (selected) {            
+            info = (GUIKIT::File::Info*)selected->userData();
+            if (info && !info->isDir)
+                selected->setText(GUIKIT::String::getFileName(info->name) + " -> " + info->date );
+        }
+
+        if (selectedBefore) {
+            info = (GUIKIT::File::Info*)selectedBefore->userData();
+            if (info && !info->isDir)
+                selectedBefore->setText(GUIKIT::String::getFileName(info->name));
         }
     };
 
