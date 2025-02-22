@@ -232,7 +232,7 @@
     
     [self setImage: item];
     
-    auto selectedBefore = treeView->state.selected
+    auto selectedBefore = treeView->state.selected;
     treeView->state.selected = ((TreeViewWrapper*)item)->treeViewItem;
     if(!treeView->p.locked && treeView->onChange)
         treeView->onChange(selectedBefore);
