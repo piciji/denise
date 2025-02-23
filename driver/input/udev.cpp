@@ -146,12 +146,17 @@ namespace DRIVER {
 			auto vendorId = udev_device_get_sysattr_value(parent, "id/vendor");
 			auto productId = udev_device_get_sysattr_value(parent, "id/product");			
 			
+			const char* devname = nullptr;
 			udev_device* root = udev_device_get_parent_with_subsystem_devtype(parent, "usb", "usb_device");
 						
-			if (!root)
-				return close(jp.fd), (void)udev_device_unref(device);;
-						
-			auto devname = udev_device_get_devpath(root);													
+			if (!root) { // maybe Bluetooth
+				root = udev_device_get_parent_with_subsystem_devtype(parent, "hid", nullptr);
+				if (!root)
+					root = parent;
+
+				devname = udev_device_get_sysattr_value(root, "uevent");
+			} else
+				devname = udev_device_get_devpath(root);
 			
 			if(!devname)
 				return close(jp.fd), (void)udev_device_unref(device);
