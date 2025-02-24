@@ -143,6 +143,7 @@ struct Program : Emulator::Interface::Bind {
     auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool initOnly = false) -> void;
     auto updateSaveIdent(Emulator::Interface* emulator, FileSetting* fSetting) -> void;
     auto initUserInterface() -> void;
+    auto unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void;
     
     //audio
     auto initAudio() -> void;

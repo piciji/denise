@@ -336,11 +336,11 @@ auto InputManager::autoAssign( KeyboardLayout::Type type, bool keyboardOnly ) ->
 
 auto InputManager::matchButtons( Emulator::Interface::Device::Input* emuInput, Hid::Input* hidInput ) -> bool {
     
-    if (emuInput->name == "Up" && hidInput->key == Hid::Key::CursorUp) return true;
-    if (emuInput->name == "Down" && hidInput->key == Hid::Key::CursorDown) return true;
-    if (emuInput->name == "Left" && hidInput->key == Hid::Key::CursorLeft) return true;
-    if (emuInput->name == "Right" && hidInput->key == Hid::Key::CursorRight) return true;
-    if (emuInput->name == "Button 1" && hidInput->key == Hid::Key::Space) return true;
+    if (emuInput->name == "Up" && hidInput->key == Hid::Key::NumPad8) return true;
+    if (emuInput->name == "Down" && hidInput->key == Hid::Key::NumPad2) return true;
+    if (emuInput->name == "Left" && hidInput->key == Hid::Key::NumPad4) return true;
+    if (emuInput->name == "Right" && hidInput->key == Hid::Key::NumPad6) return true;
+    if (emuInput->name == "Button 1" && hidInput->key == Hid::Key::NumPad0) return true;
     
     if (emuInput->name == "Button X" && hidInput->name == "Left") return true;
     if (emuInput->name == "Button Y" && hidInput->name == "Right") return true;
