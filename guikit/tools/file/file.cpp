@@ -458,9 +458,17 @@ auto File::appendFolderToTreeView(std::string& basePath, TreeViewItem* tvi, cons
         }
     }
 
+    // shuffle to test the sorting
+    // std::random_shuffle(infos.begin(), infos.end());
+
     std::sort(infos.begin(), infos.end(), [](const GUIKIT::File::Info* lhs, const GUIKIT::File::Info* rhs) {
-        if (lhs->isDir && rhs->isDir)
-            return lhs->name < rhs->name;
+        if (lhs->isDir == rhs->isDir) {
+            std::string lname = lhs->name;
+            std::string rname = rhs->name;
+            String::toLowerCase(lname);
+            String::toLowerCase(rname);
+            return lname < rname;
+        }
         
         return lhs->isDir;
     });
