@@ -88,6 +88,7 @@
                 auto listings = state.onSelectionChange( "" );
                 
                 if (listView) {
+                    // listView->resetFirstRowColor();
                     int i = 0;
                     auto _s = GUIKIT::pFont::size([(id)listView->p.cocoaView font], " ");
                     int maxChars = state.contentView.width / _s.width;
@@ -108,6 +109,9 @@
                 auto rows = state.onSelectionChange(path);
                 
                 if (listView) {
+                    //if (state.contentView.overrideFirstRowColor)
+                      //  listView->setFirstRowColor(state.contentView.firstRowForegroundColor, state.contentView.firstRowBackgroundColor);
+
                     for(auto& row : rows) {
                         listView->append({row.entry});
                     }

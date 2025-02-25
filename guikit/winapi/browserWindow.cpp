@@ -781,12 +781,15 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                             hBrush = context->listHiBrush;
 
                         } else {
-                            if (lDraw->itemID == 0 && state->contentView.overrideFirstRowColor && context->firstRowBrush)
+                            bool altColorFirstRow = state->contentView.overrideFirstRowColor && (lDraw->itemID == 0)
+                                && (context->selectedFiles.size() < 2);
+
+                            if (altColorFirstRow && context->firstRowBrush)
                                 hBrush = context->firstRowBrush;
                             else
                                 hBrush = context->listBgBrush;
 
-                            if (lDraw->itemID == 0 && state->contentView.overrideFirstRowColor) {
+                            if (altColorFirstRow) {
                                 auto colorFg = state->contentView.firstRowForegroundColor;
                                 colorRef = RGB((colorFg >> 16) & 0xff, (colorFg >> 8) & 0xff, colorFg & 0xff);
                             } else if (state->contentView.overrideForegroundColor) {

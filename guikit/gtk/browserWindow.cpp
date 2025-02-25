@@ -120,6 +120,7 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
                 auto listings = state.onSelectionChange( "" );
 
             	if (instance->listView) {
+                  //  listView->resetFirstRowColor();
             		int i = 0;
             		auto _s = pFont::size(instance->listView->p.pfont, " ");
             		int maxChars = state.contentView.width / _s.width;
@@ -140,6 +141,9 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
                 auto listings = state.onSelectionChange(path);
 
             	if (instance->listView) {
+                    //if (state.contentView.overrideFirstRowColor)
+                      //  listView->setFirstRowColor(state.contentView.firstRowForegroundColor, state.contentView.firstRowBackgroundColor);
+
             		for(auto& listing : listings) {
             			instance->listView->append({listing.entry});
             		}
