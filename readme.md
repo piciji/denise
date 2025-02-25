@@ -3,9 +3,36 @@
 
 ![Denise Logo](https://deniseemu.sourceforge.io/logo.png)
 
-[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://bitbucket.org/piciji/denise/issues) - [Nightlies](https://ci.appveyor.com/project/piciji/denise/history) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/licence.md)
+[Downloads](https://sourceforge.net/projects/deniseemu/files/) - [IssueTracker](https://sourceforge.net/p/deniseemu/tickets) - [Nightlies Windows | macOS](https://ci.appveyor.com/project/piciji/denise/history) - [Nightlies Linux](https://sourceforge.net/projects/deniseemu/files/nightlies/) - [Build info](https://bitbucket.org/piciji/denise/src/master/data/buildinfo) - [License](https://bitbucket.org/piciji/denise/src/master/licence.md)
 
 # changelog
+
+## 2.5
+* added 1581 floppy drive
+* added SuperCPU
+    * support SuperCPU + REU (e.g. Sonic without slowdowns)
+    * added option to boost DRAM accesses (speedup Wolf3D)
+    * support Metal Dust burst loader (new CIA's only and in UI check CIA Burst modification)
+* added Final Chesscard
+    * support options to overclock (up to 115 MHz)
+    * hint: latest BROM v3.6 from IBM PC ISA-cartridge can be used too    
+* added MagicDesk 2 (SNK vs CAPCOM Stronger Edition)
+* added Easycalc, Hyperbasic, Businessbasic cartridges
+* added StarDOS
+* added 4 and 8 player adapter for C64
+* added option to toggle 1541C track zero sensor
+* Linux: built flatpak
+* Linux: support Bluetooth controller
+* Windows: support USB adapter for DB9 retro joysticks
+* additional sound profile added
+    * for C64: differentiate between 5 1/4" and 3.5" drives
+    * for Amiga: differentiate between internal and external drives
+* UI: configurations are shown in a tree view for subfolder support
+* updated reSID code
+* hide mouse cursor after 2 seconds of inactivity and becomes visible again when moved
+* fix VIC-II sprite collision bug
+* fix A1000 blitter busy bug
+* fix A1000 WOM lock during reset instruction
 
 ## 2.4
 * support macOS Metal graphics driver with shaders
