@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Denise
-Comment=Commodore 64 and Amiga 500 Emulator
+Comment=Commodore 64 and Amiga Emulator
 Exec=denise %F
 Icon=denise
 Terminal=false

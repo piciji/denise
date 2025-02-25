@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.bitbucket.Denise</id>
+  <launchable type="desktop-id">denise.desktop</launchable>
+  <name>Denise</name>
+  <summary>Commodore 64 and Amiga Emulator</summary>
+  <developer_name>PiCiJi</developer_name>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <description>
+    <p>Denise is a free and cross platform emulator for Commodore 64 and Amiga computers</p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://a.fsdn.com/con/app/proj/deniseemu/screenshots/denise-88289dc8.png/max/max/1</image>
+      <caption>Denise splash screen</caption>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://sourceforge.net/projects/deniseemu/</url>
+  <url type="bugtracker">https://sourceforge.net/p/deniseemu/tickets/</url>
+  <content_rating type="oars-1.1"/>
+</component>

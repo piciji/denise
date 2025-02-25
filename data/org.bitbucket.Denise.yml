@@ -5,6 +5,7 @@ sdk: org.freedesktop.Sdk
 command: denise
 rename-desktop-file: denise.desktop
 rename-icon: denise
+rename-appdata-file: denise.appdata.xml
 
 modules:
   - name: denise

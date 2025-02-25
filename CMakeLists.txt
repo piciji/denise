@@ -386,6 +386,7 @@ else()
     install(DIRECTORY data/${shaderFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
     install(DIRECTORY data/${imagesFolder} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME})
 
+    install(FILES data/${PROJECT_NAME}.appdata.xml DESTINATION ${CMAKE_INSTALL_PREFIX}/share/appdata)
     install(FILES data/img/${PROJECT_NAME}.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/256x256/apps)
     install(FILES data/img/${PROJECT_NAME}_48.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/48x48/apps RENAME ${PROJECT_NAME}.png)
     install(FILES data/img/${PROJECT_NAME}_48.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons RENAME ${PROJECT_NAME}.png)
