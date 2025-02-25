@@ -123,6 +123,7 @@ SettingsLayout::Control::Control() {
     append( search, { 0u, 0u });
     
     load.setEnabled(false);
+    remove.setEnabled(false);
     
     setAlignment(0.5);
 }
@@ -418,8 +419,12 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         GUIKIT::TreeViewItem* selected = settings.treeView.selected();
         if (selected) {            
             info = (GUIKIT::File::Info*)selected->userData();
-            if (info && !info->isDir)
-                selected->setText(GUIKIT::String::getFileName(info->name) + " -> " + info->date );
+            if (info) {
+                if (!info->isDir)
+                    selected->setText(GUIKIT::String::getFileName(info->name) + " -> " + info->date);
+
+                settings.control.remove.setEnabled(!info->isDir);
+            }                        
         }
 
         if (selectedBefore) {
@@ -541,8 +546,16 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             .setFilters({ trans->get("all_files") })
             .save();
 
-        if (filePath.empty())
+        if (filePath.empty()) {
+            GUIKIT::TreeViewItem* selected = settings.treeView.selected();
+            if (selected) {
+                GUIKIT::File::Info* info = (GUIKIT::File::Info*)selected->userData();
+                if (info)
+                    filePath = info->name;
+            }
+            updateSettingsList(filePath);
             return;
+        }
         
         GUIKIT::File file(filePath);
         
