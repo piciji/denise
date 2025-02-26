@@ -240,7 +240,7 @@ auto StatusHandler::setExpansionClick() -> void {
     auto expansion = activeEmulator->getExpansion();
 
     if (dynamic_cast<LIBC64::Interface*>(activeEmulator) &&
-        (expansion->id == LIBC64::Interface::ExpansionId::ExpansionIdSuperCpu) || (expansion->id == LIBC64::Interface::ExpansionId::ExpansionIdSuperCpuReu)) {
+        ((expansion->id == LIBC64::Interface::ExpansionId::ExpansionIdSuperCpu) || (expansion->id == LIBC64::Interface::ExpansionId::ExpansionIdSuperCpuReu))) {
         emuThread->lock();
         bool state = activeEmulator->getExpansionJumper(expansion->mediaGroup->selected, 0);
         activeEmulator->setExpansionJumper(expansion->mediaGroup->selected, 0, !state);
