@@ -428,7 +428,7 @@ auto InputLayout::updateMiscSettings() -> void {
         case 2: control.optionControl.prioritiseLayout.keyboard.setChecked(); break;
     }
 
-    selector.grabMouseLeft.setChecked( _settings->get<bool>("grab_mouse_left", false) );
+    selector.grabMouseLeft.setChecked(_settings->get<bool>("grab_mouse_left", dynamic_cast<LIBAMI::Interface*>(emulator)));
 }
 
 auto InputLayout::stopCapture() -> void {

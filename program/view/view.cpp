@@ -1724,7 +1724,7 @@ auto View::updateDiskMenu() -> void {
 
 auto View::updateMouseGrab() -> void {
     auto settings = program->getSettings( activeEmulator );
-    grabMouseLeft = settings->get<bool>("grab_mouse_left", false);
+    grabMouseLeft = settings->get<bool>("grab_mouse_left", dynamic_cast<LIBAMI::Interface*>(activeEmulator));
 }
 
 auto View::showTapeMenu( bool show, Emulator::Interface::TapeMode mode ) -> void {
