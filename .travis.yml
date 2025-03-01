@@ -72,7 +72,7 @@ deploy:
   script: sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${deployTarget}"
   edge: true
   on:
-    branch: master      
+    all_branches: true
 
 
 # hint for env FTP_FOLDER: v\\\ 1.0
