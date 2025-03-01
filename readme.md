@@ -18,7 +18,7 @@
     * hint: latest BROM v3.6 from IBM PC ISA-cartridge can be used too    
 * added MagicDesk 2 (SNK vs CAPCOM Stronger Edition)
 * added Easycalc, Hyperbasic, Businessbasic cartridges
-* added StarDOS
+* added StarDOS, SuperCard+
 * added 4 and 8 player adapter for C64
 * added option to toggle 1541C track zero sensor
 * Linux: built flatpak
