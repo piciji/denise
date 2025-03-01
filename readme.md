@@ -22,12 +22,10 @@
 * added 4 and 8 player adapter for C64
 * added option to toggle 1541C track zero sensor
 * Linux: built flatpak
-* Linux: support Bluetooth controller
+* Linux: improve detection of Bluetooth controller
 * Windows: support USB adapter for DB9 retro joysticks
-* additional sound profile added
-    * for C64: differentiate between 5 1/4" and 3.5" drives
-    * for Amiga: differentiate between internal and external drives
-* UI: configurations are shown in a tree view for subfolder support
+* additional sound profile for C64 added to differentiate between 5 1/4" and 3.5" drives
+* configurations are shown in a tree view for subfolder support
 * updated reSID code
 * hide mouse cursor after 2 seconds of inactivity and becomes visible again when moved
 * fix VIC-II sprite collision bug
