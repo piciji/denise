@@ -94,6 +94,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
                 return;
             auto& firmware = emulator->firmwares[block->typeId];
             auto fSetting = manager->getSetting( &firmware, storeLevel );
+            auto lookupPath = GUIKIT::File::resolveRelativePath(program->installFolder(), _settings->get<std::string>("firmware_path", ""));
 
             std::string filePath = GUIKIT::BrowserWindow()
                 .setWindow(*this->tabWindow)
@@ -101,7 +102,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
                     {"%type%", trans->get(firmware.name)}
                 }))
                 .setFilters({trans->get("firmware_image") + " (*)"})
-                .setPath(_settings->get<std::string>("firmware_path", ""))
+                .setPath(lookupPath)
                 .open();
 
             assign(filePath, block, fSetting, storeLevel);
@@ -168,8 +169,8 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         return;
     
     file->setReadOnly();
-    // remember path
-    _settings->set<std::string>("firmware_path", file->getPath());
+
+    _settings->set<std::string>("firmware_path", GUIKIT::File::buildRelativePath(program->installFolder(), file->getPath(), true));
 
     if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
         return program->errorMediumSize( file, mes );
@@ -183,12 +184,13 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
             return program->errorOpen(file, item, mes);
 
         if (item->info.size > MAX_FIRMWARE_SIZE)
-            return program->errorFirmwareSize(item, mes);          
+            return program->errorFirmwareSize(item, mes);
 
+        auto path = GUIKIT::File::buildRelativePath(program->installFolder(), file->getFile(), true);
         block->fileLabel.setText(item->info.name);
-        block->fileLabel.setTooltip(file->getFile());
-        
-        fSetting->setPath(file->getFile());
+        block->fileLabel.setTooltip(path);
+                
+        fSetting->setPath(path);
         fSetting->setFile(item->info.name);
         fSetting->setId(item->id);
 				

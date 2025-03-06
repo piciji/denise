@@ -77,6 +77,7 @@ struct PathsLayout : GUIKIT::FramedVerticalLayout {
     };
     std::vector<Block*> blocks;
     auto getBlock(Emulator::Interface::MediaGroup* mediaGroup) -> Block*;
+    auto getBlockByName(const std::string& name) -> PathsLayout::Block*;
     
     PathsLayout();
 };
@@ -300,7 +301,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
     auto prepareCreator() -> void;
     auto preparePaths() -> void;
-    auto preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void;
+    auto preparePath(Emulator::Interface::MediaGroup& mediaGroup, bool allowRelativePaths = true) -> void;
     auto updateListing( Emulator::Interface::Media* media ) -> void;
 	auto savePath( std::string& groupName, std::string path ) -> void;
     auto showListing( MediaGroupLayout* layout ) -> bool;

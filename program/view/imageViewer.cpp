@@ -27,7 +27,7 @@ auto ImageViewer::build() -> void {
         if (filePath.empty())
             return;
 
-        globalSettings->set<std::string>("image_view_path", filePath);
+        globalSettings->set<std::string>("image_view_path", GUIKIT::File::buildRelativePath(program->installFolder(), filePath, true));
 
         updateList(filePath);
     };
@@ -44,6 +44,7 @@ auto ImageViewer::build() -> void {
         auto fileName = listView.text(selection, 0);
 
         std::string filePath = globalSettings->get<std::string>("image_view_path","");
+        filePath = GUIKIT::File::resolveRelativePath(program->installFolder(), filePath);
         filePath = GUIKIT::File::beautifyPath(filePath);
 
         GUIKIT::File file( filePath + fileName );
@@ -66,6 +67,7 @@ auto ImageViewer::build() -> void {
     };
 
     std::string filePath = globalSettings->get<std::string>("image_view_path","");
+    filePath = GUIKIT::File::resolveRelativePath(program->installFolder(), filePath);
 
     if (!filePath.empty())
         updateList(filePath);

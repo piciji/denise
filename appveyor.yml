@@ -5,6 +5,7 @@ skip_commits:
   files:
     - 'data/**/*'
     - '**/*.md'
+    - relative_paths
 
 image:
   - Visual Studio 2019

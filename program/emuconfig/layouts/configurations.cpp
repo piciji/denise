@@ -239,6 +239,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     settings.control.search.setImage(&searchImage);
 
     settingsFolder.select.setImage(&openImage);
+    stateFolder.select.setImage(&openImage);
 
     moduleList.setImage(0, 0, settingsImage);
     moduleList.setImage(1, 0, scriptImage);
@@ -445,17 +446,33 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         settings.control.load.onActivate();
     };
 
-    bool undockMode = globalSettings->get<bool>("undock", false);
-
-    if (undockMode || GUIKIT::Application::isGtk())
+    if (program->portable || GUIKIT::Application::isGtk())
         settings.active.remove( settings.active.undockButton );
 
     settings.active.undockButton.onActivate = [this]() {
 
         if (mes->question( trans->get("undock settings") ) ) {
+            emuThread->lock();
             program->undockSettings();
+            VideoLayout::displayFonts.clear();
 
-            settings.active.remove( settings.active.undockButton );
+            for(auto _emulator : emulators) {
+                PaletteManager* paletteManager = PaletteManager::getInstance(_emulator);
+                if (paletteManager)
+                    paletteManager->removeEditablePalettes();
+            }
+            for (auto view : emuConfigViews) {
+                if (view->configurationsLayout) {
+                    view->configurationsLayout->settings.active.remove(view->configurationsLayout->settings.active.undockButton);
+                    view->configurationsLayout->updateSettingsList();
+                }
+
+                if (view->paletteLayout)
+                    view->paletteLayout->loadSettings();
+                if (view->videoLayout)
+                    view->videoLayout->fillFontTypeList();
+            }
+            emuThread->unlock();
         }
     };
 
@@ -490,7 +507,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (info->isDir)
             return;
 
-        std::string path = program->getCustomSettingsFolder(emulator) + info->name;
+        std::string path = program->getSettingsFolder(emulator) + info->name;
 
         emuThread->lock();
         if (this->load(path)) {
@@ -521,7 +538,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             fileName = info->name;
         }
 
-        std::string path = program->getCustomSettingsFolder(emulator, true) + fileName;
+        std::string path = program->getSettingsFolder(emulator, true) + fileName;
 
         GUIKIT::File file(path);
 
@@ -537,7 +554,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     };
     
     settings.control.create.onActivate = [this]() {        
-        const std::string basePath = program->getCustomSettingsFolder(emulator, true);
+        const std::string basePath = program->getSettingsFolder(emulator, true);
 
         std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
@@ -588,7 +605,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (info->isDir)
             return;
 
-        std::string path = program->getCustomSettingsFolder(emulator) + info->name;
+        std::string path = program->getSettingsFolder(emulator) + info->name;
         
         GUIKIT::File file( path );
 
@@ -656,7 +673,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         settingsFolder.pathEdit.setEnabled();
         settingsFolder.pathEdit.setText( path );
         
-        globalSettings->set<std::string>( emulator->ident + "_settings_path", path );
+        globalSettings->set<std::string>(emulator->ident + "_settings_path", path);
         
         updateSettingsList();
     };
@@ -665,21 +682,14 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (!cmd->hasCustomConfig(emulator) && (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != ""))
             settings.active.standardButton.onActivate();
 
-        settingsFolder.pathEdit.setText( "" );
-
         globalSettings->set<std::string>( emulator->ident + "_settings_path", "" );
 
-        settingsFolder.pathEdit.setText( trans->get("home folder") );
+        settingsFolder.pathEdit.setText( "" );
 
         settingsFolder.pathEdit.setEnabled(false);
 
         updateSettingsList();
     };
-
-    std::string _settingsPath = globalSettings->get<std::string>( emulator->ident + "_settings_path", "" );
-
-    settingsFolder.pathEdit.setText( _settingsPath == "" ? trans->get("home folder") : _settingsPath );
-    settingsFolder.pathEdit.setEnabled(_settingsPath != "");
 
     if (!settings.startWithLastConfigCheckbox.checked() || cmd->hasCustomConfig(emulator))
         settings.active.fileLabel.setText(trans->get("default"));
@@ -734,7 +744,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 			fileName = "savestate";
 		}
 		                
-		auto infos = GUIKIT::File::getFolderList( States::getInstance( emulator )->statesFolder(), fileName );
+        auto infos = GUIKIT::File::getFolderList(program->generatedFolder(emulator, "states_folder", "states"), fileName);
 				
 		std::vector<StateLine> lines;
 		
@@ -756,16 +766,21 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 	};
     
     stateDirect.load.onActivate = [this]() {
+        auto path = GUIKIT::File::resolveRelativePath(program->installFolder(),
+            _settings->get<std::string>("save_direct_folder", ""));
+
 		std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
             .setTitle(trans->get("select_savestate"))
-            .setPath(_settings->get<std::string>( "save_direct_folder", "" ))
+            .setPath(path)
             .setFilters( { trans->get("state") + " (*.sav)", trans->get("all_files")} )
             .open();
 		
-		if (filePath.empty()) return;
+		if (filePath.empty())
+            return;
             
-        _settings->set<std::string>( "save_direct_folder", GUIKIT::File::getPath( filePath ) );
+        path = GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(filePath), true);
+        _settings->set<std::string>("save_direct_folder", path);
 
         emuThread->lock();
         States::getInstance(emulator)->load(filePath);
@@ -777,20 +792,25 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         
         if (activeEmulator != emulator)
             return mes->error( trans->get("no emulation active") );
+
+        auto path = GUIKIT::File::resolveRelativePath(program->installFolder(),
+            _settings->get<std::string>("save_direct_folder", ""));
         
 		std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
             .setTitle(trans->get("select_savestate"))
-            .setPath(_settings->get<std::string>("states_folder", ""))
+            .setPath(path)
             .setFilters( { trans->get("state") + " (*.sav)", trans->get("all_files")} )
             .save();
 		
-		if (filePath.empty()) return;
+		if (filePath.empty())
+            return;
             
         if ( !GUIKIT::String::foundSubStr( filePath, "." ))
             filePath += ".sav";
         
-        _settings->set<std::string>( "save_direct_folder",  GUIKIT::File::getPath( filePath ) );
+        path = GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(filePath), true);
+        _settings->set<std::string>("save_direct_folder", path);
 
         emuThread->lock();
         States::getInstance( emulator )->save( filePath );
@@ -806,12 +826,14 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (!path.empty()) {
             _settings->set<std::string>( "states_folder", path);
             stateFolder.pathEdit.setText(path);
+            stateFolder.pathEdit.setEnabled();
         }
     };
 
     stateFolder.standard.onActivate = [this]() {
         _settings->set<std::string>("states_folder", "");
         stateFolder.pathEdit.setText("");
+        stateFolder.pathEdit.setEnabled(false);
     };
         
     loadSettings();
@@ -830,7 +852,7 @@ auto ConfigurationsLayout::updateSettingsList(const std::string& expandFile, con
         delete item;
     }
         
-    std::string path = program->getCustomSettingsFolder(emulator);
+    std::string path = program->getSettingsFolder(emulator);
     auto treeViewItem = new GUIKIT::TreeViewItem;
     auto info = new GUIKIT::File::Info;
     treeViewItem->setText(path);
@@ -911,6 +933,10 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
 
     auto firmwareManager = FirmwareManager::getInstance(this->emulator);
     firmwareManager->reload();
+
+    PaletteManager* paletteManager = PaletteManager::getInstance(this->emulator);
+    if (paletteManager)
+        paletteManager->load();
 
     std::string audioFloppyFolder = audioManager->drive.getFloppyFolder(emulator, false);
     std::string audioFloppyFolderExt = audioManager->drive.getFloppyFolder(emulator, true);
@@ -1001,7 +1027,14 @@ auto ConfigurationsLayout::loadSettings() -> void {
     }
 
     stateFast.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
-    stateFolder.pathEdit.setText(_settings->get<std::string>("states_folder", ""));
+
+    std::string _statesFolder = _settings->get<std::string>("states_folder", "");
+    stateFolder.pathEdit.setText(_statesFolder);
+    stateFolder.pathEdit.setEnabled(!_statesFolder.empty());
+
+    std::string _settingsFolder = globalSettings->get<std::string>(emulator->ident + "_settings_path", "");
+    settingsFolder.pathEdit.setText(_settingsFolder);
+    settingsFolder.pathEdit.setEnabled(!_settingsFolder.empty());
     
     if(memoryPattern) {
         Emulator::Interface::MemoryPattern pattern;
@@ -1076,7 +1109,7 @@ auto ConfigurationsLayout::translate() -> void {
     settings.control.remove.setText( trans->get("remove") );
     
     settingsFolder.label.setText( trans->get("folder", {}, true) );
-    settingsFolder.standard.setText( trans->get("home folder") );
+    settingsFolder.standard.setText( trans->getA("default") );
     
     settings.setText( trans->get("settings") );
     settings.active.activeLabel.setText( trans->get("active setting", {}, true) );
@@ -1085,8 +1118,7 @@ auto ConfigurationsLayout::translate() -> void {
     settings.startWithLastConfigCheckbox.setText( trans->get("Start with last loaded Settings") );
     
     stateFolder.label.setText( trans->get("folder", {}, true) );
-    stateFolder.standard.setText( trans->get("default") );
-    stateFolder.select.setText( trans->get("select") );
+    stateFolder.standard.setText( trans->getA("default") );
     
     stateFast.top.label.setText( trans->get("labelling", {}, true) );
     stateFast.top.find.setText( trans->get("find") );

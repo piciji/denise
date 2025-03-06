@@ -15,10 +15,10 @@ States::States(Emulator::Interface* emulator) {
 
 auto States::load( std::string path, bool prependFolder ) -> void {
 
-    if (path == "")
-        path = generateAutoPath();
+    if (path.empty())
+        path = generateAutoPath(false);
     else if (prependFolder)
-        path = statesFolder() + path;
+        path = program->generatedFolder(emulator, "states_folder", "states") + path;
         
     GUIKIT::File file( path );
 
@@ -77,12 +77,10 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     VideoManager::hidePlaceHolder();
 }
 
-auto States::save( std::string path, bool prependFolder ) -> void {
+auto States::save( std::string path ) -> void {
 
-    if (path == "")
-        path = generateAutoPath();
-    else if (prependFolder)
-        path = statesFolder() + path;
+    if (path.empty())
+        path = generateAutoPath(true);
     
     if (!activeEmulator || (activeEmulator != emulator))
         return;
@@ -222,7 +220,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                 continue;
             }
 
-            GUIKIT::File* file = filePool->get( setting->path );
+            GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), setting->path));
 
             if (!file)
                 continue;                           
@@ -369,31 +367,14 @@ auto States::statusMessage( std::string langKey, std::string replacer ) -> void 
     }), 4, GUIKIT::String::foundSubStr(langKey, "error") || GUIKIT::String::foundSubStr(langKey, "incompatible") );
 }
 
-auto States::statesFolder() -> std::string {
-    
-    auto path = settings->get<std::string>( "states_folder", "");
-
-    if (path.empty()) {
-        std::string _emuIdent = emulator->ident;
-        path = program->appFolder() + "/states/" + GUIKIT::String::toLowerCase(_emuIdent);
-        std::string basePath = GUIKIT::System::getUserDataFolder( );
-        
-        GUIKIT::File::createDir( path, basePath );
-        
-        path = basePath + path;
-    }
-    
-    return GUIKIT::File::beautifyPath(path);
-}
-
-auto States::generateAutoPath() -> std::string {
+auto States::generateAutoPath(bool createFolder) -> std::string {
     
     auto ident = settings->get<std::string>( "save_ident", "savestate");
     if (ident == "")
         ident = "savestate";
     auto pos = settings->get<unsigned>( "save_slot", 0);
 
-    return statesFolder() + ident + "_" + std::to_string( pos ) + ".sav";
+    return program->generatedFolder(emulator, "states_folder", "states", createFolder) + ident + "_" + std::to_string(pos) + ".sav";
 }
 
 auto States::updateTapeMenu() -> void {

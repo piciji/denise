@@ -1425,7 +1425,7 @@ struct File {
 
     static auto getPath( std::string _fn, bool returnSlashIfError = false ) -> std::string;
     static auto resolveRelativePath(std::string _fn, std::string relPath ) -> std::string;
-    static auto buildRelativePath(std::string refPath, std::string targetPath) -> std::string;
+    static auto buildRelativePath(std::string refPath, std::string targetPath, bool onlyWhenInRefPath = false) -> std::string;
     static auto isAbsolute(const std::string& path) -> bool;
     static auto removeDirectory( const std::string& path ) -> void;
     static auto xcopy(const std::string& src, const std::string& dest) -> bool;

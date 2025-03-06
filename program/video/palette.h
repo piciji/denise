@@ -21,11 +21,12 @@ struct PaletteManager {
     auto reorder(Emulator::Interface::Palette* palette) -> bool;
     auto getSize() -> unsigned;
     auto getIdent(unsigned i) -> std::string;
-    auto path() -> std::string;
+    auto path(bool createFolder = false)->std::string;
     auto rebuildSettings() -> void;
     auto add(Emulator::Interface::Palette& copy) -> Emulator::Interface::Palette&;
     auto remove( Emulator::Interface::Palette& palette ) -> void;
     auto getCurrentPalette() -> Emulator::Interface::Palette*;
+    auto removeEditablePalettes() -> void;
 };
 
 extern std::vector<PaletteManager*> paletteManagers;

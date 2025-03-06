@@ -21,12 +21,7 @@ auto Handler::start( Emulator::Interface* emulator, std::string& errorText ) -> 
     
     GUIKIT::Settings* settings = program->getSettings( activeEmulator );
 
-    std::string path = settings->get<std::string>( "audio_record_path", "");
-    
-    if (path.empty()) {
-        errorText = trans->get("no save location");
-        return false;
-    }
+    std::string path = program->generatedFolder(emulator, "audio_record_path", "wavs", true);
     
     std::string fileName = settings->get<std::string>( "record_ident", "sample");
 

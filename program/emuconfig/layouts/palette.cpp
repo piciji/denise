@@ -19,16 +19,9 @@ PaletteControlLayout::PaletteControlLayout() {
     append( spacer, {~0u, 0u} );
     append( ownPalette, {0u, 0u}, 10 );    
     append( create, {0u, 0u}, 10 );    
-    append( remove, {0u, 0u} );
-    setAlignment( 0.5 );
-}
-
-PaletteSaveLayout::PaletteSaveLayout() {
-    append( spacer, {~0u, 0u} );
-    append( title, {0u, 0u}, 10 );
-    append( allChanges, {0u, 0u}, 30 );
-    append( onExit, {0u, 0u} );
-
+    append( remove, {0u, 0u}, 10 );
+    append( allChanges, { 0u, 0u }, 5);
+    append( save, { 0u, 0u }, 5);
     setAlignment( 0.5 );
 }
 
@@ -55,10 +48,10 @@ PaletteDetailLayout::PaletteDetailLayout() {
 PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     
     this->tabWindow = tabWindow;
-    this->emulator = tabWindow->emulator;     
+    this->emulator = tabWindow->emulator;
 
     setMargin(10);
-    updateList();
+    
     PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
     GUIKIT::HorizontalLayout* colorLine = nullptr;
     
@@ -174,15 +167,11 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
 
     colorLines.push_back(colorLine);
     paletteLayout.append(*colorLine,{~0u, 0u}, 10);        
-    paletteLayout.append(detailLayout, {~0u, 0u}, 10); 
-    
-    setPalette( getSelectedPalette() );
+    paletteLayout.append(detailLayout, {~0u, 0u}, 10);         
     
     main.append( listView, { GUIKIT::Font::scale( 180 ), paletteLayout.minimumSize().height - 10}, 10 );
     main.append( paletteLayout, {~0u, 0u} );  
     append(main, {~0u, 0u}, 10);    
-    
-    paletteLayout.append(saveLayout,{~0u, 0u} );
     
     listView.onChange = [this]() {
         
@@ -260,25 +249,20 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         emuThread->unlock();
     };
     
-    saveLayout.allChanges.onActivate = [this]() {
+    controlLayout.save.onActivate = [this]() {
         
         PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
         
         if ( !paletteManager->save() )
-            mes->warning( trans->get("file_creation_error", {{"%path%", paletteManager->path()}} ));
+            statusHandler->setMessage(trans->get("file_creation_error", { {"%path%", paletteManager->path()}} ));
         else {
             emuThread->lock();
-            statusHandler->setMessage( trans->get("file_creation_success", {{"%path%", paletteManager->path()}} ) );
+            statusHandler->setMessage(trans->get("file_creation_success", {{"%path%", paletteManager->path()}} ));
             emuThread->unlock();
         }
     };
-    
-    saveLayout.onExit.onToggle = [this](bool checked) {
-        
-        _settings->set<bool>( "save_palettes_on_exit", checked );
-    };
 
-    saveLayout.onExit.setChecked( _settings->get<bool>( "save_palettes_on_exit", true ) );
+    loadSettings();
 }
 
 auto PaletteLayout::updateDetailLayout() -> void {
@@ -400,11 +384,9 @@ auto PaletteLayout::translate() -> void {
     
     controlLayout.ownPalette.setText( trans->get("own_palette", {}, true) );
     controlLayout.create.setText( trans->get("create") );
-    controlLayout.remove.setText( trans->get("remove") );    
-    
-    saveLayout.title.setText( trans->get("save", {}, true) );
-    saveLayout.allChanges.setText( trans->get("all_changes") );
-    saveLayout.onExit.setText( trans->get("save_on_exit") );
+    controlLayout.remove.setText( trans->get("remove") );
+    controlLayout.allChanges.setText(trans->get("all_changes"));
+    controlLayout.save.setText(trans->get("save"));
 
     SliderLayout::scale({&detailLayout.right.r, &detailLayout.right.g, &detailLayout.right.b}, "255");
 }
@@ -421,25 +403,6 @@ auto PaletteLayout::markSelectedColor( PaletteColorLayout* selectColorLayout ) -
 }
 
 auto PaletteLayout::loadSettings() -> void {
-
-    auto usedPaletteId = _settings->get<unsigned>( "palette", 0 );
-    
-    unsigned selected = 0;
-    unsigned i = 0;
-    
-    for ( auto& palette : emulator->palettes ) {
-        
-        if (palette.id == usedPaletteId)
-            selected = i;            
-        
-        i++;
-    }
-    
-    listView.setSelection( selected );
-        
-    auto& palette = getSelectedPalette();
-
-    this->setPalette(palette);
-
-    saveLayout.onExit.setChecked( _settings->get<bool>( "save_palettes_on_exit", true ) );
+    updateList();
+    setPalette(getSelectedPalette());
 }

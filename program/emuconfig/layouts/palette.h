@@ -13,19 +13,12 @@ struct PaletteControlLayout : GUIKIT::HorizontalLayout {
     GUIKIT::LineEdit title;
     GUIKIT::Widget spacer;
     GUIKIT::Label ownPalette;
-    GUIKIT::Button create;    
+    GUIKIT::Button create;
     GUIKIT::Button remove;
+    GUIKIT::Label allChanges;
+    GUIKIT::Button save;
     
     PaletteControlLayout();
-};
-
-struct PaletteSaveLayout : GUIKIT::HorizontalLayout {
-    GUIKIT::Widget spacer;
-    GUIKIT::Label title;
-    GUIKIT::Button allChanges;
-    GUIKIT::CheckBox onExit;
-    
-    PaletteSaveLayout();
 };
 
 struct PaletteDetailLayout : GUIKIT::HorizontalLayout {
@@ -60,7 +53,6 @@ struct PaletteLayout : GUIKIT::VerticalLayout {
     std::vector<PaletteColorLayout*> colorLayouts;
     
     PaletteControlLayout controlLayout; 
-    PaletteSaveLayout saveLayout;
     PaletteDetailLayout detailLayout;
     
     auto translate() -> void;

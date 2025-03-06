@@ -476,7 +476,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         }
 
 		if ( showListing( layout ) ) { //preload last listing
-			GUIKIT::File* file = filePool->get( fSetting->path );
+            GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path));
 			uint8_t* data = nullptr;
 
             if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
@@ -859,7 +859,7 @@ auto MediaLayout::prepareCreator() -> void {
     }
 }
 
-auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void {
+auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup, bool allowRelativePaths) -> void {
     if (mediaGroup.isExpansion() && mediaGroup.expansion->isRS232())
         return;
 
@@ -875,14 +875,20 @@ auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> vo
     if (mediaGroup.isExpansion())
         title = "select_cartridge_folder";
 
-    block->select.onActivate = [this, block, title, settingFolderIdent]() {
+    block->select.onActivate = [this, block, title, settingFolderIdent, allowRelativePaths]() {
+        auto curPath = settings->get<std::string>(settingFolderIdent, "");
+        if (allowRelativePaths && !curPath.empty())
+            curPath = GUIKIT::File::resolveRelativePath(program->installFolder(), curPath);
+
         auto path = GUIKIT::BrowserWindow()
             .setTitle(trans->get(title))
-            .setPath( settings->get<std::string>(settingFolderIdent, "") )
+            .setPath(curPath)
             .setWindow(*this->tabWindow)
             .directory();
 
         if (!path.empty()) {
+            if (allowRelativePaths)
+                path = GUIKIT::File::buildRelativePath(program->installFolder(), path, true);
             settings->set<std::string>(settingFolderIdent, path);
             block->edit.setText(path);
         }
@@ -909,7 +915,7 @@ auto MediaLayout::preparePaths() -> void {
         saveImage->name = "disksave";
         saveImage->suffix.push_back("sav");
         saveImage->type = Emulator::Interface::MediaGroup::Type::Disk;
-        preparePath(*saveImage);
+        preparePath(*saveImage, false);
     }
 }
 
@@ -951,6 +957,8 @@ auto MediaLayout::updateListing( Emulator::Interface::Media* media ) -> void {
 auto MediaLayout::savePath( std::string& groupName, std::string path ) -> void {
 	
 	auto baseFolderIdent = _underscore(groupName) + "_folder";
+
+    path = GUIKIT::File::buildRelativePath(program->installFolder(), path, true);
 	
 	settings->set<std::string>(baseFolderIdent + "_auto", path);
 }
@@ -1164,7 +1172,6 @@ auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* f
 auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
     bool fromState = options & 1;
     bool dontUpdateSelected = options & 2;
-    bool asWP = options & 4;
 
     if (!block)
         return;
@@ -1185,7 +1192,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
 
     if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
-        fileloader->updateFileSetting(fSetting, file, item, asWP);
+        fileloader->updateFileSetting(fSetting, file, item);
         media->guid = uintptr_t(file);
 
         emulator->insertMedium(media, data, size);
@@ -1197,7 +1204,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
             block->selector.combo.setSelection(0);
             block->selector.combo.onChange();        
         }
-        fileloader->updateFileSetting(fSetting, file, item, asWP);
+        fileloader->updateFileSetting(fSetting, file, item);
     }
 
     if (showListing(layout)) {
@@ -1494,6 +1501,10 @@ auto MediaLayout::loadSettings() -> void {
     else if (selectedLayout && selectedLayout->mediaGroup->isTape())
         useTraps.setChecked( settings->get<bool>("use_tape_traps", false) );
 
+    auto pathBlock = pathsLayout.getBlockByName("disksave");
+    if (pathBlock)
+        pathBlock->edit.setText(settings->get<std::string>("disksave_folder", ""));
+
     for(auto& nav : navElements) {
         
         if (!nav.mediaGroupLayout)
@@ -1524,7 +1535,7 @@ auto MediaLayout::loadSettings() -> void {
 
             if ( showListing( layout ) ) {
                 
-                GUIKIT::File* file = filePool->get(fSetting->path);
+                GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path));
                 uint8_t* data = nullptr;
                
                 if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
@@ -1578,6 +1589,16 @@ auto PathsLayout::getBlock(Emulator::Interface::MediaGroup* mediaGroup) -> Paths
             return block;
     }
     
+    return nullptr;
+}
+
+auto PathsLayout::getBlockByName(const std::string& name) -> PathsLayout::Block* {
+
+    for (auto block : blocks) {
+        if (block->mediaGroup->name == name)
+            return block;
+    }
+
     return nullptr;
 }
 

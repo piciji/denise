@@ -34,9 +34,7 @@ struct States {
         
     std::vector<InsertFirmware> insertedFirmware;
     
-    auto statesFolder() -> std::string;  
-    
-    auto generateAutoPath() -> std::string;
+    auto generateAutoPath(bool createFolder) -> std::string;
     
     auto load( std::string path = "", bool prependFolder = false ) -> void;
     
@@ -48,7 +46,7 @@ struct States {
     
     auto statusMessage( std::string langKey, std::string replacer ) -> void;
     
-    auto save( std::string path = "", bool prependFolder = false ) -> void;  
+    auto save( std::string path = "" ) -> void;  
     
     auto loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emulator::Interface::Media*>;
     

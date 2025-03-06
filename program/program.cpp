@@ -199,7 +199,7 @@ auto Program::init() -> void {
     for( auto emulator : emulators )        
         initEmulator( emulator );
     	
-	logger->setSavePath( GUIKIT::System::getUserDataFolder(appFolder()) );
+	logger->setSavePath( generatedFolder("") );
 
 	if (!cmd->debug)
         addCustomFont();
@@ -219,6 +219,10 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
         emulator->setModelValue( model.id, _settings->get<int>( _underscore(model.name), model.defaultValue, model.range) );
     
     updateCrop( emulator );
+
+    PaletteManager* paletteManager = PaletteManager::getInstance(emulator);
+    if (paletteManager)
+        paletteManager->load();
 
     setPalette( emulator );
     
@@ -293,7 +297,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             media.guid = (uintptr_t)(nullptr);
 
             if (!IPMode) {
-                GUIKIT::File* file = filePool->get(fSetting->path);
+                GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(installFolder(), fSetting->path));
                 if (!file)
                     continue;
 
@@ -576,16 +580,24 @@ auto Program::getSystemLangFile() -> std::string {
     return DEFAULT_TRANS_FILE;
 }
 
+auto Program::installFolder() -> std::string {
+    return GUIKIT::System::getResourceFolder(appFolder());
+}
+
+auto Program::userFolder() -> std::string {
+    return GUIKIT::System::getUserDataFolder();
+}
+
 auto Program::translationFolder() -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + TRANSLATION_FOLDER;
+    return installFolder() + TRANSLATION_FOLDER;
 }
 
 auto Program::dataFolder() -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + DATA_FOLDER;
+    return installFolder() + DATA_FOLDER;
 }
 
 auto Program::fontFolder() -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + FONT_FOLDER;
+    return installFolder() + FONT_FOLDER;
 }
 
 auto Program::settingsFile( std::string ident ) -> std::string {
@@ -594,36 +606,19 @@ auto Program::settingsFile( std::string ident ) -> std::string {
 }
 
 auto Program::settingsFileFromEmuFolder( std::string ident ) -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + ident + SETTINGS_FILE;
+    return installFolder() + ident + SETTINGS_FILE;
 }
 
 auto Program::shaderFolder() -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + SHADER_FOLDER;
+    return installFolder() + SHADER_FOLDER;
 }
 
 auto Program::imgFolder() -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + IMAGES_FOLDER;
+    return installFolder() + IMAGES_FOLDER;
 }
 
 auto Program::soundFolder() -> std::string {
-    return GUIKIT::System::getResourceFolder(appFolder()) + SOUND_FOLDER;
-}
-
-auto Program::diskSaveFolder(Emulator::Interface* emulator) -> std::string {
-    auto settings = getSettings( emulator );
-    auto path = settings->get<std::string>( "disksave_folder", "");
-
-    if (path.empty()) {
-        std::string _emuIdent = emulator->ident;
-        path = program->appFolder() + "/disksave/" + GUIKIT::String::toLowerCase(_emuIdent);
-        std::string basePath = GUIKIT::System::getUserDataFolder( );
-
-        GUIKIT::File::createDir( path, basePath );
-
-        path = basePath + path;
-    }
-
-    return GUIKIT::File::beautifyPath(path);
+    return installFolder() + SOUND_FOLDER;
 }
 
 auto Program::log(std::string data, bool newLine) -> void {

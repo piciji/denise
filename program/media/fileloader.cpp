@@ -670,7 +670,8 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     if (!file)
         return false;
 
-    settings->set<std::string>( _underscore(media->group->name) + "_folder_auto", file->getPath());
+    auto folderPath = GUIKIT::File::buildRelativePath(program->installFolder(), file->getPath(), true);
+    settings->set<std::string>(_underscore(media->group->name) + "_folder_auto", folderPath);
 
     if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
         return program->errorMediumSize( file, emuView ? emuView->message : view->message ), false;
@@ -778,17 +779,17 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     }
 }
 
-auto Fileloader::updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GUIKIT::File::Item* item, bool& wp ) -> void {
-    fSetting->setPath(file->getFile(), !cmd->autoload);
+auto Fileloader::updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
+    auto path = GUIKIT::File::buildRelativePath(program->installFolder(), file->getFile(), true);
+
+    fSetting->setPath(path, !cmd->autoload);
     fSetting->setFile(item->info.name, !cmd->autoload);
     fSetting->setId(item->id, !cmd->autoload);
-    //fSetting->setWriteProtect(wp, !cmd->autoload);
 }
 
 auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
     bool fromState = options & 1;
     bool dontUpdateSelected = options & 2;
-    bool asWP = options & 4;
 
     auto mediaGroup = media->group;
 
@@ -802,7 +803,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
-        updateFileSetting(fSetting, file, item, asWP);
+        updateFileSetting(fSetting, file, item);
         media->guid = uintptr_t(file);
 
         emulator->insertMedium(media, data, size);
@@ -814,7 +815,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         if (mediaGroup->expansion->pcbs.size())
             settings->set<unsigned>( _underscore(media->name) + "_pcb", 0);
 
-        updateFileSetting(fSetting, file, item, asWP);
+        updateFileSetting(fSetting, file, item);
     }
 
     emulator->getListing(media);
@@ -933,17 +934,11 @@ auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupNa
         lastPathFirst ^= 1;
 
         path = settings->get<std::string>( useIdent, "" );
+        path = GUIKIT::File::resolveRelativePath(program->installFolder(), path);
 
         if ( !path.empty() )
             break;
     }
-
-//    auto baseFolderIdent = _underscore(groupName) + "_folder";
-//
-//    auto path = settings->get<std::string>( baseFolderIdent, "" );
-//
-//    if ( path == "" )
-//        path = settings->get<std::string>( baseFolderIdent + "_auto", "" );
 
     return path;
 }
@@ -1050,7 +1045,7 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
         }
     }
 
-    file = filePool->get( fSetting->path );
+    file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path));
 
     GUIKIT::File::Item item;
     item.id = fSetting->id;
@@ -1070,9 +1065,9 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
 
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
     if (emuView && emuView->mediaLayout)
-        emuView->mediaLayout->insertImage( media, file, &item, fSetting->writeProtect ? 4 : 0 );
+        emuView->mediaLayout->insertImage( media, file, &item );
     else
-        fileloader->insertImage( emulator, media, file, &item, fSetting->writeProtect ? 4 : 0 );
+        fileloader->insertImage( emulator, media, file, &item );
 
     autoloader->setOnlyForFirstDrive(emulator, media);
 

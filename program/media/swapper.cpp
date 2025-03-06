@@ -33,7 +33,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 	listView.onChange = [this]() {
 		auto pos = listView.selection() + 1;
 		auto fSetting = getSetting( pos );
-        GUIKIT::File* file = filePool->get(fSetting->path);
+        GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path));
 
         if (file)
             updateWP(fSetting->writeProtect);
@@ -108,10 +108,11 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                     filePool->assign(_ident(emulator, "swapper_" + std::to_string(pos)), file);
 
                     auto fSetting = getSetting(pos);
-                    fSetting->setPath(file->getFile());
+                    std::string _path = GUIKIT::File::buildRelativePath(program->installFolder(), file->getFile(), true);
+                    fSetting->setPath(_path);
                     fSetting->setFile(item->info.name);
                     fSetting->setId(item->id);
-                    listView.setText(pos - 1, {std::to_string(pos), file->getFile(), item->info.name});
+                    listView.setText(pos - 1, { std::to_string(pos), _path, item->info.name });
                     updateWP(false);
 
                     if (++pos == SWAPPER_SLOTS)
@@ -137,10 +138,11 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                     filePool->assign(_ident(emulator, "swapper_" + std::to_string(pos)), file);
 
                     auto fSetting = getSetting(pos);
-                    fSetting->setPath(file->getFile());
+                    std::string _path = GUIKIT::File::buildRelativePath(program->installFolder(), file->getFile(), true);
+                    fSetting->setPath(_path);
                     fSetting->setFile(item.info.name);
                     fSetting->setId(item.id);
-                    listView.setText(pos - 1, {std::to_string(pos), file->getFile(), item.info.name});
+                    listView.setText(pos - 1, { std::to_string(pos), _path, item.info.name });
 
                     if (pos == startPos)
                         updateWP(false);
@@ -225,11 +227,13 @@ auto SwapperLayout::preselectPath( ) -> std::string {
 	
 	auto path = mediaLayout->settings->get<std::string>( "disk_folder_swap", "" );	
 	
-	return path;
+    return GUIKIT::File::resolveRelativePath(program->installFolder(), path);
 }
 
 auto SwapperLayout::savePath( std::string path ) -> void {
 	
+    path = GUIKIT::File::buildRelativePath(program->installFolder(), path, true);
+
 	mediaLayout->settings->set<std::string>("disk_folder_swap", path);
 }
 

@@ -94,19 +94,19 @@ auto Program::initVideo(bool driverChange) -> void {
             return;
         }
 
-        std::string cacheFolder = GUIKIT::System::getUserDataFolder(appFolder());
-        std::string absPath = cacheFolder + diskFile.path;
-        GUIKIT::File f(absPath, true);
+        std::string subPath = GUIKIT::File::getPath(diskFile.path);
+        std::string cacheFile = GUIKIT::String::getFileName(diskFile.path);
 
         if (diskFile.data && diskFile.size) {
-            std::string subPath = GUIKIT::File::getPath(diskFile.path);
-
-            if ( !GUIKIT::File::isDir( GUIKIT::File::getPath(absPath) ) )
-                GUIKIT::File::createDir(subPath, cacheFolder);
+            std::string absPath = program->generatedFolder(subPath, true) + cacheFile;
+            GUIKIT::File f(absPath, true);
 
             if (f.open(GUIKIT::File::Mode::Write))
                 f.write(diskFile.data, diskFile.size);
         } else {
+            std::string absPath = program->generatedFolder(subPath, false) + cacheFile;
+            GUIKIT::File f(absPath, true);
+
             if (f.open()) {
                 diskFile.data = f.read();
                 diskFile.size = f.getSize();
@@ -618,7 +618,7 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
             file.unload();
 
             if (!found) {
-                screenTextFontPath = getCustomFontsFolder() + _fontFile;
+                screenTextFontPath = generatedFolder(activeEmulator, "", "fonts") + _fontFile;
                 file.setFile(screenTextFontPath);
                 found = file.exists();
                 file.unload();

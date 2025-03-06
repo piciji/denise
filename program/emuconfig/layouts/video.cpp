@@ -611,7 +611,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (loadShader(path)) {
             layShader.favourite.control.add.setEnabled();
             if (externalFolder())
-                _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
+                _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(path), true));
         }
         emuThread->unlock();
     };
@@ -629,7 +629,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             buildShaderUI(preset);
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             if (externalFolder())
-                _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
+                _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(path), true));
             layShader.favourite.control.add.setEnabled();
             layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
@@ -650,7 +650,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             buildShaderUI(preset);
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             if (externalFolder())
-                _settings->set<std::string>("slang_folder", GUIKIT::File::getPath(path));
+                _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(path), true));
             layShader.favourite.control.add.setEnabled();
             layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
@@ -667,9 +667,12 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
     layPass.control.save.onActivate = [this]() {
         static const std::vector<std::string> suffixList = {"slangp"};
+        auto savePath = _settings->get<std::string>("slang_folder_save", "");
+        savePath = GUIKIT::File::resolveRelativePath(program->installFolder(), savePath);
+
         auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->getA("select slang shader"))
-                .setPath( _settings->get<std::string>("slang_folder_save", "") )
+                .setPath(savePath)
                 .setFilters({ GUIKIT::BrowserWindow::transformFilter("SLANG", suffixList ) })
                 .save();
 
@@ -681,7 +684,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
         if (vManager()->savePreset(path)) {
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
-            _settings->set<std::string>("slang_folder_save", GUIKIT::File::getPath(path));
+            _settings->set<std::string>("slang_folder_save", GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(path), true));
         }
     };
 
@@ -707,13 +710,14 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
         while(1) {
             std::string fav = _settings->get<std::string>( "shader_fav_" + std::to_string(i), "");
-
+            fav = GUIKIT::File::resolveRelativePath(program->installFolder(), fav);
             if (fav == path)
                 return;
 
             if (fav == "") {
-                layShader.favourite.list.append({path});
-                _settings->set<std::string>( "shader_fav_" + std::to_string(i), path);
+                auto _path = GUIKIT::File::buildRelativePath(program->installFolder(), path, true);
+                layShader.favourite.list.append({ _path });
+                _settings->set<std::string>("shader_fav_" + std::to_string(i), _path);
                 break;
             }
             i++;
@@ -732,7 +736,6 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         int i = 0;
         while(1) {
             std::string path = _settings->get<std::string>( "shader_fav_" + std::to_string(i), "");
-
             if (path.empty())
                 break;
 
@@ -757,6 +760,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layShader.favourite.list.onActivate = [this]() {
         int selection = layShader.favourite.list.selection();
         std::string path = layShader.favourite.list.text(selection, 0);
+        path = GUIKIT::File::resolveRelativePath(program->installFolder(), path);
         emuThread->lock();
         if (loadShader(path))
             view->updateShader(emulator);
@@ -979,11 +983,8 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     };
 
     layShader.main.info.clearCache.onActivate = [this]() {
-        std::string cacheFolder = GUIKIT::System::getUserDataFolder(program->appFolder());
-        if (cacheFolder == "./")
-            return;
-
-        GUIKIT::File::removeDirectory( cacheFolder + "cache" );
+        std::string cacheFolder = program->generatedFolder("cache");
+        GUIKIT::File::removeDirectory( cacheFolder );
     };
 
     layShader.main.control.imgReplacer.onActivate = [this]() {
@@ -1179,7 +1180,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (getTTF(_fn, -1))
             return;
 
-        std::string _path = program->getCustomFontsFolder(true);
+        std::string _path = program->generatedFolder("fonts", true);
 
         if (GUIKIT::File::xcopy(filePath, _path + _fn)) {
             for (auto view : emuConfigViews) {
@@ -1202,7 +1203,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (_fn.empty())
             return;
 
-        std::string _path = program->getCustomFontsFolder();
+        std::string _path = program->generatedFolder("fonts");
 
         if (_path.empty())
             return;
@@ -1284,7 +1285,7 @@ auto VideoLayout::fillFontTypeList() -> void {
     for(auto& file : list)
         addTTF(1, file);
 
-    list = GUIKIT::File::getFolderListAlt(program->getCustomFontsFolder(), {".ttf", ".otf", ".ttc"}, false);
+    list = GUIKIT::File::getFolderListAlt(program->generatedFolder("fonts"), { ".ttf", ".otf", ".ttc" }, false);
     for(auto& file : list)
         addTTF(2, file);
 
@@ -1317,7 +1318,7 @@ auto VideoLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
     if (mode == 1) {
         screenTextFontPath = program->fontFolder() + _fontFile;
     } else if (mode == 2) {
-        screenTextFontPath = program->getCustomFontsFolder() + _fontFile;
+        screenTextFontPath = program->generatedFolder("fonts") + _fontFile;
     } else
         return;
 
@@ -2241,7 +2242,7 @@ auto VideoLayout::addShaderUI() -> void {
 
 auto VideoLayout::getShaderFolder() -> std::string {
     if (externalFolder())
-        return _settings->get<std::string>("slang_folder", "");
+        return  GUIKIT::File::resolveRelativePath(program->installFolder(), _settings->get<std::string>("slang_folder", ""));
 
     return program->shaderFolder();
 }

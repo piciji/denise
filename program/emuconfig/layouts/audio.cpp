@@ -55,11 +55,13 @@ tapeNoiseVolume("%", true) {
 AudioRecordLayout::Location::Location() {
     
     append(label, {0u, 0u}, 5 );
-    append(path, {~0u, 0u}, 5  );
+    append(pathEdit, { ~0u, 0u }, 5);
+    append(standard, { 0u, 0u }, 5);
     append(select, {0u, 0u} );
     
-    path.setEditable( false );
+    pathEdit.setEditable( false );
     
+    label.setFont(GUIKIT::Font::system("bold"));
     setAlignment( 0.5 );
 }
 
@@ -569,9 +571,16 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         if (path.empty())
             return;
         
-        audioRecord.location.path.setText( path );
+        audioRecord.location.pathEdit.setText(path);
+        audioRecord.location.pathEdit.setEnabled();
         
         _settings->set<std::string>( "audio_record_path", path );
+    };
+
+    audioRecord.location.standard.onActivate = [this]() {
+        _settings->set<std::string>("audio_record_path", "");
+        audioRecord.location.pathEdit.setText("");
+        audioRecord.location.pathEdit.setEnabled(false);
     };
     
     audioRecord.duration.minutesSlider.slider.onChange = [this](unsigned position) {
@@ -943,7 +952,8 @@ auto AudioLayout::translate() -> void {
 
     audioRecord.setText(trans->get("Audio Record"));
     audioRecord.location.label.setText( trans->get("wav folder") );
-    audioRecord.location.select.setText("...");
+    audioRecord.location.standard.setText(trans->get("default"));
+    audioRecord.location.select.setText(trans->get("select"));
 
     audioRecord.duration.useTimeLimit.setText(trans->get("Recording time"));
     audioRecord.duration.minutesSlider.name.setText(trans->get("Minutes",{}, true));
@@ -1006,7 +1016,9 @@ auto AudioLayout::loadSettings() -> void {
     bass.bottom.reduceClipping.slider.setPosition((unsigned) (bassReduceClipping * 10.0));
     bass.bottom.reduceClipping.value.setText(GUIKIT::String::convertDoubleToString(bassReduceClipping, 1));
     
-    audioRecord.location.path.setText( _settings->get<std::string>( "audio_record_path", "" ) );
+    std::string _recordPath = _settings->get<std::string>("audio_record_path", "");
+    audioRecord.location.pathEdit.setText(_recordPath);
+    audioRecord.location.pathEdit.setEnabled(!_recordPath.empty());
     
     unsigned value = _settings->get<unsigned>( "audio_record_minutes", 0, {0, 120} );
     

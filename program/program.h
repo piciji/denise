@@ -54,6 +54,7 @@ struct Program : Emulator::Interface::Bind {
     bool quitInProgress = false;
     bool initialized = false;
     static bool focused;
+    bool portable = false;
 
 	unsigned loopFrames = 0;
     GUIKIT::Timer fpsChangeTimer;
@@ -74,6 +75,10 @@ struct Program : Emulator::Interface::Bind {
 	auto loopNoGui() -> void;
     auto loopUserInterface() -> void;
     auto loadTranslation(std::string file) -> bool;
+    auto installFolder() -> std::string;
+    auto userFolder() -> std::string;
+    auto generatedFolder(const std::string& subPath, bool createFolder = false) -> std::string;
+    auto generatedFolder(Emulator::Interface* emulator, const std::string& settingIdent, const std::string& subPath, bool createFolder = false) -> std::string;
     auto translationFolder() -> std::string;
     auto dataFolder() -> std::string;
     auto fontFolder() -> std::string;
@@ -81,7 +86,6 @@ struct Program : Emulator::Interface::Bind {
     auto soundFolder() -> std::string;
     auto shaderFolder() -> std::string;
 	auto appFolder() -> std::string;
-	auto diskSaveFolder(Emulator::Interface* emulator) -> std::string;
     auto getSystemLangFile() -> std::string;
     auto saveSettings(bool onExit = false) -> void;
     auto loadSettings() -> void;
@@ -90,8 +94,7 @@ struct Program : Emulator::Interface::Bind {
     auto settingsFileFromEmuFolder( std::string ident ) -> std::string;
     auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
     auto forceSavingSomeGlobalSettings() -> void;
-    auto getCustomSettingsFolder( Emulator::Interface* emulator, bool createFolder = false ) -> std::string;
-	auto getCustomFontsFolder(bool createFolder = false) -> std::string;
+    auto getSettingsFolder( Emulator::Interface* emulator, bool createFolder = false ) -> std::string;
     auto initEmulator( Emulator::Interface* emulator ) -> void;
     auto setMemoryPattern( Emulator::Interface* emulator ) -> void;
 	auto getMemoryPatternFromConfig(Emulator::Interface* emulator, Emulator::Interface::MemoryPattern& pattern) -> void;
@@ -122,7 +125,7 @@ struct Program : Emulator::Interface::Bind {
     auto finishStartup() -> void;
     auto trapsResult(Emulator::Interface::Media* media, bool error) -> void override;
     auto libraryMissing(std::string plugin) -> void override;
-	auto getAssignedSaveFile(Emulator::Interface::Media* media) -> std::string;
+    auto getAssignedSaveFile(Emulator::Interface::Media* media, bool createFolder = false) -> std::string;
 	auto initExpansionRom(Emulator::Interface* emulator, const std::string& ident, const std::string& file) -> void;
 
     auto addCustomFont() -> void;

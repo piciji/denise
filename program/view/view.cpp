@@ -830,6 +830,7 @@ auto View::buildShader() -> void {
         int i = 0;
         while(1) {
             std::string fav = settings->get<std::string>( "shader_fav_" + std::to_string(i), "");
+            fav = GUIKIT::File::resolveRelativePath(program->installFolder(), fav);
             if (fav.empty())
                 break;
 
@@ -1553,7 +1554,7 @@ auto View::buildMenu() -> void {
             if (file.exists()) {
                 if (file.del()) {
                     auto fSetting = FileSetting::getInstance( activeEmulator, _underscore( media->name ) );
-                    GUIKIT::File* _file = filePool->get(fSetting->path);
+                    GUIKIT::File* _file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path));
 
                     activeEmulator->insertMedium(media, _file->archiveData( fSetting->id ), _file->archiveDataSize(fSetting->id));
 

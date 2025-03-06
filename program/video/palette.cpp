@@ -19,12 +19,11 @@ PaletteManager::PaletteManager(Emulator::Interface* emulator) {
     
     palSettings = new GUIKIT::Settings;
     this->emulator = emulator;
-    load();
 }
 
 PaletteManager::~PaletteManager() {
     
-    if( !cmd->debug && program->getSettings(emulator)->get<bool>( "save_palettes_on_exit", true ) )            
+    if( !cmd->debug)            
         save();
 }
 
@@ -109,12 +108,22 @@ auto PaletteManager::save() -> bool {
     
     rebuildSettings();
     
-    return palSettings->save( path() );
+    return palSettings->save( path(true) );
+}
+
+auto PaletteManager::removeEditablePalettes() -> void {
+    auto iter = std::remove_if(emulator->palettes.begin(), emulator->palettes.end(),
+        [](const Emulator::Interface::Palette& palette) {
+            return palette.editable;
+        });
+
+    emulator->palettes.erase(iter, emulator->palettes.end());
 }
 
 auto PaletteManager::load() -> void {
+    removeEditablePalettes();
 
-    palSettings->load( path() );
+    palSettings->load( path(false) );
     
     auto& list = palSettings->getList();
     
@@ -158,24 +167,18 @@ auto PaletteManager::load() -> void {
     sanitize();
 }
 
-auto PaletteManager::sanitize() -> void {
-       
-    std::vector<unsigned> deletePositions;
-    
-    unsigned i = 0;
-    
+auto PaletteManager::sanitize() -> void {    
     for( auto& palette : emulator->palettes ) {
-        
         if (!reorder( &palette ))
-            deletePositions.push_back( i );        
-        
-        i++;
+            palette.id = ~0;
     }
-    
-    for(auto& pos : deletePositions) {
-        
-        GUIKIT::Vector::eraseVectorPos( emulator->palettes, pos );
-    }
+
+    auto iter = std::remove_if(emulator->palettes.begin(), emulator->palettes.end(),
+        [](const Emulator::Interface::Palette& palette) {
+            return palette.id == ~0;
+        });
+
+    emulator->palettes.erase(iter, emulator->palettes.end());
 }
 
 auto PaletteManager::reorder(Emulator::Interface::Palette* palette) -> bool {
@@ -243,7 +246,6 @@ auto PaletteManager::getIdent(unsigned i) -> std::string {
     return ident;
 }
 
-auto PaletteManager::path() -> std::string {
-    
-    return GUIKIT::System::getUserDataFolder(program->appFolder()) + emulator->ident + ".pal";
+auto PaletteManager::path(bool createFolder) -> std::string {
+    return program->generatedFolder("", createFolder) + emulator->ident + ".pal";
 }

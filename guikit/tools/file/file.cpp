@@ -732,7 +732,7 @@ auto File::getOffsetDataStringFromBinary( std::string inFile, std::string outFil
 }
 
 auto File::resolveRelativePath(std::string _fn, std::string relPath ) -> std::string {
-    if (isAbsolute(relPath))
+    if (relPath.empty() || isAbsolute(relPath))
         return relPath;
 
     std::string basePath = getPath(_fn, false);
@@ -775,7 +775,7 @@ auto File::isAbsolute(const std::string& path) -> bool {
     return false;
 }
 
-auto File::buildRelativePath(std::string refPath, std::string targetPath) -> std::string {
+auto File::buildRelativePath(std::string refPath, std::string targetPath, bool onlyWhenInRefPath) -> std::string {
     int length = targetPath.size();
     if (refPath.size() < length)
         length = refPath.size();
@@ -794,9 +794,20 @@ auto File::buildRelativePath(std::string refPath, std::string targetPath) -> std
         return targetPath;
 
     refPath = refPath.substr(matchPos);
+    if (String::endsWith(refPath, "/"))
+        refPath += "dummy";
+    auto parts = String::split(refPath, '/');
+    if (onlyWhenInRefPath) {
+#ifdef GUIKIT_WINAPI        
+        if (parts.size() > 1)
+#else
+        if (parts.size() > 2) allow to leave /bin or /MacOS
+#endif      
+            return targetPath; // keep absolute path
+    }
+
     targetPath = targetPath.substr(matchPos);
 
-    auto parts = String::split(refPath, '/');
     if (parts.size() > 1) {
         for(int i = 0; i < (parts.size() - 1); i++ ) {
             targetPath = "../" + targetPath;

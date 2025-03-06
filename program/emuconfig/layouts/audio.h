@@ -3,7 +3,8 @@ struct AudioRecordLayout : GUIKIT::FramedVerticalLayout {
     
     struct Location : GUIKIT::HorizontalLayout {
         GUIKIT::Label label;
-        GUIKIT::LineEdit path;
+        GUIKIT::LineEdit pathEdit;
+        GUIKIT::Button standard;
         GUIKIT::Button select;
         
         Location();
