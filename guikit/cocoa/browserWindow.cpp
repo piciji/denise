@@ -187,6 +187,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
             if(!state.title.empty()) [panel setMessage:[NSString stringWithUTF8String:state.title.c_str()]];
             [panel setDirectoryURL:url];
         }
+        [(id)panel setTreatsFilePackagesAsDirectories:YES];
         
         if(filtersLength > 0)
             [panel setAllowedFileTypes:filters];
@@ -479,6 +480,7 @@ auto pBrowserWindow::directory() -> std::string {
         if(!state.title.empty()) [panel setMessage:[NSString stringWithUTF8String:state.title.c_str()]];
         [panel setCanChooseDirectories:YES];
         [panel setCanChooseFiles:NO];
+        [panel setTreatsFilePackagesAsDirectories:YES];
         NSString* urlString = [NSString stringWithUTF8String:state.path.c_str()];
         
         NSString* urlTextEscaped = [urlString stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
