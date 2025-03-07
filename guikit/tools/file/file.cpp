@@ -801,7 +801,7 @@ auto File::buildRelativePath(std::string refPath, std::string targetPath, bool o
 #ifdef GUIKIT_WINAPI        
         if (parts.size() > 1)
 #else
-        if (parts.size() > 2) allow to leave /bin or /MacOS
+        if (parts.size() > 2) // allow to leave /bin or /MacOS
 #endif      
             return targetPath; // keep absolute path
     }
