@@ -476,7 +476,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         }
 
 		if ( showListing( layout ) ) { //preload last listing
-            GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path));
+            GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(fSetting->path));
 			uint8_t* data = nullptr;
 
             if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
@@ -878,7 +878,7 @@ auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup, bool 
     block->select.onActivate = [this, block, title, settingFolderIdent, allowRelativePaths]() {
         auto curPath = settings->get<std::string>(settingFolderIdent, "");
         if (allowRelativePaths && !curPath.empty())
-            curPath = GUIKIT::File::resolveRelativePath(program->installFolder(), curPath);
+            curPath = GUIKIT::File::resolveRelativePath(curPath);
 
         auto path = GUIKIT::BrowserWindow()
             .setTitle(trans->get(title))
@@ -888,7 +888,7 @@ auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup, bool 
 
         if (!path.empty()) {
             if (allowRelativePaths)
-                path = GUIKIT::File::buildRelativePath(program->installFolder(), path, true);
+                path = GUIKIT::File::buildRelativePath(path);
             settings->set<std::string>(settingFolderIdent, path);
             block->edit.setText(path);
         }
@@ -958,7 +958,7 @@ auto MediaLayout::savePath( std::string& groupName, std::string path ) -> void {
 	
 	auto baseFolderIdent = _underscore(groupName) + "_folder";
 
-    path = GUIKIT::File::buildRelativePath(program->installFolder(), path, true);
+    path = GUIKIT::File::buildRelativePath(path);
 	
 	settings->set<std::string>(baseFolderIdent + "_auto", path);
 }
@@ -1535,7 +1535,7 @@ auto MediaLayout::loadSettings() -> void {
 
             if ( showListing( layout ) ) {
                 
-                GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path));
+                GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(fSetting->path));
                 uint8_t* data = nullptr;
                
                 if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {

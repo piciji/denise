@@ -190,6 +190,8 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
         save ? GTK_FILE_CHOOSER_ACTION_SAVE : GTK_FILE_CHOOSER_ACTION_OPEN,
         0, (const gchar*)nullptr );
 	
+    // gtk_file_chooser_set_show_hidden(GTK_FILE_CHOOSER(dialog), true);
+
     if(!state.path.empty())
         gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), state.path.c_str());
 
@@ -327,9 +329,7 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
 	pSystem::applyCss( listView->p.gtkWidget, ".someMargin { margin-right: " + std::to_string(margin) + "px;} " );
 
     if (!state.contentView.hint.empty()) {
-        //listView->append({""});
         listView->append({state.contentView.hint});
-        //listView->setRowTooltip(0, "");
         listView->setRowTooltip(0, state.contentView.hintTooltip);
     }
 
@@ -349,6 +349,7 @@ auto pBrowserWindow::directory() -> std::string {
         (const gchar*)nullptr
     );
 
+    // gtk_file_chooser_set_show_hidden(GTK_FILE_CHOOSER(dialog), true);
     if(!state.path.empty())
         gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), state.path.c_str());
 

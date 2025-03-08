@@ -297,7 +297,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             media.guid = (uintptr_t)(nullptr);
 
             if (!IPMode) {
-                GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(installFolder(), fSetting->path));
+                GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(fSetting->path));
                 if (!file)
                     continue;
 

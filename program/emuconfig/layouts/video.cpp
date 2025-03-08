@@ -611,7 +611,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         if (loadShader(path)) {
             layShader.favourite.control.add.setEnabled();
             if (externalFolder())
-                _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(path), true));
+                _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
         }
         emuThread->unlock();
     };
@@ -629,7 +629,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             buildShaderUI(preset);
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             if (externalFolder())
-                _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(path), true));
+                _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
             layShader.favourite.control.add.setEnabled();
             layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
@@ -650,7 +650,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
             buildShaderUI(preset);
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
             if (externalFolder())
-                _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(path), true));
+                _settings->set<std::string>("slang_folder", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
             layShader.favourite.control.add.setEnabled();
             layBase.view.gamma.setEnabled( !layBase.view.mode.gpu.checked() || !vManager()->shaderLumaChromaInput() );
         }
@@ -668,7 +668,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layPass.control.save.onActivate = [this]() {
         static const std::vector<std::string> suffixList = {"slangp"};
         auto savePath = _settings->get<std::string>("slang_folder_save", "");
-        savePath = GUIKIT::File::resolveRelativePath(program->installFolder(), savePath);
+        savePath = GUIKIT::File::resolveRelativePath(savePath);
 
         auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->getA("select slang shader"))
@@ -684,7 +684,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
         if (vManager()->savePreset(path)) {
             layShader.main.info.loaded.setText( vManager()->getPresetPathDetailed() );
-            _settings->set<std::string>("slang_folder_save", GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(path), true));
+            _settings->set<std::string>("slang_folder_save", GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(path)));
         }
     };
 
@@ -710,12 +710,12 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
         while(1) {
             std::string fav = _settings->get<std::string>( "shader_fav_" + std::to_string(i), "");
-            fav = GUIKIT::File::resolveRelativePath(program->installFolder(), fav);
+            fav = GUIKIT::File::resolveRelativePath(fav);
             if (fav == path)
                 return;
 
             if (fav == "") {
-                auto _path = GUIKIT::File::buildRelativePath(program->installFolder(), path, true);
+                auto _path = GUIKIT::File::buildRelativePath(path);
                 layShader.favourite.list.append({ _path });
                 _settings->set<std::string>("shader_fav_" + std::to_string(i), _path);
                 break;
@@ -760,7 +760,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layShader.favourite.list.onActivate = [this]() {
         int selection = layShader.favourite.list.selection();
         std::string path = layShader.favourite.list.text(selection, 0);
-        path = GUIKIT::File::resolveRelativePath(program->installFolder(), path);
+        path = GUIKIT::File::resolveRelativePath(path);
         emuThread->lock();
         if (loadShader(path))
             view->updateShader(emulator);
@@ -2242,7 +2242,7 @@ auto VideoLayout::addShaderUI() -> void {
 
 auto VideoLayout::getShaderFolder() -> std::string {
     if (externalFolder())
-        return  GUIKIT::File::resolveRelativePath(program->installFolder(), _settings->get<std::string>("slang_folder", ""));
+        return  GUIKIT::File::resolveRelativePath(_settings->get<std::string>("slang_folder", ""));
 
     return program->shaderFolder();
 }

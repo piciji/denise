@@ -33,7 +33,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 	listView.onChange = [this]() {
 		auto pos = listView.selection() + 1;
 		auto fSetting = getSetting( pos );
-        GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path));
+        GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(fSetting->path));
 
         if (file)
             updateWP(fSetting->writeProtect);
@@ -108,7 +108,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                     filePool->assign(_ident(emulator, "swapper_" + std::to_string(pos)), file);
 
                     auto fSetting = getSetting(pos);
-                    std::string _path = GUIKIT::File::buildRelativePath(program->installFolder(), file->getFile(), true);
+                    std::string _path = GUIKIT::File::buildRelativePath(file->getFile());
                     fSetting->setPath(_path);
                     fSetting->setFile(item->info.name);
                     fSetting->setId(item->id);
@@ -138,7 +138,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
                     filePool->assign(_ident(emulator, "swapper_" + std::to_string(pos)), file);
 
                     auto fSetting = getSetting(pos);
-                    std::string _path = GUIKIT::File::buildRelativePath(program->installFolder(), file->getFile(), true);
+                    std::string _path = GUIKIT::File::buildRelativePath(file->getFile());
                     fSetting->setPath(_path);
                     fSetting->setFile(item.info.name);
                     fSetting->setId(item.id);
@@ -227,12 +227,12 @@ auto SwapperLayout::preselectPath( ) -> std::string {
 	
 	auto path = mediaLayout->settings->get<std::string>( "disk_folder_swap", "" );	
 	
-    return GUIKIT::File::resolveRelativePath(program->installFolder(), path);
+    return GUIKIT::File::resolveRelativePath(path);
 }
 
 auto SwapperLayout::savePath( std::string path ) -> void {
 	
-    path = GUIKIT::File::buildRelativePath(program->installFolder(), path, true);
+    path = GUIKIT::File::buildRelativePath(path);
 
 	mediaLayout->settings->set<std::string>("disk_folder_swap", path);
 }

@@ -220,7 +220,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
                 continue;
             }
 
-            GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), setting->path));
+            GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(setting->path));
 
             if (!file)
                 continue;                           

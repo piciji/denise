@@ -237,7 +237,7 @@ auto FirmwareManager::loadImage( Emulator::Interface::Firmware* firmware, unsign
     if (fSetting->path.empty())
         return false;
     
-    auto fullPath = GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path);
+    auto fullPath = GUIKIT::File::resolveRelativePath(fSetting->path);
     GUIKIT::File file(fullPath);
     uint8_t* data = nullptr;
 

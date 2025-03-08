@@ -1564,7 +1564,7 @@ auto VideoManager::free() -> void {
 }
 
 auto VideoManager::loadPreset() -> bool {
-    std::string path = GUIKIT::File::resolveRelativePath(program->installFolder(), settings->get<std::string>("slang_loaded", ""));
+    std::string path = GUIKIT::File::resolveRelativePath(settings->get<std::string>("slang_loaded", ""));
     if (path.empty()) {
         clearPreset();
         return false;
@@ -1590,7 +1590,7 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
         return nullptr;
     }
 
-    settings->set<std::string>("slang_loaded", GUIKIT::File::buildRelativePath(program->installFolder(), path, true));
+    settings->set<std::string>("slang_loaded", GUIKIT::File::buildRelativePath(path));
     parser->clear();
     delete parser;
 
@@ -1631,7 +1631,7 @@ auto VideoManager::savePreset(std::string path) -> bool {
     bool res = parser->savePreset(path);
 
     if (res)
-        settings->set<std::string>("slang_loaded", GUIKIT::File::buildRelativePath(program->installFolder(), path, true));
+        settings->set<std::string>("slang_loaded", GUIKIT::File::buildRelativePath(path));
 
     return res;
 }

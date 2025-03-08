@@ -670,7 +670,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     if (!file)
         return false;
 
-    auto folderPath = GUIKIT::File::buildRelativePath(program->installFolder(), file->getPath(), true);
+    auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
     settings->set<std::string>(_underscore(media->group->name) + "_folder_auto", folderPath);
 
     if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
@@ -780,7 +780,7 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 }
 
 auto Fileloader::updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void {
-    auto path = GUIKIT::File::buildRelativePath(program->installFolder(), file->getFile(), true);
+    auto path = GUIKIT::File::buildRelativePath(file->getFile());
 
     fSetting->setPath(path, !cmd->autoload);
     fSetting->setFile(item->info.name, !cmd->autoload);
@@ -934,7 +934,7 @@ auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupNa
         lastPathFirst ^= 1;
 
         path = settings->get<std::string>( useIdent, "" );
-        path = GUIKIT::File::resolveRelativePath(program->installFolder(), path);
+        path = GUIKIT::File::resolveRelativePath(path);
 
         if ( !path.empty() )
             break;
@@ -1045,7 +1045,7 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
         }
     }
 
-    file = filePool->get(GUIKIT::File::resolveRelativePath(program->installFolder(), fSetting->path));
+    file = filePool->get(GUIKIT::File::resolveRelativePath(fSetting->path));
 
     GUIKIT::File::Item item;
     item.id = fSetting->id;

@@ -766,8 +766,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 	};
     
     stateDirect.load.onActivate = [this]() {
-        auto path = GUIKIT::File::resolveRelativePath(program->installFolder(),
-            _settings->get<std::string>("save_direct_folder", ""));
+        auto path = GUIKIT::File::resolveRelativePath(_settings->get<std::string>("save_direct_folder", ""));
 
 		std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
@@ -779,7 +778,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 		if (filePath.empty())
             return;
             
-        path = GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(filePath), true);
+        path = GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(filePath));
         _settings->set<std::string>("save_direct_folder", path);
 
         emuThread->lock();
@@ -793,8 +792,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (activeEmulator != emulator)
             return mes->error( trans->get("no emulation active") );
 
-        auto path = GUIKIT::File::resolveRelativePath(program->installFolder(),
-            _settings->get<std::string>("save_direct_folder", ""));
+        auto path = GUIKIT::File::resolveRelativePath(_settings->get<std::string>("save_direct_folder", ""));
         
 		std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
@@ -809,7 +807,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if ( !GUIKIT::String::foundSubStr( filePath, "." ))
             filePath += ".sav";
         
-        path = GUIKIT::File::buildRelativePath(program->installFolder(), GUIKIT::File::getPath(filePath), true);
+        path = GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(filePath));
         _settings->set<std::string>("save_direct_folder", path);
 
         emuThread->lock();

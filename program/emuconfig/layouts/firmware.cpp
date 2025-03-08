@@ -94,7 +94,7 @@ FirmwareLayout::FirmwareLayout(TabWindow* tabWindow) {
                 return;
             auto& firmware = emulator->firmwares[block->typeId];
             auto fSetting = manager->getSetting( &firmware, storeLevel );
-            auto lookupPath = GUIKIT::File::resolveRelativePath(program->installFolder(), _settings->get<std::string>("firmware_path", ""));
+            auto lookupPath = GUIKIT::File::resolveRelativePath(_settings->get<std::string>("firmware_path", ""));
 
             std::string filePath = GUIKIT::BrowserWindow()
                 .setWindow(*this->tabWindow)
@@ -170,7 +170,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
     
     file->setReadOnly();
 
-    _settings->set<std::string>("firmware_path", GUIKIT::File::buildRelativePath(program->installFolder(), file->getPath(), true));
+    _settings->set<std::string>("firmware_path", GUIKIT::File::buildRelativePath(file->getPath()));
 
     if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
         return program->errorMediumSize( file, mes );
@@ -186,7 +186,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         if (item->info.size > MAX_FIRMWARE_SIZE)
             return program->errorFirmwareSize(item, mes);
 
-        auto path = GUIKIT::File::buildRelativePath(program->installFolder(), file->getFile(), true);
+        auto path = GUIKIT::File::buildRelativePath(file->getFile());
         block->fileLabel.setText(item->info.name);
         block->fileLabel.setTooltip(path);
                 

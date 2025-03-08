@@ -731,7 +731,23 @@ auto File::getOffsetDataStringFromBinary( std::string inFile, std::string outFil
     return !error;
 }
 
-auto File::resolveRelativePath(std::string _fn, std::string relPath ) -> std::string {
+auto File::resolveRelativePath(std::string relPath ) -> std::string {
+    #ifdef GUIKIT_GTK
+        return relPath;
+    #else
+        return resolveRelativePath( System::getResourceFolder(), relPath );
+    #endif
+}
+
+auto File::buildRelativePath(std::string targetPath) -> std::string {
+    #ifdef GUIKIT_GTK
+        return targetPath;
+    #else
+        return buildRelativePath( System::getResourceFolder(), targetPath, true );
+    #endif
+}
+
+auto File::resolveRelativePath(std::string _fn, std::string relPath) -> std::string {
     if (relPath.empty() || isAbsolute(relPath))
         return relPath;
 
@@ -801,7 +817,7 @@ auto File::buildRelativePath(std::string refPath, std::string targetPath, bool o
 #ifdef GUIKIT_WINAPI        
         if (parts.size() > 1)
 #else
-        if (parts.size() > 2) // allow to leave /bin or /MacOS
+        if (parts.size() > 2)
 #endif      
             return targetPath; // keep absolute path
     }
