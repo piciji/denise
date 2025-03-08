@@ -571,6 +571,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         if (path.empty())
             return;
         
+        path = GUIKIT::File::buildRelativePath(path);
         audioRecord.location.pathEdit.setText(path);
         audioRecord.location.pathEdit.setEnabled();
         

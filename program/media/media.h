@@ -301,7 +301,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;
     auto prepareCreator() -> void;
     auto preparePaths() -> void;
-    auto preparePath(Emulator::Interface::MediaGroup& mediaGroup, bool allowRelativePaths = true) -> void;
+    auto preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void;
     auto updateListing( Emulator::Interface::Media* media ) -> void;
 	auto savePath( std::string& groupName, std::string path ) -> void;
     auto showListing( MediaGroupLayout* layout ) -> bool;

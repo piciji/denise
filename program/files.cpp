@@ -547,6 +547,7 @@ auto Program::generatedFolder(Emulator::Interface* emulator, const std::string& 
     if (!settingIdent.empty()) {
         auto settings = getSettings(emulator);
         _path = settings->get<std::string>(settingIdent, "");
+        _path = GUIKIT::File::resolveRelativePath(_path);
     }
 
     if (_path.empty()) {

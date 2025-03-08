@@ -670,6 +670,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (!cmd->hasCustomConfig(emulator) && (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != ""))
             settings.active.standardButton.onActivate();
 
+        path = GUIKIT::File::buildRelativePath(path);
         settingsFolder.pathEdit.setEnabled();
         settingsFolder.pathEdit.setText( path );
         
@@ -822,6 +823,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                 .directory();
 
         if (!path.empty()) {
+            path = GUIKIT::File::buildRelativePath(path);
             _settings->set<std::string>( "states_folder", path);
             stateFolder.pathEdit.setText(path);
             stateFolder.pathEdit.setEnabled();

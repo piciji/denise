@@ -859,7 +859,7 @@ auto MediaLayout::prepareCreator() -> void {
     }
 }
 
-auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup, bool allowRelativePaths) -> void {
+auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> void {
     if (mediaGroup.isExpansion() && mediaGroup.expansion->isRS232())
         return;
 
@@ -875,9 +875,9 @@ auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup, bool 
     if (mediaGroup.isExpansion())
         title = "select_cartridge_folder";
 
-    block->select.onActivate = [this, block, title, settingFolderIdent, allowRelativePaths]() {
+    block->select.onActivate = [this, block, title, settingFolderIdent]() {
         auto curPath = settings->get<std::string>(settingFolderIdent, "");
-        if (allowRelativePaths && !curPath.empty())
+        if (!curPath.empty())
             curPath = GUIKIT::File::resolveRelativePath(curPath);
 
         auto path = GUIKIT::BrowserWindow()
@@ -887,8 +887,7 @@ auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup, bool 
             .directory();
 
         if (!path.empty()) {
-            if (allowRelativePaths)
-                path = GUIKIT::File::buildRelativePath(path);
+            path = GUIKIT::File::buildRelativePath(path);
             settings->set<std::string>(settingFolderIdent, path);
             block->edit.setText(path);
         }
@@ -915,7 +914,7 @@ auto MediaLayout::preparePaths() -> void {
         saveImage->name = "disksave";
         saveImage->suffix.push_back("sav");
         saveImage->type = Emulator::Interface::MediaGroup::Type::Disk;
-        preparePath(*saveImage, false);
+        preparePath(*saveImage);
     }
 }
 
