@@ -1321,7 +1321,7 @@ struct Font {
 struct System {
     enum class Language { DE, UK, US, FR };
     static auto getUserDataFolder(std::string appIdent = "") -> std::string;
-    static auto getResourceFolder(std::string appIdent) -> std::string;
+    static auto getResourceFolder(std::string appIdent = "") -> std::string;
     static auto getWorkingDirectory() -> std::string;
     static auto getDesktopSize() -> Size;
     static auto sleep(unsigned milliSeconds) -> void;

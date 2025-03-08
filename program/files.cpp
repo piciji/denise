@@ -569,6 +569,8 @@ auto Program::getSettingsFolder( Emulator::Interface* emulator, bool createFolde
     if (path.empty())
         return generatedFolder("settings/" + GUIKIT::String::toLowerCase(_emuIdent), createFolder);
 
+    path = GUIKIT::File::resolveRelativePath(path);
+
     return GUIKIT::File::beautifyPath(path);
 }
 

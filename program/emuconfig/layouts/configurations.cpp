@@ -805,7 +805,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 		if (filePath.empty())
             return;
             
-        if ( !GUIKIT::String::foundSubStr( filePath, "." ))
+
+        auto fn = GUIKIT::String::getFileName(filePath);
+        if (GUIKIT::String::getExtension(fn, "") == "")
             filePath += ".sav";
         
         path = GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(filePath));

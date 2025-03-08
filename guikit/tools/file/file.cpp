@@ -371,7 +371,7 @@ auto File::getFileName(bool removeExtension, bool truncateFromEnd) -> std::strin
 }
 
 auto File::getExtension() -> std::string {
-    std::string _fn = filePath;
+    std::string _fn = getFileName();
     String::remove(_fn, {".."});
     std::size_t end = _fn.find_first_of(".");
     if (end == std::string::npos) return "";

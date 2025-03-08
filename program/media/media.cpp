@@ -642,6 +642,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
 
 	std::string ident = mediaGroup->name;
 	std::string suffix = mediaGroup->creatable[0];
+    std::string fn;
     unsigned id = 0;
 	
     if (mediaGroup->isExpansion()) {
@@ -715,7 +716,8 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
     if (filePath.empty())
         goto Done;
 
-    if ( !GUIKIT::String::foundSubStr( filePath, "." ))
+    fn = GUIKIT::String::getFileName(filePath);
+    if (GUIKIT::String::getExtension(fn, "") == "")
         filePath += "." + suffix;
 
     filePtr = filePool->get( filePath, insertId >= 0 );
