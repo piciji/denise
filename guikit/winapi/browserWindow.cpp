@@ -38,7 +38,7 @@ STDMETHODIMP FileDialogEventHandler::OnSelectionChange ( IFileDialog* pfd ) {
     pBrowserWindow& p = browserWindow->p;
 
     if (p.multi) {
-        if (state->orderBySelected && state->orderBySelected->checked) {
+        if (state->checkButton && state->checkButton->orderFilesBySelection()) {
             for (auto& selectedFile: p.selectedFiles) { // sorted selection before
                 unsigned pos = 0;
                 for (auto& curSelectedFile: curSelectedFiles) { // unsorted current selection
@@ -162,9 +162,9 @@ IFACEMETHODIMP FileDialogEventHandler::OnButtonClicked ( IFileDialogCustomize* p
 
 IFACEMETHODIMP FileDialogEventHandler::OnCheckButtonToggled(IFileDialogCustomize* pfdc, DWORD dwIDCtl, BOOL bChecked) {
     if (dwIDCtl == 2000) {
-        if (state->orderBySelected) {
-            state->orderBySelected->checked = bChecked;
-            state->orderBySelected->onToggle(bChecked);
+        if (state->checkButton) {
+            state->checkButton->checked = bChecked;
+            state->checkButton->onToggle(bChecked);
         }
     }
 
@@ -284,12 +284,12 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
         }    
     }
 
-    if (state.orderBySelected) {
+    if (state.checkButton) {
         if (!pDlgc)
             hr = pDlg->QueryInterface(IID_IFileDialogCustomize, reinterpret_cast<void**>(&pDlgc) );
 
         if ( SUCCEEDED(hr) ) {
-            pDlgc->AddCheckButton(2000, utf16_t(state.orderBySelected->text), state.orderBySelected->checked );
+            pDlgc->AddCheckButton(2000, utf16_t(state.checkButton->text), state.checkButton->checked);
         }
     }
 
@@ -377,7 +377,7 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
                 }
             }
 
-            if (state.orderBySelected && state.orderBySelected->checked && selectedFiles.size()) {
+            if (state.checkButton && state.checkButton->orderFilesBySelection() && selectedFiles.size()) {
                 std::vector<std::string> temp;
 
                 for (auto& sSortedFile : selectedFiles) {
@@ -498,7 +498,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
             }
         }
 
-        if (state.orderBySelected && state.orderBySelected->checked && selectedFiles.size()) {
+        if (state.checkButton && state.checkButton->orderFilesBySelection() && selectedFiles.size()) {
             std::vector<std::string> temp;
 
             for (auto& sSortedFile : selectedFiles) {
@@ -708,10 +708,10 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
 				ShowWindow(GetDlgItem(hDlg, dlgButtonId), SW_HIDE);
 			}
 
-            if (state->orderBySelected) {
+            if (state->checkButton) {
                 HWND checkBox = GetDlgItem(hDlg, IDC_CHECKBOX);
-                SetDlgItemText(hDlg, IDC_CHECKBOX, (LPCWSTR)utf16_t(state->orderBySelected->text) );
-                SendMessage(checkBox, BM_SETCHECK, (WPARAM)state->orderBySelected->checked, 0);
+                SetDlgItemText(hDlg, IDC_CHECKBOX, (LPCWSTR)utf16_t(state->checkButton->text));
+                SendMessage(checkBox, BM_SETCHECK, (WPARAM)state->checkButton->checked, 0);
             } else {
                 ShowWindow(GetDlgItem(hDlg, IDC_CHECKBOX), SW_HIDE);
             }
@@ -854,7 +854,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                         }
                    // }
 
-                    if (state->orderBySelected) {
+                        if (state->checkButton && state->checkButton->hasOrderFilesBySelection()) {
                         std::vector<std::string> resultFiles;
 
                         for (auto& selectedFile: context->selectedFiles) { // sorted selection before
@@ -960,10 +960,10 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 }                                
             }
 
-            if (context->browserWindow.state.onSelectionChange) {
+            if (context->browserWindow.state.onSelectionChange && state->checkButton) {
                 if (widgetId == IDC_CHECKBOX) {
-                    state->orderBySelected->checked ^= 1;
-                    state->orderBySelected->onToggle(state->orderBySelected->checked);
+                    state->checkButton->checked ^= 1;
+                    state->checkButton->onToggle(state->checkButton->checked);
                     break;
                 }
             }
@@ -1169,7 +1169,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
     RECT rCustomView;
     RECT rListBox;
 	unsigned buttonMargin = pFont::scale(20);
-    BrowserWindow::CheckButton* checkButton = browserWindow.state.orderBySelected;
+    BrowserWindow::CheckButton* checkButton = browserWindow.state.checkButton;
 
     HWND customView = GetDlgItem(fileDialogView, IDC_FRAME);
     

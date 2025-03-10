@@ -875,3 +875,4 @@ select_SuperCPU_image = Elekti SuperCPU ekzakta copion ...
 unsupported cartridge = Ĉi tiun kartoĉo ne estas subtenata.
 1541C Track-0 Sensor = 1541C Track-0 Sensilo
 select setting = Elekti agordon
+without speeder = without Speeder

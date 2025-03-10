@@ -875,3 +875,4 @@ select_SuperCPU_image = SuperCPUのイメージを選択 ...
 unsupported cartridge = このカートリッジは未サポートかもしれません
 1541C Track-0 Sensor = 1541C Track-0 センサー
 select setting = 設定を選択
+without speeder = without Speeder

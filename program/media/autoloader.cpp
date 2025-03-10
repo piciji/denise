@@ -25,6 +25,7 @@ auto Autoloader::init( std::vector<std::string> files, bool silentError, Mode mo
     ddControl.fileName = fileName;
     ddControl.files.clear();
     ddControl.saveFile = nullptr;
+    ddControl.overrideSpeeder = false;
     
     unsigned i = 0;
     for( auto& file : files ) {        
@@ -37,6 +38,10 @@ auto Autoloader::init( std::vector<std::string> files, bool silentError, Mode mo
 
 auto Autoloader::setEmulator(Emulator::Interface* emulator) -> void {
     ddControl.emulator = emulator;
+}
+
+auto Autoloader::overrideSpeeder() -> void {
+    ddControl.overrideSpeeder = true;
 }
 
 auto Autoloader::postProcessing() -> void {
@@ -124,8 +129,10 @@ auto Autoloader::postProcessing() -> void {
         }
     }
 
-    if (!dynamic_cast<LIBC64::Interface*>(ddControl.emulator) )
+    if (!dynamic_cast<LIBC64::Interface*>(ddControl.emulator) ) {
         trapped = false;
+        ddControl.overrideSpeeder = false;
+    }
 
     if (trapped) // traps require standard kernals
         forceStandardKernal = true;
@@ -234,7 +241,7 @@ auto Autoloader::postProcessing() -> void {
         useExpansion = ddControl.emulator->getExpansion();
         if (trapped && (useExpansion && !useExpansion->isEmpty() && !useExpansion->isFastloader() && !useExpansion->isRS232() && !useExpansion->isTurboCart()))
             trapped = false;
-        else if (forceStandardKernal) {
+        else if (forceStandardKernal || ddControl.overrideSpeeder) {
             // temporary disable any speeders
             auto fManager = FirmwareManager::getInstance( ddControl.emulator );
             if (fManager->getStoreLevelInUse() > 0)
@@ -242,7 +249,8 @@ auto Autoloader::postProcessing() -> void {
         }
 
         uint8_t options = (uint8_t)trapped;
-        if (trapped && !mediaGroup->selected) {
+        if (ddControl.overrideSpeeder) options |= 0x80;
+        else if (trapped && !mediaGroup->selected) {
             if (!trapsWithSpeeder)  options |= 0x80;
             else                    options |= 2;
         }

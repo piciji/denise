@@ -1162,7 +1162,24 @@ struct BrowserWindow {
 	struct Listing {
 		std::string entry;
 		std::string tooltip = "";
-	};    
+	};
+
+    struct CustomButton {
+        std::string text;
+        std::string toolTip = "";
+        std::function<bool(std::vector<std::string> filePaths, unsigned selection)> onClick = nullptr;
+        unsigned id = 0; // for template usage
+    };
+
+    struct CheckButton {
+        bool checked = false;
+        enum class Mode { Default, OrderBySelected } mode;
+        std::string text = "";
+        std::string toolTip = "";
+        std::function<void(bool checked)> onToggle = nullptr;
+        auto hasOrderFilesBySelection() -> bool { return mode == Mode::OrderBySelected; }
+        auto orderFilesBySelection() -> bool { return checked && hasOrderFilesBySelection(); }
+    };
     
     auto directory() -> std::string;
     auto open() -> std::string;
@@ -1183,7 +1200,8 @@ struct BrowserWindow {
 	auto setNonModal() -> BrowserWindow&;
 	auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
     auto hideOkButton() -> void;
-    auto showOrderControlForMultipleSelections( bool checked, std::string label, std::function<void (bool checked)> onToggle ) -> BrowserWindow&;
+    auto addCheckButton(bool checked, std::string label, std::function<void(bool checked)> onToggle, CheckButton::Mode mode = CheckButton::Mode::Default) -> BrowserWindow&;
+    auto hasChecked() -> bool { return state.checkButton && state.checkButton->checked; }
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
@@ -1205,19 +1223,6 @@ struct BrowserWindow {
     static auto transformFilter( std::string description, const std::vector<std::string>& suffix ) -> std::string;
 	static auto transformFilter( std::string description, const std::string& suffix ) -> std::string;   
     
-    struct CustomButton {        
-        std::string text;
-		std::string toolTip = "";
-        std::function<bool (std::vector<std::string> filePaths, unsigned selection)> onClick = nullptr;
-        unsigned id = 0; // for template usage
-    };
-
-    struct CheckButton {
-        bool checked = false;
-        std::string text = "";
-        std::string toolTip = "";
-        std::function<void (bool checked)> onToggle = nullptr;
-    };
     
     // for displaying file content
     struct ContentView {
@@ -1263,7 +1268,7 @@ struct BrowserWindow {
 		std::string toolTip = "";
 		bool modal = true;
         bool hideOkButton = false;
-        CheckButton* orderBySelected = nullptr;
+        CheckButton* checkButton = nullptr;
         bool allowSystemFiles = false;
     } state;
 

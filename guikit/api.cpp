@@ -1409,7 +1409,7 @@ std::function<void ()> BrowserWindow::onCall = nullptr;
 BrowserWindow::BrowserWindow() : p(*new pBrowserWindow(*this)) { }
 BrowserWindow::~BrowserWindow() {
     delete &p;
-    if (state.orderBySelected) delete state.orderBySelected;
+    if (state.checkButton) delete state.checkButton;
 }
 
 auto BrowserWindow::directory() -> std::string {
@@ -1584,13 +1584,14 @@ auto BrowserWindow::setDefaultButtonTooltip(std::string toolTip) -> BrowserWindo
 	return *this;
 }
 
-auto BrowserWindow::showOrderControlForMultipleSelections( bool checked, std::string label, std::function<void (bool checked)> onToggle ) -> BrowserWindow& {
-    if (!state.orderBySelected)
-        state.orderBySelected = new BrowserWindow::CheckButton;
+auto BrowserWindow::addCheckButton(bool checked, std::string label, std::function<void(bool checked)> onToggle, CheckButton::Mode mode) -> BrowserWindow& {
+    if (!state.checkButton)
+        state.checkButton = new BrowserWindow::CheckButton;
 
-    state.orderBySelected->checked = checked;
-    state.orderBySelected->text = label;
-    state.orderBySelected->onToggle = onToggle;
+    state.checkButton->checked = checked;
+    state.checkButton->mode = mode;
+    state.checkButton->text = label;
+    state.checkButton->onToggle = onToggle;
     return *this;
 }
 

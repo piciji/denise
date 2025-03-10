@@ -68,9 +68,9 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 			.setPath( preselectPath( ) )
 			.setFilters({ suffix,
 				trans->get("all_files")})
-            .showOrderControlForMultipleSelections( this->mediaLayout->settings->get<bool>( "swapper_order_selected", false ), trans->get("order selected"), [this](bool checked) {
+            .addCheckButton(this->mediaLayout->settings->get<bool>("swapper_order_selected", false), trans->get("order selected"), [this](bool checked) {
                 this->mediaLayout->settings->set<bool>( "swapper_order_selected", checked );
-            } )
+            }, GUIKIT::BrowserWindow::CheckButton::Mode::OrderBySelected)
 			.openMulti();
 
 		if (!filePaths.size() || filePaths[0].empty()) return;

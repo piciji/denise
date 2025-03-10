@@ -3,8 +3,8 @@ pBrowserWindow::pBrowserWindow(BrowserWindow& browserWindow) : browserWindow(bro
 
 auto pBrowserWindow::onToggleOrder(GtkToggleButton* toggleButton, BrowserWindow* self) -> void {
     g_signal_stop_emission_by_name(G_OBJECT(self->p.orderSelectedWidget), "clicked"); // prevent closing of dialog
-    self->state.orderBySelected->checked = gtk_toggle_button_get_active(toggleButton);
-    self->state.orderBySelected->onToggle(self->state.orderBySelected->checked);
+    self->state.checkButton->checked = gtk_toggle_button_get_active(toggleButton);
+    self->state.checkButton->onToggle(self->state.checkButton->checked);
 }
 
 auto pBrowserWindow::closeHandler(GtkDialog* dialog, GdkEvent* event, gpointer data) -> void {
@@ -86,7 +86,7 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
         }
         g_slist_free(fileList);
 
-        if (state.orderBySelected) {
+        if (state.checkButton && state.checkButton->hasOrderFilesBySelection()) {
             std::vector<std::string> resultFiles;
 
             for (auto &selectedFile: instance->sortedFiles) { // sorted selection before
@@ -195,11 +195,11 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
     if(!state.path.empty())
         gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), state.path.c_str());
 
-    if (state.orderBySelected) {
-        orderSelectedWidget = gtk_check_button_new_with_label( state.orderBySelected->text.c_str() );
+    if (state.checkButton) {
+        orderSelectedWidget = gtk_check_button_new_with_label(state.checkButton->text.c_str());
         gtk_widget_show(orderSelectedWidget);
         gtk_dialog_add_action_widget((GtkDialog*)dialog, orderSelectedWidget, 100);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(orderSelectedWidget), state.orderBySelected->checked);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(orderSelectedWidget), state.checkButton->checked);
         g_signal_connect(G_OBJECT(orderSelectedWidget), "toggled", G_CALLBACK(pBrowserWindow::onToggleOrder), (gpointer)&browserWindow);
     }
 
@@ -256,7 +256,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
 
                 g_slist_free(fileList);
 
-                if (state.orderBySelected && state.orderBySelected->checked && sortedFiles.size()) {
+                if (state.checkButton && state.checkButton->orderFilesBySelection() && sortedFiles.size()) {
                     std::vector<std::string> temp;
 
                     for (auto &sSortedFile: sortedFiles) {

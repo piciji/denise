@@ -20,6 +20,7 @@
         inputDriver->mAcquire();
 
 #define USE_TRAPS 0x80
+#define OVERRIDE_SPEEDER 0x40
 
 Fileloader* fileloader = nullptr;
 
@@ -87,7 +88,11 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
         if (filePath.empty())
             return false;
 
-        return this->insertFile(emulator, media, filePath, 1, selection);
+        uint8_t _a = 1;
+        if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
+            _a |= OVERRIDE_SPEEDER;
+
+        return this->insertFile(emulator, media, filePath, _a, selection);
     }, IDC_BUTTON );
 
     //if ((prevMode != PREV_ALTERNATE) && group->isDrive() && dynamic_cast<LIBC64::Interface*>(emulator) ) {
@@ -99,7 +104,11 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
             if (filePath.empty())
                 return false;
 
-            return this->insertFile(emulator, media, filePath, 1 | USE_TRAPS, selection);
+            uint8_t _a = 1 | USE_TRAPS;
+            if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
+                _a |= OVERRIDE_SPEEDER;
+
+            return this->insertFile(emulator, media, filePath, _a, selection);
         }, IDC_BUTTON1 );
     }
 
@@ -120,6 +129,8 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
             uint8_t _a = 1;
             if (_useTraps)
                 _a |= USE_TRAPS;
+            if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
+                _a |= OVERRIDE_SPEEDER;
 
             return insertFile(emulator, media, filePath, _a, selection);
         });
@@ -154,6 +165,11 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
     } );
 
     fileDialogPtr->setWindow( *view ).setNonModal();
+
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        if (emulator->getModelValue(LIBC64::Interface::ModelIdDriveFastLoader) || settings->get<unsigned>("use_firmware", 0))
+            fileDialogPtr->addCheckButton(false, trans->getA("without speeder"), [settings](bool checked) {});
+    }
 
     std::string filePath = fileDialogPtr->open();
 
@@ -204,6 +220,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             emuThread->lock();
             autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartDblClick, selection );
             autoloader->setEmulator( emulator );
+            if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
+                autoloader->overrideSpeeder();
             autoloader->loadFiles();
             emuThread->unlock();
 
@@ -261,6 +279,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         emuThread->lock();
         autoloader->init( filePaths, false, Autoloader::Mode::Open );
         autoloader->setEmulator( emulator );
+        if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
+            autoloader->overrideSpeeder();
         autoloader->loadFiles();
         emuThread->unlock();
 
@@ -283,6 +303,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             emuThread->lock();
             autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartSecondary, selection );
             autoloader->setEmulator( emulator );
+            if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
+                autoloader->overrideSpeeder();
             autoloader->loadFiles();
             emuThread->unlock();
 
@@ -305,6 +327,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
                 emuThread->lock();
                 autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartPrimary, selection );
                 autoloader->setEmulator( emulator );
+                if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
+                    autoloader->overrideSpeeder();
                 autoloader->loadFiles();
                 emuThread->unlock();
 
@@ -325,6 +349,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             emuThread->lock();
             autoloader->init(filePaths, false, Autoloader::Mode::AutoStartDblClick, selection);
             autoloader->setEmulator( emulator );
+            if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
+                autoloader->overrideSpeeder();
             autoloader->loadFiles();
             emuThread->unlock();
         }
@@ -361,13 +387,17 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     if (dynamic_cast<LIBC64::Interface*>(emulator)) {
         fileDialogPtr->setTitle(trans->get("select image"));
+
+        if (emulator->getModelValue(LIBC64::Interface::ModelIdDriveFastLoader) || settings->get<unsigned>("use_firmware", 0))
+            fileDialogPtr->addCheckButton(false, trans->getA("without speeder"), [settings](bool checked) {});
+        
         std::string filePath = fileDialogPtr->open();
         filePaths.push_back(filePath);
     } else {
         fileDialogPtr->setTitle(trans->get("select image multi"));
-        fileDialogPtr->showOrderControlForMultipleSelections( settings->get<bool>( "loader_order_selected", false ), trans->get("order selected"), [settings](bool checked) {
+        fileDialogPtr->addCheckButton(settings->get<bool>("loader_order_selected", false), trans->get("order selected"), [settings](bool checked) {
             settings->set<bool>( "loader_order_selected", checked );
-        } );
+        }, GUIKIT::BrowserWindow::CheckButton::Mode::OrderBySelected);
         fileDialogPtr->setContentViewHint( trans->get("multi file selection"), trans->get("swapper multi hint tooltip") );
 
         filePaths = fileDialogPtr->openMulti();
@@ -385,6 +415,8 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         emuThread->lock();
         autoloader->init( filePaths, false, Autoloader::Mode::AutoStartDblClick, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
         autoloader->setEmulator( emulator );
+        if (fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
+            autoloader->overrideSpeeder();
         autoloader->loadFiles();
         emuThread->unlock();
     } else if (view) {
@@ -691,14 +723,13 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         else
             insertImage( emulator, media, file, item );
 
-
         if (media->group->isDrive()) {
             autoloader->setOnlyForFirstDrive(emulator, media);
             settings->set<int>("swap_pos", -1, false);
         }
 
         if (autoLoad & 1) {
-            autoload(emulator, media, selection, autoLoad & USE_TRAPS);
+            autoload(emulator, media, selection, autoLoad & USE_TRAPS, autoLoad & OVERRIDE_SPEEDER);
         }
         emuThread->unlock();
     };
@@ -745,8 +776,11 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
 
     bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);
     uint8_t options = (uint8_t)trapped;
-    if ((trapped && !trapsWithSpeeder) || forceOverrideSpeeder) options |= 0x80;
-    if (trapped && trapsWithSpeeder) options |= 2;
+    if (forceOverrideSpeeder) options |= 0x80;
+    else if (trapped) {
+        if (!trapsWithSpeeder)  options |= 0x80;
+        else                    options |= 2;
+    }
 
     if (forceStandardKernal || trapped || forceOverrideSpeeder) {
         auto fManager = FirmwareManager::getInstance( emulator );

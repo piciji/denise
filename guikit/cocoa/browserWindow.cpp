@@ -34,7 +34,7 @@
             }
         }
         
-        if (state.orderBySelected) {
+        if (state.checkButton && state.checkButton->hasOrderFilesBySelection()) {
             std::vector<std::string> resultFiles;
             
             for(auto& selectedFile : browserWindow->p.sortedFiles) { // sorted selection before
@@ -229,7 +229,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
                                     //delete name;
                                 }
                             }
-                            if (state.orderBySelected && state.orderBySelected->checked && sortedFiles.size()) {
+                            if (state.checkButton && state.checkButton->orderFilesBySelection() && sortedFiles.size()) {
                                 std::vector<std::string> temp;
              
                                 for (auto& sSortedFile : sortedFiles) {
@@ -271,7 +271,7 @@ auto pBrowserWindow::fileGeneric(bool save, bool multi) -> std::vector<std::stri
                     out.push_back(result);
                 }
                 
-                if (state.orderBySelected && state.orderBySelected->checked && sortedFiles.size()) {
+                if (state.checkButton && state.checkButton->orderFilesBySelection() && sortedFiles.size()) {
                     std::vector<std::string> temp;
                     
                     for (auto& sSortedFile : sortedFiles) {
@@ -318,7 +318,7 @@ auto pBrowserWindow::setListings( std::vector<BrowserWindow::Listing>& listings 
 auto pBrowserWindow::buildView(bool save) -> void {
     auto& state = browserWindow.state;
 
-    if ( (state.buttons.size() == 0) && !state.contentView.id && !state.orderBySelected )
+    if ((state.buttons.size() == 0) && !state.contentView.id && !state.checkButton)
         return;
     
     accessoryView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
@@ -433,17 +433,17 @@ auto pBrowserWindow::buildView(bool save) -> void {
     
     maxContentWidth += maxButtonWidth;
     
-    if (state.orderBySelected) {
+    if (state.checkButton) {
         if (listView)
             _y -= 13;
         else if (state.buttons.size())
             _y += 4;
         
         auto gCheckBox = new CheckBox;
-        gCheckBox->setText(state.orderBySelected->text);
+        gCheckBox->setText(state.checkButton->text);
         gCheckBox->setFont( Font::system() );
-        gCheckBox->setChecked(state.orderBySelected->checked);
-        auto cB = state.orderBySelected;
+        gCheckBox->setChecked(state.checkButton->checked);
+        auto cB = state.checkButton;
         gCheckBox->onToggle = [cB, this](bool checked) {
             cB->checked = checked;
             
@@ -464,7 +464,7 @@ auto pBrowserWindow::buildView(bool save) -> void {
     [panel setAccessoryView: accessoryView];
    
     if (!save && GUIKIT::hasMinimumVersion(10, 11)) {
-        if (state.contentView.id || state.buttons.size() || state.orderBySelected)
+        if (state.contentView.id || state.buttons.size() || state.checkButton)
             [(id)panel setAccessoryViewDisclosed:YES];
         else
             [(id)panel setAccessoryViewDisclosed:NO];
