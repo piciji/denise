@@ -166,7 +166,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 
     fileDialogPtr->setWindow( *view ).setNonModal();
 
-    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+    if (group->isDisk() && dynamic_cast<LIBC64::Interface*>(emulator)) {
         if (emulator->getModelValue(LIBC64::Interface::ModelIdDriveFastLoader) || settings->get<unsigned>("use_firmware", 0))
             fileDialogPtr->addCheckButton(false, trans->getA("without speeder"), [settings](bool checked) {});
     }
