@@ -854,7 +854,8 @@ auto AudioLayout::setDspEvent(SliderLayout* sliderLayout, std::string ident, flo
 
 auto AudioLayout::initDsp(SliderLayout* sliderLayout, std::string ident, float defaultVal) -> void {
     auto val = _settings->get<float>(ident, defaultVal,{0.0, 1.0});
-    sliderLayout->slider.setPosition((unsigned) (val * 100.0));
+    unsigned _pos = (val + 0.005) * 100.0;
+    sliderLayout->slider.setPosition(_pos);
     sliderLayout->value.setText(GUIKIT::String::convertDoubleToString(val, 2));
 }
 
@@ -865,7 +866,7 @@ auto AudioLayout::initSeparation() -> void {
     unsigned r1 = panning.bottom.rightMix.slider.position();
 
     if(((l0 + l1) == 100) && ((r0 + r1) == 100) && (l0 == r1) && (l1 == r0)) {
-        unsigned pos = ((l0 - 50) * 20) / 50;
+        unsigned pos = ((float)(l0 - 50) * 20) / 50.0 + 0.5;
         panning.top.separation.value.setText( std::to_string(pos * 5) + "%" );
         panning.top.separation.slider.setPosition( pos );
     }
