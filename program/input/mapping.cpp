@@ -19,6 +19,9 @@ auto InputMapping::checkSanity(Hid::Device* device, unsigned groupId, unsigned i
 		|| (device->isJoypad() && groupId == Hid::Joypad::GroupID::Hat))
 			return 1;
 	} else { //digital button or switch
+        if (device->isMouse() && emuDevice && emuDevice->isJoypadOrMultiAdapter())
+            return 0;
+
 		if ((device->isMouse() && groupId == Hid::Mouse::GroupID::Button)
 		|| (device->isJoypad() && groupId == Hid::Joypad::GroupID::Button)
 		|| (device->isKeyboard() && groupId == Hid::Keyboard::GroupID::Button))
