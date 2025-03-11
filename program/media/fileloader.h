@@ -36,7 +36,6 @@ struct Fileloader {
     auto eject(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void;
     auto applyPreviewFont(Emulator::Interface* emulator, unsigned fontSize) -> void;
     auto previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media = nullptr ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
-    auto showListing( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) -> bool;
     auto resetPreview(Emulator::Interface* emulator, bool light = false) -> void;
     auto convertListing( Emulator::Interface* emulator, std::vector<Emulator::Interface::Listing>& emuListings ) -> std::vector<GUIKIT::BrowserWindow::Listing>;
     auto insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, uint8_t autoLoad = 0, unsigned selection = 0 ) -> bool;

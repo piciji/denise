@@ -32,7 +32,7 @@ auto Cart::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romS
 	if (this->rom && (rom == nullptr))
         write(); // unset
 	
-    auto _cartridgeId = media->pcbLayout ? media->pcbLayout->id : 0;
+    auto _cartridgeId = (media && media->pcbLayout) ? media->pcbLayout->id : 0;
     
     auto newCart = rebuild( (Interface::CartridgeId)_cartridgeId, rom, romSize );
 	
@@ -398,6 +398,159 @@ auto Cart::isSupported() -> bool {
             break;
     }
     return false;
+}
+
+auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
+    listings.clear();
+    Emulator::C64Listing listing;
+    listing.convertToScreencode = system->convertToScreencode;
+
+    unsigned id = 0;
+    std::vector<uint16_t> out;
+
+    out.push_back(listing.decodeToScreencodeHi('I'));
+    out.push_back(listing.decodeToScreencodeHi('D'));
+    out.push_back(listing.decodeToScreencodeHi(':'));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+
+    std::string ident = std::to_string(cartridgeId);
+    for(auto& c : ident)
+        out.push_back(listing.decodeToScreencodeHi(c));
+    listings.push_back({ id++, out });
+
+    out.clear();
+    out.push_back(listing.decodeToScreencodeHi('V'));
+    out.push_back(listing.decodeToScreencodeHi('E'));
+    out.push_back(listing.decodeToScreencodeHi('R'));
+    out.push_back(listing.decodeToScreencodeHi('S'));
+    out.push_back(listing.decodeToScreencodeHi('I'));
+    out.push_back(listing.decodeToScreencodeHi('O'));
+    out.push_back(listing.decodeToScreencodeHi('N'));
+    out.push_back(listing.decodeToScreencodeHi(':'));
+
+    ident = std::to_string(version >> 8);
+    for (auto& c : ident)
+        out.push_back(listing.decodeToScreencodeHi(c));
+    out.push_back(listing.decodeToScreencodeHi('.'));
+    ident = std::to_string(version & 0xff);
+    for (auto& c : ident)
+        out.push_back(listing.decodeToScreencodeHi(c));
+
+    listings.push_back( {id++, out});
+
+    out.clear();
+    out.push_back(listing.decodeToScreencodeHi('N'));
+    out.push_back(listing.decodeToScreencodeHi('A'));
+    out.push_back(listing.decodeToScreencodeHi('M'));
+    out.push_back(listing.decodeToScreencodeHi('E'));
+    out.push_back(listing.decodeToScreencodeHi(':'));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+
+    std::string str((const char*)cartName);
+    std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+    for (auto& c : str)
+        out.push_back(listing.decodeToScreencodeHi(c));
+    listings.push_back({ id++, out });
+
+    out.clear();
+    out.push_back(listing.decodeToScreencodeHi('E'));
+    out.push_back(listing.decodeToScreencodeHi('X'));
+    out.push_back(listing.decodeToScreencodeHi('R'));
+    out.push_back(listing.decodeToScreencodeHi('O'));
+    out.push_back(listing.decodeToScreencodeHi('M'));
+    out.push_back(listing.decodeToScreencodeHi(':'));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+
+    if (exRom) {
+        out.push_back(listing.decodeToScreencodeHi('H'));
+        out.push_back(listing.decodeToScreencodeHi('I'));
+    } else {
+        out.push_back(listing.decodeToScreencodeHi('L'));
+        out.push_back(listing.decodeToScreencodeHi('O'));
+    }
+    listings.push_back({ id++, out });
+
+    out.clear();
+    out.push_back(listing.decodeToScreencodeHi('G'));
+    out.push_back(listing.decodeToScreencodeHi('A'));
+    out.push_back(listing.decodeToScreencodeHi('M'));
+    out.push_back(listing.decodeToScreencodeHi('E'));
+    out.push_back(listing.decodeToScreencodeHi(':'));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+    out.push_back(listing.decodeToScreencodeHi(' '));
+
+    if (game) {
+        out.push_back(listing.decodeToScreencodeHi('H'));
+        out.push_back(listing.decodeToScreencodeHi('I'));
+    } else {
+        out.push_back(listing.decodeToScreencodeHi('L'));
+        out.push_back(listing.decodeToScreencodeHi('O'));
+    }
+    listings.push_back({ id++, out });
+    out.clear();
+    listings.push_back({ id++, out });
+    
+    for(auto& chip : chips) {
+        out.clear();
+        out.push_back(listing.decodeToScreencode('B'));
+        out.push_back(listing.decodeToScreencode('A'));
+        out.push_back(listing.decodeToScreencode('N'));
+        out.push_back(listing.decodeToScreencode('K'));
+        out.push_back(listing.decodeToScreencode(':'));
+
+        ident = std::to_string(chip.bank);
+        for (auto& c : ident)
+            out.push_back(listing.decodeToScreencode(c));
+
+        if (chip.bank < 100)
+            out.push_back(listing.decodeToScreencode(' '));
+        if (chip.bank < 10)
+            out.push_back(listing.decodeToScreencode(' '));
+
+        out.push_back(listing.decodeToScreencode(' '));
+        out.push_back(listing.decodeToScreencode('S'));
+        out.push_back(listing.decodeToScreencode('I'));
+        out.push_back(listing.decodeToScreencode('Z'));
+        out.push_back(listing.decodeToScreencode('E'));
+        out.push_back(listing.decodeToScreencode(':'));
+        ident = std::to_string(chip.size / 1024);
+        for (auto& c : ident)
+            out.push_back(listing.decodeToScreencode(c));
+
+        out.push_back(listing.decodeToScreencode('K'));
+        out.push_back(listing.decodeToScreencode('B'));
+        out.push_back(listing.decodeToScreencode(' '));
+        out.push_back(listing.decodeToScreencode('L'));
+        out.push_back(listing.decodeToScreencode('O'));
+        out.push_back(listing.decodeToScreencode('A'));
+        out.push_back(listing.decodeToScreencode('D'));
+        out.push_back(listing.decodeToScreencode(':'));
+        out.push_back(listing.decodeToScreencode('$'));
+
+        char hex[5] = { 0 };
+#ifdef _MSC_VER
+        sprintf_s(hex, "%X", chip.addr);
+#else
+        sprintf(hex, "%X", chip.addr);
+#endif
+
+        for (auto& c : hex) {
+            if (c)
+                out.push_back(listing.decodeToScreencode(c));
+        }
+
+        listings.push_back({ id++, out });
+    }
+
+    return listings;
 }
 
 }

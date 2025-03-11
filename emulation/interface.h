@@ -524,6 +524,7 @@ struct Interface {
     virtual auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Expansion* { return nullptr; }    
     virtual auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void {}
     virtual auto getExpansionJumper( Media* media, unsigned jumperId ) -> bool { return false; }
+    virtual auto getExpansionPreview(uint8_t* data, unsigned size) -> std::vector<Listing> { return {}; }
     // cart buttons
     virtual auto hasFreezeButton() -> bool { return false; }
     virtual auto freezeButton() -> void {}

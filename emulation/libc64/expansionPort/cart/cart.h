@@ -35,6 +35,8 @@ struct Cart : ExpansionPort {
     uint8_t* data = nullptr;
     unsigned size = 0;    
     bool binFormat;
+
+    std::vector<Emulator::Interface::Listing> listings;
 	
 	Emulator::Interface::Media* media;
     
@@ -44,6 +46,7 @@ struct Cart : ExpansionPort {
     virtual auto assumeChips( std::vector<unsigned> sizes ) -> void;
     virtual auto reset(bool softReset = false) -> void;
     virtual auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
+    virtual auto getListing() -> std::vector<Emulator::Interface::Listing>;
     
     virtual auto readRomL(uint16_t addr) -> uint8_t;
     virtual auto readRomH(uint16_t addr) -> uint8_t;   

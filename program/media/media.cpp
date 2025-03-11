@@ -1315,8 +1315,10 @@ auto MediaLayout::fillListing(Emulator::Interface::Media* media, std::vector<GUI
 
     auto layout = getMediaGroupLayout( media->group );
 
-    if (layout)
-        layout->fillListing( listings );
+    if (!layout || !showListing(layout))
+        return;
+
+    layout->fillListing( listings );
 
     if (!markPreview)
         return;

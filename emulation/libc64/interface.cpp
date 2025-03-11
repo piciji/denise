@@ -1961,6 +1961,17 @@ auto Interface::getExpansionJumper( Media* media, unsigned jumperId ) -> bool {
     return false;
 }
 
+auto Interface::getExpansionPreview(uint8_t* data, unsigned size) -> std::vector<Listing> {
+    Cart cart(system);
+    cart.rom = data;
+    cart.romSize = size;
+    if (!cart.readHeader())
+        return {};
+        
+    cart.readChips();
+    return cart.getListing();
+}
+
 auto Interface::hasFreezeButton() -> bool {
     return system->expansionPort->hasFreezeButton();
 }

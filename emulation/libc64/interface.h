@@ -147,6 +147,7 @@ struct Interface : Emulator::Interface {
     auto analyzeExpansion(uint8_t* data, unsigned size, std::string suffix = "") -> Expansion*;
     auto setExpansionJumper( Media* media, unsigned jumperId, bool state ) -> void;
     auto getExpansionJumper( Media* media, unsigned jumperId ) -> bool;
+    auto getExpansionPreview(uint8_t* data, unsigned size) -> std::vector<Listing>;
     
 	//savestates
     auto checkstate(uint8_t* data, unsigned size) -> bool;

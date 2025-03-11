@@ -442,14 +442,8 @@ auto Fileloader::applyPreviewFont(Emulator::Interface* emulator, unsigned fontSi
 auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
     Emulator::Interface::MediaGroup* mediaGroup = nullptr;
 
-    if (media) {
+    if (media)
         mediaGroup = media->group;
-
-        if ( !showListing(emulator, mediaGroup) ) {
-            queuePreview.lastMedia = nullptr;
-            return {};
-        }
-    }
 
     std::unique_lock<std::mutex> lck(previewMutex);
     uint8_t _status = queuePreview.status;
@@ -617,6 +611,14 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
                 if (mediaGroup.isProgram()) {
                     if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
                         listings = emulator->getProgramPreview(data, file.archiveDataSize(0));
+                        group = &mediaGroup;
+                        break;
+                    }
+                }
+
+                if (mediaGroup.isExpansion()) {
+                    if (GUIKIT::Vector::find(mediaGroup.suffix, extension)) {
+                        listings = emulator->getExpansionPreview(data, file.archiveDataSize(0));
                         group = &mediaGroup;
                         break;
                     }
@@ -922,14 +924,6 @@ auto Fileloader::convertListing( Emulator::Interface* emulator, std::vector<Emul
     }
 
     return list;
-}
-
-auto Fileloader::showListing( Emulator::Interface* emulator, Emulator::Interface::MediaGroup* mediaGroup ) -> bool {
-
-    if ( mediaGroup->isDrive() || mediaGroup->isProgram())
-        return true;
-
-    return false;
 }
 
 auto Fileloader::resetPreview(Emulator::Interface* emulator, bool light) -> void {
