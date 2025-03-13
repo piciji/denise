@@ -465,7 +465,11 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                 if (view->configurationsLayout) {
                     view->configurationsLayout->settings.active.remove(view->configurationsLayout->settings.active.undockButton);
                     view->configurationsLayout->updateSettingsList();
+                    view->configurationsLayout->updateStorePaths();
                 }
+
+                if(view->audioLayout)
+                    view->audioLayout->updateRecordingPath();
 
                 if (view->paletteLayout)
                     view->paletteLayout->loadSettings();
@@ -685,7 +689,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         globalSettings->set<std::string>( emulator->ident + "_settings_path", "" );
 
-        settingsFolder.pathEdit.setText( "" );
+        settingsFolder.pathEdit.setText(program->getSettingsFolder(emulator));
 
         settingsFolder.pathEdit.setEnabled(false);
 
@@ -834,7 +838,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
     stateFolder.standard.onActivate = [this]() {
         _settings->set<std::string>("states_folder", "");
-        stateFolder.pathEdit.setText("");
+        stateFolder.pathEdit.setText(program->generatedFolder("states"));
         stateFolder.pathEdit.setEnabled(false);
     };
         
@@ -1030,13 +1034,7 @@ auto ConfigurationsLayout::loadSettings() -> void {
 
     stateFast.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
 
-    std::string _statesFolder = _settings->get<std::string>("states_folder", "");
-    stateFolder.pathEdit.setText(_statesFolder);
-    stateFolder.pathEdit.setEnabled(!_statesFolder.empty());
-
-    std::string _settingsFolder = globalSettings->get<std::string>(emulator->ident + "_settings_path", "");
-    settingsFolder.pathEdit.setText(_settingsFolder);
-    settingsFolder.pathEdit.setEnabled(!_settingsFolder.empty());
+    updateStorePaths();
     
     if(memoryPattern) {
         Emulator::Interface::MemoryPattern pattern;
@@ -1055,6 +1053,16 @@ auto ConfigurationsLayout::loadSettings() -> void {
         
         updateMemoryPreview();
     }
+}
+
+auto ConfigurationsLayout::updateStorePaths() -> void {
+    std::string _statesFolder = _settings->get<std::string>("states_folder", "");
+    stateFolder.pathEdit.setText(program->generatedFolder(emulator, "states_folder", "states"));
+    stateFolder.pathEdit.setEnabled(!_statesFolder.empty());
+
+    std::string _settingsFolder = globalSettings->get<std::string>(emulator->ident + "_settings_path", "");
+    settingsFolder.pathEdit.setText(program->getSettingsFolder(emulator));
+    settingsFolder.pathEdit.setEnabled(!_settingsFolder.empty());
 }
 
 auto ConfigurationsLayout::updateMemoryPreview() -> void {

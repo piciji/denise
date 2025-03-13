@@ -173,6 +173,7 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     auto load( std::string path, bool showError = true ) -> bool;
     auto loadSettings() -> void;
     auto updateMemoryPreview() -> void;
+    auto updateStorePaths() -> void;
     
     ConfigurationsLayout(TabWindow* tabWindow); 
 };

@@ -208,4 +208,5 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     auto setSeparation() -> void;
 
     auto updateVolumeSlider() -> void;
+    auto updateRecordingPath() -> void;
 };

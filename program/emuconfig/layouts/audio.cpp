@@ -580,7 +580,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
     audioRecord.location.standard.onActivate = [this]() {
         _settings->set<std::string>("audio_record_path", "");
-        audioRecord.location.pathEdit.setText("");
+        audioRecord.location.pathEdit.setText(program->generatedFolder("states"));
         audioRecord.location.pathEdit.setEnabled(false);
     };
     
@@ -1018,9 +1018,7 @@ auto AudioLayout::loadSettings() -> void {
     bass.bottom.reduceClipping.slider.setPosition((unsigned) (bassReduceClipping * 10.0));
     bass.bottom.reduceClipping.value.setText(GUIKIT::String::convertDoubleToString(bassReduceClipping, 1));
     
-    std::string _recordPath = _settings->get<std::string>("audio_record_path", "");
-    audioRecord.location.pathEdit.setText(_recordPath);
-    audioRecord.location.pathEdit.setEnabled(!_recordPath.empty());
+    updateRecordingPath();
     
     unsigned value = _settings->get<unsigned>( "audio_record_minutes", 0, {0, 120} );
     
@@ -1095,6 +1093,12 @@ auto AudioLayout::loadSettings() -> void {
     updateVolumeSlider();
 
     updateVisibility();
+}
+
+auto AudioLayout::updateRecordingPath() -> void {
+    std::string _recordPath = _settings->get<std::string>("audio_record_path", "");
+    audioRecord.location.pathEdit.setText(program->generatedFolder(emulator, "audio_record_path", "recordings/audio"));
+    audioRecord.location.pathEdit.setEnabled(!_recordPath.empty());
 }
 
 auto AudioLayout::updateVisibility() -> void {
