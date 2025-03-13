@@ -11,8 +11,10 @@ namespace LIBC64 {
 
         auto writeIo1( uint16_t addr, uint8_t value ) -> void {
             Chip* _c;
-            if ((_c = getChip(1)) && (_c->bank != 1))
-                 addr ^= 1;
+            if (!binFormat) {
+                if ((_c = getChip(1)) && (_c->bank != 1))
+                    addr ^= 1;
+            }
 
             for( auto& chip : chips ) {
                 if (chip.addr == 0xa000) {
@@ -26,16 +28,18 @@ namespace LIBC64 {
 
         auto assumeChips( ) -> void { // when using BIN file
             Cart::assumeChips( );
+            auto _c = getChip(1);
+            bool inv = _c && _c->ptr[0] != 4; // cartconv BUG?
 
             for (auto& chip : chips) {
                 if (chip.id == 0)
                     chip.addr = 0x8000;
                 else if (chip.id == 1) {
                     chip.addr = 0xA000;
-                    chip.bank = 1;
+                    chip.bank = inv ? 1 : 0;
                 } else if (chip.id == 2) {
                     chip.addr = 0xA000;
-                    chip.bank = 0;
+                    chip.bank = inv ? 0 : 1;
                 }
             }
         }
