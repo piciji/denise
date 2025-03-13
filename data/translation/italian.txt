@@ -875,4 +875,4 @@ select_SuperCPU_image = seleziona immagine SuperCPU ...
 unsupported cartridge = Questa cartuccia non può essere supportata
 1541C Track-0 Sensor = Sensore Traccia-0 1541C
 select setting = seleziona impostazione
-without speeder = without Speeder
+without speeder = suppress Speeder

@@ -1143,13 +1143,7 @@ auto pBrowserWindow::adjustDialogByScreenResolution(HWND fileDialogView, HWND li
     RECT rListBox;
     
     GetClientRect(fileDialogView, &rDialogView);
-    GetWindowRect(listBox, &rListBox);   
-    
-    // 12 -> 472
-    // 11 -> 445    
-    // 10 -> 390
-    // 9  -> 362
-    // 8  -> 332
+    GetWindowRect(listBox, &rListBox);
        
     auto newWidth = browserWindow.state.contentView.width;
     
@@ -1198,8 +1192,10 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
         }
 
         buttons.clear();
-		int relativeX = -1;
+        int relativeX = -1;
 		unsigned buttonBarWidth = 0;
+        unsigned buttonBarHeight = 0;
+        unsigned checkBarWidth = 0;        
 		
         for (auto& button : browserWindow.state.buttons) {
             HWND hwnd = GetDlgItem(fileDialogView, button.id);
@@ -1216,21 +1212,24 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
             width = size.width + 10;
 			if (!hasAppThemed())
 				width += 10;
-            
-			if (relativeX == -1)
-				relativeX = std::abs(rect.left - rCustomView.right);
-					
+			
+            if (relativeX == -1)
+                relativeX = std::abs(rect.left - rCustomView.right);
+
 			int height = std::abs(rect.bottom - rect.top);
             int relativeY = std::abs(rect.top - (listBox ? rListBox.bottom : rCustomView.top) );
 
-            buttons.push_back({hwnd, width, height, relativeX, relativeY});
+            buttons.push_back({hwnd, false, width, height, relativeX, relativeY});
 			
 			relativeX += width + buttonMargin;
 			
 			buttonBarWidth += width + buttonMargin;
+
+            buttonBarHeight = std::max<int>(buttonBarHeight, height);
         }
 
         if (checkButton) {
+            relativeX = -1;
             HWND hwnd = GetDlgItem(hDlg, IDC_CHECKBOX);
             if (hwnd) {
                 RECT rect;
@@ -1247,23 +1246,38 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
 
                 int height = std::abs(rect.bottom - rect.top);
                 int relativeY = std::abs(rect.top - (listBox ? rListBox.bottom : rCustomView.top) );
+                if (buttonBarHeight)
+                    relativeY += buttonBarHeight + 5;
 
-                buttons.push_back({hwnd, width, height, relativeX, relativeY});
+                buttons.push_back({ hwnd, true, width, height, relativeX, relativeY});
 
                 relativeX += width + buttonMargin;
 
-                buttonBarWidth += width + buttonMargin;
+                checkBarWidth += width + buttonMargin;
             }
         }
 		
-		if (listBox && buttonBarWidth) { // center button Bar
-			buttonBarWidth -= buttonMargin;
-			if (buttonBarWidth < listWidth) {
-				unsigned delta = (listWidth - buttonBarWidth) >> 1;
-				for (auto& button : buttons) {
-					button.relativeX += delta;
-				}			
-			}
+		if (listBox) { // center button Bar
+            if (buttonBarWidth) {
+                buttonBarWidth -= buttonMargin;
+                if (buttonBarWidth < listWidth) {
+                    unsigned delta = (listWidth - buttonBarWidth) >> 1;
+                    for (auto& button : buttons) {
+                        if (!button.checkbox)
+                            button.relativeX += delta;
+                    }
+                }
+            }
+            if (checkBarWidth) {
+                checkBarWidth -= buttonMargin;
+                if (checkBarWidth < listWidth) {
+                    unsigned delta = (listWidth - checkBarWidth) >> 1;
+                    for (auto& button : buttons) {
+                        if (button.checkbox)
+                            button.relativeX += delta;
+                    }
+                }
+            }
 		}
     }
 	
@@ -1274,10 +1288,8 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
 
     int buttonTotalHeight = 0;
     
-    for (auto& button : buttons) {
-        
+    for (auto& button : buttons)
         buttonTotalHeight = std::max<int>(buttonTotalHeight, button.relativeY + button.height);
-    }
     
     int contentHeight = dialogHeight - buttonTotalHeight - customGapTop - customGapBottom + (browserWindow.state.resizeAdjust * dpiX) / 72;
     

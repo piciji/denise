@@ -796,6 +796,7 @@ struct pBrowserWindow {
 
     struct Button {
         HWND hwnd;
+        bool checkbox;
         int width;
         int height;
         int relativeX;

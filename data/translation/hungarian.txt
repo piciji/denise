@@ -875,4 +875,4 @@ select_SuperCPU_image = válassz SuperCPU képet...
 unsupported cartridge = Ez a cartridge esetleg nem támogatott.
 1541C Track-0 Sensor = 1541C Track-0 érzékelő
 select setting = válaszd a Beállítást
-without speeder = without Speeder
+without speeder = suppress Speeder
