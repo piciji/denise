@@ -618,7 +618,7 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
             file.unload();
 
             if (!found) {
-                screenTextFontPath = generatedFolder(activeEmulator, "", "fonts") + _fontFile;
+                screenTextFontPath = generatedFolder("fonts") + _fontFile;
                 file.setFile(screenTextFontPath);
                 found = file.exists();
                 file.unload();

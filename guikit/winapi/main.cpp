@@ -292,14 +292,19 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 			if ( (lpmis != NULL) && (lpmis->CtlType == ODT_MENU) ) {
 				if (pMenuBase::measureItem(lpmis))
 					return true;
-			}
-            
-            else if ( (lpmis != NULL) && (lpmis->CtlType == ODT_LISTVIEW) ) {
+			} else if ( (lpmis != NULL) && (lpmis->CtlType == ODT_LISTVIEW) ) {
                 unsigned id = LOWORD(wparam);
                 HWND control = GetDlgItem(hwnd, id);
                 base = (Base*) GetWindowLongPtr(control, GWLP_USERDATA);
                 if(dynamic_cast<ListView*>(base)) {
                     ((ListView*)base)->p.measureItem( lpmis );
+                    return true;
+                }
+            } else if ((lpmis != NULL) && (lpmis->CtlType == ODT_COMBOBOX)) {
+                unsigned id = LOWORD(wparam);
+                base = Base::find(id);
+                if (dynamic_cast<ComboButton*>(base)) {
+                    ((ComboButton*)base)->p.measureItem(lpmis);
                     return true;
                 }
             }
@@ -315,14 +320,19 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
 			if ((lDraw != NULL) && (lDraw->CtlType == ODT_MENU)) {
 				if (pMenuBase::drawItem(lDraw))
 					return true;
-			}
-
-            else if ((lDraw != NULL) && (lDraw->CtlType == ODT_LISTVIEW)) {
+			} else if ((lDraw != NULL) && (lDraw->CtlType == ODT_LISTVIEW)) {
                 
                 if (dynamic_cast<ListView*> (base)) {
                     ((ListView*) base)->p.drawItem(lDraw);
                     return true;
                 }
+            } else if ((lDraw != NULL) && (lDraw->CtlType == ODT_COMBOBOX)) {
+
+                if (dynamic_cast<ComboButton*> (base)) {
+                    ((ComboButton*)base)->p.drawItem(lDraw);
+                    return true;
+                }
+
             } else {
                 if(dynamic_cast<StatusBar*>(base)) {
                     ((StatusBar*)base)->p.drawItem(wparam, lparam);
@@ -983,7 +993,7 @@ auto pWindow::setPointerCursor() -> void {
     hCursor = LoadCursor(0, IDC_HAND); 
 }
 
-auto pWindow::addCustomFont( CustomFont* customFont ) -> bool {
+auto pWindow::addCustomFont( CustomFont& customFont ) -> bool {
 	
 	return pFont::add( customFont );
 }

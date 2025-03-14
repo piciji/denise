@@ -117,7 +117,7 @@ struct pWindow {
 	auto moveWindow(GdkEvent* event) -> void;
 	auto sizeWindow(GtkAllocation* allocation) -> void;
     
-    static auto addCustomFont( CustomFont* customFont ) -> bool;
+    static auto addCustomFont( CustomFont& customFont ) -> bool;
 
     pWindow(Window& window, Window::Hints hints = Window::Hints::Default);
 };
@@ -737,7 +737,7 @@ struct pFont {
     static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
 	static auto systemFontFile() -> std::string;
     static auto create(const std::string& desc) -> PangoFontDescription*;
-    static auto add( CustomFont* customFont ) -> bool;
+    static auto add( CustomFont& customFont ) -> bool;
     static auto free(PangoFontDescription* font) -> void;
     static auto size(PangoFontDescription* font, std::string text) -> Size;
     static auto size(std::string font, std::string text) -> Size;

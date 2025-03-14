@@ -136,7 +136,7 @@ auto Application::getUtf8CmdLine(std::vector<std::string>& out) -> bool {
 }
 #endif
 //window
-std::vector<CustomFont*> Window::customFonts;
+std::vector<CustomFont> Window::customFonts;
 
 Window::Window(Hints hints) : p(*new pWindow(*this, hints)), Base(), cocoa(*this), winapi(*this) {
     state.widgetFont = Font::system();
@@ -212,7 +212,11 @@ auto Window::remove(Layout& layout) -> void {
     layout.Sizable::state.window = nullptr;
 }
 
-auto Window::addCustomFont( CustomFont* customFont ) -> bool {	
+auto Window::addCustomFont( CustomFont& customFont ) -> bool {	
+    for (auto& cF : customFonts) {
+        if (cF.name == customFont.name)
+            return true;
+    }
 
 	bool ok = pWindow::addCustomFont( customFont );
 	if (ok)
@@ -222,9 +226,9 @@ auto Window::addCustomFont( CustomFont* customFont ) -> bool {
 }
 
 auto Window::getCustomFont(void* refPtr) -> CustomFont* {
-    for(auto cF : customFonts) {
-        if (cF->refPtr == refPtr)
-            return cF;
+    for(auto& cF : customFonts) {
+        if (cF.refPtr == refPtr)
+            return &cF;
     }
     return nullptr;
 }
@@ -873,16 +877,18 @@ auto CheckBox::toggle() -> void {
 
 CheckBox::CheckBox() : Widget(*new pCheckBox(*this)), p((pCheckBox&)Widget::p) { p.init(); }
 
-auto ComboButton::append(const std::string& text, int userData) -> void {
+auto ComboButton::append(const std::string& text, int userData, const std::string& font) -> void {
     state.rows.push_back(text);
     state.userData.push_back(userData);
-    p.append(text);
+    state.fonts.push_back(font);
+    p.append(text, font);
 }
 
 auto ComboButton::remove(unsigned selection) -> void {
     if(selection >= state.rows.size()) return;
     state.rows.erase(state.rows.begin() + selection);
     state.userData.erase(state.userData.begin() + selection);
+    state.fonts.erase(state.fonts.begin() + selection);
     p.remove(selection);
 }
 
@@ -890,6 +896,7 @@ auto ComboButton::reset() -> void {
     state.selection = 0;
     state.rows.clear();
     state.userData.clear();
+    state.fonts.clear();
     p.reset();
 }
 
@@ -935,7 +942,7 @@ auto ComboButton::setSelectionByRow(const std::string& row) -> void {
 
 auto ComboButton::setText(unsigned selection, const std::string& text) -> void {
     if(selection >= state.rows.size()) return;
-    state.rows.at(selection) = text;
+    state.rows[selection] = text;
     p.setText(selection, text);
 }
 
@@ -954,7 +961,8 @@ auto ComboButton::userData(unsigned selection) const -> int {
     return state.userData[selection];
 }
 
-ComboButton::ComboButton(bool hintVerticalScrollbar) : hintVerticalScrollbar(hintVerticalScrollbar),  Widget(*new pComboButton(*this)), p((pComboButton&)Widget::p) { p.init(); }
+ComboButton::ComboButton(bool hintVerticalScrollbar, bool hintMultiFonts)
+: hintVerticalScrollbar(hintVerticalScrollbar), hintMultiFonts(hintMultiFonts), Widget(*new pComboButton(*this)), p((pComboButton&)Widget::p) { p.init(); }
 
 auto Slider::setLength(unsigned length) -> void {
     state.length = length;

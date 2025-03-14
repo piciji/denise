@@ -133,9 +133,9 @@ auto pFont::systemFontFile() -> std::string {
     return str;
 }
 
-auto pFont::add(CustomFont* customFont) -> bool {
+auto pFont::add(CustomFont& customFont) -> bool {
     DWORD nFonts;
-    File file(customFont->filePath);
+    File file(customFont.filePath);
     bool success = false;
 
     if (file.open()) {
@@ -151,7 +151,7 @@ auto pFont::add(CustomFont* customFont) -> bool {
      * I would only use this function with fonts that are installed directly in the Windows Fonts folder.
      */
 
-    // return AddFontResourceW( utf16_t(customFont->filePath.c_str()) );
+    // return AddFontResourceW( utf16_t(customFont.filePath.c_str()) );
 }
 
 auto pFont::create(const std::string& desc) -> HFONT {
@@ -172,10 +172,21 @@ auto pFont::create(const std::string& desc) -> HFONT {
             italic |= String::foundSubStr(style, "italic");
         }
     }
+
+    std::string _desc = desc;
+    String::toLowerCase(_desc);
+
+    if (!bold) {
+        bold |= String::foundSubStr(_desc, "bold");
+    }
+
+    if (!italic) {
+        italic |= String::foundSubStr(_desc, "italic");
+    }
 	
     HFONT _hfont = CreateFont(
         -((float)size * dpiX / 72.0 + 0.5),
-        0, 0, 0, !bold ? FW_NORMAL : FW_BOLD, italic,
+        0, 0, 0, !bold ? FW_DONTCARE : FW_BOLD, italic,
         0, 0, 0, 0, 0, 0, 0, utf16_t(family) );
 		
 	return _hfont;	

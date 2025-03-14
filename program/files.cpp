@@ -585,29 +585,27 @@ auto Program::getSettings( Emulator::Interface* emulator ) -> GUIKIT::Settings* 
 }
 
 auto Program::addCustomFont() -> void {
-    GUIKIT::CustomFont* font;
-
     for(auto emulator : emulators) {
         if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
-            font = new GUIKIT::CustomFont;
-            font->name = "C64 Pro";
-            font->refPtr = (void*)emulator;
-            font->filePath = fontFolder() + "C64_Pro-STYLE121.ttf";
-            font->modifier = 0xee << 8;
+            GUIKIT::CustomFont font;
+            font.name = "C64 Pro";
+            font.refPtr = (void*)emulator;
+            font.filePath = fontFolder() + "C64_Pro-STYLE121.ttf";
+            font.modifier = 0xee << 8;
             bool useCustomFont = GUIKIT::Window::addCustomFont( font );
             ((LIBC64::Interface*) emulator)->convertPetsciiToScreencode(useCustomFont);
             ((LIBC64::Interface*) emulator)->loadWithColumn( getSettings(emulator)->get<bool>("autostart_load_with_column") );
 
         } else if ( dynamic_cast<LIBAMI::Interface*>(emulator)) {
-            font = new GUIKIT::CustomFont;
-            font->name = "TopazPlus a500a1000a2000";
-            //font->name = "Topaz a500a1000a2000";
-            font->refPtr = (void*)emulator;
-            font->filePath = fontFolder() + "TopazPlus_a500_v1.0.ttf";
-            //font->filePath = fontFolder() + "Topaz_a500_v1.0.ttf";
+            GUIKIT::CustomFont font;
+            font.name = "TopazPlus a500a1000a2000";
+            //font.name = "Topaz a500a1000a2000";
+            font.refPtr = (void*)emulator;
+            font.filePath = fontFolder() + "TopazPlus_a500_v1.0.ttf";
+            //font.filePath = fontFolder() + "Topaz_a500_v1.0.ttf";
 
-            font->sizeAdjust = 1;
-            font->modifier = 0;
+            font.sizeAdjust = 1;
+            font.modifier = 0;
             GUIKIT::Window::addCustomFont( font );
         }
     }

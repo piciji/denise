@@ -848,7 +848,7 @@ auto pWindow::remove(StatusBar& statusBar) -> void {
 }
 
 
-auto pWindow::addCustomFont(CustomFont* customFont) -> bool {
+auto pWindow::addCustomFont(CustomFont& customFont) -> bool {
     return pFont::add( customFont );
 }
 

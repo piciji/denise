@@ -565,7 +565,7 @@ auto pWindow::append(Layout& layout) -> void {
     layout.setGeometry(geometry);
 }
 
-auto pWindow::addCustomFont( CustomFont* customFont ) -> bool {
+auto pWindow::addCustomFont( CustomFont& customFont ) -> bool {
 
     return pFont::add( customFont );
 }

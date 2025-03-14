@@ -324,7 +324,7 @@ VideoScreenTextLayout::ColorBoxLayout::ColorBoxLayout() {
     setPadding(10);
 }
 
-VideoScreenTextLayout::Options::Font::Font() {
+VideoScreenTextLayout::Options::Font::Font() : fontType(false, true) {
     append(labelFontSize, {0u, 0u}, 10);
     append(fontSize, {0u, 0u}, 10);
     append(labelFontType, {0u, 0u}, 10);
@@ -1298,7 +1298,7 @@ auto VideoLayout::fillFontTypeList() -> void {
     });
 
     for(auto& displayFont : displayFonts)
-        fontTypes.append( displayFont.name, displayFont.ident );
+        fontTypes.append( displayFont.name, displayFont.ident, displayFont.name );
 
     fontTypes.setSelectionByUserId(selUserId);
 }
@@ -1306,6 +1306,10 @@ auto VideoLayout::fillFontTypeList() -> void {
 auto VideoLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
     static int counter = 0;
     uint16_t ident = mode << 14;
+    GUIKIT::CustomFont font;
+    font.filePath = "";
+    font.name = "";
+    font.refPtr = nullptr;
 
     for(auto& displayFont : displayFonts) {
         if ((displayFont.ident & 0xc000) == ident && displayFont.file == _fontFile)
@@ -1324,7 +1328,8 @@ auto VideoLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
 
     if (!screenTextFontPath.empty()) {
         GUIKIT::TTF ttf(screenTextFontPath);
-        fontNames = ttf.getFontNames();
+        fontNames = ttf.getFontNames();        
+        font.filePath = screenTextFontPath;
     }
 
     bool found = false;
@@ -1333,6 +1338,8 @@ auto VideoLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
         if (!fontName.empty()) {
             uint16_t _ident = ident + counter++;
             displayFonts.push_back({_fontFile, fontName, fIndex, _ident});
+            if (!found)
+                font.name = fontName;
             found = true;
         }
     }
@@ -1341,6 +1348,9 @@ auto VideoLayout::addTTF(unsigned mode, const std::string& _fontFile) -> void {
         ident += counter++;
         displayFonts.push_back({_fontFile, _fontFile, 0, ident});
     }
+
+    if (!font.name.empty())
+        GUIKIT::Window::addCustomFont(font);
 }
 
 auto VideoLayout::getTTF(uint16_t ident) -> DisplayFont* {

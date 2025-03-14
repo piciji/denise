@@ -305,9 +305,9 @@ auto pFont::size(std::string font, std::string text) -> Size {
     return {0, 0};
 }
 
-auto pFont::add( CustomFont* customFont ) -> bool {
+auto pFont::add( CustomFont& customFont ) -> bool {
     
-    NSString* _str = [NSString stringWithUTF8String: customFont->filePath.c_str()];
+    NSString* _str = [NSString stringWithUTF8String: customFont.filePath.c_str()];
     
     NSURL* fontURL = [NSURL fileURLWithPath: _str];
     

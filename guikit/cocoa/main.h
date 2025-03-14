@@ -72,7 +72,7 @@ struct pWindow {
     
     bool disableIconsInTopMenu = false;
 
-    static auto addCustomFont(CustomFont* customFont) -> bool;
+    static auto addCustomFont(CustomFont& customFont) -> bool;
     
     pWindow(Window& window, Window::Hints hints = Window::Hints::Default);
     ~pWindow();
@@ -579,7 +579,7 @@ struct pFont {
     static auto size(std::string font, std::string text) -> Size;
     static auto cocoaFont(const std::string& desc) -> NSFont*;
     static auto size(NSFont* font, std::string text) -> Size;
-    static auto add( CustomFont* customFont ) -> bool;
+    static auto add( CustomFont& customFont ) -> bool;
     static auto scale( unsigned pixel ) -> unsigned;
     static auto getSizeFromString(std::string desc) -> unsigned;
 };

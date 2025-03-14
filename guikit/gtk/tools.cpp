@@ -341,9 +341,9 @@ auto pFont::systemFontFile() -> std::string {
 	return fontFile;
 }
 
-auto pFont::add( CustomFont* customFont ) -> bool {
+auto pFont::add( CustomFont& customFont ) -> bool {
 
-    const FcChar8* file = (const FcChar8 *) customFont->filePath.c_str();
+    const FcChar8* file = (const FcChar8 *) customFont.filePath.c_str();
     
     return FcConfigAppFontAddFile(FcConfigGetCurrent(), file);
 }

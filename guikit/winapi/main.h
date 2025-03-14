@@ -149,7 +149,7 @@ struct pWindow {
     auto setBlankCursor() -> void {}
 	static auto XPOrBelowOrWin7InXPMode() -> bool;
 	
-	static auto addCustomFont( CustomFont* customFont ) -> bool;
+	static auto addCustomFont( CustomFont& customFont ) -> bool;
     static auto CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pWindow(Window& window, Window::Hints hints = Window::Hints::Default );
@@ -427,8 +427,9 @@ struct pCheckBox : pWidget {
 
 struct pComboButton : pWidget {
     ComboButton& comboButton;
+    std::vector<HFONT> hfonts;
 
-    auto append(std::string text) -> void;
+    auto append(std::string text, const std::string& _font) -> void;
     auto remove(unsigned selection) -> void;
     auto minimumSize() -> Size;
     auto reset() -> void;
@@ -438,10 +439,14 @@ struct pComboButton : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto onChange() -> void;
-    
-    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+
+    auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> void;
+    auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
+
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)->LRESULT;
 
     pComboButton(ComboButton& comboButton) : pWidget(comboButton), comboButton(comboButton) {}
+    ~pComboButton();
 };
 
 struct pSlider : pWidget {
@@ -859,7 +864,7 @@ struct pMessageWindow {
 struct pFont {
     static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
     static auto create(const std::string& desc) -> HFONT;
-	static auto add(CustomFont* customFont) -> bool;
+	static auto add(CustomFont& customFont) -> bool;
     static auto free(HFONT& hfont) -> void;
     static auto size(HFONT hfont, std::string text) -> Size;
     static auto size(const std::string& font, const std::string& text) -> Size;

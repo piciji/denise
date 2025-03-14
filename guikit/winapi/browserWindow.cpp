@@ -1238,8 +1238,6 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
 
                 auto size = pFont::size(Font::system(), checkButton->text);
                 int width = size.width + 10;
-                if (!hasAppThemed())
-                    width += 10;
 
                 if (relativeX == -1)
                     relativeX = std::abs(rect.left - rCustomView.right);

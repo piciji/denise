@@ -290,7 +290,7 @@ struct Window : Base {
     auto setAspectRatio(Size ratio) -> void;
     auto applyMaximizeCorrection(Geometry& geo) -> void;
 	
-	static auto addCustomFont( CustomFont* customFont ) -> bool;
+	static auto addCustomFont( CustomFont& customFont ) -> bool;
 	static auto getCustomFont(void* refPtr) -> CustomFont*;
 
     struct {
@@ -316,7 +316,7 @@ struct Window : Base {
         unsigned settingId;
     } fullscreenSetting;
 	
-	static std::vector<CustomFont*> customFonts;
+	static std::vector<CustomFont> customFonts;
     Timer* focusTimer = nullptr;
     
     pWindow& p;
@@ -627,7 +627,7 @@ struct ComboButton : Widget {
     auto text() const -> std::string { return text( state.selection ); }
     auto text(unsigned selection) const -> std::string;
 
-    auto append(const std::string& text = "", int userData = 0) -> void;
+    auto append(const std::string& text = "", int userData = 0, const std::string& font = "") -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
     auto setSelection(unsigned selection) -> void;
@@ -641,12 +641,14 @@ struct ComboButton : Widget {
     struct {
         unsigned selection = 0;
         std::vector<std::string> rows;
+        std::vector<std::string> fonts;
         std::vector<int> userData;
     } state;
 
     bool hintVerticalScrollbar = false;
+    bool hintMultiFonts = false;
     pComboButton& p;
-    ComboButton(bool hintVerticalScrollbar = false);
+    ComboButton(bool hintVerticalScrollbar = false, bool hintMultiFonts = false);
 };
 
 struct Slider : Widget {
