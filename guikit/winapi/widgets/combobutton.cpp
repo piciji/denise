@@ -208,7 +208,7 @@ auto pComboButton::rebuild() -> void {
     create();
     setFont( widget.font() );
 
-    for (int i = 0; i < comboButton.state.rows.size(); i++)
+    for (int i = 0; i < comboButton.rows(); i++)
         append(comboButton.state.rows[i], comboButton.state.fonts[i]);
     
     setSelection(comboButton.state.selection);
