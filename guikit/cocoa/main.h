@@ -281,7 +281,7 @@ struct pCheckBox : pWidget {
 struct pComboButton : pWidget {
     ComboButton& comboButton;
 
-    auto append(std::string text) -> void;
+    auto append(std::string text, const std::string& font) -> void;
     auto remove(unsigned selection) -> void;
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void;

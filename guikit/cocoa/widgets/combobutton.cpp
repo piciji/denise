@@ -22,11 +22,42 @@
 
 namespace GUIKIT {
     
-auto pComboButton::append(std::string text) -> void {
-    @autoreleasepool {
-        [(id)cocoaView addItemWithTitle:[NSString stringWithUTF8String:text.c_str()]];
-    }
+auto pComboButton::append(std::string text, const std::string& font) -> void {
     calculatedMinimumSize.updated = false;
+    @autoreleasepool {
+        int tries = 0;
+        int expectedCount = comboButton.rows();
+        std::string altText = text;
+        
+        NSString* nsStr = [NSString stringWithUTF8String:text.c_str()];
+        if (nsStr)
+            [(id)cocoaView addItemWithTitle:nsStr];
+        
+        int realCount = [(id)cocoaView numberOfItems]; //expects unique names
+        
+        while (realCount < expectedCount) {
+            tries++;
+            if(tries > 5)
+                return;
+                
+            altText = text + "_" + std::to_string(tries);
+            nsStr = [NSString stringWithUTF8String:altText.c_str()];
+            if (nsStr)
+                [(id)cocoaView addItemWithTitle:nsStr];
+            realCount = [(id)cocoaView numberOfItems];
+        }
+        
+        if (!font.empty()) {
+            NSFont* nsfont = pFont::cocoaFont(font);
+            
+            if (nsfont != nil) {
+                NSDictionary* attrsDictionary = [NSDictionary dictionaryWithObject:nsfont forKey:NSFontAttributeName];
+                NSAttributedString* attrString = [[NSAttributedString alloc] initWithString:nsStr attributes:attrsDictionary];
+                
+                [[(id)cocoaView itemAtIndex:expectedCount-1] setAttributedTitle:attrString];
+            }
+        }
+    }
 }
 
 auto pComboButton::minimumSize() -> Size {

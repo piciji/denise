@@ -282,6 +282,13 @@ auto pFont::cocoaFont(const std::string& desc) -> NSFont* {
 
         }
     }
+    
+    if (!traits) {
+        std::string _desc = desc;
+        String::toLowerCase(_desc);
+        if (String::foundSubStr(_desc, "bold")) traits |= NSBoldFontMask;
+        if (String::foundSubStr(_desc, "italic")) traits |= NSItalicFontMask;
+    }
     size *= 1.5;  //scale to point sizes
     
     return [[NSFontManager sharedFontManager] fontWithFamily:family traits:traits weight:5 size:size];
