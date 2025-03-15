@@ -127,8 +127,8 @@ auto CALLBACK pComboButton::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, 
             return 0;
     }
     
-    //return CallWindowProc(comboButton->p.wndprocOrig, hwnd, msg, wparam, lparam);
-    return pApplication::wndProc(comboButton->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return CallWindowProc(comboButton->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    //return pApplication::wndProc(comboButton->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pComboButton::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
