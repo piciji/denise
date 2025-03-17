@@ -44,7 +44,9 @@ struct Input {
     auto getConnectedDevice( Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device*;
     auto getCursorPosition( Emulator::Interface::Device* device, int16_t& x, int16_t& y ) -> bool;
 
-    auto readCiaPortA(  ) -> uint8_t;
+    auto readCia() -> uint8_t;
+    auto writeCiaPort1(bool state) -> void;
+    auto writeCiaPort2(bool state) -> void;
 
     auto readParallelportCIA1B(uint8_t& res) -> void;
     auto readParallelportCIA2A(uint8_t& res) -> void;
@@ -54,6 +56,7 @@ struct Input {
     auto writeDeniseJoytest(uint16_t data) -> void;
 
     auto observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void;
+    auto writePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void;
     auto observePotPort1(uint8_t& x0, uint8_t& y0) -> void;
     auto observePotPort2(uint8_t& x1, uint8_t& y1) -> void;
 

@@ -717,3 +717,19 @@ auto InputManager::isAutofireActive(InputMapping* trigger) -> bool {
 
     return GUIKIT::Vector::find(autoFireMappings, trigger);
 }
+
+auto InputManager::getFirstAutoFireMapping(unsigned connectorId) -> InputMapping* {
+    auto connector = emulator->getConnector(connectorId);
+    auto connectedDevice = emulator->getConnectedDevice(connector);
+    if (!connectedDevice->isJoypadOrMultiAdapter())
+        return nullptr;
+
+    for (auto& input : connectedDevice->inputs) {
+        if (input.key == Emulator::Interface::Key::ToggleAutofire) {
+            InputMapping* mapping = (InputMapping*)input.guid;
+            if (mapping)
+                return mapping->shadowMap[0];
+        }
+    }
+    return nullptr;
+}

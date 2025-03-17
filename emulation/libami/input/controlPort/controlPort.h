@@ -19,7 +19,8 @@ struct ControlPort {
 
     static auto create( Emulator::Interface* interface, Input& input, Emulator::Interface::Device* device ) -> ControlPort*;
 
-    virtual auto readButton1( ) -> uint8_t { return 0; }
+    virtual auto readCia() -> uint8_t { return 0; }
+    virtual auto writeCia(bool state) -> void { }
     virtual auto readDirection( ) -> uint16_t { return 0; }
     virtual auto writeJoytest(uint16_t data) -> void {}
 
@@ -27,6 +28,7 @@ struct ControlPort {
     virtual auto getPotY() -> uint8_t { return 0; }
 
     virtual auto observePot(uint8_t& x, uint8_t& y) -> void {}
+    virtual auto writePot(uint8_t& x, uint8_t& y) -> void {}
 
     virtual auto reset() -> void {}
     virtual auto poll() -> void {}

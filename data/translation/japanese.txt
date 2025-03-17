@@ -876,3 +876,4 @@ unsupported cartridge = このカートリッジは未サポートかもしれ�
 1541C Track-0 Sensor = 1541C Track-0 センサー
 select setting = 設定を選択
 without speeder = suppress Speeder
+button middle = Button Middle

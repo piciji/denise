@@ -38,7 +38,7 @@ rtc(agnus) {
     cia1.readPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
         uint8_t out;
         if ( port == Cia<MOS_8520>::PORTA ) {
-            out = input.readCiaPortA();
+            out = input.readCia();
 
             for(auto& drive : diskDrives) {
                 if (drive.connected)
@@ -63,6 +63,14 @@ rtc(agnus) {
 
             if ((lines->ioa ^ lines->ioaOld) & 2) {
                 paula.setLedFilter((lines->ioa & 2) == 0 );
+            }
+
+            if ((lines->ioa ^ lines->ioaOld) & 0x40) {
+                input.writeCiaPort1(lines->ioa & 0x40);
+            }
+
+            if ((lines->ioa ^ lines->ioaOld) & 0x80) {
+                input.writeCiaPort2(lines->ioa & 0x80);
             }
 
             if (dongle.connected())

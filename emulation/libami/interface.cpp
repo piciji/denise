@@ -105,11 +105,14 @@ auto Interface::prepareDevices() -> void {
         device.inputs.push_back( {3, "Right", Key::Direction} );
         device.inputs.push_back( {4, "Button 1", Key::Button} );
         device.inputs.push_back( {5, "Button 2", Key::Button} );
+        device.inputs.push_back( {6, "Button 3", Key::Button } );
 
         device.addVirtual( "Button 1 Turbo", { 4 }, Key::Autofire );
         device.addVirtual( "Button 1 Autofire", { 4 }, Key::ToggleAutofire );
         device.addVirtual( "Button 2 Turbo", { 5 }, Key::Autofire );
         device.addVirtual( "Button 2 Autofire", { 5 }, Key::ToggleAutofire );
+        device.addVirtual( "Button 3 Turbo", { 6 }, Key::Autofire);
+        device.addVirtual( "Button 3 Autofire", { 6 }, Key::ToggleAutofire);
         device.addVirtual( "Left Turbo", { 2 }, Key::AutofireDirection );
         device.addVirtual( "Right Turbo", { 3 }, Key::AutofireDirection );
 
@@ -129,6 +132,7 @@ auto Interface::prepareDevices() -> void {
         device.inputs.push_back( {1, "Y-Axis"} );
         device.inputs.push_back( {2, "Button Left"} );
         device.inputs.push_back( {3, "Button Right"} );
+        device.inputs.push_back( {4, "Button Middle" });
 
         devices.push_back(device);
         device.id = id++;
@@ -339,6 +343,42 @@ auto Interface::prepareDevices() -> void {
         device.addVirtual( "Port4: Diagonal Up-Left", { 12, 14 }, Key::JoyUpLeft );
         device.addVirtual( "Port4: Diagonal Down-Left", { 13, 14 }, Key::JoyDownLeft );
 
+        devices.push_back(device);
+    }
+
+    {   Device device{ id++, "CD32 Pad #1", Device::Type::Joypad };
+        device.inputs.push_back({ 0, "Up", Key::Direction });
+        device.inputs.push_back({ 1, "Down", Key::Direction });
+        device.inputs.push_back({ 2, "Left", Key::Direction });
+        device.inputs.push_back({ 3, "Right", Key::Direction });
+        device.inputs.push_back({ 4, "Button Red", Key::Button });
+        device.inputs.push_back({ 5, "Button Blue", Key::Button });
+        device.inputs.push_back({ 6, "Button Green", Key::Button });
+        device.inputs.push_back({ 7, "Button Yellow", Key::Button });
+        device.inputs.push_back({ 8, "Button RWD", Key::Button });
+        device.inputs.push_back({ 9, "Button FFW", Key::Button });
+        device.inputs.push_back({ 10, "Button Play", Key::Button });
+
+        device.addVirtual("Button Red Turbo", { 4 }, Key::Autofire);
+        device.addVirtual("Button Red Autofire", { 4 }, Key::ToggleAutofire);
+        device.addVirtual("Button Blue Turbo", { 5 }, Key::Autofire);
+        device.addVirtual("Button Blue Autofire", { 5 }, Key::ToggleAutofire);
+        device.addVirtual("Button Green Turbo", { 6 }, Key::Autofire);
+        device.addVirtual("Button Green Autofire", { 6 }, Key::ToggleAutofire);
+        device.addVirtual("Button Yellow Turbo", { 7 }, Key::Autofire);
+        device.addVirtual("Button Yellow Autofire", { 7 }, Key::ToggleAutofire);
+
+        device.addVirtual("Left Turbo", { 2 }, Key::AutofireDirection);
+        device.addVirtual("Right Turbo", { 3 }, Key::AutofireDirection);
+
+        device.addVirtual("Diagonal Up-Right", { 0, 3 }, Key::JoyUpRight);
+        device.addVirtual("Diagonal Down-Right", { 1, 3 }, Key::JoyDownRight);
+        device.addVirtual("Diagonal Up-Left", { 0, 2 }, Key::JoyUpLeft);
+        device.addVirtual("Diagonal Down-Left", { 1, 2 }, Key::JoyDownLeft);
+
+        devices.push_back(device);
+        device.id = id++;
+        device.name = "CD32 Pad #2";
         devices.push_back(device);
     }
 

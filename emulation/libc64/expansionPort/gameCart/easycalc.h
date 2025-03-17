@@ -28,7 +28,7 @@ namespace LIBC64 {
             cRomL = getChip(0);
             cRomH = getChip(1);
 
-            bool inv = cRomH && cRomH->ptr[0] != 4; // cartconv BUG?
+            bool inv = cRomH && cRomH->ptr[0] != 4;
 
             for (auto& chip : chips) {
                 if (chip.id == 0) {

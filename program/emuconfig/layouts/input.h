@@ -67,12 +67,8 @@ struct InputAssign : GUIKIT::HorizontalLayout {
 struct AutofireControl : GUIKIT::HorizontalLayout {
     GUIKIT::Label label;
 
-    struct Buttons {
-        GUIKIT::Button* toggleButton;
-        InputMapping* mapping;
-        bool enabled;
-    };
-    std::vector<Buttons> buttons;
+    GUIKIT::Button toggleJoy1;
+    GUIKIT::Button toggleJoy2;
 
     SliderLayout autofireSlider;
     GUIKIT::CheckBox autofireHold;
@@ -113,6 +109,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto updateAutofireFrequency() -> void;
     auto updateMiscSettings() -> void;
     auto updatedAutofireButtonHints() -> void;
+    auto updatedAutofireButtonHints(InputMapping* mappingPort, GUIKIT::Button* toggleButton) -> void;
     auto isAutomapEnabled(Emulator::Interface::Device& device) -> bool;
 
     InputSelector selector;

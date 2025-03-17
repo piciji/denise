@@ -253,17 +253,7 @@ auto Paula::power() -> void {
     int6Current = false;
     vBlankIntr = true;
     useLedFilter = true;
-    pot.cntX0 = 0;
-    pot.cntY0 = 0;
-    pot.cntX1 = 0;
-    pot.cntY1 = 0;
-    pot.capX0 = 0xff;
-    pot.capY0 = 0xff;
-    pot.capX1 = 0xff;
-    pot.capY1 = 0xff;
-    pot.go = 0;
-    pot.running = false;
-    pot.dischargeCounter = 0;
+    potReset();
 
     for(auto& cha : channels) {
         cha.AUDxON = false;

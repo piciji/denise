@@ -6,6 +6,7 @@
 #include "joypad.cpp"
 #include "mouse.cpp"
 #include "fourPlayerAdapter.cpp"
+#include "cd32pad.cpp"
 
 namespace LIBAMI  {
 
@@ -18,6 +19,9 @@ auto ControlPort::create( Emulator::Interface* interface, Input& input, Emulator
 
     if (!device)
         return new ControlPort( interface, input, nullptr );
+
+    if (device->isJoypad() && device->name.find("CD32") != std::string::npos)
+        return new CD32Pad(interface, input, device);
 
     if (device->isJoypad())
         return new Joypad( interface, input, device );

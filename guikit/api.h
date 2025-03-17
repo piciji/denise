@@ -414,6 +414,7 @@ struct Widget : Sizable {
     auto backgroundColor() -> unsigned { return state.backgroundColor; }
     auto overrideForegroundColor() -> bool { return state.overrideForegroundColor; } 
     auto overrideBackgroundColor() -> bool { return state.overrideBackgroundColor; }
+    auto getStore() -> int { return state.store; }
 
     auto focused() -> bool;
     auto setFocused() -> void;
@@ -433,6 +434,7 @@ struct Widget : Sizable {
     // gtk line edit
     auto setForegroundColor(unsigned color) -> void;
     auto resetForegroundColor() -> void;
+    auto setStore(int _store) -> void { state.store = _store; }
 
     struct {
         Geometry geometry = {0, 0, 0, 0};
@@ -445,6 +447,7 @@ struct Widget : Sizable {
         unsigned backgroundColor = 0;
         bool overrideBackgroundColor = false; 
         bool isContainer = false;
+        int store = -1;
     } state;
 
     pWidget& p;

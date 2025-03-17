@@ -6,9 +6,10 @@ namespace LIBAMI {
 struct Joypad : ControlPort {
     uint16_t out = 0;
 
-    Joypad( Emulator::Interface* interface, Input& input, Emulator::Interface::Device* device ) : ControlPort( interface, input, device ) {}
+    Joypad( Emulator::Interface* interface, Input& input, Emulator::Interface::Device* device )
+    : ControlPort( interface, input, device ) {}
 
-    auto readButton1( ) -> uint8_t {
+    auto readCia() -> uint8_t {
 
         return interface->inputPoll( device->id, 4 ) & 1;
     }
@@ -36,12 +37,21 @@ struct Joypad : ControlPort {
     }
 
     auto observePot(uint8_t& x, uint8_t& y) -> void {
+        // PotY = Pin9 = Button 2
+        // PotX = Pin5 = Button 3
+
+        // with pullup resistor
         y = (interface->inputPoll( device->id, 5 ) & 1) ? 0 : 0xff;
+        x = (interface->inputPoll( device->id, 6 ) & 1) ? 0 : 0xff;
     }
 
     auto serialize(Emulator::Serializer& s) -> void {
 
         s.integer(out);
+    }
+
+    auto reset() -> void {
+        out = 0;
     }
 };
 

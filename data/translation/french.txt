@@ -876,3 +876,4 @@ unsupported cartridge = Cette cartouche peut ne pas être prise en charge.
 1541C Track-0 Sensor = Détecteur 1541C Track-0
 select setting = Sélectionner le paramètre
 without speeder = suppress Speeder
+button middle = Button Middle

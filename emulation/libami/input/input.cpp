@@ -41,12 +41,20 @@ auto Input::readParallelportCIA2A(uint8_t& res) -> void {
     }
 }
 
-auto Input::readCiaPortA() -> uint8_t {
+auto Input::readCia() -> uint8_t {
     jitPoll();
     uint8_t out = 0xff;
-    if (controlPort1->readButton1()) out &= ~0x40;
-    if (controlPort2->readButton1()) out &= ~0x80;
+    if (controlPort1->readCia()) out &= ~0x40;
+    if (controlPort2->readCia()) out &= ~0x80;
     return out;
+}
+
+auto Input::writeCiaPort1(bool state) -> void {
+    controlPort1->writeCia(state);
+}
+
+auto Input::writeCiaPort2(bool state) -> void {
+    controlPort2->writeCia(state);
 }
 
 auto Input::readDenisePortA() -> uint16_t {
@@ -76,6 +84,11 @@ auto Input::observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> vo
     jitPoll();
     controlPort1->observePot(x0, y0);
     controlPort2->observePot(x1, y1);
+}
+
+auto Input::writePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void {
+    controlPort1->writePot(x0, y0);
+    controlPort2->writePot(x1, y1);
 }
 
 auto Input::observePotPort1(uint8_t& x0, uint8_t& y0) -> void {

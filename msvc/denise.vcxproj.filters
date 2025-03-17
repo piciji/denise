@@ -2157,6 +2157,9 @@
     <ClCompile Include="..\emulation\libc64\input\controlPort\inception.cpp">
       <Filter>emulation\libc64\input\controlPort</Filter>
     </ClCompile>
+    <ClCompile Include="..\emulation\libami\input\controlPort\cd32pad.cpp">
+      <Filter>emulation\libami\input\controlPort</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\emulation\libc64\sid\filter\circuit">

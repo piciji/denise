@@ -1247,7 +1247,7 @@ auto pBrowserWindow::resize( HWND fileDialogView, bool init ) -> void {
                 if (buttonBarHeight)
                     relativeY += buttonBarHeight + 5;
 
-                buttons.push_back({ hwnd, true, width, height, relativeX, relativeY});
+                buttons.push_back({ hwnd, true, width, height, relativeX + 11, relativeY});
 
                 relativeX += width + buttonMargin;
 

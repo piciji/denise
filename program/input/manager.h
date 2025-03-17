@@ -195,6 +195,7 @@ struct InputManager {
     auto resetTouchlessAutofire() -> void;
 	auto isAutofireActive(InputMapping* trigger) -> bool;
 	auto toggleAutofire(InputMapping* trigger) -> void;
+    auto getFirstAutoFireMapping(unsigned connectorId) -> InputMapping*;
     auto setIllegalMappings() -> void;
     auto updateMiscSettings() -> void;
     auto setupKeycodeTransfer() -> void;

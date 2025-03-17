@@ -876,3 +876,4 @@ unsupported cartridge = Dieses Modul wird möglicherweise nicht unterstützt.
 1541C Track-0 Sensor = 1541C Track-0 Sensor
 select setting = Einstellung auswählen
 without speeder = Speeder unterdrücken
+button middle = Taste Mitte

@@ -17,6 +17,7 @@
 namespace LIBAMI {
 
 auto Paula::pot0Dat() -> uint16_t {
+    potOutput(pot.go);
     input.observePotPort1(pot.capX0, pot.capY0);
     pot.running = true;
 
@@ -24,6 +25,7 @@ auto Paula::pot0Dat() -> uint16_t {
 }
 
 auto Paula::pot1Dat() -> uint16_t {
+    potOutput(pot.go);
     input.observePotPort2(pot.capX1, pot.capY1);
     pot.running = true;
 
@@ -33,9 +35,11 @@ auto Paula::pot1Dat() -> uint16_t {
 auto Paula::potGoR() -> uint16_t {
     uint16_t out = 0;
 
+    potOutput(pot.go);
     input.observePot(pot.capX0, pot.capY0, pot.capX1, pot.capY1);
 
-    // POTGOR will produce a 0 if the button is pressed, a 1 if it is not.
+    // hint: a device without own button pullup resistors needs output mode and DAT = 1 (to release button press)
+
     if (pot.capX0 == 255) out |= POT_DAT_X0;
     if (pot.capY0 == 255) out |= POT_DAT_Y0;
     if (pot.capX1 == 255) out |= POT_DAT_X1;
@@ -49,10 +53,8 @@ auto Paula::potGo(uint16_t value) -> void {
     if (system->dongle.connected())
         system->donglePotGo(value);
 
-    if (value & POT_DIR_X0) pot.capX0 = (value & POT_DAT_X0) ? 255 : 0;
-    if (value & POT_DIR_Y0) pot.capY0 = (value & POT_DAT_Y0) ? 255 : 0;
-    if (value & POT_DIR_X1) pot.capX1 = (value & POT_DAT_X1) ? 255 : 0;
-    if (value & POT_DIR_Y1) pot.capY1 = (value & POT_DAT_Y1) ? 255 : 0;
+    potOutput(value);
+    input.writePot(pot.capX0, pot.capY0, pot.capX1, pot.capY1);
 
     if (value & 1) {
         pot.cntY0 = pot.cntX0 = pot.cntY1 = pot.cntX1 = 0;
@@ -61,7 +63,14 @@ auto Paula::potGo(uint16_t value) -> void {
     }
 }
 
-auto Paula::progressPot() -> void {
+inline auto Paula::potOutput(uint16_t data) -> void {
+    if (data & POT_DIR_X0) pot.capX0 = (data & POT_DAT_X0) ? 255 : 0;
+    if (data & POT_DIR_Y0) pot.capY0 = (data & POT_DAT_Y0) ? 255 : 0;
+    if (data & POT_DIR_X1) pot.capX1 = (data & POT_DAT_X1) ? 255 : 0;
+    if (data & POT_DIR_Y1) pot.capY1 = (data & POT_DAT_Y1) ? 255 : 0;
+}
+
+auto Paula::potProgress() -> void {
     uint16_t sum;
 
     if (pot.dischargeCounter) {
@@ -71,6 +80,7 @@ auto Paula::progressPot() -> void {
             if ((pot.go & POT_DIR_Y0) == 0) pot.capY0 = 0;
             if ((pot.go & POT_DIR_X1) == 0) pot.capX1 = 0;
             if ((pot.go & POT_DIR_Y1) == 0) pot.capY1 = 0;
+            input.writePot(pot.capX0, pot.capY0, pot.capX1, pot.capY1);
         }
     } else {
         pot.running = false;
@@ -109,6 +119,20 @@ auto Paula::progressPot() -> void {
             pot.running = true;
         }
     }
+}
+
+auto Paula::potReset() -> void {
+    pot.cntX0 = 0;
+    pot.cntY0 = 0;
+    pot.cntX1 = 0;
+    pot.cntY1 = 0;
+    pot.capX0 = 0xff;
+    pot.capY0 = 0xff;
+    pot.capX1 = 0xff;
+    pot.capY1 = 0xff;
+    pot.go = 0;
+    pot.running = false;
+    pot.dischargeCounter = 0;
 }
 
 }

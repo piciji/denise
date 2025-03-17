@@ -158,6 +158,10 @@ struct Paula {
     auto pot1Dat() -> uint16_t;
     auto potGo(uint16_t value) -> void;
     auto potGoR() -> uint16_t;
+    auto potOutput(uint16_t data) -> void;
+    auto potReset() -> void;
+    auto potProgress() -> void;
+
     auto setIntena(uint16_t value) -> void;
     auto getIntena() -> uint16_t;
     auto setIntreq(uint16_t value) -> void;
@@ -212,8 +216,7 @@ struct Paula {
     template<bool readWord = false, bool waitTurbo = false> auto handleFDControllerRead() -> void;
     template<bool readWord = false> auto handleFDControllerReadByte() -> void;
     auto handleFDControllerWrite() -> void;
-
-    auto progressPot() -> void;
+    
     auto updateModulation() -> void;
     template<uint8_t nr> auto pbufld1() -> void;
     template<uint8_t nr> auto pbufld2() -> void;

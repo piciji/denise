@@ -35,12 +35,13 @@ struct Mouse : AnalogControl {
         deltaY += interface->inputPoll( device->id, 1);
     }
 
-    auto readButton1( ) -> uint8_t {
+    auto readCia() -> uint8_t {
         return interface->inputPoll( device->id, 2 );
     }
 
     auto observePot(uint8_t& x, uint8_t& y) -> void {
-        y = interface->inputPoll( device->id, 3 ) ? 0 : 0xff;
+        y = interface->inputPoll( device->id, 3 ) ? 0 : 0xff; // right
+        x = interface->inputPoll( device->id, 4 ) ? 0 : 0xff; // middle
     }
 
     auto readDirection( ) -> uint16_t {

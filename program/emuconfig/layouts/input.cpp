@@ -1,26 +1,8 @@
 
 AutofireControl::AutofireControl(Emulator::Interface* emulator) : autofireSlider("") {
     append(label, {0u, 0u}, 5);
-
-    auto manager = InputManager::getManager(emulator);
-
-    for (auto& device : emulator->devices) {
-        if (!device.isJoypad())
-            continue;
-
-        for (auto& input : device.inputs) {
-            if (input.key == Emulator::Interface::Key::ToggleAutofire) {
-                auto toggleButton = new GUIKIT::Button;
-                auto mapping = (InputMapping*)input.guid;
-
-                buttons.push_back( {toggleButton, mapping->shadowMap[0], manager->isAutofireActive(mapping->shadowMap[0])} );
-                append(*toggleButton, {0u, 0u}, 10);
-
-                break; // only first fire button
-            }
-        }
-    }
-
+    append(toggleJoy1, { 0u, 0u }, 10);
+    append(toggleJoy2, { 0u, 0u }, 10);
     append(autofireSlider, {~0u, 0u}, 10);
     append(autofireHold, {0u, 0u});
     autofireSlider.slider.setLength( 99 );
@@ -167,25 +149,28 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
     captureTimer.setInterval(3500);
     pollTimer.setInterval(200);
 
+    GUIKIT::Button* toggleButtons[2] = { &autofireControl.toggleJoy1, &autofireControl.toggleJoy2 };
 
-    for (auto& button : autofireControl.buttons) {
-        auto mapping = button.mapping;
-        auto toggleButton = button.toggleButton;
+    for (int connectorId = 0; connectorId < 2; connectorId++) {
+        GUIKIT::Button* toggleButton = toggleButtons[connectorId];
 
-        toggleButton->onActivate = [this, mapping]() {
-            if (!activeEmulator)
+        toggleButton->onActivate = [this, connectorId, toggleButton]() {
+            if (emulator != activeEmulator)
                 return;
 
-            auto manager = mapping->inputManager;
+            auto manager = InputManager::getManager(emulator);
+            auto mapping = manager->getFirstAutoFireMapping(connectorId);
 
-            emuThread->lock();
-            manager->toggleAutofire(mapping);
+            if (mapping) {
+                emuThread->lock();
+                manager->toggleAutofire(mapping);
 
-            statusHandler->setMessage( trans->get( manager->isAutofireActive(mapping) ? "Autofire active" : "Autofire inactive" ), 5 );
+                statusHandler->setMessage(trans->get(manager->isAutofireActive(mapping) ? "Autofire active" : "Autofire inactive"), 5);
 
-            this->updatedAutofireButtonHints();
+                this->updatedAutofireButtonHints(mapping, toggleButton);
 
-            emuThread->unlock();
+                emuThread->unlock();
+            }
         };
     }
 
@@ -725,11 +710,13 @@ auto InputLayout::translate() -> void {
     autofireControl.label.setText( trans->get("toggle autofire", {}, true) );
     autofireControl.label.setTooltip( trans->get("toggle autofire hint") );
 
-    for(auto& button : autofireControl.buttons) {
-        auto mapping = button.mapping;
-        button.toggleButton->setText( trans->get(mapping->emuDevice->name) );
-        button.toggleButton->setTooltip( trans->get( button.enabled ? "enabled" : "disabled") );
-    }
+    autofireControl.toggleJoy1.setText(trans->get("Port 1"));
+    autofireControl.toggleJoy2.setText(trans->get("Port 2"));
+
+    int _store = autofireControl.toggleJoy1.getStore();
+    autofireControl.toggleJoy1.setTooltip(trans->getA(_store == 1 ? "enabled" : "disabled"));
+    _store = autofireControl.toggleJoy2.getStore();
+    autofireControl.toggleJoy2.setTooltip(trans->getA(_store == 1 ? "enabled" : "disabled"));
 
     autofireControl.autofireSlider.name.setText( trans->get("Autofire Rate", {}, true) );
     autofireControl.autofireHold.setText( trans->get("hold Autofire") );
@@ -738,21 +725,22 @@ auto InputLayout::translate() -> void {
     SliderLayout::scale({&mapControl.analogSensitivity}, "100 %");
 }
 
-auto InputLayout::updatedAutofireButtonHints() -> void {
-    auto manager = InputManager::getManager( emulator );
+auto InputLayout::updatedAutofireButtonHints(InputMapping* mappingPort, GUIKIT::Button* toggleButton) -> void {
+    bool enabled = mappingPort && mappingPort->inputManager->isAutofireActive(mappingPort);
 
-    for(auto& button : autofireControl.buttons) {
-        auto mapping = button.mapping;
-
-        bool enabled = manager->isAutofireActive( mapping );
-
-        if (button.enabled == enabled)
-            continue;
-
-        button.enabled = enabled;
-
-        button.toggleButton->setTooltip( trans->get( enabled ? "enabled" : "disabled") );
+    int _store = toggleButton->getStore();
+    if ((_store == -1) || ((bool)_store != enabled)) {
+        toggleButton->setTooltip(trans->getA(enabled ? "enabled" : "disabled"));
+        toggleButton->setStore((int)enabled);
     }
+}
+
+auto InputLayout::updatedAutofireButtonHints() -> void {
+    auto manager = InputManager::getManager(emulator);
+    auto mappingPort1 = manager->getFirstAutoFireMapping(0);    
+    updatedAutofireButtonHints(mappingPort1, &autofireControl.toggleJoy1);
+    auto mappingPort2 = manager->getFirstAutoFireMapping(1);
+    updatedAutofireButtonHints(mappingPort2, &autofireControl.toggleJoy2);
 }
 
 auto InputLayout::displayInputCall() -> void {
