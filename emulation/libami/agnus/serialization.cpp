@@ -39,6 +39,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(vBlank);
     s.integer(vBlankStart);
     s.integer(sprInhibited);
+    s.integer(blitterConflict);
     s.integer(lines);
     s.integer(vTotal);
     s.integer(vBStrt);

@@ -47,7 +47,7 @@ struct Agnus {
         AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
         AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
         DMACON_3, SER_DAT, DMACON_1, DIW_START, DIW_STOP, BLT_MODA, BLT_MODB, BLT_MODC, BLT_MODD,
-        VPOSW, VHPOSW, UPD_V_DIW, UPD_DENISE_VHPOS, STROBE, COP_BLT_CONFLICT
+        VPOSW, VHPOSW, UPD_V_DIW, UPD_DENISE_VHPOS, STROBE, END_BLT_CONFLICT
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8 };
@@ -199,6 +199,8 @@ struct Agnus {
     uint32_t rDmaPtr;
     uint32_t rasAdder;
 
+    bool blitterConflict;
+
     int64_t eClockCycle;
     bool lol;
     bool lof;
@@ -306,6 +308,7 @@ struct Agnus {
     auto checkCopperBlitterConflict(uint32_t& ptr) -> bool;
 
     template<uint8_t ptrEvent, bool desc, bool add, bool mod, bool check = true> auto fetchBlitterDma(uint32_t& adr, uint16_t& result, const int16_t& modVal = 0) -> bool;
+    template<uint8_t ptrEvent, bool desc, bool add, bool mod, bool writeMode> auto handleBlitterConflicts(uint32_t& adr, uint16_t& result, const int16_t& modVal) -> void;
     template<bool desc, bool add, bool mod, bool check = true> auto writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVal = 0) -> bool;
 
     auto setRefPtr(uint16_t value) -> void;
@@ -335,6 +338,7 @@ struct Agnus {
     template<bool onlyProgressQueue = false> auto fetchPlanes() -> void;
     template<uint8_t pos, bool addMod> auto fetchPlane() -> void;
     template<uint8_t pos, bool addMod, bool strobe> auto fetchPlaneConflict() -> void;
+    template<uint8_t pos, bool addMod> auto fetchPlaneSprConflict() -> void;
     template<uint8_t nr, bool first> auto spriteControl() -> void;
     template<bool _ecs, bool start> auto bplControl() -> void;
     auto fetchSprites() -> void;
@@ -390,9 +394,10 @@ struct Agnus {
     auto clearEvents() -> void;
     template<bool tooSoon = false> auto processOneCycleEvent(RapidJob& rJob) -> void;
     template<uint8_t Channel> auto getEventDelay() -> unsigned;
-    auto setCopBltConflictThisCycle() -> void ;
+    auto setBltConflictThisCycle() -> void;
     inline auto addOneCycleEvent(int job, uint16_t data = 0, int delay = 2) -> void;
     auto forceOneCycleEvent(int job) -> void;
+    auto getOneCycleEvent(int job) -> RapidJob*;
     template<bool isPtr> auto inactivateOneCycleEvent(int job) -> void;
     inline auto updateOneCycleEvent() -> void;
     auto powerSupplyEvent() -> void;
@@ -419,6 +424,8 @@ struct Agnus {
 
     auto sanitizeCrop(int width, int height) -> void;
     auto checkForRomEncryption() -> void;
+
+    auto getSprConflictReg(uint8_t encoded) -> uint16_t;
 };
 
 }

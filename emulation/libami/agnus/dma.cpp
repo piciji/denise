@@ -202,6 +202,60 @@ template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict()
     busUsage = BUS_USAGE_BPL;
 }
 
+auto Agnus::getSprConflictReg(uint8_t encoded) -> uint16_t {
+    uint16_t sprConflictReg = 0x140 + (encoded & 7) * 8;
+
+    if ((encoded & 0x20) == 0)
+        sprConflictReg += 4;
+    if ((encoded & 0x40) == 0)
+        sprConflictReg += 2;
+
+    return sprConflictReg;
+}
+
+template<uint8_t pos, bool addMod> auto Agnus::fetchPlaneSprConflict() -> void {
+    uint16_t sprReg = getSprConflictReg(sprQueue >> 16);
+    uint16_t bplReg = 0x110 + (pos - 1) * 2;
+    uint16_t cReg = bplReg & sprReg;
+    uint32_t* bplPtr;
+    switch(pos) {
+        default:
+        case 1: bplPtr = &bpl1pt; break;
+        case 2: bplPtr = &bpl2pt; break;
+        case 3: bplPtr = &bpl3pt; break;
+        case 4: bplPtr = &bpl4pt; break;
+        case 5: bplPtr = &bpl5pt; break;
+        case 6: bplPtr = &bpl6pt; break;
+    }
+
+    uint8_t nr = (sprReg - 0x140) >> 3;
+    Sprite& spr = sprites[nr];
+    uint32_t cPtr = *bplPtr | spr.ptr;
+    cPtr &= dmaChipMemMask;
+    *bplPtr = cPtr;
+
+    if (cReg < 0x110 || cReg > 0x11a) {
+        dmaClock = clock;
+        busUsage = BUS_USAGE_BPL;
+        dataBus = _swapWord(*(uint16_t*)(chipMem + cPtr));
+        writeCustom(cReg, dataBus, Trigger_Read);
+        return;
+    }
+
+    spr.ptr = cPtr;
+    nr = (cReg - 0x110) / 2;
+
+    switch (nr) {
+        default:
+        case 0: fetchPlane<1, addMod>(); break;
+        case 1: fetchPlane<2, addMod>(); break;
+        case 2: fetchPlane<3, addMod>(); break;
+        case 3: fetchPlane<4, addMod>(); break;
+        case 4: fetchPlane<5, addMod>(); break;
+        case 5: fetchPlane<6, addMod>(); break;
+    }
+}
+
 auto Agnus::diskDma(uint8_t slot, bool writeMode) -> void {
     dmaClock = clock;
     bplQueue &= ~0xff; // no BPL fetch
@@ -300,7 +354,8 @@ template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
     } else if constexpr (control == 1) {
         spr.ptr += 2;
         spr.ptr &= dmaChipMemMask;
-
+        // not allocated -> could conflict with blitter
+        setBltConflictThisCycle();
     } else if constexpr (control == 2) {
         busUsage = BUS_USAGE_SPRITE;
     }
@@ -386,17 +441,8 @@ auto Agnus::fetchBlitterDma(uint32_t& adr, uint16_t& result, const int16_t& modV
 
     busUsage = BUS_USAGE_BLITTER;
 
-    if (copper.state == Copper::Read1Buggy) {
-        adr |= copper.copPtrBefore;
-
-        result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
-
-        adr = copper.copPtr;
-
-        if constexpr (mod) {
-            if constexpr (desc)  copper.copPtr += -modVal;
-            else                 copper.copPtr += modVal;
-        }
+    if (blitterConflict) {
+        handleBlitterConflicts<ptrEvent, desc, add, mod, false>(adr, result, modVal);
     } else {
         result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
@@ -426,24 +472,11 @@ auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVa
     }
 
     busUsage = BUS_USAGE_BLITTER;
-
-    adr &= dmaChipMemMask;
-
-    if (copper.state == Copper::Read1Buggy) {
-        adr |= copper.copPtrBefore;
-
-        if (trackMemChanges)
-            rememberChipMem(adr);
-
-        *(uint16_t*)(chipMem + adr) = _swapWord(value);
-
-        adr = copper.copPtr;
-
-        if constexpr (mod) {
-            if constexpr (desc)  copper.copPtr += -modVal;
-            else                 copper.copPtr += modVal;
-        }
+    
+    if (blitterConflict) {
+        handleBlitterConflicts<Agnus::PTR_BLT_D_H, desc, add, mod, true>(adr, value, modVal);
     } else {
+        adr &= dmaChipMemMask;
         if (trackMemChanges)
             rememberChipMem(adr);
 
@@ -465,6 +498,71 @@ auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVa
 
     inactivateOneCycleEvent<true>(PTR_BLT_D_H);
     return true;
+}
+
+template<uint8_t ptrEvent, bool desc, bool add, bool mod, bool writeMode>
+auto Agnus::handleBlitterConflicts(uint32_t& adr, uint16_t& result, const int16_t& modVal) -> void {
+    if (copper.state == Copper::Read1Buggy) {
+        adr |= copper.copPtrBefore;
+        adr &= dmaChipMemMask;
+
+        if constexpr (writeMode) {
+            if (trackMemChanges)
+                rememberChipMem(adr);
+
+            *(uint16_t*)(chipMem + adr) = _swapWord(result);
+        } else {
+            result = _swapWord(*(uint16_t*)(chipMem + adr));
+        }
+
+        adr = copper.copPtr;
+
+        if constexpr (mod) {
+            if constexpr (desc)  copper.copPtr += -modVal;
+            else                 copper.copPtr += modVal;
+        }
+    } else { // or Sprite DMA was enabled just before a Sprite decision cycle
+        RapidJob* rJob = getOneCycleEvent(Agnus::END_BLT_CONFLICT);
+        if (rJob) {
+            uint16_t sprReg = getSprConflictReg(rJob->data);
+            uint16_t bltReg = 0;
+            if constexpr (ptrEvent == Agnus::PTR_BLT_A_H)       bltReg = 0x74;
+            else if constexpr (ptrEvent == Agnus::PTR_BLT_B_H)  bltReg = 0x72;
+            else if constexpr (ptrEvent == Agnus::PTR_BLT_C_H)  bltReg = 0x70;
+
+            uint16_t cReg = bltReg & sprReg;
+            int nr = (sprReg - 0x140) / 8;
+            Sprite& spr = sprites[nr];
+            adr |= (spr.ptr - 2); // already incremented
+            adr &= dmaChipMemMask;
+
+            uint16_t _fetch;
+            if constexpr (writeMode) {
+                if (trackMemChanges)
+                    rememberChipMem(adr);
+
+                *(uint16_t*)(chipMem + adr) = _swapWord(result);
+                _fetch = result;
+            } else {
+                _fetch = (*(uint16_t*)(chipMem + adr));
+                if (cReg == bltReg)
+                    result = _fetch;
+            }
+
+            spr.ptr = adr + 2;
+            writeCustom(cReg, _fetch, Trigger_Read);
+
+            if constexpr (mod) {
+                if constexpr (desc)  spr.ptr += -modVal;
+                else                 spr.ptr += modVal;
+            }
+        }
+
+        if constexpr (add) {
+            if constexpr (desc)  adr += -2;
+            else                 adr += +2;
+        }
+    }
 }
 
 auto Agnus::checkCopperBlitterConflict(uint32_t& ptr) -> bool {

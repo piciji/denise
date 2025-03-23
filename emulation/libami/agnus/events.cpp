@@ -1,7 +1,6 @@
 
 #include "agnus.h"
 namespace LIBAMI {
-// inspired by vAmiga, a 64 bit event counter is used.
 // By means of 8 byte counters no overflow handling is necessary. Theoretically, this could run into an overflow
 // with constant use of save states. It has been thousands of years. The use of signed variables is faster,
 // because the compiler does not incorporate overflow handling from itself.
@@ -150,6 +149,18 @@ auto Agnus::forceOneCycleEvent(int job) -> void {
             processOneCycleEvent(rJob3);
         }
     }
+}
+
+auto Agnus::getOneCycleEvent(int job) -> RapidJob* {
+    if (hasActiveEvent<EVENT_ONE_CYCLE_DELAY>()) {
+        if (rJob1.job == job)
+            return &rJob1;
+        else if (rJob2.job == job)
+            return &rJob2;
+        else if (rJob3.job == job)
+            return &rJob3;
+    }
+    return nullptr;
 }
 
 template<bool isPtr> auto Agnus::inactivateOneCycleEvent(int job) -> void {
@@ -366,9 +377,10 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
             // DMAL is fetched serial bit by bit (14 cycles).
             dmal = paula.dmal();
             break;
-        case COP_BLT_CONFLICT:
+        case END_BLT_CONFLICT:
             if (copper.state == Copper::State::Read1Buggy)
                 copper.state = Copper::State::Read1;
+            blitterConflict = false;
             break;
     }
 }

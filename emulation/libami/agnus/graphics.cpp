@@ -262,6 +262,20 @@ template<bool onlyProgressQueue> inline auto Agnus::fetchPlanes() -> void {
         case 0xe4: fetchPlaneConflict<4, true, true>(); break;
         case 0xe5: fetchPlaneConflict<5, true, true>(); break;
         case 0xe6: fetchPlaneConflict<6, true, true>(); break;
+
+        case 0x11: fetchPlaneSprConflict<1, false>(); break;
+        case 0x12: fetchPlaneSprConflict<2, false>(); break;
+        case 0x13: fetchPlaneSprConflict<3, false>(); break;
+        case 0x14: fetchPlaneSprConflict<4, false>(); break;
+        case 0x15: fetchPlaneSprConflict<5, false>(); break;
+        case 0x16: fetchPlaneSprConflict<6, false>(); break;
+
+        case 0x91: fetchPlaneSprConflict<1, true>(); break;
+        case 0x92: fetchPlaneSprConflict<2, true>(); break;
+        case 0x93: fetchPlaneSprConflict<3, true>(); break;
+        case 0x94: fetchPlaneSprConflict<4, true>(); break;
+        case 0x95: fetchPlaneSprConflict<5, true>(); break;
+        case 0x96: fetchPlaneSprConflict<6, true>(); break;
     }
 
     bplQueue >>= 8;
@@ -394,6 +408,9 @@ template<uint8_t nr, bool first> auto Agnus::spriteControl() -> void {
 
             if (!spr.fetchData)
                 sprQueue |= 0x20 << 16;
+
+            if (bplQueue & 0x00ff0000)
+                bplQueue |= 0x10 << 16; // spr bpl conflict
         }
     }
 

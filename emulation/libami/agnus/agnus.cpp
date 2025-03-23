@@ -140,6 +140,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     vBlank = true;
     vBlankStart = false;
     sprInhibited = false;
+    blitterConflict = false;
 
     vTotal = 0x7ff;
     vBStrt = 0;
@@ -872,7 +873,10 @@ inline auto Agnus::setLines() -> void {
     lines = (beamCon & VARBEAMEN) ? vTotal : (ntsc ? 261 : 311);
 }
 
-auto Agnus::setCopBltConflictThisCycle() -> void { addOneCycleEvent(Agnus::COP_BLT_CONFLICT, 0, 1); }
+auto Agnus::setBltConflictThisCycle() -> void {
+    blitterConflict = true;
+    addOneCycleEvent(Agnus::END_BLT_CONFLICT, sprQueue & 0xff, 1);
+}
 
 
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;
