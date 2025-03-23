@@ -705,7 +705,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         return false;
 
     auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
-    settings->set<std::string>(_underscore(media->group->name) + "_folder_auto", folderPath);
+    settings->set<std::string>(_underscoreEx(media->group->name) + "_folder_auto", folderPath);
 
     if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
         return program->errorMediumSize( file, emuView ? emuView->message : view->message ), false;
@@ -951,7 +951,7 @@ auto Fileloader::insertCurrentPreview(Emulator::Interface::MediaGroup* mediaGrou
 }
 
 auto Fileloader::preselectPath( GUIKIT::Settings* settings, std::string& groupName, bool lastPathFirst ) -> std::string {
-    std::string baseFolderIdent = _underscore(groupName) + "_folder";
+    std::string baseFolderIdent = _underscoreEx(groupName) + "_folder";
     std::string path;
 
     for(int i = 0; i < 2; i++) {

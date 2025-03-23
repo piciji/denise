@@ -1507,6 +1507,7 @@ struct Settings {
     auto add(const std::string& ident) -> Setting*;
     auto add(Setting* setting) -> void;
     auto remove(const std::string& ident) -> bool;
+    auto changeIdent(const std::string& ident, const std::string& newIdent) -> void;
     auto clear() -> void;
     auto hasDepthError() -> bool { return errorDepth; }
     auto getBrokenPaths() -> std::vector<std::string>& { return brokenPaths; }

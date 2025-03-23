@@ -25,6 +25,14 @@ auto Settings::remove(const std::string& ident) -> bool {
     return Vector::eraseVectorElement<Setting*>(list, setting);
 }
 
+auto Settings::changeIdent(const std::string& ident, const std::string& newIdent) -> void {
+    Setting* setting = find(ident);
+    if (!setting)
+        return;
+
+    setting->ident = newIdent;
+}
+
 auto Settings::clear() -> void {
     
     for(auto setting : list)
@@ -275,7 +283,7 @@ auto Settings::save(const std::string& path) -> bool {
     for(auto& setting : list) {
         if( !setting->saveable )
             continue;
-        std::string out = setting->ident + ":" + setting->value + "\n";
+        std::string out = setting->ident + ":" + setting->value + "\r\n";
         fputs( out.c_str(), fp );
     }
     return true;

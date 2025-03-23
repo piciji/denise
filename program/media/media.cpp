@@ -865,7 +865,7 @@ auto MediaLayout::preparePath(Emulator::Interface::MediaGroup& mediaGroup) -> vo
     if (mediaGroup.isExpansion() && mediaGroup.expansion->isRS232())
         return;
 
-    auto settingFolderIdent = _underscore(mediaGroup.name) + "_folder";
+    auto settingFolderIdent = _underscoreEx(mediaGroup.name) + "_folder";
 
     auto block = new PathsLayout::Block( &mediaGroup );
 
@@ -957,7 +957,7 @@ auto MediaLayout::updateListing( Emulator::Interface::Media* media ) -> void {
 
 auto MediaLayout::savePath( std::string& groupName, std::string path ) -> void {
 	
-	auto baseFolderIdent = _underscore(groupName) + "_folder";
+	auto baseFolderIdent = _underscoreEx(groupName) + "_folder";
 
     path = GUIKIT::File::buildRelativePath(path);
 	
@@ -1521,7 +1521,7 @@ auto MediaLayout::loadSettings() -> void {
         
         auto pathBlock = pathsLayout.getBlock( mediaGroup );
         
-        auto settingFolderIdent = _underscore(mediaGroup->name) + "_folder";
+        auto settingFolderIdent = _underscoreEx(mediaGroup->name) + "_folder";
 
         if (pathBlock)
             pathBlock->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
