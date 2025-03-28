@@ -320,6 +320,9 @@
     <Filter Include="emulation\wdc\65816">
       <UniqueIdentifier>{28d9de10-d3ed-4d35-9737-5368ce1261a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="deps\lha">
+      <UniqueIdentifier>{f6db1a09-0ded-43f8-9867-93df390aeb2c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1086,6 +1089,9 @@
     </ClInclude>
     <ClInclude Include="..\emulation\wdc\65816\w65816.h">
       <Filter>emulation\wdc\65816</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\decode\lha.h">
+      <Filter>guikit\tools\decode</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2159,6 +2165,75 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libami\input\controlPort\cd32pad.cpp">
       <Filter>emulation\libami\input\controlPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\crc16.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\ext_header.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lh1_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lh5_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lh6_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lh7_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lha_arch_unix.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lha_arch_win32.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lha_basic_reader.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lha_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lha_endian.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lha_file_header.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lha_input_stream.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lha_reader.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lhx_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lk7_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lz5_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\lzs_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\macbinary.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\null_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\pm1_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\lha\pm2_decoder.cpp">
+      <Filter>deps\lha</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\decode\lha.cpp">
+      <Filter>guikit\tools\decode</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

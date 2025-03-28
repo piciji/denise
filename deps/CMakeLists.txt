@@ -42,6 +42,27 @@ set(_depSrcs
         deps/SPIRV-Cross/spirv_glsl.cpp
         deps/SPIRV-Cross/spirv_parser.cpp
         deps/SPIRV-Cross/spirv_cross_parsed_ir.cpp
+
+        deps/lha/lha_reader.cpp
+        deps/lha/lha_basic_reader.cpp
+        deps/lha/lha_input_stream.cpp
+        deps/lha/lha_file_header.cpp
+        deps/lha/lha_decoder.cpp
+        deps/lha/macbinary.cpp
+        deps/lha/ext_header.cpp
+        deps/lha/lha_endian.cpp
+        deps/lha/null_decoder.cpp
+        deps/lha/lh1_decoder.cpp
+        deps/lha/lh5_decoder.cpp
+        deps/lha/lh6_decoder.cpp
+        deps/lha/lh7_decoder.cpp
+        deps/lha/pm1_decoder.cpp
+        deps/lha/pm2_decoder.cpp
+        deps/lha/lz5_decoder.cpp
+        deps/lha/lzs_decoder.cpp
+        deps/lha/lhx_decoder.cpp
+        deps/lha/lk7_decoder.cpp
+        deps/lha/crc16.cpp        
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -64,6 +85,12 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 else()
     set(_depSrcsHLSL )
     set(_depSrcsMSL )
+endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(_depSrcs ${_depSrcs} deps/lha/lha_arch_win32.cpp )
+else()
+    set(_depSrcs ${_depSrcs} deps/lha/lha_arch_unix.cpp )
 endif()
 
 set(depSrcs ${_depSrcs} ${_depSrcsHLSL} ${_depSrcsMSL} PARENT_SCOPE)

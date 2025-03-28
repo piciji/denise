@@ -26,6 +26,7 @@
     #error no GUI KIT found
 #endif
 
+#include "tools/decode/lha.h"
 namespace GUIKIT {
 
 #include "tools/file/file.cpp"

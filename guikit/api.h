@@ -57,6 +57,7 @@ struct pImageView;
 struct Zip;
 struct Gzip;
 struct Tar;
+struct Lha;
 struct File;
 
 struct Base {
@@ -1383,8 +1384,7 @@ struct File {
         std::vector<Item*> childs;
     };
     enum class Mode { Read, Write, Update, Append };
-    enum class Type { Default, Zip, TarGz, Gzip, Tar };
-
+    enum class Type { Default, Zip, TarGz, Gzip, Tar, Lha };
     //overall file access, compressed archives are not considered
     auto open(Mode mode = Mode::Read, bool createFolderIfNotExists = false) -> bool;
     auto read() -> uint8_t*;
@@ -1422,9 +1422,9 @@ struct File {
 
     //static
     static auto suppportedCompressionExtensions() -> std::vector<std::string> { 
-        return {"zip", "gz", "tar", "tgz", "tar.gz"};
+        return {"zip", "gz", "lha", "lzh", "tar", "tgz", "tar.gz"};
     }
-    static auto suppportedCompressionFilter() -> std::string { return "zip, gz, tar, tgz, tar.gz (*.zip,*.gz,*.tar,*.tgz,*.tar.gz)"; }
+    static auto suppportedCompressionFilter() -> std::string { return "zip, gz, lha, lzh, tar, tgz, tar.gz (*.zip,*.gz,*.lha,*.lzh,*.tar,*.tgz,*.tar.gz)"; }
     static auto getFolderList( std::string path, const std::string& subStr = "") -> std::vector<Info>;
     static auto getFolderListAlt( std::string path, std::vector<std::string> subStrs, bool fromBeginning, unsigned limit = 0 ) -> std::vector<std::string>;
     static auto isDir( std::string path ) -> bool;
@@ -1472,6 +1472,7 @@ private:
     Zip* zip;
     Gzip* gzip;
     Tar* tar;
+    Lha* lha;
 };
 
 struct Setting {

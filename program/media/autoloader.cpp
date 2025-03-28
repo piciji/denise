@@ -360,6 +360,8 @@ auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsign
             continue;
 
         auto& items = file->scanArchive();
+        if (!items.size())
+            continue;
         GUIKIT::File::Item* item = &items[0];
         if (!item || (item->info.size == 0))
             continue;
