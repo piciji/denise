@@ -86,6 +86,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 endif()
 
 set(srcs
+        guikit/tools/decode/lha.cpp
         guikit/tools/decode/images.cpp
         guikit/api.cpp
 
@@ -212,6 +213,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif()
 
 SET_SOURCE_FILES_PROPERTIES(deps/depsSlang.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
+SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/lha.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/lha")
 
 set(depSrcs)
 add_subdirectory(deps)

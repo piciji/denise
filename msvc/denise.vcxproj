@@ -201,6 +201,7 @@
     <ClInclude Include="..\guikit\tools\decode\gzip.h" />
     <ClInclude Include="..\guikit\tools\decode\images.h" />
     <ClInclude Include="..\guikit\tools\decode\inflate.h" />
+    <ClInclude Include="..\guikit\tools\decode\lha.h" />
     <ClInclude Include="..\guikit\tools\decode\png.h" />
     <ClInclude Include="..\guikit\tools\decode\zip.h" />
     <ClInclude Include="..\guikit\tools\encode\png.h" />
@@ -332,6 +333,28 @@
     <ClCompile Include="..\deps\glslang\SPIRV\Logger.cpp" />
     <ClCompile Include="..\deps\glslang\SPIRV\SpvBuilder.cpp" />
     <ClCompile Include="..\deps\glslang\SPIRV\SpvPostProcess.cpp" />
+    <ClCompile Include="..\deps\lha\crc16.cpp" />
+    <ClCompile Include="..\deps\lha\ext_header.cpp" />
+    <ClCompile Include="..\deps\lha\lh1_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\lh5_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\lh6_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\lh7_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\lha_arch_unix.cpp" />
+    <ClCompile Include="..\deps\lha\lha_arch_win32.cpp" />
+    <ClCompile Include="..\deps\lha\lha_basic_reader.cpp" />
+    <ClCompile Include="..\deps\lha\lha_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\lha_endian.cpp" />
+    <ClCompile Include="..\deps\lha\lha_file_header.cpp" />
+    <ClCompile Include="..\deps\lha\lha_input_stream.cpp" />
+    <ClCompile Include="..\deps\lha\lha_reader.cpp" />
+    <ClCompile Include="..\deps\lha\lhx_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\lk7_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\lz5_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\lzs_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\macbinary.cpp" />
+    <ClCompile Include="..\deps\lha\null_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\pm1_decoder.cpp" />
+    <ClCompile Include="..\deps\lha\pm2_decoder.cpp" />
     <ClCompile Include="..\deps\SPIRV-Cross\spirv_cfg.cpp" />
     <ClCompile Include="..\deps\SPIRV-Cross\spirv_cross.cpp" />
     <ClCompile Include="..\deps\SPIRV-Cross\spirv_cross_parsed_ir.cpp" />
@@ -1239,6 +1262,7 @@
     <ClCompile Include="..\emulation\wdc\65C02\w65C02.cpp" />
     <ClCompile Include="..\guikit\api.cpp" />
     <ClCompile Include="..\guikit\tools\decode\images.cpp" />
+    <ClCompile Include="..\guikit\tools\decode\lha.cpp" />
     <ClCompile Include="..\guikit\tools\file\file.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -1791,12 +1815,12 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\data\libs\static\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_win32);$(ProjectDir)..\data\libs\static\x86;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
@@ -1804,13 +1828,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>

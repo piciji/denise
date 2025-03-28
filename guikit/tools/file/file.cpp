@@ -10,6 +10,7 @@ File::File( std::string filePath, bool keepDataOnDestruction ) {
     tar = new Tar;
     zip = new Zip;
     gzip = new Gzip;
+    lha = new Lha;
 }
 
 File::~File() {
@@ -17,6 +18,7 @@ File::~File() {
     delete tar;
     delete zip;
     delete gzip;
+    delete lha;
 }
 
 File::File(const File& source) {
@@ -32,6 +34,7 @@ File& File::operator=(const File& source) {
     tar = new Tar;
     zip = new Zip;
     gzip = new Gzip;
+    lha = new Lha;
 
     data = nullptr;
     items.clear();
@@ -59,6 +62,8 @@ auto File::detectType() -> void {
     else if ( String::endsWith( ext, ".tar.gz" ) ) type = Type::TarGz;
     else if ( String::endsWith( ext, ".gz" ) ) type = Type::Gzip;
     else if ( String::endsWith( ext, ".adz" ) ) type = Type::Gzip;
+    else if ( String::endsWith( ext, ".lha" )) type = Type::Lha;
+    else if ( String::endsWith( ext, ".lzh")) type = Type::Lha;
     else if ( String::endsWith( ext, ".tar" ) ) type = Type::Tar;
     else if ( String::endsWith( ext, ".tgz" ) ) type = Type::TarGz;
     else if ( String::endsWith( ext, ".z" ) ) type = Type::TarGz;
@@ -81,6 +86,10 @@ auto File::unload() -> void {
 
     if(type == Type::Zip) {
         for(auto& file : zip->files)
+            freeData(&file.data);
+    }
+    if (type == Type::Lha) {
+        for (auto& file : lha->files)
             freeData(&file.data);
     }
     items.clear();
@@ -283,6 +292,31 @@ auto File::scanArchive() -> std::vector<File::Item>& {
             }
             connectItems();
             break;
+        case Type::Lha:
+            if (!lha->open(fp, fileInfo.size))
+                break;
+
+            for (auto& file : lha->files) {
+#ifdef GUIKIT_WINAPI                
+                item.info.name = utf8_t(utf16_t(file.name, CP_ACP));
+#else
+                std::vector<uint8_t> out;
+
+                for (uint8_t _char : file.name)
+                    Utf8::encode( _char, out );
+
+                std::string sstr(out.begin(), out.end());
+                item.info.name = sstr;
+#endif                
+                item.info.size = file.size;
+                item.info.date = file.date;
+                item.isDirectory = file.isDirectory;
+                items.push_back(item);
+                item.id++;
+            }
+            connectItems();
+            break;
+
     }
     return items;
 }
@@ -312,15 +346,26 @@ auto File::archiveData(unsigned id) -> uint8_t* {
         case Type::TarGz:
         case Type::Tar:
             return tar->files[id].data;
-        case Type::Zip:
+        case Type::Zip: {
             auto& zipFile = zip->files[id];
-            if (zipFile.isDirectory) return nullptr;
+            if (zipFile.isDirectory)
+                return nullptr;
 
             uint8_t* dataPtr = zipFile.data;
-            if (dataPtr == nullptr) {
+            if (dataPtr == nullptr)
                 dataPtr = zip->extract( zipFile );
-            }
             return dataPtr;
+        }            
+        case Type::Lha: {
+            auto& lhaFile = lha->files[id];
+            if (lhaFile.isDirectory)
+                return nullptr;
+
+            uint8_t* dataPtr = lhaFile.data;
+            if (dataPtr == nullptr)
+                dataPtr = lha->extract(lhaFile);
+            return dataPtr;
+        }
     }
 }
 

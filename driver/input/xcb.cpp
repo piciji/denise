@@ -362,8 +362,8 @@ struct XCBInput : public Input {
 						if (ev->detail == XCB_BUTTON_INDEX_1) mouseState.left = true;
 						else if (ev->detail == XCB_BUTTON_INDEX_2) mouseState.middle = true;
 						else if (ev->detail == XCB_BUTTON_INDEX_3) mouseState.right = true;
-						else if (ev->detail == XCB_BUTTON_INDEX_4) mouseState.up = true;
-						else if (ev->detail == XCB_BUTTON_INDEX_5) mouseState.down = true;
+						else if (ev->detail == 9) mouseState.up = true;
+						else if (ev->detail == 8) mouseState.down = true;
 						keyMutex.unlock();
 					} break;
 					case XCB_INPUT_RAW_BUTTON_RELEASE: {
@@ -372,8 +372,8 @@ struct XCBInput : public Input {
 						if (ev->detail == XCB_BUTTON_INDEX_1) mouseState.left = false;
 						else if (ev->detail == XCB_BUTTON_INDEX_2) mouseState.middle = false;
 						else if (ev->detail == XCB_BUTTON_INDEX_3) mouseState.right = false;
-						else if (ev->detail == XCB_BUTTON_INDEX_4) mouseState.up = false;
-						else if (ev->detail == XCB_BUTTON_INDEX_5) mouseState.down = false;
+						else if (ev->detail == 9) mouseState.up = false;
+						else if (ev->detail == 8) mouseState.down = false;
 						keyMutex.unlock();
 					} break;
 					case XCB_INPUT_RAW_MOTION: {
