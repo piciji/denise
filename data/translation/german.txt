@@ -879,3 +879,5 @@ unsupported cartridge = Dieses Modul wird möglicherweise nicht unterstützt.
 select setting = Einstellung auswählen
 without speeder = Speeder unterdrücken
 button middle = Taste Mitte
+forward = Vorwärts
+back = Zurück

@@ -133,7 +133,7 @@ auto pViewport::mouseMove(GtkWidget* widget, GdkEventButton* event, pViewport* s
     self->viewport.state.mousePos.y = event->y;
 	
 	if(self->viewport.onMouseMove) 
-        self->viewport.onMouseMove(self->viewport.state.mousePos);
+        self->viewport.onMouseMove(self->viewport.state.mousePos, 0, 0);
 
     auto _window = self->viewport.window();
     if (_window && !_window->fullScreen() && self->cursorHideTimer.interval())

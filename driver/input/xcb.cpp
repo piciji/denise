@@ -126,8 +126,8 @@ struct XCBInput : public Input {
 		hidMouse->buttons().append("Left");
 		hidMouse->buttons().append("Middle");
 		hidMouse->buttons().append("Right");
-		hidMouse->buttons().append("Up");
-		hidMouse->buttons().append("Down");
+		hidMouse->buttons().append("Back");
+		hidMouse->buttons().append("Forward");
 
         initWorker();
 

@@ -233,9 +233,9 @@ struct DI_IDENT_CORE : DI_IDENT {
             hidMouse->buttons().append("Left");		
             hidMouse->buttons().append("Right");		
             hidMouse->buttons().append("Middle");
-            hidMouse->buttons().append("Up");
+            hidMouse->buttons().append("Back");
 #if DIRECTINPUT_VERSION != 0x500         
-            hidMouse->buttons().append("Down");
+            hidMouse->buttons().append("Forward");
 #endif        
         }
         

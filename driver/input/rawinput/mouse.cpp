@@ -78,8 +78,8 @@ struct RawMouse {
         mouse.hid->buttons().append("Left");
         mouse.hid->buttons().append("Right");
         mouse.hid->buttons().append("Middle");
-        mouse.hid->buttons().append("Up");
-        mouse.hid->buttons().append("Down");
+        mouse.hid->buttons().append("Back");
+        mouse.hid->buttons().append("Forward");
 		
 		mice.insert(mice.begin(), mouse);   
     }
