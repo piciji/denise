@@ -67,11 +67,31 @@
 }
 
 -(void) otherMouseDown:(NSEvent*)event {
-    if(viewport->onMousePress) viewport->onMousePress(GUIKIT::Mouse::Button::Middle);
+    if(viewport->onMousePress) {
+        if (event.buttonNumber == 2) viewport->onMousePress( GUIKIT::Mouse::Button::Middle);
+        if (event.buttonNumber == 3) viewport->onMousePress( GUIKIT::Mouse::Button::Back);
+        if (event.buttonNumber == 4) viewport->onMousePress( GUIKIT::Mouse::Button::Forward);
+    }
 }
 
 -(void) otherMouseUp:(NSEvent*)event {
-    if(viewport->onMouseRelease) viewport->onMouseRelease(GUIKIT::Mouse::Button::Middle);
+    if(viewport->onMouseRelease) {
+        if (event.buttonNumber == 2) viewport->onMouseRelease( GUIKIT::Mouse::Button::Middle);
+        if (event.buttonNumber == 3) viewport->onMouseRelease( GUIKIT::Mouse::Button::Back);
+        if (event.buttonNumber == 4) viewport->onMouseRelease( GUIKIT::Mouse::Button::Forward);
+    }
+}
+
+-(void) rightMouseDragged:(NSEvent*)event {
+    [viewport->p.cocoaView mouseMoved:event];
+}
+
+-(void) otherMouseDragged:(NSEvent*)event {
+    [viewport->p.cocoaView mouseMoved:event];
+}
+
+-(void) mouseDragged:(NSEvent*)event {
+    [viewport->p.cocoaView mouseMoved:event];
 }
 
 -(void) mouseMoved:(NSEvent*)event {
@@ -84,8 +104,11 @@
     _pos.y = geo.height - ceil(mouseLoc.y);
     _pos.x = floor(mouseLoc.x);
     
+    int deltaX = [event deltaX];
+    int deltaY = [event deltaY];
+    
     if(viewport->onMouseMove)
-        viewport->onMouseMove(viewport->state.mousePos);
+        viewport->onMouseMove(viewport->state.mousePos, deltaX, deltaY);
     
     auto aWindow = viewport->window();
     auto& _timer = viewport->p.cursorHideTimer;

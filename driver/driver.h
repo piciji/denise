@@ -147,6 +147,7 @@ struct Audio {
 
 struct Input {
     using KeyCallback = std::function<void ()>;
+    enum class Button : unsigned { Left = 1u, Right = 2u, Middle = 4u, Back = 8u, Forward = 16u };
 
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
@@ -155,7 +156,10 @@ struct Input {
     virtual auto mIsAcquired() -> bool { return false; }
 	virtual auto poll() -> std::vector<Hid::Device*> { return {}; }
     virtual auto setKeyboardCallback( KeyCallback* callback ) -> void {}
+    // mac only (at the moment)
     virtual auto sentUIKeyPresses(bool keyDown, uint16_t keyCode) -> void {}
+    virtual auto sentUIMousePresses(bool keyDown, Button button) -> void {}
+    virtual auto sentUIMouseMovement(int deltaX, int deltaY) -> void {}
 	
 	virtual ~Input() = default;
     static auto create(const std::string& driver) -> Input*;
