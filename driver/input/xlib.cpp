@@ -44,8 +44,8 @@ struct XInput : public Input {
         bool left = false;
         bool middle = false;
         bool right = false;
-        bool up;
-        bool down;
+        bool back;
+        bool forward;
     } mouseState;
     
     bool mouseAcquired;
@@ -223,8 +223,8 @@ struct XInput : public Input {
         hidMouse->buttons().inputs[0].setValue(mouseState.left);
         hidMouse->buttons().inputs[1].setValue(mouseState.middle);
         hidMouse->buttons().inputs[2].setValue(mouseState.right);
-        hidMouse->buttons().inputs[3].setValue(mouseState.up);
-        hidMouse->buttons().inputs[4].setValue(mouseState.down);
+        hidMouse->buttons().inputs[3].setValue(mouseState.back);
+        hidMouse->buttons().inputs[4].setValue(mouseState.forward);
 
         keyMutex.unlock();
 
@@ -314,8 +314,8 @@ struct XInput : public Input {
                 mouseState.left = (bool)(mask_return & Button1Mask);
                 mouseState.middle = (bool)(mask_return & Button2Mask);
                 mouseState.right = (bool)(mask_return & Button3Mask);
-                mouseState.up = (bool)(mask_return & Button4Mask);
-                mouseState.down = (bool)(mask_return & Button5Mask);
+                mouseState.back = (bool)(mask_return & Button4Mask);
+                mouseState.forward = (bool)(mask_return & Button5Mask);
 
                 std::memcpy(keyState, state, 32);
                 keyMutex.unlock();
