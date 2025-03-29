@@ -879,3 +879,5 @@ unsupported cartridge = Questa cartuccia non può essere supportata
 select setting = seleziona impostazione
 without speeder = suppress Speeder
 button middle = Button Middle
+forward = Forward
+back = Back

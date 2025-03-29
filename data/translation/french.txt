@@ -879,3 +879,5 @@ unsupported cartridge = Cette cartouche peut ne pas être prise en charge.
 select setting = Sélectionner le paramètre
 without speeder = suppress Speeder
 button middle = Button Middle
+forward = Forward
+back = Back

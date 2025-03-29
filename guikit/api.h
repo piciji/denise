@@ -145,7 +145,7 @@ struct Geometry {
 };
 
 struct Mouse {
-    enum class Button : unsigned { Left, Middle, Right };
+    enum class Button : unsigned { Left = 1, Right = 2, Middle = 4, Back = 8, Forward = 16 };
 };
 
 struct CustomFont {
@@ -215,6 +215,8 @@ struct Window : Base {
     std::function<void ()> onFullscreen = nullptr;
     std::function<void ()> onUnfullscreen = nullptr;
     std::function<void (bool keyDown, uint16_t keyCode)> onKeyPress = nullptr;
+    std::function<void (bool keyDown, Mouse::Button button)> onMousePress = nullptr;
+    std::function<void (int deltaX, int deltaY)> onMouseMove = nullptr;
 
     enum class Hints { Default, Video } hints = Hints::Default;
     
@@ -851,7 +853,7 @@ struct Viewport : Widget {
     std::function<void ()> onDragLeave = nullptr;
     std::function<void (int x, int y)> onDragMove = nullptr;
 
-    std::function<void (Position&)> onMouseMove = nullptr;
+    std::function<void (Position&, int deltaX, int deltaY)> onMouseMove = nullptr;
     std::function<void ()> onMouseLeave = nullptr;
     std::function<void (Mouse::Button)> onMousePress = nullptr;
     std::function<void (Mouse::Button)> onMouseRelease = nullptr;

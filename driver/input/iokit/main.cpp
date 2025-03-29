@@ -30,7 +30,7 @@ struct Iokit : Input {
         if (!keyboard.init(useCocoa))
             return false;
         
-        mouse.init( handle );
+        mouse.init( handle, useCocoa );
                 
         if(!joypad()->init()) {}
         
@@ -76,6 +76,16 @@ struct Iokit : Input {
     auto sentUIKeyPresses(bool keyDown, uint16_t keyCode) -> void {
         if (useCocoa)
             keyboard.sentUIKeyPresses(keyDown, keyCode);
+    }
+    
+    auto sentUIMousePresses(bool keyDown, Button button) -> void {
+        if (useCocoa)
+            mouse.sentUIPresses(keyDown, button);
+    }
+    
+    auto sentUIMouseMovement(int deltaX, int deltaY) -> void {
+        if (useCocoa)
+            mouse.sentUIMovement(deltaX, deltaY);
     }
     
     Iokit(bool useCocoa = false) {

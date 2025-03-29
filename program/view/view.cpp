@@ -372,7 +372,13 @@ auto View::build() -> void {
         inputDriver->mAcquire();
     };
 	
+    viewport.onMouseRelease = [this](GUIKIT::Mouse::Button button) {
+        inputDriver->sentUIMousePresses(false, (DRIVER::Input::Button)button);
+    };
+    
 	viewport.onMousePress = [this](GUIKIT::Mouse::Button button) {
+        inputDriver->sentUIMousePresses(true, (DRIVER::Input::Button)button);
+        
 	    if (button == GUIKIT::Mouse::Button::Left) {
 
 	        if (VideoManager::placeHolderSplashScreen) {
@@ -394,7 +400,10 @@ auto View::build() -> void {
 	    }
 	};
     
-    viewport.onMouseMove = [this](GUIKIT::Position& pos) {
+    viewport.onMouseMove = [this](GUIKIT::Position& pos, int deltaX, int deltaY) {
+#ifdef __APPLE__
+        inputDriver->sentUIMouseMovement(deltaX, deltaY);
+#endif
         if (!VideoManager::placeHolderSplashScreen)
             return;
 

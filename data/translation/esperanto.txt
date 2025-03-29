@@ -879,3 +879,5 @@ unsupported cartridge = Ĉi tiun kartoĉo ne estas subtenata.
 select setting = Elekti agordon
 without speeder = suppress Speeder
 button middle = Button Middle
+forward = Forward
+back = Back

@@ -184,6 +184,9 @@
     
     switch(eventType) {
         case NSEventTypeRightMouseDown:
+            if(window->onMousePress)
+                window->onMousePress(true, GUIKIT::Mouse::Button::Right);
+            
             if (window->onContext) {
                 if (window->onContext() && window->state.menus.size() > 0) {
                     if (!initMenuRunLoop) {
@@ -211,6 +214,41 @@
             flagsBefore = flags;
             if (window->onKeyPress)
                 window->onKeyPress(keyDown, keyCode);
+        } break;
+        case NSEventTypeLeftMouseDragged:
+        case NSEventTypeRightMouseDragged:
+        case NSEventTypeOtherMouseDragged:
+        case NSEventTypeMouseMoved: {
+            int deltaX = [event deltaX];
+            int deltaY = [event deltaY];
+            if (window->onMouseMove)
+                window->onMouseMove(deltaX, deltaY);
+        } break;
+        case NSEventTypeLeftMouseDown: {
+            if(window->onMousePress)
+                window->onMousePress(true, GUIKIT::Mouse::Button::Left);
+        } break;
+        case NSEventTypeLeftMouseUp: {
+            if(window->onMousePress)
+                window->onMousePress(false, GUIKIT::Mouse::Button::Left);
+        } break;
+        case NSEventTypeRightMouseUp: {
+            if(window->onMousePress)
+                window->onMousePress(false, GUIKIT::Mouse::Button::Right);
+        } break;
+        case NSEventTypeOtherMouseDown: {
+            if(window->onMousePress) {
+                if (event.buttonNumber == 2) window->onMousePress(true, GUIKIT::Mouse::Button::Middle);
+                if (event.buttonNumber == 3) window->onMousePress(true, GUIKIT::Mouse::Button::Back);
+                if (event.buttonNumber == 4) window->onMousePress(true, GUIKIT::Mouse::Button::Forward);
+            }
+        } break;
+        case NSEventTypeOtherMouseUp: {
+            if(window->onMousePress) {
+                if (event.buttonNumber == 2) window->onMousePress(false, GUIKIT::Mouse::Button::Middle);
+                if (event.buttonNumber == 3) window->onMousePress(false, GUIKIT::Mouse::Button::Back);
+                if (event.buttonNumber == 4) window->onMousePress(false, GUIKIT::Mouse::Button::Forward);
+            }
         } break;
         default:
             break;

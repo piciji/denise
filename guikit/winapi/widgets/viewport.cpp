@@ -101,7 +101,7 @@ auto CALLBACK pViewport::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
                 break;
 
             if (viewport.onMouseMove)
-                viewport.onMouseMove(viewport.state.mousePos);
+                viewport.onMouseMove(viewport.state.mousePos, 0, 0);
 
             auto& hideTimer = viewport.p.hideTimer;
             if (viewport.window() && !viewport.window()->fullScreen() && hideTimer.interval())

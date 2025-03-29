@@ -43,8 +43,8 @@ struct XCBInput : public Input {
         bool left = false;
         bool middle = false;
         bool right = false;
-        bool up;
-        bool down;
+        bool back;
+        bool forward;
     } mouseState;
 
     bool mouseAcquired;
@@ -126,8 +126,8 @@ struct XCBInput : public Input {
 		hidMouse->buttons().append("Left");
 		hidMouse->buttons().append("Middle");
 		hidMouse->buttons().append("Right");
-		hidMouse->buttons().append("Up");
-		hidMouse->buttons().append("Down");
+		hidMouse->buttons().append("Back");
+		hidMouse->buttons().append("Forward");
 
         initWorker();
 
@@ -267,8 +267,8 @@ struct XCBInput : public Input {
         hidMouse->buttons().inputs[0].setValue(mouseState.left);
         hidMouse->buttons().inputs[1].setValue(mouseState.middle);
         hidMouse->buttons().inputs[2].setValue(mouseState.right);
-        hidMouse->buttons().inputs[3].setValue(mouseState.up);
-        hidMouse->buttons().inputs[4].setValue(mouseState.down);
+        hidMouse->buttons().inputs[3].setValue(mouseState.back);
+        hidMouse->buttons().inputs[4].setValue(mouseState.forward);
 
         keyMutex.unlock();
 
@@ -362,8 +362,8 @@ struct XCBInput : public Input {
 						if (ev->detail == XCB_BUTTON_INDEX_1) mouseState.left = true;
 						else if (ev->detail == XCB_BUTTON_INDEX_2) mouseState.middle = true;
 						else if (ev->detail == XCB_BUTTON_INDEX_3) mouseState.right = true;
-						else if (ev->detail == 9) mouseState.up = true;
-						else if (ev->detail == 8) mouseState.down = true;
+						else if (ev->detail == 8) mouseState.back = true;
+						else if (ev->detail == 9) mouseState.forward = true;
 						keyMutex.unlock();
 					} break;
 					case XCB_INPUT_RAW_BUTTON_RELEASE: {
@@ -372,8 +372,8 @@ struct XCBInput : public Input {
 						if (ev->detail == XCB_BUTTON_INDEX_1) mouseState.left = false;
 						else if (ev->detail == XCB_BUTTON_INDEX_2) mouseState.middle = false;
 						else if (ev->detail == XCB_BUTTON_INDEX_3) mouseState.right = false;
-						else if (ev->detail == 9) mouseState.up = false;
-						else if (ev->detail == 8) mouseState.down = false;
+						else if (ev->detail == 8) mouseState.back = false;
+						else if (ev->detail == 9) mouseState.forward = false;
 						keyMutex.unlock();
 					} break;
 					case XCB_INPUT_RAW_MOTION: {
