@@ -215,8 +215,12 @@ endif()
 SET_SOURCE_FILES_PROPERTIES(deps/depsSlang.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
 SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/lha.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/lha")
 
+set(headerSrcs)
 set(depSrcs)
 add_subdirectory(deps)
+add_subdirectory(data)
+
+set_source_files_properties(${headerSrcs} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 SET_SOURCE_FILES_PROPERTIES(${depSrcs}
     PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
@@ -286,7 +290,7 @@ SET_SOURCE_FILES_PROPERTIES(program/program.cpp
 SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/images.cpp
         PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
 
-set(srcs ${srcs} ${depSrcs})
+set(srcs ${srcs} ${depSrcs} ${headerSrcs})
 add_executable( ${PROJECT_NAME} ${srcs} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
