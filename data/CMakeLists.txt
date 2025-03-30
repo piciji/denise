@@ -68,6 +68,93 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         driver/video/opengl3/wgl.cpp
         driver/tools/win.h
     )
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")    
+    set(headerSrcs
+        guikit/cocoa/widgets/button.cpp
+        guikit/cocoa/widgets/checkbox.cpp
+        guikit/cocoa/widgets/checkbutton.cpp
+        guikit/cocoa/widgets/combobutton.cpp
+        guikit/cocoa/widgets/frame.cpp
+        guikit/cocoa/widgets/hyperlink.cpp
+        guikit/cocoa/widgets/imageView.cpp
+        guikit/cocoa/widgets/label.cpp
+        guikit/cocoa/widgets/lineedit.cpp
+        guikit/cocoa/widgets/listview.cpp
+        guikit/cocoa/widgets/multilineedit.cpp
+        guikit/cocoa/widgets/progressbar.cpp
+        guikit/cocoa/widgets/radiobox.cpp
+        guikit/cocoa/widgets/slider.cpp
+        guikit/cocoa/widgets/squareCanvas.cpp
+        guikit/cocoa/widgets/stepbutton.cpp
+        guikit/cocoa/widgets/tabframe.cpp
+        guikit/cocoa/widgets/treeview.cpp
+        guikit/cocoa/widgets/viewport.cpp
+        guikit/cocoa/widgets/widget.cpp
+        guikit/cocoa/browserWindow.cpp
+        guikit/cocoa/display.cpp
+        guikit/cocoa/interface.h
+        guikit/cocoa/main.cpp
+        guikit/cocoa/main.h
+        guikit/cocoa/menu.cpp
+        guikit/cocoa/messageWindow.cpp
+        guikit/cocoa/statusbar.cpp
+        guikit/cocoa/tools.cpp
+        guikit/cocoa/tooltip.m
+        guikit/cocoa/versioning.cpp
+
+        driver/audio/openal.cpp
+        driver/audio/coreaudio.cpp
+        driver/input/iokit/joypad.cpp
+        driver/input/iokit/keyboard.cpp
+        driver/input/iokit/keyNames.cpp
+        driver/input/iokit/main.cpp
+        driver/input/iokit/mouse.cpp
+        driver/video/opengl3/cgl.cpp
+        driver/video/metal/interface.h
+        driver/video/metal/metal.cpp
+        driver/video/metal/shaders.h
+        driver/video/metal/utility.h
+    )
+else()
+    set(headerSrcs
+        guikit/gtk/widgets/button.cpp
+        guikit/gtk/widgets/checkbox.cpp
+        guikit/gtk/widgets/checkbutton.cpp
+        guikit/gtk/widgets/combobutton.cpp
+        guikit/gtk/widgets/frame.cpp
+        guikit/gtk/widgets/hyperlink.cpp
+        guikit/gtk/widgets/imageView.cpp
+        guikit/gtk/widgets/label.cpp
+        guikit/gtk/widgets/lineedit.cpp
+        guikit/gtk/widgets/listview.cpp
+        guikit/gtk/widgets/multilineedit.cpp
+        guikit/gtk/widgets/progressbar.cpp
+        guikit/gtk/widgets/radiobox.cpp
+        guikit/gtk/widgets/slider.cpp
+        guikit/gtk/widgets/squareCanvas.cpp
+        guikit/gtk/widgets/stepbutton.cpp
+        guikit/gtk/widgets/tabframe.cpp
+        guikit/gtk/widgets/treeview.cpp
+        guikit/gtk/widgets/viewport.cpp
+        guikit/gtk/widgets/widget.cpp
+        guikit/gtk/browserWindow.cpp
+        guikit/gtk/display.cpp
+        guikit/gtk/interProcess.cpp
+        guikit/gtk/main.cpp
+        guikit/gtk/main.h
+        guikit/gtk/menu.cpp
+        guikit/gtk/messageWindow.cpp
+        guikit/gtk/statusbar.cpp
+        guikit/gtk/tools.cpp
+
+        driver/audio/openal.cpp
+        driver/audio/pulseaudio.cpp
+        driver/input/udev.cpp
+        driver/input/uhid.cpp
+        driver/input/xcb.cpp
+        driver/input/xlib.cpp
+        driver/video/opengl3/glx.cpp
+    )
 endif()
 
 set(headerSrcs ${headerSrcs}
@@ -297,7 +384,7 @@ set(headerSrcs ${headerSrcs}
     emulation/libc64/system/clipboard.h
     emulation/libc64/system/expansion.cpp
     emulation/libc64/system/firmware.h
-    emulation/libc64/system/glueLogic.h
+    emulation/libc64/system/gluelogic.h
     emulation/libc64/system/keyBuffer.h
     emulation/libc64/system/map.cpp
     emulation/libc64/system/memory.h
