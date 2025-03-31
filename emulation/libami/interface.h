@@ -115,6 +115,9 @@ struct Interface : Emulator::Interface  {
     auto needExternalKeyUpdates() -> bool { return true; }
     auto autoStartedByMediaGroup() -> MediaGroup*;
 
+    // tools
+    auto buildDisk(const std::string& name, std::vector<Item>& files) -> Data;
+
 private:
     auto prepareDevices() -> void;
     auto prepareMedia() -> void;

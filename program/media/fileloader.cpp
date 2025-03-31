@@ -712,7 +712,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
 
     auto& items = file->scanArchive();
 
-    archiveViewer->onCallback = [this, file, media, emulator, autoLoad, selection, settings](GUIKIT::File::Item* item) {
+    archiveViewer->onCallback = [this, media, emulator, autoLoad, selection, settings](GUIKIT::File* file, GUIKIT::File::Item* item) {
 
         auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
@@ -735,7 +735,8 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         }
         emuThread->unlock();
     };
-    archiveViewer->setView(items);
+    archiveViewer->showNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator));
+    archiveViewer->setView(file, items);
 
     return true;
 }

@@ -14,30 +14,12 @@ auto ArchiveViewer::build() -> void {
     imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
     imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
 
-    layout.append(tv, {~0u, ~0u});
+    layout.append(tv, {~0u, ~0u}, 10);
+    layout.append(loadArchiveNative, { 0u, 0u });
     layout.setMargin(10);
 
     append(layout);
 	translate();
-
-    tv.onActivate = [&]() {
-        auto item = tv.selected();
-        if (!item) return;
-        auto fileItem = (GUIKIT::File::Item*)item->userData();
-        if (fileItem->isDirectory) return;
-
-        if (item->text() == "-") return;
-
-        if (!multiSelection)
-            setVisible(false);
-        else
-            item->setText("-");
-        
-        if (onCallback)
-            onCallback( fileItem );
-
-        filesSelected++;
-    };
 
     onClose = [this]() {
         filePool->unloadOrphaned();
@@ -62,12 +44,83 @@ auto ArchiveViewer::build() -> void {
     builded = true;
 }
 
-auto ArchiveViewer::setView(std::vector<GUIKIT::File::Item>& items, bool multiSelection) -> void {
-    this->multiSelection = multiSelection;
+auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>& items, bool multiSelection) -> void {
     this->filesSelected = 0;
 
     if (!builded) {
         build();
+    }
+
+    tv.onActivate = [this, file, multiSelection]() {
+        auto item = tv.selected();
+        if (!item) return;
+        auto fileItem = (GUIKIT::File::Item*)item->userData();
+        if (fileItem->isDirectory) return;
+
+        if (item->text() == "-") return;
+
+        if (!multiSelection)
+            setVisible(false);
+        else
+            item->setText("-");
+
+        if (file && onCallback)
+            onCallback(file, fileItem);
+
+        filesSelected++;
+    };
+
+    if (loadArchiveNative.enabled()) {
+        loadArchiveNative.onActivate = [this, file, items]() {
+            if (!dynamic_cast<LIBAMI::Interface*>(activeEmulator))
+                return;
+
+            std::vector<Emulator::Interface::Item> _items;
+            _items.resize(items.size());
+
+            for (auto& item : items) {
+                Emulator::Interface::Item& _item = _items[item.id];
+                _item.id = item.id;
+                _item.name = item.info.name;
+                _item.data.ptr = file->archiveData(item.id);
+                _item.data.size = file->archiveDataSize(item.id);
+                _item.isGroup = item.isDirectory;
+                _item.parent = item.parent ? &_items[item.parent->id] : nullptr;
+
+                for (auto child : item.childs)
+                    _item.childs.push_back( &_items[child->id] );
+            }
+
+            auto fileName = file->getFileName(true, true);
+            auto result = dynamic_cast<LIBAMI::Interface*>(activeEmulator)->buildDisk(fileName, _items);
+
+            if (result.ptr) {
+                std::string _path = program->generatedFolder("converted", true);
+                _path += fileName + ".adf";
+                
+                GUIKIT::File* newFile = filePool->get(_path);
+
+                if (!newFile->open(GUIKIT::File::Mode::Write)) {
+                    delete result.ptr;
+                    return;
+                }
+                
+                if (!newFile->write(result.ptr, result.size)) {
+                    delete result.ptr;
+                    return;
+                }
+                newFile->reset();
+                auto& itemsNew = newFile->scanArchive();
+
+                if (itemsNew.size()) {
+                    file->unload();
+                    setVisible(false);
+                    if (onCallback)
+                        onCallback(newFile, &itemsNew[0]);
+                } else
+                    newFile->unload();
+            }
+        };
     }
 
     unsigned fileCount = 0;
@@ -113,7 +166,7 @@ auto ArchiveViewer::setView(std::vector<GUIKIT::File::Item>& items, bool multiSe
     if(fileCount <= 1) {
         setVisible(false);
         if (onCallback)
-            onCallback( fileCount == 0 ? nullptr : firstFile);
+            onCallback( file, fileCount == 0 ? nullptr : firstFile);
         
         return;
     }
@@ -143,5 +196,10 @@ auto ArchiveViewer::setView(std::vector<GUIKIT::File::Item>& items, bool multiSe
 }
 
 auto ArchiveViewer::translate() -> void {
-	setTitle( trans->get("archive_selector") );
+	setTitle( trans->getA("archive_selector") );
+    loadArchiveNative.setText(trans->getA("load archive native"));
+}
+
+auto ArchiveViewer::showNativeArchive(bool state) -> void {
+    loadArchiveNative.setEnabled(state);
 }

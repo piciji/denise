@@ -881,3 +881,4 @@ without speeder = suppress Speeder
 button middle = Button Middle
 forward = Forward
 back = Back
+load archive native = Load archive natively

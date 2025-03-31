@@ -300,6 +300,15 @@ struct Interface {
         unsigned size;
     };
 
+    struct Item {
+        unsigned id;
+        std::string name;
+        Data data;
+        bool isGroup = false;
+        Item* parent = nullptr;
+        std::vector<Item*> childs;
+    };
+
     struct MemoryPattern {
         uint8_t value = 255;
         unsigned invertEvery = 64;

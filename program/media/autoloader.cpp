@@ -338,7 +338,7 @@ auto Autoloader::loadFiles() -> void {
 
 	if (archiveViewer) {
         filePool->assign("autoloader", file);
-		archiveViewer->onCallback = [this, file](GUIKIT::File::Item* item) {
+        archiveViewer->onCallback = [this](GUIKIT::File* file, GUIKIT::File::Item* item) {
             bool locked = emuThread->lock();
 			this->loadFile( file, item );
             filePool->assign("autoloader", nullptr);
@@ -346,7 +346,8 @@ auto Autoloader::loadFiles() -> void {
                 emuThread->unlock();
 		};
 
-		archiveViewer->setView( items );
+        archiveViewer->showNativeArchive(dynamic_cast<LIBAMI::Interface*>(activeEmulator));
+		archiveViewer->setView( file, items );
 	} else 
 		loadFile( file, &items[0] );
 }

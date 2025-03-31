@@ -572,6 +572,10 @@ auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
     return ~0;
 }
 
+auto Interface::buildDisk(const std::string& name, std::vector<Item>& files) -> Data {
+    return DiskStructure::buildDisk(system, name, files);
+}
+
 auto Interface::insertDisk(Media* media, uint8_t* data, unsigned size) -> void {
     if (!media || !media->group->isDisk())
         return;

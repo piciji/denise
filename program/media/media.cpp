@@ -1365,7 +1365,7 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
 
     auto& items = file->scanArchive();
 
-    archiveViewer->onCallback = [this, file, block](GUIKIT::File::Item* item) {
+    archiveViewer->onCallback = [this, block](GUIKIT::File* file, GUIKIT::File::Item* item) {
 
         if (!item || (item->info.size == 0) )
             return program->errorOpen( file, item, message );        
@@ -1374,8 +1374,8 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         insertImage( block, file, item );
         emuThread->unlock();
     };
-
-    archiveViewer->setView(items);
+    archiveViewer->showNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator));
+    archiveViewer->setView(file, items);
 }
 
 auto MediaLayout::updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count) -> void {

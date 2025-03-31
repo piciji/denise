@@ -2235,6 +2235,9 @@
     <ClCompile Include="..\guikit\tools\decode\lha.cpp">
       <Filter>guikit\tools\decode</Filter>
     </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\exe.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\emulation\libc64\sid\filter\circuit">

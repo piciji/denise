@@ -96,7 +96,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
             auto& items = file->scanArchive();
 
             if (filePaths.size() == 1) {
-                archiveViewer->onCallback = [this, file](GUIKIT::File::Item* item) {
+                archiveViewer->onCallback = [this](GUIKIT::File* file, GUIKIT::File::Item* item) {
                     emuThread->lock();
                     if (!item || (item->info.size == 0))
                         return this->mediaLayout->message->error( trans->get(file->isArchived() ? "archive_error" : "file_open_error",
@@ -120,7 +120,8 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 
                     emuThread->unlock();
                 };
-                archiveViewer->setView(items, true);
+                archiveViewer->showNativeArchive(false);
+                archiveViewer->setView(file, items, true);
             } else {
                 for(auto& item : items) {
                     if (item.info.size == 0)

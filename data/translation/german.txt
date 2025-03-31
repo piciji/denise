@@ -881,3 +881,4 @@ without speeder = Speeder unterdrücken
 button middle = Taste Mitte
 forward = Vorwärts
 back = Zurück
+load archive native = Archiv nativ laden

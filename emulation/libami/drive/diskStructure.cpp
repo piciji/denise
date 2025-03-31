@@ -2,6 +2,7 @@
 #include "diskStructure.h"
 #include "filesystem.h"
 #include "../../tools/buffer.h"
+#include "../../tools/string.h"
 #include "../agnus/agnus.h"
 #include "../system/system.h"
 #include "adf.cpp"
@@ -174,6 +175,12 @@ auto DiskStructure::create( System* system, Type type, std::string name, bool hd
     }
 
     return {data, size};
+}
+
+auto DiskStructure::buildDisk(System* system, const std::string& name, std::vector<Emulator::Interface::Item>& files) -> Emulator::Interface::Data {
+    DiskStructure disk(system->agnus);
+    disk.hd = false;
+    return disk.buildAdfFromBinaries(name, files);
 }
 
 auto DiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {

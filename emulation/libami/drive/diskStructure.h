@@ -71,6 +71,8 @@ struct DiskStructure {
     auto createEXT2(unsigned size) -> uint8_t*;
     auto prepareIPF(uint8_t* data, unsigned size) -> void;
 
+    auto buildAdfFromBinaries(const std::string& name, std::vector<Emulator::Interface::Item>& files) -> Emulator::Interface::Data;
+
     static auto initIPF() -> bool;
     static auto destroyIPF() -> void;
     auto removeIPF() -> void;
@@ -109,8 +111,8 @@ struct DiskStructure {
     auto setStandardTiming(Track& track) -> bool;
 
     static auto create(System* system, Type type, std::string name, bool hd, bool ffs, bool bootable) -> Emulator::Interface::Data;
-    static auto getPreview(System* system, Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing>;
-
+    static auto buildDisk(System* system, const std::string& name, std::vector<Emulator::Interface::Item>& files) -> Emulator::Interface::Data;
+    static auto getPreview(System* system, Emulator::Interface::Media* media, uint8_t* data, unsigned size) -> std::vector<Emulator::Interface::Listing>;    
 };
 
 }

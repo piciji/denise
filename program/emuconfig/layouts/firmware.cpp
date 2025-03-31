@@ -177,7 +177,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
     
     auto& items = file->scanArchive();
 
-    archiveViewer->onCallback = [this, file, block, fSetting, storeLevel](GUIKIT::File::Item* item) {
+    archiveViewer->onCallback = [this, block, fSetting, storeLevel](GUIKIT::File* file, GUIKIT::File::Item* item) {
         auto& firmware = emulator->firmwares[block->typeId];
 
         if (!item || (item->info.size == 0))
@@ -211,7 +211,8 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         emuThread->unlock();
     };
 
-    archiveViewer->setView(items);
+    archiveViewer->showNativeArchive(false);
+    archiveViewer->setView(file, items);    
 }
 
 auto FirmwareLayout::translate() -> void {

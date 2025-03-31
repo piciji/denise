@@ -442,6 +442,7 @@ set(headerSrcs ${headerSrcs}
     emulation/tools/socket.h
     emulation/tools/splines.h
     emulation/tools/systimer.h
+    emulation/tools/string.h
 
     emulation/wdc/65C02/alu.cpp
     emulation/wdc/65C02/instructions.cpp
