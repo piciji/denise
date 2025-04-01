@@ -1208,7 +1208,7 @@ struct BrowserWindow {
 	auto setNonModal() -> BrowserWindow&;
 	auto setListings( std::vector<BrowserWindow::Listing>& listings ) -> void;
     auto hideOkButton() -> void;
-    auto addCheckButton(bool checked, std::string label, std::function<void(bool checked)> onToggle, CheckButton::Mode mode = CheckButton::Mode::Default) -> BrowserWindow&;
+    auto addCheckButton(bool checked, std::string label, std::function<void(bool checked)> onToggle, CheckButton::Mode mode = CheckButton::Mode::Default, const std::string& toolTip = "") -> BrowserWindow&;
     auto hasChecked() -> bool { return state.checkButton && state.checkButton->checked; }
 
     auto setTemplateId(int id) -> BrowserWindow&;

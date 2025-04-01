@@ -1593,13 +1593,14 @@ auto BrowserWindow::setDefaultButtonTooltip(std::string toolTip) -> BrowserWindo
 	return *this;
 }
 
-auto BrowserWindow::addCheckButton(bool checked, std::string label, std::function<void(bool checked)> onToggle, CheckButton::Mode mode) -> BrowserWindow& {
+auto BrowserWindow::addCheckButton(bool checked, std::string label, std::function<void(bool checked)> onToggle, CheckButton::Mode mode, const std::string& toolTip) -> BrowserWindow& {
     if (!state.checkButton)
         state.checkButton = new BrowserWindow::CheckButton;
 
     state.checkButton->checked = checked;
     state.checkButton->mode = mode;
     state.checkButton->text = label;
+    state.checkButton->toolTip = toolTip;
     state.checkButton->onToggle = onToggle;
     return *this;
 }

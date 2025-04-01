@@ -711,6 +711,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
             if (state->checkButton) {
                 HWND checkBox = GetDlgItem(hDlg, IDC_CHECKBOX);
                 SetDlgItemText(hDlg, IDC_CHECKBOX, (LPCWSTR)utf16_t(state->checkButton->text));
+                context->setButtonTooltip(checkBox, state->checkButton->toolTip);
                 SendMessage(checkBox, BM_SETCHECK, (WPARAM)state->checkButton->checked, 0);
             } else {
                 ShowWindow(GetDlgItem(hDlg, IDC_CHECKBOX), SW_HIDE);
