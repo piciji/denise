@@ -45,8 +45,13 @@ auto DiskStructure::buildAdfFromBinaries(const std::string& name, std::vector<Em
             if (!hasStartupSequence && Emulator::String::foundSubStr(test, "startup-sequence"))
                 hasStartupSequence = true;
 
-            if (!item.isGroup && !hasStartupSequence && (!startFile || Emulator::String::endsWith(test, "exe")))
-                startFile = &item;
+            if (!item.isGroup && !hasStartupSequence) {
+                if (item.primary)
+                    startFile = &item;
+
+                if(!startFile || Emulator::String::endsWith(test, "exe"))
+                    startFile = &item;
+            }
 
             if (item.parent)
                 continue;
@@ -65,7 +70,13 @@ auto DiskStructure::buildAdfFromBinaries(const std::string& name, std::vector<Em
             if (!fs.changeDir("s"))
                 goto tryHD;
 
-            if (!fs.createFile("startup-sequence", startFile->name))
+            std::string _path = startFile->name;
+            while (startFile->parent) {
+                startFile = startFile->parent;
+                _path = startFile->name + "/" + _path;
+            }
+
+            if (!fs.createFile("startup-sequence", _path))
                 goto tryHD;
         }
 

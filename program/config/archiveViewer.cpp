@@ -71,10 +71,18 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
     };
 
     if (loadArchiveNative.enabled()) {
-        loadArchiveNative.onActivate = [this, file, items]() {
+        std::vector<GUIKIT::File::Item>* pItems = &items;
+
+        loadArchiveNative.onActivate = [this, file, pItems]() {
             if (!dynamic_cast<LIBAMI::Interface*>(activeEmulator))
                 return;
 
+            GUIKIT::File::Item* itemSelected = nullptr;
+            auto _selected = tv.selected();
+            if (_selected)
+                itemSelected = (GUIKIT::File::Item*)_selected->userData();
+
+            std::vector<GUIKIT::File::Item>& items = *pItems;
             std::vector<Emulator::Interface::Item> _items;
             _items.resize(items.size());
 
@@ -86,6 +94,7 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
                 _item.data.size = file->archiveDataSize(item.id);
                 _item.isGroup = item.isDirectory;
                 _item.parent = item.parent ? &_items[item.parent->id] : nullptr;
+                _item.primary = itemSelected && !item.isDirectory && &item == itemSelected;
 
                 for (auto child : item.childs)
                     _item.childs.push_back( &_items[child->id] );
@@ -95,7 +104,7 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
             auto result = dynamic_cast<LIBAMI::Interface*>(activeEmulator)->buildDisk(fileName, _items);
 
             if (result.ptr) {
-                std::string _path = program->generatedFolder("converted", true);
+                std::string _path = program->generatedFolder(activeEmulator, "disksave_folder", "disksave", true);
                 _path += fileName + ".adf";
                 
                 GUIKIT::File* newFile = filePool->get(_path);

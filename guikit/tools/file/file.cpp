@@ -55,8 +55,10 @@ auto File::setFile(std::string filePath) -> void {
 
 auto File::detectType() -> void {
     std::string ext = getExtension();
-    if (ext.size() > 0)
+    if (ext.size() > 0) {
+        String::toLowerCase(ext);
         ext = "." + ext;
+    }    
     
     if ( String::endsWith( ext, ".zip" ) ) type = Type::Zip;
     else if ( String::endsWith( ext, ".tar.gz" ) ) type = Type::TarGz;

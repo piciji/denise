@@ -306,6 +306,7 @@ struct Interface {
         Data data;
         bool isGroup = false;
         Item* parent = nullptr;
+        bool primary = false;
         std::vector<Item*> childs;
     };
 

@@ -389,7 +389,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
         fileDialogPtr->setTitle(trans->get("select image"));
 
         if (emulator->getModelValue(LIBC64::Interface::ModelIdDriveFastLoader) || settings->get<unsigned>("use_firmware", 0))
-            fileDialogPtr->addCheckButton(false, trans->getA("without speeder"), [settings](bool checked) {});
+            fileDialogPtr->addCheckButton(false, trans->getA("without speeder"), [settings](bool checked) {}, GUIKIT::BrowserWindow::CheckButton::Mode::Default, trans->getA("prevent speeder tooltip"));
         
         std::string filePath = fileDialogPtr->open();
         filePaths.push_back(filePath);
