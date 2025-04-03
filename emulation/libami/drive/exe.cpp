@@ -2,9 +2,11 @@
 namespace LIBAMI {
 
 auto DiskStructure::buildAdfFromBinaries(const std::string& name, std::vector<Emulator::Interface::Item>& files) -> Emulator::Interface::Data {
+    static const uint8_t executableMagic[4] = {0x00, 0x00, 0x03, 0xf3};
     unsigned rawSize;
     uint8_t* rawData;
     Emulator::Interface::Item* startFile = nullptr;
+    Emulator::Interface::Item* startFileExe = nullptr;
     bool hasStartupSequence = false;
     std::string test;
 
@@ -47,9 +49,10 @@ auto DiskStructure::buildAdfFromBinaries(const std::string& name, std::vector<Em
 
             if (!item.isGroup && !hasStartupSequence) {
                 if (item.primary)
-                    startFile = &item;
-
-                if(!startFile || Emulator::String::endsWith(test, "exe"))
+                    startFileExe = startFile = &item;
+                else if (!startFileExe && (item.data.size >= 4) && !std::memcmp((const char*)executableMagic, (const char*)item.data.ptr, 4))
+                    startFileExe = &item;
+                else if (!startFile)
                     startFile = &item;
             }
 
@@ -59,6 +62,9 @@ auto DiskStructure::buildAdfFromBinaries(const std::string& name, std::vector<Em
             if (!addItem(fs, item))
                 goto tryHD;
         }
+
+        if (startFileExe)
+            startFile = startFileExe;
 
         if (!hasStartupSequence && startFile) {
             if (!fs.changeDir("/"))
