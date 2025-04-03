@@ -118,6 +118,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(womLock);
     s.integer(resetFromKeyboard);
     s.integer(zorroBaseAdr);
+    s.integer(overclock.cycles);
 
     if (!light) {
         auto fpsOld = fps;
@@ -163,6 +164,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
         if (model == OCS_A1000)
             s.array(wom, 256 * 1024);
 
+        s.integer(overclock.speed);        
     } else {
         s.array(&mapper[0], 8);
         s.array(&mapper[0xf8], 4);

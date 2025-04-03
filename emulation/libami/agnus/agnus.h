@@ -124,6 +124,11 @@ struct Agnus {
     uint16_t beamCon;
     bool secureRA;
 
+    struct {
+        unsigned speed;
+        unsigned cycles;
+    } overclock;
+
     struct Sprite {
         uint32_t ptr;
         uint16_t pos;

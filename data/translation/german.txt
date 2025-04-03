@@ -883,3 +883,4 @@ forward = Vorwärts
 back = Zurück
 load archive native = Archiv nativ laden
 prevent speeder tooltip = Speeder-Kernel (nicht die VDT) wird für nächsten Ladevorgang unterdrückt
+overclocking = Übertaktung

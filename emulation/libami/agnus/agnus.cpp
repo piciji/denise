@@ -55,6 +55,8 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
     lineCallback.line = 0;
 
     encryptedRom = nullptr;
+    overclock.cycles = 0;
+    overclock.speed = 0;
 
     resetFps();
 }
@@ -99,6 +101,7 @@ auto Agnus::setRas() -> void {
 }
 
 auto Agnus::power(bool softReset, bool resetInstruction) -> void {
+    overclock.cycles = 0;
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
     dmaClock = 0;
@@ -296,6 +299,7 @@ auto Agnus::waitKeyboardReset() -> void {
 }
 
 auto Agnus::addWaitstatesToCPU() -> void {
+    overclock.cycles = 0;
 
     while (busUsage != BUS_FREE) {
         dmaCycle();
@@ -612,15 +616,24 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
 }
 
 auto Agnus::sync(unsigned cycles) -> void {
-    // triggers DMA cycle following current CPU micro cycle.
-    // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU
+    if (overclock.speed) {
+        overclock.cycles += cycles;
 
-    while( cycles ) {
-        dmaCycle();
-        cycles -= 2;
-#ifdef LOG_DMA_USAGE
-        logDmaUsage();
-#endif
+        while (overclock.cycles >= overclock.speed) {
+            dmaCycle();
+            overclock.cycles -= overclock.speed;
+        }
+
+    } else {
+        // triggers DMA cycle following current CPU micro cycle.
+        // means it is always a DMA cycle ahead of CPU to find out if next cycle is usable for CPU
+        while( cycles ) {
+            dmaCycle();
+            cycles -= 2;
+    #ifdef LOG_DMA_USAGE
+            logDmaUsage();
+    #endif
+        }
     }
 }
 

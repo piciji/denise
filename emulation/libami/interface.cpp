@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "233";
+const std::string Interface::Version = "234";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -52,6 +52,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdSerialLoopback, "Serial Loopback", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdFakeECSDenise, "Fake ECS Denise", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdDongle, "Plugin Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,6}, {"None", "RoboCop 3", "B.A.T. II", "Cricket Captain", "Leader Board", "Rugby Coach", "Striker Manager"}});
+    models.push_back({ModelIdOverclock, "Overclocking", Model::Type::Radio, Model::Purpose::Cpu, 0, {0, 3}, { "None", "2x", "4x", "8x" } });
 }
 
 auto Interface::prepareMedia() -> void {
@@ -538,6 +539,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdDongle:
             system->dongle.type = static_cast <System::Dongle>(value);
             break;
+        case ModelIdOverclock:
+            system->setOverclock(value);
+            break;
     }
 }
 
@@ -560,6 +564,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdSerialLoopback:                 return (int)system->paula.loopBack;
         case ModelIdFakeECSDenise:                  return (int)system->fakeECSDenise;
         case ModelIdDongle:                         return (int)system->dongle.type;
+        case ModelIdOverclock:                      return (int)system->getOverclock();
     }
 
     return 0;

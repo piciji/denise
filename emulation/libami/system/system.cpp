@@ -576,6 +576,27 @@ auto System::useRTC() -> bool {
     return agnus.useRTC;
 }
 
+auto System::setOverclock( unsigned factor ) -> void {
+    agnus.overclock.cycles = 0;
+
+    switch(factor) {
+        case 0: agnus.overclock.speed = 0; break;
+        case 1: agnus.overclock.speed = 4; break;
+        case 2: agnus.overclock.speed = 8; break;
+        case 3: agnus.overclock.speed = 16; break;
+    }
+}
+
+auto System::getOverclock() -> unsigned {
+    switch (agnus.overclock.speed) {
+        default:
+        case 0: return 0;
+        case 4: return 1;
+        case 8: return 2;
+        case 16: return 3;
+    }
+}
+
 template auto System::dongleJoydat<false>(uint16_t& val) -> void;
 template auto System::dongleJoydat<true>(uint16_t& val) -> void;
 

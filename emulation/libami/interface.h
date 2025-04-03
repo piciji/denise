@@ -31,6 +31,7 @@ struct Interface : Emulator::Interface  {
         ModelIdSerialLoopback,
         ModelIdFakeECSDenise,
         ModelIdDongle,
+        ModelIdOverclock,
     };
 
     enum MediaGroupId {
