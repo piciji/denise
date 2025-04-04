@@ -299,7 +299,13 @@ auto Agnus::waitKeyboardReset() -> void {
 }
 
 auto Agnus::addWaitstatesToCPU() -> void {
-    overclock.cycles = 0;
+    if (overclock.speed) {
+        if (overclock.cycles)
+            dmaCycle(); // set address on BUS (clock stretch to stock speed)
+
+        // access BUS (clock stretch to stock speed)
+        overclock.cycles = overclock.speed - 2;
+    }
 
     while (busUsage != BUS_FREE) {
         dmaCycle();
