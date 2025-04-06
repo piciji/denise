@@ -488,6 +488,12 @@ auto Program::unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::Interfa
             }
         }
     } else if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        if (!settings->get("update_key_acute", false)) {
+            if (settings->get<std::string>("keyboard_95", "") == "")
+                settings->set<std::string>("keyboard_95", "0|0|0|13|0");
+            settings->set("update_key_acute", true);
+        }
+
         if (!settings->get("update_joy_but3", false)) {
             settings->changeIdent("joypad#1_15", "joypad#1_18");
             settings->changeIdent("joypad#1_15_alt", "joypad#1_18_alt");

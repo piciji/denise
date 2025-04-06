@@ -296,6 +296,7 @@ auto InputManager::automap( KeyboardLayout::Type type, Emulator::Interface::Key 
             if ( key == EmuKey::Shared10 ) return {{Hid::Key::Backslash}};
             if ( key == EmuKey::Shared11 ) return {{Hid::Key::Equal, Hid::Key::ShiftRight}};
             if ( key == EmuKey::Shared12 ) return {{Hid::Key::Minus}};
+            if ( key == EmuKey::Shared13 ) return {{Hid::Key::Equal}};
 
             if ( key == EmuKey::ShiftShared7 ) return {{Hid::Key::Backslash, Hid::Key::AltRight}};
             if ( key == EmuKey::ShiftShared9 ) return {{Hid::Key::Grave}};
