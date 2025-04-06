@@ -130,6 +130,8 @@ auto InputManager::setMappings() -> void {
                     mapper->alternate = nullptr;
                     mapper->inputManager = manager;
                     mapper->isShadowed = false;
+                    mapper->shadowDelayed = nullptr;
+                    mapper->useShadowDelay = false;
 
                     mapper->autoFire = device.isJoypadOrMultiAdapter() && (input.key == Emulator::Interface::Key::Autofire || input.key == Emulator::Interface::Key::AutofireDirection);
                     if (device.isJoypadOrMultiAdapter() && (input.key == Emulator::Interface::Key::ToggleAutofire)) {
@@ -149,6 +151,10 @@ auto InputManager::setMappings() -> void {
                             shadowMapper->isShadowed = true;
                         }
                     }
+
+                    unsigned _ssize = mapper->shadowMap.size();
+                    if (device.isKeyboard() && (_ssize > 1))
+                        mapper->shadowDelayed = mapper->shadowMap[_ssize - 1];
                     
                     manager->addMapping( mapper );
                     if (!mapper->isAnalog())

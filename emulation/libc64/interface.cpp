@@ -834,27 +834,27 @@ auto Interface::prepareDevices() -> void {
         // virtual inputs (no physical keys)   
         // host could overmap default behaviour to match host keyboard layout better
         // otherwise you have to know the c64 keyboard layout to find the keys
-        device.addVirtual( "!", { 1, 47 }, Key::ExclamationMark );
-        device.addVirtual( "\"", { 2, 47 }, Key::DoubleQuotes );
-        device.addVirtual( "#", { 3, 47 }, Key::NumberSign );
-        device.addVirtual( "$", { 4, 47 }, Key::Dollar );
-        device.addVirtual( "%", { 5, 47 }, Key::Percent );
-        device.addVirtual( "&", { 6, 47 }, Key::Ampersand  );
-        device.addVirtual( "´", { 7, 47 }, Key::Acute );
-        device.addVirtual( "(", { 8, 47 }, Key::ParenthesesLeft );
-        device.addVirtual( ")", { 9, 47 }, Key::ParenthesesRight );        
-        device.addVirtual( "F2", { 36, 47 }, Key::F2 );
-        device.addVirtual( "F4", { 37, 47 }, Key::F4 );
-        device.addVirtual( "F6", { 38, 47 }, Key::F6 );
-        device.addVirtual( "F8", { 39, 47 }, Key::F8 );        
-        device.addVirtual( "Cursor Left", { 40, 47 }, Key::CursorLeft );
-        device.addVirtual( "Cursor Up", { 41, 47 }, Key::CursorUp );        
-        device.addVirtual( ">", { 48, 47 }, Key::Greater );
-        device.addVirtual( "<", { 49, 47 }, Key::Less );        
-        device.addVirtual( "[", { 50, 47 }, Key::OpenSquareBracket );
-        device.addVirtual( "]", { 51, 47 }, Key::ClosedSquareBracket );        
-        device.addVirtual( "?", { 61, 47 }, Key::QuestionMark );
-        device.addVirtual( "|", { 45, 47 }, Key::Pipe );
+        device.addVirtual( "!", { 47, 1 }, Key::ExclamationMark );
+        device.addVirtual( "\"", { 47, 2 }, Key::DoubleQuotes );
+        device.addVirtual( "#", { 47, 3 }, Key::NumberSign );
+        device.addVirtual( "$", { 47, 4 }, Key::Dollar );
+        device.addVirtual( "%", { 47, 5 }, Key::Percent );
+        device.addVirtual( "&", { 47, 6 }, Key::Ampersand  );
+        device.addVirtual( "´", { 47, 7 }, Key::Acute );
+        device.addVirtual( "(", { 47, 8 }, Key::ParenthesesLeft );
+        device.addVirtual( ")", { 47, 9 }, Key::ParenthesesRight );        
+        device.addVirtual( "F2", { 47, 36 }, Key::F2 );
+        device.addVirtual( "F4", { 47, 37 }, Key::F4);
+        device.addVirtual( "F6", { 47, 38 }, Key::F6 );
+        device.addVirtual( "F8", { 47, 39 }, Key::F8 );        
+        device.addVirtual( "Cursor Left", { 47, 40 }, Key::CursorLeft );
+        device.addVirtual( "Cursor Up", { 47, 41 }, Key::CursorUp );        
+        device.addVirtual( ">", { 47, 48 }, Key::Greater );
+        device.addVirtual( "<", { 47, 49 }, Key::Less );        
+        device.addVirtual( "[", { 47, 50 }, Key::OpenSquareBracket );
+        device.addVirtual( "]", { 47, 51 }, Key::ClosedSquareBracket );        
+        device.addVirtual( "?", { 47, 61 }, Key::QuestionMark );
+        device.addVirtual( "|", { 47, 45 }, Key::Pipe );
 		
         devices.push_back(device);         
 	}

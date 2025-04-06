@@ -29,6 +29,7 @@ struct InputMapping {
     InputMapping* parent = nullptr;
     InputMapping* sortedNext = nullptr;
     InputMapping* virtualLinked = nullptr;
+    InputMapping* shadowDelayed = nullptr;
     
     Emulator::Interface::Device* emuDevice = nullptr;
     Emulator::Interface::Device::Input* emuInput = nullptr;
@@ -43,6 +44,8 @@ struct InputMapping {
     int analogSensitivity = 16384;
     bool autoFire = false;
     bool isShadowed = false;
+    bool useShadowDelay = false;
+
     unsigned autoFirePos = 0;
     InputMapping* illegalMapping = nullptr;
 	

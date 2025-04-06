@@ -217,6 +217,11 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                         shadow->virtualLinked = useMapping;
                         shadows.push_back(shadow);
                         hasShadow = true;
+
+                        if (mapping->shadowDelayed == shadow) {
+                            if (mapping->adjustDigitalValue<true>(hid) == 0)
+                                shadow->useShadowDelay = true;
+                        }
                     }
 
 					break;
@@ -277,6 +282,11 @@ template<bool changeTrigger> auto InputManager::update() -> void {
                     shadow->virtualLinked = useMapping;
                     shadows.push_back(shadow);
                     hasShadow = true;
+
+                    if (mapping->shadowDelayed == shadow) {
+                        if (atLeastOneKeyHasSwitched)
+                            shadow->useShadowDelay = true;
+                    }
                 }
             }
                         
@@ -291,8 +301,14 @@ template<bool changeTrigger> auto InputManager::update() -> void {
 	}
 
     if (hasShadow) {
-        for (auto shadow: shadows)
-            shadow->state = shadow->virtualLinked->state;
+        for (auto shadow : shadows) {
+            if (shadow->useShadowDelay) {
+                shadow->useShadowDelay = false;
+                shadow->state = 0;
+            } else {
+                shadow->state = shadow->virtualLinked->state;
+            }            
+        }
     }
 
     if constexpr (changeTrigger) {
