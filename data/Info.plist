@@ -99,6 +99,19 @@
             <key>CFBundleTypeRole</key>
             <string>Viewer</string>
         </dict>
+        <dict>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>HDF</string>
+                <string>HDZ</string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string></string>
+            <key>CFBundleTypeName</key>
+            <string>Amiga Hard Disk Image</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+        </dict>
     </array>
 </dict>
 </plist>

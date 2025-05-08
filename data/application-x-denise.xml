@@ -64,6 +64,14 @@
     <comment>Amiga Disk Image</comment>
     <glob pattern="*.ipf"/>
   </mime-type>
+  <mime-type type="application/x-commodore-hdf">
+    <comment>Amiga Hard Disk Image</comment>
+    <glob pattern="*.hdf"/>
+  </mime-type>
+  <mime-type type="application/x-commodore-hdz">
+    <comment>Amiga Hard Disk Image</comment>
+    <glob pattern="*.hdz"/>
+  </mime-type>
   <mime-type type="application/x-denise-save">
     <comment>Denise Save Image</comment>
     <glob pattern="*.sav"/>
