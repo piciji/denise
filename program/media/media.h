@@ -218,10 +218,8 @@ struct FlashCreatorLayout : GUIKIT::FramedHorizontalLayout {
 struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
 
     struct Creator : GUIKIT::HorizontalLayout {
-        GUIKIT::Label diskSizeName;
+        GUIKIT::Label diskSizeLabel;
         GUIKIT::LineEdit diskSize;
-        GUIKIT::Label diskLabelName;
-        GUIKIT::LineEdit diskLabel;
         GUIKIT::Button button;
 
         Creator();

@@ -318,13 +318,18 @@ auto ModelLayout::alignSlider( std::string maxText ) -> void {
 
 auto ModelLayout::updateWidgets( ) -> void {
 
+    auto diskMediaGroup = emulator->getDiskMediaGroup();
+    auto hardDiskMediaGroup = emulator->getHardDiskMediaGroup();
+
     for (auto line : lines) {
         for (auto block : line->blocks) {
             updateWidget(block);
 
-            if (tabWindow->mediaLayout && block->model->isDriveSettings() &&
-            (emulator->getModelIdOfEnabledDrives(emulator->getDiskMediaGroup()) == block->model->id) ) {
-                tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
+            if (tabWindow->mediaLayout && block->model->isDriveSettings()) {
+                if (emulator->getModelIdOfEnabledDrives(diskMediaGroup) == block->model->id)
+                    tabWindow->mediaLayout->updateVisibility(diskMediaGroup, block->combo->selection());
+                else if (emulator->getModelIdOfEnabledDrives(hardDiskMediaGroup) == block->model->id)
+                    tabWindow->mediaLayout->updateVisibility(hardDiskMediaGroup, block->combo->selection());
             }
         }
     }
@@ -724,8 +729,16 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 view->updatePowerMenu();
                 break;
             case LIBAMI::Interface::ModelIdDiskDrivesConnected:
-                if(tabWindow->mediaLayout)
-                    tabWindow->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), block->combo->selection() );
+                if (tabWindow->mediaLayout)
+                    tabWindow->mediaLayout->updateVisibility(emulator->getDiskMediaGroup(), block->combo->selection());
+
+                if (this->emulator == activeEmulator)
+                    program->power(activeEmulator);
+                break;
+
+            case LIBAMI::Interface::ModelIdHardDrivesConnected:
+                if (tabWindow->mediaLayout)
+                    tabWindow->mediaLayout->updateVisibility(emulator->getHardDiskMediaGroup(), block->combo->selection());
 
                 if (this->emulator == activeEmulator)
                     program->power(activeEmulator);

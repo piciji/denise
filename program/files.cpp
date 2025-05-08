@@ -22,27 +22,20 @@ auto Program::showOpenError( std::vector<std::string>& paths, bool warning ) -> 
         view->message->error(trans->get(transKey, { {replaceIdent, replace} }));
 }
 
-auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool {
-    
+auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool {    
     if (!file)
         return false;
 
-    if ( group->isHardDisk() ) {        
-        if (!file->exists() || file->isArchived() ||
-            !file->isSizeValid(MAX_HARDDISK_SIZE) || 
-            !file->open(GUIKIT::File::Mode::Update)) {
-            
-            return false;
-        }
-        
-        return true;
-    }
-    
-    if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
+    if (!file->exists())
+        return false;
+
+    if (!group->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
+        return false;
+    if (group->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
         return false;
     
-    // non archived tape images will be loaded in chunks when needed
-    if ( group->isTape() && !file->isArchived() ) {        
+    // non archived tape or harddisk images will be loaded in chunks when needed
+    if ((group->isTape() || group->isHardDisk()) && !file->isArchived() ) {        
 		data = nullptr;
 		auto items = file->scanArchive();
 		return !items.empty();
@@ -190,7 +183,17 @@ auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {
             
             if (media && !media->secondary)
                 mediaGroup.selected = media;
-        }                
+        }
+
+        if (mediaGroup.isHardDisk()) {
+            for (auto& media : mediaGroup.media) {
+                auto pcbId = settings->get<unsigned>(_underscore(media.name) + "_pcb", mediaGroup.expansion->pcbs[0].id);
+
+                auto pcbLayout = emulator->getPCB(*mediaGroup.expansion, pcbId);
+
+                media.pcbLayout = pcbLayout ? pcbLayout : &mediaGroup.expansion->pcbs[0];
+            }
+        }
     }
     
     for ( auto& expansion : emulator->expansions ) {

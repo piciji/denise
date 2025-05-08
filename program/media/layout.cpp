@@ -103,9 +103,10 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
 
     append(edit, {~0u, 0u}, 10);
 
-    if (media->pcbLayout && group->expansion && !media->secondary && (group->expansion->pcbs.size() > 0) ) {
+    if (media->pcbLayout && group->expansion && !media->secondary && (group->expansion->pcbs.size() > 0)) {
         for (auto& pcb : group->expansion->pcbs) {
-            combo.append( pcb.name, pcb.id );
+            if (!group->isHardDisk() || (media->id == 0) || (pcb.id < 2))
+                combo.append( pcb.name, pcb.id );
 
             if (media->pcbLayout == &pcb)
                 combo.setSelection( combo.rows() - 1 );
@@ -218,10 +219,8 @@ FlashCreatorLayout::FlashCreatorLayout() {
 }
 
 HdCreatorLayout::Creator::Creator() {
-    append(diskSizeName, {0u, 0u}, 10);
+    append(diskSizeLabel, {0u, 0u}, 10);
     append(diskSize, {40, 0u}, 10);
-    append(diskLabelName, {0u, 0u}, 5);
-    append(diskLabel, {~0u, 0u}, 10);
     append(button, {0u, 0u});
 
     setAlignment(0.5);

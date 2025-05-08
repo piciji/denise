@@ -117,7 +117,7 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
                 instance->listView->reset();
 
             if (informInsertion) {
-                auto listings = state.onSelectionChange( "" );
+                auto listings = state.onSelectionChange( path, true );
 
             	if (instance->listView) {
                     instance->listView->resetFirstRowColor();
@@ -138,7 +138,7 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
             		}
             	}
             } else {
-                auto listings = state.onSelectionChange(path);
+                auto listings = state.onSelectionChange(path, false);
 
             	if (instance->listView) {
                     if (state.contentView.overrideFirstRowColor)

@@ -22,6 +22,10 @@ auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool w
                 deviceState.LED <<= 2;
                 deviceState.LED |= LED & 3;
                 deviceState.inputsPerFrame++;
+                if (LED & 0x40) { // flicker
+                    deviceState.LED <<= 2;
+                    deviceState.inputsPerFrame++;
+                }
             } else {
                 deviceState.LED = LED & 3;
                 deviceState.inputsPerFrame = 0;
@@ -333,7 +337,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 0, "1000.999", nullptr, &(view->speedControlMenu ) );    // FPS
     statusBar->append( 16, "Power", nullptr, &(view->power.menu ) );
     statusBar->append( 17, &(view->ledGreenImage), nullptr, &(view->power.menu ) ); // Power LED
-    // up to 4 disk drives
+    
     statusBar->append( 1, "8 00.0", nullptr, &(view->diskControlMenus[0].menu) ); // disk drive track
     statusBar->append( 2, &(view->ledOffImage), nullptr, &(view->diskControlMenus[0].menu) );    // disk LED
     statusBar->append( 3, "9 00.0", nullptr, &(view->diskControlMenus[1].menu) ); // disk drive track
@@ -342,6 +346,15 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 6, &(view->ledOffImage), nullptr, &(view->diskControlMenus[2].menu) );    // disk LED
     statusBar->append( 7, "11 00.0", nullptr, &(view->diskControlMenus[3].menu) ); // disk drive track
     statusBar->append( 8, &(view->ledOffImage), nullptr, &(view->diskControlMenus[3].menu) );    // disk LED
+
+    statusBar->append( 19, "DH0 00000");
+    statusBar->append( 20, &(view->ledOffImage));
+    statusBar->append( 21, "DH1 00000");
+    statusBar->append( 22, &(view->ledOffImage));
+    statusBar->append( 23, "DH2 00000");
+    statusBar->append( 24, &(view->ledOffImage));
+    statusBar->append( 25, "DH3 00000");
+    statusBar->append( 26, &(view->ledOffImage));
     
     statusBar->append( 9, "000", nullptr, &(view->tapeControlMenu) );    // tape counter
     statusBar->append( 10, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
@@ -384,6 +397,10 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->updateSeparator( 14, true );
     statusBar->updateSeparator( 17, true );
     statusBar->updateSeparator( 18, true );
+    statusBar->updateSeparator( 20, true);
+    statusBar->updateSeparator( 22, true);
+    statusBar->updateSeparator( 24, true);
+    statusBar->updateSeparator( 26, true);
 
     powerLED.timer.setInterval(1000);
     powerLED.timer.onFinished = [this]() {
@@ -469,6 +486,23 @@ auto StatusHandler::update() -> void {
 
                     updateImage(media->id * 2 + 2, image);
 
+                } else if (group->isHardDisk()) {
+                    std::string name = media->name + " ";
+                    unsigned cylinder = deviceState.position & 0xffff;
+                    name += std::to_string(cylinder);
+
+                    updateText(media->id * 2 + 19, name);
+
+                    GUIKIT::Image* image = &(view->ledOffImage);
+                    uint8_t _led = (deviceState.LED >> (deviceState.inputsPerFrame << 1)) & 3;
+                    if (_led)
+                        image = deviceState.write ? &(view->ledRedImage) : &(view->ledGreen2Image);
+
+                    if (activeVideoManager->driveLedParam)
+                        activeVideoManager->driveLedParam->value = (_led & 3) ? 1 : 0;
+
+                    updateImage(media->id * 2 + 20, image);
+                            
                 } else if (group->isTape()) {
 
                     std::string name = GUIKIT::String::prependZero( std::to_string( deviceState.position ), 3 );

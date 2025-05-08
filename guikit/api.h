@@ -1201,7 +1201,7 @@ struct BrowserWindow {
     auto setWindow(Window& window) -> BrowserWindow&;
     auto setPath(const std::string& path) -> BrowserWindow&;
     auto setTitle(const std::string& title) -> BrowserWindow&;
-    auto setOnChangeCallback( std::function<std::vector<BrowserWindow::Listing> (std::string file)> onSelectionChange ) -> BrowserWindow&;
+    auto setOnChangeCallback(std::function<std::vector<BrowserWindow::Listing>(std::string filePath, bool multi)> onSelectionChange) -> BrowserWindow&;
     auto addCustomButton( std::string text, std::function<bool (std::vector<std::string> filePaths, unsigned selection)> onClick, unsigned id = 0, std::string toolTip = "" ) -> BrowserWindow&;
     auto setDefaultButtonText(std::string textOk, std::string textCancel = "") -> BrowserWindow&;
 	auto setDefaultButtonTooltip(std::string toolTip) -> BrowserWindow&;
@@ -1263,7 +1263,7 @@ struct BrowserWindow {
         Window* window = nullptr;
         std::string path = "";
         std::string title = "";
-        std::function<std::vector<Listing> (std::string filePath)> onSelectionChange = nullptr;
+        std::function<std::vector<Listing> (std::string filePath, bool multi)> onSelectionChange = nullptr;
         std::function<void (std::vector<std::string> filePaths, unsigned selection)> onOkClick = nullptr;
         std::function<void ()> onCancelClick = nullptr;
         std::vector<CustomButton> buttons;
@@ -1414,11 +1414,11 @@ struct File {
     //archive access
     auto scanArchive() -> std::vector<Item>&;
     auto archiveData(unsigned id) -> uint8_t*;
-    auto archiveDataSize(unsigned id) -> unsigned;
+    auto archiveDataSize(unsigned id) -> uint64_t;
     
     //helper
-    auto isSizeValid(unsigned maxSize) -> bool;
-    auto isSizeValid(unsigned fileId, unsigned maxSize) -> bool;
+    auto isSizeValid(uint64_t maxSize) -> bool;
+    auto isSizeValid(unsigned fileId, uint64_t maxSize) -> bool;
     auto isArchived() -> bool;
     static auto SizeFormated(uint64_t bytes) -> std::string;
 

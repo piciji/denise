@@ -117,11 +117,21 @@ set(srcs
         emulation/libami/input/controlPort/controlPort.cpp
         emulation/libami/input/keyboard/keyboard.cpp
         emulation/libami/drive/diskDrive.cpp
+        emulation/libami/drive/hardDrive.cpp
+        emulation/libami/drive/hardDiskStructure.cpp
         emulation/libami/drive/diskStructure.cpp
         emulation/libami/drive/sectorBlock.cpp
         emulation/libami/drive/filesystem.cpp
+        emulation/libami/drive/filesystemExt.cpp
+        emulation/libami/drive/hunk.cpp
         emulation/libami/system/rtc.cpp
         emulation/libami/drive/dms/pfile.cpp
+        emulation/libami/expansionPort/expansionPort.cpp
+        emulation/libami/expansionPort/fastMem.cpp
+        emulation/libami/expansionPort/hdController.cpp
+        emulation/libami/expansionPort/mtecAT500.cpp
+        emulation/libami/expansionPort/builtinHD.cpp
+        emulation/libami/system/firmware.cpp
         emulation/tools/DLLoader.cpp
         emulation/libc64/vicII/base.cpp
         emulation/libc64/vicII/vicII.cpp
@@ -164,6 +174,7 @@ set(srcs
         emulation/libc64/disk/structure/structure.cpp
         emulation/tools/m93c86.cpp
         emulation/tools/mx29lv640eb.cpp
+        emulation/tools/error.cpp
         data/icons/icons.cpp
         data/icons/logos.cpp
         emulation/tools/socket.cpp

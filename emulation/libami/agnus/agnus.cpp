@@ -37,9 +37,16 @@
 namespace LIBAMI {
 
 Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input, RTC& rtc)
-: system(system), cpu(cpu), denise(denise), paula(paula), cia1(cia1), cia2(cia2), input(input), rtc(rtc), blitter(*this), copper(*this) {
+:   system(system), cpu(cpu), denise(denise), paula(paula), cia1(cia1), cia2(cia2),
+    input(input), rtc(rtc), blitter(*this), copper(*this), fastMemExpansion(*this) {
 
     this->interface = system->interface;
+
+    expansions[0] = &fastMemExpansion;
+    expansions[1] = new HDController(*this, system->hardDrives[0]);
+    expansions[2] = new HDController(*this, system->hardDrives[1]);
+    expansions[3] = new HDController(*this, system->hardDrives[2]);
+    expansions[4] = new HDController(*this, system->hardDrives[3]);
 
     chipMemChangeSize = slowMemChangeSize = fastMemChangeSize = 10 * 1024;
     chipMemChange = new MemChange[chipMemChangeSize];
@@ -75,6 +82,11 @@ Agnus::~Agnus() {
 
     if(encryptedRom)
         delete[] encryptedRom;
+
+    for(auto expansion : expansions) {
+        if (!dynamic_cast<FastMemExpansion*>(expansion))
+            delete expansion;
+    }
 
     delete[] frameBuffer;
 }
@@ -124,6 +136,13 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
 
     setRas();
 
+    for(auto expansion : expansions)
+        expansion->reset(softReset);
+
+    for (auto& expansionConf : expansionsConfigured)
+        expansionConf = nullptr;
+
+    hardDrivesBusy = false;
     actions = 0;
     busUsage = BUS_FREE;
     hPos = 4;
@@ -200,7 +219,6 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     lolToggle = ntsc;
     laceMode = 0;
     laceFrame = 0;
-    zorroBaseAdr = 0;
 
     initVCounter = false;
     shortLineBefore = true;
@@ -446,6 +464,8 @@ inline auto Agnus::dmaCycle() -> void {
                 diskDma(1, dmal & 2);
             bplQueue = 0; // hsync start
             dmal >>= 2;
+            if (hardDrivesBusy) // at least one
+                checkHardDrives();
             break;
         case 0xf:
             if (dmal & 3)
@@ -897,6 +917,12 @@ auto Agnus::setBltConflictThisCycle() -> void {
     addOneCycleEvent(Agnus::END_BLT_CONFLICT, sprQueue & 0xff, 1);
 }
 
+auto Agnus::checkHardDrives() -> void {
+    hardDrivesBusy = false;
+    
+    for(auto& hardDrive : system->hardDrives)
+        hardDrivesBusy |= hardDrive.process();
+}
 
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,true,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;

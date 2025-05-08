@@ -35,10 +35,13 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             dataBus = *(slowMem + (adr - 0xc00000));
             break;
         case FAST_MEM:
-            dataBus = *(fastMem + (adr - zorroBaseAdr));
+            dataBus = *(fastMem + (adr - fastMemExpansion.baseAdr));
             break;
         case KICK_ROM:
             dataBus = *(kickRom + (adr & kickRomMask));
+            break;
+        case EXPANSION:
+            dataBus = expansionsConfigured[adr >> 16]->read(adr);
             break;
         case EXT_ROM:
             dataBus = *(extRom + (adr & extRomMask));
@@ -50,7 +53,7 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
             dataBus = (adr & 1) ? rtc.read( (adr >> 2) & 0xf, system->isProcessFrame() ) : (dataBus >> 8);
             break;
         case AUTO_CONF:
-            dataBus = readZorro(adr);
+            dataBus = readAutoConf(adr);
             break;
         case Unmapped:
             break;
@@ -92,11 +95,14 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
             dataBus = _swapWord(*(uint16_t*)(slowMem + (adr - 0xc00000)));
             break;
         case FAST_MEM:
-            dataBus = _swapWord(*(uint16_t*)(fastMem + (adr - zorroBaseAdr)));
+            dataBus = _swapWord(*(uint16_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
             break;
         case KICK_ROM:
             // firmware access needs sanity checking
             dataBus = _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask)));
+            break;
+        case EXPANSION:
+            dataBus = expansionsConfigured[adr >> 16]->readW(adr);
             break;
         case EXT_ROM:
             dataBus = _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
@@ -109,8 +115,8 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
             dataBus |= rtc.read( (adr >> 2) & 0xf, system->isProcessFrame() );
             break;
         case AUTO_CONF:
-            dataBus = readZorro(adr) << 8;
-            dataBus |= readZorro(adr + 1);
+            dataBus = readAutoConf(adr) << 8;
+            dataBus |= readAutoConf(adr + 1);
             break;
         case Unmapped: // floating BUS, don't return zero (Hollywood Poker Pro)
             break;
@@ -151,7 +157,7 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
             *(slowMem + adr) = value;
             break;
         case FAST_MEM:
-            adr -= zorroBaseAdr;
+            adr -= fastMemExpansion.baseAdr;
             if (trackMemChanges)
                 rememberFastMem(adr & ~1);
             *(fastMem + adr) = value;
@@ -159,6 +165,9 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
         case KICK_ROM:
             if ( (model == OCS_A1000) && !womLock)
                 lockWom();
+            break;
+        case EXPANSION:
+            expansionsConfigured[adr >> 16]->write(adr, value);
             break;
         case EXT_ROM:
             break;
@@ -170,7 +179,7 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
                 rtc.write( (adr >> 2) & 0xf, value );
             break;
         case AUTO_CONF:
-            writeZorro(adr, value);
+            writeAutoConf(adr, value);
             break;
         case Unmapped:
             break;
@@ -211,7 +220,7 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
             *(uint16_t*)(slowMem + adr) = _swapWord(value);
             break;
         case FAST_MEM:
-            adr -= zorroBaseAdr;
+            adr -= fastMemExpansion.baseAdr;
             if (trackMemChanges)
                 rememberFastMem(adr);
             *(uint16_t*)(fastMem + adr) = _swapWord(value);
@@ -219,6 +228,9 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
         case KICK_ROM:
             if ( (model == OCS_A1000) && !womLock)
                 lockWom();
+            break;
+        case EXPANSION:
+            expansionsConfigured[adr >> 16]->writeW(adr, value);
             break;
         case EXT_ROM:
             break;
@@ -230,13 +242,87 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
                 rtc.write( (adr >> 2) & 0xf, value & 0xff );
             break;
         case AUTO_CONF:
-            writeZorro(adr, value >> 8);
-            writeZorro(adr + 1, value & 0xff);
+            writeAutoConfWord(adr, value);
             break;
         case Unmapped:
             break;
     }
     dataBus = value;
+}
+
+auto Agnus::fakeWriteByte(uint32_t adr, uint8_t value) -> void {
+    adr &= 0xffffff;
+
+    switch (mapper[adr >> 16]) {
+        case CHIP_MEM:
+            adr &= chipMemMask;
+            if (trackMemChanges)
+                rememberChipMem(adr & ~1);
+
+            *(chipMem + adr) = value;
+            break;
+        case SLOW_MEM:
+            adr -= 0xc00000;
+            if (trackMemChanges)
+                rememberSlowMem(adr & ~1);
+            *(slowMem + adr) = value;
+            break;
+        case FAST_MEM:
+            adr -= fastMemExpansion.baseAdr;
+            if (trackMemChanges)
+                rememberFastMem(adr & ~1);
+            *(fastMem + adr) = value;
+            break;
+        case WOM:
+            if (!womLock) *(wom + (adr & 0x3ffff)) = value;
+            break;
+    }
+}
+
+auto Agnus::fakeWriteByte(uint32_t adr, uint8_t* data, unsigned len) -> void {
+    for(unsigned i = 0; i < len; i++)
+        fakeWriteByte(adr + i, *data++);
+}
+
+auto Agnus::fakeWriteWord(uint32_t adr, uint16_t value) -> void {
+    fakeWriteByte(adr, value >> 8);
+    fakeWriteByte(adr + 1, value & 0xff);
+}
+
+auto Agnus::fakeWriteLongWord(uint32_t adr, uint32_t value) -> void {
+    fakeWriteWord(adr, value >> 16);
+    fakeWriteWord(adr + 2, value & 0xffff);
+}
+
+auto Agnus::fakeReadWord(uint32_t adr) -> uint16_t {
+    adr &= 0xffffff;
+    switch (mapper[adr >> 16]) {
+        case CHIP_MEM:  return _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
+        case SLOW_MEM:  return _swapWord(*(uint16_t*)(slowMem + (adr - 0xc00000)));
+        case FAST_MEM:  return _swapWord(*(uint16_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
+        case KICK_ROM:  return _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask)));
+        case EXT_ROM:   return _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
+        case WOM:       return _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
+    }
+    return 0;
+}
+
+auto Agnus::fakeReadByte(uint32_t adr) -> uint8_t {
+    adr &= 0xffffff;
+    switch (mapper[adr >> 16]) {
+        case CHIP_MEM:  return *(chipMem + (adr & chipMemMask));
+        case SLOW_MEM:  return *(slowMem + (adr - 0xc00000));
+        case FAST_MEM:  return *(fastMem + (adr - fastMemExpansion.baseAdr));
+        case KICK_ROM:  return *(kickRom + (adr & kickRomMask));
+        case EXT_ROM:   return *(extRom + (adr & extRomMask));
+        case WOM:       return *(wom + (adr & 0x3ffff));
+    }
+    return 0;
+}
+
+auto Agnus::fakeRead(uint32_t adr, uint8_t* buf, unsigned len) -> void {
+    for (unsigned i = 0; i < len; i++)
+        buf[i] = fakeReadByte(adr + i);
 }
 
 auto Agnus::setChipmem(unsigned size) -> void {
@@ -407,7 +493,14 @@ auto Agnus::mapMemory() -> void {
     mapper[0xde] = MMIO_CUSTOM;
     mapper[0xdf] = MMIO_CUSTOM;
 
-    mapper[0xe8] = fastMem ? AUTO_CONF : Unmapped;
+    mapper[0xe8] = Unmapped;
+    for(auto expansion : expansions) {
+        if (expansion->boardState != ExpansionPort::BoardState::ShutUp) {
+            mapper[0xe8] = AUTO_CONF;
+            break;
+        }
+    }
+
     for(int i = 0xe9; i <= 0xef; i++)
         mapper[i] = Unmapped;
 
@@ -435,73 +528,26 @@ auto Agnus::lockWom() -> void {
     womLock = true;
 }
 
-// dirty fastmem integration
-auto Agnus::readZorro(uint32_t adr) -> uint8_t {
-    uint8_t out = 0xff;
-    uint8_t offset = adr & 0xff;
-
-    if (zorroBaseAdr)
-        return out;
-
-    if (((offset & 1) == 0) && (offset < 0x40)) {
-        switch (offset >> 2) {
-            case 0x0: out = 0x20 | 0xc0 | getZorroSize(); break;
-            case 0x1: out = 0x51; break; // product ID
-            case 0x2: out = 0x80; break;
-            case 0x3: out = 0; break;
-            case 0x4: out = 0x02; break; // manufactorer ID: 3-State
-            case 0x5: out = 0x00; break;
-
-            case 0x6: out = 0; break; // serial number
-            case 0x7: out = 0; break;
-            case 0x8: out = 0; break;
-            case 0x9: out = 1; break;
-
-            default: out = 0; break;
-        }
-
-        out = (offset & 2) ? (out & 0xf) : ((out >> 4) & 0xf);
-        out = (offset < 4) ? (out << 4) : ~(out << 4);
-
-    } else if (offset == 0x40 || offset == 0x42)
-        out = 0;
-
-    return out;
+auto Agnus::readAutoConf(uint32_t addr) -> uint8_t {
+    for (auto expansion : expansions) {
+        if (expansion->boardState == ExpansionPort::BoardState::AutoConf)
+            return expansion->readAutoConf(addr);
+    }
+    return 0xff;
 }
 
-auto Agnus::writeZorro(uint32_t adr, uint8_t data) -> void {
-    if (zorroBaseAdr)
-        return;
-
-    switch (adr & 0xffff) {
-        case 0x48: {
-            zorroBaseAdr |= (data & 0xf0) << 16;
-            int startPage = zorroBaseAdr >> 16;
-
-            int pages = fastMemSize / (64 * 1024);
-            for (int i = startPage; i < (startPage + pages); i++)
-                mapper[i] = FAST_MEM;
-        } break;
-
-        case 0x4a:
-            zorroBaseAdr |= (data & 0xf0) << 12;
-            break;
+auto Agnus::writeAutoConf(uint32_t addr, uint8_t value) -> void {
+    for (auto expansion : expansions) {
+        if (expansion->boardState == ExpansionPort::BoardState::AutoConf)
+            return expansion->writeAutoConf(addr, value);
     }
 }
 
-auto Agnus::getZorroSize() -> uint8_t {
-    int pages = fastMemSize / (64 * 1024);
-    switch(pages) {
-        case 1: return 1;
-        case 2: return 2;
-        case 4: return 3;
-        case 8: return 4;
-        case 16: return 5;
-        case 32: return 6;
-        case 64: return 7;
-        case 128: return 0;
+auto Agnus::writeAutoConfWord(uint32_t addr, uint16_t value) -> void {
+    for (auto expansion : expansions) {
+        if (expansion->boardState == ExpansionPort::BoardState::AutoConf)
+            return expansion->writeAutoConfW(addr, value);
     }
-    return ~0; // should never happen
 }
 
 auto Agnus::checkForRomEncryption() -> void {
@@ -533,5 +579,35 @@ auto Agnus::checkForRomEncryption() -> void {
     extRomMask = 0;
     system->firmwareChanged = false;
 }
+
+auto Agnus::isChipMem(uint32_t addr) -> bool {
+    if (addr > 0xffffff)
+        return false;
+
+    return mapper[addr >> 16] == CHIP_MEM;
+}
+
+auto Agnus::isSlowMem(uint32_t addr) -> bool {
+    if (addr > 0xffffff)
+        return false;
+
+    return mapper[addr >> 16] == SLOW_MEM;
+}
+
+auto Agnus::isFastMem(uint32_t addr) -> bool {
+    if (addr > 0xffffff)
+        return false;
+
+    return mapper[addr >> 16] == FAST_MEM;
+}
+
+auto Agnus::isMem(uint32_t addr) -> bool {
+    if (addr > 0xffffff)
+        return false;
+
+    auto _m = mapper[addr >> 16];
+    return _m == FAST_MEM || _m == CHIP_MEM || _m == SLOW_MEM;
+}
+
 
 }

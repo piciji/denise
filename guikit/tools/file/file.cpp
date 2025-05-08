@@ -64,6 +64,7 @@ auto File::detectType() -> void {
     else if ( String::endsWith( ext, ".tar.gz" ) ) type = Type::TarGz;
     else if ( String::endsWith( ext, ".gz" ) ) type = Type::Gzip;
     else if ( String::endsWith( ext, ".adz" ) ) type = Type::Gzip;
+    else if ( String::endsWith( ext, ".hdz")) type = Type::Gzip;
     else if ( String::endsWith( ext, ".lha" )) type = Type::Lha;
     else if ( String::endsWith( ext, ".lzh")) type = Type::Lha;
     else if ( String::endsWith( ext, ".tar" ) ) type = Type::Tar;
@@ -172,7 +173,7 @@ auto File::write() -> bool {
     if (!fp || !data || mode == Mode::Read)
         return false;
     
-    fseek(fp, 0, SEEK_SET);
+    _fseeki64(fp, 0, SEEK_SET);
     unsigned bytesWritten = fwrite(data, 1, fileInfo.size, fp);
     fflush( fp );
     dataChanged = true;
@@ -183,7 +184,7 @@ auto File::read(uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
     if (!fp || mode == Mode::Write )
 		return 0;
     
-	if (fseek(fp, offset, SEEK_SET))
+    if (_fseeki64(fp, offset, SEEK_SET))
 		return 0;
 
 	return fread(buffer, 1, length, fp);
@@ -193,7 +194,7 @@ auto File::write(const uint8_t* buffer, unsigned length, unsigned offset) -> uns
     if (!fp || mode == Mode::Read)
         return 0;
 
-    if (fseek(fp, offset, SEEK_SET))
+    if (_fseeki64(fp, offset, SEEK_SET))
 		return 0;
     
     auto bytesWritten = fwrite(buffer, 1, length, fp);
@@ -323,7 +324,7 @@ auto File::scanArchive() -> std::vector<File::Item>& {
     return items;
 }
 
-auto File::archiveDataSize(unsigned id) -> unsigned {
+auto File::archiveDataSize(unsigned id) -> uint64_t {
     if (dataChanged)
         reset();
     
@@ -716,12 +717,12 @@ auto File::beautifyPath( std::string path ) -> std::string {
     return path;
 }
 
-auto File::isSizeValid(unsigned maxSize) -> bool {
+auto File::isSizeValid(uint64_t maxSize) -> bool {
     return getSize() > 0 && getSize() <= maxSize;
 }
 
-auto File::isSizeValid(unsigned fileId, unsigned maxSize) -> bool {
-    unsigned size = archiveDataSize(fileId);
+auto File::isSizeValid(unsigned fileId, uint64_t maxSize) -> bool {
+    uint64_t size = archiveDataSize(fileId);
     return size > 0 && size <= maxSize;
 }
 

@@ -120,7 +120,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
 
                     emuThread->unlock();
                 };
-                archiveViewer->showNativeArchive(false);
+                archiveViewer->allowNativeArchive(nullptr);
                 archiveViewer->setView(file, items, true);
             } else {
                 for(auto& item : items) {

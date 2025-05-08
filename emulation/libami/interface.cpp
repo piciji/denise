@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "234";
+const std::string Interface::Version = "235";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -38,6 +38,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdAudioFilter, "PAULA Filter", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 6}, {"Auto", "Off (A500)", "Software (A500)", "On (A500)", "Off (A1200)", "Software (A1200)", "On (A1200)"}});
     models.push_back({ModelIdRegion, "Region", Model::Type::Radio, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});
+    models.push_back({ModelIdHardDrivesConnected, "Hard Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 0, {0, 4}, { "0", "1", "2", "3", "4" }});
     models.push_back({ModelIdDiskDriveSpeed, "Disk Speed", Model::Type::Slider, Model::Purpose::DriveSettings, 30000, {29500, 30500}, {}, 100, 100.0 });
     models.push_back({ModelIdDiskDriveWobble, "Drive Wobble", Model::Type::Slider, Model::Purpose::DriveSettings, 20, {0, 500}, {}, 50, 100.0 });
     models.push_back({ModelIdDriveStepperDelay, "Drive Stepper Delay", Model::Type::Slider, Model::Purpose::DriveSettings, 0, {0, 180}, {}, 180, 10.0 });
@@ -57,7 +58,7 @@ auto Interface::prepareModels() -> void {
 
 auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "dms", "ipf", "adz", "exe"}, {"adf", "ext.adf"} });
-    // mediaGroups.push_back({MediaGroupIdHardDisk, "hd", MediaGroup::Type::HardDisk, {"hdf"}, {"hdf"} });
+    mediaGroups.push_back({MediaGroupIdHardDisk, "harddisk", MediaGroup::Type::HardDisk, {"hdf", "hdz"}, {"hdf"} });
 
     {   auto& group = mediaGroups[MediaGroupIdDisk];
         group.media.push_back({0, "DF0", 0, &group});
@@ -67,11 +68,13 @@ auto Interface::prepareMedia() -> void {
         group.selected = nullptr;
     }
 
-//    {   auto& group = mediaGroups[MediaGroupIdHardDisk];
-//        group.media.push_back({0, "DH0", 0, &group});
-//        group.media.push_back({1, "DH1", 0, &group});
-//        group.selected = nullptr;
-//    }
+    {   auto& group = mediaGroups[MediaGroupIdHardDisk];
+        group.media.push_back({0, "DH0", 0, &group});
+        group.media.push_back({1, "DH1", 0, &group});
+        group.media.push_back({2, "DH2", 0, &group});
+        group.media.push_back({3, "DH3", 0, &group});
+        group.selected = nullptr;
+    }
 
     for(auto& group : mediaGroups) {
         group.expansion = nullptr;
@@ -84,10 +87,23 @@ auto Interface::prepareMedia() -> void {
 }
 
 auto Interface::prepareExpansions() -> void {
-
     expansions.push_back( { ExpansionIdNone, "Empty", Expansion::Type::Empty, nullptr, nullptr } );
-    //expansions.push_back( { ExpansionIdFast, "Fast", Expansion::Type::Ram, &memoryTypes[2], nullptr } );
 
+    // expansion not visible in UI
+    Expansion* hdController = new Expansion;
+    hdController->id = ExpansionIdHDController;
+    hdController->name = "HD Controller";
+    hdController->pcbs.push_back({0, "Built-In"});
+    hdController->pcbs.push_back({1, "Built-In RDB" });
+    hdController->pcbs.push_back({2, "MTec AT500"});
+    mediaGroups[MediaGroupIdHardDisk].expansion = hdController;
+
+    for (auto& group : mediaGroups) {
+        for (auto& media : group.media) {   
+            media.pcbLayout = (!media.secondary && group.expansion && group.expansion->pcbs.size())
+            ? &group.expansion->pcbs[0] : nullptr;
+        }
+    }
 }
 
 auto Interface::prepareDevices() -> void {
@@ -501,7 +517,10 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->setResampleQuality( value );
             break;
         case ModelIdDiskDrivesConnected:
-            system->setDrivesEnabled(value);
+            system->setDiskDrivesEnabled(value);
+            break;
+        case ModelIdHardDrivesConnected:
+            system->setHardDrivesEnabled(value);
             break;
         case ModelIdDiskDriveWobble:
             DiskDrive::setWobble( value );
@@ -551,7 +570,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdRegion:                         return (int)system->ntsc;
         case ModelIdAudioFilter:                    return system->paula.filterMode;
         case ModelIdSampleFetch:                    return system->paula.getResampleQuality();
-        case ModelIdDiskDrivesConnected:            return system->getDrivesEnabled();
+        case ModelIdDiskDrivesConnected:            return system->getDiskDrivesEnabled();
+        case ModelIdHardDrivesConnected:            return system->getHardDrivesEnabled();
         case ModelIdDiskDriveWobble:                return (int)DiskDrive::wobble;
         case ModelIdDiskDriveSpeed:                 return (int)DiskDrive::rpm;
         case ModelIdDriveStepperDelay:              return (int)(DiskDrive::stepperSeekTimeBase);
@@ -570,9 +590,57 @@ auto Interface::getModelValue(unsigned modelId) -> int {
     return 0;
 }
 
+auto Interface::insertHardDisk(Media* media, uint8_t* data, uint64_t size) -> void {
+    if (!media || !media->group->isHardDisk())
+        return;
+
+    system->hardDrives[media->id].attach(data, size);
+}
+
+auto Interface::ejectHardDisk(Media* media) -> void {
+    if (!media || !media->group->isHardDisk())
+        return;
+
+    system->hardDrives[media->id].detach();
+}
+
+auto Interface::writeProtectHardDisk(Media* media, bool state) -> void {
+    if (!media || !media->group->isHardDisk())
+        return;
+
+    system->hardDrives[media->id].writeProtect(state);
+}
+
+auto Interface::isWriteProtectedHardDisk(Media* media) -> bool {
+    if (!media || !media->group->isHardDisk())
+        return false;
+
+    return system->hardDrives[media->id].writeProtected;
+}
+
+auto Interface::getHardDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing> {
+    if (!media || !media->group->isHardDisk())
+        return {};
+
+    return system->hardDrives[media->id].getListing();
+}
+
+auto Interface::getHardDiskPreview(uint8_t* data, uint64_t size, Media* media) -> std::vector<Listing> {
+    return HardDrive::getPreview(system, media, data, size);
+}
+
+auto Interface::buildHardDisk(const std::string& name, std::vector<Item>& files) -> Data {
+    return HardDiskStructure::buildHardDisk(system, name, files);
+}
+
 auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {
-    if (group && group->isDisk())
-        return ModelIdDiskDrivesConnected;
+    if (group) {
+        if (group->isDisk())
+            return ModelIdDiskDrivesConnected;
+
+        if (group->isHardDisk())
+            return ModelIdHardDrivesConnected;
+    }
 
     return ~0;
 }
@@ -623,28 +691,6 @@ auto Interface::getDiskListing(Media* media) -> std::vector<Emulator::Interface:
 auto Interface::getDiskPreview(uint8_t* data, unsigned size, Media* media) -> std::vector<Emulator::Interface::Listing> {
     return DiskStructure::getPreview( system, media, data, size);
 }
-
-
-//auto Interface::createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name) -> void {
-//    unsigned bufferLength = 10u * 1024u * 1024u;
-//    if (size > (512u * 1024u * 1024u) ) {
-//        bufferLength = 50u * 1024u * 1024u;
-//    }
-//    uint8_t* data = new uint8_t[bufferLength];
-//
-//    for ( long long offset = 0; offset < size; offset += bufferLength ) {
-//        memset(data, 0, bufferLength);
-//
-//        unsigned length = bufferLength;
-//        if ((offset + bufferLength) > size) {
-//            length = size - offset;
-//        }
-//
-//        onCreate(data, length, offset);
-//    }
-//
-//    delete[] data;
-//}
 
 auto Interface::savestate(unsigned& size) -> uint8_t* {
     return system->serialize( size );

@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace Emulator {
 
     struct CRC32 {

@@ -10,6 +10,7 @@
 #include "../video/denise.h"
 #include "../paula/paula.h"
 #include "../drive/diskDrive.h"
+#include "../drive/hardDrive.h"
 #include "rtc.h"
 #include "../../tools/crop.h"
 
@@ -32,6 +33,7 @@ struct System {
     Paula paula;
     RTC rtc;
     DiskDrive diskDrives[4];
+    HardDrive hardDrives[4];
     bool ntsc;
     bool firmwareChanged;
     bool fakeECSDenise = false;
@@ -116,8 +118,10 @@ struct System {
     auto setFastmem(unsigned value) -> void;
     auto getFastmem() -> unsigned;
 
-    auto setDrivesEnabled( uint8_t count ) -> void;
-    auto getDrivesEnabled() -> uint8_t;
+    auto setDiskDrivesEnabled( uint8_t count ) -> void;
+    auto getDiskDrivesEnabled() -> uint8_t;
+    auto setHardDrivesEnabled(uint8_t count) -> void;
+    auto getHardDrivesEnabled() -> uint8_t;
 
     auto hintObserverMotorChange(bool state) -> void;
     auto observeInputFetches() -> void;

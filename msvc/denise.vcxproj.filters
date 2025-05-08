@@ -323,6 +323,9 @@
     <Filter Include="deps\lha">
       <UniqueIdentifier>{f6db1a09-0ded-43f8-9867-93df390aeb2c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="emulation\libami\expansionPort">
+      <UniqueIdentifier>{7068e9f6-17a5-4047-9e9c-25bd5e6d4b01}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1092,6 +1095,42 @@
     </ClInclude>
     <ClInclude Include="..\guikit\tools\decode\lha.h">
       <Filter>guikit\tools\decode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\expansionPort\expansionPort.h">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\expansionPort\fastMem.h">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\expansionPort\mtecAT500.h">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\system\firmware.h">
+      <Filter>emulation\libami\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\hardDrive.h">
+      <Filter>emulation\libami\drive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\expansionPort\hdBase.h">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\expansionPort\hdController.h">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\filesystemExt.h">
+      <Filter>emulation\libami\drive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\expansionPort\builtinHD.h">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\hardDiskStructure.h">
+      <Filter>emulation\libami\drive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\error.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\hunk.h">
+      <Filter>emulation\libami\drive</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2236,6 +2275,39 @@
       <Filter>guikit\tools\decode</Filter>
     </ClCompile>
     <ClCompile Include="..\emulation\libami\drive\exe.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\expansionPort\expansionPort.cpp">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\expansionPort\fastMem.cpp">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\expansionPort\mtecAT500.cpp">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\system\firmware.cpp">
+      <Filter>emulation\libami\system</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\hardDrive.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\expansionPort\hdController.cpp">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\filesystemExt.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\expansionPort\builtinHD.cpp">
+      <Filter>emulation\libami\expansionPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\hardDiskStructure.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\error.cpp">
+      <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\hunk.cpp">
       <Filter>emulation\libami\drive</Filter>
     </ClCompile>
   </ItemGroup>

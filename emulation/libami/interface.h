@@ -32,14 +32,17 @@ struct Interface : Emulator::Interface  {
         ModelIdFakeECSDenise,
         ModelIdDongle,
         ModelIdOverclock,
+        ModelIdHardDrivesConnected,
     };
 
     enum MediaGroupId {
-        MediaGroupIdDisk = 0
+        MediaGroupIdDisk,
+        MediaGroupIdHardDisk
     };
 
     enum ExpansionId {
-        ExpansionIdNone = 0
+        ExpansionIdNone,
+        ExpansionIdHDController,
     };
 
     enum FirmwareId {
@@ -66,6 +69,14 @@ struct Interface : Emulator::Interface  {
     auto getSubRegion() -> SubRegion;
     auto setMonitorFpsRatio(double ratio) -> void;
 
+    // hard drive handling
+    auto insertHardDisk(Media* media, uint8_t* data, uint64_t size) -> void;
+    auto ejectHardDisk(Media* media) -> void;
+    auto writeProtectHardDisk(Media* media, bool state) -> void;
+    auto isWriteProtectedHardDisk(Media* media) -> bool;
+    auto getHardDiskListing(Media* media) -> std::vector<Listing>;
+    auto getHardDiskPreview(uint8_t* data, uint64_t size, Media* media) -> std::vector<Listing>;
+
     // disk drive handling
     auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;
     auto writeProtectDisk(Media* media, bool state) -> void;
@@ -74,7 +85,6 @@ struct Interface : Emulator::Interface  {
     auto createDiskImage(unsigned typeId, std::string name = "", bool hd = false, bool ffs = false, bool bootable = false) -> Data;
     auto getDiskListing(Media* media) -> std::vector<Emulator::Interface::Listing>;
     auto getDiskPreview(uint8_t* data, unsigned size, Media* media = nullptr) -> std::vector<Emulator::Interface::Listing>;
-
 
     //savestates
     auto checkstate(uint8_t* data, unsigned size) -> bool;
@@ -118,6 +128,7 @@ struct Interface : Emulator::Interface  {
 
     // tools
     auto buildDisk(const std::string& name, std::vector<Item>& files) -> Data;
+    auto buildHardDisk(const std::string& name, std::vector<Item>& files) -> Data;
 
 private:
     auto prepareDevices() -> void;

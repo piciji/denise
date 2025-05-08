@@ -37,8 +37,10 @@ auto DiskStructure::buildAdfFromBinaries(const std::string& name, std::vector<Em
         return true;
     };
 
+    Filesystem::Structure structure = Filesystem::Structure::OFS;
+
     while(true) {        
-        Filesystem fs(getADFCreationImageSize(), Filesystem::Structure::OFS);
+        Filesystem fs(getADFCreationImageSize(), structure);
         fs.format(!name.empty() ? name : "Volume", true);
 
         for(auto& item : files) {
@@ -97,8 +99,11 @@ auto DiskStructure::buildAdfFromBinaries(const std::string& name, std::vector<Em
         return {rawData, rawSize};
 
     tryHD:
-        if (hd)
-            break;
+        if (hd) {
+            if (structure == Filesystem::Structure::FFS)
+                break;
+            structure = Filesystem::Structure::FFS;
+        }
         
         hd = true;
     }

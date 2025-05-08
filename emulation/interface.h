@@ -52,7 +52,6 @@ struct Interface {
         AltAndShift2, AltAndShift3,
     };
     
-    //enum class CropType { Off = 0, Monitor = 1, Auto = 2, SemiAuto = 3, Free = 4 };
     enum class CropType { Off = 0, Monitor = 1, AutoRatio = 2, Auto = 3, AllSidesRatio = 4, AllSides = 5, Free = 6 };
     enum class TapeMode { Stop = 0, Play = 1, Record = 2, Forward = 3, Rewind = 4, ResetCounter = 5, Unpressed = 6 };
     enum class WarpMode { NoAudioOut = 1, NoVideoOut = 2, ReduceVideoOutput = 4, NoVideoSequencer = 8, SlowSpeed = 16 };
@@ -164,7 +163,7 @@ struct Interface {
         std::vector<Jumper> jumpers;
 		std::vector<std::string> creationIdents; 
         enum Type : unsigned { Empty = 0, Standard = 1, Ram = 2, Eprom = 4, Flash = 8, TurboCart = 16,
-            Freezer = 32, Battery = 64, RS232 = 128, Fastloader = 256 };
+            Freezer = 32, Battery = 64, RS232 = 128, Fastloader = 256, HDController = 512 };
         
         auto isEmpty() const -> bool { return typeFlags == (unsigned)Type::Empty; }
         auto isStandard() const -> bool { return typeFlags & Type::Standard; }
@@ -176,6 +175,7 @@ struct Interface {
         auto isFreezer() const -> bool { return typeFlags & Type::Freezer; }
         auto isRS232() const -> bool { return typeFlags & Type::RS232; }
         auto isFastloader() const -> bool { return typeFlags & Type::Fastloader; }
+        auto isHDController() const -> bool { return typeFlags & Type::HDController; }
     };
     std::vector<Expansion> expansions;
     
@@ -496,9 +496,12 @@ struct Interface {
     virtual auto hideDrive(Media* media) -> void { }
     
     // hard disk handling
-    virtual auto insertHardDisk(Media* media, unsigned size) -> void {} //uses read and write callbacks above because of big data
+    virtual auto insertHardDisk(Media* media, uint8_t* data, uint64_t size) -> void {} //uses read and write callbacks above because of big data
+    virtual auto writeProtectHardDisk(Media* media, bool state) -> void {}
+    virtual auto isWriteProtectedHardDisk(Media* media) -> bool { return false; }    
 	virtual auto ejectHardDisk(Media* media) -> void {}
-    virtual auto createHardDisk(std::function<void (uint8_t* buffer, unsigned length, unsigned offset)> onCreate, unsigned size, std::string name = "") -> void {}
+    virtual auto getHardDiskListing(Media* media) -> std::vector<Listing> { return {}; }
+    virtual auto getHardDiskPreview(uint8_t* data, uint64_t size, Media* media) -> std::vector<Listing> { return {}; }
     // tape handling
     virtual auto insertTape(Media* media, uint8_t* data, unsigned size) -> void {}    
     virtual auto writeProtectTape(Media* media, bool state) -> void {}
@@ -632,13 +635,13 @@ struct Interface {
     virtual auto setMonitorFpsRatio(double ratio) -> void {}
     
 	//shortcuts
-	auto insertMedium(Media* media, uint8_t* data, unsigned size) -> void {
+	auto insertMedium(Media* media, uint8_t* data, uint64_t size) -> void {
 		switch(media->group->type) {
-			case MediaGroup::Type::Disk: insertDisk(media, data, size); break;
-			case MediaGroup::Type::Tape: insertTape(media, data, size); break;
-			case MediaGroup::Type::Expansion: insertExpansionImage(media, data, size); break;
-			case MediaGroup::Type::Program: insertProgram(media, data, size); break;
-			case MediaGroup::Type::HardDisk: insertHardDisk(media, size); break;
+			case MediaGroup::Type::Disk: insertDisk(media, data, (unsigned)size); break;
+			case MediaGroup::Type::Tape: insertTape(media, data, (unsigned)size); break;
+			case MediaGroup::Type::Expansion: insertExpansionImage(media, data, (unsigned)size); break;
+			case MediaGroup::Type::Program: insertProgram(media, data, (unsigned)size); break;
+			case MediaGroup::Type::HardDisk: insertHardDisk(media, data, size); break;
 		}
 	}
 	
@@ -648,7 +651,7 @@ struct Interface {
 			case MediaGroup::Type::Tape: writeProtectTape(media, state); break;
 			case MediaGroup::Type::Expansion: writeProtectExpansion(media, state); break;
 			case MediaGroup::Type::Program: break;
-			case MediaGroup::Type::HardDisk: break;
+			case MediaGroup::Type::HardDisk: writeProtectHardDisk(media, state); break;
 		}
 	}
 
@@ -658,7 +661,7 @@ struct Interface {
 			case MediaGroup::Type::Tape: return isWriteProtectedTape(media);
 			case MediaGroup::Type::Expansion: return isWriteProtectedExpansion(media);
 			case MediaGroup::Type::Program: break;
-			case MediaGroup::Type::HardDisk: break;
+			case MediaGroup::Type::HardDisk: return isWriteProtectedHardDisk(media);
 		}
         return false;
 	}
@@ -682,7 +685,8 @@ struct Interface {
 			case MediaGroup::Type::Program:
                 return getProgramListing( media );
 			case MediaGroup::Type::Expansion: break;
-			case MediaGroup::Type::HardDisk: break;
+			case MediaGroup::Type::HardDisk:
+                return getHardDiskListing( media );
 		}	
         return {};
     }
@@ -796,6 +800,16 @@ struct Interface {
 		
 		return nullptr;
 	}
+
+    auto getHardDiskMediaGroup() -> MediaGroup* {
+        for (auto& group : mediaGroups) {
+
+            if (group.isHardDisk())
+                return &group;
+        }
+
+        return nullptr;
+    }
 
     auto getTapeMediaGroup() -> MediaGroup* {
         for (auto& group : mediaGroups) {

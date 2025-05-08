@@ -71,7 +71,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         dim = { 2, 1, 1, 4, 3, 2, 2 };
     else
-        dim = { 1, 1, 1, 1, 1, 1 };
+        dim = { 2, 1, 1, 1, 1, 1 };
 
     memoryModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::Memory}, { 1, 1, 1 } );
     driveModelLayout.build( tabWindow, emulator, {Emulator::Interface::Model::Purpose::DriveSettings}, dim );

@@ -500,8 +500,17 @@ auto States::updateModels() -> void {
             emuView->systemLayout->memoryModelLayout.updateWidgets();
 
         } else if (emuView->mediaLayout) {
-            int value = emulator->getModelValue(emulator->getModelIdOfEnabledDrives(emulator->getDiskMediaGroup()));
-            emuView->mediaLayout->updateVisibility( emulator->getDiskMediaGroup(), value );
+            auto diskGroup = emulator->getDiskMediaGroup();
+            if (diskGroup) {
+                int value = emulator->getModelValue(emulator->getModelIdOfEnabledDrives(diskGroup));
+                emuView->mediaLayout->updateVisibility(diskGroup, value);
+            }
+
+            auto hardDiskGroup = emulator->getHardDiskMediaGroup();
+            if (hardDiskGroup) {
+                int value = emulator->getModelValue(emulator->getModelIdOfEnabledDrives(hardDiskGroup));
+                emuView->mediaLayout->updateVisibility(hardDiskGroup, value);
+            }
         }
 
         if (emuView->audioLayout)

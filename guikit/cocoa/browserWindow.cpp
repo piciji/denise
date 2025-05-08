@@ -85,7 +85,7 @@
                 listView->reset();
             
             if (informInsertion) {
-                auto listings = state.onSelectionChange( "" );
+                auto listings = state.onSelectionChange( path, true );
                 
                 if (listView) {
                     listView->resetFirstRowColor();
@@ -106,7 +106,7 @@
                     }
                 }
             } else {
-                auto rows = state.onSelectionChange(path);
+                auto rows = state.onSelectionChange(path, false);
                 
                 if (listView) {
                     if (state.contentView.overrideFirstRowColor)

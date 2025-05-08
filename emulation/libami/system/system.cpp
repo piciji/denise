@@ -16,6 +16,7 @@ cia2(2),
 cpu(agnus),
 denise(this, agnus, input),
 diskDrives { {0, this, agnus, cia2}, {1, this, agnus, cia2}, {2, this, agnus, cia2}, {3, this, agnus, cia2} },
+hardDrives { {0, this, agnus}, {1, this, agnus}, {2, this, agnus}, {3, this, agnus} },
 paula(this, agnus, cpu, input, diskDrives[0], diskDrives[1], diskDrives[2], diskDrives[3]),
 agnus(this, cpu, denise, paula, cia1, cia2, input, rtc),
 input(this, agnus, cia1),
@@ -193,6 +194,9 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
 
     for(auto& drive : diskDrives)
         drive.power();
+
+    for (auto& drive : hardDrives)
+        drive.power(resetInstruction || softReset);
 
     if (resetInstruction || softReset) {
         agnus.resetFps();
@@ -522,14 +526,27 @@ auto System::getFastmem() -> unsigned {
     return 0;
 }
 
-auto System::setDrivesEnabled( uint8_t count ) -> void {
+auto System::setDiskDrivesEnabled( uint8_t count ) -> void {
     for( auto& drive : diskDrives )
         drive.connected = drive.number < count;
 }
 
-auto System::getDrivesEnabled() -> uint8_t {
+auto System::getDiskDrivesEnabled() -> uint8_t {
     uint8_t out = 0;
     for( auto& drive : diskDrives )
+        if (drive.connected) out++;
+
+    return out;
+}
+
+auto System::setHardDrivesEnabled(uint8_t count) -> void {
+    for (auto& drive : hardDrives)
+        drive.connected = drive.number < count;
+}
+
+auto System::getHardDrivesEnabled() -> uint8_t {
+    uint8_t out = 0;
+    for (auto& drive : hardDrives)
         if (drive.connected) out++;
 
     return out;

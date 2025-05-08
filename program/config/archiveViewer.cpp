@@ -74,61 +74,7 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
         std::vector<GUIKIT::File::Item>* pItems = &items;
 
         loadArchiveNative.onActivate = [this, file, pItems]() {
-            if (!dynamic_cast<LIBAMI::Interface*>(activeEmulator))
-                return;
-
-            GUIKIT::File::Item* itemSelected = nullptr;
-            auto _selected = tv.selected();
-            if (_selected)
-                itemSelected = (GUIKIT::File::Item*)_selected->userData();
-
-            std::vector<GUIKIT::File::Item>& items = *pItems;
-            std::vector<Emulator::Interface::Item> _items;
-            _items.resize(items.size());
-
-            for (auto& item : items) {
-                Emulator::Interface::Item& _item = _items[item.id];
-                _item.id = item.id;
-                _item.name = item.info.name;
-                _item.data.ptr = file->archiveData(item.id);
-                _item.data.size = file->archiveDataSize(item.id);
-                _item.isGroup = item.isDirectory;
-                _item.parent = item.parent ? &_items[item.parent->id] : nullptr;
-                _item.primary = itemSelected && !item.isDirectory && &item == itemSelected;
-
-                for (auto child : item.childs)
-                    _item.childs.push_back( &_items[child->id] );
-            }
-
-            auto fileName = file->getFileName(true, true);
-            auto result = dynamic_cast<LIBAMI::Interface*>(activeEmulator)->buildDisk(fileName, _items);
-
-            if (result.ptr) {
-                std::string _path = program->generatedFolder(activeEmulator, "disksave_folder", "disksave", true);
-                _path += fileName + ".adf";
-                
-                GUIKIT::File* newFile = filePool->get(_path);
-
-                if (!newFile->open(GUIKIT::File::Mode::Write)) {
-                    delete result.ptr;
-                    return;
-                }
-                
-                if (!newFile->write(result.ptr, result.size)) {
-                    delete result.ptr;
-                    return;
-                }
-                newFile->reset();
-                auto& itemsNew = newFile->scanArchive();
-
-                if (itemsNew.size()) {
-                    file->unload();
-                    setVisible(false);
-                    if (onCallback)
-                        onCallback(newFile, &itemsNew[0]);
-                } else
-                    newFile->unload();
-            }
+            this->buildMedia(file, *pItems);
         };
     }
 
@@ -204,11 +150,80 @@ auto ArchiveViewer::setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>&
     mtimer.setEnabled();
 }
 
+auto ArchiveViewer::buildMedia(GUIKIT::File* file, std::vector<GUIKIT::File::Item>& items) -> void {
+    if (!dynamic_cast<LIBAMI::Interface*>(activeEmulator) || !nativeGroup)
+        return;
+
+    GUIKIT::File::Item* itemSelected = nullptr;
+    auto _selected = tv.selected();
+    if (_selected)
+        itemSelected = (GUIKIT::File::Item*)_selected->userData();
+
+    std::vector<Emulator::Interface::Item> _items;
+    _items.resize(items.size());
+
+    for (auto& item : items) {
+        Emulator::Interface::Item& _item = _items[item.id];
+        _item.id = item.id;
+        _item.name = item.info.name;
+        _item.data.ptr = file->archiveData(item.id);
+        _item.data.size = file->archiveDataSize(item.id);
+        _item.isGroup = item.isDirectory;
+        _item.parent = item.parent ? &_items[item.parent->id] : nullptr;
+        _item.primary = itemSelected && !item.isDirectory && &item == itemSelected;
+
+        for (auto child : item.childs)
+            _item.childs.push_back(&_items[child->id]);
+    }
+
+    auto fileName = file->getFileName(true, true);
+
+    Emulator::Interface::Data result;
+    if (nativeGroup->isHardDisk())
+        result = dynamic_cast<LIBAMI::Interface*>(activeEmulator)->buildHardDisk(fileName, _items);
+    else
+        result = dynamic_cast<LIBAMI::Interface*>(activeEmulator)->buildDisk(fileName, _items);
+
+    if (result.ptr) {
+        std::string _path = program->generatedFolder(activeEmulator, "disksave_folder", "disksave", true);
+        if (nativeGroup->isHardDisk())
+            _path += fileName + ".hdf";
+        else
+            _path += fileName + ".adf";
+
+        GUIKIT::File* newFile = filePool->get(_path);
+
+        if (!newFile->open(GUIKIT::File::Mode::Write)) {
+            delete[] result.ptr;
+            return;
+        }
+
+        if (!newFile->write(result.ptr, result.size)) {
+            delete[] result.ptr;
+            return;
+        }
+        newFile->reset();
+        auto& itemsNew = newFile->scanArchive();
+
+        if (itemsNew.size()) {
+            file->unload();
+            setVisible(false);
+            if (onCallback)
+                onCallback(newFile, &itemsNew[0]);
+
+        } else
+            newFile->unload();        
+
+        delete[] result.ptr;
+    }
+}
+
 auto ArchiveViewer::translate() -> void {
 	setTitle( trans->getA("archive_selector") );
     loadArchiveNative.setText(trans->getA("load archive native"));
 }
 
-auto ArchiveViewer::showNativeArchive(bool state) -> void {
-    loadArchiveNative.setEnabled(state);
+auto ArchiveViewer::allowNativeArchive(Emulator::Interface::MediaGroup* group) -> void {
+    nativeGroup = group;
+    loadArchiveNative.setEnabled(group != nullptr);
 }

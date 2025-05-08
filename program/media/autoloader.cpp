@@ -346,7 +346,7 @@ auto Autoloader::loadFiles() -> void {
                 emuThread->unlock();
 		};
 
-        archiveViewer->showNativeArchive(dynamic_cast<LIBAMI::Interface*>(activeEmulator));
+        archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(activeEmulator) ? activeEmulator->getDiskMediaGroup() : nullptr);
 		archiveViewer->setView( file, items );
 	} else 
 		loadFile( file, &items[0] );
@@ -372,9 +372,6 @@ auto Autoloader::needSlotsForDragnDrop(std::vector<std::string> files) -> unsign
 
         for (auto emulator : emulators) {
             for (auto& mediaGroup : emulator->mediaGroups) {
-                if (mediaGroup.isHardDisk())
-                    continue;
-
                 for (auto& mediaSuffix : mediaGroup.suffix) {
                     if (mediaSuffix == fileSuffix) {
                         if (mediaGroup.isExpansion()) {
@@ -436,9 +433,6 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 		auto emuView = EmuConfigView::TabWindow::getView(emulator);
 
 		for (auto& mediaGroup : emulator->mediaGroups) {
-
-			if (mediaGroup.isHardDisk())
-				continue;
 
 			for (auto& mediaSuffix : mediaGroup.suffix) {
 

@@ -82,15 +82,26 @@
     <ClInclude Include="..\emulation\libami\drive\dms\dms.h" />
     <ClInclude Include="..\emulation\libami\drive\dms\pfile.h" />
     <ClInclude Include="..\emulation\libami\drive\filesystem.h" />
+    <ClInclude Include="..\emulation\libami\drive\filesystemExt.h" />
+    <ClInclude Include="..\emulation\libami\drive\hardDiskStructure.h" />
+    <ClInclude Include="..\emulation\libami\drive\hardDrive.h" />
+    <ClInclude Include="..\emulation\libami\drive\hunk.h" />
     <ClInclude Include="..\emulation\libami\drive\ipf\CapsAPI.h" />
     <ClInclude Include="..\emulation\libami\drive\ipf\CommonTypes.h" />
     <ClInclude Include="..\emulation\libami\drive\sectorBlock.h" />
+    <ClInclude Include="..\emulation\libami\expansionPort\builtinHD.h" />
+    <ClInclude Include="..\emulation\libami\expansionPort\expansionPort.h" />
+    <ClInclude Include="..\emulation\libami\expansionPort\fastMem.h" />
+    <ClInclude Include="..\emulation\libami\expansionPort\hdBase.h" />
+    <ClInclude Include="..\emulation\libami\expansionPort\hdController.h" />
+    <ClInclude Include="..\emulation\libami\expansionPort\mtecAT500.h" />
     <ClInclude Include="..\emulation\libami\input\controlPort\analogControl.h" />
     <ClInclude Include="..\emulation\libami\input\controlPort\controlPort.h" />
     <ClInclude Include="..\emulation\libami\input\input.h" />
     <ClInclude Include="..\emulation\libami\input\keyboard\keyboard.h" />
     <ClInclude Include="..\emulation\libami\interface.h" />
     <ClInclude Include="..\emulation\libami\paula\paula.h" />
+    <ClInclude Include="..\emulation\libami\system\firmware.h" />
     <ClInclude Include="..\emulation\libami\system\rtc.h" />
     <ClInclude Include="..\emulation\libami\system\system.h" />
     <ClInclude Include="..\emulation\libami\video\denise.h" />
@@ -178,6 +189,7 @@
     <ClInclude Include="..\emulation\tools\crop.h" />
     <ClInclude Include="..\emulation\tools\dac.h" />
     <ClInclude Include="..\emulation\tools\DLLoader.h" />
+    <ClInclude Include="..\emulation\tools\error.h" />
     <ClInclude Include="..\emulation\tools\flash040.h" />
     <ClInclude Include="..\emulation\tools\fpaq0.h" />
     <ClInclude Include="..\emulation\tools\gcr.h" />
@@ -711,6 +723,10 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\filesystemExt.cpp" />
+    <ClCompile Include="..\emulation\libami\drive\hardDiskStructure.cpp" />
+    <ClCompile Include="..\emulation\libami\drive\hardDrive.cpp" />
+    <ClCompile Include="..\emulation\libami\drive\hunk.cpp" />
     <ClCompile Include="..\emulation\libami\drive\instantDiskDrive.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -724,6 +740,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\emulation\libami\drive\sectorBlock.cpp" />
+    <ClCompile Include="..\emulation\libami\expansionPort\builtinHD.cpp" />
+    <ClCompile Include="..\emulation\libami\expansionPort\expansionPort.cpp" />
+    <ClCompile Include="..\emulation\libami\expansionPort\fastMem.cpp" />
+    <ClCompile Include="..\emulation\libami\expansionPort\hdController.cpp" />
+    <ClCompile Include="..\emulation\libami\expansionPort\mtecAT500.cpp" />
     <ClCompile Include="..\emulation\libami\input\controlPort\cd32pad.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
@@ -808,6 +829,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\system\firmware.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_ami</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\emulation\libami\system\rtc.cpp" />
     <ClCompile Include="..\emulation\libami\system\serialization.cpp">
@@ -1102,7 +1129,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\emulation\libc64\system\firmware.cpp" />
+    <ClCompile Include="..\emulation\libc64\system\firmware.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_c64</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\emulation\libc64\system\gluelogic.cpp" />
     <ClCompile Include="..\emulation\libc64\system\keyBuffer.cpp" />
     <ClCompile Include="..\emulation\libc64\system\map.cpp">
@@ -1235,6 +1267,7 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\vicII\vicII.cpp" />
     <ClCompile Include="..\emulation\tools\DLLoader.cpp" />
+    <ClCompile Include="..\emulation\tools\error.cpp" />
     <ClCompile Include="..\emulation\tools\fpaq0.cpp" />
     <ClCompile Include="..\emulation\tools\m93c86.cpp" />
     <ClCompile Include="..\emulation\tools\mx29lv640eb.cpp" />

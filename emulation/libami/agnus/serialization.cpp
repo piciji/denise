@@ -117,8 +117,8 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(diwFlipFlop);
     s.integer(womLock);
     s.integer(resetFromKeyboard);
-    s.integer(zorroBaseAdr);
     s.integer(overclock.cycles);
+    s.integer(hardDrivesBusy);
 
     if (!light) {
         auto fpsOld = fps;
@@ -127,6 +127,9 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
         s.array(mapper);
 
         if (s.mode() == Emulator::Serializer::Mode::Load) {
+            for (auto& expansionConf : expansionsConfigured)
+                expansionConf = nullptr;
+
             unsigned _chipMemMask;
             unsigned _slowMemSize;
             unsigned _fastMemSize;
@@ -199,6 +202,9 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     blitter.serialize(s);
     copper.serialize(s);
     powerSupply.serialize(s);
+
+    for (auto expansion : expansions)
+        expansion->serialize(s, light);
 }
 
 }

@@ -33,7 +33,7 @@ STDMETHODIMP FileDialogEventHandler::OnSelectionChange ( IFileDialog* pfd ) {
     std::string path = getFilePath(pfd, folderPath, curSelectedFiles);
 
     if (state && state->onSelectionChange)
-        state->onSelectionChange(path);
+        state->onSelectionChange(path, false);
 
     pBrowserWindow& p = browserWindow->p;
 
@@ -880,18 +880,6 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                         context->selectedFiles = resultFiles;
                     } else
                         context->selectedFiles = curSelectedFiles;
-
-//                    if (!_selectedPath.empty() && context->selectedFiles.size()) {
-//                        context->selectedPath = _selectedPath + "\\" + context->selectedFiles[0];
-//                        _hit = true;
-//                    }
-                } else {
-//                    if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 1024, (LPARAM)wFilePath) >= 0) {
-//                        if (!(GetFileAttributes(wFilePath) & FILE_ATTRIBUTE_DIRECTORY)) {
-//                            context->selectedPath = utf8_t(wFilePath);
-//                            _hit = true;
-//                        }
-//                    }
                 }
 
                 if (SendMessage(((OFNOTIFY*)lParam)->hdr.hwndFrom, CDM_GETFILEPATH, 1024, (LPARAM)wFilePath) >= 0) {
@@ -902,7 +890,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                 }
 
                 if (context->multi && (context->selectedFiles.size() > 1)) {
-                    auto rows = state->onSelectionChange( "" );
+                    auto rows = state->onSelectionChange(context->selectedFiles[0], true);
                     int i = 0;
                     int maxChars = context->listWidth / context->listItemWidth;
 
@@ -921,7 +909,7 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
 
                 } else if (_hit && !context->selectedPath.empty() && state && state->onSelectionChange) {
                     std::replace( context->selectedPath.begin(), context->selectedPath.end(), '\\', '/');
-                    auto rows = state->onSelectionChange( context->selectedPath );
+                    auto rows = state->onSelectionChange( context->selectedPath, false );
 
                     if (listBox) {
                         unsigned maximumWidth = 0;

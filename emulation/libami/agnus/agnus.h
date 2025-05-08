@@ -5,12 +5,13 @@
 #include "copper.h"
 #include "../../cia/new/cia.h"
 #include "../../tools/powersupply.h"
+#include "../expansionPort/fastMem.h"
+#include "../expansionPort/hdController.h"
 
 /**
  * todos:
  * AGA
  *
- * Bitplane <> Strobe, Refresh, DMAL conflicts
  * variable vsync, vblank, hsync, hblank, hcenter
  * UHRES/DUAL stuff (using two screens independantly ?)
  */
@@ -30,7 +31,8 @@ struct Agnus {
     Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_8520>& cia1, Cia<MOS_8520>& cia2, Input& input, RTC& rtc);
     ~Agnus();
 
-    enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM, MMIO_CUSTOM, MMIO_CIA, MMIO_RTC, AUTO_CONF, FAST_MEM };
+    enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM,
+        MMIO_CUSTOM, MMIO_CIA, MMIO_RTC, AUTO_CONF, FAST_MEM, EXPANSION };
 
     enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE,
             EVENT_HTOTAL, EVENT_SERIAL, EVENT_INTREQ, EVENT_FLOPPY, EVENT_CHANNELS };
@@ -69,6 +71,12 @@ struct Agnus {
     Input& input;
     Cia<MOS_8520>& cia1;
     Cia<MOS_8520>& cia2;
+
+    FastMemExpansion fastMemExpansion;
+    ExpansionPort* expansions[5];
+    ExpansionPort* expansionsConfigured[0x100];
+    bool hardDrivesBusy;
+
     uint16_t vPosLocked;
     bool hPosLocked;
     uint8_t* encryptedRom;
@@ -250,7 +258,6 @@ struct Agnus {
 
     bool womLock = false;
     uint8_t resetFromKeyboard = 0;
-    uint32_t zorroBaseAdr = 0;
 
     auto frequency() const -> unsigned;
     auto ecsAndHigher() const -> bool { return model & (Model::ECS | Model::AGA); }
@@ -280,14 +287,28 @@ struct Agnus {
     auto setFastmem(unsigned size) -> void;
     auto createChipSlowMem(unsigned sizeChip, unsigned sizeSlow) -> void;
 
-    auto readZorro(uint32_t adr) -> uint8_t;
-    auto writeZorro(uint32_t adr, uint8_t data) -> void;
-    auto getZorroSize() -> uint8_t;
+    auto readAutoConf(uint32_t addr) -> uint8_t;
+    auto writeAutoConf(uint32_t addr, uint8_t value) -> void;
+    auto writeAutoConfWord(uint32_t addr, uint16_t value) -> void;
+    auto checkHardDrives() -> void;
 
     auto readByte(uint32_t adr) -> uint8_t;
     auto writeByte(uint32_t adr, uint8_t value) -> void;
-    auto readWord(uint32_t adr) -> uint16_t;
+    auto readWord(uint32_t adr) -> uint16_t;    
     auto writeWord(uint32_t adr, uint16_t value) -> void;
+
+    auto fakeWriteByte(uint32_t adr, uint8_t value) -> void;
+    auto fakeWriteByte(uint32_t adr, uint8_t* data, unsigned len) -> void;
+    auto fakeWriteLongWord(uint32_t adr, uint32_t value) -> void;
+    auto fakeWriteWord(uint32_t adr, uint16_t value) -> void;
+    
+    auto fakeRead(uint32_t adr, uint8_t* buf, unsigned len) -> void;
+    auto fakeReadByte(uint32_t adr) -> uint8_t;
+    auto fakeReadWord(uint32_t adr) -> uint16_t;
+    auto fakeReadLongWord(uint32_t adr) -> uint32_t {
+        return (fakeReadWord(adr) << 16) | fakeReadWord(adr + 2);
+    }
+
     auto sync(unsigned cycles) -> void;
     auto dmaCycle() -> void;
     auto addWaitstatesToCPU() -> void;
@@ -431,6 +452,11 @@ struct Agnus {
     auto checkForRomEncryption() -> void;
 
     auto getSprConflictReg(uint8_t encoded) -> uint16_t;
+
+    auto isChipMem(uint32_t addr) -> bool;
+    auto isSlowMem(uint32_t addr) -> bool;
+    auto isFastMem(uint32_t addr) -> bool;
+    auto isMem(uint32_t addr) -> bool;
 };
 
 }

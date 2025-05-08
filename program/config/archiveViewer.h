@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../../guikit/api.h"
+#include "../../emulation/interface.h"
 
 struct ArchiveViewer : public GUIKIT::Window {
     GUIKIT::VerticalLayout layout;
@@ -15,6 +16,7 @@ struct ArchiveViewer : public GUIKIT::Window {
     GUIKIT::Image imgDocument;
     bool builded = false;
     bool geometryInitialized = false;
+    Emulator::Interface::MediaGroup* nativeGroup;
 
     unsigned filesSelected = 0;
 
@@ -23,7 +25,8 @@ struct ArchiveViewer : public GUIKIT::Window {
     auto build() -> void;
     auto setView(GUIKIT::File* file, std::vector<GUIKIT::File::Item>& items, bool multiSelection = false) -> void;
 	auto translate() -> void;
-    auto showNativeArchive(bool state) -> void;
+    auto allowNativeArchive(Emulator::Interface::MediaGroup* group) -> void;
+    auto buildMedia(GUIKIT::File* file, std::vector<GUIKIT::File::Item>& items) -> void;
 };
 
 extern ArchiveViewer* archiveViewer;

@@ -297,163 +297,119 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
         if (IPMode && fSetting->path.empty())
             fSetting->setPath("127.0.0.1:25232");
-					
-		if (mediaGroup->isHardDisk()) {
-
-			block->selector.open.onActivate = [this, block, mediaGroup, fSetting]() {
-				
-				std::string filePath = GUIKIT::BrowserWindow()
-                    .setTitle(trans->get("select_" + mediaGroup->name + "_image"))
-                    .setPath( fileloader->preselectPath( settings, mediaGroup->name ) )
-                    .setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(mediaGroup->name + "_image"), mediaGroup->suffix), trans->get("all_files")})
-                    .open();
-
-				if (filePath.empty())
-					return;
-
-				block->header.eject.onActivate();
-				GUIKIT::File testFile(filePath);
-                
-				savePath( mediaGroup->name, testFile.getPath() );
-
-                if (!testFile.exists() || !testFile.isSizeValid(MAX_HARDDISK_SIZE)) {
-					message->error(trans->get("file_size_error",{
-						{"%path%", filePath},
-						{"%size%", GUIKIT::File::SizeFormated(MAX_HARDDISK_SIZE)}
-					}));
-				} else if (testFile.isArchived()) {
-					message->error(trans->get("archive_none"));
-				} else if (!testFile.open(GUIKIT::File::Mode::Update)) {
-                    program->errorOpen(&testFile, message);
-				} else {
-					fSetting->setPath(filePath);
-					block->selector.edit.setText(filePath);
-				}
-				testFile.unload();
-			};
-
-			block->header.eject.onActivate = [fSetting, block]() {
-				fSetting->setPath("");
-				block->selector.edit.setText("");
-			};
-
-			block->selector.edit.setText(fSetting->path);
-
-		} else {
             
-			block->selector.open.onActivate = [this, block]() {
-                
-                fileloader->load( this->emulator, block->media );
-			};
+        block->selector.open.onActivate = [this, block]() {
+            
+            fileloader->load( this->emulator, block->media );
+        };
 
-			block->header.eject.onActivate = [this, block]() {
+        block->header.eject.onActivate = [this, block]() {
 
-                bool locked = emuThread->lock();
-			    fileloader->eject( emulator, block->media );
+            bool locked = emuThread->lock();
+            fileloader->eject( emulator, block->media );
 
-                if (locked)
-                    // nested lock when changing drive count ... so don't unlock here
-                    emuThread->unlock();
-			};
-
-			block->header.writeprotect.onToggle = [this, block, fSetting, mediaGroup](bool checked) {
-
-                emuThread->lock();
-				emulator->writeProtect(block->media, checked);
+            if (locked)
+                // nested lock when changing drive count ... so don't unlock here
                 emuThread->unlock();
-                // wp is shared between main image, save states and disk swapper.
-                // i.e. if save state changes it, it's valid for main image too (to keep it simple)
-				fSetting->setWriteProtect(checked);
-			};
-			
-			updateMediaBlock(block, fSetting);
+        };
+
+        block->header.writeprotect.onToggle = [this, block, fSetting, mediaGroup](bool checked) {
+
+            emuThread->lock();
+            emulator->writeProtect(block->media, checked);
+            emuThread->unlock();
+            // wp is shared between main image, save states and disk swapper.
+            // i.e. if save state changes it, it's valid for main image too (to keep it simple)
+            fSetting->setWriteProtect(checked);
+        };
+        
+        updateMediaBlock(block, fSetting);
+        
+        block->selector.edit.onFocus = [this, layout, block]() {
+            fileloader->resetPreview( this->emulator, true);
             
-            block->selector.edit.onFocus = [this, layout, block]() {
-                fileloader->resetPreview( this->emulator, true);
-                
-                layout->selectedBlock = block;
-                
-                if (layout->mediaGroup->selected && !block->media->secondary) {
-                    layout->mediaGroup->selected = block->media;
-                    settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
-                    block->header.inUse.setChecked();
-                }
-                
-                if ( showListing( layout ) )
-                    layout->updateListing( block );                
-            };
-
-            block->selector.edit.onChange = [block, fSetting]() {
-
-                auto group = block->media->group;
-
-                if (group->isExpansion() && group->expansion->isRS232()) {
-
-                    fSetting->setPath( block->selector.edit.text() );
-                }
-            };
+            layout->selectedBlock = block;
             
-            block->selector.edit.onDrop = [this, layout, block]( std::vector<std::string> files ) {
-                
-                drop( files[0], block );
-            };
-            
-            block->header.inUse.onActivate = [this, layout, block]() {
-                fileloader->resetPreview( this->emulator, true);
-                
+            if (layout->mediaGroup->selected && !block->media->secondary) {
                 layout->mediaGroup->selected = block->media;
-                
-                layout->selectedBlock = block;                                
-                
                 settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
-                
-                if ( showListing( layout ) )
-                    layout->updateListing( block );                
-            };
+                block->header.inUse.setChecked();
+            }
             
-            block->selector.combo.onChange = [this, layout, block]() {
+            if ( showListing( layout ) )
+                layout->updateListing( block );                
+        };
+
+        block->selector.edit.onChange = [block, fSetting]() {
+
+            auto group = block->media->group;
+
+            if (group->isExpansion() && group->expansion->isRS232()) {
+
+                fSetting->setPath( block->selector.edit.text() );
+            }
+        };
+        
+        block->selector.edit.onDrop = [this, layout, block]( std::vector<std::string> files ) {
+            
+            drop( files[0], block );
+        };
+        
+        block->header.inUse.onActivate = [this, layout, block]() {
+            fileloader->resetPreview( this->emulator, true);
+            
+            layout->mediaGroup->selected = block->media;
+            
+            layout->selectedBlock = block;                                
+            
+            settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
+            
+            if ( showListing( layout ) )
+                layout->updateListing( block );                
+        };
+        
+        block->selector.combo.onChange = [this, layout, block]() {
+            
+            int userData = block->selector.combo.userData();
+            
+            for( auto& pcb : layout->mediaGroup->expansion->pcbs ) {
                 
-                int userData = block->selector.combo.userData();
-                
-                for( auto& pcb : layout->mediaGroup->expansion->pcbs ) {
+                if (pcb.id == userData) {
                     
-                    if (pcb.id == userData) {
+                    block->media->pcbLayout = &pcb; 
+                    
+                    settings->set<unsigned>( _underscore(block->media->name) + "_pcb", pcb.id);
+                    
+                    if (activeEmulator) {
                         
-                        block->media->pcbLayout = &pcb; 
+                        if (block->media->group->name == "EasyFlash³") {
                         
-                        settings->set<unsigned>( _underscore(block->media->name) + "_pcb", pcb.id);
-                        
-                        if (activeEmulator) {
-                            
-                            if (block->media->group->name == "EasyFlash³") {
-                            
-                                if (!layout->hint) {
-                                    layout->hint = new GUIKIT::MultilineEdit;                                                                
+                            if (!layout->hint) {
+                                layout->hint = new GUIKIT::MultilineEdit;                                                                
 
-                                    layout->hint->setForegroundColor( ERROR_COLOR );
-									
-									layout->hint->setEditable( false );
+                                layout->hint->setForegroundColor( ERROR_COLOR );
+                                
+                                layout->hint->setEditable( false );
 
-                                    layout->append( *(layout->hint), {~0u, ~0u}, 0 );
+                                layout->append( *(layout->hint), {~0u, ~0u}, 0 );
 
-                                    layout->synchronizeLayout();
-                                }
-
-                                if (block->media->pcbLayout->name == "Slot 0")
-                                    layout->hint->setText( trans->get("ef3 switch to single slot") );
-                                else
-                                    layout->hint->setText( trans->get("ef3 switch to multi slot") );
+                                layout->synchronizeLayout();
                             }
-                        }                                                                                                
-                        
-                        break;
-                    }
-                }                                
-            };
 
-		    block->selector.open.setImage(&openImg);
-		    block->header.eject.setImage(&ejectImg);
-		}
+                            if (block->media->pcbLayout->name == "Slot 0")
+                                layout->hint->setText( trans->get("ef3 switch to single slot") );
+                            else
+                                layout->hint->setText( trans->get("ef3 switch to multi slot") );
+                        }
+                    }                                                                                                
+                    
+                    break;
+                }
+            }                                
+        };
+
+        block->selector.open.setImage(&openImg);
+        block->header.eject.setImage(&ejectImg);		
 
         if (mediaGroup->expansion && !block->media->secondary) {
             for (auto& jumper : mediaGroup->expansion->jumpers) {
@@ -666,14 +622,12 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
     int insertId = -1;
 
     if (mediaGroup->isHardDisk()) {
-
         try {
             size = std::stoi( hdCreatorLayout->creator.diskSize.text() );
-            if (size > 4095)
+            if (size > 4096)
                 throw "";
-            size = size * 1024u * 1024u;
         } catch (...) {
-            message->error(trans->get("invalid_input"));
+            message->error(trans->getA("invalid_input"));
             return;
         }        
         
@@ -763,20 +717,32 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
             GUIKIT::File file(filePath);
             file.open(GUIKIT::File::Mode::Write);
 
-            std::function<void (uint8_t* buffer, unsigned length, unsigned offset) > onCreate;
+            hdCreatorLayout->creator.button.setEnabled(false);
 
-            onCreate = [this, size, &file](uint8_t* buffer, unsigned length, unsigned offset) {
+            unsigned totalKb = size << 10;
+            unsigned bufLengthKB = (totalKb * 2) / 100;
+            uint8_t* buf = new uint8_t[bufLengthKB << 10];
 
-                file.write(buffer, length, offset);
+            for (unsigned offset = 0; offset < totalKb; offset += bufLengthKB) {
+                std::memset(buf, 0, bufLengthKB << 10);
 
-                unsigned posPercent = (double(offset + length) * 100.0) / (double) size;
+                if ((offset + bufLengthKB) > totalKb)
+                    bufLengthKB = totalKb - offset;
+
+                if (file.write(buf, bufLengthKB << 10, offset << 10) == 0) {
+                    message->error(trans->get("file_creation_error", {
+                        {"%path%", filePath}
+                    }));
+                    break;
+                }
+
+                unsigned posPercent = ((double)(offset + bufLengthKB) * 100.0 / (double)totalKb) + 0.5;
 
                 hdCreatorLayout->progress.bar.setPosition(posPercent);
                 hdCreatorLayout->progress.label.setText(std::to_string(posPercent) + " %");
-            };
+            }
 
-            hdCreatorLayout->creator.button.setEnabled(false);
-            emulator->createHardDisk(onCreate, size, hdCreatorLayout->creator.diskLabel.text() );
+            delete[] buf;
             hdCreatorLayout->creator.button.setEnabled();
         });
         t1.detach();
@@ -1052,7 +1018,7 @@ auto MediaLayout::translate() -> void {
     }
         
     if (diskCreatorLayout) {        
-        diskCreatorLayout->setText( trans->get("disc_creator") );
+        diskCreatorLayout->setText( trans->get("disk_creator") );
 
         diskCreatorLayout->formatName.setText(trans->get("format",{}, true));
         diskCreatorLayout->options.fastFileSystem.setText(trans->get("ffs"));
@@ -1064,10 +1030,9 @@ auto MediaLayout::translate() -> void {
     }
     
     if (hdCreatorLayout) {
-        hdCreatorLayout->setText( trans->get("hd_creator") );
+        hdCreatorLayout->setText( trans->get("harddisk_creator") );
         
-        hdCreatorLayout->creator.diskSizeName.setText( trans->get("size_in_mb", {}, true) );
-        hdCreatorLayout->creator.diskLabelName.setText( trans->get("disk label", {}, true) );
+        hdCreatorLayout->creator.diskSizeLabel.setText( trans->get("size_in_mb", {}, true) );
         hdCreatorLayout->creator.button.setText( trans->get("create") );
     }
             
@@ -1184,11 +1149,11 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     auto mediaGroup = layout->mediaGroup;
     auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
 
-    unsigned size = file->archiveDataSize(item->id);
+    uint64_t size = file->archiveDataSize(item->id);
 
     // unarchived tape files are writable which results in unpredictable filesizes
     // so they are loaded in chunks by an emulator callback
-    auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr
+    auto data = (mediaGroup->isTape() || mediaGroup->isHardDisk()) && !file->isArchived() ? nullptr
         : file->archiveData(item->id);
 
     if (!mediaGroup->isExpansion() || media->secondary) {
@@ -1200,10 +1165,15 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         emulator->writeProtect(media, fSetting->writeProtect);
         if (!mediaGroup->isProgram())
             filePool->assign( _ident(emulator, media->name), file);
+
+        if (mediaGroup->isHardDisk() && media->pcbLayout && mediaGroup->expansion->pcbs.size()) {
+            block->selector.combo.setSelection(0);
+            block->selector.combo.onChange();
+        }
     } else {        
         if (media->pcbLayout && mediaGroup->expansion->pcbs.size()) {
             block->selector.combo.setSelection(0);
-            block->selector.combo.onChange();        
+            block->selector.combo.onChange();
         }
         fileloader->updateFileSetting(fSetting, file, item);
     }
@@ -1352,16 +1322,17 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         
         layout = getMediaGroupLayout( mediaGroup );
     }
-    
-    if (mediaGroup->isHardDisk())
-        return;
 
     GUIKIT::File* file = filePool->get(filePath);
     if (!file)
         return;
 
-    if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorMediumSize( file, message );
+    if (!file->exists())
+        return program->errorMediumSize(file, message);
+    if (!mediaGroup->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
+        return program->errorMediumSize(file, message);
+    if (mediaGroup->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
+        return program->errorMediumSize(file, message);
 
     auto& items = file->scanArchive();
 
@@ -1374,7 +1345,7 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         insertImage( block, file, item );
         emuThread->unlock();
     };
-    archiveViewer->showNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator));
+    archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator) ? mediaGroup : nullptr);
     archiveViewer->setView(file, items);
 }
 
@@ -1526,7 +1497,7 @@ auto MediaLayout::loadSettings() -> void {
         if (pathBlock)
             pathBlock->edit.setText( settings->get<std::string>(settingFolderIdent, "") );
                 
-        if (mediaGroup->isDisk())
+        if (mediaGroup->isDrive())
             layout->updateVisibility(emulator->getModelValue( emulator->getModelIdOfEnabledDrives(mediaGroup) ), true );
         
         for (auto block : layout->blocks) {

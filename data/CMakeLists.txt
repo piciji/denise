@@ -247,12 +247,15 @@ set(headerSrcs ${headerSrcs}
     emulation/libami/drive/ipf/CommonTypes.h
     emulation/libami/drive/adf.cpp
     emulation/libami/drive/diskDrive.h
+    emulation/libami/drive/hardDrive.h
+    emulation/libami/drive/hardDiskStructure.h
     emulation/libami/drive/diskStructure.h
     emulation/libami/drive/dms.cpp
     emulation/libami/drive/exe.cpp
     emulation/libami/drive/ext.cpp
     emulation/libami/drive/ext2.cpp
     emulation/libami/drive/filesystem.h
+    emulation/libami/drive/filesystemExt.h
     emulation/libami/drive/instantDiskDrive.cpp
     emulation/libami/drive/ipf.cpp
     emulation/libami/drive/sectorBlock.h
@@ -276,6 +279,12 @@ set(headerSrcs ${headerSrcs}
     emulation/libami/system/serialization.cpp
     emulation/libami/system/system.h
     emulation/libami/video/denise.h
+    emulation/libami/expansionPort/expansionPort.h
+    emulation/libami/expansionPort/fastMem.h
+    emulation/libami/expansionPort/mtecAT500.h
+    emulation/libami/expansionPort/builtinHD.h
+    emulation/libami/expansionPort/hdController.h
+    emulation/libami/system/firmware.h
 
     emulation/libc64/interface.h
     emulation/libc64/disk/iec.h

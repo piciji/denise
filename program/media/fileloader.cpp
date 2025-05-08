@@ -76,7 +76,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
     fileDialogPtr->setFilters({ GUIKIT::BrowserWindow::transformFilter(trans->get(group->name + "_image"), suffix ),
                                 trans->get("all_files")});
 
-    fileDialogPtr->setOnChangeCallback( [this, emulator, media](std::string file) {
+    fileDialogPtr->setOnChangeCallback( [this, emulator, media](std::string file, bool multi) {
 
         return this->previewFile(file, emulator, media);
     } );
@@ -255,12 +255,20 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
     fileDialogPtr->setFilters({trans->get("all_files")});
 
-    fileDialogPtr->setOnChangeCallback( [this, emulator](std::string file) {
+    fileDialogPtr->setOnChangeCallback( [this, emulator](std::string file, bool multi) {
 
-        if (file.empty() && dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        if (multi && dynamic_cast<LIBAMI::Interface*>(emulator)) {
+            // amiga disk / harddisk multi selection
+            auto extension = GUIKIT::String::getExtension(file, "exe");
+            auto mediaGroups = emulator->getDriveMediaGroups();
             std::vector<GUIKIT::BrowserWindow::Listing> out;
-            for(auto media : emulator->getDiskMediaGroup()->media)
-                out.push_back({media.name});
+
+            for (auto mediaGroup : mediaGroups) {
+                if (GUIKIT::Vector::find(mediaGroup->suffix, extension)) {
+                    for (auto media : mediaGroup->media)
+                        out.push_back({ media.name });
+                }
+            }
             return out;
         }
 
@@ -536,7 +544,6 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
         while(1) {
             queuePreview.status &= ~2;
             GUIKIT::File file;
-            uint8_t* data;
             std::string fileName;
             std::string filePath;
             Emulator::Interface* emulator;
@@ -555,18 +562,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
             file.setReadOnly();
             auto items = file.scanArchive();
 
-            if (items.size() != 1) {
-                if (queuePreview.status & 2)
-                    continue;
-
-                queuePreview.status &= ~1;
-                queuePreview.status |= 4;
-                break;
-            }
-
-            data = file.archiveData( 0 );
-
-            if (!data) {
+            if ((file.getSize() == 0) || (items.size() != 1)) {
                 if (queuePreview.status & 2)
                     continue;
 
@@ -587,22 +583,33 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
 
                 if (mediaGroup.isDisk()) {
                     if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
-                        listings = emulator->getDiskPreview(data, file.archiveDataSize(0), media);
+                        listings = emulator->getDiskPreview(file.archiveData(0), file.archiveDataSize(0), media);
                         group = &mediaGroup;
                         break;
                     } else if (media) {
                         auto prgGroup = emulator->getPRGMediaGroup();
                         if (prgGroup && GUIKIT::Vector::find(prgGroup->suffix, extension)) {
-                            listings = emulator->getProgramPreview(data, file.archiveDataSize(0));
+                            listings = emulator->getProgramPreview(file.archiveData(0), file.archiveDataSize(0));
                             group = &mediaGroup;
                             break;
                         }
                     }
                 }
 
-                if (mediaGroup.isTape()) {
+                if (mediaGroup.isHardDisk()) {
+                    if (GUIKIT::Vector::find(mediaGroup.suffix, extension)) {
+                        Emulator::Interface::Media previewMedia;
+                        previewMedia.guid = uintptr_t(&file);
+                        previewMedia.id = media ? media->id : 0;
+                        listings = emulator->getHardDiskPreview(!file.isArchived() ? nullptr : file.archiveData(0), file.archiveDataSize(0), &previewMedia);
+                        group = &mediaGroup;
+                        break;
+                    }
+                }
+
+                if (mediaGroup.isTape()) {                    
                     if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
-                        listings = emulator->getTapePreview(data, file.archiveDataSize(0), media);
+                        listings = emulator->getTapePreview(file.archiveData(0), file.archiveDataSize(0), media);
                         group = &mediaGroup;
                         break;
                     }
@@ -610,7 +617,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
 
                 if (mediaGroup.isProgram()) {
                     if ( GUIKIT::Vector::find( mediaGroup.suffix, extension ) ) {
-                        listings = emulator->getProgramPreview(data, file.archiveDataSize(0));
+                        listings = emulator->getProgramPreview(file.archiveData(0), file.archiveDataSize(0));
                         group = &mediaGroup;
                         break;
                     }
@@ -618,7 +625,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
 
                 if (mediaGroup.isExpansion()) {
                     if (GUIKIT::Vector::find(mediaGroup.suffix, extension)) {
-                        listings = emulator->getExpansionPreview(data, file.archiveDataSize(0));
+                        listings = emulator->getExpansionPreview(file.archiveData(0), file.archiveDataSize(0));
                         group = &mediaGroup;
                         break;
                     }
@@ -707,8 +714,12 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
     settings->set<std::string>(_underscoreEx(media->group->name) + "_folder_auto", folderPath);
 
-    if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorMediumSize( file, emuView ? emuView->message : view->message ), false;
+    if (!file->exists())
+        return program->errorMediumSize(file, emuView ? emuView->message : view->message), false;
+    if (!media->group->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
+        return program->errorMediumSize(file, emuView ? emuView->message : view->message), false;
+    if (media->group->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
+        return program->errorMediumSize(file, emuView ? emuView->message : view->message), false;
 
     auto& items = file->scanArchive();
 
@@ -735,7 +746,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         }
         emuThread->unlock();
     };
-    archiveViewer->showNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator));
+    archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator) ? media->group : nullptr);
     archiveViewer->setView(file, items);
 
     return true;
@@ -836,7 +847,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     unsigned size = file->archiveDataSize(item->id);
 
-    auto data = mediaGroup->isTape() && !file->isArchived() ? nullptr : file->archiveData(item->id);
+    auto data = (mediaGroup->isTape() || mediaGroup->isHardDisk()) && !file->isArchived() ? nullptr : file->archiveData(item->id);
 
     if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
@@ -847,6 +858,9 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         emulator->writeProtect(media, fSetting->writeProtect);
         if (!mediaGroup->isProgram())
             filePool->assign(_ident(emulator, media->name), file);
+
+        if (mediaGroup->isHardDisk() && mediaGroup->expansion->pcbs.size())
+            settings->set<unsigned>(_underscore(media->name) + "_pcb", 0);
     } else {
 
         if (mediaGroup->expansion->pcbs.size())

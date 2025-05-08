@@ -1568,7 +1568,7 @@ auto BrowserWindow::setTitle(const std::string& title) -> BrowserWindow& {
     return *this;
 }
 
-auto BrowserWindow::setOnChangeCallback( std::function<std::vector<BrowserWindow::Listing> (std::string filePath)> onSelectionChange ) -> BrowserWindow& {
+auto BrowserWindow::setOnChangeCallback( std::function<std::vector<BrowserWindow::Listing> (std::string filePath, bool multi)> onSelectionChange ) -> BrowserWindow& {
     state.onSelectionChange = onSelectionChange;
     return *this;
 }
