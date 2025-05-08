@@ -4,10 +4,10 @@
 
 namespace LIBAMI {
 
-Filesystem::Filesystem(unsigned size, Structure structure, unsigned bSize) {
+Filesystem::Filesystem(uint64_t size, Structure structure, unsigned bSize) {
     this->structure = structure;
     this->bSize = bSize;
-    this->blockCount = (size + (bSize - 1)) / bSize;
+    this->blockCount = (size + (uint64_t)(bSize - 1)) / (uint64_t)bSize;
     this->rootBlock = nullptr;
 }
 
@@ -27,6 +27,13 @@ auto Filesystem::exportMedia(uint8_t* data, unsigned size) -> bool {
 
     return true;
 }
+// "importMedia", "predictType" can only be used reliably if the file system is used for
+// read only purposes like "directory listing" or is filled in one go directly after "formatting".
+
+// TODO when needed
+// When writing to already filled file systems, we need to process the header blocks for two reasons.
+// 1. "predictType" cannot reliably distinguish FFS from the rest.
+// 2. For very large harddisk images, it would simply take too long to search for a free block using "allocateEmptyBlock."
 
 auto Filesystem::importMedia(uint8_t* data, unsigned size) -> bool {
     if ((size % bSize) != 0)
@@ -95,7 +102,8 @@ auto Filesystem::predictType(unsigned ref, uint8_t* buffer) -> SectorBlock::Type
     if (type == 2 && subType == 2) return SectorBlock::Type::DIR_BLOCK;
     if (type == 2 && subType == (unsigned)-3) return SectorBlock::Type::FILE_HEADER_BLOCK;
 
-    // todo data blocks
+    // no data block detection here (wouldnt work reliable)
+    // don't use this to append files to already filled file systems
     return SectorBlock::Type::EMPTY_BLOCK;
 }
 
@@ -158,8 +166,10 @@ auto Filesystem::createBase(const std::string& name, bool isDir, uint8_t* data, 
             last->setHashChain( block->nr );
     }
 
-    if (data && !isDir)
-        writeData(block, data, size);
+    if (data && !isDir) {
+        if (!writeData(block, data, size))
+            return nullptr;
+    }
 
     return block;
 }
@@ -313,12 +323,15 @@ auto Filesystem::referenceDataBlock(SectorBlock* fhBlock, SectorBlock* dataBlock
     return false;
 }
 
-auto Filesystem::getDirectory() -> std::vector<Emulator::Interface::Listing> {
+auto Filesystem::getDirectory(bool noFilesInSubdirs) -> std::vector<Emulator::Interface::Listing> {
     std::stack<SectorBlock*> dir;
     std::vector<SectorBlock*> sanityCheck; // prevent endless iterations
     std::vector<Emulator::Interface::Listing> listing;
-    if (!rootBlock)
+    if (!rootBlock) {
         rootBlock = getBlock( getRootBlockRef() );
+        if (!rootBlock)
+            return listing;
+    }
 
     static std::vector<uint16_t> _preLabel = {'L','a','b','e','l',':',' '};
     auto label = rootBlock->getNameRaw();
@@ -334,10 +347,13 @@ auto Filesystem::getDirectory() -> std::vector<Emulator::Interface::Listing> {
 
         if (!find(sanityCheck, block)) {
             sanityCheck.push_back( block );
-            listing.push_back({block->nr, block->getNameRaw(true), getPathRaw(block)});
 
-            if (block->type == SectorBlock::Type::DIR_BLOCK)
+            if (block->type == SectorBlock::Type::DIR_BLOCK) {
+                listing.push_back({ block->nr, block->getNameRaw(true), getPathRaw(block) });
                 traverse( block, dir );
+            } else if (!noFilesInSubdirs) {
+                listing.push_back({ block->nr, block->getNameRaw(true), getPathRaw(block) });
+            }
         }
     }
     return listing;
@@ -583,10 +599,12 @@ auto Filesystem::getExtensionBlock(unsigned ref) -> SectorBlock* {
 }
 
 auto Filesystem::getHashTableBlock(unsigned ref) -> SectorBlock* {
-    if ((ref >= blockCount) || (blocks[ref]->type != SectorBlock::Type::FILE_HEADER_BLOCK && blocks[ref]->type != SectorBlock::Type::DIR_BLOCK))
+    auto block = getBlock(ref);
+
+    if (!block || (block->type != SectorBlock::Type::FILE_HEADER_BLOCK && block->type != SectorBlock::Type::DIR_BLOCK))
         return nullptr;
 
-    return blocks[ref];
+    return block;
 }
 
 auto Filesystem::getBlock(unsigned ref) -> SectorBlock* {

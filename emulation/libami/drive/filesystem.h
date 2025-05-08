@@ -16,8 +16,8 @@ struct SectorBlock;
 
 struct Filesystem {
     enum class Structure { OFS, FFS } structure;
-    Filesystem(unsigned size, Structure structure = Structure::OFS, unsigned bSize = 512);
-    ~Filesystem();
+    Filesystem(uint64_t size, Structure structure = Structure::OFS, unsigned bSize = 512);
+    virtual ~Filesystem();
 
     unsigned bSize;
     unsigned blockCount;
@@ -42,7 +42,7 @@ struct Filesystem {
     auto calculateChecksums() -> void;
     auto addBootblock() -> void;
 
-    auto getDirectory() ->  std::vector<Emulator::Interface::Listing>;
+    auto getDirectory(bool noFilesInSubdirs = false) -> std::vector<Emulator::Interface::Listing>;
     auto getPathRaw(SectorBlock* block) -> std::vector<uint16_t>;
     auto traverse( SectorBlock* from, std::stack<SectorBlock*>& result ) -> void;
 
@@ -50,7 +50,7 @@ struct Filesystem {
     auto getBitmapBlock(unsigned ref) -> SectorBlock*;
     auto getHashTableBlock(unsigned ref) -> SectorBlock*;
     auto getExtensionBlock(unsigned ref) -> SectorBlock*;
-    auto getBlock(unsigned ref) -> SectorBlock*;
+    virtual auto getBlock(unsigned ref) -> SectorBlock*;
 
     auto getRootBlockRef() -> unsigned { return blockCount >> 1; }
     auto countBitmapPointersEachExtBlock() const -> unsigned { return (bSize / 4) - 1; } // each ext bitmap block can points to this much bitmap blocks
@@ -80,8 +80,8 @@ struct Filesystem {
         return std::find(v.begin(), v.end(), element) != v.end();
     }
     template<typename T>
-    static auto combine(std::vector<T>& target, const std::vector<T>& source) -> void {
-        target.insert( target.begin(), source.begin(), source.end() );
+    static auto combine(std::vector<T>& target, const std::vector<T>& source, bool append = false) -> void {
+        target.insert( append ? target.end() : target.begin(), source.begin(), source.end());
     }
 };
 

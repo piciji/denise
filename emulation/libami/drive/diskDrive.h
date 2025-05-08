@@ -25,6 +25,7 @@ struct DiskDrive {
     auto writeProtect(bool state) -> void;
     auto power() -> void;
     auto powerOff() -> void;
+    auto attached() -> bool { return inserted; }
 
     uint8_t number;
     Agnus& agnus;
