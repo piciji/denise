@@ -159,7 +159,7 @@ auto HardDiskStructure::detectPartitions() -> void {
         partition.size = (uint64_t)partition.blocks * (uint64_t)partition.bSize;
         partition.offset = partition.cylLo * partition.heads * partition.sectors * partition.bSize;
 
-        inform("HD %i, partition %s size %llu", media->id, partition.name.c_str(), partition.size);
+        inform("HD %i, partition %s size %llu", media->id, partition.name.c_str(), (unsigned long long)partition.size);
     }
 }
 

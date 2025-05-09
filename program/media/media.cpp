@@ -714,10 +714,12 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         file.unload();        
         
         std::thread t1([this, size, filePath] {
+            hdCreatorLayout->progress.bar.setPosition(0);
+            hdCreatorLayout->progress.label.setText("0 %");
+            hdCreatorLayout->creator.button.setEnabled(false);
+            
             GUIKIT::File file(filePath);
             file.open(GUIKIT::File::Mode::Write);
-
-            hdCreatorLayout->creator.button.setEnabled(false);
 
             unsigned totalKb = size << 10;
             unsigned bufLengthKB = (totalKb * 2) / 100;

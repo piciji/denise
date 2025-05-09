@@ -28,11 +28,20 @@ auto pProgressBar::init() -> void {
 
 auto pProgressBar::setPosition(unsigned position) -> void {
     @autoreleasepool {
-        [NSAnimationContext beginGrouping];
-        [[NSAnimationContext currentContext] setDuration:0.0];
-        [(id)cocoaView setDoubleValue : (double)position ];
-        [cocoaView displayIfNeeded];
-        [NSAnimationContext endGrouping];
+        unsigned _position = position;
+        dispatch_group_t group = dispatch_group_create();
+        dispatch_group_async(group, dispatch_get_main_queue(), ^{
+            [NSAnimationContext beginGrouping];
+            [[NSAnimationContext currentContext] setDuration:0.0];
+            [(id)cocoaView setDoubleValue : (double)_position ];
+            [cocoaView setNeedsDisplay:YES];
+            [cocoaView displayIfNeeded];
+            [NSAnimationContext endGrouping];
+        });
+        
+      //  dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+
+        //});
     }
 }
     

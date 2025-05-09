@@ -172,8 +172,11 @@ auto File::read() -> uint8_t* {
 auto File::write() -> bool {
     if (!fp || !data || mode == Mode::Read)
         return false;
-    
+    #ifdef GUIKIT_WINAPI
     _fseeki64(fp, 0, SEEK_SET);
+    #else
+    fseeko(fp, 0, SEEK_SET);
+    #endif
     unsigned bytesWritten = fwrite(data, 1, fileInfo.size, fp);
     fflush( fp );
     dataChanged = true;
@@ -184,8 +187,13 @@ auto File::read(uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
     if (!fp || mode == Mode::Write )
 		return 0;
     
+    #ifdef GUIKIT_WINAPI
     if (_fseeki64(fp, offset, SEEK_SET))
 		return 0;
+    #else
+    if (fseeko(fp, offset, SEEK_SET))
+        return 0;
+    #endif
 
 	return fread(buffer, 1, length, fp);
 }
@@ -194,9 +202,13 @@ auto File::write(const uint8_t* buffer, unsigned length, unsigned offset) -> uns
     if (!fp || mode == Mode::Read)
         return 0;
 
+    #ifdef GUIKIT_WINAPI
     if (_fseeki64(fp, offset, SEEK_SET))
 		return 0;
-    
+    #else
+    if (fseeko(fp, offset, SEEK_SET))
+        return 0;
+    #endif
     auto bytesWritten = fwrite(buffer, 1, length, fp);
     fflush( fp );
     dataChanged = true;

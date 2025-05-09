@@ -4,6 +4,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
+    - harddisk
 
 language: generic
 dist: focal

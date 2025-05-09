@@ -21,6 +21,17 @@
 		9D55396E2D5A90BB0083E91B /* superCpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539562D5A8F4D0083E91B /* superCpu.cpp */; };
 		9D5539712D5A91010083E91B /* echo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539702D5A90E30083E91B /* echo.cpp */; };
 		9D5FAF2D2CF07001002B0C34 /* imageViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */; };
+		9D6404362DCDEE1C00624A00 /* hdController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D64042C2DCDEE1C00624A00 /* hdController.cpp */; };
+		9D6404372DCDEE1C00624A00 /* mtecAT500.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404302DCDEE1C00624A00 /* mtecAT500.cpp */; };
+		9D6404382DCDEE1C00624A00 /* fastMem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404332DCDEE1C00624A00 /* fastMem.cpp */; };
+		9D6404392DCDEE1C00624A00 /* expansionPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404342DCDEE1C00624A00 /* expansionPort.cpp */; };
+		9D64043A2DCDEE1C00624A00 /* builtinHD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404352DCDEE1C00624A00 /* builtinHD.cpp */; };
+		9D64043E2DCDEE3F00624A00 /* error.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D64043D2DCDEE3F00624A00 /* error.cpp */; };
+		9D6404412DCDEEF500624A00 /* firmware.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404402DCDEEF500624A00 /* firmware.cpp */; };
+		9D64044A2DCDEF2E00624A00 /* hardDiskStructure.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404432DCDEF2E00624A00 /* hardDiskStructure.cpp */; };
+		9D64044B2DCDEF2E00624A00 /* filesystemExt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404452DCDEF2E00624A00 /* filesystemExt.cpp */; };
+		9D64044C2DCDEF2E00624A00 /* hardDrive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404472DCDEF2E00624A00 /* hardDrive.cpp */; };
+		9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404482DCDEF2E00624A00 /* hunk.cpp */; };
 		9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FA9532CB3DF78006905BE /* Cocoa.framework */; };
 		9D8FAAF72CB3F6EF006905BE /* cmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA702CB3F6EF006905BE /* cmd.cpp */; };
 		9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA722CB3F6EF006905BE /* program.cpp */; };
@@ -226,6 +237,30 @@
 		9D5539702D5A90E30083E91B /* echo.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = echo.cpp; sourceTree = "<group>"; };
 		9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = imageViewer.cpp; sourceTree = "<group>"; };
 		9D5FAF2C2CF07000002B0C34 /* imageViewer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = imageViewer.h; sourceTree = "<group>"; };
+		9D64042B2DCDEE1C00624A00 /* hdBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hdBase.h; sourceTree = "<group>"; };
+		9D64042C2DCDEE1C00624A00 /* hdController.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hdController.cpp; sourceTree = "<group>"; };
+		9D64042D2DCDEE1C00624A00 /* builtinHD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = builtinHD.h; sourceTree = "<group>"; };
+		9D64042E2DCDEE1C00624A00 /* mtecAT500.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mtecAT500.h; sourceTree = "<group>"; };
+		9D64042F2DCDEE1C00624A00 /* fastMem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fastMem.h; sourceTree = "<group>"; };
+		9D6404302DCDEE1C00624A00 /* mtecAT500.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mtecAT500.cpp; sourceTree = "<group>"; };
+		9D6404312DCDEE1C00624A00 /* hdController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hdController.h; sourceTree = "<group>"; };
+		9D6404322DCDEE1C00624A00 /* expansionPort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = expansionPort.h; sourceTree = "<group>"; };
+		9D6404332DCDEE1C00624A00 /* fastMem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fastMem.cpp; sourceTree = "<group>"; };
+		9D6404342DCDEE1C00624A00 /* expansionPort.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = expansionPort.cpp; sourceTree = "<group>"; };
+		9D6404352DCDEE1C00624A00 /* builtinHD.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = builtinHD.cpp; sourceTree = "<group>"; };
+		9D64043B2DCDEE3F00624A00 /* error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = error.h; sourceTree = "<group>"; };
+		9D64043C2DCDEE3F00624A00 /* string.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = string.h; sourceTree = "<group>"; };
+		9D64043D2DCDEE3F00624A00 /* error.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = error.cpp; sourceTree = "<group>"; };
+		9D64043F2DCDEEF500624A00 /* firmware.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = firmware.h; sourceTree = "<group>"; };
+		9D6404402DCDEEF500624A00 /* firmware.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = firmware.cpp; sourceTree = "<group>"; };
+		9D6404422DCDEF2E00624A00 /* hardDiskStructure.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hardDiskStructure.h; sourceTree = "<group>"; };
+		9D6404432DCDEF2E00624A00 /* hardDiskStructure.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hardDiskStructure.cpp; sourceTree = "<group>"; };
+		9D6404442DCDEF2E00624A00 /* filesystemExt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = filesystemExt.h; sourceTree = "<group>"; };
+		9D6404452DCDEF2E00624A00 /* filesystemExt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = filesystemExt.cpp; sourceTree = "<group>"; };
+		9D6404462DCDEF2E00624A00 /* hunk.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hunk.h; sourceTree = "<group>"; };
+		9D6404472DCDEF2E00624A00 /* hardDrive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hardDrive.cpp; sourceTree = "<group>"; };
+		9D6404482DCDEF2E00624A00 /* hunk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hunk.cpp; sourceTree = "<group>"; };
+		9D6404492DCDEF2E00624A00 /* hardDrive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hardDrive.h; sourceTree = "<group>"; };
 		9D8FA9322CB3D7A7006905BE /* denise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = denise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D8FA9532CB3DF78006905BE /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		9D8FAA702CB3F6EF006905BE /* cmd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cmd.cpp; sourceTree = "<group>"; };
@@ -464,7 +499,6 @@
 		9D8FACAE2CB40DF6006905BE /* macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = macros.h; sourceTree = "<group>"; };
 		9D8FACAF2CB40DF6006905BE /* rand.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rand.h; sourceTree = "<group>"; };
 		9D8FACB02CB40DF6006905BE /* gcr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gcr.h; sourceTree = "<group>"; };
-		9D8FACB12CB40DF6006905BE /* quadratureEncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = quadratureEncoder.h; sourceTree = "<group>"; };
 		9D8FACB22CB40DF6006905BE /* m93c86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = m93c86.h; sourceTree = "<group>"; };
 		9D8FACB32CB40DF6006905BE /* flash040.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = flash040.h; sourceTree = "<group>"; };
 		9D8FACB42CB40DF6006905BE /* listing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = listing.h; sourceTree = "<group>"; };
@@ -909,6 +943,24 @@
 				9D55396A2D5A902D0083E91B /* instructions.cpp */,
 			);
 			path = 65C02;
+			sourceTree = "<group>";
+		};
+		9D64042A2DCDEE1C00624A00 /* expansionPort */ = {
+			isa = PBXGroup;
+			children = (
+				9D64042B2DCDEE1C00624A00 /* hdBase.h */,
+				9D64042C2DCDEE1C00624A00 /* hdController.cpp */,
+				9D64042D2DCDEE1C00624A00 /* builtinHD.h */,
+				9D64042E2DCDEE1C00624A00 /* mtecAT500.h */,
+				9D64042F2DCDEE1C00624A00 /* fastMem.h */,
+				9D6404302DCDEE1C00624A00 /* mtecAT500.cpp */,
+				9D6404312DCDEE1C00624A00 /* hdController.h */,
+				9D6404322DCDEE1C00624A00 /* expansionPort.h */,
+				9D6404332DCDEE1C00624A00 /* fastMem.cpp */,
+				9D6404342DCDEE1C00624A00 /* expansionPort.cpp */,
+				9D6404352DCDEE1C00624A00 /* builtinHD.cpp */,
+			);
+			path = expansionPort;
 			sourceTree = "<group>";
 		};
 		9D8FA9292CB3D7A7006905BE = {
@@ -1474,6 +1526,9 @@
 		9D8FAC9B2CB40DF6006905BE /* tools */ = {
 			isa = PBXGroup;
 			children = (
+				9D64043D2DCDEE3F00624A00 /* error.cpp */,
+				9D64043B2DCDEE3F00624A00 /* error.h */,
+				9D64043C2DCDEE3F00624A00 /* string.h */,
 				9D8FAC9C2CB40DF6006905BE /* memchangetracker.h */,
 				9D8FAC9D2CB40DF6006905BE /* pia.h */,
 				9D8FAC9E2CB40DF6006905BE /* dac.h */,
@@ -1495,7 +1550,6 @@
 				9D8FACAE2CB40DF6006905BE /* macros.h */,
 				9D8FACAF2CB40DF6006905BE /* rand.h */,
 				9D8FACB02CB40DF6006905BE /* gcr.h */,
-				9D8FACB12CB40DF6006905BE /* quadratureEncoder.h */,
 				9D8FACB22CB40DF6006905BE /* m93c86.h */,
 				9D8FACB32CB40DF6006905BE /* flash040.h */,
 				9D8FACB42CB40DF6006905BE /* listing.h */,
@@ -1513,6 +1567,7 @@
 		9D8FACBC2CB40DF6006905BE /* libami */ = {
 			isa = PBXGroup;
 			children = (
+				9D64042A2DCDEE1C00624A00 /* expansionPort */,
 				9D8FACBD2CB40DF6006905BE /* video */,
 				9D8FACC02CB40DF6006905BE /* cpu */,
 				9D8FACCE2CB40DF6006905BE /* input */,
@@ -1605,6 +1660,8 @@
 		9D8FACDC2CB40DF6006905BE /* system */ = {
 			isa = PBXGroup;
 			children = (
+				9D6404402DCDEEF500624A00 /* firmware.cpp */,
+				9D64043F2DCDEEF500624A00 /* firmware.h */,
 				9D8FACDD2CB40DF6006905BE /* dongle.cpp */,
 				9D8FACDE2CB40DF6006905BE /* rtc.cpp */,
 				9D8FACDF2CB40DF6006905BE /* serialization.cpp */,
@@ -1658,6 +1715,14 @@
 		9D8FAD002CB40DF7006905BE /* drive */ = {
 			isa = PBXGroup;
 			children = (
+				9D6404452DCDEF2E00624A00 /* filesystemExt.cpp */,
+				9D6404442DCDEF2E00624A00 /* filesystemExt.h */,
+				9D6404432DCDEF2E00624A00 /* hardDiskStructure.cpp */,
+				9D6404422DCDEF2E00624A00 /* hardDiskStructure.h */,
+				9D6404472DCDEF2E00624A00 /* hardDrive.cpp */,
+				9D6404492DCDEF2E00624A00 /* hardDrive.h */,
+				9D6404482DCDEF2E00624A00 /* hunk.cpp */,
+				9D6404462DCDEF2E00624A00 /* hunk.h */,
 				9D8FAD012CB40DF7006905BE /* dms.cpp */,
 				9D8FAD022CB40DF7006905BE /* diskStructure.h */,
 				9D8FAD032CB40DF7006905BE /* filesystem.h */,
@@ -2384,9 +2449,11 @@
 				9DF694972CBA75460095D273 /* PpContext.cpp in Sources */,
 				9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */,
 				9D8FAE012CB40DF8006905BE /* m68000.cpp in Sources */,
+				9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */,
 				9D8FAB1C2CB3F6F0006905BE /* states.cpp in Sources */,
 				9D8FAE742CB40DF9006905BE /* drive.cpp in Sources */,
 				9DF694552CBA74350095D273 /* SpvBuilder.cpp in Sources */,
+				9D64044C2DCDEF2E00624A00 /* hardDrive.cpp in Sources */,
 				9D8FAAFF2CB3F6EF006905BE /* palette.cpp in Sources */,
 				9DF6947B2CBA74FF0095D273 /* reflection.cpp in Sources */,
 				9D8FAB112CB3F6EF006905BE /* cosine.cpp in Sources */,
@@ -2395,6 +2462,7 @@
 				9D8FAE582CB40DF9006905BE /* traps.cpp in Sources */,
 				9DF7CF502D96E1D400CECCF1 /* lha.cpp in Sources */,
 				9D8FAE172CB40DF8006905BE /* copper.cpp in Sources */,
+				9D6404412DCDEEF500624A00 /* firmware.cpp in Sources */,
 				9D8FAE112CB40DF8006905BE /* interface.cpp in Sources */,
 				9DF7CF842D96E29800CECCF1 /* pm2_decoder.cpp in Sources */,
 				9D8FAE592CB40DF9006905BE /* firmware.cpp in Sources */,
@@ -2430,6 +2498,7 @@
 				9D8FADF82CB40DF8006905BE /* socket.cpp in Sources */,
 				9DF6945D2CBA74820095D273 /* Link.cpp in Sources */,
 				9DF694A12CBA759A0095D273 /* spirv_cfg.cpp in Sources */,
+				9D6404372DCDEE1C00624A00 /* mtecAT500.cpp in Sources */,
 				9D8FAE422CB40DF9006905BE /* geoRam.cpp in Sources */,
 				9D8FAC7D2CB40C9D006905BE /* spirvReflection.cpp in Sources */,
 				9D8FADF92CB40DF8006905BE /* DLLoader.cpp in Sources */,
@@ -2447,6 +2516,7 @@
 				9D8FAE9B2CB40DFA006905BE /* m6526.cpp in Sources */,
 				9D8FAE192CB40DF8006905BE /* blitter.cpp in Sources */,
 				9D8FAE612CB40DF9006905BE /* clipboard.cpp in Sources */,
+				9D64044B2DCDEF2E00624A00 /* filesystemExt.cpp in Sources */,
 				9DF694A22CBA759A0095D273 /* spirv_glsl.cpp in Sources */,
 				9D8FAB172CB3F6EF006905BE /* drive.cpp in Sources */,
 				9D8FAAFC2CB3F6EF006905BE /* manager.cpp in Sources */,
@@ -2469,6 +2539,7 @@
 				9D8FAE402CB40DF9006905BE /* freezer.cpp in Sources */,
 				9D8FAE832CB40DF9006905BE /* vicIIFast.cpp in Sources */,
 				9DF694962CBA75460095D273 /* PpTokens.cpp in Sources */,
+				9D64043A2DCDEE1C00624A00 /* builtinHD.cpp in Sources */,
 				9D8FAE792CB40DF9006905BE /* structure.cpp in Sources */,
 				9DF6948B2CBA74FF0095D273 /* PoolAlloc.cpp in Sources */,
 				9D8FAB2A2CB3F6F0006905BE /* config.cpp in Sources */,
@@ -2488,6 +2559,7 @@
 				9D8FAE442CB40DF9006905BE /* easyFlash.cpp in Sources */,
 				9D8FAE6D2CB40DF9006905BE /* via.cpp in Sources */,
 				9D8FAE5A2CB40DF9006905BE /* keyBuffer.cpp in Sources */,
+				9D6404392DCDEE1C00624A00 /* expansionPort.cpp in Sources */,
 				9D8FAB1A2CB3F6EF006905BE /* reverb.cpp in Sources */,
 				9D8FAE602CB40DF9006905BE /* system.cpp in Sources */,
 				9D8FAB042CB3F6EF006905BE /* config.cpp in Sources */,
@@ -2500,7 +2572,9 @@
 				9DF694892CBA74FF0095D273 /* glslang_tab.cpp in Sources */,
 				9D8FAB1F2CB3F6F0006905BE /* view.cpp in Sources */,
 				9DF7CF7D2D96E29800CECCF1 /* lh6_decoder.cpp in Sources */,
+				9D6404362DCDEE1C00624A00 /* hdController.cpp in Sources */,
 				9DF694862CBA74FF0095D273 /* ShaderLang.cpp in Sources */,
+				9D64044A2DCDEF2E00624A00 /* hardDiskStructure.cpp in Sources */,
 				9D8FAB2B2CB3F6F0006905BE /* emuThread.cpp in Sources */,
 				9D8FADFA2CB40DF8006905BE /* m93c86.cpp in Sources */,
 				9D8FB4E22CB47539006905BE /* icons.cpp in Sources */,
@@ -2512,7 +2586,9 @@
 				9DF7CF892D96E29800CECCF1 /* crc16.cpp in Sources */,
 				9D8FAC7B2CB40C9D006905BE /* renderThread.cpp in Sources */,
 				9DF6947D2CBA74FF0095D273 /* parseConst.cpp in Sources */,
+				9D6404382DCDEE1C00624A00 /* fastMem.cpp in Sources */,
 				9D8FAAF72CB3F6EF006905BE /* cmd.cpp in Sources */,
+				9D64043E2DCDEE3F00624A00 /* error.cpp in Sources */,
 				9DF694822CBA74FF0095D273 /* SymbolTable.cpp in Sources */,
 				9D8FAE452CB40DF9006905BE /* cart.cpp in Sources */,
 				9D8FAE412CB40DF9006905BE /* fastloader.cpp in Sources */,

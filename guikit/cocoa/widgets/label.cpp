@@ -70,7 +70,19 @@ auto pLabel::setGeometry(Geometry geometry) -> void {
     
 auto pLabel::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [(id)cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
+        if([NSThread isMainThread])
+            [(id)cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
+        else {
+            std::string _text = text;
+            dispatch_group_t group = dispatch_group_create();
+            dispatch_group_async(group, dispatch_get_main_queue(), ^{
+                [(id)cocoaView setStringValue:[NSString stringWithUTF8String:_text.c_str()]];
+            });
+            
+         //   dispatch_group_notify(group, dispatch_get_main_queue(), ^{
+                
+           // });
+        }
     }
     calculatedMinimumSize.updated = false;
 }

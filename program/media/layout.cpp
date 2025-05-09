@@ -219,8 +219,11 @@ FlashCreatorLayout::FlashCreatorLayout() {
 }
 
 HdCreatorLayout::Creator::Creator() {
+    GUIKIT::LineEdit test;
+    test.setText("9999");
+    
     append(diskSizeLabel, {0u, 0u}, 10);
-    append(diskSize, {40, 0u}, 10);
+    append(diskSize, {test.minimumSize().width, 0u}, 10);
     append(button, {0u, 0u});
 
     setAlignment(0.5);
