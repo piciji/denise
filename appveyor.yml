@@ -7,7 +7,7 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - Visual Studio 2019
+  - Visual Studio 2022
   - macos-sonoma
   - macos-monterey
 #  - Ubuntu2004
@@ -36,11 +36,11 @@ environment:
 
 matrix:
   exclude:
-    - image: Visual Studio 2019
+    - image: Visual Studio 2022
       Target: linux
-    - image: Visual Studio 2019
+    - image: Visual Studio 2022
       Target: macos
-    - image: Visual Studio 2019
+    - image: Visual Studio 2022
       Target: macos-arm
     - image: Ubuntu2004
       Target: win64
@@ -70,7 +70,7 @@ for:
 -    
   matrix:
     only:
-      - image: Visual Studio 2019        
+      - image: Visual Studio 2022        
       
   init:
     - if "%Target%"=="win64" ( set mingw_archive=x86_64-13.2.0-release-posix-seh-msvcrt-rt_v11-rev1.7z)
