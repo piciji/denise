@@ -884,3 +884,4 @@ back = Back
 load archive native = Load archive natively
 prevent speeder tooltip = Speeder kernel (not VDT) is suppressed for next loading
 overclocking = Overclocking
+CPU renderer tooltip = CPU renderer is executed in a separate thread.
