@@ -695,7 +695,7 @@ template<bool _hires, bool _ham, bool _doublePlayfield, bool _display> inline au
 
         if (upd.actions) {
             if (upd.actions & BPL1_WRITTEN) {
-                if (!_hBlank) {
+                if (!_vBlank) {
                     dat1 = upd.dat1;
                     dat2 = upd.dat2;
                     dat3 = upd.dat3;
