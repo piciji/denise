@@ -54,7 +54,10 @@ struct Tar {
             try {
                 time_t ts = octalToDecimal ( std::stoll( mtime ) );
                 struct tm* _tm = localtime( &ts );
-                file.date = asctime( _tm );
+                if (_tm)
+                    file.date = asctime( _tm );
+                else
+                    file.date = "";
             } catch(...) {
                 file.date = "";
             }

@@ -62,7 +62,8 @@ auto Lha::open(FILE* fp, unsigned size) -> bool {
                 file.date = str;
 #else
                 struct tm* _tm = localtime(&ts);
-                file.date = asctime(_tm);
+                if (_tm)
+                    file.date = asctime(_tm);
 #endif            
             }
         } catch (...) {}

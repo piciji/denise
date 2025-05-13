@@ -22,7 +22,10 @@ struct Gzip {
         try {
             time_t ts = mtime;
             struct tm* _tm = localtime( &ts );
-            date = asctime( _tm );
+            if (_tm)
+                date = asctime( _tm );
+            else
+                date = "";
         } catch(...) {
             date = "";
         }

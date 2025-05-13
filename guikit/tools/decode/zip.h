@@ -72,7 +72,10 @@ struct Zip {
                 time_t tt = mktime (&ltime);
                 struct tm* ptm = localtime(&tt);
 
-                file.date = asctime( ptm );
+                if (ptm)
+                    file.date = asctime( ptm );
+                else
+                    file.date = "";
             } catch(...) {
                 file.date = "";
             }

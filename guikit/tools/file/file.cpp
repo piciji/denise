@@ -642,7 +642,7 @@ auto File::getFolderList( std::string path, const std::string& subStr ) -> std::
 
 auto File::setStats(std::string path, Info& info) -> void {
     if (path.empty()) return;
-    struct tm* _tm;
+    struct tm* _tm = nullptr;
     info.date = "";
     info.size = 0;
     info.exists = true;
@@ -663,7 +663,8 @@ auto File::setStats(std::string path, Info& info) -> void {
     _tm = localtime(&statbuf.st_mtime);
 #endif
 
-    info.date = asctime( _tm );
+    if (_tm)
+        info.date = asctime( _tm );
     String::replace(info.date, "\n", "");
     info.size = statbuf.st_size;
     info.isDir = !!(statbuf.st_mode & S_IFDIR);
