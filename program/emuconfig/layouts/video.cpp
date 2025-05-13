@@ -1879,6 +1879,7 @@ auto VideoLayout::translate() -> void {
     layBase.view.option.trAuto.setTooltip( trans->getA("Threaded Renderer Auto") );
     layBase.view.option.trOff.setText( trans->getA("Off") );
     layBase.view.mode.cpuFilterThreaded.setText( trans->get("concurrent") );
+    layBase.view.mode.cpuFilterThreaded.setTooltip(trans->getA("CPU renderer tooltip"));
     layBase.view.mode.palette.setText( trans->get("palette") );
     layBase.view.mode.spectrum.setText( trans->get("color_spectrum") );
     layBase.view.mode.reset.setTooltip( trans->get("reset") );

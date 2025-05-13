@@ -94,6 +94,9 @@ auto Cmd::printHelp() -> void {
 	options.push_back({"-v, --version", "Output program version", ""});
 	options.push_back({"-h, --help", "Output this help screen", ""});
 
+    options.push_back({ "", "Autostart file with name in image", "<image path>:name" });
+    options.push_back({ "", "Autostart file at position in image", "<image path>:position" });
+
     options.push_back({"-attach1", "Attach tape image", "<image path>"});
     options.push_back({"-attach8", "Attach disk image in Device 8", "<image path>"});
     options.push_back({"-attach9", "Attach disk image in Device 9", "<image path>"});
@@ -139,7 +142,9 @@ auto Cmd::printHelp() -> void {
 	
     for(auto& option : options) {                
         
-        if (!option.param.empty())
+        if (option.ident.empty())
+            GUIKIT::System::printToCmd( option.param + "\n");
+        else if (!option.param.empty())
             GUIKIT::System::printToCmd( option.ident + " " + option.param + "\n" );
         else
             GUIKIT::System::printToCmd( option.ident + "\n" );
