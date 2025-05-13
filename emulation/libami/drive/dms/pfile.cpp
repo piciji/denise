@@ -18,7 +18,6 @@ namespace AMI_DMS {
 #define THLEN 20
 #define TRACK_BUFFER_LEN 32000
 #define TEMP_BUFFER_LEN 32000
-#define MAX_OUT_SIZE (1760 * 512)
 
 
 #include "cdata.h"
@@ -38,7 +37,7 @@ namespace AMI_DMS {
 #define DMSFLAG_ENCRYPTED 2
 #define DMSFLAG_HD 16
 
-static USHORT Process_Track(unsigned char **, unsigned&, unsigned, unsigned char **, unsigned&, UCHAR *, UCHAR *, USHORT, int);
+static USHORT Process_Track(unsigned char **, unsigned&, unsigned, unsigned char **, unsigned&, UCHAR *, UCHAR *, USHORT, int, unsigned&);
 static USHORT Unpack_Track(UCHAR *, UCHAR *, USHORT, USHORT, UCHAR, UCHAR, USHORT, USHORT, USHORT, int);
 
 static int passfound, passretries;
@@ -88,7 +87,6 @@ USHORT Process_File(unsigned char *fi, unsigned fiSize, unsigned char **fo, unsi
 		return ERR_HCRC;
 	}
 
-    *fo = new unsigned char[MAX_OUT_SIZE];
 	geninfo = (USHORT) ((b1[10]<<8) | b1[11]);	/* General info about archive */
 	//date = (time_t) ((((ULONG)b1[12])<<24) | (((ULONG)b1[13])<<16) | (((ULONG)b1[14])<<8) | (ULONG)b1[15]);	/* date in standard UNIX/ANSI format */
 	from = (USHORT) ((b1[16]<<8) | b1[17]);		/*  Lowest track in archive. May be incorrect if archive is "appended" */
@@ -96,6 +94,9 @@ USHORT Process_File(unsigned char *fi, unsigned fiSize, unsigned char **fo, unsi
 
 	pkfsize = (ULONG) ((((ULONG)b1[21])<<16) | (((ULONG)b1[22])<<8) | (ULONG)b1[23]);	/*  Length of total packed data as in archive   */
 	unpkfsize = (ULONG) ((((ULONG)b1[25])<<16) | (((ULONG)b1[26])<<8) | (ULONG)b1[27]);	/*  Length of unpacked data. Usually 901120 bytes  */
+
+	unsigned bufferSize = unpkfsize < 901120 ? 901120 : unpkfsize;
+	*fo = new unsigned char[bufferSize];
 
 	c_version = (USHORT) ((b1[46]<<8) | b1[47]);	/*  version of DMS used to generate it  */
 	disktype = (USHORT) ((b1[50]<<8) | b1[51]);		/*  Type of compressed disk  */
@@ -117,11 +118,11 @@ USHORT Process_File(unsigned char *fi, unsigned fiSize, unsigned char **fo, unsi
 
 	if (cmd != CMD_VIEW) {
 		if (cmd == CMD_SHOWBANNER) /*  Banner is in the first track  */
-			ret = Process_Track(&fi, fiPos, fiSize, NULL, foSize, b1,b2,cmd,geninfo);
+			ret = Process_Track(&fi, fiPos, fiSize, NULL, foSize, b1, b2, cmd, geninfo, bufferSize);
 		else {
 			Init_Decrunchers();
 			for (;;) {
-				ret = Process_Track(&fi, fiPos, fiSize, fo, foSize, b1,b2,cmd,geninfo);
+				ret = Process_Track(&fi, fiPos, fiSize, fo, foSize, b1, b2, cmd, geninfo, bufferSize);
 				if (ret == DMS_FILE_END)
 					break;
 				if (ret == NO_PROBLEM)
@@ -152,7 +153,7 @@ USHORT Process_File(unsigned char *fi, unsigned fiSize, unsigned char **fo, unsi
 	return ret;
 }
 
-static USHORT Process_Track(unsigned char **fi, unsigned& fiPos, unsigned fiSize, unsigned char **fo, unsigned& foSize, UCHAR *b1, UCHAR *b2, USHORT cmd, int dmsflags){
+static USHORT Process_Track(unsigned char **fi, unsigned& fiPos, unsigned fiSize, unsigned char **fo, unsigned& foSize, UCHAR *b1, UCHAR *b2, USHORT cmd, int dmsflags, unsigned& bufferSize) {
 	USHORT hcrc, dcrc, usum, number, pklen1, pklen2, unpklen, l;
 	UCHAR cmode, flags;
 	int crcerr = 0;
@@ -214,9 +215,9 @@ static USHORT Process_Track(unsigned char **fi, unsigned& fiPos, unsigned fiSize
         unsigned outPos = number * 512 * 22 * ((dmsflags & DMSFLAG_HD) ? 2 : 1);
         unsigned char* out = *fo + outPos;
 
-        if ((outPos + unpklen) > MAX_OUT_SIZE)
-            return ERR_CANTWRITE;
-
+		if ((foSize + unpklen) > bufferSize)
+			return DMS_FILE_END;
+		
         memcpy(out, b2, unpklen);
         foSize += unpklen;
 
