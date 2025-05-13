@@ -265,6 +265,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     updateEvent<EVENT_HTOTAL>(0xe2 - hPos);
     denise.linePtr = frameBuffer;
     lineVCounter = 0;
+    vBlankOffset = 0;
     crop.reset();
 }
 
@@ -374,13 +375,15 @@ auto Agnus::updateVCounter() -> void {
     }
 
     if (beamCon & VARVBEN) {
-        if (vPos == vBStop) {
-            vBlank = false;
-            vBlankEnd = true;
-        }
         if (vPos == vBStrt) {
             vBlank = true;
             vBlankStart = true;
+            if (vPos < (ntsc ? 19 : 24))
+                vBlankOffset = (ntsc ? 19 : 24) - vPos;
+        }
+        if (vPos == vBStop) {
+            vBlank = false;
+            vBlankEnd = true;
         }
     } else {
         if (vPos == (ntsc ? 19 : 24)) {

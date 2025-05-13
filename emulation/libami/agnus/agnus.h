@@ -222,6 +222,7 @@ struct Agnus {
     uint8_t laceMode;
     uint8_t laceFrame;
     int lineVCounter;
+    int vBlankOffset;
     uint16_t* frameBuffer;
     bool hTotalChanged = false;
 

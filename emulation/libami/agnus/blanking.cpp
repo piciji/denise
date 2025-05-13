@@ -25,9 +25,14 @@ auto Agnus::startHblank() -> void {
             std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
         } else if (lineVCounter > ((laceFrame & 3) ? 600 : 300) ) {
             lineVCounter = (laceFrame & 3) ? 600 : 300;
-            std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT ); // lost sync
         }
+        
+        if (laceFrame & 3)
+            vBlankOffset <<= 1;
 
+        if (vBlankOffset < lineVCounter)
+            lineVCounter -= vBlankOffset;
+        
         int width = denise.hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
         sanitizeCrop(width, lineVCounter);
 
@@ -41,10 +46,11 @@ auto Agnus::startHblank() -> void {
 		    }
 		}
 
-        system->videoRefresh(frameBuffer + LINE_RENDER_OFFSET, width, lineVCounter,
+        system->videoRefresh(frameBuffer + (vBlankOffset * LINE_BUFFER_WIDTH) + LINE_RENDER_OFFSET, width, lineVCounter,
                              LINE_BUFFER_WIDTH - width, laceFrame | (denise.hiresFrame ? 4 : 0));
 
         lineVCounter = 0;
+        vBlankOffset = 0;
         secureRA = system->runAhead.pos == 1;
     } else if (!lineCallback.called && (lineVCounter >= lineCallback.line)) {
         denise.process();
