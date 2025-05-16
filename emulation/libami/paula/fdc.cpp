@@ -146,11 +146,18 @@ namespace LIBAMI {
             if (useInstantDriveAccess()) {
                 activeDrive->reset();
                 instantDriveAccess();
-            } else if (fdcByteMode()) {
-                activeDrive->reset();
-                agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles = FDC_BYTE );
-            } else if (diskState == DiskState::WRITE) {
-                fdcCycles = FDC_BIT;
+
+            } else {
+                if (fdcByteMode()) {
+                    activeDrive->reset();
+                    agnus.updateEvent<Agnus::EVENT_FLOPPY>( fdcCycles = FDC_BYTE );
+                } else
+                    fdcCycles = FDC_BIT;
+
+                if (!agnus.hasActiveEvent<Agnus::EVENT_FLOPPY>()) {
+                    activeDrive->reset();
+                    agnus.updateEvent<Agnus::EVENT_FLOPPY>(fdcCycles);
+                }
             }
         }
     }
@@ -184,7 +191,8 @@ namespace LIBAMI {
     }
 
     inline auto Paula::fdcByteMode() -> bool {
-        return ((diskState == DiskState::READ) || (diskState == DiskState::WRITE)) && (activeDrive->structure.type == DiskStructure::ADF);
+        return ((diskState == DiskState::READ) || (diskState == DiskState::WRITE))
+            && ((activeDrive->structure.type == DiskStructure::ADF) || (activeDrive->structure.type == DiskStructure::Unknown));
     }
 
     auto Paula::getDskBytR() -> uint16_t {
@@ -452,6 +460,7 @@ namespace LIBAMI {
             return;
 
         switch(activeDrive->structure.type) {
+            case DiskStructure::Unknown:
             case DiskStructure::ADF: {
                 uint8_t byte = 0;
 
