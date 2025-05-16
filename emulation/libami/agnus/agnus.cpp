@@ -255,8 +255,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     } else
         setEventInactive<EVENT_POWER_SUPPLY>();
 
-    if (!softReset || !resetFromKeyboard)
-        initCiaClock();
+    initCiaClock();
 
     if (model == OCS_A1000)
         denise.model = ntsc ? Denise::Model::OCS_A1000_NO_EHB : Denise::Model::OCS_A1000;
@@ -297,8 +296,6 @@ auto Agnus::waitKeyboardReset() -> void {
         resetFromKeyboard |= 0x80;
         interface->informPowerLED(false);
     }
-
-    //updateEvent<EVENT_LEAVE_EMULATION>(100000);
 
     while(true) { // CPU and most chips on hold, Denise hasn't a reset line
         dmaCycle();

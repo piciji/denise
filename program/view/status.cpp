@@ -237,7 +237,7 @@ auto StatusHandler::updatePowerLED(bool state) -> void {
     if (!hasPowerLED() || powerLED.timer.enabled())
         return;
 
-    setPowerLED();
+    powerLED.timer.setEnabled();
 }
 
 auto StatusHandler::setExpansionClick() -> void {
@@ -301,6 +301,8 @@ auto StatusHandler::togglePowerLED() -> void {
 
 auto StatusHandler::initPowerLED() -> void {
     powerLED.state = true;
+    if (powerLED.timer.interval() != 1000)
+        powerLED.timer.setInterval(1000);
     powerLED.timer.setEnabled( powerLED.enable && activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator) );
 }
 
@@ -405,6 +407,8 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     powerLED.timer.setInterval(1000);
     powerLED.timer.onFinished = [this]() {
         powerLED.timer.setEnabled(false);
+        if (powerLED.timer.interval() != 40)
+            powerLED.timer.setInterval(40);
         if (hasPowerLED())
             setPowerLED();
     };
