@@ -21,6 +21,7 @@ struct EmuThread {
     std::atomic<bool> dismissPlaceholder;
     std::atomic<bool> presentShaderError;
     std::atomic<bool> disableTraps;
+    std::atomic<bool> updatePowerLED;
 
     std::atomic<bool> ready;
     std::atomic<bool> kill;

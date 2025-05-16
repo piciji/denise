@@ -63,6 +63,7 @@ struct StatusHandler {
     auto updateDiskDriveSpace() -> void;
     auto initPowerLED() -> void;
     auto updatePowerLED(bool state) -> void;
+    auto updatePowerLED() -> void;
     auto setPowerLED() -> void;
     auto hidePowerLED() -> void;
     auto togglePowerLED() -> void;

@@ -234,6 +234,13 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
 
 auto StatusHandler::updatePowerLED(bool state) -> void {
     powerLED.state = state;
+    if (emuThread->enabled)
+        emuThread->updatePowerLED = true;
+    else
+        updatePowerLED();
+}
+
+auto StatusHandler::updatePowerLED() -> void {
     if (!hasPowerLED() || powerLED.timer.enabled())
         return;
 
@@ -409,6 +416,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
         powerLED.timer.setEnabled(false);
         if (powerLED.timer.interval() != 40)
             powerLED.timer.setInterval(40);
+
         if (hasPowerLED())
             setPowerLED();
     };

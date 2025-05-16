@@ -7,6 +7,7 @@
 #include "../input/manager.h"
 #include "../media/autoloader.h"
 #include "../media/fileloader.h"
+#include "../view/status.h"
 
 EmuThread* emuThread = nullptr;
 
@@ -23,6 +24,7 @@ EmuThread::EmuThread() {
     enabled = false;
     presentShaderError = false;
     disableTraps = false;
+    updatePowerLED = false;
 }
 
 EmuThread::~EmuThread() {
@@ -202,6 +204,11 @@ auto EmuThread::handleUIEvents() -> void {
     if (disableTraps) {
         disableTraps = false;
         fileloader->autoload(activeEmulator, autoloader->getLatestDrive(activeEmulator), 0, false, true );
+    }
+
+    if (updatePowerLED) {
+        updatePowerLED = false;
+        statusHandler->updatePowerLED();
     }
 }
 
