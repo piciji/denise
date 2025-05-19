@@ -7,6 +7,7 @@
 #include "../../tools/error.h"
 #include "../../tools/crc32.h"
 #include "../system/firmware.h"
+#include <cmath>
 
 namespace LIBAMI {
 
@@ -87,20 +88,29 @@ auto HardDiskStructure::detectGeometry() -> void {
 
 auto HardDiskStructure::predictGeometrie() -> void {
     geometry.bSize = 512;
-    unsigned numBlocks = size / (uint64_t)geometry.bSize;
-    unsigned inMB = numBlocks / (2 * 1024);
-
     geometry.sectors = 32;
-        
-    if (inMB <= 512)
-        geometry.heads = 4;
-    else if (inMB <= 1024)
-        geometry.heads = 8;
-    else if (inMB <= 2048)
-        geometry.heads = 16;
-    else { // because of 63 sectors a few kb are wasted.
-        geometry.heads = 16;
-        geometry.sectors = 63;
+
+    unsigned numBlocks = size / (uint64_t)geometry.bSize;
+    double _inMB = (double)numBlocks / (double)(2 * 1024);
+
+    float intpart;
+    float fractpart = std::modf(_inMB, &intpart);
+
+    unsigned inMB = (unsigned)intpart;
+    if (inMB <= 2048 && fractpart != 0.0) {
+        geometry.heads = 1;
+
+    } else {        
+        if (inMB <= 512)
+            geometry.heads = 4;
+        else if (inMB <= 1024)
+            geometry.heads = 8;
+        else if (inMB <= 2048)
+            geometry.heads = 16;
+        else { // because of 63 sectors a few kb are wasted.
+            geometry.heads = 16;
+            geometry.sectors = 63;
+        }
     }
 
     geometry.cylinders = (unsigned)(numBlocks / (geometry.heads * geometry.sectors));
@@ -272,6 +282,9 @@ auto HardDiskStructure::addFileDriver(uint8_t* data) -> void {
 auto HardDiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
     std::vector<Emulator::Interface::Listing> listing;
     Filesystem* fs = nullptr;
+
+    if (hasRDB)
+        listing.push_back({ 0, {'R','D','B'}, {} });
 
     for (auto& partition : partitions) {
         if (this->data == nullptr) {
