@@ -206,6 +206,8 @@ IO_OFFSET=$2C			; ULONG   offset for seeking devices
 IOSTD_SIZE=$30
 
 CMD_READ=$2
+CMD_WRITE=$3
+CMD_FORMAT=$B
 TD_MOTOR=$9
 TD_CHANGENUM=$D
 TD_CHANGESTATE=$E
@@ -1429,37 +1431,41 @@ Open:   ; ( device:a6, iob:a1, unitnum:d0, flags:d1 )
         move.b  #NT_TASK, (devunit_Tcb+LN_TYPE)(a3)
         move.b  #5, (devunit_Tcb+LN_PRI)(a3)
 		
-		; setup task
-		lea      devunit_Stack(a3), a0          ; Low end of stack
-		move.l   a0, devunit_Tcb+tc_SPLower(a3)
-		lea      MYPROCSTACKSIZE(a0), a0    ; High end of stack
-		move.l   a0, devunit_Tcb+tc_SPUpper(a3)
-		move.l   a3,-(A0)              ; argument -- unit ptr (send on stack)
-		move.l   a0, devunit_Tcb+tc_SPReg(a3)
-		lea      devunit_Tcb(a3), a0
-		move.l   a0, MP_SIGTASK(a3)
-		
-		lea      MP_MSGLIST(a3), a0
-		NEWLIST  a0 
-		
-		;   Startup the task
-		lea      devunit_Tcb(a3), a1
-		movem.l  a2-a3, -(sp)
-		
-		lea      Task_Begin(PC), a2
-		;move.l   a3, -(sp)      ; Preserve UNIT pointer
-		lea      -1,a3     ; generate address error
-              ; if task ever "returns" (we RemTask() it
-              ; to get rid of it...)
-		;MOVEQ   #0, d0
-		
-		MOVE.L  A6,-(SP)
-		MOVE.L  dev_SysLib(a6), A6
-		JSR		_LVOAddTask(A6)
-		MOVE.L  (SP)+,A6
-		
-		movem.l   (sp)+, a2-a3      ; restore UNIT pointer		
-		; task done
+        ; setup task
+        lea      devunit_Stack(a3), a0          ; Low end of stack
+        move.l   a0, devunit_Tcb+tc_SPLower(a3)
+        lea      MYPROCSTACKSIZE(a0), a0    ; High end of stack
+        move.l   a0, devunit_Tcb+tc_SPUpper(a3)
+        move.l   a3,-(A0)              ; argument -- unit ptr (send on stack)
+        move.l   a0, devunit_Tcb+tc_SPReg(a3)
+        lea      devunit_Tcb(a3), a0
+        move.l   a0, MP_SIGTASK(a3)
+        
+        lea      MP_MSGLIST(a3), a0
+        NEWLIST  a0 
+        
+        ;   Startup the task
+        lea      devunit_Tcb(a3), a1
+        ;movem.l  a2-a3, -(sp)
+        move.l  a2, -(sp)
+        move.l  a3, -(sp)
+        
+        lea      Task_Begin(PC), a2
+        ;move.l   a3, -(sp)      ; Preserve UNIT pointer
+       ; lea      -1,a3     ; generate address error
+        ; if task ever "returns" (we RemTask() it
+        ; to get rid of it...)
+        ;MOVEQ   #0, d0
+        
+        MOVE.L  A6,-(SP)
+        MOVE.L  dev_SysLib(a6), A6
+        JSR	_LVOAddTask(A6)
+        MOVE.L  (SP)+,A6
+        
+        ; movem.l   (sp)+, a2-a3      ; restore UNIT pointer		
+        move.l   (sp)+, a3      ; restore UNIT pointer		
+        move.l   (sp)+, a2
+        ; task done
 
 
 
@@ -1568,18 +1574,19 @@ BeginIO: ; ( iob: a1, device:a6 )
         movem.l d0-d7/a0-a6, -(sp)
 
         move.b  #NT_MESSAGE, LN_TYPE(a1)
+        move.l  IO_UNIT(a1), a3
 
         lea     RomCodeEnd(pc), a0
         move.l  a1, (a0)
         move.w  #OP_IOREQ, 4(a0)
 		
-		; move.w  IO_COMMAND(a1), d0
-		; cmp.w   #CMD_READ, d0
-		; beq     Clear_Quick_End
-		; cmp.w   #CMD_WRITE, d0
-        ; beq     Clear_Quick_End
-        ; cmp.w   #CMD_FORMAT, d0
-        ; beq     Clear_Quick_End
+        move.w  IO_COMMAND(a1), d0
+        cmp.w   #CMD_READ, d0
+        beq     Clear_Quick_End
+        cmp.w   #CMD_WRITE, d0
+        beq     Clear_Quick_End
+        cmp.w   #CMD_FORMAT, d0
+        beq     Clear_Quick_End
 
         btst    #IOB_QUICK, IO_FLAGS(a1)
         bne     BeginIO_End
@@ -1588,12 +1595,13 @@ BeginIO: ; ( iob: a1, device:a6 )
         move.l  dev_SysLib(a6), a6
         ; a1=message
         jsr     _LVOReplyMsg(a6)
+	bra BeginIO_End
 
 Clear_Quick_End:
-		;bset    #UNITB_INTASK, UNIT_FLAGS(a3)
-		;bclr.b  #IOB_QUICK, IO_FLAGS(a1)
-		;move.l  a3, a0
-		;LINKSYS  PutMsg, dev_SysLib(a6)
+        ;bset    #UNITB_INTASK, UNIT_FLAGS(a3)
+        bclr.b  #IOB_QUICK, IO_FLAGS(a1)
+        move.l  a3, a0
+        LINKSYS  PutMsg, dev_SysLib(a6)
 
 BeginIO_End:
         movem.l (sp)+, d0-d7/a0-a6
@@ -1905,57 +1913,68 @@ GetDosList:
         rts
 
 Task_Begin:
-    move.l  ABSEXECBASE,a6
+        move.l  ABSEXECBASE,a6
 
-    ;------ Grab the argument passed down from our parent
-    move.l  4(sp),a3           ; Unit pointer
-    move.l  devunit_Device(a3),a5  ; Point to device structure
-	
-	    ;------ Allocate a signal
-    moveq   #-1, d0      ; -1 is any signal at all
-	JSR _LVOAllocSignal(A6)
-    move.b  d0,MP_SIGBIT(a3)
-    move.b  #PA_SIGNAL,MP_FLAGS(a3) ;Make message port "live"
-    ;------ change the bit number into a mask, and save in d7
-    moveq   #0,d7   ;Clear D7
-    bset    d0,d7
+        ;------ Grab the argument passed down from our parent
+        move.l  4(sp),a3           ; Unit pointer
+        move.l  devunit_Device(a3),a5  ; Point to device structure
+                
+                ;------ Allocate a signal
+        moveq   #-1, d0      ; -1 is any signal at all
+                JSR _LVOAllocSignal(A6)
+        move.b  d0,MP_SIGBIT(a3)
+        move.b  #PA_SIGNAL,MP_FLAGS(a3) ;Make message port "live"
+        ;------ change the bit number into a mask, and save in d7
+        moveq   #0,d7   ;Clear D7
+        bset    d0,d7
 
 	bra.s   Task_StartHere
 	
 Task_Unlock:
-    and.b   #$ff&(~(UNITF_ACTIVE!UNITF_INTASK)), UNIT_FLAGS(a3)
-    ;------ main loop: wait for a new message	
+        and.b   #$ff&(~(UNITF_ACTIVE!UNITF_INTASK)), UNIT_FLAGS(a3)
+        ;------ main loop: wait for a new message	
 	
 Task_MainLoop:
-    move.l  d7,d0
-    jsr _LVOWait(A6)
+        lea     RomCodeEnd(pc), a0
+	move.w  #101, 6(a0)
+        move.l  d7,d0
+        jsr _LVOWait(A6)
 	
 Task_StartHere:
-    ;------ see if we are stopped
-    ;btst    #MDUB_STOPPED, UNIT_FLAGS(a3)
-    ;bne.s   Task_MainLoop   ; device is stopped, ignore messages
-    ;------ lock the device
-    bset    #UNITB_ACTIVE, UNIT_FLAGS(a3)
-    bne     Task_MainLoop   ; device in use (immediate command?)
+	lea     RomCodeEnd(pc), a0
+	move.w  #102, 6(a0)
+        ;------ see if we are stopped
+        ;btst    #MDUB_STOPPED, UNIT_FLAGS(a3)
+        ;bne.s   Task_MainLoop   ; device is stopped, ignore messages
+        ;------ lock the device
+        bset    #UNITB_ACTIVE, UNIT_FLAGS(a3)
+        bne     Task_MainLoop   ; device in use (immediate command?)
 
 Task_NextMessage:
-    move.l  a3,a0
+        move.l  a3,a0
 	JSR _LVOGetMsg(A6)
-    tst.l   d0
-    beq     Task_Unlock ; no message?
+        tst.l   d0
+        beq     Task_Unlock ; no message?
 
-    ;------ do this request
-    move.l  d0,a1
-    exg     a5,a6   ; put device ptr in right place
-    ;bsr     PerformIO
-	;lea     RomCodeEnd(pc), a0
-	;move.l  a1, (a0)
-	;move.w  #OP_IOREQ, 4(a0)
-	
-	
-    exg     a5,a6   ; get syslib back in a6
-	;LINKSYS ReplyMsg, dev_SysLib(a6)
+        ;------ do this request
+        move.l  d0,a1
+        exg     a5,a6   ; put device ptr in right place
 
-    bra.s   Task_NextMessage
+        lea     RomCodeEnd(pc), a0
+	move.w  #104, 6(a0)
+
+        lea     RomCodeEnd(pc), a0
+        move.l  a1, (a0)
+        move.w  #OP_IOREQ, 4(a0)
+          
+    ;    btst    #IOB_QUICK,IO_FLAGS(a1)
+     ;   bne.s   Message_No_Replay 
+
+        LINKSYS ReplyMsg, dev_SysLib(a6)
+
+Message_No_Replay:        
+        exg     a5,a6   ; get syslib back in a6
+
+        bra.s   Task_NextMessage
 
 RomCodeEnd:
