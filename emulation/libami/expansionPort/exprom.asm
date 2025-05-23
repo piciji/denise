@@ -43,6 +43,7 @@ OP_FSINITSEG=$fee2
 OP_VOLUME_GET_ID=$fee3
 OP_VOLUME_INIT=$fee4
 OP_VOLUME_PACKET=$fee5
+OP_IOREQ_DELAY=$fee6
 
 RT_MATCHWORD=$00		; UWORD word to match on (ILLEGAL)
 RT_MATCHTAG=$02			; APTR  pointer to the above (RT_MATCHWORD)
@@ -72,6 +73,7 @@ NT_RESOURCE=8
 NT_BOOTNODE=16
 
 ; exec.library
+_LVOInitStruct=-78
 _LVOFindResident=-96
 _LVOInitResident=-102
 _LVOAlert=-108
@@ -84,6 +86,7 @@ _LVOAddHead=-240
 _LVOAddTail=-246
 _LVOEnqueue=-270
 _LVOAddTask=-282
+_LVORemTask=-288
 _LVOSetTaskPri=-300
 _LVOWait=-318
 _LVOPutMsg=-366
@@ -300,14 +303,16 @@ cb_ProductString=$0008
 cb_ToolTypes=$000c
 cb_Sizeof=$0010
 
-MYPROCSTACKSIZE   EQU   $900
+PROCSTACKSIZE   EQU   $100
 
 ; Starts at UNIT_SIZE
 devunit_Device=$26              ; APTR
 devunit_UnitNum=$2A             ; ULONG NOTE used in emulator, offset must be kept in sync
 devunit_Stack=$2E
-devunit_Tcb=$2E+MYPROCSTACKSIZE
-devunit_Sizeof=$2E+MYPROCSTACKSIZE+tc_Sizeof
+devunit_Tcb=$2E+PROCSTACKSIZE
+devunit_Sizeof=$2E+PROCSTACKSIZE+tc_Sizeof
+
+IMMEDIATES   EQU   %11111111111111111111011111110011    ; Read, Write and Format handled async
 
 ; struct FileSysResource
 fsr_Node=$0000                  ; struct Node
@@ -1434,7 +1439,7 @@ Open:   ; ( device:a6, iob:a1, unitnum:d0, flags:d1 )
         ; setup task
         lea      devunit_Stack(a3), a0          ; Low end of stack
         move.l   a0, devunit_Tcb+tc_SPLower(a3)
-        lea      MYPROCSTACKSIZE(a0), a0    ; High end of stack
+        lea      PROCSTACKSIZE(a0), a0    ; High end of stack
         move.l   a0, devunit_Tcb+tc_SPUpper(a3)
         move.l   a3,-(A0)              ; argument -- unit ptr (send on stack)
         move.l   a0, devunit_Tcb+tc_SPReg(a3)
@@ -1452,10 +1457,9 @@ Open:   ; ( device:a6, iob:a1, unitnum:d0, flags:d1 )
         
         lea      Task_Begin(PC), a2
         ;move.l   a3, -(sp)      ; Preserve UNIT pointer
-       ; lea      -1,a3     ; generate address error
+        lea      -1, a3     ; generate address error
         ; if task ever "returns" (we RemTask() it
         ; to get rid of it...)
-        ;MOVEQ   #0, d0
         
         MOVE.L  A6,-(SP)
         MOVE.L  dev_SysLib(a6), A6
@@ -1466,9 +1470,6 @@ Open:   ; ( device:a6, iob:a1, unitnum:d0, flags:d1 )
         move.l   (sp)+, a3      ; restore UNIT pointer		
         move.l   (sp)+, a2
         ; task done
-
-
-
 
         move.l  a3, IO_UNIT(a2)
         addq.w  #1, LIB_OPENCNT(a6)
@@ -1532,6 +1533,9 @@ Close:  ; ( device:a6, iob:a1 )
         bne     CloseDevice
 
         ; Free unit
+        lea   devunit_Tcb(a3),a1
+        LINKSYS RemTask,dev_SysLib(a6)
+
         move.l  a6, a5
         move.l  a3, a1
         move.l  #devunit_Sizeof, d0
@@ -1553,6 +1557,8 @@ CloseEnd:
 Expunge:
         ; TODO: Support this (maybe)
         ; Just leak memory for now
+        ;lea     RomCodeEnd(pc), a0
+        ;move.w  #110, 6(a0)
         ifne    DEBUG
         lea     .expmsg(pc), a0
         bsr     SerPutMsg
@@ -1579,26 +1585,29 @@ BeginIO: ; ( iob: a1, device:a6 )
         lea     RomCodeEnd(pc), a0
         move.l  a1, (a0)
         move.w  #OP_IOREQ, 4(a0)
+
+        move.b  IO_ERROR(a1), d0
+        bne     Begin_Sync
 		
         move.w  IO_COMMAND(a1), d0
-        cmp.w   #CMD_READ, d0
-        beq     Clear_Quick_End
-        cmp.w   #CMD_WRITE, d0
-        beq     Clear_Quick_End
-        cmp.w   #CMD_FORMAT, d0
-        beq     Clear_Quick_End
+        move.w  #IMMEDIATES, d1
+        btst    d0, d1
+        beq.s   Begin_Async
 
+Begin_Sync:
         btst    #IOB_QUICK, IO_FLAGS(a1)
         bne     BeginIO_End
 
         ; Note: "trash" a6
-        move.l  dev_SysLib(a6), a6
+       ; move.l  dev_SysLib(a6), a6
         ; a1=message
-        jsr     _LVOReplyMsg(a6)
-	bra BeginIO_End
+        ;jsr _LVOReplyMsg(a6)
+        LINKSYS ReplyMsg, dev_SysLib(a6)
 
-Clear_Quick_End:
-        ;bset    #UNITB_INTASK, UNIT_FLAGS(a3)
+	bra     BeginIO_End
+
+Begin_Async:
+        bset    #UNITB_INTASK, UNIT_FLAGS(a3)
         bclr.b  #IOB_QUICK, IO_FLAGS(a1)
         move.l  a3, a0
         LINKSYS  PutMsg, dev_SysLib(a6)
@@ -1609,6 +1618,8 @@ BeginIO_End:
 
 AbortIO:
         ; Shouldn't be called, but fake success anyway
+        ;lea     RomCodeEnd(pc), a0
+        ;move.w  #107, 6(a0)
         move.b  #0, IO_ERROR(a1)
         rts
 
@@ -1912,6 +1923,8 @@ GetDosList:
         lea.l   di_DevInfo(a0), a0
         rts
 
+        cnop    0,4     ; long word align
+
 Task_Begin:
         move.l  ABSEXECBASE,a6
 
@@ -1919,9 +1932,8 @@ Task_Begin:
         move.l  4(sp),a3           ; Unit pointer
         move.l  devunit_Device(a3),a5  ; Point to device structure
                 
-                ;------ Allocate a signal
         moveq   #-1, d0      ; -1 is any signal at all
-                JSR _LVOAllocSignal(A6)
+        JSR _LVOAllocSignal(A6)
         move.b  d0,MP_SIGBIT(a3)
         move.b  #PA_SIGNAL,MP_FLAGS(a3) ;Make message port "live"
         ;------ change the bit number into a mask, and save in d7
@@ -1932,17 +1944,12 @@ Task_Begin:
 	
 Task_Unlock:
         and.b   #$ff&(~(UNITF_ACTIVE!UNITF_INTASK)), UNIT_FLAGS(a3)
-        ;------ main loop: wait for a new message	
 	
 Task_MainLoop:
-        lea     RomCodeEnd(pc), a0
-	move.w  #101, 6(a0)
         move.l  d7,d0
         jsr _LVOWait(A6)
 	
 Task_StartHere:
-	lea     RomCodeEnd(pc), a0
-	move.w  #102, 6(a0)
         ;------ see if we are stopped
         ;btst    #MDUB_STOPPED, UNIT_FLAGS(a3)
         ;bne.s   Task_MainLoop   ; device is stopped, ignore messages
@@ -1956,25 +1963,20 @@ Task_NextMessage:
         tst.l   d0
         beq     Task_Unlock ; no message?
 
-        ;------ do this request
         move.l  d0,a1
         exg     a5,a6   ; put device ptr in right place
 
         lea     RomCodeEnd(pc), a0
-	move.w  #104, 6(a0)
-
-        lea     RomCodeEnd(pc), a0
         move.l  a1, (a0)
-        move.w  #OP_IOREQ, 4(a0)
+        move.w  #OP_IOREQ_DELAY, 4(a0)
           
-    ;    btst    #IOB_QUICK,IO_FLAGS(a1)
-     ;   bne.s   Message_No_Replay 
+        btst    #IOB_QUICK,IO_FLAGS(a1)
+        bne.s   Message_No_Replay 
 
         LINKSYS ReplyMsg, dev_SysLib(a6)
 
 Message_No_Replay:        
         exg     a5,a6   ; get syslib back in a6
-
         bra.s   Task_NextMessage
 
 RomCodeEnd:
