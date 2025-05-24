@@ -28,4 +28,6 @@ namespace Firmware {
 
     extern const uint8_t mras0Rom[2890];
 
+    extern const uint8_t mras0RomAsyc[2996];
+
 };

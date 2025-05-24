@@ -12,7 +12,9 @@ struct HDController;
 struct HDBase {
     HDBase(HDController& board, HardDrive& hardDrive) : board(board), hardDrive(hardDrive) { rom = nullptr; }
 
-    uint8_t* rom = nullptr;        
+    uint8_t* rom = nullptr;
+
+    unsigned romSize = 0;
 
     HDController& board;
 

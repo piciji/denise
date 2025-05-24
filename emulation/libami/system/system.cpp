@@ -6,6 +6,7 @@
 #include  "../../tools/macros.h"
 #include "serialization.cpp"
 #include "dongle.cpp"
+#include "../expansionPort/builtinHD.h"
 
 namespace LIBAMI {
 
@@ -612,6 +613,14 @@ auto System::getOverclock() -> unsigned {
         case 8: return 2;
         case 16: return 3;
     }
+}
+
+auto System::setHDDAsync(bool state) -> void {
+    asyncHDDAccess = state;
+}
+
+auto System::getHDDAsync() -> bool {
+    return asyncHDDAccess;
 }
 
 template auto System::dongleJoydat<false>(uint16_t& val) -> void;

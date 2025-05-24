@@ -186,6 +186,7 @@ struct Paula {
     auto scheduleIntreqCia1(bool state) -> void;
     auto scheduleIntreqCia2(bool state) -> void;
     auto setDskSyncInt() -> void;
+    auto setExternalInt() -> void;
     auto setDskBlkInt() -> void;
     auto setVblInt() -> void;
 

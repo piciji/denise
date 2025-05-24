@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "235";
+const std::string Interface::Version = "236";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -54,6 +54,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdFakeECSDenise, "Fake ECS Denise", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdDongle, "Plugin Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,6}, {"None", "RoboCop 3", "B.A.T. II", "Cricket Captain", "Leader Board", "Rugby Coach", "Striker Manager"}});
     models.push_back({ModelIdOverclock, "Overclocking", Model::Type::Radio, Model::Purpose::Cpu, 0, {0, 3}, { "None", "2x", "4x", "8x" } });
+    models.push_back({ ModelIdHardDrivesBuiltInSlower, "Slower Built-In HDD", Model::Type::Switch, Model::Purpose::Misc, 0 });
 }
 
 auto Interface::prepareMedia() -> void {
@@ -561,6 +562,9 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdOverclock:
             system->setOverclock(value);
             break;
+        case ModelIdHardDrivesBuiltInSlower:
+            system->setHDDAsync(!!value);
+            break;
     }
 }
 
@@ -585,6 +589,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdFakeECSDenise:                  return (int)system->fakeECSDenise;
         case ModelIdDongle:                         return (int)system->dongle.type;
         case ModelIdOverclock:                      return (int)system->getOverclock();
+        case ModelIdHardDrivesBuiltInSlower:        return (int)system->getHDDAsync();
     }
 
     return 0;

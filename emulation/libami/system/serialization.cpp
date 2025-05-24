@@ -123,6 +123,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
 
     s.integer(ntsc);
     s.integer(fakeECSDenise);
+    s.integer(asyncHDDAccess);
     s.integer((uint8_t&)dongle.type);
     if (dongle.type) {
         s.integer(dongle.clock);

@@ -55,7 +55,7 @@ namespace LIBAMI {
 
         auto reset() -> void;
 
-        auto handleCmd() -> void;
+        auto handleCmd(bool delayed = false) -> void;
 
         auto handleInit() -> void;
 

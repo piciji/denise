@@ -37,6 +37,11 @@ auto Paula::setDskSyncInt() -> void {
     prepareIpl();
 }
 
+auto Paula::setExternalInt() -> void {
+    intreq |= 0x2000;
+    prepareIpl();
+}
+
 auto Paula::setDskBlkInt() -> void {
     intreq |= 2;
     prepareIpl();

@@ -33,6 +33,7 @@ struct Interface : Emulator::Interface  {
         ModelIdDongle,
         ModelIdOverclock,
         ModelIdHardDrivesConnected,
+        ModelIdHardDrivesBuiltInSlower,
     };
 
     enum MediaGroupId {

@@ -13,10 +13,10 @@ MtecAT500::~MtecAT500() {
 
 auto MtecAT500::reset() -> void {     
     if (!rom) {
-        unsigned _mtecSize = sizeof(Firmware::mtecAT500);
-        rom = new uint8_t[_mtecSize << 1];        
-        std::memcpy(rom, Firmware::mtecAT500, _mtecSize);
-        std::memset(rom + _mtecSize, 0xff, _mtecSize); // upper 8k are unused
+        romSize = sizeof(Firmware::mtecAT500);
+        rom = new uint8_t[romSize << 1];
+        std::memcpy(rom, Firmware::mtecAT500, romSize);
+        std::memset(rom + romSize, 0xff, romSize); // upper 8k are unused
     }
 }
 

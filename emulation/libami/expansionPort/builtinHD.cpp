@@ -7,8 +7,7 @@
 #include "../../tools/error.h"
 #include "../../tools/crc32.h"
 
-#define BUILTIN_ROM_SIZE sizeof(Firmware::mras0Rom)
-
+#pragma warning(disable:4996)
 namespace LIBAMI {
 
 BuiltinHD::~BuiltinHD() {
@@ -17,14 +16,26 @@ BuiltinHD::~BuiltinHD() {
 }
 
 auto BuiltinHD::reset() -> void {
-    if (!rom) {
-        rom = new uint8_t[sizeof(Firmware::mras0Rom)];
-        std::memcpy(rom, Firmware::mras0Rom, sizeof(Firmware::mras0Rom));
+    bool asyncAccessUse = romSize == sizeof(Firmware::mras0RomAsyc);
+
+    if (!rom || (agnus.system->asyncHDDAccess != asyncAccessUse)) {
+        if (rom)
+            delete[] rom;
+
+        if (agnus.system->asyncHDDAccess) {
+            romSize = sizeof(Firmware::mras0RomAsyc);
+            rom = new uint8_t[romSize];
+            std::memcpy(rom, Firmware::mras0RomAsyc, romSize);
+        } else {
+            romSize = sizeof(Firmware::mras0Rom);
+            rom = new uint8_t[romSize];
+            std::memcpy(rom, Firmware::mras0Rom, romSize);
+        }
     }
 
     const std::string deviceName = "denise" + std::to_string(hardDrive.number) + "hf.device";
 
-    if (Emulator::replaceInBuffer(rom, sizeof(Firmware::mras0Rom), "virtualhd.device", deviceName)) {}
+    while (Emulator::replaceInBuffer(rom, romSize, "virtualhd.device", deviceName)) {}
 
     if (hardDrive.number == 0)
         fixKick12();
@@ -97,46 +108,47 @@ auto BuiltinHD::readAutoConf(uint32_t addr)->uint8_t {
 
 auto BuiltinHD::read(uint32_t addr) -> uint8_t {
     unsigned offset = (addr & 0xffff) - 0x40;
-    return offset < BUILTIN_ROM_SIZE ? rom[offset] : 0;
+    return offset < romSize ? rom[offset] : 0;
 }
 
 auto BuiltinHD::readW(uint32_t addr) -> uint16_t {
     unsigned offset = (addr & 0xffff) - 0x40;
 
-    switch(offset) {
-        case BUILTIN_ROM_SIZE:
-            return hardDrive.countPartitions();
-        case BUILTIN_ROM_SIZE + 2:
-            return hardDrive.countFileDrivers();
-        case BUILTIN_ROM_SIZE + 4:
-            return board.agnus.system->diskDrives[0].attached();
-        case BUILTIN_ROM_SIZE + 6:
-            return 0; // shared folders ...
-    }
+    if (offset == romSize)
+        return hardDrive.countPartitions();
+    else if (offset == romSize + 2)
+        return hardDrive.countFileDrivers();
+    else if (offset == romSize + 4)
+        return board.agnus.system->diskDrives[0].attached();
+    else if (offset == romSize + 6)
+        return 0;
 
-    return offset < BUILTIN_ROM_SIZE ? (rom[offset] << 8) | rom[offset + 1] : 0;
+    return offset < romSize ? (rom[offset] << 8) | rom[offset + 1] : 0;
 }
 
 auto BuiltinHD::writeW(uint32_t addr, uint16_t data) -> void {
     unsigned offset = (addr & 0xffff) - 0x40;
 
-    switch (offset) {
-        case BUILTIN_ROM_SIZE:
-            memPtr = (memPtr & 0xffff) | (data << 16);
-            break;
-        case BUILTIN_ROM_SIZE + 2:
-            memPtr = (memPtr & ~0xffff) | data;
-            break;
-        case BUILTIN_ROM_SIZE + 4:
-            switch (data) {
-                case 0xfede: handleCmd(); break;
-                case 0xfedf: handleInit(); break;
-                case 0xfee0: handleResource(); break;
-                case 0xfee1: handleInfoReq(); break;
-                case 0xfee2: handleInitSeg(); break;
-                default:
-                    warn("Invalid Builtin Command: %x", data);
-            } break;
+    if (offset == romSize)
+        memPtr = (memPtr & 0xffff) | (data << 16);
+    else if (offset == romSize + 2)
+        memPtr = (memPtr & ~0xffff) | data;
+    else if (offset == romSize + 4) {
+        switch (data) {
+            case 0xfede: handleCmd(); break;
+            case 0xfedf: handleInit(); break;
+            case 0xfee0: handleResource(); break;
+            case 0xfee1: handleInfoReq(); break;
+            case 0xfee2: handleInitSeg(); break;
+            case 0xfee6: handleCmd(true); break;
+            default:
+                warn("Invalid Builtin Command: %x", data);
+        }
+    } else if (offset == romSize + 6) {
+        if (data == 107)
+            warn("abortIO");
+        else if (data == 110)
+            warn("expunge");
     }
 }
 
@@ -350,7 +362,7 @@ auto BuiltinHD::handleInitSeg() -> void {
     }
 }
 
-auto BuiltinHD::handleCmd() -> void {
+auto BuiltinHD::handleCmd(bool delayed) -> void {
     constexpr uint32_t IO_UNIT = 0x18;
     constexpr uint32_t IO_COMMAND = 0x1C;
     constexpr uint32_t IO_ERROR = 0x1F;
@@ -382,6 +394,7 @@ auto BuiltinHD::handleCmd() -> void {
     uint32_t len = agnus.fakeReadLongWord(memPtr + IO_LENGTH);
     uint32_t addr = agnus.fakeReadLongWord(memPtr + IO_DATA);
     uint32_t offset = agnus.fakeReadLongWord(memPtr + IO_OFFSET);
+    bool asyncAccessUse = romSize == sizeof(Firmware::mras0RomAsyc);
 
     int8_t error = 0;
     uint32_t actual = 0;
@@ -390,8 +403,11 @@ auto BuiltinHD::handleCmd() -> void {
     constexpr int8_t IOERR_UNITBUSY = -6;
 
     switch((Command)cmd) {
-        case Command::Read:
+        case Command::Read: {
             error = verify(offset, len, addr);
+            if (!delayed && asyncAccessUse)
+                break;
+
             if (!error) {
                 actual = len;
                 uint8_t* data = hardDrive.read(offset, len);
@@ -400,10 +416,13 @@ auto BuiltinHD::handleCmd() -> void {
                 else
                     agnus.fakeWriteByte(addr, data, len);
             }
-            break;
+        } break;
         case Command::Write:
-        case Command::Format:
+        case Command::Format: {
             error = verify(offset, len, addr);
+            if (!delayed && asyncAccessUse)
+                break;
+
             if (!error) {
                 actual = len;
                 hardDrive.setBuffer(len);
@@ -411,7 +430,8 @@ auto BuiltinHD::handleCmd() -> void {
                 if (!hardDrive.write(offset, len))
                     error = IOERR_BADLENGTH;
             }
-            break;
+        } break;
+
         case Command::Reset:
         case Command::Update:
         case Command::Clear:
@@ -426,6 +446,7 @@ auto BuiltinHD::handleCmd() -> void {
         case Command::ProtStatus:
         case Command::AddChangeInt:
         case Command::RemChangeInt:
+            warn("not implemented command: %x", cmd);
             break;
 
         case Command::SCSICMD: {
@@ -557,8 +578,7 @@ auto BuiltinHD::scsiCommand(scsiCmd& sc) -> void {
     } else if (cmd[0] == 0x37 && sc.scsi_CmdLength == 10) { // READ DEFECT DATA
         uint8_t data[4] = { 0, static_cast<uint8_t>(cmd[1] & 0x1f), 0, 0 };
         copy_data(data, sizeof(data));
-    }
-    else if (cmd[0] == 0x2f) { // verify
+    } else if (cmd[0] == 0x2f || cmd[0] == 0x0) { // verify or unit ready
         // pretend there are no errors :-)
         sc.scsi_Actual = 0;
         sc.scsi_CmdActual = sc.scsi_CmdLength;

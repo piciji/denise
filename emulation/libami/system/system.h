@@ -37,6 +37,7 @@ struct System {
     bool ntsc;
     bool firmwareChanged;
     bool fakeECSDenise = false;
+    bool asyncHDDAccess = false;
 
     Emulator::Crop<uint16_t> crop;
 
@@ -137,6 +138,9 @@ struct System {
 
     auto setOverclock(unsigned factor) -> void;
     auto getOverclock() -> unsigned;
+
+    auto setHDDAsync(bool state) -> void;
+    auto getHDDAsync() -> bool;
 };
 
 
