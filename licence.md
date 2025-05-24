@@ -37,13 +37,14 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * P64 by BeRo https://blog.rosseaux.net/page/986c1ab5667d2dfa6ef552e6dd42fe27/micro64
 * Floppy Sounds are taken by Trackers-World.NET ([Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/))
 * Amiga Fonts by rewtnull https://github.com/rewtnull/amigafonts
-* Amiga low pass audio filter by WinUAE https://github.com/tonioni/WinUAE
-* findings for handling Blitter low level emulation by WinUAE https://www.winuae.net
+* Amiga low pass audio filter by WinUAE https://www.winuae.net/
+* findings for handling Blitter low level emulation by WinUAE https://www.winuae.net/
 * floppy step noise by WinUAE https://www.winuae.net/
-* vAmiga inspirations for a 64-bit event counter, 68k and handling sector blocks https://dirkwhoffmann.github.io/vAmiga/
+* vAmiga inspirations for 68k and handling sector blocks https://dirkwhoffmann.github.io/vAmiga/
 * 68k simulator/wrapper around FX68K by emoon https://github.com/emoon/fx68k
 * bundled AROS kickrom and extrom  https://aros.sourceforge.io/ 
 * RetroArch shader system by https://github.com/libretro/RetroArch
 * glslang by Khronos Group https://github.com/KhronosGroup/glslang
 * SPIRV-Cross by Khronos Group https://github.com/KhronosGroup/SPIRV-Cross
 * scpu64 ROM from Soci
+* HDD builtin ROM from mras0

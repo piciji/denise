@@ -1,8 +1,11 @@
+; Copyright @ mras0
 ;
 ; Can be compiled with vasm: vasmm68k_mot exprom.asm -Fbin -phxass
 ;
 ; KS1.2 magic based on http://eab.abime.net/showpost.php?p=1045113&postcount=3
 ;
+; asynchronous (SendIO) Read/Write operation (PiCiJi)
+
     ORG $40
 
 RomStart=0
@@ -12,14 +15,14 @@ REVISION=5
 
 DEBUG=0
 
-NEWLIST     MACRO   ; list
+NEWLIST     MACRO
 	    MOVE.L  \1, $8(\1)
 	    ADDQ.L  #4,\1	;Get address of LH_TAIL
 	    CLR.L   (\1)	;Clear LH_TAIL
 	    MOVE.L  \1,-(\1)	;Address of LH_TAIL to LH_HEAD
 	    ENDM
 		
-LINKSYS     MACRO       ; link to a library without having to see a _LVO
+LINKSYS     MACRO
 		MOVE.L  A6,-(SP)
 		MOVE.L  \2,A6
 		JSR _LVO\1(A6)
