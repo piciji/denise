@@ -336,7 +336,7 @@ auto Filesystem::getDirectory(bool noFilesInSubdirs) -> std::vector<Emulator::In
     static std::vector<uint16_t> _preLabel = {'L','a','b','e','l',':',' '};
     auto label = rootBlock->getNameRaw();
     combine(label, _preLabel);
-    listing.push_back({rootBlock->nr, label, {}});
+    listing.push_back({label, {}});
 
     rootBlock->depth = -1;
     traverse( rootBlock, dir );
@@ -349,10 +349,10 @@ auto Filesystem::getDirectory(bool noFilesInSubdirs) -> std::vector<Emulator::In
             sanityCheck.push_back( block );
 
             if (block->type == SectorBlock::Type::DIR_BLOCK) {
-                listing.push_back({ block->nr, block->getNameRaw(true), getPathRaw(block) });
+                listing.push_back({ block->getNameRaw(true), getPathRaw(block) });
                 traverse( block, dir );
             } else if (!noFilesInSubdirs) {
-                listing.push_back({ block->nr, block->getNameRaw(true), getPathRaw(block) });
+                listing.push_back({ block->getNameRaw(true), getPathRaw(block) });
             }
         }
     }

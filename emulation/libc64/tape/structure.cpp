@@ -43,7 +43,6 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
     uint8_t head[16] = {'C','6','4','-','T', 'A', 'P', 'E','-','R','A','W',' ',' ',' ',' '};
 
     setPosition(0x14);
-    unsigned id = 0;
 
     listings.clear();
 
@@ -55,7 +54,7 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
 
     listing.convertToScreencode = tape.system->convertToScreencode;
 
-    listings.push_back( {id++, listing.buildHeadline( &head[0] ) } );
+    listings.push_back( {listing.buildHeadline( &head[0] ) } );
 
     while( nextFile(fileEntry) ) {
 
@@ -135,7 +134,7 @@ auto TapeStructure::getListing( ) -> std::vector<Emulator::Interface::Listing>& 
                 out[i + 6] |= 0x100;
         }
 
-        listings.push_back( {id++, out });
+        listings.push_back( { out });
 
         fileEntries.push_back(fileEntry);
 

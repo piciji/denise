@@ -247,7 +247,6 @@ struct Interface {
     	
 	// general purpose emulator output listing
 	struct Listing {
-		unsigned id;
 		std::vector<uint16_t> line; // host is responsible for conversion, e.g. c64 use petscii charset
 		std::vector<uint16_t> loadCommand;
 	};	

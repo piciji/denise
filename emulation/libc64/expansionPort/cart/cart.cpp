@@ -405,7 +405,6 @@ auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
     Emulator::C64Listing listing;
     listing.convertToScreencode = system->convertToScreencode;
 
-    unsigned id = 0;
     std::vector<uint16_t> out;
 
     out.push_back(listing.decodeToScreencodeHi('I'));
@@ -420,7 +419,7 @@ auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
     std::string ident = std::to_string(cartridgeId);
     for(auto& c : ident)
         out.push_back(listing.decodeToScreencodeHi(c));
-    listings.push_back({ id++, out });
+    listings.push_back( {out} );
 
     out.clear();
     out.push_back(listing.decodeToScreencodeHi('V'));
@@ -440,7 +439,7 @@ auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
     for (auto& c : ident)
         out.push_back(listing.decodeToScreencodeHi(c));
 
-    listings.push_back( {id++, out});
+    listings.push_back( {out} );
 
     out.clear();
     out.push_back(listing.decodeToScreencodeHi('N'));
@@ -456,7 +455,7 @@ auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
     std::transform(str.begin(), str.end(), str.begin(), ::toupper);
     for (auto& c : str)
         out.push_back(listing.decodeToScreencodeHi(c));
-    listings.push_back({ id++, out });
+    listings.push_back({ out });
 
     out.clear();
     out.push_back(listing.decodeToScreencodeHi('E'));
@@ -475,7 +474,7 @@ auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
         out.push_back(listing.decodeToScreencodeHi('L'));
         out.push_back(listing.decodeToScreencodeHi('O'));
     }
-    listings.push_back({ id++, out });
+    listings.push_back({ out });
 
     out.clear();
     out.push_back(listing.decodeToScreencodeHi('G'));
@@ -494,9 +493,9 @@ auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
         out.push_back(listing.decodeToScreencodeHi('L'));
         out.push_back(listing.decodeToScreencodeHi('O'));
     }
-    listings.push_back({ id++, out });
+    listings.push_back({ out });
     out.clear();
-    listings.push_back({ id++, out });
+    listings.push_back({ out });
     
     for(auto& chip : chips) {
         out.clear();
@@ -547,7 +546,7 @@ auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
                 out.push_back(listing.decodeToScreencode(c));
         }
 
-        listings.push_back({ id++, out });
+        listings.push_back({ out });
     }
 
     return listings;

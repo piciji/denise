@@ -18,8 +18,6 @@ auto DiskStructure::createListing() -> void {
     Emulator::C64Listing listing;
     listing.convertToScreencode = system->convertToScreencode;
 
-    unsigned id = 0;
-
     uint8_t buffer[256];
     uint8_t _track = 18;
     uint8_t _sector = 0;
@@ -102,7 +100,7 @@ auto DiskStructure::createListing() -> void {
                 if (system->loadWithColumn && ((type & 7) != 2) ) // when first file is not a PRG
                     _headlineCmd = {'*'};
 
-                listings.push_back( { id++, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand(_headlineCmd, true) ) } );
+                listings.push_back( { listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ), listing.decodeToScreencode( buildLoadCommand(_headlineCmd, true) ) } );
                 loader.push_back( _headlineCmd );
             }
 
@@ -114,7 +112,7 @@ auto DiskStructure::createListing() -> void {
             if (listingSize)
                 loadCommand = listing.decodeToScreencode( buildLoadCommand( listing.loader, true ) );
 
-            listings.push_back( { id++, entry, loadCommand } );
+            listings.push_back( { entry, loadCommand } );
 			loader.push_back( listing.loader );
         }
 
@@ -147,11 +145,11 @@ auto DiskStructure::createListing() -> void {
     }
 
     if (!addedHeadline) {
-        listings.push_back( { 0, listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ) } );
+        listings.push_back( { listing.buildHeadline( buffer + 0x90, buffer + 0xa5, buffer + 0xa2 ) } );
         loader.push_back( {'*'} );
     }
 
-    listings.push_back( { id++, listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand( _headlineCmd, true) ) } );
+    listings.push_back( { listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand( _headlineCmd, true) ) } );
 	loader.push_back( _headlineCmd );
 }
 
@@ -187,7 +185,6 @@ auto DiskStructure::createListingMfm() -> void {
     Emulator::C64Listing listing;
     listing.convertToScreencode = system->convertToScreencode;
 
-    unsigned id = 0;
     uint8_t* ptr;
 
     uint8_t _track = 40;
@@ -200,7 +197,7 @@ auto DiskStructure::createListingMfm() -> void {
     if ((ptr = getDecodedMfmLogical(_track, _sector++)) == nullptr)
         return;
 
-    listings.push_back( { id++, listing.buildHeadline( ptr + 0x4, ptr + 0x19, ptr + 0x16 ), listing.decodeToScreencode( buildLoadCommand(_headlineCmd, true) ) } );
+    listings.push_back( { listing.buildHeadline( ptr + 0x4, ptr + 0x19, ptr + 0x16 ), listing.decodeToScreencode( buildLoadCommand(_headlineCmd, true) ) } );
     loader.push_back( _headlineCmd );
 
     unsigned freeBlocks = 0;
@@ -241,7 +238,7 @@ auto DiskStructure::createListingMfm() -> void {
             if (listingSize)
                 loadCommand = listing.decodeToScreencode( buildLoadCommand( listing.loader, true ) );
 
-            listings.push_back( { id++, entry, loadCommand } );
+            listings.push_back( { entry, loadCommand } );
             loader.push_back( listing.loader );
         }
 
@@ -260,7 +257,7 @@ auto DiskStructure::createListingMfm() -> void {
         }
     }
 
-    listings.push_back( { id++, listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand( _headlineCmd, true) ) } );
+    listings.push_back( { listing.buildFreeLine( freeBlocks ), listing.decodeToScreencode( buildLoadCommand( _headlineCmd, true) ) } );
     loader.push_back( _headlineCmd );
 }
 

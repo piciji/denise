@@ -18,17 +18,17 @@ Prg::~Prg() {
 auto Prg::select( unsigned pos ) -> bool {
 
 	auto _size = listings.size();
-	
-    if (_size <= pos) {
-		if (_size == 1 && pos == 1) // fallback for PRG, which has no header
-			pos = 0;
-		else
-			return false;
-	}
-	
-    auto id = listings[ pos ].id;
 
-    useChunk = &chunks[ id ];
+    if (headlinePtr && pos > 0)
+        pos--;
+
+    if (_size <= 1)
+        pos = 0;
+
+    if (pos >= chunks.size())
+        return false;
+
+    useChunk = &chunks[pos];
 
     saneSize();
 
@@ -155,14 +155,12 @@ auto Prg::createListing() -> void {
     Emulator::C64Listing listing;
     listing.convertToScreencode = system->convertToScreencode;
 
-    unsigned id = 0;
-
     if (headlinePtr)
-        listings.push_back( { id, listing.buildHeadline( headlinePtr ), listing.decodeToScreencode( {'R','U','N', ' ', '"', '*', '"'} ) } );
+        listings.push_back( { listing.buildHeadline( headlinePtr ), listing.decodeToScreencode( {'R','U','N', ' ', '"', '*', '"'} ) } );
 
     for (auto& chunk : chunks) {
         unsigned listingSize = (chunk.size / 254) + ( (chunk.size % 254) ? 1 : 0);
-        listings.push_back( { id++, listing.buildListing( chunk.namePtr, listingSize, 0x82 ), listing.decodeToScreencode( buildLoadCommand( listing.loader ) ) } );
+        listings.push_back( { listing.buildListing( chunk.namePtr, listingSize, 0x82 ), listing.decodeToScreencode( buildLoadCommand( listing.loader ) ) } );
     }
 }
 

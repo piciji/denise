@@ -284,7 +284,7 @@ auto HardDiskStructure::getListing() -> std::vector<Emulator::Interface::Listing
     Filesystem* fs = nullptr;
 
     if (hasRDB)
-        listing.push_back({ 0, {'R','D','B'}, {} });
+        listing.push_back({ {'R','D','B'} });
 
     for (auto& partition : partitions) {
         if (this->data == nullptr) {
@@ -309,7 +309,7 @@ auto HardDiskStructure::getListing() -> std::vector<Emulator::Interface::Listing
 
         if (_listing.size()) {
             if (!listing.empty())
-                listing.push_back({ 0, {}, {} });
+                listing.push_back({  });
 
             Filesystem::combine(_listing[0].line, out, true);
 
