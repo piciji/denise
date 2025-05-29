@@ -1390,9 +1390,9 @@ struct File {
     //overall file access, compressed archives are not considered
     auto open(Mode mode = Mode::Read, bool createFolderIfNotExists = false) -> bool;
     auto read() -> uint8_t*;
-	auto read(uint8_t* buffer, unsigned length, unsigned offset = 0) -> unsigned;
+	auto read(uint8_t* buffer, unsigned length, uint64_t offset = 0) -> unsigned;
     auto write() -> bool;
-    auto write(const uint8_t* buffer, unsigned length, unsigned offset = 0) -> unsigned;
+    auto write(const uint8_t* buffer, unsigned length, uint64_t offset = 0) -> unsigned;
     auto append(const uint8_t* buffer, unsigned length) -> unsigned;
     auto truncate() -> bool;
     auto getSize() const -> uint64_t { return fileInfo.size; }

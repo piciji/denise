@@ -133,6 +133,7 @@ set(srcs
         emulation/libami/expansionPort/builtinHD.cpp
         emulation/libami/system/firmware.cpp
         emulation/tools/DLLoader.cpp
+        emulation/tools/uuid.cpp
         emulation/libc64/vicII/base.cpp
         emulation/libc64/vicII/vicII.cpp
         emulation/libc64/vicII/fast/vicIIFast.cpp

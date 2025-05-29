@@ -183,7 +183,7 @@ auto File::write() -> bool {
     return bytesWritten && (bytesWritten == fileInfo.size);
 }
 
-auto File::read(uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+auto File::read(uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
     if (!fp || mode == Mode::Write )
 		return 0;
     
@@ -198,7 +198,7 @@ auto File::read(uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
 	return fread(buffer, 1, length, fp);
 }
 
-auto File::write(const uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+auto File::write(const uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
     if (!fp || mode == Mode::Read)
         return 0;
 

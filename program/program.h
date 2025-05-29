@@ -106,8 +106,8 @@ struct Program : Emulator::Interface::Bind {
     auto power( Emulator::Interface* emulator, bool regular = true ) -> void;
 	auto reset( Emulator::Interface* emulator ) -> void;
     auto powerOff() -> void;
-    auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
-    auto writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned override;
+    auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned override;
+    auto writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned override;
 	auto readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer, bool preview) -> unsigned override;
 	auto writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length) -> unsigned override;
 

@@ -9,7 +9,7 @@
 #include <set>
 #include "sectorBlock.h"
 #include "filesystem.h"
-#include "../interface.h"
+#include "hardDiskStructure.h"
 
 namespace Emulator {
     struct Interface;
@@ -22,12 +22,12 @@ struct FilesystemExt : Filesystem {
     FilesystemExt(uint64_t size, Structure structure = Structure::FFS, unsigned bSize = 512);
     ~FilesystemExt();
     
-    Emulator::Interface* interface;
-    Emulator::Interface::Media* media;
     uint8_t* buffer;
-    unsigned offset;
+    uint64_t offset;
+    HardDiskStructure* structure;
     
-    auto setDataSource(Emulator::Interface* interface, Emulator::Interface::Media* media, unsigned offset) -> void;
+    auto setDataSource(HardDiskStructure* hdStructure, uint64_t offset) -> void;
+
     auto importMedia(uint8_t* data, unsigned size) -> bool = delete;
     auto exportMedia(uint8_t* data, unsigned size) -> bool = delete;
 

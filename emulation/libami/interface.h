@@ -77,6 +77,7 @@ struct Interface : Emulator::Interface  {
     auto isWriteProtectedHardDisk(Media* media) -> bool;
     auto getHardDiskListing(Media* media) -> std::vector<Listing>;
     auto getHardDiskPreview(uint8_t* data, uint64_t size, Media* media) -> std::vector<Listing>;
+    auto createHardDiskImage(uint64_t _size, bool vhd) -> Data;
 
     // disk drive handling
     auto insertDisk(Media* media, uint8_t* data, unsigned size) -> void;

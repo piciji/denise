@@ -23,9 +23,23 @@ struct HardDiskStructure {
 
     bool hasRDB;
 
+    struct VHD {
+        bool inUse;
+        bool dynamic;
+        uint64_t size;
+        uint32_t bamOffset;
+        uint32_t blockSize;
+        uint32_t bamSize;
+        uint32_t bitmapSize;
+        uint8_t* header; // 512 + 1024 + bam size
+
+        uint64_t bitmapSectorOffset;
+        uint8_t bitmapSector[512];
+    } vhd;
+
     Emulator::Interface::Media* media;
 
-    uint8_t buffer[512];
+    uint8_t blockBuffer[512];
 
     struct Partition {
         std::string name;
@@ -46,7 +60,7 @@ struct HardDiskStructure {
         uint32_t bootPrio;
 
         unsigned blocks;
-        unsigned offset;
+        uint64_t offset;
         uint64_t size;
     };
     std::vector<Partition> partitions;
@@ -96,11 +110,27 @@ struct HardDiskStructure {
 
     auto reset() -> void;
 
+    auto detectVHD() -> void;
+
     auto getListing() -> std::vector<Emulator::Interface::Listing>;
 
     auto readFileDriver(FileDriver& fileDriver, std::vector<uint8_t>& code) -> void;
 
     auto makePartitionUnique(std::string& name, unsigned suffix = 0) -> void;
+
+    static auto create(System* system, uint64_t _size, bool vhd) -> Emulator::Interface::Data;
+
+    static auto getVHDCrc(uint8_t* buf, unsigned crcPosToExclude = ~0) -> uint32_t;
+
+    auto read(uint8_t* buffer, uint64_t offset, unsigned length) -> bool;
+
+    auto readDirect(uint8_t* buffer, uint64_t offset, unsigned length) -> bool;
+
+    auto write(uint8_t* buffer, uint64_t offset, unsigned length) -> bool;
+
+    auto writeDirect(uint8_t* buffer, uint64_t offset, unsigned length) -> bool;
+
+    auto expandVHD(unsigned bamOffset) -> bool;
 };
 
 }

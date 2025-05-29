@@ -59,7 +59,7 @@ auto Interface::prepareModels() -> void {
 
 auto Interface::prepareMedia() -> void {
     mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "dms", "ipf", "adz", "exe"}, {"adf", "ext.adf"} });
-    mediaGroups.push_back({MediaGroupIdHardDisk, "harddisk", MediaGroup::Type::HardDisk, {"hdf", "hdz"}, {"hdf"} });
+    mediaGroups.push_back({MediaGroupIdHardDisk, "harddisk", MediaGroup::Type::HardDisk, {"hdf", "hdz", "vhd"}, {"hdf", "vhd"} });
 
     {   auto& group = mediaGroups[MediaGroupIdDisk];
         group.media.push_back({0, "DF0", 0, &group});
@@ -636,6 +636,10 @@ auto Interface::getHardDiskPreview(uint8_t* data, uint64_t size, Media* media) -
 
 auto Interface::buildHardDisk(const std::string& name, std::vector<Item>& files) -> Data {
     return HardDiskStructure::buildHardDisk(system, name, files);
+}
+
+auto Interface::createHardDiskImage(uint64_t _size, bool vhd) -> Data {
+    return HardDiskStructure::create(system, _size, vhd);
 }
 
 auto Interface::getModelIdOfEnabledDrives(MediaGroup* group) -> unsigned {

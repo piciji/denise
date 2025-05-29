@@ -629,7 +629,15 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         } catch (...) {
             message->error(trans->getA("invalid_input"));
             return;
-        }        
+        }    
+        
+        suffix = hdCreatorLayout->creator.format.text();
+        bool vhd = hdCreatorLayout->creator.format.userData() != 0;
+        Emulator::Interface::Data _data = emulator->createHardDiskImage((uint64_t)size * 1024ull * 1024ull, vhd);
+        if (_data.ptr) {
+            data = _data.ptr;
+            size = _data.size;
+        }
         
     } else if (mediaGroup->isDisk()) {
         suffix = diskCreatorLayout->format.text();
@@ -710,7 +718,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         }));
         
     } else {
-        // hd creation
+        // hd creation in chunks without any data
         file.unload();        
         
         std::thread t1([this, size, filePath] {
@@ -772,7 +780,7 @@ auto MediaLayout::prepareCreator() -> void {
         
         if (mediaGroup.isHardDisk()) {
 
-            hdCreatorLayout = new HdCreatorLayout;
+            hdCreatorLayout = new HdCreatorLayout(&mediaGroup);
 
             hdCreatorLayout->creator.button.onActivate = [this, group]() {
                 createImage( group );
@@ -1035,6 +1043,7 @@ auto MediaLayout::translate() -> void {
         hdCreatorLayout->setText( trans->get("harddisk_creator") );
         
         hdCreatorLayout->creator.diskSizeLabel.setText( trans->get("size_in_mb", {}, true) );
+        hdCreatorLayout->creator.formatName.setText(trans->getA("format", true));
         hdCreatorLayout->creator.button.setText( trans->get("create") );
     }
             
@@ -1056,12 +1065,8 @@ auto MediaLayout::translate() -> void {
 
 	unsigned neededWidth = 90;
 	
-    for(auto block : pathsLayout.blocks) {
-        				
+    for(auto block : pathsLayout.blocks) {        				
         block->label.setText( trans->get( getMediaGroupTransIdent(block->mediaGroup) ) );
-      //  block->empty.setText( trans->get("remove") );
-        //block->select.setText( trans->get("select") );
-		
 		neededWidth = std::max(neededWidth, block->label.minimumSize().width );
     }
 	

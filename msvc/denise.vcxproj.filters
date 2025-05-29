@@ -1132,6 +1132,9 @@
     <ClInclude Include="..\emulation\libami\drive\hunk.h">
       <Filter>emulation\libami\drive</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\tools\uuid.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2309,6 +2312,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libami\drive\hunk.cpp">
       <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\uuid.cpp">
+      <Filter>emulation\tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -328,8 +328,8 @@ struct Interface {
         virtual auto videoRefresh(const uint16_t*, unsigned, unsigned, unsigned, uint8_t) -> void {}
         virtual auto audioSample(int16_t, int16_t) -> void {}
         virtual auto audioFlush() -> void {}
-        virtual auto readMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
-        virtual auto writeMedia(Media*, uint8_t*, unsigned, unsigned) -> unsigned { return 0; }
+        virtual auto readMedia(Media*, uint8_t*, unsigned, uint64_t) -> unsigned { return 0; }
+        virtual auto writeMedia(Media*, uint8_t*, unsigned, uint64_t) -> unsigned { return 0; }
         virtual auto readAssignedMedia(Media*, uint8_t*&, bool) -> unsigned { return 0; }
         virtual auto writeAssignedMedia(Media*, uint8_t*, unsigned) -> unsigned { return 0; }
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
@@ -380,11 +380,11 @@ struct Interface {
         bind->midScreenCallback(options);
     }
 
-    auto readMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+    auto readMedia(Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
         return bind->readMedia(media, buffer, length, offset);
     }
 
-    auto writeMedia(Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+    auto writeMedia(Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
         return bind->writeMedia(media, buffer, length, offset);
     }
 
@@ -501,6 +501,7 @@ struct Interface {
 	virtual auto ejectHardDisk(Media* media) -> void {}
     virtual auto getHardDiskListing(Media* media) -> std::vector<Listing> { return {}; }
     virtual auto getHardDiskPreview(uint8_t* data, uint64_t size, Media* media) -> std::vector<Listing> { return {}; }
+    virtual auto createHardDiskImage(uint64_t _size, bool vhd) -> Data { return { nullptr, 0 }; }
     // tape handling
     virtual auto insertTape(Media* media, uint8_t* data, unsigned size) -> void {}    
     virtual auto writeProtectTape(Media* media, bool state) -> void {}

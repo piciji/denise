@@ -434,6 +434,7 @@ set(headerSrcs ${headerSrcs}
     emulation/tools/crop.h
     emulation/tools/dac.h
     emulation/tools/DLLoader.h
+    emulation/tools/uuid.h
     emulation/tools/flash040.h
     emulation/tools/fpaq0.h
     emulation/tools/gcr.h

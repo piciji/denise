@@ -446,7 +446,7 @@ auto BuiltinHD::handleCmd(bool delayed) -> void {
         case Command::ProtStatus:
         case Command::AddChangeInt:
         case Command::RemChangeInt:
-            warn("not implemented command: %x", cmd);
+            // warn("not implemented command: %x", cmd);
             break;
 
         case Command::SCSICMD: {
