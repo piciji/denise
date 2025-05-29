@@ -205,6 +205,7 @@
     <ClInclude Include="..\emulation\tools\socket.h" />
     <ClInclude Include="..\emulation\tools\splines.h" />
     <ClInclude Include="..\emulation\tools\systimer.h" />
+    <ClInclude Include="..\emulation\tools\uuid.h" />
     <ClInclude Include="..\emulation\wdc\65816\optable.h" />
     <ClInclude Include="..\emulation\wdc\65816\w65816.h" />
     <ClInclude Include="..\emulation\wdc\65C02\w65C02.h" />
@@ -1273,6 +1274,7 @@
     <ClCompile Include="..\emulation\tools\mx29lv640eb.cpp" />
     <ClCompile Include="..\emulation\tools\pia.cpp" />
     <ClCompile Include="..\emulation\tools\socket.cpp" />
+    <ClCompile Include="..\emulation\tools\uuid.cpp" />
     <ClCompile Include="..\emulation\wdc\65816\alu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>

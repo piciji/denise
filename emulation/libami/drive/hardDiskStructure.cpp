@@ -6,8 +6,10 @@
 #include "../../tools/buffer.h"
 #include "../../tools/error.h"
 #include "../../tools/crc32.h"
+#include "../../tools/uuid.h"
 #include "../system/firmware.h"
 #include <cmath>
+#include <ctime>
 
 namespace LIBAMI {
 
@@ -16,6 +18,8 @@ HardDiskStructure::HardDiskStructure(Agnus& agnus, Emulator::Interface::Media* m
     size = 0;
     data = nullptr;
     hasRDB = false;
+    vhd.inUse = false;
+    vhd.header = nullptr;
 }
 
 auto HardDiskStructure::attach(uint8_t* data, uint64_t size) -> bool {
@@ -23,7 +27,7 @@ auto HardDiskStructure::attach(uint8_t* data, uint64_t size) -> bool {
     this->size = size;
     
     if (!size)
-        return false;
+        return false;    
 
     reset();
 
@@ -31,9 +35,84 @@ auto HardDiskStructure::attach(uint8_t* data, uint64_t size) -> bool {
 }
 
 auto HardDiskStructure::reset() -> void {
+    detectVHD();
     detectGeometry();
     detectPartitions();
     detectFileDrivers();
+}
+
+auto HardDiskStructure::detectVHD() -> void {
+    uint8_t header[512];
+    uint8_t footer[512];
+
+    vhd.inUse = false;
+
+    if (!readDirect(header, 0, 512))
+        return;
+
+    uint32_t val = ToU32BE(header + 8);
+    if ((val & 3) != 2)
+        return;
+
+    val = ToU32BE(header + 0xc);
+    if ((val >> 16) != 1)
+        return;
+
+    val = ToU32BE(header + 0x3c);
+    if (val != 2 && val != 3) // allow fixed or dynamic
+        return;
+
+    vhd.dynamic = val == 3;
+
+    val = ToU32BE(header + 0x40);
+    if (!val) // checksum
+        return;
+
+    if (getVHDCrc(header, 0x40) != val)
+        return;
+
+    if (!readDirect(footer, size - 512, 512))
+        return;
+    
+    if (std::memcmp(footer, header, 512)) // footer and header are redundant
+        return;
+
+    vhd.size = (uint64_t)(ToU32BE(header + 0x30)) << 32;
+    vhd.size |= (uint64_t)(ToU32BE(header + 0x34));
+
+    if (vhd.dynamic) {
+        vhd.bamOffset = ToU32BE(header + 0x14); // offset to dynamic disk header
+
+        if (!vhd.bamOffset || (vhd.bamOffset >= size))
+            return;
+
+        if (!readDirect(header, vhd.bamOffset, 512))
+            return;
+
+        val = ToU32BE(header + 0x24);
+
+        if (getVHDCrc(header, 0x24) != val)
+            return;
+
+        val = ToU32BE(header + 0x18);
+        if ((val >> 16) != 1) // check version
+            return;
+
+        vhd.bamOffset = ToU32BE(header + 0x14); // offset to BAM, 512 + 1024
+        vhd.blockSize = ToU32BE(header + 0x20);        
+        vhd.bamSize = ((uint32_t)((vhd.size + (uint64_t)vhd.blockSize - 1) / (uint64_t)vhd.blockSize) * 4 + 511) & ~511;
+        // one bit for each 512 byte sector, a block size up to 2 MB fits in one 512 byte bitmap sector
+        vhd.bitmapSize = ((vhd.blockSize / (8 * 512)) + 511) & ~511; // align to 512 byte sector boundary
+
+        vhd.header = new uint8_t[vhd.bamOffset + vhd.bamSize];
+
+        if (!readDirect(vhd.header, 0, vhd.bamOffset + vhd.bamSize))
+            return;
+
+        vhd.bitmapSectorOffset = 0;
+    }
+
+    vhd.inUse = true;
 }
 
 auto HardDiskStructure::detach() -> void {
@@ -41,6 +120,12 @@ auto HardDiskStructure::detach() -> void {
     fileDrivers.clear();
     data = nullptr;
     size = 0;
+    vhd.inUse = false;
+
+    if (vhd.header) {
+        delete[] vhd.header;
+        vhd.header = nullptr;
+    }    
 }
 
 auto HardDiskStructure::getRDB() -> uint8_t* {
@@ -58,16 +143,181 @@ auto HardDiskStructure::getBlock(unsigned ref) -> uint8_t* {
     if (ref == ~0)
         return nullptr;
 
-    // don't fetch logical filesystem blocks here, hence size does not necessarily have to be 512 for this. 
-    if ((512ull * (uint64_t)(ref + 1)) <= size) {
-        if (this->data) {
-            if ((512ull * (uint64_t)ref + 512ull) <= size)
-                return this->data + 512 * ref;
-        } else if (agnus.interface->readMedia(media, buffer, 512, 512 * ref) == 512)
-            return &buffer[0];
-    }
+    // don't fetch logical filesystem blocks here, hence size does not necessarily have to be 512 for this.
+    if (read(blockBuffer, 512ull * (uint64_t)ref, 512))
+        return &blockBuffer[0];
 
     return nullptr;
+}
+
+inline auto HardDiskStructure::writeDirect(uint8_t* buffer, uint64_t offset, unsigned length) -> bool {
+    if ((offset + (uint64_t)length) > size)
+        return false;
+
+    if (data) {
+        std::memcpy(data + (uint32_t)offset, buffer, length);
+        return true;
+
+    } else if (agnus.interface->writeMedia(media, buffer, length, offset) == length)
+        return true;
+
+    return false;
+}
+
+auto HardDiskStructure::write(uint8_t* buffer, uint64_t offset, unsigned length) -> bool {
+    if (!vhd.inUse)
+        return writeDirect(buffer, offset, length);
+
+    if (!vhd.dynamic)
+        return writeDirect(buffer, offset + 512ull, length);
+
+    // dynamic VHD    
+    if (offset & 511)
+        return false;
+
+    if (length & 511)
+        return false;
+
+    uint8_t* ptr = buffer;
+
+    while (length) {
+        uint32_t bamOffset = (uint32_t)(offset / (uint64_t)vhd.blockSize) * 4 + vhd.bamOffset;
+        uint32_t blockOffset = ToU32BE(vhd.header + bamOffset);
+
+        if (blockOffset == 0xffffffff) {
+            if (!expandVHD(bamOffset))
+                return false;
+            
+            continue; // now try again this sector
+
+        } else {
+            unsigned sectorInBlock = (uint32_t)(offset / 512ull) % (vhd.blockSize / 512);
+            unsigned bitmapPos = sectorInBlock / 8; // one bit each sector
+
+            uint64_t bitmapSectorOffset = (uint64_t)blockOffset * 512ull + (uint64_t)(bitmapPos & ~511);
+
+            if (vhd.bitmapSectorOffset != bitmapSectorOffset) {
+                if (!readDirect(vhd.bitmapSector, bitmapSectorOffset, 512))
+                    return false;
+
+                vhd.bitmapSectorOffset = bitmapSectorOffset;
+            }
+
+            uint64_t sectorOffset = (uint64_t)blockOffset * 512ull + (uint64_t)vhd.bitmapSize + (uint64_t)sectorInBlock * 512ull;
+
+            if (!writeDirect(ptr, sectorOffset, 512))
+                return false;
+
+            if (!(vhd.bitmapSector[bitmapPos & 511] & (1 << (7 - (sectorInBlock & 7))))) { // check if allocated
+                vhd.bitmapSector[bitmapPos & 511] |= (1 << (7 - (sectorInBlock & 7)));
+
+                if (!writeDirect(vhd.bitmapSector, bitmapSectorOffset, 512))
+                    return false;
+            }
+        }
+
+        length -= 512;
+        offset += 512ull;
+        ptr += 512;
+    }
+
+    return true;
+}
+
+auto HardDiskStructure::expandVHD(unsigned bamOffset) -> bool {
+    if (this->data) // compressed VHD will not be expanded
+        return false;
+
+    unsigned length = vhd.blockSize + vhd.bitmapSize + 512;
+    uint8_t* buffer = new uint8_t[length];
+    std::memset(buffer, 0, length - 512);
+    std::memcpy(buffer + length - 512, vhd.header, 512);
+
+    uint64_t footerOffset = size - 512ull;
+    size += (uint64_t)(length - 512);
+
+    bool result = writeDirect(buffer, footerOffset, length);
+    delete[] buffer;
+
+    if (!result) {
+        size = footerOffset + 512ull;
+        return false;
+    }
+
+    uint8_t* ptr = vhd.header + bamOffset;
+    uint32_t blockOffset = (uint32_t)(footerOffset / 512ull);
+
+    FromU32BE(ptr, blockOffset);
+
+    return writeDirect(vhd.header + vhd.bamOffset, vhd.bamOffset, vhd.bamSize);
+}
+
+inline auto HardDiskStructure::readDirect(uint8_t* buffer, uint64_t offset, unsigned length) -> bool {
+    if ((offset + (uint64_t)length) > size)
+        return false;
+
+    if (data) {
+        std::memcpy(buffer, data + (uint32_t)offset, length);
+        return true;
+                  
+    } else if (agnus.interface->readMedia(media, buffer, length, offset) == length)
+        return true;
+
+    return false;
+}
+
+auto HardDiskStructure::read(uint8_t* buffer, uint64_t offset, unsigned length) -> bool {
+    if (!vhd.inUse)
+        return readDirect(buffer, offset, length);
+
+    if (!vhd.dynamic)
+        return readDirect(buffer, offset + 512ull, length);
+
+    // dynamic VHD    
+    if (offset & 511)
+        return false;
+
+    if (length & 511)
+        return false;
+
+    uint8_t* ptr = buffer;
+
+    while(length) {
+        uint32_t bamOffset = (uint32_t)(offset / (uint64_t)vhd.blockSize) * 4 + vhd.bamOffset;
+        uint32_t blockOffset = ToU32BE(vhd.header + bamOffset);
+
+        if (blockOffset == 0xffffffff) {
+            std::memset(ptr, 0, 512);
+
+        } else {
+            unsigned sectorInBlock = (uint32_t)(offset / 512ull) % (vhd.blockSize / 512);
+            unsigned bitmapPos = sectorInBlock / 8; // one bit each sector
+
+            uint64_t bitmapSectorOffset = (uint64_t)blockOffset * 512ull + (uint64_t)(bitmapPos & ~511);
+
+            if (vhd.bitmapSectorOffset != bitmapSectorOffset) {                
+                 if (!readDirect(vhd.bitmapSector, bitmapSectorOffset, 512))
+                     return false;
+
+                 vhd.bitmapSectorOffset = bitmapSectorOffset;
+            }
+            
+            if (vhd.bitmapSector[bitmapPos & 511] & (1 << (7 - (sectorInBlock & 7)))) { // check if allocated
+                uint64_t sectorOffset = (uint64_t)blockOffset * 512ull + (uint64_t)vhd.bitmapSize + (uint64_t)sectorInBlock * 512ull;
+
+                if (!readDirect(ptr, sectorOffset, 512))
+                    return false;
+
+            } else
+                std::memset(ptr, 0, 512);
+        }
+
+        length -= 512;
+        offset += 512ull;
+        ptr += 512;
+    }
+
+    return true;
 }
 
 auto HardDiskStructure::detectGeometry() -> void {
@@ -87,9 +337,23 @@ auto HardDiskStructure::detectGeometry() -> void {
 }
 
 auto HardDiskStructure::predictGeometrie() -> void {
-    geometry.bSize = 512;
-    geometry.sectors = 32;
+    geometry.bSize = 512;    
 
+    if (vhd.inUse) {
+        uint8_t header[512];
+
+        if (readDirect(header, 0, 512)) {
+            geometry.cylinders = header[0x38] << 8;
+            geometry.cylinders |= header[0x39];
+            geometry.heads = header[0x3a];
+            geometry.sectors = header[0x3b];
+
+            if (geometry.heads && geometry.cylinders && geometry.sectors)
+                return;
+        }
+    }
+
+    geometry.sectors = 32;
     unsigned numBlocks = size / (uint64_t)geometry.bSize;
     double _inMB = (double)numBlocks / (double)(2 * 1024);
 
@@ -167,7 +431,7 @@ auto HardDiskStructure::detectPartitions() -> void {
 
         partition.blocks = c * h * s;
         partition.size = (uint64_t)partition.blocks * (uint64_t)partition.bSize;
-        partition.offset = partition.cylLo * partition.heads * partition.sectors * partition.bSize;
+        partition.offset = (uint64_t)partition.cylLo * (uint64_t)partition.heads * (uint64_t)partition.sectors * (uint64_t)partition.bSize;
 
         inform("HD %i, partition %s size %llu", media->id, partition.name.c_str(), (unsigned long long)partition.size);
     }
@@ -281,23 +545,14 @@ auto HardDiskStructure::addFileDriver(uint8_t* data) -> void {
 
 auto HardDiskStructure::getListing() -> std::vector<Emulator::Interface::Listing> {
     std::vector<Emulator::Interface::Listing> listing;
-    Filesystem* fs = nullptr;
 
     if (hasRDB)
         listing.push_back({ {'R','D','B'} });
 
     for (auto& partition : partitions) {
-        if (this->data == nullptr) {
-            FilesystemExt* fsExt = new FilesystemExt(partition.size, (Filesystem::Structure)partition.dosType, partition.bSize);
-            fsExt->setDataSource(agnus.interface, media, partition.offset);
-            fs = fsExt;
-        } else {
-            fs = new Filesystem(partition.size, (Filesystem::Structure)partition.dosType, partition.bSize);
-            if (!fs->importMedia(data + partition.offset, partition.size)) {
-
-            }
-        }
-
+        FilesystemExt fsExt(partition.size, (Filesystem::Structure)partition.dosType, partition.bSize);
+        fsExt.setDataSource(this, partition.offset);
+         
         std::vector<uint16_t> out;
         std::string _name = partition.name;
         _name = " - " + _name;
@@ -305,7 +560,7 @@ auto HardDiskStructure::getListing() -> std::vector<Emulator::Interface::Listing
         for (unsigned i = 0; i < _name.size(); i++)
             out[i] = _name[i];
 
-        auto _listing = fs->getDirectory(true);
+        auto _listing = fsExt.getDirectory(true);
 
         if (_listing.size()) {
             if (!listing.empty())
@@ -315,7 +570,6 @@ auto HardDiskStructure::getListing() -> std::vector<Emulator::Interface::Listing
 
             Filesystem::combine(listing, _listing, true);
         }
-        delete fs;
     }
 
     return listing;
@@ -332,22 +586,22 @@ auto HardDiskStructure::readFileDriver(FileDriver& fileDriver, std::vector<uint8
 
     unsigned codeOffset = 0;
     code.resize(codeSize);
+    uint8_t* buffer = new uint8_t[geometry.bSize];
 
     for (auto& seg : fileDriver.segList) {
-        auto offset = seg * geometry.bSize + 20;
+        auto offset = seg * geometry.bSize;
 
-        if (this->data) {
-            if ((uint64_t)offset + (uint64_t)bytesPerBlock <= size)
-                std::memcpy(code.data() + codeOffset, data + offset, bytesPerBlock);
-            else
-                throw Emulator::Error(EType::HDD_BAD_FILE_OFFSET, offset);
-
-        }
-        else if (agnus.interface->readMedia(media, code.data() + codeOffset, bytesPerBlock, offset) != bytesPerBlock)
+        if (!read(buffer, offset, geometry.bSize)) {
+            delete[] buffer;
             throw Emulator::Error(EType::HDD_BAD_FILE_OFFSET, offset);
+        }
+
+        std::memcpy(code.data() + codeOffset, buffer + 20, bytesPerBlock);
 
         codeOffset += bytesPerBlock;
     }
+
+    delete[] buffer;
 }
 
 auto HardDiskStructure::buildHdfFromBinaries(const std::string& name, std::vector<Emulator::Interface::Item>& files) -> Emulator::Interface::Data {
@@ -426,6 +680,100 @@ auto HardDiskStructure::buildHdfFromBinaries(const std::string& name, std::vecto
 auto HardDiskStructure::buildHardDisk(System* system, const std::string& name, std::vector<Emulator::Interface::Item>& files) -> Emulator::Interface::Data {
     HardDiskStructure hardDisk(system->agnus, nullptr);
     return hardDisk.buildHdfFromBinaries(name, files);
+}
+
+auto HardDiskStructure::create(System* system, uint64_t _size, bool vhd) -> Emulator::Interface::Data {
+    if (!vhd)
+        return {nullptr, 0}; // let UI create a header less HDF
+
+    // create dynamic VHD
+    HardDiskStructure hs(system->agnus, nullptr);
+    hs.size = _size;
+
+    uint32_t blockSize = 512 * 1024;
+    uint32_t batSize = (uint32_t)((_size + (uint64_t)blockSize - 1) / (uint64_t)blockSize);
+
+    uint32_t maxEntries = batSize;
+    batSize *= 4;
+    // BAT is always extended to sector boundary
+    batSize += 511;
+    batSize &= ~511;
+
+    unsigned bufSize = 512 + 1024 + batSize + 512;
+    uint8_t* buffer = new uint8_t[bufSize];
+    std::memset(buffer, 0, bufSize);
+
+    std::memcpy(buffer, "conectix", 8);
+    buffer[0x0b] = 2; // features
+    buffer[0x0d] = 1; // version 0x10000
+    buffer[0x16] = 2; // data offset 0x200 (512) -> points to header for dynamic disks
+
+    auto tm = std::time(nullptr) - 946684800; // 1.1.2000 12:00:00 - 1.1.1970 00:00:00
+    FromU32BE(buffer + 0x18, tm);
+
+    std::memcpy(buffer + 0x1c, "vpc ", 4); // creator application
+
+    buffer[0x21] = 5; // creator version (Virtual PC 2004)
+    std::memcpy(buffer + 0x24, "Wi2k", 4); // creator host os
+    // original and current size
+    buffer[0x28] = buffer[0x30] = (uint8_t)(_size >> 56);
+    buffer[0x29] = buffer[0x31] = (uint8_t)(_size >> 48);
+    buffer[0x2a] = buffer[0x32] = (uint8_t)(_size >> 40);
+    buffer[0x2b] = buffer[0x33] = (uint8_t)(_size >> 32);
+    buffer[0x2c] = buffer[0x34] = (uint8_t)(_size >> 24);
+    buffer[0x2d] = buffer[0x35] = (uint8_t)(_size >> 16);
+    buffer[0x2e] = buffer[0x36] = (uint8_t)(_size >> 8);
+    buffer[0x2f] = buffer[0x37] = (uint8_t)(_size >> 0);
+
+    hs.predictGeometrie();
+
+    buffer[0x38] = hs.geometry.cylinders >> 8;
+    buffer[0x39] = hs.geometry.cylinders;
+    buffer[0x3a] = hs.geometry.heads;
+    buffer[0x3b] = hs.geometry.sectors;
+    buffer[0x3f] = 3; // dynamic VHD
+
+    // GUID needed for "differencing hard disks" to find out parent <> child relationship
+    Emulator::UUID uuid;
+    auto guid = uuid.get();
+    std::memcpy(buffer + 0x44, (uint8_t*)guid.data(), guid.size());
+
+    auto crc = getVHDCrc(buffer);
+    FromU32BE(buffer + 0x40, crc);
+
+    // 512 byte footer and header are the same
+    std::memcpy(buffer + 512 + 1024 + batSize, buffer, 512);
+
+    // header for dynamic VHD
+    uint8_t* ptr = buffer + 512;
+    std::memcpy(ptr, "cxsparse", 8);
+    std::memset(ptr + 8, 0xff, 8); // unused
+
+    ptr[0x16] = 6; // 0x600 header + sparse
+    ptr[0x19] = 1; // version 0x1000
+
+    FromU32BE(ptr + 0x1c, maxEntries);
+    FromU32BE(ptr + 0x20, blockSize);
+
+    crc = getVHDCrc(ptr);
+    FromU32BE(ptr + 0x24, crc);
+
+    std::memset(buffer + 512 + 1024, 0xff, maxEntries * 4);
+
+    return { buffer, bufSize };
+}
+
+auto HardDiskStructure::getVHDCrc(uint8_t* buf, unsigned crcPosToExclude) -> uint32_t {
+    uint32_t sum = 0;
+
+    for (int i = 0; i < 512; i++) {
+        if ( (crcPosToExclude != ~0) && (i >= crcPosToExclude && i < crcPosToExclude + 4))
+            continue;
+
+        sum += buf[i];
+    }
+
+    return ~sum;
 }
 
 }

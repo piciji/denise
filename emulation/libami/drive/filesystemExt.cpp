@@ -7,8 +7,6 @@ namespace LIBAMI {
 FilesystemExt::FilesystemExt(uint64_t size, Structure structure, unsigned bSize)
 : Filesystem(size, structure, bSize) {
     buffer = new uint8_t[bSize];
-    media = nullptr;
-    interface = nullptr;
     offset = 0;
 }
 
@@ -16,9 +14,8 @@ FilesystemExt::~FilesystemExt() {
     delete[] buffer;
 }
 
-auto FilesystemExt::setDataSource(Emulator::Interface* interface, Emulator::Interface::Media* media, unsigned offset) -> void {
-    this->media = media;
-    this->interface = interface;
+auto FilesystemExt::setDataSource(HardDiskStructure* hdStructure, uint64_t offset) -> void {
+    this->structure = hdStructure;
     this->offset = offset;
 }
 
@@ -35,7 +32,7 @@ auto FilesystemExt::getBlock(unsigned ref) -> SectorBlock* {
 }
 
 auto FilesystemExt::getBlock(unsigned ref, SectorBlock::Type type) -> SectorBlock* {
-    if (interface && interface->readMedia(media, buffer, bSize, offset + bSize * ref) == bSize) {
+    if (structure->read(buffer, offset + (uint64_t)bSize * (uint64_t)ref, bSize)) {
         if (type == SectorBlock::Type::EMPTY_BLOCK)
             type = predictType(ref, buffer);
 

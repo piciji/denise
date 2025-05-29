@@ -218,11 +218,13 @@ struct FlashCreatorLayout : GUIKIT::FramedHorizontalLayout {
 struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
 
     struct Creator : GUIKIT::HorizontalLayout {
+        GUIKIT::Label formatName;
+        GUIKIT::ComboButton format;
         GUIKIT::Label diskSizeLabel;
         GUIKIT::LineEdit diskSize;
         GUIKIT::Button button;
 
-        Creator();
+        Creator(Emulator::Interface::MediaGroup* mediaGroup);
     } creator;
 
     struct Progress : GUIKIT::HorizontalLayout {
@@ -232,7 +234,7 @@ struct HdCreatorLayout : GUIKIT::FramedVerticalLayout {
         Progress();
     } progress;
 
-    HdCreatorLayout();
+    HdCreatorLayout(Emulator::Interface::MediaGroup* mediaGroup);
 };
 
 struct MediaLayout : GUIKIT::HorizontalLayout {

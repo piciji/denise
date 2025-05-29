@@ -218,10 +218,21 @@ FlashCreatorLayout::FlashCreatorLayout() {
     setAlignment(0.5);
 }
 
-HdCreatorLayout::Creator::Creator() {
+HdCreatorLayout::Creator::Creator(Emulator::Interface::MediaGroup* mediaGroup) {
     GUIKIT::LineEdit test;
     test.setText("9999");
     
+    unsigned formatId = 0;
+    for (auto& creatable : mediaGroup->creatable)
+        format.append(creatable, formatId++);
+
+    append(formatName, { 0u, 0u }, 10);
+
+    if (format.rows() == 1)
+        format.setEnabled(false);
+
+    append(format, { 0u, 0u }, 10);
+
     append(diskSizeLabel, {0u, 0u}, 10);
     append(diskSize, {test.minimumSize().width, 0u}, 10);
     append(button, {0u, 0u});
@@ -241,7 +252,8 @@ HdCreatorLayout::Progress::Progress() {
     append(label, {40u, 0u} );
 }
 
-HdCreatorLayout::HdCreatorLayout() {
+HdCreatorLayout::HdCreatorLayout(Emulator::Interface::MediaGroup* mediaGroup)
+: creator(mediaGroup) {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
 

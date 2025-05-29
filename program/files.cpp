@@ -85,7 +85,7 @@ auto Program::errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> 
 }
 
 
-auto Program::readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+auto Program::readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
 	if (!media->guid)
 		return 0;
     
@@ -114,7 +114,7 @@ auto Program::readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buf
     return 0;
 }
 
-auto Program::writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, unsigned offset) -> unsigned {
+auto Program::writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
 	if (!activeEmulator || !media->guid)
 		return 0;
     

@@ -283,13 +283,9 @@ auto HardDrive::writeData(uint16_t data) -> void {
         unsigned lba = getLba();
 
         if (!writeProtected) {
-            if (structure.data) {
-                std::memcpy(structure.data + writeOffset, buffer, transferSize);
-            } else {
-                if (interface->writeMedia(media, buffer, transferSize, writeOffset) != transferSize) {
-                    status |= (uint8_t)State::ERR;
-                    error |= (uint8_t)Error::Idnf;
-                }
+            if (!structure.write(buffer, (uint64_t)writeOffset, transferSize)) {
+                status |= (uint8_t)State::ERR;
+                error |= (uint8_t)Error::Idnf;
             }
         }
 
@@ -338,15 +334,8 @@ auto HardDrive::readSector(bool verify, bool useMultiple) -> void {
     
     sectorCount -= _secToTransfer > refill.sectors ? refill.sectors : _secToTransfer;
 
-    if (structure.data) {
-        if (((uint64_t)(lba * geometry().bSize) + (uint64_t)transferSize) <= structure.size)
-            std::memcpy(buffer, structure.data + lba * geometry().bSize, transferSize);
-        else
-            error |= (uint8_t)Error::Idnf;
-    } else {
-        if (interface->readMedia(media, buffer, transferSize, lba * geometry().bSize) != transferSize)
-            error |= (uint8_t)Error::Idnf;
-    }
+    if (!structure.read(buffer, (uint64_t)lba * (uint64_t)geometry().bSize, transferSize))
+        error |= (uint8_t)Error::Idnf;
 
     if (error & (uint8_t)Error::Idnf) {
         status |= (uint8_t)State::ERR;
@@ -400,7 +389,7 @@ auto HardDrive::getLba() -> unsigned {
 }
 
 auto HardDrive::maxLba() -> unsigned {
-    return structure.size / (uint64_t)geometry().bSize;
+    return (structure.vhd.inUse ? structure.vhd.size : structure.size) / (uint64_t)geometry().bSize;
 }
 
 auto HardDrive::identify() -> void {
@@ -448,7 +437,7 @@ auto HardDrive::identify() -> void {
     FromU16LE(buffer + 112, geometry().sectors);
     FromU32LE(buffer + 114, geometry().sectors * geometry().cylinders * geometry().heads);
     FromU16LE(buffer + 118, 0x100 | multiple);
-    FromU32LE(buffer + 120, structure.size / (uint64_t)geometry().bSize);
+    FromU32LE(buffer + 120, (structure.vhd.inUse ? structure.vhd.size : structure.size) / (uint64_t)geometry().bSize);
     FromU16LE(buffer + 124, 7); // mode 0 - 2
     FromU16LE(buffer + 126, 7); // mode 0 - 2
 }
@@ -460,12 +449,8 @@ auto HardDrive::read(unsigned offset, unsigned length) -> uint8_t* {
     convertCHS(offset / geometry().bSize);
     agnus.interface->updateDeviceState(media, false, getPositonForUI(), 0x80 | 0x40 | 1, false);
 
-    if (structure.data) {
-        if (((uint64_t)offset + (uint64_t)length) <= structure.size)
-            return structure.data + offset;
-    } else if (interface->readMedia(media, buffer, length, offset) == length) {
-        return buffer;
-    }    
+    if (structure.read(buffer, offset, length))
+        return buffer;   
 
     return nullptr;
 }
@@ -477,12 +462,10 @@ auto HardDrive::write(unsigned offset, unsigned length) -> bool {
     convertCHS(offset / geometry().bSize);
     agnus.interface->updateDeviceState(media, true, getPositonForUI(), 0x80 | 0x40 | 1, false);
 
-    if (structure.data) {
-        std::memcpy(structure.data + offset, buffer, length);
-    } else if (interface->writeMedia(media, buffer, length, offset) != length)
-        return false;
+    if (structure.write(buffer, offset, length))
+        return true;
 
-    return true;
+    return false;
 }
 
 inline auto HardDrive::getPositonForUI() -> unsigned {

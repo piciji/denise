@@ -133,6 +133,7 @@ set(srcs
         emulation/libami/expansionPort/builtinHD.cpp
         emulation/libami/system/firmware.cpp
         emulation/tools/DLLoader.cpp
+        emulation/tools/uuid.cpp
         emulation/libc64/vicII/base.cpp
         emulation/libc64/vicII/vicII.cpp
         emulation/libc64/vicII/fast/vicIIFast.cpp
@@ -328,7 +329,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
 else()
-    target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr")
+    target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr -luuid")
     target_link_directories(${PROJECT_NAME} PUBLIC ${GTK_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${X11_LIBRARY_DIRS})
