@@ -562,15 +562,15 @@ inline auto Agnus::dmaCycle() -> void {
         else if (hPos == ddfStart)
             bplControl<false, true>();
     }
-    
-    if (paula.iplCounter)
-        paula.iplUpdate();
         
     if (paula.sampleCycle == clock)
         paula.sampleUpdate();
 
     if (actions) {
         int _actions = actions;
+
+        if (_actions & ACT_IPLCOUNTER)
+            paula.iplUpdate();
 
         if (_actions & ACT_BPL)
             fetchPlanes();

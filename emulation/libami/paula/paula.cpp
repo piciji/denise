@@ -326,6 +326,8 @@ auto Paula::iplUpdate() -> void {
     cpu.setInterrupt( (ipl >> 16) & 7 );
     ipl = (ipl << 8) | (ipl & 0xff);
     iplCounter--;
+    if (!iplCounter)
+        agnus.actions &= ~Agnus::ACT_IPLCOUNTER;
 }
 
 auto Paula::sampleUpdate() -> void {

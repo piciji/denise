@@ -155,6 +155,7 @@ auto Paula::prepareIpl() -> void {
     if (level != lastIPL) {
         ipl = (ipl & ~0xff) | level;
         iplCounter = 3;
+        agnus.actions |= Agnus::ACT_IPLCOUNTER;
     }
 }
 
