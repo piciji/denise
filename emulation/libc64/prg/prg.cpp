@@ -106,6 +106,29 @@ auto Prg::inject( ) -> void {
 
     uint16_t end = useChunk->offset + useChunk->size;
     // now we need to simulate the kernal load
+
+    uint8_t hiBegin = useChunk->offset >> 8;
+    uint8_t hiNext = *(useChunk->data + 1);
+    uint8_t hiDiff = hiNext - hiBegin;
+
+    // e.g. hi byte is 0x1c (C128), correct it to 0x08 (C64)
+    if ((useChunk->offset == 0x0801) && (hiDiff > 1)) {
+        uint16_t nextAddr = useChunk->offset;
+        ram[nextAddr + 1] -= hiDiff;
+
+        for (;;) {
+            nextAddr = ram[nextAddr] | (ram[nextAddr + 1] << 8);  
+
+            if (nextAddr >= end)
+                break; // shouldn't happen
+
+            if ((ram[nextAddr] | (ram[nextAddr + 1] << 8)) == 0)
+                break; // final basic line
+
+            ram[nextAddr + 1] -= hiDiff;
+        }
+    }
+
     ram[0x2b] = ram[0xac] = ram[0x2b];
     ram[0x2c] = ram[0xad] = ram[0x2c];
     ram[0x2d] = ram[0x2f] = ram[0x31] = ram[0xae] = end & 0xff;
