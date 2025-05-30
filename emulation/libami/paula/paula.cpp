@@ -146,6 +146,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
 
     s.integer(ipl);
     s.integer(iplCounter);
+    s.integer(sampleCounter);
 
     s.integer(intreqAud0Clock);
     s.integer(intreqAud1Clock);
@@ -295,6 +296,7 @@ auto Paula::power() -> void {
     dskBytr = 0;
     diskState = DiskState::OFF;
     iplCounter = 0;
+    sampleCounter = 0;
     ipl = 0;
     intreqAud0Clock = INT64_MAX;
     intreqAud1Clock = INT64_MAX;
@@ -330,23 +332,58 @@ auto Paula::iplUpdate() -> void {
         agnus.actions &= ~Agnus::ACT_IPLCOUNTER;
 }
 
-auto Paula::sampleUpdate() -> void {
-    sampleCycle = agnus.clock + sampleLimit;
-    
-    if (audioOut) {
-        int32_t sampleL = channels[0].sample + channels[3].sample; // sample: 14 bit (8bit * 6bit volume), mix two samples: 15 bit
-        int32_t sampleR = channels[1].sample + channels[2].sample;
-        sampleL <<= 1; // 16 bit
-        sampleR <<= 1;
-
-        if (filterMode != 4) { // A1200 Off don't use filter
-            int _filterMode = filterMode;
-            sampleL = lowPassfilter<0>(sampleL, _filterMode);
-            sampleR = lowPassfilter<1>(sampleR, _filterMode);
-        }
-        
-        system->audioRefresh(Emulator::sclamp(16, sampleL), Emulator::sclamp(16, sampleR));
+template<bool force> auto Paula::sampleUpdate() -> void {
+    int cyclesToDo = (int)agnus.fallBackCycles(sampleCycle);
+    if constexpr(!force) {
+        if (cyclesToDo < 30)
+            return;
     }
+
+    uint8_t _limit = sampleLimit;
+
+    if (audioOut) {
+        for (int c = 0; c < cyclesToDo; c++) {
+
+            if (++sampleCounter == _limit) {
+                sampleCounter = 0;
+                int32_t sampleL = channels[0].sample + channels[3].sample; // sample: 14 bit (8bit * 6bit volume), mix two samples: 15 bit
+                int32_t sampleR = channels[1].sample + channels[2].sample;
+                sampleL <<= 1; // 16 bit
+                sampleR <<= 1;
+
+                if (filterMode != 4) { // A1200 Off don't use filter
+                    int _filterMode = filterMode;
+                    sampleL = lowPassfilter<0>(sampleL, _filterMode);
+                    sampleR = lowPassfilter<1>(sampleR, _filterMode);
+                }
+
+                system->audioRefresh(Emulator::sclamp(16, sampleL), Emulator::sclamp(16, sampleR));
+            }
+        }
+    } else {
+        sampleCounter = ((int)sampleCounter + cyclesToDo) % _limit;
+    }
+
+    sampleCycle = agnus.clock;
 }
+
+// auto Paula::sampleUpdate() -> void {
+//     sampleCycle = agnus.clock + sampleLimit;
+    
+//     if (audioOut) {
+//         int32_t sampleL = channels[0].sample + channels[3].sample; // sample: 14 bit (8bit * 6bit volume), mix two samples: 15 bit
+//         int32_t sampleR = channels[1].sample + channels[2].sample;
+//         sampleL <<= 1; // 16 bit
+//         sampleR <<= 1;
+
+//         if (filterMode != 4) { // A1200 Off don't use filter
+//             int _filterMode = filterMode;
+//             sampleL = lowPassfilter<0>(sampleL, _filterMode);
+//             sampleR = lowPassfilter<1>(sampleR, _filterMode);
+//         }
+        
+//         system->audioRefresh(Emulator::sclamp(16, sampleL), Emulator::sclamp(16, sampleR));
+//     }
+// }
 
 }

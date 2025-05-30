@@ -124,6 +124,7 @@ struct Paula {
     } channels[4];
 
     uint8_t sampleLimit;
+    uint8_t sampleCounter;
     int64_t sampleCycle;
 
     int64_t intUpdClock;
@@ -241,7 +242,7 @@ struct Paula {
     auto updateSerialEvent() -> void;
     
     auto iplUpdate() -> void;
-    auto sampleUpdate() -> void;
+    template<bool force = true> auto sampleUpdate() -> void;
 };
 
 }

@@ -133,6 +133,7 @@ template<uint8_t nr> auto Paula::audxDat(uint16_t value) -> void {
 template<uint8_t nr> inline auto Paula::addSample( uint8_t sample ) -> void {
     Channel& cha = channels[nr];
     cha.sample = (int8_t)sample * cha.vol;
+    sampleUpdate();
 }
 
 template<uint8_t nr> auto Paula::audxLen(uint16_t value) -> void {
@@ -295,4 +296,6 @@ template auto Paula::audxVol<1>(uint16_t value) -> void;
 template auto Paula::audxVol<2>(uint16_t value) -> void;
 template auto Paula::audxVol<3>(uint16_t value) -> void;
 
+template auto Paula::sampleUpdate<true>() -> void;
+template auto Paula::sampleUpdate<false>() -> void;
 }

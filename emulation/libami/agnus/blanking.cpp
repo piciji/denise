@@ -46,6 +46,7 @@ auto Agnus::startHblank() -> void {
 		    }
 		}
 
+        paula.sampleUpdate();
         system->videoRefresh(frameBuffer + (vBlankOffset * LINE_BUFFER_WIDTH) + LINE_RENDER_OFFSET, width, lineVCounter,
                              LINE_BUFFER_WIDTH - width, laceFrame | (denise.hiresFrame ? 4 : 0));
 
