@@ -2,7 +2,7 @@
 #include "cia.h"
 
 template<uint8_t model>
-auto Cia<model>::tod() -> void {
+auto Cia<model>::tod(unsigned clockAllignment) -> void {
     // calling this function means "rising edge"
     if (!todActive)
         return;
@@ -78,6 +78,7 @@ auto Cia<model>::tod() -> void {
     } else {
 
         tickCounter = 1;
+        delay |= CIA_TOD0 << clockAllignment;
     }
 }
 
@@ -88,6 +89,7 @@ auto Cia<model>::todIncrement() -> void {
         switch(tickCounter) {
             case 1:     // align to 4-th clock
                 tickCounter = 2;
+                delay |= CIA_TOD0;
                 break;
             case 2:     // 4 cycles
                 if ((todc & 0xfff) == 0xfff) {
@@ -98,15 +100,18 @@ auto Cia<model>::todIncrement() -> void {
                     todc++;
                     todc &= 0xffffff;
                 }
+                delay |= CIA_TOD0;
                 break;
             case 3:     // 8 cycles
                 if (todc == alarm) //tod bug
                     intIncomming |= 4;
 
                 tickCounter = 5;
+                delay |= CIA_TOD0;
                 break;
             case 4:     // 8 cycles
                 tickCounter = 6;
+                delay |= CIA_TOD0;
                 break;
 
             case 5:     // 12 cycles

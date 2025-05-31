@@ -37,7 +37,7 @@ auto Cia<model>::reset() -> void {
     cnt = CIA_CNT0;
     sdrForceFinish = false;
 
-    delay = CIA_TOD1;
+    delay = 0;
     icrTemp = 0;
     intIncomming = 0;
 
@@ -82,15 +82,13 @@ auto Cia<model>::clock() -> void {
         }
         if (_delay & CIA_UPD_ICR_ONLY1) icr = icrTemp;
 
-        if constexpr(model == MOS_8520) { // todo for 6526
-            if (_delay & CIA_TOD4) {
-                delay |= CIA_TOD0;
-                if (tickCounter)
+        if (_delay & CIA_TASKS_UNLIKELY) {
+            
+            if constexpr (model == MOS_8520) { // todo for 6526
+                if (_delay & CIA_TOD3)
                     todIncrement();
             }
-        }
 
-        if (_delay & CIA_TASKS_UNLIKELY) {
             if (_delay & CIA_STEPOUT_TA1) timerA.run &= ~2;
             if (_delay & CIA_STEPOUT_TB1) timerB.run &= ~2;
 
@@ -502,8 +500,8 @@ template auto Cia<MOS_6526>::read(unsigned pos) -> uint8_t;
 template auto Cia<MOS_8520>::read(unsigned pos) -> uint8_t;
 template auto Cia<MOS_6526>::write(unsigned pos, uint8_t value) -> void;
 template auto Cia<MOS_8520>::write(unsigned pos, uint8_t value) -> void;
-template auto Cia<MOS_6526>::tod() -> void;
-template auto Cia<MOS_8520>::tod() -> void;
+template auto Cia<MOS_6526>::tod(unsigned clockAllignment) -> void;
+template auto Cia<MOS_8520>::tod(unsigned clockAllignment) -> void;
 
 template auto Cia<MOS_6526>::serialIn(bool spLine) -> void;
 template auto Cia<MOS_8520>::serialIn(bool spLine) -> void;

@@ -39,7 +39,7 @@ struct Cia {
 
     auto read(unsigned pos) -> uint8_t;
     auto write(unsigned pos, uint8_t value) -> void;
-    auto tod() -> void;
+    auto tod(unsigned clockAllignment = 0) -> void;
     auto reset() -> void;
 
     auto clock() -> void;
