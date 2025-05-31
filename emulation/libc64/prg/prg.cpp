@@ -112,20 +112,25 @@ auto Prg::inject( ) -> void {
     uint8_t hiDiff = hiNext - hiBegin;
 
     // e.g. hi byte is 0x1c (C128), correct it to 0x08 (C64)
-    if ((useChunk->offset == 0x0801) && (hiDiff > 1)) {
-        uint16_t nextAddr = useChunk->offset;
-        ram[nextAddr + 1] -= hiDiff;
+    if ((useChunk->offset == 0x0801) ) {
+        uint16_t offset = 0;
 
-        for (;;) {
-            nextAddr = ram[nextAddr] | (ram[nextAddr + 1] << 8);  
+        for (unsigned i = 4; i < useChunk->size; i++) {
+            uint16_t _offset = useChunk->offset + i;
 
-            if (nextAddr >= end)
-                break; // shouldn't happen
+            if (ram[_offset] == 0) {
+                _offset += 1;
+                uint16_t fixLink = useChunk->offset + offset;
 
-            if ((ram[nextAddr] | (ram[nextAddr + 1] << 8)) == 0)
-                break; // final basic line
+                ram[fixLink] = _offset & 0xff;
+                ram[fixLink + 1] = (_offset >> 8) & 0xff;
+                
+                if ((ram[_offset] | (ram[_offset + 1] << 8)) == 0)
+                    break;
 
-            ram[nextAddr + 1] -= hiDiff;
+                offset = i + 1;
+                i += 4; // skip next pointer and line number
+            }
         }
     }
 
