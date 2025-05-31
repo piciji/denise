@@ -259,6 +259,7 @@ struct Agnus {
 
     bool womLock = false;
     uint8_t resetFromKeyboard = 0;
+    bool ddfEnableCache;
 
     auto frequency() const -> unsigned;
     auto ecsAndHigher() const -> bool { return model & (Model::ECS | Model::AGA); }
@@ -458,6 +459,8 @@ struct Agnus {
     auto isSlowMem(uint32_t addr) -> bool;
     auto isFastMem(uint32_t addr) -> bool;
     auto isMem(uint32_t addr) -> bool;
+
+    inline auto updateDdfEnableCache() -> void;
 };
 
 }

@@ -112,6 +112,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(harddisH);
     s.integer(harddisV);
     s.integer(ddfEnableBefore);
+    s.integer(ddfEnableCache);
     s.integer(bplState);
     s.integer(hardStop);
     s.integer(diwFlipFlop);

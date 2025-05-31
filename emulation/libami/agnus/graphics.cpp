@@ -281,9 +281,15 @@ template<bool onlyProgressQueue> inline auto Agnus::fetchPlanes() -> void {
     bplQueue >>= 8;
 }
 
+inline auto Agnus::updateDdfEnableCache() -> void {
+    ddfEnableCache = useBitplaneDMA() && diwFlipFlop && (!hardStop || harddisH);
+}
+
+//bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch & 1) && (!hardStop || harddisH);
+
 #define ECS_BPL_START_CHECK \
-    bool ddfEnable = useBitplaneDMA() && diwFlipFlop && (ddfStartMatch & 1) && (!hardStop || harddisH); \
-    if (!bplState && ddfEnable && !ddfEnableBefore) bplState = 1; \
+    bool ddfEnable = ddfEnableCache && (ddfStartMatch & 1); \
+    if (ddfEnable && !bplState && !ddfEnableBefore) bplState = 1; \
     ddfEnableBefore = ddfEnable;
 
 template<bool _ecs, bool start>
@@ -315,7 +321,7 @@ inline auto Agnus::bplControl() -> void {
                 stopFetching = true;
         }
 
-        if (_hPos == ddfStart)
+        if constexpr(start)
             ddfStartMatch = 1;
 
         if (_hPos == ddfStop) {

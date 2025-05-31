@@ -100,6 +100,8 @@ auto Agnus::dmaControl(uint16_t data) -> void {
         dmaConImm |= data & 0x7ff;
     else
         dmaConImm &= ~data; // no masking needed, unused upper 5 bits will never be set
+
+    updateDdfEnableCache();
 }
 
 auto Agnus::setRas() -> void {
@@ -266,6 +268,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     lineVCounter = 0;
     vBlankOffset = 0;
     crop.reset();
+    updateDdfEnableCache();
 }
 
 auto Agnus::powerOff() -> void {
@@ -357,8 +360,10 @@ auto Agnus::updateVCounter() -> void {
         if (system->isProcessFrame())
             observeFrameDuration();
 
-        if (!harddisV)
+        if (!harddisV) {
             diwFlipFlop = false;
+            updateDdfEnableCache();
+        }
         initVCounter = false;
         vPos = 0;
         if (model == OCS_A1000) {
@@ -489,7 +494,7 @@ inline auto Agnus::dmaCycle() -> void {
             dmal >>= 2;
 
             if (!lof && (ERSY == 0) && (vPos == (ntsc ? 6 : 5) ) ) {
-                if (model != OCS_A1000) cia1.tod(); // hardwired vsync end
+                if (model != OCS_A1000) cia1.tod(eClockCycle & 3); // hardwired vsync end
             }
             break;
         case 0x15:
@@ -506,6 +511,7 @@ inline auto Agnus::dmaCycle() -> void {
             break;
         case 0x18:
             hardStop = false;
+            updateDdfEnableCache();
             break;
         case 0x19:
             if (!vBlank) spriteControl<0, false>();
@@ -516,7 +522,7 @@ inline auto Agnus::dmaCycle() -> void {
         case 0x21: if (!vBlank) spriteControl<2, false>(); break;
         case 0x23: if (!vBlank) spriteControl<3, true>(); break;
         case 0x24: // hsync end
-            if (ERSY == 0) cia2.tod();
+            if (ERSY == 0) cia2.tod(eClockCycle & 3);
             break;
         case 0x25: if (!vBlank) spriteControl<3, false>(); break;
         case 0x27: if (!vBlank) spriteControl<4, true>(); break;
@@ -533,8 +539,10 @@ inline auto Agnus::dmaCycle() -> void {
         case 0x38: actions &= ~ACT_SPRITE; break;
 
         case 0xd7:
-            if (ecsAndHigher())
+            if (ecsAndHigher()) {
                 hardStop = true;
+                updateDdfEnableCache();
+            }
 
             if (bplState && (bplState != 4)) {
                 if (!ecsAndHigher() || !harddisH)
@@ -544,7 +552,7 @@ inline auto Agnus::dmaCycle() -> void {
 
         case 0x85:
             if (lof && (ERSY == 0) && (vPos == (ntsc ? 6 : 5) ) ) {
-                if (model != OCS_A1000) cia1.tod();
+                if (model != OCS_A1000) cia1.tod(eClockCycle & 3);
             }
             break;
 
@@ -555,16 +563,19 @@ inline auto Agnus::dmaCycle() -> void {
         processEvents(clock);
 
     if (ecsAndHigher()) {
-        bplControl<true, false>();
+        if (hPos == ddfStart)
+            bplControl<true, true>();
+        else if (ddfStartMatch || bplState)
+            bplControl<true, false>();
+        else if (!(hPos & 1)) {
+            ECS_BPL_START_CHECK
+        }
     } else {
         if (bplState)
             bplControl<false, false>();
         else if (hPos == ddfStart)
             bplControl<false, true>();
     }
-        
- //   if (paula.sampleCycle == clock)
-   //     paula.sampleUpdate();
 
     if (actions) {
         int _actions = actions;
@@ -693,6 +704,7 @@ auto Agnus::setRefPtr(uint16_t value) -> void {
 auto Agnus::updateHarddis() -> void {
     harddisH = (beamCon & VARBEAMEN) || (beamCon & HARDDIS) || (bplCon0 & 0xc0);
     harddisV = (beamCon & VARBEAMEN) || (beamCon & HARDDIS) || (beamCon & VARVBEN);
+    updateDdfEnableCache();
 }
 
 auto Agnus::isEquLine() -> bool {
@@ -749,6 +761,7 @@ template<int mode> auto Agnus::updateVdiw() -> void {
         if (!diwFlipFlop) {
             diwFlipFlop = true;
             updateCropTop();
+            updateDdfEnableCache();
         }
         if (diwStart || diwHigh)
             bplCycle &= ~BPL_ADD_MOD;
@@ -761,6 +774,7 @@ template<int mode> auto Agnus::updateVdiw() -> void {
         } else if (diwFlipFlop) {
             diwFlipFlop = false;
             updateCropBottom();
+            updateDdfEnableCache();
         }
     }
 

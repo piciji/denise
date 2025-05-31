@@ -337,6 +337,7 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
             if (diwFlipFlop) {
                 diwFlipFlop = false;
                 updateCropBottom();
+                updateDdfEnableCache();
             }
             break;
 
@@ -386,7 +387,7 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
 }
 
 auto Agnus::powerSupplyEvent() -> void {
-    cia1.tod( );
+    cia1.tod( eClockCycle & 3 );
     updateEvent<EVENT_POWER_SUPPLY>(powerSupply.nextTickCount());
 }
 
