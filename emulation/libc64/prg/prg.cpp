@@ -104,7 +104,9 @@ auto Prg::inject( ) -> void {
     for (unsigned i = 0; i < useChunk->size; i++)
         ram[ useChunk->offset + i ] = *(useChunk->data + i);
 
-    uint16_t end = useChunk->offset + useChunk->size;    
+    uint16_t end = useChunk->offset + useChunk->size;
+
+    uint16_t start = ram[0x2c] << 8 | ram[0x2b];
 
     // e.g. hi byte is 0x1c (C128), correct it to 0x08 (C64)
     if ((useChunk->offset == 0x0801) ) {
@@ -116,6 +118,9 @@ auto Prg::inject( ) -> void {
             if (ram[_offset] == 0) { // end of line
                 _offset += 1;
                 uint16_t fixLink = useChunk->offset + offset;
+
+                if (ram[fixLink + 1] == 0) // hi byte is zero page ?
+                    break;
 
                 ram[fixLink] = _offset & 0xff;
                 ram[fixLink + 1] = (_offset >> 8) & 0xff;
