@@ -104,12 +104,7 @@ auto Prg::inject( ) -> void {
     for (unsigned i = 0; i < useChunk->size; i++)
         ram[ useChunk->offset + i ] = *(useChunk->data + i);
 
-    uint16_t end = useChunk->offset + useChunk->size;
-    // now we need to simulate the kernal load
-
-    uint8_t hiBegin = useChunk->offset >> 8;
-    uint8_t hiNext = *(useChunk->data + 1);
-    uint8_t hiDiff = hiNext - hiBegin;
+    uint16_t end = useChunk->offset + useChunk->size;    
 
     // e.g. hi byte is 0x1c (C128), correct it to 0x08 (C64)
     if ((useChunk->offset == 0x0801) ) {
@@ -118,7 +113,7 @@ auto Prg::inject( ) -> void {
         for (unsigned i = 4; i < useChunk->size; i++) {
             uint16_t _offset = useChunk->offset + i;
 
-            if (ram[_offset] == 0) {
+            if (ram[_offset] == 0) { // end of line
                 _offset += 1;
                 uint16_t fixLink = useChunk->offset + offset;
 
@@ -126,7 +121,7 @@ auto Prg::inject( ) -> void {
                 ram[fixLink + 1] = (_offset >> 8) & 0xff;
                 
                 if ((ram[_offset] | (ram[_offset + 1] << 8)) == 0)
-                    break;
+                    break; // last basic line
 
                 offset = i + 1;
                 i += 4; // skip next pointer and line number
