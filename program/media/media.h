@@ -19,8 +19,8 @@ struct MediaGroupLayout;
 
 struct NavElement {
     GUIKIT::TreeViewItem* tvi;
-    MediaGroupLayout* mediaGroupLayout;
-    GUIKIT::Layout* altLayout;
+    Emulator::Interface::MediaGroup* mediaGroup;
+    GUIKIT::Layout* layout;
 };
 
 struct SwapperControlLayout : GUIKIT::HorizontalLayout {
@@ -295,6 +295,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto updateSwitchLayout() -> void;
 	
 	auto translate() -> void;
+    auto translate(NavElement& nav) -> void;
     auto updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void;
     auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
     auto updateOptionsVisibility() -> void;
@@ -319,7 +320,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     auto getMediaGroupTransIdent( Emulator::Interface::MediaGroup* mediaGroup ) -> std::string;
     auto updateJumper(Emulator::Interface::Media* media) -> void;
     auto updateWriteProtection( Emulator::Interface::Media* media, bool state ) -> void;
-    auto getActiveLayout() -> MediaGroupLayout*;
+    auto getActiveMediaGroupLayout() -> MediaGroupLayout*;
     auto resetPreview(bool light = false) -> void;
     auto convertListing( std::vector<Emulator::Interface::Listing>& emuListings, bool loadCommand ) -> std::vector<std::string>;
     auto updateListingFont( unsigned fontSize ) -> void;

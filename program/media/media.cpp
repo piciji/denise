@@ -49,11 +49,11 @@ auto MediaLayout::setMediaView() -> void {
     
     for(auto& nav : navElements) {
                 
-        if (nav.mediaGroupLayout) {
+        if (nav.mediaGroup) {
             if (nav.tvi->selected())
                 return;
 
-            if (nav.mediaGroupLayout->mediaGroup->isDisk())
+            if (nav.mediaGroup->isDisk())
                 diskItem = nav.tvi;
         }        
     }
@@ -68,7 +68,7 @@ auto MediaLayout::setDiskSwapperView() -> void {
     
     for(auto& nav : navElements) {
 
-        if ( nav.altLayout && (nav.altLayout == swapperLayout) ) {
+        if ( nav.layout && (nav.layout == swapperLayout) ) {
             if (!nav.tvi->selected()) {
                 nav.tvi->setSelected();
                 mediaTree.onChange(nullptr);
@@ -86,8 +86,21 @@ auto MediaLayout::updateSwitchLayout() -> void {
         return;
 
     unsigned navPos = (unsigned)item->userData();
-		
-    moduleSwitch.setSelection( navPos );
+
+    if (navPos < navElements.size()) {
+        auto& navElement = navElements[navPos];
+        if (!navElement.layout && navElement.mediaGroup) {
+            auto mediaGroupLayout = new MediaGroupLayout( navElement.mediaGroup, this );
+            navElement.layout = (GUIKIT::Layout*)mediaGroupLayout;
+            mediaGroupLayout->build(12);
+
+            moduleSwitch.setLayout( navPos, *mediaGroupLayout, {~0u, ~0u} );
+		    bindSelectorAction( mediaGroupLayout );
+            translate(navElement);
+        }
+
+        moduleSwitch.setSelection( navPos );
+    }    
 }
 
 auto MediaLayout::updateOptionsVisibility() -> void {
@@ -102,13 +115,13 @@ auto MediaLayout::updateOptionsVisibility() -> void {
         if (navPos < navElements.size()) {
             auto& navElement = navElements[navPos];
 
-            if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isDisk()) {
+            if (navElement.mediaGroup && navElement.mediaGroup->isDisk()) {
                 _enabledTraps = true;
                 useTraps.setChecked( settings->get<bool>("use_disk_traps", false) );
-            } else if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isTape()) {
+            } else if (navElement.mediaGroup && navElement.mediaGroup->isTape()) {
                 _enabledTraps = true;
                 useTraps.setChecked( settings->get<bool>("use_tape_traps", false) );
-            } else if (navElement.mediaGroupLayout && navElement.mediaGroupLayout->mediaGroup->isExpansion())
+            } else if (navElement.mediaGroup && navElement.mediaGroup->isExpansion())
                 _enabledExpansion = true;
         }
     }
@@ -190,15 +203,17 @@ auto MediaLayout::build() -> void {
         if (!mediaGroup.isExpansion())
             mediaTree.append(*tvi);
         
-        MediaGroupLayout* mediaGroupLayout = new MediaGroupLayout( &mediaGroup, this );                
-        
         tvi->setUserData( (uintptr_t)(navElements.size()) );
+
+        MediaGroupLayout* mediaGroupLayout = nullptr;
+        if (!mediaGroup.isExpansion()) {
+            mediaGroupLayout = new MediaGroupLayout( &mediaGroup, this );
+            mediaGroupLayout->build(previewFontSize);
+        }
+
+        navElements.push_back( { tvi, &mediaGroup, (GUIKIT::Layout*)mediaGroupLayout } );        
         
-        navElements.push_back( { tvi, mediaGroupLayout, nullptr } );
-        
-        mediaGroupLayout->build(previewFontSize);
-        
-        if (mediaGroupLayout->showOnlyConnectedDevices()) {
+        if (mediaGroupLayout && mediaGroupLayout->showOnlyConnectedDevices()) {
 
             auto modelId = emulator->getModelIdOfEnabledDrives(&mediaGroup);
 
@@ -206,10 +221,14 @@ auto MediaLayout::build() -> void {
 
             mediaGroupLayout->updateVisibility( counter, true );
         }        
-                
-        moduleSwitch.setLayout( navElements.size() - 1, *mediaGroupLayout, {~0u, ~0u} );
-        
-		bindSelectorAction( mediaGroupLayout );
+           
+        if (!mediaGroup.isExpansion()) {
+            moduleSwitch.setLayout( navElements.size() - 1, *mediaGroupLayout, {~0u, ~0u} );
+		    bindSelectorAction( mediaGroupLayout );
+        } else {
+            static GUIKIT::FixedLayout placeHolderLayout;
+            moduleSwitch.setLayout( navElements.size() - 1, placeHolderLayout, {~0u, ~0u}, false );
+        }
     }
 
     moduleFrame.append( mediaTree, { GUIKIT::Font::scale(170), ~0u}, 10 );
@@ -251,7 +270,7 @@ auto MediaLayout::build() -> void {
     swapperLayout = new SwapperLayout(this);
     moduleSwitch.setLayout( navElements.size(), *swapperLayout, {~0u, ~0u} );
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
-    navElements.push_back( { tvi, nullptr, (Layout*)swapperLayout } );
+    navElements.push_back( { tvi, nullptr, (GUIKIT::Layout*)swapperLayout } );
 
     tvi = new GUIKIT::TreeViewItem;
     tvi->setText( "create" );
@@ -260,7 +279,7 @@ auto MediaLayout::build() -> void {
     prepareCreator();
     moduleSwitch.setLayout( navElements.size(), creatorLayout, {~0u, ~0u} );
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
-    navElements.push_back( { tvi, nullptr, (Layout*)&creatorLayout } );
+    navElements.push_back( { tvi, nullptr, (GUIKIT::Layout*)&creatorLayout } );
     
     tvi = new GUIKIT::TreeViewItem;
     tvi->setText( "paths" );
@@ -269,7 +288,7 @@ auto MediaLayout::build() -> void {
     preparePaths();
     moduleSwitch.setLayout( navElements.size(), pathsLayout, {~0u, ~0u} );    
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
-    navElements.push_back( { tvi, nullptr, (Layout*)&pathsLayout } );
+    navElements.push_back( { tvi, nullptr, (GUIKIT::Layout*)&pathsLayout } );
 
     tvi = new GUIKIT::TreeViewItem;
     tvi->setText( "dialog preview" );
@@ -277,7 +296,7 @@ auto MediaLayout::build() -> void {
     mediaTree.append(*tvi);
     moduleSwitch.setLayout( navElements.size(), dialogPreviewLayout, {~0u, ~0u} );
     tvi->setUserData( (uintptr_t)(navElements.size() ) );
-    navElements.push_back( { tvi, nullptr, (Layout*)&dialogPreviewLayout } );
+    navElements.push_back( { tvi, nullptr, (GUIKIT::Layout*)&dialogPreviewLayout } );
 
     auto videoManager = VideoManager::getInstance(emulator);
     colorListing(videoManager->getForegroundColor(), videoManager->getBackgroundColor());
@@ -497,7 +516,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
     }
 
     useTraps.onToggle = [this](bool checked) {
-        auto layout = this->getActiveLayout();
+        auto layout = this->getActiveMediaGroupLayout();
 
         if (layout && layout->mediaGroup->isDisk())
             settings->set<bool>("use_disk_traps", checked);
@@ -509,7 +528,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
     bootCart.onActivate = [this]() {
 
-        auto mediaGroupLayout = getActiveLayout();
+        auto mediaGroupLayout = getActiveMediaGroupLayout();
 
         if (!mediaGroupLayout || !mediaGroupLayout->mediaGroup->isExpansion())
             return;
@@ -940,6 +959,53 @@ auto MediaLayout::savePath( std::string& groupName, std::string path ) -> void {
 	settings->set<std::string>(baseFolderIdent + "_auto", path);
 }
 
+auto MediaLayout::translate(NavElement& nav) -> void {   
+    bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
+    auto mediaGroup = nav.mediaGroup;
+    auto mediaGroupLayout = dynamic_cast<MediaGroupLayout*>(nav.layout);
+    
+    mediaGroupLayout->setText( trans->get( mediaGroup->name + "_insert") );
+    if (mediaGroup->isProgram())
+        mediaGroupLayout->inject.setText( trans->get("program_inject") );
+    else if (mediaGroup->isTape())
+        mediaGroupLayout->inject.setText( trans->get("tape spool") );
+
+    for ( auto block : mediaGroupLayout->blocks ) {
+        block->header.writeprotect.setText(trans->get("write_protected"));
+        block->header.eject.setTooltip(trans->get("eject"));
+        block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );
+        block->header.inUse.setText( trans->get( block->media->name, {}, true ) );
+
+        if ( isC64 && (block->media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard)) {
+            if (block->media->id > 3)
+                block->header.deviceName.setTooltip( trans->getA( "Final Chesscard Battery tooltip" ) );
+            else if (block->media->id < 4)
+                block->selector.open.setTooltip( trans->getA( "Final Chesscard ROMS tooltip" ) );
+        }
+        
+        if (mediaGroup->isExpansion() && !block->media->secondary) {
+            unsigned id = 0;
+            for( auto& pcb : mediaGroup->expansion->pcbs ) {
+                block->selector.combo.setText(id++, trans->get( pcb.name ));
+            }
+                    
+            block->selector.jumperLabel.setText( trans->get("jumper", {}, true) );
+            
+            for(auto& jumper : mediaGroup->expansion->jumpers) {
+
+                auto jumperBox = block->selector.jumpers[jumper.id];
+
+                jumperBox->setText( trans->get( jumper.name ) );
+
+                if ( isC64 && (block->media->group->id == LIBC64::Interface::MediaGroupIdExpansionSuperCpu)) {
+                    if (jumper.id == 2)
+                        jumperBox->setTooltip(trans->getA("SuperCPU DRAM Boost tooltip"));
+                }
+            }        
+        }
+    } 
+}
+
 auto MediaLayout::translate() -> void {
 
     pathsLayout.setText( trans->get("paths") );
@@ -963,68 +1029,22 @@ auto MediaLayout::translate() -> void {
     dialogPreviewLayout.dimension.dialogHeight.name.setText( trans->get("Height", {}, true) );
 
     if (expansionParent)
-        expansionParent->setText( trans->get("cartridges") );
-
-    bool isC64 = dynamic_cast<LIBC64::Interface*>(emulator);
+        expansionParent->setText( trans->get("cartridges") );    
     
     for(auto& nav : navElements) {
-        if (nav.mediaGroupLayout) {
-            nav.tvi->setText( trans->get( getMediaGroupTransIdent( nav.mediaGroupLayout->mediaGroup ) ) );
-            
-        } else if ( dynamic_cast<SwapperLayout*>(nav.altLayout))
+        if (nav.mediaGroup)
+            nav.tvi->setText( trans->get( getMediaGroupTransIdent( nav.mediaGroup ) ) );
+        else if (nav.layout && dynamic_cast<SwapperLayout*>(nav.layout))
             nav.tvi->setText( trans->get( emulator->getTapeMediaGroup() ? "swapper" : "disk swapper" ) );
-        else if ( dynamic_cast<PathsLayout*>(nav.altLayout))
+        else if (nav.layout && dynamic_cast<PathsLayout*>(nav.layout))
             nav.tvi->setText( trans->get( "paths" ) );
-        else if ( nav.altLayout == &creatorLayout )
+        else if ( nav.layout == &creatorLayout )
             nav.tvi->setText( trans->get( "create" ) );
-        else if ( nav.altLayout == &dialogPreviewLayout )
+        else if ( nav.layout == &dialogPreviewLayout )
             nav.tvi->setText( trans->get( "Dialog Preview" ) );
 
-        if (!nav.mediaGroupLayout)
-            continue;
-        
-        auto mediaGroup = nav.mediaGroupLayout->mediaGroup;
-        
-        nav.mediaGroupLayout->setText( trans->get( mediaGroup->name + "_insert") );
-        if (mediaGroup->isProgram())
-            nav.mediaGroupLayout->inject.setText( trans->get("program_inject") );
-        else if (mediaGroup->isTape())
-            nav.mediaGroupLayout->inject.setText( trans->get("tape spool") );
-
-        for ( auto block : nav.mediaGroupLayout->blocks ) {
-            block->header.writeprotect.setText(trans->get("write_protected"));
-            block->header.eject.setTooltip(trans->get("eject"));
-            block->header.deviceName.setText( trans->get( block->media->name, {}, true ) );
-            block->header.inUse.setText( trans->get( block->media->name, {}, true ) );
-
-            if ( isC64 && (block->media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard)) {
-                if (block->media->id > 3)
-                    block->header.deviceName.setTooltip( trans->getA( "Final Chesscard Battery tooltip" ) );
-                else if (block->media->id < 4)
-                    block->selector.open.setTooltip( trans->getA( "Final Chesscard ROMS tooltip" ) );
-            }
-            
-            if (mediaGroup->isExpansion() && !block->media->secondary) {
-                unsigned id = 0;
-                for( auto& pcb : mediaGroup->expansion->pcbs ) {
-                    block->selector.combo.setText(id++, trans->get( pcb.name ));
-                }
-                      
-                block->selector.jumperLabel.setText( trans->get("jumper", {}, true) );
-                
-                for(auto& jumper : mediaGroup->expansion->jumpers) {
-
-                    auto jumperBox = block->selector.jumpers[jumper.id];
-
-                    jumperBox->setText( trans->get( jumper.name ) );
-
-                    if ( isC64 && (block->media->group->id == LIBC64::Interface::MediaGroupIdExpansionSuperCpu)) {
-                        if (jumper.id == 2)
-                            jumperBox->setTooltip(trans->getA("SuperCPU DRAM Boost tooltip"));
-                    }
-                }        
-            }
-        }  
+        if (nav.layout && nav.mediaGroup)
+            translate(nav);
     }
         
     if (diskCreatorLayout) {        
@@ -1130,8 +1150,8 @@ auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* f
     
     auto layout = getMediaGroupLayout( media->group );
     
-    if (!layout)
-        return;
+    if (!layout) // (Expansion) UI has not been built yet.
+        return fileloader->insertImage(emulator, media, file, item, options);
 
     for( auto block : layout->blocks ) {
         
@@ -1222,8 +1242,8 @@ auto MediaLayout::getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGro
     
     for (auto& nav : navElements) {
         
-        if (nav.mediaGroupLayout && (nav.mediaGroupLayout->mediaGroup == mediaGroup))
-            return nav.mediaGroupLayout;
+        if (nav.mediaGroup && (nav.mediaGroup == mediaGroup))
+            return nav.layout ? dynamic_cast<MediaGroupLayout*>(nav.layout) : nullptr;
     }
     
     return nullptr;
@@ -1232,7 +1252,7 @@ auto MediaLayout::getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGro
 auto MediaLayout::showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> void {
     
     for (auto& nav : navElements) {
-        if (nav.mediaGroupLayout && (nav.mediaGroupLayout->mediaGroup == mediaGroup)) {
+        if (nav.mediaGroup && (nav.mediaGroup == mediaGroup)) {
             nav.tvi->setSelected();
             updateSwitchLayout();
             updateOptionsVisibility();
@@ -1241,14 +1261,18 @@ auto MediaLayout::showMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGr
     }
 }
 
-auto MediaLayout::getActiveLayout() -> MediaGroupLayout* {
+auto MediaLayout::getActiveMediaGroupLayout() -> MediaGroupLayout* {
 
     auto itemSelected = mediaTree.selected();
     
     if (itemSelected) {
         unsigned navPos = (unsigned)itemSelected->userData();
-        if (navPos < navElements.size())
-            return navElements[navPos].mediaGroupLayout;            
+        if (navPos < navElements.size()) {
+            auto& navElement = navElements[navPos];
+
+            return (navElement.mediaGroup && navElement.layout)
+            ? dynamic_cast<MediaGroupLayout*>(navElement.layout) : nullptr;
+        }
     }
     
     return nullptr;
@@ -1257,19 +1281,24 @@ auto MediaLayout::getActiveLayout() -> MediaGroupLayout* {
 auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundColor ) -> void {
 
     for (auto& nav : navElements) {
-        if (nav.mediaGroupLayout && showListing( nav.mediaGroupLayout ) ) {
-            nav.mediaGroupLayout->listings.setForegroundColor( foregroundColor );
-            nav.mediaGroupLayout->listings.setBackgroundColor( backgroundColor );
+        if (!nav.mediaGroup || !nav.layout)
+            continue;
+
+        auto mediaGroupLayout = dynamic_cast<MediaGroupLayout*>(nav.layout);
+
+        if (showListing( mediaGroupLayout ) ) {
+            mediaGroupLayout->listings.setForegroundColor( foregroundColor );
+            mediaGroupLayout->listings.setBackgroundColor( backgroundColor );
 
             if (settings->get<bool>("software_preview_commodore_hi", true ))
-                nav.mediaGroupLayout->listings.setSelectionColor( backgroundColor, foregroundColor );
+                mediaGroupLayout->listings.setSelectionColor( backgroundColor, foregroundColor );
             else
-                nav.mediaGroupLayout->listings.resetSelectionColor();
+                mediaGroupLayout->listings.resetSelectionColor();
 
             if (dynamic_cast<LIBAMI::Interface*>(emulator))
-                nav.mediaGroupLayout->listings.setFirstRowColor( backgroundColor, foregroundColor );
+                mediaGroupLayout->listings.setFirstRowColor( backgroundColor, foregroundColor );
             else
-                nav.mediaGroupLayout->listings.resetFirstRowColor();
+                mediaGroupLayout->listings.resetFirstRowColor();
         }
     }
 }
@@ -1278,12 +1307,17 @@ auto MediaLayout::selectionColorListing( ) -> void {
     bool comHi = settings->get<bool>("software_preview_commodore_hi", true );
 
     for (auto& nav : navElements) {
-        if (nav.mediaGroupLayout && showListing( nav.mediaGroupLayout ) ) {
+        if (!nav.mediaGroup || !nav.layout)
+            continue;
+
+        auto mediaGroupLayout = dynamic_cast<MediaGroupLayout*>(nav.layout);
+
+        if (showListing( mediaGroupLayout ) ) {
             if (comHi)
-                nav.mediaGroupLayout->listings.setSelectionColor(
-                    nav.mediaGroupLayout->listings.backgroundColor(), nav.mediaGroupLayout->listings.foregroundColor() );
+                mediaGroupLayout->listings.setSelectionColor(
+                    mediaGroupLayout->listings.backgroundColor(), mediaGroupLayout->listings.foregroundColor() );
             else
-                nav.mediaGroupLayout->listings.resetSelectionColor();
+                mediaGroupLayout->listings.resetSelectionColor();
         }
     }
 }
@@ -1315,7 +1349,7 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
     Emulator::Interface::MediaGroup* mediaGroup;
     
     if (!block) {        
-        layout = getActiveLayout();
+        layout = getActiveMediaGroupLayout();
         
         if (!layout)
             return;
@@ -1328,6 +1362,9 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         mediaGroup = block->media->group;
         
         layout = getMediaGroupLayout( mediaGroup );
+
+        if (!layout)
+            return;
     }
 
     GUIKIT::File* file = filePool->get(filePath);
@@ -1411,17 +1448,18 @@ auto MediaLayout::updateJumper(Emulator::Interface::Media* media) -> void {
 auto MediaLayout::resetPreview( bool light ) -> void {
     
     for (auto& nav : navElements) {
-    
-        if (!nav.mediaGroupLayout)
+        if (!nav.mediaGroup )
             continue;
+
+        auto mediaGroupLayout = nav.layout ? dynamic_cast<MediaGroupLayout*>(nav.layout) : nullptr;
         
-        if (!showListing( nav.mediaGroupLayout ))
+        if (!mediaGroupLayout || !showListing( mediaGroupLayout ))
             continue;
         
         if (!light)
-            nav.mediaGroupLayout->updateListing( nav.mediaGroupLayout->selectedBlock ); 
+            mediaGroupLayout->updateListing( mediaGroupLayout->selectedBlock ); 
         
-        for (auto block : nav.mediaGroupLayout->blocks) {
+        for (auto block : mediaGroupLayout->blocks) {
             
             if (block->header.fileName.overrideForegroundColor()) {
                 auto fSetting = FileSetting::getInstance( emulator, _underscore(block->media->name) );
@@ -1460,22 +1498,31 @@ auto MediaLayout::convertListing( std::vector<Emulator::Interface::Listing>& emu
 auto MediaLayout::updateListingFont( unsigned fontSize ) -> void {
 
     for(auto& nav : navElements) {
-        if (nav.mediaGroupLayout)
-            nav.mediaGroupLayout->applyFont( fontSize );
+        if (!nav.mediaGroup || !nav.layout)
+            continue;
+
+        auto mediaGroupLayout = dynamic_cast<MediaGroupLayout*>(nav.layout);
+
+        mediaGroupLayout->applyFont( fontSize );
     }
 }
 
 auto MediaLayout::updateListings( ) -> void {
 
     for(auto& nav : navElements) {
-        if (nav.mediaGroupLayout && showListing( nav.mediaGroupLayout ) )
-            nav.mediaGroupLayout->updateListing( nav.mediaGroupLayout->selectedBlock );
+        if (!nav.mediaGroup || !nav.layout)
+            continue;
+
+        auto mediaGroupLayout = dynamic_cast<MediaGroupLayout*>(nav.layout);
+
+        if (showListing( mediaGroupLayout ) )
+            mediaGroupLayout->updateListing( mediaGroupLayout->selectedBlock );
     }
 }
 
 auto MediaLayout::loadSettings() -> void {
 
-    auto selectedLayout = this->getActiveLayout();
+    auto selectedLayout = this->getActiveMediaGroupLayout();
 
     if (selectedLayout && selectedLayout->mediaGroup->isDisk())
         useTraps.setChecked( settings->get<bool>("use_disk_traps", false) );
@@ -1487,11 +1534,18 @@ auto MediaLayout::loadSettings() -> void {
         pathBlock->edit.setText(settings->get<std::string>("disksave_folder", ""));
 
     for(auto& nav : navElements) {
-        
-        if (!nav.mediaGroupLayout)
+        if (!nav.mediaGroup)
             continue;
-        
-        auto layout = nav.mediaGroupLayout;
+
+        if (!nav.layout) { // UI has not been built yet
+            for(auto& media : nav.mediaGroup->media) {
+                auto fSetting = FileSetting::getInstance(emulator, _underscore(media.name) );
+                fSetting->update();
+            }
+            continue;
+        }
+
+        auto layout = dynamic_cast<MediaGroupLayout*>(nav.layout);
         
         layout->loadSettings();
         
