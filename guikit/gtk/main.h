@@ -354,7 +354,9 @@ struct pComboButton : pWidget {
     auto setText(unsigned selection, const std::string& text) -> void;
     auto init() -> void;
     auto create() -> void;
+    auto setDroppable(bool droppable) -> void;
     static auto onChange(ComboButton* self) -> void;
+    static auto dropEvent(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, ComboButton* comboButton) -> void;
 
     pComboButton(ComboButton& comboButton) : pWidget(comboButton), comboButton(comboButton) { }
 };

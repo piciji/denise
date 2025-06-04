@@ -25,8 +25,8 @@ auto pComboButton::reset() -> void {
 }
 
 auto pComboButton::setSelection(unsigned selection) -> void {
-    locked = true;
-    gtk_combo_box_set_active(GTK_COMBO_BOX(gtkWidget), selection);
+    locked = true;    
+    gtk_combo_box_set_active(GTK_COMBO_BOX(gtkWidget), selection == ~0 ? -1 : selection);
     locked = false;
 }
 
@@ -52,6 +52,7 @@ auto pComboButton::init() -> void {
         append(comboButton.state.rows[i], comboButton.state.fonts[i]);
     locked = false;
     setSelection(comboButton.selection());
+    setDroppable(comboButton.droppable());
 }
 
 auto pComboButton::onChange(ComboButton* self) -> void {
@@ -59,4 +60,17 @@ auto pComboButton::onChange(ComboButton* self) -> void {
         self->state.selection = gtk_combo_box_get_active(GTK_COMBO_BOX(self->p.gtkWidget));
         if(self->onChange) self->onChange();
     }
+}
+
+auto pComboButton::dropEvent(GtkWidget* widget, GdkDragContext* context, gint x, gint y,
+GtkSelectionData* data, guint type, guint timestamp, ComboButton* comboButton) -> void {
+    if(!comboButton->droppable()) return;
+    auto paths = getDropPaths(data);
+    if(paths.empty()) return;
+    if(comboButton->onDrop) comboButton->onDrop(paths);
+}
+
+auto pComboButton::setDroppable(bool droppable) -> void {
+    gtk_drag_dest_set(gtkWidget, GTK_DEST_DEFAULT_ALL, nullptr, 0, GDK_ACTION_COPY);
+    if(droppable) gtk_drag_dest_add_uri_targets(gtkWidget);
 }
