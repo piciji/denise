@@ -135,8 +135,9 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
         } header;
 
         struct Selector : GUIKIT::HorizontalLayout {            
-            GUIKIT::LineEdit edit;
-            GUIKIT::ComboButton combo;          
+            GUIKIT::LineEdit* edit = nullptr;
+            GUIKIT::ComboButton* pathCombo = nullptr;
+            GUIKIT::ComboButton combo;
             GUIKIT::Label jumperLabel;
             std::vector<GUIKIT::CheckBox*> jumpers;
             GUIKIT::Button open;

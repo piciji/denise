@@ -14,6 +14,7 @@
 #include "../tools/DiskFinder.h"
 #include "../view/status.h"
 #include "../audio/manager.h"
+#include "recentFiles.h"
 
 #define HideMouseIfWasBefore \
     if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) \
@@ -34,6 +35,11 @@ Fileloader::Fileloader() {
             fileDialogPtr->setForeground();
     };
     queuePreview.status = 0;
+}
+
+Fileloader::~Fileloader() {
+    for (auto recentFile : recentFiles)
+        delete recentFile;
 }
 
 auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void {
@@ -869,6 +875,9 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         updateFileSetting(fSetting, file, item);
     }
 
+    auto recentFiles = fileloader->getRecentFile(emulator);
+    recentFiles->add(*mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
+
     emulator->getListing(media);
 
     if (!fromState && view && activeEmulator && mediaGroup->isTape())
@@ -1117,4 +1126,17 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
     statusHandler->setMessage( trans->get("insert drive", {{"%drive%", media->name},{"%file%", fSetting->file}}) );
 
     return media;
+}
+
+auto Fileloader::getRecentFile(Emulator::Interface* emulator) -> RecentFiles* {
+    for (auto recentFile : recentFiles) {
+        if (recentFile->emulator == emulator)
+            return recentFile;
+    }
+
+    std::string path = program->generatedFolder("") + GUIKIT::String::toLowerCase(emulator->ident) + "_recent.ini";
+
+    auto recentFile = new RecentFiles(emulator, path);
+    recentFiles.push_back(recentFile);
+    return recentFile;
 }

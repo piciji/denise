@@ -962,6 +962,16 @@ auto ComboButton::userData(unsigned selection) const -> int {
     return state.userData[selection];
 }
 
+auto ComboButton::setDroppable(bool droppable) -> void {
+    state.droppable = droppable;
+    p.setDroppable(droppable);
+}
+
+auto ComboButton::unselect() -> void {
+    state.selection = ~0;
+    p.setSelection(~0);
+}
+
 ComboButton::ComboButton(bool hintVerticalScrollbar, bool hintMultiFonts)
 : hintVerticalScrollbar(hintVerticalScrollbar), hintMultiFonts(hintMultiFonts), Widget(*new pComboButton(*this)), p((pComboButton&)Widget::p) { p.init(); }
 

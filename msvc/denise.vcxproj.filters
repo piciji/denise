@@ -1135,6 +1135,9 @@
     <ClInclude Include="..\emulation\tools\uuid.h">
       <Filter>emulation\tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\media\recentFiles.h">
+      <Filter>program\media</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2315,6 +2318,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\tools\uuid.cpp">
       <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\media\recentFiles.cpp">
+      <Filter>program\media</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

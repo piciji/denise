@@ -101,7 +101,15 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
     auto group = media->group;
     bool IPMode = group->isExpansion() && group->expansion->isRS232();
 
-    append(edit, {~0u, 0u}, 10);
+    if (IPMode) {
+        edit = new GUIKIT::LineEdit;
+        pathCombo = nullptr;
+        append(*edit, { ~0u, 0u }, 10);
+    } else {
+        edit = nullptr;
+        pathCombo = new GUIKIT::ComboButton(true);
+        append(*pathCombo, { ~0u, 0u }, 10);
+    }    
 
     if (media->pcbLayout && group->expansion && !media->secondary && (group->expansion->pcbs.size() > 0)) {
         for (auto& pcb : group->expansion->pcbs) {
@@ -132,8 +140,11 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
         append(open, {0u, 0u});
     
     setAlignment(0.5);
-    edit.setEditable( IPMode );
-    edit.setDroppable();
+
+    if (IPMode)
+        edit->setEditable();
+    else 
+        pathCombo->setDroppable();
 }
 
 MediaGroupLayout::Block::Block(Emulator::Interface::Media* media, Emulator::Interface* emulator) : media(media), header(media, emulator), selector(media) {

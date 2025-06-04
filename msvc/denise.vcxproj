@@ -267,6 +267,7 @@
     <ClInclude Include="..\program\media\autoloader.h" />
     <ClInclude Include="..\program\media\fileloader.h" />
     <ClInclude Include="..\program\media\media.h" />
+    <ClInclude Include="..\program\media\recentFiles.h" />
     <ClInclude Include="..\program\program.h" />
     <ClInclude Include="..\program\states\states.h" />
     <ClInclude Include="..\program\thread\emuThread.h" />
@@ -1732,6 +1733,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\program\media\media.cpp" />
+    <ClCompile Include="..\program\media\recentFiles.cpp" />
     <ClCompile Include="..\program\media\swapper.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

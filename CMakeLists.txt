@@ -191,6 +191,7 @@ set(srcs
         program/media/media.cpp
         program/media/autoloader.cpp
         program/media/fileloader.cpp
+        program/media/recentFiles.cpp
         program/config/archiveViewer.cpp
         program/states/states.cpp
         program/audio/manager.cpp

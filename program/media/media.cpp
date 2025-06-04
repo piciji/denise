@@ -14,6 +14,7 @@
 #include "../../data/resource.h"
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
+#include "recentFiles.h"
 
 #include <thread>
 #include <vector>
@@ -344,36 +345,66 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         
         updateMediaBlock(block, fSetting);
         
-        block->selector.edit.onFocus = [this, layout, block]() {
-            fileloader->resetPreview( this->emulator, true);
-            
-            layout->selectedBlock = block;
-            
-            if (layout->mediaGroup->selected && !block->media->secondary) {
-                layout->mediaGroup->selected = block->media;
-                settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
-                block->header.inUse.setChecked();
-            }
-            
-            if ( showListing( layout ) )
-                layout->updateListing( block );                
-        };
+        if (block->selector.edit) {
+            block->selector.edit->onFocus = [this, layout, block]() {
+                fileloader->resetPreview( this->emulator, true);
+                
+                layout->selectedBlock = block;
+                
+                if (layout->mediaGroup->selected && !block->media->secondary) {
+                    layout->mediaGroup->selected = block->media;
+                    settings->set<unsigned>( _underscore(layout->mediaGroup->name) + "_selected", block->media->id);
+                    block->header.inUse.setChecked();
+                }
+                
+                // if ( showListing( layout ) )
+                //     layout->updateListing( block );                
+            };
 
-        block->selector.edit.onChange = [block, fSetting]() {
+            block->selector.edit->onChange = [block, fSetting]() {
 
-            auto group = block->media->group;
+                auto group = block->media->group;
 
-            if (group->isExpansion() && group->expansion->isRS232()) {
+                if (group->isExpansion() && group->expansion->isRS232()) {
 
-                fSetting->setPath( block->selector.edit.text() );
-            }
-        };
-        
-        block->selector.edit.onDrop = [this, layout, block]( std::vector<std::string> files ) {
-            
-            drop( files[0], block );
-        };
-        
+                    fSetting->setPath( block->selector.edit->text() );
+                }
+            };
+
+        } else if (block->selector.pathCombo) {
+
+            block->selector.pathCombo->onDrop = [this, layout, block](std::vector<std::string> files) {
+
+                drop(files[0], block);
+            };
+
+            block->selector.pathCombo->onChange = [this, layout, block]() {
+
+                drop(block->selector.pathCombo->text(), block);
+            };
+
+            if (mediaGroup->isDrive()) {
+                block->selector.pathCombo->onHover = [this, layout, block]() {
+                    if (layout->blockContainer.children.size() <= 1)
+                        return;
+
+                    fileloader->resetPreview(this->emulator, true);
+
+                    layout->selectedBlock = block;
+
+                    // if (layout->mediaGroup->selected && !block->media->secondary) {
+                    //     layout->mediaGroup->selected = block->media;
+                    //     settings->set<unsigned>(_underscore(layout->mediaGroup->name) + "_selected", block->media->id);
+                    //     block->header.inUse.setChecked();
+                    // }
+
+                    if (showListing(layout))
+                        layout->updateListing(block);
+                };
+            } else
+                block->selector.pathCombo->onHover = nullptr;
+        }
+
         block->header.inUse.onActivate = [this, layout, block]() {
             fileloader->resetPreview( this->emulator, true);
             
@@ -919,7 +950,22 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
 
     bool IPMode = block->media->group->isExpansion() && block->media->group->expansion->isRS232();
 
-    block->selector.edit.setText( fSetting->path );
+    if (block->selector.edit)
+        block->selector.edit->setText( fSetting->path );
+
+    if (block->selector.pathCombo) {
+        auto recentFiles = fileloader->getRecentFile(emulator);
+        auto files = recentFiles->list(*block->media->group, fSetting->path);
+        block->selector.pathCombo->reset();
+
+        for (auto& file : files)
+            block->selector.pathCombo->append(file);
+
+        if (fSetting->path.empty())
+            block->selector.pathCombo->unselect();
+        else
+            block->selector.pathCombo->setSelectionByRow(fSetting->path);
+    }
 
     if (!IPMode) {
         block->header.fileName.setText(fSetting->file);
@@ -1204,6 +1250,9 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         }
         fileloader->updateFileSetting(fSetting, file, item);
     }
+
+    auto recentFiles = fileloader->getRecentFile(emulator);
+    recentFiles->add(*mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
 
     if (showListing(layout)) {
         block->listings.clear();

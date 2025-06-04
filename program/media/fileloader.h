@@ -7,9 +7,12 @@
 #include "../../emulation/interface.h"
 #include "../emuconfig/config.h"
 
+struct RecentFiles;
+
 struct Fileloader {
 
     Fileloader();
+    ~Fileloader();
 
     struct {
         Emulator::Interface* emulator = nullptr;
@@ -20,6 +23,8 @@ struct Fileloader {
         std::atomic<uint8_t> status; // bit 0:thread alive, 1:new file, 2:reset, 3:preview, 4:anyload
         std::vector<GUIKIT::BrowserWindow::Listing> listings;
     } queuePreview;
+
+    std::vector<RecentFiles*> recentFiles;
 
     std::mutex previewMutex;
     GUIKIT::BrowserWindow* fileDialogPtr = nullptr;
@@ -48,6 +53,7 @@ struct Fileloader {
     auto getSwapPos(Emulator::Interface* emulator) -> unsigned;
     auto getSwapMedia(Emulator::Interface* emulator, int swapPos, FileSetting* fSetting) -> Emulator::Interface::Media*;
     auto updateFileSetting(FileSetting* fSetting, GUIKIT::File* file, GUIKIT::File::Item* item ) -> void;
+    auto getRecentFile(Emulator::Interface* emulator) -> RecentFiles*;
 };
 
 extern Fileloader* fileloader;

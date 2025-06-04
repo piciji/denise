@@ -55,7 +55,7 @@ auto pComboButton::remove(unsigned selection) -> void {
         return;
     
     SendMessage(hwnd, CB_DELETESTRING, selection, 0);
-    if(selection == comboButton.state.selection)
+    if (selection == comboButton.selection())
         comboButton.setSelection(0);
 }
 
@@ -86,7 +86,7 @@ auto pComboButton::setGeometry(Geometry geometry) -> void {
 
 auto pComboButton::setSelection(unsigned selection) -> void {
     if(hwnd)
-        SendMessage(hwnd, CB_SETCURSEL, selection, 0);
+        SendMessage(hwnd, CB_SETCURSEL, selection == ~0 ? -1 : selection, 0);
 }
 
 auto pComboButton::setText(unsigned selection, const std::string& text) -> void {
@@ -95,8 +95,13 @@ auto pComboButton::setText(unsigned selection, const std::string& text) -> void 
     
     SendMessage(hwnd, CB_DELETESTRING, selection, 0);
     SendMessage(hwnd, CB_INSERTSTRING, selection, (LPARAM)(wchar_t*)utf16_t(text));
-    setSelection(comboButton.state.selection);
+    setSelection(comboButton.selection());
     calculatedMinimumSize.updated = false;
+}
+
+auto pComboButton::setDroppable(bool droppable) -> void {
+    if (hwnd)
+        DragAcceptFiles(hwnd, droppable);
 }
 
 auto pComboButton::create() -> void {
@@ -125,6 +130,25 @@ auto CALLBACK pComboButton::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, 
     switch(msg) {
         case WM_ERASEBKGND:
             return 0;
+        case WM_DROPFILES: {
+            std::vector<std::string> paths = getDropPaths(wparam);
+
+            if (!paths.empty() && comboButton->onDrop)
+                comboButton->onDrop(paths);
+
+            return false;
+        } break;
+        case WM_MOUSEMOVE: {
+            if (!comboButton->p.hovered) {
+                comboButton->p.hovered = true;
+                if (comboButton->onHover)
+                    comboButton->onHover();
+            }
+        } break;
+
+        case WM_MOUSELEAVE: {
+            comboButton->p.hovered = false;
+        } break;
     }
     
     return CallWindowProc(comboButton->p.wndprocOrig, hwnd, msg, wparam, lparam);
@@ -211,13 +235,14 @@ auto pComboButton::rebuild() -> void {
     for (int i = 0; i < comboButton.rows(); i++)
         append(comboButton.state.rows[i], comboButton.state.fonts[i]);
     
-    setSelection(comboButton.state.selection);
+    setSelection(comboButton.selection());
+    setDroppable(comboButton.droppable());
     pWidget::rebuild();
 }
 
 auto pComboButton::onChange() -> void {
     unsigned selection = SendMessage(hwnd, CB_GETCURSEL, 0, 0);
-    if(selection == comboButton.state.selection)
+    if(selection == comboButton.selection())
         return;
     
     comboButton.state.selection = selection;

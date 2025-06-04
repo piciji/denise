@@ -624,7 +624,9 @@ struct CheckBox : Widget {
 };
 
 struct ComboButton : Widget {
-    std::function<void ()> onChange = nullptr;
+    std::function<void()> onChange = nullptr;
+    std::function<void()> onHover = nullptr;
+    std::function<void(std::vector<std::string>)> onDrop = nullptr;
 
     auto rows() const -> unsigned { return state.rows.size(); }
     auto selection() const -> unsigned { return state.selection; }
@@ -632,6 +634,7 @@ struct ComboButton : Widget {
     auto userData(unsigned selection) const -> int;
     auto text() const -> std::string { return text( state.selection ); }
     auto text(unsigned selection) const -> std::string;
+    auto droppable() -> bool const { return state.droppable; }
 
     auto append(const std::string& text = "", int userData = 0, const std::string& font = "") -> void;
     auto remove(unsigned selection) -> void;
@@ -640,12 +643,15 @@ struct ComboButton : Widget {
     auto activate(unsigned selection) -> void;
     auto setSelectionByUserId(int userId) -> void;
     auto setSelectionByRow(const std::string& row) -> void;
+    auto unselect() -> void;
     auto setText(unsigned selection, const std::string& text) -> void;
     auto setUserData(unsigned selection, int userData) -> void;
     auto setText(const std::string& text) -> void = delete;
+    auto setDroppable(bool droppable = true) -> void;
 
     struct {
         unsigned selection = 0;
+        bool droppable = false;
         std::vector<std::string> rows;
         std::vector<std::string> fonts;
         std::vector<int> userData;

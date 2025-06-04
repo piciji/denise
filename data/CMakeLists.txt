@@ -518,6 +518,7 @@ set(headerSrcs ${headerSrcs}
     program/media/layout.cpp
     program/media/media.h
     program/media/swapper.cpp
+    program/media/recentFiles.h
     program/states/states.h
     program/thread/emuThread.h
     program/tools/chronos.h
