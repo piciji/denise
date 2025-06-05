@@ -289,6 +289,7 @@ struct pComboButton : pWidget {
     auto setSelection(unsigned selection) -> void;
     auto setText(unsigned selection, const std::string& text) -> void;
     auto init() -> void;
+    auto setDroppable(bool droppable) -> void;
 
     pComboButton(ComboButton& comboButton) : pWidget(comboButton), comboButton(comboButton) { }
 };

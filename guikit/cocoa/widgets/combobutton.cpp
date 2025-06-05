@@ -18,6 +18,18 @@
     comboButton->state.selection = [self indexOfSelectedItem];
     if(comboButton->onChange) comboButton->onChange();
 }
+
+-(NSDragOperation) draggingEntered:(id<NSDraggingInfo>)sender {
+    return GUIKIT::DropPathsOperation(sender);
+}
+
+-(BOOL) performDragOperation:(id<NSDraggingInfo>)sender {
+    auto paths = GUIKIT::getDropPaths(sender);
+    if(paths.empty()) return NO;
+    if(comboButton->onDrop) comboButton->onDrop(paths);
+    return YES;
+}
+
 @end
 
 namespace GUIKIT {
@@ -97,7 +109,7 @@ auto pComboButton::reset() -> void {
 
 auto pComboButton::setSelection(unsigned selection) -> void {
     @autoreleasepool {
-        [(id)cocoaView selectItemAtIndex:selection];
+        [(id)cocoaView selectItemAtIndex:selection == ~0 ? -1 : selection];
     }
 }
 
@@ -106,6 +118,16 @@ auto pComboButton::setText(unsigned selection, const std::string& text) -> void 
         [[(id)cocoaView itemAtIndex:selection] setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
+}
+
+auto pComboButton::setDroppable(bool droppable) -> void {
+    @autoreleasepool {
+        if(droppable) {
+            [cocoaView registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
+        } else {
+            [cocoaView unregisterDraggedTypes];
+        }
+    }
 }
 
 auto pComboButton::init() -> void {

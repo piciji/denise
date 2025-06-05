@@ -15,6 +15,7 @@
 		9D0C38242CB59D9B00363301 /* data in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38232CB59D9B00363301 /* data */; };
 		9D0C38282CB5A66F00363301 /* images in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38272CB5A66F00363301 /* images */; };
 		9D0C382E2CB5C17900363301 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D0C382D2CB5C17900363301 /* OpenAL.framework */; };
+		9D31E3BE2DF2083600F88404 /* recentFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D31E3BC2DF2083600F88404 /* recentFiles.cpp */; };
 		9D55396B2D5A90940083E91B /* w65816.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539652D5A902D0083E91B /* w65816.cpp */; };
 		9D55396C2D5A909C0083E91B /* w65C02.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539692D5A902D0083E91B /* w65C02.cpp */; };
 		9D55396D2D5A90AE0083E91B /* chessCard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539582D5A8FBC0083E91B /* chessCard.cpp */; };
@@ -221,6 +222,8 @@
 		9D0C38232CB59D9B00363301 /* data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = data; path = data/data; sourceTree = "<group>"; };
 		9D0C38272CB5A66F00363301 /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = data/images; sourceTree = "<group>"; };
 		9D0C382D2CB5C17900363301 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		9D31E3BC2DF2083600F88404 /* recentFiles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = recentFiles.cpp; sourceTree = "<group>"; };
+		9D31E3BD2DF2083600F88404 /* recentFiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = recentFiles.h; sourceTree = "<group>"; };
 		9D5539552D5A8F4D0083E91B /* superCpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = superCpu.h; sourceTree = "<group>"; };
 		9D5539562D5A8F4D0083E91B /* superCpu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = superCpu.cpp; sourceTree = "<group>"; };
 		9D5539582D5A8FBC0083E91B /* chessCard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = chessCard.cpp; sourceTree = "<group>"; };
@@ -1268,6 +1271,8 @@
 		9D8FAAEE2CB3F6EF006905BE /* media */ = {
 			isa = PBXGroup;
 			children = (
+				9D31E3BC2DF2083600F88404 /* recentFiles.cpp */,
+				9D31E3BD2DF2083600F88404 /* recentFiles.h */,
 				9D8FAAEF2CB3F6EF006905BE /* media.cpp */,
 				9D8FAAF02CB3F6EF006905BE /* media.h */,
 				9D8FAAF12CB3F6EF006905BE /* autoloader.cpp */,
@@ -2497,6 +2502,7 @@
 				9D8FAE3F2CB40DF9006905BE /* gmod2.cpp in Sources */,
 				9D8FADF72CB40DF8006905BE /* pia.cpp in Sources */,
 				9DF6947F2CBA74FF0095D273 /* ParseHelper.cpp in Sources */,
+				9D31E3BE2DF2083600F88404 /* recentFiles.cpp in Sources */,
 				9DF7CF822D96E29800CECCF1 /* lz5_decoder.cpp in Sources */,
 				9DF6947E2CBA74FF0095D273 /* ParseContextBase.cpp in Sources */,
 				9DF694882CBA74FF0095D273 /* attribute.cpp in Sources */,
