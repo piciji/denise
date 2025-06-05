@@ -629,8 +629,8 @@ auto pWindow::setBlankCursor() -> void {
 }
 
 auto pWindow::setIcon( std::string path ) -> bool {
-   
-    File file( path + String::toLowerCase( Application::name ) + ".png" );    
+    std::string appName = Application::name;
+    File file(path + String::toLowerCase(appName) + ".png");
         
     if ( file.open() ) {
         
