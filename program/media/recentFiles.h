@@ -11,25 +11,34 @@ namespace GUIKIT {
 
 struct RecentFiles {
 
+    RecentFiles(Emulator::Interface* emulator, const std::string& path);
+
+    ~RecentFiles();
+
     std::string path;
 
     Emulator::Interface* emulator;
 
     const int maxEntries = 30;
 
-    RecentFiles(Emulator::Interface* emulator, const std::string& path);
-
-    ~RecentFiles();
-
     GUIKIT::Settings* settings = nullptr;
+
+    struct Storage {
+        Emulator::Interface::MediaGroup* group;
+        std::vector<std::string> files;
+    };
+
+    std::vector<Storage*> storage;
 
     auto load() -> void;
 
     auto save() -> void;
 
-    auto add(Emulator::Interface::MediaGroup& group, const std::string& path) -> void;
+    auto add(Emulator::Interface::MediaGroup& group, const std::string& curPath) -> void;
 
-    auto list(Emulator::Interface::MediaGroup& group, const std::string& curPath = "") -> std::vector<std::string>;
+    auto list(Emulator::Interface::MediaGroup& group, const std::string& curPath = "") -> std::vector<std::string>&;
 
     auto getIdent(Emulator::Interface::MediaGroup& group, unsigned pos) -> std::string;
+
+    auto getStorage(Emulator::Interface::MediaGroup& group) -> Storage*;
 };

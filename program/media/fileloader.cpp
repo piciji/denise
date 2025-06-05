@@ -875,8 +875,8 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         updateFileSetting(fSetting, file, item);
     }
 
-    auto recentFiles = fileloader->getRecentFile(emulator);
-    recentFiles->add(*mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
+    auto recentFile = fileloader->getRecentFile(emulator);
+    recentFile->add(*mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
 
     emulator->getListing(media);
 
@@ -1134,7 +1134,10 @@ auto Fileloader::getRecentFile(Emulator::Interface* emulator) -> RecentFiles* {
             return recentFile;
     }
 
-    std::string path = program->generatedFolder("") + GUIKIT::String::toLowerCase(emulator->ident) + "_recent.ini";
+    auto _ident = emulator->ident;
+    GUIKIT::String::toLowerCase(_ident);
+
+    std::string path = program->generatedFolder("") + _ident + "_recent.ini";
 
     auto recentFile = new RecentFiles(emulator, path);
     recentFiles.push_back(recentFile);

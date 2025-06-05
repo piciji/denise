@@ -428,7 +428,6 @@ struct pCheckBox : pWidget {
 struct pComboButton : pWidget {
     ComboButton& comboButton;
     std::vector<HFONT> hfonts;
-    bool hovered = false;
 
     auto append(std::string text, const std::string& _font) -> void;
     auto remove(unsigned selection) -> void;

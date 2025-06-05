@@ -154,7 +154,8 @@ auto MediaLayout::build() -> void {
     imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
     imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );
     settingsImage.loadPng((uint8_t*)Icons::settings, sizeof(Icons::settings) );
-
+    searchImage.loadPng((uint8_t*)Icons::search, sizeof(Icons::search) );
+    
     openImg.loadPng((uint8_t*)Icons::open, sizeof(Icons::open) );
     ejectImg.loadPng((uint8_t*)Icons::eject, sizeof(Icons::eject) );
 
@@ -382,27 +383,20 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
                 drop(block->selector.pathCombo->text(), block);
             };
+        }
 
-            if (mediaGroup->isDrive()) {
-                block->selector.pathCombo->onHover = [this, layout, block]() {
-                    if (layout->blockContainer.children.size() <= 1)
-                        return;
+        if (block->header.list) {
+            block->header.list->onActivate = [this, layout, block]() {
+                if (layout->blockContainer.children.size() <= 1)
+                    return;
 
-                    fileloader->resetPreview(this->emulator, true);
+                fileloader->resetPreview(this->emulator, true);
 
-                    layout->selectedBlock = block;
+                layout->selectedBlock = block;
 
-                    // if (layout->mediaGroup->selected && !block->media->secondary) {
-                    //     layout->mediaGroup->selected = block->media;
-                    //     settings->set<unsigned>(_underscore(layout->mediaGroup->name) + "_selected", block->media->id);
-                    //     block->header.inUse.setChecked();
-                    // }
-
-                    if (showListing(layout))
-                        layout->updateListing(block);
-                };
-            } else
-                block->selector.pathCombo->onHover = nullptr;
+                if (showListing(layout))
+                    layout->updateListing(block);
+            };
         }
 
         block->header.inUse.onActivate = [this, layout, block]() {
@@ -954,8 +948,9 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
         block->selector.edit->setText( fSetting->path );
 
     if (block->selector.pathCombo) {
-        auto recentFiles = fileloader->getRecentFile(emulator);
-        auto files = recentFiles->list(*block->media->group, fSetting->path);
+        auto recentFile = fileloader->getRecentFile(emulator);
+        auto& files = recentFile->list(*block->media->group, fSetting->path);
+
         block->selector.pathCombo->reset();
 
         for (auto& file : files)
@@ -1251,8 +1246,8 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         fileloader->updateFileSetting(fSetting, file, item);
     }
 
-    auto recentFiles = fileloader->getRecentFile(emulator);
-    recentFiles->add(*mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
+    auto recentFile = fileloader->getRecentFile(emulator);
+    recentFile->add(*mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
 
     if (showListing(layout)) {
         block->listings.clear();

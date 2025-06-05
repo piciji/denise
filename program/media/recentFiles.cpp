@@ -11,6 +11,9 @@ RecentFiles::RecentFiles(Emulator::Interface* emulator, const std::string& path)
 RecentFiles::~RecentFiles() {
     if (settings)
         delete settings;
+
+    for(auto s : storage)
+        delete s;
 }
 
 auto RecentFiles::load() -> void {
@@ -31,65 +34,78 @@ auto RecentFiles::save() -> void {
     settings->save(path);
 }
 
-auto RecentFiles::add(Emulator::Interface::MediaGroup& group, const std::string& path) -> void {
-    std::vector<std::string> out;
-    if (path.empty())
+auto RecentFiles::add(Emulator::Interface::MediaGroup& group, const std::string& curPath) -> void {
+    if (curPath.empty())
         return;
 
     load();
 
+    auto s = getStorage(group);    
+    s->files.clear();
+    s->files.reserve(maxEntries);
+
     std::string line;
-    out.push_back(path);
+    s->files.push_back(curPath);
 
     for (int i = 0; i < maxEntries; i++) {
         line = settings->get<std::string>(getIdent(group, i), "");
 
         if (!line.empty()) {
-            if (line != path)
-                out.push_back(line);
+            if (line != curPath)
+                s->files.push_back(line);
         }
     }
 
     for (int i = 0; i < maxEntries; i++) {
-        if (i >= out.size())
+        if (i >= s->files.size())
             settings->set<std::string>(getIdent(group, i), "");
         else
-            settings->set<std::string>(getIdent(group, i), out[i]);
+            settings->set<std::string>(getIdent(group, i), s->files[i]);
     }
 
     save();
 }
 
-auto RecentFiles::list(Emulator::Interface::MediaGroup& group, const std::string& curPath) -> std::vector<std::string> {
-    std::vector<std::string> out;
+auto RecentFiles::list(Emulator::Interface::MediaGroup& group, const std::string& curPath) -> std::vector<std::string>& {
     load();
 
-    std::string line;
+    auto s = getStorage(group);
 
-    bool found = curPath.empty();
+    if (curPath.empty())
+        return s->files;
 
-    for (int i = 0; i < maxEntries; i++) {
-        line = settings->get<std::string>(getIdent(group, i), "");
-        if (!line.empty()) {
-            if (!found && (line == curPath)) {
-                found = true;
-            }
-
-            out.push_back(line);
-        }
+    for(auto& file : s->files) {
+        if (file == curPath)
+            return s->files;
     }
 
-    if (!found) {
-        add(group, curPath);
-        out.insert(out.begin(), curPath);
-        if (out.size() > maxEntries)
-            out.pop_back();
-    }
+    add(group, curPath);
 
-    return out;
+    return s->files;
 }
 
 
 auto RecentFiles::getIdent(Emulator::Interface::MediaGroup& group, unsigned pos) -> std::string {
     return group.name + "_" + std::to_string(pos);
+}
+
+auto RecentFiles::getStorage(Emulator::Interface::MediaGroup& group) -> Storage* {
+    for(auto _s : storage) {
+        if (_s->group == &group)
+            return _s;
+    }
+
+    Storage* s = new Storage;
+    s->group = &group;
+    s->files.reserve(maxEntries);
+    std::string line;
+
+    for (int i = 0; i < maxEntries; i++) {
+        line = settings->get<std::string>(getIdent(group, i), "");
+
+        if (!line.empty())
+            s->files.push_back(line);
+    }
+    storage.push_back(s);
+    return s;
 }

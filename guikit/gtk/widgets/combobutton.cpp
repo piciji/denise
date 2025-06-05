@@ -1,7 +1,7 @@
 
 auto pComboButton::append(std::string text, const std::string& _font) -> void {
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(gtkWidget), text.c_str());
-    if(comboButton.rows() == 1) comboButton.setSelection(0);
+    if(comboButton.rows() == 1) setSelection(0);
 	calculatedMinimumSize.updated = false;
 }
 
@@ -43,6 +43,7 @@ auto pComboButton::create() -> void {
     destroy();
     gtkWidget = gtk_combo_box_text_new();
     g_signal_connect_swapped(G_OBJECT(gtkWidget), "changed", G_CALLBACK(pComboButton::onChange), (gpointer)&comboButton);
+    g_signal_connect(G_OBJECT(gtkWidget), "drag-data-received", G_CALLBACK(pComboButton::dropEvent), (gpointer)&comboButton);
 }
 
 auto pComboButton::init() -> void {

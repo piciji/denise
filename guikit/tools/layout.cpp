@@ -58,6 +58,22 @@ auto Layout::append(Sizable& sizable, Size size, unsigned spacing) -> void {
     updateLayout();
 }
 
+auto Layout::insert(Sizable& sizable, Sizable& after, Size size, unsigned spacing) -> void {
+	
+    if (has(sizable))
+        return;
+
+    for (auto it = children.begin(); it != children.end();) {
+        if ((*it).sizable == &after) {
+            children.insert(++it, {&sizable, size, {0,0}, spacing, 0, false});
+            sizable.setVisible( visible() );
+            updateLayout();
+            return;
+        } else
+            ++it;
+    }
+}
+
 auto Layout::append(Sizable& sizable) -> void {
     sizable.state.parent = this;
     if (frameWidget) ((Sizable*)frameWidget)->state.parent = this;

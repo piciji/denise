@@ -625,7 +625,6 @@ struct CheckBox : Widget {
 
 struct ComboButton : Widget {
     std::function<void()> onChange = nullptr;
-    std::function<void()> onHover = nullptr;
     std::function<void(std::vector<std::string>)> onDrop = nullptr;
 
     auto rows() const -> unsigned { return state.rows.size(); }
@@ -892,6 +891,7 @@ struct Layout : Sizable {
     };
     
     auto append(Sizable& sizable, Size size, unsigned spacing = 0) -> void;
+    auto insert(Sizable& sizable, Sizable& after, Size size, unsigned spacing) -> void;
     auto remove(Sizable& sizable) -> bool;
 
     auto updateLayout() -> void;

@@ -138,17 +138,6 @@ auto CALLBACK pComboButton::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, 
 
             return false;
         } break;
-        case WM_MOUSEMOVE: {
-            if (!comboButton->p.hovered) {
-                comboButton->p.hovered = true;
-                if (comboButton->onHover)
-                    comboButton->onHover();
-            }
-        } break;
-
-        case WM_MOUSELEAVE: {
-            comboButton->p.hovered = false;
-        } break;
     }
     
     return CallWindowProc(comboButton->p.wndprocOrig, hwnd, msg, wparam, lparam);

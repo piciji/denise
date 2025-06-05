@@ -83,6 +83,11 @@ MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media, Emula
         append(inUse, {0u, 0u}, 5);
     else
         append(deviceName, {0u, 0u}, 10);
+
+    if (group->isDrive() && group->media.size() > 1) {
+        list = new GUIKIT::Button;
+        append(*list, {0u, 0u}, 10);
+    }
         
     if (group->isWritable()) {
         if ( (media->id < 4) && dynamic_cast<LIBC64::Interface*>(emulator) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionFinalChessCard));
@@ -281,17 +286,22 @@ auto MediaGroupLayout::updateVisibility( unsigned count, bool init ) -> void {
     
     if (!count)
         count = 1;
+
+    auto block = blocks[0];
+    block->header.remove(*(block->header.list));
+    if (count > 1)
+        block->header.insert(*(block->header.list), block->header.deviceName, {0u, 0u}, 10);
     
-    for(auto block : blocks)   
-        blockContainer.remove(*block);        
+    for(auto block : blocks)
+        blockContainer.remove(*block);
     
-    for(auto block : blocks) {  
+    for(auto block : blocks) {
         
         if (count) {
-            blockContainer.append(*block,{~0u, 0u}, 2);      
+            blockContainer.append(*block,{~0u, 0u}, 2);
             
             if (!listingInVisibleBlock)
-                listingInVisibleBlock = block == selectedBlock;     
+                listingInVisibleBlock = block == selectedBlock;
             
             count--;
         } else {
@@ -393,6 +403,9 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
     for (auto& media : mediaGroup->media) {
         auto block = addBlock(&media);
         block->layout = this;
+        if (block->header.list) {
+            block->header.list->setImage(&mediaLayout->searchImage);
+        }
 
         auto& header = block->header;
         

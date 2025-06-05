@@ -127,6 +127,7 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
         struct Header : GUIKIT::HorizontalLayout {
             GUIKIT::RadioBox inUse;
             GUIKIT::Label deviceName;
+            GUIKIT::Button* list = nullptr;
             GUIKIT::CheckBox writeprotect;
             GUIKIT::Button eject;
             GUIKIT::Label fileName;
@@ -259,6 +260,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image imgFolderClosed;
     GUIKIT::Image imgDocument;
     GUIKIT::Image settingsImage;
+    GUIKIT::Image searchImage;
 
     GUIKIT::Image openImg;
     GUIKIT::Image ejectImg;
