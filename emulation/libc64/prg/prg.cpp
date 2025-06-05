@@ -119,7 +119,7 @@ auto Prg::inject( ) -> void {
                 _offset += 1;
                 uint16_t fixLink = useChunk->offset + offset;
 
-                if (ram[fixLink + 1] == 0) // hi byte is zero page ?
+                if (ram[fixLink + 1] == 0) // hi byte is zero page ? cancel correction
                     break;
 
                 ram[fixLink] = _offset & 0xff;
