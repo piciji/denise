@@ -109,7 +109,7 @@ auto Prg::inject( ) -> void {
     uint16_t start = ram[0x2c] << 8 | ram[0x2b];
 
     // e.g. hi byte is 0x1c (C128), correct it to 0x08 (C64)
-    if ((useChunk->offset == 0x0801) ) {
+    if ((useChunk->offset == 0x0801) && (ram[0x2b] == 0x01) && (ram[0x2c] == 0x08)) {
         uint16_t offset = 0;
 
         for (unsigned i = 4; i < useChunk->size; i++) {
