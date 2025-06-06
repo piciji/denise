@@ -100,16 +100,17 @@ auto Prg::inject( ) -> void {
         return;
 
     uint8_t* ram = system->ram;
+    uint16_t start = ram[0x2c] << 8 | ram[0x2b];
+    bool matchStart = start == useChunk->offset;
+
     // put prg file in c64 memory
     for (unsigned i = 0; i < useChunk->size; i++)
         ram[ useChunk->offset + i ] = *(useChunk->data + i);
 
-    uint16_t end = useChunk->offset + useChunk->size;
-
-    uint16_t start = ram[0x2c] << 8 | ram[0x2b];
+    uint16_t end = useChunk->offset + useChunk->size;    
 
     // e.g. hi byte is 0x1c (C128), correct it to 0x08 (C64)
-    if ((useChunk->offset == 0x0801) && (ram[0x2b] == 0x01) && (ram[0x2c] == 0x08)) {
+    if (matchStart) {
         uint16_t offset = 0;
 
         for (unsigned i = 4; i < useChunk->size; i++) {
