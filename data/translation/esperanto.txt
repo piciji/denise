@@ -887,3 +887,4 @@ overclocking = Overclocking
 CPU renderer tooltip = CPU renderer is executed in a separate thread.
 Slower Built-In HDD = Slow down HDD
 Slower Built-In HDD tooltip = The virtual hard drive provides the data, similar to a real one, after a short wait. This does not concern real HD controllers, such as the M-Tec AT500.
+toggle Caps Lock LED = toggle Caps Lock LED

@@ -232,10 +232,21 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
     emuThread->unlockStatus();
 }
 
+auto StatusHandler::updateCapsLockLED(bool state) -> void {
+    capsLED.state = state;
+    if (!hasCapsLED())
+        return;
+
+    if (emuThread->enabled)
+        emuThread->events |= EmuThread::EVT_CAPS_LED;
+    else
+        setCapsLED();
+}
+
 auto StatusHandler::updatePowerLED(bool state) -> void {
     powerLED.state = state;
     if (emuThread->enabled)
-        emuThread->updatePowerLED = true;
+        emuThread->events |= EmuThread::EVT_POWER_LED;
     else
         updatePowerLED();
 }
@@ -294,8 +305,34 @@ auto StatusHandler::hidePowerLED() -> void {
     emuThread->unlockStatus();
 }
 
+auto StatusHandler::setCapsLED() -> void {
+    emuThread->lockStatus();
+    updateVisible(27, true);
+    updateImage(28, capsLED.state ? &(view->ledGreen2Image) : &(view->ledOffImage));
+    updateStatusBar();
+    emuThread->unlockStatus();
+}
+
+auto StatusHandler::hideCapsLED() -> void {
+    emuThread->lockStatus();
+    updateVisible(27, false);
+    updateVisible(28, false);
+    updateStatusBar();
+    emuThread->unlockStatus();
+}
+
 auto StatusHandler::hasPowerLED() -> bool {
     return powerLED.enable && activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator);
+}
+
+auto StatusHandler::hasCapsLED() -> bool {
+    return capsLED.enable && activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator);
+}
+
+auto StatusHandler::toggleCapsLED() -> void {
+    capsLED.enable ^= 1;
+    globalSettings->set<bool>("caps_led", capsLED.enable);
+    hasCapsLED() ? setCapsLED() : hideCapsLED();
 }
 
 auto StatusHandler::togglePowerLED() -> void {
@@ -339,6 +376,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     showFPS = globalSettings->get<bool>("fps", false);
     //showFPSScreen = globalSettings->get<bool>("fps_screen", false);
     powerLED.enable = globalSettings->get<bool>("power_led", true);
+    capsLED.enable = globalSettings->get<bool>("caps_led", true);
     showVolume = globalSettings->get<bool>("volume_control", true );
     fpsCounter.decimalPoints = 3;
 	control = 0;
@@ -364,6 +402,9 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 24, &(view->ledOffImage));
     statusBar->append( 25, "DH3 00000");
     statusBar->append( 26, &(view->ledOffImage));
+
+    statusBar->append( 27, "CL" );
+    statusBar->append( 28, &(view->ledOffImage));
     
     statusBar->append( 9, "000", nullptr, &(view->tapeControlMenu) );    // tape counter
     statusBar->append( 10, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
@@ -410,6 +451,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->updateSeparator( 22, true);
     statusBar->updateSeparator( 24, true);
     statusBar->updateSeparator( 26, true);
+    statusBar->updateSeparator( 28, true);
 
     powerLED.timer.setInterval(1000);
     powerLED.timer.onFinished = [this]() {

@@ -748,7 +748,7 @@ auto Program::trapsResult(Emulator::Interface::Media* media, bool error) -> void
     if (activeEmulator && media && media->group->isDisk()) {
         if (error) {
             if (emuThread->enabled)
-                emuThread->disableTraps = true;
+                emuThread->events |= EmuThread::EVT_AUTO_LOAD_NO_TRAPS;
             else
                 fileloader->autoload(activeEmulator, media, 0, false, true );
         } else {

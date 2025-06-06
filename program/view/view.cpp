@@ -1092,6 +1092,7 @@ auto View::buildMenu() -> void {
             sM.menu->setEnabled(false);
             sM.system->append(*sM.menu);
             sM.powerLED = nullptr;
+            sM.capsLED = nullptr;
         } else {
             sM.powerLED = new GUIKIT::MenuItem;
             sM.powerLED->setIcon( menuImage );
@@ -1099,6 +1100,13 @@ auto View::buildMenu() -> void {
                 statusHandler->togglePowerLED();
             };
             sM.system->append(*sM.powerLED);
+
+            sM.capsLED = new GUIKIT::MenuItem;
+            sM.capsLED->setIcon(menuImage);
+            sM.capsLED->onActivate = []() {
+                statusHandler->toggleCapsLED();
+            };
+            sM.system->append(*sM.capsLED);
             sM.menu = nullptr;
             sM.freeze = nullptr;
         }
@@ -1803,6 +1811,8 @@ auto View::translate() -> void {
             sysMenu.menu->setText(trans->get("cartridge button"));
         if (sysMenu.powerLED)
             sysMenu.powerLED->setText(trans->get("toggle Power LED"));
+        if (sysMenu.capsLED)
+            sysMenu.capsLED->setText(trans->get("toggle Caps Lock LED"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.states->setText(trans->get("states"));

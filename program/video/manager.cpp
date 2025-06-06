@@ -159,7 +159,7 @@ auto VideoManager::updateListingColors() -> void {
     emuThread->unlockPaletteForSoftwareView();
 
     if (emuThread->enabled) {
-        emuThread->updatePaletteForSoftwareView = true;
+        emuThread->events |= EmuThread::EVT_UPDATE_PALETTE_SOFTWARE;
         return;
     }
 
@@ -646,7 +646,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 
         if (!--placeHolderFrames) {
             if (emuThread->enabled) {
-                emuThread->dismissPlaceholder = true;
+                emuThread->events |= EmuThread::EVT_DISMISS_PLACEHOLDER;
             } else {
                 hidePlaceHolder();
             }

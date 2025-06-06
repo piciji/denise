@@ -13,15 +13,13 @@ struct EmuThread {
     bool enabled = false;
     std::atomic<bool> attention;
     std::atomic<bool> acknowledged;
-    std::atomic<bool> finishAudioRecord;
-    std::atomic<bool> pollHotkeys;
-    std::atomic<bool> updatePaletteForSoftwareView;
     std::atomic<bool> updateBorder;
-    std::atomic<bool> updateFps;
-    std::atomic<bool> dismissPlaceholder;
-    std::atomic<bool> presentShaderError;
-    std::atomic<bool> disableTraps;
-    std::atomic<bool> updatePowerLED;
+
+    enum {EVT_CAPS_LED = 1, EVT_POWER_LED = 2, EVT_AUTO_LOAD_NO_TRAPS = 4, EVT_DISMISS_PLACEHOLDER = 8,
+            EVT_UPDATE_FPS = 0x10, EVT_SHADER_ERROR = 0x20, EVT_UPDATE_PALETTE_SOFTWARE = 0x40,
+            EVT_POLL_HOTKEYS = 0x80, EVT_FINISH_AUDIO_RECORD = 0x100 };
+
+    std::atomic<unsigned> events;
 
     std::atomic<bool> ready;
     std::atomic<bool> kill;

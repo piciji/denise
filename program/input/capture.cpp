@@ -37,7 +37,7 @@ auto InputManager::poll() -> void {
     }
 
     if (emuThread->enabled)
-        emuThread->pollHotkeys = true;
+        emuThread->events |= EmuThread::EVT_POLL_HOTKEYS;
     else
         pollHotkeys();
 }

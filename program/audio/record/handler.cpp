@@ -143,7 +143,7 @@ auto Handler::finish(bool timeup) -> void {
     if (activeEmulator) {
 
         if (timeup && emuThread->enabled) {
-            emuThread->finishAudioRecord = true;
+            emuThread->events |= EmuThread::EVT_FINISH_AUDIO_RECORD;
         } else {
             auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
 

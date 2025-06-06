@@ -34,6 +34,7 @@ struct View : GUIKIT::Window {
 		GUIKIT::MenuItem* reset;
         GUIKIT::MenuItem* freeze;
         GUIKIT::MenuItem* powerLED;
+        GUIKIT::MenuItem* capsLED;
         GUIKIT::MenuItem* menu;
         GUIKIT::MenuItem* firmware;
         GUIKIT::MenuItem* loadSoftware;

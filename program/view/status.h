@@ -66,8 +66,13 @@ struct StatusHandler {
     auto updatePowerLED() -> void;
     auto setPowerLED() -> void;
     auto hidePowerLED() -> void;
+    auto setCapsLED() -> void;
+    auto hideCapsLED() -> void;
+    auto updateCapsLockLED(bool state) -> void;
     auto togglePowerLED() -> void;
+    auto toggleCapsLED() -> void;
     auto hasPowerLED() -> bool;
+    auto hasCapsLED() -> bool;
     auto setVolumeSlider(unsigned value) -> void;
     auto setVolumeSlider(Emulator::Interface* emulator) -> void;
     auto updateOnScreenFPS() -> void;
@@ -87,6 +92,11 @@ struct StatusHandler {
         bool state;
         GUIKIT::Timer timer;
     } powerLED;
+
+    struct {
+        bool enable;
+        bool state;
+    } capsLED;
 
     struct {
         std::string txt = "";

@@ -58,7 +58,7 @@ auto Program::initVideo(bool driverChange) -> void {
             auto manager = VideoManager::getInstance(activeEmulator);
             if (manager) {
                 if (emuThread->enabled)
-                    emuThread->presentShaderError = true;
+                    emuThread->events |= EmuThread::EVT_SHADER_ERROR;
                 else
                     manager->finishPreset();
             }
@@ -546,7 +546,7 @@ auto Program::fpsChanged() -> void {
         return;
 
     if (emuThread->enabled)
-        emuThread->updateFps = true;
+        emuThread->events |= EmuThread::EVT_UPDATE_FPS;
     else
         fpsChangeTimer.setEnabled();
 }

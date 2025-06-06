@@ -15,16 +15,9 @@ EmuThread::EmuThread() {
     kill = false;
     attention = false;
     acknowledged = false;
-    finishAudioRecord = false;
-    pollHotkeys = false;
-    updatePaletteForSoftwareView = false;
     updateBorder = false;
-    updateFps = false;
-    dismissPlaceholder = false;
     enabled = false;
-    presentShaderError = false;
-    disableTraps = false;
-    updatePowerLED = false;
+    events = 0;
 }
 
 EmuThread::~EmuThread() {
@@ -161,64 +154,58 @@ auto EmuThread::handleStatusUpdate( ) -> void {
 
 auto EmuThread::handleUIEvents() -> void {
 
-    if (finishAudioRecord) {
-        finishAudioRecord = false;
-        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-        if (emuView && emuView->audioLayout)
-            emuView->audioLayout->stopRecord();
-    }
+    if (events) {
+        unsigned _events = events;
+        events = 0;
 
-    if (pollHotkeys) {
-        pollHotkeys = false;
-        InputManager::pollHotkeys();
-    }
+        if (_events & EVT_FINISH_AUDIO_RECORD) {
+            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+            if (emuView && emuView->audioLayout)
+                emuView->audioLayout->stopRecord();
+        }
 
-    if (updatePaletteForSoftwareView) {
-        updatePaletteForSoftwareView = false;
-        auto emulator = program->getEmulator("C64");
-        auto emuView = EmuConfigView::TabWindow::getView( emulator );
-        auto vManager = VideoManager::getInstance( emulator );
+        if (_events & EVT_POLL_HOTKEYS)
+            InputManager::pollHotkeys();
 
-        if (emuView && emuView->mediaLayout)
-            emuView->mediaLayout->colorListing( vManager->getForegroundColor(), vManager->getBackgroundColor() );
-    }
+        if (_events & EVT_UPDATE_PALETTE_SOFTWARE) {
+            auto emulator = program->getEmulator("C64");
+            auto emuView = EmuConfigView::TabWindow::getView(emulator);
+            auto vManager = VideoManager::getInstance(emulator);
 
-    if (updateFps) {
-        program->fpsChangeTimer.setEnabled();
-        updateFps = false;
-    }
+            if (emuView && emuView->mediaLayout)
+                emuView->mediaLayout->colorListing(vManager->getForegroundColor(), vManager->getBackgroundColor());
+        }
 
-    if (dismissPlaceholder) {
-        VideoManager::hidePlaceHolder();
-        dismissPlaceholder = false;
-    }
+        if (_events & EVT_SHADER_ERROR) {
+            auto manager = VideoManager::getInstance(activeEmulator);
+            if (manager)
+                manager->finishPreset();
+        }
 
-    if (presentShaderError) {
-        auto manager = VideoManager::getInstance(activeEmulator);
-        if (manager)
-            manager->finishPreset();
+        if(_events & EVT_UPDATE_FPS)
+            program->fpsChangeTimer.setEnabled();
 
-        presentShaderError = false;
-    }
+        if (_events & EVT_DISMISS_PLACEHOLDER)
+            VideoManager::hidePlaceHolder();
 
-    if (disableTraps) {
-        disableTraps = false;
-        fileloader->autoload(activeEmulator, autoloader->getLatestDrive(activeEmulator), 0, false, true );
-    }
+        if (_events & EVT_AUTO_LOAD_NO_TRAPS) {
+            lock();
+            fileloader->autoload(activeEmulator, autoloader->getLatestDrive(activeEmulator), 0, false, true);
+            unlock();
+        }
 
-    if (updatePowerLED) {
-        updatePowerLED = false;
-        statusHandler->updatePowerLED();
+        if (_events & EVT_POWER_LED)
+            statusHandler->setPowerLED();
+
+        if (_events & EVT_CAPS_LED)
+            statusHandler->setCapsLED();
     }
 }
 
 auto EmuThread::clearEvents() -> void {
     statusUpdates.clear();
-    finishAudioRecord = false;
-    updatePaletteForSoftwareView = false;
     updateBorder = false;
-    pollHotkeys = false;
-    disableTraps = false;
+    events = 0;
 }
 
 auto EmuThread::lockHotkeys() -> void {
