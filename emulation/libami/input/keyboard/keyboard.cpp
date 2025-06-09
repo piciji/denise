@@ -20,7 +20,7 @@ const uint8_t Keyboard::keymap[] = {
 
 Keyboard::Keyboard(Emulator::Interface* interface, Agnus& agnus, Cia<MOS_8520>& cia)
 : interface(interface), agnus(agnus), cia(cia) {
-    queue.resize(10);
+    queue.resize(15);
 }
 
 auto Keyboard::addEvent(State _state, unsigned delay) -> void {
@@ -32,6 +32,8 @@ auto Keyboard::processEvent() -> void {
     switch (waitState) {
         case KBD_Selftest:
             resync();
+            capsLock = false;
+            informCapsLed();
             break;
 
         case KBD_Transfer:
@@ -86,49 +88,54 @@ auto Keyboard::processEvent() -> void {
 }
 
 auto Keyboard::handshake(bool spLine) -> void {
-    if (hardReset)
+    if (hardReset || !spLine)
         return;
     // when CIA switches serial direction to output, SP line goes low and Keyboard recognizes this.
-    // because SP will be set high after each transmission (byte or single resync bits)
-    if (!spLine)
-        handshakeClock = agnus.clock;
-    else { // CIA switches back to input.
-        if (agnus.fallBackCycles(handshakeClock) > agnus.usecToDMACycles(1)) { // recognized
-            if (agnus.hasActiveEvent<Agnus::EVENT_KBD>() /*&& (waitState == KBD_Wait_For_Timeout)*/) {
-                if (overflow) {
-                    overflow = false;
-                    sendCode( 0xfa );
-                } else if (state == KBD_Lost_Sync_Init) {
-                    state = KBD_Lost_Sync_Transmit;
-                    sendCode( 0xf9 );
-                } else if (state == KBD_Lost_Sync_Transmit) {
-                    state = memState;
-                    sendCode( curCode );
-                } else if (state == KBD_Selftest) {
-                    state = KBD_Initiate;
-                    sendCode( 0xfd );
-                } else if (state == KBD_Initiate) {
-                    if (!queue.empty())
-                        sendCode( queue.read() );
-                    else {
-                        state = KBD_Terminate;
-                        sendCode( 0xfe );
-                    }
-                } else { // terminate or send
-                    if (state == KBD_Terminate) {
-                        interface->informCapsLock( false ); // LED control
-                        state = KBD_Send;
-                    }
+    // because SP will be set high after each transmission (byte or single resync bits)    
+    auto _cycles = agnus.fallBackCycles(handshakeClock);
+    handshakeClock = agnus.clock;
 
-                    if(waitState == KBD_Wait_For_Timeout) {
-                        if (!queue.empty())
-                            sendCode(queue.read());
-                        else
-                            agnus.setEventInactive<Agnus::EVENT_KBD>();
-                    } else
-                        sendCode(curCode);
-                }
+    if (_cycles < 1100) {        
+        watchdogTimer += _cycles;
+        if (watchdogTimer > agnus.usecToDMACycles(40000))
+            return reset();
+    } else
+        watchdogTimer = 0;
+
+    if (agnus.hasActiveEvent<Agnus::EVENT_KBD>() /*&& (waitState == KBD_Wait_For_Timeout)*/) {
+        if (overflow) {
+            overflow = false;
+            sendCode( 0xfa );
+        } else if (state == KBD_Lost_Sync_Init) {
+            state = KBD_Lost_Sync_Transmit;
+            sendCode( 0xf9 );
+        } else if (state == KBD_Lost_Sync_Transmit) {
+            state = memState;
+            sendCode( curCode );
+        } else if (state == KBD_Selftest) {
+            state = KBD_Initiate;
+            sendCode( 0xfd );
+        } else if (state == KBD_Initiate) {
+            if (!queue.empty())
+                sendCode( queue.read() );
+            else {
+                state = KBD_Terminate;
+                sendCode( 0xfe );
             }
+        } else { // terminate or send
+            if (state == KBD_Terminate) {
+                state = KBD_Send;
+                capsLock = false;
+                informCapsLed();
+            }
+
+            if(waitState == KBD_Wait_For_Timeout) {
+                if (!queue.empty())
+                    sendCode(queue.read());
+                else
+                    agnus.setEventInactive<Agnus::EVENT_KBD>();
+            } else
+                sendCode(curCode);
         }
     }
 }
@@ -152,16 +159,18 @@ auto Keyboard::resync() -> void {
 auto Keyboard::reset() -> void {
     state = KBD_Selftest;
     overflow = false;
-    capsLock = false;
+    capsLock = true;
     hardReset = false;
     shiftPos = 1;
     shiftOut = 0;
+    watchdogTimer = 0;
+    handshakeClock = agnus.clock;
     std::memset(keyState, 0, sizeof(keyState));
 
-    interface->informCapsLock( true );
+    informCapsLed();
     queue.reset();
     // bypass keyboard selftest
-    addEvent(KBD_Selftest, Agnus::msecToDMACycles(1000));
+    addEvent(KBD_Selftest, Agnus::msecToDMACycles(500));
 }
 
 auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* input) -> void {
@@ -216,13 +225,10 @@ auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* i
         return;
     }
 
-    // even Caps Lock won't toggle LED, when queue is full ... need to check with my nose if Caps Locks toggles when Reset keys pressed same time.
+    // even Caps Lock won't toggle LED, when queue is full
     if (stroke == 0x62) {
-        if (state != KBD_Send)
-            return;
-
         capsLock ^= 1;
-        interface->informCapsLock( capsLock );
+        informCapsLed();
 
         if (!capsLock)
             stroke |= 0x80;
@@ -234,8 +240,15 @@ auto Keyboard::sendKeyChange(bool pressed, Emulator::Interface::Device::Input* i
         sendCode(stroke);
 }
 
+auto Keyboard::informCapsLed() -> void {
+    uint8_t state = capsLock ? 1 : 0;
+    state |= agnus.ecsAndHigher() ? 2 : 0;
+    interface->updateLedState(Emulator::Interface::LedId::CapsLock, state);
+}
+
 auto Keyboard::serialize( Emulator::Serializer& s ) -> void {
     s.integer(handshakeClock);
+    s.integer(watchdogTimer);
     s.integer(shiftOut);
     s.integer(shiftPos);
     s.integer(curCode);

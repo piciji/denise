@@ -15,6 +15,15 @@ struct DeviceState {
     bool update = true;
 };
 
+struct LEDState {
+    Emulator::Interface::LedId ledId;
+    std::string name;
+    bool enabled;
+    uint8_t state;
+    uint8_t inputQueue;
+    uint8_t inputs;
+};
+
 struct FpsCounter {
     uint64_t deltas[FPS_MEASUREMENTS];
     uint64_t sum;
@@ -31,11 +40,13 @@ struct StatusHandler {
     
     auto messageUpdate() const -> bool { return control & 1; }
     auto deviceUpdate() const -> bool { return control & 2; }
+    auto ledUpdate() const -> bool { return control & 4; }
     auto drcBufferUpdate() const -> bool { return control & 8; }
     auto fpsCounterUpdate() const -> bool { return control & 0x10; }
     
     auto setMessageUpdate() -> void { control |= 1; }
     auto setDeviceUpdate() -> void { control |= 2; }
+    auto setLedUpdate() -> void { control |= 4; }
     auto setDrcBufferUpdate() -> void  { control |= 8; }
     auto setFpsCounterUpdate() -> void  { control |= 0x10; }
 
@@ -61,42 +72,24 @@ struct StatusHandler {
     auto updateImage(unsigned id, GUIKIT::Image* image) -> void;
     auto updateStatusBar() -> void;
     auto updateDiskDriveSpace() -> void;
-    auto initPowerLED() -> void;
-    auto updatePowerLED(bool state) -> void;
-    auto updatePowerLED() -> void;
-    auto setPowerLED() -> void;
-    auto hidePowerLED() -> void;
-    auto setCapsLED() -> void;
-    auto hideCapsLED() -> void;
-    auto updateCapsLockLED(bool state) -> void;
-    auto togglePowerLED() -> void;
-    auto toggleCapsLED() -> void;
-    auto hasPowerLED() -> bool;
-    auto hasCapsLED() -> bool;
     auto setVolumeSlider(unsigned value) -> void;
     auto setVolumeSlider(Emulator::Interface* emulator) -> void;
     auto updateOnScreenFPS() -> void;
     auto setExpansionClick() -> void;
+    auto updateLEDState(Emulator::Interface::LedId ledId, uint8_t state) -> void;
+    auto enableLEDs() -> void;
+    auto enableLED(Emulator::Interface::LedId ledId, bool toggle = false) -> void;
+    auto getLEDImage(LEDState& ledState) -> GUIKIT::Image*;
 
     GUIKIT::StatusBar* statusBar = nullptr;
     uint16_t control;
     std::vector<DeviceState> deviceStates;
+    std::vector<LEDState> ledStates;
     FpsCounter fpsCounter;
 
     bool showFPS = false;
     bool showFPSScreen = false;
     bool showVolume = false;
-
-    struct {
-        bool enable;
-        bool state;
-        GUIKIT::Timer timer;
-    } powerLED;
-
-    struct {
-        bool enable;
-        bool state;
-    } capsLED;
 
     struct {
         std::string txt = "";

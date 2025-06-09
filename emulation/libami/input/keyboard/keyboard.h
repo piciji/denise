@@ -37,6 +37,7 @@ struct Keyboard {
     bool overflow;
     bool capsLock;
     bool hardReset;
+    unsigned watchdogTimer;
 
     Emulator::Interface* interface;
     Emulator::Interface::Device* device = nullptr;
@@ -48,7 +49,7 @@ struct Keyboard {
     auto resync() -> void;
     auto processEvent() -> void;
     auto addEvent(State _state, unsigned delay) -> void;
-
+    auto informCapsLed() -> void;
     auto serialize( Emulator::Serializer& s ) -> void;
 };
 

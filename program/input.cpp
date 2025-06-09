@@ -54,11 +54,6 @@ auto Program::inputPoll( uint16_t deviceId, uint16_t inputId) -> int16_t {
     return 0;
 }
 
-auto Program::informCapsLock(bool state) -> void {
-    if (statusHandler)
-        statusHandler->updateCapsLockLED(state);
-}
-
 auto Program::getDevice( Emulator::Interface* emulator, Emulator::Interface::Connector* connector ) -> Emulator::Interface::Device* {
     unsigned defaultDevice = 0;
 

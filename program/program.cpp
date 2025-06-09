@@ -370,8 +370,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
         statusHandler->resetFrameCounter();
         statusHandler->setFpsRefresh();
-        statusHandler->initPowerLED();
 	    statusHandler->setVolumeSlider(activeEmulator);
+        statusHandler->enableLEDs();
 
         view->updateSpeedLabels();
 
@@ -652,9 +652,11 @@ auto Program::updateDeviceState( Emulator::Interface::Media* media, bool write, 
 	statusHandler->updateDeviceState( media, write, position, LED, motorOff );
 }
 
-auto Program::informPowerLED(bool state) -> void {
-    if (statusHandler)
-        statusHandler->updatePowerLED(state);
+auto Program::updateLedState(Emulator::Interface::LedId ledId, uint8_t state) -> void {
+    if (cmd->noGui || !statusHandler)
+        return;
+
+    statusHandler->updateLEDState(ledId, state);
 }
 
 auto Program::appFolder() -> std::string {

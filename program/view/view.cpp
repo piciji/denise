@@ -1017,6 +1017,10 @@ auto View::loadImages() -> void {
     ledGreen2DimImage.loadPng((uint8_t*) Icons::ledGreen2Dim, sizeof (Icons::ledGreen2Dim));
     ledRed2Image.loadPng((uint8_t*) Icons::ledRed2, sizeof (Icons::ledRed2));
     ledYellowImage.loadPng((uint8_t*) Icons::ledYellow, sizeof (Icons::ledYellow));
+
+    ledGreenRoundImage.loadPng((uint8_t*)Icons::ledGreenRound, sizeof(Icons::ledGreenRound));
+    ledRedRoundImage.loadPng((uint8_t*) Icons::ledRedRound, sizeof (Icons::ledRedRound));
+    ledOffRoundImage.loadPng((uint8_t*)Icons::ledOffRound, sizeof(Icons::ledOffRound));
 }
 
 auto View::buildMenu() -> void {
@@ -1096,15 +1100,17 @@ auto View::buildMenu() -> void {
         } else {
             sM.powerLED = new GUIKIT::MenuItem;
             sM.powerLED->setIcon( menuImage );
-            sM.powerLED->onActivate = []() {
-                statusHandler->togglePowerLED();
+            sM.powerLED->onActivate = [emulator]() {
+                if (emulator == activeEmulator)
+                    statusHandler->enableLED(Emulator::Interface::LedId::Power, true);
             };
             sM.system->append(*sM.powerLED);
 
             sM.capsLED = new GUIKIT::MenuItem;
             sM.capsLED->setIcon(menuImage);
-            sM.capsLED->onActivate = []() {
-                statusHandler->toggleCapsLED();
+            sM.capsLED->onActivate = [emulator]() {
+                if (emulator == activeEmulator)
+                    statusHandler->enableLED(Emulator::Interface::LedId::CapsLock, true);
             };
             sM.system->append(*sM.capsLED);
             sM.menu = nullptr;

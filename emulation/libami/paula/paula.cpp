@@ -130,6 +130,7 @@ auto Paula::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer(vBlankIntr);
     s.integer(filterMode);
     s.integer(useLedFilter);
+    s.integer(ledChange);
 
     s.integer(dskLen);
     s.integer(dskSync);
@@ -254,6 +255,7 @@ auto Paula::power() -> void {
     int6Current = false;
     vBlankIntr = true;
     useLedFilter = true;
+    ledChange = 0;
     potReset();
 
     for(auto& cha : channels) {

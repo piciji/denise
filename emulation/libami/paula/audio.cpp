@@ -230,7 +230,7 @@ template<uint8_t nr, bool updEvent> auto Paula::percntrld() -> void {
 
 auto Paula::setFilterMode( int val ) -> void {
     filterMode = val;
-    informPowerLED();
+    ledChange |= 0x80;
 }
 
 auto Paula::setResampleQuality( int val ) -> void {

@@ -36,6 +36,7 @@ struct Paula {
     bool vBlankIntr;
     int filterMode;
     bool useLedFilter;
+    uint8_t ledChange;
 
     DiskDrive& disk0;
     DiskDrive& disk1;
@@ -150,7 +151,7 @@ struct Paula {
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
     auto disableAudioOut(bool state) -> void { audioOut = !state; }
     auto setLedFilter(bool state) -> void;
-    auto informPowerLED() -> void;
+    auto informPowerLED(bool force) -> void;
     auto setFilter() -> void;
     auto setFilterMode( int val ) -> void;
     auto audioEvent() -> void;

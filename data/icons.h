@@ -155,4 +155,10 @@ extern uint8_t open[298];
 extern uint8_t search[505];
 
 extern uint8_t clear[440];
+
+extern uint8_t ledOffRound[443];
+
+extern uint8_t ledRedRound[471];
+
+extern uint8_t ledGreenRound[472];
 }

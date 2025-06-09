@@ -15,7 +15,7 @@ struct EmuThread {
     std::atomic<bool> acknowledged;
     std::atomic<bool> updateBorder;
 
-    enum {EVT_CAPS_LED = 1, EVT_POWER_LED = 2, EVT_AUTO_LOAD_NO_TRAPS = 4, EVT_DISMISS_PLACEHOLDER = 8,
+    enum {  EVT_AUTO_LOAD_NO_TRAPS = 4, EVT_DISMISS_PLACEHOLDER = 8,
             EVT_UPDATE_FPS = 0x10, EVT_SHADER_ERROR = 0x20, EVT_UPDATE_PALETTE_SOFTWARE = 0x40,
             EVT_POLL_HOTKEYS = 0x80, EVT_FINISH_AUDIO_RECORD = 0x100 };
 

@@ -113,7 +113,7 @@ struct Program : Emulator::Interface::Bind {
 
     auto truncateMedia(Emulator::Interface::Media* media) -> bool override;
     auto updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, uint8_t LED, bool motorOff ) -> void override;
-    auto informPowerLED(bool state) -> void override;
+    auto updateLedState(Emulator::Interface::LedId ledId, uint8_t state) -> void override;
 	auto log(std::string data, bool newLine = true) -> void override;
     auto questionToWrite(Emulator::Interface::Media* media) -> bool override;
     auto exit(int code) -> void override;
@@ -199,7 +199,6 @@ struct Program : Emulator::Interface::Bind {
     auto resetRunAhead() -> void;
     auto setRunAhead(Emulator::Interface* emulator) -> void;
     auto setJit(Emulator::Interface* emulator) -> void;
-    auto informCapsLock(bool state) -> void override;
 
     static auto hasFocus() -> bool;
 

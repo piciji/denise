@@ -27,18 +27,27 @@ namespace LIBAMI {
 
 auto Paula::setLedFilter(bool state) -> void {
     useLedFilter = state;
-    informPowerLED();
+    ledChange |= 0x80;
 }
 
-auto Paula::informPowerLED() -> void {
+auto Paula::informPowerLED(bool force) -> void {
     bool powerLed = useLedFilter;
 
     if (filterMode == 1 || filterMode == 4)
         powerLed = false;
     else if ( (filterMode == 3) || (filterMode == 6) || (!filterMode && agnus.a1000()))
         powerLed = true;
+    
+     if (!force && (powerLed == (ledChange & 1))) {
+         ledChange &= ~0x80;
+         return;
+     }
 
-    system->interface->informPowerLED( powerLed );
+    ledChange = powerLed;
+
+    uint8_t state = powerLed ? 1 : 0;
+    state |= agnus.ecsAndHigher() ? 2 : 0;
+    system->interface->updateLedState(Emulator::Interface::LedId::Power, state);
 }
 
 auto Paula::setFilter() -> void {

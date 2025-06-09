@@ -94,7 +94,8 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
 
     updateDriveSounds();
     updateStats();
-    paula.informPowerLED();
+    paula.informPowerLED(true);
+    input.keyboard.informCapsLed();
 
     return true;
 }

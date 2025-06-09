@@ -61,6 +61,7 @@ struct Interface {
                             TapePlaySpinUp = 14, TapePlaySpin = 15, TapeSpinDown = 16, TapeForwardSpin = 17, TapeRewindSpin = 18,
     };
     enum class ThreadPriority { Normal = 0, High = 1, Realtime = 2 };
+    enum class LedId { Power, CapsLock };
 
     std::string ident;
     
@@ -335,6 +336,7 @@ struct Interface {
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
         virtual auto truncateMedia(Media* ) -> bool { return false; }
         virtual auto updateDeviceState(Media*, bool, unsigned, uint8_t, bool ) -> void {}
+        virtual auto updateLedState(Emulator::Interface::LedId, uint8_t) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
         virtual auto exit( int code ) -> void {}
         virtual auto midScreenCallback(uint8_t) -> void {}
@@ -344,8 +346,6 @@ struct Interface {
         virtual auto mixDriveSound( Media*, DriveSound, bool, uint8_t ) -> void {}
         virtual auto jam(Media*) -> void {}
         virtual auto setThreadPriority(ThreadPriority, float, float) -> bool { return false; }
-        virtual auto informCapsLock(bool) -> void {}
-        virtual auto informPowerLED(bool) -> void {}
         virtual auto fpsChanged() -> void {}
         virtual auto trapsResult(Media*, bool error) -> void {}
         virtual auto libraryMissing(std::string) -> void {}
@@ -407,6 +407,10 @@ struct Interface {
     auto updateDeviceState(Media* media, bool write, unsigned position, uint8_t LED, bool motorOff ) -> void {
         bind->updateDeviceState(media, write, position, LED, motorOff);
     }
+
+    auto updateLedState(Emulator::Interface::LedId ledId, uint8_t state) -> void {
+        bind->updateLedState(ledId, state);
+    }
     
     auto questionToWrite(Media* media) -> bool {
         return bind->questionToWrite(media);
@@ -442,14 +446,6 @@ struct Interface {
 
     auto trapsResult(Media* media, bool error) -> void {
         bind->trapsResult(media, error);
-    }
-
-    auto informCapsLock(bool state) -> void {
-        bind->informCapsLock( state );
-    }
-
-    auto informPowerLED(bool state) -> void {
-        bind->informPowerLED( state );
     }
 
     auto fpsChanged() -> void {

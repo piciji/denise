@@ -193,12 +193,6 @@ auto EmuThread::handleUIEvents() -> void {
             fileloader->autoload(activeEmulator, autoloader->getLatestDrive(activeEmulator), 0, false, true);
             unlock();
         }
-
-        if (_events & EVT_POWER_LED)
-            statusHandler->setPowerLED();
-
-        if (_events & EVT_CAPS_LED)
-            statusHandler->setCapsLED();
     }
 }
 

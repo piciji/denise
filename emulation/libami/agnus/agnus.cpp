@@ -297,7 +297,7 @@ auto Agnus::waitKeyboardReset() -> void {
     if ((resetFromKeyboard & 0x80) == 0) {
         system->power(true);
         resetFromKeyboard |= 0x80;
-        interface->informPowerLED(false);
+        interface->updateLedState(Emulator::Interface::LedId::CapsLock, ecsAndHigher() ? 3 : 1);
     }
 
     while(true) { // CPU and most chips on hold, Denise hasn't a reset line

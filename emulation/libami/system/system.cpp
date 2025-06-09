@@ -207,6 +207,7 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
 
     dongle.control = 0;
     dongle.clock = 0;
+    interface->updateLedState(Emulator::Interface::LedId::Power, agnus.ecsAndHigher() ? 2 : 0);
     powerOn = true;
 }
 
