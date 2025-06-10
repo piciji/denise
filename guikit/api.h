@@ -1420,6 +1420,7 @@ struct File {
     //archive access
     auto scanArchive() -> std::vector<Item>&;
     auto archiveData(unsigned id) -> uint8_t*;
+    auto freeArchiveData(unsigned id) -> void;
     auto archiveDataSize(unsigned id) -> uint64_t;
     
     //helper
@@ -1628,6 +1629,7 @@ struct String {
     static auto getExtension(const std::string& str, const std::string& defaultExt, int maxParts = 1, int maxPartSize = 3) -> std::string;
     static auto removeExtension(std::string str, int maxParts = 1, int maxPartSize = 3) -> std::string;
     static auto sgets(char* buf, unsigned& bufSize, unsigned& n, char** str) -> char*;
+    static auto getDomain(const std::string& str, std::string& path) -> std::string;
 
     template<typename T> static auto addThousandSeparator(T digit) -> std::string {
         return addThousandSeparator( std::to_string( digit ) );

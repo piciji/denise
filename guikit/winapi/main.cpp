@@ -142,6 +142,13 @@ auto pApplication::initialize() -> void {
             closeThemeData = (CloseThemeData_t)::GetProcAddress(uxTheme, "CloseThemeData");
         }
     }
+
+    HWND consoleWnd = GetConsoleWindow();
+    if (!consoleWnd) {
+        // -mwindows (GUI APP)
+        if (AttachConsole(ATTACH_PARENT_PROCESS)) // attach to console (when run from console)
+            freopen("CON", "w", stderr);
+    }
 }
 
 auto pApplication::currentWorkingDirectory() -> std::string {

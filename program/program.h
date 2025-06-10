@@ -34,6 +34,7 @@
 #define MAX_HARDDISK_SIZE (4096ull * 1024ull * 1024ull)
 
 #define ERROR_COLOR 0xff4500
+#define SUCCESS_COLOR 0x009911
 
 #include <vector>
 #include <time.h>

@@ -21,10 +21,11 @@
 #include "../thread/emuThread.h"
 #include "../media/fileloader.h"
 #include "../media/autoloader.h"
+#include "../tools/httpClient.h"
+#include "../tools/error.h"
 
 #include <vector>
 #include <algorithm>
-#include <cmath>
 #include <cstring>
 #include <sstream>
 

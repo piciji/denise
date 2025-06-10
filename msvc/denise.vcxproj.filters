@@ -1138,6 +1138,12 @@
     <ClInclude Include="..\program\media\recentFiles.h">
       <Filter>program\media</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\tools\httpClient.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\httplib.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2321,6 +2327,9 @@
     </ClCompile>
     <ClCompile Include="..\program\media\recentFiles.cpp">
       <Filter>program\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\tools\httpClient.cpp">
+      <Filter>program\tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

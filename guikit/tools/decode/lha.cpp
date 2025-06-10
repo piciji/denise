@@ -4,6 +4,7 @@
 #include <ctime>
 
 #include "public/lha_reader.h"
+#include "../../api.h"
 
 #include "lha.h"
 
@@ -16,6 +17,7 @@ auto Lha::open(FILE* fp, unsigned size) -> bool {
     LHAReader* reader = lha_reader_new(stream);
     std::vector<std::string> dirPaths;
     int id = 0;
+    std::string _subPath;
     files.clear();
 
     for (;;) {
@@ -35,12 +37,28 @@ auto Lha::open(FILE* fp, unsigned size) -> bool {
        
         if (header->path != nullptr) {
             _fnPath = header->path;
+
             if (!hasPath(dirPaths, _fnPath)) {
-                dirPaths.push_back(_fnPath);
-                File dir;
-                dir.isDirectory = true;
-                dir.name = _fnPath;
-                files.push_back(dir);
+                auto parts = String::split(_fnPath, '/');
+
+                while (true) {
+                    _subPath = "";
+                    for (auto& part : parts)
+                        _subPath += part + "/";
+
+                    if (!hasPath(dirPaths, _subPath)) {
+                        dirPaths.push_back(_subPath);
+                        File dir;
+                        dir.isDirectory = true;
+                        dir.name = _subPath;
+                        files.push_back(dir);
+                    }
+
+                    parts.pop_back();
+
+                    if (parts.size() == 0)
+                        break;
+                }
             }
         }
         

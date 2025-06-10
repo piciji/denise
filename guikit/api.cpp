@@ -13,6 +13,7 @@
 #include <ctime>
 #include <cmath>
 #include <sstream>
+#include <regex>
 
 #include "api.h"
 

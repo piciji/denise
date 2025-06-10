@@ -543,10 +543,17 @@ auto pSystem::getOSLang() -> System::Language {
 auto pSystem::printToCmd( std::string str ) -> void {
     
     static bool isAttached = false;
-    
-    if (!isAttached && AttachConsole( ATTACH_PARENT_PROCESS )) {
-        freopen("CON", "w", stdout);
-        isAttached = true;
+
+    if (!isAttached) {
+        HWND consoleWnd = GetConsoleWindow();
+
+        if (!consoleWnd) {
+            if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+                freopen("CON", "w", stdout);
+                isAttached = true;
+            }
+        } else
+            isAttached = true;
     }
     
     if (!isAttached)

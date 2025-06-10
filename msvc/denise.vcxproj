@@ -278,6 +278,8 @@
     <ClInclude Include="..\program\tools\filepool.h" />
     <ClInclude Include="..\program\tools\filesetting.h" />
     <ClInclude Include="..\program\tools\gaussianBlur.h" />
+    <ClInclude Include="..\program\tools\httpClient.h" />
+    <ClInclude Include="..\program\tools\httplib.h" />
     <ClInclude Include="..\program\tools\logger.h" />
     <ClInclude Include="..\program\tools\mathVector.h" />
     <ClInclude Include="..\program\tools\shortcuts.h" />
@@ -1743,6 +1745,7 @@
     <ClCompile Include="..\program\program.cpp" />
     <ClCompile Include="..\program\states\states.cpp" />
     <ClCompile Include="..\program\thread\emuThread.cpp" />
+    <ClCompile Include="..\program\tools\httpClient.cpp" />
     <ClCompile Include="..\program\video.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

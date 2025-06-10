@@ -384,6 +384,46 @@ auto File::archiveData(unsigned id) -> uint8_t* {
     }
 }
 
+auto File::freeArchiveData(unsigned id) -> void {
+    if (dataChanged)
+        reset();
+
+    scanArchive();
+
+    if (id >= items.size()) return;
+    if (items[id].info.size == 0) return;
+
+    switch (type) {
+        default:
+        case Type::Gzip:
+        case Type::TarGz:
+        case Type::Tar:
+            return;
+        case Type::Zip: {
+            auto& zipFile = zip->files[id];
+            if (zipFile.isDirectory)
+                return;
+
+            if (zipFile.data) {
+                delete[] zipFile.data;
+                zipFile.data = nullptr;
+            }
+            return;
+        }
+        case Type::Lha: {
+            auto& lhaFile = lha->files[id];
+            if (lhaFile.isDirectory)
+                return;
+
+            if (lhaFile.data) {
+                delete[] lhaFile.data;
+                lhaFile.data = nullptr;
+            }
+            return;
+        }
+    }
+}
+
 auto File::connectItems() -> void {
     
     for(auto& item : items) {

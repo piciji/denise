@@ -532,6 +532,7 @@ set(headerSrcs ${headerSrcs}
     program/tools/mathVector.h
     program/tools/shortcuts.h
     program/tools/sincFirFilter.h
+    program/tools/httpClient.h
     program/video/luts.cpp
     program/video/manager.h
     program/video/palette.h

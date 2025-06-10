@@ -115,13 +115,14 @@ view(withSpectrum) {
 }
 
 VideoShaderLayout::Main::Control::Control() {
-    append(unload,{0u, 0u}, 10);
-    append(spacer,{~0u, 0u});
-    append(imgReplacer, {0u, 0u}, 5);
+    append(unload,{0u, 0u});
+    append(spacer, { ~0u, 0u });
+    append(downloadSlang, { 0u, 0u }, 5);
+    append(manuell, { 0u, 0u }, 15);
+
     append(folder,{0u, 0u}, 5);
     append(internal,{0u, 0u}, 5);
-    append(external,{0u, 0u}, 10);
-    append(downloadSlang,{0u, 0u}, 10);
+    append(external,{0u, 0u}, 5);
     append(prependPreset,{0u, 0u}, 10);
     append(appendPreset,{0u, 0u}, 10);
     append(load,{0u, 0u});
@@ -138,6 +139,7 @@ VideoShaderLayout::Main::Control::Control() {
 VideoShaderLayout::Main::Info::Info() {
     append(label,{0u, 0u}, 5);
     append(loaded,{~0u, 0u});
+    append(imgReplacer, { 0u, 0u }, 10);
     append(shaderCache, {0u, 0u}, 10);
     append(clearCache,{0u, 0u}, 10);
     append(toParams,{0u, 0u});
@@ -145,6 +147,15 @@ VideoShaderLayout::Main::Info::Info() {
     setAlignment(0.5);
     loaded.setFont(GUIKIT::Font::system("bold"));
     toParams.setEnabled(false);
+}
+
+VideoShaderLayout::Main::Progress::Progress() {
+    append(bar, { ~0u, 0u }, 10);
+    append(label, { 0u, 0u }, 50);
+    append(close, { 0u, 0u });
+
+    label.setFont(GUIKIT::Font::system("bold"));
+    setAlignment(0.5);
 }
 
 VideoShaderLayout::Main::Main() {
@@ -412,8 +423,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
 
-    layShader.main.control.downloadSlang.setImage( &retroarch );
-    layShader.main.control.downloadSlang.setUri( "https://buildbot.libretro.com/assets/frontend/shaders_slang.zip" );
+    layShader.main.control.downloadSlang.setImage(&retroarch);
 
     tviBase.setUserData( (uintptr_t)1 );
     tviBase.setImage( colorImage );
@@ -454,8 +464,140 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layPass.control.down.setEnabled(false);
 
     layBase.view.mode.reset.setImage(&backImage);
+    layShader.main.progress.close.setImage(&backImage);
 
     moduleSwitch.setSelection( 1 );
+
+    layShader.main.progress.close.onActivate = [this]() {
+        if (layShader.main.has(layShader.main.progress)) {
+            layShader.main.remove(layShader.main.progress);
+            layShader.main.update(layShader.main.info, 0u);
+            layShader.synchronizeLayout();
+        }
+        layShader.main.control.downloadSlang.setEnabled();
+    };
+
+    layShader.main.control.downloadSlang.onClick = [&]() {
+        std::string uri = "https://buildbot.libretro.com/assets/frontend/shaders_slang.zip";
+
+        if (layShader.main.control.manuell.checked()) {
+            layShader.main.control.downloadSlang.setUri(uri);
+            return;
+        }
+
+        if (!layShader.main.control.downloadSlang.enabled())
+            return;
+
+        layShader.main.control.downloadSlang.setUri("");
+        layShader.main.control.downloadSlang.setEnabled(false);
+
+        std::string shaderPath = program->generatedFolder("shaders");
+        layShader.main.progress.bar.setPosition(0);
+        layShader.main.progress.label.resetForegroundColor();
+        layShader.main.progress.label.setText( trans->getA("shader download") );
+        
+        if (!layShader.main.has(layShader.main.progress)) {
+            layShader.main.update(layShader.main.info, 10u);
+            layShader.main.insert(layShader.main.progress, layShader.main.info, { ~0u, 0u }, 0);
+            layShader.synchronizeLayout();
+        }
+
+        auto settings = program->getSettings(emulator);
+
+        std::thread t1([shaderPath, uri, settings, this] {
+            try {
+                std::string url = uri;
+                std::string urlPath = "";
+                std::string archiveName = "";
+
+                GUIKIT::String::replace(url, "https", "http");
+
+                std::string domain = GUIKIT::String::getDomain(url, urlPath);
+                if (domain.empty())
+                    throw Error("no domain from " + url);
+
+                HttpClient httpClient(domain);
+
+                httpClient.setProgressCallback([this](uint64_t len, uint64_t total) {
+                    unsigned percent = (len * 50) / total + 0.5;
+                    layShader.main.progress.bar.setPosition(percent);
+                });
+
+                archiveName = GUIKIT::String::getFileName(urlPath);
+
+                if (httpClient.download(urlPath, shaderPath + archiveName)) {
+                    layShader.main.progress.label.setText(trans->getA("unpack"));
+                    GUIKIT::File file(shaderPath + archiveName);
+
+                    if (!file.open())
+                        throw Error("can't open file " + shaderPath + archiveName);
+                    
+                    layShader.main.progress.bar.setPosition(50);
+                    auto items = file.scanArchive();
+                    unsigned fileCount = items.size();
+                    if (!fileCount)
+                        throw Error("no files in archive " + shaderPath + archiveName);
+
+                    unsigned updateCount = 10 * fileCount / 100;
+                    unsigned countUIUpdate = 0;
+                    unsigned countAll = 0;
+
+                    for(auto& item : items) {
+                        uint8_t* data = file.archiveData(item.id);
+                        unsigned size = file.archiveDataSize(item.id);
+
+                        std::string filePath = item.isDirectory ? (item.info.name + "/") : "";
+                        GUIKIT::File::Item* parent = item.parent;
+                        while (parent) {
+                            filePath = parent->info.name + "/" + filePath;
+                            parent = parent->parent;
+                        }
+
+                        if (!filePath.empty() && !GUIKIT::File::createDir(filePath, shaderPath))
+                            throw Error("can't create folder " + shaderPath + filePath);
+
+                        if (!data || item.isDirectory)
+                            continue;
+
+                        std::string fileName = filePath + item.info.name;
+
+                        GUIKIT::File fileToWrite(shaderPath + fileName);
+                        if (!fileToWrite.open(GUIKIT::File::Mode::Write))
+                            throw Error("can't open file " + shaderPath + fileName);
+
+                        if (fileToWrite.write(data, size) != size)
+                            throw Error("can't write file " + shaderPath + fileName);
+
+                        file.freeArchiveData(item.id);
+                        fileToWrite.unload();
+
+                        countAll++;
+                        if (++countUIUpdate == updateCount) {
+                            countUIUpdate = 0;
+                            unsigned percent = (countAll * 50) / fileCount + 0.5;
+                            layShader.main.progress.bar.setPosition(50 + percent);
+                        }
+                    }
+                    if (layShader.main.progress.bar.position() != 100)
+                        layShader.main.progress.bar.setPosition(100);
+
+                    file.reset();
+                    file.del();
+                    settings->set<std::string>("slang_folder", shaderPath);
+                    layShader.main.progress.label.setForegroundColor(SUCCESS_COLOR);
+                    layShader.main.progress.label.setText(trans->getA("complete"));
+
+                } else
+                    throw Error("can't download " + url);
+
+            } catch (Error& e) {
+                _error("Shader update: %s", e.what());
+                layShader.main.progress.label.setForegroundColor(ERROR_COLOR);
+                layShader.main.progress.label.setText(trans->getA("error"));                
+            }
+        });
+        t1.detach();
+    };
 
     moduleTree.onChange = [this](GUIKIT::TreeViewItem* selectedBefore) {
         auto item = moduleTree.selected();
@@ -778,7 +920,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     codeLayout.setMargin(10);
     codeWindow.append(codeLayout);
 
-    layShader.main.control.imgReplacer.setImage( &gearsImage );
+    layShader.main.info.imgReplacer.setImage( &gearsImage );
 
     codeWindow.onClose = [this]() {
         codeWindow.setVisible(false);
@@ -987,7 +1129,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         GUIKIT::File::removeDirectory( cacheFolder );
     };
 
-    layShader.main.control.imgReplacer.onActivate = [this]() {
+    layShader.main.info.imgReplacer.onActivate = [this]() {
         if (!view->imageViewer) {
             view->imageViewer = new ImageViewer;
             view->imageViewer->build();
@@ -1901,7 +2043,11 @@ auto VideoLayout::translate() -> void {
     layShader.main.control.prependPreset.setText( trans->getA("prepend preset") );
     layShader.main.control.appendPreset.setText( trans->getA("append preset") );
 
+    layShader.main.control.manuell.setText(trans->getA("manual"));
+
     layShader.main.control.folder.setText( trans->getA("folder", true) );
+    layShader.main.control.downloadSlang.setTooltip(trans->getA("shader update"));
+    
     layShader.main.control.internal.setText( trans->getA("internal") );
     layShader.main.control.external.setText( trans->getA("external") );
     layShader.main.control.external.setTooltip( trans->getA("shader hints") );
@@ -1979,8 +2125,6 @@ auto VideoLayout::translate() -> void {
     layPass.generated.errorLabel.setText( trans->getA("error output", true) );
     layPass.generated.vertex.setText( trans->getA("native Vertex code") );
     layPass.generated.fragment.setText( trans->getA("native Fragment code") );
-
-    layShader.main.control.downloadSlang.setTooltip( trans->getA("shader download") );
 
     for(int i = 0; i < PARAMS_PER_PAGE; i++) {
         paramSliders[i]->defaultButton.setText( trans->getA("default") );

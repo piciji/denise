@@ -505,3 +505,16 @@ auto String::sgets(char* buf, unsigned& bufSize, unsigned& n, char** str) -> cha
     n -= len;
     return buf;
 }
+
+auto String::getDomain(const std::string& str, std::string& path) -> std::string {
+
+    std::regex r("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}");
+    std::smatch sm;
+
+    if (regex_search(str, sm, r)) {
+        path = sm.suffix();
+        return sm.str();
+    }
+
+    return "";
+}

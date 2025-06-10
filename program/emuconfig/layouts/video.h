@@ -66,13 +66,12 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
     struct Main : GUIKIT::FramedVerticalLayout {
         struct Control : GUIKIT::HorizontalLayout {
             GUIKIT::Button unload;
-
             GUIKIT::Widget spacer;
-            GUIKIT::Button imgReplacer;
+            GUIKIT::CheckBox manuell;
+            GUIKIT::ImageView downloadSlang;
             GUIKIT::Label folder;
             GUIKIT::RadioBox internal;
             GUIKIT::RadioBox external;
-            GUIKIT::ImageView downloadSlang;
 
             GUIKIT::Button prependPreset;
             GUIKIT::Button appendPreset;
@@ -84,12 +83,21 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
         struct Info : GUIKIT::HorizontalLayout {
             GUIKIT::Label label;
             GUIKIT::Label loaded;
+            GUIKIT::Button imgReplacer;
             GUIKIT::CheckBox shaderCache;
             GUIKIT::Button clearCache;
             GUIKIT::Button toParams;
 
             Info();
         } info;
+
+        struct Progress : GUIKIT::HorizontalLayout {
+            GUIKIT::ProgressBar bar;
+            GUIKIT::Label label;
+            GUIKIT::Button close;
+
+            Progress();
+        } progress;
 
         Main();
 

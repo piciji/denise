@@ -211,6 +211,7 @@ set(srcs
         program/video/manager.cpp
         program/video/shaderParser.cpp
         program/view/imageViewer.cpp
+        program/tools/httpClient.cpp
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
