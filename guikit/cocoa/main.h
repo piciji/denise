@@ -118,6 +118,7 @@ struct pWidget {
     virtual auto minimumSize() -> Size { return {0,0}; }
     virtual auto borderSize() -> unsigned { return 1; }
     virtual auto setEnabled(bool enabled) -> void;
+    virtual auto setEnabledThreaded(bool enabled) -> void;
     virtual auto setVisible(bool visible) -> void;
     virtual auto setFont(std::string font) -> void;
     virtual auto setGeometry(Geometry geometry) -> void;
@@ -125,6 +126,7 @@ struct pWidget {
     virtual auto setTooltip(std::string tooltip) -> void;
     virtual auto setBackgroundColor(unsigned color) -> void {}
     virtual auto setForegroundColor(unsigned color) -> void {}
+    virtual auto setForegroundColorThreaded(unsigned color) -> void {}
     auto getMinimumSize() -> Size;
     auto add() -> void;
     virtual auto init() -> void {}
@@ -171,9 +173,13 @@ struct pLabel : pWidget {
     auto init() -> void;
     auto setGeometry(Geometry geometry) -> void;
     auto setText(const std::string& text) -> void;
+    auto setTextThreaded(const std::string& text) -> void;
     auto setEnabled(bool enabled) -> void;
+    auto setEnabledThreaded(bool enabled) -> void;
     auto setForegroundColor(unsigned color) -> void;
+    virtual auto setForegroundColorThreaded(unsigned color) -> void;
     auto setAlign( Label::Align align ) -> void;
+    auto getTextColor() -> NSColor*;
 
     pLabel(Label& label) : pWidget(label), label(label) { }
 };
@@ -334,6 +340,7 @@ struct pProgressBar : pWidget {
     auto minimumSize() -> Size;
     auto init() -> void;
     auto setPosition(unsigned position) -> void;
+    auto setPositionThreaded(unsigned position) -> void;
 
     pProgressBar(ProgressBar& progressBar) : pWidget(progressBar), progressBar(progressBar) { }
 };

@@ -229,12 +229,14 @@ struct pWidget {
     virtual auto minimumSize() -> Size { return {0,0}; }
     virtual auto borderSize() -> unsigned { return 2; }
     virtual auto setEnabled(bool enabled) -> void;
+    virtual auto setEnabledThreaded(bool enabled) -> void;
     virtual auto setVisible(bool visible) -> void;
     virtual auto setFont(std::string font) -> void;
     virtual auto setText(const std::string& text) -> void;
     virtual auto setGeometry(Geometry geometry) -> void;
     virtual auto rebuild() -> void;
 	virtual auto setForegroundColor(unsigned color) -> void {}
+    virtual auto setForegroundColorThreaded(unsigned color) -> void {}
     virtual auto setBackgroundColor(unsigned color) -> void {}
 
     virtual auto callDrops(std::vector<std::string>& paths) -> void {}
@@ -299,8 +301,10 @@ struct pLabel : pWidget {
 
     auto minimumSize() -> Size;
     auto setText(const std::string& text) -> void;
+    auto setTextThreaded(const std::string& text) -> void;
 	auto setEnabled(bool enabled) -> void;
 	auto setForegroundColor(unsigned color) -> void;
+    auto setForegroundColorThreaded(unsigned color) -> void;
     auto setFont(std::string font) -> void;
     auto setAlign( Label::Align align ) -> void;
 
@@ -358,6 +362,7 @@ struct pButton : pWidget {
     auto setImage(Image* image) -> void;
     auto setText(const std::string& text) -> void;
     auto setEnabled(bool enabled) -> void;
+    auto setEnabledThreaded(bool enabled) -> void;
     auto customDraw(HWND hwnd, PAINTSTRUCT& ps) -> void;
     auto minimumSize() -> Size;
     auto onActivate() -> void;
@@ -490,6 +495,7 @@ struct pProgressBar : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto setPosition(unsigned position) -> void;
+    auto setPositionThreaded(unsigned position) -> void;
     
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 

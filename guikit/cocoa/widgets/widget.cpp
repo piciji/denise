@@ -53,6 +53,18 @@ auto pWidget::setEnabled(bool enabled) -> void {
         }
     }
 }
+
+auto pWidget::setEnabledThreaded(bool enabled) -> void {
+    @autoreleasepool {
+        bool _enabled = enabled;
+        dispatch_group_t group = dispatch_group_create();
+        dispatch_group_async(group, dispatch_get_main_queue(), ^{
+            if([cocoaView respondsToSelector:@selector(setEnabled:)]) {
+                [(id)cocoaView setEnabled:_enabled];
+            }
+        });
+    }
+}
     
 auto pWidget::setVisible(bool visible) -> void {
     @autoreleasepool {

@@ -168,12 +168,15 @@ struct pWidget {
     virtual auto minimumSize() -> Size { return {0,0}; }
     virtual auto borderSize() -> unsigned { return 1; }
     virtual auto setEnabled(bool enabled) -> void;
+    virtual auto setEnabledThreaded(bool enabled) -> void;
     virtual auto setVisible(bool visible) -> void;
     virtual auto setFont(std::string font) -> void;
     virtual auto setGeometry(Geometry geometry) -> void;
     virtual auto setText(const std::string& text) -> void {}
     virtual auto destroy() -> void;
     virtual auto setForegroundColor(unsigned color) -> void;
+    virtual auto _setForegroundColor(unsigned color) -> void;
+    virtual auto setForegroundColorThreaded(unsigned color) -> void;
     virtual auto setBackgroundColor(unsigned color) -> void;
 	auto getMinimumSize() -> Size;
     auto getMinimumFontSize() -> Size;
@@ -183,6 +186,8 @@ struct pWidget {
     virtual auto getContainerWidget(int selection = -1) -> GtkWidget* { return nullptr; }
     virtual auto getDisplacement() -> Position { return {0,0}; }
 	static auto getScaledDim( unsigned value ) -> unsigned { return value; }
+    static auto setForegroundColorCall(gpointer data) -> gboolean;
+    static auto setEnabledCall(gpointer data) -> gboolean;
 
     pWidget(Widget& widget);
     virtual ~pWidget();
@@ -230,9 +235,11 @@ struct pLabel : pWidget {
 
     auto minimumSize() -> Size;
     auto setText(const std::string& text) -> void;
+    auto setTextThreaded(const std::string& text) -> void;
     auto init() -> void;
     auto create() -> void;
     auto setAlign( Label::Align align ) -> void;
+    static auto setTextCall(gpointer data) -> gboolean;
 
     pLabel(Label& label) : pWidget(label), label(label) { }
 };
@@ -399,6 +406,8 @@ struct pProgressBar : pWidget {
     auto init() -> void;
     auto create() -> void;
     auto setPosition(unsigned position) -> void;
+    auto setPositionThreaded(unsigned position) -> void;
+    static auto setPositionCall(gpointer data) -> gboolean;
 
     pProgressBar(ProgressBar& progressBar) : pWidget(progressBar), progressBar(progressBar) { }
 };

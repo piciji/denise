@@ -71,6 +71,10 @@ auto pButton::setEnabled(bool enabled) -> void {
         RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
+auto pButton::setEnabledThreaded(bool enabled) -> void {
+    setEnabled(enabled);
+}
+
 auto pButton::setImage(Image* image) -> void {
     if (!image)
         return;

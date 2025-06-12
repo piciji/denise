@@ -763,13 +763,13 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
         
     } else {
         // hd creation in chunks without any data
-        file.unload();        
+        file.unload();
+
+        hdCreatorLayout->progress.bar.setPosition(0);
+        hdCreatorLayout->progress.label.setText("0 %");
+        hdCreatorLayout->creator.button.setEnabled(false);
         
-        std::thread t1([this, size, filePath] {
-            hdCreatorLayout->progress.bar.setPosition(0);
-            hdCreatorLayout->progress.label.setText("0 %");
-            hdCreatorLayout->creator.button.setEnabled(false);
-            
+        std::thread t1([this, size, filePath] {            
             GUIKIT::File file(filePath);
             file.open(GUIKIT::File::Mode::Write);
 
@@ -792,12 +792,12 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
 
                 unsigned posPercent = ((double)(offset + bufLengthKB) * 100.0 / (double)totalKb) + 0.5;
 
-                hdCreatorLayout->progress.bar.setPosition(posPercent);
-                hdCreatorLayout->progress.label.setText(std::to_string(posPercent) + " %");
+                hdCreatorLayout->progress.bar.setPositionThreaded(posPercent);
+                hdCreatorLayout->progress.label.setTextThreaded(std::to_string(posPercent) + " %");
             }
 
             delete[] buf;
-            hdCreatorLayout->creator.button.setEnabled();
+            hdCreatorLayout->creator.button.setEnabledThreaded();
         });
         t1.detach();
     }

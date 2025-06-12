@@ -520,19 +520,19 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
                 httpClient.setProgressCallback([this](uint64_t len, uint64_t total) {
                     unsigned percent = (len * 50) / total + 0.5;
-                    layShader.main.progress.bar.setPosition(percent);
+                    layShader.main.progress.bar.setPositionThreaded(percent);
                 });
 
                 archiveName = GUIKIT::String::getFileName(urlPath);
 
                 if (httpClient.download(urlPath, shaderPath + archiveName)) {
-                    layShader.main.progress.label.setText(trans->getA("unpack"));
+                    layShader.main.progress.label.setTextThreaded(trans->getA("unpack"));
                     GUIKIT::File file(shaderPath + archiveName);
 
                     if (!file.open())
                         throw Error("can't open file " + shaderPath + archiveName);
                     
-                    layShader.main.progress.bar.setPosition(50);
+                    layShader.main.progress.bar.setPositionThreaded(50);
                     auto items = file.scanArchive();
                     unsigned fileCount = items.size();
                     if (!fileCount)
@@ -575,25 +575,25 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
                         if (++countUIUpdate == updateCount) {
                             countUIUpdate = 0;
                             unsigned percent = (countAll * 50) / fileCount + 0.5;
-                            layShader.main.progress.bar.setPosition(50 + percent);
+                            layShader.main.progress.bar.setPositionThreaded(50 + percent);
                         }
                     }
                     if (layShader.main.progress.bar.position() != 100)
-                        layShader.main.progress.bar.setPosition(100);
+                        layShader.main.progress.bar.setPositionThreaded(100);
 
                     file.reset();
                     file.del();
                     settings->set<std::string>("slang_folder", shaderPath);
-                    layShader.main.progress.label.setForegroundColor(SUCCESS_COLOR);
-                    layShader.main.progress.label.setText(trans->getA("complete"));
+                    layShader.main.progress.label.setForegroundColorThreaded(SUCCESS_COLOR);
+                    layShader.main.progress.label.setTextThreaded(trans->getA("complete"));
 
                 } else
                     throw Error("can't download " + url);
 
             } catch (Error& e) {
                 _error("Shader update: %s", e.what());
-                layShader.main.progress.label.setForegroundColor(ERROR_COLOR);
-                layShader.main.progress.label.setText(trans->getA("error"));                
+                layShader.main.progress.label.setForegroundColorThreaded(ERROR_COLOR);
+                layShader.main.progress.label.setTextThreaded(trans->getA("error"));                
             }
         });
         t1.detach();

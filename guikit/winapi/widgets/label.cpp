@@ -11,6 +11,10 @@ auto pLabel::setText(const std::string& text) -> void {
         InvalidateRect(hwnd, 0, false);
 }
 
+auto pLabel::setTextThreaded(const std::string& text) -> void {
+    pWidget::setText(text);
+}
+
 auto pLabel::setFont(std::string font) -> void {
     pWidget::setFont( font );
     
@@ -29,6 +33,10 @@ auto pLabel::setForegroundColor(unsigned color) -> void {
     
     if (hwnd)
         InvalidateRect(hwnd, 0, false);
+}
+
+auto pLabel::setForegroundColorThreaded(unsigned color) -> void {
+    setForegroundColor(color);
 }
 
 auto pLabel::create() -> void {

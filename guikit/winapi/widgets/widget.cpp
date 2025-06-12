@@ -65,6 +65,10 @@ auto pWidget::setText(const std::string& text) -> void {
     }
 }
 
+auto pWidget::setEnabledThreaded(bool enabled) -> void {
+    setEnabled(enabled);
+}
+
 auto pWidget::setEnabled(bool enabled) -> void {
     if(hwnd)
 		EnableWindow(hwnd, enabled);

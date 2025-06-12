@@ -47,3 +47,8 @@ auto pProgressBar::setPosition(unsigned position) -> void {
     if(hwnd)
         SendMessage(hwnd, PBM_SETPOS, (WPARAM)position, 0);
 }
+
+auto pProgressBar::setPositionThreaded(unsigned position) -> void {
+    if(hwnd)
+        PostMessage(hwnd, PBM_SETPOS, (WPARAM)position, 0);
+}

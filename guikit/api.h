@@ -422,6 +422,7 @@ struct Widget : Sizable {
     auto focused() -> bool;
     auto setFocused() -> void;
     auto setEnabled(bool enabled = true) -> void;
+    auto setEnabledThreaded(bool enabled = true) -> void;
     auto setVisible(bool visible = true) -> void;
     // "special font" hint is only handled in listviews at the moment.
     // in this case vertical spacing is completly removed.
@@ -436,6 +437,7 @@ struct Widget : Sizable {
     // supported for label, listview, treeview
     // gtk line edit
     auto setForegroundColor(unsigned color) -> void;
+    auto setForegroundColorThreaded(unsigned color) -> void;
     auto resetForegroundColor() -> void;
     auto setStore(int _store) -> void { state.store = _store; }
 
@@ -511,6 +513,7 @@ struct Label : Widget {
     
     auto align() -> Align { return state.align; }
     auto setAlign( Align align ) -> void;
+    auto setTextThreaded(const std::string& text) -> void;
     
     pLabel& p;
     Label();
@@ -713,6 +716,7 @@ struct RadioBox : Widget {
 
 struct ProgressBar : Widget {
     auto setPosition(unsigned position) -> void;
+    auto setPositionThreaded(unsigned position) -> void;
     auto position() -> unsigned { return state.position; }
     auto setText(const std::string& text) -> void = delete;
     auto text() -> std::string = delete;

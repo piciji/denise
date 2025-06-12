@@ -70,40 +70,60 @@ auto pLabel::setGeometry(Geometry geometry) -> void {
     
 auto pLabel::setText(const std::string& text) -> void {
     @autoreleasepool {
-        if([NSThread isMainThread])
-            [(id)cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
-        else {
-            std::string _text = text;
-            dispatch_group_t group = dispatch_group_create();
-            dispatch_group_async(group, dispatch_get_main_queue(), ^{
-                [(id)cocoaView setStringValue:[NSString stringWithUTF8String:_text.c_str()]];
-            });
-            
-         //   dispatch_group_notify(group, dispatch_get_main_queue(), ^{
-                
-           // });
-        }
+        [(id)cocoaView setStringValue:[NSString stringWithUTF8String:text.c_str()]];
+    }
+    calculatedMinimumSize.updated = false;
+}
+
+auto pLabel::setTextThreaded(const std::string& text) -> void {
+    @autoreleasepool {
+        std::string _text = text;
+        dispatch_group_t group = dispatch_group_create();
+        dispatch_group_async(group, dispatch_get_main_queue(), ^{
+            [(id)cocoaView setStringValue:[NSString stringWithUTF8String:_text.c_str()]];
+        });
     }
     calculatedMinimumSize.updated = false;
 }
     
-auto pLabel::setEnabled(bool enabled) -> void {
-    
+auto pLabel::getTextColor() -> NSColor* {
+    if (!label.enabled())
+        return [NSColor grayColor];
+
     NSColor* textColor = [NSColor textColor];
-    
+        
     if(label.overrideForegroundColor()) {
         unsigned color = label.foregroundColor();
         textColor = pHelper::getColor( color );
     }
-    
-    [(id)cocoaView setTextColor: enabled ? textColor : [NSColor grayColor]];
+
+    return textColor;
+}
+
+auto pLabel::setEnabled(bool enabled) -> void {    
+    [(id)cocoaView setTextColor: getTextColor()];
     pWidget::setEnabled(enabled);
+}
+
+auto pLabel::setEnabledThreaded(bool enabled) -> void {
+    @autoreleasepool {
+        bool _enabled = enabled;
+        NSColor* _color = getTextColor();
+        dispatch_group_t group = dispatch_group_create();
+        dispatch_group_async(group, dispatch_get_main_queue(), ^{
+            [(id)cocoaView setTextColor: _color];
+            pWidget::setEnabled(_enabled);
+        });
+    }
 }
     
 auto pLabel::setForegroundColor(unsigned color) -> void {
     setEnabled( label.enabled() );
 }
 
+auto pLabel::setForegroundColorThreaded(unsigned color) -> void {
+    setEnabledThreaded( label.enabled() );
+}
 
 auto pLabel::init() -> void {
     cocoaView = [[CocoaLabel alloc] initWith:label];

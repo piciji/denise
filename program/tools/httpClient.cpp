@@ -2,7 +2,7 @@
 //#define CPPHTTPLIB_OPENSSL_SUPPORT
 
 #include "httpClient.h"
-#include "httplib.h"
+#include "../../deps/httplib.h"
 #include "../../guikit/api.h"
 
 

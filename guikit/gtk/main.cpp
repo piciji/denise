@@ -66,14 +66,6 @@ auto pApplication::initialize() -> void {
     gtk_init(nullptr, nullptr);
     setlocale(LC_NUMERIC, "C");
 
-// don't apply global CSS because of micro stutter
-//    #include "css.cpp"
-//    GtkCssProvider* cssProvider = gtk_css_provider_new();
-//    gtk_css_provider_load_from_data(cssProvider, css.c_str(), -1, NULL);
-//    gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
-//                                              GTK_STYLE_PROVIDER(cssProvider),
-//                                              GTK_STYLE_PROVIDER_PRIORITY_USER);
-
     fetchDesktopSession();
 }  
 

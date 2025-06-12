@@ -65,6 +65,19 @@ auto pWidget::setEnabled(bool enabled) -> void {
         gtk_widget_set_sensitive(gtkWidget, enabled);
 }
 
+auto pWidget::setEnabledThreaded(bool enabled) -> void {
+    if(gtkWidget)
+        gdk_threads_add_idle(pWidget::setEnabledCall, this);
+}
+
+auto pWidget::setEnabledCall(gpointer data) -> gboolean {
+    pWidget* self = (pWidget*)data;
+
+    gtk_widget_set_sensitive(self->gtkWidget, self->widget.enabled());
+
+    return G_SOURCE_REMOVE;
+}
+
 auto pWidget::setVisible(bool visible) -> void {
     if(gtkWidget)
         gtk_widget_set_visible(gtkWidget, visible);
@@ -154,10 +167,7 @@ auto pWidget::setBackgroundColor(unsigned color) -> void {
 	pSystem::applyCss( gtkWidget, ".customBgColor { background-color: " + pSystem::getColorCss(color) + " }" );
 }
 
-auto pWidget::setForegroundColor(unsigned color) -> void {
-	if( !gtkWidget)
-		return;
-
+auto pWidget::_setForegroundColor(unsigned color) -> void {
 	pSystem::removeCssClass(gtkWidget, "customTextColor");
 	
     if( !widget.overrideForegroundColor() )
@@ -166,4 +176,26 @@ auto pWidget::setForegroundColor(unsigned color) -> void {
 	pSystem::addCssClass(gtkWidget, "customTextColor");
 
 	pSystem::applyCss(gtkWidget, ".customTextColor { color: " + pSystem::getColorCss(color) + " }");
+}
+
+auto pWidget::setForegroundColor(unsigned color) -> void {
+	if( !gtkWidget)
+		return;
+
+    _setForegroundColor(color);
+}
+
+auto pWidget::setForegroundColorCall(gpointer data) -> gboolean {
+    pWidget* self = (pWidget*)data;
+
+    self->_setForegroundColor(self->widget.foregroundColor());
+
+    return G_SOURCE_REMOVE;
+}
+
+auto pWidget::setForegroundColorThreaded(unsigned color) -> void {
+	if( !gtkWidget)
+		return;
+
+    gdk_threads_add_idle(pWidget::setForegroundColorCall, this);
 }

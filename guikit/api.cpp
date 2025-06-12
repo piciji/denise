@@ -689,6 +689,11 @@ auto Widget::setEnabled(bool enabled) -> void {
     p.setEnabled(enabled);
 }
 
+auto Widget::setEnabledThreaded(bool enabled) -> void {
+    Sizable::state.enabled = enabled;
+    p.setEnabledThreaded(enabled);
+}
+
 auto Widget::setFocused() -> void {
     return p.setFocused();
 }
@@ -738,6 +743,12 @@ auto Widget::setForegroundColor(unsigned color) -> void {
     state.overrideForegroundColor = true;
     state.foregroundColor = color;
     p.setForegroundColor(color);
+}
+
+auto Widget::setForegroundColorThreaded(unsigned color) -> void {
+    state.overrideForegroundColor = true;
+    state.foregroundColor = color;
+    p.setForegroundColorThreaded(color);
 }
 
 auto Widget::resetForegroundColor() -> void {
@@ -797,6 +808,11 @@ MultilineEdit::MultilineEdit() : Widget(*new pMultilineEdit(*this)), p((pMultili
 auto Label::setAlign( Align align ) -> void {
     state.align = align;
     p.setAlign( align );
+}
+
+auto Label::setTextThreaded(const std::string& text) -> void {
+    Widget::state.text = text;
+    p.setTextThreaded(text);
 }
 
 Label::Label() : Widget(*new pLabel(*this)), p((pLabel&)Widget::p) { p.init(); }
@@ -1009,6 +1025,11 @@ RadioBox::RadioBox() : Widget(*new pRadioBox(*this)), p((pRadioBox&)Widget::p) {
 auto ProgressBar::setPosition(unsigned position) -> void {
     state.position = position;
     p.setPosition(position);
+}
+
+auto ProgressBar::setPositionThreaded(unsigned position) -> void {
+    state.position = position;
+    p.setPositionThreaded(position);
 }
 
 ProgressBar::ProgressBar() : Widget(*new pProgressBar(*this)), p((pProgressBar&)Widget::p) { p.init(); }
