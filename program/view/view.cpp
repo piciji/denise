@@ -638,6 +638,35 @@ auto View::removeMenuTree( GUIKIT::Menu* menu ) -> void {
 		delete child;
 }
 
+auto View::updateRecentList(Emulator::Interface* emulator) -> void {
+    auto recentFile = fileloader->getRecentFile(emulator);
+
+    auto list = recentFile->list(nullptr);
+    auto sysMenu = getSysMenu(emulator);
+    
+    unsigned i = 0;
+    for(auto& filePath : list) {
+        if (filePath.empty())
+            continue;
+
+        if (!sysMenu->recents[i]) {
+            GUIKIT::MenuItem* item;
+            item = new GUIKIT::MenuItem;
+            item->onActivate = [this, item]() {
+                emuThread->lock();
+                autoloader->init({ item->text() }, false, Autoloader::Mode::DragnDrop);
+                autoloader->loadFiles();
+                emuThread->unlock();
+            };
+            sysMenu->recents[i] = item;
+            sysMenu->recentSoftware->append(*item);
+        }
+
+        sysMenu->recents[i]->setText(filePath);
+        i++;
+    }
+}
+
 auto View::setConnectors() -> void {
     std::vector<GUIKIT::MenuRadioItem*> connectorItems;
     GUIKIT::Menu* connectorMenu;
@@ -996,6 +1025,8 @@ auto View::loadImages() -> void {
     gearsImage.setResourceId( ID_GEARS );
     delImage.loadPng((uint8_t*) Icons::del, sizeof (Icons::del));
     delImage.setResourceId( ID_DEL );
+    openImage.loadPng((uint8_t*)Icons::open, sizeof(Icons::open));
+    openImage.setResourceId(ID_OPEN);
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1125,6 +1156,13 @@ auto View::buildMenu() -> void {
             setAnyload( emulator );
 	    };
         sM.system->append( *sM.loadSoftware );
+
+        sM.recentSoftware = new GUIKIT::Menu;
+        sM.recentSoftware->setIcon(openImage);
+        for(auto& recent : sM.recents)
+            recent = nullptr;
+        
+        sM.system->append(*sM.recentSoftware);
         
         sM.media = new GUIKIT::MenuItem;
         sM.media->setIcon( driveImage );
@@ -1253,6 +1291,7 @@ auto View::buildMenu() -> void {
         sM.system->append( *sM.misc );
         
         sysMenus.push_back( sM );
+        updateRecentList(sM.emulator);
 
         if (globalSettings->get<bool>("core_" + emulator->ident, true))
             append( *sM.system );
@@ -1820,6 +1859,7 @@ auto View::translate() -> void {
         if (sysMenu.capsLED)
             sysMenu.capsLED->setText(trans->get("toggle Caps Lock LED"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
+        sysMenu.recentSoftware->setText(trans->getA("Recent Files"));
         sysMenu.media->setText(trans->get("Software"));
         sysMenu.states->setText(trans->get("states"));
         sysMenu.save->setText(trans->get("Savestate"));

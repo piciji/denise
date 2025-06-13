@@ -949,7 +949,7 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
 
     if (block->selector.pathCombo) {
         auto recentFile = fileloader->getRecentFile(emulator);
-        auto& files = recentFile->list(*block->media->group, fSetting->path);
+        auto& files = recentFile->list(block->media->group, fSetting->path);
 
         block->selector.pathCombo->reset();
 
@@ -1247,7 +1247,8 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     }
 
     auto recentFile = fileloader->getRecentFile(emulator);
-    recentFile->add(*mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
+    recentFile->add(mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
+    view->updateRecentList(emulator);
 
     if (showListing(layout)) {
         block->listings.clear();

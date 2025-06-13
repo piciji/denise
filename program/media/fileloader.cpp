@@ -876,7 +876,8 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     }
 
     auto recentFile = fileloader->getRecentFile(emulator);
-    recentFile->add(*mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
+    recentFile->add(mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
+    view->updateRecentList(emulator);
 
     emulator->getListing(media);
 

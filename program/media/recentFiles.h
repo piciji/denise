@@ -19,7 +19,7 @@ struct RecentFiles {
 
     Emulator::Interface* emulator;
 
-    const int maxEntries = 30;
+    static const int maxEntries = 30;
 
     GUIKIT::Settings* settings = nullptr;
 
@@ -34,11 +34,11 @@ struct RecentFiles {
 
     auto save() -> void;
 
-    auto add(Emulator::Interface::MediaGroup& group, const std::string& curPath) -> void;
+    auto add(Emulator::Interface::MediaGroup* group, const std::string& curPath) -> void;
 
-    auto list(Emulator::Interface::MediaGroup& group, const std::string& curPath = "") -> std::vector<std::string>&;
+    auto list(Emulator::Interface::MediaGroup* group, const std::string& curPath = "") -> std::vector<std::string>&;
 
-    auto getIdent(Emulator::Interface::MediaGroup& group, unsigned pos) -> std::string;
+    auto getIdent(Emulator::Interface::MediaGroup* group, unsigned pos) -> std::string;
 
-    auto getStorage(Emulator::Interface::MediaGroup& group) -> Storage*;
+    auto getStorage(Emulator::Interface::MediaGroup* group) -> Storage*;
 };

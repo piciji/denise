@@ -34,7 +34,7 @@ auto RecentFiles::save() -> void {
     settings->save(path);
 }
 
-auto RecentFiles::add(Emulator::Interface::MediaGroup& group, const std::string& curPath) -> void {
+auto RecentFiles::add(Emulator::Interface::MediaGroup* group, const std::string& curPath) -> void {
     if (curPath.empty())
         return;
 
@@ -63,10 +63,13 @@ auto RecentFiles::add(Emulator::Interface::MediaGroup& group, const std::string&
             settings->set<std::string>(getIdent(group, i), s->files[i]);
     }
 
-    save();
+    if (group) {
+        add(nullptr, curPath);
+        save();
+    }
 }
 
-auto RecentFiles::list(Emulator::Interface::MediaGroup& group, const std::string& curPath) -> std::vector<std::string>& {
+auto RecentFiles::list(Emulator::Interface::MediaGroup* group, const std::string& curPath) -> std::vector<std::string>& {
     load();
 
     auto s = getStorage(group);
@@ -84,19 +87,19 @@ auto RecentFiles::list(Emulator::Interface::MediaGroup& group, const std::string
     return s->files;
 }
 
-
-auto RecentFiles::getIdent(Emulator::Interface::MediaGroup& group, unsigned pos) -> std::string {
-    return group.name + "_" + std::to_string(pos);
+auto RecentFiles::getIdent(Emulator::Interface::MediaGroup* group, unsigned pos) -> std::string {
+    std::string out = group ? group->name : "recent";
+    return out + "_" + std::to_string(pos);
 }
 
-auto RecentFiles::getStorage(Emulator::Interface::MediaGroup& group) -> Storage* {
+auto RecentFiles::getStorage(Emulator::Interface::MediaGroup* group) -> Storage* {
     for(auto _s : storage) {
-        if (_s->group == &group)
+        if (_s->group == group)
             return _s;
     }
 
     Storage* s = new Storage;
-    s->group = &group;
+    s->group = group;
     s->files.reserve(maxEntries);
     std::string line;
 

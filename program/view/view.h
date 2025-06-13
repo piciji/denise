@@ -4,6 +4,7 @@
 #include "../../guikit/api.h"
 #include "imageViewer.h"
 #include "message.h"
+#include "../media/recentFiles.h"
 
 struct View : GUIKIT::Window {
     Message* message;
@@ -38,6 +39,8 @@ struct View : GUIKIT::Window {
         GUIKIT::MenuItem* menu;
         GUIKIT::MenuItem* firmware;
         GUIKIT::MenuItem* loadSoftware;
+        GUIKIT::Menu* recentSoftware;
+            GUIKIT::MenuItem* recents[RecentFiles::maxEntries];
         GUIKIT::MenuItem* media;
         GUIKIT::Menu* states;
     		GUIKIT::MenuItem* save;
@@ -95,6 +98,7 @@ struct View : GUIKIT::Window {
     auto updateEmuUsage() -> void;
     auto updateDiskMenu() -> void;
 	auto updateMouseGrab() -> void;
+    auto updateRecentList(Emulator::Interface* emulator) -> void;
 
     GUIKIT::Viewport viewport;    
     
@@ -198,6 +202,7 @@ struct View : GUIKIT::Window {
     GUIKIT::Image fullscreenImage;
 	GUIKIT::Image gearsImage;
 	GUIKIT::Image infoImage;
+    GUIKIT::Image openImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;

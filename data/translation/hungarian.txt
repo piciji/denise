@@ -891,3 +891,4 @@ shader download = Shader letöltése
 shader update = If you don't have RetroArch installed, or if you want to manage the shaders for Denise independently, you can download the latest shader pack now. Manual download opens your default browser and downloads the current shader archive. This archive must then be unpacked. Automatic download automatically downloads and unpacks the shaders. Finally, the current shader directory is updated.
 unpack = unpack
 complete = complete
+Recent Files = Recent Files
