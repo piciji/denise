@@ -80,6 +80,8 @@ struct ShaderParser {
 
     auto useScale(ShaderPreset::Pass& pass) -> bool;
 
+    auto getValue(std::string& line) -> std::string;
+
     static auto buildLutBloom() -> void;
     static auto buildLutMask() -> void;
     static auto buildLutBandwidth() -> void;

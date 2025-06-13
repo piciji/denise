@@ -753,7 +753,8 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
             GUIKIT::String::remove(line, {includePrefix});
             GUIKIT::String::remove(line, { "\n" });
             GUIKIT::String::trim(line);
-            GUIKIT::String::removeQuote(line);
+            line = getValue(line);
+
             if (!fetchShaderSource( GUIKIT::File::resolveRelativePath(path, line), pass, stages, depth + 1))
                 return false;
 
@@ -844,6 +845,32 @@ auto ShaderParser::fetchShaderSource(ShaderPreset::Pass& pass) -> bool {
 
 auto ShaderParser::useScale(ShaderPreset::Pass& pass) -> bool {
     return pass.scaleTypeX != ShaderPreset::SCALE_NONE || pass.scaleTypeY != ShaderPreset::SCALE_NONE;
+}
+
+auto ShaderParser::getValue(std::string& line) -> std::string {
+    unsigned index = 0;
+    unsigned length = line.size();
+
+    if (!length)
+        return "";
+
+    if (line[index++] == '"') {
+        if ((length > 1) && (line[index++] != '"')) {
+            for (; index < length; index++) {
+                if (line[index] == '"')
+                    break;
+            }
+
+            return line.substr(1, index - 1);
+        }
+    }
+
+    for (; index < length; index++) {
+        if (!std::isgraph(line[index]))
+            break;
+    }
+
+    return line.substr(0, index);
 }
 
 auto ShaderParser::clear() -> void {
