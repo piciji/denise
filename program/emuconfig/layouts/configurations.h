@@ -110,6 +110,7 @@ struct MemoryPatternLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::Button preConfigured1;
         GUIKIT::Button preConfigured2;
         GUIKIT::Button preConfigured3;
+        GUIKIT::Button preConfigured4;
 
         FifthLine();
     } fifthLine;

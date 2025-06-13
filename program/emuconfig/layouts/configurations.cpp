@@ -87,7 +87,8 @@ MemoryPatternLayout::FifthLine::FifthLine() {
 
     append( preConfigured1, {0u, 0u}, 10 );
     append( preConfigured2, {0u, 0u}, 10 );
-    append( preConfigured3, {0u, 0u} );
+    append( preConfigured3, {0u, 0u }, 10);
+    append( preConfigured4, {0u, 0u} );
 
     setAlignment(0.5);
 }
@@ -408,6 +409,28 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             _settings->set<unsigned>("memory_random_repeat", 0);
             _settings->set<unsigned>("random_chance", 1);
             _settings->set<unsigned>("memory_offset", 2);
+
+            this->updateMemoryPreview();
+        };
+
+        memoryPattern->fifthLine.preConfigured4.onActivate = [this]() {
+            memoryPattern->firstLine.valueStepper.setValue(255);
+            memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId(2);
+            memoryPattern->secondLine.valueStepper.setValue(128);
+            memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId(1);
+            memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId(0);
+            memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId(0);
+            memoryPattern->fourthLine.randomChanceStepper.setValue(0);
+            memoryPattern->fourthLine.offsetCombo.setSelectionByUserId(0);
+
+            _settings->set<unsigned>("memory_value", 255);
+            _settings->set<unsigned>("memory_invert_every", 2);
+            _settings->set<unsigned>("memory_second_value", 128);
+            _settings->set<unsigned>("memory_second_invert_every", 1);
+            _settings->set<unsigned>("memory_random_pattern", 0);
+            _settings->set<unsigned>("memory_random_repeat", 0);
+            _settings->set<unsigned>("random_chance", 0);
+            _settings->set<unsigned>("memory_offset", 0);
 
             this->updateMemoryPreview();
         };
@@ -1174,6 +1197,7 @@ auto ConfigurationsLayout::translate() -> void {
         memoryPattern->fifthLine.preConfigured1.setText( trans->get( "pre-configured 1" ) );
         memoryPattern->fifthLine.preConfigured2.setText( trans->get( "pre-configured 2" ) );
         memoryPattern->fifthLine.preConfigured3.setText( trans->get( "pre-configured 3" ) );
+        memoryPattern->fifthLine.preConfigured4.setText( trans->get( "pre-configured 4" ) );
 
         GUIKIT::HorizontalLayout::alignChildrenVertically( {&memoryPattern->firstLine, &memoryPattern->secondLine, &memoryPattern->thirdLine, &memoryPattern->fourthLine} );
 
