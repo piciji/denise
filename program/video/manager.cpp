@@ -1589,12 +1589,16 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
         delete tempParser;
         return nullptr;
     }
-
+    // improtant, parameter changes when temp parser replaces current parser.
+    // old shader is still active ... need to run to a safe spot before
+    videoDriver->waitRenderThread();
     settings->set<std::string>("slang_loaded", GUIKIT::File::buildRelativePath(path));
     parser->clear();
     delete parser;
 
-    parser = tempParser;
+    parser = tempParser; // emu and render thread must be paused until the current shader is unloaded.
+    // The new shader can then be built asynchronously.
+
     rebuildShader = true;
     requestUpdate(); // check for FP mode
     applyMeta();
@@ -1613,6 +1617,7 @@ auto VideoManager::addPreset(std::string path, bool prepend, std::vector<std::st
         return nullptr;
     }
 
+    videoDriver->waitRenderThread();
     if (!parser->addPreset( tempParser, prepend )) {
         GUIKIT::Vector::combine(errors, parser->errors);
         delete tempParser;

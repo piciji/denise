@@ -1081,13 +1081,17 @@ namespace DRIVER {
 
             format = renderBuffer->floatFormat ? DXGI_FORMAT_R32G32B32A32_FLOAT : DXGI_FORMAT_B8G8R8A8_UNORM;
             if(format != frame.textures[0].desc.Format || renderBuffer->width != frame.textures[0].desc.Width || renderBuffer->height != frame.textures[0].desc.Height) {
-                if (!initMainTexture(renderBuffer->width, renderBuffer->height))
+                if (!initMainTexture(renderBuffer->width, renderBuffer->height)) {
+                    renderBuffer->sharedMutex.unlock();
                     return;
+                }
             }
 
             D3D11_MAPPED_SUBRESOURCE mappedTexture;
-            if (FAILED(context->Map((ID3D11Resource*)frame.textures[0].staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture)))
+            if (FAILED(context->Map((ID3D11Resource*)frame.textures[0].staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture))) {
+                renderBuffer->sharedMutex.unlock();
                 return;
+            }
 
             int srcPitch = renderBuffer->width << (renderBuffer->floatFormat ? 4 : 2);
             uint8_t* src = renderBuffer->data;

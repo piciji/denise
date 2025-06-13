@@ -2,7 +2,6 @@
 #include <cstring>
 #include "renderThread.h"
 #include "../../tools/threadPriority.h"
-// #include "../../../program/tools/logger.h"
 
 namespace DRIVER {
 
@@ -169,7 +168,7 @@ namespace DRIVER {
 
     auto RenderThread::wait() -> void {
 
-        while(ready) {
+        while(ready.load()) {
             std::this_thread::yield();
         }
     }
