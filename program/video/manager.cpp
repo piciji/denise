@@ -1658,6 +1658,7 @@ auto VideoManager::finishPreset() -> void {
 }
 
 auto VideoManager::clearPreset() -> void {
+    videoDriver->waitRenderThread();
     parser->clear();
     applyMeta();
     driveLedParam = nullptr;
