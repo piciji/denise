@@ -345,7 +345,9 @@ auto HardDrive::readSector(bool verify, bool useMultiple) -> void {
 
     setBusy(1, true);
 
-    agnus.interface->updateDeviceState(media, false, getPositonForUI(), 0x80 | 1, false);
+    uint8_t LED = system->getModel() > 1 ? 1 : 2;
+
+    agnus.interface->updateDeviceState(media, false, getPositonForUI(), 0x80 | LED, false);
 }
 
 auto HardDrive::fetchData() -> uint16_t {
@@ -447,7 +449,8 @@ auto HardDrive::read(unsigned offset, unsigned length) -> uint8_t* {
     setBuffer(length);
 
     convertCHS(offset / geometry().bSize);
-    agnus.interface->updateDeviceState(media, false, getPositonForUI(), 0x80 | 0x40 | 1, false);
+    uint8_t LED = system->getModel() > 1 ? 1 : 2;
+    agnus.interface->updateDeviceState(media, false, getPositonForUI(), 0x80 | 0x40 | LED, false);
 
     if (structure.read(buffer, offset, length))
         return buffer;   

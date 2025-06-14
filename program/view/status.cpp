@@ -508,8 +508,12 @@ auto StatusHandler::update() -> void {
 
                     GUIKIT::Image* image = &(view->ledOffImage);
                     uint8_t _led = (deviceState.LED >> (deviceState.inputsPerFrame << 1)) & 3;
-                    if (_led)
-                        image = deviceState.write ? &(view->ledRedImage) : &(view->ledGreen2Image);
+                    if (_led) {
+                        if (deviceState.write)
+                            image = &(view->ledRedImage);
+                        else
+                            image = (_led & 1) ? &(view->ledYellowImage) : &(view->ledGreen2Image);
+                    }
 
                     if (activeVideoManager->driveLedParam)
                         activeVideoManager->driveLedParam->value = (_led & 3) ? 1 : 0;
