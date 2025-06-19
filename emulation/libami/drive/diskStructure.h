@@ -5,6 +5,7 @@
 #include <functional>
 #include "../../interface.h"
 #include "../../tools/DLLoader.h"
+#include "scp/scp.h"
 
 namespace Emulator {
 struct Serializer;
@@ -23,7 +24,7 @@ struct DiskStructure {
     DiskStructure(Agnus& agnus);
     ~DiskStructure();
 
-    enum Type { ADF, EXT2, EXT, IPF, Unknown = -1 } type = Unknown;
+    enum Type { Unknown = 1, ADF = 2, EXT2 = 4, EXT = 8, IPF = 0x10, SCP = 0x20 } type = Unknown;
     enum {  CAPSInit, CAPSExit, CAPSAddImage, CAPSRemImage,
             CAPSLockImageMemory, CAPSUnlockImage, CAPSLoadImage,
             CAPSGetVersionInfo, CAPSGetImageInfo,
@@ -39,8 +40,8 @@ struct DiskStructure {
         uint8_t* data = nullptr;
         unsigned length = 0;
         unsigned bits = 0;
-        uint8_t options = 0; // Bit 0: written, Bit 1: IPF Weak Bit Track
-        uint16_t* cellWidth = nullptr; // flux formats like IPF
+        uint8_t options = 0; // Bit 0: written, Bit 1: IPF/SPC multi rev track
+        uint16_t* cellWidth = nullptr; // flux formats like IPF, SCP
         int32_t overlap = -1;
     };
 
@@ -54,6 +55,7 @@ struct DiskStructure {
     bool virtualCreated = false;
     static Emulator::DLLoader dlLoader;
     int capsImageId;
+    LibSCP libSCP;
 
     auto attach(uint8_t* data, unsigned size) -> bool;
     auto detach() -> void;
@@ -64,12 +66,14 @@ struct DiskStructure {
     auto analyzeDMS(uint8_t*& data, unsigned& size) -> bool;
     auto analyzeIPF(uint8_t* data, unsigned size) -> bool;
     auto analyzeEXE(uint8_t*& data, unsigned& size) -> bool;
+    auto analyzeSCP(uint8_t* data, unsigned size) -> bool;
 
     auto prepareADF(uint8_t* data, unsigned size) -> void;
     auto prepareEXT(uint8_t* data, unsigned size) -> void;
     auto prepareEXT2(uint8_t* data, unsigned size) -> void;
     auto createEXT2(unsigned size) -> uint8_t*;
     auto prepareIPF(uint8_t* data, unsigned size) -> void;
+    auto prepareSCP(uint8_t* data, unsigned size) -> void;
 
     auto buildAdfFromBinaries(const std::string& name, std::vector<Emulator::Interface::Item>& files) -> Emulator::Interface::Data;
 
@@ -78,8 +82,12 @@ struct DiskStructure {
     auto removeIPF() -> void;
     auto unloadIPF() -> void;
     auto loadNextRevIPF(Track& track) -> void;
-    auto deleteTimingIPF(Track& track) -> void;
+    auto deleteTiming(Track& track) -> void;
     auto addTimingIPF(Track& track, unsigned tiLength, uint32_t* tiData) -> void;
+
+    auto loadFirstRevSCP(Track& track) -> void;
+    auto loadNextRevSCP(Track& track) -> void;
+    auto loadNextRev(Track& track) -> void;
 
     auto storeWrittenTracks(Emulator::Interface::Media* media) -> void;
 

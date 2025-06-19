@@ -326,6 +326,9 @@
     <Filter Include="emulation\libami\expansionPort">
       <UniqueIdentifier>{7068e9f6-17a5-4047-9e9c-25bd5e6d4b01}</UniqueIdentifier>
     </Filter>
+    <Filter Include="emulation\libami\drive\scp">
+      <UniqueIdentifier>{26d29b6b-2c03-43ef-bec3-c1737d802b90}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1143,6 +1146,9 @@
     </ClInclude>
     <ClInclude Include="..\program\tools\httplib.h">
       <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\drive\scp\scp.h">
+      <Filter>emulation\libami\drive\scp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2330,6 +2336,12 @@
     </ClCompile>
     <ClCompile Include="..\program\tools\httpClient.cpp">
       <Filter>program\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\scp.cpp">
+      <Filter>emulation\libami\drive</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\scp\scp.cpp">
+      <Filter>emulation\libami\drive\scp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -258,6 +258,8 @@ set(headerSrcs ${headerSrcs}
     emulation/libami/drive/filesystemExt.h
     emulation/libami/drive/instantDiskDrive.cpp
     emulation/libami/drive/ipf.cpp
+    emulation/libami/drive/scp.cpp
+    emulation/libami/drive/scp/scp.h
     emulation/libami/drive/sectorBlock.h
     emulation/libami/input/input.h
     emulation/libami/input/controlPort/analogControl.h

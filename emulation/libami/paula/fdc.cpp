@@ -192,7 +192,7 @@ namespace LIBAMI {
 
     inline auto Paula::fdcByteMode() -> bool {
         return ((diskState == DiskState::READ) || (diskState == DiskState::WRITE))
-            && ((activeDrive->structure.type == DiskStructure::ADF) || (activeDrive->structure.type == DiskStructure::Unknown));
+            && (activeDrive->structure.type & (DiskStructure::ADF | DiskStructure::Unknown));
     }
 
     auto Paula::getDskBytR() -> uint16_t {
@@ -241,7 +241,7 @@ namespace LIBAMI {
             } else if (!turbo || (diskState != DiskState::READ))
                 return false;
 
-            if (activeDrive->structure.type == DiskStructure::ADF)
+            if (activeDrive->structure.type & (DiskStructure::ADF | DiskStructure::Unknown))
                 handleFDControllerReadByte<true>();
             else
                 handleFDControllerRead<true>();
@@ -288,8 +288,8 @@ namespace LIBAMI {
 
     auto Paula::handleFDControllerIdle() -> void {
         dskShifter <<= 1;
-        if (activeDrive->structure.type == DiskStructure::IPF)
-            dskShifter |= activeDrive->readBitIPF<true>(fdcCycles);
+        if (activeDrive->structure.type & (DiskStructure::IPF | DiskStructure::SCP))
+            dskShifter |= activeDrive->readBitExtended<true>(fdcCycles);
         else
             dskShifter |= activeDrive->readBit<true>(fdcCycles);
 
@@ -381,8 +381,8 @@ namespace LIBAMI {
             if constexpr (readWord || waitTurbo) iterations--;
 			dskShifter <<= 1;
 
-            if (activeDrive->structure.type == DiskStructure::IPF)
-                dskShifter |= activeDrive->readBitIPF<!readWord>(fdcCycles);
+            if (activeDrive->structure.type & (DiskStructure::IPF | DiskStructure::SCP))
+                dskShifter |= activeDrive->readBitExtended<!readWord>(fdcCycles);
             else
                 dskShifter |= activeDrive->readBit<!readWord>(fdcCycles);
 
@@ -454,77 +454,69 @@ namespace LIBAMI {
     auto Paula::handleFDControllerWrite() -> void {
         // paula would send data to all connected and selected drives.
         // the controller can only write with two fixed speeds. copy protections recognize this by measuring time when reading back.
-        // adjusting motor speed would result in different bit cell width too. (not emulated in ADF and EXT ADF ... simply not possible)
+        // adjusting motor speed would result in different bit cell width too.
 
         if (!dmaDisk || !fifoReady)
             return;
 
-        switch(activeDrive->structure.type) {
-            case DiskStructure::Unknown:
-            case DiskStructure::ADF: {
-                uint8_t byte = 0;
+        if(activeDrive->structure.type & (DiskStructure::ADF | DiskStructure::Unknown)) {
+            uint8_t byte = 0;
 
-                if (dskShifterPos != 16) {
-                    if (dskShifterPos == 0) {
-                        byte = dskShifter >> 8;
-                        if (dskLen & 0x8000)
-                            dskBytr = 0x8000;
-                    } else {
-                        byte = dskShifter & 0xff;
-                    }
+            if (dskShifterPos != 16) {
+                if (dskShifterPos == 0) {
+                    byte = dskShifter >> 8;
+                    if (dskLen & 0x8000)
+                        dskBytr = 0x8000;
+                } else {
+                    byte = dskShifter & 0xff;
                 }
+            }
 
-                if (disk0.connected)
-                    disk0.writeByte(byte);
-                if (disk1.connected)
-                    disk1.writeByte(byte);
-                if (disk2.connected)
-                    disk2.writeByte(byte);
-                if (disk3.connected)
-                    disk3.writeByte(byte);
+            if (disk0.connected)
+                disk0.writeByte(byte);
+            if (disk1.connected)
+                disk1.writeByte(byte);
+            if (disk2.connected)
+                disk2.writeByte(byte);
+            if (disk3.connected)
+                disk3.writeByte(byte);
 
-                if (dskShifterPos == 8) {
+            if (dskShifterPos == 8) {
+                if (dskTransferLength) {
+                    if (!--dskTransferLength)
+                        return finishDMA();
+                }
+            }
+
+            if (dskShifterPos != 16)
+                dskShifterPos += 8;
+
+        } else {
+            bool state = false;
+
+            if (dskShifterPos != 16)
+                state = dskShifter & (1 << (15 - dskShifterPos));
+
+            if (disk0.connected)
+                disk0.writeBit(state);
+            if (disk1.connected)
+                disk1.writeBit(state);
+            if (disk2.connected)
+                disk2.writeBit(state);
+            if (disk3.connected)
+                disk3.writeBit(state);
+
+            if (((dskShifterPos & 7) == 7) && (dskLen & 0x8000))
+                dskBytr = 0x8000;
+
+            if (dskShifterPos != 16) {
+                if (++dskShifterPos == 16) {
                     if (dskTransferLength) {
                         if (!--dskTransferLength)
                             return finishDMA();
                     }
                 }
-
-                if (dskShifterPos != 16)
-                    dskShifterPos += 8;
-            } break;
-            case DiskStructure::IPF:
-            case DiskStructure::EXT:
-            case DiskStructure::EXT2: {
-                bool state = false;
-
-                if (dskShifterPos != 16)
-                    state = dskShifter & (1 << (15 - dskShifterPos));
-
-                if (disk0.connected)
-                    disk0.writeBit(state);
-                if (disk1.connected)
-                    disk1.writeBit(state);
-                if (disk2.connected)
-                    disk2.writeBit(state);
-                if (disk3.connected)
-                    disk3.writeBit(state);
-
-                if (((dskShifterPos & 7) == 7) && (dskLen & 0x8000))
-                    dskBytr = 0x8000;
-
-                if (dskShifterPos != 16) {
-                    if (++dskShifterPos == 16) {
-                        if (dskTransferLength) {
-                            if (!--dskTransferLength)
-                                return finishDMA();
-                        }
-                    }
-                }
-
-            } break;
-            default:
-                break;
+            }
         }
 
         if (dskTransferLength && (dskShifterPos == 16)) {
@@ -577,7 +569,7 @@ namespace LIBAMI {
                     handleFDControllerRead();
                 break;
             case DiskState::READ:
-                if (activeDrive->structure.type == DiskStructure::ADF)
+                if (activeDrive->structure.type & (DiskStructure::ADF | DiskStructure::Unknown))
                     handleFDControllerReadByte();
                 else
                     handleFDControllerRead();
@@ -613,8 +605,7 @@ namespace LIBAMI {
 
     auto Paula::setActiveDrive(DiskDrive* drive) -> void {
         activeDrive = drive;
-        turbo = ((activeDrive->structure.type != DiskStructure::IPF) || !activeDrive->track->cellWidth)
-                ? turboRequested : 0;
+        turbo = activeDrive->canTurbo() ? turboRequested : 0;
 
         if (!agnus.hasActiveEvent<Agnus::EVENT_FLOPPY>() && activeDrive->motor) {
             activeDrive->reset();
@@ -625,7 +616,7 @@ namespace LIBAMI {
 
     auto Paula::setTurbo(int value) -> void {
         turboRequested = value;
-        turbo = ((activeDrive->structure.type != DiskStructure::IPF) || !activeDrive->track->cellWidth) ? value : 0;
+        turbo = activeDrive->canTurbo() ? value : 0;
     }
 
 }

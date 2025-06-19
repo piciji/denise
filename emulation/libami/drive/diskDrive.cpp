@@ -180,14 +180,13 @@ template<bool update> auto DiskDrive::readBit(int& dmaCycles) -> bool {
     return state;
 }
 
-template<bool update> auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
+template<bool update> auto DiskDrive::readBitExtended(int& dmaCycles) -> bool {
     if (!motorSpinning() || !inserted)
         return false;
 
     if (stepSettleClock) progressStepper();
 
-    unsigned byte = headOffset >> 3;
-    uint8_t bit = (~headOffset) & 7; // msb is next
+    bool state = (track->data[headOffset >> 3] >> ((~headOffset) & 7)) & 1;
 
     headOffset++;
     if (headOffset == track->overlap)
@@ -195,7 +194,12 @@ template<bool update> auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
 
     if ( headOffset >= track->bits ) {
         headOffset -= track->bits;
-        structure.loadNextRevIPF(*track);
+
+        // runAhead don't change revolution in NON processing frames.
+        // worst case: a temporary display error during loading, never a permanent error
+        if (system->isProcessFrame())
+            structure.loadNextRev(*track);
+
         if (selected)
             cia.setFlag();
 
@@ -236,7 +240,7 @@ template<bool update> auto DiskDrive::readBitIPF(int& dmaCycles) -> bool {
     if (!selected)
         return false;
 
-    return (track->data[byte] >> bit) & 1;
+    return state;
 }
 
 auto DiskDrive::writeBit(bool state) -> void {
@@ -308,6 +312,9 @@ auto DiskDrive::attach(uint8_t* data, unsigned size) -> bool {
 
     if (driveSound && system->powerOn && system->isDisplayFrame())
         interface->mixDriveSound( media, DriveSound::FloppyInsert, media->id > 0 );
+
+    if(structure.type == DiskStructure::SCP)
+        agnus.interface->unloadMedia(media);
 
     updateTrack(true);
     return true;
@@ -538,6 +545,9 @@ inline auto DiskDrive::updateTrack(bool init) -> void {
     DiskStructure::Track* oldTrack = track;
     track = &structure.tracks[(cylinder << 1) | side];
 
+    if ((structure.type == DiskStructure::SCP) && system->isProcessFrame())
+         structure.loadFirstRevSCP(*track);
+
     if (init)
         headOffset = rand() % track->bits;
     else {
@@ -553,10 +563,17 @@ inline auto DiskDrive::updateTrack(bool init) -> void {
             headOffset = 0;
     }
 
-    paula.turbo = ((structure.type != DiskStructure::IPF) || !track->cellWidth) ? paula.turboRequested : 0;
+    paula.turbo = canTurbo() ? paula.turboRequested : 0;
     randCounter = 0;
 
     updateDeviceState();
+}
+
+auto DiskDrive::canTurbo() -> bool {
+    if (structure.type & (DiskStructure::ADF | DiskStructure::Unknown | DiskStructure::EXT | DiskStructure::EXT2))
+        return true;
+
+    return track->cellWidth == nullptr;
 }
 
 auto DiskDrive::updateRpm() -> void {
@@ -698,6 +715,11 @@ auto DiskDrive::serialize(Emulator::Serializer& s, bool light) -> void {
     }
 
     structure.serialize( s, written );
+
+    if (s.mode() == Emulator::Serializer::Mode::Load) {
+        if (connected && track->bits)
+            headOffset %= track->bits; // could be another revolution (IPF, SCP) with different size of same track
+    }
 }
 
 template auto DiskDrive::readByte<false>(int& dmaCycles) -> uint8_t;
@@ -706,7 +728,7 @@ template auto DiskDrive::readByte<true>(int& dmaCycles) -> uint8_t;
 template auto DiskDrive::readBit<false>(int& dmaCycles) -> bool;
 template auto DiskDrive::readBit<true>(int& dmaCycles) -> bool;
 
-template auto DiskDrive::readBitIPF<false>(int& dmaCycles) -> bool;
-template auto DiskDrive::readBitIPF<true>(int& dmaCycles) -> bool;
+template auto DiskDrive::readBitExtended<false>(int& dmaCycles) -> bool;
+template auto DiskDrive::readBitExtended<true>(int& dmaCycles) -> bool;
 
 }

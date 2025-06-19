@@ -124,6 +124,7 @@ set(srcs
         emulation/libami/drive/filesystem.cpp
         emulation/libami/drive/filesystemExt.cpp
         emulation/libami/drive/hunk.cpp
+        emulation/libami/drive/scp/scp.cpp
         emulation/libami/system/rtc.cpp
         emulation/libami/drive/dms/pfile.cpp
         emulation/libami/expansionPort/expansionPort.cpp

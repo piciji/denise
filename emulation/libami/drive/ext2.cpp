@@ -41,6 +41,8 @@ auto DiskStructure::updateWrittenTracks(uint8_t* data, unsigned size) -> void {
                     bits = storage << 3;
 
                 unsigned length = (bits + 7) / 8;
+                // "initTrack" set options to zero
+                // A track that has already been written must not load another revolution (IPF,SCP) to retain the changes.
                 initTrack(track, std::max(length, getTrackByteLength()), bits, 0xaa);
                 std::memcpy(track.data, data + dataOffset, length);
                 track.length = length;

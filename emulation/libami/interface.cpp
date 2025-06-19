@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "239";
+const std::string Interface::Version = "240";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -58,7 +58,7 @@ auto Interface::prepareModels() -> void {
 }
 
 auto Interface::prepareMedia() -> void {
-    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "dms", "ipf", "adz", "exe"}, {"adf", "ext.adf"} });
+    mediaGroups.push_back({MediaGroupIdDisk, "disk", MediaGroup::Type::Disk, {"adf", "dms", "ipf", "scp", "ctr", "adz", "exe"}, {"adf", "ext.adf"} });
     mediaGroups.push_back({MediaGroupIdHardDisk, "harddisk", MediaGroup::Type::HardDisk, {"hdf", "hdz", "vhd"}, {"hdf", "vhd"} });
 
     {   auto& group = mediaGroups[MediaGroupIdDisk];

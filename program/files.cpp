@@ -164,9 +164,23 @@ auto Program::getFileNameFromMedia(Emulator::Interface::Media* media) -> std::st
 	if (!media->guid)
 		return "";
 	
-	auto file = (GUIKIT::File*)media->guid;	
+	auto file = (GUIKIT::File*)media->guid;
 	
 	return file->getFileName(true);
+}
+
+auto Program::unloadMedia(Emulator::Interface::Media* media) -> void {
+    if (!media->guid)
+        return;
+
+    auto file = (GUIKIT::File*)media->guid;
+
+    file->unload();
+
+    filePool->assign(_ident(activeEmulator, media->name + "store"), nullptr);
+    filePool->assign(_ident(activeEmulator, media->name), nullptr);
+
+    //filePool->unloadOrphaned();
 }
 
 auto Program::setExpansionSelection( Emulator::Interface* emulator ) -> void {

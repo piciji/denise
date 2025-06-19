@@ -11,6 +11,7 @@
 #include "dms.cpp"
 #include "ipf.cpp"
 #include "exe.cpp"
+#include "scp.cpp"
 
 namespace LIBAMI {
 
@@ -52,6 +53,9 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
         case Type::IPF:
             prepareIPF(data, size);
             break;
+        case Type::SCP:
+            prepareSCP(data, size);
+            break;
         default:
             return false;
     }
@@ -63,6 +67,8 @@ auto DiskStructure::attach(uint8_t* data, unsigned size) -> bool {
 auto DiskStructure::detach() -> void {
     if (type == Type::IPF)
         unloadIPF();
+    else if (type == Type::SCP)
+        libSCP.clear();
 
     type = Type::Unknown;
     writeProtected = false;
@@ -84,6 +90,9 @@ auto DiskStructure::analyze(uint8_t*& data, unsigned& size) -> bool {
         return true;
 
     if (analyzeIPF(data, size))
+        return true;
+
+    if (analyzeSCP(data, size))
         return true;
 
     if (analyzeADF(data, size))
@@ -143,6 +152,8 @@ auto DiskStructure::applyAssignedSave() -> void {
         updateWrittenTracks(buffer, length);
         if (_type == Type::IPF)
             type = Type::IPF;
+        else if (_type == Type::SCP)
+            type = Type::SCP;
         else if (_type == Type::ADF)
             type = Type::ADF;
             // when use EXT2 dont forget to increase bits to be byte aligned
@@ -234,15 +245,12 @@ auto DiskStructure::initTrack(Track& track, unsigned newLength, unsigned bits, u
     track.bits = bits == 0 ? getTrackBitLength() : bits;
     track.options = 0;
     track.overlap = -1;
-    deleteTimingIPF(track);
+    deleteTiming(track);
 }
 
 auto DiskStructure::setStandardTiming(Track& track) -> bool {
-   // if (type == DiskStructure::ADF || type == DiskStructure::Unknown)
-     //   return false;
-
     unsigned standardBitLength = getTrackBitLength();
-    deleteTimingIPF(track);
+    deleteTiming(track);
     track.options &= ~2; // disable possible multi rev behaviour
     track.overlap = -1;
 
@@ -260,6 +268,22 @@ auto DiskStructure::getTrackBitLength() -> unsigned {
 
 auto DiskStructure::getTrackByteLength() -> unsigned {
     return (getTrackBitLength() + 7) / 8;
+}
+
+auto DiskStructure::loadNextRev(Track& track) -> void {
+    // Bit 0: track written, don't overwrite with another revolution from source image or changes are lost
+    // Bit 1: track has multiple revolutions
+    // Note: a track not written this time but restored from additional save file disables possible multi revolution bit.
+    // for same reason
+    if ((track.options & 1) || ((track.options & 2) == 0))
+        return;
+
+    // weak bits: StarRay, Wizmo
+    switch(type) {
+        case Type::IPF: loadNextRevIPF(track); break;
+        case Type::SCP: loadNextRevSCP(track); break;
+        default: break;
+    }
 }
 
 auto DiskStructure::updateSerializationSize() -> void {
@@ -311,6 +335,7 @@ auto DiskStructure::serialize(Emulator::Serializer& s, bool written) -> void {
                 if (track.length)
                     track.data = new uint8_t[track.length];
             }
+            deleteTiming(track);
         }
 
         if (track.length)

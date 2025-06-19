@@ -155,7 +155,7 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
                 if (++overflow == 2)
                     break; // there was no sync pattern found
             }
-            structure.loadNextRevIPF(*track);
+            structure.loadNextRev(*track);
             cia.setFlag();
 
             if (bitMode) {
@@ -171,7 +171,7 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
                 if (++overflow == 2)
                     break;
             }
-            structure.loadNextRevIPF(*track);
+            structure.loadNextRev(*track);
             cia.setFlag();
 
             if (bitMode) {

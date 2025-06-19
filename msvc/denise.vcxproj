@@ -88,6 +88,7 @@
     <ClInclude Include="..\emulation\libami\drive\hunk.h" />
     <ClInclude Include="..\emulation\libami\drive\ipf\CapsAPI.h" />
     <ClInclude Include="..\emulation\libami\drive\ipf\CommonTypes.h" />
+    <ClInclude Include="..\emulation\libami\drive\scp\scp.h" />
     <ClInclude Include="..\emulation\libami\drive\sectorBlock.h" />
     <ClInclude Include="..\emulation\libami\expansionPort\builtinHD.h" />
     <ClInclude Include="..\emulation\libami\expansionPort\expansionPort.h" />
@@ -743,6 +744,13 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\scp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\drive\scp\scp.cpp" />
     <ClCompile Include="..\emulation\libami\drive\sectorBlock.cpp" />
     <ClCompile Include="..\emulation\libami\expansionPort\builtinHD.cpp" />
     <ClCompile Include="..\emulation\libami\expansionPort\expansionPort.cpp" />

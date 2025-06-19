@@ -182,9 +182,6 @@ auto DiskStructure::prepareIPF(uint8_t* data, unsigned size) -> void {
 }
 
 auto DiskStructure::loadNextRevIPF(Track& track) -> void {
-    if ((type != DiskStructure::IPF) || (track.options & 1) || ((track.options & 2) == 0))
-        return;
-
     CapsTrackInfoT2 ti;
     ti.type = 2;
 
@@ -193,7 +190,7 @@ auto DiskStructure::loadNextRevIPF(Track& track) -> void {
     if(pLockTrack(DLPTR(CAPSLockTrack))(_ti, capsImageId, track.pos / 2, track.pos & 1, CAPS_FLAGS) == imgeOk) {
         // if mutli REV, next revolution will be fetched to emulate weak bits (oscillation)
         // note: get next REV only, if DI_LOCK_NOUPDATE is not set
-        deleteTimingIPF(track);
+        deleteTiming(track);
         initTrack(track, (ti.tracklen + 7) / 8, ti.tracklen);
         std::memcpy(track.data, ti.trackbuf, track.length);
 
@@ -204,7 +201,7 @@ auto DiskStructure::loadNextRevIPF(Track& track) -> void {
     }
 }
 
-auto DiskStructure::deleteTimingIPF(Track& track) -> void {
+auto DiskStructure::deleteTiming(Track& track) -> void {
     if (track.cellWidth) {
         delete[] track.cellWidth;
         track.cellWidth = nullptr;

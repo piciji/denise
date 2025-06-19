@@ -119,6 +119,7 @@ struct Program : Emulator::Interface::Bind {
     auto questionToWrite(Emulator::Interface::Media* media) -> bool override;
     auto exit(int code) -> void override;
 	auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
+    auto unloadMedia(Emulator::Interface::Media* media) -> void override;
     auto hintAutoWarp(uint8_t state) -> void override;
     auto autoStartFinish(bool soft) -> void override;
     auto jam( Emulator::Interface::Media* media = nullptr ) -> void override;

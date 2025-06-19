@@ -93,11 +93,12 @@ struct DiskDrive {
     template<bool update> auto readByte(int& dmaCycles) -> uint8_t;
     auto writeByte(uint8_t byte) -> void;
     template<bool update> auto readBit(int& dmaCycles) -> bool;
-    template<bool update> auto readBitIPF(int& dmaCycles) -> bool;
+    template<bool update> auto readBitExtended(int& dmaCycles) -> bool;
     auto writeBit(bool state) -> void;
     auto reset() -> void;
 
     auto getDummyTrack() -> DiskStructure::Track*;
+    auto canTurbo() -> bool;
 
     auto instantWrite(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;
     auto instantRead(unsigned words, uint16_t syncWord, bool needSync) -> uint8_t;
