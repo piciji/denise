@@ -649,12 +649,15 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
         if (filePath.empty())
             continue;
 
+        if (i >= RecentFiles::maxEntries)
+            break;
+
         if (!sysMenu->recents[i]) {
             GUIKIT::MenuItem* item;
             item = new GUIKIT::MenuItem;
             item->onActivate = [this, item]() {
                 emuThread->lock();
-                autoloader->init({ item->text() }, false, Autoloader::Mode::DragnDrop);
+                autoloader->init({ GUIKIT::File::resolveRelativePath(item->text()) }, false, Autoloader::Mode::DragnDrop);
                 autoloader->loadFiles();
                 emuThread->unlock();
             };

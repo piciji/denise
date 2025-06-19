@@ -88,7 +88,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
             if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE)) {
                 if (!errorShown) {
                     errorShown = true;
-                    program->errorMediumSize(file, this->mediaLayout->message);
+                    program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), this->mediaLayout->message);
                 }
                 continue;
             }

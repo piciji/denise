@@ -64,26 +64,15 @@ auto Program::errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* m
     filePool->unloadOrphaned();
 }
 
-auto Program::errorMediumSize(GUIKIT::File* file, Message* message ) -> void {
+auto Program::errorFileSize(uint64_t maxSize, std::string filePath, Message* message) -> void {
 
-    message->error(trans->get("file_size_error",{
-        {"%path%", file->getPath()},
-        {"%size%", GUIKIT::File::SizeFormated(MAX_MEDIUM_SIZE)}
-    }));
-    
+    message->error(trans->get("file_size_error", {
+        { "%path%", filePath},
+        { "%size%", GUIKIT::File::SizeFormated(maxSize)}
+        }));
+
     filePool->unloadOrphaned();
 }
-
-auto Program::errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> void {
-
-    message->error(trans->get("file_size_error",{
-        { "%path%", item->info.name},
-        { "%size%", GUIKIT::File::SizeFormated( MAX_FIRMWARE_SIZE )}
-    }));
-    
-    filePool->unloadOrphaned();
-}
-
 
 auto Program::readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
 	if (!media->guid)

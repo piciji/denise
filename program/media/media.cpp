@@ -381,7 +381,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
 
             block->selector.pathCombo->onChange = [this, layout, block]() {
 
-                drop(block->selector.pathCombo->text(), block);
+                drop(GUIKIT::File::resolveRelativePath(block->selector.pathCombo->text()), block);
             };
         }
 
@@ -1417,11 +1417,11 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         return;
 
     if (!file->exists())
-        return program->errorMediumSize(file, message);
+        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
     if (!mediaGroup->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorMediumSize(file, message);
+        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
     if (mediaGroup->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
-        return program->errorMediumSize(file, message);
+        return program->errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), message);
 
     auto& items = file->scanArchive();
 

@@ -721,11 +721,11 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     settings->set<std::string>(_underscoreEx(media->group->name) + "_folder_auto", folderPath);
 
     if (!file->exists())
-        return program->errorMediumSize(file, emuView ? emuView->message : view->message), false;
+        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message), false;
     if (!media->group->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorMediumSize(file, emuView ? emuView->message : view->message), false;
+        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message), false;
     if (media->group->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
-        return program->errorMediumSize(file, emuView ? emuView->message : view->message), false;
+        return program->errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), emuView ? emuView->message : view->message), false;
 
     auto& items = file->scanArchive();
 
@@ -875,7 +875,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         updateFileSetting(fSetting, file, item);
     }
 
-    auto recentFile = fileloader->getRecentFile(emulator);
+    auto recentFile = getRecentFile(emulator);
     recentFile->add(mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
     view->updateRecentList(emulator);
 
@@ -1120,7 +1120,7 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
     if (emuView && emuView->mediaLayout)
         emuView->mediaLayout->insertImage( media, file, &item );
     else
-        fileloader->insertImage( emulator, media, file, &item );
+        insertImage( emulator, media, file, &item );
 
     autoloader->setOnlyForFirstDrive(emulator, media);
 

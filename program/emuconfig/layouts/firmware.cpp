@@ -173,7 +173,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
     _settings->set<std::string>("firmware_path", GUIKIT::File::buildRelativePath(file->getPath()));
 
     if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorMediumSize( file, mes );
+        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), mes);
     
     auto& items = file->scanArchive();
 
@@ -184,7 +184,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
             return program->errorOpen(file, item, mes);
 
         if (item->info.size > MAX_FIRMWARE_SIZE)
-            return program->errorFirmwareSize(item, mes);
+            return program->errorFileSize(MAX_FIRMWARE_SIZE, item->info.name, mes);
 
         auto path = GUIKIT::File::buildRelativePath(file->getFile());
         block->fileLabel.setText(item->info.name);

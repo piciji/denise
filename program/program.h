@@ -136,8 +136,7 @@ struct Program : Emulator::Interface::Bind {
 	
     auto errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* message ) -> void;
     auto errorOpen(GUIKIT::File* file, Message* message ) -> void;
-    auto errorMediumSize(GUIKIT::File* file, Message* message ) -> void;
-    auto errorFirmwareSize(GUIKIT::File::Item* item, Message* message ) -> void;
+    auto errorFileSize(uint64_t maxSize, std::string filePath, Message* message) -> void;
     auto setExpansionSelection( Emulator::Interface* emulator ) -> void;
     auto updateSaveIdent(Emulator::Interface::Media* media, FileSetting* fSetting = nullptr) -> void;
     auto updateSaveIdentFromSav( Emulator::Interface* emulator, GUIKIT::File* file ) -> void;
