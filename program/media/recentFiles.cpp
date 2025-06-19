@@ -54,6 +54,9 @@ auto RecentFiles::add(Emulator::Interface::MediaGroup* group, const std::string&
             if (line != curPath)
                 s->files.push_back(line);
         }
+
+        if (s->files.size() >= maxEntries)
+            break;
     }
 
     for (int i = 0; i < maxEntries; i++) {
@@ -100,6 +103,7 @@ auto RecentFiles::getStorage(Emulator::Interface::MediaGroup* group) -> Storage*
 
     Storage* s = new Storage;
     s->group = group;
+    s->files.clear();
     s->files.reserve(maxEntries);
     std::string line;
 
