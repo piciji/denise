@@ -334,7 +334,7 @@ struct Interface {
         virtual auto readAssignedMedia(Media*, uint8_t*&, bool) -> unsigned { return 0; }
         virtual auto writeAssignedMedia(Media*, uint8_t*, unsigned) -> unsigned { return 0; }
 		virtual auto getFileNameFromMedia(Media*) -> std::string { return ""; }
-        virtual auto unloadMedia(Media*) -> void;
+        virtual auto unloadMedia(Media*) -> void {}
         virtual auto truncateMedia(Media* ) -> bool { return false; }
         virtual auto updateDeviceState(Media*, bool, unsigned, uint8_t, bool ) -> void {}
         virtual auto updateLedState(Emulator::Interface::LedId, uint8_t) -> void {}
