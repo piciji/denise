@@ -2,7 +2,7 @@
 HBRUSH pTabFrame::bkgndBrush = nullptr;
 
 auto pTabFrame::borderSize() -> unsigned {
-    return hasAppThemed() ? 1 : 2;
+    return pApplication::hasAppThemed() ? 1 : 2;
 }
 
 auto pTabFrame::minimumSize() -> Size {
@@ -20,7 +20,10 @@ auto pTabFrame::minimumSize() -> Size {
 }
 
 auto pTabFrame::setGeometry(Geometry geometry) -> void {
-    if(hasAppThemed()) { geometry.width += 2; geometry.height += 1; }
+    if (pApplication::hasAppThemed()) {
+        geometry.width += 2;
+        geometry.height += 1;
+    }
     pWidget::setGeometry(geometry);
 }
 
@@ -98,7 +101,7 @@ auto CALLBACK pTabFrame::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     
     switch(msg) {   
         case WM_ERASEBKGND:
-			if (hasAppThemed())
+            if (pApplication::hasAppThemed())
 				return 0;
 			break;
     }
@@ -112,7 +115,7 @@ auto pTabFrame::create() -> void {
     destroy();
     
     hwnd = CreateWindow(WC_TABCONTROL, L"",
-        WS_CHILD | WS_TABSTOP | (hasAppThemed( ) ? WS_CLIPCHILDREN : 0),
+        WS_CHILD | WS_TABSTOP | (pApplication::hasAppThemed() ? WS_CLIPCHILDREN : 0),
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)tabFrame.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&tabFrame);

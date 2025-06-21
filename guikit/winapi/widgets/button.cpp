@@ -91,14 +91,14 @@ auto pButton::customDraw(HWND hwnd, PAINTSTRUCT& ps) -> void {
     auto buttonState = Button_GetState(hwnd);
     auto minSize = minimumSize();
 
-    if(auto theme = pApplication::openThemeData(hwnd, L"BUTTON")) {
-        pApplication::drawThemeParentBackground(hwnd, ps.hdc, &rc);
+    if(auto theme = pApplication::pOpenThemeData(hwnd, L"BUTTON")) {
+        pApplication::pDrawThemeParentBackground(hwnd, ps.hdc, &rc);
         unsigned flags = 0;
         if(buttonState & BST_PUSHED ) flags = PBS_PRESSED;
         else if(buttonState & BST_HOT) flags = PBS_HOT;
         else flags = button.enabled() ? PBS_NORMAL : PBS_DISABLED;
-        pApplication::drawThemeBackground(theme, ps.hdc, BP_PUSHBUTTON, flags, &rc, &ps.rcPaint);
-        pApplication::closeThemeData(theme);
+        pApplication::pDrawThemeBackground(theme, ps.hdc, BP_PUSHBUTTON, flags, &rc, &ps.rcPaint);
+        pApplication::pCloseThemeData(theme);
 
     } else {
         FillRect(ps.hdc, &rc, GetSysColorBrush(COLOR_3DFACE));

@@ -105,7 +105,6 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
 
             RECT rc;
             GetClientRect(hwnd, &rc);
-          //  DrawThemeParentBackground(hwnd, ps.hdc, &rc);
 
             BLENDFUNCTION bf{AC_SRC_OVER, 0, (BYTE) 255, AC_SRC_ALPHA};
             AlphaBlend(ps.hdc, 0, 0, width, height, hdc, 0, 0, width, height, bf);

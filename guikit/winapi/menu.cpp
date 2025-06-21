@@ -67,7 +67,7 @@ auto pMenuBase::setIcon(Image& icon) -> void {
     if (!icon.empty()) {
 		Image iconTemp = icon; //deep copy, don't change raw data of original
 		
-		if(hasAppThemed() && (getVersionNew() >= WindowsVista)) { //Vista and later versions
+        if (pApplication::hasAppThemed() && (getVersionNew() >= WindowsVista)) { //Vista and later versions
             iconTemp.scaleNearest(15, 15);     
             // without premultiplied alpha, edges looks mangy in win32
             hbitmap = CreateBitmapWithPremultipliedAlpha( iconTemp );
@@ -201,7 +201,7 @@ auto pMenuBase::setMenuItemInfo(HMENU parent) -> void {
 	mii.cbSize = sizeof(mii);
 	mii.dwTypeData = nullptr;
 
-	if (!hasAppThemed() || (getVersionNew() < WindowsVista)) {
+    if (!pApplication::hasAppThemed() || (getVersionNew() < WindowsVista)) {
 		setMenuInfo( parent );
 
 		mii.fMask = MIIM_FTYPE | MIIM_BITMAP;

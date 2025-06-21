@@ -18,6 +18,7 @@ namespace GUIKIT {
 #include "display.cpp"
 #include "dragndrop.cpp"
 #include "interProcess.cpp"
+#include "dark.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"
@@ -92,15 +93,30 @@ auto pApplication::getUtf8CmdLine(std::vector<std::string>& out) -> bool {
 }
 
 std::string pApplication::cwd = "";
+bool pApplication::useDark = false;
+HBRUSH pApplication::darkBG = nullptr;
+HBRUSH pApplication::darkBGHot = nullptr;
+COLORREF pApplication::darkFG = 0;
 
 HMODULE pApplication::uxTheme = nullptr;
+SetWindowTheme_t pApplication::pSetWindowTheme = nullptr;
+IsAppThemed_t pApplication::pIsAppThemed = nullptr;
 FN_BeginBufferedPaint pApplication::pfnBeginBufferedPaint = nullptr;
 FN_EndBufferedPaint pApplication::pfnEndBufferedPaint = nullptr;
-DrawThemeParentBackground_t pApplication::drawThemeParentBackground = nullptr;
+DrawThemeParentBackground_t pApplication::pDrawThemeParentBackground = nullptr;
 ProcessReference pApplication::g_pProcRef;
-DrawThemeBackground_t pApplication::drawThemeBackground = nullptr;
-OpenThemeData_t pApplication::openThemeData = nullptr;
-CloseThemeData_t pApplication::closeThemeData = nullptr;
+DrawThemeBackground_t pApplication::pDrawThemeBackground = nullptr;
+OpenThemeData_t pApplication::pOpenThemeData = nullptr;
+CloseThemeData_t pApplication::pCloseThemeData = nullptr;
+RefreshImmersiveColorPolicyState_t pApplication::pRefreshImmersiveColorPolicyState = nullptr;
+GetIsImmersiveColorUsingHighContrast_t pApplication::pGetIsImmersiveColorUsingHighContrast = nullptr;
+ShouldAppsUseDarkMode_t pApplication::pShouldAppsUseDarkMode = nullptr;
+AllowDarkModeForWindow_t pApplication::pAllowDarkModeForWindow = nullptr;
+AllowDarkModeForApp_t pApplication::pAllowDarkModeForApp = nullptr;
+FlushMenuThemes_t pApplication::pFlushMenuThemes = nullptr;
+IsDarkModeAllowedForWindow_t pApplication::pIsDarkModeAllowedForWindow = nullptr;
+ShouldSystemUseDarkMode_t pApplication::pShouldSystemUseDarkMode = nullptr;
+SetPreferredAppMode_t pApplication::pSetPreferredAppMode = nullptr;
 
 auto pApplication::initialize() -> void {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED); // same as CoInitialize(0)
@@ -129,19 +145,11 @@ auto pApplication::initialize() -> void {
     RegisterClass(&wc);
 
     currentWorkingDirectory();
-    
-    if(getVersionNew() >= WindowsVista) {
-        uxTheme = LoadLibraryA("UXTHEME.DLL");
 
-        if (uxTheme) {
-            pfnBeginBufferedPaint = (FN_BeginBufferedPaint)::GetProcAddress(uxTheme, "BeginBufferedPaint");
-            pfnEndBufferedPaint = (FN_EndBufferedPaint)::GetProcAddress(uxTheme, "EndBufferedPaint");
-            drawThemeParentBackground = (DrawThemeParentBackground_t)::GetProcAddress(uxTheme, "DrawThemeParentBackground");
-            drawThemeBackground = (DrawThemeBackground_t)::GetProcAddress(uxTheme, "DrawThemeBackground");
-            openThemeData = (OpenThemeData_t)::GetProcAddress(uxTheme, "OpenThemeData");
-            closeThemeData = (CloseThemeData_t)::GetProcAddress(uxTheme, "CloseThemeData");
-        }
-    }
+    loadThemedFunctions();
+    
+    if (preferDarkTheme())
+        initDarkTheme();
 
     HWND consoleWnd = GetConsoleWindow();
     if (!consoleWnd) {
@@ -149,6 +157,55 @@ auto pApplication::initialize() -> void {
         if (AttachConsole(ATTACH_PARENT_PROCESS)) // attach to console (when run from console)
             freopen("CON", "w", stderr);
     }
+}
+
+auto pApplication::hasAppThemed() -> bool {
+    // result is "false" when Win 7 is witched to classic (XP) mode
+    // Win7 standard and all OS's above return "true"
+    // never tested on real XP or Vista
+    static int themed = -1; // undetermined
+
+    if (themed >= 0)
+        return (themed == 1) ? true : false;
+
+    themed = 1; // most likely
+
+    loadThemedFunctions();
+
+    if (pIsAppThemed && !pIsAppThemed())
+        themed = 0;
+
+    return (themed == 1) ? true : false;
+}
+
+auto pApplication::loadThemedFunctions() -> void {
+    static bool prepared = false;
+    if (prepared)
+        return;
+    prepared = true;
+
+    uxTheme = LoadLibraryA("uxtheme.dll");
+    if (!uxTheme)
+        return;
+
+    pIsAppThemed = (IsAppThemed_t)(GetProcAddress(uxTheme, "IsAppThemed"));
+    pSetWindowTheme = (SetWindowTheme_t)(GetProcAddress(uxTheme, "SetWindowTheme"));
+    pfnBeginBufferedPaint = (FN_BeginBufferedPaint)::GetProcAddress(uxTheme, "BeginBufferedPaint");
+    pfnEndBufferedPaint = (FN_EndBufferedPaint)::GetProcAddress(uxTheme, "EndBufferedPaint");
+    pDrawThemeParentBackground = (DrawThemeParentBackground_t)::GetProcAddress(uxTheme, "DrawThemeParentBackground");
+    pDrawThemeBackground = (DrawThemeBackground_t)::GetProcAddress(uxTheme, "DrawThemeBackground");
+    pOpenThemeData = (OpenThemeData_t)::GetProcAddress(uxTheme, "OpenThemeData");
+    pCloseThemeData = (CloseThemeData_t)::GetProcAddress(uxTheme, "CloseThemeData");
+    pRefreshImmersiveColorPolicyState = (RefreshImmersiveColorPolicyState_t)::GetProcAddress(uxTheme, MAKEINTRESOURCEA(104));
+    pGetIsImmersiveColorUsingHighContrast = (GetIsImmersiveColorUsingHighContrast_t)::GetProcAddress(uxTheme, MAKEINTRESOURCEA(106));
+    pShouldAppsUseDarkMode = (ShouldAppsUseDarkMode_t)::GetProcAddress(uxTheme, MAKEINTRESOURCEA(132));
+    pAllowDarkModeForWindow = (AllowDarkModeForWindow_t)::GetProcAddress(uxTheme, MAKEINTRESOURCEA(133));
+
+    pSetPreferredAppMode = reinterpret_cast<SetPreferredAppMode_t>(GetProcAddress(uxTheme, MAKEINTRESOURCEA(135)));
+    if (!pSetPreferredAppMode)
+        pAllowDarkModeForApp = reinterpret_cast<AllowDarkModeForApp_t>(GetProcAddress(uxTheme, MAKEINTRESOURCEA(135)));
+
+    pIsDarkModeAllowedForWindow = reinterpret_cast<IsDarkModeAllowedForWindow_t>(GetProcAddress(uxTheme, MAKEINTRESOURCEA(137)));
 }
 
 auto pApplication::currentWorkingDirectory() -> std::string {
@@ -364,6 +421,50 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                 Application::onDisplayChange();
         }
         break;
+
+        case WM_UAHDRAWMENU: {
+            if (pApplication::useDark) {
+                UAHMENU* pUDM = (UAHMENU*)lparam;
+                RECT rc = { 0 };
+                MENUBARINFO mbi = { sizeof(MENUBARINFO) };
+                GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbi);
+
+                RECT rcWindow;
+                GetWindowRect(hwnd, &rcWindow);
+                rc = mbi.rcBar;
+                OffsetRect(&rc, -rcWindow.left, -rcWindow.top);
+
+                FillRect(pUDM->hdc, &rc, darkBG);
+                return true;
+            } break;
+        }
+          
+        case WM_UAHDRAWMENUITEM: {
+            if (pApplication::useDark) {
+                UAHDRAWMENUITEM* pUDMI = (UAHDRAWMENUITEM*)lparam;
+                wchar_t menuString[256] = { 0 };
+                MENUITEMINFO mii = { sizeof(MENUITEMINFO), MIIM_STRING };
+                mii.dwTypeData = menuString;
+                mii.cch = (sizeof(menuString) / 2) - 1;
+                GetMenuItemInfo(pUDMI->um.hmenu, pUDMI->umi.iPosition, TRUE, &mii);
+                
+                if ((pUDMI->dis.itemState & ODS_GRAYED) || (pUDMI->dis.itemState & ODS_DISABLED))
+                    SetTextColor(pUDMI->um.hdc, GetSysColor(COLOR_GRAYTEXT));
+                else
+                    SetTextColor(pUDMI->um.hdc, pApplication::darkFG);
+                
+                SetBkMode(pUDMI->um.hdc, TRANSPARENT);
+
+                if (pUDMI->dis.itemState & ODS_HOTLIGHT)
+                    FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, darkBGHot);
+                else
+                    FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, darkBG);
+
+                DrawText(pUDMI->um.hdc, menuString, -1, &pUDMI->dis.rcItem, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+
+                return true;
+            } break;
+        }
     }
     return windowProc(hwnd, msg, wparam, lparam);
 }
@@ -393,8 +494,13 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 
 	hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
 
+    if (pApplication::useDark) {
+        DWORD darkMode = TRUE;
+        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &darkMode, sizeof(darkMode));
+    }
+
     hmenu = CreateMenu();
-	contextmenu = CreatePopupMenu();        
+	contextmenu = CreatePopupMenu();
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&window);
     setDroppable(window.state.droppable);
@@ -413,7 +519,7 @@ auto pWindow::handle() -> uintptr_t {
 inline auto pWindow::XPOrBelowOrWin7InXPMode() -> bool {
 	// in Win8 and above visual styles can't be turned off anymore, so App is always themed.
 	// when App is not themed, it means Win7 visual styles looks and behaves as XP (classic mode)
-	return !hasAppThemed() || (getVersionNew() <= WindowsXP);
+    return !pApplication::hasAppThemed() || (getVersionNew() <= WindowsXP);
 }
 
 auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
@@ -468,6 +574,8 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
             break;
             
         case WM_ERASEBKGND: {
+            if (pApplication::useDark)
+                pWindow::fixMenuBarInDarkMode(hwnd);
             if (!window.fullScreen() && window.p.preventRedraw)
                 return 0;
 
@@ -478,6 +586,8 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
             break;
         } 
         case WM_ACTIVATE:
+            if (pApplication::useDark)
+                pWindow::fixMenuBarInDarkMode(hwnd);
 			if ((LOWORD(wparam) == WA_ACTIVE) && (LOWORD(wparam) != WA_CLICKACTIVE)) {
                 if (window.statusBar())
                     window.statusBar()->p.updatePosition();
@@ -496,6 +606,8 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 			}
 			break;
 		case WM_ACTIVATEAPP:
+            if (pApplication::useDark)
+                pWindow::fixMenuBarInDarkMode(hwnd);
 			if (LOWORD(wparam) == WA_INACTIVE) {
                 if(window.fullScreen()) {
                     if (window.onInactive)
@@ -1003,6 +1115,31 @@ auto pWindow::setPointerCursor() -> void {
 auto pWindow::addCustomFont( CustomFont& customFont ) -> bool {
 	
 	return pFont::add( customFont );
+}
+
+auto pWindow::fixMenuBarInDarkMode(HWND& _hwnd) -> bool {
+    MENUBARINFO mbi = { sizeof(MENUBARINFO) };
+    if (!GetMenuBarInfo(_hwnd, OBJID_MENU, 0, &mbi))
+        return false;
+
+    RECT rcClient = { 0 };
+    GetClientRect(_hwnd, &rcClient);
+    MapWindowPoints(_hwnd, nullptr, (POINT*)&rcClient, 2);
+
+    RECT rcWindow = { 0 };
+    GetWindowRect(_hwnd, &rcWindow);
+
+    OffsetRect(&rcClient, -rcWindow.left, -rcWindow.top);
+
+    RECT rcAnnoyingLine = rcClient;
+    rcAnnoyingLine.bottom = rcAnnoyingLine.top;
+    rcAnnoyingLine.top--;
+
+    HDC hdc = GetWindowDC(_hwnd);
+    FillRect(hdc, &rcAnnoyingLine, pApplication::darkBG);
+    ReleaseDC(_hwnd, hdc);
+
+    return true;
 }
 
 }

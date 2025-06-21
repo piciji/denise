@@ -34,6 +34,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         guikit/winapi/processref.h
         guikit/winapi/statusbar.cpp
         guikit/winapi/tools.cpp
+        guikit/winapi/dark.cpp
 
         driver/audio/xaudio2/core.cpp
         driver/audio/xaudio2/header27.h

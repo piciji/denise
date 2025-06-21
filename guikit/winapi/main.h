@@ -17,10 +17,16 @@
 #include <direct.h>
 #include <dwmapi.h>
 #include <windowsx.h>
+#include <Vssym32.h>
 #include "processref.h"
 
 DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 
+enum IMMERSIVE_HC_CACHE_MODE { IHCM_USE_CACHED_VALUE, IHCM_REFRESH };
+enum PreferredAppMode { Default, AllowDark, ForceDark, ForceLight, Max };
+
+typedef void (WINAPI* SetWindowTheme_t)(HWND hwnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
+typedef int (WINAPI* IsAppThemed_t)();
 typedef HPAINTBUFFER (WINAPI *FN_BeginBufferedPaint) (HDC hdcTarget, const RECT *prcTarget, BP_BUFFERFORMAT dwFormat, BP_PAINTPARAMS *pPaintParams, HDC *phdc);    
 typedef HRESULT (WINAPI *FN_EndBufferedPaint) (HPAINTBUFFER hBufferedPaint, BOOL fUpdateTarget);
 typedef HRESULT (WINAPI *DwmGetCompositionTimingInfo_t)(HWND hwnd, DWM_TIMING_INFO *pTimingInfo);
@@ -28,6 +34,19 @@ typedef HRESULT (WINAPI *DrawThemeParentBackground_t)(HWND hwnd, HDC hdc, const 
 typedef HRESULT (WINAPI *DrawThemeBackground_t)(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT pRect, LPCRECT pClipRect);
 typedef HTHEME  (WINAPI *OpenThemeData_t)(HWND hwnd, LPCWSTR pszClassList);
 typedef HRESULT (WINAPI *CloseThemeData_t)(HTHEME hTheme);
+
+typedef void (WINAPI *RefreshImmersiveColorPolicyState_t)();
+typedef bool (WINAPI *GetIsImmersiveColorUsingHighContrast_t)(IMMERSIVE_HC_CACHE_MODE mode);
+typedef bool (WINAPI *ShouldAppsUseDarkMode_t)();
+typedef bool (WINAPI *AllowDarkModeForWindow_t)(HWND hWnd, bool allow);
+typedef bool (WINAPI *AllowDarkModeForApp_t)(bool allow);
+typedef void (WINAPI *FlushMenuThemes_t)();
+
+typedef bool (WINAPI *IsDarkModeAllowedForWindow_t)(HWND hWnd);
+typedef bool (WINAPI *ShouldSystemUseDarkMode_t)();
+typedef bool (WINAPI *SetPreferredAppMode_t)(PreferredAppMode appMode);
+typedef bool (WINAPI *IsDarkModeAllowedForApp_t)();
+
 
 namespace GUIKIT {
 
@@ -74,17 +93,40 @@ struct pApplication {
 	static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;
     static auto getUtf8CmdLine(std::vector<std::string>& out) -> bool;
+    static auto initDarkTheme() -> void;
 	
     static std::string cwd; //current working directory
 
+    static bool useDark;
+    static HBRUSH darkBG;
+    static HBRUSH darkBGHot;
+    static COLORREF darkFG;
+
+    static auto loadThemedFunctions() -> void;
+    static auto hasAppThemed() -> bool;
+    static auto preferDarkTheme() -> bool;
+    static auto getDarkmodeColors() -> void;
+
     static ProcessReference g_pProcRef;
+
     static HMODULE uxTheme;
     static FN_BeginBufferedPaint pfnBeginBufferedPaint;
     static FN_EndBufferedPaint pfnEndBufferedPaint;
-    static DrawThemeParentBackground_t drawThemeParentBackground;
-    static DrawThemeBackground_t drawThemeBackground;
-    static OpenThemeData_t openThemeData;
-    static CloseThemeData_t closeThemeData;
+    static DrawThemeParentBackground_t pDrawThemeParentBackground;
+    static DrawThemeBackground_t pDrawThemeBackground;
+    static OpenThemeData_t pOpenThemeData;
+    static CloseThemeData_t pCloseThemeData;
+    static SetWindowTheme_t pSetWindowTheme;
+    static IsAppThemed_t pIsAppThemed;
+    static RefreshImmersiveColorPolicyState_t pRefreshImmersiveColorPolicyState;
+    static GetIsImmersiveColorUsingHighContrast_t pGetIsImmersiveColorUsingHighContrast;
+    static ShouldAppsUseDarkMode_t pShouldAppsUseDarkMode;
+    static AllowDarkModeForWindow_t pAllowDarkModeForWindow;
+    static AllowDarkModeForApp_t pAllowDarkModeForApp;
+    static FlushMenuThemes_t pFlushMenuThemes;
+    static IsDarkModeAllowedForWindow_t pIsDarkModeAllowedForWindow;
+    static ShouldSystemUseDarkMode_t pShouldSystemUseDarkMode;
+    static SetPreferredAppMode_t pSetPreferredAppMode;
 };
 
 struct pWindow {
@@ -135,6 +177,7 @@ struct pWindow {
     auto getScrollbarWidth() -> unsigned { return 20; }
     auto applyAspectRatio() -> void {}
     auto applyMaximizeCorrection(Geometry& geo) -> void;
+    static auto fixMenuBarInDarkMode(HWND& _hwnd) -> bool;
 
     auto onEraseBackground() -> bool;
     auto onClose() -> void;
@@ -881,9 +924,6 @@ struct pFont {
     static auto systemFontFile() -> std::string;
 };
 
-typedef void (WINAPI *SetWindowTheme_t)(HWND hwnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
-typedef int (WINAPI *IsAppThemed_t)();
-
 struct pSystem {
     static auto getUserDataFolder() -> std::string;
     static auto getResourceFolder(std::string appIdent) -> std::string;
@@ -893,11 +933,8 @@ struct pSystem {
     static auto sleep(unsigned milliSeconds) -> void;
     static auto isOffscreen( Geometry geometry ) -> bool;
     static auto getOSLang() -> System::Language;
-    static auto printToCmd( std::string str ) -> void;
-    static auto loadThemedFunctions() -> void;
+    static auto printToCmd( std::string str ) -> void;    
 
-    static SetWindowTheme_t pSetWindowTheme;
-    static IsAppThemed_t pIsAppThemed;
     static bool offscreen;
     static std::vector<RECT> clientRects;
 

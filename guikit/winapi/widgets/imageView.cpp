@@ -95,8 +95,8 @@ auto CALLBACK pImageView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
             RECT rc;
             GetClientRect(hwnd, &rc);
-            if (pApplication::drawThemeParentBackground)
-                pApplication::drawThemeParentBackground(hwnd, ps.hdc, &rc);
+            if (pApplication::pDrawThemeParentBackground)
+                pApplication::pDrawThemeParentBackground(hwnd, ps.hdc, &rc);
 
             BLENDFUNCTION bf{AC_SRC_OVER, 0, (BYTE) 255, AC_SRC_ALPHA};
             AlphaBlend(ps.hdc, 0, 0, width, height, hdc, 0, 0, width, height, bf);

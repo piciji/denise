@@ -246,7 +246,9 @@ auto pListView::createTooltip(bool useBallon) -> void {
     
     pWidget::createTooltip( useBallon );
 
-    setWindowTheme(hwndTip, L" ", L" "); // to make coloring work
+    if (pApplication::pSetWindowTheme)
+        pApplication::pSetWindowTheme(hwndTip, L" ", L" "); // to make coloring work
+
     RECT rectSetMargin = {5, 5, 5, 3};
     SendMessage(hwndTip, TTM_SETMARGIN, 0, (LPARAM)&rectSetMargin);  
     

@@ -370,7 +370,7 @@ auto pFrame::rebuild() -> void {
 
 inline auto pFrame::getBorderColor() -> COLORREF {
 	
-	if (!hasAppThemed() || (getVersionNew() <= WindowsXP) )
+    if (!pApplication::hasAppThemed() || (getVersionNew() <= WindowsXP))
 		return RGB(0xff, 0xff, 0xff);
 	
 	if (getVersionNew() > Windows7)

@@ -2343,6 +2343,9 @@
     <ClCompile Include="..\emulation\libami\drive\scp\scp.cpp">
       <Filter>emulation\libami\drive\scp</Filter>
     </ClCompile>
+    <ClCompile Include="..\guikit\winapi\dark.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\emulation\libc64\sid\filter\circuit">

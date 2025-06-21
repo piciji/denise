@@ -85,15 +85,23 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 //			}
 
         } break;
-//       case WM_ERASEBKGND:
-//            RECT rc;
-//            GetClientRect(hwnd, &rc);
-//            PAINTSTRUCT ps;
-//            BeginPaint(hwnd, &ps);
-//            FillRect(ps.hdc, &rc, statusBar->p.brush);
-//            EndPaint(hwnd, &ps);
-//            return 1;
-//
+        case WM_ERASEBKGND:
+            //RECT rc;
+            //GetClientRect(hwnd, &rc);
+            //PAINTSTRUCT ps;
+            //BeginPaint(hwnd, &ps);
+            //FillRect(ps.hdc, &rc, statusBar->p.brush);
+            //EndPaint(hwnd, &ps);
+            //return 1;
+
+            if (pApplication::useDark) {
+                HDC hdc = (HDC)wparam;
+                RECT rect;
+                GetClientRect(hwnd, &rect);
+                FillRect(hdc, &rect, pApplication::darkBG);
+                return TRUE;
+            } break;
+
         case WM_PAINT: {
             auto& p = statusBar->p;
 			if (xpMode && statusBar->window()->fullScreen() );
@@ -251,7 +259,7 @@ auto pStatusBar::updatePart( StatusBar::Part& part ) -> void {
 //			SendMessage(hwnd, SB_SETICON, part.position, (LPARAM) hIcon);
 //			DestroyIcon(hIcon);
 //		} else {
-            bool _border = hasAppThemed() && part.appendSeparator && ((part.position + 1) < usedParts.size());
+            bool _border = pApplication::hasAppThemed() && part.appendSeparator && ((part.position + 1) < usedParts.size());
 
             SendMessage(hwnd, SB_SETTEXT, part.position | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
 //      }
@@ -294,7 +302,7 @@ auto pStatusBar::update() -> void {
 
             if (!trackBar) {
                 trackBar = CreateWindow(
-                    TRACKBAR_CLASS, L"", WS_CHILD | TBS_NOTICKS | TBS_BOTH | TBS_HORZ,
+                    TRACKBAR_CLASS, L"", WS_CHILD | TBS_NOTICKS | TBS_BOTH | TBS_HORZ | TBS_TRANSPARENTBKGND,
                     0, 0, 0, 0, hwnd, (HMENU)(long long)(part.id + TRACKBAR_SLIDER), GetModuleHandle(0), 0);
 
                 SendMessage(trackBar, TBM_SETRANGE, (WPARAM)true, (LPARAM)MAKELONG(0, part.sliderLength - 1));
@@ -358,7 +366,7 @@ auto pStatusBar::update() -> void {
             part.position = i;
             usedParts.push_back( &part );
 
-            bool _border = hasAppThemed() && part.appendSeparator && ((i + 1) < countVisible);
+            bool _border = pApplication::hasAppThemed() && part.appendSeparator && ((i + 1) < countVisible);
 
             SendMessage(hwnd, SB_SETTEXT, i++ | SBT_OWNERDRAW | (_border ? 0 : SBT_NOBORDERS), 0);
         }
@@ -422,9 +430,10 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
         if (part.overrideForegroundColor != -1) {
             unsigned color = part.overrideForegroundColor;
             SetTextColor(hDC, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
-        }
+        } else if (pApplication::useDark)
+            SetTextColor(hDC, pApplication::darkFG);
 
-        if (hasAppThemed() && (getVersionNew() <= Windows7))
+        if (pApplication::hasAppThemed() && (getVersionNew() <= Windows7))
             rect.top += 2;
         else
             rect.top += 1;
@@ -438,7 +447,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
             rect.left += 4;
 
         SetBkMode(hDC, TRANSPARENT);
-       // SetBkColor(hDC, GetSysColor(COLOR_MENU));
+        // SetBkColor(hDC, GetSysColor(COLOR_MENU));
         DrawText(hDC, utf16_t(part.text.c_str()), -1, &rect, DT_SINGLELINE | DT_NOCLIP | (part.alignRight ? DT_RIGHT : 0) );
     }
     locked = !disableLock;
