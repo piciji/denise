@@ -1658,12 +1658,17 @@ auto VideoManager::finishPreset() -> void {
 }
 
 auto VideoManager::clearPreset() -> void {
+    bool locked = emuThread->lock();
+    // don't wait for the renderer if the emu thread is running and constantly submitting new images.
+    // This could lead to an endless loop
     videoDriver->waitRenderThread();
     parser->clear();
     applyMeta();
     driveLedParam = nullptr;
-    settings->set<std::string>("slang_loaded", "");
     rebuildShader = true;
+    if (locked) // avoid releasing a lock prematurely, when locked before
+        emuThread->unlock();
+    settings->set<std::string>("slang_loaded", "");    
 }
 
 auto VideoManager::getPresetPath() -> std::string {
