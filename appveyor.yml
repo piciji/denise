@@ -19,7 +19,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
-    - harddisk
+    - win-darkmode
 
 environment:
   matrix:

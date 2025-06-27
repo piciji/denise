@@ -169,15 +169,17 @@ auto pComboButton::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
     Size _size;
     int maxHeight = 0;
 
-    for(int i = 0; i < comboButton.rows(); i++) {
-        std::string _str = comboButton.text(i);
-        HFONT _hFont = nullptr;
-        if (i < hfonts.size())
-            _hFont = hfonts[i];
+    if (comboButton.hintMultiFonts) {
+        for(int i = 0; i < comboButton.rows(); i++) {
+            std::string _str = comboButton.text(i);
+            HFONT _hfont = hfonts[i];
+            if (!_hfont)
+                _hfont = hfont;
 
-        _size = pFont::size(_hFont, _str);
-        if (_size.height > maxHeight)
-            maxHeight = _size.height;
+            _size = pFont::size(_hfont, _str);
+            if (_size.height > maxHeight)
+                maxHeight = _size.height;
+        }
     }
 
     if (maxHeight) {
