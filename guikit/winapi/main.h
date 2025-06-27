@@ -19,6 +19,7 @@
 #include <windowsx.h>
 #include <Vssym32.h>
 #include "processref.h"
+#include "doubleBuffer.h"
 
 DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 
@@ -93,19 +94,23 @@ struct pApplication {
 	static auto requestClipboardText() -> void;
     static auto setClipboardText( std::string text ) -> void;
     static auto getUtf8CmdLine(std::vector<std::string>& out) -> bool;
-    static auto initDarkTheme() -> void;
+    static auto initDarkTheme(bool force) -> void;
+    static auto setDarkMode(Application::DarkMode darkMode) -> void;
 	
     static std::string cwd; //current working directory
 
     static bool useDark;
-    static HBRUSH darkBG;
-    static HBRUSH darkBGHot;
-    static COLORREF darkFG;
+    static HBRUSH darkEdgeBrush;
+    static HBRUSH darkBGHotBrush;
+    static HBRUSH darkBGBrush;       
+    static HBRUSH darkBGSofterBrush;
+    static HBRUSH darkBGTabBrush; 
+    static HBRUSH darkDisabledEdgeBrush;
+    static HPEN darkEdgePen;
 
     static auto loadThemedFunctions() -> void;
     static auto hasAppThemed() -> bool;
     static auto preferDarkTheme() -> bool;
-    static auto getDarkmodeColors() -> void;
 
     static ProcessReference g_pProcRef;
 
@@ -190,6 +195,7 @@ struct pWindow {
     auto setDefaultCursor() -> void;
     auto setPointerCursor() -> void;
     auto setBlankCursor() -> void {}
+    auto setDarkMode();
 	static auto XPOrBelowOrWin7InXPMode() -> bool;
 	
 	static auto addCustomFont( CustomFont& customFont ) -> bool;
@@ -256,6 +262,7 @@ struct pWidget {
     WNDPROC wndprocOrig;
     bool locked = false;
     TabFrameLayout* parentTabFrameLayout = nullptr;
+    DoubleBuffer* doubleBuffer = nullptr;
     
     struct {
         bool updated = false;
@@ -291,13 +298,13 @@ struct pWidget {
     auto destroy(HWND& handle) -> void;
     auto destroyImageList() -> void;
     auto setTooltip(std::string tooltip) -> void;
-    auto getColor(WPARAM wparam) -> HBRUSH;
+    auto setEditFieldColor(WPARAM wparam) -> HBRUSH;
     virtual auto createTooltip(bool useBallon = true) -> void;
     auto getMinimumSize() -> Size;
 	static auto getScaledContainerSize( Size size ) -> Size;
 	static auto getScaledDim( unsigned value ) -> unsigned;
     virtual auto init() -> void {}
-    
+   
     pWidget(Widget& widget);
     virtual ~pWidget();
 };
@@ -350,11 +357,13 @@ struct pLabel : pWidget {
     auto setForegroundColorThreaded(unsigned color) -> void;
     auto setFont(std::string font) -> void;
     auto setAlign( Label::Align align ) -> void;
+    auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
 
     pLabel(Label& label) : pWidget(label), label(label) {}
     auto rebuild() -> void;
     auto create() -> void;
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    auto buildLabel(HWND hwnd, HDC hdc, RECT& rc) -> void;
 };
 
 struct pHyperlink : pWidget {
@@ -366,7 +375,7 @@ struct pHyperlink : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto generate() -> std::string;
-    auto setUri( std::string uri, std::string wrap ) -> void;    
+    auto setUri( std::string uri, std::string wrap ) -> void; 
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;    
 };
@@ -380,6 +389,7 @@ struct pSquareCanvas : pWidget {
     auto setBackgroundColor( unsigned color ) -> void;
     auto setBorderColor(unsigned borderSize, unsigned borderColor) -> void;
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
 };
 
 struct pImageView : pWidget {
@@ -393,6 +403,7 @@ struct pImageView : pWidget {
     auto create() -> void;
     auto minimumSize() -> Size;
     auto updateCursor() -> void;
+    auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
 
     pImageView(ImageView& imageView) : pWidget(imageView), imageView(imageView) {}
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
@@ -406,7 +417,7 @@ struct pButton : pWidget {
     auto setText(const std::string& text) -> void;
     auto setEnabled(bool enabled) -> void;
     auto setEnabledThreaded(bool enabled) -> void;
-    auto customDraw(HWND hwnd, PAINTSTRUCT& ps) -> void;
+    auto customDraw(HWND hWnd, HDC hdc, RECT& rc, RECT& rcpaint) -> void;
     auto minimumSize() -> Size;
     auto onActivate() -> void;
     auto rebuild() -> void;
@@ -492,7 +503,7 @@ struct pComboButton : pWidget {
     auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> void;
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
 
-    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)->LRESULT;
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pComboButton(ComboButton& comboButton) : pWidget(comboButton), comboButton(comboButton) {}
     ~pComboButton();
@@ -511,6 +522,7 @@ struct pSlider : pWidget {
     auto onChange() -> void;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    auto onCustomDraw(LPARAM lparam) -> LRESULT;
     
     pSlider(Slider& slider) : pWidget(slider), slider(slider) {}
 };
@@ -525,6 +537,7 @@ struct pRadioBox : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto onActivate() -> void;
+    auto onCustomDraw(LPARAM lparam) -> LRESULT;
     
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
@@ -576,6 +589,8 @@ struct pListView : pWidget {
     auto addToImageList(Image& image, unsigned size) -> void;
 	auto setBackgroundColor(unsigned color) -> void;
 	auto setForegroundColor(unsigned color) -> void;
+    auto setDarkBackground() -> void;
+    auto setDarkForeground() -> void;
     auto setRowTooltip(unsigned selection, std::string tooltip) -> void {}
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     auto updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void;
@@ -642,6 +657,8 @@ struct pTreeView : pWidget {
     auto onExpanded(LPARAM lparam) -> void;
 	auto setBackgroundColor(unsigned color) -> void;
 	auto setForegroundColor(unsigned color) -> void;
+    auto setDarkBackground() -> void;
+    auto setDarkForeground() -> void;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     pTreeView(TreeView& treeView) : pWidget(treeView), treeView(treeView) {}
@@ -715,6 +732,7 @@ struct pTabFrame : pWidget {
     auto setFont(std::string font) -> void;
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     static auto getTabBackgroundForControl(HWND tab, HWND control) -> HBRUSH;
+    static auto paintTab(HWND hWnd, HDC hdc, const RECT& rect) -> void;
 
     pTabFrame(TabFrameLayout::TabFrame& tabFrame) : pWidget(tabFrame), tabFrame(tabFrame) {}
 };
@@ -903,12 +921,17 @@ struct pBrowserWindow {
 };
 
 struct pMessageWindow {
+    static HHOOK hhookCBTProc;
+    static WNDPROC wndprocOrig;
     static auto error(MessageWindow::State& state) -> MessageWindow::Response;
     static auto information(MessageWindow::State& state) -> MessageWindow::Response;
     static auto question(MessageWindow::State& state) -> MessageWindow::Response;
     static auto warning(MessageWindow::State& state) -> MessageWindow::Response;
     static auto translateResponse(UINT response) -> MessageWindow::Response;
     static auto translateButtons(MessageWindow::Buttons buttons) -> UINT;
+
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK pfnCBTMsgBoxHook(int nCode, WPARAM wparam, LPARAM lparam) ->LRESULT;
 };
 
 struct pFont {

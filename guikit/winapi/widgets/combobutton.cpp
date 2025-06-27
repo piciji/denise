@@ -75,13 +75,23 @@ auto pComboButton::setGeometry(Geometry geometry) -> void {
     if(!hwnd)
         return;
     
-    pWidget::setGeometry({geometry.x, geometry.y, geometry.width, 1});
+    int _y = geometry.y;
+    int adjust = 0;
+    
+    if (comboButton.hintMultiFonts) {
+        adjust = -1;
+    } else if (pApplication::useDark) {
+        geometry.width += 2;
+        geometry.height -= 1;
+    }
+
+    pWidget::setGeometry({geometry.x, _y, geometry.width, 1});
     RECT rc;
     GetWindowRect(hwnd, &rc);
-    unsigned adjustedHeight = geometry.height - ((rc.bottom - rc.top) - 
-        SendMessage(hwnd, CB_GETITEMHEIGHT, (WPARAM)-1, 0));
+    unsigned _height = geometry.height - ((rc.bottom - rc.top) - 
+        SendMessage(hwnd, CB_GETITEMHEIGHT, (WPARAM)  + adjust, 0));
     
-    SendMessage(hwnd, CB_SETITEMHEIGHT, (WPARAM)-1, adjustedHeight);
+    SendMessage(hwnd, CB_SETITEMHEIGHT, (WPARAM)-1, _height);
 }
 
 auto pComboButton::setSelection(unsigned selection) -> void {
@@ -112,10 +122,21 @@ auto pComboButton::create() -> void {
         WC_COMBOBOX, L"",
         WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_HASSTRINGS |
         (comboButton.hintVerticalScrollbar ? WS_VSCROLL : 0) | 
-        (comboButton.hintMultiFonts ? CBS_OWNERDRAWFIXED : 0),
+        ((comboButton.hintMultiFonts || pApplication::useDark) ? CBS_OWNERDRAWFIXED : 0),
         0, 0, 0, 0,
         getParentHandle(), (HMENU)(unsigned long long)comboButton.id, GetModuleHandle(0), 0
     );
+
+    if (pApplication::useDark) {
+        SetWindowTheme(hwnd, L"CFD", NULL);
+        pApplication::pAllowDarkModeForWindow(hwnd, true);
+        SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
+
+        COMBOBOXINFO cbi{};
+        cbi.cbSize = sizeof(COMBOBOXINFO);
+        if (GetComboBoxInfo(hwnd, &cbi) && cbi.hwndList)
+            SetWindowTheme(cbi.hwndList, L"DarkMode_Explorer", nullptr);       
+    }
 
     //ComboBox_SetMinVisible(hwnd, 30);
 
@@ -179,11 +200,8 @@ auto pComboButton::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
 
     if (_hfont) {
         Size _size = pFont::size(_hfont, text);
-        // RECT rc;
-        // DrawText(lDraw->hDC, utf16_t(text.c_str()), -1, &rc, DT_CALCRECT);
 
         int _hItem = lRow.bottom - lRow.top;
-        //int _hText = rc.bottom - rc.top;
         int _hText = _size.height;   
 
         if (_hItem > _hText)
@@ -192,6 +210,7 @@ auto pComboButton::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     auto textRC = lRow;
     textRC.top += adjust; //center vertically
     textRC.bottom += adjust;
+    textRC.left += 2;
 
     HFONT oldFont = nullptr;
     if (lDraw->itemID < hfonts.size())
@@ -200,12 +219,21 @@ auto pComboButton::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     SetBkMode(lDraw->hDC, TRANSPARENT);
 
     if (lDraw->itemState & ODS_SELECTED) {
-        FillRect(lDraw->hDC, &lRow, CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT)));
-        SetTextColor(lDraw->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
-        
+        if (pApplication::useDark) {
+            FillRect(lDraw->hDC, &lRow, pApplication::darkBGHotBrush);
+            SetTextColor(lDraw->hDC, DARK_FG_COL);
+        } else {
+            FillRect(lDraw->hDC, &lRow, CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT)));
+            SetTextColor(lDraw->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+        }        
     } else {
-        FillRect(lDraw->hDC, &lRow, CreateSolidBrush(GetSysColor(COLOR_WINDOW)));
-        SetTextColor(lDraw->hDC, GetSysColor(COLOR_WINDOWTEXT));
+        if (pApplication::useDark) {
+            FillRect(lDraw->hDC, &lRow, pApplication::darkBGSofterBrush);
+            SetTextColor(lDraw->hDC, DARK_FG_COL);
+        } else {
+            FillRect(lDraw->hDC, &lRow, CreateSolidBrush(GetSysColor(COLOR_WINDOW)));
+            SetTextColor(lDraw->hDC, GetSysColor(COLOR_WINDOWTEXT));
+        }        
     }
 
     DrawText(lDraw->hDC, utf16_t(text.c_str()), -1, &textRC, DT_LEFT | DT_NOPREFIX);

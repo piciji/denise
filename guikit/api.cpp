@@ -57,6 +57,8 @@ Base::Base() {
 
 //application
 bool Application::isQuit = false;
+bool Application::canSwitchDark = false;
+
 int Application::exitCode = 0;
 std::string Application::name;
 std::string Application::vendor;
@@ -119,6 +121,16 @@ auto Application::initialize() -> void {
         initialized = true;
         pApplication::initialize();
     }
+}
+
+auto Application::setDarkMode(DarkMode darkMode) -> void {
+#ifdef GUIKIT_WINAPI
+    pApplication::setDarkMode(darkMode);
+#endif
+}
+
+auto Application::isDarkMode() -> bool {
+    return pApplication::useDark;
 }
 
 auto Application::requestClipboardText() -> void {

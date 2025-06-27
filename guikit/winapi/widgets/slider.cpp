@@ -48,7 +48,7 @@ auto pSlider::create() -> void {
     destroy(hwndTip);
     
     hwnd = CreateWindow(
-        TRACKBAR_CLASS, L"", WS_CHILD | WS_TABSTOP | TBS_NOTICKS | TBS_BOTH |
+        TRACKBAR_CLASS, L"", WS_CHILD | WS_TABSTOP | TBS_NOTICKS | TBS_BOTH | 
         (slider.orientation == Slider::Orientation::VERTICAL ? TBS_VERT : TBS_HORZ),
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)slider.id, GetModuleHandle(0), 0);
 
@@ -97,4 +97,33 @@ auto pSlider::onChange() -> void {
     
     if(slider.onChange)
         slider.onChange(position);
+}
+
+auto pSlider::onCustomDraw(LPARAM lparam) -> LRESULT {
+    LPNMCUSTOMDRAW lpcd = (LPNMCUSTOMDRAW)lparam;
+
+    switch (lpcd->dwDrawStage) {
+        case CDDS_PREPAINT:
+            if (pApplication::useDark)
+                return CDRF_NOTIFYITEMDRAW;
+            break;
+
+        case CDDS_ITEMPREPAINT:
+            if (lpcd->dwItemSpec == TBCD_CHANNEL) {
+                ::InflateRect(&lpcd->rc, 0, -1);
+                ::FillRect(lpcd->hdc, &lpcd->rc, pApplication::darkEdgeBrush);
+                return CDRF_SKIPDEFAULT;
+
+            } else if (lpcd->dwItemSpec == TBCD_THUMB) {
+                if (!IsWindowEnabled(lpcd->hdr.hwndFrom)) {
+                    ::FillRect(lpcd->hdc, &lpcd->rc, pApplication::darkDisabledEdgeBrush);
+                    return CDRF_SKIPDEFAULT;
+                } else if ((lpcd->uItemState & CDIS_SELECTED) == CDIS_SELECTED) {
+                    ::FillRect(lpcd->hdc, &lpcd->rc, pApplication::darkEdgeBrush);
+                    return CDRF_SKIPDEFAULT;
+                }            
+            }
+            break;
+    }
+    return CDRF_DODEFAULT;
 }

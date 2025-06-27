@@ -13,7 +13,7 @@ auto pImageView::create() -> void {
     destroy(hwndTip);
 
     hwnd = CreateWindow(WC_STATIC, L"",
-                        WS_CHILD,
+                        WS_CHILD | SS_OWNERDRAW,
                         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)imageView.id, GetModuleHandle(0), 0);
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&imageView);
@@ -78,36 +78,36 @@ auto CALLBACK pImageView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
         case WM_GETDLGCODE: return DLGC_STATIC | DLGC_WANTCHARS;
         case WM_ERASEBKGND:
             return 0;
-        case WM_PAINT:
-        {
-            if (!imageView->state.image)
-                return 0;
+        //case WM_PAINT:
+        //{
+        //    if (!imageView->state.image)
+        //        return 0;
 
-            unsigned width = imageView->state.image->width;
-            unsigned height = imageView->state.image->height;
+        //    unsigned width = imageView->state.image->width;
+        //    unsigned height = imageView->state.image->height;
 
-            PAINTSTRUCT ps;
-            BeginPaint(hwnd, &ps);
-            HDC hdc = CreateCompatibleDC(ps.hdc);
+        //    PAINTSTRUCT ps;
+        //    BeginPaint(hwnd, &ps);
+        //    HDC hdc = CreateCompatibleDC(ps.hdc);
 
-            auto bitmap = CreateBitmapWithPremultipliedAlpha(*imageView->state.image);
-            SelectObject(hdc, bitmap);
+        //    auto bitmap = CreateBitmapWithPremultipliedAlpha(*imageView->state.image);
+        //    SelectObject(hdc, bitmap);
 
-            RECT rc;
-            GetClientRect(hwnd, &rc);
-            if (pApplication::pDrawThemeParentBackground)
-                pApplication::pDrawThemeParentBackground(hwnd, ps.hdc, &rc);
+        //    RECT rc;
+        //    GetClientRect(hwnd, &rc);
+        //    if (pApplication::pDrawThemeParentBackground)
+        //        pApplication::pDrawThemeParentBackground(hwnd, ps.hdc, &rc);
 
-            BLENDFUNCTION bf{AC_SRC_OVER, 0, (BYTE) 255, AC_SRC_ALPHA};
-            AlphaBlend(ps.hdc, 0, 0, width, height, hdc, 0, 0, width, height, bf);
+        //    BLENDFUNCTION bf{AC_SRC_OVER, 0, (BYTE) 255, AC_SRC_ALPHA};
+        //    AlphaBlend(ps.hdc, 0, 0, width, height, hdc, 0, 0, width, height, bf);
 
-            DeleteObject(bitmap);
-            DeleteDC(hdc);
+        //    DeleteObject(bitmap);
+        //    DeleteDC(hdc);
 
-            EndPaint(hwnd, &ps);
+        //    EndPaint(hwnd, &ps);
 
-            return 0;
-        }
+        //    return 0;
+        //}
         case WM_SETCURSOR:
             imageView->p.updateCursor();
             return 1;
@@ -116,9 +116,43 @@ auto CALLBACK pImageView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
             return HTCLIENT;
 
         case WM_LBUTTONDOWN:
-            imageView->p.onLink(); break;
+            imageView->p.onLink();
+            break;
     }
 
-    //return CallWindowProc(imageView->p.wndprocOrig, hwnd, msg, wparam, lparam);
-    return pApplication::wndProc(imageView->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return CallWindowProc(imageView->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    //return pApplication::wndProc(imageView->p.wndprocOrig, hwnd, msg, wparam, lparam);
+}
+
+auto pImageView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
+    if (!imageView.state.image)
+        return;
+
+    auto hdc = lDraw->hDC;
+    auto rc = lDraw->rcItem;
+    unsigned width = imageView.state.image->width;
+    unsigned height = imageView.state.image->height;
+
+    SetBkMode(hdc, TRANSPARENT);
+    HBRUSH brush = getBackgroundBrush();
+    if (brush)
+        FillRect(hdc, &rc, brush);
+
+    PAINTSTRUCT ps;
+    BeginPaint(hwnd, &ps);
+    HDC _hdc = CreateCompatibleDC(hdc);
+
+    auto bitmap = CreateBitmapWithPremultipliedAlpha(*imageView.state.image);
+    SelectObject(_hdc, bitmap);
+
+    //RECT rc;
+    //GetClientRect(hwnd, &rc);
+   // if (pApplication::pDrawThemeParentBackground)
+     //   pApplication::pDrawThemeParentBackground(hwnd, hdc, &rc);
+
+    BLENDFUNCTION bf{ AC_SRC_OVER, 0, (BYTE)255, AC_SRC_ALPHA };
+    AlphaBlend(hdc, 0, 0, width, height, _hdc, 0, 0, width, height, bf);
+
+    DeleteObject(bitmap);
+    DeleteDC(_hdc);
 }

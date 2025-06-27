@@ -65,7 +65,7 @@ auto pListView::buildHeaderText(std::vector<std::string> list) -> void {
     if(list.size() == 0) list.push_back("");
 
     for(unsigned i = 0; i < list.size(); i++) {
-        utf16_t wtext( list.at(i) );
+        utf16_t wtext( list[i] );
         LVCOLUMN column;
         column.mask = LVCF_FMT | LVCF_TEXT | LVCF_SUBITEM;
         column.fmt = LVCFMT_LEFT;
@@ -73,6 +73,14 @@ auto pListView::buildHeaderText(std::vector<std::string> list) -> void {
         column.pszText = wtext;
         ListView_InsertColumn(hwnd, i, &column);
     }
+
+    if (pApplication::useDark) {
+        HWND hHeader = ListView_GetHeader(hwnd);
+        SetWindowTheme(hHeader, L"ItemsView", nullptr);
+        pApplication::pAllowDarkModeForWindow(hHeader, true);
+        SendMessageW(hHeader, WM_THEMECHANGED, 0, 0);
+    }
+
     autoSizeColumns();
 }
 
@@ -129,6 +137,20 @@ auto CALLBACK pListView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             if (wparam != VK_TAB)
                 return DLGC_WANTALLKEYS;
             break;
+
+        case WM_NOTIFY: {
+            if (pApplication::useDark && (reinterpret_cast<LPNMHDR>(lparam)->code == NM_CUSTOMDRAW)) {
+                LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lparam);
+                switch (nmcd->dwDrawStage) {
+                    case CDDS_PREPAINT:
+                        return CDRF_NOTIFYITEMDRAW;
+                    case CDDS_ITEMPREPAINT:                
+                        SetTextColor(nmcd->hdc, DARK_FG_COL);
+                        return CDRF_DODEFAULT;               
+                }
+            }
+        }
+        break;
 
         case WM_MOUSEMOVE: {
             if (!listView->state.rowTooltips.size())
@@ -232,7 +254,13 @@ auto pListView::create() -> void {
         WS_EX_CLIENTEDGE, WC_LISTVIEW, L"",
         WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | LVS_NOCOLUMNHEADER | WS_HSCROLL | 
             ( listView.specialFont() ? LVS_OWNERDRAWFIXED : 0),
-        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);        
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);  
+
+    if (pApplication::useDark) {
+        SetWindowTheme(hwnd, L"Explorer", nullptr);
+        pApplication::pAllowDarkModeForWindow(hwnd, true);
+        SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
+    }
 
     ListView_SetExtendedListViewStyle(hwnd, LVS_EX_FULLROWSELECT | LVS_EX_SUBITEMIMAGES | LVS_EX_DOUBLEBUFFER);
 
@@ -257,12 +285,15 @@ auto pListView::createTooltip(bool useBallon) -> void {
     if (listView.state.colorRowTooltips && widgetState.overrideBackgroundColor) {
         unsigned color = widgetState.backgroundColor;
         SendMessage(hwndTip, TTM_SETTIPBKCOLOR, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), 0);    
-    }
+    } else if (pApplication::useDark)
+        SendMessage(hwndTip, TTM_SETTIPBKCOLOR, DARK_BG_SOFTER_COL, 0);
+
 
     if (listView.state.colorRowTooltips && widgetState.overrideForegroundColor) {
         unsigned color = widgetState.foregroundColor;
         SendMessage(hwndTip, TTM_SETTIPTEXTCOLOR, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff), 0);
-    }
+    } else if (pApplication::useDark)
+        SendMessage(hwndTip, TTM_SETTIPTEXTCOLOR, DARK_FG_COL, 0);
     
     if (hfont)
         SendMessage(hwndTip, WM_SETFONT, (WPARAM)hfont, 0);
@@ -279,10 +310,15 @@ auto pListView::rebuild() -> void {
         
     create();
 
-	if (listView.overrideBackgroundColor())
-		setBackgroundColor( listView.backgroundColor() );
+    if (listView.overrideBackgroundColor())
+        setBackgroundColor(listView.backgroundColor());
+    else if (pApplication::useDark)
+        setDarkBackground();
+
 	if (listView.overrideForegroundColor())
 		setForegroundColor( listView.foregroundColor() );
+    else if (pApplication::useDark)
+        setDarkForeground();
 	
     pWidget::setFont( widget.font() );
     setContent();
@@ -346,7 +382,7 @@ auto pListView::onCustomDraw(LPARAM lparam) -> LRESULT {
         case CDDS_PREPAINT:
             return CDRF_NOTIFYITEMDRAW;
         case CDDS_ITEMPREPAINT:
-            if( (listView.columnCount() >= 2) && (lvcd->nmcd.dwItemSpec % 2) )
+            if(!pApplication::useDark && (listView.columnCount() >= 2) && (lvcd->nmcd.dwItemSpec % 2) )
                 lvcd->clrTextBk = 0xfff8f0 ^ 0x0f0f0f;
 
             break;
@@ -432,13 +468,29 @@ auto pListView::buildImageList() -> void {
     autoSizeColumns();
 }
 
-auto pListView::setBackgroundColor(unsigned color) -> void {	
+auto pListView::setBackgroundColor(unsigned color) -> void {
 	if (!hwnd) return;
 	ListView_SetBkColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
 	ListView_SetTextBkColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) ); 
     
     clearBrush();
     destroy(hwndTip); 
+}
+
+auto pListView::setDarkBackground() -> void {
+    if (!hwnd) return;
+
+    ListView_SetBkColor(hwnd, DARK_BG_COL);
+    ListView_SetTextBkColor(hwnd, DARK_BG_COL);
+
+    clearBrush();
+    destroy(hwndTip);    
+}
+
+auto pListView::setDarkForeground() -> void {
+    if (!hwnd) return;
+    ListView_SetTextColor(hwnd, DARK_FG_COL);
+    destroy(hwndTip);
 }
 
 auto pListView::setForegroundColor(unsigned color) -> void {

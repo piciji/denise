@@ -98,17 +98,205 @@ auto pTabFrame::onChange() -> void {
 auto CALLBACK pTabFrame::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
     TabFrameLayout::TabFrame* tabFrame = (TabFrameLayout::TabFrame*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     if(tabFrame == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+    Window* window = (Window*)tabFrame->Sizable::state.window;
+    if (window == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
+
+    auto* doubleBuffer = tabFrame->p.doubleBuffer;
+    const auto& hMemDC = doubleBuffer->hMemDC;
     
-    switch(msg) {   
-        case WM_ERASEBKGND:
-            if (pApplication::hasAppThemed())
-				return 0;
-			break;
+    switch(msg) {
+        case WM_ERASEBKGND: {
+            if (!pApplication::useDark) {
+                if (pApplication::hasAppThemed())
+                    return 0;
+                break;
+            }
+
+            const auto* hdc = reinterpret_cast<HDC>(wparam);
+            if (hdc != hMemDC)        
+                return FALSE;
+        
+            return TRUE;
+        }
+
+        case WM_PARENTNOTIFY: {
+            if (LOWORD(wparam) == WM_CREATE) {
+                if (pApplication::useDark) {
+                    auto hUpDown = reinterpret_cast<HWND>(lparam);
+                    SetWindowTheme(hUpDown, L"Explorer", nullptr);
+                }
+            }
+            break;
+        }
+
+        case WM_PAINT: {
+            if (!pApplication::useDark)
+                break;
+
+            const auto nStyle = ::GetWindowLongPtr(hwnd, GWL_STYLE);
+            if ((nStyle & TCS_VERTICAL) == TCS_VERTICAL)
+                break;
+
+            PAINTSTRUCT ps{};
+            HDC hdc = ::BeginPaint(hwnd, &ps);
+
+            if (ps.rcPaint.right <= ps.rcPaint.left || ps.rcPaint.bottom <= ps.rcPaint.top) {
+                EndPaint(hwnd, &ps);
+                return 0;
+            }
+
+            RECT rcClient{};
+            GetClientRect(hwnd, &rcClient);
+
+            if (doubleBuffer->ensure(hdc, rcClient)) {
+                const int savedState = ::SaveDC(hMemDC);
+                IntersectClipRect(
+                    hMemDC,
+                    ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom
+                );
+
+                pTabFrame::paintTab(hwnd, hMemDC, rcClient);
+
+                RestoreDC(hMemDC, savedState);
+
+                BitBlt(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top,
+                    hMemDC, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY
+                );
+            }
+
+            EndPaint(hwnd, &ps);
+            return 0;
+        }
+
+        case WM_UPDATEUISTATE: {
+            if ((HIWORD(wparam) & (UISF_HIDEACCEL | UISF_HIDEFOCUS)) != 0)
+                InvalidateRect(hwnd, nullptr, FALSE);
+        
+            break;
+        }
+
     }
 
-   return pApplication::wndProc(tabFrame->p.wndprocOrig, hwnd, msg, wparam, lparam);
-    
-   // return CallWindowProc(tabFrame->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return pApplication::wndProc(tabFrame->p.wndprocOrig, hwnd, msg, wparam, lparam);
+}
+
+auto pTabFrame::paintTab(HWND hWnd, HDC hdc, const RECT& rect) -> void {
+    FillRect(hdc, &rect, pApplication::darkBGTabBrush);
+
+    auto holdPen = static_cast<HPEN>(SelectObject(hdc, pApplication::darkEdgePen));
+
+    auto holdClip = ::CreateRectRgn(0, 0, 0, 0);
+    if (GetClipRgn(hdc, holdClip) != 1) {
+        DeleteObject(holdClip);
+        holdClip = nullptr;
+    }
+
+    auto hFont = reinterpret_cast<HFONT>(::SendMessage(hWnd, WM_GETFONT, 0, 0));
+    auto holdFont = SelectObject(hdc, hFont);
+
+    POINT ptCursor{};
+    GetCursorPos(&ptCursor);
+    ScreenToClient(hWnd, &ptCursor);
+
+    bool hasFocusRect = false;
+    if (GetFocus() == hWnd) {
+        const auto uiState = static_cast<DWORD>(::SendMessage(hWnd, WM_QUERYUISTATE, 0, 0));
+        hasFocusRect = ((uiState & UISF_HIDEFOCUS) != UISF_HIDEFOCUS);
+    }
+
+    const int iSelTab = TabCtrl_GetCurSel(hWnd);
+    const int nTabs = TabCtrl_GetItemCount(hWnd);
+
+    for (int i = 0; i < nTabs; ++i) {
+        RECT rcItem{};
+        TabCtrl_GetItemRect(hWnd, i, &rcItem);
+        RECT rcFrame{ rcItem };
+
+        RECT rcIntersect{};
+        if (IntersectRect(&rcIntersect, &rect, &rcItem) == TRUE) {
+            const bool isHot = ::PtInRect(&rcItem, ptCursor) == TRUE;
+            const bool isSelectedTab = (i == iSelTab);
+
+            SetBkMode(hdc, TRANSPARENT);
+
+            HRGN hClip = ::CreateRectRgnIndirect(&rcItem);
+            SelectClipRgn(hdc, hClip);
+
+            InflateRect(&rcItem, -1, -1);
+            rcItem.right += 1;
+
+            std::wstring label(MAX_PATH, L'\0');
+            TCITEM tci{};
+            tci.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_STATE;
+            tci.dwStateMask = TCIS_HIGHLIGHTED;
+            tci.pszText = label.data();
+            tci.cchTextMax = MAX_PATH - 1;
+
+            TabCtrl_GetItem(hWnd, i, &tci);
+
+            const auto nStyle = ::GetWindowLongPtr(hWnd, GWL_STYLE);
+            const bool isBtn = (nStyle & TCS_BUTTONS) == TCS_BUTTONS;
+            if (isBtn) {
+                const bool isHighlighted = (tci.dwState & TCIS_HIGHLIGHTED) == TCIS_HIGHLIGHTED;
+                FillRect(hdc, &rcItem, isHighlighted ? pApplication::darkBGHotBrush : pApplication::darkBGSofterBrush);
+                SetTextColor(hdc, isHighlighted ? DARK_FG_COL : DARK_FG_COL);
+            } else {
+                auto getBrush = [&]() -> HBRUSH {
+                    if (isSelectedTab)
+                        return  pApplication::darkBGTabBrush;
+
+                    if (isHot)
+                        return pApplication::darkBGHotBrush;
+
+                    return pApplication::darkBGSofterBrush;
+                };
+
+                FillRect(hdc, &rcItem, getBrush());
+                SetTextColor(hdc, (isHot || isSelectedTab) ? DARK_FG_COL : DARK_FG_COL);
+            }
+
+            RECT rcText{ rcItem };
+            if (!isBtn) {
+                if (isSelectedTab) {
+                    //OffsetRect(&rcText, 0, -1);
+                    InflateRect(&rcFrame, 0, 1);
+                }
+
+                if (i != nTabs - 1)
+                    rcFrame.right += 1;
+            }
+
+            if (tci.iImage != -1) {
+                int cx = 0;
+                int cy = 0;
+                auto hImagelist = TabCtrl_GetImageList(hWnd);
+                static constexpr int offset = 3;
+                ImageList_GetIconSize(hImagelist, &cx, &cy);
+                ImageList_Draw(hImagelist, tci.iImage, hdc, rcText.left + offset, rcText.top + (((rcText.bottom - rcText.top) - cy) / 2), ILD_NORMAL);
+                rcText.left += cx;
+            }
+
+            DrawText(hdc, label.c_str(), -1, &rcText, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+
+            FrameRect(hdc, &rcFrame, pApplication::darkEdgeBrush);
+
+            if (isSelectedTab && hasFocusRect) {
+                ::InflateRect(&rcFrame, -2, -1);
+                ::DrawFocusRect(hdc, &rcFrame);
+            }
+
+            SelectClipRgn(hdc, holdClip);
+            DeleteObject(hClip);
+        }
+    }
+
+    SelectObject(hdc, holdFont);
+    SelectClipRgn(hdc, holdClip);
+    if (holdClip != nullptr) {
+        DeleteObject(holdClip);
+        holdClip = nullptr;
+    }
+    SelectObject(hdc, holdPen);
 }
 
 auto pTabFrame::create() -> void {
@@ -116,7 +304,11 @@ auto pTabFrame::create() -> void {
     
     hwnd = CreateWindow(WC_TABCONTROL, L"",
         WS_CHILD | WS_TABSTOP | (pApplication::hasAppThemed() ? WS_CLIPCHILDREN : 0),
-        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)tabFrame.id, GetModuleHandle(0), 0);
+        0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)tabFrame.id, GetModuleHandle(0), 0);    
+
+    if (!doubleBuffer)
+        doubleBuffer = new DoubleBuffer();
+    doubleBuffer->release();
 
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&tabFrame);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
@@ -135,6 +327,9 @@ auto pTabFrame::rebuild() -> void {
 }
 
 auto pTabFrame::getTabBackgroundForControl(HWND tab, HWND control) -> HBRUSH {
+    if (pApplication::useDark)
+        return pApplication::darkBGTabBrush;
+
     if (bkgndBrush)
         return bkgndBrush;
     

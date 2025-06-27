@@ -26,6 +26,14 @@ struct EmuSelectionLayout : GUIKIT::FramedHorizontalLayout {
     EmuSelectionLayout();
 };
 
+struct StyleLayout : GUIKIT::FramedHorizontalLayout {
+    GUIKIT::RadioBox osSetting;
+    GUIKIT::RadioBox dark;
+    GUIKIT::RadioBox light;
+
+    StyleLayout();
+};
+
 struct AboutLayout : GUIKIT::FramedHorizontalLayout {
     
     struct Left : GUIKIT::VerticalLayout {
@@ -47,10 +55,12 @@ struct AboutLayout : GUIKIT::FramedHorizontalLayout {
 struct SettingsLayout : GUIKIT::VerticalLayout {
 
     GUIKIT::HorizontalLayout upperLayout;
+    GUIKIT::HorizontalLayout centerLayout;
     LangLayout lang;
     SwitchesLayout switches;    
     AboutLayout about;
     EmuSelectionLayout emuSelection;
+    StyleLayout styleLayout;
     std::vector<GUIKIT::Image*> images;
     std::vector<std::string> langIdents;
     GUIKIT::Image denise;

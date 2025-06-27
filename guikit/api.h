@@ -157,6 +157,8 @@ struct CustomFont {
 };
 
 struct Application {
+    enum DarkMode { Auto, On, Off };
+
     static std::function<void ()> loop;
 	static std::function<void (std::string text)> onClipboardRequest;
     static std::function<void ()> onDisplayChange;
@@ -175,8 +177,12 @@ struct Application {
     static auto getUtf8CmdLine(std::vector<std::string>& out) -> bool;
 #endif
     static auto closeOtherInstances() -> void;
+    static auto setDarkMode(DarkMode darkMode) -> void;
+    static auto isDarkMode() -> bool;
 
     static bool isQuit;
+    static bool canSwitchDark;
+
     static int exitCode;
     static std::string name;
     static std::string vendor;

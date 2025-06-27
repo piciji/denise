@@ -189,9 +189,12 @@ auto Program::init() -> void {
     if (!cmd->debug) {
         loadSettings();
 
+        auto style = globalSettings->get<unsigned>("visual_style", GUIKIT::Application::DarkMode::Auto);
+        GUIKIT::Application::setDarkMode((GUIKIT::Application::DarkMode)style);
+
         if (view && !loadTranslation(globalSettings->get<std::string>("translation", getSystemLangFile()))) {
             view->message->error("language plugin not found");
-        }		
+        }
     }
     
     cmd->parse();

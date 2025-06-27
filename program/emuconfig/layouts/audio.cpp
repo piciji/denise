@@ -580,7 +580,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
     audioRecord.location.standard.onActivate = [this]() {
         _settings->set<std::string>("audio_record_path", "");
-        audioRecord.location.pathEdit.setText(program->generatedFolder("states"));
+        audioRecord.location.pathEdit.setText( program->generatedFolder(emulator, "audio_record_path", "recordings/audio") );
         audioRecord.location.pathEdit.setEnabled(false);
     };
     

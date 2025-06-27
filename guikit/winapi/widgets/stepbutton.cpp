@@ -72,6 +72,16 @@ auto pStepButton::create() -> void {
     hwnd = CreateWindowEx( WS_EX_CLIENTEDGE, UPDOWN_CLASS, L"",
         WS_CHILD | WS_TABSTOP | UDS_WRAP | UDS_ARROWKEYS | UDS_ALIGNRIGHT | UDS_SETBUDDYINT,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)stepButton.id, GetModuleHandle(0), 0);
+
+    if (pApplication::useDark) {
+        SetWindowTheme(buddyHwnd, L"CFD", NULL);
+        pApplication::pAllowDarkModeForWindow(buddyHwnd, true);
+        SendMessageW(buddyHwnd, WM_THEMECHANGED, 0, 0);
+
+        SetWindowTheme(hwnd, L"Explorer", NULL);
+        pApplication::pAllowDarkModeForWindow(hwnd, true);
+        SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
+    }
     
     SetWindowLongPtr(buddyHwnd, GWLP_USERDATA, (LONG_PTR)&stepButton);
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&stepButton);

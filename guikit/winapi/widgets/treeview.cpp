@@ -187,8 +187,14 @@ auto pTreeView::create() -> void {
     
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_TREEVIEW, L"",
-        WS_CHILD | WS_TABSTOP | TVS_HASLINES | TVS_SHOWSELALWAYS,
+        WS_CHILD | WS_TABSTOP | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_NOTOOLTIPS,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)treeView.id, GetModuleHandle(0), 0);
+
+    if (pApplication::useDark) {
+        SetWindowTheme(hwnd, L"Explorer", NULL);
+        pApplication::pAllowDarkModeForWindow(hwnd, true);
+        SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
+    }
 
     TreeView_SetExtendedStyle(hwnd, TVS_EX_DOUBLEBUFFER, TVS_EX_DOUBLEBUFFER);
     
@@ -204,8 +210,13 @@ auto pTreeView::rebuild() -> void {
 	
 	if (treeView.overrideBackgroundColor())
 		setBackgroundColor( treeView.backgroundColor() );
+    else if (pApplication::useDark)
+        setDarkBackground();
+
 	if (treeView.overrideForegroundColor())
 		setForegroundColor( treeView.foregroundColor() );
+    else if (pApplication::useDark)
+        setDarkForeground();
 	
     pWidget::setFont( widget.font() );
     buildImageList();
@@ -334,4 +345,16 @@ auto pTreeView::setBackgroundColor(unsigned color) -> void {
 auto pTreeView::setForegroundColor(unsigned color) -> void {
 	if (!hwnd) return;
 	TreeView_SetTextColor( hwnd, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+}
+
+auto pTreeView::setDarkBackground() -> void {
+    if (!hwnd) return;
+
+    TreeView_SetBkColor(hwnd, DARK_BG_COL);
+    TreeView_SetTextColor(hwnd, DARK_BG_COL);    
+}
+
+auto pTreeView::setDarkForeground() -> void {
+    if (!hwnd) return;
+    TreeView_SetTextColor(hwnd, DARK_FG_COL);
 }

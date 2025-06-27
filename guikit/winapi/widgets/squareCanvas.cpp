@@ -4,7 +4,7 @@ auto pSquareCanvas::create() -> void {
     destroy(hwndTip);
     
     hwnd = CreateWindow(WC_STATIC, L"",
-        WS_CHILD,
+        WS_CHILD | SS_OWNERDRAW,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)squareCanvas.id, GetModuleHandle(0), 0);
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&squareCanvas);
@@ -44,78 +44,82 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
         case WM_GETDLGCODE: return DLGC_STATIC | DLGC_WANTCHARS;
         case WM_ERASEBKGND:
             return 0;
-        case WM_PAINT:
-        {
-            unsigned width = squareCanvas->Widget::state.geometry.width;
-            unsigned height = squareCanvas->Widget::state.geometry.height;
-            unsigned color = squareCanvas->Widget::state.backgroundColor;
-            unsigned borderColor = squareCanvas->state.borderColor;
-            unsigned borderSize = squareCanvas->state.borderSize;
-            
-            uint8_t r = (color >> 16) & 0xff;
-            uint8_t g = (color >> 8) & 0xff;
-            uint8_t b = (color >> 0) & 0xff;
+        //case WM_PAINT:
+        //{
+        //    break;
+        //    unsigned width = squareCanvas->Widget::state.geometry.width;
+        //    unsigned height = squareCanvas->Widget::state.geometry.height;
+        //    unsigned color = squareCanvas->Widget::state.backgroundColor;
+        //    unsigned borderColor = squareCanvas->state.borderColor;
+        //    unsigned borderSize = squareCanvas->state.borderSize;
 
-            uint8_t bR = (borderColor >> 16) & 0xff;
-            uint8_t bG = (borderColor >> 8) & 0xff;
-            uint8_t bB = (borderColor >> 0) & 0xff;
-            
-            PAINTSTRUCT ps;
-            BeginPaint(hwnd, &ps);
-            HDC hdc = CreateCompatibleDC(ps.hdc);
-            BITMAPINFO bmi{};
-            bmi.bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
-            bmi.bmiHeader.biPlanes = 1;
-            bmi.bmiHeader.biBitCount = 32;
-            bmi.bmiHeader.biCompression = BI_RGB;
-            bmi.bmiHeader.biWidth = width;
-            bmi.bmiHeader.biHeight = -((long)height);
-            bmi.bmiHeader.biSizeImage = width * height * sizeof (uint32_t);
-            void* bits = nullptr;
-            HBITMAP bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
-            if (bits) {                
-                
-                for (unsigned y = 0; y < height; y++) {
-                    bool borderYPixel = 0;
-                    if (y < borderSize)
-                        borderYPixel = 1;
-                    else if (y >= (height - borderSize) )
-                        borderYPixel = 1;
-                    
-                    auto target = (uint8_t*) bits + y * width * sizeof (uint32_t);
-                    for (unsigned x = 0; x < width; x++) {
-                        bool borderXPixel = 0;
-                        
-                        if (!borderYPixel) {                            
-                            if (x < borderSize)
-                                borderXPixel = 1;
-                            else if (x >= (width - borderSize))
-                                borderXPixel = 1;
-                        }
-                        
-                        target[0] = (borderYPixel || borderXPixel) ? bB : b;
-                        target[1] = (borderYPixel || borderXPixel) ? bG : g;
-                        target[2] = (borderYPixel || borderXPixel) ? bR : r;
-                        target[3] = 0xff;
-                        target += 4;
-                    }
-                }
-            }
-            SelectObject(hdc, bitmap);
+        //    if (pApplication::useDark)
+        //        borderColor = pApplication::darkFGColor;
+        //    
+        //    uint8_t r = (color >> 16) & 0xff;
+        //    uint8_t g = (color >> 8) & 0xff;
+        //    uint8_t b = (color >> 0) & 0xff;
 
-            RECT rc;
-            GetClientRect(hwnd, &rc);
+        //    uint8_t bR = (borderColor >> 16) & 0xff;
+        //    uint8_t bG = (borderColor >> 8) & 0xff;
+        //    uint8_t bB = (borderColor >> 0) & 0xff;
+        //    
+        //    PAINTSTRUCT ps;
+        //    BeginPaint(hwnd, &ps);
+        //    HDC hdc = CreateCompatibleDC(ps.hdc);
+        //    BITMAPINFO bmi{};
+        //    bmi.bmiHeader.biSize = sizeof (BITMAPINFOHEADER);
+        //    bmi.bmiHeader.biPlanes = 1;
+        //    bmi.bmiHeader.biBitCount = 32;
+        //    bmi.bmiHeader.biCompression = BI_RGB;
+        //    bmi.bmiHeader.biWidth = width;
+        //    bmi.bmiHeader.biHeight = -((long)height);
+        //    bmi.bmiHeader.biSizeImage = width * height * sizeof (uint32_t);
+        //    void* bits = nullptr;
+        //    HBITMAP bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+        //    if (bits) {                
+        //        
+        //        for (unsigned y = 0; y < height; y++) {
+        //            bool borderYPixel = 0;
+        //            if (y < borderSize)
+        //                borderYPixel = 1;
+        //            else if (y >= (height - borderSize) )
+        //                borderYPixel = 1;
+        //            
+        //            auto target = (uint8_t*) bits + y * width * sizeof (uint32_t);
+        //            for (unsigned x = 0; x < width; x++) {
+        //                bool borderXPixel = 0;
+        //                
+        //                if (!borderYPixel) {                            
+        //                    if (x < borderSize)
+        //                        borderXPixel = 1;
+        //                    else if (x >= (width - borderSize))
+        //                        borderXPixel = 1;
+        //                }
+        //                
+        //                target[0] = (borderYPixel || borderXPixel) ? bB : b;
+        //                target[1] = (borderYPixel || borderXPixel) ? bG : g;
+        //                target[2] = (borderYPixel || borderXPixel) ? bR : r;
+        //                target[3] = 0xff;
+        //                target += 4;
+        //            }
+        //        }
+        //    }
+        //    SelectObject(hdc, bitmap);
 
-            BLENDFUNCTION bf{AC_SRC_OVER, 0, (BYTE) 255, AC_SRC_ALPHA};
-            AlphaBlend(ps.hdc, 0, 0, width, height, hdc, 0, 0, width, height, bf);
+        //    RECT rc;
+        //    GetClientRect(hwnd, &rc);
 
-            DeleteObject(bitmap);
-            DeleteDC(hdc);
+        //    BLENDFUNCTION bf{AC_SRC_OVER, 0, (BYTE) 255, AC_SRC_ALPHA};
+        //    AlphaBlend(ps.hdc, 0, 0, width, height, hdc, 0, 0, width, height, bf);
 
-            EndPaint(hwnd, &ps);
-            
-            return 0;
-        }
+        //    DeleteObject(bitmap);
+        //    DeleteDC(hdc);
+
+        //    EndPaint(hwnd, &ps);
+        //    
+        //    return 0;
+        //}
         case WM_NCHITTEST:
             return HTCLIENT;
 
@@ -133,6 +137,77 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
             squareCanvas->onMouseRelease(Mouse::Button::Right); break;
     }
 
-    //return CallWindowProc(squareCanvas->p.wndprocOrig, hwnd, msg, wparam, lparam);
-    return pApplication::wndProc(squareCanvas->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return CallWindowProc(squareCanvas->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    //return pApplication::wndProc(squareCanvas->p.wndprocOrig, hwnd, msg, wparam, lparam);
+}
+
+auto pSquareCanvas::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
+    auto hdc = lDraw->hDC;
+    auto rc = lDraw->rcItem;
+
+    HDC _hdc = CreateCompatibleDC(hdc);
+    unsigned width = squareCanvas.Widget::state.geometry.width;
+    unsigned height = squareCanvas.Widget::state.geometry.height;
+    unsigned color = squareCanvas.Widget::state.backgroundColor;
+    unsigned borderColor = squareCanvas.state.borderColor;
+    unsigned borderSize = squareCanvas.state.borderSize;
+
+    if (pApplication::useDark) {
+        borderColor = DARK_EDGE_COL;
+    }
+
+    uint8_t r = (color >> 16) & 0xff;
+    uint8_t g = (color >> 8) & 0xff;
+    uint8_t b = (color >> 0) & 0xff;
+
+    uint8_t bR = (borderColor >> 16) & 0xff;
+    uint8_t bG = (borderColor >> 8) & 0xff;
+    uint8_t bB = (borderColor >> 0) & 0xff;
+
+    BITMAPINFO bmi{};
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+    bmi.bmiHeader.biWidth = width;
+    bmi.bmiHeader.biHeight = -((long)height);
+    bmi.bmiHeader.biSizeImage = width * height * sizeof(uint32_t);
+    void* bits = nullptr;
+    HBITMAP bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+    if (bits) {
+
+        for (unsigned y = 0; y < height; y++) {
+            bool borderYPixel = 0;
+            if (y < borderSize)
+                borderYPixel = 1;
+            else if (y >= (height - borderSize))
+                borderYPixel = 1;
+
+            auto target = (uint8_t*)bits + y * width * sizeof(uint32_t);
+            for (unsigned x = 0; x < width; x++) {
+                bool borderXPixel = 0;
+
+                if (!borderYPixel) {
+                    if (x < borderSize)
+                        borderXPixel = 1;
+                    else if (x >= (width - borderSize))
+                        borderXPixel = 1;
+                }
+
+                target[0] = (borderYPixel || borderXPixel) ? bB : b;
+                target[1] = (borderYPixel || borderXPixel) ? bG : g;
+                target[2] = (borderYPixel || borderXPixel) ? bR : r;
+                target[3] = 0xff;
+                target += 4;
+            }
+        }
+    }
+    SelectObject(_hdc, bitmap);
+
+
+    BLENDFUNCTION bf{ AC_SRC_OVER, 0, (BYTE)255, AC_SRC_ALPHA };
+    AlphaBlend(hdc, 0, 0, width, height, _hdc, 0, 0, width, height, bf);
+
+    DeleteObject(bitmap);
+    DeleteDC(_hdc);
 }

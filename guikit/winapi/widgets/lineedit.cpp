@@ -8,6 +8,12 @@ auto pLineEdit::create() -> void {
         WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL | ES_AUTOVSCROLL,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)lineEdit.id, GetModuleHandle(0), 0 );
 
+    if (pApplication::useDark) {
+        SetWindowTheme(hwnd, L"CFD", NULL);
+        pApplication::pAllowDarkModeForWindow(hwnd, true);
+        SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
+    }
+
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&lineEdit);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
 }

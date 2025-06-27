@@ -8,6 +8,8 @@ pWidget::~pWidget() {
     destroy(hwnd);
     destroyImageList();
     pFont::free(hfont);
+    if (doubleBuffer)
+        delete doubleBuffer;
 }
 
 auto pWidget::destroy(HWND& handle) -> void {
@@ -91,7 +93,7 @@ auto pWidget::rebuild() -> void {
 
 auto pWidget::getParentHandle() -> HWND {
 
-    if (!parentTabFrameLayout || !pApplication::hasAppThemed())
+   // if (!parentTabFrameLayout || !pApplication::hasAppThemed())
 		return widget.window() ? widget.window()->p.hwnd : nullptr;
 	
 	return parentTabFrameLayout->frameWidget->p.hwnd;
@@ -99,7 +101,7 @@ auto pWidget::getParentHandle() -> HWND {
 
 auto pWidget::getParentTabWidget() -> Widget* {
 
-    if (!parentTabFrameLayout || !pApplication::hasAppThemed())
+  //  if (!parentTabFrameLayout || !pApplication::hasAppThemed())
 		return nullptr;
 	
 	return parentTabFrameLayout->frameWidget;
@@ -114,7 +116,7 @@ auto pWidget::needRebuild() -> bool {
         parentTabFrameLayout = parent;
 
         if (hwnd) {
-            SetParent(hwnd, getParentHandle());
+      //      SetParent(hwnd, getParentHandle());
             return false;
         }
         
@@ -181,7 +183,13 @@ auto pWidget::createTooltip(bool useBallon) -> void {
     hwndTip = CreateWindowEx(0, TOOLTIPS_CLASS, NULL,
         WS_POPUP | TTS_ALWAYSTIP | TTS_USEVISUALSTYLE | ( useBallon ? TTS_BALLOON : 0),
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        hwnd, NULL, GetModuleHandle(0), 0);    
+        hwnd, NULL, GetModuleHandle(0), 0);
+
+    if (pApplication::useDark) {
+        SetWindowTheme(hwndTip, L"Explorer", nullptr);
+        pApplication::pAllowDarkModeForWindow(hwndTip, true);
+        SendMessageW(hwndTip, WM_THEMECHANGED, 0, 0);
+    }
 }
 
 auto pWidget::getScaledContainerSize( Size size ) -> Size {
@@ -221,16 +229,24 @@ auto pWidget::getBackgroundBrush() -> HBRUSH {
 	return brush;
 }
 
-auto pWidget::getColor(WPARAM wparam) -> HBRUSH {
-    
-    static HBRUSH brush =  GetSysColorBrush(COLOR_WINDOW);
-    
-    if (!widget.overrideForegroundColor())
-        return nullptr;
-    
-    SetBkColor((HDC) wparam, GetSysColor(COLOR_WINDOW));
+auto pWidget::setEditFieldColor(WPARAM wparam) -> HBRUSH {    
+    static HBRUSH brush = GetSysColorBrush(COLOR_WINDOW);
 
-    unsigned color = widget.foregroundColor();
-    SetTextColor((HDC) wparam, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));    
-    return brush;
+    if (widget.overrideForegroundColor()) {
+        unsigned color = widget.foregroundColor();
+        SetTextColor((HDC)wparam, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
+        if (pApplication::useDark) {
+            SetBkColor((HDC)wparam, DARK_BG_SOFTER_COL);
+            return pApplication::darkBGSofterBrush;
+        }
+        SetBkColor((HDC)wparam, GetSysColor(COLOR_WINDOW));
+        return brush;
+    } else if (pApplication::useDark) {
+        SetBkMode((HDC)(wparam), TRANSPARENT);
+        SetTextColor((HDC)wparam, DARK_FG_COL);
+        SetBkColor((HDC)wparam, DARK_BG_SOFTER_COL);
+        return pApplication::darkBGSofterBrush;
+    }
+
+    return nullptr;
 }

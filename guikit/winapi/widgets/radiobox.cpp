@@ -25,6 +25,12 @@ auto pRadioBox::create() -> void {
         WS_CHILD | WS_TABSTOP | BS_RADIOBUTTON,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)radioBox.id, GetModuleHandle(0), 0);
 
+    if (pApplication::useDark) {
+        SetWindowTheme(hwnd, L"Explorer", nullptr);
+        pApplication::pAllowDarkModeForWindow(hwnd, true);
+        SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
+    }
+
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&radioBox);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
 }
@@ -39,6 +45,35 @@ auto CALLBACK pRadioBox::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
     }
     
     return CallWindowProc(radioBox->p.wndprocOrig, hwnd, msg, wparam, lparam);
+}
+
+auto pRadioBox::onCustomDraw(LPARAM lparam) -> LRESULT {
+    LPNMCUSTOMDRAW lpcd = (LPNMCUSTOMDRAW)lparam;
+
+    switch (lpcd->dwDrawStage) {
+    case CDDS_PREPAINT:
+        if (radioBox.overrideForegroundColor() || pApplication::useDark) {
+            const int textLength = ::GetWindowTextLength(lpcd->hdr.hwndFrom);
+            if (textLength > 0) {
+                TCHAR* buttonText = new TCHAR[textLength + 1];
+                ::GetWindowText(lpcd->hdr.hwndFrom, buttonText, textLength + 1);
+                static Size containerSize = pWidget::getScaledContainerSize({ 16, 1 });
+                ::SetBkMode(lpcd->hdc, TRANSPARENT);
+                auto color = radioBox.foregroundColor();
+                if (pApplication::useDark) {
+                    if (radioBox.enabled())
+                        ::SetTextColor(lpcd->hdc, DARK_FG_COL);
+                    else
+                        ::SetTextColor(lpcd->hdc, DARK_DISABLE_COL);
+                } else
+                    ::SetTextColor(lpcd->hdc, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
+                ::TextOut(lpcd->hdc, containerSize.width, containerSize.height, buttonText, textLength);
+                delete[] buttonText;
+                return CDRF_SKIPDEFAULT;
+            }
+        }
+    }
+    return CDRF_DODEFAULT;
 }
 
 auto pRadioBox::rebuild() -> void {

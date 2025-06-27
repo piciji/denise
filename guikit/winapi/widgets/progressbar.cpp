@@ -14,6 +14,11 @@ auto pProgressBar::create() -> void {
         WS_CHILD | PBS_SMOOTH,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)progressBar.id, GetModuleHandle(0), 0);
     
+    if (pApplication::useDark) {
+        SetWindowTheme(hwnd, L"", L"");
+        SendMessage(hwnd, PBM_SETBKCOLOR, 0, DARK_BG_COL);
+    }
+
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&progressBar);
     SendMessage(hwnd, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
     SendMessage(hwnd, PBM_SETSTEP, MAKEWPARAM(1, 0), 0);

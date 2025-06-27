@@ -223,6 +223,7 @@
     <ClInclude Include="..\guikit\tools\file\directory.h" />
     <ClInclude Include="..\guikit\tools\file\tar.h" />
     <ClInclude Include="..\guikit\winapi\dirent.h" />
+    <ClInclude Include="..\guikit\winapi\doubleBuffer.h" />
     <ClInclude Include="..\guikit\winapi\main.h" />
     <ClInclude Include="..\guikit\winapi\processref.h" />
     <ClInclude Include="..\program\audio\dsp\base.h" />
@@ -246,12 +247,10 @@
     <ClInclude Include="..\program\cmd\cmd.h" />
     <ClInclude Include="..\program\config\archiveViewer.h" />
     <ClInclude Include="..\program\config\config.h" />
-    <ClInclude Include="..\program\config\layouts\audio.h" />
-    <ClInclude Include="..\program\config\layouts\driver.h" />
-    <ClInclude Include="..\program\config\layouts\input.h" />
+    <ClInclude Include="..\program\config\layouts\drivers.h" />
     <ClInclude Include="..\program\config\layouts\settings.h" />
-    <ClInclude Include="..\program\config\layouts\video.h" />
     <ClInclude Include="..\program\config\slider.h" />
+    <ClInclude Include="..\program\config\sliderAlt.h" />
     <ClInclude Include="..\program\emuconfig\config.h" />
     <ClInclude Include="..\program\emuconfig\layouts\audio.h" />
     <ClInclude Include="..\program\emuconfig\layouts\border.h" />
@@ -1601,25 +1600,13 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_config</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_config</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\program\config\layouts\audio.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    <ClCompile Include="..\program\config\layouts\drivers.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\program\config\layouts\input.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\program\config\layouts\settings.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\program\config\layouts\video.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>

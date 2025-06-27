@@ -282,6 +282,9 @@ auto CALLBACK pFrame::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM
             //else
               //  SetTextColor(memHdc, GetSysColor(COLOR_GRAYTEXT) );
 
+            if (pApplication::useDark)
+                SetTextColor(memHdc, DARK_FG_COL);
+
 			HBRUSH brush = widget->p.getBackgroundBrush();
             
 			if (brush && (useLabel || frame->roundedConrner))
@@ -373,8 +376,12 @@ inline auto pFrame::getBorderColor() -> COLORREF {
     if (!pApplication::hasAppThemed() || (getVersionNew() <= WindowsXP))
 		return RGB(0xff, 0xff, 0xff);
 	
-	if (getVersionNew() > Windows7)
-		return RGB(0xdc, 0xdc, 0xdc);
+    if (getVersionNew() > Windows7) {
+        if (pApplication::useDark)
+            return DARK_EDGE_COL;
+
+        return RGB(0xdc, 0xdc, 0xdc);
+    }
 	
 	return RGB(0xd5, 0xdf, 0xe5);
 }

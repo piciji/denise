@@ -17,6 +17,12 @@ auto pCheckButton::create() -> void {
     hwnd = CreateWindow(WC_BUTTON, L"",
         WS_CHILD | WS_TABSTOP | BS_CHECKBOX | BS_PUSHLIKE,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)checkButton.id, GetModuleHandle(0), 0);
+
+    if (pApplication::useDark) {
+        SetWindowTheme(hwnd, L"Explorer", NULL);
+        pApplication::pAllowDarkModeForWindow(hwnd, true);
+        SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
+    }
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&checkButton);  
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    

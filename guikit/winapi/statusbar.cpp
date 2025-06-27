@@ -98,7 +98,7 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
                 HDC hdc = (HDC)wparam;
                 RECT rect;
                 GetClientRect(hwnd, &rect);
-                FillRect(hdc, &rect, pApplication::darkBG);
+                FillRect(hdc, &rect, pApplication::darkBGBrush);
                 return TRUE;
             } break;
 
@@ -139,6 +139,23 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
                     if (nmhdr->code == NM_CUSTOMDRAW) {
                         NMCUSTOMDRAW* lpNMCustomDraw = (NMCUSTOMDRAW*)lparam;
                         lpNMCustomDraw->uItemState &= ~CDIS_FOCUS;
+                        LPNMCUSTOMDRAW lpcd = (LPNMCUSTOMDRAW)lparam;
+
+                        switch (lpcd->dwDrawStage) {
+                            case CDDS_PREPAINT:
+                                if (pApplication::useDark)
+                                    return CDRF_NOTIFYITEMDRAW;
+                                break;
+
+                            case CDDS_ITEMPREPAINT:
+                                if (lpcd->dwItemSpec == TBCD_CHANNEL) {
+                                  //  InflateRect(&lpcd->rc, 0, -1);
+                                    FillRect(lpcd->hdc, &lpcd->rc, pApplication::darkEdgeBrush);
+                                    return CDRF_SKIPDEFAULT;
+
+                                } break;
+                        }
+                        return CDRF_DODEFAULT;
                     }
                     break;
                 }
@@ -323,7 +340,7 @@ auto pStatusBar::update() -> void {
         }
 
         if (trackBar) {
-            MoveWindow(trackBar,  pos, 2, part.width - 1, getHeight() - 2, true);
+            MoveWindow(trackBar, pos, 3, part.width - 1, getHeight() - 2, true);
 
             if (!IsWindowVisible(trackBar))
                 ShowWindow(trackBar, SW_SHOWNORMAL);
@@ -431,7 +448,7 @@ auto pStatusBar::drawItem(WPARAM wparam, LPARAM lparam) -> void {
             unsigned color = part.overrideForegroundColor;
             SetTextColor(hDC, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
         } else if (pApplication::useDark)
-            SetTextColor(hDC, pApplication::darkFG);
+            SetTextColor(hDC, DARK_FG_COL);
 
         if (pApplication::hasAppThemed() && (getVersionNew() <= Windows7))
             rect.top += 2;

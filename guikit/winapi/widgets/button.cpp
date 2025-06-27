@@ -37,6 +37,16 @@ auto pButton::create() -> void {
     hwnd = CreateWindow(WC_BUTTON, L"",
         WS_CHILD | WS_TABSTOP,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)button.id, GetModuleHandle(0), 0);
+
+    if (!doubleBuffer)
+        doubleBuffer = new DoubleBuffer();
+    doubleBuffer->release();
+
+    if (pApplication::useDark) {
+        SetWindowTheme(hwnd, L"Explorer", NULL);
+        pApplication::pAllowDarkModeForWindow(hwnd, true);
+        SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
+    }
     
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&button);
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
@@ -85,30 +95,29 @@ auto pButton::setImage(Image* image) -> void {
     hbitmap = CreateBitmapWithPremultipliedAlpha( *image );
 }
 
-auto pButton::customDraw(HWND hwnd, PAINTSTRUCT& ps) -> void {
-    RECT rc;
-    GetClientRect(hwnd, &rc);
+auto pButton::customDraw(HWND hWnd, HDC hdc, RECT& rc, RECT& rcpaint) -> void {
     auto buttonState = Button_GetState(hwnd);
     auto minSize = minimumSize();
 
-    if(auto theme = pApplication::pOpenThemeData(hwnd, L"BUTTON")) {
-        pApplication::pDrawThemeParentBackground(hwnd, ps.hdc, &rc);
+    FillRect(hdc, &rc, getBackgroundBrush());
+
+    if(auto theme = pApplication::pOpenThemeData(hwnd, VSCLASS_BUTTON)) {
+        pApplication::pDrawThemeParentBackground(hwnd, hdc, &rc);
         unsigned flags = 0;
         if(buttonState & BST_PUSHED ) flags = PBS_PRESSED;
         else if(buttonState & BST_HOT) flags = PBS_HOT;
         else flags = button.enabled() ? PBS_NORMAL : PBS_DISABLED;
-        pApplication::pDrawThemeBackground(theme, ps.hdc, BP_PUSHBUTTON, flags, &rc, &ps.rcPaint);
+        pApplication::pDrawThemeBackground(theme, hdc, BP_PUSHBUTTON, flags, &rc, &rcpaint);
         pApplication::pCloseThemeData(theme);
 
     } else {
-        FillRect(ps.hdc, &rc, GetSysColorBrush(COLOR_3DFACE));
         unsigned flags = (buttonState & BST_PUSHED ) ? DFCS_PUSHED : 0;
-        DrawFrameControl(ps.hdc, &rc, DFC_BUTTON, DFCS_BUTTONPUSH | flags | (button.enabled() ? 0 : DFCS_INACTIVE));
+        DrawFrameControl(hdc, &rc, DFC_BUTTON, DFCS_BUTTONPUSH | flags | (button.enabled() ? 0 : DFCS_INACTIVE));
     }
 
     if(button.image() && hbitmap) {
         auto& img = *button.image();
-        HDC hdcSource = CreateCompatibleDC(ps.hdc);
+        HDC hdcSource = CreateCompatibleDC(hdc);
 
         SelectBitmap(hdcSource, hbitmap);
         BLENDFUNCTION blend{AC_SRC_OVER, 0, (BYTE)(IsWindowEnabled(hwnd) ? 255 : 128), AC_SRC_ALPHA};
@@ -123,7 +132,7 @@ auto pButton::customDraw(HWND hwnd, PAINTSTRUCT& ps) -> void {
         }
 
         AlphaBlend(
-            ps.hdc, _x, _y, img.width, img.height,
+            hdc, _x, _y, img.width, img.height,
             hdcSource, 0, 0, img.width, img.height, blend
         );
 
@@ -131,14 +140,18 @@ auto pButton::customDraw(HWND hwnd, PAINTSTRUCT& ps) -> void {
     }
 
     if(!button.text().empty()) {
-        SetBkMode(ps.hdc, TRANSPARENT);
-        SetTextColor(ps.hdc, GetSysColor(IsWindowEnabled(hwnd) ? COLOR_BTNTEXT : COLOR_GRAYTEXT));
-        SelectObject(ps.hdc, hfont);
+        SetBkMode(hdc, TRANSPARENT);
+        if (pApplication::useDark)
+            SetTextColor(hdc, IsWindowEnabled(hwnd) ? DARK_FG_COL : DARK_DISABLE_COL);
+        else
+            SetTextColor(hdc, GetSysColor(IsWindowEnabled(hwnd) ? COLOR_BTNTEXT : COLOR_GRAYTEXT));
+        SelectObject(hdc, hfont);
 
-        rc.left += button.image()->width + 10;
-        rc.top += 4;
+        RECT rcText = rc;
+        rcText.left += button.image()->width + 10;
+        rcText.top += 4;
 
-        DrawText(ps.hdc, utf16_t(button.text().c_str()), -1, &rc, DT_NOPREFIX | DT_END_ELLIPSIS);
+        DrawText(hdc, utf16_t(button.text().c_str()), -1, &rcText, DT_NOPREFIX | DT_END_ELLIPSIS);
     }
 }
 
@@ -146,19 +159,51 @@ auto CALLBACK pButton::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
     Button* button = (Button*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     if(button == nullptr) return DefWindowProc(hwnd, msg, wparam, lparam);
 
+    auto* doubleBuffer = button->p.doubleBuffer;
+    const auto& hMemDC = doubleBuffer->hMemDC;
+
     switch(msg) {
         case WM_PAINT: {
             if (button->image()) {
                 PAINTSTRUCT ps;
-                BeginPaint(hwnd, &ps);
-                button->p.customDraw(hwnd, ps);
+                HDC hdc = BeginPaint(hwnd, &ps);
+                if (ps.rcPaint.right <= ps.rcPaint.left || ps.rcPaint.bottom <= ps.rcPaint.top) {
+                    EndPaint(hwnd, &ps);
+                    return 0;
+                }
+
+                RECT rcClient{};
+                GetClientRect(hwnd, &rcClient);
+
+                if (doubleBuffer->ensure(hdc, rcClient)) {
+                    const int savedState = ::SaveDC(hMemDC);
+                    IntersectClipRect(
+                        hMemDC,
+                        ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom
+                    );
+
+                    button->p.customDraw(hwnd, hMemDC, rcClient, ps.rcPaint);
+
+                    RestoreDC(hMemDC, savedState);
+
+                    BitBlt(
+                        hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top,
+                        hMemDC, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY
+                    );
+                }
+                
                 EndPaint(hwnd, &ps);
-                return false;
+                return 0;
             } break;
         }
 
-        case WM_ERASEBKGND:
-            return 0;
+        case WM_ERASEBKGND: {
+            const auto* hdc = reinterpret_cast<HDC>(wparam);
+            if (hdc != hMemDC)
+                return FALSE;
+
+            return TRUE;
+        }
     }
     
     return CallWindowProc(button->p.wndprocOrig, hwnd, msg, wparam, lparam);

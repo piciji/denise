@@ -246,6 +246,8 @@ auto MediaLayout::build() -> void {
 
     moduleFrame.append(fontSizeLayout, {0u, 0u}, 10);
     if (emulator->expansions.size() > 1) {
+        bootCart.setEnabled(false);
+        deactivateCart.setEnabled(false);
         moduleFrame.append(bootCart, {0u, 0u}, 10);
         moduleFrame.append(deactivateCart, {0u, 0u});
     }

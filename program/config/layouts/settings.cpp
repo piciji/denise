@@ -55,6 +55,18 @@ EmuSelectionLayout::EmuSelectionLayout() {
     setAlignment(0.5);
 }
 
+StyleLayout::StyleLayout() {
+    append(osSetting, {0u, 0u}, 10);
+    append(dark, { 0u, 0u }, 10);
+    append(light, { 0u, 0u });
+
+    setPadding(10);
+    setFont(GUIKIT::Font::system("bold"));
+    setAlignment(0.5);
+
+    GUIKIT::RadioBox::setGroup(osSetting, dark, light);
+}
+
 SettingsLayout::SettingsLayout() {
     setMargin(10);
 
@@ -66,7 +78,14 @@ SettingsLayout::SettingsLayout() {
     upperLayout.append(lang, {~0u, ~0u}, 10);
     upperLayout.append(switches, {~0u, 0u});
     append(upperLayout, {~0u, 0u}, 10);
-    append(emuSelection, {~0u, 0u}, 10);
+
+    if (GUIKIT::Application::canSwitchDark) {
+        centerLayout.append(emuSelection, { ~0u, 0u }, 10);
+        centerLayout.append(styleLayout, { ~0u, 0u });
+        append(centerLayout, {~0u, 0u}, 10);
+    } else    
+        append(emuSelection, {~0u, 0u}, 10);
+
     append(about, {~0u, 0u});    
 
     for(auto& core : emuSelection.cores) {
@@ -155,6 +174,36 @@ SettingsLayout::SettingsLayout() {
         if (checked)
             GUIKIT::Application::closeOtherInstances();
     };
+
+    styleLayout.osSetting.onActivate = [this]() {
+        emuThread->lock();
+
+        globalSettings->set<unsigned>("visual_style", GUIKIT::Application::DarkMode::Auto);
+        configView->message->information( trans->getA("restart for changes"));
+        emuThread->unlock();
+    };
+
+    styleLayout.dark.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("visual_style", GUIKIT::Application::DarkMode::On);
+        configView->message->information(trans->getA("restart for changes"));
+        emuThread->unlock();
+    };
+
+    styleLayout.light.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("visual_style", GUIKIT::Application::DarkMode::Off);
+        configView->message->information(trans->getA("restart for changes"));
+        emuThread->unlock();
+    };
+
+    auto style = globalSettings->get<unsigned>("visual_style", GUIKIT::Application::DarkMode::Auto);
+
+    switch (style) {
+        case GUIKIT::Application::DarkMode::Auto: styleLayout.osSetting.setChecked(); break;
+        case GUIKIT::Application::DarkMode::On: styleLayout.dark.setChecked(); break;
+        case GUIKIT::Application::DarkMode::Off: styleLayout.light.setChecked(); break;
+    }
 
     setLang();
     
@@ -300,4 +349,9 @@ auto SettingsLayout::translate() -> void {
     about.right.trackersWorld.setTooltip("Trackers-World.NET");
 
     emuSelection.setText( trans->get("Core Selection") );
+
+    styleLayout.setText(trans->getA("Visual Style"));
+    styleLayout.osSetting.setText(trans->getA("OS Setting"));
+    styleLayout.light.setText( trans->getA("Light") );
+    styleLayout.dark.setText(trans->getA("Dark"));
 }

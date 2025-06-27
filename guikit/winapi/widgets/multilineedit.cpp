@@ -8,6 +8,12 @@ auto pMultilineEdit::create() -> void {
         WS_CHILD | WS_TABSTOP | WS_VSCROLL | ES_AUTOVSCROLL | ES_MULTILINE | ES_WANTRETURN,
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)multilineEdit.id, GetModuleHandle(0), 0 );
 
+    if (pApplication::useDark) {
+        SetWindowTheme(hwnd, L"Explorer", NULL);
+        pApplication::pAllowDarkModeForWindow(hwnd, true);
+        SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
+    }
+
     SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)&multilineEdit);
     
     //wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);    
@@ -75,8 +81,8 @@ auto CALLBACK pMultilineEdit::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam
 
     switch(msg) {
         case WM_ERASEBKGND: 
-            return 0;   
-            
+            return 0;
+
     }
 
     return CallWindowProc(multilineEdit->p.wndprocOrig, hwnd, msg, wparam, lparam);

@@ -1,4 +1,10 @@
 
+#define DARK_FG_COL         RGB(0xe0, 0xe0, 0xe0)
+#define DARK_BG_COL         RGB(0x19, 0x19, 0x19)
+#define DARK_EDGE_COL       RGB(0x9b, 0x9b, 0x9b)
+#define DARK_DISABLE_COL    RGB(0x80, 0x80, 0x80)
+#define DARK_BG_SOFTER_COL  RGB(0x38, 0x38, 0x38)
+
 #ifndef WM_UAHDRAWMENU
 #define WM_UAHDRAWMENU 0x0091
 #endif
@@ -7,21 +13,24 @@
 #define WM_UAHDRAWMENUITEM 0x0092
 #endif
 
+#ifdef __GNUC__
+#define WINAPI_LAMBDA WINAPI
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+#else
+#define WINAPI_LAMBDA
 #endif
 
 typedef struct tagUAHMENU
 {
     HMENU hmenu;
     HDC hdc;
-    DWORD dwFlags; // no idea what these mean, in my testing it's either 0x00000a00 or sometimes 0x00000a10
+    DWORD dwFlags;
 } UAHMENU;
 
 typedef union tagUAHMENUITEMMETRICS
 {
-    // cx appears to be 14 / 0xE less than rcItem's width!
-    // cy 0x14 seems stable, i wonder if it is 4 less than rcItem's height which is always 24 atm
     struct {
         DWORD cx;
         DWORD cy;
@@ -35,19 +44,19 @@ typedef union tagUAHMENUITEMMETRICS
 typedef struct tagUAHMENUPOPUPMETRICS
 {
     DWORD rgcx[4];
-    DWORD fUpdateMaxWidths : 2; // from kernel symbols, padded to full dword
+    DWORD fUpdateMaxWidths : 2;
 } UAHMENUPOPUPMETRICS;
 
 typedef struct tagUAHMENUITEM
 {
-    int iPosition; // 0-based position of menu item in menubar
+    int iPosition;
     UAHMENUITEMMETRICS umim;
     UAHMENUPOPUPMETRICS umpm;
 } UAHMENUITEM;
 
 typedef struct UAHDRAWMENUITEM
 {
-    DRAWITEMSTRUCT dis; // itemID looks uninitialized
+    DRAWITEMSTRUCT dis;
     UAHMENU um;
     UAHMENUITEM umi;
 } UAHDRAWMENUITEM;
@@ -72,11 +81,26 @@ auto pApplication::preferDarkTheme() -> bool {
     return i != 1;
 }
 
-auto pApplication::initDarkTheme() -> void {
-    auto version = getVersionNew();
+auto pApplication::setDarkMode(Application::DarkMode darkMode) -> void {
+    useDark = false;
 
-    if (version < Windows10)
+    if (darkMode == Application::DarkMode::Off)
         return;
+
+    if (darkMode == Application::DarkMode::On)
+        initDarkTheme(true);
+    else if (preferDarkTheme())
+        initDarkTheme(false);
+}
+
+auto pApplication::initDarkTheme(bool force) -> void {
+    auto version = getVersionNew();
+    auto buildNumber = getVersionNew(true);
+
+    if ((version < Windows10) || (buildNumber < 19041))
+        return;
+
+    loadThemedFunctions();
 
     if (pOpenThemeData &&
         pRefreshImmersiveColorPolicyState &&
@@ -88,33 +112,24 @@ auto pApplication::initDarkTheme() -> void {
             pApplication::useDark = true;
 
             if (pSetPreferredAppMode)
-                pSetPreferredAppMode(PreferredAppMode::AllowDark);
+                pSetPreferredAppMode(force ? PreferredAppMode::ForceDark : PreferredAppMode::AllowDark);
             else if (pAllowDarkModeForApp)
                 pAllowDarkModeForApp(true);
             
-            pRefreshImmersiveColorPolicyState();
+            pRefreshImmersiveColorPolicyState();          
 
-            getDarkmodeColors();
+            darkBGBrush = CreateSolidBrush(DARK_BG_COL);
+
+            darkBGHotBrush = CreateSolidBrush(RGB(0x45, 0x45, 0x45));
+
+            darkEdgeBrush = CreateSolidBrush(DARK_EDGE_COL);
+
+            darkBGSofterBrush = CreateSolidBrush(DARK_BG_SOFTER_COL);
+
+            darkBGTabBrush = CreateSolidBrush(RGB(0x20, 0x20, 0x20));
+
+            darkEdgePen = ::CreatePen(PS_SOLID, 1, RGB(0x64, 0x64, 0x64));
+
+            darkDisabledEdgeBrush = CreateSolidBrush(RGB(0x48, 0x48, 0x48));
     }
-}
-
-auto pApplication::getDarkmodeColors() -> void {
-    if (!pOpenThemeData)
-        return;
-
-    HTHEME hTheme = pOpenThemeData(nullptr, L"ItemsView");
-
-    if (hTheme) {
-        GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, &darkFG);
-
-        COLORREF color;
-
-        if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
-            darkBG = CreateSolidBrush(color);
-
-        darkBGHot = CreateSolidBrush(RGB(50, 50, 50));
-        
-        CloseThemeData(hTheme);
-    }
-
 }

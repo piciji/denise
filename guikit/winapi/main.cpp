@@ -10,6 +10,7 @@
 namespace GUIKIT {
 
 #include "tools.cpp"
+#include "dark.cpp"
 #include "menu.cpp"
 #include "browserWindow.cpp"
 #include "messageWindow.cpp"
@@ -18,7 +19,6 @@ namespace GUIKIT {
 #include "display.cpp"
 #include "dragndrop.cpp"
 #include "interProcess.cpp"
-#include "dark.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"
@@ -94,9 +94,14 @@ auto pApplication::getUtf8CmdLine(std::vector<std::string>& out) -> bool {
 
 std::string pApplication::cwd = "";
 bool pApplication::useDark = false;
-HBRUSH pApplication::darkBG = nullptr;
-HBRUSH pApplication::darkBGHot = nullptr;
-COLORREF pApplication::darkFG = 0;
+HBRUSH pApplication::darkBGBrush = nullptr;
+HBRUSH pApplication::darkBGTabBrush = nullptr;
+HBRUSH pApplication::darkBGSofterBrush = nullptr;
+HBRUSH pApplication::darkBGHotBrush = nullptr;
+HBRUSH pApplication::darkEdgeBrush = nullptr;
+HBRUSH pApplication::darkDisabledEdgeBrush = nullptr;
+HPEN pApplication::darkEdgePen = nullptr;
+
 
 HMODULE pApplication::uxTheme = nullptr;
 SetWindowTheme_t pApplication::pSetWindowTheme = nullptr;
@@ -148,8 +153,11 @@ auto pApplication::initialize() -> void {
 
     loadThemedFunctions();
     
-    if (preferDarkTheme())
-        initDarkTheme();
+    auto _v = getVersionNew();
+    auto _b = getVersionNew(true);
+
+    if ((_v > Windows10) || ((_v == Windows10) && (_b >= 19041)))
+        Application::canSwitchDark = true;
 
     HWND consoleWnd = GetConsoleWindow();
     if (!consoleWnd) {
@@ -200,9 +208,12 @@ auto pApplication::loadThemedFunctions() -> void {
     pGetIsImmersiveColorUsingHighContrast = (GetIsImmersiveColorUsingHighContrast_t)::GetProcAddress(uxTheme, MAKEINTRESOURCEA(106));
     pShouldAppsUseDarkMode = (ShouldAppsUseDarkMode_t)::GetProcAddress(uxTheme, MAKEINTRESOURCEA(132));
     pAllowDarkModeForWindow = (AllowDarkModeForWindow_t)::GetProcAddress(uxTheme, MAKEINTRESOURCEA(133));
+    pFlushMenuThemes = reinterpret_cast<FlushMenuThemes_t>(GetProcAddress(uxTheme, MAKEINTRESOURCEA(136)));
 
-    pSetPreferredAppMode = reinterpret_cast<SetPreferredAppMode_t>(GetProcAddress(uxTheme, MAKEINTRESOURCEA(135)));
-    if (!pSetPreferredAppMode)
+    auto _b = getVersionNew(true);
+    if (_b > 18361)
+        pSetPreferredAppMode = reinterpret_cast<SetPreferredAppMode_t>(GetProcAddress(uxTheme, MAKEINTRESOURCEA(135)));
+    else
         pAllowDarkModeForApp = reinterpret_cast<AllowDarkModeForApp_t>(GetProcAddress(uxTheme, MAKEINTRESOURCEA(135)));
 
     pIsDarkModeAllowedForWindow = reinterpret_cast<IsDarkModeAllowedForWindow_t>(GetProcAddress(uxTheme, MAKEINTRESOURCEA(137)));
@@ -228,26 +239,31 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             Base* base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);
             if(base == nullptr) break;
 
-            HBRUSH brush = ((Widget*)base)->p.getColor( wparam );
+            HBRUSH brush = ((Widget*)base)->p.setEditFieldColor( wparam );
 
             if (!brush)
                 break;
 
             return (LRESULT)brush;
         }
-        case WM_CTLCOLORBTN:
-        case WM_CTLCOLORSTATIC: {
+
+        case WM_CTLCOLORSTATIC:
+        case WM_CTLCOLORBTN: {
             Base* base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);
             if(base == nullptr) break;
-
+            
             if (dynamic_cast<LineEdit*>(base) || dynamic_cast<MultilineEdit*>(base) || dynamic_cast<StepButton*>(base)) {
-                
-                HBRUSH brush = ((Widget*) base)->p.getColor(wparam);
+
+                HBRUSH brush = ((Widget*) base)->p.setEditFieldColor(wparam);
 
                 if (!brush)
                     return windowProc(hwnd, WM_CTLCOLOREDIT, wparam, lparam);
 
                 return (LRESULT) brush;
+            }
+
+            if (pApplication::useDark && (dynamic_cast<Hyperlink*>(base) )) {
+                SetTextColor((HDC)wparam, DARK_FG_COL);
             }
             
 			TabFrameLayout* parentTabFrameLayout = ((Widget*)base)->p.parentTabFrameLayout;
@@ -296,6 +312,8 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == LVN_ITEMACTIVATE) { ((ListView*)base)->p.onActivate(lparam); break; }
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((ListView*)base)->p.onCustomDraw(lparam); }
             if(dynamic_cast<CheckBox*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((CheckBox*)base)->p.onCustomDraw(lparam); }
+            if(dynamic_cast<RadioBox*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((RadioBox*)base)->p.onCustomDraw(lparam); }
+            if(dynamic_cast<Slider*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((Slider*)base)->p.onCustomDraw(lparam); }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == TVN_SELCHANGED) { ((TreeView*)base)->p.onChange(); break; }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == TVN_ITEMEXPANDED) { ((TreeView*)base)->p.onExpanded(lparam); break; }
             if(dynamic_cast<TreeView*>(base) && ((LPNMHDR)lparam)->code == NM_DBLCLK) { ((TreeView*)base)->p.onActivate(); break; }
@@ -312,7 +330,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                 ((StatusBar*)base)->p.onClick(lparam);
                 break;
             }
-            
+           
             break;
         }
 		case WM_CONTEXTMENU: {
@@ -396,7 +414,18 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                     ((ComboButton*)base)->p.drawItem(lDraw);
                     return true;
                 }
+            } else if ((lDraw != NULL) && (lDraw->CtlType == ODT_STATIC)) {
 
+                if (dynamic_cast<Label*> (base)) {
+                    ((Label*)base)->p.drawItem(lDraw);
+                    return true;
+                } else if (dynamic_cast<SquareCanvas*> (base)) {
+                    ((SquareCanvas*)base)->p.drawItem(lDraw);
+                    return true;
+                } else if (dynamic_cast<ImageView*> (base)) {
+                    ((ImageView*)base)->p.drawItem(lDraw);
+                    return true;
+                }
             } else {
                 if(dynamic_cast<StatusBar*>(base)) {
                     ((StatusBar*)base)->p.drawItem(wparam, lparam);
@@ -434,7 +463,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                 rc = mbi.rcBar;
                 OffsetRect(&rc, -rcWindow.left, -rcWindow.top);
 
-                FillRect(pUDM->hdc, &rc, darkBG);
+                FillRect(pUDM->hdc, &rc, darkBGBrush);
                 return true;
             } break;
         }
@@ -451,14 +480,14 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                 if ((pUDMI->dis.itemState & ODS_GRAYED) || (pUDMI->dis.itemState & ODS_DISABLED))
                     SetTextColor(pUDMI->um.hdc, GetSysColor(COLOR_GRAYTEXT));
                 else
-                    SetTextColor(pUDMI->um.hdc, pApplication::darkFG);
+                    SetTextColor(pUDMI->um.hdc, DARK_FG_COL);
                 
                 SetBkMode(pUDMI->um.hdc, TRANSPARENT);
 
                 if (pUDMI->dis.itemState & ODS_HOTLIGHT)
-                    FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, darkBGHot);
+                    FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, darkBGHotBrush);
                 else
-                    FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, darkBG);
+                    FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, darkBGBrush);
 
                 DrawText(pUDMI->um.hdc, menuString, -1, &pUDMI->dis.rcItem, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
 
@@ -492,12 +521,7 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 
     Geometry geo = window.state.geometry;
 
-	hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
-
-    if (pApplication::useDark) {
-        DWORD darkMode = TRUE;
-        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &darkMode, sizeof(darkMode));
-    }
+    hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
 
     hmenu = CreateMenu();
 	contextmenu = CreatePopupMenu();
@@ -652,6 +676,14 @@ auto pWindow::setFocused() -> void {
 }
 
 auto pWindow::setVisible(bool visible) -> bool {
+
+    if (pApplication::useDark) {
+        DWORD darkMode = TRUE;
+        DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &darkMode, sizeof(darkMode));
+        if (!brush)
+            brush = CreateSolidBrush(DARK_BG_COL);
+    }
+
     ShowWindow(hwnd, visible ? SW_SHOWNORMAL : SW_HIDE);
     if (window.statusBar())
         window.statusBar()->p.update();
@@ -663,7 +695,7 @@ auto pWindow::restore() -> void {
 }
 
 auto pWindow::setResizable(bool resizable) -> void {
-    SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (window.fullScreen() ? 0 : WS_CLIPCHILDREN) | (resizable ? ResizableStyle : FixedStyle));
+    SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (window.fullScreen() ? 0 : 0) | (resizable ? ResizableStyle : FixedStyle));
     if(window.visible() && !window.fullScreen() ) setGeometry(window.state.geometry);
 }
 
@@ -1136,7 +1168,7 @@ auto pWindow::fixMenuBarInDarkMode(HWND& _hwnd) -> bool {
     rcAnnoyingLine.top--;
 
     HDC hdc = GetWindowDC(_hwnd);
-    FillRect(hdc, &rcAnnoyingLine, pApplication::darkBG);
+    FillRect(hdc, &rcAnnoyingLine, pApplication::darkBGBrush);
     ReleaseDC(_hwnd, hdc);
 
     return true;

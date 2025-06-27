@@ -110,7 +110,8 @@ MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     append( fifthLine, {0u, 0u} );
     
     preview.setFont( GUIKIT::Font::system("", true) );
-    preview.setForegroundColor( 0x5a5e63 );
+    if (!GUIKIT::Application::isDarkMode())
+        preview.setForegroundColor( 0x5a5e63 );
     preview.setEditable(false);
 }
 
@@ -861,7 +862,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
     stateFolder.standard.onActivate = [this]() {
         _settings->set<std::string>("states_folder", "");
-        stateFolder.pathEdit.setText(program->generatedFolder("states"));
+        stateFolder.pathEdit.setText(program->generatedFolder(emulator, "states_folder", "states"));
         stateFolder.pathEdit.setEnabled(false);
     };
         

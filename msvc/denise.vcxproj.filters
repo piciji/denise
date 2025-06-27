@@ -769,19 +769,7 @@
     <ClInclude Include="..\program\config\slider.h">
       <Filter>program\config</Filter>
     </ClInclude>
-    <ClInclude Include="..\program\config\layouts\audio.h">
-      <Filter>program\config\layouts</Filter>
-    </ClInclude>
-    <ClInclude Include="..\program\config\layouts\driver.h">
-      <Filter>program\config\layouts</Filter>
-    </ClInclude>
-    <ClInclude Include="..\program\config\layouts\input.h">
-      <Filter>program\config\layouts</Filter>
-    </ClInclude>
     <ClInclude Include="..\program\config\layouts\settings.h">
-      <Filter>program\config\layouts</Filter>
-    </ClInclude>
-    <ClInclude Include="..\program\config\layouts\video.h">
       <Filter>program\config\layouts</Filter>
     </ClInclude>
     <ClInclude Include="..\program\emuconfig\config.h">
@@ -1149,6 +1137,15 @@
     </ClInclude>
     <ClInclude Include="..\emulation\libami\drive\scp\scp.h">
       <Filter>emulation\libami\drive\scp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\layouts\drivers.h">
+      <Filter>program\config\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\config\sliderAlt.h">
+      <Filter>program\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\winapi\doubleBuffer.h">
+      <Filter>guikit\winapi</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1680,16 +1677,7 @@
     <ClCompile Include="..\program\config\config.cpp">
       <Filter>program\config</Filter>
     </ClCompile>
-    <ClCompile Include="..\program\config\layouts\input.cpp">
-      <Filter>program\config\layouts</Filter>
-    </ClCompile>
     <ClCompile Include="..\program\config\layouts\settings.cpp">
-      <Filter>program\config\layouts</Filter>
-    </ClCompile>
-    <ClCompile Include="..\program\config\layouts\video.cpp">
-      <Filter>program\config\layouts</Filter>
-    </ClCompile>
-    <ClCompile Include="..\program\config\layouts\audio.cpp">
       <Filter>program\config\layouts</Filter>
     </ClCompile>
     <ClCompile Include="..\program\emuconfig\config.cpp">
@@ -2345,6 +2333,9 @@
     </ClCompile>
     <ClCompile Include="..\guikit\winapi\dark.cpp">
       <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\config\layouts\drivers.cpp">
+      <Filter>program\config\layouts</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -297,7 +297,7 @@ auto PaletteLayout::setPalette(Emulator::Interface::Palette& palette) -> void {
     
     detailLayout.setEnabled( false );
 	
-	detailLayout.left.canvas.setBackgroundColor(0xffffff);
+	detailLayout.left.canvas.setBackgroundColor(GUIKIT::Application::isDarkMode() ? 0x454545 : 0xffffff);
     
     for( auto colorLayout : colorLayouts ) {
         
