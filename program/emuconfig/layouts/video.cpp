@@ -583,7 +583,12 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
                     file.reset();
                     file.del();
-                    settings->set<std::string>("slang_folder", shaderPath);
+                    for (auto _s : settingsStorage) {
+                        if (_s->getGuid())
+                            _s->set<std::string>("slang_folder", shaderPath);
+                    }
+
+                    //settings->set<std::string>("slang_folder", shaderPath);
                     layShader.main.progress.label.setForegroundColorThreaded(SUCCESS_COLOR);
                     layShader.main.progress.label.setTextThreaded(trans->getA("complete"));
 
@@ -1946,7 +1951,7 @@ auto VideoLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> void {
         layShader.favourite.control.add.setEnabled();
         showErrors(errors);
     } else
-        unloadShader();
+        unloadShader(reloadDriver);
 	
 	updateVisibillity();
 }
@@ -2363,8 +2368,9 @@ auto VideoLayout::enableGPUMode(bool state) -> void {
         layBase.view.mode.rgb.activate();
 }
 
-auto VideoLayout::unloadShader() -> void {
-    vManager()->clearPreset();
+auto VideoLayout::unloadShader(bool reloadDriver) -> void {
+    if (reloadDriver)
+        vManager()->clearPreset();
     buildShaderUI(nullptr);
     layShader.main.info.loaded.setText( "" );
 

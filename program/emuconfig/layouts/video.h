@@ -368,7 +368,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto clearErrors() -> void;
     auto showErrors(const std::vector<std::string>& errors) -> void;
     auto loadShader(std::string path) -> bool;
-    auto unloadShader() -> void;
+    auto unloadShader(bool reloadDriver = true) -> void;
     auto getShaderFolder() -> std::string;
     auto externalFolder() -> bool { return layShader.main.control.external.checked(); }
     auto openShaderFileDialog() -> std::string;
