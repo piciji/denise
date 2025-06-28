@@ -139,8 +139,9 @@ RatioLayout::Dimension::Dimension() {
     append(height, {0u, 0u}, 10);
     append(refresh, {0u, 0u}, 10);
     append(apply, {0u, 0u}, 10);
-    append(cropWindow, {0u, 0u});
-    append(spacer, {~0u, 0u});
+    append(scaleOnEmuSwitch, { 0u, 0u });
+    append(spacer, { ~0u, 0u });
+    append(cropWindow, {0u, 0u}, 10);    
     append(aspectCorrectResizing, {0u, 0u});
 
     setAlignment(0.5);
@@ -336,6 +337,10 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         view->adjustToEmu(true);
     };
 
+    ratioLayout.dimension.scaleOnEmuSwitch.onToggle = [&](bool checked) {
+        _settings->set<bool>("scale_emu_switch", checked);
+    };
+
     monitorResolutionLayout.display.onChange = [this]() {
         emuThread->lock();
         auto displayId = monitorResolutionLayout.display.userData();
@@ -449,15 +454,11 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
     };
 
     ratioLayout.dimension.apply.onActivate = [this]() {
-        if (view->fullScreen() || (emulator != activeEmulator))
-            return;
-
-        emuThread->lock();
-        globalSettings->set<unsigned>("screen_width", _settings->get<unsigned>("view_hold_width", 800));
-        globalSettings->set<unsigned>("screen_height", _settings->get<unsigned>("view_hold_height", 600));
-
-        view->updateGeometry(true);
-        emuThread->unlock();
+        if ((emulator == activeEmulator) && !view->fullScreen()) {
+            emuThread->lock();
+            view->updateToHoldDimension();
+            emuThread->unlock();
+        }
     };
 
     ratioLayout.dimension.aspectCorrectResizing.onToggle = [&](bool checked) {
@@ -585,6 +586,7 @@ auto GeometryLayout::translate() -> void {
     ratioLayout.dimension.refresh.setText(trans->getA("refresh"));
     ratioLayout.dimension.apply.setText(trans->getA("apply"));
     ratioLayout.dimension.cropWindow.setText( trans->getA("crop window") );
+    ratioLayout.dimension.scaleOnEmuSwitch.setText(trans->getA("changing emulator"));
 
     monitorResolutionLayout.active.setTooltip( trans->get("fullscreen switch tooltip") );
     monitorResolutionLayout.setText( trans->get("preselect fullscreen resolution") );
@@ -676,6 +678,8 @@ auto GeometryLayout::loadSettings() -> void {
     ratioLayout.dimension.width.setValue( _settings->get<unsigned>("view_hold_width", 800) );
     ratioLayout.dimension.height.setValue( _settings->get<unsigned>("view_hold_height", 600) );
     ratioLayout.dimension.aspectCorrectResizing.setChecked( _settings->get<bool>("aspect_correct_resizing", false) );
+
+    ratioLayout.dimension.scaleOnEmuSwitch.setChecked(_settings->get<bool>("scale_emu_switch", false));
 
     updateVisibillity();
 }

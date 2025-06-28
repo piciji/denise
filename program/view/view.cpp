@@ -2187,3 +2187,14 @@ auto View::adjustToEmu(bool withViewport) -> void {
 
     updateGeometry(withViewport);
 }
+
+auto View::updateToHoldDimension() -> void {
+    if (view->fullScreen())
+        return;
+    
+    auto settings = program->getSettings(activeEmulator);
+    globalSettings->set<unsigned>("screen_width", settings->get<unsigned>("view_hold_width", 800));
+    globalSettings->set<unsigned>("screen_height", settings->get<unsigned>("view_hold_height", 600));
+
+    updateGeometry(true);
+}

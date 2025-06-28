@@ -897,3 +897,4 @@ OS Setting = OS Setting
 Dark = Dark
 Light = Light
 restart for changes = The changes will take effect the next time you restart the App.
+changing emulator = when changing emulator

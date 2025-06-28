@@ -356,6 +356,9 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             setVideoDimension(activeEmulator);
             videoDriver->useShaderCache( settings->get<bool>("shader_cache", true) );
 		    updateOnScreenText();
+
+            if (settings->get<bool>("scale_emu_switch", false))
+                view->updateToHoldDimension();
         }
 
 		resetRunAhead();

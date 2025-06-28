@@ -99,6 +99,7 @@ struct View : GUIKIT::Window {
     auto updateDiskMenu() -> void;
 	auto updateMouseGrab() -> void;
     auto updateRecentList(Emulator::Interface* emulator) -> void;
+    auto updateToHoldDimension() -> void;
 
     GUIKIT::Viewport viewport;    
     

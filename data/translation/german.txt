@@ -897,3 +897,4 @@ OS Setting = OS Einstellung
 Dark = Dunkel
 Light = Hell
 restart for changes = Die Änderungen werden beim nächsten Neustart der App wirksam.
+changing emulator = beim Emulator Wechsel

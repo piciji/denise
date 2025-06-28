@@ -103,6 +103,7 @@ struct RatioLayout : GUIKIT::FramedVerticalLayout {
 
         GUIKIT::Button refresh;
         GUIKIT::Button apply;
+        GUIKIT::CheckBox scaleOnEmuSwitch;
 
         GUIKIT::Button cropWindow;
         GUIKIT::Widget spacer;
