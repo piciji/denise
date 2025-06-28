@@ -393,6 +393,7 @@ auto Cart::isSupported() -> bool {
         case LIBC64::Interface::CartridgeIdEasyCalc:
         case LIBC64::Interface::CartridgeIdHyperBasic:
         case LIBC64::Interface::CartridgeIdBusinessBasic:
+        case LIBC64::Interface::CartridgeIdMagicDesk2:
             return true;
         default:
             break;
