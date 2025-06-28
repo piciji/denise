@@ -156,7 +156,13 @@ auto pSquareCanvas::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     uint8_t r = (color >> 16) & 0xff;
     uint8_t g = (color >> 8) & 0xff;
     uint8_t b = (color >> 0) & 0xff;
-    uint8_t a = overrideBG ? 0xff : 0;
+
+    if (!overrideBG) {
+        color = pApplication::useDark ? (unsigned)DARK_BG_COL : (unsigned)GetSysColor(COLOR_WINDOW);
+        r = (color >> 16) & 0xff;
+        g = (color >> 8) & 0xff;
+        b = (color >> 0) & 0xff;
+    }
 
     uint8_t bR = (borderColor >> 16) & 0xff;
     uint8_t bG = (borderColor >> 8) & 0xff;
@@ -196,12 +202,12 @@ auto pSquareCanvas::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
                     target[0] = bB;
                     target[1] = bG;
                     target[2] = bR;
-                    target[3] = 0xff;                    
+                    target[3] = 0xff;
                 } else {
                     target[0] = b;
                     target[1] = g;
                     target[2] = r;
-                    target[3] = a; 
+                    target[3] = 0xff;
                 }
 
                 target += 4;
