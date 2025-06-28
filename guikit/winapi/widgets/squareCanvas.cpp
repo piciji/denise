@@ -146,19 +146,17 @@ auto pSquareCanvas::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     auto rc = lDraw->rcItem;
 
     HDC _hdc = CreateCompatibleDC(hdc);
-    unsigned width = squareCanvas.Widget::state.geometry.width;
-    unsigned height = squareCanvas.Widget::state.geometry.height;
-    unsigned color = squareCanvas.Widget::state.backgroundColor;
-    unsigned borderColor = squareCanvas.state.borderColor;
-    unsigned borderSize = squareCanvas.state.borderSize;
-
-    if (pApplication::useDark) {
-        borderColor = DARK_EDGE_COL;
-    }
+    unsigned width = squareCanvas.geometry().width;
+    unsigned height = squareCanvas.geometry().height;
+    unsigned color = squareCanvas.backgroundColor();
+    unsigned borderColor = squareCanvas.borderColor();
+    unsigned borderSize = squareCanvas.borderSize();
+    bool overrideBG = squareCanvas.overrideBackgroundColor();
 
     uint8_t r = (color >> 16) & 0xff;
     uint8_t g = (color >> 8) & 0xff;
     uint8_t b = (color >> 0) & 0xff;
+    uint8_t a = overrideBG ? 0xff : 0;
 
     uint8_t bR = (borderColor >> 16) & 0xff;
     uint8_t bG = (borderColor >> 8) & 0xff;
@@ -174,8 +172,8 @@ auto pSquareCanvas::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     bmi.bmiHeader.biSizeImage = width * height * sizeof(uint32_t);
     void* bits = nullptr;
     HBITMAP bitmap = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
-    if (bits) {
 
+    if (bits) {
         for (unsigned y = 0; y < height; y++) {
             bool borderYPixel = 0;
             if (y < borderSize)
@@ -194,16 +192,23 @@ auto pSquareCanvas::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
                         borderXPixel = 1;
                 }
 
-                target[0] = (borderYPixel || borderXPixel) ? bB : b;
-                target[1] = (borderYPixel || borderXPixel) ? bG : g;
-                target[2] = (borderYPixel || borderXPixel) ? bR : r;
-                target[3] = 0xff;
+                if (borderYPixel || borderXPixel) {
+                    target[0] = bB;
+                    target[1] = bG;
+                    target[2] = bR;
+                    target[3] = 0xff;                    
+                } else {
+                    target[0] = b;
+                    target[1] = g;
+                    target[2] = r;
+                    target[3] = a; 
+                }
+
                 target += 4;
             }
         }
     }
     SelectObject(_hdc, bitmap);
-
 
     BLENDFUNCTION bf{ AC_SRC_OVER, 0, (BYTE)255, AC_SRC_ALPHA };
     AlphaBlend(hdc, 0, 0, width, height, _hdc, 0, 0, width, height, bf);

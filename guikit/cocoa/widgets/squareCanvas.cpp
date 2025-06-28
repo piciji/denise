@@ -82,11 +82,12 @@ auto pSquareCanvas::init() -> void {
 }
 
 auto pSquareCanvas::redraw() -> void {
-    unsigned width = squareCanvas.Widget::state.geometry.width;
-    unsigned height = squareCanvas.Widget::state.geometry.height;
-    unsigned color = squareCanvas.Widget::state.backgroundColor;
-    unsigned borderColor = squareCanvas.state.borderColor;
-    unsigned borderSize = squareCanvas.state.borderSize;
+    unsigned width = squareCanvas.geometry().width;
+    unsigned height = squareCanvas.geometry().height;
+    unsigned color = squareCanvas.backgroundColor();
+    unsigned borderColor = squareCanvas.borderColor();
+    unsigned borderSize = squareCanvas.borderSize();
+    bool overrideBG = squareCanvas.overrideBackgroundColor();
     
     if (width == 0 || height == 0)
         return;
@@ -94,6 +95,7 @@ auto pSquareCanvas::redraw() -> void {
     uint8_t r = (color >> 16) & 0xff;
     uint8_t g = (color >> 8) & 0xff;
     uint8_t b = (color >> 0) & 0xff;
+    uint8_t a = overrideBG ? 0xff : 0;
 
     uint8_t bR = (borderColor >> 16) & 0xff;
     uint8_t bG = (borderColor >> 8) & 0xff;
@@ -146,7 +148,7 @@ auto pSquareCanvas::redraw() -> void {
                 if (borderYPixel || borderXPixel)            
                     *target++ = 0xff << 24 | bB << 16 | bG << 8 | bR;
                 else
-                    *target++ = 0xff << 24 | b << 16 | g << 8 | r;
+                    *target++ = a << 24 | b << 16 | g << 8 | r;
             }
         }
     }

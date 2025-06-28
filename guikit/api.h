@@ -178,7 +178,6 @@ struct Application {
 #endif
     static auto closeOtherInstances() -> void;
     static auto setDarkMode(DarkMode darkMode) -> void;
-    static auto isDarkMode() -> bool;
 
     static bool isQuit;
     static bool canSwitchDark;
@@ -445,6 +444,7 @@ struct Widget : Sizable {
     auto setForegroundColor(unsigned color) -> void;
     auto setForegroundColorThreaded(unsigned color) -> void;
     auto resetForegroundColor() -> void;
+    auto resetBackgroundColor() -> void;
     auto setStore(int _store) -> void { state.store = _store; }
 
     struct {

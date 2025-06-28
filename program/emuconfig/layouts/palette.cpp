@@ -9,7 +9,7 @@ PaletteColorLayout::PaletteColorLayout(unsigned editWidth, unsigned canvasHeight
     hex.setText( "0x" );
     hex.setForegroundColor( 0x333333 );
     color.setFont( GUIKIT::Font::system("bold") );
-    canvas.setBorderColor( 1, 0x333333 );
+    canvas.setBorderColor( 1, 0x666666 );
     edit.setMaxLength(6);
     setAlignment( 0.5 );
 }
@@ -40,7 +40,7 @@ PaletteDetailLayout::PaletteDetailLayout() {
     append(left, {0u, ~0u}, 10);
     append(right, {~0u, 0u});
     
-    left.canvas.setBorderColor(1, 0x333333);
+    left.canvas.setBorderColor(1, 0x666666);
     
     setEnabled( false );
 }
@@ -297,7 +297,7 @@ auto PaletteLayout::setPalette(Emulator::Interface::Palette& palette) -> void {
     
     detailLayout.setEnabled( false );
 	
-	detailLayout.left.canvas.setBackgroundColor(GUIKIT::Application::isDarkMode() ? 0x454545 : 0xffffff);
+    detailLayout.left.canvas.resetBackgroundColor();
     
     for( auto colorLayout : colorLayouts ) {
         

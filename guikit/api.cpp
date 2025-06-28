@@ -129,10 +129,6 @@ auto Application::setDarkMode(DarkMode darkMode) -> void {
 #endif
 }
 
-auto Application::isDarkMode() -> bool {
-    return pApplication::useDark;
-}
-
 auto Application::requestClipboardText() -> void {
     pApplication::requestClipboardText();
 }
@@ -767,6 +763,12 @@ auto Widget::resetForegroundColor() -> void {
     state.overrideForegroundColor = false;
     state.foregroundColor = 0;
     p.setForegroundColor(0);
+}
+
+auto Widget::resetBackgroundColor() -> void {
+    state.overrideBackgroundColor = false;
+    state.backgroundColor = 0;
+    p.setBackgroundColor(0);
 }
     
 Widget::Widget() : p(*new pWidget(*this)), Sizable() { }

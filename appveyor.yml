@@ -19,7 +19,6 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
-    - win-darkmode
 
 environment:
   matrix:

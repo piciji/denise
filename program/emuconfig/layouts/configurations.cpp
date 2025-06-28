@@ -110,8 +110,7 @@ MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     append( fifthLine, {0u, 0u} );
     
     preview.setFont( GUIKIT::Font::system("", true) );
-    if (!GUIKIT::Application::isDarkMode())
-        preview.setForegroundColor( 0x5a5e63 );
+    preview.setForegroundColor( 0x666666 );
     preview.setEditable(false);
 }
 
