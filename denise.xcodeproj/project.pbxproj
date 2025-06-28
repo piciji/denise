@@ -145,6 +145,7 @@
 		9D8FB4E22CB47539006905BE /* icons.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E02CB47539006905BE /* icons.cpp */; };
 		9D8FB4E32CB47539006905BE /* logos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E12CB47539006905BE /* logos.cpp */; };
 		9D8FB4E42CB475A8006905BE /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAB412CB3F8EE006905BE /* images.cpp */; };
+		9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA70F452E101AF000F1DC5B /* scp.cpp */; };
 		9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD306D62DFAFF2200B8F12F /* httpClient.cpp */; };
 		9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */; };
 		9DF694552CBA74350095D273 /* SpvBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DF694502CBA74350095D273 /* SpvBuilder.cpp */; };
@@ -796,6 +797,9 @@
 		9D8FB4D72CB472BA006905BE /* depsSlang.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = depsSlang.cpp; path = deps/depsSlang.cpp; sourceTree = "<group>"; };
 		9D8FB4E02CB47539006905BE /* icons.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = icons.cpp; path = data/icons/icons.cpp; sourceTree = "<group>"; };
 		9D8FB4E12CB47539006905BE /* logos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = logos.cpp; path = data/icons/logos.cpp; sourceTree = "<group>"; };
+		9DA70F442E101AF000F1DC5B /* scp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scp.h; sourceTree = "<group>"; };
+		9DA70F452E101AF000F1DC5B /* scp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
+		9DA70F472E101AFF00F1DC5B /* scp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DD306D42DFAFEE000B8F12F /* error.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = error.h; sourceTree = "<group>"; };
 		9DD306D62DFAFF2200B8F12F /* httpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = httpClient.cpp; sourceTree = "<group>"; };
 		9DD306D72DFAFF2200B8F12F /* httpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpClient.h; sourceTree = "<group>"; };
@@ -1732,6 +1736,8 @@
 		9D8FAD002CB40DF7006905BE /* drive */ = {
 			isa = PBXGroup;
 			children = (
+				9DA70F472E101AFF00F1DC5B /* scp.cpp */,
+				9DA70F432E101AF000F1DC5B /* scp */,
 				9D6404452DCDEF2E00624A00 /* filesystemExt.cpp */,
 				9D6404442DCDEF2E00624A00 /* filesystemExt.h */,
 				9D6404432DCDEF2E00624A00 /* hardDiskStructure.cpp */,
@@ -2252,6 +2258,15 @@
 			name = data;
 			sourceTree = "<group>";
 		};
+		9DA70F432E101AF000F1DC5B /* scp */ = {
+			isa = PBXGroup;
+			children = (
+				9DA70F442E101AF000F1DC5B /* scp.h */,
+				9DA70F452E101AF000F1DC5B /* scp.cpp */,
+			);
+			path = scp;
+			sourceTree = "<group>";
+		};
 		9DF6944F2CBA73C20095D273 /* deps */ = {
 			isa = PBXGroup;
 			children = (
@@ -2569,6 +2584,7 @@
 				9D8FAE4C2CB40DF9006905BE /* prg.cpp in Sources */,
 				9DF694562CBA74350095D273 /* InReadableOrder.cpp in Sources */,
 				9DF694792CBA74FF0095D273 /* SpirvIntrinsics.cpp in Sources */,
+				9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */,
 				9D8FAE3C2CB40DF9006905BE /* pfile.cpp in Sources */,
 				9DF7CF832D96E29800CECCF1 /* null_decoder.cpp in Sources */,
 				9D8FAE0E2CB40DF8006905BE /* rtc.cpp in Sources */,
