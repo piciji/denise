@@ -1,10 +1,4 @@
 
-/**
- * Blitter shifter behaviour has been reverse engineered from WinUAE.
- * Programming is currently experimental and numerous borderline cases need to be cross-checked.
- *
- */
-
 #include "blitter.h"
 
 #define STAGE_A 1
@@ -271,15 +265,29 @@ auto Blitter::stateMachine() -> void {
             curW = bltSizeW;
 
             if (!--curH) {
-                if (bltcon1 & 1) {
-                    if(!restartTimer)
-                        busy = false;
-                    flags = ((bltcon0 >> 4) & 0xf0) | LINE_MODE | 0xf;
-                } else {
-                    if (!agnus.aga() && !restartTimer)
-                        busy = false;
+                if (shifter & (STAGE_B | STAGE_X | STAGE_Y)) {
+                    // TLC Lotus 2 or TLC CRTrJimPower have more than one shifter bit at the end
+                    curW = curH = 1; // one more round
 
-                    flags = ((bltcon0 >> 4) & 0xf0) | (desc << 9) | (isFillMode() << 8) | 0xd; // 5 + shift out
+                    if (shifter & (STAGE_X | STAGE_Y)) {
+                        shifter |= STAGE_X;
+                        shifter &= ~STAGE_A;
+                    }
+
+                    shifter &= ~STAGE_B;
+                    shifter &= ~STAGE_Y;
+
+                } else {
+                    if (bltcon1 & 1) {
+                        if(!restartTimer)
+                            busy = false;
+                        flags = ((bltcon0 >> 4) & 0xf0) | LINE_MODE | 0xf;
+                    } else {
+                        if (!agnus.aga() && !restartTimer)
+                            busy = false;
+
+                        flags = ((bltcon0 >> 4) & 0xf0) | (desc << 9) | (isFillMode() << 8) | 0xd; // 5 + shift out
+                    }
                 }
             }
         }
