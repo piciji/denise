@@ -1070,10 +1070,12 @@ struct MenuBase : Base {
     auto enabled() const -> bool { return state.enabled; }
     auto visible() const -> bool { return state.visible; }
     auto text() const -> std::string { return state.text; }
+    auto filePath() const -> std::string { return state.filePath; }
     auto icon() const -> Image* { return state.icon; }
     auto setEnabled(bool enabled = true) -> void;
     auto setVisible(bool visible = true) -> void;
     auto setText(const std::string& text) -> void;
+    auto setFilePath(const std::string& path) -> void;
     auto setIcon(Image& icon) -> void;
     auto parentMenu() -> Menu* { return state.parentMenu; }
     auto parentWindow() -> Window* { return state.parentWindow; }
@@ -1082,6 +1084,7 @@ struct MenuBase : Base {
         bool enabled = true;
         bool visible = true;
         std::string text = "";
+        std::string filePath = "";
         Image* icon = new Image;
         Menu* parentMenu = nullptr;
         Window* parentWindow = nullptr;

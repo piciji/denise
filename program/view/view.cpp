@@ -657,7 +657,7 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
             item = new GUIKIT::MenuItem;
             item->onActivate = [this, item]() {
                 emuThread->lock();
-                autoloader->init({ GUIKIT::File::resolveRelativePath(item->text()) }, false, Autoloader::Mode::DragnDrop);
+                autoloader->init({ GUIKIT::File::resolveRelativePath(item->filePath()) }, false, Autoloader::Mode::DragnDrop);
                 autoloader->loadFiles();
                 emuThread->unlock();
             };
@@ -665,7 +665,8 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
             sysMenu->recentSoftware->append(*item);
         }
 
-        sysMenu->recents[i]->setText(filePath);
+        sysMenu->recents[i]->setText(GUIKIT::String::getFileName(filePath));
+        sysMenu->recents[i]->setFilePath(filePath);
         i++;
     }
 }

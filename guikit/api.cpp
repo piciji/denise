@@ -1347,6 +1347,10 @@ auto MenuBase::setVisible(bool visible) -> void {
     p.setVisible(visible);
 }
 
+auto MenuBase::setFilePath(const std::string& path) -> void {
+    state.filePath = path;
+}
+
 auto MenuBase::setText(const std::string& text) -> void {
     state.text = text;
     p.setText(text);

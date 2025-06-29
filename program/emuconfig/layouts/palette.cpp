@@ -254,7 +254,7 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
         
         if ( !paletteManager->save() )
-            statusHandler->setMessage(trans->get("file_creation_error", { {"%path%", paletteManager->path()}} ));
+            statusHandler->setMessage(trans->get("file_creation_error", { {"%path%", paletteManager->path()}} ), 3, true);
         else {
             emuThread->lock();
             statusHandler->setMessage(trans->get("file_creation_success", {{"%path%", paletteManager->path()}} ));
