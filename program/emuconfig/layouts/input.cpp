@@ -165,7 +165,7 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
                 emuThread->lock();
                 manager->toggleAutofire(mapping);
 
-                statusHandler->setMessage(trans->get(manager->isAutofireActive(mapping) ? "Autofire active" : "Autofire inactive"), 5);
+                statusHandler->setMessage(trans->get(manager->isAutofireActive(mapping) ? "Autofire active" : "Autofire inactive"), false, true, 4);
 
                 this->updatedAutofireButtonHints(mapping, toggleButton);
 

@@ -154,7 +154,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 } else {
                     std::string errorText;
                     if (!audioManager->record.start(activeEmulator, errorText)) {
-                        statusHandler->setMessage(errorText, 3, true);
+                        statusHandler->setMessage(errorText, true);
                     }
                 }
             }
@@ -183,7 +183,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (emuView && emuView->miscLayout)
                 emuView->miscLayout->setRunAhead( pos );
 
-            statusHandler->setMessage( trans->get( "runahead input latency", {{"%count%", std::to_string(pos) }} ) );  
+            statusHandler->setMessage( trans->get( "runahead input latency", {{"%count%", std::to_string(pos) }} ), false, true );
 
         } break;
             
@@ -222,7 +222,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (emuView && emuView->miscLayout)
                 emuView->miscLayout->setRunAheadPerformance( state );
             
-            statusHandler->setMessage( trans->get( !state ? "runahead accuracy mode" : "runahead performance mode" ) );  
+            statusHandler->setMessage( trans->get( !state ? "runahead accuracy mode" : "runahead performance mode" ), false, true );
         } break;
 
         case Hotkey::Id::SwapJoypadsPort2: {
@@ -406,7 +406,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             _str += GUIKIT::String::convertDoubleToString(monitorFrequency, 3 );
             emuThread->lock();
             if (statusHandler)
-                statusHandler->setMessage(_str, 5);
+                statusHandler->setMessage(_str, false, true, 4);
         } break;
         case Hotkey::Id::ThreadedRenderer: {
             auto _settings = program->getSettings( activeEmulator );
@@ -430,9 +430,9 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (statusHandler) {
                 switch (tr) {
                     default:
-                    case 0: statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA("disabled"), 3 ); break;
-                    case 1: statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA("enabled"), 3 ); break;
-                    case 2: statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA("auto"), 3 ); break;
+                    case 0: statusHandler->setMessage( trans->getA("Threaded Renderer") + " " + trans->getA("disabled"), false, true ); break;
+                    case 1: statusHandler->setMessage(trans->getA("Threaded Renderer") + " " + trans->getA("enabled"), false, true); break;
+                    case 2: statusHandler->setMessage(trans->getA("Threaded Renderer") + " " + trans->getA("auto"), false, true ); break;
                 }
             }
 
@@ -466,7 +466,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 std::string txt = "RGB";
                 if (_mode == (unsigned)VideoManager::CrtMode::Cpu) txt = "S/C-Video CPU";
                 else if (_mode == (unsigned)VideoManager::CrtMode::Gpu) txt = "Shader GPU";
-                statusHandler->setMessage( trans->getA(txt), 3 );
+                statusHandler->setMessage( trans->getA(txt), false, true );
             }
 
         } break;
@@ -548,7 +548,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 program->setVideoDimension(activeEmulator);
                 view->updateViewport();
             }
-            statusHandler->setMessage( program->getScaleMessage(activeEmulator, aspectMode) );
+            statusHandler->setMessage( program->getScaleMessage(activeEmulator, aspectMode), false, true );
         } break;
 
         case Hotkey::Id::ToggleBorder:
@@ -596,7 +596,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 emuThread->lock();
                 program->updateCrop(activeEmulator);
             }
-            statusHandler->setMessage( program->getCropMessage(activeEmulator, (CropType)cropType) );
+            statusHandler->setMessage(program->getCropMessage(activeEmulator, (CropType)cropType), false, true);
         } break;
 
         case Hotkey::ResetTapeCounter:
@@ -618,7 +618,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             unsigned driveCount = activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives( media->group ) );
 
             if (driveCount == 0) {
-                statusHandler->setMessage( trans->get("tape_disconnect"), 3, true );
+                statusHandler->setMessage( trans->get("tape_disconnect"), true );
                 break;
             }                        
 
@@ -626,18 +626,18 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
             if (id == Hotkey::PlayTape) {
                 activeEmulator->controlTape( media, TapeMode::Play );
-                statusHandler->setMessage( trans->get("tape_play_state") );
+                statusHandler->setMessage(trans->get("tape_play_state"), false, true);
                 view->updateTapeIcons( TapeMode::Play );
             } else if (id == Hotkey::StopTape) {
                 activeEmulator->controlTape( media, TapeMode::Stop );
-                statusHandler->setMessage( trans->get("tape_stop_state") );
+                statusHandler->setMessage(trans->get("tape_stop_state"), false, true);
                 view->updateTapeIcons( TapeMode::Stop );
             } else if (id == Hotkey::RecordTape) {              
                 activeEmulator->controlTape( media, TapeMode::Record );
-                statusHandler->setMessage( trans->get("tape_record_state") );						
+                statusHandler->setMessage(trans->get("tape_record_state"), false, true);
                 view->updateTapeIcons( TapeMode::Record );
                 if (activeEmulator->isWriteProtected( media ))
-                    statusHandler->setMessage( trans->get("tape_record_wp_state"), 3, true );						
+                    statusHandler->setMessage( trans->get("tape_record_wp_state"), true );						
 
             } else if (id == Hotkey::ForwardTape) {
                 activeEmulator->controlTape( media, TapeMode::Forward );
@@ -649,7 +649,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 view->updateTapeIcons( TapeMode::Rewind );
             } else if (id == Hotkey::ResetTapeCounter) {
                 activeEmulator->controlTape( media, TapeMode::ResetCounter );
-                statusHandler->setMessage( trans->get("tape_counter_reset") );
+                statusHandler->setMessage(trans->get("tape_counter_reset"), false, true);
             } 															
             break;
         }
@@ -674,7 +674,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 }
             }
 
-            statusHandler->setMessage( trans->get( state ? "digiboost_on" : "digiboost_off" ) );
+            statusHandler->setMessage(trans->get(state ? "digiboost_on" : "digiboost_off"), false, true);
         } break;
         case Hotkey::Id::SwapSid: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
@@ -702,7 +702,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 emuView->audioLayout->settingsLayout.updateWidget( C64Interface::ModelIdSid );
             }
 
-            statusHandler->setMessage( trans->get( val == 1 ? "sid_6581_on" : "sid_8580_on" ) );
+            statusHandler->setMessage(trans->get(val == 1 ? "sid_6581_on" : "sid_8580_on"), false, true);
         } break;
         case Hotkey::Id::ToggleSidFilter: {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
@@ -723,7 +723,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                     activeEmulator->setModelValue( model->id, state );
                 }
             }
-            statusHandler->setMessage( trans->get( state ? "sid_filter_on" : "sid_filter_off" ) );
+            statusHandler->setMessage(trans->get(state ? "sid_filter_on" : "sid_filter_off"), false, true);
         } break;
         case Hotkey::AdjustBiasUp:
         case Hotkey::AdjustBiasDown: {
@@ -751,7 +751,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                     activeEmulator->setModelValue( model->id, state );
                 }
             }
-            statusHandler->setMessage( trans->get( "sid_bias_change", {{"%state%", std::to_string(state) }} ) );                    
+            statusHandler->setMessage(trans->get("sid_bias_change", { {"%state%", std::to_string(state) } }), false, true);
         } break;
         
         case Hotkey::Id::FloppyAccess: {
@@ -766,7 +766,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 break;
 
             settings->set<unsigned>( "access_floppy", media->id, false);
-            statusHandler->setMessage( trans->get("access_floppy", {{"%drive%", media->name}}) );								                    
+            statusHandler->setMessage(trans->get("access_floppy", { {"%drive%", media->name} }), false, true);
             break;
         }
 
@@ -839,7 +839,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
             manager->toggleAutofire(mapping);
 
-            statusHandler->setMessage( trans->get( manager->isAutofireActive(mapping) ? "Autofire active" : "Autofire inactive" ), 5 );
+            statusHandler->setMessage(trans->get(manager->isAutofireActive(mapping) ? "Autofire active" : "Autofire inactive"), false, true, 4);
 
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             if (emuView && emuView->inputLayout)

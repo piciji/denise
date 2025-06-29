@@ -364,7 +364,7 @@ auto States::changeSlot( bool down ) -> void {
 auto States::statusMessage( std::string langKey, std::string replacer ) -> void {
     statusHandler->setMessage(trans->get(langKey,{
         {"%ident%", replacer}
-    }), 4, GUIKIT::String::foundSubStr(langKey, "error") || GUIKIT::String::foundSubStr(langKey, "incompatible") );
+    }), GUIKIT::String::foundSubStr(langKey, "error") || GUIKIT::String::foundSubStr(langKey, "incompatible"), true, 4 );
 }
 
 auto States::generateAutoPath(bool createFolder) -> std::string {

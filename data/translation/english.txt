@@ -898,3 +898,5 @@ Dark = Dark
 Light = Light
 restart for changes = The changes will take effect the next time you restart the App.
 changing emulator = when changing emulator
+only urgent messages = only urgent messages
+only urgent messages tooltip = Only warning or urgent messages are displayed.

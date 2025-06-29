@@ -898,3 +898,5 @@ Dark = Dunkel
 Light = Hell
 restart for changes = Die Änderungen werden beim nächsten Neustart der App wirksam.
 changing emulator = beim Emulator Wechsel
+only urgent messages = nur dringende Nachrichten
+only urgent messages tooltip = Es werden nur Warnmeldungen oder dringende Meldungen angezeigt.

@@ -568,7 +568,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         emuThread->lock();
         program->power( emulator );
         if (statusHandler && emulator->isExpansionUnsupported())
-            statusHandler->setMessage(trans->getA("unsupported cartridge"), 3, true);
+            statusHandler->setMessage(trans->getA("unsupported cartridge"), true);
         emuThread->unlock();
         
         view->setFocused( 100 );

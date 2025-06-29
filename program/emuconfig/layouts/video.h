@@ -222,6 +222,7 @@ struct VideoScreenTextLayout : GUIKIT::VerticalLayout {
             GUIKIT::RadioBox normal;
             GUIKIT::RadioBox warning;
             GUIKIT::Widget spacer;
+            GUIKIT::CheckBox onlyUrgentWarnings;
             GUIKIT::Button reset;
 
             Type();

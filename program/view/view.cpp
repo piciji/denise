@@ -1628,7 +1628,7 @@ auto View::buildMenu() -> void {
                     if (emuView && emuView->mediaLayout)
                         emuView->mediaLayout->updateListing( media );
 
-                    statusHandler->setMessage(trans->getA("save file deleted"), 3, true);
+                    statusHandler->setMessage(trans->getA("save file deleted"), true);
                 }
             }
             emuThread->unlock();

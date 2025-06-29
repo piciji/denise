@@ -233,7 +233,7 @@ auto Autoloader::postProcessing() -> void {
         if (!useExpansion)
             program->removeExpansion();
         else if (statusHandler && activeEmulator->isExpansionUnsupported())
-            statusHandler->setMessage(trans->getA("unsupported cartridge"), 3, true);
+            statusHandler->setMessage(trans->getA("unsupported cartridge"), true);
 
 
         bool trapsWithSpeeder = trapped && mediaGroup->isDisk() && settings->get<bool>("autostart_speeder_traps", false);

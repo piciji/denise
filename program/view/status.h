@@ -54,10 +54,11 @@ struct StatusHandler {
     auto hasUpdates() -> bool { return !!control; }
 
     auto init(GUIKIT::StatusBar* statusBar) -> void;
+    auto reset() -> void;
     auto clear() -> void;
     auto update() -> void;
     auto updateDeviceState(Emulator::Interface::Media* media, bool write, unsigned position, uint8_t LED, bool motorOff) -> void;
-    auto setMessage(const std::string& txt, unsigned duration = 3, bool warn = false) -> void;
+    auto setMessage(const std::string& txt, bool warn = false, bool force = false, unsigned duration = 3) -> void;
     auto updateFPS( bool state ) -> void;
     auto updateVolume( bool state ) -> void;
     auto updateAudioRecord( bool state ) -> void;
@@ -80,6 +81,7 @@ struct StatusHandler {
     auto enableLEDs() -> void;
     auto enableLED(Emulator::Interface::LedId ledId, bool toggle = false) -> void;
     auto getLEDImage(LEDState& ledState) -> GUIKIT::Image*;
+    auto setMessageLevel() -> void;
 
     GUIKIT::StatusBar* statusBar = nullptr;
     uint16_t control;
@@ -90,6 +92,7 @@ struct StatusHandler {
     bool showFPS = false;
     bool showFPSScreen = false;
     bool showVolume = false;
+    bool showOnlyUrgentMessages = false;
 
     struct {
         std::string txt = "";

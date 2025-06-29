@@ -374,10 +374,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
 		globalSettings->set("last_used_emu", activeEmulator->ident);
 
-        statusHandler->resetFrameCounter();
-        statusHandler->setFpsRefresh();
-	    statusHandler->setVolumeSlider(activeEmulator);
-        statusHandler->enableLEDs();
+        statusHandler->reset();
 
         view->updateSpeedLabels();
 
@@ -748,7 +745,7 @@ auto Program::jam( Emulator::Interface::Media* media ) -> void {
         out = "CPU " + media->name + " Jam";
 
     emuThread->lockStatus();
-    statusHandler->setMessage( out, 4, true );
+    statusHandler->setMessage( out, true );
     emuThread->unlockStatus();
 }
 

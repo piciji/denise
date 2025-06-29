@@ -55,7 +55,10 @@ auto StatusHandler::updateDeviceState( Emulator::Interface::Media* media, bool w
     deviceStates.push_back({media, write, position, _led, motorOff, _inputsPerFrame, true});
 }
 
-auto StatusHandler::setMessage(const std::string& txt, unsigned duration, bool warn ) -> void {
+auto StatusHandler::setMessage(const std::string& txt, bool warn, bool force, unsigned duration) -> void {
+    if (!force && showOnlyUrgentMessages && !warn)
+        return;
+
     if (txt.empty())
         duration = 0;
 
@@ -73,7 +76,7 @@ auto StatusHandler::clear() -> void {
     statusBar->update();
     message.clear();
     clearUpdates();
-    setMessage("");
+    setMessage("", false, true);
 }
 
 auto StatusHandler::resetFrameCounter() -> void {
@@ -252,7 +255,7 @@ auto StatusHandler::setExpansionClick() -> void {
         emuThread->lock();
         bool state = activeEmulator->getExpansionJumper(expansion->mediaGroup->selected, 0);
         activeEmulator->setExpansionJumper(expansion->mediaGroup->selected, 0, !state);
-        setMessage( trans->get( state ? "SuperCPU 1Mhz" : "SuperCPU turbo"));
+        setMessage( trans->get( state ? "SuperCPU 1Mhz" : "SuperCPU turbo"), false, true);
 
         auto& jumper = expansion->jumpers[0];
         auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
@@ -421,6 +424,19 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->updateSeparator( 24, true);
     statusBar->updateSeparator( 26, true);
     statusBar->updateSeparator( 28, true);
+}
+
+auto StatusHandler::reset() -> void {
+    resetFrameCounter();
+    setFpsRefresh();
+    setVolumeSlider(activeEmulator);
+    enableLEDs();
+    setMessageLevel();
+}
+
+auto StatusHandler::setMessageLevel() -> void {
+    auto settings = program->getSettings(activeEmulator);
+    showOnlyUrgentMessages = settings->get<bool>("only_urgent_messages", false);
 }
 
 auto StatusHandler::updateDiskDriveSpace() -> void {

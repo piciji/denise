@@ -780,7 +780,7 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     if (!mediaGroup->isExpansion())
         program->removeExpansion();
     else if (statusHandler && activeEmulator->isExpansionUnsupported())
-        statusHandler->setMessage(trans->getA("unsupported cartridge"), 3, true);
+        statusHandler->setMessage(trans->getA("unsupported cartridge"), true);
 
     bool forceStandardKernal = false;
     if (media->group->isTape()) {
@@ -1107,7 +1107,7 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
     if (!file || !file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE) ||
         (file->archiveData(fSetting->id) == nullptr)
             ) {
-        statusHandler->setMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), 2, true);
+        statusHandler->setMessage(trans->get("file_open_error", {{ "%path%", fSetting->file }}), true);
         return nullptr;
     }
 

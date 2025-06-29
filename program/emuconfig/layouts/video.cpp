@@ -287,6 +287,7 @@ VideoScreenTextLayout::ColorBoxLayout::Type::Type() {
     append(normal, {0u, 0u}, 10);
     append(warning, {0u, 0u});
     append(spacer, {~0u, 0u});
+    append(onlyUrgentWarnings, { 0u, 0u }, 10);
     append(reset, {0u, 0u});
 
     setAlignment(0.5);
@@ -1207,6 +1208,12 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         updateScreenText(true);
     };
 
+    layScreenText.colorBox.type.onlyUrgentWarnings.onToggle = [this](bool checked) {
+        _settings->set<bool>("only_urgent_messages", checked);
+        if (statusHandler && (emulator == activeEmulator))
+            statusHandler->setMessageLevel();
+    };
+
     layScreenText.colorBox.type.reset.onActivate = [this]() {
         _settings->remove("screen_text_color");
         _settings->remove("screen_text_bgcolor");
@@ -1543,7 +1550,7 @@ auto VideoLayout::updateScreenText(bool keepFontPath) -> void {
 
     program->updateOnScreenText(keepFontPath);
     if (statusHandler)
-        statusHandler->setMessage( trans->getA("changes applied"), 4, layScreenText.colorBox.type.warning.checked() );
+        statusHandler->setMessage( trans->getA("changes applied"), layScreenText.colorBox.type.warning.checked(), true, 4 );
 }
 
 auto VideoLayout::countFloatingPoint(ShaderPreset::Param& param, int& places, int& decimalPlaces) -> void {
@@ -2148,6 +2155,9 @@ auto VideoLayout::translate() -> void {
 
     SliderLayout::scale({&layScreenText.options.textPadding.paddingHorizontal, &layScreenText.options.textMargin.marginHorizontal}, "99.9 %");
     SliderLayout::scale({&layScreenText.options.textPadding.paddingVertical, &layScreenText.options.textMargin.marginVertical}, "99.9 %");
+
+    layScreenText.colorBox.type.onlyUrgentWarnings.setText(trans->getA("only urgent messages"));
+    layScreenText.colorBox.type.onlyUrgentWarnings.setTooltip(trans->getA("only urgent messages tooltip"));
 }
 
 auto VideoLayout::sliderIdent() -> std::string {
@@ -2265,6 +2275,8 @@ auto VideoLayout::loadSettings(bool init) -> void {
     layScreenText.options.textPadding.paddingVertical.value.setEnabled(paddingSeparate);
     layScreenText.options.textMargin.marginVertical.slider.setEnabled(marginSeparate);
     layScreenText.options.textMargin.marginVertical.value.setEnabled(marginSeparate);
+
+    layScreenText.colorBox.type.onlyUrgentWarnings.setChecked(_settings->get<bool>("only_urgent_messages", false));
 }
 
 auto VideoLayout::prepareColBox() -> void {

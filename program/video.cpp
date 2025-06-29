@@ -67,11 +67,10 @@ auto Program::initVideo(bool driverChange) -> void {
         if (statusHandler) {
             emuThread->lockStatus();
             if (pass < 0) {
-                statusHandler->setMessage(trans->get(hasErrors ? "shader has errors" : "shader activated"),
-                    3, hasErrors);
+                statusHandler->setMessage(trans->get(hasErrors ? "shader has errors" : "shader activated"), hasErrors);
             } else {
                 statusHandler->setMessage(trans->get(hasErrors ? "pass error" : "pass success",
-                    {{"%pass%", std::to_string(pass)}}), 3, hasErrors);
+                    {{"%pass%", std::to_string(pass)}}), hasErrors);
             }
             emuThread->unlockStatus();
         }
