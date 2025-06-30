@@ -70,13 +70,16 @@ auto Autoloader::postProcessing() -> void {
     }
         
     std::sort(ddControl.mediaGroups.begin(), ddControl.mediaGroups.end(), [ ](const Emulator::Interface::MediaGroup* lhs, const Emulator::Interface::MediaGroup* rhs) {
+        auto getPrio = [](const Emulator::Interface::MediaGroup* group) -> int {
+            if (group->isProgram()) return 0;
+            if (group->isExpansion()) return 1;
+            if (group->isDisk()) return 2;
+            if (group->isTape()) return 3;
+            if (group->isHardDisk()) return 4;
+            return 5;
+            };
 
-        if (lhs->isProgram()) return true;
-        if (rhs->isProgram()) return false;
-        if (lhs->isExpansion()) return true;
-        if (rhs->isExpansion()) return false;
-        if (lhs->isDisk()) return true;
-        return false;
+        return getPrio(lhs) < getPrio(rhs);
     });	
 
     auto mediaGroup = ddControl.mediaGroups[0];
@@ -527,7 +530,7 @@ auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interfa
     bool halfTrackMode = dynamic_cast<LIBC64::Interface*>(emulator);
     if (updateStatus && statusHandler) {
         for (auto& media: mediaGroup->media) {
-            if (media.id >= counter) {
+            if ((media.id >= counter) && (media.id < requestedCount)) {
                 statusHandler->updateDeviceState(&media, false, halfTrackMode ? 0x8000 : 0, 0, true);
             }
         }
