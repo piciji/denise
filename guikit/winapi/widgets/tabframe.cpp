@@ -123,7 +123,7 @@ auto CALLBACK pTabFrame::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             if (LOWORD(wparam) == WM_CREATE) {
                 if (pApplication::useDark) {
                     auto hUpDown = reinterpret_cast<HWND>(lparam);
-                    SetWindowTheme(hUpDown, L"Explorer", nullptr);
+                    SetWindowTheme(hUpDown, L"DarkMode_Explorer", nullptr);
                 }
             }
             break;
