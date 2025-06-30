@@ -500,7 +500,7 @@ struct pComboButton : pWidget {
     auto onChange() -> void;
     auto setDroppable(bool droppable) -> void;
 
-    auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> void;
+    auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> bool;
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;

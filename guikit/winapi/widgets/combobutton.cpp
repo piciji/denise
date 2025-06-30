@@ -23,7 +23,7 @@ auto pComboButton::append(std::string text, const std::string& _font) -> void {
 
 auto pComboButton::minimumSize() -> Size {
 
-	static Size containerSize = pWidget::getScaledContainerSize( {24, 8} );	
+	static Size containerSize = pWidget::getScaledContainerSize( { pApplication::useDark ? 26u : 24u, pApplication::useDark ? 6u : 8u } );
 	
     if (calculatedMinimumSize.updated)
         return calculatedMinimumSize.minimumSize; 
@@ -40,7 +40,7 @@ auto pComboButton::minimumSize() -> Size {
     calculatedMinimumSize.updated = true;
     
     calculatedMinimumSize.minimumSize = {maximumWidth + containerSize.width,
-											pFont::size(hfont, " ").height + 8}; // don't use scaled height
+											pFont::size(hfont, " ").height + (pApplication::useDark ? 6 : 8)}; // don't use scaled height
 	
     return calculatedMinimumSize.minimumSize;
 }
@@ -75,23 +75,13 @@ auto pComboButton::setGeometry(Geometry geometry) -> void {
     if(!hwnd)
         return;
     
-    int _y = geometry.y;
-    int adjust = 0;
+    pWidget::setGeometry({geometry.x, geometry.y, geometry.width, 1});
+    //RECT rc;
+  //  GetWindowRect(hwnd, &rc);
+ //   unsigned _height = geometry.height - ((rc.bottom - rc.top) - 
+   //     SendMessage(hwnd, CB_GETITEMHEIGHT, (WPARAM), 0));
     
-    if (comboButton.hintMultiFonts) {
-        adjust = -1;
-    } else if (pApplication::useDark) {
-        geometry.width += 2;
-        geometry.height -= 1;
-    }
-
-    pWidget::setGeometry({geometry.x, _y, geometry.width, 1});
-    RECT rc;
-    GetWindowRect(hwnd, &rc);
-    unsigned _height = geometry.height - ((rc.bottom - rc.top) - 
-        SendMessage(hwnd, CB_GETITEMHEIGHT, (WPARAM)  + adjust, 0));
-    
-    SendMessage(hwnd, CB_SETITEMHEIGHT, (WPARAM)-1, _height);
+    SendMessage(hwnd, CB_SETITEMHEIGHT, (WPARAM)-1, geometry.height - 6);
 }
 
 auto pComboButton::setSelection(unsigned selection) -> void {
@@ -165,7 +155,7 @@ auto CALLBACK pComboButton::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, 
     //return pApplication::wndProc(comboButton->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
-auto pComboButton::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
+auto pComboButton::measureItem(LPMEASUREITEMSTRUCT lpmis) -> bool {
     Size _size;
     int maxHeight = 0;
 
@@ -184,11 +174,12 @@ auto pComboButton::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
 
     if (maxHeight) {
         lpmis->itemHeight = maxHeight;
-        return;
+        return true;
     }
 
-    _size = getMinimumSize();
-    lpmis->itemHeight = _size.height;
+    return false;
+//    _size = getMinimumSize();
+//    lpmis->itemHeight = _size.height - 6;
 }
 
 auto pComboButton::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {

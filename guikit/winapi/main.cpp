@@ -386,8 +386,8 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                 unsigned id = LOWORD(wparam);
                 base = Base::find(id);
                 if (dynamic_cast<ComboButton*>(base)) {
-                    ((ComboButton*)base)->p.measureItem(lpmis);
-                    return true;
+                    if(((ComboButton*)base)->p.measureItem(lpmis))
+                        return true;
                 }
             }
 			break;
