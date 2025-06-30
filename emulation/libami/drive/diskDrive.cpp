@@ -397,11 +397,22 @@ auto DiskDrive::readCiaPortA() -> uint8_t {
     if (selected) {
         auto speed = getMotorSpeed();
 
-        if ((!motor && (speed == 0)) || (motor && (speed < 2))) {
-            if (getId() & (1 << (31 - idPos))) out &= ~0x20;
-        } else if (inserted) {
-            if ((!motor && (speed > 98)) || (motor && (speed == 100))) out &= ~0x20;
+        // todo: check dskready after inserting a disk while motor is already running
+        if (motor) {
+            if (inserted && (speed >= 2))
+                out &= ~0x20;
+        } else {
+            if (getId() & (1 << (31 - idPos)))
+                out &= ~0x20;
+            else if (inserted && (speed > 98))
+                out &= ~0x20;
         }
+
+        // if ((!motor && (speed == 0)) || (motor && (speed < 2))) {
+        //     if (getId() & (1 << (31 - idPos))) out &= ~0x20;
+        // } else if (inserted) {
+        //     if ((!motor && (speed > 98)) || (motor && (speed == 100))) out &= ~0x20;
+        // }
 
         if (cylinder == 0) out &= ~0x10;
         if (structure.writeProtected) out &= ~8;
