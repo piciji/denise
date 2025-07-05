@@ -34,8 +34,9 @@ struct Agnus {
     enum { Unmapped, CHIP_MEM, SLOW_MEM, KICK_ROM, EXT_ROM, WOM,
         MMIO_CUSTOM, MMIO_CIA, MMIO_RTC, AUTO_CONF, FAST_MEM, EXPANSION };
 
-    enum { EVENT_KBD, EVENT_ONE_CYCLE_DELAY, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_AUDIO_STATE,
-            EVENT_HTOTAL, EVENT_SERIAL, EVENT_INTREQ, EVENT_FLOPPY, EVENT_CHANNELS };
+    enum { EVENT_ONE_CYCLE_DELAY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_INTREQ, EVENT_RARELY,
+        EVENT_KBD, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_SERIAL, EVENT_FLOPPY, EVENT_BLANKEN,
+        EVENT_CHANNELS };
 
     enum { BLT_INIT = 0, DMACON = 1,
         PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
@@ -49,7 +50,8 @@ struct Agnus {
         AUD_PER0, AUD_PER1, AUD_PER2, AUD_PER3,
         AUD_DAT0, AUD_DAT1, AUD_DAT2, AUD_DAT3,
         DMACON_3, SER_DAT, DMACON_1, DIW_START, DIW_STOP, BLT_MODA, BLT_MODB, BLT_MODC, BLT_MODD,
-        VPOSW, VHPOSW, UPD_V_DIW, UPD_DENISE_VHPOS, STROBE, END_BLT_CONFLICT
+        VPOSW, VHPOSW, UPD_V_DIW, UPD_DENISE_VHPOS, STROBE, END_BLT_CONFLICT, BPL_CON3, DIW_HIGH,
+        STROBE2,
     };
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8, ACT_IPLCOUNTER = 0x10 };
@@ -123,6 +125,8 @@ struct Agnus {
     bool sprInhibited;
     uint8_t hsStrt;
     uint8_t hsStop;
+    uint8_t hBStrt;
+    uint8_t hBStop;
 
     uint16_t lines;
     uint16_t vTotal;
@@ -442,8 +446,9 @@ struct Agnus {
     auto endHblank() -> void;
     auto startHsync() -> void;
 
-    auto switchToHiresMidframe() -> void;
-    inline auto doubleLoresPixel(uint16_t* _ptr, unsigned _xStart) -> void;
+    template<bool quadruple> auto doubleResMidframe(bool fromHires) -> void;
+    inline auto doublePixel(uint16_t* _ptr, unsigned _xStart) -> void;
+    inline auto quadruplePixel(uint16_t* _ptr, unsigned _xStart) -> void;
 
     auto updateCropTop() -> void;
     auto updateCropBottom() -> void;
@@ -459,6 +464,9 @@ struct Agnus {
     auto isSlowMem(uint32_t addr) -> bool;
     auto isFastMem(uint32_t addr) -> bool;
     auto isMem(uint32_t addr) -> bool;
+    auto csyncPolTrue(bool state) -> bool;
+
+    auto blanken() -> void;
 
     inline auto updateDdfEnableCache() -> void;
 };

@@ -9,13 +9,15 @@
 #define VARBEAMEN 0x80
 #define BEAM_PAL 0x20
 #define VARCSYEN 0x10
+#define BLANKEN 8
+#define CSYTRUE 4
 
 #define FREQUENCY_PAL   28375160
 #define FREQUENCY_NTSC  28636360
 
 #define LINE_MAX_WIDTH 384
 #define LINE_RENDER_OFFSET 5 // needed to avoid costly sanity checking for CRT emulation later on
-#define LINE_BUFFER_WIDTH 1024
+#define LINE_BUFFER_WIDTH (2048)
 #define LINE_BUFFER_HEIGHT 600
 #define LINE_CROP_TEST 150
 //#define LOG_DMA_USAGE
@@ -171,6 +173,11 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     vBStop = 0;
     hTotal = 0xff;
     hTotalChanged = false;
+
+    hsStrt = 0;
+    hsStop = 0;
+    hBStrt = 0;
+    hBStop = 0;
 
     ntsc = system->ntsc;
     beamCon = (ntsc || !ecsAndHigher()) ? 0 : BEAM_PAL;
@@ -402,7 +409,7 @@ auto Agnus::updateVCounter() -> void {
 template<uint8_t slot> inline auto Agnus::refreshCycle() -> void {
     busUsage = BUS_USAGE_REFRESH;
     constexpr bool firstStrobe = slot == 0;
-    bool secondStrobe = slot == 1 && ecsAndHigher() && lol;
+    bool secondStrobe = slot == 1 && lol;
 
     // For AGA chipset, DRAM use internal refresh counter.
     // AGA chipset only triggers Refresh but can't control the refresh position.
@@ -428,7 +435,7 @@ template<uint8_t slot> inline auto Agnus::refreshCycle() -> void {
     if (firstStrobe) {
         addOneCycleEvent(STROBE);
     } else if (secondStrobe) {
-        // todo strlong (OCS denise ignores it)
+        addOneCycleEvent(STROBE2);
     }
 }
 
@@ -467,7 +474,7 @@ inline auto Agnus::dmaCycle() -> void {
         case 0xd:
             if (dmal & 3)
                 diskDma(1, dmal & 2);
-            bplQueue = 0; // hsync start
+            bplQueue = 0;
             dmal >>= 2;
             if (hardDrivesBusy) // at least one
                 checkHardDrives();
@@ -522,7 +529,10 @@ inline auto Agnus::dmaCycle() -> void {
         case 0x21: if (!vBlank) spriteControl<2, false>(); break;
         case 0x23: if (!vBlank) spriteControl<3, true>(); break;
         case 0x24: // hsync end
-            if (ERSY == 0) cia2.tod(eClockCycle & 3);
+            if (ERSY == 0)
+                cia2.tod(eClockCycle & 3);
+            if (denise.extblanken && ecs() && ((beamCon & BLANKEN) == 0))
+                denise.csync(csyncPolTrue(vBlank));
             break;
         case 0x25: if (!vBlank) spriteControl<3, false>(); break;
         case 0x27: if (!vBlank) spriteControl<4, true>(); break;
@@ -610,6 +620,37 @@ inline auto Agnus::dmaCycle() -> void {
         cia1.clock();
         cia2.clock();
     }
+}
+
+auto Agnus::blanken() -> void {
+    int delayStrt, delayStop;
+
+    if (beamCon & VARCSYEN) {
+        if (hPos == hsStop) denise.csync(csyncPolTrue(false));
+        else if (hPos == hsStrt) denise.csync(csyncPolTrue(true));
+
+        delayStop = hsStop - hPos;
+        if (delayStop <= 0)
+            delayStop = ((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol)) - hPos + hsStop;
+
+        delayStrt = hsStrt - hPos;
+        if (delayStrt <= 0)
+            delayStrt = ((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol)) - hPos + hsStrt;
+
+    } else {
+        if (hPos == hBStop) denise.csync(csyncPolTrue(false));
+        else if (hPos == hBStrt) denise.csync(csyncPolTrue(true));
+
+        delayStop = hBStop - hPos;
+        if (delayStop <= 0)
+            delayStop = ((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol)) - hPos + hBStop;
+
+        delayStrt = hBStrt - hPos;
+        if (delayStrt <= 0)
+            delayStrt = ((beamCon & VARBEAMEN) ? (hTotal + lol) : (0xe2 + lol)) - hPos + hBStrt;
+    }
+
+    updateEvent<EVENT_BLANKEN>(delayStop <= delayStrt ? delayStop : delayStrt);
 }
 
 auto Agnus::POSR(bool vhpos) -> uint16_t {
@@ -938,6 +979,10 @@ auto Agnus::checkHardDrives() -> void {
         hardDrivesBusy |= hardDrive.process();
 }
 
+inline auto Agnus::csyncPolTrue(bool state) -> bool {
+    return (beamCon & CSYTRUE) ? !state : state;
+}
+
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,true,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,true,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;
@@ -1018,5 +1063,8 @@ template auto Agnus::allocateCopper<true>() -> bool;
 
 template auto Agnus::canCopperUseBus<false>() -> bool;
 template auto Agnus::canCopperUseBus<true>() -> bool;
+
+template auto Agnus::doubleResMidframe<false>(bool fromHires) -> void;
+template auto Agnus::doubleResMidframe<true>(bool fromHires) -> void;
 
 }

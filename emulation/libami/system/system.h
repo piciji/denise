@@ -36,7 +36,6 @@ struct System {
     HardDrive hardDrives[4];
     bool ntsc;
     bool firmwareChanged;
-    bool fakeECSDenise = false;
     bool asyncHDDAccess = false;
 
     Emulator::Crop<uint16_t> crop;

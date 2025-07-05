@@ -33,7 +33,14 @@ auto Agnus::startHblank() -> void {
         if (vBlankOffset < lineVCounter)
             lineVCounter -= vBlankOffset;
         
-        int width = denise.hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
+        int width;
+        if(denise.frameMode == Denise::SHRES_FRAME)
+            width = LINE_MAX_WIDTH << 2;
+        else if (denise.frameMode == Denise::HIRES_FRAME)
+            width = LINE_MAX_WIDTH << 1;
+        else
+            width = LINE_MAX_WIDTH;
+
         sanitizeCrop(width, lineVCounter);
 
 		if (laceFrame & 0x80) {
@@ -49,16 +56,20 @@ auto Agnus::startHblank() -> void {
         if (paula.ledChange & 0x80)
             paula.informPowerLED(false);
 
+        uint8_t _res = (denise.frameMode == Denise::SHRES_FRAME) ? 8 : (denise.frameMode == Denise::HIRES_FRAME ? 4 : 0);
+
         paula.sampleUpdate();
         system->videoRefresh(frameBuffer + (vBlankOffset * LINE_BUFFER_WIDTH) + LINE_RENDER_OFFSET, width, lineVCounter,
-                             LINE_BUFFER_WIDTH - width, laceFrame | (denise.hiresFrame ? 4 : 0));
+            LINE_BUFFER_WIDTH - width, laceFrame | _res);
 
         lineVCounter = 0;
         vBlankOffset = 0;
         secureRA = system->runAhead.pos == 1;
     } else if (!lineCallback.called && (lineVCounter >= lineCallback.line)) {
         denise.process();
-        system->videoMidScreenCallback(laceFrame | (denise.hiresFrame ? 4 : 0) );
+
+        uint8_t _res = (denise.frameMode == Denise::SHRES_FRAME) ? 8 : (denise.frameMode == Denise::HIRES_FRAME ? 4 : 0);
+        system->videoMidScreenCallback(laceFrame | _res);
         lineCallback.called = true;
     }
 
@@ -97,6 +108,11 @@ auto Agnus::startHsync() -> void {
         if (system->isProcessFrame())
             observeFrameDuration();
     }
+
+    if (denise.extblanken && ecs()) {
+        if ((beamCon & BLANKEN) == 0)
+            denise.csync(csyncPolTrue(true));
+    }
 }
 
 auto Agnus::endHblank() -> void {
@@ -107,7 +123,11 @@ auto Agnus::endHblank() -> void {
         if (lineVCounter == 0) {
             crop.reset();
 
-            denise.hiresFrame = (laceMode & 3) ? true : denise.hires; // can switch to hires mid-frame
+            if (denise.isShres()) denise.frameMode = Denise::SHRES_FRAME;
+            else if (denise.isHires()) denise.frameMode = Denise::HIRES_FRAME;
+            else if (laceMode & 3) denise.frameMode = Denise::HIRES_FRAME;
+            else denise.frameMode = Denise::LORES_FRAME;
+
             // Denise doesn't need to know of interlace or vertical position.
             if (hTotalChanged) {
                 hTotalChanged = false;
@@ -157,7 +177,9 @@ auto Agnus::updateCropRight(int pos) -> void {
         return;
 
     unsigned diff = 0;
-    unsigned limit = denise.hiresFrame ? (LINE_MAX_WIDTH << 1) : LINE_MAX_WIDTH;
+    unsigned limit = LINE_MAX_WIDTH;
+    if (denise.frameMode == Denise::SHRES_FRAME) limit <<= 2;
+    else if (denise.frameMode == Denise::HIRES_FRAME) limit <<= 1;
 
     if (limit > pos)
         diff = limit - pos;
@@ -196,27 +218,50 @@ auto Agnus::sanitizeCrop(int width, int height) -> void {
     }
 }
 
-auto Agnus::switchToHiresMidframe() -> void {
+template<bool quadruple> auto Agnus::doubleResMidframe(bool fromHires) -> void {
     uint16_t* curLinePtr;
     unsigned xStart;
     int y = (laceFrame & 2) ? 1 : 0;
     int inc = (laceFrame & 3) ? 2 : 1;
 
+    unsigned _lineWidth = LINE_MAX_WIDTH;
+    if (fromHires)
+        _lineWidth <<= 1;
+
     for (; y < lineVCounter; y = y + inc ) {
         curLinePtr = frameBuffer + y * LINE_BUFFER_WIDTH + LINE_RENDER_OFFSET;
-        xStart = curLinePtr != denise.linePtr ? (LINE_MAX_WIDTH - 1) : (denise.linePos - 1);
+        xStart = curLinePtr != denise.linePtr ? (_lineWidth - 1) : (denise.linePos - 1);
 
-        doubleLoresPixel( curLinePtr, xStart );
+        if constexpr (quadruple)
+            quadruplePixel(curLinePtr, xStart);
+        else
+            doublePixel( curLinePtr, xStart );
     }
-    denise.linePos <<= 1;
+
+    if constexpr (quadruple)
+        denise.linePos <<= 2;
+    else
+        denise.linePos <<= 1;
 }
 
-inline auto Agnus::doubleLoresPixel(uint16_t* _ptr, unsigned _xStart) -> void {
+inline auto Agnus::doublePixel(uint16_t* _ptr, unsigned _xStart) -> void {
     uint16_t p;
     for (int _x = _xStart; _x >= 0; _x--) {
         p = *( _ptr + _x );
         *( _ptr + (_x * 2 + 1) ) = p;
         *( _ptr + (_x * 2) ) = p;
+    }
+}
+
+inline auto Agnus::quadruplePixel(uint16_t* _ptr, unsigned _xStart) -> void {
+    uint16_t p;
+    for (int _x = _xStart; _x >= 0; _x--) {
+        p = *(_ptr + _x);
+        
+        *(_ptr + (_x * 4 + 3)) = p;
+        *(_ptr + (_x * 4 + 2)) = p;
+        *(_ptr + (_x * 4 + 1)) = p;
+        *(_ptr + (_x * 4)) = p;
     }
 }
 

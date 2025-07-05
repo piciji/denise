@@ -27,14 +27,14 @@ namespace LIBAMI {
 #define UseBplHires6(c)  UseBpl6(c | BPL_HIRES)
 #define UseBplHires7(c)  UseBpl7(c | BPL_HIRES)
 
-#define UseBplSHires0(c)  UseBpl0(c | BPL_SHIRES)
-#define UseBplSHires1(c)  UseBpl1(c | BPL_SHIRES)
-#define UseBplSHires2(c)  UseBpl2(c | BPL_SHIRES)
-#define UseBplSHires3(c)  UseBpl3(c | BPL_SHIRES)
-#define UseBplSHires4(c)  UseBpl4(c | BPL_SHIRES)
-#define UseBplSHires5(c)  UseBpl5(c | BPL_SHIRES)
-#define UseBplSHires6(c)  UseBpl6(c | BPL_SHIRES)
-#define UseBplSHires7(c)  UseBpl7(c | BPL_SHIRES)
+#define UseBplSHres0(c)  UseBpl0(c | BPL_SHIRES)
+#define UseBplSHres1(c)  UseBpl1(c | BPL_SHIRES)
+#define UseBplSHres2(c)  UseBpl2(c | BPL_SHIRES)
+#define UseBplSHres3(c)  UseBpl3(c | BPL_SHIRES)
+#define UseBplSHres4(c)  UseBpl4(c | BPL_SHIRES)
+#define UseBplSHres5(c)  UseBpl5(c | BPL_SHIRES)
+#define UseBplSHres6(c)  UseBpl6(c | BPL_SHIRES)
+#define UseBplSHres7(c)  UseBpl7(c | BPL_SHIRES)
 
 #define UseBpl0Mod(c) UseBpl0(c | BPL_ADD_MOD)
 #define UseBpl1Mod(c) UseBpl1(c | BPL_ADD_MOD)
@@ -54,14 +54,14 @@ namespace LIBAMI {
 #define UseBplHires6Mod(c) UseBplHires6(c | BPL_ADD_MOD)
 #define UseBplHires7Mod(c) UseBplHires7(c | BPL_ADD_MOD)
 
-#define UseBplSHires0Mod(c) UseBplSHires0(c | BPL_ADD_MOD)
-#define UseBplSHires1Mod(c) UseBplSHires1(c | BPL_ADD_MOD)
-#define UseBplSHires2Mod(c) UseBplSHires2(c | BPL_ADD_MOD)
-#define UseBplSHires3Mod(c) UseBplSHires3(c | BPL_ADD_MOD)
-#define UseBplSHires4Mod(c) UseBplSHires4(c | BPL_ADD_MOD)
-#define UseBplSHires5Mod(c) UseBplSHires5(c | BPL_ADD_MOD)
-#define UseBplSHires6Mod(c) UseBplSHires6(c | BPL_ADD_MOD)
-#define UseBplSHires7Mod(c) UseBplSHires7(c | BPL_ADD_MOD)
+#define UseBplSHres0Mod(c) UseBplSHres0(c | BPL_ADD_MOD)
+#define UseBplSHres1Mod(c) UseBplSHres1(c | BPL_ADD_MOD)
+#define UseBplSHres2Mod(c) UseBplSHres2(c | BPL_ADD_MOD)
+#define UseBplSHres3Mod(c) UseBplSHres3(c | BPL_ADD_MOD)
+#define UseBplSHres4Mod(c) UseBplSHres4(c | BPL_ADD_MOD)
+#define UseBplSHres5Mod(c) UseBplSHres5(c | BPL_ADD_MOD)
+#define UseBplSHres6Mod(c) UseBplSHres6(c | BPL_ADD_MOD)
+#define UseBplSHres7Mod(c) UseBplSHres7(c | BPL_ADD_MOD)
 
 #define ALL_BPL(c) UseBpl0(c) UseBpl1(c) UseBpl2(c) UseBpl3(c) UseBpl4(c) UseBpl5(c) UseBpl6(c) UseBpl7(c)
 #define ALL_BPL_MOD(c) ALL_BPL(c | BPL_ADD_MOD)
@@ -122,11 +122,11 @@ template<bool onlyProgressQueue> inline auto Agnus::fetchPlanes() -> void {
 
             UseBpl1(7) UseBpl2(7) UseBpl3(7) UseBpl4(7) UseBpl5(7) UseBpl6(7) UseBpl7(7)
             UseBplHires1(7) UseBplHires2(7) UseBplHires3(7) UseBplHires4(7)
-            UseBplSHires1(7) UseBplSHires2(7)
+            UseBplSHres1(7) UseBplSHres2(7)
                 bplQueue |= 1 << 24;
-            UseBpl0(7) UseBplHires0(7) UseBplSHires0(7)
+            UseBpl0(7) UseBplHires0(7) UseBplSHres0(7)
             UseBplHires5(7) UseBplHires6(7) UseBplHires7(7)
-            UseBplSHires3(7) UseBplSHires4(7) UseBplSHires5(7) UseBplSHires6(7) UseBplSHires7(7)
+            UseBplSHres3(7) UseBplSHres4(7) UseBplSHres5(7) UseBplSHres6(7) UseBplSHres7(7)
                 bplCycle &= ~15;
                 if (stopFetching)
                     bplCycle |= BPL_ADD_MOD;
@@ -134,11 +134,11 @@ template<bool onlyProgressQueue> inline auto Agnus::fetchPlanes() -> void {
 
             UseBpl1Mod(7) UseBpl2Mod(7) UseBpl3Mod(7) UseBpl4Mod(7) UseBpl5Mod(7) UseBpl6Mod(7) UseBpl7Mod(7)
             UseBplHires1Mod(7) UseBplHires2Mod(7) UseBplHires3Mod(7) UseBplHires4Mod(7)
-            UseBplSHires1Mod(7) UseBplSHires2Mod(7)
+            UseBplSHres1Mod(7) UseBplSHres2Mod(7)
                 bplQueue |= 0x81 << 24;
-            UseBpl0Mod(7) UseBplHires0Mod(7) UseBplSHires0Mod(7)
+            UseBpl0Mod(7) UseBplHires0Mod(7) UseBplSHres0Mod(7)
             UseBplHires5Mod(7) UseBplHires6Mod(7) UseBplHires7Mod(7)
-            UseBplSHires3Mod(7) UseBplSHires4Mod(7) UseBplSHires5Mod(7) UseBplSHires6Mod(7) UseBplSHires7Mod(7)
+            UseBplSHres3Mod(7) UseBplSHres4Mod(7) UseBplSHres5Mod(7) UseBplSHres6Mod(7) UseBplSHres7Mod(7)
                 if (bplState != 4) {
                     bplCycle = BPL_QUEUE;
                 } else {
@@ -186,35 +186,35 @@ template<bool onlyProgressQueue> inline auto Agnus::fetchPlanes() -> void {
 
             UseBplHires3Mod(6) UseBplHires4Mod(6)
                 bplQueue |= 0x83 << 24; break;
-// shires
-            UseBplSHires2(0)
-            UseBplSHires2Mod(0)
+// shres
+            UseBplSHres2(0)
+            UseBplSHres2Mod(0)
                 bplQueue |= 2 << 24; break;
 
-            UseBplSHires1(1) UseBplSHires2(1)
-            UseBplSHires1Mod(1) UseBplSHires2Mod(1)
+            UseBplSHres1(1) UseBplSHres2(1)
+            UseBplSHres1Mod(1) UseBplSHres2Mod(1)
                 bplQueue |= 1 << 24; break;
 
-            UseBplSHires2(2)
-            UseBplSHires2Mod(2)
+            UseBplSHres2(2)
+            UseBplSHres2Mod(2)
                 bplQueue |= 2 << 24; break;
 
-            UseBplSHires1(3) UseBplSHires2(3)
-            UseBplSHires1Mod(3) UseBplSHires2Mod(3)
+            UseBplSHres1(3) UseBplSHres2(3)
+            UseBplSHres1Mod(3) UseBplSHres2Mod(3)
                 bplQueue |= 1 << 24; break;
 
-            UseBplSHires2(4)
-            UseBplSHires2Mod(4)
+            UseBplSHres2(4)
+            UseBplSHres2Mod(4)
                 bplQueue |= 2 << 24; break;
 
-            UseBplSHires1(5) UseBplSHires2(5)
-            UseBplSHires1Mod(5) UseBplSHires2Mod(5)
+            UseBplSHres1(5) UseBplSHres2(5)
+            UseBplSHres1Mod(5) UseBplSHres2Mod(5)
                 bplQueue |= 1 << 24; break;
 
-            UseBplSHires2(6)
+            UseBplSHres2(6)
                 bplQueue |= 2 << 24; break;
 
-            UseBplSHires2Mod(6)
+            UseBplSHres2Mod(6)
                 bplQueue |= 0x82 << 24; break;
         }
     }

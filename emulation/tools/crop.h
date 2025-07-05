@@ -63,9 +63,10 @@ struct Crop {
                 top <<= 1;
                 bottom <<= 1;
             }
-            if (options & 4) {
-                left <<= 1;
-                right <<= 1;
+			if (options & 0xc) {
+				unsigned _shift = (options & 0xc) >> 2;
+				left <<= _shift;
+				right <<= _shift;
             }
 			
 		} else if( settings.type == CropType::Free ) {			
@@ -78,10 +79,11 @@ struct Crop {
                 top <<= 1;
                 bottom <<= 1;
             }
-            if (options & 4) {
-                left <<= 1;
-                right <<= 1;
-            }
+			if (options & 0xc) {
+				unsigned _shift = (options & 0xc) >> 2;
+				left <<= _shift;
+				right <<= _shift;
+			}
 		}
 		return true;
 	}
@@ -138,7 +140,7 @@ struct Crop {
 	
 	auto correct( unsigned width, unsigned height, uint8_t& options ) -> void {
 		bool lace = options & 3;
-        bool hires = options & 4;
+        bool hires = options & 0xc;
 
 		unsigned _correctedHeight = roundUp( (double)croppedWidth * (double)height / (double)width );
         unsigned diff;

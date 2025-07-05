@@ -105,7 +105,7 @@ struct VideoManager {
         std::atomic<bool> ready;
         std::atomic<bool> kill;
         std::condition_variable cv;
-        uint8_t options = 0;
+        unsigned options = 0;
     } render[2];
     bool workerCreated = false;
 
@@ -182,7 +182,7 @@ struct VideoManager {
     template<typename T, uint8_t options = 0> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop ) -> void;
     template<typename T, uint8_t options = 0> auto renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop ) -> void;
     template<typename T> auto renderCrtThreadedBlank(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
-    template<uint8_t options> auto getRenderOptions() -> uint8_t;
+    template<uint8_t options> auto getRenderOptions() -> unsigned;
     auto convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
     auto convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
     auto update() -> void;

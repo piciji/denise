@@ -47,10 +47,12 @@ template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByW
         case 0x1e:
             return paula.getIntreq();
 
-        case 0x7c:
-            if (system->fakeECSDenise)
-                return 0xfffc;
-            // fallthrough
+        case 0x7c: {
+            auto deniseId = denise.getId();
+            if (deniseId)
+                return deniseId;
+        }
+        // fallthrough
         default:
             if (!triggeredByWrite) {
                 if constexpr (byteAccess)
@@ -412,6 +414,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             break;
 
         case 0x106:
+            addOneCycleEvent(BPL_CON3, value);
             break;
 
         case 0x108:
@@ -494,6 +497,11 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
                     fpsChange |= 1;
 
                 beamCon = value;
+                if (value & BLANKEN)
+                    updateEvent<EVENT_BLANKEN>(1);
+                else
+                    setEventInactive<EVENT_BLANKEN>();
+                    
                 bool _ntscBefore = ntsc;
                 ntsc = (value & BEAM_PAL) == 0;
                 setLines();
@@ -560,17 +568,25 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             if (ecsAndHigher()) {
                 // system->interface->log( "hsync stop written " + std::to_string(value));
                 hsStop = value & 0xff;
+                if (beamCon & BLANKEN)
+                    updateEvent<EVENT_BLANKEN>(1);
                 fpsChange |= 2;
             }
 
         case 0x1c4:
             if (ecsAndHigher()) {
                 // system->interface->log( "hblank start written " + std::to_string(value));
+                hBStrt = value & 0xff;
+                if (beamCon & BLANKEN)
+                    updateEvent<EVENT_BLANKEN>(1);
             }
 
         case 0x1c6:
             if (ecsAndHigher()) {
                 // system->interface->log( "hblank stop written " + std::to_string(value));
+                hBStop = value & 0xff;
+                if (beamCon & BLANKEN)
+                    updateEvent<EVENT_BLANKEN>(1);
             }
 
         case 0x1c8:
@@ -606,6 +622,8 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
             if (ecsAndHigher()) {
                 // system->interface->log( "hsync start written " + std::to_string(value));
                 hsStrt = value & 0xff;
+                if (beamCon & BLANKEN)
+                    updateEvent<EVENT_BLANKEN>(1);
                 fpsChange |= 2;
             }
             break;
@@ -624,6 +642,7 @@ auto Agnus::writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy) -> vo
 
         case 0x1e4:
             setDiwHigh(value, triggeredBy == Trigger_Copper);
+            addOneCycleEvent(DIW_HIGH, value);
             break;
 
         case 0x1fe:

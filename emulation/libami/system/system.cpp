@@ -132,7 +132,10 @@ rtc(agnus) {
         left = 31; // 384 CRT monitor, 344 CRT TV
         right = 9;
 
-        if (denise.hiresFrame) {
+        if (denise.frameMode == Denise::SHRES_FRAME) {
+            left <<= 2;
+            right <<= 2;
+        } else if (denise.frameMode == Denise::HIRES_FRAME) {
             left <<= 1;
             right <<= 1;
         }
@@ -312,7 +315,7 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool all
 
 auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
     if (!runAhead.pos && frame) {
-        crop.apply( frame, width, height, linePitch, options & 7 );
+        crop.apply( frame, width, height, linePitch, options & 15 );
         // for lightguns
         // input.drawCursor();
     }
@@ -325,7 +328,7 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
         denise.setDisableSequencer( (warp.config & (unsigned)Interface::WarpMode::NoVideoSequencer) ? 1 : 2 );
 
     } else if (warp.config & (unsigned)Interface::WarpMode::ReduceVideoOutput) {
-        if ((options & 0xc0) == 0)
+        if ((options & 0xc0) == 0) // lace frame toggle
             frame = nullptr;
 
         if ((++warp.frameCounter & 15) == 0) {
@@ -336,7 +339,7 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
     }
 
     if (!runAhead.pos) {
-        this->interface->videoRefresh(frame, width, height, linePitch, options & 7);
+        this->interface->videoRefresh(frame, width, height, linePitch, options & 15);
     }
 
     leaveEmulation = true;
@@ -368,6 +371,9 @@ auto System::setModel(uint8_t model) -> void {
     } else if (model == 2) {
         agnus.model = Agnus::Model::ECS;
         denise.model = Denise::Model::OCS;
+    } else if (model == 3) {
+        agnus.model = Agnus::Model::ECS;
+        denise.model = Denise::Model::ECS;
     }
 }
 
@@ -378,6 +384,8 @@ auto System::getModel() -> uint8_t {
         return 1;
     if (agnus.model == Agnus::Model::ECS && denise.model == Denise::Model::OCS)
         return 2;
+    if (agnus.model == Agnus::Model::ECS && denise.model == Denise::Model::ECS)
+        return 3;
 
     return 2;
 }

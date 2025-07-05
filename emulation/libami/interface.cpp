@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "240";
+const std::string Interface::Version = "241";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -32,8 +32,7 @@ auto Interface::prepareFirmware() -> void {
 }
 
 auto Interface::prepareModels() -> void {
-
-    models.push_back({ModelIdSystem, "Amiga", Model::Type::Radio, Model::Purpose::SubModels, 1, {0, 2}, {"A1000", "A500 (Full OCS)", "A500 (ECS Agnus, OCS Denise)"} });
+    models.push_back({ModelIdSystem, "Amiga", Model::Type::Radio, Model::Purpose::SubModels, 1, {0, 3}, {"A1000", "A500/A2000 (Full OCS)", "A500 (ECS Agnus, OCS Denise)", "A500+/A600 (Full ECS)"} });
     models.push_back({ModelIdSampleFetch, "PAULA Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 3, {0, 11}, {"8", "16", "24", "32", "40", "48", "56", "64", "80", "96", "112", "128"}});
     models.push_back({ModelIdAudioFilter, "PAULA Filter", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 6}, {"Auto", "Off (A500)", "Software (A500)", "On (A500)", "Off (A1200)", "Software (A1200)", "On (A1200)"}});
     models.push_back({ModelIdRegion, "Region", Model::Type::Radio, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
@@ -51,10 +50,9 @@ auto Interface::prepareModels() -> void {
 
     models.push_back({ModelIdRTC, "RTC", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdSerialLoopback, "Serial Loopback", Model::Type::Switch, Model::Purpose::Misc, 0});
-    models.push_back({ModelIdFakeECSDenise, "Fake ECS Denise", Model::Type::Switch, Model::Purpose::Misc, 0});
     models.push_back({ModelIdDongle, "Plugin Dongle", Model::Type::Combo, Model::Purpose::Misc, 0, {0,6}, {"None", "RoboCop 3", "B.A.T. II", "Cricket Captain", "Leader Board", "Rugby Coach", "Striker Manager"}});
     models.push_back({ModelIdOverclock, "Overclocking", Model::Type::Radio, Model::Purpose::Cpu, 0, {0, 3}, { "None", "2x", "4x", "8x" } });
-    models.push_back({ ModelIdHardDrivesBuiltInSlower, "Slower Built-In HDD", Model::Type::Switch, Model::Purpose::Misc, 0 });
+    models.push_back({ModelIdHardDrivesBuiltInSlower, "Slower Built-In HDD", Model::Type::Switch, Model::Purpose::Misc, 0 });
 }
 
 auto Interface::prepareMedia() -> void {
@@ -553,9 +551,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdSerialLoopback:
             system->paula.loopBack = !!value;
             break;
-        case ModelIdFakeECSDenise:
-            system->fakeECSDenise = !!value;
-            break;
         case ModelIdDongle:
             system->dongle.type = static_cast <System::Dongle>(value);
             break;
@@ -586,7 +581,6 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdFastMem:                        return system->getFastmem();
         case ModelIdRTC:                            return (int)system->useRTC();
         case ModelIdSerialLoopback:                 return (int)system->paula.loopBack;
-        case ModelIdFakeECSDenise:                  return (int)system->fakeECSDenise;
         case ModelIdDongle:                         return (int)system->dongle.type;
         case ModelIdOverclock:                      return (int)system->getOverclock();
         case ModelIdHardDrivesBuiltInSlower:        return (int)system->getHDDAsync();

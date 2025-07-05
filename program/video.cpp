@@ -190,6 +190,10 @@ auto Program::midScreenCallback(uint8_t options) -> void {
         case 4: activeVideoManager->renderMidScreen<4>(); break;
         case 5: activeVideoManager->renderMidScreen<5>(); break;
         case 6: activeVideoManager->renderMidScreen<6>(); break;
+
+        case 8: activeVideoManager->renderMidScreen<8>(); break;
+        case 9: activeVideoManager->renderMidScreen<9>(); break;
+        case 10: activeVideoManager->renderMidScreen<10>(); break;
     }
 }
 
@@ -202,13 +206,18 @@ auto Program::videoRefresh(const uint16_t* frame, unsigned width, unsigned heigh
 	
     if (frame) {
         switch(options) {
-            case 0: activeVideoManager->renderFrame<uint16_t, 0>(frame, width, height, linePitch); break;
-            case 1: activeVideoManager->renderFrame<uint16_t, 1>(frame, width, height, linePitch); break;
-            case 2: activeVideoManager->renderFrame<uint16_t, 2>(frame, width, height, linePitch); break;
-
+            //lores
+            case 0: activeVideoManager->renderFrame<uint16_t, 0>(frame, width, height, linePitch); break; // non lace
+            case 1: activeVideoManager->renderFrame<uint16_t, 1>(frame, width, height, linePitch); break; // lace odd
+            case 2: activeVideoManager->renderFrame<uint16_t, 2>(frame, width, height, linePitch); break; // lace even
+            // hires
             case 4: activeVideoManager->renderFrame<uint16_t, 4>(frame, width, height, linePitch); break;
             case 5: activeVideoManager->renderFrame<uint16_t, 5>(frame, width, height, linePitch); break;
             case 6: activeVideoManager->renderFrame<uint16_t, 6>(frame, width, height, linePitch); break;
+            // shres
+            case 8: activeVideoManager->renderFrame<uint16_t, 8>(frame, width, height, linePitch); break;
+            case 9: activeVideoManager->renderFrame<uint16_t, 9>(frame, width, height, linePitch); break;
+            case 10: activeVideoManager->renderFrame<uint16_t, 10>(frame, width, height, linePitch); break;
         }
     }
 }
@@ -249,6 +258,10 @@ auto Program::repeatLastFrame() -> void {
             case 4: activeVideoManager->renderFrame<uint16_t, 4>(cropData16, _width, _height, _pitch); break;
             case 5: activeVideoManager->renderFrame<uint16_t, 5>(cropData16, _width, _height, _pitch); break;
             case 6: activeVideoManager->renderFrame<uint16_t, 6>(cropData16, _width, _height, _pitch); break;
+
+            case 8: activeVideoManager->renderFrame<uint16_t, 8>(cropData16, _width, _height, _pitch); break;
+            case 9: activeVideoManager->renderFrame<uint16_t, 9>(cropData16, _width, _height, _pitch); break;
+            case 10: activeVideoManager->renderFrame<uint16_t, 10>(cropData16, _width, _height, _pitch); break;
         }
     }
 }

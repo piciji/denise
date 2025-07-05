@@ -106,7 +106,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
 
     currentHeight = 0;
 	
-	tempDest = new uint32_t[ 1024 * 600 ];
+	tempDest = new uint32_t[ 2048 * 600 ];
 	
 	lumaRise = 1.0 / 2.0;
 	lumaFall = 1.0 / 1.2;
@@ -585,6 +585,8 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     constexpr bool interlace = options & 3;
     constexpr bool field = options & 2;
     constexpr bool hires = options & 4;
+    constexpr bool shres = options & 8;
+    constexpr bool lores = !hires && !shres;
     bool iHold = interlace && !field && !interlaceFields;
     bool warp = program->warp.active;
     uint8_t gpuOptions = iHold | (interlace << 1) | (warp << 2);
@@ -636,7 +638,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     }
 
     frameRenderPos = 0;
-    videoDriver->setIntegerScalingDimension( hires ? width : (width << 1), interlace ? height : (height << 1), hires | interlace);
+    videoDriver->setIntegerScalingDimension( lores ? (width << 1) : (hires ? width : (width >> 1)), interlace ? height : (height << 1), shres | hires | interlace);
 
     if (placeHolderFrames) {
         if (!placeHolderSplashScreen || ((placeHolderFrames & 3) == 0)) {
@@ -929,7 +931,7 @@ template<uint8_t options> auto VideoManager::renderMidScreen() -> void {
 
     re->options = getRenderOptions<options>();
 
-    if((re->options ^ render[1].options) & (1 | 4 | 32)) { // scanlines, interlace, hires changes
+    if((re->options ^ render[1].options) & (1 | 4 | 32 | 0x100)) { // scanlines, interlace, hires changes
         re->dest = nullptr; // disable threaded emulation one frame to prevent artifacts
         return;
     }
@@ -1033,7 +1035,7 @@ template<typename T, uint8_t options> auto VideoManager::renderCrtThreaded(unsig
     unsigned heightFirstHalfScreen = ((height * scaler) >> 8) & ~1;
 	unsigned destOffset = (width + destPitch) * (heightFirstHalfScreen << ((!interlace && scanlines) ? 1 : 0));
     
-    if (interlace || program->isPause || !re.dest || ((re.options ^ re1.options) & (1 | 4 | 32)) ) { // mostly to check if mid-screen callback is lores and switches to hires later on
+    if (interlace || program->isPause || !re.dest || ((re.options ^ re1.options) & (1 | 4 | 32 | 0x100)) ) { // mostly to check if mid-screen callback is lores and switches to hires later on
         while (re.ready.load())
             std::this_thread::yield();
 
@@ -1514,11 +1516,12 @@ inline auto VideoManager::uclamp8(double x) -> uint8_t {
     return std::min( std::max((int)(x + 0.5), 0), 255 );
 }
 
-template<uint8_t options> auto VideoManager::getRenderOptions() -> uint8_t {
-    uint8_t out = 0;
+template<uint8_t options> auto VideoManager::getRenderOptions() -> unsigned {
+    unsigned out = 0;
     constexpr bool interlace = options & 3;
     constexpr bool field = options & 2;
     constexpr bool hires = options & 4;
+    constexpr bool shres = options & 8;
 
     if (scanlines && !interlace) out |= 1; // surpress user requested scanlines if software requests interlace
     if ((countColorBits == 4) && useLumaDelay()) out |= 2;
@@ -1531,6 +1534,7 @@ template<uint8_t options> auto VideoManager::getRenderOptions() -> uint8_t {
         if (!interlaceFields && !laceToggle) out |= 16;
     }
     if (hires) out |= 32;
+    if (shres) out |= 0x100;
     return out;
 }
 
@@ -1743,12 +1747,19 @@ template auto VideoManager::renderFrame<uint16_t, 2>(const uint16_t* src, unsign
 template auto VideoManager::renderFrame<uint16_t, 4>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
 template auto VideoManager::renderFrame<uint16_t, 5>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
 template auto VideoManager::renderFrame<uint16_t, 6>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 8>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 9>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 10>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+
 template auto VideoManager::renderMidScreen<0>() -> void;
 template auto VideoManager::renderMidScreen<1>() -> void;
 template auto VideoManager::renderMidScreen<2>() -> void;
 template auto VideoManager::renderMidScreen<4>() -> void;
 template auto VideoManager::renderMidScreen<5>() -> void;
 template auto VideoManager::renderMidScreen<6>() -> void;
+template auto VideoManager::renderMidScreen<8>() -> void;
+template auto VideoManager::renderMidScreen<9>() -> void;
+template auto VideoManager::renderMidScreen<10>() -> void;
 
 template auto VideoManager::updateData<bool>(std::string ident, bool data) -> void;
 template auto VideoManager::updateData<int>(std::string ident, int data) -> void;

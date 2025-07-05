@@ -16,15 +16,14 @@ inline auto Agnus::updateEventAbs(int64_t absClock) -> void {
     eventClock[Channel] = absClock;
     if (absClock < nextClock)
         nextClock = absClock;
+
+    if constexpr (Channel > EVENT_RARELY) {
+        if (absClock < eventClock[EVENT_RARELY])
+            eventClock[EVENT_RARELY] = absClock;
+    }
 }
 
 auto Agnus::processEvents(int64_t curClock) -> void {
-
-    if (curClock == eventClock[EVENT_KBD])
-        input.keyboard.processEvent();
-
-    if (curClock == eventClock[EVENT_HTOTAL])
-        HTotalEvent();
 
     if (curClock == eventClock[EVENT_ONE_CYCLE_DELAY]) {
         if (curClock == rJob1.clock)
@@ -35,41 +34,58 @@ auto Agnus::processEvents(int64_t curClock) -> void {
             processOneCycleEvent(rJob3);
     }
 
-    if (curClock == eventClock[EVENT_POWER_SUPPLY])
-        powerSupplyEvent();
-
-    if (curClock == eventClock[EVENT_LEAVE_EMULATION])
-        leaveEmulationEvent();
+    if (curClock == eventClock[EVENT_HTOTAL])
+        HTotalEvent();
 
     if (curClock == eventClock[EVENT_AUDIO_STATE])
         paula.audioEvent();
 
-    if (curClock == eventClock[EVENT_SERIAL])
-        paula.serialEvent();
-
     if (curClock == eventClock[EVENT_INTREQ])
         paula.intreqEvent();
 
-    if (curClock == eventClock[EVENT_FLOPPY])
-        paula.diskEvent();
+    if (curClock == eventClock[EVENT_RARELY]) {
+        if (curClock == eventClock[EVENT_KBD])
+            input.keyboard.processEvent();
 
-    int64_t next = eventClock[EVENT_KBD];
-    if (eventClock[EVENT_ONE_CYCLE_DELAY] < next)
-        next = eventClock[EVENT_ONE_CYCLE_DELAY];
-    if (eventClock[EVENT_LEAVE_EMULATION] < next)
-        next = eventClock[EVENT_LEAVE_EMULATION];
-    if (eventClock[EVENT_POWER_SUPPLY] < next)
-        next = eventClock[EVENT_POWER_SUPPLY];
+        if (curClock == eventClock[EVENT_SERIAL])
+            paula.serialEvent();
+
+        if (curClock == eventClock[EVENT_FLOPPY])
+            paula.diskEvent();
+
+        if (curClock == eventClock[EVENT_POWER_SUPPLY])
+            powerSupplyEvent();
+
+        if (curClock == eventClock[EVENT_LEAVE_EMULATION])
+            leaveEmulationEvent();
+
+        if (curClock == eventClock[EVENT_BLANKEN])
+            blanken();
+
+        int64_t next = eventClock[EVENT_KBD];
+        if (eventClock[EVENT_SERIAL] < next)
+            next = eventClock[EVENT_SERIAL];
+        if (eventClock[EVENT_FLOPPY] < next)
+            next = eventClock[EVENT_FLOPPY];
+        if (eventClock[EVENT_POWER_SUPPLY] < next)
+            next = eventClock[EVENT_POWER_SUPPLY];
+        if (eventClock[EVENT_LEAVE_EMULATION] < next)
+            next = eventClock[EVENT_LEAVE_EMULATION];
+        if (eventClock[EVENT_BLANKEN] < next)
+            next = eventClock[EVENT_BLANKEN];
+
+        updateEventAbs<EVENT_RARELY>(next);
+    }
+    
+    int64_t next = eventClock[EVENT_ONE_CYCLE_DELAY];
     if (eventClock[EVENT_AUDIO_STATE] < next)
         next = eventClock[EVENT_AUDIO_STATE];
     if (eventClock[EVENT_HTOTAL] < next)
         next = eventClock[EVENT_HTOTAL];
-    if (eventClock[EVENT_SERIAL] < next)
-        next = eventClock[EVENT_SERIAL];
     if (eventClock[EVENT_INTREQ] < next)
         next = eventClock[EVENT_INTREQ];
-    if (eventClock[EVENT_FLOPPY] < next)
-        next = eventClock[EVENT_FLOPPY];
+    if (eventClock[EVENT_RARELY] < next)
+        next = eventClock[EVENT_RARELY];
 
     nextClock = next;
 }
@@ -310,6 +326,7 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
         case BPL_CON0: denise.setBplCon0(data); break;
         case BPL_CON1: denise.setBplCon1(data); break;
         case BPL_CON2: denise.setBplCon2(data); break;
+        case BPL_CON3: denise.setBplCon3(data); break;
         case INTREQ: paula.setIntreq(data); break;
         case INTENA: paula.setIntena(data); break;
 
@@ -333,6 +350,7 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
         case SER_DAT: paula.setSerdat(data); break;
         case DIW_START: denise.setDiwStrt(data); break;
         case DIW_STOP: denise.setDiwStop(data); break;
+        case DIW_HIGH: denise.setDiwHigh(data); break;
         case UPD_V_DIW:
             if (diwFlipFlop) {
                 diwFlipFlop = false;
@@ -377,6 +395,9 @@ template<bool tooSoon> auto Agnus::processOneCycleEvent(RapidJob& rJob) -> void 
                 paula.potProgress();
             // DMAL is fetched serial bit by bit (14 cycles).
             dmal = paula.dmal();
+            break;
+        case STROBE2:
+            denise.strlong();
             break;
         case END_BLT_CONFLICT:
             if (copper.state == Copper::State::Read1Buggy)
