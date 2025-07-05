@@ -287,7 +287,8 @@ VideoScreenTextLayout::ColorBoxLayout::Type::Type() {
     append(normal, {0u, 0u}, 10);
     append(warning, {0u, 0u});
     append(spacer, {~0u, 0u});
-    append(onlyUrgentWarnings, { 0u, 0u }, 10);
+    append(onlyUrgentWarnings, { 0u, 0u });
+    append(spacer2, { ~0u, 0u });
     append(reset, {0u, 0u});
 
     setAlignment(0.5);

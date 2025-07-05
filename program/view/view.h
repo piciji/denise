@@ -41,6 +41,8 @@ struct View : GUIKIT::Window {
         GUIKIT::MenuItem* loadSoftware;
         GUIKIT::Menu* recentSoftware;
             GUIKIT::MenuItem* recents[RecentFiles::maxEntries];
+            GUIKIT::MenuSeparator* recentSeparator;
+            GUIKIT::MenuItem* recentClearEntries;
         GUIKIT::MenuItem* media;
         GUIKIT::Menu* states;
     		GUIKIT::MenuItem* save;
@@ -204,6 +206,7 @@ struct View : GUIKIT::Window {
 	GUIKIT::Image gearsImage;
 	GUIKIT::Image infoImage;
     GUIKIT::Image openImage;
+    GUIKIT::Image clearImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;

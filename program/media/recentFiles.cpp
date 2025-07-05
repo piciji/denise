@@ -116,3 +116,18 @@ auto RecentFiles::getStorage(Emulator::Interface::MediaGroup* group) -> Storage*
     storage.push_back(s);
     return s;
 }
+
+auto RecentFiles::clear(Emulator::Interface::MediaGroup* group) -> void {
+    for (int i = 0; i < maxEntries; i++)
+        settings->remove(getIdent(group, i));
+
+    save();
+    
+    for (auto _s : storage) {
+        if (_s->group == group) {
+            _s->files.clear();
+            _s->files.reserve(maxEntries);
+            break;
+        }
+    }
+}

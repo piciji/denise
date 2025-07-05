@@ -41,4 +41,6 @@ struct RecentFiles {
     auto getIdent(Emulator::Interface::MediaGroup* group, unsigned pos) -> std::string;
 
     auto getStorage(Emulator::Interface::MediaGroup* group) -> Storage*;
+
+    auto clear(Emulator::Interface::MediaGroup* group = nullptr) -> void;
 };
