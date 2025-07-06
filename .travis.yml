@@ -11,7 +11,7 @@ dist: focal
 os: linux
 
 before_install:
-  - sudo apt-get -q update
+ # - sudo apt-get -q update
 
 addons:
   apt:
@@ -52,18 +52,20 @@ after_success:
 deploy:
   - provider: script
     script:
-    - export deployFile=${deployFilePrefix}$(echo ${TRAVIS_COMMIT} | cut -c 1-7)${deployFileSufix}
-    - mv "${srcFile}" "${deployFile}"
-    - sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_NIGHTLIES}"
+    - |
+      export deployFile=${deployFilePrefix}$(echo ${TRAVIS_COMMIT} | cut -c 1-7)${deployFileSufix}
+      mv "${srcFile}" "${deployFile}"
+      sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_NIGHTLIES}"
     edge: true
     on:
       tags: false
       all_branches: true
   - provider: script
     script:
-    - export deployFile=${deployFilePrefix}${TRAVIS_TAG}${deployFileSufix}
-    - mv "${srcFile}" "${deployFile}"
-    - sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_TAGS}"
+    - |
+      export deployFile=${deployFilePrefix}${TRAVIS_TAG}${deployFileSufix}
+      mv "${srcFile}" "${deployFile}"
+      sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_TAGS}"
     edge: true
     on:
       tags: true
