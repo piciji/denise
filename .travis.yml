@@ -24,7 +24,7 @@ addons:
     #  - libudev-dev
     #  - libxcb-xinput-dev
     #  - libxcb-xfixes0
-    #  - sshpass      
+      - sshpass      
     #  - flatpak-builder
 
 jobs:
