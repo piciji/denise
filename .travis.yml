@@ -11,71 +11,64 @@ dist: focal
 os: linux
 
 before_install:
-  - sudo apt-get -q update
+  # - sudo apt-get -q update
 
 addons:
   apt:
     packages:
-      - g++-10
-      - cmake
-      - mesa-common-dev
-      - libgtk-3-dev
-      - libpulse-dev
-      - libudev-dev
-      - libxcb-xinput-dev
-      - libxcb-xfixes0
-      - sshpass      
-      - flatpak-builder
+    #  - g++-10
+    #  - cmake
+    #  - mesa-common-dev
+    #  - libgtk-3-dev
+    #  - libpulse-dev
+    #  - libudev-dev
+    #  - libxcb-xinput-dev
+    #  - libxcb-xfixes0
+    #  - sshpass      
+    #  - flatpak-builder
 
 jobs:
   include:
-    - name: Flatpak
-      compiler: gcc
-      script:
-      - echo $TRAVIS_TAG
-      - flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-      - flatpak-builder --force-clean --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
-      - flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
-      - |
-        if [[ "$TRAVIS_TAG" != "" ]]; then
-          export deployFile=denise_${TRAVIS_TAG}.flatpak
-          export deployTarget=${FTP_TAGS}
-        else
-          export deployFile=denise_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).flatpak
-          export deployTarget=${FTP_NIGHTLIES}
-        fi
-      - mv denise.flatpak "${deployFile}"
 
 
     - name: DEB package    
       compiler: gcc
-      script:
-      - echo $TRAVIS_TAG
-      - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
-      - cmake --build builds/release -j 4 || travis_terminate 1;
-      - cd data
-      - chmod +x build_deb.sh
-      - ./build_deb.sh
-      - dpkg-deb --build ./denisepackage || travis_terminate 1;
+      script:      
+     # - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
+     # - cmake --build builds/release -j 4 || travis_terminate 1;
+     # - cd data
+     # - chmod +x build_deb.sh
+     # - ./build_deb.sh
+     # - dpkg-deb --build ./denisepackage || travis_terminate 1;
       - |
-        if [[ "$TRAVIS_TAG" != "" ]]; then
-          export deployFile=denise_ubuntu2004_${TRAVIS_TAG}.deb
-          export deployTarget=${FTP_TAGS}
-        else
-          export deployFile=denise_ubuntu2004_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).deb
-          export deployTarget=${FTP_NIGHTLIES}
-        fi
-      - mv denisepackage.deb "${deployFile}"
+        export deployFilePrefix=denise_ubuntu2004_
+        export deployFileSufix=.deb
+        export srcFile=readme.md
+       # export srcFile=denisepackage.deb
 
 after_success:
   - echo ${FTP_PSW} > ftp.txt 2>&1
 
 deploy:
-  provider: script
-  script: sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${deployTarget}"
-  edge: true
-  on:
-    all_branches: true
-
+  - provider: script
+    script:
+    - export deployFile=${deployFilePrefix}$(echo ${TRAVIS_COMMIT} | cut -c 1-7)${deployFileSufix}
+    - echo $deployFile
+    - mv "${srcFile}" "${deployFile}"
+    - sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_NIGHTLIES}"
+    edge: true
+    on:
+      tags: false
+      all_branches: true
+  - provider: script
+    script:
+    - echo $TRAVIS_TAG
+    - export deployFile=${deployFilePrefix}${TRAVIS_TAG}${deployFileSufix}
+    - echo $deployFile
+    - mv "${srcFile}" "${deployFile}"
+    - sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_TAGS}"
+    edge: true
+    on:
+      tags: true
 
 # hint for env FTP_FOLDER: v\\\ 1.0
