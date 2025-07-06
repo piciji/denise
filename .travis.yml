@@ -4,6 +4,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
+    - vtest
 
 language: generic
 dist: focal
@@ -31,6 +32,7 @@ jobs:
     - name: Flatpak
       compiler: gcc
       script:
+      - echo $TRAVIS_TAG
       - flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
       - flatpak-builder --force-clean --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
       - flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
@@ -48,6 +50,7 @@ jobs:
     - name: DEB package    
       compiler: gcc
       script:
+      - echo $TRAVIS_TAG
       - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
       - cmake --build builds/release -j 4 || travis_terminate 1;
       - cd data
