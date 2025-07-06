@@ -53,7 +53,7 @@ deploy:
   - provider: script
     script:
     - |
-      export deployFile=${deployFilePrefix}$(echo ${TRAVIS_COMMIT} | cut -c 1-7)${deployFileSufix}
+      deployFile=${deployFilePrefix}$(echo ${TRAVIS_COMMIT} | cut -c 1-7)${deployFileSufix}
       mv "${srcFile}" "${deployFile}"
       sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_NIGHTLIES}"
     edge: true
@@ -63,7 +63,7 @@ deploy:
   - provider: script
     script:
     - |
-      export deployFile=${deployFilePrefix}${TRAVIS_TAG}${deployFileSufix}
+      deployFile=${deployFilePrefix}${TRAVIS_TAG}${deployFileSufix}
       mv "${srcFile}" "${deployFile}"
       sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_TAGS}"
     edge: true
