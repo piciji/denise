@@ -19,7 +19,7 @@ before_install:
 addons:
   apt:
     packages:
-      # - g++-10
+      - g++-12
       - cmake
       - mesa-common-dev
       - libgtk-3-dev
@@ -52,8 +52,7 @@ jobs:
     - name: DEB package    
       compiler: gcc
       script:
-     # - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
-      - cmake -B builds/release || travis_terminate 1;
+      - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-12 || travis_terminate 1;
       - cmake --build builds/release -j 4 || travis_terminate 1;
       - cd data
       - chmod +x build_deb.sh
