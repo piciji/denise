@@ -6,8 +6,12 @@ branches:
     - /v\d*\.\d*\.\d*/
 
 language: generic
-dist: focal
+dist: jammy
 os: linux
+
+cache:
+   directories:
+   - $HOME/.flatpak-builder
 
 before_install:
   - sudo apt-get -q update
@@ -15,7 +19,7 @@ before_install:
 addons:
   apt:
     packages:
-      - g++-10
+      # - g++-10
       - cmake
       - mesa-common-dev
       - libgtk-3-dev
@@ -32,7 +36,7 @@ jobs:
       compiler: gcc
       script:
       - flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-      - flatpak-builder --force-clean --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
+      - flatpak-builder --force-clean --verbose=0 --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
       - flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
       - |
         if [[ $TRAVIS_BRANCH =~ v[0-999].[0-999] || $TRAVIS_BRANCH =~ v[0-999].[0-999].[0-999] ]]; then
@@ -48,7 +52,8 @@ jobs:
     - name: DEB package    
       compiler: gcc
       script:
-      - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
+     # - cmake -B builds/release -DCMAKE_CXX_COMPILER=g++-10 || travis_terminate 1;
+      - cmake -B builds/release || travis_terminate 1;
       - cmake --build builds/release -j 4 || travis_terminate 1;
       - cd data
       - chmod +x build_deb.sh
