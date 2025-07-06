@@ -7,6 +7,31 @@
 
 # changelog
 
+## 2.6
+* Amiga: added harddisk emulation
+    * built-In HD Controller
+    * M-Tec AT 500
+    * VHD support for dynamic HDFs
+* Amiga: added ECS Denise emulation (A500+/A600)
+* Amiga: added option to overclock CPU
+* Amiga: support for floppy disks in SCP format
+* Amiga: added CD32 gamepad support
+* Amiga: added option to show Caps Lock LED in status bar
+* C64: added file dialog option to prevent speeder for next load
+    * the speeder + firmware does not have to be switched time-consumingly for certain programs
+* C64: added file dialog preview for cartridges
+* C64: improved PRG injection (rebuild linked list)
+    * Note: a PRG can also be loaded as a D64
+* Windows 10/11: added dark UI mode    
+* added LHA support
+    * added option to convert LHA to Amiga native filesystem (ADF or HDF)
+* supported relative paths
+    * APP can be used fully or partially portable
+* added file history to make it easier to re-insert files
+* improved Shader management
+    * fixed an error when parsing shaders (Bezel: koko-aio works again)
+    * added option to automatically download and unpack shaders
+
 ## 2.5
 * added 1581 floppy drive
 * added SuperCPU
