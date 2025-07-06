@@ -53,9 +53,8 @@ deploy:
   - provider: script
     script:
     - |
-      deployFile=${deployFilePrefix}$(echo ${TRAVIS_COMMIT} | cut -c 1-7)${deployFileSufix}
-      mv "${srcFile}" "${deployFile}"
-      sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_NIGHTLIES}"
+      mv "${srcFile}" "${deployFilePrefix}$(echo ${TRAVIS_COMMIT} | cut -c 1-7)${deployFileSufix}"
+      sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFilePrefix}$(echo ${TRAVIS_COMMIT} | cut -c 1-7)${deployFileSufix}" piciji@frs.sourceforge.net:"${FTP_NIGHTLIES}"
     edge: true
     on:
       tags: false
@@ -63,9 +62,8 @@ deploy:
   - provider: script
     script:
     - |
-      deployFile=${deployFilePrefix}${TRAVIS_TAG}${deployFileSufix}
-      mv "${srcFile}" "${deployFile}"
-      sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFile}" piciji@frs.sourceforge.net:"${FTP_TAGS}"
+      mv "${srcFile}" "${deployFilePrefix}${TRAVIS_TAG}${deployFileSufix}"
+      sshpass -f "ftp.txt" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${deployFilePrefix}${TRAVIS_TAG}${deployFileSufix}" piciji@frs.sourceforge.net:"${FTP_TAGS}"
     edge: true
     on:
       tags: true
