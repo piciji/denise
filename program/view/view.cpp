@@ -669,7 +669,7 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
                 recentSoftware->remove(*sysMenu->recentClearEntries);
                 clearFooter = true;
             }
-            sysMenu->recentSoftware->append(*item);
+            recentSoftware->append(*item);
         }
 
         sysMenu->recents[i]->setText(GUIKIT::String::getFileName(filePath));
@@ -681,6 +681,9 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
         recentSoftware->append(*sysMenu->recentSeparator);
         recentSoftware->append(*sysMenu->recentClearEntries);
     }
+    
+    if (recentSoftware->enabled() == recentSoftware->childs.empty())
+        recentSoftware->setEnabled(!recentSoftware->childs.empty());
 }
 
 auto View::setConnectors() -> void {
@@ -1196,6 +1199,7 @@ auto View::buildMenu() -> void {
                     }
                 }
                 sysMenu->recentSoftware->reset();
+                sysMenu->recentSoftware->setEnabled(false);
             }
             emuThread->unlock();
         };

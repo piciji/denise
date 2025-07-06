@@ -1250,7 +1250,8 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
 
     auto recentFile = fileloader->getRecentFile(emulator);
     recentFile->add(mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
-    view->updateRecentList(emulator);
+    if (view)
+        view->updateRecentList(emulator);
 
     if (showListing(layout)) {
         block->listings.clear();
@@ -1259,7 +1260,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
         layout->updateListing(block);
     }
 
-    if (!fromState && activeEmulator && mediaGroup->isTape())
+    if (view && !fromState && activeEmulator && mediaGroup->isTape())
         view->updateTapeIcons();
     
     if (!dontUpdateSelected && mediaGroup->selected && !media->secondary && !block->header.inUse.checked() ) {

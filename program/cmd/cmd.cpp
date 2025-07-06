@@ -44,7 +44,7 @@ Cmd::Cmd(int argc, char** argv) {
 			noDriver = true;
 			
         } else if ( arg == "-debugcart" )
-            debug = true;            
+            debug = true;
         
         else if ( arg == "-h" )
             helpRequested = true;
