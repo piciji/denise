@@ -299,7 +299,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
 	
 	auto translate() -> void;
     auto translate(NavElement& nav) -> void;
-    auto updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting, bool refreshFileList ) -> void;
+    auto updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void;
     auto updateVisibility( Emulator::Interface::MediaGroup* mediaGroup, unsigned count ) -> void;
     auto updateOptionsVisibility() -> void;
     auto bindSelectorAction( MediaGroupLayout* layout ) -> void;

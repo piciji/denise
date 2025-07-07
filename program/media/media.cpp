@@ -346,7 +346,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             fSetting->setWriteProtect(checked);
         };
         
-        updateMediaBlock(block, fSetting, true);
+        updateMediaBlock(block, fSetting);
         
         if (block->selector.edit) {
             block->selector.edit->onFocus = [this, layout, block]() {
@@ -942,7 +942,7 @@ auto MediaLayout::preparePaths() -> void {
     }
 }
 
-auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting, bool refreshFileList) -> void {
+auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* fSetting) -> void {
 
     bool IPMode = block->media->group->isExpansion() && block->media->group->expansion->isRS232();
 
@@ -950,15 +950,13 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
         block->selector.edit->setText( fSetting->path );
 
     if (block->selector.pathCombo) {
-        if (refreshFileList) {
-            auto recentFile = fileloader->getRecentFile(emulator);
-            auto& files = recentFile->list(block->media->group, fSetting->path);
+        auto recentFile = fileloader->getRecentFile(emulator);
+        auto& files = recentFile->list(block->media->group, fSetting->path);
 
-            block->selector.pathCombo->reset();
+        block->selector.pathCombo->reset();
 
-            for (auto& file : files)
-                block->selector.pathCombo->append(file);
-        }
+        for (auto& file : files)
+            block->selector.pathCombo->append(file);
 
         if (fSetting->path.empty())
             block->selector.pathCombo->unselect();
@@ -1188,7 +1186,7 @@ auto MediaLayout::ejectImage( MediaGroupLayout::Block* block ) -> void {
             layout->listings.reset();
     }
 
-    updateMediaBlock(block, fSetting, false);
+    updateMediaBlock(block, fSetting);
 }
 
 auto MediaLayout::insertImage(Emulator::Interface::Media* media, GUIKIT::File* file, GUIKIT::File::Item* item, int options) -> void {
@@ -1282,7 +1280,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     else
         States::getInstance(emulator)->forcePowerNextLoad = true;
 
-    updateMediaBlock(block, fSetting, true);
+    updateMediaBlock(block, fSetting);
     
     if (!fromState && fSetting && mediaGroup->isDrive())
         program->updateSaveIdent( emulator, fSetting );
@@ -1616,7 +1614,7 @@ auto MediaLayout::loadSettings() -> void {
             auto fSetting = FileSetting::getInstance(emulator, _underscore(block->media->name) );
             fSetting->update();
             
-            updateMediaBlock(block, fSetting, false);
+            updateMediaBlock(block, fSetting);
 
             if ( showListing( layout ) ) {
                 
