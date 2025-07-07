@@ -901,3 +901,4 @@ changing emulator = when changing emulator
 only urgent messages = only urgent messages
 only urgent messages tooltip = Only warning or urgent messages are displayed.
 Clear all entries = Clear all entries
+list length = List length %count%

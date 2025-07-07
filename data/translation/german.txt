@@ -901,3 +901,4 @@ changing emulator = beim Emulator Wechsel
 only urgent messages = nur dringende Nachrichten
 only urgent messages tooltip = Es werden nur Warnmeldungen oder dringende Meldungen angezeigt.
 Clear all entries = Alle Einträge löschen
+list length = Listenlänge %count%
