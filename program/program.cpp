@@ -539,6 +539,7 @@ auto Program::quit() -> void {
 	delete filePool;
     delete cmd;
 	delete autoloader;
+    delete fileloader;
     
     for(auto settings : settingsStorage)
         delete settings;

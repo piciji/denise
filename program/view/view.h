@@ -41,8 +41,12 @@ struct View : GUIKIT::Window {
         GUIKIT::MenuItem* loadSoftware;
         GUIKIT::Menu* recentSoftware;
             GUIKIT::MenuItem* recents[RecentFiles::maxEntries];
-            GUIKIT::MenuSeparator* recentSeparator;
-            GUIKIT::MenuItem* recentClearEntries;
+            GUIKIT::MenuSeparator* recentControlSeparator;
+            GUIKIT::Menu* recentControl;
+                GUIKIT::MenuItem* recentClearEntries;
+                GUIKIT::MenuSeparator* recentSeparator;
+                std::vector<GUIKIT::MenuRadioItem*> recentEntries;
+
         GUIKIT::MenuItem* media;
         GUIKIT::Menu* states;
     		GUIKIT::MenuItem* save;
@@ -102,6 +106,7 @@ struct View : GUIKIT::Window {
 	auto updateMouseGrab() -> void;
     auto updateRecentList(Emulator::Interface* emulator) -> void;
     auto updateToHoldDimension() -> void;
+    auto clearRecentList(Emulator::Interface* emulator) -> void;
 
     GUIKIT::Viewport viewport;    
     

@@ -9,8 +9,10 @@ RecentFiles::RecentFiles(Emulator::Interface* emulator, const std::string& path)
 }
 
 RecentFiles::~RecentFiles() {
-    if (settings)
+    if (settings) {
+        save();
         delete settings;
+    }
 
     for(auto s : storage)
         delete s;
@@ -22,9 +24,8 @@ auto RecentFiles::load() -> void {
 
     settings = new GUIKIT::Settings;
 
-    if (settings->load(path)) {
-
-    }
+    if (settings->load(path))
+        genericEntries = settings->get<unsigned>("generic_entries", 25, {5, maxEntries});
 }
 
 auto RecentFiles::save() -> void {
@@ -40,14 +41,15 @@ auto RecentFiles::add(Emulator::Interface::MediaGroup* group, const std::string&
 
     load();
 
-    auto s = getStorage(group);    
+    auto s = getStorage(group);
     s->files.clear();
-    s->files.reserve(maxEntries);
+    unsigned entries = getEntries(group);
+    s->files.reserve(entries);
 
     std::string line;
-    s->files.push_back(curPath);
+    s->files.push_back(curPath);    
 
-    for (int i = 0; i < maxEntries; i++) {
+    for (int i = 0; i < entries; i++) {
         line = settings->get<std::string>(getIdent(group, i), "");
 
         if (!line.empty()) {
@@ -55,11 +57,11 @@ auto RecentFiles::add(Emulator::Interface::MediaGroup* group, const std::string&
                 s->files.push_back(line);
         }
 
-        if (s->files.size() >= maxEntries)
+        if (s->files.size() >= entries)
             break;
     }
 
-    for (int i = 0; i < maxEntries; i++) {
+    for (int i = 0; i < entries; i++) {
         if (i >= s->files.size())
             settings->set<std::string>(getIdent(group, i), "");
         else
@@ -68,7 +70,7 @@ auto RecentFiles::add(Emulator::Interface::MediaGroup* group, const std::string&
 
     if (group) {
         add(nullptr, curPath);
-        save();
+        //save();
     }
 }
 
@@ -104,10 +106,11 @@ auto RecentFiles::getStorage(Emulator::Interface::MediaGroup* group) -> Storage*
     Storage* s = new Storage;
     s->group = group;
     s->files.clear();
-    s->files.reserve(maxEntries);
+    unsigned entries = getEntries(group);
+    s->files.reserve(entries);
     std::string line;
 
-    for (int i = 0; i < maxEntries; i++) {
+    for (int i = 0; i < entries; i++) {
         line = settings->get<std::string>(getIdent(group, i), "");
 
         if (!line.empty())
@@ -126,8 +129,21 @@ auto RecentFiles::clear(Emulator::Interface::MediaGroup* group) -> void {
     for (auto _s : storage) {
         if (_s->group == group) {
             _s->files.clear();
-            _s->files.reserve(maxEntries);
             break;
         }
+    }
+}
+
+auto RecentFiles::getEntries(Emulator::Interface::MediaGroup* group) -> unsigned {
+    return std::min(maxEntries, group ? groupEntries : genericEntries);
+}
+
+auto RecentFiles::setGenericEntries(unsigned entries) -> void {
+    if (entries > maxEntries)
+        entries = maxEntries;
+    if (settings) {
+        settings->set<unsigned>("generic_entries", entries);
+        save();
+        genericEntries = entries;
     }
 }

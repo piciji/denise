@@ -102,6 +102,12 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
                 return TRUE;
             } break;
 
+        case WM_CTLCOLORSTATIC:
+            if (pApplication::useDark) {
+                SetBkMode((HDC)(wparam), TRANSPARENT);
+                return (INT_PTR)pApplication::darkBGBrush;
+            } break;
+
         case WM_PAINT: {
             auto& p = statusBar->p;
 			if (xpMode && statusBar->window()->fullScreen() );
@@ -166,7 +172,8 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         case WM_CONTEXTMENU:
             return 0;
     }
-    return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    //return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return pApplication::wndProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pStatusBar::setTooltip(StatusBar::Part* part) -> void {
@@ -319,7 +326,7 @@ auto pStatusBar::update() -> void {
 
             if (!trackBar) {
                 trackBar = CreateWindow(
-                    TRACKBAR_CLASS, L"", WS_CHILD | TBS_NOTICKS | TBS_BOTH | TBS_HORZ | TBS_TRANSPARENTBKGND,
+                    TRACKBAR_CLASS, L"", WS_CHILD | TBS_NOTICKS | TBS_BOTH | TBS_HORZ,
                     0, 0, 0, 0, hwnd, (HMENU)(long long)(part.id + TRACKBAR_SLIDER), GetModuleHandle(0), 0);
 
                 SendMessage(trackBar, TBM_SETRANGE, (WPARAM)true, (LPARAM)MAKELONG(0, part.sliderLength - 1));

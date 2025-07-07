@@ -651,7 +651,7 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
         if (filePath.empty())
             continue;
 
-        if (i >= RecentFiles::maxEntries)
+        if (i >= recentFile->getEntries())
             break;
 
         if (!sysMenu->recents[i]) {
@@ -665,8 +665,8 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
             };
             sysMenu->recents[i] = item;
             if (!clearFooter) {                
-                recentSoftware->remove(*sysMenu->recentSeparator);
-                recentSoftware->remove(*sysMenu->recentClearEntries);
+                recentSoftware->remove(*sysMenu->recentControlSeparator);
+                recentSoftware->remove(*sysMenu->recentControl);
                 clearFooter = true;
             }
             recentSoftware->append(*item);
@@ -678,8 +678,8 @@ auto View::updateRecentList(Emulator::Interface* emulator) -> void {
     }
 
     if (clearFooter) {
-        recentSoftware->append(*sysMenu->recentSeparator);
-        recentSoftware->append(*sysMenu->recentClearEntries);
+        recentSoftware->append(*sysMenu->recentControlSeparator);
+        recentSoftware->append(*sysMenu->recentControl);
     }
     
     if (recentSoftware->enabled() == recentSoftware->childs.empty())
@@ -1183,27 +1183,52 @@ auto View::buildMenu() -> void {
         for(auto& recent : sM.recents)
             recent = nullptr;
 
-        sM.recentSeparator = new GUIKIT::MenuSeparator;
+        sM.recentControl = new GUIKIT::Menu;        
         sM.recentClearEntries = new GUIKIT::MenuItem;
         sM.recentClearEntries->setIcon(clearImage);
         sM.recentClearEntries->onActivate = [this, emulator]() {
             emuThread->lock();
             auto recent = fileloader->getRecentFile(emulator);
             if (recent) {
-                auto sysMenu = getSysMenu(emulator);
                 recent->clear();
-                for (auto& recent : sysMenu->recents) {
-                    if (recent) {
-                        delete recent;
-                        recent = nullptr;
-                    }
-                }
-                sysMenu->recentSoftware->reset();
-                sysMenu->recentSoftware->setEnabled(false);
+                clearRecentList(emulator);
             }
             emuThread->unlock();
         };
-        
+        sM.recentSeparator = new GUIKIT::MenuSeparator;
+        sM.recentControlSeparator = new GUIKIT::MenuSeparator;
+        sM.recentControl->append(*sM.recentClearEntries);
+        sM.recentControl->append(*sM.recentSeparator);
+
+        int entries = 10;
+        sM.recentEntries.resize(7);
+        auto recent = fileloader->getRecentFile(emulator);
+        auto curEntries = recent->getEntries();
+        GUIKIT::MenuRadioItem* checkedRe = nullptr;
+
+        for(auto& rE : sM.recentEntries) {
+            rE = new GUIKIT::MenuRadioItem;            
+
+            rE->onActivate = [this, emulator, entries]() {
+                emuThread->lock();
+
+                auto recent = fileloader->getRecentFile(emulator);
+                if (recent) {
+                    recent->setGenericEntries(entries);
+                    clearRecentList(emulator);
+                    updateRecentList(emulator);
+                }
+                emuThread->unlock();
+            };
+            sM.recentControl->append(*rE);
+            if (curEntries == entries)
+                checkedRe = rE;
+            entries += 5;
+        }        
+        GUIKIT::MenuRadioItem::setGroup(sM.recentEntries);
+        if (checkedRe)
+            checkedRe->setChecked();
+
         sM.system->append(*sM.recentSoftware);
         
         sM.media = new GUIKIT::MenuItem;
@@ -1920,7 +1945,14 @@ auto View::translate() -> void {
         sysMenu.misc->setText(trans->get("miscellaneous"));
 
         sysMenu.shaderMenu->setText(trans->get("Shader"));
+        sysMenu.recentControl->setText(trans->getA("preferences"));
         sysMenu.recentClearEntries->setText(trans->getA("Clear all entries"));
+
+        int i = 10;
+        for (auto rE : sysMenu.recentEntries) {
+            rE->setText(trans->get("list length", {{"%count%", std::to_string(i) }} ));
+            i += 5;
+        }
     }    
 
     editMenu.setText( trans->get("Edit") );
@@ -2237,4 +2269,19 @@ auto View::updateToHoldDimension() -> void {
     globalSettings->set<unsigned>("screen_height", settings->get<unsigned>("view_hold_height", 600));
 
     updateGeometry(true);
+}
+
+auto View::clearRecentList(Emulator::Interface* emulator) -> void {
+    auto sysMenu = getSysMenu(emulator);
+    if (!sysMenu)
+        return;
+
+    for (auto& recent : sysMenu->recents) {
+        if (recent) {
+            delete recent;
+            recent = nullptr;
+        }
+    }
+    sysMenu->recentSoftware->reset();
+    sysMenu->recentSoftware->setEnabled(false);
 }

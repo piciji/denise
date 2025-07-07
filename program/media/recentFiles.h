@@ -19,7 +19,10 @@ struct RecentFiles {
 
     Emulator::Interface* emulator;
 
-    static const int maxEntries = 30;
+    static const unsigned maxEntries = 40;
+
+    unsigned genericEntries = 25;
+    unsigned groupEntries = 25;
 
     GUIKIT::Settings* settings = nullptr;
 
@@ -43,4 +46,8 @@ struct RecentFiles {
     auto getStorage(Emulator::Interface::MediaGroup* group) -> Storage*;
 
     auto clear(Emulator::Interface::MediaGroup* group = nullptr) -> void;
+
+    auto getEntries(Emulator::Interface::MediaGroup* group = nullptr) -> unsigned;
+
+    auto setGenericEntries(unsigned entries) -> void;
 };
