@@ -1633,7 +1633,7 @@ auto MediaLayout::loadSettings() -> void {
             auto fSetting = FileSetting::getInstance(emulator, _underscore(block->media->name) );
             fSetting->update();
             
-            if (nav.tvi->selected())
+            if (nav.tvi->selected() || (expansionParent && expansionParent->selected() && (nav.tvi->userData() == expansionParent->userData())))
                 updateMediaBlock(block, fSetting);
             else
                 block->dirty = true; // we can't update all comboboxes in software at once ... would hang a few seconds
