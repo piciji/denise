@@ -3,6 +3,8 @@
     #include <objbase.h>
 #elif defined( __APPLE__ )
     #include <CoreFoundation/CFUUID.h>
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+    #include <uuid.h>
 #else
     #include <uuid/uuid.h>
 #endif
@@ -41,6 +43,9 @@ namespace Emulator {
         res[1] = bytes.byte1; res[5] = bytes.byte5; res[9] = bytes.byte9; res[13] = bytes.byte13;
         res[2] = bytes.byte2; res[6] = bytes.byte6; res[10] = bytes.byte10; res[14] = bytes.byte14;
         res[3] = bytes.byte3; res[7] = bytes.byte7; res[11] = bytes.byte11; res[15] = bytes.byte15;
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+        uint32_t status;
+        uuid_create((uuid_t*)res.data(), &status);
 #else
         uuid_generate(res.data());
 #endif
