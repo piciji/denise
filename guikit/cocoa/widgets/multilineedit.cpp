@@ -22,12 +22,12 @@
 -(void) configure {
 //    [content setMinSize:NSMakeSize(0,0)];
     
-    [[content textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+//    [[content textContainer] setContainerSize:NSMakeSize(FLT_MAX, FLT_MAX)];
     [[content textContainer] setWidthTracksTextView:YES];
     
     [content setHorizontallyResizable:YES];
     [content setVerticallyResizable:YES];
-    [content setAutoresizingMask:NSViewNotSizable];
+    [content setAutoresizingMask:NSViewWidthSizable];
     
     [self setHasVerticalScroller:YES];
     [self setHasHorizontalScroller:YES];
