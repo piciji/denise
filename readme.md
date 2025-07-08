@@ -24,9 +24,8 @@
     * Note: a PRG can also be loaded as a D64
 * Windows 10/11: added dark UI mode    
 * added LHA support
-    * added option to convert LHA to Amiga native filesystem (ADF or HDF)
-* supported relative paths
-    * APP can be used fully or partially portable
+    * added option to convert LHA archives to Amiga native filesystem (ADF, HD-ADF or HDF)
+* APP can be used fully or partially portable
 * added file history to make it easier to re-insert files
 * improved Shader management
     * fixed an error when parsing shaders (Bezel: koko-aio works again)
