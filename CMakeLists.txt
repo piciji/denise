@@ -332,7 +332,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
 else()
-    target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr -luuid")
+    target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr")
     target_link_directories(${PROJECT_NAME} PUBLIC ${GTK_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${X11_LIBRARY_DIRS})
@@ -344,7 +344,7 @@ else()
 
     # use -Wl,--verbose for detailed linker problems
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        target_link_libraries(${PROJECT_NAME} "-lrt -lGL -lpulse -lusbhid")
+        target_link_libraries(${PROJECT_NAME} "-luuid -lrt -lGL -lpulse -lusbhid")
         # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs
         set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
     elseif (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
@@ -353,7 +353,7 @@ else()
     elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
         target_link_libraries(${PROJECT_NAME} "-lrt -ldl -lGL -lpulse -lusbhid")
     else() # linux
-        target_link_libraries(${PROJECT_NAME} "-no-pie -lrt -ldl -lGL -ludev -lpulse")
+        target_link_libraries(${PROJECT_NAME} "-luuid -no-pie -lrt -ldl -lGL -ludev -lpulse")
     endif()
 endif()
 
