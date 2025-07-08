@@ -28,6 +28,7 @@ struct RecentFiles {
 
     struct Storage {
         Emulator::Interface::MediaGroup* group;
+        bool alternate;
         std::vector<std::string> files;
     };
 
@@ -37,15 +38,15 @@ struct RecentFiles {
 
     auto save() -> void;
 
-    auto add(Emulator::Interface::MediaGroup* group, const std::string& curPath) -> void;
+    auto add(Emulator::Interface::MediaGroup* group, bool alternate, const std::string& curPath, bool updateGeneric = true) -> void;
 
-    auto list(Emulator::Interface::MediaGroup* group, const std::string& curPath = "") -> std::vector<std::string>&;
+    auto list(Emulator::Interface::MediaGroup* group, bool alternate = false, const std::string& curPath = "") -> std::vector<std::string>&;
 
-    auto getIdent(Emulator::Interface::MediaGroup* group, unsigned pos) -> std::string;
+    auto getIdent(Emulator::Interface::MediaGroup* group, bool alternate, unsigned pos) -> std::string;
 
-    auto getStorage(Emulator::Interface::MediaGroup* group) -> Storage*;
+    auto getStorage(Emulator::Interface::MediaGroup* group, bool alternate) -> Storage*;
 
-    auto clear(Emulator::Interface::MediaGroup* group = nullptr) -> void;
+    auto clear(Emulator::Interface::MediaGroup* group = nullptr, bool alternate = false) -> void;
 
     auto getEntries(Emulator::Interface::MediaGroup* group = nullptr) -> unsigned;
 

@@ -90,14 +90,24 @@ auto MediaLayout::updateSwitchLayout() -> void {
 
     if (navPos < navElements.size()) {
         auto& navElement = navElements[navPos];
-        if (!navElement.layout && navElement.mediaGroup) {
-            auto mediaGroupLayout = new MediaGroupLayout( navElement.mediaGroup, this );
-            navElement.layout = (GUIKIT::Layout*)mediaGroupLayout;
-            mediaGroupLayout->build(12);
 
-            moduleSwitch.setLayout( navPos, *mediaGroupLayout, {~0u, ~0u} );
-		    bindSelectorAction( mediaGroupLayout );
-            translate(navElement);
+        if (navElement.mediaGroup) {
+            if (!navElement.layout) {
+                auto mediaGroupLayout = new MediaGroupLayout( navElement.mediaGroup, this );
+                navElement.layout = (GUIKIT::Layout*)mediaGroupLayout;
+                mediaGroupLayout->build(12);
+
+                moduleSwitch.setLayout( navPos, *mediaGroupLayout, {~0u, ~0u} );
+                bindSelectorAction( mediaGroupLayout );
+                translate(navElement);
+            } else {
+                for (auto block : ((MediaGroupLayout*)navElement.layout)->blocks) {
+                    if (block->dirty) {
+                        auto fSetting = FileSetting::getInstance(emulator, _underscore(block->media->name));
+                        updateMediaBlock(block, fSetting);
+                    }
+                }
+            }
         }
 
         moduleSwitch.setSelection( navPos );
@@ -432,8 +442,6 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
                         
                             if (!layout->hint) {
                                 layout->hint = new GUIKIT::MultilineEdit;                                                                
-
-                                layout->hint->setForegroundColor( ERROR_COLOR );
                                 
                                 layout->hint->setEditable( false );
 
@@ -951,7 +959,7 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
 
     if (block->selector.pathCombo) {
         auto recentFile = fileloader->getRecentFile(emulator);
-        auto& files = recentFile->list(block->media->group, fSetting->path);
+        auto& files = recentFile->list(block->media->group, block->media->secondary, fSetting->path);
 
         block->selector.pathCombo->reset();
 
@@ -968,6 +976,8 @@ auto MediaLayout::updateMediaBlock(MediaGroupLayout::Block* block, FileSetting* 
         block->header.fileName.setText(fSetting->file);
         block->header.writeprotect.setChecked( fSetting->writeProtect );
     }
+
+    block->dirty = false;
 }
 
 auto MediaLayout::updateListing( Emulator::Interface::Media* media ) -> void {    
@@ -1032,7 +1042,7 @@ auto MediaLayout::translate(NavElement& nav) -> void {
                 block->selector.combo.setText(id++, trans->get( pcb.name ));
             }
                     
-            block->selector.jumperLabel.setText( trans->get("jumper", {}, true) );
+          //  block->selector.jumperLabel.setText( trans->get("jumper", {}, true) );
             
             for(auto& jumper : mediaGroup->expansion->jumpers) {
 
@@ -1226,6 +1236,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     auto data = (mediaGroup->isTape() || mediaGroup->isHardDisk()) && !file->isArchived() ? nullptr
         : file->archiveData(item->id);
 
+    bool updateGenericFileList = !media->secondary;
     if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
         fileloader->updateFileSetting(fSetting, file, item);
@@ -1240,7 +1251,12 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
             block->selector.combo.setSelection(0);
             block->selector.combo.onChange();
         }
-    } else {        
+    } else {    
+        auto ext = GUIKIT::String::getExtension(file->getFile(), "bin");
+        GUIKIT::String::toLowerCase(ext);
+        if (ext != "crt")
+            updateGenericFileList = false;
+
         if (media->pcbLayout && mediaGroup->expansion->pcbs.size()) {
             block->selector.combo.setSelection(0);
             block->selector.combo.onChange();
@@ -1249,7 +1265,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     }
 
     auto recentFile = fileloader->getRecentFile(emulator);
-    recentFile->add(mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
+    recentFile->add(mediaGroup, media->secondary, GUIKIT::File::buildRelativePath(file->getFile()), updateGenericFileList);
     if (view)
         view->updateRecentList(emulator);
 
@@ -1414,6 +1430,9 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         if (!layout)
             return;
     }
+
+    if (!block || !block->selector.pathCombo)
+        return;
 
     GUIKIT::File* file = filePool->get(filePath);
     if (!file)
@@ -1614,7 +1633,10 @@ auto MediaLayout::loadSettings() -> void {
             auto fSetting = FileSetting::getInstance(emulator, _underscore(block->media->name) );
             fSetting->update();
             
-            updateMediaBlock(block, fSetting);
+            if (nav.tvi->selected())
+                updateMediaBlock(block, fSetting);
+            else
+                block->dirty = true; // we can't update all comboboxes in software at once ... would hang a few seconds
 
             if ( showListing( layout ) ) {
                 

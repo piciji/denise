@@ -293,6 +293,8 @@ auto View::build() -> void {
     	
 	GUIKIT::Application::Cocoa::onCustom1 = []() {
         emuThread->lock();
+        for (auto rF : fileloader->recentFiles)
+            rF->save();
 		program->saveSettings();
         emuThread->unlock();
 	};
@@ -1490,7 +1492,11 @@ auto View::buildMenu() -> void {
     optionsMenu.append(statusTextMenu);
 
     saveItem.onActivate = []() {
+        emuThread->lock();
+        for (auto rF : fileloader->recentFiles)
+            rF->save();
         program->saveSettings();
+        emuThread->unlock();
     };
     saveItem.setIcon(diskImage);
     optionsMenu.append(saveItem);

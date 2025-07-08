@@ -76,6 +76,7 @@ PathsLayout::PathsLayout() {
 MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media, Emulator::Interface* emulator) {
     auto group = media->group;
     bool IPMode = group->isExpansion() && group->expansion->isRS232();
+    bool staticField = (media->id == 0) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionSuperCpu) && dynamic_cast<LIBC64::Interface*>(emulator);
 
     deviceName.setFont(GUIKIT::Font::system("bold"));
     inUse.setFont(GUIKIT::Font::system("bold"));
@@ -96,17 +97,19 @@ MediaGroupLayout::Block::Header::Header(Emulator::Interface::Media* media, Emula
     }
 
     if (!IPMode) {
-        append(eject, {0u, 0u}, 10);
+        if (!staticField)
+            append(eject, {0u, 0u}, 10);
         append(fileName, {~0u, 0u});
     }
     setAlignment(0.5);
 }
 
-MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
+MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media, Emulator::Interface* emulator) {
     auto group = media->group;
     bool IPMode = group->isExpansion() && group->expansion->isRS232();
+    bool staticField = (media->id == 0) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionSuperCpu) && dynamic_cast<LIBC64::Interface*>(emulator);
 
-    if (IPMode) {
+    if (IPMode || staticField) {
         edit = new GUIKIT::LineEdit;
         pathCombo = nullptr;
         append(*edit, { ~0u, 0u }, 10);
@@ -129,7 +132,7 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
     }
                   
     if (group->expansion && !media->secondary && (group->expansion->jumpers.size() > 0) ) {
-        append(jumperLabel, {0u, 0u}, 5 );
+      //  append(jumperLabel, {0u, 0u}, 5 );
         
         for(auto& jumper : group->expansion->jumpers) {
             auto jumpChecker = new GUIKIT::CheckBox;
@@ -141,20 +144,27 @@ MediaGroupLayout::Block::Selector::Selector(Emulator::Interface::Media* media) {
         }        
     }
 
-    if (!IPMode)
+    if (!IPMode) {
         append(open, {0u, 0u});
+        if (staticField)
+            open.setEnabled(false);
+    }
     
     setAlignment(0.5);
 
-    if (IPMode)
-        edit->setEditable();
-    else 
+    if (edit) {
+        edit->setEditable(IPMode);
+        edit->setDroppable(false);
+        if (staticField)
+            edit->setEnabled(false);
+    } else if (pathCombo)
         pathCombo->setDroppable();
 }
 
-MediaGroupLayout::Block::Block(Emulator::Interface::Media* media, Emulator::Interface* emulator) : media(media), header(media, emulator), selector(media) {
+MediaGroupLayout::Block::Block(Emulator::Interface::Media* media, Emulator::Interface* emulator) : media(media), header(media, emulator), selector(media, emulator) {
     append(header, {~0u, 0u}, 2);
     append(selector, {~0u, 0u});
+    dirty = true;
 }
 
 MediaGroupLayout::MediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup, MediaLayout* mediaLayout ) {
@@ -388,11 +398,6 @@ auto MediaGroupLayout::build(unsigned previewFontSize) -> void {
                 spacing += 20;
 
             blockContainer.append(*block, {~0u, 0u}, spacing);
-        }
-
-        if (isC64 && (media->id == 0) && (media->group->id == LIBC64::Interface::MediaGroupIdExpansionSuperCpu)) {
-            block->selector.open.setEnabled(false);
-            block->header.remove(block->header.eject);
         }
             
         return block;

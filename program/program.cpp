@@ -517,6 +517,9 @@ auto Program::quit() -> void {
     fpsChangeTimer.setEnabled(false);
 
     if (!cmd->debug) {
+        for(auto rF : fileloader->recentFiles)
+            rF->save();
+
         if (globalSettings->get<bool>("save_settings_on_exit", true))
 		    saveSettings( true );
         else

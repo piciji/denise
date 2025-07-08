@@ -139,17 +139,18 @@ struct MediaGroupLayout : GUIKIT::FramedVerticalLayout {
             GUIKIT::LineEdit* edit = nullptr;
             GUIKIT::ComboButton* pathCombo = nullptr;
             GUIKIT::ComboButton combo;
-            GUIKIT::Label jumperLabel;
+            //GUIKIT::Label jumperLabel;
             std::vector<GUIKIT::CheckBox*> jumpers;
             GUIKIT::Button open;
             GUIKIT::Widget spacer;          
 
-            Selector(Emulator::Interface::Media* media);
+            Selector(Emulator::Interface::Media* media, Emulator::Interface* emulator);
         } selector;
 
-        Emulator::Interface::Media* media;        
+        Emulator::Interface::Media* media;
         std::vector<Emulator::Interface::Listing> listings;
         MediaGroupLayout* layout;
+        bool dirty = true;
         Block(Emulator::Interface::Media* media, Emulator::Interface* emulator);
     };
     std::vector<Block*> blocks;

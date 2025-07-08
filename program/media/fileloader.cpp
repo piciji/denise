@@ -855,6 +855,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     auto data = (mediaGroup->isTape() || mediaGroup->isHardDisk()) && !file->isArchived() ? nullptr : file->archiveData(item->id);
 
+    bool updateGenericFileList = !media->secondary;
     if (!mediaGroup->isExpansion() || media->secondary) {
         emulator->ejectMedium(media);
         updateFileSetting(fSetting, file, item);
@@ -868,6 +869,10 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
         if (mediaGroup->isHardDisk() && mediaGroup->expansion->pcbs.size())
             settings->set<unsigned>(_underscore(media->name) + "_pcb", 0);
     } else {
+        auto ext = GUIKIT::String::getExtension(file->getFile(), "bin");
+        GUIKIT::String::toLowerCase(ext);
+        if (ext != "crt")
+            updateGenericFileList = false;
 
         if (mediaGroup->expansion->pcbs.size())
             settings->set<unsigned>( _underscore(media->name) + "_pcb", 0);
@@ -876,7 +881,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
     }
 
     auto recentFile = getRecentFile(emulator);
-    recentFile->add(mediaGroup, GUIKIT::File::buildRelativePath(file->getFile()));
+    recentFile->add(mediaGroup, media->secondary, GUIKIT::File::buildRelativePath(file->getFile()), updateGenericFileList);
     if (view)
         view->updateRecentList(emulator);
 
