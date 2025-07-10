@@ -106,7 +106,10 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
 
     currentHeight = 0;
 	
-	tempDest = new uint32_t[ 2048 * 600 ];
+    if (isAmiga())
+	    tempDest = new uint32_t[2048 * 600]; // shres
+    else
+        tempDest = new uint32_t[1024 * 600];
 	
 	lumaRise = 1.0 / 2.0;
 	lumaFall = 1.0 / 1.2;
