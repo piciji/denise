@@ -78,36 +78,7 @@ auto CALLBACK pImageView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
         case WM_GETDLGCODE: return DLGC_STATIC | DLGC_WANTCHARS;
         case WM_ERASEBKGND:
             return 0;
-        //case WM_PAINT:
-        //{
-        //    if (!imageView->state.image)
-        //        return 0;
 
-        //    unsigned width = imageView->state.image->width;
-        //    unsigned height = imageView->state.image->height;
-
-        //    PAINTSTRUCT ps;
-        //    BeginPaint(hwnd, &ps);
-        //    HDC hdc = CreateCompatibleDC(ps.hdc);
-
-        //    auto bitmap = CreateBitmapWithPremultipliedAlpha(*imageView->state.image);
-        //    SelectObject(hdc, bitmap);
-
-        //    RECT rc;
-        //    GetClientRect(hwnd, &rc);
-        //    if (pApplication::pDrawThemeParentBackground)
-        //        pApplication::pDrawThemeParentBackground(hwnd, ps.hdc, &rc);
-
-        //    BLENDFUNCTION bf{AC_SRC_OVER, 0, (BYTE) 255, AC_SRC_ALPHA};
-        //    AlphaBlend(ps.hdc, 0, 0, width, height, hdc, 0, 0, width, height, bf);
-
-        //    DeleteObject(bitmap);
-        //    DeleteDC(hdc);
-
-        //    EndPaint(hwnd, &ps);
-
-        //    return 0;
-        //}
         case WM_SETCURSOR:
             imageView->p.updateCursor();
             return 1;
