@@ -1889,7 +1889,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;ENABLE_HLSL;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -1924,7 +1924,7 @@ xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;ENABLE_HLSL;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -1963,7 +1963,7 @@ xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;ENABLE_HLSL;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -2000,7 +2000,7 @@ xcopy "$(ProjectDir)..\data\fonts\*.ttf" "$(TargetDir)fonts\" /e /y /i /r
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>DRV_FREETYPE;DRV_WGL;DRV_XAUDIO27;DRV_XAUDIO28;DRV_XAUDIO29;DRV_WASAPI;DRV_RAWINPUT;DRV_DINPUT5;DRV_DINPUT7;DRV_DINPUT8;DRV_DSOUND;DRV_DIRECT3D9;DRV_DIRECT3D11;GUIKIT_WINAPI;ENABLE_HLSL;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
