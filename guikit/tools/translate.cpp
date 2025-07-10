@@ -97,6 +97,7 @@ auto Translation::read( std::string path, unsigned maxFileSize ) -> bool {
     if(file.getSize() > maxFileSize ) return false;
 
     clear();
+    list.reserve(1000);
     if( file.getSize() == 0) return true;
 
     auto fp = file.getHandle();
@@ -118,6 +119,7 @@ auto Translation::read( std::string path, unsigned maxFileSize ) -> bool {
 
         list.push_back( data );
     }
+    list.shrink_to_fit();
     return true;
 }
 
