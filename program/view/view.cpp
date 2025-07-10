@@ -1050,6 +1050,8 @@ auto View::loadImages() -> void {
     openImage.setResourceId(ID_OPEN);
     clearImage.loadPng((uint8_t*)Icons::clear, sizeof(Icons::clear));
     clearImage.setResourceId(ID_CLEAR);
+    insertImage.loadPng((uint8_t*)Icons::insert, sizeof(Icons::insert));
+    insertImage.setResourceId(ID_INSERT);
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1174,7 +1176,7 @@ auto View::buildMenu() -> void {
         sM.system->append(*GUIKIT::MenuSeparator::getInstance());
 		
 		sM.loadSoftware = new GUIKIT::MenuItem;
-        sM.loadSoftware->setIcon( driveImage );
+        sM.loadSoftware->setIcon(insertImage);
         sM.loadSoftware->onActivate = [this, emulator]() {			
             setAnyload( emulator );
 	    };

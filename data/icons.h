@@ -161,4 +161,8 @@ extern uint8_t ledOffRound[443];
 extern uint8_t ledRedRound[471];
 
 extern uint8_t ledGreenRound[472];
+
+extern uint8_t insert[673];
+
+extern uint8_t binary[339];
 }

@@ -54,3 +54,4 @@
 #define ID_DEL          32042
 #define ID_OPEN         32043
 #define ID_CLEAR        32044
+#define ID_INSERT       32045

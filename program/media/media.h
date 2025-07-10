@@ -262,6 +262,7 @@ struct MediaLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image imgDocument;
     GUIKIT::Image settingsImage;
     GUIKIT::Image searchImage;
+    GUIKIT::Image binaryImage;
 
     GUIKIT::Image openImg;
     GUIKIT::Image ejectImg;

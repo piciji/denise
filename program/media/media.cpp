@@ -169,6 +169,8 @@ auto MediaLayout::build() -> void {
     openImg.loadPng((uint8_t*)Icons::open, sizeof(Icons::open) );
     ejectImg.loadPng((uint8_t*)Icons::eject, sizeof(Icons::eject) );
 
+    binaryImage.loadPng((uint8_t*)Icons::binary, sizeof(Icons::binary));
+
     GUIKIT::TreeViewItem* tvi;
     unsigned previewFontSize = settings->get<unsigned>("software_preview_fontsize", 12, {8, 16});
     
@@ -205,7 +207,7 @@ auto MediaLayout::build() -> void {
            
 		} else if (mediaGroup.isProgram()) {
             tvi->setText( "memory" );
-            tvi->setImage( memoryImage );
+            tvi->setImage( binaryImage );
             
         } else {
             delete tvi;

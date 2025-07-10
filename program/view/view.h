@@ -252,6 +252,8 @@ struct View : GUIKIT::Window {
     GUIKIT::Image ledRedRoundImage;
     GUIKIT::Image ledOffRoundImage;
 
+    GUIKIT::Image insertImage;
+
 	GUIKIT::Image delImage;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
