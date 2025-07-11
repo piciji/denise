@@ -23,7 +23,7 @@ auto RecentFiles::load() -> void {
     settings = new GUIKIT::Settings;
 
     if (settings->load(path))
-        genericEntries = settings->get<unsigned>("generic_entries", 25, {5, maxEntries});
+        genericEntries = settings->get<unsigned>("generic_entries", 25, { 5, MAX_RECENT_ENTIRIES });
 }
 
 auto RecentFiles::save() -> void {
@@ -121,7 +121,7 @@ auto RecentFiles::getStorage(Emulator::Interface::MediaGroup* group, bool altern
 
 auto RecentFiles::clear(Emulator::Interface::MediaGroup* group, bool alternate) -> void {
     load();
-    for (int i = 0; i < maxEntries; i++)
+    for (int i = 0; i < MAX_RECENT_ENTIRIES; i++)
         settings->remove(getIdent(group, alternate, i));
     
     for (auto _s : storage) {
@@ -134,12 +134,12 @@ auto RecentFiles::clear(Emulator::Interface::MediaGroup* group, bool alternate) 
 
 auto RecentFiles::getEntries(Emulator::Interface::MediaGroup* group) -> unsigned {
     load();
-    return std::min(maxEntries, group ? groupEntries : genericEntries);
+    return std::min(MAX_RECENT_ENTIRIES, group ? groupEntries : genericEntries);
 }
 
 auto RecentFiles::setGenericEntries(unsigned entries) -> void {
-    if (entries > maxEntries)
-        entries = maxEntries;
+    if (entries > MAX_RECENT_ENTIRIES)
+        entries = MAX_RECENT_ENTIRIES;
 
     load();
     if (settings) {

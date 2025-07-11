@@ -9,6 +9,8 @@ namespace GUIKIT {
     struct Settings;
 }
 
+#define MAX_RECENT_ENTIRIES 40u
+
 struct RecentFiles {
 
     RecentFiles(Emulator::Interface* emulator, const std::string& path);
@@ -18,8 +20,6 @@ struct RecentFiles {
     std::string path;
 
     Emulator::Interface* emulator;
-
-    static const unsigned maxEntries = 40;
 
     unsigned genericEntries = 25;
     unsigned groupEntries = 25;

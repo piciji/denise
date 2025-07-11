@@ -40,7 +40,7 @@ struct View : GUIKIT::Window {
         GUIKIT::MenuItem* firmware;
         GUIKIT::MenuItem* loadSoftware;
         GUIKIT::Menu* recentSoftware;
-            GUIKIT::MenuItem* recents[RecentFiles::maxEntries];
+            GUIKIT::MenuItem* recents[MAX_RECENT_ENTIRIES];
             GUIKIT::MenuSeparator* recentControlSeparator;
             GUIKIT::Menu* recentControl;
                 GUIKIT::MenuItem* recentClearEntries;
