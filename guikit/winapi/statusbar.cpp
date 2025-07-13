@@ -172,8 +172,7 @@ auto pStatusBar::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         case WM_CONTEXTMENU:
             return 0;
     }
-    //return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
-    return pApplication::wndProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
+    return CallWindowProc(statusBar->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pStatusBar::setTooltip(StatusBar::Part* part) -> void {
