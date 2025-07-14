@@ -48,10 +48,9 @@ int main(int argc, char** argv) {
     }
     
     Program program;
-    if (!GUIKIT::Application::isQuit) {
-        GUIKIT::Application::processEvents();
+    if (!GUIKIT::Application::isQuit)
         GUIKIT::Application::run();
-    }
+    
     return GUIKIT::Application::exitCode;
 }
 

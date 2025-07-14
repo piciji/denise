@@ -38,6 +38,8 @@ pApplication::DesktopSession pApplication::desktopSession = pApplication::Deskto
 auto pApplication::run() -> void {
 
     if(Application::loop) {
+        Application::processEvents();
+        
         while(!Application::isQuit) {
             Application::loop();
             processEvents();

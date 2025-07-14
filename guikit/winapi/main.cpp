@@ -42,6 +42,8 @@ namespace GUIKIT {
 #include "widgets/imageView.cpp"
    
 auto pApplication::run() -> void {
+    Application::processEvents();
+    
     if (Application::loop) {        
         while(!Application::isQuit) {
             Application::loop();
