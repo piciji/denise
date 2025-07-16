@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - Visual Studio 2022
+#  - Visual Studio 2022
   - macos-sonoma
-  - macos-monterey
+#  - macos-monterey
 #  - Ubuntu2004
 
 stack: python 3.8
@@ -266,7 +266,7 @@ for:
     - sh: cd ..
     - sh: sudo rm -rf /Library/Frameworks/Mono.framework
     - sh: install -m 755 data/libs/static/macArm/libfreetype.a /usr/local/lib/
-    - sh: install -m 755 data/libs/shared/macArm/libfreetype.6.dylib /usr/local/lib/
+    - sh: install -m 755 data/libs/shared/macArm/libfreetype.dylib /usr/local/lib/
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
