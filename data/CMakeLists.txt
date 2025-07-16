@@ -204,7 +204,6 @@ set(headerSrcs ${headerSrcs}
     guikit/tools/decode/lha.h
     guikit/tools/decode/png.h
     guikit/tools/decode/zip.h
-    guikit/tools/decode/stb/stb_image.h
     guikit/tools/encode/png.h
     guikit/tools/file/chunk.h
     guikit/tools/file/directory.h

@@ -40,6 +40,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ToggleAudioStats, "show_audio_buffer"} );
     hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
     hotkeys.push_back( {Hotkey::Id::CropWindow, "crop window"} );
+    hotkeys.push_back({ Hotkey::Id::TakeScreenShot, "take screenshot" });
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "swapper up"} );
@@ -408,6 +409,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (statusHandler)
                 statusHandler->setMessage(_str, false, true, 4);
         } break;
+        case Hotkey::Id::TakeScreenShot:
+            if (view) {
+                emuThread->lock();
+                view->takeScreenshot();
+            }
+            break;
         case Hotkey::Id::ThreadedRenderer: {
             auto _settings = program->getSettings( activeEmulator );
             unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);

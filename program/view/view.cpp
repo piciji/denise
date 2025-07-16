@@ -13,6 +13,7 @@
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
 #include "placeholder.cpp"
+#include "../tools/chronos.h"
 
 View* view = nullptr;
 
@@ -1375,7 +1376,41 @@ auto View::buildMenu() -> void {
     controlMenu.setIcon(joystickImage);
     append(controlMenu);
 	
-    editMenu.append( copyItem );
+    // Misc Control
+    recordScreen.onActivate = [this]() {
+        emuThread->lock();
+        takeScreenshot();
+        emuThread->unlock();
+    };
+    miscMenu.append(recordScreen);
+
+    captureTwoFrames.onToggle = [this]() {
+        emuThread->lock();
+        globalSettings->set<bool>("screenshot_two_frames", captureTwoFrames.checked());
+        emuThread->unlock();
+    };
+    captureTwoFrames.setChecked(globalSettings->get<bool>("screenshot_two_frames", false));
+    miscMenu.append(captureTwoFrames);
+
+    captureNative.onToggle = [this]() {
+        emuThread->lock();
+        globalSettings->set<bool>("screenshot_native", captureNative.checked());
+        emuThread->unlock();
+    };
+    captureNative.setChecked(globalSettings->get<bool>("screenshot_native", false));
+    miscMenu.append(captureNative);
+
+    captureNoEffects.onToggle = [this]() {
+        emuThread->lock();
+        globalSettings->set<bool>("screenshot_no_effects", captureNoEffects.checked());
+        emuThread->unlock();
+    };
+    captureNoEffects.setChecked(globalSettings->get<bool>("screenshot_no_effects", false));
+    miscMenu.append(captureNoEffects);
+
+    miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
+    miscMenu.append(copyItem);
 
     pasteItem.onActivate = []() {
         GUIKIT::Application::requestClipboardText();
@@ -1391,10 +1426,10 @@ auto View::buildMenu() -> void {
         GUIKIT::Application::setClipboardText( text );
     };
 
-    editMenu.append( pasteItem );
+    miscMenu.append( pasteItem );
 
-	editMenu.setIcon(editImage);
-    append( editMenu );
+	miscMenu.setIcon(editImage);
+    append( miscMenu );
 
     optionsMenu.setIcon(toolsImage);
     append(optionsMenu);
@@ -1963,9 +1998,13 @@ auto View::translate() -> void {
         }
     }    
 
-    editMenu.setText( trans->get("Edit") );
+    miscMenu.setText( trans->get("Misc") );
     pasteItem.setText( trans->get("Paste") );
     copyItem.setText( trans->get("Copy") );
+    recordScreen.setText(trans->getA("take screenshot"));
+    captureTwoFrames.setText(trans->getA("merge two frames"));
+    captureNative.setText(trans->getA("capture native resolution"));    
+    captureNoEffects.setText(trans->getA("without effects"));
 
     controlMenu.setText( trans->get("control") );
     
@@ -2112,7 +2151,8 @@ auto View::updateCartButtons( Emulator::Interface* emulator ) -> void {
             sM.menu->setEnabled( state );
     }
 
-    editMenu.setEnabled( !!dynamic_cast<LIBC64::Interface*>(emulator) );
+    copyItem.setEnabled(!!dynamic_cast<LIBC64::Interface*>(emulator));
+    pasteItem.setEnabled(!!dynamic_cast<LIBC64::Interface*>(emulator));
 }
 
 auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
@@ -2208,7 +2248,7 @@ auto View::updateEmuUsage() -> void {
     remove(tapeControlMenu);
     remove(speedControlMenu);
     remove(optionsMenu);
-    remove(editMenu);
+    remove(miscMenu);
     remove(controlMenu);
 
     for(auto& sysMenu : sysMenus)
@@ -2229,7 +2269,7 @@ auto View::updateEmuUsage() -> void {
 
     setConnectors();
     append(controlMenu);
-    append(editMenu);
+    append(miscMenu);
     append(optionsMenu);
     append(speedControlMenu);
     if (activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives( activeEmulator->getTapeMediaGroup() ) ))
@@ -2292,4 +2332,44 @@ auto View::clearRecentList(Emulator::Interface* emulator) -> void {
     }
     sysMenu->recentSoftware->reset();
     sysMenu->recentSoftware->setEnabled(false);
+}
+
+auto View::takeScreenshot() -> void {
+    videoDriver->waitRenderThread();
+    auto settings = program->getSettings(activeEmulator);
+    auto _path = program->generatedFolder(activeEmulator, "screen_record_path", "recordings/screenshots", true);
+    auto _file = settings->get<std::string>("save_ident", "screenshot");
+    auto screenshotFormat = settings->get<std::string>("screen_record_format", "png");
+    bool withoutFilter = globalSettings->get<bool>("screenshot_no_effects", false);
+    bool mergeTwoFrames = globalSettings->get<bool>("screenshot_two_frames", false);
+    bool native = globalSettings->get<bool>("screenshot_native", false);
+
+    auto timestamp = Chronos::getTimestampInSeconds();
+    _path += _file + "_" + std::to_string(timestamp);
+
+    screenshot.sharedMutex.lock();
+    if (screenshotFormat == "bmp") {
+        screenshot.path = _path + ".bmp";
+        screenshot.type = GUIKIT::Image::Type::BMP;
+    } else if (screenshotFormat == "jpg") {
+        screenshot.path = _path + ".jpg";
+        screenshot.type = GUIKIT::Image::Type::JPG;
+    } else if (screenshotFormat == "tga") {
+        screenshot.path = _path + ".tga";
+        screenshot.type = GUIKIT::Image::Type::TGA;
+    } else {
+        screenshot.path = _path + ".png";
+        screenshot.type = GUIKIT::Image::Type::PNG;
+    }
+
+    screenshot.withoutFilter = withoutFilter;
+    screenshot.native = native;
+    screenshot.twoFrames = mergeTwoFrames;
+    screenshot.pause = 0;
+    VideoManager::takeScreenShots = mergeTwoFrames ? 2 : 1;
+    if (screenshot.mergeData)
+        delete[] screenshot.mergeData;
+    screenshot.mergeData = nullptr;
+    screenshot.mergeSize = 0;
+    screenshot.sharedMutex.unlock();
 }

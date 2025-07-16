@@ -24,6 +24,7 @@ uint8_t VideoManager::frameRenderTrigger = 1;
 unsigned VideoManager::placeHolderFrames = 0;
 bool VideoManager::placeHolderSplashScreen = false;
 bool VideoManager::needAUpdate = true;
+unsigned VideoManager::takeScreenShots = 0;
 
 std::vector<VideoManager*> videoManagers;
 
@@ -591,8 +592,8 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     constexpr bool shres = options & 8;
     constexpr bool lores = !hires && !shres;
     bool iHold = interlace && !field && !interlaceFields;
-    bool warp = program->warp.active;
-    uint8_t gpuOptions = iHold | (interlace << 1) | (warp << 2);
+    bool suppressShader = program->warp.active;
+    uint8_t gpuOptions = iHold | (interlace << 1) | (suppressShader << 2);
 
     if (needAUpdate)
         updateAll();
@@ -640,12 +641,30 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         return;
     }
 
+    if (takeScreenShots) {
+        if (view->screenshot.native) {
+            suppressShader = true;
+        } else {
+            gpuOptions |= (uint8_t)DRIVER::OPT_TakeScreenshot;
+            if (view->screenshot.withoutFilter) {
+                gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader;
+                suppressShader = true;
+            }
+            if (!placeHolderFrames) {
+                if (!--takeScreenShots && view->screenshot.pause)
+                    program->isPause = view->screenshot.pause;
+            }
+        }
+    }
+
     frameRenderPos = 0;
     videoDriver->setIntegerScalingDimension( lores ? (width << 1) : (hires ? width : (width >> 1)), interlace ? height : (height << 1), shres | hires | interlace);
 
     if (placeHolderFrames) {
         if (!placeHolderSplashScreen || ((placeHolderFrames & 3) == 0)) {
-            if (!view->renderPlaceholder())
+            if (takeScreenShots)
+                takeScreenShots--;
+            if (!view->renderPlaceholder(gpuOptions))
                 return hidePlaceHolder();
         }
 
@@ -658,12 +677,14 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         }
         return;
 
-    } else if ( warp || (crtMode == CrtMode::None) ) {
+    } else if ( suppressShader || (crtMode == CrtMode::None) ) {
         if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
             return;
 
         renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
 
+        if (takeScreenShots && view->screenshot.native)
+            takeScreenshot(gpuData, width, height, gpuPitch - width);
 	} else if (crtMode == CrtMode::Gpu) {
         if (shaderLumaChromaInput()) {
             width += SHADER_OFFSCREEN_WIDTH << 1;
@@ -696,6 +717,28 @@ Typical:
 	}		           
 
     videoDriver->unlockAndRedraw( );
+}
+
+auto VideoManager::takeScreenshot(uint32_t* _data, unsigned _width, unsigned _height, unsigned _pitch) -> void {
+    if (!--takeScreenShots && view->screenshot.pause)
+        program->isPause = view->screenshot.pause;
+        
+    uint8_t* _dest = new uint8_t[_width * _height * 3];
+    unsigned rgba;
+
+    uint8_t* ptr = _dest;
+    for (int y = 0; y < _height; y++) {
+        for (int x = 0; x < _width; x++) {
+            rgba = *_data++;
+
+            *ptr++ = (rgba >> 16) & 0xff;
+            *ptr++ = (rgba >> 8) & 0xff;
+            *ptr++ = rgba & 0xff;
+        }
+        _data += _pitch;
+    }
+    program->takeScreenshot(_dest, _width, _height);
+    delete[] _dest;
 }
 
 template<typename T, bool interlace, bool field> inline auto VideoManager::renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {

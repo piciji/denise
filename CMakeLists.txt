@@ -88,6 +88,7 @@ endif()
 set(srcs
         guikit/tools/decode/lha.cpp
         guikit/tools/decode/images.cpp
+        guikit/tools/encode/images.cpp
         guikit/api.cpp
 
         driver/driver.cpp
@@ -229,6 +230,8 @@ endif()
 
 SET_SOURCE_FILES_PROPERTIES(deps/depsSlang.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
 SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/lha.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/lha")
+SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb")
+SET_SOURCE_FILES_PROPERTIES(guikit/tools/encode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb")
 
 set(headerSrcs)
 set(depSrcs)

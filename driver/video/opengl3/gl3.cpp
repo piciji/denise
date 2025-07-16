@@ -110,6 +110,7 @@ struct GL3 {
     } settings;
 
     Version version;
+    DRIVER::Video::ScreenshotCallback screenshotCallback = nullptr;
 
     GL3() {
         shaderPasses = 0;
@@ -1138,6 +1139,33 @@ End:
         frame.size.z = 1.0f / (float)viewport.width;
         frame.size.w = 1.0f / (float)viewport.height;
         updateRTS = true;
+    }
+
+    auto setScreenshotCallback(DRIVER::Video::ScreenshotCallback callback) -> void {
+        this->screenshotCallback = callback;
+    }
+
+    auto takeScreenshot() -> void {
+        if (!screenshotCallback)
+            return;
+
+        uint8_t* buffer = new uint8_t[viewport.width * viewport.height * 4];
+
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        glReadBuffer(GL_FRONT);
+
+        glReadPixels(viewport.x, viewport.y, viewport.width, viewport.height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+
+        for (int line = 0; line != viewport.height / 2; ++line) {
+            std::swap_ranges(
+                buffer + 3 * viewport.width * line,
+                buffer + 3 * viewport.width * (line + 1),
+                buffer + 3 * viewport.width * (viewport.height - line - 1));
+        }
+
+        screenshotCallback(buffer, viewport.width, viewport.height);
+
+        delete[] buffer;
     }
 };
 

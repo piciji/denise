@@ -187,6 +187,7 @@ struct Program : Emulator::Interface::Bind {
     auto loadProgress() -> void;
 	auto activateGPU(Emulator::Interface* emulator, bool state) -> void;
 	auto updateOnScreenText(bool keepFontPath = false) -> void;
+    auto takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) -> void;
 	
     //input
     auto initInput() -> void;

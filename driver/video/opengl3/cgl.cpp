@@ -355,6 +355,8 @@ struct CGL : public Video, GL3, RenderThread {
         } else {
             resizeMutex.lock();
             redraw(options & OPT_DisallowShader);
+            if (options & OPT_TakeScreenshot)
+                takeScreenshot();
             resizeMutex.unlock();
         }
 
@@ -440,7 +442,8 @@ struct CGL : public Video, GL3, RenderThread {
                     [[view openGLContext] flushBuffer];
                     if (settings.hardSync && settings.synchronize) glFinish();
                 }
-                    
+                if (options & OPT_TakeScreenshot)
+                    takeScreenshot();
                 [view unlockFocus];
             }
 
@@ -621,6 +624,10 @@ struct CGL : public Video, GL3, RenderThread {
     
     auto freeContext() -> void {
         clearCurrent();
+    }
+
+    auto setScreenshotCallback(ScreenshotCallback callback) -> void {
+        GL3::setScreenshotCallback(callback);
     }
 
     auto canHardSync() -> bool { return true; }

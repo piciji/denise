@@ -199,6 +199,8 @@ struct WGL : Video, GL3, RenderThread {
             RenderThread::unlock();
         } else {
             redraw(options & OPT_DisallowShader);
+            if (options & OPT_TakeScreenshot)
+                takeScreenshot();
         }
     }
 
@@ -280,6 +282,8 @@ struct WGL : Video, GL3, RenderThread {
         }
 
 		resizeMutexThreaded.unlock();
+        if (options & OPT_TakeScreenshot)
+            takeScreenshot();
         clearCurrent();
     }
 	
@@ -480,6 +484,10 @@ struct WGL : Video, GL3, RenderThread {
     }
 
     auto canHardSync() -> bool { return true; }
+
+    auto setScreenshotCallback(ScreenshotCallback callback) -> void {
+        GL3::setScreenshotCallback(callback);
+    }
 };
 
 }

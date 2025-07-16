@@ -496,8 +496,10 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
                 if (view->paletteLayout)
                     view->paletteLayout->loadSettings();
-                if (view->videoLayout)
+                if (view->videoLayout) {
                     view->videoLayout->fillFontTypeList();
+                    view->videoLayout->updateRecordingPath();
+                }
             }
             emuThread->unlock();
         }

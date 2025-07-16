@@ -218,6 +218,7 @@
     <ClInclude Include="..\guikit\tools\decode\lha.h" />
     <ClInclude Include="..\guikit\tools\decode\png.h" />
     <ClInclude Include="..\guikit\tools\decode\zip.h" />
+    <ClInclude Include="..\guikit\tools\encode\images.h" />
     <ClInclude Include="..\guikit\tools\encode\png.h" />
     <ClInclude Include="..\guikit\tools\file\chunk.h" />
     <ClInclude Include="..\guikit\tools\file\directory.h" />
@@ -1312,8 +1313,19 @@
     </ClCompile>
     <ClCompile Include="..\emulation\wdc\65C02\w65C02.cpp" />
     <ClCompile Include="..\guikit\api.cpp" />
-    <ClCompile Include="..\guikit\tools\decode\images.cpp" />
+    <ClCompile Include="..\guikit\tools\decode\images.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_decode</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_decode</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_decode</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_decode</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\guikit\tools\decode\lha.cpp" />
+    <ClCompile Include="..\guikit\tools\encode\images.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_encode</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_encode</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_encode</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_encode</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\guikit\tools\file\file.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -1862,12 +1874,12 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\data\libs\static\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_win32);$(ProjectDir)..\data\libs\static\x86;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
@@ -1875,13 +1887,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>

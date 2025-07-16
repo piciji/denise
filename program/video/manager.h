@@ -69,6 +69,7 @@ struct VideoManager {
     static unsigned placeHolderFrames;
     static bool placeHolderSplashScreen;
     static bool needAUpdate;
+    static unsigned takeScreenShots;
 	
     auto setCrtThreaded(bool state) -> void;
     static auto setFrameRender(uint8_t limit) -> void;
@@ -273,6 +274,7 @@ struct VideoManager {
     auto translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string;
 
     auto fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool;
+    auto takeScreenshot(uint32_t* _data, unsigned _width, unsigned _height, unsigned _pitch) -> void;
 };
 
 extern std::vector<VideoManager*> videoManagers;

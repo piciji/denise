@@ -429,8 +429,11 @@ struct GLX : public Video, GL3, RenderThread {
         if (threadEnabled) {
             resizeWindow();
             RenderThread::unlock();
-        } else
+        } else {
             _redraw(options & OPT_DisallowShader);
+            if (options & OPT_TakeScreenshot)
+                takeScreenshot();
+        }
     }
 
     auto redraw(bool disallowShader = false) -> void {
@@ -528,6 +531,8 @@ struct GLX : public Video, GL3, RenderThread {
             if (settings.hardSync && settings.synchronize) glFinish();
         }
 
+        if (options & OPT_TakeScreenshot)
+            takeScreenshot();
         clearCurrent();
         resizeMutexThreaded.unlock();
     }
@@ -666,6 +671,10 @@ struct GLX : public Video, GL3, RenderThread {
 
     auto freeContext() -> void {
         clearCurrent();
+    }
+
+    auto setScreenshotCallback(ScreenshotCallback callback) -> void {
+        GL3::setScreenshotCallback(callback);
     }
 
     auto canHardSync() -> bool { return true; }

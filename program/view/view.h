@@ -21,6 +21,18 @@ struct View : GUIKIT::Window {
 	bool useFullscreenRefreshAsEmuSpeed = false;
 	ImageViewer* imageViewer = nullptr;
 
+    struct {        
+        std::string path;
+        GUIKIT::Image::Type type;
+        bool withoutFilter = false;
+        bool native = false;
+        bool twoFrames = false;
+        uint8_t* mergeData = nullptr;
+        unsigned mergeSize = 0;
+        unsigned pause = 0;
+        std::mutex sharedMutex;
+    } screenshot;
+
     struct ShaderFavourites {
         std::string path;
         GUIKIT::MenuRadioItem* item;
@@ -96,7 +108,7 @@ struct View : GUIKIT::Window {
     auto loadImages() -> void;
     
     auto loadPlaceholder() -> void;
-    auto renderPlaceholder() -> bool;
+    auto renderPlaceholder(uint8_t gpuOptions) -> bool;
     auto loadDragnDropOverlay() -> void;
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
@@ -126,7 +138,12 @@ struct View : GUIKIT::Window {
 
     std::vector<InputMenu> inputMenus;
 
-    GUIKIT::Menu editMenu;
+    GUIKIT::Menu miscMenu;
+        GUIKIT::MenuItem recordScreen;
+        GUIKIT::MenuCheckItem captureTwoFrames;
+        GUIKIT::MenuCheckItem captureNative;
+        GUIKIT::MenuCheckItem captureNoEffects;
+
         GUIKIT::MenuItem copyItem;
         GUIKIT::MenuItem pasteItem;
 
@@ -266,6 +283,7 @@ struct View : GUIKIT::Window {
 	auto activateCustomSpeed() -> void;
     auto updateGeometry(bool withViewport = false) -> void;
     auto adjustToEmu(bool withViewport) -> void;
+    auto takeScreenshot() -> void;
     
     View();
 };

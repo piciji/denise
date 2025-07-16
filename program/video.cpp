@@ -112,6 +112,10 @@ auto Program::initVideo(bool driverChange) -> void {
             }
         }
     } );
+
+    videoDriver->setScreenshotCallback([this](uint8_t* _data, unsigned _width, unsigned _height) {
+        takeScreenshot(_data, _width, _height);
+    } );
     
     if (activeEmulator) {
         videoDriver->useShaderCache( getSettings( activeEmulator )->get<bool>("shader_cache", true) );
@@ -120,6 +124,41 @@ auto Program::initVideo(bool driverChange) -> void {
     updateOnScreenText();
 
     loadProgress();
+}
+
+auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) -> void {
+    auto& screenShot = view->screenshot;
+    screenShot.sharedMutex.lock();
+
+    if (screenShot.twoFrames && !screenShot.mergeData) {
+        screenShot.mergeSize = _width * _height * 3;
+        screenShot.mergeData = new uint8_t[screenShot.mergeSize];
+        std::memcpy(screenShot.mergeData, _data, screenShot.mergeSize);
+    } else {        
+        if (screenShot.mergeData) {
+            if (screenShot.mergeSize == (_width * _height * 3)) {
+                uint8_t* src = screenShot.mergeData;
+                uint8_t* desc = _data;
+
+                for (unsigned y = 0; y < _height; y++) {
+                    for (unsigned x = 0; x < (_width * 3); x++)
+                        *desc++ = ((unsigned)*desc + (unsigned)*src++) >> 1;
+                }
+            }
+            delete[] screenShot.mergeData;
+            screenShot.mergeData = nullptr;
+            screenShot.mergeSize = 0;
+        }
+
+        GUIKIT::Image image;
+        if (image.generate(screenShot.type, _data, _width, _height)) {
+            GUIKIT::File file;
+            file.setFile(screenShot.path);
+            file.open(GUIKIT::File::Mode::Write);
+            file.write(image.data, image.writtenSize);
+        }        
+    }
+    screenShot.sharedMutex.unlock();
 }
 
 auto Program::loadProgress() -> void {
@@ -239,30 +278,35 @@ auto Program::repeatLastFrame() -> void {
 
     auto cropData = activeEmulator->cropData();
 
-    if (cropData)
-        return activeVideoManager->renderFrame<uint8_t>(cropData, activeEmulator->cropWidth(), activeEmulator->cropHeight(), activeEmulator->cropPitch());
+    if (cropData) {
+        activeVideoManager->renderFrame<uint8_t>(cropData, activeEmulator->cropWidth(), activeEmulator->cropHeight(), activeEmulator->cropPitch());
+    } else {
+        auto cropData16 = activeEmulator->cropData16();
 
-    auto cropData16 = activeEmulator->cropData16();
+        if (cropData16) {
+            unsigned _width = activeEmulator->cropWidth();
+            unsigned _height = activeEmulator->cropHeight();
+            unsigned _pitch = activeEmulator->cropPitch();
+            unsigned _options = activeEmulator->cropOptions();
 
-    if (cropData16) {
-        unsigned _width = activeEmulator->cropWidth();
-        unsigned _height = activeEmulator->cropHeight();
-        unsigned _pitch = activeEmulator->cropPitch();
-        unsigned _options = activeEmulator->cropOptions();
+            switch(_options) {
+                case 0: activeVideoManager->renderFrame<uint16_t, 0>(cropData16, _width, _height, _pitch); break;
+                case 1: activeVideoManager->renderFrame<uint16_t, 1>(cropData16, _width, _height, _pitch); break;
+                case 2: activeVideoManager->renderFrame<uint16_t, 2>(cropData16, _width, _height, _pitch); break;
 
-        switch(_options) {
-            case 0: activeVideoManager->renderFrame<uint16_t, 0>(cropData16, _width, _height, _pitch); break;
-            case 1: activeVideoManager->renderFrame<uint16_t, 1>(cropData16, _width, _height, _pitch); break;
-            case 2: activeVideoManager->renderFrame<uint16_t, 2>(cropData16, _width, _height, _pitch); break;
+                case 4: activeVideoManager->renderFrame<uint16_t, 4>(cropData16, _width, _height, _pitch); break;
+                case 5: activeVideoManager->renderFrame<uint16_t, 5>(cropData16, _width, _height, _pitch); break;
+                case 6: activeVideoManager->renderFrame<uint16_t, 6>(cropData16, _width, _height, _pitch); break;
 
-            case 4: activeVideoManager->renderFrame<uint16_t, 4>(cropData16, _width, _height, _pitch); break;
-            case 5: activeVideoManager->renderFrame<uint16_t, 5>(cropData16, _width, _height, _pitch); break;
-            case 6: activeVideoManager->renderFrame<uint16_t, 6>(cropData16, _width, _height, _pitch); break;
-
-            case 8: activeVideoManager->renderFrame<uint16_t, 8>(cropData16, _width, _height, _pitch); break;
-            case 9: activeVideoManager->renderFrame<uint16_t, 9>(cropData16, _width, _height, _pitch); break;
-            case 10: activeVideoManager->renderFrame<uint16_t, 10>(cropData16, _width, _height, _pitch); break;
+                case 8: activeVideoManager->renderFrame<uint16_t, 8>(cropData16, _width, _height, _pitch); break;
+                case 9: activeVideoManager->renderFrame<uint16_t, 9>(cropData16, _width, _height, _pitch); break;
+                case 10: activeVideoManager->renderFrame<uint16_t, 10>(cropData16, _width, _height, _pitch); break;
+            }
         }
+    }
+    if (VideoManager::takeScreenShots && view && isPause) {
+        view->screenshot.pause = isPause;
+        isPause = 0;
     }
 }
 

@@ -44,10 +44,9 @@ auto View::loadPlaceholder() -> void {
     VideoManager::placeHolderSplashScreen = true;
 }
 
-auto View::renderPlaceholder() -> bool {
+auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {
     unsigned _width, _height;
     uint8_t* _data;
-    uint8_t options = 0;
     unsigned gpu_pitch;
     unsigned* gpu_data = nullptr;
     float* gpu_data_float = nullptr;
@@ -55,6 +54,7 @@ auto View::renderPlaceholder() -> bool {
     ColorLumaChroma clc;
     ColorRgb rgb;
     bool useImgViewer = imageViewer && imageViewer->overrideImage.data;
+    gpuOptions &= (DRIVER::OPT_DisallowShader | DRIVER::OPT_TakeScreenshot);
 
     if (GUIKIT::Application::isQuit)
         return false;
@@ -69,12 +69,12 @@ auto View::renderPlaceholder() -> bool {
         _data = placeholder.data;
 
         videoDriver->setLinearFilter( true );
-        options = DRIVER::OPT_DisallowShader;
+        gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader;
     } else
         return false;
 
     if (useImgViewer && (activeVideoManager->crtMode == VideoManager::CrtMode::Gpu) && activeVideoManager->shaderLumaChromaInput()) {
-        if (videoDriver->lock(gpu_data_float, gpu_pitch, _width, _height, options)) {
+        if (videoDriver->lock(gpu_data_float, gpu_pitch, _width, _height, gpuOptions)) {
             for (_h = 0; _h < _height; _h++) {
                 for (_w = 0; _w < _width; _w++) {
                     rgb.r = _data[0];
@@ -94,7 +94,7 @@ auto View::renderPlaceholder() -> bool {
 
             videoDriver->unlockAndRedraw();
         }
-    } else if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, options)) {
+    } else if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, gpuOptions)) {
         for (_h = 0; _h < _height; _h++) {
             for (_w = 0; _w < _width; _w++) {
                 *gpu_data++ = _data[0] << 16 | _data[1] << 8 | _data[2];

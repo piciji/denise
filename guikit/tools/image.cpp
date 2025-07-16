@@ -2,6 +2,7 @@
 #include "decode/png.h"
 #include "encode/png.h"
 #include "decode/images.h"
+#include "encode/images.h"
 
 Image::Image(unsigned width, unsigned height, uint8_t* src, Format format)
 : format(format) {
@@ -53,6 +54,18 @@ auto Image::load(const uint8_t* src, unsigned size, bool keepDataOnDestruction) 
         data = decoder.data;
         width = decoder.width;
         height = decoder.height;
+        return true;
+    }
+    return false;
+}
+
+auto Image::generate(Type type, const uint8_t* src, unsigned width, unsigned height, bool keepDataOnDestruction) -> bool {
+    this->keepDataOnDestruction = keepDataOnDestruction;
+    ImageEncoder encoder;
+
+    if (encoder.encode((ImageEncoder::Type)type, src, width, height)) {
+        data = encoder.data;
+        writtenSize = encoder.size;
         return true;
     }
     return false;
