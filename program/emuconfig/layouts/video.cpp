@@ -1459,7 +1459,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     layScreenShot.location.select.onActivate = [this]() {
 
         auto path = GUIKIT::BrowserWindow()
-            .setTitle(trans->getA("record screen"))
+            .setTitle(trans->getA("select screenshot folder"))
             .setWindow(*this->tabWindow)
             .directory();
 
@@ -2242,8 +2242,8 @@ auto VideoLayout::translate() -> void {
     layScreenText.colorBox.type.onlyUrgentWarnings.setText(trans->getA("only urgent messages"));
     layScreenText.colorBox.type.onlyUrgentWarnings.setTooltip(trans->getA("only urgent messages tooltip"));
 
-    layScreenShot.setText(trans->getA("screenshots"));
-    layScreenShot.location.label.setText(trans->getA("screen folder", true));
+    layScreenShot.setText(trans->getA("screenshot"));
+    layScreenShot.location.label.setText(trans->getA("folder", true));
     layScreenShot.location.standard.setText(trans->getA("default"));
     layScreenShot.location.select.setText(trans->getA("select"));
 

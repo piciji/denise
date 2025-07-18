@@ -140,9 +140,9 @@ struct View : GUIKIT::Window {
 
     GUIKIT::Menu miscMenu;
         GUIKIT::MenuItem recordScreen;
-        GUIKIT::MenuCheckItem captureTwoFrames;
-        GUIKIT::MenuCheckItem captureNative;
-        GUIKIT::MenuCheckItem captureNoEffects;
+        GUIKIT::MenuCheckItem recordMergedFrames;
+        GUIKIT::MenuCheckItem recordNoScaling;
+        GUIKIT::MenuCheckItem recordNoEffects;
 
         GUIKIT::MenuItem copyItem;
         GUIKIT::MenuItem pasteItem;

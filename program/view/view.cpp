@@ -1384,29 +1384,29 @@ auto View::buildMenu() -> void {
     };
     miscMenu.append(recordScreen);
 
-    captureTwoFrames.onToggle = [this]() {
+    recordMergedFrames.onToggle = [this]() {
         emuThread->lock();
-        globalSettings->set<bool>("screenshot_two_frames", captureTwoFrames.checked());
+        globalSettings->set<bool>("screenshot_merge_frames", recordMergedFrames.checked());
         emuThread->unlock();
     };
-    captureTwoFrames.setChecked(globalSettings->get<bool>("screenshot_two_frames", false));
-    miscMenu.append(captureTwoFrames);
+    recordMergedFrames.setChecked(globalSettings->get<bool>("screenshot_merge_frames", false));
+    miscMenu.append(recordMergedFrames);
 
-    captureNative.onToggle = [this]() {
+    recordNoScaling.onToggle = [this]() {
         emuThread->lock();
-        globalSettings->set<bool>("screenshot_native", captureNative.checked());
+        globalSettings->set<bool>("screenshot_no_scaling", recordNoScaling.checked());
         emuThread->unlock();
     };
-    captureNative.setChecked(globalSettings->get<bool>("screenshot_native", false));
-    miscMenu.append(captureNative);
+    recordNoScaling.setChecked(globalSettings->get<bool>("screenshot_no_scaling", false));
+    miscMenu.append(recordNoScaling);
 
-    captureNoEffects.onToggle = [this]() {
+    recordNoEffects.onToggle = [this]() {
         emuThread->lock();
-        globalSettings->set<bool>("screenshot_no_effects", captureNoEffects.checked());
+        globalSettings->set<bool>("screenshot_no_effects", recordNoEffects.checked());
         emuThread->unlock();
     };
-    captureNoEffects.setChecked(globalSettings->get<bool>("screenshot_no_effects", false));
-    miscMenu.append(captureNoEffects);
+    recordNoEffects.setChecked(globalSettings->get<bool>("screenshot_no_effects", false));
+    miscMenu.append(recordNoEffects);
 
     miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
 
@@ -1985,7 +1985,7 @@ auto View::translate() -> void {
         sysMenu.presentation->setText(trans->get("Presentation"));
         sysMenu.palette->setText(trans->get("Palette"));
         sysMenu.geometry->setText(trans->get("Geometry"));
-        sysMenu.misc->setText(trans->get("miscellaneous"));
+        sysMenu.misc->setText(trans->get("Miscellaneous"));
 
         sysMenu.shaderMenu->setText(trans->get("Shader"));
         sysMenu.recentControl->setText(trans->getA("preferences"));
@@ -1998,13 +1998,13 @@ auto View::translate() -> void {
         }
     }    
 
-    miscMenu.setText( trans->get("Misc") );
+    miscMenu.setText(trans->get("Miscellaneous"));
     pasteItem.setText( trans->get("Paste") );
     copyItem.setText( trans->get("Copy") );
     recordScreen.setText(trans->getA("take screenshot"));
-    captureTwoFrames.setText(trans->getA("merge two frames"));
-    captureNative.setText(trans->getA("capture native resolution"));    
-    captureNoEffects.setText(trans->getA("without effects"));
+    recordMergedFrames.setText(trans->getA("merge frames"));
+    recordNoScaling.setText(trans->getA("without scaling"));
+    recordNoEffects.setText(trans->getA("without effects"));
 
     controlMenu.setText( trans->get("control") );
     
