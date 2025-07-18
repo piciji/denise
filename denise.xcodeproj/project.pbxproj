@@ -2607,7 +2607,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2.5;
+				CURRENT_PROJECT_VERSION = 2.6;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = data/info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Denise;
@@ -2623,7 +2623,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				"MACOSX_DEPLOYMENT_TARGET[arch=arm64]" = 11.0;
 				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
-				MARKETING_VERSION = 2.5;
+				MARKETING_VERSION = 2.6;
 				"OTHER_LDFLAGS[arch=arm64]" = (
 					data/libs/static/macArm/libfreetype.a,
 					"-w",
@@ -2648,7 +2648,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2.5;
+				CURRENT_PROJECT_VERSION = 2.6;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = data/info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Denise;
@@ -2664,7 +2664,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				"MACOSX_DEPLOYMENT_TARGET[arch=arm64]" = 11.0;
 				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
-				MARKETING_VERSION = 2.5;
+				MARKETING_VERSION = 2.6;
 				"OTHER_LDFLAGS[arch=arm64]" = (
 					data/libs/static/macArm/libfreetype.a,
 					"-w",
