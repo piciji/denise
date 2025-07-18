@@ -2341,8 +2341,8 @@ auto View::takeScreenshot() -> void {
     auto _file = settings->get<std::string>("save_ident", "screenshot");
     auto screenshotFormat = settings->get<std::string>("screen_record_format", "png");
     bool withoutFilter = globalSettings->get<bool>("screenshot_no_effects", false);
-    bool mergeTwoFrames = globalSettings->get<bool>("screenshot_two_frames", false);
-    bool native = globalSettings->get<bool>("screenshot_native", false);
+    bool mergeTwoFrames = globalSettings->get<bool>("screenshot_merge_frames", false);
+    bool native = globalSettings->get<bool>("screenshot_no_scaling", false);
 
     auto timestamp = Chronos::getTimestampInSeconds();
     _path += _file + "_" + std::to_string(timestamp);
