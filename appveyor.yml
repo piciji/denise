@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
-#  - Visual Studio 2022
+  - Visual Studio 2022
   - macos-sonoma
-#  - macos-monterey
+  - macos-monterey
 #  - Ubuntu2004
 
 stack: python 3.8
