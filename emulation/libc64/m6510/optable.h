@@ -1,8 +1,4 @@
 
-case 0x00:
-    interrupt<true>( );
-    break;
-
 case 0x01:
     ORA( GET_INDEXED_INDIRECT )
     break;

@@ -48,6 +48,8 @@ struct M6510 {
 	bool callResetRoutine;
 	
 	bool killed;
+    bool oddCycle;
+    bool reg2mhz;
 	
 	unsigned busState;
 	
@@ -89,23 +91,23 @@ struct M6510 {
 
     auto registerCallbacks() -> void;
 
-	auto process() -> void;
+	template<bool mhz2> auto process() -> void;
 	
-	template<bool sampleInterrupt, bool rememberRdy = false> auto busRead( uint16_t addr ) -> uint8_t;
+	template<bool sampleInterrupt, bool rememberRdy, bool mhz2> auto busRead( uint16_t addr ) -> uint8_t;
 	
-	template<bool setI> auto busAccessUpdateFlagI( uint16_t addr ) -> void;
+	template<bool setI, bool mhz2> auto busAccessUpdateFlagI( uint16_t addr ) -> void;
 	
-	auto busWrite( uint16_t addr, uint8_t value ) -> void;
+	template<bool mhz2> auto busWrite( uint16_t addr, uint8_t value ) -> void;
 	
 	auto busWatch() -> uint8_t;
 	
-	template<bool software = false> auto interrupt() -> void;
+	template<bool software, bool mhz2> auto interrupt() -> void;
 	
 	auto power() -> void;
 	
 	auto reset() -> void;
 	
-	auto resetRoutine() -> void;
+	template<bool mhz2> auto resetRoutine() -> void;
 	
 	auto setIrq(bool state) -> void;
 	
@@ -132,6 +134,8 @@ struct M6510 {
     auto getMagicForLax() -> uint8_t { return magicLax; }
 	
 	auto serialize(Emulator::Serializer& s) -> void;
+    
+    auto setClock(bool state) -> void;
 };
 
 }

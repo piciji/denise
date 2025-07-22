@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "214";
+const std::string Interface::Version = "215";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -601,6 +601,8 @@ auto Interface::prepareModels() -> void {
     // emulate the buggy vertical line in first two border pixels
     models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Combo, Model::Purpose::Misc, 0, {0, 2},
                       {"Off", "Solid White", "Register Color"}});
+    
+    models.push_back({ModelId2Mhz, "2 MHz", Model::Type::Switch, Model::Purpose::Misc, 0 });
 
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "0", "1", "2", "3", "4" }});
@@ -1676,7 +1678,10 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdSuperCpuRam:
             system->superCpu->setRamSize( value );
             break;
-    }    
+        case ModelId2Mhz:
+            system->mhz2 = value & 1;
+            break;
+    }
 }
 
 auto Interface::getModelValue(unsigned modelId) -> int {
@@ -1784,6 +1789,8 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdReuRam:                 return (int)system->reu->getRamSize();
         case ModelIdGeoRam:                 return (int)system->geoRam->getRamSize();
         case ModelIdSuperCpuRam:            return (int)system->superCpu->getRamSize();
+        case ModelId2Mhz:
+            return (int)system->mhz2;
     }
     return 0;
 }

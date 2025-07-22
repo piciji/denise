@@ -306,6 +306,8 @@ auto VicIIBase::power() -> void {
 	modeEcmBmm = modeMcm = 0;
     writeReg(0x11, controlReg1);
     writeReg(0x16, controlReg2);
+    
+    reg2mhz = 0;
         
     initVerticalLineAnomaly();
 }

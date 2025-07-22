@@ -64,6 +64,8 @@ struct VicIIBase {
 		bool permanent = false;
 	} leftLineAnomaly;
 
+    uint8_t reg2mhz;
+    
 	M6510& cpu;
 	ExpansionPort* expansionPort;
     System* system;

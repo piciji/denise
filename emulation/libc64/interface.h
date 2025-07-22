@@ -29,7 +29,7 @@ struct Interface : Emulator::Interface {
         ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64AccuracyDeprecated,
         ModelIdReuRam, ModelIdGeoRam, ModelIdIntensifyPseudoStereo,
     	ModelIdEmulateDriveMechanics, ModelIdDriveStepperDelay, ModelIdDriveAcceleration, ModelIdDriveDeceleration,
-    	ModelIdSidSeparateInput, ModelIdSuperCpuRam, ModelIdTrackZeroSensor,
+    	ModelIdSidSeparateInput, ModelIdSuperCpuRam, ModelIdTrackZeroSensor, ModelId2Mhz, 
     };
     
     enum MediaGroupId {

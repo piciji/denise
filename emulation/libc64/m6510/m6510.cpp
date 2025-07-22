@@ -55,13 +55,15 @@ auto M6510::reset() -> void {
 	ioLines = 0;
 	
 	busState = 0;
+    oddCycle = true;
+    reg2mhz = false;
 
 	bit6charge = bit7charge = 0;
 	
 	callResetRoutine = true;
 }
 
-auto M6510::resetRoutine() -> void {
+template<bool mhz2> auto M6510::resetRoutine() -> void {
 	
 	uint8_t dataBus;
 	
@@ -81,7 +83,7 @@ auto M6510::resetRoutine() -> void {
 	callResetRoutine = false;
 }
 
-template<bool software> inline auto M6510::interrupt() -> void {	
+template<bool software, bool mhz2> inline auto M6510::interrupt() -> void {
 	
 	uint8_t dataBus;
 	
@@ -200,15 +202,34 @@ auto M6510::busWatch() -> uint8_t {
 	expansionPort->clock(); \
     if (system->secondDriveCable.cycleSyncing) \
 	    iecBus.syncDrivesEachCycle();
+    
+// IO access or RAM refresh force to 1 MHz
+#define SYNC2    \
+if ((addr & 0xd000) == 0xd000) \
+    oddCycle = true; \
+if (oddCycle) { \
+    sysTimer.process();    \
+    cia1.clock();    \
+    vicII->clock();    \
+    cia2.clock();    \
+    expansionPort->clock(); \
+    if (system->secondDriveCable.cycleSyncing) \
+        iecBus.syncDrivesEachCycle(); \
+    if (reg2mhz && (vicII->getCycle() > 14 || vicII->getCycle() < 10)) \
+        oddCycle = false; \
+} else { \
+    oddCycle = true; \
+}
 
-template<bool setI> auto M6510::busAccessUpdateFlagI( uint16_t addr ) -> void { 
+template<bool setI, bool mhz2> auto M6510::busAccessUpdateFlagI( uint16_t addr ) -> void {
 
 	busState = addr;
 
 STEAL:	
 	SAMPLE_INTERRUPT
-			
-	SYNC
+    
+    if constexpr(mhz2)  { SYNC2 }
+    else                { SYNC }
 		
 	if( rdyLine ) {
 		if (setI)	{ SET_FLAG_I(1) }
@@ -222,14 +243,15 @@ STEAL:
 	system->memoryCpu.read( addr );	
 }
 
-template<bool sampleInterrupt, bool rememberRdy> auto M6510::busRead( uint16_t addr ) -> uint8_t {        
+template<bool sampleInterrupt, bool rememberRdy, bool mhz2> auto M6510::busRead( uint16_t addr ) -> uint8_t {
 	busState = addr;
 
 STEAL:	
 	if (sampleInterrupt)
 		SAMPLE_INTERRUPT
 			
-	SYNC
+    if constexpr(mhz2)  { SYNC2 }
+    else                { SYNC }
 		
 	if( rdyLine ) {
 		if (rememberRdy) {
@@ -266,10 +288,11 @@ STEAL:
 	return system->memoryCpu.read( addr );
 }
 
-auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
+template<bool mhz2> auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
     busState = CPU_WRITE_CYCLE | addr;
 
-	SYNC
+    if constexpr(mhz2)  { SYNC2 }
+    else                { SYNC }
 	
     // places write on bus for $00 and $01 too.
 	// but for these two addresses it seems only the address is selected on BUS in write mode but not the data.
@@ -341,6 +364,22 @@ auto M6510::serialize(Emulator::Serializer& s) -> void {
 	s.integer( bit7charge );
 	s.integer( magicAne );
 	s.integer( magicLax );
+    s.integer( oddCycle );
+    s.integer( reg2mhz );
+}
+    
+auto M6510::setClock(bool state) -> void {
+    if (reg2mhz == state)
+        return;
+    
+    reg2mhz = state;
+    oddCycle = !state;
+    //system->interface->log(vicII->getVcounter());
 }
 
+template auto M6510::process<false>() -> void;
+template auto M6510::resetRoutine<false>() -> void;
+template auto M6510::process<true>() -> void;
+template auto M6510::resetRoutine<true>() -> void;
+    
 }

@@ -842,6 +842,9 @@ SWITCH_END
     }
 		
 	switch( IR ) {
+        case 0x00:
+            interrupt<true>( );
+            break;
         #include "../../m6510/optable.h"
 	}
 }

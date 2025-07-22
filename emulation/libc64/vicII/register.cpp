@@ -98,6 +98,12 @@ auto VicIICycle::readReg( uint8_t addr ) -> uint8_t {
         case 0x2b: case 0x2c: case 0x2d: case 0x2e:
 			value = colorReg[ addr ] | 0xf0;
 			break;
+        case 0x30:
+            if (system->mhz2)
+                value = (reg2mhz & 3) | 0xfc;
+            else
+                value = 0xff;
+            break;
     }
 	
 	lastBusPhi2 = value;
@@ -238,6 +244,12 @@ auto VicIICycle::writeReg( uint8_t addr, uint8_t value ) -> void {
             colorReg[ addr ] = value & 15;
             lastColorReg = addr;	
 		} break;
+        case 0x30:
+            if (system->mhz2) {
+                reg2mhz = value & 3;
+                cpu.setClock(value & 1);
+            }
+            break;
         
         default:
             // 2f - 3f

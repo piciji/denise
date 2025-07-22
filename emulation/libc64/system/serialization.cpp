@@ -167,6 +167,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( secondDriveCable.parallelUserport );
     s.integer( secondDriveCable.parallelExpansion );
     s.integer( secondDriveCable.cycleSyncing );
+    s.integer( mhz2 );
 
     s.integer( observer.memoryAccesses );
     s.integer( observer.enterRom );

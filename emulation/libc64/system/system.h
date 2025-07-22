@@ -160,6 +160,7 @@ struct System {
     bool kernalBootComplete = false;
     bool powerOn = false;
     bool cycleRendererNextBoot = false;
+    bool mhz2 = false;
 
     // petscii will be converted to ascii or screencodes to be viewed in host
     bool convertToScreencode = false;

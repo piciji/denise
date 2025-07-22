@@ -682,8 +682,12 @@ auto System::run() -> void {
     runAhead.pos = 0;
     acia->connectionLock = false;
 
-    if (cpu.callResetRoutine)
-        cpu.resetRoutine();
+    if (cpu.callResetRoutine) {
+        if (mhz2)
+            cpu.resetRoutine<true>();
+        else
+            cpu.resetRoutine<false>();
+    }
 
     input.poll();
 
@@ -713,9 +717,15 @@ auto System::run() -> void {
             if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
                 iecBus.syncDrives();
         }
+    } else if (!mhz2) {
+        while( !leaveEmulation ) {
+            cpu.process<false>();
+            if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
+                iecBus.syncDrives();
+        }
     } else {
         while( !leaveEmulation ) {
-            cpu.process();
+            cpu.process<true>();
             if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
                 iecBus.syncDrives();
         }

@@ -1,5 +1,5 @@
 
-auto M6510::process() -> void {
+template<bool mhz2> auto M6510::process() -> void {
 
 	uint8_t dataBus;
 	uint8_t zeroPage;
@@ -41,11 +41,11 @@ auto M6510::process() -> void {
 #define SAMPLE_INTERRUPT	\
 	interruptSampled |= nmiPending | (irqPending & !GET_FLAG_I );
 
-#define READ( addr ) 	dataBus = busRead<false>( addr );
-#define READ_LAST( addr ) 	dataBus = busRead<true>( addr );
+#define READ( addr ) 	dataBus = busRead<false, false, mhz2>( addr );
+#define READ_LAST( addr ) 	dataBus = busRead<true, false, mhz2>( addr );
 	
 #define WRITE( addr, value )	\
-	busWrite( addr, value);
+	busWrite<mhz2>( addr, value);
 
 #define WRITE_LAST( addr, value )	\
 	SAMPLE_INTERRUPT				\
@@ -100,7 +100,7 @@ auto M6510::process() -> void {
 	absolute |= dataBus << 8;		\
 	uint16_t absIndexed = absolute + regY;					\
 	if (FORCE || PAGE_CROSSED) {		\
-		busRead<false, true>( ((absolute & 0xff00) | (absIndexed & 0xff)) );	\
+		busRead<false, true, mhz2>( ((absolute & 0xff00) | (absIndexed & 0xff)) );	\
 	}
 	
 #define ZERO_PAGE_INDEXED( REG )	\
@@ -118,7 +118,7 @@ auto M6510::process() -> void {
 	ABS										\
 	uint16_t absIndexed = absolute + REG;	\
 	if (FORCE || PAGE_CROSSED) {		\
-		busRead<false, true>( ((absolute & 0xff00) | (absIndexed & 0xff)) ); \
+		busRead<false, true, mhz2>( ((absolute & 0xff00) | (absIndexed & 0xff)) ); \
 	} 
 	
 // GET	
@@ -429,11 +429,11 @@ auto M6510::process() -> void {
 	SET_FLAG_C( 1 )
 
 #define CLI				\
-	busAccessUpdateFlagI<false>( pc ); \
+	busAccessUpdateFlagI<false,mhz2>( pc ); \
 	SET_FLAG_I( 0 )
 	
 #define SEI				\
-	busAccessUpdateFlagI<true>( pc ); \
+	busAccessUpdateFlagI<true,mhz2>( pc ); \
 	SET_FLAG_I( 1 )
 	
 #define CLV	\
@@ -598,7 +598,7 @@ auto M6510::process() -> void {
 	H1_AND_WRITE( REG ) }
 	
 #define GET_IMM_AND_REMEMBER_RDY	\
-	dataBus = busRead<true, true>( pc );			\
+	dataBus = busRead<true, true, mhz2>( pc );			\
 	INC_PC( 1 )
 		
 #define ANE	\
@@ -649,11 +649,15 @@ auto M6510::process() -> void {
 	}
 
 	if (unlikely(interruptSampled))
-		return interrupt();
+		return interrupt<false, mhz2>();
 	
 	READ_PC_INC		
 		
 	switch( dataBus ) {
+        case 0x00:
+            interrupt<true, mhz2>( );
+            break;
+            
         #include "optable.h"
 	}
 }
