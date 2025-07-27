@@ -369,6 +369,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image delImage;
     GUIKIT::Image gearsImage;
     GUIKIT::Image backImage;
+    GUIKIT::Image screenshotImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;

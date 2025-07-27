@@ -25,8 +25,9 @@ struct View : GUIKIT::Window {
         std::string path;
         GUIKIT::Image::Type type;
         bool withoutFilter = false;
-        bool native = false;
+        unsigned unscaled = 0;
         bool twoFrames = false;
+        bool saveState = false;
         uint8_t* mergeData = nullptr;
         unsigned mergeSize = 0;
         unsigned pause = 0;
@@ -140,8 +141,11 @@ struct View : GUIKIT::Window {
 
     GUIKIT::Menu miscMenu;
         GUIKIT::MenuItem recordScreen;
+        GUIKIT::MenuRadioItem recordScaled;
+        GUIKIT::MenuRadioItem recordUnscaled;
+        GUIKIT::MenuRadioItem recordUnscaledNoBorder;
+        GUIKIT::MenuRadioItem recordUnscaledMonitor;
         GUIKIT::MenuCheckItem recordMergedFrames;
-        GUIKIT::MenuCheckItem recordNoScaling;
         GUIKIT::MenuCheckItem recordNoEffects;
 
         GUIKIT::MenuItem copyItem;
@@ -229,6 +233,7 @@ struct View : GUIKIT::Window {
 	GUIKIT::Image infoImage;
     GUIKIT::Image openImage;
     GUIKIT::Image clearImage;
+    GUIKIT::Image screenshotImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;
@@ -284,6 +289,7 @@ struct View : GUIKIT::Window {
     auto updateGeometry(bool withViewport = false) -> void;
     auto adjustToEmu(bool withViewport) -> void;
     auto takeScreenshot() -> void;
+    auto updateScreenshotUI() -> void;
     
     View();
 };

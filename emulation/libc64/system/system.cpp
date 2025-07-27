@@ -406,6 +406,10 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         right = vicII->crop.rightOverscan;
     };
 
+    crop->screenshotBorderCallback = [this](unsigned _w, unsigned _h) {
+        return vicII->getCrop(_w, _h);
+    };
+
     tape.setReadTransition = [this]() {
 
         cia1.setFlag();

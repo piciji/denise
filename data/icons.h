@@ -165,4 +165,6 @@ extern uint8_t ledGreenRound[472];
 extern uint8_t insert[637];
 
 extern uint8_t binary[339];
+
+extern uint8_t screenshot[383];
 }

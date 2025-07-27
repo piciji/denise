@@ -54,6 +54,7 @@ ID_DEL          ICON    "ico/delete.ico"
 ID_OPEN         ICON    "ico/open.ico"
 ID_CLEAR        ICON    "ico/clear.ico"
 ID_INSERT       ICON    "ico/insert.ico"
+ID_SCREENSHOT   ICON    "ico/screenshot.ico"
 
 IDD_FILE_TEMPLATE DIALOG DISCARDABLE 0, 0, 486, 205
 STYLE WS_CHILD | WS_CLIPSIBLINGS | DS_3DLOOK | DS_CONTROL | WS_VISIBLE | NOT WS_BORDER | NOT WS_POPUP | NOT WS_SYSMENU

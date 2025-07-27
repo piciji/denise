@@ -150,12 +150,24 @@ auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) 
             screenShot.mergeSize = 0;
         }
 
-        GUIKIT::Image image;
-        if (image.generate(screenShot.type, _data, _width, _height)) {
+        GUIKIT::Image::Encoded encoded;
+        encoded.data = nullptr;
+
+        if (screenShot.saveState) {
+            GUIKIT::Image image(_width, _height, _data, GUIKIT::Image::Format::RGB);
+            image.scaleLinear(200, 150);
+            encoded = image.generate(GUIKIT::Image::Type::PNG);
+        } else {
+            GUIKIT::Image image;
+            encoded = image.generate(screenShot.type, _data, _width, _height);
+        }
+
+        if (encoded.data) {
             GUIKIT::File file;
             file.setFile(screenShot.path);
             file.open(GUIKIT::File::Mode::Write);
-            file.write(image.data, image.writtenSize);
+            file.write(encoded.data, encoded.size);
+            delete[] encoded.data;
         }        
     }
     screenShot.sharedMutex.unlock();

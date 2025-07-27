@@ -1828,6 +1828,10 @@ auto Interface::cropPitch() -> unsigned {
     return system->crop->latest.linePitch;
 }
 
+auto Interface::cropAlternatively(unsigned& width, unsigned& height, unsigned& pitch) -> uint8_t* {
+    return system->crop->cropAlternatively(width, height, pitch);
+}
+
 auto Interface::setInputSampling(uint8_t mode) -> void {
     system->input.setSampling( mode );
 }

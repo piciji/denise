@@ -274,6 +274,7 @@ struct VideoManager {
     auto translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string;
 
     auto fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool;
+    template<typename T, bool interlace, bool field> auto takeScreenshot(unsigned unscaled) -> bool;
     auto takeScreenshot(uint32_t* _data, unsigned _width, unsigned _height, unsigned _pitch) -> void;
 };
 

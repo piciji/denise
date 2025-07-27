@@ -642,7 +642,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     }
 
     if (takeScreenShots) {
-        if (view->screenshot.native) {
+        if (view->screenshot.unscaled) {
             suppressShader = true;
         } else {
             gpuOptions |= (uint8_t)DRIVER::OPT_TakeScreenshot;
@@ -683,8 +683,10 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 
         renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
 
-        if (takeScreenShots && view->screenshot.native)
-            takeScreenshot(gpuData, width, height, gpuPitch - width);
+        if (takeScreenShots && view->screenshot.unscaled) {
+            if (!takeScreenshot<T, interlace, field>(view->screenshot.unscaled))
+                takeScreenshot(gpuData, width, height, gpuPitch - width);
+        }
 	} else if (crtMode == CrtMode::Gpu) {
         if (shaderLumaChromaInput()) {
             width += SHADER_OFFSCREEN_WIDTH << 1;
@@ -717,6 +719,29 @@ Typical:
 	}		           
 
     videoDriver->unlockAndRedraw( );
+}
+
+template<typename T, bool interlace, bool field> auto VideoManager::takeScreenshot(unsigned unscaled) -> bool {
+    unsigned _w, _h, _p;
+
+    if (unscaled == 2) {
+        _w = isC64() ? 320 : unscaled;
+    } else if (unscaled == 3) {
+        _w = isC64() ? 384 : unscaled;
+    } else
+        return false;
+
+    uint8_t* _f = activeEmulator->cropAlternatively(_w, _h, _p);
+    const T* _fT = (const T*)_f;
+
+    if (_f) {
+        unsigned* _t = new unsigned[_w * _h];
+        renderToRgb<T, interlace, field>(_w, _h, _fT, _p, _t, 0);
+        takeScreenshot(_t, _w, _h, 0);
+        delete[] _t;
+        return true;
+    }
+    return false;
 }
 
 auto VideoManager::takeScreenshot(uint32_t* _data, unsigned _width, unsigned _height, unsigned _pitch) -> void {

@@ -452,6 +452,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     delImage.loadPng((uint8_t*)Icons::del, sizeof(Icons::del));
     gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
     backImage.loadPng((uint8_t*)Icons::back, sizeof(Icons::back));
+    screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
 
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
@@ -465,7 +466,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     tviScreenText.setImage( menuImage );
 
     tviScreenShot.setUserData((uintptr_t)12);
-    tviScreenShot.setImage(menuImage);
+    tviScreenShot.setImage(screenshotImage);
 
     tviShader.setUserData( (uintptr_t)2 );
     tviShader.setImage(imgFolderClosed);

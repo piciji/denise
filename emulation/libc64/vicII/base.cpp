@@ -103,6 +103,23 @@ auto VicIIBase::setBorderData() -> void {
     }
 }
 
+auto VicIIBase::getCrop(unsigned w, unsigned h) -> Emulator::Interface::Crop {
+    Interface::Crop _c;
+
+    if (w == 320) {
+        _c.left = ntscBorder ? 56 : 46;
+        _c.right = ntscBorder ? 44 : 40;
+        _c.top = ntscBorder ? 28 : 42;
+        _c.bottom = ntscBorder ? 25 : 51;
+    } else if (w == 384) {
+        _c.left = crop.leftOverscan;
+        _c.right = crop.rightOverscan;
+        _c.top = crop.topOverscan;
+        _c.bottom = crop.bottomOverscan;
+    }
+    return _c;
+}
+
 auto VicIIBase::triggerLightPen(bool state) -> void {
     // trigger by writing to cia        
     lpPin = state;

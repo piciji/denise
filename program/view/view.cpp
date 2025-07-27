@@ -1053,6 +1053,8 @@ auto View::loadImages() -> void {
     clearImage.setResourceId(ID_CLEAR);
     insertImage.loadPng((uint8_t*)Icons::insert, sizeof(Icons::insert));
     insertImage.setResourceId(ID_INSERT);
+    screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
+    screenshotImage.setResourceId(ID_SCREENSHOT);
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1377,12 +1379,57 @@ auto View::buildMenu() -> void {
     append(controlMenu);
 	
     // Misc Control
+    recordScreen.setIcon(screenshotImage);
     recordScreen.onActivate = [this]() {
         emuThread->lock();
         takeScreenshot();
         emuThread->unlock();
     };
     miscMenu.append(recordScreen);
+
+    miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
+    recordScaled.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("screenshot_unscaled", 0);
+        emuThread->unlock();
+    };
+    miscMenu.append(recordScaled);
+
+    recordUnscaled.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("screenshot_unscaled", 1);
+        emuThread->unlock();
+    };
+    miscMenu.append(recordUnscaled);
+
+    recordUnscaledNoBorder.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("screenshot_unscaled", 2);
+        emuThread->unlock();
+    };
+    miscMenu.append(recordUnscaledNoBorder);
+
+    recordUnscaledMonitor.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("screenshot_unscaled", 3);
+        emuThread->unlock();
+    };
+    miscMenu.append(recordUnscaledMonitor);
+
+    GUIKIT::MenuRadioItem::setGroup(recordScaled, recordUnscaled, recordUnscaledNoBorder, recordUnscaledMonitor);
+
+    unsigned _unscaled = globalSettings->get<unsigned>("screenshot_unscaled", 0);
+    
+    switch (_unscaled) {
+        default:
+        case 0: recordScaled.setChecked(); break;
+        case 1: recordUnscaled.setChecked(); break;
+        case 2: recordUnscaledNoBorder.setChecked(); break;
+        case 3: recordUnscaledMonitor.setChecked(); break;
+    }
+
+    miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
 
     recordMergedFrames.onToggle = [this]() {
         emuThread->lock();
@@ -1391,14 +1438,6 @@ auto View::buildMenu() -> void {
     };
     recordMergedFrames.setChecked(globalSettings->get<bool>("screenshot_merge_frames", false));
     miscMenu.append(recordMergedFrames);
-
-    recordNoScaling.onToggle = [this]() {
-        emuThread->lock();
-        globalSettings->set<bool>("screenshot_no_scaling", recordNoScaling.checked());
-        emuThread->unlock();
-    };
-    recordNoScaling.setChecked(globalSettings->get<bool>("screenshot_no_scaling", false));
-    miscMenu.append(recordNoScaling);
 
     recordNoEffects.onToggle = [this]() {
         emuThread->lock();
@@ -2002,9 +2041,12 @@ auto View::translate() -> void {
     pasteItem.setText( trans->get("Paste") );
     copyItem.setText( trans->get("Copy") );
     recordScreen.setText(trans->getA("take screenshot"));
-    recordMergedFrames.setText(trans->getA("merge frames"));
-    recordNoScaling.setText(trans->getA("without scaling"));
+    recordMergedFrames.setText(trans->getA("merge frames"));    
     recordNoEffects.setText(trans->getA("without effects"));
+
+    recordScaled.setText(trans->getA("scaled"));
+    recordUnscaled.setText(trans->getA("unscaled"));
+    updateScreenshotUI();
 
     controlMenu.setText( trans->get("control") );
     
@@ -2035,7 +2077,7 @@ auto View::translate() -> void {
 
     for (auto& diskControlMenu : diskControlMenus) {
         diskControlMenu.insert.setText( trans->get("insert") );
-        diskControlMenu.eject.setText( trans->get("eject") );
+            diskControlMenu.eject.setText( trans->get("eject") );
         diskControlMenu.reset.setText( trans->get("Reset Floppy") );
         diskControlMenu.inactive.setText( trans->get("inactive until reset") );
         diskControlMenu.clearSave.setText( trans->get("clear save file") );
@@ -2083,6 +2125,16 @@ auto View::translate() -> void {
 
     maximumSpeedItem.setText( trans->get("maximum speed") );
     customizeSpeedItem.setText( trans->get("customize speed") );
+}
+
+auto View::updateScreenshotUI() -> void {
+    if (activeEmulator && dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
+        recordUnscaledNoBorder.setText("320x200");
+        recordUnscaledMonitor.setText("384x272");
+    } else {
+        recordUnscaledNoBorder.setText(trans->getA("unscaled no border"));
+        recordUnscaledMonitor.setText(trans->getA("unscaled monitor"));
+    }
 }
 
 auto View::getViewportHandle(bool driverChange) -> uintptr_t {
@@ -2342,7 +2394,7 @@ auto View::takeScreenshot() -> void {
     auto screenshotFormat = settings->get<std::string>("screen_record_format", "png");
     bool withoutFilter = globalSettings->get<bool>("screenshot_no_effects", false);
     bool mergeTwoFrames = globalSettings->get<bool>("screenshot_merge_frames", false);
-    bool native = globalSettings->get<bool>("screenshot_no_scaling", false);
+    unsigned unscaled = globalSettings->get<unsigned>("screenshot_unscaled", 0);
 
     auto timestamp = Chronos::getTimestampInSeconds();
     _path += _file + "_" + std::to_string(timestamp);
@@ -2363,9 +2415,10 @@ auto View::takeScreenshot() -> void {
     }
 
     screenshot.withoutFilter = withoutFilter;
-    screenshot.native = native;
+    screenshot.unscaled = unscaled;
     screenshot.twoFrames = mergeTwoFrames;
     screenshot.pause = 0;
+    screenshot.saveState = false;
     VideoManager::takeScreenShots = mergeTwoFrames ? 2 : 1;
     if (screenshot.mergeData)
         delete[] screenshot.mergeData;

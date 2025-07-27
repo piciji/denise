@@ -55,3 +55,4 @@
 #define ID_OPEN         32043
 #define ID_CLEAR        32044
 #define ID_INSERT       32045
+#define ID_SCREENSHOT   32046

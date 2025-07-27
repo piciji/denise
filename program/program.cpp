@@ -358,6 +358,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 
             if (settings->get<bool>("scale_emu_switch", false))
                 view->updateToHoldDimension();
+            view->updateScreenshotUI();
         }
 
 		resetRunAhead();

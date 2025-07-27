@@ -73,23 +73,34 @@ struct Image {
     unsigned width;
     unsigned height;
     uint8_t* data = nullptr;
-    unsigned writtenSize = 0;
     bool keepDataOnDestruction = false;
     bool alphaBlendApplied = false;
     int resourceId = -1; // win xp only 
-    enum Format : unsigned { RGBA, BGRA } format;
+    enum Format : unsigned { RGBA, BGRA, RGB } format;
     enum class Type { PNG, JPG, TGA, BMP };
+
+    struct Encoded {
+        uint8_t* data = nullptr;
+        unsigned size = 0;
+    };
 
     auto loadPng(const uint8_t* src, unsigned size, bool keepDataOnDestruction = false) -> bool;
     auto load(const uint8_t* src, unsigned size, bool keepDataOnDestruction = false) -> bool;
-    auto generate(Type type, const uint8_t* src, unsigned width, unsigned height, bool keepDataOnDestruction = false) -> bool;
+    auto generate(Type type, const uint8_t* src, unsigned width, unsigned height) -> Encoded;
+    auto generate(Type type) -> Encoded;
     auto generatePng( uint8_t* rgbData, unsigned width, unsigned height, unsigned channels, unsigned& pngSize ) -> uint8_t*;
     auto alphaBlend(unsigned alphaColor) -> void;
 	auto alphaMultiply() -> void;
     auto scaleNearest(unsigned outputWidth, unsigned outputHeight) -> void;
+    auto scaleLinear(unsigned outputWidth, unsigned outputHeight) -> void;
+    auto scaleLinearWidth(unsigned outputWidth) -> void;
+    auto scaleLinearHeight(unsigned outputHeight) -> void;
+    auto scaleLinearBoth(unsigned outputWidth, unsigned outputHeight) -> void;
+
     auto switchBetweenBGRandRGB() -> void;
     auto empty() -> bool;
     auto free() -> void;
+    auto channels() -> unsigned;
     auto create(unsigned _width, unsigned _height, uint8_t* src = nullptr) -> void;
     auto setResourceId( int rId ) -> void;
     //helper to convert binary file to comma separated hardcoded unsigned char sequence
