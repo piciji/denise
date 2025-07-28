@@ -68,22 +68,18 @@ namespace GUIKIT {
         }
     }
     
-    auto pImageView::redraw() -> void {
-        unsigned width = imageView.state.image->width;
-        unsigned height = imageView.state.image->height;
-
-        if (width == 0 || height == 0)
-            return;
-        
+    auto pImageView::redraw() -> void {       
         @autoreleasepool {
             if (surface) {
                 [(id)cocoaView setImage:nil];
                 [surface release];
+                surface = nil;
             }
             
-            surface = NSMakeImage(*imageView.state.image);
-            
-            [(id)cocoaView setImage : surface];
+            if (imageView.image() && !imageView.image()->empty()) {
+                surface = NSMakeImage(*imageView.state.image);
+                [(id)cocoaView setImage : surface];
+            }
         }
     }
     

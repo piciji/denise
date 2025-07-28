@@ -678,7 +678,7 @@ struct CGL : public Video, GL3, RenderThread {
 }
 
 -(void) reshape {
-
+    video->area = [self frame];
 }
 
 @end
