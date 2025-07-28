@@ -402,6 +402,11 @@ auto Image::scaleLinear(unsigned outputWidth, unsigned outputHeight) -> void {
     unsigned d1hw = ((height * outputHeight) + (outputWidth * outputHeight)) * 1;
     unsigned d2wh = (outputWidth * outputHeight) * 3;
 
+    if(d1wh <= d1hw && d1wh <= d2wh)
+        return scaleLinearWidth(outputWidth), scaleLinearHeight(outputHeight);
+    if(d1hw <= d2wh)
+        return scaleLinearHeight(outputHeight), scaleLinearWidth(outputWidth);
+
     return scaleLinearBoth(outputWidth, outputHeight);
 }
 

@@ -1392,6 +1392,7 @@ auto View::buildMenu() -> void {
     recordScaled.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("screenshot_unscaled", 0);
+        recordNoEffects.setEnabled();
         emuThread->unlock();
     };
     miscMenu.append(recordScaled);
@@ -1399,6 +1400,7 @@ auto View::buildMenu() -> void {
     recordUnscaled.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("screenshot_unscaled", 1);
+        recordNoEffects.setEnabled(false);
         emuThread->unlock();
     };
     miscMenu.append(recordUnscaled);
@@ -1406,6 +1408,7 @@ auto View::buildMenu() -> void {
     recordUnscaledNoBorder.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("screenshot_unscaled", 2);
+        recordNoEffects.setEnabled(false);
         emuThread->unlock();
     };
     miscMenu.append(recordUnscaledNoBorder);
@@ -1413,6 +1416,7 @@ auto View::buildMenu() -> void {
     recordUnscaledMonitor.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("screenshot_unscaled", 3);
+        recordNoEffects.setEnabled(false);
         emuThread->unlock();
     };
     miscMenu.append(recordUnscaledMonitor);
@@ -1445,6 +1449,7 @@ auto View::buildMenu() -> void {
         emuThread->unlock();
     };
     recordNoEffects.setChecked(globalSettings->get<bool>("screenshot_no_effects", false));
+    recordNoEffects.setEnabled(_unscaled == 0);
     miscMenu.append(recordNoEffects);
 
     miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
