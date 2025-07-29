@@ -42,13 +42,14 @@ namespace LIBC64 {
 
 struct System;
 struct SidManager;
+struct USBSIDPico;
 
 typedef double doublePoint[2];
 
 struct Sid {
     enum Type { MOS_6581 = 0, MOS_8580 = 1 } type;
     enum FilterType { Resid = 0, ResidVice24 = 1, Chamberlin = 2 } filterType;
-    Sid( System* system, SidManager& sidManager, Type type);
+    Sid( unsigned nr, System* system, SidManager& sidManager, Type type);
 
     static std::vector<std::string> adrOptions;
 
@@ -70,14 +71,16 @@ struct Sid {
 	auto setSeparateFilterInputs(bool state) -> void;
 	auto hasSeparateFilterInputs() -> bool { return separateFilterInputs; }
 
+    unsigned nr;
     System* system;
     SidManager& sidManager;
     Emulator::SystemTimer& sysTimer;
+    USBSIDPico& usbSIDPico;
 
     bool leftChannel = true;
     bool rightChannel = true;
-    uint16_t ioMask;    
-    uint8_t ioPos;    
+    uint16_t ioMask;
+    uint8_t ioPos;
     float correction = 1.0;
 
     double curSample;

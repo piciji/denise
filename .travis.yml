@@ -29,6 +29,7 @@ addons:
       - libxcb-xfixes0
       - sshpass      
       - flatpak-builder
+      - libusb-1.0-0-dev
 
 jobs:
   include:

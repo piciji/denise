@@ -392,6 +392,7 @@ set(headerSrcs ${headerSrcs}
     emulation/libc64/sid/sid.h
     emulation/libc64/sid/tables.cpp
     emulation/libc64/sid/voice.cpp
+    emulation/libc64/sid/usbSidPico.h
     emulation/libc64/system/clipboard.h
     emulation/libc64/system/expansion.cpp
     emulation/libc64/system/firmware.h

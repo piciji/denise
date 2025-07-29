@@ -341,6 +341,8 @@ auto ModelLayout::updateWidgets( ) -> void {
         updateBurstVisibillity();
     } else if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::DriveMechanics )) {
         updateMechanicsVisibillity();
+    } else if (dynamic_cast<LIBC64::Interface*>(this->emulator) && GUIKIT::Vector::find( purposes, Emulator::Interface::Model::AudioExtern )) {
+        updatePicoVisibillity();
     }
 }
 
@@ -722,6 +724,10 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 if (block->imageView)
                     setImageUri(block, (float)emulator->getModelValue( model->id ) / model->scaler);
                 break;
+
+            case LIBC64::Interface::ModelIdSidUsbPico:
+                updatePicoVisibillity();
+                break;
         }
     } else {
         switch(model->id) {
@@ -761,6 +767,15 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 break;
         }
     }
+}
+
+auto ModelLayout::updatePicoVisibillity() -> void {
+    auto pico = getBlock( LIBC64::Interface::ModelIdSidUsbPico );
+    auto bufSize = getBlock( LIBC64::Interface::ModelIdSidUsbPicoBufferSize );
+    auto diffSize = getBlock( LIBC64::Interface::ModelIdSidUsbPicoDiffSize );
+
+    bufSize->setEnabled( pico->checkBox->checked() );
+    diffSize->setEnabled( pico->checkBox->checked() );
 }
 
 auto ModelLayout::updateBurstVisibillity() -> void {

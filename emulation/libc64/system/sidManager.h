@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include "../sid/sid.h"
+#include "../sid/usbSidPico.h"
 
 namespace Emulator {
     struct Serializer;
@@ -20,6 +21,7 @@ struct SidManager {
     using Callback = std::function<void ()>;
     std::function<uint8_t ()> getPotX;
     std::function<uint8_t ()> getPotY;
+    USBSIDPico usbSIDPico;
 
     System* system;
     bool audioOut;
@@ -104,6 +106,14 @@ struct SidManager {
     auto hasIntensifiedPseudoStereo() -> bool { return offsetPseudoStereo.allow; }
     auto setSeparateFilterInputs(bool state) -> void;
     auto hasSeparateFilterInputs() -> bool;
+
+    auto enableUSBSID(bool state) -> void;
+    auto setUSBSIDBuffSize(unsigned value) -> void;
+    auto setUSBSIDDiffSize(unsigned value) -> void;    
+
+    auto hasUSBSID() -> bool { return usbSIDPico.enabled; }
+    auto getUSBSIDBuffSize() -> unsigned { return usbSIDPico.buffSize; }
+    auto getUSBSIDDiffSize() -> unsigned { return usbSIDPico.diffSize; }    
 };
 
 }

@@ -21,6 +21,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCH
     pkg_check_modules(GTK REQUIRED gtk+-3.0)
     pkg_check_modules(X11 REQUIRED x11 xfixes xext)
     pkg_check_modules(XCB REQUIRED xcb xcb-xinput xcb-xfixes xkbcommon)
+    pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
 
@@ -74,6 +75,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
+#message(STATUS "LIBUSB ${LIBUSB_INCLUDE_DIRS}")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "compile for architecture ${CMAKE_OSX_ARCHITECTURES}")
@@ -156,6 +158,7 @@ set(srcs
         emulation/libc64/expansionPort/finalChessCard/chessCard.cpp
         emulation/libc64/system/clipboard.cpp
         emulation/libc64/sid/sid.cpp
+        emulation/libc64/sid/usbSidPico.cpp
         emulation/libc64/system/sidManager.cpp
         emulation/libc64/sid/filter/chamberlin.cpp
         emulation/libc64/tape/tape.cpp
@@ -228,10 +231,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     )
 endif()
 
-SET_SOURCE_FILES_PROPERTIES(deps/depsSlang.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
 SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/lha.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/lha")
 SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb")
 SET_SOURCE_FILES_PROPERTIES(guikit/tools/encode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb")
+SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/usbSidPico.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/USBSID-Pico")
 
 set(headerSrcs)
 set(depSrcs)
@@ -241,7 +244,7 @@ add_subdirectory(data)
 set_source_files_properties(${headerSrcs} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 SET_SOURCE_FILES_PROPERTIES(${depSrcs}
-    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
+    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${LIBUSB_INCLUDE_DIRS};")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     SET_SOURCE_FILES_PROPERTIES(${depSrcs} PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
@@ -340,10 +343,12 @@ else()
     target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${X11_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})
+    target_link_directories(${PROJECT_NAME} PUBLIC ${LIBUSB_LIBRARY_DIRS})
     target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARIES})
 
     # use -Wl,--verbose for detailed linker problems
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")

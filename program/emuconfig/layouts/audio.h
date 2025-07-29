@@ -174,6 +174,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     GUIKIT::SwitchLayout moduleSwitch;
     
     ModelLayout settingsLayout;
+    ModelLayout* usbSidPicoLayout = nullptr;
     
     GUIKIT::VerticalLayout dspFrame;
     BassControlLayout bass;

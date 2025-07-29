@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "214";
+const std::string Interface::Version = "215";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -550,6 +550,10 @@ auto Interface::prepareModels() -> void {
     // extra Sids    
     models.push_back({ModelIdSidMulti, "Extra SIDs", Model::Type::Combo, Model::Purpose::AudioResampler, 0, {0, 7}, {"0", "1", "2", "3", "4", "5", "6", "7"}});
     
+    models.push_back({ModelIdSidUsbPico, "USBSID-Pico", Model::Type::Switch, Model::Purpose::AudioExtern, 0});
+    models.push_back({ModelIdSidUsbPicoBufferSize, "Pico Buffer Size", Model::Type::Slider, Model::Purpose::AudioExtern, 8192, {256, 16384}, {}, 64, 1.0 });
+    models.push_back({ModelIdSidUsbPicoDiffSize, "Pico Diff Size", Model::Type::Slider, Model::Purpose::AudioExtern, 64, {16, 128}, {}, 14, 1.0 });
+
 	models.push_back({ModelIdSid, "SID 1", Model::Type::Radio, Model::Purpose::SoundChip, 0, {0, 1}, {"8580", "6581"} });	
     models.push_back({ModelIdSid1Left, "SID 1 Left Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid1Right, "SID 1 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 0});
@@ -1676,6 +1680,15 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdSuperCpuRam:
             system->superCpu->setRamSize( value );
             break;
+        case ModelIdSidUsbPico:
+            system->sidManager.enableUSBSID(value & 1);
+            break;
+        case ModelIdSidUsbPicoBufferSize:
+            system->sidManager.setUSBSIDBuffSize(value);
+            break;
+        case ModelIdSidUsbPicoDiffSize:
+            system->sidManager.setUSBSIDDiffSize(value);
+            break;
     }    
 }
 
@@ -1784,6 +1797,9 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdReuRam:                 return (int)system->reu->getRamSize();
         case ModelIdGeoRam:                 return (int)system->geoRam->getRamSize();
         case ModelIdSuperCpuRam:            return (int)system->superCpu->getRamSize();
+        case ModelIdSidUsbPico:             return system->sidManager.hasUSBSID();
+        case ModelIdSidUsbPicoBufferSize:   return system->sidManager.getUSBSIDBuffSize();
+        case ModelIdSidUsbPicoDiffSize:     return system->sidManager.getUSBSIDDiffSize();
     }
     return 0;
 }

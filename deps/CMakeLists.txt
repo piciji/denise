@@ -62,7 +62,10 @@ set(_depSrcs
         deps/lha/lzs_decoder.cpp
         deps/lha/lhx_decoder.cpp
         deps/lha/lk7_decoder.cpp
-        deps/lha/crc16.cpp        
+        deps/lha/crc16.cpp
+
+        deps/USBSID-Pico/USBSID.cpp
+        deps/USBSID-Pico/USBSIDInterface.cpp
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
