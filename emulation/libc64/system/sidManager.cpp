@@ -559,8 +559,10 @@ auto SidManager::enableUSBSID(bool state) -> void {
     usbSIDPico.enabled = state;
     if (!state)
         usbSIDPico.close();
-    else if (system->powerOn)
-        usbSIDPico.open(true);
+    else if (system->powerOn) {
+        if (usbSIDPico.open())
+            usbSIDPico.setInitialState(); // user enabled USBSID during emulation
+    }
 }
 
 auto SidManager::setUSBSIDBuffSize(unsigned value) -> void {
@@ -601,8 +603,6 @@ auto SidManager::searializeActiveSids(Emulator::Serializer& s, bool light) -> vo
 
         updateOptionsInUse();
     }
-
-    usbSIDPico.serialize(s, light);
 }
 
 }

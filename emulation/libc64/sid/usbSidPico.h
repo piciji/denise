@@ -30,7 +30,7 @@ struct USBSIDPico {
     unsigned lastClock = 0;
     unsigned rasterRate = 0;
 
-    auto open(bool initState = false) -> bool;
+    auto open() -> int;
 
     auto close() -> void;
 
@@ -42,7 +42,7 @@ struct USBSIDPico {
 
     auto store(uint8_t addr, uint8_t val, int chipNr) -> void;
 
-    auto serialize(Emulator::Serializer& s, bool light) -> void;
+    auto serialize(Emulator::Serializer& s) -> void;
 
     auto setInitialState() -> void;
 

@@ -16,7 +16,9 @@ USBSIDPico::USBSIDPico(System& system) : system(system), sysTimer(system.sysTime
     sysTimer.registerCallback( {&flush, 1} );
 }
 
-auto USBSIDPico::open(bool initState) -> bool {
+auto USBSIDPico::open() -> int {
+    int result = 0;
+
     if (!usbsid) {
         usbsid = create_USBSID();
 
@@ -26,23 +28,22 @@ auto USBSIDPico::open(bool initState) -> bool {
         if (init_USBSID(usbsid, true, true) < 0) {
             close_USBSID(usbsid);
             usbsid = nullptr;
-            return false;
+            return 0;
         }
-        
-        setstereo_USBSID(usbsid, system.interface->stats.stereoSound);
-    } else
+        result = 1;
+    } else {
         reset_USBSID(usbsid);
+        result = 2;
+    }
 
+    setstereo_USBSID(usbsid, system.interface->stats.stereoSound);
     // check emulation/libc64/vicII/base.cpp -> setModel() for line and frame cycles
     setclockrate_USBSID(usbsid, system.vicII->frequency(), true);
     rasterRate = getrasterrate_USBSID(usbsid);
     sysTimer.add( &flush, rasterRate, Emulator::SystemTimer::UpdateExisting );
     lastClock = sysTimer.clock;
 
-    // if (initState)
-        // setInitialState();
-
-    return true;
+    return result;
 }
 
 auto USBSIDPico::close() -> void {
@@ -82,27 +83,30 @@ auto USBSIDPico::updateStereo() -> void {
         setstereo_USBSID(usbsid, system.interface->stats.stereoSound);
 }
 
-auto USBSIDPico::serialize(Emulator::Serializer& s, bool light) -> void {
+auto USBSIDPico::serialize(Emulator::Serializer& s) -> void {
     s.integer(enabled);
+    unsigned _buffSizeBefore = buffSize;
     s.integer(buffSize);
     s.integer(diffSize);
-    s.integer(lastClock);
 
-    if (!light && enabled && (s.mode() == Emulator::Serializer::Mode::Load) ) {
-        if (!usbsid)
-            open();
-        else {
+    if (enabled && (s.mode() == Emulator::Serializer::Mode::Load) ) {
+        int result = open();
+        if (result == 2) { // reset
+            // could be changed from loaded state
             setdiffsize_USBSID(usbsid, diffSize);
-            setbuffsize_USBSID(usbsid, buffSize);
-            setstereo_USBSID(usbsid, system.interface->stats.stereoSound);
-            setclockrate_USBSID(usbsid, system.vicII->frequency(), true);
-            rasterRate = getrasterrate_USBSID(usbsid);
+            if (_buffSizeBefore != buffSize) {
+                setbuffsize_USBSID(usbsid, buffSize);
+                restartringbuffer_USBSID(usbsid);
+            }
         }
-        // setInitialState();
+
+        setInitialState();
     }
 }
 
 auto USBSIDPico::setInitialState() -> void {
+    return;
+
     // when loading a state file or activation during emulation
     for(auto sid : system.sidManager.useSids) {
         store(0, sid->voice[0].freq & 0xff, sid->nr);
