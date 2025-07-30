@@ -28,6 +28,7 @@
 #pragma GCC optimize ("O0")
 #endif
 
+#include <libusb.h>
 #include "USBSID.h"
 
 

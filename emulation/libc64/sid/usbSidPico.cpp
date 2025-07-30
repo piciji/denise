@@ -1,9 +1,9 @@
 
-#include "USBSID.h"
+#include <USBSID.h>
 #include "usbSidPico.h"
 #include "../system/system.h"
 
-USBSID_NS::USBSID_Class* usbsid;
+USBSID_NS::USBSID_Class* usbsid = nullptr;
 
 namespace LIBC64 {
 
@@ -22,13 +22,14 @@ auto USBSIDPico::open() -> int {
     int result = 0;
 
     if (!usbsid) {
-        USBSID_NS::USBSID_Class* usbsid = new USBSID_NS::USBSID_Class();
+        usbsid = new USBSID_NS::USBSID_Class();
 
         usbsid->USBSID_SetDiffSize(diffSize);
         usbsid->USBSID_SetBufferSize(buffSize);
 
         if (usbsid->USBSID_Init(true, true) < 0) {
             delete usbsid;  /* Executes usbsid->USBSID_Close(); */
+            usbsid = nullptr;
             return 0;
         }
         result = 1;
@@ -56,7 +57,7 @@ auto USBSIDPico::close() -> void {
 }
 
 auto USBSIDPico::setBuffSize(unsigned value) -> void {
-    if (value == buffSize)
+    if (!usbsid || (value == buffSize))
         return;
 
     buffSize = value;
@@ -65,7 +66,7 @@ auto USBSIDPico::setBuffSize(unsigned value) -> void {
 }
 
 auto USBSIDPico::setDiffSize(unsigned value) -> void {
-    if (value == diffSize)
+    if (!usbsid || (value == diffSize))
         return;
 
     diffSize = value;
@@ -75,16 +76,19 @@ auto USBSIDPico::setDiffSize(unsigned value) -> void {
 auto USBSIDPico::store(uint8_t addr, uint8_t val, int chipNr) -> void {
     unsigned cycles = sysTimer.fallBackCycles(lastClock);
     // unsigned cycles = sysTimer.fallBackCycles(lastClock) - 1;
-    usbsid->USBSID_WriteRingCycled(addr + (chipNr * 0x20), val, cycles);
+    if (usbsid)
+        usbsid->USBSID_WriteRingCycled(addr + (chipNr * 0x20), val, cycles);
     lastClock = sysTimer.clock;
 }
 
 auto USBSIDPico::reset() -> void {
-    usbsid->USBSID_Reset();
+    if (usbsid)
+        usbsid->USBSID_Reset();
 }
 
 auto USBSIDPico::updateStereo() -> void {
-    usbsid->USBSID_SetStereo(system.interface->stats.stereoSound);
+    if (usbsid)
+        usbsid->USBSID_SetStereo(system.interface->stats.stereoSound);
 }
 
 auto USBSIDPico::serialize(Emulator::Serializer& s) -> void {

@@ -65,11 +65,6 @@ set(_depSrcs
         deps/lha/crc16.cpp
 )
 
-set(_usblibSrcs
-        deps/USBSID-Pico/USBSID.cpp
-        deps/USBSID-Pico/USBSIDInterface.cpp
-)
-
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(_depSrcsHLSL
         deps/glslang/glslang/HLSL/hlslAttributes.cpp
@@ -98,6 +93,6 @@ else()
     set(_depSrcs ${_depSrcs} deps/lha/lha_arch_unix.cpp )
 endif()
 
-set(usblibSrcs ${_usblibSrcs} PARENT_SCOPE)
+set(usblibSrcs deps/USBSID-Pico/USBSID.cpp PARENT_SCOPE)
 
 set(depSrcs ${_depSrcs} ${_depSrcsHLSL} ${_depSrcsMSL} PARENT_SCOPE)

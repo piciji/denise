@@ -32,6 +32,14 @@
   #define __US_WINDOWS_COMPILE
 #endif
 
+#ifndef LIBUSB_CALL
+#if defined(_WIN32) || defined(__CYGWIN__)
+#define LIBUSB_CALL WINAPI
+#else
+#define LIBUSB_CALL
+#endif
+#endif
+
 #ifdef USBSID_OPTOFF
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
@@ -56,7 +64,7 @@
   #include <pthread.h>
 #endif
 
-#include <libusb.h>
+//#include <libusb.h>
 
 /* Optional driver start and driver exit commands
  *
@@ -83,6 +91,9 @@
 #define USBERR(...) fprintf(__VA_ARGS__)
 
 using namespace std;
+
+struct libusb_context;
+struct libusb_transfer;
 
 namespace USBSID_NS
 {
