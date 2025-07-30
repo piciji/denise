@@ -41,6 +41,8 @@ struct USBSIDPico {
 
     auto store(uint8_t addr, uint8_t val, int chipNr) -> void;
 
+    auto reset() -> void;
+
     auto serialize(Emulator::Serializer& s) -> void;
 
     auto setInitialState() -> void;

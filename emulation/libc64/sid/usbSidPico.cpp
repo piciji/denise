@@ -79,6 +79,10 @@ auto USBSIDPico::store(uint8_t addr, uint8_t val, int chipNr) -> void {
     lastClock = sysTimer.clock;
 }
 
+auto USBSIDPico::reset() -> void {
+    usbsid->USBSID_Reset();
+}
+
 auto USBSIDPico::updateStereo() -> void {
     usbsid->USBSID_SetStereo(system.interface->stats.stereoSound);
 }
