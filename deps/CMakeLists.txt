@@ -63,7 +63,9 @@ set(_depSrcs
         deps/lha/lhx_decoder.cpp
         deps/lha/lk7_decoder.cpp
         deps/lha/crc16.cpp
+)
 
+set(_usblibSrcs
         deps/USBSID-Pico/USBSID.cpp
         deps/USBSID-Pico/USBSIDInterface.cpp
 )
@@ -95,5 +97,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 else()
     set(_depSrcs ${_depSrcs} deps/lha/lha_arch_unix.cpp )
 endif()
+
+set(usblibSrcs ${_usblibSrcs} PARENT_SCOPE)
 
 set(depSrcs ${_depSrcs} ${_depSrcsHLSL} ${_depSrcsMSL} PARENT_SCOPE)

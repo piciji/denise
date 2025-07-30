@@ -9,6 +9,7 @@ elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
     find_package(Freetype REQUIRED)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(FREETYPE2 REQUIRED freetype2)
+    pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
 elseif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_package(Freetype REQUIRED)
     find_package(PkgConfig REQUIRED)
@@ -238,13 +239,14 @@ SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/usbSidPico.cpp PROPERTIES INCLU
 
 set(headerSrcs)
 set(depSrcs)
+set(usblibSrcs)
 add_subdirectory(deps)
 add_subdirectory(data)
 
 set_source_files_properties(${headerSrcs} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 SET_SOURCE_FILES_PROPERTIES(${depSrcs}
-    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${LIBUSB_INCLUDE_DIRS};")
+    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     SET_SOURCE_FILES_PROPERTIES(${depSrcs} PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
@@ -256,9 +258,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${FREETYPE2_INCLUDE_DIRS};")
+
+        SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
+            PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
     else()
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${CMAKE_SOURCE_DIR}/data/libs/include")
+
+        SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
+            PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/data/libs/include")
     endif()
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v5.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT5")
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v7.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT7")
@@ -283,6 +291,9 @@ else()
 
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS}")
+
+    SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
+            PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
 
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # no udev
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
@@ -311,7 +322,7 @@ SET_SOURCE_FILES_PROPERTIES(program/program.cpp
 SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/images.cpp
         PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
 
-set(srcs ${srcs} ${depSrcs} ${headerSrcs})
+set(srcs ${srcs} ${depSrcs} ${usblibSrcs} ${headerSrcs})
 add_executable( ${PROJECT_NAME} ${srcs} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
@@ -325,11 +336,14 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
     if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
         target_link_libraries(${PROJECT_NAME} ${FREETYPE2_STATIC_LIBRARIES})
+        target_link_libraries(${PROJECT_NAME} ${LIBUSB_STATIC_LIBRARIES})
 
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
         target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x86/libfreetype.a")
+        target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x86/libusb-1.0.a")
     else()
         target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x64/libfreetype.a")
+        target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x64/libusb-1.0.a")
     endif()
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
