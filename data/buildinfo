@@ -116,6 +116,7 @@ NetBSD
 sudo pkgin in cmake
 sudo pkgin in pkg-config
 sudo pkgin in pulseaudio
+sudo pkgin in libusb1
 ---------------------------------------------
 OpenBSD
 ---------------------------------------------

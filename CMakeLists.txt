@@ -22,7 +22,7 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCH
     pkg_check_modules(GTK REQUIRED gtk+-3.0)
     pkg_check_modules(X11 REQUIRED x11 xfixes xext)
     pkg_check_modules(XCB REQUIRED xcb xcb-xinput xcb-xfixes xkbcommon)
-    pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+    pkg_check_modules(LIBUSB libusb-1.0)
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
 
@@ -292,9 +292,6 @@ else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS}")
 
-    SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
-            PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
-
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # no udev
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
                 PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID -DDRV_FREETYPE")
@@ -306,6 +303,15 @@ else()
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
 
+endif()
+
+if(LIBUSB_FOUND)
+    SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
+            PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
+
+    SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/usbSidPico.cpp PROPERTIES COMPILE_FLAGS "-DLIBUSB")
+else()
+    set(usblibSrcs)
 endif()
 
 if(OPENAL_FOUND)
@@ -356,13 +362,11 @@ else()
     target_link_directories(${PROJECT_NAME} PUBLIC ${GTK_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${X11_LIBRARY_DIRS})
-    target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})
-    target_link_directories(${PROJECT_NAME} PUBLIC ${LIBUSB_LIBRARY_DIRS})
+    target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})    
     target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})    
 
     # use -Wl,--verbose for detailed linker problems
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
@@ -377,6 +381,11 @@ else()
     else() # linux
         target_link_libraries(${PROJECT_NAME} "-luuid -no-pie -lrt -ldl -lGL -ludev -lpulse")
     endif()
+endif()
+
+if(LIBUSB_FOUND)
+    target_link_directories(${PROJECT_NAME} PUBLIC ${LIBUSB_LIBRARY_DIRS})
+    target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARIES})
 endif()
 
 if(OPENAL_FOUND)

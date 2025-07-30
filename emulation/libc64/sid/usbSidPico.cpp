@@ -1,14 +1,17 @@
 
+#ifdef LIBUSB
 #include <USBSID.h>
+#endif
 #include "usbSidPico.h"
 #include "../system/system.h"
 
+#ifdef LIBUSB
 USBSID_NS::USBSID_Class* usbsid = nullptr;
-
+#endif
 namespace LIBC64 {
 
 USBSIDPico::USBSIDPico(System& system) : system(system), sysTimer(system.sysTimer) {
-
+#ifdef LIBUSB
     flush = [this]() {
         usbsid->USBSID_SetFlush();
         lastClock = sysTimer.clock;
@@ -16,11 +19,12 @@ USBSIDPico::USBSIDPico(System& system) : system(system), sysTimer(system.sysTime
     };
 
     sysTimer.registerCallback( {&flush, 1} );
+#endif    
 }
 
 auto USBSIDPico::open() -> int {
     int result = 0;
-
+#ifdef LIBUSB
     if (!usbsid) {
         usbsid = new USBSID_NS::USBSID_Class();
 
@@ -44,54 +48,67 @@ auto USBSIDPico::open() -> int {
     rasterRate = usbsid->USBSID_GetRasterRate();
     sysTimer.add( &flush, rasterRate, Emulator::SystemTimer::UpdateExisting );
     lastClock = sysTimer.clock;
-
+#endif
     return result;
 }
 
 auto USBSIDPico::close() -> void {
+#ifdef LIBUSB    
     if (usbsid) {
         sysTimer.remove(&flush);
         usbsid->USBSID_Mute();
         delete usbsid;  /* Executes usbsid->USBSID_Close(); */
     }
+#endif    
 }
 
 auto USBSIDPico::setBuffSize(unsigned value) -> void {
+#ifdef LIBUSB    
     if (!usbsid || (value == buffSize))
         return;
 
     buffSize = value;
     usbsid->USBSID_SetBufferSize(buffSize);
     usbsid->USBSID_RestartRingBuffer();
+#endif    
 }
 
 auto USBSIDPico::setDiffSize(unsigned value) -> void {
+#ifdef LIBUSB    
     if (!usbsid || (value == diffSize))
         return;
 
     diffSize = value;
     usbsid->USBSID_SetDiffSize(diffSize);
+#endif    
 }
 
 auto USBSIDPico::store(uint8_t addr, uint8_t val, int chipNr) -> void {
+#ifdef LIBUSB    
     unsigned cycles = sysTimer.fallBackCycles(lastClock);
     // unsigned cycles = sysTimer.fallBackCycles(lastClock) - 1;
     if (usbsid)
         usbsid->USBSID_WriteRingCycled(addr + (chipNr * 0x20), val, cycles);
     lastClock = sysTimer.clock;
+#endif    
 }
 
 auto USBSIDPico::reset() -> void {
+#ifdef LIBUSB    
     if (usbsid)
         usbsid->USBSID_Reset();
+#endif        
 }
 
 auto USBSIDPico::updateStereo() -> void {
+#ifdef LIBUSB    
     if (usbsid)
         usbsid->USBSID_SetStereo(system.interface->stats.stereoSound);
+#endif        
 }
 
 auto USBSIDPico::serialize(Emulator::Serializer& s) -> void {
+#ifdef LIBUSB    
     s.integer(enabled);
     unsigned _buffSizeBefore = buffSize;
     s.integer(buffSize);
@@ -110,6 +127,7 @@ auto USBSIDPico::serialize(Emulator::Serializer& s) -> void {
 
         setInitialState();
     }
+#endif    
 }
 
 auto USBSIDPico::setInitialState() -> void {
