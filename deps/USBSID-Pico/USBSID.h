@@ -241,6 +241,8 @@ namespace USBSID_NS
   static int socketconfig = -1;
 
   /* Object related */
+  static bool us_Initialised = false;
+  static bool us_Available = false;
   static bool us_PortIsOpen = false;
   static int instance = -1;
 
@@ -257,6 +259,8 @@ namespace USBSID_NS
   static pthread_mutex_t us_mutex;
   class USBSID_Class {
     private:
+
+      int us_InstanceID;
 
       /* LIBUSB */
       int LIBUSB_Setup(bool start_threaded, bool with_cycles);
@@ -304,15 +308,14 @@ namespace USBSID_NS
       USBSID_Class();   /* Constructor */
       ~USBSID_Class();  /* Deconstructor */
 
-      bool us_Available;
-      bool us_Initialised;
       int us_Found;
-      int us_InstanceID;
 
       /* USBSID */
       int USBSID_Init(bool start_threaded, bool with_cycles);
       int USBSID_Close(void);
-      bool USBSID_isOpen(void);
+      bool USBSID_isInitialised(void){ return us_Initialised; };
+      bool USBSID_isAvailable(void){ return us_Available; };
+      bool USBSID_isOpen(void){ return us_PortIsOpen; };
 
       /* USBSID & SID control */
       void USBSID_Pause(void);                                            /* Pause playing by releasing chipselect pins */

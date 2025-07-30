@@ -474,6 +474,7 @@ auto SidManager::resetAll() -> void {
     system->sysTimer.add( &callAlarm, 300, Emulator::SystemTimer::Action::UpdateExisting );
 
     sid->reset();
+    if (usbSIDPico.enabled) usbSIDPico.reset();
 
     for (int i = 0; i < 7; i++)
         sids[i]->reset();

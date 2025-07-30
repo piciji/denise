@@ -10,14 +10,13 @@ namespace Emulator {
 
 namespace LIBC64 {
 
-struct System;    
+struct System;
 
 using Callback = std::function<void ()>;
 
 struct USBSIDPico {
     USBSIDPico(System& system);
 
-    void* usbsid = nullptr;
     System& system;
     Emulator::SystemTimer& sysTimer;
 
@@ -41,6 +40,8 @@ struct USBSIDPico {
     auto updateStereo() -> void;
 
     auto store(uint8_t addr, uint8_t val, int chipNr) -> void;
+
+    auto reset() -> void;
 
     auto serialize(Emulator::Serializer& s) -> void;
 
