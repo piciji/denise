@@ -74,36 +74,47 @@ extern "C"
     return ((USBSID_Class*)p)->USBSID_GetClockRate();
   };
   long getrefreshrate_USBSID(USBSIDitf p){
+    /* No check here, can be called without connection */
     return ((USBSID_Class*)p)->USBSID_GetRefreshRate();
   };
   long getrasterrate_USBSID(USBSIDitf p){
+    /* No check here, can be called without connection */
     return ((USBSID_Class*)p)->USBSID_GetRasterRate();
   };
   int getnumsids_USBSID(USBSIDitf p){
+    if( p == NULL ) return -1;
     return ((USBSID_Class*)p)->USBSID_GetNumSIDs();
   }
   int getfmoplsid_USBSID(USBSIDitf p) {
+    if( p == NULL ) return -1;
     return ((USBSID_Class*)p)->USBSID_GetFMOplSID();
   };
   int getpcbversion_USBSID(USBSIDitf p) {
+    if( p == NULL ) return -1;
     return ((USBSID_Class*)p)->USBSID_GetPCBVersion();
   };
   void setstereo_USBSID(USBSIDitf p, int state) {
+    if( p == NULL ) return;
     return ((USBSID_Class*)p)->USBSID_SetStereo(state);
   };
   void togglestereo_USBSID(USBSIDitf p) {
+    if( p == NULL ) return;
     return ((USBSID_Class*)p)->USBSID_ToggleStereo();
   };
-  bool available_USBSID(USBSIDitf p) {
-    return ((USBSID_Class*)p)->us_Available;
-  }
   bool initialised_USBSID(USBSIDitf p) {
-    return ((USBSID_Class*)p)->us_Initialised;
+    /* No check here, can be called without connection */
+    return ((USBSID_Class*)p)->USBSID_isInitialised();
+  }
+  bool available_USBSID(USBSIDitf p) {
+    /* No check here, can be called without connection */
+    return ((USBSID_Class*)p)->USBSID_isAvailable();
   }
   bool portisopen_USBSID(USBSIDitf p) {
+    /* No check here, can be called without connection */
     return ((USBSID_Class*)p)->USBSID_isOpen();
   }
   int found_USBSID(USBSIDitf p) {
+    if( p == NULL ) return -1;
     return ((USBSID_Class*)p)->us_Found;
   }
   void writesingle_USBSID(USBSIDitf p, unsigned char *buff, size_t len){
