@@ -303,6 +303,9 @@ else()
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
 
+    if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # libusb_dev_mem_ stuff undeclared
+        set(LIBUSB_FOUND false)
+    endif()
 endif()
 
 if(LIBUSB_FOUND)
