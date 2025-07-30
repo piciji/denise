@@ -30,16 +30,17 @@ auto USBSIDPico::open(bool initState) -> bool {
         }
         
         setstereo_USBSID(usbsid, system.interface->stats.stereoSound);
+    } else
+        reset_USBSID(usbsid);
 
-        // check emulation/libc64/vicII/base.cpp -> setModel() for line and frame cycles
-        setclockrate_USBSID(usbsid, system.vicII->frequency(), true);
-        rasterRate = getrasterrate_USBSID(usbsid);
-        sysTimer.add( &flush, rasterRate, Emulator::SystemTimer::UpdateExisting );
-        lastClock = sysTimer.clock;
+    // check emulation/libc64/vicII/base.cpp -> setModel() for line and frame cycles
+    setclockrate_USBSID(usbsid, system.vicII->frequency(), true);
+    rasterRate = getrasterrate_USBSID(usbsid);
+    sysTimer.add( &flush, rasterRate, Emulator::SystemTimer::UpdateExisting );
+    lastClock = sysTimer.clock;
 
-        // if (initState)
-            // setInitialState();
-    }
+    // if (initState)
+        // setInitialState();
 
     return true;
 }
