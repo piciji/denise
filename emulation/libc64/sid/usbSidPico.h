@@ -10,14 +10,13 @@ namespace Emulator {
 
 namespace LIBC64 {
 
-struct System;    
+struct System;
 
 using Callback = std::function<void ()>;
 
 struct USBSIDPico {
     USBSIDPico(System& system);
 
-    void* usbsid = nullptr;
     System& system;
     Emulator::SystemTimer& sysTimer;
 
