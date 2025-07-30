@@ -9,7 +9,7 @@ elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
     find_package(Freetype REQUIRED)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(FREETYPE2 REQUIRED freetype2)
-    pkg_check_modules(LIBUSB REQUIRED libusb-1.0)
+    pkg_check_modules(LIBUSB libusb-1.0)
 elseif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_package(Freetype REQUIRED)
     find_package(PkgConfig REQUIRED)
@@ -259,14 +259,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${FREETYPE2_INCLUDE_DIRS};")
 
-        SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
-            PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
+       # SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
+        #    PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
     else()
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${CMAKE_SOURCE_DIR}/data/libs/include")
 
-        SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
-            PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/data/libs/include")
+        #SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
+         #   PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/data/libs/include")
+
     endif()
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v5.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT5")
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v7.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT7")
@@ -345,7 +346,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
     if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
         target_link_libraries(${PROJECT_NAME} ${FREETYPE2_STATIC_LIBRARIES})
-        target_link_libraries(${PROJECT_NAME} ${LIBUSB_STATIC_LIBRARIES})
+        if(LIBUSB_FOUND)
+            target_link_libraries(${PROJECT_NAME} ${LIBUSB_STATIC_LIBRARIES})
+        endif()
 
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
         target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x86/libfreetype.a")
@@ -369,7 +372,12 @@ else()
     target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})    
+    target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
+
+    if(LIBUSB_FOUND)
+        target_link_directories(${PROJECT_NAME} PUBLIC ${LIBUSB_LIBRARY_DIRS})
+        target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARIES})
+    endif()
 
     # use -Wl,--verbose for detailed linker problems
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
@@ -384,11 +392,6 @@ else()
     else() # linux
         target_link_libraries(${PROJECT_NAME} "-luuid -no-pie -lrt -ldl -lGL -ludev -lpulse")
     endif()
-endif()
-
-if(LIBUSB_FOUND)
-    target_link_directories(${PROJECT_NAME} PUBLIC ${LIBUSB_LIBRARY_DIRS})
-    target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARIES})
 endif()
 
 if(OPENAL_FOUND)
