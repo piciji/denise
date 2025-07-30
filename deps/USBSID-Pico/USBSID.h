@@ -32,6 +32,14 @@
   #define __US_WINDOWS_COMPILE
 #endif
 
+#ifndef WINAPI
+#if defined(_ARM_)
+#define WINAPI
+#else
+#define WINAPI __stdcall
+#endif
+#endif
+
 #ifndef LIBUSB_CALL
 #if defined(_WIN32) || defined(__CYGWIN__)
 #define LIBUSB_CALL WINAPI

@@ -258,17 +258,14 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${FREETYPE2_INCLUDE_DIRS};")
-
-       # SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
-        #    PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
     else()
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${CMAKE_SOURCE_DIR}/data/libs/include")
 
-        #SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
-         #   PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/data/libs/include")
-
+        set(LIBUSB_FOUND true)
+        set(LIBUSB_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
     endif()
+
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v5.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT5")
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v7.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT7")
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v8.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT8")
@@ -352,10 +349,14 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
         target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x86/libfreetype.a")
-        target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x86/libusb-1.0.a")
+        if(LIBUSB_FOUND)
+            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x86/libusb-1.0.a")
+        endif()
     else()
         target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x64/libfreetype.a")
-        target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x64/libusb-1.0.a")
+        if(LIBUSB_FOUND)
+            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x64/libusb-1.0.a")
+        endif()
     endif()
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
