@@ -1150,6 +1150,9 @@
     <ClInclude Include="..\guikit\tools\encode\images.h">
       <Filter>guikit\tools\encode</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libc64\sid\usbSidPico.h">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2342,6 +2345,9 @@
     </ClCompile>
     <ClCompile Include="..\guikit\tools\encode\images.cpp">
       <Filter>guikit\tools\encode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\usbSidPico.cpp">
+      <Filter>emulation\libc64\sid</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

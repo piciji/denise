@@ -168,6 +168,7 @@
     <ClInclude Include="..\emulation\libc64\m6510\optable.h" />
     <ClInclude Include="..\emulation\libc64\prg\prg.h" />
     <ClInclude Include="..\emulation\libc64\sid\sid.h" />
+    <ClInclude Include="..\emulation\libc64\sid\usbSidPico.h" />
     <ClInclude Include="..\emulation\libc64\system\clipboard.h" />
     <ClInclude Include="..\emulation\libc64\system\firmware.h" />
     <ClInclude Include="..\emulation\libc64\system\gluelogic.h" />
@@ -1128,6 +1129,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\usbSidPico.cpp" />
     <ClCompile Include="..\emulation\libc64\sid\voice.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
