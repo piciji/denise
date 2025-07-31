@@ -370,7 +370,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
             set(LIBUSB_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/macArm/libusb-1.0.0.dylib")
         else()
-
+			set(LIBUSB_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/macIntel/libusb-1.0.0.dylib")
         endif()
 
         target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARY})

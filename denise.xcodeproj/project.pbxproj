@@ -2654,6 +2654,7 @@
 					"-w",
 				);
 				"OTHER_LDFLAGS[arch=x86_64]" = (
+					"data/libs/static/macIntel/libusb-1.0.a",
 					data/libs/static/macIntel/libfreetype.a,
 					"-w",
 				);
@@ -2696,6 +2697,7 @@
 					"-w",
 				);
 				"OTHER_LDFLAGS[arch=x86_64]" = (
+					"data/libs/static/macIntel/libusb-1.0.a",
 					data/libs/static/macIntel/libfreetype.a,
 					"-w",
 				);
