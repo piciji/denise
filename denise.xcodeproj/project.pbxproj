@@ -171,6 +171,9 @@
 		9D8FB4E32CB47539006905BE /* logos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E12CB47539006905BE /* logos.cpp */; };
 		9D8FB4E42CB475A8006905BE /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAB412CB3F8EE006905BE /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
 		9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA70F452E101AF000F1DC5B /* scp.cpp */; };
+		9DD0A0B62E3B943B0018DA68 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
+		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
 		9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD306D62DFAFF2200B8F12F /* httpClient.cpp */; };
 		9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */; };
 		9DF7CF502D96E1D400CECCF1 /* lha.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DF7CF4E2D96E1D400CECCF1 /* lha.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/lha/"; }; };
@@ -799,6 +802,11 @@
 		9DA70F442E101AF000F1DC5B /* scp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scp.h; sourceTree = "<group>"; };
 		9DA70F452E101AF000F1DC5B /* scp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DA70F472E101AFF00F1DC5B /* scp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
+		9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbSidPico.cpp; sourceTree = "<group>"; };
+		9DD0A0B52E3B943B0018DA68 /* usbSidPico.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = usbSidPico.h; sourceTree = "<group>"; };
+		9DD0A0B82E3B94AF0018DA68 /* USBSID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = USBSID.h; path = "deps/USBSID-Pico/USBSID.h"; sourceTree = SOURCE_ROOT; };
+		9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = USBSID.cpp; path = "deps/USBSID-Pico/USBSID.cpp"; sourceTree = SOURCE_ROOT; };
+		9DD0A0BB2E3B9A220018DA68 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		9DD306D42DFAFEE000B8F12F /* error.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = error.h; sourceTree = "<group>"; };
 		9DD306D62DFAFF2200B8F12F /* httpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = httpClient.cpp; sourceTree = "<group>"; };
 		9DD306D72DFAFF2200B8F12F /* httpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpClient.h; sourceTree = "<group>"; };
@@ -813,6 +821,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */,
 				9D0C382E2CB5C17900363301 /* OpenAL.framework in Frameworks */,
 				9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */,
 				9D8FAEA72CB415B1006905BE /* Carbon.framework in Frameworks */,
@@ -984,6 +993,7 @@
 		9D8FA9522CB3DF78006905BE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9DD0A0BB2E3B9A220018DA68 /* Security.framework */,
 				9D0C382D2CB5C17900363301 /* OpenAL.framework */,
 				9D8FAEB22CB415E3006905BE /* AudioUnit.framework */,
 				9D8FAEB02CB415DD006905BE /* AudioToolbox.framework */,
@@ -2154,6 +2164,8 @@
 		9D8FADD82CB40DF8006905BE /* sid */ = {
 			isa = PBXGroup;
 			children = (
+				9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */,
+				9DD0A0B52E3B943B0018DA68 /* usbSidPico.h */,
 				9D8FADD92CB40DF8006905BE /* voice.cpp */,
 				9D8FADDA2CB40DF8006905BE /* sid.cpp */,
 				9D8FADDB2CB40DF8006905BE /* tables.cpp */,
@@ -2210,6 +2222,7 @@
 		9D8FB4D52CB472A7006905BE /* deps */ = {
 			isa = PBXGroup;
 			children = (
+				9DD0A0B72E3B94900018DA68 /* USBSID-Pico */,
 				9D07CD172E29703800A9787E /* depsSlang.cpp */,
 				9D07CD162E29703800A9787E /* depsSpirv.cpp */,
 				9D07CD132E296D5500A9787E /* stb */,
@@ -2241,6 +2254,15 @@
 				9DA70F452E101AF000F1DC5B /* scp.cpp */,
 			);
 			path = scp;
+			sourceTree = "<group>";
+		};
+		9DD0A0B72E3B94900018DA68 /* USBSID-Pico */ = {
+			isa = PBXGroup;
+			children = (
+				9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */,
+				9DD0A0B82E3B94AF0018DA68 /* USBSID.h */,
+			);
+			path = "USBSID-Pico";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -2352,6 +2374,7 @@
 				9D8FAAFF2CB3F6EF006905BE /* palette.cpp in Sources */,
 				9D8FAB112CB3F6EF006905BE /* cosine.cpp in Sources */,
 				9D8FAB282CB3F6F0006905BE /* model.cpp in Sources */,
+				9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */,
 				9D8FAE3E2CB40DF9006905BE /* reu.cpp in Sources */,
 				9D07CD0C2E296CD000A9787E /* lha_arch_unix.cpp in Sources */,
 				9D07CD182E29703800A9787E /* depsSpirv.cpp in Sources */,
@@ -2442,6 +2465,7 @@
 				9D07CD032E296CD000A9787E /* lh5_decoder.cpp in Sources */,
 				9D07CCFC2E296CD000A9787E /* null_decoder.cpp in Sources */,
 				9D6404392DCDEE1C00624A00 /* expansionPort.cpp in Sources */,
+				9DD0A0B62E3B943B0018DA68 /* usbSidPico.cpp in Sources */,
 				9D8FAB1A2CB3F6EF006905BE /* reverb.cpp in Sources */,
 				9D8FAE602CB40DF9006905BE /* system.cpp in Sources */,
 				9D8FAB042CB3F6EF006905BE /* config.cpp in Sources */,
@@ -2625,6 +2649,7 @@
 				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
 				MARKETING_VERSION = 2.6;
 				"OTHER_LDFLAGS[arch=arm64]" = (
+					"data/libs/static/macArm/libusb-1.0.a",
 					data/libs/static/macArm/libfreetype.a,
 					"-w",
 				);
@@ -2666,6 +2691,7 @@
 				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
 				MARKETING_VERSION = 2.6;
 				"OTHER_LDFLAGS[arch=arm64]" = (
+					"data/libs/static/macArm/libusb-1.0.a",
 					data/libs/static/macArm/libfreetype.a,
 					"-w",
 				);

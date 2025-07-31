@@ -306,7 +306,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     panning.top.reset.setImage(&resetImage);
         
     moduleList.setSelection(0);
-    moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(100)}, 15 );
+    moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(dynamic_cast<LIBC64::Interface*>(emulator) ? 120 : 100)}, 15 );
     moduleFrame.append( volumeLayout, {0u, ~0u} );
     moduleFrame.setPadding(10);
     moduleFrame.setFont( GUIKIT::Font::system("bold") );

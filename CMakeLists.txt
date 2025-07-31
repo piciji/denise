@@ -283,6 +283,9 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
+
+    set(LIBUSB_FOUND true)
+    set(LIBUSB_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
 else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES COMPILE_FLAGS "-DGUIKIT_GTK")
@@ -363,6 +366,16 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit")
     target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARY})
 
+    if(LIBUSB_FOUND)
+        if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
+            set(LIBUSB_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/macArm/libusb-1.0.0.dylib")
+        else()
+
+        endif()
+
+        target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARY})
+    endif()    
+
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
 else()
     target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr")
@@ -434,6 +447,11 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     install(FILES ${ft_resolved} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
 
     install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE_LIBRARY} libfreetype.dylib ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app ${PROJECT_NAME})")
+
+    if(LIBUSB_FOUND)
+        install(FILES ${LIBUSB_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
+        install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${LIBUSB_LIBRARY} libusb-1.0.0.dylib ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app ${PROJECT_NAME})")
+    endif()
 
     install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app)")
 
