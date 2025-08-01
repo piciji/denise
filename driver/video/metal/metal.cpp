@@ -904,7 +904,7 @@ namespace DRIVER {
                 [rce setRenderPipelineState:outputPipelineState];
                 [rce setVertexBytes:&rotatedMatrix length:sizeof(matrix_float4x4) atIndex:1];
                 if (options & OPT_DisallowFilter)
-                    [rce setFragmentSamplerState:samplers[ShaderPreset::FilterNearest][ShaderPreset::WRAP_EDGE][0] atIndex : 0];
+                    [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_NEAREST][ShaderPreset::WRAP_EDGE][0] atIndex : 0];
                 else
                     [rce setFragmentSamplerState:sampler atIndex:0];
                 [rce setVertexBytes:&vertices length:sizeof(vertices) atIndex:0];
