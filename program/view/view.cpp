@@ -1392,7 +1392,7 @@ auto View::buildMenu() -> void {
     recordScaled.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("screenshot_unscaled", 0);
-        recordNoEffects.setEnabled();
+        recordWithEffects.setEnabled();
         emuThread->unlock();
     };
     miscMenu.append(recordScaled);
@@ -1400,7 +1400,7 @@ auto View::buildMenu() -> void {
     recordUnscaled.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("screenshot_unscaled", 1);
-        recordNoEffects.setEnabled(false);
+        recordWithEffects.setEnabled(false);
         emuThread->unlock();
     };
     miscMenu.append(recordUnscaled);
@@ -1408,7 +1408,7 @@ auto View::buildMenu() -> void {
     recordUnscaledNoBorder.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("screenshot_unscaled", 2);
-        recordNoEffects.setEnabled(false);
+        recordWithEffects.setEnabled(false);
         emuThread->unlock();
     };
     miscMenu.append(recordUnscaledNoBorder);
@@ -1416,7 +1416,7 @@ auto View::buildMenu() -> void {
     recordUnscaledMonitor.onActivate = [this]() {
         emuThread->lock();
         globalSettings->set<unsigned>("screenshot_unscaled", 3);
-        recordNoEffects.setEnabled(false);
+        recordWithEffects.setEnabled(false);
         emuThread->unlock();
     };
     miscMenu.append(recordUnscaledMonitor);
@@ -1443,14 +1443,14 @@ auto View::buildMenu() -> void {
     recordMergedFrames.setChecked(globalSettings->get<bool>("screenshot_merge_frames", false));
     miscMenu.append(recordMergedFrames);
 
-    recordNoEffects.onToggle = [this]() {
+    recordWithEffects.onToggle = [this]() {
         emuThread->lock();
-        globalSettings->set<bool>("screenshot_no_effects", recordNoEffects.checked());
+        globalSettings->set<bool>("screenshot_with_effects", recordWithEffects.checked());
         emuThread->unlock();
     };
-    recordNoEffects.setChecked(globalSettings->get<bool>("screenshot_no_effects", false));
-    recordNoEffects.setEnabled(_unscaled == 0);
-    miscMenu.append(recordNoEffects);
+    recordWithEffects.setChecked(globalSettings->get<bool>("screenshot_with_effects", true));
+    recordWithEffects.setEnabled(_unscaled == 0);
+    miscMenu.append(recordWithEffects);
 
     miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
 
@@ -2047,7 +2047,7 @@ auto View::translate() -> void {
     copyItem.setText( trans->get("Copy") );
     recordScreen.setText(trans->getA("take screenshot"));
     recordMergedFrames.setText(trans->getA("merge frames"));    
-    recordNoEffects.setText(trans->getA("without effects"));
+    recordWithEffects.setText(trans->getA("including effects"));
 
     recordScaled.setText(trans->getA("scaled"));
     recordUnscaled.setText(trans->getA("unscaled"));
@@ -2137,8 +2137,8 @@ auto View::updateScreenshotUI() -> void {
         recordUnscaledNoBorder.setText("320x200");
         recordUnscaledMonitor.setText("384x272");
     } else {
-        recordUnscaledNoBorder.setText(trans->getA("unscaled no border"));
-        recordUnscaledMonitor.setText(trans->getA("unscaled monitor"));
+        recordUnscaledNoBorder.setText(trans->getA("320x256"));
+        recordUnscaledMonitor.setText(trans->getA("344x280"));
     }
 }
 
@@ -2397,7 +2397,7 @@ auto View::takeScreenshot() -> void {
     auto _path = program->generatedFolder(activeEmulator, "screen_record_path", "recordings/screenshots", true);
     auto _file = settings->get<std::string>("save_ident", "screenshot");
     auto screenshotFormat = settings->get<std::string>("screen_record_format", "png");
-    bool withoutFilter = globalSettings->get<bool>("screenshot_no_effects", false);
+    bool withEffects = globalSettings->get<bool>("screenshot_with_effects", true);
     bool mergeTwoFrames = globalSettings->get<bool>("screenshot_merge_frames", false);
     unsigned unscaled = globalSettings->get<unsigned>("screenshot_unscaled", 0);
 
@@ -2419,7 +2419,7 @@ auto View::takeScreenshot() -> void {
         screenshot.type = GUIKIT::Image::Type::PNG;
     }
 
-    screenshot.withoutFilter = withoutFilter;
+    screenshot.withEffects = withEffects;
     screenshot.unscaled = unscaled;
     screenshot.twoFrames = mergeTwoFrames;
     screenshot.pause = 0;

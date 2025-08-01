@@ -118,6 +118,12 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         lpD3DDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, flags.filter);
     }
 
+    auto forceFilter(unsigned filt) -> void {
+        lpD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, filt);
+        lpD3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, filt);
+        lpD3DDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, filt);
+    }
+
     auto setVertex(unsigned src_w, unsigned src_h, unsigned tex_w, unsigned tex_h, unsigned dest_x, unsigned dest_y, unsigned dest_w, unsigned dest_h) -> void {
         d3d9vertex vertex[4];
         LPDIRECT3DVERTEXBUFFER9* vertexPtr;
@@ -470,6 +476,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if( settings.synchronize && IsIconic( settings.parent ) )
             return;
 
+        bool surpressFilter = options & OPT_DisallowFilter;
+        if (surpressFilter)
+            forceFilter(D3DTEXF_POINT);
+
         lpD3DDevice->BeginScene();
         if (updVertex)
             setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
@@ -490,6 +500,9 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 #endif
 
         lpD3DDevice->EndScene();
+
+        if (surpressFilter)
+            forceFilter(flags.filter);
 
         if (settings.vrr) {
             waitVRR();
@@ -544,6 +557,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             accessMutex.unlock();
         }
 
+        bool surpressFilter = options & OPT_DisallowFilter;
+        if (surpressFilter)
+            forceFilter(D3DTEXF_POINT);
+
         lpD3DDevice->BeginScene();
         if (updVertex)
             setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
@@ -564,6 +581,9 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 #endif
 
         lpD3DDevice->EndScene();
+
+        if (surpressFilter)
+            forceFilter(flags.filter); // revert
 
         if (settings.vrr) {
             waitVRR();

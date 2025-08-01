@@ -1262,7 +1262,10 @@ namespace DRIVER {
         if (texture) {
             applyShader(frame.shader);
             context->PSSetShaderResources(0, 1, &texture->view);
-            context->PSSetSamplers(0, 1, &sampler);
+            if (options & OPT_DisallowFilter)
+                context->PSSetSamplers(0, 1, &samplers[ShaderPreset::FILTER_NEAREST][ShaderPreset::WRAP_EDGE]);
+            else
+                context->PSSetSamplers(0, 1, &sampler);
             context->VSSetConstantBuffers(0, 1, &uboRotated);
         }
 

@@ -195,17 +195,17 @@ struct GL3 {
         return GLUtility::initTexture(tex, false);
     }
 
-    auto _redraw(bool disallowShader, bool interlace) -> void {
+    auto _redraw(uint8_t options) -> void {
         clear();
         
         if (updateRTS)
-            updateRenderTargets(frame.textures[0].width, frame.textures[0].height, interlace);
+            updateRenderTargets(frame.textures[0].width, frame.textures[0].height, options & OPT_Interlace);
 
         glBindVertexArray(frame.vao);
 
         GLTexture* texture = &frame.textures[0];
 
-        if (!disallowShader && shaderPasses) {
+        if (!(options & OPT_DisallowShader) && shaderPasses) {
             frameCount += 1;
 
             for(int i = 0; i < shaderPasses; i++) {
@@ -350,7 +350,10 @@ struct GL3 {
             glUseProgram(frame.prg);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture->view);
-            GLUtility::glParameters(GL_CLAMP_TO_EDGE, frame.filter, frame.filter);
+            if (options & OPT_DisallowFilter)
+                GLUtility::glParameters(GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
+            else
+                GLUtility::glParameters(GL_CLAMP_TO_EDGE, frame.filter, frame.filter);
         }
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // to screen

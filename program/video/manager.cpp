@@ -599,27 +599,25 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         updateAll();
 
     bool cropCoordUpdated = emulator->cropCoordUpdated(cropTop, cropLeft);
-    if (!placeHolderSplashScreen) {
-        if (rebuildShader) {
-            if (crtMode == CrtMode::Gpu) {
-                setData("autoEmu_cropTop", (float)cropTop);
-                setData("autoEmu_cropLeft", (float)cropLeft);
-                setData("autoEmu_lace", (float)interlace);
-                setData("autoEmu_hires", (float)hires);
-                setData("autoEmu_pal", (float)pal);
-                setData("autoEmu_subRegion", emulator->getSubRegion());
-                setData("autoEmu_tvGamma", (float)(shaderLumaChromaInput() && (colorSpectrum || crtRealGamma)));
-                setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
-                setData("autoEmu_driveLED", (float)0);
-                videoDriver->setShader( &parser->shaderPreset);
-            } else
-                videoDriver->setShader(nullptr);
-
-            rebuildShader  = false;
-        } else if (cropCoordUpdated) {
+    if (rebuildShader && !placeHolderSplashScreen) {
+        if (crtMode == CrtMode::Gpu) {
             setData("autoEmu_cropTop", (float)cropTop);
             setData("autoEmu_cropLeft", (float)cropLeft);
-        }
+            setData("autoEmu_lace", (float)interlace);
+            setData("autoEmu_hires", (float)hires);
+            setData("autoEmu_pal", (float)pal);
+            setData("autoEmu_subRegion", emulator->getSubRegion());
+            setData("autoEmu_tvGamma", (float)(shaderLumaChromaInput() && (colorSpectrum || crtRealGamma)));
+            setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
+            setData("autoEmu_driveLED", (float)0);
+            videoDriver->setShader( &parser->shaderPreset);
+        } else
+            videoDriver->setShader(nullptr);
+
+        rebuildShader  = false;
+    } else if (cropCoordUpdated && !placeHolderSplashScreen) {
+        setData("autoEmu_cropTop", (float)cropTop);
+        setData("autoEmu_cropLeft", (float)cropLeft);
     }
 
     frameOptions &= ~0x80; // init lace toggle
@@ -641,26 +639,26 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         return;
     }
 
-    if (takeScreenShots) {
+    if (unlikely(takeScreenShots)) {
         if (view->screenshot.unscaled) {
-            suppressShader = true;
+            takeScreenshot<T, interlace, field>(view->screenshot.unscaled, src, width, height, srcPitch);
         } else {
             gpuOptions |= (uint8_t)DRIVER::OPT_TakeScreenshot;
-            if (view->screenshot.withoutFilter) {
-                gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader;
+            if (!view->screenshot.withEffects) {
+                gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader | (uint8_t)DRIVER::OPT_DisallowFilter;
                 suppressShader = true;
             }
-            if (!placeHolderFrames) {
-                if (!--takeScreenShots && view->screenshot.pause)
-                    program->isPause = view->screenshot.pause;
-            }
+        }
+        if (!placeHolderFrames) {
+            if (!--takeScreenShots && view->screenshot.pause)
+                program->isPause = view->screenshot.pause;
         }
     }
 
     frameRenderPos = 0;
     videoDriver->setIntegerScalingDimension( lores ? (width << 1) : (hires ? width : (width >> 1)), interlace ? height : (height << 1), shres | hires | interlace);
 
-    if (placeHolderFrames) {
+    if (unlikely(placeHolderFrames)) {
         if (!placeHolderSplashScreen || ((placeHolderFrames & 3) == 0)) {
             if (takeScreenShots)
                 takeScreenShots--;
@@ -683,10 +681,6 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 
         renderToRgb<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
 
-        if (takeScreenShots && view->screenshot.unscaled) {
-            if (!takeScreenshot<T, interlace, field>(view->screenshot.unscaled))
-                takeScreenshot(gpuData, width, height, gpuPitch - width);
-        }
 	} else if (crtMode == CrtMode::Gpu) {
         if (shaderLumaChromaInput()) {
             width += SHADER_OFFSCREEN_WIDTH << 1;
@@ -721,47 +715,24 @@ Typical:
     videoDriver->unlockAndRedraw( );
 }
 
-template<typename T, bool interlace, bool field> auto VideoManager::takeScreenshot(unsigned unscaled) -> bool {
-    unsigned _w, _h, _p;
+template<typename T, bool interlace, bool field> auto VideoManager::takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch) -> void {
+    const T* _fT = _src;
 
     if (unscaled == 2) {
-        _w = isC64() ? 320 : unscaled;
+        _width = 320;
     } else if (unscaled == 3) {
-        _w = isC64() ? 384 : unscaled;
-    } else
-        return false;
+        _width = isC64() ? 384 : 344;
+    }    
 
-    uint8_t* _f = activeEmulator->cropAlternatively(_w, _h, _p);
-    const T* _fT = (const T*)_f;
+    if (unscaled > 1) {
+        uint8_t* _f = activeEmulator->cropAlternatively(_width, _height, _pitch);
+        if (!_f)
+            return;
+        _fT = (const T*)_f;        
+    } 
 
-    if (_f) {
-        unsigned* _t = new unsigned[_w * _h];
-        renderToRgb<T, interlace, field>(_w, _h, _fT, _p, _t, 0);
-        takeScreenshot(_t, _w, _h, 0);
-        delete[] _t;
-        return true;
-    }
-    return false;
-}
-
-auto VideoManager::takeScreenshot(uint32_t* _data, unsigned _width, unsigned _height, unsigned _pitch) -> void {
-    if (!--takeScreenShots && view->screenshot.pause)
-        program->isPause = view->screenshot.pause;
-        
     uint8_t* _dest = new uint8_t[_width * _height * 3];
-    unsigned rgba;
-
-    uint8_t* ptr = _dest;
-    for (int y = 0; y < _height; y++) {
-        for (int x = 0; x < _width; x++) {
-            rgba = *_data++;
-
-            *ptr++ = (rgba >> 16) & 0xff;
-            *ptr++ = (rgba >> 8) & 0xff;
-            *ptr++ = rgba & 0xff;
-        }
-        _data += _pitch;
-    }
+    renderToScreenshot<T, interlace, field>(_width, _height, _fT, _pitch, _dest);
     program->takeScreenshot(_dest, _width, _height);
     delete[] _dest;
 }
@@ -815,6 +786,53 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
         }
     }
 }
+
+#define screenshot3channel(x) { auto& _x = x; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; }
+
+template<typename T, bool interlace, bool field> auto VideoManager::renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest) -> void {
+    unsigned mask = (1 << countColorBits) - 1;
+
+    if constexpr (interlace) {
+        unsigned color;
+        ColorRgbLight colorDecayed;
+        bool laceToggle = !!(frameOptions & 0x80);
+        unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
+        if (laceToggle)
+            iRate = 100;
+
+        for (unsigned h = 0; h < height; h++) {
+
+            if ((iRate != 100) && ((!field && (h & 1)) || (field && !(h & 1)))) {
+
+                for (unsigned w = 0; w < width; w++) {
+                    color = palette->paletteColors[*src++ & mask].rgb;
+                    colorDecayed.r = (color >> 16) & 0xff;
+                    colorDecayed.g = (color >> 8) & 0xff;
+                    colorDecayed.b = (color >> 0) & 0xff;
+
+                    colorDecayed.r = (colorDecayed.r * iRate) / 100;
+                    colorDecayed.g = (colorDecayed.g * iRate) / 100;
+                    colorDecayed.b = (colorDecayed.b * iRate) / 100;
+
+                    screenshot3channel(colorDecayed)
+                }
+            } else {
+                for (unsigned w = 0; w < width; w++) {
+                    screenshot3channel(palette->paletteColors[*src++ & mask])
+                }
+            }
+            src += srcPitch;
+        }
+    } else {
+        for (unsigned h = 0; h < height; h++) {
+            for (unsigned w = 0; w < width; w++) {
+                screenshot3channel(palette->paletteColors[*src++ & mask])
+            }
+            src += srcPitch;
+        }
+    }
+}
+#undef screenshot3channel
 
 template<typename T, bool interlace, bool field> inline auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch, unsigned& cropTop) -> void {
 	const T* srcDelay = src;

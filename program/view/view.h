@@ -24,7 +24,7 @@ struct View : GUIKIT::Window {
     struct {        
         std::string path;
         GUIKIT::Image::Type type;
-        bool withoutFilter = false;
+        bool withEffects = false;
         unsigned unscaled = 0;
         bool twoFrames = false;
         bool saveState = false;
@@ -146,7 +146,7 @@ struct View : GUIKIT::Window {
         GUIKIT::MenuRadioItem recordUnscaledNoBorder;
         GUIKIT::MenuRadioItem recordUnscaledMonitor;
         GUIKIT::MenuCheckItem recordMergedFrames;
-        GUIKIT::MenuCheckItem recordNoEffects;
+        GUIKIT::MenuCheckItem recordWithEffects;
 
         GUIKIT::MenuItem copyItem;
         GUIKIT::MenuItem pasteItem;

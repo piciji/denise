@@ -51,7 +51,7 @@ struct ScreenTextDescription {
 	int marginVertical;
 };
 
-enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4, OPT_TakeScreenshot = 8 };
+enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4, OPT_TakeScreenshot = 8, OPT_DisallowFilter = 16 };
 enum Rotation { ROT_0, ROT_90, ROT_180, ROT_270 };
 
 struct Video {
