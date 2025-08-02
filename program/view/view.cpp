@@ -257,9 +257,6 @@ auto View::build() -> void {
 	};
 
     GUIKIT::Application::Cocoa::onOpenFile = [this] (std::string fileName) {
-        // will be called when starting from cmd with parameter too ? we don't want to do it twice in case of argv.
-        // but opening a file from explorer doesn't generate argv parameter, so we need this callback.
-        // Why does everything have to be more complicated on the mac?
         if (cmd->hasContent)
             return;
 
