@@ -81,6 +81,17 @@ auto Image::generate(Type type) -> Encoded {
     return encoded;
 }
 
+auto Image::generate(std::vector<uint32_t>& colorTable, const uint8_t* src, unsigned width, unsigned height) -> Encoded {
+    ImageEncoder encoder;
+    Encoded encoded;
+
+    if (encoder.encodeBMPWithColorTable(colorTable, src, width, height)) {
+        encoded.data = encoder.data;
+        encoded.size = encoder.size;
+    }
+    return encoded;
+}
+
 auto Image::loadPng(const uint8_t* src, unsigned size, bool keepDataOnDestruction) -> bool {
     this->keepDataOnDestruction = keepDataOnDestruction;
     Png png;

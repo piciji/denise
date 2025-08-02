@@ -159,7 +159,17 @@ auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) 
             encoded = image.generate(GUIKIT::Image::Type::PNG);
         } else {
             GUIKIT::Image image;
-            encoded = image.generate(screenShot.type, _data, _width, _height);
+            bool withPalette = screenShot.unscaled && dynamic_cast<LIBC64::Interface*>(activeEmulator) && (screenShot.type == GUIKIT::Image::Type::BMP)
+                && !screenShot.twoFrames && activeVideoManager && activeVideoManager->palette;
+
+            if (withPalette) {
+                std::vector<uint32_t> colorTable;
+                for (auto& pal : activeVideoManager->palette->paletteColors)
+                    colorTable.push_back(pal.rgb);
+
+                encoded = image.generate(colorTable, _data, _width, _height);
+            } else
+                encoded = image.generate(screenShot.type, _data, _width, _height);
         }
 
         if (encoded.data) {
