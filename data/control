@@ -1,8 +1,8 @@
 Package: Denise
-Version: 2.4
+Version: 2.6
 Architecture: all
 Essential: no
 Priority: optional
 Depends: libgtk-3-0,libpulse0,libudev1,libxcb-xinput0,libxcb-xfixes0
-Maintainer: piciji
+Maintainer: PiCiJi
 Description: a C64/Amiga emulator
