@@ -66,6 +66,7 @@ auto Image::generate(Type type, const uint8_t* src, unsigned width, unsigned hei
     if (encoder.encode((ImageEncoder::Type)type, src, width, height)) {
         encoded.data = encoder.data;
         encoded.size = encoder.size;
+        encoded.type = (Type)encoder.usedType;
     }
     return encoded;
 }
@@ -77,15 +78,16 @@ auto Image::generate(Type type) -> Encoded {
     if (encoder.encode((ImageEncoder::Type)type, data, width, height)) {
         encoded.data = encoder.data;
         encoded.size = encoder.size;
+        encoded.type = (Type)encoder.usedType;
     }
     return encoded;
 }
 
-auto Image::generate(std::vector<uint32_t>& colorTable, const uint8_t* src, unsigned width, unsigned height) -> Encoded {
+auto Image::generate(Type type, std::vector<uint32_t>& colorTable, const uint8_t* src, const uint8_t* src2, unsigned width, unsigned height) -> Encoded {
     ImageEncoder encoder;
     Encoded encoded;
 
-    if (encoder.encodeBMPWithColorTable(colorTable, src, width, height)) {
+    if (encoder.encodeWithColorTable((ImageEncoder::Type)type, colorTable, src, src2, width, height)) {
         encoded.data = encoder.data;
         encoded.size = encoder.size;
     }

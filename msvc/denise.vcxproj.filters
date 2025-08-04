@@ -329,6 +329,9 @@
     <Filter Include="emulation\libami\drive\scp">
       <UniqueIdentifier>{26d29b6b-2c03-43ef-bec3-c1737d802b90}</UniqueIdentifier>
     </Filter>
+    <Filter Include="deps\cgif">
+      <UniqueIdentifier>{d0862150-5b8f-4bef-81c4-14123c5c2c59}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1152,6 +1155,12 @@
     </ClInclude>
     <ClInclude Include="..\emulation\libc64\sid\usbSidPico.h">
       <Filter>emulation\libc64\sid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\cgif\cgif.h">
+      <Filter>deps\cgif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\cgif\cgif_raw.h">
+      <Filter>deps\cgif</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2348,6 +2357,12 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\sid\usbSidPico.cpp">
       <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\cgif\cgif.cpp">
+      <Filter>deps\cgif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\cgif\cgif_raw.cpp">
+      <Filter>deps\cgif</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

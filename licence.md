@@ -38,9 +38,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * Floppy Sounds are taken by Trackers-World.NET ([Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/))
 * Amiga Fonts by rewtnull https://github.com/rewtnull/amigafonts
 * Amiga low pass audio filter by WinUAE https://www.winuae.net/
-* findings for handling Blitter low level emulation by WinUAE https://www.winuae.net/
 * floppy step noise by WinUAE https://www.winuae.net/
-* vAmiga inspirations for 68k and handling sector blocks https://dirkwhoffmann.github.io/vAmiga/
+* vAmiga inspirations for 68k https://dirkwhoffmann.github.io/vAmiga/
 * 68k simulator/wrapper around FX68K by emoon https://github.com/emoon/fx68k
 * bundled AROS kickrom and extrom  https://aros.sourceforge.io/ 
 * RetroArch shader system by https://github.com/libretro/RetroArch
@@ -48,3 +47,5 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 * SPIRV-Cross by Khronos Group https://github.com/KhronosGroup/SPIRV-Cross
 * scpu64 ROM from Soci
 * HDD builtin ROM from mras0
+* CGIF from Daniel Löbl ([https://github.com/dloebl/cgif](https://github.com/dloebl/cgif)) 
+* STB from Sean Barrett ([https://github.com/nothings/stb](https://github.com/nothings/stb)) 

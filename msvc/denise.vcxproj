@@ -23,6 +23,8 @@
     <ClInclude Include="..\data\icons.h" />
     <ClInclude Include="..\data\logos.h" />
     <ClInclude Include="..\data\resource.h" />
+    <ClInclude Include="..\deps\cgif\cgif.h" />
+    <ClInclude Include="..\deps\cgif\cgif_raw.h" />
     <ClInclude Include="..\driver\audio\xaudio2\header27.h" />
     <ClInclude Include="..\driver\audio\xaudio2\header29.h" />
     <ClInclude Include="..\driver\audio\xaudio2\xaudio2.h" />
@@ -297,6 +299,8 @@
   <ItemGroup>
     <ClCompile Include="..\data\icons\icons.cpp" />
     <ClCompile Include="..\data\icons\logos.cpp" />
+    <ClCompile Include="..\deps\cgif\cgif.cpp" />
+    <ClCompile Include="..\deps\cgif\cgif_raw.cpp" />
     <ClCompile Include="..\deps\glslang\glslang\GenericCodeGen\CodeGen.cpp" />
     <ClCompile Include="..\deps\glslang\glslang\GenericCodeGen\Link.cpp" />
     <ClCompile Include="..\deps\glslang\glslang\HLSL\hlslAttributes.cpp" />
@@ -1876,12 +1880,12 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\data\libs\static\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_win32);$(ProjectDir)..\data\libs\static\x86;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
@@ -1889,13 +1893,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(ProjectDir)..\data\libs\include;$(ProjectDir)..\deps\glslang;$(ProjectDir)..\deps\lha;$(ProjectDir)..\deps\stb;$(ProjectDir)..\deps\cgif;$(IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(ProjectDir)..\data\libs\static\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\out\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>

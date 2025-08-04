@@ -63,6 +63,9 @@ set(_depSrcs
         deps/lha/lhx_decoder.cpp
         deps/lha/lk7_decoder.cpp
         deps/lha/crc16.cpp
+
+        deps/cgif/cgif.cpp
+        deps/cgif/cgif_raw.cpp
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")

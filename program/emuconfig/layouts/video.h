@@ -309,7 +309,8 @@ struct VideoScreenShotLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::RadioBox png;
         GUIKIT::RadioBox jpg;
         GUIKIT::RadioBox bmp;
-        GUIKIT::RadioBox tga;        
+        GUIKIT::RadioBox gif;
+        GUIKIT::RadioBox tga;
 
         Format();
     } format;
@@ -413,6 +414,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     static auto getTTF(const std::string& file, int fontIndex) -> DisplayFont*;
     static auto removeTTF(const std::string& file, uint8_t mode) -> bool;
     auto updateRecordingPath() -> void;
+    auto selectViewScreenshot() -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

@@ -114,6 +114,7 @@ auto States::save( std::string path ) -> void {
         screenshot.type = GUIKIT::Image::Type::PNG;
         screenshot.path = path + ".png";
         screenshot.saveState = true;
+        screenshot.writePalette = false;
         VideoManager::takeScreenShots = 1;
     }
 

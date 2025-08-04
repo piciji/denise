@@ -31,6 +31,7 @@ struct View : GUIKIT::Window {
         uint8_t* mergeData = nullptr;
         unsigned mergeSize = 0;
         unsigned pause = 0;
+        bool writePalette = false;
         std::mutex sharedMutex;
     } screenshot;
 
@@ -147,6 +148,7 @@ struct View : GUIKIT::Window {
         GUIKIT::MenuRadioItem recordUnscaledMonitor;
         GUIKIT::MenuCheckItem recordMergedFrames;
         GUIKIT::MenuCheckItem recordWithEffects;
+        GUIKIT::MenuItem recordSettings;
 
         GUIKIT::MenuItem copyItem;
         GUIKIT::MenuItem pasteItem;

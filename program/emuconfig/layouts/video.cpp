@@ -420,9 +420,10 @@ VideoScreenShotLayout::Format::Format() {
     append(png, { 0u, 0u }, 10);
     append(jpg, { 0u, 0u }, 10);
     append(bmp, { 0u, 0u }, 10);
+    append(gif, { 0u, 0u }, 10);
     append(tga, { 0u, 0u });
 
-    GUIKIT::RadioBox::setGroup(png, jpg, bmp, tga);
+    GUIKIT::RadioBox::setGroup(png, jpg, bmp, gif, tga);
 
     setAlignment(0.5);
 }
@@ -1492,6 +1493,10 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         _settings->set<std::string>("screen_record_format", "bmp");
     };
 
+    layScreenShot.format.gif.onActivate = [this]() {
+        _settings->set<std::string>("screen_record_format", "gif");
+    };
+
     layScreenShot.format.tga.onActivate = [this]() {
         _settings->set<std::string>("screen_record_format", "tga");
     };
@@ -2252,6 +2257,8 @@ auto VideoLayout::translate() -> void {
     layScreenShot.format.png.setText(trans->getA("PNG"));
     layScreenShot.format.jpg.setText(trans->getA("JPG"));
     layScreenShot.format.bmp.setText(trans->getA("BMP"));
+    layScreenShot.format.gif.setText(trans->getA("GIF (*)"));
+    layScreenShot.format.gif.setTooltip(trans->getA("GIF tooltip"));
     layScreenShot.format.tga.setText(trans->getA("TGA"));
 }
 
@@ -2377,6 +2384,9 @@ auto VideoLayout::loadSettings(bool init) -> void {
     auto screenshotFormat = _settings->get<std::string>("screen_record_format", "png");
 
     if (screenshotFormat == "bmp") layScreenShot.format.bmp.setChecked();
+    else if (screenshotFormat == "jpg") layScreenShot.format.jpg.setChecked();
+    else if (screenshotFormat == "tga") layScreenShot.format.tga.setChecked();
+    else if (screenshotFormat == "gif") layScreenShot.format.gif.setChecked();
     else layScreenShot.format.png.setChecked();
 }
 
@@ -2567,4 +2577,9 @@ auto VideoLayout::presentShaderError() -> void {
     }
 
     showErrors(errors);
+}
+
+auto VideoLayout::selectViewScreenshot() -> void {
+    tviScreenShot.setSelected();
+    moduleTree.onChange(nullptr);
 }

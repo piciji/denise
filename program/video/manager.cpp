@@ -823,7 +823,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderToScre
             }
             src += srcPitch;
         }
-    } else if (dynamic_cast<LIBC64::Interface*>(activeEmulator) && !view->screenshot.twoFrames && (view->screenshot.type == GUIKIT::Image::Type::BMP)) {
+    } else if (view->screenshot.writePalette) {
         for (unsigned h = 0; h < height; h++) {
             for (unsigned w = 0; w < width; w++)
                 *dest++ = *src++ & mask;

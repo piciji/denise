@@ -77,18 +77,19 @@ struct Image {
     bool alphaBlendApplied = false;
     int resourceId = -1; // win xp only 
     enum Format : unsigned { RGBA, BGRA, RGB } format;
-    enum class Type { PNG, JPG, TGA, BMP };
+    enum class Type { PNG, JPG, TGA, BMP, GIF };
 
     struct Encoded {
         uint8_t* data = nullptr;
         unsigned size = 0;
+        Type type;
     };
 
     auto loadPng(const uint8_t* src, unsigned size, bool keepDataOnDestruction = false) -> bool;
     auto load(const uint8_t* src, unsigned size, bool keepDataOnDestruction = false) -> bool;
     auto generate(Type type, const uint8_t* src, unsigned width, unsigned height) -> Encoded;
     auto generate(Type type) -> Encoded;
-    auto generate(std::vector<uint32_t>& colorTable, const uint8_t* src, unsigned width, unsigned height) -> Encoded;
+    auto generate(Type type, std::vector<uint32_t>& colorTable, const uint8_t* src, const uint8_t* src2, unsigned width, unsigned height) -> Encoded;
     auto generatePng( uint8_t* rgbData, unsigned width, unsigned height, unsigned channels, unsigned& pngSize ) -> uint8_t*;
     auto alphaBlend(unsigned alphaColor) -> void;
 	auto alphaMultiply() -> void;

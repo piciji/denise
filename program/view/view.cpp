@@ -1449,6 +1449,14 @@ auto View::buildMenu() -> void {
     recordWithEffects.setEnabled(_unscaled == 0);
     miscMenu.append(recordWithEffects);
 
+    recordSettings.onActivate = [this]() {
+        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
+        emuView->show(EmuConfigView::TabWindow::Layout::Presentation);
+        if (emuView->videoLayout)
+            emuView->videoLayout->selectViewScreenshot();
+    };
+    miscMenu.append(recordSettings);
+
     miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
 
     miscMenu.append(copyItem);
@@ -2045,6 +2053,7 @@ auto View::translate() -> void {
     recordScreen.setText(trans->getA("take screenshot"));
     recordMergedFrames.setText(trans->getA("merge frames"));    
     recordWithEffects.setText(trans->getA("including effects"));
+    recordSettings.setText(trans->getA("settings"));
 
     recordScaled.setText(trans->getA("scaled"));
     recordUnscaled.setText(trans->getA("unscaled"));
@@ -2411,11 +2420,16 @@ auto View::takeScreenshot() -> void {
     } else if (screenshotFormat == "tga") {
         screenshot.path = _path + ".tga";
         screenshot.type = GUIKIT::Image::Type::TGA;
+    } else if (screenshotFormat == "gif") {
+        screenshot.path = _path + ".gif";
+        screenshot.type = GUIKIT::Image::Type::GIF;
     } else {
         screenshot.path = _path + ".png";
         screenshot.type = GUIKIT::Image::Type::PNG;
     }
 
+    screenshot.writePalette = (unscaled > 0) && dynamic_cast<LIBC64::Interface*>(activeEmulator) &&
+        ((screenshot.type == GUIKIT::Image::Type::GIF) || ((screenshot.type == GUIKIT::Image::Type::BMP) && !mergeTwoFrames));
     screenshot.withEffects = withEffects;
     screenshot.unscaled = unscaled;
     screenshot.twoFrames = mergeTwoFrames;

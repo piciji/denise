@@ -135,7 +135,7 @@ auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) 
         screenShot.mergeData = new uint8_t[screenShot.mergeSize];
         std::memcpy(screenShot.mergeData, _data, screenShot.mergeSize);
     } else {        
-        if (screenShot.mergeData) {
+        if (screenShot.mergeData && !screenShot.writePalette) {
             if (screenShot.mergeSize == (_width * _height * 3)) {
                 uint8_t* src = screenShot.mergeData;
                 uint8_t* desc = _data;
@@ -159,21 +159,27 @@ auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) 
             encoded = image.generate(GUIKIT::Image::Type::PNG);
         } else {
             GUIKIT::Image image;
-            bool withPalette = screenShot.unscaled && dynamic_cast<LIBC64::Interface*>(activeEmulator) && (screenShot.type == GUIKIT::Image::Type::BMP)
-                && !screenShot.twoFrames && activeVideoManager && activeVideoManager->palette;
-
-            if (withPalette) {
+            if (screenShot.writePalette) {
                 std::vector<uint32_t> colorTable;
                 for (auto& pal : activeVideoManager->palette->paletteColors)
                     colorTable.push_back(pal.rgb);
-
-                encoded = image.generate(colorTable, _data, _width, _height);
+                
+                encoded = image.generate(screenShot.type, colorTable, _data, screenShot.mergeData, _width, _height);
             } else
                 encoded = image.generate(screenShot.type, _data, _width, _height);
         }
 
+        if (screenShot.mergeData) {
+            delete[] screenShot.mergeData;
+            screenShot.mergeData = nullptr;
+        }
+
         if (encoded.data) {
             GUIKIT::File file;
+            if (encoded.type == GUIKIT::Image::Type::PNG && (encoded.type != screenShot.type)) {
+                // request GIF, but image has more than 256 colors
+                GUIKIT::String::replace(screenShot.path, ".gif", ".png");
+            }
             file.setFile(screenShot.path);
             file.open(GUIKIT::File::Mode::Write);
             file.write(encoded.data, encoded.size);

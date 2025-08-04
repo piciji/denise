@@ -909,3 +909,4 @@ merge frames = Bilder mischen (interlace)
 including effects = einschließlich Shader, Filter
 scaled = skaliert (angezeigt)
 unscaled = unskaliert
+GIF tooltip = GIF's können maximal 256 verschiedene Farben pro Bild darstellen. Durch Shader oder Effekte kann dieser Wert erreicht werden. Sollte das passieren, wird alternativ ein PNG gespeichert.
