@@ -162,8 +162,8 @@ rtc(agnus) {
         Emulator::Interface::Crop _c = {0};
 
         if (_w == 320) {
-            _c.left = 44 << (unsigned)denise.frameMode;
-            _c.right = 20 << (unsigned)denise.frameMode;
+            _c.left = 45 << (unsigned)denise.frameMode;
+            _c.right = 19 << (unsigned)denise.frameMode;
             _c.top = 20;
             _c.bottom = 13;
         } else {
