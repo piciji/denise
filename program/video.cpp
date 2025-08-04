@@ -176,7 +176,7 @@ auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) 
 
         if (encoded.data) {
             GUIKIT::File file;
-            if (encoded.type == GUIKIT::Image::Type::PNG && (encoded.type != screenShot.type)) {
+            if ((encoded.type == GUIKIT::Image::Type::PNG) && (encoded.type != screenShot.type)) {
                 // request GIF, but image has more than 256 colors
                 GUIKIT::String::replace(screenShot.path, ".gif", ".png");
             }

@@ -90,6 +90,7 @@ auto Image::generate(Type type, std::vector<uint32_t>& colorTable, const uint8_t
     if (encoder.encodeWithColorTable((ImageEncoder::Type)type, colorTable, src, src2, width, height)) {
         encoded.data = encoder.data;
         encoded.size = encoder.size;
+        encoded.type = (Type)encoder.usedType;
     }
     return encoded;
 }

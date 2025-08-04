@@ -53,6 +53,8 @@ namespace GUIKIT {
 
     auto ImageEncoder::encodeWithColorTable(Type type, std::vector<uint32_t>& colorTable, const uint8_t* src, const uint8_t* src2, unsigned width, unsigned height) -> bool {
         size = 0;
+        usedType = type;
+        
         switch (type) {
             case Type::BMP:
                 encodeBMPWithColorTable(colorTable, src, width, height);
