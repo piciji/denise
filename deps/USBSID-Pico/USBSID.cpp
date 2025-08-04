@@ -42,7 +42,12 @@ using namespace std;
 static inline uint8_t* us_alloc(size_t alignment, size_t size)
 {
 #if defined(__US_LINUX_COMPILE)
-  return (uint8_t*)aligned_alloc(alignment, size);
+  #ifdef HAVE_ALIGNED_ALLOC
+    return (uint8_t*)aligned_alloc(alignment, size);
+  #else
+    (void)alignment;
+    return (uint8_t*)malloc(size);
+  #endif
 #elif defined(__US_WINDOWS_COMPILE)
   return (uint8_t*)_aligned_malloc(size, alignment);
 #else

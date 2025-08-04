@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9D07CC8C2E296C5F00A9787E /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CC8B2E296C5F00A9787E /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
+		9D07CC8C2E296C5F00A9787E /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CC8B2E296C5F00A9787E /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/cgif/ -I$(PROJECT_DIR)/deps/stb/"; }; };
 		9D07CCF92E296CD000A9787E /* lh1_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD12E296CD000A9787E /* lh1_decoder.cpp */; };
 		9D07CCFA2E296CD000A9787E /* lha_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD22E296CD000A9787E /* lha_reader.cpp */; };
 		9D07CCFB2E296CD000A9787E /* macbinary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD32E296CD000A9787E /* macbinary.cpp */; };
@@ -58,6 +58,9 @@
 		9D64044B2DCDEF2E00624A00 /* filesystemExt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404452DCDEF2E00624A00 /* filesystemExt.cpp */; };
 		9D64044C2DCDEF2E00624A00 /* hardDrive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404472DCDEF2E00624A00 /* hardDrive.cpp */; };
 		9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404482DCDEF2E00624A00 /* hunk.cpp */; };
+		9D7B485D2E40D7640010B152 /* cgif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B48572E40D7640010B152 /* cgif.cpp */; };
+		9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B485A2E40D7640010B152 /* cgif_raw.cpp */; };
+		9D7B48602E40D7640010B152 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9D7B485C2E40D7640010B152 /* LICENSE.txt */; };
 		9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FA9532CB3DF78006905BE /* Cocoa.framework */; };
 		9D8FAAF72CB3F6EF006905BE /* cmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA702CB3F6EF006905BE /* cmd.cpp */; };
 		9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA722CB3F6EF006905BE /* program.cpp */; };
@@ -172,7 +175,7 @@
 		9D8FB4E42CB475A8006905BE /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAB412CB3F8EE006905BE /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
 		9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA70F452E101AF000F1DC5B /* scp.cpp */; };
 		9DD0A0B62E3B943B0018DA68 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
-		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
 		9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD306D62DFAFF2200B8F12F /* httpClient.cpp */; };
 		9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */; };
@@ -272,6 +275,11 @@
 		9D6404472DCDEF2E00624A00 /* hardDrive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hardDrive.cpp; sourceTree = "<group>"; };
 		9D6404482DCDEF2E00624A00 /* hunk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hunk.cpp; sourceTree = "<group>"; };
 		9D6404492DCDEF2E00624A00 /* hardDrive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hardDrive.h; sourceTree = "<group>"; };
+		9D7B48572E40D7640010B152 /* cgif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif.cpp; sourceTree = "<group>"; };
+		9D7B48582E40D7640010B152 /* cgif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cgif.h; sourceTree = "<group>"; };
+		9D7B485A2E40D7640010B152 /* cgif_raw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif_raw.cpp; sourceTree = "<group>"; };
+		9D7B485B2E40D7640010B152 /* cgif_raw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cgif_raw.h; sourceTree = "<group>"; };
+		9D7B485C2E40D7640010B152 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		9D8FA9322CB3D7A7006905BE /* denise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = denise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D8FA9532CB3DF78006905BE /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		9D8FAA702CB3F6EF006905BE /* cmd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cmd.cpp; sourceTree = "<group>"; };
@@ -966,6 +974,19 @@
 				9D6404352DCDEE1C00624A00 /* builtinHD.cpp */,
 			);
 			path = expansionPort;
+			sourceTree = "<group>";
+		};
+		9D7B48562E40D7640010B152 /* cgif */ = {
+			isa = PBXGroup;
+			children = (
+				9D7B48572E40D7640010B152 /* cgif.cpp */,
+				9D7B48582E40D7640010B152 /* cgif.h */,
+				9D7B485A2E40D7640010B152 /* cgif_raw.cpp */,
+				9D7B485B2E40D7640010B152 /* cgif_raw.h */,
+				9D7B485C2E40D7640010B152 /* LICENSE.txt */,
+			);
+			name = cgif;
+			path = deps/cgif;
 			sourceTree = "<group>";
 		};
 		9D8FA9292CB3D7A7006905BE = {
@@ -2222,6 +2243,7 @@
 		9D8FB4D52CB472A7006905BE /* deps */ = {
 			isa = PBXGroup;
 			children = (
+				9D7B48562E40D7640010B152 /* cgif */,
 				9DD0A0B72E3B94900018DA68 /* USBSID-Pico */,
 				9D07CD172E29703800A9787E /* depsSlang.cpp */,
 				9D07CD162E29703800A9787E /* depsSpirv.cpp */,
@@ -2325,6 +2347,7 @@
 				9D0C380B2CB584D800363301 /* denise.icns in Resources */,
 				9D0C380F2CB5865B00363301 /* shader in Resources */,
 				9D0C38112CB586AD00363301 /* translation in Resources */,
+				9D7B48602E40D7640010B152 /* LICENSE.txt in Resources */,
 				9D0C38242CB59D9B00363301 /* data in Resources */,
 				9D0C38282CB5A66F00363301 /* images in Resources */,
 				9D0C380D2CB5861C00363301 /* fonts in Resources */,
@@ -2452,6 +2475,7 @@
 				9D07CD042E296CD000A9787E /* lk7_decoder.cpp in Sources */,
 				9D8FAB2A2CB3F6F0006905BE /* config.cpp in Sources */,
 				9D5FAF2D2CF07001002B0C34 /* imageViewer.cpp in Sources */,
+				9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */,
 				9D8FAB192CB3F6EF006905BE /* panning.cpp in Sources */,
 				9D8FAE4C2CB40DF9006905BE /* prg.cpp in Sources */,
 				9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */,
@@ -2484,6 +2508,7 @@
 				9D6404382DCDEE1C00624A00 /* fastMem.cpp in Sources */,
 				9D8FAAF72CB3F6EF006905BE /* cmd.cpp in Sources */,
 				9D64043E2DCDEE3F00624A00 /* error.cpp in Sources */,
+				9D7B485D2E40D7640010B152 /* cgif.cpp in Sources */,
 				9D07CCF92E296CD000A9787E /* lh1_decoder.cpp in Sources */,
 				9D8FAE452CB40DF9006905BE /* cart.cpp in Sources */,
 				9D07CD122E296CD000A9787E /* lha_endian.cpp in Sources */,

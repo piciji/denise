@@ -26,6 +26,21 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCH
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
 
+include(CheckCXXSourceCompiles)
+
+check_cxx_source_compiles("
+  #include <cstdlib>
+  int main()
+  {
+  #if defined(__linux__) || defined(__linux) || defined(linux) || defined(__unix__) || defined(__APPLE__)
+    (void*)aligned_alloc(2000, 1000);
+  #elif defined(_WIN32) || defined(_WIN64) || defined(__MINGW32__) || defined(__MINGW64__)
+    (void*)_aligned_malloc(1000, 2000);
+  #endif
+    return 0;
+  }
+" HAVE_ALIGNED_ALLOC)
+
 set(AppName "Denise")
 set(translationFolder "translation")
 set(dataFolder "data")
@@ -312,6 +327,11 @@ endif()
 if(LIBUSB_FOUND)
     SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
             PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
+
+    if(HAVE_ALIGNED_ALLOC) # older Clang compilers do not support this, despite C++17
+        SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
+            PROPERTIES COMPILE_FLAGS "-DHAVE_ALIGNED_ALLOC")
+    endif()
 
     SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/usbSidPico.cpp PROPERTIES COMPILE_FLAGS "-DLIBUSB")
 else()
