@@ -958,11 +958,11 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     int maxChars = context->listWidth / context->listItemWidth;
 
                     for(auto& file : context->selectedFiles) {
-                        if (i >= rows.size())
-                            break;
-
                         std::string ident = String::removeExtension(file, 2);
-                        ident += "  " + rows[i++].entry + ": ";
+                        
+                        if (i < rows.size())                                               
+                            ident += "  " + rows[i++].entry + ": ";
+
                         if (ident.size() > maxChars)
                             ident = ident.substr( ident.size() - maxChars );
 
