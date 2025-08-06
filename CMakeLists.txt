@@ -6,9 +6,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_package(Freetype REQUIRED)
     find_package(OpenAL)
 elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
-    find_package(Freetype REQUIRED)
+    find_package(Freetype)
     find_package(PkgConfig REQUIRED)
-    pkg_check_modules(FREETYPE2 REQUIRED freetype2)
+    pkg_check_modules(FREETYPE2 freetype2)
     pkg_check_modules(LIBUSB libusb-1.0)
 elseif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_package(Freetype REQUIRED)
@@ -84,8 +84,12 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "freetype lib ${FREETYPE_LIBRARY}")
 endif()
 
+set(architecture)
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(architecture "x86")
     message(STATUS "32 bit build")
+else()
+    set(architecture "x64")
 endif()
 
 set(srcs
@@ -253,7 +257,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp PROPERTIES COMPILE_FLAGS "-DGUIKIT_WINAPI")
 
-    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp PROPERTIES COMPILE_FLAGS "-DDRV_WGL -DDRV_DIRECT3D9 -DDRV_DIRECT3D11 -DDRV_DSOUND -DDRV_DINPUT5 -DDRV_DINPUT7 -DDRV_DINPUT8 -DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -DDRV_WASAPI -DDRV_RAWINPUT -DDRV_FREETYPE")
+    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp PROPERTIES COMPILE_FLAGS "-DDRV_WGL -DDRV_DIRECT3D9 -DDRV_DIRECT3D11 -DDRV_DSOUND -DDRV_DINPUT5 -DDRV_DINPUT7 -DDRV_DINPUT8 -DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -DDRV_WASAPI -DDRV_RAWINPUT")
 
     if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
@@ -261,6 +265,9 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     else()
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
             PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${CMAKE_SOURCE_DIR}/data/libs/include")
+
+        set(FREETYPE2_FOUND true)
+        set(FREETYPE2_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
 
         set(LIBUSB_FOUND true)
         set(LIBUSB_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
@@ -309,6 +316,10 @@ else()
     endif()
 endif()
 
+if(FREETYPE2_FOUND)
+    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DDRV_FREETYPE ")
+endif()
+
 if(LIBUSB_FOUND)
     SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
             PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
@@ -348,23 +359,26 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         target_link_libraries(${PROJECT_NAME} "-mwindows")
     else()
         target_link_libraries(${PROJECT_NAME} "-mconsole")
-    endif()
+    endif()    
 
     if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
-        target_link_libraries(${PROJECT_NAME} ${FREETYPE2_STATIC_LIBRARIES})
+        if(FREETYPE2_FOUND)
+            target_link_libraries(${PROJECT_NAME} ${FREETYPE2_STATIC_LIBRARIES})
+        endif()
+
         if(LIBUSB_FOUND)
             target_link_libraries(${PROJECT_NAME} ${LIBUSB_STATIC_LIBRARIES})
         endif()
-
-    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-        target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x86/libfreetype.a")
-        if(LIBUSB_FOUND)
-            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x86/libusb-1.0.a")
-        endif()
     else()
-        target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x64/libfreetype.a")
+        if(FREETYPE2_FOUND)
+            set(FREETYPE_LIBS libfreetype.a libpng16.a libz.a libbz2.a libbrotlidec.a libbrotlicommon.a)
+            foreach(_lib IN LISTS FREETYPE_LIBS)
+                target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/${_lib}")
+            endforeach()
+        endif()
+
         if(LIBUSB_FOUND)
-            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x64/libusb-1.0.a")
+            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/libusb-1.0.a")
         endif()
     endif()
 

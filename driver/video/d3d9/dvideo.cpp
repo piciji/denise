@@ -8,8 +8,9 @@
 #include "symbols.h"
 #include <uxtheme.h>
 #include <cstring>
+#ifdef DRV_FREETYPE
 #include "screenText.h"
-
+#endif
 namespace DRIVER {
 
 #include "dragnDropOverlay.h"
