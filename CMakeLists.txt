@@ -11,10 +11,10 @@ elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
     pkg_check_modules(FREETYPE2 freetype2)
     pkg_check_modules(LIBUSB libusb-1.0)
 elseif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    find_package(Freetype REQUIRED)
+    find_package(Freetype)
     find_package(PkgConfig REQUIRED)
     find_package(OpenAL)
-    pkg_check_modules(FREETYPE2 REQUIRED freetype2)
+    pkg_check_modules(FREETYPE2 freetype2)
 endif()
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -302,10 +302,10 @@ else()
 
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # no udev
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID -DDRV_FREETYPE")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID")
     else()
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV -DDRV_FREETYPE")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV")
     endif()
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
