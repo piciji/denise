@@ -156,7 +156,7 @@ public:
 #ifdef _MSC_VER
             sprintf_s(buf+i*2, sizeof(buf) - i*2, "%02x", digest[i]);
 #else
-            sprintf(buf+i*2, "%02x", digest[i]);
+            snprintf(buf+i*2, 3, "%02x", digest[i]);
 #endif
         buf[32]=0;
 

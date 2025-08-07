@@ -189,24 +189,18 @@ for:
     only:
       - image: macos-monterey
       
-  install:      
-    - sh: test -e freetype-2.13.0.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.0.tar.gz --output freetype-2.13.0.tar.gz
-    - tar -zxf freetype-2.13.0.tar.gz
+  install:
     - sh: sudo pip install dmgbuild
     - sh: test -e sshpass-1.08.tar.gz && echo "File exists" || curl -L https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz --output sshpass-1.08.tar.gz
     - tar -zxf sshpass-1.08.tar.gz
     
   cache:
-    - freetype-2.13.0.tar.gz
     - sshpass-1.08.tar.gz
     
   before_build:
     - sh: export MACOSX_DEPLOYMENT_TARGET=10.9
     
   build_script:
-    - sh: cd freetype-2.13.0
-    - sh: ./configure --enable-static --without-zlib --without-bzip2 --without-png && make && make install
-    - sh: cd ..  
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..
@@ -247,26 +241,18 @@ for:
       - image: macos-sonoma
 
   install:
-    - sh: test -e freetype-2.13.0.tar.gz && echo "File exists" || curl -L https://download.savannah.gnu.org/releases/freetype/freetype-2.13.0.tar.gz --output freetype-2.13.0.tar.gz
-    - tar -zxf freetype-2.13.0.tar.gz
     - sh: sudo pip install dmgbuild
     - sh: test -e sshpass-1.08.tar.gz && echo "File exists" || curl -L https://onboardcloud.dl.sourceforge.net/project/sshpass/sshpass/1.08/sshpass-1.08.tar.gz --output sshpass-1.08.tar.gz
     - tar -zxf sshpass-1.08.tar.gz
 
   cache:
-    - freetype-2.13.0.tar.gz
     - sshpass-1.08.tar.gz
 
   before_build:
     - sh: export MACOSX_DEPLOYMENT_TARGET=11
 
   build_script:
-    - sh: cd freetype-2.13.0
-    - sh: ./configure --host=arm64-apple-macos11 --enable-static --without-zlib --without-bzip2 --without-png && make && make install
-    - sh: cd ..
     - sh: sudo rm -rf /Library/Frameworks/Mono.framework
-    - sh: install -m 755 data/libs/static/macArm/libfreetype.a /usr/local/lib/
-    - sh: install -m 755 data/libs/shared/macArm/libfreetype.dylib /usr/local/lib/
     - sh: cd sshpass*
     - sh: ./configure && make install
     - sh: cd ..

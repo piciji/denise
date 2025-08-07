@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.14)
 project(denise LANGUAGES CXX)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    find_package(Freetype REQUIRED)
     find_package(OpenAL)
 elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
     find_package(Freetype)
@@ -80,8 +79,6 @@ message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "compile for architecture ${CMAKE_OSX_ARCHITECTURES}")
-    message(STATUS "freetype include dir ${FREETYPE_INCLUDE_DIRS}")
-    message(STATUS "freetype lib ${FREETYPE_LIBRARY}")
 endif()
 
 set(architecture)
@@ -286,10 +283,13 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             PROPERTIES COMPILE_FLAGS "-x objective-c++ -DGUIKIT_COCOA")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_FREETYPE")
+            PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT")
+
+    set(FREETYPE2_FOUND true)
+    set(FREETYPE2_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
+        PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
 
     set(LIBUSB_FOUND true)
     set(LIBUSB_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
@@ -394,7 +394,17 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         endif()
 
         target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARY})
-    endif()    
+    endif()
+
+    if(FREETYPE2_FOUND)
+        if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
+            set(FREETYPE2_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/macArm/libfreetype.6.dylib")
+        else()
+            set(FREETYPE2_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/macIntel/libfreetype.6.dylib")
+        endif()
+
+        target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARY})
+    endif()
 
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
 else()
@@ -460,17 +470,14 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     install(PROGRAMS ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/MacOS)
 
-    set (ft_resolved "")
-    get_filename_component(ft_resolved "${FREETYPE_LIBRARY}" REALPATH)
-
-    install(FILES ${FREETYPE_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
-    install(FILES ${ft_resolved} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
-
-    install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE_LIBRARY} libfreetype.dylib ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app ${PROJECT_NAME})")
-
     if(LIBUSB_FOUND)
         install(FILES ${LIBUSB_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
         install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${LIBUSB_LIBRARY} libusb-1.0.0.dylib ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app ${PROJECT_NAME})")
+    endif()
+
+    if(FREETYPE2_FOUND)
+        install(FILES ${FREETYPE2_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
+        install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE2_LIBRARY} libfreetype.6.dylib ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app ${PROJECT_NAME})")
     endif()
 
     install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app)")

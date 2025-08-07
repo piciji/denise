@@ -62,6 +62,8 @@ namespace GUIKIT {
             case Type::GIF:
                 encodeGIFWithColorTable(colorTable, src, src2, width, height);
                 break;
+            default:
+                break;
         }
 
         return data != nullptr;
@@ -207,7 +209,11 @@ namespace GUIKIT {
         uint8_t* _pImg = imgSrc;
 
         for (int i = 0; i < _size; i++) {
-            _col = (*_ptr++ << 16) | (*_ptr++ << 8) | *_ptr++;
+            //_col = (*_ptr++ << 16) | (*_ptr++ << 8) | *_ptr++;
+            _col = *_ptr++ << 16;
+            _col |= *_ptr++ << 8;
+            _col |= *_ptr++;
+            
             match = false;
 
             for (colRef = 0; colRef < colorTable.size(); colRef++) {

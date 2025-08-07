@@ -475,7 +475,7 @@ struct Interface {
 #ifdef _MSC_VER
             sprintf_s( hex, "%x", data );
 #else
-            sprintf( hex, "%x", data );
+            snprintf( hex, 8, "%x", data );
 #endif
             out += (std::string)hex;
         }

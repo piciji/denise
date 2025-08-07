@@ -539,7 +539,7 @@ auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
 #ifdef _MSC_VER
         sprintf_s(hex, "%X", chip.addr);
 #else
-        sprintf(hex, "%X", chip.addr);
+        snprintf(hex, 5, "%X", chip.addr);
 #endif
 
         for (auto& c : hex) {

@@ -54,6 +54,9 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define RAW_DATA(hdr_ptr, off)  ((*hdr_ptr)->raw_data[off])
 #define RAW_DATA_LEN(hdr_ptr)   ((*hdr_ptr)->raw_data_len)
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 char *lha_file_header_full_path(LHAFileHeader *header)
 {
 	char *path;
