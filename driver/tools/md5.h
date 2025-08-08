@@ -153,11 +153,9 @@ public:
 
         char buf[33];
         for (int i=0; i<16; i++)
-#ifdef _MSC_VER
-            sprintf_s(buf+i*2, sizeof(buf) - i*2, "%02x", digest[i]);
-#else
-            snprintf(buf+i*2, 3, "%02x", digest[i]);
-#endif
+
+        snprintf(buf+i*2, 3, "%02x", digest[i]);
+
         buf[32]=0;
 
         return std::string(buf);

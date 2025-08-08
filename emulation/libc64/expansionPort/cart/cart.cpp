@@ -536,11 +536,8 @@ auto Cart::getListing() -> std::vector<Emulator::Interface::Listing> {
         out.push_back(listing.decodeToScreencode('$'));
 
         char hex[5] = { 0 };
-#ifdef _MSC_VER
-        sprintf_s(hex, "%X", chip.addr);
-#else
+
         snprintf(hex, 5, "%X", chip.addr);
-#endif
 
         for (auto& c : hex) {
             if (c)
