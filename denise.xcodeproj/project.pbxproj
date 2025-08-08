@@ -172,6 +172,20 @@
 		9D8FB4E22CB47539006905BE /* icons.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E02CB47539006905BE /* icons.cpp */; };
 		9D8FB4E32CB47539006905BE /* logos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E12CB47539006905BE /* logos.cpp */; };
 		9D8FB4E42CB475A8006905BE /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAB412CB3F8EE006905BE /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
+		9D99AA7A2E4631490075FF62 /* libbrotlicommon.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */; };
+		9D99AA7B2E4631490075FF62 /* libbrotlicommon.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9D99AA7C2E4631490075FF62 /* libbrotlidec.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA6A2E462DE20075FF62 /* libbrotlidec.1.dylib */; };
+		9D99AA7D2E4631490075FF62 /* libbrotlidec.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA6A2E462DE20075FF62 /* libbrotlidec.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9D99AA7E2E4631490075FF62 /* libbz2.1.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA642E462DE10075FF62 /* libbz2.1.0.dylib */; };
+		9D99AA7F2E4631490075FF62 /* libbz2.1.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA642E462DE10075FF62 /* libbz2.1.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9D99AA802E4631490075FF62 /* libfreetype.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA682E462DE20075FF62 /* libfreetype.6.dylib */; };
+		9D99AA812E4631490075FF62 /* libfreetype.6.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA682E462DE20075FF62 /* libfreetype.6.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9D99AA822E4631490075FF62 /* libpng16.16.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA662E462DE20075FF62 /* libpng16.16.dylib */; };
+		9D99AA832E4631490075FF62 /* libpng16.16.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA662E462DE20075FF62 /* libpng16.16.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9D99AA842E4631490075FF62 /* libusb-1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA652E462DE10075FF62 /* libusb-1.0.0.dylib */; };
+		9D99AA852E4631490075FF62 /* libusb-1.0.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA652E462DE10075FF62 /* libusb-1.0.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9D99AA862E4631490075FF62 /* libz.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA672E462DE20075FF62 /* libz.1.dylib */; };
+		9D99AA872E4631490075FF62 /* libz.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA672E462DE20075FF62 /* libz.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA70F452E101AF000F1DC5B /* scp.cpp */; };
 		9DD0A0B62E3B943B0018DA68 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
 		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
@@ -368,6 +382,23 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		9D99AA882E46314A0075FF62 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				9D99AA832E4631490075FF62 /* libpng16.16.dylib in Embed Libraries */,
+				9D99AA812E4631490075FF62 /* libfreetype.6.dylib in Embed Libraries */,
+				9D99AA872E4631490075FF62 /* libz.1.dylib in Embed Libraries */,
+				9D99AA7D2E4631490075FF62 /* libbrotlidec.1.dylib in Embed Libraries */,
+				9D99AA852E4631490075FF62 /* libusb-1.0.0.dylib in Embed Libraries */,
+				9D99AA7B2E4631490075FF62 /* libbrotlicommon.1.dylib in Embed Libraries */,
+				9D99AA7F2E4631490075FF62 /* libbz2.1.0.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9DECF8562E45F25E005C0BBA /* Embed Libraries */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1012,6 +1043,13 @@
 		9D8FAEB22CB415E3006905BE /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		9D8FB4E02CB47539006905BE /* icons.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = icons.cpp; path = data/icons/icons.cpp; sourceTree = "<group>"; };
 		9D8FB4E12CB47539006905BE /* logos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = logos.cpp; path = data/icons/logos.cpp; sourceTree = "<group>"; };
+		9D99AA642E462DE10075FF62 /* libbz2.1.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbz2.1.0.dylib; path = data/libs/shared/macIntel/libbz2.1.0.dylib; sourceTree = "<group>"; };
+		9D99AA652E462DE10075FF62 /* libusb-1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libusb-1.0.0.dylib"; path = "data/libs/shared/macIntel/libusb-1.0.0.dylib"; sourceTree = "<group>"; };
+		9D99AA662E462DE20075FF62 /* libpng16.16.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpng16.16.dylib; path = data/libs/shared/macIntel/libpng16.16.dylib; sourceTree = "<group>"; };
+		9D99AA672E462DE20075FF62 /* libz.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.dylib; path = data/libs/shared/macIntel/libz.1.dylib; sourceTree = "<group>"; };
+		9D99AA682E462DE20075FF62 /* libfreetype.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libfreetype.6.dylib; path = data/libs/shared/macIntel/libfreetype.6.dylib; sourceTree = "<group>"; };
+		9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbrotlicommon.1.dylib; path = data/libs/shared/macIntel/libbrotlicommon.1.dylib; sourceTree = "<group>"; };
+		9D99AA6A2E462DE20075FF62 /* libbrotlidec.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbrotlidec.1.dylib; path = data/libs/shared/macIntel/libbrotlidec.1.dylib; sourceTree = "<group>"; };
 		9DA70F442E101AF000F1DC5B /* scp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scp.h; sourceTree = "<group>"; };
 		9DA70F452E101AF000F1DC5B /* scp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DA70F472E101AFF00F1DC5B /* scp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
@@ -1070,7 +1108,11 @@
 			files = (
 				9DECF9B82E45F309005C0BBA /* Security.framework in Frameworks */,
 				9DECF9B92E45F309005C0BBA /* OpenAL.framework in Frameworks */,
+				9D99AA822E4631490075FF62 /* libpng16.16.dylib in Frameworks */,
+				9D99AA842E4631490075FF62 /* libusb-1.0.0.dylib in Frameworks */,
+				9D99AA7A2E4631490075FF62 /* libbrotlicommon.1.dylib in Frameworks */,
 				9DECF9BA2E45F309005C0BBA /* Cocoa.framework in Frameworks */,
+				9D99AA802E4631490075FF62 /* libfreetype.6.dylib in Frameworks */,
 				9DECF9BB2E45F309005C0BBA /* Carbon.framework in Frameworks */,
 				9DECF9BF2E45F309005C0BBA /* CoreAudio.framework in Frameworks */,
 				9DECF9C02E45F309005C0BBA /* Metal.framework in Frameworks */,
@@ -1078,8 +1120,11 @@
 				9DECF9C22E45F309005C0BBA /* AudioUnit.framework in Frameworks */,
 				9DECF9C32E45F309005C0BBA /* AudioToolbox.framework in Frameworks */,
 				9DECF9C42E45F309005C0BBA /* MetalKit.framework in Frameworks */,
+				9D99AA862E4631490075FF62 /* libz.1.dylib in Frameworks */,
 				9DECF9C52E45F309005C0BBA /* CoreVideo.framework in Frameworks */,
+				9D99AA7C2E4631490075FF62 /* libbrotlidec.1.dylib in Frameworks */,
 				9DECF9C82E45F309005C0BBA /* IOKit.framework in Frameworks */,
+				9D99AA7E2E4631490075FF62 /* libbz2.1.0.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1256,11 +1301,18 @@
 			children = (
 				9DECF8452E45F25D005C0BBA /* libbrotlicommon.1.dylib */,
 				9DECF8462E45F25D005C0BBA /* libbrotlidec.1.dylib */,
+				9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */,
+				9D99AA6A2E462DE20075FF62 /* libbrotlidec.1.dylib */,
 				9DECF8422E45F25D005C0BBA /* libbz2.1.0.dylib */,
 				9DECF8432E45F25D005C0BBA /* libfreetype.6.dylib */,
+				9D99AA682E462DE20075FF62 /* libfreetype.6.dylib */,
 				9DECF8472E45F25D005C0BBA /* libpng16.16.dylib */,
+				9D99AA662E462DE20075FF62 /* libpng16.16.dylib */,
 				9DECF8442E45F25D005C0BBA /* libusb-1.0.0.dylib */,
 				9DECF8412E45F25D005C0BBA /* libz.1.dylib */,
+				9D99AA642E462DE10075FF62 /* libbz2.1.0.dylib */,
+				9D99AA652E462DE10075FF62 /* libusb-1.0.0.dylib */,
+				9D99AA672E462DE20075FF62 /* libz.1.dylib */,
 				9DD0A0BB2E3B9A220018DA68 /* Security.framework */,
 				9D0C382D2CB5C17900363301 /* OpenAL.framework */,
 				9D8FAEB22CB415E3006905BE /* AudioUnit.framework */,
@@ -2562,6 +2614,7 @@
 				9DECF91D2E45F309005C0BBA /* Sources */,
 				9DECF9B72E45F309005C0BBA /* Frameworks */,
 				9DECF9CB2E45F309005C0BBA /* Resources */,
+				9D99AA882E46314A0075FF62 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -3154,7 +3207,6 @@
 		9DECF9DD2E45F309005C0BBA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = data/denise.entitlements;
@@ -3179,6 +3231,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MARKETING_VERSION = 2.6;
+				OTHER_CODE_SIGN_FLAGS = "--deep";
 				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
 				PRODUCT_NAME = Denise;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -3188,7 +3241,6 @@
 		9DECF9DE2E45F309005C0BBA /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = data/denise.entitlements;
@@ -3213,6 +3265,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MARKETING_VERSION = 2.6;
+				OTHER_CODE_SIGN_FLAGS = "--deep";
 				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
 				PRODUCT_NAME = Denise;
 				SWIFT_EMIT_LOC_STRINGS = YES;
