@@ -7,9 +7,9 @@ skip_commits:
     - '**/*.md'
 
 image:
-  - Visual Studio 2022
-  - macos-sonoma
   - macos-monterey
+  - macos-sonoma
+  - Visual Studio 2022  
 #  - Ubuntu2004
 
 stack: python 3.8
@@ -19,6 +19,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
+    - update_freetype_building
 
 environment:
   matrix:
