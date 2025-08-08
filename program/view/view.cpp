@@ -2407,7 +2407,7 @@ auto View::takeScreenshot() -> void {
     bool mergeTwoFrames = globalSettings->get<bool>("screenshot_merge_frames", false);
     unsigned unscaled = globalSettings->get<unsigned>("screenshot_unscaled", 0);
 
-    auto timestamp = Chronos::getTimestampInSeconds();
+    auto timestamp = Chronos::getTimestampInSecondsPrecise();
     _path += _file + "_" + std::to_string(timestamp);
 
     screenshot.sharedMutex.lock();

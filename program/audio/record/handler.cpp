@@ -33,7 +33,7 @@ auto Handler::start( Emulator::Interface* emulator, std::string& errorText ) -> 
     
     useFloat = audioDriver->expectFloatingPoint();
     
-    std::string filePath = path + fileName + "_" + std::to_string( Chronos::getTimestampInSeconds() ) + ".wav";
+    std::string filePath = path + fileName + "_" + std::to_string( Chronos::getTimestampInSecondsPrecise() ) + ".wav";
     
     wavWriter = new WavWriter;
 
