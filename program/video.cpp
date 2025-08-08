@@ -54,6 +54,8 @@ auto Program::initVideo(bool driverChange) -> void {
     view->buildShader();
     view->loadDragnDropOverlay();
     videoDriver->setShaderProgressCallback( [](int pass, bool hasErrors) {
+        if (program->quitInProgress)
+            return;
         if (pass < 0) {
             auto manager = VideoManager::getInstance(activeEmulator);
             if (manager) {
