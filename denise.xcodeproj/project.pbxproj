@@ -60,7 +60,6 @@
 		9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404482DCDEF2E00624A00 /* hunk.cpp */; };
 		9D7B485D2E40D7640010B152 /* cgif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B48572E40D7640010B152 /* cgif.cpp */; };
 		9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B485A2E40D7640010B152 /* cgif_raw.cpp */; };
-		9D7B48602E40D7640010B152 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 9D7B485C2E40D7640010B152 /* LICENSE.txt */; };
 		9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FA9532CB3DF78006905BE /* Cocoa.framework */; };
 		9D8FAAF72CB3F6EF006905BE /* cmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA702CB3F6EF006905BE /* cmd.cpp */; };
 		9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA722CB3F6EF006905BE /* program.cpp */; };
@@ -179,8 +178,214 @@
 		9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
 		9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD306D62DFAFF2200B8F12F /* httpClient.cpp */; };
 		9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */; };
+		9DECF8482E45F25D005C0BBA /* libz.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DECF8412E45F25D005C0BBA /* libz.1.dylib */; };
+		9DECF8492E45F25D005C0BBA /* libz.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9DECF8412E45F25D005C0BBA /* libz.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9DECF84A2E45F25D005C0BBA /* libbz2.1.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DECF8422E45F25D005C0BBA /* libbz2.1.0.dylib */; };
+		9DECF84B2E45F25D005C0BBA /* libbz2.1.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9DECF8422E45F25D005C0BBA /* libbz2.1.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9DECF84C2E45F25E005C0BBA /* libfreetype.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DECF8432E45F25D005C0BBA /* libfreetype.6.dylib */; };
+		9DECF84D2E45F25E005C0BBA /* libfreetype.6.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9DECF8432E45F25D005C0BBA /* libfreetype.6.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9DECF84E2E45F25E005C0BBA /* libusb-1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DECF8442E45F25D005C0BBA /* libusb-1.0.0.dylib */; };
+		9DECF84F2E45F25E005C0BBA /* libusb-1.0.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9DECF8442E45F25D005C0BBA /* libusb-1.0.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9DECF8502E45F25E005C0BBA /* libbrotlicommon.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DECF8452E45F25D005C0BBA /* libbrotlicommon.1.dylib */; };
+		9DECF8512E45F25E005C0BBA /* libbrotlicommon.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9DECF8452E45F25D005C0BBA /* libbrotlicommon.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9DECF8542E45F25E005C0BBA /* libpng16.16.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DECF8472E45F25D005C0BBA /* libpng16.16.dylib */; };
+		9DECF8552E45F25E005C0BBA /* libpng16.16.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9DECF8472E45F25D005C0BBA /* libpng16.16.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9DECF91E2E45F309005C0BBA /* echo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539702D5A90E30083E91B /* echo.cpp */; };
+		9DECF91F2E45F309005C0BBA /* superCpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539562D5A8F4D0083E91B /* superCpu.cpp */; };
+		9DECF9202E45F309005C0BBA /* chessCard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539582D5A8FBC0083E91B /* chessCard.cpp */; };
+		9DECF9212E45F309005C0BBA /* w65C02.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539692D5A902D0083E91B /* w65C02.cpp */; };
+		9DECF9222E45F309005C0BBA /* w65816.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539652D5A902D0083E91B /* w65816.cpp */; };
+		9DECF9232E45F309005C0BBA /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAB412CB3F8EE006905BE /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
+		9DECF9242E45F309005C0BBA /* input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACD02CB40DF6006905BE /* input.cpp */; };
+		9DECF9252E45F309005C0BBA /* media.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAEF2CB3F6EF006905BE /* media.cpp */; };
+		9DECF9262E45F309005C0BBA /* fileloader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAF62CB3F6EF006905BE /* fileloader.cpp */; };
+		9DECF9272E45F309005C0BBA /* m68000.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACC22CB40DF6006905BE /* m68000.cpp */; };
+		9DECF9282E45F309005C0BBA /* manager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA9F2CB3F6EF006905BE /* manager.cpp */; };
+		9DECF9292E45F309005C0BBA /* sid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADDA2CB40DF8006905BE /* sid.cpp */; };
+		9DECF92A2E45F309005C0BBA /* bass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAC22CB3F6EF006905BE /* bass.cpp */; };
+		9DECF92B2E45F309005C0BBA /* paula.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACF82CB40DF7006905BE /* paula.cpp */; };
+		9DECF92C2E45F309005C0BBA /* cosinePrecise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAB62CB3F6EF006905BE /* cosinePrecise.cpp */; };
+		9DECF92D2E45F309005C0BBA /* crc16.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCE82E296CD000A9787E /* crc16.cpp */; };
+		9DECF92E2E45F309005C0BBA /* base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADD02CB40DF8006905BE /* base.cpp */; };
+		9DECF92F2E45F309005C0BBA /* interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD952CB40DF7006905BE /* interface.cpp */; };
+		9DECF9302E45F309005C0BBA /* tape.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD9D2CB40DF7006905BE /* tape.cpp */; };
+		9DECF9312E45F309005C0BBA /* m6502.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADA22CB40DF7006905BE /* m6502.cpp */; };
+		9DECF9322E45F309005C0BBA /* keyboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACDA2CB40DF6006905BE /* keyboard.cpp */; };
+		9DECF9332E45F309005C0BBA /* lha_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD22E296CD000A9787E /* lha_reader.cpp */; };
+		9DECF9342E45F309005C0BBA /* wd1770.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADA62CB40DF7006905BE /* wd1770.cpp */; };
+		9DECF9352E45F309005C0BBA /* lzs_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD92E296CD000A9787E /* lzs_decoder.cpp */; };
+		9DECF9362E45F309005C0BBA /* pm2_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCEE2E296CD000A9787E /* pm2_decoder.cpp */; };
+		9DECF9372E45F309005C0BBA /* m8520.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADEE2CB40DF8006905BE /* m8520.cpp */; };
+		9DECF9382E45F309005C0BBA /* status.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAACD2CB3F6EF006905BE /* status.cpp */; };
+		9DECF9392E45F309005C0BBA /* program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA722CB3F6EF006905BE /* program.cpp */; };
+		9DECF93A2E45F309005C0BBA /* m68000.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACC72CB40DF6006905BE /* m68000.cpp */; };
+		9DECF93B2E45F309005C0BBA /* hunk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404482DCDEF2E00624A00 /* hunk.cpp */; };
+		9DECF93C2E45F309005C0BBA /* states.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAACA2CB3F6EF006905BE /* states.cpp */; };
+		9DECF93D2E45F309005C0BBA /* drive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADB52CB40DF8006905BE /* drive.cpp */; };
+		9DECF93E2E45F309005C0BBA /* hardDrive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404472DCDEF2E00624A00 /* hardDrive.cpp */; };
+		9DECF93F2E45F309005C0BBA /* palette.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA7E2CB3F6EF006905BE /* palette.cpp */; };
+		9DECF9402E45F309005C0BBA /* cosine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAB32CB3F6EF006905BE /* cosine.cpp */; };
+		9DECF9412E45F309005C0BBA /* model.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAE62CB3F6EF006905BE /* model.cpp */; };
+		9DECF9422E45F309005C0BBA /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9DECF9432E45F309005C0BBA /* reu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD252CB40DF7006905BE /* reu.cpp */; };
+		9DECF9442E45F309005C0BBA /* lha_arch_unix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCF12E296CD000A9787E /* lha_arch_unix.cpp */; };
+		9DECF9452E45F309005C0BBA /* depsSpirv.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CD162E29703800A9787E /* depsSpirv.cpp */; };
+		9DECF9462E45F309005C0BBA /* lz5_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCF22E296CD000A9787E /* lz5_decoder.cpp */; };
+		9DECF9472E45F309005C0BBA /* traps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD7F2CB40DF7006905BE /* traps.cpp */; };
+		9DECF9482E45F309005C0BBA /* lha.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DF7CF4E2D96E1D400CECCF1 /* lha.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/lha/"; }; };
+		9DECF9492E45F309005C0BBA /* copper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACEB2CB40DF7006905BE /* copper.cpp */; };
+		9DECF94A2E45F309005C0BBA /* firmware.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404402DCDEEF500624A00 /* firmware.cpp */; };
+		9DECF94B2E45F309005C0BBA /* interface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACE32CB40DF7006905BE /* interface.cpp */; };
+		9DECF94C2E45F309005C0BBA /* firmware.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD842CB40DF7006905BE /* firmware.cpp */; };
+		9DECF94D2E45F309005C0BBA /* lha_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCEA2E296CD000A9787E /* lha_decoder.cpp */; };
+		9DECF94E2E45F309005C0BBA /* lh6_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCF72E296CD000A9787E /* lh6_decoder.cpp */; };
+		9DECF94F2E45F309005C0BBA /* agnus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACF12CB40DF7006905BE /* agnus.cpp */; };
+		9DECF9502E45F309005C0BBA /* base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADED2CB40DF8006905BE /* base.cpp */; };
+		9DECF9512E45F309005C0BBA /* gluelogic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD8B2CB40DF7006905BE /* gluelogic.cpp */; };
+		9DECF9522E45F309005C0BBA /* sinc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAB82CB3F6EF006905BE /* sinc.cpp */; };
+		9DECF9532E45F309005C0BBA /* acia.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD492CB40DF7006905BE /* acia.cpp */; };
+		9DECF9542E45F309005C0BBA /* gameCart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD562CB40DF7006905BE /* gameCart.cpp */; };
+		9DECF9552E45F309005C0BBA /* retroReplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD612CB40DF7006905BE /* retroReplay.cpp */; };
+		9DECF9562E45F309005C0BBA /* lhx_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCF32E296CD000A9787E /* lhx_decoder.cpp */; };
+		9DECF9572E45F309005C0BBA /* diskDrive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD0C2CB40DF7006905BE /* diskDrive.cpp */; };
+		9DECF9582E45F309005C0BBA /* autoloader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAF12CB3F6EF006905BE /* autoloader.cpp */; };
+		9DECF9592E45F309005C0BBA /* api.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAB322CB3F8EE006905BE /* api.cpp */; settings = {COMPILER_FLAGS = "-DGUIKIT_COCOA -x objective-c++ -fno-objc-arc"; }; };
+		9DECF95A2E45F309005C0BBA /* sectorBlock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD212CB40DF7006905BE /* sectorBlock.cpp */; };
+		9DECF95B2E45F309005C0BBA /* ShaderCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC372CB40C9C006905BE /* ShaderCache.cpp */; };
+		9DECF95C2E45F309005C0BBA /* ext_header.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCEF2E296CD000A9787E /* ext_header.cpp */; };
+		9DECF95D2E45F309005C0BBA /* pm1_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCED2E296CD000A9787E /* pm1_decoder.cpp */; };
+		9DECF95E2E45F309005C0BBA /* macbinary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD32E296CD000A9787E /* macbinary.cpp */; };
+		9DECF95F2E45F309005C0BBA /* gmod2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD292CB40DF7006905BE /* gmod2.cpp */; };
+		9DECF9602E45F309005C0BBA /* pia.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC9F2CB40DF6006905BE /* pia.cpp */; };
+		9DECF9612E45F309005C0BBA /* recentFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D31E3BC2DF2083600F88404 /* recentFiles.cpp */; };
+		9DECF9622E45F309005C0BBA /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACA32CB40DF6006905BE /* socket.cpp */; };
+		9DECF9632E45F309005C0BBA /* mtecAT500.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404302DCDEE1C00624A00 /* mtecAT500.cpp */; };
+		9DECF9642E45F309005C0BBA /* geoRam.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD3C2CB40DF7006905BE /* geoRam.cpp */; };
+		9DECF9652E45F309005C0BBA /* spirvReflection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC3B2CB40C9C006905BE /* spirvReflection.cpp */; };
+		9DECF9662E45F309005C0BBA /* lha_basic_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCEB2E296CD000A9787E /* lha_basic_reader.cpp */; };
+		9DECF9672E45F309005C0BBA /* DLLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACA72CB40DF6006905BE /* DLLoader.cpp */; };
+		9DECF9682E45F309005C0BBA /* m6510.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD672CB40DF7006905BE /* m6510.cpp */; };
+		9DECF9692E45F309005C0BBA /* vicII.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADC72CB40DF8006905BE /* vicII.cpp */; };
+		9DECF96A2E45F309005C0BBA /* easyFlash3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD3E2CB40DF7006905BE /* easyFlash3.cpp */; };
+		9DECF96B2E45F309005C0BBA /* iec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADA02CB40DF7006905BE /* iec.cpp */; };
+		9DECF96C2E45F309005C0BBA /* mx29lv640eb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACAD2CB40DF6006905BE /* mx29lv640eb.cpp */; };
+		9DECF96D2E45F309005C0BBA /* filesystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD0E2CB40DF7006905BE /* filesystem.cpp */; };
+		9DECF96E2E45F309005C0BBA /* handler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAA82CB3F6EF006905BE /* handler.cpp */; };
+		9DECF96F2E45F309005C0BBA /* lha_input_stream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCDB2E296CD000A9787E /* lha_input_stream.cpp */; };
+		9DECF9702E45F309005C0BBA /* input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD6E2CB40DF7006905BE /* input.cpp */; };
+		9DECF9712E45F309005C0BBA /* system.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACE02CB40DF6006905BE /* system.cpp */; };
+		9DECF9722E45F309005C0BBA /* m6526.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADEC2CB40DF8006905BE /* m6526.cpp */; };
+		9DECF9732E45F309005C0BBA /* blitter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACED2CB40DF7006905BE /* blitter.cpp */; };
+		9DECF9742E45F309005C0BBA /* clipboard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD932CB40DF7006905BE /* clipboard.cpp */; };
+		9DECF9752E45F309005C0BBA /* filesystemExt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404452DCDEF2E00624A00 /* filesystemExt.cpp */; };
+		9DECF9762E45F309005C0BBA /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CC8B2E296C5F00A9787E /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/cgif/ -I$(PROJECT_DIR)/deps/stb/"; }; };
+		9DECF9772E45F309005C0BBA /* drive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAABD2CB3F6EF006905BE /* drive.cpp */; };
+		9DECF9782E45F309005C0BBA /* manager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA7A2CB3F6EF006905BE /* manager.cpp */; };
+		9DECF9792E45F309005C0BBA /* manager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA752CB3F6EF006905BE /* manager.cpp */; };
+		9DECF97A2E45F309005C0BBA /* uuid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */; };
+		9DECF97B2E45F309005C0BBA /* httpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD306D62DFAFF2200B8F12F /* httpClient.cpp */; };
+		9DECF97C2E45F309005C0BBA /* archiveViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA8E2CB3F6EF006905BE /* archiveViewer.cpp */; };
+		9DECF97D2E45F309005C0BBA /* denise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACBF2CB40DF6006905BE /* denise.cpp */; };
+		9DECF97E2E45F309005C0BBA /* cosineSSE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAB72CB3F6EF006905BE /* cosineSSE.cpp */; };
+		9DECF97F2E45F309005C0BBA /* chamberlin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADE02CB40DF8006905BE /* chamberlin.cpp */; };
+		9DECF9802E45F309005C0BBA /* virtualDrive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADAF2CB40DF7006905BE /* virtualDrive.cpp */; };
+		9DECF9812E45F309005C0BBA /* lha_arch_win32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD72E296CD000A9787E /* lha_arch_win32.cpp */; };
+		9DECF9822E45F309005C0BBA /* depsSlang.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CD172E29703800A9787E /* depsSlang.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/glslang/"; }; };
+		9DECF9832E45F309005C0BBA /* structure.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD992CB40DF7006905BE /* structure.cpp */; };
+		9DECF9842E45F309005C0BBA /* lha_file_header.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCF42E296CD000A9787E /* lha_file_header.cpp */; };
+		9DECF9852E45F309005C0BBA /* cia.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADF52CB40DF8006905BE /* cia.cpp */; };
+		9DECF9862E45F309005C0BBA /* wavWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAA62CB3F6EF006905BE /* wavWriter.cpp */; };
+		9DECF9872E45F309005C0BBA /* lh7_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD62E296CD000A9787E /* lh7_decoder.cpp */; };
+		9DECF9882E45F309005C0BBA /* manager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAABA2CB3F6EF006905BE /* manager.cpp */; };
+		9DECF9892E45F309005C0BBA /* freezer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD2C2CB40DF7006905BE /* freezer.cpp */; };
+		9DECF98A2E45F309005C0BBA /* vicIIFast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADCB2CB40DF8006905BE /* vicIIFast.cpp */; };
+		9DECF98B2E45F309005C0BBA /* builtinHD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404352DCDEE1C00624A00 /* builtinHD.cpp */; };
+		9DECF98C2E45F309005C0BBA /* structure.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADBC2CB40DF8006905BE /* structure.cpp */; };
+		9DECF98D2E45F309005C0BBA /* lk7_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCE12E296CD000A9787E /* lk7_decoder.cpp */; };
+		9DECF98E2E45F309005C0BBA /* config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAEA2CB3F6EF006905BE /* config.cpp */; };
+		9DECF98F2E45F309005C0BBA /* imageViewer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5FAF2B2CF07000002B0C34 /* imageViewer.cpp */; };
+		9DECF9902E45F309005C0BBA /* cgif_raw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B485A2E40D7640010B152 /* cgif_raw.cpp */; };
+		9DECF9912E45F309005C0BBA /* panning.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAC32CB3F6EF006905BE /* panning.cpp */; };
+		9DECF9922E45F309005C0BBA /* prg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD6B2CB40DF7006905BE /* prg.cpp */; };
+		9DECF9932E45F309005C0BBA /* scp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA70F452E101AF000F1DC5B /* scp.cpp */; };
+		9DECF9942E45F309005C0BBA /* pfile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD1F2CB40DF7006905BE /* pfile.cpp */; };
+		9DECF9952E45F309005C0BBA /* rtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACDE2CB40DF6006905BE /* rtc.cpp */; };
+		9DECF9962E45F309005C0BBA /* fpaq0.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACA92CB40DF6006905BE /* fpaq0.cpp */; };
+		9DECF9972E45F309005C0BBA /* diskStructure.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD042CB40DF7006905BE /* diskStructure.cpp */; };
+		9DECF9982E45F309005C0BBA /* easyFlash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD3F2CB40DF7006905BE /* easyFlash.cpp */; };
+		9DECF9992E45F309005C0BBA /* via.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADAA2CB40DF7006905BE /* via.cpp */; };
+		9DECF99A2E45F309005C0BBA /* keyBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD852CB40DF7006905BE /* keyBuffer.cpp */; };
+		9DECF99B2E45F309005C0BBA /* lh5_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCDF2E296CD000A9787E /* lh5_decoder.cpp */; };
+		9DECF99C2E45F309005C0BBA /* null_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD52E296CD000A9787E /* null_decoder.cpp */; };
+		9DECF99D2E45F309005C0BBA /* expansionPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404342DCDEE1C00624A00 /* expansionPort.cpp */; };
+		9DECF99E2E45F309005C0BBA /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
+		9DECF99F2E45F309005C0BBA /* reverb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAC42CB3F6EF006905BE /* reverb.cpp */; };
+		9DECF9A02E45F309005C0BBA /* system.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD8C2CB40DF7006905BE /* system.cpp */; };
+		9DECF9A12E45F309005C0BBA /* config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA962CB3F6EF006905BE /* config.cpp */; };
+		9DECF9A22E45F309005C0BBA /* shaderParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA7D2CB3F6EF006905BE /* shaderParser.cpp */; };
+		9DECF9A32E45F309005C0BBA /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC732CB40C9D006905BE /* driver.cpp */; settings = {COMPILER_FLAGS = "-DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_OPENAL -DDRV_FREETYPE -x objective-c++ -fno-objc-arc -I$(PROJECT_DIR)/deps/glslang/ -I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9DECF9A42E45F309005C0BBA /* sidManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD862CB40DF7006905BE /* sidManager.cpp */; };
+		9DECF9A52E45F309005C0BBA /* view.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAD12CB3F6EF006905BE /* view.cpp */; };
+		9DECF9A62E45F309005C0BBA /* hdController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D64042C2DCDEE1C00624A00 /* hdController.cpp */; };
+		9DECF9A72E45F309005C0BBA /* hardDiskStructure.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404432DCDEF2E00624A00 /* hardDiskStructure.cpp */; };
+		9DECF9A82E45F309005C0BBA /* emuThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAEC2CB3F6EF006905BE /* emuThread.cpp */; };
+		9DECF9A92E45F309005C0BBA /* m93c86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACA82CB40DF6006905BE /* m93c86.cpp */; };
+		9DECF9AA2E45F309005C0BBA /* icons.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E02CB47539006905BE /* icons.cpp */; };
+		9DECF9AB2E45F309005C0BBA /* controlPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD742CB40DF7006905BE /* controlPort.cpp */; };
+		9DECF9AC2E45F309005C0BBA /* controlPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACD22CB40DF6006905BE /* controlPort.cpp */; };
+		9DECF9AD2E45F309005C0BBA /* renderThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC342CB40C9C006905BE /* renderThread.cpp */; };
+		9DECF9AE2E45F309005C0BBA /* fastMem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404332DCDEE1C00624A00 /* fastMem.cpp */; };
+		9DECF9AF2E45F309005C0BBA /* cmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA702CB3F6EF006905BE /* cmd.cpp */; };
+		9DECF9B02E45F309005C0BBA /* error.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D64043D2DCDEE3F00624A00 /* error.cpp */; };
+		9DECF9B12E45F309005C0BBA /* cgif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B48572E40D7640010B152 /* cgif.cpp */; };
+		9DECF9B22E45F309005C0BBA /* lh1_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD12E296CD000A9787E /* lh1_decoder.cpp */; };
+		9DECF9B32E45F309005C0BBA /* cart.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD472CB40DF7006905BE /* cart.cpp */; };
+		9DECF9B42E45F309005C0BBA /* lha_endian.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCF82E296CD000A9787E /* lha_endian.cpp */; };
+		9DECF9B52E45F309005C0BBA /* fastloader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD382CB40DF7006905BE /* fastloader.cpp */; };
+		9DECF9B62E45F309005C0BBA /* logos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E12CB47539006905BE /* logos.cpp */; };
+		9DECF9B82E45F309005C0BBA /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
+		9DECF9B92E45F309005C0BBA /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D0C382D2CB5C17900363301 /* OpenAL.framework */; };
+		9DECF9BA2E45F309005C0BBA /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FA9532CB3DF78006905BE /* Cocoa.framework */; };
+		9DECF9BB2E45F309005C0BBA /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEA62CB415B1006905BE /* Carbon.framework */; };
+		9DECF9BF2E45F309005C0BBA /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEAE2CB415D3006905BE /* CoreAudio.framework */; };
+		9DECF9C02E45F309005C0BBA /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEA82CB415B7006905BE /* Metal.framework */; };
+		9DECF9C12E45F309005C0BBA /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEAC2CB415CC006905BE /* OpenGL.framework */; };
+		9DECF9C22E45F309005C0BBA /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEB22CB415E3006905BE /* AudioUnit.framework */; };
+		9DECF9C32E45F309005C0BBA /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEB02CB415DD006905BE /* AudioToolbox.framework */; };
+		9DECF9C42E45F309005C0BBA /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEAA2CB415BD006905BE /* MetalKit.framework */; };
+		9DECF9C52E45F309005C0BBA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEA22CB4159E006905BE /* CoreVideo.framework */; };
+		9DECF9C82E45F309005C0BBA /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FAEA42CB415A9006905BE /* IOKit.framework */; };
+		9DECF9CC2E45F309005C0BBA /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38122CB586BE00363301 /* sounds */; };
+		9DECF9CD2E45F309005C0BBA /* denise.icns in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380A2CB584D800363301 /* denise.icns */; };
+		9DECF9CE2E45F309005C0BBA /* shader in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380E2CB5865B00363301 /* shader */; };
+		9DECF9CF2E45F309005C0BBA /* translation in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38102CB586AD00363301 /* translation */; };
+		9DECF9D12E45F309005C0BBA /* data in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38232CB59D9B00363301 /* data */; };
+		9DECF9D22E45F309005C0BBA /* images in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38272CB5A66F00363301 /* images */; };
+		9DECF9D32E45F309005C0BBA /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C380C2CB5861C00363301 /* fonts */; };
+		9DECF9E12E45F82B005C0BBA /* libbrotlidec.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DECF8462E45F25D005C0BBA /* libbrotlidec.1.dylib */; };
+		9DECF9E22E45F82B005C0BBA /* libbrotlidec.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9DECF8462E45F25D005C0BBA /* libbrotlidec.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9DF7CF502D96E1D400CECCF1 /* lha.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DF7CF4E2D96E1D400CECCF1 /* lha.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/lha/"; }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		9DECF8562E45F25E005C0BBA /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				9DECF84D2E45F25E005C0BBA /* libfreetype.6.dylib in Embed Libraries */,
+				9DECF84B2E45F25D005C0BBA /* libbz2.1.0.dylib in Embed Libraries */,
+				9DECF8552E45F25E005C0BBA /* libpng16.16.dylib in Embed Libraries */,
+				9DECF8492E45F25D005C0BBA /* libz.1.dylib in Embed Libraries */,
+				9DECF84F2E45F25E005C0BBA /* libusb-1.0.0.dylib in Embed Libraries */,
+				9DECF9E22E45F82B005C0BBA /* libbrotlidec.1.dylib in Embed Libraries */,
+				9DECF8512E45F25E005C0BBA /* libbrotlicommon.1.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		9D07CC8A2E296C5F00A9787E /* images.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = images.h; sourceTree = "<group>"; };
@@ -280,7 +485,7 @@
 		9D7B485A2E40D7640010B152 /* cgif_raw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif_raw.cpp; sourceTree = "<group>"; };
 		9D7B485B2E40D7640010B152 /* cgif_raw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cgif_raw.h; sourceTree = "<group>"; };
 		9D7B485C2E40D7640010B152 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
-		9D8FA9322CB3D7A7006905BE /* denise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = denise.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D8FA9322CB3D7A7006905BE /* Denise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Denise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D8FA9532CB3DF78006905BE /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		9D8FAA702CB3F6EF006905BE /* cmd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cmd.cpp; sourceTree = "<group>"; };
 		9D8FAA712CB3F6EF006905BE /* cmd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cmd.h; sourceTree = "<group>"; };
@@ -820,6 +1025,14 @@
 		9DD306D72DFAFF2200B8F12F /* httpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpClient.h; sourceTree = "<group>"; };
 		9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = uuid.cpp; sourceTree = "<group>"; };
 		9DE47D0F2DE8CD6200903CA4 /* uuid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uuid.h; sourceTree = "<group>"; };
+		9DECF8412E45F25D005C0BBA /* libz.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.dylib; path = data/libs/shared/macArm/libz.1.dylib; sourceTree = "<group>"; };
+		9DECF8422E45F25D005C0BBA /* libbz2.1.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbz2.1.0.dylib; path = data/libs/shared/macArm/libbz2.1.0.dylib; sourceTree = "<group>"; };
+		9DECF8432E45F25D005C0BBA /* libfreetype.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libfreetype.6.dylib; path = data/libs/shared/macArm/libfreetype.6.dylib; sourceTree = "<group>"; };
+		9DECF8442E45F25D005C0BBA /* libusb-1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libusb-1.0.0.dylib"; path = "data/libs/shared/macArm/libusb-1.0.0.dylib"; sourceTree = "<group>"; };
+		9DECF8452E45F25D005C0BBA /* libbrotlicommon.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbrotlicommon.1.dylib; path = data/libs/shared/macArm/libbrotlicommon.1.dylib; sourceTree = "<group>"; };
+		9DECF8462E45F25D005C0BBA /* libbrotlidec.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbrotlidec.1.dylib; path = data/libs/shared/macArm/libbrotlidec.1.dylib; sourceTree = "<group>"; };
+		9DECF8472E45F25D005C0BBA /* libpng16.16.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpng16.16.dylib; path = data/libs/shared/macArm/libpng16.16.dylib; sourceTree = "<group>"; };
+		9DECF9DF2E45F309005C0BBA /* Denise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Denise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9DF7CF4E2D96E1D400CECCF1 /* lha.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lha.cpp; sourceTree = "<group>"; };
 		9DF7CF4F2D96E1D400CECCF1 /* lha.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lha.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -833,14 +1046,40 @@
 				9D0C382E2CB5C17900363301 /* OpenAL.framework in Frameworks */,
 				9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */,
 				9D8FAEA72CB415B1006905BE /* Carbon.framework in Frameworks */,
+				9DECF8542E45F25E005C0BBA /* libpng16.16.dylib in Frameworks */,
+				9DECF8482E45F25D005C0BBA /* libz.1.dylib in Frameworks */,
 				9D8FAEAF2CB415D3006905BE /* CoreAudio.framework in Frameworks */,
 				9D8FAEA92CB415B7006905BE /* Metal.framework in Frameworks */,
 				9D8FAEAD2CB415CC006905BE /* OpenGL.framework in Frameworks */,
 				9D8FAEB32CB415E3006905BE /* AudioUnit.framework in Frameworks */,
+				9DECF9E12E45F82B005C0BBA /* libbrotlidec.1.dylib in Frameworks */,
 				9D8FAEB12CB415DD006905BE /* AudioToolbox.framework in Frameworks */,
 				9D8FAEAB2CB415BD006905BE /* MetalKit.framework in Frameworks */,
 				9D8FAEA32CB4159E006905BE /* CoreVideo.framework in Frameworks */,
+				9DECF84C2E45F25E005C0BBA /* libfreetype.6.dylib in Frameworks */,
+				9DECF84A2E45F25D005C0BBA /* libbz2.1.0.dylib in Frameworks */,
 				9D8FAEA52CB415A9006905BE /* IOKit.framework in Frameworks */,
+				9DECF8502E45F25E005C0BBA /* libbrotlicommon.1.dylib in Frameworks */,
+				9DECF84E2E45F25E005C0BBA /* libusb-1.0.0.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DECF9B72E45F309005C0BBA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DECF9B82E45F309005C0BBA /* Security.framework in Frameworks */,
+				9DECF9B92E45F309005C0BBA /* OpenAL.framework in Frameworks */,
+				9DECF9BA2E45F309005C0BBA /* Cocoa.framework in Frameworks */,
+				9DECF9BB2E45F309005C0BBA /* Carbon.framework in Frameworks */,
+				9DECF9BF2E45F309005C0BBA /* CoreAudio.framework in Frameworks */,
+				9DECF9C02E45F309005C0BBA /* Metal.framework in Frameworks */,
+				9DECF9C12E45F309005C0BBA /* OpenGL.framework in Frameworks */,
+				9DECF9C22E45F309005C0BBA /* AudioUnit.framework in Frameworks */,
+				9DECF9C32E45F309005C0BBA /* AudioToolbox.framework in Frameworks */,
+				9DECF9C42E45F309005C0BBA /* MetalKit.framework in Frameworks */,
+				9DECF9C52E45F309005C0BBA /* CoreVideo.framework in Frameworks */,
+				9DECF9C82E45F309005C0BBA /* IOKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1006,7 +1245,8 @@
 		9D8FA9332CB3D7A7006905BE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				9D8FA9322CB3D7A7006905BE /* denise.app */,
+				9D8FA9322CB3D7A7006905BE /* Denise.app */,
+				9DECF9DF2E45F309005C0BBA /* Denise.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1014,6 +1254,13 @@
 		9D8FA9522CB3DF78006905BE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9DECF8452E45F25D005C0BBA /* libbrotlicommon.1.dylib */,
+				9DECF8462E45F25D005C0BBA /* libbrotlidec.1.dylib */,
+				9DECF8422E45F25D005C0BBA /* libbz2.1.0.dylib */,
+				9DECF8432E45F25D005C0BBA /* libfreetype.6.dylib */,
+				9DECF8472E45F25D005C0BBA /* libpng16.16.dylib */,
+				9DECF8442E45F25D005C0BBA /* libusb-1.0.0.dylib */,
+				9DECF8412E45F25D005C0BBA /* libz.1.dylib */,
 				9DD0A0BB2E3B9A220018DA68 /* Security.framework */,
 				9D0C382D2CB5C17900363301 /* OpenAL.framework */,
 				9D8FAEB22CB415E3006905BE /* AudioUnit.framework */,
@@ -2290,21 +2537,39 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		9D8FA9312CB3D7A7006905BE /* denise */ = {
+		9D8FA9312CB3D7A7006905BE /* arm64 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 9D8FA94B2CB3D7A8006905BE /* Build configuration list for PBXNativeTarget "denise" */;
+			buildConfigurationList = 9D8FA94B2CB3D7A8006905BE /* Build configuration list for PBXNativeTarget "arm64" */;
 			buildPhases = (
 				9D8FA92E2CB3D7A7006905BE /* Sources */,
 				9D8FA92F2CB3D7A7006905BE /* Frameworks */,
 				9D8FA9302CB3D7A7006905BE /* Resources */,
+				9DECF8562E45F25E005C0BBA /* Embed Libraries */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = denise;
+			name = arm64;
 			productName = denise;
-			productReference = 9D8FA9322CB3D7A7006905BE /* denise.app */;
+			productReference = 9D8FA9322CB3D7A7006905BE /* Denise.app */;
+			productType = "com.apple.product-type.application";
+		};
+		9DECF91C2E45F309005C0BBA /* x86_64 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9DECF9DC2E45F309005C0BBA /* Build configuration list for PBXNativeTarget "x86_64" */;
+			buildPhases = (
+				9DECF91D2E45F309005C0BBA /* Sources */,
+				9DECF9B72E45F309005C0BBA /* Frameworks */,
+				9DECF9CB2E45F309005C0BBA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = x86_64;
+			productName = denise;
+			productReference = 9DECF9DF2E45F309005C0BBA /* Denise.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -2333,7 +2598,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				9D8FA9312CB3D7A7006905BE /* denise */,
+				9D8FA9312CB3D7A7006905BE /* arm64 */,
+				9DECF91C2E45F309005C0BBA /* x86_64 */,
 			);
 		};
 /* End PBXProject section */
@@ -2347,10 +2613,23 @@
 				9D0C380B2CB584D800363301 /* denise.icns in Resources */,
 				9D0C380F2CB5865B00363301 /* shader in Resources */,
 				9D0C38112CB586AD00363301 /* translation in Resources */,
-				9D7B48602E40D7640010B152 /* LICENSE.txt in Resources */,
 				9D0C38242CB59D9B00363301 /* data in Resources */,
 				9D0C38282CB5A66F00363301 /* images in Resources */,
 				9D0C380D2CB5861C00363301 /* fonts in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9DECF9CB2E45F309005C0BBA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DECF9CC2E45F309005C0BBA /* sounds in Resources */,
+				9DECF9CD2E45F309005C0BBA /* denise.icns in Resources */,
+				9DECF9CE2E45F309005C0BBA /* shader in Resources */,
+				9DECF9CF2E45F309005C0BBA /* translation in Resources */,
+				9DECF9D12E45F309005C0BBA /* data in Resources */,
+				9DECF9D22E45F309005C0BBA /* images in Resources */,
+				9DECF9D32E45F309005C0BBA /* fonts in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2517,6 +2796,166 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9DECF91D2E45F309005C0BBA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DECF91E2E45F309005C0BBA /* echo.cpp in Sources */,
+				9DECF91F2E45F309005C0BBA /* superCpu.cpp in Sources */,
+				9DECF9202E45F309005C0BBA /* chessCard.cpp in Sources */,
+				9DECF9212E45F309005C0BBA /* w65C02.cpp in Sources */,
+				9DECF9222E45F309005C0BBA /* w65816.cpp in Sources */,
+				9DECF9232E45F309005C0BBA /* images.cpp in Sources */,
+				9DECF9242E45F309005C0BBA /* input.cpp in Sources */,
+				9DECF9252E45F309005C0BBA /* media.cpp in Sources */,
+				9DECF9262E45F309005C0BBA /* fileloader.cpp in Sources */,
+				9DECF9272E45F309005C0BBA /* m68000.cpp in Sources */,
+				9DECF9282E45F309005C0BBA /* manager.cpp in Sources */,
+				9DECF9292E45F309005C0BBA /* sid.cpp in Sources */,
+				9DECF92A2E45F309005C0BBA /* bass.cpp in Sources */,
+				9DECF92B2E45F309005C0BBA /* paula.cpp in Sources */,
+				9DECF92C2E45F309005C0BBA /* cosinePrecise.cpp in Sources */,
+				9DECF92D2E45F309005C0BBA /* crc16.cpp in Sources */,
+				9DECF92E2E45F309005C0BBA /* base.cpp in Sources */,
+				9DECF92F2E45F309005C0BBA /* interface.cpp in Sources */,
+				9DECF9302E45F309005C0BBA /* tape.cpp in Sources */,
+				9DECF9312E45F309005C0BBA /* m6502.cpp in Sources */,
+				9DECF9322E45F309005C0BBA /* keyboard.cpp in Sources */,
+				9DECF9332E45F309005C0BBA /* lha_reader.cpp in Sources */,
+				9DECF9342E45F309005C0BBA /* wd1770.cpp in Sources */,
+				9DECF9352E45F309005C0BBA /* lzs_decoder.cpp in Sources */,
+				9DECF9362E45F309005C0BBA /* pm2_decoder.cpp in Sources */,
+				9DECF9372E45F309005C0BBA /* m8520.cpp in Sources */,
+				9DECF9382E45F309005C0BBA /* status.cpp in Sources */,
+				9DECF9392E45F309005C0BBA /* program.cpp in Sources */,
+				9DECF93A2E45F309005C0BBA /* m68000.cpp in Sources */,
+				9DECF93B2E45F309005C0BBA /* hunk.cpp in Sources */,
+				9DECF93C2E45F309005C0BBA /* states.cpp in Sources */,
+				9DECF93D2E45F309005C0BBA /* drive.cpp in Sources */,
+				9DECF93E2E45F309005C0BBA /* hardDrive.cpp in Sources */,
+				9DECF93F2E45F309005C0BBA /* palette.cpp in Sources */,
+				9DECF9402E45F309005C0BBA /* cosine.cpp in Sources */,
+				9DECF9412E45F309005C0BBA /* model.cpp in Sources */,
+				9DECF9422E45F309005C0BBA /* USBSID.cpp in Sources */,
+				9DECF9432E45F309005C0BBA /* reu.cpp in Sources */,
+				9DECF9442E45F309005C0BBA /* lha_arch_unix.cpp in Sources */,
+				9DECF9452E45F309005C0BBA /* depsSpirv.cpp in Sources */,
+				9DECF9462E45F309005C0BBA /* lz5_decoder.cpp in Sources */,
+				9DECF9472E45F309005C0BBA /* traps.cpp in Sources */,
+				9DECF9482E45F309005C0BBA /* lha.cpp in Sources */,
+				9DECF9492E45F309005C0BBA /* copper.cpp in Sources */,
+				9DECF94A2E45F309005C0BBA /* firmware.cpp in Sources */,
+				9DECF94B2E45F309005C0BBA /* interface.cpp in Sources */,
+				9DECF94C2E45F309005C0BBA /* firmware.cpp in Sources */,
+				9DECF94D2E45F309005C0BBA /* lha_decoder.cpp in Sources */,
+				9DECF94E2E45F309005C0BBA /* lh6_decoder.cpp in Sources */,
+				9DECF94F2E45F309005C0BBA /* agnus.cpp in Sources */,
+				9DECF9502E45F309005C0BBA /* base.cpp in Sources */,
+				9DECF9512E45F309005C0BBA /* gluelogic.cpp in Sources */,
+				9DECF9522E45F309005C0BBA /* sinc.cpp in Sources */,
+				9DECF9532E45F309005C0BBA /* acia.cpp in Sources */,
+				9DECF9542E45F309005C0BBA /* gameCart.cpp in Sources */,
+				9DECF9552E45F309005C0BBA /* retroReplay.cpp in Sources */,
+				9DECF9562E45F309005C0BBA /* lhx_decoder.cpp in Sources */,
+				9DECF9572E45F309005C0BBA /* diskDrive.cpp in Sources */,
+				9DECF9582E45F309005C0BBA /* autoloader.cpp in Sources */,
+				9DECF9592E45F309005C0BBA /* api.cpp in Sources */,
+				9DECF95A2E45F309005C0BBA /* sectorBlock.cpp in Sources */,
+				9DECF95B2E45F309005C0BBA /* ShaderCache.cpp in Sources */,
+				9DECF95C2E45F309005C0BBA /* ext_header.cpp in Sources */,
+				9DECF95D2E45F309005C0BBA /* pm1_decoder.cpp in Sources */,
+				9DECF95E2E45F309005C0BBA /* macbinary.cpp in Sources */,
+				9DECF95F2E45F309005C0BBA /* gmod2.cpp in Sources */,
+				9DECF9602E45F309005C0BBA /* pia.cpp in Sources */,
+				9DECF9612E45F309005C0BBA /* recentFiles.cpp in Sources */,
+				9DECF9622E45F309005C0BBA /* socket.cpp in Sources */,
+				9DECF9632E45F309005C0BBA /* mtecAT500.cpp in Sources */,
+				9DECF9642E45F309005C0BBA /* geoRam.cpp in Sources */,
+				9DECF9652E45F309005C0BBA /* spirvReflection.cpp in Sources */,
+				9DECF9662E45F309005C0BBA /* lha_basic_reader.cpp in Sources */,
+				9DECF9672E45F309005C0BBA /* DLLoader.cpp in Sources */,
+				9DECF9682E45F309005C0BBA /* m6510.cpp in Sources */,
+				9DECF9692E45F309005C0BBA /* vicII.cpp in Sources */,
+				9DECF96A2E45F309005C0BBA /* easyFlash3.cpp in Sources */,
+				9DECF96B2E45F309005C0BBA /* iec.cpp in Sources */,
+				9DECF96C2E45F309005C0BBA /* mx29lv640eb.cpp in Sources */,
+				9DECF96D2E45F309005C0BBA /* filesystem.cpp in Sources */,
+				9DECF96E2E45F309005C0BBA /* handler.cpp in Sources */,
+				9DECF96F2E45F309005C0BBA /* lha_input_stream.cpp in Sources */,
+				9DECF9702E45F309005C0BBA /* input.cpp in Sources */,
+				9DECF9712E45F309005C0BBA /* system.cpp in Sources */,
+				9DECF9722E45F309005C0BBA /* m6526.cpp in Sources */,
+				9DECF9732E45F309005C0BBA /* blitter.cpp in Sources */,
+				9DECF9742E45F309005C0BBA /* clipboard.cpp in Sources */,
+				9DECF9752E45F309005C0BBA /* filesystemExt.cpp in Sources */,
+				9DECF9762E45F309005C0BBA /* images.cpp in Sources */,
+				9DECF9772E45F309005C0BBA /* drive.cpp in Sources */,
+				9DECF9782E45F309005C0BBA /* manager.cpp in Sources */,
+				9DECF9792E45F309005C0BBA /* manager.cpp in Sources */,
+				9DECF97A2E45F309005C0BBA /* uuid.cpp in Sources */,
+				9DECF97B2E45F309005C0BBA /* httpClient.cpp in Sources */,
+				9DECF97C2E45F309005C0BBA /* archiveViewer.cpp in Sources */,
+				9DECF97D2E45F309005C0BBA /* denise.cpp in Sources */,
+				9DECF97E2E45F309005C0BBA /* cosineSSE.cpp in Sources */,
+				9DECF97F2E45F309005C0BBA /* chamberlin.cpp in Sources */,
+				9DECF9802E45F309005C0BBA /* virtualDrive.cpp in Sources */,
+				9DECF9812E45F309005C0BBA /* lha_arch_win32.cpp in Sources */,
+				9DECF9822E45F309005C0BBA /* depsSlang.cpp in Sources */,
+				9DECF9832E45F309005C0BBA /* structure.cpp in Sources */,
+				9DECF9842E45F309005C0BBA /* lha_file_header.cpp in Sources */,
+				9DECF9852E45F309005C0BBA /* cia.cpp in Sources */,
+				9DECF9862E45F309005C0BBA /* wavWriter.cpp in Sources */,
+				9DECF9872E45F309005C0BBA /* lh7_decoder.cpp in Sources */,
+				9DECF9882E45F309005C0BBA /* manager.cpp in Sources */,
+				9DECF9892E45F309005C0BBA /* freezer.cpp in Sources */,
+				9DECF98A2E45F309005C0BBA /* vicIIFast.cpp in Sources */,
+				9DECF98B2E45F309005C0BBA /* builtinHD.cpp in Sources */,
+				9DECF98C2E45F309005C0BBA /* structure.cpp in Sources */,
+				9DECF98D2E45F309005C0BBA /* lk7_decoder.cpp in Sources */,
+				9DECF98E2E45F309005C0BBA /* config.cpp in Sources */,
+				9DECF98F2E45F309005C0BBA /* imageViewer.cpp in Sources */,
+				9DECF9902E45F309005C0BBA /* cgif_raw.cpp in Sources */,
+				9DECF9912E45F309005C0BBA /* panning.cpp in Sources */,
+				9DECF9922E45F309005C0BBA /* prg.cpp in Sources */,
+				9DECF9932E45F309005C0BBA /* scp.cpp in Sources */,
+				9DECF9942E45F309005C0BBA /* pfile.cpp in Sources */,
+				9DECF9952E45F309005C0BBA /* rtc.cpp in Sources */,
+				9DECF9962E45F309005C0BBA /* fpaq0.cpp in Sources */,
+				9DECF9972E45F309005C0BBA /* diskStructure.cpp in Sources */,
+				9DECF9982E45F309005C0BBA /* easyFlash.cpp in Sources */,
+				9DECF9992E45F309005C0BBA /* via.cpp in Sources */,
+				9DECF99A2E45F309005C0BBA /* keyBuffer.cpp in Sources */,
+				9DECF99B2E45F309005C0BBA /* lh5_decoder.cpp in Sources */,
+				9DECF99C2E45F309005C0BBA /* null_decoder.cpp in Sources */,
+				9DECF99D2E45F309005C0BBA /* expansionPort.cpp in Sources */,
+				9DECF99E2E45F309005C0BBA /* usbSidPico.cpp in Sources */,
+				9DECF99F2E45F309005C0BBA /* reverb.cpp in Sources */,
+				9DECF9A02E45F309005C0BBA /* system.cpp in Sources */,
+				9DECF9A12E45F309005C0BBA /* config.cpp in Sources */,
+				9DECF9A22E45F309005C0BBA /* shaderParser.cpp in Sources */,
+				9DECF9A32E45F309005C0BBA /* driver.cpp in Sources */,
+				9DECF9A42E45F309005C0BBA /* sidManager.cpp in Sources */,
+				9DECF9A52E45F309005C0BBA /* view.cpp in Sources */,
+				9DECF9A62E45F309005C0BBA /* hdController.cpp in Sources */,
+				9DECF9A72E45F309005C0BBA /* hardDiskStructure.cpp in Sources */,
+				9DECF9A82E45F309005C0BBA /* emuThread.cpp in Sources */,
+				9DECF9A92E45F309005C0BBA /* m93c86.cpp in Sources */,
+				9DECF9AA2E45F309005C0BBA /* icons.cpp in Sources */,
+				9DECF9AB2E45F309005C0BBA /* controlPort.cpp in Sources */,
+				9DECF9AC2E45F309005C0BBA /* controlPort.cpp in Sources */,
+				9DECF9AD2E45F309005C0BBA /* renderThread.cpp in Sources */,
+				9DECF9AE2E45F309005C0BBA /* fastMem.cpp in Sources */,
+				9DECF9AF2E45F309005C0BBA /* cmd.cpp in Sources */,
+				9DECF9B02E45F309005C0BBA /* error.cpp in Sources */,
+				9DECF9B12E45F309005C0BBA /* cgif.cpp in Sources */,
+				9DECF9B22E45F309005C0BBA /* lh1_decoder.cpp in Sources */,
+				9DECF9B32E45F309005C0BBA /* cart.cpp in Sources */,
+				9DECF9B42E45F309005C0BBA /* lha_endian.cpp in Sources */,
+				9DECF9B52E45F309005C0BBA /* fastloader.cpp in Sources */,
+				9DECF9B62E45F309005C0BBA /* logos.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -2574,9 +3013,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
-				"MACOSX_DEPLOYMENT_TARGET[arch=arm64]" = 11.0;
-				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -2635,9 +3072,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
-				"MACOSX_DEPLOYMENT_TARGET[arch=arm64]" = 11.0;
-				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -2668,23 +3103,15 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
-				"MACOSX_DEPLOYMENT_TARGET[arch=arm64]" = 11.0;
-				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/data/libs/shared/macArm",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 2.6;
-				"OTHER_LDFLAGS[arch=arm64]" = (
-					"data/libs/static/macArm/libusb-1.0.a",
-					data/libs/static/macArm/libfreetype.a,
-					"-w",
-				);
-				"OTHER_LDFLAGS[arch=x86_64]" = (
-					"data/libs/static/macIntel/libusb-1.0.a",
-					data/libs/static/macIntel/libfreetype.a,
-					"-w",
-				);
+				OTHER_CODE_SIGN_FLAGS = "--deep";
 				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Denise;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Debug;
@@ -2711,23 +3138,83 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
-				"MACOSX_DEPLOYMENT_TARGET[arch=arm64]" = 11.0;
-				"MACOSX_DEPLOYMENT_TARGET[arch=x86_64]" = 10.13;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/data/libs/shared/macArm",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 2.6;
-				"OTHER_LDFLAGS[arch=arm64]" = (
-					"data/libs/static/macArm/libusb-1.0.a",
-					data/libs/static/macArm/libfreetype.a,
-					"-w",
-				);
-				"OTHER_LDFLAGS[arch=x86_64]" = (
-					"data/libs/static/macIntel/libusb-1.0.a",
-					data/libs/static/macIntel/libfreetype.a,
-					"-w",
-				);
+				OTHER_CODE_SIGN_FLAGS = "--deep";
 				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Denise;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		9DECF9DD2E45F309005C0BBA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = data/denise.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 2.6;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = data/info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Denise;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/data/libs/shared/macIntel",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MARKETING_VERSION = 2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
+				PRODUCT_NAME = Denise;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		9DECF9DE2E45F309005C0BBA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = data/denise.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 2.6;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = data/info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Denise;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/data/libs/shared/macIntel",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MARKETING_VERSION = 2.6;
+				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
+				PRODUCT_NAME = Denise;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;
@@ -2744,11 +3231,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		9D8FA94B2CB3D7A8006905BE /* Build configuration list for PBXNativeTarget "denise" */ = {
+		9D8FA94B2CB3D7A8006905BE /* Build configuration list for PBXNativeTarget "arm64" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9D8FA94C2CB3D7A8006905BE /* Debug */,
 				9D8FA94D2CB3D7A8006905BE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9DECF9DC2E45F309005C0BBA /* Build configuration list for PBXNativeTarget "x86_64" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9DECF9DD2E45F309005C0BBA /* Debug */,
+				9DECF9DE2E45F309005C0BBA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

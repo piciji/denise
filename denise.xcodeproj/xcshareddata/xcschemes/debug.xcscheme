@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "9D8FA9312CB3D7A7006905BE"
-               BuildableName = "denise.app"
-               BlueprintName = "denise"
+               BuildableName = "Denise.app"
+               BlueprintName = "arm64"
                ReferencedContainer = "container:denise.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -44,8 +44,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9D8FA9312CB3D7A7006905BE"
-            BuildableName = "denise.app"
-            BlueprintName = "denise"
+            BuildableName = "Denise.app"
+            BlueprintName = "arm64"
             ReferencedContainer = "container:denise.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -61,8 +61,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9D8FA9312CB3D7A7006905BE"
-            BuildableName = "denise.app"
-            BlueprintName = "denise"
+            BuildableName = "Denise.app"
+            BlueprintName = "arm64"
             ReferencedContainer = "container:denise.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
