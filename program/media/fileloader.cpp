@@ -265,15 +265,21 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
         if (multi && dynamic_cast<LIBAMI::Interface*>(emulator)) {
             // amiga disk / harddisk multi selection
-            auto extension = GUIKIT::String::getExtension(file, "exe");
             auto mediaGroups = emulator->getDriveMediaGroups();
             std::vector<GUIKIT::BrowserWindow::Listing> out;
+            auto extension = GUIKIT::String::getExtension(file, "exe", 2);
+            auto parts = GUIKIT::String::split(extension, '.');
 
-            for (auto mediaGroup : mediaGroups) {
-                if (GUIKIT::Vector::find(mediaGroup->suffix, extension)) {
-                    for (auto media : mediaGroup->media)
-                        out.push_back({ media.name });
+            for (auto& part : parts) {
+                for (auto mediaGroup : mediaGroups) {
+                    if (GUIKIT::Vector::find(mediaGroup->suffix, part)) {
+                        for (auto media : mediaGroup->media)
+                            out.push_back({ media.name });
+                    }
                 }
+
+                if (out.size())
+                    break;
             }
             return out;
         }
