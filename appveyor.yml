@@ -69,15 +69,15 @@ for:
 -    
   matrix:
     only:
-      - image: Visual Studio 2022        
+      - image: Visual Studio 2022
       
   init:
-    - if "%Target%"=="win64" ( set mingw_archive=x86_64-13.2.0-release-posix-seh-msvcrt-rt_v11-rev1.7z)
-    - if "%Target%"=="win32" ( set mingw_archive=i686-13.2.0-release-posix-dwarf-msvcrt-rt_v11-rev1.7z)
+    - if "%Target%"=="win64" ( set mingw_archive=x86_64-14.2.0-release-posix-seh-msvcrt-rt_v12-rev2.7z)
+    - if "%Target%"=="win32" ( set mingw_archive=i686-14.2.0-release-posix-dwarf-msvcrt-rt_v12-rev2.7z)
     - if "%Target%"=="win64" ( set mingw_dir=mingw64)
     - if "%Target%"=="win32" ( set mingw_dir=mingw32)
-    - if "%Target%"=="win64" ( set mingw_url=https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev1/%mingw_archive%)
-    - if "%Target%"=="win32" ( set mingw_url=https://github.com/niXman/mingw-builds-binaries/releases/download/13.2.0-rt_v11-rev1/%mingw_archive%)
+    - if "%Target%"=="win64" ( set mingw_url=https://github.com/niXman/mingw-builds-binaries/releases/download/14.2.0-rt_v12-rev2/%mingw_archive%)
+    - if "%Target%"=="win32" ( set mingw_url=https://github.com/niXman/mingw-builds-binaries/releases/download/14.2.0-rt_v12-rev2/%mingw_archive%)
 
   cache:
     - '%mingw_archive%'
