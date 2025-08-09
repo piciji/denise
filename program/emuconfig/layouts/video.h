@@ -315,7 +315,12 @@ struct VideoScreenShotLayout : GUIKIT::FramedVerticalLayout {
         Format();
     } format;
 
-    VideoScreenShotLayout();
+    struct Options : GUIKIT::HorizontalLayout  {
+        GUIKIT::CheckBox palete;
+        Options(bool withPalete);
+    } options;
+
+    VideoScreenShotLayout(bool withPalete);
 };
 
 struct DisplayFont {

@@ -2429,7 +2429,7 @@ auto View::takeScreenshot() -> void {
     }
 
     screenshot.writePalette = (unscaled > 0) && dynamic_cast<LIBC64::Interface*>(activeEmulator) &&
-        ((screenshot.type == GUIKIT::Image::Type::GIF) || ((screenshot.type == GUIKIT::Image::Type::BMP) && !mergeTwoFrames));
+        ((screenshot.type == GUIKIT::Image::Type::GIF) || ((screenshot.type == GUIKIT::Image::Type::BMP) && settings->get<bool>("screen_palette", true) && !mergeTwoFrames));
     screenshot.withEffects = withEffects;
     screenshot.unscaled = unscaled;
     screenshot.twoFrames = mergeTwoFrames;

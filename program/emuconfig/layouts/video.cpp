@@ -428,14 +428,23 @@ VideoScreenShotLayout::Format::Format() {
     setAlignment(0.5);
 }
 
-VideoScreenShotLayout::VideoScreenShotLayout() {
+VideoScreenShotLayout::Options::Options(bool withPalete) {
+    if (withPalete)
+        append(palete, { 0u, 0u });
+
+    setAlignment(0.5);
+}
+
+VideoScreenShotLayout::VideoScreenShotLayout(bool withPalete) : options(withPalete) {
     append(location, { ~0u, 0u}, 10);
-    append(format, { ~0u, 0u });
+    append(format, { ~0u, 0u}, 10 );
+    append(options, { ~0u, 0u });
     setPadding(10);
 }
 
 VideoLayout::VideoLayout(TabWindow* tabWindow) :
-layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
+layBase(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)),
+layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
@@ -1501,6 +1510,11 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         _settings->set<std::string>("screen_record_format", "tga");
     };
 
+    layScreenShot.options.palete.onToggle = [this](bool checked) {
+        _settings->set<bool>("screen_palette", checked);
+    };
+
+
     fillFontTypeList();
 
     loadSettings(true);
@@ -2260,6 +2274,7 @@ auto VideoLayout::translate() -> void {
     layScreenShot.format.gif.setText(trans->getA("GIF (*)"));
     layScreenShot.format.gif.setTooltip(trans->getA("GIF tooltip"));
     layScreenShot.format.tga.setText(trans->getA("TGA"));
+    layScreenShot.options.palete.setText(trans->getA("save palete"));
 }
 
 auto VideoLayout::sliderIdent() -> std::string {
@@ -2388,6 +2403,9 @@ auto VideoLayout::loadSettings(bool init) -> void {
     else if (screenshotFormat == "tga") layScreenShot.format.tga.setChecked();
     else if (screenshotFormat == "gif") layScreenShot.format.gif.setChecked();
     else layScreenShot.format.png.setChecked();
+
+    if (dynamic_cast<LIBC64::Interface*>(emulator))
+        layScreenShot.options.palete.setChecked(_settings->get<bool>("screen_palette", true) );
 }
 
 auto VideoLayout::prepareColBox() -> void {
