@@ -641,7 +641,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 
     if (unlikely(takeScreenShots)) {
         if (view->screenshot.unscaled) {
-            takeScreenshot<T, interlace, field>(view->screenshot.unscaled, src, width, height, srcPitch);
+            takeScreenshot<T>(view->screenshot.unscaled, src, width, height, srcPitch, options);
         } else {
             gpuOptions |= (uint8_t)DRIVER::OPT_TakeScreenshot;
             if (!view->screenshot.withEffects) {
@@ -715,24 +715,41 @@ Typical:
     videoDriver->unlockAndRedraw( );
 }
 
-template<typename T, bool interlace, bool field> auto VideoManager::takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch) -> void {
+template<typename T> auto VideoManager::takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, uint8_t _options) -> void {
     const T* _fT = _src;
 
-    if (unscaled == 2) {
-        _width = 320;
-    } else if (unscaled == 3) {
-        _width = isC64() ? 384 : 344;
-    }    
-
     if (unscaled > 1) {
+        if (unscaled == 2)
+            _width = 320;
+        else if (unscaled == 3)
+            _width = isC64() ? 384 : 344;
+
         uint8_t* _f = activeEmulator->cropAlternatively(_width, _height, _pitch);
         if (!_f)
             return;
-        _fT = (const T*)_f;        
-    } 
+        _fT = (const T*)_f;
+    }
+
+    unsigned w = _width;
+    unsigned h = _height;
+
+    if (_options) {
+        bool interlace = _options & 3;
+        bool hires = _options & 4;
+        bool shres = _options & 8;
+
+        if (shres && !interlace)
+            _height <<= 2;
+        else if (shres && interlace)
+            _height <<= 1;
+        else if (hires && !interlace)
+            _height <<= 1;
+        else if (!hires && interlace)
+            _width <<= 1;
+    }
 
     uint8_t* _dest = new uint8_t[_width * _height * 3];
-    renderToScreenshot<T, interlace, field>(_width, _height, _fT, _pitch, _dest);
+    renderToScreenshot<T>(w, h, _fT, _pitch, _dest, _options);
     program->takeScreenshot(_dest, _width, _height);
     delete[] _dest;
 }
@@ -788,11 +805,17 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
 }
 
 #define screenshot3channel(x) { auto& _x = x; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; }
+#define screenshot3channel2x(x) { auto& _x = x; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; }
 
-template<typename T, bool interlace, bool field> auto VideoManager::renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest) -> void {
+template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void {
     unsigned mask = (1 << countColorBits) - 1;
+    bool interlace = _options & 3;
+    bool field = _options & 2;
+    bool hires = _options & 4;
+    bool shres = _options & 8;
 
-    if constexpr (interlace) {
+    if (interlace) {
+        bool repeatWidth = !hires && !shres;
         unsigned color;
         ColorRgbLight colorDecayed;
         bool laceToggle = !!(frameOptions & 0x80);
@@ -801,6 +824,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderToScre
             iRate = 100;
 
         for (unsigned h = 0; h < height; h++) {
+            uint8_t* _p = dest;
 
             if ((iRate != 100) && ((!field && (h & 1)) || (field && !(h & 1)))) {
 
@@ -818,9 +842,18 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderToScre
                 }
             } else {
                 for (unsigned w = 0; w < width; w++) {
-                    screenshot3channel(palette->paletteColors[*src++ & mask])
+                    if (repeatWidth)
+                        screenshot3channel2x(palette->paletteColors[*src++ & mask])
+                    else
+                        screenshot3channel(palette->paletteColors[*src++ & mask])
                 }
             }
+
+            if (shres) {
+                std::memcpy(dest, _p, width * 3);
+                dest += width * 3;
+            }
+
             src += srcPitch;
         }
     } else if (view->screenshot.writePalette) {
@@ -831,10 +864,19 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderToScre
             src += srcPitch;
         }
     } else {
+        int repeatHeight = shres ? 3 : (hires ? 1 : 0);
+
         for (unsigned h = 0; h < height; h++) {
+            uint8_t* _p = dest;
             for (unsigned w = 0; w < width; w++) {
                 screenshot3channel(palette->paletteColors[*src++ & mask])
             }
+
+            for(int i = 0; i < repeatHeight; i++) {
+                std::memcpy(dest, _p, width * 3);
+                dest += width * 3;
+            }
+
             src += srcPitch;
         }
     }

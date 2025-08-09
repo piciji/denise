@@ -178,7 +178,7 @@ struct VideoManager {
 
     template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch, unsigned& cropTop) -> void;
     template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
-    template<typename T, bool interlace = false, bool field = false> auto renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest) -> void;
+    template<typename T> auto renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void;
     template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
     template<typename T> inline auto renderCrtSelection(Render& re) -> void;
     template<typename T, uint8_t options = 0> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop ) -> void;
@@ -275,7 +275,7 @@ struct VideoManager {
     auto translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string;
 
     auto fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool;
-    template<typename T, bool interlace, bool field> auto takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch) -> void;
+    template<typename T> auto takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, uint8_t _options) -> void;
 };
 
 extern std::vector<VideoManager*> videoManagers;
