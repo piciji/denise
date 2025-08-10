@@ -44,7 +44,7 @@ cmake --build builds/release --target install
 ---------------
 Visual Studio
 ---------------
-there is a solution file in folder msvc
+there is a solution file in folder msvc with two targets (x86, x64)
 
 ###########################
 OSX
@@ -52,11 +52,6 @@ OSX
 -----------
 Console
 -----------
-compile freetype
-  download latest source
-  ./configure --enable-static --without-zlib --without-bzip2
-  make
-  sudo make install
 
 git clone https://piciji@bitbucket.org/piciji/denise.git denise
 cd denise
@@ -67,7 +62,7 @@ cmake --build builds/release --target install
 -----------
 Xcode
 -----------
-there is a solution file in folder denise.xcodeproj
+there is a solution file in folder denise.xcodeproj with two targets (x86_64, arm64)
 
 
 ###########################
