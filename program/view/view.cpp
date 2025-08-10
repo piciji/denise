@@ -1077,6 +1077,7 @@ auto View::loadImages() -> void {
     ledGreenRoundImage.loadPng((uint8_t*)Icons::ledGreenRound, sizeof(Icons::ledGreenRound));
     ledRedRoundImage.loadPng((uint8_t*) Icons::ledRedRound, sizeof (Icons::ledRedRound));
     ledOffRoundImage.loadPng((uint8_t*)Icons::ledOffRound, sizeof(Icons::ledOffRound));
+    recordAudioImage.loadPng((uint8_t*)Icons::recordAudio, sizeof(Icons::recordAudio));
 }
 
 auto View::buildMenu() -> void {
@@ -1449,13 +1450,29 @@ auto View::buildMenu() -> void {
     recordWithEffects.setEnabled(_unscaled == 0);
     miscMenu.append(recordWithEffects);
 
-    recordSettings.onActivate = [this]() {
+    recordScreenSettings.onActivate = [this]() {
         auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
         emuView->show(EmuConfigView::TabWindow::Layout::Presentation);
         if (emuView->videoLayout)
             emuView->videoLayout->selectViewScreenshot();
     };
-    miscMenu.append(recordSettings);
+    miscMenu.append(recordScreenSettings);
+
+    miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
+    recordAudio.onActivate = [this]() {    
+        program->toggleRecord();
+    };
+    recordAudio.setIcon(recordAudioImage);
+    miscMenu.append(recordAudio);
+
+    recordAudioSettings.onActivate = [this]() {
+        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
+        emuView->show(EmuConfigView::TabWindow::Layout::Audio);
+        if (emuView->audioLayout)
+            emuView->audioLayout->selectViewAudioRecord();
+    };
+    miscMenu.append(recordAudioSettings);
 
     miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
 
@@ -2053,7 +2070,10 @@ auto View::translate() -> void {
     recordScreen.setText(trans->getA("take screenshot"));
     recordMergedFrames.setText(trans->getA("merge frames"));    
     recordWithEffects.setText(trans->getA("including effects"));
-    recordSettings.setText(trans->getA("settings"));
+    recordScreenSettings.setText(trans->getA("screenshot settings"));
+
+    recordAudio.setText(trans->getA("record audio"));
+    recordAudioSettings.setText(trans->getA("record audio settings"));
 
     recordScaled.setText(trans->getA("scaled"));
     recordUnscaled.setText(trans->getA("unscaled"));
@@ -2136,6 +2156,8 @@ auto View::translate() -> void {
 
     maximumSpeedItem.setText( trans->get("maximum speed") );
     customizeSpeedItem.setText( trans->get("customize speed") );
+
+    setAudioRecordText();
 }
 
 auto View::updateScreenshotUI() -> void {
@@ -2441,4 +2463,14 @@ auto View::takeScreenshot() -> void {
     screenshot.mergeData = nullptr;
     screenshot.mergeSize = 0;
     screenshot.sharedMutex.unlock();
+}
+
+auto View::setAudioRecordText() -> void {
+    if (!audioManager)
+        return;
+
+    if(!audioManager->record.run())
+        recordAudio.setText(trans->getA("record audio start"));
+    else
+        recordAudio.setText(trans->getA("record audio stop"));
 }

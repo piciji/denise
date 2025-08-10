@@ -7,6 +7,7 @@
 #include "../../emuconfig/config.h"
 #include "../../view/status.h"
 #include "../../thread/emuThread.h"
+#include "../../view/view.h"
 
 namespace AudioRecord {
     
@@ -54,7 +55,8 @@ auto Handler::start( Emulator::Interface* emulator, std::string& errorText ) -> 
     
     setTimeLimit();
 
-    statusHandler->updateAudioRecord( true );
+    if (statusHandler)
+        statusHandler->updateAudioRecord( true );
     
     return true;
 }
@@ -149,10 +151,24 @@ auto Handler::finish(bool timeup) -> void {
 
             if (emuView && emuView->audioLayout)
                 emuView->audioLayout->stopRecord();
+            if (view)
+                view->setAudioRecordText();
         }
     }
 
-    statusHandler->updateAudioRecord( false );
+    if (statusHandler)
+        statusHandler->updateAudioRecord( false );
+}
+
+auto Handler::toggle(Emulator::Interface* emulator, std::string& errorText) -> bool {
+    if (run()) {
+        finish();
+    } else {
+        if (!start(emulator, errorText)) {
+            return false;
+        }
+    }
+    return true;
 }
     
 }

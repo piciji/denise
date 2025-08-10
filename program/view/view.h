@@ -148,7 +148,10 @@ struct View : GUIKIT::Window {
         GUIKIT::MenuRadioItem recordUnscaledMonitor;
         GUIKIT::MenuCheckItem recordMergedFrames;
         GUIKIT::MenuCheckItem recordWithEffects;
-        GUIKIT::MenuItem recordSettings;
+        GUIKIT::MenuItem recordScreenSettings;
+
+        GUIKIT::MenuItem recordAudio;
+        GUIKIT::MenuItem recordAudioSettings;
 
         GUIKIT::MenuItem copyItem;
         GUIKIT::MenuItem pasteItem;
@@ -279,6 +282,7 @@ struct View : GUIKIT::Window {
     GUIKIT::Image insertImage;
 
 	GUIKIT::Image delImage;
+    GUIKIT::Image recordAudioImage;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels() -> void;
@@ -292,6 +296,7 @@ struct View : GUIKIT::Window {
     auto adjustToEmu(bool withViewport) -> void;
     auto takeScreenshot() -> void;
     auto updateScreenshotUI() -> void;
+    auto setAudioRecordText() -> void;
     
     View();
 };

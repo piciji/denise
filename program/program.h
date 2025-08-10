@@ -165,6 +165,7 @@ struct Program : Emulator::Interface::Bind {
     auto audioSample(int16_t sampleLeft, int16_t sampleRight) -> void override;
     auto audioFlush() -> void override;
     auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, bool alternate, uint8_t data = 0) -> void override;
+    auto toggleRecord() -> void;
     
     //video
     auto setVideoDimension(Emulator::Interface* emulator = nullptr) -> void;

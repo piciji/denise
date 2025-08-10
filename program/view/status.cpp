@@ -7,6 +7,7 @@
 #include "../thread/emuThread.h"
 #include "../emuconfig/config.h"
 #include "../media/media.h"
+#include "../input/manager.h"
 
 StatusHandler* statusHandler = nullptr;
 
@@ -388,7 +389,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
         if (activeEmulator)
             this->setExpansionClick();
     } );    // expansion LED
-    statusBar->append( 14, &(view->recordStatusImage) );    // REC Status
+    statusBar->append(14, &(view->recordStatusImage), []() { program->toggleRecord(); });    // REC Status
     statusBar->append( 18, 21, 60, [](unsigned position) {
         if (!activeEmulator)
             return;

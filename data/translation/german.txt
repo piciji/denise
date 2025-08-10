@@ -911,3 +911,7 @@ scaled = skaliert (angezeigt)
 unscaled = unskaliert
 GIF tooltip = GIF's können maximal 256 verschiedene Farben pro Bild darstellen. Durch Shader oder Effekte kann dieser Wert erreicht werden. Sollte das passieren, wird alternativ ein PNG gespeichert.
 save palete = BMP speichert Palette (4bit)
+screenshot settings = Bildschirmfoto Einstellungen
+record audio start = Tonaufnahme starten
+record audio stop = Tonaufnahme anhalten
+record audio settings = Tonaufnahme Einstellungen

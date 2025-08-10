@@ -35,6 +35,8 @@ struct Handler {
     auto checkTime() -> void;
     
     auto finish(bool timeup = false) -> void;
+
+    auto toggle(Emulator::Interface* emulator, std::string& errorText) -> bool;
 };
 
 }

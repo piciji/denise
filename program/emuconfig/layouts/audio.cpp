@@ -634,7 +634,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
                 mes->error( errorText );
                 audioRecord.duration.record.setChecked(false);
                 return;
-            }                        
+            }
+
+            view->setAudioRecordText();
         } else
             audioManager->record.finish();
 
@@ -1156,4 +1158,9 @@ auto AudioLayout::stopRecord() -> void {
         audioRecord.duration.record.setText( trans->get( "Record" ) );
         audioRecord.duration.record.setChecked(false);
     }
+}
+
+auto AudioLayout::selectViewAudioRecord() -> void {
+    moduleList.setSelection(moduleList.rowCount() - 1);
+    moduleSwitch.setSelection(moduleList.selection());
 }

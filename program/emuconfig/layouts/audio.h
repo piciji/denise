@@ -210,4 +210,6 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
 
     auto updateVolumeSlider() -> void;
     auto updateRecordingPath() -> void;
+
+    auto selectViewAudioRecord() -> void;
 };

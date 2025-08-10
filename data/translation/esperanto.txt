@@ -911,3 +911,7 @@ scaled = scaled (displayed)
 unscaled = unscaled
 GIF tooltip = GIFs can display a maximum of 256 different colors per image. This can be quickly achieved using shaders or effects. If this happens, a PNG is saved as an alternative.
 save palete = BMP saves palette (4bit)
+screenshot settings = Screenshot settings
+record audio start = Start audio recording
+record audio stop = Stop audio recording
+record audio settings = Audio recording settings

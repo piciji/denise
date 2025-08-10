@@ -145,21 +145,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (!activeEmulator)
                 break;
 
-            auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
-            if (emuView && emuView->audioLayout) {
-                emuView->audioLayout->toggleRecord();
-            } else {
-                emuThread->lock();
-                if (audioManager->record.run()) {
-                    audioManager->record.finish();
-                } else {
-                    std::string errorText;
-                    if (!audioManager->record.start(activeEmulator, errorText)) {
-                        statusHandler->setMessage(errorText, true);
-                    }
-                }
-            }
-
+            program->toggleRecord();
         } break;
         case Hotkey::Id::RunAheadDown:
         case Hotkey::Id::RunAheadUp: {
