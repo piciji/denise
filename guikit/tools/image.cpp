@@ -83,11 +83,11 @@ auto Image::generate(Type type) -> Encoded {
     return encoded;
 }
 
-auto Image::generate(Type type, std::vector<uint32_t>& colorTable, const uint8_t* src, const uint8_t* src2, unsigned width, unsigned height) -> Encoded {
+auto Image::generate(Type type, std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height) -> Encoded {
     ImageEncoder encoder;
     Encoded encoded;
 
-    if (encoder.encodeWithColorTable((ImageEncoder::Type)type, colorTable, src, src2, width, height)) {
+    if (encoder.encodeWithColorTable((ImageEncoder::Type)type, colorTable, srcs, width, height)) {
         encoded.data = encoder.data;
         encoded.size = encoder.size;
         encoded.type = (Type)encoder.usedType;

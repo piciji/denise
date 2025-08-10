@@ -17,8 +17,14 @@ namespace DRIVER {
 
     auto RenderThread::lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options) -> bool {
 
-        if (!prepareBuffer(_width, _height, true))
-            return false;
+        if (!prepareBuffer(_width, _height, true)) {
+            if (options & 8) { // screenshot
+                wait();
+                if (!prepareBuffer(_width, _height, true))
+                    return false;
+            } else
+                return false;
+        }
 
         lockedBuffer->options = options;
         if ((options & 1) && fillPos) {
@@ -36,8 +42,14 @@ namespace DRIVER {
 
     auto RenderThread::lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options) -> bool {
 
-        if (!prepareBuffer(_width, _height, false))
-            return false;
+        if (!prepareBuffer(_width, _height, false)) {
+            if (options & 8) {
+                wait();
+                if (!prepareBuffer(_width, _height, false))
+                    return false;
+            } else
+                return false;
+        }
 
         lockedBuffer->options = options;
         if ((options & 1) && fillPos) {

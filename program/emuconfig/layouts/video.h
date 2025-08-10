@@ -317,6 +317,7 @@ struct VideoScreenShotLayout : GUIKIT::FramedVerticalLayout {
 
     struct Options : GUIKIT::HorizontalLayout  {
         GUIKIT::CheckBox palete;
+        SliderLayout gun;
         Options(bool withPalete);
     } options;
 

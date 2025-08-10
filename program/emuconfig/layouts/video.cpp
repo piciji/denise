@@ -428,9 +428,15 @@ VideoScreenShotLayout::Format::Format() {
     setAlignment(0.5);
 }
 
-VideoScreenShotLayout::Options::Options(bool withPalete) {
+VideoScreenShotLayout::Options::Options(bool withPalete)
+: gun("") {
     if (withPalete)
-        append(palete, { 0u, 0u });
+        append(palete, { 0u, 0u }, 20);
+    
+    append(gun, { ~0u, 0u });
+
+    gun.slider.setLength(60);
+    gun.updateValueWidth("99");
 
     setAlignment(0.5);
 }
@@ -1514,6 +1520,10 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<bool>("screen_palette", checked);
     };
 
+    layScreenShot.options.gun.slider.onChange = [this](unsigned position) {
+        layScreenShot.options.gun.setValue(std::to_string(position+1));
+        _settings->set<unsigned>("screen_gun", position+1);
+    };
 
     fillFontTypeList();
 
@@ -2275,6 +2285,7 @@ auto VideoLayout::translate() -> void {
     layScreenShot.format.gif.setTooltip(trans->getA("GIF tooltip"));
     layScreenShot.format.tga.setText(trans->getA("TGA"));
     layScreenShot.options.palete.setText(trans->getA("save palete"));
+    layScreenShot.options.gun.name.setText(trans->getA("frames"));
 }
 
 auto VideoLayout::sliderIdent() -> std::string {
@@ -2406,6 +2417,12 @@ auto VideoLayout::loadSettings(bool init) -> void {
 
     if (dynamic_cast<LIBC64::Interface*>(emulator))
         layScreenShot.options.palete.setChecked(_settings->get<bool>("screen_palette", true) );
+
+    auto screenshotGun = _settings->get<unsigned>("screen_gun", 1);
+    if (!screenshotGun)
+        screenshotGun = 1;
+    layScreenShot.options.gun.slider.setPosition(screenshotGun - 1);
+    layScreenShot.options.gun.setValue(std::to_string(screenshotGun));
 }
 
 auto VideoLayout::prepareColBox() -> void {

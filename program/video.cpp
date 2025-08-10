@@ -128,66 +128,95 @@ auto Program::initVideo(bool driverChange) -> void {
     loadProgress();
 }
 
+auto Program::bufferScreenshot(uint8_t* _data, unsigned _size) -> void {
+    auto& screenShot = view->screenshot;
+    unsigned useSize = _size * 3;
+
+    if (!screenShot.bufferSize)
+        screenShot.bufferSize = useSize;
+    else if (screenShot.bufferSize != useSize) {
+        view->clearScreenshotBuffer();
+        screenShot.bufferSize = useSize;
+    }
+
+    uint8_t* ptr = new uint8_t[useSize];
+    screenShot.buffer.push_back(ptr);
+    std::memcpy(ptr, _data, useSize);
+}
+
 auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) -> void {
     auto& screenShot = view->screenshot;
     screenShot.sharedMutex.lock();
+    GUIKIT::Image::Encoded encoded;
+    encoded.data = nullptr;
+    GUIKIT::Image image;
+    std::vector<uint32_t> colorTable;
 
-    if (screenShot.twoFrames && !screenShot.mergeData) {
-        screenShot.mergeSize = _width * _height * 3;
-        screenShot.mergeData = new uint8_t[screenShot.mergeSize];
-        std::memcpy(screenShot.mergeData, _data, screenShot.mergeSize);
-    } else {        
-        if (screenShot.mergeData && !screenShot.writePalette) {
-            if (screenShot.mergeSize == (_width * _height * 3)) {
-                uint8_t* src = screenShot.mergeData;
-                uint8_t* desc = _data;
+    if (screenShot.saveState) {
+        GUIKIT::Image image(_width, _height, _data, GUIKIT::Image::Format::RGB);
+        image.scaleLinear(200, 150);
+        encoded = image.generate(GUIKIT::Image::Type::PNG);
 
-                for (unsigned y = 0; y < _height; y++) {
-                    for (unsigned x = 0; x < (_width * 3); x++)
-                        *desc++ = ((unsigned)*desc + (unsigned)*src++) >> 1;
-                }
-            }
-            delete[] screenShot.mergeData;
-            screenShot.mergeData = nullptr;
-            screenShot.mergeSize = 0;
+    } else if (screenShot.animatedGif) {
+        bufferScreenshot(_data, _width * _height);
+
+        if (!--screenShot.gun) {            
+            for (auto& pal : activeVideoManager->palette->paletteColors)
+                colorTable.push_back(pal.rgb);
+
+            encoded = image.generate(screenShot.type, colorTable, screenShot.buffer, _width, _height);
         }
 
-        GUIKIT::Image::Encoded encoded;
-        encoded.data = nullptr;
+    } else if (screenShot.twoFrames && !screenShot.buffer.size()) {
+        bufferScreenshot(_data, _width * _height);
 
-        if (screenShot.saveState) {
-            GUIKIT::Image image(_width, _height, _data, GUIKIT::Image::Format::RGB);
-            image.scaleLinear(200, 150);
-            encoded = image.generate(GUIKIT::Image::Type::PNG);
+    } else {
+        if (screenShot.writePalette) {
+            for (auto& pal : activeVideoManager->palette->paletteColors)
+                colorTable.push_back(pal.rgb);
+            
+            encoded = image.generate(screenShot.type, colorTable, {_data}, _width, _height);
+
         } else {
-            GUIKIT::Image image;
-            if (screenShot.writePalette) {
-                std::vector<uint32_t> colorTable;
-                for (auto& pal : activeVideoManager->palette->paletteColors)
-                    colorTable.push_back(pal.rgb);
-                
-                encoded = image.generate(screenShot.type, colorTable, _data, screenShot.mergeData, _width, _height);
-            } else
-                encoded = image.generate(screenShot.type, _data, _width, _height);
-        }
+            if (screenShot.buffer.size()) {
+                auto screenBefore = screenShot.buffer[0];
 
-        if (screenShot.mergeData) {
-            delete[] screenShot.mergeData;
-            screenShot.mergeData = nullptr;
-        }
+                if (screenShot.bufferSize == (_width * _height * 3)) {
+                    uint8_t* src = screenBefore;
+                    uint8_t* desc = _data;
 
-        if (encoded.data) {
-            GUIKIT::File file;
-            if ((encoded.type == GUIKIT::Image::Type::PNG) && (encoded.type != screenShot.type)) {
-                // request GIF, but image has more than 256 colors
-                GUIKIT::String::replace(screenShot.path, ".gif", ".png");
+                    for (unsigned y = 0; y < _height; y++) {
+                        for (unsigned x = 0; x < (_width * 3); x++)
+                            *desc++ = ((unsigned)*desc + (unsigned)*src++) >> 1;
+                    }
+                }
+                view->clearScreenshotBuffer();
             }
-            file.setFile(screenShot.path);
-            file.open(GUIKIT::File::Mode::Write);
-            file.write(encoded.data, encoded.size);
-            delete[] encoded.data;
-        }        
+
+            encoded = image.generate(screenShot.type, _data, _width, _height);
+        }
     }
+
+    if (encoded.data) {
+        GUIKIT::File file;
+        std::string _replace = std::to_string(Chronos::getTimestampInSecondsPrecise());
+        if (screenShot.gun && !screenShot.animatedGif)
+            _replace += "_" + std::to_string(screenShot.gun++);
+
+        std::string _path = screenShot.path;
+
+        GUIKIT::String::replace(_path, "#ident#", _replace);
+
+        if ((encoded.type == GUIKIT::Image::Type::PNG) && (encoded.type != screenShot.type)) {
+            // request GIF, but image has more than 256 colors -> write as PNG
+            GUIKIT::String::replace(_path, ".gif", ".png");
+        }
+        file.setFile(_path);
+        file.open(GUIKIT::File::Mode::Write);
+        file.write(encoded.data, encoded.size);
+        delete[] encoded.data;
+    }
+
     screenShot.sharedMutex.unlock();
 }
 

@@ -2428,9 +2428,10 @@ auto View::takeScreenshot() -> void {
     bool withEffects = globalSettings->get<bool>("screenshot_with_effects", true);
     bool mergeTwoFrames = globalSettings->get<bool>("screenshot_merge_frames", false);
     unsigned unscaled = globalSettings->get<unsigned>("screenshot_unscaled", 0);
+    bool usePalete = settings->get<bool>("screen_palette", true);
+    unsigned screenGun = settings->get<unsigned>("screen_gun", 1);
 
-    auto timestamp = Chronos::getTimestampInSecondsPrecise();
-    _path += _file + "_" + std::to_string(timestamp);
+    _path += _file + "_#ident#";
 
     screenshot.sharedMutex.lock();
     if (screenshotFormat == "bmp") {
@@ -2451,18 +2452,37 @@ auto View::takeScreenshot() -> void {
     }
 
     screenshot.writePalette = (unscaled > 0) && dynamic_cast<LIBC64::Interface*>(activeEmulator) &&
-        ((screenshot.type == GUIKIT::Image::Type::GIF) || ((screenshot.type == GUIKIT::Image::Type::BMP) && settings->get<bool>("screen_palette", true) && !mergeTwoFrames));
+        ((screenshot.type == GUIKIT::Image::Type::GIF) || ((screenshot.type == GUIKIT::Image::Type::BMP) && usePalete && !mergeTwoFrames));
+
+    screenshot.animatedGif = (screenshot.type == GUIKIT::Image::Type::GIF) && (unscaled > 0) && dynamic_cast<LIBC64::Interface*>(activeEmulator)
+        && ((screenGun > 1) || mergeTwoFrames);
+
     screenshot.withEffects = withEffects;
     screenshot.unscaled = unscaled;
     screenshot.twoFrames = mergeTwoFrames;
     screenshot.pause = 0;
     screenshot.saveState = false;
-    VideoManager::takeScreenShots = mergeTwoFrames ? 2 : 1;
-    if (screenshot.mergeData)
-        delete[] screenshot.mergeData;
-    screenshot.mergeData = nullptr;
-    screenshot.mergeSize = 0;
+
+    if (screenshot.animatedGif) {
+        screenshot.gun = screenGun > 1 ? screenGun : 2;
+        VideoManager::takeScreenShots = screenshot.gun;
+    } else {
+        screenshot.gun = screenGun > 1 ? 1 : 0;
+        VideoManager::takeScreenShots = mergeTwoFrames ? 2 : 1;
+        if (screenGun)
+            VideoManager::takeScreenShots *= screenGun;
+    }
+    clearScreenshotBuffer();
     screenshot.sharedMutex.unlock();
+}
+
+auto View::clearScreenshotBuffer() -> void {
+    for (auto ptr : screenshot.buffer) {
+        if (ptr)
+            delete[] ptr;
+    }
+    screenshot.buffer.clear();
+    screenshot.bufferSize = 0;
 }
 
 auto View::setAudioRecordText() -> void {

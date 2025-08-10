@@ -9,7 +9,7 @@
 
 namespace GUIKIT {
 
-#include "images.h"
+    #include "images.h"
 
     ImageEncoder::~ImageEncoder() {
         for (auto& chunk : chunks) {
@@ -51,16 +51,16 @@ namespace GUIKIT {
         return data != nullptr;
     }
 
-    auto ImageEncoder::encodeWithColorTable(Type type, std::vector<uint32_t>& colorTable, const uint8_t* src, const uint8_t* src2, unsigned width, unsigned height) -> bool {
+    auto ImageEncoder::encodeWithColorTable(Type type, std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height) -> bool {
         size = 0;
         usedType = type;
         
         switch (type) {
             case Type::BMP:
-                encodeBMPWithColorTable(colorTable, src, width, height);
+                encodeBMPWithColorTable(colorTable, srcs[0], width, height);
                 break;
             case Type::GIF:
-                encodeGIFWithColorTable(colorTable, src, src2, width, height);
+                encodeGIFWithColorTable(colorTable, srcs, width, height);
                 break;
             default:
                 break;
@@ -273,7 +273,7 @@ namespace GUIKIT {
         return true;
     }
 
-    auto ImageEncoder::encodeGIFWithColorTable(std::vector<uint32_t>& colorTable, const uint8_t* src, const uint8_t* src2, unsigned width, unsigned height) -> bool {
+    auto ImageEncoder::encodeGIFWithColorTable(std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height) -> bool {
         CGIF* pGIF;
         CGIF_Config gConfig;
         CGIF_FrameConfig fConfig;
@@ -296,22 +296,19 @@ namespace GUIKIT {
         gConfig.path = nullptr;
         gConfig.pWriteFn = writeGIF;
         gConfig.pContext = this;
-        if (src2)
+        if (srcs.size() > 1)
             gConfig.attrFlags = CGIF_ATTR_IS_ANIMATED;
 
         pGIF = cgif_newgif(&gConfig);
         delete[] aPalette;
 
         std::memset(&fConfig, 0, sizeof(CGIF_FrameConfig));
-        fConfig.pImageData = (uint8_t*)src;
-        if (src2)
-            fConfig.delay = 2; // 0.02 => 50 FPS
-        
-        cgif_addframe(pGIF, &fConfig);
 
-        if (src2) {
-            fConfig.pImageData = (uint8_t*)src2;
-            fConfig.delay = 2;
+        if (srcs.size() > 1)
+            fConfig.delay = 2; // 0.02 => 50 FPS
+
+        for(auto src : srcs) {
+            fConfig.pImageData = (uint8_t*)src;
             cgif_addframe(pGIF, &fConfig);
         }
 

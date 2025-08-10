@@ -28,10 +28,12 @@ struct View : GUIKIT::Window {
         unsigned unscaled = 0;
         bool twoFrames = false;
         bool saveState = false;
-        uint8_t* mergeData = nullptr;
-        unsigned mergeSize = 0;
         unsigned pause = 0;
         bool writePalette = false;
+        unsigned gun = 0;
+        bool animatedGif = false;
+        std::vector<uint8_t*> buffer;
+        unsigned bufferSize;
         std::mutex sharedMutex;
     } screenshot;
 
@@ -295,6 +297,7 @@ struct View : GUIKIT::Window {
     auto updateGeometry(bool withViewport = false) -> void;
     auto adjustToEmu(bool withViewport) -> void;
     auto takeScreenshot() -> void;
+    auto clearScreenshotBuffer() -> void;
     auto updateScreenshotUI() -> void;
     auto setAudioRecordText() -> void;
     
