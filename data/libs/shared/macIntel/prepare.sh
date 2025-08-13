@@ -15,3 +15,4 @@ install_name_tool -id @rpath/libz.1.dylib libz.1.dylib
 install_name_tool -id @rpath/libusb-1.0.0.dylib libusb-1.0.0.dylib
 install_name_tool -id @rpath/libpng16.16.dylib libpng16.16.dylib
 install_name_tool -id @rpath/libfreetype.6.dylib libfreetype.6.dylib
+install_name_tool -id @rpath/libmp3lame.0.dylib libmp3lame.0.dylib

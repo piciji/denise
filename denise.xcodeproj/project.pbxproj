@@ -62,6 +62,8 @@
 		9D64044B2DCDEF2E00624A00 /* filesystemExt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404452DCDEF2E00624A00 /* filesystemExt.cpp */; };
 		9D64044C2DCDEF2E00624A00 /* hardDrive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404472DCDEF2E00624A00 /* hardDrive.cpp */; };
 		9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404482DCDEF2E00624A00 /* hunk.cpp */; };
+		9D6C71762E4CD03A00F3F107 /* libmp3lame.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */; };
+		9D6C71772E4CD03A00F3F107 /* libmp3lame.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9D7B485D2E40D7640010B152 /* cgif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B48572E40D7640010B152 /* cgif.cpp */; };
 		9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B485A2E40D7640010B152 /* cgif_raw.cpp */; };
 		9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FA9532CB3DF78006905BE /* Cocoa.framework */; };
@@ -392,6 +394,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				9D6C71772E4CD03A00F3F107 /* libmp3lame.0.dylib in Embed Libraries */,
 				9D99AA832E4631490075FF62 /* libpng16.16.dylib in Embed Libraries */,
 				9D99AA812E4631490075FF62 /* libfreetype.6.dylib in Embed Libraries */,
 				9D99AA872E4631490075FF62 /* libz.1.dylib in Embed Libraries */,
@@ -520,6 +523,7 @@
 		9D6404472DCDEF2E00624A00 /* hardDrive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hardDrive.cpp; sourceTree = "<group>"; };
 		9D6404482DCDEF2E00624A00 /* hunk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hunk.cpp; sourceTree = "<group>"; };
 		9D6404492DCDEF2E00624A00 /* hardDrive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hardDrive.h; sourceTree = "<group>"; };
+		9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmp3lame.0.dylib; path = data/libs/shared/macIntel/libmp3lame.0.dylib; sourceTree = "<group>"; };
 		9D7B48572E40D7640010B152 /* cgif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif.cpp; sourceTree = "<group>"; };
 		9D7B48582E40D7640010B152 /* cgif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cgif.h; sourceTree = "<group>"; };
 		9D7B485A2E40D7640010B152 /* cgif_raw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif_raw.cpp; sourceTree = "<group>"; };
@@ -1128,6 +1132,7 @@
 				9DECF9C02E45F309005C0BBA /* Metal.framework in Frameworks */,
 				9DECF9C12E45F309005C0BBA /* OpenGL.framework in Frameworks */,
 				9DECF9C22E45F309005C0BBA /* AudioUnit.framework in Frameworks */,
+				9D6C71762E4CD03A00F3F107 /* libmp3lame.0.dylib in Frameworks */,
 				9DECF9C32E45F309005C0BBA /* AudioToolbox.framework in Frameworks */,
 				9DECF9C42E45F309005C0BBA /* MetalKit.framework in Frameworks */,
 				9D99AA862E4631490075FF62 /* libz.1.dylib in Frameworks */,
@@ -1310,6 +1315,7 @@
 			isa = PBXGroup;
 			children = (
 				9D06E27C2E4CC79B00CF5A5E /* libmp3lame.0.dylib */,
+				9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */,
 				9DECF8452E45F25D005C0BBA /* libbrotlicommon.1.dylib */,
 				9DECF8462E45F25D005C0BBA /* libbrotlidec.1.dylib */,
 				9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */,
