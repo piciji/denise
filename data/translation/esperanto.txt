@@ -542,7 +542,6 @@ Damping = Malseketigado
 Room Width = Larĝeco de la ĉambro
 Room Size = Grandeco de la ĉambro
 EF3 Slot = EF3 Fendo
-wav folder = Dosierujo WAV
 japanese = Japane
 app settings = %app% agordoj
 RS-232_insert = Enmeti kartoĉon RS-232

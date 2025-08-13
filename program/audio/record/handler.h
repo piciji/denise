@@ -6,19 +6,19 @@
 
 namespace AudioRecord {
 
-struct WavWriter;    
+struct BaseWriter;
     
 struct Handler {
 		
-	WavWriter* wavWriter = nullptr;
+    enum Type { MP3, WAV } type;
+
+    BaseWriter* baseWriter = nullptr;
 	
 	unsigned startTime = 0;
 	
 	unsigned timeLimit = 0;
 	
 	unsigned sampleRate = 44100;
-	
-	unsigned framesFlush;
 	
 	unsigned framesTimeCheck;
     

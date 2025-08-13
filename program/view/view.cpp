@@ -2429,7 +2429,7 @@ auto View::takeScreenshot() -> void {
     bool mergeTwoFrames = globalSettings->get<bool>("screenshot_merge_frames", false);
     unsigned unscaled = globalSettings->get<unsigned>("screenshot_unscaled", 0);
     bool usePalete = settings->get<bool>("screen_palette", true);
-    unsigned screenGun = settings->get<unsigned>("screen_gun", 1);
+    unsigned screenGun = settings->get<unsigned>("screen_gun", 1, {1, 60});
 
     _path += _file + "_#ident#";
 

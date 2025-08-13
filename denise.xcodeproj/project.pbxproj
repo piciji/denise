@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9D06E2772E4CC1D800CF5A5E /* mp3Writer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D06E2762E4CC1D800CF5A5E /* mp3Writer.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9D06E2782E4CC1D800CF5A5E /* mp3Writer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D06E2762E4CC1D800CF5A5E /* mp3Writer.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9D06E27D2E4CC79B00CF5A5E /* libmp3lame.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D06E27C2E4CC79B00CF5A5E /* libmp3lame.0.dylib */; };
+		9D06E27E2E4CC79B00CF5A5E /* libmp3lame.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D06E27C2E4CC79B00CF5A5E /* libmp3lame.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9D07CC8C2E296C5F00A9787E /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CC8B2E296C5F00A9787E /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/cgif/ -I$(PROJECT_DIR)/deps/stb/"; }; };
 		9D07CCF92E296CD000A9787E /* lh1_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD12E296CD000A9787E /* lh1_decoder.cpp */; };
 		9D07CCFA2E296CD000A9787E /* lha_reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCD22E296CD000A9787E /* lha_reader.cpp */; };
@@ -58,6 +62,8 @@
 		9D64044B2DCDEF2E00624A00 /* filesystemExt.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404452DCDEF2E00624A00 /* filesystemExt.cpp */; };
 		9D64044C2DCDEF2E00624A00 /* hardDrive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404472DCDEF2E00624A00 /* hardDrive.cpp */; };
 		9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404482DCDEF2E00624A00 /* hunk.cpp */; };
+		9D6C71762E4CD03A00F3F107 /* libmp3lame.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */; };
+		9D6C71772E4CD03A00F3F107 /* libmp3lame.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9D7B485D2E40D7640010B152 /* cgif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B48572E40D7640010B152 /* cgif.cpp */; };
 		9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B485A2E40D7640010B152 /* cgif_raw.cpp */; };
 		9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FA9532CB3DF78006905BE /* Cocoa.framework */; };
@@ -71,7 +77,7 @@
 		9D8FAB042CB3F6EF006905BE /* config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA962CB3F6EF006905BE /* config.cpp */; };
 		9D8FAB092CB3F6EF006905BE /* manager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA9F2CB3F6EF006905BE /* manager.cpp */; };
 		9D8FAB0D2CB3F6EF006905BE /* wavWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAA62CB3F6EF006905BE /* wavWriter.cpp */; };
-		9D8FAB0E2CB3F6EF006905BE /* handler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAA82CB3F6EF006905BE /* handler.cpp */; };
+		9D8FAB0E2CB3F6EF006905BE /* handler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAA82CB3F6EF006905BE /* handler.cpp */; settings = {COMPILER_FLAGS = "-DLIBLAME -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9D8FAB112CB3F6EF006905BE /* cosine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAB32CB3F6EF006905BE /* cosine.cpp */; };
 		9D8FAB132CB3F6EF006905BE /* cosinePrecise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAB62CB3F6EF006905BE /* cosinePrecise.cpp */; };
 		9D8FAB142CB3F6EF006905BE /* cosineSSE.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAB72CB3F6EF006905BE /* cosineSSE.cpp */; };
@@ -284,7 +290,7 @@
 		9DECF96B2E45F309005C0BBA /* iec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FADA02CB40DF7006905BE /* iec.cpp */; };
 		9DECF96C2E45F309005C0BBA /* mx29lv640eb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACAD2CB40DF6006905BE /* mx29lv640eb.cpp */; };
 		9DECF96D2E45F309005C0BBA /* filesystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD0E2CB40DF7006905BE /* filesystem.cpp */; };
-		9DECF96E2E45F309005C0BBA /* handler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAA82CB3F6EF006905BE /* handler.cpp */; };
+		9DECF96E2E45F309005C0BBA /* handler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAA82CB3F6EF006905BE /* handler.cpp */; settings = {COMPILER_FLAGS = "-DLIBLAME -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DECF96F2E45F309005C0BBA /* lha_input_stream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D07CCDB2E296CD000A9787E /* lha_input_stream.cpp */; };
 		9DECF9702E45F309005C0BBA /* input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD6E2CB40DF7006905BE /* input.cpp */; };
 		9DECF9712E45F309005C0BBA /* system.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACE02CB40DF6006905BE /* system.cpp */; };
@@ -388,6 +394,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				9D6C71772E4CD03A00F3F107 /* libmp3lame.0.dylib in Embed Libraries */,
 				9D99AA832E4631490075FF62 /* libpng16.16.dylib in Embed Libraries */,
 				9D99AA812E4631490075FF62 /* libfreetype.6.dylib in Embed Libraries */,
 				9D99AA872E4631490075FF62 /* libz.1.dylib in Embed Libraries */,
@@ -405,6 +412,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				9D06E27E2E4CC79B00CF5A5E /* libmp3lame.0.dylib in Embed Libraries */,
 				9DECF84D2E45F25E005C0BBA /* libfreetype.6.dylib in Embed Libraries */,
 				9DECF84B2E45F25D005C0BBA /* libbz2.1.0.dylib in Embed Libraries */,
 				9DECF8552E45F25E005C0BBA /* libpng16.16.dylib in Embed Libraries */,
@@ -419,6 +427,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		9D06E2742E4CC1D700CF5A5E /* base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base.h; sourceTree = "<group>"; };
+		9D06E2752E4CC1D700CF5A5E /* mp3Writer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mp3Writer.h; sourceTree = "<group>"; };
+		9D06E2762E4CC1D800CF5A5E /* mp3Writer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mp3Writer.cpp; sourceTree = "<group>"; };
+		9D06E27C2E4CC79B00CF5A5E /* libmp3lame.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmp3lame.0.dylib; path = data/libs/shared/macArm/libmp3lame.0.dylib; sourceTree = "<group>"; };
 		9D07CC8A2E296C5F00A9787E /* images.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = images.h; sourceTree = "<group>"; };
 		9D07CC8B2E296C5F00A9787E /* images.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = images.cpp; sourceTree = "<group>"; };
 		9D07CCD12E296CD000A9787E /* lh1_decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lh1_decoder.cpp; sourceTree = "<group>"; };
@@ -511,6 +523,7 @@
 		9D6404472DCDEF2E00624A00 /* hardDrive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hardDrive.cpp; sourceTree = "<group>"; };
 		9D6404482DCDEF2E00624A00 /* hunk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hunk.cpp; sourceTree = "<group>"; };
 		9D6404492DCDEF2E00624A00 /* hardDrive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hardDrive.h; sourceTree = "<group>"; };
+		9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmp3lame.0.dylib; path = data/libs/shared/macIntel/libmp3lame.0.dylib; sourceTree = "<group>"; };
 		9D7B48572E40D7640010B152 /* cgif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif.cpp; sourceTree = "<group>"; };
 		9D7B48582E40D7640010B152 /* cgif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cgif.h; sourceTree = "<group>"; };
 		9D7B485A2E40D7640010B152 /* cgif_raw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif_raw.cpp; sourceTree = "<group>"; };
@@ -1092,6 +1105,7 @@
 				9D8FAEB32CB415E3006905BE /* AudioUnit.framework in Frameworks */,
 				9DECF9E12E45F82B005C0BBA /* libbrotlidec.1.dylib in Frameworks */,
 				9D8FAEB12CB415DD006905BE /* AudioToolbox.framework in Frameworks */,
+				9D06E27D2E4CC79B00CF5A5E /* libmp3lame.0.dylib in Frameworks */,
 				9D8FAEAB2CB415BD006905BE /* MetalKit.framework in Frameworks */,
 				9D8FAEA32CB4159E006905BE /* CoreVideo.framework in Frameworks */,
 				9DECF84C2E45F25E005C0BBA /* libfreetype.6.dylib in Frameworks */,
@@ -1118,6 +1132,7 @@
 				9DECF9C02E45F309005C0BBA /* Metal.framework in Frameworks */,
 				9DECF9C12E45F309005C0BBA /* OpenGL.framework in Frameworks */,
 				9DECF9C22E45F309005C0BBA /* AudioUnit.framework in Frameworks */,
+				9D6C71762E4CD03A00F3F107 /* libmp3lame.0.dylib in Frameworks */,
 				9DECF9C32E45F309005C0BBA /* AudioToolbox.framework in Frameworks */,
 				9DECF9C42E45F309005C0BBA /* MetalKit.framework in Frameworks */,
 				9D99AA862E4631490075FF62 /* libz.1.dylib in Frameworks */,
@@ -1299,6 +1314,8 @@
 		9D8FA9522CB3DF78006905BE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9D06E27C2E4CC79B00CF5A5E /* libmp3lame.0.dylib */,
+				9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */,
 				9DECF8452E45F25D005C0BBA /* libbrotlicommon.1.dylib */,
 				9DECF8462E45F25D005C0BBA /* libbrotlidec.1.dylib */,
 				9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */,
@@ -1464,6 +1481,9 @@
 		9D8FAAA42CB3F6EF006905BE /* record */ = {
 			isa = PBXGroup;
 			children = (
+				9D06E2742E4CC1D700CF5A5E /* base.h */,
+				9D06E2762E4CC1D800CF5A5E /* mp3Writer.cpp */,
+				9D06E2752E4CC1D700CF5A5E /* mp3Writer.h */,
 				9D8FAAA52CB3F6EF006905BE /* wavWriter.h */,
 				9D8FAAA62CB3F6EF006905BE /* wavWriter.cpp */,
 				9D8FAAA72CB3F6EF006905BE /* handler.h */,
@@ -2814,6 +2834,7 @@
 				9D8FAE3C2CB40DF9006905BE /* pfile.cpp in Sources */,
 				9D8FAE0E2CB40DF8006905BE /* rtc.cpp in Sources */,
 				9D8FADFB2CB40DF8006905BE /* fpaq0.cpp in Sources */,
+				9D06E2772E4CC1D800CF5A5E /* mp3Writer.cpp in Sources */,
 				9D8FAE292CB40DF8006905BE /* diskStructure.cpp in Sources */,
 				9D8FAE442CB40DF9006905BE /* easyFlash.cpp in Sources */,
 				9D8FAE6D2CB40DF9006905BE /* via.cpp in Sources */,
@@ -2974,6 +2995,7 @@
 				9DECF9942E45F309005C0BBA /* pfile.cpp in Sources */,
 				9DECF9952E45F309005C0BBA /* rtc.cpp in Sources */,
 				9DECF9962E45F309005C0BBA /* fpaq0.cpp in Sources */,
+				9D06E2782E4CC1D800CF5A5E /* mp3Writer.cpp in Sources */,
 				9DECF9972E45F309005C0BBA /* diskStructure.cpp in Sources */,
 				9DECF9982E45F309005C0BBA /* easyFlash.cpp in Sources */,
 				9DECF9992E45F309005C0BBA /* via.cpp in Sources */,
