@@ -86,7 +86,7 @@ auto USBSIDPico::setDiffSize(unsigned value) -> void {
 auto USBSIDPico::store(uint8_t addr, uint8_t val, int chipNr) -> void {
 #ifdef LIBUSB    
     unsigned cycles = sysTimer.fallBackCycles(lastClock);
-    // unsigned cycles = sysTimer.fallBackCycles(lastClock) - 1;
+    cycles = (cycles > 0) ? (cycles - 1) : cycles;
     if (usbsid)
         usbsid->USBSID_WriteRingCycled(addr + (chipNr * 0x20), val, cycles);
     lastClock = sysTimer.clock;
