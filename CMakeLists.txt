@@ -414,6 +414,11 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARY})
     endif()
 
+    if(LIBLAME_FOUND)
+        set(LIBLAME_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/libmp3lame.0.dylib")
+        target_link_libraries(${PROJECT_NAME} ${LIBLAME_LIBRARY})
+    endif()
+
     if(FREETYPE2_FOUND)
         set(FREETYPE_LIBS libbrotlicommon.1.dylib libbrotlidec.1.dylib libbz2.1.0.dylib libpng16.16.dylib libz.1.dylib libfreetype.6.dylib)
         set(FREETYPE2_LIBRARIES)
@@ -499,6 +504,10 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     if(LIBUSB_FOUND)
         install(FILES ${LIBUSB_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
+    endif()
+
+    if(LIBLAME_FOUND)
+        install(FILES ${LIBLAME_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
     endif()
 
     if(FREETYPE2_FOUND)
