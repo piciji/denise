@@ -77,6 +77,7 @@ sudo apt install libpulse-dev
 sudo apt install libudev-dev
 sudo apt install libxcb-xinput-dev && apt install libxcb-xfixes0
 sudo apt install libusb-1.0-0-dev
+sudo apt install libmp3lame-dev
 ---------------------------------------------
 ARCH (Manjaro, Endeavour, ...)
 ---------------------------------------------

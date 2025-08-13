@@ -27,7 +27,7 @@ auto Handler::start( Emulator::Interface* emulator, std::string& errorText ) -> 
 
     std::string path = program->generatedFolder(emulator, "audio_record_path", "recordings/audio", true);
     
-    std::string fileName = settings->get<std::string>( "record_ident", "sample");
+    std::string fileName = settings->get<std::string>( "audio_record_ident", "sample");
 
     Type type = (Type)settings->get<unsigned>( "audio_record_type", 0);
 
