@@ -202,12 +202,15 @@ for:
     - sh: export MACOSX_DEPLOYMENT_TARGET=10.9
     
   build_script:
-    - sh: cd sshpass*
-    - sh: ./configure && make install
-    - sh: cd ..
-    - sh: sudo rm -rf /Library/Frameworks/Mono.framework
-    - sh: cmake -B builds/release -DCMAKE_INSTALL_PREFIX=builds/release && cmake --build builds/release && cmake --install builds/release
-    - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/denise.dmg
+    - sh: |
+        if [ "${APPVEYOR_REPO_TAG}" == "true" ]
+        then
+          cd sshpass*
+          ./configure && make install
+          cd ..        
+        fi
+        cmake -B builds/release -DCMAKE_INSTALL_PREFIX=builds/release && cmake --build builds/release && cmake --install builds/release
+        dmgbuild -s data/dmgSettings.py "Denise" builds/denise.dmg
     
   after_build:
     - sh: |
@@ -253,12 +256,15 @@ for:
     - sh: export MACOSX_DEPLOYMENT_TARGET=11
 
   build_script:
-    - sh: sudo rm -rf /Library/Frameworks/Mono.framework
-    - sh: cd sshpass*
-    - sh: ./configure && make install
-    - sh: cd ..
-    - sh: cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_INSTALL_PREFIX=builds/release && cmake --build builds/release && cmake --install builds/release
-    - sh: dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
+    - sh: |
+        if [ "${APPVEYOR_REPO_TAG}" == "true" ]
+        then
+          cd sshpass*
+          ./configure && make install
+          cd ..        
+        fi
+        cmake -B builds/release -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_INSTALL_PREFIX=builds/release && cmake --build builds/release && cmake --install builds/release
+        dmgbuild -s data/dmgSettings.py "Denise" builds/release/denise.dmg
 
   after_build:
     - sh: |
