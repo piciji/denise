@@ -199,7 +199,7 @@ auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) 
 
     if (encoded.data) {
         GUIKIT::File file;
-        std::string _replace = std::to_string(Chronos::getTimestampInSecondsPrecise());
+        std::string _replace = std::to_string(Chronos::getTimestampInSecondsReal());
         if (screenShot.gun && !screenShot.animatedGif)
             _replace += "_" + std::to_string(screenShot.gun++);
 

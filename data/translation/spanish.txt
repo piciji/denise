@@ -542,7 +542,6 @@ Damping = Damping
 Room Width = Ancho de la habitación
 Room Size = Tamaño de la habitación
 EF3 Slot = EF3 Slot
-wav folder = Carpeta de WAV
 japanese = Japonés
 app settings = %app% ajustes
 RS-232_insert = insertar Cartucho RS-232

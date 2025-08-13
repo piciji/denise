@@ -542,7 +542,6 @@ Damping = ダンピング
 Room Width = Roomの幅
 Room Size = Roomの大きさ
 EF3 Slot = EF3スロット
-wav folder = Wavフォルダ
 japanese = 日本語
 app settings = %app% の設定
 RS-232_insert = RS-232カートリッジの挿入

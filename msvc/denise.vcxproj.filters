@@ -1162,6 +1162,12 @@
     <ClInclude Include="..\deps\cgif\cgif_raw.h">
       <Filter>deps\cgif</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\audio\record\mp3Writer.h">
+      <Filter>program\audio\record</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\record\base.h">
+      <Filter>program\audio\record</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2363,6 +2369,9 @@
     </ClCompile>
     <ClCompile Include="..\deps\cgif\cgif_raw.cpp">
       <Filter>deps\cgif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\record\mp3Writer.cpp">
+      <Filter>program\audio\record</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

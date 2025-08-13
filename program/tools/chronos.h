@@ -12,9 +12,9 @@ struct Chronos {
             (std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 
-    static auto getTimestampInSecondsPrecise() -> uint64_t {
+    static auto getTimestampInSecondsReal() -> uint64_t {
         return std::chrono::duration_cast<std::chrono::seconds>
-            (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+            (std::chrono::system_clock::now().time_since_epoch()).count();
     }
     
     static auto getTimestampInMilliseconds() -> uint64_t {

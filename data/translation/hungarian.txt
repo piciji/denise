@@ -542,7 +542,6 @@ Damping = Csillapítás
 Room Width = Szobaszéles. tényező
 Room Size = Szobaméret tényező
 EF3 Slot = EF3 Slot
-wav folder = WAV mappa
 japanese = japán
 app settings = %app% beállítások
 RS-232_insert = RS-232 cartridge csatlakoztatása

@@ -9,14 +9,14 @@ elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(FREETYPE2 freetype2)
     pkg_check_modules(LIBUSB libusb-1.0)
+    pkg_check_modules(LIBLAME lame)
 elseif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     find_package(Freetype)
     find_package(PkgConfig REQUIRED)
     find_package(OpenAL)
     pkg_check_modules(FREETYPE2 freetype2)
-endif()
+    pkg_check_modules(LIBLAME lame)
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_package(PulseAudio REQUIRED)
     pkg_check_modules(GTK REQUIRED gtk+-3.0)
     pkg_check_modules(X11 REQUIRED x11 xfixes xext)
@@ -251,6 +251,11 @@ set_source_files_properties(${headerSrcs} PROPERTIES HEADER_FILE_ONLY TRUE)
 SET_SOURCE_FILES_PROPERTIES(${depSrcs}
     PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
 
+SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
+    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
+
+set(APP_INCLUDE "${CMAKE_SOURCE_DIR}/data/libs/include")
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     SET_SOURCE_FILES_PROPERTIES(${depSrcs} PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
 
@@ -258,18 +263,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp PROPERTIES COMPILE_FLAGS "-DDRV_WGL -DDRV_DIRECT3D9 -DDRV_DIRECT3D11 -DDRV_DSOUND -DDRV_DINPUT5 -DDRV_DINPUT7 -DDRV_DINPUT8 -DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -DDRV_WASAPI -DDRV_RAWINPUT")
 
-    if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
-        SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${FREETYPE2_INCLUDE_DIRS};")
-    else()
-        SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${CMAKE_SOURCE_DIR}/data/libs/include")
-
+    if(NOT CMAKE_GENERATOR MATCHES "MSYS Makefiles")
         set(FREETYPE2_FOUND true)
-        set(FREETYPE2_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
+        set(FREETYPE2_INCLUDE_DIRS "${APP_INCLUDE}")
 
         set(LIBUSB_FOUND true)
-        set(LIBUSB_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
+        set(LIBUSB_INCLUDE_DIRS "${APP_INCLUDE}")
+
+        set(LIBLAME_FOUND true)
+        set(LIBLAME_INCLUDE_DIRS "${APP_INCLUDE}")
     endif()
 
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v5.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT5")
@@ -288,13 +290,13 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT")
 
     set(FREETYPE2_FOUND true)
-    set(FREETYPE2_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
-
-    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-        PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
+    set(FREETYPE2_INCLUDE_DIRS "${APP_INCLUDE}")
 
     set(LIBUSB_FOUND true)
-    set(LIBUSB_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/data/libs/include")
+    set(LIBUSB_INCLUDE_DIRS "${APP_INCLUDE}")
+
+    set(LIBLAME_FOUND true)
+    set(LIBLAME_INCLUDE_DIRS "${APP_INCLUDE}")
 else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES COMPILE_FLAGS "-DGUIKIT_GTK")
@@ -310,15 +312,27 @@ else()
                 PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV")
     endif()
 
-    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
+    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};")
 
     if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # libusb_dev_mem_ stuff undeclared
         set(LIBUSB_FOUND false)
     endif()
 endif()
 
+if(LIBLAME_FOUND)
+    set(srcs ${srcs} program/audio/record/mp3Writer.cpp)
+
+    SET_SOURCE_FILES_PROPERTIES(program/audio/record/mp3Writer.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${LIBLAME_INCLUDE_DIRS};")
+    SET_SOURCE_FILES_PROPERTIES(program/audio/record/handler.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${LIBLAME_INCLUDE_DIRS};")
+
+    set_property(SOURCE program/audio/record/handler.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DLIBLAME ")
+endif()
+
 if(FREETYPE2_FOUND)
+    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};")
+
     set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DDRV_FREETYPE ")
 endif()
 
@@ -371,6 +385,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         if(LIBUSB_FOUND)
             target_link_libraries(${PROJECT_NAME} ${LIBUSB_STATIC_LIBRARIES})
         endif()
+
+        if(LIBLAME_FOUND)
+            target_link_libraries(${PROJECT_NAME} ${LIBLAME_STATIC_LIBRARIES})
+        endif()
     else()
         if(FREETYPE2_FOUND)
             set(FREETYPE_LIBS libfreetype.a libpng16.a libz.a libbz2.a libbrotlidec.a libbrotlicommon.a)
@@ -381,6 +399,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
         if(LIBUSB_FOUND)
             target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/libusb-1.0.a")
+        endif()
+
+        if(LIBLAME_FOUND)
+            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/libmp3lame.a")
         endif()
     endif()
 
@@ -407,18 +429,26 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "@executable_path/../Frameworks")
 else()
     target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr")
-    target_link_directories(${PROJECT_NAME} PUBLIC ${GTK_LIBRARY_DIRS})
-    target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
+    target_link_directories(${PROJECT_NAME} PUBLIC ${GTK_LIBRARY_DIRS})    
     target_link_directories(${PROJECT_NAME} PUBLIC ${X11_LIBRARY_DIRS})
     target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})    
-    target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})    
     target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
+
+    if(FREETYPE2_FOUND)
+        target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
+        target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
+    endif()
 
     if(LIBUSB_FOUND)
         target_link_directories(${PROJECT_NAME} PUBLIC ${LIBUSB_LIBRARY_DIRS})
         target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARIES})
+    endif()
+
+    if(LIBLAME_FOUND)
+        target_link_directories(${PROJECT_NAME} PUBLIC ${LIBLAME_LIBRARY_DIRS})
+        target_link_libraries(${PROJECT_NAME} ${LIBLAME_LIBRARIES})
     endif()
 
     # use -Wl,--verbose for detailed linker problems

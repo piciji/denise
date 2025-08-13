@@ -52,6 +52,15 @@ tapeNoiseVolume("%", true) {
     }
 }
 
+AudioRecordLayout::Type::Type() {
+    append(label, { 0u, 0u }, 10);
+    append(mp3, { 0u, 0u }, 10);
+    append(wav, { 0u, 0u });
+
+    setAlignment(0.5);
+    GUIKIT::RadioBox::setGroup(mp3, wav);
+}
+
 AudioRecordLayout::Location::Location() {
     
     append(label, {0u, 0u}, 5 );
@@ -85,7 +94,8 @@ AudioRecordLayout::AudioRecordLayout() {
     
     setPadding(10);
     
-    append(location, {~0u, 0u}, 10 );    
+    append(location, {~0u, 0u}, 10 );
+    append(type, { ~0u, 0u }, 10);
     append(duration, {~0u, 0u} );
     
     setFont(GUIKIT::Font::system("bold"));
@@ -602,6 +612,14 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         audioRecord.location.pathEdit.setText( program->generatedFolder(emulator, "audio_record_path", "recordings/audio") );
         audioRecord.location.pathEdit.setEnabled(false);
     };
+
+    audioRecord.type.mp3.onActivate = [this]() {
+        _settings->set<unsigned>("audio_record_type", 0);
+    };
+
+    audioRecord.type.wav.onActivate = [this]() {
+        _settings->set<unsigned>("audio_record_type", 1);
+    };
     
     audioRecord.duration.minutesSlider.slider.onChange = [this](unsigned position) {
         _settings->set<unsigned>( "audio_record_minutes", position );
@@ -976,9 +994,13 @@ auto AudioLayout::translate() -> void {
     driveLayout->tapeNoiseVolume.active.setText( trans->get("Tape Noise") );
 
     audioRecord.setText(trans->get("Audio Record"));
-    audioRecord.location.label.setText( trans->get("wav folder") );
+    audioRecord.location.label.setText( trans->getA("folder", true) );
     audioRecord.location.standard.setText(trans->get("default"));
     audioRecord.location.select.setText(trans->get("select"));
+
+    audioRecord.type.label.setText( trans->getA("format", true) );
+    audioRecord.type.mp3.setText(trans->getA("MP3"));
+    audioRecord.type.wav.setText(trans->getA("WAV"));
 
     audioRecord.duration.useTimeLimit.setText(trans->get("Recording time"));
     audioRecord.duration.minutesSlider.name.setText(trans->get("Minutes",{}, true));
@@ -1064,6 +1086,17 @@ auto AudioLayout::loadSettings() -> void {
     audioRecord.duration.secondsSlider.slider.setPosition( value ); 
                  
     audioRecord.duration.useTimeLimit.setChecked( _settings->get<bool>( "audio_record_timelimit", false) );
+
+    auto recordingType = _settings->get<unsigned>("audio_record_type", 0);
+    switch (recordingType) {
+        case 0:
+        default:
+            audioRecord.type.mp3.setChecked();
+            break;
+        case 1:
+            audioRecord.type.wav.setChecked();
+            break;
+    }
 
     driveLayout->floppyVolume.active.setChecked( _settings->get<bool>( "audio_floppy", false) );
 
