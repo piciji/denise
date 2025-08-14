@@ -429,8 +429,11 @@ struct GLX : public Video, GL3, RenderThread {
         if (threadEnabled) {
             resizeWindow();
             RenderThread::unlock();
-        } else
-            _redraw(options & OPT_DisallowShader);
+        } else {
+            _redraw();
+            if (options & OPT_TakeScreenshot)
+                takeScreenshot();
+        }
     }
 
     auto redraw(bool disallowShader = false) -> void {
@@ -445,14 +448,18 @@ struct GLX : public Video, GL3, RenderThread {
         resizeWindow();
         makeCurrent();
         GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
-        GL3::_redraw(disallowShader, options & OPT_Interlace);
+        uint8_t _options = options;
+        if (disallowShader)
+            _options &= ~OPT_DisallowShader;
+
+        GL3::_redraw(_options);
 #ifdef DRV_FREETYPE
         screenText.showText(viewport);
 #endif
         clearCurrent();
     }
 
-    auto _redraw(bool disallowShader = false) -> void {
+    auto _redraw() -> void {
         resizeWindow();
         resizeMutex.lock();
         makeCurrent(true);
@@ -461,7 +468,7 @@ struct GLX : public Video, GL3, RenderThread {
             GL3::updateFrameSize();
         }
         GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
-        GL3::_redraw(disallowShader, options & OPT_Interlace);
+        GL3::_redraw(options);
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
@@ -509,7 +516,7 @@ struct GLX : public Video, GL3, RenderThread {
             GL3::updateFrameSize();
         }
 
-        GL3::_redraw(options & OPT_DisallowShader, options & OPT_Interlace);
+        GL3::_redraw(options);
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
@@ -528,6 +535,8 @@ struct GLX : public Video, GL3, RenderThread {
             if (settings.hardSync && settings.synchronize) glFinish();
         }
 
+        if (options & OPT_TakeScreenshot)
+            takeScreenshot();
         clearCurrent();
         resizeMutexThreaded.unlock();
     }
@@ -666,6 +675,10 @@ struct GLX : public Video, GL3, RenderThread {
 
     auto freeContext() -> void {
         clearCurrent();
+    }
+
+    auto setScreenshotCallback(ScreenshotCallback callback) -> void {
+        GL3::setScreenshotCallback(callback);
     }
 
     auto canHardSync() -> bool { return true; }

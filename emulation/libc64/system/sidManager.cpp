@@ -6,11 +6,11 @@
 
 namespace LIBC64 {
 
-SidManager::SidManager(LIBC64::System* system) : system(system) {
+SidManager::SidManager(LIBC64::System* system) : system(system), usbSIDPico(*system) {
     for (unsigned i = 0; i < 7; i++)
-        sids[i] = new Sid( system, *this, Sid::Type::MOS_6581 );
+        sids[i] = new Sid( i + 1, system, *this, Sid::Type::MOS_6581 );
 
-    sid = new Sid( system, *this, Sid::Type::MOS_6581 );
+    sid = new Sid( 0, system, *this, Sid::Type::MOS_6581 );
 
     sampleCounter = 0;
     sampleLimit = 2;
@@ -67,7 +67,6 @@ auto SidManager::applyOffsetPseudoStereo() -> void {
         if ((useSid->leftChannel == useSid->rightChannel) || (useSid == sid) || useSid->ioMask)
             continue;
 
-        //system->interface->log("apply");
         offsetPseudoStereo.offset = (system->vicII->frequency() >> 1) + (rand() & 0x3ffff);
         offsetPseudoStereo.delayedSid = useSid;
         break;
@@ -326,6 +325,7 @@ auto SidManager::updateSidUsage() -> void {
 
     if (!extraSids) {
         system->updateStatsStereo();
+        usbSIDPico.updateStereo();
         return;
     }
 
@@ -355,6 +355,7 @@ auto SidManager::updateSidUsage() -> void {
     extraSids = !useSids.empty();
 
     system->updateStatsStereo();
+    usbSIDPico.updateStereo();
 }
 
 auto SidManager::isStereo() -> bool {
@@ -473,6 +474,7 @@ auto SidManager::resetAll() -> void {
     system->sysTimer.add( &callAlarm, 300, Emulator::SystemTimer::Action::UpdateExisting );
 
     sid->reset();
+    if (usbSIDPico.enabled) usbSIDPico.reset();
 
     for (int i = 0; i < 7; i++)
         sids[i]->reset();
@@ -481,6 +483,8 @@ auto SidManager::resetAll() -> void {
     offsetPseudoStereo.offset = 0;
     offsetPseudoStereo.trigger = true;
     offsetPseudoStereo.delayedSid = nullptr;
+
+    usbSIDPico.enabled ? (void)usbSIDPico.open() : usbSIDPico.close();
 }
 
 auto SidManager::calcSerializationSizeForSevenMoreSids() -> void {
@@ -550,6 +554,24 @@ auto SidManager::getResampleQuality( ) -> uint8_t {
     }
 
     _unreachable
+}
+
+auto SidManager::enableUSBSID(bool state) -> void {
+    usbSIDPico.enabled = state;
+    if (!state)
+        usbSIDPico.close();
+    else if (system->powerOn) {
+        if (usbSIDPico.open())
+            usbSIDPico.setInitialState(); // user enabled USBSID during emulation
+    }
+}
+
+auto SidManager::setUSBSIDBuffSize(unsigned value) -> void {
+    usbSIDPico.setBuffSize(value);
+}
+
+auto SidManager::setUSBSIDDiffSize(unsigned value) -> void {
+    usbSIDPico.setDiffSize(value);
 }
 
 auto SidManager::searializeActiveSids(Emulator::Serializer& s, bool light) -> void {

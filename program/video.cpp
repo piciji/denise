@@ -54,6 +54,8 @@ auto Program::initVideo(bool driverChange) -> void {
     view->buildShader();
     view->loadDragnDropOverlay();
     videoDriver->setShaderProgressCallback( [](int pass, bool hasErrors) {
+        if (program->quitInProgress)
+            return;
         if (pass < 0) {
             auto manager = VideoManager::getInstance(activeEmulator);
             if (manager) {
@@ -112,6 +114,10 @@ auto Program::initVideo(bool driverChange) -> void {
             }
         }
     } );
+
+    videoDriver->setScreenshotCallback([this](uint8_t* _data, unsigned _width, unsigned _height) {
+        takeScreenshot(_data, _width, _height);
+    } );
     
     if (activeEmulator) {
         videoDriver->useShaderCache( getSettings( activeEmulator )->get<bool>("shader_cache", true) );
@@ -120,6 +126,98 @@ auto Program::initVideo(bool driverChange) -> void {
     updateOnScreenText();
 
     loadProgress();
+}
+
+auto Program::bufferScreenshot(uint8_t* _data, unsigned _size) -> void {
+    auto& screenShot = view->screenshot;
+    unsigned useSize = _size * 3;
+
+    if (!screenShot.bufferSize)
+        screenShot.bufferSize = useSize;
+    else if (screenShot.bufferSize != useSize) {
+        view->clearScreenshotBuffer();
+        screenShot.bufferSize = useSize;
+    }
+
+    uint8_t* ptr = new uint8_t[useSize];
+    screenShot.buffer.push_back(ptr);
+    std::memcpy(ptr, _data, useSize);
+}
+
+auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) -> void {
+    auto& screenShot = view->screenshot;
+    screenShot.sharedMutex.lock();
+    GUIKIT::Image::Encoded encoded;
+    encoded.data = nullptr;
+    GUIKIT::Image image;
+    std::vector<uint32_t> colorTable;
+
+    if (screenShot.saveState) {
+        GUIKIT::Image image(_width, _height, _data, GUIKIT::Image::Format::RGB);
+        image.scaleLinear(200, 150);
+        encoded = image.generate(GUIKIT::Image::Type::PNG);
+
+    } else if (screenShot.animatedGif) {
+        bufferScreenshot(_data, _width * _height);
+
+        if (!--screenShot.gun) {            
+            for (auto& pal : activeVideoManager->palette->paletteColors)
+                colorTable.push_back(pal.rgb);
+
+            encoded = image.generate(screenShot.type, colorTable, screenShot.buffer, _width, _height);
+        }
+
+    } else if (screenShot.twoFrames && !screenShot.buffer.size()) {
+        bufferScreenshot(_data, _width * _height);
+
+    } else {
+        if (screenShot.writePalette) {
+            for (auto& pal : activeVideoManager->palette->paletteColors)
+                colorTable.push_back(pal.rgb);
+            
+            encoded = image.generate(screenShot.type, colorTable, {_data}, _width, _height);
+
+        } else {
+            if (screenShot.buffer.size()) {
+                auto screenBefore = screenShot.buffer[0];
+
+                if (screenShot.bufferSize == (_width * _height * 3)) {
+                    uint8_t* src = screenBefore;
+                    uint8_t* desc = _data;
+
+                    for (unsigned y = 0; y < _height; y++) {
+                        for (unsigned x = 0; x < (_width * 3); x++)
+                            *desc++ = ((unsigned)*desc + (unsigned)*src++) >> 1;
+                    }
+                }
+                view->clearScreenshotBuffer();
+            }
+
+            encoded = image.generate(screenShot.type, _data, _width, _height);
+        }
+    }
+
+    if (encoded.data) {
+        GUIKIT::File file;
+        std::string _replace = std::to_string(Chronos::getTimestampInSecondsReal());
+        if (screenShot.gun && !screenShot.animatedGif)
+            _replace += "_" + std::to_string(screenShot.gun++);
+
+        std::string _path = screenShot.path;
+
+        GUIKIT::String::replace(_path, "#ident#", _replace);
+
+        if ((encoded.type == GUIKIT::Image::Type::PNG) && (encoded.type != screenShot.type)) {
+            // request GIF, but image has more than 256 colors -> write as PNG
+            GUIKIT::String::replace(_path, ".gif", ".png");
+        }
+        file.setFile(_path);
+        file.open(GUIKIT::File::Mode::Write);
+        file.write(encoded.data, encoded.size);
+        delete[] encoded.data;
+    }
+
+    screenShot.sharedMutex.unlock();
 }
 
 auto Program::loadProgress() -> void {
@@ -239,30 +337,35 @@ auto Program::repeatLastFrame() -> void {
 
     auto cropData = activeEmulator->cropData();
 
-    if (cropData)
-        return activeVideoManager->renderFrame<uint8_t>(cropData, activeEmulator->cropWidth(), activeEmulator->cropHeight(), activeEmulator->cropPitch());
+    if (cropData) {
+        activeVideoManager->renderFrame<uint8_t>(cropData, activeEmulator->cropWidth(), activeEmulator->cropHeight(), activeEmulator->cropPitch());
+    } else {
+        auto cropData16 = activeEmulator->cropData16();
 
-    auto cropData16 = activeEmulator->cropData16();
+        if (cropData16) {
+            unsigned _width = activeEmulator->cropWidth();
+            unsigned _height = activeEmulator->cropHeight();
+            unsigned _pitch = activeEmulator->cropPitch();
+            unsigned _options = activeEmulator->cropOptions();
 
-    if (cropData16) {
-        unsigned _width = activeEmulator->cropWidth();
-        unsigned _height = activeEmulator->cropHeight();
-        unsigned _pitch = activeEmulator->cropPitch();
-        unsigned _options = activeEmulator->cropOptions();
+            switch(_options) {
+                case 0: activeVideoManager->renderFrame<uint16_t, 0>(cropData16, _width, _height, _pitch); break;
+                case 1: activeVideoManager->renderFrame<uint16_t, 1>(cropData16, _width, _height, _pitch); break;
+                case 2: activeVideoManager->renderFrame<uint16_t, 2>(cropData16, _width, _height, _pitch); break;
 
-        switch(_options) {
-            case 0: activeVideoManager->renderFrame<uint16_t, 0>(cropData16, _width, _height, _pitch); break;
-            case 1: activeVideoManager->renderFrame<uint16_t, 1>(cropData16, _width, _height, _pitch); break;
-            case 2: activeVideoManager->renderFrame<uint16_t, 2>(cropData16, _width, _height, _pitch); break;
+                case 4: activeVideoManager->renderFrame<uint16_t, 4>(cropData16, _width, _height, _pitch); break;
+                case 5: activeVideoManager->renderFrame<uint16_t, 5>(cropData16, _width, _height, _pitch); break;
+                case 6: activeVideoManager->renderFrame<uint16_t, 6>(cropData16, _width, _height, _pitch); break;
 
-            case 4: activeVideoManager->renderFrame<uint16_t, 4>(cropData16, _width, _height, _pitch); break;
-            case 5: activeVideoManager->renderFrame<uint16_t, 5>(cropData16, _width, _height, _pitch); break;
-            case 6: activeVideoManager->renderFrame<uint16_t, 6>(cropData16, _width, _height, _pitch); break;
-
-            case 8: activeVideoManager->renderFrame<uint16_t, 8>(cropData16, _width, _height, _pitch); break;
-            case 9: activeVideoManager->renderFrame<uint16_t, 9>(cropData16, _width, _height, _pitch); break;
-            case 10: activeVideoManager->renderFrame<uint16_t, 10>(cropData16, _width, _height, _pitch); break;
+                case 8: activeVideoManager->renderFrame<uint16_t, 8>(cropData16, _width, _height, _pitch); break;
+                case 9: activeVideoManager->renderFrame<uint16_t, 9>(cropData16, _width, _height, _pitch); break;
+                case 10: activeVideoManager->renderFrame<uint16_t, 10>(cropData16, _width, _height, _pitch); break;
+            }
         }
+    }
+    if (VideoManager::takeScreenShots && view && isPause) {
+        view->screenshot.pause = isPause;
+        isPause = 0;
     }
 }
 

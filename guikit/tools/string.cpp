@@ -259,7 +259,7 @@ auto String::convertIntToHex( int number, bool prepend_0x ) -> std::string {
     
     std::string _out = prepend_0x ? "0x" : "";
     char hex[10];
-    sprintf( hex, "%x", number );
+    snprintf( hex, 10, "%x", number );
     _out += (std::string)hex;
     
     return _out;

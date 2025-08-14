@@ -204,7 +204,6 @@ set(headerSrcs ${headerSrcs}
     guikit/tools/decode/lha.h
     guikit/tools/decode/png.h
     guikit/tools/decode/zip.h
-    guikit/tools/decode/stb/stb_image.h
     guikit/tools/encode/png.h
     guikit/tools/file/chunk.h
     guikit/tools/file/directory.h
@@ -393,6 +392,7 @@ set(headerSrcs ${headerSrcs}
     emulation/libc64/sid/sid.h
     emulation/libc64/sid/tables.cpp
     emulation/libc64/sid/voice.cpp
+    emulation/libc64/sid/usbSidPico.h
     emulation/libc64/system/clipboard.h
     emulation/libc64/system/expansion.cpp
     emulation/libc64/system/firmware.h

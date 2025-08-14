@@ -2,6 +2,7 @@
 #include "decode/png.h"
 #include "encode/png.h"
 #include "decode/images.h"
+#include "encode/images.h"
 
 Image::Image(unsigned width, unsigned height, uint8_t* src, Format format)
 : format(format) {
@@ -56,6 +57,42 @@ auto Image::load(const uint8_t* src, unsigned size, bool keepDataOnDestruction) 
         return true;
     }
     return false;
+}
+
+auto Image::generate(Type type, const uint8_t* src, unsigned width, unsigned height) -> Encoded {
+    ImageEncoder encoder;
+    Encoded encoded;
+
+    if (encoder.encode((ImageEncoder::Type)type, src, width, height)) {
+        encoded.data = encoder.data;
+        encoded.size = encoder.size;
+        encoded.type = (Type)encoder.usedType;
+    }
+    return encoded;
+}
+
+auto Image::generate(Type type) -> Encoded {
+    ImageEncoder encoder;
+    Encoded encoded;
+
+    if (encoder.encode((ImageEncoder::Type)type, data, width, height)) {
+        encoded.data = encoder.data;
+        encoded.size = encoder.size;
+        encoded.type = (Type)encoder.usedType;
+    }
+    return encoded;
+}
+
+auto Image::generate(Type type, std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height) -> Encoded {
+    ImageEncoder encoder;
+    Encoded encoded;
+
+    if (encoder.encodeWithColorTable((ImageEncoder::Type)type, colorTable, srcs, width, height)) {
+        encoded.data = encoder.data;
+        encoded.size = encoder.size;
+        encoded.type = (Type)encoder.usedType;
+    }
+    return encoded;
 }
 
 auto Image::loadPng(const uint8_t* src, unsigned size, bool keepDataOnDestruction) -> bool {
@@ -212,59 +249,22 @@ auto Image::create(unsigned _width, unsigned _height, uint8_t* src) -> void {
     free();
     width = _width;
     height = _height;
-    unsigned size = _width * _height * 4;
+    unsigned size = _width * _height * channels();
     data = new uint8_t[size];
     if (src) memcpy(data, src, size);
 }
 
 auto Image::read(uint8_t* p) -> unsigned {
     unsigned result = 0;
-    for(signed n = 3; n >= 0; n--) result = (result << 8) | p[n];
+    for (signed n = channels(); n >= 0; n--) result = (result << 8) | p[n];
     return result;
 }
 
 auto Image::write(uint8_t* p, unsigned value) -> void {
-    for(unsigned n = 0; n < 4; n++) {
+    for (unsigned n = 0; n < channels(); n++) {
         p[n] = value & 0xff;
         value >>= 8;
     }
-}
-
-auto Image::scaleNearest(unsigned outputWidth, unsigned outputHeight) -> void {
-    if ( (outputWidth == width) && (outputHeight == height) ) return;
-    uint8_t* outputData = new uint8_t[outputWidth * outputHeight * 4];
-
-    uint64_t xstride = ((uint64_t)width  << 32) / outputWidth;
-    uint64_t ystride = ((uint64_t)height << 32) / outputHeight;
-
-    for(unsigned y = 0; y < outputHeight; y++) {
-        uint64_t yfraction = ystride * y;
-        uint64_t xfraction = 0;
-
-        uint8_t* sp = data + (width * 4) * (yfraction >> 32);
-        uint8_t* dp = outputData + (outputWidth * 4) * y;
-
-        uint64_t a = read(sp);
-        unsigned x = 0;
-
-        while(true) {
-            while(xfraction < 0x100000000 && x++ < outputWidth) {
-                write(dp, a);
-                dp += 4;
-                xfraction += xstride;
-            }
-            if(x >= outputWidth) break;
-
-            sp += 4;
-            a = read(sp);
-            xfraction -= 0x100000000;
-        }
-    }
-
-    free();
-    data = outputData;
-    width = outputWidth;
-    height = outputHeight;
 }
 
 auto Image::normalize(uint64_t color, unsigned sourceDepth, unsigned targetDepth) -> uint64_t {
@@ -318,4 +318,225 @@ auto Image::getCharDataStringFromBinary(std::string inFile, std::string outFile)
 auto Image::setResourceId( int rId ) -> void {
     
     resourceId = rId;
+}
+
+auto Image::channels() -> unsigned {
+    return format == RGB ? 3 : 4;
+}
+
+auto Image::scaleNearest(unsigned outputWidth, unsigned outputHeight) -> void {
+    if (!data)
+        return;
+    if ((outputWidth == width) && (outputHeight == height))
+        return;
+    uint8_t* outputData = new uint8_t[outputWidth * outputHeight * channels()];
+
+    uint64_t xstride = ((uint64_t)width << 32) / outputWidth;
+    uint64_t ystride = ((uint64_t)height << 32) / outputHeight;
+
+    for (unsigned y = 0; y < outputHeight; y++) {
+        uint64_t yfraction = ystride * y;
+        uint64_t xfraction = 0;
+
+        uint8_t* sp = data + (width * channels()) * (yfraction >> 32);
+        uint8_t* dp = outputData + (outputWidth * channels()) * y;
+
+        uint64_t a = read(sp);
+        unsigned x = 0;
+
+        while (true) {
+            while (xfraction < 0x100000000 && x++ < outputWidth) {
+                write(dp, a);
+                dp += channels();
+                xfraction += xstride;
+            }
+            if (x >= outputWidth) break;
+
+            sp += channels();
+            a = read(sp);
+            xfraction -= 0x100000000;
+        }
+    }
+
+    free();
+    data = outputData;
+    width = outputWidth;
+    height = outputHeight;
+}
+
+inline auto isplit(uint64_t* c, uint64_t color) -> void {
+    c[0] = ((color) >> 24) & 0xff;
+    c[1] = ((color) >> 16) & 0xff;
+    c[2] = ((color) >> 8) & 0xff;
+    c[3] = ((color) >> 0) & 0xff;
+}
+
+inline auto imerge(const uint64_t* c) -> uint64_t {
+    return c[0] << 24 | c[1] << 16 | c[2] << 8 | c[3] << 0;
+}
+
+inline auto interpolate1i(int64_t a, int64_t b, uint32_t x) -> uint64_t {
+    return a + (((b - a) * x) >> 32);
+}
+
+inline auto interpolate1i(int64_t a, int64_t b, int64_t c, int64_t d, uint32_t x, uint32_t y) -> uint64_t {
+    a = a + (((b - a) * x) >> 32);
+    c = c + (((d - c) * x) >> 32);
+    return a + (((c - a) * y) >> 32);
+}
+
+inline auto interpolate4i(uint64_t a, uint64_t b, uint32_t x) -> uint64_t {
+    uint64_t o[4], pa[4], pb[4];
+    isplit(pa, a), isplit(pb, b);
+    for (unsigned n = 0; n < 4; n++)
+        o[n] = interpolate1i(pa[n], pb[n], x);
+    return imerge(o);
+}
+
+inline auto interpolate4i(uint64_t a, uint64_t b, uint64_t c, uint64_t d, uint32_t x, uint32_t y) -> uint64_t {
+    uint64_t o[4], pa[4], pb[4], pc[4], pd[4];
+    isplit(pa, a), isplit(pb, b), isplit(pc, c), isplit(pd, d);
+    for (unsigned n = 0; n < 4; n++)
+        o[n] = interpolate1i(pa[n], pb[n], pc[n], pd[n], x, y);
+    return imerge(o);
+}
+
+auto Image::scaleLinear(unsigned outputWidth, unsigned outputHeight) -> void {
+    if (!data)
+        return;
+    if (width == outputWidth && height == outputHeight)
+        return;
+
+    if (width == outputWidth)
+        return scaleLinearHeight(outputHeight);
+    if (height == outputHeight)
+        return scaleLinearWidth(outputWidth);
+
+    unsigned d1wh = ((width * outputWidth) + (outputWidth * outputHeight)) * 1;
+    unsigned d1hw = ((height * outputHeight) + (outputWidth * outputHeight)) * 1;
+    unsigned d2wh = (outputWidth * outputHeight) * 3;
+
+    if(d1wh <= d1hw && d1wh <= d2wh)
+        return scaleLinearWidth(outputWidth), scaleLinearHeight(outputHeight);
+    if(d1hw <= d2wh)
+        return scaleLinearHeight(outputHeight), scaleLinearWidth(outputWidth);
+
+    return scaleLinearBoth(outputWidth, outputHeight);
+}
+
+auto Image::scaleLinearWidth(unsigned outputWidth) -> void {
+    uint8_t* outputData = new uint8_t[outputWidth * height * channels()];
+
+    unsigned outputPitch = outputWidth * channels();
+    uint64_t xstride = ((uint64_t)(width - 1) << 32) / std::max<unsigned>(1u, outputWidth - 1);
+
+    for (unsigned y = 0; y < height; y++) {
+        uint64_t xfraction = 0;
+
+        uint8_t* sp = data + width * channels() * y;
+        uint8_t* dp = outputData + outputPitch * y;
+
+        uint64_t a = read(sp);
+        uint64_t b = read(sp + channels());
+        sp += channels();
+
+        unsigned x = 0;
+        while (true) {
+            while (xfraction < 0x100000000 && x++ < outputWidth) {
+                write(dp, interpolate4i(a, b, xfraction));
+                dp += channels();
+                xfraction += xstride;
+            }
+            if (x >= outputWidth) break;
+
+            sp += channels();
+            a = b;
+            b = read(sp);
+            xfraction -= 0x100000000;
+        }
+    }
+
+    free();
+    data = outputData;
+    width = outputWidth;
+}
+
+auto Image::scaleLinearHeight(unsigned outputHeight) -> void {
+    uint8_t* outputData = new uint8_t[width * outputHeight * channels()];
+    uint64_t ystride = ((uint64_t)(height - 1) << 32) / std::max<unsigned>(1u, outputHeight - 1);
+
+    for (unsigned x = 0; x < width; x++) {
+        uint64_t yfraction = 0;
+
+        uint8_t* sp = data + channels() * x;
+        uint8_t* dp = outputData + channels() * x;
+
+        uint64_t a = read(sp);
+        uint64_t b = read(sp + channels() * width);
+        sp += channels() * width;
+
+        unsigned y = 0;
+        while (true) {
+            while (yfraction < 0x100000000 && y++ < outputHeight) {
+                write(dp, interpolate4i(a, b, yfraction));
+                dp += channels() * width;
+                yfraction += ystride;
+            }
+            if (y >= outputHeight) break;
+
+            sp += channels() * width;
+            a = b;
+            b = read(sp);
+            yfraction -= 0x100000000;
+        }
+    }
+
+    free();
+    data = outputData;
+    height = outputHeight;
+}
+
+auto Image::scaleLinearBoth(unsigned outputWidth, unsigned outputHeight) -> void {
+    uint8_t* outputData = new uint8_t[outputWidth * outputHeight * channels() + width * channels() + channels()];
+    unsigned outputPitch = outputWidth * channels();
+
+    uint64_t xstride = ((uint64_t)(width - 1) << 32) / std::max<unsigned>(1u, outputWidth - 1);
+    uint64_t ystride = ((uint64_t)(height - 1) << 32) / std::max<unsigned>(1u, outputHeight - 1);
+
+    for (unsigned y = 0; y < outputHeight; y++) {
+        uint64_t yfraction = ystride * y;
+        uint64_t xfraction = 0;
+
+        uint8_t* sp = data + channels() * width * (yfraction >> 32);
+        uint8_t* dp = outputData + outputPitch * y;
+
+        uint64_t a = read(sp);
+        uint64_t b = read(sp + channels());
+        uint64_t c = read(sp + channels() * width);
+        uint64_t d = read(sp + channels() * width + channels());
+        sp += channels();
+
+        unsigned x = 0;
+        while (true) {
+            while (xfraction < 0x100000000 && x++ < outputWidth) {
+                write(dp, interpolate4i(a, b, c, d, xfraction, yfraction));
+                dp += channels();
+                xfraction += xstride;
+            }
+            if (x >= outputWidth)
+                break;
+
+            sp += channels();
+            a = b;
+            c = d;
+            b = read(sp);
+            d = read(sp + channels() * width);
+            xfraction -= 0x100000000;
+        }
+    }
+
+    free();
+    data = outputData;
+    width = outputWidth;
+    height = outputHeight;
 }

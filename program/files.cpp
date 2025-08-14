@@ -270,8 +270,8 @@ auto Program::updateSaveIdent( Emulator::Interface* emulator, FileSetting* fSett
 
     fileName = GUIKIT::String::getFileNameA(fileName, true);
 
-    // for wav record
-    settings->set<std::string>( "record_ident", fileName, false);
+    // for audio record
+    settings->set<std::string>( "audio_record_ident", fileName);
 
     if (!autoSaveMode)
         return;

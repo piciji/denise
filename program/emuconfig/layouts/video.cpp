@@ -402,8 +402,55 @@ VideoScreenTextLayout::VideoScreenTextLayout() {
     append(options, {~0u, 0u});
 }
 
+VideoScreenShotLayout::Location::Location() {
+
+    append(label, { 0u, 0u }, 5);
+    append(pathEdit, { ~0u, 0u }, 5);
+    append(standard, { 0u, 0u }, 5);
+    append(select, { 0u, 0u });
+
+    pathEdit.setEditable(false);
+
+    label.setFont(GUIKIT::Font::system("bold"));
+    setAlignment(0.5);
+}
+
+VideoScreenShotLayout::Format::Format() {
+    append(label, { 0u, 0u }, 10);
+    append(png, { 0u, 0u }, 10);
+    append(jpg, { 0u, 0u }, 10);
+    append(bmp, { 0u, 0u }, 10);
+    append(gif, { 0u, 0u }, 10);
+    append(tga, { 0u, 0u });
+
+    GUIKIT::RadioBox::setGroup(png, jpg, bmp, gif, tga);
+
+    setAlignment(0.5);
+}
+
+VideoScreenShotLayout::Options::Options(bool withPalete)
+: gun("") {
+    if (withPalete)
+        append(palete, { 0u, 0u }, 20);
+    
+    append(gun, { ~0u, 0u });
+
+    gun.slider.setLength(60);
+    gun.updateValueWidth("99");
+
+    setAlignment(0.5);
+}
+
+VideoScreenShotLayout::VideoScreenShotLayout(bool withPalete) : options(withPalete) {
+    append(location, { ~0u, 0u}, 10);
+    append(format, { ~0u, 0u}, 10 );
+    append(options, { ~0u, 0u });
+    setPadding(10);
+}
+
 VideoLayout::VideoLayout(TabWindow* tabWindow) :
-layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
+layBase(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)),
+layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
@@ -421,6 +468,7 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     delImage.loadPng((uint8_t*)Icons::del, sizeof(Icons::del));
     gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
     backImage.loadPng((uint8_t*)Icons::back, sizeof(Icons::back));
+    screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
 
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
@@ -433,6 +481,9 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
     tviScreenText.setUserData( (uintptr_t)11 );
     tviScreenText.setImage( menuImage );
 
+    tviScreenShot.setUserData((uintptr_t)12);
+    tviScreenShot.setImage(screenshotImage);
+
     tviShader.setUserData( (uintptr_t)2 );
     tviShader.setImage(imgFolderClosed);
     tviShader.setImageExpanded(imgFolderOpen);
@@ -443,12 +494,14 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
 
     moduleTree.append(tviBase);
     moduleTree.append(tviScreenText);
+    moduleTree.append(tviScreenShot);
     tviBase.setSelected();
     if (videoDriver->shaderSupport())
         moduleTree.append(tviShader);
 
     moduleSwitch.setLayout(1, layBase, {~0u, ~0u});
     moduleSwitch.setLayout(11, layScreenText, {~0u, ~0u});
+    moduleSwitch.setLayout(12, layScreenShot, { ~0u, ~0u });
     moduleSwitch.setLayout(2, layShader, {~0u, ~0u});
     moduleSwitch.setLayout(21, layPass, {~0u, ~0u});
     moduleSwitch.setLayout(3, layParam, {~0u, ~0u});
@@ -1420,9 +1473,67 @@ layBase( dynamic_cast<LIBC64::Interface*>(tabWindow->emulator) ) {
         updateScreenText(true);
     };
 
+    layScreenShot.location.select.onActivate = [this]() {
+
+        auto path = GUIKIT::BrowserWindow()
+            .setTitle(trans->getA("select screenshot folder"))
+            .setWindow(*this->tabWindow)
+            .directory();
+
+        if (path.empty())
+            return;
+
+        path = GUIKIT::File::buildRelativePath(path);
+        layScreenShot.location.pathEdit.setText(path);
+        layScreenShot.location.pathEdit.setEnabled();
+
+        _settings->set<std::string>("screen_record_path", path);
+    };
+
+    layScreenShot.location.standard.onActivate = [this]() {
+        _settings->set<std::string>("screen_record_path", "");
+        layScreenShot.location.pathEdit.setText(program->generatedFolder(emulator, "screen_record_path", "recordings/screenshots"));
+        layScreenShot.location.pathEdit.setEnabled(false);
+    };
+
+    layScreenShot.format.png.onActivate = [this]() {
+        _settings->set<std::string>("screen_record_format", "png");
+    };
+
+    layScreenShot.format.jpg.onActivate = [this]() {
+        _settings->set<std::string>("screen_record_format", "jpg");
+    };
+
+    layScreenShot.format.bmp.onActivate = [this]() {
+        _settings->set<std::string>("screen_record_format", "bmp");
+    };
+
+    layScreenShot.format.gif.onActivate = [this]() {
+        _settings->set<std::string>("screen_record_format", "gif");
+    };
+
+    layScreenShot.format.tga.onActivate = [this]() {
+        _settings->set<std::string>("screen_record_format", "tga");
+    };
+
+    layScreenShot.options.palete.onToggle = [this](bool checked) {
+        _settings->set<bool>("screen_palette", checked);
+    };
+
+    layScreenShot.options.gun.slider.onChange = [this](unsigned position) {
+        layScreenShot.options.gun.setValue(std::to_string(position+1));
+        _settings->set<unsigned>("screen_gun", position+1);
+    };
+
     fillFontTypeList();
 
     loadSettings(true);
+}
+
+auto VideoLayout::updateRecordingPath() -> void {
+    std::string _recordPath = _settings->get<std::string>("screen_record_path", "");
+    layScreenShot.location.pathEdit.setText(program->generatedFolder(emulator, "screen_record_path", "recordings/screenshots"));
+    layScreenShot.location.pathEdit.setEnabled(!_recordPath.empty());
 }
 
 auto VideoLayout::fillFontTypeList() -> void {
@@ -1686,7 +1797,7 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> void {
     }
 
     tviShader.setExpanded();
-    if (selectIt && !tviBase.selected() && !tviScreenText.selected()) {
+    if (selectIt && !tviBase.selected() && !tviScreenText.selected() && !tviScreenShot.selected()) {
         tviShader.setSelected();
         moduleSwitch.setSelection( 2 );
     }
@@ -2124,6 +2235,7 @@ auto VideoLayout::translate() -> void {
 
     tviBase.setText( trans->getA("overview") );
     tviScreenText.setText( trans->getA("screen text") );
+    tviScreenShot.setText(trans->getA("screenshot"));
     tviShader.setText( trans->getA("Shader") );
     tviParams.setText( trans->getA("Parameter") );
 
@@ -2159,6 +2271,21 @@ auto VideoLayout::translate() -> void {
 
     layScreenText.colorBox.type.onlyUrgentWarnings.setText(trans->getA("only urgent messages"));
     layScreenText.colorBox.type.onlyUrgentWarnings.setTooltip(trans->getA("only urgent messages tooltip"));
+
+    layScreenShot.setText(trans->getA("screenshot"));
+    layScreenShot.location.label.setText(trans->getA("folder", true));
+    layScreenShot.location.standard.setText(trans->getA("default"));
+    layScreenShot.location.select.setText(trans->getA("select"));
+
+    layScreenShot.format.label.setText(trans->getA("Format", true));
+    layScreenShot.format.png.setText(trans->getA("PNG"));
+    layScreenShot.format.jpg.setText(trans->getA("JPG"));
+    layScreenShot.format.bmp.setText(trans->getA("BMP"));
+    layScreenShot.format.gif.setText(trans->getA("GIF (*)"));
+    layScreenShot.format.gif.setTooltip(trans->getA("GIF tooltip"));
+    layScreenShot.format.tga.setText(trans->getA("TGA"));
+    layScreenShot.options.palete.setText(trans->getA("save palete"));
+    layScreenShot.options.gun.name.setText(trans->getA("frames"));
 }
 
 auto VideoLayout::sliderIdent() -> std::string {
@@ -2249,6 +2376,7 @@ auto VideoLayout::loadSettings(bool init) -> void {
     }
 
     prepareColBox();
+    updateRecordingPath();
 
     unsigned screenTextPaddingHorizontal = _settings->get<unsigned>("screen_text_padding_horizontal", 10, {0, 60});
     unsigned screenTextPaddingVertical = _settings->get<unsigned>("screen_text_padding_vertical", 8, {0, 30});
@@ -2278,6 +2406,23 @@ auto VideoLayout::loadSettings(bool init) -> void {
     layScreenText.options.textMargin.marginVertical.value.setEnabled(marginSeparate);
 
     layScreenText.colorBox.type.onlyUrgentWarnings.setChecked(_settings->get<bool>("only_urgent_messages", false));
+
+    auto screenshotFormat = _settings->get<std::string>("screen_record_format", "png");
+
+    if (screenshotFormat == "bmp") layScreenShot.format.bmp.setChecked();
+    else if (screenshotFormat == "jpg") layScreenShot.format.jpg.setChecked();
+    else if (screenshotFormat == "tga") layScreenShot.format.tga.setChecked();
+    else if (screenshotFormat == "gif") layScreenShot.format.gif.setChecked();
+    else layScreenShot.format.png.setChecked();
+
+    if (dynamic_cast<LIBC64::Interface*>(emulator))
+        layScreenShot.options.palete.setChecked(_settings->get<bool>("screen_palette", true) );
+
+    auto screenshotGun = _settings->get<unsigned>("screen_gun", 1);
+    if (!screenshotGun)
+        screenshotGun = 1;
+    layScreenShot.options.gun.slider.setPosition(screenshotGun - 1);
+    layScreenShot.options.gun.setValue(std::to_string(screenshotGun));
 }
 
 auto VideoLayout::prepareColBox() -> void {
@@ -2398,11 +2543,11 @@ auto VideoLayout::unloadShader(bool reloadDriver) -> void {
     if (!videoDriver->shaderSupport()) {
         moduleTree.remove(tviParams);
         moduleTree.remove(tviShader);
-        if (!tviScreenText.selected()) {
+        if (!tviScreenText.selected() && !tviScreenShot.selected()) {
             tviBase.setSelected();
             moduleSwitch.setSelection( 1 );
         }
-    } else if (!tviBase.selected() && !tviScreenText.selected()) {
+    } else if (!tviBase.selected() && !tviScreenText.selected() && !tviScreenShot.selected()) {
         tviShader.setSelected();
         moduleSwitch.setSelection( 2 );
     }
@@ -2467,4 +2612,9 @@ auto VideoLayout::presentShaderError() -> void {
     }
 
     showErrors(errors);
+}
+
+auto VideoLayout::selectViewScreenshot() -> void {
+    tviScreenShot.setSelected();
+    moduleTree.onChange(nullptr);
 }

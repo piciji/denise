@@ -887,6 +887,7 @@ struct pBrowserWindow {
     int listItemHeight = 0;
 
     auto directory() -> std::string;
+    auto directoryVista() -> std::string;
     auto fileGeneric(bool save, bool multi = false) -> std::vector<std::string>;
     auto file(bool save) -> std::string { return fileGeneric(save)[0]; }
     auto fileMulti() -> std::vector<std::string> { return fileGeneric(false, true); }

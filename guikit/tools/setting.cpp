@@ -178,6 +178,7 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
     if (depth <= 0) {
         this->path = path;
         clear();
+        list.reserve(1000);
     } else if (depth > 16) {
         errorDepth = true;
         return false;
@@ -234,6 +235,9 @@ auto Settings::loadEx(const std::string& path, int depth, const char separator) 
                 setting->saveable = false;
         }
     }
+    if (depth <= 0)
+        list.shrink_to_fit();
+    
     return true;
 }
 

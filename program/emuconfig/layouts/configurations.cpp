@@ -171,24 +171,32 @@ StateFastLayout::Top::Top() {
 }
 
 StateFastLayout::Options::Options() {
-    append(autoLabel,{0u, 0u}, 10);
-    append(autoIdentOff,{0u, 0u}, 10);
-    append(autoIdentOn,{0u, 0u}, 10);
+    append(autoLabel,{0u, 0u}, 5);
+    append(autoIdentOff,{0u, 0u}, 5);
+    append(autoIdentOn,{0u, 0u}, 5);
     append(autoIdentCutFollowUp,{0u, 0u});
+    append(spacer, {~0u, 0u});
+    append(screenshot, { 0u, 0u });
 
     GUIKIT::RadioBox::setGroup(autoIdentOff, autoIdentOn, autoIdentCutFollowUp);
     setAlignment(0.5);
 }
 
+StateFastLayout::Selector::Selector() {
+    listView.setHeaderVisible();
+    listView.setHeaderText({ "", "", "" });
+
+    append(listView, { ~0u, ~0u }, 10);
+    append(preview, { 200u, 150u });
+}
+
 StateFastLayout::StateFastLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
-    listView.setHeaderVisible();
-	listView.setHeaderText( { "", "", "" } );
     
     append(top,{~0u, 0u}, 5);
-    append(options,{0u, 0u}, 5);
-    append(listView,{~0u, ~0u});
+    append(options,{~0u, 0u}, 5);
+    append(selector, { ~0u, ~0u }, 5);
 }
 
 StateDirectLayout::StateDirectLayout() {
@@ -496,8 +504,10 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
                 if (view->paletteLayout)
                     view->paletteLayout->loadSettings();
-                if (view->videoLayout)
+                if (view->videoLayout) {
                     view->videoLayout->fillFontTypeList();
+                    view->videoLayout->updateRecordingPath();
+                }
             }
             emuThread->unlock();
         }
@@ -747,25 +757,53 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     stateFast.options.autoIdentCutFollowUp.onActivate = [this]() {
         _settings->set<unsigned>( "auto_save_mode", 2);
     };
+
+    stateFast.options.screenshot.onToggle = [this](bool checked) {
+        _settings->set<bool>("save_screenshot", checked);
+        if (!checked)
+            stateFast.selector.preview.setImage(nullptr);
+    };
     
-    stateFast.listView.onActivate = [this]() {
-		auto selection = stateFast.listView.selection();
-		auto pos = stateFast.listView.text(selection, 0);
+    stateFast.selector.listView.onChange = [this]() {
+        if (!_settings->get<bool>("save_screenshot", true))
+            return;
+        auto& lview = stateFast.selector.listView;
+        auto selection = lview.selection();
+        auto ident = lview.text(selection, 1);
+        auto path = program->generatedFolder(emulator, "states_folder", "states") + ident + ".png";
+
+        GUIKIT::Image* image = &stateFast.selector.image;
+        image->free();
+
+        GUIKIT::File file(path);
+        if (file.open()) {            
+            if (image->loadPng(file.read(), file.getSize())) {
+                stateFast.selector.preview.setImage(image);
+                return;
+            }
+        }
+        stateFast.selector.preview.setImage(nullptr);
+    };
+
+    stateFast.selector.listView.onActivate = [this]() {
+        auto& lview = stateFast.selector.listView;
+        auto selection = lview.selection();
+        auto pos = lview.text(selection, 0);
 		_settings->set<unsigned>( "save_slot", std::stoul(pos));   
         
         unsigned statePos = 0;
-        std::string baseName = splitFile( stateFast.listView.text(selection, 1), statePos );
+        std::string baseName = splitFile(lview.text(selection, 1), statePos);
         stateFast.top.edit.setText( baseName );
         _settings->set<std::string>("save_ident", baseName);
 
         emuThread->lock();
-        States::getInstance( emulator )->load( stateFast.listView.text(selection, 1), true );
+        States::getInstance(emulator)->load(lview.text(selection, 1), true);
         emuThread->unlock();
         view->setFocused(100);
 	};	
 		
 	stateFast.top.find.onActivate = [this]() {
-		stateFast.listView.reset();
+		stateFast.selector.listView.reset();
 		
 		auto fileName = stateFast.top.edit.text();
 		if (fileName.empty()) {
@@ -777,7 +815,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 		std::vector<StateLine> lines;
 		
 		for(auto& info : infos) {
-            if (GUIKIT::String::endsWith(info.name, ".images"))
+            if (GUIKIT::String::endsWith(info.name, ".images") || GUIKIT::String::endsWith(info.name, ".png"))
                 continue;
             
             unsigned statePos = 0;
@@ -789,8 +827,10 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 		std::sort(lines.begin(), lines.end());
 		
 		for(auto& line : lines ) {
-			stateFast.listView.append({ std::to_string(line.pos), line.fileName, line.date });
+			stateFast.selector.listView.append({ std::to_string(line.pos), line.fileName, line.date });
 		}
+
+        stateFast.selector.preview.setImage(nullptr);
 	};
     
     stateDirect.load.onActivate = [this]() {
@@ -1055,6 +1095,8 @@ auto ConfigurationsLayout::loadSettings() -> void {
         case 2: stateFast.options.autoIdentCutFollowUp.setChecked(); break;
     }
 
+    stateFast.options.screenshot.setChecked(_settings->get<bool>("save_screenshot", true));
+
     stateFast.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
 
     updateStorePaths();
@@ -1076,6 +1118,7 @@ auto ConfigurationsLayout::loadSettings() -> void {
         
         updateMemoryPreview();
     }
+    stateFast.selector.preview.setImage(nullptr);
 }
 
 auto ConfigurationsLayout::updateStorePaths() -> void {
@@ -1107,14 +1150,14 @@ auto ConfigurationsLayout::updateMemoryPreview() -> void {
     
     while(true) {
         
-        sprintf( hex, "%04x", addr );
+        snprintf( hex, 6, "%04x", addr );
         
         out += (std::string)hex;
         out += ": ";
 
         for (i = 0; i < 16; i++, addr++) {
 
-            sprintf(hex, "%02x", pattern[addr]);
+            snprintf(hex, 6, "%02x", pattern[addr]);
 
             out += (std::string)hex;
             out += " ";
@@ -1156,12 +1199,13 @@ auto ConfigurationsLayout::translate() -> void {
     stateFast.top.label.setText( trans->get("labelling", {}, true) );
     stateFast.top.find.setText( trans->get("find") );
 	stateFast.top.hotkeys.setText( trans->get("hotkeys") );
-    stateFast.listView.setHeaderText({"#", trans->get("file"), trans->get("date")});
+    stateFast.selector.listView.setHeaderText({"#", trans->get("file"), trans->get("date")});
 
     stateFast.options.autoLabel.setText( trans->getA("automatic savestate identifier", true) );
     stateFast.options.autoIdentOff.setText( trans->getA("off") );
     stateFast.options.autoIdentOn.setText( trans->get("on") );
     stateFast.options.autoIdentCutFollowUp.setText( trans->get("cut off follow-up disks") );
+    stateFast.options.screenshot.setText(trans->getA("screenshot"));
     
     stateDirect.load.setText( trans->get("load") );
     stateDirect.save.setText( trans->get("save") );

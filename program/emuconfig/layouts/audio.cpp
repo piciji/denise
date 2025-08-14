@@ -52,6 +52,15 @@ tapeNoiseVolume("%", true) {
     }
 }
 
+AudioRecordLayout::Type::Type() {
+    append(label, { 0u, 0u }, 10);
+    append(mp3, { 0u, 0u }, 10);
+    append(wav, { 0u, 0u });
+
+    setAlignment(0.5);
+    GUIKIT::RadioBox::setGroup(mp3, wav);
+}
+
 AudioRecordLayout::Location::Location() {
     
     append(label, {0u, 0u}, 5 );
@@ -85,7 +94,8 @@ AudioRecordLayout::AudioRecordLayout() {
     
     setPadding(10);
     
-    append(location, {~0u, 0u}, 10 );    
+    append(location, {~0u, 0u}, 10 );
+    append(type, { ~0u, 0u }, 10);
     append(duration, {~0u, 0u} );
     
     setFont(GUIKIT::Font::system("bold"));
@@ -288,6 +298,11 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     moduleList.append( {"SID"} );
     moduleList.setImage(0, 0, processorImage);
 
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        moduleList.append( {"USBSID-Pico"} );
+        moduleList.setImage(moduleList.rowCount() - 1, 0, processorImage);
+    }
+
     moduleList.append( {"Drive"} );
     moduleList.setImage(moduleList.rowCount() - 1, 0, driveImage);
     moduleList.append( {"DSP"} );
@@ -301,7 +316,7 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
     panning.top.reset.setImage(&resetImage);
         
     moduleList.setSelection(0);
-    moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(100)}, 15 );
+    moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(dynamic_cast<LIBC64::Interface*>(emulator) ? 120 : 100)}, 15 );
     moduleFrame.append( volumeLayout, {0u, ~0u} );
     moduleFrame.setPadding(10);
     moduleFrame.setFont( GUIKIT::Font::system("bold") );
@@ -329,6 +344,16 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
     settingsLayout.setEvents();
     
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        usbSidPicoLayout = new ModelLayout;
+
+        usbSidPicoLayout->build(tabWindow, emulator,
+            {Emulator::Interface::Model::Purpose::AudioExtern}, {1,1,1}, 8);
+
+        usbSidPicoLayout->setEvents();
+    } else
+        usbSidPicoLayout = nullptr;
+    
     dspFrame.append( bass, {~0u, 0u}, 5 );
     dspFrame.append( echo, {~0u, 0u}, 5 );
     dspFrame.append( reverb, {~0u, 0u}, 5 );
@@ -336,10 +361,14 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
 
     append( moduleSwitch, {~0u, ~0u} );
 
-    moduleSwitch.setLayout( 0, settingsLayout, {~0u, ~0u} );
-    moduleSwitch.setLayout( 1, *driveLayout, {~0u, ~0u} );
-    moduleSwitch.setLayout( 2, dspFrame, {~0u, ~0u} );
-    moduleSwitch.setLayout( 3, audioRecord, {~0u, ~0u} );
+    int layPos = 0;
+    moduleSwitch.setLayout( layPos++, settingsLayout, {~0u, ~0u} );
+    if (usbSidPicoLayout)
+        moduleSwitch.setLayout( layPos++, *usbSidPicoLayout, {~0u, ~0u} );
+
+    moduleSwitch.setLayout( layPos++, *driveLayout, {~0u, ~0u} );
+    moduleSwitch.setLayout( layPos++, dspFrame, {~0u, ~0u} );
+    moduleSwitch.setLayout( layPos++, audioRecord, {~0u, ~0u} );
     
     bass.top.active.onToggle = [this](bool checked) {
         
@@ -583,6 +612,14 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
         audioRecord.location.pathEdit.setText( program->generatedFolder(emulator, "audio_record_path", "recordings/audio") );
         audioRecord.location.pathEdit.setEnabled(false);
     };
+
+    audioRecord.type.mp3.onActivate = [this]() {
+        _settings->set<unsigned>("audio_record_type", 0);
+    };
+
+    audioRecord.type.wav.onActivate = [this]() {
+        _settings->set<unsigned>("audio_record_type", 1);
+    };
     
     audioRecord.duration.minutesSlider.slider.onChange = [this](unsigned position) {
         _settings->set<unsigned>( "audio_record_minutes", position );
@@ -615,7 +652,9 @@ AudioLayout::AudioLayout(TabWindow* tabWindow) {
                 mes->error( errorText );
                 audioRecord.duration.record.setChecked(false);
                 return;
-            }                        
+            }
+
+            view->setAudioRecordText();
         } else
             audioManager->record.finish();
 
@@ -904,7 +943,9 @@ auto AudioLayout::setSeparation() -> void {
 }
 
 auto AudioLayout::translate() -> void {
-    settingsLayout.translate( );
+    settingsLayout.translate();
+    if (usbSidPicoLayout)
+        usbSidPicoLayout->translate();
     moduleFrame.setText(trans->get("selection"));
     
     bass.setText(trans->get("Bass Boost"));
@@ -953,20 +994,28 @@ auto AudioLayout::translate() -> void {
     driveLayout->tapeNoiseVolume.active.setText( trans->get("Tape Noise") );
 
     audioRecord.setText(trans->get("Audio Record"));
-    audioRecord.location.label.setText( trans->get("wav folder") );
+    audioRecord.location.label.setText( trans->getA("folder", true) );
     audioRecord.location.standard.setText(trans->get("default"));
     audioRecord.location.select.setText(trans->get("select"));
+
+    audioRecord.type.label.setText( trans->getA("format", true) );
+    audioRecord.type.mp3.setText(trans->getA("MP3"));
+    audioRecord.type.wav.setText(trans->getA("WAV"));
 
     audioRecord.duration.useTimeLimit.setText(trans->get("Recording time"));
     audioRecord.duration.minutesSlider.name.setText(trans->get("Minutes",{}, true));
     audioRecord.duration.secondsSlider.name.setText(trans->get("Seconds",{}, true));
     audioRecord.duration.record.setText( trans->get( audioManager->record.run(emulator) ? "Stop" : "Record") );
 
-    moduleList.setText(0, 0, trans->get("Chip"));
-    moduleList.setText(1, 0, trans->get("Drives"));
-    moduleList.setText(2, 0, trans->get("DSP"));
-    moduleList.setText(3, 0, trans->get("Audio Record"));
-    moduleList.setRowTooltip(2, trans->get("Digital Signal Processing"));
+    int layPos = 0;
+    moduleList.setText(layPos++, 0, trans->get("Chip"));
+    if (usbSidPicoLayout)
+        moduleList.setText(layPos++, 0, trans->get("USBSID-Pico"));
+    moduleList.setText(layPos++, 0, trans->get("Drives"));
+    moduleList.setText(layPos, 0, trans->get("DSP"));
+    moduleList.setRowTooltip(layPos++, trans->get("Digital Signal Processing"));
+    moduleList.setText(layPos++, 0, trans->get("Audio Record"));
+    
 
     volumeLayout.info.label.setText( trans->getA("volume") );
 
@@ -980,6 +1029,8 @@ auto AudioLayout::translate() -> void {
 
 auto AudioLayout::loadSettings() -> void {
     settingsLayout.updateWidgets();
+    if (usbSidPicoLayout)
+        usbSidPicoLayout->updateWidgets();
 
     initDsp( &echo.top.amp, "audio_echo_amp", 0.2 );
     initDsp( &echo.bottom.feedback, "audio_echo_feedback", 0.5 );
@@ -1035,6 +1086,17 @@ auto AudioLayout::loadSettings() -> void {
     audioRecord.duration.secondsSlider.slider.setPosition( value ); 
                  
     audioRecord.duration.useTimeLimit.setChecked( _settings->get<bool>( "audio_record_timelimit", false) );
+
+    auto recordingType = _settings->get<unsigned>("audio_record_type", 0);
+    switch (recordingType) {
+        case 0:
+        default:
+            audioRecord.type.mp3.setChecked();
+            break;
+        case 1:
+            audioRecord.type.wav.setChecked();
+            break;
+    }
 
     driveLayout->floppyVolume.active.setChecked( _settings->get<bool>( "audio_floppy", false) );
 
@@ -1129,4 +1191,9 @@ auto AudioLayout::stopRecord() -> void {
         audioRecord.duration.record.setText( trans->get( "Record" ) );
         audioRecord.duration.record.setChecked(false);
     }
+}
+
+auto AudioLayout::selectViewAudioRecord() -> void {
+    moduleList.setSelection(moduleList.rowCount() - 1);
+    moduleSwitch.setSelection(moduleList.selection());
 }

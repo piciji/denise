@@ -1,9 +1,9 @@
 
 auto pImageView::minimumSize() -> Size {
-    if (!imageView.state.image)
+    if (!imageView.image())
         return {0u, 0u};
 
-    auto image = imageView.state.image;
+    auto image = imageView.image();
 
     return {image->width, image->height};
 }
@@ -96,24 +96,25 @@ auto CALLBACK pImageView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LP
 }
 
 auto pImageView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
-    if (!imageView.state.image)
-        return;
-
     auto hdc = lDraw->hDC;
     auto rc = lDraw->rcItem;
-    unsigned width = imageView.state.image->width;
-    unsigned height = imageView.state.image->height;
 
     SetBkMode(hdc, TRANSPARENT);
     HBRUSH brush = getBackgroundBrush();
     if (brush)
         FillRect(hdc, &rc, brush);
 
+    if (!imageView.state.image)
+        return;
+
+    unsigned width = imageView.image()->width;
+    unsigned height = imageView.image()->height;
+
     PAINTSTRUCT ps;
     BeginPaint(hwnd, &ps);
     HDC _hdc = CreateCompatibleDC(hdc);
 
-    auto bitmap = CreateBitmapWithPremultipliedAlpha(*imageView.state.image);
+    auto bitmap = CreateBitmapWithPremultipliedAlpha(*imageView.image());
     SelectObject(_hdc, bitmap);
 
     //RECT rc;

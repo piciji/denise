@@ -110,6 +110,7 @@ struct GL3 {
     } settings;
 
     Version version;
+    DRIVER::Video::ScreenshotCallback screenshotCallback = nullptr;
 
     GL3() {
         shaderPasses = 0;
@@ -194,17 +195,17 @@ struct GL3 {
         return GLUtility::initTexture(tex, false);
     }
 
-    auto _redraw(bool disallowShader, bool interlace) -> void {
+    auto _redraw(uint8_t options) -> void {
         clear();
         
         if (updateRTS)
-            updateRenderTargets(frame.textures[0].width, frame.textures[0].height, interlace);
+            updateRenderTargets(frame.textures[0].width, frame.textures[0].height, options & OPT_Interlace);
 
         glBindVertexArray(frame.vao);
 
         GLTexture* texture = &frame.textures[0];
 
-        if (!disallowShader && shaderPasses) {
+        if (!(options & OPT_DisallowShader) && shaderPasses) {
             frameCount += 1;
 
             for(int i = 0; i < shaderPasses; i++) {
@@ -349,7 +350,10 @@ struct GL3 {
             glUseProgram(frame.prg);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture->view);
-            GLUtility::glParameters(GL_CLAMP_TO_EDGE, frame.filter, frame.filter);
+            if (options & OPT_DisallowFilter)
+                GLUtility::glParameters(GL_CLAMP_TO_EDGE, GL_NEAREST, GL_NEAREST);
+            else
+                GLUtility::glParameters(GL_CLAMP_TO_EDGE, frame.filter, frame.filter);
         }
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // to screen
@@ -1138,6 +1142,33 @@ End:
         frame.size.z = 1.0f / (float)viewport.width;
         frame.size.w = 1.0f / (float)viewport.height;
         updateRTS = true;
+    }
+
+    auto setScreenshotCallback(DRIVER::Video::ScreenshotCallback callback) -> void {
+        this->screenshotCallback = callback;
+    }
+
+    auto takeScreenshot() -> void {
+        if (!screenshotCallback)
+            return;
+
+        uint8_t* buffer = new uint8_t[viewport.width * viewport.height * 4];
+
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        glReadBuffer(GL_FRONT);
+
+        glReadPixels(viewport.x, viewport.y, viewport.width, viewport.height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+
+        for (int line = 0; line != viewport.height / 2; ++line) {
+            std::swap_ranges(
+                buffer + 3 * viewport.width * line,
+                buffer + 3 * viewport.width * (line + 1),
+                buffer + 3 * viewport.width * (viewport.height - line - 1));
+        }
+
+        screenshotCallback(buffer, viewport.width, viewport.height);
+
+        delete[] buffer;
     }
 };
 

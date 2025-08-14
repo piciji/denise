@@ -62,7 +62,10 @@ set(_depSrcs
         deps/lha/lzs_decoder.cpp
         deps/lha/lhx_decoder.cpp
         deps/lha/lk7_decoder.cpp
-        deps/lha/crc16.cpp        
+        deps/lha/crc16.cpp
+
+        deps/cgif/cgif.cpp
+        deps/cgif/cgif_raw.cpp
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -92,5 +95,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 else()
     set(_depSrcs ${_depSrcs} deps/lha/lha_arch_unix.cpp )
 endif()
+
+set(usblibSrcs deps/USBSID-Pico/USBSID.cpp PARENT_SCOPE)
 
 set(depSrcs ${_depSrcs} ${_depSrcsHLSL} ${_depSrcsMSL} PARENT_SCOPE)

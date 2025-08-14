@@ -63,3 +63,19 @@ auto Program::mixDriveSound( Emulator::Interface::Media* media, Emulator::Interf
 
     audioManager->drive.addSound( activeEmulator, media, (Mixer::Drive::DriveSound)driveSound, alternate, data );
 }
+
+auto Program::toggleRecord() -> void {
+    auto emuView = EmuConfigView::TabWindow::getView(activeEmulator);
+    if (emuView && emuView->audioLayout) {
+        emuView->audioLayout->toggleRecord();
+    } else if (audioManager) {
+        emuThread->lock();
+        std::string errorText;
+        if (!audioManager->record.toggle(activeEmulator, errorText))
+            statusHandler->setMessage(errorText, true);
+        if (view)
+            view->setAudioRecordText();
+
+        emuThread->unlock();
+    }
+}

@@ -187,6 +187,67 @@ auto pBrowserWindow::getIFileParent() -> HWND {
     return nullptr;
 }
 
+auto pBrowserWindow::directoryVista() -> std::string {
+    auto& state = browserWindow.state;
+    std::string out = "";
+    pApplication::currentWorkingDirectory();
+
+    HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL,
+        IID_IFileOpenDialog, reinterpret_cast<void**>(&pDlg));
+
+    if (FAILED(hr))
+        return "";
+
+    pDialogEventHandler = new FileDialogEventHandler;
+    pDialogEventHandler->state = &state;
+    pDialogEventHandler->browserWindow = &browserWindow;
+    pDialogEventHandler->pDlg = pDlg;
+
+    utf16_t wtitle(state.title);
+    std::string path = state.path;
+    std::replace(path.begin(), path.end(), '/', '\\');
+
+    utf16_t wpath(path.c_str());
+
+    IShellItem* location;
+    SHCreateItemFromParsingName(wpath, nullptr, IID_IShellItem, reinterpret_cast<void**>(&location));
+    
+    DWORD dwFlags;
+    pDlg->GetOptions(&dwFlags);
+    pDlg->SetOptions(dwFlags | FOS_PICKFOLDERS);
+    pDlg->SetTitle(wtitle);
+    pDlg->SetFolder(location);
+
+    hr = pDlg->Show(state.window ? state.window->p.hwnd : 0);
+
+    if (!pDlg || !SUCCEEDED(hr))
+        return "";
+
+    IShellItem* pItem = nullptr;
+    hr = pDlg->GetResult(&pItem);
+
+    if (SUCCEEDED(hr)) {
+        LPOLESTR pwsz = NULL;
+
+        hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pwsz);
+
+        if (SUCCEEDED(hr)) {
+            out = utf8_t(pwsz);
+            if (!out.empty()) {
+                std::replace(out.begin(), out.end(), '\\', '/');
+                if (out.back() != '/')
+                    out.push_back('/');
+            }
+            CoTaskMemFree(pwsz);
+        }
+    }
+
+    pDlg->Release();
+    pDlg = nullptr;
+
+    return out;
+}
+
 auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string> {
     auto& state = browserWindow.state;
     std::string name = "";
@@ -233,7 +294,7 @@ auto pBrowserWindow::fileVista(bool save, bool multi) -> std::vector<std::string
     if (!state.textOk.empty())
         pDlg->SetOkButtonLabel( (LPCWSTR)utf16_t(state.textOk) );    
     
-    pDialogEventHandler = new FileDialogEventHandler;    
+    pDialogEventHandler = new FileDialogEventHandler;
     pDialogEventHandler->state = &state;
     pDialogEventHandler->browserWindow = &browserWindow;
     pDialogEventHandler->pDlg = pDlg;
@@ -897,11 +958,11 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                     int maxChars = context->listWidth / context->listItemWidth;
 
                     for(auto& file : context->selectedFiles) {
-                        if (i >= rows.size())
-                            break;
-
                         std::string ident = String::removeExtension(file, 2);
-                        ident += "  " + rows[i++].entry + ": ";
+                        
+                        if (i < rows.size())                                               
+                            ident += "  " + rows[i++].entry + ": ";
+
                         if (ident.size() > maxChars)
                             ident = ident.substr( ident.size() - maxChars );
 
@@ -1424,6 +1485,9 @@ pBrowserWindow::~pBrowserWindow() {
 }
 
 auto pBrowserWindow::directory() -> std::string {
+    if (getVersionNew() >= WindowsVista)
+        return directoryVista();
+
     auto& state = browserWindow.state;
     
     pApplication::currentWorkingDirectory();
@@ -1463,12 +1527,12 @@ auto CALLBACK pBrowserWindow::PathCallbackProc(HWND hwnd, UINT msg, LPARAM lpara
     if(msg == BFFM_INITIALIZED) {
         if(lpdata) {
             auto state = (BrowserWindow::State*)lpdata;
-            utf16_t wtitle( state->title );
+         //   utf16_t wtitle( state->title );
             std::string path = state->path;
             std::replace( path.begin(), path.end(), '/', '\\');
             utf16_t wpath( path );
 
-            if( !state->title.empty() ) SetWindowText(hwnd, wtitle);
+         //   if( !state->title.empty() ) SetWindowText(hwnd, wtitle);
             SendMessage(hwnd, BFFM_SETSELECTION, TRUE, (LPARAM)(wchar_t*)wpath);
         }
     }

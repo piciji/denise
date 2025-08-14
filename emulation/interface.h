@@ -222,7 +222,7 @@ struct Interface {
 		unsigned id;
 		std::string name;		
 		enum Type : unsigned { Switch, Range, Hex, Radio, Combo, Slider } type;
-		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Memory, SubModels, DriveMechanics } purpose;
+		enum Purpose : unsigned { Cpu, GraphicChip, SoundChip, Cia, AudioSettings, AudioResampler, Misc, DriveSettings, Performance, Memory, SubModels, DriveMechanics, AudioExtern } purpose;
 		int defaultValue;
 		std::vector<int> range;
 		std::vector<std::string> options;
@@ -472,11 +472,9 @@ struct Interface {
         if (asHex) {
             out = "0x";
             char hex[8];
-#ifdef _MSC_VER
-            sprintf_s( hex, "%x", data );
-#else
-            sprintf( hex, "%x", data );
-#endif
+
+            snprintf( hex, 8, "%x", data );
+            
             out += (std::string)hex;
         }
         bind->log(out, newLine);
@@ -590,7 +588,6 @@ struct Interface {
     
     //crop
 	virtual auto cropFrame( CropType type, Crop crop ) -> void {}
-    // get native resolution after cropping
     virtual auto cropWidth() -> unsigned { return 0; }
     virtual auto cropHeight() -> unsigned { return 0; }
     virtual auto cropTop() -> unsigned { return 0; }
@@ -600,6 +597,8 @@ struct Interface {
     virtual auto cropData16() -> uint16_t* { return nullptr; }
     virtual auto cropPitch() -> unsigned { return 0; }
     virtual auto cropOptions() -> uint8_t { return 0; }
+    // for taking screenshots with different crop than the visible one
+    virtual auto cropAlternatively(unsigned& width, unsigned& height, unsigned& pitch) -> uint8_t* { return nullptr; }
     
     virtual auto videoAddMeta(bool state) -> void {}
     

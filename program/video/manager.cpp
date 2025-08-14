@@ -24,6 +24,7 @@ uint8_t VideoManager::frameRenderTrigger = 1;
 unsigned VideoManager::placeHolderFrames = 0;
 bool VideoManager::placeHolderSplashScreen = false;
 bool VideoManager::needAUpdate = true;
+unsigned VideoManager::takeScreenShots = 0;
 
 std::vector<VideoManager*> videoManagers;
 
@@ -591,34 +592,32 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     constexpr bool shres = options & 8;
     constexpr bool lores = !hires && !shres;
     bool iHold = interlace && !field && !interlaceFields;
-    bool warp = program->warp.active;
-    uint8_t gpuOptions = iHold | (interlace << 1) | (warp << 2);
+    bool suppressShader = program->warp.active;
+    uint8_t gpuOptions = iHold | (interlace << 1) | (suppressShader << 2);
 
     if (needAUpdate)
         updateAll();
 
     bool cropCoordUpdated = emulator->cropCoordUpdated(cropTop, cropLeft);
-    if (!placeHolderSplashScreen) {
-        if (rebuildShader) {
-            if (crtMode == CrtMode::Gpu) {
-                setData("autoEmu_cropTop", (float)cropTop);
-                setData("autoEmu_cropLeft", (float)cropLeft);
-                setData("autoEmu_lace", (float)interlace);
-                setData("autoEmu_hires", (float)hires);
-                setData("autoEmu_pal", (float)pal);
-                setData("autoEmu_subRegion", emulator->getSubRegion());
-                setData("autoEmu_tvGamma", (float)(shaderLumaChromaInput() && (colorSpectrum || crtRealGamma)));
-                setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
-                setData("autoEmu_driveLED", (float)0);
-                videoDriver->setShader( &parser->shaderPreset);
-            } else
-                videoDriver->setShader(nullptr);
-
-            rebuildShader  = false;
-        } else if (cropCoordUpdated) {
+    if (rebuildShader && !placeHolderSplashScreen) {
+        if (crtMode == CrtMode::Gpu) {
             setData("autoEmu_cropTop", (float)cropTop);
             setData("autoEmu_cropLeft", (float)cropLeft);
-        }
+            setData("autoEmu_lace", (float)interlace);
+            setData("autoEmu_hires", (float)hires);
+            setData("autoEmu_pal", (float)pal);
+            setData("autoEmu_subRegion", emulator->getSubRegion());
+            setData("autoEmu_tvGamma", (float)(shaderLumaChromaInput() && (colorSpectrum || crtRealGamma)));
+            setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
+            setData("autoEmu_driveLED", (float)0);
+            videoDriver->setShader( &parser->shaderPreset);
+        } else
+            videoDriver->setShader(nullptr);
+
+        rebuildShader  = false;
+    } else if (cropCoordUpdated && !placeHolderSplashScreen) {
+        setData("autoEmu_cropTop", (float)cropTop);
+        setData("autoEmu_cropLeft", (float)cropLeft);
     }
 
     frameOptions &= ~0x80; // init lace toggle
@@ -640,12 +639,30 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         return;
     }
 
+    if (unlikely(takeScreenShots)) {
+        if (view->screenshot.unscaled) {
+            takeScreenshot<T>(view->screenshot.unscaled, src, width, height, srcPitch, options);
+        } else {
+            gpuOptions |= (uint8_t)DRIVER::OPT_TakeScreenshot;
+            if (!view->screenshot.withEffects) {
+                gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader | (uint8_t)DRIVER::OPT_DisallowFilter;
+                suppressShader = true;
+            }
+        }
+        if (!placeHolderFrames) {
+            if (!--takeScreenShots && view->screenshot.pause)
+                program->isPause = view->screenshot.pause;
+        }
+    }
+
     frameRenderPos = 0;
     videoDriver->setIntegerScalingDimension( lores ? (width << 1) : (hires ? width : (width >> 1)), interlace ? height : (height << 1), shres | hires | interlace);
 
-    if (placeHolderFrames) {
+    if (unlikely(placeHolderFrames)) {
         if (!placeHolderSplashScreen || ((placeHolderFrames & 3) == 0)) {
-            if (!view->renderPlaceholder())
+            if (takeScreenShots)
+                takeScreenShots--;
+            if (!view->renderPlaceholder(gpuOptions))
                 return hidePlaceHolder();
         }
 
@@ -658,7 +675,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         }
         return;
 
-    } else if ( warp || (crtMode == CrtMode::None) ) {
+    } else if ( suppressShader || (crtMode == CrtMode::None) ) {
         if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
             return;
 
@@ -696,6 +713,45 @@ Typical:
 	}		           
 
     videoDriver->unlockAndRedraw( );
+}
+
+template<typename T> auto VideoManager::takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, uint8_t _options) -> void {
+    const T* _fT = _src;
+
+    if (unscaled > 1) {
+        if (unscaled == 2)
+            _width = 320;
+        else if (unscaled == 3)
+            _width = isC64() ? 384 : 344;
+
+        uint8_t* _f = activeEmulator->cropAlternatively(_width, _height, _pitch);
+        if (!_f)
+            return;
+        _fT = (const T*)_f;
+    }
+
+    unsigned w = _width;
+    unsigned h = _height;
+
+    if (_options) {
+        bool interlace = _options & 3;
+        bool hires = _options & 4;
+        bool shres = _options & 8;
+
+        if (shres && !interlace)
+            _height <<= 2;
+        else if (shres && interlace)
+            _height <<= 1;
+        else if (hires && !interlace)
+            _height <<= 1;
+        else if (!hires && interlace)
+            _width <<= 1;
+    }
+
+    uint8_t* _dest = new uint8_t[_width * _height * 3];
+    renderToScreenshot<T>(w, h, _fT, _pitch, _dest, _options);
+    program->takeScreenshot(_dest, _width, _height);
+    delete[] _dest;
 }
 
 template<typename T, bool interlace, bool field> inline auto VideoManager::renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
@@ -747,6 +803,85 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
         }
     }
 }
+
+#define screenshot3channel(x) { auto& _x = x; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; }
+#define screenshot3channel2x(x) { auto& _x = x; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; *dest++ = _x.r; *dest++ = _x.g; *dest++ = _x.b; }
+
+template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void {
+    unsigned mask = (1 << countColorBits) - 1;
+    bool interlace = _options & 3;
+    bool field = _options & 2;
+    bool hires = _options & 4;
+    bool shres = _options & 8;
+
+    if (interlace) {
+        bool repeatWidth = !hires && !shres;
+        unsigned color;
+        ColorRgbLight colorDecayed;
+        bool laceToggle = !!(frameOptions & 0x80);
+        unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
+        if (laceToggle)
+            iRate = 100;
+
+        for (unsigned h = 0; h < height; h++) {
+            uint8_t* _p = dest;
+
+            if ((iRate != 100) && ((!field && (h & 1)) || (field && !(h & 1)))) {
+
+                for (unsigned w = 0; w < width; w++) {
+                    color = palette->paletteColors[*src++ & mask].rgb;
+                    colorDecayed.r = (color >> 16) & 0xff;
+                    colorDecayed.g = (color >> 8) & 0xff;
+                    colorDecayed.b = (color >> 0) & 0xff;
+
+                    colorDecayed.r = (colorDecayed.r * iRate) / 100;
+                    colorDecayed.g = (colorDecayed.g * iRate) / 100;
+                    colorDecayed.b = (colorDecayed.b * iRate) / 100;
+
+                    screenshot3channel(colorDecayed)
+                }
+            } else {
+                for (unsigned w = 0; w < width; w++) {
+                    if (repeatWidth)
+                        screenshot3channel2x(palette->paletteColors[*src++ & mask])
+                    else
+                        screenshot3channel(palette->paletteColors[*src++ & mask])
+                }
+            }
+
+            if (shres) {
+                std::memcpy(dest, _p, width * 3);
+                dest += width * 3;
+            }
+
+            src += srcPitch;
+        }
+    } else if (view->screenshot.writePalette) {
+        for (unsigned h = 0; h < height; h++) {
+            for (unsigned w = 0; w < width; w++)
+                *dest++ = *src++ & mask;
+
+            src += srcPitch;
+        }
+    } else {
+        int repeatHeight = shres ? 3 : (hires ? 1 : 0);
+
+        for (unsigned h = 0; h < height; h++) {
+            uint8_t* _p = dest;
+            for (unsigned w = 0; w < width; w++) {
+                screenshot3channel(palette->paletteColors[*src++ & mask])
+            }
+
+            for(int i = 0; i < repeatHeight; i++) {
+                std::memcpy(dest, _p, width * 3);
+                dest += width * 3;
+            }
+
+            src += srcPitch;
+        }
+    }
+}
+#undef screenshot3channel
 
 template<typename T, bool interlace, bool field> inline auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch, unsigned& cropTop) -> void {
 	const T* srcDelay = src;

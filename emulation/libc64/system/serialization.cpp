@@ -132,7 +132,9 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
     input.serialize( s );
     serializeExpansion( s );
     
-    sysTimer.serialize( s );        
+    sysTimer.serialize( s );
+
+    sidManager.usbSIDPico.serialize( s );
 }    
     
 inline auto System::serializeDiskIdle(Emulator::Serializer& s) -> void {

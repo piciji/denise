@@ -13,6 +13,7 @@ struct Crop {
 	
 	BorderCallback removeBorderCallback;
 	BorderCallback monitorBorderCallback;
+	std::function<Interface::Crop(unsigned _w, unsigned _h)> screenshotBorderCallback = nullptr;
 	
 	struct {
 		CropType type;
@@ -29,6 +30,11 @@ struct Crop {
         bool topLeftChanged;
     	uint8_t options;
     } latest;
+
+	struct {
+		unsigned width;
+		unsigned height;
+	} original;
     
 	unsigned croppedWidth;
 	unsigned croppedHeight;
@@ -88,8 +94,10 @@ struct Crop {
 		return true;
 	}
 	
-	auto apply(T*& frame, unsigned& width, unsigned& height, unsigned& linePitch, uint8_t options = 0) -> void {
-		
+	auto apply(T*& frame, unsigned& width, unsigned& height, unsigned& linePitch, uint8_t options = 0) -> void {		
+		original.width = width;
+		original.height = height;
+
 		if ( !updateBorder(options) ) {
             memoryLatest( frame, width, height, linePitch, options );
 			return;
@@ -175,6 +183,28 @@ struct Crop {
             left &= ~1;
             croppedWidth &= ~1;
         }
+	}
+
+	auto cropAlternatively(unsigned& width, unsigned& height, unsigned& pitch) -> uint8_t* {
+		if (!screenshotBorderCallback)
+			return nullptr;
+
+		Emulator::Crop<T> _crop;
+		_crop.settings.type = CropType::Free;
+		_crop.settings.crop = screenshotBorderCallback(width, height);
+
+		unsigned lineLength = latest.linePitch + latest.width;
+		pitch = lineLength - original.width;
+		width = original.width;
+		height = original.height;
+
+		T* frame = latest.frame;
+		frame -= latest.left;
+		frame -= latest.top * lineLength;
+
+		_crop.apply(frame, width, height, pitch);
+
+		return (uint8_t*)frame;
 	}
 };
 

@@ -21,6 +21,22 @@ struct View : GUIKIT::Window {
 	bool useFullscreenRefreshAsEmuSpeed = false;
 	ImageViewer* imageViewer = nullptr;
 
+    struct {        
+        std::string path;
+        GUIKIT::Image::Type type;
+        bool withEffects = false;
+        unsigned unscaled = 0;
+        bool twoFrames = false;
+        bool saveState = false;
+        unsigned pause = 0;
+        bool writePalette = false;
+        unsigned gun = 0;
+        bool animatedGif = false;
+        std::vector<uint8_t*> buffer;
+        unsigned bufferSize;
+        std::mutex sharedMutex;
+    } screenshot;
+
     struct ShaderFavourites {
         std::string path;
         GUIKIT::MenuRadioItem* item;
@@ -96,7 +112,7 @@ struct View : GUIKIT::Window {
     auto loadImages() -> void;
     
     auto loadPlaceholder() -> void;
-    auto renderPlaceholder() -> bool;
+    auto renderPlaceholder(uint8_t gpuOptions) -> bool;
     auto loadDragnDropOverlay() -> void;
     auto togglePause() -> void;
     auto updatePauseCheck() -> void;
@@ -126,7 +142,19 @@ struct View : GUIKIT::Window {
 
     std::vector<InputMenu> inputMenus;
 
-    GUIKIT::Menu editMenu;
+    GUIKIT::Menu miscMenu;
+        GUIKIT::MenuItem recordScreen;
+        GUIKIT::MenuRadioItem recordScaled;
+        GUIKIT::MenuRadioItem recordUnscaled;
+        GUIKIT::MenuRadioItem recordUnscaledNoBorder;
+        GUIKIT::MenuRadioItem recordUnscaledMonitor;
+        GUIKIT::MenuCheckItem recordMergedFrames;
+        GUIKIT::MenuCheckItem recordWithEffects;
+        GUIKIT::MenuItem recordScreenSettings;
+
+        GUIKIT::MenuItem recordAudio;
+        GUIKIT::MenuItem recordAudioSettings;
+
         GUIKIT::MenuItem copyItem;
         GUIKIT::MenuItem pasteItem;
 
@@ -212,6 +240,7 @@ struct View : GUIKIT::Window {
 	GUIKIT::Image infoImage;
     GUIKIT::Image openImage;
     GUIKIT::Image clearImage;
+    GUIKIT::Image screenshotImage;
     
     GUIKIT::Image playImage;
     GUIKIT::Image playhiImage;
@@ -255,6 +284,7 @@ struct View : GUIKIT::Window {
     GUIKIT::Image insertImage;
 
 	GUIKIT::Image delImage;
+    GUIKIT::Image recordAudioImage;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels() -> void;
@@ -266,6 +296,10 @@ struct View : GUIKIT::Window {
 	auto activateCustomSpeed() -> void;
     auto updateGeometry(bool withViewport = false) -> void;
     auto adjustToEmu(bool withViewport) -> void;
+    auto takeScreenshot() -> void;
+    auto clearScreenshotBuffer() -> void;
+    auto updateScreenshotUI() -> void;
+    auto setAudioRecordText() -> void;
     
     View();
 };

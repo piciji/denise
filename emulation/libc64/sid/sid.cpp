@@ -20,8 +20,10 @@ std::vector<std::string> Sid::adrOptions = {"Default", "D400", "D420", "D440", "
                                             "D7A0", "D7C0", "D7E0", "DE00", "DE20", "DE40", "DE60", "DE80", "DEA0", "DEC0", "DEE0", "DF00", "DF20", "DF40", "DF60", "DF80", "DFA0", "DFC0", "DFE0"};
 
 
-Sid::Sid( System* system, SidManager& sidManager, Type type ) :
+Sid::Sid( unsigned nr, System* system, SidManager& sidManager, Type type ) :
+nr(nr),
 system(system),
+usbSIDPico(sidManager.usbSIDPico),
 sidManager(sidManager),
 sysTimer(system->sysTimer),
 filter( this ),

@@ -294,6 +294,36 @@ struct VideoScreenTextLayout : GUIKIT::VerticalLayout {
     VideoScreenTextLayout();
 };
 
+struct VideoScreenShotLayout : GUIKIT::FramedVerticalLayout {
+    struct Location : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::LineEdit pathEdit;
+        GUIKIT::Button standard;
+        GUIKIT::Button select;
+
+        Location();
+    } location;
+
+    struct Format : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox png;
+        GUIKIT::RadioBox jpg;
+        GUIKIT::RadioBox bmp;
+        GUIKIT::RadioBox gif;
+        GUIKIT::RadioBox tga;
+
+        Format();
+    } format;
+
+    struct Options : GUIKIT::HorizontalLayout  {
+        GUIKIT::CheckBox palete;
+        SliderLayout gun;
+        Options(bool withPalete);
+    } options;
+
+    VideoScreenShotLayout(bool withPalete);
+};
+
 struct DisplayFont {
     std::string file;
     std::string name;
@@ -314,6 +344,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::SwitchLayout moduleSwitch;
     GUIKIT::TreeViewItem tviBase;
     GUIKIT::TreeViewItem tviScreenText;
+    GUIKIT::TreeViewItem tviScreenShot;
 
     GUIKIT::TreeViewItem tviShader;
     std::vector<GUIKIT::TreeViewItem*> tviPasses;
@@ -324,6 +355,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     VideoPassLayout layPass;
     VideoParamLayout layParam;
     VideoScreenTextLayout layScreenText;
+    VideoScreenShotLayout layScreenShot;
 
     GUIKIT::Window codeWindow;
     GUIKIT::VerticalLayout codeLayout;
@@ -344,6 +376,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image delImage;
     GUIKIT::Image gearsImage;
     GUIKIT::Image backImage;
+    GUIKIT::Image screenshotImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;
@@ -386,6 +419,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     static auto getTTF(uint16_t ident) -> DisplayFont*;
     static auto getTTF(const std::string& file, int fontIndex) -> DisplayFont*;
     static auto removeTTF(const std::string& file, uint8_t mode) -> bool;
+    auto updateRecordingPath() -> void;
+    auto selectViewScreenshot() -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

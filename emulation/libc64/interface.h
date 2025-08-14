@@ -29,7 +29,8 @@ struct Interface : Emulator::Interface {
         ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64AccuracyDeprecated,
         ModelIdReuRam, ModelIdGeoRam, ModelIdIntensifyPseudoStereo,
     	ModelIdEmulateDriveMechanics, ModelIdDriveStepperDelay, ModelIdDriveAcceleration, ModelIdDriveDeceleration,
-    	ModelIdSidSeparateInput, ModelIdSuperCpuRam, ModelIdTrackZeroSensor, ModelId2Mhz, 
+    	ModelIdSidSeparateInput, ModelIdSuperCpuRam, ModelIdTrackZeroSensor, ModelId2Mhz,
+        ModelIdSidUsbPico, ModelIdSidUsbPicoBufferSize, ModelIdSidUsbPicoDiffSize,
     };
     
     enum MediaGroupId {
@@ -172,6 +173,7 @@ struct Interface : Emulator::Interface {
     auto cropCoordUpdated(unsigned& top, unsigned& left) -> bool;
     auto cropData() -> uint8_t*;
     auto cropPitch() -> unsigned;
+    auto cropAlternatively(unsigned& width, unsigned& height, unsigned& pitch) -> uint8_t*;
 
     // jit
     auto setInputSampling(uint8_t mode) -> void;

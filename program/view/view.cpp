@@ -13,6 +13,7 @@
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
 #include "placeholder.cpp"
+#include "../tools/chronos.h"
 
 View* view = nullptr;
 
@@ -256,9 +257,6 @@ auto View::build() -> void {
 	};
 
     GUIKIT::Application::Cocoa::onOpenFile = [this] (std::string fileName) {
-        // will be called when starting from cmd with parameter too ? we don't want to do it twice in case of argv.
-        // but opening a file from explorer doesn't generate argv parameter, so we need this callback.
-        // Why does everything have to be more complicated on the mac?
         if (cmd->hasContent)
             return;
 
@@ -1052,6 +1050,8 @@ auto View::loadImages() -> void {
     clearImage.setResourceId(ID_CLEAR);
     insertImage.loadPng((uint8_t*)Icons::insert, sizeof(Icons::insert));
     insertImage.setResourceId(ID_INSERT);
+    screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
+    screenshotImage.setResourceId(ID_SCREENSHOT);
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1077,6 +1077,7 @@ auto View::loadImages() -> void {
     ledGreenRoundImage.loadPng((uint8_t*)Icons::ledGreenRound, sizeof(Icons::ledGreenRound));
     ledRedRoundImage.loadPng((uint8_t*) Icons::ledRedRound, sizeof (Icons::ledRedRound));
     ledOffRoundImage.loadPng((uint8_t*)Icons::ledOffRound, sizeof(Icons::ledOffRound));
+    recordAudioImage.loadPng((uint8_t*)Icons::recordAudio, sizeof(Icons::recordAudio));
 }
 
 auto View::buildMenu() -> void {
@@ -1375,7 +1376,107 @@ auto View::buildMenu() -> void {
     controlMenu.setIcon(joystickImage);
     append(controlMenu);
 	
-    editMenu.append( copyItem );
+    // Misc Control
+    recordScreen.setIcon(screenshotImage);
+    recordScreen.onActivate = [this]() {
+        emuThread->lock();
+        takeScreenshot();
+        emuThread->unlock();
+    };
+    miscMenu.append(recordScreen);
+
+    miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
+    recordScaled.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("screenshot_unscaled", 0);
+        recordWithEffects.setEnabled();
+        emuThread->unlock();
+    };
+    miscMenu.append(recordScaled);
+
+    recordUnscaled.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("screenshot_unscaled", 1);
+        recordWithEffects.setEnabled(false);
+        emuThread->unlock();
+    };
+    miscMenu.append(recordUnscaled);
+
+    recordUnscaledNoBorder.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("screenshot_unscaled", 2);
+        recordWithEffects.setEnabled(false);
+        emuThread->unlock();
+    };
+    miscMenu.append(recordUnscaledNoBorder);
+
+    recordUnscaledMonitor.onActivate = [this]() {
+        emuThread->lock();
+        globalSettings->set<unsigned>("screenshot_unscaled", 3);
+        recordWithEffects.setEnabled(false);
+        emuThread->unlock();
+    };
+    miscMenu.append(recordUnscaledMonitor);
+
+    GUIKIT::MenuRadioItem::setGroup(recordScaled, recordUnscaled, recordUnscaledNoBorder, recordUnscaledMonitor);
+
+    unsigned _unscaled = globalSettings->get<unsigned>("screenshot_unscaled", 0);
+    
+    switch (_unscaled) {
+        default:
+        case 0: recordScaled.setChecked(); break;
+        case 1: recordUnscaled.setChecked(); break;
+        case 2: recordUnscaledNoBorder.setChecked(); break;
+        case 3: recordUnscaledMonitor.setChecked(); break;
+    }
+
+    miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
+    recordMergedFrames.onToggle = [this]() {
+        emuThread->lock();
+        globalSettings->set<bool>("screenshot_merge_frames", recordMergedFrames.checked());
+        emuThread->unlock();
+    };
+    recordMergedFrames.setChecked(globalSettings->get<bool>("screenshot_merge_frames", false));
+    miscMenu.append(recordMergedFrames);
+
+    recordWithEffects.onToggle = [this]() {
+        emuThread->lock();
+        globalSettings->set<bool>("screenshot_with_effects", recordWithEffects.checked());
+        emuThread->unlock();
+    };
+    recordWithEffects.setChecked(globalSettings->get<bool>("screenshot_with_effects", true));
+    recordWithEffects.setEnabled(_unscaled == 0);
+    miscMenu.append(recordWithEffects);
+
+    recordScreenSettings.onActivate = [this]() {
+        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
+        emuView->show(EmuConfigView::TabWindow::Layout::Presentation);
+        if (emuView->videoLayout)
+            emuView->videoLayout->selectViewScreenshot();
+    };
+    miscMenu.append(recordScreenSettings);
+
+    miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
+    recordAudio.onActivate = [this]() {    
+        program->toggleRecord();
+    };
+    recordAudio.setIcon(recordAudioImage);
+    miscMenu.append(recordAudio);
+
+    recordAudioSettings.onActivate = [this]() {
+        auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
+        emuView->show(EmuConfigView::TabWindow::Layout::Audio);
+        if (emuView->audioLayout)
+            emuView->audioLayout->selectViewAudioRecord();
+    };
+    miscMenu.append(recordAudioSettings);
+
+    miscMenu.append(*GUIKIT::MenuSeparator::getInstance());
+
+    miscMenu.append(copyItem);
 
     pasteItem.onActivate = []() {
         GUIKIT::Application::requestClipboardText();
@@ -1391,10 +1492,10 @@ auto View::buildMenu() -> void {
         GUIKIT::Application::setClipboardText( text );
     };
 
-    editMenu.append( pasteItem );
+    miscMenu.append( pasteItem );
 
-	editMenu.setIcon(editImage);
-    append( editMenu );
+	miscMenu.setIcon(editImage);
+    append( miscMenu );
 
     optionsMenu.setIcon(toolsImage);
     append(optionsMenu);
@@ -1950,7 +2051,7 @@ auto View::translate() -> void {
         sysMenu.presentation->setText(trans->get("Presentation"));
         sysMenu.palette->setText(trans->get("Palette"));
         sysMenu.geometry->setText(trans->get("Geometry"));
-        sysMenu.misc->setText(trans->get("miscellaneous"));
+        sysMenu.misc->setText(trans->get("Miscellaneous"));
 
         sysMenu.shaderMenu->setText(trans->get("Shader"));
         sysMenu.recentControl->setText(trans->getA("preferences"));
@@ -1963,9 +2064,20 @@ auto View::translate() -> void {
         }
     }    
 
-    editMenu.setText( trans->get("Edit") );
+    miscMenu.setText(trans->get("Miscellaneous"));
     pasteItem.setText( trans->get("Paste") );
     copyItem.setText( trans->get("Copy") );
+    recordScreen.setText(trans->getA("take screenshot"));
+    recordMergedFrames.setText(trans->getA("merge frames"));    
+    recordWithEffects.setText(trans->getA("including effects"));
+    recordScreenSettings.setText(trans->getA("screenshot settings"));
+
+    recordAudio.setText(trans->getA("record audio"));
+    recordAudioSettings.setText(trans->getA("record audio settings"));
+
+    recordScaled.setText(trans->getA("scaled"));
+    recordUnscaled.setText(trans->getA("unscaled"));
+    updateScreenshotUI();
 
     controlMenu.setText( trans->get("control") );
     
@@ -1996,7 +2108,7 @@ auto View::translate() -> void {
 
     for (auto& diskControlMenu : diskControlMenus) {
         diskControlMenu.insert.setText( trans->get("insert") );
-        diskControlMenu.eject.setText( trans->get("eject") );
+            diskControlMenu.eject.setText( trans->get("eject") );
         diskControlMenu.reset.setText( trans->get("Reset Floppy") );
         diskControlMenu.inactive.setText( trans->get("inactive until reset") );
         diskControlMenu.clearSave.setText( trans->get("clear save file") );
@@ -2044,6 +2156,18 @@ auto View::translate() -> void {
 
     maximumSpeedItem.setText( trans->get("maximum speed") );
     customizeSpeedItem.setText( trans->get("customize speed") );
+
+    setAudioRecordText();
+}
+
+auto View::updateScreenshotUI() -> void {
+    if (activeEmulator && dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
+        recordUnscaledNoBorder.setText("320x200");
+        recordUnscaledMonitor.setText("384x272");
+    } else {
+        recordUnscaledNoBorder.setText(trans->getA("320x256"));
+        recordUnscaledMonitor.setText(trans->getA("344x280"));
+    }
 }
 
 auto View::getViewportHandle(bool driverChange) -> uintptr_t {
@@ -2112,7 +2236,8 @@ auto View::updateCartButtons( Emulator::Interface* emulator ) -> void {
             sM.menu->setEnabled( state );
     }
 
-    editMenu.setEnabled( !!dynamic_cast<LIBC64::Interface*>(emulator) );
+    copyItem.setEnabled(!!dynamic_cast<LIBC64::Interface*>(emulator));
+    pasteItem.setEnabled(!!dynamic_cast<LIBC64::Interface*>(emulator));
 }
 
 auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
@@ -2208,7 +2333,7 @@ auto View::updateEmuUsage() -> void {
     remove(tapeControlMenu);
     remove(speedControlMenu);
     remove(optionsMenu);
-    remove(editMenu);
+    remove(miscMenu);
     remove(controlMenu);
 
     for(auto& sysMenu : sysMenus)
@@ -2229,7 +2354,7 @@ auto View::updateEmuUsage() -> void {
 
     setConnectors();
     append(controlMenu);
-    append(editMenu);
+    append(miscMenu);
     append(optionsMenu);
     append(speedControlMenu);
     if (activeEmulator->getModelValue( activeEmulator->getModelIdOfEnabledDrives( activeEmulator->getTapeMediaGroup() ) ))
@@ -2292,4 +2417,80 @@ auto View::clearRecentList(Emulator::Interface* emulator) -> void {
     }
     sysMenu->recentSoftware->reset();
     sysMenu->recentSoftware->setEnabled(false);
+}
+
+auto View::takeScreenshot() -> void {
+    videoDriver->waitRenderThread();
+    auto settings = program->getSettings(activeEmulator);
+    auto _path = program->generatedFolder(activeEmulator, "screen_record_path", "recordings/screenshots", true);
+    auto _file = settings->get<std::string>("save_ident", "screenshot");
+    auto screenshotFormat = settings->get<std::string>("screen_record_format", "png");
+    bool withEffects = globalSettings->get<bool>("screenshot_with_effects", true);
+    bool mergeTwoFrames = globalSettings->get<bool>("screenshot_merge_frames", false);
+    unsigned unscaled = globalSettings->get<unsigned>("screenshot_unscaled", 0);
+    bool usePalete = settings->get<bool>("screen_palette", true);
+    unsigned screenGun = settings->get<unsigned>("screen_gun", 1, {1, 60});
+
+    _path += _file + "_#ident#";
+
+    screenshot.sharedMutex.lock();
+    if (screenshotFormat == "bmp") {
+        screenshot.path = _path + ".bmp";
+        screenshot.type = GUIKIT::Image::Type::BMP;
+    } else if (screenshotFormat == "jpg") {
+        screenshot.path = _path + ".jpg";
+        screenshot.type = GUIKIT::Image::Type::JPG;
+    } else if (screenshotFormat == "tga") {
+        screenshot.path = _path + ".tga";
+        screenshot.type = GUIKIT::Image::Type::TGA;
+    } else if (screenshotFormat == "gif") {
+        screenshot.path = _path + ".gif";
+        screenshot.type = GUIKIT::Image::Type::GIF;
+    } else {
+        screenshot.path = _path + ".png";
+        screenshot.type = GUIKIT::Image::Type::PNG;
+    }
+
+    screenshot.writePalette = (unscaled > 0) && dynamic_cast<LIBC64::Interface*>(activeEmulator) &&
+        ((screenshot.type == GUIKIT::Image::Type::GIF) || ((screenshot.type == GUIKIT::Image::Type::BMP) && usePalete && !mergeTwoFrames));
+
+    screenshot.animatedGif = (screenshot.type == GUIKIT::Image::Type::GIF) && (unscaled > 0) && dynamic_cast<LIBC64::Interface*>(activeEmulator)
+        && ((screenGun > 1) || mergeTwoFrames);
+
+    screenshot.withEffects = withEffects;
+    screenshot.unscaled = unscaled;
+    screenshot.twoFrames = mergeTwoFrames;
+    screenshot.pause = 0;
+    screenshot.saveState = false;
+
+    if (screenshot.animatedGif) {
+        screenshot.gun = screenGun > 1 ? screenGun : 2;
+        VideoManager::takeScreenShots = screenshot.gun;
+    } else {
+        screenshot.gun = screenGun > 1 ? 1 : 0;
+        VideoManager::takeScreenShots = mergeTwoFrames ? 2 : 1;
+        if (screenGun)
+            VideoManager::takeScreenShots *= screenGun;
+    }
+    clearScreenshotBuffer();
+    screenshot.sharedMutex.unlock();
+}
+
+auto View::clearScreenshotBuffer() -> void {
+    for (auto ptr : screenshot.buffer) {
+        if (ptr)
+            delete[] ptr;
+    }
+    screenshot.buffer.clear();
+    screenshot.bufferSize = 0;
+}
+
+auto View::setAudioRecordText() -> void {
+    if (!audioManager)
+        return;
+
+    if(!audioManager->record.run())
+        recordAudio.setText(trans->getA("record audio start"));
+    else
+        recordAudio.setText(trans->getA("record audio stop"));
 }

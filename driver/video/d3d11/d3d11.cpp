@@ -48,6 +48,8 @@ namespace DRIVER {
         Matrix4x4 mvp;
         Matrix4x4 mvpRotated;
     } frame;
+    
+    ScreenshotCallback screenshotCallback = nullptr;
 
     Rectangle overlay;
     Rectangle message;
@@ -1260,7 +1262,10 @@ namespace DRIVER {
         if (texture) {
             applyShader(frame.shader);
             context->PSSetShaderResources(0, 1, &texture->view);
-            context->PSSetSamplers(0, 1, &sampler);
+            if (options & OPT_DisallowFilter)
+                context->PSSetSamplers(0, 1, &samplers[ShaderPreset::FILTER_NEAREST][ShaderPreset::WRAP_EDGE]);
+            else
+                context->PSSetSamplers(0, 1, &sampler);
             context->VSSetConstantBuffers(0, 1, &uboRotated);
         }
 
@@ -1284,6 +1289,9 @@ namespace DRIVER {
         if (settings.vrr) {
             waitVRR();
         }
+
+        if (options & OPT_TakeScreenshot)
+            takeScreenshot();
 
         if (settings.synchronize) {
             swapChain.ptr->Present(1, 0);
@@ -1675,6 +1683,61 @@ namespace DRIVER {
         }
 
         context->Unmap((ID3D11Resource*)progress.vbo, 0);
+    }
+
+    auto setScreenshotCallback(ScreenshotCallback callback) -> void {
+        this->screenshotCallback = callback;
+    }
+
+    auto takeScreenshot() -> void {
+        D3DTexture screenBuffer;
+        D3D11_MAPPED_SUBRESOURCE mappedResource;
+        ID3D11RenderTargetView* rtv = nullptr;
+
+        if (!screenshotCallback)
+            return;
+
+        if (FAILED(swapChain.ptr->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&screenBuffer.ptr)))
+            return;
+
+        screenBuffer.ptr->GetDesc(&screenBuffer.desc);
+        screenBuffer.desc.BindFlags = 0;
+        screenBuffer.desc.Usage = D3D11_USAGE_STAGING;
+        screenBuffer.desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        if (FAILED(device->CreateTexture2D(&screenBuffer.desc, nullptr, &screenBuffer.staging)))
+            return;
+
+        D3D11_BOX crop;
+        crop.left = viewport.x;
+        crop.right = viewport.width + viewport.x;
+        crop.top = viewport.y;
+        crop.bottom = viewport.height + viewport.y;
+        crop.front = 0;
+        crop.back = 1;
+
+        context->CopySubresourceRegion((ID3D11Resource*)screenBuffer.staging, 0, 0, 0, 0,
+            (ID3D11Resource*)screenBuffer.ptr, 0, &crop);
+
+        if (SUCCEEDED(context->Map((ID3D11Resource*)screenBuffer.staging, 0, D3D11_MAP_READ, 0, &mappedResource))) {
+            uint32_t* pPixels = (uint32_t*)mappedResource.pData;
+            uint8_t* pTarget = (uint8_t*)mappedResource.pData;
+            unsigned _pitch = mappedResource.RowPitch >> 2;
+            uint32_t rgba;
+
+            for (int y = 0; y < viewport.height; ++y) {
+                for (int x = 0; x < viewport.width; ++x) {
+                    rgba = pPixels[y * _pitch + x];
+
+                    *pTarget++ = rgba & 0xff;
+                    *pTarget++ = (rgba >> 8) & 0xff;
+                    *pTarget++ = (rgba >> 16) & 0xff;
+                }
+            }
+
+            screenshotCallback((uint8_t*)mappedResource.pData, viewport.width, viewport.height);
+            context->Unmap((ID3D11Resource*)screenBuffer.staging, 0);
+            D3D11Utility::releaseTexture(screenBuffer);
+        }                 
     }
 
     auto waitVRR() -> void {

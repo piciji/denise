@@ -199,6 +199,8 @@ struct WGL : Video, GL3, RenderThread {
             RenderThread::unlock();
         } else {
             redraw(options & OPT_DisallowShader);
+            if (options & OPT_TakeScreenshot)
+                takeScreenshot();
         }
     }
 
@@ -218,7 +220,11 @@ struct WGL : Video, GL3, RenderThread {
         makeCurrent(true);
         //GL3::clear();
         GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
-        GL3::_redraw(disallowShader, options & OPT_Interlace);
+        uint8_t _options = options;
+        if (disallowShader)
+            _options &= ~OPT_DisallowShader;
+                        
+        GL3::_redraw(_options);
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
@@ -260,7 +266,7 @@ struct WGL : Video, GL3, RenderThread {
         }
 		resizeMutexThreaded.lock();
         resizeWindow();
-        GL3::_redraw(options & OPT_DisallowShader, options & OPT_Interlace);
+        GL3::_redraw(options);
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
@@ -280,6 +286,8 @@ struct WGL : Video, GL3, RenderThread {
         }
 
 		resizeMutexThreaded.unlock();
+        if (options & OPT_TakeScreenshot)
+            takeScreenshot();
         clearCurrent();
     }
 	
@@ -480,6 +488,10 @@ struct WGL : Video, GL3, RenderThread {
     }
 
     auto canHardSync() -> bool { return true; }
+
+    auto setScreenshotCallback(ScreenshotCallback callback) -> void {
+        GL3::setScreenshotCallback(callback);
+    }
 };
 
 }

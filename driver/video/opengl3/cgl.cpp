@@ -342,7 +342,11 @@ struct CGL : public Video, GL3, RenderThread {
 
     void redraw(bool disallowShader = false) {
         makeCurrent(true);
-        _redraw(disallowShader, threadEnabled ? getLastBufferToRender() : nullptr);
+        uint8_t _options = options;
+        if (disallowShader)
+            _options &= ~OPT_DisallowShader;
+
+        _redraw(_options, threadEnabled ? getLastBufferToRender() : nullptr);
         
         if (useResizing)
             clearCurrent();
@@ -354,13 +358,21 @@ struct CGL : public Video, GL3, RenderThread {
             RenderThread::unlock();
         } else {
             resizeMutex.lock();
-            redraw(options & OPT_DisallowShader);
+
+            makeCurrent(true);
+            _redraw(options, threadEnabled ? getLastBufferToRender() : nullptr);
+
+            if (useResizing)
+                clearCurrent();
+
+            if (options & OPT_TakeScreenshot)
+                takeScreenshot();
             resizeMutex.unlock();
         }
 
     }
 
-    void _redraw(bool disallowShader, RenderBuffer* renderBuffer = nullptr) {
+    void _redraw(uint8_t _options, RenderBuffer* renderBuffer = nullptr) {
 
         @autoreleasepool {
             if([view lockFocusIfCanDraw]) {
@@ -371,7 +383,7 @@ struct CGL : public Video, GL3, RenderThread {
                 }
 
                 GL3::updateMainTexture( renderBuffer );
-                GL3::_redraw(disallowShader, options & OPT_Interlace);
+                GL3::_redraw(_options);
 
                 if (dndOverlay.enabled())
                     dndOverlay.show(viewport);
@@ -420,7 +432,7 @@ struct CGL : public Video, GL3, RenderThread {
                 if (shaderResizeTimer && !--shaderResizeTimer) {
                     GL3::updateFrameSize();
                 }
-                GL3::_redraw(options & OPT_DisallowShader, options & OPT_Interlace);
+                GL3::_redraw(options);
 
                 if (dndOverlay.enabled())
                     dndOverlay.show(viewport);
@@ -440,7 +452,8 @@ struct CGL : public Video, GL3, RenderThread {
                     [[view openGLContext] flushBuffer];
                     if (settings.hardSync && settings.synchronize) glFinish();
                 }
-                    
+                if (options & OPT_TakeScreenshot)
+                    takeScreenshot();
                 [view unlockFocus];
             }
 
@@ -623,6 +636,10 @@ struct CGL : public Video, GL3, RenderThread {
         clearCurrent();
     }
 
+    auto setScreenshotCallback(ScreenshotCallback callback) -> void {
+        GL3::setScreenshotCallback(callback);
+    }
+
     auto canHardSync() -> bool { return true; }
     
     auto innerUpdate() -> void {
@@ -671,7 +688,7 @@ struct CGL : public Video, GL3, RenderThread {
 }
 
 -(void) reshape {
-
+    video->area = [self frame];
 }
 
 @end

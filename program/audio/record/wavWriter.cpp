@@ -1,29 +1,25 @@
 
 #include "wavWriter.h"
+#include <cstring>
 
 namespace AudioRecord {
 
-auto WavWriter::create(std::string path) -> bool {
+auto WavWriter::init(std::string& path, unsigned sampleRate, bool useFloat) -> bool {
 
     file.setFile(path);
 
     if (!file.open(GUIKIT::File::Mode::Write))
         return false;
 
-    return true;
-}
-
-auto WavWriter::writeHeader(unsigned sampleRate, bool useFloat) -> void {
-
     auto fp = file.getHandle();
 
     if (!fp)
-        return;
-    
+        return false;
+
     std::string out = "RIFF----WAVEfmt ";
 
     fputs(out.c_str(), fp);
-    
+
     writeChunk(16, 4);
     writeChunk(useFloat ? 3 : 1, 2);
     writeChunk(2, 2);
@@ -39,26 +35,32 @@ auto WavWriter::writeHeader(unsigned sampleRate, bool useFloat) -> void {
     fputs(out.c_str(), fp);
 
     fflush(fp);
+
+    unsigned size = useFloat ? (sampleRate << 3) : (sampleRate << 2);
+
+    initSampleBuffer(size);
+
+    return true;
 }
 
 auto WavWriter::write(uint8_t* buf, unsigned size) -> void {
-    auto fp = file.getHandle();
-
-    if (!fp)
+    if ((bufferPos + size) <= bufferSize) {
+        std::memcpy(sampleBuffer + bufferPos, buf, size);
+        bufferPos += size;
         return;
-    
-    fwrite(buf, 1, size, fp);
-}
+    }
 
-auto WavWriter::flush() -> void {
+    file.append(sampleBuffer, bufferPos);
 
-    auto fp = file.getHandle();
-
-    if (fp)
-        fflush(fp);
+    std::memcpy(sampleBuffer, buf, size);
+    bufferPos = size;
 }
 
 auto WavWriter::finish() -> void {
+    if (bufferPos && sampleBuffer) {
+        file.append(sampleBuffer, bufferPos);
+        bufferPos = 0;
+    }
 
     auto fp = file.getHandle();
 
@@ -69,20 +71,21 @@ auto WavWriter::finish() -> void {
     
     writeChunk( fileLength - chunkPos + 8, 4, chunkPos + 4 );
     
-    writeChunk( fileLength - 8, 4, 4 );   
+    writeChunk( fileLength - 8, 4, 4 );
 
     fflush(fp);
+
+    file.unload();
 }    
     
 auto WavWriter::writeChunk( unsigned value, uint8_t size, unsigned offset ) -> void {
-    
-    uint8_t* buffer = new uint8_t[size];
+    uint8_t buf[4];
     
     auto fp = file.getHandle();
     
     for( unsigned i = 0; i < size; i++ ) {
 
-        buffer[i] = value & 0xff;
+        buf[i] = value & 0xff;
 
         value >>= 8;
     }
@@ -90,10 +93,7 @@ auto WavWriter::writeChunk( unsigned value, uint8_t size, unsigned offset ) -> v
     if (offset)
         fseek(fp, offset, SEEK_SET);    
     
-    fwrite(buffer, 1, size, fp);
-
-    delete[] buffer;
+    fwrite(&buf[0], 1, size, fp);
 }
 
 }
-

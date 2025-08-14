@@ -34,13 +34,13 @@ auto pImageView::init() -> void {
 }
 
 auto pImageView::update() -> void {
-    if (!imageView.state.image || imageView.state.image->empty())
-        return;
-
     if (surface)
         g_object_unref(surface);
 
-    surface = CreatePixbuf( *imageView.state.image );
+    surface = nullptr;
+
+    if (imageView.state.image && !imageView.state.image->empty())
+        surface = CreatePixbuf( *imageView.state.image );
 
     if (gtk_widget_get_realized(gtkWidget)) {
         gdk_window_invalidate_rect(gtk_widget_get_window(gtkWidget), nullptr, true);
@@ -58,16 +58,17 @@ auto pImageView::setImage(Image* image) -> void {
 }
 
 auto pImageView::expose(GtkWidget* widget, GdkEventExpose* event, pImageView* self) -> signed {
-    if (self->surface == nullptr)
-        return true;
-
-    unsigned width = self->imageView.state.image->width;
-    unsigned height = self->imageView.state.image->height;
 
     GdkDrawingContext* gdc = gdk_window_begin_draw_frame( gtk_widget_get_window( self->gtkWidget ), cairo_region_create());
     cairo_t* cr = gdk_drawing_context_get_cairo_context( gdc );
 
-    gdk_cairo_set_source_pixbuf (cr, self->surface, 0, 0);
+    if (self->surface)
+        gdk_cairo_set_source_pixbuf(cr, self->surface, 0, 0);
+    else {
+        GdkRGBA rgba = {0.0, 0.0, 0.0, 0.0};
+        gdk_cairo_set_source_rgba(cr, &rgba);
+    }
+
     cairo_paint (cr);
     gdk_window_end_draw_frame(gtk_widget_get_window(self->gtkWidget), gdc);
 

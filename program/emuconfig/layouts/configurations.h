@@ -14,11 +14,18 @@ struct StateFastLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::RadioBox autoIdentOff;
         GUIKIT::RadioBox autoIdentOn;
         GUIKIT::RadioBox autoIdentCutFollowUp;
+        GUIKIT::Widget spacer;
+        GUIKIT::CheckBox screenshot;
 
         Options();
     } options;
 
-    GUIKIT::ListView listView;
+    struct Selector : GUIKIT::HorizontalLayout  {
+        GUIKIT::ListView listView;
+        GUIKIT::ImageView preview;
+        GUIKIT::Image image;
+        Selector();
+    } selector;    
     
     StateFastLayout();
 };

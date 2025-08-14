@@ -51,10 +51,12 @@ struct ScreenTextDescription {
 	int marginVertical;
 };
 
-enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4 };
+enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4, OPT_TakeScreenshot = 8, OPT_DisallowFilter = 16 };
 enum Rotation { ROT_0, ROT_90, ROT_180, ROT_270 };
 
 struct Video {
+    using ScreenshotCallback = std::function<void (uint8_t* _data, unsigned _width, unsigned _height)>;
+
     virtual auto init(uintptr_t handle) -> bool { return true; }
     virtual auto term() -> void {}
 
@@ -107,6 +109,7 @@ struct Video {
     virtual auto getIntegerScalingDimension(unsigned& _w, unsigned& _h) -> void { }
 
     virtual auto shaderSupport() -> bool { return false; }
+    virtual auto setScreenshotCallback(ScreenshotCallback callback) -> void {}
 	/** direct 3D only */
 	virtual auto hasExclusiveFullscreen() -> bool { return false; }
 	virtual auto hintExclusiveFullscreen(bool state, float rate = 0.0) -> void {}

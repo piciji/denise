@@ -110,6 +110,7 @@ struct Interface : Emulator::Interface  {
     auto cropData16() -> uint16_t*;
     auto cropPitch() -> unsigned;
     auto cropOptions() -> uint8_t;
+    auto cropAlternatively(unsigned& width, unsigned& height, unsigned& pitch) -> uint8_t*;
 
     // jit
     auto setInputSampling(uint8_t mode) -> void;

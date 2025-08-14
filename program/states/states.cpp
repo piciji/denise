@@ -103,7 +103,21 @@ auto States::save( std::string path ) -> void {
                 // it's unlikely the state file was saved but the path file didn't.
             }
         }                            
-    }            
+    }
+
+    if (view && settings->get<bool>("save_screenshot", true)) {
+        auto& screenshot = view->screenshot;
+        screenshot.unscaled = 1;
+        screenshot.pause = 0;
+        screenshot.twoFrames = false;
+        screenshot.type = GUIKIT::Image::Type::PNG;
+        screenshot.path = path + ".png";
+        screenshot.saveState = true;
+        screenshot.writePalette = false;
+        screenshot.animatedGif = false;
+        screenshot.gun = 0;
+        VideoManager::takeScreenShots = 1;
+    }
 
     statusMessage( langKey, file.getFileName() );    
 }    
@@ -513,8 +527,11 @@ auto States::updateModels() -> void {
             }
         }
 
-        if (emuView->audioLayout)
+        if (emuView->audioLayout) {
             emuView->audioLayout->settingsLayout.updateWidgets();
+            if (emuView->audioLayout->usbSidPicoLayout)
+                emuView->audioLayout->usbSidPicoLayout->updateWidgets();
+        }
     }
 
     if (regionChange) {

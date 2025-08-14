@@ -46,6 +46,16 @@
 #include "tools/logger.h"
 #include "tools/shortcuts.h"
 
+#ifdef _MSC_VER
+#define _unreachable    __assume(false);
+#define likely(x)       (x)
+#define unlikely(x)     (x)
+#else
+#define _unreachable    __builtin_unreachable();
+#define likely(x)	    __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
+#endif
+
 struct FileSetting;
 struct Message;
 struct InputManager;
@@ -155,6 +165,7 @@ struct Program : Emulator::Interface::Bind {
     auto audioSample(int16_t sampleLeft, int16_t sampleRight) -> void override;
     auto audioFlush() -> void override;
     auto mixDriveSound( Emulator::Interface::Media* media, Emulator::Interface::DriveSound driveSound, bool alternate, uint8_t data = 0) -> void override;
+    auto toggleRecord() -> void;
     
     //video
     auto setVideoDimension(Emulator::Interface* emulator = nullptr) -> void;
@@ -187,6 +198,8 @@ struct Program : Emulator::Interface::Bind {
     auto loadProgress() -> void;
 	auto activateGPU(Emulator::Interface* emulator, bool state) -> void;
 	auto updateOnScreenText(bool keepFontPath = false) -> void;
+    auto takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) -> void;
+    auto bufferScreenshot(uint8_t* _data, unsigned _size) -> void;
 	
     //input
     auto initInput() -> void;

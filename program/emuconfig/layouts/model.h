@@ -83,6 +83,8 @@ struct ModelLayout : GUIKIT::FramedVerticalLayout {
 
     auto updateBurstVisibillity() -> void;
 
+    auto updatePicoVisibillity() -> void;
+
     auto updateMechanicsVisibillity() -> void;
 
     auto getAlignedWidth(Emulator::Interface::Model* model = nullptr) -> unsigned;

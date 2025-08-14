@@ -758,6 +758,10 @@ auto Interface::cropOptions() -> uint8_t {
     return system->crop.latest.options;
 }
 
+auto Interface::cropAlternatively(unsigned& width, unsigned& height, unsigned& pitch) -> uint8_t* {
+    return system->crop.cropAlternatively(width, height, pitch);
+}
+
 auto Interface::requestImmediateReturn() -> void {
     system->leaveEmulation = true;
 }

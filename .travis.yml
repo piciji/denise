@@ -29,6 +29,8 @@ addons:
       - libxcb-xfixes0
       - sshpass      
       - flatpak-builder
+      - libusb-1.0-0-dev
+      - libmp3lame-dev
 
 jobs:
   include:

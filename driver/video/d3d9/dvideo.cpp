@@ -8,8 +8,9 @@
 #include "symbols.h"
 #include <uxtheme.h>
 #include <cstring>
+#ifdef DRV_FREETYPE
 #include "screenText.h"
-
+#endif
 namespace DRIVER {
 
 #include "dragnDropOverlay.h"
@@ -73,6 +74,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     } flags;
 
     bool lost;
+    ScreenshotCallback screenshotCallback = nullptr;
 
     auto releaseResources() -> void {
         dxRelease(surface);
@@ -115,6 +117,12 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         lpD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, flags.filter);
         lpD3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, flags.filter);
         lpD3DDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, flags.filter);
+    }
+
+    auto forceFilter(unsigned filt) -> void {
+        lpD3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, filt);
+        lpD3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, filt);
+        lpD3DDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, filt);
     }
 
     auto setVertex(unsigned src_w, unsigned src_h, unsigned tex_w, unsigned tex_h, unsigned dest_x, unsigned dest_y, unsigned dest_w, unsigned dest_h) -> void {
@@ -397,6 +405,8 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             }
 
             _redraw();
+            if (options & OPT_TakeScreenshot)
+                takeScreenshot();
 
             resizeMutex.unlock();
         }
@@ -467,6 +477,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if( settings.synchronize && IsIconic( settings.parent ) )
             return;
 
+        bool surpressFilter = options & OPT_DisallowFilter;
+        if (surpressFilter)
+            forceFilter(D3DTEXF_POINT);
+
         lpD3DDevice->BeginScene();
         if (updVertex)
             setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
@@ -487,6 +501,9 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 #endif
 
         lpD3DDevice->EndScene();
+
+        if (surpressFilter)
+            forceFilter(flags.filter);
 
         if (settings.vrr) {
             waitVRR();
@@ -541,6 +558,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             accessMutex.unlock();
         }
 
+        bool surpressFilter = options & OPT_DisallowFilter;
+        if (surpressFilter)
+            forceFilter(D3DTEXF_POINT);
+
         lpD3DDevice->BeginScene();
         if (updVertex)
             setVertex(inputWidth, inputHeight, textureWidth, textureHeight, viewport.x, viewport.y, viewport.width, viewport.height);
@@ -562,6 +583,9 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
         lpD3DDevice->EndScene();
 
+        if (surpressFilter)
+            forceFilter(flags.filter); // revert
+
         if (settings.vrr) {
             waitVRR();
         }
@@ -569,6 +593,9 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
             lost = true;
         }
+
+        if (options & OPT_TakeScreenshot)
+            takeScreenshot();
 
         resizeMutexThreaded.unlock();
     }
@@ -720,6 +747,72 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         screenText.ftUpdateCoords();
 #endif
         updVertex = true;
+    }
+
+    auto setScreenshotCallback(ScreenshotCallback callback) -> void {
+        this->screenshotCallback = callback;
+    }
+
+    auto takeScreenshot() -> void {
+        LPDIRECT3DSURFACE9 screenBuffer = nullptr;
+        LPDIRECT3DSURFACE9 screenSurface = nullptr;
+        uint32_t* pPixels;
+        uint8_t* pTarget;
+        unsigned _pitch;
+        uint32_t rgba;
+
+        if (!screenshotCallback)
+            return;
+
+        if (lpD3DDevice->GetRenderTarget(0, &screenBuffer) != D3D_OK)
+            //if (lpD3DDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &screenBuffer) != D3D_OK)
+            return;
+
+        D3DLOCKED_RECT d3dlr;
+        D3DSURFACE_DESC desc;
+        if (screenBuffer->GetDesc(&desc) != D3D_OK)
+            goto Clear;
+
+        if (lpD3DDevice->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format,
+            D3DPOOL_SYSTEMMEM, &screenSurface, NULL) != D3D_OK)
+            goto Clear;
+
+        if (lpD3DDevice->GetRenderTargetData(screenBuffer, screenSurface) != D3D_OK)
+            goto Clear;
+
+        RECT rect;
+        rect.top = viewport.y;
+        rect.bottom = viewport.y + viewport.height;
+        rect.left = viewport.x;
+        rect.right = viewport.x + viewport.width;
+
+        if (screenSurface->LockRect(&d3dlr, &rect, D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY) != D3D_OK)
+            goto Clear;
+
+        pPixels = (uint32_t*)d3dlr.pBits;
+        pTarget = (uint8_t*)d3dlr.pBits;
+        _pitch = d3dlr.Pitch >> 2;
+
+        for (int y = 0; y < viewport.height; ++y) {
+            for (int x = 0; x < viewport.width; ++x) {
+                rgba = pPixels[y * _pitch + x];
+
+                *pTarget++ = (rgba >> 16) & 0xff;
+                *pTarget++ = (rgba >> 8) & 0xff;
+                *pTarget++ = rgba & 0xff;
+            }
+        }
+
+        screenshotCallback((uint8_t*)d3dlr.pBits, viewport.width, viewport.height);
+
+Clear:
+        if (screenSurface) {
+            screenSurface->UnlockRect();
+            screenSurface->Release();
+        }
+
+        if (screenBuffer)
+            screenBuffer->Release();
     }
 
     auto synchronize(bool state) -> void {

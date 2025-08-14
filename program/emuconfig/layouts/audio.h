@@ -9,6 +9,14 @@ struct AudioRecordLayout : GUIKIT::FramedVerticalLayout {
         
         Location();
     } location;
+
+    struct Type : GUIKIT::HorizontalLayout {
+        GUIKIT::Label label;
+        GUIKIT::RadioBox mp3;
+        GUIKIT::RadioBox wav;
+
+        Type();
+    } type;
     
     struct Duration : GUIKIT::HorizontalLayout {
         GUIKIT::CheckBox useTimeLimit;
@@ -174,6 +182,7 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
     GUIKIT::SwitchLayout moduleSwitch;
     
     ModelLayout settingsLayout;
+    ModelLayout* usbSidPicoLayout = nullptr;
     
     GUIKIT::VerticalLayout dspFrame;
     BassControlLayout bass;
@@ -209,4 +218,6 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
 
     auto updateVolumeSlider() -> void;
     auto updateRecordingPath() -> void;
+
+    auto selectViewAudioRecord() -> void;
 };

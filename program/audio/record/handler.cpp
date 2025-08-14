@@ -1,12 +1,16 @@
 
 #include "handler.h"
 #include "wavWriter.h"
+#ifdef LIBLAME
+#include "mp3Writer.h"
+#endif
 #include "../../tools/chronos.h"
 #include "../../program.h"
 #include "../../tools/logger.h"
 #include "../../emuconfig/config.h"
 #include "../../view/status.h"
 #include "../../thread/emuThread.h"
+#include "../../view/view.h"
 
 namespace AudioRecord {
     
@@ -23,38 +27,51 @@ auto Handler::start( Emulator::Interface* emulator, std::string& errorText ) -> 
 
     std::string path = program->generatedFolder(emulator, "audio_record_path", "recordings/audio", true);
     
-    std::string fileName = settings->get<std::string>( "record_ident", "sample");
+    std::string fileName = settings->get<std::string>( "audio_record_ident", "sample");
+
+    Type type = (Type)settings->get<unsigned>( "audio_record_type", 0);
 
     sampleRate = audioDriver->getFrequency();
-
-    framesFlush = 0;
 
     framesTimeCheck = 0;		
     
     useFloat = audioDriver->expectFloatingPoint();
     
-    std::string filePath = path + fileName + "_" + std::to_string( Chronos::getTimestampInSeconds() ) + ".wav";
+    std::string filePath = path + fileName + "_" + std::to_string(Chronos::getTimestampInSecondsReal());
     
-    wavWriter = new WavWriter;
+    switch (type) {
+        case WAV:
+            filePath += ".wav";
+            baseWriter = new WavWriter;
+            break;
+        case MP3:
+        default:
+            filePath += ".mp3";
+#ifdef LIBLAME
+            baseWriter = new MP3Writer;
+#else
+            baseWriter = new BaseWriter;
+#endif
+            break;
+    }
 
-    if ( !wavWriter->create( filePath ) ) {
+    if (!baseWriter->init(filePath, sampleRate, useFloat)) {
 
-        delete wavWriter;
+        delete baseWriter;
 
-        wavWriter = nullptr;
+        baseWriter = nullptr;
         
         errorText = trans->get("file_creation_error", {{"%path%", filePath}});
 
         return false;
     }
 
-    wavWriter->writeHeader( sampleRate, useFloat );    
-
     startTime = Chronos::getTimestampInMilliseconds();
     
     setTimeLimit();
 
-    statusHandler->updateAudioRecord( true );
+    if (statusHandler)
+        statusHandler->updateAudioRecord( true );
     
     return true;
 }
@@ -82,7 +99,7 @@ auto Handler::setTimeLimit() -> void {
 
 auto Handler::run(Emulator::Interface* emulator) -> bool {
 
-    if (wavWriter == nullptr)
+    if (baseWriter == nullptr)
         return false;
 
     if (!emulator)
@@ -96,16 +113,7 @@ auto Handler::write( uint8_t* buf, unsigned frames ) -> void {
     if (!run())
         return;
 
-    wavWriter->write( buf, frames << (useFloat ? 3 : 2) );
-
-    framesFlush += frames;			
-
-    if (framesFlush >= (sampleRate << 1) ) {
-
-        wavWriter->flush();
-
-        framesFlush = 0;
-    }	
+    baseWriter->write(buf, frames << (useFloat ? 3 : 2));
 
     if (timeLimit) {
         framesTimeCheck += frames;
@@ -131,14 +139,14 @@ auto Handler::checkTime() -> void {
 
 auto Handler::finish(bool timeup) -> void {
 
-    if (!wavWriter)
+    if (!baseWriter)
         return;
 
-    wavWriter->finish();
+    baseWriter->finish();
 
-    delete wavWriter;
+    delete baseWriter;
 
-    wavWriter = nullptr;
+    baseWriter = nullptr;
     
     if (activeEmulator) {
 
@@ -149,10 +157,24 @@ auto Handler::finish(bool timeup) -> void {
 
             if (emuView && emuView->audioLayout)
                 emuView->audioLayout->stopRecord();
+            if (view)
+                view->setAudioRecordText();
         }
     }
 
-    statusHandler->updateAudioRecord( false );
+    if (statusHandler)
+        statusHandler->updateAudioRecord( false );
+}
+
+auto Handler::toggle(Emulator::Interface* emulator, std::string& errorText) -> bool {
+    if (run()) {
+        finish();
+    } else {
+        if (!start(emulator, errorText)) {
+            return false;
+        }
+    }
+    return true;
 }
     
 }

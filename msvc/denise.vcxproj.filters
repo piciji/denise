@@ -329,6 +329,9 @@
     <Filter Include="emulation\libami\drive\scp">
       <UniqueIdentifier>{26d29b6b-2c03-43ef-bec3-c1737d802b90}</UniqueIdentifier>
     </Filter>
+    <Filter Include="deps\cgif">
+      <UniqueIdentifier>{d0862150-5b8f-4bef-81c4-14123c5c2c59}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1146,6 +1149,24 @@
     </ClInclude>
     <ClInclude Include="..\guikit\winapi\doubleBuffer.h">
       <Filter>guikit\winapi</Filter>
+    </ClInclude>
+    <ClInclude Include="..\guikit\tools\encode\images.h">
+      <Filter>guikit\tools\encode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\sid\usbSidPico.h">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\cgif\cgif.h">
+      <Filter>deps\cgif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\deps\cgif\cgif_raw.h">
+      <Filter>deps\cgif</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\record\mp3Writer.h">
+      <Filter>program\audio\record</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\audio\record\base.h">
+      <Filter>program\audio\record</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2336,6 +2357,21 @@
     </ClCompile>
     <ClCompile Include="..\program\config\layouts\drivers.cpp">
       <Filter>program\config\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\tools\encode\images.cpp">
+      <Filter>guikit\tools\encode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\sid\usbSidPico.cpp">
+      <Filter>emulation\libc64\sid</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\cgif\cgif.cpp">
+      <Filter>deps\cgif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\deps\cgif\cgif_raw.cpp">
+      <Filter>deps\cgif</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\audio\record\mp3Writer.cpp">
+      <Filter>program\audio\record</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

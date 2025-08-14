@@ -149,6 +149,15 @@ struct DiskFinder {
 
             auto list = GUIKIT::File::getFolderListAlt( filePath, {temp}, false, 20 );
 
+            if (list.size() > 1) {
+                for (auto it = list.begin(); it != list.end();) {
+                    if (!GUIKIT::String::foundSubStr(*it, "." + tempSuffix))
+                        it = list.erase(it);
+                    else
+                        ++it;
+                }
+            }
+
             if (list.size() < 2)
                 continue;
 
@@ -157,8 +166,8 @@ struct DiskFinder {
 
             for(auto& file : list) {
 
-                if (!GUIKIT::String::foundSubStr( file, "." + tempSuffix ))
-                    continue;
+              //  if (!GUIKIT::String::foundSubStr( file, "." + tempSuffix ))
+                //    continue;
 
                 auto splitted = GUIKIT::String::split( file, '.' );
                 GUIKIT::Vector::eraseVectorPos( splitted, splitted.size() - 1 );

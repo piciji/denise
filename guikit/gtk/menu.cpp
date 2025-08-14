@@ -1,6 +1,6 @@
 
 //base
-#define ICON_SPACING 6
+#define ICON_SPACING 8
 
 pMenuBase::~pMenuBase() {
 	destroy();

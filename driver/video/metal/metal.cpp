@@ -87,6 +87,9 @@ namespace DRIVER {
     
     id<MTLSamplerState> samplers[3][4][2];
     id<MTLSamplerState> sampler;
+        
+    Video::ScreenshotCallback screenshotCallback = nullptr;
+    id<MTLTexture> screenshotTexture = nil;
 
     struct {
         MTLTexture textures[MAX_FRAME_HISTORY + 1];
@@ -745,6 +748,7 @@ namespace DRIVER {
                 updateFrameSize();
             }
             
+            bool requestScreenshot = options & OPT_TakeScreenshot;
             MTLTexture& mainTex = frame.textures[0];
             
             if (updateRTS)
@@ -783,7 +787,11 @@ namespace DRIVER {
                     
                     if (p.renderTarget.view == nil) { // shader handles last pass
                         rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
-                        rpd.colorAttachments[0].texture = drawable.texture;
+                        if (requestScreenshot) {
+                            updateScreenshotTexture();
+                            rpd.colorAttachments[0].texture = screenshotTexture;
+                        } else
+                            rpd.colorAttachments[0].texture = drawable.texture;
                     } else if (p.crop.active)
                         rpd.colorAttachments[0].texture = p.cropTarget.view;
                     else
@@ -885,12 +893,20 @@ namespace DRIVER {
             
             if (texture) {
                 rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
-                rpd.colorAttachments[0].texture = drawable.texture;
+                if (requestScreenshot) {
+                    updateScreenshotTexture();
+                    rpd.colorAttachments[0].texture = screenshotTexture;
+                } else
+                    rpd.colorAttachments[0].texture = drawable.texture;
+                
                 rce = [commandBuffer renderCommandEncoderWithDescriptor:rpd];
                 
                 [rce setRenderPipelineState:outputPipelineState];
                 [rce setVertexBytes:&rotatedMatrix length:sizeof(matrix_float4x4) atIndex:1];
-                [rce setFragmentSamplerState:sampler atIndex:0];
+                if (options & OPT_DisallowFilter)
+                    [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_NEAREST][ShaderPreset::WRAP_EDGE][0] atIndex : 0];
+                else
+                    [rce setFragmentSamplerState:sampler atIndex:0];
                 [rce setVertexBytes:&vertices length:sizeof(vertices) atIndex:0];
                 [rce setFragmentTexture:texture->view atIndex:0];
             }
@@ -921,21 +937,26 @@ namespace DRIVER {
                 dispatch_semaphore_signal(_semaphore);
             }];
             
-            if (drawable) {
-                [commandBuffer presentDrawable:drawable];
-            }
-            
-            if (settings.vrr) {
-                //MTLCommandBufferStatus s = [commandBuffer status];
-                //if (s != MTLCommandBufferStatusNotEnqueued)
-                    //[_commandBuffer waitUntilCompleted];
-                waitVRR();
+            if (requestScreenshot) {
                 [commandBuffer commit];
                 [commandBuffer waitUntilCompleted];
+                takeScreenshot();
             } else {
-                [commandBuffer commit];
-                if (settings.hardSync && settings.synchronize)
+                if (drawable)
+                    [commandBuffer presentDrawable:drawable];
+                
+                if (settings.vrr) {
+                    //MTLCommandBufferStatus s = [commandBuffer status];
+                    //if (s != MTLCommandBufferStatusNotEnqueued)
+                        //[_commandBuffer waitUntilCompleted];
+                    waitVRR();
+                    [commandBuffer commit];
                     [commandBuffer waitUntilCompleted];
+                } else {
+                    [commandBuffer commit];
+                    if (settings.hardSync && settings.synchronize)
+                        [commandBuffer waitUntilCompleted];
+                }
             }
 
             commandBuffer = nil;
@@ -1567,6 +1588,52 @@ namespace DRIVER {
 
     auto getShaderNativeFragmentCode(std::string& slang, std::string& out) -> bool {
         return MTLUtility::translate(slang, out, true);
+    }
+        
+    auto setScreenshotCallback(ScreenshotCallback callback) -> void {
+        this->screenshotCallback = callback;
+    }
+        
+    auto updateScreenshotTexture() -> void {
+        if (screenshotTexture)
+            [screenshotTexture release];
+    
+        MTLTextureDescriptor* descriptor = [[MTLTextureDescriptor alloc] init];
+            descriptor.storageMode = MTLStorageModeShared;
+            descriptor.usage = MTLTextureUsageRenderTarget;
+            descriptor.pixelFormat = drawable.texture.pixelFormat;
+            descriptor.width = drawable.texture.width;
+            descriptor.height = drawable.texture.height;
+          
+        screenshotTexture = [device newTextureWithDescriptor:descriptor];
+    }
+        
+    auto takeScreenshot() -> void {
+        if (!screenshotCallback)
+            return;
+        
+        size_t bufferSize = viewport.width * viewport.height * 4;
+        uint8_t* buffer = new uint8_t[bufferSize];
+        MTLRegion region = MTLRegionMake2D(viewport.x, viewport.y, viewport.width, viewport.height);
+        
+        [screenshotTexture getBytes:buffer bytesPerRow: (viewport.width * 4) fromRegion:region mipmapLevel: 0];
+        
+        unsigned rgba;
+        uint32_t* pSource = (uint32_t*)buffer;
+        uint8_t* pTarget = buffer;
+        
+        for (int y = 0; y < viewport.height; ++y) {
+            for (int x = 0; x < viewport.width; ++x) {
+                rgba = *pSource++;
+                *pTarget++ = (rgba >> 16) & 0xff;
+                *pTarget++ = (rgba >> 8) & 0xff;
+                *pTarget++ = rgba & 0xff;
+            }
+        }
+
+        screenshotCallback(buffer, viewport.width, viewport.height);
+
+        delete[] buffer;
     }
 };
 

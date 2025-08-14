@@ -158,6 +158,29 @@ rtc(agnus) {
         bottom = agnus.crop.bottom;
     };
 
+    crop.screenshotBorderCallback = [this](unsigned _w, unsigned _h) {
+        Emulator::Interface::Crop _c = {0};
+
+        if (_w == 320) {
+            _c.left = 45 << (unsigned)denise.frameMode;
+            _c.right = 19 << (unsigned)denise.frameMode;
+            _c.top = 20;
+            _c.bottom = 13;
+        } else {
+            _c.left = 31 << (unsigned)denise.frameMode;
+            _c.right = 9 << (unsigned)denise.frameMode;
+            _c.top = 7;
+            _c.bottom = 2;
+        }
+
+        if (agnus.laceFrame & 3) {
+            _c.top <<= 1;
+            _c.bottom <<= 1;
+        }
+
+        return _c;
+    };
+
     paula.activeDrive = &diskDrives[0];
     ntsc = false;
     firmwareChanged = true;

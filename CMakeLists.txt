@@ -3,24 +3,24 @@ cmake_minimum_required(VERSION 3.14)
 project(denise LANGUAGES CXX)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    find_package(Freetype REQUIRED)
     find_package(OpenAL)
 elseif(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
-    find_package(Freetype REQUIRED)
+    find_package(Freetype)
     find_package(PkgConfig REQUIRED)
-    pkg_check_modules(FREETYPE2 REQUIRED freetype2)
+    pkg_check_modules(FREETYPE2 freetype2)
+    pkg_check_modules(LIBUSB libusb-1.0)
+    pkg_check_modules(LIBLAME lame)
 elseif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    find_package(Freetype REQUIRED)
+    find_package(Freetype)
     find_package(PkgConfig REQUIRED)
     find_package(OpenAL)
-    pkg_check_modules(FREETYPE2 REQUIRED freetype2)
-endif()
-
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows" AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    pkg_check_modules(FREETYPE2 freetype2)
+    include(data/FindLame.cmake)
     find_package(PulseAudio REQUIRED)
     pkg_check_modules(GTK REQUIRED gtk+-3.0)
     pkg_check_modules(X11 REQUIRED x11 xfixes xext)
     pkg_check_modules(XCB REQUIRED xcb xcb-xinput xcb-xfixes xkbcommon)
+    pkg_check_modules(LIBUSB libusb-1.0)
     set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 endif()
 
@@ -44,8 +44,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     if (${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
         set(CMAKE_OSX_DEPLOYMENT_TARGET "11")
+        set(macArchFolder "macArm")
     else()
         set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
+        set(macArchFolder "macIntel")
     endif()
 endif()
 
@@ -74,20 +76,24 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
+#message(STATUS "LIBUSB ${LIBUSB_INCLUDE_DIRS}")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "compile for architecture ${CMAKE_OSX_ARCHITECTURES}")
-    message(STATUS "freetype include dir ${FREETYPE_INCLUDE_DIRS}")
-    message(STATUS "freetype lib ${FREETYPE_LIBRARY}")
 endif()
 
+set(architecture)
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(architecture "x86")
     message(STATUS "32 bit build")
+else()
+    set(architecture "x64")
 endif()
 
 set(srcs
         guikit/tools/decode/lha.cpp
         guikit/tools/decode/images.cpp
+        guikit/tools/encode/images.cpp
         guikit/api.cpp
 
         driver/driver.cpp
@@ -155,6 +161,7 @@ set(srcs
         emulation/libc64/expansionPort/finalChessCard/chessCard.cpp
         emulation/libc64/system/clipboard.cpp
         emulation/libc64/sid/sid.cpp
+        emulation/libc64/sid/usbSidPico.cpp
         emulation/libc64/system/sidManager.cpp
         emulation/libc64/sid/filter/chamberlin.cpp
         emulation/libc64/tape/tape.cpp
@@ -227,33 +234,45 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     )
 endif()
 
-SET_SOURCE_FILES_PROPERTIES(deps/depsSlang.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
 SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/lha.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/lha")
+SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb")
+SET_SOURCE_FILES_PROPERTIES(guikit/tools/encode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb;${CMAKE_SOURCE_DIR}/deps/cgif")
+SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/usbSidPico.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/USBSID-Pico")
 
 set(headerSrcs)
 set(depSrcs)
+set(usblibSrcs)
 add_subdirectory(deps)
 add_subdirectory(data)
 
 set_source_files_properties(${headerSrcs} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 SET_SOURCE_FILES_PROPERTIES(${depSrcs}
-    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang")
+    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
+
+SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
+    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
+
+set(APP_INCLUDE "${CMAKE_SOURCE_DIR}/data/libs/include")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     SET_SOURCE_FILES_PROPERTIES(${depSrcs} PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
 
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp PROPERTIES COMPILE_FLAGS "-DGUIKIT_WINAPI")
 
-    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp PROPERTIES COMPILE_FLAGS "-DDRV_WGL -DDRV_DIRECT3D9 -DDRV_DIRECT3D11 -DDRV_DSOUND -DDRV_DINPUT5 -DDRV_DINPUT7 -DDRV_DINPUT8 -DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -DDRV_WASAPI -DDRV_RAWINPUT -DDRV_FREETYPE")
+    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp PROPERTIES COMPILE_FLAGS "-DDRV_WGL -DDRV_DIRECT3D9 -DDRV_DIRECT3D11 -DDRV_DSOUND -DDRV_DINPUT5 -DDRV_DINPUT7 -DDRV_DINPUT8 -DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -DDRV_WASAPI -DDRV_RAWINPUT")
 
-    if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
-        SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${FREETYPE2_INCLUDE_DIRS};")
-    else()
-        SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;${CMAKE_SOURCE_DIR}/data/libs/include")
+    if(NOT CMAKE_GENERATOR MATCHES "MSYS Makefiles")
+        set(FREETYPE2_FOUND true)
+        set(FREETYPE2_INCLUDE_DIRS "${APP_INCLUDE}")
+
+        set(LIBUSB_FOUND true)
+        set(LIBUSB_INCLUDE_DIRS "${APP_INCLUDE}")
+
+        set(LIBLAME_FOUND true)
+        set(LIBLAME_INCLUDE_DIRS "${APP_INCLUDE}")
     endif()
+
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v5.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT5")
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v7.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT7")
     SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v8.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT8")
@@ -267,10 +286,16 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             PROPERTIES COMPILE_FLAGS "-x objective-c++ -DGUIKIT_COCOA")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_FREETYPE")
+            PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT")
 
-    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${FREETYPE_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
+    set(FREETYPE2_FOUND true)
+    set(FREETYPE2_INCLUDE_DIRS "${APP_INCLUDE}")
+
+    set(LIBUSB_FOUND true)
+    set(LIBUSB_INCLUDE_DIRS "${APP_INCLUDE}")
+
+    set(LIBLAME_FOUND true)
+    set(LIBLAME_INCLUDE_DIRS "${APP_INCLUDE}")
 else()
     SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
             PROPERTIES COMPILE_FLAGS "-DGUIKIT_GTK")
@@ -280,15 +305,49 @@ else()
 
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # no udev
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID -DDRV_FREETYPE")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID")
     else()
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV -DDRV_FREETYPE")
+                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV")
     endif()
 
-    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};${FREETYPE2_INCLUDE_DIRS};${CMAKE_SOURCE_DIR}/deps/glslang;")
+    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};")
 
+    if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # libusb_dev_mem_ stuff undeclared
+        set(LIBUSB_FOUND false)
+    endif()
+endif()
+
+if(LIBLAME_FOUND)
+    set(srcs ${srcs} program/audio/record/mp3Writer.cpp)
+
+    SET_SOURCE_FILES_PROPERTIES(program/audio/record/mp3Writer.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${LIBLAME_INCLUDE_DIRS};")
+    SET_SOURCE_FILES_PROPERTIES(program/audio/record/handler.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${LIBLAME_INCLUDE_DIRS};")
+
+    set_property(SOURCE program/audio/record/handler.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DLIBLAME ")
+endif()
+
+if(FREETYPE2_FOUND)
+    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};")
+
+    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DDRV_FREETYPE ")
+endif()
+
+if(LIBUSB_FOUND)
+    SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
+            PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
+
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        SET_SOURCE_FILES_PROPERTIES(${usblibSrcs} PROPERTIES COMPILE_FLAGS "-DHAVE_ALIGNED_ALLOC")
+    elseif(${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
+        SET_SOURCE_FILES_PROPERTIES(${usblibSrcs} PROPERTIES COMPILE_FLAGS "-DHAVE_ALIGNED_ALLOC")
+    endif()
+
+    SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/usbSidPico.cpp PROPERTIES COMPILE_FLAGS "-DLIBUSB")
+else()
+    set(usblibSrcs)
 endif()
 
 if(OPENAL_FOUND)
@@ -305,7 +364,7 @@ SET_SOURCE_FILES_PROPERTIES(program/program.cpp
 SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/images.cpp
         PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
 
-set(srcs ${srcs} ${depSrcs} ${headerSrcs})
+set(srcs ${srcs} ${depSrcs} ${usblibSrcs} ${headerSrcs})
 add_executable( ${PROJECT_NAME} ${srcs} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
@@ -315,32 +374,86 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         target_link_libraries(${PROJECT_NAME} "-mwindows")
     else()
         target_link_libraries(${PROJECT_NAME} "-mconsole")
-    endif()
+    endif()    
 
     if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
-        target_link_libraries(${PROJECT_NAME} ${FREETYPE2_STATIC_LIBRARIES})
+        if(FREETYPE2_FOUND)
+            target_link_libraries(${PROJECT_NAME} ${FREETYPE2_STATIC_LIBRARIES})
+        endif()
 
-    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-        target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x86/libfreetype.a")
+        if(LIBUSB_FOUND)
+            target_link_libraries(${PROJECT_NAME} ${LIBUSB_STATIC_LIBRARIES})
+        endif()
+
+        if(LIBLAME_FOUND)
+            target_link_libraries(${PROJECT_NAME} ${LIBLAME_STATIC_LIBRARIES})
+        endif()
     else()
-        target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/x64/libfreetype.a")
+        if(FREETYPE2_FOUND)
+            set(FREETYPE_LIBS libfreetype.a libpng16.a libz.a libbz2.a libbrotlidec.a libbrotlicommon.a)
+            foreach(_lib IN LISTS FREETYPE_LIBS)
+                target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/${_lib}")
+            endforeach()
+        endif()
+
+        if(LIBUSB_FOUND)
+            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/libusb-1.0.a")
+        endif()
+
+        if(LIBLAME_FOUND)
+            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/libmp3lame.a")
+        endif()
     endif()
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit")
     target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARY})
 
+    if(LIBUSB_FOUND)
+        set(LIBUSB_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/libusb-1.0.0.dylib")
+        target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARY})
+    endif()
+
+    if(LIBLAME_FOUND)
+        set(LIBLAME_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/libmp3lame.0.dylib")
+        target_link_libraries(${PROJECT_NAME} ${LIBLAME_LIBRARY})
+    endif()
+
+    if(FREETYPE2_FOUND)
+        set(FREETYPE_LIBS libbrotlicommon.1.dylib libbrotlidec.1.dylib libbz2.1.0.dylib libpng16.16.dylib libz.1.dylib libfreetype.6.dylib)
+        set(FREETYPE2_LIBRARIES)
+        foreach(_lib IN LISTS FREETYPE_LIBS)
+           set(FREETYPE2_LIBRARIES ${FREETYPE2_LIBRARIES} ${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/${_lib})
+        endforeach()
+
+        target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
+    endif()
+
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "@executable_path/../Frameworks")
 else()
     target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr")
-    target_link_directories(${PROJECT_NAME} PUBLIC ${GTK_LIBRARY_DIRS})
-    target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
+    target_link_directories(${PROJECT_NAME} PUBLIC ${GTK_LIBRARY_DIRS})    
     target_link_directories(${PROJECT_NAME} PUBLIC ${X11_LIBRARY_DIRS})
-    target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})
-    target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
+    target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})    
+    target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})    
     target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
+
+    if(FREETYPE2_FOUND)
+        target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
+        target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
+    endif()
+
+    if(LIBUSB_FOUND)
+        target_link_directories(${PROJECT_NAME} PUBLIC ${LIBUSB_LIBRARY_DIRS})
+        target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARIES})
+    endif()
+
+    if(LIBLAME_FOUND)
+        target_link_directories(${PROJECT_NAME} PUBLIC ${LIBLAME_LIBRARY_DIRS})
+        target_link_libraries(${PROJECT_NAME} ${LIBLAME_LIBRARIES})
+    endif()
 
     # use -Wl,--verbose for detailed linker problems
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
@@ -389,13 +502,17 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     install(PROGRAMS ${CMAKE_BINARY_DIR}/${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/MacOS)
 
-    set (ft_resolved "")
-    get_filename_component(ft_resolved "${FREETYPE_LIBRARY}" REALPATH)
+    if(LIBUSB_FOUND)
+        install(FILES ${LIBUSB_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
+    endif()
 
-    install(FILES ${FREETYPE_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
-    install(FILES ${ft_resolved} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
+    if(LIBLAME_FOUND)
+        install(FILES ${LIBLAME_LIBRARY} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)
+    endif()
 
-    install(CODE "execute_process(COMMAND sh ${CMAKE_SOURCE_DIR}/data/bundle_dylib.sh ${FREETYPE_LIBRARY} libfreetype.dylib ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app ${PROJECT_NAME})")
+    if(FREETYPE2_FOUND)
+        install(FILES ${FREETYPE2_LIBRARIES} DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app/Contents/Frameworks)   
+    endif()
 
     install(CODE "execute_process(COMMAND codesign --force --deep -s - ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.app)")
 
