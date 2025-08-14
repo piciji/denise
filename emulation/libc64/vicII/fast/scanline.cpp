@@ -7,10 +7,15 @@ namespace LIBC64 {
 
 auto VicIIFast::scanline() -> void {    
     
-    if (den && (vCounter == borderTop))
-        vFlipFlop = false;    
-    else if (vCounter == borderBottom)
-        vFlipFlop = true;                 
+    if (den && (vCounter == borderTop)) {
+        vFlipFlop = false;
+        if (system->mhz2 & 2)
+            cpu.setClock(false);
+    } else if (vCounter == borderBottom) {
+        vFlipFlop = true;
+        if (system->mhz2 & 2)
+            cpu.setClock(true);
+    }
     
     vc = vcBase;   
     
