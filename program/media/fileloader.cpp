@@ -268,6 +268,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             auto mediaGroups = emulator->getDriveMediaGroups();
             std::vector<GUIKIT::BrowserWindow::Listing> out;
             auto extension = GUIKIT::String::getExtension(file, "exe", 2);
+            GUIKIT::String::toLowerCase(extension);
             auto parts = GUIKIT::String::split(extension, '.');
 
             for (auto& part : parts) {

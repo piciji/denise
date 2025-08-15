@@ -292,7 +292,7 @@ inline auto VicIICycle::borderControl() -> void {
 	} else if (vCounter == borderBottom) {
 		if (!vFlipFlopShadow) {
         	vFlipFlopShadow = true;
-			if (system->mhz2 & 2) {
+			if ((system->mhz2 & 2) && !system->iecBus.drivesRunning) {
 				cpu.setClock(true);
 				// system->interface->log("on");
 				// system->interface->log(vCounter, 0);
@@ -310,7 +310,7 @@ template<bool first> auto VicIICycle::borderLeft(  ) -> void {
 		if (vCounter == borderBottom) {
 			if (!vFlipFlopShadow) {
 				vFlipFlopShadow = true;
-				if (system->mhz2 & 2) {
+				if ((system->mhz2 & 2) && !system->iecBus.drivesRunning) {
 					cpu.setClock(true);
 				//	system->interface->log("off");
 				//	system->interface->log(vCounter, 0);

@@ -13,7 +13,7 @@ auto VicIIFast::scanline() -> void {
             cpu.setClock(false);
     } else if (vCounter == borderBottom) {
         vFlipFlop = true;
-        if (system->mhz2 & 2)
+        if ((system->mhz2 & 2) && !system->iecBus.drivesRunning)
             cpu.setClock(true);
     }
     

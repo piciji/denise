@@ -102,7 +102,7 @@ auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
 			value = colorReg[ addr ] | 0xf0;
 			break;
         case 0x30:
-            if (system->mhz2 & 1)
+            if (system->mhz2)
                 value = (reg2mhz & 3) | 0xfc;
             else
                 value = 0xff;
@@ -322,7 +322,7 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 		} break;
             
         case 0x30:
-            if (system->mhz2 & 1) {
+            if (system->mhz2) {
                 reg2mhz = value & 3;
                 cpu.setClock(value & 1);
             }

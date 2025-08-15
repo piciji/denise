@@ -46,6 +46,7 @@ struct IecBus {
     unsigned cpuBurnerRequested;
     unsigned cpuBurner;
     bool powerOn;
+    bool drivesRunning;
     
     auto writeCia( uint8_t byte ) -> bool;
     auto readCia() -> uint8_t;
@@ -114,6 +115,7 @@ struct IecBus {
     auto wasAutostarted() -> bool;
     auto has1581() -> bool;
     auto initThread() -> void;
+    auto updateRunningDrives() -> bool;
 };
 
 }
