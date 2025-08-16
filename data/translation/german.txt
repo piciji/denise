@@ -914,3 +914,5 @@ screenshot settings = Bildschirmfoto Einstellungen
 record audio start = Tonaufnahme starten
 record audio stop = Tonaufnahme anhalten
 record audio settings = Tonaufnahme Einstellungen
+CPU speed 2 MHz = CPU Geschwindigkeit: 2 MHz 
+CPU speed 1 MHz = CPU Geschwindigkeit: 1 MHz

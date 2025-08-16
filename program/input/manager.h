@@ -81,7 +81,7 @@ struct Hotkey {
         SyncStatus, ThreadedRenderer, ToggleSCVideo, ToggleShader, DiskSwapUp, DiskSwapDown, AutoStart,
         Warp, WarpOff, Quit, Audio, SwapJoypadsPort2, ApplyWindowSize, ToggleBorderPrev,
         Rotation, CropWindow, PowerWithUnplugCart, ToggleScaling, ToggleFPS, ToggleAudioStats, ToggleSuperCpuTurbo,
-        TakeScreenShot,
+        TakeScreenShot, Toggle2MHzCpu,
         Autofire = 1000,
     } id;
     std::string name;

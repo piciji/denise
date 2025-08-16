@@ -49,7 +49,7 @@ struct M6510 {
 	
 	bool killed;
     bool oddCycle;
-    bool reg2mhz;
+    uint8_t reg2mhz;
 	
 	unsigned busState;
 	
@@ -135,7 +135,7 @@ struct M6510 {
 	
 	auto serialize(Emulator::Serializer& s) -> void;
     
-    auto setClock(bool state) -> void;
+	auto setClock(bool state, bool aggressive = false) -> void;
 };
 
 }

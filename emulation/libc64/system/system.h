@@ -308,6 +308,9 @@ struct System {
     auto displayFrame() -> const bool { return !runAhead.pos; }
 	auto processFrame() -> const bool { return !runAhead.active || (runAhead.frames == runAhead.pos); }
     auto getPrgInstance(Emulator::Interface::Media* media) -> Prg*;
+
+    auto set2Mhz(bool state) -> void;
+    auto toggle2Mhz() -> bool;
 };
 
 }

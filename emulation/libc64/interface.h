@@ -213,6 +213,7 @@ struct Interface : Emulator::Interface {
     auto copyText() -> std::string;
 
     auto autoStartedByMediaGroup() -> MediaGroup*;
+    auto toggle2Mhz() -> bool;
 private:
 	auto prepareDevices() -> void;
 	auto prepareMedia() -> void;

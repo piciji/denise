@@ -661,9 +661,8 @@ structure(system, this) {
                     if (system->driveSounds.useFloppy)
                         system->interface->mixDriveSound( this->media, motorOn ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown, true );
 
-                    bool atLeastOneRunning = this->iecBus.updateRunningDrives();
                     if (structure.autoStarted)
-                        system->hintObserverMotorChange(atLeastOneRunning);
+                        system->hintObserverMotorChange(this->iecBus.runningDrives());
 
                     updateDeviceState1581();
                 }
@@ -890,10 +889,9 @@ structure(system, this) {
                     system->interface->mixDriveSound( this->media, motorOn ? DriveSound::FloppySpinUp : DriveSound::FloppySpinDown );
                 
                 updateDeviceState();
-                bool atLeastOneRunning = this->iecBus.updateRunningDrives();
 
                 if (structure.autoStarted)
-                    system->hintObserverMotorChange(atLeastOneRunning);
+                    system->hintObserverMotorChange(this->iecBus.runningDrives());
             }
             
             // LED status change

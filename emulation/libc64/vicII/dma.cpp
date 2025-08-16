@@ -280,24 +280,11 @@ inline auto VicIICycle::updateBadLine() -> void {
 inline auto VicIICycle::borderControl() -> void {
     
     if (den && (vCounter == borderTop)) {
-		if (vFlipFlop || vFlipFlopShadow) {
-        	vFlipFlop = vFlipFlopShadow = false;
-			if (system->mhz2 & 2) {
-				cpu.setClock(false);
-				// system->interface->log("off");
-				// system->interface->log(vCounter, 0);
-			}
-		}
+        vFlipFlop = vFlipFlopShadow = false;
     
 	} else if (vCounter == borderBottom) {
-		if (!vFlipFlopShadow) {
+		if (!vFlipFlopShadow)
         	vFlipFlopShadow = true;
-			if ((system->mhz2 & 2) && !system->iecBus.drivesRunning) {
-				cpu.setClock(true);
-				// system->interface->log("on");
-				// system->interface->log(vCounter, 0);
-			}
-		}
 	}
     
     if (cycle == 0)
@@ -308,14 +295,8 @@ template<bool first> auto VicIICycle::borderLeft(  ) -> void {
 	
 	if ((cSel && first) || (!cSel && !first)) {
 		if (vCounter == borderBottom) {
-			if (!vFlipFlopShadow) {
+			if (!vFlipFlopShadow)
 				vFlipFlopShadow = true;
-				if ((system->mhz2 & 2) && !system->iecBus.drivesRunning) {
-					cpu.setClock(true);
-				//	system->interface->log("off");
-				//	system->interface->log(vCounter, 0);
-				}
-			}
 		}
 		
 		vFlipFlop = vFlipFlopShadow;

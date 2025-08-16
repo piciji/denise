@@ -517,6 +517,7 @@ auto System::power( bool softReset ) -> void {
     mode = (expansionPort->isExrom() << 1) | expansionPort->isGame();
 
     vicBank = 0;
+    mhz2 &= ~0x80;
 
     mode <<= 3;
     if (!dynamic_cast<SuperCpu*>(expansionPort))
@@ -1194,6 +1195,24 @@ auto System::getPrgInstance(Emulator::Interface::Media* media) -> Prg* {
     }
 
     return nullptr;
+}
+
+auto System::set2Mhz(bool state) -> void {
+    mhz2 = state ? (mhz2 | 1) : (mhz2 & ~1);
+    if (mhz2 == 0)
+        cpu.setClock(false);
+}
+
+auto System::toggle2Mhz() -> bool {
+    if (mhz2 & 0x80) {
+        cpu.setClock(false);
+        mhz2 = mhz2 & ~0x80;
+    } else {
+        cpu.setClock(true, true);
+        mhz2 = mhz2 | 0x80;
+    }
+
+    return mhz2 & 0x80;
 }
 
 }

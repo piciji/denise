@@ -56,7 +56,7 @@ auto M6510::reset() -> void {
 	
 	busState = 0;
     oddCycle = true;
-    reg2mhz = false;
+    reg2mhz = 0;
 
 	bit6charge = bit7charge = 0;
 	
@@ -215,7 +215,7 @@ if (oddCycle) { \
     expansionPort->clock(); \
     if (system->secondDriveCable.cycleSyncing) \
         iecBus.syncDrivesEachCycle(); \
-    if (reg2mhz && (vicII->getCycle() > 14 || vicII->getCycle() < 10)) \
+    if ((reg2mhz & 0x80) || ((reg2mhz & 1)  && (vicII->getCycle() > 14 || vicII->getCycle() < 10))) \
         oddCycle = false; \
 } else { \
     oddCycle = true; \
@@ -368,12 +368,11 @@ auto M6510::serialize(Emulator::Serializer& s) -> void {
     s.integer( reg2mhz );
 }
     
-auto M6510::setClock(bool state) -> void {
-    if (reg2mhz == state)
-        return;
-    
+auto M6510::setClock(bool state, bool aggressive) -> void {    
     reg2mhz = state;
     oddCycle = !state;
+	if (aggressive)
+		reg2mhz |= 0x80;
     //system->interface->log(vicII->getVcounter());
 }
 

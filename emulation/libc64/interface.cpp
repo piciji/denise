@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "221";
+const std::string Interface::Version = "222";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -606,7 +606,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Combo, Model::Purpose::Misc, 0, {0, 2},
                       {"Off", "Solid White", "Register Color"}});
     
-    models.push_back({ModelId2Mhz, "2 MHz", Model::Type::Radio, Model::Purpose::Misc, 0, {0, 2}, {"Off", "Auto", "On"} });
+    models.push_back({ModelId2Mhz, "2 MHz CPU", Model::Type::Switch, Model::Purpose::Misc, 0});
 
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "0", "1", "2", "3", "4" }});
@@ -1683,7 +1683,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->superCpu->setRamSize( value );
             break;
         case ModelId2Mhz:
-            system->mhz2 = value & 3;
+            system->set2Mhz(value & 1);
             break;
         case ModelIdSidUsbPico:
             system->sidManager.enableUSBSID(value & 1);
@@ -1802,7 +1802,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdReuRam:                 return (int)system->reu->getRamSize();
         case ModelIdGeoRam:                 return (int)system->geoRam->getRamSize();
         case ModelIdSuperCpuRam:            return (int)system->superCpu->getRamSize();
-        case ModelId2Mhz:					return (int)system->mhz2;
+        case ModelId2Mhz:					return (int)system->mhz2 & 1;
         case ModelIdSidUsbPico:             return system->sidManager.hasUSBSID();
         case ModelIdSidUsbPicoBufferSize:   return system->sidManager.getUSBSIDBuffSize();
         case ModelIdSidUsbPicoDiffSize:     return system->sidManager.getUSBSIDDiffSize();
@@ -2071,6 +2071,10 @@ auto Interface::autoStartedByMediaGroup() -> MediaGroup* {
         return getTapeMediaGroup();
 
     return nullptr;
+}
+
+auto Interface::toggle2Mhz() -> bool {
+    return system->toggle2Mhz();
 }
 
 }

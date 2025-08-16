@@ -67,7 +67,6 @@ sysTimer(system->sysTimer) {
     threadInitialized = false;
     cpuBurner = 0;
     cpuBurnerRequested = 0;
-    drivesRunning = false;
 }
 
 IecBus::~IecBus() {
@@ -363,7 +362,6 @@ auto IecBus::power() -> void {
         drive->power();
     }
 
-    updateRunningDrives();
     powerOn = true;
     updateIdleState();
 }
@@ -625,7 +623,6 @@ auto IecBus::serialize(Emulator::Serializer& s) -> void {
     s.integer( cpuCylcesPerSecond );
     s.integer( drivesConnected );
     s.integer( lastByte );
-    s.integer( drivesRunning );
        
     if (s.mode() == Emulator::Serializer::Mode::Load) {
         setDrivesEnabled( drivesConnected );
@@ -646,7 +643,6 @@ auto IecBus::serializeLight(Emulator::Serializer& s) -> void {
     s.integer( dataOut );
     s.integer( port );
     s.integer( lastByte );
-    s.integer( drivesRunning );
     
     s.integer( drivesConnected );
     
@@ -690,14 +686,11 @@ auto IecBus::hasTrackZeroSensor() -> bool {
     return drives[0]->trackZeroSensor;
 }
 
-auto IecBus::updateRunningDrives() -> bool {
+auto IecBus::runningDrives() -> bool {
     for (auto drive : drivesEnabled) {
-        if (drive->motorOn) {
-            drivesRunning = true;
+        if (drive->motorOn)
             return true;
-        }
     }
-    drivesRunning = false;
     return false;
 }
 

@@ -914,3 +914,5 @@ screenshot settings = Screenshot settings
 record audio start = Start audio recording
 record audio stop = Stop audio recording
 record audio settings = Audio recording settings
+CPU speed 2 MHz = CPU speed: 2 MHz 
+CPU speed 1 MHz = CPU speed: 1 MHz
