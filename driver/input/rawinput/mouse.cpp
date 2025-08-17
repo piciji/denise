@@ -15,7 +15,9 @@ struct RawMouse {
         long relativeY = 0;
         long relativeZ = 0;
         bool buttons[5] = {false};
-        Hid::Mouse* hid = nullptr;        
+        Hid::Mouse* hid = nullptr;
+
+        unsigned sortIdent;
     };
     
     std::vector<Mouse> mice;
@@ -68,7 +70,8 @@ struct RawMouse {
         mouse.hid = new Hid::Mouse;
 		CRC32 crc32((uint8_t*)_path.c_str(), _path.size());		
         
-        mouse.hid->id = uniqueDeviceId(mice, crc32.value() );
+        mouse.sortIdent = crc32.value();
+        mouse.hid->id = uniqueDeviceId(mice, 1);
 		mouse.hid->name = uniqueDeviceName(mice, "Mouse");
 
         mouse.hid->axes().append("X");
@@ -81,7 +84,31 @@ struct RawMouse {
         mouse.hid->buttons().append("Back");
         mouse.hid->buttons().append("Forward");
 		
-		mice.insert(mice.begin(), mouse);   
+		mice.insert(mice.begin(), mouse);
+    }
+
+    auto sortMice() -> void {
+        if (mice.size() < 2)
+            return;
+
+        std::vector<unsigned> sortIdents;
+
+        for (auto& m : mice)
+            sortIdents.push_back(m.sortIdent);
+
+        std::sort(sortIdents.begin(), sortIdents.end());
+
+        int id = 1;
+        for (auto& sortIdent : sortIdents) {
+            for (int i = 0; i < mice.size(); i++) {
+                Mouse& mouse = mice[i];
+
+                if (mouse.sortIdent == sortIdent) {
+                    mouse.hid->id = id++;
+                    break;
+                }
+            }
+        }
     }
 	
 	auto init() -> void {

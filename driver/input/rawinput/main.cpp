@@ -136,7 +136,7 @@ struct RawInput : Input {
 				mouse.add( list[pos].hDevice );
 			}
 		}
-
+		mouse.sortMice();
 		delete[] list;
 	}
 	
