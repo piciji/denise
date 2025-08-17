@@ -322,8 +322,8 @@ auto VicIIFast::writeReg( uint8_t addr, uint8_t value ) -> void {
 		} break;
             
         case 0x30:
+            reg2mhz = value & 3;
             if (system->mhz2 == 1) {
-                reg2mhz = value & 3;
                 cpu.setClock(value & 1);
             }
             break;

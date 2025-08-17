@@ -245,8 +245,8 @@ auto VicIICycle::writeReg( uint8_t addr, uint8_t value ) -> void {
             lastColorReg = addr;	
 		} break;
         case 0x30:
+            reg2mhz = value & 3;
             if (system->mhz2 == 1) {
-                reg2mhz = value & 3;
                 cpu.setClock(value & 1);
               //  system->interface->log(value & 1 ? "on" : "off");
               //  system->interface->log(vCounter, 0);

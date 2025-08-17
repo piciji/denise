@@ -624,6 +624,21 @@ auto System::power( bool softReset ) -> void {
         };
         keyBuffer->add( action );
 
+        if (!dynamic_cast<SuperCpu*>(expansionPort) && (mhz2 & 1) && (Drive::globalType == Drive::Type::D1571)) {
+            action.callback = nullptr;
+            action.mode = KeyBuffer::Mode::Input;
+            action.buffer = { 'O','P','E','N',' ','1','5',',','8',',','1','5',',',' ','"','U','0','>','M','1','"',':','C','L','O','S','E',' ','1','5', '\r' };
+            action.blinkingCursor = false;
+            action.delay = 0;
+            keyBuffer->add(action);
+
+            action.mode = KeyBuffer::Mode::WaitFor;
+            action.buffer = { 'R', 'E', 'A', 'D', 'Y', '.' };
+            action.blinkingCursor = true;
+            action.delay = 2;
+            keyBuffer->add(action);
+        }
+
     } else {
         action.callbackId = 1;
         action.callback = [this]() { kernalBootComplete = true; };

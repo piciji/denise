@@ -606,7 +606,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Combo, Model::Purpose::Misc, 0, {0, 2},
                       {"Off", "Solid White", "Register Color"}});
     
-    models.push_back({ModelId2Mhz, "2 MHz CPU", Model::Type::Switch, Model::Purpose::Misc, 0});
+    models.push_back({ModelId2Mhz, "C128 in C64 mode", Model::Type::Switch, Model::Purpose::Misc, 0});
 
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
                       { "0", "1", "2", "3", "4" }});

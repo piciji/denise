@@ -95,7 +95,7 @@ auto InputManager::setCustomHotkeys() -> void {
 		customHotkeys.push_back( {Hotkey::Id::ResetTapeCounter, "tape_counter_reset_key", false} );
         customHotkeys.push_back( {Hotkey::Id::EF3Menu, "ef3 menu button", false} );
 	    customHotkeys.push_back( {Hotkey::Id::ToggleSuperCpuTurbo, "SuperCPU Turbo", false} );
-        customHotkeys.push_back({ Hotkey::Id::Toggle2MHzCpu, "2 MHz CPU", false });
+        customHotkeys.push_back({ Hotkey::Id::Toggle2MHzCpuTurbo, "toggle 2 MHz Turbo", false });
 	} else
         customHotkeys.push_back( {Hotkey::Id::SwapJoypadsPort2, "swap joypads Port2", false} );
     
@@ -780,11 +780,11 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             statusHandler->setExpansionClick();
             break;
 
-        case Hotkey::Toggle2MHzCpu: {
+        case Hotkey::Toggle2MHzCpuTurbo: {
             if (dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
                 emuThread->lock();
                 bool state = dynamic_cast<LIBC64::Interface*>(activeEmulator)->toggle2Mhz();
-                statusHandler->setMessage(trans->getA(state ? "CPU speed 2 MHz" : "CPU speed 1 MHz"), false, true);
+                statusHandler->setMessage(trans->getA(state ? "CPU Turbo 2 MHz" : "CPU Turbo disabled"), false, true);
             }
         } break;
 
