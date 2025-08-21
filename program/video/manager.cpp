@@ -640,18 +640,25 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     }
 
     if (unlikely(takeScreenShots)) {
-        if (view->screenshot.unscaled) {
-            takeScreenshot<T>(view->screenshot.unscaled, src, width, height, srcPitch, options);
-        } else {
-            gpuOptions |= (uint8_t)DRIVER::OPT_TakeScreenshot;
-            if (!view->screenshot.withEffects) {
-                gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader | (uint8_t)DRIVER::OPT_DisallowFilter;
-                suppressShader = true;
+        auto& screenshot = view->screenshot;
+
+        if (!--screenshot.intervalPos) {
+            screenshot.intervalPos = screenshot.interval;
+
+            if (screenshot.unscaled) {
+                takeScreenshot<T>(screenshot.unscaled, src, width, height, srcPitch, options);
+            } else {
+                gpuOptions |= (uint8_t)DRIVER::OPT_TakeScreenshot;
+                if (!screenshot.withEffects) {
+                    gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader | (uint8_t)DRIVER::OPT_DisallowFilter;
+                    suppressShader = true;
+                }
             }
-        }
-        if (!placeHolderFrames) {
-            if (!--takeScreenShots && view->screenshot.pause)
-                program->isPause = view->screenshot.pause;
+
+            if (!placeHolderFrames) {
+                if (!--takeScreenShots && screenshot.pause)
+                    program->isPause = screenshot.pause;
+            }
         }
     }
 
@@ -660,8 +667,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 
     if (unlikely(placeHolderFrames)) {
         if (!placeHolderSplashScreen || ((placeHolderFrames & 3) == 0)) {
-            if (takeScreenShots)
-                takeScreenShots--;
+            takeScreenShots = 0;
             if (!view->renderPlaceholder(gpuOptions))
                 return hidePlaceHolder();
         }

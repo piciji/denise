@@ -415,33 +415,38 @@ VideoScreenShotLayout::Location::Location() {
     setAlignment(0.5);
 }
 
-VideoScreenShotLayout::Format::Format() {
+VideoScreenShotLayout::Format::Format(bool withPalete) {
     append(label, { 0u, 0u }, 10);
     append(png, { 0u, 0u }, 10);
     append(jpg, { 0u, 0u }, 10);
     append(bmp, { 0u, 0u }, 10);
     append(gif, { 0u, 0u }, 10);
-    append(tga, { 0u, 0u });
+    append(tga, { 0u, 0u }, 20);
+
+    if (withPalete)
+        append(palete, { 0u, 0u });
 
     GUIKIT::RadioBox::setGroup(png, jpg, bmp, gif, tga);
 
     setAlignment(0.5);
 }
 
-VideoScreenShotLayout::Options::Options(bool withPalete)
-: gun("") {
-    if (withPalete)
-        append(palete, { 0u, 0u }, 20);
-    
-    append(gun, { ~0u, 0u });
+VideoScreenShotLayout::Options::Options() :
+gun(""),
+interval("") {
 
-    gun.slider.setLength(60);
-    gun.updateValueWidth("99");
+    append(gun, { ~0u, 0u }, 10);
+    append(interval, { ~0u, 0u });
+
+    gun.slider.setLength(120);
+    interval.slider.setLength(60);
+    gun.updateValueWidth("999");
+    interval.updateValueWidth("99");
 
     setAlignment(0.5);
 }
 
-VideoScreenShotLayout::VideoScreenShotLayout(bool withPalete) : options(withPalete) {
+VideoScreenShotLayout::VideoScreenShotLayout(bool withPalete) : format(withPalete) {
     append(location, { ~0u, 0u}, 10);
     append(format, { ~0u, 0u}, 10 );
     append(options, { ~0u, 0u });
@@ -1516,13 +1521,18 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<std::string>("screen_record_format", "tga");
     };
 
-    layScreenShot.options.palete.onToggle = [this](bool checked) {
+    layScreenShot.format.palete.onToggle = [this](bool checked) {
         _settings->set<bool>("screen_palette", checked);
     };
 
     layScreenShot.options.gun.slider.onChange = [this](unsigned position) {
         layScreenShot.options.gun.setValue(std::to_string(position+1));
         _settings->set<unsigned>("screen_gun", position+1);
+    };
+
+    layScreenShot.options.interval.slider.onChange = [this](unsigned position) {
+        layScreenShot.options.interval.setValue(std::to_string(position + 1));
+        _settings->set<unsigned>("screen_gun_each", position + 1);
     };
 
     fillFontTypeList();
@@ -2284,8 +2294,9 @@ auto VideoLayout::translate() -> void {
     layScreenShot.format.gif.setText(trans->getA("GIF (*)"));
     layScreenShot.format.gif.setTooltip(trans->getA("GIF tooltip"));
     layScreenShot.format.tga.setText(trans->getA("TGA"));
-    layScreenShot.options.palete.setText(trans->getA("save palete"));
+    layScreenShot.format.palete.setText(trans->getA("save palete"));
     layScreenShot.options.gun.name.setText(trans->getA("frames"));
+    layScreenShot.options.interval.name.setText(trans->getA("interval"));
 }
 
 auto VideoLayout::sliderIdent() -> std::string {
@@ -2416,13 +2427,19 @@ auto VideoLayout::loadSettings(bool init) -> void {
     else layScreenShot.format.png.setChecked();
 
     if (dynamic_cast<LIBC64::Interface*>(emulator))
-        layScreenShot.options.palete.setChecked(_settings->get<bool>("screen_palette", true) );
+        layScreenShot.format.palete.setChecked(_settings->get<bool>("screen_palette", true) );
 
-    auto screenshotGun = _settings->get<unsigned>("screen_gun", 1);
+    auto screenshotGun = _settings->get<unsigned>("screen_gun", 1, {1, 120});
     if (!screenshotGun)
         screenshotGun = 1;
     layScreenShot.options.gun.slider.setPosition(screenshotGun - 1);
     layScreenShot.options.gun.setValue(std::to_string(screenshotGun));
+
+    auto screenshotGunEach = _settings->get<unsigned>("screen_gun_each", 1, {1, 60});
+    if (!screenshotGunEach)
+        screenshotGunEach = 1;
+    layScreenShot.options.interval.slider.setPosition(screenshotGunEach - 1);
+    layScreenShot.options.interval.setValue(std::to_string(screenshotGunEach));
 }
 
 auto VideoLayout::prepareColBox() -> void {

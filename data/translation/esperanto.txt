@@ -918,4 +918,5 @@ toggle 2 MHz Turbo = toggle 2 MHz Turbo
 CPU Turbo 2 MHz = 2 MHz Turbo enabled
 CPU Turbo disabled = Turbo disabled
 C128 in C64 mode = C128 in C64 mode w/$D030
-C128 in C64 mode tooltip = This option simulates a C128 switched to C64 mode. Software can still temporarily use the C128's 2 MHz clock speed. Games like Mario 64, Sonic, SNK vs. Capcom or Eye of the Beholder are optimized for this.
+C128 in C64 mode tooltip = This option simulates a C128 switched to C64 mode. Software can still temporarily use the C128's 2 MHz clock speed. Games like Mario 64, Sonic, SNK vs. Capcom (C128 version) or Eye of the Beholder are optimized for this.
+interval = interval

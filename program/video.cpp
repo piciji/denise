@@ -164,7 +164,7 @@ auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) 
             for (auto& pal : activeVideoManager->palette->paletteColors)
                 colorTable.push_back(pal.rgb);
 
-            encoded = image.generate(screenShot.type, colorTable, screenShot.buffer, _width, _height);
+            encoded = image.generate(screenShot.type, colorTable, screenShot.buffer, _width, _height, screenShot.interval);
         }
 
     } else if (screenShot.twoFrames && !screenShot.buffer.size()) {
@@ -214,6 +214,7 @@ auto Program::takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) 
         file.setFile(_path);
         file.open(GUIKIT::File::Mode::Write);
         file.write(encoded.data, encoded.size);
+        file.unload();
         delete[] encoded.data;
     }
 

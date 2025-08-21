@@ -34,6 +34,8 @@ struct View : GUIKIT::Window {
         bool animatedGif = false;
         std::vector<uint8_t*> buffer;
         unsigned bufferSize;
+        unsigned interval;
+        unsigned intervalPos;
         std::mutex sharedMutex;
     } screenshot;
 

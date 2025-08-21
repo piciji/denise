@@ -89,7 +89,7 @@ struct Image {
     auto load(const uint8_t* src, unsigned size, bool keepDataOnDestruction = false) -> bool;
     auto generate(Type type, const uint8_t* src, unsigned width, unsigned height) -> Encoded;
     auto generate(Type type) -> Encoded;
-    auto generate(Type type, std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height) -> Encoded;
+    auto generate(Type type, std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height, unsigned delay = 1) -> Encoded;
     auto generatePng( uint8_t* rgbData, unsigned width, unsigned height, unsigned channels, unsigned& pngSize ) -> uint8_t*;
     auto alphaBlend(unsigned alphaColor) -> void;
 	auto alphaMultiply() -> void;

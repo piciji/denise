@@ -312,13 +312,14 @@ struct VideoScreenShotLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::RadioBox gif;
         GUIKIT::RadioBox tga;
 
-        Format();
+        GUIKIT::CheckBox palete;
+        Format(bool withPalete);
     } format;
 
-    struct Options : GUIKIT::HorizontalLayout  {
-        GUIKIT::CheckBox palete;
+    struct Options : GUIKIT::HorizontalLayout  {        
         SliderLayout gun;
-        Options(bool withPalete);
+        SliderLayout interval;
+        Options();
     } options;
 
     VideoScreenShotLayout(bool withPalete);

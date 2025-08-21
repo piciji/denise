@@ -51,7 +51,7 @@ namespace GUIKIT {
         return data != nullptr;
     }
 
-    auto ImageEncoder::encodeWithColorTable(Type type, std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height) -> bool {
+    auto ImageEncoder::encodeWithColorTable(Type type, std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height, unsigned delay) -> bool {
         size = 0;
         usedType = type;
         
@@ -60,7 +60,7 @@ namespace GUIKIT {
                 encodeBMPWithColorTable(colorTable, srcs[0], width, height);
                 break;
             case Type::GIF:
-                encodeGIFWithColorTable(colorTable, srcs, width, height);
+                encodeGIFWithColorTable(colorTable, srcs, width, height, delay);
                 break;
             default:
                 break;
@@ -273,7 +273,7 @@ namespace GUIKIT {
         return true;
     }
 
-    auto ImageEncoder::encodeGIFWithColorTable(std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height) -> bool {
+    auto ImageEncoder::encodeGIFWithColorTable(std::vector<uint32_t>& colorTable, const std::vector<uint8_t*>& srcs, unsigned width, unsigned height, unsigned delay) -> bool {
         CGIF* pGIF;
         CGIF_Config gConfig;
         CGIF_FrameConfig fConfig;
@@ -296,8 +296,10 @@ namespace GUIKIT {
         gConfig.path = nullptr;
         gConfig.pWriteFn = writeGIF;
         gConfig.pContext = this;
-        if (srcs.size() > 1)
+        if (srcs.size() > 1) {
             gConfig.attrFlags = CGIF_ATTR_IS_ANIMATED;
+            gConfig.genFlags = CGIF_GEN_KEEP_IDENT_FRAMES;
+        }
 
         pGIF = cgif_newgif(&gConfig);
         delete[] aPalette;
@@ -305,7 +307,7 @@ namespace GUIKIT {
         std::memset(&fConfig, 0, sizeof(CGIF_FrameConfig));
 
         if (srcs.size() > 1)
-            fConfig.delay = 2; // 0.02 => 50 FPS
+            fConfig.delay = 2 * delay; // 0.02 => 50 FPS
 
         for(auto src : srcs) {
             fConfig.pImageData = (uint8_t*)src;

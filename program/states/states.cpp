@@ -116,6 +116,8 @@ auto States::save( std::string path ) -> void {
         screenshot.writePalette = false;
         screenshot.animatedGif = false;
         screenshot.gun = 0;
+        screenshot.interval = 1;
+        screenshot.intervalPos = 1;
         VideoManager::takeScreenShots = 1;
     }
 

@@ -2429,7 +2429,8 @@ auto View::takeScreenshot() -> void {
     bool mergeTwoFrames = globalSettings->get<bool>("screenshot_merge_frames", false);
     unsigned unscaled = globalSettings->get<unsigned>("screenshot_unscaled", 0);
     bool usePalete = settings->get<bool>("screen_palette", true);
-    unsigned screenGun = settings->get<unsigned>("screen_gun", 1, {1, 60});
+    unsigned screenGun = settings->get<unsigned>("screen_gun", 1, {1, 120});
+    unsigned screenGunEach = settings->get<unsigned>("screen_gun_each", 1, { 1, 60 });
 
     _path += _file + "_#ident#";
 
@@ -2462,6 +2463,8 @@ auto View::takeScreenshot() -> void {
     screenshot.twoFrames = mergeTwoFrames;
     screenshot.pause = 0;
     screenshot.saveState = false;
+    screenshot.interval = VideoManager::placeHolderFrames ? 1 : screenGunEach;
+    screenshot.intervalPos = 1;
 
     if (screenshot.animatedGif) {
         screenshot.gun = screenGun > 1 ? screenGun : 2;
@@ -2471,6 +2474,9 @@ auto View::takeScreenshot() -> void {
         VideoManager::takeScreenShots = mergeTwoFrames ? 2 : 1;
         if (screenGun)
             VideoManager::takeScreenShots *= screenGun;
+
+        if (mergeTwoFrames)
+            screenshot.interval = 1;
     }
     clearScreenshotBuffer();
     screenshot.sharedMutex.unlock();
