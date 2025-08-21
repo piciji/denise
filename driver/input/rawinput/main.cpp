@@ -115,7 +115,7 @@ struct RawInput : Input {
 		GetRawInputDeviceList(NULL, &deviceCount, sizeof (RAWINPUTDEVICELIST));
 		RAWINPUTDEVICELIST* list = new RAWINPUTDEVICELIST[deviceCount];
 		GetRawInputDeviceList(list, &deviceCount, sizeof (RAWINPUTDEVICELIST));
-
+		logger->log("add");
 		for (unsigned n = 0; n < deviceCount; n++) {
 
 			unsigned pos = deviceCount - n - 1; // add devices in reverse

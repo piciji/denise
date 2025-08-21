@@ -1,5 +1,6 @@
 
 typedef BOOLEAN (__stdcall *HidD_GetProductString_)(HANDLE handle, PVOID buffer, ULONG buffer_len);
+typedef BOOLEAN(__stdcall* HidD_GetManufacturerString_)(HANDLE handle, PVOID buffer, ULONG buffer_len);
 typedef VOID (__stdcall *HidD_GetHidGuid_)(GUID* hidGuid);
 typedef BOOLEAN (__stdcall *HidD_GetPreparsedData_)(HANDLE handle, PHIDP_PREPARSED_DATA *preparsed_data);
 typedef BOOLEAN (__stdcall *HidD_FreePreparsedData_)(PHIDP_PREPARSED_DATA preparsed_data);
@@ -10,6 +11,7 @@ typedef NTSTATUS (__stdcall *HidP_GetValueCaps_)(HIDP_REPORT_TYPE ReportType, PH
 typedef NTSTATUS (__stdcall *HidP_GetUsageValue_)(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection, USAGE Usage,PULONG UsageValue, PHIDP_PREPARSED_DATA PreparsedData,PCHAR Report, ULONG ReportLength);
 
 static HidD_GetProductString_ HidD_GetProductString;
+static HidD_GetManufacturerString_ HidD_GetManufacturerString;
 static HidD_GetHidGuid_ HidD_GetHidGuid;
 static HidD_GetPreparsedData_ HidD_GetPreparsedData;
 static HidD_FreePreparsedData_ HidD_FreePreparsedData;
@@ -25,6 +27,7 @@ static auto lookupHidLibrary() -> bool {
 	if (libHandle) {
 #define RESOLVE(x) x = (x##_)GetProcAddress(libHandle, #x); if (!x) return false;
 		RESOLVE(HidD_GetProductString);
+		RESOLVE(HidD_GetManufacturerString);
         RESOLVE(HidD_GetHidGuid);
 		RESOLVE(HidD_GetPreparsedData);
 		RESOLVE(HidD_FreePreparsedData);

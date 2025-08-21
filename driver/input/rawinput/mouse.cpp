@@ -59,6 +59,18 @@ struct RawMouse {
         
         std::string _path = Win::utf8_t(path);
 
+        logger->log(_path);
+
+        RID_DEVICE_INFO info;
+        size = sizeof(info);
+        auto actualSize = GetRawInputDeviceInfo(handle, RIDI_DEVICEINFO, &info, &size);
+
+
+        logger->log(std::to_string(actualSize), 0);
+        logger->log(std::to_string(sizeof(info)), 0);
+        logger->log(std::to_string(info.dwType), 0);
+
+
         mouse.ntHandle = CreateFileW(
             path, 0u, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
             OPEN_EXISTING, 0u, nullptr
@@ -66,6 +78,18 @@ struct RawMouse {
         
         if (!mouse.ntHandle)
             return;      
+
+        wchar_t nameBuffer[PATH_MAX];
+        if (HidD_GetProductString(mouse.ntHandle, nameBuffer, 100)) {
+            auto pName = Win::utf8_t(nameBuffer);
+            logger->log(pName, 0);
+        }
+
+        wchar_t nameBuffer2[PATH_MAX];
+        if (HidD_GetManufacturerString(mouse.ntHandle, nameBuffer2, 100)) {
+            auto mName = Win::utf8_t(nameBuffer2);
+            logger->log(mName, 0);
+        }
         
         mouse.hid = new Hid::Mouse;
 		CRC32 crc32((uint8_t*)_path.c_str(), _path.size());		
