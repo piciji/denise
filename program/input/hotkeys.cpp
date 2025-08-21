@@ -76,6 +76,9 @@ auto InputManager::setCustomHotkeys() -> void {
 	customHotkeys.push_back( {Hotkey::Id::Power, "Hard Reset", true} );
     if (dynamic_cast<LIBC64::Interface*>(emulator) )
         customHotkeys.push_back( {Hotkey::Id::PowerWithUnplugCart, "Hard Reset + Unplug Cart", false} );
+    else
+        customHotkeys.push_back({ Hotkey::Id::PowerWithEjectDisks, "Hard Reset + Eject Disks", false });
+
 	customHotkeys.push_back( {Hotkey::Id::SoftReset, "Soft Reset", true} );
     customHotkeys.push_back( {Hotkey::Id::AnyLoad, "load software", true} );
 
@@ -312,6 +315,14 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
         case Hotkey::PowerWithUnplugCart:
             emuThread->lock();
+            program->power(emulator);
+            program->removeExpansion(false);
+            break;
+
+        case Hotkey::PowerWithEjectDisks:
+            emuThread->lock();
+            for (auto& media : emulator->getDiskMediaGroup()->media)
+                fileloader->eject(emulator, &media);
             program->power(emulator);
             program->removeExpansion(false);
             break;
