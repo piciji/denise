@@ -11,7 +11,7 @@
 #include "../cmd/cmd.h"
 #include "../firmware/manager.h"
 #include "../thread/emuThread.h"
-#include "../tools/DiskFinder.h"
+#include "../tools/diskGuesser.h"
 #include "../view/status.h"
 #include "../audio/manager.h"
 #include "recentFiles.h"
@@ -1039,8 +1039,8 @@ auto Fileloader::getSwapPos(Emulator::Interface* emulator) -> unsigned {
     if (fSetting->path.empty())
         return 0;
 
-    DiskFinder diskFinder(fSetting->path);
-    return diskFinder.getDiskPos();
+    DiskGuesser diskGuesser(fSetting->path);
+    return diskGuesser.getDiskPos(fSetting->id);
 }
 
 auto Fileloader::getSwapMedia(Emulator::Interface* emulator, int swapPos, FileSetting* fSetting) -> Emulator::Interface::Media* {
@@ -1099,14 +1099,13 @@ auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos)
         if (srcSetting->path.empty())
             return nullptr;
 
-        DiskFinder diskFinder( srcSetting->path );
+        DiskGuesser diskGuesser( srcSetting->path );
+        auto result = diskGuesser.search( swapPos, srcSetting->id );
 
-        auto result = diskFinder.findNext( swapPos );
-
-        if (result != "") {
-            fSetting->file = result;
-            fSetting->path = diskFinder.filePath + result;
-            fSetting->id = 0;
+        if (!result.isEmpty()) {
+            fSetting->file = result.fileName;
+            fSetting->path = result.filePath;
+            fSetting->id = result.archivePos;
             fSetting->writeProtect = false;
         }
     }

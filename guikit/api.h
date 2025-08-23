@@ -1464,7 +1464,7 @@ struct File {
     }
     static auto suppportedCompressionFilter() -> std::string { return "zip, gz, lha, lzh, tar, tgz, tar.gz (*.zip,*.gz,*.lha,*.lzh,*.tar,*.tgz,*.tar.gz)"; }
     static auto getFolderList( std::string path, const std::string& subStr = "") -> std::vector<Info>;
-    static auto getFolderListAlt( std::string path, std::vector<std::string> subStrs, bool fromBeginning, unsigned limit = 0 ) -> std::vector<std::string>;
+    static auto getFolderListAlt( std::string path, std::vector<std::string> subStrs, bool fromBeginning, unsigned limit = 0, const std::string& suffix = "" ) -> std::vector<std::string>;
     static auto isDir( std::string path ) -> bool;
     static auto createDir( std::string path, std::string basePath = "" ) -> bool;
     static auto beautifyPath(std::string path) -> std::string;

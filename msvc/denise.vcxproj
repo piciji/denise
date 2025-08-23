@@ -281,6 +281,7 @@
     <ClInclude Include="..\program\tools\circularBuffer.h" />
     <ClInclude Include="..\program\tools\dataStorage.h" />
     <ClInclude Include="..\program\tools\DiskFinder.h" />
+    <ClInclude Include="..\program\tools\diskGuesser.h" />
     <ClInclude Include="..\program\tools\filepool.h" />
     <ClInclude Include="..\program\tools\filesetting.h" />
     <ClInclude Include="..\program\tools\gaussianBlur.h" />
@@ -1767,6 +1768,7 @@
     <ClCompile Include="..\program\program.cpp" />
     <ClCompile Include="..\program\states\states.cpp" />
     <ClCompile Include="..\program\thread\emuThread.cpp" />
+    <ClCompile Include="..\program\tools\diskGuesser.cpp" />
     <ClCompile Include="..\program\tools\httpClient.cpp" />
     <ClCompile Include="..\program\video.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

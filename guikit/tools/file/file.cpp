@@ -594,7 +594,7 @@ auto File::appendFolderToTreeView(std::string& basePath, TreeViewItem* tvi, cons
     }
 }
 
-auto File::getFolderListAlt( std::string path, std::vector<std::string> subStrs, bool fromBeginning, unsigned limit ) -> std::vector<std::string> {
+auto File::getFolderListAlt( std::string path, std::vector<std::string> subStrs, bool fromBeginning, unsigned limit, const std::string& suffix ) -> std::vector<std::string> {
     std::vector<std::string> list;
     std::string file;
     
@@ -623,15 +623,19 @@ auto File::getFolderListAlt( std::string path, std::vector<std::string> subStrs,
 		    if (fromBeginning) {
 		        for(auto& subStr : subStrs) {
 		            if(String::startsWith(file, subStr)) {
-		                found = true;
-		                break;
+		                if (suffix.empty() || String::foundSubStr(file, "." + suffix)) {
+		                    found = true;
+		                    break;
+		                }
 		            }
 		        }
 		    } else {
 		        for(auto& subStr : subStrs) {
 		            if(String::findString(file, subStr)) {
-		                found = true;
-		                break;
+		                if (suffix.empty() || String::foundSubStr(file, "." + suffix)) {
+		                    found = true;
+		                    break;
+		                }
 		            }
 		        }
 		    }

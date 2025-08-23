@@ -1168,6 +1168,9 @@
     <ClInclude Include="..\program\audio\record\base.h">
       <Filter>program\audio\record</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\tools\diskGuesser.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2372,6 +2375,9 @@
     </ClCompile>
     <ClCompile Include="..\program\audio\record\mp3Writer.cpp">
       <Filter>program\audio\record</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\tools\diskGuesser.cpp">
+      <Filter>program\tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

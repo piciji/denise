@@ -220,6 +220,7 @@ set(srcs
         program/video/shaderParser.cpp
         program/view/imageViewer.cpp
         program/tools/httpClient.cpp
+        program/tools/diskGuesser.cpp
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")

@@ -1456,6 +1456,9 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
 
         emuThread->lock();
         insertImage( block, file, item );
+        if (block->media->group->isDrive()) {
+            settings->set<int>("swap_pos", -1, false);
+        }
         emuThread->unlock();
     };
     archiveViewer->allowNativeArchive(dynamic_cast<LIBAMI::Interface*>(emulator) ? mediaGroup : nullptr);
