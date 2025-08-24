@@ -1152,6 +1152,13 @@ auto View::buildMenu() -> void {
             };
             sM.menu->setEnabled(false);
             sM.system->append(*sM.menu);
+            sM.mhz2LED = new GUIKIT::MenuItem;
+            sM.mhz2LED->setIcon(menuImage);
+            sM.mhz2LED->onActivate = [emulator]() {
+                if (emulator == activeEmulator)
+                    statusHandler->toggleLED(Emulator::Interface::LedId::MHz2);
+            };
+            sM.system->append(*sM.mhz2LED);
             sM.powerLED = nullptr;
             sM.capsLED = nullptr;
         } else {
@@ -1159,7 +1166,7 @@ auto View::buildMenu() -> void {
             sM.powerLED->setIcon( menuImage );
             sM.powerLED->onActivate = [emulator]() {
                 if (emulator == activeEmulator)
-                    statusHandler->enableLED(Emulator::Interface::LedId::Power, true);
+                    statusHandler->toggleLED(Emulator::Interface::LedId::Power);
             };
             sM.system->append(*sM.powerLED);
 
@@ -1167,9 +1174,10 @@ auto View::buildMenu() -> void {
             sM.capsLED->setIcon(menuImage);
             sM.capsLED->onActivate = [emulator]() {
                 if (emulator == activeEmulator)
-                    statusHandler->enableLED(Emulator::Interface::LedId::CapsLock, true);
+                    statusHandler->toggleLED(Emulator::Interface::LedId::CapsLock);
             };
             sM.system->append(*sM.capsLED);
+            sM.mhz2LED = nullptr;
             sM.menu = nullptr;
             sM.freeze = nullptr;
         }
@@ -2034,6 +2042,8 @@ auto View::translate() -> void {
             sysMenu.powerLED->setText(trans->get("toggle Power LED"));
         if (sysMenu.capsLED)
             sysMenu.capsLED->setText(trans->get("toggle Caps Lock LED"));
+        if (sysMenu.mhz2LED)
+            sysMenu.mhz2LED->setText(trans->getA("toggle 2 MHz LED"));
         sysMenu.loadSoftware->setText(trans->get("load software"));
         sysMenu.recentSoftware->setText(trans->getA("Recent Files"));
         sysMenu.media->setText(trans->get("Software"));

@@ -18,7 +18,8 @@ auto StatusHandler::updateLEDState(Emulator::Interface::LedId ledId, uint8_t sta
         if (ledState.ledId == ledId) {
             ledState.inputQueue <<= 2;
             ledState.inputQueue |= state & 3;
-            ledState.inputs++;
+            if (++ledState.inputs > 16)
+                ledState.inputs = 1;
             return;
         }
     }
@@ -294,50 +295,82 @@ auto StatusHandler::enableLEDs() -> void {
         ledState.state = false;
         ledState.inputQueue = 0;
         ledState.inputs = 0;
-        enableLED(ledState.ledId);
+        enableLED(ledState);
     }
 }
 
-auto StatusHandler::enableLED(Emulator::Interface::LedId ledId, bool toggle) -> void {
-    GUIKIT::Settings* settings = nullptr;
-    if (dynamic_cast<LIBAMI::Interface*>(activeEmulator))
-        settings = program->getSettings(activeEmulator);
+auto StatusHandler::toggleLED(Emulator::Interface::LedId ledId) -> void {
+    auto settings = program->getSettings(activeEmulator);
 
     for (auto& ledState : ledStates) {
         if (ledState.ledId == ledId) {
-            bool enabled = false;
-
-            if (settings) {
-                enabled = settings->get<bool>(ledState.name, false);
-                if (toggle) {
-                    enabled ^= 1;
-                    settings->set<bool>(ledState.name, enabled);
-                }
-            }
-            ledState.enabled = enabled;
-
-            emuThread->lockStatus();
-            unsigned sId = ledId == Emulator::Interface::LedId::CapsLock ? 27 : 16;
-            updateVisible(sId, enabled);
-            if (enabled)
-                updateImage(sId + 1, getLEDImage(ledState));
-            else
-                updateVisible(sId + 1, false);
-
-            updateStatusBar();
-            emuThread->unlockStatus();
+            bool state = settings->get<bool>(ledState.name, false);
+            state ^= 1;
+            settings->set<bool>(ledState.name, state);
+            enableLED(ledState);
+            break;
         }
     }
 }
 
+auto StatusHandler::enableLED(LEDState& ledState) -> void {
+    GUIKIT::Settings* settings = nullptr;
+    if (activeEmulator)
+        settings = program->getSettings(activeEmulator);
+
+    bool enabled = settings ? settings->get<bool>(ledState.name, false) : false;
+    ledState.enabled = enabled;
+
+    emuThread->lockStatus();
+    unsigned sId = getStatusId(ledState.ledId);
+    updateVisible(sId - 1, enabled);
+    if (enabled)
+        updateImage(sId, getLEDImage(ledState));
+    else
+        updateVisible(sId, false);
+
+    updateStatusBar();
+    emuThread->unlockStatus();
+}
+
 auto StatusHandler::getLEDImage(LEDState& ledState) -> GUIKIT::Image* {
-    switch (ledState.state & 3) {
+    switch (ledState.ledId) {
+        case Emulator::Interface::LedId::Power:
+            switch (ledState.state & 3) {
+                default:
+                case 0: return &(view->ledOffImage);
+                case 1: return &(view->ledRed2Image);
+                case 2: return &(view->ledGreen2DimImage);
+                case 3: return &(view->ledGreen2Image);
+            }
+        case Emulator::Interface::LedId::CapsLock:
+            switch (ledState.state & 3) {
+                default:
+                case 0: return &(view->ledOffRoundImage);
+                case 1: return &(view->ledRedRoundImage);
+                case 2: return &(view->ledOffRoundImage);
+                case 3: return &(view->ledGreenRoundImage);
+            }
+        case Emulator::Interface::LedId::MHz2:
+            switch (ledState.state & 3) {
+                default:
+                case 0: return &(view->ledOffImage);
+                case 1: return &(view->ledGreen2Image);
+                case 2: return &(view->ledOffImage);
+                case 3: return &(view->ledGreen2Image);
+            }
         default:
-        case 0: return ledState.ledId == Emulator::Interface::LedId::Power ? &(view->ledOffImage) : &(view->ledOffRoundImage);
-        case 1: return ledState.ledId == Emulator::Interface::LedId::Power ? &(view->ledRed2Image) : &(view->ledRedRoundImage);
-        case 2: return ledState.ledId == Emulator::Interface::LedId::Power ? &(view->ledGreen2DimImage) : &(view->ledOffRoundImage);
-        case 3: return ledState.ledId == Emulator::Interface::LedId::Power ? &(view->ledGreen2Image) : &(view->ledGreenRoundImage);
+            break;
     }
+    return nullptr;
+
+    // switch (ledState.state & 3) {
+    //     default:
+    //     case 0: return ledState.ledId == Emulator::Interface::LedId::Power ? &(view->ledOffImage) : &(view->ledOffRoundImage);
+    //     case 1: return ledState.ledId == Emulator::Interface::LedId::Power ? &(view->ledRed2Image) : &(view->ledRedRoundImage);
+    //     case 2: return ledState.ledId == Emulator::Interface::LedId::Power ? &(view->ledGreen2DimImage) : &(view->ledOffRoundImage);
+    //     case 3: return ledState.ledId == Emulator::Interface::LedId::Power ? &(view->ledGreen2Image) : &(view->ledGreenRoundImage);
+    // }
 }
 
 auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
@@ -351,6 +384,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
 
     ledStates.push_back({ Emulator::Interface::LedId::Power, "power_led", false, 0, 0, 0 });
     ledStates.push_back({ Emulator::Interface::LedId::CapsLock, "caps_led", false, 0, 0, 0 });
+    ledStates.push_back({ Emulator::Interface::LedId::MHz2, "2_mhz", false, 0, 0, 0 });
 
 	control = 0;
 
@@ -378,6 +412,17 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
 
     statusBar->append( 27, "Caps" );
     statusBar->append( 28, &(view->ledOffImage));
+
+    statusBar->append( 29, "2 MHz", [this]() {
+        emuThread->lock();
+        program->toggle2Mhz();
+        emuThread->unlock();
+    } );
+    statusBar->append( 30, &(view->ledOffImage), [this]() {
+        emuThread->lock();
+        program->toggle2Mhz();
+        emuThread->unlock();
+    });
     
     statusBar->append( 9, "000", nullptr, &(view->tapeControlMenu) );    // tape counter
     statusBar->append( 10, &(view->stopStatusImage), nullptr, &(view->tapeControlMenu) );    // tape button icon
@@ -425,6 +470,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->updateSeparator( 24, true);
     statusBar->updateSeparator( 26, true);
     statusBar->updateSeparator( 28, true);
+    statusBar->updateSeparator( 30, true);
 }
 
 auto StatusHandler::reset() -> void {
@@ -574,18 +620,16 @@ auto StatusHandler::update() -> void {
             for(auto& ledState : ledStates) {
                 if (!ledState.inputs)
                     continue;
-                else
-                    ledState.inputs--;
+
+                ledState.inputs--;
 
                 if (ledState.inputs)
                     clearMask &= ~4;
 
                 ledState.state = (ledState.inputQueue >> (ledState.inputs << 1)) & 3;
 
-                if (ledState.enabled) {
-                    unsigned sId = ledState.ledId == Emulator::Interface::LedId::CapsLock ? 28 : 17;
-                    updateImage(sId, getLEDImage(ledState));
-                }
+                if (ledState.enabled)
+                    updateImage(getStatusId(ledState.ledId), getLEDImage(ledState));
             }
         }
 
@@ -621,6 +665,16 @@ auto StatusHandler::update() -> void {
     clearUpdates( clearMask );
 
     emuThread->unlockStatus();
+}
+
+inline auto StatusHandler::getStatusId(Emulator::Interface::LedId ledId) -> unsigned {
+    switch (ledId) {
+        case Emulator::Interface::LedId::Power:     return 17;
+        case Emulator::Interface::LedId::CapsLock:  return 28;
+        case Emulator::Interface::LedId::MHz2:      return 30;
+        default:
+            return 0;
+    }
 }
 
 auto StatusHandler::updateVisible(unsigned id, bool visible) -> void {

@@ -61,7 +61,7 @@ struct Interface {
                             TapePlaySpinUp = 14, TapePlaySpin = 15, TapeSpinDown = 16, TapeForwardSpin = 17, TapeRewindSpin = 18,
     };
     enum class ThreadPriority { Normal = 0, High = 1, Realtime = 2 };
-    enum class LedId { Power, CapsLock };
+    enum class LedId { Power, CapsLock, MHz2 };
 
     std::string ident;
     

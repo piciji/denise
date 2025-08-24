@@ -527,7 +527,6 @@ set(headerSrcs ${headerSrcs}
     program/tools/chronos.h
     program/tools/circularBuffer.h
     program/tools/dataStorage.h
-    program/tools/DiskFinder.h
     program/tools/filepool.h
     program/tools/filesetting.h
     program/tools/gaussianBlur.h

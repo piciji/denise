@@ -20,7 +20,7 @@ struct LEDState {
     std::string name;
     bool enabled;
     uint8_t state;
-    uint8_t inputQueue;
+    uint32_t inputQueue;
     uint8_t inputs;
 };
 
@@ -79,8 +79,11 @@ struct StatusHandler {
     auto setExpansionClick() -> void;
     auto updateLEDState(Emulator::Interface::LedId ledId, uint8_t state) -> void;
     auto enableLEDs() -> void;
-    auto enableLED(Emulator::Interface::LedId ledId, bool toggle = false) -> void;
+    auto enableLED(LEDState& ledState) -> void;
+    auto toggleLED(Emulator::Interface::LedId ledId) -> void;
+
     auto getLEDImage(LEDState& ledState) -> GUIKIT::Image*;
+    auto getStatusId(Emulator::Interface::LedId ledId) -> unsigned;
     auto setMessageLevel() -> void;
 
     GUIKIT::StatusBar* statusBar = nullptr;

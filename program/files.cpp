@@ -713,3 +713,11 @@ auto Program::initExpansionRom(Emulator::Interface* emulator, const std::string&
     fSetting->setId(0);
     fSetting->setSaveable(false);
 }
+
+auto Program::toggle2Mhz() -> void {
+    if (dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
+        bool state = dynamic_cast<LIBC64::Interface*>(activeEmulator)->toggle2Mhz();
+        if (statusHandler)
+            statusHandler->setMessage(trans->getA(state ? "CPU Turbo 2 MHz" : "CPU Turbo disabled"), false, true);
+    }
+}

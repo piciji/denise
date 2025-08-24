@@ -1226,7 +1226,7 @@ auto System::toggle2Mhz() -> bool {
         cpu.setClock(true, true);
         mhz2 = mhz2 | 0x80;
     }
-
+    interface->updateLedState(Emulator::Interface::LedId::MHz2, (mhz2 & 0x80) ? 1 : 0);
     return mhz2 & 0x80;
 }
 

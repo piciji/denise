@@ -158,6 +158,7 @@ struct Program : Emulator::Interface::Bind {
     auto updateSaveIdent(Emulator::Interface* emulator, FileSetting* fSetting) -> void;
     auto initUserInterface() -> void;
     auto unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void;
+    auto toggle2Mhz() -> void;
     
     //audio
     auto initAudio() -> void;

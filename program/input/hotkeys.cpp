@@ -792,11 +792,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
 
         case Hotkey::Toggle2MHzCpuTurbo: {
-            if (dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
-                emuThread->lock();
-                bool state = dynamic_cast<LIBC64::Interface*>(activeEmulator)->toggle2Mhz();
-                statusHandler->setMessage(trans->getA(state ? "CPU Turbo 2 MHz" : "CPU Turbo disabled"), false, true);
-            }
+            emuThread->lock();
+            program->toggle2Mhz();
         } break;
 
         case Hotkey::AutoStart: {
