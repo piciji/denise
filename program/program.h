@@ -159,6 +159,7 @@ struct Program : Emulator::Interface::Bind {
     auto initUserInterface() -> void;
     auto unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void;
     auto toggle2Mhz() -> void;
+    auto hasSuperCpuActive() -> bool;
     
     //audio
     auto initAudio() -> void;

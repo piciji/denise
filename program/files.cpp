@@ -715,9 +715,21 @@ auto Program::initExpansionRom(Emulator::Interface* emulator, const std::string&
 }
 
 auto Program::toggle2Mhz() -> void {
-    if (dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
+    if (dynamic_cast<LIBC64::Interface*>(activeEmulator) && !hasSuperCpuActive()) {
         bool state = dynamic_cast<LIBC64::Interface*>(activeEmulator)->toggle2Mhz();
         if (statusHandler)
             statusHandler->setMessage(trans->getA(state ? "CPU Turbo 2 MHz" : "CPU Turbo disabled"), false, true);
     }
+}
+
+auto Program::hasSuperCpuActive() -> bool {
+    if (dynamic_cast<LIBC64::Interface*>(activeEmulator)) {
+        auto expansion = activeEmulator->getExpansion();
+        if (!expansion)
+            return false;
+
+        if ((expansion->id == LIBC64::Interface::ExpansionId::ExpansionIdSuperCpu) || (expansion->id == LIBC64::Interface::ExpansionId::ExpansionIdSuperCpuReu))
+            return true;
+    }
+    return false;
 }
