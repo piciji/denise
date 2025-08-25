@@ -23,6 +23,8 @@ auto Program::initVideo(bool driverChange) -> void {
     setVideoFilter();
     setVideoDimension();
     updateFullscreenSetting();
+    setHDR();
+    updateHDRParams();
 	    
     if ( !videoDriver->init( view->getViewportHandle(driverChange) ) ) {
         delete videoDriver;
@@ -774,4 +776,21 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
     desc.marginVertical = marginSeparate ? (int)screenTextMarginVertical : -1;
 
     videoDriver->setScreenTextDescription(desc);
+}
+
+auto Program::setHDR() -> void {
+    auto _emu = activeEmulator ? activeEmulator : getLastUsedEmu();
+    videoDriver->setHDR( getSettings(_emu)->get<bool>("hdr_enable", false) );
+}
+
+auto Program::updateHDRParams() -> void {
+    auto _emu = activeEmulator ? activeEmulator : getLastUsedEmu();
+    auto _settings = getSettings(_emu);
+
+    bool gamut = _settings->get<bool>("hdr_gamut", true);
+    unsigned maxNits = _settings->get<unsigned>("hdr_nits", 1000, {0, 10000});
+    unsigned pwNits = _settings->get<unsigned>("hdr_pw_nits", 200, { 0, 2000 });
+    float contrast = _settings->get<float>("hdr_contrast", 5.0, {0.0f, 10.0f});
+
+    videoDriver->setHDRParams(maxNits, pwNits, contrast, gamut);
 }

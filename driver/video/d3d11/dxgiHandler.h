@@ -12,7 +12,7 @@ namespace DRIVER {
 
 struct DXGIHandler {
 
-    auto initSwapChain(D3D11Symbols& symbols, ID3D11Device* device, HWND handle, bool hardSync, SwapChain& swapChain, bool windowed = true, float rate = 0.0) -> bool {
+    auto initSwapChain(D3D11Symbols& symbols, ID3D11Device* device, HWND handle, bool hardSync, bool& useHdr, SwapChain& swapChain, bool windowed = true, float rate = 0.0) -> bool {
         if (swapChain.ptr )
             swapChain.ptr->SetFullscreenState(false, nullptr);
 
@@ -28,6 +28,7 @@ struct DXGIHandler {
 
         //support = 4;
         if (support & 4) {
+            useHdr = false;
             IDXGIDevice1* dxgiDevice = nullptr;
             IDXGIAdapter* dxgiAdapter = nullptr;
             IDXGIFactory1* dxgiFactory = nullptr;
@@ -102,7 +103,7 @@ struct DXGIHandler {
             desc.Height = windowed ? 0 : outScreenParent.bottom;
             desc.BufferCount = 2;
             desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-            desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            desc.Format = useHdr ? DXGI_FORMAT_R10G10B10A2_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM;
             desc.SampleDesc.Count = 1;
             desc.SampleDesc.Quality = 0;
 
@@ -148,6 +149,13 @@ struct DXGIHandler {
             DXGI_CLEAR
         }
 
+        if (useHdr) {
+            if (!setColorSpace(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020)) {
+                useHdr = false;
+                return initSwapChain(symbols, device, handle, hardSync, useHdr, swapChain);
+            }
+        }
+
         return true;
     }
 
@@ -190,6 +198,48 @@ struct DXGIHandler {
 
         return support;
     }
+
+    auto setColorSpace(SwapChain& swapChain, DXGI_COLOR_SPACE_TYPE colorSpace) -> bool {
+        UINT colorSpaceSupport = 0;
+
+        if (SUCCEEDED(((IDXGISwapChain4*)swapChain.ptr)->CheckColorSpaceSupport(colorSpace, &colorSpaceSupport))) {
+            if ((colorSpaceSupport & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT)
+                == DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT) {
+
+                if (SUCCEEDED(((IDXGISwapChain4*)swapChain.ptr)->SetColorSpace1(colorSpace)))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    auto setHdrParams(SwapChain& swapChain, DXGI_COLOR_SPACE_TYPE colorSpace, float maxNits) -> void {
+
+        if (colorSpace != DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020) {
+            ((IDXGISwapChain4*)swapChain.ptr)->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_NONE, 0, NULL);
+            return;
+        }
+
+        DXGI_HDR_METADATA_HDR10 hdr10MetaData;
+        hdr10MetaData.RedPrimary[0] = 0.708f * 50000.0f;
+        hdr10MetaData.RedPrimary[1] = 0.292f * 50000.0f;
+        hdr10MetaData.GreenPrimary[0] = 0.170f * 50000.0f;
+        hdr10MetaData.GreenPrimary[1] = 0.797f * 50000.0f;
+        hdr10MetaData.BluePrimary[0] = 0.131f * 50000.0f;
+        hdr10MetaData.BluePrimary[1] = 0.046f * 50000.0f;
+        hdr10MetaData.WhitePoint[0] = 0.3127f * 50000.0f;
+        hdr10MetaData.WhitePoint[1] = 0.3290f * 50000.0f;
+
+        hdr10MetaData.MinMasteringLuminance = 0.001 * 10000.0f;
+        hdr10MetaData.MaxMasteringLuminance = maxNits;
+        hdr10MetaData.MaxContentLightLevel = 0;
+        hdr10MetaData.MaxFrameAverageLightLevel = 0;
+
+        if (FAILED(((IDXGISwapChain4*)swapChain.ptr)->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_HDR10, sizeof(DXGI_HDR_METADATA_HDR10), &hdr10MetaData))) {
+            
+        }
+    }
+
 };
 
 }

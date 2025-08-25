@@ -122,6 +122,9 @@ struct Video {
     virtual auto setRotation(Rotation rotation) -> void {}
     virtual auto getRotation() -> Rotation { return ROT_0; }
 
+    virtual auto setHDR(bool state) -> void {}
+    virtual auto setHDRParams(float maxNits, float paperWhiteNits, float contrast, bool expandGamut) -> void {}
+
     virtual ~Video() = default;
     static auto create(const std::string& driver) -> Video*;
 	static auto available() -> std::vector<std::string>;

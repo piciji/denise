@@ -316,13 +316,28 @@ struct VideoScreenShotLayout : GUIKIT::FramedVerticalLayout {
         Format(bool withPalete);
     } format;
 
-    struct Options : GUIKIT::HorizontalLayout  {        
+    struct Options : GUIKIT::HorizontalLayout {
         SliderLayout gun;
         SliderLayout interval;
         Options();
     } options;
 
     VideoScreenShotLayout(bool withPalete);
+};
+
+struct VideoHDRLayout : GUIKIT::FramedVerticalLayout {
+    struct Control : GUIKIT::HorizontalLayout {
+        GUIKIT::CheckBox enableHdr;
+        GUIKIT::CheckBox expandGamut;
+
+        Control();
+    } control;
+
+    SliderLayout maxNits;
+    SliderLayout paperWhiteNits;
+    SliderLayout contrast;
+
+    VideoHDRLayout();
 };
 
 struct DisplayFont {
@@ -346,6 +361,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::TreeViewItem tviBase;
     GUIKIT::TreeViewItem tviScreenText;
     GUIKIT::TreeViewItem tviScreenShot;
+    GUIKIT::TreeViewItem tviHdr;
 
     GUIKIT::TreeViewItem tviShader;
     std::vector<GUIKIT::TreeViewItem*> tviPasses;
@@ -357,6 +373,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     VideoParamLayout layParam;
     VideoScreenTextLayout layScreenText;
     VideoScreenShotLayout layScreenShot;
+    VideoHDRLayout layHdr;
 
     GUIKIT::Window codeWindow;
     GUIKIT::VerticalLayout codeLayout;
@@ -378,6 +395,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image gearsImage;
     GUIKIT::Image backImage;
     GUIKIT::Image screenshotImage;
+    GUIKIT::Image hdrImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;
@@ -422,6 +440,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     static auto removeTTF(const std::string& file, uint8_t mode) -> bool;
     auto updateRecordingPath() -> void;
     auto selectViewScreenshot() -> void;
+    auto isSecondaryViewSelected() -> bool;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

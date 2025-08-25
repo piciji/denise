@@ -280,7 +280,6 @@
     <ClInclude Include="..\program\tools\chronos.h" />
     <ClInclude Include="..\program\tools\circularBuffer.h" />
     <ClInclude Include="..\program\tools\dataStorage.h" />
-    <ClInclude Include="..\program\tools\DiskFinder.h" />
     <ClInclude Include="..\program\tools\diskGuesser.h" />
     <ClInclude Include="..\program\tools\filepool.h" />
     <ClInclude Include="..\program\tools\filesetting.h" />

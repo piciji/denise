@@ -847,9 +847,6 @@
     <ClInclude Include="..\program\tools\circularBuffer.h">
       <Filter>program\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\program\tools\DiskFinder.h">
-      <Filter>program\tools</Filter>
-    </ClInclude>
     <ClInclude Include="..\program\tools\filepool.h">
       <Filter>program\tools</Filter>
     </ClInclude>

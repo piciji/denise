@@ -453,6 +453,32 @@ VideoScreenShotLayout::VideoScreenShotLayout(bool withPalete) : format(withPalet
     setPadding(10);
 }
 
+VideoHDRLayout::Control::Control() {
+    append(enableHdr, { 0u, 0u }, 20);
+    append(expandGamut, { 0u, 0u });
+    setAlignment(0.5);
+}
+
+VideoHDRLayout::VideoHDRLayout() : 
+maxNits("", false, true),
+paperWhiteNits("", false, true),
+contrast("", false, true)
+{
+    append(control, { ~0u, 0u }, 10);
+    append(maxNits, { ~0u, 0u }, 10);
+    append(paperWhiteNits, { ~0u, 0u }, 10);
+    append(contrast, { ~0u, 0u });
+
+    maxNits.slider.setLength(101);
+    maxNits.updateValueWidth("9999");
+    paperWhiteNits.slider.setLength(101);
+    paperWhiteNits.updateValueWidth("9999");
+    contrast.slider.setLength(201);
+    contrast.updateValueWidth("9.99");
+    setAlignment(0.5);
+    setPadding(10);
+}
+
 VideoLayout::VideoLayout(TabWindow* tabWindow) :
 layBase(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)),
 layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
@@ -474,6 +500,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     gearsImage.loadPng((uint8_t*)Icons::gears, sizeof(Icons::gears));
     backImage.loadPng((uint8_t*)Icons::back, sizeof(Icons::back));
     screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
+    hdrImage.loadPng((uint8_t*)Icons::hdr, sizeof(Icons::hdr));
 
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
@@ -489,6 +516,9 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     tviScreenShot.setUserData((uintptr_t)12);
     tviScreenShot.setImage(screenshotImage);
 
+    tviHdr.setUserData((uintptr_t)13);
+    tviHdr.setImage(hdrImage);
+
     tviShader.setUserData( (uintptr_t)2 );
     tviShader.setImage(imgFolderClosed);
     tviShader.setImageExpanded(imgFolderOpen);
@@ -500,6 +530,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     moduleTree.append(tviBase);
     moduleTree.append(tviScreenText);
     moduleTree.append(tviScreenShot);
+    moduleTree.append(tviHdr);
     tviBase.setSelected();
     if (videoDriver->shaderSupport())
         moduleTree.append(tviShader);
@@ -507,6 +538,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     moduleSwitch.setLayout(1, layBase, {~0u, ~0u});
     moduleSwitch.setLayout(11, layScreenText, {~0u, ~0u});
     moduleSwitch.setLayout(12, layScreenShot, { ~0u, ~0u });
+    moduleSwitch.setLayout(13, layHdr, { ~0u, ~0u });
     moduleSwitch.setLayout(2, layShader, {~0u, ~0u});
     moduleSwitch.setLayout(21, layPass, {~0u, ~0u});
     moduleSwitch.setLayout(3, layParam, {~0u, ~0u});
@@ -525,6 +557,10 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
     layBase.view.mode.reset.setImage(&backImage);
     layShader.main.progress.close.setImage(&backImage);
+
+    layHdr.maxNits.defaultButton.setImage(&backImage);
+    layHdr.paperWhiteNits.defaultButton.setImage(&backImage);
+    layHdr.contrast.defaultButton.setImage(&backImage);
 
     moduleSwitch.setSelection( 1 );
 
@@ -1535,6 +1571,74 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<unsigned>("screen_gun_each", position + 1);
     };
 
+    layHdr.control.enableHdr.onToggle = [this](bool checked) {
+        _settings->set<bool>("hdr_enable", checked);
+        emuThread->lock();
+        videoDriver->setHDR(checked);
+        emuThread->unlock();
+    };
+
+    layHdr.control.expandGamut.onToggle = [this](bool checked) {        
+        _settings->set<bool>("hdr_gamut", checked);
+        emuThread->lock();
+        program->updateHDRParams();
+        emuThread->unlock();
+    };
+
+    layHdr.maxNits.slider.onChange = [this](unsigned position) {
+        unsigned value = position * 100;
+        _settings->set<unsigned>("hdr_nits", value);
+        emuThread->lock();
+        layHdr.maxNits.setValue(std::to_string(value));        
+        program->updateHDRParams();
+        emuThread->unlock();
+    };
+
+    layHdr.maxNits.defaultButton.onActivate = [this]() {
+        _settings->set<unsigned>("hdr_nits", 1000);
+        emuThread->lock();
+        layHdr.maxNits.setValue("1000");
+        layHdr.maxNits.slider.setPosition(10);
+        program->updateHDRParams();
+        emuThread->unlock();
+    };
+
+    layHdr.paperWhiteNits.slider.onChange = [this](unsigned position) {
+        unsigned value = position * 10;
+        _settings->set<unsigned>("hdr_pw_nits", value);
+        emuThread->lock();
+        layHdr.paperWhiteNits.setValue(std::to_string(value));
+        program->updateHDRParams();
+        emuThread->unlock();
+    };
+
+    layHdr.paperWhiteNits.defaultButton.onActivate = [this]() {
+        _settings->set<unsigned>("hdr_pw_nits", 200);
+        emuThread->lock();
+        layHdr.paperWhiteNits.setValue("200");
+        layHdr.paperWhiteNits.slider.setPosition(20);
+        program->updateHDRParams();
+        emuThread->unlock();
+    };
+
+    layHdr.contrast.slider.onChange = [this](unsigned position) {
+        float value = (float)position / 10.0f;
+        _settings->set<float>("hdr_contrast", value);
+        emuThread->lock();
+        layHdr.contrast.setValue(GUIKIT::String::formatFloatingPoint(value, 1));
+        program->updateHDRParams();
+        emuThread->unlock();
+    };
+
+    layHdr.contrast.defaultButton.onActivate = [this]() {
+        _settings->set<float>("hdr_contrast", 5.0);
+        emuThread->lock();
+        layHdr.contrast.setValue("5.0");
+        layHdr.contrast.slider.setPosition(50);
+        program->updateHDRParams();
+        emuThread->unlock();
+    };
+
     fillFontTypeList();
 
     loadSettings(true);
@@ -1807,7 +1911,7 @@ auto VideoLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> void {
     }
 
     tviShader.setExpanded();
-    if (selectIt && !tviBase.selected() && !tviScreenText.selected() && !tviScreenShot.selected()) {
+    if (selectIt && !tviBase.selected() && !isSecondaryViewSelected()) {
         tviShader.setSelected();
         moduleSwitch.setSelection( 2 );
     }
@@ -2243,11 +2347,19 @@ auto VideoLayout::translate() -> void {
     layScreenText.options.textPadding.paddingHorizontal.name.setText( trans->getA("Padding", true) );
     layScreenText.options.textMargin.marginHorizontal.name.setText( trans->getA("Margin", true) );
 
+    layHdr.setText(trans->getA("HDR"));
+    layHdr.control.enableHdr.setText(trans->getA("Enable"));
+    layHdr.control.expandGamut.setText(trans->getA("Expand Gamut"));
+    layHdr.maxNits.name.setText(trans->getA("Max Nits"));
+    layHdr.paperWhiteNits.name.setText(trans->getA("Paper White Nits"));
+    layHdr.contrast.name.setText(trans->getA("Contrast"));
+
     tviBase.setText( trans->getA("overview") );
     tviScreenText.setText( trans->getA("screen text") );
     tviScreenShot.setText(trans->getA("screenshot"));
     tviShader.setText( trans->getA("Shader") );
     tviParams.setText( trans->getA("Parameter") );
+    tviHdr.setText(trans->getA("HDR"));
 
     layNav.setText( trans->getA("selection") );
     layPass.setText( trans->getA("Pass") );
@@ -2278,6 +2390,7 @@ auto VideoLayout::translate() -> void {
 
     SliderLayout::scale({&layScreenText.options.textPadding.paddingHorizontal, &layScreenText.options.textMargin.marginHorizontal}, "99.9 %");
     SliderLayout::scale({&layScreenText.options.textPadding.paddingVertical, &layScreenText.options.textMargin.marginVertical}, "99.9 %");
+    SliderLayout::scale({&layHdr.maxNits, &layHdr.paperWhiteNits, &layHdr.contrast}, "9999");
 
     layScreenText.colorBox.type.onlyUrgentWarnings.setText(trans->getA("only urgent messages"));
     layScreenText.colorBox.type.onlyUrgentWarnings.setTooltip(trans->getA("only urgent messages tooltip"));
@@ -2440,6 +2553,22 @@ auto VideoLayout::loadSettings(bool init) -> void {
         screenshotGunEach = 1;
     layScreenShot.options.interval.slider.setPosition(screenshotGunEach - 1);
     layScreenShot.options.interval.setValue(std::to_string(screenshotGunEach));
+
+    bool enableHdr = _settings->get<bool>("hdr_enable", false);
+    bool gamut = _settings->get<bool>("hdr_gamut", true);
+    unsigned maxNits = _settings->get<unsigned>("hdr_nits", 1000, { 0, 10000 });
+    unsigned pwNits = _settings->get<unsigned>("hdr_pw_nits", 200, { 0, 2000 });
+    float contrast = _settings->get<float>("hdr_contrast", 5.0, { 0.0f, 10.0f });
+
+    layHdr.control.enableHdr.setChecked(enableHdr);
+    layHdr.control.expandGamut.setChecked(gamut);
+    layHdr.maxNits.setValue(std::to_string(maxNits));
+    layHdr.paperWhiteNits.setValue(std::to_string(pwNits));
+    layHdr.contrast.setValue(GUIKIT::String::formatFloatingPoint(contrast, 1));
+
+    layHdr.maxNits.slider.setPosition(maxNits / 100);
+    layHdr.paperWhiteNits.slider.setPosition(pwNits / 10);
+    layHdr.contrast.slider.setPosition(contrast * 10.0);
 }
 
 auto VideoLayout::prepareColBox() -> void {
@@ -2560,14 +2689,18 @@ auto VideoLayout::unloadShader(bool reloadDriver) -> void {
     if (!videoDriver->shaderSupport()) {
         moduleTree.remove(tviParams);
         moduleTree.remove(tviShader);
-        if (!tviScreenText.selected() && !tviScreenShot.selected()) {
+        if (!isSecondaryViewSelected()) {
             tviBase.setSelected();
             moduleSwitch.setSelection( 1 );
         }
-    } else if (!tviBase.selected() && !tviScreenText.selected() && !tviScreenShot.selected()) {
+    } else if (!tviBase.selected() && !isSecondaryViewSelected()) {
         tviShader.setSelected();
         moduleSwitch.setSelection( 2 );
     }
+}
+
+auto VideoLayout::isSecondaryViewSelected() -> bool {
+    return tviScreenText.selected() || tviScreenShot.selected() || tviHdr.selected();
 }
 
 auto VideoLayout::addShaderUI() -> void {

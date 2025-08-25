@@ -48,12 +48,23 @@ namespace DRIVER {
         Matrix4x4 mvp;
         Matrix4x4 mvpRotated;
     } frame;
+
+    struct alignas(16) HdrUniforms {
+        Matrix4x4 mvp;
+        float contrast;
+        float paperWhiteNits;
+        float maxNits;
+        float expandGamut;
+        float inverseTonemap;
+        float hdr10;
+    } hdrUniforms;
     
     ScreenshotCallback screenshotCallback = nullptr;
 
     Rectangle overlay;
     Rectangle message;
     Rectangle progress;
+    Rectangle hdr;
 
     D3DProgram programs[MAX_SHADERS];
     std::vector<D3DProgram*> programsTemp;
@@ -136,6 +147,7 @@ namespace DRIVER {
         Rotation rotation = ROT_0;
         int direction = 1; // reserved for rewind support
         bool useShaderCache = false;
+        bool hdrEnable = false;
     } settings;
 
     D3D11(bool legacy) {
@@ -155,6 +167,7 @@ namespace DRIVER {
         overlay.buffer = nullptr;
         progress.vbo = nullptr;
         progress.buffer = nullptr;
+        hdr.buffer = nullptr;
         updateRTS = false;
         updateHistory = false;
         shaderPasses = 0;
@@ -221,7 +234,10 @@ namespace DRIVER {
         if (settings.exclusiveFullscreen) {
             //wait();
             resizeMutexThreaded.lock();
-            initSwapChain(symbols, device, settings.handle, settings.hardSync, swapChain, true);
+            initSwapChain(symbols, device, settings.handle, settings.hardSync, settings.hdrEnable, swapChain, true);
+            if (settings.hdrEnable)
+                setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+
             resizeMutexThreaded.unlock();
             settings.exclusiveFullscreen = false;
         }
@@ -236,14 +252,20 @@ namespace DRIVER {
                 if (adapterId >= 0) {
                     settings.exclusiveFullscreen = true;
                     resizeMutexThreaded.lock();
-                    initSwapChain(symbols, device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
+                    initSwapChain(symbols, device, parent, settings.hardSync, settings.hdrEnable, swapChain, false, settings.exclusiveFullscreenRate);
+                    if (settings.hdrEnable)
+                        setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+
                     resizeMutexThreaded.unlock();
                     return;
                 }
             }
 
             resizeMutexThreaded.lock();
-            initSwapChain(symbols, device, settings.handle, settings.hardSync, swapChain, true);
+            initSwapChain(symbols, device, settings.handle, settings.hardSync, settings.hdrEnable, swapChain, true);
+            if (settings.hdrEnable)
+                setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+
             resizeMutexThreaded.unlock();
         }
     }
@@ -257,7 +279,10 @@ namespace DRIVER {
                 wait();
                 settings.exclusiveFullscreen = true;
                 resizeMutexThreaded.lock();
-                initSwapChain(symbols, device, parent, settings.hardSync, swapChain, false, settings.exclusiveFullscreenRate);
+                initSwapChain(symbols, device, parent, settings.hardSync, settings.hdrEnable, swapChain, false, settings.exclusiveFullscreenRate);
+                if (settings.hdrEnable)
+                    setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+
                 resizeMutexThreaded.unlock();
             }
         }
@@ -296,9 +321,9 @@ namespace DRIVER {
         wait();
         settings.hardSync = state;
         if (settings.handle) {
-            if (!initSwapChain(symbols, device, settings.handle, state, swapChain)) {
-
-            }
+            initSwapChain(symbols, device, settings.handle, state, settings.hdrEnable, swapChain);
+            if (settings.hdrEnable)
+                setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
         }
     }
 
@@ -435,8 +460,11 @@ namespace DRIVER {
         }
 #endif
 
-        if (!initSwapChain(symbols, device, settings.handle, settings.hardSync, swapChain))
+        if (!initSwapChain(symbols, device, settings.handle, settings.hardSync, settings.hdrEnable, swapChain))
             return false;
+
+        if (settings.hdrEnable)
+            setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
 
         format = DXGI_FORMAT_B8G8R8A8_UNORM;
         if (!initMainTexture(32, 32))
@@ -471,6 +499,13 @@ namespace DRIVER {
         if (FAILED(device->CreateBuffer(&descP, nullptr, &message.buffer)))
             return term(), false;
 #endif
+
+        hdrUniforms.mvp = projection;
+        descP.ByteWidth = sizeof(hdrUniforms);
+        uboData.pSysMem = &hdrUniforms.mvp;
+        if (FAILED(device->CreateBuffer(&descP, &uboData, &hdr.buffer)))
+            return term(), false;
+
         updateRotation();
 
         D3D11_SAMPLER_DESC descS;
@@ -556,6 +591,9 @@ namespace DRIVER {
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11progressShader, "PS", "VS", "", descShader, countof(descShader), &progress.shader))
             return term(), false;
 
+        if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11hdrShader, "PS", "VS", "", descShader, countof(descShader), &hdr.shader))
+            return term(), false;
+
         dndOverlay.initialized = true;
         D3D11_BLEND_DESC blendDesc;
         std::memset(&blendDesc, 0, sizeof(blendDesc));
@@ -614,8 +652,12 @@ namespace DRIVER {
             D3D11Utility::releaseTexture( lut );
 
         this->preset = preset;
-        if (!preset || (preset->passes.size() > MAX_SHADERS) || (preset->luts.size() > MAX_TEXTURES))
+
+        if (!preset || (preset->passes.size() > MAX_SHADERS) || (preset->luts.size() > MAX_TEXTURES)) {
+            if (settings.hdrEnable)
+                updateRTS = true;
             return;
+        }
 
         bool todo = false;
         _programs.reserve(preset->passes.size());
@@ -629,8 +671,11 @@ namespace DRIVER {
             todo |= pass.inUse;
         }
 
-        if (!todo)
+        if (!todo) {
+            if (settings.hdrEnable)
+                updateRTS = true;
             return;
+        }
 
         _luts.reserve(preset->luts.size());
         for (auto& lut : preset->luts) {
@@ -1051,7 +1096,10 @@ namespace DRIVER {
         RECT windowSize = Win::getDimension( settings.handle );
         if ((windowSize.right != viewScreen.windowWidth) || (windowSize.bottom != viewScreen.windowHeight)) {
             resizeMutexThreaded.lock();
-            swapChain.ptr->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, swapChain.flags );
+            if (settings.hdrEnable)
+                swapChain.ptr->ResizeBuffers(0, 0, 0, DXGI_FORMAT_R10G10B10A2_UNORM, swapChain.flags);
+            else
+                swapChain.ptr->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, swapChain.flags );
             resizeMutexThreaded.unlock();
             viewScreen.update(viewport, windowSize.right, windowSize.bottom);
 #ifdef DRV_FREETYPE
@@ -1254,8 +1302,15 @@ namespace DRIVER {
 
         dxRelease(backBuffer)
 
-        context->OMSetRenderTargets(1, &rtv, nullptr);
-        context->ClearRenderTargetView(rtv, clearColor);
+        bool useHDRShader = settings.hdrEnable && (hdr.texture.desc.Format != DXGI_FORMAT_R10G10B10A2_UNORM);
+
+        if (useHDRShader) {
+            context->OMSetRenderTargets(1, &hdr.texture.rtView, nullptr);
+            context->ClearRenderTargetView(hdr.texture.rtView, clearColor);
+        } else {
+            context->OMSetRenderTargets(1, &rtv, nullptr);
+            context->ClearRenderTargetView(rtv, clearColor);
+        }
 
         setViewport(viewport);
 
@@ -1284,6 +1339,22 @@ namespace DRIVER {
             setProgressPosition();
             setProgressRotation();
             blendRect<true, true>(progress);
+        }
+
+        if (useHDRShader) {
+            context->OMSetRenderTargets(1, &rtv, nullptr);
+            context->ClearRenderTargetView(rtv, clearColor);
+            setViewport({viewScreen.windowWidth, viewScreen.windowHeight, 0, 0});
+            applyShader(hdr.shader);
+            context->VSSetConstantBuffers(0, 1, &ubo);
+            context->PSSetShaderResources(0, 1, &hdr.texture.view);
+            context->PSSetSamplers(0, 1, &sampler);
+            context->PSSetConstantBuffers(0, 1, &hdr.buffer);
+            context->IASetVertexBuffers(0, 1, &frame.vbo, &stride, &offset);
+            context->RSSetState(scissorDisable);
+            context->OMSetBlendState(blendDisable, nullptr, D3D11_DEFAULT_SAMPLE_MASK);
+            context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            context->Draw(4, 0);
         }
 
         if (settings.vrr) {
@@ -1408,6 +1479,28 @@ namespace DRIVER {
             }
 
         }
+
+        if (settings.hdrEnable) {
+            D3D11Utility::releaseTexture(hdr.texture);
+            hdr.texture.desc.Width = viewScreen.windowWidth;
+            hdr.texture.desc.Height = viewScreen.windowHeight;
+            hdr.texture.desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+
+            if (shaderPasses) {
+                auto& p = programs[shaderPasses-1];
+                if (!preset->lumaChroma && p.format == DXGI_FORMAT_R16G16B16A16_FLOAT)
+                    setInternalHDRParams(false, true);
+                else
+                    setInternalHDRParams(true, true);
+
+                hdr.texture.desc.Format = p.format;
+            } else {
+                setInternalHDRParams(true, true);
+                hdr.texture.desc.Format = format;
+            }
+
+            D3D11Utility::initTexture(device, hdr.texture);
+        }
     }
 
     auto applyShader(D3DShader& shader) -> void {
@@ -1477,6 +1570,7 @@ namespace DRIVER {
         D3D11Utility::releaseTexture(message.texture);
         D3D11Utility::releaseTexture(overlay.texture);
         D3D11Utility::releaseTexture(progress.texture);
+        D3D11Utility::releaseTexture(hdr.texture);
 
         dxRelease(frame.vbo)
         dxRelease(message.vbo)
@@ -1487,6 +1581,7 @@ namespace DRIVER {
         dxRelease(uboRotated)
         dxRelease(message.buffer)
         dxRelease(progress.buffer)
+        dxRelease(hdr.buffer)
         dxRelease(blendEnable)
         dxRelease(blendDisable)
         dxRelease(scissorEnable)
@@ -1501,6 +1596,7 @@ namespace DRIVER {
         D3D11Utility::releaseShader(message.shader);
         D3D11Utility::releaseShader(overlay.shader);
         D3D11Utility::releaseShader(progress.shader);
+        D3D11Utility::releaseShader(hdr.shader);
 
         dxRelease(debugInfoQueue)
         dxRelease(debug)
@@ -1794,6 +1890,59 @@ namespace DRIVER {
         frame.size.z = 1.0f / (float)viewport.width;
         frame.size.w = 1.0f / (float)viewport.height;
         updateRTS = true; // in the case of passes scaled by viewport
+    }
+
+    auto setHDR(bool state) -> void {
+        wait();
+        settings.hdrEnable = state;
+        if (!settings.handle)
+            return;
+        
+        resizeMutexThreaded.lock();
+        initSwapChain(symbols, device, settings.handle, settings.hardSync, settings.hdrEnable, swapChain);
+
+        if (settings.hdrEnable)
+            setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+
+        updateRTS = true;
+        resizeMutexThreaded.unlock();
+    }
+
+    auto setHDRParams(float maxNits, float paperWhiteNits, float contrast, bool expandGamut) -> void {        
+        D3D11_MAPPED_SUBRESOURCE mapped;
+        HdrUniforms* ubo = nullptr;
+
+        hdrUniforms.maxNits = maxNits;
+        hdrUniforms.paperWhiteNits = paperWhiteNits;
+        hdrUniforms.contrast = contrast;
+        hdrUniforms.expandGamut = expandGamut;
+
+        if (!settings.hdrEnable || !settings.handle)
+            return;
+
+        wait();
+        context->Map((ID3D11Resource*)hdr.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+        ubo = (HdrUniforms*)mapped.pData;
+        *ubo = hdrUniforms;
+        context->Unmap((ID3D11Resource*)hdr.buffer, 0);
+
+        setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, maxNits);
+    }
+
+    auto setInternalHDRParams(bool inverseTonemap, bool hdr10) -> void {
+        D3D11_MAPPED_SUBRESOURCE mapped;
+        HdrUniforms* ubo = nullptr;
+
+        hdrUniforms.hdr10 = hdr10 ? 1.0f : 0.0f;
+        hdrUniforms.inverseTonemap = inverseTonemap ? 1.0f : 0.0f;
+
+        if (!settings.hdrEnable)
+            return;
+
+        context->Map((ID3D11Resource*)hdr.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+        ubo = (HdrUniforms*)mapped.pData;
+        *ubo = hdrUniforms;
+        context->Unmap((ID3D11Resource*)hdr.buffer, 0);
     }
 };
 
