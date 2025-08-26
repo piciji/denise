@@ -441,6 +441,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto updateRecordingPath() -> void;
     auto selectViewScreenshot() -> void;
     auto isSecondaryViewSelected() -> bool;
+    auto checkHDR() -> void;
     
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }

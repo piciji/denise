@@ -1214,8 +1214,10 @@ auto System::getPrgInstance(Emulator::Interface::Media* media) -> Prg* {
 
 auto System::set2Mhz(bool state) -> void {
     mhz2 = state ? (mhz2 | 1) : (mhz2 & ~1);
-    if (mhz2 == 0)
+    if (mhz2 == 0) {
         cpu.setClock(false);
+        interface->updateLedState(Emulator::Interface::LedId::MHz2, 0);
+    }
 }
 
 auto System::toggle2Mhz() -> bool {

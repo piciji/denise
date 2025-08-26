@@ -202,8 +202,7 @@ struct Program : Emulator::Interface::Bind {
 	auto updateOnScreenText(bool keepFontPath = false) -> void;
     auto takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) -> void;
     auto bufferScreenshot(uint8_t* _data, unsigned _size) -> void;
-    auto setHDR() -> void;
-    auto updateHDRParams() -> void;
+    auto updateHDR() -> void;
 	
     //input
     auto initInput() -> void;

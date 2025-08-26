@@ -236,7 +236,7 @@ namespace DRIVER {
             resizeMutexThreaded.lock();
             initSwapChain(symbols, device, settings.handle, settings.hardSync, settings.hdrEnable, swapChain, true);
             if (settings.hdrEnable)
-                setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+                setHdrChain(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
 
             resizeMutexThreaded.unlock();
             settings.exclusiveFullscreen = false;
@@ -254,7 +254,7 @@ namespace DRIVER {
                     resizeMutexThreaded.lock();
                     initSwapChain(symbols, device, parent, settings.hardSync, settings.hdrEnable, swapChain, false, settings.exclusiveFullscreenRate);
                     if (settings.hdrEnable)
-                        setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+                        setHdrChain(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
 
                     resizeMutexThreaded.unlock();
                     return;
@@ -264,7 +264,7 @@ namespace DRIVER {
             resizeMutexThreaded.lock();
             initSwapChain(symbols, device, settings.handle, settings.hardSync, settings.hdrEnable, swapChain, true);
             if (settings.hdrEnable)
-                setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+                setHdrChain(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
 
             resizeMutexThreaded.unlock();
         }
@@ -281,7 +281,7 @@ namespace DRIVER {
                 resizeMutexThreaded.lock();
                 initSwapChain(symbols, device, parent, settings.hardSync, settings.hdrEnable, swapChain, false, settings.exclusiveFullscreenRate);
                 if (settings.hdrEnable)
-                    setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+                    setHdrChain(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
 
                 resizeMutexThreaded.unlock();
             }
@@ -323,7 +323,7 @@ namespace DRIVER {
         if (settings.handle) {
             initSwapChain(symbols, device, settings.handle, state, settings.hdrEnable, swapChain);
             if (settings.hdrEnable)
-                setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+                setHdrChain(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
         }
     }
 
@@ -464,7 +464,7 @@ namespace DRIVER {
             return false;
 
         if (settings.hdrEnable)
-            setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
+            setHdrChain(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
 
         format = DXGI_FORMAT_B8G8R8A8_UNORM;
         if (!initMainTexture(32, 32))
@@ -505,6 +505,10 @@ namespace DRIVER {
         uboData.pSysMem = &hdrUniforms.mvp;
         if (FAILED(device->CreateBuffer(&descP, &uboData, &hdr.buffer)))
             return term(), false;
+
+        hdrUniforms.hdr10 = 1.0f;
+        hdrUniforms.inverseTonemap = 1.0f;
+        updateHDRParams();
 
         updateRotation();
 
@@ -1892,58 +1896,54 @@ namespace DRIVER {
         updateRTS = true; // in the case of passes scaled by viewport
     }
 
-    auto setHDR(bool state) -> void {
-        wait();
-        settings.hdrEnable = state;
-        if (!settings.handle)
-            return;
-        
-        resizeMutexThreaded.lock();
-        initSwapChain(symbols, device, settings.handle, settings.hardSync, settings.hdrEnable, swapChain);
-
-        if (settings.hdrEnable)
-            setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
-
-        updateRTS = true;
-        resizeMutexThreaded.unlock();
-    }
-
-    auto setHDRParams(float maxNits, float paperWhiteNits, float contrast, bool expandGamut) -> void {        
-        D3D11_MAPPED_SUBRESOURCE mapped;
-        HdrUniforms* ubo = nullptr;
-
-        hdrUniforms.maxNits = maxNits;
-        hdrUniforms.paperWhiteNits = paperWhiteNits;
-        hdrUniforms.contrast = contrast;
-        hdrUniforms.expandGamut = expandGamut;
-
-        if (!settings.hdrEnable || !settings.handle)
-            return;
-
-        wait();
-        context->Map((ID3D11Resource*)hdr.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-        ubo = (HdrUniforms*)mapped.pData;
-        *ubo = hdrUniforms;
-        context->Unmap((ID3D11Resource*)hdr.buffer, 0);
-
-        setHdrParams(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, maxNits);
-    }
-
     auto setInternalHDRParams(bool inverseTonemap, bool hdr10) -> void {
-        D3D11_MAPPED_SUBRESOURCE mapped;
-        HdrUniforms* ubo = nullptr;
-
         hdrUniforms.hdr10 = hdr10 ? 1.0f : 0.0f;
         hdrUniforms.inverseTonemap = inverseTonemap ? 1.0f : 0.0f;
 
         if (!settings.hdrEnable)
             return;
 
+        updateHDRParams();
+    }
+
+    auto setHDR(bool state, float maxNits, float paperWhiteNits, float contrast, bool expandGamut) -> void {
+        hdrUniforms.maxNits = maxNits;
+        hdrUniforms.paperWhiteNits = paperWhiteNits;
+        hdrUniforms.contrast = contrast;
+        hdrUniforms.expandGamut = expandGamut;
+        if (!settings.handle) {
+            settings.hdrEnable = state;
+            return;
+        }
+
+        if (settings.hdrEnable != state) {
+            wait();
+            settings.hdrEnable = state;
+
+            resizeMutexThreaded.lock();
+            initSwapChain(symbols, device, settings.handle, settings.hardSync, settings.hdrEnable, swapChain);
+
+            updateRTS = true;
+            resizeMutexThreaded.unlock();
+        }
+
+        if (settings.hdrEnable) {
+            wait();
+            updateHDRParams();
+            setHdrChain(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, maxNits);
+        }
+    }
+
+    auto updateHDRParams() -> void {
+        D3D11_MAPPED_SUBRESOURCE mapped;
+        if (!hdr.buffer)
+            return;
         context->Map((ID3D11Resource*)hdr.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-        ubo = (HdrUniforms*)mapped.pData;
-        *ubo = hdrUniforms;
+        *(HdrUniforms*)mapped.pData = hdrUniforms;
         context->Unmap((ID3D11Resource*)hdr.buffer, 0);
     }
+
+    auto HDRsupport() -> bool { return true; }
 };
 
 }

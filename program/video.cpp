@@ -23,8 +23,7 @@ auto Program::initVideo(bool driverChange) -> void {
     setVideoFilter();
     setVideoDimension();
     updateFullscreenSetting();
-    setHDR();
-    updateHDRParams();
+    updateHDR();
 	    
     if ( !videoDriver->init( view->getViewportHandle(driverChange) ) ) {
         delete videoDriver;
@@ -47,9 +46,10 @@ auto Program::initVideo(bool driverChange) -> void {
         videoManager->setCrtThreaded( settings->get<bool>("cpu_filter_threaded", true) );
 
         auto emuView = EmuConfigView::TabWindow::getView(emulator);
-        if (emuView && emuView->videoLayout)
+        if (emuView && emuView->videoLayout) {
             emuView->videoLayout->updatePresets(true, true);
-        else
+            emuView->videoLayout->checkHDR();
+        } else
             videoManager->reloadSettings(true);
     }
 
@@ -778,19 +778,15 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
     videoDriver->setScreenTextDescription(desc);
 }
 
-auto Program::setHDR() -> void {
-    auto _emu = activeEmulator ? activeEmulator : getLastUsedEmu();
-    videoDriver->setHDR( getSettings(_emu)->get<bool>("hdr_enable", false) );
-}
-
-auto Program::updateHDRParams() -> void {
+auto Program::updateHDR() -> void {
     auto _emu = activeEmulator ? activeEmulator : getLastUsedEmu();
     auto _settings = getSettings(_emu);
 
+    bool enable = _settings->get<bool>("hdr_enable", false);
     bool gamut = _settings->get<bool>("hdr_gamut", true);
     unsigned maxNits = _settings->get<unsigned>("hdr_nits", 1000, {0, 10000});
     unsigned pwNits = _settings->get<unsigned>("hdr_pw_nits", 200, { 0, 2000 });
     float contrast = _settings->get<float>("hdr_contrast", 5.0, {0.0f, 10.0f});
 
-    videoDriver->setHDRParams(maxNits, pwNits, contrast, gamut);
+    videoDriver->setHDR( enable, maxNits, pwNits, contrast, gamut );
 }

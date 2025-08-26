@@ -213,7 +213,7 @@ struct DXGIHandler {
         return false;
     }
 
-    auto setHdrParams(SwapChain& swapChain, DXGI_COLOR_SPACE_TYPE colorSpace, float maxNits) -> void {
+    auto setHdrChain(SwapChain& swapChain, DXGI_COLOR_SPACE_TYPE colorSpace, float maxNits) -> void {
 
         if (colorSpace != DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020) {
             ((IDXGISwapChain4*)swapChain.ptr)->SetHDRMetaData(DXGI_HDR_METADATA_TYPE_NONE, 0, NULL);

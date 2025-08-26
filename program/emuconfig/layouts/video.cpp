@@ -1574,14 +1574,16 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layHdr.control.enableHdr.onToggle = [this](bool checked) {
         _settings->set<bool>("hdr_enable", checked);
         emuThread->lock();
-        videoDriver->setHDR(checked);
+        if (emulator == activeEmulator)
+            program->updateHDR();
         emuThread->unlock();
     };
 
     layHdr.control.expandGamut.onToggle = [this](bool checked) {        
         _settings->set<bool>("hdr_gamut", checked);
         emuThread->lock();
-        program->updateHDRParams();
+        if (emulator == activeEmulator)
+            program->updateHDR();
         emuThread->unlock();
     };
 
@@ -1589,8 +1591,9 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         unsigned value = position * 100;
         _settings->set<unsigned>("hdr_nits", value);
         emuThread->lock();
-        layHdr.maxNits.setValue(std::to_string(value));        
-        program->updateHDRParams();
+        layHdr.maxNits.setValue(std::to_string(value));
+        if (emulator == activeEmulator)
+            program->updateHDR();
         emuThread->unlock();
     };
 
@@ -1599,7 +1602,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->lock();
         layHdr.maxNits.setValue("1000");
         layHdr.maxNits.slider.setPosition(10);
-        program->updateHDRParams();
+        if (emulator == activeEmulator)
+            program->updateHDR();
         emuThread->unlock();
     };
 
@@ -1608,7 +1612,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<unsigned>("hdr_pw_nits", value);
         emuThread->lock();
         layHdr.paperWhiteNits.setValue(std::to_string(value));
-        program->updateHDRParams();
+        if (emulator == activeEmulator)
+            program->updateHDR();
         emuThread->unlock();
     };
 
@@ -1617,7 +1622,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->lock();
         layHdr.paperWhiteNits.setValue("200");
         layHdr.paperWhiteNits.slider.setPosition(20);
-        program->updateHDRParams();
+        if (emulator == activeEmulator)
+            program->updateHDR();
         emuThread->unlock();
     };
 
@@ -1626,7 +1632,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<float>("hdr_contrast", value);
         emuThread->lock();
         layHdr.contrast.setValue(GUIKIT::String::formatFloatingPoint(value, 1));
-        program->updateHDRParams();
+        if (emulator == activeEmulator)
+            program->updateHDR();
         emuThread->unlock();
     };
 
@@ -1635,11 +1642,13 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->lock();
         layHdr.contrast.setValue("5.0");
         layHdr.contrast.slider.setPosition(50);
-        program->updateHDRParams();
+        if (emulator == activeEmulator)
+            program->updateHDR();
         emuThread->unlock();
     };
 
     fillFontTypeList();
+    checkHDR();
 
     loadSettings(true);
 }
@@ -2349,6 +2358,7 @@ auto VideoLayout::translate() -> void {
 
     layHdr.setText(trans->getA("HDR"));
     layHdr.control.enableHdr.setText(trans->getA("Enable"));
+    layHdr.control.enableHdr.setTooltip(trans->getA("HDR tooltip"));
     layHdr.control.expandGamut.setText(trans->getA("Expand Gamut"));
     layHdr.maxNits.name.setText(trans->getA("Max Nits"));
     layHdr.paperWhiteNits.name.setText(trans->getA("Paper White Nits"));
@@ -2767,4 +2777,8 @@ auto VideoLayout::presentShaderError() -> void {
 auto VideoLayout::selectViewScreenshot() -> void {
     tviScreenShot.setSelected();
     moduleTree.onChange(nullptr);
+}
+
+auto VideoLayout::checkHDR() -> void {
+    layHdr.setEnabled( videoDriver->HDRsupport() );
 }
