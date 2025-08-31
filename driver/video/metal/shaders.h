@@ -165,6 +165,7 @@ static const std::string MTLprogressShader = R"(
     }
 )";
 
+// Copyright (c) RetroArch (licenced under GPLv3)
 static const std::string MTLhdrShader = R"(
     #include <metal_stdlib>
     #include <simd/simd.h>
@@ -295,7 +296,6 @@ static const std::string MTLhdrShader = R"(
          if(params.expand_gamut > 0.0f)
          {
             rec2020 = hdr * kExpanded709to2020;
-            //rec2020 = hdr * kP3to2020;
          }
 
          float3 linearColour  = rec2020 * (params.paper_white_nits / kMaxNitsFor2084);

@@ -1346,13 +1346,16 @@ namespace DRIVER {
         }
 
         if (useHDRShader) {
+            if (options & OPT_TakeScreenshot)
+                updateHDRParams(true);
             context->OMSetRenderTargets(1, &rtv, nullptr);
             context->ClearRenderTargetView(rtv, clearColor);
             setViewport({viewScreen.windowWidth, viewScreen.windowHeight, 0, 0});
             applyShader(hdr.shader);
             context->VSSetConstantBuffers(0, 1, &ubo);
             context->PSSetShaderResources(0, 1, &hdr.texture.view);
-            context->PSSetSamplers(0, 1, &sampler);
+            //context->PSSetSamplers(0, 1, &sampler);
+            context->PSSetSamplers(0, 1, &samplers[ShaderPreset::FILTER_NEAREST][ShaderPreset::WRAP_EDGE]);
             context->PSSetConstantBuffers(0, 1, &hdr.buffer);
             context->IASetVertexBuffers(0, 1, &frame.vbo, &stride, &offset);
             context->RSSetState(scissorDisable);
@@ -1824,20 +1827,35 @@ namespace DRIVER {
             unsigned _pitch = mappedResource.RowPitch >> 2;
             uint32_t rgba;
 
-            for (int y = 0; y < viewport.height; ++y) {
-                for (int x = 0; x < viewport.width; ++x) {
-                    rgba = pPixels[y * _pitch + x];
+            if (settings.hdrEnable) {
+                for (int y = 0; y < viewport.height; ++y) {
+                    for (int x = 0; x < viewport.width; ++x) {
+                        rgba = pPixels[y * _pitch + x];
 
-                    *pTarget++ = rgba & 0xff;
-                    *pTarget++ = (rgba >> 8) & 0xff;
-                    *pTarget++ = (rgba >> 16) & 0xff;
+                        *pTarget++ = (rgba >> 2) & 0xff;
+                        *pTarget++ = (rgba >> 12) & 0xff;
+                        *pTarget++ = (rgba >> 22) & 0xff;
+                    }
+                }
+            } else {
+                for (int y = 0; y < viewport.height; ++y) {
+                    for (int x = 0; x < viewport.width; ++x) {
+                        rgba = pPixels[y * _pitch + x];
+
+                        *pTarget++ = rgba & 0xff;
+                        *pTarget++ = (rgba >> 8) & 0xff;
+                        *pTarget++ = (rgba >> 16) & 0xff;
+                    }
                 }
             }
 
             screenshotCallback((uint8_t*)mappedResource.pData, viewport.width, viewport.height);
             context->Unmap((ID3D11Resource*)screenBuffer.staging, 0);
             D3D11Utility::releaseTexture(screenBuffer);
-        }                 
+        }
+
+        if (settings.hdrEnable)
+            updateHDRParams();
     }
 
     auto waitVRR() -> void {
@@ -1934,12 +1952,24 @@ namespace DRIVER {
         }
     }
 
-    auto updateHDRParams() -> void {
+    auto updateHDRParams(bool disableConversion = false) -> void {
         D3D11_MAPPED_SUBRESOURCE mapped;
+        HdrUniforms copy;
+        HdrUniforms* pHdrUniforms;
+
         if (!hdr.buffer)
             return;
+
+        if (disableConversion) {
+            copy = hdrUniforms;
+            copy.inverseTonemap = false;
+            copy.hdr10 = false;
+            pHdrUniforms = &copy;
+        } else
+            pHdrUniforms = &hdrUniforms;
+
         context->Map((ID3D11Resource*)hdr.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-        *(HdrUniforms*)mapped.pData = hdrUniforms;
+        *(HdrUniforms*)mapped.pData = *pHdrUniforms;
         context->Unmap((ID3D11Resource*)hdr.buffer, 0);
     }
 
