@@ -217,7 +217,8 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
 
     auto modeIdent = getModeIdent();
 
-    unsigned _saturation = settings->get<unsigned>("video_saturation" + modeIdent, (_pal && _crtMode) ? 110u : 100u,{0u, 200u});
+    unsigned _saturation = settings->get<unsigned>("video_saturation" + modeIdent,
+        (_pal && (_crtMode == (unsigned)CrtMode::Cpu) ) ? 110u : 100u,{0u, 200u});
     unsigned _contrast = settings->get<unsigned>("video_contrast" + modeIdent, 100u,{0u, 200u});
     unsigned _gamma = settings->get<unsigned>("video_gamma" + modeIdent, 100u,{30u, 280u});
     unsigned _brightness = settings->get<unsigned>("video_brightness" + modeIdent, 100u,{0, 200u});

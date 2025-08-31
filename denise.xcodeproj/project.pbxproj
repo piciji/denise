@@ -44,6 +44,8 @@
 		9D0C38242CB59D9B00363301 /* data in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38232CB59D9B00363301 /* data */; };
 		9D0C38282CB5A66F00363301 /* images in Resources */ = {isa = PBXBuildFile; fileRef = 9D0C38272CB5A66F00363301 /* images */; };
 		9D0C382E2CB5C17900363301 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D0C382D2CB5C17900363301 /* OpenAL.framework */; };
+		9D0C948B2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
+		9D0C948C2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D31E3BE2DF2083600F88404 /* recentFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D31E3BC2DF2083600F88404 /* recentFiles.cpp */; };
 		9D55396B2D5A90940083E91B /* w65816.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539652D5A902D0083E91B /* w65816.cpp */; };
 		9D55396C2D5A909C0083E91B /* w65C02.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539692D5A902D0083E91B /* w65C02.cpp */; };
@@ -480,6 +482,8 @@
 		9D0C38232CB59D9B00363301 /* data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = data; path = data/data; sourceTree = "<group>"; };
 		9D0C38272CB5A66F00363301 /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = data/images; sourceTree = "<group>"; };
 		9D0C382D2CB5C17900363301 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = diskGuesser.cpp; sourceTree = "<group>"; };
+		9D0C948A2E5E345E00A9B56C /* diskGuesser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = diskGuesser.h; sourceTree = "<group>"; };
 		9D31E3BC2DF2083600F88404 /* recentFiles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = recentFiles.cpp; sourceTree = "<group>"; };
 		9D31E3BD2DF2083600F88404 /* recentFiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = recentFiles.h; sourceTree = "<group>"; };
 		9D5539552D5A8F4D0083E91B /* superCpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = superCpu.h; sourceTree = "<group>"; };
@@ -546,7 +550,6 @@
 		9D8FAA7E2CB3F6EF006905BE /* palette.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = palette.cpp; sourceTree = "<group>"; };
 		9D8FAA7F2CB3F6EF006905BE /* shaderParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shaderParser.h; sourceTree = "<group>"; };
 		9D8FAA812CB3F6EF006905BE /* sincFirFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sincFirFilter.h; sourceTree = "<group>"; };
-		9D8FAA822CB3F6EF006905BE /* DiskFinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DiskFinder.h; sourceTree = "<group>"; };
 		9D8FAA832CB3F6EF006905BE /* circularBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = circularBuffer.h; sourceTree = "<group>"; };
 		9D8FAA842CB3F6EF006905BE /* shortcuts.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shortcuts.h; sourceTree = "<group>"; };
 		9D8FAA852CB3F6EF006905BE /* filesetting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = filesetting.h; sourceTree = "<group>"; };
@@ -1408,11 +1411,12 @@
 		9D8FAA802CB3F6EF006905BE /* tools */ = {
 			isa = PBXGroup;
 			children = (
+				9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */,
+				9D0C948A2E5E345E00A9B56C /* diskGuesser.h */,
 				9DD306D62DFAFF2200B8F12F /* httpClient.cpp */,
 				9DD306D72DFAFF2200B8F12F /* httpClient.h */,
 				9DD306D42DFAFEE000B8F12F /* error.h */,
 				9D8FAA812CB3F6EF006905BE /* sincFirFilter.h */,
-				9D8FAA822CB3F6EF006905BE /* DiskFinder.h */,
 				9D8FAA832CB3F6EF006905BE /* circularBuffer.h */,
 				9D8FAA842CB3F6EF006905BE /* shortcuts.h */,
 				9D8FAA852CB3F6EF006905BE /* filesetting.h */,
@@ -2762,6 +2766,7 @@
 				9D8FAE592CB40DF9006905BE /* firmware.cpp in Sources */,
 				9D07CD072E296CD000A9787E /* lha_decoder.cpp in Sources */,
 				9D07CD112E296CD000A9787E /* lh6_decoder.cpp in Sources */,
+				9D0C948B2E5E345E00A9B56C /* diskGuesser.cpp in Sources */,
 				9D8FAE1D2CB40DF8006905BE /* agnus.cpp in Sources */,
 				9D8FAE9C2CB40DFA006905BE /* base.cpp in Sources */,
 				9D8FAE5F2CB40DF9006905BE /* gluelogic.cpp in Sources */,
@@ -2923,6 +2928,7 @@
 				9DECF94C2E45F309005C0BBA /* firmware.cpp in Sources */,
 				9DECF94D2E45F309005C0BBA /* lha_decoder.cpp in Sources */,
 				9DECF94E2E45F309005C0BBA /* lh6_decoder.cpp in Sources */,
+				9D0C948C2E5E345E00A9B56C /* diskGuesser.cpp in Sources */,
 				9DECF94F2E45F309005C0BBA /* agnus.cpp in Sources */,
 				9DECF9502E45F309005C0BBA /* base.cpp in Sources */,
 				9DECF9512E45F309005C0BBA /* gluelogic.cpp in Sources */,

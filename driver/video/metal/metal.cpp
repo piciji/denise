@@ -71,6 +71,9 @@ namespace DRIVER {
     id<MTLRenderPipelineState> messagePipelineState;
     id<MTLRenderPipelineState> dndOverlayPipelineState;
     id<MTLRenderPipelineState> progressPipelineState;
+    id<MTLRenderPipelineState> hdrPipelineState;
+        
+    MTLPixelFormat curStockFormat;
     
     matrix_float4x4 projectionMatrix;
     matrix_float4x4 rotatedMatrix;
@@ -89,7 +92,6 @@ namespace DRIVER {
     id<MTLSamplerState> sampler;
         
     Video::ScreenshotCallback screenshotCallback = nullptr;
-    id<MTLTexture> screenshotTexture = nil;
 
     struct {
         MTLTexture textures[MAX_FRAME_HISTORY + 1];
@@ -97,12 +99,23 @@ namespace DRIVER {
         MTLViewport viewport;
         matrix_float4x4 mvp;
     } frame;
+        
+    struct HDRUniforms {
+        float contrast;
+        float paperWhiteNits;
+        float maxNits;
+        float expandGamut;
+        float inverseTonemap;
+        float hdr10;
+    } hdrUniforms;
     
     MTLTexture messageTex;
     MTLTexture dndOverlayTex;
     MTLTexture progressTex;
+    MTLTexture hdrTex;
 
     id<MTLBuffer> messageColBuffer;
+    id<MTLBuffer> hdrBuffer;
     
     METAL() {
         view = nil;
@@ -115,6 +128,7 @@ namespace DRIVER {
         settings.linearFilter = true;
         settings.vrr = false;
         settings.useShaderCache = false;
+        settings.hdrEnable = false;
         settings.direction = 1;
         options = 0;
         shaderId = 0;
@@ -129,6 +143,11 @@ namespace DRIVER {
         frameData = nullptr;
         updateRTS = false;
         updateHistory = false;
+        hdrBuffer = nil;
+        messageColBuffer = nil;
+        
+        hdrUniforms.hdr10 = true;
+        hdrUniforms.inverseTonemap = true;
         
         for(auto& program : programs) {
             program.renderTarget.view = nil;
@@ -163,6 +182,7 @@ namespace DRIVER {
         bool hardSync;
         bool useShaderCache = false;
         int direction = 1; // reserved for rewind support
+        bool hdrEnable = false;
     } settings;
     
     auto needResizingPreparations(bool useEmuThread) -> bool {
@@ -186,6 +206,14 @@ namespace DRIVER {
         
         layer.framebufferOnly = YES;
         layer.displaySyncEnabled = settings.synchronize ? YES : NO;
+        
+        if (settings.hdrEnable) {
+            layer.wantsExtendedDynamicRangeContent = YES;
+            layer.pixelFormat = MTLPixelFormatBGR10A2Unorm;
+            CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_2100_PQ);
+            layer.colorspace = colorSpace;
+            CGColorSpaceRelease(colorSpace);
+        }
     //     layer.needsDisplayOnBoundsChange = true;
         commandQueue = [device newCommandQueue];
         clearColor = MTLClearColorMake(0, 0, 0, 1);
@@ -194,7 +222,7 @@ namespace DRIVER {
         messageTex.view = nil;
         dndOverlayTex.view = nil;
         
-        if (!initStockShader())
+        if (!initStockShader(settings.hdrEnable ? MTLPixelFormatBGRA8Unorm : layer.pixelFormat))
             return false;
         
         MTLSamplerDescriptor* sd = [MTLSamplerDescriptor new];
@@ -257,6 +285,7 @@ namespace DRIVER {
         rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
 
         [handle addSubview:view];
+        updateRTS = true;
         resizeWindow(true);
         
         [view setFrame:NSMakeRect(0, 0, area.width, area.height)];
@@ -266,8 +295,9 @@ namespace DRIVER {
         return true;
     }
     
-    auto initStockShader() -> bool {
+    auto initStockShader(MTLPixelFormat _format) -> bool {
         @autoreleasepool {
+            curStockFormat = _format;
             NSError* error;
             MTLRenderPipelineDescriptor* psd;
             MTLRenderPipelineColorAttachmentDescriptor* ca;
@@ -282,7 +312,7 @@ namespace DRIVER {
             psd.label = @"output";
 
             ca = psd.colorAttachments[0];
-            ca.pixelFormat = layer.pixelFormat;
+            ca.pixelFormat = _format;
             ca.blendingEnabled = NO;
             ca.sourceAlphaBlendFactor= MTLBlendFactorSourceAlpha;
             ca.sourceRGBBlendFactor = MTLBlendFactorSourceAlpha;
@@ -296,6 +326,7 @@ namespace DRIVER {
             NSString* messageShaderStr = [NSString stringWithUTF8String:MTLMessageShader.c_str()];
             NSString* dndOverlayShaderStr = [NSString stringWithUTF8String:MTLDndOverlayShader.c_str()];
             NSString* progressShaderStr = [NSString stringWithUTF8String:MTLprogressShader.c_str()];
+            NSString* hdrShaderStr = [NSString stringWithUTF8String:MTLhdrShader.c_str()];
             
             //MTLCompileOptions* compileOptions = [MTLCompileOptions new];
             //compileOptions.languageVersion = MTLLanguageVersion2_0;
@@ -351,6 +382,25 @@ namespace DRIVER {
             progressPipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
             if (error != nil)
                 return false;
+            
+            ca.pixelFormat = MTLPixelFormatBGR10A2Unorm;
+            ca.blendingEnabled = NO;
+            lib = [device newLibraryWithSource:hdrShaderStr options:nil error:&error];
+            if (error != nil)
+                return false;
+            
+            psd.vertexFunction = [lib newFunctionWithName:@"_vertex"];
+            psd.fragmentFunction = [lib newFunctionWithName:@"_fragment"];
+
+            psd.label = @"hdr conversion";
+            
+            hdrPipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
+            if (error != nil)
+                return false;
+
+            hdrBuffer = [device newBufferWithLength:sizeof(hdrUniforms) options:MTLResourceStorageModeManaged];
+            
+            updateHDRParams();
         }
         return true;
     }
@@ -360,13 +410,7 @@ namespace DRIVER {
         
         dndOverlay.term();
         [rpd release]; rpd = nil;
-        [outputPipelineState release]; outputPipelineState = nil;
-#ifdef DRV_FREETYPE
-        if (messagePipelineState)
-            [messagePipelineState release]; messagePipelineState = nil;
-#endif
-        [dndOverlayPipelineState release]; dndOverlayPipelineState = nil;
-        [progressPipelineState release]; progressPipelineState = nil;
+        releaseStockShader();
         
         [commandQueue release]; commandQueue = nil;
         [device release]; device = nil;
@@ -391,6 +435,20 @@ namespace DRIVER {
             [view release];
             view = nil;
         }
+    }
+        
+    auto releaseStockShader() -> void {
+        [outputPipelineState release]; outputPipelineState = nil;
+#ifdef DRV_FREETYPE
+        if (messagePipelineState)
+            [messagePipelineState release]; messagePipelineState = nil;
+        
+        [messageColBuffer release]; messageColBuffer = nil;
+#endif
+        [dndOverlayPipelineState release]; dndOverlayPipelineState = nil;
+        [progressPipelineState release]; progressPipelineState = nil;
+        [hdrPipelineState release]; hdrPipelineState = nil;
+        [hdrBuffer release]; hdrBuffer = nil;
     }
     
     auto releaseShader(bool withMainTexture = false) -> void {
@@ -593,6 +651,8 @@ namespace DRIVER {
 #ifdef DRV_FREETYPE
         ftUpdateCoords();
 #endif
+        if (settings.hdrEnable)
+            updateHDRTexture();
     }
     
     void synchronize(bool state) {
@@ -749,6 +809,7 @@ namespace DRIVER {
             }
             
             bool requestScreenshot = options & OPT_TakeScreenshot;
+            layer.framebufferOnly = requestScreenshot ? NO : YES;
             MTLTexture& mainTex = frame.textures[0];
             
             if (updateRTS)
@@ -760,6 +821,8 @@ namespace DRIVER {
             drawable = layer.nextDrawable;
             
             MTLTexture* texture = &frame.textures[0];
+            
+            bool useHDRShader = settings.hdrEnable && (hdrTex.view.pixelFormat != MTLPixelFormatBGR10A2Unorm);
             
             if (!disallowShader && shaderPasses) {
                 frameCount += 1;
@@ -783,14 +846,12 @@ namespace DRIVER {
                     auto& p = programs[i];
                     if (!p.inUse)
                         continue;
-                    bool lastPass = i == (shaderPasses - 1);
                     
                     if (p.renderTarget.view == nil) { // shader handles last pass
                         rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
-                        if (requestScreenshot) {
-                            updateScreenshotTexture();
-                            rpd.colorAttachments[0].texture = screenshotTexture;
-                        } else
+                        if (useHDRShader)
+                            rpd.colorAttachments[0].texture = hdrTex.view;
+                        else
                             rpd.colorAttachments[0].texture = drawable.texture;
                     } else if (p.crop.active)
                         rpd.colorAttachments[0].texture = p.cropTarget.view;
@@ -893,10 +954,10 @@ namespace DRIVER {
             
             if (texture) {
                 rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
-                if (requestScreenshot) {
-                    updateScreenshotTexture();
-                    rpd.colorAttachments[0].texture = screenshotTexture;
-                } else
+
+                if (useHDRShader)
+                    rpd.colorAttachments[0].texture = hdrTex.view;
+                else
                     rpd.colorAttachments[0].texture = drawable.texture;
                 
                 rce = [commandBuffer renderCommandEncoderWithDescriptor:rpd];
@@ -927,6 +988,28 @@ namespace DRIVER {
                 showProgress(rce);
             }
             
+            if (useHDRShader) {
+                if (requestScreenshot)
+                    updateHDRParams(true);
+                
+                rpd.colorAttachments[0].texture = drawable.texture;
+                
+                if (rce)
+                    [rce endEncoding];
+                rce = [commandBuffer renderCommandEncoderWithDescriptor:rpd];
+                
+                [rce setRenderPipelineState:hdrPipelineState];
+                [rce setFragmentBuffer:hdrBuffer offset:0 atIndex:1];
+              //  [hdrBuffer didModifyRange:NSMakeRange(0, hdrBuffer.length)];
+                [rce setVertexBytes:&projectionMatrix length:sizeof(matrix_float4x4) atIndex:1];
+                [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_NEAREST][ShaderPreset::WRAP_EDGE][0] atIndex:0];
+                [rce setVertexBytes:&vertices length:sizeof(vertices) atIndex:0];
+                [rce setFragmentTexture:hdrTex.view atIndex:0];
+                
+                [rce setViewport:{0.0, 0.0, (double)viewScreen.windowWidth, (double)viewScreen.windowHeight, 0.0, 1.0}];
+                [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+            }
+            
             if (rce) {
                 [rce endEncoding];
                 rce = nil;
@@ -937,26 +1020,25 @@ namespace DRIVER {
                 dispatch_semaphore_signal(_semaphore);
             }];
             
-            if (requestScreenshot) {
+            if (drawable)
+                [commandBuffer presentDrawable:drawable];
+            
+            if (settings.vrr) {
+                //MTLCommandBufferStatus s = [commandBuffer status];
+                //if (s != MTLCommandBufferStatusNotEnqueued)
+                    //[_commandBuffer waitUntilCompleted];
+                waitVRR();
                 [commandBuffer commit];
                 [commandBuffer waitUntilCompleted];
-                takeScreenshot();
             } else {
-                if (drawable)
-                    [commandBuffer presentDrawable:drawable];
-                
-                if (settings.vrr) {
-                    //MTLCommandBufferStatus s = [commandBuffer status];
-                    //if (s != MTLCommandBufferStatusNotEnqueued)
-                        //[_commandBuffer waitUntilCompleted];
-                    waitVRR();
-                    [commandBuffer commit];
+                [commandBuffer commit];
+                if (settings.hardSync && settings.synchronize)
                     [commandBuffer waitUntilCompleted];
-                } else {
-                    [commandBuffer commit];
-                    if (settings.hardSync && settings.synchronize)
-                        [commandBuffer waitUntilCompleted];
-                }
+            }
+        
+            if (requestScreenshot) {
+                [commandBuffer waitUntilCompleted];
+                takeScreenshot();
             }
 
             commandBuffer = nil;
@@ -1161,7 +1243,12 @@ namespace DRIVER {
                 height = viewport.height;
             }
 
-            if (!lastPass || p.feedback || (width != viewport.width) || (height != viewport.height) ) {
+            if (!lastPass || p.feedback || (width != viewport.width) || (height != viewport.height)
+                // Unlike D3D11, the pixel format must be specified when creating metal shaders,
+                // and it must match that of the render texture. Blended objects have the same pixel
+                // format as the output stock shader. If this is not used and the final shader pass
+                // has a different format, a crash will occur.
+                || (p.format != MTLPixelFormatBGRA8Unorm ) ) {
                 if (p.mipmap)
                     MTLUtility::releaseTexture(p.renderTarget);
                 
@@ -1220,6 +1307,46 @@ namespace DRIVER {
                 frame.mvp = rotatedMatrix; // last shader pass is final pass
             }
         }
+        
+        MTLPixelFormat _format;
+        
+        if (settings.hdrEnable) {
+            _format = MTLPixelFormatBGRA8Unorm;
+            updateHDRTexture();
+            
+            if (shaderPasses) {
+                auto& p = programs[shaderPasses-1];
+                
+                if (p.renderTarget.view != nil)
+                    _format = p.format;
+            }
+        } else
+            _format = layer.pixelFormat;
+        
+        if (_format != curStockFormat) {
+            releaseStockShader();
+            initStockShader(_format);
+        }
+    }
+        
+    auto updateHDRTexture() -> void {
+        MTLUtility::releaseTexture(hdrTex);
+        MTLPixelFormat _format;
+        hdrUniforms.inverseTonemap = true;
+        
+        if (shaderPasses) {
+            auto& p = programs[shaderPasses-1];
+            
+            if (!preset->lumaChroma && (p.format == MTLPixelFormatRGBA16Float))
+                hdrUniforms.inverseTonemap = false;
+            
+            _format = p.format;
+        } else
+            _format = MTLPixelFormatBGRA8Unorm;
+        
+        updateHDRParams();
+        
+        MTLUtility::initTexture(hdrTex, viewScreen.windowWidth, viewScreen.windowHeight, _format, device, false, true);
     }
     
     auto setShader(ShaderPreset* preset) -> void {
@@ -1245,8 +1372,11 @@ namespace DRIVER {
         
         this->preset = preset;
         
-        if (!preset || (preset->passes.size() > MAX_SHADERS) || (preset->luts.size() > MAX_TEXTURES))
+        if (!preset || (preset->passes.size() > MAX_SHADERS) || (preset->luts.size() > MAX_TEXTURES)) {
+            if (settings.hdrEnable)
+                updateRTS = true;
             return;
+        }
         
         bool todo = false;
         _programs.reserve(preset->passes.size());
@@ -1262,8 +1392,11 @@ namespace DRIVER {
             todo |= pass.inUse;
         }
 
-        if (!todo)
+        if (!todo) {
+            if (settings.hdrEnable)
+                updateRTS = true;
             return;
+        }
 
         _luts.reserve(preset->luts.size());
         for (auto& lut : preset->luts) {
@@ -1594,20 +1727,6 @@ namespace DRIVER {
         this->screenshotCallback = callback;
     }
         
-    auto updateScreenshotTexture() -> void {
-        if (screenshotTexture)
-            [screenshotTexture release];
-    
-        MTLTextureDescriptor* descriptor = [[MTLTextureDescriptor alloc] init];
-            descriptor.storageMode = MTLStorageModeShared;
-            descriptor.usage = MTLTextureUsageRenderTarget;
-            descriptor.pixelFormat = drawable.texture.pixelFormat;
-            descriptor.width = drawable.texture.width;
-            descriptor.height = drawable.texture.height;
-          
-        screenshotTexture = [device newTextureWithDescriptor:descriptor];
-    }
-        
     auto takeScreenshot() -> void {
         if (!screenshotCallback)
             return;
@@ -1616,24 +1735,96 @@ namespace DRIVER {
         uint8_t* buffer = new uint8_t[bufferSize];
         MTLRegion region = MTLRegionMake2D(viewport.x, viewport.y, viewport.width, viewport.height);
         
-        [screenshotTexture getBytes:buffer bytesPerRow: (viewport.width * 4) fromRegion:region mipmapLevel: 0];
+        [drawable.texture getBytes:buffer bytesPerRow: (viewport.width * 4) fromRegion:region mipmapLevel: 0];
         
         unsigned rgba;
         uint32_t* pSource = (uint32_t*)buffer;
         uint8_t* pTarget = buffer;
         
-        for (int y = 0; y < viewport.height; ++y) {
-            for (int x = 0; x < viewport.width; ++x) {
-                rgba = *pSource++;
-                *pTarget++ = (rgba >> 16) & 0xff;
-                *pTarget++ = (rgba >> 8) & 0xff;
-                *pTarget++ = rgba & 0xff;
+        if (drawable.layer.pixelFormat == MTLPixelFormatBGR10A2Unorm) {
+            for (int y = 0; y < viewport.height; ++y) {
+                for (int x = 0; x < viewport.width; ++x) {
+                    rgba = *pSource++;
+                    *pTarget++ = (rgba >> 22) & 0xff;
+                    *pTarget++ = (rgba >> 12) & 0xff;
+                    *pTarget++ = (rgba >> 2) & 0xff;
+                }
+            }
+        } else {
+            for (int y = 0; y < viewport.height; ++y) {
+                for (int x = 0; x < viewport.width; ++x) {
+                    rgba = *pSource++;
+                    *pTarget++ = (rgba >> 16) & 0xff;
+                    *pTarget++ = (rgba >> 8) & 0xff;
+                    *pTarget++ = rgba & 0xff;
+                }
             }
         }
 
         screenshotCallback(buffer, viewport.width, viewport.height);
 
         delete[] buffer;
+        
+        if (settings.hdrEnable)
+            updateHDRParams();
+    }
+        
+    auto HDRsupport() -> bool { return true; }
+        
+    auto setHDR(bool state, float maxNits, float paperWhiteNits, float contrast, bool expandGamut) -> void {
+        wait();
+        hdrUniforms.maxNits = maxNits;
+        hdrUniforms.paperWhiteNits = paperWhiteNits;
+        hdrUniforms.contrast = contrast;
+        hdrUniforms.expandGamut = expandGamut;
+        
+        if (!layer || !handle) {
+            settings.hdrEnable = state;
+            return;
+        }
+        
+        if (settings.hdrEnable != state) {
+            wait();
+            settings.hdrEnable = state;
+            
+            if (settings.hdrEnable) {
+                layer.wantsExtendedDynamicRangeContent = YES;
+                layer.pixelFormat = MTLPixelFormatBGR10A2Unorm;
+                CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_2100_PQ);
+                layer.colorspace = colorSpace;
+                CGColorSpaceRelease(colorSpace);
+            } else {
+                layer.wantsExtendedDynamicRangeContent = NO;
+                layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+                CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+                layer.colorspace = colorSpace;
+                CGColorSpaceRelease(colorSpace);
+            }
+            updateRTS = true;
+        } else if (settings.hdrEnable) {
+            wait();
+            updateHDRParams();
+        }
+    }
+        
+    auto updateHDRParams(bool disableConversion = false) -> void {
+        void* bufData = hdrBuffer.contents;
+        if (bufData) {
+            float _inverse = hdrUniforms.inverseTonemap;
+            float _hdr10 = hdrUniforms.hdr10;
+            if (disableConversion) {
+                _inverse = _hdr10 = (float)false;
+            }
+            
+            memcpy((uint8_t*)bufData + 0, &hdrUniforms.contrast, 4);
+            memcpy((uint8_t*)bufData + 4, &hdrUniforms.paperWhiteNits, 4);
+            memcpy((uint8_t*)bufData + 8, &hdrUniforms.maxNits, 4);
+            memcpy((uint8_t*)bufData + 12, &hdrUniforms.expandGamut, 4);
+            memcpy((uint8_t*)bufData + 16, &_inverse, 4);
+            memcpy((uint8_t*)bufData + 20, &_hdr10, 4);
+
+            [hdrBuffer didModifyRange:NSMakeRange(0, hdrBuffer.length)];
+        }
     }
 };
 
