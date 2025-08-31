@@ -15,6 +15,8 @@
 #include "../freetype.h"
 #endif
 
+#define NSAppKitVersionNumber11 2022
+
 namespace DRIVER {
 
 #ifdef DRV_FREETYPE
@@ -210,7 +212,7 @@ namespace DRIVER {
         if (settings.hdrEnable) {
             layer.wantsExtendedDynamicRangeContent = YES;
             layer.pixelFormat = MTLPixelFormatBGR10A2Unorm;
-            CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_2100_PQ);
+            CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(NSAppKitVersionNumber < NSAppKitVersionNumber11 ? CFSTR("kCGColorSpaceITUR_2020_PQ_EOTF") : CFSTR("kCGColorSpaceITUR_2100_PQ"));
             layer.colorspace = colorSpace;
             CGColorSpaceRelease(colorSpace);
         }
@@ -1790,7 +1792,7 @@ namespace DRIVER {
             if (settings.hdrEnable) {
                 layer.wantsExtendedDynamicRangeContent = YES;
                 layer.pixelFormat = MTLPixelFormatBGR10A2Unorm;
-                CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceITUR_2100_PQ);
+                CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(NSAppKitVersionNumber < NSAppKitVersionNumber11 ? CFSTR("kCGColorSpaceITUR_2020_PQ_EOTF") : CFSTR("kCGColorSpaceITUR_2100_PQ"));
                 layer.colorspace = colorSpace;
                 CGColorSpaceRelease(colorSpace);
             } else {
