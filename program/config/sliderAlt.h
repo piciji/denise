@@ -1,4 +1,8 @@
 
+#pragma once
+
+#include <cmath>
+
 #define MAX_RADIO_BOXES 8
 
 struct SliderLayoutAlt : GUIKIT::VerticalLayout {

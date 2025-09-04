@@ -8,6 +8,7 @@
 #include "../emuconfig/config.h"
 #include "../media/media.h"
 #include "../input/manager.h"
+#include "../emuconfig/layouts/audio.h"
 
 StatusHandler* statusHandler = nullptr;
 

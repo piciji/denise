@@ -1,11 +1,22 @@
 
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+#include "../../config/sliderAlt.h"
+#include "model.h"
+
+namespace EmuConfigView {
+
+struct TabWindow;
+
 struct StateFastLayout : GUIKIT::FramedVerticalLayout {
     struct Top : GUIKIT::HorizontalLayout {
         GUIKIT::Label label;
         GUIKIT::LineEdit edit;
-		GUIKIT::Button find;
-		GUIKIT::Button hotkeys;
-        
+        GUIKIT::Button find;
+        GUIKIT::Button hotkeys;
+
         Top();
     } top;
 
@@ -25,23 +36,23 @@ struct StateFastLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::ImageView preview;
         GUIKIT::Image image;
         Selector();
-    } selector;    
-    
+    } selector;
+
     StateFastLayout();
 };
 
 struct StateDirectLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::Button load;
     GUIKIT::Button save;
-    
+
     StateDirectLayout();
 };
 
 struct SettingsLayout : GUIKIT::FramedVerticalLayout {
-    
-    struct Control : GUIKIT::HorizontalLayout {    
+
+    struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Button load;
-        GUIKIT::Button save;        
+        GUIKIT::Button save;
         GUIKIT::Button remove;
         GUIKIT::Button create;
         GUIKIT::LineEdit edit;
@@ -50,13 +61,13 @@ struct SettingsLayout : GUIKIT::FramedVerticalLayout {
 
         Control();
     } control;
-    
+
     struct Active : GUIKIT::HorizontalLayout {
         GUIKIT::Label activeLabel;
         GUIKIT::Label fileLabel;
         GUIKIT::Button undockButton;
         GUIKIT::Button standardButton;
-        
+
         Active();
     } active;
 
@@ -71,7 +82,7 @@ struct ConfigurationsFolderLayout : GUIKIT::HorizontalLayout {
     GUIKIT::LineEdit pathEdit;
     GUIKIT::Button standard;
     GUIKIT::Button select;
-    
+
     ConfigurationsFolderLayout();
 };
 
@@ -121,31 +132,31 @@ struct MemoryPatternLayout : GUIKIT::FramedVerticalLayout {
 
         FifthLine();
     } fifthLine;
-    
+
     GUIKIT::MultilineEdit preview;
-    
+
     MemoryPatternLayout(TabWindow* tabWindow);
 };
 
 struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
-    
+
     TabWindow* tabWindow;
-    Emulator::Interface* emulator;    
-    
-    GUIKIT::FramedVerticalLayout moduleFrame;    
+    Emulator::Interface* emulator;
+
+    GUIKIT::FramedVerticalLayout moduleFrame;
     GUIKIT::ListView moduleList;
-        
+
     GUIKIT::SwitchLayout moduleSwitch;
-    
+
     GUIKIT::VerticalLayout settingsFrame;
     SettingsLayout settings;
     ConfigurationsFolderLayout settingsFolder;
-    
+
     GUIKIT::VerticalLayout statesFrame;
     StateFastLayout stateFast;
     StateDirectLayout stateDirect;
     ConfigurationsFolderLayout stateFolder;
-    
+
     MemoryPatternLayout* memoryPattern = nullptr;
 
     GUIKIT::Image settingsImage;
@@ -162,17 +173,17 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image imgFolderClosed;
     GUIKIT::Image imgDocument;
     struct StateLine {
-		unsigned pos;
-		std::string fileName;
-		std::string date;
+        unsigned pos;
+        std::string fileName;
+        std::string date;
 
-		StateLine(unsigned pos, std::string fileName, std::string date)
-			: pos(pos), fileName(fileName), date(date) {}
+        StateLine(unsigned pos, std::string fileName, std::string date)
+            : pos(pos), fileName(fileName), date(date) {}
 
-		bool operator < (const StateLine& line) const {
-			return pos < line.pos;
-		}
-	}; 
+        bool operator < (const StateLine& line) const {
+            return pos < line.pos;
+        }
+    };
     
     auto translate() -> void;
     auto updateSettingsList(const std::string& expandFile = "", const std::string& search = "") -> void;
@@ -185,3 +196,5 @@ struct ConfigurationsLayout : GUIKIT::HorizontalLayout {
     
     ConfigurationsLayout(TabWindow* tabWindow); 
 };
+
+}

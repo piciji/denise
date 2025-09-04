@@ -1,4 +1,18 @@
 
+#include <sstream>
+#include "misc.h"
+#include "../config.h"
+#include "../../thread/emuThread.h"
+#include "../../view/view.h"
+#include "../../input/manager.h"
+#include "../../view/status.h"
+#include "../../audio/manager.h"
+
+#define mes this->tabWindow->message
+#define _settings this->tabWindow->settings
+
+namespace EmuConfigView {
+
 FpsLayout::CustomRate::CustomRate() {
     append(label, {0u, 0u}, 5);
     append(fps, {0u, 0u}, 5 );
@@ -589,4 +603,6 @@ auto MiscLayout::loadSettings() -> void {
         case 2: fpsLayout.refresh.Two.setChecked(); break;
         case 3: fpsLayout.refresh.Three.setChecked(); break;
     }
+}
+
 }

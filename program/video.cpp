@@ -46,9 +46,9 @@ auto Program::initVideo(bool driverChange) -> void {
         videoManager->setCrtThreaded( settings->get<bool>("cpu_filter_threaded", true) );
 
         auto emuView = EmuConfigView::TabWindow::getView(emulator);
-        if (emuView && emuView->videoLayout) {
-            emuView->videoLayout->updatePresets(true, true);
-            emuView->videoLayout->checkHDR();
+        if (emuView && emuView->presentationLayout) {
+            emuView->presentationLayout->updatePresets(true, true);
+            emuView->presentationLayout->checkHDR();
         } else
             videoManager->reloadSettings(true);
     }
@@ -682,8 +682,8 @@ auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {
     auto emuView = EmuConfigView::TabWindow::getView(emulator);
 
     if (videoDriver->shaderSupport()) {
-        if (emuView && emuView->videoLayout)
-            emuView->videoLayout->addShaderUI();
+        if (emuView && emuView->presentationLayout)
+            emuView->presentationLayout->addShaderUI();
         return;
     }
 
@@ -695,8 +695,8 @@ auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {
 
     auto vManager = VideoManager::getInstance(emulator);
 
-    if (emuView && emuView->videoLayout)
-        emuView->videoLayout->unloadShader();
+    if (emuView && emuView->presentationLayout)
+        emuView->presentationLayout->unloadShader();
     else if (vManager)
         vManager->clearPreset();
 }

@@ -13,6 +13,7 @@
 #include "../audio/manager.h"
 #include "../thread/emuThread.h"
 #include "../view/status.h"
+#include "../emuconfig/layouts/system.h"
 
 Autoloader* autoloader = nullptr;
 

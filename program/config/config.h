@@ -9,10 +9,10 @@ namespace Emulator {
 }
 
 #include "../../guikit/api.h"
+#include "slider.h"
 
 namespace ConfigView {
 
-#include "slider.h"
 #include "layouts/drivers.h"
 #include "layouts/settings.h"
 

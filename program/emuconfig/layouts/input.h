@@ -1,19 +1,30 @@
 
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+#include "../../config/slider.h"
+#include "model.h"
+
+struct InputMapping;
+
+namespace EmuConfigView {
+
 struct InputSelector : GUIKIT::HorizontalLayout {
     GUIKIT::ComboButton device;
-	GUIKIT::CheckButton hotkeys;
+    GUIKIT::CheckButton hotkeys;
     GUIKIT::CheckButton globalHotkeys;
     GUIKIT::CheckBox grabMouseLeft;
-	GUIKIT::Widget spacer;
+    GUIKIT::Widget spacer;
     GUIKIT::Label plugin;
-    
+
     struct AssignedConnector {
         GUIKIT::CheckButton* checkButton;
         Emulator::Interface::Connector* connector;
     };
-    
+
     std::vector<AssignedConnector> connectorButtons;
-    
+
     InputSelector();
 };
 
@@ -41,7 +52,7 @@ struct InputControl : GUIKIT::HorizontalLayout {
     GUIKIT::Button mapperAlt;
     GUIKIT::Button linkerAlt;
     GUIKIT::Button eraseAlt;
-    
+
     InputControl();
 };
 
@@ -51,7 +62,7 @@ struct InputMapControl : GUIKIT::HorizontalLayout {
     GUIKIT::ComboButton keyLayout;
     SliderLayout analogSensitivity;
     GUIKIT::Button reset;
-    
+
     InputMapControl();
 };
 
@@ -60,7 +71,7 @@ struct InputAssign : GUIKIT::HorizontalLayout {
     GUIKIT::Label assignLabel;
     GUIKIT::RadioBox overwriteRadio;
     GUIKIT::RadioBox appendRadio;
-    
+
     InputAssign();
 };
 
@@ -83,7 +94,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
 
     auto translate() -> void;
     auto loadDeviceList() -> void;
-	auto loadHotkeyList() -> void;
+    auto loadHotkeyList() -> void;
     auto loadGlobalHotkeyList() -> void;
     auto loadInputList(unsigned deviceId) -> void;
     auto appendListEntry(std::string& name, Emulator::Interface::Device::Input& input, GUIKIT::Image* image) -> void;
@@ -91,8 +102,8 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto deviceId() -> unsigned;
     auto inputId() -> unsigned;
     auto displayInputCall() -> void;
-	auto getMappingOfSelected(std::string& inputIdent) -> InputMapping*;
-	auto update() -> void;
+    auto getMappingOfSelected(std::string& inputIdent) -> InputMapping*;
+    auto update() -> void;
     auto stopCapture() -> void;
     auto updateKeyLayout() -> void;
     auto updateConnectorButtons() -> void;
@@ -101,9 +112,9 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto linkSelected( bool alternate = false ) -> void;
     auto mapSelected( bool alternate = false ) -> void;
     auto updateAnalogSensitivity() -> void;
-	auto hotkeyMode() -> bool;
+    auto hotkeyMode() -> bool;
     auto globalHotkeyMode() -> bool;
-	auto triggerHotkeyMode() -> void;
+    auto triggerHotkeyMode() -> void;
     auto updateAssigner() -> void;
     auto loadSettings() -> void;
     auto updateAutofireFrequency() -> void;
@@ -132,3 +143,5 @@ struct InputLayout : GUIKIT::VerticalLayout {
 
     InputLayout( TabWindow* tabWindow );
 };
+
+}

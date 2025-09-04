@@ -6,10 +6,8 @@ struct InputMapping;
 struct FileSetting;
 struct FirmwareManager;
 
-#include <cmath>
 #include "../../guikit/api.h"
 #include "../program.h"
-#include "layouts/model.h"
 
 namespace MediaView {
     struct MediaLayout;
@@ -17,19 +15,16 @@ namespace MediaView {
 
 namespace EmuConfigView {
 
+struct PresentationLayout;
+struct AudioLayout;
+struct ConfigurationsLayout;
+struct FirmwareLayout;
+struct GeometryLayout;
+struct InputLayout;
+struct MiscLayout;
+struct PaletteLayout;
+struct SystemLayout;
 struct TabWindow;
-	
-#include "../config/slider.h"
-#include "../config/sliderAlt.h"
-#include "layouts/system.h"
-#include "layouts/configurations.h"
-#include "layouts/geometry.h"
-#include "layouts/video.h"
-#include "layouts/input.h"
-#include "layouts/firmware.h"
-#include "layouts/palette.h"
-#include "layouts/misc.h"
-#include "layouts/audio.h"
 
 struct TabWindow : public GUIKIT::Window {
     
@@ -45,7 +40,7 @@ struct TabWindow : public GUIKIT::Window {
     AudioLayout* audioLayout = nullptr;
     FirmwareLayout* firmwareLayout = nullptr;
     GeometryLayout* geometryLayout = nullptr;
-    VideoLayout* videoLayout = nullptr;
+    PresentationLayout* presentationLayout = nullptr;
     PaletteLayout* paletteLayout = nullptr;
     MiscLayout* miscLayout = nullptr;
     GUIKIT::Settings* settings = nullptr;

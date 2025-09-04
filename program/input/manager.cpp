@@ -4,6 +4,7 @@
 #include "../view/view.h"
 #include "../config/config.h"
 #include "../emuconfig/config.h"
+#include "../emuconfig/layouts/presentation.h"
 #include "../tools/filepool.h"
 #include "../tools/filesetting.h"
 #include "../tools/chronos.h"

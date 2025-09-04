@@ -14,6 +14,9 @@
 #include "../thread/emuThread.h"
 #include "placeholder.cpp"
 #include "../tools/chronos.h"
+#include "../emuconfig/layouts/presentation.h"
+#include "../emuconfig/layouts/audio.h"
+#include "../emuconfig/layouts/input.h"
 
 View* view = nullptr;
 
@@ -874,8 +877,8 @@ auto View::buildShader() -> void {
         noneItem->onActivate = [emulator, vManager]() {
             emuThread->lock();
             auto emuView = EmuConfigView::TabWindow::getView(emulator);
-            if (emuView && emuView->videoLayout)
-                emuView->videoLayout->unloadShader();
+            if (emuView && emuView->presentationLayout)
+                emuView->presentationLayout->unloadShader();
             else
                 vManager->clearPreset();
             emuThread->unlock();
@@ -914,8 +917,8 @@ auto View::buildShader() -> void {
                 emuThread->lock();
                 auto emuView = EmuConfigView::TabWindow::getView(emulator);
 
-                if (emuView && emuView->videoLayout)
-                    emuView->videoLayout->loadShader(shaderPath);
+                if (emuView && emuView->presentationLayout)
+                    emuView->presentationLayout->loadShader(shaderPath);
                 else {
                     program->activateGPU(emulator, true);
                     vManager->loadPreset(shaderPath);
@@ -1461,8 +1464,8 @@ auto View::buildMenu() -> void {
     recordScreenSettings.onActivate = [this]() {
         auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
         emuView->show(EmuConfigView::TabWindow::Layout::Presentation);
-        if (emuView->videoLayout)
-            emuView->videoLayout->selectViewScreenshot();
+        if (emuView->presentationLayout)
+            emuView->presentationLayout->selectViewScreenshot();
     };
     miscMenu.append(recordScreenSettings);
 

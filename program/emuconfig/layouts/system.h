@@ -1,4 +1,12 @@
 
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+#include "model.h"
+
+namespace EmuConfigView {
+
 struct ExpansionLayout : GUIKIT::FramedVerticalLayout {
     
     struct Line : GUIKIT::HorizontalLayout {
@@ -44,3 +52,5 @@ struct SystemLayout : GUIKIT::VerticalLayout {
     
     SystemLayout( TabWindow* tabWindow );
 };
+
+}

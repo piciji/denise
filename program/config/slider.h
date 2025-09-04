@@ -1,4 +1,6 @@
 
+#pragma once
+
 struct SliderLayout : GUIKIT::HorizontalLayout {    
     GUIKIT::Label name;
     GUIKIT::CheckBox active;

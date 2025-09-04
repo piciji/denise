@@ -1,4 +1,13 @@
 
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+#include "../../config/slider.h"
+#include "model.h"
+
+namespace EmuConfigView {
+
 struct FpsLayout : GUIKIT::FramedVerticalLayout {
 
     struct CustomRate : GUIKIT::HorizontalLayout {
@@ -123,3 +132,5 @@ struct MiscLayout : GUIKIT::VerticalLayout {
     
     MiscLayout(TabWindow* tabWindow);
 };
+
+}

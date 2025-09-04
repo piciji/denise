@@ -1,4 +1,14 @@
 
+#include "geometry.h"
+#include "../config.h"
+#include "../../thread/emuThread.h"
+#include "../../view/view.h"
+
+#define mes this->tabWindow->message
+#define _settings this->tabWindow->settings
+
+namespace EmuConfigView {
+
 MonitorResolutionLayout::MonitorResolutionLayout() : displaySettings(true) {
     append(active, {0u, 0u}, 10 );
     append(display, {0u, 0u}, 10 );
@@ -162,7 +172,7 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
 
     setMargin(10);
 
-	append(cropLayout, {~0u, 0u}, 10);
+    append(cropLayout, {~0u, 0u}, 10);
     append(ratioLayout, {~0u, 0u}, 10);
     append(monitorResolutionLayout, {~0u, 0u}, 10);
     append(rotationLayout, {~0u, 0u});
@@ -172,14 +182,14 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
     cropLayout.type1.cropOff.onActivate = [this]() {
         updateCrop("crop_type", (unsigned)CropType::Off);
 
-		updateVisibillity();
-	};
+        updateVisibillity();
+    };
 
     cropLayout.type1.cropMonitor.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Monitor);
 
-		updateVisibillity();
-	};
+        updateVisibillity();
+    };
 
     cropLayout.type1.cropAutoAspect.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::AutoRatio);
@@ -190,15 +200,15 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
     cropLayout.type1.cropAuto.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Auto);
 
-		updateVisibillity();
-	};
+        updateVisibillity();
+    };
 
     cropLayout.type2.cropAllSidesAspect.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::AllSidesRatio);
 
         updateBorderSlider();
-		updateVisibillity();
-	};
+        updateVisibillity();
+    };
 
     cropLayout.type2.cropAllSides.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::AllSides);
@@ -211,8 +221,8 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         updateCrop("crop_type", (unsigned)CropType::Free);
 
         updateBorderSlider();
-		updateVisibillity();
-	};
+        updateVisibillity();
+    };
 
     cropLayout.type3.cropFree2.onActivate = [this]( ) {
         updateCrop("crop_type", (unsigned)CropType::Free + 1);
@@ -253,25 +263,25 @@ GeometryLayout::GeometryLayout(TabWindow* tabWindow) {
         updateCrop("crop_left", position);
 
         cropLayout.cropHorizontal.cropLeft.value.setText( std::to_string( position ) + " px" );
-	};
+    };
 
     cropLayout.cropHorizontal.cropRight.slider.onChange = [this](unsigned position) {
         updateCrop("crop_right", position);
 
         cropLayout.cropHorizontal.cropRight.value.setText( std::to_string( position ) + " px" );
-	};
+    };
 
     cropLayout.cropVertical.cropTop.slider.onChange = [this](unsigned position) {
         updateCrop("crop_top", position);
 
         cropLayout.cropVertical.cropTop.value.setText( std::to_string( position ) + " px" );
-	};
+    };
 
     cropLayout.cropVertical.cropBottom.slider.onChange = [this](unsigned position) {
         updateCrop("crop_bottom", position);
 
         cropLayout.cropVertical.cropBottom.value.setText( std::to_string( position ) + " px" );
-	};
+    };
 
     for(int i = 0; i < 12; i++) {
         cropLayout.hotkey.boxes[i]->onToggle = [this, i](bool checked) {
@@ -511,7 +521,7 @@ auto GeometryLayout::updateCrop(std::string property, unsigned value) -> void {
 }
 
 auto GeometryLayout::updateVisibillity() -> void {
-	auto val = _settings->get<unsigned>( "crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
+    auto val = _settings->get<unsigned>( "crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
 
     cropLayout.cropHorizontal.cropLeft.setEnabled( val >= 4 );
     cropLayout.cropHorizontal.cropRight.setEnabled( val >= 6 );
@@ -570,7 +580,7 @@ auto GeometryLayout::translate() -> void {
         ratioLayout.hotkey.boxes[i]->setText( std::to_string(i) );
     }
 
-	cropLayout.setText( trans->get("crop border") );
+    cropLayout.setText( trans->get("crop border") );
 
     ratioLayout.setText( trans->getA("scaling") );
     ratioLayout.control.label.setText( trans->getA("aspect ratio", true) );
@@ -692,4 +702,6 @@ auto GeometryLayout::setRotation(DRIVER::Rotation rotation) -> void {
         case DRIVER::ROT_180: rotationLayout.degree180.setChecked(); break;
         case DRIVER::ROT_270: rotationLayout.degree270.setChecked(); break;
     }
+}
+
 }

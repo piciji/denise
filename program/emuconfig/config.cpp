@@ -9,42 +9,25 @@
 #include "../view/view.h"
 #include "../input/manager.h"
 #include "../view/message.h"
-#include "../tools/filepool.h"
-#include "../tools/filesetting.h"
 #include "../view/status.h"
-#include "../firmware/manager.h"
-#include "../video/palette.h"
-#include "../cmd/cmd.h"
 #include "../media/media.h"
-#include "../audio/manager.h"
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
-#include "../media/fileloader.h"
-#include "../media/autoloader.h"
 #include "../tools/httpClient.h"
-#include "../tools/error.h"
 
-#include <vector>
-#include <algorithm>
-#include <cstring>
-#include <sstream>
+#include "layouts/presentation.h"
+#include "layouts/audio.h"
+#include "layouts/configurations.h"
+#include "layouts/firmware.h"
+#include "layouts/palette.h"
+#include "layouts/geometry.h"
+#include "layouts/input.h"
+#include "layouts/misc.h"
+#include "layouts/system.h"
 
 std::vector<EmuConfigView::TabWindow*> emuConfigViews;
 
 namespace EmuConfigView {
-
-#define mes this->tabWindow->message
-#define _settings this->tabWindow->settings
-	
-#include "layouts/input.cpp"
-#include "layouts/system.cpp"
-#include "layouts/configurations.cpp"
-#include "layouts/video.cpp"
-#include "layouts/audio.cpp"
-#include "layouts/geometry.cpp"
-#include "layouts/firmware.cpp"
-#include "layouts/palette.cpp"
-#include "layouts/misc.cpp"
 
 TabWindow::TabWindow(Emulator::Interface* emulator) {
     this->emulator = emulator;
@@ -171,7 +154,7 @@ auto TabWindow::translate() -> void {
     if(configurationsLayout) configurationsLayout->translate();
     if(firmwareLayout) firmwareLayout->translate();
     if(geometryLayout) geometryLayout->translate();
-    if(videoLayout) videoLayout->translate();
+    if(presentationLayout) presentationLayout->translate();
     if(paletteLayout) paletteLayout->translate();
     if(audioLayout) audioLayout->translate();
     if(miscLayout) miscLayout->translate();
@@ -260,10 +243,10 @@ auto TabWindow::prepareLayout(Layout layout, unsigned tabPos) -> void {
                 tab.setLayout( tabPos, *firmwareLayout, {~0u, ~0u} );
             } break;
         case Layout::Presentation:
-            if (!videoLayout) {
-                videoLayout = new VideoLayout( this );
-                videoLayout->translate();
-                tab.setLayout( tabPos, *videoLayout, {~0u, ~0u} );
+            if (!presentationLayout) {
+                presentationLayout = new PresentationLayout( this );
+                presentationLayout->translate();
+                tab.setLayout( tabPos, *presentationLayout, {~0u, ~0u} );
             } break;
         case Layout::Palette:
             if (!paletteLayout && dynamic_cast<LIBC64::Interface*>(emulator)) {

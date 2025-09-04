@@ -1,4 +1,24 @@
 
+
+#include "firmware.h"
+#include "../config.h"
+#include "../../../data/icons.h"
+#include "../../thread/emuThread.h"
+#include "presentation.h"
+#include "../../video/palette.h"
+#include "audio.h"
+#include "system.h"
+#include "../../states/states.h"
+#include "../../firmware/manager.h"
+#include "../../media/fileloader.h"
+#include "../../config/archiveViewer.h"
+#include <cstring>
+
+#define mes this->tabWindow->message
+#define _settings this->tabWindow->settings
+
+namespace EmuConfigView {
+
 FirmwareContainer::Block::Block() {
     append(fileLabelTitle, {0u, 0u}, 5);
     append(fileLabel, {~0u, 0u}, 5);
@@ -141,9 +161,9 @@ auto FirmwareLayout::hotSwap( unsigned storeLevel, int firmwareId ) -> void {
 
 auto FirmwareLayout::updateVisibility() -> void {
 	
-	auto storeLevel = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
-    
-	if (selectorBoxes.size() >= storeLevel)
+    auto storeLevel = _settings->get<unsigned>( "use_firmware", 0, {0, manager->maxSets} );
+
+    if (selectorBoxes.size() >= storeLevel)
         selectedBlock = storeLevel == 0 ? nullptr : containerLayout.blocks[0];
 
     for (auto block : containerLayout.blocks) {
@@ -160,21 +180,21 @@ auto FirmwareLayout::updateVisibility() -> void {
 }
 
 auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, FileSetting* fSetting, unsigned storeLevel ) -> void {
-    
+
     if (path.empty())
-        return;	
-                    
+        return;
+
     GUIKIT::File* file = filePool->get( path );
     if (!file)
         return;
-    
+
     file->setReadOnly();
 
     _settings->set<std::string>("firmware_path", GUIKIT::File::buildRelativePath(file->getPath()));
 
     if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
         return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), mes);
-    
+
     auto& items = file->scanArchive();
 
     archiveViewer->onCallback = [this, block, fSetting, storeLevel](GUIKIT::File* file, GUIKIT::File::Item* item) {
@@ -189,19 +209,19 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         auto path = GUIKIT::File::buildRelativePath(file->getFile());
         block->fileLabel.setText(item->info.name);
         block->fileLabel.setTooltip(path);
-                
+
         fSetting->setPath(path);
         fSetting->setFile(item->info.name);
         fSetting->setId(item->id);
-				
-		uint8_t* data = file->archiveData(item->id);
-		unsigned size = file->archiveDataSize( item->id );
 
-		uint8_t* copy = new uint8_t[size];
-		std::memcpy(copy, data, size);
+        uint8_t* data = file->archiveData(item->id);
+        unsigned size = file->archiveDataSize( item->id );
+
+        uint8_t* copy = new uint8_t[size];
+        std::memcpy(copy, data, size);
 
         emuThread->lock();
-		this->manager->addImage( &firmware, storeLevel, copy, size );
+        this->manager->addImage( &firmware, storeLevel, copy, size );
 		
         selectedBlock = block;
         
@@ -267,4 +287,6 @@ auto FirmwareLayout::loadSettings() -> void {
         selectorBoxes[firmwareInUse]->setChecked();    
     
     updateVisibility();
+}
+
 }

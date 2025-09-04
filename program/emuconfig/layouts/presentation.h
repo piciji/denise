@@ -1,6 +1,17 @@
 
+#pragma once
+
 #define PARAMS_PER_PAGE 11
 #define SCALE_BOXES 5
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+#include "../../config/slider.h"
+#include "../../config/sliderAlt.h"
+
+namespace EmuConfigView {
+
+struct TabWindow;
 
 struct VideoBaseLayout : GUIKIT::VerticalLayout {
 
@@ -69,9 +80,7 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Widget spacer;
             GUIKIT::CheckBox manuell;
             GUIKIT::ImageView downloadSlang;
-            GUIKIT::Label folder;
-            GUIKIT::RadioBox internal;
-            GUIKIT::RadioBox external;
+            GUIKIT::Button loadOldShader;
 
             GUIKIT::Button prependPreset;
             GUIKIT::Button appendPreset;
@@ -351,7 +360,7 @@ struct DisplayFont {
     }
 };
 
-struct VideoLayout : GUIKIT::HorizontalLayout {
+struct PresentationLayout : GUIKIT::HorizontalLayout {
 
     TabWindow* tabWindow;
     Emulator::Interface* emulator;
@@ -423,9 +432,8 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     auto showErrors(const std::vector<std::string>& errors) -> void;
     auto loadShader(std::string path) -> bool;
     auto unloadShader(bool reloadDriver = true) -> void;
-    auto getShaderFolder() -> std::string;
-    auto externalFolder() -> bool { return layShader.main.control.external.checked(); }
-    auto openShaderFileDialog() -> std::string;
+    auto getShaderFolder(bool oldShader) -> std::string;
+    auto openShaderFileDialog(bool oldShader = false) -> std::string;
     auto presentShaderError() -> void;
     auto clearShaderError() -> void;
     auto addShaderUI() -> void;
@@ -446,5 +454,7 @@ struct VideoLayout : GUIKIT::HorizontalLayout {
     template<typename T> auto setSliderAction( SliderLayout* layout, std::string baseIdent, std::function<T ( unsigned position )> callTransfer = [](unsigned position) { return position; } ) -> void;
     auto vManager() -> VideoManager* { return VideoManager::getInstance(emulator); }
     
-    VideoLayout(TabWindow* tabWindow);
+    PresentationLayout(TabWindow* tabWindow);
 };
+
+}

@@ -15,6 +15,7 @@
 #include "../view/status.h"
 #include "../audio/manager.h"
 #include "recentFiles.h"
+#include "../emuconfig/layouts/system.h"
 
 #define HideMouseIfWasBefore \
     if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) \

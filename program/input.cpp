@@ -2,6 +2,8 @@
 #include "program.h"
 #include "input/manager.h"
 #include "view/view.h"
+#include "emuconfig/layouts/input.h"
+#include "emuconfig/layouts/misc.h"
 
 auto Program::initInput() -> void {   
 	

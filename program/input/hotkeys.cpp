@@ -5,6 +5,11 @@
 #include "../thread/emuThread.h"
 #include "../media/fileloader.h"
 #include "../media/autoloader.h"
+#include "../emuconfig/layouts/audio.h"
+#include "../emuconfig/layouts/geometry.h"
+#include "../emuconfig/layouts/input.h"
+#include "../emuconfig/layouts/misc.h"
+#include "../emuconfig/layouts/system.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -422,12 +427,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             _settings->set<unsigned>("threaded_renderer", tr);
 
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-            if (emuView && emuView->videoLayout) {
+            if (emuView && emuView->presentationLayout) {
                 switch (tr) {
                     default:
-                    case 0: emuView->videoLayout->layBase.view.option.trOff.setChecked(); break;
-                    case 1: emuView->videoLayout->layBase.view.option.trOn.setChecked(); break;
-                    case 2: emuView->videoLayout->layBase.view.option.trAuto.setChecked(); break;
+                    case 0: emuView->presentationLayout->layBase.view.option.trOff.setChecked(); break;
+                    case 1: emuView->presentationLayout->layBase.view.option.trOn.setChecked(); break;
+                    case 2: emuView->presentationLayout->layBase.view.option.trAuto.setChecked(); break;
                 }
             }
 
@@ -462,8 +467,8 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             settings->set<unsigned>("video_crt", _mode);
             program->setWarp( false );
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-            if (emuView && emuView->videoLayout)
-                emuView->videoLayout->loadSettings();
+            if (emuView && emuView->presentationLayout)
+                emuView->presentationLayout->loadSettings();
             else
                 VideoManager::getInstance( activeEmulator )->reloadSettings(false);
 

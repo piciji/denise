@@ -11,6 +11,7 @@
 #include "../../view/status.h"
 #include "../../thread/emuThread.h"
 #include "../../view/view.h"
+#include "../../emuconfig/layouts/audio.h"
 
 namespace AudioRecord {
     

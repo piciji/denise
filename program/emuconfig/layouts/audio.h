@@ -1,4 +1,15 @@
 
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+#include "../../config/slider.h"
+#include "model.h"
+
+namespace EmuConfigView {
+
+struct TabWindow;
+
 struct AudioRecordLayout : GUIKIT::FramedVerticalLayout {
     
     struct Location : GUIKIT::HorizontalLayout {
@@ -221,3 +232,5 @@ struct AudioLayout : GUIKIT::HorizontalLayout {
 
     auto selectViewAudioRecord() -> void;
 };
+
+}

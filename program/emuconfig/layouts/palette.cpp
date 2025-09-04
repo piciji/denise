@@ -1,5 +1,19 @@
 
-PaletteColorLayout::PaletteColorLayout(unsigned editWidth, unsigned canvasHeight) {   
+#include "palette.h"
+#include "../config.h"
+#include "../../thread/emuThread.h"
+#include "../../view/view.h"
+#include "../../input/manager.h"
+#include "../../view/status.h"
+#include "../../audio/manager.h"
+#include "../../video/palette.h"
+
+#define mes this->tabWindow->message
+#define _settings this->tabWindow->settings
+
+namespace EmuConfigView {
+
+PaletteColorLayout::PaletteColorLayout(unsigned editWidth, unsigned canvasHeight) {
 
     append( color, {~0u, 0u}, 5 );
     append( canvas, {(unsigned)((float)canvasHeight * 1.5), canvasHeight}, 10 );
@@ -124,21 +138,21 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
             this->updateDetailLayout();
         };
 		
-		colorLayout->edit.onFocus = [this, colorLayout]() {
-			auto& palette = this->getSelectedPalette();
+        colorLayout->edit.onFocus = [this, colorLayout]() {
+            auto& palette = this->getSelectedPalette();
 
-			if (!palette.editable)
-				return;
+            if (!palette.editable)
+                return;
 
-			colorPos = colorLayout->pos;
-			markSelectedColor(colorLayout);			
+            colorPos = colorLayout->pos;
+            markSelectedColor(colorLayout);
 
-			if (!detailLayout.enabled())
-				detailLayout.setEnabled();
+            if (!detailLayout.enabled())
+                detailLayout.setEnabled();
 
-			this->updateDetailLayout();
-		};
-        
+            this->updateDetailLayout();
+        };
+
         colorLayout->canvas.onMouseRelease = [this, colorLayout](GUIKIT::Mouse::Button button) {
 
             auto& palette = this->getSelectedPalette();
@@ -147,112 +161,112 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
                 return;
 
             colorPos = colorLayout->pos;
-			markSelectedColor(colorLayout);
+            markSelectedColor(colorLayout);
 
             if (!detailLayout.enabled())
                 detailLayout.setEnabled();
 
             this->updateDetailLayout();
         };
-        
+
         if ((i % 3) != 0)
             colorLayout->color.setAlign( GUIKIT::Label::Align::Right );
         else if (i == (paletteManager->getSize()-1))
             colorLayout->color.setAlign( GUIKIT::Label::Align::Right );
-        
+
         colorLine->append( *colorLayout, {~0u, 0u} );
-        
+
         colorLayouts.push_back( colorLayout );
-    }  
+    }
 
     colorLines.push_back(colorLine);
-    paletteLayout.append(*colorLine,{~0u, 0u}, 10);        
-    paletteLayout.append(detailLayout, {~0u, 0u}, 10);         
-    
+    paletteLayout.append(*colorLine,{~0u, 0u}, 10);
+    paletteLayout.append(detailLayout, {~0u, 0u}, 10);
+
     main.append( listView, { GUIKIT::Font::scale( 180 ), paletteLayout.minimumSize().height - 10}, 10 );
-    main.append( paletteLayout, {~0u, 0u} );  
-    append(main, {~0u, 0u}, 10);    
-    
+    main.append( paletteLayout, {~0u, 0u} );
+    append(main, {~0u, 0u}, 10);
+
     listView.onChange = [this]() {
-        
+
         auto& palette = getSelectedPalette();
-        
+
         _settings->set<unsigned>( "palette", palette.id );
 
         emuThread->lock();
         program->setPalette( this->emulator );
         emuThread->unlock();
-        
+
         this->setPalette( palette );
     };
-    
+
     detailLayout.right.r.slider.onChange = [this](unsigned position) {
 
-		detailLayout.right.r.value.setText( std::to_string(position) );
-		
-        updateSliderChange(position, 16);                
+        detailLayout.right.r.value.setText( std::to_string(position) );
+
+        updateSliderChange(position, 16);
     };
 
     detailLayout.right.g.slider.onChange = [this](unsigned position) {
 
-		detailLayout.right.g.value.setText( std::to_string(position) );
+        detailLayout.right.g.value.setText( std::to_string(position) );
 
         updateSliderChange(position, 8);
     };
 
     detailLayout.right.b.slider.onChange = [this](unsigned position) {
 
-		detailLayout.right.b.value.setText( std::to_string(position) );
+        detailLayout.right.b.value.setText( std::to_string(position) );
 
         updateSliderChange( position, 0);
     };
-    
+
     controlLayout.create.onActivate = [this]() {
-        
+
         PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
 
         emuThread->lock();
         auto& palette = paletteManager->add( getSelectedPalette() );
         emuThread->unlock();
-        
+
         _settings->set<unsigned>( "palette", palette.id );
-        
+
         updateList();
 
         setPalette( palette );
     };
-    
+
     controlLayout.remove.onActivate = [this]() {
-        
+
         if ( !mes->question( trans->get("palette_remove_question") ) )
             return;
-        
+
         PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
-        
+
         Emulator::Interface::Palette& palette = getSelectedPalette();
-        
+
         if (!palette.editable)
             return;
 
         emuThread->lock();
         paletteManager->remove( palette );
-        
+
         auto& _palette = emulator->palettes[0];
-        
+
         _settings->set<unsigned>( "palette", _palette.id );
-        
+
         updateList();
 
         setPalette( _palette );
-        
+
         program->setPalette( this->emulator );
         emuThread->unlock();
     };
-    
+
     controlLayout.save.onActivate = [this]() {
-        
+
         PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
-        
+
         if ( !paletteManager->save() )
             statusHandler->setMessage(trans->get("file_creation_error", { {"%path%", paletteManager->path()}} ), true);
         else {
@@ -271,75 +285,75 @@ auto PaletteLayout::updateDetailLayout() -> void {
 
     if (!palette.editable)
         return;
-    
+
     auto& pC = palette.paletteColors[colorPos];
-    
+
     detailLayout.right.r.slider.setPosition( pC.r );
     detailLayout.right.g.slider.setPosition( pC.g );
     detailLayout.right.b.slider.setPosition( pC.b );
-    
+
     detailLayout.right.r.value.setText( std::to_string( pC.r ) );
     detailLayout.right.g.value.setText( std::to_string( pC.g ) );
     detailLayout.right.b.value.setText( std::to_string( pC.b ) );
-    
+
     detailLayout.left.canvas.setBackgroundColor( pC.rgb );
 }
 
 auto PaletteLayout::setPalette(Emulator::Interface::Palette& palette) -> void {
-    
+
     auto& paletteColors = palette.paletteColors;
-    
+
     controlLayout.title.setText( palette.name );
-    
+
     controlLayout.title.setEnabled( palette.editable );
-    
+
     controlLayout.remove.setEnabled( palette.editable );
-    
+
     detailLayout.setEnabled( false );
-	
+
     detailLayout.left.canvas.resetBackgroundColor();
-    
+
     for( auto colorLayout : colorLayouts ) {
-        
-        colorLayout->edit.setText( GUIKIT::String::prependZero( GUIKIT::String::convertIntToHex( paletteColors[colorLayout->pos].rgb, false ), 6) );                
-        
+
+        colorLayout->edit.setText( GUIKIT::String::prependZero( GUIKIT::String::convertIntToHex( paletteColors[colorLayout->pos].rgb, false ), 6) );
+
         colorLayout->edit.setEnabled( palette.editable );
-        
+
         colorLayout->canvas.setBackgroundColor( paletteColors[colorLayout->pos].rgb );
-		
-		colorLayout->color.setFont( GUIKIT::Font::system() );
+
+        colorLayout->color.setFont( GUIKIT::Font::system() );
     }
 }
 
 auto PaletteLayout::getSelectedPalette() -> Emulator::Interface::Palette& {
-    
+
     unsigned size = emulator->palettes.size();
-    
+
     if (listView.selection() >= size)
         return emulator->palettes[0];
-    
+
     return emulator->palettes[ listView.selection() ];
 }
 
 auto PaletteLayout::updateList() -> void {
-    
+
     auto usedPaletteId = _settings->get<unsigned>( "palette", 0 );
-    
+
     listView.reset();
-    
+
     unsigned i = 0;
     unsigned selected = 0;
-    
+
     for ( auto& palette : emulator->palettes ) {
-        
+
         listView.append( {trans->get( palette.name )} );
-        
+
         if (palette.id == usedPaletteId)
-            selected = i;            
-        
+            selected = i;
+
         i++;
     }
-    
+
     listView.setSelection( selected );
 }
 
@@ -366,22 +380,22 @@ auto PaletteLayout::updateSliderChange( uint8_t colorChannel, uint8_t bits ) -> 
 
     colorLayouts[colorPos]->canvas.setBackgroundColor(rgb);
 
-    colorLayouts[colorPos]->edit.setText( GUIKIT::String::prependZero( GUIKIT::String::convertIntToHex(rgb, false), 6 ) ); 
+    colorLayouts[colorPos]->edit.setText( GUIKIT::String::prependZero( GUIKIT::String::convertIntToHex(rgb, false), 6 ) );
 }
 
 auto PaletteLayout::translate() -> void {
-    
+
     PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
-    
+
     for(auto colorLayout : colorLayouts) {
-        
+
         colorLayout->color.setText( trans->get( paletteManager->getIdent( colorLayout->pos ) ) );
     }
-    
+
     detailLayout.right.r.name.setText( trans->get("red", {}, true ));
     detailLayout.right.g.name.setText( trans->get("green", {}, true ));
     detailLayout.right.b.name.setText( trans->get("blue", {}, true ));
-    
+
     controlLayout.ownPalette.setText( trans->get("own_palette", {}, true) );
     controlLayout.create.setText( trans->get("create") );
     controlLayout.remove.setText( trans->get("remove") );
@@ -392,17 +406,19 @@ auto PaletteLayout::translate() -> void {
 }
 
 auto PaletteLayout::markSelectedColor( PaletteColorLayout* selectColorLayout ) -> void {
-	
-	for( auto colorLayout : colorLayouts ) {				
-		
-		if (selectColorLayout == colorLayout)
-			colorLayout->color.setFont( GUIKIT::Font::system("bold") );
-		else
-			colorLayout->color.setFont( GUIKIT::Font::system() );
-	}
+
+    for( auto colorLayout : colorLayouts ) {
+
+        if (selectColorLayout == colorLayout)
+            colorLayout->color.setFont( GUIKIT::Font::system("bold") );
+        else
+            colorLayout->color.setFont( GUIKIT::Font::system() );
+    }
 }
 
 auto PaletteLayout::loadSettings() -> void {
     updateList();
     setPalette(getSelectedPalette());
+}
+
 }

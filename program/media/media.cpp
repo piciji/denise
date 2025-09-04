@@ -15,6 +15,7 @@
 #include "../../data/icons.h"
 #include "../thread/emuThread.h"
 #include "recentFiles.h"
+#include "../emuconfig/layouts/system.h"
 
 #include <thread>
 #include <vector>

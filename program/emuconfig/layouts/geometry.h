@@ -1,4 +1,13 @@
 
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+#include "../../config/slider.h"
+#include "model.h"
+
+namespace EmuConfigView {
+
 struct MonitorResolutionLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::CheckBox active;
     GUIKIT::ComboButton display;
@@ -125,7 +134,7 @@ struct GeometryLayout : GUIKIT::VerticalLayout {
     RotationLayout rotationLayout;
 
     auto translate() -> void;
-	auto updateVisibillity() -> void;
+    auto updateVisibillity() -> void;
     auto loadSettings() -> void;
     auto updateCrop(std::string property, unsigned value = 0) -> void;
     auto updateBorderHotkeyUsage(unsigned bit, bool checked) -> void;
@@ -135,3 +144,5 @@ struct GeometryLayout : GUIKIT::VerticalLayout {
 
     GeometryLayout(TabWindow* tabWindow);
 };
+
+}

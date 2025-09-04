@@ -196,6 +196,15 @@ set(srcs
         program/config/config.cpp
         program/emuconfig/config.cpp
         program/emuconfig/layouts/model.cpp
+        program/emuconfig/layouts/presentation.cpp
+        program/emuconfig/layouts/audio.cpp
+        program/emuconfig/layouts/configurations.cpp
+        program/emuconfig/layouts/firmware.cpp
+        program/emuconfig/layouts/geometry.cpp
+        program/emuconfig/layouts/input.cpp
+        program/emuconfig/layouts/misc.cpp
+        program/emuconfig/layouts/palette.cpp
+        program/emuconfig/layouts/system.cpp
         program/media/media.cpp
         program/media/autoloader.cpp
         program/media/fileloader.cpp

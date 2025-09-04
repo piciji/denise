@@ -11,6 +11,7 @@
 #include "../../data/icons.h"
 #include "../../data/logos.h"
 #include "../thread/emuThread.h"
+#include "../emuconfig/layouts/input.h"
 
 ConfigView::TabWindow* configView = nullptr;
 

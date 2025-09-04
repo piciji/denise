@@ -793,13 +793,7 @@
     <ClInclude Include="..\program\emuconfig\layouts\system.h">
       <Filter>program\emuconfig\layouts</Filter>
     </ClInclude>
-    <ClInclude Include="..\program\emuconfig\layouts\video.h">
-      <Filter>program\emuconfig\layouts</Filter>
-    </ClInclude>
     <ClInclude Include="..\program\emuconfig\layouts\audio.h">
-      <Filter>program\emuconfig\layouts</Filter>
-    </ClInclude>
-    <ClInclude Include="..\program\emuconfig\layouts\border.h">
       <Filter>program\emuconfig\layouts</Filter>
     </ClInclude>
     <ClInclude Include="..\program\emuconfig\layouts\configurations.h">
@@ -1167,6 +1161,12 @@
     </ClInclude>
     <ClInclude Include="..\program\tools\diskGuesser.h">
       <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\geometry.h">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\emuconfig\layouts\presentation.h">
+      <Filter>program\emuconfig\layouts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1719,13 +1719,7 @@
     <ClCompile Include="..\program\emuconfig\layouts\system.cpp">
       <Filter>program\emuconfig\layouts</Filter>
     </ClCompile>
-    <ClCompile Include="..\program\emuconfig\layouts\video.cpp">
-      <Filter>program\emuconfig\layouts</Filter>
-    </ClCompile>
     <ClCompile Include="..\program\emuconfig\layouts\audio.cpp">
-      <Filter>program\emuconfig\layouts</Filter>
-    </ClCompile>
-    <ClCompile Include="..\program\emuconfig\layouts\border.cpp">
       <Filter>program\emuconfig\layouts</Filter>
     </ClCompile>
     <ClCompile Include="..\program\emuconfig\layouts\configurations.cpp">
@@ -2375,6 +2369,12 @@
     </ClCompile>
     <ClCompile Include="..\program\tools\diskGuesser.cpp">
       <Filter>program\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\geometry.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\emuconfig\layouts\presentation.cpp">
+      <Filter>program\emuconfig\layouts</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

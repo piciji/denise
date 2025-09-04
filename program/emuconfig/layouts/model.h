@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../../config/slider.h"
+struct SliderLayout;
 
 namespace EmuConfigView {
     

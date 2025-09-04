@@ -1,4 +1,17 @@
 
+#include "input.h"
+#include "../config.h"
+#include "../../thread/emuThread.h"
+#include "../../view/view.h"
+#include "../../input/manager.h"
+#include "../../../data/icons.h"
+#include "../../view/status.h"
+
+#define mes this->tabWindow->message
+#define _settings this->tabWindow->settings
+
+namespace EmuConfigView {
+
 AutofireControl::AutofireControl(Emulator::Interface* emulator) : autofireSlider("") {
     append(label, {0u, 0u}, 5);
     append(toggleJoy1, { 0u, 0u }, 10);
@@ -13,10 +26,10 @@ AutofireControl::AutofireControl(Emulator::Interface* emulator) : autofireSlider
 
 InputSelector::InputSelector() {
     append(device, {0u, 0u}, 10);
-	append(hotkeys, {0u, 0u}, 10);
+    append(hotkeys, {0u, 0u}, 10);
     append(globalHotkeys, {0u, 0u}, 10);
     append(grabMouseLeft, {0u, 0u}, 10);
-	append(spacer, {~0u, 0u});
+    append(spacer, {~0u, 0u});
     append(plugin, {0u, 0u}, 10);
     setAlignment(0.5);
 }
@@ -44,16 +57,16 @@ InputControl::InputControl() {
     eraseAlt.setEnabled(false);
     linkerAlt.setEnabled(false);
 
-    append(mapper, {0u, 0u}, 10);     
-	append(linker, {0u, 0u}, 10);     
+    append(mapper, {0u, 0u}, 10);
+    append(linker, {0u, 0u}, 10);
     append(erase, {0u, 0u}, 10);
 
     append(optionControl, {0u, 0u});
 
     append(spacing, {~0u, 0u});
-    append(alternate, {0u, 0u}, 5);  
-    append(mapperAlt, {0u, 0u}, 10);     
-	append(linkerAlt, {0u, 0u}, 10);     
+    append(alternate, {0u, 0u}, 5);
+    append(mapperAlt, {0u, 0u}, 10);
+    append(linkerAlt, {0u, 0u}, 10);
     append(eraseAlt, {0u, 0u});
 
     setAlignment( 0.5 );
@@ -64,26 +77,26 @@ InputMapControl::InputMapControl() : analogSensitivity("%") {
     append(keyLayoutLabel, {0u, 0u}, 5);
     append(keyLayout, {0u, 0u}, 10);
     append(analogSensitivity, {~0u, 0u}, 10);
-    append(reset, {0u, 0u});    
-    
+    append(reset, {0u, 0u});
+
     setAlignment( 0.5 );
-    
-    analogSensitivity.slider.setLength(101);    
-    
-    automap.setEnabled( false );   
-    keyLayout.setEnabled( false );    
+
+    analogSensitivity.slider.setLength(101);
+
+    automap.setEnabled( false );
+    keyLayout.setEnabled( false );
     keyLayout.append( "", -1 );
-    
-    for ( auto& keyboardLayout : InputManager::keyboardLayouts ) {     
-        keyLayout.append( "", (unsigned)keyboardLayout.type ); 
+
+    for ( auto& keyboardLayout : InputManager::keyboardLayouts ) {
+        keyLayout.append( "", (unsigned)keyboardLayout.type );
     }
 }
 
-InputAssign::InputAssign() {    
+InputAssign::InputAssign() {
     append(infoLabel, {~0u, 0u}, 10);
     append(assignLabel, {0u, 0u}, 10);
     append(appendRadio, {0u, 0u}, 3);
-    append(overwriteRadio, {0u, 0u});    
+    append(overwriteRadio, {0u, 0u});
     GUIKIT::RadioBox::setGroup( overwriteRadio, appendRadio );
     appendRadio.setChecked();
     setAlignment(0.5);
@@ -94,33 +107,33 @@ InputAssign::InputAssign() {
 InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emulator) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
-    
+
     setMargin(10);
 
     inputList.setHeaderText( { "", "", "", "" } );
     inputList.setHeaderVisible();
-    
+
     controllerImage.loadPng((uint8_t*)Icons::controller, sizeof(Icons::controller));
     mouseImage.loadPng((uint8_t*)Icons::mouse, sizeof(Icons::mouse));
     keyboardImage.loadPng((uint8_t*)Icons::keyboard, sizeof(Icons::keyboard));
     virtualKeyImage.loadPng((uint8_t*)Icons::virtualKey, sizeof(Icons::virtualKey));
     lightgunImage.loadPng((uint8_t*)Icons::lightgun, sizeof(Icons::lightgun));
     lightpenImage.loadPng((uint8_t*)Icons::lightpen, sizeof(Icons::lightpen));
-    
+
     for(auto& connector : emulator->connectors) {
         auto pluginConnector = new GUIKIT::CheckButton;
         pluginConnector->setText( trans->get( connector.name ) );
-        
+
         Emulator::Interface::Connector* connectorPtr = &connector;
-        
+
         pluginConnector->onToggle = [&, pluginConnector, connectorPtr]() {
 
             emuThread->lock();
             auto device = emulator->getUnplugDevice();
-            
+
             if (pluginConnector->checked())
                 device = emulator->getDevice( deviceId() );
-            
+
             this->emulator->connect( connectorPtr, device );
 
             auto manager = InputManager::getManager( this->emulator );
@@ -128,14 +141,14 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
 
             emuThread->unlock();
             _settings->set<unsigned>( _underscore(connectorPtr->name), device->id);
-            
+
             view->checkInputDevice( emulator, connectorPtr, device );
-            
+
             view->setCursor( emulator );
         };
-        
+
         selector.append( *pluginConnector, {0u, 0u}, &emulator->connectors.back() == &connector ? 0 : 20 );
-        
+
         selector.connectorButtons.push_back( { pluginConnector, &connector } );
     }
 
@@ -195,19 +208,19 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
 
     mapControl.reset.onActivate = [this]() {
         if (!mes->question( trans->get("reset_device_question") ))
-			return;
+            return;
 
         emuThread->lock();
         stopCapture();
-                
-		if (hotkeyMode())
-			InputManager::getManager( this->emulator )->unmapCustomHotkeys();
+
+        if (hotkeyMode())
+            InputManager::getManager( this->emulator )->unmapCustomHotkeys();
         else if (globalHotkeyMode())
             InputManager::unmapHotkeys();
-		else
-			InputManager::getManager( this->emulator )->unmapDevice( deviceId() );        
-    
-		update();
+        else
+            InputManager::getManager( this->emulator )->unmapDevice( deviceId() );
+
+        update();
         emuThread->unlock();
     };
 
@@ -222,31 +235,31 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
         eraseSelected( true );
         emuThread->unlock();
     };
-	
-	control.linker.onActivate = [this]() {
+
+    control.linker.onActivate = [this]() {
         emuThread->lock();
         linkSelected();
         emuThread->unlock();
-	};
+    };
 
     control.linkerAlt.onActivate = [this]() {
         emuThread->lock();
         linkSelected( true );
         emuThread->unlock();
     };
-    
+
     control.mapper.onActivate = [this]() {
         emuThread->lock();
         mapSelected();
         emuThread->unlock();
     };
-    
+
     control.mapperAlt.onActivate = [this]() {
         emuThread->lock();
         mapSelected( true );
         emuThread->unlock();
     };
-    
+
     inputList.onActivate = [this]() {
         emuThread->lock();
         mapSelected( inputList.column() == 3 );
@@ -260,15 +273,15 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
         auto selection = mapControl.keyLayout.selection();
 
         auto& device = emulator->devices[ deviceId() ];
-        
+
         if (!isAutomapEnabled(device))
             return;
-        
+
         if ( mes->question( trans->get("layout_map_question") ) ) {
 
             emuThread->lock();
-            InputManager::getManager( this->emulator )->unmapDevice( deviceId() );                
-            
+            InputManager::getManager( this->emulator )->unmapDevice( deviceId() );
+
             auto type = mapControl.keyLayout.userData( selection );
 
             if (device.isKeyboard())
@@ -277,29 +290,29 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
                 InputManager::getManager( this->emulator )->autoAssign( device );
 
             InputManager::getManager( this->emulator )->updateMappingsInUse();
-            
+
             update();
             emuThread->unlock();
         }
     };
-    
+
     mapControl.keyLayout.onChange = [&]() {
-        
-		if (hotkeyMode() || globalHotkeyMode())
-			return;
-		
+
+        if (hotkeyMode() || globalHotkeyMode())
+            return;
+
         _settings->set<int>( "keyboard_layout", mapControl.keyLayout.userData() );
-        
-        update();        
+
+        update();
     };
 
     inputList.onChange = [&]() {
         displayInputCall();
         std::string inputIdent;
         auto mapping = getMappingOfSelected(inputIdent);
-        
+
         control.erase.setEnabled( inputList.selected() );
-		control.linker.setEnabled( !mapping->isAnalog() && inputList.selected() );
+        control.linker.setEnabled( !mapping->isAnalog() && inputList.selected() );
         control.mapper.setEnabled( inputList.selected() );
         control.eraseAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
         control.linkerAlt.setEnabled(!mapping->isAnalog() && inputList.selected());
@@ -307,27 +320,27 @@ InputLayout::InputLayout(TabWindow* tabWindow) : autofireControl(tabWindow->emul
     };
 
     mapControl.analogSensitivity.slider.onChange = [this](unsigned position) {
-		if(hotkeyMode() || globalHotkeyMode())
-			return;
+        if(hotkeyMode() || globalHotkeyMode())
+            return;
 
         emuThread->lock();
         auto& device = emulator->devices[ deviceId() ];
 
-        mapControl.analogSensitivity.value.setText( std::to_string(position) + " " + mapControl.analogSensitivity.unit );    
-    
+        mapControl.analogSensitivity.value.setText( std::to_string(position) + " " + mapControl.analogSensitivity.unit );
+
         _settings->set<unsigned>("analog_sensitivity_" + _underscore(device.name), position);
-        
+
         InputManager::getManager( this->emulator )->updateAnalogSensitivity( &device );
         emuThread->unlock();
-    };    
-	
-	selector.hotkeys.onToggle = [this]() {
-	    selector.globalHotkeys.setChecked(false);
+    };
+
+    selector.hotkeys.onToggle = [this]() {
+        selector.globalHotkeys.setChecked(false);
         emuThread->lock();
-		stopCapture();
-		update();
+        stopCapture();
+        update();
         emuThread->unlock();
-	};
+    };
 
     selector.globalHotkeys.onToggle = [this]() {
         selector.hotkeys.setChecked(false);
@@ -425,44 +438,44 @@ auto InputLayout::stopCapture() -> void {
 }
 
 auto InputLayout::loadDeviceList() -> void {
-	
-	unsigned selection = selector.device.selection();
-	
+
+    unsigned selection = selector.device.selection();
+
     selector.device.reset();
-    
+
     for (auto& device : emulator->devices) {
         if (device.inputs.size() == 0)
             continue;
-        
+
         selector.device.append( trans->get( device.name ), device.id );
     }
-	
-	selector.device.setSelection( selection );
+
+    selector.device.setSelection( selection );
 
     selector.device.onChange = [&]() {
-		selector.hotkeys.setChecked(false);
+        selector.hotkeys.setChecked(false);
         selector.globalHotkeys.setChecked(false);
         stopCapture();
         update();
     };
-	
+
     stopCapture();
-	
-	update();
+
+    update();
 }
 
 auto InputLayout::loadInputList(unsigned deviceId) -> void {
     inputList.reset();
     control.erase.setEnabled(false);
-	control.linker.setEnabled(false);
+    control.linker.setEnabled(false);
     control.mapper.setEnabled(false);
     control.eraseAlt.setEnabled(false);
-	control.linkerAlt.setEnabled(false);
+    control.linkerAlt.setEnabled(false);
     control.mapperAlt.setEnabled(false);
 
     auto& device = emulator->devices[deviceId];
     GUIKIT::Image* image = nullptr;
-    
+
     if (device.isJoypadOrMultiAdapter())
         image = &controllerImage;
     else if (device.isMouse() || device.isPaddles())
@@ -471,40 +484,40 @@ auto InputLayout::loadInputList(unsigned deviceId) -> void {
         image = &lightgunImage;
     else if (device.isLightPen())
         image = &lightpenImage;
-    else 
+    else
         image = &keyboardImage;
-    
+
     auto layoutType = _settings->get<int>( "keyboard_layout", InputManager::assumeLayoutType() );
-    
+
     inputList.lockRedraw();
-    
+
     unsigned counter = device.isKeyboard() ? (emulator->devices[deviceId].inputs.size() >> 1) : 0;
-    
+
     for (auto& input : emulator->devices[deviceId].inputs) {
-        
+
         std::string useName = input.name;
-        
+
         for(auto& layout : input.layouts) {
             if ( (KeyboardLayout::Type) layout.type == layoutType ) {
                 useName = layout.name;
                 break;
             }
         }
-                    
+
         appendListEntry( useName, input, image );
-        
+
         if (counter) {
             if (--counter == 0) {
                 inputList.unlockRedraw();
-            }                
+            }
         }
     }
-    
+
     inputList.unlockRedraw();
-    
-    mapControl.keyLayout.setEnabled( device.isKeyboard() );    
+
+    mapControl.keyLayout.setEnabled( device.isKeyboard() );
     mapControl.automap.setEnabled( isAutomapEnabled(device) );
-    
+
     updateConnectorButtons();
     enableConnectorButtons();
     updateAnalogSensitivity();
@@ -518,33 +531,33 @@ auto InputLayout::isAutomapEnabled(Emulator::Interface::Device& device) -> bool 
 }
 
 auto InputLayout::loadHotkeyList() -> void {
-	inputList.reset();
+    inputList.reset();
     control.erase.setEnabled(false);
-	control.linker.setEnabled(false);
+    control.linker.setEnabled(false);
     control.mapper.setEnabled(false);
     control.eraseAlt.setEnabled(false);
-	control.linkerAlt.setEnabled(false);
+    control.linkerAlt.setEnabled(false);
     control.mapperAlt.setEnabled(false);
 
     if (mapControl.analogSensitivity.enabled())
         mapControl.analogSensitivity.setEnabled(false);
-	
+
     inputList.lockRedraw();
-    
-	for (auto& input : InputManager::getManager( emulator )->customHotkeys ) {
+
+    for (auto& input : InputManager::getManager( emulator )->customHotkeys ) {
 
         InputMapping* mapping = (InputMapping*)input.guid;
 
         inputList.append({ "", trans->get( input.name ), mapping->getDescription(),
                            mapping->alternate ? mapping->alternate->getDescription() : "" });
-	}
-    
+    }
+
     inputList.unlockRedraw();
-	
-	mapControl.keyLayout.setEnabled( false );    
+
+    mapControl.keyLayout.setEnabled( false );
     mapControl.automap.setEnabled( false );
-	
-	for(auto& connectorButton : selector.connectorButtons)        
+
+    for(auto& connectorButton : selector.connectorButtons)
         connectorButton.checkButton->setEnabled( false );
 }
 
@@ -580,13 +593,13 @@ auto InputLayout::loadGlobalHotkeyList() -> void {
 }
 
 auto InputLayout::updateAnalogSensitivity() -> void {
-    
+
     auto& device = emulator->devices[ deviceId() ];
-    
+
     auto position = _settings->get<unsigned>("analog_sensitivity_" + _underscore(device.name), 40u, {0u, 100u});
-        
+
     mapControl.analogSensitivity.value.setText( std::to_string(position) + " " + mapControl.analogSensitivity.unit );
-    
+
     mapControl.analogSensitivity.slider.setPosition( position );
 
     if (!mapControl.analogSensitivity.enabled())
@@ -594,11 +607,11 @@ auto InputLayout::updateAnalogSensitivity() -> void {
 }
 
 auto InputLayout::updateKeyLayout() -> void {
-    
+
     auto layout = _settings->get<int>( "keyboard_layout", InputManager::assumeLayoutType() );
-    
+
     for( unsigned row = 0; row < mapControl.keyLayout.rows(); row++ ) {
-        
+
         if ( layout == mapControl.keyLayout.userData( row ) ) {
             mapControl.keyLayout.setSelection( row );
             break;
@@ -634,9 +647,9 @@ auto InputLayout::appendListEntry(std::string& name, Emulator::Interface::Device
 
     inputList.append({ "", transName, mapping->getDescription(),
         mapping->alternate ? mapping->alternate->getDescription() : "" });
-		
-	if (image)
-		inputList.setImage( inputList.rowCount() - 1, 0, *image );
+
+    if (image)
+        inputList.setImage( inputList.rowCount() - 1, 0, *image );
 
     if (mapping->emuDevice && mapping->emuDevice->isJoypadOrMultiAdapter()) {
         if (input.key == Emulator::Interface::Key::Direction);
@@ -664,7 +677,7 @@ auto InputLayout::updateListEntry(unsigned selection, InputMapping* mapping, boo
 
 auto InputLayout::translate() -> void {
     stopCapture();
-	selector.hotkeys.setText( trans->get("hotkeys") );
+    selector.hotkeys.setText( trans->get("hotkeys") );
     selector.globalHotkeys.setText( trans->get("global hotkeys") );
     selector.grabMouseLeft.setText( trans->getA("left click grabs mouse") );
     selector.plugin.setText( trans->get("plugin", {}, true) );
@@ -683,28 +696,28 @@ auto InputLayout::translate() -> void {
     control.erase.setTooltip( trans->get( "erase_device_info" ) );
     control.eraseAlt.setText( trans->get( "erase" ) );
     control.eraseAlt.setTooltip( trans->get( "erase_device_info" ) );
-	control.linker.setText( trans->get( "and_or_connection" ) );   
-    control.linkerAlt.setText( trans->get( "and_or_connection" ) );       
+    control.linker.setText( trans->get( "and_or_connection" ) );
+    control.linkerAlt.setText( trans->get( "and_or_connection" ) );
     control.mapper.setText( trans->get( "assign" ) );
     control.mapperAlt.setText( trans->get( "assign" ) );
     control.alternate.setText( trans->get( "alternate", {}, true ) );
-    
+
     mapControl.keyLayoutLabel.setText( trans->get("layout", {}, true) );
     mapControl.keyLayout.setTooltip( trans->get("keyboard_layout_tip") );
     mapControl.automap.setText( trans->get("automap") );
     mapControl.analogSensitivity.name.setText( trans->get("analog_sensitivity", {}, true) );
-    
+
     assigner.overwriteRadio.setText( trans->get("overwrite") );
     assigner.appendRadio.setText( trans->get("append") );
     assigner.assignLabel.setText( trans->get("assignment", {}, true) );
-    
+
     unsigned i = 0;
     mapControl.keyLayout.setText( i++, trans->get("positional"));
     for ( auto& keyboardLayout : InputManager::keyboardLayouts ) {
         mapControl.keyLayout.setText( i++, trans->get( keyboardLayout.language ) + " ( " + keyboardLayout.code + " )" );
     }
-    
-    for(auto& connectorButton : selector.connectorButtons) 
+
+    for(auto& connectorButton : selector.connectorButtons)
         connectorButton.checkButton->setText( trans->get( connectorButton.connector->name ) );
 
     autofireControl.label.setText( trans->get("toggle autofire", {}, true) );
@@ -721,7 +734,7 @@ auto InputLayout::translate() -> void {
     autofireControl.autofireSlider.name.setText( trans->get("Autofire Rate", {}, true) );
     autofireControl.autofireHold.setText( trans->get("hold Autofire") );
     autofireControl.autofireHold.setTooltip( trans->get("hold Autofire tooltip") );
-    
+
     SliderLayout::scale({&mapControl.analogSensitivity}, "100 %");
 }
 
@@ -737,7 +750,7 @@ auto InputLayout::updatedAutofireButtonHints(InputMapping* mappingPort, GUIKIT::
 
 auto InputLayout::updatedAutofireButtonHints() -> void {
     auto manager = InputManager::getManager(emulator);
-    auto mappingPort1 = manager->getFirstAutoFireMapping(0);    
+    auto mappingPort1 = manager->getFirstAutoFireMapping(0);
     updatedAutofireButtonHints(mappingPort1, &autofireControl.toggleJoy1);
     auto mappingPort2 = manager->getFirstAutoFireMapping(1);
     updatedAutofireButtonHints(mappingPort2, &autofireControl.toggleJoy2);
@@ -745,14 +758,14 @@ auto InputLayout::updatedAutofireButtonHints() -> void {
 
 auto InputLayout::displayInputCall() -> void {
     std::string text = trans->get("register_input");
-    
+
     if (inputList.selected()) {
-        auto selection = inputList.selection();    
-        
+        auto selection = inputList.selection();
+
         if ( inputList.getImage( selection, 0 ) == &virtualKeyImage )
             text = trans->get("register_vkey");
-    }    
-    
+    }
+
     assigner.infoLabel.setFont( GUIKIT::Font::system() );
     assigner.infoLabel.setText( text );
 }
@@ -781,41 +794,41 @@ auto InputLayout::getMappingOfSelected(std::string& inputIdent) -> InputMapping*
         return (InputMapping*)input.guid;
     }
 
-	auto input = emulator->devices[ deviceId() ].inputs[ inputId() ];
+    auto input = emulator->devices[ deviceId() ].inputs[ inputId() ];
 
-	inputIdent = input.name;
+    inputIdent = input.name;
 
-	return (InputMapping*)input.guid;
+    return (InputMapping*)input.guid;
 }
 
 auto InputLayout::update() -> void {
-	if (hotkeyMode())
-		loadHotkeyList();
+    if (hotkeyMode())
+        loadHotkeyList();
     else if (globalHotkeyMode())
         TabWindow::updateGlobalHotkeys();
-	else
-		loadInputList( deviceId() );
+    else
+        loadInputList( deviceId() );
 }
 
 auto InputLayout::updateConnectorButtons() -> void {
-    
+
     for(auto& connectorButton : selector.connectorButtons) {
-        
+
         auto device = emulator->getConnectedDevice( connectorButton.connector );
-        
+
         bool willCheck = deviceId() == device->id;
-        
-        if (willCheck != connectorButton.checkButton->checked() )        
+
+        if (willCheck != connectorButton.checkButton->checked() )
             connectorButton.checkButton->setChecked( willCheck );
     }
 }
 
 auto InputLayout::enableConnectorButtons() -> void {
-    
+
     auto device = emulator->getDevice( deviceId() );
-    
-    for(auto& connectorButton : selector.connectorButtons)        
-        connectorButton.checkButton->setEnabled( !device->isKeyboard() );   
+
+    for(auto& connectorButton : selector.connectorButtons)
+        connectorButton.checkButton->setEnabled( !device->isKeyboard() );
 }
 
 auto InputLayout::eraseSelected( bool alternate ) -> void {
@@ -826,17 +839,17 @@ auto InputLayout::eraseSelected( bool alternate ) -> void {
 
     std::string inputIdent;
     auto mapping = getMappingOfSelected(inputIdent);
-    
+
     if (alternate && !mapping->alternate)
         return;
-    
+
     if (alternate)
         mapping = mapping->alternate;
 
     mapping->init();
-    
-	InputManager::updateAllMappingsInUse(true);
-        
+
+    InputManager::updateAllMappingsInUse(true);
+
     updateListEntry(inputId(), mapping);
     TabWindow::updateGlobalHotkeys(this->tabWindow);
 }
@@ -850,7 +863,7 @@ auto InputLayout::linkSelected( bool alternate ) -> void {
 
     std::string inputIdent;
     auto mapping = getMappingOfSelected(inputIdent);
-    
+
     if (alternate && !mapping->alternate)
         return;
 
@@ -860,20 +873,20 @@ auto InputLayout::linkSelected( bool alternate ) -> void {
     mapping->swapLinker();
     updateListEntry(inputId(), mapping);
     TabWindow::updateGlobalHotkeys(this->tabWindow);
-	
-	InputManager::updateAllMappingsInUse(true);
+
+    InputManager::updateAllMappingsInUse(true);
 }
 
 auto InputLayout::mapSelected( bool alternate ) -> void {
     if (InputManager::captureObject)
         return;
-        
+
     std::string inputIdent;
     auto mapping = getMappingOfSelected(inputIdent);
-    
+
     if (alternate && !mapping->alternate)
         return;
-    
+
     if (alternate)
         mapping = mapping->alternate;
 
@@ -902,8 +915,8 @@ auto InputLayout::mapSelected( bool alternate ) -> void {
 }
 
 auto InputLayout::hotkeyMode() -> bool {
-	
-	return selector.hotkeys.checked();
+
+    return selector.hotkeys.checked();
 }
 
 auto InputLayout::globalHotkeyMode() -> bool {
@@ -912,12 +925,12 @@ auto InputLayout::globalHotkeyMode() -> bool {
 }
 
 auto InputLayout::triggerHotkeyMode() -> void {
-	if (hotkeyMode())
-		return;
-	
-	selector.globalHotkeys.setChecked(false);
+    if (hotkeyMode())
+        return;
+
+    selector.globalHotkeys.setChecked(false);
     selector.hotkeys.setChecked();
-	selector.hotkeys.onToggle();
+    selector.hotkeys.onToggle();
 }
 
 auto InputLayout::loadSettings() -> void {
@@ -931,4 +944,6 @@ auto InputLayout::loadSettings() -> void {
     updateMiscSettings();
     
     update();
+}
+
 }

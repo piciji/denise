@@ -16,6 +16,7 @@
 #include "media/autoloader.h"
 #include "media/fileloader.h"
 #include "thread/emuThread.h"
+#include "emuconfig/layouts/presentation.h"
 #include <random>
 
 Program* program = nullptr;

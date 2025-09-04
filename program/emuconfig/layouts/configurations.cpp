@@ -1,4 +1,31 @@
 
+#include "configurations.h"
+#include "../config.h"
+#include "../../../data/icons.h"
+#include "../../view/view.h"
+#include "../../thread/emuThread.h"
+#include "presentation.h"
+#include "../../video/palette.h"
+#include "audio.h"
+#include "../../cmd/cmd.h"
+#include "../../view/status.h"
+#include "../../states/states.h"
+#include "../../audio/manager.h"
+#include "../../firmware/manager.h"
+#include "../../media/fileloader.h"
+#include "../../media/autoloader.h"
+#include "firmware.h"
+#include "geometry.h"
+#include "input.h"
+#include "misc.h"
+#include "palette.h"
+#include "system.h"
+
+#define mes this->tabWindow->message
+#define _settings this->tabWindow->settings
+
+namespace EmuConfigView {
+
 MemoryPatternLayout::FirstLine::FirstLine() {
     append( valueLabel, {0u, 0u}, 10 );
     append( valueStepper, {0u, 0u}, 10 );
@@ -97,24 +124,24 @@ MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
-	GUIKIT::Label test;
-	test.setFont( GUIKIT::Font::system("", true) );
-	test.setText( "0000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 " );
-	auto size = test.minimumSize();
-    
+    GUIKIT::Label test;
+    test.setFont( GUIKIT::Font::system("", true) );
+    test.setText( "0000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 " );
+    auto size = test.minimumSize();
+
     append( firstLine, {0u, 0u}, 10 );
     append( secondLine, {0u, 0u}, 10 );
     append( thirdLine, {0u, 0u}, 10 );
     append( fourthLine, {0u, 0u}, 10 );
     append( preview, {size.width + tabWindow->getScrollbarWidth(), size.height * 17}, 10 );
     append( fifthLine, {0u, 0u} );
-    
+
     preview.setFont( GUIKIT::Font::system("", true) );
     preview.setForegroundColor( 0x666666 );
     preview.setEditable(false);
 }
 
-SettingsLayout::Control::Control() {    
+SettingsLayout::Control::Control() {
     append( load, {0u, 0u}, 10 );
     append( save, {0u, 0u}, 10 );
     append( remove, {0u, 0u}, 10 );
@@ -122,10 +149,10 @@ SettingsLayout::Control::Control() {
     append( edit, {~0u, 0u}, 10 );
     append( clear, { 0u, 0u }, 10);
     append( search, { 0u, 0u });
-    
+
     load.setEnabled(false);
     remove.setEnabled(false);
-    
+
     setAlignment(0.5);
 }
 
@@ -135,7 +162,7 @@ SettingsLayout::Active::Active() {
     append(undockButton,{0u, 0u}, 10);
     append(standardButton,{0u, 0u});
 
-    fileLabel.setFont(GUIKIT::Font::system("bold"));    
+    fileLabel.setFont(GUIKIT::Font::system("bold"));
 
     setAlignment(0.5);
 }
@@ -143,7 +170,7 @@ SettingsLayout::Active::Active() {
 SettingsLayout::SettingsLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
-    
+
     append(control, {~0u, 0u}, 5);
     append(active, {~0u, 0u}, 5);
     append(startWithLastConfigCheckbox,{~0u, 0u}, 5);
@@ -155,9 +182,9 @@ ConfigurationsFolderLayout::ConfigurationsFolderLayout() {
     append( pathEdit, {~0u, 0u}, 10 );
     append( standard, {0u, 0u}, 10 );
     append( select, {0u, 0u} );
-    
+
     pathEdit.setEditable( false );
-    
+
     label.setFont(GUIKIT::Font::system("bold"));
     setAlignment(0.5);
 }
@@ -166,7 +193,7 @@ StateFastLayout::Top::Top() {
     append(label,{0u, 0u}, 10);
     append(edit,{~0u, 0u}, 10);
     append(find,{0u, 0u}, 10);
-	append(hotkeys,{0u, 0u});
+    append(hotkeys,{0u, 0u});
     setAlignment(0.5);
 }
 
@@ -193,7 +220,7 @@ StateFastLayout::Selector::Selector() {
 StateFastLayout::StateFastLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
-    
+
     append(top,{~0u, 0u}, 5);
     append(options,{~0u, 0u}, 5);
     append(selector, { ~0u, ~0u }, 5);
@@ -202,7 +229,7 @@ StateFastLayout::StateFastLayout() {
 StateDirectLayout::StateDirectLayout() {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
-    
+
     append(load,{0u, 0u}, 20);
     append(save,{0u, 0u});
     setAlignment(0.5);
@@ -212,18 +239,18 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
-    
+
     setMargin(10);
     if(dynamic_cast<LIBC64::Interface*>(emulator))
         memoryPattern = new MemoryPatternLayout(tabWindow);
-    
+
     moduleList.setHeaderText( { "" } );
-    moduleList.setHeaderVisible( false );     
+    moduleList.setHeaderVisible( false );
     moduleList.append( {"settings"} );
     moduleList.append( {"states"} );
     if (memoryPattern)
         moduleList.append( {"memory"} );
-    
+
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen));
     imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed));
     imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document));
@@ -239,7 +266,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     delImage.loadPng((uint8_t*)Icons::del, sizeof(Icons::del));
     saveImage.loadPng((uint8_t*)Icons::disk, sizeof(Icons::disk));
     openImage.loadPng((uint8_t*)Icons::open, sizeof(Icons::open));
-    
+
     settings.control.load.setImage(&scriptImage);
     settings.control.save.setImage(&saveImage);
     settings.control.create.setImage(&addImage);
@@ -254,12 +281,12 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     moduleList.setImage(1, 0, scriptImage);
     if (memoryPattern)
         moduleList.setImage(2, 0, memImage);
-    
+
     moduleList.setSelection(0);
     moduleFrame.append( moduleList, { GUIKIT::Font::scale(140), GUIKIT::Font::scale(100)} );
     moduleFrame.setPadding(10);
     moduleFrame.setFont( GUIKIT::Font::system("bold") );
-    
+
     moduleList.onChange = [this]() {
 
         if (!moduleList.selected())
@@ -273,14 +300,14 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             memoryPattern->updateLayout();
         }
     };
-        
+
     append( moduleFrame, {0u, 0u}, 10 );
-        
+
     settingsFrame.append( settings, {~0u, ~0u}, 5 );
     settingsFrame.append( settingsFolder, {~0u, 0u} );
-    
+
     statesFrame.append( stateFast, {~0u, ~0u}, 5 );
-    statesFrame.append( stateDirect, {~0u, 0u}, 5 );    
+    statesFrame.append( stateDirect, {~0u, 0u}, 5 );
     statesFrame.append( stateFolder, {~0u, 0u} );
 
     append( moduleSwitch, {~0u, ~0u} );
@@ -288,24 +315,24 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     moduleSwitch.setLayout( 1, statesFrame, {~0u, ~0u} );
     if(memoryPattern)
         moduleSwitch.setLayout( 2, *memoryPattern, {~0u, ~0u} );
-    
+
     if(memoryPattern) {
-		
-		memoryPattern->preview.onChange = [this]() {
-         //   mes->warning( "on change" );
-		};
-		
-		memoryPattern->preview.onFocus = [this]() {
-		//	mes->warning( "on focus" );
-		};
+
+        memoryPattern->preview.onChange = [this]() {
+            //   mes->warning( "on change" );
+        };
+
+        memoryPattern->preview.onFocus = [this]() {
+            //	mes->warning( "on focus" );
+        };
 
         memoryPattern->firstLine.valueStepper.onChange = [this]() {
-			
+
             _settings->set<unsigned>("memory_value", (unsigned)(memoryPattern->firstLine.valueStepper.getValue()));
 
             this->updateMemoryPreview();
         };
-        
+
         memoryPattern->firstLine.invertValueEveryCombo.onChange = [this]() {
 
             _settings->set<unsigned>("memory_invert_every", (unsigned)(memoryPattern->firstLine.invertValueEveryCombo.userData()));
@@ -326,7 +353,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
             this->updateMemoryPreview();
         };
-        
+
         memoryPattern->thirdLine.lengthRandomCombo.onChange = [this]() {
 
             _settings->set<unsigned>("memory_random_pattern", (unsigned)(memoryPattern->thirdLine.lengthRandomCombo.userData()));
@@ -446,17 +473,17 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     settings.treeView.onChange = [this](GUIKIT::TreeViewItem* selectedBefore) {
         if (!settings.control.load.enabled())
             settings.control.load.setEnabled();
-        
+
         GUIKIT::File::Info* info;
         GUIKIT::TreeViewItem* selected = settings.treeView.selected();
-        if (selected) {            
+        if (selected) {
             info = (GUIKIT::File::Info*)selected->userData();
             if (info) {
                 if (!info->isDir)
                     selected->setText(GUIKIT::String::getFileName(info->name) + " -> " + info->date);
 
                 settings.control.remove.setEnabled(!info->isDir);
-            }                        
+            }
         }
 
         if (selectedBefore) {
@@ -473,7 +500,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     settings.startWithLastConfigCheckbox.setChecked( globalSettings->get<bool>( this->emulator->ident + "_load_last_settings", false ) );
 
     settings.treeView.onActivate = [this]() {
-        
+
         settings.control.load.onActivate();
     };
 
@@ -485,7 +512,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (mes->question( trans->get("undock settings") ) ) {
             emuThread->lock();
             program->undockSettings();
-            VideoLayout::displayFonts.clear();
+            PresentationLayout::displayFonts.clear();
 
             for(auto _emulator : emulators) {
                 PaletteManager* paletteManager = PaletteManager::getInstance(_emulator);
@@ -504,9 +531,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
                 if (view->paletteLayout)
                     view->paletteLayout->loadSettings();
-                if (view->videoLayout) {
-                    view->videoLayout->fillFontTypeList();
-                    view->videoLayout->updateRecordingPath();
+                if (view->presentationLayout) {
+                    view->presentationLayout->fillFontTypeList();
+                    view->presentationLayout->updateRecordingPath();
                 }
             }
             emuThread->unlock();
@@ -533,9 +560,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         emuThread->unlock();
     };
-    
+
     settings.control.load.onActivate = [this]() {
-        auto& _tree = settings.treeView;        
+        auto& _tree = settings.treeView;
         GUIKIT::TreeViewItem* selected = _tree.selected();
         if (!selected)
             return;
@@ -554,7 +581,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         }
         emuThread->unlock();
     };
-    
+
     settings.control.save.onActivate = [this]() {
         std::string fileName;
         GUIKIT::File::Info* info = nullptr;
@@ -563,7 +590,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (selected) {
             info = (GUIKIT::File::Info*)selected->userData();
         }
-        
+
         if (!selected || (info && info->isDir)) {
             if (cmd->hasCustomConfig(emulator))
                 return;
@@ -589,8 +616,8 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             mes->error(trans->get("file_creation_error",{
                 {"%path%", path}}));
     };
-    
-    settings.control.create.onActivate = [this]() {        
+
+    settings.control.create.onActivate = [this]() {
         const std::string basePath = program->getSettingsFolder(emulator, true);
 
         std::string filePath = GUIKIT::BrowserWindow()
@@ -610,9 +637,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             updateSettingsList(filePath);
             return;
         }
-        
+
         GUIKIT::File file(filePath);
-        
+
         if (file.exists()) {
             if (!mes->question(trans->get("file_exist_error", { {"%path%", filePath} })))
                 return;
@@ -622,28 +649,28 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             GUIKIT::String::remove(filePath, { basePath });
             if (statusHandler)
                 statusHandler->setMessage(trans->get("file_creation_success", { {"%path%", filePath} }));
-            
+
             globalSettings->set(emulator->ident + "_custom_settings", filePath);
             cmd->removeCustomConfig(emulator);
             settings.active.fileLabel.setText(filePath);
             updateSettingsList(filePath);
-            
+
         } else
             mes->error(trans->get("file_creation_error", { {"%path%", filePath} }));
     };
-    
+
     settings.control.remove.onActivate = [this]() {
         auto& _tree = settings.treeView;
         GUIKIT::TreeViewItem* selected = _tree.selected();
         if (!selected)
             return;
-        
+
         GUIKIT::File::Info* info = (GUIKIT::File::Info*)selected->userData();
         if (info->isDir)
             return;
 
         std::string path = program->getSettingsFolder(emulator) + info->name;
-        
+
         GUIKIT::File file( path );
 
         if (file.exists()) {
@@ -651,11 +678,11 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                     {"%path%", path}
                 })))
                 return;
-        }        
-		
+        }
+
         if (!file.del())
             mes->error( trans->get("file deletion error", {{"%path%", path}}) );
-        else {			
+        else {
             if (!cmd->hasCustomConfig(emulator) && (info->name == globalSettings->get<std::string>(emulator->ident + "_custom_settings", ""))) {
                 globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
 
@@ -671,8 +698,8 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                 settings.active.fileLabel.setText(trans->get("default"));
 
                 emuThread->unlock();
-			}
-			
+            }
+
             auto parent = selected->parentItem();
             if (parent) {
                 parent->remove(*selected);
@@ -682,7 +709,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
                     delete info;
                 delete selected;
             }
-		}
+        }
     };
 
     settings.control.search.onActivate = [this]() {
@@ -693,7 +720,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         settings.control.edit.setText("");
         updateSettingsList();
     };
-    
+
     settingsFolder.select.onActivate = [this]() {
 
         auto path = GUIKIT::BrowserWindow()
@@ -703,16 +730,16 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         if (path.empty())
             return;
-        
+
         if (!cmd->hasCustomConfig(emulator) && (globalSettings->get<std::string>(emulator->ident + "_custom_settings", "") != ""))
             settings.active.standardButton.onActivate();
 
         path = GUIKIT::File::buildRelativePath(path);
         settingsFolder.pathEdit.setEnabled();
         settingsFolder.pathEdit.setText( path );
-        
+
         globalSettings->set<std::string>(emulator->ident + "_settings_path", path);
-        
+
         updateSettingsList();
     };
 
@@ -733,19 +760,19 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         settings.active.fileLabel.setText(trans->get("default"));
     else
         settings.active.fileLabel.setText( globalSettings->get<std::string>(emulator->ident + "_custom_settings", trans->get("default")));
-    
+
     // states
-    
+
     stateFast.top.hotkeys.onActivate = [this]() {
-		this->tabWindow->show(EmuConfigView::TabWindow::Layout::Control);
+        this->tabWindow->show(EmuConfigView::TabWindow::Layout::Control);
         this->tabWindow->inputLayout->triggerHotkeyMode();
-	};
-	
-	stateFast.top.edit.onChange = [this]() {
-		_settings->set<std::string>( "save_ident", stateFast.top.edit.text());
-		_settings->set<unsigned>( "save_slot", 0);
-	};
-    
+    };
+
+    stateFast.top.edit.onChange = [this]() {
+        _settings->set<std::string>( "save_ident", stateFast.top.edit.text());
+        _settings->set<unsigned>( "save_slot", 0);
+    };
+
     stateFast.options.autoIdentOff.onActivate = [this]() {
         _settings->set<unsigned>( "auto_save_mode", 0);
     };
@@ -763,7 +790,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (!checked)
             stateFast.selector.preview.setImage(nullptr);
     };
-    
+
     stateFast.selector.listView.onChange = [this]() {
         if (!_settings->get<bool>("save_screenshot", true))
             return;
@@ -776,7 +803,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         image->free();
 
         GUIKIT::File file(path);
-        if (file.open()) {            
+        if (file.open()) {
             if (image->loadPng(file.read(), file.getSize())) {
                 stateFast.selector.preview.setImage(image);
                 return;
@@ -789,8 +816,8 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         auto& lview = stateFast.selector.listView;
         auto selection = lview.selection();
         auto pos = lview.text(selection, 0);
-		_settings->set<unsigned>( "save_slot", std::stoul(pos));   
-        
+        _settings->set<unsigned>( "save_slot", std::stoul(pos));
+
         unsigned statePos = 0;
         std::string baseName = splitFile(lview.text(selection, 1), statePos);
         stateFast.top.edit.setText( baseName );
@@ -800,52 +827,52 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         States::getInstance(emulator)->load(lview.text(selection, 1), true);
         emuThread->unlock();
         view->setFocused(100);
-	};	
-		
-	stateFast.top.find.onActivate = [this]() {
-		stateFast.selector.listView.reset();
-		
-		auto fileName = stateFast.top.edit.text();
-		if (fileName.empty()) {
-			fileName = "savestate";
-		}
-		                
+    };
+
+    stateFast.top.find.onActivate = [this]() {
+        stateFast.selector.listView.reset();
+
+        auto fileName = stateFast.top.edit.text();
+        if (fileName.empty()) {
+            fileName = "savestate";
+        }
+
         auto infos = GUIKIT::File::getFolderList(program->generatedFolder(emulator, "states_folder", "states"), fileName);
-				
-		std::vector<StateLine> lines;
-		
-		for(auto& info : infos) {
+
+        std::vector<StateLine> lines;
+
+        for(auto& info : infos) {
             if (GUIKIT::String::endsWith(info.name, ".images") || GUIKIT::String::endsWith(info.name, ".png"))
                 continue;
-            
+
             unsigned statePos = 0;
             splitFile( info.name, statePos );
-            
-			lines.push_back( {statePos, info.name, info.date} );
-		}
-		
-		std::sort(lines.begin(), lines.end());
-		
-		for(auto& line : lines ) {
-			stateFast.selector.listView.append({ std::to_string(line.pos), line.fileName, line.date });
-		}
+
+            lines.push_back( {statePos, info.name, info.date} );
+        }
+
+        std::sort(lines.begin(), lines.end());
+
+        for(auto& line : lines ) {
+            stateFast.selector.listView.append({ std::to_string(line.pos), line.fileName, line.date });
+        }
 
         stateFast.selector.preview.setImage(nullptr);
-	};
-    
+    };
+
     stateDirect.load.onActivate = [this]() {
         auto path = GUIKIT::File::resolveRelativePath(_settings->get<std::string>("save_direct_folder", ""));
 
-		std::string filePath = GUIKIT::BrowserWindow()
+        std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
             .setTitle(trans->get("select_savestate"))
             .setPath(path)
             .setFilters( { trans->get("state") + " (*.sav)", trans->get("all_files")} )
             .open();
-		
-		if (filePath.empty())
+
+        if (filePath.empty())
             return;
-            
+
         path = GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(filePath));
         _settings->set<std::string>("save_direct_folder", path);
 
@@ -853,38 +880,38 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         States::getInstance(emulator)->load(filePath);
         emuThread->unlock();
         view->setFocused(100);
-	};
-	
-	stateDirect.save.onActivate = [this]() {
-        
+    };
+
+    stateDirect.save.onActivate = [this]() {
+
         if (activeEmulator != emulator)
             return mes->error( trans->get("no emulation active") );
 
         auto path = GUIKIT::File::resolveRelativePath(_settings->get<std::string>("save_direct_folder", ""));
-        
-		std::string filePath = GUIKIT::BrowserWindow()
+
+        std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
             .setTitle(trans->get("select_savestate"))
             .setPath(path)
             .setFilters( { trans->get("state") + " (*.sav)", trans->get("all_files")} )
             .save();
-		
-		if (filePath.empty())
+
+        if (filePath.empty())
             return;
-            
+
 
         auto fn = GUIKIT::String::getFileName(filePath);
         if (GUIKIT::String::getExtension(fn, "") == "")
             filePath += ".sav";
-        
+
         path = GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(filePath));
         _settings->set<std::string>("save_direct_folder", path);
 
         emuThread->lock();
         States::getInstance( emulator )->save( filePath );
         emuThread->unlock();
-	};
-    
+    };
+
     stateFolder.select.onActivate = [this]() {
         auto path = GUIKIT::BrowserWindow()
                 .setTitle(trans->get("select_states_folder"))
@@ -904,9 +931,9 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         stateFolder.pathEdit.setText(program->generatedFolder(emulator, "states_folder", "states"));
         stateFolder.pathEdit.setEnabled(false);
     };
-        
+
     loadSettings();
-    
+
     updateSettingsList();
 }
 
@@ -920,7 +947,7 @@ auto ConfigurationsLayout::updateSettingsList(const std::string& expandFile, con
         delete info;
         delete item;
     }
-        
+
     std::string path = program->getSettingsFolder(emulator);
     auto treeViewItem = new GUIKIT::TreeViewItem;
     auto info = new GUIKIT::File::Info;
@@ -929,7 +956,7 @@ auto ConfigurationsLayout::updateSettingsList(const std::string& expandFile, con
     treeViewItem->setUserData((uintptr_t)info);
 
     GUIKIT::File::appendFolderToTreeView(path, treeViewItem, search);
-    
+
     if (treeViewItem->itemCount() == 0) {
         delete treeViewItem;
         delete info;
@@ -939,7 +966,7 @@ auto ConfigurationsLayout::updateSettingsList(const std::string& expandFile, con
         treeViewItem->setImageExpanded(imgFolderOpen);
         treeViewItem->setExpanded();
         settings.treeView.append(*treeViewItem);
-        
+
         treeViewItem->itemsRecursive(items);
         for (auto item : items) {
             GUIKIT::File::Info* info = (GUIKIT::File::Info*)item->userData();
@@ -1021,7 +1048,7 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
         audioManager->drive.unload(this->emulator, this->emulator->getTapeMediaGroup(), false);
 
     view->updateDeviceSelection(this->emulator);
-    
+
     if(this->tabWindow->audioLayout) this->tabWindow->audioLayout->loadSettings();
 
     if(this->tabWindow->geometryLayout) this->tabWindow->geometryLayout->loadSettings();
@@ -1036,8 +1063,8 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
 
     if(this->tabWindow->systemLayout) this->tabWindow->systemLayout->loadSettings();
 
-    if(this->tabWindow->videoLayout)
-        this->tabWindow->videoLayout->loadSettings();
+    if(this->tabWindow->presentationLayout)
+        this->tabWindow->presentationLayout->loadSettings();
     else if (videoDriver)
         VideoManager::getInstance( emulator )->reloadSettings(true);
 
@@ -1045,7 +1072,7 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
         this->tabWindow->mediaLayout->loadSettings();
     else
         fileloader->loadSettings(this->emulator);
-    
+
     loadSettings();
 
     view->updateSpeedLabels();
@@ -1059,30 +1086,30 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
 }
 
 auto ConfigurationsLayout::splitFile( std::string file, unsigned& pos ) -> std::string {
-    
+
     auto parts = GUIKIT::String::split( file, '_' );
     if (parts.size() < 2)
         return file;
-    
+
     auto ident = parts[ parts.size() - 1 ];
-    
+
     try {
         pos = std::stoi( ident );
-    } catch(...) { 
+    } catch(...) {
         pos = 0;
     }
-    
+
     std::size_t end = file.find_last_of("_");
     if (end == std::string::npos)
         return file;
-    
+
     file = file.erase(end);
 
     return file;
 }
 
 auto ConfigurationsLayout::updateSaveIdent( std::string fileName ) -> void {
-        
+
     stateFast.top.edit.setText( fileName );
 }
 
@@ -1100,22 +1127,22 @@ auto ConfigurationsLayout::loadSettings() -> void {
     stateFast.top.edit.setText( _settings->get<std::string>( "save_ident", "") );
 
     updateStorePaths();
-    
+
     if(memoryPattern) {
         Emulator::Interface::MemoryPattern pattern;
         program->getMemoryPatternFromConfig(emulator, pattern);
-        
+
         memoryPattern->firstLine.valueStepper.setValue( pattern.value );
         memoryPattern->firstLine.invertValueEveryCombo.setSelectionByUserId( pattern.invertEvery );
         memoryPattern->secondLine.valueStepper.setValue( pattern.secondValue );
         memoryPattern->secondLine.invertValueEveryCombo.setSelectionByUserId( pattern.secondInvertEvery );
-        
+
         memoryPattern->thirdLine.lengthRandomCombo.setSelectionByUserId( pattern.randomPatternLength );
         memoryPattern->thirdLine.repeatRandomEveryCombo.setSelectionByUserId( pattern.repeatRandomPattern );
-        
+
         memoryPattern->fourthLine.randomChanceStepper.setValue( pattern.randomChance );
         memoryPattern->fourthLine.offsetCombo.setSelectionByUserId( pattern.offset );
-        
+
         updateMemoryPreview();
     }
     stateFast.selector.preview.setImage(nullptr);
@@ -1135,23 +1162,23 @@ auto ConfigurationsLayout::updateMemoryPreview() -> void {
     program->setMemoryPattern(emulator);
 
     unsigned size = emulator->getMemorySize();
-    
+
     uint8_t* pattern = new uint8_t[ size ];
 
     emulator->getMemoryInitPattern( pattern );
-    
+
     char hex[6];
-    
+
     std::string out = "";
-    
+
     unsigned addr = 0;
-    
+
     uint8_t i;
-    
+
     while(true) {
-        
+
         snprintf( hex, 6, "%04x", addr );
-        
+
         out += (std::string)hex;
         out += ": ";
 
@@ -1162,43 +1189,43 @@ auto ConfigurationsLayout::updateMemoryPreview() -> void {
             out += (std::string)hex;
             out += " ";
         }
-        
+
         out += "\r\n";
-        
+
         if (addr == size)
             break;
-        
+
         if ((addr & 0xff) == 0)
             out += "\r\n";
     }
-    
+
     delete[] pattern;
-    
+
     memoryPattern->preview.setText( out );
 }
 
 auto ConfigurationsLayout::translate() -> void {
-            
+
     settings.control.load.setText( trans->get("load") );
     settings.control.save.setText( trans->get("save") );
     settings.control.create.setText( trans->get("create") );
     settings.control.remove.setText( trans->get("remove") );
-    
+
     settingsFolder.label.setText( trans->get("folder", {}, true) );
     settingsFolder.standard.setText( trans->getA("default") );
-    
+
     settings.setText( trans->get("settings") );
     settings.active.activeLabel.setText( trans->get("active setting", {}, true) );
     settings.active.undockButton.setText( trans->get("undock") );
     settings.active.standardButton.setText( trans->get("default") );
     settings.startWithLastConfigCheckbox.setText( trans->get("Start with last loaded Settings") );
-    
+
     stateFolder.label.setText( trans->get("folder", {}, true) );
     stateFolder.standard.setText( trans->getA("default") );
-    
+
     stateFast.top.label.setText( trans->get("labelling", {}, true) );
     stateFast.top.find.setText( trans->get("find") );
-	stateFast.top.hotkeys.setText( trans->get("hotkeys") );
+    stateFast.top.hotkeys.setText( trans->get("hotkeys") );
     stateFast.selector.listView.setHeaderText({"#", trans->get("file"), trans->get("date")});
 
     stateFast.options.autoLabel.setText( trans->getA("automatic savestate identifier", true) );
@@ -1247,4 +1274,6 @@ auto ConfigurationsLayout::translate() -> void {
 
         memoryPattern->updateLayout();
     }
+}
+
 }

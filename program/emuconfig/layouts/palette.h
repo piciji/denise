@@ -1,5 +1,15 @@
 
-struct PaletteColorLayout : GUIKIT::HorizontalLayout {    
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+#include "../../config/slider.h"
+#include "../../config/sliderAlt.h"
+#include "model.h"
+
+namespace EmuConfigView {
+
+struct PaletteColorLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Label color;
     GUIKIT::SquareCanvas canvas;
     GUIKIT::Label hex;
@@ -73,3 +83,5 @@ struct PaletteLayout : GUIKIT::VerticalLayout {
     
     PaletteLayout(TabWindow* tabWindow);
 };
+
+}

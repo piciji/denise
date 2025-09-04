@@ -8,6 +8,7 @@
 #include "../media/autoloader.h"
 #include "../media/fileloader.h"
 #include "../view/status.h"
+#include "../emuconfig/layouts/audio.h"
 
 EmuThread* emuThread = nullptr;
 

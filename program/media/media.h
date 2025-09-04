@@ -9,6 +9,7 @@ struct FileSetting;
 #include "../../guikit/api.h"
 #include "../program.h"
 #include "../emuconfig/config.h"
+#include "../config/slider.h"
 
 #define SWAPPER_SLOTS 25
 

@@ -491,25 +491,8 @@ set(headerSrcs ${headerSrcs}
     program/config/slider.h
     program/config/sliderAlt.h
     program/emuconfig/config.h
-    program/emuconfig/layouts/audio.cpp
-    program/emuconfig/layouts/audio.h
-    program/emuconfig/layouts/configurations.cpp
-    program/emuconfig/layouts/configurations.h
-    program/emuconfig/layouts/firmware.cpp
-    program/emuconfig/layouts/firmware.h
-    program/emuconfig/layouts/geometry.cpp
-    program/emuconfig/layouts/geometry.h
-    program/emuconfig/layouts/input.cpp
-    program/emuconfig/layouts/input.h
-    program/emuconfig/layouts/misc.cpp
-    program/emuconfig/layouts/misc.h
     program/emuconfig/layouts/model.h
-    program/emuconfig/layouts/palette.cpp
-    program/emuconfig/layouts/palette.h
-    program/emuconfig/layouts/system.cpp
-    program/emuconfig/layouts/system.h
-    program/emuconfig/layouts/video.cpp
-    program/emuconfig/layouts/video.h
+    program/emuconfig/layouts/presentation.h
     program/firmware/manager.h
     program/input/capture.cpp
     program/input/global.cpp

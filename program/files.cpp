@@ -1,6 +1,8 @@
 
 #include "program.h"
 #include "tools/chronos.h"
+#include "emuconfig/layouts/configurations.h"
+#include "emuconfig/layouts/system.h"
 
 auto Program::showOpenError( std::vector<std::string>& paths, bool warning ) -> void {
     if ( paths.empty() )

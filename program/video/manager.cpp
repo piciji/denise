@@ -14,6 +14,7 @@
 #include "props.cpp"
 #include "sync.cpp"
 #include "../tools/dataStorage.h"
+#include "../emuconfig/layouts/presentation.h"
 
 #include "../tools/chronos.h"
 #include "../view/status.h"
@@ -1801,8 +1802,8 @@ auto VideoManager::getPreset() -> ShaderPreset* {
 auto VideoManager::finishPreset() -> void {
     parser->addBrokenLUT();
     auto emuView = EmuConfigView::TabWindow::getView(emulator);
-    if (emuView && emuView->videoLayout)
-        emuView->videoLayout->presentShaderError();
+    if (emuView && emuView->presentationLayout)
+        emuView->presentationLayout->presentShaderError();
 }
 
 auto VideoManager::clearPreset() -> void {

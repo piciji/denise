@@ -1,4 +1,16 @@
 
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+#include "model.h"
+
+struct FirmwareManager;
+
+namespace EmuConfigView {
+
+struct TabWindow;
+
 struct FirmwareContainer : GUIKIT::FramedVerticalLayout {
     
     struct Block : GUIKIT::HorizontalLayout {
@@ -27,17 +39,19 @@ struct FirmwareLayout : GUIKIT::VerticalLayout {
     FirmwareContainer containerLayout;
     FirmwareContainer::Block* selectedBlock = nullptr;
     GUIKIT::HorizontalLayout customSelectorLayout;
-	std::vector<GUIKIT::RadioBox*> selectorBoxes;
+    std::vector<GUIKIT::RadioBox*> selectorBoxes;
 
     GUIKIT::Image openImg;
     GUIKIT::Image ejectImg;
-    
+
     auto assign( std::string path, FirmwareContainer::Block* block, FileSetting* fSetting, unsigned storeLevel ) -> void;
     auto translate() -> void;
     auto drop( std::string path ) -> void;
-	auto updateVisibility() -> void;
+    auto updateVisibility() -> void;
     auto hotSwap( unsigned storeLevel, int firmwareId = -1 ) -> void;
     auto loadSettings() -> void;
     
     FirmwareLayout( TabWindow* tabWindow );
 };
+
+}

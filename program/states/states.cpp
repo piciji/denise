@@ -4,6 +4,10 @@
 #include "../view/status.h"
 #include "../audio/manager.h"
 #include "../media/fileloader.h"
+#include "../emuconfig/layouts/presentation.h"
+#include "../emuconfig/layouts/audio.h"
+#include "../emuconfig/layouts/input.h"
+#include "../emuconfig/layouts/system.h"
 
 std::vector<States*> states;
 
@@ -537,8 +541,8 @@ auto States::updateModels() -> void {
     }
 
     if (regionChange) {
-        if (emuView && emuView->videoLayout)
-            emuView->videoLayout->updatePresets(true, false);
+        if (emuView && emuView->presentationLayout)
+            emuView->presentationLayout->updatePresets(true, false);
         else if (videoDriver && activeVideoManager)
             activeVideoManager->reloadSettings(false);
     }

@@ -1,6 +1,7 @@
 
 #include "program.h"
 #include "audio/manager.h"
+#include "emuconfig/layouts/audio.h"
 
 auto Program::initAudio() -> void {    
 	if (audioDriver) delete audioDriver;

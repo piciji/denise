@@ -1,4 +1,16 @@
 
+#include "system.h"
+#include "../config.h"
+#include "../../thread/emuThread.h"
+#include "../../view/view.h"
+#include "../../input/manager.h"
+#include "../../audio/manager.h"
+
+#define mes this->tabWindow->message
+#define _settings this->tabWindow->settings
+
+namespace EmuConfigView {
+
 auto ExpansionLayout::build( Emulator::Interface* emulator ) -> void {
     unsigned blocksPerLine = 5;
     auto& expansions = emulator->expansions;
@@ -119,14 +131,14 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 _settings->set<unsigned>( "expansion", block->expansion->id);
                 updateExpansionMemory();
 
-				if (activeEmulator == this->emulator) {
+                if (activeEmulator == this->emulator) {
                     emuThread->lock();
                     program->power(activeEmulator);
                     emuThread->unlock();
                 }
             };
         }
-    }       
+    }
 
     loadSettings();
 }
@@ -137,11 +149,11 @@ auto SystemLayout::translate() -> void {
     driveMechanicsLayout.translate( "drive mechanics" );
     performanceModelLayout.translate( "accuracy and performance" );
     memoryModelLayout.translate( "memory" );
-    
+
     expansionLayout.setText( trans->get("expansion_port") );
-    
+
     for( auto line : expansionLayout.lines ) {
-        for( auto block : line->blocks ) {                               
+        for( auto block : line->blocks ) {
             block->box.setText( trans->get( block->expansion->name ) );
         }
     }
@@ -157,13 +169,13 @@ auto SystemLayout::updateExpansionMemory() -> void {
     Emulator::Interface::Model* useModel = nullptr;
     Emulator::Interface::Model* useModel2 = nullptr;
     Emulator::Interface::Expansion* expansionSelected = nullptr;
-    
+
     for ( auto line : expansionLayout.lines ) {
-        for( auto block : line->blocks ) {  
+        for( auto block : line->blocks ) {
             if (block->box.checked()) {
                 expansionSelected = block->expansion;
                 break;
-            }                
+            }
         }
     }
 
@@ -172,40 +184,40 @@ auto SystemLayout::updateExpansionMemory() -> void {
             expansionSelected->id == LIBC64::Interface::ExpansionIdReuRetroReplay) {
             useModel = emulator->getModel(LIBC64::Interface::ModelIdReuRam);
 
-        } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdGeoRam) {
-            useModel = emulator->getModel(LIBC64::Interface::ModelIdGeoRam);
-        } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdSuperCpu) {
-            useModel = emulator->getModel(LIBC64::Interface::ModelIdSuperCpuRam);
-        } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdSuperCpuReu) {
-            useModel = emulator->getModel(LIBC64::Interface::ModelIdSuperCpuRam);
-            useModel2 = emulator->getModel(LIBC64::Interface::ModelIdReuRam);
-        }
+            } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdGeoRam) {
+                useModel = emulator->getModel(LIBC64::Interface::ModelIdGeoRam);
+            } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdSuperCpu) {
+                useModel = emulator->getModel(LIBC64::Interface::ModelIdSuperCpuRam);
+            } else if (expansionSelected->id == LIBC64::Interface::ExpansionIdSuperCpuReu) {
+                useModel = emulator->getModel(LIBC64::Interface::ModelIdSuperCpuRam);
+                useModel2 = emulator->getModel(LIBC64::Interface::ModelIdReuRam);
+            }
     }
 
     memoryModelLayout.setVisibility(useModel, useModel2);
 }
 
 auto SystemLayout::setExpansion( Emulator::Interface::Expansion* newExpansion ) -> void {
-    
+
     for ( auto line : expansionLayout.lines ) {
-        for( auto block : line->blocks ) {   
-            
+        for( auto block : line->blocks ) {
+
             if (!newExpansion) {
                 if (block->expansion->isEmpty()) {
                     if (!block->box.checked()) {
-						block->box.setChecked();
-						updateExpansionMemory();
-					}
-                    
+                        block->box.setChecked();
+                        updateExpansionMemory();
+                    }
+
                     return;
                 }
             }
-            
+
             else if (block->expansion == newExpansion) {
                 if (!block->box.checked()) {
-					block->box.setChecked();
-					updateExpansionMemory();
-				}
+                    block->box.setChecked();
+                    updateExpansionMemory();
+                }
 				
                 return;
             }                
@@ -234,4 +246,6 @@ auto SystemLayout::loadSettings() -> void {
     performanceModelLayout.updateWidgets();
 
     memoryModelLayout.updateWidgets();
+}
+
 }

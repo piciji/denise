@@ -1,4 +1,17 @@
 
+#include "audio.h"
+#include "../config.h"
+#include "../../../data/icons.h"
+#include "../../thread/emuThread.h"
+#include "../../view/view.h"
+#include "../../view/status.h"
+#include "../../audio/manager.h"
+
+#define mes this->tabWindow->message
+#define _settings this->tabWindow->settings
+
+namespace EmuConfigView {
+
 AudioDriveLayout::TapeSelection::TapeSelection() {
     append( label, {0u, 0u}, 10 );
     append( combo, {0u, 0u} );
@@ -1196,4 +1209,6 @@ auto AudioLayout::stopRecord() -> void {
 auto AudioLayout::selectViewAudioRecord() -> void {
     moduleList.setSelection(moduleList.rowCount() - 1);
     moduleSwitch.setSelection(moduleList.selection());
+}
+
 }

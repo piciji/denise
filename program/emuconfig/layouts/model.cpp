@@ -3,13 +3,16 @@
 
 #include "../../program.h"
 #include "../config.h"
-#include "../../view/message.h"
 #include "../../audio/manager.h"
 #include "../../../emulation/libc64/interface.h"
 #include "../../media/media.h"
 #include "../../thread/emuThread.h"
 #include "../../view/view.h"
 #include "model.h"
+#include "presentation.h"
+#include "audio.h"
+#include "system.h"
+#include "../../config/slider.h"
 #include "../../../data/icons.h"
 
 namespace EmuConfigView {   
@@ -647,8 +650,8 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                 break;
                 
             case LIBC64::Interface::ModelIdVicIIModel:
-                if (tabWindow->videoLayout)
-                    tabWindow->videoLayout->updatePresets(true, false);
+                if (tabWindow->presentationLayout)
+                    tabWindow->presentationLayout->updatePresets(true, false);
                 else if (videoDriver)
                     VideoManager::getInstance( emulator )->reloadSettings(false);
 
@@ -750,8 +753,8 @@ auto ModelLayout::applyCustomStuff( Line::Block* block, Emulator::Interface::Mod
                     program->power(activeEmulator);
                 break;
             case LIBAMI::Interface::ModelIdRegion:
-                if (tabWindow->videoLayout)
-                    tabWindow->videoLayout->updatePresets(true, false);
+                if (tabWindow->presentationLayout)
+                    tabWindow->presentationLayout->updatePresets(true, false);
                 else if (videoDriver)
                     VideoManager::getInstance( emulator )->reloadSettings(false);
                 // fallthrough
