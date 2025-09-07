@@ -79,7 +79,7 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
             GUIKIT::Button unload;
             GUIKIT::Widget spacer;
             GUIKIT::CheckBox manuell;
-            GUIKIT::ImageView downloadSlang;
+            GUIKIT::ImageView downloadShader;
             GUIKIT::Button loadOldShader;
 
             GUIKIT::Button prependPreset;

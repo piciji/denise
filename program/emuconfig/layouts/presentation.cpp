@@ -130,7 +130,7 @@ view(withSpectrum) {
 VideoShaderLayout::Main::Control::Control() {
     append(unload,{0u, 0u});
     append(spacer, { ~0u, 0u });
-    append(downloadSlang, { 0u, 0u }, 5);
+    append(downloadShader, { 0u, 0u }, 5);
     append(manuell, { 0u, 0u }, 15);
 
     append(loadOldShader,{0u, 0u}, 10);
@@ -514,7 +514,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
 
-    layShader.main.control.downloadSlang.setImage(&retroarch);
+    layShader.main.control.downloadShader.setImage(&retroarch);
 
     tviBase.setUserData( (uintptr_t)1 );
     tviBase.setImage( colorImage );
@@ -579,22 +579,22 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             layShader.main.update(layShader.main.info, 0u);
             layShader.synchronizeLayout();
         }
-        layShader.main.control.downloadSlang.setEnabled();
+        layShader.main.control.downloadShader.setEnabled();
     };
 
-    layShader.main.control.downloadSlang.onClick = [&]() {
+    layShader.main.control.downloadShader.onClick = [&]() {
         std::string uri = "https://buildbot.libretro.com/assets/frontend/shaders_slang.zip";
 
         if (layShader.main.control.manuell.checked()) {
-            layShader.main.control.downloadSlang.setUri(uri);
+            layShader.main.control.downloadShader.setUri(uri);
             return;
         }
 
-        if (!layShader.main.control.downloadSlang.enabled())
+        if (!layShader.main.control.downloadShader.enabled())
             return;
 
-        layShader.main.control.downloadSlang.setUri("");
-        layShader.main.control.downloadSlang.setEnabled(false);
+        layShader.main.control.downloadShader.setUri("");
+        layShader.main.control.downloadShader.setEnabled(false);
 
         std::string shaderPath = program->generatedFolder("shaders");
         layShader.main.progress.bar.setPosition(0);
@@ -693,7 +693,6 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
                             _s->set<std::string>("slang_folder", shaderPath);
                     }
 
-                    //settings->set<std::string>("slang_folder", shaderPath);
                     layShader.main.progress.label.setForegroundColorThreaded(SUCCESS_COLOR);
                     layShader.main.progress.label.setTextThreaded(trans->getA("complete"));
 
@@ -2301,13 +2300,14 @@ auto PresentationLayout::translate() -> void {
     layShader.main.control.appendPreset.setText( trans->getA("append preset") );
 
     layShader.main.control.manuell.setText(trans->getA("manual"));
+    layShader.main.control.manuell.setTooltip(trans->getA("manual shader update tooltip"));
 
-    layShader.main.control.downloadSlang.setTooltip(trans->getA("shader update"));
+    layShader.main.control.downloadShader.setTooltip(trans->getA("download shader tooltip"));
 
     layShader.main.control.unload.setText( trans->getA("unload") );
     layPass.control.save.setText( trans->getA("save") );
     layShader.main.control.load.setText( trans->getA("load") );
-    layShader.main.control.load.setTooltip( trans->getA("update shader tooltip") );
+    layShader.main.control.load.setTooltip( trans->getA("load shader tooltip") );
     layShader.main.control.loadOldShader.setText( trans->getA("load outdated shader") );
     layShader.main.control.loadOldShader.setTooltip( trans->getA("load outdated shader tooltip") );
     layPass.control.save.setTooltip( trans->getA("save parameter tooltip") );
