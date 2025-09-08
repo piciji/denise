@@ -42,7 +42,8 @@ auto Input::readCiaPortA( CIA::Base::Lines* lines ) -> uint8_t {
         if ( colMask & (1 << col) )
             continue;
 
-        linkedRows = 0, linkedCols = 0;
+        linkedRows = 0;
+        linkedCols = 0;
         keyboard.matrixResolveCol( col, linkedRows, linkedCols);
 
         if ( linkedCols & portBOutputHi )
@@ -81,7 +82,8 @@ auto Input::readCiaPortB( CIA::Base::Lines* lines ) -> uint8_t {
         if ( rowMask & (1 << row) )
             continue;
 
-        linkedRows = 0, linkedCols = 0;
+        linkedRows = 0;
+        linkedCols = 0;
         keyboard.matrixResolveRow( row, linkedRows, linkedCols);
         val &= ~linkedCols;
 

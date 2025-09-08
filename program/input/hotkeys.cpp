@@ -690,7 +690,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             if (!activeEmulator || !dynamic_cast<LIBC64::Interface*>(activeEmulator))
                 break;
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-            unsigned val;
+            unsigned val = 1;
 
             if (emuView && emuView->systemLayout) {
                 val = emuView->systemLayout->modelLayout.nextOption( C64Interface::ModelIdSid );
@@ -742,7 +742,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             
             int _sid = activeEmulator->getModelValue( C64Interface::ModelIdSid );
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
-            int state;
+            int state = 0;
 
             if (emuView && emuView->audioLayout) {
                 state = emuView->audioLayout->settingsLayout.stepRange( _sid == 0 ? C64Interface::ModelIdBias8580 : C64Interface::ModelIdBias6581,

@@ -271,6 +271,7 @@ auto DiskStructure::parseMfm(MTrack* trackPtr, unsigned offset) -> void {
 
     uint8_t sectorCount = rawData[offset++];
     uint8_t version = rawData[offset++];
+    (void)version;
 
     unsigned dataOffset = offset + 32 * 5;
 
@@ -384,7 +385,7 @@ auto DiskStructure::writeMfm(const MTrack* trackPtr, unsigned offset) -> bool {
 
     offset += 2;
     unsigned dataOffset = offset + 32 * 5;
-    unsigned sectorSize;
+    unsigned sectorSize = 0;
     unsigned sectorCount = 0;
     bool align = false;
     uint8_t error = 0;

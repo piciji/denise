@@ -87,7 +87,7 @@ auto Tape::nextGap() -> unsigned {
     }	
 	// in else case we are at the beginning of tape (0x14)
     
-	unsigned gap;
+	unsigned gap = 0;
 	
 	// read forward from known aligned position
 	// remember if previous gap was long or not

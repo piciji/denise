@@ -12,7 +12,7 @@ struct Gzip {
         if(size < 18) return false;
         if(data[0] != 0x1f) return false;
         if(data[1] != 0x8b) return false;
-        unsigned cm = data[2];
+       // unsigned cm = data[2];
         unsigned flg = data[3];
         unsigned mtime = data[4];
         mtime |= data[5] << 8;
@@ -30,8 +30,8 @@ struct Gzip {
             date = "";
         }
 
-        unsigned xfl = data[8];
-        unsigned os = data[9];
+       // unsigned xfl = data[8];
+       // unsigned os = data[9];
         unsigned p = 10;
         unsigned isize = data[size - 4];
         isize |= data[size - 3] << 8;

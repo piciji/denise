@@ -280,8 +280,6 @@ auto HardDrive::writeData(uint16_t data) -> void {
         status &= ~(uint8_t)State::DRQ;
         setBusy(1, false);
 
-        unsigned lba = getLba();
-
         if (!writeProtected) {
             if (!structure.write(buffer, (uint64_t)writeOffset, transferSize)) {
                 status |= (uint8_t)State::ERR;

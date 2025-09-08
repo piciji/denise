@@ -214,7 +214,7 @@ auto Sid::Filter::build(int m) -> void {
 
 		// Mehr bits bedeutet eine höhere Genauigkeit. Somit lassen sich immer feinere Unterschiede in den Spannungen Ganzzahlen zuordnen.
 		// Je begrenzter die Genauigkeit desto eher steht die selbe Ganzzahl für verschiedene Spannungen.		
-		double N30 = norm * ( ( 1u << 30 ) - 1 ); // 30 bit
+		// double N30 = norm * ( ( 1u << 30 ) - 1 ); // 30 bit
 		double N31 = norm * ( ( 1u << 31 ) - 1 ); // 31 bit
 		double N14 = norm * ( 1u << 14 );
         // verschieden skalierete Werte können mit einander multipliziert oder dividiert werden. Dadurch ändert sich die Skalierung
@@ -365,7 +365,6 @@ auto Sid::Filter::build(int m) -> void {
 			// R1 = R2 => x = 1
 			for ( int n8 = 0; n8 < 16; n8++ ) {
 				int x = ca.ak;
-				int x2 = ca.ak;
 				double n = double(~n8 & 0xf) / 8.0;
 
 				for (int vi = 0; vi < (1 << 16); vi++) {

@@ -107,7 +107,7 @@ static auto startsWith(const std::string& str, const std::string& prefix) -> boo
     return (prefix.size() <= str.size()) && std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 
-static auto isNumber(const std::string& str) -> bool {
+[[maybe_unused]] static auto isNumber(const std::string& str) -> bool {
     std::string _str = str;
     if (_str.substr(0,1) == "-") _str = _str.substr(1);
 

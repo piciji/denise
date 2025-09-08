@@ -528,7 +528,6 @@ auto HardDiskStructure::addFileDriver(uint8_t* data) -> void {
     driver.patchFlags = ToU32BE(data + 40);
     driver.seglistBptr = 0;
 
-    uint8_t* lsegBlock;
     unsigned lsegRef = ToU32BE(data + 72);
 
     for (unsigned i = 0; i < 1024; i++) {

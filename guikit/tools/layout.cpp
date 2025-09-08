@@ -184,7 +184,8 @@ auto Layout::getFrameInnerGeometry(Geometry geometry) -> Geometry {
     unsigned borderSize = frameWidget->p.borderSize();
     Size minimumSize = frameWidget->p.minimumSize();
 
-    geometry.x += borderSize, geometry.width -= borderSize << 1;
+    geometry.x += borderSize;
+    geometry.width -= borderSize << 1;
     geometry.y += minimumSize.height - borderSize;
     geometry.height -= minimumSize.height;
     return geometry;

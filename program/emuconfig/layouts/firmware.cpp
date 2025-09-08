@@ -246,6 +246,7 @@ auto FirmwareLayout::translate() -> void {
     }
 
     for (auto box : selectorBoxes) {
+        (void)box;
         if (storeLevel == 0) {
             selectorBoxes[storeLevel++]->setText( trans->get("default") );
             continue;

@@ -73,6 +73,10 @@ auto Sid::ChamberlinFilter::clock(double voice1, double voice2, double voice3) -
                 prefilter = voice1 + voice2 + voice3;
                 mixer = 0;
                 break;
+            default:
+                prefilter = 0.0;
+                mixer = 0.0;
+                break;
         }
 
         process( prefilter );    

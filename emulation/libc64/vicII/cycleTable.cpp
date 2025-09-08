@@ -83,7 +83,7 @@ namespace LIBC64 {
 
 auto VicIIBase::generateCycleTable(CycleMode _m) -> void {
 	uint8_t _cycle = 1;
-	uint32_t flags;
+	uint32_t flags = 0;
 	unsigned xPos = M_PAL ? 0x198 : 0x1a0;
 	
 	while(_cycle <= 65) {

@@ -10,8 +10,6 @@ namespace LIBC64 {
         }
 
         auto writeIo1( uint16_t addr, uint8_t value ) -> void {
-            Chip* _c;
-
             for( auto& chip : chips ) {
                 if (chip.addr == 0xa000) {
                     if (chip.bank == (addr & 1) ) {

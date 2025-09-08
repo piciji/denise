@@ -495,7 +495,7 @@ struct CGL : public Video, GL3, RenderThread {
             RenderThread::reset();
             
             auto& tex = frame.textures[0];
-            tex.width = 0, tex.height = 0;
+            tex.width = 0; tex.height = 0;
 
             clearCurrent();
         }

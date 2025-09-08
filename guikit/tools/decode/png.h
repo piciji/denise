@@ -41,6 +41,7 @@ struct Png {
             unsigned length   = read(sourceData + offset + 0, 4);
             unsigned fourCC   = read(sourceData + offset + 4, 4);
             unsigned checksum = read(sourceData + offset + 8 + length, 4);
+            (void)checksum;
 
             if(fourCC == (unsigned)FourCC::IHDR) {
                 info.width             = read(sourceData + offset +  8, 4);

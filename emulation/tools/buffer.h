@@ -67,7 +67,7 @@ template<typename T> static auto copyBufferToIntBigEndian( const uint8_t* buf ) 
     return value;
 }
 
-static auto replaceInBuffer(uint8_t* buf, unsigned size, const std::string& needle, const std::string& replace) -> bool {
+[[maybe_unused]] static auto replaceInBuffer(uint8_t* buf, unsigned size, const std::string& needle, const std::string& replace) -> bool {
     unsigned _len = needle.size();
     auto _char = needle.c_str();
 

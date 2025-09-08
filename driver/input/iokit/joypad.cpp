@@ -149,7 +149,6 @@ struct IokitJoypad {
 
     auto getDeviceInfo(IOHIDDeviceRef hidDevice, Joypad& jp) -> bool {
         
-        uint32_t* guid32 = NULL;
         CFTypeRef refCF = NULL;
         CFArrayRef array = NULL;
 
@@ -218,8 +217,10 @@ struct IokitJoypad {
             jp.deviceRef = NULL;
         }        
         
-        if (jp.hid)
-            delete jp.hid, jp.hid = nullptr;
+        if (jp.hid) {
+            delete jp.hid;
+            jp.hid = nullptr;
+        }
     }
     
     auto _addElement(const void* value, void* ctx) -> void {

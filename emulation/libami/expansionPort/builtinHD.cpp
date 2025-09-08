@@ -186,7 +186,7 @@ auto BuiltinHD::handleInit() -> void {
         return;
 
     auto& part = hardDrive.partitions()[unit];
-    auto& geometry = hardDrive.geometry();
+    // auto& geometry = hardDrive.geometry();
 
     uint32_t namePtr = agnus.fakeReadLongWord(memPtr + devn_dosName);
 
@@ -363,7 +363,7 @@ auto BuiltinHD::handleInitSeg() -> void {
 }
 
 auto BuiltinHD::handleCmd(bool delayed) -> void {
-    constexpr uint32_t IO_UNIT = 0x18;
+    //constexpr uint32_t IO_UNIT = 0x18;
     constexpr uint32_t IO_COMMAND = 0x1C;
     constexpr uint32_t IO_ERROR = 0x1F;
     constexpr uint32_t IO_ACTUAL = 0x20;
@@ -384,7 +384,7 @@ auto BuiltinHD::handleCmd(bool delayed) -> void {
     constexpr uint16_t scsi_SenseActual = 0x1c;
     constexpr uint16_t scsi_SizeOf = 0x1e;
 
-    constexpr uint16_t devunit_UnitNum = 0x2A;
+    //constexpr uint16_t devunit_UnitNum = 0x2A;
 
     constexpr int8_t IOERR_NOCMD = -3;
     constexpr int8_t IOERR_BADLENGTH = -4;
@@ -399,8 +399,7 @@ auto BuiltinHD::handleCmd(bool delayed) -> void {
     int8_t error = 0;
     uint32_t actual = 0;
 
-    static int _counta = 0;
-    constexpr int8_t IOERR_UNITBUSY = -6;
+    //constexpr int8_t IOERR_UNITBUSY = -6;
 
     switch((Command)cmd) {
         case Command::Read: {
@@ -597,12 +596,12 @@ auto BuiltinHD::scsiCommand(scsiCmd& sc) -> void {
 }
 
 auto BuiltinHD::verify(unsigned offset, unsigned length, uint32_t addr) -> int8_t {
-    constexpr int8_t IOERR_OPENFAIL = -1;
-    constexpr int8_t IOERR_ABORTED = -2;
+    //constexpr int8_t IOERR_OPENFAIL = -1;
+    //constexpr int8_t IOERR_ABORTED = -2;
     constexpr int8_t IOERR_BADLENGTH = -4;
     constexpr int8_t IOERR_BADADDRESS = -5;
-    constexpr int8_t IOERR_UNITBUSY = -6;
-    constexpr int8_t IOERR_SELFTEST = -7;
+    //constexpr int8_t IOERR_UNITBUSY = -6;
+    //constexpr int8_t IOERR_SELFTEST = -7;
 
     if (length % 512)
         return IOERR_BADLENGTH;

@@ -48,13 +48,13 @@ static USHORT PWDCRC;
 
 USHORT Process_File(unsigned char *fi, unsigned fiSize, unsigned char **fo, unsigned& foSize)
 {
-	USHORT from, to, geninfo, c_version, cmode, hcrc, disktype, pv, ret;
+	USHORT from, to, geninfo, c_version, cmode, hcrc, disktype, ret;
 	ULONG pkfsize, unpkfsize;
 	UCHAR *b1, *b2;
 	//time_t date;
     USHORT cmd = CMD_UNPACK;
     USHORT PCRC = 0;
-    USHORT pwd = 0;
+    //USHORT pwd = 0;
     unsigned fiPos = 0;
 
 	passfound = 0;
@@ -154,7 +154,7 @@ USHORT Process_File(unsigned char *fi, unsigned fiSize, unsigned char **fo, unsi
 }
 
 static USHORT Process_Track(unsigned char **fi, unsigned& fiPos, unsigned fiSize, unsigned char **fo, unsigned& foSize, UCHAR *b1, UCHAR *b2, USHORT cmd, int dmsflags, unsigned& bufferSize) {
-	USHORT hcrc, dcrc, usum, number, pklen1, pklen2, unpklen, l;
+	USHORT hcrc, dcrc, usum, number, pklen1, pklen2, unpklen;
 	UCHAR cmode, flags;
 	int crcerr = 0;
 	bool normaltrack;

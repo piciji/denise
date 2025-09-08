@@ -225,7 +225,7 @@ namespace Mixer {
 
     auto Drive::addSound(Emulator::Interface* emulator, Emulator::Interface::Media* media, DriveSound soundId, bool alternate, uint8_t data) -> void {
         Device* device = nullptr;
-        uint8_t stepCounts;
+        // uint8_t stepCounts;
         uint64_t ts;
         unsigned delta;
         Sound* sound = nullptr;

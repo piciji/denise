@@ -495,7 +495,7 @@ auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, bool forceSeco
 
 auto TapeStructure::readCbmBlock(uint8_t* buffer, unsigned& size, std::vector<unsigned>& errors, uint8_t& pass) -> int {
     int data;
-    uint8_t _pass;
+    uint8_t _pass = 0;
     unsigned offset = 0;
     bool firstPass = pass == 1;
 

@@ -43,8 +43,8 @@ struct Zip {
             unsigned signature = read(directory + 0, 4);
             if(signature != 0x02014b50) break;
 
-            unsigned versionNeeded = read(directory + 6, 2);
-            unsigned bitFlag = read(directory + 8, 2);
+            [[maybe_unused]] unsigned versionNeeded = read(directory + 6, 2);
+            [[maybe_unused]] unsigned bitFlag = read(directory + 8, 2);
 
             File file;
             file.cmode = read(directory + 10, 2);

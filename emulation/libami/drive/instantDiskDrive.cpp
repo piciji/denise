@@ -115,7 +115,7 @@ auto DiskDrive::instantRead(unsigned words, uint16_t syncWord, bool needSync) ->
     bool synced = !needSync;
     unsigned offset = headOffset >> 3;
     unsigned length = track->length;
-    uint16_t shifter;
+    uint16_t shifter = 0;
     int overflow = 0;
     int b;
     unsigned pos = 0;

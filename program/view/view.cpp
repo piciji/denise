@@ -1873,7 +1873,7 @@ auto View::buildMenu() -> void {
     auto model = amiEmu->getModel( LIBAMI::Interface::ModelId::ModelIdAudioFilter );
     if (model) {
         int i = 0;
-        for(auto& option : model->options) {
+        for([[maybe_unused]] auto& option : model->options) {
             auto item = new GUIKIT::MenuRadioItem;
 
             item->onActivate = [i]() {

@@ -480,7 +480,7 @@ cgif_result cgif_raw_addframe(CGIFRaw* pGIF, const CGIFRaw_FrameConfig* pConfig)
   const int  isInterlaced = (pConfig->attrFlags & CGIF_RAW_FRAME_ATTR_INTERLACED) ? 1 : 0;
   uint16_t   numEffColors; // number of effective colors
   uint16_t   initDictLen;
-  uint8_t    pow2LCT, initCodeLen;
+  uint8_t    pow2LCT = 0, initCodeLen;
 
   if(pGIF->curResult != CGIF_OK && pGIF->curResult != CGIF_PENDING) {
     return pGIF->curResult; // return previous error

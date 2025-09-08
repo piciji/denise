@@ -54,10 +54,13 @@ auto DiskStructure::encodeTrack(Track& track, unsigned trackNr, uint8_t* userDat
 
         ptr[0] = lastDataWasAOne ? 0x2a : 0xaa;
         ptr[1] = ptr[2] = ptr[3] = 0xaa;
-        ptr[4] = 0x44, ptr[5] = 0x89; // encoded byte 0xa1
-        ptr[6] = 0x44, ptr[7] = 0x89;
+        ptr[4] = 0x44; ptr[5] = 0x89; // encoded byte 0xa1
+        ptr[6] = 0x44; ptr[7] = 0x89;
 
-        buffer[0] = 0xff, buffer[1] = trackNr, buffer[2] = sector, buffer[3] = sectors - sector;
+        buffer[0] = 0xff;
+        buffer[1] = trackNr;
+        buffer[2] = sector;
+        buffer[3] = sectors - sector;
         separateOddEven( &ptr[8], &buffer[0], 4 );
 
         for(unsigned i = 16; i < 48; i++)
