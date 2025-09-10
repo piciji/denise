@@ -462,13 +462,13 @@ VideoScreenShotLayout::VideoScreenShotLayout(bool withPalete) : format(withPalet
     setPadding(10);
 }
 
-VideoHDRLayout::Control::Control() {
+VideoMotionLayout::HDRLayout::Control::Control() {
     append(enableHdr, { 0u, 0u }, 20);
     append(expandGamut, { 0u, 0u });
     setAlignment(0.5);
 }
 
-VideoHDRLayout::VideoHDRLayout() : 
+VideoMotionLayout::HDRLayout::HDRLayout() :
 maxNits("", false, true),
 paperWhiteNits("", false, true),
 contrast("", false, true)
@@ -486,6 +486,37 @@ contrast("", false, true)
     contrast.updateValueWidth("9.99");
     setAlignment(0.5);
     setPadding(10);
+}
+
+VideoMotionLayout::BFILayout::BFILayout() {
+    bfiCombo.append("none");
+    bfiCombo.append("1 - 100Hz (120Hz)");
+    bfiCombo.append("2 - 150Hz (180Hz)");
+    bfiCombo.append("3 - 200Hz (240Hz)");
+    bfiCombo.append("4 - 250Hz (300Hz)");
+    bfiCombo.append("5 - 300Hz (360Hz)");
+    bfiCombo.append("6 - 350Hz (420Hz)");
+
+    darkCombo.append("0");
+    darkCombo.append("1");
+    darkCombo.append("2");
+    darkCombo.append("3");
+    darkCombo.append("4");
+    darkCombo.append("5");
+    darkCombo.append("6");
+
+    append(bfiLabel, {0u, 0u}, 10);
+    append(bfiCombo, {0u, 0u}, 20);
+    append(darkLabel, {0u, 0u}, 10);
+    append(darkCombo, {0u, 0u});
+
+    setAlignment(0.5);
+    setPadding(10);
+}
+
+VideoMotionLayout::VideoMotionLayout() {
+    append(hdr, {~0u, 0u}, 20);
+    append(bfi, {~0u, 0u});
 }
 
 PresentationLayout::PresentationLayout(TabWindow* tabWindow) :
@@ -525,8 +556,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     tviScreenShot.setUserData((uintptr_t)12);
     tviScreenShot.setImage(screenshotImage);
 
-    tviHdr.setUserData((uintptr_t)13);
-    tviHdr.setImage(hdrImage);
+    tviMotion.setUserData((uintptr_t)13);
+    tviMotion.setImage(hdrImage);
 
     tviShader.setUserData( (uintptr_t)2 );
     tviShader.setImage(imgFolderClosed);
@@ -539,7 +570,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     moduleTree.append(tviBase);
     moduleTree.append(tviScreenText);
     moduleTree.append(tviScreenShot);
-    moduleTree.append(tviHdr);
+    moduleTree.append(tviMotion);
     tviBase.setSelected();
     if (videoDriver->shaderSupport())
         moduleTree.append(tviShader);
@@ -547,7 +578,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     moduleSwitch.setLayout(1, layBase, {~0u, ~0u});
     moduleSwitch.setLayout(11, layScreenText, {~0u, ~0u});
     moduleSwitch.setLayout(12, layScreenShot, { ~0u, ~0u });
-    moduleSwitch.setLayout(13, layHdr, { ~0u, ~0u });
+    moduleSwitch.setLayout(13, layMotion, { ~0u, ~0u });
     moduleSwitch.setLayout(2, layShader, {~0u, ~0u});
     moduleSwitch.setLayout(21, layPass, {~0u, ~0u});
     moduleSwitch.setLayout(3, layParam, {~0u, ~0u});
@@ -567,9 +598,9 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     layBase.view.mode.reset.setImage(&backImage);
     layShader.main.progress.close.setImage(&backImage);
 
-    layHdr.maxNits.defaultButton.setImage(&backImage);
-    layHdr.paperWhiteNits.defaultButton.setImage(&backImage);
-    layHdr.contrast.defaultButton.setImage(&backImage);
+    layMotion.hdr.maxNits.defaultButton.setImage(&backImage);
+    layMotion.hdr.paperWhiteNits.defaultButton.setImage(&backImage);
+    layMotion.hdr.contrast.defaultButton.setImage(&backImage);
 
     moduleSwitch.setSelection( 1 );
 
@@ -1580,7 +1611,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<unsigned>("screen_gun_each", position + 1);
     };
 
-    layHdr.control.enableHdr.onToggle = [this](bool checked) {
+    layMotion.hdr.control.enableHdr.onToggle = [this](bool checked) {
         _settings->set<bool>("hdr_enable", checked);
         emuThread->lock();
         if (emulator == activeEmulator)
@@ -1588,7 +1619,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layHdr.control.expandGamut.onToggle = [this](bool checked) {
+    layMotion.hdr.control.expandGamut.onToggle = [this](bool checked) {
         _settings->set<bool>("hdr_gamut", checked);
         emuThread->lock();
         if (emulator == activeEmulator)
@@ -1596,63 +1627,87 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layHdr.maxNits.slider.onChange = [this](unsigned position) {
+    layMotion.hdr.maxNits.slider.onChange = [this](unsigned position) {
         unsigned value = position * 100;
         _settings->set<unsigned>("hdr_nits", value);
         emuThread->lock();
-        layHdr.maxNits.setValue(std::to_string(value));
+        layMotion.hdr.maxNits.setValue(std::to_string(value));
         if (emulator == activeEmulator)
             program->updateHDR();
         emuThread->unlock();
     };
 
-    layHdr.maxNits.defaultButton.onActivate = [this]() {
+    layMotion.hdr.maxNits.defaultButton.onActivate = [this]() {
         _settings->set<unsigned>("hdr_nits", 1000);
         emuThread->lock();
-        layHdr.maxNits.setValue("1000");
-        layHdr.maxNits.slider.setPosition(10);
+        layMotion.hdr.maxNits.setValue("1000");
+        layMotion.hdr.maxNits.slider.setPosition(10);
         if (emulator == activeEmulator)
             program->updateHDR();
         emuThread->unlock();
     };
 
-    layHdr.paperWhiteNits.slider.onChange = [this](unsigned position) {
+    layMotion.hdr.paperWhiteNits.slider.onChange = [this](unsigned position) {
         unsigned value = position * 10;
         _settings->set<unsigned>("hdr_pw_nits", value);
         emuThread->lock();
-        layHdr.paperWhiteNits.setValue(std::to_string(value));
+        layMotion.hdr.paperWhiteNits.setValue(std::to_string(value));
         if (emulator == activeEmulator)
             program->updateHDR();
         emuThread->unlock();
     };
 
-    layHdr.paperWhiteNits.defaultButton.onActivate = [this]() {
+    layMotion.hdr.paperWhiteNits.defaultButton.onActivate = [this]() {
         _settings->set<unsigned>("hdr_pw_nits", 200);
         emuThread->lock();
-        layHdr.paperWhiteNits.setValue("200");
-        layHdr.paperWhiteNits.slider.setPosition(20);
+        layMotion.hdr.paperWhiteNits.setValue("200");
+        layMotion.hdr.paperWhiteNits.slider.setPosition(20);
         if (emulator == activeEmulator)
             program->updateHDR();
         emuThread->unlock();
     };
 
-    layHdr.contrast.slider.onChange = [this](unsigned position) {
+    layMotion.hdr.contrast.slider.onChange = [this](unsigned position) {
         float value = (float)position / 10.0f;
         _settings->set<float>("hdr_contrast", value);
         emuThread->lock();
-        layHdr.contrast.setValue(GUIKIT::String::formatFloatingPoint(value, 1));
+        layMotion.hdr.contrast.setValue(GUIKIT::String::formatFloatingPoint(value, 1));
         if (emulator == activeEmulator)
             program->updateHDR();
         emuThread->unlock();
     };
 
-    layHdr.contrast.defaultButton.onActivate = [this]() {
+    layMotion.hdr.contrast.defaultButton.onActivate = [this]() {
         _settings->set<float>("hdr_contrast", 5.0);
         emuThread->lock();
-        layHdr.contrast.setValue("5.0");
-        layHdr.contrast.slider.setPosition(50);
+        layMotion.hdr.contrast.setValue("5.0");
+        layMotion.hdr.contrast.slider.setPosition(50);
         if (emulator == activeEmulator)
             program->updateHDR();
+        emuThread->unlock();
+    };
+
+    layMotion.bfi.bfiCombo.onChange = [this]() {
+        unsigned selection = layMotion.bfi.bfiCombo.selection();
+        _settings->set<unsigned>("bfi_frames", selection);
+        _settings->set<unsigned>("dark_frames", selection);
+
+        emuThread->lock();
+        if (emulator == activeEmulator)
+            program->updateBFI();
+        emuThread->unlock();
+
+        layMotion.bfi.darkCombo.setSelection(selection);
+        updateBfiVisibilities();
+    };
+
+    layMotion.bfi.darkCombo.onChange = [this]() {
+        unsigned selection = layMotion.bfi.darkCombo.selection();
+        _settings->set<unsigned>("dark_frames", selection);
+
+        emuThread->lock();
+        if (emulator == activeEmulator)
+            program->updateBFI();
         emuThread->unlock();
     };
 
@@ -1786,6 +1841,12 @@ auto PresentationLayout::updateFontVisibilities() -> void {
     if (!userId)
         _settings->set<std::string>("screen_text_font", "");
     layScreenText.options.font.removeFont.setEnabled( (userId >> 14) == 2 );
+}
+
+auto PresentationLayout::updateBfiVisibilities() -> void {
+    bool darkSelectorVisible = layMotion.bfi.bfiCombo.selection() > 1;
+    layMotion.bfi.darkLabel.setEnabled( darkSelectorVisible );
+    layMotion.bfi.darkCombo.setEnabled( darkSelectorVisible );
 }
 
 auto PresentationLayout::updateScreenText(bool keepFontPath) -> void {
@@ -2365,20 +2426,27 @@ auto PresentationLayout::translate() -> void {
     layScreenText.options.textPadding.paddingHorizontal.name.setText( trans->getA("Padding", true) );
     layScreenText.options.textMargin.marginHorizontal.name.setText( trans->getA("Margin", true) );
 
-    layHdr.setText(trans->getA("HDR"));
-    layHdr.control.enableHdr.setText(trans->getA("Enable"));
-    layHdr.control.enableHdr.setTooltip(trans->getA("HDR tooltip"));
-    layHdr.control.expandGamut.setText(trans->getA("Expand Gamut"));
-    layHdr.maxNits.name.setText(trans->getA("Max Nits"));
-    layHdr.paperWhiteNits.name.setText(trans->getA("Paper White Nits"));
-    layHdr.contrast.name.setText(trans->getA("Contrast"));
+    layMotion.hdr.setText(trans->getA("HDR"));
+    layMotion.hdr.control.enableHdr.setText(trans->getA("Enable"));
+    layMotion.hdr.control.enableHdr.setTooltip(trans->getA("HDR tooltip"));
+    layMotion.hdr.control.expandGamut.setText(trans->getA("Expand Gamut"));
+    layMotion.hdr.maxNits.name.setText(trans->getA("Max Nits"));
+    layMotion.hdr.paperWhiteNits.name.setText(trans->getA("Paper White Nits"));
+    layMotion.hdr.contrast.name.setText(trans->getA("Contrast"));
+
+    layMotion.bfi.setText( trans->getA("Black Frame Insertion") );
+    layMotion.bfi.bfiLabel.setText( trans->getA("BFI images") );
+    layMotion.bfi.bfiCombo.setTooltip( trans->getA("BFI images tooltip") );
+    layMotion.bfi.darkLabel.setText( trans->getA("BFI black images") );
+    layMotion.bfi.darkCombo.setTooltip( trans->getA("BFI black images tooltip") );
+    layMotion.bfi.bfiCombo.setText(0, trans->getA("none"));
 
     tviBase.setText( trans->getA("overview") );
     tviScreenText.setText( trans->getA("screen text") );
     tviScreenShot.setText(trans->getA("screenshot"));
     tviShader.setText( trans->getA("Shader") );
     tviParams.setText( trans->getA("Parameter") );
-    tviHdr.setText(trans->getA("HDR"));
+    tviMotion.setText(trans->getA("HDR / BFI"));
 
     layNav.setText( trans->getA("selection") );
     layPass.setText( trans->getA("Pass") );
@@ -2409,7 +2477,7 @@ auto PresentationLayout::translate() -> void {
 
     SliderLayout::scale({&layScreenText.options.textPadding.paddingHorizontal, &layScreenText.options.textMargin.marginHorizontal}, "99.9 %");
     SliderLayout::scale({&layScreenText.options.textPadding.paddingVertical, &layScreenText.options.textMargin.marginVertical}, "99.9 %");
-    SliderLayout::scale({&layHdr.maxNits, &layHdr.paperWhiteNits, &layHdr.contrast}, "9999");
+    SliderLayout::scale({&layMotion.hdr.maxNits, &layMotion.hdr.paperWhiteNits, &layMotion.hdr.contrast}, "9999");
 
     layScreenText.colorBox.type.onlyUrgentWarnings.setText(trans->getA("only urgent messages"));
     layScreenText.colorBox.type.onlyUrgentWarnings.setTooltip(trans->getA("only urgent messages tooltip"));
@@ -2572,15 +2640,23 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     unsigned pwNits = _settings->get<unsigned>("hdr_pw_nits", 200, { 0, 2000 });
     float contrast = _settings->get<float>("hdr_contrast", 5.0, { 0.0f, 10.0f });
 
-    layHdr.control.enableHdr.setChecked(enableHdr);
-    layHdr.control.expandGamut.setChecked(gamut);
-    layHdr.maxNits.setValue(std::to_string(maxNits));
-    layHdr.paperWhiteNits.setValue(std::to_string(pwNits));
-    layHdr.contrast.setValue(GUIKIT::String::formatFloatingPoint(contrast, 1));
+    layMotion.hdr.control.enableHdr.setChecked(enableHdr);
+    layMotion.hdr.control.expandGamut.setChecked(gamut);
+    layMotion.hdr.maxNits.setValue(std::to_string(maxNits));
+    layMotion.hdr.paperWhiteNits.setValue(std::to_string(pwNits));
+    layMotion.hdr.contrast.setValue(GUIKIT::String::formatFloatingPoint(contrast, 1));
 
-    layHdr.maxNits.slider.setPosition(maxNits / 100);
-    layHdr.paperWhiteNits.slider.setPosition(pwNits / 10);
-    layHdr.contrast.slider.setPosition(contrast * 10.0);
+    layMotion.hdr.maxNits.slider.setPosition(maxNits / 100);
+    layMotion.hdr.paperWhiteNits.slider.setPosition(pwNits / 10);
+    layMotion.hdr.contrast.slider.setPosition(contrast * 10.0);
+
+    unsigned bfiFrames = _settings->get<unsigned>("bfi_frames", 0, { 0, 6 });
+    unsigned darkFrames = _settings->get<unsigned>("dark_frames", 0, { 0, 6 });
+
+    layMotion.bfi.bfiCombo.setSelection(bfiFrames);
+    layMotion.bfi.darkCombo.setSelection(darkFrames);
+
+    updateBfiVisibilities();
 }
 
 auto PresentationLayout::prepareColBox() -> void {
@@ -2712,7 +2788,7 @@ auto PresentationLayout::unloadShader(bool reloadDriver) -> void {
 }
 
 auto PresentationLayout::isSecondaryViewSelected() -> bool {
-    return tviScreenText.selected() || tviScreenShot.selected() || tviHdr.selected();
+    return tviScreenText.selected() || tviScreenShot.selected() || tviMotion.selected();
 }
 
 auto PresentationLayout::addShaderUI() -> void {
@@ -2782,7 +2858,7 @@ auto PresentationLayout::selectViewScreenshot() -> void {
 }
 
 auto PresentationLayout::checkHDR() -> void {
-    layHdr.setEnabled( videoDriver->HDRsupport() );
+    layMotion.hdr.setEnabled( videoDriver->HDRsupport() );
 }
 
 }

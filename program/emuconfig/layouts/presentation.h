@@ -334,19 +334,32 @@ struct VideoScreenShotLayout : GUIKIT::FramedVerticalLayout {
     VideoScreenShotLayout(bool withPalete);
 };
 
-struct VideoHDRLayout : GUIKIT::FramedVerticalLayout {
-    struct Control : GUIKIT::HorizontalLayout {
-        GUIKIT::CheckBox enableHdr;
-        GUIKIT::CheckBox expandGamut;
+struct VideoMotionLayout : GUIKIT::VerticalLayout {
+    struct HDRLayout : GUIKIT::FramedVerticalLayout {
+        struct Control : GUIKIT::HorizontalLayout {
+            GUIKIT::CheckBox enableHdr;
+            GUIKIT::CheckBox expandGamut;
 
-        Control();
-    } control;
+            Control();
+        } control;
 
-    SliderLayout maxNits;
-    SliderLayout paperWhiteNits;
-    SliderLayout contrast;
+        SliderLayout maxNits;
+        SliderLayout paperWhiteNits;
+        SliderLayout contrast;
 
-    VideoHDRLayout();
+        HDRLayout();
+    } hdr;
+
+    struct BFILayout : GUIKIT::FramedHorizontalLayout {
+        GUIKIT::Label bfiLabel;
+        GUIKIT::ComboButton bfiCombo;
+        GUIKIT::Label darkLabel;
+        GUIKIT::ComboButton darkCombo;
+
+        BFILayout();
+    } bfi;
+
+    VideoMotionLayout();
 };
 
 struct DisplayFont {
@@ -370,7 +383,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     GUIKIT::TreeViewItem tviBase;
     GUIKIT::TreeViewItem tviScreenText;
     GUIKIT::TreeViewItem tviScreenShot;
-    GUIKIT::TreeViewItem tviHdr;
+    GUIKIT::TreeViewItem tviMotion;
 
     GUIKIT::TreeViewItem tviShader;
     std::vector<GUIKIT::TreeViewItem*> tviPasses;
@@ -382,7 +395,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     VideoParamLayout layParam;
     VideoScreenTextLayout layScreenText;
     VideoScreenShotLayout layScreenShot;
-    VideoHDRLayout layHdr;
+    VideoMotionLayout layMotion;
 
     GUIKIT::Window codeWindow;
     GUIKIT::VerticalLayout codeLayout;
@@ -442,6 +455,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     auto prepareColBox() -> void;
     auto fillFontTypeList() -> void;
     auto updateFontVisibilities() -> void;
+    auto updateBfiVisibilities() -> void;
     static auto addTTF(unsigned mode, const std::string& _fontFile) -> void;
     static auto getTTF(uint16_t ident) -> DisplayFont*;
     static auto getTTF(const std::string& file, int fontIndex) -> DisplayFont*;

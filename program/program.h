@@ -203,6 +203,7 @@ struct Program : Emulator::Interface::Bind {
     auto takeScreenshot(uint8_t* _data, unsigned _width, unsigned _height) -> void;
     auto bufferScreenshot(uint8_t* _data, unsigned _size) -> void;
     auto updateHDR() -> void;
+    auto updateBFI() -> void;
 	
     //input
     auto initInput() -> void;

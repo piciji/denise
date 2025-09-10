@@ -140,6 +140,7 @@ namespace DRIVER {
 
         HWND handle;
         bool vrr = false;
+        float vrrSpeed = 0.0;
 
         bool exclusiveFullscreen = false;
         float exclusiveFullscreenRate = 0.0;
@@ -148,6 +149,9 @@ namespace DRIVER {
         int direction = 1; // reserved for rewind support
         bool useShaderCache = false;
         bool hdrEnable = false;
+        unsigned bfiFrames = 0;
+        unsigned darkFrames = 0;
+        unsigned lightFrames = 0;
     } settings;
 
     D3D11(bool legacy) {
@@ -401,9 +405,16 @@ namespace DRIVER {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
+        settings.vrrSpeed = speed;
+        updateVRR();
+    }
 
-        if (state) {
-            minimumCapTime = (1000000.0 / speed) + 0.5;
+    auto updateVRR() -> void {
+        if (settings.vrr) {
+            if (settings.bfiFrames)
+                minimumCapTime = (1000000.0 / (settings.vrrSpeed + ((float)settings.bfiFrames * settings.vrrSpeed) ) ) + 0.5;
+            else
+                minimumCapTime = (1000000.0 / settings.vrrSpeed) + 0.5;
             lastCapTime = Chronos::getTimestampInMicroseconds();
         }
     }
@@ -1173,7 +1184,7 @@ namespace DRIVER {
         redraw(options & OPT_DisallowShader);
     }
 
-    auto redraw(bool disallowShader = false) -> void {
+    auto redraw(bool disallowShader = false, bool bfiLock = false) -> void {
         ID3D11RenderTargetView* rtv = nullptr;
         ID3D11Texture2D* backBuffer = nullptr;
 
@@ -1371,7 +1382,7 @@ namespace DRIVER {
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
 
-        if (settings.synchronize) {
+        if (settings.synchronize || (settings.bfiFrames && !settings.vrr) ) {
             swapChain.ptr->Present(1, 0);
             if (!legacy) {
                 IDXGIOutput* pOutput;
@@ -1387,6 +1398,22 @@ namespace DRIVER {
 
         if (settings.vrr)
             context->Flush();
+
+        if (settings.bfiFrames && !disallowShader && !bfiLock) {
+            for (int i = 0; i < settings.lightFrames; i++)
+                redraw(false, true);
+
+            for (int i = 0; i < settings.darkFrames; i++) {
+                context->OMSetRenderTargets(1, &rtv, nullptr);
+                context->ClearRenderTargetView(rtv, clearColor);
+                if (settings.vrr) {
+                    waitVRR();
+                    swapChain.ptr->Present(1, 0);
+                    context->Flush();
+                } else
+                    swapChain.ptr->Present(1, 0);
+            }
+        }
 
         dxRelease(rtv)
     }
@@ -1796,6 +1823,7 @@ namespace DRIVER {
         D3DTexture screenBuffer;
         D3D11_MAPPED_SUBRESOURCE mappedResource;
         ID3D11RenderTargetView* rtv = nullptr;
+        options &= ~OPT_TakeScreenshot;
 
         if (!screenshotCallback)
             return;
@@ -1867,7 +1895,7 @@ namespace DRIVER {
             return;
         }
 
-        if (remaining >= 5000) {
+        if (!settings.bfiFrames && (remaining >= 5000)) {
 
             remaining -= 3500;
 
@@ -1971,6 +1999,16 @@ namespace DRIVER {
         context->Map((ID3D11Resource*)hdr.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
         *(HdrUniforms*)mapped.pData = *pHdrUniforms;
         context->Unmap((ID3D11Resource*)hdr.buffer, 0);
+    }
+
+    auto setBFI(unsigned frames, unsigned darkFrames) -> void {
+        if (settings.handle)
+            wait();
+
+        settings.bfiFrames = frames;
+        settings.darkFrames = darkFrames > frames ? frames : darkFrames;
+        settings.lightFrames = frames - settings.darkFrames;
+        updateVRR();
     }
 
     auto HDRsupport() -> bool { return true; }

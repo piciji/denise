@@ -124,6 +124,7 @@ struct Video {
 
     virtual auto HDRsupport() -> bool { return false; }
     virtual auto setHDR(bool state, float maxNits, float paperWhiteNits, float contrast, bool expandGamut) -> void {}
+    virtual auto setBFI(unsigned frames, unsigned darkFrames) -> void {}
 
     virtual ~Video() = default;
     static auto create(const std::string& driver) -> Video*;

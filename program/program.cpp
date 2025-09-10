@@ -352,6 +352,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		if (emuSwap) {
             setVideoFilter();
 		    updateHDR();
+		    updateBFI();
             activeVideoManager->rebuildShader = true;
             statusHandler->updateDiskDriveSpace();
             setVideoDimension(activeEmulator);

@@ -59,6 +59,10 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         bool exclusiveFullscreen = false;
         Rotation rotation;
         bool vrr = false;
+        float vrrSpeed = 0.0;
+        unsigned bfiFrames = 0;
+        unsigned darkFrames = 0;
+        unsigned lightFrames = 0;
     } settings;
 
     struct {
@@ -405,8 +409,6 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
             }
 
             _redraw();
-            if (options & OPT_TakeScreenshot)
-                takeScreenshot();
 
             resizeMutex.unlock();
         }
@@ -512,6 +514,12 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
             lost = true;
         }
+
+        if (options & OPT_TakeScreenshot)
+            takeScreenshot();
+
+        if (settings.bfiFrames && settings.synchronize && !(options & OPT_DisallowShader))
+            bfi();
     }
 
     auto refresh() -> void {
@@ -597,7 +605,24 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
 
+        if (settings.bfiFrames && settings.synchronize && !(options & OPT_DisallowShader))
+            bfi();
+
         resizeMutexThreaded.unlock();
+    }
+
+    auto bfi() -> void {
+        for (int i = 0; i < settings.lightFrames; i++) {
+            if (lpD3DDevice->Present(0, 0, 0, 0) == D3DERR_DEVICELOST) {
+                lost = true;
+                return;
+            }
+        }
+
+        for (int i = 0; i < settings.darkFrames; i++) {
+            lpD3DDevice->Clear(0, 0, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0x00, 0x00, 0x00), 1.0f, 0);
+            lpD3DDevice->Present(0, 0, 0, 0);
+        }
     }
 
     auto clear() -> void {
@@ -761,6 +786,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         unsigned _pitch;
         uint32_t rgba;
 
+        options &= ~OPT_TakeScreenshot;
         if (!screenshotCallback)
             return;
 
@@ -945,11 +971,28 @@ Clear:
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
+        settings.vrrSpeed = speed;
+        updateVRR();
+    }
 
-        if (state) {
-            minimumCapTime = (1000000.0 / speed) + 0.5;
+    auto updateVRR() -> void {
+        if (settings.vrr) {
+            if (settings.bfiFrames)
+                minimumCapTime = (1000000.0 / (settings.vrrSpeed + ((float)settings.bfiFrames * settings.vrrSpeed) ) ) + 0.5;
+            else
+                minimumCapTime = (1000000.0 / settings.vrrSpeed) + 0.5;
             lastCapTime = Chronos::getTimestampInMicroseconds();
         }
+    }
+
+    auto setBFI(unsigned frames, unsigned darkFrames) -> void {
+        if (settings.handle)
+            wait();
+
+        settings.bfiFrames = frames;
+        settings.darkFrames = darkFrames > frames ? frames : darkFrames;
+        settings.lightFrames = frames - settings.darkFrames;
+        updateVRR();
     }
 
     auto waitRenderThread() -> void { if (threadEnabled) wait(); }
@@ -966,7 +1009,7 @@ Clear:
             return;
         }
 
-        if (remaining >= 3000) {
+        if (!settings.bfiFrames && (remaining >= 3000)) {
 
             remaining -= 1500;
 

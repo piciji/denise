@@ -104,9 +104,14 @@ struct GL3 {
         bool hardSync = false;
         bool linearFilter = true;
         bool vrr = false;
+        float vrrSpeed = 0.0;
         Rotation rotation = ROT_0;
         int direction = 1; // reserved for rewind support
         bool useShaderCache = false;
+
+        unsigned bfiFrames = 0;
+        unsigned darkFrames = 0;
+        unsigned lightFrames = 0;
     } settings;
 
     Version version;
@@ -1099,10 +1104,14 @@ End:
         glUseProgram(0);
     }
 
-    auto initVRR(float speed) -> void {
-        minimumCapTime = (1000000.0 / speed) + 0.5;
-
-        lastCapTime = Chronos::getTimestampInMicroseconds();
+    auto updateVRR() -> void {
+        if (settings.vrr) {
+            if (settings.bfiFrames)
+                minimumCapTime = (1000000.0 / (settings.vrrSpeed + ((float)settings.bfiFrames * settings.vrrSpeed) ) ) + 0.5;
+            else
+                minimumCapTime = (1000000.0 / settings.vrrSpeed) + 0.5;
+            lastCapTime = Chronos::getTimestampInMicroseconds();
+        }
     }
 
     auto waitVRR() -> void {
@@ -1114,7 +1123,7 @@ End:
             return;
         }
 
-        if (remaining >= 3000) {
+        if (!settings.bfiFrames && (remaining >= 3000)) {
 
             remaining -= 1500;
 

@@ -223,7 +223,7 @@ auto pComboButton::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     } else {
         if (pApplication::useDark) {
             FillRect(lDraw->hDC, &lRow, pApplication::darkBGSofterBrush);
-            SetTextColor(lDraw->hDC, DARK_FG_COL);
+            SetTextColor(lDraw->hDC, IsWindowEnabled(hwnd) ? DARK_FG_COL : GetSysColor(COLOR_GRAYTEXT));
         } else {
             FillRect(lDraw->hDC, &lRow, CreateSolidBrush(GetSysColor(COLOR_WINDOW)));
             SetTextColor(lDraw->hDC, GetSysColor(COLOR_WINDOWTEXT));

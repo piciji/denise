@@ -24,6 +24,7 @@ auto Program::initVideo(bool driverChange) -> void {
     setVideoDimension();
     updateFullscreenSetting();
     updateHDR();
+    updateBFI();
 	    
     if ( !videoDriver->init( view->getViewportHandle(driverChange) ) ) {
         delete videoDriver;
@@ -789,4 +790,14 @@ auto Program::updateHDR() -> void {
     float contrast = _settings->get<float>("hdr_contrast", 5.0, {0.0f, 10.0f});
 
     videoDriver->setHDR( enable, maxNits, pwNits, contrast, gamut );
+}
+
+auto Program::updateBFI() -> void {
+    auto _emu = activeEmulator ? activeEmulator : getLastUsedEmu();
+    auto _settings = getSettings(_emu);
+
+    unsigned bfiFrames = _settings->get<unsigned>("bfi_frames", 0, { 0, 6 });
+    unsigned darkFrames = _settings->get<unsigned>("dark_frames", 0, { 0, 6 });
+
+    videoDriver->setBFI(bfiFrames, darkFrames);
 }

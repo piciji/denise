@@ -199,8 +199,6 @@ struct WGL : Video, GL3, RenderThread {
             RenderThread::unlock();
         } else {
             redraw(options & OPT_DisallowShader);
-            if (options & OPT_TakeScreenshot)
-                takeScreenshot();
         }
     }
 
@@ -224,26 +222,16 @@ struct WGL : Video, GL3, RenderThread {
         if (disallowShader)
             _options &= ~OPT_DisallowShader;
                         
-        GL3::_redraw(_options);
-
-        if (dndOverlay.enabled())
-            dndOverlay.show(viewport);
-#ifdef DRV_FREETYPE
-        screenText.showText(viewport);
-#endif
-
-        if (progressVisible && progress.initialized)
-            progress.show(viewport, 20, 20);
-
-        if (settings.vrr) {
-            glFinish();
-            waitVRR();
-            SwapBuffers(display);
-        } else {
-            if (settings.hardSync && settings.synchronize) glFinish();
-            SwapBuffers(display);
+        render(_options);
+        if (options & OPT_TakeScreenshot) {
+            takeScreenshot();
+            options &= ~OPT_TakeScreenshot;
         }
-		resizeMutex.unlock();
+
+        if (settings.bfiFrames && settings.synchronize && !disallowShader)
+            bfi(_options);
+
+        resizeMutex.unlock();
 	}
 
     auto refresh() -> void {
@@ -266,7 +254,20 @@ struct WGL : Video, GL3, RenderThread {
         }
 		resizeMutexThreaded.lock();
         resizeWindow();
-        GL3::_redraw(options);
+        render(options);
+
+		resizeMutexThreaded.unlock();
+        if (options & OPT_TakeScreenshot)
+            takeScreenshot();
+
+        if (settings.bfiFrames && settings.synchronize && !(options & OPT_DisallowShader))
+            bfi(options);
+
+        clearCurrent();
+    }
+
+    auto render(uint8_t _options) -> void {
+        GL3::_redraw(_options);
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
@@ -284,11 +285,21 @@ struct WGL : Video, GL3, RenderThread {
             SwapBuffers(display);
             if (settings.hardSync && settings.synchronize) glFinish();
         }
+    }
 
-		resizeMutexThreaded.unlock();
-        if (options & OPT_TakeScreenshot)
-            takeScreenshot();
-        clearCurrent();
+    auto bfi(uint8_t _options) -> void {
+        for (int i = 0; i < settings.lightFrames; i++)
+            render(_options);
+
+        for (int i = 0; i < settings.darkFrames; i++) {
+            GL3::clear();
+            if (settings.vrr) {
+                glFinish();
+                waitVRR();
+            }
+            SwapBuffers(display);
+
+        }
     }
 	
 	bool init(uintptr_t _handle) {
@@ -434,9 +445,17 @@ struct WGL : Video, GL3, RenderThread {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
+        settings.vrrSpeed = speed;
+        updateVRR();
+    }
 
-        if (state)
-            initVRR(speed);
+    auto setBFI(unsigned frames, unsigned darkFrames) -> void {
+        wait();
+
+        settings.bfiFrames = frames;
+        settings.darkFrames = darkFrames > frames ? frames : darkFrames;
+        settings.lightFrames = frames - settings.darkFrames;
+        updateVRR();
     }
 
     auto waitRenderThread() -> void { if (threadEnabled) wait(); }
