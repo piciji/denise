@@ -465,7 +465,7 @@ struct GLX : public Video, GL3, RenderThread {
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
 
-        if (settings.bfiFrames && settings.synchronize &&  !(options & OPT_DisallowShader))
+        if (settings.bfiFrames && (settings.synchronize || useVRR) && !(options & OPT_DisallowShader))
             bfi();
 
         if (useResizing)
@@ -488,7 +488,7 @@ struct GLX : public Video, GL3, RenderThread {
         if (useVRR) {
             glFinish();
             waitVRR();
-            glXSwapBuffers(display, glxwindow);
+            if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
         } else {
             if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
             if (settings.hardSync && settings.synchronize) glFinish();
@@ -522,6 +522,10 @@ struct GLX : public Video, GL3, RenderThread {
 
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
+
+        if (settings.bfiFrames && (settings.synchronize || useVRR) && !(options & OPT_DisallowShader))
+            bfi();
+
         clearCurrent();
         resizeMutexThreaded.unlock();
     }
@@ -532,11 +536,11 @@ struct GLX : public Video, GL3, RenderThread {
 
         for (int i = 0; i < settings.darkFrames; i++) {
             GL3::clear();
-            if (settings.vrr) {
+            if (useVRR) {
                 glFinish();
                 waitVRR();
             }
-            SwapBuffers(display);
+            if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
         }
     }
 
@@ -630,6 +634,15 @@ struct GLX : public Video, GL3, RenderThread {
         settings.vrrSpeed = speed;
         useVRR = state;
 
+        updateVRR();
+    }
+
+    auto setBFI(unsigned frames, unsigned darkFrames) -> void {
+        wait();
+
+        settings.bfiFrames = frames;
+        settings.darkFrames = darkFrames > frames ? frames : darkFrames;
+        settings.lightFrames = frames - settings.darkFrames;
         updateVRR();
     }
 

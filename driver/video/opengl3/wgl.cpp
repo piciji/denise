@@ -222,7 +222,7 @@ struct WGL : Video, GL3, RenderThread {
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
 
-        if (settings.bfiFrames && settings.synchronize &&  !(options & OPT_DisallowShader))
+        if (settings.bfiFrames && (settings.synchronize || settings.vrr) && !(options & OPT_DisallowShader))
             bfi();
 
         resizeMutex.unlock();
@@ -254,7 +254,7 @@ struct WGL : Video, GL3, RenderThread {
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
 
-        if (settings.bfiFrames && settings.synchronize && !(options & OPT_DisallowShader))
+        if (settings.bfiFrames && (settings.synchronize || settings.vrr) && !(options & OPT_DisallowShader))
             bfi();
 
         clearCurrent();
