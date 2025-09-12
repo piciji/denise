@@ -633,13 +633,11 @@ struct GLX : public Video, GL3, RenderThread {
         settings.vrr = state;
         settings.vrrSpeed = speed;
         useVRR = state;
-
         updateVRR();
     }
 
     auto setBFI(unsigned frames, unsigned darkFrames) -> void {
         wait();
-
         settings.bfiFrames = frames;
         settings.darkFrames = darkFrames > frames ? frames : darkFrames;
         settings.lightFrames = frames - settings.darkFrames;

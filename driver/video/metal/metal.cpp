@@ -180,11 +180,16 @@ namespace DRIVER {
         bool linearFilter;
         bool synchronize;
         bool vrr;
+        float vrrSpeed = 0.0;
         Rotation rotation;
         bool hardSync;
         bool useShaderCache = false;
         int direction = 1; // reserved for rewind support
         bool hdrEnable = false;
+        
+        unsigned bfiFrames = 0;
+        unsigned darkFrames = 0;
+        unsigned lightFrames = 0;
     } settings;
     
     auto needResizingPreparations(bool useEmuThread) -> bool {
@@ -545,7 +550,7 @@ namespace DRIVER {
             [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.width, (NSUInteger)tex.height)
                         mipmapLevel:0 withBytes:frameData bytesPerRow: tex.bytesPerRow];
             
-            redrawBase(options & OPT_DisallowShader);
+            redrawBase();
             
             resizeMutex.unlock();
         }
@@ -572,7 +577,7 @@ namespace DRIVER {
             accessMutex.unlock();
         }
         
-        redrawBase(options & OPT_DisallowShader);
+        redrawBase();
      
         resizeMutexThreaded.unlock();
     }
@@ -752,11 +757,26 @@ namespace DRIVER {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
-
-        if (state) {
-            minimumCapTime = (1000000.0 / speed) + 0.5;
+        settings.vrrSpeed = speed;
+        updateVRR();
+    }
+        
+    auto updateVRR() -> void {
+        if (settings.vrr) {
+            if (settings.bfiFrames)
+                minimumCapTime = (1000000.0 / (settings.vrrSpeed + ((float)settings.bfiFrames * settings.vrrSpeed) ) ) + 0.5;
+            else
+                minimumCapTime = (1000000.0 / settings.vrrSpeed) + 0.5;
             lastCapTime = Chronos::getTimestampInMicroseconds();
         }
+    }
+        
+    auto setBFI(unsigned frames, unsigned darkFrames) -> void {
+        wait();
+        settings.bfiFrames = frames;
+        settings.darkFrames = darkFrames > frames ? frames : darkFrames;
+        settings.lightFrames = frames - settings.darkFrames;
+        updateVRR();
     }
 
     auto waitRenderThread() -> void { if (threadEnabled) wait(); }
@@ -804,13 +824,14 @@ namespace DRIVER {
     
     auto shaderSupport() -> bool { return true; }
     
-    auto redrawBase(bool disallowShader = false) -> void {
+    auto redrawBase(bool bfiLock = false) -> void {
         @autoreleasepool {
             if (shaderResizeTimer && !--shaderResizeTimer) {
                 updateFrameSize();
             }
             
             bool requestScreenshot = options & OPT_TakeScreenshot;
+            bool disallowShader = options & OPT_DisallowShader;
             layer.framebufferOnly = requestScreenshot ? NO : YES;
             MTLTexture& mainTex = frame.textures[0];
             
@@ -1045,6 +1066,35 @@ namespace DRIVER {
 
             commandBuffer = nil;
             drawable = nil;
+            
+            if (settings.bfiFrames && !disallowShader && !bfiLock) {
+                for (int i = 0; i < settings.lightFrames; i++)
+                    redrawBase(true);
+                
+                for (int i = 0; i < settings.darkFrames; i++) {
+                    commandBuffer = [commandQueue commandBuffer];
+                    drawable = layer.nextDrawable;
+                    rpd.colorAttachments[0].clearColor = clearColor;
+                    rpd.colorAttachments[0].loadAction = MTLLoadActionClear;
+                    rpd.colorAttachments[0].texture = drawable.texture;
+                    
+                    rce = [commandBuffer renderCommandEncoderWithDescriptor:rpd];
+                    [rce endEncoding];
+                    
+                    __block dispatch_semaphore_t _semaphore = semaphore;
+                    [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> _buf) {
+                        dispatch_semaphore_signal(_semaphore);
+                    }];
+                    
+                    [commandBuffer presentDrawable:drawable];
+                    if (settings.vrr) {
+                        waitVRR();
+                        [commandBuffer commit];
+                        [commandBuffer waitUntilCompleted];
+                    } else
+                        [commandBuffer commit];
+                }
+            }
         }
     }
 
@@ -1730,6 +1780,7 @@ namespace DRIVER {
     }
         
     auto takeScreenshot() -> void {
+        options &= ~OPT_TakeScreenshot;
         if (!screenshotCallback)
             return;
         

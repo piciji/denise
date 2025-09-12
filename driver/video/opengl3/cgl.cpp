@@ -334,7 +334,8 @@ struct CGL : public Video, GL3, RenderThread {
             return;
 
 //        if (NSAppKitVersionNumber < NSAppKitVersionNumber10_14) // before Mojave
-        _redraw(false, threadEnabled ? getLastBufferToRender() : nullptr);
+        options &= ~(OPT_TakeScreenshot);
+        _redraw(threadEnabled ? getLastBufferToRender() : nullptr);
         
         resizeMutexThreaded.unlock();
         resizeMutex.unlock();
@@ -342,7 +343,7 @@ struct CGL : public Video, GL3, RenderThread {
 
     void redraw() {
         makeCurrent(true);
-        _redraw(options, threadEnabled ? getLastBufferToRender() : nullptr);
+        _redraw(threadEnabled ? getLastBufferToRender() : nullptr);
         
         if (useResizing)
             clearCurrent();
@@ -356,19 +357,17 @@ struct CGL : public Video, GL3, RenderThread {
             resizeMutex.lock();
 
             makeCurrent(true);
-            _redraw(options, threadEnabled ? getLastBufferToRender() : nullptr);
+            _redraw(threadEnabled ? getLastBufferToRender() : nullptr);
 
             if (useResizing)
                 clearCurrent();
 
-            if (options & OPT_TakeScreenshot)
-                takeScreenshot();
             resizeMutex.unlock();
         }
 
     }
 
-    void _redraw(uint8_t _options, RenderBuffer* renderBuffer = nullptr) {
+    void _redraw(RenderBuffer* renderBuffer = nullptr) {
 
         @autoreleasepool {
             if([view lockFocusIfCanDraw]) {
@@ -379,26 +378,13 @@ struct CGL : public Video, GL3, RenderThread {
                 }
 
                 GL3::updateMainTexture( renderBuffer );
-                GL3::_redraw(_options);
-
-                if (dndOverlay.enabled())
-                    dndOverlay.show(viewport);
-#ifdef DRV_FREETYPE
-                screenText.showText(viewport);
-#endif
-                if (progressVisible && progress.initialized)
-                    progress.show(viewport, 20, 20);
-
-                if (useResizing)
-                    [[view openGLContext] flushBuffer];
-                else if (useVRR) {
-                    glFinish();
-                    waitVRR();
-                    [[view openGLContext] flushBuffer];
-                } else {
-                    [[view openGLContext] flushBuffer];
-                    if (settings.hardSync && settings.synchronize) glFinish();
-                }
+                render();
+                
+                if (options & OPT_TakeScreenshot)
+                    takeScreenshot();
+                
+                if (settings.bfiFrames && (settings.synchronize || useVRR) && !(options & OPT_DisallowShader))
+                    bfi();
               
                 [view unlockFocus];
             }
@@ -428,28 +414,14 @@ struct CGL : public Video, GL3, RenderThread {
                 if (shaderResizeTimer && !--shaderResizeTimer) {
                     GL3::updateFrameSize();
                 }
-                GL3::_redraw(options);
-
-                if (dndOverlay.enabled())
-                    dndOverlay.show(viewport);
-#ifdef DRV_FREETYPE
-                screenText.showText(viewport);
-#endif
-                if (progressVisible && progress.initialized)
-                    progress.show(viewport, 20, 20);
-
-                if (useResizing)
-                    [[view openGLContext] flushBuffer];
-                else if (useVRR) {
-                    glFinish();
-                    waitVRR();
-                    [[view openGLContext] flushBuffer];
-                } else {
-                    [[view openGLContext] flushBuffer];
-                    if (settings.hardSync && settings.synchronize) glFinish();
-                }
+                render();
+                
                 if (options & OPT_TakeScreenshot)
                     takeScreenshot();
+                
+                if (settings.bfiFrames && (settings.synchronize || useVRR) && !(options & OPT_DisallowShader))
+                    bfi();
+                
                 [view unlockFocus];
             }
 
@@ -457,6 +429,43 @@ struct CGL : public Video, GL3, RenderThread {
            
         }
         resizeMutexThreaded.unlock();
+    }
+    
+    void render() {
+        GL3::_redraw(options);
+
+        if (dndOverlay.enabled())
+            dndOverlay.show(viewport);
+#ifdef DRV_FREETYPE
+        screenText.showText(viewport);
+#endif
+        if (progressVisible && progress.initialized)
+            progress.show(viewport, 20, 20);
+
+        if (useResizing)
+            [[view openGLContext] flushBuffer];
+        else if (useVRR) {
+            glFinish();
+            waitVRR();
+            [[view openGLContext] flushBuffer];
+        } else {
+            [[view openGLContext] flushBuffer];
+            if (settings.hardSync && settings.synchronize) glFinish();
+        }
+    }
+    
+    auto bfi() -> void {
+        for (int i = 0; i < settings.lightFrames; i++)
+            render();
+
+        for (int i = 0; i < settings.darkFrames; i++) {
+            GL3::clear();
+            if (useVRR) {
+                glFinish();
+                waitVRR();
+            }
+            [[view openGLContext] flushBuffer];
+        }
     }
     
     void synchronize(bool state) {
@@ -586,10 +595,17 @@ struct CGL : public Video, GL3, RenderThread {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
+        settings.vrrSpeed = speed;
         useVRR = state;
-
-        if (state)
-            initVRR(speed);
+        updateVRR();
+    }
+    
+    auto setBFI(unsigned frames, unsigned darkFrames) -> void {
+        wait();
+        settings.bfiFrames = frames;
+        settings.darkFrames = darkFrames > frames ? frames : darkFrames;
+        settings.lightFrames = frames - settings.darkFrames;
+        updateVRR();
     }
 
     auto waitRenderThread() -> void { if (threadEnabled) wait(); }
