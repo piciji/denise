@@ -340,13 +340,9 @@ struct CGL : public Video, GL3, RenderThread {
         resizeMutex.unlock();
     }
 
-    void redraw(bool disallowShader = false) {
+    void redraw() {
         makeCurrent(true);
-        uint8_t _options = options;
-        if (disallowShader)
-            _options &= ~OPT_DisallowShader;
-
-        _redraw(_options, threadEnabled ? getLastBufferToRender() : nullptr);
+        _redraw(options, threadEnabled ? getLastBufferToRender() : nullptr);
         
         if (useResizing)
             clearCurrent();

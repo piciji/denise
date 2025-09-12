@@ -195,11 +195,10 @@ struct WGL : Video, GL3, RenderThread {
     }
 
     auto unlockAndRedraw() -> void {
-        if (threadEnabled) {
+        if (threadEnabled)
             RenderThread::unlock();
-        } else {
-            redraw(options & OPT_DisallowShader);
-        }
+        else
+            redraw();
     }
 
 	auto lockResize() -> void {
@@ -211,25 +210,20 @@ struct WGL : Video, GL3, RenderThread {
         resizeMutexThreaded.unlock();
         resizeMutex.unlock();
     }
-	
-	auto redraw(bool disallowShader = false) -> void {
+
+	auto redraw() -> void {
 		resizeMutex.lock();
         resizeWindow();
         makeCurrent(true);
         //GL3::clear();
         GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
-        uint8_t _options = options;
-        if (disallowShader)
-            _options &= ~OPT_DisallowShader;
                         
-        render(_options);
-        if (options & OPT_TakeScreenshot) {
+        render();
+        if (options & OPT_TakeScreenshot)
             takeScreenshot();
-            options &= ~OPT_TakeScreenshot;
-        }
 
-        if (settings.bfiFrames && settings.synchronize && !disallowShader)
-            bfi(_options);
+        if (settings.bfiFrames && settings.synchronize &&  !(options & OPT_DisallowShader))
+            bfi();
 
         resizeMutex.unlock();
 	}
@@ -254,20 +248,20 @@ struct WGL : Video, GL3, RenderThread {
         }
 		resizeMutexThreaded.lock();
         resizeWindow();
-        render(options);
+        render();
 
 		resizeMutexThreaded.unlock();
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
 
         if (settings.bfiFrames && settings.synchronize && !(options & OPT_DisallowShader))
-            bfi(options);
+            bfi();
 
         clearCurrent();
     }
 
-    auto render(uint8_t _options) -> void {
-        GL3::_redraw(_options);
+    auto render() -> void {
+        GL3::_redraw(options);
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);
@@ -287,9 +281,9 @@ struct WGL : Video, GL3, RenderThread {
         }
     }
 
-    auto bfi(uint8_t _options) -> void {
+    auto bfi() -> void {
         for (int i = 0; i < settings.lightFrames; i++)
-            render(_options);
+            render();
 
         for (int i = 0; i < settings.darkFrames; i++) {
             GL3::clear();
@@ -298,7 +292,6 @@ struct WGL : Video, GL3, RenderThread {
                 waitVRR();
             }
             SwapBuffers(display);
-
         }
     }
 	

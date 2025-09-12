@@ -1132,7 +1132,7 @@ namespace DRIVER {
         context->Unmap((ID3D11Resource*)frame.textures[0].staging, 0);
         context->CopyResource((ID3D11Resource*)frame.textures[0].ptr, (ID3D11Resource*)frame.textures[0].staging);
 
-        redraw(options & OPT_DisallowShader);
+        _redraw();
     }
 
     auto refresh() -> void {
@@ -1181,14 +1181,19 @@ namespace DRIVER {
             accessMutex.unlock();
         }
 
-        redraw(options & OPT_DisallowShader);
+        _redraw();
     }
 
-    auto redraw(bool disallowShader = false, bool bfiLock = false) -> void {
+    auto redraw() -> void {
+        _redraw();
+    }
+
+    auto _redraw(bool bfiLock = false) -> void {
         ID3D11RenderTargetView* rtv = nullptr;
         ID3D11Texture2D* backBuffer = nullptr;
 
-        checkForResize();
+        if (!bfiLock)
+            checkForResize();
 
         if (updateRTS) {
             updateRenderTargets(frame.textures[0].desc.Width, frame.textures[0].desc.Height);
@@ -1205,7 +1210,7 @@ namespace DRIVER {
 
         D3DTexture* texture = &frame.textures[0];
 
-        if (!disallowShader && shaderPasses) {
+        if (!(options & OPT_DisallowShader) && shaderPasses) {
             frameCount += 1;
 
             for(int i = 0; i < shaderPasses; i++) {
@@ -1399,9 +1404,9 @@ namespace DRIVER {
         if (settings.vrr)
             context->Flush();
 
-        if (settings.bfiFrames && !disallowShader && !bfiLock) {
+        if (settings.bfiFrames && !(options & OPT_DisallowShader) && !bfiLock) {
             for (int i = 0; i < settings.lightFrames; i++)
-                redraw(false, true);
+                _redraw(true);
 
             for (int i = 0; i < settings.darkFrames; i++) {
                 context->OMSetRenderTargets(1, &rtv, nullptr);
@@ -1410,8 +1415,9 @@ namespace DRIVER {
                     waitVRR();
                     swapChain.ptr->Present(1, 0);
                     context->Flush();
-                } else
+                } else {
                     swapChain.ptr->Present(1, 0);
+                }
             }
         }
 
@@ -1895,7 +1901,7 @@ namespace DRIVER {
             return;
         }
 
-        if (!settings.bfiFrames && (remaining >= 5000)) {
+        if (remaining >= 5000) {
 
             remaining -= 3500;
 

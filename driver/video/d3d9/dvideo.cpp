@@ -442,7 +442,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         }
     }
 
-    auto redraw(bool disallowShader = false) -> void {
+    auto redraw() -> void {
         RECT windowsize = Win::getDimension( settings.handle );
         if ((viewScreen.windowWidth != windowsize.right) || (viewScreen.windowHeight != windowsize.bottom)) {
             if (!resetOrInit())
@@ -1009,7 +1009,7 @@ Clear:
             return;
         }
 
-        if (!settings.bfiFrames && (remaining >= 3000)) {
+        if (remaining >= 3000) {
 
             remaining -= 1500;
 

@@ -1123,7 +1123,7 @@ End:
             return;
         }
 
-        if (!settings.bfiFrames && (remaining >= 3000)) {
+        if (remaining >= 3000) {
 
             remaining -= 1500;
 

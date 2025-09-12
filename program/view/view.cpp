@@ -114,10 +114,7 @@ auto View::build() -> void {
                     videoDriver->freeContext();
                     emuThread->unlock();
                 }
-			} else {
-				videoDriver->redraw(true);
-                videoDriver->freeContext();
-            }
+			}
         }
 
     //    if (!emuThread->enabled)

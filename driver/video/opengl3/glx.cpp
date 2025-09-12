@@ -431,32 +431,24 @@ struct GLX : public Video, GL3, RenderThread {
             RenderThread::unlock();
         } else {
             _redraw();
-            if (options & OPT_TakeScreenshot)
-                takeScreenshot();
         }
     }
 
-    auto redraw(bool disallowShader = false) -> void {
+    auto redraw() -> void {
         resizeMutex.lock();
         resizeMutexThreaded.lock();
-        redrawCustom(disallowShader);
-        resizeMutexThreaded.unlock();
-        resizeMutex.unlock();
-    }
 
-    auto redrawCustom(bool disallowShader = false) -> void {
         resizeWindow();
         makeCurrent();
         GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
-        uint8_t _options = options;
-        if (disallowShader)
-            _options &= ~OPT_DisallowShader;
-
-        GL3::_redraw(_options);
+        GL3::_redraw(options);
 #ifdef DRV_FREETYPE
         screenText.showText(viewport);
 #endif
         clearCurrent();
+
+        resizeMutexThreaded.unlock();
+        resizeMutex.unlock();
     }
 
     auto _redraw() -> void {
@@ -468,6 +460,21 @@ struct GLX : public Video, GL3, RenderThread {
             GL3::updateFrameSize();
         }
         GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
+
+        render();
+        if (options & OPT_TakeScreenshot)
+            takeScreenshot();
+
+        if (settings.bfiFrames && settings.synchronize &&  !(options & OPT_DisallowShader))
+            bfi();
+
+        if (useResizing)
+            clearCurrent();
+
+        resizeMutex.unlock();
+    }
+
+    auto render() -> void {
         GL3::_redraw(options);
 
         if (dndOverlay.enabled())
@@ -486,11 +493,6 @@ struct GLX : public Video, GL3, RenderThread {
             if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
             if (settings.hardSync && settings.synchronize) glFinish();
         }
-
-        if (useResizing)
-            clearCurrent();
-
-        resizeMutex.unlock();
     }
 
     auto refresh() -> void {
@@ -516,29 +518,26 @@ struct GLX : public Video, GL3, RenderThread {
             GL3::updateFrameSize();
         }
 
-        GL3::_redraw(options);
-
-        if (dndOverlay.enabled())
-            dndOverlay.show(viewport);
-#ifdef DRV_FREETYPE
-        screenText.showText(viewport);
-#endif
-        if (progressVisible && progress.initialized)
-            progress.show(viewport, 20, 20);
-
-        if (useVRR) {
-            glFinish();
-            waitVRR();
-            glXSwapBuffers(display, glxwindow);
-        } else {
-            if (glx.doubleBuffer) glXSwapBuffers(display, glxwindow);
-            if (settings.hardSync && settings.synchronize) glFinish();
-        }
+        render();
 
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
         clearCurrent();
         resizeMutexThreaded.unlock();
+    }
+
+    auto bfi() -> void {
+        for (int i = 0; i < settings.lightFrames; i++)
+            render();
+
+        for (int i = 0; i < settings.darkFrames; i++) {
+            GL3::clear();
+            if (settings.vrr) {
+                glFinish();
+                waitVRR();
+            }
+            SwapBuffers(display);
+        }
     }
 
     auto term() -> void {
@@ -628,10 +627,10 @@ struct GLX : public Video, GL3, RenderThread {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
+        settings.vrrSpeed = speed;
         useVRR = state;
 
-        if (state)
-            initVRR(speed);
+        updateVRR();
     }
 
     auto waitRenderThread() -> void { if (threadEnabled) wait(); }

@@ -62,7 +62,7 @@ struct Video {
 
     virtual auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
     virtual auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
-    virtual auto redraw(bool disallowShader = false) -> void {}
+    virtual auto redraw() -> void {}
     virtual auto unlockAndRedraw() -> void {}
     virtual auto clear() -> void {}
     virtual auto setLinearFilter(bool state) -> void {}
