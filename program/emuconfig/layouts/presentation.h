@@ -328,6 +328,7 @@ struct VideoScreenShotLayout : GUIKIT::FramedVerticalLayout {
     struct Options : GUIKIT::HorizontalLayout {
         SliderLayout gun;
         SliderLayout interval;
+        GUIKIT::CheckBox delayScreenshot;
         Options();
     } options;
 

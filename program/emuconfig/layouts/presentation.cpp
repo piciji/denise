@@ -445,7 +445,8 @@ gun(""),
 interval("") {
 
     append(gun, { ~0u, 0u }, 10);
-    append(interval, { ~0u, 0u });
+    append(interval, { ~0u, 0u }, 10);
+    append(delayScreenshot, { 0u, 0u });
 
     gun.slider.setLength(120);
     interval.slider.setLength(60);
@@ -1611,6 +1612,10 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<unsigned>("screen_gun_each", position + 1);
     };
 
+    layScreenShot.options.delayScreenshot.onToggle = [this](bool checked) {
+        _settings->set<unsigned>("screen_shot_delay", checked);
+    };
+
     layMotion.hdr.control.enableHdr.onToggle = [this](bool checked) {
         _settings->set<bool>("hdr_enable", checked);
         emuThread->lock();
@@ -2497,6 +2502,8 @@ auto PresentationLayout::translate() -> void {
     layScreenShot.format.palete.setText(trans->getA("save palete"));
     layScreenShot.options.gun.name.setText(trans->getA("frames"));
     layScreenShot.options.interval.name.setText(trans->getA("interval"));
+    layScreenShot.options.delayScreenshot.setText(trans->getA("Delay"));
+    layScreenShot.options.delayScreenshot.setTooltip(trans->getA("delay screenshot tooltip"));
 }
 
 auto PresentationLayout::sliderIdent() -> std::string {
@@ -2633,6 +2640,9 @@ auto PresentationLayout::loadSettings(bool init) -> void {
         screenshotGunEach = 1;
     layScreenShot.options.interval.slider.setPosition(screenshotGunEach - 1);
     layScreenShot.options.interval.setValue(std::to_string(screenshotGunEach));
+
+    bool delayScreenshot = _settings->get<unsigned>("screen_shot_delay", false);
+    layScreenShot.options.delayScreenshot.setChecked(delayScreenshot);
 
     bool enableHdr = _settings->get<bool>("hdr_enable", false);
     bool gamut = _settings->get<bool>("hdr_gamut", true);

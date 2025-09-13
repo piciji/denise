@@ -812,7 +812,7 @@ auto View::setConnectors() -> void {
         controlMenu.append(*inputItem);
 
         inputItem = new GUIKIT::MenuItem;
-        inputItem->setText(emulator->ident + " " + trans->get("config") );
+        inputItem->setText(emulator->ident + " " + trans->get("config") + "..." );
 
         inputItem->onActivate = [emulator]() {
             auto emuView = EmuConfigView::TabWindow::getView( emulator, true );
@@ -2044,24 +2044,24 @@ auto View::translate() -> void {
             sysMenu.capsLED->setText(trans->get("toggle Caps Lock LED"));
         if (sysMenu.mhz2LED)
             sysMenu.mhz2LED->setText(trans->getA("toggle 2 MHz LED"));
-        sysMenu.loadSoftware->setText(trans->get("load software"));
+        sysMenu.loadSoftware->setText(trans->get("load software") + "...");
         sysMenu.recentSoftware->setText(trans->getA("Recent Files"));
-        sysMenu.media->setText(trans->get("Software"));
+        sysMenu.media->setText(trans->get("Software") + "...");
         sysMenu.states->setText(trans->get("states"));
         sysMenu.save->setText(trans->get("Savestate"));
         sysMenu.slotUp->setText(trans->get("Incslot"));
         sysMenu.slotDown->setText(trans->get("Decslot"));
         sysMenu.load->setText(trans->get("Loadstate"));
 
-        sysMenu.systemManagement->setText(trans->get("system_management"));
+        sysMenu.systemManagement->setText(trans->get("system_management") + "...");
 
-        sysMenu.audio->setText(trans->get("Audio"));
-        sysMenu.firmware->setText(trans->get("Firmware"));
-        sysMenu.configurations->setText(trans->get("Configurations"));
-        sysMenu.presentation->setText(trans->get("Presentation"));
-        sysMenu.palette->setText(trans->get("Palette"));
-        sysMenu.geometry->setText(trans->get("Geometry"));
-        sysMenu.misc->setText(trans->get("Miscellaneous"));
+        sysMenu.audio->setText(trans->get("Audio") + "...");
+        sysMenu.firmware->setText(trans->get("Firmware") + "...");
+        sysMenu.configurations->setText(trans->get("Configurations") + "...");
+        sysMenu.presentation->setText(trans->get("Presentation") + "...");
+        sysMenu.palette->setText(trans->get("Palette") + "...");
+        sysMenu.geometry->setText(trans->get("Geometry") + "...");
+        sysMenu.misc->setText(trans->get("Miscellaneous") + "...");
 
         sysMenu.shaderMenu->setText(trans->get("Shader"));
         sysMenu.recentControl->setText(trans->getA("preferences"));
@@ -2080,10 +2080,10 @@ auto View::translate() -> void {
     recordScreen.setText(trans->getA("take screenshot"));
     recordMergedFrames.setText(trans->getA("merge frames"));    
     recordWithEffects.setText(trans->getA("including effects"));
-    recordScreenSettings.setText(trans->getA("screenshot settings"));
+    recordScreenSettings.setText(trans->getA("screenshot settings") + "...");
 
     recordAudio.setText(trans->getA("record audio"));
-    recordAudioSettings.setText(trans->getA("record audio settings"));
+    recordAudioSettings.setText(trans->getA("record audio settings") + "...");
 
     recordScaled.setText(trans->getA("scaled"));
     recordUnscaled.setText(trans->getA("unscaled"));
@@ -2093,8 +2093,8 @@ auto View::translate() -> void {
     
     optionsMenu.setText( trans->get("options"));
 
-    driversItem.setText( trans->get("driver") );
-    settingsItem.setText( trans->get("settings"));
+    driversItem.setText( trans->get("driver") + "...");
+    settingsItem.setText( trans->get("settings") + "...");
 
     videoSyncItem.setText( trans->get("Video Sync"));
     vrrItem.setText( trans->get("VRR"));
@@ -2441,6 +2441,7 @@ auto View::takeScreenshot() -> void {
     bool usePalete = settings->get<bool>("screen_palette", true);
     unsigned screenGun = settings->get<unsigned>("screen_gun", 1, {1, 120});
     unsigned screenGunEach = settings->get<unsigned>("screen_gun_each", 1, { 1, 60 });
+    bool delayScreenshot = settings->get<unsigned>("screen_shot_delay", false);
 
     _path += _file + "_#ident#";
 
@@ -2474,7 +2475,7 @@ auto View::takeScreenshot() -> void {
     screenshot.pause = 0;
     screenshot.saveState = false;
     screenshot.interval = VideoManager::placeHolderFrames ? 1 : screenGunEach;
-    screenshot.intervalPos = 1;
+    screenshot.intervalPos = delayScreenshot ? (50 * 3) : 1;
 
     if (screenshot.animatedGif) {
         screenshot.gun = screenGun > 1 ? screenGun : 2;

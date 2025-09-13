@@ -932,3 +932,4 @@ BFI images = extra images
 BFI images tooltip = Depending on the refresh rate used, additional black images can be inserted to reduce motion blur.
 BFI black images = of which black
 BFI black images tooltip = If at least 2 extra images are added, a compromise between brightness and motion blur can be determined.
+delay screenshot tooltip = Screenshot is triggered 3 seconds later

@@ -932,3 +932,4 @@ BFI images = zusätzliche Bilder
 BFI images tooltip = In Abhängigkeit der verwendeten Bildwiederholrate können zusätzliche schwarze Bilder eingefügt werden um die Bewegungsunschärfe zu reduzieren.
 BFI black images = davon schwarz
 BFI black images tooltip = Wenn mindestens 2 extra Bilder hinzugefügt sind, kann hierüber ein Kompromiss zwischen Helligkeit und Bewegungsunschärfe festgelegt werden.
+delay screenshot tooltip = Screenshot wird 3 Sekunden später ausgelöst
