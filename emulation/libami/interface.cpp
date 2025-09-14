@@ -713,11 +713,6 @@ auto Interface::informAboutKeyUpdate() -> void {
     system->informAboutKeyUpdate();
 }
 
-auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
-    system->agnus.lineCallback.use = state;
-    system->agnus.lineCallback.line = scanline;
-}
-
 auto Interface::cropFrame( CropType type, Crop crop ) -> void {
     system->crop.settings.type = type;
     system->crop.settings.crop = crop;

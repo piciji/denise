@@ -340,7 +340,6 @@ struct Interface {
         virtual auto updateLedState(Emulator::Interface::LedId, uint8_t) -> void {}
         virtual auto log(std::string, bool) -> void {} //for debugging
         virtual auto exit( int code ) -> void {}
-        virtual auto midScreenCallback(uint8_t) -> void {}
         virtual auto questionToWrite(Media*) -> bool { return false; }
         virtual auto hintAutoWarp(uint8_t) -> void {}
         virtual auto autoStartFinish(bool) -> void {}
@@ -375,10 +374,6 @@ struct Interface {
 	
 	auto videoRefresh8(const uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void {
         bind->videoRefresh8(frame, width, height, linePitch);
-    }
-    
-    auto midScreenCallback(uint8_t options) -> void {
-        bind->midScreenCallback(options);
     }
 
     auto readMedia(Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
@@ -601,9 +596,6 @@ struct Interface {
     virtual auto cropAlternatively(unsigned& width, unsigned& height, unsigned& pitch) -> uint8_t* { return nullptr; }
     
     virtual auto videoAddMeta(bool state) -> void {}
-    
-    //sets alternative per line callbacks
-    virtual auto setLineCallback(bool state, unsigned scanline = 0) -> void {}
 
     virtual auto setWarpMode(unsigned config) -> void {}
 	virtual auto getWarpMode() -> unsigned { return 0; }

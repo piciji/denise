@@ -57,14 +57,14 @@ struct GunStick : LightControl {
 		return (*displayPtr & 0xf) != 0;
 	}
     
-    auto draw(bool midScreen = false) -> void {
+    auto draw() -> void {
         
         uint8_t color = 3;
         
         if ( this == system->input.controlPort2 )
             color = 4;
 		
-		LightControl::draw( color, midScreen );
+		LightControl::draw( color );
     }
 };
 

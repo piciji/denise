@@ -65,12 +65,6 @@ auto Agnus::startHblank() -> void {
         lineVCounter = 0;
         vBlankOffset = 0;
         secureRA = system->runAhead.pos == 1;
-    } else if (!lineCallback.called && (lineVCounter >= lineCallback.line)) {
-        denise.process();
-
-        uint8_t _res = (denise.frameMode == Denise::SHRES_FRAME) ? 8 : (denise.frameMode == Denise::HIRES_FRAME ? 4 : 0);
-        system->videoMidScreenCallback(laceFrame | _res);
-        lineCallback.called = true;
     }
 
     if (_vblank) {
@@ -143,11 +137,6 @@ auto Agnus::endHblank() -> void {
             laceFrame = laceMode;
             if (laceFrame & 2)
                 lineVCounter = 1;
-
-            if (laceMode & 3)
-                lineCallback.called = true; // no interlace support for threaded CPU renderer
-            else
-                lineCallback.called = !lineCallback.use /*|| !lineCallback.line*/;
 
             if (secureRA) {
                 secureRA = false;

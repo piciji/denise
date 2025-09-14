@@ -31,9 +31,9 @@ struct InkwellLightpen : LightControl {
         return button2Pressed ? 0 : 0xff;
     }
 
-    auto draw(bool midScreen = false) -> void {
+    auto draw() -> void {
 		
-		LightControl::draw( 7, midScreen );
+		LightControl::draw( 7 );
 
     }
         

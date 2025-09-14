@@ -1890,15 +1890,6 @@ auto Interface::getChroma(uint8_t index) -> double {
     return system->vicII->getChroma( index );
 }
 
-auto Interface::setLineCallback(bool state, unsigned scanline) -> void {
-
-    system->vicIIFast.lineCallback.use = state;
-    system->vicIIFast.lineCallback.line = scanline;
-    system->vicIICycle.lineCallback.use = state;
-    system->vicIICycle.lineCallback.line = scanline;
-
-}
-
 auto Interface::setMemoryInitParams(MemoryPattern& pattern) -> void {
 
     system->memoryInit = pattern;

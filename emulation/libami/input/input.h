@@ -68,7 +68,7 @@ struct Input {
 
     auto emergencyPoll() -> void;
 
-    auto drawCursor(bool midScreen = false) -> void;
+    auto drawCursor() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
 
     auto setSampling(uint8_t mode) -> void;

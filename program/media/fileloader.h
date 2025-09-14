@@ -3,6 +3,7 @@
 
 #include <thread>
 #include <mutex>
+#include <atomic>
 #include "../../guikit/api.h"
 #include "../../emulation/interface.h"
 #include "../emuconfig/config.h"

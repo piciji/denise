@@ -55,11 +55,6 @@ struct VicIIBase {
 	} crop;
 
 	struct {
-		bool use;
-		unsigned line;
-	} lineCallback;
-
-	struct {
 		uint8_t mode = 0;
 		unsigned framePos = 1;
 		bool permanent = false;

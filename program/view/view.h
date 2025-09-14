@@ -5,6 +5,7 @@
 #include "imageViewer.h"
 #include "message.h"
 #include "../media/recentFiles.h"
+#include <mutex>
 
 struct View : GUIKIT::Window {
     Message* message;

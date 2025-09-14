@@ -880,7 +880,6 @@ back = 戻る
 load archive native = 圧縮ファイルをネイティブで読み込み
 prevent speeder tooltip = Speederカーネル (非VDT) は次回読み込み時に抑制されます
 overclocking = オーバークロック
-CPU renderer tooltip = CPUレンダラーを別スレッドで処理
 Slower Built-In HDD = HDDの速度を下げる
 Slower Built-In HDD tooltip = 仮想ハードディスクはデータを渡しますが、その際に実機と同様にほんの少し遅延を発生させます。これはM-Tec AT500などの実機のハードディスクのコントローラは影響しません
 toggle Caps Lock LED = Caps LockのLEDをトグル

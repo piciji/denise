@@ -122,7 +122,6 @@ struct Interface : Emulator::Interface  {
 
     auto sendKeyChange(bool pressed, Device::Input* input) -> void;
     auto informAboutKeyUpdate() -> void;
-    auto setLineCallback(bool state, unsigned scanline) -> void;
     auto requestImmediateReturn() -> void;
 
     auto needExternalKeyUpdates() -> bool { return true; }

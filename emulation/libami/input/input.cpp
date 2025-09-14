@@ -137,9 +137,9 @@ auto Input::initFrame() -> void {
     sampling.externalKeyEvent = false;
 }
 
-auto Input::drawCursor(bool midScreen) -> void {
-    controlPort1->draw( midScreen );
-    controlPort2->draw( midScreen );
+auto Input::drawCursor() -> void {
+    controlPort1->draw( );
+    controlPort2->draw( );
 }
 
 auto Input::reset() -> void {

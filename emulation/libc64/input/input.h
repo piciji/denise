@@ -69,7 +69,7 @@ struct Input {
     auto readPotX() -> uint8_t;
     auto readPotY() -> uint8_t;
     
-    auto drawCursor(bool midScreen = false) -> void;
+    auto drawCursor() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
 
     auto setSampling(uint8_t mode) -> void;

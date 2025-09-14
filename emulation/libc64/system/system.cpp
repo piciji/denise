@@ -969,16 +969,6 @@ auto System::setVicRdy(bool state) -> void {
     cpu.setRdy( rdyIncomming != 0 );
 }
 
-auto System::VicMidScreenCallback() -> void {
-
-    if (runAhead.pos)
-        return;
-
-    input.drawCursor(true);
-
-    interface->midScreenCallback(0);
-}
-
 auto System::pasteText( std::string buffer ) -> void {
     keyBuffer->paste( buffer );
 }

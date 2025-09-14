@@ -880,7 +880,6 @@ back = Zurück
 load archive native = Archiv nativ laden
 prevent speeder tooltip = Speeder-Kernel (nicht die VDT) wird für nächsten Ladevorgang unterdrückt
 overclocking = Übertaktung
-CPU renderer tooltip = CPU Renderer wird in einem extra thread ausgeführt.
 Slower Built-In HDD = HDD verlangsamen
 Slower Built-In HDD tooltip = Die virtuelle Festplatte stellt die Daten, ähnlich einer Echten, nach kurzer Wartezeit zur Verfügung. Das betrifft keine echten HD-Controller, wie dem M-Tec AT500.
 toggle Caps Lock LED = Caps Lock LED umschalten

@@ -134,7 +134,7 @@ inline auto VicIICycle::advanceCycle() -> void {
             visibleLine = false; // v-blank
 
             if (leftLineAnomaly.mode)
-                insertVerticalLineAnomaly( lineCallback.line, lineVCounter );
+                insertVerticalLineAnomaly( 0, lineVCounter );
 
             // push out the frame to host
             // we crop the h-blanking area before
@@ -142,12 +142,7 @@ inline auto VicIICycle::advanceCycle() -> void {
                 hWidth, lineVCounter, VIC_MAX_LINE_LENGTH - hWidth
             );
 			lineVCounter = 0;
-		} else if (lineCallback.use && (lineVCounter == lineCallback.line)) {
-            if (leftLineAnomaly.mode)
-                insertVerticalLineAnomaly( 0, lineVCounter );
-
-            system->VicMidScreenCallback();
-        }
+		}
 	}
 
     sprite0DmaLateBA = false;

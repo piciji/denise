@@ -374,15 +374,6 @@ auto System::audioRefresh(int16_t left, int16_t right) -> void {
     }
 }
 
-auto System::videoMidScreenCallback(uint8_t options) -> void {
-    if (runAhead.pos)
-        return;
-
-  //  input.drawCursor(true);
-
-    interface->midScreenCallback(options & 7);
-}
-
 auto System::setModel(uint8_t model) -> void {
 
     if (model == 0) {

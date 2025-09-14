@@ -59,9 +59,6 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
     ntsc = false;
 
     frameBuffer = new uint16_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT + LINE_RENDER_OFFSET];
-    lineCallback.use = false;
-    lineCallback.called = true;
-    lineCallback.line = 0;
 
     encryptedRom = nullptr;
     overclock.cycles = 0;

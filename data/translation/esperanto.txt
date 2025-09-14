@@ -880,7 +880,6 @@ back = Malantaŭen
 load archive native = ŝargi arkivo denaske
 prevent speeder tooltip = Speeder kernel (ne VDT) estos malaktiva dum la sekva ŝargado
 overclocking = Overclocking
-CPU renderer tooltip = CPU bildigilo funkcias en aparta fadeno.
 Slower Built-In HDD = malrapidigi HDD
 Slower Built-In HDD tooltip = La virtuala fiksita diskilo provizas datumojn, similaj al veraj, post mallonga atendo. Ĉi tio ne koncernas al la veraj alta fidela pieliloj, kiel M-Tec AT500.
 toggle Caps Lock LED = baskuli Caps Lock LED

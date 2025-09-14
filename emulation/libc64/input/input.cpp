@@ -145,9 +145,9 @@ auto Input::poll() -> void {
     sampling.midscreen = 0;
 }
 
-auto Input::drawCursor(bool midScreen) -> void {
-    controlPort1->draw( midScreen );
-    controlPort2->draw( midScreen );
+auto Input::drawCursor() -> void {
+    controlPort1->draw();
+    controlPort2->draw();
 }
 
 auto Input::restore() -> bool {

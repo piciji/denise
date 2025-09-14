@@ -30,9 +30,6 @@ VicIIBase::VicIIBase(System* system) : system(system), cpu(system->cpu) {
     sprite7->position = 7;
 
     initColorWheel();
-	
-    lineCallback.use = false;
-    lineCallback.line = 0;
 }	
 
 VicIIBase::~VicIIBase() {

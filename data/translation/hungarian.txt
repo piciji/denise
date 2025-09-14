@@ -880,7 +880,6 @@ back = Vissza
 load archive native = Archívum natív betöltése
 prevent speeder tooltip = A gyorsító kernel (nem a VDT) a következő betöltéskor letiltásra kerül.
 overclocking = Túlhajtás
-CPU renderer tooltip = A CPU renderelő külön szálban fut.
 Slower Built-In HDD = HDD lelassítása
 Slower Built-In HDD tooltip = A virtuális merevlemez egy rövid várakozás után, hasonlóan egy valódihoz, biztosítja az adatokat. Ez nem vonatkozik a valódi HD vezérlőkre, mint például az M-Tec AT500.
 toggle Caps Lock LED = Caps Lock LED be-/kikapcsolása

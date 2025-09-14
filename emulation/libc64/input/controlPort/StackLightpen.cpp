@@ -31,9 +31,9 @@ struct StackLightpen : LightControl {
         return true;
     }
     
-    auto draw(bool midScreen = false) -> void {
+    auto draw() -> void {
 		
-		LightControl::draw( 7, midScreen );
+		LightControl::draw( 7 );
 
     }
 };

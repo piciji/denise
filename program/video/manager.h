@@ -2,9 +2,6 @@
 #pragma once
 
 #include "../../emulation/interface.h"
-#include <atomic>
-#include <thread>
-#include <condition_variable>
 #include "../../driver/tools/shaderpass.h"
 
 #define VPARAMS _useSpectrum, _crtMode, _region, _useInterlace, _interlace, \
@@ -63,15 +60,13 @@ struct VideoManager {
     ShaderParser* parser = nullptr;
         
 	static bool synchronized;
-    bool crtThreaded;
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
     static unsigned placeHolderFrames;
     static bool placeHolderSplashScreen;
     static bool needAUpdate;
     static unsigned takeScreenShots;
-	
-    auto setCrtThreaded(bool state) -> void;
+
     static auto setFrameRender(uint8_t limit) -> void;
     static auto setSynchronize() -> void;
     static auto setHardSync() -> void;
@@ -103,12 +98,8 @@ struct VideoManager {
         unsigned* scanlineDest;
         unsigned* fieldDest;
         uint8_t oddLine;
-        std::atomic<bool> ready;
-        std::atomic<bool> kill;
-        std::condition_variable cv;
         unsigned options = 0;
-    } render[2];
-    bool workerCreated = false;
+    } render;
 
     uint32_t* tempDest = nullptr;
     ColorLumaChroma delayLine[ 1024 ];
@@ -119,8 +110,6 @@ struct VideoManager {
     Emulator::Interface::Palette* palette;
     
     uint32_t* colorTable = nullptr;
-    auto reinitCrtThread( bool initMem = false ) -> void;
-    auto resetTempData( int offset = 0, bool onlyIfUsed = false ) -> void;
 
     unsigned countColorBits;
 	
@@ -162,7 +151,7 @@ struct VideoManager {
     ShaderPreset::Param* driveLedParam = nullptr;
     uint8_t frameOptions = 0;
     bool colorTableUpdated = false;
-    inline auto needUpdate() -> bool { return !colorTableUpdated; }
+    auto needUpdate() -> bool { return !colorTableUpdated; }
     auto requestUpdate() -> void;
  
     auto isC64() -> bool;
@@ -180,10 +169,7 @@ struct VideoManager {
     template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
     template<typename T> auto renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void;
     template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
-    template<typename T> inline auto renderCrtSelection(Render& re) -> void;
     template<typename T, uint8_t options = 0> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop ) -> void;
-    template<typename T, uint8_t options = 0> auto renderCrtThreaded(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop ) -> void;
-    template<typename T> auto renderCrtThreadedBlank(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch ) -> void;
     template<uint8_t options> auto getRenderOptions() -> unsigned;
     auto convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
     auto convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
@@ -203,15 +189,10 @@ struct VideoManager {
     auto convertPaletteToLumaChroma() -> void;
     auto calculateGamma() -> void;
     auto calculateLumaDelay() -> void;
-    template<typename T> auto createWorker(Render* re) -> void;
-    auto enableCrtThread( bool state) -> void;
-    static auto updateCrtThreads(bool light = false) -> void;
-	auto waitForCrtRenderer() -> void;
-    template<uint8_t options, typename T> auto renderPalCrt( Render& re ) -> void;
-    template<uint8_t options, typename T> auto renderNtscCrt( Render& re ) -> void;
+    template<uint8_t options, typename T> auto renderPalCrt() -> void;
+    template<uint8_t options, typename T> auto renderNtscCrt() -> void;
     auto powerOff() -> void;
-    template<uint8_t options> auto renderMidScreen() -> void;
-    
+
     static auto getInstance( Emulator::Interface* emulator ) -> VideoManager*;
 	static auto updateAll() -> void;
     static auto hidePlaceHolder() -> void;

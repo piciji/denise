@@ -276,7 +276,6 @@ struct System {
 	auto videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsigned linePitch) -> void;
 	auto setVicIrq( bool state ) -> void;
 	auto setVicRdy(bool state) -> void;
-	auto VicMidScreenCallback() -> void;
 
 	auto pasteText( std::string buffer ) -> void;
     auto copyText( ) -> std::string;

@@ -26,7 +26,6 @@ VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
     append(gpu,{0u, 0u});
 
     append(spacer,{~0u, 0u});
-    append(cpuFilterThreaded, {0u, 0u}, 5);
     append(reset,{0u, 0u});
 
     GUIKIT::RadioBox::setGroup(rgb, cpu, gpu);
@@ -827,13 +826,6 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<unsigned>("threaded_renderer", 0);
         if (emulator == activeEmulator)
             VideoManager::setSynchronize();
-        emuThread->unlock();
-    };
-
-    layBase.view.mode.cpuFilterThreaded.onToggle = [this](bool checked) {
-        emuThread->lock();
-        _settings->set<bool>("cpu_filter_threaded", checked);
-        vManager()->setCrtThreaded( checked );
         emuThread->unlock();
     };
 
@@ -2321,8 +2313,6 @@ auto PresentationLayout::updateVisibillity() -> void {
     }
 
     layBase.view.option.tvGamma.setEnabled( (crtCpuChecked || crtGpuChecked) && layBase.view.mode.palette.checked() && _pal );
-
-    layBase.view.mode.cpuFilterThreaded.setEnabled( crtCpuChecked );
 }
 
 auto PresentationLayout::translate() -> void {
@@ -2342,8 +2332,6 @@ auto PresentationLayout::translate() -> void {
     layBase.view.option.trAuto.setText( trans->getA("Auto") );
     layBase.view.option.trAuto.setTooltip( trans->getA("Threaded Renderer Auto") );
     layBase.view.option.trOff.setText( trans->getA("Off") );
-    layBase.view.mode.cpuFilterThreaded.setText( trans->get("concurrent") );
-    layBase.view.mode.cpuFilterThreaded.setTooltip(trans->getA("CPU renderer tooltip"));
     layBase.view.mode.palette.setText( trans->get("palette") );
     layBase.view.mode.spectrum.setText( trans->get("color_spectrum") );
     layBase.view.mode.reset.setTooltip( trans->get("reset") );
@@ -2550,8 +2538,6 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     updatePresets(!init, true);
 
     layBase.view.option.linearInterpolation.setChecked( _settings->get<bool>("video_filter", true) );
-
-    layBase.view.mode.cpuFilterThreaded.setChecked( _settings->get<bool>("cpu_filter_threaded", true) );
 
     layShader.main.info.shaderCache.setChecked( _settings->get<bool>("shader_cache", true) );
 

@@ -26,9 +26,9 @@ struct StackLightRifle : LightControl {
         return {true, getCursorGunWidth(), &cursorGun[0]};
     }
     
-    auto draw(bool midScreen = false) -> void {
+    auto draw() -> void {
 		
-		LightControl::draw( 3, midScreen );
+		LightControl::draw( 3 );
     }
         
 };

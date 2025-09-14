@@ -135,15 +135,11 @@ struct LightControl : ControlPort {
         
         return out;        
     }
-    
-    inline auto draw( uint16_t color, bool midScreen ) -> void {               
-        midScreen ? draw<true>( color ) : draw<false>( color );
-    }
-    
-    template<bool midScreen = false> auto draw( uint16_t color ) -> void {
+
+    auto draw( uint16_t color ) -> void {
         
         if (device->userData & 1) {
-            if (!midScreen && !system->warp.config)
+            if (!system->warp.config)
                 device->userData &= ~1; 
             
             return;
@@ -151,11 +147,6 @@ struct LightControl : ControlPort {
 		
 		if(!cropLatest->frame)
 			return;
-        
-        int stopLine = 0;
-        if (midScreen) {
-            stopLine = vicII->lineCallback.line - cropLatest->top;
-        }
         
         int vx, vx1;
         int vy, vy1;          
@@ -175,11 +166,6 @@ struct LightControl : ControlPort {
         for (; cy < cursor.size; cy++) {
 
             vy1 = vy + cy;
-            
-            if (midScreen) {
-                if (vy1 >= stopLine)
-                    break;
-            }
              
             if ( vy1 <= 0 || vy1 >= cropLatest->height )
                 continue;

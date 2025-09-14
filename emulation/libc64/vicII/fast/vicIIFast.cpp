@@ -93,19 +93,13 @@ auto VicIIFast::clock() -> void {
             visibleLine = false;
 
             if (leftLineAnomaly.mode)
-                insertVerticalLineAnomaly(lineCallback.line, lineVCounter);
+                insertVerticalLineAnomaly(0, lineVCounter);
 
             system->videoRefresh(frameBuffer + firstVisiblePixel,
 				hWidth, lineVCounter, VIC_MAX_LINE_LENGTH - hWidth
 			);
 			
             lineVCounter = 0;
-            
-        } else if (lineCallback.use && (lineVCounter == lineCallback.line)) {
-            if (leftLineAnomaly.mode)
-                insertVerticalLineAnomaly( 0, lineVCounter );
-            
-            system->VicMidScreenCallback();
         }
 
         if (visibleLine) {

@@ -24,7 +24,6 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
             GUIKIT::RadioBox gpu;
 
             GUIKIT::Widget spacer;
-            GUIKIT::CheckBox cpuFilterThreaded;
             GUIKIT::Button reset;
 
             Mode(bool withSpectrum);

@@ -2,11 +2,6 @@
 #include "manager.h"
 #include "../program.h"
 
-auto VideoManager::setCrtThreaded(bool state) -> void {
-    crtThreaded = state;
-    updateCrtThreads();
-}
-
 auto VideoManager::usePal(bool state) -> void {
 	pal = state;
     requestUpdate();
@@ -25,14 +20,7 @@ auto VideoManager::setCrtMode(CrtMode _mode) -> void {
         rebuildShader = true;
 
     this->crtMode = _mode;
-    bool useRenderThread = (_mode == CrtMode::Cpu) && crtThreaded;
-
-	emulator->setLineCallback( useRenderThread );
-	reinitCrtThread(true);
     requestUpdate();
-
-    if (!program->warp.active)
-        enableCrtThread(useRenderThread && (this == activeVideoManager));
 }
 
 auto VideoManager::setPalette(Emulator::Interface::Palette* palette) -> void {        
@@ -104,10 +92,8 @@ auto VideoManager::setLumaFall( float pixel ) -> void {
 }
 
 auto VideoManager::setScanlines(unsigned intensity) -> void {
-    waitForCrtRenderer();
     scanlines = intensity;
     requestUpdate();
-    reinitCrtThread();
 }
 
 auto VideoManager::setInterlace(unsigned intensity) -> void {
@@ -267,9 +253,6 @@ auto VideoManager::reloadSettings(bool reloadPreset) -> void {
     setCrtMode( (CrtMode)_crtMode );
     
     setCrtRealGamma( _tvGamma );
-	
-	// update only, crt mode could be changed
-    setCrtThreaded( settings->get<bool>("cpu_filter_threaded", true) );
 
     if (reloadPreset)
         loadPreset();

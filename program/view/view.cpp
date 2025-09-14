@@ -108,7 +108,6 @@ auto View::build() -> void {
       
 			if (activeVideoManager) {
                 if (!emuThread->enabled) {
-                    activeVideoManager->waitForCrtRenderer();
                     emuThread->lock();
                     videoDriver->redraw();
                     videoDriver->freeContext();

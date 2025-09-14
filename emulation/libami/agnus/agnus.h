@@ -241,12 +241,6 @@ struct Agnus {
         }
     } crop;
 
-    struct {
-        bool use;
-        unsigned line;
-        bool called;
-    } lineCallback;
-
     bool initVCounter;
     bool shortLineBefore;
     bool stopFetching;

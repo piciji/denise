@@ -32,7 +32,7 @@ struct ControlPort {
 
     virtual auto reset() -> void {}
     virtual auto poll() -> void {}
-    virtual auto draw(bool midScreen = false) -> void {}
+    virtual auto draw() -> void {}
 
     virtual auto getCursorPosition( int16_t& x, int16_t& y ) -> bool { return false; }
 

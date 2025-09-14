@@ -27,9 +27,9 @@ struct MagnumLightPhaser : LightControl {
         return button1Pressed ? 0 : 0xff;
     }
     
-    auto draw(bool midScreen = false) -> void {
+    auto draw() -> void {
 		
-		LightControl::draw( 3, midScreen );
+		LightControl::draw( 3 );
     }
     
 };

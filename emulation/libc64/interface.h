@@ -196,8 +196,6 @@ struct Interface : Emulator::Interface {
     
     auto getLuma(uint8_t index, bool newRevision) -> double;
     auto getChroma(uint8_t index) -> double; 
-    
-    auto setLineCallback(bool state, unsigned scanline = 0) -> void;
 
     auto setMemoryInitParams(MemoryPattern& pattern) -> void;
 	auto getMemoryInitPattern( uint8_t* pattern ) -> void;

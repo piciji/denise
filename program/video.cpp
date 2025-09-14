@@ -35,16 +35,12 @@ auto Program::initVideo(bool driverChange) -> void {
         videoDriver->setRotation(rotation);
 
     if (activeVideoManager) {
-        activeVideoManager->reinitCrtThread(true);
         activeVideoManager->rebuildShader = true;
     }
         
     for( auto emulator : emulators ) {
         checkShaderSupport(emulator);
         auto videoManager =  VideoManager::getInstance(emulator);
-        auto settings = program->getSettings( emulator );
-
-        videoManager->setCrtThreaded( settings->get<bool>("cpu_filter_threaded", true) );
 
         auto emuView = EmuConfigView::TabWindow::getView(emulator);
         if (emuView && emuView->presentationLayout) {
@@ -279,23 +275,6 @@ auto Program::activateGPU(Emulator::Interface* emulator, bool state) -> void {
         auto settings = program->getSettings(emulator);
         settings->set<unsigned>("video_crt", state ? (unsigned)VideoManager::CrtMode::Gpu : (unsigned)VideoManager::CrtMode::None);
         vManager->reloadSettings(true);
-    }
-}
-
-auto Program::midScreenCallback(uint8_t options) -> void {
-
-    switch(options) {
-        case 0: activeVideoManager->renderMidScreen<0>(); break;
-        case 1: activeVideoManager->renderMidScreen<1>(); break;
-        case 2: activeVideoManager->renderMidScreen<2>(); break;
-
-        case 4: activeVideoManager->renderMidScreen<4>(); break;
-        case 5: activeVideoManager->renderMidScreen<5>(); break;
-        case 6: activeVideoManager->renderMidScreen<6>(); break;
-
-        case 8: activeVideoManager->renderMidScreen<8>(); break;
-        case 9: activeVideoManager->renderMidScreen<9>(); break;
-        case 10: activeVideoManager->renderMidScreen<10>(); break;
     }
 }
 
@@ -539,10 +518,6 @@ auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
     getCrop(emulator, crop);
 
 	emulator->cropFrame( (Emulator::Interface::CropType) type, crop );
-    
-    if (activeVideoManager && (activeVideoManager->emulator == activeEmulator)) {
-        activeVideoManager->reinitCrtThread();
-    }
 }
 
 auto Program::toggleWarp(bool aggressive) -> void {
@@ -581,10 +556,6 @@ auto Program::setWarp( bool activate, bool aggressive ) -> void {
     unsigned forward = 0;
 
     if (activate) {
-        activeEmulator->setLineCallback(false);
-        if (activeVideoManager)
-            activeVideoManager->waitForCrtRenderer();
-
         VideoManager::hidePlaceHolder();
         warp.active = true;
         warp.aggressive = aggressive;
@@ -604,10 +575,6 @@ auto Program::setWarp( bool activate, bool aggressive ) -> void {
         warp.active = false;
 
         VideoManager::setSynchronize();
-
-        if (activeVideoManager) {
-            activeVideoManager->resetTempData();
-        }
 
         if (audioManager)
             audioManager->drive.reset();

@@ -880,7 +880,6 @@ back = Retour
 load archive native = Charger l'archive en mode natif
 prevent speeder tooltip = Le noyau Speeder (pas VDT) est supprimé pour le prochain chargement
 overclocking = Overclocking
-CPU renderer tooltip = Le moteur de rendu du processeur est exécuté dans un processus séparé.
 Slower Built-In HDD = Ralentir le disque dur
 Slower Built-In HDD tooltip = Le disque dur virtuel fournit les données, comme un vrai disque dur, après une courte attente. Cela ne concerne pas les contrôleurs HD réels, tels que le M-Tec AT500.
 toggle Caps Lock LED = activer la LED de verrouillage des majuscules
