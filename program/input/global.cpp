@@ -480,7 +480,7 @@ auto InputManager::autoAssignHotkeys() -> void {
 auto InputManager::bindHidsGlobal( ) -> void {	
     
 	for (auto manager : inputManagers)
-        manager->bindHids();        
+        manager->bindHids();
 	
     clearLastDeviceState();
 }
@@ -511,8 +511,26 @@ auto InputManager::bindHids( ) -> void {
 
                     Hid::Device* hidDevice = getDeviceFromIdent(deviceId);
 
-                    if (hidDevice) {
+                    // if device ID can not be found anymore, take first device in list
+                    if (!hidDevice) {
+                        if (!mapping->emuDevice || mapping->emuDevice->isJoypadOrMultiAdapter()) {
+                            for(auto _hidDevice : hidDevices) {
+                                if (_hidDevice->isJoypad()) {
+                                    hidDevice = _hidDevice;
+                                    break;
+                                }
+                            }
+                        } else if (!mapping->emuDevice->isKeyboard() && !mapping->emuDevice->isUnplugged()) {
+                            for(auto _hidDevice : hidDevices) {
+                                if (_hidDevice->isMouse()) {
+                                    hidDevice = _hidDevice;
+                                    break;
+                                }
+                            }
+                        }
+                    }
 
+                    if (hidDevice) {
                         unsigned result = mapping->checkSanity(hidDevice, groupId, inputId);
                         if (result == 0);
                         else if (result == 3 && qualifier == 0);

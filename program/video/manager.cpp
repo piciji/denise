@@ -677,8 +677,9 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             }
         }
         return;
+    }
 
-    } else if ( suppressShader || (crtMode == CrtMode::None) ) {
+    if ( suppressShader || (crtMode == CrtMode::None) ) {
         if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
             return;
 
