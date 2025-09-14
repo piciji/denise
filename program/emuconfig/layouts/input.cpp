@@ -527,7 +527,7 @@ auto InputLayout::isAutomapEnabled(Emulator::Interface::Device& device) -> bool 
     if (device.isKeyboard())
         return mapControl.keyLayout.selection() != 0;
 
-    return device.isMouse() || device.isLightDevice() || device.isPaddles();
+    return device.isJoypad() || device.isMouse() || device.isLightDevice() || device.isPaddles();
 }
 
 auto InputLayout::loadHotkeyList() -> void {

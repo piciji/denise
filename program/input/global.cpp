@@ -226,6 +226,9 @@ auto InputManager::autoAssign( Emulator::Interface::Device& device ) -> void {
         return;
 
     for (auto& input : device.inputs) {
+        if (device.isJoypad() && input.id > 5)
+            break;
+
         auto mapper = (InputMapping*) input.guid;
         auto setting = mapper->setting->value;
 
@@ -237,13 +240,33 @@ auto InputManager::autoAssign( Emulator::Interface::Device& device ) -> void {
 
             if (hidDevice->isJoypad() && (device.isMouse() || device.isLightDevice() || device.isPaddles() ))
                 continue;
+            if (hidDevice->isMouse() && device.isJoypadOrMultiAdapter())
+                continue;
 
             for(auto& group : hidDevice->groups) {
                 for(auto& hidInput : group.inputs) {
                     if ( device.isJoypad() ) {
-                        if (matchButtons(&input, &hidInput)) {
+                        int qualifier = -1;
+
+                        if (group.id == Hid::Joypad::Hat) {
+                            if (input.name == "Up" && (hidInput.name.find(".Y") != std::string::npos))
+                                qualifier = 2;
+                            else if (input.name == "Down" && (hidInput.name.find(".Y") != std::string::npos))
+                                qualifier = 1;
+                            else if (input.name == "Left" && (hidInput.name.find(".X") != std::string::npos))
+                                qualifier = 1;
+                            else if (input.name == "Right" && (hidInput.name.find(".X") != std::string::npos))
+                                qualifier = 2;
+                        } else if (group.id == Hid::Joypad::Button) {
+                            if ((input.name == "Button 1" || input.name == "Button Red") && hidInput.name == "0")
+                                qualifier = 0;
+                            else if ((input.name == "Button 2" || input.name == "Button Blue") && hidInput.name == "1")
+                                qualifier = 0;
+                        }
+
+                        if (qualifier >= 0) {
                             mapper->hids.clear();
-                            mapper->hids.push_back( {hidDevice, &group, &hidInput, 0, 0} );
+                            mapper->hids.push_back( {hidDevice, &group, &hidInput, (unsigned)qualifier, 0} );
                             mapper->anded = 0;
                             break;
                         }
