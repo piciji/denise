@@ -48,7 +48,12 @@ namespace DRIVER {
     NSUInteger historySize;
     bool threadAlive;
     unsigned frameCount;
-    
+
+    unsigned deltaTime;
+    unsigned lastTime;
+    unsigned subFrame;
+    unsigned totalFrames;
+
     GLSlang glSlang;
     MTLTexture luts[MAX_TEXTURES];
     MTLProgram programs[MAX_SHADERS];
@@ -147,6 +152,10 @@ namespace DRIVER {
         updateHistory = false;
         hdrBuffer = nil;
         messageColBuffer = nil;
+        deltaTime = 0;
+        lastTime = 0;
+        subFrame = 1;
+        totalFrames = 1;
         
         hdrUniforms.hdr10 = true;
         hdrUniforms.inverseTonemap = true;
@@ -773,6 +782,8 @@ namespace DRIVER {
         
     auto setBFI(unsigned frames, unsigned darkFrames) -> void {
         wait();
+        subFrame = 1;
+        totalFrames = frames + 1;
         settings.bfiFrames = frames;
         settings.darkFrames = darkFrames > frames ? frames : darkFrames;
         settings.lightFrames = frames - settings.darkFrames;
@@ -849,6 +860,14 @@ namespace DRIVER {
             
             if (!disallowShader && shaderPasses) {
                 frameCount += 1;
+                unsigned curTime = Chronos::getTimestampInMicrosecondsPrecise();
+                deltaTime = curTime - lastTime;
+                lastTime = curTime;
+                if (!bfiLock) {
+                    subFrame = 1;
+                    if (settings.bfiFrames)
+                        totalFrames = (options & OPT_Pause) ? 1 : (settings.bfiFrames + 1);
+                }
 
               // if (!updateRTS) {
                     for(int i = 0; i < shaderPasses; i++) {
@@ -1067,9 +1086,11 @@ namespace DRIVER {
             commandBuffer = nil;
             drawable = nil;
             
-            if (settings.bfiFrames && !disallowShader && !bfiLock) {
-                for (int i = 0; i < settings.lightFrames; i++)
+            if (settings.bfiFrames && !(options & (OPT_DisallowShader | OPT_Pause) ) && !bfiLock) {
+                for (int i = 0; i < settings.lightFrames; i++) {
+                    subFrame++;
                     redrawBase(true);
+                }
                 
                 for (int i = 0; i < settings.darkFrames; i++) {
                     commandBuffer = [commandQueue commandBuffer];
@@ -1621,7 +1642,8 @@ namespace DRIVER {
            {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(MTLProgram), MAX_SHADERS},
            {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(MTLProgram), MAX_SHADERS},
            {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(MTLTexture), MAX_TEXTURES},
-        }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &settings.rotation, &historySize} };
+        }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &deltaTime, &settings.vrrSpeed, &settings.rotation,
+            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize} };
 
         shaderPasses = 0;
         for(int i = programsTemp.size() - 1; i >= 0; i--) {

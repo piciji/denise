@@ -588,10 +588,11 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     constexpr bool field = options & 2;
     constexpr bool hires = options & 4;
     constexpr bool shres = options & 8;
+    constexpr bool isPause = options & 0x10;
     constexpr bool lores = !hires && !shres;
     bool iHold = interlace && !field && !interlaceFields;
     bool suppressShader = program->warp.active;
-    uint8_t gpuOptions = iHold | (interlace << 1) | (suppressShader << 2);
+    uint8_t gpuOptions = iHold | (interlace << 1) | (suppressShader << 2) | (isPause << 5);
 
     if (needAUpdate)
         updateAll();
@@ -1650,6 +1651,8 @@ VideoManager::~VideoManager() {
 }
 
 template auto VideoManager::renderFrame<uint8_t>(const uint8_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint8_t, 0x10>(const uint8_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+
 template auto VideoManager::renderFrame<uint16_t, 0>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
 template auto VideoManager::renderFrame<uint16_t, 1>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
 template auto VideoManager::renderFrame<uint16_t, 2>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
@@ -1659,6 +1662,16 @@ template auto VideoManager::renderFrame<uint16_t, 6>(const uint16_t* src, unsign
 template auto VideoManager::renderFrame<uint16_t, 8>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
 template auto VideoManager::renderFrame<uint16_t, 9>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
 template auto VideoManager::renderFrame<uint16_t, 10>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+
+template auto VideoManager::renderFrame<uint16_t, 0x10 | 0>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 0x10 | 1>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 0x10 | 2>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 0x10 | 4>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 0x10 | 5>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 0x10 | 6>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 0x10 | 8>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 0x10 | 9>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
+template auto VideoManager::renderFrame<uint16_t, 0x10 | 10>(const uint16_t* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
 
 template auto VideoManager::updateData<bool>(std::string ident, bool data) -> void;
 template auto VideoManager::updateData<int>(std::string ident, int data) -> void;

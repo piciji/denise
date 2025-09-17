@@ -488,7 +488,7 @@ contrast("", false, true)
     setPadding(10);
 }
 
-VideoMotionLayout::BFILayout::BFILayout() {
+VideoMotionLayout::StrobeLayout::BFILayout::BFILayout() {
     bfiCombo.append("none");
     bfiCombo.append("1 - 100Hz (120Hz)");
     bfiCombo.append("2 - 150Hz (180Hz)");
@@ -508,15 +508,31 @@ VideoMotionLayout::BFILayout::BFILayout() {
     append(bfiLabel, {0u, 0u}, 10);
     append(bfiCombo, {0u, 0u}, 20);
     append(darkLabel, {0u, 0u}, 10);
-    append(darkCombo, {0u, 0u});
+    append(darkCombo, {0u, 0u}, 10);
 
     setAlignment(0.5);
+}
+
+VideoMotionLayout::StrobeLayout::SubFrame::SubFrame() {
+    append(subFrameShader, {0u, 0u}, 20);
+    append(learnMore, {0u, 0u});
+
+    learnMore.setUri("https://blurbusters.com/crt-simulation-in-a-gpu-shader-looks-better-than-bfi/");
+
+    setAlignment(0.5);
+}
+
+VideoMotionLayout::StrobeLayout::StrobeLayout() {
+    append(strobeWarning, {0u, 0u}, 10);
+    append(bfi, {0u, 0u}, 10);
+    append(subFrame, {0u, 0u});
+
     setPadding(10);
 }
 
 VideoMotionLayout::VideoMotionLayout() {
     append(hdr, {~0u, 0u}, 20);
-    append(bfi, {~0u, 0u});
+    append(strobe, {~0u, 0u});
 }
 
 PresentationLayout::PresentationLayout(TabWindow* tabWindow) :
@@ -1684,8 +1700,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
-    layMotion.bfi.bfiCombo.onChange = [this]() {
-        unsigned selection = layMotion.bfi.bfiCombo.selection();
+    layMotion.strobe.bfi.bfiCombo.onChange = [this]() {
+        unsigned selection = layMotion.strobe.bfi.bfiCombo.selection();
         _settings->set<unsigned>("bfi_frames", selection);
         _settings->set<unsigned>("dark_frames", selection);
 
@@ -1694,18 +1710,27 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             program->updateBFI();
         emuThread->unlock();
 
-        layMotion.bfi.darkCombo.setSelection(selection);
+        layMotion.strobe.bfi.darkCombo.setSelection(selection);
         updateBfiVisibilities();
     };
 
-    layMotion.bfi.darkCombo.onChange = [this]() {
-        unsigned selection = layMotion.bfi.darkCombo.selection();
+    layMotion.strobe.bfi.darkCombo.onChange = [this]() {
+        unsigned selection = layMotion.strobe.bfi.darkCombo.selection();
         _settings->set<unsigned>("dark_frames", selection);
 
         emuThread->lock();
         if (emulator == activeEmulator)
             program->updateBFI();
         emuThread->unlock();
+    };
+
+    layMotion.strobe.subFrame.subFrameShader.onToggle = [this](bool checked) {
+        _settings->set<bool>("strobe_shader", checked);
+        emuThread->lock();
+        if (emulator == activeEmulator)
+            program->updateBFI();
+        emuThread->unlock();
+        updateBfiVisibilities();
     };
 
     fillFontTypeList();
@@ -1841,9 +1866,11 @@ auto PresentationLayout::updateFontVisibilities() -> void {
 }
 
 auto PresentationLayout::updateBfiVisibilities() -> void {
-    bool darkSelectorVisible = layMotion.bfi.bfiCombo.selection() > 1;
-    layMotion.bfi.darkLabel.setEnabled( darkSelectorVisible );
-    layMotion.bfi.darkCombo.setEnabled( darkSelectorVisible );
+    bool darkSelectorVisible = layMotion.strobe.bfi.bfiCombo.selection() > 1;
+    bool strobeShader = layMotion.strobe.subFrame.subFrameShader.checked();
+
+    layMotion.strobe.bfi.darkLabel.setEnabled( !strobeShader && darkSelectorVisible );
+    layMotion.strobe.bfi.darkCombo.setEnabled( !strobeShader && darkSelectorVisible );
 }
 
 auto PresentationLayout::updateScreenText(bool keepFontPath) -> void {
@@ -2427,12 +2454,17 @@ auto PresentationLayout::translate() -> void {
     layMotion.hdr.paperWhiteNits.name.setText(trans->getA("Paper White Nits"));
     layMotion.hdr.contrast.name.setText(trans->getA("Contrast"));
 
-    layMotion.bfi.setText( trans->getA("Black Frame Insertion") );
-    layMotion.bfi.bfiLabel.setText( trans->getA("BFI images") );
-    layMotion.bfi.bfiCombo.setTooltip( trans->getA("BFI images tooltip") );
-    layMotion.bfi.darkLabel.setText( trans->getA("BFI black images") );
-    layMotion.bfi.darkCombo.setTooltip( trans->getA("BFI black images tooltip") );
-    layMotion.bfi.bfiCombo.setText(0, trans->getA("none"));
+    layMotion.strobe.setText( trans->getA("Black Frame Insertion") );
+    layMotion.strobe.strobeWarning.setText( trans->getA("strobe warning"));
+    layMotion.strobe.strobeWarning.setForegroundColor(ERROR_COLOR);
+    layMotion.strobe.bfi.bfiLabel.setText( trans->getA("extra images") );
+    layMotion.strobe.bfi.bfiCombo.setTooltip( trans->getA("extra images tooltip") );
+    layMotion.strobe.bfi.darkLabel.setText( trans->getA("black images") );
+    layMotion.strobe.bfi.darkCombo.setTooltip( trans->getA("black images tooltip") );
+    layMotion.strobe.bfi.bfiCombo.setText(0, trans->getA("none"));
+    layMotion.strobe.subFrame.subFrameShader.setText( trans->getA("Shader Sub-Frames"));
+    layMotion.strobe.subFrame.subFrameShader.setTooltip( trans->getA("Shader Sub-Frames tooltip"));
+    layMotion.strobe.subFrame.learnMore.setText( trans->getA("learn more") );
 
     tviBase.setText( trans->getA("overview") );
     tviScreenText.setText( trans->getA("screen text") );
@@ -2648,9 +2680,11 @@ auto PresentationLayout::loadSettings(bool init) -> void {
 
     unsigned bfiFrames = _settings->get<unsigned>("bfi_frames", 0, { 0, 6 });
     unsigned darkFrames = _settings->get<unsigned>("dark_frames", 0, { 0, 6 });
+    bool strobeShader = _settings->get<bool>("strobe_shader", false);
 
-    layMotion.bfi.bfiCombo.setSelection(bfiFrames);
-    layMotion.bfi.darkCombo.setSelection(darkFrames);
+    layMotion.strobe.bfi.bfiCombo.setSelection(bfiFrames);
+    layMotion.strobe.bfi.darkCombo.setSelection(darkFrames);
+    layMotion.strobe.subFrame.subFrameShader.setChecked(strobeShader);
 
     updateBfiVisibilities();
 }

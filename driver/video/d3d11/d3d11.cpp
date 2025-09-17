@@ -91,6 +91,10 @@ namespace DRIVER {
     uint8_t options;
     GLSlang glSlang;
     unsigned historySize;
+    unsigned deltaTime;
+    unsigned lastTime;
+    unsigned subFrame;
+    unsigned totalFrames;
 
     unsigned frameCount;
     unsigned progressDegree;
@@ -177,6 +181,10 @@ namespace DRIVER {
         shaderPasses = 0;
         frameCount = 0;
         historySize = 0;
+        deltaTime = 0;
+        lastTime = 0;
+        subFrame = 1;
+        totalFrames = 1;
 
         blendEnable = nullptr;
         blendDisable = nullptr;
@@ -405,7 +413,8 @@ namespace DRIVER {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
-        settings.vrrSpeed = speed;
+        if (speed != 0.0) // otherwise keep speed (use as Shader param too)
+            settings.vrrSpeed = speed;
         updateVRR();
     }
 
@@ -868,7 +877,8 @@ namespace DRIVER {
            {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(D3DProgram), MAX_SHADERS},
            {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(D3DProgram), MAX_SHADERS},
            {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(D3DTexture), MAX_TEXTURES},
-        }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &settings.rotation, &historySize} };
+        }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &deltaTime, &settings.vrrSpeed, &settings.rotation,
+            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize} };
 
         shaderPasses = 0;
         for(int i = programsTemp.size() - 1; i >= 0; i--) {
@@ -1212,6 +1222,15 @@ namespace DRIVER {
 
         if (!(options & OPT_DisallowShader) && shaderPasses) {
             frameCount += 1;
+            unsigned curTime = Chronos::getTimestampInMicrosecondsPrecise();
+            deltaTime = curTime - lastTime;            
+            lastTime = curTime;
+
+            if (!bfiLock) {
+                subFrame = 1;
+                if (settings.bfiFrames)
+                    totalFrames = (options & OPT_Pause) ? 1 : (settings.bfiFrames + 1);
+            }
 
             for(int i = 0; i < shaderPasses; i++) {
                 auto& p = programs[i];
@@ -1404,9 +1423,11 @@ namespace DRIVER {
         if (settings.vrr)
             context->Flush();
 
-        if (settings.bfiFrames && !(options & OPT_DisallowShader) && !bfiLock) {
-            for (int i = 0; i < settings.lightFrames; i++)
+        if (settings.bfiFrames && !(options & (OPT_DisallowShader | OPT_Pause) ) && !bfiLock) {
+            for (int i = 0; i < settings.lightFrames; i++) {
+                subFrame++;
                 _redraw(true);
+            }
 
             for (int i = 0; i < settings.darkFrames; i++) {
                 context->OMSetRenderTargets(1, &rtv, nullptr);
@@ -2010,7 +2031,8 @@ namespace DRIVER {
     auto setBFI(unsigned frames, unsigned darkFrames) -> void {
         if (settings.handle)
             wait();
-
+        subFrame = 1;
+        totalFrames = frames + 1;
         settings.bfiFrames = frames;
         settings.darkFrames = darkFrames > frames ? frames : darkFrames;
         settings.lightFrames = frames - settings.darkFrames;

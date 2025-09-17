@@ -99,6 +99,11 @@ struct GL3 {
     int64_t minimumCapTime;
     GLSampler samplers[3][4][2];
 
+    unsigned deltaTime;
+    unsigned lastTime;
+    unsigned subFrame;
+    unsigned totalFrames;
+
     struct {
         bool synchronize = false;
         bool hardSync = false;
@@ -128,6 +133,10 @@ struct GL3 {
         frameCount = 0;
         shaderReady = false;
         shaderId = 0;
+        deltaTime = 0;
+        lastTime = 0;
+        subFrame = 1;
+        totalFrames = 1;
 
         settings.synchronize = false;
         settings.hardSync = false;
@@ -212,6 +221,9 @@ struct GL3 {
 
         if (!(options & OPT_DisallowShader) && shaderPasses) {
             frameCount += 1;
+            unsigned curTime = Chronos::getTimestampInMicrosecondsPrecise();
+            deltaTime = curTime - lastTime;
+            lastTime = curTime;
 
             for(int i = 0; i < shaderPasses; i++) {
                 auto& p = programs[i];
@@ -811,7 +823,8 @@ End:
             {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(GLProgram), MAX_SHADERS},
             {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(GLProgram), MAX_SHADERS},
             {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(GLTexture), MAX_TEXTURES},
-       }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &settings.rotation, &historySize} };
+       }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &deltaTime, &settings.vrrSpeed, &settings.rotation,
+            &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize} };
 
         shaderPasses = 0;
         for(int i = programsTemp.size() - 1; i >= 0; i--) {

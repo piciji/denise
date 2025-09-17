@@ -185,6 +185,10 @@ struct ViewScreen {
         viewport.y = outputTop;
         viewport.width = outputWidth;
         viewport.height = outputHeight;
+        viewport.ratioRot = static_cast<float>(viewport.width) / static_cast<float>(viewport.height);
+        viewport.ratio = flipped ? (1.0f / viewport.ratioRot) : viewport.ratioRot;
+
+        //fprintf(stderr, "%f %f\n", viewport.ratio, viewport.ratioRot);
     }
 };
 

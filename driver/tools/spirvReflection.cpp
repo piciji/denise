@@ -370,25 +370,43 @@ auto SpirvReflection::bindUniforms(SpirvBuffer& spirvBuffer, ShaderPreset* prese
         if (var.name == "MVP") {
             semVar.data = map.uniforms[SemanticMap::MVP];
             goto Next;
-        } else if (var.name == "OutputSize") {
+        } if (var.name == "OutputSize") {
             semVar.data = map.uniforms[SemanticMap::Output];
             goto Next;
-        } else if (var.name == "FinalViewportSize") {
+        } if (var.name == "FinalViewportSize") {
             semVar.data = map.uniforms[SemanticMap::FinalViewport];
             goto Next;
-        } else if (var.name == "FrameCount") {
+        } if (var.name == "FrameCount") {
             semVar.data = map.uniforms[SemanticMap::FrameCount];
             goto Next;
-        } else if (var.name == "FrameDirection") {
+        } if (var.name == "FrameDirection") {
             semVar.data = map.uniforms[SemanticMap::FrameDirection];
             goto Next;
-        } else if (var.name == "Rotation") {
+        } if (var.name == "FrameTimeDelta") {
+            semVar.data = map.uniforms[SemanticMap::FrameTimeDelta];
+            goto Next;
+        } if (var.name == "OriginalFPS") {
+            semVar.data = map.uniforms[SemanticMap::OriginalFPS];
+            goto Next;
+        } if (var.name == "Rotation") {
             semVar.data = map.uniforms[SemanticMap::Rotation];
             goto Next;
-        } else if (var.name == "OriginalSize") {
+        } if (var.name == "OriginalAspect") {
+            semVar.data = map.uniforms[SemanticMap::OriginalAspect];
+            goto Next;
+        } if (var.name == "OriginalAspectRotated") {
+            semVar.data = map.uniforms[SemanticMap::OriginalAspectRot];
+            goto Next;
+        } if (var.name == "TotalSubFrames") {
+            semVar.data = map.uniforms[SemanticMap::TotalSubFrames];
+            goto Next;
+        } if (var.name == "CurrentSubFrame") {
+            semVar.data = map.uniforms[SemanticMap::CurrentSubFrame];
+            goto Next;
+        } if (var.name == "OriginalSize") {
             semVar.data = map.textures[SemanticMap::History].size;
             goto Next;
-        } else if (var.name == "SourceSize") {
+        } if (var.name == "SourceSize") {
             if (passId > 0) {
                 for(int p = passId - 1; p >= 0; p--) {
                     auto& pass = preset->passes[p];

@@ -536,14 +536,14 @@ auto InputManager::bindHids( ) -> void {
 
                     // if device ID can not be found anymore, take first device in list
                     if (!hidDevice) {
-                        if (!mapping->emuDevice || mapping->emuDevice->isJoypadOrMultiAdapter()) {
+                        if (!mapping->emuDevice || mapping->emuDevice->isJoypadOrMultiAdapter() || mapping->emuDevice->isKeyboard()) {
                             for(auto _hidDevice : hidDevices) {
                                 if (_hidDevice->isJoypad()) {
                                     hidDevice = _hidDevice;
                                     break;
                                 }
                             }
-                        } else if (!mapping->emuDevice->isKeyboard() && !mapping->emuDevice->isUnplugged()) {
+                        } else if (!mapping->emuDevice->isUnplugged()) {
                             for(auto _hidDevice : hidDevices) {
                                 if (_hidDevice->isMouse()) {
                                     hidDevice = _hidDevice;

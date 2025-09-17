@@ -378,12 +378,15 @@ struct CGL : public Video, GL3, RenderThread {
                 }
 
                 GL3::updateMainTexture( renderBuffer );
+                subFrame = 1;
+                if (settings.bfiFrames)
+                    totalFrames = (options & OPT_Pause) ? 1 : (settings.bfiFrames + 1);
                 render();
                 
                 if (options & OPT_TakeScreenshot)
                     takeScreenshot();
                 
-                if (settings.bfiFrames && (settings.synchronize || useVRR) && !(options & OPT_DisallowShader))
+                if (settings.bfiFrames && (settings.synchronize || useVRR) && !(options & (OPT_DisallowShader | OPT_Pause)))
                     bfi();
               
                 [view unlockFocus];
@@ -414,12 +417,15 @@ struct CGL : public Video, GL3, RenderThread {
                 if (shaderResizeTimer && !--shaderResizeTimer) {
                     GL3::updateFrameSize();
                 }
+                subFrame = 1;
+                if (settings.bfiFrames)
+                    totalFrames = (options & OPT_Pause) ? 1 : (settings.bfiFrames + 1);
                 render();
                 
                 if (options & OPT_TakeScreenshot)
                     takeScreenshot();
                 
-                if (settings.bfiFrames && (settings.synchronize || useVRR) && !(options & OPT_DisallowShader))
+                if (settings.bfiFrames && (settings.synchronize || useVRR) && !(options & (OPT_DisallowShader | OPT_Pause)))
                     bfi();
                 
                 [view unlockFocus];
@@ -455,8 +461,10 @@ struct CGL : public Video, GL3, RenderThread {
     }
     
     auto bfi() -> void {
-        for (int i = 0; i < settings.lightFrames; i++)
+        for (int i = 0; i < settings.lightFrames; i++) {
+            subFrame++;
             render();
+        }
 
         for (int i = 0; i < settings.darkFrames; i++) {
             GL3::clear();
@@ -602,6 +610,8 @@ struct CGL : public Video, GL3, RenderThread {
     
     auto setBFI(unsigned frames, unsigned darkFrames) -> void {
         wait();
+        subFrame = 1;
+        totalFrames = frames + 1;
         settings.bfiFrames = frames;
         settings.darkFrames = darkFrames > frames ? frames : darkFrames;
         settings.lightFrames = frames - settings.darkFrames;

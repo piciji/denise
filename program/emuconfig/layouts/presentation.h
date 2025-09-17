@@ -350,14 +350,27 @@ struct VideoMotionLayout : GUIKIT::VerticalLayout {
         HDRLayout();
     } hdr;
 
-    struct BFILayout : GUIKIT::FramedHorizontalLayout {
-        GUIKIT::Label bfiLabel;
-        GUIKIT::ComboButton bfiCombo;
-        GUIKIT::Label darkLabel;
-        GUIKIT::ComboButton darkCombo;
+    struct StrobeLayout : GUIKIT::FramedVerticalLayout {
+        GUIKIT::Label strobeWarning;
 
-        BFILayout();
-    } bfi;
+        struct BFILayout : GUIKIT::HorizontalLayout {
+            GUIKIT::Label bfiLabel;
+            GUIKIT::ComboButton bfiCombo;
+            GUIKIT::Label darkLabel;
+            GUIKIT::ComboButton darkCombo;
+
+            BFILayout();
+        } bfi;
+
+        struct SubFrame : GUIKIT::HorizontalLayout {
+            GUIKIT::CheckBox subFrameShader;
+            GUIKIT::Hyperlink learnMore;
+
+            SubFrame();
+        } subFrame;
+
+        StrobeLayout();
+    } strobe;
 
     VideoMotionLayout();
 };

@@ -690,9 +690,10 @@ inline auto ShaderParser::addNewLine(std::string& str) -> void {
         str += "\n";
 }
 
-auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass& pass, std::vector<Stage>& stages, int depth) -> bool {
+auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass& pass, std::vector<Stage>& stages, int depth, bool optional) -> bool {
     static const std::string versionPrefix = "#version";
     static const std::string includePrefix = "#include";
+    static const std::string includeOptionalPrefix = "#pragma include_optional";
     static const std::string pragmaPrefix = "#pragma";
     static const std::string endifPrefix = "#endif";
     static const std::string paramPrefix = "#pragma parameter";
@@ -713,7 +714,8 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
     if (!fileData) {
         GUIKIT::File file(path, true);
         if (!file.open() || !file.getSize()) {
-            errors.push_back(path);
+            if (!optional)
+                errors.push_back(path);
             return false;
         }
 
@@ -739,6 +741,8 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
 
         addLineToStage(stages, line, pass);
         addLineToStage<true>(stages, "#extension GL_GOOGLE_cpp_style_line_directive : require\n", pass);
+        addLineToStage<true>(stages, "#define _HAS_ORIGINALASPECT_UNIFORMS\n", pass);
+        addLineToStage<true>(stages, "#define _HAS_FRAMETIME_UNIFORMS\n", pass);
     }
 
     unsigned pos = !depth ? 2 : 1;
@@ -749,7 +753,18 @@ auto ShaderParser::fetchShaderSource(const std::string& path, ShaderPreset::Pass
         GUIKIT::String::remove(line, { "\r" });
         GUIKIT::String::trim(line);
 
-        if (GUIKIT::String::startsWith(line, includePrefix)) {
+        if (GUIKIT::String::startsWith(line, includeOptionalPrefix)) {
+            GUIKIT::String::remove(line, {includeOptionalPrefix});
+            GUIKIT::String::remove(line, { "\n" });
+            GUIKIT::String::trim(line);
+            line = getValue(line);
+
+            if (!fetchShaderSource( GUIKIT::File::resolveRelativePath(path, line), pass, stages, depth + 1, true))
+                goto End;
+
+            addLineToStage<true>(stages, "#line " + std::to_string(pos) + " \"" + GUIKIT::String::getFileName(path) + "\"\n", pass);
+
+        } else if (GUIKIT::String::startsWith(line, includePrefix)) {
             GUIKIT::String::remove(line, {includePrefix});
             GUIKIT::String::remove(line, { "\n" });
             GUIKIT::String::trim(line);

@@ -23,6 +23,8 @@ struct Viewport {
     unsigned height = 0;
     int x = 0;
     int y = 0;
+    float ratio = 0.0f;
+    float ratioRot = 0.0f;
 };
 
 struct DiskFile {
@@ -51,7 +53,8 @@ struct ScreenTextDescription {
 	int marginVertical;
 };
 
-enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4, OPT_TakeScreenshot = 8, OPT_DisallowFilter = 16 };
+enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4, OPT_TakeScreenshot = 8,
+                OPT_DisallowFilter = 16, OPT_Pause = 32 };
 enum Rotation { ROT_0, ROT_90, ROT_180, ROT_270 };
 
 struct Video {

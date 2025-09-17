@@ -217,12 +217,15 @@ struct WGL : Video, GL3, RenderThread {
         makeCurrent(true);
         //GL3::clear();
         GL3::updateMainTexture( threadEnabled ? getLastBufferToRender() : nullptr );
-                        
+
+        subFrame = 1;
+        if (settings.bfiFrames)
+            totalFrames = (options & OPT_Pause) ? 1 : (settings.bfiFrames + 1);
         render();
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
 
-        if (settings.bfiFrames && (settings.synchronize || settings.vrr) && !(options & OPT_DisallowShader))
+        if (settings.bfiFrames && (settings.synchronize || settings.vrr) && !(options & (OPT_DisallowShader | OPT_Pause)))
             bfi();
 
         resizeMutex.unlock();
@@ -248,13 +251,16 @@ struct WGL : Video, GL3, RenderThread {
         }
 		resizeMutexThreaded.lock();
         resizeWindow();
+        subFrame = 1;
+        if (settings.bfiFrames)
+            totalFrames = (options & OPT_Pause) ? 1 : (settings.bfiFrames + 1);
         render();
 
 		resizeMutexThreaded.unlock();
         if (options & OPT_TakeScreenshot)
             takeScreenshot();
 
-        if (settings.bfiFrames && (settings.synchronize || settings.vrr) && !(options & OPT_DisallowShader))
+        if (settings.bfiFrames && (settings.synchronize || settings.vrr) && !(options & (OPT_DisallowShader | OPT_Pause)))
             bfi();
 
         clearCurrent();
@@ -282,8 +288,10 @@ struct WGL : Video, GL3, RenderThread {
     }
 
     auto bfi() -> void {
-        for (int i = 0; i < settings.lightFrames; i++)
+        for (int i = 0; i < settings.lightFrames; i++) {
+            subFrame++;
             render();
+        }
 
         for (int i = 0; i < settings.darkFrames; i++) {
             GL3::clear();
@@ -444,6 +452,8 @@ struct WGL : Video, GL3, RenderThread {
 
     auto setBFI(unsigned frames, unsigned darkFrames) -> void {
         wait();
+        subFrame = 1;
+        totalFrames = frames + 1;
         settings.bfiFrames = frames;
         settings.darkFrames = darkFrames > frames ? frames : darkFrames;
         settings.lightFrames = frames - settings.darkFrames;

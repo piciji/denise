@@ -321,7 +321,7 @@ auto Program::repeatLastFrame() -> void {
     auto cropData = activeEmulator->cropData();
 
     if (cropData) {
-        activeVideoManager->renderFrame<uint8_t>(cropData, activeEmulator->cropWidth(), activeEmulator->cropHeight(), activeEmulator->cropPitch());
+        activeVideoManager->renderFrame<uint8_t, 0x10>(cropData, activeEmulator->cropWidth(), activeEmulator->cropHeight(), activeEmulator->cropPitch());
     } else {
         auto cropData16 = activeEmulator->cropData16();
 
@@ -332,17 +332,17 @@ auto Program::repeatLastFrame() -> void {
             unsigned _options = activeEmulator->cropOptions();
 
             switch(_options) {
-                case 0: activeVideoManager->renderFrame<uint16_t, 0>(cropData16, _width, _height, _pitch); break;
-                case 1: activeVideoManager->renderFrame<uint16_t, 1>(cropData16, _width, _height, _pitch); break;
-                case 2: activeVideoManager->renderFrame<uint16_t, 2>(cropData16, _width, _height, _pitch); break;
+                case 0: activeVideoManager->renderFrame<uint16_t, 0x10 | 0>(cropData16, _width, _height, _pitch); break;
+                case 1: activeVideoManager->renderFrame<uint16_t, 0x10 | 1>(cropData16, _width, _height, _pitch); break;
+                case 2: activeVideoManager->renderFrame<uint16_t, 0x10 | 2>(cropData16, _width, _height, _pitch); break;
 
-                case 4: activeVideoManager->renderFrame<uint16_t, 4>(cropData16, _width, _height, _pitch); break;
-                case 5: activeVideoManager->renderFrame<uint16_t, 5>(cropData16, _width, _height, _pitch); break;
-                case 6: activeVideoManager->renderFrame<uint16_t, 6>(cropData16, _width, _height, _pitch); break;
+                case 4: activeVideoManager->renderFrame<uint16_t, 0x10 | 4>(cropData16, _width, _height, _pitch); break;
+                case 5: activeVideoManager->renderFrame<uint16_t, 0x10 | 5>(cropData16, _width, _height, _pitch); break;
+                case 6: activeVideoManager->renderFrame<uint16_t, 0x10 | 6>(cropData16, _width, _height, _pitch); break;
 
-                case 8: activeVideoManager->renderFrame<uint16_t, 8>(cropData16, _width, _height, _pitch); break;
-                case 9: activeVideoManager->renderFrame<uint16_t, 9>(cropData16, _width, _height, _pitch); break;
-                case 10: activeVideoManager->renderFrame<uint16_t, 10>(cropData16, _width, _height, _pitch); break;
+                case 8: activeVideoManager->renderFrame<uint16_t, 0x10 | 8>(cropData16, _width, _height, _pitch); break;
+                case 9: activeVideoManager->renderFrame<uint16_t, 0x10 | 9>(cropData16, _width, _height, _pitch); break;
+                case 10: activeVideoManager->renderFrame<uint16_t, 0x10 | 10>(cropData16, _width, _height, _pitch); break;
             }
         }
     }
@@ -765,6 +765,7 @@ auto Program::updateBFI() -> void {
 
     unsigned bfiFrames = _settings->get<unsigned>("bfi_frames", 0, { 0, 6 });
     unsigned darkFrames = _settings->get<unsigned>("dark_frames", 0, { 0, 6 });
+    bool strobeShader = _settings->get<bool>("strobe_shader", false);
 
-    videoDriver->setBFI(bfiFrames, darkFrames);
+    videoDriver->setBFI(bfiFrames, strobeShader ? 0 : darkFrames);
 }
