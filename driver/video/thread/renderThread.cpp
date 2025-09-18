@@ -227,7 +227,7 @@ namespace DRIVER {
             std::unique_lock<std::mutex> lk(cvM);
 #ifdef __APPLE__
             if (ThreadPriority::setPriority( ThreadPriority::Mode::Realtime, 3.0, 5.0 )) {
-            //     logger->log("increased render thread prio");
+               //  fprintf(stderr, "Prio: realtime ");
             }
             updatePriority = false;
             realtime = true;
@@ -241,7 +241,7 @@ namespace DRIVER {
                     updatePriority = false;
                         
                     if (ThreadPriority::setPriority( realtime ? ThreadPriority::Mode::Realtime : ThreadPriority::Mode::Normal, 3.0, 5.0 )) {
-                            // logger->log(realtime ? "render thread realtime prio" : "render thread normal prio");
+                 //       fprintf(stderr, realtime ? "Prio: realtime " : "Prio: normal ");
                     }
                 }
 #endif

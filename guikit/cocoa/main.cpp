@@ -292,8 +292,10 @@
 }
 
 -(void)windowDidEndLiveResize:(NSNotification *)notification {
-    if (window->onResizeEnd && !window->fullScreen())
-        window->onResizeEnd();
+    if (window->onResizeEnd && !window->fullScreen()) {
+        // we need more time in case of real time prio for render thread and >100 Hz BFI
+        window->p.resizeTimer.setEnabled();
+    }
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)frameSize {
@@ -552,6 +554,13 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     @autoreleasepool {
         backgroundView = nullptr;
         cocoaWindow = [[CocoaWindow alloc] initWith:window];
+        
+        resizeTimer.setInterval(500);
+        resizeTimer.onFinished = [this]() {
+            resizeTimer.setEnabled(false);
+            if (this->window.onResizeEnd)
+                this->window.onResizeEnd();
+        };
         
         static bool once = true;
         

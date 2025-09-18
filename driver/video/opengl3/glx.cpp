@@ -639,7 +639,8 @@ struct GLX : public Video, GL3, RenderThread {
     auto setVRR(bool state, float speed = 0.0) -> void {
         wait();
         settings.vrr = state;
-        settings.vrrSpeed = speed;
+        if (speed != 0.0)
+            settings.vrrSpeed = speed;
         useVRR = state;
         updateVRR();
     }
