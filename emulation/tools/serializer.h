@@ -27,7 +27,7 @@ struct Serializer {
         return _capacity;
     }
     
-    virtual auto lightUsage() -> bool { return false; }
+    virtual auto memUsage() -> bool { return false; }
 
     template<typename T> auto floatingpoint(T& value) -> Serializer& {
         
@@ -172,7 +172,7 @@ protected:
 
 struct MemSerializer : Serializer {
 
-    auto lightUsage() -> bool { return true; }
+    auto memUsage() -> bool { return true; }
     
     auto setMode( Mode mode ) -> void {
         this->_mode = mode;

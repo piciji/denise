@@ -1462,6 +1462,10 @@ auto Timer::setData(unsigned data) -> void {
     state.data = data;
 }
 
+auto Timer::setDataF(float data) -> void {
+    state.dataF = data;
+}
+
 //browserWindow
 std::function<void ()> BrowserWindow::onCall = nullptr;
 

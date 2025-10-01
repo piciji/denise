@@ -1185,14 +1185,17 @@ struct Timer : Base {
         bool enabled = false;
         unsigned interval = 0;
         unsigned data = 0;
+        float dataF = 0.0;
     } state;
 
     auto enabled() const -> bool { return state.enabled; }
     auto interval() const -> unsigned { return state.interval; }
     auto data() const -> unsigned { return state.data; }
+    auto dataF() const -> float { return state.dataF; }
     auto setEnabled(bool enabled = true) -> void;
     auto setInterval(unsigned intervalInMs) -> void;
     auto setData(unsigned data) -> void;
+    auto setDataF(float data) -> void;
 
     pTimer& p;
     Timer();

@@ -36,8 +36,8 @@ auto Program::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator
     if (group->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
         return false;
     
-    // non archived tape or harddisk images will be loaded in chunks when needed
-    if ((group->isTape() || group->isHardDisk()) && !file->isArchived() ) {        
+    // non archived harddisk images will be loaded in chunks when needed
+    if (group->isHardDisk() && !file->isArchived() ) {
 		data = nullptr;
 		auto items = file->scanArchive();
 		return !items.empty();
@@ -230,7 +230,7 @@ auto Program::updateSaveIdent(Emulator::Interface::Media* media, FileSetting* fS
         return;
     }        
     
-    if ( (media->group->isExpansion() && !media->group->expansion->isFastloader() && !media->group->expansion->isTurboCart() && !media->secondary)
+    if ( (media->group->isExpansion() && !media->group->expansion->isFastloader() && !media->group->expansion->isTurboCart() && !media->group->expansion->isRam() && !media->secondary)
     || (!_media && !media->group->isProgram())
     || (media->group->isDisk() && !_media->group->isDisk() && !_media->group->isExpansion())
     || (media->group->isTape() && !_media->group->isDisk() && !_media->group->isExpansion())) {

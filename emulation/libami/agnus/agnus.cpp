@@ -50,11 +50,6 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
     expansions[3] = new HDController(*this, system->hardDrives[2]);
     expansions[4] = new HDController(*this, system->hardDrives[3]);
 
-    chipMemChangeSize = slowMemChangeSize = fastMemChangeSize = 10 * 1024;
-    chipMemChange = new MemChange[chipMemChangeSize];
-    slowMemChange = new MemChange[slowMemChangeSize];
-    fastMemChange = new MemChange[fastMemChangeSize];
-
     wom = new uint8_t[256 * 1024];
     ntsc = false;
 
@@ -68,9 +63,6 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
 }
 
 Agnus::~Agnus() {
-    delete[] chipMemChange;
-    delete[] slowMemChange;
-    delete[] fastMemChange;
     delete[] wom;
 
     if (chipMemMask)
@@ -200,10 +192,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     }
 
     dskpt = 0;
-    chipMemChangePos = 0;
-    slowMemChangePos = 0;
-    fastMemChangePos = 0;
-    trackMemChanges = false;
+    memState = nullptr;
 
     ddfStart = 0;
     ddfStop = 0;

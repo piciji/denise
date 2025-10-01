@@ -624,7 +624,7 @@ auto IecBus::serialize(Emulator::Serializer& s) -> void {
     s.integer( drivesConnected );
     s.integer( lastByte );
        
-    if (s.mode() == Emulator::Serializer::Mode::Load) {
+    if (!s.memUsage() && (s.mode() == Emulator::Serializer::Mode::Load)) {
         setDrivesEnabled( drivesConnected );
         updateIdleState();
     }

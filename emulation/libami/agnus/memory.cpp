@@ -132,8 +132,8 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
         case CHIP_MEM:
             addWaitstatesToCPU();
             adr &= chipMemMask;
-            if (trackMemChanges)
-                rememberChipMem(adr & ~1);
+            if (memState)
+                memState->trackers[TRACKER_CHIP].remember(adr & ~1);
 
             *(chipMem + adr) = value;
             break;
@@ -152,14 +152,14 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
         case SLOW_MEM:
             addWaitstatesToCPU();
             adr -= 0xc00000;
-            if (trackMemChanges)
-                rememberSlowMem(adr & ~1);
+            if (memState)
+                memState->trackers[TRACKER_SLOW].remember(adr & ~1);
             *(slowMem + adr) = value;
             break;
         case FAST_MEM:
             adr -= fastMemExpansion.baseAdr;
-            if (trackMemChanges)
-                rememberFastMem(adr & ~1);
+            if (memState)
+                memState->trackers[TRACKER_FAST].remember(adr & ~1);
             *(fastMem + adr) = value;
             break;
         case KICK_ROM:
@@ -195,8 +195,8 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
         case CHIP_MEM:
             addWaitstatesToCPU();
             adr &= chipMemMask;
-            if (trackMemChanges)
-                rememberChipMem(adr);
+            if (memState)
+                memState->trackers[TRACKER_CHIP].remember(adr);
 
             *(uint16_t*)(chipMem + adr) = _swapWord(value);
             break;
@@ -215,14 +215,14 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
         case SLOW_MEM:
             addWaitstatesToCPU();
             adr -= 0xc00000;
-            if (trackMemChanges)
-                rememberSlowMem(adr);
+            if (memState)
+                memState->trackers[TRACKER_SLOW].remember(adr);
             *(uint16_t*)(slowMem + adr) = _swapWord(value);
             break;
         case FAST_MEM:
             adr -= fastMemExpansion.baseAdr;
-            if (trackMemChanges)
-                rememberFastMem(adr);
+            if (memState)
+                memState->trackers[TRACKER_FAST].remember(adr);
             *(uint16_t*)(fastMem + adr) = _swapWord(value);
             break;
         case KICK_ROM:
@@ -256,21 +256,21 @@ auto Agnus::fakeWriteByte(uint32_t adr, uint8_t value) -> void {
     switch (mapper[adr >> 16]) {
         case CHIP_MEM:
             adr &= chipMemMask;
-            if (trackMemChanges)
-                rememberChipMem(adr & ~1);
+            if (memState)
+                memState->trackers[TRACKER_CHIP].remember(adr & ~1);
 
             *(chipMem + adr) = value;
             break;
         case SLOW_MEM:
             adr -= 0xc00000;
-            if (trackMemChanges)
-                rememberSlowMem(adr & ~1);
+            if (memState)
+                memState->trackers[TRACKER_SLOW].remember(adr & ~1);
             *(slowMem + adr) = value;
             break;
         case FAST_MEM:
             adr -= fastMemExpansion.baseAdr;
-            if (trackMemChanges)
-                rememberFastMem(adr & ~1);
+            if (memState)
+                memState->trackers[TRACKER_FAST].remember(adr & ~1);
             *(fastMem + adr) = value;
             break;
         case WOM:
@@ -378,41 +378,6 @@ auto Agnus::setFastmem(unsigned size) -> void {
     if (size)
         fastMem = new uint8_t[size];
     fastMemSize = size;
-}
-
-auto Agnus::rememberChipMem(uint32_t adr) -> void {
-    MemChange* memChange = &chipMemChange[chipMemChangePos++];
-    memChange->address = adr;
-    memChange->value = *(uint16_t*)(chipMem + adr);
-
-    if (chipMemChangePos == chipMemChangeSize)
-        increaseTrackMemStorage(chipMemChange, chipMemChangeSize);
-}
-
-auto Agnus::rememberSlowMem(uint32_t adr) -> void {
-    MemChange* memChange = &slowMemChange[slowMemChangePos++];
-    memChange->address = adr;
-    memChange->value = *(uint16_t*)(slowMem + adr);
-
-    if (slowMemChangePos == slowMemChangeSize)
-        increaseTrackMemStorage(slowMemChange, slowMemChangeSize);
-}
-
-auto Agnus::rememberFastMem(uint32_t adr) -> void {
-    MemChange* memChange = &fastMemChange[fastMemChangePos++];
-    memChange->address = adr;
-    memChange->value = *(uint16_t*)(fastMem + adr);
-
-    if (fastMemChangePos == fastMemChangeSize)
-        increaseTrackMemStorage(fastMemChange, fastMemChangeSize);
-}
-
-auto Agnus::increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> void {
-    MemChange* memChangeTemp = new MemChange[size << 1];
-    std::memcpy(memChangeTemp, memChange, sizeof(MemChange) * size );
-    size <<= 1;
-    delete[] memChange;
-    memChange = memChangeTemp;
 }
 
 auto Agnus::mapRom(bool init ) -> void {

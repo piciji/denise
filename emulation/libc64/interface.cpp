@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "222";
+const std::string Interface::Version = "223";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -2066,6 +2066,15 @@ auto Interface::autoStartedByMediaGroup() -> MediaGroup* {
 
 auto Interface::toggle2Mhz() -> bool {
     return system->toggle2Mhz();
+}
+
+auto Interface::configRewind(unsigned steps, unsigned maxSizeInMb) -> void {
+    system->history.config(steps, maxSizeInMb);
+}
+
+auto Interface::setRewind(bool state) -> void {
+    if (system->powerOn)
+        system->history.setRewind(state);
 }
 
 }

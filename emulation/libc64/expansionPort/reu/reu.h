@@ -2,7 +2,6 @@
 #pragma once
 
 #include "../expansionPort.h"
-#include "../../../tools/memchangetracker.h"
 
 namespace LIBC64 {
     
@@ -24,8 +23,6 @@ struct Reu : ExpansionPort {
         uint32_t reuAddr;
         uint16_t transferLength;           
     } reg;
-
-    MemChangeTracker<uint32_t, uint8_t> memChangeTracker;
 
     uint16_t hostAddr;    
     uint32_t reuAddr;
@@ -106,6 +103,7 @@ struct Reu : ExpansionPort {
 	auto hasSecondaryRom() -> bool { return true; }
 	
 	auto setExpander( ExpansionPort* expander ) -> void;
+    auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 
 };    
 

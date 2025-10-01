@@ -131,10 +131,12 @@ auto Drive::serialize(Emulator::Serializer& s) -> void {
         }
 
         // unserialize VIA, CIA before to get state of LED
-        (operation & DRIVE_MODE_158x) ? updateDeviceState1581() : updateDeviceState();
+        if (!s.memUsage())
+            (operation & DRIVE_MODE_158x) ? updateDeviceState1581() : updateDeviceState();
     }
-       
-    structure.serialize( s, written );
+
+    if (!s.memUsage())
+        structure.serialize( s, written );
 }
 
 }

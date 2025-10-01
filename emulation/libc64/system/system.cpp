@@ -580,8 +580,6 @@ auto System::power( bool softReset ) -> void {
 
     if( !softReset ) {
         calcSerializationSize();
-        if (requestedSids)
-            serializationSize += sidManager.serializationSizeForSevenMoreSids;
 
         warp.config = 0;
         warp.frameCounter = 0;
@@ -645,6 +643,7 @@ auto System::power( bool softReset ) -> void {
         keyBuffer->add( action, false );
     }
 
+    history.reset();
     powerOn = true;
 }
 
@@ -723,6 +722,28 @@ auto System::run() -> void {
     runAhead.active = !warp.config && runAhead.frames && !traps.installed
         && !keyBuffer->isPrgInjectionInQueue();
 
+    if (history.enable()) {
+        if (history.rewind) {
+            runAhead.active = false;
+            auto memState = history.apply();
+            if (memState) {
+                unserializeLight(*memState, true);
+                expansionPort->memChange = &memState->trackers[0];
+                if (expansionPort->expander)
+                    expansionPort->expander->memChange = &memState->trackers[1];
+            }
+        } else {
+            auto memState = history.remember();
+            if (memState)
+                serializeLight(*memState, true);
+            else {
+                expansionPort->memChange = &history.getCurMemstate()->trackers[0];
+                if (expansionPort->expander)
+                    expansionPort->expander->memChange = &history.getCurMemstate()->trackers[1];
+            }
+        }
+    }
+
     if (runAhead.active) {
         runAhead.pos = runAhead.frames;
         vicII->disableSequencer( runAhead.performance );
@@ -753,7 +774,7 @@ auto System::run() -> void {
 
     if (runAhead.active) {
         if (runAhead.frames == runAhead.pos) {
-            serializeLight();
+            serializeLight(runAhead.memState);
         }
 
         if (runAhead.pos) {
@@ -769,7 +790,7 @@ auto System::run() -> void {
             goto labelRunAhead;
         }
 
-        unserializeLight();
+        unserializeLight(runAhead.memState);
     }
 
     if (observer.stateChange)
@@ -860,6 +881,7 @@ auto System::updateStats() -> void {
     interface->stats.sampleRate = (double)vicII->frequency() / (double)sidManager.sampleLimit;
     interface->stats.fps = 1.0 / ( (double)vicII->cyclesPerFrame() / (double)vicII->frequency() );
     interface->stats.stereoSound = sidManager.isStereo();
+    history.reset();
 }
 
 auto System::updateStatsStereo() -> void {
@@ -875,10 +897,13 @@ auto System::useExtraSids(uint8_t requestedSids) -> void {
     if (!powerOn)
         return;
 
-    if (requestedSids && !requestedSidsBefore)
+    if (requestedSids && !requestedSidsBefore) {
         serializationSize += sidManager.serializationSizeForSevenMoreSids;
-    else if (!requestedSids && requestedSidsBefore)
+        serializationSizeLight += sidManager.serializationSizeForSevenMoreSids;
+    } else if (!requestedSids && requestedSidsBefore) {
         serializationSize -= sidManager.serializationSizeForSevenMoreSids;
+        serializationSizeLight -= sidManager.serializationSizeForSevenMoreSids;
+    }
 
     sidManager.clone( requestedSidsBefore, requestedSids );
 }

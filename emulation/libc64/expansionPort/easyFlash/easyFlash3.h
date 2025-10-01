@@ -108,6 +108,8 @@ struct EasyFlash3 : FreezeButton {
     
     auto updateSlotDisplayName(Slot* slot) -> void;
     auto updateSlotHeaderName(Slot* slot, uint8_t* header) -> void;
+
+    auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 };
 
 }

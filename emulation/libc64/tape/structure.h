@@ -39,10 +39,7 @@ struct TapeStructure {
     uint8_t version;
     uint8_t* rawData = nullptr;
     unsigned rawSize;
-    unsigned fetchPos;
-    unsigned fetchSize;
     unsigned curPos;
-    uint8_t* fetchData;
     unsigned allocatedSize;
 
     auto setData(uint8_t* data, unsigned size) -> void;

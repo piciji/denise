@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "241";
+const std::string Interface::Version = "242";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -780,6 +780,15 @@ auto Interface::getWarpMode() -> unsigned {
 auto Interface::autoStartedByMediaGroup() -> MediaGroup* {
 
     return getDiskMediaGroup();
+}
+
+auto Interface::configRewind(unsigned steps, unsigned maxSizeInMb) -> void {
+    system->history.config(steps, maxSizeInMb);
+}
+
+auto Interface::setRewind(bool state) -> void {
+    if (system->powerOn)
+        system->history.setRewind(state);
 }
 
 }

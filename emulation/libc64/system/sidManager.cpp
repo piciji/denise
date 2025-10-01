@@ -356,6 +356,7 @@ auto SidManager::updateSidUsage() -> void {
 
     system->updateStatsStereo();
     usbSIDPico.updateStereo();
+    system->history.reset();
 }
 
 auto SidManager::isStereo() -> bool {
@@ -395,6 +396,7 @@ auto SidManager::setFilterTypeAll( Sid::FilterType filterType ) -> void {
         sids[i]->volumeCorrection(useVolumeCorrection);
     }
     updateOptionsInUse();
+    system->history.reset();
 }
 
 auto SidManager::getFilterType( ) -> Sid::FilterType {
@@ -540,6 +542,7 @@ auto SidManager::setResampleQuality( uint8_t val ) -> void {
         case 3:
             sampleLimit = 18; break;
     }
+    system->history.reset();
 }
 
 auto SidManager::getResampleQuality( ) -> uint8_t {
@@ -596,7 +599,7 @@ auto SidManager::searializeActiveSids(Emulator::Serializer& s, bool light) -> vo
     s.integer( sampleLimit );
     s.integer( useExternalFilter );
 
-    if (!light && (s.mode() == Emulator::Serializer::Mode::Load) ) {
+    if (!s.memUsage() && (s.mode() == Emulator::Serializer::Mode::Load) ) {
         updateSidUsage();
 
         if (sampleLimitBefore != sampleLimit)

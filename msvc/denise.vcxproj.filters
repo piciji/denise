@@ -1168,6 +1168,12 @@
     <ClInclude Include="..\program\emuconfig\layouts\presentation.h">
       <Filter>program\emuconfig\layouts</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\tools\memchangetracker.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\history.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">

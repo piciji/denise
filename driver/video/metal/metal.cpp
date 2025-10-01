@@ -48,6 +48,7 @@ namespace DRIVER {
     NSUInteger historySize;
     bool threadAlive;
     unsigned frameCount;
+    int frameDirection;
 
     unsigned deltaTime;
     unsigned lastTime;
@@ -136,7 +137,6 @@ namespace DRIVER {
         settings.vrr = false;
         settings.useShaderCache = false;
         settings.hdrEnable = false;
-        settings.direction = 1;
         options = 0;
         shaderId = 0;
         preset = nullptr;
@@ -156,6 +156,7 @@ namespace DRIVER {
         lastTime = 0;
         subFrame = 1;
         totalFrames = 1;
+        frameDirection = 1;
         
         hdrUniforms.hdr10 = true;
         hdrUniforms.inverseTonemap = true;
@@ -193,7 +194,6 @@ namespace DRIVER {
         Rotation rotation;
         bool hardSync;
         bool useShaderCache = false;
-        int direction = 1; // reserved for rewind support
         bool hdrEnable = false;
         
         unsigned bfiFrames = 0;
@@ -864,6 +864,8 @@ namespace DRIVER {
                 unsigned curTime = Chronos::getTimestampInMicrosecondsPrecise();
                 deltaTime = curTime - lastTime;
                 lastTime = curTime;
+                frameDirection = (options & OPT_Rewind) ? -1 : 1;
+
                 if (!bfiLock) {
                     subFrame = 1;
                     if (settings.bfiFrames)
@@ -1643,7 +1645,7 @@ namespace DRIVER {
            {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(MTLProgram), MAX_SHADERS},
            {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(MTLProgram), MAX_SHADERS},
            {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(MTLTexture), MAX_TEXTURES},
-        }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &deltaTime, &settings.vrrSpeed, &settings.rotation,
+        }, {nullptr, nullptr, &frame.size, nullptr, &frameDirection, &deltaTime, &settings.vrrSpeed, &settings.rotation,
             &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize} };
 
         shaderPasses = 0;

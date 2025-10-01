@@ -94,6 +94,7 @@ struct GL3 {
 
     bool updateRTS;
     bool updateHistory;
+    int frameDirection;
 
     int64_t lastCapTime;
     int64_t minimumCapTime;
@@ -111,7 +112,6 @@ struct GL3 {
         bool vrr = false;
         float vrrSpeed = 0.0;
         Rotation rotation = ROT_0;
-        int direction = 1; // reserved for rewind support
         bool useShaderCache = false;
 
         unsigned bfiFrames = 0;
@@ -137,13 +137,13 @@ struct GL3 {
         lastTime = 0;
         subFrame = 1;
         totalFrames = 1;
+        frameDirection = 1;
 
         settings.synchronize = false;
         settings.hardSync = false;
         settings.linearFilter = true;
         settings.vrr = false;
         settings.rotation = ROT_0;
-        settings.direction = 1;
         settings.useShaderCache = false;
     }
 
@@ -224,6 +224,7 @@ struct GL3 {
             unsigned curTime = Chronos::getTimestampInMicrosecondsPrecise();
             deltaTime = curTime - lastTime;
             lastTime = curTime;
+            frameDirection = (options & OPT_Rewind) ? -1 : 1;
 
             for(int i = 0; i < shaderPasses; i++) {
                 auto& p = programs[i];
@@ -823,7 +824,7 @@ End:
             {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(GLProgram), MAX_SHADERS},
             {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(GLProgram), MAX_SHADERS},
             {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(GLTexture), MAX_TEXTURES},
-       }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &deltaTime, &settings.vrrSpeed, &settings.rotation,
+       }, {nullptr, nullptr, &frame.size, nullptr, &frameDirection, &deltaTime, &settings.vrrSpeed, &settings.rotation,
             &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize} };
 
         shaderPasses = 0;

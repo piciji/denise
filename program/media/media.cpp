@@ -308,7 +308,7 @@ auto MediaLayout::build() -> void {
     navElements.push_back( { tvi, nullptr, (GUIKIT::Layout*)&pathsLayout } );
 
     tvi = new GUIKIT::TreeViewItem;
-    tvi->setText( "dialog preview" );
+    tvi->setText( "file dialog preview" );
     tvi->setImage( settingsImage );
     mediaTree.append(*tvi);
     moduleSwitch.setLayout( navElements.size(), dialogPreviewLayout, {~0u, ~0u} );
@@ -1073,7 +1073,7 @@ auto MediaLayout::translate() -> void {
 
     fontSizeLayout.label.setText( trans->getA("Font Size") );
 
-    dialogPreviewLayout.setText( trans->getA("Dialog Preview") );
+    dialogPreviewLayout.setText( trans->getA("File Dialog Preview") );
     dialogPreviewLayout.mode.label.setText( trans->getA("preview", true) );
     dialogPreviewLayout.mode.noPreviewRadio.setText( trans->getA("off") );
     dialogPreviewLayout.mode.dialogPreviewRadio.setText( trans->getA("Dialog Preview") );
@@ -1097,7 +1097,7 @@ auto MediaLayout::translate() -> void {
         else if ( nav.layout == &creatorLayout )
             nav.tvi->setText( trans->get( "create" ) );
         else if ( nav.layout == &dialogPreviewLayout )
-            nav.tvi->setText( trans->get( "Dialog Preview" ) );
+            nav.tvi->setText( trans->get( "File Dialog Preview" ) );
 
         if (nav.layout && nav.mediaGroup)
             translate(nav);
@@ -1236,7 +1236,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
 
     // unarchived tape files are writable which results in unpredictable filesizes
     // so they are loaded in chunks by an emulator callback
-    auto data = (mediaGroup->isTape() || mediaGroup->isHardDisk()) && !file->isArchived() ? nullptr
+    auto data = mediaGroup->isHardDisk() && !file->isArchived() ? nullptr
         : file->archiveData(item->id);
 
     bool updateGenericFileList = !media->secondary;

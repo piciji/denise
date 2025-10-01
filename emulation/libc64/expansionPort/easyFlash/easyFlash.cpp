@@ -309,7 +309,7 @@ auto EasyFlash::serialize(Emulator::Serializer& s) -> void {
     flashLo.serialize(s);
     flashHi.serialize(s);
 
-    if (!s.lightUsage()) {
+    if (!s.memUsage()) {
         if (flashLo.dirty)
             s.array(dataLo, 512 * 1024);
 
@@ -321,6 +321,15 @@ auto EasyFlash::serialize(Emulator::Serializer& s) -> void {
     }
     
     ExpansionPort::serialize(s);        
+}
+
+auto EasyFlash::getSizeNotConsideredForMemorySerialization() -> unsigned {
+    unsigned _size = 0;
+    if (flashLo.dirty)
+        _size += 512 * 1024;
+    if (flashHi.dirty)
+        _size += 512 * 1024;
+    return _size;
 }
 
 auto EasyFlash::createImage(unsigned& imageSize) -> uint8_t* {

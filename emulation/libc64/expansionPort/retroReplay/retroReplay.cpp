@@ -397,6 +397,13 @@ auto RetroReplay::serialize(Emulator::Serializer& s) -> void {
     FreezeButton::serializeCustom( s );
 }
 
+auto RetroReplay::getSizeNotConsideredForMemorySerialization() -> unsigned {
+    unsigned _size = 0;
+    if (flash.dirty)
+        _size += 128 * 1024;
+    return _size;
+}
+
 auto RetroReplay::setJumper( unsigned jumperId, bool state ) -> void {
     
     if (jumperId == 0) { // bank jumper

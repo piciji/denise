@@ -71,6 +71,7 @@ struct RetroReplay : FreezeButton {
     auto createImage(unsigned& imageSize, uint8_t id) -> uint8_t*;
 	
 	auto protectFromDeletion() -> bool { return true; }
+    auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 };
 
 }

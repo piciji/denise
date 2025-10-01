@@ -133,13 +133,20 @@ auto AudioManager::setBufferSize() -> void {
         return;
 
     stat = activeEmulator->getStatsForSelectedRegion();
-    auto synchronize = audioDriver->hasSynchronized();
+
+    if (rewind) {
+        bufferSize = (stat.sampleRate / stat.fps) * 2.0 * 1.06;
+        if (bufferSize > MAX_AUDIO_BUF_SIZE) {
+            bufferSize = MAX_AUDIO_BUF_SIZE;
+            //fprintf(stderr, "audio buf limited\n");
+        }
+    } else {
+        bufferSize = 2048;
     
-    bufferSize = 2048;
-    
-    if (synchronize || dynamicRateControl)
-        bufferSize = 512;
-    
+        if (audioDriver->hasSynchronized() || dynamicRateControl)
+            bufferSize = 512;
+    }
+
     if (!stat.stereoSound)
         bufferSize >>= 1;
     
@@ -316,6 +323,7 @@ auto AudioManager::setRateControl() -> void {
 }
 
 auto AudioManager::power() -> void {
+    rewind = false;
     setSynchronize();
     setResampler();
     setBufferSize();
@@ -370,7 +378,36 @@ auto AudioManager::process( int16_t sampleLeft, int16_t sampleRight ) -> void {
         buffer[bufferPos++] = sampleRight * volumeAdjust;
 
     if (bufferPos < bufferSize)
-        return;   
+        return;
+
+    //if (rewind)
+      //  fprintf(stderr, "rewind audio buf too small ");
+
+    flush();
+}
+
+auto AudioManager::setRewind(bool state) -> void {
+    rewind = state;
+    reverseAndFlushBuffer();
+    setBufferSize();
+}
+
+auto AudioManager::reverseAndFlushBuffer() -> void {
+    if (!bufferPos)
+        return;
+
+    if (stat.stereoSound) {
+        for (unsigned int i = 0; i < (bufferPos >> 1); i++) {
+            if (i & 1)
+                std::swap( buffer[i], buffer[bufferPos - i] );
+            else
+                std::swap( buffer[i], buffer[bufferPos - 2 - i] );
+        }
+    } else {
+        for (unsigned int i = 0; i < (bufferPos >> 1); i++) {
+            std::swap( buffer[i], buffer[bufferPos - 1 - i] );
+        }
+    }
 
     flush();
 }

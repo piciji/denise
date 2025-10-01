@@ -234,6 +234,7 @@ auto System::power(bool softReset, bool resetInstruction) -> void {
     dongle.control = 0;
     dongle.clock = 0;
     interface->updateLedState(Emulator::Interface::LedId::Power, agnus.ecsAndHigher() ? 2 : 0);
+    history.reset();
     powerOn = true;
 }
 
@@ -254,9 +255,26 @@ auto System::run() -> void {
     if (agnus.resetFromKeyboard)
         agnus.waitKeyboardReset();
 
-    bool useRunAhead = allowRunAhead();
+    runAhead.active = allowRunAhead();
 
-    if (useRunAhead) {
+    if (history.enable()) {
+        if (history.rewind) {
+            runAhead.active = false;
+            auto memState = history.apply();
+            if (memState) {
+                unserializeLight(*memState, true);
+                agnus.memState = memState;
+            }
+        } else {
+            auto memState = history.remember();
+            if (memState)
+                serializeLight(*memState, true);
+            else
+                agnus.memState = history.getCurMemstate();
+        }
+    }
+
+    if (runAhead.active) {
         runAhead.pos = runAhead.frames;
         denise.setDisableSequencer( runAhead.performance ? 1 : 2 );
         paula.disableAudioOut( runAhead.frames > 1 );
@@ -275,9 +293,9 @@ auto System::run() -> void {
     }
 
     denise.process(); // keep up, so we don't need to serialize BplUpdate
-    if (useRunAhead) {
+    if (runAhead.active) {
         if (runAhead.frames == runAhead.pos) {
-            serializeLight();
+            serializeLight(runAhead.memState);
         }
 
         if (runAhead.pos) {
@@ -293,7 +311,7 @@ auto System::run() -> void {
             goto labelRunAhead;
         }
 
-        unserializeLight();
+        unserializeLight(runAhead.memState);
     }
 
     DiskDrive::randomizeRpm(agnus.frequency(), paula.turbo);
@@ -302,8 +320,6 @@ auto System::run() -> void {
 
     if (observer.stateChange)
         informAboutStateChange();
-
-    //agnus.setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
 }
 
 auto System::informAboutKeyUpdate() -> void {
@@ -432,6 +448,7 @@ auto System::setRegion( int region ) -> void {
 auto System::setResampleQuality( int value ) -> void {
     paula.setResampleQuality( value );
     updateStats();
+    history.reset();
 }
 
 auto System::setRunAhead(unsigned frames) -> void {
@@ -626,6 +643,8 @@ auto System::setOverclock( unsigned factor ) -> void {
         case 2: agnus.overclock.speed = 8; break;
         case 3: agnus.overclock.speed = 16; break;
     }
+
+    history.reset();
 }
 
 auto System::getOverclock() -> unsigned {

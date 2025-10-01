@@ -10,15 +10,17 @@ auto System::calcSerializationSize() -> void {
     
     unsigned signature = 0;
     char version[16] = {};
-    char reserved[256] = {};
 
     s.integer(signature);
     s.array(version);
-    s.array(reserved);
   
     serializeAll(s);
     
     serializationSize = s.size();
+    if (requestedSids)
+        serializationSize += sidManager.serializationSizeForSevenMoreSids;
+
+    serializationSizeLight = serializationSize - expansionPort->getSizeNotConsideredForMemorySerialization();
 }
 
 auto System::serialize(unsigned& size) -> uint8_t* {   
@@ -31,15 +33,13 @@ auto System::serialize(unsigned& size) -> uint8_t* {
     Emulator::Serializer s( serializationSize );
     
     unsigned signature = 0x433634; // always constant for each emulation core
-    char version[16] = {}; 
-    char reserved[256] = {}; // reserved, e.g. state description
+    char version[16] = {};
     
     auto str = Interface::Version;    
     str.copy( version, str.size() );
 
     s.integer(signature);
     s.array(version);
-    s.array(reserved);
     
     serializeAll(s);
     
@@ -86,11 +86,9 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
     
     unsigned signature = 0;
     char version[16] = {};
-    char reserved[256] = {};
 
     s.integer(signature);
     s.array(version);
-    s.array(reserved);
 
     if(signature != 0x433634)
         return false;
@@ -103,6 +101,8 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
     remapCpu();
 
     updateDriveSounds();
+
+    history.reset();
     
     return true;
 }    
@@ -153,6 +153,7 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.array( ram, 64 * 1024 );
     s.array( colorRam, 1 * 1024 );    
     s.integer( serializationSize );
+    s.integer( serializationSizeLight );
     s.integer( mode );
     s.integer( vicBank );    
     s.integer( irqIncomming );
@@ -185,30 +186,34 @@ auto System::serialize(Emulator::Serializer& s) -> void {
 }
 
 // for runahead
-auto System::serializeLight() -> void {   
-      
-    auto& s = runAhead.serializer;
-    
-    s.setData( serializationSize );
+auto System::serializeLight(MemState<uint32_t, uint8_t, 2>& memState, bool fromHistory) -> void {
+    auto& s = memState.serializer;
+    expansionPort->memChange = &memState.trackers[0];
+    if (expansionPort->expander)
+        expansionPort->expander->memChange = &memState.trackers[1];
+
+    s.setData( serializationSizeLight );
     s.setMode( Emulator::Serializer::Mode::Save );
     
     serialize(s);
     cia1.serialize(s);
     cia2.serialize(s);
     vicII->serialize(s);
-    sidManager.searializeActiveSids( s, runAhead.frames > 1 );
+    sidManager.searializeActiveSids( s, !fromHistory && (runAhead.frames > 1) );
     tape.serialize(s, true);
-    iecBus.serializeLight(s);
+    fromHistory ? iecBus.serialize(s) : iecBus.serializeLight(s);
     input.serialize(s);
     expansionPort->serialize( s );
 
     sysTimer.serialize(s);
 }
 
-auto System::unserializeLight() -> void {   
-      
-    auto& s = runAhead.serializer;
-    
+auto System::unserializeLight(MemState<uint32_t, uint8_t, 2>& memState, bool fromHistory) -> void {
+    auto& s = memState.serializer;
+    expansionPort->memChange = &memState.trackers[0];
+    if (expansionPort->expander)
+        expansionPort->expander->memChange = &memState.trackers[1];
+
     s.setMode( Emulator::Serializer::Mode::Load );
     uint8_t _mode = mode;
     
@@ -216,9 +221,9 @@ auto System::unserializeLight() -> void {
     cia1.serialize(s);
     cia2.serialize(s);
     vicII->serialize(s);
-    sidManager.searializeActiveSids( s, runAhead.frames > 1 );
+    sidManager.searializeActiveSids( s, !fromHistory && (runAhead.frames > 1) );
     tape.serialize(s, true);
-    iecBus.serializeLight(s);
+    fromHistory ? iecBus.serialize(s) : iecBus.serializeLight(s);
     input.serialize(s);
     expansionPort->serialize( s );
 

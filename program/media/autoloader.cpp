@@ -78,7 +78,7 @@ auto Autoloader::postProcessing() -> void {
             if (group->isTape()) return 3;
             if (group->isHardDisk()) return 4;
             return 5;
-            };
+        };
 
         return getPrio(lhs) < getPrio(rhs);
     });	

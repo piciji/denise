@@ -131,6 +131,9 @@ struct Interface : Emulator::Interface  {
     auto buildDisk(const std::string& name, std::vector<Item>& files) -> Data;
     auto buildHardDisk(const std::string& name, std::vector<Item>& files) -> Data;
 
+    auto configRewind(unsigned steps, unsigned maxSizeInMb) -> void;
+    auto setRewind(bool state) -> void;
+
 private:
     auto prepareDevices() -> void;
     auto prepareMedia() -> void;

@@ -189,7 +189,7 @@
 
 namespace LIBC64 {
 
-auto Tape::updateCounter() -> void {
+auto Tape::updateCounter(bool userRequest) -> void {
 
     unsigned oldCounter = counter;
     counter = ( 1000 - counterOffset + calculateCounter() ) % 1000;
@@ -197,14 +197,16 @@ auto Tape::updateCounter() -> void {
     if ( oldCounter == counter )
         return;
     
-    updateDeviceState();
+    updateDeviceState(userRequest);
 }
 
 auto Tape::resetCounter() -> void {
 	
 	counterOffset = calculateCounter() % 1000;
+
+    counter = ( 1000 - counterOffset + calculateCounter() ) % 1000;
 	
-	updateCounter();
+    updateDeviceState(true);
 }
 
 auto Tape::calculateCounter() -> unsigned {

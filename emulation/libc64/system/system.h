@@ -18,6 +18,8 @@
 #include "gluelogic.h"
 #include "sidManager.h"
 #include "../traps/traps.h"
+#include "../../tools/memchangetracker.h"
+#include "../../tools/history.h"
 
 namespace Emulator {
     struct PowerSupply;
@@ -142,7 +144,8 @@ struct System {
 	Callback countDownPowerSupply;
 	
 	Emulator::Crop<uint8_t>* crop;
-    unsigned serializationSize; 
+    unsigned serializationSize;
+    unsigned serializationSizeLight;
     uint8_t requestedSids;
     
     uint8_t mode; //bit 4: exrom, bit 3: game, bit 2: charen, bit 1: hiram, bit 0: loram
@@ -178,9 +181,11 @@ struct System {
         bool performance = false;
         bool preventJit = true;
 		bool active = false;
-        Emulator::MemSerializer serializer;
+        MemState<uint32_t, uint8_t, 2> memState;
     } runAhead;
-    
+
+    History<uint32_t, uint8_t, 2> history;
+
     struct {
         unsigned idleFrames = 0;
         bool idle = false;
@@ -241,8 +246,8 @@ struct System {
     
     auto calcSerializationSize() -> void;
     auto serialize(unsigned& size) -> uint8_t*;
-    auto serializeLight() -> void;
-    auto unserializeLight() -> void;
+    auto serializeLight(MemState<uint32_t, uint8_t, 2>& memState, bool fromHistory = false) -> void;
+    auto unserializeLight(MemState<uint32_t, uint8_t, 2>& memState, bool fromHistory = false) -> void;
     auto checkSerialization(uint8_t* data, unsigned size) -> bool;
     auto unserialize(uint8_t* data, unsigned size) -> bool;
     auto serializeAll(Emulator::Serializer& s) -> void;

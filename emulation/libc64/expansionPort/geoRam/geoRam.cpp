@@ -22,8 +22,8 @@ auto GeoRam::isBootable( ) -> bool {
 auto GeoRam::writeIo1( uint16_t addr, uint8_t value ) -> void {
     unsigned _addr = (blockOf16k << 14) + (page << 8) + (addr & 0xff);
 
-    if (memChangeTracker.enabled())
-        memChangeTracker.remember(_addr, data);
+    if (memChange)
+        memChange->remember(_addr);
 
 	data[_addr] = value;
 	dirty = true;
@@ -126,6 +126,8 @@ auto GeoRam::reset(bool softReset) -> void {
 	page = 0;
 	
 	dirty = false;
+
+    memChange = nullptr;
 }
 
 auto GeoRam::write() -> void {
@@ -152,23 +154,24 @@ auto GeoRam::createImage(unsigned& imageSize, uint8_t id) -> uint8_t* {
 
 auto GeoRam::serialize(Emulator::Serializer& s) -> void {
     unsigned _size = size;
-    bool light = s.lightUsage();
+    bool memUsage = s.memUsage();
 
     s.integer(_size);
     if (s.mode() == Emulator::Serializer::Mode::Load) {
-        if (light)
-            memChangeTracker.applyAndDisable(data);
-        else {
+        if (memUsage && memChange) {
+            memChange->apply();
+            memChange = nullptr;
+        } else {
             prepareRam(_size >> 10); // when size mismatches, recreate
             if (!data)
                 data = new uint8_t[_size];
         }
     } else {
-        if (light)
-            memChangeTracker.enable();
+        if (memUsage && memChange)
+            memChange->reset(data);
     }
 
-    if (!light)
+    if (!memUsage)
 		s.array(data, size);
 
 	s.integer( blockOf16k );
@@ -177,6 +180,10 @@ auto GeoRam::serialize(Emulator::Serializer& s) -> void {
 	s.integer( writeProtect );
 	
 	ExpansionPort::serialize( s );
+}
+
+auto GeoRam::getSizeNotConsideredForMemorySerialization() -> unsigned {
+    return size;
 }
 
 auto GeoRam::setWriteProtect(bool state) -> void {

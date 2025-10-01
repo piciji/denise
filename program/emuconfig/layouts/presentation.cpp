@@ -535,6 +535,20 @@ VideoMotionLayout::VideoMotionLayout() {
     append(strobe, {~0u, 0u});
 }
 
+VideoRewindLayout::VideoRewindLayout() :
+framesPerStep(""),
+bufferSize("MB") {
+    append(enableRewind, {0u, 0u}, 20);
+    append(framesPerStep, {~0u, 0u}, 20);
+    append(bufferSize, {~0u, 0u});
+
+    framesPerStep.slider.setLength(60);
+    framesPerStep.updateValueWidth("99");
+    bufferSize.slider.setLength(50);
+    bufferSize.updateValueWidth("999 MB");
+    setPadding(10);
+}
+
 PresentationLayout::PresentationLayout(TabWindow* tabWindow) :
 layBase(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)),
 layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
@@ -557,6 +571,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     backImage.loadPng((uint8_t*)Icons::back, sizeof(Icons::back));
     screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
     hdrImage.loadPng((uint8_t*)Icons::hdr, sizeof(Icons::hdr));
+    rewindImage.loadPng((uint8_t*)Icons::rewind, sizeof(Icons::rewind) );
 
     layScreenText.options.font.addFont.setImage(&addImage);
     layScreenText.options.font.removeFont.setImage(&delImage);
@@ -575,6 +590,9 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     tviMotion.setUserData((uintptr_t)13);
     tviMotion.setImage(hdrImage);
 
+    tviRewind.setUserData((uintptr_t)14);
+    tviRewind.setImage(rewindImage);
+
     tviShader.setUserData( (uintptr_t)2 );
     tviShader.setImage(imgFolderClosed);
     tviShader.setImageExpanded(imgFolderOpen);
@@ -587,6 +605,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     moduleTree.append(tviScreenText);
     moduleTree.append(tviScreenShot);
     moduleTree.append(tviMotion);
+    moduleTree.append(tviRewind);
     tviBase.setSelected();
     if (videoDriver->shaderSupport())
         moduleTree.append(tviShader);
@@ -595,6 +614,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     moduleSwitch.setLayout(11, layScreenText, {~0u, ~0u});
     moduleSwitch.setLayout(12, layScreenShot, { ~0u, ~0u });
     moduleSwitch.setLayout(13, layMotion, { ~0u, ~0u });
+    moduleSwitch.setLayout(14, layRewind, { ~0u, ~0u });
     moduleSwitch.setLayout(2, layShader, {~0u, ~0u});
     moduleSwitch.setLayout(21, layPass, {~0u, ~0u});
     moduleSwitch.setLayout(3, layParam, {~0u, ~0u});
@@ -1733,6 +1753,30 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         updateBfiVisibilities();
     };
 
+    layRewind.enableRewind.onToggle = [this](bool checked) {
+        _settings->set<bool>("rewind_enable", checked);
+        emuThread->lock();
+        program->setRewind(emulator);
+        emuThread->unlock();
+    };
+
+    layRewind.framesPerStep.slider.onChange = [this](unsigned position) {
+        _settings->set<unsigned>("rewind_step", position + 1);
+        layRewind.framesPerStep.setValue( std::to_string(position + 1) );
+        emuThread->lock();
+        program->setRewind(emulator);
+        emuThread->unlock();
+    };
+
+    layRewind.bufferSize.slider.onChange = [this](unsigned position) {
+        unsigned _size = (position + 1) * 10;
+        _settings->set<unsigned>("rewind_buffer", _size);
+        layRewind.bufferSize.setValue( std::to_string(_size) );
+        emuThread->lock();
+        program->setRewind(emulator);
+        emuThread->unlock();
+    };
+
     fillFontTypeList();
     checkHDR();
 
@@ -2466,12 +2510,20 @@ auto PresentationLayout::translate() -> void {
     layMotion.strobe.subFrame.subFrameShader.setTooltip( trans->getA("Shader Sub-Frames tooltip"));
     layMotion.strobe.subFrame.learnMore.setText( trans->getA("learn more") );
 
+    layRewind.setText(trans->getA("Rewind"));
+    layRewind.enableRewind.setText(trans->getA("Enable"));
+    layRewind.framesPerStep.name.setText(trans->getA("Frames Per Step", true));
+    layRewind.bufferSize.name.setText(trans->getA("Buffer Size", true));
+
     tviBase.setText( trans->getA("overview") );
     tviScreenText.setText( trans->getA("screen text") );
     tviScreenShot.setText(trans->getA("screenshot"));
     tviShader.setText( trans->getA("Shader") );
     tviParams.setText( trans->getA("Parameter") );
     tviMotion.setText(trans->getA("HDR / BFI"));
+    tviRewind.setText(trans->getA("Rewind"));
+
+    SliderLayout::scale({&layRewind.framesPerStep, &layRewind.bufferSize}, "999 MB");
 
     layNav.setText( trans->getA("selection") );
     layPass.setText( trans->getA("Pass") );
@@ -2686,6 +2738,16 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     layMotion.strobe.bfi.darkCombo.setSelection(darkFrames);
     layMotion.strobe.subFrame.subFrameShader.setChecked(strobeShader);
 
+    bool rewindEnable = _settings->get<bool>("rewind_enable", false);
+    unsigned rewindStep = _settings->get<unsigned>("rewind_step", 1, {1, 60});
+    unsigned rewindBuffer = _settings->get<unsigned>("rewind_buffer", 100, {10, 500});
+
+    layRewind.enableRewind.setChecked(rewindEnable);
+    layRewind.framesPerStep.slider.setPosition(rewindStep - 1);
+    layRewind.framesPerStep.setValue( std::to_string(rewindStep) );
+    layRewind.bufferSize.slider.setPosition(rewindBuffer / 10 - 1);
+    layRewind.bufferSize.setValue( std::to_string(rewindBuffer) );
+
     updateBfiVisibilities();
 }
 
@@ -2818,7 +2880,7 @@ auto PresentationLayout::unloadShader(bool reloadDriver) -> void {
 }
 
 auto PresentationLayout::isSecondaryViewSelected() -> bool {
-    return tviScreenText.selected() || tviScreenShot.selected() || tviMotion.selected();
+    return tviScreenText.selected() || tviScreenShot.selected() || tviMotion.selected() || tviRewind.selected();
 }
 
 auto PresentationLayout::addShaderUI() -> void {

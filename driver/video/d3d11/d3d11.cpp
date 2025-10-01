@@ -100,6 +100,7 @@ namespace DRIVER {
     unsigned progressDegree;
     bool progressVisible;
     bool threadAlive;
+    int frameDirection;
 
     ShaderPreset* preset;
     std::atomic<int> shaderId = 0;
@@ -150,7 +151,6 @@ namespace DRIVER {
         float exclusiveFullscreenRate = 0.0;
         bool hintExclusiveFullscreen = false;
         Rotation rotation = ROT_0;
-        int direction = 1; // reserved for rewind support
         bool useShaderCache = false;
         bool hdrEnable = false;
         unsigned bfiFrames = 0;
@@ -185,6 +185,7 @@ namespace DRIVER {
         lastTime = 0;
         subFrame = 1;
         totalFrames = 1;
+        frameDirection = 1;
 
         blendEnable = nullptr;
         blendDisable = nullptr;
@@ -194,7 +195,6 @@ namespace DRIVER {
         settings.hintExclusiveFullscreen = false;
         settings.exclusiveFullscreen = false;
         settings.rotation = ROT_0;
-        settings.direction = 1;
         settings.useShaderCache = false;
         options = 0;
         progressDegree = 0;
@@ -877,7 +877,7 @@ namespace DRIVER {
            {(uintptr_t)(&programs[0].renderTarget.view), &programs[0].renderTarget.size, sizeof(D3DProgram), MAX_SHADERS},
            {(uintptr_t)(&programs[0].feedbackTarget.view), &programs[0].feedbackTarget.size, sizeof(D3DProgram), MAX_SHADERS},
            {(uintptr_t)(&luts[0].view), &luts[0].size, sizeof(D3DTexture), MAX_TEXTURES},
-        }, {nullptr, nullptr, &frame.size, nullptr, &settings.direction, &deltaTime, &settings.vrrSpeed, &settings.rotation,
+        }, {nullptr, nullptr, &frame.size, nullptr, &frameDirection, &deltaTime, &settings.vrrSpeed, &settings.rotation,
             &viewport.ratio, &viewport.ratioRot, &totalFrames, &subFrame, &historySize} };
 
         shaderPasses = 0;
@@ -1225,6 +1225,7 @@ namespace DRIVER {
             unsigned curTime = Chronos::getTimestampInMicrosecondsPrecise();
             deltaTime = curTime - lastTime;            
             lastTime = curTime;
+            frameDirection = (options & OPT_Rewind) ? -1 : 1;
 
             if (!bfiLock) {
                 subFrame = 1;

@@ -197,9 +197,11 @@
     <ClInclude Include="..\emulation\tools\flash040.h" />
     <ClInclude Include="..\emulation\tools\fpaq0.h" />
     <ClInclude Include="..\emulation\tools\gcr.h" />
+    <ClInclude Include="..\emulation\tools\history.h" />
     <ClInclude Include="..\emulation\tools\listing.h" />
     <ClInclude Include="..\emulation\tools\m93c86.h" />
     <ClInclude Include="..\emulation\tools\macros.h" />
+    <ClInclude Include="..\emulation\tools\memchangetracker.h" />
     <ClInclude Include="..\emulation\tools\mx29lv640eb.h" />
     <ClInclude Include="..\emulation\tools\petcii.h" />
     <ClInclude Include="..\emulation\tools\pia.h" />

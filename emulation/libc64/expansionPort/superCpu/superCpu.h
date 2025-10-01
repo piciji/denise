@@ -4,7 +4,6 @@
 #include "../expansionPort.h"
 #include "../../../wdc/65816/w65816.h"
 //#include "../../../wdc65816alt/my65816.h"
-#include "../../../tools/memchangetracker.h"
 #include "../../../interface.h"
 
 namespace CIA {
@@ -28,8 +27,6 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     CIA::M6526& cia2;
     SidManager& sidManager;
     Traps& traps;
-
-    MemChangeTracker<uint32_t, uint8_t> dramTracker;
 
     uint8_t* sram;
     uint8_t* dram;
@@ -164,6 +161,7 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto executeHostRam() -> bool;
 
     auto setExpander(ExpansionPort* expander) -> void;
+    auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 
     // SuperCPU can change HOST memory map onyl by GAME/EXROM.
     // 6510 runs only for a short time to set PPORT to a meaningfull setting.

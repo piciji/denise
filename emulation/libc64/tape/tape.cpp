@@ -18,9 +18,8 @@ namespace LIBC64 {
 Tape::Tape( System* system, Emulator::Interface::Media* media ) : system(system), sysTimer(system->sysTimer), structure(*this) {
 	this->media = media;
 
-	fetchData = new uint8_t[ TAPE_FETCH_SIZE ];
 	writeData = new uint8_t[ TAPE_WRITE_SIZE ];
-	    
+
     // events
     motorOff = [this, system]() {
         if (!enabled)
@@ -104,7 +103,7 @@ Tape::Tape( System* system, Emulator::Interface::Media* media ) : system(system)
             return;
         
 		setMode( nextMode );
-		updateDeviceState();
+		updateDeviceState(true);
 	};        
 
 	enabled = false;
@@ -115,7 +114,6 @@ Tape::Tape( System* system, Emulator::Interface::Media* media ) : system(system)
 }    
 
 Tape::~Tape() {
-    delete[] fetchData;
 	delete[] writeData;
 }
 
@@ -123,8 +121,8 @@ auto Tape::registerCallbacks() -> void {
     sysTimer.registerCallback( { {&motorOff, 1}, {&worker, 1}, {&delayMode, 1} } );
 }
 
-auto Tape::updateDeviceState() -> void {
-    if (system->processFrame())
+auto Tape::updateDeviceState(bool userRequest) -> void {
+    if (userRequest || system->processFrame())
         system->interface->updateDeviceState( media, mode == Mode::Record, counter, 0, !motorIn );
 }
 
@@ -259,9 +257,6 @@ auto Tape::setMode( unsigned mode ) -> void {
 			senseOut( true );
             directionForward = true;
 			writeClock = writeCounterClock = sysTimer.clock;
-			// a write changes the file pos, so we have to invalidate the read buffer
-			// because it's content is not aligned anymore
-			fetchPos = 0;
             if (system->driveSounds.useTape)
                 system->interface->mixDriveSound(media, DriveSound::TapeAnyButton);
 
@@ -276,7 +271,7 @@ auto Tape::setMode( unsigned mode ) -> void {
     }
         
 	this->mode = (Mode)mode;
-	updateCounter();
+	updateCounter(true);
     updateMotorSound(false);
 }
 
@@ -298,8 +293,6 @@ auto Tape::reset() -> void {
 	writeClock = writeCounterClock = sysTimer.clock;
 	cycles = 0;	
 	directionForward = lastDirectionForward = true;
-	fetchPos = 0;
-	fetchSize = 0;
 	motorIn = false;
 	curPos = 0x14;
 	mode = Mode::Stop;
@@ -354,7 +347,10 @@ auto Tape::unload() -> void {
     }
 	
 	this->rawSize = 0;
+    if (this->expanded)
+        delete[] this->rawData;
 	this->rawData = nullptr;
+    this->expanded = false;
 	loaded = false;
 	motorIn = false;
     writeQuestionState = 0;
@@ -409,12 +405,12 @@ auto Tape::selectListing( unsigned pos, uint8_t options ) -> void {
 
     curPos = 0x14;
     if (structure.setFile(pos - 1))  {
-        if (pos > 1) {
+        if (pos >= 1) {
+            cycles = 0;
+            counterOffset = 0;
             advanceCounterToPos( structure.getCurFile()->offset );
         }
     }
-
-    fetchPos = 0;
 
     if (options & 1) {
         if (!system->traps.testForComplexTapeLoader())
@@ -442,7 +438,7 @@ auto Tape::selectListing( unsigned pos, uint8_t options ) -> void {
     action.callbackId = 4;
     action.mode = KeyBuffer::Mode::WaitFor;
     action.buffer = {'R', 'E', 'A', 'D', 'Y', '.'};
-    action.delay = 800; // seconds
+    action.delay = 900; // seconds
     action.alternateBuffer.clear();
     action.blinkingCursor = true;
     action.callback = nullptr;
@@ -476,7 +472,6 @@ auto Tape::advanceCounterToPos(unsigned pos) -> void {
     bool _longGap;
     unsigned gaps;
     curPos = 0x14; // skip tape header
-    fetchPos = 0;
 
     while( true ) {
         gaps = fetchGap(_longGap);
@@ -487,9 +482,8 @@ auto Tape::advanceCounterToPos(unsigned pos) -> void {
             break;
     }
 
-    updateCounter();
+    updateCounter(true);
     curPos = pos;
-    fetchPos = 0;
     gapsRemaining = 0;
 }
 
@@ -505,8 +499,6 @@ auto Tape::setPosition( unsigned pos, bool find ) -> void {
 
         advanceCounterToPos(pos);
     }
-
-    fetchPos = 0;
 }
 
 }

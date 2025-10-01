@@ -375,6 +375,14 @@ struct VideoMotionLayout : GUIKIT::VerticalLayout {
     VideoMotionLayout();
 };
 
+struct VideoRewindLayout : GUIKIT::FramedVerticalLayout {
+    GUIKIT::CheckBox enableRewind;
+    SliderLayout framesPerStep;
+    SliderLayout bufferSize;
+
+    VideoRewindLayout();
+};
+
 struct DisplayFont {
     std::string file;
     std::string name;
@@ -397,6 +405,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     GUIKIT::TreeViewItem tviScreenText;
     GUIKIT::TreeViewItem tviScreenShot;
     GUIKIT::TreeViewItem tviMotion;
+    GUIKIT::TreeViewItem tviRewind;
 
     GUIKIT::TreeViewItem tviShader;
     std::vector<GUIKIT::TreeViewItem*> tviPasses;
@@ -409,6 +418,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     VideoScreenTextLayout layScreenText;
     VideoScreenShotLayout layScreenShot;
     VideoMotionLayout layMotion;
+    VideoRewindLayout layRewind;
 
     GUIKIT::Window codeWindow;
     GUIKIT::VerticalLayout codeLayout;
@@ -431,6 +441,7 @@ struct PresentationLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Image backImage;
     GUIKIT::Image screenshotImage;
     GUIKIT::Image hdrImage;
+    GUIKIT::Image rewindImage;
 
     unsigned selectedPassId;
     unsigned selectedParamId;

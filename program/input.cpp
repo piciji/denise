@@ -180,3 +180,13 @@ auto Program::setRunAhead(Emulator::Interface* emulator) -> void {
 
     emulator->runAheadPreventJit( settings->get<bool>( "runahead_prevent_jit", true ) );
 }
+
+auto Program::setRewind(Emulator::Interface* emulator) -> void {
+    auto settings = getSettings( emulator );
+
+    bool rewindEnable = settings->get<bool>("rewind_enable", false);
+    unsigned rewindStep = settings->get<unsigned>("rewind_step", 1, {1, 60});
+    unsigned rewindBuffer = settings->get<unsigned>("rewind_buffer", 100, {10, 500});
+
+    emulator->configRewind(rewindEnable ? rewindStep : 0, rewindBuffer);
+}

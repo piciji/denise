@@ -204,7 +204,7 @@ auto Gmod2::serializeStep2(Emulator::Serializer& s) -> void {
 
     eeprom.serialize(s );
 
-    if (!s.lightUsage()) {
+    if (!s.memUsage()) {
 
         if (flash.dirty)
             s.array(flashData, 512 * 1024);
@@ -214,6 +214,15 @@ auto Gmod2::serializeStep2(Emulator::Serializer& s) -> void {
     }
 
     ExpansionPort::serialize(s);
+}
+
+auto Gmod2::getSizeNotConsideredForMemorySerialization() -> unsigned {
+    unsigned _size = 0;
+    if (flash.dirty)
+        _size += 512 * 1024;
+    if (eeprom.dirty)
+        _size += 2 * 1024;
+    return _size;
 }
 
 auto Gmod2::reset(bool softReset) -> void {

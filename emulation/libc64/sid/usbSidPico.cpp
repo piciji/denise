@@ -18,8 +18,11 @@ USBSIDPico::USBSIDPico(System& system) : system(system), sysTimer(system.sysTime
         this->sysTimer.add( &flush, rasterRate, Emulator::SystemTimer::UpdateExisting );
     };
 
-    sysTimer.registerCallback( {&flush, 1} );
-#endif    
+#else
+    flush = [this]() {};
+#endif
+
+    sysTimer.registerCallback({ &flush, 1 });
 }
 
 auto USBSIDPico::open() -> int {
@@ -108,12 +111,11 @@ auto USBSIDPico::updateStereo() -> void {
 }
 
 auto USBSIDPico::serialize(Emulator::Serializer& s) -> void {
-#ifdef LIBUSB    
     s.integer(enabled);
     unsigned _buffSizeBefore = buffSize;
     s.integer(buffSize);
     s.integer(diffSize);
-
+#ifdef LIBUSB
     if (enabled && (s.mode() == Emulator::Serializer::Mode::Load) ) {
         int result = open();
         if (result == 2) { // reset

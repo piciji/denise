@@ -9,15 +9,14 @@ auto System::calcSerializationSize() -> void {
 
     unsigned signature = 0;
     char version[16] = {};
-    char reserved[256] = {};
 
     s.integer(signature);
     s.array(version);
-    s.array(reserved);
 
     serializeAll(s);
 
     serializationSize = s.size();
+    serializationSizeLight = serializationSize - agnus.getMemorySize();
 }
 
 auto System::serialize(unsigned& size) -> uint8_t* {
@@ -31,14 +30,12 @@ auto System::serialize(unsigned& size) -> uint8_t* {
 
     unsigned signature = 0x414d49; // always constant for each emulation core
     char version[16] = {};
-    char reserved[256] = {}; // reserved, e.g. state description
 
     auto str = Interface::Version;
     str.copy( version, str.size() );
 
     s.integer(signature);
     s.array(version);
-    s.array(reserved);
 
     serializeAll(s);
 
@@ -78,11 +75,9 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
 
     unsigned signature = 0;
     char version[16] = {};
-    char reserved[256] = {};
 
     s.integer(signature);
     s.array(version);
-    s.array(reserved);
 
     if(signature != 0x414d49)
         return false;
@@ -97,6 +92,7 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
     paula.informPowerLED(true);
     input.keyboard.informCapsLed();
 
+    history.reset();
     return true;
 }
 
@@ -117,6 +113,7 @@ auto System::serializeAll(Emulator::Serializer& s) -> void {
 
 auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( serializationSize );
+    s.integer( serializationSizeLight );
 
     s.integer( observer.stateChange );
     s.integer( observer.motor );
@@ -132,11 +129,11 @@ auto System::serialize(Emulator::Serializer& s) -> void {
 }
 
 // for runahead
-auto System::serializeLight() -> void {
+auto System::serializeLight(MemState<uint32_t, uint16_t, 3>& memState, bool fromHistory) -> void {
+    auto& s = memState.serializer;
+    agnus.memState = &memState;
 
-    auto& s = runAhead.serializer;
-
-    s.setData( serializationSize );
+    s.setData( serializationSizeLight );
     s.setMode( Emulator::Serializer::Mode::Save );
 
     serialize(s);
@@ -145,16 +142,22 @@ auto System::serializeLight() -> void {
     cia1.serialize(s);
     cia2.serialize(s);
     denise.serialize(s);
-    paula.serialize(s, runAhead.frames > 1);
+    paula.serialize(s, !fromHistory && (runAhead.frames > 1));
     input.serialize(s);
+    if (fromHistory)
+        rtc.serialize( s );
 
     for(auto& drive : diskDrives)
         drive.serialize(s, true);
+
+    memState.trackers[TRACKER_CHIP].reset(agnus.chipMem);
+    memState.trackers[TRACKER_SLOW].reset(agnus.slowMem);
+    memState.trackers[TRACKER_FAST].reset(agnus.fastMem);
 }
 
-auto System::unserializeLight() -> void {
-
-    auto& s = runAhead.serializer;
+auto System::unserializeLight(MemState<uint32_t, uint16_t, 3>& memState, bool fromHistory) -> void {
+    auto& s = memState.serializer;
+    agnus.memState = nullptr;
 
     s.setMode( Emulator::Serializer::Mode::Load );
 
@@ -164,11 +167,17 @@ auto System::unserializeLight() -> void {
     cia1.serialize(s);
     cia2.serialize(s);
     denise.serialize(s);
-    paula.serialize(s, runAhead.frames > 1);
+    paula.serialize(s, !fromHistory && (runAhead.frames > 1));
     input.serialize(s);
+    if (fromHistory)
+        rtc.serialize( s );
 
     for(auto& drive : diskDrives)
         drive.serialize(s, true);
+
+    memState.trackers[TRACKER_CHIP].apply();
+    memState.trackers[TRACKER_SLOW].apply();
+    memState.trackers[TRACKER_FAST].apply();
 }
 
 }

@@ -612,6 +612,10 @@ struct Interface {
     virtual auto enableTapeSounds(bool state) -> void {}
     virtual auto setTapeLoadingNoise(unsigned volume) -> void {}
 
+    // rewind
+    virtual auto configRewind(unsigned steps, unsigned maxSizeInMb) -> void {}
+    virtual auto setRewind(bool state) -> void {}
+
     virtual auto autoStartedByMediaGroup() -> MediaGroup* { return nullptr; }
     
     auto getStatsForSelectedRegion() -> Stats& {  

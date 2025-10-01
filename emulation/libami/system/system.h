@@ -13,6 +13,8 @@
 #include "../drive/hardDrive.h"
 #include "rtc.h"
 #include "../../tools/crop.h"
+#include "../../tools/history.h"
+#include "../../tools/serializer.h"
 
 //#define LOG_CPU_STATE
 
@@ -42,6 +44,7 @@ struct System {
 
     Cia<MOS_8520> cia1;
     Cia<MOS_8520> cia2;
+    History<uint32_t, uint16_t, 3> history;
 
     enum Dongle { DongleNone = 0, DongleRoboCop3, DongleBat2, DongleCricketCaptain, DongleLeaderBoard, DongleRugbyCoach, DongleStrikerManager };
     struct {
@@ -62,7 +65,8 @@ struct System {
         unsigned pos = 0;
         bool performance = false;
         bool preventJit = true;
-        Emulator::MemSerializer serializer;
+        bool active = false;
+        MemState<uint32_t, uint16_t, 3> memState;
     } runAhead;
 
     struct {
@@ -76,6 +80,7 @@ struct System {
     bool leaveEmulation = false;
     bool powerOn = false;
     unsigned serializationSize;
+    unsigned serializationSizeLight;
     Emulator::Serializer serializer;
 
     auto setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool allowPatching) -> void;
@@ -103,8 +108,8 @@ struct System {
 
     auto calcSerializationSize() -> void;
     auto serialize(unsigned& size) -> uint8_t*;
-    auto serializeLight() -> void;
-    auto unserializeLight() -> void;
+    auto serializeLight(MemState<uint32_t, uint16_t, 3>& memState, bool fromHistory = false) -> void;
+    auto unserializeLight(MemState<uint32_t, uint16_t, 3>& memState, bool fromHistory = false) -> void;
     auto checkSerialization(uint8_t* data, unsigned size) -> bool;
     auto unserialize(uint8_t* data, unsigned size) -> bool;
     auto serializeAll(Emulator::Serializer& s) -> void;
@@ -127,7 +132,7 @@ struct System {
     auto informAboutStateChange() -> void;
 
     auto isDisplayFrame() -> const bool { return !runAhead.pos; }
-    auto isProcessFrame() -> const bool { return !allowRunAhead() || (runAhead.frames == runAhead.pos); }
+    auto isProcessFrame() -> const bool { return !runAhead.active || (runAhead.frames == runAhead.pos); }
 
     template<bool CIA2> auto dongleCiaWrite(Cia<MOS_8520>::Lines* lines) -> void;
     template<bool CIA2> auto dongleCiaRead(Cia<MOS_8520>::Lines* lines, uint8_t& val) -> void;

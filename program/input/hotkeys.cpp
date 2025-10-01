@@ -46,6 +46,7 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
     hotkeys.push_back( {Hotkey::Id::CropWindow, "crop window"} );
     hotkeys.push_back({ Hotkey::Id::TakeScreenShot, "take screenshot" });
+    hotkeys.push_back({ Hotkey::Id::Rewind, "rewind" });
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "swapper up"} );
@@ -859,6 +860,71 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             auto emuView = EmuConfigView::TabWindow::getView( activeEmulator );
             if (emuView && emuView->inputLayout)
                 emuView->inputLayout->updatedAutofireButtonHints();
+
+        } break;
+
+        case Hotkey::Rewind: {
+            static GUIKIT::Timer* rewindTimer = nullptr;
+            if (!rewindTimer) {
+                rewindTimer = new GUIKIT::Timer();
+                rewindTimer->setInterval(20);
+            }
+
+            rewindTimer->onFinished = [trigger]() {
+                auto _t = trigger;
+                bool pressed;
+
+                do {
+                    bool ored = !_t->anded || (_t->hids.size() == 1);
+                    pressed = !ored;
+
+                    if (ored) {
+                        for (auto& hid : _t->hids) {
+                            if (hid.input->value) {
+                                pressed = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        for (auto& hid : _t->hids) {
+                            if (!hid.input->value) {
+                                pressed = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (pressed)
+                        break;
+
+                    _t = _t->alternate;
+                } while (_t);
+
+                rewindTimer->setEnabled(pressed);
+                if (!pressed) {
+                    bool locked = emuThread->lock();
+                    audioManager->setRewind(false);
+                    activeEmulator->setRewind(false);
+                    if (rewindTimer->data())
+                        audioManager->volumeAdjust = rewindTimer->dataF();
+
+                    if (locked)
+                        emuThread->unlock();
+                }
+            };
+
+            if (rewindTimer->enabled() || !settings->get<bool>("rewind_enable", false))
+                return;
+
+            emuThread->lock();
+            if (settings->get<unsigned>("rewind_step", 1, {1, 60}) > 1) {
+                rewindTimer->setDataF(audioManager->volumeAdjust);
+                rewindTimer->setData(1u);
+                audioManager->volumeAdjust = 0.0;
+            } else
+                rewindTimer->setData(0u);
+            rewindTimer->setEnabled();
+            audioManager->setRewind(true);
+            activeEmulator->setRewind(true);
 
         } break;
     }

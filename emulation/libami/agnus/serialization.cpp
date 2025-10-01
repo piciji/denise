@@ -174,32 +174,6 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
     } else {
         s.array(&mapper[0], 8);
         s.array(&mapper[0xf8], 4);
-
-        if (s.mode() == Emulator::Serializer::Mode::Load) {
-            MemChange* ptr;
-            if (chipMemChangePos) {
-                for (int i = chipMemChangePos - 1; i >= 0; i--) {
-                    ptr = &chipMemChange[i];
-                    *(uint16_t*)(chipMem + ptr->address) = ptr->value;
-                }
-            }
-            if (slowMemChangePos) {
-                for (int i = slowMemChangePos - 1; i >= 0; i--) {
-                    ptr = &slowMemChange[i];
-                    *(uint16_t*)(slowMem + ptr->address) = ptr->value;
-                }
-            }
-            if (fastMemChangePos) {
-                for (int i = fastMemChangePos - 1; i >= 0; i--) {
-                    ptr = &fastMemChange[i];
-                    *(uint16_t*)(fastMem + ptr->address) = ptr->value;
-                }
-            }
-            trackMemChanges = false;
-        } else {
-            chipMemChangePos = slowMemChangePos = fastMemChangePos = 0;
-            trackMemChanges = true;
-        }
     }
 
     blitter.serialize(s);

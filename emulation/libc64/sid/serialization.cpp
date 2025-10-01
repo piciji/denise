@@ -121,7 +121,9 @@ auto Sid::serialize(Emulator::Serializer& s, bool light) -> void {
         s.integer( externalFilter.Vhp );
         s.integer( externalFilter.w0lp_1_s7 );
         s.integer( externalFilter.w0hp_1_s17 );
-        
+    }
+
+    if (!s.memUsage()) {
         if (s.mode() == Emulator::Serializer::Mode::Load) {
             volumeCorrection(sidManager.useVolumeCorrection);
 

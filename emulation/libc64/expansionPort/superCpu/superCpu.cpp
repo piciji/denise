@@ -126,6 +126,8 @@ auto SuperCpu::reset(bool softReset) -> void {
     float nscycleDot = 1'000'000'000.0 / ((float)frequency * 8.0);
     float nsCycleIoLong = 7.0 * nscycleDot - 86.0;
     cycleIoLong = (unsigned)((float)SCPU_FREQ * (nsCycleIoLong / nsCycle));
+
+    memChange = nullptr;
 }
 
 auto SuperCpu::setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void {
@@ -519,8 +521,8 @@ inline auto SuperCpu::writeByte(uint32_t addr, uint8_t value) -> void {
             return stepCycle();
 
         clockStretchDramWrite(addr);
-        if (dramTracker.enabled())
-            dramTracker.remember(addr & dramMask, dram);
+        if (memChange)
+            memChange->remember(addr & dramMask);
         dram[addr & dramMask] = value;
     } else
         stepCycle();
@@ -1298,14 +1300,15 @@ auto SuperCpu::setExpander(ExpansionPort* expander) -> void {
 }
 
 auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
-    bool light = s.lightUsage();
+    bool memUsage = s.memUsage();
     unsigned _dramSize = dramSize;
     s.integer(dramSize);
 
     if ( s.mode() == Emulator::Serializer::Mode::Load ) {
-        if (light)
-            dramTracker.applyAndDisable(dram);
-        else {
+        if (memUsage && memChange) {
+            memChange->apply();
+            memChange = nullptr;
+        } else {
             if (!dram || (_dramSize != dramSize)) {
                 if (dram) {
                     delete[] dram;
@@ -1315,8 +1318,8 @@ auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
             }
         }
     } else {
-        if (light)
-            dramTracker.enable();
+        if (memUsage && memChange)
+            memChange->reset(dram);
     }
 
     s.array( sram, 128 * 1024 );
@@ -1350,7 +1353,7 @@ auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
     s.integer(writeBuffer.colram);
     s.integer(randomizer.xorShift32);
 
-    if (!light) {
+    if (!memUsage) {
         s.array(dram, dramSize - (((dramSize >> 20) == 16) ? (512 * 1024) : 0));
         updateFastmode(false);
     }
@@ -1373,6 +1376,14 @@ auto SuperCpu::serialize(Emulator::Serializer& s) -> void {
 
     if (expander)
         expander->serialize(s);
+}
+
+auto SuperCpu::getSizeNotConsideredForMemorySerialization() -> unsigned {
+    unsigned _size = dramSize - (((dramSize >> 20) == 16) ? (512 * 1024) : 0);
+
+    if (expander)
+        return expander->getSizeNotConsideredForMemorySerialization() + _size;
+    return _size;
 }
 
 }

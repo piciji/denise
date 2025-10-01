@@ -10,7 +10,6 @@
 #define TAPE_ZERO_GAP 20000
 #define TAPE_MAX_EVENT_DELAY 20000
 
-#define TAPE_FETCH_SIZE 50 * 1024
 #define TAPE_WRITE_SIZE 10 * 1024
 
 namespace Emulator {
@@ -59,7 +58,7 @@ struct Tape {
     auto selectListing( unsigned pos, uint8_t options = 0 ) -> void;
 	auto setWobble(bool state) -> void;
 	auto hasWobble() -> bool { return wobble; }
-    auto updateDeviceState() -> void;
+    auto updateDeviceState(bool userRequest = false) -> void;
     auto getListing() -> std::vector<Emulator::Interface::Listing>&;
     auto setPosition( unsigned pos, bool find ) -> void;
     auto setMotorSound() -> void;
@@ -73,10 +72,10 @@ protected:
 
     uint8_t* rawData = nullptr;
     unsigned rawSize;
-    
-	uint8_t* fetchData;
+
 	uint8_t* writeData;
-	
+
+    bool expanded = false;
 	bool enabled;
 	bool autoStarted;
 	
@@ -101,8 +100,6 @@ protected:
     bool directionForward;
 	bool lastDirectionForward;
     uint8_t version;
-    unsigned fetchPos; // position in fetched chunk
-    unsigned fetchSize; // size of fetched chunk
     unsigned curPos; // overall position in tap file
 	bool wobble = false;
     
@@ -110,7 +107,7 @@ protected:
 	
     // counter
     auto calculateCounter() -> unsigned;    
-    auto updateCounter() -> void;
+    auto updateCounter(bool userRequest = false) -> void;
     auto resetCounter() -> void;
     auto speedAdjustment() -> double;
     auto calculateCounterForNoTape() -> unsigned;

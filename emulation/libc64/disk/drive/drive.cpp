@@ -1280,6 +1280,8 @@ auto Drive::attach( uint8_t* data, unsigned size ) -> void {
         return;
 
     bool changed = changeModelByType();
+    if (changed)
+        system->calcSerializationSize();
 
     if (iecBus.powerOn && system->driveSounds.useFloppy) {
         system->interface->mixDriveSound( media, DriveSound::FloppyInsert, operation & DRIVE_MODE_158x );

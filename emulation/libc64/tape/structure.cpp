@@ -17,14 +17,10 @@
 namespace LIBC64 {
 
 TapeStructure::TapeStructure(Tape& tape) : tape(tape) {
-    fetchData = new uint8_t[ TAPE_FETCH_SIZE ];
-    fetchPos = 0;
-    fetchSize = 0;
     curPos = 0;
 }
 
 TapeStructure::~TapeStructure() {
-    delete[] fetchData;
     clearBuffer();
 }
 
@@ -674,22 +670,7 @@ auto TapeStructure::readForward( uint8_t& byte ) -> bool {
 
         return true;
     }
-
-    if (fetchPos == 0) {
-
-        fetchSize = tape.read( fetchData, TAPE_FETCH_SIZE, curPos );
-
-        if (fetchSize == 0)
-            return false;
-    }
-
-    byte = fetchData[fetchPos++];
-    curPos++;
-
-    if (fetchPos == fetchSize)
-        fetchPos = 0;
-
-    return true;
+    return false;
 }
 
 auto TapeStructure::setData(uint8_t* data, unsigned size) -> void {
@@ -702,9 +683,8 @@ auto TapeStructure::setData(uint8_t* data, unsigned size) -> void {
         version = 1;
 }
 
-auto TapeStructure::setPosition( unsigned pos ) -> void {
+inline auto TapeStructure::setPosition( unsigned pos ) -> void {
     curPos = pos;
-    fetchPos = 0;
 }
 
 auto TapeStructure::readCurFile() -> FileEntry* {

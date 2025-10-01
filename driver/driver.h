@@ -54,7 +54,7 @@ struct ScreenTextDescription {
 };
 
 enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4, OPT_TakeScreenshot = 8,
-                OPT_DisallowFilter = 16, OPT_Pause = 32 };
+                OPT_DisallowFilter = 0x10, OPT_Pause = 0x20, OPT_Rewind = 0x40 };
 enum Rotation { ROT_0, ROT_90, ROT_180, ROT_270 };
 
 struct Video {

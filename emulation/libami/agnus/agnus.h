@@ -7,6 +7,7 @@
 #include "../../tools/powersupply.h"
 #include "../expansionPort/fastMem.h"
 #include "../expansionPort/hdController.h"
+#include "../../tools/history.h"
 
 /**
  * todos:
@@ -25,6 +26,10 @@ struct Denise;
 struct Paula;
 struct Input;
 struct RTC;
+
+#define TRACKER_CHIP 0
+#define TRACKER_SLOW 1
+#define TRACKER_FAST 2
 
 struct Agnus {
 
@@ -158,22 +163,7 @@ struct Agnus {
 
     uint32_t dskpt;
 
-    // need this for runAhead
-    struct MemChange {
-        uint32_t address;
-        uint16_t value;
-    };
-
-    MemChange* chipMemChange;
-    MemChange* slowMemChange;
-    MemChange* fastMemChange;
-    unsigned chipMemChangeSize;
-    unsigned slowMemChangeSize;
-    unsigned fastMemChangeSize;
-    unsigned chipMemChangePos;
-    unsigned slowMemChangePos;
-    unsigned fastMemChangePos;
-    bool trackMemChanges;
+    MemState<uint32_t, uint16_t, 3>* memState;
 
     uint8_t ddfStart;
     uint8_t ddfStop;
@@ -399,11 +389,6 @@ struct Agnus {
 
     auto serialize(Emulator::Serializer& s, bool light = false) -> void;
 
-    auto rememberChipMem(uint32_t adr) -> void;
-    auto rememberSlowMem(uint32_t adr) -> void;
-    auto rememberFastMem(uint32_t adr) -> void;
-    auto increaseTrackMemStorage(MemChange*& memChange, unsigned& size) -> void;
-
     template<uint8_t Channel> auto updateEvent(int delay) -> void;
     template<uint8_t Channel> auto updateEventAbs(int64_t absClock) -> void;
     template<uint8_t Channel> auto setEventInactive() -> void {
@@ -461,6 +446,13 @@ struct Agnus {
     auto csyncPolTrue(bool state) -> bool;
 
     auto blanken() -> void;
+
+    auto getMemorySize() -> unsigned {
+        unsigned _size = chipMemMask + 1 + slowMemSize + fastMemSize;
+        if (model == Agnus::OCS_A1000)
+            _size += 256 * 1024; // WOM
+        return _size;
+    }
 
     inline auto updateDdfEnableCache() -> void;
 };

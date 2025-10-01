@@ -2,7 +2,6 @@
 #pragma once
 
 #include "../expansionPort.h"
-#include "../../../tools/memchangetracker.h"
 
 namespace LIBC64 {
     
@@ -25,8 +24,6 @@ struct GeoRam : ExpansionPort {
 	bool dirty = false;
 	bool writeProtect;
 
-    MemChangeTracker<uint32_t, uint8_t> memChangeTracker;
-	
 	auto writeIo1( uint16_t addr, uint8_t value ) -> void;
 	auto writeIo2( uint16_t addr, uint8_t value ) -> void;
 	auto readIo1( uint16_t addr ) -> uint8_t;
@@ -50,6 +47,7 @@ struct GeoRam : ExpansionPort {
 
 	auto setWriteProtect(bool state) -> void;
 	auto isWriteProtected() -> bool;
+    auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 
 };
 

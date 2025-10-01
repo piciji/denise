@@ -233,6 +233,8 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
 
     setRunAhead( emulator );
 
+    setRewind( emulator );
+
     if (dynamic_cast<LIBC64::Interface*>( emulator )) {
         setMemoryPattern( emulator );
         initExpansionRom(emulator, "SuperCPU 1", "scpu64");
@@ -475,6 +477,9 @@ auto Program::loop() -> void {
 			}
 		} else
 			activeEmulator->run();
+
+        if (audioManager->rewind)
+            audioManager->reverseAndFlushBuffer();
 	} else {
         GUIKIT::System::sleep( 10 );
 		audioDriver->clear();

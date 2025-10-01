@@ -18,7 +18,7 @@ auto Tape::writeIn(bool bit) -> void {
     bool _wb = writeBit;
     writeBit = bit;
 
-    if (!enabled || !loaded || rawData || !motorIn || mode != Mode::Record)
+    if (!enabled || !loaded || !motorIn || mode != Mode::Record || !system->processFrame())
         return;
 
     if (writeProtect) // mechanical protection, record button isn't pressable
@@ -82,10 +82,11 @@ auto Tape::addByteToWriteBuffer(uint8_t byte) -> void {
 }
 
 auto Tape::writeBuffer() -> void {
-	if (rawData || (writePos == 0) )
+	if (writePos == 0)
 		return;
 	
 	unsigned writeSize = write(writeData, writePos, curPos );
+    unsigned curPosBefore = curPos;
     curPos += writeSize;
 		
 	if (writeSize != writePos) {
@@ -94,11 +95,24 @@ auto Tape::writeBuffer() -> void {
     }
 	
 	writePos = 0;
-	
-	if (curPos <= rawSize)
-		return;
+
+    if (curPos <= rawSize) {
+        std::memcpy(rawData + curPosBefore, writeData, writeSize);
+        return;
+    }
 	// file has increased
     rawSize = curPos;
+    uint8_t* temp = new uint8_t[rawSize];
+    std::memcpy(temp, rawData, curPosBefore);
+    std::memcpy(temp + curPosBefore, writeData, writeSize);
+
+    if (expanded)
+        delete[] rawData;
+    else
+        expanded = true;
+
+    rawData = temp;
+
 	// write new file size to header
 	uint8_t entry[4];
 	uint32_t hSize = rawSize - 20;

@@ -212,6 +212,9 @@ struct Interface : Emulator::Interface {
 
     auto autoStartedByMediaGroup() -> MediaGroup*;
     auto toggle2Mhz() -> bool;
+
+    auto configRewind(unsigned steps, unsigned maxSizeInMb) -> void;
+    auto setRewind(bool state) -> void;
 private:
 	auto prepareDevices() -> void;
 	auto prepareMedia() -> void;

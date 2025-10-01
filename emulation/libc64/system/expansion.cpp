@@ -70,6 +70,7 @@ auto System::setExpansion( Interface::ExpansionId id ) -> void {
 		case Interface::ExpansionIdReuRetroReplay:
 			expansionPort = reu;
 			reu->setExpander( retroReplay );
+            retroReplay->vicII = vicII;
 			break;
 			
 		case Interface::ExpansionIdGeoRam:

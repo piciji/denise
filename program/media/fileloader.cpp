@@ -861,7 +861,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     unsigned size = file->archiveDataSize(item->id);
 
-    auto data = (mediaGroup->isTape() || mediaGroup->isHardDisk()) && !file->isArchived() ? nullptr : file->archiveData(item->id);
+    auto data = mediaGroup->isHardDisk() && !file->isArchived() ? nullptr : file->archiveData(item->id);
 
     bool updateGenericFileList = !media->secondary;
     if (!mediaGroup->isExpansion() || media->secondary) {

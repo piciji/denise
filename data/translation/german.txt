@@ -936,3 +936,4 @@ strobe warning = WARNUNG: Schnelles Flackern kann bei manchen Displays zu Bildna
 Shader Sub-Frames = Shader Sub-Frames
 Shader Sub-Frames tooltip = liefert deutlich besseres Resultat als beim klassischen BFI. Hierfür muss ein Shader aus dem RA Packet verwendet werden: subframe-bfi/crt-beam-simulator.slangp
 learn more = mehr erfahren
+File Dialog Preview = Dateidialog Vorschau

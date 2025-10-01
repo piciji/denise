@@ -10,12 +10,9 @@ auto Tape::serialize(Emulator::Serializer& s, bool light) -> void {
 
     if (!enabled)
         return;
-    
-    s.array( fetchData, TAPE_FETCH_SIZE );
-    s.array( writeData, TAPE_WRITE_SIZE );
+
     s.integer( (uint8_t&)mode );
     s.integer( (uint8_t&)nextMode );
-    s.integer( writePos );
     s.integer( writeBit );
     s.integer( writeClock );
     s.integer( writeCounterClock );
@@ -30,20 +27,18 @@ auto Tape::serialize(Emulator::Serializer& s, bool light) -> void {
     s.integer( directionForward );
     s.integer( lastDirectionForward );
     s.integer( version );
-    s.integer( fetchPos );
-    s.integer( fetchSize );
     s.integer( curPos );
     s.integer( writeProtect );
     s.integer( writeQuestionState );
     s.integer( autoStarted );
     s.integer( wobble );
 
-    if (light)
-        return;
-
     if (s.mode() == Emulator::Serializer::Mode::Load) {
-        updateDeviceState();
-    }
+        writePos = 0;
+        if (!light)
+            updateDeviceState(true);
+    } else if (writePos)
+        writeBuffer();
 }
 
 

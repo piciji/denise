@@ -27,7 +27,8 @@ struct ExpansionPort {
     // pins on startup, some carts change this during runtime
     bool exRom = true;
     bool game = true;
-    bool dma = false;   
+    bool dma = false;
+    MemChangeTracker<uint32_t, uint8_t>* memChange = nullptr;
 	
 	ExpansionPort* expander = nullptr;
     
@@ -106,6 +107,7 @@ struct ExpansionPort {
         game = true;
         exRom = true;
         dma = false;
+        memChange = nullptr;
     }
     
     virtual auto setJumper( unsigned jumperId, bool state ) -> void {}
@@ -139,6 +141,8 @@ struct ExpansionPort {
     auto setId(Interface::ExpansionId id) -> void { this->id = id; }
 
     virtual auto bootSpeed() -> float { return 0.0; }
+
+    virtual auto getSizeNotConsideredForMemorySerialization() -> unsigned { return 0; }
 };   
 
 }

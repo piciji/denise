@@ -159,16 +159,6 @@ inline auto Tape::randomizeGap( unsigned gap ) -> unsigned {
 		return 1;
 
 	return result;
-
-    // for realistic behaviour we need some randomness
-	// beware of Jars of Revenge, Time Traveller
-	// int adjust = (rand() & 15 ) - 5;
-	
-	// if ( (adjust >= 0) || (gap > -adjust) )
-		// return gap + adjust;
-	
-	// gap would be zero or below	
-	// return 1;
 }
 
 auto Tape::readForward( uint8_t& byte, unsigned count ) -> bool {
@@ -182,37 +172,18 @@ auto Tape::readForward( uint8_t& byte, unsigned count ) -> bool {
     return true;
 }
 
-auto Tape::readForward( uint8_t& byte ) -> bool {
+inline auto Tape::readForward( uint8_t& byte ) -> bool {
+    if (!rawData)
+        return false;
 
-    if (rawData) {
-        // tape image was fully loaded because of compressed file
-        // tape image can't be written in this case
-        if (curPos == rawSize)
-            return false;
+    // tape image was fully loaded because of compressed file
+    // tape image can't be written in this case
+    if (curPos == rawSize)
+        return false;
 
-        byte = rawData[curPos++];
+    byte = rawData[curPos++];
 
-        return true;
-    }
-    
-    // uncompressed files shouldn't load before
-    // needed data will be loaded by callback in chunks
-   
-    if (fetchPos == 0) {
-
-        fetchSize = read( fetchData, TAPE_FETCH_SIZE, curPos );
-
-        if (fetchSize == 0)
-            return false;
-    }
-
-    byte = fetchData[fetchPos++];
-    curPos++;
-
-    if (fetchPos == fetchSize)
-        fetchPos = 0;
-
-    return true;	
+    return true;
 }
 
 auto Tape::readBackward( uint8_t& byte, unsigned count ) -> bool {
@@ -228,38 +199,16 @@ auto Tape::readBackward( uint8_t& byte, unsigned count ) -> bool {
 
 auto Tape::readBackward( uint8_t& byte ) -> bool {
     
-    if (curPos == 0x14) //end of header
+    if (!rawData || (curPos == 0x14)) //end of header
         return false;
 
     curPos--;
-            
-    if (rawData) {
 
-        byte = rawData[curPos];
+    if (curPos >= rawSize)
+        return false;
 
-        return true;
-    }     
-    // for uncompressed mode
-    if (fetchPos == 0) {
-        
-        unsigned fetchStart = 0;
-        fetchSize = curPos + 1;
+    byte = rawData[curPos];
 
-        if (curPos > TAPE_FETCH_SIZE) {
-            fetchStart = curPos - TAPE_FETCH_SIZE + 1;
-            fetchSize = TAPE_FETCH_SIZE;
-        } 
-
-        fetchSize = read(fetchData, fetchSize, fetchStart );
-
-        if (fetchSize == 0)
-            return false;
-        
-        fetchPos = fetchSize;
-    }
-	
-    byte = fetchData[--fetchPos];	
-    
     return true;
 }
     

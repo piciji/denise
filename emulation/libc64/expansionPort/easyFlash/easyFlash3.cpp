@@ -870,14 +870,23 @@ auto EasyFlash3::serialize(Emulator::Serializer& s) -> void {
 
         s.integer( slot.dirty );
 
-        if (slot.dirty && !s.lightUsage())
+        if (slot.dirty && !s.memUsage())
             s.array(dataFlash + slot.media->id * 1024 * 1024, 1024 * 1024);
     }
 
-    if (!s.lightUsage() && s.mode() == (Emulator::Serializer::Mode::Load) )
+    if (!s.memUsage() && s.mode() == (Emulator::Serializer::Mode::Load) )
         updateDeviceState();
 
     FreezeButton::serializeCustom(s);        
+}
+
+auto EasyFlash3::getSizeNotConsideredForMemorySerialization() -> unsigned {
+    unsigned _size = 0;
+    for(auto& slot : slots) {
+        if (slot.dirty)
+            _size += 1024 * 1024;
+    }
+    return _size;
 }
 
 auto EasyFlash3::setWriteProtect( Emulator::Interface::Media* media, bool state ) -> void {

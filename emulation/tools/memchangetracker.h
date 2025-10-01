@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <cstring>
 
+#define TRACKER_SIZE_INC (512)
+
 template<typename A, typename V>
 struct MemChangeTracker {
 
@@ -13,33 +15,31 @@ struct MemChangeTracker {
 
     MemChange* memChange;
 
-    bool armed;
     unsigned pos;
     unsigned size;
+    uint8_t* src;
 
     MemChangeTracker() {
-        size = 10 * 1024;
-        memChange = new MemChange[size];
-        pos = 0;
-        armed = false;
+        memChange = nullptr;
+        src = nullptr;
+        size = 0;
+        initSize();
     }
 
-    ~MemChangeTracker() {
+    virtual ~MemChangeTracker() {
         delete[] memChange;
     }
 
-    auto enabled() -> bool const { return armed; }
-
-    auto enable() -> void {
+    auto reset(uint8_t* _src) -> void {
         pos = 0;
-        armed = true;
+        src = _src;
     }
 
-    auto disable() -> void {
-        armed = false;
+    auto reset() -> void {
+        pos = 0;
     }
 
-    auto remember(A adr, uint8_t* src) -> void {
+    auto remember(A adr) -> void {
         MemChange* ptr = &memChange[pos++];
 
         ptr->address = adr;
@@ -49,12 +49,7 @@ struct MemChangeTracker {
             increase();
     }
 
-    auto applyAndDisable(uint8_t* src) -> void {
-        apply(src);
-        disable();
-    }
-
-    auto apply(uint8_t* src) -> void {
+    auto apply() -> void {
         MemChange* ptr;
         if (!pos)
             return;
@@ -63,6 +58,7 @@ struct MemChangeTracker {
             ptr = &memChange[i];
             *(V*)(src + ptr->address) = ptr->value;
         }
+        pos = 0;
     }
 
     auto increase() -> void {
@@ -71,5 +67,15 @@ struct MemChangeTracker {
         size <<= 1;
         delete[] memChange;
         memChange = temp;
+    }
+
+    auto initSize() -> void {
+        if (size == TRACKER_SIZE_INC)
+            return;
+        if (memChange)
+            delete[] memChange;
+        size = TRACKER_SIZE_INC;
+        memChange = new MemChange[size];
+        pos = 0;
     }
 };

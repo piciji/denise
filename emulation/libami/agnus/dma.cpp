@@ -270,8 +270,8 @@ auto Agnus::diskDma(uint8_t slot, bool writeMode) -> void {
         if (!paula.dskDatR(slot, value))
             return;
 
-        if (trackMemChanges)
-            rememberChipMem(dskpt);
+        if (memState)
+            memState->trackers[TRACKER_CHIP].remember(dskpt);
 
         *(uint16_t*)(chipMem + dskpt) = _swapWord(value);
         dataBus = value;
@@ -284,8 +284,8 @@ auto Agnus::diskDma(uint8_t slot, bool writeMode) -> void {
 }
 
 auto Agnus::fakeDiskDma(uint16_t& word) -> void {
-    if (trackMemChanges)
-        rememberChipMem(dskpt);
+    if (memState)
+        memState->trackers[TRACKER_CHIP].remember(dskpt);
 
     *(uint16_t*)(chipMem + dskpt) = _swapWord(word);
     dskpt += 2;
@@ -477,8 +477,8 @@ auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVa
         handleBlitterConflicts<Agnus::PTR_BLT_D_H, desc, add, mod, true>(adr, value, modVal);
     } else {
         adr &= dmaChipMemMask;
-        if (trackMemChanges)
-            rememberChipMem(adr);
+        if (memState)
+            memState->trackers[TRACKER_CHIP].remember(adr);
 
         *(uint16_t*)(chipMem + adr) = _swapWord(value);
 
@@ -507,8 +507,8 @@ auto Agnus::handleBlitterConflicts(uint32_t& adr, uint16_t& result, const int16_
         adr &= dmaChipMemMask;
 
         if constexpr (writeMode) {
-            if (trackMemChanges)
-                rememberChipMem(adr);
+            if (memState)
+                memState->trackers[TRACKER_CHIP].remember(adr);
 
             *(uint16_t*)(chipMem + adr) = _swapWord(result);
         } else {
@@ -538,8 +538,8 @@ auto Agnus::handleBlitterConflicts(uint32_t& adr, uint16_t& result, const int16_
 
             uint16_t _fetch;
             if constexpr (writeMode) {
-                if (trackMemChanges)
-                    rememberChipMem(adr);
+                if (memState)
+                    memState->trackers[TRACKER_CHIP].remember(adr);
 
                 *(uint16_t*)(chipMem + adr) = _swapWord(result);
                 _fetch = result;

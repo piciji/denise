@@ -16,6 +16,8 @@ namespace DSP {
     struct Panning;
 }
 
+#define MAX_AUDIO_BUF_SIZE (2048 * 21)
+
 struct AudioManager {
     
     AudioManager();
@@ -23,7 +25,7 @@ struct AudioManager {
     
     unsigned bufferPos = 0;
     unsigned bufferSize = 0;
-    float buffer[2048];        
+    float buffer[MAX_AUDIO_BUF_SIZE];
     float volumeAdjust;
     std::vector<DSP::Base*> dsps;
     
@@ -46,7 +48,8 @@ struct AudioManager {
         bool enable = false;
         unsigned lastTS;
     } measureUiUpdate;
-    
+
+    bool rewind = false;
     double ratio;    
     bool dynamicRateControl;
     double rateDelta = 0.005;
@@ -98,6 +101,8 @@ struct AudioManager {
     auto applyDsp() -> void;
 
     auto checkIfUINeedsAnUpdate() -> void;
+    auto reverseAndFlushBuffer() -> void;
+    auto setRewind(bool state) -> void;
 };
 
 extern AudioManager* audioManager;

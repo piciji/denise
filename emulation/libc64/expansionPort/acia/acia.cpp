@@ -497,7 +497,7 @@ auto Acia::serialize(Emulator::Serializer& s) -> void {
     s.integer( dsrLock );
     s.integer( dcdLock );
 
-    if ( !s.lightUsage() && (s.mode() == Emulator::Serializer::Mode::Load ) ) {
+    if ( !s.memUsage() && (s.mode() == Emulator::Serializer::Mode::Load ) ) {
         socket.disconnect();
 
         if (command & 1) {

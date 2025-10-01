@@ -68,6 +68,8 @@ struct EasyFlash : Cart {
     auto updateDeviceState() -> void;
 	
 	auto protectFromDeletion() -> bool { return true; }
+
+    auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 };
 
 }

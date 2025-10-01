@@ -56,7 +56,7 @@ struct Gmod2 : GameCart {
 	auto hasSecondaryRom() -> bool { return true; }
 	
 	auto protectFromDeletion() -> bool { return true; }
-
+    auto getSizeNotConsideredForMemorySerialization() -> unsigned;
 };
 
 }
