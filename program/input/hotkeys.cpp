@@ -875,7 +875,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 bool pressed;
 
                 do {
-                    bool ored = !_t->anded || (_t->hids.size() == 1);
+                    bool ored = !_t->anded || (_t->hids.size() <= 1);
                     pressed = !ored;
 
                     if (ored) {

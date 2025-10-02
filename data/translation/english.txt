@@ -937,3 +937,6 @@ Shader Sub-Frames = Shader Sub-Frames
 Shader Sub-Frames tooltip = delivers significantly better results than the classic BFI. This requires the use of a shader from the RA package: subframe-bfi/crt-beam-simulator.slangp
 learn more = learn more
 File Dialog Preview = File Dialog Preview
+rewind = Rewind
+frames per step = frames per step
+buffer size = buffer size
