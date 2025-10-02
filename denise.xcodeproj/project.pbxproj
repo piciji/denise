@@ -1069,6 +1069,7 @@
 		9DA70F442E101AF000F1DC5B /* scp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scp.h; sourceTree = "<group>"; };
 		9DA70F452E101AF000F1DC5B /* scp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DA70F472E101AFF00F1DC5B /* scp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
+		9DC345C22E8EF1130071B38B /* history.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = history.h; sourceTree = "<group>"; };
 		9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbSidPico.cpp; sourceTree = "<group>"; };
 		9DD0A0B52E3B943B0018DA68 /* usbSidPico.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = usbSidPico.h; sourceTree = "<group>"; };
 		9DD0A0B82E3B94AF0018DA68 /* USBSID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = USBSID.h; path = "deps/USBSID-Pico/USBSID.h"; sourceTree = SOURCE_ROOT; };
@@ -1891,6 +1892,7 @@
 		9D8FAC9B2CB40DF6006905BE /* tools */ = {
 			isa = PBXGroup;
 			children = (
+				9DC345C22E8EF1130071B38B /* history.h */,
 				9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */,
 				9DE47D0F2DE8CD6200903CA4 /* uuid.h */,
 				9D64043D2DCDEE3F00624A00 /* error.cpp */,
