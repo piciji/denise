@@ -17,6 +17,8 @@ before_install:
 # jammy update flatpak-builder only to version 1.2.x. However, we need a more recent version to avoid an error: "bwrap: execvp appstream-compose: No such file"
   - sudo add-apt-repository -y ppa:flatpak/stable
   - sudo apt-get -q update
+  - sudo apt -f install flatpak-builder
+  - flatpak-builder --version
 
 addons:
   apt:
@@ -30,7 +32,7 @@ addons:
       - libxcb-xinput-dev
       - libxcb-xfixes0
       - sshpass      
-      - flatpak-builder
+      #- flatpak-builder
       - libusb-1.0-0-dev
       - libmp3lame-dev
 
