@@ -102,7 +102,7 @@
 		9D8FAC7B2CB40C9D006905BE /* renderThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC342CB40C9C006905BE /* renderThread.cpp */; };
 		9D8FAC7C2CB40C9D006905BE /* ShaderCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC372CB40C9C006905BE /* ShaderCache.cpp */; };
 		9D8FAC7D2CB40C9D006905BE /* spirvReflection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC3B2CB40C9C006905BE /* spirvReflection.cpp */; };
-		9D8FAC992CB40C9D006905BE /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC732CB40C9D006905BE /* driver.cpp */; settings = {COMPILER_FLAGS = "-DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_OPENAL -DDRV_FREETYPE -x objective-c++ -fno-objc-arc -I$(PROJECT_DIR)/deps/glslang/ -I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9D8FAC992CB40C9D006905BE /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC732CB40C9D006905BE /* driver.cpp */; settings = {COMPILER_FLAGS = "-DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_COREAUDIO3 -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_OPENAL -DDRV_FREETYPE -x objective-c++ -fno-objc-arc -I$(PROJECT_DIR)/deps/glslang/ -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9D8FADF72CB40DF8006905BE /* pia.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC9F2CB40DF6006905BE /* pia.cpp */; };
 		9D8FADF82CB40DF8006905BE /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACA32CB40DF6006905BE /* socket.cpp */; };
 		9D8FADF92CB40DF8006905BE /* DLLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FACA72CB40DF6006905BE /* DLLoader.cpp */; };
@@ -199,6 +199,8 @@
 		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
 		9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD306D62DFAFF2200B8F12F /* httpClient.cpp */; };
+		9DD79F362E916F4400A4166D /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD79F352E916F4400A4166D /* AVFAudio.framework */; };
+		9DD79F372E916F5D00A4166D /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD79F352E916F4400A4166D /* AVFAudio.framework */; };
 		9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */; };
 		9DECF8482E45F25D005C0BBA /* libz.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DECF8412E45F25D005C0BBA /* libz.1.dylib */; };
 		9DECF8492E45F25D005C0BBA /* libz.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9DECF8412E45F25D005C0BBA /* libz.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -345,7 +347,7 @@
 		9DECF9A02E45F309005C0BBA /* system.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD8C2CB40DF7006905BE /* system.cpp */; };
 		9DECF9A12E45F309005C0BBA /* config.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA962CB3F6EF006905BE /* config.cpp */; };
 		9DECF9A22E45F309005C0BBA /* shaderParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA7D2CB3F6EF006905BE /* shaderParser.cpp */; };
-		9DECF9A32E45F309005C0BBA /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC732CB40C9D006905BE /* driver.cpp */; settings = {COMPILER_FLAGS = "-DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_OPENAL -DDRV_FREETYPE -x objective-c++ -fno-objc-arc -I$(PROJECT_DIR)/deps/glslang/ -I$(PROJECT_DIR)/data/libs/include/"; }; };
+		9DECF9A32E45F309005C0BBA /* driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAC732CB40C9D006905BE /* driver.cpp */; settings = {COMPILER_FLAGS = "-DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_COREAUDIO3 -DDRV_IOKIT -DDRV_COCOA_IOKIT -DDRV_OPENAL -DDRV_FREETYPE -x objective-c++ -fno-objc-arc -I$(PROJECT_DIR)/deps/glslang/ -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DECF9A42E45F309005C0BBA /* sidManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAD862CB40DF7006905BE /* sidManager.cpp */; };
 		9DECF9A52E45F309005C0BBA /* view.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAAD12CB3F6EF006905BE /* view.cpp */; };
 		9DECF9A62E45F309005C0BBA /* hdController.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D64042C2DCDEE1C00624A00 /* hdController.cpp */; };
@@ -1070,6 +1072,7 @@
 		9DA70F452E101AF000F1DC5B /* scp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DA70F472E101AFF00F1DC5B /* scp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DC345C22E8EF1130071B38B /* history.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = history.h; sourceTree = "<group>"; };
+		9DC3A9982E8F07DD005B0F8C /* coreaudio3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = coreaudio3.cpp; sourceTree = "<group>"; };
 		9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbSidPico.cpp; sourceTree = "<group>"; };
 		9DD0A0B52E3B943B0018DA68 /* usbSidPico.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = usbSidPico.h; sourceTree = "<group>"; };
 		9DD0A0B82E3B94AF0018DA68 /* USBSID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = USBSID.h; path = "deps/USBSID-Pico/USBSID.h"; sourceTree = SOURCE_ROOT; };
@@ -1078,6 +1081,7 @@
 		9DD306D42DFAFEE000B8F12F /* error.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = error.h; sourceTree = "<group>"; };
 		9DD306D62DFAFF2200B8F12F /* httpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = httpClient.cpp; sourceTree = "<group>"; };
 		9DD306D72DFAFF2200B8F12F /* httpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpClient.h; sourceTree = "<group>"; };
+		9DD79F352E916F4400A4166D /* AVFAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFAudio.framework; path = System/Library/Frameworks/AVFAudio.framework; sourceTree = SDKROOT; };
 		9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = uuid.cpp; sourceTree = "<group>"; };
 		9DE47D0F2DE8CD6200903CA4 /* uuid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uuid.h; sourceTree = "<group>"; };
 		9DECF8412E45F25D005C0BBA /* libz.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.dylib; path = data/libs/shared/macArm/libz.1.dylib; sourceTree = "<group>"; };
@@ -1115,6 +1119,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9DD79F362E916F4400A4166D /* AVFAudio.framework in Frameworks */,
 				9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */,
 				9D0C382E2CB5C17900363301 /* OpenAL.framework in Frameworks */,
 				9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */,
@@ -1142,6 +1147,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9DD79F372E916F5D00A4166D /* AVFAudio.framework in Frameworks */,
 				9DECF9B82E45F309005C0BBA /* Security.framework in Frameworks */,
 				9DECF9B92E45F309005C0BBA /* OpenAL.framework in Frameworks */,
 				9D99AA822E4631490075FF62 /* libpng16.16.dylib in Frameworks */,
@@ -1336,6 +1342,7 @@
 		9D8FA9522CB3DF78006905BE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9DD79F352E916F4400A4166D /* AVFAudio.framework */,
 				9D06E27C2E4CC79B00CF5A5E /* libmp3lame.0.dylib */,
 				9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */,
 				9DECF8452E45F25D005C0BBA /* libbrotlicommon.1.dylib */,
@@ -1870,6 +1877,7 @@
 		9D8FAC622CB40C9D006905BE /* audio */ = {
 			isa = PBXGroup;
 			children = (
+				9DC3A9982E8F07DD005B0F8C /* coreaudio3.cpp */,
 				9D8FAC702CB40C9D006905BE /* openal.cpp */,
 				9D8FAC712CB40C9D006905BE /* coreaudio.cpp */,
 			);

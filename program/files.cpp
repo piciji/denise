@@ -494,6 +494,14 @@ auto Program::unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::Interfa
                 }
                 settings->set("unset_ds", true);
             }
+        } else if (GUIKIT::Application::isCocoa()) {
+            if (!settings->get("unset_ca", false)) {
+                if (settings->get<std::string>("audio_driver", "") == "CoreAudio") {
+                    settings->remove("audio_driver");
+                    settings->set<unsigned>("audio_latency", 30);
+                }
+                settings->set("unset_ca", true);
+            }
         }
     } else {
         if (!settings->get("unset_mid", false)) {

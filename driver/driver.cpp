@@ -62,6 +62,10 @@
 	#include "audio/coreaudio.cpp"
 #endif
 
+#ifdef DRV_COREAUDIO3
+    #include "audio/coreaudio3.cpp"
+#endif
+
 #ifdef DRV_UDEV
 	#include "input/udev.cpp"
 #endif
@@ -190,6 +194,12 @@ auto Audio::available() -> std::vector<std::string> {
 		list.push_back("PulseAudio");
 	#endif
 
+    #ifdef DRV_COREAUDIO3
+        if (@available(macOS 10.13, *)) {
+            list.push_back("CoreAudio3");
+        }
+    #endif
+    
     #ifdef DRV_COREAUDIO
         list.push_back("CoreAudio");
     #endif
@@ -233,6 +243,12 @@ auto Audio::preferred() -> std::string {
 	#ifdef DRV_PULSEAUDIO
 		return "PulseAudio";
 	#endif
+    
+    #ifdef DRV_COREAUDIO3
+        if (@available(macOS 10.13, *)) {
+            return "CoreAudio3";
+        }
+    #endif
 
     #ifdef DRV_COREAUDIO
         return "CoreAudio";
@@ -265,6 +281,12 @@ auto Audio::create(const std::string& driver) -> Audio* {
 	#ifdef DRV_PULSEAUDIO
 		if(driver == "PulseAudio") return new PulseAudio();
 	#endif
+    
+    #ifdef DRV_COREAUDIO3
+        if (@available(macOS 10.13, *)) {
+            if(driver == "CoreAudio3") return new CoreAudio3();
+        }
+    #endif
 
     #ifdef DRV_COREAUDIO
         if(driver == "CoreAudio") return new CoreAudio();
