@@ -498,7 +498,7 @@ auto Program::unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::Interfa
             if (!settings->get("unset_ca", false)) {
                 if (settings->get<std::string>("audio_driver", "") == "CoreAudio") {
                     settings->remove("audio_driver");
-                    settings->set<unsigned>("audio_latency", 30);
+                    settings->set<unsigned>("audio_latency", 35);
                 }
                 settings->set("unset_ca", true);
             }
