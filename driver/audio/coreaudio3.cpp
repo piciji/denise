@@ -35,8 +35,8 @@ struct CoreAudio3 : public Audio {
     struct {
         bool synchronize = false;
         unsigned frequency = 48000;
-        unsigned latency = 64;
-        unsigned minimumLatency = 2;
+        unsigned latency = 35;
+        unsigned minimumLatency = 10;
         uintptr_t handle;
     } settings;
     
@@ -59,7 +59,7 @@ struct CoreAudio3 : public Audio {
     }
     
     auto setLatency(unsigned value) -> void {
-        settings.latency = std::max(settings.minimumLatency, value);
+        settings.latency = std::max(settings.minimumLatency, value + 5);
         if(coreAudio3Obj)
             init();
     }
