@@ -933,6 +933,15 @@ auto InputLayout::triggerHotkeyMode() -> void {
     selector.hotkeys.onToggle();
 }
 
+auto InputLayout::triggerGlobalHotkeyMode() -> void {
+    if (globalHotkeyMode())
+        return;
+
+    selector.hotkeys.setChecked(false);
+    selector.globalHotkeys.setChecked();
+    selector.globalHotkeys.onToggle();
+}
+
 auto InputLayout::loadSettings() -> void {
     
     updateAssigner();

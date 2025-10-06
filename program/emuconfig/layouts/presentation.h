@@ -379,6 +379,7 @@ struct VideoRewindLayout : GUIKIT::FramedVerticalLayout {
     GUIKIT::CheckBox enableRewind;
     SliderLayout framesPerStep;
     SliderLayout bufferSize;
+    GUIKIT::Button hotkey;
 
     VideoRewindLayout();
 };

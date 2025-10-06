@@ -115,6 +115,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto hotkeyMode() -> bool;
     auto globalHotkeyMode() -> bool;
     auto triggerHotkeyMode() -> void;
+    auto triggerGlobalHotkeyMode() -> void;
     auto updateAssigner() -> void;
     auto loadSettings() -> void;
     auto updateAutofireFrequency() -> void;

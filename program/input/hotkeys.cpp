@@ -15,6 +15,7 @@ std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
 auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::Pause, "Pause"} );
+    hotkeys.push_back({ Hotkey::Id::Rewind, "rewind" });
     hotkeys.push_back( {Hotkey::Id::Fullscreen, "Fullscreen"} );
     hotkeys.push_back( {Hotkey::Id::ToggleWarp, "Toggle Warp"} );
     hotkeys.push_back( {Hotkey::Id::ToggleWarpAggressive, "Toggle Warp Aggressive"} );
@@ -46,7 +47,6 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::ApplyWindowSize, "apply window size"} );
     hotkeys.push_back( {Hotkey::Id::CropWindow, "crop window"} );
     hotkeys.push_back({ Hotkey::Id::TakeScreenShot, "take screenshot" });
-    hotkeys.push_back({ Hotkey::Id::Rewind, "rewind" });
 
     hotkeys.push_back( {Hotkey::Id::FloppyAccess, "select_disk_drive"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwapUp, "swapper up"} );

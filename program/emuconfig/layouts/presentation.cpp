@@ -1,5 +1,6 @@
 
 #include "presentation.h"
+#include "input.h"
 #include "../config.h"
 #include "../../../data/icons.h"
 #include "../../tools/error.h"
@@ -540,7 +541,8 @@ framesPerStep(""),
 bufferSize("MB") {
     append(enableRewind, {0u, 0u}, 20);
     append(framesPerStep, {~0u, 0u}, 20);
-    append(bufferSize, {~0u, 0u});
+    append(bufferSize, {~0u, 0u}, 20);
+    append(hotkey, {0u, 0u});
 
     framesPerStep.slider.setLength(60);
     framesPerStep.updateValueWidth("99");
@@ -1777,6 +1779,11 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         emuThread->unlock();
     };
 
+    layRewind.hotkey.onActivate = [this]() {
+        this->tabWindow->show(EmuConfigView::TabWindow::Layout::Control);
+        this->tabWindow->inputLayout->triggerGlobalHotkeyMode();
+    };
+
     fillFontTypeList();
     checkHDR();
 
@@ -2514,6 +2521,8 @@ auto PresentationLayout::translate() -> void {
     layRewind.enableRewind.setText(trans->getA("Enable"));
     layRewind.framesPerStep.name.setText(trans->getA("Frames Per Step", true));
     layRewind.bufferSize.name.setText(trans->getA("Buffer Size", true));
+    layRewind.hotkey.setText(trans->getA("hotkeys"));
+    layRewind.hotkey.setTooltip(trans->getA("rewind hotkey tooltip"));
 
     tviBase.setText( trans->getA("overview") );
     tviScreenText.setText( trans->getA("screen text") );

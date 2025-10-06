@@ -940,3 +940,4 @@ File Dialog Preview = File Dialog Preview
 rewind = Rewind
 frames per step = frames per step
 buffer size = buffer size
+rewind hotkey tooltip = Rewinding is done via a hotkey. Click here and then find the hotkey for rewind in the list. Double-click this list row to assign a key combination to the function. For optimal use, rewind should be assigned to the gamepad.
