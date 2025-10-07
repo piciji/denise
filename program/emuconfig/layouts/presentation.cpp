@@ -190,7 +190,7 @@ VideoShaderLayout::Favourite::Favourite() {
 
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
-    list.setHeaderText({""});
+    list.setHeaderText({"", ""});
     list.setHeaderVisible(true);
 }
 
@@ -1030,12 +1030,14 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
             if (fav == "") {
                 auto _path = GUIKIT::File::buildRelativePath(path);
-                layShader.favourite.list.append({ _path });
                 _settings->set<std::string>("shader_fav_" + std::to_string(i), _path);
                 break;
             }
             i++;
         }
+        sortFavourites();
+        listFavourites();
+
         view->buildShader();
     };
 
@@ -1062,7 +1064,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
         i = 0;
         for(auto& fav : storage) {
-            layShader.favourite.list.append({fav});
+            appendFavourite(fav);
             _settings->set<std::string>( "shader_fav_" + std::to_string(i), fav);
             i++;
         }
@@ -1073,7 +1075,9 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
     layShader.favourite.list.onActivate = [this]() {
         int selection = layShader.favourite.list.selection();
-        std::string path = layShader.favourite.list.text(selection, 0);
+        std::string path = _settings->get<std::string>( "shader_fav_" + std::to_string(selection), "");
+        if (path.empty())
+            return;
         path = GUIKIT::File::resolveRelativePath(path);
         emuThread->lock();
         if (loadShader(path))
@@ -2446,7 +2450,7 @@ auto PresentationLayout::translate() -> void {
 
     layShader.main.setText( trans->getA("Shader") );
     layShader.favourite.setText( trans->getA("favourites") );
-    layShader.favourite.list.setHeaderText({trans->getA("selection")});
+    layShader.favourite.list.setHeaderText({trans->getA("selection"), trans->getA("path")});
 
     layShader.main.info.label.setText( trans->getA("loaded", true) );
     layShader.main.info.clearCache.setText( trans->getA("clear cache") );
@@ -2617,16 +2621,7 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     else
         layBase.view.mode.palette.setChecked();
 
-    int i = 0;
-    layShader.favourite.list.reset();
-    while(1) {
-        std::string fav = _settings->get<std::string>( "shader_fav_" + std::to_string(i), "");
-        if (fav.empty())
-            break;
-
-        layShader.favourite.list.append({fav});
-        i++;
-    }
+    listFavourites();
 
     updatePresets(!init, true);
 
@@ -2951,6 +2946,53 @@ auto PresentationLayout::presentShaderError() -> void {
     }
 
     showErrors(errors);
+}
+
+auto PresentationLayout::appendFavourite(std::string& path) -> void {
+    auto fileName = GUIKIT::String::getFileName(path, true);
+    auto _path = GUIKIT::File::getPath(path);
+
+    layShader.favourite.list.append({fileName, _path});
+}
+
+auto PresentationLayout::sortFavourites() -> void {
+    int i = 0;
+    std::vector<std::string> favs;
+
+    while(1) {
+        std::string fav = _settings->get<std::string>( "shader_fav_" + std::to_string(i++), "");
+        if (fav.empty())
+            break;
+
+        favs.push_back(fav);
+    }
+
+    std::sort(favs.begin(), favs.end(), [ ](const std::string& lhs, const std::string& rhs) {
+
+        auto fileNamel = GUIKIT::String::getFileName(lhs, true);
+        auto fileNameR = GUIKIT::String::getFileName(rhs, true);
+        GUIKIT::String::toLowerCase(fileNamel);
+        GUIKIT::String::toLowerCase(fileNameR);
+
+        return fileNamel < fileNameR;
+    });
+
+    i = 0;
+    for(auto& fav : favs) {
+        _settings->set<std::string>("shader_fav_" + std::to_string(i++), fav);
+    }
+}
+
+auto PresentationLayout::listFavourites() -> void {
+    int i = 0;
+    layShader.favourite.list.reset();
+    while(1) {
+        std::string fav = _settings->get<std::string>( "shader_fav_" + std::to_string(i++), "");
+        if (fav.empty())
+            break;
+
+        appendFavourite(fav);
+    }
 }
 
 auto PresentationLayout::selectViewScreenshot() -> void {
