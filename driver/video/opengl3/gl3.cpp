@@ -175,13 +175,8 @@ struct GL3 {
         GLuint type;
         void* data = renderBuffer ? renderBuffer->data : tex.data;
 
-        if (tex.format == GL_RGBA32F) {
-            pixelFormat = GL_RGBA;
-            type = GL_FLOAT;
-        } else {
-            pixelFormat = GL_BGRA;
-            type = GL_UNSIGNED_INT_8_8_8_8_REV;
-        }
+        pixelFormat = GL_BGRA;
+        type = GL_UNSIGNED_INT_8_8_8_8_REV;
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex.view);

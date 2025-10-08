@@ -92,6 +92,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
     evenTable = new ColorLumaChroma[this->colorCount];
     oddTable = new ColorLumaChroma[this->colorCount];
     colorTable = new uint32_t[this->colorCount];
+    colorTableRGB10 = new uint32_t[this->colorCount];
     
     newLuma = true;
     crtRealGamma = false;
@@ -205,10 +206,8 @@ auto VideoManager::generateC64ColorSpectrum() -> void {
         double luma = c64Emu->getLuma( c, newLuma );                
 
         lumaChroma->y = ( luma + brightness ) * con;
-        lumaChroma->y_n = float(lumaChroma->y / 255.0);
         
         lumaChroma->u_i = lumaChroma->v_q = 0.0;
-        lumaChroma->u_i_n = lumaChroma->v_q_n = 0.0;
         
         double chroma = c64Emu->getChroma( c );
         
@@ -226,9 +225,6 @@ auto VideoManager::generateC64ColorSpectrum() -> void {
             lumaChroma->u_i = (std::sin(angle) * sat) * con;
             lumaChroma->v_q = (std::cos(angle) * sat) * con;                    
         }
-        
-        lumaChroma->u_i_n = float(lumaChroma->u_i / 255.0);
-        lumaChroma->v_q_n = float(lumaChroma->v_q / 255.0);
     }
 }
 
@@ -294,11 +290,6 @@ auto VideoManager::convertPaletteToLumaChroma() -> void {
 		lumaChroma->u_i = (lumaChroma->u_i * saturation) * contrast;
 		lumaChroma->v_q = (lumaChroma->v_q * saturation) * contrast;		
 		lumaChroma->y = (lumaChroma->y + brightness) * contrast;
-		
-		// for shader
-        lumaChroma->y_n = float(lumaChroma->y / 255.0);
-        lumaChroma->u_i_n = float(lumaChroma->u_i / 255.0);
-        lumaChroma->v_q_n = float(lumaChroma->v_q / 255.0);
 	}
 }
 
@@ -313,7 +304,8 @@ auto VideoManager::convertLumaChromaToRGB() -> void {
         else
 			convertYIQToRGB( &rgb, &lumaChromaTable[c] );
 
-		//if (pal && colorSpectrum) {
+        colorTableRGB10[c] = (uclamp10( rgb.r) << 20) | (uclamp10( rgb.g ) << 10) | uclamp10( rgb.b );
+
         if (pal && (colorSpectrum || crtRealGamma)) {
 			normalizeColorSpectrumPalGamma(rgb.r);
 			normalizeColorSpectrumPalGamma(rgb.g);
@@ -582,7 +574,6 @@ auto VideoManager::calculateLumaDelay() -> void {
 template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch ) -> void {
 	unsigned gpuPitch;
     unsigned* gpuData;
-	float* gpuDataFloat;
     unsigned cropTop, cropLeft;
     constexpr bool interlace = options & 3;
     constexpr bool field = options & 2;
@@ -693,10 +684,10 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
             src -= SHADER_OFFSCREEN_WIDTH;
 
-            if (!videoDriver->lock(gpuDataFloat, gpuPitch, width, height + (interlace ? 2 : 1), gpuOptions ))
+            if (!videoDriver->lock(gpuData, gpuPitch, width, height + (interlace ? 2 : 1), gpuOptions | (uint8_t)DRIVER::OPT_RGB10 ))
                 goto Typical;
 
-            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuDataFloat, gpuPitch - width, cropTop);
+            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width, cropTop);
 
         } else {
 Typical:
@@ -883,10 +874,9 @@ template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsig
 }
 #undef screenshot3channel
 
-template<typename T, bool interlace, bool field> inline auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch, unsigned& cropTop) -> void {
+template<typename T, bool interlace, bool field> inline auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, unsigned& cropTop) -> void {
 	const T* srcDelay = src;
     T color;
-	unsigned _dp = destPitch * 4;
     unsigned metaShift = countColorBits;
     unsigned mask = (1 << metaShift) - 1;
     bool laceToggle = !!(frameOptions & 0x80);
@@ -903,56 +893,52 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     for (int i = 0; i <= interlace; i++) {
         for (unsigned w = 0; w < width; w++) { // delayline
             color = *srcDelay++;
-
-            *dest++ = lumaChromaTable[color & mask].y_n;
-            *dest++ = lumaChromaTable[color & mask].u_i_n;
-            *dest++ = lumaChromaTable[color & mask].v_q_n;
-            *dest++ = color >> metaShift; // aec, ba
+            *dest++ = colorTableRGB10[ color & mask ] | (color >> metaShift) << 30;
         }
-        dest += _dp;
+        dest += destPitch;
         srcDelay += srcPitch;
     }
 
     if (interlace && !laceToggle) {
         float iRate = (float)(100 - interlaceDecay);
+        uint32_t _c;
+        uint16_t _r, _g, _b;
 
         for (unsigned h = 0; h < height; h++) {
             if (field == (h & 1)) {
                 for (unsigned w = 0; w < width; w++) {
                     color = *src++;
-
-                    *dest++ = lumaChromaTable[color & mask].y_n;
-                    *dest++ = lumaChromaTable[color & mask].u_i_n;
-                    *dest++ = lumaChromaTable[color & mask].v_q_n;
-                    *dest++ = color >> metaShift;
+                    *dest++ = colorTableRGB10[ color & mask ] | (color >> metaShift) << 30;
                 }
             } else {
                 for (unsigned w = 0; w < width; w++) {
                     color = *src++;
+                    _c = colorTableRGB10[color & mask];
 
-                    *dest++ = lumaChromaTable[color & mask].y_n * iRate / 100.0;
-                    *dest++ = lumaChromaTable[color & mask].u_i_n;
-                    *dest++ = lumaChromaTable[color & mask].v_q_n;
-                    *dest++ = color >> metaShift;
+                    _r = (_c >> 20) & 0x3ff;
+                    _g = (_c >> 10) & 0x3ff;
+                    _b = (_c >> 0) & 0x3ff;
+
+                    _r = (_r * iRate) / 100;
+                    _g = (_g * iRate) / 100;
+                    _b = (_b * iRate) / 100;
+
+                    *dest++ = _r << 20 | _g << 10 | _b | (color >> metaShift) << 30;
                 }
             }
 
             src += srcPitch;
-            dest += _dp;
+            dest += destPitch;
         }
     } else {
         for (unsigned h = 0; h < height; h++) {
             for (unsigned w = 0; w < width; w++) {
                 color = *src++;
-
-                *dest++ = lumaChromaTable[color & mask].y_n;
-                *dest++ = lumaChromaTable[color & mask].u_i_n;
-                *dest++ = lumaChromaTable[color & mask].v_q_n;
-                *dest++ = color >> metaShift;
+                *dest++ = colorTableRGB10[ color & mask ] | (color >> metaShift) << 30;
             }
 
             src += srcPitch;
-            dest += _dp;
+            dest += destPitch;
         }
     }
 }
@@ -1428,6 +1414,10 @@ inline auto VideoManager::uclamp8(double x) -> uint8_t {
     return std::min( std::max((int)(x + 0.5), 0), 255 );
 }
 
+inline auto VideoManager::uclamp10(double x) -> uint16_t {
+    return std::min( std::max((int)(x + 0.5), 0), 1023 );
+}
+
 template<uint8_t options> auto VideoManager::getRenderOptions() -> unsigned {
     unsigned out = 0;
     constexpr bool interlace = options & 3;
@@ -1463,6 +1453,9 @@ auto VideoManager::free() -> void {
     if (colorTable)
         delete[] colorTable;
 
+    if (colorTableRGB10)
+        delete[] colorTableRGB10;
+
     if (lumaChromaTable)
         delete[] lumaChromaTable;                
     
@@ -1474,6 +1467,7 @@ auto VideoManager::free() -> void {
         
     evenTable = oddTable = lumaChromaTable = nullptr;
     colorTable = nullptr;
+    colorTableRGB10 = nullptr;
 	
 	if (tempDest)
 		delete[] tempDest;

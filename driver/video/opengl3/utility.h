@@ -90,10 +90,7 @@ struct GLUtility {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         } else {
-            if (tex.format == GL_RGBA32F)
-                tex.data = new uint8_t[tex.width * tex.height * 4 * 4]();
-            else
-                tex.data = new uint8_t[tex.width * tex.height * 4]();
+            tex.data = new uint8_t[tex.width * tex.height * 4]();
         }
 
         glBindTexture(GL_TEXTURE_2D, 0);

@@ -75,7 +75,7 @@ void main() {
         xpos += 4; // no crop
 
     xpos &= 7;
-    int flags = int( color.w );
+    int flags = int( color.w * 255.0 ) >> 6;
     lumaChroma.x *= 1.0 - ((flags & 1) * BA);
     lumaChroma.x *= 1.0 - (((flags >> 1) & 1) * AEC);
     lumaChroma.x *= 1.0 - (((xpos >> 2) & 1) * PHI0);

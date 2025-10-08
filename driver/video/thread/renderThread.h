@@ -11,7 +11,6 @@ namespace DRIVER {
     struct RenderBuffer {
         std::mutex sharedMutex;
         uint8_t* data = nullptr;
-        bool floatFormat = false;
         unsigned width = 0;
         unsigned height = 0;
         unsigned pitch = 0;
@@ -52,9 +51,8 @@ namespace DRIVER {
         auto enable(bool state) -> void;
         auto changePriorityToRealtime(bool state) -> void;
 
-        auto prepareBuffer(unsigned _width, unsigned _height, bool floatFormat) -> bool;
+        auto prepareBuffer(unsigned _width, unsigned _height) -> bool;
         auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options) -> bool;
-        auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options) -> bool;
 
         auto unlock() -> void;
         auto reset() -> void;

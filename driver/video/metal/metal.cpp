@@ -486,6 +486,9 @@ namespace DRIVER {
             shaderPostBuild();
             shaderReady = false;
         }
+
+        if (!shaderPasses && (options & OPT_RGB10) ) // YUV input needs a shader to progress it
+            return false;
         
         if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
@@ -505,42 +508,6 @@ namespace DRIVER {
         }
         
         data = (unsigned*)frameData;
-        pitch = tex.width;
-
-        return true;
-    }
-    
-    auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
-        
-        if (shaderReady) {
-            wait();
-           // @autoreleasepool {
-                shaderPostBuild();
-          //  }
-            shaderReady = false;
-        }
-        
-        if (!shaderPasses) // YUV input needs a shader to progress it
-            return false;
-        
-        if (threadEnabled)
-            return RenderThread::lock(data, pitch, _width, _height, options);
-        
-        this->options = options;
-        MTLTexture& tex = frame.textures[0];
-        
-        if (MTLUtility::initTexture(tex, _width, _height, MTLPixelFormatRGBA32Float, device)) {
-            if (frameData)
-                delete[] frameData;
-            frameData = new uint8_t[tex.bytesPerRow * tex.height];
-            
-            viewScreen.update(viewport);
-            updateViewport();
-            updateRTS = true;
-            updateHistory = true;
-        }
-        
-        data = (float*)frameData;
         pitch = tex.width;
 
         return true;
@@ -573,7 +540,7 @@ namespace DRIVER {
         if (renderBuffer && renderBuffer->height) {
             MTLTexture& tex = frame.textures[0];
             renderBuffer->sharedMutex.lock();
-            MTLUtility::initTexture(tex, renderBuffer->width, renderBuffer->height, renderBuffer->floatFormat ? MTLPixelFormatRGBA32Float : MTLPixelFormatBGRA8Unorm, device);
+            MTLUtility::initTexture(tex, renderBuffer->width, renderBuffer->height,MTLPixelFormatBGRA8Unorm, device);
 
             [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.width, (NSUInteger)tex.height)
                         mipmapLevel:0 withBytes:renderBuffer->data bytesPerRow: tex.bytesPerRow];
