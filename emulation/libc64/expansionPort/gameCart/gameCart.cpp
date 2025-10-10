@@ -23,6 +23,7 @@
 #include "hyperBasic.h"
 #include "businessBasic.h"
 #include "rgcd.h"
+#include "structuredBasic.h"
 
 namespace LIBC64 {
 
@@ -152,6 +153,10 @@ auto GameCart::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> C
 
         case Interface::CartridgeIdBusinessBasic:
             cart = new BusinessBasic(system);
+            break;
+
+        case Interface::CartridgeIdStructuredBasic:
+            cart = new StructuredBasic(system);
             break;
 
         default:

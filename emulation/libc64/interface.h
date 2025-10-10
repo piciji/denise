@@ -64,7 +64,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdSuperSnapshotV5 = 20, CartridgeIdComal80 = 21, CartridgeIdSilverrock = 55, CartridgeIdRGCD = 57,
     	CartridgeIdStarDos = 31, CartridgeIdProfDos = 1000, CartridgeIdPrologicDos = 1001, CartridgeIdTurboTrans = 1002,
         CartridgeIdRGCDHucky = 571, CartridgeIdEasyCalc = 59, CartridgeIdHyperBasic = 79, CartridgeIdBusinessBasic/*KingSoft*/ = 54,
-    	CartridgeIdMagicDesk2 = 85,
+    	CartridgeIdMagicDesk2 = 85, CartridgeIdStructuredBasic = 22,
     };
 
     enum FirmwareId {

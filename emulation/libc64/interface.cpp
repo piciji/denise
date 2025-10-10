@@ -248,6 +248,7 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdEasyCalc, "Easy Calc"} );
         expansion.pcbs.push_back( {CartridgeIdHyperBasic, "Hyper-Basic"} );
         expansion.pcbs.push_back( {CartridgeIdBusinessBasic, "Kingsoft Business Basic"} );
+        expansion.pcbs.push_back( {CartridgeIdStructuredBasic, "Structured Basic"} );
 
 		expansion.creationIdents.push_back( "Gmod2 Flash" );
         expansion.creationIdents.push_back( "Gmod2 Eeprom" );
