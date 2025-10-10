@@ -130,6 +130,7 @@ view(withSpectrum) {
 VideoShaderLayout::Main::Control::Control() {
     append(unload,{0u, 0u});
     append(spacer, { ~0u, 0u });
+    append(prependSvideoShader, { 0u, 0u }, 10);
     append(downloadShader, { 0u, 0u }, 5);
     append(manuell, { 0u, 0u }, 15);
 
@@ -775,6 +776,10 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             }
         });
         t1.detach();
+    };
+
+    layShader.main.control.prependSvideoShader.onToggle = [this](bool checked) {
+        _settings->set<bool>("prepend_svideo_shader", checked );
     };
 
     moduleTree.onChange = [this](GUIKIT::TreeViewItem* selectedBefore) {
@@ -2066,9 +2071,11 @@ auto PresentationLayout::buildShaderUI(ShaderPreset* preset, bool selectIt) -> v
     if (params.size()) {
         moduleTree.append(tviParams);
         layShader.main.info.toParams.setEnabled();
-    }
 
-    tviShader.setExpanded();
+        tviParams.setExpanded();
+    } else
+        tviShader.setExpanded();
+
     if (selectIt && !tviBase.selected() && !isSecondaryViewSelected()) {
         tviShader.setSelected();
         moduleSwitch.setSelection( 2 );
@@ -2458,6 +2465,7 @@ auto PresentationLayout::translate() -> void {
     layShader.main.info.toParams.setText( trans->getA("Parameter") );
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
+    layShader.main.control.prependSvideoShader.setText( trans->getA("prepend S-Video Shader") );
 
     layPass.settings.file.ident.setText( trans->getA("file", true) );
     layPass.settings.filter.ident.setText( trans->getA("filter", true) );
@@ -2752,6 +2760,9 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     layRewind.bufferSize.slider.setPosition(rewindBuffer / 10 - 1);
     layRewind.bufferSize.setValue( std::to_string(rewindBuffer) );
 
+    if (_settings->get<bool>("prepend_svideo_shader", dynamic_cast<LIBC64::Interface*>(emulator) ))
+        layShader.main.control.prependSvideoShader.setChecked();
+
     updateBfiVisibilities();
 }
 
@@ -3002,6 +3013,23 @@ auto PresentationLayout::selectViewScreenshot() -> void {
 
 auto PresentationLayout::checkHDR() -> void {
     layMotion.hdr.setEnabled( videoDriver->HDRsupport() );
+}
+
+auto PresentationLayout::jumpToParams() -> void {
+    selectedParamId = 0;
+    if (selectedParamId >= params.size())
+        return;
+
+    auto& param = params[selectedParamId];
+
+    tviParams.setExpanded();
+    if (!param.tvi)
+        tviParams.setSelected();
+    else
+        param.tvi->setSelected();
+
+    buildParams(param);
+    moduleSwitch.setSelection( 3 );
 }
 
 }

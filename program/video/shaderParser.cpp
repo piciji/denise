@@ -612,10 +612,18 @@ auto ShaderParser::setPassScaleY(unsigned passId, float scale) -> void {
 
 auto ShaderParser::needMetaData() -> bool {
     for (auto& pass : shaderPreset.passes) {
-        if (pass.inUse && (pass.alias == "VICIIGlitches"))
+        if (pass.inUse && (pass.alias == "VICIIGlitches" || pass.alias == "CRT Prepend 1"))
             return true;
     }
 
+    return false;
+}
+
+auto ShaderParser::hasAlias(const std::string& alias) -> bool {
+    for (auto& pass : shaderPreset.passes) {
+        if (pass.alias == alias)
+            return true;
+    }
     return false;
 }
 
@@ -641,6 +649,8 @@ auto ShaderParser::addBrokenLUT() -> void {
 }
 
 auto ShaderParser::updateCrop() -> void {
+    shaderPreset.useCrop = false;
+
     for(auto& pass : shaderPreset.passes)
         pass.crop.release();
 
@@ -655,6 +665,7 @@ auto ShaderParser::updateCrop() -> void {
         if (GUIKIT::String::findString(pass.alias, "BloomVertical")
             || GUIKIT::String::findString(pass.alias, "GammaOrShades") || GUIKIT::String::findString(pass.alias, "LumaChromaDecoding") ) {
             pass.crop.set({1, 4, 0, 4});
+            shaderPreset.useCrop = true;
             break;
         }
     }

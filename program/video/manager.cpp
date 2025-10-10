@@ -680,11 +680,17 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 
 	} else if (crtMode == CrtMode::Gpu) {
         if (shaderLumaChromaInput()) {
-            width += SHADER_OFFSCREEN_WIDTH << 1;
-            srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
-            src -= SHADER_OFFSCREEN_WIDTH;
 
-            if (!videoDriver->lock(gpuData, gpuPitch, width, height + (interlace ? 2 : 1), gpuOptions | (uint8_t)DRIVER::OPT_RGB10 ))
+            int _hAdjust = 0;
+            if (shaderUseCrop()) {
+                width += SHADER_OFFSCREEN_WIDTH << 1;
+                srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
+                src -= SHADER_OFFSCREEN_WIDTH;
+                _hAdjust = interlace ? 2 : 1;
+            } else
+                cropTop = -1; // prevent
+
+            if (!videoDriver->lock(gpuData, gpuPitch, width, height + _hAdjust, gpuOptions | (uint8_t)DRIVER::OPT_RGB10 ))
                 goto Typical;
 
             renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width, cropTop);
@@ -874,7 +880,7 @@ template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsig
 }
 #undef screenshot3channel
 
-template<typename T, bool interlace, bool field> inline auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, unsigned& cropTop) -> void {
+template<typename T, bool interlace, bool field> inline auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, int cropTop) -> void {
 	const T* srcDelay = src;
     T color;
     unsigned metaShift = countColorBits;
@@ -884,19 +890,22 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
     if (interlace && !field && !laceToggle && !interlaceFields) // hold -> update full frames only
         return;
 
-    if(cropTop) {
-        srcDelay -= width + srcPitch;
-        if constexpr (interlace)
-            srcDelay -= width + srcPitch;
-    }
+    if (cropTop != -1) {
 
-    for (int i = 0; i <= interlace; i++) {
-        for (unsigned w = 0; w < width; w++) { // delayline
-            color = *srcDelay++;
-            *dest++ = colorTableRGB10[ color & mask ] | (color >> metaShift) << 30;
+        if(cropTop) {
+            srcDelay -= width + srcPitch;
+            if constexpr (interlace)
+                srcDelay -= width + srcPitch;
         }
-        dest += destPitch;
-        srcDelay += srcPitch;
+
+        for (int i = 0; i <= interlace; i++) {
+            for (unsigned w = 0; w < width; w++) { // delayline
+                color = *srcDelay++;
+                *dest++ = colorTableRGB10[ color & mask ] | (color >> metaShift) << 30;
+            }
+            dest += destPitch;
+            srcDelay += srcPitch;
+        }
     }
 
     if (interlace && !laceToggle) {
@@ -1499,6 +1508,16 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
         delete tempParser;
         return nullptr;
     }
+
+    if (settings->get<bool>("prepend_svideo_shader", dynamic_cast<LIBC64::Interface*>(emulator) )) {
+        if (!tempParser->hasAlias("CRT Prepend 1")) {
+            ShaderParser* tempParserPre = new ShaderParser;
+            if (tempParserPre->loadPreset(program->shaderFolder() + "svideo_crt_prepend.slangp"))
+                tempParser->addPreset( tempParserPre, true );
+            delete tempParserPre;
+        }
+    }
+
     // important, parameter changes when temp parser replaces current parser.
     // old shader is still active ... need to run to a safe spot before
     videoDriver->waitRenderThread();
@@ -1623,6 +1642,10 @@ auto VideoManager::setPassScaleY(unsigned passId, float scale) -> void {
 
 auto VideoManager::shaderLumaChromaInput() -> bool {
     return parser->shaderPreset.lumaChroma;
+}
+
+inline auto VideoManager::shaderUseCrop() -> bool {
+    return parser->shaderPreset.useCrop;
 }
 
 auto VideoManager::translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string {

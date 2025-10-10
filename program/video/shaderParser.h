@@ -66,6 +66,7 @@ struct ShaderParser {
     auto writeLine(FILE* fp, std::string key, std::string value) -> void;
 
     auto needMetaData() -> bool;
+    auto hasAlias(const std::string& alias) -> bool;
 
     auto clear() -> void;
 

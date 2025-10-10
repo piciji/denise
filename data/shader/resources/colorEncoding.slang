@@ -58,13 +58,12 @@ void main() {
     float flags = color.w;
 
     if (bool(params.autoEmu_lumaChroma)) {
-        // YUV / YIC input
+        // 10 BIT RGB input to prevent accuracy loss
         int _col = int((uint(color.b * 255.0) & 255)
         | ((uint(color.g * 255.0) & 255) << 8)
         | ((uint(color.r * 255.0) & 255) << 16)
         | ((uint(color.a * 255.0) & 255) << 24));
 
-        // 10 bit to prevent accuracy loss
         color.b = float(_col & 1023) / 255.0;
         color.g = float((_col >> 10) & 1023) / 255.0;
         color.r = float((_col >> 20) & 1023) / 255.0;

@@ -1,0 +1,19 @@
+
+shaders = 2
+luma_chroma = true
+
+shader0 = resources/crtPrepend1.slang
+alias0 = "CRT Prepend 1"
+wrap_mode0 = "clamp_to_edge"
+filter_linear0 = false
+float_framebuffer0 = true
+scale_type0 = source
+scale0 = 1.0
+
+shader1 = resources/crtPrepend2.slang
+alias1 = "CRT Prepend 2"
+wrap_mode1 = "clamp_to_edge"
+filter_linear1 = false
+float_framebuffer1 = true
+scale_type1 = source
+scale1 = 1.0

@@ -163,7 +163,7 @@ struct VideoManager {
     static auto convertRGBToYUV(ColorLumaChroma* dest, ColorRgb* src) -> void;
     auto setPalette(Emulator::Interface::Palette* palette) -> void;
 
-    template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, unsigned& cropTop) -> void;
+    template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, int cropTop) -> void;
     template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
     template<typename T> auto renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void;
     template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
@@ -251,6 +251,7 @@ struct VideoManager {
     auto setPassScaleX(unsigned passId, float scale) -> void;
     auto setPassScaleY(unsigned passId, float scale) -> void;
     auto shaderLumaChromaInput() -> bool;
+    auto shaderUseCrop() -> bool;
     auto translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string;
 
     auto fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool;
