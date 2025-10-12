@@ -28,7 +28,6 @@ struct MTLVertexSlang {
 struct MTLProgram {
     MTLTexture renderTarget;
     MTLTexture feedbackTarget;
-    MTLTexture cropTarget;
     bool inUse;
     std::string codeFragment;
     std::string codeVertex;
@@ -38,9 +37,6 @@ struct MTLProgram {
     MTLPixelFormat format;
     std::string ident;
     MTLViewport viewport;
-    CropPass crop;
-    MTLOrigin cropOrigin;
-    MTLSize cropSize;
     
     bool mipmap = false;
     bool feedback = false;

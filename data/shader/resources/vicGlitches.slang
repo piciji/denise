@@ -16,7 +16,6 @@ layout(push_constant) uniform Push
     float glitch_ba;
     float autoEmu_cropLeft;
     float autoEmu_pal;
-    float autoEmu_lumaChroma;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -33,14 +32,13 @@ layout(std140, set = 0, binding = 0) uniform UBO
 // RAS: first pixel of each half cycle will be non darkened
 
 #pragma parameter vicGlitches_head      "[VICII GLITCHES]"   0 0 0.001 0.001
-#pragma parameter glitch_aec            "AEC"                10.5 0 50 0.1
-#pragma parameter glitch_ba             "BA"                 10.5 0 50 0.1
-#pragma parameter glitch_phi            "PHI"                10.5 0 50 0.1
-#pragma parameter glitch_ras            "RAS"                10.5 0 50 0.1
-#pragma parameter glitch_cas            "CAS"                10.5 0 50 0.1
+#pragma parameter glitch_aec            "AEC"                10.5 0 25 0.1
+#pragma parameter glitch_ba             "BA"                 10.5 0 25 0.1
+#pragma parameter glitch_phi            "PHI"                10.5 0 25 0.1
+#pragma parameter glitch_ras            "RAS"                10.5 0 25 0.1
+#pragma parameter glitch_cas            "CAS"                10.5 0 25 0.1
 #pragma parameter autoEmu_cropLeft      "Crop Left"          6 0 100 1
 #pragma parameter autoEmu_pal           "PAL"                1 0 1 1
-#pragma parameter autoEmu_lumaChroma    "Luma Chroma Input"  0 0 1 1
 
 
 #pragma stage vertex
@@ -68,19 +66,20 @@ void main() {
     float RAS = params.glitch_ras * params.glitch_ras * 0.0001;
 
     vec3 lumaChroma = color.xyz;
-    float xposF = vTexCoord.x * params.SourceSize.x;
-    int xpos = int(xposF);
-    xpos += int(params.autoEmu_cropLeft) + (2 << (int(params.autoEmu_pal) ^ 1));
-    if (!(bool(params.autoEmu_lumaChroma)))
-        xpos += 4; // no crop
+    float _y = texture(Source, vTexCoord.xy + vec2( -2.0 / float(params.SourceSize.x), 0.0)).x;
 
-    xpos &= 7;
-    int flags = int( color.w * 255.0 ) >> 6;
-    lumaChroma.x *= 1.0 - ((flags & 1) * BA);
-    lumaChroma.x *= 1.0 - (((flags >> 1) & 1) * AEC);
-    lumaChroma.x *= 1.0 - (((xpos >> 2) & 1) * PHI0);
-    lumaChroma.x *= 1.0 - (((xpos >> 1) & 1) * CAS);
-    lumaChroma.x *= 1.0 - (((((~xpos >> 1) & 1) & (~xpos & 1)) ^ 1) * RAS);
+    if (_y > 0.0) {
+        float xposF = vTexCoord.x * params.SourceSize.x;
+        int xpos = int(xposF);
+        xpos += int(params.autoEmu_cropLeft) + 4 + (2 << (int(params.autoEmu_pal) ^ 1));
 
+        xpos &= 7;
+        int flags = int( color.w * 255.0 ) >> 6;
+        lumaChroma.x *= 1.0 - ((flags & 1) * BA);
+        lumaChroma.x *= 1.0 - (((flags >> 1) & 1) * AEC);
+        lumaChroma.x *= 1.0 - (((xpos >> 2) & 1) * PHI0);
+        lumaChroma.x *= 1.0 - (((xpos >> 1) & 1) * CAS);
+        lumaChroma.x *= 1.0 - (((((~xpos >> 1) & 1) & (~xpos & 1)) ^ 1) * RAS);
+    }
     FragColor = vec4(lumaChroma, 1.0);
 }

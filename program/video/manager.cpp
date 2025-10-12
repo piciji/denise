@@ -681,19 +681,10 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
 	} else if (crtMode == CrtMode::Gpu) {
         if (shaderLumaChromaInput()) {
 
-            int _hAdjust = 0;
-            if (shaderUseCrop()) {
-                width += SHADER_OFFSCREEN_WIDTH << 1;
-                srcPitch -= SHADER_OFFSCREEN_WIDTH << 1;
-                src -= SHADER_OFFSCREEN_WIDTH;
-                _hAdjust = interlace ? 2 : 1;
-            } else
-                cropTop = -1; // prevent
-
-            if (!videoDriver->lock(gpuData, gpuPitch, width, height + _hAdjust, gpuOptions | (uint8_t)DRIVER::OPT_RGB10 ))
+            if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10 ))
                 goto Typical;
 
-            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width, cropTop);
+            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
 
         } else {
 Typical:
@@ -880,8 +871,7 @@ template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsig
 }
 #undef screenshot3channel
 
-template<typename T, bool interlace, bool field> inline auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, int cropTop) -> void {
-	const T* srcDelay = src;
+template<typename T, bool interlace, bool field> auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch) -> void {
     T color;
     unsigned metaShift = countColorBits;
     unsigned mask = (1 << metaShift) - 1;
@@ -889,24 +879,6 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
 
     if (interlace && !field && !laceToggle && !interlaceFields) // hold -> update full frames only
         return;
-
-    if (cropTop != -1) {
-
-        if(cropTop) {
-            srcDelay -= width + srcPitch;
-            if constexpr (interlace)
-                srcDelay -= width + srcPitch;
-        }
-
-        for (int i = 0; i <= interlace; i++) {
-            for (unsigned w = 0; w < width; w++) { // delayline
-                color = *srcDelay++;
-                *dest++ = colorTableRGB10[ color & mask ] | (color >> metaShift) << 30;
-            }
-            dest += destPitch;
-            srcDelay += srcPitch;
-        }
-    }
 
     if (interlace && !laceToggle) {
         float iRate = (float)(100 - interlaceDecay);
@@ -1509,10 +1481,11 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
         return nullptr;
     }
 
-    if (settings->get<bool>("prepend_svideo_shader", dynamic_cast<LIBC64::Interface*>(emulator) )) {
-        if (!tempParser->hasAlias("CRT Prepend 1")) {
+    if (settings->get<bool>("prepend_yuv_shader", dynamic_cast<LIBC64::Interface*>(emulator) )) {
+        if (!tempParser->hasYUVPrepend() && !tempParser->internalShader()) {
             ShaderParser* tempParserPre = new ShaderParser;
-            if (tempParserPre->loadPreset(program->shaderFolder() + "svideo_crt_prepend.slangp"))
+            std::string _emuIdent = emulator->ident;
+            if (tempParserPre->loadPreset(program->shaderFolder() + GUIKIT::String::toLowerCase(_emuIdent) + "_yuv.slangp"))
                 tempParser->addPreset( tempParserPre, true );
             delete tempParserPre;
         }
@@ -1642,10 +1615,6 @@ auto VideoManager::setPassScaleY(unsigned passId, float scale) -> void {
 
 auto VideoManager::shaderLumaChromaInput() -> bool {
     return parser->shaderPreset.lumaChroma;
-}
-
-inline auto VideoManager::shaderUseCrop() -> bool {
-    return parser->shaderPreset.useCrop;
 }
 
 auto VideoManager::translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string {

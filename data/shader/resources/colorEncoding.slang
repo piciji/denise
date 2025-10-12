@@ -85,7 +85,7 @@ void main() {
             float _phaseError = params.phaseErrorPAL * PI / 180.0;
             float rotU = cos(_phaseError);
             float rotV = sin(_phaseError);
-            int oddLine = ((int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1) ^ (int(params.autoEmu_lumaChroma) ^ 1);
+            int oddLine = ((int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1) ^ 1;
 
             vec3 yuvEven = vec3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV, lumaChroma.z * rotU + lumaChroma.y * rotV);
             vec3 yuvOdd = vec3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV * -1, lumaChroma.z * rotU + lumaChroma.y * rotV * -1);

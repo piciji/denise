@@ -56,7 +56,6 @@ auto ShaderParser::loadPreset(std::string path) -> bool {
         applyOverrides(path, settingsList);
     }
 
-    updateCrop();
     return true;
 }
 
@@ -85,7 +84,10 @@ auto ShaderParser::savePreset(std::string path) -> bool {
 
         for(int i = 0; i < shaderPreset.passes.size(); i++) {
             auto& pass = shaderPreset.passes[i];
-            writeLine(fp, i, "shader", GUIKIT::File::buildRelativePath(path, pass.src));
+
+            writeLine(fp, i, "shader", GUIKIT::File::buildRelativePath(
+                hasYUVPrepend(pass) ? program->shaderFolder() : path, pass.src));
+
             if (!pass.inUse)
                 writeLine(fp, i, "hide", "true");
             if (pass.filter != ShaderPreset::FILTER_UNSPEC)
@@ -123,7 +125,7 @@ auto ShaderParser::savePreset(std::string path) -> bool {
             fputs( out.c_str(), fp );
 
             for(auto& lut : shaderPreset.luts) {
-                writeLine(fp, lut.id, GUIKIT::File::buildRelativePath(path, lut.path) );
+                writeLine(fp, lut.id, GUIKIT::File::buildRelativePath(hasYUVPrepend(lut) ? program->shaderFolder() : path, lut.path) );
                 if (lut.filter != ShaderPreset::FILTER_UNSPEC)
                     writeLine(fp, lut.id + "_linear", lut.filter == ShaderPreset::FILTER_NEAREST ? "false" : "true" );
                 writeLine(fp, lut.id + "_wrap_mode",  translateWrapMode(lut.wrap) );
@@ -222,7 +224,7 @@ auto ShaderParser::parseTextures() -> void {
 
         if (lut.path.empty())
             continue;
-        lut.path = GUIKIT::File::resolveRelativePath( rootSettings.getPath(), lut.path );
+        lut.path = GUIKIT::File::resolveRelativePath( hasYUVPrepend(lut) ? program->shaderFolder() : rootSettings.getPath(), lut.path );
 
         int filter = -1;
         if (rootSettings.find(id + "_linear"))
@@ -241,14 +243,13 @@ auto ShaderParser::parseTextures() -> void {
 
 auto ShaderParser::parsePass(unsigned pos) -> bool {
     ShaderPreset::Pass pass;
-    pass.crop.release();
     std::string strPos = std::to_string(pos);
     std::string path = rootSettings.get<std::string>("shader" + strPos, "");
     if (path.empty())
         return false;
 
-    pass.src = GUIKIT::File::resolveRelativePath( rootSettings.getPath(), path);
     pass.alias = rootSettings.get<std::string>("alias" + strPos, "");
+    pass.src = GUIKIT::File::resolveRelativePath( hasYUVPrepend(pass) ? program->shaderFolder() : rootSettings.getPath(), path);
     pass.bufferType = ShaderPreset::BufferType::UNKNOWN;
     pass.error = "";
     if (!fetchShaderSource(pass))
@@ -517,7 +518,6 @@ auto ShaderParser::addPreset(ShaderParser* parser, bool prepend) -> bool {
     GUIKIT::Vector::combine<ShaderPreset::Pass>(shaderPreset.passes, preset.passes, prepend);
     GUIKIT::Vector::combine<ShaderPreset::Param>(shaderPreset.params, preset.params, prepend);
     GUIKIT::Vector::combine<ShaderPreset::Lut>(shaderPreset.luts, preset.luts, prepend);
-    updateCrop();
     return true;
 }
 
@@ -538,7 +538,6 @@ auto ShaderParser::movePass(unsigned& passId, bool up) -> void {
             modified = true;
         }
     }
-    updateCrop();
 }
 
 auto ShaderParser::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
@@ -548,7 +547,6 @@ auto ShaderParser::togglePassUsage(unsigned passId) -> ShaderPreset::Pass* {
     ShaderPreset::Pass& pass = shaderPreset.passes[passId];
     pass.inUse ^= 1;
     modified = true;
-    updateCrop();
     return &pass;
 }
 
@@ -612,19 +610,34 @@ auto ShaderParser::setPassScaleY(unsigned passId, float scale) -> void {
 
 auto ShaderParser::needMetaData() -> bool {
     for (auto& pass : shaderPreset.passes) {
-        if (pass.inUse && (pass.alias == "VICIIGlitches" || pass.alias == "CRT Prepend 1"))
+        if (pass.inUse && (pass.alias == "VICIIGlitches" || hasYUVPrepend(pass)))
             return true;
     }
 
     return false;
 }
 
-auto ShaderParser::hasAlias(const std::string& alias) -> bool {
+auto ShaderParser::hasYUVPrepend(ShaderPreset::Lut& lut) -> bool {
+    return lut.id == "lutChromaBandwidth";
+}
+
+auto ShaderParser::hasYUVPrepend(ShaderPreset::Pass& pass) -> bool {
+    return pass.alias == "YUV Encoding" || pass.alias == "YUV Decoding";
+}
+
+auto ShaderParser::hasYUVPrepend() -> bool {
     for (auto& pass : shaderPreset.passes) {
-        if (pass.alias == alias)
+        if (hasYUVPrepend(pass))
             return true;
     }
     return false;
+}
+
+auto ShaderParser::internalShader() -> bool {
+    if (entryPaths.empty())
+        return true;
+
+    return GUIKIT::String::foundSubStr(entryPaths[0], program->shaderFolder());
 }
 
 auto ShaderParser::checkLUT(ShaderPreset::Lut& lut) -> bool {
@@ -645,29 +658,6 @@ auto ShaderParser::addBrokenLUT() -> void {
     for(auto& lut : shaderPreset.luts) {
         if (lut.error)
             errors.push_back(lut.path);
-    }
-}
-
-auto ShaderParser::updateCrop() -> void {
-    shaderPreset.useCrop = false;
-
-    for(auto& pass : shaderPreset.passes)
-        pass.crop.release();
-
-    if (!shaderPreset.lumaChroma)
-        return;
-
-    for(int i = shaderPreset.passes.size() - 1; i >= 0; i--) {
-        ShaderPreset::Pass& pass = shaderPreset.passes[i];
-        if (!pass.inUse)
-            continue;
-
-        if (GUIKIT::String::findString(pass.alias, "BloomVertical")
-            || GUIKIT::String::findString(pass.alias, "GammaOrShades") || GUIKIT::String::findString(pass.alias, "LumaChromaDecoding") ) {
-            pass.crop.set({1, 4, 0, 4});
-            shaderPreset.useCrop = true;
-            break;
-        }
     }
 }
 

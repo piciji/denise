@@ -130,7 +130,7 @@ view(withSpectrum) {
 VideoShaderLayout::Main::Control::Control() {
     append(unload,{0u, 0u});
     append(spacer, { ~0u, 0u });
-    append(prependSvideoShader, { 0u, 0u }, 10);
+    append(yuvEncoding, { 0u, 0u }, 10);
     append(downloadShader, { 0u, 0u }, 5);
     append(manuell, { 0u, 0u }, 15);
 
@@ -778,8 +778,8 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         t1.detach();
     };
 
-    layShader.main.control.prependSvideoShader.onToggle = [this](bool checked) {
-        _settings->set<bool>("prepend_svideo_shader", checked );
+    layShader.main.control.yuvEncoding.onToggle = [this](bool checked) {
+        _settings->set<bool>("prepend_yuv_shader", checked );
     };
 
     moduleTree.onChange = [this](GUIKIT::TreeViewItem* selectedBefore) {
@@ -2465,7 +2465,7 @@ auto PresentationLayout::translate() -> void {
     layShader.main.info.toParams.setText( trans->getA("Parameter") );
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
-    layShader.main.control.prependSvideoShader.setText( trans->getA("prepend S-Video Shader") );
+    layShader.main.control.yuvEncoding.setText( trans->getA("PAL Encoding") );
 
     layPass.settings.file.ident.setText( trans->getA("file", true) );
     layPass.settings.filter.ident.setText( trans->getA("filter", true) );
@@ -2760,8 +2760,8 @@ auto PresentationLayout::loadSettings(bool init) -> void {
     layRewind.bufferSize.slider.setPosition(rewindBuffer / 10 - 1);
     layRewind.bufferSize.setValue( std::to_string(rewindBuffer) );
 
-    if (_settings->get<bool>("prepend_svideo_shader", dynamic_cast<LIBC64::Interface*>(emulator) ))
-        layShader.main.control.prependSvideoShader.setChecked();
+    if (_settings->get<bool>("prepend_yuv_shader", dynamic_cast<LIBC64::Interface*>(emulator) ))
+        layShader.main.control.yuvEncoding.setChecked();
 
     updateBfiVisibilities();
 }
@@ -2828,12 +2828,15 @@ auto PresentationLayout::showErrors(const std::vector<std::string>& errors) -> v
         layShader.main.append(*label, {0u, 0u}, 2);
     }
 
+    int i = 0;
     for (auto& error : errors) {
         auto label = new GUIKIT::Label;
         label->setText(error);
         label->setForegroundColor(ERROR_COLOR);
         layShader.main.errorLabels.push_back(label);
         layShader.main.append(*label, {0u, 0u}, 2);
+        if (i > 5)
+            break;
     }
 
     if (hasLabels || errSize)
@@ -2945,6 +2948,8 @@ auto PresentationLayout::presentShaderError() -> void {
     for(auto& pass : preset->passes) {
         if (pass.inUse && !pass.error.empty()) {
             tviPasses[passId]->setImage(imgError);
+            if (!tviShader.expanded())
+                tviShader.setExpanded();
 
             if (selectedPassId == passId) {
                 std::string _error = pass.error;

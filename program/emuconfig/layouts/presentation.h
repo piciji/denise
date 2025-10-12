@@ -77,7 +77,7 @@ struct VideoShaderLayout : GUIKIT::VerticalLayout {
         struct Control : GUIKIT::HorizontalLayout {
             GUIKIT::Button unload;
             GUIKIT::Widget spacer;
-            GUIKIT::CheckBox prependSvideoShader;
+            GUIKIT::CheckBox yuvEncoding;
             GUIKIT::CheckBox manuell;
             GUIKIT::ImageView downloadShader;
             GUIKIT::Button loadOldShader;

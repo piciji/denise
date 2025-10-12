@@ -37,8 +37,6 @@ namespace DRIVER {
         bool feedback = false;
         unsigned frameCount = 0;
         unsigned frameModulo = 0;
-        CropPass crop;
-        CropPass cropBox;
         GLuint indexUboVertex;
         GLuint indexUboFragment;
         GLuint uboBuffer = 0;
@@ -46,7 +44,6 @@ namespace DRIVER {
 
         GLTexture renderTarget;
         GLTexture feedbackTarget;
-        GLTexture cropTarget;
         std::string codeFragment;
         std::string codeVertex;
         std::vector<SemanticTexture> semanticTextures;

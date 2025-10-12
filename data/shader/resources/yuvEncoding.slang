@@ -66,6 +66,16 @@ layout(location = 0) out vec4 FragColor;
 layout(set = 0, binding = 2) uniform sampler2D Source;
 
 float vicGlitches(float luma, int flags) {
+    float _y;
+    vec3 ySrc = texture(Source, vTexCoord.xy + vec2( -2.0 / float(params.SourceSize.x), 0.0)).rgb;
+    if (bool(params.autoEmu_pal))
+        _y = ySrc.r * 0.299 + ySrc.g * 0.587 + ySrc.b * 0.114;
+    else
+        _y = ySrc.r * 0.23485876230514607 + ySrc.g * 0.6335007388077467 + ySrc.b * 0.13164049888710716;
+
+    if (_y <= 0.0)
+        return luma;
+
     float AEC = params.glitch_aec * params.glitch_aec * 0.0001;
     float BA = params.glitch_ba * params.glitch_ba * 0.0001;
     float PHI0 = params.glitch_phi * params.glitch_phi * 0.0001;

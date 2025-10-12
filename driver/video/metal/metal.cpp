@@ -164,7 +164,6 @@ namespace DRIVER {
         for(auto& program : programs) {
             program.renderTarget.view = nil;
             program.feedbackTarget.view = nil;
-            program.cropTarget.view = nil;
             program.pipelineState = nil;
             program.buffers[0] = nil;
             program.buffers[1] = nil;
@@ -865,9 +864,7 @@ namespace DRIVER {
                             rpd.colorAttachments[0].texture = hdrTex.view;
                         else
                             rpd.colorAttachments[0].texture = drawable.texture;
-                    } else if (p.crop.active)
-                        rpd.colorAttachments[0].texture = p.cropTarget.view;
-                    else
+                    } else
                         rpd.colorAttachments[0].texture = p.renderTarget.view;
                     
                     rce = [commandBuffer renderCommandEncoderWithDescriptor:rpd];
@@ -923,20 +920,12 @@ namespace DRIVER {
 
                     [rce endEncoding];
                     
-                    if (p.mipmap || p.crop.active) {
+                    if (p.mipmap) {
                         // note: one encoder at a time for same commandbuffer, so "[rce endEncoding]" before
                         id<MTLBlitCommandEncoder> bce = [commandBuffer blitCommandEncoder];
                         
                         if (p.mipmap)
-                            [bce generateMipmapsForTexture:(p.crop.active ? p.cropTarget.view : p.renderTarget.view)];
-                        
-                        if (p.crop.active) {
-                            [bce copyFromTexture:p.cropTarget.view sourceSlice:0 sourceLevel:0
-                               sourceOrigin:p.cropOrigin sourceSize:p.cropSize
-                               toTexture:p.renderTarget.view
-                               destinationSlice:0 destinationLevel:0
-                               destinationOrigin:MTLOriginMake(0, 0, 0)];
-                        }
+                            [bce generateMipmapsForTexture:(p.renderTarget.view)];
                         
                         [bce endEncoding];
                         bce = nil;
@@ -1310,32 +1299,6 @@ namespace DRIVER {
                 p.viewport.znear   = 0.0f;
                 p.viewport.zfar    = 1.0f;
 
-                if (p.crop.active) {
-                    auto& crop = p.crop;
-                    uint8_t interlace = (options & OPT_Interlace) ? 1 : 0;
-                    unsigned croppedLeft = (width * crop.left) / sourceWidth;
-                    unsigned croppedRight = (width * crop.right) / sourceWidth;
-                    unsigned croppedTop = (height * (crop.top << interlace) ) / sourceHeight;
-                    unsigned croppedBottom = (height * (crop.bottom << interlace) ) / sourceHeight;
-
-                    width -= croppedLeft + croppedRight;
-                    height -= croppedTop + croppedBottom;
-                    
-                    p.cropOrigin.x = croppedLeft;
-                    p.cropOrigin.y = croppedTop;
-                    p.cropOrigin.z = 0;
-                    
-                    p.cropSize.width = width;
-                    p.cropSize.height = height;
-                    p.cropSize.depth = 1;
-
-                    MTLUtility::releaseTexture(p.cropTarget);
-                    MTLUtility::initTexture(p.cropTarget, width, height, p.format, device, p.mipmap, true);
-
-                    // todo: SourceSize of following pass isn't OutputSize (non cropped) of this pass.
-                    // only internal shader use this feature and relevant passes don't access SourceSize
-                    std::swap(p.renderTarget.view, p.cropTarget.view);
-                }
             } else {
                 MTLUtility::releaseTexture(p.renderTarget);
                 
@@ -1636,7 +1599,6 @@ namespace DRIVER {
             program.filter = pass.filter;
             program.wrap = pass.wrap;
             program.frameModulo = pass.frameModulo;
-            program.crop = pass.crop;
             program.mipmap = false;
 
             if (!pass.inUse)

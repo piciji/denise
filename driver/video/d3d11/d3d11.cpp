@@ -903,7 +903,6 @@ namespace DRIVER {
             program.wrap = pass.wrap;
             program.frameModulo = pass.frameModulo;
             program.format = D3D11Utility::getFormat( pass.bufferType );
-            program.crop = pass.crop;
             program.mipmap = false;
 
             if (!pass.inUse)
@@ -1266,10 +1265,7 @@ namespace DRIVER {
                 context->Draw(4, lastPass ? 0 : 4 );
 
                 if (p.mipmap)
-                    context->GenerateMips( p.crop.active ? p.cropTarget.view : p.renderTarget.view);
-
-                if (p.crop.active)
-                    context->CopySubresourceRegion((ID3D11Resource*)p.renderTarget.ptr, 0, 0, 0, 0, (ID3D11Resource*)p.cropTarget.ptr, 0, &p.cropBox);
+                    context->GenerateMips( p.renderTarget.view);
 
                 texture = &p.renderTarget;
             }
@@ -1457,39 +1453,6 @@ namespace DRIVER {
                         continue;
                 }
 
-                if (p.crop.active) {
-                    auto& crop = p.crop;
-                    uint8_t interlace = (options & OPT_Interlace) ? 1 : 0;
-                    unsigned croppedLeft = (width * crop.left) / sourceWidth;
-                    unsigned croppedRight = (width * crop.right) / sourceWidth;
-                    unsigned croppedTop = (height * (crop.top << interlace) ) / sourceHeight;
-                    unsigned croppedBottom = (height * (crop.bottom << interlace) ) / sourceHeight;
-
-                    width -= croppedLeft + croppedRight;
-                    height -= croppedTop + croppedBottom;
-
-                    p.cropBox.left = croppedLeft;
-                    p.cropBox.right = width + croppedLeft;
-                    p.cropBox.top = croppedTop;
-                    p.cropBox.bottom = height + croppedTop;
-                    p.cropBox.front  = 0;
-                    p.cropBox.back   = 1;
-
-                    D3D11Utility::releaseTexture(p.cropTarget);
-                    p.cropTarget.desc.Width = width;
-                    p.cropTarget.desc.Height = height;
-                    p.cropTarget.desc.Format = p.format;
-                    if (p.mipmap)
-                        p.renderTarget.desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-
-                    if (!D3D11Utility::initTexture(device, p.cropTarget, false))
-                        continue;
-
-                    // todo: SourceSize of following pass isn't OutputSize (non cropped) of this pass.
-                    // only internal shader use this feature and relevant passes don't access SourceSize
-                    std::swap(p.renderTarget.view, p.cropTarget.view);
-                    std::swap(p.renderTarget.ptr, p.cropTarget.ptr);
-                }
             } else {
                 if (viewScreen.flipped && (viewScreen.mode != ViewScreen::Mode::Window)) {
                     unsigned tmp = width;

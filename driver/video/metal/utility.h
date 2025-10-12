@@ -74,7 +74,6 @@ namespace DRIVER {
             
             releaseTexture(prg.renderTarget);
             releaseTexture(prg.feedbackTarget);
-            releaseTexture(prg.cropTarget);
             releaseShader(prg);
         }
         

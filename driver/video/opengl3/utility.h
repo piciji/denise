@@ -119,7 +119,6 @@ struct GLUtility {
         deleteProgram(prg.prg);
         releaseTexture(prg.renderTarget);
         releaseTexture(prg.feedbackTarget);
-        releaseTexture(prg.cropTarget);
 
         if (prg.uboData) {
             delete[] prg.uboData;
@@ -137,8 +136,6 @@ struct GLUtility {
 
         prg.semanticBuffer[SemanticBuffer::Ubo].mask = 0;
         prg.semanticBuffer[SemanticBuffer::Push].mask = 0;
-        prg.crop.release();
-        prg.cropBox.release();
     }
 
     static auto getGLSLVersion(GLint& major, GLint& minor) -> unsigned {
