@@ -2465,7 +2465,8 @@ auto PresentationLayout::translate() -> void {
     layShader.main.info.toParams.setText( trans->getA("Parameter") );
     layShader.favourite.control.add.setText( trans->getA("add") );
     layShader.favourite.control.remove.setText( trans->getA("remove") );
-    layShader.main.control.yuvEncoding.setText( trans->getA("PAL Encoding") );
+    layShader.main.control.yuvEncoding.setText( trans->getA("YUV Encoding") );
+    layShader.main.control.yuvEncoding.setTooltip( trans->getA("YUV Encoding tooltip") );
 
     layPass.settings.file.ident.setText( trans->getA("file", true) );
     layPass.settings.filter.ident.setText( trans->getA("filter", true) );
