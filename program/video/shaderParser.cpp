@@ -627,17 +627,10 @@ auto ShaderParser::hasYUVPrepend(ShaderPreset::Pass& pass) -> bool {
 
 auto ShaderParser::hasYUVPrepend() -> bool {
     for (auto& pass : shaderPreset.passes) {
-        if (hasYUVPrepend(pass))
+        if (hasYUVPrepend(pass) || (pass.alias == "LumaChromaEncoding"))
             return true;
     }
     return false;
-}
-
-auto ShaderParser::internalShader() -> bool {
-    if (entryPaths.empty())
-        return true;
-
-    return GUIKIT::String::foundSubStr(entryPaths[0], program->shaderFolder());
 }
 
 auto ShaderParser::checkLUT(ShaderPreset::Lut& lut) -> bool {

@@ -9,10 +9,6 @@ struct MTLTexture {
     id<MTLTexture> view = nil;
     Float4 size;
     unsigned bytesPerRow;
-    
-    // seems redundant, but we need this when swapping crop with render target to keep track of real size
-    unsigned width = 0;
-    unsigned height = 0;
 };
 
 struct MTLVertex {

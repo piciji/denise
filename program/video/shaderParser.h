@@ -69,7 +69,6 @@ struct ShaderParser {
     auto hasYUVPrepend(ShaderPreset::Pass& pass) -> bool;
     auto hasYUVPrepend() -> bool;
     auto hasYUVPrepend(ShaderPreset::Lut& lut) -> bool;
-    auto internalShader() -> bool;
 
     auto clear() -> void;
 

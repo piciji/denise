@@ -1482,7 +1482,7 @@ auto VideoManager::loadPreset(const std::string& path, std::vector<std::string>&
     }
 
     if (settings->get<bool>("prepend_yuv_shader", dynamic_cast<LIBC64::Interface*>(emulator) )) {
-        if (!tempParser->hasYUVPrepend() && !tempParser->internalShader()) {
+        if (!tempParser->hasYUVPrepend()) {
             ShaderParser* tempParserPre = new ShaderParser;
             std::string _emuIdent = emulator->ident;
             if (tempParserPre->loadPreset(program->shaderFolder() + GUIKIT::String::toLowerCase(_emuIdent) + "_yuv.slangp"))

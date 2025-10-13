@@ -498,7 +498,7 @@ namespace DRIVER {
         if (MTLUtility::initTexture(tex, _width, _height, MTLPixelFormatBGRA8Unorm, device)) {
             if (frameData)
                 delete[] frameData;
-            frameData = new uint8_t[tex.bytesPerRow * tex.height];
+            frameData = new uint8_t[tex.bytesPerRow * tex.view.height];
             
             viewScreen.update(viewport);
             updateViewport();
@@ -507,7 +507,7 @@ namespace DRIVER {
         }
         
         data = (unsigned*)frameData;
-        pitch = tex.width;
+        pitch = tex.view.width;
 
         return true;
     }
@@ -522,7 +522,7 @@ namespace DRIVER {
             
             MTLTexture& tex = frame.textures[0];
 
-            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.width, (NSUInteger)tex.height)
+            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.view.width, (NSUInteger)tex.view.height)
                         mipmapLevel:0 withBytes:frameData bytesPerRow: tex.bytesPerRow];
             
             redrawBase();
@@ -541,7 +541,7 @@ namespace DRIVER {
             renderBuffer->sharedMutex.lock();
             MTLUtility::initTexture(tex, renderBuffer->width, renderBuffer->height,MTLPixelFormatBGRA8Unorm, device);
 
-            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.width, (NSUInteger)tex.height)
+            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.view.width, (NSUInteger)tex.view.height)
                         mipmapLevel:0 withBytes:renderBuffer->data bytesPerRow: tex.bytesPerRow];
             
             options = renderBuffer->options;
@@ -814,7 +814,7 @@ namespace DRIVER {
             MTLTexture& mainTex = frame.textures[0];
             
             if (updateRTS)
-                updateRenderTargets(mainTex.width, mainTex.height);
+                updateRenderTargets(mainTex.view.width, mainTex.view.height);
             
             id<MTLRenderCommandEncoder> rce;
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
@@ -938,7 +938,7 @@ namespace DRIVER {
                     if (updateHistory) {
                         for(int i = 1; i <= historySize; i++) {
                             MTLUtility::releaseTexture(frame.textures[i]);
-                            MTLUtility::initTexture(frame.textures[i], mainTex.width, mainTex.height, mainTex.view.pixelFormat, device);
+                            MTLUtility::initTexture(frame.textures[i], mainTex.view.width, mainTex.view.height, mainTex.view.pixelFormat, device);
                         }
                         
                         updateHistory = false;
@@ -1156,7 +1156,7 @@ namespace DRIVER {
     auto setProgressPosition() -> void {
         float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
         
-        float x = -1.0 + (viewport.width - progressTex.width - 20) * screenx;
+        float x = -1.0 + (viewport.width - progressTex.view.width - 20) * screenx;
         float y = 1.0 -  20.0 * screeny;
 
         float w = progressTex.size.x * screenx;
@@ -1692,7 +1692,7 @@ namespace DRIVER {
                 MTLUtility::releaseTexture(lutTex);
                 MTLUtility::initTexture(lutTex, lutFile->width, lutFile->height, MTLPixelFormatRGBA8Unorm, device, lut.mipmap);
                 
-                [lutTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)lutTex.width, (NSUInteger)lutTex.height)
+                [lutTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)lutTex.view.width, (NSUInteger)lutTex.view.height)
                             mipmapLevel:0 // fill in original texture, next command generates mips for the requested mipmapLevelCount
                             withBytes:lutFile->data bytesPerRow: lutTex.bytesPerRow];
                 

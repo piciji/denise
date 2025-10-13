@@ -153,11 +153,8 @@ namespace DRIVER {
         
         static auto initTexture(MTLTexture& tex, unsigned newWidth, unsigned newHeight, MTLPixelFormat newFormat, id<MTLDevice> device, bool mipmapped = false, bool renderTarget = false) -> bool {
             
-            if(tex.view != nil && tex.view.pixelFormat == newFormat && tex.width == newWidth && tex.height == newHeight)
+            if(tex.view != nil && tex.view.pixelFormat == newFormat && tex.view.width == newWidth && tex.view.height == newHeight)
                 return false;
-            
-            tex.width = newWidth;
-            tex.height = newHeight;
             
             if (tex.view)
                 [tex.view release];
@@ -187,7 +184,7 @@ namespace DRIVER {
             
             tex.view = [device newTextureWithDescriptor:td];
             
-            tex.size = {(float)tex.width, (float)tex.height, 1.0f / float(tex.width), 1.0f / float(tex.height)};
+            tex.size = {(float)tex.view.width, (float)tex.view.height, 1.0f / float(tex.view.width), 1.0f / float(tex.view.height)};
             
             return true;
         }
