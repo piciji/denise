@@ -1,0 +1,27 @@
+
+shaders = 2
+luma_chroma = true
+
+shader0 = resources/yuvEncoding.slang
+alias0 = "YUV Encoding"
+wrap_mode0 = "clamp_to_edge"
+filter_linear0 = false
+float_framebuffer0 = true
+scale_type0 = source
+scale0 = 1.0
+
+shader1 = resources/yuvDecoding.slang
+alias1 = "YUV Decoding"
+wrap_mode1 = "clamp_to_edge"
+filter_linear1 = false
+float_framebuffer1 = true
+scale_type1 = source
+scale1 = 1.0
+
+# LUT generation: program/video/luts.cpp
+textures = "lutChromaBandwidth"
+
+lutChromaBandwidth = resources/lutBandwidth.png
+lutChromaBandwidth_linear = false
+lutChromaBandwidth_mipmap = false
+lutChromaBandwidth_wrap_mode = "clamp_to_edge"

@@ -30,10 +30,6 @@ struct ColorLumaChroma {
     int32_t y_s_blur;   
     int32_t u_i_s;
     int32_t v_q_s;
-    
-    float y_n;
-    float u_i_n;
-    float v_q_n;
 };
 
 struct ColorRgb {
@@ -110,6 +106,7 @@ struct VideoManager {
     Emulator::Interface::Palette* palette;
     
     uint32_t* colorTable = nullptr;
+    uint32_t* colorTableRGB10 = nullptr;
 
     unsigned countColorBits;
 	
@@ -161,11 +158,12 @@ struct VideoManager {
     auto getBackgroundColor() -> unsigned;
        
     static auto uclamp8(double x) -> uint8_t;
+    static auto uclamp10(double x) -> uint16_t;
     static auto convertRGBToYIQ(ColorLumaChroma* dest, ColorRgb* src) -> void;
     static auto convertRGBToYUV(ColorLumaChroma* dest, ColorRgb* src) -> void;
     auto setPalette(Emulator::Interface::Palette* palette) -> void;
 
-    template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, float* dest, unsigned destPitch, unsigned& cropTop) -> void;
+    template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch) -> void;
     template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
     template<typename T> auto renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void;
     template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;

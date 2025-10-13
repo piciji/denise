@@ -9,10 +9,6 @@ struct MTLTexture {
     id<MTLTexture> view = nil;
     Float4 size;
     unsigned bytesPerRow;
-    
-    // seems redundant, but we need this when swapping crop with render target to keep track of real size
-    unsigned width = 0;
-    unsigned height = 0;
 };
 
 struct MTLVertex {
@@ -28,7 +24,6 @@ struct MTLVertexSlang {
 struct MTLProgram {
     MTLTexture renderTarget;
     MTLTexture feedbackTarget;
-    MTLTexture cropTarget;
     bool inUse;
     std::string codeFragment;
     std::string codeVertex;
@@ -38,9 +33,6 @@ struct MTLProgram {
     MTLPixelFormat format;
     std::string ident;
     MTLViewport viewport;
-    CropPass crop;
-    MTLOrigin cropOrigin;
-    MTLSize cropSize;
     
     bool mipmap = false;
     bool feedback = false;

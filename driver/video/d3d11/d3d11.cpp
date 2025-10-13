@@ -85,7 +85,7 @@ namespace DRIVER {
     ID3D11Buffer* uboRotated;
     ID3D11SamplerState* samplers[3][4];
     ID3D11SamplerState* sampler;
-    DXGI_FORMAT format;
+
     bool updateRTS;
     bool updateHistory;
     uint8_t options;
@@ -486,7 +486,6 @@ namespace DRIVER {
         if (settings.hdrEnable)
             setHdrChain(swapChain, DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020, hdrUniforms.maxNits);
 
-        format = DXGI_FORMAT_B8G8R8A8_UNORM;
         if (!initMainTexture(32, 32))
             return term(), false;
 
@@ -904,7 +903,6 @@ namespace DRIVER {
             program.wrap = pass.wrap;
             program.frameModulo = pass.frameModulo;
             program.format = D3D11Utility::getFormat( pass.bufferType );
-            program.crop = pass.crop;
             program.mipmap = false;
 
             if (!pass.inUse)
@@ -1046,6 +1044,9 @@ namespace DRIVER {
             shaderReady = false;
         }
 
+        if (!shaderPasses && (options & OPT_RGB10) ) // YUV input needs a shader to progress it
+            return false;
+
         if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
@@ -1053,8 +1054,7 @@ namespace DRIVER {
         if (swapChain.frameLatency && !settings.vrr)
             WaitForSingleObjectEx( swapChain.frameLatency, 500, true);
 
-        format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        if(format != frame.textures[0].desc.Format || _width != frame.textures[0].desc.Width || _height != frame.textures[0].desc.Height) {
+        if(_width != frame.textures[0].desc.Width || _height != frame.textures[0].desc.Height) {
             if (!initMainTexture(_width, _height))
                 return false;
             viewScreen.update(viewport);
@@ -1068,45 +1068,6 @@ namespace DRIVER {
 
         data = (unsigned*)mappedTexture.pData;
         pitch = mappedTexture.RowPitch >> 2;
-
-        return true;
-    }
-
-    auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
-        if (settings.hintExclusiveFullscreen)
-            checkFSE();
-
-        if (shaderReady) {
-            wait();
-            shaderPostBuild();
-            shaderReady = false;
-        }
-
-        if (!shaderPasses) // YUV input needs a shader to progress it
-            return false;
-
-        if (threadEnabled)
-            return RenderThread::lock(data, pitch, _width, _height, options);
-
-        this->options = options;
-        if (swapChain.frameLatency && !settings.vrr)
-            WaitForSingleObjectEx( swapChain.frameLatency, 500, true);
-
-        format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-        if(format != frame.textures[0].desc.Format || _width != frame.textures[0].desc.Width || _height != frame.textures[0].desc.Height) {
-            if (!initMainTexture(_width, _height))
-                return false;
-            viewScreen.update(viewport);
-            updateRTS = true;
-            updateHistory = true;
-        }
-
-        D3D11_MAPPED_SUBRESOURCE mappedTexture;
-        if (FAILED(context->Map((ID3D11Resource*)frame.textures[0].staging, 0, D3D11_MAP_WRITE, 0, &mappedTexture)))
-            return false;
-
-        data = (float*)mappedTexture.pData;
-        pitch = mappedTexture.RowPitch >> 4;
 
         return true;
     }
@@ -1154,8 +1115,7 @@ namespace DRIVER {
 
             renderBuffer->sharedMutex.lock();
 
-            format = renderBuffer->floatFormat ? DXGI_FORMAT_R32G32B32A32_FLOAT : DXGI_FORMAT_B8G8R8A8_UNORM;
-            if(format != frame.textures[0].desc.Format || renderBuffer->width != frame.textures[0].desc.Width || renderBuffer->height != frame.textures[0].desc.Height) {
+            if(renderBuffer->width != frame.textures[0].desc.Width || renderBuffer->height != frame.textures[0].desc.Height) {
                 if (!initMainTexture(renderBuffer->width, renderBuffer->height)) {
                     renderBuffer->sharedMutex.unlock();
                     return;
@@ -1168,7 +1128,7 @@ namespace DRIVER {
                 return;
             }
 
-            int srcPitch = renderBuffer->width << (renderBuffer->floatFormat ? 4 : 2);
+            int srcPitch = renderBuffer->width << 2;
             uint8_t* src = renderBuffer->data;
 
             unsigned pitch = mappedTexture.RowPitch;
@@ -1305,10 +1265,7 @@ namespace DRIVER {
                 context->Draw(4, lastPass ? 0 : 4 );
 
                 if (p.mipmap)
-                    context->GenerateMips( p.crop.active ? p.cropTarget.view : p.renderTarget.view);
-
-                if (p.crop.active)
-                    context->CopySubresourceRegion((ID3D11Resource*)p.renderTarget.ptr, 0, 0, 0, 0, (ID3D11Resource*)p.cropTarget.ptr, 0, &p.cropBox);
+                    context->GenerateMips( p.renderTarget.view);
 
                 texture = &p.renderTarget;
             }
@@ -1496,39 +1453,6 @@ namespace DRIVER {
                         continue;
                 }
 
-                if (p.crop.active) {
-                    auto& crop = p.crop;
-                    uint8_t interlace = (options & OPT_Interlace) ? 1 : 0;
-                    unsigned croppedLeft = (width * crop.left) / sourceWidth;
-                    unsigned croppedRight = (width * crop.right) / sourceWidth;
-                    unsigned croppedTop = (height * (crop.top << interlace) ) / sourceHeight;
-                    unsigned croppedBottom = (height * (crop.bottom << interlace) ) / sourceHeight;
-
-                    width -= croppedLeft + croppedRight;
-                    height -= croppedTop + croppedBottom;
-
-                    p.cropBox.left = croppedLeft;
-                    p.cropBox.right = width + croppedLeft;
-                    p.cropBox.top = croppedTop;
-                    p.cropBox.bottom = height + croppedTop;
-                    p.cropBox.front  = 0;
-                    p.cropBox.back   = 1;
-
-                    D3D11Utility::releaseTexture(p.cropTarget);
-                    p.cropTarget.desc.Width = width;
-                    p.cropTarget.desc.Height = height;
-                    p.cropTarget.desc.Format = p.format;
-                    if (p.mipmap)
-                        p.renderTarget.desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-
-                    if (!D3D11Utility::initTexture(device, p.cropTarget, false))
-                        continue;
-
-                    // todo: SourceSize of following pass isn't OutputSize (non cropped) of this pass.
-                    // only internal shader use this feature and relevant passes don't access SourceSize
-                    std::swap(p.renderTarget.view, p.cropTarget.view);
-                    std::swap(p.renderTarget.ptr, p.cropTarget.ptr);
-                }
             } else {
                 if (viewScreen.flipped && (viewScreen.mode != ViewScreen::Mode::Window)) {
                     unsigned tmp = width;
@@ -1558,7 +1482,7 @@ namespace DRIVER {
                 hdr.texture.desc.Format = p.format;
             } else {
                 setInternalHDRParams(true, true);
-                hdr.texture.desc.Format = format;
+                hdr.texture.desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
             }
 
             D3D11Utility::initTexture(device, hdr.texture);
@@ -1674,7 +1598,7 @@ namespace DRIVER {
         D3D11Utility::releaseTexture(frame.textures[pos]);
         frame.textures[pos].desc.Width = w;
         frame.textures[pos].desc.Height = h;
-        frame.textures[pos].desc.Format = format;
+        frame.textures[pos].desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
         return D3D11Utility::initTexture(device, frame.textures[pos]);
     }
 

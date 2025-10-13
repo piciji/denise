@@ -90,10 +90,7 @@ struct GLUtility {
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         } else {
-            if (tex.format == GL_RGBA32F)
-                tex.data = new uint8_t[tex.width * tex.height * 4 * 4]();
-            else
-                tex.data = new uint8_t[tex.width * tex.height * 4]();
+            tex.data = new uint8_t[tex.width * tex.height * 4]();
         }
 
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -122,7 +119,6 @@ struct GLUtility {
         deleteProgram(prg.prg);
         releaseTexture(prg.renderTarget);
         releaseTexture(prg.feedbackTarget);
-        releaseTexture(prg.cropTarget);
 
         if (prg.uboData) {
             delete[] prg.uboData;
@@ -140,8 +136,6 @@ struct GLUtility {
 
         prg.semanticBuffer[SemanticBuffer::Ubo].mask = 0;
         prg.semanticBuffer[SemanticBuffer::Push].mask = 0;
-        prg.crop.release();
-        prg.cropBox.release();
     }
 
     static auto getGLSLVersion(GLint& major, GLint& minor) -> unsigned {

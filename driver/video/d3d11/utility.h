@@ -245,7 +245,6 @@ struct D3D11Utility {
         releaseShader(prg.shader);
         releaseTexture(prg.renderTarget);
         releaseTexture(prg.feedbackTarget);
-        releaseTexture(prg.cropTarget);
 
         for (int b = 0; b < SemanticBuffer::Max; b++) {
             dxRelease(prg.buffers[b])

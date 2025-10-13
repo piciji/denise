@@ -45,12 +45,9 @@ namespace DRIVER {
         bool feedback = false;
         unsigned frameCount = 0;
         unsigned frameModulo = 0;
-        CropPass crop;
-        D3D11_BOX cropBox;
 
         D3DTexture renderTarget;
         D3DTexture feedbackTarget;
-        D3DTexture cropTarget;
         std::string codeFragment;
         std::string codeVertex;
         std::vector<SemanticTexture> semanticTextures;

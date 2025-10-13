@@ -175,13 +175,8 @@ struct GL3 {
         GLuint type;
         void* data = renderBuffer ? renderBuffer->data : tex.data;
 
-        if (tex.format == GL_RGBA32F) {
-            pixelFormat = GL_RGBA;
-            type = GL_FLOAT;
-        } else {
-            pixelFormat = GL_BGRA;
-            type = GL_UNSIGNED_INT_8_8_8_8_REV;
-        }
+        pixelFormat = GL_BGRA;
+        type = GL_UNSIGNED_INT_8_8_8_8_REV;
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex.view);
@@ -291,11 +286,7 @@ struct GL3 {
                     break;
                 }
 
-                if (p.crop.active) {
-                    glBindFramebuffer(GL_FRAMEBUFFER, p.cropTarget.frameBuffer);
-                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, p.cropTarget.view, 0);
-                } else
-                    glBindFramebuffer(GL_FRAMEBUFFER, p.renderTarget.frameBuffer);
+                glBindFramebuffer(GL_FRAMEBUFFER, p.renderTarget.frameBuffer);
 
                 glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
                 glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -312,26 +303,9 @@ struct GL3 {
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
                 if (p.renderTarget.mipmap) {
-                    glBindTexture(GL_TEXTURE_2D, p.crop.active ? p.cropTarget.view : p.renderTarget.view);
+                    glBindTexture(GL_TEXTURE_2D, p.renderTarget.view);
                     glGenerateMipmap(GL_TEXTURE_2D);
                     glBindTexture(GL_TEXTURE_2D, 0);
-                }
-
-                if (p.crop.active) {
-                    glBindFramebuffer(GL_READ_FRAMEBUFFER, p.cropTarget.frameBuffer);
-                    glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, p.cropTarget.view, 0);
-                    glReadBuffer(GL_COLOR_ATTACHMENT0);
-
-                    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, p.renderTarget.frameBuffer);
-                    glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, p.renderTarget.view, 0);
-                    glDrawBuffer(GL_COLOR_ATTACHMENT1);
-
-                    glBlitFramebuffer(
-                            p.cropBox.left, p.cropBox.top, p.cropBox.right, p.cropBox.bottom,
-                            0, 0, p.cropTarget.width, p.cropTarget.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, 0, 0);
-                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
                 }
 
                 texture = &p.renderTarget;
@@ -849,7 +823,6 @@ End:
             program.frameModulo = pass.frameModulo;
             program.renderTarget.format = GLUtility::getFormat( pass.bufferType );
             program.feedbackTarget.format = program.renderTarget.format;
-            program.crop = pass.crop;
             program.renderTarget.mipmap = program.feedbackTarget.mipmap = false;
 
             if (!pass.inUse)
@@ -1045,33 +1018,6 @@ End:
                         continue;
                 }
 
-                if (p.crop.active) {
-                    auto& crop = p.crop;
-                    unsigned croppedLeft = (width * crop.left) / sourceWidth;
-                    unsigned croppedRight = (width * crop.right) / sourceWidth;
-                    unsigned croppedTop = (height * (crop.top << (uint8_t)interlace) ) / sourceHeight;
-                    unsigned croppedBottom = (height * (crop.bottom << (uint8_t)interlace) ) / sourceHeight;
-
-                    width -= croppedLeft + croppedRight;
-                    height -= croppedTop + croppedBottom;
-
-                    p.cropBox.left = croppedLeft;
-                    p.cropBox.right = width + croppedLeft;
-                    p.cropBox.top = croppedTop;
-                    p.cropBox.bottom = height + croppedTop;
-
-                    GLUtility::releaseTexture(p.cropTarget);
-                    p.cropTarget.width = width;
-                    p.cropTarget.height = height;
-                    p.cropTarget.format = p.renderTarget.format;
-                    p.cropTarget.mipmap = false;
-
-                    if (!GLUtility::initTexture(p.cropTarget, true))
-                        continue;
-
-                    std::swap(p.renderTarget.view, p.cropTarget.view);
-                    std::swap(p.renderTarget.frameBuffer, p.cropTarget.frameBuffer);
-                }
             } else {
                 if (viewScreen.flipped && (viewScreen.mode != ViewScreen::Mode::Window)) {
                     unsigned tmp = width;

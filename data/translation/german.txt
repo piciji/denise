@@ -941,3 +941,5 @@ rewind = Zurückspulen
 frames per step = Bilder pro Schritt
 buffer size = Puffer Größe
 rewind hotkey tooltip = Zurückgespult wird über einen Hotkey. Klicke hier und suche dann in der Liste den Hotkey für Zurückspulen. Nach einem Doppelklick in dieser Listenzeile weist du der Funktion eine Tasten Kombination zu. Für eine optimale Nutzung sollte man Zurückspulen auf das Gamepad legen.
+YUV Encoding = YUV-Kodierung
+YUV Encoding tooltip = Das Bild wird in Form von Luminanz/Chrominanz (AV, Composite, S-Video) anstatt RGB übertragen. Diese Option wird beim Laden eines Shaders berücksichtigt.

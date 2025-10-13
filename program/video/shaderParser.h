@@ -66,12 +66,14 @@ struct ShaderParser {
     auto writeLine(FILE* fp, std::string key, std::string value) -> void;
 
     auto needMetaData() -> bool;
+    auto hasYUVPrepend(ShaderPreset::Pass& pass) -> bool;
+    auto hasYUVPrepend() -> bool;
+    auto hasYUVPrepend(ShaderPreset::Lut& lut) -> bool;
 
     auto clear() -> void;
 
     auto checkLUT(ShaderPreset::Lut& lut) -> bool;
     auto addBrokenLUT() -> void;
-    auto updateCrop() -> void;
 
     auto fetchShaderSource(const std::string& path, ShaderPreset::Pass& pass, std::vector<Stage>& stages, int depth = 0, bool optional = false) -> bool;
     auto fetchShaderSource(ShaderPreset::Pass& pass) -> bool;

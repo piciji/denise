@@ -279,6 +279,9 @@ struct GLX : public Video, GL3, RenderThread {
             shaderReady = false;
         }
 
+        if (!shaderPasses && (options & OPT_RGB10) ) // YUV input needs a shader to progress it
+            return false;
+
         if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
 
@@ -302,41 +305,6 @@ struct GLX : public Video, GL3, RenderThread {
 
 		return GL3::lock(data, pitch);
 	}
-	
-	auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
-        if (shaderReady) {
-            wait();
-            makeCurrent();
-            GL3::shaderPostBuild();
-            clearCurrent();
-            shaderReady = false;
-        }
-
-        if (!shaderPasses) // YUV input needs a shader to progress it
-            return false;
-
-        if (threadEnabled)
-            return RenderThread::lock(data, pitch, _width, _height, options);
-
-        bool _useResizing = useResizing;
-        if (_useResizing)
-            resizeMutex.lock();
-
-        this->options = options;
-        makeCurrent(true);
-        if (GL3::initTexture(_width, _height, GL_RGBA32F)) {
-            updateRTS = true;
-            updateHistory = true;
-            viewScreen.update(viewport);
-        }
-
-        if (_useResizing) {
-            clearCurrent();
-            resizeMutex.unlock();
-        }
-
-        return GL3::lock(data, pitch);
-    }
 
     auto adjustSize(unsigned& w, unsigned& h) -> void {
         viewScreen.update(viewport);
@@ -507,7 +475,7 @@ struct GLX : public Video, GL3, RenderThread {
 
         if (renderBuffer && renderBuffer->height) {
             renderBuffer->sharedMutex.lock();
-            GL3::initTexture(renderBuffer->width, renderBuffer->height, renderBuffer->floatFormat ? GL_RGBA32F : GL_RGBA8);
+            GL3::initTexture(renderBuffer->width, renderBuffer->height,GL_RGBA8);
 
             updateMainTexture(renderBuffer);
             options = renderBuffer->options;

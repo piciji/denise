@@ -54,7 +54,7 @@ struct ScreenTextDescription {
 };
 
 enum Options { OPT_HoldFrame = 1, OPT_Interlace = 2, OPT_DisallowShader = 4, OPT_TakeScreenshot = 8,
-                OPT_DisallowFilter = 0x10, OPT_Pause = 0x20, OPT_Rewind = 0x40 };
+                OPT_DisallowFilter = 0x10, OPT_Pause = 0x20, OPT_Rewind = 0x40, OPT_RGB10 = 0x80 };
 enum Rotation { ROT_0, ROT_90, ROT_180, ROT_270 };
 
 struct Video {
@@ -64,7 +64,6 @@ struct Video {
     virtual auto term() -> void {}
 
     virtual auto lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
-    virtual auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool { return false; }
     virtual auto redraw() -> void {}
     virtual auto unlockAndRedraw() -> void {}
     virtual auto clear() -> void {}

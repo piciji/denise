@@ -14,7 +14,6 @@ layout(push_constant) uniform Push
     float autoEmu_cropTop;
     float autoEmu_lace;
     float autoEmu_pal;
-    float autoEmu_lumaChroma;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -22,9 +21,8 @@ layout(std140, set = 0, binding = 0) uniform UBO
     mat4 MVP;
 } global;
 
-#pragma parameter hanoverBars           "Hanover Bars"       10 -100 100 1
+#pragma parameter hanoverBars           "Hanover Bars"       -10 -100 100 1
 #pragma parameter noEncoding            "Disable Encoding"   0 0 1 1
-#pragma parameter autoEmu_lumaChroma    "Luma Chroma Input"  0 0 1 1
 #pragma parameter autoEmu_cropTop       "Crop Top"           1 0 100 1
 #pragma parameter autoEmu_pal           "PAL"                1 0 1 1
 #pragma parameter autoEmu_lace          "Interlace"          0 0 1 1
@@ -52,7 +50,7 @@ void main() {
         if (bool(params.noEncoding)) {
             color = texture(Source, vTexCoord.xy).xyz * mat3(1.0,0.0,1.140251,1.0,-0.39393070,-0.58080921,1.0,2.0283976,0.0);
         } else {
-            int oddLine = ((int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1) ^ (int(params.autoEmu_lumaChroma) ^ 1);
+            int oddLine = ((int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1) ^ 1;
             int lineFactor = int(floor(mod(floor(vTexCoord.y * params.OutputSize.y / float( 1 << int(params.autoEmu_lace) )), 2.0)));
             float _hanoverBars = (100.0 - abs(params.hanoverBars)) / 100.0;
             float _hanoverBarsAlt = 1.0;
@@ -63,7 +61,7 @@ void main() {
             vec3 yuvLineBefore;
             float yOffset = float( 1 << int(params.autoEmu_lace) ) / params.OutputSize.y;
 
-            if (!(bool(params.autoEmu_lumaChroma)) && (vTexCoord.y < yOffset ) ) {
+            if (vTexCoord.y < yOffset) {
                 // no hidden delay line
                 yuvLineBefore = texture(Source, vTexCoord.xy + vec2(0.0, yOffset) ).xyz;
             } else {

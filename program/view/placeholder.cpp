@@ -49,7 +49,6 @@ auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {
     uint8_t* _data;
     unsigned gpu_pitch;
     unsigned* gpu_data = nullptr;
-    float* gpu_data_float = nullptr;
     unsigned _w, _h;
     ColorLumaChroma clc;
     ColorRgb rgb;
@@ -74,22 +73,13 @@ auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {
         return false;
 
     if (useImgViewer && (activeVideoManager->crtMode == VideoManager::CrtMode::Gpu) && activeVideoManager->shaderLumaChromaInput()) {
-        if (videoDriver->lock(gpu_data_float, gpu_pitch, _width, _height, gpuOptions)) {
+        if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10)) {
             for (_h = 0; _h < _height; _h++) {
                 for (_w = 0; _w < _width; _w++) {
-                    rgb.r = _data[0];
-                    rgb.g = _data[1];
-                    rgb.b = _data[2];
-                    VideoManager::convertRGBToYUV(&clc, &rgb);
-
-                    *gpu_data_float++ = clc.y / 255.0;
-                    *gpu_data_float++ = clc.u_i / 255.0;
-                    *gpu_data_float++ = clc.v_q / 255.0;
-                    *gpu_data_float++ = 0;
-
+                    *gpu_data++ = _data[0] << 20 | _data[1] << 10 | _data[2];
                     _data += 4;
                 }
-                gpu_data_float += gpu_pitch - _width;
+                gpu_data += gpu_pitch - _width;
             }
 
             videoDriver->unlockAndRedraw();

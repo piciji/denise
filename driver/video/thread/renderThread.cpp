@@ -15,37 +15,12 @@ namespace DRIVER {
         reset();
     }
 
-    auto RenderThread::lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options) -> bool {
-
-        if (!prepareBuffer(_width, _height, true)) {
-            if (options & 8) { // screenshot
-                wait();
-                if (!prepareBuffer(_width, _height, true))
-                    return false;
-            } else
-                return false;
-        }
-
-        lockedBuffer->options = options;
-        if ((options & 1) && fillPos) {
-            _width = lockedBuffer->pitch;
-            RenderBuffer* srcBuffer = getReuseBuffer(_width, _height);
-            if (srcBuffer && srcBuffer->data)
-                std::memcpy(lockedBuffer->data, srcBuffer->data, _width * _height * 4 * 4);
-        }
-
-        pitch = lockedBuffer->pitch;
-        data = (float*)lockedBuffer->data;
-
-        return true;
-    }
-
     auto RenderThread::lock(unsigned*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options) -> bool {
 
-        if (!prepareBuffer(_width, _height, false)) {
+        if (!prepareBuffer(_width, _height)) {
             if (options & 8) {
                 wait();
-                if (!prepareBuffer(_width, _height, false))
+                if (!prepareBuffer(_width, _height))
                     return false;
             } else
                 return false;
@@ -76,7 +51,7 @@ namespace DRIVER {
         return srcBuffer;
     }
 
-    auto RenderThread::prepareBuffer(unsigned _width, unsigned _height, bool floatFormat) -> bool {
+    auto RenderThread::prepareBuffer(unsigned _width, unsigned _height) -> bool {
 
         lockedBuffer = getBufferToDraw();
 
@@ -86,14 +61,13 @@ namespace DRIVER {
 
         lockedBuffer->sharedMutex.lock();
 
-        if (lockedBuffer->floatFormat != floatFormat || lockedBuffer->width != _width || lockedBuffer->height != _height) {
+        if (lockedBuffer->width != _width || lockedBuffer->height != _height) {
             deleteBuffer(lockedBuffer);
             lockedBuffer->width = _width;
             lockedBuffer->height = _height;
             lockedBuffer->pitch = calcPitch( _width );
-            lockedBuffer->floatFormat = floatFormat;
             adjustSize(_width, _height);
-            lockedBuffer->data = new uint8_t[_width * _height * 4 * (floatFormat ? 4 : 1) ]();
+            lockedBuffer->data = new uint8_t[_width * _height * 4]();
         }
 
         return true;
@@ -122,7 +96,6 @@ namespace DRIVER {
             buffer.height = 0;
             buffer.pitch = 0;
             buffer.options = 0;
-            buffer.floatFormat = false;
         }
 
         fillPos = 0;

@@ -164,7 +164,6 @@ namespace DRIVER {
         for(auto& program : programs) {
             program.renderTarget.view = nil;
             program.feedbackTarget.view = nil;
-            program.cropTarget.view = nil;
             program.pipelineState = nil;
             program.buffers[0] = nil;
             program.buffers[1] = nil;
@@ -486,6 +485,9 @@ namespace DRIVER {
             shaderPostBuild();
             shaderReady = false;
         }
+
+        if (!shaderPasses && (options & OPT_RGB10) ) // YUV input needs a shader to progress it
+            return false;
         
         if (threadEnabled)
             return RenderThread::lock(data, pitch, _width, _height, options);
@@ -496,7 +498,7 @@ namespace DRIVER {
         if (MTLUtility::initTexture(tex, _width, _height, MTLPixelFormatBGRA8Unorm, device)) {
             if (frameData)
                 delete[] frameData;
-            frameData = new uint8_t[tex.bytesPerRow * tex.height];
+            frameData = new uint8_t[tex.bytesPerRow * tex.view.height];
             
             viewScreen.update(viewport);
             updateViewport();
@@ -505,43 +507,7 @@ namespace DRIVER {
         }
         
         data = (unsigned*)frameData;
-        pitch = tex.width;
-
-        return true;
-    }
-    
-    auto lock(float*& data, unsigned& pitch, unsigned _width, unsigned _height, uint8_t options = 0) -> bool {
-        
-        if (shaderReady) {
-            wait();
-           // @autoreleasepool {
-                shaderPostBuild();
-          //  }
-            shaderReady = false;
-        }
-        
-        if (!shaderPasses) // YUV input needs a shader to progress it
-            return false;
-        
-        if (threadEnabled)
-            return RenderThread::lock(data, pitch, _width, _height, options);
-        
-        this->options = options;
-        MTLTexture& tex = frame.textures[0];
-        
-        if (MTLUtility::initTexture(tex, _width, _height, MTLPixelFormatRGBA32Float, device)) {
-            if (frameData)
-                delete[] frameData;
-            frameData = new uint8_t[tex.bytesPerRow * tex.height];
-            
-            viewScreen.update(viewport);
-            updateViewport();
-            updateRTS = true;
-            updateHistory = true;
-        }
-        
-        data = (float*)frameData;
-        pitch = tex.width;
+        pitch = tex.view.width;
 
         return true;
     }
@@ -556,7 +522,7 @@ namespace DRIVER {
             
             MTLTexture& tex = frame.textures[0];
 
-            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.width, (NSUInteger)tex.height)
+            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.view.width, (NSUInteger)tex.view.height)
                         mipmapLevel:0 withBytes:frameData bytesPerRow: tex.bytesPerRow];
             
             redrawBase();
@@ -573,9 +539,9 @@ namespace DRIVER {
         if (renderBuffer && renderBuffer->height) {
             MTLTexture& tex = frame.textures[0];
             renderBuffer->sharedMutex.lock();
-            MTLUtility::initTexture(tex, renderBuffer->width, renderBuffer->height, renderBuffer->floatFormat ? MTLPixelFormatRGBA32Float : MTLPixelFormatBGRA8Unorm, device);
+            MTLUtility::initTexture(tex, renderBuffer->width, renderBuffer->height,MTLPixelFormatBGRA8Unorm, device);
 
-            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.width, (NSUInteger)tex.height)
+            [tex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)tex.view.width, (NSUInteger)tex.view.height)
                         mipmapLevel:0 withBytes:renderBuffer->data bytesPerRow: tex.bytesPerRow];
             
             options = renderBuffer->options;
@@ -848,7 +814,7 @@ namespace DRIVER {
             MTLTexture& mainTex = frame.textures[0];
             
             if (updateRTS)
-                updateRenderTargets(mainTex.width, mainTex.height);
+                updateRenderTargets(mainTex.view.width, mainTex.view.height);
             
             id<MTLRenderCommandEncoder> rce;
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
@@ -898,9 +864,7 @@ namespace DRIVER {
                             rpd.colorAttachments[0].texture = hdrTex.view;
                         else
                             rpd.colorAttachments[0].texture = drawable.texture;
-                    } else if (p.crop.active)
-                        rpd.colorAttachments[0].texture = p.cropTarget.view;
-                    else
+                    } else
                         rpd.colorAttachments[0].texture = p.renderTarget.view;
                     
                     rce = [commandBuffer renderCommandEncoderWithDescriptor:rpd];
@@ -956,20 +920,12 @@ namespace DRIVER {
 
                     [rce endEncoding];
                     
-                    if (p.mipmap || p.crop.active) {
+                    if (p.mipmap) {
                         // note: one encoder at a time for same commandbuffer, so "[rce endEncoding]" before
                         id<MTLBlitCommandEncoder> bce = [commandBuffer blitCommandEncoder];
                         
                         if (p.mipmap)
-                            [bce generateMipmapsForTexture:(p.crop.active ? p.cropTarget.view : p.renderTarget.view)];
-                        
-                        if (p.crop.active) {
-                            [bce copyFromTexture:p.cropTarget.view sourceSlice:0 sourceLevel:0
-                               sourceOrigin:p.cropOrigin sourceSize:p.cropSize
-                               toTexture:p.renderTarget.view
-                               destinationSlice:0 destinationLevel:0
-                               destinationOrigin:MTLOriginMake(0, 0, 0)];
-                        }
+                            [bce generateMipmapsForTexture:(p.renderTarget.view)];
                         
                         [bce endEncoding];
                         bce = nil;
@@ -982,7 +938,7 @@ namespace DRIVER {
                     if (updateHistory) {
                         for(int i = 1; i <= historySize; i++) {
                             MTLUtility::releaseTexture(frame.textures[i]);
-                            MTLUtility::initTexture(frame.textures[i], mainTex.width, mainTex.height, mainTex.view.pixelFormat, device);
+                            MTLUtility::initTexture(frame.textures[i], mainTex.view.width, mainTex.view.height, mainTex.view.pixelFormat, device);
                         }
                         
                         updateHistory = false;
@@ -1200,7 +1156,7 @@ namespace DRIVER {
     auto setProgressPosition() -> void {
         float screenx = 2.0f / (float)viewport.width, screeny = 2.0f / (float)viewport.height;
         
-        float x = -1.0 + (viewport.width - progressTex.width - 20) * screenx;
+        float x = -1.0 + (viewport.width - progressTex.view.width - 20) * screenx;
         float y = 1.0 -  20.0 * screeny;
 
         float w = progressTex.size.x * screenx;
@@ -1343,32 +1299,6 @@ namespace DRIVER {
                 p.viewport.znear   = 0.0f;
                 p.viewport.zfar    = 1.0f;
 
-                if (p.crop.active) {
-                    auto& crop = p.crop;
-                    uint8_t interlace = (options & OPT_Interlace) ? 1 : 0;
-                    unsigned croppedLeft = (width * crop.left) / sourceWidth;
-                    unsigned croppedRight = (width * crop.right) / sourceWidth;
-                    unsigned croppedTop = (height * (crop.top << interlace) ) / sourceHeight;
-                    unsigned croppedBottom = (height * (crop.bottom << interlace) ) / sourceHeight;
-
-                    width -= croppedLeft + croppedRight;
-                    height -= croppedTop + croppedBottom;
-                    
-                    p.cropOrigin.x = croppedLeft;
-                    p.cropOrigin.y = croppedTop;
-                    p.cropOrigin.z = 0;
-                    
-                    p.cropSize.width = width;
-                    p.cropSize.height = height;
-                    p.cropSize.depth = 1;
-
-                    MTLUtility::releaseTexture(p.cropTarget);
-                    MTLUtility::initTexture(p.cropTarget, width, height, p.format, device, p.mipmap, true);
-
-                    // todo: SourceSize of following pass isn't OutputSize (non cropped) of this pass.
-                    // only internal shader use this feature and relevant passes don't access SourceSize
-                    std::swap(p.renderTarget.view, p.cropTarget.view);
-                }
             } else {
                 MTLUtility::releaseTexture(p.renderTarget);
                 
@@ -1669,7 +1599,6 @@ namespace DRIVER {
             program.filter = pass.filter;
             program.wrap = pass.wrap;
             program.frameModulo = pass.frameModulo;
-            program.crop = pass.crop;
             program.mipmap = false;
 
             if (!pass.inUse)
@@ -1763,7 +1692,7 @@ namespace DRIVER {
                 MTLUtility::releaseTexture(lutTex);
                 MTLUtility::initTexture(lutTex, lutFile->width, lutFile->height, MTLPixelFormatRGBA8Unorm, device, lut.mipmap);
                 
-                [lutTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)lutTex.width, (NSUInteger)lutTex.height)
+                [lutTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)lutTex.view.width, (NSUInteger)lutTex.view.height)
                             mipmapLevel:0 // fill in original texture, next command generates mips for the requested mipmapLevelCount
                             withBytes:lutFile->data bytesPerRow: lutTex.bytesPerRow];
                 

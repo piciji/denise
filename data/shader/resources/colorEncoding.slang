@@ -58,16 +58,24 @@ void main() {
     float flags = color.w;
 
     if (bool(params.autoEmu_lumaChroma)) {
-        // YUV / YIC input
-        lumaChroma = color.xyz;
+        // 10 BIT RGB input to prevent accuracy loss
+        int _col = int((uint(color.b * 255.0) & 255)
+        | ((uint(color.g * 255.0) & 255) << 8)
+        | ((uint(color.r * 255.0) & 255) << 16)
+        | ((uint(color.a * 255.0) & 255) << 24));
+
+        color.b = float(_col & 1023) / 255.0;
+        color.g = float((_col >> 10) & 1023) / 255.0;
+        color.r = float((_col >> 20) & 1023) / 255.0;
+
     } else {
-        // RGB input
-        if (bool(params.autoEmu_pal)) {
-            lumaChroma = vec3(color.rgb * mat3(0.299,0.587,0.114,-0.147407,-0.289391,0.436798,0.614777,-0.514799,-0.099978));
-        } else {
-            lumaChroma = vec3(color.rgb * mat3(0.23485876230514607, 0.6335007388077467, 0.13164049888710716, 0.4409594767911895, -0.27984362502847304, -0.16111585176271648, 0.14630060102591497, -0.5594814826856017, 0.4131808816596867));
-        }
         flags = 0;
+    }
+
+    if (bool(params.autoEmu_pal)) {
+        lumaChroma = vec3(color.rgb * mat3(0.299,0.587,0.114,-0.147407,-0.289391,0.436798,0.614777,-0.514799,-0.099978));
+    } else {
+        lumaChroma = vec3(color.rgb * mat3(0.23485876230514607, 0.6335007388077467, 0.13164049888710716, 0.4409594767911895, -0.27984362502847304, -0.16111585176271648, 0.14630060102591497, -0.5594814826856017, 0.4131808816596867));
     }
 
     if (bool(params.noEncoding)) {
@@ -77,7 +85,7 @@ void main() {
             float _phaseError = params.phaseErrorPAL * PI / 180.0;
             float rotU = cos(_phaseError);
             float rotV = sin(_phaseError);
-            int oddLine = ((int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1) ^ (int(params.autoEmu_lumaChroma) ^ 1);
+            int oddLine = ((int(params.autoEmu_cropTop) >> int(params.autoEmu_lace)) & 1) ^ 1;
 
             vec3 yuvEven = vec3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV, lumaChroma.z * rotU + lumaChroma.y * rotV);
             vec3 yuvOdd = vec3(lumaChroma.x, lumaChroma.y * rotU - lumaChroma.z * rotV * -1, lumaChroma.z * rotU + lumaChroma.y * rotV * -1);

@@ -941,3 +941,5 @@ rewind = Rewind
 frames per step = frames per step
 buffer size = buffer size
 rewind hotkey tooltip = Rewinding is done via a hotkey. Click here and then find the hotkey for rewind in the list. Double-click this list row to assign a key combination to the function. For optimal use, rewind should be assigned to the gamepad.
+YUV Encoding = YUV-Encoding
+YUV Encoding tooltip = The image is transmitted in the form of luminance/chrominance (AV, composite, S-Video) instead of RGB. This option is taken into account when loading a shader.

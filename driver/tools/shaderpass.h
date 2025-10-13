@@ -1,28 +1,6 @@
 
 #pragma once
 
-struct CropPass {
-    unsigned top = 0;
-    unsigned left = 0;
-    unsigned bottom = 0;
-    unsigned right = 0;
-
-    bool active = false;
-
-    auto release() -> void {
-        top = left = bottom = right = 0;
-        active = false;
-    }
-
-    auto set(const CropPass& crop) -> void {
-        top = crop.top;
-        left = crop.left;
-        bottom = crop.bottom;
-        right = crop.right;
-        active = top || left || bottom || right;
-    }
-};
-
 struct ShaderPreset {
     enum WrapMode { WRAP_BORDER = 0, WRAP_EDGE, WRAP_REPEAT, WRAP_MIRRORED_REPEAT };
     enum Filter { FILTER_UNSPEC = 0, FILTER_LINEAR, FILTER_NEAREST };
@@ -33,7 +11,7 @@ struct ShaderPreset {
         R32G32_SFLOAT, R32G32B32A32_UINT, R32G32B32A32_SINT, R32G32B32A32_SFLOAT
     };
 
-    bool lumaChroma = false; // format of incoming frame data (uses floating point for YUV/YIC)
+    bool lumaChroma = false; // incoming frame data use 10 bit RGB components to prevent accuracy loss when converting to YUV/YIC
 
     struct Pass {
         std::string src;
@@ -48,7 +26,6 @@ struct ShaderPreset {
         std::string alias;
         bool inUse;
         std::string error;
-        CropPass crop;
         bool subChain; // in the case of combined shader chains
 
         ScaleType scaleTypeX;
