@@ -193,9 +193,6 @@ struct Interface : Emulator::Interface {
     auto activateDebugCart( unsigned limitCycles = 0 ) -> void;
     auto setWarpMode(unsigned config) -> void;
 	auto getWarpMode() -> unsigned;
-    
-    auto getLuma(uint8_t index, bool newRevision) -> double;
-    auto getChroma(uint8_t index) -> double; 
 
     auto setMemoryInitParams(MemoryPattern& pattern) -> void;
 	auto getMemoryInitPattern( uint8_t* pattern ) -> void;

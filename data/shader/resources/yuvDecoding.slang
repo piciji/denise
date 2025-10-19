@@ -13,7 +13,7 @@ layout(push_constant) uniform Push
     float hanoverBars;
     float autoEmu_cropTop;
     float gamma;
-    float autoEmu_tvGamma;
+    float autoEmu_palGamma;
     float autoEmu_lace;
     float autoEmu_pal;
     float autoEmu_subRegion;
@@ -37,7 +37,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter chromaSubsampling     "Chroma Subsampling"  0 0 1 1
 #pragma parameter firTaps               "Chroma Bandwidth"    5 1 21 2
 #pragma parameter autoEmu_cropTop       "Crop Top"            1 0 100 1
-#pragma parameter autoEmu_tvGamma       "TV Gamma"            0 0 1 1
+#pragma parameter autoEmu_palGamma      "PAL Gamma"           0 0 1 1
 #pragma parameter autoEmu_pal           "PAL"                 1 0 1 1
 #pragma parameter autoEmu_lace          "Interlace"           0 0 1 1
 #pragma parameter autoEmu_subRegion     "Sub Region"          0 0 3 1
@@ -189,7 +189,7 @@ void main() {
         vec2 merged = vec2(yuv.y + yuvLineBefore.y, yuv.z + yuvLineBefore.z) * mix(_hanoverBars, _hanoverBarsAlt, lineFactor ^ int(oddLine)) * 0.5;
         color = vec3(yuv.x, merged.x, merged.y) * mat3(1.0,0.0,1.140251,1.0,-0.39393070,-0.58080921,1.0,2.0283976,0.0);
 
-        if (bool(params.autoEmu_tvGamma) )
+        if (bool(params.autoEmu_palGamma) )
             _gamma *= 2.8 / 2.2;
 
     } else {

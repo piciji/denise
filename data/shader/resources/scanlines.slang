@@ -13,7 +13,7 @@ layout(push_constant) uniform Push
     float autoEmu_lace;
     float scanlineShade;
     float gamma;
-    float autoEmu_tvGamma;
+    float autoEmu_palGamma;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -24,7 +24,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 #pragma parameter scanline_head    "[SCANLINES AND GAMMA]"  0 0 0.001 0.001
 #pragma parameter scanlineShade    "Scanline Shade"         20 0 100 1
 #pragma parameter gamma            "Gamma"                  100 30 280 1
-#pragma parameter autoEmu_tvGamma  "TV Gamma"               0 0 1 1
+#pragma parameter autoEmu_palGamma "PAL Gamma"              0 0 1 1
 #pragma parameter autoEmu_pal      "PAL"                    1 0 1 1
 #pragma parameter autoEmu_lace     "Interlace"              0 0 1 1
 
@@ -50,7 +50,7 @@ void main() {
     vec3 colorDown = texture(Source, vTexCoord.xy + vec2( 0.0, 1.0 / params.OutputSize.y ) ).rgb;
     float shade = 1.0 - (params.scanlineShade / 100.0);
     float _gamma = params.gamma / 100.0;
-    if (bool(params.autoEmu_tvGamma) && bool(params.autoEmu_pal))
+    if (bool(params.autoEmu_palGamma))
         _gamma *= 2.8 / 2.2;
 
     int lineFactor = 0;

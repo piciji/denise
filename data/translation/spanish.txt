@@ -679,7 +679,6 @@ PAULA Sample Interval tooltip = Los intervalos pequeños provocan una mayor carg
 Chip = Chip
 RGB cable = Cable RGB
 color encoding = Codificación de color PAL/NTSC
-TV gamma = TV gama
 RGB = RGB
 distortion hires tooltip = La distorsión radial puede dar lugar a la aparición del efecto muaré. Duplicar la resolución reduce este efecto, pero a expensas de un rendimiento adicional.
 interlace = Entrelazado

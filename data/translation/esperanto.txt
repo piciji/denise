@@ -679,7 +679,6 @@ PAULA Sample Interval tooltip = Malgrandaj intervaloj kaŭzas pli da CPU-ŝarĝo
 Chip = Blato
 RGB cable = RGB-kablo
 color encoding = PAL/NTSC kolorkodigo
-TV gamma = TV gama
 RGB = RGB
 distortion hires tooltip = Radiala misprezento povas konduki al la apero de la moirefiko. Duobligi la rezolucion reduktas ĉi tiun efikon, sed koste de plia agado.
 interlace = Interplekta

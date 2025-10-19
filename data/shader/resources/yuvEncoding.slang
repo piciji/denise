@@ -67,7 +67,16 @@ layout(set = 0, binding = 2) uniform sampler2D Source;
 
 float vicGlitches(float luma, int flags) {
     float _y;
-    vec3 ySrc = texture(Source, vTexCoord.xy + vec2( -2.0 / float(params.SourceSize.x), 0.0)).rgb;
+    vec4 ySrc = texture(Source, vTexCoord.xy + vec2( -2.0 / float(params.SourceSize.x), 0.0));
+    int _col = int((uint(ySrc.b * 255.0) & 255)
+    | ((uint(ySrc.g * 255.0) & 255) << 8)
+    | ((uint(ySrc.r * 255.0) & 255) << 16)
+    | ((uint(ySrc.a * 255.0) & 255) << 24));
+
+    ySrc.b = (float(_col & 1023) - 256.0) / 255.0;
+    ySrc.g = (float((_col >> 10) & 1023) - 256.0) / 255.0;
+    ySrc.r = (float((_col >> 20) & 1023) - 256.0) / 255.0;
+
     if (bool(params.autoEmu_pal))
         _y = ySrc.r * 0.299 + ySrc.g * 0.587 + ySrc.b * 0.114;
     else
@@ -107,9 +116,9 @@ void main() {
     | ((uint(color.r * 255.0) & 255) << 16)
     | ((uint(color.a * 255.0) & 255) << 24));
 
-    color.b = float(_col & 1023) / 255.0;
-    color.g = float((_col >> 10) & 1023) / 255.0;
-    color.r = float((_col >> 20) & 1023) / 255.0;
+    color.b = (float(_col & 1023) - 256.0) / 255.0;
+    color.g = (float((_col >> 10) & 1023) - 256.0) / 255.0;
+    color.r = (float((_col >> 20) & 1023) - 256.0) / 255.0;
 
     if (bool(params.autoEmu_pal)) {
         float _phaseError = params.phaseErrorPAL * PI / 180.0;

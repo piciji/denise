@@ -514,6 +514,13 @@ auto Interface::preparePalettes() -> void {
         {"Medium Gray", 0x646464},{"Light Green", 0x7ce587},{"Light Blue", 0x6351db},{"Light Gray", 0x939393}}
     });
 
+    palettes.push_back({ 20, "PALette 8565R2", false, {
+        {"Black", 0x0},{"White", 0xffffff},{"Red", 0x893436},{"Cyan", 0x67beb9},
+        {"Purple", 0x8c36a2},{"Green", 0x4ba646},{"Blue", 0x2d30a8},{"Yellow", 0xd2cf57},
+        {"Orange", 0x8d501b},{"Brown", 0x533d00},{"Light Red", 0xbb6568},{"Dark Gray", 0x4e4e4e},
+        {"Medium Gray", 0x767676},{"Light Green", 0x8ee989},{"Light Blue", 0x6669e1},{"Light Gray", 0xa3a3a3}}
+    });
+
     for( auto& palette : palettes )
         for( auto& paletteColor : palette.paletteColors )
             paletteColor.updateChannels();
@@ -1881,14 +1888,6 @@ auto Interface::setWarpMode(unsigned config) -> void {
 
 auto Interface::getWarpMode() -> unsigned {
 	return system->warp.config;
-}
-
-auto Interface::getLuma(uint8_t index, bool newRevision) -> double {
-    return system->vicII->getLuma( index, newRevision );
-}
-
-auto Interface::getChroma(uint8_t index) -> double {
-    return system->vicII->getChroma( index );
 }
 
 auto Interface::setMemoryInitParams(MemoryPattern& pattern) -> void {

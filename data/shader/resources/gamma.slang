@@ -11,7 +11,7 @@ layout(push_constant) uniform Push
 
     float autoEmu_pal;
     float gamma;
-    float autoEmu_tvGamma;
+    float autoEmu_palGamma;
 } params;
 
 layout(std140, set = 0, binding = 0) uniform UBO
@@ -20,7 +20,7 @@ layout(std140, set = 0, binding = 0) uniform UBO
 } global;
 
 #pragma parameter gamma            "Gamma"              100 30 280 1
-#pragma parameter autoEmu_tvGamma  "TV Gamma"           0 0 1 1
+#pragma parameter autoEmu_palGamma "PAL Gamma"          0 0 1 1
 #pragma parameter autoEmu_pal      "PAL"                1 0 1 1
 
 #pragma stage vertex
@@ -43,7 +43,7 @@ void main() {
     vec3 color = texture(Source, vTexCoord).rgb;
 
     float _gamma = params.gamma / 100.0;
-    if (bool(params.autoEmu_tvGamma) && bool(params.autoEmu_pal))
+    if (bool(params.autoEmu_palGamma))
         _gamma *= 2.8 / 2.2;
 
     color = clamp(color, 0.0, 1.0);

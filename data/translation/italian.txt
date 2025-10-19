@@ -679,7 +679,6 @@ PAULA Sample Interval tooltip = Un intervallo basso causa l'aumento del carico s
 Chip = Chip
 RGB cable = Cavo RGB
 color encoding = Codificatore PAL/NTSC
-TV gamma = Gamma TV
 RGB = RGB
 distortion hires tooltip = La distorsione radiale può dar luogo alla comparsa di un effetto moiré. Raddoppiando la risoluzione si riduce questo effetto, a discapito però delle prestazioni aggiuntive.
 interlace = Interlaccia

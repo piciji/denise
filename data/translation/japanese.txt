@@ -679,7 +679,6 @@ PAULA Sample Interval tooltip =ごく短いインターバルはCPU負荷を高�
 Chip =チップ
 RGB cable =RGB接続
 color encoding =PAL/NTSCエンコード
-TV gamma =TVのガンマ値
 RGB =RGB
 distortion hires tooltip =ブラウン管の丸みを再現するとモアレを発生させる場合があります。解像度を倍にすれば緩和できますが処理は重くなります
 interlace =インターレース

@@ -90,17 +90,13 @@ struct Serializer {
     }
     
     template<typename T> auto vector( std::vector<T>& vector ) -> Serializer& {
-        unsigned _size = vector.size();
-        integer( _size );
+        unsigned _vsize = vector.size();
+        integer( _vsize );
         
-        if (_mode == Load) {
-            vector.clear();
-            
-            for(unsigned i = 0; i < _size; i++)
-                vector.push_back({});
-        }
+        if (_mode == Load)
+            vector.resize(_vsize);
         
-        for( auto& element : vector )            
+        for( auto& element : vector )
             operator()( element );
         
         return *this;

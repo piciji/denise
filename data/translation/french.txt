@@ -679,7 +679,6 @@ PAULA Sample Interval tooltip = les petits intervalles entraînent une charge de
 Chip = Puce
 RGB cable = cable RGB
 color encoding = Encodage PAL/NTSC
-TV gamma = Gamma TV
 RGB = RGB
 distortion hires tooltip = La distorsion radiale peut entraîner l'apparition de l'effet de moiré. Doubler la résolution réduit cet effet, mais au détriment des performances.
 interlace = Entrelacé

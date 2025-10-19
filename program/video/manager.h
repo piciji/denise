@@ -6,12 +6,12 @@
 
 #define VPARAMS _useSpectrum, _crtMode, _region, _useInterlace, _interlace, \
     _saturation, _contrast, _gamma, _brightness, _phase, _usePhaseError, _phaseError,  \
-    _newLuma, _tvGamma, _hanoverBars, _useHanoverBars, \
+    _newLuma, _hanoverBars, _useHanoverBars, \
     _useBlur, _blur, _useScanlines, _scanlines, _useLumaRise, _lumaRise, _useLumaFall, _lumaFall
 
-#define VPARAMST bool, unsigned, unsigned, bool, unsigned, \
+#define VPARAMST unsigned, unsigned, unsigned, bool, unsigned, \
     unsigned, unsigned, unsigned, unsigned, int, bool, float, \
-    bool, bool, int, bool, \
+    bool, int, bool, \
     bool, unsigned, bool, unsigned, bool, float, bool, float
 
 struct ShaderParser;
@@ -24,10 +24,13 @@ struct ColorLumaChroma {
     // yuv / yiq (Sony CXA2025AS)
     double y;    
     double u_i;
-    double v_q ;
+    double v_q;
+    double uOdd;
+    double vOdd;
+
     // yuv / yiq scaled to integer
-    int32_t y_s;    
-    int32_t y_s_blur;   
+    int32_t y_s;
+    int32_t y_s_blur;
     int32_t u_i_s;
     int32_t v_q_s;
 };
@@ -42,10 +45,21 @@ struct ColorRgb {
     int16_t bInt;
 };
 
-struct ColorRgbLight {
+struct RGBDescriptor {
     uint8_t r;
     uint8_t g;
     uint8_t b;
+};
+
+struct C64ColorSpectrum {
+    double luminance;
+    double angle;
+    double amplitude;
+
+    double angleOdd;
+    double amplitudeOdd;
+    double angleEven;
+    double amplitudeEven;
 };
 
 struct VideoManager {
@@ -106,11 +120,12 @@ struct VideoManager {
     Emulator::Interface::Palette* palette;
     
     uint32_t* colorTable = nullptr;
-    uint32_t* colorTableRGB10 = nullptr;
+    uint32_t* colorTableRGB10Even = nullptr;
+    uint32_t* colorTableRGB10Odd = nullptr;
 
     unsigned countColorBits;
 	
-    bool colorSpectrum;
+    unsigned colorSpectrum;
     bool pal;
     unsigned interlaceDecay;
     bool interlaceFields;
@@ -121,8 +136,7 @@ struct VideoManager {
     double gamma;           
     double phase; // at degree on color wheel
     bool newLuma;
-    bool crtRealGamma;
-    
+
     double phaseError;
     int32_t hanoverBars;
     int32_t hanoverBarsAlt;
@@ -163,14 +177,14 @@ struct VideoManager {
     static auto convertRGBToYUV(ColorLumaChroma* dest, ColorRgb* src) -> void;
     auto setPalette(Emulator::Interface::Palette* palette) -> void;
 
-    template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch) -> void;
+    template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, bool odd) -> void;
     template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
     template<typename T> auto renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void;
     template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
     template<typename T, uint8_t options = 0> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop ) -> void;
     template<uint8_t options> auto getRenderOptions() -> unsigned;
-    auto convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
-    auto convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void;
+    auto convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src, bool odd) -> void;
+    auto convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src, bool odd) -> void;
     auto update() -> void;
     auto adjustPalette() -> void;
     auto free() -> void;
@@ -180,7 +194,6 @@ struct VideoManager {
     auto adjustBrightness(double& c) -> void;
     auto convertLumaChromaToRGB() -> void;
     static auto normalizeColorSpectrumPalGamma( double& color ) -> void;
-    auto denormalizeColorSpectrumPalGamma( double& color ) -> void;
     auto updateListingColors() -> void;
     auto injectPhaseTransferError() -> void;
     auto convertLumaChromaToInteger() -> void;
@@ -199,7 +212,7 @@ struct VideoManager {
     auto useRegionEncoding() -> bool;
     // seter props
     auto usePal(bool state) -> void; // pal or ntsc
-    auto useColorSpectrum(bool state) -> void; // color spectrum or palette
+    auto useColorSpectrum(unsigned state) -> void; // color spectrum or palette
     auto setCrtMode(CrtMode _mode) -> void;
     
     auto setSaturation(unsigned saturation) -> void;
@@ -207,7 +220,6 @@ struct VideoManager {
     auto setGamma(unsigned gamma) -> void;
     auto setContrast(unsigned contrast) -> void;
     auto setNewLuma(bool state) -> void;
-    auto setCrtRealGamma(bool state) -> void;
     auto setPhase( int degree ) -> void;
     auto setPhaseError(float phaseError) -> void;
     auto setHanoverBars( int saturationDelta ) -> void;
@@ -252,6 +264,8 @@ struct VideoManager {
     auto setPassScaleY(unsigned passId, float scale) -> void;
     auto shaderLumaChromaInput() -> bool;
     auto translateShaderBufferType(ShaderPreset::BufferType& bufferType) -> const std::string;
+    auto getColorSpectrum(unsigned id, unsigned col) -> C64ColorSpectrum&;
+    auto lumaChromaMode() -> bool;
 
     auto fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> bool;
     template<typename T> auto takeScreenshot(unsigned unscaled, const T* _src, unsigned _width, unsigned _height, unsigned _pitch, uint8_t _options) -> void;

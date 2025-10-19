@@ -18,8 +18,9 @@ std::vector<DisplayFont> PresentationLayout::displayFonts;
 VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
     if (withSpectrum) {
         append(palette,{0u, 0u}, 10);
-        append(spectrum,{0u, 0u}, 20);
-        GUIKIT::RadioBox::setGroup(palette, spectrum);
+        append(spectrumPALette,{0u, 0u}, 10);
+        append(spectrumColodore,{0u, 0u}, 30);
+        GUIKIT::RadioBox::setGroup(palette, spectrumColodore, spectrumPALette);
     }
 
     append(rgb,{0u, 0u}, 10);
@@ -37,8 +38,6 @@ VideoBaseLayout::View::Mode::Mode(bool withSpectrum) {
 VideoBaseLayout::View::Option::Option(bool withSpectrum) {
     if (withSpectrum)
         append(newLuma, {0u, 0u}, 10);
-
-    append(tvGamma, {0u, 0u}, 10);
 
     append(linearInterpolation, {0u, 0u});
     append(spacer, {~0u, 0u});
@@ -833,11 +832,6 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         _settings->set<bool>( "video_new_luma" + this->sliderIdent(), checked);
         vManager()->updateData<bool>("new_luma", checked);
     };
-
-    layBase.view.option.tvGamma.onToggle = [this](bool checked) {
-        _settings->set<bool>( "video_tv_gamma" + this->sliderIdent(), checked);
-        vManager()->updateData<bool>("tv_gamma", checked);
-    };
 	
     layBase.view.option.linearInterpolation.onToggle = [this](bool checked) {
         _settings->set<bool>("video_filter", checked );
@@ -880,14 +874,21 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     };
 
     layBase.view.mode.palette.onActivate = [this]() {
-        _settings->set<bool>( "video_spectrum", false);
+        _settings->set<unsigned>( "video_spectrum", 0);
         emuThread->lock();
         updatePresets(true, false);
         emuThread->unlock();
     };
 
-    layBase.view.mode.spectrum.onActivate = [this]() {
-        _settings->set<bool>("video_spectrum", true);
+    layBase.view.mode.spectrumPALette.onActivate = [this]() {
+        _settings->set<unsigned>("video_spectrum", 1);
+        emuThread->lock();
+        updatePresets(true, false);
+        emuThread->unlock();
+    };
+
+    layBase.view.mode.spectrumColodore.onActivate = [this]() {
+        _settings->set<unsigned>("video_spectrum", 2);
         emuThread->lock();
         updatePresets(true, false);
         emuThread->unlock();
@@ -2306,7 +2307,6 @@ auto PresentationLayout::updatePresets(bool reloadDriver, bool reloadPreset) -> 
         VideoManager::getInstance( emulator )->reloadSettings(reloadPreset);
 
     layBase.view.option.newLuma.setChecked( _newLuma );
-    layBase.view.option.tvGamma.setChecked( _tvGamma );
     layBase.view.saturation.slider.setPosition(_saturation);
     layBase.view.saturation.value.setText(std::to_string(_saturation) + " %");
     layBase.view.gamma.slider.setPosition(_gamma - 30 );
@@ -2369,7 +2369,7 @@ auto PresentationLayout::updateVisibillity() -> void {
     } else
         layBase.view.mode.gpu.setEnabled();
 
-    if (layBase.view.mode.spectrum.checked()) {
+    if (!layBase.view.mode.palette.checked()) {
         layBase.view.phase.setEnabled();
         layBase.view.option.newLuma.setEnabled();
     } else {
@@ -2400,8 +2400,6 @@ auto PresentationLayout::updateVisibillity() -> void {
             layBase.lumaDelay.lumaFall.slider.setEnabled(layBase.lumaDelay.lumaFall.active.checked());
         }
     }
-
-    layBase.view.option.tvGamma.setEnabled( (crtCpuChecked || crtGpuChecked) && layBase.view.mode.palette.checked() && _pal );
 }
 
 auto PresentationLayout::translate() -> void {
@@ -2413,7 +2411,6 @@ auto PresentationLayout::translate() -> void {
     layBase.view.contrast.name.setText( trans->get("contrast", {}, true) );
     layBase.view.phase.name.setText( trans->get("phase", {}, true) );
     layBase.view.option.newLuma.setText( trans->get("new_luma") );
-    layBase.view.option.tvGamma.setText( trans->get("TV gamma") );
     layBase.view.option.linearInterpolation.setText( trans->get("linear_interpolation") );
     layBase.view.option.trLabel.setText( trans->getA("Threaded Renderer", true) );
     layBase.view.option.trOn.setText( trans->getA("On") );
@@ -2422,7 +2419,8 @@ auto PresentationLayout::translate() -> void {
     layBase.view.option.trAuto.setTooltip( trans->getA("Threaded Renderer Auto") );
     layBase.view.option.trOff.setText( trans->getA("Off") );
     layBase.view.mode.palette.setText( trans->get("palette") );
-    layBase.view.mode.spectrum.setText( trans->get("color_spectrum") );
+    layBase.view.mode.spectrumColodore.setText( trans->getA("color_spectrum") + " Colodore" );
+    layBase.view.mode.spectrumPALette.setText( trans->getA("color_spectrum") + " PALette" );
     layBase.view.mode.reset.setTooltip( trans->get("reset") );
     layBase.view.mode.rgb.setText( trans->get("RGB") );
     layBase.view.mode.cpu.setText( trans->get("S/C-Video CPU") );
@@ -2604,7 +2602,7 @@ auto PresentationLayout::sliderIdent() -> std::string {
 
     std::string ident = (emulator->getRegionEncoding() == Emulator::Interface::Region::Pal) ? "_pal" : "_ntsc";
 
-    if (dynamic_cast<LIBC64::Interface*>(emulator) && layBase.view.mode.spectrum.checked())
+    if (dynamic_cast<LIBC64::Interface*>(emulator) && !layBase.view.mode.palette.checked())
         ident += "_spectrum";
 
     if (layBase.view.mode.cpu.checked())
@@ -2624,10 +2622,15 @@ auto PresentationLayout::loadSettings(bool init) -> void {
         layBase.view.mode.cpu.setChecked();
     else
         layBase.view.mode.rgb.setChecked();
-    
-    if (dynamic_cast<LIBC64::Interface*>(emulator) && _settings->get<bool>( "video_spectrum", true) )
-        layBase.view.mode.spectrum.setChecked();
-    else
+
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        unsigned _spectrum = _settings->get<unsigned>( "video_spectrum", 1);
+        switch (_spectrum) {
+            case 0: layBase.view.mode.palette.setChecked(); break;
+            case 1: layBase.view.mode.spectrumPALette.setChecked(); break;
+            case 2: layBase.view.mode.spectrumColodore.setChecked(); break;
+        }
+    } else
         layBase.view.mode.palette.setChecked();
 
     listFavourites();

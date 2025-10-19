@@ -2,7 +2,6 @@
 #include "base.h"
 #include "../system/system.h"
 #include "cycleTable.cpp"
-#include "colorWheel.cpp"
 #include "verticalLineAnomaly.cpp"
 
 namespace LIBC64 { 
@@ -28,8 +27,6 @@ VicIIBase::VicIIBase(System* system) : system(system), cpu(system->cpu) {
     sprite5->position = 5;
     sprite6->position = 6;
     sprite7->position = 7;
-
-    initColorWheel();
 }	
 
 VicIIBase::~VicIIBase() {

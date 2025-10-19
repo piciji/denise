@@ -679,7 +679,6 @@ PAULA Sample Interval tooltip = small intervals cause a higher CPU load and very
 Chip = Chip
 RGB cable = RGB cable
 color encoding = PAL/NTSC Encoding
-TV gamma = TV gamma
 RGB = RGB
 distortion hires tooltip = radial distortion can lead to the appearance of the moiré effect. Doubling the resolution reduces this effect, but at the expense of additional performance.
 interlace = Interlace

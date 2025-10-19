@@ -9,8 +9,8 @@ auto VideoManager::usePal(bool state) -> void {
     setData("autoEmu_subRegion", emulator->getSubRegion());
 }
 
-auto VideoManager::useColorSpectrum(bool state) -> void {       
-    colorSpectrum = !isC64() ? false : state;
+auto VideoManager::useColorSpectrum(unsigned state) -> void {
+    colorSpectrum = !isC64() ? 0 : state;
     requestUpdate();
 }
 
@@ -106,12 +106,6 @@ auto VideoManager::setInterlaceFields(bool state) -> void {
     requestUpdate();
 }
 
-auto VideoManager::setCrtRealGamma(bool state) -> void {
-    crtRealGamma = state;
-    setData("autoEmu_tvGamma", (float)(shaderLumaChromaInput() && (colorSpectrum || crtRealGamma)));
-    requestUpdate();
-}
-
 auto VideoManager::setData(const std::string& ident, float value) -> void {
     if (activeEmulator != emulator)
         rebuildShader = true;
@@ -150,7 +144,6 @@ auto VideoManager::resetSettings() -> void {
     auto modeIdent = getModeIdent();
     
     settings->remove( "video_new_luma" + modeIdent );
-    settings->remove( "video_tv_gamma" + modeIdent );
     settings->remove( "video_saturation" + modeIdent );
     settings->remove( "video_brightness" + modeIdent );
     settings->remove( "video_gamma" + modeIdent );
@@ -176,7 +169,7 @@ auto VideoManager::resetSettings() -> void {
 
 auto VideoManager::getModeIdent() -> std::string {
     bool _pal = emulator->getRegionEncoding() == Emulator::Interface::Region::Pal;
-    bool _useSpectrum = settings->get<bool>("video_spectrum", true);
+    unsigned _useSpectrum = settings->get<unsigned>("video_spectrum", 1);
     unsigned _crtMode = settings->get<unsigned>("video_crt", (unsigned)CrtMode::None, {0u, 2u});
 
     std::string modeIdent = _pal ? "_pal" : "_ntsc";
@@ -193,8 +186,7 @@ auto VideoManager::getModeIdent() -> std::string {
 }
 
 auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
-    
-    bool _useSpectrum = settings->get<bool>("video_spectrum", true);
+    unsigned _useSpectrum = settings->get<unsigned>("video_spectrum", 1);
 	unsigned _region = emulator->getRegionEncoding();
 	bool _pal = _region == Emulator::Interface::Region::Pal;
 	
@@ -203,8 +195,7 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
 
     auto modeIdent = getModeIdent();
 
-    unsigned _saturation = settings->get<unsigned>("video_saturation" + modeIdent,
-        (_pal && (_crtMode == (unsigned)CrtMode::Cpu) ) ? 110u : 100u,{0u, 200u});
+    unsigned _saturation = settings->get<unsigned>("video_saturation" + modeIdent, 100u,{0u, 200u});
     unsigned _contrast = settings->get<unsigned>("video_contrast" + modeIdent, 100u,{0u, 200u});
     unsigned _gamma = settings->get<unsigned>("video_gamma" + modeIdent, 100u,{30u, 280u});
     unsigned _brightness = settings->get<unsigned>("video_brightness" + modeIdent, 100u,{0, 200u});
@@ -212,7 +203,6 @@ auto VideoManager::getSettings() -> std::tuple<VPARAMST> {
     float _phaseError = settings->get<float>("video_phase_error" + modeIdent, _pal ? (moreError ? 22.5 : 3.5 ) : 0, {-45.0, 45.0});
     bool _usePhaseError = settings->get<bool>("video_phase_error_use" + modeIdent, true);
     bool _newLuma = settings->get<bool>("video_new_luma" + modeIdent, true);
-    bool _tvGamma = settings->get<bool>("video_tv_gamma" + modeIdent, false);
     int _hanoverBars = settings->get<int>("video_hanover_bars" + modeIdent, -10, {-100, 100});
     bool _useHanoverBars = settings->get<bool>("video_hanover_bars_use" + modeIdent, true);
     unsigned _blur = settings->get<unsigned>("video_blur" + modeIdent, 30,{0, 100});
@@ -251,8 +241,8 @@ auto VideoManager::reloadSettings(bool reloadPreset) -> void {
     usePal(_region == 0);
     useColorSpectrum(_useSpectrum);
     setCrtMode( (CrtMode)_crtMode );
-    
-    setCrtRealGamma( _tvGamma );
+
+    setData("autoEmu_palGamma", (float)(pal && (colorSpectrum == 2)));
 
     if (reloadPreset)
         loadPreset();

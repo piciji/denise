@@ -82,8 +82,8 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
 
     gamma = 1.0;
     contrast = 1.0;
-    brightness = 1.0;
-	saturation = 1.0;    
+    brightness = 0.0;
+	saturation = 1.0;
 
     colorTableUpdated = false;
     dataUpdatesPending = false;
@@ -92,13 +92,13 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
     evenTable = new ColorLumaChroma[this->colorCount];
     oddTable = new ColorLumaChroma[this->colorCount];
     colorTable = new uint32_t[this->colorCount];
-    colorTableRGB10 = new uint32_t[this->colorCount];
+    colorTableRGB10Even = new uint32_t[this->colorCount];
+    colorTableRGB10Odd = new uint32_t[this->colorCount];
     
     newLuma = true;
-    crtRealGamma = false;
 	phase = 0.0;
 	pal = true;
-    colorSpectrum = false;  
+    colorSpectrum = 0;
     crtMode = CrtMode::None;
     scanlines = 0;
 
@@ -127,7 +127,7 @@ VideoManager::VideoManager(Emulator::Interface* emulator) {
 auto VideoManager::update() -> void {
 
     if (!colorSpectrum || !isC64() ) { // palette
-        if ( (crtMode == CrtMode::Cpu) || ( (crtMode == CrtMode::Gpu) && shaderLumaChromaInput() ) ) {
+        if ( lumaChromaMode() ) {
             convertPaletteToLumaChroma();
 
             convertLumaChromaToRGB();
@@ -187,59 +187,72 @@ auto VideoManager::getBackgroundColor() -> unsigned {
 }
 
 auto VideoManager::generateC64ColorSpectrum() -> void {
-    
-    LIBC64::Interface* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
-    
     static double radian = M_PI / 180.0;
-    static double baseSaturation = 40.0;
-	static double baseContrast = 1.2;
-	
-	double sat = baseSaturation * saturation;
-	double con = baseContrast * contrast;	
+
+	double con = contrast;
+
+    if (colorSpectrum == 2) // colodore
+        con *= 1.2;
 	
     double angle;
     
     for (unsigned c = 0; c < colorCount; c++) {
               
 		ColorLumaChroma* lumaChroma = &lumaChromaTable[c];
-		
-        double luma = c64Emu->getLuma( c, newLuma );                
 
-        lumaChroma->y = ( luma + brightness ) * con;
+        C64ColorSpectrum& colSpec = getColorSpectrum(colorSpectrum - 1, c);
+
+        lumaChroma->y = ( colSpec.luminance + brightness ) * con;
         
         lumaChroma->u_i = lumaChroma->v_q = 0.0;
         
-        double chroma = c64Emu->getChroma( c );
-        
-        if (chroma == 0.0)
-            continue; // luma only ... black, grey shades
-        
-		if (pal) {
-			angle = (chroma + phase ) * radian;
-            lumaChroma->u_i = (std::cos(angle) * sat) * con;
-            lumaChroma->v_q = (std::sin(angle) * sat) * con;                    
+        if (colSpec.amplitude == 0.0)
+            continue; // luma only ... black, white and grey shades
 
+		if (pal) {
+            if (lumaChromaMode() && (colorSpectrum == 1)) {
+		        angle = (colSpec.angleEven + phase ) * radian;
+		        lumaChroma->u_i = (std::cos(angle) * colSpec.amplitudeEven * saturation) * con;
+		        lumaChroma->v_q = (std::sin(angle) * colSpec.amplitudeEven * saturation) * con;
+                angle = (colSpec.angleOdd + phase ) * radian;
+                lumaChroma->uOdd = (std::cos(angle) * colSpec.amplitudeOdd * saturation) * con;
+                lumaChroma->vOdd = (std::sin(angle) * colSpec.amplitudeOdd * saturation) * con;
+		    } else {
+		        angle = (colSpec.angle + phase ) * radian;
+		        lumaChroma->u_i = (std::cos(angle) * colSpec.amplitude * saturation) * con;
+		        lumaChroma->v_q = (std::sin(angle) * colSpec.amplitude * saturation) * con;
+		        lumaChroma->uOdd = lumaChroma->u_i;
+		        lumaChroma->vOdd = lumaChroma->v_q;
+		    }
 		} else {
 			// yiq is 33 degree rotated
-            angle = (chroma + phase - (100.0 / 3.0) ) * radian;
-            lumaChroma->u_i = (std::sin(angle) * sat) * con;
-            lumaChroma->v_q = (std::cos(angle) * sat) * con;                    
+		    if (lumaChromaMode() && (colorSpectrum == 1)) {
+		        angle = (colSpec.angleEven + phase - (100.0 / 3.0) ) * radian;
+		        lumaChroma->u_i = (std::sin(angle) * colSpec.amplitudeEven * saturation) * con;
+		        lumaChroma->v_q = (std::cos(angle) * colSpec.amplitudeEven * saturation) * con;
+		    } else {
+		        angle = (colSpec.angle + phase - (100.0 / 3.0) ) * radian;
+		        lumaChroma->u_i = (std::sin(angle) * colSpec.amplitude * saturation) * con;
+		        lumaChroma->v_q = (std::cos(angle) * colSpec.amplitude * saturation) * con;
+		    }
+
+		    lumaChroma->uOdd = lumaChroma->u_i;
+		    lumaChroma->vOdd = lumaChroma->v_q;
         }
     }
 }
 
+auto VideoManager::lumaChromaMode() -> bool {
+    return (crtMode == CrtMode::Cpu) || ( (crtMode == CrtMode::Gpu) && shaderLumaChromaInput() );
+}
+
 auto VideoManager::normalizeColorSpectrumPalGamma( double& color ) -> void {
-	
+    if (color < 0.0)
+        color = 0.0;
+
 	color = std::pow(255, 1 - 2.8) * std::pow(color, 2.8);
 	
 	color = std::pow(255, 1 - (1.0 / 2.2)) * std::pow(color, 1.0 / 2.2 );
-}
-
-auto VideoManager::denormalizeColorSpectrumPalGamma( double& color ) -> void {
-	
-	color = std::pow(255, 1 - 2.2) * std::pow(color, 2.2);
-	
-	color = std::pow(255, 1 - (1.0 / 2.8)) * std::pow(color, 1.0 / 2.8 );
 }
 
 auto VideoManager::adjustPalette() -> void {
@@ -273,12 +286,6 @@ auto VideoManager::convertPaletteToLumaChroma() -> void {
         rgb.r = paletteColor.r;
         rgb.g = paletteColor.g;
         rgb.b = paletteColor.b;
-                
-        if (pal && crtRealGamma) {
-            denormalizeColorSpectrumPalGamma(rgb.r);
-            denormalizeColorSpectrumPalGamma(rgb.g);
-            denormalizeColorSpectrumPalGamma(rgb.b);
-        }
 
 		ColorLumaChroma* lumaChroma = &lumaChromaTable[c];
 		
@@ -288,35 +295,45 @@ auto VideoManager::convertPaletteToLumaChroma() -> void {
 			convertRGBToYIQ( lumaChroma, &rgb);
 		
 		lumaChroma->u_i = (lumaChroma->u_i * saturation) * contrast;
-		lumaChroma->v_q = (lumaChroma->v_q * saturation) * contrast;		
+		lumaChroma->v_q = (lumaChroma->v_q * saturation) * contrast;
+        lumaChroma->uOdd = lumaChroma->u_i;
+        lumaChroma->vOdd = lumaChroma->v_q;
 		lumaChroma->y = (lumaChroma->y + brightness) * contrast;
 	}
 }
 
 auto VideoManager::convertLumaChromaToRGB() -> void {
-	
-    ColorRgb rgb;     	
+    ColorRgb rgbOdd;
+    ColorRgb rgbEven;
 	
     for (unsigned c = 0; c < colorCount; c++) {
         
-        if (pal)
-            convertYUVToRGB( &rgb, &lumaChromaTable[c] );
-        else
-			convertYIQToRGB( &rgb, &lumaChromaTable[c] );
+        if (pal) {
+            convertYUVToRGB( &rgbOdd, &lumaChromaTable[c], true );
+            convertYUVToRGB( &rgbEven, &lumaChromaTable[c], false );
+        } else {
+            convertYIQToRGB( &rgbEven, &lumaChromaTable[c], false );
+            rgbOdd = rgbEven;
+        }
 
-        colorTableRGB10[c] = (uclamp10( rgb.r) << 20) | (uclamp10( rgb.g ) << 10) | uclamp10( rgb.b );
+        colorTableRGB10Odd[c] = (uclamp10( rgbOdd.r + 256.0) << 20) | (uclamp10( rgbOdd.g + 256.0 ) << 10) | uclamp10( rgbOdd.b + 256.0 );
+        colorTableRGB10Even[c] = (uclamp10( rgbEven.r + 256.0) << 20) | (uclamp10( rgbEven.g + 256.0 ) << 10) | uclamp10( rgbEven.b + 256.0 );
 
-        if (pal && (colorSpectrum || crtRealGamma)) {
-			normalizeColorSpectrumPalGamma(rgb.r);
-			normalizeColorSpectrumPalGamma(rgb.g);
-			normalizeColorSpectrumPalGamma(rgb.b);
-		}
+        if (pal && (colorSpectrum == 2)) {
+            normalizeColorSpectrumPalGamma(rgbEven.r);
+            normalizeColorSpectrumPalGamma(rgbEven.g);
+            normalizeColorSpectrumPalGamma(rgbEven.b);
+        }
 
-        adjustGamma(rgb.r);
-        adjustGamma(rgb.g);
-        adjustGamma(rgb.b);
+        adjustGamma(rgbEven.r);
+        adjustGamma(rgbEven.g);
+        adjustGamma(rgbEven.b);
+
+        uint8_t _r = uclamp8(rgbEven.r);
+        uint8_t _g = uclamp8(rgbEven.g);
+        uint8_t _b = uclamp8(rgbEven.b);
 		
-		colorTable[c] = 255 << 24 | uclamp8( rgb.r ) << 16 | uclamp8( rgb.g ) << 8 | uclamp8( rgb.b );
+		colorTable[c] = 255 << 24 | uclamp8( rgbEven.r ) << 16 | uclamp8( rgbEven.g ) << 8 | uclamp8( rgbEven.b );
     }
 }
 
@@ -330,7 +347,7 @@ auto VideoManager::calculateGamma() -> void {
 		
 		double c1 = (double)(c - 256);
 		
-		if (pal && (colorSpectrum || crtRealGamma))
+		if (pal && (colorSpectrum == 2))
 			normalizeColorSpectrumPalGamma( c1 );
 		
 		adjustGamma( c1 );
@@ -352,7 +369,7 @@ auto VideoManager::calculateGamma() -> void {
 		// precise final values.
 		c1 = (double)((c - 256) + 0.5);
 		
-		if (pal && (colorSpectrum || crtRealGamma))
+		if (pal && (colorSpectrum == 2))
 			normalizeColorSpectrumPalGamma(c1);
 		
 		adjustGamma( c1 );
@@ -466,8 +483,8 @@ auto VideoManager::injectPhaseTransferError() -> void {
 		if (pal) {
 			// same phase error but shifted in the opposite direction (PAL)
 			oddTable[c].y = lumaChromaTable[c].y;
-			oddTable[c].u_i = lumaChromaTable[c].u_i * rotU - lumaChromaTable[c].v_q * rotV * -1;
-			oddTable[c].v_q = lumaChromaTable[c].v_q * rotU + lumaChromaTable[c].u_i * rotV * -1;
+			oddTable[c].u_i = lumaChromaTable[c].uOdd * rotU - lumaChromaTable[c].vOdd * rotV * -1;
+			oddTable[c].v_q = lumaChromaTable[c].vOdd * rotU + lumaChromaTable[c].uOdd * rotV * -1;
 		}
     }
 }
@@ -598,7 +615,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             setData("autoEmu_hires", (float)hires);
             setData("autoEmu_pal", (float)pal);
             setData("autoEmu_subRegion", emulator->getSubRegion());
-            setData("autoEmu_tvGamma", (float)(shaderLumaChromaInput() && (colorSpectrum || crtRealGamma)));
+            setData("autoEmu_palGamma", (float)( pal && (colorSpectrum == 2)));
             setData("autoEmu_lumaChroma", (float)(shaderLumaChromaInput()));
             setData("autoEmu_driveLED", (float)0);
             videoDriver->setShader( &parser->shaderPreset);
@@ -684,7 +701,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10 ))
                 goto Typical;
 
-            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
+            renderToLumaChroma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width, cropTop & 1);
 
         } else {
 Typical:
@@ -747,7 +764,7 @@ template<typename T, bool interlace, bool field> inline auto VideoManager::rende
 
     if constexpr (interlace) {
         unsigned color;
-        ColorRgbLight colorDecayed;
+        RGBDescriptor colorDecayed;
         bool laceToggle = !!(frameOptions & 0x80);
         unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
         if (laceToggle)
@@ -805,7 +822,7 @@ template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsig
     if (interlace) {
         bool repeatWidth = !hires && !shres;
         unsigned color;
-        ColorRgbLight colorDecayed;
+        RGBDescriptor colorDecayed;
         bool laceToggle = !!(frameOptions & 0x80);
         unsigned iRate = (100 - interlaceDecay); // simulate phosphor decay
         if (laceToggle)
@@ -871,11 +888,12 @@ template<typename T> auto VideoManager::renderToScreenshot(unsigned width, unsig
 }
 #undef screenshot3channel
 
-template<typename T, bool interlace, bool field> auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch) -> void {
+template<typename T, bool interlace, bool field> auto VideoManager::renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, bool odd) -> void {
     T color;
     unsigned metaShift = countColorBits;
     unsigned mask = (1 << metaShift) - 1;
     bool laceToggle = !!(frameOptions & 0x80);
+    uint32_t* colorTableRGB10;
 
     if (interlace && !field && !laceToggle && !interlaceFields) // hold -> update full frames only
         return;
@@ -886,6 +904,8 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderToLuma
         uint16_t _r, _g, _b;
 
         for (unsigned h = 0; h < height; h++) {
+            colorTableRGB10 = odd ? colorTableRGB10Odd : colorTableRGB10Even;
+
             if (field == (h & 1)) {
                 for (unsigned w = 0; w < width; w++) {
                     color = *src++;
@@ -910,9 +930,12 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderToLuma
 
             src += srcPitch;
             dest += destPitch;
+            odd = !odd;
         }
     } else {
         for (unsigned h = 0; h < height; h++) {
+            colorTableRGB10 = odd ? colorTableRGB10Odd : colorTableRGB10Even;
+
             for (unsigned w = 0; w < width; w++) {
                 color = *src++;
                 *dest++ = colorTableRGB10[ color & mask ] | (color >> metaShift) << 30;
@@ -920,6 +943,7 @@ template<typename T, bool interlace, bool field> auto VideoManager::renderToLuma
 
             src += srcPitch;
             dest += destPitch;
+            odd = !odd;
         }
     }
 }
@@ -992,7 +1016,7 @@ template<uint8_t options, typename T> auto VideoManager::renderPalCrt( ) -> void
 	ColorLumaChroma* lineTable;
 	ColorRgb* lineBeforeDest = nullptr;
 	ColorLumaChroma yuv;
-    ColorRgbLight colorI;
+    RGBDescriptor colorI;
 	int32_t uSubSample, vSubSample;
     unsigned mask = (1 << countColorBits) - 1;
 
@@ -1170,7 +1194,7 @@ template<uint8_t options, typename T> auto VideoManager::renderNtscCrt( ) -> voi
 
     Render& re = render;
 	ColorLumaChroma yiq;
-    ColorRgbLight colorI;
+    RGBDescriptor colorI;
 	ColorRgb* lineBeforeDest = nullptr;
     unsigned mask = (1 << countColorBits) - 1;
 	
@@ -1298,20 +1322,29 @@ auto VideoManager::convertRGBToYUV(ColorLumaChroma* dest, ColorRgb* src) -> void
     dest->v_q = (src->r - dest->y) * 0.877;
 }
 
-auto VideoManager::convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void {
-//    dest->r = src->y + 1.140 * src->v_q;
-//    dest->g = src->y - 0.396 * src->u_i - 0.581 * src->v_q;
-//    dest->b = src->y + 2.029 * src->u_i;
-    dest->r = src->y + ((double)1.0 / (double)0.877) * src->v_q;
-    dest->g = src->y - 0.3939307027516405140450117660881 * src->u_i - 0.58080920903109757400461150856936 * src->v_q;
-    dest->b = src->y + ((double)1.0 / (double)0.493) * src->u_i;
+auto VideoManager::convertYUVToRGB(ColorRgb* dest, ColorLumaChroma* src, bool odd) -> void {
+    if (odd) {
+        dest->r = src->y + (1.0 / 0.877) * src->vOdd;
+        dest->g = src->y - 0.3939307027516405140450117660881 * src->uOdd - 0.58080920903109757400461150856936 * src->vOdd;
+        dest->b = src->y + (1.0 / 0.493) * src->uOdd;
+    } else {
+        dest->r = src->y + (1.0 / 0.877) * src->v_q;
+        dest->g = src->y - 0.3939307027516405140450117660881 * src->u_i - 0.58080920903109757400461150856936 * src->v_q;
+        dest->b = src->y + (1.0 / 0.493) * src->u_i;
+    }
 }
 
 // sony decoder matrix
-auto VideoManager::convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src) -> void {
-	dest->r = src->y + 1.630 * src->u_i + 0.317 * src->v_q;
-	dest->g = src->y - 0.378 * src->u_i - 0.466 * src->v_q;
-	dest->b = src->y - 1.089 * src->u_i + 1.677 * src->v_q;
+auto VideoManager::convertYIQToRGB(ColorRgb* dest, ColorLumaChroma* src, bool odd) -> void {
+    if (odd) {
+        dest->r = src->y + 1.630 * src->uOdd + 0.317 * src->vOdd;
+        dest->g = src->y - 0.378 * src->uOdd - 0.466 * src->vOdd;
+        dest->b = src->y - 1.089 * src->uOdd + 1.677 * src->vOdd;
+    } else {
+        dest->r = src->y + 1.630 * src->u_i + 0.317 * src->v_q;
+        dest->g = src->y - 0.378 * src->u_i - 0.466 * src->v_q;
+        dest->b = src->y - 1.089 * src->u_i + 1.677 * src->v_q;
+    }
 }
 
 auto VideoManager::powerOff() -> void {
@@ -1379,7 +1412,6 @@ auto VideoManager::applyDataUpdates() -> void {
         else if (dataUpdate.ident == "luma_fall")           setLumaFall( dataUpdate.dataF );
 
         else if (dataUpdate.ident == "new_luma")            setNewLuma( dataUpdate.dataB );
-        else if (dataUpdate.ident == "tv_gamma")            setCrtRealGamma( dataUpdate.dataB );
     }
 }
 
@@ -1434,8 +1466,10 @@ auto VideoManager::free() -> void {
     if (colorTable)
         delete[] colorTable;
 
-    if (colorTableRGB10)
-        delete[] colorTableRGB10;
+    if (colorTableRGB10Odd)
+        delete[] colorTableRGB10Odd;
+    if (colorTableRGB10Even)
+        delete[] colorTableRGB10Even;
 
     if (lumaChromaTable)
         delete[] lumaChromaTable;                
@@ -1448,7 +1482,8 @@ auto VideoManager::free() -> void {
         
     evenTable = oddTable = lumaChromaTable = nullptr;
     colorTable = nullptr;
-    colorTableRGB10 = nullptr;
+    colorTableRGB10Odd = nullptr;
+    colorTableRGB10Even = nullptr;
 	
 	if (tempDest)
 		delete[] tempDest;
@@ -1630,6 +1665,87 @@ auto VideoManager::fetchShader(ShaderPreset::Pass& pass, unsigned passId) -> boo
     ShaderParser temp;
     pass.src = preset.passes[passId].src;
     return temp.fetchShaderSource( pass );
+}
+
+auto VideoManager::getColorSpectrum(unsigned id, unsigned col) -> C64ColorSpectrum& {
+
+    static C64ColorSpectrum c64ColorSpectrum[2][2][16] = {
+    { // PALette
+            { // 8565
+                { 0.000 * 256.0,    0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                { 1.000 * 256.0,    0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                { 0.306 * 256.0,  102.50, 0.214 * 256.0, 93.50, 0.212 * 256.0, 111.50, 0.215 * 256.0},
+                { 0.639 * 256.0,  281.50, 0.216 * 256.0, 273.00, 0.215 * 256.0, 290.00, 0.217 * 256.0},
+                { 0.363 * 256.0,   51.00, 0.214 * 256.0, 43.00, 0.214 * 256.0, 59.00, 0.213 * 256.0},
+                { 0.500 * 256.0,  238.70, 0.214 * 256.0, 231.70, 0.216 * 256.0, 245.70, 0.212 * 256.0},
+                { 0.237 * 256.0,  345.10, 0.214 * 256.0, -24.40, 0.215 * 256.0, 354.60, 0.213 * 256.0},
+                { 0.763 * 256.0,  165.10, 0.214 * 256.0, 169.60, 0.215 * 256.0, 160.60, 0.214 * 256.0},
+                { 0.363 * 256.0,  126.50, 0.213 * 256.0, 120.50, 0.211 * 256.0, 132.50, 0.215 * 256.0},
+                { 0.237 * 256.0,  146.00, 0.141 * 256.0, 146.50, 0.140 * 256.0, 145.50, 0.142 * 256.0},
+                { 0.500 * 256.0,  102.50, 0.214 * 256.0, 93.50, 0.212 * 256.0, 111.50, 0.215 * 256.0},
+                { 0.306 * 256.0,    0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                { 0.461 * 256.0,    0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                { 0.763 * 256.0,  238.70, 0.214 * 256.0, 231.70, 0.216 * 256.0, 245.70, 0.212 * 256.0},
+                { 0.461 * 256.0,  345.10, 0.214 * 256.0, -24.40, 0.215 * 256.0, 354.60, 0.213 * 256.0},
+                { 0.639 * 256.0,    0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0}
+            },{ // 6569R1
+                { 0.000 * 256.0,    0.00,  0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                { 1.000 * 256.0,    0.00,  0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                { 0.237 * 256.0,   95.50,  0.217 * 256.0, 89.00, 0.202 * 256.0, 102.00, 0.232 * 256.0},
+                { 0.763 * 256.0,  275.50, 0.210 * 256.0, 269.25, 0.191 * 256.0, 281.75, 0.228 * 256.0},
+                { 0.500 * 256.0,   54.00, 0.219 * 256.0, 48.50, 0.226 * 256.0, 59.50, 0.211 * 256.0},
+                { 0.500 * 256.0,  241.70,  0.213 * 256.0, 235.45, 0.222 * 256.0, 247.95, 0.205 * 256.0},
+                { 0.237 * 256.0,  355.60,  0.217 * 256.0, -12.40, 0.234 * 256.0, 363.60, 0.200 * 256.0},
+                { 0.763 * 256.0,  175.60, 0.211 * 256.0, 168.60, 0.231 * 256.0, 182.60, 0.191 * 256.0},
+                { 0.500 * 256.0,  128.25, 0.217 * 256.0, 122.00, 0.213 * 256.0, 134.50, 0.221 * 256.0},
+                { 0.237 * 256.0,  146.50,  0.140 * 256.0, 140.00, 0.153 * 256.0, 153.00, 0.131 * 256.0},
+                { 0.500 * 256.0,   95.50,  0.217 * 256.0, 89.00, 0.202 * 256.0, 102.00, 0.232 * 256.0},
+                { 0.237 * 256.0,    0.00,  0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                { 0.500 * 256.0,    0.00,  0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                { 0.763 * 256.0,  241.70,  0.213 * 256.0, 235.45, 0.222 * 256.0, 247.95, 0.205 * 256.0},
+                { 0.500 * 256.0,  355.60,  0.217 * 256.0, -12.40, 0.234 * 256.0, 363.60, 0.200 * 256.0},
+                { 0.763 * 256.0,    0.00,  0.000 * 256.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0}
+            }
+        },{ // Colodore
+            { // 8565
+                {0.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {32.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {10.0 * 8.0, 101.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {20.0 * 8.0, 281.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {12.0 * 8.0, 56.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {16.0 * 8.0, 236.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {8.0 * 8.0, 348.75, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {24.0 * 8.0, 168.75, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {12.0 * 8.0, 123.75, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {8.0 * 8.0, 146.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {16.0 * 8.0, 101.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {10.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {15.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {24.0 * 8.0, 236.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {15.0 * 8.0, 348.75, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {20.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+            },{ // 6569R1
+                {0.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {32.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {8.0 * 8.0, 101.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {24.0 * 8.0, 281.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {16.0 * 8.0, 56.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {16.0 * 8.0, 236.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {8.0 * 8.0, 348.75, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {24.0 * 8.0, 168.75, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {16.0 * 8.0, 123.75, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {8.0 * 8.0, 146.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {16.0 * 8.0, 101.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {8.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {16.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {24.0 * 8.0, 236.25, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {16.0 * 8.0, 348.75, 40.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+                {24.0 * 8.0, 0.0, 0.0, 0.00, 0.000 * 256.0, 0.00, 0.000 * 256.0},
+            }
+        }
+    };
+
+    return c64ColorSpectrum[id & 1][newLuma ? 0 : 1][col & 15];
 }
 
 VideoManager::~VideoManager() {

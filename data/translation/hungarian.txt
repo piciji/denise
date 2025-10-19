@@ -679,7 +679,6 @@ PAULA Sample Interval tooltip = a kis intervallumok nagyobb CPU-terhelést okozn
 Chip = Chip
 RGB cable = RGB kábel
 color encoding = színkódolás (PAL/NTSC)
-TV gamma = TV gamma
 RGB = RGB
 distortion hires tooltip = a sugárirányú torzítás a moiré-hatás megjelenéséhez vezethet. A felbontás megduplázása csökkenti ezt a hatást, de a teljesítménynövekedés rovására.
 interlace = interlace

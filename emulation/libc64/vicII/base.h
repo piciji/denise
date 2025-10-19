@@ -91,11 +91,7 @@ struct VicIIBase {
     inline auto useSequencer() -> bool { return enableSequencer; }
     auto getHeight() -> unsigned { return vHeight; }
     auto getWidth() -> unsigned { return hWidth;  }
-    auto getCyclesForNextLightTrigger( int x, int y, uint8_t& cyclePixel ) -> unsigned;    	
-    
-    auto initColorWheel() -> void;
-    auto getLuma(uint8_t index, bool newRevision) -> double;
-    auto getChroma(uint8_t index) -> double;             
+    auto getCyclesForNextLightTrigger( int x, int y, uint8_t& cyclePixel ) -> unsigned;
     
     auto isBaLow() -> bool { return baLow; }
     
@@ -132,9 +128,6 @@ protected:
 	uint16_t vc;
 	uint8_t rc;	
 	uint16_t cBuffer[40];
-
-	double luma[2][16];
-	double chroma[16]; // as angle on color wheel
 
 	bool rev65; //true: 65xx chips, false: 85xx chips
 	unsigned lineCycles;

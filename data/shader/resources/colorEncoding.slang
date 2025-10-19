@@ -64,9 +64,9 @@ void main() {
         | ((uint(color.r * 255.0) & 255) << 16)
         | ((uint(color.a * 255.0) & 255) << 24));
 
-        color.b = float(_col & 1023) / 255.0;
-        color.g = float((_col >> 10) & 1023) / 255.0;
-        color.r = float((_col >> 20) & 1023) / 255.0;
+        color.b = (float(_col & 1023) - 256.0) / 255.0;
+        color.g = (float((_col >> 10) & 1023) - 256.0) / 255.0;
+        color.r = (float((_col >> 20) & 1023) - 256.0) / 255.0;
 
     } else {
         flags = 0;

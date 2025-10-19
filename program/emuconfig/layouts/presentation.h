@@ -18,7 +18,8 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
     struct View : GUIKIT::FramedVerticalLayout {
         struct Mode : GUIKIT::HorizontalLayout {
             GUIKIT::RadioBox palette;
-            GUIKIT::RadioBox spectrum;
+            GUIKIT::RadioBox spectrumPALette;
+            GUIKIT::RadioBox spectrumColodore;
             GUIKIT::RadioBox rgb;
             GUIKIT::RadioBox cpu;
             GUIKIT::RadioBox gpu;
@@ -31,7 +32,6 @@ struct VideoBaseLayout : GUIKIT::VerticalLayout {
 
         struct Option : GUIKIT::HorizontalLayout {
             GUIKIT::CheckBox newLuma;
-            GUIKIT::CheckBox tvGamma;
             GUIKIT::CheckBox linearInterpolation;
             GUIKIT::Widget spacer;
             GUIKIT::Label trLabel;
