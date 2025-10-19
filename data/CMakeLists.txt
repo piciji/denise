@@ -417,7 +417,6 @@ set(headerSrcs ${headerSrcs}
     emulation/libc64/vicII/fast/silence.cpp
     emulation/libc64/vicII/fast/vicIIFast.h
     emulation/libc64/vicII/base.h
-    emulation/libc64/vicII/colorWheel.cpp
     emulation/libc64/vicII/cycleTable.cpp
     emulation/libc64/vicII/dma.cpp
     emulation/libc64/vicII/fetch.cpp
