@@ -7,6 +7,34 @@
 
 # changelog
 
+## 2.7
+* added screenshot generation
+    * option to merge two adjacent frames (e.g. interlace)
+    * option to generate multiple screenshots at a set interval
+    * option to take native or scaled, filtered screenshot
+* support MP3 for audio recording 
+* C64: support for USBSID-Pico was added by LouDnl
+* C64: added support for 2 MHz
+    * C64 in C128 mode: e.g. Mario, Sonic, SNK vs CAPCOM (C128 version), Eye Of the Beholder
+    * force 2 MHz for games, which support it
+    * 2 MHz status LED
+* C64: added PALette measurements by Tobias as new default for color generation
+* C64: support for Structured Basic CRT was added by ClausS
+* fix: mouse is found when changing the USB port
+* disk finder: guessing follow disks or tapes take archives into account
+* support HDR for Windows (D3D11) and macOS (Metal)
+    * monitor must support this and be activated in the OS and emulator
+* support black frame insertion (BFI) to reduce motion blur
+    * monitor requires support for higher refresh rates, e.g. 100, 150, 200, 250 Hz... 
+    * CRT Simulation in a GPU Shader ... advanced BFI
+* added CoreAudio3 driver for macOS
+* added rewind support
+    * you can rewind a few seconds while playing, e.g. to avoid the loss of a life
+    * the function must be assigned to a hotkey, ideally the gamepad
+* added option to prepend YUV PAL emulation to a CRT shader
+    * C64 (default setting)
+    * Amiga (no default setting), because RGB is typical
+
 ## 2.6
 * Amiga: added harddisk emulation
     * built-In HD Controller
