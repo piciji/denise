@@ -942,3 +942,7 @@ buffer size = buffer size
 rewind hotkey tooltip = Rewinding is done via a hotkey. Click here and then find the hotkey for rewind in the list. Double-click this list row to assign a key combination to the function. For optimal use, rewind should be assigned to the gamepad.
 YUV Encoding = YUV-Encoding
 YUV Encoding tooltip = The image is transmitted in the form of luminance/chrominance (AV, composite, S-Video) instead of RGB. Changing this setting will not be applied until a shader is reloaded.
+Pico Buffer Size = Pico Buffer Size
+Pico Diff Size = Pico Difference Size
+Max Nits = Max Nits
+Paper White Nits = Paper White Nits
