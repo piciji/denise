@@ -48,7 +48,7 @@ struct ShaderParser {
 
     auto applyOverrides(std::string& path, std::vector<GUIKIT::Settings*>& settingsList, int depth = 0) -> void;
 
-    auto getPresetPath() -> std::string { return entryPaths.size() ? entryPaths[0] : ""; }
+    auto getPresetPath() -> std::string;
 
     auto getPresetPathDetailed() -> std::string;
 

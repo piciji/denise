@@ -882,6 +882,17 @@ auto ShaderParser::getValue(std::string& line) -> std::string {
     return line.substr(0, index);
 }
 
+auto ShaderParser::getPresetPath() -> std::string {
+    if (entryPaths.empty())
+        return "";
+    if (entryPaths.size() == 1)
+        return entryPaths[0];
+    if (hasYUVPrepend())
+        return entryPaths[1];
+
+    return entryPaths[0];
+}
+
 auto ShaderParser::clear() -> void {
     entryPaths.clear();
     errors.clear();
