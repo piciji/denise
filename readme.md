@@ -11,29 +11,29 @@
 * added screenshot generation
     * option to merge two adjacent frames (e.g. interlace)
     * option to generate multiple screenshots at a set interval
-    * option to take native or scaled, filtered screenshot
-* support MP3 for audio recording 
+    * option to take native or scaled, filtered screenshots
 * C64: support for USBSID-Pico was added by LouDnl
 * C64: added support for 2 MHz
-    * C64 in C128 mode: e.g. Mario, Sonic, SNK vs CAPCOM (C128 version), Eye Of the Beholder
-    * force 2 MHz for games, which support it
+    * C64 in C128 mode: e.g. Sonic, SNK vs CAPCOM (C128 version), Eye Of the Beholder, Mario
+    * Hotkey to force 2 MHz for games that can handle it but don't support it
     * 2 MHz status LED
 * C64: added PALette measurements by Tobias as new default for color generation
 * C64: support for Structured Basic CRT was added by ClausS
-* fix: mouse is found when changing the USB port
+* support MP3 for audio recording
+* fix: mouse is found when changing the USB port (Windows)
 * disk finder: guessing follow disks or tapes take archives into account
 * support HDR for Windows (D3D11) and macOS (Metal)
     * monitor must support this and be activated in the OS and emulator
 * support black frame insertion (BFI) to reduce motion blur
     * monitor requires support for higher refresh rates, e.g. 100, 150, 200, 250 Hz... 
-    * CRT Simulation in a GPU Shader ... advanced BFI
-* added CoreAudio3 driver for macOS
+    * BlUR BUSTERS CRT Simulation GPU Shader ... advanced BFI [read more](https://blurbusters.com/crt-simulation-in-a-gpu-shader-looks-better-than-bfi/)
 * added rewind support
     * you can rewind a few seconds while playing, e.g. to avoid the loss of a life
     * the function must be assigned to a hotkey, ideally the gamepad
-* added option to prepend YUV PAL emulation to a CRT shader
+* added option to prepend YUV PAL/NTSC color encoding to a CRT shader
     * C64 (default setting)
     * Amiga (no default setting), because RGB is typical
+* added CoreAudio3 driver for macOS
 
 ## 2.6
 * Amiga: added harddisk emulation

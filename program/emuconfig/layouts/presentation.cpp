@@ -2438,7 +2438,9 @@ auto PresentationLayout::translate() -> void {
     layBase.lumaDelay.lumaFall.active.setText( trans->get("luma_fall", {}, true) );
 
     layShader.main.control.prependPreset.setText( trans->getA("prepend preset") );
+    layShader.main.control.prependPreset.setTooltip( trans->getA("combine shader") );
     layShader.main.control.appendPreset.setText( trans->getA("append preset") );
+    layShader.main.control.appendPreset.setTooltip( trans->getA("combine shader") );
 
     layShader.main.control.manuell.setText(trans->getA("manual"));
     layShader.main.control.manuell.setTooltip(trans->getA("manual shader update tooltip"));

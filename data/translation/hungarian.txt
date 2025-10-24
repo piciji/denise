@@ -946,3 +946,4 @@ Pico Buffer Size = Pico Buffer Size
 Pico Diff Size = Pico Difference Size
 Max Nits = Max Nits
 Paper White Nits = Paper White Nits
+combine shader = Some shaders can be combined with each other. This option is intended for experienced users or shader developers.
