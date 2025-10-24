@@ -76,15 +76,18 @@ auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {
         if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10)) {
             for (_h = 0; _h < _height; _h++) {
                 for (_w = 0; _w < _width; _w++) {
-                    *gpu_data++ = _data[0] << 20 | _data[1] << 10 | _data[2];
+                    *gpu_data++ = ((unsigned)_data[0] + 256) << 20 | ((unsigned)_data[1] + 256) << 10 | ((unsigned)_data[2] + 256);
                     _data += 4;
                 }
                 gpu_data += gpu_pitch - _width;
             }
 
             videoDriver->unlockAndRedraw();
+            return true;
         }
-    } else if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, gpuOptions)) {
+    }
+
+    if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, gpuOptions)) {
         for (_h = 0; _h < _height; _h++) {
             for (_w = 0; _w < _width; _w++) {
                 *gpu_data++ = _data[0] << 16 | _data[1] << 8 | _data[2];
