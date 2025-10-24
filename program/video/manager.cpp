@@ -205,6 +205,7 @@ auto VideoManager::generateC64ColorSpectrum() -> void {
         lumaChroma->y = ( colSpec.luminance + brightness ) * con;
         
         lumaChroma->u_i = lumaChroma->v_q = 0.0;
+        lumaChroma->uOdd = lumaChroma->vOdd = 0.0;
         
         if (colSpec.amplitude == 0.0)
             continue; // luma only ... black, white and grey shades
