@@ -516,9 +516,7 @@ VideoMotionLayout::StrobeLayout::BFILayout::BFILayout() {
 
 VideoMotionLayout::StrobeLayout::SubFrame::SubFrame() {
     append(subFrameShader, {0u, 0u}, 20);
-    append(learnMore, {0u, 0u});
-
-    learnMore.setUri("https://blurbusters.com/crt-simulation-in-a-gpu-shader-looks-better-than-bfi/");
+    append(learnMore, {~0u, 0u});
 
     setAlignment(0.5);
 }
@@ -526,7 +524,7 @@ VideoMotionLayout::StrobeLayout::SubFrame::SubFrame() {
 VideoMotionLayout::StrobeLayout::StrobeLayout() {
     append(strobeWarning, {0u, 0u}, 10);
     append(bfi, {0u, 0u}, 10);
-    append(subFrame, {0u, 0u});
+    append(subFrame, {~0u, 0u});
 
     setPadding(10);
 }
@@ -2528,7 +2526,10 @@ auto PresentationLayout::translate() -> void {
     layMotion.strobe.bfi.bfiCombo.setText(0, trans->getA("none"));
     layMotion.strobe.subFrame.subFrameShader.setText( trans->getA("Shader Sub-Frames"));
     layMotion.strobe.subFrame.subFrameShader.setTooltip( trans->getA("Shader Sub-Frames tooltip"));
+    
     layMotion.strobe.subFrame.learnMore.setText( trans->getA("learn more") );
+    layMotion.strobe.subFrame.learnMore.setUri("https://blurbusters.com/crt-simulation-in-a-gpu-shader-looks-better-than-bfi/");
+    layMotion.strobe.subFrame.learnMore.setTooltip("CRT Simulation Shader");
 
     layRewind.setText(trans->getA("Rewind"));
     layRewind.enableRewind.setText(trans->getA("Enable"));
