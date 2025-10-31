@@ -85,4 +85,4 @@ deploy:
     all_branches: true
 
 
-# hint for env FTP_FOLDER: v\\\ 1.0
+# hint for env FTP_TAGS: v\\\ 1.0
