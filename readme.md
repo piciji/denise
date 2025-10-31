@@ -30,9 +30,8 @@
 * added rewind support
     * you can rewind a few seconds while playing, e.g. to avoid the loss of a life
     * the function must be assigned to a hotkey, ideally the gamepad
-* added option to prepend YUV PAL/NTSC color encoding to a CRT shader
-    * C64 (default setting)
-    * Amiga (no default setting), because RGB is typical
+* added option to prepend YUV (S/C-Video) PAL/NTSC color encoding to a CRT shader
+    * default setting for C64
 * added CoreAudio3 driver for macOS
 
 ## 2.6
