@@ -4,6 +4,7 @@ branches:
     - master
     - /v\d*\.\d*/
     - /v\d*\.\d*\.\d*/
+    - /test\d*\.\d*/
 
 language: generic
 dist: jammy
@@ -47,7 +48,7 @@ jobs:
       - |
         if [[ $TRAVIS_BRANCH =~ v[0-999].[0-999] || $TRAVIS_BRANCH =~ v[0-999].[0-999].[0-999] ]]; then
           export deployFile=denise_$TRAVIS_BRANCH.flatpak
-          export deployTarget=${FTP_TAGS}
+          export deployTarget=${FTP_FOLDER}$TRAVIS_BRANCH
         else
           export deployFile=denise_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).flatpak
           export deployTarget=${FTP_NIGHTLIES}
@@ -67,7 +68,7 @@ jobs:
       - |
         if [[ $TRAVIS_BRANCH =~ v[0-999].[0-999] || $TRAVIS_BRANCH =~ v[0-999].[0-999].[0-999] ]]; then
           export deployFile=denise_ubuntu2004_$TRAVIS_BRANCH.deb
-          export deployTarget=${FTP_TAGS}
+          export deployTarget=${FTP_FOLDER}$TRAVIS_BRANCH
         else
           export deployFile=denise_ubuntu2004_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).deb
           export deployTarget=${FTP_NIGHTLIES}
@@ -83,6 +84,3 @@ deploy:
   edge: true
   on:
     all_branches: true
-
-
-# hint for env FTP_TAGS: v\\\ 1.0
