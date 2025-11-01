@@ -551,11 +551,18 @@ auto SpirvReflection::bindTextures(ShaderPreset* preset, unsigned passId, Semant
         }
 
         if (tex.name == "Original") {
-            auto& firstPass = preset->passes[0];
+            unsigned index = 0;
+            index += getSubChainIndex(preset, passId);
+
+            auto& firstPass = preset->passes[index];
             semTex.filter = firstPass.filter;
             semTex.wrap = firstPass.wrap;
             semTex.mipmap = firstPass.mipmap;
-            semTex.data = (uintptr_t)map.textures[SemanticMap::History].image;
+            if (index)
+                semTex.data = (uintptr_t)map.textures[SemanticMap::PassOutput].image + (index - 1) * map.textures[SemanticMap::PassOutput].stride;
+            else
+                semTex.data = (uintptr_t)map.textures[SemanticMap::History].image;
+
             goto Next;
         }
 
