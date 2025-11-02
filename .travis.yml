@@ -46,7 +46,7 @@ jobs:
       - flatpak-builder --force-clean --verbose=0 --user --install-deps-from=flathub --repo=repo .flatpak-builder/out data/org.bitbucket.Denise.yml
       - flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
       - |
-        if [[ $TRAVIS_BRANCH =~ v[0-999].[0-999] || $TRAVIS_BRANCH =~ v[0-999].[0-999].[0-999] ]]; then
+        if [[ $TRAVIS_BRANCH =~ v[0-999].[0-999] || $TRAVIS_BRANCH =~ v[0-999].[0-999].[0-999] || $TRAVIS_BRANCH =~ test[0-999].[0-999] ]]; then
           export deployFile=denise_$TRAVIS_BRANCH.flatpak
           export deployTarget=${FTP_FOLDER}$TRAVIS_BRANCH
         else
@@ -66,7 +66,7 @@ jobs:
       - ./build_deb.sh
       - dpkg-deb --build ./denisepackage || travis_terminate 1;
       - |
-        if [[ $TRAVIS_BRANCH =~ v[0-999].[0-999] || $TRAVIS_BRANCH =~ v[0-999].[0-999].[0-999] ]]; then
+        if [[ $TRAVIS_BRANCH =~ v[0-999].[0-999] || $TRAVIS_BRANCH =~ v[0-999].[0-999].[0-999] || $TRAVIS_BRANCH =~ test[0-999].[0-999] ]]; then
           export deployFile=denise_ubuntu2004_$TRAVIS_BRANCH.deb
           export deployTarget=${FTP_FOLDER}$TRAVIS_BRANCH
         else
