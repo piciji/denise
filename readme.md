@@ -26,7 +26,7 @@
     * monitor must support this and be activated in the OS and emulator
 * support black frame insertion (BFI) to reduce motion blur
     * monitor requires support for higher refresh rates, e.g. 100, 150, 200, 250 Hz... 
-    * BlUR BUSTERS CRT Simulation GPU Shader ... advanced BFI [read more](https://blurbusters.com/crt-simulation-in-a-gpu-shader-looks-better-than-bfi/)
+    * BLUR BUSTERS CRT Simulation GPU Shader ... advanced BFI [read more](https://blurbusters.com/crt-simulation-in-a-gpu-shader-looks-better-than-bfi/)
 * added rewind support
     * you can rewind a few seconds while playing, e.g. to avoid the loss of a life
     * the function must be assigned to a hotkey, ideally the gamepad

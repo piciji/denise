@@ -235,7 +235,7 @@ auto VicIIBase::power() -> void {
     std::memset(cBuffer, 0, sizeof cBuffer); 	            
     std::memset(colorReg, 0, sizeof (colorReg));
         
-    cycle = lineCycles - 1;
+    cycle = 10;
     vCounter = 0;
 
     xCounterLatch = xCounterLatchBefore = ntscBorder ? 412 : 404;

@@ -47,7 +47,7 @@ jobs:
       - flatpak build-bundle repo denise.flatpak org.bitbucket.Denise --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
       - |
         if [[ $TRAVIS_BRANCH =~ v[0-999].[0-999] || $TRAVIS_BRANCH =~ v[0-999].[0-999].[0-999] || $TRAVIS_BRANCH =~ test[0-999].[0-999] ]]; then
-          export deployFile=denise_$TRAVIS_BRANCH.flatpak
+          export deployFile=denise_linux_$TRAVIS_BRANCH.flatpak
           export deployTarget=${FTP_FOLDER}$TRAVIS_BRANCH
         else
           export deployFile=denise_$(echo ${TRAVIS_COMMIT} | cut -c 1-7).flatpak
