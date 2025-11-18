@@ -287,9 +287,6 @@ auto System::run() -> void {
 
     while( !leaveEmulation ) {
         cpu.process();
-#ifdef LOG_CPU_STATE
-        cpu.logState();
-#endif
     }
 
     denise.process(); // keep up, so we don't need to serialize BplUpdate
@@ -663,6 +660,18 @@ auto System::setHDDAsync(bool state) -> void {
 
 auto System::getHDDAsync() -> bool {
     return asyncHDDAccess;
+}
+
+auto System::debuggerAdd(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    switch (action) {
+        case Emulator::Interface::DebuggerAction::Line:
+        case Emulator::Interface::DebuggerAction::Frame:
+            agnus.debuggerAction = action;
+            break;
+        default:
+            cpu.debuggerAdd( (M68FAMILY::M68000::DebuggerAction)action, addr, addrTo );
+            break;
+    }
 }
 
 template auto System::dongleJoydat<false>(uint16_t& val) -> void;

@@ -17,6 +17,7 @@
 #include "../emuconfig/layouts/presentation.h"
 #include "../emuconfig/layouts/audio.h"
 #include "../emuconfig/layouts/input.h"
+#include "../debugger/debugger.h"
 
 View* view = nullptr;
 
@@ -209,7 +210,7 @@ auto View::build() -> void {
     };
 
     onMinimize = [this]() {
-        if (program->quitInProgress)
+        if (program->quitInProgress || program->getActiveDebugger())
             return;
         static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
         program->isPause &= ~2;
@@ -227,7 +228,8 @@ auto View::build() -> void {
     };
 
     onFocus = [this]() {
-        program->isPause &= ~2;
+        if (!program->getActiveDebugger())
+            program->isPause &= ~2;
     };
 
     onUnFocus = [this]() {
@@ -237,6 +239,9 @@ auto View::build() -> void {
 
         if (inputDriver && inputDriver->mIsAcquired())
             inputDriver->mUnacquire();
+
+        if (program->getActiveDebugger())
+            return;
 
         program->isPause &= ~2;
         program->isPause |= (!!*pauseFocusLoss) << 1;
@@ -1051,6 +1056,7 @@ auto View::loadImages() -> void {
     insertImage.setResourceId(ID_INSERT);
     screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
     screenshotImage.setResourceId(ID_SCREENSHOT);
+    debugImage.loadPng((uint8_t*)Icons::debug, sizeof(Icons::debug));
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1310,6 +1316,21 @@ auto View::buildMenu() -> void {
             emuView->show(EmuConfigView::TabWindow::Layout::System);
 	    };
         sM.system->append( *sM.systemManagement );
+
+        sM.debugger = new GUIKIT::MenuItem;
+        sM.debugger->setIcon( debugImage );
+        sM.debugger->onActivate = [this, emulator]() {
+            for (auto debugger : debuggers) {
+                if (debugger->emulator == emulator) {
+                    debugger->makeVisible();
+                    return;
+                }
+            }
+            auto debugger = new Debugger(emulator);
+            debuggers.push_back(debugger);
+            debugger->makeVisible();
+        };
+        sM.system->append( *sM.debugger );
             
         sM.configurations = new GUIKIT::MenuItem;
         sM.configurations->setIcon( scriptImage );
@@ -2053,6 +2074,7 @@ auto View::translate() -> void {
         sysMenu.load->setText(trans->get("Loadstate"));
 
         sysMenu.systemManagement->setText(trans->get("system_management") + "...");
+        sysMenu.debugger->setText(trans->get("Debugger"));
 
         sysMenu.audio->setText(trans->get("Audio") + "...");
         sysMenu.firmware->setText(trans->get("Firmware") + "...");

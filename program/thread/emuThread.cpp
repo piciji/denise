@@ -3,6 +3,8 @@
 #include "../tools/chronos.h"
 #include "../view/view.h"
 #include "emuThread.h"
+
+#include "../debugger/debugger.h"
 #include "../emuconfig/config.h"
 #include "../input/manager.h"
 #include "../media/autoloader.h"
@@ -195,6 +197,12 @@ auto EmuThread::handleUIEvents() -> void {
             lock();
             fileloader->autoload(activeEmulator, autoloader->getLatestDrive(activeEmulator), 0, false, true);
             unlock();
+        }
+
+        if (_events & EVT_DEBUGGER) {
+            auto debugger = program->getActiveDebugger();
+            if (debugger)
+                debugger->debugCallback();
         }
     }
 }

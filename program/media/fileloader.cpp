@@ -456,9 +456,13 @@ auto Fileloader::applyPreviewFont(Emulator::Interface* emulator, unsigned fontSi
     auto customFont = GUIKIT::Window::getCustomFont(emulator);
 
     if (customFont)
-        fileDialogPtr->setContentViewFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust), dynamic_cast<LIBC64::Interface*>(emulator));
-    else
+        fileDialogPtr->setContentViewFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust));
+    else {
         fileDialogPtr->setContentViewFont(GUIKIT::Font::system(fontSize));
+    }
+
+    if (!customFont || !dynamic_cast<LIBC64::Interface*>(emulator))
+        fileDialogPtr->setSpacing( 2 );
 }
 
 auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media ) -> std::vector<GUIKIT::BrowserWindow::Listing> {

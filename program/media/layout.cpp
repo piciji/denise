@@ -472,10 +472,12 @@ auto MediaGroupLayout::applyFont(unsigned fontSize) -> void {
 
     auto customFont = GUIKIT::Window::getCustomFont(mediaLayout->emulator);
 
-    if (customFont)
-        listings.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust),
-            dynamic_cast<LIBC64::Interface*>(mediaLayout->emulator) || GUIKIT::Application::isWinApi()); // todo handle this better
-    else
+    if (customFont) {
+        listings.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust));
+
+        if (dynamic_cast<LIBC64::Interface*>(mediaLayout->emulator) || GUIKIT::Application::isWinApi())
+            listings.setSpacing( 0 );
+    } else
         listings.setFont(GUIKIT::Font::system(fontSize));
 }
 
@@ -540,9 +542,10 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
 
     auto fontSize = settings->get<unsigned>("dialog_preview_fontsize", 11, {8, 16});
 
-    if (customFont)
-        previewBox.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust), true);
-    else
+    if (customFont) {
+        previewBox.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust));
+        previewBox.setSpacing( 0 );
+    } else
         previewBox.setFont( GUIKIT::Font::system(fontSize) );
 
     if (!previewBox.rowCount()) {
@@ -599,10 +602,13 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
         else
             previewBox.resetSelectionColor();
 
-        if (dynamic_cast<LIBAMI::Interface*>(emulator))
-            previewBox.setFirstRowColor( backgroundColor, foregroundColor );
-        else
-            previewBox.resetFirstRowColor();
+        if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+            previewBox.setRowForegroundColor( 0, backgroundColor );
+            previewBox.setRowBackgroundColor( 0, foregroundColor );
+        } else {
+            previewBox.resetRowForegroundColor( 0 );
+            previewBox.resetRowBackgroundColor( 0 );
+        }
         
         for (unsigned i = 0; i < 8; i++) {
             previewBox.append( {out} );

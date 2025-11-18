@@ -393,11 +393,11 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticI(ui
     result = arithmetic<Inst, Size>( imm, result);
     
     if constexpr(Size == Long && isRegisterMode<Mode>()) {
-        if constexpr(Inst == Cmp)   SYNC(2);
+        if constexpr(Inst == Cmpi)  SYNC(2);
         else                        SYNC(4);
     }
     
-    if constexpr(Inst != Cmp)
+    if constexpr(Inst != Cmpi)
         writeEA<Mode, Size>(ea, result);
 }
 
@@ -411,7 +411,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opArithmeticQ(ui
 
     prefetch<SampleIPL>();
     if (Mode == AddressRegisterDirect)
-        result = Inst == Add ? (result + operand) : (result - operand);
+        result = Inst == Addq ? (result + operand) : (result - operand);
     else
         result = arithmetic<Inst, Size>( operand, result);
 
@@ -849,15 +849,19 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opExt(uint16_t opcode) -> void
     prefetch<SampleIPL>();
 }
 
-template<uint8_t Inst, uint8_t Size> auto M68000::opMoveUsp(uint16_t opcode) -> void {
+template<uint8_t Inst, uint8_t Size> auto M68000::opMoveUspAn(uint16_t opcode) -> void {
     if (!s)
         return privilegeException();
 
-    if (Inst == UspAn)
-        writeRegA( opcode & 7, usp );
-    else
-        usp = readRegA( opcode & 7 );
+    writeRegA( opcode & 7, usp );
+    prefetch<SampleIPL>();
+}
 
+template<uint8_t Inst, uint8_t Size> auto M68000::opMoveAnUsp(uint16_t opcode) -> void {
+    if (!s)
+        return privilegeException();
+
+    usp = readRegA( opcode & 7 );
     prefetch<SampleIPL>();
 }
 
@@ -999,35 +1003,36 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opUnlink(uint16_t opcode) -> v
     prefetch();
 }
 
-template<uint8_t Inst, uint8_t Size> auto M68000::opMovep(uint16_t opcode) -> void {
+template<uint8_t Inst, uint8_t Size> auto M68000::opMovepReg(uint16_t opcode) -> void {
     uint32_t ea = calcEA<AddressRegisterIndirectWithDisplacement, Byte>( opcode & 7 );
 
-    if constexpr(Inst == ToReg) {
-        uint32_t result = 0;
-        if constexpr(Size == Long) {
-            result |= read<Byte>(ea) << 24; ea += 2;
-            result |= read<Byte>(ea) << 16; ea += 2;
-        }
-
-        result |= read<Byte>(ea) << 8; ea += 2;
-        result |= read<Byte, SampleIPL>(ea);
-
-        writeRegD<Size>((opcode >> 9) & 7, result);
-        prefetch();
-
-    } else {
-        uint32_t result = readRegD<Long>((opcode >> 9) & 7);
-
-        if constexpr(Size == Long) {
-            write<Byte>(ea, (result >> 24) & 0xff); ea += 2;
-            write<Byte>(ea, (result >> 16) & 0xff); ea += 2;
-        }
-
-        write<Byte>(ea, (result >> 8) & 0xff); ea += 2;
-        write<Byte>(ea, result & 0xff);
-
-        prefetch<SampleIPL>();
+    uint32_t result = 0;
+    if constexpr(Size == Long) {
+        result |= read<Byte>(ea) << 24; ea += 2;
+        result |= read<Byte>(ea) << 16; ea += 2;
     }
+
+    result |= read<Byte>(ea) << 8; ea += 2;
+    result |= read<Byte, SampleIPL>(ea);
+
+    writeRegD<Size>((opcode >> 9) & 7, result);
+    prefetch();
+}
+
+template<uint8_t Inst, uint8_t Size> auto M68000::opMovepEa(uint16_t opcode) -> void {
+    uint32_t ea = calcEA<AddressRegisterIndirectWithDisplacement, Byte>( opcode & 7 );
+
+    uint32_t result = readRegD<Long>((opcode >> 9) & 7);
+
+    if constexpr(Size == Long) {
+        write<Byte>(ea, (result >> 24) & 0xff); ea += 2;
+        write<Byte>(ea, (result >> 16) & 0xff); ea += 2;
+    }
+
+    write<Byte>(ea, (result >> 8) & 0xff); ea += 2;
+    write<Byte>(ea, result & 0xff);
+
+    prefetch<SampleIPL>();
 }
 
 }

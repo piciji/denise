@@ -90,6 +90,7 @@ auto M68000::firstPrefetch() -> void {
 
 template<uint8_t Flags> auto M68000::prefetch() -> void {
     ird = irc;
+    pcEdge = pc;
     pc += 2;
     irc = read<Word, Flags OR_FC_PRG>(pc);
 }
@@ -99,8 +100,26 @@ template<uint8_t Flags> auto M68000::readExtensionWord() -> void {
     irc = read<Word, Flags OR_FC_PRG>(pc);
 }
 
+template<uint8_t Size> auto M68000::peekInc(uint32_t& adr, DasmHandler& d) -> uint32_t {
+    switch(Size) {
+        case Long:
+            return peekInc<Word>(adr, d) << 16 | peekInc<Word>(adr, d);
+        default:
+            adr +=2;
+            return d.memSnap ? *d.memSnap++ : peek(adr);
+    }
+}
+
+auto M68000::peek(uint32_t adr) -> uint16_t {
+    return PEEK_WORD(adr & 0xffffff);
+}
+
 template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_t {
     uint32_t result;
+
+    if ((control & WatchPoint) && watchPoints.check( adr, Size )) {
+        DEBUG_POINT_REACHED(DebuggerAction::Watchpoint, adr, modifiedCode.getAndForget());
+    }
 
     if constexpr (Size == Long) {
         SYNC(2);
@@ -145,6 +164,13 @@ template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_
 }
 
 template<uint8_t Size, uint8_t Flags> auto M68000::write(uint32_t adr, uint32_t data) -> void {
+
+    if (control & (WatchPoint | ModifiedCode) ) {
+        modifiedCode.checkAndSet( adr, Size );
+
+        if ((control & WatchPoint) && watchPoints.check( adr, Size ))
+            DEBUG_POINT_REACHED(DebuggerAction::Watchpoint, adr, modifiedCode.getAndForget());
+    }
 
     if constexpr (Size == Long) {
         SYNC(2);
@@ -286,6 +312,33 @@ template<uint8_t Mode, uint8_t Size, uint8_t Flags> auto M68000::calcEA(int reg)
             }
             readExtensionWord();
             return adr;
+    }
+}
+
+template<uint8_t Mode, uint8_t Size> auto M68000::prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void {
+    d.mode = Mode;
+    d.reg = reg;
+
+    switch(Mode) {
+        case ProgramCounterIndirectWithIndex:
+        case ProgramCounterIndirectWithDisplacement:
+            d.pc = adr;
+        case AddressRegisterIndirectWithDisplacement:
+        case AbsoluteShort:
+        case AddressRegisterIndirectWithIndex:
+            d.ext = peekInc<Word>(adr, d);
+            break;
+
+        case AbsoluteLong:
+            d.ext = peekInc<Long>(adr, d);
+            break;
+
+        case Immediate:
+            d.ext = clip<Size>(peekInc<Size>(adr, d));
+            break;
+
+        default:
+            break;
     }
 }
 

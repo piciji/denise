@@ -829,6 +829,10 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         view->setFocused(100);
     };
 
+    stateFast.top.edit.onReturn = [this]() {
+        stateFast.top.find.onActivate();
+    };
+
     stateFast.top.find.onActivate = [this]() {
         stateFast.selector.listView.reset();
 

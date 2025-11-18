@@ -1,10 +1,5 @@
 
-/**
- * v 1.9.5
- */
-
-#ifndef GUIKIT_H
-#define GUIKIT_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -13,6 +8,7 @@
 #include <unordered_set>
 #include <thread>
 #include <iterator>
+#include <optional>
 
 namespace GUIKIT {
 
@@ -429,14 +425,13 @@ struct Widget : Sizable {
     std::function<void ()> onSize = nullptr;
 
     auto font() -> std::string;
-    auto specialFont() -> bool { return state.specialFont; }
     auto geometry() const -> Geometry { return state.geometry; }
     auto text() -> std::string { return state.text; }
     auto tooltip() -> std::string { return state.tooltip; }
     auto isContainer() -> bool { return state.isContainer; }
     auto foregroundColor() -> unsigned { return state.foregroundColor; }
     auto backgroundColor() -> unsigned { return state.backgroundColor; }
-    auto overrideForegroundColor() -> bool { return state.overrideForegroundColor; } 
+    auto overrideForegroundColor() -> bool { return state.overrideForegroundColor; }
     auto overrideBackgroundColor() -> bool { return state.overrideBackgroundColor; }
     auto getStore() -> int { return state.store; }
 
@@ -445,9 +440,7 @@ struct Widget : Sizable {
     auto setEnabled(bool enabled = true) -> void;
     auto setEnabledThreaded(bool enabled = true) -> void;
     auto setVisible(bool visible = true) -> void;
-    // "special font" hint is only handled in listviews at the moment.
-    // in this case vertical spacing is completly removed.
-    auto setFont(const std::string& font, bool specialFont = false) -> void;
+    auto setFont(const std::string& font) -> void;
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void; //use this to control geometry manually for widgets without layout, layouts set widget geometry automatically
     auto setText(const std::string& text) -> void;
@@ -466,7 +459,6 @@ struct Widget : Sizable {
     struct {
         Geometry geometry = {0, 0, 0, 0};
         std::string font;
-        bool specialFont = false;
         std::string text;
         std::string tooltip;
         unsigned foregroundColor = 0;
@@ -486,8 +478,10 @@ protected:
 };
 
 struct LineEdit : Widget {
+    enum class Align { Left, Right } ;
     std::function<void ()> onChange = nullptr;
     std::function<void ()> onFocus = nullptr;
+    std::function<void ()> onReturn = nullptr;
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
 
     auto editable() const -> bool { return state.editable; }
@@ -499,11 +493,17 @@ struct LineEdit : Widget {
     auto setEditable(bool editable = true) -> void;
     auto setDroppable(bool droppable = true) -> void;
     auto setMaxLength( unsigned maxLength ) -> void;
+    auto setPlaceholder(const std::string& placeholder) -> void;
+    auto placeholder() const -> std::string { return state.placeholder; }
+    auto setAlign( Align align ) -> void;
+    auto align() -> Align { return state.align; }
     
     struct {
         bool editable = true;
         bool droppable = false;
+        std::string placeholder;
         unsigned maxLength = 0; // no limit
+        Align align = Align::Left;
     } state;
 
     pLineEdit& p;
@@ -752,6 +752,8 @@ struct ProgressBar : Widget {
 struct ListView : Widget {
     std::function<void ()> onActivate = nullptr;
     std::function<void ()> onChange = nullptr;
+    std::function<void (unsigned row, unsigned column)> onClick = nullptr;
+    std::function<void (unsigned row, unsigned column)> onEdit = nullptr;
 
     auto headerVisible() const -> bool { return state.headerVisible; }
     auto rowCount() const -> unsigned { return state.rows.size(); }
@@ -762,7 +764,7 @@ struct ListView : Widget {
     auto lockRedraw() -> void;
     auto unlockRedraw() -> void;
 
-    auto append(const std::vector<std::string>& row) -> void;
+    auto append(const std::vector<std::string>& row, bool preventColumnResizing = false) -> void;
     auto append(const std::vector<std::vector<std::string>>& rows, bool clearBefore = true) -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
@@ -772,7 +774,7 @@ struct ListView : Widget {
     auto setHeaderText(const std::vector<std::string>& text) -> void;
     auto setText(unsigned selection, const std::vector<std::string>& text) -> void;
     auto setText(unsigned selection, unsigned position, const std::string& text) -> void;
-    auto setImage(unsigned selection, unsigned position, Image& image) -> void;
+    auto setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing = false) -> void;
     auto getImage( unsigned selection, unsigned position ) -> Image*;
     auto countImages() -> unsigned;
     auto text(unsigned selection, unsigned position) -> std::string;
@@ -783,14 +785,21 @@ struct ListView : Widget {
     auto colorRowTooltips(bool colorTip) -> void;
     auto setSelectionColor(unsigned foregroundColor, unsigned backgroundColor) -> void;
     auto resetSelectionColor() -> void;
-    auto setFirstRowColor(unsigned foregroundColor, unsigned backgroundColor) -> void;
-    auto resetFirstRowColor() -> void;
     auto overrideSelectionColor() -> bool { return state.overrideSelectionColor; }
     auto selectionForegroundColor() -> unsigned { return state.selectionForegroundColor; }
     auto selectionBackgroundColor() -> unsigned { return state.selectionBackgroundColor; }
-    auto overrideFirstRowColor() -> bool { return state.overrideFirstRowColor; }
-    auto firstRowForegroundColor() -> unsigned { return state.firstRowForegroundColor; }
-    auto firstRowBackgroundColor() -> unsigned { return state.firstRowBackgroundColor; }
+    auto spacing() -> int { return state.spacing; }
+    auto autoSizeColumns() -> void;
+
+    auto rowForegroundColor(unsigned row) -> std::optional<unsigned>;
+    auto setRowForegroundColor(unsigned row, unsigned foregroundColor) -> void;
+    auto resetRowForegroundColor(unsigned row) -> void;
+
+    auto rowBackgroundColor(unsigned row) -> std::optional<unsigned>;
+    auto setRowBackgroundColor(unsigned row, unsigned backgroundColor) -> void;
+    auto resetRowBackgroundColor(unsigned row) -> void;
+    auto resetRowColors() -> void;
+    auto setSpacing(unsigned spacing) -> void;
 
     struct {
         bool headerVisible = false;
@@ -801,13 +810,13 @@ struct ListView : Widget {
         bool overrideSelectionColor = false;
         unsigned selectionForegroundColor;
         unsigned selectionBackgroundColor;
-        bool overrideFirstRowColor = false;
-        unsigned firstRowForegroundColor;
-        unsigned firstRowBackgroundColor;
+        int spacing = -1;
         std::vector<std::string> header;
         std::vector<std::vector<std::string>> rows;
 		std::vector<std::string> rowTooltips;
         std::vector<std::vector<Image*>> images;
+        std::vector<std::pair<unsigned, unsigned>> rowForegroundColor;
+        std::vector<std::pair<unsigned, unsigned>> rowBackgroundColor;
     } state;
 
     pListView& p;
@@ -1251,7 +1260,9 @@ struct BrowserWindow {
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
-    auto setContentViewFont(std::string font, bool specialFont = false) -> BrowserWindow&;
+    auto setContentViewFont(std::string font) -> BrowserWindow&;
+    auto setSpacing(unsigned spacing) -> BrowserWindow&;
+    auto spacing() -> int { return state.contentView.spacing; }
     auto setContentViewWidth(unsigned boxWidth) -> BrowserWindow&;
     auto setContentViewHeight(unsigned boxHeight) -> BrowserWindow&;
     auto setContentViewBackground(unsigned color) -> BrowserWindow&;
@@ -1274,7 +1285,7 @@ struct BrowserWindow {
     struct ContentView {
         unsigned id = 0; // for template usage
         std::string font = "";
-        bool specialFont = false;
+        int spacing = -1;
         unsigned width = 450;
         unsigned height = 200;
         unsigned foregroundColor = 0;
@@ -1721,5 +1732,3 @@ struct Utf8 {
 };
 
 }
-
-#endif

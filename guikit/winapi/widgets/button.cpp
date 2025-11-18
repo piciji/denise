@@ -77,7 +77,7 @@ auto pButton::setText(const std::string& text) -> void {
 
 auto pButton::setEnabled(bool enabled) -> void {
     pWidget::setEnabled(enabled);
-    if(button.image())
+    if(button.image() && hwnd)
         RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
@@ -93,6 +93,9 @@ auto pButton::setImage(Image* image) -> void {
         DeleteObject(hbitmap);
 
     hbitmap = CreateBitmapWithPremultipliedAlpha( *image );
+
+    if (hwnd)
+        RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
 auto pButton::customDraw(HWND hWnd, HDC hdc, RECT& rc, RECT& rcpaint) -> void {

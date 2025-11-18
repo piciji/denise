@@ -107,6 +107,7 @@ auto Agnus::setRas() -> void {
 
 auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     overclock.cycles = 0;
+    debuggerAction = Interface::DebuggerAction::None;
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
     dmaClock = 0;
@@ -429,6 +430,7 @@ inline auto Agnus::dmaCycle() -> void {
     busUsage = BUS_FREE;
 
     // de-adjust HRM DMA view by 4 cycles to Beam position.
+    // this is no hack. HRM DMA view is designed from a developer's perspective.
     switch(++hPos) {
         case 1:
             if (ERSY)
@@ -967,6 +969,24 @@ auto Agnus::checkHardDrives() -> void {
 
 inline auto Agnus::csyncPolTrue(bool state) -> bool {
     return (beamCon & CSYTRUE) ? !state : state;
+}
+
+auto Agnus::debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned addr, bool maybeModified) -> void {
+    system->leaveEmulation = true;
+    interface->debugger((Emulator::Interface::DebuggerAction)action, addr, maybeModified);
+}
+
+auto Agnus::oneTimeDebuggerAction() -> void {
+    system->leaveEmulation = true;
+    interface->debugger(debuggerAction, 0, cpu.hasModifiedCode());
+    debuggerAction = Emulator::Interface::DebuggerAction::None;
+}
+
+auto Agnus::getSnapshot() -> AgnusSnapshot {
+    AgnusSnapshot snapshot;
+    snapshot.hPos = hPos;
+    snapshot.vPos = vPos;
+    return snapshot;
 }
 
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;

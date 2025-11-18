@@ -1362,10 +1362,13 @@ auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundCol
             else
                 mediaGroupLayout->listings.resetSelectionColor();
 
-            if (dynamic_cast<LIBAMI::Interface*>(emulator))
-                mediaGroupLayout->listings.setFirstRowColor( backgroundColor, foregroundColor );
-            else
-                mediaGroupLayout->listings.resetFirstRowColor();
+            if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+                mediaGroupLayout->listings.setRowForegroundColor( 0, backgroundColor );
+                mediaGroupLayout->listings.setRowBackgroundColor( 0, foregroundColor );
+            } else {
+                mediaGroupLayout->listings.resetRowForegroundColor( 0 );
+                mediaGroupLayout->listings.resetRowBackgroundColor( 0 );
+            }
         }
     }
 }

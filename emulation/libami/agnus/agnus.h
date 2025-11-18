@@ -8,6 +8,9 @@
 #include "../expansionPort/fastMem.h"
 #include "../expansionPort/hdController.h"
 #include "../../tools/history.h"
+#include "../cpu/m68000/dasmHandler.h"
+#include "../cpu/m68000/m68000.h"
+#include "../system/snapShots.h"
 
 /**
  * todos:
@@ -95,6 +98,7 @@ struct Agnus {
     int64_t eventClock[EVENT_CHANNELS];
     int64_t clock;
     int64_t nextClock;
+    Emulator::Interface::DebuggerAction debuggerAction;
 
     struct RapidJob {
         int job;
@@ -284,7 +288,8 @@ struct Agnus {
 
     auto readByte(uint32_t adr) -> uint8_t;
     auto writeByte(uint32_t adr, uint8_t value) -> void;
-    auto readWord(uint32_t adr) -> uint16_t;    
+    auto readWord(uint32_t adr) -> uint16_t;
+    auto peekWord(uint32_t adr) -> uint16_t;
     auto writeWord(uint32_t adr, uint16_t value) -> void;
 
     auto fakeWriteByte(uint32_t adr, uint8_t value) -> void;
@@ -455,6 +460,10 @@ struct Agnus {
     }
 
     inline auto updateDdfEnableCache() -> void;
+
+    auto debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned addr, bool maybeModified) -> void;
+    auto oneTimeDebuggerAction() -> void;
+    auto getSnapshot() -> AgnusSnapshot;
 };
 
 }

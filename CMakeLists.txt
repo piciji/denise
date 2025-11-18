@@ -112,6 +112,8 @@ set(srcs
         emulation/cia/new/cia.cpp
 
         emulation/libami/cpu/m68000/m68000.cpp
+        emulation/libami/cpu/m68000/dasmHandler.cpp
+        emulation/libami/cpu/m68000/watcher.cpp
         emulation/libami/cpu/m68000.cpp
         emulation/libami/agnus/agnus.cpp
         emulation/libami/agnus/blitter.cpp
@@ -192,6 +194,7 @@ set(srcs
         program/program.cpp
         program/input/manager.cpp
         program/view/view.cpp
+        program/debugger/debugger.cpp
         program/view/status.cpp
         program/config/config.cpp
         program/emuconfig/config.cpp

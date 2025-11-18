@@ -321,6 +321,8 @@ struct Interface {
         unsigned randomChance = 0;
     };
 
+    enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame };
+
     //callbacks
     struct Bind {
         virtual auto jitPoll(int) -> bool { return false; }
@@ -349,6 +351,7 @@ struct Interface {
         virtual auto fpsChanged() -> void {}
         virtual auto trapsResult(Media*, bool error) -> void {}
         virtual auto libraryMissing(std::string) -> void {}
+        virtual auto debugger(DebuggerAction action, unsigned addr, bool maybeModified) -> void {}
     };
     Bind* bind = nullptr;
 
@@ -458,6 +461,10 @@ struct Interface {
 
     auto libraryMissing(std::string ident) -> void {
         bind->libraryMissing(ident);
+    }
+
+    auto debugger(DebuggerAction action, unsigned addr, bool maybeModified) -> void {
+        bind->debugger(action, addr, maybeModified);
     }
 
     template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {
@@ -629,6 +636,20 @@ struct Interface {
     
     // a ratio of 1.0 means monitor refresh rate is equal to emulated system original speed
     virtual auto setMonitorFpsRatio(double ratio) -> void {}
+
+    // debugger
+    virtual auto debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
+    virtual auto debuggerRemove(DebuggerAction action, unsigned addr) -> void {}
+    virtual auto debuggerEnable(DebuggerAction action, unsigned addr, bool state = true) -> void {}
+    virtual auto debuggerDisable(DebuggerAction action, unsigned addr) -> void {}
+    virtual auto debuggerDisableAll() -> void {}
+    virtual auto debuggerStepOver() -> void {}
+    virtual auto debuggerStepInto() -> void {}
+
+    // disassembler
+    virtual auto disassemble(unsigned addr, unsigned& bytes) -> std::string { return ""; }
+    virtual auto disassembleData(unsigned addr, unsigned bytes) -> std::string { return ""; }
+    virtual auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string { return ""; }
     
 	//shortcuts
 	auto insertMedium(Media* media, uint8_t* data, uint64_t size) -> void {

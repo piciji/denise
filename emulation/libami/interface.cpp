@@ -791,4 +791,55 @@ auto Interface::setRewind(bool state) -> void {
         system->history.setRewind(state);
 }
 
+auto Interface::disassemble(unsigned addr, unsigned& bytes) -> std::string {
+    return system->cpu.disassemble(addr, bytes);
+}
+
+auto Interface::disassembleData(unsigned addr, unsigned bytes) -> std::string {
+    return system->cpu.disassembleData( addr, bytes );
+}
+
+auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
+    return system->cpu.disassembleTrace( i, flags );
+}
+
+auto Interface::getCpuSnapshot() -> CpuSnapshot {
+    return system->cpu.getSnapshot();
+}
+
+auto Interface::getAgnusSnapshot() -> AgnusSnapshot {
+    return system->agnus.getSnapshot();
+}
+
+auto Interface::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    system->debuggerAdd( action, addr, addrTo );
+}
+
+auto Interface::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
+    system->cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr );
+}
+
+auto Interface::debuggerEnable(DebuggerAction action, unsigned addr, bool state) -> void {
+    if (state)
+        system->cpu.debuggerEnable( (M68FAMILY::M68000::DebuggerAction)action, addr );
+    else
+        debuggerDisable( action, addr );
+}
+
+auto Interface::debuggerDisable(DebuggerAction action, unsigned addr) -> void {
+    system->cpu.debuggerDisable( (M68FAMILY::M68000::DebuggerAction)action, addr );
+}
+
+auto Interface::debuggerStepOver() -> void {
+    system->cpu.debuggerStepOver();
+}
+
+auto Interface::debuggerStepInto() -> void {
+    system->cpu.debuggerStepInto();
+}
+
+auto Interface::debuggerDisableAll() -> void {
+    system->cpu.debuggerDisableAll();
+}
+
 }

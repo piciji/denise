@@ -1,6 +1,5 @@
 
-#ifndef LOGGER_H
-#define LOGGER_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -81,6 +80,3 @@ private:
 };
 
 extern Logger* logger;
-
-#endif
-

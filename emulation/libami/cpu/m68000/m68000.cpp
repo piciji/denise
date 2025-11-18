@@ -10,10 +10,12 @@
     #define REF_CALL
 #endif
 
-#define READ_WORD       REF_CALL readWord
-#define READ_BYTE       REF_CALL readByte
-#define WRITE_WORD      REF_CALL writeWord
-#define WRITE_BYTE      REF_CALL writeByte
+#define READ_WORD           REF_CALL readWord
+#define READ_BYTE           REF_CALL readByte
+#define WRITE_WORD          REF_CALL writeWord
+#define WRITE_BYTE          REF_CALL writeByte
+#define PEEK_WORD           REF_CALL peekWord
+#define DEBUG_POINT_REACHED REF_CALL debugPointReached
 
 #ifdef FC_SUPPORT
 #define READ_WORD_PRG   REF_CALL readWordPRG
@@ -35,22 +37,29 @@
 #include "instruction.cpp"
 #include "alu.cpp"
 #include "exception.cpp"
+#include "disassembler.cpp"
 
 namespace M68FAMILY {
 
 M68000::~M68000() {
     if (mulCycleLookup)
         delete[] mulCycleLookup;
+
+    delete[] dasmTable;
 }
 
-auto M68000::process()->void {
+auto M68000::process() -> void {
 
     if (control) {
         if (control & Halt)
             return SYNC(4);
 
-        if (control & TraceScheduled) // highest prioritized group 1 exception
-            return traceException();
+        if (control & TraceScheduled) { // highest prioritized group 1 exception
+            traceException();
+            if (control & (BreakPoint | SoftStop))
+                controlBreaks();
+            return;
+        }
 
         if ((control & Trace) && !(control & Stop))
             // trace happens if it was enabled at beginning of an instruction.
@@ -58,8 +67,12 @@ auto M68000::process()->void {
             // stop instruction can not schedule trace mode, but an already scheduled trace prevent "stop" at all.
             control |= TraceScheduled;
 
-        if (control & IRQ)
-            return IRQException();
+        if (control & IRQ) {
+            IRQException();
+            if (control & (BreakPoint | SoftStop))
+                controlBreaks();
+            return;
+        }
 
         if (control & Stop) {
             sampleInterrupt(); // if not detected, 4 extra cycles.
@@ -74,9 +87,27 @@ auto M68000::process()->void {
 
         if (control & ResetRoutine)
             resetRoutine();
-    }
-    
-    (this->*opTable[ird])(ird);
+
+        if (control & History)
+            historyHandler.add();
+
+        (this->*opTable[ird])(ird);
+
+        if (control & (BreakPoint | SoftStop))
+            controlBreaks();
+    } else    
+        (this->*opTable[ird])(ird);
+}
+
+auto M68000::controlBreaks() -> void {
+    if (control & TraceScheduled)
+        return;
+
+    if ((control & SoftStop) && checkSoftStop(pcEdge))
+        return DEBUG_POINT_REACHED(DebuggerAction::Softstop, pcEdge, modifiedCode.getAndForget());
+
+    if ((control & BreakPoint) && breakPoints.check(pcEdge))
+        return DEBUG_POINT_REACHED(DebuggerAction::Breakpoint, pcEdge, modifiedCode.getAndForget());
 }
 
 auto M68000::power() -> void {
@@ -98,6 +129,11 @@ auto M68000::reset() -> void { // highest prioritized group 0 routine
     i = 7;
     iplPins = iplSample = 0;
     control = ResetRoutine; // emulation begins, when reset line is de-asserted
+    watchPoints.flagWhenNeeded();
+    breakPoints.flagWhenNeeded();
+    exceptionPoints.flagWhenNeeded();
+    modifiedCode.disable();
+    historyHandler.flagWhenNeeded();
 }
 
 auto M68000::getCCR() -> uint8_t {
@@ -319,7 +355,7 @@ template<uint8_t phaseShift> auto M68000::internalWaitCyclesBasedOnMainClockCycl
     return internalWaitCyclesBasedOnEClock<phaseShift>( clockCycles % 10 );
 }
 
-// initial phase shift of E-Clock at power up (cold start) is non deterministic.
+// initial phase shift of E-Clock at power up (cold start) is non-deterministic.
 // keep phase shift after reset
 template<> auto M68000::internalWaitCyclesBasedOnEClock<0>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 7;
@@ -384,6 +420,86 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<8>(int eCyclePos) -> uin
     if (eCyclePos == 8) return 8;
     if (eCyclePos == 9) return 7;
     /*if (eCyclePos == 0)*/ return 6;
+}
+
+auto M68000::flagDebugAction(int action, bool state) -> void {
+    if (state)
+        control |= action;
+    else
+        control &= ~action;
+}
+
+auto M68000::checkSoftStop(uint32_t addr) -> bool {
+    if (!softStep.has_value() || softStep.value() == addr) {
+        control &= ~SoftStop;
+        return true;
+    }
+    return false;
+}
+
+auto M68000::debuggerStepOver() -> void {
+    unsigned iSize;
+
+    disassemble( pcEdge, iSize );
+
+    softStep = pcEdge + iSize;
+    control |= SoftStop;
+}
+
+auto M68000::debuggerStepInto() -> void {
+    softStep = std::nullopt;
+    control |= SoftStop;
+}
+
+auto M68000::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    switch (action) {
+        case DebuggerAction::Breakpoint:        breakPoints.add( addr ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.add( addr ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.add( addr ); break;
+        case DebuggerAction::ModifiedCode:      modifiedCode.add( addr, addrTo ); break;
+        default:
+            break;
+    }
+}
+
+auto M68000::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
+    switch (action) {
+        case DebuggerAction::Breakpoint:        breakPoints.remove( addr ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
+        default:
+            break;
+    }
+}
+
+auto M68000::debuggerEnable(DebuggerAction action, unsigned addr) -> void {
+    switch (action) {
+        case DebuggerAction::Breakpoint:        breakPoints.enable( addr ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.enable( addr ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.enable( addr ); break;
+        case DebuggerAction::History:           historyHandler.enable(); break;
+        default:
+            break;
+    }
+}
+
+auto M68000::debuggerDisable(DebuggerAction action, unsigned addr) -> void {
+    switch (action) {
+        case DebuggerAction::Breakpoint:        breakPoints.disable( addr ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.disable( addr ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.disable( addr ); break;
+        case DebuggerAction::History:           historyHandler.disable( ); break;
+        default:
+            break;
+    }
+}
+
+auto M68000::debuggerDisableAll() -> void {
+    breakPoints.disableAll();
+    watchPoints.disableAll();
+    exceptionPoints.disableAll();
+    modifiedCode.disable();
+    historyHandler.disable();
 }
 
 }

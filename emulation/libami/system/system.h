@@ -16,8 +16,6 @@
 #include "../../tools/history.h"
 #include "../../tools/serializer.h"
 
-//#define LOG_CPU_STATE
-
 namespace LIBAMI {
 
 struct Interface;
@@ -144,6 +142,8 @@ struct System {
 
     auto setHDDAsync(bool state) -> void;
     auto getHDDAsync() -> bool;
+
+    auto debuggerAdd(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void;
 };
 
 

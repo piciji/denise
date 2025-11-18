@@ -947,3 +947,4 @@ Pico Diff Size = Pico Differenzgröße
 Max Nits = Max Nits
 Paper White Nits = Paper White Nits
 combine shader = Einige Shader können miteinander kombiniert werden. Diese Option ist für erfahrene Nutzer oder Shader Entwickler gedacht.
+debugger = Debugger

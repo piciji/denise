@@ -319,6 +319,8 @@ struct pLineEdit : pWidget {
     auto setDroppable(bool droppable) -> void;
     auto setMaxLength( unsigned maxLength ) -> void;
     auto setForegroundColor(unsigned color) -> void;
+    auto setPlaceholder(const std::string& placeholder) -> void;
+    auto setAlign( LineEdit::Align align ) -> void;
 
     pLineEdit(LineEdit& lineEdit) : pWidget(lineEdit), lineEdit(lineEdit) {}
     auto rebuild() -> void;
@@ -566,9 +568,10 @@ struct pListView : pWidget {
     // for ownerdraw
     HBRUSH bgBrush = nullptr;
     HBRUSH hiBrush = nullptr;
-    HBRUSH firstRowBrush = nullptr;
+   // HBRUSH firstRowBrush = nullptr;
+    std::vector<std::pair<unsigned, HBRUSH>> rowBrushes;
 
-    auto append(const std::vector<std::string>& list) -> void;
+    auto append(const std::vector<std::string>& list, bool preventColumnResizing = false) -> void;
     auto autoSizeColumns() -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
@@ -584,7 +587,7 @@ struct pListView : pWidget {
     auto setFont(std::string font) -> void;
     auto setContent() -> void;
     auto setImage(unsigned selection, unsigned position, int imageListPos) -> void;
-    auto setImage(unsigned selection, unsigned position, Image& image) -> void;
+    auto setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing = false) -> void;
     auto buildImageList() -> void;
     auto addToImageList(Image& image, unsigned size) -> void;
 	auto setBackgroundColor(unsigned color) -> void;
@@ -604,12 +607,15 @@ struct pListView : pWidget {
     
     auto onChange(LPARAM lparam) -> void;
     auto onActivate(LPARAM lparam) -> void;
+    auto onClick(LPARAM lparam) -> void;
     
     auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> void;
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
     auto clearBrush() -> void;
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
-    auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
+    auto findRowBrush(unsigned row) -> HBRUSH;
+    auto updateRowColors() -> void;
+    auto updateSpacing() -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) {}
 };

@@ -217,7 +217,8 @@ template<uint8_t Inst> auto M68000::bcd(uint32_t src, uint32_t dest) -> uint8_t 
 }
 
 template<uint8_t Inst, uint8_t Size> auto M68000::arithmetic(uint32_t src, uint32_t dest) -> uint32_t {
-    if constexpr ((Size == Long) && ((Inst == Add) || (Inst == Addx) || (Inst == Sub) || (Inst == Subx) || (Inst == Cmp)))
+    if constexpr ((Size == Long) && ((Inst == Add) || (Inst == Addx) || (Inst == Sub) || (Inst == Subx)
+        || (Inst == Cmp) || (Inst == Cmpi) || (Inst == Neg) || (Inst == Negx) || (Inst == Addi) || (Inst == Subi)|| (Inst == Addq) || (Inst == Subq)))
         return arithmeticT<uint64_t, int64_t, Inst, Size>(src, dest);
     else
         return arithmeticT<uint32_t, int32_t, Inst, Size>(src, dest);
@@ -227,6 +228,8 @@ template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::ar
     T result;
 
     switch (Inst) {
+        case Addq:
+        case Addi:
         case Add: {
             result = (TSign)src + (TSign)dest;
             c = carry<Size>(result);
@@ -245,6 +248,9 @@ template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::ar
             x = c;
         } break;
 
+        case Subq:
+        case Subi:
+        case Neg:
         case Sub: {
             result = (TSign)dest - (TSign)src;
             c = carry<Size>(result);
@@ -254,6 +260,7 @@ template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::ar
             x = c;
         } break;
 
+        case Negx:
         case Subx: {
             result = (TSign)dest - (TSign)src - (TSign)x;
             c = carry<Size>(result);
@@ -263,6 +270,7 @@ template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::ar
             x = c;
         } break;
 
+        case Cmpi:
         case Cmp: {
             result = (TSign)dest - (TSign)src;
             c = carry<Size>(result);
@@ -276,16 +284,19 @@ template<typename T, typename TSign, uint8_t Inst, uint8_t Size> auto M68000::ar
             defaultFlags<Size>(result);
         } break;
 
+        case Andi:
         case And: {
             result = src & dest;
             defaultFlags<Size>(result);
         } break;
 
+        case Ori:
         case Or: {
             result = src | dest;
             defaultFlags<Size>(result);
         } break;
 
+        case Eori:
         case Eor: {
             result = src ^ dest;
             defaultFlags<Size>(result);
@@ -327,23 +338,25 @@ template<uint8_t Inst> auto M68000::sr(uint16_t data) -> void {
 }
 
 template<uint8_t Inst> auto M68000::testCondition() -> bool {
-    switch( Inst & 0xf ) {
-        case 0: return true;
-        case 1: return false;
-        case 2: return !c & !z;
-        case 3: return c | z;
-        case 4: return !c;
-        case 5: return c;
-        case 6: return !z;
-        case 7: return z;
-        case 8: return !v;
-        case 9: return v;
-        case 10: return !n;
-        case 11: return n;
-        case 12: return n == v;
-        case 13: return n != v;
-        case 14: return n == v && !z;
-        case 15: return n != v || z;
+    switch( Inst ) {
+        case Dbt: case Bra: case St:    return true;
+        case Dbf: case Sf:              return false;
+        case Dbhi: case Bhi: case Shi:  return !c & !z;
+        case Dbls: case Bls: case Sls:  return c | z;
+        case Dbcc: case Bcc: case Scc:  return !c;
+        case Dbcs: case Bcs: case Scs:  return c;
+        case Dbne: case Bne: case Sne:  return !z;
+        case Dbeq: case Beq: case Seq:  return z;
+        case Dbvc: case Bvc: case Svc:  return !v;
+        case Dbvs: case Bvs: case Svs:  return v;
+        case Dbpl: case Bpl: case Spl:  return !n;
+        case Dbmi: case Bmi: case Smi:  return n;
+        case Dbge: case Bge: case Sge:  return n == v;
+        case Dblt: case Blt: case Slt:  return n != v;
+        case Dbgt: case Bgt: case Sgt:  return n == v && !z;
+        case Dble: case Ble: case Sle:  return n != v || z;
+        default:
+            break;
     }
     return false; // unreachable
 }

@@ -63,6 +63,40 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
     return (uint8_t)dataBus;
 }
 
+auto Agnus::peekWord(uint32_t adr) -> uint16_t {
+    adr &= 0xffffff;
+    // 68k is big endian, modern architecture is little endian
+    switch( mapper[adr >> 16] ) {
+        case CHIP_MEM:
+            return _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
+        case MMIO_CUSTOM:
+            break;
+        case MMIO_CIA: {
+
+        } break;
+        case SLOW_MEM:
+            return _swapWord(*(uint16_t*)(slowMem + (adr - 0xc00000)));
+        case FAST_MEM:
+            return _swapWord(*(uint16_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
+        case KICK_ROM:
+            return _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask)));
+        case EXPANSION:
+            break;
+        case EXT_ROM:
+            return _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
+        case WOM:
+            return _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
+        case MMIO_RTC:
+            break;
+        case AUTO_CONF:
+            break;
+        case Unmapped: // floating BUS, don't return zero (Hollywood Poker Pro)
+            break;
+    }
+
+    return 0;
+}
+
 auto Agnus::readWord(uint32_t adr) -> uint16_t {
     adr &= 0xffffff;
     // 68k is big endian, modern architecture is little endian

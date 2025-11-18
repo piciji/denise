@@ -432,6 +432,8 @@ auto Agnus::HTotalEvent() -> void {
             } else
                 laceMode = 0;
             initVCounter = true;
+            if (debuggerAction == Emulator::Interface::DebuggerAction::Frame)
+                oneTimeDebuggerAction();
         }
         updateEvent<EVENT_HTOTAL>(1);
         hTotalFirst = false;
@@ -461,6 +463,9 @@ auto Agnus::HTotalEvent() -> void {
 
         if (((vPos & 3) == 0) && input.externalKeyEvent() && system->isProcessFrame())
             input.emergencyPoll();
+
+        if (debuggerAction == Emulator::Interface::DebuggerAction::Line)
+            oneTimeDebuggerAction();
     }
 }
 

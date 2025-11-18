@@ -811,7 +811,10 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
         case WM_MEASUREITEM: {
             LPMEASUREITEMSTRUCT lpmis = (LPMEASUREITEMSTRUCT)lParam;
             if ( (lpmis != NULL) && (lpmis->CtlType == ODT_LISTBOX) ) {
+                int spacing = context->browserWindow.spacing();
                 lpmis->itemHeight = context->listItemHeight;
+                if (spacing > 0)
+                    lpmis->itemHeight += spacing * 2;
                 return TRUE;
             }
             break;
@@ -864,10 +867,11 @@ auto CALLBACK pBrowserWindow::OfnHookProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
                         }
 
                         auto lRow = lDraw->rcItem;
-                        if (!state->contentView.specialFont) {
-                            lRow.left += 2;
-                            lRow.top += 2;
-                            lRow.bottom += 2;
+                        int spacing = context->browserWindow.spacing();
+                        if (spacing > 0) {
+                            lRow.left += spacing;
+                            lRow.top += spacing;
+                            lRow.bottom += spacing;
                         }
 
                         FillRect(lDraw->hDC, &lRow, hBrush);

@@ -19,6 +19,8 @@
 #include "emuconfig/layouts/presentation.h"
 #include <random>
 
+#include "debugger/debugger.h"
+
 Program* program = nullptr;
 DRIVER::Input* inputDriver = new DRIVER::Input;
 DRIVER::Audio* audioDriver = new DRIVER::Audio;
@@ -26,6 +28,7 @@ DRIVER::Video* videoDriver = new DRIVER::Video;
 std::vector<Emulator::Interface*> emulators;
 Emulator::Interface* activeEmulator = nullptr;
 std::vector<GUIKIT::Settings*> settingsStorage;
+std::vector<Debugger*> debuggers;
 GUIKIT::Settings* globalSettings = nullptr;
 GUIKIT::Translation* trans = nullptr;
 FilePool* filePool = nullptr;
@@ -364,6 +367,9 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             view->updateScreenshotUI();
         }
 
+	    for (auto debugger : debuggers)
+	        debugger->reset();
+
 		resetRunAhead();
 
 		archiveViewer->setVisible(false);
@@ -538,6 +544,8 @@ auto Program::quit() -> void {
         delete firmwareManager;
     for( auto paletteManager : paletteManagers )
         delete paletteManager;
+    for ( auto debugger : debuggers)
+        delete debugger;
         
     delete inputDriver;
     delete audioDriver;
@@ -825,4 +833,23 @@ auto Program::getAMIModelValue(LIBAMI::Interface::ModelId modelId) -> int {
     if (activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator))
         return activeEmulator->getModelValue(modelId);
     return 0;
+}
+
+auto Program::getActiveDebugger() -> Debugger* {
+    for (auto debugger : debuggers) {
+        if (debugger->emulator == activeEmulator) {
+            if (debugger->visible())
+                return debugger;
+            break;
+        }
+    }
+    return nullptr;
+}
+
+auto Program::debugger(Emulator::Interface::DebuggerAction action, unsigned addr, bool maybeModified) -> void {
+    auto debugger = getActiveDebugger();
+    if (debugger) {
+        isPause |= 2;
+        debugger->debugCallback( action, addr, maybeModified );
+    }
 }
