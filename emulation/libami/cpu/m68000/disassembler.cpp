@@ -54,13 +54,13 @@ auto M68000::dasmIllegal(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void
 auto M68000::dasmLineA(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
     d.str.append( "dc.w " );
     d.tab().hex(opcode);
-    d.str.append( "; opcode 1010" );
+    d.str.append( "; Line A" );
 }
 
 auto M68000::dasmLineF(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
     d.str.append( "dc.w " );
     d.tab().hex(opcode);
-    d.str.append( "; opcode 1111" );
+    d.str.append( "; Line F" );
 }
 
 template<uint8_t Inst, uint8_t Size>

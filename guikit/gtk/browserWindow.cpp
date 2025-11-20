@@ -120,7 +120,8 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
                 auto listings = state.onSelectionChange( path, true );
 
             	if (instance->listView) {
-                    instance->listView->resetFirstRowColor();
+                    instance->listView->resetRowForegroundColor(0);
+            		instance->listView->resetRowBackgroundColor(0);
             		int i = 0;
             		auto _s = pFont::size(instance->listView->p.pfont, " ");
             		int maxChars = state.contentView.width / _s.width;
@@ -141,8 +142,10 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
                 auto listings = state.onSelectionChange(path, false);
 
             	if (instance->listView) {
-                    if (state.contentView.overrideFirstRowColor)
-                        instance->listView->setFirstRowColor(state.contentView.firstRowForegroundColor, state.contentView.firstRowBackgroundColor);
+                    if (state.contentView.overrideFirstRowColor) {
+                    	instance->listView->setRowForegroundColor(0, state.contentView.firstRowForegroundColor);
+                    	instance->listView->setRowBackgroundColor(0, state.contentView.firstRowBackgroundColor);
+                    }
 
             		for(auto& listing : listings) {
             			instance->listView->append({listing.entry});
@@ -306,8 +309,10 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
 		listView->setForegroundColor( state.contentView.foregroundColor );
     if (state.contentView.overrideSelectionColor)
         listView->setSelectionColor( state.contentView.selectionForegroundColor, state.contentView.selectionBackgroundColor );
-	if (state.contentView.overrideFirstRowColor)
-		listView->setFirstRowColor( state.contentView.firstRowForegroundColor, state.contentView.firstRowBackgroundColor );
+	if (state.contentView.overrideFirstRowColor) {
+		listView->setRowForegroundColor(0, state.contentView.firstRowForegroundColor);
+		listView->setRowBackgroundColor(0, state.contentView.firstRowBackgroundColor);
+	}
 
 	listView->colorRowTooltips( state.contentView.colorTooltips );
 	listView->onActivate = [this]() {
@@ -319,7 +324,9 @@ auto pBrowserWindow::createPreview() -> GtkWidget* {
 	};
 
 	if (!state.contentView.font.empty())
-		listView->setFont( state.contentView.font, state.contentView.specialFont );
+		listView->setFont( state.contentView.font );
+
+	listView->setSpacing( browserWindow.spacing() );
 		
 	unsigned margin = 5;
 	

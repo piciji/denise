@@ -201,9 +201,12 @@ struct pLineEdit : pWidget {
     auto setText(const std::string& text) -> void;
     auto text() -> std::string;
     auto setMaxLength( unsigned maxLength ) -> void;
+	auto setPlaceholder(const std::string& placeholder) -> void;
+	auto setAlign( LineEdit::Align align ) -> void;
     auto init() -> void;
     static auto onChange(LineEdit* self) -> void;
     static auto onFocus(LineEdit* self) -> bool;
+	static auto onActivate(LineEdit* self) -> void;
     static auto dropEvent(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, LineEdit* lineEdit) -> void;
     auto create() -> void;
     auto setDroppable(bool droppable) -> void;
@@ -420,7 +423,6 @@ struct pListView : pWidget {
 	
 	GtkWidget* customTooltip = nullptr;
 	Label* customTooltipLabel = nullptr;
-    bool pressed = false;
 
     struct GtkColumn {
         GtkTreeViewColumn* column;
@@ -430,7 +432,7 @@ struct pListView : pWidget {
     };
     std::vector<GtkColumn> column;
 	
-    auto append(const std::vector<std::string>& list) -> void;
+    auto append(const std::vector<std::string>& list, bool preventColumnResizing = false) -> void;
     auto autoSizeColumns() -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
@@ -442,7 +444,7 @@ struct pListView : pWidget {
     auto init() -> void;
     auto create() -> void;
     auto setFont(std::string font) -> void;
-    auto setImage(unsigned selection, unsigned position, Image& image) -> void;
+    auto setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing = false) -> void;
     auto focused() -> bool;
     auto setFocused() -> void;
     auto setForegroundColor(unsigned color) -> void;
@@ -453,7 +455,8 @@ struct pListView : pWidget {
     auto lockRedraw() -> void {}
     auto unlockRedraw() -> void {}
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
-	auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
+	auto updateRowColors() -> void {}
+	auto updateSpacing() -> void;
 
     auto destroy() -> void;
 	auto applyDataFunc(GtkTreeViewColumn* gtkColumn, GtkCellRenderer* renderer, GtkTreeIter* iter, GtkTreeModel* model) -> void;

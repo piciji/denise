@@ -9,7 +9,7 @@ auto pCheckBox::minimumSize() -> Size {
 		initialized = true;
 		gint natural;
 		gtk_widget_get_preferred_height(gtkWidget, &minimumHeight, &natural);
-		gtk_widget_get_preferred_width(gtkWidget, &minimumWidth, &natural);		
+		gtk_widget_get_preferred_width(gtkWidget, &minimumWidth, &natural);
 		
 		if (minimumWidth > size.width)
 			minimumWidth -= size.width;

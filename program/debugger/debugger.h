@@ -102,8 +102,6 @@ struct Debugger : GUIKIT::Window {
         CPU68K();
     } cpu68k;
 
-    GUIKIT::SwitchLayout moduleSwitch;
-
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Label position;
         GUIKIT::Button resume;
@@ -160,5 +158,5 @@ struct Debugger : GUIKIT::Window {
     auto updateAgnus(LIBAMI::Interface* amiEmu) -> void;
     auto update68k(LIBAMI::CpuSnapshot& s) -> void;
 
-    auto hex( uint32_t val ) -> std::string;
+    auto hex( uint32_t val, int length = -1 ) -> std::string;
 };

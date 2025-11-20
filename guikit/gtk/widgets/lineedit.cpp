@@ -62,6 +62,10 @@ auto pLineEdit::onFocus(LineEdit* self) -> bool {
     return false;
 }
 
+auto pLineEdit::onActivate(LineEdit* self) -> void {
+    if(!self->p.locked && self->onReturn) self->onReturn();
+}
+
 auto pLineEdit::create() -> void {
     destroy();
     gtkWidget = gtk_entry_new();    
@@ -69,6 +73,7 @@ auto pLineEdit::create() -> void {
     g_signal_connect_swapped(G_OBJECT(gtkWidget), "changed", G_CALLBACK(pLineEdit::onChange), (gpointer)&lineEdit);
     g_signal_connect_swapped(G_OBJECT(gtkWidget), "focus-in-event", G_CALLBACK(pLineEdit::onFocus), (gpointer)&lineEdit);
     g_signal_connect(G_OBJECT(gtkWidget), "drag-data-received", G_CALLBACK(pLineEdit::dropEvent), (gpointer)&lineEdit);
+    g_signal_connect_swapped(G_OBJECT(gtkWidget), "activate", G_CALLBACK(pLineEdit::onActivate), (gpointer)&lineEdit);
 }
 
 auto pLineEdit::init() -> void {
@@ -97,4 +102,12 @@ auto pLineEdit::setDroppable(bool droppable) -> void {
 auto pLineEdit::setMaxLength( unsigned maxLength ) -> void {
 	
     gtk_entry_set_max_length(GTK_ENTRY(gtkWidget), maxLength);
+}
+
+auto pLineEdit::setPlaceholder(const std::string& placeholder) -> void {
+    gtk_entry_set_placeholder_text(GTK_ENTRY(gtkWidget), placeholder.c_str());
+}
+
+auto pLineEdit::setAlign( LineEdit::Align align ) -> void {
+    gtk_entry_set_alignment(GTK_ENTRY(gtkWidget), align == LineEdit::Align::Left ? 0.0f : 1.0f);
 }

@@ -10,6 +10,7 @@
 
 Debugger::~Debugger() {
     timer.setEnabled( false );
+    setVisible(false);
 }
 
 Debugger::Debugger( Emulator::Interface* emulator ) {
@@ -143,10 +144,10 @@ Debugger::Control::Control() {
     append( resume, {0u, 0u}, 10 );
     append( stepOver, {0u, 0u}, 10 );
     append( stepInto, {0u, 0u}, 10 );
-    append( line, {50u, 0u}, 10 );
-    append( frame, {50u, 0u}, 30 );
+    append( line, {0u, 0u}, 10 );
+    append( frame, {0u, 0u}, 30 );
     append( searchEdit, {120u, 0u}, 10 );
-    append( search, {50u, 0u} );
+    append( search, {0u, 0u} );
 
     setAlignment( 0.5 );
 }
@@ -187,8 +188,6 @@ auto Debugger::build() -> void {
     if (isOffscreen())
         setGeometry( defaultGeometry );
 
-    moduleSwitch.setLayout( 0, cpu68k, {~0u, ~0u} );
-
     control.resume.setImage( &pauseImg );
     control.stepOver.setImage( &stepOverImg );
     control.stepInto.setImage( &stepIntoImg );
@@ -196,9 +195,13 @@ auto Debugger::build() -> void {
     control.line.setImage( &lineImg );
     control.frame.setImage( &frameImg );
 
+    cpu68k.state.trace.clear.setImage( &clearImg );
+
     layout.setMargin( 10 );
-    layout.append( moduleSwitch, {~0u, ~0u}, 10 );
+    layout.append( cpu68k, {~0u, ~0u}, 10 );
     layout.append( control, {~0u, 0u} );
+
+    append( layout );
 
     cpu68k.instructionLayout.list.onClick = [this](unsigned row, unsigned column) {
         if (column == 0) {
@@ -219,8 +222,6 @@ auto Debugger::build() -> void {
             enableInstructionBreakpoint(row, watcher->enabled);
         }
     };
-
-    append( layout );
 
     onClose = [this]() {
         timer.setEnabled( false );
@@ -392,9 +393,11 @@ auto Debugger::build() -> void {
     };
 
     cpu68k.state.trace.clear.onActivate = [this]() {
+        emuThread->lock();
         emulator->debuggerDisable( Emulator::Interface::DebuggerAction::History, 0 );
         emulator->debuggerEnable( Emulator::Interface::DebuggerAction::History, 0 );
         updateTraceList();
+        emuThread->unlock();
     };
 
     setTitle( emulator->ident + " Debugger" );
@@ -429,13 +432,11 @@ auto Debugger::translate() -> void {
     }
 
     cpu68k.state.trace.toggle.setText( "Trace" );
-    cpu68k.state.trace.clear.setImage( &clearImg );
 }
 
 auto Debugger::update() -> void {
     bool locked = emuThread->lock();
     unsigned addr;
-    unsigned flags;
 
     if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
         LIBAMI::Interface* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
@@ -443,10 +444,8 @@ auto Debugger::update() -> void {
         addr = cpuSnapshot.pcOpEdge;
         update68k(cpuSnapshot);
         updateAgnus(amiEmu);
-        flags = cpuSnapshot.flags;
     } else {
         addr = 0;
-        flags = 0;
     }
 
     std::optional<unsigned> instRow = std::nullopt;
@@ -471,7 +470,7 @@ auto Debugger::update() -> void {
 
 auto Debugger::updateAgnus(LIBAMI::Interface* amiEmu) -> void {
     auto s = amiEmu->getAgnusSnapshot();
-    setTitle( "V: " + hex( s.vPos ) + " H: " + hex( s.hPos ) );
+    setTitle( emulator->ident + " Debugger V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
 }
 
 auto Debugger::update68k(LIBAMI::CpuSnapshot& s) -> void {
@@ -795,17 +794,24 @@ auto Debugger::reset() -> void {
         timer.setInterval( 50 );
         timer.setEnabled( );
         timer.onFinished = [this]() {
-            update();
-            timer.setEnabled( );
+            if (timer.enabled()) {
+                update();
+                timer.setEnabled( );
+            }
         };
         if (locked)
             emuThread->unlock();
     }
 }
 
-auto Debugger::hex( uint32_t val ) -> std::string {
+auto Debugger::hex( uint32_t val, int length ) -> std::string {
     char hex[9];
-    snprintf(hex, 9, "%x", val);
+    if (length == -1)
+        snprintf(hex, 9, "%x", val);
+    else {
+        std::string format = "%0" + std::to_string(length) + "x";
+        snprintf(hex, 9, format.c_str(), val);
+    }
     std::string result = static_cast<std::string>(hex);
     GUIKIT::String::toUpperCase( result );
     return result;

@@ -5,6 +5,8 @@
 
 //timer
 static auto Timer_trigger(pTimer* self) -> guint {
+	if (GUIKIT::Application::isQuit)
+		return false;
     if(self->timer.onFinished) self->timer.onFinished();
 
     self->gtimer = 0;

@@ -347,8 +347,12 @@ auto pListView::setFont(std::string font) -> void {
 auto pListView::setContent() -> void {
     buildHeaderText(listView.state.header);
     setHeaderVisible(listView.state.headerVisible);
-    for(auto& row : listView.state.rows) append(row);
+    for(auto& row : listView.state.rows)
+        append(row, true);
+
+    autoSizeColumns();
     if(listView.selected()) setSelection(listView.selection());
+
 }
 
 auto pListView::onChange(LPARAM lparam) -> void {

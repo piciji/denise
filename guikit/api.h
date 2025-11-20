@@ -753,7 +753,6 @@ struct ListView : Widget {
     std::function<void ()> onActivate = nullptr;
     std::function<void ()> onChange = nullptr;
     std::function<void (unsigned row, unsigned column)> onClick = nullptr;
-    std::function<void (unsigned row, unsigned column)> onEdit = nullptr;
 
     auto headerVisible() const -> bool { return state.headerVisible; }
     auto rowCount() const -> unsigned { return state.rows.size(); }

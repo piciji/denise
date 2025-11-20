@@ -461,8 +461,7 @@ auto Fileloader::applyPreviewFont(Emulator::Interface* emulator, unsigned fontSi
         fileDialogPtr->setContentViewFont(GUIKIT::Font::system(fontSize));
     }
 
-    if (!customFont || !dynamic_cast<LIBC64::Interface*>(emulator))
-        fileDialogPtr->setSpacing( 2 );
+    fileDialogPtr->setSpacing( !customFont || !dynamic_cast<LIBC64::Interface*>(emulator) ? 2 : 0 );
 }
 
 auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
