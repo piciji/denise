@@ -444,6 +444,7 @@ auto pListView::setSelection(unsigned selection) -> void {
         [[(id)cocoaView content] selectRowIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(selection, 1)] byExtendingSelection:NO];
         
         [[(id)cocoaView content] scrollRowToVisible: selection];
+        [[(id)cocoaView window] makeFirstResponder: cocoaView];
     }
 }
 

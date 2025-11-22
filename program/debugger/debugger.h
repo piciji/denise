@@ -103,7 +103,7 @@ struct Debugger : GUIKIT::Window {
     } cpu68k;
 
     struct Control : GUIKIT::HorizontalLayout {
-        GUIKIT::Label position;
+        GUIKIT::Widget spacer;
         GUIKIT::Button resume;
         GUIKIT::Button stepOver;
         GUIKIT::Button stepInto;
@@ -111,7 +111,7 @@ struct Debugger : GUIKIT::Window {
         GUIKIT::Button frame;
         GUIKIT::LineEdit searchEdit;
         GUIKIT::ImageView search;
-        GUIKIT::Label posLabel;
+        GUIKIT::Label position;
         Control();
     } control;
 

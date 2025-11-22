@@ -140,7 +140,7 @@ Debugger::Control::Control() {
     searchEdit.setMaxLength( 8 );
     searchEdit.setFont(GUIKIT::Font::system(12));
 
-    append( position, {0u, 0u}, 10 );
+    append( spacer, {0u, 0u}, 10 );
     append( resume, {0u, 0u}, 10 );
     append( stepOver, {0u, 0u}, 10 );
     append( stepInto, {0u, 0u}, 10 );
@@ -148,7 +148,7 @@ Debugger::Control::Control() {
     append( frame, {0u, 0u}, 30 );
     append( searchEdit, {120u, 0u}, 10 );
     append( search, {0u, 0u}, 20 );
-    append( posLabel, {0u, 0u} );
+    append( position, {~0u, 0u} );
 
     setAlignment( 0.5 );
 }
@@ -482,7 +482,6 @@ auto Debugger::update() -> void {
             emuThread->unlock();
         updateInstructionList();
     }
-    cpu68k.instructionLayout.list.setFocused();
 
     if (cpu68k.switchLayout.selection() == 1)
         updateTraceList();
@@ -490,7 +489,7 @@ auto Debugger::update() -> void {
 
 auto Debugger::updateAgnus(LIBAMI::Interface* amiEmu) -> void {
     auto s = amiEmu->getAgnusSnapshot();
-    control.posLabel.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    control.position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
 }
 
 auto Debugger::update68k(LIBAMI::CpuSnapshot& s) -> void {
