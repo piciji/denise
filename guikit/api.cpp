@@ -1218,10 +1218,12 @@ auto ListView::setRowForegroundColor(unsigned row, unsigned foregroundColor) -> 
     for (auto& pair : state.rowForegroundColor) {
         if(pair.first == row) {
             pair.second = foregroundColor;
+            p.updateRowColors();
             return;
         }
     }
     state.rowForegroundColor.push_back( {row, foregroundColor} );
+    p.updateRowColors();
 }
 
 auto ListView::resetRowForegroundColor(unsigned row) -> void {
@@ -1231,6 +1233,7 @@ auto ListView::resetRowForegroundColor(unsigned row) -> void {
         else
             ++it;
     }
+    p.updateRowColors();
 }
 
 auto ListView::rowBackgroundColor(unsigned row) -> std::optional<unsigned> {

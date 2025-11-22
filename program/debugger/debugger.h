@@ -129,6 +129,7 @@ struct Debugger : GUIKIT::Window {
     std::vector<Watcher> watchers;
     Instruction instructions[LIST_INSTRUCTIONS];
     GUIKIT::Timer timer;
+    GUIKIT::Timer timerVisibility;
 
     GUIKIT::VerticalLayout layout;
 

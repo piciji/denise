@@ -147,6 +147,8 @@ struct pLineEdit : pWidget {
     auto text() -> std::string;
     auto init() -> void;
     auto setDroppable(bool droppable) -> void;
+    auto setPlaceholder(const std::string& placeholder) -> void;
+    auto setAlign( LineEdit::Align align ) -> void;
 
     pLineEdit(LineEdit& lineEdit) : pWidget(lineEdit), lineEdit(lineEdit) { }
 };
@@ -359,7 +361,7 @@ struct pListView : pWidget {
         int height = 0;
     } fontAdjust;
 
-    auto append(const std::vector<std::string>& list) -> void;
+    auto append(const std::vector<std::string>& list, bool preventColumnResizing = false) -> void;
     auto autoSizeColumns() -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
@@ -371,7 +373,7 @@ struct pListView : pWidget {
     auto init() -> void;
     auto setEnabled(bool enabled) -> void;
     auto setGeometry(Geometry geometry) -> void;
-    auto setImage(unsigned selection, unsigned position, Image& image) -> void;
+    auto setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing = false) -> void;
     auto releaseRowImages(unsigned selection) -> void;
     auto releaseAllImages() -> void;
     auto setForegroundColor(unsigned color) -> void;
@@ -384,7 +386,8 @@ struct pListView : pWidget {
     auto lockRedraw() -> void {}
     auto unlockRedraw() -> void {}
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
-    auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
+    auto updateRowColors() -> void;
+    auto updateSpacing() -> void {}
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
     ~pListView();

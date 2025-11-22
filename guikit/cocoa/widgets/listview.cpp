@@ -50,6 +50,18 @@
     [listView->p.tooltip orderOut:nil];
 }
 
+-(void) mouseDown:(NSEvent *)event {
+    if (listView->onClick) {
+        NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+        
+        auto _row = [self rowAtPoint:point];
+        auto _col = [self columnAtPoint:point];
+        
+        listView->onClick(_row, _col);
+    }
+    [super mouseDown:event];
+}
+
 -(void) mouseMoved:(NSEvent*)event {
     
     if (!listView->p.mouseIsOver || !listView->p.useCustomTooltip)
@@ -60,11 +72,6 @@
         return;
 
     auto mouseOverRow = [self rowAtPoint:[self convertPoint:[event locationInWindow] fromView:nil]];
-    
-    if (mouseOverRow == 0 && listView->overrideFirstRowColor()) {
-        [listView->p.tooltip orderOut:nil];
-        return;
-    }
     
     if (!listView->p.tooltip)
         listView->p.createCustomTooltip();
@@ -125,12 +132,11 @@
         else
             textColor = [NSColor alternateSelectedControlTextColor];
     } else {
-        if (_row == 0 && listView->overrideFirstRowColor()) {
-            NSColor* frcol = GUIKIT::pHelper::getColor( listView->firstRowBackgroundColor() );
-            
-            [frcol set];
-            textColor = GUIKIT::pHelper::getColor( listView->firstRowForegroundColor() );
-            NSRectFill(frame);
+        std::optional<unsigned> rowColor = listView->rowForegroundColor( _row );
+        
+        if (rowColor.has_value()) {
+            textColor = GUIKIT::pHelper::getColor( rowColor.value() );
+        
         } else if(listView->overrideForegroundColor()) {
             textColor = GUIKIT::pHelper::getColor( listView->foregroundColor() );
         } else
@@ -149,6 +155,13 @@
             
         frame.origin.x -= 5;
         NSRectFill(frame);
+    } else if (![self isHighlighted]) {
+        std::optional<unsigned> rowColor = listView->rowBackgroundColor( _row );
+        if (rowColor.has_value()) {
+            NSColor* frcol = GUIKIT::pHelper::getColor( rowColor.value() );
+            [frcol set];
+            NSRectFill(frame);
+        }
     }
     
     [text drawInRect:textRect withAttributes:@{ NSForegroundColorAttributeName:textColor, NSFontAttributeName:[self font] }];
@@ -210,7 +223,7 @@
     listView->p.fontAdjust.yOffset = 0;
     listView->p.fontAdjust.height = 0;
     
-    if (listView->specialFont()) {
+    if (listView->spacing() == 0) {
         // this is a hack to completly remove row spacing
         unsigned fontSize = GUIKIT::pFont::getSizeFromString( listView->font() );
         
@@ -247,7 +260,7 @@
     [content setFont:_font];
     [content setRowHeight:fontHeight + listView->p.fontAdjust.rowHeight ];
     
-    if (listView->specialFont()) {
+    if (listView->spacing() == 0) {
         [content setIntercellSpacing:NSMakeSize(0.0, 0.0)];
     } else
         [content setIntercellSpacing:NSMakeSize(0.0, 3.0)];
@@ -333,8 +346,7 @@ row:(NSInteger)row
 mouseLocation:(NSPoint)mouseLocation {
     auto& toolTips = listView->state.rowTooltips;
 
-    if (listView->p.useCustomTooltip && listView->overrideFirstRowColor() && row == 0);
-    else if ( listView->p.useCustomTooltip || !toolTips.size())
+    if ( listView->p.useCustomTooltip || !toolTips.size())
         return nil;
 
     if (row >= toolTips.size())
@@ -361,8 +373,9 @@ auto pListView::autoSizeColumns() -> void {
             for(unsigned row = 0; row < listView.rowCount(); row++) {
                 unsigned width = pFont::size([(id)cocoaView font], listView.text(row, column)).width + 4;
                 GUIKIT::Image* img = listView.state.images.at(row).at(column);
-
-                if(img && !img->empty()) width += height + 2;
+                if(img) {
+                    width += height + 2;
+                }
                 if(width > minimumWidth) minimumWidth = width;
             }
             [tableColumn setWidth:minimumWidth];
@@ -372,7 +385,7 @@ auto pListView::autoSizeColumns() -> void {
     }
 }
 
-auto pListView::append(const std::vector<std::string>& list) -> void {
+auto pListView::append(const std::vector<std::string>& list, bool preventColumnResizing) -> void {
     @autoreleasepool {
 
         [[(id)cocoaView content] reloadData];
@@ -380,7 +393,8 @@ auto pListView::append(const std::vector<std::string>& list) -> void {
     std::vector<NSImage*> image;
     for (unsigned i = 0; i < list.size(); i++) image.push_back(nil);
     images.push_back(image);
-    autoSizeColumns();
+    if (!preventColumnResizing)
+        autoSizeColumns();
 }
 
 auto pListView::remove(unsigned selection) -> void {
@@ -448,7 +462,7 @@ auto pListView::init() -> void {
     }
 }
 
-auto pListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
+auto pListView::setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing) -> void {
     @autoreleasepool {
         [images.at(selection).at(position) release];
         images.at(selection).at(position) = NSMakeImage(image);
@@ -456,7 +470,8 @@ auto pListView::setImage(unsigned selection, unsigned position, Image& image) ->
         [[(id)cocoaView content] reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:selection]
                              columnIndexes:[NSIndexSet indexSetWithIndex:position]];
     }
-    autoSizeColumns();
+    if (!preventColumnResizing)
+        autoSizeColumns();
 }
     
 auto pListView::setEnabled(bool enabled) -> void {
@@ -507,7 +522,7 @@ auto pListView::setForegroundColor(unsigned color) -> void {
 }
 
 auto pListView::setFont(std::string font) -> void {
-    if (!listView.specialFont() && GUIKIT::hasMinimumVersion(10, 10))
+    if (listView.spacing() != 0 && GUIKIT::hasMinimumVersion(10, 10))
         [(id)cocoaView setContentInsets:NSEdgeInsetsMake(0, 2, 0, 2)];
     
     updateTooltipUsage();
@@ -525,11 +540,11 @@ auto pListView::createCustomTooltip() -> void {
         
         if (listView.state.colorRowTooltips) {
             
-            if (listView.Widget::state.overrideBackgroundColor) {
-                [tooltip setBackgroundColor: pHelper::getColor(listView.Widget::state.backgroundColor) ];
+            if (listView.overrideBackgroundColor()) {
+                [tooltip setBackgroundColor: pHelper::getColor(listView.backgroundColor()) ];
             }
-            if (listView.Widget::state.overrideForegroundColor) {
-                [tooltip setTextColor: pHelper::getColor(listView.Widget::state.foregroundColor) ];
+            if (listView.overrideForegroundColor()) {
+                [tooltip setTextColor: pHelper::getColor(listView.foregroundColor()) ];
             }
         }
     }
@@ -538,7 +553,7 @@ auto pListView::createCustomTooltip() -> void {
 auto pListView::updateTooltipUsage() -> void {
     useCustomTooltip = false;
     
-    if (listView.state.colorRowTooltips && (listView.Widget::state.overrideBackgroundColor || listView.Widget::state.overrideForegroundColor) )
+    if (listView.state.colorRowTooltips && (listView.overrideBackgroundColor() || listView.overrideForegroundColor()) )
         useCustomTooltip = true;
     else if ( listView.font() != Font::system() )
         useCustomTooltip = true;
@@ -551,6 +566,12 @@ auto pListView::updateTooltipUsage() -> void {
     
 auto pListView::colorRowTooltips( bool colorTip ) -> void {
     updateTooltipUsage();
+}
+
+auto pListView::updateRowColors() -> void {
+    @autoreleasepool {
+        [[(id)cocoaView content] reloadData];
+    }
 }
 
 pListView::~pListView() {

@@ -195,6 +195,12 @@
 		9D99AA862E4631490075FF62 /* libz.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA672E462DE20075FF62 /* libz.1.dylib */; };
 		9D99AA872E4631490075FF62 /* libz.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA672E462DE20075FF62 /* libz.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA70F452E101AF000F1DC5B /* scp.cpp */; };
+		9DBA88382ED0B94400DF0756 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */; };
+		9DBA88392ED0B94400DF0756 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */; };
+		9DBA883D2ED0B96400DF0756 /* watcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA883C2ED0B96400DF0756 /* watcher.cpp */; };
+		9DBA883E2ED0B96400DF0756 /* watcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA883C2ED0B96400DF0756 /* watcher.cpp */; };
+		9DBA88432ED0C7D400DF0756 /* debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88412ED0C7D400DF0756 /* debugger.cpp */; };
+		9DBA88442ED0C7D400DF0756 /* debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88412ED0C7D400DF0756 /* debugger.cpp */; };
 		9DD0A0B62E3B943B0018DA68 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
 		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
@@ -1071,6 +1077,13 @@
 		9DA70F442E101AF000F1DC5B /* scp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scp.h; sourceTree = "<group>"; };
 		9DA70F452E101AF000F1DC5B /* scp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DA70F472E101AFF00F1DC5B /* scp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
+		9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dasmHandler.cpp; sourceTree = "<group>"; };
+		9DBA88372ED0B94400DF0756 /* dasmHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dasmHandler.h; sourceTree = "<group>"; };
+		9DBA883A2ED0B95700DF0756 /* disassembler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = disassembler.cpp; sourceTree = "<group>"; };
+		9DBA883B2ED0B96400DF0756 /* watcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = watcher.h; sourceTree = "<group>"; };
+		9DBA883C2ED0B96400DF0756 /* watcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = watcher.cpp; sourceTree = "<group>"; };
+		9DBA88412ED0C7D400DF0756 /* debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = debugger.cpp; sourceTree = "<group>"; };
+		9DBA88422ED0C7D400DF0756 /* debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = debugger.h; sourceTree = "<group>"; };
 		9DC345C22E8EF1130071B38B /* history.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = history.h; sourceTree = "<group>"; };
 		9DC3A9982E8F07DD005B0F8C /* coreaudio3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = coreaudio3.cpp; sourceTree = "<group>"; };
 		9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbSidPico.cpp; sourceTree = "<group>"; };
@@ -1378,6 +1391,7 @@
 		9D8FAA6E2CB3F6EF006905BE /* program */ = {
 			isa = PBXGroup;
 			children = (
+				9DBA88402ED0C7D400DF0756 /* debugger */,
 				9D8FAA6F2CB3F6EF006905BE /* cmd */,
 				9D8FAA722CB3F6EF006905BE /* program.cpp */,
 				9D8FAA732CB3F6EF006905BE /* firmware */,
@@ -1980,6 +1994,11 @@
 		9D8FACC32CB40DF6006905BE /* m68000 */ = {
 			isa = PBXGroup;
 			children = (
+				9DBA883C2ED0B96400DF0756 /* watcher.cpp */,
+				9DBA883B2ED0B96400DF0756 /* watcher.h */,
+				9DBA883A2ED0B95700DF0756 /* disassembler.cpp */,
+				9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */,
+				9DBA88372ED0B94400DF0756 /* dasmHandler.h */,
 				9D8FACC42CB40DF6006905BE /* memory.cpp */,
 				9D8FACC52CB40DF6006905BE /* m68000.h */,
 				9D8FACC62CB40DF6006905BE /* exception.cpp */,
@@ -2629,6 +2648,15 @@
 			path = scp;
 			sourceTree = "<group>";
 		};
+		9DBA88402ED0C7D400DF0756 /* debugger */ = {
+			isa = PBXGroup;
+			children = (
+				9DBA88412ED0C7D400DF0756 /* debugger.cpp */,
+				9DBA88422ED0C7D400DF0756 /* debugger.h */,
+			);
+			path = debugger;
+			sourceTree = "<group>";
+		};
 		9DD0A0B72E3B94900018DA68 /* USBSID-Pico */ = {
 			isa = PBXGroup;
 			children = (
@@ -2791,6 +2819,7 @@
 				9D8FAE172CB40DF8006905BE /* copper.cpp in Sources */,
 				9D6404412DCDEEF500624A00 /* firmware.cpp in Sources */,
 				9D8FAE112CB40DF8006905BE /* interface.cpp in Sources */,
+				9DBA883D2ED0B96400DF0756 /* watcher.cpp in Sources */,
 				9DFA8D492E6F062C00DDD746 /* audio.cpp in Sources */,
 				9D8FAE592CB40DF9006905BE /* firmware.cpp in Sources */,
 				9D07CD072E296CD000A9787E /* lha_decoder.cpp in Sources */,
@@ -2824,6 +2853,7 @@
 				9D8FADF92CB40DF8006905BE /* DLLoader.cpp in Sources */,
 				9D8FAE4B2CB40DF9006905BE /* m6510.cpp in Sources */,
 				9DFA8D432E6F062C00DDD746 /* palette.cpp in Sources */,
+				9DBA88432ED0C7D400DF0756 /* debugger.cpp in Sources */,
 				9D8FAE822CB40DF9006905BE /* vicII.cpp in Sources */,
 				9D8FAE432CB40DF9006905BE /* easyFlash3.cpp in Sources */,
 				9D8FAE692CB40DF9006905BE /* iec.cpp in Sources */,
@@ -2873,6 +2903,7 @@
 				9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */,
 				9D8FAE3C2CB40DF9006905BE /* pfile.cpp in Sources */,
 				9D8FAE0E2CB40DF8006905BE /* rtc.cpp in Sources */,
+				9DBA88382ED0B94400DF0756 /* dasmHandler.cpp in Sources */,
 				9D8FADFB2CB40DF8006905BE /* fpaq0.cpp in Sources */,
 				9DFA8D4F2E6F062C00DDD746 /* presentation.cpp in Sources */,
 				9D06E2772E4CC1D800CF5A5E /* mp3Writer.cpp in Sources */,
@@ -2962,6 +2993,7 @@
 				9DECF9492E45F309005C0BBA /* copper.cpp in Sources */,
 				9DECF94A2E45F309005C0BBA /* firmware.cpp in Sources */,
 				9DECF94B2E45F309005C0BBA /* interface.cpp in Sources */,
+				9DBA883E2ED0B96400DF0756 /* watcher.cpp in Sources */,
 				9DFA8D4A2E6F062C00DDD746 /* audio.cpp in Sources */,
 				9DECF94C2E45F309005C0BBA /* firmware.cpp in Sources */,
 				9DECF94D2E45F309005C0BBA /* lha_decoder.cpp in Sources */,
@@ -2995,6 +3027,7 @@
 				9DECF9672E45F309005C0BBA /* DLLoader.cpp in Sources */,
 				9DECF9682E45F309005C0BBA /* m6510.cpp in Sources */,
 				9DFA8D442E6F062C00DDD746 /* palette.cpp in Sources */,
+				9DBA88442ED0C7D400DF0756 /* debugger.cpp in Sources */,
 				9DECF9692E45F309005C0BBA /* vicII.cpp in Sources */,
 				9DECF96A2E45F309005C0BBA /* easyFlash3.cpp in Sources */,
 				9DECF96B2E45F309005C0BBA /* iec.cpp in Sources */,
@@ -3044,6 +3077,7 @@
 				9DECF9932E45F309005C0BBA /* scp.cpp in Sources */,
 				9DECF9942E45F309005C0BBA /* pfile.cpp in Sources */,
 				9DECF9952E45F309005C0BBA /* rtc.cpp in Sources */,
+				9DBA88392ED0B94400DF0756 /* dasmHandler.cpp in Sources */,
 				9DECF9962E45F309005C0BBA /* fpaq0.cpp in Sources */,
 				9DFA8D502E6F062C00DDD746 /* presentation.cpp in Sources */,
 				9D06E2782E4CC1D800CF5A5E /* mp3Writer.cpp in Sources */,

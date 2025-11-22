@@ -153,6 +153,7 @@ Debugger::Control::Control() {
 }
 
 auto Debugger::build() -> void {
+    cocoa.keepMenuVisibilityOnDisplay();
     setWidgetFont( GUIKIT::Font::system( 11 ) );
 
     GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1024), GUIKIT::Font::scale(570)};
@@ -217,7 +218,8 @@ auto Debugger::build() -> void {
                 emulator->debuggerEnable(DebuggerAction::Breakpoint, inst.addr, watcher->enabled);
             }
             updateWatcherList();
-            update();
+            timer.setEnabled();
+            //update();
             emuThread->unlock();
             enableInstructionBreakpoint(row, watcher->enabled);
         }
@@ -322,7 +324,7 @@ auto Debugger::build() -> void {
     control.stepInto.onActivate = [this]() {
         emuThread->lock();
         program->isPause &= ~2;
-        updateToolboxVisibility();
+        timerVisibility.setEnabled();
         emulator->debuggerStepInto();
         emuThread->unlock();
     };
@@ -331,7 +333,7 @@ auto Debugger::build() -> void {
         emuThread->lock();
         program->isPause &= ~2;
         timer.setEnabled(  );
-        updateToolboxVisibility();
+        timerVisibility.setEnabled();
         emulator->debuggerStepOver();
         emuThread->unlock();
     };
@@ -339,7 +341,7 @@ auto Debugger::build() -> void {
     control.line.onActivate = [this]() {
         emuThread->lock();
         program->isPause &= ~2;
-        updateToolboxVisibility();
+        timerVisibility.setEnabled();
         emulator->debuggerAdd( DebuggerAction::Line, 0 );
         emuThread->unlock();
     };
@@ -347,7 +349,7 @@ auto Debugger::build() -> void {
     control.frame.onActivate = [this]() {
         emuThread->lock();
         program->isPause &= ~2;
-        updateToolboxVisibility();
+        timerVisibility.setEnabled();
         emulator->debuggerAdd( DebuggerAction::Frame, 0 );
         emuThread->unlock();
     };
@@ -356,7 +358,7 @@ auto Debugger::build() -> void {
         program->isPause ^= 2;
         timer.setEnabled( (program->isPause & 2) == 0 );
         update();
-        updateToolboxVisibility();
+        timerVisibility.setEnabled();
     };
 
     control.search.onClick = [this]() {
@@ -399,7 +401,23 @@ auto Debugger::build() -> void {
         updateTraceList();
         emuThread->unlock();
     };
-
+    
+    timer.setInterval( 50 );
+    timer.onFinished = [this]() {
+        if (timer.enabled()) {
+            update();
+            if ((program->isPause & 2) == 0)
+                timer.setEnabled( );
+        }
+    };
+    timerVisibility.setInterval( 50 );
+    timerVisibility.onFinished = [this]() {
+        if (timerVisibility.enabled()) {
+            updateToolboxVisibility();
+            timerVisibility.setEnabled(false);
+        }
+    };
+    
     setTitle( emulator->ident + " Debugger" );
 
     translate();
@@ -463,6 +481,7 @@ auto Debugger::update() -> void {
             emuThread->unlock();
         updateInstructionList();
     }
+    cpu68k.instructionLayout.list.setFocused();
 
     if (cpu68k.switchLayout.selection() == 1)
         updateTraceList();
@@ -757,6 +776,7 @@ auto Debugger::debugCallback(Emulator::Interface::DebuggerAction action, unsigne
 auto Debugger::debugCallback() -> void {
     timer.setEnabled( false );
     update();
+    timerVisibility.setEnabled(false);
     updateToolboxVisibility();
 
     auto& watcherList = cpu68k.watcher.list;
@@ -791,14 +811,7 @@ auto Debugger::reset() -> void {
         program->isPause &= ~2;
         updateToolboxVisibility();
 
-        timer.setInterval( 50 );
         timer.setEnabled( );
-        timer.onFinished = [this]() {
-            if (timer.enabled()) {
-                update();
-                timer.setEnabled( );
-            }
-        };
         if (locked)
             emuThread->unlock();
     }
