@@ -111,6 +111,7 @@ struct Debugger : GUIKIT::Window {
         GUIKIT::Button frame;
         GUIKIT::LineEdit searchEdit;
         GUIKIT::ImageView search;
+        GUIKIT::Label posLabel;
         Control();
     } control;
 

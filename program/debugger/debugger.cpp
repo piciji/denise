@@ -147,7 +147,8 @@ Debugger::Control::Control() {
     append( line, {0u, 0u}, 10 );
     append( frame, {0u, 0u}, 30 );
     append( searchEdit, {120u, 0u}, 10 );
-    append( search, {0u, 0u} );
+    append( search, {0u, 0u}, 20 );
+    append( posLabel, {0u, 0u} );
 
     setAlignment( 0.5 );
 }
@@ -489,7 +490,7 @@ auto Debugger::update() -> void {
 
 auto Debugger::updateAgnus(LIBAMI::Interface* amiEmu) -> void {
     auto s = amiEmu->getAgnusSnapshot();
-    setTitle( emulator->ident + " Debugger V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    control.posLabel.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
 }
 
 auto Debugger::update68k(LIBAMI::CpuSnapshot& s) -> void {
