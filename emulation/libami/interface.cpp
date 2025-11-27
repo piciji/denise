@@ -803,12 +803,10 @@ auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
     return system->cpu.disassembleTrace( i, flags );
 }
 
-auto Interface::getCpuSnapshot() -> CpuSnapshot {
-    return system->cpu.getSnapshot();
-}
-
-auto Interface::getAgnusSnapshot() -> AgnusSnapshot {
-    return system->agnus.getSnapshot();
+auto Interface::getDebuggerSnapshot() -> DebuggerSnapshot {
+    DebuggerSnapshot snap{};
+    system->updateDebuggerSnapshot(snap);
+    return snap;
 }
 
 auto Interface::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {

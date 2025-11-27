@@ -20,6 +20,7 @@
 #include "../traps/traps.h"
 #include "../../tools/memchangetracker.h"
 #include "../../tools/history.h"
+#include "debuggerSnapshot.h"
 
 namespace Emulator {
     struct PowerSupply;
@@ -64,27 +65,36 @@ struct System {
     Memory::Write writeRamAt80To9F;
     Memory::Write writeRamAtA0ToBF;
     Memory::Read readVicReg;
+    Memory::Read peekVicReg;
     Memory::Write writeVicReg;
     Memory::Read readSidReg;
+    Memory::Read peekSidReg;
     Memory::Write writeSidReg;
     Memory::Read readColorRam;
     Memory::Write writeColorRam;
     Memory::Read readIo1Reg;
+    Memory::Read peekIo1Reg;
     Memory::Write writeIo1Reg;
     Memory::Read readIo2Reg;
+    Memory::Read peekIo2Reg;
     Memory::Write writeIo2Reg;
     Memory::Read readCia1Reg;
+    Memory::Read peekCia1Reg;
     Memory::Write writeCia1Reg;
     Memory::Read readCia2Reg;
+    Memory::Read peekCia2Reg;
     Memory::Write writeCia2Reg;
     
     Memory::Write writeDebugReg;
     
     Memory::Read readCharRom;
     Memory::Read readKernalRom;
+    Memory::Read peekKernalRom;
     Memory::Read readBasicRom; 
     Memory::Read readRomL;
     Memory::Read readRomH;
+    Memory::Read peekRomL;
+    Memory::Read peekRomH;
     Memory::Write writeRomL;
     Memory::Write writeRomH;
     // need this separated from writeRomL and writeRomH because of not writing to C64 memory
@@ -93,6 +103,7 @@ struct System {
     // in ultimax mode a cartridge can map following areas freely.
     // will add more when emulating a cartridge which maps something in unmapped spaces
     Memory::Read readUltimaxA0;
+    Memory::Read peekUltimaxA0;
     Memory::Write writeUltimaxA0;    
     
     Memory memoryCpu;
@@ -230,6 +241,11 @@ struct System {
         auto reset() -> void;
     } tapeNoise;
 
+    struct {
+        Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
+        uint32_t addr;
+    } debugger;
+
 	Emulator::Interface::MemoryPattern memoryInit;
     
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
@@ -315,6 +331,10 @@ struct System {
 
     auto set2Mhz(bool state) -> void;
     auto toggle2Mhz() -> bool;
+    auto debuggerAdd(Emulator::Interface::DebuggerAction action, uint16_t addr, uint16_t addrTo) -> void;
+
+    auto debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+    auto updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }

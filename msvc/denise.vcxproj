@@ -168,8 +168,10 @@
     <ClInclude Include="..\emulation\libc64\input\input.h" />
     <ClInclude Include="..\emulation\libc64\input\keyboard.h" />
     <ClInclude Include="..\emulation\libc64\interface.h" />
+    <ClInclude Include="..\emulation\libc64\m6510\dasmHandler.h" />
     <ClInclude Include="..\emulation\libc64\m6510\m6510.h" />
     <ClInclude Include="..\emulation\libc64\m6510\optable.h" />
+    <ClInclude Include="..\emulation\libc64\m6510\watcher.h" />
     <ClInclude Include="..\emulation\libc64\prg\prg.h" />
     <ClInclude Include="..\emulation\libc64\sid\sid.h" />
     <ClInclude Include="..\emulation\libc64\sid\usbSidPico.h" />
@@ -179,6 +181,7 @@
     <ClInclude Include="..\emulation\libc64\system\keyBuffer.h" />
     <ClInclude Include="..\emulation\libc64\system\memory.h" />
     <ClInclude Include="..\emulation\libc64\system\sidManager.h" />
+    <ClInclude Include="..\emulation\libc64\system\snapShots.h" />
     <ClInclude Include="..\emulation\libc64\system\system.h" />
     <ClInclude Include="..\emulation\libc64\system\testbench.h" />
     <ClInclude Include="..\emulation\libc64\tape\structure.h" />
@@ -601,7 +604,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\dasmHandler.cpp" />
+    <ClCompile Include="..\emulation\libami\cpu\m68000\dasmHandler.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_ami</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\emulation\libami\cpu\m68000\disassembler.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
@@ -638,7 +646,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\watcher.cpp" />
+    <ClCompile Include="..\emulation\libami\cpu\m68000\watcher.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_ami</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_ami</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\emulation\libami\drive\adf.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -1081,12 +1094,24 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_c64</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_c64</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\emulation\libc64\m6510\dasmHandler.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_c64</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\emulation\libc64\m6510\m6510.cpp" />
     <ClCompile Include="..\emulation\libc64\m6510\opcodes.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\m6510\watcher.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_c64</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_c64</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\prg\prg.cpp" />
     <ClCompile Include="..\emulation\libc64\sid\clone.cpp">

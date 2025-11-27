@@ -109,6 +109,14 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return (uint8_t) this->kernalRom[ addr & 0x1fff ];
     };
 
+    peekKernalRom = [this](uint16_t addr) {
+
+        if (expansionPort->hasHiramCableConnected())
+            return expansionPort->readRomH(addr & 0x1fff);
+
+        return (uint8_t) this->kernalRom[ addr & 0x1fff ];
+    };
+
     readBasicRom = [this](uint16_t addr) {
 
         return (uint8_t) this->basicRom[ addr & 0x1fff ];
@@ -119,7 +127,17 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return expansionPort->readRomL( addr & 0x1fff );
     };
 
+    peekRomL = [this](uint16_t addr) {
+
+        return expansionPort->readRomL( addr & 0x1fff );
+    };
+
     readRomH = [this](uint16_t addr) {
+
+        return expansionPort->readRomH( addr & 0x1fff );
+    };
+
+    peekRomH = [this](uint16_t addr) {
 
         return expansionPort->readRomH( addr & 0x1fff );
     };
@@ -145,6 +163,10 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
     };
 
     readUltimaxA0 = [this](uint16_t addr) {
+        return expansionPort->readUltimaxA0( addr & 0x1fff );
+    };
+
+    peekUltimaxA0 = [this](uint16_t addr) {
         return expansionPort->readUltimaxA0( addr & 0x1fff );
     };
 
@@ -184,6 +206,19 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return expansionPort->readIo1(addr);
     };
 
+    peekIo1Reg = [this](uint16_t addr) {
+
+        if (sidManager.extraSids) {
+            Sid* _sid = sidManager.getSidByAdr( addr, true );
+            if (_sid) {
+                sidManager.updateClock();
+                return _sid->readIO( addr );
+            }
+        }
+
+        return expansionPort->readIo1(addr);
+    };
+
     writeIo2Reg = [this](uint16_t addr, uint8_t value) {
 
         if (sidManager.extraSids) {
@@ -194,6 +229,19 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
     };
 
     readIo2Reg = [this](uint16_t addr) {
+
+        if (sidManager.extraSids) {
+            Sid* _sid = sidManager.getSidByAdr( addr, true );
+            if (_sid) {
+                sidManager.updateClock();
+                return _sid->readIO( addr );
+            }
+        }
+
+        return expansionPort->readIo2(addr);
+    };
+
+    peekIo2Reg = [this](uint16_t addr) {
 
         if (sidManager.extraSids) {
             Sid* _sid = sidManager.getSidByAdr( addr, true );
@@ -238,12 +286,27 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return sidManager.sid->readIO( addr );
     };
 
+    peekSidReg = [this](uint16_t addr) {
+
+        sidManager.updateClock();
+
+        if (sidManager.extraSids)
+            return sidManager.getSidByAdr( addr )->readIO( addr );
+
+        return sidManager.sid->readIO( addr );
+    };
+
     writeVicReg = [this](uint16_t addr, uint8_t value) {
 
         vicII->writeReg( addr & 0xff, value );
     };
 
     readVicReg = [this](uint16_t addr) {
+
+        return vicII->readReg( addr & 0xff );
+    };
+
+    peekVicReg = [this](uint16_t addr) {
 
         return vicII->readReg( addr & 0xff );
     };
@@ -258,12 +321,22 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return cia1.read( addr );
     };
 
+    peekCia1Reg = [this](uint16_t addr) {
+
+        return cia1.read( addr );
+    };
+
     writeCia2Reg = [this](uint16_t addr, uint8_t value) {
 
         cia2.write( addr, value );
     };
 
     readCia2Reg = [this](uint16_t addr) {
+
+        return cia2.read(addr);
+    };
+
+    peekCia2Reg = [this](uint16_t addr) {
 
         return cia2.read(addr);
     };
@@ -432,7 +505,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         // and forced down when datasette is running
         // all other lines are not forced up or down in input mode?
         // means switching from output to input mode doesn't change line
-        // Note: when Dattasette not connected: motor line is forced down
+        // Note: when Datasette not connected: motor line is forced down
 
         if (!state)
             cpu.updateIoLines( 0x17 );
@@ -568,9 +641,6 @@ auto System::power( bool softReset ) -> void {
         // vic hasn't a reset line ... means no change ?
         cpu.reset();
     }
-    if (expansionPort->haltMainCpu())
-        cpu.callResetRoutine = false;
-
 
     // cpu doesn't leave halted state by reset request   
     //cpu->setRdy( false );
@@ -700,14 +770,6 @@ auto System::run() -> void {
     leaveEmulation = false;
     runAhead.pos = 0;
     acia->connectionLock = false;
-
-    if (cpu.callResetRoutine) {
-        if (mhz2)
-            cpu.resetRoutine<true>();
-        else
-            cpu.resetRoutine<false>();
-    }
-
     input.poll();
 
     if (input.restore())
@@ -720,7 +782,7 @@ auto System::run() -> void {
     iecBus.randomizeRpm();
 
     runAhead.active = !warp.config && runAhead.frames && !traps.installed
-        && !keyBuffer->isPrgInjectionInQueue();
+        && !cpu.inDebugMode() && !keyBuffer->isPrgInjectionInQueue();
 
     if (history.enable()) {
         if (history.rewind) {
@@ -797,6 +859,11 @@ auto System::run() -> void {
         informAboutStateChange();
 
     debugCart->check();
+
+    if (debugger.action != Emulator::Interface::DebuggerAction::None) {
+        interface->debugger(debugger.action, debugger.addr, cpu.hasModifiedCode());
+        debugger.action = Emulator::Interface::DebuggerAction::None;
+    }
 }
 
 auto System::isUltimax() -> bool {
@@ -1245,6 +1312,29 @@ auto System::toggle2Mhz() -> bool {
     }
     interface->updateLedState(Emulator::Interface::LedId::MHz2, (mhz2 & 0x80) ? 1 : 0);
     return mhz2 & 0x80;
+}
+
+auto System::debuggerAdd(Emulator::Interface::DebuggerAction action, uint16_t addr, uint16_t addrTo) -> void {
+    switch (action) {
+        case Emulator::Interface::DebuggerAction::Line:
+        case Emulator::Interface::DebuggerAction::Frame:
+            vicII->debuggerAction = action;
+            break;
+        default:
+            cpu.debuggerAdd( (M6510::DebuggerAction)action, addr, addrTo );
+            break;
+    }
+}
+
+auto System::debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    leaveEmulation = true;
+    debugger.action = action;
+    debugger.addr = addr;
+}
+
+auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
+    cpu.updateSnapshot(snap);
+    vicII->updateSnapshot(snap);
 }
 
 }

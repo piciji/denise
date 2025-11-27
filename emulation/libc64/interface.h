@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../interface.h"
+#include "system/debuggerSnapshot.h"
 
 namespace LIBC64 {
 
@@ -212,6 +213,21 @@ struct Interface : Emulator::Interface {
 
     auto configRewind(unsigned steps, unsigned maxSizeInMb) -> void;
     auto setRewind(bool state) -> void;
+
+    // debugger
+    auto debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerAction action, unsigned addr) -> void;
+    auto debuggerEnable(DebuggerAction action, unsigned addr, bool state = true) -> void;
+    auto debuggerDisable(DebuggerAction action, unsigned addr) -> void;
+    auto debuggerStepOver() -> void;
+    auto debuggerStepInto() -> void;
+    auto debuggerDisableAll() -> void;
+
+    // disassembler
+    auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
+    auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
+    auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
+    auto getDebuggerSnapshot() -> DebuggerSnapshot;
 private:
 	auto prepareDevices() -> void;
 	auto prepareMedia() -> void;

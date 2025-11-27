@@ -57,6 +57,8 @@ auto VicIIFast::clock() -> void {
     
     if (initVCounter) {
         vCounter = 0;
+        if (debuggerAction == Emulator::Interface::DebuggerAction::Frame)
+            oneTimeDebuggerAction();
         initVCounter = false;
         lpLatched = false;
         if (!lpPin)
@@ -67,7 +69,9 @@ auto VicIIFast::clock() -> void {
     } 
     
     if (++cycle == lineCycles) {	
-		cycle = 0; 
+		cycle = 0;
+        if (debuggerAction == Emulator::Interface::DebuggerAction::Line)
+            oneTimeDebuggerAction();
 
         if (vCounter == 0xf7)
             allowBadlines = false;                    

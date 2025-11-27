@@ -101,6 +101,8 @@ inline auto VicIICycle::advanceCycle() -> void {
 		vcBase = vc = 0;
 		refreshCounter = 0xff;
 		allowBadlines = false;
+	    if (debuggerAction == Emulator::Interface::DebuggerAction::Frame)
+	        oneTimeDebuggerAction();
     }
     
 	if (++cycle == lineCycles) {	
@@ -143,6 +145,8 @@ inline auto VicIICycle::advanceCycle() -> void {
             );
 			lineVCounter = 0;
 		}
+	    if (debuggerAction == Emulator::Interface::DebuggerAction::Line)
+	        oneTimeDebuggerAction();
 	}
 
     sprite0DmaLateBA = false;

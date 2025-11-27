@@ -28,8 +28,6 @@ struct WatchPoints {
 
     auto check(uint32_t addr, unsigned Size = 1) -> bool;
 
-    auto checkRange(uint32_t addr, unsigned Size) -> bool;
-
     auto find(uint32_t addr) -> Watcher*;
 
     auto isEnabled(uint32_t addr) -> bool;
@@ -65,7 +63,7 @@ struct ModifiedCodes {
 
 struct HistoryEntry {
     uint32_t addr;
-    uint16_t mem[5] = {0};
+    uint16_t mem[5] = {0}; // we should remember the actual values, because of potentially modified code.
     uint16_t flags;
 };
 

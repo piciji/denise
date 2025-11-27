@@ -11,14 +11,14 @@ namespace Emulator {
 namespace LIBAMI {
 
 struct Agnus;
-struct CpuSnapshot;
+struct DebuggerSnapshot;
 
 struct Cpu : M68FAMILY::M68000 {
     Cpu(Agnus& agnus);
 
     auto serialize(Emulator::Serializer& s) -> void;
 
-    auto getSnapshot() -> CpuSnapshot;
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }

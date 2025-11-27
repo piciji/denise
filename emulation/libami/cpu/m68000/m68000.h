@@ -114,7 +114,6 @@ protected:
     uint32_t regsD[8];
     uint32_t regsA[8];
     uint32_t pc;
-    uint32_t pcEdge;
 
     uint32_t usp;
     uint32_t ssp;
@@ -167,6 +166,10 @@ public:
     auto disassembleData(uint32_t addr, unsigned words) -> std::string;
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
     auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }
+    auto inDebugMode() -> bool {
+        return control & (WatchPoint | BreakPoint | ExceptionPoint | SoftStop | History);
+    }
+    auto pcEdge() -> uint32_t { return (pc - 2) & 0xffffff; }
 
     // use this to calculate the needed wait states by terminating a BUS cycle with VPA line
     template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnEClock(int eCyclePos) -> uint8_t;
@@ -251,7 +254,7 @@ protected:
     virtual auto tasCycleBegin() -> void {}
     virtual auto tasCycleEnd() -> void {}
 
-    virtual auto debugPointReached(DebuggerAction action, unsigned addr, bool maybeModified) -> void {}
+    virtual auto debugPointReached(DebuggerAction action, unsigned addr) -> void {}
 #endif
 private:
     auto controlBreaks() -> void;

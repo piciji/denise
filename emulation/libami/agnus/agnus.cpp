@@ -971,22 +971,22 @@ inline auto Agnus::csyncPolTrue(bool state) -> bool {
     return (beamCon & CSYTRUE) ? !state : state;
 }
 
-auto Agnus::debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned addr, bool maybeModified) -> void {
+auto Agnus::debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned addr) -> void {
     system->leaveEmulation = true;
-    interface->debugger((Emulator::Interface::DebuggerAction)action, addr, maybeModified);
+    debugger.action = (Emulator::Interface::DebuggerAction)action;
+    debugger.addr = addr;
 }
 
 auto Agnus::oneTimeDebuggerAction() -> void {
     system->leaveEmulation = true;
-    interface->debugger(debuggerAction, 0, cpu.hasModifiedCode());
+    debugger.action = debuggerAction;
+    debugger.addr = 0;
     debuggerAction = Emulator::Interface::DebuggerAction::None;
 }
 
-auto Agnus::getSnapshot() -> AgnusSnapshot {
-    AgnusSnapshot snapshot;
-    snapshot.hPos = hPos;
-    snapshot.vPos = vPos;
-    return snapshot;
+auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    snap.hPos = hPos;
+    snap.vPos = vPos;
 }
 
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;

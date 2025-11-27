@@ -15,6 +15,7 @@
 #include "../../tools/crop.h"
 #include "../../tools/history.h"
 #include "../../tools/serializer.h"
+#include "debuggerSnapshot.h"
 
 namespace LIBAMI {
 
@@ -101,7 +102,8 @@ struct System {
     auto setWarpMode( unsigned config ) -> void;
     auto setRunAhead(unsigned frames) -> void;
     auto runAheadPreventJit() -> bool { return runAhead.preventJit && runAhead.frames; }
-    auto allowRunAhead() -> const bool { return !warp.config && runAhead.frames && !agnus.resetFromKeyboard && agnus.womLocked(); }
+    auto allowRunAhead() -> const bool { return !warp.config && runAhead.frames && !agnus.resetFromKeyboard
+        && !cpu.inDebugMode() && agnus.womLocked(); }
     auto hintSlowSpeed(bool state) -> void;
 
     auto calcSerializationSize() -> void;
@@ -144,6 +146,7 @@ struct System {
     auto getHDDAsync() -> bool;
 
     auto debuggerAdd(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void;
+    auto updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 

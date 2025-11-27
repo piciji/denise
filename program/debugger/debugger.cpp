@@ -7,6 +7,7 @@
 #include "../../data/icons.h"
 
 // #838589
+// fc0d18
 
 Debugger::~Debugger() {
     timer.setEnabled( false );
@@ -19,7 +20,7 @@ Debugger::Debugger( Emulator::Interface* emulator ) {
     build();
 }
 
-Debugger::CPU68K::Watcher::Adder::Adder() {
+Debugger::CPU::Watcher::Adder::Adder() {
     address.setMaxLength( 8 );
     address.setFont(GUIKIT::Font::system(12));
     append(address, {~0u, 0u}, 10);
@@ -28,7 +29,7 @@ Debugger::CPU68K::Watcher::Adder::Adder() {
     setAlignment( 0.5 );
 }
 
-Debugger::CPU68K::Watcher::Watcher() {
+Debugger::CPU::Watcher::Watcher() {
     list.setHeaderText( { "", "address", "", ""} );
     list.setFont( GUIKIT::Font::system( 11 ,"", true ) );
 
@@ -42,25 +43,37 @@ Debugger::CPU68K::Watcher::Watcher() {
     GUIKIT::RadioBox::setGroup( breakPoint, watchPoint, exceptionPoint );
 }
 
-Debugger::CPU68K::State::Flags::Flags() {
-    int i = 16;
+Debugger::CPU::State::Flags::Flags(Debugger* debugger) {
+    int i;
+    const char* ident;
+
+    if (dynamic_cast<LIBAMI::Interface*>(debugger->emulator)) {
+        i = sizeof(LIBAMI::DebuggerSnapshot::flagIdent);
+        ident = &LIBAMI::DebuggerSnapshot::flagIdent[0];
+    } else {
+        i = sizeof(LIBC64::DebuggerSnapshot::flagIdent);
+        ident = &LIBC64::DebuggerSnapshot::flagIdent[0];
+    }
+
+    flag.resize( i );
 
     append(spacer, {0u, 0u}, 10);
     for (auto& f : flag) {
+        f = new GUIKIT::Label;
         i--;
-        char _f = LIBAMI::CpuSnapshot::flagIdent[i];
+        char _f = ident[i];
         if (_f == ' ')
             continue;
         std::string _t{_f};
         GUIKIT::String::toLowerCase( _t );
-        f.setText( _t );
-        f.setStore( 0 );
-        f.setEnabled( false );
-        append(f, {20u, 0u}, 5);
+        f->setText( _t );
+        f->setStore( 0 );
+        f->setEnabled( false );
+        append(*f, {20u, 0u}, 5);
     }
 }
 
-Debugger::CPU68K::State::Registers::Registers() {
+Debugger::CPU::State::Registers::Registers() {
     static unsigned _w = 0;
 
     if (_w == 0) {
@@ -81,32 +94,40 @@ Debugger::CPU68K::State::Registers::Registers() {
     rightVal.setText( "0" );
     rightVal.setStore( 0 );
 
-    append(left, {_w * 3, 0u}, 5);
+    append(left, {_w * 4, 0u}, 5);
     append(leftVal, {_w * 8, 0u}, 20);
-    append(right, {_w * 3, 0u}, 5);
+    append(right, {_w * 4, 0u}, 5);
     append(rightVal, {_w * 8, 0u});
 
     setAlignment( 0.5 );
 }
 
-Debugger::CPU68K::State::State::Trace::Trace() {
+Debugger::CPU::State::State::Trace::Trace() {
     append(toggle, {0u, 0u}, 10);
     append(clear, {0u, 0u});
     setAlignment( 0.5 );
 }
 
-Debugger::CPU68K::State::State() {
+Debugger::CPU::State::State(Debugger* debugger)
+: flags(debugger) {
     int i = 0;
+    bool is68k = dynamic_cast<LIBAMI::Interface*>(debugger->emulator);
+    registers.resize( is68k ? 11 : 4 );
     for (auto& reg : registers) {
+        reg = new Registers;
         i++;
-        append(reg, {0u, 0u}, (i == 8 || i == 11) ? 20 : 5);
+
+        if (is68k)
+            append(*reg, {0u, 0u}, (i == 8 || i == 11) ? 20 : 5);
+        else
+            append(*reg, {0u, 0u}, (i == 4) ? 20 : 5);
     }
 
     append(flags, {0u, 0u}, 10);
     append(trace, {0u, 0u});
 }
 
-Debugger::CPU68K::InstructionLayout::InstructionLayout() {
+Debugger::CPU::InstructionLayout::InstructionLayout() {
     list.setHeaderText( { "", "address", "data", "instruction" } );
     list.setFont( GUIKIT::Font::system( 11 ,"", true ) );
     list.setHeaderVisible( true );
@@ -114,7 +135,7 @@ Debugger::CPU68K::InstructionLayout::InstructionLayout() {
     append(list, {~0u, ~0u});
 }
 
-Debugger::CPU68K::TraceLayout::TraceLayout() {
+Debugger::CPU::TraceLayout::TraceLayout() {
     list.setHeaderText( { "PC", "Flags","Instruction" } );
     list.setFont( GUIKIT::Font::system( 11 ,"", true ) );
     list.setHeaderVisible( true );
@@ -122,7 +143,8 @@ Debugger::CPU68K::TraceLayout::TraceLayout() {
     append(list, {~0u, ~0u});
 }
 
-Debugger::CPU68K::CPU68K() {
+Debugger::CPU::CPU(Debugger* debugger)
+: state(debugger) {
     switchLayout.setLayout( 0, instructionLayout, {~0u, ~0u} );
     switchLayout.setLayout( 1, traceLayout, {~0u, ~0u} );
 
@@ -185,7 +207,12 @@ auto Debugger::build() -> void {
     exceptionImg.loadPng((uint8_t*)Icons::exception, sizeof(Icons::exception));
     clearImg.loadPng((uint8_t*)Icons::clear, sizeof(Icons::clear));
 
-    cpu68k.watcher.adder.add.setImage( &addImg );
+    if (dynamic_cast<LIBAMI::Interface*>(emulator))
+        cpu = new CPU(this);
+    else
+        cpu = new CPU(this);
+
+    cpu->watcher.adder.add.setImage( &addImg );
 
     if (isOffscreen())
         setGeometry( defaultGeometry );
@@ -197,15 +224,15 @@ auto Debugger::build() -> void {
     control.line.setImage( &lineImg );
     control.frame.setImage( &frameImg );
 
-    cpu68k.state.trace.clear.setImage( &clearImg );
+    cpu->state.trace.clear.setImage( &clearImg );
 
     layout.setMargin( 10 );
-    layout.append( cpu68k, {~0u, ~0u}, 10 );
+    layout.append( *cpu, {~0u, ~0u}, 10 );
     layout.append( control, {~0u, 0u} );
 
     append( layout );
 
-    cpu68k.instructionLayout.list.onClick = [this](unsigned row, unsigned column) {
+    cpu->instructionLayout.list.onClick = [this](unsigned row, unsigned column) {
         if (column == 0) {
             emuThread->lock();
             auto& inst = instructions[row];
@@ -249,7 +276,7 @@ auto Debugger::build() -> void {
         settings->set<unsigned>("debugger_height", geometry.height);
     };
 
-    cpu68k.watcher.list.onClick = [this](unsigned row, unsigned column) {
+    cpu->watcher.list.onClick = [this](unsigned row, unsigned column) {
         if (row >= watchers.size())
             return;
 
@@ -285,12 +312,12 @@ auto Debugger::build() -> void {
         emuThread->unlock();
     };
 
-    cpu68k.watcher.adder.add.onActivate = [this]() {
-        cpu68k.watcher.adder.address.onReturn();
+    cpu->watcher.adder.add.onActivate = [this]() {
+        cpu->watcher.adder.address.onReturn();
     };
 
-    cpu68k.watcher.adder.address.onReturn = [this]() {
-        std::string addressText = cpu68k.watcher.adder.address.text();
+    cpu->watcher.adder.address.onReturn = [this]() {
+        std::string addressText = cpu->watcher.adder.address.text();
         if (addressText.empty())
             return;
         GUIKIT::String::remove( addressText, {"$", "0x"} );
@@ -300,9 +327,9 @@ auto Debugger::build() -> void {
             return;
 
         DebuggerAction action = DebuggerAction::Breakpoint;
-        if (cpu68k.watcher.watchPoint.checked())
+        if (cpu->watcher.watchPoint.checked())
             action = DebuggerAction::Watchpoint;
-        else if (cpu68k.watcher.exceptionPoint.checked())
+        else if (cpu->watcher.exceptionPoint.checked())
             action = DebuggerAction::ExceptionPoint;
 
         if (findWatcherBy( address, action ))
@@ -323,6 +350,8 @@ auto Debugger::build() -> void {
     };
 
     control.stepInto.onActivate = [this]() {
+        if (emulator != activeEmulator)
+            return;
         emuThread->lock();
         program->isPause &= ~2;
         timerVisibility.setEnabled();
@@ -331,6 +360,8 @@ auto Debugger::build() -> void {
     };
 
     control.stepOver.onActivate = [this]() {
+        if (emulator != activeEmulator)
+            return;
         emuThread->lock();
         program->isPause &= ~2;
         timer.setEnabled(  );
@@ -340,6 +371,8 @@ auto Debugger::build() -> void {
     };
 
     control.line.onActivate = [this]() {
+        if (emulator != activeEmulator)
+            return;
         emuThread->lock();
         program->isPause &= ~2;
         timerVisibility.setEnabled();
@@ -348,6 +381,8 @@ auto Debugger::build() -> void {
     };
 
     control.frame.onActivate = [this]() {
+        if (emulator != activeEmulator)
+            return;
         emuThread->lock();
         program->isPause &= ~2;
         timerVisibility.setEnabled();
@@ -356,6 +391,8 @@ auto Debugger::build() -> void {
     };
 
     control.resume.onActivate = [this]() {
+        if (emulator != activeEmulator)
+            return;
         program->isPause ^= 2;
         timer.setEnabled( (program->isPause & 2) == 0 );
         update();
@@ -363,6 +400,8 @@ auto Debugger::build() -> void {
     };
 
     control.search.onClick = [this]() {
+        if (emulator != activeEmulator)
+            return;
         std::string addressText = control.searchEdit.text();
         if (addressText.empty())
             return;
@@ -374,7 +413,7 @@ auto Debugger::build() -> void {
 
         auto instRow = findInstructionRowBy(static_cast<unsigned>(address));
         if (instRow.has_value())
-            cpu68k.instructionLayout.list.setSelection( instRow.value() );
+            cpu->instructionLayout.list.setSelection( instRow.value() );
         else {
             emuThread->lock();
             cacheInstructions(address);
@@ -387,15 +426,15 @@ auto Debugger::build() -> void {
         control.search.onClick();
     };
 
-    cpu68k.state.trace.toggle.onToggle = [this]() {
-        if (cpu68k.switchLayout.selection() == 0) {
+    cpu->state.trace.toggle.onToggle = [this]() {
+        if (cpu->switchLayout.selection() == 0) {
             updateTraceList();
-            cpu68k.switchLayout.setSelection( 1 );
+            cpu->switchLayout.setSelection( 1 );
         } else
-            cpu68k.switchLayout.setSelection( 0 );
+            cpu->switchLayout.setSelection( 0 );
     };
 
-    cpu68k.state.trace.clear.onActivate = [this]() {
+    cpu->state.trace.clear.onActivate = [this]() {
         emuThread->lock();
         emulator->debuggerDisable( Emulator::Interface::DebuggerAction::History, 0 );
         emulator->debuggerEnable( Emulator::Interface::DebuggerAction::History, 0 );
@@ -425,32 +464,52 @@ auto Debugger::build() -> void {
 }
 
 auto Debugger::translate() -> void {
-    cpu68k.watcher.adder.address.setPlaceholder( trans->getA( "address/vector" ) );
+    cpu->watcher.adder.address.setPlaceholder( trans->getA( "address/vector" ) );
     control.searchEdit.setPlaceholder( trans->getA( "address" ) );
-    cpu68k.watcher.breakPoint.setText( trans->getA( "Instruktion" ) );
-    cpu68k.watcher.watchPoint.setText( trans->getA( "Speicherzugriff" ) );
-    cpu68k.watcher.exceptionPoint.setText( trans->getA( "Ausnahme" ) );
+    cpu->watcher.breakPoint.setText( trans->getA( "Instruktion" ) );
+    cpu->watcher.watchPoint.setText( trans->getA( "Speicherzugriff" ) );
+    cpu->watcher.exceptionPoint.setText( trans->getA( "Ausnahme" ) );
 
     int i = 0;
-    for (auto& reg : cpu68k.state.registers) {
-        if (i < 8) {
-            reg.left.setText( "D" + std::to_string( i ) );
-            reg.right.setText( "A" + std::to_string( i ) );
-        } else if (i == 8) {
-            reg.left.setText("PC");
-            reg.right.setText("IRD");
-        } else if (i == 9) {
-            reg.left.setText("SSP");
-            reg.right.setText("IRC");
-        } else if (i == 10) {
-            reg.left.setText("USP");
-            reg.right.setText("IPL");
-        }
+    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        for (auto& reg : cpu->state.registers) {
+            if (i < 8) {
+                reg->left.setText( "D" + std::to_string( i ) );
+                reg->right.setText( "A" + std::to_string( i ) );
+            } else if (i == 8) {
+                reg->left.setText("PC");
+                reg->right.setText("IRD");
+            } else if (i == 9) {
+                reg->left.setText("SSP");
+                reg->right.setText("IRC");
+            } else if (i == 10) {
+                reg->left.setText("USP");
+                reg->right.setText("IPL");
+            }
 
-        i++;
+            i++;
+        }
+    } else {
+        for (auto& reg : cpu->state.registers) {
+            if (i == 0) {
+                reg->left.setText( "PC" );
+                reg->right.setText( "S" );
+            } else if (i == 1) {
+                reg->left.setText( "X" );
+                reg->right.setText( "Y" );
+            } else if (i == 2) {
+                reg->left.setText( "A" );
+                reg->right.setText( "I/O" );
+            } else if (i == 3) {
+                reg->left.setText( "POR" );
+                reg->right.setText( "DDR" );
+            }
+
+            i++;
+        }
     }
 
-    cpu68k.state.trace.toggle.setText( "Trace" );
+    cpu->state.trace.toggle.setText( "Trace" );
 }
 
 auto Debugger::update() -> void {
@@ -459,12 +518,14 @@ auto Debugger::update() -> void {
 
     if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
         LIBAMI::Interface* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
-        auto cpuSnapshot = amiEmu->getCpuSnapshot();
-        addr = cpuSnapshot.pcOpEdge;
-        update68k(cpuSnapshot);
-        updateAgnus(amiEmu);
+        auto snap = amiEmu->getDebuggerSnapshot();
+        addr = snap.pc;
+        update68k(snap);
     } else {
-        addr = 0;
+        LIBC64::Interface* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
+        auto snap = c64Emu->getDebuggerSnapshot();
+        addr = snap.pc;
+        update6510( snap );
     }
 
     std::optional<unsigned> instRow = std::nullopt;
@@ -475,7 +536,7 @@ auto Debugger::update() -> void {
     if (instRow.has_value()) {
         if (locked)
             emuThread->unlock();
-        cpu68k.instructionLayout.list.setSelection( instRow.value() );
+        cpu->instructionLayout.list.setSelection( instRow.value() );
     } else {
         cacheInstructions(addr);
         if (locked)
@@ -483,83 +544,97 @@ auto Debugger::update() -> void {
         updateInstructionList();
     }
 
-    if (cpu68k.switchLayout.selection() == 1)
+    if (cpu->switchLayout.selection() == 1)
         updateTraceList();
 }
 
-auto Debugger::updateAgnus(LIBAMI::Interface* amiEmu) -> void {
-    auto s = amiEmu->getAgnusSnapshot();
-    control.position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
-}
-
-auto Debugger::update68k(LIBAMI::CpuSnapshot& s) -> void {
+auto Debugger::update68k(LIBAMI::DebuggerSnapshot& s) -> void {
     int i = 0;
-    for (auto& reg : cpu68k.state.registers) {
-        if (i < 8) {
-            unsigned val = s.regsD[i];
-            if ((unsigned)reg.leftVal.getStore() != val) {
-                reg.leftVal.setStore( static_cast<int>(val) );
-                reg.leftVal.setText(  hex( val ) );
-            }
-            val = s.regsA[i];
-            if ((unsigned)reg.rightVal.getStore() != val) {
-                reg.rightVal.setStore( static_cast<int>(val) );
-                reg.rightVal.setText(  hex( val ) );
-            }
-        } else if (i == 8) {
-            if ((unsigned)reg.leftVal.getStore() != s.pc) {
-                reg.leftVal.setStore( static_cast<int>(s.pc) );
-                reg.leftVal.setText(  hex( s.pc ) );
-            }
-            if ((uint16_t)reg.rightVal.getStore() != s.ird) {
-                reg.rightVal.setStore( static_cast<int>(s.ird) );
-                reg.rightVal.setText(  hex( s.ird ) );
-            }
-        } else if (i == 9) {
-            if ((unsigned)reg.leftVal.getStore() != s.ssp) {
-                reg.leftVal.setStore( static_cast<int>(s.ssp) );
-                reg.leftVal.setText(  hex( s.ssp ) );
-            }
-            if ((uint16_t)reg.rightVal.getStore() != s.irc) {
-                reg.rightVal.setStore( static_cast<int>(s.irc) );
-                reg.rightVal.setText(  hex( s.irc ) );
-            }
-        } else if (i == 10) {
-            if ((unsigned)reg.leftVal.getStore() != s.usp) {
-                reg.leftVal.setStore( static_cast<int>(s.usp) );
-                reg.leftVal.setText(  hex( s.usp ) );
-            }
-            if ((uint8_t)reg.rightVal.getStore() != s.ipl) {
-                reg.rightVal.setStore( static_cast<int>(s.ipl) );
-                reg.rightVal.setText(  hex( s.ipl ) );
-            }
+    for (auto& reg : cpu->state.registers) {
+        switch (i) {
+            case 0: case 1: case 2: case 3:
+            case 4: case 5: case 6: case 7:
+                updateCpuReg(reg->leftVal, s.regsD[i]);
+                updateCpuReg(reg->rightVal, s.regsA[i]);
+                break;
+            case 8:
+                updateCpuReg(reg->leftVal, s.pc);
+                updateCpuReg(reg->rightVal, s.ird);
+                break;
+            case 9:
+                updateCpuReg(reg->leftVal, s.ssp);
+                updateCpuReg(reg->rightVal, s.irc);
+                break;
+            case 10:
+                updateCpuReg(reg->leftVal, s.usp);
+                updateCpuReg(reg->rightVal, s.ipl);
+                break;
         }
         i++;
     }
 
-    i = 16;
-    for (auto& f : cpu68k.state.flags.flag) {
+    control.position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateCpuFlags(&LIBAMI::DebuggerSnapshot::flagIdent[0], s.flags);
+}
+
+auto Debugger::update6510(LIBC64::DebuggerSnapshot& s) -> void {
+    int i = 0;
+    for (auto& reg : cpu->state.registers) {
+        switch (i++) {
+            case 0:
+                updateCpuReg(reg->leftVal, s.pc);
+                updateCpuReg(reg->rightVal, s.regS);
+                break;
+            case 1:
+                updateCpuReg(reg->leftVal, s.regX);
+                updateCpuReg(reg->rightVal, s.regY);
+                break;
+            case 2:
+                updateCpuReg(reg->leftVal, s.regA);
+                updateCpuReg(reg->rightVal, s.ioLines);
+                break;
+            case 3:
+                updateCpuReg(reg->leftVal, s.por);
+                updateCpuReg(reg->rightVal, s.ddr);
+                break;
+        }
+    }
+
+    control.position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateCpuFlags(&LIBC64::DebuggerSnapshot::flagIdent[0], s.flags);
+}
+
+auto Debugger::updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void {
+    if ((unsigned)reg.getStore() != val) {
+        reg.setStore( static_cast<int>(val) );
+        reg.setText( hex( val ) );
+    }
+}
+
+auto Debugger::updateCpuFlags(const char* flagIdent, unsigned flags) -> void {
+    int i = cpu->state.flags.flag.size();
+    for (auto& f : cpu->state.flags.flag) {
         i--;
-        char _f = LIBAMI::CpuSnapshot::flagIdent[i];
+        char _f = *(flagIdent + i);
 
         if (_f == ' ')
             continue;
 
-        bool state = s.flags & (1 << i);
-        if ((bool)f.getStore() != state) {
-            f.setStore( static_cast<int>(state) );
+        bool state = flags & (1 << i);
+        if ((bool)f->getStore() != state) {
+            f->setStore( static_cast<int>(state) );
             std::string _t{_f};
 
             if (state) {
-                f.setEnabled(  );
-                f.setFont( GUIKIT::Font::system( 11, "bold" ) );
+                f->setEnabled(  );
+                f->setFont( GUIKIT::Font::system( 11, "bold" ) );
             } else {
-                f.setEnabled( false );
-                f.setFont( GUIKIT::Font::system( 11 ) );
+                f->setEnabled( false );
+                f->setFont( GUIKIT::Font::system( 11 ) );
                 GUIKIT::String::toLowerCase( _t );
             }
 
-            f.setText( _t );
+            f->setText( _t );
         }
     }
 }
@@ -582,7 +657,7 @@ auto Debugger::cacheInstructions(unsigned addr) -> void {
 }
 
 auto Debugger::updateInstructionList() -> void {
-    auto& instructionList = cpu68k.instructionLayout.list;
+    auto& instructionList = cpu->instructionLayout.list;
     instructionList.lockRedraw();
     instructionList.reset();
 
@@ -610,9 +685,19 @@ auto Debugger::updateInstructionList() -> void {
 }
 
 auto Debugger::updateTraceList() -> void {
-    auto& traceList = cpu68k.traceLayout.list;
+    auto& traceList = cpu->traceLayout.list;
     traceList.lockRedraw();
     traceList.reset();
+
+    unsigned flagSize;
+    const char* flagIdent;
+    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        flagSize = sizeof(LIBAMI::DebuggerSnapshot::flagIdent);
+        flagIdent = &LIBAMI::DebuggerSnapshot::flagIdent[0];
+    } else {
+        flagSize = sizeof(LIBC64::DebuggerSnapshot::flagIdent);
+        flagIdent = &LIBC64::DebuggerSnapshot::flagIdent[0];
+    }
 
     for (int i = 0; i < 512; i++) {
         uint16_t flags;
@@ -622,9 +707,9 @@ auto Debugger::updateTraceList() -> void {
             break;
         auto parts = GUIKIT::String::split( result, '|' );
 
-        for (int f = 15; f >= 0; f--) {
+        for (int f = flagSize - 1; f >= 0; f--) {
             bool state = flags & (1 << f);
-            char _f = LIBAMI::CpuSnapshot::flagIdent[f];
+            char _f = flagIdent[f];
 
             if (_f == ' ')
                 continue;
@@ -696,13 +781,16 @@ auto Debugger::findInstructionRowBy(unsigned addr) -> std::optional<unsigned> {
 }
 
 auto Debugger::updateWatcherList() -> void {
-    auto& addrList = cpu68k.watcher.list;
+    auto& addrList = cpu->watcher.list;
     addrList.lockRedraw();
     addrList.reset();
     char hex[7];
+    std::string format = "%06x";
+    if (dynamic_cast<LIBC64::Interface*>(emulator))
+        format = "%04x";
 
     for (auto& w : watchers) {
-        snprintf(hex, 7, "%06x", w.addr);
+        snprintf(hex, 7, format.c_str(), w.addr);
         addrList.append( {"", std::string(hex), "", ""}, true );
         unsigned row = addrList.rowCount() - 1;
 
@@ -720,7 +808,7 @@ auto Debugger::updateWatcherList() -> void {
 }
 
 auto Debugger::enableInstructionBreakpoint(unsigned row, bool state) -> void {
-    auto& instructionList = cpu68k.instructionLayout.list;
+    auto& instructionList = cpu->instructionLayout.list;
 
     if (state) {
         instructionList.setImage( row, 0, breakEnableImg);
@@ -732,13 +820,13 @@ auto Debugger::enableInstructionBreakpoint(unsigned row, bool state) -> void {
 }
 
 auto Debugger::removeInstructionBreakpoint(unsigned row) -> void {
-    auto& instructionList = cpu68k.instructionLayout.list;
+    auto& instructionList = cpu->instructionLayout.list;
     instructionList.setImage( row, 0, nullImg);
     instructionList.resetRowForegroundColor( row );
 }
 
 auto Debugger::enableWatcher(unsigned row, bool state) -> void {
-    auto& addrList = cpu68k.watcher.list;
+    auto& addrList = cpu->watcher.list;
     addrList.setImage( row, 0, state ? breakEnableImg : breakDisableImg );
 }
 
@@ -779,7 +867,7 @@ auto Debugger::debugCallback() -> void {
     timerVisibility.setEnabled(false);
     updateToolboxVisibility();
 
-    auto& watcherList = cpu68k.watcher.list;
+    auto& watcherList = cpu->watcher.list;
     if (last.action == DebuggerAction::Watchpoint || last.action == DebuggerAction::ExceptionPoint) {
         auto row = findWatcherRowBy(last.addr, last.action);
         if (row.has_value())
@@ -807,7 +895,6 @@ auto Debugger::reset() -> void {
             emulator->debuggerEnable( watcher.action, watcher.addr, watcher.enabled );
 
         last.maybeModified = true;
-        update();
         program->isPause &= ~2;
         updateToolboxVisibility();
 

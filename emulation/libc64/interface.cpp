@@ -2077,4 +2077,53 @@ auto Interface::setRewind(bool state) -> void {
         system->history.setRewind(state);
 }
 
+auto Interface::disassemble(unsigned addr, unsigned& bytes) -> std::string {
+    return system->cpu.disassemble(addr, bytes);
+}
+
+auto Interface::disassembleData(unsigned addr, unsigned bytes) -> std::string {
+    return system->cpu.disassembleData( (uint16_t)addr, bytes );
+}
+
+auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
+    return system->cpu.disassembleTrace( i, (uint8_t&)flags );
+}
+
+auto Interface::getDebuggerSnapshot() -> DebuggerSnapshot {
+    DebuggerSnapshot snap{};
+    system->updateDebuggerSnapshot(snap);
+    return snap;
+}
+
+auto Interface::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    system->debuggerAdd( action, (uint16_t)addr, (uint16_t)addrTo );
+}
+
+auto Interface::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
+    system->cpu.debuggerRemove( (M6510::DebuggerAction)action, addr );
+}
+
+auto Interface::debuggerEnable(DebuggerAction action, unsigned addr, bool state) -> void {
+    if (state)
+        system->cpu.debuggerEnable( (M6510::DebuggerAction)action, addr );
+    else
+        debuggerDisable( action, addr );
+}
+
+auto Interface::debuggerDisable(DebuggerAction action, unsigned addr) -> void {
+    system->cpu.debuggerDisable( (M6510::DebuggerAction)action, addr );
+}
+
+auto Interface::debuggerStepOver() -> void {
+    system->cpu.debuggerStepOver();
+}
+
+auto Interface::debuggerStepInto() -> void {
+    system->cpu.debuggerStepInto();
+}
+
+auto Interface::debuggerDisableAll() -> void {
+    system->cpu.debuggerDisableAll();
+}
+
 }

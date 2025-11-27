@@ -1,19 +1,19 @@
 
 #include "watcher.h"
-#include "m68000.h"
+#include "m6510.h"
 #include <cstring>
 
 #define INSTRUCTION_HISTORY_SIZE 512
 #define INSTRUCTION_HISTORY_MASK (INSTRUCTION_HISTORY_SIZE - 1)
 
-namespace M68FAMILY {
+namespace LIBC64 {
 
-WatchPoints::WatchPoints(M68000& cpu, int controlFlag) : cpu(cpu) {
+WatchPoints::WatchPoints(M6510& cpu, int controlFlag) : cpu(cpu) {
     this->controlFlag = controlFlag;
     watchers.reserve( 10 );
 }
 
-auto WatchPoints::add(uint32_t addr) -> void {
+auto WatchPoints::add(uint16_t addr) -> void {
     auto w = find( addr );
 
     if (!w)
@@ -25,7 +25,7 @@ auto WatchPoints::add(uint32_t addr) -> void {
     flag( true );
 }
 
-auto WatchPoints::remove(uint32_t addr) -> void {
+auto WatchPoints::remove(uint16_t addr) -> void {
     for (auto it = watchers.begin(); it != watchers.end();) {
         if (it->addr == addr) {
             watchers.erase(it);
@@ -36,7 +36,7 @@ auto WatchPoints::remove(uint32_t addr) -> void {
     }
 }
 
-auto WatchPoints::find(uint32_t addr) -> Watcher* {
+auto WatchPoints::find(uint16_t addr) -> Watcher* {
     for ( auto& w : watchers ) {
         if (w.addr == addr)
             return &w;
@@ -44,32 +44,32 @@ auto WatchPoints::find(uint32_t addr) -> Watcher* {
     return nullptr;
 }
 
-auto WatchPoints::check(uint32_t addr, unsigned Size) -> bool {
+auto WatchPoints::check(uint16_t addr) -> bool {
     for ( auto& w : watchers ) {
-        if ((w.addr >= addr) && (w.addr < addr + Size) && w.enabled)
+        if ((w.addr == addr) && w.enabled)
             return true;
     }
     return false;
 }
 
-auto WatchPoints::isEnabled(uint32_t addr) -> bool {
+auto WatchPoints::isEnabled(uint16_t addr) -> bool {
     auto w = find( addr );
     return w != nullptr && w->enabled;
 }
 
-auto WatchPoints::isDisabled(uint32_t addr) -> bool {
+auto WatchPoints::isDisabled(uint16_t addr) -> bool {
     auto w = find( addr );
     return w == nullptr || !w->enabled;
 }
 
-auto WatchPoints::enable(uint32_t addr) -> void {
+auto WatchPoints::enable(uint16_t addr) -> void {
     if (auto w = find( addr )) {
         w->enabled = true;
         flag( true );
     }
 }
 
-auto WatchPoints::disable(uint32_t addr) -> void {
+auto WatchPoints::disable(uint16_t addr) -> void {
     if (auto w = find( addr )) {
         w->enabled = false;
         flagWhenNeeded();
@@ -97,19 +97,19 @@ auto WatchPoints::flag(bool enable) -> void {
     cpu.flagDebugAction( controlFlag, enable );
 }
 
-ModifiedCodes::ModifiedCodes(M68000& cpu, int controlFlag) : cpu(cpu) {
+ModifiedCodes::ModifiedCodes(M6510& cpu, int controlFlag) : cpu(cpu) {
     this->controlFlag = controlFlag;
     alarm = false;
 }
 
-auto ModifiedCodes::add(uint32_t addr, uint32_t addrTo) -> void {
+auto ModifiedCodes::add(uint16_t addr, uint16_t addrTo) -> void {
     this->addrFrom = addr;
     this->addrTo = addrTo;
     cpu.flagDebugAction( controlFlag, true );
 }
 
-auto ModifiedCodes::checkAndSet(uint32_t addr, unsigned Size) -> void {
-    if ((addrFrom >= addr) && (addrFrom < addr + Size) && (addrTo >= addr))
+auto ModifiedCodes::checkAndSet(uint16_t addr) -> void {
+    if ((addrFrom <= addr) && (addrTo >= addr))
         alarm = true;
 }
 
@@ -124,7 +124,7 @@ auto ModifiedCodes::disable() -> void {
     cpu.flagDebugAction( controlFlag, false );
 }
 
-HistoryHandler::HistoryHandler(M68000& cpu, int controlFlag) : cpu(cpu) {
+HistoryHandler::HistoryHandler(M6510& cpu, int controlFlag) : cpu(cpu) {
     this->controlFlag = controlFlag;
     this->pos = 0;
     this->_enable = false;
@@ -137,13 +137,11 @@ auto HistoryHandler::add() -> void {
     if (pos == 0)
         _overflow = true;
 
-    uint32_t addr = cpu.pcEdge();
+    uint16_t addr = cpu.pc;
     trace.addr = addr;
-    trace.flags = cpu.getSR();
-    for (uint16_t& m : trace.mem) {
-        m = cpu.peek( addr );
-        addr += 2;
-    }
+    trace.flags = cpu.getFlags();
+    for (uint8_t& m : trace.mem)
+        m = cpu.memory.peek( addr++ );
 }
 
 auto HistoryHandler::get(unsigned i) -> HistoryEntry* {

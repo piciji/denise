@@ -5,12 +5,17 @@
 #include "../../emulation/interface.h"
 
 #define LIST_INSTRUCTIONS 256
-#define LIST_TRACE 100
+
 typedef Emulator::Interface::DebuggerAction DebuggerAction;
 
 namespace LIBAMI {
     struct Interface;
-    struct CpuSnapshot;
+    struct DebuggerSnapshot;
+}
+
+namespace LIBC64 {
+    struct Interface;
+    struct DebuggerSnapshot;
 }
 
 struct Debugger : GUIKIT::Window {
@@ -42,7 +47,7 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image exceptionImg;
     GUIKIT::Image clearImg;
 
-    struct CPU68K : GUIKIT::HorizontalLayout {
+    struct CPU : GUIKIT::HorizontalLayout {
         GUIKIT::SwitchLayout switchLayout;
 
         struct InstructionLayout : GUIKIT::VerticalLayout {
@@ -78,14 +83,14 @@ struct Debugger : GUIKIT::Window {
                 GUIKIT::Label right;
                 GUIKIT::LineEdit rightVal;
                 Registers();
-
-            } registers[11];
+            };
+            std::vector<Registers*> registers;
 
             struct Flags : GUIKIT::HorizontalLayout {
                 GUIKIT::Widget spacer;
-                GUIKIT::Label flag[16];
+                std::vector<GUIKIT::Label*> flag;
 
-                Flags();
+                Flags(Debugger* debugger);
             } flags;
 
             struct Trace : GUIKIT::HorizontalLayout {
@@ -95,12 +100,11 @@ struct Debugger : GUIKIT::Window {
                 Trace();
             } trace;
 
-            State();
+            State(Debugger* debugger);
         } state;
 
-
-        CPU68K();
-    } cpu68k;
+        CPU(Debugger* debugger);
+    };
 
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;
@@ -132,6 +136,8 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Timer timer;
     GUIKIT::Timer timerVisibility;
 
+    CPU* cpu;
+
     GUIKIT::VerticalLayout layout;
 
     auto build() -> void;
@@ -157,8 +163,10 @@ struct Debugger : GUIKIT::Window {
     auto makeVisible() -> void;
     auto reset() -> void;
 
-    auto updateAgnus(LIBAMI::Interface* amiEmu) -> void;
-    auto update68k(LIBAMI::CpuSnapshot& s) -> void;
+    auto update68k(LIBAMI::DebuggerSnapshot& s) -> void;
+    auto update6510(LIBC64::DebuggerSnapshot& s) -> void;
+    auto updateCpuFlags(const char* flagIdent, unsigned flags) -> void;
+    auto updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
 
     auto hex( uint32_t val, int length = -1 ) -> std::string;
 };

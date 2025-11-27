@@ -18,6 +18,7 @@ namespace LIBC64 {
 struct System;
 struct ExpansionPort;
 struct M6510;
+struct DebuggerSnapshot;
 
 struct VicIIBase {
 	VicIIBase(System* system);
@@ -61,6 +62,7 @@ struct VicIIBase {
 	} leftLineAnomaly;
 
     uint8_t reg2mhz;
+    Emulator::Interface::DebuggerAction debuggerAction;
     
 	M6510& cpu;
 	ExpansionPort* expansionPort;
@@ -112,6 +114,7 @@ struct VicIIBase {
     auto setUltimax(bool state ) -> void { ultimaxPhi1 = ultimaxPhi2 = state; };
     auto oldOne() -> bool { return oldIrqMode; }
     auto inVisibleArea() -> bool { return visibleLine; }
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 
 protected:     
     bool ultimaxPhi1;
@@ -235,6 +238,7 @@ protected:
 	
 	bool enableSequencer = true;
 
+    auto oneTimeDebuggerAction() -> void;
 	auto updateIrq(Interrupt interrupt = Update) -> void;
 	auto checkLightPen() -> void;	
 	

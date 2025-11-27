@@ -10,7 +10,7 @@
 #include "../../tools/history.h"
 #include "../cpu/m68000/dasmHandler.h"
 #include "../cpu/m68000/m68000.h"
-#include "../system/snapShots.h"
+#include "../system/debuggerSnapshot.h"
 
 /**
  * todos:
@@ -149,6 +149,11 @@ struct Agnus {
         unsigned speed;
         unsigned cycles;
     } overclock;
+
+    struct {
+        Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
+        uint32_t addr;
+    } debugger;
 
     struct Sprite {
         uint32_t ptr;
@@ -461,9 +466,9 @@ struct Agnus {
 
     inline auto updateDdfEnableCache() -> void;
 
-    auto debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned addr, bool maybeModified) -> void;
+    auto debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned addr) -> void;
     auto oneTimeDebuggerAction() -> void;
-    auto getSnapshot() -> AgnusSnapshot;
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }

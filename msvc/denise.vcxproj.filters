@@ -1186,6 +1186,15 @@
     <ClInclude Include="..\emulation\libami\cpu\m68000\watcher.h">
       <Filter>emulation\libami\cpu\m68000</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libc64\m6510\dasmHandler.h">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\m6510\watcher.h">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\snapShots.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2402,6 +2411,12 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libami\cpu\m68000\watcher.cpp">
       <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\m6510\dasmHandler.cpp">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\m6510\watcher.cpp">
+      <Filter>emulation\libc64\m6510</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

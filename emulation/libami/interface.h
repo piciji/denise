@@ -2,7 +2,7 @@
 #pragma once
 
 #include "../interface.h"
-#include "system/snapShots.h"
+#include "system/debuggerSnapshot.h"
 
 namespace LIBAMI {
 
@@ -148,8 +148,7 @@ struct Interface : Emulator::Interface  {
     auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
     auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
-    auto getCpuSnapshot() -> CpuSnapshot;
-    auto getAgnusSnapshot() -> AgnusSnapshot;
+    auto getDebuggerSnapshot() -> DebuggerSnapshot;
 
 private:
     auto prepareDevices() -> void;

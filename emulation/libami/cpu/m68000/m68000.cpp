@@ -103,11 +103,11 @@ auto M68000::controlBreaks() -> void {
     if (control & TraceScheduled)
         return;
 
-    if ((control & SoftStop) && checkSoftStop(pcEdge))
-        return DEBUG_POINT_REACHED(DebuggerAction::Softstop, pcEdge, modifiedCode.getAndForget());
+    if ((control & SoftStop) && checkSoftStop(pcEdge()))
+        return DEBUG_POINT_REACHED(DebuggerAction::Softstop, pcEdge());
 
-    if ((control & BreakPoint) && breakPoints.check(pcEdge))
-        return DEBUG_POINT_REACHED(DebuggerAction::Breakpoint, pcEdge, modifiedCode.getAndForget());
+    if ((control & BreakPoint) && breakPoints.check(pcEdge()))
+        return DEBUG_POINT_REACHED(DebuggerAction::Breakpoint, pcEdge());
 }
 
 auto M68000::power() -> void {
@@ -440,9 +440,9 @@ auto M68000::checkSoftStop(uint32_t addr) -> bool {
 auto M68000::debuggerStepOver() -> void {
     unsigned iSize;
 
-    disassemble( pcEdge, iSize );
+    disassemble( pcEdge(), iSize );
 
-    softStep = pcEdge + iSize;
+    softStep = pcEdge() + iSize;
     control |= SoftStop;
 }
 

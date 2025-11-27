@@ -317,6 +317,11 @@ auto System::run() -> void {
 
     if (observer.stateChange)
         informAboutStateChange();
+
+    if (agnus.debugger.action != Emulator::Interface::DebuggerAction::None) {
+        interface->debugger(agnus.debugger.action, agnus.debugger.addr, cpu.hasModifiedCode());
+        agnus.debugger.action = Emulator::Interface::DebuggerAction::None;
+    }
 }
 
 auto System::informAboutKeyUpdate() -> void {
@@ -672,6 +677,11 @@ auto System::debuggerAdd(Emulator::Interface::DebuggerAction action, unsigned ad
             cpu.debuggerAdd( (M68FAMILY::M68000::DebuggerAction)action, addr, addrTo );
             break;
     }
+}
+
+auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
+    cpu.updateSnapshot(snap);
+    agnus.updateSnapshot(snap);
 }
 
 template auto System::dongleJoydat<false>(uint16_t& val) -> void;

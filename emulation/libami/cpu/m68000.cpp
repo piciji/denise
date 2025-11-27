@@ -2,7 +2,7 @@
 #include "m68000.h"
 #include "../agnus/agnus.h"
 #include "../../tools/serializer.h"
-#include "../system/snapShots.h"
+#include "../system/debuggerSnapshot.h"
 
 namespace LIBAMI {
 
@@ -10,12 +10,10 @@ Cpu::Cpu(Agnus& agnus) : M68FAMILY::M68000(agnus) {
 
 }
 
-auto Cpu::getSnapshot() -> CpuSnapshot {
-    CpuSnapshot snap{};
+auto Cpu::updateSnapshot(DebuggerSnapshot& snap) -> void {
     std::copy(std::begin(regsD), std::end(regsD), std::begin(snap.regsD));
     std::copy(std::begin(regsA), std::end(regsA), std::begin(snap.regsA));
-    snap.pc = pc;
-    snap.pcOpEdge = pcEdge;
+    snap.pc = pcEdge();
     snap.irc = irc;
     snap.ird = ird;
     snap.usp = usp;
@@ -25,7 +23,6 @@ auto Cpu::getSnapshot() -> CpuSnapshot {
     snap.ipl = iplPins;
     snap.stp = control & Stop;
     snap.hlt = control & Halt;
-    return snap;
 }
 
 auto Cpu::serialize(Emulator::Serializer& s) -> void {

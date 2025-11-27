@@ -90,7 +90,6 @@ auto M68000::firstPrefetch() -> void {
 
 template<uint8_t Flags> auto M68000::prefetch() -> void {
     ird = irc;
-    pcEdge = pc;
     pc += 2;
     irc = read<Word, Flags OR_FC_PRG>(pc);
 }
@@ -118,7 +117,7 @@ template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_
     uint32_t result;
 
     if ((control & WatchPoint) && watchPoints.check( adr, Size )) {
-        DEBUG_POINT_REACHED(DebuggerAction::Watchpoint, adr, modifiedCode.getAndForget());
+        DEBUG_POINT_REACHED(DebuggerAction::Watchpoint, adr);
     }
 
     if constexpr (Size == Long) {
@@ -169,7 +168,7 @@ template<uint8_t Size, uint8_t Flags> auto M68000::write(uint32_t adr, uint32_t 
         modifiedCode.checkAndSet( adr, Size );
 
         if ((control & WatchPoint) && watchPoints.check( adr, Size ))
-            DEBUG_POINT_REACHED(DebuggerAction::Watchpoint, adr, modifiedCode.getAndForget());
+            DEBUG_POINT_REACHED(DebuggerAction::Watchpoint, adr);
     }
 
     if constexpr (Size == Long) {

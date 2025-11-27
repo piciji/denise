@@ -3,6 +3,10 @@
 
 #include <cstdint>
 #include <functional>
+#include <string>
+#include <optional>
+#include "watcher.h"
+#include "../system/memory.h"
 
 namespace Emulator {
     struct SystemTimer;
@@ -23,12 +27,24 @@ struct ExpansionPort;
 struct VicIIBase;
 struct IecBus;
 struct Traps;
+struct DebuggerSnapshot;
 
 struct M6510 {
-	
+    friend struct WatchPoints;
+    friend struct ModifiedCodes;
+    friend struct HistoryHandler;
+
+    enum { Normal = 0, IRQ = 1, Halt = 2, ResetRoutine = 4,
+        WatchPoint = 8, BreakPoint = 0x10, ExceptionPoint = 0x20, SoftStop = 0x40, ModifiedCode = 0x80,
+        History = 0x100
+    };
+
+    enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History };
+
 	M6510(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& cia1, CIA::M6526& cia2, IecBus& iecBus, Traps& traps);
 
     System* system;
+    Memory& memory;
     Emulator::SystemTimer& sysTimer;
     CIA::M6526& cia1;
     CIA::M6526& cia2;
@@ -43,15 +59,12 @@ struct M6510 {
 	bool irqPending;
 	bool nmiPending;
 	bool nmiDetect;
-	
-	bool interruptSampled;
-	bool callResetRoutine;
-	
-	bool killed;
+
     bool oddCycle;
     uint8_t reg2mhz;
 	
 	unsigned busState;
+    int control;
 	
 	uint16_t pc;
 	
@@ -89,9 +102,16 @@ struct M6510 {
 	Callback unChargeBit6;
 	Callback unChargeBit7;
 
+    WatchPoints watchPoints = WatchPoints(*this, WatchPoint);
+    WatchPoints breakPoints = WatchPoints(*this, BreakPoint);
+    WatchPoints exceptionPoints = WatchPoints(*this, ExceptionPoint);
+    ModifiedCodes modifiedCode = ModifiedCodes(*this, ModifiedCode);
+    HistoryHandler historyHandler = HistoryHandler(*this, History);
+    std::optional<uint16_t> softStep = std::nullopt;
+
     auto registerCallbacks() -> void;
 
-	template<bool mhz2> auto process() -> void;
+	template<bool mhz2, bool postBreakCheck = false> auto process() -> void;
 	
 	template<bool sampleInterrupt, bool rememberRdy, bool mhz2> auto busRead( uint16_t addr ) -> uint8_t;
 	
@@ -136,6 +156,36 @@ struct M6510 {
 	auto serialize(Emulator::Serializer& s) -> void;
     
 	auto setClock(bool state, bool aggressive = false) -> void;
+
+    auto inDebugMode() -> bool {
+        return control & (WatchPoint | BreakPoint | ExceptionPoint | SoftStop | History);
+    }
+
+    auto getFlags() -> uint8_t;
+
+    auto flagDebugAction(int action, bool state) -> void;
+
+    auto disassemble(uint16_t addr, unsigned& bytes, const uint8_t* memSnap = nullptr) -> std::string;
+
+    auto disassembleData(uint16_t addr, unsigned bytes) -> std::string;
+
+    auto controlBreaks() -> void;
+
+    auto checkSoftStop(uint16_t addr) -> bool;
+
+    auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
+
+    auto debuggerStepOver() -> void;
+    auto debuggerStepInto() -> void;
+    auto debuggerAdd(DebuggerAction action, uint16_t addr, uint16_t addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerAction action, uint16_t addr) -> void;
+    auto debuggerEnable(DebuggerAction action, uint16_t addr) -> void;
+    auto debuggerDisable(DebuggerAction action, uint16_t addr) -> void;
+    auto debuggerDisableAll() -> void;
+
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+
+    auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }
 };
 
 }

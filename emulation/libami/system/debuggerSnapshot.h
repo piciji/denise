@@ -5,11 +5,10 @@
 
 namespace LIBAMI {
 
-struct CpuSnapshot {
+struct DebuggerSnapshot {
     uint32_t regsD[8];
     uint32_t regsA[8];
     uint32_t pc;
-    uint32_t pcOpEdge;
 
     uint32_t usp;
     uint32_t ssp;
@@ -24,9 +23,7 @@ struct CpuSnapshot {
     uint8_t ipl;
     bool hlt;
     bool stp;
-};
 
-struct AgnusSnapshot {
     uint8_t hPos;
     uint16_t vPos;
 };

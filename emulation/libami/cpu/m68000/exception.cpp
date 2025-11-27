@@ -205,7 +205,7 @@ auto M68000::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
     prefetch<SampleIPL>();
 
     if ((control & ExceptionPoint) && exceptionPoints.check( adr >> 2 )) {
-        DEBUG_POINT_REACHED(DebuggerAction::ExceptionPoint, adr >> 2, modifiedCode.getAndForget());
+        DEBUG_POINT_REACHED(DebuggerAction::ExceptionPoint, adr >> 2);
     }
 }
 

@@ -3,6 +3,7 @@
 #include "../system/system.h"
 #include "cycleTable.cpp"
 #include "verticalLineAnomaly.cpp"
+#include "../system/debuggerSnapshot.h"
 
 namespace LIBC64 { 
 
@@ -321,6 +322,18 @@ auto VicIIBase::power() -> void {
     reg2mhz = 0;
         
     initVerticalLineAnomaly();
+}
+
+auto VicIIBase::oneTimeDebuggerAction() -> void {
+    system->leaveEmulation = true;
+    system->debugger.action = debuggerAction;
+    system->debugger.addr = 0;
+    debuggerAction = Emulator::Interface::DebuggerAction::None;
+}
+
+auto VicIIBase::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    snap.vPos = vCounter;
+    snap.hPos = cycle;
 }
 
 auto VicIIBase::setVerticalLineAnomaly(uint8_t mode) -> void {
