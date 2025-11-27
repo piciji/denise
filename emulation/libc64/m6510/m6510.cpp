@@ -24,6 +24,7 @@ traps(traps) {
 	
 	unChargeBit6 = [this]() { bit6charge = 0; };
 	unChargeBit7 = [this]() { bit7charge = 0; };
+    stepOuts.reserve(128);
 }
 
 auto M6510::registerCallbacks() -> void {
@@ -33,6 +34,7 @@ auto M6510::registerCallbacks() -> void {
 auto M6510::power() -> void {
 
 	regS = 0x00;
+    stepOuts.clear();
 	//some of these values could be random on first power on
 	regX = 0x00;
 	regY = 0x00;
@@ -100,6 +102,7 @@ template<bool software, bool mhz2> inline auto M6510::interrupt() -> void {
 	
 	PUSH((pc >> 8) & 0xff);
 	PUSH( pc & 0xff);
+    stepOuts.push_back( pc );
 
 	uint16_t vector = 0xfffe;
 
@@ -382,7 +385,9 @@ auto M6510::setClock(bool state, bool aggressive) -> void {
 		reg2mhz |= 0x80;
 }
 
-#define A_IMPLIED           case 0x00: case 0x02: case 0x08: case 0x0a: case 0x12: case 0x18: case 0x1a: case 0x22: case 0x28: \
+#define A_BREAK             case 0x00
+
+#define A_IMPLIED                      case 0x02: case 0x08: case 0x0a: case 0x12: case 0x18: case 0x1a: case 0x22: case 0x28: \
                             case 0x2a: case 0x32: case 0x38: case 0x3a: case 0x40: case 0x42: case 0x48: case 0x4a: case 0x52: \
                             case 0x58: case 0x5a: case 0x60: case 0x62: case 0x68: case 0x6a: case 0x72: case 0x78: case 0x7a: \
                             case 0x88: case 0x8a: case 0x92: case 0x98: case 0x9a: case 0xa8: case 0xaa: case 0xb2: case 0xb8: \
@@ -474,6 +479,9 @@ auto M6510::disassemble(uint16_t addr, unsigned& bytes, const uint8_t* memSnap) 
             bytes = 3;
             d.indirect( PeekWord );
             break;
+        A_BREAK:
+            bytes = 2;
+            break;
         default:
             bytes = 1;
             break;
@@ -535,6 +543,14 @@ auto M6510::debuggerStepOver() -> void {
 auto M6510::debuggerStepInto() -> void {
     softStep = std::nullopt;
     control |= SoftStop;
+}
+
+auto M6510::debuggerStepOut() -> bool {
+    if (stepOuts.empty())
+        return false;
+    softStep = stepOuts.back();
+    control |= SoftStop;
+    return true;
 }
 
 auto M6510::debuggerAdd(DebuggerAction action, uint16_t addr, uint16_t addrTo) -> void {

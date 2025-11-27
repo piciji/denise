@@ -343,6 +343,10 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	READ_LAST( pc )	\
 	TARGET = SRC;
 
+#define TRANSFER_REG_S( SRC, TARGET )	\
+    TRANSFER( SRC, TARGET )	\
+    stepOuts.clear();
+
 #define TRANSFER_WITH_FLAG( SRC, TARGET )	\
 	TRANSFER( SRC, TARGET )	\
 	SET_FLAG_ZN( SRC )
@@ -411,6 +415,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	PULL						\
 	zeroPage = dataBus;				\
 	PULL_LAST					\
+    if(!stepOuts.empty()) stepOuts.pop_back(); \
 	pc = (dataBus << 8) | zeroPage;
 
 #define RTS	\
@@ -419,6 +424,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	PULL						\
 	zeroPage = dataBus;			\
 	PULL						\
+    if(!stepOuts.empty()) stepOuts.pop_back(); \
 	pc = (dataBus << 8) | zeroPage;			\
 	READ_PC_INC_LAST
 
@@ -460,6 +466,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	READ( pc )					\
 	PUSH( pc >> 8 )				\
 	PUSH( pc & 0xff )			\
+    stepOuts.push_back( pc + 1 ); \
 	READ_LAST( pc )				\
 	absolute |= dataBus << 8;	\
 	pc = absolute;
@@ -593,6 +600,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 #define TAS_ABS_INDEXED	\
 	{ ABS_INDEXED(regY, true)	\
 	regS = regA & regX;	\
+    stepOuts.clear(); \
 	H1_AND_WRITE( regS ) }
 
 #define SH_ABS_INDEXED( REG_INDEX, REG ) \
@@ -622,6 +630,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	{ GET_ABS_INDEXED_REGY_LAST	\
 	regA = dataBus & regS; \
 	regX = regS = regA;	\
+    stepOuts.clear(); \
 	SET_FLAG_ZN( regA ) }
 
 #define DCP( GET, SET )	\

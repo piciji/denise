@@ -645,6 +645,7 @@ struct Interface {
     virtual auto debuggerDisableAll() -> void {}
     virtual auto debuggerStepOver() -> void {}
     virtual auto debuggerStepInto() -> void {}
+    virtual auto debuggerStepOut() -> bool { return false; }
 
     // disassembler
     virtual auto disassemble(unsigned addr, unsigned& bytes) -> std::string { return ""; }

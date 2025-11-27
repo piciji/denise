@@ -82,6 +82,7 @@ struct Hotkey {
         Warp, WarpOff, Quit, Audio, SwapJoypadsPort2, ApplyWindowSize, ToggleBorderPrev,
         Rotation, CropWindow, PowerWithUnplugCart, ToggleScaling, ToggleFPS, ToggleAudioStats, ToggleSuperCpuTurbo,
         TakeScreenShot, Toggle2MHzCpuTurbo, PowerWithEjectDisks, Rewind,
+        DebuggerToggle, DebuggerStepInto, DebuggerStepOver, DebuggerStepOut, DebuggerLine, DebuggerFrame,
         Autofire = 1000,
     } id;
     std::string name;

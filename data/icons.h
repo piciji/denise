@@ -178,6 +178,8 @@ extern uint8_t stepInto[286];
 
 extern uint8_t stepOver[302];
 
+extern uint8_t stepOut[294];
+
 extern uint8_t trash[172];
 
 extern uint8_t line[240];

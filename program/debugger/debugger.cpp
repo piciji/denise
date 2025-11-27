@@ -136,7 +136,7 @@ Debugger::CPU::InstructionLayout::InstructionLayout() {
 }
 
 Debugger::CPU::TraceLayout::TraceLayout() {
-    list.setHeaderText( { "PC", "Flags","Instruction" } );
+    list.setHeaderText( { "address", "status","Instruction" } );
     list.setFont( GUIKIT::Font::system( 11 ,"", true ) );
     list.setHeaderVisible( true );
 
@@ -156,6 +156,7 @@ Debugger::CPU::CPU(Debugger* debugger)
 Debugger::Control::Control() {
     stepOver.setEnabled( false );
     stepInto.setEnabled( false );
+    stepOut.setEnabled( false );
     line.setEnabled( false );
     frame.setEnabled( false );
 
@@ -166,11 +167,13 @@ Debugger::Control::Control() {
     append( resume, {0u, 0u}, 10 );
     append( stepOver, {0u, 0u}, 10 );
     append( stepInto, {0u, 0u}, 10 );
+    append( stepOut, {0u, 0u}, 10 );
     append( line, {0u, 0u}, 10 );
     append( frame, {0u, 0u}, 30 );
     append( searchEdit, {120u, 0u}, 10 );
     append( search, {0u, 0u}, 20 );
     append( position, {~0u, 0u} );
+    append( showTips, {0u, 0u} );
 
     setAlignment( 0.5 );
 }
@@ -199,6 +202,7 @@ auto Debugger::build() -> void {
     resumeImg.loadPng((uint8_t*)Icons::resume, sizeof(Icons::resume));
     stepIntoImg.loadPng((uint8_t*)Icons::stepInto, sizeof(Icons::stepInto));
     stepOverImg.loadPng((uint8_t*)Icons::stepOver, sizeof(Icons::stepOver));
+    stepOutImg.loadPng((uint8_t*)Icons::stepOut, sizeof(Icons::stepOut));
 
     lineImg.loadPng((uint8_t*)Icons::line, sizeof(Icons::line));
     frameImg.loadPng((uint8_t*)Icons::frame, sizeof(Icons::frame));
@@ -220,6 +224,7 @@ auto Debugger::build() -> void {
     control.resume.setImage( &pauseImg );
     control.stepOver.setImage( &stepOverImg );
     control.stepInto.setImage( &stepIntoImg );
+    control.stepOut.setImage( &stepOutImg );
     control.search.setImage( &searchImg );
     control.line.setImage( &lineImg );
     control.frame.setImage( &frameImg );
@@ -359,6 +364,17 @@ auto Debugger::build() -> void {
         emuThread->unlock();
     };
 
+    control.stepOut.onActivate = [this]() {
+        if (emulator != activeEmulator)
+            return;
+        emuThread->lock();
+        if (emulator->debuggerStepOut()) {
+            program->isPause &= ~2;
+            timerVisibility.setEnabled();
+        }
+        emuThread->unlock();
+    };
+
     control.stepOver.onActivate = [this]() {
         if (emulator != activeEmulator)
             return;
@@ -457,6 +473,13 @@ auto Debugger::build() -> void {
             timerVisibility.setEnabled(false);
         }
     };
+
+    control.showTips.onToggle = [this](bool checked) {
+        settings->set<bool>("debugger_tips", checked);
+        translate();
+    };
+
+    control.showTips.setChecked( settings->get<bool>("debugger_tips", true) );
     
     setTitle( emulator->ident + " Debugger" );
 
@@ -466,9 +489,9 @@ auto Debugger::build() -> void {
 auto Debugger::translate() -> void {
     cpu->watcher.adder.address.setPlaceholder( trans->getA( "address/vector" ) );
     control.searchEdit.setPlaceholder( trans->getA( "address" ) );
-    cpu->watcher.breakPoint.setText( trans->getA( "Instruktion" ) );
-    cpu->watcher.watchPoint.setText( trans->getA( "Speicherzugriff" ) );
-    cpu->watcher.exceptionPoint.setText( trans->getA( "Ausnahme" ) );
+    cpu->watcher.breakPoint.setText( trans->getA( "instruction" ) );
+    cpu->watcher.watchPoint.setText( trans->getA( "memory access" ) );
+    cpu->watcher.exceptionPoint.setText( trans->getA( "exception" ) );
 
     int i = 0;
     if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
@@ -509,7 +532,19 @@ auto Debugger::translate() -> void {
         }
     }
 
-    cpu->state.trace.toggle.setText( "Trace" );
+    bool showTips = control.showTips.checked();
+    control.showTips.setText( trans->getA("popup hints") );
+    control.stepInto.setTooltip( showTips ? trans->getA("step into") : "" );
+    control.stepOver.setTooltip( showTips ? trans->getA("step over") : "" );
+    control.stepOut.setTooltip( showTips ? trans->getA("step out") : "" );
+    control.line.setTooltip( showTips ? trans->getA("step end of line") : "" );
+    control.frame.setTooltip( showTips ? trans->getA("step end of frame") : "" );
+
+    cpu->instructionLayout.list.setHeaderText( {"", trans->getA( "address"), trans->getA( "data"), trans->getA( "instruction") } );
+    cpu->traceLayout.list.setHeaderText( {trans->getA( "address"), trans->getA( "status"), trans->getA( "instruction") } );
+    cpu->state.trace.toggle.setText( trans->getA( "trace") );
+    cpu->state.trace.toggle.setTooltip( showTips ? trans->getA( "toggle trace") : "" );
+    cpu->state.trace.clear.setTooltip( showTips? trans->getA( "clear trace") : "" );
 }
 
 auto Debugger::update() -> void {
@@ -836,6 +871,7 @@ auto Debugger::updateToolboxVisibility() -> void {
             control.resume.setImage( &resumeImg );
             control.stepOver.setEnabled( );
             control.stepInto.setEnabled( );
+            control.stepOut.setEnabled( );
             control.line.setEnabled( );
             control.frame.setEnabled( );
         }
@@ -844,6 +880,7 @@ auto Debugger::updateToolboxVisibility() -> void {
             control.resume.setImage( &pauseImg );
             control.stepOver.setEnabled( false );
             control.stepInto.setEnabled( false );
+            control.stepOut.setEnabled( false );
             control.line.setEnabled( false );
             control.frame.setEnabled( false );
         }

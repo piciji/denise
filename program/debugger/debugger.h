@@ -41,6 +41,7 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image resumeImg;
     GUIKIT::Image stepOverImg;
     GUIKIT::Image stepIntoImg;
+    GUIKIT::Image stepOutImg;
     GUIKIT::Image lineImg;
     GUIKIT::Image frameImg;
     GUIKIT::Image memoryImg;
@@ -111,11 +112,13 @@ struct Debugger : GUIKIT::Window {
         GUIKIT::Button resume;
         GUIKIT::Button stepOver;
         GUIKIT::Button stepInto;
+        GUIKIT::Button stepOut;
         GUIKIT::Button line;
         GUIKIT::Button frame;
         GUIKIT::LineEdit searchEdit;
         GUIKIT::ImageView search;
         GUIKIT::Label position;
+        GUIKIT::CheckBox showTips;
         Control();
     } control;
 

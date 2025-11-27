@@ -2106,6 +2106,10 @@ auto Interface::debuggerStepInto() -> void {
     system->cpu.debuggerStepInto();
 }
 
+auto Interface::debuggerStepOut() -> bool {
+    return system->cpu.debuggerStepOut();
+}
+
 auto Interface::debuggerDisableAll() -> void {
     system->cpu.debuggerDisableAll();
 }

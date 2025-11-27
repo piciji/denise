@@ -10,6 +10,7 @@
 #include "../emuconfig/layouts/input.h"
 #include "../emuconfig/layouts/misc.h"
 #include "../emuconfig/layouts/system.h"
+#include "../debugger/debugger.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -67,7 +68,14 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::DiskSwap13, "swap media13"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap14, "swap media14"} );
 
-    // not assignable, not saveable
+    hotkeys.push_back( {Hotkey::Id::DebuggerToggle, "debugger toggle"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerStepInto, "debugger step into"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerStepOver, "debugger step over"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerStepOut, "debugger step out"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerLine, "debugger step line"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerFrame, "debugger step frame"} );
+
+    // not assignable, not savable
     hiddenHotkeys.push_back( {Hotkey::Id::Warp, ""} );
     hiddenHotkeys.push_back( {Hotkey::Id::WarpOff, ""} );
 }
@@ -926,6 +934,37 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             audioManager->setRewind(true);
             activeEmulator->setRewind(true);
 
+        } break;
+
+        case Hotkey::DebuggerToggle: {
+            auto debugger = program->getActiveDebugger();
+            if (debugger)
+                debugger->control.resume.onActivate();
+        } break;
+        case Hotkey::DebuggerStepInto: {
+            auto debugger = program->getActiveDebugger();
+            if (debugger)
+                debugger->control.stepInto.onActivate();
+        } break;
+        case Hotkey::DebuggerStepOver: {
+            auto debugger = program->getActiveDebugger();
+            if (debugger)
+                debugger->control.stepOver.onActivate();
+        } break;
+        case Hotkey::DebuggerStepOut: {
+            auto debugger = program->getActiveDebugger();
+            if (debugger)
+                debugger->control.stepOut.onActivate();
+        } break;
+        case Hotkey::DebuggerLine: {
+            auto debugger = program->getActiveDebugger();
+            if (debugger)
+                debugger->control.line.onActivate();
+        } break;
+        case Hotkey::DebuggerFrame: {
+            auto debugger = program->getActiveDebugger();
+            if (debugger)
+                debugger->control.frame.onActivate();
         } break;
     }
     emuThread->unlock();

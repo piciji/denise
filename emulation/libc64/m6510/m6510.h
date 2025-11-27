@@ -105,6 +105,7 @@ struct M6510 {
     ModifiedCodes modifiedCode = ModifiedCodes(*this, ModifiedCode);
     HistoryHandler historyHandler = HistoryHandler(*this, History);
     std::optional<uint16_t> softStep = std::nullopt;
+    std::vector<uint16_t> stepOuts;
 
     auto registerCallbacks() -> void;
 
@@ -166,6 +167,7 @@ struct M6510 {
 
     auto debuggerStepOver() -> void;
     auto debuggerStepInto() -> void;
+    auto debuggerStepOut() -> bool;
     auto debuggerAdd(DebuggerAction action, uint16_t addr, uint16_t addrTo = 0) -> void;
     auto debuggerRemove(DebuggerAction action, uint16_t addr) -> void;
     auto debuggerEnable(DebuggerAction action, uint16_t addr) -> void;

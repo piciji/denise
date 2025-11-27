@@ -511,6 +511,10 @@ auto Program::hasFocus() -> bool {
         if (emuView->focused())
             return true;
 
+    auto debugger = program->getActiveDebugger();
+    if (debugger && debugger->focused())
+        return true;
+
     return false;
 }
 
