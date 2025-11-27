@@ -602,10 +602,6 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdSid8Right, "SID 8 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid8Adr, "SID 8 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
 
-    // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
-    models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xef, { 0, 0xff }});
-	// LAX magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
-    models.push_back({ModelIdCpuLaxMagic, "LAX Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xee, { 0, 0xff }});
     // c64c use custom ic instead of discrete glue logic
     models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Purpose::Misc, 0});
 	// disable grey dot bug for 85xx VIC-II
@@ -1546,14 +1542,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->cia1.setNewVersion( value & 1 );
             system->cia2.setNewVersion( value & 1 );
             break;
-        case ModelIdCpuAneMagic:
-            //this is annoying ... look in 6502 cpu code for more information
-            system->cpu.setMagicForAne( value & 0xff );
-            break;
-		case ModelIdCpuLaxMagic:
-            //this is annoying ... look in 6502 cpu code for more information
-            system->cpu.setMagicForLax( value & 0xff );
-            break;
         case ModelIdGlueLogic:
             system->glueLogic.setType( (GlueLogic::Type)(value & 1) );
             break;
@@ -1730,10 +1718,6 @@ auto Interface::getModelValue(unsigned modelId) -> int {
             return system->sidManager.getResampleQuality();
         case ModelIdCiaRev:
             return system->cia1.isNewVersion();
-        case ModelIdCpuAneMagic:
-            return system->cpu.getMagicForAne();
-		case ModelIdCpuLaxMagic:
-			return system->cpu.getMagicForLax();
         case ModelIdGlueLogic:
             return (int)system->glueLogic.type;
         case ModelIdLeftLineAnomaly:

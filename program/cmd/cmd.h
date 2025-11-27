@@ -51,11 +51,7 @@ struct Cmd {
     auto setReuSize(std::string arg) -> void;
 	
 	auto setGeoRamSize(std::string arg) -> void;
-    
-    auto setAneMagic(std::string arg) -> void;
-	
-	auto setLaxMagic(std::string arg) -> void;
-	
+
 	auto setAutoStartPrg(std::string arg) -> void;
 
     auto setCustomConfig(std::string& ident, std::string path) -> void;

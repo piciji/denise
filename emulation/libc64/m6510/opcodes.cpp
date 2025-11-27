@@ -605,7 +605,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 
 #define ANE	\
 	GET_IMM_AND_REMEMBER_RDY	\
-	regA = ( regA | (RDY_CYCLE ? 0xee : magicAne) ) & regX & dataBus;	\
+	regA = ( regA | (RDY_CYCLE ? 0xee : 0xef) ) & regX & dataBus;	\
 	SET_FLAG_ZN( regA )
 
 #define LAX( GET )	\
@@ -615,7 +615,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 
 #define LXA	\
 	{ GET_IMM_AND_REMEMBER_RDY	\
-	regA = regX = (regA | (RDY_CYCLE ? 0xee : magicLax) ) & dataBus;	\
+	regA = regX = (regA | (RDY_CYCLE ? 0xee : 0xee) ) & dataBus;	\
 	SET_FLAG_ZN( regA ) }
 
 #define LAS	\

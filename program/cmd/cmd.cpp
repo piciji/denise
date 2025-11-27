@@ -132,8 +132,6 @@ auto Cmd::printHelp() -> void {
 	options.push_back({"-debugcart", "Generate exit codes for VICE Testbench", ""});
 	options.push_back({"-limitcycles", "Specify number of cycles to run before quitting with an error (checks at complete frames)", "<cycles>"});
 	options.push_back({"-exitscreenshot", "Save screen to PNG file, when exiting App", "<filePath>"});
-	options.push_back({"-ane-magic", "Force CPU to use this value for ANE opcode", "<value>"});
-	options.push_back({"-lax-magic", "Force CPU to use this value for LAX opcode", "<value>"});
 	options.push_back({"-no-driver", "Run without video, audio, input drivers", ""});
 	options.push_back({"-no-gui", "Open without graphical user interface and force -no-driver", ""});
 	options.push_back({"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"});
@@ -198,18 +196,16 @@ auto Cmd::parse() -> void {
             continue;
         }
         
-        if (aneMagicNext) {
+        if (aneMagicNext) { // ignore, not used anymore
             aneMagicNext = false;
-            setAneMagic( arg );
             continue;
         }
 
-		if (laxMagicNext) {
+		if (laxMagicNext) { // ignore, not used anymore
 			laxMagicNext = false;
-			setLaxMagic(arg);
 			continue;
 		}
-        
+
         if (screenshotPathNext) {
             screenshotPathNext = false;     	
             settingsC64->set<unsigned>( "crop_type", (unsigned)EmuInt::CropType::Monitor );
@@ -586,21 +582,7 @@ auto Cmd::getCycles(std::string arg) -> unsigned {
 	return 0;
 }
 
-auto Cmd::setAneMagic(std::string arg) -> void {
-    
-    auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
-    
-    updateModel( program->getEmulator("C64"), LIBC64::Interface::ModelIdCpuAneMagic, magic );
-}
-
-auto Cmd::setLaxMagic(std::string arg) -> void {
-    
-    auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
-    
-    updateModel( program->getEmulator("C64"), LIBC64::Interface::ModelIdCpuLaxMagic, magic );
-}
-
-auto Cmd::setAutoStartPrg(std::string arg) -> void {    
+auto Cmd::setAutoStartPrg(std::string arg) -> void {
 		
     if (!GUIKIT::String::isNumber( arg ))
         return;

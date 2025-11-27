@@ -92,10 +92,7 @@ struct M6510 {
 	
 	uint8_t pulldown;
 	
-	uint8_t magicAne = 0xef;
-	uint8_t magicLax = 0xee;
-	
-	uint8_t bit6charge;	
+	uint8_t bit6charge;
 	uint8_t bit7charge;
 	
 	using Callback = std::function<void ()>;
@@ -144,14 +141,6 @@ struct M6510 {
 	auto updateLines() -> void;
 	
 	auto chargeUndefinedBits( uint8_t newDdr ) -> void;
-	
-	auto setMagicForAne(uint8_t magicAne) -> void;
-
-    auto getMagicForAne() -> uint8_t { return magicAne; }
-	
-	auto setMagicForLax(uint8_t magicLax) -> void;
-
-    auto getMagicForLax() -> uint8_t { return magicLax; }
 	
 	auto serialize(Emulator::Serializer& s) -> void;
     

@@ -348,14 +348,6 @@ template<bool mhz2> auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void 
 	}        
 }
 
-auto M6510::setMagicForAne(uint8_t magicAne) -> void {
-	this->magicAne = magicAne;
-}
-
-auto M6510::setMagicForLax(uint8_t magicLax) -> void {
-	this->magicLax = magicLax;
-}
-
 auto M6510::serialize(Emulator::Serializer& s) -> void {
 	
 	s.integer( rdyLine );
@@ -379,8 +371,6 @@ auto M6510::serialize(Emulator::Serializer& s) -> void {
 	s.integer( pulldown );
 	s.integer( bit6charge );
 	s.integer( bit7charge );
-	s.integer( magicAne );
-	s.integer( magicLax );
     s.integer( oddCycle );
     s.integer( reg2mhz );
 }
