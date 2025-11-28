@@ -58,7 +58,7 @@ struct Interface : Emulator::Interface {
         CartridgeIdEasyFlash = 32, CartridgeIdRetroReplay = 36, CartridgeIdNordicReplay = 261,
         CartridgeIdGmod2 = 60, CartridgeIdMagicDesk = 19, CartridgeIdFinalCartridge = 13,
         CartridgeIdFinalCartridge3 = 3, CartridgeIdFinalCartridgePlus = 29, CartridgeIdSimonsBasic = 4,
-        CartridgeIdWarpSpeed = 16, CartridgeIdAtomicPower = 9, CartridgeIdMach5 = 51, CartridgeIdRoss = 23,
+        CartridgeIdWarpSpeed = 16, CartridgeIdAtomicPower = 9, CartridgeIdKcsPower = 2, CartridgeIdMach5 = 51, CartridgeIdRoss = 23,
         CartridgeIdWestermann = 11, CartridgeIdPagefox = 53,
         CartridgeIdSwiftlink = 270, CartridgeIdTurbo232 = 271, CartridgeIdDinamic = 17, CartridgeIdDiashowMaker = 52,
         CartridgeIdSuperSnapshotV5 = 20, CartridgeIdComal80 = 21, CartridgeIdSilverrock = 55, CartridgeIdRGCD = 57,

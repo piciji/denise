@@ -11,6 +11,7 @@
 #include "atomicPower.h"
 #include "diashowMaker.h"
 #include "superSnapshotV5.h"
+#include "kcsPower.h"
 
 namespace LIBC64 {
 
@@ -69,6 +70,10 @@ auto Freezer::create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Ca
 
         case Interface::CartridgeIdAtomicPower:
             cart = new AtomicPower(system);
+            break;
+
+        case Interface::CartridgeIdKcsPower:
+            cart = new KCSPower(system);
             break;
 
         case Interface::CartridgeIdDiashowMaker:
