@@ -5,7 +5,7 @@
 #include <functional>
 #include <string>
 #include <optional>
-#include "watcher.h"
+#include "../../tools/watcher.h"
 #include "../system/memory.h"
 
 namespace Emulator {
@@ -99,11 +99,11 @@ struct M6510 {
 	Callback unChargeBit6;
 	Callback unChargeBit7;
 
-    WatchPoints watchPoints = WatchPoints(*this, WatchPoint);
-    WatchPoints breakPoints = WatchPoints(*this, BreakPoint);
-    WatchPoints exceptionPoints = WatchPoints(*this, ExceptionPoint);
-    ModifiedCodes modifiedCode = ModifiedCodes(*this, ModifiedCode);
-    HistoryHandler historyHandler = HistoryHandler(*this, History);
+    Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints breakPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints exceptionPoints = Emulator::WatchPoints();
+    Emulator::ModifiedCodes modifiedCode = Emulator::ModifiedCodes();
+    Emulator::HistoryHandler historyHandler = Emulator::HistoryHandler();
     std::optional<uint16_t> softStep = std::nullopt;
     std::vector<uint16_t> stepOuts;
 
@@ -153,6 +153,8 @@ struct M6510 {
 
     auto getFlags() -> uint8_t;
 
+    auto loadTrace(Emulator::HistoryEntry& entry) -> void;
+
     auto flagDebugAction(int action, bool state) -> void;
 
     auto disassemble(uint16_t addr, unsigned& bytes, const uint8_t* memSnap = nullptr) -> std::string;
@@ -177,6 +179,8 @@ struct M6510 {
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 
     auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }
+
+    auto appendStepOut(uint16_t addr) -> void;
 };
 
 }

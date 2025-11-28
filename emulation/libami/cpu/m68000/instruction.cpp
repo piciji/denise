@@ -454,6 +454,7 @@ template<uint8_t Inst, uint8_t Size> auto M68000::opBsr(uint16_t opcode) -> void
         return addressException(sp, pc, SF_DATA, (Size == Word ? (pc + 2) : pc) >> 16 );
 
     write<Long, Reverse>( sp, Size == Word ? (pc + 2) : pc); // stack PC of next opcode
+    appendStepOut( Size == Word ? (pc + 2) : pc );
 
     pc += (Size == Word) ? (int16_t)irc : (int8_t)(opcode & 0xff);
     if (misaligned<Long>(pc))
@@ -527,6 +528,7 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opJsr(uint16_t o
         return addressException(sp, pcNextInstruction, SF_DATA, pcNextInstruction >> 16); // stack PC of next instruction
     
     write<Long, Reverse>(sp, pcNextInstruction);
+    appendStepOut( pcNextInstruction );
     prefetch<SampleIPL>();
 }
 
@@ -898,7 +900,7 @@ auto M68000::opRte(uint16_t opcode) -> void {
 
     if (misaligned<Long>(newPc))
         return addressException(newPc, pc, SF_READ | SF_PRG);
-
+    if(!stepOuts.empty()) stepOuts.pop_back();
     pc = newPc;
     fullPrefetch<SampleIPL>();
 }
@@ -917,6 +919,7 @@ auto M68000::opRtr(uint16_t opcode) -> void {
     if (misaligned<Long>(newPc))
         return addressException(newPc, pc, SF_READ | SF_PRG);
 
+    if(!stepOuts.empty()) stepOuts.pop_back();
     pc = newPc;
     fullPrefetch<SampleIPL>();
 }
@@ -934,6 +937,7 @@ auto M68000::opRts(uint16_t opcode) -> void {
         // for simplicity, that is not emulated and not needed either, because PC is updated from vector a few cycles later.
         return addressException(newPc, pc, SF_READ | SF_PRG);
 
+    if(!stepOuts.empty()) stepOuts.pop_back();
     pc = newPc;
     fullPrefetch<SampleIPL>();
 }

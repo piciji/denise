@@ -3,10 +3,11 @@
 
 #include <cstdint>
 #include <vector>
+#include <functional>
 
-namespace LIBC64 {
+namespace Emulator {
 
-class M6510;
+using WatcherCallback = std::function<void ( bool state )>;
 
 struct Watcher {
     uint16_t addr;
@@ -14,11 +15,10 @@ struct Watcher {
 };
 
 struct WatchPoints {
-    M6510& cpu;
     std::vector<Watcher> watchers;
-    int controlFlag;
+    WatcherCallback callback;
 
-    WatchPoints(M6510& cpu, int controlFlag);
+    WatchPoints();
 
     virtual ~WatchPoints() = default;
 
@@ -41,15 +41,12 @@ struct WatchPoints {
     auto disableAll() -> void;
 
     auto flagWhenNeeded() -> void;
-
-    auto flag(bool enable) -> void;
 };
 
 struct ModifiedCodes {
-    M6510& cpu;
-    int controlFlag;
+    WatcherCallback callback;
 
-    ModifiedCodes(M6510& cpu, int controlFlag);
+    ModifiedCodes();
 
     uint16_t addrFrom;
     uint16_t addrTo;
@@ -68,17 +65,16 @@ struct HistoryEntry {
 };
 
 struct HistoryHandler {
-    M6510& cpu;
-    int controlFlag;
+    WatcherCallback callback;
 
-    HistoryHandler(M6510& cpu, int controlFlag);
+    HistoryHandler();
 
     bool _enable = false;
     bool _overflow = false;
     uint16_t pos;
     std::vector<HistoryEntry> traces;
 
-    auto add() -> void;
+    auto getNext() -> HistoryEntry&;
     auto get(unsigned i) -> HistoryEntry*;
     auto flagWhenNeeded() -> void;
     auto enable() -> void;

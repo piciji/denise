@@ -17,6 +17,7 @@ auto M68000::trapException(uint8_t vector) -> void { // group 2 exceptions
     sp -= 6;
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
+    appendStepOut( pc );
     executeAt( vector << 2, 2 );
 }
 
@@ -56,6 +57,7 @@ auto M68000::group1Exception(uint8_t vector) -> void {
     sp -= 6;
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
+    appendStepOut( pc );
     executeAt( vector << 2, 1 );
 }
 
@@ -82,6 +84,7 @@ auto M68000::IRQException() -> void { // a group 1 exception
     sp -= 6;
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
+    appendStepOut( pc );
     executeAt( vectorAdr, 1 );
 
     // when IPL sample state changes, another IRQ service routine could be processed without a single instruction in between.
@@ -185,7 +188,7 @@ auto M68000::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_
     sp -= 14;
     write<Word>(sp + 0, code );
     write<Word>(sp + 2, (adr >> 16) & 0xffff);
-
+    appendStepOut( pc );
     executeAt(3 << 2, 0);
 }
 

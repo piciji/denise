@@ -133,6 +133,7 @@ protected:
     uint8_t iplPins;
     uint8_t iplSample;
     int control;
+    std::vector<uint32_t> stepOuts;
 
     WatchPoints watchPoints = WatchPoints(*this, WatchPoint);
     WatchPoints breakPoints = WatchPoints(*this, BreakPoint);
@@ -156,6 +157,7 @@ public:
 
     auto debuggerStepOver() -> void;
     auto debuggerStepInto() -> void;
+    auto debuggerStepOut() -> bool;
     auto debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
     auto debuggerRemove(DebuggerAction action, unsigned addr) -> void;
     auto debuggerEnable(DebuggerAction action, unsigned addr) -> void;
@@ -170,6 +172,7 @@ public:
         return control & (WatchPoint | BreakPoint | ExceptionPoint | SoftStop | History);
     }
     auto pcEdge() -> uint32_t { return (pc - 2) & 0xffffff; }
+    auto appendStepOut(uint32_t addr) -> void;
 
     // use this to calculate the needed wait states by terminating a BUS cycle with VPA line
     template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnEClock(int eCyclePos) -> uint8_t;

@@ -24,7 +24,13 @@ traps(traps) {
 	
 	unChargeBit6 = [this]() { bit6charge = 0; };
 	unChargeBit7 = [this]() { bit7charge = 0; };
-    stepOuts.reserve(128);
+    stepOuts.reserve(32);
+
+    watchPoints.callback = [this](bool state) { this->flagDebugAction( WatchPoint, state ); };
+    breakPoints.callback = [this](bool state) { this->flagDebugAction( BreakPoint, state ); };
+    exceptionPoints.callback = [this](bool state) { this->flagDebugAction( ExceptionPoint, state ); };
+    modifiedCode.callback = [this](bool state) { this->flagDebugAction( ModifiedCode, state ); };
+    historyHandler.callback = [this](bool state) { this->flagDebugAction( History, state ); };
 }
 
 auto M6510::registerCallbacks() -> void {
@@ -102,7 +108,7 @@ template<bool software, bool mhz2> inline auto M6510::interrupt() -> void {
 	
 	PUSH((pc >> 8) & 0xff);
 	PUSH( pc & 0xff);
-    stepOuts.push_back( pc );
+    appendStepOut(pc);
 
 	uint16_t vector = 0xfffe;
 
@@ -139,6 +145,12 @@ template<bool software, bool mhz2> inline auto M6510::interrupt() -> void {
     if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
         system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::ExceptionPoint, vector);
     }
+}
+
+inline auto M6510::appendStepOut(uint16_t addr) -> void {
+    if (stepOuts.size() == stepOuts.capacity())
+        stepOuts.clear();
+    stepOuts.push_back( addr );
 }
 
 auto M6510::setIrq(bool state) -> void {
@@ -514,7 +526,7 @@ auto M6510::flagDebugAction(int action, bool state) -> void {
 auto M6510::disassembleTrace(unsigned i, uint8_t& flags) -> std::string {
     DasmHandler d;
     unsigned bytes;
-    HistoryEntry* historyEntry = historyHandler.get(i);
+    Emulator::HistoryEntry* historyEntry = historyHandler.get(i);
     if (!historyEntry)
         return "";
     d.hex16( historyEntry->addr );

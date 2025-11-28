@@ -466,7 +466,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	READ( pc )					\
 	PUSH( pc >> 8 )				\
 	PUSH( pc & 0xff )			\
-    stepOuts.push_back( pc + 1 ); \
+    appendStepOut(pc + 1);      \
 	READ_LAST( pc )				\
 	absolute |= dataBus << 8;	\
 	pc = absolute;
@@ -672,7 +672,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
             }
 
             if (control & History)
-                historyHandler.add();
+                loadTrace(historyHandler.getNext());
 
             if (control & (BreakPoint | SoftStop)) {
                 return process<mhz2, true>();
@@ -692,6 +692,15 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 
     if constexpr (postBreakCheck)
         controlBreaks();
+}
+
+auto M6510::loadTrace(Emulator::HistoryEntry& entry) -> void {
+    uint16_t addr = pc;
+    entry.addr = pc;
+    entry.flags = getFlags();
+
+    for (uint8_t& m : entry.mem)
+        m = memory.peek( addr++ );
 }
 
 inline auto M6510::controlBreaks() -> void {

@@ -107,7 +107,7 @@ set(srcs
         emulation/libc64/m6510/m6510.cpp
         emulation/libc64/disk/cpu/m6502.cpp
         emulation/libc64/m6510/dasmHandler.cpp
-        emulation/libc64/m6510/watcher.cpp
+        emulation/tools/watcher.cpp
 
         emulation/cia/base.cpp
         emulation/cia/m6526.cpp

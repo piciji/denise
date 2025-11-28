@@ -1,16 +1,16 @@
 
 #include "watcher.h"
-#include "m6510.h"
-#include <cstring>
+
+#include <utility>
 
 #define INSTRUCTION_HISTORY_SIZE 512
 #define INSTRUCTION_HISTORY_MASK (INSTRUCTION_HISTORY_SIZE - 1)
 
-namespace LIBC64 {
+namespace Emulator {
 
-WatchPoints::WatchPoints(M6510& cpu, int controlFlag) : cpu(cpu) {
-    this->controlFlag = controlFlag;
+WatchPoints::WatchPoints() {
     watchers.reserve( 10 );
+    callback = [](bool state) {};
 }
 
 auto WatchPoints::add(uint16_t addr) -> void {
@@ -22,7 +22,7 @@ auto WatchPoints::add(uint16_t addr) -> void {
         w->enabled = true;
     }
 
-    flag( true );
+    callback(true);
 }
 
 auto WatchPoints::remove(uint16_t addr) -> void {
@@ -65,7 +65,7 @@ auto WatchPoints::isDisabled(uint16_t addr) -> bool {
 auto WatchPoints::enable(uint16_t addr) -> void {
     if (auto w = find( addr )) {
         w->enabled = true;
-        flag( true );
+        callback(true);
     }
 }
 
@@ -80,32 +80,28 @@ auto WatchPoints::disableAll() -> void {
     for ( auto& w : watchers )
         w.enabled = false;
 
-    flag(false);
+    callback(false);
 }
 
 auto WatchPoints::flagWhenNeeded() -> void {
     for ( auto& w : watchers ) {
         if (w.enabled) {
-            flag(true);
+            callback(true);
             return;
         }
     }
-    flag(false);
+    callback(false);
 }
 
-auto WatchPoints::flag(bool enable) -> void {
-    cpu.flagDebugAction( controlFlag, enable );
-}
-
-ModifiedCodes::ModifiedCodes(M6510& cpu, int controlFlag) : cpu(cpu) {
-    this->controlFlag = controlFlag;
+ModifiedCodes::ModifiedCodes() {
     alarm = false;
+    callback = [](bool state) {};
 }
 
 auto ModifiedCodes::add(uint16_t addr, uint16_t addrTo) -> void {
     this->addrFrom = addr;
     this->addrTo = addrTo;
-    cpu.flagDebugAction( controlFlag, true );
+    callback(true);
 }
 
 auto ModifiedCodes::checkAndSet(uint16_t addr) -> void {
@@ -121,27 +117,22 @@ auto ModifiedCodes::getAndForget() -> bool {
 
 auto ModifiedCodes::disable() -> void {
     alarm = false;
-    cpu.flagDebugAction( controlFlag, false );
+    callback(false);
 }
 
-HistoryHandler::HistoryHandler(M6510& cpu, int controlFlag) : cpu(cpu) {
-    this->controlFlag = controlFlag;
+HistoryHandler::HistoryHandler() {
     this->pos = 0;
     this->_enable = false;
     traces.resize( INSTRUCTION_HISTORY_SIZE );
+    callback = [](bool state) {};
 }
 
-auto HistoryHandler::add() -> void {
+auto HistoryHandler::getNext() -> HistoryEntry& {
     auto& trace = traces[pos++];
     pos &= INSTRUCTION_HISTORY_MASK;
     if (pos == 0)
         _overflow = true;
-
-    uint16_t addr = cpu.pc;
-    trace.addr = addr;
-    trace.flags = cpu.getFlags();
-    for (uint8_t& m : trace.mem)
-        m = cpu.memory.peek( addr++ );
+    return trace;
 }
 
 auto HistoryHandler::get(unsigned i) -> HistoryEntry* {
@@ -178,7 +169,7 @@ auto HistoryHandler::disable() -> void {
 }
 
 auto HistoryHandler::flagWhenNeeded() -> void {
-    cpu.flagDebugAction( controlFlag, _enable );
+    callback(_enable);
 }
 
 }

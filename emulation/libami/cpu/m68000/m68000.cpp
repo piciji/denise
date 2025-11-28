@@ -129,6 +129,7 @@ auto M68000::reset() -> void { // highest prioritized group 0 routine
     i = 7;
     iplPins = iplSample = 0;
     control = ResetRoutine; // emulation begins, when reset line is de-asserted
+    stepOuts.clear();
     watchPoints.flagWhenNeeded();
     breakPoints.flagWhenNeeded();
     exceptionPoints.flagWhenNeeded();
@@ -422,6 +423,12 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<8>(int eCyclePos) -> uin
     /*if (eCyclePos == 0)*/ return 6;
 }
 
+inline auto M68000::appendStepOut(uint32_t addr) -> void {
+    if (stepOuts.size() == stepOuts.capacity())
+        stepOuts.clear();
+    stepOuts.push_back( addr );
+}
+
 auto M68000::flagDebugAction(int action, bool state) -> void {
     if (state)
         control |= action;
@@ -449,6 +456,14 @@ auto M68000::debuggerStepOver() -> void {
 auto M68000::debuggerStepInto() -> void {
     softStep = std::nullopt;
     control |= SoftStop;
+}
+
+auto M68000::debuggerStepOut() -> bool {
+    if (stepOuts.empty())
+        return false;
+    softStep = stepOuts.back();
+    control |= SoftStop;
+    return true;
 }
 
 auto M68000::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {

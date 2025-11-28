@@ -1189,11 +1189,11 @@
     <ClInclude Include="..\emulation\libc64\m6510\dasmHandler.h">
       <Filter>emulation\libc64\m6510</Filter>
     </ClInclude>
-    <ClInclude Include="..\emulation\libc64\m6510\watcher.h">
-      <Filter>emulation\libc64\m6510</Filter>
-    </ClInclude>
     <ClInclude Include="..\emulation\libc64\system\snapShots.h">
       <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\watcher.h">
+      <Filter>emulation\tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2415,8 +2415,8 @@
     <ClCompile Include="..\emulation\libc64\m6510\dasmHandler.cpp">
       <Filter>emulation\libc64\m6510</Filter>
     </ClCompile>
-    <ClCompile Include="..\emulation\libc64\m6510\watcher.cpp">
-      <Filter>emulation\libc64\m6510</Filter>
+    <ClCompile Include="..\emulation\tools\watcher.cpp">
+      <Filter>emulation\tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

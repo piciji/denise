@@ -142,6 +142,7 @@ struct Interface : Emulator::Interface  {
     auto debuggerDisable(DebuggerAction action, unsigned addr) -> void;
     auto debuggerStepOver() -> void;
     auto debuggerStepInto() -> void;
+    auto debuggerStepOut() -> bool;
     auto debuggerDisableAll() -> void;
 
     // disassembler

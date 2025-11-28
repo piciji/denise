@@ -626,6 +626,8 @@ auto M68000::build() -> void {
             dasmTable[i] = &M68000::dasmIllegal;
         }
     }
+
+    stepOuts.reserve(64);
 }
 
 }
