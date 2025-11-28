@@ -29,18 +29,28 @@ Debugger::CPU::Watcher::Adder::Adder() {
     setAlignment( 0.5 );
 }
 
+Debugger::CPU::Watcher::ExcAdder::ExcAdder()
+: exceptionCombo(true) {
+    exceptionCombo.setFont( GUIKIT::Font::system( 11 ) );
+
+    append(exceptionCombo, {~0u, 0u}, 10);
+    append(add, {0u, 0u});
+
+    setAlignment( 0.5 );
+}
+
 Debugger::CPU::Watcher::Watcher() {
     list.setHeaderText( { "", "address", "", ""} );
-    list.setFont( GUIKIT::Font::system( 11 ,"", true ) );
+    //list.setFont( GUIKIT::Font::system( 11 ,"", true ) );
 
     append(list, {~0u, ~0u}, 5);
-    append(adder, {~0u, 0u}, 5);
-
     append(breakPoint, {0u, 0u}, 3);
     append(watchPoint, {0u, 0u}, 3);
-    append(exceptionPoint, {0u, 0u});
+    append(adder, {~0u, 0u}, 5);
 
-    GUIKIT::RadioBox::setGroup( breakPoint, watchPoint, exceptionPoint );
+    append(excAdder, {~0u, 0u});
+
+    GUIKIT::RadioBox::setGroup( breakPoint, watchPoint );
 }
 
 Debugger::CPU::State::Flags::Flags(Debugger* debugger) {
@@ -82,6 +92,11 @@ Debugger::CPU::State::Registers::Registers() {
         test.setText( "U" );
         _w = test.minimumSize().width;
     }
+
+    left.setFont( GUIKIT::Font::system( 11 ) );
+    leftVal.setFont( GUIKIT::Font::system( 11 ) );
+    right.setFont( GUIKIT::Font::system( 11 ) );
+    rightVal.setFont( GUIKIT::Font::system( 11 ) );
 
     left.setAlign( GUIKIT::Label::Align::Right );
     right.setAlign( GUIKIT::Label::Align::Right );
@@ -162,6 +177,7 @@ Debugger::Control::Control() {
 
     searchEdit.setMaxLength( 8 );
     searchEdit.setFont(GUIKIT::Font::system(12));
+    position.setFont( GUIKIT::Font::system( 11 ) );
 
     append( spacer, {0u, 0u}, 10 );
     append( resume, {0u, 0u}, 10 );
@@ -180,7 +196,6 @@ Debugger::Control::Control() {
 
 auto Debugger::build() -> void {
     cocoa.keepMenuVisibilityOnDisplay();
-    setWidgetFont( GUIKIT::Font::system( 11 ) );
 
     GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1024), GUIKIT::Font::scale(570)};
 
@@ -217,6 +232,7 @@ auto Debugger::build() -> void {
         cpu = new CPU(this);
 
     cpu->watcher.adder.add.setImage( &addImg );
+    cpu->watcher.excAdder.add.setImage( &addImg );
 
     if (isOffscreen())
         setGeometry( defaultGeometry );
@@ -234,6 +250,14 @@ auto Debugger::build() -> void {
     layout.setMargin( 10 );
     layout.append( *cpu, {~0u, ~0u}, 10 );
     layout.append( control, {~0u, 0u} );
+
+    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        for (const Emulator::Interface::DebuggerException& debuggerException : LIBAMI::DebuggerSnapshot::exceptions)
+            cpu->watcher.excAdder.exceptionCombo.append( debuggerException.ident, (int)debuggerException.vector );
+    } else {
+        for (const Emulator::Interface::DebuggerException& debuggerException : LIBC64::DebuggerSnapshot::exceptions)
+            cpu->watcher.excAdder.exceptionCombo.append( debuggerException.ident, (int)debuggerException.vector );
+    }
 
     append( layout );
 
@@ -317,6 +341,21 @@ auto Debugger::build() -> void {
         emuThread->unlock();
     };
 
+    cpu->watcher.excAdder.add.onActivate = [this]() {
+        unsigned vector = (int)cpu->watcher.excAdder.exceptionCombo.userData();
+
+        DebuggerAction action = DebuggerAction::ExceptionPoint;
+
+        if (findWatcherBy( vector, action ))
+            return;
+
+        emuThread->lock();
+        addToWatcherList( vector, action, cpu->watcher.excAdder.exceptionCombo.text() );
+        updateWatcherList();
+        emulator->debuggerAdd(action, vector);
+        emuThread->unlock();
+    };
+
     cpu->watcher.adder.add.onActivate = [this]() {
         cpu->watcher.adder.address.onReturn();
     };
@@ -334,8 +373,6 @@ auto Debugger::build() -> void {
         DebuggerAction action = DebuggerAction::Breakpoint;
         if (cpu->watcher.watchPoint.checked())
             action = DebuggerAction::Watchpoint;
-        else if (cpu->watcher.exceptionPoint.checked())
-            action = DebuggerAction::ExceptionPoint;
 
         if (findWatcherBy( address, action ))
             return;
@@ -487,11 +524,10 @@ auto Debugger::build() -> void {
 }
 
 auto Debugger::translate() -> void {
-    cpu->watcher.adder.address.setPlaceholder( trans->getA( "address/vector" ) );
+    cpu->watcher.adder.address.setPlaceholder( trans->getA( "address" ) );
     control.searchEdit.setPlaceholder( trans->getA( "address" ) );
     cpu->watcher.breakPoint.setText( trans->getA( "instruction" ) );
     cpu->watcher.watchPoint.setText( trans->getA( "memory access" ) );
-    cpu->watcher.exceptionPoint.setText( trans->getA( "exception" ) );
 
     int i = 0;
     if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
@@ -766,8 +802,8 @@ auto Debugger::updateTraceList() -> void {
     traceList.unlockRedraw();
 }
 
-auto Debugger::addToWatcherList(unsigned addr, DebuggerAction action) -> void {
-    watchers.push_back( {addr, action, true} );
+auto Debugger::addToWatcherList(unsigned addr, DebuggerAction action, const std::string& ident) -> void {
+    watchers.push_back( {addr, ident, action, true} );
 
     std::sort(watchers.begin(), watchers.end(), [](Watcher& a, Watcher& b) -> bool {
         if (a.action < b.action)
@@ -825,8 +861,13 @@ auto Debugger::updateWatcherList() -> void {
         format = "%04x";
 
     for (auto& w : watchers) {
-        snprintf(hex, 7, format.c_str(), w.addr);
-        addrList.append( {"", std::string(hex), "", ""}, true );
+        if (w.ident.empty()) {
+            snprintf(hex, 7, format.c_str(), w.addr);
+            addrList.append( {"", std::string(hex), "", ""}, true );
+        } else {
+            addrList.append( {"", w.ident, "", ""}, true );
+        }
+
         unsigned row = addrList.rowCount() - 1;
 
         addrList.setImage( row, 0, w.enabled ? breakEnableImg : breakDisableImg, true );

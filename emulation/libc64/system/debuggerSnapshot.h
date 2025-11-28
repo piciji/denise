@@ -2,6 +2,7 @@
 #pragma once
 
 #include <cstdint>
+#include "../../interface.h"
 
 namespace LIBC64 {
 
@@ -21,6 +22,11 @@ struct DebuggerSnapshot {
 
     uint8_t hPos;
     uint16_t vPos;
+
+    constexpr static Emulator::Interface::DebuggerException exceptions[] {
+        {0xfffe, "IRQ"},
+        {0xffff, "NMI"},
+    };
 };
 
 

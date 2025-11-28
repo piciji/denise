@@ -321,6 +321,11 @@ struct Interface {
         unsigned randomChance = 0;
     };
 
+    struct DebuggerException {
+        uint16_t vector;
+        const char* ident;
+    };
+
     enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame };
 
     //callbacks

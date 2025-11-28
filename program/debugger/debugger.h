@@ -64,15 +64,20 @@ struct Debugger : GUIKIT::Window {
         struct Watcher : GUIKIT::VerticalLayout {
             GUIKIT::ListView list;
 
+            GUIKIT::RadioBox breakPoint;
+            GUIKIT::RadioBox watchPoint;
+
             struct Adder : GUIKIT::HorizontalLayout {
                 GUIKIT::LineEdit address;
                 GUIKIT::Button add;
                 Adder();
             } adder;
 
-            GUIKIT::RadioBox breakPoint;
-            GUIKIT::RadioBox watchPoint;
-            GUIKIT::RadioBox exceptionPoint;
+            struct ExcAdder : GUIKIT::HorizontalLayout {
+                GUIKIT::ComboButton exceptionCombo;
+                GUIKIT::Button add;
+                ExcAdder();
+            } excAdder;
 
             Watcher();
         } watcher;
@@ -130,6 +135,7 @@ struct Debugger : GUIKIT::Window {
 
     struct Watcher {
         unsigned addr;
+        std::string ident;
         DebuggerAction action;
         bool enabled;
     };
@@ -149,7 +155,7 @@ struct Debugger : GUIKIT::Window {
     auto cacheInstructions(unsigned addr) -> void;
     auto updateInstructionList() -> void;
     auto updateTraceList() -> void;
-    auto addToWatcherList(unsigned addr, DebuggerAction action) -> void;
+    auto addToWatcherList(unsigned addr, DebuggerAction action, const std::string& ident = "") -> void;
     auto removeFromWatcherList(unsigned addr, DebuggerAction action) -> void;
     auto updateWatcherList() -> void;
 

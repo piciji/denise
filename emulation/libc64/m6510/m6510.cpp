@@ -99,7 +99,7 @@ template<bool software, bool mhz2> inline auto M6510::interrupt() -> void {
 	
 	uint8_t dataBus;
 	
-	if (!software) {
+	if constexpr (!software) {
 		READ( pc )
 		READ( pc )
 	} else {
@@ -142,8 +142,10 @@ template<bool software, bool mhz2> inline auto M6510::interrupt() -> void {
 
     control &= ~IRQ;
 
-    if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
-        system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::ExceptionPoint, vector);
+    if constexpr (!software) {
+        if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
+            system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::ExceptionPoint, vector);
+        }
     }
 }
 
