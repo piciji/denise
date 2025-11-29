@@ -22,7 +22,6 @@ Debugger::Debugger( Emulator::Interface* emulator ) {
 
 Debugger::CPU::Watcher::Adder::Adder() {
     address.setMaxLength( 8 );
-    address.setFont(GUIKIT::Font::system(12));
     append(address, {~0u, 0u}, 10);
     append(add, {0u, 0u});
 
@@ -31,8 +30,6 @@ Debugger::CPU::Watcher::Adder::Adder() {
 
 Debugger::CPU::Watcher::ExcAdder::ExcAdder()
 : exceptionCombo(true) {
-    exceptionCombo.setFont( GUIKIT::Font::system( 11 ) );
-
     append(exceptionCombo, {~0u, 0u}, 10);
     append(add, {0u, 0u});
 
@@ -41,7 +38,6 @@ Debugger::CPU::Watcher::ExcAdder::ExcAdder()
 
 Debugger::CPU::Watcher::Watcher() {
     list.setHeaderText( { "", "address", "", ""} );
-    //list.setFont( GUIKIT::Font::system( 11 ,"", true ) );
 
     append(list, {~0u, ~0u}, 5);
     append(breakPoint, {0u, 0u}, 3);
@@ -176,7 +172,7 @@ Debugger::Control::Control() {
     frame.setEnabled( false );
 
     searchEdit.setMaxLength( 8 );
-    searchEdit.setFont(GUIKIT::Font::system(12));
+    searchEdit.setFont(GUIKIT::Font::system(11));
     position.setFont( GUIKIT::Font::system( 11 ) );
 
     append( spacer, {0u, 0u}, 10 );
