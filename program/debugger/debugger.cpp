@@ -74,9 +74,11 @@ Debugger::CPU::State::Flags::Flags(Debugger* debugger) {
         GUIKIT::String::toLowerCase( _t );
         f->setText( _t );
         f->setStore( 0 );
+        f->setFont( GUIKIT::Font::system( 11 ) );
         f->setEnabled( false );
         append(*f, {20u, 0u}, 5);
     }
+    setAlignment(0.5);
 }
 
 Debugger::CPU::State::Registers::Registers() {
