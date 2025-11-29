@@ -465,6 +465,7 @@ struct pListView : pWidget {
     static auto onChange(GtkTreeView* treeView, ListView* self) -> void;
     static auto onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* self) -> gboolean;
 	static auto onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip* tooltip, ListView* self) -> gboolean;
+	static auto onRealize(GtkTreeView* treeView, ListView* self) -> void;
 	static auto dataFunc(GtkTreeViewColumn* column, GtkCellRenderer* renderer, GtkTreeModel* model, GtkTreeIter* iter, pListView* p) -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }

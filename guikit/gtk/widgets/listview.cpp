@@ -162,8 +162,13 @@ auto pListView::create() -> void {
     g_signal_connect(G_OBJECT(subWidget), "button-press-event", G_CALLBACK(pListView::onPress), (gpointer)&listView);
     g_signal_connect(G_OBJECT(subWidget), "row-activated", G_CALLBACK(pListView::onActivate), (gpointer)&listView);
     g_signal_connect(G_OBJECT(subWidget), "query-tooltip", G_CALLBACK(pListView::onTooltip), (gpointer)&listView);
+	g_signal_connect(G_OBJECT(subWidget), "realize", G_CALLBACK(pListView::onRealize), (gpointer)&listView);
 
     gtk_widget_show(subWidget);
+}
+
+auto pListView::onRealize(GtkTreeView* treeView, ListView* self) -> void {
+	self->p.autoSizeColumns();
 }
 
 auto pListView::destroy() -> void {
@@ -195,7 +200,6 @@ auto pListView::init() -> void {
         }
     }
     if(listView.selected()) setSelection(listView.selection());
-    autoSizeColumns();
 }
 
 auto pListView::setFont(std::string font) -> void {
@@ -212,8 +216,11 @@ auto pListView::updateSpacing() -> void {
 
 	if (listView.spacing() == 0) {
 		pSystem::addCssClass(subWidget, "removeRowSpacing");
-
 		pSystem::applyCss(subWidget, ".removeRowSpacing { padding: 0px; -GtkTreeView-expander-size: 0; -GtkTreeView-vertical-separator: 0; -GtkTreeView-horizontal-separator: 0; }");
+
+	} else {
+		pSystem::addCssClass(subWidget, "removeRowSpacing");
+		pSystem::applyCss(subWidget, ".removeRowSpacing { -GtkTreeView-vertical-separator: 5; -GtkTreeView-horizontal-separator: 15;  }");
 	}
 }
 

@@ -110,7 +110,7 @@ Debugger::CPU::State::Registers::Registers() {
     rightVal.setStore( 0 );
 
     append(left, {_w * 4, 0u}, 5);
-    append(leftVal, {_w * 8, 0u}, 20);
+    append(leftVal, {_w * 8, 0u}, 10);
     append(right, {_w * 4, 0u}, 5);
     append(rightVal, {_w * 8, 0u});
 
@@ -138,7 +138,7 @@ Debugger::CPU::State::State(Debugger* debugger)
             append(*reg, {0u, 0u}, (i == 4) ? 20 : 5);
     }
 
-    append(flags, {0u, 0u}, 10);
+    append(flags, {0u, 0u}, 20);
     append(trace, {0u, 0u});
 }
 
@@ -164,7 +164,7 @@ Debugger::CPU::CPU(Debugger* debugger)
     switchLayout.setLayout( 1, traceLayout, {~0u, ~0u} );
 
     append(switchLayout, {~0u, ~0u}, 20);
-    append(watcher, {180u, ~0u}, 10);
+    append(watcher, {200u, ~0u}, 10);
     append(state, {0u, 0u});
 }
 
