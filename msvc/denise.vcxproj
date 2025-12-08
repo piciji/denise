@@ -137,6 +137,7 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridge3.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\freezer\finalCartridgePlus.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\freezer\freezer.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\kcsPower.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\businessBasic.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\cart16k.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\easycalc.h" />
@@ -152,6 +153,7 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\ross.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\silverrock.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\simonsBasic.h" />
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\structuredBasic.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\supergames.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\system3.h" />
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\warpSpeed.h" />

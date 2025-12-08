@@ -1195,6 +1195,12 @@
     <ClInclude Include="..\emulation\tools\watcher.h">
       <Filter>emulation\tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\kcsPower.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\structuredBasic.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
