@@ -271,6 +271,7 @@ auto Interface::prepareExpansions() -> void {
         expansion.pcbs.push_back( {CartridgeIdFinalCartridgePlus, "Final Cartridge Plus"} );
         expansion.pcbs.push_back( {CartridgeIdFinalCartridge3, "Final Cartridge 3"} );
         expansion.pcbs.push_back( {CartridgeIdAtomicPower, "Atomic Power"} );
+        expansion.pcbs.push_back( {CartridgeIdKcsPower, "KCS Power Cartridge"} );
         expansion.pcbs.push_back( {CartridgeIdDiashowMaker, "Diashow Maker"} );
         expansion.pcbs.push_back( {CartridgeIdSuperSnapshotV5, "Super Snapshot V5"} );
         

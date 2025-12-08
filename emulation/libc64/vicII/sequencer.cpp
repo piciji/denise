@@ -382,8 +382,13 @@ inline auto VicIICycle::updateMc8565() -> void {
         
         bool toggled = spr.multiColor ^ spr.useMultiColor;        
 		// mc flop is toggled, when register is changed and sprite is not x expanded
-		// unchanged oterwise
-        spr.mcFlop ^= toggled & ~spr.expandXFlop;
+		// unchanged otherwise
+    	if (toggled & ~spr.expandXFlop) {
+    		if (spr.multiColor)
+    			spr.mcFlop ^= 1;
+    		else
+    			spr.mcFlop = true;
+    	}
         
         spr.useMultiColor = spr.multiColor;
     }
@@ -448,8 +453,10 @@ template<uint8_t sprPos> inline auto VicIICycle::spriteSequencer( Sprite* spr, S
                     spr->shiftOut = (spr->dataShiftReg >> 22) & 3;
 
                 spr->mcFlop ^= 1; //repeat last shift out for second pixel
-            } else
+            } else if (spr->mcFlop || rev65)
                 spr->shiftOut = ((spr->dataShiftReg >> 23) & 1) << 1; // 2: sprite color, 0: transparent
+        	else
+        		spr->mcFlop = true;
         }
 
         if (spr->expandXFlop)
