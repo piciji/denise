@@ -143,6 +143,10 @@ auto FinalChessCard::readIo2( uint16_t addr ) -> uint8_t {
     return latch;
 }
 
+auto FinalChessCard::peekIo2( uint16_t addr ) -> uint8_t {
+    return latch;
+}
+
 auto FinalChessCard::assumeChips( ) -> void {
     Cart::assumeChips( {16384} );
 }

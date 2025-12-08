@@ -30,11 +30,13 @@ struct Gmod2 : GameCart {
 
     auto init() -> void;
     auto readIo1( uint16_t addr ) -> uint8_t;
+    auto peekIo1( uint16_t addr ) -> uint8_t;
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;
 
     auto clock() -> void;
 
     auto readRomL( uint16_t addr ) -> uint8_t;
+    auto peekRomL( uint16_t addr ) -> uint8_t;
     auto writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void;
 
     auto reset(bool softReset = false) -> void;

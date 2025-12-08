@@ -17,7 +17,7 @@
  * AGA
  *
  * variable vsync, vblank, hsync, hblank, hcenter
- * UHRES/DUAL stuff (using two screens independantly ?)
+ * UHRES/DUAL stuff
  */
 
 namespace LIBAMI {
@@ -296,6 +296,7 @@ struct Agnus {
     auto readWord(uint32_t adr) -> uint16_t;
     auto peekWord(uint32_t adr) -> uint16_t;
     auto writeWord(uint32_t adr, uint16_t value) -> void;
+    auto memoryDump(uint8_t bank, uint16_t* dump) -> void;
 
     auto fakeWriteByte(uint32_t adr, uint8_t value) -> void;
     auto fakeWriteByte(uint32_t adr, uint8_t* data, unsigned len) -> void;
@@ -324,6 +325,7 @@ struct Agnus {
 
     auto writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy = Trigger_CPU) -> void;
     template<bool byteAccess = false> auto readCustom(uint16_t adr, bool triggeredByWrite = false) -> uint16_t;
+    auto peekCustom(uint16_t addr) -> uint16_t;
 
     inline auto canBlitterUseBus() -> bool;
     auto canBlitterUseBusExt() -> bool;

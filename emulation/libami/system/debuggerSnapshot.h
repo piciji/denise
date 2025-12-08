@@ -17,6 +17,8 @@ struct DebuggerSnapshot {
     uint16_t irc;
     uint16_t ird;
 
+    uint8_t mapper[256];
+
     constexpr static char flagIdent[] = {'C', 'V', 'Z', 'N', 'X', ' ', ' ', ' ',
         'I', 'I', 'I', ' ', ' ', 'S', ' ', 'T'};
     uint16_t flags;

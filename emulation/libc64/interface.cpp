@@ -2114,4 +2114,8 @@ auto Interface::debuggerDisableAll() -> void {
     system->cpu.debuggerDisableAll();
 }
 
+auto Interface::getMemoryDump(uint8_t bank, uint8_t* dump) -> void {
+    system->memoryDump(bank, dump);
+}
+
 }

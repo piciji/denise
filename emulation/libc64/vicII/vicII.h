@@ -18,6 +18,7 @@ struct VicIICycle : VicIIBase {
     auto reuSprite0() -> bool { return sprite0DmaLateBA; }
 	auto serialize(Emulator::Serializer& s) -> void;
 	auto readReg(uint8_t addr) -> uint8_t;
+    auto peekReg(uint8_t addr) -> uint8_t;
 	auto writeReg(uint8_t addr, uint8_t value) -> void;
 	auto power() -> void;
 	

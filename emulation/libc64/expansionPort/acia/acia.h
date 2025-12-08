@@ -75,10 +75,13 @@ struct Acia : ExpansionPort {
 
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;
     auto readIo1( uint16_t addr ) -> uint8_t;
+    auto peekIo1( uint16_t addr ) -> uint8_t;
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;
     auto readIo2( uint16_t addr ) -> uint8_t;
+    auto peekIo2( uint16_t addr ) -> uint8_t;
     auto writeIo( uint16_t addr, uint8_t value ) -> void;
     auto readIo( uint16_t addr ) -> uint8_t;
+    auto peekIo( uint16_t addr ) -> uint8_t;
     auto updateBaudGenerator() -> void;
     auto receiveData(uint8_t* data) -> bool;
     auto receiveFromSocket( uint8_t* data ) -> bool;

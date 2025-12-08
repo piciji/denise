@@ -46,6 +46,10 @@ namespace LIBAMI {
         return pcb->read(addr);
     }
 
+    auto HDController::peekW(uint32_t addr)->uint16_t {
+        return pcb->peekW(addr);
+    }
+
     auto HDController::readW(uint32_t addr)->uint16_t {
         return pcb->readW(addr);
     }

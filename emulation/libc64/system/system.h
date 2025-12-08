@@ -251,6 +251,7 @@ struct System {
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
     
     auto remapCpu(bool speedHack = false) -> void;
+    auto memoryDump(uint8_t bank, uint8_t* dump) -> void;
 	auto isUltimax() -> bool;
 	auto changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus = false, bool speedHack = false) -> void;
     

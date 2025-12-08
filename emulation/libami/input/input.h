@@ -52,7 +52,9 @@ struct Input {
     auto readParallelportCIA2A(uint8_t& res) -> void;
 
     auto readDenisePortA() -> uint16_t;
+    auto peekDenisePortA() -> uint16_t;
     auto readDenisePortB() -> uint16_t;
+    auto peekDenisePortB() -> uint16_t;
     auto writeDeniseJoytest(uint16_t data) -> void;
 
     auto observePot(uint8_t& x0, uint8_t& y0, uint8_t& x1, uint8_t& y1) -> void;

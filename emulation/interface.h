@@ -652,6 +652,9 @@ struct Interface {
     virtual auto debuggerStepInto() -> void {}
     virtual auto debuggerStepOut() -> bool { return false; }
 
+    virtual auto getMemoryDump(uint8_t bank, uint16_t* dump) -> void {}
+    virtual auto getMemoryDump(uint8_t bank, uint8_t* dump) -> void {}
+
     // disassembler
     virtual auto disassemble(unsigned addr, unsigned& bytes) -> std::string { return ""; }
     virtual auto disassembleData(unsigned addr, unsigned bytes) -> std::string { return ""; }

@@ -1,6 +1,62 @@
 
 namespace LIBAMI {
 
+auto Agnus::peekCustom(uint16_t addr) -> uint16_t {
+    switch (addr) {
+        case 2:
+            return dmaCon | (blitter.busy << 14) | (blitter.zero << 13);
+        case 4:
+            return POSR(false);
+        case 6:
+            return POSR(true);
+
+        case 0xa:
+            return input.peekDenisePortA();
+
+        case 0xc:
+            return input.peekDenisePortB();
+
+        case 0xe:
+            return  denise.clxDat | 0x8000;
+
+        case 0x10:
+            return paula.getAdkCon();
+
+        case 0x12:
+            return paula.peekPot0Dat();
+
+        case 0x14:
+            return paula.peekPot1Dat();
+
+        case 0x16:
+            return paula.peekPotGoR();
+
+        case 0x18:
+            return paula.peekSerdatR();
+
+        case 0x1a:
+            return paula.peekDskBytR();
+
+        case 0x1c:
+            return paula.getIntena();
+
+        case 0x1e:
+            return paula.getIntreq();
+
+        case 0x7c: {
+            auto deniseId = denise.getId();
+            if (deniseId)
+                return deniseId;
+        }
+            // fallthrough
+        default:
+            break;
+
+    }
+
+    return dataBus;
+}
+
 template<bool byteAccess> auto Agnus::readCustom(uint16_t adr, bool triggeredByWrite) -> uint16_t {
 
     switch(adr) {

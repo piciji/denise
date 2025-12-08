@@ -20,6 +20,8 @@ struct MtecAT500 : HDBase {
 
     auto read(uint32_t addr) -> uint8_t;
 
+    auto peekW(uint32_t addr) -> uint16_t;
+
     auto readW(uint32_t addr) -> uint16_t;
 
     auto write(uint32_t addr, uint8_t data) -> void;

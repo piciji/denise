@@ -52,6 +52,13 @@ namespace LIBC64 {
                 enable = false;
         }
 
+        auto peekIo1( uint16_t addr ) -> uint8_t {
+            if (!enable)
+                return 0;
+
+            return ExpansionPort::readIo1(addr);
+        }
+
         auto readIo1( uint16_t addr ) -> uint8_t {
             if (!enable)
                 return 0;
@@ -60,6 +67,10 @@ namespace LIBC64 {
             uint8_t value = ExpansionPort::readIo1(addr);
             writeIo1( addr, value );
             return value;
+        }
+
+        auto peekIo2( uint16_t addr ) -> uint8_t {
+            return readIo2( addr );
         }
 
         auto readIo2( uint16_t addr ) -> uint8_t {
@@ -84,6 +95,10 @@ namespace LIBC64 {
 
             if (useRam)
                 ram[ (0x1f << 8) | (addr & 0xff) ] = value;
+        }
+
+        auto peekRomL( uint16_t addr ) -> uint8_t {
+            return readRomL(addr);
         }
 
         auto readRomL( uint16_t addr ) -> uint8_t {
@@ -113,6 +128,10 @@ namespace LIBC64 {
         auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void {
             if (useRam && !useRamAtA0)
                 ram[ addr & 0x1fff ] = data;
+        }
+
+        auto peekRomH( uint16_t addr ) -> uint8_t {
+            return readRomH(addr);
         }
 
         auto readRomH( uint16_t addr ) -> uint8_t {

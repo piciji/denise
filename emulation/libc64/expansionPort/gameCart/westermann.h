@@ -9,6 +9,10 @@ namespace LIBC64 {
 
         }
 
+        auto peekIo2( uint16_t addr ) -> uint8_t {
+            return 0;
+        }
+
         auto readIo2( uint16_t addr ) -> uint8_t {
 
             system->changeExpansionPortMemoryMode( exRom = false, game = true );

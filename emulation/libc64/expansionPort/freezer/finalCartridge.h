@@ -17,6 +17,10 @@ namespace LIBC64 {
             system->changeExpansionPortMemoryMode( exRom = true, game = true );
         }
 
+        auto peekIo1( uint16_t addr ) -> uint8_t {
+            return *(cRomL->ptr + (0x1e00 | (addr & 0xff)) );
+        }
+
         auto readIo1( uint16_t addr ) -> uint8_t {
 
             nmiCall(false);
@@ -29,6 +33,10 @@ namespace LIBC64 {
 
             nmiCall(false);
             system->changeExpansionPortMemoryMode( exRom = false, game = false );
+        }
+
+        auto peekIo2( uint16_t addr ) -> uint8_t {
+            return *(cRomL->ptr + (0x1f00 | (addr & 0xff)) );
         }
 
         auto readIo2( uint16_t addr ) -> uint8_t {

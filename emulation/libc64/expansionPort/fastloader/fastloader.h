@@ -40,11 +40,15 @@ struct Fastloader : Cart {
     auto reset(bool softReset = false) -> void;
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;
+    auto peekIo1( uint16_t addr ) -> uint8_t;
     auto readIo1( uint16_t addr ) -> uint8_t;
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;
+    auto peekIo2( uint16_t addr ) -> uint8_t;
     auto readIo2( uint16_t addr ) -> uint8_t;
     auto readRomL( uint16_t addr ) -> uint8_t;
+    auto peekRomL( uint16_t addr ) -> uint8_t;
     auto readRomH( uint16_t addr ) -> uint8_t;
+    auto peekRomH( uint16_t addr ) -> uint8_t;
     auto clock() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;

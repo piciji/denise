@@ -70,9 +70,14 @@ auto Agnus::peekWord(uint32_t adr) -> uint16_t {
         case CHIP_MEM:
             return _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
         case MMIO_CUSTOM:
-            break;
+            return peekCustom(adr & 0x1fe);
         case MMIO_CIA: {
-
+            uint8_t reg = (adr >> 8) & 0xf;
+            switch(adr & 0x3000) {
+                case 0x0000: return cia1.read( reg ) | (cia2.read( reg ) << 8);
+                case 0x1000: return (dataBus >> 8) | (cia2.read( reg ) << 8);
+                case 0x2000: return cia1.read( reg ) | (dataBus << 8);
+            }
         } break;
         case SLOW_MEM:
             return _swapWord(*(uint16_t*)(slowMem + (adr - 0xc00000)));
@@ -81,20 +86,96 @@ auto Agnus::peekWord(uint32_t adr) -> uint16_t {
         case KICK_ROM:
             return _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask)));
         case EXPANSION:
-            break;
+            return expansionsConfigured[adr >> 16]->peekW(adr);
         case EXT_ROM:
             return _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
         case WOM:
             return _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
         case MMIO_RTC:
-            break;
+            return (dataBus & 0xff00) | rtc.read( (adr >> 2) & 0xf, true );
         case AUTO_CONF:
-            break;
-        case Unmapped: // floating BUS, don't return zero (Hollywood Poker Pro)
+            return (readAutoConf(adr) << 8) | readAutoConf(adr + 1);
+        case Unmapped:
             break;
     }
 
-    return 0;
+    return dataBus;
+}
+
+auto Agnus::memoryDump(uint8_t bank, uint16_t* dump) -> void {
+    switch( mapper[bank] ) {
+        case CHIP_MEM: {
+            for (unsigned addr = bank << 16; addr < ((bank << 16) | 0xffff); addr += 2)
+                *dump++ = *(uint16_t*)(chipMem + (addr & chipMemMask));
+        } break;
+
+        case MMIO_CUSTOM: {
+            uint16_t temp[0x200];
+            for (unsigned addr = 0; addr < 0x200; addr += 2)
+                temp[addr] = peekCustom(addr & 0x1fe);
+
+            for (unsigned addr = 0; addr < 0xffff; addr += 2)
+                *dump++ = temp[addr & 0x1fe];
+        } break;
+        case MMIO_CIA: {
+            uint8_t tempC1[16];
+            uint8_t tempC2[16];
+            for (uint8_t a = 0; a < 16; a++)
+                tempC1[a] = cia1.read( a );
+            for (uint8_t a = 0; a < 16; a++)
+                tempC2[a] = cia2.read( a );
+            for (unsigned addr = 0; addr < 0xffff; addr += 2) {
+                uint8_t reg = (addr >> 8) & 0xf;
+                switch(addr & 0x3000) {
+                    case 0x0000: *dump++ = tempC1[reg] | (tempC2[reg] << 8);
+                    case 0x1000: *dump++ = (dataBus >> 8) | (tempC2[reg] << 8);
+                    case 0x2000: *dump++ =  tempC1[reg] | (dataBus << 8);
+                    default: *dump++ = dataBus;
+                }
+            }
+        } break;
+        case SLOW_MEM: {
+            for (unsigned addr = bank << 16; addr < ((bank << 16) | 0xffff); addr += 2)
+                *dump++ = *(uint16_t*)(slowMem + (addr - 0xc00000));
+        } break;
+        case FAST_MEM: {
+            for (unsigned addr = bank << 16; addr < ((bank << 16) | 0xffff); addr += 2)
+                *dump++ = *(uint16_t*)(fastMem + (addr - fastMemExpansion.baseAdr));
+        } break;
+        case KICK_ROM: {
+            for (unsigned addr = bank << 16; addr < ((bank << 16) | 0xffff); addr += 2)
+                *dump++ = *(uint16_t*)(kickRom + (addr & kickRomMask));
+        } break;
+
+        case EXPANSION:
+            for (unsigned addr = bank << 16; addr < ((bank << 16) | 0xffff); addr += 2)
+                *dump++ = expansionsConfigured[addr >> 16]->peekW(addr);
+            break;
+        case EXT_ROM: {
+            for (unsigned addr = bank << 16; addr < ((bank << 16) | 0xffff); addr += 2)
+                *dump++ = *(uint16_t*)(extRom + (addr & extRomMask));
+        } break;
+        case WOM: {
+            for (unsigned addr = bank << 16; addr < ((bank << 16) | 0xffff); addr += 2)
+                *dump++ = *(uint16_t*)(wom + (addr & 0x3ffff));
+        } break;
+        case MMIO_RTC: {
+            uint8_t tempRTC[16];
+            for (uint8_t a = 0; a < 16; a++)
+                tempRTC[a] = rtc.read( a, true );
+            for (unsigned addr = 0; addr < 0xffff; addr += 2)
+                *dump++ = (dataBus & 0xff00) | tempRTC[(addr >> 2) & 0xf];
+        } break;
+        case AUTO_CONF:
+            for (unsigned addr = 0; addr < 0xffff; addr += 2)
+                *dump++ = (readAutoConf(addr) << 8) | readAutoConf(addr + 1);
+            break;
+        default:
+        case Unmapped:
+            for (unsigned addr = 0; addr < 0xffff; addr += 2)
+                *dump++ = 0;
+            break;
+    }
 }
 
 auto Agnus::readWord(uint32_t adr) -> uint16_t {

@@ -11,6 +11,10 @@ Pia::Pia() {
         return port == Port::A ? ioa : iob;
     };
 
+    peekPort = [this]( Port port ) {
+        return port == Port::A ? ioa : iob;
+    };
+
     writePort = []( Port, uint8_t data ) {};
     irqCall = [](bool state) {};
 }
@@ -121,6 +125,39 @@ auto Pia::read(uint8_t adr) -> uint8_t {
         cra &= ~0xc0;
 
         irqCall(false);
+
+        return out;
+    }
+
+    return ddrA;
+}
+
+auto Pia::peek(uint8_t adr) -> uint8_t {
+    if (adr & 2) { // Port B
+        if (adr & 1) {
+            return crb;
+        }
+
+        if (crb & 4) {
+            uint8_t out = peekPort(Port::B);
+
+            out = (out & ~ddrB) | (dataB & ddrB);
+
+            return out;
+        }
+
+        return ddrB;
+    }
+
+    // Port A
+    if (adr & 1) {
+        return cra;
+    }
+
+    if (cra & 4) {
+        uint8_t out = peekPort( Port::A );
+
+        out = ( out & ~ddrA ) | (dataA & ddrA);
 
         return out;
     }

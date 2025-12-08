@@ -49,6 +49,8 @@ namespace LIBAMI {
 
         auto read(uint32_t addr) -> uint8_t;
 
+        auto peekW(uint32_t addr) -> uint16_t;
+
         auto readW(uint32_t addr) -> uint16_t;
 
         auto writeW(uint32_t addr, uint16_t data) -> void;

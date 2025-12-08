@@ -9,11 +9,19 @@ namespace LIBC64 {
 
         }
 
+        auto peekIo1( uint16_t addr ) -> uint8_t {
+            return 0;
+        }
+
         auto readIo1( uint16_t addr ) -> uint8_t {
 
             if (chips.size() > 1)
                 cRomL = cRomH = getChip(1);
 
+            return 0;
+        }
+
+        auto peekIo2( uint16_t addr ) -> uint8_t {
             return 0;
         }
 

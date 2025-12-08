@@ -11,8 +11,9 @@ struct M8520 : Base {
 	 * impulse on tod line occured
 	 */
     auto tod() -> void;
-	
+
 	auto read(unsigned pos) -> uint8_t;
+    auto peek(unsigned pos) -> uint8_t;
 	auto write(unsigned pos, uint8_t value) -> void;
 	auto reset() -> void;
     auto serialize(Emulator::Serializer& s) -> void;

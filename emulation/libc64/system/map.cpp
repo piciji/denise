@@ -119,4 +119,98 @@ auto System::remapCpu(bool speedHack) -> void {
     expansionPort->memoryMapUpdated();
 }
 
+auto System::memoryDump(uint8_t bank, uint8_t* dump) -> void {
+    uint8_t temp[16];
+    bank &= 0xf;
+    bank <<= 4;
+
+    // for (uint16_t addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+    //     *dump++ = memoryCpu.peek(addr);
+    //
+    // return;
+    Memory::Read* ptr = memoryCpu.reads[bank];
+
+    if (ptr == &readRam) {
+        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+            *dump++ = this->ram[ addr ];
+    }
+
+    else if (ptr == &readVicReg) {
+        for (unsigned addr = 0xd000; addr <= 0xd3ff; addr++ )
+            *dump++ = vicII->peekReg( addr & 0xff );
+
+        if (sidManager.extraSids) {
+            for (unsigned addr = 0xd400; addr <= 0xd7ff; addr++ )
+                *dump++ = sidManager.getSidByAdr( addr )->peekIO( addr );
+        } else {
+            for (unsigned addr = 0xd400; addr <= 0xd7ff; addr++ )
+                *dump++ = sidManager.sid->peekIO( addr );
+        }
+
+        uint8_t _l = vicII->lastReadPhase1() & ~0xf;
+        for (unsigned addr = 0xd800; addr <= 0xdbff; addr++ )
+            *dump++ = (colorRam[ addr & 0x3ff ] & 0xf) | _l;
+
+        for (unsigned addr = 0xdc00; addr <= 0xdc0f; addr++ )
+            temp[addr & 0xf] = cia1.peek( addr );
+
+        for(int a = 0; a < 16; a++) {
+            std::memcpy(dump, &temp, 16);
+            dump += 16;
+        }
+
+        for (unsigned addr = 0xdd00; addr <= 0xdd0f; addr++ )
+            temp[addr & 0xf] = cia2.peek( addr );
+
+        for(int a = 0; a < 16; a++) {
+            std::memcpy(dump, &temp, 16);
+            dump += 16;
+        }
+
+        for (unsigned addr = 0xde00; addr <= 0xdeff; addr++ )
+            *dump++ = peekIo1Reg( addr );
+
+        for (unsigned addr = 0xdf00; addr <= 0xdfff; addr++ )
+            *dump++ = peekIo2Reg( addr );
+    }
+
+    else if (ptr == &readRomL) {
+        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+            *dump++ = peekRomL( addr );
+    }
+
+    else if (ptr == &readRomH) {
+        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+            *dump++ = peekRomH( addr );
+    }
+
+    else if (ptr == &readUltimaxA0) {
+        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+            *dump++ = peekUltimaxA0( addr );
+    }
+
+    else if (ptr == &readCharRom) {
+        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+            *dump++ = charRom[ addr & 0xfff ];
+    }
+
+    else if (ptr == &readBasicRom) {
+        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+            *dump++ = basicRom[ addr & 0x1fff ];
+    }
+
+    else if (ptr == &readKernalRom) {
+        if (expansionPort->hasHiramCableConnected()) {
+            for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+                *dump++ = peekRomH( addr & 0x1fff );
+        } else {
+            for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+                *dump++ = kernalRom[ addr & 0x1fff ];
+        }
+    } else {
+        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+            *dump++ = vicII->lastReadPhase1();
+    }
+}
+
 }

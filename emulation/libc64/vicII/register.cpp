@@ -3,6 +3,21 @@
 
 namespace LIBC64 {
 
+auto VicIICycle::peekReg( uint8_t addr ) -> uint8_t {
+    addr &= 0x3f;
+
+    if (addr == 0x1e)
+        return spriteSpriteCollidedRead;
+
+    if (addr == 0x1f)
+        return spriteForegroundCollidedRead;
+
+    uint8_t temp = lastBusPhi2;
+    uint8_t val = readReg( addr );
+    lastBusPhi2 = temp;
+    return val;
+}
+
 auto VicIICycle::readReg( uint8_t addr ) -> uint8_t {
 	uint8_t value = 0;
 	addr &= 0x3f;

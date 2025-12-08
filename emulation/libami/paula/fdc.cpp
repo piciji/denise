@@ -195,6 +195,22 @@ namespace LIBAMI {
             && (activeDrive->structure.type & (DiskStructure::ADF | DiskStructure::Unknown));
     }
 
+    auto Paula::peekDskBytR() -> uint16_t {
+        uint16_t out = dskBytr;
+        if (dmaDisk && (diskState != DiskState::OFF)) out |= 0x4000;
+        if (dskLen & 0x4000) out |= 0x2000;
+
+        if (fdcByteMode()) {
+            if (dskSyncCycle) {
+                if ((agnus.clock - dskSyncCycle) <= (!fast() ? 14 : 7))
+                    out |= 0x1000;
+            }
+        }
+        else if (dskShifter == dskSync) out |= 0x1000;
+
+        return out;
+    }
+
     auto Paula::getDskBytR() -> uint16_t {
         uint16_t out = dskBytr;
         dskBytr &= ~0x8000;

@@ -37,6 +37,7 @@ struct Cia {
     std::function<void (bool state)> irqCall;
     std::function<void (const char* info, bool newLine, bool hex)> logOut;
 
+    auto peek(unsigned pos) -> uint8_t;
     auto read(unsigned pos) -> uint8_t;
     auto write(unsigned pos, uint8_t value) -> void;
     auto tod(unsigned clockAllignment = 0) -> void;

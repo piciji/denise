@@ -498,6 +498,8 @@ template auto Cia<MOS_6526>::clock() -> void;
 template auto Cia<MOS_8520>::clock() -> void;
 template auto Cia<MOS_6526>::read(unsigned pos) -> uint8_t;
 template auto Cia<MOS_8520>::read(unsigned pos) -> uint8_t;
+template auto Cia<MOS_6526>::peek(unsigned pos) -> uint8_t;
+template auto Cia<MOS_8520>::peek(unsigned pos) -> uint8_t;
 template auto Cia<MOS_6526>::write(unsigned pos, uint8_t value) -> void;
 template auto Cia<MOS_8520>::write(unsigned pos, uint8_t value) -> void;
 template auto Cia<MOS_6526>::tod(unsigned clockAllignment) -> void;

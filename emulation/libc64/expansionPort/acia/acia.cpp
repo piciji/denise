@@ -184,6 +184,14 @@ auto Acia::readIo2( uint16_t addr ) -> uint8_t {
     return ExpansionPort::readIo2(addr);
 }
 
+auto Acia::peekIo2( uint16_t addr ) -> uint8_t {
+
+    if (!useDE00)
+        return peekIo( addr );
+
+    return ExpansionPort::peekIo2(addr);
+}
+
 auto Acia::writeIo1( uint16_t addr, uint8_t value ) -> void {
 
     if (useDE00)
@@ -196,6 +204,14 @@ auto Acia::readIo1( uint16_t addr ) -> uint8_t {
         return readIo( addr );
 
     return ExpansionPort::readIo1(addr);
+}
+
+auto Acia::peekIo1( uint16_t addr ) -> uint8_t {
+
+    if (useDE00)
+        return peekIo( addr );
+
+    return ExpansionPort::peekIo1(addr);
 }
 
 inline auto Acia::transmitterEnabled() -> bool {
@@ -287,6 +303,27 @@ auto Acia::writeIo( uint16_t addr, uint8_t value ) -> void {
             }
             break;
     }
+}
+
+auto Acia::peekIo( uint16_t addr ) -> uint8_t {
+    addr &= (cartridgeId == Interface::CartridgeIdTurbo232) ? 7 : 3;
+
+    switch(addr) {
+        case 0:
+            return rxData;
+        case 1:
+            return status;
+        case 2:
+            return command;
+        case 3:
+            return control;
+        case 7:
+            return enhancedControl | (((control & 0xf) == 0) ? 4 : 0);
+        default:
+            return 0;
+    }
+
+    _unreachable
 }
 
 auto Acia::readIo( uint16_t addr ) -> uint8_t {

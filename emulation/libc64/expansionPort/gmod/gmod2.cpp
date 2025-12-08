@@ -143,6 +143,10 @@ auto Gmod2::writeEeprom() -> void {
     system->interface->writeMedia(mediaSecondary, eepromData, 2 * 1024, 0);		
 }
 
+auto Gmod2::peekIo1( uint16_t addr ) -> uint8_t {
+    return readIo1( addr );
+}
+
 auto Gmod2::readIo1( uint16_t addr ) -> uint8_t {
 
     return (eeprom.read() << 7) | (ExpansionPort::readIo1( addr ) & 0x7f);
@@ -178,6 +182,15 @@ auto Gmod2::clock() -> void {
         } else
             system->changeExpansionPortMemoryMode( exRom, true);
     }
+}
+
+auto Gmod2::peekRomL( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flash.byteToProgram;
+    uint8_t _sm = flash.eraseMask;
+    uint8_t result = readRomL(addr);
+    flash.byteToProgram = _btp;
+    flash.eraseMask = _sm;
+    return result;
 }
 
 auto Gmod2::readRomL( uint16_t addr ) -> uint8_t {

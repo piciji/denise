@@ -37,6 +37,7 @@ struct FinalChessCard : Cart, WDCFAMILY::W65C02 {
 
     auto writeIo2( uint16_t addr, uint8_t data ) -> void;
     auto readIo2( uint16_t addr ) -> uint8_t;
+    auto peekIo2( uint16_t addr ) -> uint8_t;
     auto writeIo1( uint16_t addr, uint8_t data ) -> void;
 
     auto assumeChips( ) -> void;

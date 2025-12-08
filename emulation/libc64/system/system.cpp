@@ -112,7 +112,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
     peekKernalRom = [this](uint16_t addr) {
 
         if (expansionPort->hasHiramCableConnected())
-            return expansionPort->readRomH(addr & 0x1fff);
+            return expansionPort->peekRomH(addr & 0x1fff);
 
         return (uint8_t) this->kernalRom[ addr & 0x1fff ];
     };
@@ -129,7 +129,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     peekRomL = [this](uint16_t addr) {
 
-        return expansionPort->readRomL( addr & 0x1fff );
+        return expansionPort->peekRomL( addr & 0x1fff );
     };
 
     readRomH = [this](uint16_t addr) {
@@ -139,7 +139,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     peekRomH = [this](uint16_t addr) {
 
-        return expansionPort->readRomH( addr & 0x1fff );
+        return expansionPort->peekRomH( addr & 0x1fff );
     };
 
     writeRomL = [this](uint16_t addr, uint8_t value) {
@@ -167,7 +167,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
     };
 
     peekUltimaxA0 = [this](uint16_t addr) {
-        return expansionPort->readUltimaxA0( addr & 0x1fff );
+        return expansionPort->peekUltimaxA0( addr & 0x1fff );
     };
 
     writeUltimaxA0 = [this](uint16_t addr, uint8_t value) {
@@ -212,11 +212,11 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
             Sid* _sid = sidManager.getSidByAdr( addr, true );
             if (_sid) {
                 sidManager.updateClock();
-                return _sid->readIO( addr );
+                return _sid->peekIO( addr );
             }
         }
 
-        return expansionPort->readIo1(addr);
+        return expansionPort->peekIo1(addr);
     };
 
     writeIo2Reg = [this](uint16_t addr, uint8_t value) {
@@ -247,11 +247,11 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
             Sid* _sid = sidManager.getSidByAdr( addr, true );
             if (_sid) {
                 sidManager.updateClock();
-                return _sid->readIO( addr );
+                return _sid->peekIO( addr );
             }
         }
 
-        return expansionPort->readIo2(addr);
+        return expansionPort->peekIo2(addr);
     };
 
     writeSidReg = [this](uint16_t addr, uint8_t value) {
@@ -291,9 +291,9 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         sidManager.updateClock();
 
         if (sidManager.extraSids)
-            return sidManager.getSidByAdr( addr )->readIO( addr );
+            return sidManager.getSidByAdr( addr )->peekIO( addr );
 
-        return sidManager.sid->readIO( addr );
+        return sidManager.sid->peekIO( addr );
     };
 
     writeVicReg = [this](uint16_t addr, uint8_t value) {
@@ -308,7 +308,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     peekVicReg = [this](uint16_t addr) {
 
-        return vicII->readReg( addr & 0xff );
+        return vicII->peekReg( addr & 0xff );
     };
 
     writeCia1Reg = [this](uint16_t addr, uint8_t value) {
@@ -323,7 +323,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     peekCia1Reg = [this](uint16_t addr) {
 
-        return cia1.read( addr );
+        return cia1.peek( addr );
     };
 
     writeCia2Reg = [this](uint16_t addr, uint8_t value) {
@@ -338,7 +338,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     peekCia2Reg = [this](uint16_t addr) {
 
-        return cia2.read(addr);
+        return cia2.peek(addr);
     };
 
     writeColorRam = [this](uint16_t addr, uint8_t value) {
@@ -1335,6 +1335,19 @@ auto System::debugPointReached(Emulator::Interface::DebuggerAction action, unsig
 auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
     cpu.updateSnapshot(snap);
     vicII->updateSnapshot(snap);
+
+    snap.mode = mode;
+    for (uint8_t a = 0; a <= 0xf; a++ ) {
+        if (memoryCpu.isLocation(a << 4, &readRam)) snap.mapper[a] = 1;
+        else if (memoryCpu.isLocation(a << 4, &readVicReg)) snap.mapper[a] = 2;
+        else if (memoryCpu.isLocation(a << 4, &readCharRom)) snap.mapper[a] = 3;
+        else if (memoryCpu.isLocation(a << 4, &readKernalRom)) snap.mapper[a] = 4;
+        else if (memoryCpu.isLocation(a << 4, &readBasicRom)) snap.mapper[a] = 5;
+        else if (memoryCpu.isLocation(a << 4, &readRomL)) snap.mapper[a] = 6;
+        else if (memoryCpu.isLocation(a << 4, &readRomH)) snap.mapper[a] = 7;
+        else if (memoryCpu.isLocation(a << 4, &readUltimaxA0)) snap.mapper[a] = 8;
+        else snap.mapper[a] = 0; // unmapped
+    }
 }
 
 }

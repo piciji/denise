@@ -88,6 +88,29 @@ auto M6526::reset() -> void {
 	Base::reset();
 }
 
+auto M6526::peek(unsigned pos) -> uint8_t {
+    pos &= 0xf;
+
+    switch (pos) {
+        case 8:
+        case 9:
+        case 0xa:
+        case 0xb: {
+            uint8_t shifter = (pos - 8) << 3;
+
+            if(!todLatched)
+                return (todc >> shifter) & 0xff;
+
+            return (todLatch >> shifter) & 0xff;
+        } break;
+
+        default:
+            break;
+    }
+
+    return Base::peek( pos );
+}
+
 auto M6526::read(unsigned pos) -> uint8_t {
 	pos &= 0xf;
 	

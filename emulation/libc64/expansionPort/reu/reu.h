@@ -54,9 +54,11 @@ struct Reu : ExpansionPort {
     bool swapRead;
 
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;    
-    auto readIo1( uint16_t addr ) -> uint8_t;    
+    auto readIo1( uint16_t addr ) -> uint8_t;
+    auto peekIo1( uint16_t addr ) -> uint8_t;
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;    
-    auto readIo2( uint16_t addr ) -> uint8_t;    
+    auto readIo2( uint16_t addr ) -> uint8_t;
+    auto peekIo2( uint16_t addr ) -> uint8_t;
     auto setRom(Emulator::Interface::Media* media, uint8_t* rom, unsigned romSize) -> void;
     auto prepareRam(unsigned size) -> void;
 
@@ -90,11 +92,14 @@ struct Reu : ExpansionPort {
     template<bool fromSCPU = false> inline auto verify() -> void;
 	
 	auto readRomL(uint16_t addr) -> uint8_t;
+    auto peekRomL(uint16_t addr) -> uint8_t;
 	auto writeRomL( uint16_t addr, uint8_t data ) -> void;
     auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void;
     auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void;    
     auto readRomH( uint16_t addr ) -> uint8_t;
-    auto readUltimaxA0( uint16_t addr ) -> uint8_t;        
+    auto peekRomH( uint16_t addr ) -> uint8_t;
+    auto readUltimaxA0( uint16_t addr ) -> uint8_t;
+    auto peekUltimaxA0( uint16_t addr ) -> uint8_t;
     auto writeRomH( uint16_t addr, uint8_t data ) -> void;
     auto writeUltimaxA0( uint16_t addr, uint8_t data ) -> void;
 

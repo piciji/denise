@@ -809,6 +809,10 @@ auto Interface::getDebuggerSnapshot() -> DebuggerSnapshot {
     return snap;
 }
 
+auto Interface::getMemoryDump(uint8_t bank, uint16_t* dump) -> void {
+    system->agnus.memoryDump(bank, dump);
+}
+
 auto Interface::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
     system->debuggerAdd( action, addr, addrTo );
 }

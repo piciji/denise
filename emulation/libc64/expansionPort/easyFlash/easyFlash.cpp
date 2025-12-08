@@ -254,6 +254,20 @@ auto EasyFlash::readIo2( uint16_t addr ) -> uint8_t {
     return ram[ addr & 0xff ];
 }
 
+auto EasyFlash::peekIo2( uint16_t addr ) -> uint8_t {
+
+    return ram[ addr & 0xff ];
+}
+
+auto EasyFlash::peekRomL( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flashLo.byteToProgram;
+    uint8_t _sm = flashLo.eraseMask;
+    uint8_t result = readRomL(addr);
+    flashLo.byteToProgram = _btp;
+    flashLo.eraseMask = _sm;
+    return result;
+}
+
 auto EasyFlash::readRomL( uint16_t addr ) -> uint8_t {
     
     return flashLo.read( bank * 0x2000 + (addr & 0x1fff) );
@@ -264,6 +278,15 @@ auto EasyFlash::writeRomL( uint16_t addr, uint8_t data ) -> void {
     flashLo.write( bank * 0x2000 + (addr & 0x1fff), data );
     
     ExpansionPort::writeRomL( addr, data );
+}
+
+auto EasyFlash::peekRomH( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flashHi.byteToProgram;
+    uint8_t _sm = flashHi.eraseMask;
+    uint8_t result = readRomH(addr);
+    flashHi.byteToProgram = _btp;
+    flashHi.eraseMask = _sm;
+    return result;
 }
 
 auto EasyFlash::readRomH( uint16_t addr ) -> uint8_t {

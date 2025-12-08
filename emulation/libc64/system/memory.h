@@ -82,7 +82,7 @@ struct Memory {
 	
 	auto unmapWrite( uint8_t pageLo, uint8_t pageHi ) -> void {
 		for ( unsigned page = pageLo; page <= pageHi; page++ ) {
-			writes[ page ] = 0;
+			writes[ page ] = nullptr;
 		}
 	}
     

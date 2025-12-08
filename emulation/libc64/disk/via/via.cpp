@@ -13,6 +13,11 @@ Via::Via( uint8_t model ) {
         // basic mode, when lines not modified from external
         return port == Port::A ? plines->ioa : plines->iob;        
     };
+
+    peekPort = []( Port port, Lines* plines ) {
+        // basic mode, when lines not modified from external
+        return port == Port::A ? plines->ioa : plines->iob;
+    };
     
     writePort = []( Port, Lines* ) {};    
 	irqCall = [](bool state) {};

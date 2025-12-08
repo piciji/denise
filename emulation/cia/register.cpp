@@ -3,6 +3,13 @@
 
 namespace CIA {
 
+auto Base::peek( unsigned pos ) -> uint8_t {
+    if (pos == 0xd)
+        return icr;
+
+    return read( pos );
+}
+
 auto Base::read( unsigned pos ) -> uint8_t {
         
 	switch (pos & 0xf) {

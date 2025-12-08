@@ -150,6 +150,7 @@ struct Interface : Emulator::Interface  {
     auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
     auto getDebuggerSnapshot() -> DebuggerSnapshot;
+    auto getMemoryDump(uint8_t bank, uint16_t* dump) -> void;
 
 private:
     auto prepareDevices() -> void;

@@ -14,6 +14,7 @@ struct VicIIFast : VicIIBase {
     auto clockSilence() -> void;    
 	   
     auto readReg( uint8_t addr ) -> uint8_t;
+    auto peekReg( uint8_t addr ) -> uint8_t;
     auto writeReg( uint8_t addr, uint8_t value ) -> void;
     auto getCurrentLinePtr() -> uint8_t*;
 	auto getCurrentFramePtr() -> uint8_t*;

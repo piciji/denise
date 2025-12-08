@@ -4,6 +4,18 @@
 
 namespace LIBC64 {
 
+auto VicIIFast::peekReg( uint8_t addr ) -> uint8_t {
+    addr &= 0x3f;
+
+    if (addr == 0x1e)
+        return spriteSpriteCollided;
+
+    if (addr == 0x1f)
+        return spriteForegroundCollided;
+
+    return readReg( addr );
+}
+
 auto VicIIFast::readReg( uint8_t addr ) -> uint8_t {
 	uint8_t value = 0;
 	addr &= 0x3f;

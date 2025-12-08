@@ -16,6 +16,9 @@ struct DebuggerSnapshot {
     uint8_t ddr;
     uint8_t por;
     uint8_t ioLines;
+    uint8_t mode;
+
+    uint8_t mapper[16];
 
     constexpr static char flagIdent[] = {'C', 'Z', 'I', 'D', 'B', ' ', 'V', 'N'};
     uint8_t flags;

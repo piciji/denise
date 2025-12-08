@@ -63,15 +63,23 @@ struct ExpansionPort {
     virtual auto addressBus() -> uint16_t { return bus.addr; }
     
     virtual auto readIo1( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
+
+    virtual auto peekIo1( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
     
     virtual auto readIo2( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
+
+    virtual auto peekIo2( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
     
     virtual auto writeIo1( uint16_t addr, uint8_t data ) -> void {}
     
     virtual auto writeIo2( uint16_t addr, uint8_t data ) -> void {}
-    
+
+    virtual auto peekRomL( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
+
     virtual auto readRomL( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
-    
+
+    virtual auto peekRomH( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
+
     virtual auto readRomH( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
     
     virtual auto writeRomL( uint16_t addr, uint8_t data ) -> void {        
@@ -84,7 +92,9 @@ struct ExpansionPort {
     
     virtual auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void { }
     
-    virtual auto writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void { }   
+    virtual auto writeUltimaxRomH( uint16_t addr, uint8_t data ) -> void { }
+
+    virtual auto peekUltimaxA0( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
 
     virtual auto readUltimaxA0( uint16_t addr ) -> uint8_t { return vicII->lastReadPhase1(); }
         

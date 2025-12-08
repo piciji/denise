@@ -50,10 +50,18 @@ namespace LIBC64 {
             handleIo1(addr);
         }
 
+        auto peekIo1(uint16_t addr) -> uint8_t {
+            return 0;
+        }
+
         // IO1: READ schaltet ebenfalls
         auto readIo1(uint16_t addr) -> uint8_t {
             handleIo1(addr);
             return 0;
+        }
+
+        auto peekRomL( uint16_t addr ) -> uint8_t {
+            return readRomL(addr);
         }
 
         // ROML: im RAM-Modus aus RAM lesen/schreiben, sonst Standard-ROM

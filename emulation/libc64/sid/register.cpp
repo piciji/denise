@@ -3,6 +3,27 @@
 
 namespace LIBC64 {
 
+auto Sid::peekIO( uint8_t addr ) -> uint8_t {
+    addr &= 0x1f;
+
+    switch( addr ) {
+        case 0x19:
+        case 0x1a:
+            if (!sysTimer.has( &sidManager.callPotUpdate )) {
+                sidManager.potX = sidManager.getPotX();
+                sidManager.potY = sidManager.getPotY();
+                sysTimer.add( &sidManager.callPotUpdate, 512, Emulator::SystemTimer::Action::WhenNotExistsOnly );
+            }
+            return addr == 0x19 ? sidManager.potX : sidManager.potY;
+        case 0x1b:
+            return voice[2].osc3 >> 4;
+        case 0x1c:
+            return envelope[2].env3;
+    }
+
+    return lastBusValue;
+}
+
 auto Sid::readIO( uint8_t addr ) -> uint8_t {
     addr &= 0x1f;
     

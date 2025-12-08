@@ -78,6 +78,7 @@ struct VicIIBase {
     virtual auto reuSprite0() -> bool = 0;
 	virtual auto serialize(Emulator::Serializer& s) -> void = 0;
 	virtual auto readReg( uint8_t addr ) -> uint8_t = 0;
+    virtual auto peekReg( uint8_t addr ) -> uint8_t = 0;
     virtual auto writeReg( uint8_t addr, uint8_t value ) -> void = 0;	
     virtual auto power() -> void;
 	virtual auto triggerLightPen( bool state ) -> void;

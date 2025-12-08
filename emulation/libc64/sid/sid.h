@@ -58,6 +58,7 @@ struct Sid {
     auto setFilterType( FilterType filterType ) -> void;
     auto updateDigiBoost( bool state ) -> void;
     auto readIO( uint8_t addr ) -> uint8_t;
+    auto peekIO( uint8_t addr ) -> uint8_t;
     auto writeIO( uint8_t addr, uint8_t value ) -> void;
 	auto writeIOFilter( uint8_t addr, uint8_t value ) -> void;
     auto reset() -> void;
