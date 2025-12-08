@@ -74,7 +74,9 @@ struct View : GUIKIT::Window {
     		GUIKIT::MenuItem* slotDown;
     		GUIKIT::MenuItem* load;
         GUIKIT::MenuItem* systemManagement;
-        GUIKIT::MenuItem* debugger;
+        GUIKIT::Menu* debugger;
+            GUIKIT::MenuItem* debuggerCpu;
+            GUIKIT::MenuItem* debuggerMem;
         GUIKIT::MenuItem* audio;
         GUIKIT::MenuItem* configurations;
         GUIKIT::Menu* shaderMenu;

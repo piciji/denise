@@ -200,9 +200,8 @@ auto EmuThread::handleUIEvents() -> void {
         }
 
         if (_events & EVT_DEBUGGER) {
-            auto debugger = program->getActiveDebugger();
-            if (debugger)
-                debugger->debugCallback();
+            if (program->hasActiveDebugger())
+                Debugger::Callback();
         }
     }
 }

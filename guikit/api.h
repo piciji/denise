@@ -753,6 +753,7 @@ struct ListView : Widget {
     std::function<void ()> onActivate = nullptr;
     std::function<void ()> onChange = nullptr;
     std::function<void (unsigned row, unsigned column)> onClick = nullptr;
+    enum class Align { Left, Right, Center } ;
 
     auto headerVisible() const -> bool { return state.headerVisible; }
     auto rowCount() const -> unsigned { return state.rows.size(); }
@@ -764,15 +765,16 @@ struct ListView : Widget {
     auto unlockRedraw() -> void;
 
     auto append(const std::vector<std::string>& row, bool preventColumnResizing = false) -> void;
-    auto append(const std::vector<std::vector<std::string>>& rows, bool clearBefore = true) -> void;
+    auto appendMulti(const std::vector<std::vector<std::string>>& rows, bool clearBefore = true) -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
     auto setSelection(unsigned selection) -> void;
     auto setSelected(bool selected = true) -> void;
     auto setHeaderVisible(bool visible = true) -> void;
     auto setHeaderText(const std::vector<std::string>& text) -> void;
-    auto setText(unsigned selection, const std::vector<std::string>& text) -> void;
-    auto setText(unsigned selection, unsigned position, const std::string& text) -> void;
+    auto setAlignment(std::vector<Align> aligns, bool centerHeader = false) -> void;
+    auto setText(unsigned selection, const std::vector<std::string>& text, bool preventColumnResizing = false) -> void;
+    auto setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing = false) -> void;
     auto setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing = false) -> void;
     auto getImage( unsigned selection, unsigned position ) -> Image*;
     auto countImages() -> unsigned;
@@ -790,15 +792,21 @@ struct ListView : Widget {
     auto spacing() -> int { return state.spacing; }
     auto autoSizeColumns() -> void;
 
-    auto rowForegroundColor(unsigned row) -> std::optional<unsigned>;
-    auto setRowForegroundColor(unsigned row, unsigned foregroundColor) -> void;
-    auto resetRowForegroundColor(unsigned row) -> void;
+    auto rowForegroundColor(unsigned row, std::optional<unsigned> col = std::nullopt) -> std::optional<unsigned>;
+    auto setRowForegroundColor(unsigned foregroundColor, unsigned row, std::optional<unsigned> col = std::nullopt) -> void;
+    auto resetRowForegroundColor(std::optional<unsigned> row = std::nullopt, std::optional<unsigned> col = std::nullopt) -> void;
 
     auto rowBackgroundColor(unsigned row) -> std::optional<unsigned>;
-    auto setRowBackgroundColor(unsigned row, unsigned backgroundColor) -> void;
+    auto setRowBackgroundColor(unsigned backgroundColor, unsigned row) -> void;
     auto resetRowBackgroundColor(unsigned row) -> void;
     auto resetRowColors() -> void;
     auto setSpacing(unsigned spacing) -> void;
+
+    struct RowForegroundColor {
+        unsigned row;
+        std::optional<unsigned> col;
+        unsigned color;
+    };
 
     struct {
         bool headerVisible = false;
@@ -811,10 +819,12 @@ struct ListView : Widget {
         unsigned selectionBackgroundColor;
         int spacing = -1;
         std::vector<std::string> header;
+        std::vector<Align> aligns;
+        bool centerHeader = false;
         std::vector<std::vector<std::string>> rows;
 		std::vector<std::string> rowTooltips;
         std::vector<std::vector<Image*>> images;
-        std::vector<std::pair<unsigned, unsigned>> rowForegroundColor;
+        std::vector<RowForegroundColor> rowForegroundColor;
         std::vector<std::pair<unsigned, unsigned>> rowBackgroundColor;
     } state;
 

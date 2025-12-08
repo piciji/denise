@@ -937,34 +937,28 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         } break;
 
         case Hotkey::DebuggerToggle: {
-            auto debugger = program->getActiveDebugger();
-            if (debugger)
-                debugger->control.resume.onActivate();
+            if (program->hasActiveDebugger())
+                Debugger::resume( activeEmulator );
         } break;
         case Hotkey::DebuggerStepInto: {
-            auto debugger = program->getActiveDebugger();
-            if (debugger)
-                debugger->control.stepInto.onActivate();
+            if (program->hasActiveDebugger())
+                Debugger::stepInto( activeEmulator );
         } break;
         case Hotkey::DebuggerStepOver: {
-            auto debugger = program->getActiveDebugger();
-            if (debugger)
-                debugger->control.stepOver.onActivate();
+            if (program->hasActiveDebugger())
+                Debugger::stepOver( activeEmulator );
         } break;
         case Hotkey::DebuggerStepOut: {
-            auto debugger = program->getActiveDebugger();
-            if (debugger)
-                debugger->control.stepOut.onActivate();
+            if (program->hasActiveDebugger())
+                Debugger::stepOut( activeEmulator );
         } break;
         case Hotkey::DebuggerLine: {
-            auto debugger = program->getActiveDebugger();
-            if (debugger)
-                debugger->control.line.onActivate();
+            if (program->hasActiveDebugger())
+                Debugger::stepLine( activeEmulator );
         } break;
         case Hotkey::DebuggerFrame: {
-            auto debugger = program->getActiveDebugger();
-            if (debugger)
-                debugger->control.frame.onActivate();
+            if (program->hasActiveDebugger())
+                Debugger::stepFrame( activeEmulator );
         } break;
     }
     emuThread->unlock();

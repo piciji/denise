@@ -1065,7 +1065,7 @@ auto ListView::unlockRedraw() -> void {
     p.unlockRedraw();
 }
 
-auto ListView::append(const std::vector<std::vector<std::string>>& rows, bool clearBefore) -> void {    
+auto ListView::appendMulti(const std::vector<std::vector<std::string>>& rows, bool clearBefore) -> void {
     p.lockRedraw();
     
     if (clearBefore)
@@ -1130,19 +1130,24 @@ auto ListView::setHeaderText(const std::vector<std::string>& text) -> void {
     p.setHeaderText(text);
 }
 
-auto ListView::setText(unsigned selection, const std::vector<std::string>& text) -> void {
+auto ListView::setAlignment(std::vector<Align> aligns, bool centerHeader) -> void {
+    state.aligns = std::move(aligns);
+    state.centerHeader = centerHeader;
+}
+
+auto ListView::setText(unsigned selection, const std::vector<std::string>& text, bool preventColumnResizing) -> void {
     if(selection >= state.rows.size()) return;
     for(unsigned position = 0; position < text.size(); position++) {
-        setText(selection, position, text.at(position));
+        setText(selection, position, text[position], preventColumnResizing);
     }
 }
 
-auto ListView::setText(unsigned selection, unsigned position, const std::string& text) -> void {
+auto ListView::setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing) -> void {
     if(selection >= state.rows.size()) return;
-    std::vector<std::string>& row = state.rows.at(selection);
+    std::vector<std::string>& row = state.rows[selection];
     if(position >= row.size()) return;
-    row.at(position) = text;
-    p.setText(selection, position, text);
+    row[position] = text;
+    p.setText(selection, position, text, preventColumnResizing);
 }
 
 auto ListView::setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing) -> void {
@@ -1206,34 +1211,47 @@ auto ListView::resetSelectionColor() -> void {
     p.setSelectionColor();
 }
 
-auto ListView::rowForegroundColor(unsigned row) -> std::optional<unsigned> {
-    for (auto& pair : state.rowForegroundColor) {
-        if(pair.first == row)
-            return pair.second;
-    }
-    return std::nullopt;
-}
+auto ListView::rowForegroundColor(unsigned row, std::optional<unsigned> col) -> std::optional<unsigned> {
+    std::optional<unsigned> result = std::nullopt;
 
-auto ListView::setRowForegroundColor(unsigned row, unsigned foregroundColor) -> void {
-    for (auto& pair : state.rowForegroundColor) {
-        if(pair.first == row) {
-            pair.second = foregroundColor;
-            p.updateRowColors();
-            return;
+    for (auto& entry : state.rowForegroundColor) {
+        if(entry.row == row) {
+            if (entry.col == col)
+                return entry.color;
+
+            if (entry.col == std::nullopt)
+                result = entry.color;
         }
     }
-    state.rowForegroundColor.push_back( {row, foregroundColor} );
-    p.updateRowColors();
+    return result;
 }
 
-auto ListView::resetRowForegroundColor(unsigned row) -> void {
-    for (auto it = state.rowForegroundColor.begin(); it != state.rowForegroundColor.end();) {
-        if (it->first == row)
-            it = state.rowForegroundColor.erase(it);
-        else
-            ++it;
+auto ListView::setRowForegroundColor(unsigned foregroundColor, unsigned row, std::optional<unsigned> col) -> void {
+    for (auto& entry : state.rowForegroundColor) {
+        if(entry.row == row) {
+            if (entry.col == col) {
+                entry.color = foregroundColor;
+                p.updateRowForegroundColors();
+                return;
+            }
+        }
     }
-    p.updateRowColors();
+    state.rowForegroundColor.push_back( {row, col, foregroundColor} );
+    p.updateRowForegroundColors();
+}
+
+auto ListView::resetRowForegroundColor(std::optional<unsigned> row, std::optional<unsigned> col) -> void {
+    if (row == std::nullopt)
+        state.rowForegroundColor.clear();
+    else {
+        for (auto it = state.rowForegroundColor.begin(); it != state.rowForegroundColor.end();) {
+            if (it->row == row && it->col == col)
+                it = state.rowForegroundColor.erase(it);
+            else
+                ++it;
+        }
+    }
+    p.updateRowForegroundColors();
 }
 
 auto ListView::rowBackgroundColor(unsigned row) -> std::optional<unsigned> {
@@ -1244,7 +1262,7 @@ auto ListView::rowBackgroundColor(unsigned row) -> std::optional<unsigned> {
     return std::nullopt;
 }
 
-auto ListView::setRowBackgroundColor(unsigned row, unsigned backgroundColor) -> void {
+auto ListView::setRowBackgroundColor(unsigned backgroundColor, unsigned row) -> void {
     for (auto& pair : state.rowBackgroundColor) {
         if(pair.first == row) {
             pair.second = backgroundColor;
@@ -1270,6 +1288,7 @@ auto ListView::resetRowColors() -> void {
     state.rowBackgroundColor.clear();
     state.rowForegroundColor.clear();
     p.updateRowColors();
+    p.updateRowForegroundColors();
 }
 
 auto ListView::setSpacing(unsigned spacing) -> void {

@@ -19,11 +19,16 @@ namespace LIBC64 {
 }
 
 struct Debugger : GUIKIT::Window {
-    Debugger( Emulator::Interface* emulator );
+    enum class Mode {
+        CPU, Memory
+    } mode;
+
+    Debugger( Emulator::Interface* emulator, Mode mode );
     ~Debugger();
 
     Emulator::Interface* emulator;
     GUIKIT::Settings* settings = nullptr;
+    std::string screenIdent;
 
     struct {
         unsigned addr = 0;
@@ -47,6 +52,8 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image memoryImg;
     GUIKIT::Image exceptionImg;
     GUIKIT::Image clearImg;
+    GUIKIT::Image offImg;
+    GUIKIT::Image onImg;
 
     struct CPU : GUIKIT::HorizontalLayout {
         GUIKIT::SwitchLayout switchLayout;
@@ -112,6 +119,45 @@ struct Debugger : GUIKIT::Window {
         CPU(Debugger* debugger);
     };
 
+    struct Memory : GUIKIT::HorizontalLayout {
+        GUIKIT::ListView bankList;
+        GUIKIT::ListView pageList;
+
+        Memory(Debugger* debugger);
+    };
+
+    struct C64MemControl : GUIKIT::HorizontalLayout {
+
+        struct Element : GUIKIT::HorizontalLayout {
+            GUIKIT::ImageView imgView;
+            GUIKIT::Label label;
+
+            Element(Debugger* debugger);
+        };
+
+        struct Left : GUIKIT::VerticalLayout {
+            Element exrom;
+            Element game;
+
+            Left(Debugger* debugger);
+        } left;
+
+        struct Middle : GUIKIT::VerticalLayout {
+            Element charen;
+
+            Middle(Debugger* debugger);
+        } middle;
+
+        struct Right : GUIKIT::VerticalLayout {
+            Element loram;
+            Element hiram;
+
+            Right(Debugger* debugger);
+        } right;
+
+        C64MemControl(Debugger* debugger);
+    };
+
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;
         GUIKIT::Button resume;
@@ -123,9 +169,15 @@ struct Debugger : GUIKIT::Window {
         GUIKIT::LineEdit searchEdit;
         GUIKIT::ImageView search;
         GUIKIT::Label position;
+
+        C64MemControl* c64MemControl = nullptr;
         GUIKIT::CheckBox showTips;
-        Control();
+        Control(Debugger* debugger);
     } control;
+
+    uint8_t bankListStore[256] = {0};
+    uint8_t* memDump = nullptr;
+    uint8_t* memDumpOld = nullptr;
 
     struct Instruction {
         unsigned addr;
@@ -142,14 +194,17 @@ struct Debugger : GUIKIT::Window {
 
     std::vector<Watcher> watchers;
     Instruction instructions[LIST_INSTRUCTIONS];
-    GUIKIT::Timer timer;
-    GUIKIT::Timer timerVisibility;
+    static GUIKIT::Timer* timer;
+    static GUIKIT::Timer* timerVisibility;
 
-    CPU* cpu;
+    CPU* cpu = nullptr;
+    Memory* memory = nullptr;
 
     GUIKIT::VerticalLayout layout;
 
     auto build() -> void;
+    auto buildCPU() -> void;
+    auto buildMem() -> void;
     auto translate() -> void;
     auto update() -> void;
     auto cacheInstructions(unsigned addr) -> void;
@@ -166,16 +221,30 @@ struct Debugger : GUIKIT::Window {
     auto enableWatcher(unsigned row, bool state) -> void;
     auto findInstructionRowBy(unsigned addr) -> std::optional<unsigned>;
 
-    auto debugCallback(DebuggerAction action, unsigned addr, bool maybeModified) -> void;
-    auto debugCallback() -> void;
+    static auto Callback(DebuggerAction action, unsigned addr, bool maybeModified) -> void;
+    static auto Callback() -> void;
     auto updateToolboxVisibility() -> void;
     auto makeVisible() -> void;
-    auto reset() -> void;
 
     auto update68k(LIBAMI::DebuggerSnapshot& s) -> void;
     auto update6510(LIBC64::DebuggerSnapshot& s) -> void;
+    auto updateMemory(LIBAMI::DebuggerSnapshot& s) -> void;
+    auto updateMemory(LIBC64::DebuggerSnapshot& s) -> void;
+    auto loadMemoryBank16(uint8_t bank, bool swap) -> void;
+    auto loadMemoryBank12(uint8_t bank, bool swap) -> void;
     auto updateCpuFlags(const char* flagIdent, unsigned flags) -> void;
     auto updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
+    auto updateWatcherSelection() -> void;
+    auto initWatchers() -> void;
 
-    auto hex( uint32_t val, int length = -1 ) -> std::string;
+    static auto hex( uint32_t val, int length = -1 ) -> std::string;
+    static auto toAscii(const uint8_t* buf, int len, char* result, char pad = '.') -> void;
+
+    static auto stepOut(Emulator::Interface* emulator) -> void;
+    static auto stepInto(Emulator::Interface* emulator) -> void;
+    static auto stepOver(Emulator::Interface* emulator) -> void;
+    static auto stepLine(Emulator::Interface* emulator) -> void;
+    static auto stepFrame(Emulator::Interface* emulator) -> void;
+    static auto resume(Emulator::Interface* emulator) -> void;
+    static auto reset() -> void;
 };

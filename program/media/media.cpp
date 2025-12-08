@@ -1363,8 +1363,8 @@ auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundCol
                 mediaGroupLayout->listings.resetSelectionColor();
 
             if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
-                mediaGroupLayout->listings.setRowForegroundColor( 0, backgroundColor );
-                mediaGroupLayout->listings.setRowBackgroundColor( 0, foregroundColor );
+                mediaGroupLayout->listings.setRowForegroundColor( backgroundColor, 0 );
+                mediaGroupLayout->listings.setRowBackgroundColor( foregroundColor, 0 );
             } else {
                 mediaGroupLayout->listings.resetRowForegroundColor( 0 );
                 mediaGroupLayout->listings.resetRowBackgroundColor( 0 );
@@ -1572,6 +1572,7 @@ auto MediaLayout::convertListing( std::vector<Emulator::Interface::Listing>& emu
 }
 
 auto MediaLayout::updateListingFont( unsigned fontSize ) -> void {
+    auto selectedLayout = this->getActiveMediaGroupLayout();
 
     for(auto& nav : navElements) {
         if (!nav.mediaGroup || !nav.layout)

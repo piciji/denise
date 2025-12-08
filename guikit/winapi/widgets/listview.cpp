@@ -25,7 +25,7 @@ auto pListView::append(const std::vector<std::string>& list, bool preventColumnR
     ListView_InsertItem(hwnd, &item);
     locked = false;
     for(unsigned column = 0; column < list.size(); column++) {
-        utf16_t wtext(list.at(column));
+        utf16_t wtext(list[column]);
         ListView_SetItemText(hwnd, row, column, wtext );
     }
     if (!preventColumnResizing)
@@ -38,8 +38,10 @@ auto pListView::lockRedraw() -> void {
 }
 
 auto pListView::unlockRedraw() -> void {
-    if (hwnd)
+    if (hwnd) {
         SendMessage( hwnd, WM_SETREDRAW, 1, 0);
+        InvalidateRect(hwnd, 0, false);
+    }
 }
 
 auto pListView::remove(unsigned selection) -> void {
@@ -63,12 +65,23 @@ auto pListView::buildHeaderText(std::vector<std::string> list) -> void {
     while(ListView_DeleteColumn(hwnd, 0));
 
     if(list.size() == 0) list.push_back("");
+    auto& aligns = listView.state.aligns;
 
     for(unsigned i = 0; i < list.size(); i++) {
+        int fmt = LVCFMT_LEFT;
+        if (i < aligns.size()) {
+            switch (aligns[i]) {
+                default:
+                case ListView::Align::Left: fmt = LVCFMT_LEFT; break;
+                case ListView::Align::Right: fmt = LVCFMT_RIGHT; break;
+                case ListView::Align::Center: fmt = LVCFMT_CENTER; break;
+            }
+        }
+
         utf16_t wtext( list[i] );
         LVCOLUMN column;
         column.mask = LVCF_FMT | LVCF_TEXT | LVCF_SUBITEM;
-        column.fmt = LVCFMT_LEFT;
+        column.fmt = fmt;
         column.iSubItem = i;
         column.pszText = wtext;
         ListView_InsertColumn(hwnd, i, &column);
@@ -118,10 +131,34 @@ auto pListView::setSelection(unsigned selection) -> void {
     locked = false;
 }
 
-auto pListView::setText(unsigned selection, unsigned position, const std::string& text) -> void {
+auto pListView::setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing) -> void {
     utf16_t wtext(text);
     if (hwnd) ListView_SetItemText(hwnd, selection, position, wtext);
-    autoSizeColumns();
+    if (!preventColumnResizing)
+        autoSizeColumns();
+}
+
+auto pListView::getThemeHeaderColors(HPEN& captionPen) -> HBRUSH {
+    static bool initialized = false;
+    static HBRUSH darkHeadBrush = nullptr;
+    static HPEN pen = nullptr;
+
+    if (!initialized && pApplication::pOpenThemeData) {
+        HTHEME hTheme = pApplication::pOpenThemeData(NULL, L"ItemsView");
+        if (hTheme) {
+            COLORREF color;
+            if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
+                darkHeadBrush = CreateSolidBrush( RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+
+            if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, pApplication::useDark ? TMT_EDGEDKSHADOWCOLOR : TMT_EDGEFILLCOLOR, &color)))
+                pen = CreatePen(PS_SOLID, 1, color);
+
+            pApplication::pCloseThemeData(hTheme);
+        }
+        initialized = true;
+    }
+    captionPen = pen;
+    return darkHeadBrush;
 }
 
 auto CALLBACK pListView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
@@ -139,13 +176,42 @@ auto CALLBACK pListView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             break;
 
         case WM_NOTIFY: {
-            if (pApplication::useDark && (reinterpret_cast<LPNMHDR>(lparam)->code == NM_CUSTOMDRAW)) {
+            if ((pApplication::useDark || listView->state.centerHeader) && (reinterpret_cast<LPNMHDR>(lparam)->code == NM_CUSTOMDRAW)) {
                 LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lparam);
                 switch (nmcd->dwDrawStage) {
                     case CDDS_PREPAINT:
                         return CDRF_NOTIFYITEMDRAW;
+
                     case CDDS_ITEMPREPAINT:
-                        SetTextColor(nmcd->hdc, DARK_FG_COL);
+                        if (pApplication::useDark)
+                            SetTextColor(nmcd->hdc, DARK_FG_COL);
+
+                        if (listView->state.centerHeader) {
+                            if (nmcd->dwItemSpec < listView->columnCount()) {
+                                HPEN pen;
+                                HBRUSH darkHeadBrush = getThemeHeaderColors(pen);
+
+                                utf16_t wtext(listView->state.header[nmcd->dwItemSpec]);
+                                SetBkMode(nmcd->hdc, TRANSPARENT);
+                                if (pApplication::useDark && darkHeadBrush)
+                                    FillRect(nmcd->hdc, &nmcd->rc, darkHeadBrush);
+
+                                if (pen) {
+                                    SelectObject( nmcd->hdc, pen);
+                                    MoveToEx( nmcd->hdc, nmcd->rc.right - 1, nmcd->rc.top, NULL );
+                                    LineTo( nmcd->hdc, nmcd->rc.right - 1, nmcd->rc.bottom );
+                                }
+
+                                auto rect = nmcd->rc;
+                                int _h = rect.bottom - rect.top;
+                                int _th = listView->p.getMinimumSize().height;
+                                if (_h > _th)
+                                    rect.top += (_h - _th) / 2;
+
+                                DrawText(nmcd->hdc, wtext, -1, &rect, DT_CENTER | DT_NOPREFIX);
+                                return CDRF_SKIPDEFAULT;
+                            }
+                        }
                         return CDRF_DODEFAULT;
                 }
             }
@@ -397,23 +463,44 @@ auto pListView::onCustomDraw(LPARAM lparam) -> LRESULT {
     switch(lvcd->nmcd.dwDrawStage) {
         case CDDS_PREPAINT:
             return CDRF_NOTIFYITEMDRAW;
-        case CDDS_ITEMPREPAINT:
-            if(!pApplication::useDark && (listView.columnCount() >= 2) && (lvcd->nmcd.dwItemSpec % 2) )
-                lvcd->clrTextBk = 0xfff8f0 ^ 0x0f0f0f;
 
-            auto rowColor = listView.rowForegroundColor( lvcd->nmcd.dwItemSpec );
+        case CDDS_ITEMPREPAINT | CDDS_SUBITEM: {
+            auto rowColor = listView.rowForegroundColor( lvcd->nmcd.dwItemSpec, lvcd->iSubItem );
             if (rowColor.has_value()) {
                 unsigned color = rowColor.value();
                 lvcd->clrText = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+            } else {
+                if (pApplication::useDark)
+                    lvcd->clrText = DARK_FG_COL;
+                else
+                    lvcd->clrText = GetSysColor(COLOR_WINDOWTEXT);
+            }
+            return CDRF_NEWFONT;
+        } break;
+
+        case CDDS_ITEMPREPAINT: {
+            if((listView.columnCount() >= 2) && (lvcd->nmcd.dwItemSpec % 2) ) {
+                lvcd->clrTextBk = pApplication::useDark ? DARK_BG_COL ^ 0x060606 : 0xfff8f0 ^ 0x0f0f0f;
             }
 
-            rowColor = listView.rowBackgroundColor( lvcd->nmcd.dwItemSpec );
+            auto rowColor = listView.rowBackgroundColor( lvcd->nmcd.dwItemSpec );
             if (rowColor.has_value()) {
                 unsigned color = rowColor.value();
                 lvcd->clrTextBk = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
             }
 
-            break;
+            for (auto& entry : listView.state.rowForegroundColor) {
+                if (entry.col != std::nullopt)
+                    return CDRF_NOTIFYSUBITEMDRAW;
+            }
+
+            rowColor = listView.rowForegroundColor(lvcd->nmcd.dwItemSpec);
+            if (rowColor.has_value()) {
+                unsigned color = rowColor.value();
+                lvcd->clrText = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+            }
+
+        } break;
     }
     return CDRF_DODEFAULT;
 }
@@ -558,7 +645,6 @@ auto pListView::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
 }
 
 auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
-    
     HBRUSH hBrush = nullptr;
     COLORREF colorRef;
     
@@ -566,14 +652,8 @@ auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
         if (listView.state.overrideSelectionColor) {
             unsigned color = listView.state.selectionForegroundColor;
             colorRef = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
-        } else {
-            auto rowColor = listView.rowForegroundColor( lDraw->itemID );
-            if (rowColor.has_value()) {
-                unsigned color = rowColor.value();
-                colorRef = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
-            } else
-                colorRef = GetSysColor( COLOR_HIGHLIGHTTEXT );
-        }
+        } else
+            colorRef = GetSysColor( COLOR_HIGHLIGHTTEXT );
 
         if (!hiBrush) {
             if (listView.state.overrideSelectionColor) {

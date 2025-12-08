@@ -140,7 +140,7 @@ SettingsLayout::SettingsLayout() {
 	switches.pause.setChecked(globalSettings->get<bool>("pause_focus_loss", false));
     switches.pause.onToggle = [&](bool checked) {
         globalSettings->set<bool>("pause_focus_loss", checked);
-        if (program->getActiveDebugger())
+        if (program->hasActiveDebugger())
             return;
         program->isPause &= ~2;
         if (checked)

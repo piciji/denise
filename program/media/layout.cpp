@@ -350,7 +350,7 @@ auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& e
     for( auto listing : mediaLayout->convertListing( emuListings, false ) )
         rows.push_back({listing});
         
-    listings.append(rows);
+    listings.appendMulti(rows);
 
     if (!mediaLayout->settings->get<bool>("software_preview_tooltips", true ))
         return;
@@ -368,7 +368,7 @@ auto MediaGroupLayout::fillListing( std::vector<GUIKIT::BrowserWindow::Listing>&
     for( auto listing : emuListings ) 
         rows.push_back({listing.entry});
         
-    listings.append(rows);
+    listings.appendMulti(rows);
 		
     if (!mediaLayout->settings->get<bool>("software_preview_tooltips", true ))
         return;
@@ -472,6 +472,7 @@ auto MediaGroupLayout::applyFont(unsigned fontSize) -> void {
 
     auto customFont = GUIKIT::Window::getCustomFont(mediaLayout->emulator);
 
+    listings.setSelected( false );
     if (customFont) {
         listings.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust));
 
@@ -603,8 +604,8 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
             previewBox.resetSelectionColor();
 
         if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
-            previewBox.setRowForegroundColor( 0, backgroundColor );
-            previewBox.setRowBackgroundColor( 0, foregroundColor );
+            previewBox.setRowForegroundColor( backgroundColor, 0 );
+            previewBox.setRowBackgroundColor( foregroundColor, 0 );
         } else {
             previewBox.resetRowForegroundColor( 0 );
             previewBox.resetRowBackgroundColor( 0 );
@@ -618,7 +619,7 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
     }
 
     unsigned newWidth = settings->get<unsigned>("dialog_preview_width", 450, {200, 600});
-    unsigned newHeight = 80;
+    unsigned newHeight = 100;
     if (GUIKIT::Application::isCocoa())
         newHeight = settings->get<unsigned>("dialog_preview_height", 200, {50, 400});
 

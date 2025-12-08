@@ -564,11 +564,9 @@ struct pListView : pWidget {
     ListView& listView;
     std::vector<Image*> images;
     int lastItem = -1;
-    
-    // for ownerdraw
+
     HBRUSH bgBrush = nullptr;
     HBRUSH hiBrush = nullptr;
-   // HBRUSH firstRowBrush = nullptr;
     std::vector<std::pair<unsigned, HBRUSH>> rowBrushes;
 
     auto append(const std::vector<std::string>& list, bool preventColumnResizing = false) -> void;
@@ -581,7 +579,7 @@ struct pListView : pWidget {
     auto setHeaderVisible(bool visible) -> void;
     auto setSelection(unsigned selection) -> void;
     auto setSelected(bool selected) -> void;
-    auto setText(unsigned selection, unsigned position, const std::string& text) -> void;
+    auto setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing) -> void;
     auto rebuild() -> void;
     auto create() -> void;
     auto setFont(std::string font) -> void;
@@ -600,6 +598,7 @@ struct pListView : pWidget {
     auto colorRowTooltips( bool colorTip ) -> void {}
     auto lockRedraw() -> void;
     auto unlockRedraw() -> void;
+    static auto getThemeHeaderColors(HPEN& captionPen) -> HBRUSH;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;    
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
@@ -615,6 +614,7 @@ struct pListView : pWidget {
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
     auto findRowBrush(unsigned row) -> HBRUSH;
     auto updateRowColors() -> void;
+    auto updateRowForegroundColors() -> void {}
     auto updateSpacing() -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) {}

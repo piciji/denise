@@ -1,5 +1,6 @@
 
 #pragma once
+#include "debugger/debugger.h"
 
 #ifndef APP_NAME
 #define APP_NAME "Denise"
@@ -34,8 +35,8 @@
 
 #define ERROR_COLOR 0xff4500
 #define SUCCESS_COLOR 0x009911
-//#define DEBUG_COLOR 0xff7780
 #define DEBUG_COLOR 0xff514f
+#define UNUSED_COLOR 0x666666
 
 #include <vector>
 #include "../guikit/api.h"
@@ -219,7 +220,10 @@ struct Program : Emulator::Interface::Bind {
     auto setJit(Emulator::Interface* emulator) -> void;
     auto setRewind(Emulator::Interface* emulator) -> void;
 
-    auto getActiveDebugger() -> Debugger*;
+    auto openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -> void;
+    auto hasActiveDebugger() -> bool;
+    auto hasFocusedDebugger() -> bool;
+    auto getActiveDebuggers() -> std::vector<Debugger*>;
     auto debugger(Emulator::Interface::DebuggerAction action, unsigned addr, bool maybeModified) -> void override;
 
     static auto hasFocus() -> bool;

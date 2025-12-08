@@ -367,8 +367,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             view->updateScreenshotUI();
         }
 
-	    for (auto debugger : debuggers)
-	        debugger->reset();
+	    Debugger::reset();
 
 		resetRunAhead();
 
@@ -511,8 +510,7 @@ auto Program::hasFocus() -> bool {
         if (emuView->focused())
             return true;
 
-    auto debugger = program->getActiveDebugger();
-    if (debugger && debugger->focused())
+    if (program->hasFocusedDebugger())
         return true;
 
     return false;
@@ -839,21 +837,52 @@ auto Program::getAMIModelValue(LIBAMI::Interface::ModelId modelId) -> int {
     return 0;
 }
 
-auto Program::getActiveDebugger() -> Debugger* {
+auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -> void {
+    for (auto debugger : debuggers) {
+        if (debugger->emulator == emulator && debugger->mode == mode) {
+            debugger->makeVisible();
+            return;
+        }
+    }
+    auto debugger = new Debugger(emulator, mode);
+    debuggers.push_back(debugger);
+    debugger->makeVisible();
+}
+
+auto Program::hasActiveDebugger() -> bool {
     for (auto debugger : debuggers) {
         if (debugger->emulator == activeEmulator) {
             if (debugger->visible())
-                return debugger;
-            break;
+                return true;
         }
     }
-    return nullptr;
+    return false;
+}
+
+auto Program::hasFocusedDebugger() -> bool {
+    for (auto debugger : debuggers) {
+        if (debugger->emulator == activeEmulator) {
+            if (debugger->visible() && debugger->focused())
+                return true;
+        }
+    }
+    return false;
+}
+
+auto Program::getActiveDebuggers() -> std::vector<Debugger*> {
+    std::vector<Debugger*> out;
+    for (auto debugger : debuggers) {
+        if (debugger->emulator == activeEmulator) {
+            if (debugger->visible())
+                out.push_back(debugger);
+        }
+    }
+    return out;
 }
 
 auto Program::debugger(Emulator::Interface::DebuggerAction action, unsigned addr, bool maybeModified) -> void {
-    auto debugger = getActiveDebugger();
-    if (debugger) {
+    if (hasActiveDebugger()) {
         isPause |= 2;
-        debugger->debugCallback( action, addr, maybeModified );
+        Debugger::Callback( action, addr, maybeModified );
     }
 }

@@ -210,7 +210,7 @@ auto View::build() -> void {
     };
 
     onMinimize = [this]() {
-        if (program->quitInProgress || program->getActiveDebugger())
+        if (program->quitInProgress || program->hasActiveDebugger())
             return;
         static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
         program->isPause &= ~2;
@@ -228,7 +228,7 @@ auto View::build() -> void {
     };
 
     onFocus = [this]() {
-        if (!program->getActiveDebugger())
+        if (!program->hasActiveDebugger())
             program->isPause &= ~2;
     };
 
@@ -240,7 +240,7 @@ auto View::build() -> void {
         if (inputDriver && inputDriver->mIsAcquired())
             inputDriver->mUnacquire();
 
-        if (program->getActiveDebugger())
+        if (program->hasActiveDebugger())
             return;
 
         program->isPause &= ~2;
@@ -1317,19 +1317,21 @@ auto View::buildMenu() -> void {
 	    };
         sM.system->append( *sM.systemManagement );
 
-        sM.debugger = new GUIKIT::MenuItem;
+        sM.debugger = new GUIKIT::Menu;
         sM.debugger->setIcon( debugImage );
-        sM.debugger->onActivate = [this, emulator]() {
-            for (auto debugger : debuggers) {
-                if (debugger->emulator == emulator) {
-                    debugger->makeVisible();
-                    return;
-                }
-            }
-            auto debugger = new Debugger(emulator);
-            debuggers.push_back(debugger);
-            debugger->makeVisible();
+
+        sM.debuggerCpu = new GUIKIT::MenuItem;
+        sM.debuggerCpu->onActivate = [this, emulator]() {
+            program->openDebugger(emulator, Debugger::Mode::CPU);
         };
+        sM.debugger->append( *sM.debuggerCpu );
+
+        sM.debuggerMem = new GUIKIT::MenuItem;
+        sM.debuggerMem->onActivate = [this, emulator]() {
+            program->openDebugger(emulator, Debugger::Mode::Memory);
+        };
+        sM.debugger->append( *sM.debuggerMem );
+
         sM.system->append( *sM.debugger );
             
         sM.configurations = new GUIKIT::MenuItem;
@@ -2075,6 +2077,8 @@ auto View::translate() -> void {
 
         sysMenu.systemManagement->setText(trans->get("system_management") + "...");
         sysMenu.debugger->setText(trans->get("Debugger"));
+        sysMenu.debuggerCpu->setText(trans->get("CPU"));
+        sysMenu.debuggerMem->setText(trans->get("MEM"));
 
         sysMenu.audio->setText(trans->get("Audio") + "...");
         sysMenu.firmware->setText(trans->get("Firmware") + "...");
