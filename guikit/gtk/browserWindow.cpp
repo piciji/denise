@@ -143,8 +143,8 @@ auto pBrowserWindow::selectionHandler(GtkFileChooser* chooser, gpointer data) ->
 
             	if (instance->listView) {
                     if (state.contentView.overrideFirstRowColor) {
-                    	instance->listView->setRowForegroundColor(0, state.contentView.firstRowForegroundColor);
-                    	instance->listView->setRowBackgroundColor(0, state.contentView.firstRowBackgroundColor);
+                    	instance->listView->setRowForegroundColor( state.contentView.firstRowForegroundColor, 0);
+                    	instance->listView->setRowBackgroundColor( state.contentView.firstRowBackgroundColor, 0);
                     }
 
             		for(auto& listing : listings) {

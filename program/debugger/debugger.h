@@ -236,6 +236,7 @@ struct Debugger : GUIKIT::Window {
     auto updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
     auto updateWatcherSelection() -> void;
     auto initWatchers() -> void;
+    auto updateC64MemControl(uint8_t _mode, bool init = false) -> void;
 
     static auto hex( uint32_t val, int length = -1 ) -> std::string;
     static auto toAscii(const uint8_t* buf, int len, char* result, char pad = '.') -> void;

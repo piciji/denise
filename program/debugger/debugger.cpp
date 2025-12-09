@@ -219,7 +219,6 @@ Debugger::Memory::Memory(Debugger* debugger) {
 
 Debugger::C64MemControl::Element::Element(Debugger* debugger) {
     imgView.setStore( 0 );
-    imgView.setImage( &debugger->offImg );
     append(imgView, {0u, 0u}, 2);
     append(label, {0u, 0u});
     setAlignment( 0.5 );
@@ -506,6 +505,8 @@ auto Debugger::buildMem() -> void {
         memDump = new uint8_t[0x1000];
         memDumpOld = new uint8_t[0x1000];
         std::memset(memDumpOld, 0, 0x1000);
+
+        updateC64MemControl(0, true);
     }
 
     memory->bankList.onChange = [this]() {
@@ -720,7 +721,9 @@ auto Debugger::translate() -> void {
         cpu->state.trace.clear.setTooltip( showTips? trans->getA( "clear trace") : "" );
     } else if (mode == Mode::Memory) {
         memory->bankList.setHeaderText( {trans->getA( "address"), trans->getA( "assignment") } );
-        memory->pageList.state.header[0] = trans->getA( "address" );
+        auto header = memory->pageList.state.header;
+        header[0] = trans->getA( "address" );;
+        memory->pageList.setHeaderText(header);
     }
 }
 
@@ -869,7 +872,10 @@ auto Debugger::updateMemory(LIBC64::DebuggerSnapshot& s) -> void {
 
     control.position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
 
-    uint8_t _m = s.mode;
+    updateC64MemControl(s.mode);
+}
+
+auto Debugger::updateC64MemControl(uint8_t _mode, bool init) -> void {
     unsigned i = 0;
     C64MemControl::Element* elements[] = {
         &control.c64MemControl->left.exrom, &control.c64MemControl->left.game,
@@ -877,9 +883,9 @@ auto Debugger::updateMemory(LIBC64::DebuggerSnapshot& s) -> void {
     };
 
     for (auto el : elements) {
-        bool _on = (_m >> (4 - i)) & 1;
+        bool _on = (_mode >> (4 - i)) & 1;
 
-        if (el->imgView.getStore() != _on) {
+        if (init || (el->imgView.getStore() != _on)) {
             el->imgView.setImage( _on ? &onImg : &offImg );
             el->imgView.setStore(_on);
         }
@@ -941,19 +947,32 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
     auto* pOld = reinterpret_cast<uint16_t*>(memDumpOld);
     emulator->getMemoryDump( bank, pNew );
 
+    unsigned visibleRow = pageList.getFirstVisibleRow();
+    //fprintf(stderr, "%i ", visibleRow);
+    unsigned allowedChanges = 20;
+
     pageList.lockRedraw();
     unsigned pos = 0;
     unsigned line = 0;
-    bool changed;
+    bool colChanged;
+    bool lineChanged = false;
+    bool changeLock = false;
+    bool pause = !!(program->isPause & 2);
+    if (pause)
+        visibleRow = 0;
     std::string val;
     auto mapping = bankListStore[bank];
     bool _swapWords = mapping == 1 || mapping == 2 || mapping == 3 || mapping == 4 || mapping == 5 || mapping == 10;
     char ascii[17];
 
     while (true) {
-        changed = *pNew != *pOld;
+        colChanged = !changeLock && (line >= visibleRow) && *pNew != *pOld;
 
-        if (changed) {
+        if (colChanged) {
+            lineChanged = true;
+            if (allowedChanges)
+                allowedChanges--;
+
             if (_swapWords)
                 val = hex( _swapWord(*pNew) );
             else
@@ -961,7 +980,7 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
             pageList.setText( line, 1 + (pos & 7), val, true );
         }
 
-        if (!swap && changed)
+        if (!swap && colChanged)
             pageList.setRowForegroundColor(DEBUG_COLOR, line, 1 + (pos & 7));
         else if (pageList.rowForegroundColor( line, 1 + (pos & 7) ) != std::nullopt)
             pageList.resetRowForegroundColor(line, 1 + (pos & 7));
@@ -970,16 +989,21 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
         pOld++;
 
         if ((++pos & 7) == 0) {
-            const uint8_t* _a = (const uint8_t*)pNew;
-            _a -= 16;
+            if (lineChanged) {
+                const uint8_t* _a = (const uint8_t*)pNew;
+                _a -= 16;
+                toAscii(_a, 16, ascii);
 
-            toAscii(_a, 16, ascii);
-
-            pageList.setText( line, 9, ascii, true );
+                pageList.setText( line, 9, ascii, true );
+                lineChanged = false;
+            }
 
             line++;
             if (pos == 0x8000)
                 break;
+
+            if (!pause && !swap && !allowedChanges)
+                changeLock = true;
         }
     }
 
@@ -993,21 +1017,33 @@ auto Debugger::loadMemoryBank12(uint8_t bank, bool swap) -> void {
     auto* pOld = memDumpOld;
     emulator->getMemoryDump( bank, pNew );
 
+    unsigned visibleRow = pageList.getFirstVisibleRow();
+    //fprintf(stderr, "%i ", visibleRow);
+    unsigned allowedChanges = 20;
+
     pageList.lockRedraw();
     unsigned pos = 0;
     unsigned line = 0;
-    bool changed;
+    bool colChanged;
+    bool lineChanged = false;
+    bool changeLock = false;
+    bool pause = !!(program->isPause & 2);
+    if (pause)
+        visibleRow = 0;
     char ascii[17];
 
     while (true) {
-        changed = *pNew != *pOld;
+        colChanged = !changeLock && (line >= visibleRow) && *pNew != *pOld;
 
-        if (changed) {
+        if (colChanged) {
+            lineChanged = true;
+            if (allowedChanges)
+                allowedChanges--;
             std::string val = hex( *pNew );
             pageList.setText( line, 1 + (pos & 0xf), val, true );
         }
 
-        if (!swap && changed)
+        if (!swap && colChanged)
             pageList.setRowForegroundColor(DEBUG_COLOR, line, 1 + (pos & 0xf));
         else if (pageList.rowForegroundColor( line, 1 + (pos & 0xf) ) != std::nullopt)
             pageList.resetRowForegroundColor(line, 1 + (pos & 0xf));
@@ -1016,16 +1052,21 @@ auto Debugger::loadMemoryBank12(uint8_t bank, bool swap) -> void {
         pOld++;
 
         if ((++pos & 0xf) == 0) {
-            const uint8_t* _a = (const uint8_t*)pNew;
-            _a -= 16;
+            if (lineChanged) {
+                const uint8_t* _a = (const uint8_t*)pNew;
+                _a -= 16;
+                toAscii(_a, 16, ascii);
 
-            toAscii(_a, 16, ascii);
-
-            pageList.setText( line, 17, ascii, true );
+                pageList.setText( line, 17, ascii, true );
+                lineChanged = false;
+            }
 
             line++;
             if (pos == 0x1000)
                 break;
+
+            if (!pause && !swap && !allowedChanges)
+                changeLock = true;
         }
     }
 

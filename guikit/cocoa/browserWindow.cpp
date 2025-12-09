@@ -111,9 +111,9 @@
                 
                 if (listView) {
                     if (state.contentView.overrideFirstRowColor) {
-                        listView->setRowForegroundColor(0, state.contentView.firstRowForegroundColor);
+                        listView->setRowForegroundColor(state.contentView.firstRowForegroundColor, 0);
                         
-                        listView->setRowBackgroundColor(0, state.contentView.firstRowBackgroundColor);
+                        listView->setRowBackgroundColor(state.contentView.firstRowBackgroundColor, 0);
                     }
 
                     for(auto& row : rows) {
@@ -349,9 +349,9 @@ auto pBrowserWindow::buildView(bool save) -> void {
 
         listView->colorRowTooltips( state.contentView.colorTooltips );
         if (state.contentView.overrideFirstRowColor) {
-            listView->setRowForegroundColor(0, state.contentView.firstRowForegroundColor);
+            listView->setRowForegroundColor(state.contentView.firstRowForegroundColor, 0);
             
-            listView->setRowBackgroundColor(0, state.contentView.firstRowBackgroundColor);
+            listView->setRowBackgroundColor(state.contentView.firstRowBackgroundColor, 0);
         }
 
         listView->onActivate = [this]() {

@@ -97,6 +97,13 @@ auto pListView::buildHeaderText(std::vector<std::string> list) -> void {
     autoSizeColumns();
 }
 
+auto pListView::getFirstVisibleRow() -> unsigned {
+    if (!hwnd)
+        return 0;
+
+    return ListView_GetTopIndex(hwnd);
+}
+
 auto pListView::setHeaderText(std::vector<std::string> list) -> void {
 	if (!hwnd) return;
 	reset();

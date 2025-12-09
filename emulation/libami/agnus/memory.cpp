@@ -74,9 +74,9 @@ auto Agnus::peekWord(uint32_t adr) -> uint16_t {
         case MMIO_CIA: {
             uint8_t reg = (adr >> 8) & 0xf;
             switch(adr & 0x3000) {
-                case 0x0000: return cia1.read( reg ) | (cia2.read( reg ) << 8);
-                case 0x1000: return (dataBus >> 8) | (cia2.read( reg ) << 8);
-                case 0x2000: return cia1.read( reg ) | (dataBus << 8);
+                case 0x0000: return cia1.peek( reg ) | (cia2.peek( reg ) << 8);
+                case 0x1000: return (dataBus >> 8) | (cia2.peek( reg ) << 8);
+                case 0x2000: return cia1.peek( reg ) | (dataBus << 8);
             }
         } break;
         case SLOW_MEM:
@@ -121,16 +121,16 @@ auto Agnus::memoryDump(uint8_t bank, uint16_t* dump) -> void {
             uint8_t tempC1[16];
             uint8_t tempC2[16];
             for (uint8_t a = 0; a < 16; a++)
-                tempC1[a] = cia1.read( a );
+                tempC1[a] = cia1.peek( a );
             for (uint8_t a = 0; a < 16; a++)
-                tempC2[a] = cia2.read( a );
+                tempC2[a] = cia2.peek( a );
             for (unsigned addr = 0; addr < 0xffff; addr += 2) {
                 uint8_t reg = (addr >> 8) & 0xf;
                 switch(addr & 0x3000) {
-                    case 0x0000: *dump++ = tempC1[reg] | (tempC2[reg] << 8);
-                    case 0x1000: *dump++ = (dataBus >> 8) | (tempC2[reg] << 8);
-                    case 0x2000: *dump++ =  tempC1[reg] | (dataBus << 8);
-                    default: *dump++ = dataBus;
+                    case 0x0000: *dump++ = tempC1[reg] | (tempC2[reg] << 8); break;
+                    case 0x1000: *dump++ = (dataBus >> 8) | (tempC2[reg] << 8); break;
+                    case 0x2000: *dump++ =  tempC1[reg] | (dataBus << 8); break;
+                    default: *dump++ = dataBus; break;
                 }
             }
         } break;

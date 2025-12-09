@@ -440,7 +440,7 @@ struct pListView : pWidget {
     auto setHeaderVisible(bool visible) -> void;
     auto setSelection(unsigned selection) -> void;
     auto setSelected(bool selected) -> void;
-    auto setText(unsigned selection, unsigned position, const std::string& text) -> void;
+    auto setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing = false) -> void;
     auto init() -> void;
     auto create() -> void;
     auto setFont(std::string font) -> void;
@@ -452,11 +452,13 @@ struct pListView : pWidget {
 	auto setRowTooltip(unsigned selection, std::string tooltip) -> void {}
 	auto createCustomTooltip() -> void;
 	auto colorRowTooltips( bool colorTip ) -> void {}
-    auto lockRedraw() -> void {}
-    auto unlockRedraw() -> void {}
+    auto lockRedraw() -> void;
+    auto unlockRedraw() -> void;
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
 	auto updateRowColors() -> void {}
+	auto updateRowForegroundColors() -> void;
 	auto updateSpacing() -> void;
+	auto getFirstVisibleRow() -> unsigned;
 
     auto destroy() -> void;
 	auto applyDataFunc(GtkTreeViewColumn* gtkColumn, GtkCellRenderer* renderer, GtkTreeIter* iter, GtkTreeModel* model) -> void;
@@ -467,6 +469,7 @@ struct pListView : pWidget {
 	static auto onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip* tooltip, ListView* self) -> gboolean;
 	static auto onRealize(GtkTreeView* treeView, ListView* self) -> void;
 	static auto dataFunc(GtkTreeViewColumn* column, GtkCellRenderer* renderer, GtkTreeModel* model, GtkTreeIter* iter, pListView* p) -> void;
+	static auto getColPos(GtkTreeView* treeView, GtkTreeViewColumn* column) -> std::optional<unsigned>;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
     ~pListView() { destroy(); }

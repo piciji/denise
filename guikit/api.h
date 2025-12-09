@@ -791,6 +791,7 @@ struct ListView : Widget {
     auto selectionBackgroundColor() -> unsigned { return state.selectionBackgroundColor; }
     auto spacing() -> int { return state.spacing; }
     auto autoSizeColumns() -> void;
+    auto getFirstVisibleRow() -> unsigned;
 
     auto rowForegroundColor(unsigned row, std::optional<unsigned> col = std::nullopt) -> std::optional<unsigned>;
     auto setRowForegroundColor(unsigned foregroundColor, unsigned row, std::optional<unsigned> col = std::nullopt) -> void;

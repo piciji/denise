@@ -99,7 +99,7 @@ auto DasmHandler::indexedIndirect( uint8_t val ) -> DasmHandler& {
 auto DasmHandler::indirectIndexed( uint8_t val ) -> DasmHandler& {
     str.append("(");
     hex(val);
-    str.append(",Y)");
+    str.append("),Y");
     return *this;
 }
 

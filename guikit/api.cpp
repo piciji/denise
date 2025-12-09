@@ -1296,6 +1296,10 @@ auto ListView::setSpacing(unsigned spacing) -> void {
     p.updateSpacing();
 }
 
+auto ListView::getFirstVisibleRow() -> unsigned {
+    return p.getFirstVisibleRow();
+}
+
 ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) { p.init(); }
 
 auto TreeViewItem::append(TreeViewItem& item) -> void {

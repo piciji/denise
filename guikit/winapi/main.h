@@ -598,6 +598,7 @@ struct pListView : pWidget {
     auto colorRowTooltips( bool colorTip ) -> void {}
     auto lockRedraw() -> void;
     auto unlockRedraw() -> void;
+    auto getFirstVisibleRow() -> unsigned;
     static auto getThemeHeaderColors(HPEN& captionPen) -> HBRUSH;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;    
