@@ -369,7 +369,7 @@ struct pListView : pWidget {
     auto setHeaderVisible(bool visible) -> void;
     auto setSelection(unsigned selection) -> void;
     auto setSelected(bool selected) -> void;
-    auto setText(unsigned selection, unsigned position, const std::string& text) -> void;
+    auto setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing = false) -> void;
     auto init() -> void;
     auto setEnabled(bool enabled) -> void;
     auto setGeometry(Geometry geometry) -> void;
@@ -387,7 +387,9 @@ struct pListView : pWidget {
     auto unlockRedraw() -> void {}
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
     auto updateRowColors() -> void;
+    auto updateRowForegroundColors() -> void;
     auto updateSpacing() -> void {}
+    auto getFirstVisibleRow() -> unsigned;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
     ~pListView();

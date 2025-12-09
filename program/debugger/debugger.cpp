@@ -728,6 +728,9 @@ auto Debugger::translate() -> void {
 }
 
 auto Debugger::update() -> void {
+    if (emulator != activeEmulator)
+        return;
+    
     bool locked = emuThread->lock();
     unsigned addr;
 
@@ -948,7 +951,7 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
     emulator->getMemoryDump( bank, pNew );
 
     unsigned visibleRow = pageList.getFirstVisibleRow();
-    //fprintf(stderr, "%i ", visibleRow);
+    //fprintf(stderr, "%d\n", visibleRow);
     unsigned allowedChanges = 20;
 
     pageList.lockRedraw();
