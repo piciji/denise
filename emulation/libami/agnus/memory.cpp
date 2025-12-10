@@ -173,7 +173,7 @@ auto Agnus::memoryDump(uint8_t bank, uint16_t* dump) -> void {
         default:
         case Unmapped:
             for (unsigned addr = 0; addr < 0xffff; addr += 2)
-                *dump++ = 0;
+                *dump++ = dataBus;
             break;
     }
 }

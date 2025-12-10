@@ -616,7 +616,7 @@ auto pListView::updateRowForegroundColors() -> void {
 auto pListView::getFirstVisibleRow() -> unsigned {
     NSRect rect = [[(id)cocoaView content] visibleRect];
     NSRange rows = [[(id)cocoaView content] rowsInRect:rect];
-    return rows.location;
+    return rows.location > 2 ? rows.location + 2 : 0;
 }
 
 pListView::~pListView() {

@@ -176,8 +176,8 @@ Debugger::CPU::CPU(Debugger* debugger)
 
 Debugger::Memory::Memory(Debugger* debugger) {
     bankList.setHeaderText( { "bank", "mapping" } );
-    bankList.setFont( GUIKIT::Font::system( 11 ,"", true ) );
-    pageList.setFont( GUIKIT::Font::system( 11 ,"", true ) );
+    bankList.setFont( GUIKIT::Font::system( 10 ,"", true ) );
+    pageList.setFont( GUIKIT::Font::system( 10 ,"", true ) );
     bankList.setHeaderVisible( true );
     #define AL GUIKIT::ListView::Align::Left
     #define AR GUIKIT::ListView::Align::Right
@@ -520,6 +520,8 @@ auto Debugger::buildMem() -> void {
     };
 
     std::memset(bankListStore, 0, sizeof(bankListStore));
+    memory->bankList.setSelected();
+    memory->pageList.setSelected();
 }
 
 auto Debugger::buildCPU() -> void {
@@ -952,29 +954,30 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
 
     unsigned visibleRow = pageList.getFirstVisibleRow();
     //fprintf(stderr, "%d\n", visibleRow);
-    unsigned allowedChanges = 20;
+    unsigned allowedTextChanges = 24 * 8;
+    unsigned allowedColorChanges = 24 * 8;
 
     pageList.lockRedraw();
     unsigned pos = 0;
     unsigned line = 0;
-    bool colChanged;
     bool lineChanged = false;
-    bool changeLock = false;
+    
+    bool colorChangeLock = swap;
+    bool textChangeLock = false;
+    
     bool pause = !!(program->isPause & 2);
-    if (pause)
-        visibleRow = 0;
+
     std::string val;
     auto mapping = bankListStore[bank];
     bool _swapWords = mapping == 1 || mapping == 2 || mapping == 3 || mapping == 4 || mapping == 5 || mapping == 10;
     char ascii[17];
 
     while (true) {
-        colChanged = !changeLock && (line >= visibleRow) && *pNew != *pOld;
-
-        if (colChanged) {
+        
+        if (!textChangeLock && (pause || (line >= visibleRow)) && (*pNew != *pOld) ) {
             lineChanged = true;
-            if (allowedChanges)
-                allowedChanges--;
+            if (allowedTextChanges)
+                allowedTextChanges--;
 
             if (_swapWords)
                 val = hex( _swapWord(*pNew) );
@@ -983,9 +986,11 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
             pageList.setText( line, 1 + (pos & 7), val, true );
         }
 
-        if (!swap && colChanged)
+        if (!colorChangeLock && (line >= visibleRow) && (*pNew != *pOld) ) {
+            if (allowedColorChanges)
+                allowedColorChanges--;
             pageList.setRowForegroundColor(DEBUG_COLOR, line, 1 + (pos & 7));
-        else if (pageList.rowForegroundColor( line, 1 + (pos & 7) ) != std::nullopt)
+        } else if (pageList.rowForegroundColor( line, 1 + (pos & 7) ) != std::nullopt)
             pageList.resetRowForegroundColor(line, 1 + (pos & 7));
 
         pNew++;
@@ -1005,8 +1010,10 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
             if (pos == 0x8000)
                 break;
 
-            if (!pause && !swap && !allowedChanges)
-                changeLock = true;
+            if (!pause && !allowedTextChanges && !textChangeLock)
+                textChangeLock = true;
+            if (!allowedColorChanges && !colorChangeLock)
+                colorChangeLock = true;
         }
     }
 
@@ -1019,36 +1026,39 @@ auto Debugger::loadMemoryBank12(uint8_t bank, bool swap) -> void {
     auto* pNew = memDump;
     auto* pOld = memDumpOld;
     emulator->getMemoryDump( bank, pNew );
-
+    
     unsigned visibleRow = pageList.getFirstVisibleRow();
-    //fprintf(stderr, "%i ", visibleRow);
-    unsigned allowedChanges = 20;
+    //fprintf(stderr, "%d\n", visibleRow);
+    unsigned allowedTextChanges = 24 * 16;
+    unsigned allowedColorChanges = 24 * 16;
 
     pageList.lockRedraw();
     unsigned pos = 0;
     unsigned line = 0;
-    bool colChanged;
     bool lineChanged = false;
-    bool changeLock = false;
+    
+    bool colorChangeLock = swap;
+    bool textChangeLock = false;
+    
     bool pause = !!(program->isPause & 2);
-    if (pause)
-        visibleRow = 0;
+
     char ascii[17];
 
     while (true) {
-        colChanged = !changeLock && (line >= visibleRow) && *pNew != *pOld;
 
-        if (colChanged) {
+        if (!textChangeLock && (pause || (line >= visibleRow)) && (*pNew != *pOld) ) {
             lineChanged = true;
-            if (allowedChanges)
-                allowedChanges--;
+            if (allowedTextChanges)
+                allowedTextChanges--;
             std::string val = hex( *pNew );
             pageList.setText( line, 1 + (pos & 0xf), val, true );
         }
 
-        if (!swap && colChanged)
+        if (!colorChangeLock && (line >= visibleRow) && (*pNew != *pOld) ) {
+            if (allowedColorChanges)
+                allowedColorChanges--;
             pageList.setRowForegroundColor(DEBUG_COLOR, line, 1 + (pos & 0xf));
-        else if (pageList.rowForegroundColor( line, 1 + (pos & 0xf) ) != std::nullopt)
+        } else if (pageList.rowForegroundColor( line, 1 + (pos & 0xf) ) != std::nullopt)
             pageList.resetRowForegroundColor(line, 1 + (pos & 0xf));
 
         pNew++;
@@ -1068,8 +1078,10 @@ auto Debugger::loadMemoryBank12(uint8_t bank, bool swap) -> void {
             if (pos == 0x1000)
                 break;
 
-            if (!pause && !swap && !allowedChanges)
-                changeLock = true;
+            if (!pause && !allowedTextChanges && !textChangeLock)
+                textChangeLock = true;
+            if (!allowedColorChanges && !colorChangeLock)
+                colorChangeLock = true;
         }
     }
 
@@ -1486,6 +1498,8 @@ auto Debugger::reset() -> void {
 auto Debugger::makeVisible() -> void {
     bool result = program->hasActiveDebugger();
     setVisible();
+    if (emulator != activeEmulator)
+        return;
 
     if (!result) {
         timer->setEnabled( );
