@@ -61,7 +61,7 @@ Debugger::CPU::State::Flags::Flags(Debugger* debugger) {
     int i;
     const char* ident;
 
-    if (dynamic_cast<LIBAMI::Interface*>(debugger->emulator)) {
+    if (debugger->isAmiga()) {
         i = sizeof(LIBAMI::DebuggerSnapshot::flagIdent);
         ident = &LIBAMI::DebuggerSnapshot::flagIdent[0];
     } else {
@@ -89,20 +89,30 @@ Debugger::CPU::State::Flags::Flags(Debugger* debugger) {
     setAlignment(0.5);
 }
 
-Debugger::CPU::State::Registers::Registers() {
-    static unsigned _w = 0;
+Debugger::CPU::State::Registers::Registers(Debugger* debugger) {
+    static unsigned _wLabel = 0;
+    static unsigned _wEdit = 0;
+    static unsigned _wEdit16 = 0;
 
-    if (_w == 0) {
+    if (_wLabel == 0) {
         GUIKIT::Label test;
-        test.setFont( GUIKIT::Font::system( 11 ) );
-        test.setText( "U" );
-        _w = test.minimumSize().width;
+        test.setFont( GUIKIT::Font::system( 11, "", true ) );
+        test.setText( "0000" );
+        _wLabel = test.minimumSize().width;
+
+        GUIKIT::LineEdit edit;
+        edit.setFont( GUIKIT::Font::system( 11, "", true ) );
+        edit.setText( "00000000" );
+        _wEdit = edit.minimumSize().width;
+
+        edit.setText( "0000" );
+        _wEdit16 = edit.minimumSize().width;
     }
 
-    left.setFont( GUIKIT::Font::system( 11 ) );
-    leftVal.setFont( GUIKIT::Font::system( 11 ) );
-    right.setFont( GUIKIT::Font::system( 11 ) );
-    rightVal.setFont( GUIKIT::Font::system( 11 ) );
+    left.setFont( GUIKIT::Font::system( 11, "", true ) );
+    leftVal.setFont( GUIKIT::Font::system( 11, "", true ) );
+    right.setFont( GUIKIT::Font::system( 11, "", true ) );
+    rightVal.setFont( GUIKIT::Font::system( 11, "", true ) );
 
     left.setAlign( GUIKIT::Label::Align::Right );
     right.setAlign( GUIKIT::Label::Align::Right );
@@ -115,10 +125,10 @@ Debugger::CPU::State::Registers::Registers() {
     rightVal.setText( "0" );
     rightVal.setStore( 0 );
 
-    append(left, {_w * 4, 0u}, 5);
-    append(leftVal, {_w * 8, 0u}, 10);
-    append(right, {_w * 4, 0u}, 5);
-    append(rightVal, {_w * 8, 0u});
+    append(left, {_wLabel, 0u}, 5);
+    append(leftVal, {debugger->isAmiga() ? _wEdit : _wEdit16, 0u}, 10);
+    append(right, {_wLabel, 0u}, 5);
+    append(rightVal, {debugger->isAmiga() ? _wEdit : _wEdit16, 0u});
 
     setAlignment( 0.5 );
 }
@@ -132,10 +142,10 @@ Debugger::CPU::State::State::Trace::Trace() {
 Debugger::CPU::State::State(Debugger* debugger)
 : flags(debugger) {
     int i = 0;
-    bool is68k = dynamic_cast<LIBAMI::Interface*>(debugger->emulator);
+    bool is68k = debugger->isAmiga();
     registers.resize( is68k ? 11 : 4 );
     for (auto& reg : registers) {
-        reg = new Registers;
+        reg = new Registers(debugger);
         i++;
 
         if (is68k)
@@ -183,7 +193,7 @@ Debugger::Memory::Memory(Debugger* debugger) {
     #define AR GUIKIT::ListView::Align::Right
     #define AC GUIKIT::ListView::Align::Center
 
-    if (dynamic_cast<LIBAMI::Interface*>(debugger->emulator)) {
+    if (debugger->isAmiga()) {
         pageList.setHeaderText( { "address", "0","2", "4", "6", "8", "A", "C", "E", "ASCII" });
         pageList.setAlignment( {AL, AR, AR, AR, AR, AR, AR, AR, AR}, true );
 
@@ -277,7 +287,7 @@ Debugger::Control::Control(Debugger* debugger) {
     append( search, {0u, 0u}, 20 );
     append( position, {~0u, 0u} );
 
-    if (dynamic_cast<LIBC64::Interface*>(debugger->emulator) && debugger->mode == Mode::Memory) {
+    if (debugger->isC64() && debugger->mode == Mode::Memory) {
         c64MemControl = new C64MemControl(debugger);
         append(*c64MemControl, {0u, 0u}, 20);
     }
@@ -430,7 +440,7 @@ auto Debugger::build() -> void {
                 updateInstructionList();
             }
         } else if (mode == Mode::Memory) {
-            if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+            if (isAmiga()) {
                 uint8_t bank = (address >> 16) & 0xff;
                 memory->bankList.setSelection( bank );
                 uint16_t page = address & 0xffff;
@@ -468,16 +478,14 @@ auto Debugger::build() -> void {
             if (timer->enabled()) {
                 for (auto& debugger : program->getActiveDebuggers())
                     debugger->update();
-
-                if ((program->isPause & 2) == 0)
-                    timer->setEnabled( );
             }
+            timer->setEnabled( !isPaused() );
         };
     }
 
     if (!timerVisibility) {
         timerVisibility = new GUIKIT::Timer();
-        timerVisibility->setInterval( 50 );
+        timerVisibility->setInterval( 20 );
         timerVisibility->onFinished = [this]() {
             if (timerVisibility->enabled()) {
                 for (auto& debugger : program->getActiveDebuggers())
@@ -497,7 +505,7 @@ auto Debugger::build() -> void {
 
 auto Debugger::buildMem() -> void {
     memory = new Memory(this);
-    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+    if (isAmiga()) {
         memDump = new uint8_t[0x10000];
         memDumpOld = new uint8_t[0x10000];
         std::memset(memDumpOld, 0, 0x10000);
@@ -512,7 +520,7 @@ auto Debugger::buildMem() -> void {
     memory->bankList.onChange = [this]() {
         unsigned selectedBank = memory->bankList.selection();
         emuThread->lock();
-        if (dynamic_cast<LIBAMI::Interface*>(emulator))
+        if (isAmiga())
             loadMemoryBank16( selectedBank, true );
         else
             loadMemoryBank12( selectedBank, true );
@@ -530,7 +538,7 @@ auto Debugger::buildCPU() -> void {
     cpu->watcher.excAdder.add.setImage( &addImg );
     cpu->state.trace.clear.setImage( &clearImg );
 
-    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+    if (isAmiga()) {
         for (const Emulator::Interface::DebuggerException& debuggerException : LIBAMI::DebuggerSnapshot::exceptions)
             cpu->watcher.excAdder.exceptionCombo.append( debuggerException.ident, (int)debuggerException.vector );
     } else {
@@ -678,7 +686,7 @@ auto Debugger::translate() -> void {
         cpu->watcher.watchPoint.setText( trans->getA( "memory access" ) );
 
         int i = 0;
-        if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+        if (isAmiga()) {
             for (auto& reg : cpu->state.registers) {
                 if (i < 8) {
                     reg->left.setText( "D" + std::to_string( i ) );
@@ -736,7 +744,7 @@ auto Debugger::update() -> void {
     bool locked = emuThread->lock();
     unsigned addr;
 
-    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+    if (isAmiga()) {
         LIBAMI::Interface* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
         auto snap = amiEmu->getDebuggerSnapshot();
         addr = snap.pc;
@@ -965,7 +973,7 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
     bool colorChangeLock = swap;
     bool textChangeLock = false;
     
-    bool pause = !!(program->isPause & 2);
+    bool pause = isPaused();
 
     std::string val;
     auto mapping = bankListStore[bank];
@@ -1040,7 +1048,7 @@ auto Debugger::loadMemoryBank12(uint8_t bank, bool swap) -> void {
     bool colorChangeLock = swap;
     bool textChangeLock = false;
     
-    bool pause = !!(program->isPause & 2);
+    bool pause = isPaused();
 
     char ascii[17];
 
@@ -1176,7 +1184,7 @@ auto Debugger::updateTraceList() -> void {
 
     unsigned flagSize;
     const char* flagIdent;
-    if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+    if (isAmiga()) {
         flagSize = sizeof(LIBAMI::DebuggerSnapshot::flagIdent);
         flagIdent = &LIBAMI::DebuggerSnapshot::flagIdent[0];
     } else {
@@ -1271,7 +1279,7 @@ auto Debugger::updateWatcherList() -> void {
     addrList.reset();
     char hex[7];
     std::string format = "%06x";
-    if (dynamic_cast<LIBC64::Interface*>(emulator))
+    if (isC64())
         format = "%04x";
 
     for (auto& w : watchers) {
@@ -1321,7 +1329,7 @@ auto Debugger::enableWatcher(unsigned row, bool state) -> void {
 }
 
 auto Debugger::updateToolboxVisibility() -> void {
-    if (program->isPause & 2) {
+    if (isPaused()) {
         if (control.resume.image() == &pauseImg) {
             control.resume.setImage( &resumeImg );
             control.stepOver.setEnabled( );
@@ -1406,7 +1414,7 @@ auto Debugger::toAscii(const uint8_t* buf, int len, char* result, char pad) -> v
 }
 
 auto Debugger::stepOut(Emulator::Interface* emulator) -> void {
-    if (emulator != activeEmulator)
+    if (!isPaused() || (emulator != activeEmulator))
         return;
     emuThread->lock();
     if (emulator->debuggerStepOut()) {
@@ -1418,7 +1426,7 @@ auto Debugger::stepOut(Emulator::Interface* emulator) -> void {
 }
 
 auto Debugger::stepInto(Emulator::Interface* emulator) -> void {
-    if (emulator != activeEmulator)
+    if (!isPaused() || (emulator != activeEmulator))
         return;
     emuThread->lock();
     program->isPause &= ~2;
@@ -1430,7 +1438,7 @@ auto Debugger::stepInto(Emulator::Interface* emulator) -> void {
 }
 
 auto Debugger::stepOver(Emulator::Interface* emulator) -> void {
-    if (emulator != activeEmulator)
+    if (!isPaused() || (emulator != activeEmulator))
         return;
     emuThread->lock();
     program->isPause &= ~2;
@@ -1442,7 +1450,7 @@ auto Debugger::stepOver(Emulator::Interface* emulator) -> void {
 }
 
 auto Debugger::stepLine(Emulator::Interface* emulator) -> void {
-    if (emulator != activeEmulator)
+    if (!isPaused() || (emulator != activeEmulator))
         return;
     emuThread->lock();
     program->isPause &= ~2;
@@ -1454,7 +1462,7 @@ auto Debugger::stepLine(Emulator::Interface* emulator) -> void {
 }
 
 auto Debugger::stepFrame(Emulator::Interface* emulator) -> void {
-    if (emulator != activeEmulator)
+    if (!isPaused() || (emulator != activeEmulator))
         return;
     emuThread->lock();
     program->isPause &= ~2;
@@ -1475,7 +1483,7 @@ auto Debugger::resume(Emulator::Interface* emulator) -> void {
     for (auto& debugger : program->getActiveDebuggers())
         debugger->update();
 
-    timer->setEnabled((program->isPause & 2) == 0);
+    timer->setEnabled(!isPaused());
     timerVisibility->setEnabled();
     emuThread->unlock();
 }
@@ -1524,4 +1532,16 @@ auto Debugger::initWatchers() -> void {
         emulator->debuggerEnable( watcher.action, watcher.addr, watcher.enabled );
 
     last.maybeModified = true;
+}
+
+inline auto Debugger::isPaused() -> bool {
+    return (program->isPause & 2) == 2;
+}
+
+inline auto Debugger::isC64() -> bool {
+    return dynamic_cast<LIBC64::Interface*>(emulator);
+}
+
+inline auto Debugger::isAmiga() -> bool {
+    return dynamic_cast<LIBAMI::Interface*>(emulator);
 }

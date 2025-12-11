@@ -95,7 +95,7 @@ struct Debugger : GUIKIT::Window {
                 GUIKIT::LineEdit leftVal;
                 GUIKIT::Label right;
                 GUIKIT::LineEdit rightVal;
-                Registers();
+                Registers(Debugger* debugger);
             };
             std::vector<Registers*> registers;
 
@@ -237,10 +237,13 @@ struct Debugger : GUIKIT::Window {
     auto updateWatcherSelection() -> void;
     auto initWatchers() -> void;
     auto updateC64MemControl(uint8_t _mode, bool init = false) -> void;
+    auto isC64() -> bool;
+    auto isAmiga() -> bool;
 
     static auto hex( uint32_t val, int length = -1 ) -> std::string;
     static auto toAscii(const uint8_t* buf, int len, char* result, char pad = '.') -> void;
 
+    static auto isPaused() -> bool;
     static auto stepOut(Emulator::Interface* emulator) -> void;
     static auto stepInto(Emulator::Interface* emulator) -> void;
     static auto stepOver(Emulator::Interface* emulator) -> void;
