@@ -95,6 +95,14 @@ auto SidManager::readSidReg(uint16_t addr) -> uint8_t {
     return sid->readIO( addr );
 }
 
+auto SidManager::peekSidReg(uint16_t addr) -> uint8_t {
+    updateClock();
+    if (extraSids)
+        return getSidByAdr( addr )->peekIO( addr );
+
+    return sid->peekIO( addr );
+}
+
 auto SidManager::writeSidReg(uint16_t addr, uint8_t value) -> void {
     updateClock();
     if (extraSids)
@@ -109,6 +117,18 @@ auto SidManager::readIo(uint16_t& addr, uint8_t& value) -> bool {
         if (_sid) {
             updateClock();
             value = _sid->readIO( addr );
+            return true;
+        }
+    }
+    return false;
+}
+
+auto SidManager::peekIo(uint16_t& addr, uint8_t& value) -> bool {
+    if (extraSids) {
+        Sid* _sid = getSidByAdr( addr, true );
+        if (_sid) {
+            updateClock();
+            value = _sid->peekIO( addr );
             return true;
         }
     }

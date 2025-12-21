@@ -1314,16 +1314,81 @@ auto System::toggle2Mhz() -> bool {
     return mhz2 & 0x80;
 }
 
-auto System::debuggerAdd(Emulator::Interface::DebuggerAction action, uint16_t addr, uint16_t addrTo) -> void {
+auto System::debuggerAdd(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
     switch (action) {
         case Emulator::Interface::DebuggerAction::Line:
         case Emulator::Interface::DebuggerAction::Frame:
             vicII->debuggerAction = action;
             break;
         default:
-            cpu.debuggerAdd( (M6510::DebuggerAction)action, addr, addrTo );
+            if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+                superCpu->debuggerAdd((WDCFAMILY::W65816::DebuggerAction)action, addr, addrTo);
+            else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+                cpu.debuggerAdd( (M6510::DebuggerAction)action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
+
             break;
     }
+}
+
+auto System::debuggerRemove(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+        superCpu->debuggerRemove( (WDCFAMILY::W65816::DebuggerAction)action, addr);
+    else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+        cpu.debuggerRemove( (M6510::DebuggerAction)action, addr );
+}
+
+auto System::debuggerEnable(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+        superCpu->debuggerEnable((WDCFAMILY::W65816::DebuggerAction)action, addr);
+    else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+        cpu.debuggerEnable( (M6510::DebuggerAction)action, addr );
+}
+
+auto System::debuggerDisable(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+        superCpu->debuggerDisable((WDCFAMILY::W65816::DebuggerAction)action, addr);
+    else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+        cpu.debuggerDisable( (M6510::DebuggerAction)action, addr );
+}
+
+auto System::debuggerDisableAll(Emulator::Interface::DebuggerCpu cpuModel) -> void {
+    if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+        superCpu->debuggerDisableAll();
+    else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+        cpu.debuggerDisableAll();
+}
+
+auto System::debuggerStepOver() -> void {
+    if (expansionPort->haltMainCpu())
+        superCpu->debuggerStepOver();
+    else
+        cpu.debuggerStepOver();
+}
+
+auto System::debuggerStepInto() -> void {
+    if (expansionPort->haltMainCpu())
+        superCpu->debuggerStepInto();
+    else
+        cpu.debuggerStepInto();
+}
+
+auto System::debuggerStepOut() -> bool {
+    if (expansionPort->haltMainCpu())
+        return superCpu->debuggerStepOut();
+
+    return cpu.debuggerStepOut();
+}
+
+auto System::getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {
+    if (expansionPort->haltMainCpu())
+        dynamic_cast<SuperCpu*>(expansionPort)->memoryDumpBank(bank, dump);
+}
+
+auto System::getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {
+    if (expansionPort->haltMainCpu())
+        dynamic_cast<SuperCpu*>(expansionPort)->memoryDumpPage(page, dump);
+    else
+        memoryDump(page, dump);
 }
 
 auto System::debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
@@ -1333,21 +1398,48 @@ auto System::debugPointReached(Emulator::Interface::DebuggerAction action, unsig
 }
 
 auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
-    cpu.updateSnapshot(snap);
-    vicII->updateSnapshot(snap);
+    if (expansionPort->haltMainCpu()) {
+        dynamic_cast<SuperCpu*>(expansionPort)->updateSnapshot(snap);
+    } else {
+        cpu.updateSnapshot(snap);
+        snap.mode = mode;
+        snap.superCpu = false;
 
-    snap.mode = mode;
-    for (uint8_t a = 0; a <= 0xf; a++ ) {
-        if (memoryCpu.isLocation(a << 4, &readRam)) snap.mapper[a] = 1;
-        else if (memoryCpu.isLocation(a << 4, &readVicReg)) snap.mapper[a] = 2;
-        else if (memoryCpu.isLocation(a << 4, &readCharRom)) snap.mapper[a] = 3;
-        else if (memoryCpu.isLocation(a << 4, &readKernalRom)) snap.mapper[a] = 4;
-        else if (memoryCpu.isLocation(a << 4, &readBasicRom)) snap.mapper[a] = 5;
-        else if (memoryCpu.isLocation(a << 4, &readRomL)) snap.mapper[a] = 6;
-        else if (memoryCpu.isLocation(a << 4, &readRomH)) snap.mapper[a] = 7;
-        else if (memoryCpu.isLocation(a << 4, &readUltimaxA0)) snap.mapper[a] = 8;
-        else snap.mapper[a] = 0; // unmapped
+        for (uint8_t a = 0; a <= 0xf; a++ ) {
+            if (memoryCpu.isLocation(a << 4, &readRam)) snap.mapper[a] = 1;
+            else if (memoryCpu.isLocation(a << 4, &readVicReg)) snap.mapper[a] = 2;
+            else if (memoryCpu.isLocation(a << 4, &readCharRom)) snap.mapper[a] = 3;
+            else if (memoryCpu.isLocation(a << 4, &readKernalRom)) snap.mapper[a] = 4;
+            else if (memoryCpu.isLocation(a << 4, &readBasicRom)) snap.mapper[a] = 5;
+            else if (memoryCpu.isLocation(a << 4, &readRomL)) snap.mapper[a] = 6;
+            else if (memoryCpu.isLocation(a << 4, &readRomH)) snap.mapper[a] = 7;
+            else if (memoryCpu.isLocation(a << 4, &readUltimaxA0)) snap.mapper[a] = 8;
+            else snap.mapper[a] = 0; // unmapped
+        }
     }
+
+    vicII->updateSnapshot(snap);
+}
+
+auto System::disassemble(unsigned addr, unsigned& bytes) -> std::string {
+    if (expansionPort->haltMainCpu())
+        return dynamic_cast<SuperCpu*>(expansionPort)->disassemble(addr, bytes);
+
+    return cpu.disassemble(addr, bytes);
+}
+
+auto System::disassembleData(unsigned addr, unsigned bytes) -> std::string {
+    if (expansionPort->haltMainCpu())
+        return dynamic_cast<SuperCpu*>(expansionPort)->disassembleData(addr, bytes);
+
+    return cpu.disassembleData( (uint16_t)addr, bytes );
+}
+
+auto System::disassembleTrace(unsigned i, uint8_t& flags) -> std::string {
+    if (expansionPort->haltMainCpu())
+        return dynamic_cast<SuperCpu*>(expansionPort)->disassembleTrace(i, flags);
+
+    return cpu.disassembleTrace( i, flags );
 }
 
 }

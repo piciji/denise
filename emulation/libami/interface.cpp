@@ -809,27 +809,31 @@ auto Interface::getDebuggerSnapshot() -> DebuggerSnapshot {
     return snap;
 }
 
-auto Interface::getMemoryDump(uint8_t bank, uint16_t* dump) -> void {
+auto Interface::getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {
     system->agnus.memoryDump(bank, dump);
 }
 
-auto Interface::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+auto Interface::debuggerAdd(DebuggerCpu cpu, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
     system->debuggerAdd( action, addr, addrTo );
 }
 
-auto Interface::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
+auto Interface::debuggerRemove(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {
     system->cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr );
 }
 
-auto Interface::debuggerEnable(DebuggerAction action, unsigned addr, bool state) -> void {
+auto Interface::debuggerEnable(DebuggerCpu cpu, DebuggerAction action, unsigned addr, bool state) -> void {
     if (state)
         system->cpu.debuggerEnable( (M68FAMILY::M68000::DebuggerAction)action, addr );
     else
-        debuggerDisable( action, addr );
+        debuggerDisable( cpu, action, addr );
 }
 
-auto Interface::debuggerDisable(DebuggerAction action, unsigned addr) -> void {
+auto Interface::debuggerDisable(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {
     system->cpu.debuggerDisable( (M68FAMILY::M68000::DebuggerAction)action, addr );
+}
+
+auto Interface::debuggerDisableAll(DebuggerCpu cpu) -> void {
+    system->cpu.debuggerDisableAll();
 }
 
 auto Interface::debuggerStepOver() -> void {
@@ -842,10 +846,6 @@ auto Interface::debuggerStepInto() -> void {
 
 auto Interface::debuggerStepOut() -> bool {
     return system->cpu.debuggerStepOut();
-}
-
-auto Interface::debuggerDisableAll() -> void {
-    system->cpu.debuggerDisableAll();
 }
 
 }

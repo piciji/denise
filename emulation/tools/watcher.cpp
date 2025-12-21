@@ -13,7 +13,7 @@ WatchPoints::WatchPoints() {
     callback = [](bool state) {};
 }
 
-auto WatchPoints::add(uint16_t addr) -> void {
+auto WatchPoints::add(uint32_t addr) -> void {
     auto w = find( addr );
 
     if (!w)
@@ -25,7 +25,7 @@ auto WatchPoints::add(uint16_t addr) -> void {
     callback(true);
 }
 
-auto WatchPoints::remove(uint16_t addr) -> void {
+auto WatchPoints::remove(uint32_t addr) -> void {
     for (auto it = watchers.begin(); it != watchers.end();) {
         if (it->addr == addr) {
             watchers.erase(it);
@@ -36,7 +36,7 @@ auto WatchPoints::remove(uint16_t addr) -> void {
     }
 }
 
-auto WatchPoints::find(uint16_t addr) -> Watcher* {
+auto WatchPoints::find(uint32_t addr) -> Watcher* {
     for ( auto& w : watchers ) {
         if (w.addr == addr)
             return &w;
@@ -44,7 +44,7 @@ auto WatchPoints::find(uint16_t addr) -> Watcher* {
     return nullptr;
 }
 
-auto WatchPoints::check(uint16_t addr) -> bool {
+auto WatchPoints::check(uint32_t addr) -> bool {
     for ( auto& w : watchers ) {
         if ((w.addr == addr) && w.enabled)
             return true;
@@ -52,24 +52,24 @@ auto WatchPoints::check(uint16_t addr) -> bool {
     return false;
 }
 
-auto WatchPoints::isEnabled(uint16_t addr) -> bool {
+auto WatchPoints::isEnabled(uint32_t addr) -> bool {
     auto w = find( addr );
     return w != nullptr && w->enabled;
 }
 
-auto WatchPoints::isDisabled(uint16_t addr) -> bool {
+auto WatchPoints::isDisabled(uint32_t addr) -> bool {
     auto w = find( addr );
     return w == nullptr || !w->enabled;
 }
 
-auto WatchPoints::enable(uint16_t addr) -> void {
+auto WatchPoints::enable(uint32_t addr) -> void {
     if (auto w = find( addr )) {
         w->enabled = true;
         callback(true);
     }
 }
 
-auto WatchPoints::disable(uint16_t addr) -> void {
+auto WatchPoints::disable(uint32_t addr) -> void {
     if (auto w = find( addr )) {
         w->enabled = false;
         flagWhenNeeded();
@@ -98,13 +98,13 @@ ModifiedCodes::ModifiedCodes() {
     callback = [](bool state) {};
 }
 
-auto ModifiedCodes::add(uint16_t addr, uint16_t addrTo) -> void {
+auto ModifiedCodes::add(uint32_t addr, uint32_t addrTo) -> void {
     this->addrFrom = addr;
     this->addrTo = addrTo;
     callback(true);
 }
 
-auto ModifiedCodes::checkAndSet(uint16_t addr) -> void {
+auto ModifiedCodes::checkAndSet(uint32_t addr) -> void {
     if ((addrFrom <= addr) && (addrTo >= addr))
         alarm = true;
 }

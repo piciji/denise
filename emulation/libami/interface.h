@@ -136,21 +136,22 @@ struct Interface : Emulator::Interface  {
     auto setRewind(bool state) -> void;
 
     // debugger
-    auto debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
-    auto debuggerRemove(DebuggerAction action, unsigned addr) -> void;
-    auto debuggerEnable(DebuggerAction action, unsigned addr, bool state = true) -> void;
-    auto debuggerDisable(DebuggerAction action, unsigned addr) -> void;
+    auto debuggerAdd(DebuggerCpu cpu, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void;
+    auto debuggerEnable(DebuggerCpu cpu, DebuggerAction action, unsigned addr, bool state = true) -> void;
+    auto debuggerDisable(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void;
+    auto debuggerDisableAll(DebuggerCpu cpu) -> void;
+
     auto debuggerStepOver() -> void;
     auto debuggerStepInto() -> void;
     auto debuggerStepOut() -> bool;
-    auto debuggerDisableAll() -> void;
 
     // disassembler
     auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
     auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
     auto getDebuggerSnapshot() -> DebuggerSnapshot;
-    auto getMemoryDump(uint8_t bank, uint16_t* dump) -> void;
+    auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void;
 
 private:
     auto prepareDevices() -> void;

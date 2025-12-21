@@ -623,7 +623,7 @@ auto M6510::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.regA = regA;
     snap.regX = regX;
     snap.regY = regY;
-    snap.regS = regS;
+    snap.regS = 0x100 | regS;
     snap.ddr = ddr;
     snap.por = por;
     snap.ioLines = ioLines;

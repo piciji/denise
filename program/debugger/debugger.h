@@ -20,7 +20,7 @@ namespace LIBC64 {
 
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, Memory
+        CPU, SCPU, Memory, MemorySCPU,
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );
@@ -32,7 +32,7 @@ struct Debugger : GUIKIT::Window {
 
     struct {
         unsigned addr = 0;
-        Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
+        Emulator::Interface::DebuggerAction action = DebuggerAction::None;
         bool maybeModified = false;
     } last;
 
@@ -228,10 +228,10 @@ struct Debugger : GUIKIT::Window {
 
     auto update68k(LIBAMI::DebuggerSnapshot& s) -> void;
     auto update6510(LIBC64::DebuggerSnapshot& s) -> void;
+    auto update65816(LIBC64::DebuggerSnapshot& s) -> void;
     auto updateMemory(LIBAMI::DebuggerSnapshot& s) -> void;
     auto updateMemory(LIBC64::DebuggerSnapshot& s) -> void;
-    auto loadMemoryBank16(uint8_t bank, bool swap) -> void;
-    auto loadMemoryBank12(uint8_t bank, bool swap) -> void;
+    template<typename T> auto loadMemoryBank(uint8_t bank, bool noColorChanges) -> void;
     auto updateCpuFlags(const char* flagIdent, unsigned flags) -> void;
     auto updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
     auto updateWatcherSelection() -> void;
@@ -239,6 +239,9 @@ struct Debugger : GUIKIT::Window {
     auto updateC64MemControl(uint8_t _mode, bool init = false) -> void;
     auto isC64() -> bool;
     auto isAmiga() -> bool;
+    auto getCpuType() -> Emulator::Interface::DebuggerCpu;
+    auto isCpuMode() const -> bool { return mode == Mode::CPU || mode == Mode::SCPU; }
+    auto isMemMode() const -> bool { return mode == Mode::Memory || mode == Mode::MemorySCPU; }
 
     static auto hex( uint32_t val, int length = -1 ) -> std::string;
     static auto toAscii(const uint8_t* buf, int len, char* result, char pad = '.') -> void;

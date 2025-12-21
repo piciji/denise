@@ -64,6 +64,9 @@ Debugger::CPU::State::Flags::Flags(Debugger* debugger) {
     if (debugger->isAmiga()) {
         i = sizeof(LIBAMI::DebuggerSnapshot::flagIdent);
         ident = &LIBAMI::DebuggerSnapshot::flagIdent[0];
+    } else if (debugger->mode == Mode::SCPU) {
+        i = sizeof(LIBC64::DebuggerSnapshot::flagIdent65816);
+        ident = &LIBC64::DebuggerSnapshot::flagIdent65816[0];
     } else {
         i = sizeof(LIBC64::DebuggerSnapshot::flagIdent);
         ident = &LIBC64::DebuggerSnapshot::flagIdent[0];
@@ -142,13 +145,13 @@ Debugger::CPU::State::State::Trace::Trace() {
 Debugger::CPU::State::State(Debugger* debugger)
 : flags(debugger) {
     int i = 0;
-    bool is68k = debugger->isAmiga();
-    registers.resize( is68k ? 11 : 4 );
+    registers.resize( debugger->isAmiga() ? 11 : 4 );
+
     for (auto& reg : registers) {
         reg = new Registers(debugger);
         i++;
 
-        if (is68k)
+        if (debugger->isAmiga())
             append(*reg, {0u, 0u}, (i == 8 || i == 11) ? 20 : 5);
         else
             append(*reg, {0u, 0u}, (i == 4) ? 20 : 5);
@@ -197,24 +200,47 @@ Debugger::Memory::Memory(Debugger* debugger) {
         pageList.setHeaderText( { "address", "0","2", "4", "6", "8", "A", "C", "E", "ASCII" });
         pageList.setAlignment( {AL, AR, AR, AR, AR, AR, AR, AR, AR}, true );
 
+        bankList.lockRedraw();
         for (unsigned i = 0; i < 0x100; i++) {
             bankList.append({hex(i, 2), "Unmapped" }, true);
             bankList.setRowForegroundColor( UNUSED_COLOR, i );
         }
+        bankList.unlockRedraw();
 
+        pageList.lockRedraw();
         for (unsigned i = 0; i < 0x1000; i++)
             pageList.append({hex(i * 16, 4), "   0", "   0", "   0", "   0", "   0", "   0", "   0", "   0", "................"}, true);
+        pageList.unlockRedraw();
+    } else if (debugger->mode == Mode::MemorySCPU) {
+        pageList.setHeaderText( { "address", "0","1", "2", "3", "4", "5", "6", "7", "8","9", "A", "B", "C", "D", "E","F", "ASCII" });
+        pageList.setAlignment( {AL, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, true );
+
+        bankList.lockRedraw();
+        for (unsigned i = 0; i < 0x100; i++) {
+            bankList.append({hex(i, 2), "Unmapped" }, true);
+            bankList.setRowForegroundColor( UNUSED_COLOR, i );
+        }
+        bankList.unlockRedraw();
+
+        pageList.lockRedraw();
+        for (unsigned i = 0; i < 0x1000; i++)
+            pageList.append({hex(i * 16, 4), "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "................"}, true);
+        pageList.unlockRedraw();
     } else {
         pageList.setHeaderText( { "address", "0","1", "2", "3", "4", "5", "6", "7", "8","9", "A", "B", "C", "D", "E","F", "ASCII" });
         pageList.setAlignment( {AL, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC, AC}, true );
 
+        bankList.lockRedraw();
         for (unsigned i = 0; i < 0x10; i++) {
             bankList.append({hex(i, 1), "Unmapped" }, true);
             bankList.setRowForegroundColor( UNUSED_COLOR, i );
         }
+        bankList.unlockRedraw();
 
+        pageList.lockRedraw();
         for (unsigned i = 0; i < 0x100; i++)
             pageList.append({hex(i * 16, 3), "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "................"}, true);
+        pageList.unlockRedraw();
     }
 
     pageList.setHeaderVisible( true );
@@ -287,7 +313,7 @@ Debugger::Control::Control(Debugger* debugger) {
     append( search, {0u, 0u}, 20 );
     append( position, {~0u, 0u} );
 
-    if (debugger->isC64() && debugger->mode == Mode::Memory) {
+    if (debugger->isC64() && debugger->isMemMode()) {
         c64MemControl = new C64MemControl(debugger);
         append(*c64MemControl, {0u, 0u}, 20);
     }
@@ -305,6 +331,10 @@ auto Debugger::build() -> void {
     screenIdent = "debugger";
     if (mode == Mode::Memory)
         screenIdent += "_mem";
+    else if (mode == Mode::MemorySCPU)
+        screenIdent += "_memscpu";
+    else if (mode == Mode::SCPU)
+        screenIdent += "_scpu";
 
     GUIKIT::Geometry geometry = {settings->get<int>("debugger" + screenIdent + "_x", defaultGeometry.x)
         ,settings->get<int>("debugger" + screenIdent + "_y", defaultGeometry.y)
@@ -351,11 +381,13 @@ auto Debugger::build() -> void {
 
     switch (mode) {
         case Mode::CPU:
+        case Mode::SCPU:
             buildCPU();
             layout.append( *cpu, {~0u, ~0u}, 10 );
             break;
 
         case Mode::Memory:
+        case Mode::MemorySCPU:
             buildMem();
             layout.append( *memory, {~0u, ~0u}, 10 );
             break;
@@ -367,8 +399,8 @@ auto Debugger::build() -> void {
 
     onClose = [this]() {
         emuThread->lock();
-        if (mode == Mode::CPU)
-            emulator->debuggerDisableAll();
+        if (isCpuMode())
+            emulator->debuggerDisableAll( getCpuType() );
         setVisible(false);
 
         if (!program->hasActiveDebugger()) {
@@ -429,7 +461,7 @@ auto Debugger::build() -> void {
         if (address == -1)
             return;
 
-        if (mode == Mode::CPU) {
+        if (isCpuMode()) {
             auto instRow = findInstructionRowBy(static_cast<unsigned>(address));
             if (instRow.has_value())
                 cpu->instructionLayout.list.setSelection( instRow.value() );
@@ -452,8 +484,12 @@ auto Debugger::build() -> void {
                 memory->pageList.setSelection( page / 16 );
             }
             memory->bankList.onChange();
+        } else if (mode == Mode::MemorySCPU) {
+            uint8_t bank = (address >> 16) & 0xff;
+            memory->bankList.setSelection( bank );
+            uint16_t page = address & 0xffff;
+            memory->pageList.setSelection( page / 16 );
         }
-
     };
 
     control.searchEdit.onReturn = [this]() {
@@ -497,15 +533,24 @@ auto Debugger::build() -> void {
     }
 
     control.showTips.setChecked( settings->get<bool>("debugger_tips", true) );
+
+    std::string _title = emulator->ident + " Debugger ";
+    switch (mode) {
+        case Mode::Memory: _title += " Memory"; break;
+        case Mode::MemorySCPU: _title += " Memory SCPU"; break;
+        case Mode::CPU: _title += " CPU"; break;
+        case Mode::SCPU: _title += " SCPU"; break;
+        default: break;
+    }
     
-    setTitle( emulator->ident + " Debugger" );
+    setTitle( _title );
 
     translate();
 }
 
 auto Debugger::buildMem() -> void {
     memory = new Memory(this);
-    if (isAmiga()) {
+    if (isAmiga() || (mode == Mode::MemorySCPU)) {
         memDump = new uint8_t[0x10000];
         memDumpOld = new uint8_t[0x10000];
         std::memset(memDumpOld, 0, 0x10000);
@@ -513,7 +558,9 @@ auto Debugger::buildMem() -> void {
         memDump = new uint8_t[0x1000];
         memDumpOld = new uint8_t[0x1000];
         std::memset(memDumpOld, 0, 0x1000);
+    }
 
+    if (isC64() && isMemMode()) {
         updateC64MemControl(0, true);
     }
 
@@ -521,9 +568,9 @@ auto Debugger::buildMem() -> void {
         unsigned selectedBank = memory->bankList.selection();
         emuThread->lock();
         if (isAmiga())
-            loadMemoryBank16( selectedBank, true );
+            loadMemoryBank<uint16_t>( selectedBank, true );
         else
-            loadMemoryBank12( selectedBank, true );
+            loadMemoryBank<uint8_t>( selectedBank, true );
         emuThread->unlock();
     };
 
@@ -541,6 +588,9 @@ auto Debugger::buildCPU() -> void {
     if (isAmiga()) {
         for (const Emulator::Interface::DebuggerException& debuggerException : LIBAMI::DebuggerSnapshot::exceptions)
             cpu->watcher.excAdder.exceptionCombo.append( debuggerException.ident, (int)debuggerException.vector );
+    } else if (mode == Mode::SCPU) {
+        for (const Emulator::Interface::DebuggerException& debuggerException : LIBC64::DebuggerSnapshot::exceptions65816)
+            cpu->watcher.excAdder.exceptionCombo.append( debuggerException.ident, (int)debuggerException.vector );
     } else {
         for (const Emulator::Interface::DebuggerException& debuggerException : LIBC64::DebuggerSnapshot::exceptions)
             cpu->watcher.excAdder.exceptionCombo.append( debuggerException.ident, (int)debuggerException.vector );
@@ -554,10 +604,10 @@ auto Debugger::buildCPU() -> void {
             if (!watcher) {
                 addToWatcherList( inst.addr, DebuggerAction::Breakpoint );
                 watcher = findWatcherBy(inst.addr, DebuggerAction::Breakpoint);
-                emulator->debuggerAdd(DebuggerAction::Breakpoint, inst.addr);
+                emulator->debuggerAdd(getCpuType(), DebuggerAction::Breakpoint, inst.addr);
             } else {
                 watcher->enabled ^= 1;
-                emulator->debuggerEnable(DebuggerAction::Breakpoint, inst.addr, watcher->enabled);
+                emulator->debuggerEnable(getCpuType(), DebuggerAction::Breakpoint, inst.addr, watcher->enabled);
             }
             updateWatcherList();
             timer->setEnabled();
@@ -587,11 +637,11 @@ auto Debugger::buildCPU() -> void {
         if (column == 0) {
             watcher.enabled ^= 1;
             enableWatcher(row, watcher.enabled);
-            emulator->debuggerEnable( watcher.action, watcher.addr, watcher.enabled );
+            emulator->debuggerEnable( getCpuType(), watcher.action, watcher.addr, watcher.enabled );
             if (instRow.has_value())
                 enableInstructionBreakpoint(instRow.value(), watcher.enabled);
         } else {
-            emulator->debuggerRemove(watcher.action, watcher.addr);
+            emulator->debuggerRemove( getCpuType(), watcher.action, watcher.addr);
             if (instRow.has_value())
                 removeInstructionBreakpoint(instRow.value());
 
@@ -613,7 +663,7 @@ auto Debugger::buildCPU() -> void {
         emuThread->lock();
         addToWatcherList( vector, action, cpu->watcher.excAdder.exceptionCombo.text() );
         updateWatcherList();
-        emulator->debuggerAdd(action, vector);
+        emulator->debuggerAdd(getCpuType(), action, vector);
         emuThread->unlock();
     };
 
@@ -648,13 +698,15 @@ auto Debugger::buildCPU() -> void {
                 enableInstructionBreakpoint(instRow.value(), true);
         }
 
-        emulator->debuggerAdd(action, address);
+        emulator->debuggerAdd(getCpuType(), action, address);
         emuThread->unlock();
     };
 
     cpu->state.trace.toggle.onToggle = [this]() {
         if (cpu->switchLayout.selection() == 0) {
+            emuThread->lock();
             updateTraceList();
+            emuThread->unlock();
             cpu->switchLayout.setSelection( 1 );
         } else
             cpu->switchLayout.setSelection( 0 );
@@ -662,8 +714,8 @@ auto Debugger::buildCPU() -> void {
 
     cpu->state.trace.clear.onActivate = [this]() {
         emuThread->lock();
-        emulator->debuggerDisable( Emulator::Interface::DebuggerAction::History, 0 );
-        emulator->debuggerEnable( Emulator::Interface::DebuggerAction::History, 0 );
+        emulator->debuggerDisable( getCpuType(), DebuggerAction::History, 0 );
+        emulator->debuggerEnable( getCpuType(), DebuggerAction::History, 0 );
         updateTraceList();
         emuThread->unlock();
     };
@@ -680,7 +732,7 @@ auto Debugger::translate() -> void {
     control.line.setTooltip( showTips ? trans->getA("step end of line") : "" );
     control.frame.setTooltip( showTips ? trans->getA("step end of frame") : "" );
 
-    if (mode == Mode::CPU) {
+    if (isCpuMode()) {
         cpu->watcher.adder.address.setPlaceholder( trans->getA( "address" ) );
         cpu->watcher.breakPoint.setText( trans->getA( "instruction" ) );
         cpu->watcher.watchPoint.setText( trans->getA( "memory access" ) );
@@ -714,10 +766,10 @@ auto Debugger::translate() -> void {
                     reg->right.setText( "Y" );
                 } else if (i == 2) {
                     reg->left.setText( "A" );
-                    reg->right.setText( "I/O" );
+                    reg->right.setText( mode == Mode::SCPU ? "M-E" : "I/O" );
                 } else if (i == 3) {
-                    reg->left.setText( "POR" );
-                    reg->right.setText( "DDR" );
+                    reg->left.setText( mode == Mode::SCPU ? "PBR" : "POR" );
+                    reg->right.setText( mode == Mode::SCPU ? "DBR" : "DDR" );
                 }
 
                 i++;
@@ -729,7 +781,7 @@ auto Debugger::translate() -> void {
         cpu->state.trace.toggle.setText( trans->getA( "trace") );
         cpu->state.trace.toggle.setTooltip( showTips ? trans->getA( "toggle trace") : "" );
         cpu->state.trace.clear.setTooltip( showTips? trans->getA( "clear trace") : "" );
-    } else if (mode == Mode::Memory) {
+    } else if (isMemMode()) {
         memory->bankList.setHeaderText( {trans->getA( "address"), trans->getA( "assignment") } );
         auto header = memory->pageList.state.header;
         header[0] = trans->getA( "address" );;
@@ -748,21 +800,37 @@ auto Debugger::update() -> void {
         LIBAMI::Interface* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
         auto snap = amiEmu->getDebuggerSnapshot();
         addr = snap.pc;
-        if (mode == Mode::CPU)
+        if (mode == Mode::CPU) {
             update68k(snap);
-        else if (mode == Mode::Memory)
+            if (cpu->switchLayout.selection() == 1)
+                updateTraceList();
+        } else if (mode == Mode::Memory)
             updateMemory( snap);
     } else {
         LIBC64::Interface* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
         auto snap = c64Emu->getDebuggerSnapshot();
         addr = snap.pc;
-        if (mode == Mode::CPU)
+
+        if (!snap.superCpu && mode == Mode::CPU) {
             update6510( snap );
-        else if (mode == Mode::Memory)
+            if (cpu->switchLayout.selection() == 1)
+                updateTraceList();
+        } else if (snap.superCpu && mode == Mode::SCPU) {
+            update65816( snap );
+            if (cpu->switchLayout.selection() == 1)
+                updateTraceList();
+        } else if (mode == Mode::Memory) {
             updateMemory( snap);
+        } else if (snap.superCpu && mode == Mode::MemorySCPU) {
+            updateMemory( snap);
+        } else {
+            if (locked)
+                emuThread->unlock();
+            return;
+        }
     }
 
-    if (mode == Mode::CPU) {
+    if (isCpuMode()) {
         std::optional<unsigned> instRow = std::nullopt;
 
         if (!last.maybeModified)
@@ -778,9 +846,6 @@ auto Debugger::update() -> void {
                 emuThread->unlock();
             updateInstructionList();
         }
-
-        if (cpu->switchLayout.selection() == 1)
-            updateTraceList();
 
     } else if (locked)
         emuThread->unlock();
@@ -842,46 +907,100 @@ auto Debugger::update6510(LIBC64::DebuggerSnapshot& s) -> void {
     updateCpuFlags(&LIBC64::DebuggerSnapshot::flagIdent[0], s.flags);
 }
 
-auto Debugger::updateMemory(LIBC64::DebuggerSnapshot& s) -> void {
-    auto& bankList = memory->bankList;
-    bankList.lockRedraw();
-
-    int bank = 0;
-    std::string ident;
-    for (auto& m : s.mapper) {
-        switch (m) {
-            case 1: ident = "Ram"; break;
-            case 2: ident = "I/O"; break;
-            case 3: ident = "Char"; break;
-            case 4: ident = "Kernal"; break;
-            case 5: ident = "Basic"; break;
-            case 6: ident = "RomL"; break;
-            case 7: ident = "RomH"; break;
-            case 8: ident = "UltimaxA0"; break;
-            default:
-            case 0: ident = "Unmapped"; break;
+auto Debugger::update65816(LIBC64::DebuggerSnapshot& s) -> void {
+    int i = 0;
+    for (auto& reg : cpu->state.registers) {
+        switch (i++) {
+            case 0:
+                updateCpuReg(reg->leftVal, s.pc);
+                updateCpuReg(reg->rightVal, s.regS);
+                break;
+            case 1:
+                updateCpuReg(reg->leftVal, s.regX);
+                updateCpuReg(reg->rightVal, s.regY);
+                break;
+            case 2:
+                updateCpuReg(reg->leftVal, s.regA);
+                updateCpuReg(reg->rightVal, s.modeE);
+                break;
+            case 3:
+                updateCpuReg(reg->leftVal, s.pbr);
+                updateCpuReg(reg->rightVal, s.dbr);
+                break;
         }
-
-        if (bankListStore[bank] != m) {
-            bankList.setText( bank, 1, ident );
-            if (m == 0)
-                bankList.setRowForegroundColor( UNUSED_COLOR, bank );
-            else
-                bankList.resetRowForegroundColor( bank );
-
-            bankListStore[bank] = m;
-        }
-
-        bank++;
     }
 
+    control.position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateCpuFlags(&LIBC64::DebuggerSnapshot::flagIdent65816[0], s.flags);
+}
+
+auto Debugger::updateMemory(LIBC64::DebuggerSnapshot& s) -> void {
+    auto& bankList = memory->bankList;
+    int bank = 0;
+    std::string ident;
+
+    bankList.lockRedraw();
+    if (mode == Mode::MemorySCPU) {
+        for (auto& m : s.mapperSCPU) {
+            switch (m) {
+                case 1: ident = "SRAM"; break;
+                case 2: ident = "ROM"; break;
+                case 3: ident = "DRAM"; break;
+                default:
+                case 0: ident = "Unmapped"; break;
+            }
+
+            if (bankListStore[bank] != m) {
+                bankList.setText( bank, 1, ident );
+                if (m == 0)
+                    bankList.setRowForegroundColor( UNUSED_COLOR, bank );
+                else
+                    bankList.resetRowForegroundColor( bank );
+
+                bankListStore[bank] = m;
+            }
+
+            bank++;
+        }
+    } else {
+        for (auto& m : s.mapper) {
+            switch (m) {
+                case 1: ident = "Ram"; break;
+                case 2: ident = "I/O"; break;
+                case 3: ident = "Char"; break;
+                case 4: ident = "Kernal"; break;
+                case 5: ident = "Basic"; break;
+                case 6: ident = "RomL"; break;
+                case 7: ident = "RomH"; break;
+                case 8: ident = "UltimaxA0"; break;
+
+                case 10: ident = "SramB0"; break;
+                case 11: ident = "SramB1"; break;
+                case 12: ident = "ROM"; break;
+                default:
+                case 0: ident = "Unmapped"; break;
+            }
+
+            if (bankListStore[bank] != m) {
+                bankList.setText( bank, 1, ident );
+                if (m == 0)
+                    bankList.setRowForegroundColor( UNUSED_COLOR, bank );
+                else
+                    bankList.resetRowForegroundColor( bank );
+
+                bankListStore[bank] = m;
+            }
+
+            bank++;
+        }
+    }
     bankList.unlockRedraw();
 
     unsigned selectedBank = 0;
     if (bankList.selected())
         selectedBank = bankList.selection();
 
-    loadMemoryBank12(selectedBank, false);
+    loadMemoryBank<uint8_t>(selectedBank, false);
 
     control.position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
 
@@ -949,39 +1068,56 @@ auto Debugger::updateMemory(LIBAMI::DebuggerSnapshot& s) -> void {
     if (bankList.selected())
         selectedBank = bankList.selection();
 
-    loadMemoryBank16(selectedBank, false);
+    loadMemoryBank<uint16_t>(selectedBank, false);
 
     control.position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
 }
 
-auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
+template<typename T>
+auto Debugger::loadMemoryBank(uint8_t bank, bool noColorChanges) -> void {
     auto& pageList = memory->pageList;
-    auto* pNew = reinterpret_cast<uint16_t*>(memDump);
-    auto* pOld = reinterpret_cast<uint16_t*>(memDumpOld);
-    emulator->getMemoryDump( bank, pNew );
+    auto* pNew = reinterpret_cast<T*>(memDump);
+    auto* pOld = reinterpret_cast<T*>(memDumpOld);
+
+    if (isC64() && (mode == Mode::Memory))
+        emulator->getMemoryDumpPage( bank, reinterpret_cast<uint8_t*>(pNew) );
+    else
+        emulator->getMemoryDumpBank( bank, pNew );
 
     unsigned visibleRow = pageList.getFirstVisibleRow();
-    //fprintf(stderr, "%d\n", visibleRow);
     unsigned allowedTextChanges = 24 * 8;
     unsigned allowedColorChanges = 24 * 8;
+
+    if constexpr (std::is_same_v<T, uint8_t>) {
+        allowedTextChanges <<= 1;
+        allowedColorChanges <<= 1;
+    }
 
     pageList.lockRedraw();
     unsigned pos = 0;
     unsigned line = 0;
     bool lineChanged = false;
-    
-    bool colorChangeLock = swap;
-    bool textChangeLock = false;
-    
-    bool pause = isPaused();
 
+    bool colorChangeLock = noColorChanges;
+    bool textChangeLock = false;
+
+    bool pause = isPaused();
     std::string val;
-    auto mapping = bankListStore[bank];
-    bool _swapWords = mapping == 1 || mapping == 2 || mapping == 3 || mapping == 4 || mapping == 5 || mapping == 10;
+    unsigned mask = (std::is_same_v<T, uint8_t>) ? 0xf : 7;
+    bool _swapWords = false;
+    if (isAmiga()) {
+        auto mapping = bankListStore[bank];
+        _swapWords = mapping == 1 || mapping == 2 || mapping == 3 || mapping == 4 || mapping == 5 || mapping == 10;
+    }
     char ascii[17];
+    unsigned limit = 0x1000;
+    if constexpr (std::is_same_v<T, uint16_t>)
+        limit = 0x8000;
+    else if (mode == Mode::MemorySCPU)
+        limit = 0x10000;
 
     while (true) {
-        
+
         if (!textChangeLock && (pause || (line >= visibleRow)) && (*pNew != *pOld) ) {
             lineChanged = true;
             if (allowedTextChanges)
@@ -991,31 +1127,31 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
                 val = hex( _swapWord(*pNew) );
             else
                 val = hex( *pNew );
-            pageList.setText( line, 1 + (pos & 7), val, true );
+            pageList.setText( line, 1 + (pos & mask), val, true );
         }
 
         if (!colorChangeLock && (line >= visibleRow) && (*pNew != *pOld) ) {
             if (allowedColorChanges)
                 allowedColorChanges--;
-            pageList.setRowForegroundColor(DEBUG_COLOR, line, 1 + (pos & 7));
-        } else if (pageList.rowForegroundColor( line, 1 + (pos & 7) ) != std::nullopt)
-            pageList.resetRowForegroundColor(line, 1 + (pos & 7));
+            pageList.setRowForegroundColor(DEBUG_COLOR, line, 1 + (pos & mask));
+        } else if (pageList.rowForegroundColor( line, 1 + (pos & mask) ) != std::nullopt)
+            pageList.resetRowForegroundColor(line, 1 + (pos & mask));
 
         pNew++;
         pOld++;
 
-        if ((++pos & 7) == 0) {
+        if ((++pos & mask) == 0) {
             if (lineChanged) {
                 const uint8_t* _a = (const uint8_t*)pNew;
                 _a -= 16;
                 toAscii(_a, 16, ascii);
 
-                pageList.setText( line, 9, ascii, true );
+                pageList.setText( line, mask + 2, ascii, true );
                 lineChanged = false;
             }
 
             line++;
-            if (pos == 0x8000)
+            if (pos == limit)
                 break;
 
             if (!pause && !allowedTextChanges && !textChangeLock)
@@ -1026,75 +1162,7 @@ auto Debugger::loadMemoryBank16(uint8_t bank, bool swap) -> void {
     }
 
     pageList.unlockRedraw();
-    std::memcpy(memDumpOld, memDump, 0x10000);
-}
-
-auto Debugger::loadMemoryBank12(uint8_t bank, bool swap) -> void {
-    auto& pageList = memory->pageList;
-    auto* pNew = memDump;
-    auto* pOld = memDumpOld;
-    emulator->getMemoryDump( bank, pNew );
-    
-    unsigned visibleRow = pageList.getFirstVisibleRow();
-    //fprintf(stderr, "%d\n", visibleRow);
-    unsigned allowedTextChanges = 24 * 16;
-    unsigned allowedColorChanges = 24 * 16;
-
-    pageList.lockRedraw();
-    unsigned pos = 0;
-    unsigned line = 0;
-    bool lineChanged = false;
-    
-    bool colorChangeLock = swap;
-    bool textChangeLock = false;
-    
-    bool pause = isPaused();
-
-    char ascii[17];
-
-    while (true) {
-
-        if (!textChangeLock && (pause || (line >= visibleRow)) && (*pNew != *pOld) ) {
-            lineChanged = true;
-            if (allowedTextChanges)
-                allowedTextChanges--;
-            std::string val = hex( *pNew );
-            pageList.setText( line, 1 + (pos & 0xf), val, true );
-        }
-
-        if (!colorChangeLock && (line >= visibleRow) && (*pNew != *pOld) ) {
-            if (allowedColorChanges)
-                allowedColorChanges--;
-            pageList.setRowForegroundColor(DEBUG_COLOR, line, 1 + (pos & 0xf));
-        } else if (pageList.rowForegroundColor( line, 1 + (pos & 0xf) ) != std::nullopt)
-            pageList.resetRowForegroundColor(line, 1 + (pos & 0xf));
-
-        pNew++;
-        pOld++;
-
-        if ((++pos & 0xf) == 0) {
-            if (lineChanged) {
-                const uint8_t* _a = (const uint8_t*)pNew;
-                _a -= 16;
-                toAscii(_a, 16, ascii);
-
-                pageList.setText( line, 17, ascii, true );
-                lineChanged = false;
-            }
-
-            line++;
-            if (pos == 0x1000)
-                break;
-
-            if (!pause && !allowedTextChanges && !textChangeLock)
-                textChangeLock = true;
-            if (!allowedColorChanges && !colorChangeLock)
-                colorChangeLock = true;
-        }
-    }
-
-    pageList.unlockRedraw();
-    std::memcpy(memDumpOld, memDump, 0x1000);
+    std::memcpy(memDumpOld, memDump, (isAmiga() || (mode == Mode::MemorySCPU)) ? 0x10000 : 0x1000);
 }
 
 auto Debugger::updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void {
@@ -1146,7 +1214,7 @@ auto Debugger::cacheInstructions(unsigned addr) -> void {
         addr += bytes;
     }
 
-    emulator->debuggerAdd( Emulator::Interface::DebuggerAction::ModifiedCode, _addr, addr );
+    emulator->debuggerAdd( getCpuType(), DebuggerAction::ModifiedCode, _addr, addr );
 }
 
 auto Debugger::updateInstructionList() -> void {
@@ -1187,6 +1255,9 @@ auto Debugger::updateTraceList() -> void {
     if (isAmiga()) {
         flagSize = sizeof(LIBAMI::DebuggerSnapshot::flagIdent);
         flagIdent = &LIBAMI::DebuggerSnapshot::flagIdent[0];
+    } else if (mode == Mode::SCPU) {
+        flagSize = sizeof(LIBC64::DebuggerSnapshot::flagIdent65816);
+        flagIdent = &LIBC64::DebuggerSnapshot::flagIdent65816[0];
     } else {
         flagSize = sizeof(LIBC64::DebuggerSnapshot::flagIdent);
         flagIdent = &LIBC64::DebuggerSnapshot::flagIdent[0];
@@ -1352,7 +1423,7 @@ auto Debugger::updateToolboxVisibility() -> void {
 
 auto Debugger::Callback(Emulator::Interface::DebuggerAction action, unsigned addr, bool maybeModified) -> void {
     for (auto debugger : program->getActiveDebuggers()) {
-        if (debugger->mode == Mode::CPU) {
+        if (debugger->isCpuMode()) {
             debugger->last.action = action;
             debugger->last.addr = addr;
             debugger->last.maybeModified = maybeModified;
@@ -1373,7 +1444,7 @@ auto Debugger::Callback() -> void {
         debugger->update();
         debugger->updateToolboxVisibility();
 
-        if (debugger->mode == Mode::CPU) {
+        if (debugger->isCpuMode()) {
             debugger->updateWatcherSelection();
         }
     }
@@ -1457,7 +1528,7 @@ auto Debugger::stepLine(Emulator::Interface* emulator) -> void {
 
     timer->setEnabled();
     timerVisibility->setEnabled();
-    emulator->debuggerAdd( DebuggerAction::Line, 0 );
+    emulator->debuggerAdd( Emulator::Interface::DebuggerCpu::Unspecified, DebuggerAction::Line, 0 );
     emuThread->unlock();
 }
 
@@ -1470,7 +1541,7 @@ auto Debugger::stepFrame(Emulator::Interface* emulator) -> void {
     timer->setEnabled();
     timerVisibility->setEnabled();
 
-    emulator->debuggerAdd( DebuggerAction::Frame, 0 );
+    emulator->debuggerAdd( Emulator::Interface::DebuggerCpu::Unspecified, DebuggerAction::Frame, 0 );
     emuThread->unlock();
 }
 
@@ -1494,8 +1565,9 @@ auto Debugger::reset() -> void {
 
     for (auto debugger : program->getActiveDebuggers()) {
 
-        if (debugger->mode == Mode::CPU)
+        if (debugger->isCpuMode()) {
             debugger->initWatchers();
+        }
 
         debugger->updateToolboxVisibility();
         if (!timer->enabled())
@@ -1517,8 +1589,9 @@ auto Debugger::makeVisible() -> void {
     updateToolboxVisibility();
 
     emuThread->lock();
-    if (mode == Mode::CPU)
+    if (isCpuMode()) {
         initWatchers();
+    }
 
     if (!timer->enabled())
         update();
@@ -1527,9 +1600,9 @@ auto Debugger::makeVisible() -> void {
 }
 
 auto Debugger::initWatchers() -> void {
-    emulator->debuggerEnable( Emulator::Interface::DebuggerAction::History, 0 );
+    emulator->debuggerEnable( getCpuType(), DebuggerAction::History, 0 );
     for (auto& watcher : watchers)
-        emulator->debuggerEnable( watcher.action, watcher.addr, watcher.enabled );
+        emulator->debuggerEnable( getCpuType(), watcher.action, watcher.addr, watcher.enabled );
 
     last.maybeModified = true;
 }
@@ -1544,4 +1617,13 @@ inline auto Debugger::isC64() -> bool {
 
 inline auto Debugger::isAmiga() -> bool {
     return dynamic_cast<LIBAMI::Interface*>(emulator);
+}
+
+inline auto Debugger::getCpuType() -> Emulator::Interface::DebuggerCpu {
+    if (isAmiga())
+        return Emulator::Interface::DebuggerCpu::C68000;
+    if (mode == Mode::SCPU)
+        return Emulator::Interface::DebuggerCpu::C65c816;
+
+    return Emulator::Interface::DebuggerCpu::C6510;
 }

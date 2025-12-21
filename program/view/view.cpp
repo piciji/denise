@@ -1332,6 +1332,23 @@ auto View::buildMenu() -> void {
         };
         sM.debugger->append( *sM.debuggerMem );
 
+        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            sM.debuggerSCPU = new GUIKIT::MenuItem;
+            sM.debuggerSCPU->onActivate = [this, emulator]() {
+                program->openDebugger(emulator, Debugger::Mode::SCPU);
+            };
+            sM.debugger->append( *sM.debuggerSCPU );
+
+            sM.debuggerMemSCPU = new GUIKIT::MenuItem;
+            sM.debuggerMemSCPU->onActivate = [this, emulator]() {
+                program->openDebugger(emulator, Debugger::Mode::MemorySCPU);
+            };
+            sM.debugger->append( *sM.debuggerMemSCPU );
+        } else {
+            sM.debuggerMemSCPU = nullptr;
+            sM.debuggerSCPU = nullptr;
+        }
+
         sM.system->append( *sM.debugger );
             
         sM.configurations = new GUIKIT::MenuItem;
@@ -2079,6 +2096,12 @@ auto View::translate() -> void {
         sysMenu.debugger->setText(trans->get("Debugger"));
         sysMenu.debuggerCpu->setText(trans->get("CPU"));
         sysMenu.debuggerMem->setText(trans->get("MEM"));
+
+        if (sysMenu.debuggerMemSCPU)
+            sysMenu.debuggerMemSCPU->setText(trans->get("MEM SCPU"));
+
+        if (sysMenu.debuggerSCPU)
+            sysMenu.debuggerSCPU->setText(trans->get("SCPU"));
 
         sysMenu.audio->setText(trans->get("Audio") + "...");
         sysMenu.firmware->setText(trans->get("Firmware") + "...");

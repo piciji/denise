@@ -10,7 +10,7 @@ namespace Emulator {
 using WatcherCallback = std::function<void ( bool state )>;
 
 struct Watcher {
-    uint16_t addr;
+    uint32_t addr;
     bool enabled;
 };
 
@@ -22,21 +22,21 @@ struct WatchPoints {
 
     virtual ~WatchPoints() = default;
 
-    auto add(uint16_t addr) -> void;
+    auto add(uint32_t addr) -> void;
 
-    auto remove(uint16_t addr) -> void;
+    auto remove(uint32_t addr) -> void;
 
-    auto check(uint16_t addr) -> bool;
+    auto check(uint32_t addr) -> bool;
 
-    auto find(uint16_t addr) -> Watcher*;
+    auto find(uint32_t addr) -> Watcher*;
 
-    auto isEnabled(uint16_t addr) -> bool;
+    auto isEnabled(uint32_t addr) -> bool;
 
-    auto isDisabled(uint16_t addr) -> bool;
+    auto isDisabled(uint32_t addr) -> bool;
 
-    auto enable(uint16_t addr) -> void;
+    auto enable(uint32_t addr) -> void;
 
-    auto disable(uint16_t addr) -> void;
+    auto disable(uint32_t addr) -> void;
 
     auto disableAll() -> void;
 
@@ -48,19 +48,19 @@ struct ModifiedCodes {
 
     ModifiedCodes();
 
-    uint16_t addrFrom;
-    uint16_t addrTo;
+    uint32_t addrFrom;
+    uint32_t addrTo;
     bool alarm;
 
-    auto add(uint16_t addr, uint16_t addrTo) -> void;
-    auto checkAndSet(uint16_t addr) -> void;
+    auto add(uint32_t addr, uint32_t addrTo) -> void;
+    auto checkAndSet(uint32_t addr) -> void;
     auto getAndForget() -> bool;
     auto disable() -> void;
 };
 
 struct HistoryEntry {
-    uint16_t addr;
-    uint8_t mem[3] = {0}; // we should remember the actual values, because of potentially modified code.
+    uint32_t addr;
+    uint8_t mem[4] = {0}; // we should remember the actual values, because of potentially modified code.
     uint8_t flags;
 };
 

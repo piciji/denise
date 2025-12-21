@@ -119,19 +119,19 @@ auto System::remapCpu(bool speedHack) -> void {
     expansionPort->memoryMapUpdated();
 }
 
-auto System::memoryDump(uint8_t bank, uint8_t* dump) -> void {
+auto System::memoryDump(uint8_t page, uint8_t* dump) -> void {
     uint8_t temp[16];
-    bank &= 0xf;
-    bank <<= 4;
+    page &= 0xf;
+    page <<= 4;
 
     // for (uint16_t addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
     //     *dump++ = memoryCpu.peek(addr);
     //
     // return;
-    Memory::Read* ptr = memoryCpu.reads[bank];
+    Memory::Read* ptr = memoryCpu.reads[page];
 
     if (ptr == &readRam) {
-        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
             *dump++ = this->ram[ addr ];
     }
 
@@ -175,40 +175,40 @@ auto System::memoryDump(uint8_t bank, uint8_t* dump) -> void {
     }
 
     else if (ptr == &readRomL) {
-        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
             *dump++ = peekRomL( addr );
     }
 
     else if (ptr == &readRomH) {
-        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
             *dump++ = peekRomH( addr );
     }
 
     else if (ptr == &readUltimaxA0) {
-        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
             *dump++ = peekUltimaxA0( addr );
     }
 
     else if (ptr == &readCharRom) {
-        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
             *dump++ = charRom[ addr & 0xfff ];
     }
 
     else if (ptr == &readBasicRom) {
-        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
             *dump++ = basicRom[ addr & 0x1fff ];
     }
 
     else if (ptr == &readKernalRom) {
         if (expansionPort->hasHiramCableConnected()) {
-            for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+            for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
                 *dump++ = peekRomH( addr & 0x1fff );
         } else {
-            for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+            for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
                 *dump++ = kernalRom[ addr & 0x1fff ];
         }
     } else {
-        for (unsigned addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
             *dump++ = vicII->lastReadPhase1();
     }
 }

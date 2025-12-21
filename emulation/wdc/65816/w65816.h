@@ -2,6 +2,9 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <optional>
+#include "../../tools/watcher.h"
 
 // RDY input line is tested in every cycle, and this affects performance.
 // therefore, it should only be activated when it is actually being used.
@@ -30,14 +33,31 @@ namespace WDCFAMILY {
 struct W65816 {
 
     auto power() -> void;
-    auto process() -> void;
+    template<bool postBreakCheck = false> auto process() -> void;
     auto setNmiLineLow(bool state) -> void;
     auto setIrqLineLow(bool state) -> void;
     auto setRdyLineLow(bool state) -> void;
     auto emulationMode() -> bool { return modeE; } // E-Line
 
+    enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History };
+
+    auto disassemble(uint32_t addr, unsigned& bytes, const uint8_t* memSnap = nullptr) -> std::string;
+    auto disassembleData(uint32_t addr, unsigned bytes) -> std::string;
+    auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
+
+    auto debuggerStepOver() -> void;
+    auto debuggerStepInto() -> void;
+    auto debuggerStepOut() -> bool;
+    auto debuggerAdd(DebuggerAction action, uint32_t addr, uint32_t addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerAction action, uint32_t addr) -> void;
+    auto debuggerEnable(DebuggerAction action, uint32_t addr) -> void;
+    auto debuggerDisable(DebuggerAction action, uint32_t addr) -> void;
+    auto debuggerDisableAll() -> void;
+
     enum {  RESET = 1, WAI = 2, STP = 4, IRQ_LINE = 8, NMI_LINE = 0x10, RDY_LINE = 0x20,
-            NMI_TRANSITION = 0x40, IRQ_PENDING = 0x80, NMI_PENDING = 0x100 };
+            NMI_TRANSITION = 0x40, IRQ_PENDING = 0x80, NMI_PENDING = 0x100,
+            WatchPoint = 0x200, BreakPoint = 0x400, ExceptionPoint = 0x800, SoftStop = 0x1000, ModifiedCode = 0x2000,
+            History = 0x4000};
 
     enum {  LDA = 1, LDX, LDY, ORA, AND, EOR, ADC, SBC, CMP, CPX, CPY,
             ROL, ROR, ASL, LSR, DEC, INC, TSB, TRB, BIT, BIT_IM,
@@ -49,10 +69,10 @@ struct W65816 {
 
 protected:
 #ifdef W65816_REF
-    W65816(W65816_REF_NS::W65816_REF& ref) : ref(ref) { }
+    W65816(W65816_REF_NS::W65816_REF& ref) : ref(ref) { init(); }
     W65816_REF_NS::W65816_REF& ref;
 #else
-    W65816() { }
+    W65816() { init(); }
 #endif
     struct RegP {
         bool c;
@@ -95,6 +115,8 @@ protected:
     bool modeE;
     int control;
     int lines;
+
+    auto init() -> void;
 
     template<bool hardware = true> auto interrupt(const uint16_t& vector) -> void;
 
@@ -202,6 +224,7 @@ protected:
 
 #ifndef W65816_REF
     virtual auto readByte(uint32_t addr) -> uint8_t = 0;
+    virtual auto peekByte(uint32_t addr) -> uint8_t = 0;
     virtual auto writeByte(uint32_t addr, uint8_t value) -> void = 0;
     virtual auto idleCycle(uint32_t addr) -> void = 0;
 
@@ -212,8 +235,24 @@ protected:
     virtual auto outputRDYLineLow() -> void {} // RDY is bi-directional
     virtual auto setMemoryLock(bool state) -> void {} // MLB hints other BUS participants not to interfere RMW
     virtual auto trapHandler() -> bool { return false; } // trap COP instruction
+
+    virtual auto debugPointReached(DebuggerAction action, unsigned addr) -> void {}
 #endif
 
+    auto observeRegLength(uint8_t newVal) -> void;
+    auto flagDebugAction(int action, bool state) -> void;
+    auto checkSoftStop(uint32_t addr) -> bool;
+    auto controlBreaks() -> void;
+    auto loadTrace(Emulator::HistoryEntry& entry) -> void;
+    auto appendStepOut(uint32_t addr) -> void;
+
+    Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints breakPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints exceptionPoints = Emulator::WatchPoints();
+    Emulator::ModifiedCodes modifiedCode = Emulator::ModifiedCodes();
+    Emulator::HistoryHandler historyHandler = Emulator::HistoryHandler();
+    std::optional<uint32_t> softStep = std::nullopt;
+    std::vector<uint32_t> stepOuts;
 };
 
 }

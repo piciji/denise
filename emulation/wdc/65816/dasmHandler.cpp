@@ -45,6 +45,14 @@ auto DasmHandler65816::hex( uint32_t val ) -> DasmHandler65816& {
     return *this;
 }
 
+auto DasmHandler65816::hex24( uint16_t val ) -> DasmHandler65816& {
+    char hex[7];
+    snprintf(hex, 7, "%06X", val);
+
+    str.append(static_cast<std::string>(hex));
+    return *this;
+}
+
 auto DasmHandler65816::hex16( uint16_t val ) -> DasmHandler65816& {
     char hex[5];
     snprintf(hex, 5, "%04X", val);
@@ -61,15 +69,25 @@ auto DasmHandler65816::hex8( uint8_t val ) -> DasmHandler65816& {
     return *this;
 }
 
-auto DasmHandler65816::immediate( uint8_t val ) -> DasmHandler65816& {
+auto DasmHandler65816::immediate( uint16_t val ) -> DasmHandler65816& {
     str.append("#");
     return hex(val);
 }
 
-auto DasmHandler65816::zeroPageIndexedX( uint8_t val ) -> DasmHandler65816& {
+auto DasmHandler65816::directIndexedX( uint8_t val ) -> DasmHandler65816& {
     hex(val);
     str.append(",X");
     return *this;
+}
+
+auto DasmHandler65816::directIndexedY( uint8_t val ) -> DasmHandler65816& {
+    hex(val);
+    str.append(",Y");
+    return *this;
+}
+
+auto DasmHandler65816::direct( uint8_t val ) -> DasmHandler65816& {
+    return hex(val);
 }
 
 auto DasmHandler65816::stackRelative( uint8_t val ) -> DasmHandler65816& {
@@ -78,31 +96,21 @@ auto DasmHandler65816::stackRelative( uint8_t val ) -> DasmHandler65816& {
     return *this;
 }
 
-auto DasmHandler65816::directPageIndirectLong( uint8_t val ) -> DasmHandler65816& {
+auto DasmHandler65816::stackRelativeIndirectIndexed( uint8_t val ) -> DasmHandler65816& {
+    str.append("(");
+    hex(val);
+    str.append(",S),Y");
+    return *this;
+}
+
+auto DasmHandler65816::directIndirectLong( uint8_t val ) -> DasmHandler65816& {
     str.append("[");
     hex(val);
     str.append("]");
     return *this;
 }
 
-auto DasmHandler65816::zeroPageIndexedY( uint8_t val ) -> DasmHandler65816& {
-    hex(val);
-    str.append(",Y");
-    return *this;
-}
-
-auto DasmHandler65816::zeroPage( uint8_t val ) -> DasmHandler65816& {
-    return hex(val);
-}
-
-auto DasmHandler65816::indirect( uint16_t val ) -> DasmHandler65816& {
-    str.append("(");
-    hex(val);
-    str.append(")");
-    return *this;
-}
-
-auto DasmHandler65816::indexedIndirect( uint8_t val ) -> DasmHandler65816& {
+auto DasmHandler65816::indexedIndirect( uint16_t val ) -> DasmHandler65816& {
     str.append("(");
     hex(val);
     str.append(",X)");
@@ -116,25 +124,41 @@ auto DasmHandler65816::indirectIndexed( uint8_t val ) -> DasmHandler65816& {
     return *this;
 }
 
-auto DasmHandler65816::absolute( uint16_t val ) -> DasmHandler65816& {
+auto DasmHandler65816::indirect( uint16_t val ) -> DasmHandler65816& {
+    str.append("(");
+    hex(val);
+    str.append(")");
+    return *this;
+}
+
+auto DasmHandler65816::indirectIndexedLong( uint8_t val ) -> DasmHandler65816& {
+    str.append("[");
+    hex(val);
+    str.append("],Y");
+    return *this;
+}
+
+auto DasmHandler65816::absolute( uint32_t val ) -> DasmHandler65816& {
     hex(val);
     return *this;
 }
 
-auto DasmHandler65816::absoluteLong( uint32_t val ) -> DasmHandler65816& {
-    hex(val);
-    return *this;
-}
-
-auto DasmHandler65816::absIndexedX( uint16_t val ) -> DasmHandler65816& {
+auto DasmHandler65816::absoluteIndexedX( uint32_t val ) -> DasmHandler65816& {
     hex(val);
     str.append(",X");
     return *this;
 }
 
-auto DasmHandler65816::absIndexedY( uint16_t val ) -> DasmHandler65816& {
+auto DasmHandler65816::absoluteIndexedY( uint16_t val ) -> DasmHandler65816& {
     hex(val);
     str.append(",Y");
+    return *this;
+}
+
+auto DasmHandler65816::move( uint8_t dest, uint8_t src ) -> DasmHandler65816& {
+    immediate(src);
+    str.append(",");
+    immediate(dest);
     return *this;
 }
 

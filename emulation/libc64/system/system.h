@@ -251,7 +251,7 @@ struct System {
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
     
     auto remapCpu(bool speedHack = false) -> void;
-    auto memoryDump(uint8_t bank, uint8_t* dump) -> void;
+    auto memoryDump(uint8_t page, uint8_t* dump) -> void;
 	auto isUltimax() -> bool;
 	auto changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus = false, bool speedHack = false) -> void;
     
@@ -332,10 +332,25 @@ struct System {
 
     auto set2Mhz(bool state) -> void;
     auto toggle2Mhz() -> bool;
-    auto debuggerAdd(Emulator::Interface::DebuggerAction action, uint16_t addr, uint16_t addrTo) -> void;
+
+    auto debuggerAdd(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
+	auto debuggerRemove(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+	auto debuggerEnable(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+	auto debuggerDisable(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+	auto debuggerDisableAll(Emulator::Interface::DebuggerCpu cpuModel) -> void;
+
+	auto debuggerStepOver() -> void;
+	auto debuggerStepInto() -> void;
+	auto debuggerStepOut() -> bool;
+	auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void;
+	auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void;
 
     auto debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
     auto updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
+
+	auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
+	auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
+	auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
 };
 
 }

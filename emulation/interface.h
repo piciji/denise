@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include <thread>
+#include <optional>
 
 namespace Emulator {
     
@@ -326,6 +327,7 @@ struct Interface {
         const char* ident;
     };
 
+    enum class DebuggerCpu { Unspecified, C68000, C6502, C6510, C65c816 };
     enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame };
 
     //callbacks
@@ -569,8 +571,8 @@ struct Interface {
 
     virtual auto getConnectedDevice( Connector* connector ) -> Device* { return getUnplugDevice(); }
     // for light devices you can disable cursor rendering by requesting cursor position in order to
-    // draw cursor by yourself. that is usefull if you want to draw the cursor in a higher resolution.
-    // of course, the coordinates are in native resoltion of the emulated system. you need to convert them.
+    // draw cursor by yourself. that is usefully if you want to draw the cursor in a higher resolution.
+    // of course, the coordinates are in native resolution of the emulated system. you need to convert them.
     virtual auto getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> bool { return false; }
     // As a rule, retro systems query the status of the connected input devices. Some devices, such as the Amiga keyboard, take the initiative and send input to the computer.
     virtual auto needExternalKeyUpdates() -> bool { return false; }
@@ -643,17 +645,19 @@ struct Interface {
     virtual auto setMonitorFpsRatio(double ratio) -> void {}
 
     // debugger
-    virtual auto debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
-    virtual auto debuggerRemove(DebuggerAction action, unsigned addr) -> void {}
-    virtual auto debuggerEnable(DebuggerAction action, unsigned addr, bool state = true) -> void {}
-    virtual auto debuggerDisable(DebuggerAction action, unsigned addr) -> void {}
-    virtual auto debuggerDisableAll() -> void {}
+    virtual auto debuggerAdd(DebuggerCpu cpu, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
+    virtual auto debuggerRemove(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {}
+    virtual auto debuggerEnable(DebuggerCpu cpu, DebuggerAction action, unsigned addr, bool state = true) -> void {}
+    virtual auto debuggerDisable(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {}
+    virtual auto debuggerDisableAll(DebuggerCpu cpu) -> void {}
+
     virtual auto debuggerStepOver() -> void {}
     virtual auto debuggerStepInto() -> void {}
     virtual auto debuggerStepOut() -> bool { return false; }
 
-    virtual auto getMemoryDump(uint8_t bank, uint16_t* dump) -> void {}
-    virtual auto getMemoryDump(uint8_t bank, uint8_t* dump) -> void {}
+    virtual auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {}
+    virtual auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {}
+    virtual auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {}
 
     // disassembler
     virtual auto disassemble(unsigned addr, unsigned& bytes) -> std::string { return ""; }
