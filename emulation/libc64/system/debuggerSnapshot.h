@@ -35,12 +35,61 @@ struct DebuggerSnapshot {
     uint8_t hPos;
     uint16_t vPos;
 
-    constexpr static Emulator::Interface::DebuggerException exceptions[] {
+    struct {
+        struct {
+            uint8_t pr;
+            uint8_t ddr;
+            uint8_t io;
+
+            uint16_t timer;
+            uint16_t timerLatch;
+
+            bool timerRunning;
+            bool oneshot;
+            bool pbOut;
+            bool toggleOut;
+        } port[2];
+
+        uint8_t icr;
+        uint8_t icrMask;
+        uint32_t tod;
+        uint32_t todAlarm;
+
+        uint8_t sdr;
+        unsigned shiftCount;
+    } cia[2];
+
+    constexpr static Emulator::Interface::DebuggerIdent CiaPorts[2][2][8] = {
+        { // CIA A
+            { // Port A
+                {7, "COL7"},{6, "COL6"},{5, "COL5"},{4, "BTNB"},
+                {3, "JOYB3"},{2, "JOYB2"},{1, "JOYB1"}, {0, "JOYB0"}
+
+            },
+            { // Port B
+                    {7, "ROW7"},{6, "ROW6"},{5, "ROW5"},{4, "BTNA"},
+                    {3, "JOYA3"},{2, "JOYA2"},{1, "JOYA1"},{0, "JOYA0"}
+            }
+        },
+        { // CIA B
+                { // Port A
+                    {7, "DATA IN"},{6, "CLK IN"},{5, "DATA OUT"},{4, "CLK OUT"},
+                    {3, "ATN OUT"},{2, "USER M"},{1, "VA15"},{0, "VA14"}
+
+                },
+                { // Port B
+                    {7, "USER L"}, {6, "USER K"},{5, "USER J"},{4, "USER H"},
+                    {3, "USER F"},{2, "USER E"},{1, "USER D"},{0, "USER C"}
+                }
+        }
+    };
+
+    constexpr static Emulator::Interface::DebuggerIdent exceptions[] {
         {0xfffe, "IRQ"},
         {0xffff, "NMI"},
     };
 
-    constexpr static Emulator::Interface::DebuggerException exceptions65816[] {
+    constexpr static Emulator::Interface::DebuggerIdent exceptions65816[] {
         {0xfffe, "IRQ M-E"},
         {0xfffa, "NMI M-E"},
         {0xffee, "IRQ"},

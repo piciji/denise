@@ -54,7 +54,7 @@ struct Cia {
     auto isNewVersion() -> bool;
     auto serialize(Emulator::Serializer& s) -> void;
 
-protected:
+//protected:
     struct Timer {
         // bit 0: -> phase in, bit 1: -> single step in cascade mode
         uint8_t run;

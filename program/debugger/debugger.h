@@ -20,7 +20,7 @@ namespace LIBC64 {
 
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU,
+        CPU, SCPU, Memory, MemorySCPU, CIA,
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );
@@ -54,6 +54,80 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image clearImg;
     GUIKIT::Image offImg;
     GUIKIT::Image onImg;
+
+    struct CIA : GUIKIT::HorizontalLayout {
+        struct Chip : GUIKIT::FramedVerticalLayout {
+            struct Port : GUIKIT::HorizontalLayout {
+                GUIKIT::Label pr;
+                GUIKIT::LineEdit prVal;
+                GUIKIT::Label ddr;
+                GUIKIT::LineEdit ddrVal;
+                Port(uint8_t portNr);
+            } port[2];
+
+            struct PortIO : GUIKIT::HorizontalLayout {
+                GUIKIT::Label portLabel;
+                std::vector<GUIKIT::Label*> line;
+                PortIO(uint8_t chipNr, uint8_t portNr, Debugger* debugger);
+            } portIO[2];
+
+            struct Timer : GUIKIT::HorizontalLayout {
+                GUIKIT::Label label;
+                GUIKIT::LineEdit val;
+                GUIKIT::Label latch;
+                GUIKIT::LineEdit latchVal;
+
+                GUIKIT::CheckBox oneShot;
+                GUIKIT::CheckBox pbOut;
+                GUIKIT::CheckBox toggleOut;
+                Timer(uint8_t portNr);
+            } timer[2];
+
+            struct IntData : GUIKIT::HorizontalLayout {
+                GUIKIT::Label icr;
+                GUIKIT::LineEdit icrVal;
+                GUIKIT::CheckBox ir;
+                GUIKIT::CheckBox flag;
+                GUIKIT::CheckBox sp;
+                GUIKIT::CheckBox alarm;
+                GUIKIT::CheckBox tb;
+                GUIKIT::CheckBox ta;
+                IntData();
+            } intData;
+
+            struct IntMask : GUIKIT::HorizontalLayout {
+                GUIKIT::Label mask;
+                GUIKIT::LineEdit maskVal;
+                GUIKIT::CheckBox ir;
+                GUIKIT::CheckBox flag;
+                GUIKIT::CheckBox sp;
+                GUIKIT::CheckBox alarm;
+                GUIKIT::CheckBox tb;
+                GUIKIT::CheckBox ta;
+                IntMask();
+            } intMask;
+
+            struct Tod24bit : GUIKIT::HorizontalLayout {
+                GUIKIT::Label label;
+                GUIKIT::LineEdit counter;
+                GUIKIT::Label labelAlarm;
+                GUIKIT::LineEdit counterAlarm;
+                Tod24bit();
+            } tod24bit;
+
+            struct Shifter : GUIKIT::HorizontalLayout {
+                GUIKIT::Label label;
+                GUIKIT::LineEdit sdr;
+                GUIKIT::Label labelShiftCount;
+                GUIKIT::LineEdit shiftCount;
+                Shifter();
+            } shifter;
+
+            Chip(uint8_t chipNr, Debugger* debugger);
+        } chip[2];
+
+        CIA(Debugger* debugger);
+    };
 
     struct CPU : GUIKIT::HorizontalLayout {
         GUIKIT::SwitchLayout switchLayout;
@@ -199,12 +273,14 @@ struct Debugger : GUIKIT::Window {
 
     CPU* cpu = nullptr;
     Memory* memory = nullptr;
+    CIA* cia = nullptr;
 
     GUIKIT::VerticalLayout layout;
 
     auto build() -> void;
     auto buildCPU() -> void;
     auto buildMem() -> void;
+    auto buildCIA() -> void;
     auto translate() -> void;
     auto update() -> void;
     auto cacheInstructions(unsigned addr) -> void;
@@ -231,6 +307,7 @@ struct Debugger : GUIKIT::Window {
     auto update65816(LIBC64::DebuggerSnapshot& s) -> void;
     auto updateMemory(LIBAMI::DebuggerSnapshot& s) -> void;
     auto updateMemory(LIBC64::DebuggerSnapshot& s) -> void;
+    template<typename T> auto updateCia(T& s) -> void;
     template<typename T> auto loadMemoryBank(uint8_t bank, bool noColorChanges) -> void;
     auto updateCpuFlags(const char* flagIdent, unsigned flags) -> void;
     auto updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
@@ -242,6 +319,7 @@ struct Debugger : GUIKIT::Window {
     auto getCpuType() -> Emulator::Interface::DebuggerCpu;
     auto isCpuMode() const -> bool { return mode == Mode::CPU || mode == Mode::SCPU; }
     auto isMemMode() const -> bool { return mode == Mode::Memory || mode == Mode::MemorySCPU; }
+    auto isCiaMode() const -> bool { return mode == Mode::CIA; }
 
     static auto hex( uint32_t val, int length = -1 ) -> std::string;
     static auto toAscii(const uint8_t* buf, int len, char* result, char pad = '.') -> void;

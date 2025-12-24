@@ -30,7 +30,56 @@ struct DebuggerSnapshot {
     uint8_t hPos;
     uint16_t vPos;
 
-    constexpr static Emulator::Interface::DebuggerException exceptions[] {
+    struct {
+        struct {
+            uint8_t pr;
+            uint8_t ddr;
+            uint8_t io;
+
+            uint16_t timer;
+            uint16_t timerLatch;
+
+            bool timerRunning;
+            bool oneshot;
+            bool pbOut;
+            bool toggleOut;
+        } port[2];
+
+        uint8_t icr;
+        uint8_t icrMask;
+        uint32_t tod;
+        uint32_t todAlarm;
+
+        uint8_t sdr;
+        unsigned shiftCount;
+    } cia[2];
+
+    constexpr static Emulator::Interface::DebuggerIdent CiaPorts[2][2][8] = {
+        { // CIA A
+            { // Port A
+                {7, "FIR1"},{6, "FIR0"},{5, "RDY"},{4, "TK0"},
+                {3, "WPRO"},{2, "CHNG"},{1, "LED"}, {0, "OVL"}
+
+            },
+            { // Port B
+                {7, "PB7"},{6, "PB6"},{5, "PB5"},{4, "PB4"},
+                {3, "PB3"},{2, "PB2"},{1, "PB1"},{0, "PB0"}
+            }
+        },
+        { // CIA B
+            { // Port A
+                {7, "DTR"},{6, "RTS"},{5, "CD"},{4, "CTS"},
+                {3, "DSR"},{2, "SEL"},{1, "POUT"},{0, "BUSY"}
+
+            },
+            { // Port B
+                {7, "MTR"}, {6, "SEL3"},{5, "SEL2"},{4, "SEL1"},
+                {3, "SEL0"},{2, "SIDE"},{1, "DIR"},{0, "STEP"}
+            }
+        }
+    };
+
+    constexpr static Emulator::Interface::DebuggerIdent exceptions[] {
         {2, "BUS error (2)"},
         {3, "Address error (3)"},
         {4, "Illegal (4)"},

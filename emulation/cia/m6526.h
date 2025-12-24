@@ -19,7 +19,7 @@ struct M6526 : Base {
 	auto reset() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
         
-protected:        
+//protected:
 	bool todLatched;
 	bool todActive;
 	uint32_t todLatch;

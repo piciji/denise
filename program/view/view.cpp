@@ -1349,6 +1349,12 @@ auto View::buildMenu() -> void {
             sM.debuggerSCPU = nullptr;
         }
 
+        sM.debuggerCia = new GUIKIT::MenuItem;
+        sM.debuggerCia->onActivate = [this, emulator]() {
+            program->openDebugger(emulator, Debugger::Mode::CIA);
+        };
+        sM.debugger->append( *sM.debuggerCia );
+
         sM.system->append( *sM.debugger );
             
         sM.configurations = new GUIKIT::MenuItem;
@@ -2096,6 +2102,7 @@ auto View::translate() -> void {
         sysMenu.debugger->setText(trans->get("Debugger"));
         sysMenu.debuggerCpu->setText(trans->get("CPU"));
         sysMenu.debuggerMem->setText(trans->get("MEM"));
+        sysMenu.debuggerCia->setText(trans->get("CIA"));
 
         if (sysMenu.debuggerMemSCPU)
             sysMenu.debuggerMemSCPU->setText(trans->get("MEM SCPU"));

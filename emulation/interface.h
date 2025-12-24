@@ -322,7 +322,7 @@ struct Interface {
         unsigned randomChance = 0;
     };
 
-    struct DebuggerException {
+    struct DebuggerIdent {
         uint16_t vector;
         const char* ident;
     };

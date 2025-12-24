@@ -910,6 +910,10 @@ auto CheckBox::setChecked(bool checked) -> void {
     p.setChecked(checked);
 }
 
+auto CheckBox::setReadonly(bool readonly) -> void {
+    state.readonly = readonly;
+}
+
 auto CheckBox::toggle() -> void {
     state.checked ^= 1;
     p.setChecked(state.checked);

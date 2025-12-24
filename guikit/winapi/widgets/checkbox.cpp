@@ -13,6 +13,8 @@ auto pCheckBox::setChecked(bool checked) -> void {
 }
 
 auto pCheckBox::onToggle() -> void {
+    if (checkBox.readonly())
+        return;
     checkBox.state.checked ^= 1;
     setChecked(checkBox.state.checked);
     

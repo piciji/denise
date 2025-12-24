@@ -682,6 +682,68 @@ auto System::debuggerAdd(Emulator::Interface::DebuggerAction action, unsigned ad
 auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
     cpu.updateSnapshot(snap);
     agnus.updateSnapshot(snap);
+    updateCiaDebuggerSnapshot(snap);
+}
+
+auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& c1p0 = snap.cia[0].port[0];
+    c1p0.pr = cia1.lines.pra;
+    c1p0.ddr = cia1.lines.ddra;
+    c1p0.io = cia1.peek( 0 );
+    c1p0.timer = cia1.timerA.counter;
+    c1p0.timerLatch = cia1.timerA.latch;
+    c1p0.oneshot = cia1.timerA.oneshot;
+    c1p0.pbOut = cia1.timerA.control & 2;
+    c1p0.toggleOut = cia1.timerA.control & 4;
+    c1p0.timerRunning = !!cia1.timerA.run;
+
+    auto& c1p1 = snap.cia[0].port[1];
+    c1p1.pr = cia1.lines.prb;
+    c1p1.ddr = cia1.lines.ddrb;
+    c1p1.io = cia1.peek( 1 );
+    c1p1.timer = cia1.timerB.counter;
+    c1p1.timerLatch = cia1.timerB.latch;
+    c1p1.oneshot = cia1.timerB.oneshot;
+    c1p1.pbOut = cia1.timerB.control & 2;
+    c1p1.toggleOut = cia1.timerB.control & 4;
+    c1p1.timerRunning = !!cia1.timerB.run;
+
+    auto& c2p0 = snap.cia[1].port[0];
+    c2p0.pr = cia2.lines.pra;
+    c2p0.ddr = cia2.lines.ddra;
+    c2p0.io = cia2.peek( 0 );
+    c2p0.timer = cia2.timerA.counter;
+    c2p0.timerLatch = cia2.timerA.latch;
+    c2p0.oneshot = cia2.timerA.oneshot;
+    c2p0.pbOut = cia2.timerA.control & 2;
+    c2p0.toggleOut = cia2.timerA.control & 4;
+    c2p0.timerRunning = !!cia2.timerA.run;
+
+    auto& c2p1 = snap.cia[1].port[1];
+    c2p1.pr = cia2.lines.prb;
+    c2p1.ddr = cia2.lines.ddrb;
+    c2p1.io = cia2.peek( 1 );
+    c2p1.timer = cia2.timerB.counter;
+    c2p1.timerLatch = cia2.timerB.latch;
+    c2p1.oneshot = cia2.timerB.oneshot;
+    c2p1.pbOut = cia2.timerB.control & 2;
+    c2p1.toggleOut = cia2.timerB.control & 4;
+    c2p1.timerRunning = !!cia2.timerB.run;
+
+    snap.cia[0].icr = cia1.icr;
+    snap.cia[0].icrMask = cia1.icrmask;
+    snap.cia[1].icr = cia2.icr;
+    snap.cia[1].icrMask = cia2.icrmask;
+
+    snap.cia[0].tod = cia1.todc;
+    snap.cia[0].todAlarm = cia1.alarm;
+    snap.cia[1].tod = cia2.todc;
+    snap.cia[1].todAlarm = cia2.alarm;
+
+    snap.cia[0].sdr = cia1.sdr;
+    snap.cia[0].shiftCount = cia1.sdrShiftCount;
+    snap.cia[1].sdr = cia2.sdr;
+    snap.cia[1].shiftCount = cia2.sdrShiftCount;
 }
 
 template auto System::dongleJoydat<false>(uint16_t& val) -> void;

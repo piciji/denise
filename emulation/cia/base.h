@@ -68,7 +68,7 @@ struct Base {
     auto serialize(Emulator::Serializer& s) -> void;
 	
 	uint8_t model; // for debugging purposes
-protected:
+//protected:
 	/**
 	 * cia's have an annoying timing
 	 * rules:

@@ -147,6 +147,7 @@ struct System {
 
     auto debuggerAdd(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void;
     auto updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 

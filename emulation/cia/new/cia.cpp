@@ -118,7 +118,7 @@ auto Cia<model>::clock() -> void {
         }
     }
 
-    // collect all incomming interrupt sources of this cycle
+    // collect all incoming interrupt sources of this cycle
     icrTemp = 0;
 
     updateState<T_B>();
@@ -143,7 +143,7 @@ template<uint8_t model>
 inline auto Cia<model>::interruptControl() -> void {
     // for new cia models
     if (delay & CIA_INT1) {
-        // interrupt is incomming and allowed by icr mask, a write in mask register
+        // interrupt is incoming and allowed by icr mask, a write-in mask register
         // before can cause this situation too
         icrTemp |= 0x80;
         icr |= 0x80;
@@ -151,34 +151,34 @@ inline auto Cia<model>::interruptControl() -> void {
         if (delay & CIA_ACK0) { // we have both at same time, interrupt and acknowledge cycle
             irqCall( false );
             // interrupt is scheduled for next cycle, so cpu can not recognize it this cycle.
-            // icr is reseted next cycle too with zero or the interrupts incomming this cycle
+            // icr is reset next cycle too with zero or the interrupts incoming this cycle
             delay |= CIA_UPD_ICR_IRQ0;
         } else
             // normal interrupt behaviour
             irqCall( true );
 
     } else /*if (delay & CIA_ACK0)*/ {
-        // interrupt is not incomming or is not allowed by icr mask and
-        // this is an acknowledge cycle
+        // interrupt is not incoming or is not allowed by icr mask and
+        // this is an acknowledgment cycle
         irqCall( false );
         // we schedule to update icr next cycle, so a possible second read in a row
-        // gets the non reseted state of icr.
-        // in next cycle icr will be reseted with zero or the interrupts incomming this cycle
+        // gets the non reset state of icr.
+        // in next cycle icr will be reset with zero or the interrupts incoming this cycle
         delay |= CIA_UPD_ICR_ONLY0;
     }
 }
 
 template<uint8_t model>
 inline auto Cia<model>::interruptControlOld() -> void {
-    // for old cia models, interrupt is incomming one cycle later
+    // for old cia models, interrupt is incoming one cycle later
     if (delay & CIA_INT1) {
 
         if (delay & CIA_ACK0) {
             // interrupt and acknowledge cycle at the same time.
-            // msb is seted but there is no interrupt sended to cpu like new cia
+            // msb is set but there is no interrupt sent to cpu like new cia
             icr = 0x80;
             irqCall( false );
-            // icr is reseted next cycle with zero or the interrupts incomming this cycle
+            // icr is reset next cycle with zero or the interrupts incoming this cycle
             delay |= CIA_UPD_ICR_ONLY0;
         } else {
             // normal interrupt behaviour
@@ -187,7 +187,7 @@ inline auto Cia<model>::interruptControlOld() -> void {
         }
 
     } else /*if (delay & CIA_ACK0)*/ {
-        // same behaviour like new cia, but all interrupt sources will be reseted
+        // same behaviour like new cia, but all interrupt sources will be reset
         // but not the msb of icr, matters when a second read in register 0d happens
         icr &= ~0x7f;
         irqCall( false );
@@ -203,8 +203,8 @@ auto Cia<model>::handleInterrupt( uint8_t number ) -> void {
     if (( (number ? number : icr) & icrmask) == 0 ) {
         // for old cias interrupts are delayed by one cycle.
         // if an underflow happens a cycle sooner followed by a second write
-        // in a row to 0xd, which disables the mask, then
-        // a scheduled interrupt is discarded.
+        // in a row to 0xd, which disables the mask,
+        // then a scheduled interrupt is discarded.
         // can not happen for new cias
         if (number == 0) // write in icr mask register
             if(delay & CIA_MASK_WRITE1) // second write in mask register in a row

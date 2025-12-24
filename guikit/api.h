@@ -639,10 +639,15 @@ struct CheckBox : Widget {
     std::function<void (bool checked)> onToggle = nullptr;
 
     auto setChecked(bool checked = true) -> void;
+    auto setReadonly(bool readonly = true) -> void;
     auto checked() const -> bool { return state.checked; }
+    auto readonly() const -> bool { return state.readonly; }
     auto toggle() -> void;
 
-    struct { bool checked = false; } state;
+    struct {
+        bool checked = false;
+        bool readonly = false;
+    } state;
 
     pCheckBox& p;
     CheckBox();

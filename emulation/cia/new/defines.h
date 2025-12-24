@@ -17,7 +17,7 @@
 #define CIA_FL_TA1  0x400
 #define CIA_FL_TA2  0x800
 
-// underlow lasts one cycle, pb 6/7 may need to know
+// underflow lasts one cycle, pb 6/7 may need to know
 #define CIA_UF_TA0  0x1000
 #define CIA_UF_TA1  0x2000
 

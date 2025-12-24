@@ -351,6 +351,8 @@ struct System {
 	auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
 	auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
 	auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
+
+    auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }
