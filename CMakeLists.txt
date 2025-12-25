@@ -198,6 +198,9 @@ set(srcs
         program/input/manager.cpp
         program/view/view.cpp
         program/debugger/debugger.cpp
+        program/debugger/cpuDebugger.cpp
+        program/debugger/memDebugger.cpp
+        program/debugger/ciaDebugger.cpp
         program/view/status.cpp
         program/config/config.cpp
         program/emuconfig/config.cpp

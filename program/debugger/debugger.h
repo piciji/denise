@@ -24,17 +24,10 @@ struct Debugger : GUIKIT::Window {
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );
-    ~Debugger();
+    virtual ~Debugger();
 
     Emulator::Interface* emulator;
     GUIKIT::Settings* settings = nullptr;
-    std::string screenIdent;
-
-    struct {
-        unsigned addr = 0;
-        Emulator::Interface::DebuggerAction action = DebuggerAction::None;
-        bool maybeModified = false;
-    } last;
 
     GUIKIT::Image addImg;
     GUIKIT::Image trashImg;
@@ -55,183 +48,6 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image offImg;
     GUIKIT::Image onImg;
 
-    struct CIA : GUIKIT::HorizontalLayout {
-        struct Chip : GUIKIT::FramedVerticalLayout {
-            struct Port : GUIKIT::HorizontalLayout {
-                GUIKIT::Label pr;
-                GUIKIT::LineEdit prVal;
-                GUIKIT::Label ddr;
-                GUIKIT::LineEdit ddrVal;
-                Port(uint8_t portNr);
-            } port[2];
-
-            struct PortIO : GUIKIT::HorizontalLayout {
-                GUIKIT::Label portLabel;
-                std::vector<GUIKIT::Label*> line;
-                PortIO(uint8_t chipNr, uint8_t portNr, Debugger* debugger);
-            } portIO[2];
-
-            struct Timer : GUIKIT::HorizontalLayout {
-                GUIKIT::Label label;
-                GUIKIT::LineEdit val;
-                GUIKIT::Label latch;
-                GUIKIT::LineEdit latchVal;
-
-                GUIKIT::CheckBox oneShot;
-                GUIKIT::CheckBox pbOut;
-                GUIKIT::CheckBox toggleOut;
-                Timer(uint8_t portNr);
-            } timer[2];
-
-            struct IntData : GUIKIT::HorizontalLayout {
-                GUIKIT::Label icr;
-                GUIKIT::LineEdit icrVal;
-                GUIKIT::CheckBox ir;
-                GUIKIT::CheckBox flag;
-                GUIKIT::CheckBox sp;
-                GUIKIT::CheckBox alarm;
-                GUIKIT::CheckBox tb;
-                GUIKIT::CheckBox ta;
-                IntData();
-            } intData;
-
-            struct IntMask : GUIKIT::HorizontalLayout {
-                GUIKIT::Label mask;
-                GUIKIT::LineEdit maskVal;
-                GUIKIT::CheckBox ir;
-                GUIKIT::CheckBox flag;
-                GUIKIT::CheckBox sp;
-                GUIKIT::CheckBox alarm;
-                GUIKIT::CheckBox tb;
-                GUIKIT::CheckBox ta;
-                IntMask();
-            } intMask;
-
-            struct Tod24bit : GUIKIT::HorizontalLayout {
-                GUIKIT::Label label;
-                GUIKIT::LineEdit counter;
-                GUIKIT::Label labelAlarm;
-                GUIKIT::LineEdit counterAlarm;
-                Tod24bit();
-            } tod24bit;
-
-            struct Shifter : GUIKIT::HorizontalLayout {
-                GUIKIT::Label label;
-                GUIKIT::LineEdit sdr;
-                GUIKIT::Label labelShiftCount;
-                GUIKIT::LineEdit shiftCount;
-                Shifter();
-            } shifter;
-
-            Chip(uint8_t chipNr, Debugger* debugger);
-        } chip[2];
-
-        CIA(Debugger* debugger);
-    };
-
-    struct CPU : GUIKIT::HorizontalLayout {
-        GUIKIT::SwitchLayout switchLayout;
-
-        struct InstructionLayout : GUIKIT::VerticalLayout {
-            GUIKIT::ListView list;
-            InstructionLayout();
-        } instructionLayout;
-
-        struct TraceLayout : GUIKIT::VerticalLayout {
-            GUIKIT::ListView list;
-            TraceLayout();
-        } traceLayout;
-
-        struct Watcher : GUIKIT::VerticalLayout {
-            GUIKIT::ListView list;
-
-            GUIKIT::RadioBox breakPoint;
-            GUIKIT::RadioBox watchPoint;
-
-            struct Adder : GUIKIT::HorizontalLayout {
-                GUIKIT::LineEdit address;
-                GUIKIT::Button add;
-                Adder();
-            } adder;
-
-            struct ExcAdder : GUIKIT::HorizontalLayout {
-                GUIKIT::ComboButton exceptionCombo;
-                GUIKIT::Button add;
-                ExcAdder();
-            } excAdder;
-
-            Watcher();
-        } watcher;
-
-        struct State : GUIKIT::VerticalLayout {
-            struct Registers : GUIKIT::HorizontalLayout {
-                GUIKIT::Label left;
-                GUIKIT::LineEdit leftVal;
-                GUIKIT::Label right;
-                GUIKIT::LineEdit rightVal;
-                Registers(Debugger* debugger);
-            };
-            std::vector<Registers*> registers;
-
-            struct Flags : GUIKIT::HorizontalLayout {
-                GUIKIT::Widget spacer;
-                std::vector<GUIKIT::Label*> flag;
-
-                Flags(Debugger* debugger);
-            } flags;
-
-            struct Trace : GUIKIT::HorizontalLayout {
-                GUIKIT::CheckButton toggle;
-                GUIKIT::Button clear;
-
-                Trace();
-            } trace;
-
-            State(Debugger* debugger);
-        } state;
-
-        CPU(Debugger* debugger);
-    };
-
-    struct Memory : GUIKIT::HorizontalLayout {
-        GUIKIT::ListView bankList;
-        GUIKIT::ListView pageList;
-
-        Memory(Debugger* debugger);
-    };
-
-    struct C64MemControl : GUIKIT::HorizontalLayout {
-
-        struct Element : GUIKIT::HorizontalLayout {
-            GUIKIT::ImageView imgView;
-            GUIKIT::Label label;
-
-            Element(Debugger* debugger);
-        };
-
-        struct Left : GUIKIT::VerticalLayout {
-            Element exrom;
-            Element game;
-
-            Left(Debugger* debugger);
-        } left;
-
-        struct Middle : GUIKIT::VerticalLayout {
-            Element charen;
-
-            Middle(Debugger* debugger);
-        } middle;
-
-        struct Right : GUIKIT::VerticalLayout {
-            Element loram;
-            Element hiram;
-
-            Right(Debugger* debugger);
-        } right;
-
-        C64MemControl(Debugger* debugger);
-    };
-
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;
         GUIKIT::Button resume;
@@ -244,85 +60,43 @@ struct Debugger : GUIKIT::Window {
         GUIKIT::ImageView search;
         GUIKIT::Label position;
 
-        C64MemControl* c64MemControl = nullptr;
         GUIKIT::CheckBox showTips;
         Control(Debugger* debugger);
-    } control;
-
-    uint8_t bankListStore[256] = {0};
-    uint8_t* memDump = nullptr;
-    uint8_t* memDumpOld = nullptr;
-
-    struct Instruction {
-        unsigned addr;
-        std::string disassembled;
-        std::string data;
     };
+    Control* control = nullptr;
 
-    struct Watcher {
-        unsigned addr;
-        std::string ident;
-        DebuggerAction action;
-        bool enabled;
-    };
-
-    std::vector<Watcher> watchers;
-    Instruction instructions[LIST_INSTRUCTIONS];
     static GUIKIT::Timer* timer;
     static GUIKIT::Timer* timerVisibility;
 
-    CPU* cpu = nullptr;
-    Memory* memory = nullptr;
-    CIA* cia = nullptr;
-
+    GUIKIT::Layout* theme = nullptr;
     GUIKIT::VerticalLayout layout;
 
     auto build() -> void;
-    auto buildCPU() -> void;
-    auto buildMem() -> void;
-    auto buildCIA() -> void;
+    virtual auto screenIdent() -> std::string = 0;
+    virtual auto titleIdent() -> std::string = 0;
+    virtual auto buildTheme() -> void = 0;
+    virtual auto searchTheme(unsigned addr) -> void {}
+    virtual auto translateTheme() -> void {}
+    virtual auto updateTheme() -> void {}
+    virtual auto initTheme() -> void {}
+    virtual auto closeTheme() -> void {}
+    virtual auto buildControl() -> GUIKIT::Layout* { return nullptr; }
+
     auto translate() -> void;
     auto update() -> void;
-    auto cacheInstructions(unsigned addr) -> void;
-    auto updateInstructionList() -> void;
-    auto updateTraceList() -> void;
-    auto addToWatcherList(unsigned addr, DebuggerAction action, const std::string& ident = "") -> void;
-    auto removeFromWatcherList(unsigned addr, DebuggerAction action) -> void;
-    auto updateWatcherList() -> void;
-
-    auto findWatcherBy(unsigned addr, DebuggerAction action) -> Watcher*;
-    auto findWatcherRowBy(unsigned addr, DebuggerAction action) -> std::optional<unsigned>;
-    auto enableInstructionBreakpoint(unsigned row, bool state) -> void;
-    auto removeInstructionBreakpoint(unsigned row) -> void;
-    auto enableWatcher(unsigned row, bool state) -> void;
-    auto findInstructionRowBy(unsigned addr) -> std::optional<unsigned>;
 
     static auto Callback(DebuggerAction action, unsigned addr, bool maybeModified) -> void;
     static auto Callback() -> void;
     auto updateToolboxVisibility() -> void;
     auto makeVisible() -> void;
 
-    auto update68k(LIBAMI::DebuggerSnapshot& s) -> void;
-    auto update6510(LIBC64::DebuggerSnapshot& s) -> void;
-    auto update65816(LIBC64::DebuggerSnapshot& s) -> void;
-    auto updateMemory(LIBAMI::DebuggerSnapshot& s) -> void;
-    auto updateMemory(LIBC64::DebuggerSnapshot& s) -> void;
-    template<typename T> auto updateCia(T& s) -> void;
-    template<typename T> auto loadMemoryBank(uint8_t bank, bool noColorChanges) -> void;
-    auto updateCpuFlags(const char* flagIdent, unsigned flags) -> void;
-    auto updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
-    auto updateWatcherSelection() -> void;
-    auto initWatchers() -> void;
-    auto updateC64MemControl(uint8_t _mode, bool init = false) -> void;
     auto isC64() -> bool;
     auto isAmiga() -> bool;
-    auto getCpuType() -> Emulator::Interface::DebuggerCpu;
     auto isCpuMode() const -> bool { return mode == Mode::CPU || mode == Mode::SCPU; }
     auto isMemMode() const -> bool { return mode == Mode::Memory || mode == Mode::MemorySCPU; }
     auto isCiaMode() const -> bool { return mode == Mode::CIA; }
 
     static auto hex( uint32_t val, int length = -1 ) -> std::string;
-    static auto toAscii(const uint8_t* buf, int len, char* result, char pad = '.') -> void;
 
     static auto isPaused() -> bool;
     static auto stepOut(Emulator::Interface* emulator) -> void;

@@ -19,7 +19,11 @@
 #include "emuconfig/layouts/presentation.h"
 #include <random>
 
-#include "debugger/debugger.h"
+#include "debugger/scpuDebugger.h"
+#include "debugger/cpuDebugger.h"
+#include "debugger/memScpuDebugger.h"
+#include "debugger/memDebugger.h"
+#include "debugger/ciaDebugger.h"
 
 Program* program = nullptr;
 DRIVER::Input* inputDriver = new DRIVER::Input;
@@ -844,7 +848,17 @@ auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -
             return;
         }
     }
-    auto debugger = new Debugger(emulator, mode);
+    Debugger* debugger;
+    switch (mode) {
+        case Debugger::Mode::CPU: debugger = new CpuDebugger(emulator); break;
+        case Debugger::Mode::SCPU: debugger = new ScpuDebugger(emulator); break;
+        case Debugger::Mode::Memory: debugger = new MemDebugger(emulator); break;
+        case Debugger::Mode::MemorySCPU: debugger = new MemScpuDebugger(emulator); break;
+        case Debugger::Mode::CIA: debugger = new CiaDebugger(emulator); break;
+        default:
+            return;
+    }
+
     debuggers.push_back(debugger);
     debugger->makeVisible();
 }

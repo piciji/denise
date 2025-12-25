@@ -1201,6 +1201,24 @@
     <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\structuredBasic.h">
       <Filter>emulation\libc64\expansionPort\gameCart</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\debugger\cpuDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\scpuDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\wdc\65816\dasmHandler.h">
+      <Filter>emulation\wdc\65816</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\ciaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\memDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\memScpuDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2423,6 +2441,18 @@
     </ClCompile>
     <ClCompile Include="..\emulation\tools\watcher.cpp">
       <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\cpuDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\wdc\65816\dasmHandler.cpp">
+      <Filter>emulation\wdc\65816</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\ciaDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\memDebugger.cpp">
+      <Filter>program\debugger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
