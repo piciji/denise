@@ -7,6 +7,7 @@
 #include "../../data/icons.h"
 
 #include "cpuDebugger.h"
+#include "../../emulation/interface.h"
 
 // #838589
 // fc0d18
@@ -15,6 +16,7 @@ GUIKIT::Timer* Debugger::timerVisibility = nullptr;
 GUIKIT::Timer* Debugger::timer = nullptr;
 
 Debugger::~Debugger() {
+    delete snapshot;
     timer->setEnabled( false );
     setVisible(false);
 }
@@ -22,6 +24,10 @@ Debugger::~Debugger() {
 Debugger::Debugger( Emulator::Interface* emulator, Mode mode )
 : emulator( emulator ), mode( mode ) {
     this->settings = program->getSettings( emulator );
+    if (isAmiga())
+        snapshot = new LIBAMI::DebuggerSnapshot;
+    else if (isC64())
+        snapshot = new LIBC64::DebuggerSnapshot;
 }
 
 Debugger::Control::Control(Debugger* debugger) {
@@ -104,8 +110,7 @@ auto Debugger::build() -> void {
 
     layout.setMargin( 10 );
 
-    buildTheme();
-    layout.append( *theme, {~0u, ~0u}, 10 );
+    layout.append( *buildTheme(), {~0u, ~0u}, 10 );
     layout.append( *control, {~0u, 0u} );
 
     append( layout );
@@ -344,7 +349,7 @@ auto Debugger::stepLine(Emulator::Interface* emulator) -> void {
 
     timer->setEnabled();
     timerVisibility->setEnabled();
-    emulator->debuggerAdd( Emulator::Interface::DebuggerCpu::Unspecified, DebuggerAction::Line, 0 );
+    emulator->debuggerAdd( Emulator::Interface::DebuggerChip::Unspecified, DebuggerAction::Line, 0 );
     emuThread->unlock();
 }
 
@@ -357,7 +362,7 @@ auto Debugger::stepFrame(Emulator::Interface* emulator) -> void {
     timer->setEnabled();
     timerVisibility->setEnabled();
 
-    emulator->debuggerAdd( Emulator::Interface::DebuggerCpu::Unspecified, DebuggerAction::Frame, 0 );
+    emulator->debuggerAdd( Emulator::Interface::DebuggerChip::Unspecified, DebuggerAction::Frame, 0 );
     emuThread->unlock();
 }
 
@@ -420,4 +425,11 @@ auto Debugger::isC64() -> bool {
 
 auto Debugger::isAmiga() -> bool {
     return dynamic_cast<LIBAMI::Interface*>(emulator);
+}
+
+auto Debugger::updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void {
+    if ((unsigned)reg.getStore() != val) {
+        reg.setStore( static_cast<int>(val) );
+        reg.setText( hex( val ) );
+    }
 }

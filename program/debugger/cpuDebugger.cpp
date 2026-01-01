@@ -170,9 +170,8 @@ CpuDebugger::CPU::CPU(Debugger* debugger)
     append(state, {0u, 0u});
 }
 
-auto CpuDebugger::buildTheme() -> void {
+auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
     cpu = new CPU(this);
-    theme = cpu;
     cpu->watcher.adder.add.setImage( &addImg );
     cpu->watcher.excAdder.add.setImage( &addImg );
     cpu->state.trace.clear.setImage( &clearImg );
@@ -312,13 +311,7 @@ auto CpuDebugger::buildTheme() -> void {
         emuThread->unlock();
     };
 
-}
-
-auto CpuDebugger::updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void {
-    if ((unsigned)reg.getStore() != val) {
-        reg.setStore( static_cast<int>(val) );
-        reg.setText( hex( val ) );
-    }
+    return cpu;
 }
 
 auto CpuDebugger::updateCpuFlags(const char* flagIdent, unsigned flags) -> void {
@@ -583,18 +576,23 @@ auto CpuDebugger::searchTheme(unsigned addr) -> void {
 auto CpuDebugger::updateTheme() -> void {
     bool locked = emuThread->lock();
     unsigned addr;
+    snapshot->theme = Emulator::Interface::DebuggerSnapshot::Theme::CPU;
 
     if (isAmiga()) {
-        LIBAMI::Interface* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
-        auto snap = amiEmu->getDebuggerSnapshot();
+        auto* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
+        LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
+
+        amiEmu->getDebuggerSnapshot(snap);
         addr = snap.pc;
         update68k(snap);
         if (cpu->switchLayout.selection() == 1)
             updateTraceList();
 
     } else {
-        LIBC64::Interface* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
-        auto snap = c64Emu->getDebuggerSnapshot();
+        auto* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
+        LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
+
+        c64Emu->getDebuggerSnapshot(snap);
         addr = snap.pc;
 
         if (!snap.superCpu && mode == Mode::CPU) {
@@ -646,20 +644,20 @@ auto CpuDebugger::update68k(LIBAMI::DebuggerSnapshot& s) -> void {
         switch (i) {
             case 0: case 1: case 2: case 3:
             case 4: case 5: case 6: case 7:
-                updateCpuReg(reg->leftVal, s.regsD[i]);
-                updateCpuReg(reg->rightVal, s.regsA[i]);
+                updateReg(reg->leftVal, s.regsD[i]);
+                updateReg(reg->rightVal, s.regsA[i]);
                 break;
             case 8:
-                updateCpuReg(reg->leftVal, s.pc);
-                updateCpuReg(reg->rightVal, s.ird);
+                updateReg(reg->leftVal, s.pc);
+                updateReg(reg->rightVal, s.ird);
                 break;
             case 9:
-                updateCpuReg(reg->leftVal, s.ssp);
-                updateCpuReg(reg->rightVal, s.irc);
+                updateReg(reg->leftVal, s.ssp);
+                updateReg(reg->rightVal, s.irc);
                 break;
             case 10:
-                updateCpuReg(reg->leftVal, s.usp);
-                updateCpuReg(reg->rightVal, s.ipl);
+                updateReg(reg->leftVal, s.usp);
+                updateReg(reg->rightVal, s.ipl);
                 break;
         }
         i++;
@@ -674,20 +672,20 @@ auto CpuDebugger::update6510(LIBC64::DebuggerSnapshot& s) -> void {
     for (auto& reg : cpu->state.registers) {
         switch (i++) {
             case 0:
-                updateCpuReg(reg->leftVal, s.pc);
-                updateCpuReg(reg->rightVal, s.regS);
+                updateReg(reg->leftVal, s.pc);
+                updateReg(reg->rightVal, s.regS);
                 break;
             case 1:
-                updateCpuReg(reg->leftVal, s.regX);
-                updateCpuReg(reg->rightVal, s.regY);
+                updateReg(reg->leftVal, s.regX);
+                updateReg(reg->rightVal, s.regY);
                 break;
             case 2:
-                updateCpuReg(reg->leftVal, s.regA);
-                updateCpuReg(reg->rightVal, s.ioLines);
+                updateReg(reg->leftVal, s.regA);
+                updateReg(reg->rightVal, s.ioLines);
                 break;
             case 3:
-                updateCpuReg(reg->leftVal, s.por);
-                updateCpuReg(reg->rightVal, s.ddr);
+                updateReg(reg->leftVal, s.por);
+                updateReg(reg->rightVal, s.ddr);
                 break;
         }
     }
@@ -701,20 +699,20 @@ auto CpuDebugger::update65816(LIBC64::DebuggerSnapshot& s) -> void {
     for (auto& reg : cpu->state.registers) {
         switch (i++) {
             case 0:
-                updateCpuReg(reg->leftVal, s.pc);
-                updateCpuReg(reg->rightVal, s.regS);
+                updateReg(reg->leftVal, s.pc);
+                updateReg(reg->rightVal, s.regS);
                 break;
             case 1:
-                updateCpuReg(reg->leftVal, s.regX);
-                updateCpuReg(reg->rightVal, s.regY);
+                updateReg(reg->leftVal, s.regX);
+                updateReg(reg->rightVal, s.regY);
                 break;
             case 2:
-                updateCpuReg(reg->leftVal, s.regA);
-                updateCpuReg(reg->rightVal, s.modeE);
+                updateReg(reg->leftVal, s.regA);
+                updateReg(reg->rightVal, s.modeE);
                 break;
             case 3:
-                updateCpuReg(reg->leftVal, s.pbr);
-                updateCpuReg(reg->rightVal, s.dbr);
+                updateReg(reg->leftVal, s.pbr);
+                updateReg(reg->rightVal, s.dbr);
                 break;
         }
     }
@@ -776,13 +774,13 @@ auto CpuDebugger::translateTheme() -> void {
     cpu->state.trace.clear.setTooltip( showTips ? trans->getA( "clear trace") : "" );
 }
 
-inline auto CpuDebugger::getCpuType() -> Emulator::Interface::DebuggerCpu {
+inline auto CpuDebugger::getCpuType() -> Emulator::Interface::DebuggerChip {
     if (isAmiga())
-        return Emulator::Interface::DebuggerCpu::C68000;
+        return Emulator::Interface::DebuggerChip::C68000;
     if (mode == Mode::SCPU)
-        return Emulator::Interface::DebuggerCpu::C65c816;
+        return Emulator::Interface::DebuggerChip::C65c816;
 
-    return Emulator::Interface::DebuggerCpu::C6510;
+    return Emulator::Interface::DebuggerChip::C6510;
 }
 
 auto CpuDebugger::screenIdent() -> std::string {

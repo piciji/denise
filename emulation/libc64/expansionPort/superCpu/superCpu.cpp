@@ -1579,8 +1579,10 @@ auto SuperCpu::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.dbr = dbr;
     snap.flags = p;
     snap.modeE = modeE;
+}
+
+auto SuperCpu::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {
     snap.mode = (memConf & 7) | 0x18;
-    snap.superCpu = true;
 
     for (int b = 0; b <= 0xff; b++ ) {
         if (b < 2)                                          snap.mapperSCPU[b] = 1; // sram

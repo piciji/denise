@@ -20,7 +20,7 @@ namespace LIBC64 {
 
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU, CIA,
+        CPU, SCPU, Memory, MemorySCPU, CIA, DENISE,
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );
@@ -65,16 +65,15 @@ struct Debugger : GUIKIT::Window {
     };
     Control* control = nullptr;
 
+    Emulator::Interface::DebuggerSnapshot* snapshot = nullptr;
     static GUIKIT::Timer* timer;
     static GUIKIT::Timer* timerVisibility;
-
-    GUIKIT::Layout* theme = nullptr;
     GUIKIT::VerticalLayout layout;
 
     auto build() -> void;
     virtual auto screenIdent() -> std::string = 0;
     virtual auto titleIdent() -> std::string = 0;
-    virtual auto buildTheme() -> void = 0;
+    virtual auto buildTheme() -> GUIKIT::Layout* = 0;
     virtual auto searchTheme(unsigned addr) -> void {}
     virtual auto translateTheme() -> void {}
     virtual auto updateTheme() -> void {}
@@ -97,6 +96,7 @@ struct Debugger : GUIKIT::Window {
     auto isCiaMode() const -> bool { return mode == Mode::CIA; }
 
     static auto hex( uint32_t val, int length = -1 ) -> std::string;
+    static auto updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
 
     static auto isPaused() -> bool;
     static auto stepOut(Emulator::Interface* emulator) -> void;

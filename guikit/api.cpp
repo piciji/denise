@@ -857,6 +857,33 @@ auto SquareCanvas::setBorderColor(unsigned borderSize, unsigned borderColor) -> 
 
 SquareCanvas::SquareCanvas() : Widget(*new pSquareCanvas(*this)), p((pSquareCanvas&)Widget::p) { p.init(); }
 
+auto MultiSquareCanvas::setGrid(unsigned squareSize, unsigned rows, unsigned cols) -> void {
+    state.squareSize = squareSize;
+
+    if (!state.dots || state.rows != rows || state.cols != cols) {
+        state.rows = rows;
+        state.cols = cols;
+        delete[] state.dots;
+        state.dots = nullptr;
+        unsigned s = rows * cols;
+        if (s)
+            state.dots = new unsigned[s];
+
+        p.updateScrollRange();
+    }
+}
+
+auto MultiSquareCanvas::update() -> void {
+    p.update();
+}
+
+auto MultiSquareCanvas::setPadding(unsigned padding) -> void {
+    state.padding = padding;
+    p.setPadding(padding);
+}
+
+MultiSquareCanvas::MultiSquareCanvas() : Widget(*new pMultiSquareCanvas(*this)), p((pMultiSquareCanvas&)Widget::p) { p.init(); }
+
 auto ImageView::setImage(Image* image) -> void {
     state.image = image;
     p.setImage(image);

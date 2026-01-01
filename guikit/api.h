@@ -34,6 +34,7 @@ struct pMultilineEdit;
 struct pLabel;
 struct pHyperlink;
 struct pSquareCanvas;
+struct pMultiSquareCanvas;
 struct pButton;
 struct pStepButton;
 struct pCheckButton;
@@ -571,6 +572,30 @@ struct SquareCanvas : Widget {
     } state;
     
     SquareCanvas();
+};
+
+struct MultiSquareCanvas : Widget {
+    pMultiSquareCanvas& p;
+
+    auto setGrid(unsigned squareSize, unsigned rows, unsigned cols) -> void;
+    auto getDotPtr() -> unsigned* { return state.dots; }
+    auto update() -> void;
+    auto setPadding(unsigned padding) -> void;
+    auto padding() -> unsigned { return state.padding; }
+    auto cols() -> unsigned { return state.cols; }
+    unsigned rows() { return state.rows; }
+    unsigned squareSize() { return state.squareSize; }
+
+    struct {
+        unsigned squareSize = 0;
+        unsigned rows = 0;
+        unsigned cols = 0;
+        unsigned padding = 0;
+
+        unsigned* dots = nullptr;
+    } state;
+
+    MultiSquareCanvas();
 };
 
 struct ImageView : Widget {

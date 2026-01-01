@@ -27,7 +27,8 @@ namespace GUIKIT {
 #include "widgets/multilineedit.cpp"
 #include "widgets/label.cpp"
 #include "widgets/hyperlink.cpp"
-#include "widgets/squareCanvas.cpp"   
+#include "widgets/squareCanvas.cpp"
+#include "widgets/multiSquareCanvas.cpp"
 #include "widgets/checkbutton.cpp"
 #include "widgets/checkbox.cpp"
 #include "widgets/combobutton.cpp"
@@ -370,6 +371,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                 break;
             }
             if(dynamic_cast<Slider*>(base)) { ((Slider*)base)->p.onChange(); return true; }
+            if(dynamic_cast<MultiSquareCanvas*>(base)) { ((MultiSquareCanvas*)base)->p.onChange(wparam); return true; }
             break;
         }
 		case WM_MEASUREITEM: {
@@ -424,6 +426,9 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                     return true;
                 } else if (dynamic_cast<SquareCanvas*> (base)) {
                     ((SquareCanvas*)base)->p.drawItem(lDraw);
+                    return true;
+                } else if (dynamic_cast<MultiSquareCanvas*> (base)) {
+                    ((MultiSquareCanvas*)base)->p.drawItem(lDraw);
                     return true;
                 } else if (dynamic_cast<ImageView*> (base)) {
                     ((ImageView*)base)->p.drawItem(lDraw);

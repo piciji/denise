@@ -96,7 +96,7 @@ struct CpuDebugger : Debugger {
     std::vector<Watcher> watchers;
     Instruction instructions[LIST_INSTRUCTIONS];
 
-    auto buildTheme() -> void override;
+    auto buildTheme() -> GUIKIT::Layout* override;
     auto searchTheme(unsigned addr) -> void override;
     auto translateTheme() -> void override;
     auto updateTheme() -> void override;
@@ -120,7 +120,6 @@ struct CpuDebugger : Debugger {
     auto findInstructionRowBy(unsigned addr) -> std::optional<unsigned>;
 
     auto updateCpuFlags(const char* flagIdent, unsigned flags) -> void;
-    auto updateCpuReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
     auto updateWatcherSelection() -> void;
     auto initWatchers() -> void;
 
@@ -128,5 +127,5 @@ struct CpuDebugger : Debugger {
     auto update6510(LIBC64::DebuggerSnapshot& s) -> void;
     auto update65816(LIBC64::DebuggerSnapshot& s) -> void;
 
-    auto getCpuType() -> Emulator::Interface::DebuggerCpu;
+    auto getCpuType() -> Emulator::Interface::DebuggerChip;
 };

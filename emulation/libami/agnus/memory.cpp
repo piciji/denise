@@ -689,5 +689,9 @@ auto Agnus::isMem(uint32_t addr) -> bool {
     return _m == FAST_MEM || _m == CHIP_MEM || _m == SLOW_MEM;
 }
 
+auto Agnus::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {
+    std::memcpy(snap.mapper, mapper, sizeof(mapper));
+}
+
 
 }

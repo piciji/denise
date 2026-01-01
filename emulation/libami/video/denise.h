@@ -12,6 +12,7 @@ namespace LIBAMI {
 struct System;
 struct Agnus;
 struct Input;
+struct DebuggerSnapshot;
 
 // A1000 + OCS Denise, todo: ECS Denise
 struct Denise {
@@ -109,6 +110,16 @@ struct Denise {
     bool hBlank;
     bool vBlank;
 
+    struct {
+        bool store = false;
+        struct {
+            uint16_t* data = nullptr;
+            unsigned pos = 0;
+            uint8_t sprData[16];
+            bool lock = false;
+        } spr[8];
+    } debugInfo;
+
     auto strhor() -> void;
     auto strequ() -> void;
     auto strvbl() -> void;
@@ -157,6 +168,9 @@ struct Denise {
     auto updateECSFeatures() -> void;
     auto ecsena() -> bool { return !!(bplCon0 & 1) && (model > Model::OCS); }
     auto csync(bool state) -> void;
+
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto storeSprite(uint8_t nr, uint32_t shift) -> void;
 };
 
 }

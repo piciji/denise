@@ -333,11 +333,11 @@ struct System {
     auto set2Mhz(bool state) -> void;
     auto toggle2Mhz() -> bool;
 
-    auto debuggerAdd(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
-	auto debuggerRemove(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
-	auto debuggerEnable(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
-	auto debuggerDisable(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
-	auto debuggerDisableAll(Emulator::Interface::DebuggerCpu cpuModel) -> void;
+    auto debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
+	auto debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+	auto debuggerEnable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+	auto debuggerDisable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+	auto debuggerDisableAll(Emulator::Interface::DebuggerChip chip) -> void;
 
 	auto debuggerStepOver() -> void;
 	auto debuggerStepInto() -> void;
@@ -353,6 +353,7 @@ struct System {
 	auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
 
     auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }

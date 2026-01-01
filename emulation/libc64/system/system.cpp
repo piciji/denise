@@ -1314,47 +1314,47 @@ auto System::toggle2Mhz() -> bool {
     return mhz2 & 0x80;
 }
 
-auto System::debuggerAdd(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
+auto System::debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
     switch (action) {
         case Emulator::Interface::DebuggerAction::Line:
         case Emulator::Interface::DebuggerAction::Frame:
             vicII->debuggerAction = action;
             break;
         default:
-            if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+            if (chip == Emulator::Interface::DebuggerChip::C65c816)
                 superCpu->debuggerAdd((WDCFAMILY::W65816::DebuggerAction)action, addr, addrTo);
-            else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+            else if (chip == Emulator::Interface::DebuggerChip::C6510)
                 cpu.debuggerAdd( (M6510::DebuggerAction)action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
 
             break;
     }
 }
 
-auto System::debuggerRemove(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
-    if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (chip == Emulator::Interface::DebuggerChip::C65c816)
         superCpu->debuggerRemove( (WDCFAMILY::W65816::DebuggerAction)action, addr);
-    else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+    else if (chip == Emulator::Interface::DebuggerChip::C6510)
         cpu.debuggerRemove( (M6510::DebuggerAction)action, addr );
 }
 
-auto System::debuggerEnable(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
-    if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+auto System::debuggerEnable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (chip == Emulator::Interface::DebuggerChip::C65c816)
         superCpu->debuggerEnable((WDCFAMILY::W65816::DebuggerAction)action, addr);
-    else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+    else if (chip == Emulator::Interface::DebuggerChip::C6510)
         cpu.debuggerEnable( (M6510::DebuggerAction)action, addr );
 }
 
-auto System::debuggerDisable(Emulator::Interface::DebuggerCpu cpuModel, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
-    if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+auto System::debuggerDisable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (chip == Emulator::Interface::DebuggerChip::C65c816)
         superCpu->debuggerDisable((WDCFAMILY::W65816::DebuggerAction)action, addr);
-    else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+    else if (chip == Emulator::Interface::DebuggerChip::C6510)
         cpu.debuggerDisable( (M6510::DebuggerAction)action, addr );
 }
 
-auto System::debuggerDisableAll(Emulator::Interface::DebuggerCpu cpuModel) -> void {
-    if (cpuModel == Emulator::Interface::DebuggerCpu::C65c816)
+auto System::debuggerDisableAll(Emulator::Interface::DebuggerChip chip) -> void {
+    if (chip == Emulator::Interface::DebuggerChip::C65c816)
         superCpu->debuggerDisableAll();
-    else if (cpuModel == Emulator::Interface::DebuggerCpu::C6510)
+    else if (chip == Emulator::Interface::DebuggerChip::C6510)
         cpu.debuggerDisableAll();
 }
 
@@ -1398,28 +1398,47 @@ auto System::debugPointReached(Emulator::Interface::DebuggerAction action, unsig
 }
 
 auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
-    if (expansionPort->haltMainCpu()) {
-        dynamic_cast<SuperCpu*>(expansionPort)->updateSnapshot(snap);
-    } else {
-        cpu.updateSnapshot(snap);
-        snap.mode = mode;
-        snap.superCpu = false;
+    snap.superCpu = expansionPort->haltMainCpu();
 
-        for (uint8_t a = 0; a <= 0xf; a++ ) {
-            if (memoryCpu.isLocation(a << 4, &readRam)) snap.mapper[a] = 1;
-            else if (memoryCpu.isLocation(a << 4, &readVicReg)) snap.mapper[a] = 2;
-            else if (memoryCpu.isLocation(a << 4, &readCharRom)) snap.mapper[a] = 3;
-            else if (memoryCpu.isLocation(a << 4, &readKernalRom)) snap.mapper[a] = 4;
-            else if (memoryCpu.isLocation(a << 4, &readBasicRom)) snap.mapper[a] = 5;
-            else if (memoryCpu.isLocation(a << 4, &readRomL)) snap.mapper[a] = 6;
-            else if (memoryCpu.isLocation(a << 4, &readRomH)) snap.mapper[a] = 7;
-            else if (memoryCpu.isLocation(a << 4, &readUltimaxA0)) snap.mapper[a] = 8;
-            else snap.mapper[a] = 0; // unmapped
-        }
+    switch (snap.theme) {
+        case Emulator::Interface::DebuggerSnapshot::Theme::CPU:
+            if (expansionPort->haltMainCpu())
+                superCpu->updateSnapshot(snap);
+            else
+                cpu.updateSnapshot(snap);
+            break;
+        case Emulator::Interface::DebuggerSnapshot::Theme::Memory:
+            if (expansionPort->haltMainCpu())
+                superCpu->updateMemorySnapshot( snap );
+            else
+                updateMemorySnapshot(snap);
+            break;
+        case Emulator::Interface::DebuggerSnapshot::Theme::CIA:
+            updateCiaDebuggerSnapshot(snap);
+            break;
+        case Emulator::Interface::DebuggerSnapshot::Theme::Video:
+            break;
+        default:
+            break;
     }
 
     vicII->updateSnapshot(snap);
-    updateCiaDebuggerSnapshot(snap);
+}
+
+auto System::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {
+    snap.mode = mode;
+
+    for (uint8_t a = 0; a <= 0xf; a++ ) {
+        if (memoryCpu.isLocation(a << 4, &readRam)) snap.mapper[a] = 1;
+        else if (memoryCpu.isLocation(a << 4, &readVicReg)) snap.mapper[a] = 2;
+        else if (memoryCpu.isLocation(a << 4, &readCharRom)) snap.mapper[a] = 3;
+        else if (memoryCpu.isLocation(a << 4, &readKernalRom)) snap.mapper[a] = 4;
+        else if (memoryCpu.isLocation(a << 4, &readBasicRom)) snap.mapper[a] = 5;
+        else if (memoryCpu.isLocation(a << 4, &readRomL)) snap.mapper[a] = 6;
+        else if (memoryCpu.isLocation(a << 4, &readRomH)) snap.mapper[a] = 7;
+        else if (memoryCpu.isLocation(a << 4, &readUltimaxA0)) snap.mapper[a] = 8;
+        else snap.mapper[a] = 0; // unmapped
+    }
 }
 
 auto System::disassemble(unsigned addr, unsigned& bytes) -> std::string {

@@ -667,7 +667,12 @@ auto System::getHDDAsync() -> bool {
     return asyncHDDAccess;
 }
 
-auto System::debuggerAdd(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+auto System::debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    if (chip == Interface::DebuggerChip::Video) {
+        denise.debugInfo.store = true;
+        return;
+    }
+
     switch (action) {
         case Emulator::Interface::DebuggerAction::Line:
         case Emulator::Interface::DebuggerAction::Frame:
@@ -679,10 +684,35 @@ auto System::debuggerAdd(Emulator::Interface::DebuggerAction action, unsigned ad
     }
 }
 
+auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (chip == Interface::DebuggerChip::Video) {
+        denise.debugInfo.store = false;
+        return;
+    }
+
+    cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr );
+}
+
 auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
-    cpu.updateSnapshot(snap);
+    switch (snap.theme) {
+        case Emulator::Interface::DebuggerSnapshot::Theme::CPU:
+            cpu.updateSnapshot(snap);
+            break;
+        case Emulator::Interface::DebuggerSnapshot::Theme::Memory:
+            agnus.updateMemorySnapshot(snap);
+            break;
+        case Emulator::Interface::DebuggerSnapshot::Theme::CIA:
+            updateCiaDebuggerSnapshot(snap);
+            break;
+        case Emulator::Interface::DebuggerSnapshot::Theme::Video:
+            denise.updateSnapshot(snap);
+            agnus.updateVideoSnapshot( snap );
+            break;
+        default:
+            break;
+    }
+
     agnus.updateSnapshot(snap);
-    updateCiaDebuggerSnapshot(snap);
 }
 
 auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {

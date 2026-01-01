@@ -6,7 +6,7 @@
 
 namespace LIBAMI {
 
-struct DebuggerSnapshot {
+struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint32_t regsD[8];
     uint32_t regsA[8];
     uint32_t pc;
@@ -29,6 +29,43 @@ struct DebuggerSnapshot {
 
     uint8_t hPos;
     uint16_t vPos;
+
+    struct {
+        struct {
+            uint16_t data[0x1fff];
+            unsigned pos = 0;
+            uint16_t x = 0;
+            uint16_t vStart = 0;
+            uint16_t vStop = 0;
+            bool attached = false;
+
+            uint16_t datA;
+            uint16_t datB;
+        } spr[8];
+
+        uint16_t colors[32];
+        uint16_t bplCon0;
+        uint16_t bplCon1;
+        uint16_t bplCon2;
+        uint16_t bplCon3;
+        uint16_t clxDat;
+        uint16_t hPos;
+        bool hblank;
+        bool border;
+        bool enableDisplay;
+        uint16_t hStart;
+        uint16_t hStop;
+        uint8_t delayPf1;
+        uint8_t delayPf2;
+
+        uint16_t bpl1dat;
+        uint16_t bpl2dat;
+        uint16_t bpl3dat;
+        uint16_t bpl4dat;
+        uint16_t bpl5dat;
+        uint16_t bpl6dat;
+
+    } denise;
 
     struct {
         struct {

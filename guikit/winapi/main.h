@@ -394,6 +394,34 @@ struct pSquareCanvas : pWidget {
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
 };
 
+struct pMultiSquareCanvas : pWidget {
+    MultiSquareCanvas& multiSquareCanvas;
+    WNDPROC wndprocOrigScroller;
+
+    pMultiSquareCanvas(MultiSquareCanvas& multiSquareCanvas) : pWidget(multiSquareCanvas), multiSquareCanvas(multiSquareCanvas) {}
+    ~pMultiSquareCanvas();
+
+    HWND hwndScroller;
+    int scrollPos;
+    unsigned* drawArea = nullptr;
+
+    auto rebuild() -> void;
+    auto update() -> void;
+    auto create() -> void;
+    auto setPadding(unsigned padding) -> void;
+    auto updateScrollRange() -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto setVisible(bool visible) -> void;
+    auto setEnabled(bool enabled) -> void;
+    auto buildDrawArea() -> void;
+    auto scroll(int delta) -> void;
+
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK subclassWndProcScroller(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
+    auto onChange(WPARAM wparam) -> void;
+};
+
 struct pImageView : pWidget {
     ImageView& imageView;
     HCURSOR hCursor = nullptr;
@@ -479,6 +507,7 @@ struct pCheckBox : pWidget {
     auto onToggle() -> void;
     auto rebuild() -> void;
     auto create() -> void;
+    auto setForegroundColor(unsigned color) -> void;
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
     
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
@@ -539,6 +568,7 @@ struct pRadioBox : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto onActivate() -> void;
+    auto setForegroundColor(unsigned color) -> void;
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
     
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;

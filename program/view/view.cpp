@@ -1344,9 +1344,17 @@ auto View::buildMenu() -> void {
                 program->openDebugger(emulator, Debugger::Mode::MemorySCPU);
             };
             sM.debugger->append( *sM.debuggerMemSCPU );
+
+            sM.debuggerVideo = nullptr;
         } else {
             sM.debuggerMemSCPU = nullptr;
             sM.debuggerSCPU = nullptr;
+
+            sM.debuggerVideo = new GUIKIT::MenuItem;
+            sM.debuggerVideo->onActivate = [this, emulator]() {
+                program->openDebugger(emulator, Debugger::Mode::DENISE);
+            };
+            sM.debugger->append( *sM.debuggerVideo );
         }
 
         sM.debuggerCia = new GUIKIT::MenuItem;
@@ -2103,6 +2111,9 @@ auto View::translate() -> void {
         sysMenu.debuggerCpu->setText(trans->get("CPU"));
         sysMenu.debuggerMem->setText(trans->get("MEM"));
         sysMenu.debuggerCia->setText(trans->get("CIA"));
+
+        if (sysMenu.debuggerVideo)
+            sysMenu.debuggerVideo->setText(trans->get("Denise"));
 
         if (sysMenu.debuggerMemSCPU)
             sysMenu.debuggerMemSCPU->setText(trans->get("MEM SCPU"));

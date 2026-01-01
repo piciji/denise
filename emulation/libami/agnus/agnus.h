@@ -471,6 +471,8 @@ struct Agnus {
     auto debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned addr) -> void;
     auto oneTimeDebuggerAction() -> void;
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }

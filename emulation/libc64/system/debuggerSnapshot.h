@@ -6,7 +6,7 @@
 
 namespace LIBC64 {
 
-struct DebuggerSnapshot {
+struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint16_t regA;
     uint16_t regX;
     uint16_t regY;

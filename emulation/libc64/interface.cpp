@@ -2074,33 +2074,31 @@ auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
     return system->disassembleTrace( i, (uint8_t&)flags );
 }
 
-auto Interface::getDebuggerSnapshot() -> DebuggerSnapshot {
-    DebuggerSnapshot snap{};
+auto Interface::getDebuggerSnapshot(LIBC64::DebuggerSnapshot& snap) -> void {
     system->updateDebuggerSnapshot(snap);
-    return snap;
 }
 
-auto Interface::debuggerAdd(DebuggerCpu cpu, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
-    system->debuggerAdd( cpu, action, addr, addrTo );
+auto Interface::debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    system->debuggerAdd( chip, action, addr, addrTo );
 }
 
-auto Interface::debuggerRemove(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {
-    system->debuggerRemove( cpu, action, addr );
+auto Interface::debuggerRemove(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {
+    system->debuggerRemove( chip, action, addr );
 }
 
-auto Interface::debuggerEnable(DebuggerCpu cpu, DebuggerAction action, unsigned addr, bool state) -> void {
+auto Interface::debuggerEnable(DebuggerChip chip, DebuggerAction action, unsigned addr, bool state) -> void {
     if (state)
-        system->debuggerEnable( cpu, action, addr );
+        system->debuggerEnable( chip, action, addr );
     else
-        system->debuggerDisable( cpu, action, addr );
+        system->debuggerDisable( chip, action, addr );
 }
 
-auto Interface::debuggerDisable(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {
-    system->debuggerDisable( cpu, action, addr );
+auto Interface::debuggerDisable(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {
+    system->debuggerDisable( chip, action, addr );
 }
 
-auto Interface::debuggerDisableAll(DebuggerCpu cpu) -> void {
-    system->debuggerDisableAll(cpu);
+auto Interface::debuggerDisableAll(DebuggerChip chip) -> void {
+    system->debuggerDisableAll(chip);
 }
 
 auto Interface::debuggerStepOver() -> void {

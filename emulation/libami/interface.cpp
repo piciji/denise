@@ -803,36 +803,34 @@ auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
     return system->cpu.disassembleTrace( i, flags );
 }
 
-auto Interface::getDebuggerSnapshot() -> DebuggerSnapshot {
-    DebuggerSnapshot snap{};
+auto Interface::getDebuggerSnapshot(LIBAMI::DebuggerSnapshot& snap) -> void {
     system->updateDebuggerSnapshot(snap);
-    return snap;
 }
 
 auto Interface::getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {
     system->agnus.memoryDump(bank, dump);
 }
 
-auto Interface::debuggerAdd(DebuggerCpu cpu, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
-    system->debuggerAdd( action, addr, addrTo );
+auto Interface::debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    system->debuggerAdd( chip, action, addr, addrTo );
 }
 
-auto Interface::debuggerRemove(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {
-    system->cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr );
+auto Interface::debuggerRemove(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {
+    system->debuggerRemove( chip, action, addr );
 }
 
-auto Interface::debuggerEnable(DebuggerCpu cpu, DebuggerAction action, unsigned addr, bool state) -> void {
+auto Interface::debuggerEnable(DebuggerChip chip, DebuggerAction action, unsigned addr, bool state) -> void {
     if (state)
         system->cpu.debuggerEnable( (M68FAMILY::M68000::DebuggerAction)action, addr );
     else
-        debuggerDisable( cpu, action, addr );
+        debuggerDisable( chip, action, addr );
 }
 
-auto Interface::debuggerDisable(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {
+auto Interface::debuggerDisable(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {
     system->cpu.debuggerDisable( (M68FAMILY::M68000::DebuggerAction)action, addr );
 }
 
-auto Interface::debuggerDisableAll(DebuggerCpu cpu) -> void {
+auto Interface::debuggerDisableAll(DebuggerChip chip) -> void {
     system->cpu.debuggerDisableAll();
 }
 

@@ -1219,6 +1219,9 @@
     <ClInclude Include="..\program\debugger\memScpuDebugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\debugger\deniseDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2453,6 +2456,12 @@
     </ClCompile>
     <ClCompile Include="..\program\debugger\memDebugger.cpp">
       <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\deniseDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\multiSquareCanvas.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

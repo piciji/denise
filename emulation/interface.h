@@ -327,7 +327,11 @@ struct Interface {
         const char* ident;
     };
 
-    enum class DebuggerCpu { Unspecified, C68000, C6502, C6510, C65c816 };
+    struct DebuggerSnapshot {
+        enum class Theme { CPU, Memory, CIA, Video } theme;
+    };
+
+    enum class DebuggerChip { Unspecified, C68000, C6502, C6510, C65c816, Video };
     enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame };
 
     //callbacks
@@ -645,11 +649,11 @@ struct Interface {
     virtual auto setMonitorFpsRatio(double ratio) -> void {}
 
     // debugger
-    virtual auto debuggerAdd(DebuggerCpu cpu, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
-    virtual auto debuggerRemove(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {}
-    virtual auto debuggerEnable(DebuggerCpu cpu, DebuggerAction action, unsigned addr, bool state = true) -> void {}
-    virtual auto debuggerDisable(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void {}
-    virtual auto debuggerDisableAll(DebuggerCpu cpu) -> void {}
+    virtual auto debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
+    virtual auto debuggerRemove(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {}
+    virtual auto debuggerEnable(DebuggerChip chip, DebuggerAction action, unsigned addr, bool state = true) -> void {}
+    virtual auto debuggerDisable(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {}
+    virtual auto debuggerDisableAll(DebuggerChip chip) -> void {}
 
     virtual auto debuggerStepOver() -> void {}
     virtual auto debuggerStepInto() -> void {}

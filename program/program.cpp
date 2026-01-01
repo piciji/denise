@@ -24,6 +24,7 @@
 #include "debugger/memScpuDebugger.h"
 #include "debugger/memDebugger.h"
 #include "debugger/ciaDebugger.h"
+#include "debugger/deniseDebugger.h"
 
 Program* program = nullptr;
 DRIVER::Input* inputDriver = new DRIVER::Input;
@@ -855,6 +856,7 @@ auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -
         case Debugger::Mode::Memory: debugger = new MemDebugger(emulator); break;
         case Debugger::Mode::MemorySCPU: debugger = new MemScpuDebugger(emulator); break;
         case Debugger::Mode::CIA: debugger = new CiaDebugger(emulator); break;
+        case Debugger::Mode::DENISE: debugger = new DeniseDebugger(emulator); break;
         default:
             return;
     }

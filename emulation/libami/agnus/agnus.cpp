@@ -984,10 +984,18 @@ auto Agnus::oneTimeDebuggerAction() -> void {
     debuggerAction = Emulator::Interface::DebuggerAction::None;
 }
 
+auto Agnus::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
+    int i = 0;
+    for (auto& spr : sprites) {
+        auto& _spr = snap.denise.spr[i++];
+        _spr.vStart = spr.vStart;
+        _spr.vStop = spr.vStop;
+    }
+}
+
 auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.hPos = hPos;
     snap.vPos = vPos;
-    std::memcpy(snap.mapper, mapper, sizeof(mapper));
 }
 
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;

@@ -153,9 +153,8 @@ auto MemDebugger::searchTheme(unsigned addr) -> void {
     }
 }
 
-auto MemDebugger::buildTheme() -> void {
+auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
     memory = new Memory(this);
-    theme = memory;
 
     if (isAmiga() || (mode == Mode::MemorySCPU)) {
         memDump = new uint8_t[0x10000];
@@ -184,6 +183,8 @@ auto MemDebugger::buildTheme() -> void {
     std::memset(bankListStore, 0, sizeof(bankListStore));
     memory->bankList.setSelected();
     memory->pageList.setSelected();
+
+    return memory;
 }
 
 auto MemDebugger::translateTheme() -> void {
@@ -195,14 +196,19 @@ auto MemDebugger::translateTheme() -> void {
 
 auto MemDebugger::updateTheme() -> void {
     bool locked = emuThread->lock();
+    snapshot->theme = Emulator::Interface::DebuggerSnapshot::Theme::Memory;
 
     if (isAmiga()) {
         auto* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
-        auto snap = amiEmu->getDebuggerSnapshot();
+        LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
+
+        amiEmu->getDebuggerSnapshot(snap);
         updateMemory( snap);
     } else {
         auto* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
-        auto snap = c64Emu->getDebuggerSnapshot();
+        LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
+
+        c64Emu->getDebuggerSnapshot(snap);
 
         if (mode == Mode::Memory) {
             updateMemory( snap);

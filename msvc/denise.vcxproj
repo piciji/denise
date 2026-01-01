@@ -270,6 +270,7 @@
     <ClInclude Include="..\program\debugger\ciaDebugger.h" />
     <ClInclude Include="..\program\debugger\cpuDebugger.h" />
     <ClInclude Include="..\program\debugger\debugger.h" />
+    <ClInclude Include="..\program\debugger\deniseDebugger.h" />
     <ClInclude Include="..\program\debugger\memDebugger.h" />
     <ClInclude Include="..\program\debugger\memScpuDebugger.h" />
     <ClInclude Include="..\program\debugger\scpuDebugger.h" />
@@ -1549,6 +1550,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\multiSquareCanvas.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\guikit\winapi\widgets\progressbar.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -1677,6 +1684,7 @@
     <ClCompile Include="..\program\debugger\ciaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\cpuDebugger.cpp" />
     <ClCompile Include="..\program\debugger\debugger.cpp" />
+    <ClCompile Include="..\program\debugger\deniseDebugger.cpp" />
     <ClCompile Include="..\program\debugger\memDebugger.cpp" />
     <ClCompile Include="..\program\emuconfig\config.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_emuconfig</ObjectFileName>

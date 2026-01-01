@@ -136,11 +136,11 @@ struct Interface : Emulator::Interface  {
     auto setRewind(bool state) -> void;
 
     // debugger
-    auto debuggerAdd(DebuggerCpu cpu, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
-    auto debuggerRemove(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void;
-    auto debuggerEnable(DebuggerCpu cpu, DebuggerAction action, unsigned addr, bool state = true) -> void;
-    auto debuggerDisable(DebuggerCpu cpu, DebuggerAction action, unsigned addr) -> void;
-    auto debuggerDisableAll(DebuggerCpu cpu) -> void;
+    auto debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void;
+    auto debuggerEnable(DebuggerChip chip, DebuggerAction action, unsigned addr, bool state = true) -> void;
+    auto debuggerDisable(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void;
+    auto debuggerDisableAll(DebuggerChip chip) -> void;
 
     auto debuggerStepOver() -> void;
     auto debuggerStepInto() -> void;
@@ -150,7 +150,7 @@ struct Interface : Emulator::Interface  {
     auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
     auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
-    auto getDebuggerSnapshot() -> DebuggerSnapshot;
+    auto getDebuggerSnapshot(LIBAMI::DebuggerSnapshot& snap) -> void;
     auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void;
 
 private:

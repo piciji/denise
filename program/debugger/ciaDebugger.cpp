@@ -212,15 +212,8 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
         for (int j = 0; j < 2; j++) {
             auto& p = c.port[j];
             auto& sp = sc.port[j];
-
-            if (p.prVal.getStore() != sp.pr) {
-                p.prVal.setText( hex(sp.pr) );
-                p.prVal.setStore( sp.pr );
-            }
-            if (p.ddrVal.getStore() != sp.ddr) {
-                p.ddrVal.setText( hex(sp.ddr) );
-                p.ddrVal.setStore( sp.ddr );
-            }
+            updateReg( p.prVal, sp.pr );
+            updateReg( p.ddrVal, sp.ddr );
 
             auto& io = c.portIO[j];
             int ioPos = io.line.size();
@@ -256,14 +249,9 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
                 t.label.setStore( sp.timerRunning );
             }
 
-            if (t.val.getStore() != sp.timer) {
-                t.val.setText( hex(sp.timer) );
-                t.val.setStore( sp.timer );
-            }
-            if (t.latchVal.getStore() != sp.timerLatch) {
-                t.latchVal.setText( hex(sp.timerLatch) );
-                t.latchVal.setStore( sp.timerLatch );
-            }
+            updateReg( t.val, sp.timer );
+            updateReg( t.latchVal, sp.timerLatch );
+
             if (t.oneShot.checked() != sp.oneshot)
                 t.oneShot.setChecked( sp.oneshot );
             if (t.pbOut.checked() != sp.pbOut)
@@ -273,10 +261,8 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
         }
 
         auto& id = c.intData;
-        if (id.icrVal.getStore() != sc.icr) {
-            id.icrVal.setText( hex(sc.icr) );
-            id.icrVal.setStore( sc.icr );
-        }
+        updateReg( id.icrVal, sc.icr );
+
         if (id.ir.checked() != !!(sc.icr & 0x80) ) id.ir.setChecked( !!(sc.icr & 0x80) );
         if (id.flag.checked() != !!(sc.icr & 0x10) ) id.flag.setChecked( !!(sc.icr & 0x10) );
         if (id.sp.checked() != !!(sc.icr & 0x08) ) id.sp.setChecked( !!(sc.icr & 0x08) );
@@ -285,10 +271,8 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
         if (id.ta.checked() != !!(sc.icr & 0x01) ) id.ta.setChecked( !!(sc.icr & 0x01) );
 
         auto& im = c.intMask;
-        if (im.maskVal.getStore() != sc.icrMask) {
-            im.maskVal.setText( hex(sc.icrMask) );
-            im.maskVal.setStore( sc.icrMask );
-        }
+        updateReg( im.maskVal, sc.icrMask );
+
         if (im.flag.checked() != !!(sc.icrMask & 0x10) ) im.flag.setChecked( !!(sc.icrMask & 0x10) );
         if (im.sp.checked() != !!(sc.icrMask & 0x08) ) im.sp.setChecked( !!(sc.icrMask & 0x08) );
         if (im.alarm.checked() != !!(sc.icrMask & 0x04) ) im.alarm.setChecked( !!(sc.icrMask & 0x04) );
@@ -296,34 +280,23 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
         if (im.ta.checked() != !!(sc.icrMask & 0x01) ) im.ta.setChecked( !!(sc.icrMask & 0x01) );
 
         auto& tod = c.tod24bit;
-        if (tod.counter.getStore() != sc.tod) {
-            tod.counter.setText( hex(sc.tod) );
-            tod.counter.setStore( sc.tod );
-        }
-        if (tod.counterAlarm.getStore() != sc.todAlarm) {
-            tod.counterAlarm.setText( hex(sc.todAlarm) );
-            tod.counterAlarm.setStore( sc.todAlarm );
-        }
+        updateReg( tod.counter, sc.tod );
+        updateReg( tod.counterAlarm, sc.todAlarm );
 
         auto& sh = c.shifter;
-        if (sh.sdr.getStore() != sc.sdr) {
-            sh.sdr.setText( hex(sc.sdr) );
-            sh.sdr.setStore( sc.sdr );
-        }
-        if (sh.shiftCount.getStore() != sc.shiftCount) {
-            sh.shiftCount.setText( hex(sc.shiftCount) );
-            sh.shiftCount.setStore( sc.shiftCount );
-        }
+        updateReg( sh.sdr, sc.sdr );
+        updateReg( sh.shiftCount, sc.shiftCount );
     }
     control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
 }
 
-auto CiaDebugger::buildTheme() -> void {
+auto CiaDebugger::buildTheme() -> GUIKIT::Layout* {
     cia = new CIA(this);
-    theme = cia;
 
     control->remove( control->searchEdit );
     control->remove( control->search );
+
+    return cia;
 }
 
 auto CiaDebugger::translateTheme() -> void {
@@ -342,14 +315,19 @@ auto CiaDebugger::translateTheme() -> void {
 
 auto CiaDebugger::updateTheme() -> void {
     bool locked = emuThread->lock();
+    snapshot->theme = Emulator::Interface::DebuggerSnapshot::Theme::CIA;
 
     if (isAmiga()) {
         auto* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
-        auto snap = amiEmu->getDebuggerSnapshot();
+        LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
+
+        amiEmu->getDebuggerSnapshot(snap);
         updateCia<LIBAMI::DebuggerSnapshot>( snap);
     } else {
         auto* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
-        auto snap = c64Emu->getDebuggerSnapshot();
+        LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
+
+        c64Emu->getDebuggerSnapshot(snap);
         updateCia<LIBC64::DebuggerSnapshot>( snap);
     }
 

@@ -329,10 +329,6 @@ auto VideoManager::convertLumaChromaToRGB() -> void {
         adjustGamma(rgbEven.r);
         adjustGamma(rgbEven.g);
         adjustGamma(rgbEven.b);
-
-        uint8_t _r = uclamp8(rgbEven.r);
-        uint8_t _g = uclamp8(rgbEven.g);
-        uint8_t _b = uclamp8(rgbEven.b);
 		
 		colorTable[c] = 255 << 24 | uclamp8( rgbEven.r ) << 16 | uclamp8( rgbEven.g ) << 8 | uclamp8( rgbEven.b );
     }

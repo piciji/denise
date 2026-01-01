@@ -83,7 +83,7 @@ struct CiaDebugger : Debugger {
 
     template<typename T> auto updateCia(T& s) -> void;
 
-    auto buildTheme() -> void override;
+    auto buildTheme() -> GUIKIT::Layout* override;
     auto translateTheme() -> void override;
     auto updateTheme() -> void override;
     auto screenIdent() -> std::string override;

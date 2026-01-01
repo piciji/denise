@@ -194,6 +194,7 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto setRegA(uint8_t data) -> void { a = (a & 0xff00) | data; }
 
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
     auto debugPointReached(DebuggerAction action, unsigned addr) -> void;
 };
 

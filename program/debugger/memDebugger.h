@@ -56,7 +56,7 @@ struct MemDebugger : Debugger {
     uint8_t* memDump = nullptr;
     uint8_t* memDumpOld = nullptr;
 
-    auto buildTheme() -> void override;
+    auto buildTheme() -> GUIKIT::Layout* override;
     auto buildControl() -> GUIKIT::Layout* override;
     auto searchTheme(unsigned addr) -> void override;
     auto translateTheme() -> void override;
