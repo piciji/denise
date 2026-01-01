@@ -40,9 +40,9 @@ DeniseDebugger::Video::Wraper::Registers::Registers() {
     rightVal.setStore( 0 );
 
     append(left, {90u, 0u}, 10);
-    append(leftVal, {50u, 0u}, 10);
-    append(right, {90u, 0u}, 10);
-    append(rightVal, {50u, 0u});
+    append(leftVal, {getWidth(4, true, true), 0u}, 10);
+    append(right, {100u, 0u}, 10);
+    append(rightVal, {getWidth(4, true, true), 0u});
 
     setAlignment( 0.5 );
 }
@@ -74,11 +74,11 @@ DeniseDebugger::Video::Wraper::Wraper() {
     for (auto& reg : registers) {
         reg = new Registers();
         i++;
-        append(*reg, {0u, 0u}, 10);
+        append(*reg, {0u, 0u}, 7);
     }
 
-    append( flags, {~0u, 0u}, 10 );
-    append( flagsECS, {~0u, 0u}, 20 );
+    append( flags, {~0u, 0u}, 7 );
+    append( flagsECS, {~0u, 0u}, 15 );
     append( colors, {~0u, 0u} );
 }
 
@@ -104,6 +104,10 @@ DeniseDebugger::Video::Sprites::Viewer::Viewer() {
 }
 
 DeniseDebugger::Video::Sprites::Position::Position() {
+    valVStart.setFont( GUIKIT::Font::system( 11, "", true ) );
+    valVStop.setFont( GUIKIT::Font::system( 11, "", true ) );
+    valH.setFont( GUIKIT::Font::system( 11, "", true ) );
+
     valVStart.setEditable( false );
     valVStop.setEditable( false );
     valH.setEditable( false );
@@ -116,17 +120,19 @@ DeniseDebugger::Video::Sprites::Position::Position() {
     valH.setStore( 0 );
 
     append(labelVStart, {0u, 0u}, 10);
-    append(valVStart, {40u, 0u}, 5);
+    append(valVStart, {getWidth(3, true, true), 0u}, 5);
     append(labelVStop, {0u, 0u}, 5);
-    append(valVStop, {40u, 0u}, 10);
+    append(valVStop, {getWidth(3, true, true), 0u}, 10);
     append(labelH, {0u, 0u}, 10);
-    append(valH, {40u, 0u}, 10);
+    append(valH, {getWidth(3, true, true), 0u}, 10);
     append(attached, {0u, 0u});
 
     setAlignment( 0.5 );
 }
 
 DeniseDebugger::Video::Sprites::Dat::Dat() {
+    valDatA.setFont( GUIKIT::Font::system( 11, "", true ) );
+    valDatB.setFont( GUIKIT::Font::system( 11, "", true ) );
     valDatA.setEditable( false );
     valDatB.setEditable( false );
     valDatA.setText( "0" );
@@ -135,9 +141,9 @@ DeniseDebugger::Video::Sprites::Dat::Dat() {
     valDatB.setStore( 0 );
 
     append(labelDatA, {0u, 0u}, 10);
-    append(valDatA, {40u, 0u}, 5);
+    append(valDatA, {getWidth(4, true, true), 0u}, 5);
     append(labelDatB, {0u, 0u}, 5);
-    append(valDatB, {40u, 0u});
+    append(valDatB, {getWidth(4, true, true), 0u});
 
     setAlignment( 0.5 );
 }

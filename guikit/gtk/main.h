@@ -274,9 +274,32 @@ struct pSquareCanvas : pWidget {
     auto setGeometry(Geometry geometry) -> void;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pSquareCanvas* self) -> gboolean;
     static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pSquareCanvas* self) -> gboolean;
-    static auto expose(GtkWidget* widget, GdkEventExpose* event, pSquareCanvas* self) -> signed;
+   // static auto expose(GtkWidget* widget, GdkEventExpose* event, pSquareCanvas* self) -> signed;
+	static auto expose(GtkWidget* widget, cairo_t* cr, pSquareCanvas* self) -> gboolean;
     
     pSquareCanvas(SquareCanvas& squareCanvas) : pWidget(squareCanvas), squareCanvas(squareCanvas) {}
+};
+
+struct pMultiSquareCanvas : pWidget {
+	MultiSquareCanvas& multiSquareCanvas;
+	GdkPixbuf* surface = nullptr;
+	GtkWidget* subWidget = nullptr;
+	unsigned* drawArea = nullptr;
+
+	auto init() -> void;
+	auto create() -> void;
+	auto destroy() -> void;
+	auto redraw() -> void;
+	auto update() -> void;
+	auto setPadding(unsigned padding) -> void;
+	auto setGeometry(Geometry geometry) -> void;
+	auto buildDrawArea() -> void;
+	auto updateScrollRange() -> void {}
+
+	static auto expose(GtkWidget* widget, cairo_t* cr, pMultiSquareCanvas* self) -> gboolean;
+
+	pMultiSquareCanvas(MultiSquareCanvas& multiSquareCanvas) : pWidget(multiSquareCanvas), multiSquareCanvas(multiSquareCanvas) {}
+	~pMultiSquareCanvas();
 };
 
 struct pImageView : pWidget {
@@ -292,8 +315,9 @@ struct pImageView : pWidget {
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pImageView* self) -> gboolean;
-    static auto expose(GtkWidget* widget, GdkEventExpose* event, pImageView* self) -> signed;
+    //static auto expose(GtkWidget* widget, GdkEventExpose* event, pImageView* self) -> signed;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pImageView* self) -> gboolean;
+	static auto expose(GtkWidget* widget, cairo_t* cr, pImageView* self) -> gboolean;
 
     pImageView(ImageView& imageView) : pWidget(imageView), imageView(imageView) {}
 };

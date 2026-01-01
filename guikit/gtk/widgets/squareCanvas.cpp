@@ -96,22 +96,32 @@ auto pSquareCanvas::setGeometry(Geometry geometry) -> void {
 	pWidget::setGeometry( geometry );
 }
 
-auto pSquareCanvas::expose(GtkWidget* widget, GdkEventExpose* event, pSquareCanvas* self) -> signed {
+auto pSquareCanvas::expose(GtkWidget* widget, cairo_t* cr, pSquareCanvas* self) -> gboolean {
     if (self->surface == nullptr)
-        return true;
-    
-    unsigned width = self->squareCanvas.Widget::state.geometry.width;
-    unsigned height = self->squareCanvas.Widget::state.geometry.height;
-	
-	GdkDrawingContext* gdc = gdk_window_begin_draw_frame( gtk_widget_get_window( self->gtkWidget ), cairo_region_create());
-	cairo_t* cr = gdk_drawing_context_get_cairo_context( gdc );	
-	
-	gdk_cairo_set_source_pixbuf (cr, self->surface, 0, 0);
-	cairo_paint (cr);
-	gdk_window_end_draw_frame(gtk_widget_get_window(self->gtkWidget), gdc);
-    
-    return true;
+        return FALSE;
+
+    gdk_cairo_set_source_pixbuf (cr, self->surface, 0, 0);
+    cairo_paint (cr);
+
+    return FALSE;
 }
+
+// auto pSquareCanvas::expose(GtkWidget* widget, GdkEventExpose* event, pSquareCanvas* self) -> signed {
+//     if (self->surface == nullptr)
+//         return true;
+//
+//     unsigned width = self->squareCanvas.Widget::state.geometry.width;
+//     unsigned height = self->squareCanvas.Widget::state.geometry.height;
+//
+// 	GdkDrawingContext* gdc = gdk_window_begin_draw_frame( gtk_widget_get_window( self->gtkWidget ), cairo_region_create());
+// 	cairo_t* cr = gdk_drawing_context_get_cairo_context( gdc );
+//
+// 	gdk_cairo_set_source_pixbuf (cr, self->surface, 0, 0);
+// 	cairo_paint (cr);
+// 	gdk_window_end_draw_frame(gtk_widget_get_window(self->gtkWidget), gdc);
+//
+//     return true;
+// }
 
 auto pSquareCanvas::mousePress(GtkWidget* widget, GdkEventButton* event, pSquareCanvas* self) -> gboolean {
     if(self->squareCanvas.onMousePress) switch(event->button) {

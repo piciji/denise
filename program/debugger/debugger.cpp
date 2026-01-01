@@ -433,3 +433,32 @@ auto Debugger::updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void {
         reg.setText( hex( val ) );
     }
 }
+
+auto Debugger::getWidth(unsigned length, bool editField, bool bigger) -> unsigned {
+    static unsigned _w[8][2][2] = {0};
+    GUIKIT::Widget* widget;
+
+    unsigned& _width = _w[length - 1][bigger ? 1 : 0][editField ? 1 : 0];
+
+    if (_width == 0) {
+        if (editField)
+            widget = new GUIKIT::LineEdit;
+        else
+            widget = new GUIKIT::Label;
+
+        if (bigger)
+            widget->setFont( GUIKIT::Font::system( 11, "", true ) );
+        else
+            widget->setFont( GUIKIT::Font::system( "", true ) );
+
+        std::string _str;
+        while (length--)
+            _str += "0";
+
+        widget->setText( _str );
+        _width = widget->minimumSize().width;
+        delete widget;
+    }
+
+    return _width;
+}

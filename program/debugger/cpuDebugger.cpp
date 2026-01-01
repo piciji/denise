@@ -76,25 +76,6 @@ CpuDebugger::CPU::State::Flags::Flags(Debugger* debugger) {
 }
 
 CpuDebugger::CPU::State::Registers::Registers(Debugger* debugger) {
-    static unsigned _wLabel = 0;
-    static unsigned _wEdit = 0;
-    static unsigned _wEdit16 = 0;
-
-    if (_wLabel == 0) {
-        GUIKIT::Label test;
-        test.setFont( GUIKIT::Font::system( 11, "", true ) );
-        test.setText( "0000" );
-        _wLabel = test.minimumSize().width;
-
-        GUIKIT::LineEdit edit;
-        edit.setFont( GUIKIT::Font::system( 11, "", true ) );
-        edit.setText( "00000000" );
-        _wEdit = edit.minimumSize().width;
-
-        edit.setText( "0000" );
-        _wEdit16 = edit.minimumSize().width;
-    }
-
     left.setFont( GUIKIT::Font::system( 11, "", true ) );
     leftVal.setFont( GUIKIT::Font::system( 11, "", true ) );
     right.setFont( GUIKIT::Font::system( 11, "", true ) );
@@ -111,10 +92,10 @@ CpuDebugger::CPU::State::Registers::Registers(Debugger* debugger) {
     rightVal.setText( "0" );
     rightVal.setStore( 0 );
 
-    append(left, {_wLabel, 0u}, 5);
-    append(leftVal, {debugger->isAmiga() ? _wEdit : _wEdit16, 0u}, 10);
-    append(right, {_wLabel, 0u}, 5);
-    append(rightVal, {debugger->isAmiga() ? _wEdit : _wEdit16, 0u});
+    append(left, {getWidth(4, false, true), 0u}, 5);
+    append(leftVal, {getWidth(debugger->isAmiga() ? 8 : 4, true, true), 0u}, 10);
+    append(right, {getWidth(4, false, true), 0u}, 5);
+    append(rightVal, {getWidth(debugger->isAmiga() ? 8 : 4, true, true), 0u});
 
     setAlignment( 0.5 );
 }

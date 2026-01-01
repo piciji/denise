@@ -9,6 +9,8 @@ CiaDebugger::CiaDebugger( Emulator::Interface* emulator, Mode mode )
 }
 
 CiaDebugger::CIA::Chip::Port::Port(uint8_t port) {
+    prVal.setFont( GUIKIT::Font::system("", true ) );
+    ddrVal.setFont( GUIKIT::Font::system("", true ) );
     pr.setText( port == 0 ? "PRA:" : "PRB:" );
     ddr.setText( port == 0 ? "DDRA:" : "DDRB:" );
     prVal.setText("0");
@@ -19,9 +21,9 @@ CiaDebugger::CIA::Chip::Port::Port(uint8_t port) {
     ddrVal.setEditable( false );
 
     append(pr, {50u, 0u}, 5);
-    append(prVal, {40u, 0u}, 10);
+    append(prVal, {getWidth(2, true, false), 0u}, 10);
     append(ddr, {40u, 0u}, 5);
-    append(ddrVal, {40u, 0u});
+    append(ddrVal, {getWidth(2, true, false), 0u});
 
     setAlignment( 0.5 );
 }
@@ -49,6 +51,8 @@ CiaDebugger::CIA::Chip::PortIO::PortIO(uint8_t chipNr, uint8_t portNr, Debugger*
 }
 
 CiaDebugger::CIA::Chip::Timer::Timer(uint8_t portNr) {
+    val.setFont( GUIKIT::Font::system("", true ) );
+    latchVal.setFont( GUIKIT::Font::system("", true ) );
     label.setText( portNr == 0 ? "Timer A:" : "Timer B:" );
     label.setStore( 0 );
     latch.setText( "Latch:" );
@@ -68,9 +72,9 @@ CiaDebugger::CIA::Chip::Timer::Timer(uint8_t portNr) {
     toggleOut.setReadonly();
 
     append(label, {50u, 0u}, 5);
-    append(val, {40u, 0u}, 10);
+    append(val, {getWidth(4, true, false), 0u}, 10);
     append(latch, {40u, 0u}, 5);
-    append(latchVal, {40u, 0u}, 10);
+    append(latchVal, {getWidth(4, true, false), 0u}, 10);
 
     append(oneShot, {0u, 0u}, 5);
     append(pbOut, {0u, 0u}, 5);
@@ -80,6 +84,7 @@ CiaDebugger::CIA::Chip::Timer::Timer(uint8_t portNr) {
 }
 
 CiaDebugger::CIA::Chip::IntData::IntData() {
+    icrVal.setFont( GUIKIT::Font::system("", true ) );
     icr.setText( "ICR:" );
     ir.setText( "IR" );
     flag.setText( "Flag" );
@@ -98,7 +103,7 @@ CiaDebugger::CIA::Chip::IntData::IntData() {
     icrVal.setEditable( false );
 
     append(icr, {50u, 0u}, 5);
-    append(icrVal, {40u, 0u}, 10);
+    append(icrVal, {getWidth(2, true, false), 0u}, 10);
     append(ir, {0u, 0u}, 5);
     append(flag, {0u, 0u}, 5);
     append(sp, {0u, 0u}, 5);
@@ -110,6 +115,7 @@ CiaDebugger::CIA::Chip::IntData::IntData() {
 }
 
 CiaDebugger::CIA::Chip::IntMask::IntMask() {
+    maskVal.setFont( GUIKIT::Font::system("", true ) );
     mask.setText( "Mask:" );
     ir.setText( "IR" );
     flag.setText( "Flag" );
@@ -129,7 +135,7 @@ CiaDebugger::CIA::Chip::IntMask::IntMask() {
     tb.setReadonly();
 
     append(mask, {50u, 0u}, 5);
-    append(maskVal, {40u, 0u}, 10);
+    append(maskVal, {getWidth(2, true, false), 0u}, 10);
     append(ir, {0u, 0u}, 5);
     append(flag, {0u, 0u}, 5);
     append(sp, {0u, 0u}, 5);
@@ -141,6 +147,8 @@ CiaDebugger::CIA::Chip::IntMask::IntMask() {
 }
 
 CiaDebugger::CIA::Chip::Tod24bit::Tod24bit() {
+    counter.setFont( GUIKIT::Font::system("", true ) );
+    counterAlarm.setFont( GUIKIT::Font::system("", true ) );
     counter.setStore( 0 );
     counter.setText( "0" );
     counterAlarm.setStore( 0 );
@@ -150,14 +158,16 @@ CiaDebugger::CIA::Chip::Tod24bit::Tod24bit() {
     label.setText( "TOD:" );
 
     append(label, {50u, 0u}, 5);
-    append(counter, {60u, 0u}, 10);
+    append(counter, {getWidth(6, true, false), 0u}, 10);
     append(labelAlarm, {0u, 0u}, 5);
-    append(counterAlarm, {60u, 0u});
+    append(counterAlarm, {getWidth(6, true, false), 0u});
 
     setAlignment( 0.5 );
 }
 
 CiaDebugger::CIA::Chip::Shifter::Shifter() {
+    sdr.setFont( GUIKIT::Font::system("", true ) );
+    shiftCount.setFont( GUIKIT::Font::system("", true ) );
     sdr.setStore( 0 );
     sdr.setText( "0" );
     shiftCount.setStore( 0 );
@@ -167,9 +177,9 @@ CiaDebugger::CIA::Chip::Shifter::Shifter() {
     label.setText( "SDR:" );
 
     append(label, {50u, 0u}, 5);
-    append(sdr, {40u, 0u}, 10);
+    append(sdr, {getWidth(2, true, false), 0u}, 10);
     append(labelShiftCount, {0u, 0u}, 5);
-    append(shiftCount, {40u, 0u});
+    append(shiftCount, {getWidth(2, true, false), 0u});
 
     setAlignment( 0.5 );
 }

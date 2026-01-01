@@ -31,6 +31,7 @@ namespace GUIKIT {
 #include "widgets/listview.cpp"
 #include "widgets/treeview.cpp"
 #include "widgets/squareCanvas.cpp"
+#include "widgets/multiSquareCanvas.cpp"
 #include "widgets/imageView.cpp"
 
 pApplication::DesktopSession pApplication::desktopSession = pApplication::DesktopSession::Unknown;
