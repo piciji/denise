@@ -236,6 +236,19 @@
 }
 @end
 
+@interface CocoaMultiSquareCanvas : NSImageView {
+@public
+    GUIKIT::MultiSquareCanvas* multiSquareCanvas;
+}
+@end
+
+@interface CocoaMultiSquareScroll : NSScrollView {
+@public
+    GUIKIT::MultiSquareCanvas* multiSquareCanvas;
+    CocoaMultiSquareCanvas* content;
+}
+@end
+
 @interface CocoaImageView : NSImageView {
 @public
     GUIKIT::ImageView* imageView;

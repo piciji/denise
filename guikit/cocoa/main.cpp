@@ -27,6 +27,7 @@
 #include "widgets/listview.cpp"
 #include "widgets/treeview.cpp"
 #include "widgets/squareCanvas.cpp"
+#include "widgets/multiSquareCanvas.cpp"
 #include "widgets/hyperlink.cpp"
 #include "widgets/imageView.cpp"
 

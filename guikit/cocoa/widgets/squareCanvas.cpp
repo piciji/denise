@@ -108,7 +108,7 @@ auto pSquareCanvas::redraw() -> void {
             [bitmap release];
         }
         surface = [[NSImage alloc] initWithSize : NSMakeSize(width, height)];
-        NSBitmapImageRep* bitmap = [[NSBitmapImageRep alloc]
+        bitmap = [[NSBitmapImageRep alloc]
                 initWithBitmapDataPlanes: nil
                 pixelsWide: width
                 pixelsHigh: height

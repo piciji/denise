@@ -128,6 +128,7 @@ struct pWidget {
     virtual auto setBackgroundColor(unsigned color) -> void {}
     virtual auto setForegroundColor(unsigned color) -> void {}
     virtual auto setForegroundColorThreaded(unsigned color) -> void {}
+    auto getTextColor() -> NSColor*;
     auto getMinimumSize() -> Size;
     auto add() -> void;
     virtual auto init() -> void {}
@@ -182,7 +183,6 @@ struct pLabel : pWidget {
     auto setForegroundColor(unsigned color) -> void;
     virtual auto setForegroundColorThreaded(unsigned color) -> void;
     auto setAlign( Label::Align align ) -> void;
-    auto getTextColor() -> NSColor*;
 
     pLabel(Label& label) : pWidget(label), label(label) { }
 };
@@ -215,6 +215,24 @@ struct pSquareCanvas : pWidget {
     auto setGeometry(Geometry geometry) -> void;
     
     pSquareCanvas(SquareCanvas& squareCanvas) : pWidget(squareCanvas), squareCanvas(squareCanvas) {}
+};
+
+struct pMultiSquareCanvas : pWidget {
+    MultiSquareCanvas& multiSquareCanvas;
+    NSImage* surface = nullptr;
+    NSBitmapImageRep* bitmap = nullptr;
+    unsigned* drawArea = nullptr;
+
+    auto init() -> void;
+    auto redraw() -> void;
+    auto update() -> void;
+    auto setPadding(unsigned padding) -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto buildDrawArea() -> void;
+    auto updateScrollRange() -> void {}
+
+    pMultiSquareCanvas(MultiSquareCanvas& multiSquareCanvas) : pWidget(multiSquareCanvas), multiSquareCanvas(multiSquareCanvas) {}
+    ~pMultiSquareCanvas();
 };
 
 struct pImageView : pWidget {
@@ -330,6 +348,8 @@ struct pRadioBox : pWidget {
     auto setEnabled(bool enabled) -> void;
     auto setFont(std::string font) -> void;
     auto setTooltip(std::string tooltip) -> void;
+    auto setForegroundColor(unsigned color) -> void;
+    auto setAttributedText() -> void;
 
     auto init() -> void;
     auto setText(const std::string& text) -> void;

@@ -47,6 +47,16 @@
 		9D0C948B2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D0C948C2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D31E3BE2DF2083600F88404 /* recentFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D31E3BC2DF2083600F88404 /* recentFiles.cpp */; };
+		9D4D10442F071C6B00296467 /* ciaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */; };
+		9D4D10452F071C6B00296467 /* ciaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */; };
+		9D4D10462F071C6B00296467 /* deniseDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103C2F071C6B00296467 /* deniseDebugger.cpp */; };
+		9D4D10472F071C6B00296467 /* deniseDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103C2F071C6B00296467 /* deniseDebugger.cpp */; };
+		9D4D10482F071C6B00296467 /* memDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103D2F071C6B00296467 /* memDebugger.cpp */; };
+		9D4D10492F071C6B00296467 /* memDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103D2F071C6B00296467 /* memDebugger.cpp */; };
+		9D4D104A2F071C6B00296467 /* cpuDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */; };
+		9D4D104B2F071C6B00296467 /* cpuDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */; };
+		9D4D104E2F071DA500296467 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D104D2F071DA500296467 /* dasmHandler.cpp */; };
+		9D4D104F2F071DA500296467 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D104D2F071DA500296467 /* dasmHandler.cpp */; };
 		9D55396B2D5A90940083E91B /* w65816.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539652D5A902D0083E91B /* w65816.cpp */; };
 		9D55396C2D5A909C0083E91B /* w65C02.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539692D5A902D0083E91B /* w65C02.cpp */; };
 		9D55396D2D5A90AE0083E91B /* chessCard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539582D5A8FBC0083E91B /* chessCard.cpp */; };
@@ -516,6 +526,19 @@
 		9D0C948A2E5E345E00A9B56C /* diskGuesser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = diskGuesser.h; sourceTree = "<group>"; };
 		9D31E3BC2DF2083600F88404 /* recentFiles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = recentFiles.cpp; sourceTree = "<group>"; };
 		9D31E3BD2DF2083600F88404 /* recentFiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = recentFiles.h; sourceTree = "<group>"; };
+		9D4D10392F07156300296467 /* multiSquareCanvas.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = multiSquareCanvas.cpp; sourceTree = "<group>"; };
+		9D4D103A2F071C6B00296467 /* deniseDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = deniseDebugger.h; sourceTree = "<group>"; };
+		9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ciaDebugger.cpp; sourceTree = "<group>"; };
+		9D4D103C2F071C6B00296467 /* deniseDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = deniseDebugger.cpp; sourceTree = "<group>"; };
+		9D4D103D2F071C6B00296467 /* memDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = memDebugger.cpp; sourceTree = "<group>"; };
+		9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cpuDebugger.cpp; sourceTree = "<group>"; };
+		9D4D103F2F071C6B00296467 /* ciaDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciaDebugger.h; sourceTree = "<group>"; };
+		9D4D10402F071C6B00296467 /* memDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memDebugger.h; sourceTree = "<group>"; };
+		9D4D10412F071C6B00296467 /* cpuDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpuDebugger.h; sourceTree = "<group>"; };
+		9D4D10422F071C6B00296467 /* memScpuDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memScpuDebugger.h; sourceTree = "<group>"; };
+		9D4D10432F071C6B00296467 /* scpuDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scpuDebugger.h; sourceTree = "<group>"; };
+		9D4D104C2F071DA500296467 /* dasmHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasmHandler.h; path = emulation/wdc/65816/dasmHandler.h; sourceTree = SOURCE_ROOT; };
+		9D4D104D2F071DA500296467 /* dasmHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasmHandler.cpp; path = emulation/wdc/65816/dasmHandler.cpp; sourceTree = SOURCE_ROOT; };
 		9D5539552D5A8F4D0083E91B /* superCpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = superCpu.h; sourceTree = "<group>"; };
 		9D5539562D5A8F4D0083E91B /* superCpu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = superCpu.cpp; sourceTree = "<group>"; };
 		9D5539582D5A8FBC0083E91B /* chessCard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = chessCard.cpp; sourceTree = "<group>"; };
@@ -1297,6 +1320,8 @@
 		9D5539662D5A902D0083E91B /* 65C02 */ = {
 			isa = PBXGroup;
 			children = (
+				9D4D104D2F071DA500296467 /* dasmHandler.cpp */,
+				9D4D104C2F071DA500296467 /* dasmHandler.h */,
 				9D5539672D5A902D0083E91B /* alu.cpp */,
 				9D5539682D5A902D0083E91B /* w65C02.h */,
 				9D5539692D5A902D0083E91B /* w65C02.cpp */,
@@ -1765,6 +1790,7 @@
 		9D8FAB592CB3F8EE006905BE /* widgets */ = {
 			isa = PBXGroup;
 			children = (
+				9D4D10392F07156300296467 /* multiSquareCanvas.cpp */,
 				9D8FAB5A2CB3F8EE006905BE /* lineedit.cpp */,
 				9D8FAB5B2CB3F8EE006905BE /* widget.cpp */,
 				9D8FAB5C2CB3F8EE006905BE /* checkbox.cpp */,
@@ -2661,6 +2687,16 @@
 		9DBA88402ED0C7D400DF0756 /* debugger */ = {
 			isa = PBXGroup;
 			children = (
+				9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */,
+				9D4D103F2F071C6B00296467 /* ciaDebugger.h */,
+				9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */,
+				9D4D10412F071C6B00296467 /* cpuDebugger.h */,
+				9D4D103C2F071C6B00296467 /* deniseDebugger.cpp */,
+				9D4D103A2F071C6B00296467 /* deniseDebugger.h */,
+				9D4D103D2F071C6B00296467 /* memDebugger.cpp */,
+				9D4D10402F071C6B00296467 /* memDebugger.h */,
+				9D4D10422F071C6B00296467 /* memScpuDebugger.h */,
+				9D4D10432F071C6B00296467 /* scpuDebugger.h */,
 				9DBA88412ED0C7D400DF0756 /* debugger.cpp */,
 				9DBA88422ED0C7D400DF0756 /* debugger.h */,
 			);
@@ -2795,6 +2831,7 @@
 				9D8FADFE2CB40DF8006905BE /* m68000.cpp in Sources */,
 				9D8FAB092CB3F6EF006905BE /* manager.cpp in Sources */,
 				9D8FAE8F2CB40DFA006905BE /* sid.cpp in Sources */,
+				9D4D10482F071C6B00296467 /* memDebugger.cpp in Sources */,
 				9D8FAB182CB3F6EF006905BE /* bass.cpp in Sources */,
 				9D8FAE212CB40DF8006905BE /* paula.cpp in Sources */,
 				9D8FAB132CB3F6EF006905BE /* cosinePrecise.cpp in Sources */,
@@ -2871,6 +2908,7 @@
 				9D8FAE692CB40DF9006905BE /* iec.cpp in Sources */,
 				9D8FADFC2CB40DF8006905BE /* mx29lv640eb.cpp in Sources */,
 				9D8FAE2F2CB40DF9006905BE /* filesystem.cpp in Sources */,
+				9D4D10442F071C6B00296467 /* ciaDebugger.cpp in Sources */,
 				9D8FAB0E2CB3F6EF006905BE /* handler.cpp in Sources */,
 				9D07CD012E296CD000A9787E /* lha_input_stream.cpp in Sources */,
 				9D8FAE4D2CB40DF9006905BE /* input.cpp in Sources */,
@@ -2883,9 +2921,12 @@
 				9D64044B2DCDEF2E00624A00 /* filesystemExt.cpp in Sources */,
 				9D07CC8C2E296C5F00A9787E /* images.cpp in Sources */,
 				9D8FAB172CB3F6EF006905BE /* drive.cpp in Sources */,
+				9D4D104A2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
+				9D4D10462F071C6B00296467 /* deniseDebugger.cpp in Sources */,
 				9D8FAAFC2CB3F6EF006905BE /* manager.cpp in Sources */,
 				9D8FAAF92CB3F6EF006905BE /* manager.cpp in Sources */,
 				9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */,
+				9D4D104E2F071DA500296467 /* dasmHandler.cpp in Sources */,
 				9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */,
 				9D8FAB012CB3F6EF006905BE /* archiveViewer.cpp in Sources */,
 				9D8FADFD2CB40DF8006905BE /* denise.cpp in Sources */,
@@ -2971,6 +3012,7 @@
 				9DECF9272E45F309005C0BBA /* m68000.cpp in Sources */,
 				9DECF9282E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF9292E45F309005C0BBA /* sid.cpp in Sources */,
+				9D4D10492F071C6B00296467 /* memDebugger.cpp in Sources */,
 				9DECF92A2E45F309005C0BBA /* bass.cpp in Sources */,
 				9DECF92B2E45F309005C0BBA /* paula.cpp in Sources */,
 				9DECF92C2E45F309005C0BBA /* cosinePrecise.cpp in Sources */,
@@ -3047,6 +3089,7 @@
 				9DECF96B2E45F309005C0BBA /* iec.cpp in Sources */,
 				9DECF96C2E45F309005C0BBA /* mx29lv640eb.cpp in Sources */,
 				9DECF96D2E45F309005C0BBA /* filesystem.cpp in Sources */,
+				9D4D10452F071C6B00296467 /* ciaDebugger.cpp in Sources */,
 				9DECF96E2E45F309005C0BBA /* handler.cpp in Sources */,
 				9DECF96F2E45F309005C0BBA /* lha_input_stream.cpp in Sources */,
 				9DECF9702E45F309005C0BBA /* input.cpp in Sources */,
@@ -3059,9 +3102,12 @@
 				9DECF9752E45F309005C0BBA /* filesystemExt.cpp in Sources */,
 				9DECF9762E45F309005C0BBA /* images.cpp in Sources */,
 				9DECF9772E45F309005C0BBA /* drive.cpp in Sources */,
+				9D4D104B2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
+				9D4D10472F071C6B00296467 /* deniseDebugger.cpp in Sources */,
 				9DECF9782E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF9792E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF97A2E45F309005C0BBA /* uuid.cpp in Sources */,
+				9D4D104F2F071DA500296467 /* dasmHandler.cpp in Sources */,
 				9DECF97B2E45F309005C0BBA /* httpClient.cpp in Sources */,
 				9DECF97C2E45F309005C0BBA /* archiveViewer.cpp in Sources */,
 				9DECF97D2E45F309005C0BBA /* denise.cpp in Sources */,

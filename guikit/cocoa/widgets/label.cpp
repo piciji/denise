@@ -85,20 +85,6 @@ auto pLabel::setTextThreaded(const std::string& text) -> void {
     }
     calculatedMinimumSize.updated = false;
 }
-    
-auto pLabel::getTextColor() -> NSColor* {
-    if (!label.enabled())
-        return [NSColor grayColor];
-
-    NSColor* textColor = [NSColor textColor];
-        
-    if(label.overrideForegroundColor()) {
-        unsigned color = label.foregroundColor();
-        textColor = pHelper::getColor( color );
-    }
-
-    return textColor;
-}
 
 auto pLabel::setEnabled(bool enabled) -> void {    
     [(id)cocoaView setTextColor: getTextColor()];
