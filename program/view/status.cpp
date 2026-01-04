@@ -382,7 +382,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     updateOnScreenFPS();
     
     this->statusBar = statusBar;
-    showFPS = globalSettings->get<bool>("fps", false);
+    showFPS = globalSettings->get<bool>("fps", true);
     showVolume = globalSettings->get<bool>("volume_control", true );
     fpsCounter.decimalPoints = 3;
 

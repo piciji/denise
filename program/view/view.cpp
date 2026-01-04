@@ -1641,7 +1641,7 @@ auto View::buildMenu() -> void {
         globalSettings->set<bool>("fps", fpsItem.checked() );
         statusHandler->updateFPS( fpsItem.checked() );
     };
-    if ( globalSettings->get<bool>("fps", false) ) fpsItem.setChecked();
+    if ( globalSettings->get<bool>("fps", true) ) fpsItem.setChecked();
     statusTextMenu.append(fpsItem);
 
     volumeItem.onToggle = [&]() {
