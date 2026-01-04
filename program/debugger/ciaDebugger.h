@@ -13,7 +13,7 @@ struct CiaDebugger : Debugger {
                 GUIKIT::LineEdit prVal;
                 GUIKIT::Label ddr;
                 GUIKIT::LineEdit ddrVal;
-                Port(uint8_t portNr);
+                Port();
             } port[2];
 
             struct PortIO : GUIKIT::HorizontalLayout {
@@ -31,32 +31,20 @@ struct CiaDebugger : Debugger {
                 GUIKIT::CheckBox oneShot;
                 GUIKIT::CheckBox pbOut;
                 GUIKIT::CheckBox toggleOut;
-                Timer(uint8_t portNr);
+                Timer();
             } timer[2];
 
-            struct IntData : GUIKIT::HorizontalLayout {
-                GUIKIT::Label icr;
-                GUIKIT::LineEdit icrVal;
+            struct Intr : GUIKIT::HorizontalLayout {
+                GUIKIT::Label label;
+                GUIKIT::LineEdit val;
                 GUIKIT::CheckBox ir;
                 GUIKIT::CheckBox flag;
                 GUIKIT::CheckBox sp;
                 GUIKIT::CheckBox alarm;
                 GUIKIT::CheckBox tb;
                 GUIKIT::CheckBox ta;
-                IntData();
-            } intData;
-
-            struct IntMask : GUIKIT::HorizontalLayout {
-                GUIKIT::Label mask;
-                GUIKIT::LineEdit maskVal;
-                GUIKIT::CheckBox ir;
-                GUIKIT::CheckBox flag;
-                GUIKIT::CheckBox sp;
-                GUIKIT::CheckBox alarm;
-                GUIKIT::CheckBox tb;
-                GUIKIT::CheckBox ta;
-                IntMask();
-            } intMask;
+                Intr(bool isMask);
+            } icr, icrMask;
 
             struct Tod24bit : GUIKIT::HorizontalLayout {
                 GUIKIT::Label label;

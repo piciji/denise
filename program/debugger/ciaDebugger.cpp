@@ -8,11 +8,9 @@ CiaDebugger::CiaDebugger( Emulator::Interface* emulator, Mode mode )
     build();
 }
 
-CiaDebugger::CIA::Chip::Port::Port(uint8_t port) {
-    prVal.setFont( GUIKIT::Font::system("", true ) );
-    ddrVal.setFont( GUIKIT::Font::system("", true ) );
-    pr.setText( port == 0 ? "PRA:" : "PRB:" );
-    ddr.setText( port == 0 ? "DDRA:" : "DDRB:" );
+CiaDebugger::CIA::Chip::Port::Port() {
+    prVal.setFont( GUIKIT::Font::monospace() );
+    ddrVal.setFont( GUIKIT::Font::monospace() );
     prVal.setText("0");
     ddrVal.setText("0");
     prVal.setStore( 0 );
@@ -21,22 +19,20 @@ CiaDebugger::CIA::Chip::Port::Port(uint8_t port) {
     ddrVal.setEditable( false );
 
     append(pr, {50u, 0u}, 5);
-    append(prVal, {getWidth(2, true, false), 0u}, 10);
+    append(prVal, {getWidth(2, true), 0u}, 10);
     append(ddr, {40u, 0u}, 5);
-    append(ddrVal, {getWidth(2, true, false), 0u});
+    append(ddrVal, {getWidth(2, true), 0u});
 
     setAlignment( 0.5 );
 }
 
 CiaDebugger::CIA::Chip::PortIO::PortIO(uint8_t chipNr, uint8_t portNr, Debugger* debugger) {
-    portLabel.setText( portNr == 0 ? "Port A:" : "Port B:" );
     portLabel.setFont( GUIKIT::Font::system( "bold" ) );
 
     append( portLabel, {50u, 0u}, 5 );
     const Emulator::Interface::DebuggerIdent* idents = debugger->isAmiga() ? &LIBAMI::DebuggerSnapshot::CiaPorts[chipNr][portNr][0]
     : &LIBC64::DebuggerSnapshot::CiaPorts[chipNr][portNr][0];
 
-    //for (const Emulator::Interface::DebuggerIdent& port : idents) {
     for (unsigned i = 0; i < 8; i++) {
         const Emulator::Interface::DebuggerIdent& port = idents[i];
         auto* l = new GUIKIT::Label;
@@ -50,12 +46,10 @@ CiaDebugger::CIA::Chip::PortIO::PortIO(uint8_t chipNr, uint8_t portNr, Debugger*
     setAlignment( 0.5 );
 }
 
-CiaDebugger::CIA::Chip::Timer::Timer(uint8_t portNr) {
-    val.setFont( GUIKIT::Font::system("", true ) );
-    latchVal.setFont( GUIKIT::Font::system("", true ) );
-    label.setText( portNr == 0 ? "Timer A:" : "Timer B:" );
-    label.setStore( 0 );
-    latch.setText( "Latch:" );
+CiaDebugger::CIA::Chip::Timer::Timer() {
+    val.setFont( GUIKIT::Font::monospace() );
+    latchVal.setFont( GUIKIT::Font::monospace() );
+
     val.setText("0");
     latchVal.setText("0");
     val.setStore( 0 );
@@ -63,18 +57,14 @@ CiaDebugger::CIA::Chip::Timer::Timer(uint8_t portNr) {
     val.setEditable( false );
     latchVal.setEditable( false );
 
-    oneShot.setText( "oneshot" );
-    pbOut.setText( portNr == 0 ? "PB6" : "PB7" );
-    toggleOut.setText( "toggle" );
-
     oneShot.setReadonly();
     pbOut.setReadonly();
     toggleOut.setReadonly();
 
     append(label, {50u, 0u}, 5);
-    append(val, {getWidth(4, true, false), 0u}, 10);
-    append(latch, {40u, 0u}, 5);
-    append(latchVal, {getWidth(4, true, false), 0u}, 10);
+    append(val, {getWidth(4, true), 0u}, 10);
+    append(latch, {0u, 0u}, 5);
+    append(latchVal, {getWidth(4, true), 0u}, 10);
 
     append(oneShot, {0u, 0u}, 5);
     append(pbOut, {0u, 0u}, 5);
@@ -83,59 +73,21 @@ CiaDebugger::CIA::Chip::Timer::Timer(uint8_t portNr) {
     setAlignment( 0.5 );
 }
 
-CiaDebugger::CIA::Chip::IntData::IntData() {
-    icrVal.setFont( GUIKIT::Font::system("", true ) );
-    icr.setText( "ICR:" );
-    ir.setText( "IR" );
-    flag.setText( "Flag" );
-    sp.setText( "SP" );
-    alarm.setText( "Alarm" );
-    tb.setText( "TB" );
-    ta.setText( "TA" );
-    icrVal.setText( "0" );
-    icrVal.setStore( 0 );
-    ir.setReadonly();
-    flag.setReadonly();
-    sp.setReadonly();
-    alarm.setReadonly();
-    ta.setReadonly();
-    tb.setReadonly();
-    icrVal.setEditable( false );
+CiaDebugger::CIA::Chip::Intr::Intr(bool isMask) {
+    val.setFont( GUIKIT::Font::monospace() );
+    val.setEditable( false );
 
-    append(icr, {50u, 0u}, 5);
-    append(icrVal, {getWidth(2, true, false), 0u}, 10);
-    append(ir, {0u, 0u}, 5);
-    append(flag, {0u, 0u}, 5);
-    append(sp, {0u, 0u}, 5);
-    append(alarm, {0u, 0u}, 5);
-    append(tb, {0u, 0u}, 5);
-    append(ta, {0u, 0u});
-
-    setAlignment( 0.5 );
-}
-
-CiaDebugger::CIA::Chip::IntMask::IntMask() {
-    maskVal.setFont( GUIKIT::Font::system("", true ) );
-    mask.setText( "Mask:" );
-    ir.setText( "IR" );
-    flag.setText( "Flag" );
-    sp.setText( "SP" );
-    alarm.setText( "Alarm" );
-    tb.setText( "TB" );
-    ta.setText( "TA" );
-    maskVal.setText( "0" );
-    maskVal.setStore( 0 );
-    maskVal.setEditable( false );
-
-    ir.setEnabled( false );
+    val.setText( "0" );
+    val.setStore( 0 );
+    isMask ? ir.setEnabled( false ) : ir.setReadonly();
     flag.setReadonly();
     sp.setReadonly();
     alarm.setReadonly();
     ta.setReadonly();
     tb.setReadonly();
 
-    append(mask, {50u, 0u}, 5);
-    append(maskVal, {getWidth(2, true, false), 0u}, 10);
+    append(label, {50u, 0u}, 5);
+    append(val, {getWidth(2, true), 0u}, 10);
     append(ir, {0u, 0u}, 5);
     append(flag, {0u, 0u}, 5);
     append(sp, {0u, 0u}, 5);
@@ -147,46 +99,45 @@ CiaDebugger::CIA::Chip::IntMask::IntMask() {
 }
 
 CiaDebugger::CIA::Chip::Tod24bit::Tod24bit() {
-    counter.setFont( GUIKIT::Font::system("", true ) );
-    counterAlarm.setFont( GUIKIT::Font::system("", true ) );
+    counter.setFont( GUIKIT::Font::monospace() );
+    counterAlarm.setFont( GUIKIT::Font::monospace() );
+
     counter.setStore( 0 );
     counter.setText( "0" );
     counterAlarm.setStore( 0 );
     counterAlarm.setText( "0" );
     counter.setEditable( false );
     counterAlarm.setEditable( false );
-    label.setText( "TOD:" );
 
     append(label, {50u, 0u}, 5);
-    append(counter, {getWidth(6, true, false), 0u}, 10);
+    append(counter, {getWidth(6, true), 0u}, 10);
     append(labelAlarm, {0u, 0u}, 5);
-    append(counterAlarm, {getWidth(6, true, false), 0u});
+    append(counterAlarm, {getWidth(6, true), 0u});
 
     setAlignment( 0.5 );
 }
 
 CiaDebugger::CIA::Chip::Shifter::Shifter() {
-    sdr.setFont( GUIKIT::Font::system("", true ) );
-    shiftCount.setFont( GUIKIT::Font::system("", true ) );
+    sdr.setFont( GUIKIT::Font::monospace() );
+    shiftCount.setFont( GUIKIT::Font::monospace() );
     sdr.setStore( 0 );
     sdr.setText( "0" );
     shiftCount.setStore( 0 );
     shiftCount.setText( "0" );
     sdr.setEditable( false );
     shiftCount.setEditable( false );
-    label.setText( "SDR:" );
 
     append(label, {50u, 0u}, 5);
-    append(sdr, {getWidth(2, true, false), 0u}, 10);
+    append(sdr, {getWidth(2, true), 0u}, 10);
     append(labelShiftCount, {0u, 0u}, 5);
-    append(shiftCount, {getWidth(2, true, false), 0u});
+    append(shiftCount, {getWidth(2, true), 0u});
 
     setAlignment( 0.5 );
 }
 
 CiaDebugger::CIA::Chip::Chip(uint8_t chipNr, Debugger* debugger)
 : portIO{ {chipNr, 0, debugger }, { chipNr, 1, debugger }},
-    port{ {0}, { 1 }}, timer {{0}, { 1 }} {
+    icr(false), icrMask( true ) {
 
     append( port[0], {0u, 0u}, 10 );
     append( portIO[0], {0u, 0u}, 10 );
@@ -196,8 +147,8 @@ CiaDebugger::CIA::Chip::Chip(uint8_t chipNr, Debugger* debugger)
     append( timer[0], {0u, 0u}, 10 );
     append( timer[1], {0u, 0u}, 10 );
 
-    append( intData, {0u, 0u}, 10 );
-    append( intMask, {0u, 0u}, 10 );
+    append( icr, {0u, 0u}, 10 );
+    append( icrMask, {0u, 0u}, 10 );
 
     append( tod24bit, {0u, 0u}, 10 );
     append( shifter, {0u, 0u} );
@@ -207,8 +158,6 @@ CiaDebugger::CIA::Chip::Chip(uint8_t chipNr, Debugger* debugger)
 
 CiaDebugger::CIA::CIA( Debugger* debugger )
 : chip{{0, debugger }, { 1, debugger }} {
-    chip[0].setText( "CIA A" );
-    chip[1].setText( "CIA B" );
 
     append(chip[0], {~0u, 0u}, 10);
     append(chip[1], {~0u, 0u});
@@ -262,32 +211,29 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
             updateReg( t.val, sp.timer );
             updateReg( t.latchVal, sp.timerLatch );
 
-            if (t.oneShot.checked() != sp.oneshot)
-                t.oneShot.setChecked( sp.oneshot );
-            if (t.pbOut.checked() != sp.pbOut)
-                t.pbOut.setChecked( sp.pbOut );
-            if (t.toggleOut.checked() != sp.toggleOut)
-                t.toggleOut.setChecked( sp.toggleOut );
+            updateReg(t.oneShot, sp.oneshot);
+            updateReg(t.pbOut, sp.pbOut);
+            updateReg(t.toggleOut, sp.toggleOut);
         }
 
-        auto& id = c.intData;
-        updateReg( id.icrVal, sc.icr );
+        auto& id = c.icr;
+        updateReg( id.val, sc.icr );
 
-        if (id.ir.checked() != !!(sc.icr & 0x80) ) id.ir.setChecked( !!(sc.icr & 0x80) );
-        if (id.flag.checked() != !!(sc.icr & 0x10) ) id.flag.setChecked( !!(sc.icr & 0x10) );
-        if (id.sp.checked() != !!(sc.icr & 0x08) ) id.sp.setChecked( !!(sc.icr & 0x08) );
-        if (id.alarm.checked() != !!(sc.icr & 0x04) ) id.alarm.setChecked( !!(sc.icr & 0x04) );
-        if (id.tb.checked() != !!(sc.icr & 0x02) ) id.tb.setChecked( !!(sc.icr & 0x02) );
-        if (id.ta.checked() != !!(sc.icr & 0x01) ) id.ta.setChecked( !!(sc.icr & 0x01) );
+        updateReg(id.ir,!!(sc.icr & 0x80) );
+        updateReg(id.flag,!!(sc.icr & 0x10) );
+        updateReg(id.sp,!!(sc.icr & 0x08) );
+        updateReg(id.alarm,!!(sc.icr & 0x04) );
+        updateReg(id.tb,!!(sc.icr & 0x02) );
+        updateReg(id.ta,!!(sc.icr & 0x01) );
 
-        auto& im = c.intMask;
-        updateReg( im.maskVal, sc.icrMask );
+        auto& im = c.icrMask;
+        updateReg( im.val, sc.icrMask );
 
-        if (im.flag.checked() != !!(sc.icrMask & 0x10) ) im.flag.setChecked( !!(sc.icrMask & 0x10) );
-        if (im.sp.checked() != !!(sc.icrMask & 0x08) ) im.sp.setChecked( !!(sc.icrMask & 0x08) );
-        if (im.alarm.checked() != !!(sc.icrMask & 0x04) ) im.alarm.setChecked( !!(sc.icrMask & 0x04) );
-        if (im.tb.checked() != !!(sc.icrMask & 0x02) ) im.tb.setChecked( !!(sc.icrMask & 0x02) );
-        if (im.ta.checked() != !!(sc.icrMask & 0x01) ) im.ta.setChecked( !!(sc.icrMask & 0x01) );
+        updateReg(im.flag,!!(sc.icrMask & 0x10) );
+        updateReg(im.sp,!!(sc.icrMask & 0x08) );
+        updateReg(im.alarm,!!(sc.icrMask & 0x04) );
+        updateReg(im.tb,!!(sc.icrMask & 0x02) );
+        updateReg(im.ta,!!(sc.icrMask & 0x01) );
 
         auto& tod = c.tod24bit;
         updateReg( tod.counter, sc.tod );
@@ -297,6 +243,7 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
         updateReg( sh.sdr, sc.sdr );
         updateReg( sh.shiftCount, sc.shiftCount );
     }
+
     control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
 }
 
@@ -312,14 +259,47 @@ auto CiaDebugger::buildTheme() -> GUIKIT::Layout* {
 auto CiaDebugger::translateTheme() -> void {
     for (int i = 0; i < 2; i++) {
         auto& c = cia->chip[i];
-        // for (int j = 0; j < 2; j++) {
-        //     auto& t = c.timer[j];
-        //     t.oneShot.setText( trans->getA( "oneshot" ) );
-        //     t.toggleOut.setText( trans->getA( "toggle" ) );
-        // }
+        c.setText( i == 0 ? "CIA A" : "CIA B" );
 
-        c.tod24bit.labelAlarm.setText( trans->getA( "Alarm" ) );
-        c.shifter.labelShiftCount.setText( trans->getA( "Shifter" ) );
+        for (int j = 0; j < 2; j++) {
+            auto& p = c.port[j];
+            p.pr.setText( j == 0 ? "PRA:" : "PRB:" );
+            p.ddr.setText( j == 0 ? "DDRA" : "DDRB" );
+
+            auto& pio = c.portIO[j];
+            pio.portLabel.setText( j == 0 ? "Port A:" : "Port B:" );
+
+            auto& t = c.timer[j];
+            t.label.setText( j == 0 ? "Timer A:" : "Timer B:" );
+            t.latch.setText( "Latch" );
+
+            t.oneShot.setText( "oneshot" );
+            t.toggleOut.setText("toggle" );
+            t.pbOut.setText( j == 0 ? "PB6" : "PB7" );
+        }
+
+        auto& icrMask = c.icrMask;
+        icrMask.label.setText( "Mask:" );
+        icrMask.ir.setText( "IR" );
+        icrMask.flag.setText( "Flag" );
+        icrMask.sp.setText( "SP" );
+        icrMask.alarm.setText( "Alarm" );
+        icrMask.tb.setText( "TB" );
+        icrMask.ta.setText( "TA" );
+
+        auto& icr = c.icr;
+        icr.label.setText( "ICR:" );
+        icr.ir.setText( "IR" );
+        icr.flag.setText( "Flag" );
+        icr.sp.setText( "SP" );
+        icr.alarm.setText( "Alarm" );
+        icr.tb.setText( "TB" );
+        icr.ta.setText( "TA" );
+
+        c.tod24bit.label.setText("TOD:" );
+        c.tod24bit.labelAlarm.setText("Alarm" );
+        c.shifter.label.setText( "SDR:" );
+        c.shifter.labelShiftCount.setText("Shifter" );
     }
 }
 
