@@ -99,9 +99,6 @@ auto VicIIFast::clock() -> void {
         } else if (lineVCounter == vHeight) {
             visibleLine = false;
 
-            if (leftLineAnomaly.mode)
-                insertVerticalLineAnomaly(0, lineVCounter);
-
             system->videoRefresh(frameBuffer + firstVisiblePixel,
 				hWidth, lineVCounter, VIC_MAX_LINE_LENGTH - hWidth
 			);

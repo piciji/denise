@@ -22,11 +22,7 @@ auto VicIIFast::serialize(Emulator::Serializer& s) -> void {
     s.integer( crop.bottomOverscan );
     s.integer( crop.leftOverscan );
     s.integer( crop.rightOverscan );
-    
-	s.integer( leftLineAnomaly.mode );
-	s.integer( leftLineAnomaly.permanent );
-	s.integer( leftLineAnomaly.framePos );
-	
+
     s.array( colorReg );    
 	s.integer( flags );
 	s.integer( color );

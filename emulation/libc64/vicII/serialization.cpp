@@ -18,10 +18,6 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
     s.integer( crop.leftOverscan );
     s.integer( crop.rightOverscan );
 
-	s.integer(leftLineAnomaly.mode);
-	s.integer(leftLineAnomaly.permanent);
-	s.integer(leftLineAnomaly.framePos);
-	
 	s.integer( color );
     s.integer( mcFlop );
     s.integer( dataC );

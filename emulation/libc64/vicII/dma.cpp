@@ -137,9 +137,6 @@ inline auto VicIICycle::advanceCycle() -> void {
         } else if ( lineVCounter == vHeight ) {
             visibleLine = false; // v-blank
 
-            if (leftLineAnomaly.mode)
-                insertVerticalLineAnomaly( 0, lineVCounter );
-
             // push out the frame to host
             // we crop the h-blanking area before
             system->videoRefresh( frameBuffer + firstVisiblePixel,

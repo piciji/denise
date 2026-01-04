@@ -607,10 +607,7 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Purpose::Misc, 0});
 	// disable grey dot bug for 85xx VIC-II
 	models.push_back({ModelIdDisableGreyDotBug, "Disable Grey Dot Bug", Model::Type::Switch, Model::Purpose::Misc, 1});
-    // emulate the buggy vertical line in first two border pixels
-    models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Combo, Model::Purpose::Misc, 0, {0, 2},
-                      {"Off", "Solid White", "Register Color"}});
-    
+
     models.push_back({ModelId2Mhz, "C128 in C64 mode", Model::Type::Switch, Model::Purpose::Misc, 0});
 
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
@@ -1546,10 +1543,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdGlueLogic:
             system->glueLogic.setType( (GlueLogic::Type)(value & 1) );
             break;
-        case ModelIdLeftLineAnomaly:
-            system->vicIIFast.setVerticalLineAnomaly( (unsigned)value );
-            system->vicIICycle.setVerticalLineAnomaly( (unsigned)value );
-            break;
 		case ModelIdVicIIModel:
             system->vicIIFast.setModel( (VicIIBase::Model)value );
             system->vicIICycle.setModel( (VicIIBase::Model)value );
@@ -1721,8 +1714,6 @@ auto Interface::getModelValue(unsigned modelId) -> int {
             return system->cia1.isNewVersion();
         case ModelIdGlueLogic:
             return (int)system->glueLogic.type;
-        case ModelIdLeftLineAnomaly:
-            return (int)system->vicII->getVerticalLineAnomaly();
 		case ModelIdVicIIModel:
 			return (int)system->vicII->getModel();
 		case ModelIdDisableGreyDotBug:

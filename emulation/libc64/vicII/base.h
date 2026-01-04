@@ -69,12 +69,6 @@ struct VicIIBase {
         auto reset() -> void { for (auto& s : spr) s.pos = 0; }
     } debugInfo;
 
-	struct {
-		uint8_t mode = 0;
-		unsigned framePos = 1;
-		bool permanent = false;
-	} leftLineAnomaly;
-
     uint8_t reg2mhz;
     Emulator::Interface::DebuggerAction debuggerAction;
     
@@ -111,9 +105,6 @@ struct VicIIBase {
     auto getCyclesForNextLightTrigger( int x, int y, uint8_t& cyclePixel ) -> unsigned;
     
     auto isBaLow() -> bool { return baLow; }
-    
-    auto setVerticalLineAnomaly(uint8_t mode) -> void;
-    auto getVerticalLineAnomaly() -> uint8_t;
     
     auto getVcounter() -> unsigned { return vCounter; }
 	
@@ -263,11 +254,6 @@ protected:
 	auto updateIrq(Interrupt interrupt = Update) -> void;
 	auto checkLightPen() -> void;
     auto storeSprite(Sprite& spr) -> void;
-	
-	auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
-	auto initVerticalLineAnomaly() -> void;
-	template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
-
 };
 
 }

@@ -16,7 +16,7 @@ struct Interface : Emulator::Interface {
     
     enum ModelId {
         ModelIdSid, ModelIdFilter, ModelIdDigiboost, ModelIdBias6581,
-        ModelIdCiaRev, ModelIdGlueLogic, ModelIdLeftLineAnomaly, ModelIdVicIIModel,
+        ModelIdCiaRev, ModelIdGlueLogic, ModelIdVicIIModel,
 		ModelIdDisableGreyDotBug, ModelIdSidFilterType, ModelIdSidSampleFetch, ModelIdBias8580,
         ModelIdSidMulti, ModelIdSidExternal, ModelIdSidFilterVolumeEqualizer,
                      ModelIdSid1Left, ModelIdSid1Right, ModelIdSid1Adr, ModelIdSid2, ModelIdSid2Left, ModelIdSid2Right, ModelIdSid2Adr,

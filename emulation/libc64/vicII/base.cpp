@@ -2,7 +2,6 @@
 #include "base.h"
 #include "../system/system.h"
 #include "cycleTable.cpp"
-#include "verticalLineAnomaly.cpp"
 #include "../system/debuggerSnapshot.h"
 
 namespace LIBC64 { 
@@ -376,8 +375,6 @@ auto VicIIBase::power() -> void {
     writeReg(0x16, controlReg2);
     
     reg2mhz = 0;
-        
-    initVerticalLineAnomaly();
 }
 
 auto VicIIBase::oneTimeDebuggerAction() -> void {
@@ -443,23 +440,6 @@ auto VicIIBase::updateSnapshot(DebuggerSnapshot& snap) -> void {
 auto VicIIBase::updatePositionSnapshot(DebuggerSnapshot& snap) -> void {
     snap.vPos = vCounter;
     snap.hPos = cycle;
-}
-
-auto VicIIBase::setVerticalLineAnomaly(uint8_t mode) -> void {
-    leftLineAnomaly.mode = mode;
-
-    if (mode)
-        initVerticalLineAnomaly();
-}
-
-auto VicIIBase::getVerticalLineAnomaly() -> uint8_t {
-    return leftLineAnomaly.mode;
-}
-
-auto VicIIBase::initVerticalLineAnomaly() -> void {
-
-    leftLineAnomaly.framePos = LEFT_LINE_ANOMALY;
-    leftLineAnomaly.permanent = false;
 }
 
 auto VicIIBase::setModel(Model model) -> void {
