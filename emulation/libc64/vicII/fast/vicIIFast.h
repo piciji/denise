@@ -25,6 +25,7 @@ struct VicIIFast : VicIIBase {
 	auto reuBaLow() -> bool { return baLow; }
     auto reuSprite0() -> bool { return false; }
 	auto setMeta( bool state ) -> void;
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
    
 protected:
 	#include "../flags.h"
@@ -39,7 +40,6 @@ protected:
 	uint8_t* linePtr;
 	bool addMeta; // add aec and ba state to output 
 
-    uint16_t vicBank;
     Sprite* drawSprites[VIC_MAX_LINE_LENGTH << 1];
     uint8_t* patternBadline;
     uint8_t* patternLine;

@@ -20,7 +20,7 @@ namespace LIBC64 {
 
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU, CIA, DENISE,
+        CPU, SCPU, Memory, MemorySCPU, CIA, DENISE, VICII,
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );
@@ -97,6 +97,8 @@ struct Debugger : GUIKIT::Window {
 
     static auto hex( uint32_t val, int length = -1 ) -> std::string;
     static auto updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
+    static auto updateReg(GUIKIT::CheckBox& reg, bool state) -> void;
+    static auto updateReg(GUIKIT::LineEdit& widget, const std::string& text, unsigned ident) -> void;
 
     static auto isPaused() -> bool;
     static auto stepOut(Emulator::Interface* emulator) -> void;

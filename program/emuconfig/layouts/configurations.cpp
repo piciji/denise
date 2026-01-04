@@ -125,7 +125,7 @@ MemoryPatternLayout::MemoryPatternLayout(TabWindow* tabWindow) {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
     GUIKIT::Label test;
-    test.setFont( GUIKIT::Font::system("", true) );
+    test.setFont( GUIKIT::Font::system("bold", true) );
     test.setText( "0000: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 " );
     auto size = test.minimumSize();
 

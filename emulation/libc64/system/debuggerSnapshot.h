@@ -37,6 +37,56 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
 
     struct {
         struct {
+            uint8_t data[0x3fff];
+            unsigned pos = 0;
+
+            bool expandX;
+            bool expandY;
+            bool multiColor;
+            bool prioMD;
+            uint16_t x;
+            uint8_t y;
+            uint16_t addr;
+            uint8_t mcBase;
+        } spr[8];
+        uint8_t spriteForegroundCollided;
+        uint8_t spriteSpriteCollided;
+
+        uint16_t xPos;
+        uint16_t vc;
+        uint16_t vcBase;
+        uint8_t rc;
+
+        bool den;
+        bool badLine;
+        bool visibleLine;
+        bool hFlipFlip;
+        bool vFlipFlip;
+        bool idleMode;
+        uint8_t vmli;
+        uint8_t mode;
+        uint8_t irqLatch;
+        uint8_t irqEnable;
+        uint16_t irqLine;
+
+        uint8_t xScroll;
+        uint8_t yScroll;
+
+        uint16_t vicBank;
+        uint16_t screenMemory;
+        uint16_t charMemory;
+
+        uint8_t lpx;
+        uint8_t lpy;
+        bool lpPin;
+        bool lpLatched;
+        uint8_t controlReg1;
+        uint8_t controlReg2;
+
+    } vicII;
+
+    struct {
+        struct {
             uint8_t pr;
             uint8_t ddr;
             uint8_t io;

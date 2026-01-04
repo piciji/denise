@@ -47,13 +47,13 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
     std::string family = utf8_t(metrics.lfMessageFont.lfFaceName);
     
     if (monospaced)
-        family = "Lucida Console";
+        family = "Consolas";
 
-    if (size == 0) {
+    if (size == 0)
 		size = float(std::abs(metrics.lfMessageFont.lfHeight)) * 72.0 / dpiX;
-    }
 
-    if(style == "") style = "Normal";
+    if(style == "")
+        style = "Normal";
 
     return family + ", " + std::to_string(size) + ", " + style;
 }

@@ -1345,17 +1345,16 @@ auto View::buildMenu() -> void {
             };
             sM.debugger->append( *sM.debuggerMemSCPU );
 
-            sM.debuggerVideo = nullptr;
         } else {
             sM.debuggerMemSCPU = nullptr;
             sM.debuggerSCPU = nullptr;
-
-            sM.debuggerVideo = new GUIKIT::MenuItem;
-            sM.debuggerVideo->onActivate = [this, emulator]() {
-                program->openDebugger(emulator, Debugger::Mode::DENISE);
-            };
-            sM.debugger->append( *sM.debuggerVideo );
         }
+
+        sM.debuggerVideo = new GUIKIT::MenuItem;
+        sM.debuggerVideo->onActivate = [this, emulator]() {
+            program->openDebugger(emulator, dynamic_cast<LIBC64::Interface*>(emulator) ? Debugger::Mode::VICII : Debugger::Mode::DENISE);
+        };
+        sM.debugger->append( *sM.debuggerVideo );
 
         sM.debuggerCia = new GUIKIT::MenuItem;
         sM.debuggerCia->onActivate = [this, emulator]() {
@@ -2112,8 +2111,7 @@ auto View::translate() -> void {
         sysMenu.debuggerMem->setText(trans->get("MEM"));
         sysMenu.debuggerCia->setText(trans->get("CIA"));
 
-        if (sysMenu.debuggerVideo)
-            sysMenu.debuggerVideo->setText(trans->get("Denise"));
+        sysMenu.debuggerVideo->setText(trans->get( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "VIC-II" : "Denise"));
 
         if (sysMenu.debuggerMemSCPU)
             sysMenu.debuggerMemSCPU->setText(trans->get("MEM SCPU"));

@@ -160,9 +160,8 @@ struct System {
     uint8_t requestedSids;
     
     uint8_t mode; //bit 4: exrom, bit 3: game, bit 2: charen, bit 1: hiram, bit 0: loram
-    uint16_t vicBank;
     // the c64 shares multiple sources for irq and nmi
-    // achknowledging e.g. an irq from vic side doesn't mean the irq line on cpu changes immediately
+    // acknowledging e.g. an irq from vic side doesn't mean the irq line on cpu changes immediately
     // if cia1 holds up an irq too, the cpu irq pin goes hi if both sources are hi
     
     uint8_t irqIncomming; // bit 0: vicII, bit 1: cia1, bit 2: expansion port
@@ -176,7 +175,7 @@ struct System {
     bool cycleRendererNextBoot = false;
     uint8_t mhz2 = 0;
 
-    // petscii will be converted to ascii or screencodes to be viewed in host
+    // petscii will be converted to ascii or screen codes to be viewed in host
     bool convertToScreencode = false;
     bool loadWithColumn = false;
     

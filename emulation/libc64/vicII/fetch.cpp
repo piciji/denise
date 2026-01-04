@@ -35,7 +35,7 @@
 #include "vicII.h"
 #include "../expansionPort/expansionPort.h"
 
-#define _fullAdr( __addr ) (((__addr) & 0x3fff) | system->vicBank)
+#define _fullAdr( __addr ) (((__addr) & 0x3fff) | vicBank)
 
 namespace LIBC64 {
 	
@@ -92,55 +92,61 @@ inline auto VicIICycle::sprHasDma(uint8_t pos) -> bool {
 
 auto VicIICycle::fetchSpriteS1(uint8_t pos) -> uint8_t {	
     uint8_t sprdata;
+    Sprite& spr = sprite[pos];
 
     if (sprHasDma(pos)) {
-        sprdata = readPhi<true>( _fullAdr((sprite[pos].dataP << 6) | sprite[pos].mc) );
+        sprdata = readPhi<true>( _fullAdr((spr.dataP << 6) | spr.mc) );
 
-        sprite[pos].mc++;
-        sprite[pos].mc &= 0x3f;
+        spr.mc++;
+        spr.mc &= 0x3f;
 		
     } else {
         sprdata = readPhi<true>( _fullAdr(0x3fff) );
     }
 
-    sprite[pos].dataS &= 0xff00ff;
-    sprite[pos].dataS |= sprdata << 8;
+    spr.dataS &= 0xff00ff;
+    spr.dataS |= sprdata << 8;
 
     return sprdata;
 }
 
 inline auto VicIICycle::fetchSpriteS0(uint8_t pos) -> void {
     uint8_t value = lastBusPhi2;
+    Sprite& spr = sprite[pos];
 
     if ( sprHasDma(pos) ) {
         if (!aecDelay) {
-            value = readPhi<false>( _fullAdr((sprite[pos].dataP << 6) | sprite[pos].mc) );
+            value = readPhi<false>( _fullAdr((spr.dataP << 6) | spr.mc) );
 		}
 
-        sprite[pos].mc++;
-        sprite[pos].mc &= 0x3f;
+        spr.mc++;
+        spr.mc &= 0x3f;
     }
 
-    sprite[pos].dataS &= 0x00ffff;
-    sprite[pos].dataS |= value << 16;
+    spr.dataS &= 0x00ffff;
+    spr.dataS |= value << 16;
 }
 
 inline auto VicIICycle::fetchSpriteS2(uint8_t pos) -> void {
     uint8_t value = lastBusPhi2;
+    Sprite& spr = sprite[pos];
 	
     if ( sprHasDma(pos) ) {
         if (!aecDelay) {
-			value = readPhi<false>( _fullAdr((sprite[pos].dataP << 6) | sprite[pos].mc) );
+			value = readPhi<false>( _fullAdr((spr.dataP << 6) | spr.mc) );
 		}
 		
-        sprite[pos].mc++;
-        sprite[pos].mc &= 0x3f;
+        spr.mc++;
+        spr.mc &= 0x3f;
     }
 
-    sprite[pos].dataS &= 0xffff00;
-    sprite[pos].dataS |= value;
+    spr.dataS &= 0xffff00;
+    spr.dataS |= value;
 	
-	sprite[pos].dataShiftReg = sprite[pos].dataS;
+	spr.dataShiftReg = spr.dataS;
+
+    if (debugInfo.store && (spritePending & (1 << pos)))
+        storeSprite(spr);
 }
 
 auto VicIICycle::fetchC() -> void {
@@ -185,7 +191,6 @@ auto VicIICycle::addrG( uint8_t useMode ) -> uint16_t {
 
 auto VicIICycle::fetchIdleG() -> uint8_t {
 	uint8_t data;
-	uint16_t addr;
 
 	if (rev65)
 		data = modeEcmBmm;
@@ -193,13 +198,13 @@ auto VicIICycle::fetchIdleG() -> uint8_t {
 		data = modeEcmBmmDma; //is delayed one cycle for 85xx chips
 
 	if (badLine && yScroll)
-		addr = rev65 ? 0x38ff : 0x3807;
+		_addrG = rev65 ? 0x38ff : 0x3807;
 	else if (VIC_MODE_ECM(data) )
-		addr = 0x39ff;
+		_addrG = 0x39ff;
 	else
-		addr = 0x3fff;
+		_addrG = 0x3fff;
 
-	gBuffer = readPhi<true>(_fullAdr(addr));
+	gBuffer = readPhi<true>(_fullAdr(_addrG));
 	
 	if (gBufferUse) {
 		gBufferPipe1 = gBuffer;
@@ -210,11 +215,10 @@ auto VicIICycle::fetchIdleG() -> uint8_t {
 }
 
 auto VicIICycle::fetchG() -> uint8_t {
-    uint16_t addr;
     uint8_t data;
         
 	if (rev65) {
-		addr = addrG( modeEcmBmm | (modeEcmBmmDma & 8) );
+		_addrG = addrG( modeEcmBmm | (modeEcmBmmDma & 8) );
 
 		// when Bmm changes
 		if ( (modeEcmBmm ^ modeEcmBmmDma) & 8 ) {
@@ -222,17 +226,17 @@ auto VicIICycle::fetchG() -> uint8_t {
 			uint16_t addrTo = addrG( modeEcmBmm );
 
 			if ( !isCharRomAccessed( addrFrom ) && isCharRomAccessed( addrTo ) ) 
-				addr = (addrFrom & 0xff) | (addrTo & 0x3f00);
+				_addrG = (addrFrom & 0xff) | (addrTo & 0x3f00);
 		}
 
 	} else
-		addr = addrG( modeEcmBmmDma );
+		_addrG = addrG( modeEcmBmmDma );
 
 	vmli++;
 	vc++;
 	vc &= 0x3ff;	
            
-    data = readPhi<true>( _fullAdr(addr) );
+    data = readPhi<true>( _fullAdr(_addrG) );
 	
 	gBuffer = data;
 
@@ -245,7 +249,7 @@ auto VicIICycle::fetchG() -> uint8_t {
 }
 
 inline auto VicIICycle::isCharRomAccessed(uint16_t addr) -> bool {
-	addr = (addr & 0x3fff) | system->vicBank;
+	addr = (addr & 0x3fff) | vicBank;
 
     return !ultimaxPhi1 && ((addr & 0x7000) == 0x1000);
 }

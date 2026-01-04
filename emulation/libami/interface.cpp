@@ -821,13 +821,13 @@ auto Interface::debuggerRemove(DebuggerChip chip, DebuggerAction action, unsigne
 
 auto Interface::debuggerEnable(DebuggerChip chip, DebuggerAction action, unsigned addr, bool state) -> void {
     if (state)
-        system->cpu.debuggerEnable( (M68FAMILY::M68000::DebuggerAction)action, addr );
+        system->debuggerEnable( chip, action, addr );
     else
-        debuggerDisable( chip, action, addr );
+        system->debuggerDisable( chip, action, addr );
 }
 
 auto Interface::debuggerDisable(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {
-    system->cpu.debuggerDisable( (M68FAMILY::M68000::DebuggerAction)action, addr );
+    system->debuggerDisable( chip, action, addr );
 }
 
 auto Interface::debuggerDisableAll(DebuggerChip chip) -> void {

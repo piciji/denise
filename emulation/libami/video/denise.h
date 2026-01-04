@@ -118,6 +118,14 @@ struct Denise {
             uint8_t sprData[16];
             bool lock = false;
         } spr[8];
+
+        auto setEnable(bool state) -> void {
+            store = state;
+            reset();
+        }
+        auto reset() -> void { for (auto& s : spr) { s.pos = 0; s.lock = false; } }
+        auto resetPos() -> void { for (auto& s : spr) s.pos = 0; }
+        auto resetLock() -> void { for (auto& s : spr) s.lock = false; }
     } debugInfo;
 
     auto strhor() -> void;

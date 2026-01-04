@@ -589,7 +589,6 @@ auto System::power( bool softReset ) -> void {
 
     mode = (expansionPort->isExrom() << 1) | expansionPort->isGame();
 
-    vicBank = 0;
     mhz2 &= ~0x80;
 
     mode <<= 3;
@@ -1338,6 +1337,12 @@ auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::In
 }
 
 auto System::debuggerEnable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (chip == Interface::DebuggerChip::Video) {
+        vicIICycle.debugInfo.setEnable( true );
+        vicIIFast.debugInfo.setEnable( true );
+        return;
+    }
+
     if (chip == Emulator::Interface::DebuggerChip::C65c816)
         superCpu->debuggerEnable((WDCFAMILY::W65816::DebuggerAction)action, addr);
     else if (chip == Emulator::Interface::DebuggerChip::C6510)
@@ -1345,6 +1350,12 @@ auto System::debuggerEnable(Emulator::Interface::DebuggerChip chip, Emulator::In
 }
 
 auto System::debuggerDisable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (chip == Interface::DebuggerChip::Video) {
+        vicIICycle.debugInfo.setEnable( false );
+        vicIIFast.debugInfo.setEnable( false );
+        return;
+    }
+
     if (chip == Emulator::Interface::DebuggerChip::C65c816)
         superCpu->debuggerDisable((WDCFAMILY::W65816::DebuggerAction)action, addr);
     else if (chip == Emulator::Interface::DebuggerChip::C6510)
@@ -1417,12 +1428,13 @@ auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
             updateCiaDebuggerSnapshot(snap);
             break;
         case Emulator::Interface::DebuggerSnapshot::Theme::Video:
+            vicII->updateSnapshot(snap);
             break;
         default:
             break;
     }
 
-    vicII->updateSnapshot(snap);
+    vicII->updatePositionSnapshot(snap);
 }
 
 auto System::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {

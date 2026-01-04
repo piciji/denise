@@ -56,6 +56,9 @@ auto VicIIFast::clock() -> void {
     }    
     
     if (initVCounter) {
+        if (debugInfo.store)
+            debugInfo.reset();
+
         vCounter = 0;
         if (debuggerAction == Emulator::Interface::DebuggerAction::Frame)
             oneTimeDebuggerAction();
@@ -68,7 +71,7 @@ auto VicIIFast::clock() -> void {
         allowBadlines = false;
     } 
     
-    if (++cycle == lineCycles) {	
+    if (++cycle == lineCycles) {
 		cycle = 0;
         if (debuggerAction == Emulator::Interface::DebuggerAction::Line)
             oneTimeDebuggerAction();
@@ -284,6 +287,13 @@ inline auto VicIIFast::applyMeta() -> void {
         *ptr |= *src++;
         ptr += 1;
     }  
+}
+
+auto VicIIFast::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.vicII;
+    s.vmli = 0;
+
+    VicIIBase::updateSnapshot(snap);
 }
 
 auto VicIIFast::initMetaPattern() -> void {

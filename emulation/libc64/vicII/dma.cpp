@@ -70,7 +70,7 @@ auto VicIICycle::clock() -> void {
 	else if (isUpdateRc( flags ))
 		updateRc();
 	
-    // copy state of ECM / BMM directly before a possible write in order
+    // copy state of ECM / BMM directly before a possible "write" in order
     // to delay it one cycle for DMA fetch logic
     modeEcmBmmDma = modeEcmBmm;   
 	
@@ -90,6 +90,8 @@ inline auto VicIICycle::advanceCycle() -> void {
 		allowBadlines = true;
 	
 	if(initVCounter) {
+	    if (debugInfo.store)
+	        debugInfo.reset();
         vCounter = 0;
         initVCounter = false;
 		lpLatched = false;	
@@ -105,7 +107,7 @@ inline auto VicIICycle::advanceCycle() -> void {
 	        oneTimeDebuggerAction();
     }
     
-	if (++cycle == lineCycles) {	
+	if (++cycle == lineCycles) {
 		cycle = 0;
 
 		// Note: line complete but vcounter is not incremented at this point

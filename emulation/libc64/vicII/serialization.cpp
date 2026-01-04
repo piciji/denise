@@ -154,6 +154,7 @@ auto VicIICycle::serialize(Emulator::Serializer& s) -> void {
     s.integer( ultimaxPhi2 );
     
     s.integer( reg2mhz );
+    s.integer( vicBank );
 }
 
 }

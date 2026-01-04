@@ -30,6 +30,7 @@ struct VicIICycle : VicIIBase {
 	auto lastReadPhase1() -> uint8_t { return lastReadPhi1; }
 	auto isAecLow() -> bool { return !aecDelay; }
 	auto isScanlineRenderer() -> bool { return false; }
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 	
 protected:       
 	#include "flags.h"

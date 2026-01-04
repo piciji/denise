@@ -434,6 +434,19 @@ auto Debugger::updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void {
     }
 }
 
+auto Debugger::updateReg(GUIKIT::LineEdit& widget, const std::string& text, unsigned ident) -> void {
+    if ((unsigned)widget.getStore() != ident) {
+        widget.setStore( static_cast<int>(ident) );
+        widget.setText( text );
+    }
+}
+
+auto Debugger::updateReg(GUIKIT::CheckBox& reg, bool state) -> void {
+    if (reg.checked() != state) {
+        reg.setChecked( state );
+    }
+}
+
 auto Debugger::getWidth(unsigned length, bool editField, bool bigger) -> unsigned {
     static unsigned _w[8][2][2] = {0};
     GUIKIT::Widget* widget;

@@ -54,10 +54,7 @@ auto Denise::power(bool softReset) -> void {
     for (int i = 0; i < 256; i++)
         bplUpdate[i].actions = 0;
 
-    for(auto& s : debugInfo.spr) {
-        s.pos = 0;
-        s.lock = false;
-    }
+    debugInfo.reset();
 
     if (!softReset) {
         hPos = 2;
@@ -143,12 +140,8 @@ auto Denise::strhor() -> void {
         if (vBlank) {
             process(-1);
             vBlank = false;
-            if (debugInfo.store) {
-                for (auto& spr : debugInfo.spr) {
-                    spr.pos = 0;
-                    spr.lock = false;
-                }
-            }
+            if (debugInfo.store)
+                debugInfo.reset();
         }
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
@@ -891,10 +884,8 @@ template<bool _hires, bool _shres, bool _ham, bool _doublePlayfield, bool _displ
                 hPos = 2;
                 upd.actions &= ~RESET_HPOS;
 
-                if (debugInfo.store) {
-                    for (auto& spr : debugInfo.spr)
-                        spr.lock = false;
-                }
+                if (debugInfo.store)
+                    debugInfo.resetLock();
             }
 
 //            if (upd.actions & UPD_COLOR) {

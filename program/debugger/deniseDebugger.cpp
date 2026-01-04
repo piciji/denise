@@ -182,8 +182,6 @@ auto DeniseDebugger::buildTheme() -> GUIKIT::Layout* {
         };
     }
 
-    emulator->debuggerAdd( Emulator::Interface::DebuggerChip::Video, Emulator::Interface::DebuggerAction::None, 0);
-
     return video;
 }
 
@@ -197,18 +195,22 @@ auto DeniseDebugger::updateTheme() -> void {
 
         amiEmu->getDebuggerSnapshot(snap);
 
-        updateDenise(snap);
+        updateView(snap);
     }
 
     if (locked)
         emuThread->unlock();
 }
 
-auto DeniseDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( Emulator::Interface::DebuggerChip::Video, Emulator::Interface::DebuggerAction::None, 0);
+auto DeniseDebugger::initTheme() -> void {
+    emulator->debuggerEnable( Emulator::Interface::DebuggerChip::Video, Emulator::Interface::DebuggerAction::None, 0);
 }
 
-auto DeniseDebugger::updateDenise(LIBAMI::DebuggerSnapshot& s) -> void {
+auto DeniseDebugger::closeTheme() -> void {
+    emulator->debuggerDisable( Emulator::Interface::DebuggerChip::Video, Emulator::Interface::DebuggerAction::None, 0);
+}
+
+auto DeniseDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
     auto& snap = s.denise;
     auto& spr = snap.spr[getSelectedSprite()];
     auto vManager = VideoManager::getInstance( emulator );

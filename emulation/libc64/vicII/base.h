@@ -55,6 +55,20 @@ struct VicIIBase {
 		unsigned rightOverscan;
 	} crop;
 
+    struct {
+        bool store = false;
+        struct {
+            uint8_t* data = nullptr;
+            unsigned pos = 0;
+        } spr[8];
+
+        auto setEnable(bool state) -> void {
+            store = state;
+            reset();
+        }
+        auto reset() -> void { for (auto& s : spr) s.pos = 0; }
+    } debugInfo;
+
 	struct {
 		uint8_t mode = 0;
 		unsigned framePos = 1;
@@ -115,7 +129,10 @@ struct VicIIBase {
     auto setUltimax(bool state ) -> void { ultimaxPhi1 = ultimaxPhi2 = state; };
     auto oldOne() -> bool { return oldIrqMode; }
     auto inVisibleArea() -> bool { return visibleLine; }
-    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    virtual auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updatePositionSnapshot(DebuggerSnapshot& snap) -> void;
+    auto setVicBank(uint16_t data) -> void { vicBank = data; }
+    auto getVicBank() -> uint16_t { return vicBank; }
 
 protected:     
     bool ultimaxPhi1;
@@ -130,7 +147,7 @@ protected:
 	
 	uint16_t vcBase;
 	uint16_t vc;
-	uint8_t rc;	
+	uint8_t rc;
 	uint16_t cBuffer[40];
 
 	bool rev65; //true: 65xx chips, false: 85xx chips
@@ -196,7 +213,10 @@ protected:
 	bool hFlipFlop;
 	bool vFlipFlop;	
 	bool idleMode;	
-	bool initVCounter;	
+	bool initVCounter;
+
+    uint16_t _addrG;
+    uint16_t vicBank;
 
 	struct Sprite {
 		uint8_t position;
@@ -241,7 +261,8 @@ protected:
 
     auto oneTimeDebuggerAction() -> void;
 	auto updateIrq(Interrupt interrupt = Update) -> void;
-	auto checkLightPen() -> void;	
+	auto checkLightPen() -> void;
+    auto storeSprite(Sprite& spr) -> void;
 	
 	auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
 	auto initVerticalLineAnomaly() -> void;

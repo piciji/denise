@@ -352,7 +352,7 @@ template<uint8_t sprPos> inline auto VicIICycle::triggerSprites( uint16_t xPos )
     // in halt state a few x coordinates between first and second dma cannot trigger
     if ( !(spriteActive & mask) && !(spriteHalt & mask) && (spriteTrigger & mask) && (spritePending & mask) )
         if ( xPos == spr->useX ) {                
-            // can not retrigger until sprite is shifted out completly or second sprite dma finishes                
+            // can not retrigger until sprite is shifted out completely or second sprite dma finishes
 			spriteActive |= mask;
             // init the flops
             spr->expandXFlop = true;
@@ -410,8 +410,8 @@ inline auto VicIICycle::spriteSequencer(  ) -> void {
 	if(spriteActive & 0x01) spriteSequencer<0>( sprite0, sprUse, collision );
 	
     if (sprUse) {
-        // at least one non transparent sprite pixel is found 
-        // ok we have to find out if background pixel or sprite pixel is higher priorized
+        // at least one non-transparent sprite pixel is found
+        // ok we have to find out if background pixel or sprite pixel is higher prioritized
 
         // if display color is background, sprite prio doesn't matter
         if (!isForeground() || !sprUse->usePrioMD) {
@@ -425,11 +425,11 @@ inline auto VicIICycle::spriteSequencer(  ) -> void {
         }
 
         if (isForeground())
-            // if pixel is foreground all non transparent sprite pixel will be seted if not already
+            // if pixel is foreground all non-transparent sprite pixel will be set if not already
             spriteForegroundCollided |= collision;
 
         if (collision & (collision - 1))
-            // at least two sprites have to be non transparent
+            // at least two sprites have to be non-transparent
             // otherwise no bit is set
             spriteSpriteCollided |= collision;
     }    
@@ -444,7 +444,7 @@ template<uint8_t sprPos> inline auto VicIICycle::spriteSequencer( Sprite* spr, S
         spriteActive &= ~mask;
         return;
     }
-    // in halted state, last "shift out" is used always and no flip flops will be toggled
+    // in halted state, last "shift out" is used always and no flip-flops will be toggled
     if (!(spriteHalt & mask )) {		
         if (spr->expandXFlop) {				
             if (spr->useMultiColor) {
@@ -466,9 +466,9 @@ template<uint8_t sprPos> inline auto VicIICycle::spriteSequencer( Sprite* spr, S
         if (spr->useExpandX)
             spr->expandXFlop ^= 1;
         else
-            spr->expandXFlop = 1;
+            spr->expandXFlop = true;
 
-        // if pixel is x-expanded and uses multi color, the 2 bit "shift out" is
+        // if pixel is x-expanded and uses multicolor, the 2 bit "shift out" is
         // repeated for three more pixel, see below
         // pixel | x-flop | mc-flop | shift out | shift count
         // --------------------------------------------------
@@ -480,9 +480,9 @@ template<uint8_t sprPos> inline auto VicIICycle::spriteSequencer( Sprite* spr, S
     }
 
     if (spr->shiftOut) {
-        // the lowest non transparent sprite has prio at this pixel position
+        // the lowest non-transparent sprite has prio at this pixel position
         sprUse = spr;
-        // remember all non transparent sprites for this pixel position
+        // remember all non-transparent sprites for this pixel position
         collision |= mask;
     } else {
 		spr->dataShiftReg &= 0xffffff;

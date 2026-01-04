@@ -95,7 +95,8 @@ struct DeniseDebugger : Debugger {
     auto updateTheme() -> void override;
     auto closeTheme() -> void override;
     auto translateTheme() -> void override;
+    auto initTheme() -> void override;
 
-    auto updateDenise(LIBAMI::DebuggerSnapshot& s) -> void;
+    auto updateView(LIBAMI::DebuggerSnapshot& s) -> void;
     auto getSelectedSprite() -> unsigned;
 };

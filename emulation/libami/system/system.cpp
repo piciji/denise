@@ -668,11 +668,6 @@ auto System::getHDDAsync() -> bool {
 }
 
 auto System::debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
-    if (chip == Interface::DebuggerChip::Video) {
-        denise.debugInfo.store = true;
-        return;
-    }
-
     switch (action) {
         case Emulator::Interface::DebuggerAction::Line:
         case Emulator::Interface::DebuggerAction::Frame:
@@ -685,12 +680,25 @@ auto System::debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Inter
 }
 
 auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr );
+}
+
+auto System::debuggerEnable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
     if (chip == Interface::DebuggerChip::Video) {
-        denise.debugInfo.store = false;
+        denise.debugInfo.setEnable( true );
         return;
     }
 
-    cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr );
+    cpu.debuggerEnable( (M68FAMILY::M68000::DebuggerAction)action, addr );
+}
+
+auto System::debuggerDisable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    if (chip == Interface::DebuggerChip::Video) {
+        denise.debugInfo.setEnable( false );
+        return;
+    }
+
+    cpu.debuggerDisable( (M68FAMILY::M68000::DebuggerAction)action, addr );
 }
 
 auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
