@@ -17,7 +17,7 @@ auto Agnus::peekCustom(uint16_t addr) -> uint16_t {
             return input.peekDenisePortB();
 
         case 0xe:
-            return  denise.clxDat | 0x8000;
+            return denise.clxDat | 0x8000;
 
         case 0x10:
             return paula.getAdkCon();

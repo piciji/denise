@@ -270,10 +270,10 @@
     <ClInclude Include="..\program\debugger\ciaDebugger.h" />
     <ClInclude Include="..\program\debugger\cpuDebugger.h" />
     <ClInclude Include="..\program\debugger\debugger.h" />
-    <ClInclude Include="..\program\debugger\deniseDebugger.h" />
     <ClInclude Include="..\program\debugger\memDebugger.h" />
     <ClInclude Include="..\program\debugger\memScpuDebugger.h" />
     <ClInclude Include="..\program\debugger\scpuDebugger.h" />
+    <ClInclude Include="..\program\debugger\videoDebugger.h" />
     <ClInclude Include="..\program\emuconfig\config.h" />
     <ClInclude Include="..\program\emuconfig\layouts\audio.h" />
     <ClInclude Include="..\program\emuconfig\layouts\configurations.h" />
@@ -1684,8 +1684,8 @@
     <ClCompile Include="..\program\debugger\ciaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\cpuDebugger.cpp" />
     <ClCompile Include="..\program\debugger\debugger.cpp" />
-    <ClCompile Include="..\program\debugger\deniseDebugger.cpp" />
     <ClCompile Include="..\program\debugger\memDebugger.cpp" />
+    <ClCompile Include="..\program\debugger\videoDebugger.cpp" />
     <ClCompile Include="..\program\emuconfig\config.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_emuconfig</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_emuconfig</ObjectFileName>

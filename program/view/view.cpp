@@ -1352,7 +1352,7 @@ auto View::buildMenu() -> void {
 
         sM.debuggerVideo = new GUIKIT::MenuItem;
         sM.debuggerVideo->onActivate = [this, emulator]() {
-            program->openDebugger(emulator, dynamic_cast<LIBC64::Interface*>(emulator) ? Debugger::Mode::VICII : Debugger::Mode::DENISE);
+            program->openDebugger(emulator, Debugger::Mode::Video);
         };
         sM.debugger->append( *sM.debuggerVideo );
 

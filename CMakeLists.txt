@@ -201,8 +201,7 @@ set(srcs
         program/debugger/cpuDebugger.cpp
         program/debugger/memDebugger.cpp
         program/debugger/ciaDebugger.cpp
-        program/debugger/deniseDebugger.cpp
-        program/debugger/vicIIDebugger.cpp
+        program/debugger/videoDebugger.cpp
         program/view/status.cpp
         program/config/config.cpp
         program/emuconfig/config.cpp
