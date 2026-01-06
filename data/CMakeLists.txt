@@ -425,7 +425,6 @@ set(headerSrcs ${headerSrcs}
     emulation/libc64/vicII/sequencer.cpp
     emulation/libc64/vicII/serialization.cpp
     emulation/libc64/vicII/silence.cpp
-    emulation/libc64/vicII/verticalLineAnomaly.cpp
     emulation/libc64/vicII/vicII.h
 
     emulation/tools/bits.h
