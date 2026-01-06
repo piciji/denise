@@ -47,10 +47,10 @@
 		9D0C948B2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D0C948C2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D31E3BE2DF2083600F88404 /* recentFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D31E3BC2DF2083600F88404 /* recentFiles.cpp */; };
+		9D4CCC482F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */; };
+		9D4CCC492F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */; };
 		9D4D10442F071C6B00296467 /* ciaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */; };
 		9D4D10452F071C6B00296467 /* ciaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */; };
-		9D4D10462F071C6B00296467 /* deniseDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103C2F071C6B00296467 /* deniseDebugger.cpp */; };
-		9D4D10472F071C6B00296467 /* deniseDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103C2F071C6B00296467 /* deniseDebugger.cpp */; };
 		9D4D10482F071C6B00296467 /* memDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103D2F071C6B00296467 /* memDebugger.cpp */; };
 		9D4D10492F071C6B00296467 /* memDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103D2F071C6B00296467 /* memDebugger.cpp */; };
 		9D4D104A2F071C6B00296467 /* cpuDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */; };
@@ -526,10 +526,10 @@
 		9D0C948A2E5E345E00A9B56C /* diskGuesser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = diskGuesser.h; sourceTree = "<group>"; };
 		9D31E3BC2DF2083600F88404 /* recentFiles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = recentFiles.cpp; sourceTree = "<group>"; };
 		9D31E3BD2DF2083600F88404 /* recentFiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = recentFiles.h; sourceTree = "<group>"; };
+		9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = videoDebugger.cpp; sourceTree = "<group>"; };
+		9D4CCC472F0BD4EB00ADD454 /* videoDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = videoDebugger.h; sourceTree = "<group>"; };
 		9D4D10392F07156300296467 /* multiSquareCanvas.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = multiSquareCanvas.cpp; sourceTree = "<group>"; };
-		9D4D103A2F071C6B00296467 /* deniseDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = deniseDebugger.h; sourceTree = "<group>"; };
 		9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ciaDebugger.cpp; sourceTree = "<group>"; };
-		9D4D103C2F071C6B00296467 /* deniseDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = deniseDebugger.cpp; sourceTree = "<group>"; };
 		9D4D103D2F071C6B00296467 /* memDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = memDebugger.cpp; sourceTree = "<group>"; };
 		9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cpuDebugger.cpp; sourceTree = "<group>"; };
 		9D4D103F2F071C6B00296467 /* ciaDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciaDebugger.h; sourceTree = "<group>"; };
@@ -1057,7 +1057,6 @@
 		9D8FADD22CB40DF8006905BE /* register.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = register.cpp; sourceTree = "<group>"; };
 		9D8FADD32CB40DF8006905BE /* vicII.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vicII.h; sourceTree = "<group>"; };
 		9D8FADD42CB40DF8006905BE /* serialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serialization.cpp; sourceTree = "<group>"; };
-		9D8FADD52CB40DF8006905BE /* verticalLineAnomaly.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = verticalLineAnomaly.cpp; sourceTree = "<group>"; };
 		9D8FADD72CB40DF8006905BE /* base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base.h; sourceTree = "<group>"; };
 		9D8FADD92CB40DF8006905BE /* voice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = voice.cpp; sourceTree = "<group>"; };
 		9D8FADDA2CB40DF8006905BE /* sid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sid.cpp; sourceTree = "<group>"; };
@@ -2569,7 +2568,6 @@
 				9D8FADD22CB40DF8006905BE /* register.cpp */,
 				9D8FADD32CB40DF8006905BE /* vicII.h */,
 				9D8FADD42CB40DF8006905BE /* serialization.cpp */,
-				9D8FADD52CB40DF8006905BE /* verticalLineAnomaly.cpp */,
 				9D8FADD72CB40DF8006905BE /* base.h */,
 			);
 			path = vicII;
@@ -2687,12 +2685,12 @@
 		9DBA88402ED0C7D400DF0756 /* debugger */ = {
 			isa = PBXGroup;
 			children = (
+				9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */,
+				9D4CCC472F0BD4EB00ADD454 /* videoDebugger.h */,
 				9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */,
 				9D4D103F2F071C6B00296467 /* ciaDebugger.h */,
 				9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */,
 				9D4D10412F071C6B00296467 /* cpuDebugger.h */,
-				9D4D103C2F071C6B00296467 /* deniseDebugger.cpp */,
-				9D4D103A2F071C6B00296467 /* deniseDebugger.h */,
 				9D4D103D2F071C6B00296467 /* memDebugger.cpp */,
 				9D4D10402F071C6B00296467 /* memDebugger.h */,
 				9D4D10422F071C6B00296467 /* memScpuDebugger.h */,
@@ -2847,6 +2845,7 @@
 				9D07CD0A2E296CD000A9787E /* pm2_decoder.cpp in Sources */,
 				9D8FAE9D2CB40DFA006905BE /* m8520.cpp in Sources */,
 				9D8FAB1D2CB3F6F0006905BE /* status.cpp in Sources */,
+				9D4CCC482F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */,
 				9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */,
 				9D8FAE012CB40DF8006905BE /* m68000.cpp in Sources */,
 				9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */,
@@ -2922,7 +2921,6 @@
 				9D07CC8C2E296C5F00A9787E /* images.cpp in Sources */,
 				9D8FAB172CB3F6EF006905BE /* drive.cpp in Sources */,
 				9D4D104A2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
-				9D4D10462F071C6B00296467 /* deniseDebugger.cpp in Sources */,
 				9D8FAAFC2CB3F6EF006905BE /* manager.cpp in Sources */,
 				9D8FAAF92CB3F6EF006905BE /* manager.cpp in Sources */,
 				9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */,
@@ -3028,6 +3026,7 @@
 				9DECF9362E45F309005C0BBA /* pm2_decoder.cpp in Sources */,
 				9DECF9372E45F309005C0BBA /* m8520.cpp in Sources */,
 				9DECF9382E45F309005C0BBA /* status.cpp in Sources */,
+				9D4CCC492F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */,
 				9DECF9392E45F309005C0BBA /* program.cpp in Sources */,
 				9DECF93A2E45F309005C0BBA /* m68000.cpp in Sources */,
 				9DECF93B2E45F309005C0BBA /* hunk.cpp in Sources */,
@@ -3103,7 +3102,6 @@
 				9DECF9762E45F309005C0BBA /* images.cpp in Sources */,
 				9DECF9772E45F309005C0BBA /* drive.cpp in Sources */,
 				9D4D104B2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
-				9D4D10472F071C6B00296467 /* deniseDebugger.cpp in Sources */,
 				9DECF9782E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF9792E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF97A2E45F309005C0BBA /* uuid.cpp in Sources */,
