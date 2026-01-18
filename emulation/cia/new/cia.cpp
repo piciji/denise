@@ -377,11 +377,16 @@ auto Cia<model>::positiveCntTransition( ) -> void {
 template<uint8_t model>
 auto Cia<model>::switchSerialDirection(bool input) -> void {
 
+    if ((sdrShiftCount > 1 && sdrShiftCount < 15) || (sdrShiftCount == 15 && !(delay & CIA_CNT2))) {
+        delay &= ~(CIA_FINISH_SDR0 | CIA_FINISH_SDR2);
+        delay |= CIA_FINISH_SDR1;
+    }
+
     if (input) {
-        if ((model == MOS_8520) || newVersion)
+      //  if ((model == MOS_8520) || newVersion)
             sdrForceFinish = (delay & CIA_CNT_NEW) != CIA_CNT_NEW;
-        else
-            sdrForceFinish = (delay & CIA_CNT) != CIA_CNT;
+        //else
+          //  sdrForceFinish = (delay & CIA_CNT) != CIA_CNT;
 
         if (!sdrForceFinish) {
             if (sdrShiftCount != 2 && (delay & CIA_FLIP_CNT2 )  )

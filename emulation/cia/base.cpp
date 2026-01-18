@@ -400,11 +400,15 @@ auto Base::positiveCntTransition( ) -> void {
 }
 
 auto Base::switchSerialDirection(bool input) -> void {
-	
-	if (input) { 
-		if (!newVersion)
-			sdrForceFinish = (delay & CIA_CNT) != CIA_CNT;
-		else
+
+	if ((sdrShiftCount > 1 && sdrShiftCount < 15) || (sdrShiftCount == 15 && !(delay & CIA_CNT2))) {
+		events.add( &finishSdr, 2, Emulator::SystemTimer::Action::UpdateExisting );
+	}
+
+	if (input) {
+		// if (!newVersion) // This code path is for the outlier CIA chips marked 6526 4485
+		// 	sdrForceFinish = (delay & CIA_CNT) != CIA_CNT;
+		// else
 			sdrForceFinish = (delay & CIA_CNT_NEW) != CIA_CNT_NEW;
 
 		if (!sdrForceFinish) {
