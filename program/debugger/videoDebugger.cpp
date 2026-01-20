@@ -711,8 +711,8 @@ auto VideoDebugger::translateTheme() -> void {
     }
 }
 
-auto VideoDebugger::screenIdent() -> std::string {
-    return isC64() ? "debugger_vicII" : "debugger_denise";
+auto VideoDebugger::saveIdent() -> std::string {
+    return "debugger_video";
 }
 
 auto VideoDebugger::titleIdent() -> std::string {

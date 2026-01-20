@@ -19,6 +19,10 @@ struct Cpu : M68FAMILY::M68000 {
     auto serialize(Emulator::Serializer& s) -> void;
 
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+
+    auto getIRC() const -> uint16_t { return irc; }
+
+    auto getIPL() const -> uint8_t { return iplPins; }
 };
 
 }

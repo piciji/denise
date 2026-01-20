@@ -460,7 +460,7 @@ auto MemDebugger::toAscii(const uint8_t* buf, int len, char* result, char pad) -
     result[len] = 0;
 }
 
-auto MemDebugger::screenIdent() -> std::string {
+auto MemDebugger::saveIdent() -> std::string {
     return "debugger_mem";
 }
 

@@ -7,6 +7,7 @@
 #define LIST_INSTRUCTIONS 256
 
 typedef Emulator::Interface::DebuggerAction DebuggerAction;
+typedef Emulator::Interface::DebuggerChip DebuggerChip;
 
 namespace LIBAMI {
     struct Interface;
@@ -20,7 +21,7 @@ namespace LIBC64 {
 
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU, CIA, Video,
+        CPU, SCPU, Memory, MemorySCPU, CIA, Video, DMA,
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );
@@ -47,6 +48,8 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image clearImg;
     GUIKIT::Image offImg;
     GUIKIT::Image onImg;
+    GUIKIT::Image editImg;
+    GUIKIT::Image checkedImg;
 
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;
@@ -71,7 +74,7 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::VerticalLayout layout;
 
     auto build() -> void;
-    virtual auto screenIdent() -> std::string = 0;
+    virtual auto saveIdent() -> std::string = 0;
     virtual auto titleIdent() -> std::string = 0;
     virtual auto buildTheme() -> GUIKIT::Layout* = 0;
     virtual auto searchTheme(unsigned addr) -> void {}

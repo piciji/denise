@@ -48,7 +48,7 @@ struct Crop {
 
 	auto updateBorder(uint8_t& options ) -> bool {
         
-		if ( settings.type == CropType::Off ) {
+		if ( (options & 0x80) || (settings.type == CropType::Off) ) {
             top = left = right = bottom = 0;
 			return false;
 		}
@@ -128,7 +128,7 @@ struct Crop {
         latest.width = width;
         latest.height = height;
         latest.linePitch = linePitch;
-		latest.options = options;
+		latest.options = options & 0x7f;
 
         if ( (latest.top != top) || (latest.left != left) ) {
             latest.top = top;

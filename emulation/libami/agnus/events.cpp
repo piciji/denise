@@ -443,7 +443,7 @@ auto Agnus::HTotalEvent() -> void {
                 actions &= ~ACT_BPL;
             }
         }
-
+        debugger.lastHpos = hPos;
     } else {
         if (!lol) {
             actions &= ~ACT_COPPER; // "even" cycle 0 after a short line is not usable by Copper, otherwise Copper would progress 2 cycles in a row.

@@ -152,6 +152,7 @@ struct Interface : Emulator::Interface  {
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
     auto getDebuggerSnapshot(LIBAMI::DebuggerSnapshot& snap) -> void;
     auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void;
+    auto getDmaDump() -> uint8_t*;
 
 private:
     auto prepareDevices() -> void;

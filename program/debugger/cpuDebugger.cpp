@@ -764,7 +764,7 @@ inline auto CpuDebugger::getCpuType() -> Emulator::Interface::DebuggerChip {
     return Emulator::Interface::DebuggerChip::C6510;
 }
 
-auto CpuDebugger::screenIdent() -> std::string {
+auto CpuDebugger::saveIdent() -> std::string {
     return "debugger_cpu";
 }
 

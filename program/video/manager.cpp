@@ -13,6 +13,8 @@
 #include "shaderParser.h"
 #include "props.cpp"
 #include "sync.cpp"
+#include "../debugger/dmaDebugger.h"
+#include "../tools/colors.h"
 #include "../tools/dataStorage.h"
 #include "../emuconfig/layouts/presentation.h"
 
@@ -686,7 +688,15 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         return;
     }
 
-    if ( suppressShader || (crtMode == CrtMode::None) ) {
+    if (dmaColors) {
+        gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader | (uint8_t)DRIVER::OPT_DisallowFilter;
+
+        if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
+            return;
+
+        renderToRgbWithDma<T, interlace, field>(width, height, src, srcPitch, gpuData, gpuPitch - width);
+
+    } else if ( suppressShader || (crtMode == CrtMode::None) ) {
         if (!videoDriver->lock(gpuData, gpuPitch, width, height, gpuOptions))
             return;
 
@@ -711,7 +721,7 @@ Typical:
         if (!videoDriver->lock(gpuData, gpuPitch, width, (scanlines && !interlace) ? (height << 1) : height, gpuOptions))
             return;
 
-        renderCrt<T, options>(width, height, src, srcPitch, iHold ? 0 : gpuData, gpuPitch - width, cropTop);
+        renderCrt<T, options>(width, height, src, srcPitch, iHold ? nullptr : gpuData, gpuPitch - width, cropTop);
 	}		           
 
     videoDriver->unlockAndRedraw( );
@@ -754,6 +764,31 @@ template<typename T> auto VideoManager::takeScreenshot(unsigned unscaled, const 
     renderToScreenshot<T>(w, h, _fT, _pitch, _dest, _options);
     program->takeScreenshot(_dest, _width, _height);
     delete[] _dest;
+}
+
+template<typename T, bool interlace, bool field> auto VideoManager::renderToRgbWithDma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
+    unsigned mask = (1 << countColorBits) - 1;
+    uint8_t* dmaDump = emulator->getDmaDump();
+    unsigned color;
+    unsigned dmaColor;
+    DmaColor* dmaPtr;
+
+    for(unsigned h = 0; h < height; h++) {
+        for(unsigned w = 0; w < width; w++) {
+            dmaPtr = &dmaColors[*dmaDump++];
+
+            if (dmaPtr->enabled) {
+                color = colorTable[ *src++ & mask ];
+                dmaColor = dmaPtr->color;
+                *dest++ = ColorTools::mix(dmaColor, color, dmaPtr->alpha);
+            } else
+                *dest++ = colorTable[ *src++ & mask ];
+        }
+
+        src += srcPitch;
+        dmaDump += srcPitch;
+        dest += destPitch;
+    }
 }
 
 template<typename T, bool interlace, bool field> inline auto VideoManager::renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {

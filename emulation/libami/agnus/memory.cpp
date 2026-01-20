@@ -5,67 +5,106 @@
 
 namespace LIBAMI {
 
-auto Agnus::readByte(uint32_t adr) -> uint8_t {
-    adr &= 0xffffff;
+#define LOG_DMA(res) if constexpr (logDma) { \
+    auto& dmaLogger = debugger.dma[hPos]; \
+    dmaLogger.usage = BUS_USAGE_CPU; \
+    dmaLogger.mapper = _map; \
+    dmaLogger.address = dmaLogger.addrCpu = addrBus = adr; \
+    dmaLogger.data = dmaLogger.dataCpu = res; \
+    peekDmaWatcher(dmaLogger); \
+}
 
-    switch( mapper[adr >> 16] ) {
+#define LOG_DMA_CPU(res) if constexpr (logDma) { \
+    auto& dmaLogger = debugger.dma[hPos]; \
+    dmaLogger.mapper = _map; \
+    dmaLogger.addrCpu = adr; \
+    dmaLogger.dataCpu = res; \
+}
+
+auto Agnus::readByte(uint32_t adr) -> uint8_t {
+    return debugger.dmaLog ? readByte<true>(adr) : readByte<false>(adr);
+}
+
+template<bool logDma> auto Agnus::readByte(uint32_t adr) -> uint8_t {
+    adr &= 0xffffff;
+    uint8_t _map = mapper[adr >> 16];
+    uint8_t res;
+
+    switch( _map ) {
         case CHIP_MEM:
-            addWaitstatesToCPU();
-            dataBus = *(chipMem + (adr & chipMemMask));
+            addWaitstatesToCPU<logDma>();
+            res = *(chipMem + (adr & chipMemMask));
+            dataBus = (res << 8) | res;
+            LOG_DMA(res)
             break;
         case MMIO_CUSTOM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             if (adr & 1)
-                dataBus = (uint8_t)readCustom<true>(adr & 0x1fe);
+                res = (uint8_t)readCustom<true>(adr & 0x1fe);
             else
-                dataBus = (uint8_t)(readCustom<true>(adr & 0x1fe) >> 8);
+                res = (uint8_t)(readCustom<true>(adr & 0x1fe) >> 8);
+            dataBus = (res << 8) | res;
+            LOG_DMA(res)
             break;
         case MMIO_CIA: {
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
             uint8_t reg = (adr >> 8) & 0xf;
             switch(adr & 0x3000) {
-                case 0x0000: dataBus = (adr & 1) ? cia1.read( reg ) : cia2.read( reg ); break;
-                case 0x1000: dataBus = (adr & 1) ? (uint8_t)dataBus : cia2.read( reg ); break;
-                case 0x2000: dataBus = (adr & 1) ? cia1.read( reg ) : (dataBus >> 8); break;
-                case 0x3000: dataBus = (adr & 1) ? (uint8_t)dataBus : (dataBus >> 8); break;
+                default:
+                case 0x0000: res = (adr & 1) ? cia1.read( reg ) : cia2.read( reg ); break;
+                case 0x1000: res = (adr & 1) ? (uint8_t)cpu.getIRC() : cia2.read( reg ); break;
+                case 0x2000: res = (adr & 1) ? cia1.read( reg ) : (cpu.getIRC() >> 8); break;
+                case 0x3000: res = (adr & 1) ? (uint8_t)cpu.getIRC() : (cpu.getIRC() >> 8); break;
             }
-        } break;
+            LOG_DMA_CPU(res)
+            break;
+        }
         case SLOW_MEM:
-            addWaitstatesToCPU();
-            dataBus = *(slowMem + (adr - 0xc00000));
+            addWaitstatesToCPU<logDma>();
+            res = *(slowMem + (adr - 0xc00000));
+            dataBus = (res << 8) | res;
+            LOG_DMA(res)
             break;
         case FAST_MEM:
-            dataBus = *(fastMem + (adr - fastMemExpansion.baseAdr));
+            res = *(fastMem + (adr - fastMemExpansion.baseAdr));
+            LOG_DMA_CPU(res)
             break;
         case KICK_ROM:
-            dataBus = *(kickRom + (adr & kickRomMask));
+            res = *(kickRom + (adr & kickRomMask));
+            LOG_DMA_CPU(res)
             break;
         case EXPANSION:
-            dataBus = expansionsConfigured[adr >> 16]->read(adr);
+            res = expansionsConfigured[adr >> 16]->read(adr);
+            LOG_DMA_CPU(res)
             break;
         case EXT_ROM:
-            dataBus = *(extRom + (adr & extRomMask));
+            res = *(extRom + (adr & extRomMask));
+            LOG_DMA_CPU(res)
             break;
         case WOM:
-            dataBus = *(wom + (adr & 0x3ffff));
+            res = *(wom + (adr & 0x3ffff));
+            LOG_DMA_CPU(res)
             break;
         case MMIO_RTC:
-            dataBus = (adr & 1) ? rtc.read( (adr >> 2) & 0xf, system->isProcessFrame() ) : (dataBus >> 8);
+            res = (adr & 1) ? rtc.read( (adr >> 2) & 0xf, system->isProcessFrame() ) : (cpu.getIRC() >> 8);
+            LOG_DMA_CPU(res)
             break;
         case AUTO_CONF:
-            dataBus = readAutoConf(adr);
+            res = readAutoConf(adr);
+            LOG_DMA_CPU(res)
             break;
+        default:
         case Unmapped:
+            res = static_cast<uint8_t>(cpu.getIRC());
+            LOG_DMA_CPU(res)
             break;
     }
-
-    dataBus = (dataBus << 8) | dataBus;
-    return (uint8_t)dataBus;
+    return res;
 }
 
 auto Agnus::peekWord(uint32_t adr) -> uint16_t {
     adr &= 0xffffff;
-    // 68k is big endian, modern architecture is little endian
+
     switch( mapper[adr >> 16] ) {
         case CHIP_MEM:
             return _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
@@ -75,8 +114,8 @@ auto Agnus::peekWord(uint32_t adr) -> uint16_t {
             uint8_t reg = (adr >> 8) & 0xf;
             switch(adr & 0x3000) {
                 case 0x0000: return cia1.peek( reg ) | (cia2.peek( reg ) << 8);
-                case 0x1000: return (dataBus >> 8) | (cia2.peek( reg ) << 8);
-                case 0x2000: return cia1.peek( reg ) | (dataBus << 8);
+                case 0x1000: return (cpu.getIRC() >> 8) | (cia2.peek( reg ) << 8);
+                case 0x2000: return cia1.peek( reg ) | (cpu.getIRC() << 8);
             }
         } break;
         case SLOW_MEM:
@@ -92,7 +131,7 @@ auto Agnus::peekWord(uint32_t adr) -> uint16_t {
         case WOM:
             return _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
         case MMIO_RTC:
-            return (dataBus & 0xff00) | rtc.read( (adr >> 2) & 0xf, true );
+            return (cpu.getIRC() & 0xff00) | rtc.read( (adr >> 2) & 0xf, true );
         case AUTO_CONF:
             return (readAutoConf(adr) << 8) | readAutoConf(adr + 1);
         case Unmapped:
@@ -103,6 +142,8 @@ auto Agnus::peekWord(uint32_t adr) -> uint16_t {
 }
 
 auto Agnus::memoryDump(uint8_t bank, uint16_t* dump) -> void {
+    uint16_t _irc = cpu.getIRC();
+
     switch( mapper[bank] ) {
         case CHIP_MEM: {
             for (unsigned addr = bank << 16; addr < ((bank << 16) | 0xffff); addr += 2)
@@ -128,9 +169,9 @@ auto Agnus::memoryDump(uint8_t bank, uint16_t* dump) -> void {
                 uint8_t reg = (addr >> 8) & 0xf;
                 switch(addr & 0x3000) {
                     case 0x0000: *dump++ = tempC1[reg] | (tempC2[reg] << 8); break;
-                    case 0x1000: *dump++ = (dataBus >> 8) | (tempC2[reg] << 8); break;
-                    case 0x2000: *dump++ =  tempC1[reg] | (dataBus << 8); break;
-                    default: *dump++ = dataBus; break;
+                    case 0x1000: *dump++ = (_irc >> 8) | (tempC2[reg] << 8); break;
+                    case 0x2000: *dump++ =  tempC1[reg] | (_irc << 8); break;
+                    default: *dump++ = _irc; break;
                 }
             }
         } break;
@@ -164,7 +205,7 @@ auto Agnus::memoryDump(uint8_t bank, uint16_t* dump) -> void {
             for (uint8_t a = 0; a < 16; a++)
                 tempRTC[a] = rtc.read( a, true );
             for (unsigned addr = 0; addr < 0xffff; addr += 2)
-                *dump++ = (dataBus & 0xff00) | tempRTC[(addr >> 2) & 0xf];
+                *dump++ = (_irc & 0xff00) | tempRTC[(addr >> 2) & 0xf];
         } break;
         case AUTO_CONF:
             for (unsigned addr = 0; addr < 0xffff; addr += 2)
@@ -173,22 +214,29 @@ auto Agnus::memoryDump(uint8_t bank, uint16_t* dump) -> void {
         default:
         case Unmapped:
             for (unsigned addr = 0; addr < 0xffff; addr += 2)
-                *dump++ = dataBus;
+                *dump++ = _irc;
             break;
     }
 }
 
 auto Agnus::readWord(uint32_t adr) -> uint16_t {
+    return debugger.dmaLog ? readWord<true>(adr) : readWord<false>(adr);
+}
+
+template<bool logDma> auto Agnus::readWord(uint32_t adr) -> uint16_t {
     adr &= 0xffffff;
+    uint8_t _map = mapper[adr >> 16];
     // 68k is big endian, modern architecture is little endian
-    switch( mapper[adr >> 16] ) {
+    switch( _map ) {
         case CHIP_MEM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             dataBus = _swapWord(*(uint16_t*)(chipMem + (adr & chipMemMask)));
+            LOG_DMA(dataBus)
             break;
         case MMIO_CUSTOM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             dataBus = readCustom(adr & 0x1fe);
+            LOG_DMA(dataBus)
             break;
         case MMIO_CIA: {
             // CIA CS (Chip Select) happens when A12/A13 and VMA (respond of VPA in 68k E-Mode) are active.
@@ -197,64 +245,96 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
             // same applies to CIA writes.
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
             uint8_t reg = (adr >> 8) & 0xf;
+            uint16_t res;
+
             switch(adr & 0x3000) {
-                case 0x0000: dataBus = cia1.read( reg ) | (cia2.read( reg ) << 8); break;
-                case 0x1000: dataBus = (dataBus >> 8) | (cia2.read( reg ) << 8); break;
-                case 0x2000: dataBus = cia1.read( reg ) | (dataBus << 8); break;
-                    // case 0x3000: break; get last BUS value, should be IRC in most cases
-                    // E-Clock is used too
+                default:
+                case 0x0000: res = cia1.read( reg ) | (cia2.read( reg ) << 8); break;
+                case 0x1000: res = (cpu.getIRC() >> 8) | (cia2.read( reg ) << 8); break;
+                case 0x2000: res = cia1.read( reg ) | (cpu.getIRC() << 8); break;
+                case 0x3000: res = cpu.getIRC(); break;
             }
-        } break;
+            LOG_DMA_CPU( res )
+            return res;
+        };
         case SLOW_MEM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             dataBus = _swapWord(*(uint16_t*)(slowMem + (adr - 0xc00000)));
+            LOG_DMA(dataBus)
             break;
-        case FAST_MEM:
-            dataBus = _swapWord(*(uint16_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
-            break;
-        case KICK_ROM:
-            // firmware access needs sanity checking
-            dataBus = _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask)));
-            break;
-        case EXPANSION:
-            dataBus = expansionsConfigured[adr >> 16]->readW(adr);
-            break;
-        case EXT_ROM:
-            dataBus = _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
-            break;
-        case WOM:
-            dataBus = _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
-            break;
-        case MMIO_RTC:
-            dataBus &= ~0xff;
-            dataBus |= rtc.read( (adr >> 2) & 0xf, system->isProcessFrame() );
-            break;
-        case AUTO_CONF:
-            dataBus = readAutoConf(adr) << 8;
-            dataBus |= readAutoConf(adr + 1);
-            break;
-        case Unmapped: // floating BUS, don't return zero (Hollywood Poker Pro)
-            break;
+        case FAST_MEM: {
+            uint16_t res = _swapWord(*(uint16_t*)(fastMem + (adr - fastMemExpansion.baseAdr)));
+            LOG_DMA_CPU( res )
+            return res;
+        }
+        case KICK_ROM: {
+            uint16_t res = _swapWord(*(uint16_t*)(kickRom + (adr & kickRomMask)));
+            LOG_DMA_CPU( res )
+            return res;
+        }
+        case EXPANSION: {
+            uint16_t res = expansionsConfigured[adr >> 16]->readW(adr);
+            LOG_DMA_CPU( res )
+            return res;
+        }
+        case EXT_ROM: {
+            uint16_t res = _swapWord(*(uint16_t*)(extRom + (adr & extRomMask)));
+            LOG_DMA_CPU( res )
+            return res;
+        }
+        case WOM: {
+            uint16_t res = _swapWord(*(uint16_t*)(wom + (adr & 0x3ffff)));
+            LOG_DMA_CPU( res )
+            return res;
+        }
+        case MMIO_RTC: {
+            uint16_t res = cpu.getIRC() & ~0xff;
+            res |= rtc.read( (adr >> 2) & 0xf, system->isProcessFrame() );
+            LOG_DMA_CPU(res)
+            return res;
+        }
+        case AUTO_CONF: {
+            uint16_t res = readAutoConf(adr) << 8;
+            res |= readAutoConf(adr + 1);
+            LOG_DMA_CPU(res)
+            return res;
+        }
+        default:
+        case Unmapped: {
+            // floating BUS, don't return zero (Hollywood Poker Pro)
+            uint16_t res = cpu.getIRC();
+            LOG_DMA_CPU(res)
+            return res;
+        }
     }
 
     return dataBus;
 }
 
 auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
-    adr &= 0xffffff;
+    debugger.dmaLog ? writeByte<true>(adr, value) : writeByte<false>(adr, value);
+}
 
-    switch( mapper[adr >> 16] ) {
+template<bool logDma> auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
+    adr &= 0xffffff;
+    uint8_t _map = mapper[adr >> 16];
+
+    switch( _map ) {
         case CHIP_MEM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             adr &= chipMemMask;
             if (memState)
                 memState->trackers[TRACKER_CHIP].remember(adr & ~1);
 
             *(chipMem + adr) = value;
+            dataBus = (value << 8) | value;
+            LOG_DMA(value)
             break;
         case MMIO_CUSTOM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             writeCustom( adr & 0x1fe, value | (value << 8) );
+            dataBus = (value << 8) | value;
+            LOG_DMA(value)
             break;
         case MMIO_CIA: {
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
@@ -263,61 +343,81 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
                 cia1.write( reg, value );
             if ((adr & 0x2000) == 0)
                 cia2.write( reg, value );
+
+            dataBus = (value << 8) | value;
+            LOG_DMA_CPU( value )
         } break;
         case SLOW_MEM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             adr -= 0xc00000;
             if (memState)
                 memState->trackers[TRACKER_SLOW].remember(adr & ~1);
             *(slowMem + adr) = value;
+            dataBus = (value << 8) | value;
+            LOG_DMA(value)
             break;
         case FAST_MEM:
             adr -= fastMemExpansion.baseAdr;
             if (memState)
                 memState->trackers[TRACKER_FAST].remember(adr & ~1);
             *(fastMem + adr) = value;
+            LOG_DMA_CPU( value )
             break;
         case KICK_ROM:
             if ( (model == OCS_A1000) && !womLock)
                 lockWom();
+            LOG_DMA_CPU( value )
             break;
         case EXPANSION:
             expansionsConfigured[adr >> 16]->write(adr, value);
+            LOG_DMA_CPU( value )
             break;
         case EXT_ROM:
+            LOG_DMA_CPU( value )
             break;
         case WOM:
             if (!womLock) *(wom + (adr & 0x3ffff)) = value;
+            LOG_DMA_CPU( value )
             break;
         case MMIO_RTC:
             if ((adr & 1) && system->isProcessFrame())
                 rtc.write( (adr >> 2) & 0xf, value );
+            LOG_DMA_CPU( value )
             break;
         case AUTO_CONF:
             writeAutoConf(adr, value);
+            LOG_DMA_CPU( value )
             break;
         case Unmapped:
+            LOG_DMA_CPU( value )
             break;
     }
-
-    dataBus = (value << 8) | value;
 }
 
 auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
-    adr &= 0xffffff;
+    debugger.dmaLog ? writeWord<true>(adr, value) : writeWord<false>(adr, value);
+}
 
-    switch( mapper[adr >> 16] ) {
+template<bool logDma> auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
+    adr &= 0xffffff;
+    uint8_t _map = mapper[adr >> 16];
+
+    switch( _map ) {
         case CHIP_MEM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             adr &= chipMemMask;
             if (memState)
                 memState->trackers[TRACKER_CHIP].remember(adr);
 
             *(uint16_t*)(chipMem + adr) = _swapWord(value);
+            dataBus = value;
+            LOG_DMA(value)
             break;
         case MMIO_CUSTOM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             writeCustom( adr & 0x1fe, value );
+            dataBus = value;
+            LOG_DMA(value)
             break;
         case MMIO_CIA: {
             sync( cpu.internalWaitCyclesBasedOnEClock<2>( eCyclePosition ) );
@@ -326,43 +426,53 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
                 cia1.write( reg, (uint8_t)value );
             if ((adr & 0x2000) == 0)
                 cia2.write( reg, (uint8_t)(value >> 8) );
+            LOG_DMA_CPU( value )
         } break;
         case SLOW_MEM:
-            addWaitstatesToCPU();
+            addWaitstatesToCPU<logDma>();
             adr -= 0xc00000;
             if (memState)
                 memState->trackers[TRACKER_SLOW].remember(adr);
             *(uint16_t*)(slowMem + adr) = _swapWord(value);
+            dataBus = value;
+            LOG_DMA(value)
             break;
         case FAST_MEM:
             adr -= fastMemExpansion.baseAdr;
             if (memState)
                 memState->trackers[TRACKER_FAST].remember(adr);
             *(uint16_t*)(fastMem + adr) = _swapWord(value);
+            LOG_DMA_CPU( value )
             break;
         case KICK_ROM:
             if ( (model == OCS_A1000) && !womLock)
                 lockWom();
+            LOG_DMA_CPU( value )
             break;
         case EXPANSION:
             expansionsConfigured[adr >> 16]->writeW(adr, value);
+            LOG_DMA_CPU( value )
             break;
         case EXT_ROM:
+            LOG_DMA_CPU( value )
             break;
         case WOM:
             if (!womLock) *(uint16_t*)(wom + (adr & 0x3ffff)) = _swapWord(value);
+            LOG_DMA_CPU( value )
             break;
         case MMIO_RTC:
             if (system->isProcessFrame())
                 rtc.write( (adr >> 2) & 0xf, value & 0xff );
+            LOG_DMA_CPU( value )
             break;
         case AUTO_CONF:
             writeAutoConfWord(adr, value);
+            LOG_DMA_CPU( value )
             break;
         case Unmapped:
+            LOG_DMA_CPU( value )
             break;
     }
-    dataBus = value;
 }
 
 auto Agnus::fakeWriteByte(uint32_t adr, uint8_t value) -> void {

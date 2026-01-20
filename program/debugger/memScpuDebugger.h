@@ -9,7 +9,7 @@ struct MemScpuDebugger : MemDebugger {
         build();
     }
 
-    auto screenIdent() -> std::string override {
+    auto saveIdent() -> std::string override {
         return "debugger_memscpu";
     }
 

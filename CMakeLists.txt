@@ -202,6 +202,7 @@ set(srcs
         program/debugger/memDebugger.cpp
         program/debugger/ciaDebugger.cpp
         program/debugger/videoDebugger.cpp
+        program/debugger/dmaDebugger.cpp
         program/view/status.cpp
         program/config/config.cpp
         program/emuconfig/config.cpp
@@ -389,7 +390,7 @@ add_executable( ${PROJECT_NAME} ${srcs} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(${PROJECT_NAME} "-static -lws2_32 -lgdi32 -lcomdlg32 -lole32 -lcomctl32 -lshlwapi -lmsimg32 -lwinmm -lopengl32 -ldwmapi -luxtheme")
+    target_link_libraries(${PROJECT_NAME} "-static -lws2_32 -lgdi32 -lcomdlg32 -lole32 -lcomctl32 -lshlwapi -lmsimg32 -lwinmm -lopengl32 -ldwmapi -luxtheme -lgdiplus")
     if(CMAKE_BUILD_TYPE STREQUAL Release)
         target_link_libraries(${PROJECT_NAME} "-mwindows")
     else()

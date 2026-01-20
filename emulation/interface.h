@@ -323,16 +323,30 @@ struct Interface {
     };
 
     struct DebuggerIdent {
-        uint16_t vector;
+        uint32_t vector;
         const char* ident;
     };
 
-    struct DebuggerSnapshot {
-        enum class Theme { CPU, Memory, CIA, Video } theme;
+    struct DebuggerDma {
+        uint8_t usage;
+        uint8_t mapper;
+        uint32_t address;
+        uint16_t data;
+
+        uint32_t addrCpu;
+        uint16_t dataCpu;
+
+        // free assignable
+        uint16_t watcher[4];
     };
 
-    enum class DebuggerChip { Unspecified, C68000, C6502, C6510, C65c816, Video };
-    enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame };
+    struct DebuggerSnapshot {
+        enum class Theme { CPU, Memory, CIA, Video, Bus } theme;
+    };
+
+    enum class DebuggerChip { Unspecified, C68000, C6502, C6510, C65c816, Video, Bus };
+    enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
+        DmaView, DmaLog, DmaWatch1, DmaWatch2, DmaWatch3, DmaWatch4 };
 
     //callbacks
     struct Bind {
@@ -662,6 +676,7 @@ struct Interface {
     virtual auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {}
     virtual auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {}
     virtual auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {}
+    virtual auto getDmaDump() -> uint8_t* { return nullptr; }
 
     // disassembler
     virtual auto disassemble(unsigned addr, unsigned& bytes) -> std::string { return ""; }

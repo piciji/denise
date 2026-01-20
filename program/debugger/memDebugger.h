@@ -61,7 +61,7 @@ struct MemDebugger : Debugger {
     auto searchTheme(unsigned addr) -> void override;
     auto translateTheme() -> void override;
     auto updateTheme() -> void override;
-    auto screenIdent() -> std::string override;
+    auto saveIdent() -> std::string override;
     auto titleIdent() -> std::string override;
 
     auto updateC64MemControl(uint8_t _mode, bool init = false) -> void;

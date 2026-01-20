@@ -241,7 +241,7 @@ auto String::addThousandSeparator(std::string str) -> std::string {
     return out;
 }
 
-auto String::convertToNumber(std::string str) -> int {
+auto String::convertToNumber(std::string str, int defaultVal) -> int {
 	String::remove(str, {{"%"}});
 	String::trim(str);
 	int value = 0;
@@ -249,7 +249,7 @@ auto String::convertToNumber(std::string str) -> int {
 	try {
 		value = std::stoi( str );
 	} catch(...) {
-		value = 0;
+		value = defaultVal;
 	}
 	
 	return value;

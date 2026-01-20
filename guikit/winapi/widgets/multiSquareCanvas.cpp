@@ -137,7 +137,6 @@ auto CALLBACK pMultiSquareCanvas::subclassWndProcScroller(HWND hwnd, UINT msg, W
     }
 
     return CallWindowProc(multiSquareCanvas->p.wndprocOrigScroller, hwnd, msg, wparam, lparam);
-    //return pApplication::wndProc(squareCanvas->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto CALLBACK pMultiSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
@@ -168,7 +167,6 @@ auto CALLBACK pMultiSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wp
     }
 
     return CallWindowProc(multiSquareCanvas->p.wndprocOrig, hwnd, msg, wparam, lparam);
-    //return pApplication::wndProc(squareCanvas->p.wndprocOrig, hwnd, msg, wparam, lparam);
 }
 
 auto pMultiSquareCanvas::scroll(int delta) -> void {
@@ -189,18 +187,10 @@ auto pMultiSquareCanvas::scroll(int delta) -> void {
 }
 
 auto pMultiSquareCanvas::onChange(WPARAM wparam) -> void {
-    SCROLLINFO info;
-
-    memset(&info, 0, sizeof(SCROLLINFO));
-    info.cbSize = sizeof(SCROLLINFO);
-    info.fMask = SIF_TRACKPOS;
-    GetScrollInfo(hwndScroller, SB_CTL, &info);
-
-    scrollPos = info.nTrackPos;
-    SetScrollPos(hwndScroller, SB_CTL,  info.nTrackPos, false);
+    if (hwndScroller)
+        scrollTo(hwndScroller, wparam, scrollPos);
 
     if (hwnd)
-        //InvalidateRect(hwnd, 0, true);
         RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 

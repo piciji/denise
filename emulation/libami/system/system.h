@@ -103,7 +103,7 @@ struct System {
     auto setRunAhead(unsigned frames) -> void;
     auto runAheadPreventJit() -> bool { return runAhead.preventJit && runAhead.frames; }
     auto allowRunAhead() -> const bool { return !warp.config && runAhead.frames && !agnus.resetFromKeyboard
-        && !cpu.inDebugMode() && agnus.womLocked(); }
+        && !cpu.inDebugMode() && agnus.womLocked() && !agnus.debugger.dmaLog; }
     auto hintSlowSpeed(bool state) -> void;
 
     auto calcSerializationSize() -> void;
@@ -144,6 +144,7 @@ struct System {
 
     auto setHDDAsync(bool state) -> void;
     auto getHDDAsync() -> bool;
+    auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop crop ) -> void;
 
     auto debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void;
     auto debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;

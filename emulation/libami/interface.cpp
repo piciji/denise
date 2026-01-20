@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "242";
+const std::string Interface::Version = "243";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -714,8 +714,7 @@ auto Interface::informAboutKeyUpdate() -> void {
 }
 
 auto Interface::cropFrame( CropType type, Crop crop ) -> void {
-    system->crop.settings.type = type;
-    system->crop.settings.crop = crop;
+    system->cropFrame( type, crop );
 }
 
 auto Interface::cropWidth() -> unsigned {
@@ -809,6 +808,10 @@ auto Interface::getDebuggerSnapshot(LIBAMI::DebuggerSnapshot& snap) -> void {
 
 auto Interface::getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {
     system->agnus.memoryDump(bank, dump);
+}
+
+auto Interface::getDmaDump() -> uint8_t* {
+    return system->agnus.debugger.dmaFrame;
 }
 
 auto Interface::debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {

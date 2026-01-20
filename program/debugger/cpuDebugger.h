@@ -102,7 +102,7 @@ struct CpuDebugger : Debugger {
     auto updateTheme() -> void override;
     auto initTheme() -> void override;
     auto closeTheme() -> void override;
-    auto screenIdent() -> std::string override;
+    auto saveIdent() -> std::string override;
     auto titleIdent() -> std::string override;
 
     auto cacheInstructions(unsigned addr) -> void;

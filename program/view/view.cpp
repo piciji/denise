@@ -1356,6 +1356,12 @@ auto View::buildMenu() -> void {
         };
         sM.debugger->append( *sM.debuggerVideo );
 
+        sM.debuggerDma = new GUIKIT::MenuItem;
+        sM.debuggerDma->onActivate = [this, emulator]() {
+            program->openDebugger(emulator, Debugger::Mode::DMA);
+        };
+        sM.debugger->append( *sM.debuggerDma );
+
         sM.debuggerCia = new GUIKIT::MenuItem;
         sM.debuggerCia->onActivate = [this, emulator]() {
             program->openDebugger(emulator, Debugger::Mode::CIA);
@@ -2112,6 +2118,7 @@ auto View::translate() -> void {
         sysMenu.debuggerCia->setText(trans->get("CIA"));
 
         sysMenu.debuggerVideo->setText(trans->get( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "VIC-II" : "Denise"));
+        sysMenu.debuggerDma->setText(trans->get("DMA"));
 
         if (sysMenu.debuggerMemSCPU)
             sysMenu.debuggerMemSCPU->setText(trans->get("MEM SCPU"));

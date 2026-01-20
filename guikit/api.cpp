@@ -1454,6 +1454,36 @@ auto Viewport::hideCursorByInactivity(unsigned delayMS) -> void {
 
 Viewport::Viewport() : Widget(*new pViewport(*this)), p((pViewport&)Widget::p) { p.init(); }
 
+auto LogicViewer::setLength(unsigned slots) -> void {
+    if (slots == state.logics.size())
+        return;
+
+    state.logics.resize(slots);
+    p.updateScrollRange();
+}
+
+auto LogicViewer::getDataRef() -> std::vector<LogicState>& {
+    return state.logics;
+}
+
+auto LogicViewer::setAddrAs24bit(bool addr24bit) -> void {
+    state.addr24bit = addr24bit;
+}
+
+auto LogicViewer::setSymbolicAddr(bool symbolicAddr) -> void {
+    state.symbolicAddr = symbolicAddr;
+}
+
+auto LogicViewer::update() -> void {
+    p.update();
+}
+
+auto LogicViewer::scrollToActive() -> void {
+    p.scrollToActive();
+}
+
+LogicViewer::LogicViewer() : Widget(*new pLogicViewer(*this)), p((pLogicViewer&)Widget::p) { p.init(); }
+
 //menu
 MenuBase::MenuBase(pMenuBase& p) : p(p), Base() {}
 MenuBase::~MenuBase() {
@@ -1517,6 +1547,10 @@ auto Menu::reset() -> void {
     for( auto child : childs ) {
         remove(*child);
     }
+}
+
+auto Menu::update() -> void {
+    p.update( nullptr );
 }
 
 MenuItem::MenuItem() : MenuBase(*new pMenuItem(*this)), p((pMenuItem&)MenuBase::p) { p.init(); }
@@ -1869,6 +1903,21 @@ auto MessageWindow::translateYes(const std::string& str) -> void {
 auto MessageWindow::translateCancel(const std::string& str) -> void {
     trans.cancel = str;
 }
+
+auto ColorChooser::setWindow(Window& window) -> ColorChooser& {
+    state.window = &window;
+    return *this;
+}
+
+auto ColorChooser::setDefault(unsigned color) -> ColorChooser& {
+    state.defaultColor = color;
+    return *this;
+}
+
+auto ColorChooser::choose() -> std::optional<unsigned> {
+    return pColorChooser::choose(state);
+}
+
 //font
 auto Font::system(unsigned size, const std::string& style, bool monospaced) -> std::string {
     return pFont::system(size, style, monospaced);

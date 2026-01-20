@@ -126,7 +126,7 @@ struct Denise {
         auto reset() -> void { for (auto& s : spr) { s.pos = 0; s.lock = false; } }
         auto resetPos() -> void { for (auto& s : spr) s.pos = 0; }
         auto resetLock() -> void { for (auto& s : spr) s.lock = false; }
-    } debugInfo;
+    } debugger;
 
     auto strhor() -> void;
     auto strequ() -> void;
@@ -168,6 +168,12 @@ struct Denise {
     auto getId() -> unsigned;
     auto isHires() -> bool { return bplCon0 & 0x8000; }
     auto isShres() -> bool { return bplCon0 & 0x40; }
+    auto lineWidthMultiplier() -> unsigned {
+        return frameMode == LORES_FRAME ? 1 : (frameMode == HIRES_FRAME ? 2 : 4);
+    }
+    auto pixelPerDma() -> unsigned {
+        return frameMode == LORES_FRAME ? 2 : (frameMode == HIRES_FRAME ? 4 : 8);
+    }
 
     template<bool useHires> auto processDelayPf1() -> void;
     template<bool useHires> auto processDelayPf2() -> void;

@@ -9,7 +9,7 @@ struct ScpuDebugger : CpuDebugger {
         build();
     }
 
-    auto screenIdent() -> std::string override {
+    auto saveIdent() -> std::string override {
         return "debugger_scpu";
     }
 

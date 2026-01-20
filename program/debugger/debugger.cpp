@@ -65,10 +65,10 @@ auto Debugger::build() -> void {
 
     GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1024), GUIKIT::Font::scale(570)};
 
-    GUIKIT::Geometry geometry = {settings->get<int>(screenIdent() + "_x", defaultGeometry.x)
-        ,settings->get<int>(screenIdent() + "_y", defaultGeometry.y)
-        ,settings->get<unsigned>(screenIdent() + "_width", defaultGeometry.width)
-        ,settings->get<unsigned>(screenIdent() + "_height", defaultGeometry.height)
+    GUIKIT::Geometry geometry = {settings->get<int>(saveIdent() + "_x", defaultGeometry.x)
+        ,settings->get<int>(saveIdent() + "_y", defaultGeometry.y)
+        ,settings->get<unsigned>(saveIdent() + "_width", defaultGeometry.width)
+        ,settings->get<unsigned>(saveIdent() + "_height", defaultGeometry.height)
     };
 
     setGeometry( geometry );
@@ -97,6 +97,9 @@ auto Debugger::build() -> void {
 
     offImg.loadPng((uint8_t*)Icons::record, sizeof(Icons::record));
     onImg.loadPng((uint8_t*)Icons::ledGreenRound, sizeof(Icons::ledGreenRound));
+
+    editImg.loadPng((uint8_t*)Icons::edit, sizeof(Icons::edit));
+    checkedImg.loadPng((uint8_t*)Icons::checked, sizeof(Icons::checked));
 
     control = new Control(this);
 
@@ -130,15 +133,15 @@ auto Debugger::build() -> void {
     onMove = [&]() {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<int>(screenIdent() + "_x", geometry.x);
-        settings->set<int>(screenIdent() + "_y", geometry.y);
+        settings->set<int>(saveIdent() + "_x", geometry.x);
+        settings->set<int>(saveIdent() + "_y", geometry.y);
     };
 
     onSize = [&](GUIKIT::Window::SIZE_MODE sizeMode) {
         if (fullScreen()) return;
         GUIKIT::Geometry geometry = this->geometry();
-        settings->set<unsigned>(screenIdent() + "_width", geometry.width);
-        settings->set<unsigned>(screenIdent() + "_height", geometry.height);
+        settings->set<unsigned>(saveIdent() + "_width", geometry.width);
+        settings->set<unsigned>(saveIdent() + "_height", geometry.height);
     };
 
     control->stepInto.onActivate = [this]() {

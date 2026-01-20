@@ -120,6 +120,20 @@ auto CALLBACK pLineEdit::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             
             return false;
         }
+        case WM_CONTEXTMENU: {
+            if (lineEdit->onContext) {
+                auto* menu = lineEdit->onContext();
+                if (menu) {
+                    POINT pt;
+                    GetCursorPos(&pt);
+                    int mid = TrackPopupMenuEx(menu->p.hmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, lineEdit->window()->p.hwnd, NULL);
+                    if (mid) {
+                        SendMessage(lineEdit->window()->p.hwnd, WM_COMMAND, mid, 0);
+                        return 0;
+                    }
+                }
+            }
+        } break;
         case WM_KEYUP:
             if (wparam == VK_RETURN) {
                 if (lineEdit->onReturn)

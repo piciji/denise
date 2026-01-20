@@ -22,12 +22,12 @@ Denise::Denise(System* system, Agnus& agnus, Input& input) : system(system), agn
         initialized = true;
     }
 
-    for(auto& s : debugInfo.spr)
+    for(auto& s : debugger.spr)
         s.data = new uint16_t[8192];
 }
 
 Denise::~Denise() {
-    for(auto& s : debugInfo.spr)
+    for(auto& s : debugger.spr)
         delete[] s.data;
 }
 
@@ -54,7 +54,7 @@ auto Denise::power(bool softReset) -> void {
     for (int i = 0; i < 256; i++)
         bplUpdate[i].actions = 0;
 
-    debugInfo.reset();
+    debugger.reset();
 
     if (!softReset) {
         hPos = 2;
@@ -140,8 +140,8 @@ auto Denise::strhor() -> void {
         if (vBlank) {
             process(-1);
             vBlank = false;
-            if (debugInfo.store)
-                debugInfo.reset();
+            if (debugger.store)
+                debugger.reset();
         }
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
@@ -259,13 +259,13 @@ auto Denise::setSprDatB( uint8_t nr, uint16_t value, bool force ) -> bool {
     }
 
     spr.datB = value;
-    if (debugInfo.store)
+    if (debugger.store)
         storeSprite(nr, value | (spr.datA << 16));
     return true;
 }
 
 auto Denise::storeSprite(uint8_t nr, uint32_t shift) -> void {
-    auto& _spr = debugInfo.spr[nr];
+    auto& _spr = debugger.spr[nr];
     if (_spr.lock) {
         _spr.pos -= 16;
     } else
@@ -280,7 +280,7 @@ auto Denise::storeSprite(uint8_t nr, uint32_t shift) -> void {
 
         if (spr.attached) {
             sprData <<= 2;
-            sprData |= debugInfo.spr[nr & ~1].sprData[i];
+            sprData |= debugger.spr[nr & ~1].sprData[i];
             _spr.data[_spr.pos++] = sprData ? colors[sprData + 16 ] : 0x8000;
         } else {
             _spr.data[_spr.pos++] = sprData ? colors[sprData + 16 + ((nr >> 1) << 2) ] : 0x8000;
@@ -884,8 +884,8 @@ template<bool _hires, bool _shres, bool _ham, bool _doublePlayfield, bool _displ
                 hPos = 2;
                 upd.actions &= ~RESET_HPOS;
 
-                if (debugInfo.store)
-                    debugInfo.resetLock();
+                if (debugger.store)
+                    debugger.resetLock();
             }
 
 //            if (upd.actions & UPD_COLOR) {
@@ -919,7 +919,7 @@ auto Denise::updateSnapshot(DebuggerSnapshot& snap) -> void {
     auto& s = snap.denise;
     for (unsigned i = 0; i < 8; i++) {
         auto& spr = sprites[i];
-        auto& _sprD = debugInfo.spr[i];
+        auto& _sprD = debugger.spr[i];
         auto& _sprT = s.spr[i];
         unsigned pos = _sprD.pos;
 

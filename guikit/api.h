@@ -10,6 +10,8 @@
 #include <iterator>
 #include <optional>
 
+#include "api.h"
+
 namespace GUIKIT {
 
 struct Window;
@@ -51,6 +53,7 @@ struct pFrame;
 struct pTabFrame;
 struct pBrowserWindow;
 struct pImageView;
+struct pLogicViewer;
 struct Zip;
 struct Gzip;
 struct Tar;
@@ -484,11 +487,13 @@ struct LineEdit : Widget {
     std::function<void ()> onFocus = nullptr;
     std::function<void ()> onReturn = nullptr;
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
+    std::function<GUIKIT::Menu* ()> onContext = nullptr;
 
     auto editable() const -> bool { return state.editable; }
     auto droppable() const -> bool { return state.droppable; }
     auto maxLength() const -> unsigned { return state.maxLength; }
     auto text() -> std::string;
+    auto align() -> Align { return state.align; }
 	auto value() -> int; // integer formated text, returns 0 if not possible
 	auto setValue(int value) -> void;
     auto setEditable(bool editable = true) -> void;
@@ -497,7 +502,6 @@ struct LineEdit : Widget {
     auto setPlaceholder(const std::string& placeholder) -> void;
     auto placeholder() const -> std::string { return state.placeholder; }
     auto setAlign( Align align ) -> void;
-    auto align() -> Align { return state.align; }
     
     struct {
         bool editable = true;
@@ -618,6 +622,7 @@ struct ImageView : Widget {
 
 struct Button : Widget {
     std::function<void ()> onActivate = nullptr;
+    std::function<GUIKIT::Menu* ()> onMenu = nullptr;
 
     auto setImage(Image* image) -> void;
     auto image() -> Image* { return state.image; }
@@ -955,6 +960,47 @@ struct Viewport : Widget {
     Viewport();
 };
 
+struct LogicState {
+    enum class Display { None = 0, SingleBlock = 1, BeginBlock = 2, KeepBlock = 4, EndBlock = 8 };
+
+    bool active;
+    unsigned position;
+    unsigned color;
+
+    std::string usage;
+    std::string symbolicAddr;
+    unsigned addr;
+    unsigned data;
+    Display display;
+
+    std::string usage2;
+    unsigned addr2;
+    unsigned data2;
+    Display display2;
+
+    std::pair<Display, unsigned> watches[4];
+};
+
+struct LogicViewer : Widget {
+    auto setLength(unsigned slots) -> void;
+    auto getDataRef() -> std::vector<LogicState>&;
+    auto update() -> void;
+    auto scrollToActive() -> void;
+    auto setAddrAs24bit(bool addr24bit = true) -> void;
+    auto addrAs24bit() -> bool { return state.addr24bit; }
+    auto setSymbolicAddr(bool symbolicAddr) -> void;
+    auto hasSymbolicAddr() -> bool { return state.symbolicAddr; }
+
+    struct {
+        std::vector<LogicState> logics;
+        bool addr24bit = false;
+        bool symbolicAddr = false;
+    } state;
+
+    pLogicViewer& p;
+    LogicViewer();
+};
+
 struct Layout : Sizable {        
     struct Children {
         Sizable* sizable;
@@ -1167,6 +1213,7 @@ struct Menu : MenuBase {
     auto append(MenuBase& item) -> void;
     auto remove(MenuBase& item) -> void;
     auto reset() -> void;
+    auto update() -> void;
     
     auto contextOnly() const -> bool { return state.contextOnly; }
     auto showContextOnly(bool contextOnly) -> void;
@@ -1409,6 +1456,17 @@ struct MessageWindow {
     static auto translateYes(const std::string& str) -> void;
     static auto translateCancel(const std::string& str) -> void;
     static Trans trans;
+};
+
+struct ColorChooser {
+    struct State {
+        Window* window = nullptr;
+        unsigned defaultColor = 0;
+    } state;
+
+    auto setWindow(Window& window) -> ColorChooser&;
+    auto setDefault(unsigned color) -> ColorChooser&;
+    auto choose() -> std::optional<unsigned>;
 };
 
 struct Font {
@@ -1698,7 +1756,7 @@ struct String {
     static auto replace(std::string& str, const std::string& search, const std::string& replace) -> std::string&;
     static auto isNumber(const std::string& str) -> bool;
     static auto isFloatNumber(const std::string& str) -> bool;
-	static auto convertToNumber(std::string str) -> int;
+	static auto convertToNumber(std::string str, int defaultVal = 0) -> int;
     static auto convertIntToHex( int number, bool prepend_0x = true ) -> std::string;
     static auto convertHexToInt( std::string hex, int defaultValueByFailure = 0 ) -> int;
     static auto formatFloatingPoint(double value, uint8_t roundDecimal = 0, bool cutTrailingZero = false) -> std::string;

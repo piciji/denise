@@ -1,7 +1,135 @@
 
-#include "agnus.h"
+//#include "agnus.h"
 
 namespace LIBAMI {
+
+#define DEBUG_SCROLL_MAX 30
+
+auto Agnus::startHblankDebug() -> void {
+    denise.process();
+
+    int width = denise.lineWidthMultiplier() * LINE_DEBUG_WIDTH;
+    unsigned _pixPerDma = denise.pixelPerDma();
+
+    uint8_t _pos = hPos;
+    for (int i = 0; i < width;) {
+        std::memset( debugger.frameLine, debugger.dma[_pos].usage, _pixPerDma );
+        i += _pixPerDma;
+        debugger.frameLine += _pixPerDma;
+
+        if (++_pos > debugger.lastHpos)
+            _pos = 0;
+    }
+
+    if (vPos == 0) {
+        auto& _crop = debugger.crop;
+        if (laceFrame & 1)
+            lineVCounter--;
+
+        if (paula.ledChange & 0x80)
+            paula.informPowerLED(false);
+
+        paula.sampleUpdate();
+
+        uint8_t _res = 0;
+        if (denise.frameMode == Denise::HIRES_FRAME) _res = 4;
+        else if (denise.frameMode == Denise::SHRES_FRAME) _res = 8;
+
+        // fprintf( stderr, "v %i h %i f %i ", lineVCounter, denise.linePos, laceFrame | _res );
+
+        unsigned _width = denise.lineWidthMultiplier() * LINE_MAX_WIDTH;
+        unsigned _height = (ntsc ? 244 : 289) * (laceFrame & 3 ? 2 : 1) - ((laceFrame & 1) ? 1 : 0);
+        unsigned _pitch = LINE_BUFFER_WIDTH - width;
+        uint16_t* _ptr = frameBuffer + LINE_RENDER_OFFSET;
+        _crop.apply( _ptr, _width, _height, _pitch, laceFrame | _res );
+
+        int offsetX = 0;
+        int offsetY = 0;
+        int offsetFrameX = 0;
+        int offsetFrameY = 0;
+        bool endDmaView = false;
+
+        if (debugger.scrollDirection != 0) {
+            if (((debugger.scrollDirection == 1) && (debugger.scrollCounter < DEBUG_SCROLL_MAX))
+            || ((debugger.scrollDirection == -1) && debugger.scrollCounter)) {
+                if (_crop.latest.width < width) {
+                    offsetX = width - _crop.latest.width;
+                    offsetX = offsetX - (offsetX * debugger.scrollCounter) / DEBUG_SCROLL_MAX;
+                }
+
+                if (_crop.latest.height < lineVCounter) {
+                    offsetY = lineVCounter - _crop.latest.height;
+                    offsetY = offsetY - (offsetY * debugger.scrollCounter) / DEBUG_SCROLL_MAX;
+                }
+
+                if (width > _crop.original.width) {
+                    unsigned lastLeft = (width - _crop.original.width) + _crop.latest.left;
+                    if  (lastLeft)
+                        offsetFrameX = lastLeft - ((lastLeft * debugger.scrollCounter) / DEBUG_SCROLL_MAX);
+                }
+
+                if (lineVCounter > _crop.original.height) {
+                    unsigned lastTop = (lineVCounter - _crop.original.height) + _crop.latest.top;
+                    if (lastTop)
+                        offsetFrameY = lastTop - ((lastTop * debugger.scrollCounter) / DEBUG_SCROLL_MAX);
+                }
+
+                if (debugger.scrollDirection == 1)
+                    debugger.scrollCounter++;
+                else
+                    debugger.scrollCounter--;
+
+            } else {
+               if (debugger.scrollDirection == -1)
+                   endDmaView = true;
+
+               debugger.scrollDirection = 0;
+            }
+        }
+
+        if (!endDmaView) {
+            system->videoRefresh(frameBuffer + (offsetFrameY * LINE_BUFFER_WIDTH) + offsetFrameX, width - offsetX, lineVCounter - offsetY,
+                LINE_BUFFER_WIDTH - (width - offsetX ), laceFrame | _res);
+        }
+
+        lineVCounter = 0;
+
+        if (endDmaView) {
+            debugger.dmaView = false;
+            debugger.dmaLog = debugger.requestDmaLog;
+            hBlank = false;
+            return;
+        }
+
+        if (denise.isShres()) denise.frameMode = Denise::SHRES_FRAME;
+        else if (denise.isHires()) denise.frameMode = Denise::HIRES_FRAME;
+        else if (laceMode & 3) denise.frameMode = Denise::HIRES_FRAME;
+        else denise.frameMode = Denise::LORES_FRAME;
+
+        if (hTotalChanged) {
+            hTotalChanged = false;
+            std::memset(frameBuffer, 0, LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT );
+        } else if (!(laceFrame & 3) && (laceMode & 3)) {
+            laceMode |= 0x80; // first lace frame
+            denise.setDisableSequencer( 0 );
+        } else if ((laceFrame & 3) && !(laceMode & 3)) {
+            laceMode |= 0x40; // first non lace frame
+            denise.setDisableSequencer( 0 );
+        }
+
+        laceFrame = laceMode;
+        if (laceFrame & 2)
+            lineVCounter = 1;
+    }
+
+    if (lineVCounter >= LINE_BUFFER_HEIGHT)
+        lineVCounter = LINE_BUFFER_HEIGHT - 1;
+
+    debugger.frameLine = debugger.dmaFrame + lineVCounter * LINE_BUFFER_WIDTH;
+    denise.linePtr = frameBuffer + lineVCounter * LINE_BUFFER_WIDTH;
+    denise.linePos = 0;
+    lineVCounter += (laceFrame & 3) ? 2 : 1;
+}
 
 auto Agnus::startHblank() -> void {
     bool _vblank = vBlank && !vBlankStart;
@@ -30,17 +158,13 @@ auto Agnus::startHblank() -> void {
         if (laceFrame & 3)
             vBlankOffset <<= 1;
 
+        // ECS Worms VBI use programmed vblank from v 2 - 5. The current programming would increase the number of visible lines beyond what is possible.
+        // This needs to be compensated for. todo: solve this better
+
         if (vBlankOffset < lineVCounter)
             lineVCounter -= vBlankOffset;
         
-        int width;
-        if(denise.frameMode == Denise::SHRES_FRAME)
-            width = LINE_MAX_WIDTH << 2;
-        else if (denise.frameMode == Denise::HIRES_FRAME)
-            width = LINE_MAX_WIDTH << 1;
-        else
-            width = LINE_MAX_WIDTH;
-
+        int width = denise.lineWidthMultiplier() * LINE_MAX_WIDTH;
         sanitizeCrop(width, lineVCounter);
 
 		if (laceFrame & 0x80) {
@@ -56,7 +180,9 @@ auto Agnus::startHblank() -> void {
         if (paula.ledChange & 0x80)
             paula.informPowerLED(false);
 
-        uint8_t _res = (denise.frameMode == Denise::SHRES_FRAME) ? 8 : (denise.frameMode == Denise::HIRES_FRAME ? 4 : 0);
+        uint8_t _res = 0;
+        if (denise.frameMode == Denise::HIRES_FRAME) _res = 4;
+        else if (denise.frameMode == Denise::SHRES_FRAME) _res = 8;
 
         paula.sampleUpdate();
         system->videoRefresh(frameBuffer + (vBlankOffset * LINE_BUFFER_WIDTH) + LINE_RENDER_OFFSET, width, lineVCounter,
@@ -98,7 +224,8 @@ auto Agnus::startHsync() -> void {
     if (state) {
         vBlank = true;
         vBlankStart = true;
-        startHblank();
+        if (!debugger.dmaView)
+            startHblank();
         if (system->isProcessFrame())
             observeFrameDuration();
     }
@@ -111,6 +238,10 @@ auto Agnus::startHsync() -> void {
 
 auto Agnus::endHblank() -> void {
     denise.process();
+
+    if (debugger.dmaView)
+        return;
+
     if (hBlank) {
         denise.linePos = 0;
 
@@ -208,6 +339,9 @@ auto Agnus::sanitizeCrop(int width, int height) -> void {
 }
 
 template<bool quadruple> auto Agnus::doubleResMidframe(bool fromHires) -> void {
+    if (debugger.dmaView)
+        return doubleResMidDebugframe<quadruple>(fromHires);
+
     uint16_t* curLinePtr;
     unsigned xStart;
     int y = (laceFrame & 2) ? 1 : 0;
@@ -222,9 +356,9 @@ template<bool quadruple> auto Agnus::doubleResMidframe(bool fromHires) -> void {
         xStart = curLinePtr != denise.linePtr ? (_lineWidth - 1) : (denise.linePos - 1);
 
         if constexpr (quadruple)
-            quadruplePixel(curLinePtr, xStart);
+            quadruplePixel<uint16_t>(curLinePtr, xStart);
         else
-            doublePixel( curLinePtr, xStart );
+            doublePixel<uint16_t>( curLinePtr, xStart );
     }
 
     if constexpr (quadruple)
@@ -233,8 +367,39 @@ template<bool quadruple> auto Agnus::doubleResMidframe(bool fromHires) -> void {
         denise.linePos <<= 1;
 }
 
-inline auto Agnus::doublePixel(uint16_t* _ptr, unsigned _xStart) -> void {
-    uint16_t p;
+template<bool quadruple> auto Agnus::doubleResMidDebugframe(bool fromHires) -> void {
+    uint16_t* curLinePtr;
+    uint8_t* curDmaPtr;
+    unsigned xStart;
+    int y = (laceFrame & 2) ? 1 : 0;
+    int inc = (laceFrame & 3) ? 2 : 1;
+
+    unsigned _lineWidth = LINE_DEBUG_WIDTH;
+    if (fromHires)
+        _lineWidth <<= 1;
+
+    for (; y < lineVCounter; y = y + inc ) {
+        curLinePtr = frameBuffer + y * LINE_BUFFER_WIDTH;
+        curDmaPtr = debugger.dmaFrame + y * LINE_BUFFER_WIDTH;
+        xStart = curLinePtr != denise.linePtr ? (_lineWidth - 1) : (denise.linePos - 1);
+
+        if constexpr (quadruple) {
+            quadruplePixel<uint16_t>(curLinePtr, xStart);
+            quadruplePixel<uint8_t>(curDmaPtr, xStart);
+        } else {
+            doublePixel<uint16_t>(curLinePtr, xStart);
+            doublePixel<uint8_t>(curDmaPtr, xStart);
+        }
+    }
+
+    if constexpr (quadruple)
+        denise.linePos <<= 2;
+    else
+        denise.linePos <<= 1;
+}
+
+template<typename T> auto Agnus::doublePixel(T* _ptr, unsigned _xStart) -> void {
+    T p;
     for (int _x = _xStart; _x >= 0; _x--) {
         p = *( _ptr + _x );
         *( _ptr + (_x * 2 + 1) ) = p;
@@ -242,8 +407,8 @@ inline auto Agnus::doublePixel(uint16_t* _ptr, unsigned _xStart) -> void {
     }
 }
 
-inline auto Agnus::quadruplePixel(uint16_t* _ptr, unsigned _xStart) -> void {
-    uint16_t p;
+template<typename T> auto Agnus::quadruplePixel(T* _ptr, unsigned _xStart) -> void {
+    T p;
     for (int _x = _xStart; _x >= 0; _x--) {
         p = *(_ptr + _x);
         

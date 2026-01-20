@@ -63,7 +63,20 @@ auto pButton::rebuild() -> void {
     pWidget::rebuild();
 }
 
-auto pButton::onActivate() -> void {    
+auto pButton::onActivate() -> void {
+    if(button.onMenu) {
+        auto* menu = button.onMenu();
+        if (menu) {
+            POINT pt;
+            GetCursorPos(&pt);
+            int mid = TrackPopupMenuEx(menu->p.hmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, button.window()->p.hwnd, NULL);
+            if (mid) {
+                SendMessage(button.window()->p.hwnd, WM_COMMAND, mid, 0);
+                return;
+            }
+        }
+    }
+
     if(button.onActivate)
         button.onActivate();
 }

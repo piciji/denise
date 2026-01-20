@@ -14,6 +14,7 @@
 #include <Shellapi.h>
 #include <shlwapi.h>
 #include <Commdlg.h>
+#include <gdiplus.h>
 #include <direct.h>
 #include <dwmapi.h>
 #include <windowsx.h>
@@ -107,6 +108,8 @@ struct pApplication {
     static HBRUSH darkBGTabBrush; 
     static HBRUSH darkDisabledEdgeBrush;
     static HPEN darkEdgePen;
+    static HPEN darkFGPen;
+    static ULONG_PTR gdiplusToken;
 
     static auto loadThemedFunctions() -> void;
     static auto hasAppThemed() -> bool;
@@ -384,8 +387,10 @@ struct pHyperlink : pWidget {
 
 struct pSquareCanvas : pWidget {
     SquareCanvas& squareCanvas;
+    HCURSOR hCursor = nullptr;
 
     pSquareCanvas(SquareCanvas& squareCanvas) : pWidget(squareCanvas), squareCanvas(squareCanvas) {}
+    ~pSquareCanvas();
     auto rebuild() -> void;
     auto create() -> void;
     auto setBackgroundColor( unsigned color ) -> void;
@@ -415,6 +420,59 @@ struct pMultiSquareCanvas : pWidget {
     auto setEnabled(bool enabled) -> void;
     auto buildDrawArea() -> void;
     auto scroll(int delta) -> void;
+
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK subclassWndProcScroller(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
+    auto onChange(WPARAM wparam) -> void;
+};
+
+struct pLogicViewer : pWidget {
+    LogicViewer& logicViewer;
+    WNDPROC wndprocOrigScroller;
+
+    pLogicViewer(LogicViewer& logicViewer) : pWidget(logicViewer), logicViewer(logicViewer) {}
+    ~pLogicViewer();
+
+    HWND hwndScroller;
+    int scrollPos;
+    unsigned showSlot;
+    GUIKIT::Timer scrollTimer;
+
+    HDC drawDC = nullptr;
+    HBITMAP drawBmp = nullptr;
+
+    Gdiplus::Pen* penFG = nullptr;
+    Gdiplus::Pen* penDarkEdge = nullptr;
+
+    std::vector<std::pair<unsigned, HBRUSH>> brushes;
+
+    auto rebuild() -> void;
+    auto update() -> void;
+    auto scrollToActive() -> void;
+    auto create() -> void;
+    auto updateScrollRange() -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto setVisible(bool visible) -> void;
+    auto setEnabled(bool enabled) -> void;
+    auto calcFullWidth() -> unsigned;
+
+    auto setBox(RECT& rc, unsigned offset = 5) -> void;
+    auto drawRect(LogicState::Display display, Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT& rc, const std::string& text, unsigned padding, bool active) -> void;
+    auto drawRect(RECT& rc, const std::string& text) -> void;
+    auto drawRectRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void;
+    auto drawRectLeftRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void;
+    auto drawRectRightRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void;
+    auto drawLine(RECT& rc) -> void;
+
+    auto scroll(int delta) -> void;
+    auto buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RECT rc) -> void;
+    auto invalidateDrawArea() -> void;
+    auto buildDrawArea(HDC hdc, RECT rcWork, unsigned firstSlot, unsigned buildSlots) -> void;
+    auto getBrush(unsigned color) -> HBRUSH;
+    auto GetRoundRectPath(Gdiplus::GraphicsPath* pPath, Gdiplus::Rect r, int dia) -> void;
+    auto GetRoundRectPathLeft(Gdiplus::GraphicsPath* pPath, Gdiplus::Rect r, int dia) -> void;
+    auto GetRoundRectPathRight(Gdiplus::GraphicsPath* pPath, Gdiplus::Rect r, int dia) -> void;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     static auto CALLBACK subclassWndProcScroller(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
@@ -972,6 +1030,11 @@ struct pMessageWindow {
     static auto CALLBACK pfnCBTMsgBoxHook(int nCode, WPARAM wparam, LPARAM lparam) ->LRESULT;
 };
 
+struct pColorChooser {
+    static auto choose(ColorChooser::State& state) -> std::optional<unsigned>;
+    static auto CALLBACK chooseColorDlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) -> uintptr_t;
+};
+
 struct pFont {
     static auto system(unsigned size, std::string style, bool monospaced = false) -> std::string;
     static auto create(const std::string& desc) -> HFONT;
@@ -1083,4 +1146,7 @@ auto CreateBitmapWithPremultipliedAlpha(Image& image) -> HBITMAP;
 auto CreateHCursor( HBITMAP hBitmap, unsigned hotSpotX, unsigned hotSpotY ) -> HCURSOR;
 auto CreateHIcon(Image& image) -> HICON;
 auto getDropPaths(WPARAM wparam) -> std::vector<std::string>;
+static auto scrollTo(HWND hwndScroller, WPARAM wparam, int& scrollPos ) -> void;
+static auto makeColorRef(unsigned rgb) -> COLORREF;
+static auto convertToHex( unsigned val, int length = -1 ) -> std::string;
 }

@@ -118,10 +118,9 @@ struct VideoDebugger : Debugger {
         } sprites;
 
         Video(Debugger* debugger);
-    };
-    Video* video;
+    } *video;
 
-    auto screenIdent() -> std::string override;
+    auto saveIdent() -> std::string override;
     auto titleIdent() -> std::string override;
     auto buildTheme() -> GUIKIT::Layout* override;
     auto updateTheme() -> void override;

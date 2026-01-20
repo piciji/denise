@@ -325,7 +325,7 @@ auto CiaDebugger::updateTheme() -> void {
         emuThread->unlock();
 }
 
-auto CiaDebugger::screenIdent() -> std::string {
+auto CiaDebugger::saveIdent() -> std::string {
     return "debugger_cia";
 }
 
