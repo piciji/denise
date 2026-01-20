@@ -132,6 +132,9 @@ auto Agnus::startHblankDebug() -> void {
 }
 
 auto Agnus::startHblank() -> void {
+    if (debugger.dmaView)
+        return startHblankDebug();
+
     bool _vblank = vBlank && !vBlankStart;
 
     if (!vPos) { // line 0

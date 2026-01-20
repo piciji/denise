@@ -489,10 +489,7 @@ inline auto Agnus::dmaCycle() -> void {
             dmal >>= 2;
             break;
         case 0xc:
-            if (debugger.dmaView)
-                startHblankDebug();
-            else
-                startHblank();
+            startHblank();
             break;
         case 0xd:
             if (dmal & 3)
@@ -720,7 +717,7 @@ auto Agnus::sync(unsigned cycles) -> void {
     debugger.dmaLog ? sync<true>(cycles) : sync<false>(cycles);
 }
 
-template<bool logDma> auto Agnus::sync(unsigned cycles) -> void {
+template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
     if (overclock.speed) {
         overclock.cycles += cycles;
 

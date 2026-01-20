@@ -25,7 +25,7 @@ auto Agnus::readByte(uint32_t adr) -> uint8_t {
     return debugger.dmaLog ? readByte<true>(adr) : readByte<false>(adr);
 }
 
-template<bool logDma> auto Agnus::readByte(uint32_t adr) -> uint8_t {
+template<bool logDma> inline auto Agnus::readByte(uint32_t adr) -> uint8_t {
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
     uint8_t res;
@@ -223,7 +223,7 @@ auto Agnus::readWord(uint32_t adr) -> uint16_t {
     return debugger.dmaLog ? readWord<true>(adr) : readWord<false>(adr);
 }
 
-template<bool logDma> auto Agnus::readWord(uint32_t adr) -> uint16_t {
+template<bool logDma> inline auto Agnus::readWord(uint32_t adr) -> uint16_t {
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
     // 68k is big endian, modern architecture is little endian
@@ -315,7 +315,7 @@ auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
     debugger.dmaLog ? writeByte<true>(adr, value) : writeByte<false>(adr, value);
 }
 
-template<bool logDma> auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
+template<bool logDma> inline auto Agnus::writeByte(uint32_t adr, uint8_t value) -> void {
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
 
@@ -398,7 +398,7 @@ auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
     debugger.dmaLog ? writeWord<true>(adr, value) : writeWord<false>(adr, value);
 }
 
-template<bool logDma> auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
+template<bool logDma> inline auto Agnus::writeWord(uint32_t adr, uint16_t value) -> void {
     adr &= 0xffffff;
     uint8_t _map = mapper[adr >> 16];
 
