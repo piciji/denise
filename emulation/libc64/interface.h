@@ -215,10 +215,7 @@ struct Interface : Emulator::Interface {
 
     // debugger
     auto debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
-    auto debuggerRemove(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void;
-    auto debuggerEnable(DebuggerChip chip, DebuggerAction action, unsigned addr, bool state = true) -> void;
-    auto debuggerDisable(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void;
-	auto debuggerDisableAll(DebuggerChip chip) -> void;
+    auto debuggerRemove(DebuggerChip chip, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void;
 
     auto debuggerStepOver() -> void;
     auto debuggerStepInto() -> void;

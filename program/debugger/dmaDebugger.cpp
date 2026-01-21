@@ -96,7 +96,10 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
     dma->dmaFrame.showUsage.onToggle = [this](bool checked) {
         emuThread->lock();
         VideoManager::getInstance( emulator )->dmaColors = checked ? &dmaColors[0] : nullptr;
-        emulator->debuggerEnable( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0, checked);
+        if (checked)
+            emulator->debuggerAdd( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+        else
+            emulator->debuggerRemove( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
         emuThread->unlock();
     };
 
@@ -206,7 +209,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
 
         if (w) {
             emuThread->lock();
-            emulator->debuggerRemove( DebuggerChip::Bus, w->action, 0 );
+            emulator->debuggerRemove( DebuggerChip::Bus, w->action );
             w->button.setStore( -1 );
             updateTheme();
             emuThread->unlock();
@@ -408,10 +411,10 @@ auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
 }
 
 auto DmaDebugger::initTheme() -> void {
-    emulator->debuggerEnable( DebuggerChip::Bus, DebuggerAction::DmaLog, 0);
+    emulator->debuggerAdd( DebuggerChip::Bus, DebuggerAction::DmaLog, 0);
     if (dma->dmaFrame.showUsage.checked()) {
         VideoManager::getInstance( emulator )->dmaColors = &dmaColors[0];
-        emulator->debuggerEnable( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+        emulator->debuggerAdd( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
     }
 
     for (auto& watcher : dma->legend.watchers) {
@@ -423,12 +426,12 @@ auto DmaDebugger::initTheme() -> void {
 }
 
 auto DmaDebugger::closeTheme() -> void {
-    emulator->debuggerDisable( DebuggerChip::Bus, DebuggerAction::DmaView, 0);
-    emulator->debuggerDisable( DebuggerChip::Bus, DebuggerAction::DmaLog, 0);
+    emulator->debuggerRemove( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+    emulator->debuggerRemove( DebuggerChip::Bus, DebuggerAction::DmaLog);
     VideoManager::getInstance( emulator )->dmaColors = nullptr;
 
     for (auto& watcher : dma->legend.watchers)
-        emulator->debuggerRemove(DebuggerChip::Bus, watcher.action, 0 );
+        emulator->debuggerRemove(DebuggerChip::Bus, watcher.action );
 }
 
 auto DmaDebugger::translateTheme() -> void {

@@ -299,11 +299,11 @@ auto VideoDebugger::updateTheme() -> void {
 }
 
 auto VideoDebugger::initTheme() -> void {
-    emulator->debuggerEnable( Emulator::Interface::DebuggerChip::Video, Emulator::Interface::DebuggerAction::None, 0);
+    emulator->debuggerAdd( DebuggerChip::Video, DebuggerAction::None, 0);
 }
 
 auto VideoDebugger::closeTheme() -> void {
-    emulator->debuggerDisable( Emulator::Interface::DebuggerChip::Video, Emulator::Interface::DebuggerAction::None, 0);
+    emulator->debuggerRemove( DebuggerChip::Video, DebuggerAction::None);
 }
 
 auto VideoDebugger::updateView(LIBC64::DebuggerSnapshot& s) -> void {
@@ -512,9 +512,10 @@ auto VideoDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
     }
 
     int i = 0;
+    unsigned colMask = (1 << vManager->countColorBits) - 1;
     for (auto& row : video->wraper.colors.rows) {
         for (auto& col : row.cols) {
-            uint16_t colIndex = snap.colors[i++];
+            uint16_t colIndex = snap.colors[i++] & colMask;
             uint32_t rgb = vManager->colorTable[ colIndex ];
             std::string tooltip = "Index: " + hex(colIndex) + ", RGB: " + hex(rgb & 0xffffff);
             col.setTooltip( tooltip );

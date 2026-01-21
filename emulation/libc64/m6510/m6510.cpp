@@ -572,6 +572,7 @@ auto M6510::debuggerAdd(DebuggerAction action, uint16_t addr, uint16_t addrTo) -
         case DebuggerAction::Breakpoint:        breakPoints.add( addr ); break;
         case DebuggerAction::Watchpoint:        watchPoints.add( addr ); break;
         case DebuggerAction::ExceptionPoint:    exceptionPoints.add( addr ); break;
+        case DebuggerAction::History:           historyHandler.enable(); break;
         case DebuggerAction::ModifiedCode:      modifiedCode.add( addr, addrTo ); break;
         default:
             break;
@@ -583,39 +584,22 @@ auto M6510::debuggerRemove(DebuggerAction action, uint16_t addr) -> void {
         case DebuggerAction::Breakpoint:        breakPoints.remove( addr ); break;
         case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
         case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
-        default:
-            break;
-    }
-}
-
-auto M6510::debuggerEnable(DebuggerAction action, uint16_t addr) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.enable( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.enable( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.enable( addr ); break;
-        case DebuggerAction::History:           historyHandler.enable(); break;
-        default:
-            break;
-    }
-}
-
-auto M6510::debuggerDisable(DebuggerAction action, uint16_t addr) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.disable( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.disable( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.disable( addr ); break;
         case DebuggerAction::History:           historyHandler.disable( ); break;
         default:
             break;
     }
 }
 
-auto M6510::debuggerDisableAll() -> void {
-    breakPoints.disableAll();
-    watchPoints.disableAll();
-    exceptionPoints.disableAll();
-    modifiedCode.disable();
-    historyHandler.disable();
+auto M6510::debuggerRemove(DebuggerAction action) -> void {
+    switch (action) {
+        case DebuggerAction::Breakpoint:        breakPoints.removeAll(); break;
+        case DebuggerAction::Watchpoint:        watchPoints.removeAll(); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.removeAll(); break;
+        case DebuggerAction::History:           historyHandler.disable(); break;
+        case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
+        default:
+            break;
+    }
 }
 
 auto M6510::updateSnapshot(DebuggerSnapshot& snap) -> void {

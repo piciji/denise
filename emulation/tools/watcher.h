@@ -11,7 +11,6 @@ using WatcherCallback = std::function<void ( bool state )>;
 
 struct Watcher {
     uint32_t addr;
-    bool enabled;
 };
 
 struct WatchPoints {
@@ -30,15 +29,7 @@ struct WatchPoints {
 
     auto find(uint32_t addr) -> Watcher*;
 
-    auto isEnabled(uint32_t addr) -> bool;
-
-    auto isDisabled(uint32_t addr) -> bool;
-
-    auto enable(uint32_t addr) -> void;
-
-    auto disable(uint32_t addr) -> void;
-
-    auto disableAll() -> void;
+    auto removeAll() -> void;
 
     auto flagWhenNeeded() -> void;
 };

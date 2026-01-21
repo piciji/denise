@@ -685,80 +685,78 @@ auto System::cropFrame( Emulator::Interface::CropType type, Emulator::Interface:
 }
 
 auto System::debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
-    switch (action) {
-        case Emulator::Interface::DebuggerAction::Line:
-        case Emulator::Interface::DebuggerAction::Frame:
-            agnus.debuggerAction = action;
+    switch (chip) {
+        case Interface::DebuggerChip::Video:
+            denise.debugger.setEnable( true );
             break;
-        case Emulator::Interface::DebuggerAction::DmaWatch1:
-            agnus.debugger.dmaWatchers[0] = addr | (0x80 << 24);
-            break;
-        case Emulator::Interface::DebuggerAction::DmaWatch2:
-            agnus.debugger.dmaWatchers[1] = addr | (0x80 << 24);
-            break;
-        case Emulator::Interface::DebuggerAction::DmaWatch3:
-            agnus.debugger.dmaWatchers[2] = addr | (0x80 << 24);
-            break;
-        case Emulator::Interface::DebuggerAction::DmaWatch4:
-            agnus.debugger.dmaWatchers[3] = addr | (0x80 << 24);
-            break;
-        default:
+        case Interface::DebuggerChip::Bus:
+            switch (action) {
+                case Emulator::Interface::DebuggerAction::DmaView:
+                    agnus.debugger.enableDmaView(true, addr == 0);
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaLog:
+                    agnus.debugger.enableDmaLog(true);
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaWatch1:
+                    agnus.debugger.dmaWatchers[0] = addr | (0x80 << 24);
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaWatch2:
+                    agnus.debugger.dmaWatchers[1] = addr | (0x80 << 24);
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaWatch3:
+                    agnus.debugger.dmaWatchers[2] = addr | (0x80 << 24);
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaWatch4:
+                    agnus.debugger.dmaWatchers[3] = addr | (0x80 << 24);
+                    break;
+            } break;
+        case Interface::DebuggerChip::C68000:
             cpu.debuggerAdd( (M68FAMILY::M68000::DebuggerAction)action, addr, addrTo );
             break;
+        case Interface::DebuggerChip::Unspecified: {
+            switch (action) {
+                case Emulator::Interface::DebuggerAction::Line:
+                case Emulator::Interface::DebuggerAction::Frame:
+                    agnus.debuggerAction = action;
+                    break;
+            }
+        } break;
     }
 }
 
-auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
-    switch (action) {
-        case Emulator::Interface::DebuggerAction::DmaWatch1:
-            agnus.debugger.dmaWatchers[0] = 0;
-            break;
-        case Emulator::Interface::DebuggerAction::DmaWatch2:
-            agnus.debugger.dmaWatchers[1] = 0;
-            break;
-        case Emulator::Interface::DebuggerAction::DmaWatch3:
-            agnus.debugger.dmaWatchers[2] = 0;
-            break;
-        case Emulator::Interface::DebuggerAction::DmaWatch4:
-            agnus.debugger.dmaWatchers[3] = 0;
-            break;
-        default:
-            cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr );
-            break;
-    }
-}
-
-auto System::debuggerEnable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void {
     switch (chip) {
         case Interface::DebuggerChip::Video:
-            return denise.debugger.setEnable( true );
+            denise.debugger.setEnable( false );
+            break;
         case Interface::DebuggerChip::Bus:
-            if (action == Emulator::Interface::DebuggerAction::DmaView) {
-                agnus.debugger.enableDmaView(true, addr == 0);
-            } else if (action == Emulator::Interface::DebuggerAction::DmaLog) {
-                agnus.debugger.enableDmaLog(true);
-            }
-
-            return;
+            switch (action) {
+                case Emulator::Interface::DebuggerAction::DmaView:
+                    agnus.debugger.enableDmaView(false, !addr.has_value() || (addr.value() == 0));
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaLog:
+                    agnus.debugger.enableDmaLog(false);
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaWatch1:
+                    agnus.debugger.dmaWatchers[0] = 0;
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaWatch2:
+                    agnus.debugger.dmaWatchers[1] = 0;
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaWatch3:
+                    agnus.debugger.dmaWatchers[2] = 0;
+                    break;
+                case Emulator::Interface::DebuggerAction::DmaWatch4:
+                    agnus.debugger.dmaWatchers[3] = 0;
+                    break;
+            } break;
+        case Interface::DebuggerChip::C68000:
+            if (addr.has_value())
+                cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr.value() );
+            else
+                cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action );
+            break;
     }
-
-    cpu.debuggerEnable( (M68FAMILY::M68000::DebuggerAction)action, addr );
-}
-
-auto System::debuggerDisable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
-    switch (chip) {
-        case Interface::DebuggerChip::Video:
-            return denise.debugger.setEnable( false );
-        case Interface::DebuggerChip::Bus:
-            if (action == Emulator::Interface::DebuggerAction::DmaView) {
-                agnus.debugger.enableDmaView(false, addr == 0);
-            } else if (action == Emulator::Interface::DebuggerAction::DmaLog) {
-                agnus.debugger.enableDmaLog(false);
-            }
-            return;
-    }
-
-    cpu.debuggerDisable( (M68FAMILY::M68000::DebuggerAction)action, addr );
 }
 
 auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {

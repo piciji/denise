@@ -664,10 +664,7 @@ struct Interface {
 
     // debugger
     virtual auto debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
-    virtual auto debuggerRemove(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {}
-    virtual auto debuggerEnable(DebuggerChip chip, DebuggerAction action, unsigned addr, bool state = true) -> void {}
-    virtual auto debuggerDisable(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {}
-    virtual auto debuggerDisableAll(DebuggerChip chip) -> void {}
+    virtual auto debuggerRemove(DebuggerChip chip, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void {}
 
     virtual auto debuggerStepOver() -> void {}
     virtual auto debuggerStepInto() -> void {}

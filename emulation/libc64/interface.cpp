@@ -2073,23 +2073,8 @@ auto Interface::debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned a
     system->debuggerAdd( chip, action, addr, addrTo );
 }
 
-auto Interface::debuggerRemove(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {
+auto Interface::debuggerRemove(DebuggerChip chip, DebuggerAction action, std::optional<unsigned> addr) -> void {
     system->debuggerRemove( chip, action, addr );
-}
-
-auto Interface::debuggerEnable(DebuggerChip chip, DebuggerAction action, unsigned addr, bool state) -> void {
-    if (state)
-        system->debuggerEnable( chip, action, addr );
-    else
-        system->debuggerDisable( chip, action, addr );
-}
-
-auto Interface::debuggerDisable(DebuggerChip chip, DebuggerAction action, unsigned addr) -> void {
-    system->debuggerDisable( chip, action, addr );
-}
-
-auto Interface::debuggerDisableAll(DebuggerChip chip) -> void {
-    system->debuggerDisableAll(chip);
 }
 
 auto Interface::debuggerStepOver() -> void {

@@ -472,6 +472,7 @@ auto M68000::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) 
         case DebuggerAction::Watchpoint:        watchPoints.add( addr ); break;
         case DebuggerAction::ExceptionPoint:    exceptionPoints.add( addr ); break;
         case DebuggerAction::ModifiedCode:      modifiedCode.add( addr, addrTo ); break;
+        case DebuggerAction::History:           historyHandler.enable(); break;
         default:
             break;
     }
@@ -482,39 +483,22 @@ auto M68000::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
         case DebuggerAction::Breakpoint:        breakPoints.remove( addr ); break;
         case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
         case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
-        default:
-            break;
-    }
-}
-
-auto M68000::debuggerEnable(DebuggerAction action, unsigned addr) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.enable( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.enable( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.enable( addr ); break;
-        case DebuggerAction::History:           historyHandler.enable(); break;
-        default:
-            break;
-    }
-}
-
-auto M68000::debuggerDisable(DebuggerAction action, unsigned addr) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.disable( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.disable( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.disable( addr ); break;
         case DebuggerAction::History:           historyHandler.disable( ); break;
         default:
             break;
     }
 }
 
-auto M68000::debuggerDisableAll() -> void {
-    breakPoints.disableAll();
-    watchPoints.disableAll();
-    exceptionPoints.disableAll();
-    modifiedCode.disable();
-    historyHandler.disable();
+auto M68000::debuggerRemove(DebuggerAction action) -> void {
+    switch (action) {
+        case DebuggerAction::Breakpoint:        breakPoints.removeAll(); break;
+        case DebuggerAction::Watchpoint:        watchPoints.removeAll(); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.removeAll(); break;
+        case DebuggerAction::History:           historyHandler.disable(); break;
+        case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
+        default:
+            break;
+    }
 }
 
 }

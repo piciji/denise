@@ -160,9 +160,7 @@ public:
     auto debuggerStepOut() -> bool;
     auto debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
     auto debuggerRemove(DebuggerAction action, unsigned addr) -> void;
-    auto debuggerEnable(DebuggerAction action, unsigned addr) -> void;
-    auto debuggerDisable(DebuggerAction action, unsigned addr) -> void;
-    auto debuggerDisableAll() -> void;
+    auto debuggerRemove(DebuggerAction action) -> void;
 
     auto disassemble(uint32_t addr, unsigned& bytes, uint16_t* memSnap = nullptr) -> std::string;
     auto disassembleData(uint32_t addr, unsigned words) -> std::string;

@@ -14,13 +14,8 @@ WatchPoints::WatchPoints() {
 }
 
 auto WatchPoints::add(uint32_t addr) -> void {
-    auto w = find( addr );
-
-    if (!w)
-        watchers.push_back( {addr, true} );
-    else {
-        w->enabled = true;
-    }
+    if (!find( addr ))
+        watchers.push_back( {addr} );
 
     callback(true);
 }
@@ -46,51 +41,19 @@ auto WatchPoints::find(uint32_t addr) -> Watcher* {
 
 auto WatchPoints::check(uint32_t addr) -> bool {
     for ( auto& w : watchers ) {
-        if ((w.addr == addr) && w.enabled)
+        if (w.addr == addr)
             return true;
     }
     return false;
 }
 
-auto WatchPoints::isEnabled(uint32_t addr) -> bool {
-    auto w = find( addr );
-    return w != nullptr && w->enabled;
-}
-
-auto WatchPoints::isDisabled(uint32_t addr) -> bool {
-    auto w = find( addr );
-    return w == nullptr || !w->enabled;
-}
-
-auto WatchPoints::enable(uint32_t addr) -> void {
-    if (auto w = find( addr )) {
-        w->enabled = true;
-        callback(true);
-    }
-}
-
-auto WatchPoints::disable(uint32_t addr) -> void {
-    if (auto w = find( addr )) {
-        w->enabled = false;
-        flagWhenNeeded();
-    }
-}
-
-auto WatchPoints::disableAll() -> void {
-    for ( auto& w : watchers )
-        w.enabled = false;
-
+auto WatchPoints::removeAll() -> void {
+    watchers.clear();
     callback(false);
 }
 
 auto WatchPoints::flagWhenNeeded() -> void {
-    for ( auto& w : watchers ) {
-        if (w.enabled) {
-            callback(true);
-            return;
-        }
-    }
-    callback(false);
+    callback(!watchers.empty());
 }
 
 ModifiedCodes::ModifiedCodes() {

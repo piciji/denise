@@ -333,10 +333,7 @@ struct System {
     auto toggle2Mhz() -> bool;
 
     auto debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
-	auto debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
-	auto debuggerEnable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
-	auto debuggerDisable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
-	auto debuggerDisableAll(Emulator::Interface::DebuggerChip chip) -> void;
+	auto debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
 
 	auto debuggerStepOver() -> void;
 	auto debuggerStepInto() -> void;

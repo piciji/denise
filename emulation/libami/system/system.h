@@ -147,9 +147,7 @@ struct System {
     auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop crop ) -> void;
 
     auto debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void;
-    auto debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
-    auto debuggerEnable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
-    auto debuggerDisable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+    auto debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
     auto updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
 };

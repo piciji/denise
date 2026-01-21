@@ -352,7 +352,7 @@ auto Debugger::stepLine(Emulator::Interface* emulator) -> void {
 
     timer->setEnabled();
     timerVisibility->setEnabled();
-    emulator->debuggerAdd( Emulator::Interface::DebuggerChip::Unspecified, DebuggerAction::Line, 0 );
+    emulator->debuggerAdd( DebuggerChip::Unspecified, DebuggerAction::Line, 0 );
     emuThread->unlock();
 }
 
@@ -365,7 +365,7 @@ auto Debugger::stepFrame(Emulator::Interface* emulator) -> void {
     timer->setEnabled();
     timerVisibility->setEnabled();
 
-    emulator->debuggerAdd( Emulator::Interface::DebuggerChip::Unspecified, DebuggerAction::Frame, 0 );
+    emulator->debuggerAdd( DebuggerChip::Unspecified, DebuggerAction::Frame, 0 );
     emuThread->unlock();
 }
 

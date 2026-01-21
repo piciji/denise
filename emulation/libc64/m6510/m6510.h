@@ -172,9 +172,7 @@ struct M6510 {
     auto debuggerStepOut() -> bool;
     auto debuggerAdd(DebuggerAction action, uint16_t addr, uint16_t addrTo = 0) -> void;
     auto debuggerRemove(DebuggerAction action, uint16_t addr) -> void;
-    auto debuggerEnable(DebuggerAction action, uint16_t addr) -> void;
-    auto debuggerDisable(DebuggerAction action, uint16_t addr) -> void;
-    auto debuggerDisableAll() -> void;
+    auto debuggerRemove(DebuggerAction action) -> void;
 
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 

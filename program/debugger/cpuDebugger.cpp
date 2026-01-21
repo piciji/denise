@@ -179,7 +179,10 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
                 emulator->debuggerAdd(getCpuType(), DebuggerAction::Breakpoint, inst.addr);
             } else {
                 watcher->enabled ^= 1;
-                emulator->debuggerEnable(getCpuType(), DebuggerAction::Breakpoint, inst.addr, watcher->enabled);
+                if (watcher->enabled)
+                    emulator->debuggerAdd(getCpuType(), DebuggerAction::Breakpoint, inst.addr);
+                else
+                    emulator->debuggerRemove(getCpuType(), DebuggerAction::Breakpoint, inst.addr);
             }
             updateWatcherList();
             timer->setEnabled();
@@ -209,7 +212,11 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         if (column == 0) {
             watcher.enabled ^= 1;
             enableWatcher(row, watcher.enabled);
-            emulator->debuggerEnable( getCpuType(), watcher.action, watcher.addr, watcher.enabled );
+            if (watcher.enabled)
+                emulator->debuggerAdd(getCpuType(), watcher.action, watcher.addr);
+            else
+                emulator->debuggerRemove(getCpuType(), watcher.action, watcher.addr);
+
             if (instRow.has_value())
                 enableInstructionBreakpoint(instRow.value(), watcher.enabled);
         } else {
@@ -286,8 +293,8 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
 
     cpu->state.trace.clear.onActivate = [this]() {
         emuThread->lock();
-        emulator->debuggerDisable( getCpuType(), DebuggerAction::History, 0 );
-        emulator->debuggerEnable( getCpuType(), DebuggerAction::History, 0 );
+        emulator->debuggerRemove( getCpuType(), DebuggerAction::History, 0 );
+        emulator->debuggerAdd( getCpuType(), DebuggerAction::History, 0 );
         updateTraceList();
         emuThread->unlock();
     };
@@ -534,14 +541,6 @@ auto CpuDebugger::updateWatcherSelection() -> void {
         watcherList.setSelected( false );
 }
 
-auto CpuDebugger::initWatchers() -> void {
-    emulator->debuggerEnable( getCpuType(), DebuggerAction::History, 0 );
-    for (auto& watcher : watchers)
-        emulator->debuggerEnable( getCpuType(), watcher.action, watcher.addr, watcher.enabled );
-
-    last.maybeModified = true;
-}
-
 auto CpuDebugger::searchTheme(unsigned addr) -> void {
     auto instRow = findInstructionRowBy(static_cast<unsigned>(addr));
     if (instRow.has_value())
@@ -612,11 +611,24 @@ auto CpuDebugger::updateTheme() -> void {
 }
 
 auto CpuDebugger::initTheme() -> void {
-    initWatchers();
+    emulator->debuggerAdd( getCpuType(), DebuggerAction::History, 0 );
+
+    for (auto& watcher : watchers) {
+        if (watcher.enabled)
+            emulator->debuggerAdd( getCpuType(), watcher.action, watcher.addr );
+        else
+            emulator->debuggerRemove( getCpuType(), watcher.action, watcher.addr );
+    }
+
+    last.maybeModified = true;
 }
 
 auto CpuDebugger::closeTheme() -> void {
-    emulator->debuggerDisableAll( getCpuType() );
+    emulator->debuggerRemove( getCpuType(), DebuggerAction::Breakpoint );
+    emulator->debuggerRemove( getCpuType(), DebuggerAction::Watchpoint );
+    emulator->debuggerRemove( getCpuType(), DebuggerAction::ExceptionPoint );
+    emulator->debuggerRemove( getCpuType(), DebuggerAction::History );
+    emulator->debuggerRemove( getCpuType(), DebuggerAction::ModifiedCode );
 }
 
 auto CpuDebugger::update68k(LIBAMI::DebuggerSnapshot& s) -> void {
@@ -757,11 +769,11 @@ auto CpuDebugger::translateTheme() -> void {
 
 inline auto CpuDebugger::getCpuType() -> Emulator::Interface::DebuggerChip {
     if (isAmiga())
-        return Emulator::Interface::DebuggerChip::C68000;
+        return DebuggerChip::C68000;
     if (mode == Mode::SCPU)
-        return Emulator::Interface::DebuggerChip::C65c816;
+        return DebuggerChip::C65c816;
 
-    return Emulator::Interface::DebuggerChip::C6510;
+    return DebuggerChip::C6510;
 }
 
 auto CpuDebugger::saveIdent() -> std::string {

@@ -1314,59 +1314,47 @@ auto System::toggle2Mhz() -> bool {
 }
 
 auto System::debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
-    switch (action) {
-        case Emulator::Interface::DebuggerAction::Line:
-        case Emulator::Interface::DebuggerAction::Frame:
-            vicII->debuggerAction = action;
+    switch (chip) {
+        case Interface::DebuggerChip::Video:
+            vicIICycle.debugInfo.setEnable( true );
+            vicIIFast.debugInfo.setEnable( true );
             break;
-        default:
-            if (chip == Emulator::Interface::DebuggerChip::C65c816)
-                superCpu->debuggerAdd((WDCFAMILY::W65816::DebuggerAction)action, addr, addrTo);
-            else if (chip == Emulator::Interface::DebuggerChip::C6510)
-                cpu.debuggerAdd( (M6510::DebuggerAction)action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
+        case Emulator::Interface::DebuggerChip::C65c816:
+            superCpu->debuggerAdd((WDCFAMILY::W65816::DebuggerAction)action, addr, addrTo);
+            break;
+        case Emulator::Interface::DebuggerChip::C6510:
+            cpu.debuggerAdd( (M6510::DebuggerAction)action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
+            break;
+        case Emulator::Interface::DebuggerChip::Unspecified: {
+            switch (action) {
+                case Emulator::Interface::DebuggerAction::Line:
+                case Emulator::Interface::DebuggerAction::Frame:
+                    vicII->debuggerAction = action;
+                    break;
+            }
+        } break;
+    }
+}
 
+auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void {
+    switch (chip) {
+        case Interface::DebuggerChip::Video:
+            vicIICycle.debugInfo.setEnable( false );
+            vicIIFast.debugInfo.setEnable( false );
+            break;
+        case Interface::DebuggerChip::C65c816:
+            if (addr.has_value())
+                superCpu->debuggerRemove( (WDCFAMILY::W65816::DebuggerAction)action, addr.value());
+            else
+                superCpu->debuggerRemove((WDCFAMILY::W65816::DebuggerAction)action);
+            break;
+        case Emulator::Interface::DebuggerChip::C6510:
+            if (addr.has_value())
+                cpu.debuggerRemove( (M6510::DebuggerAction)action, addr.value() );
+            else
+                cpu.debuggerRemove( (M6510::DebuggerAction)action);
             break;
     }
-}
-
-auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
-    if (chip == Emulator::Interface::DebuggerChip::C65c816)
-        superCpu->debuggerRemove( (WDCFAMILY::W65816::DebuggerAction)action, addr);
-    else if (chip == Emulator::Interface::DebuggerChip::C6510)
-        cpu.debuggerRemove( (M6510::DebuggerAction)action, addr );
-}
-
-auto System::debuggerEnable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
-    if (chip == Interface::DebuggerChip::Video) {
-        vicIICycle.debugInfo.setEnable( true );
-        vicIIFast.debugInfo.setEnable( true );
-        return;
-    }
-
-    if (chip == Emulator::Interface::DebuggerChip::C65c816)
-        superCpu->debuggerEnable((WDCFAMILY::W65816::DebuggerAction)action, addr);
-    else if (chip == Emulator::Interface::DebuggerChip::C6510)
-        cpu.debuggerEnable( (M6510::DebuggerAction)action, addr );
-}
-
-auto System::debuggerDisable(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
-    if (chip == Interface::DebuggerChip::Video) {
-        vicIICycle.debugInfo.setEnable( false );
-        vicIIFast.debugInfo.setEnable( false );
-        return;
-    }
-
-    if (chip == Emulator::Interface::DebuggerChip::C65c816)
-        superCpu->debuggerDisable((WDCFAMILY::W65816::DebuggerAction)action, addr);
-    else if (chip == Emulator::Interface::DebuggerChip::C6510)
-        cpu.debuggerDisable( (M6510::DebuggerAction)action, addr );
-}
-
-auto System::debuggerDisableAll(Emulator::Interface::DebuggerChip chip) -> void {
-    if (chip == Emulator::Interface::DebuggerChip::C65c816)
-        superCpu->debuggerDisableAll();
-    else if (chip == Emulator::Interface::DebuggerChip::C6510)
-        cpu.debuggerDisableAll();
 }
 
 auto System::debuggerStepOver() -> void {
