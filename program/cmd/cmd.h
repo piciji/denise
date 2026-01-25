@@ -9,6 +9,13 @@ struct Cmd {
 
     std::vector<std::string> arguments;
 
+	struct Option {
+		std::string ident;
+		std::string description;
+		std::string param;
+	};
+	std::vector<Option> options;
+
     struct Attachments {
         Emulator::Interface* emulator;
         Emulator::Interface::Media* media;
@@ -35,6 +42,9 @@ struct Cmd {
     std::string diskListing = "";
     bool hasContent = false;
     bool startInFullscreen = false;
+
+	std::string invalidParam;
+	bool ambiguousParam = false;
     
     auto parse() -> void;
     
@@ -51,10 +61,6 @@ struct Cmd {
     auto setReuSize(std::string arg) -> void;
 	
 	auto setGeoRamSize(std::string arg) -> void;
-    
-    auto setAneMagic(std::string arg) -> void;
-	
-	auto setLaxMagic(std::string arg) -> void;
 	
 	auto setAutoStartPrg(std::string arg) -> void;
 
@@ -71,6 +77,14 @@ struct Cmd {
     auto saveExitScreenshot() -> void;
 
     auto recommendPlaceholder() -> bool { return !debug && !noGui && !autoload; }
+
+	auto prepareOptions() -> void;
+
+	auto checkForValidOptions(std::string& arg, std::string& arg2) -> bool;
+
+	auto printInvalidParam() -> void;
+
+	auto hasInvalidParam() -> bool { return !invalidParam.empty(); }
 };
 
 extern Cmd* cmd;

@@ -10,9 +10,13 @@ Cmd::Cmd(int argc, char** argv) {
         return;
 
 	std::string arg;
+    std::string appendedArg = "";
     std::string configIdent = "";
     std::vector<std::string> out;
     hasContent = false;
+    invalidParam = "";
+    ambiguousParam = false;
+    prepareOptions();
 
 #ifdef _WIN32
     if (GUIKIT::Application::getUtf8CmdLine(out))
@@ -30,6 +34,13 @@ Cmd::Cmd(int argc, char** argv) {
         else
             arg = (std::string)argv[i];
 
+        if (arg[0] == '-') {
+            if (!checkForValidOptions(arg, appendedArg)) {
+                invalidParam = arg;
+                break;
+            }
+        }
+
         if (configIdent != "") {
             setCustomConfig(configIdent, arg);
             configIdent = "";
@@ -46,16 +57,10 @@ Cmd::Cmd(int argc, char** argv) {
         } else if ( arg == "-debugcart" )
             debug = true;
         
-        else if ( arg == "-h" )
+        else if ( arg == "-help" )
             helpRequested = true;
         
-        else if ( arg == "--help" )
-            helpRequested = true;
-        
-        else if ( arg == "-v" )
-            versionRequested = true;
-        
-        else if ( arg == "--version" )
+        else if ( arg == "-version" )
             versionRequested = true;
 
         else if ( arg == "-config-c64" )
@@ -67,32 +72,74 @@ Cmd::Cmd(int argc, char** argv) {
             startInFullscreen = true;
 		else
             arguments.push_back(arg);
+
+        if (!appendedArg.empty()) {
+            arguments.push_back(appendedArg);
+            appendedArg = "";
+        }
     }
 }
 
-auto Cmd::printHelp() -> void {
-    
-    GUIKIT::System::printToCmd( "\n" );
-    
-    if (versionRequested) {
-        
-        GUIKIT::System::printToCmd( "Version: " + (std::string)VERSION + "\n" );
-        
-        return;
-    }    
-    
-    GUIKIT::System::printToCmd( "Usage: Denise [option]... [image paths]... \n\n" );
-    GUIKIT::System::printToCmd( "Available command-line options:\n" );
+auto Cmd::checkForValidOptions(std::string& arg, std::string& arg2) -> bool {
+    if (arg.size() < 2)
+        return false;
 
-	struct Options {
-        std::string ident;
-        std::string description;
-        std::string param;
-    };  
-	
-	std::vector<Options> options;
-	options.push_back({"-v, --version", "Output program version", ""});
-	options.push_back({"-h, --help", "Output this help screen", ""});
+    if (arg[1] == '-')
+        arg.erase(0, 1);
+
+    // direct match
+    for(auto& option : options) {
+        if (!option.ident.empty() && option.ident == arg) {
+            return true;
+        }
+    }
+
+    // check for similar matches
+    Option* useOption = nullptr;
+    for(auto& option : options) {
+        if (!option.ident.empty() && GUIKIT::String::foundSubStr(option.ident, arg)) {
+            if (useOption == nullptr)
+                useOption = &option;
+            else {
+                ambiguousParam = true;
+                return false;
+            }
+        }
+    }
+
+    if (useOption) {
+        arg = useOption->ident;
+        return true;
+    }
+
+    // check for missing space between param and value
+    for(auto& option : options) {
+        if (!option.param.empty() && (arg.size() > option.ident.size())) {
+            if (!option.ident.empty() && GUIKIT::String::findString(arg, option.ident)) {
+                if (useOption == nullptr)
+                    useOption = &option;
+                else {
+                    ambiguousParam = true;
+                    return false;
+                }
+            }
+        }
+    }
+
+    if (useOption) {
+        GUIKIT::String::remove(arg, {useOption->ident});
+        arg2 = arg;
+        arg = useOption->ident;
+        return true;
+    }
+
+    return false;
+}
+
+auto Cmd::prepareOptions() -> void {
+    options.reserve(50);
+    options.push_back({"-version", "Output program version", ""});
+	options.push_back({"-help", "Output this help screen", ""});
 
     options.push_back({ "", "Autostart file with name in image", "<image path>:name" });
     options.push_back({ "", "Autostart file at position in image", "<image path>:position" });
@@ -124,7 +171,7 @@ auto Cmd::printHelp() -> void {
 	options.push_back({"-sid-6581", "Select SID 6581", ""});
 	options.push_back({"-sid-8580", "Select SID 8580", ""});
 
-	options.push_back({"-cia-6526a", "Select CIA 6526a", ""});
+	options.push_back({"-cia-8521", "Select CIA 8521", ""});
 	options.push_back({"-cia-6526", "Select CIA 6526", ""});
 
 	options.push_back({"-reu", "Emulate REU Expansion", "<size in kb>"});
@@ -132,15 +179,36 @@ auto Cmd::printHelp() -> void {
 	options.push_back({"-debugcart", "Generate exit codes for VICE Testbench", ""});
 	options.push_back({"-limitcycles", "Specify number of cycles to run before quitting with an error (checks at complete frames)", "<cycles>"});
 	options.push_back({"-exitscreenshot", "Save screen to PNG file, when exiting App", "<filePath>"});
-	options.push_back({"-ane-magic", "Force CPU to use this value for ANE opcode", "<value>"});
-	options.push_back({"-lax-magic", "Force CPU to use this value for LAX opcode", "<value>"});
 	options.push_back({"-no-driver", "Run without video, audio, input drivers", ""});
 	options.push_back({"-no-gui", "Open without graphical user interface and force -no-driver", ""});
 	options.push_back({"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"});
 	options.push_back({"-aggressive-warp", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""});
 	options.push_back({"-fast-testbench", "analyze passed options and then decides on the use of aggressive warp and/or PRG memory injection", ""});
-	
-    for(auto& option : options) {                
+
+}
+
+auto Cmd::printInvalidParam() -> void {
+    if (ambiguousParam)
+        GUIKIT::System::printToCmd( "Ambiguous option: '" + invalidParam + "'\nFor help use '-help'\n" );
+    else
+        GUIKIT::System::printToCmd( "Unknown option: '" + invalidParam + "'\nFor help use '-help'\n" );
+}
+
+auto Cmd::printHelp() -> void {
+    
+    GUIKIT::System::printToCmd( "\n" );
+    
+    if (versionRequested) {
+        
+        GUIKIT::System::printToCmd( "Version: " + (std::string)VERSION + "\n" );
+        
+        return;
+    }    
+    
+    GUIKIT::System::printToCmd( "Usage: Denise [option]... [image paths]... \n\n" );
+    GUIKIT::System::printToCmd( "Available command-line options:\n" );
+
+    for(auto& option : options) {
         
         if (option.ident.empty())
             GUIKIT::System::printToCmd( option.param + "\n");
@@ -160,8 +228,6 @@ auto Cmd::parse() -> void {
     bool limitCyclesNext = false;
     bool reuSizeNext = false;
 	bool georamSizeNext = false;
-    bool aneMagicNext = false;
-	bool laxMagicNext = false;
     bool screenshotPathNext = false;
 	bool autostartPrgNext = false;
 	bool fastTestbench = false;
@@ -197,19 +263,7 @@ auto Cmd::parse() -> void {
             setGeoRamSize( arg );
             continue;
         }
-        
-        if (aneMagicNext) {
-            aneMagicNext = false;
-            setAneMagic( arg );
-            continue;
-        }
 
-		if (laxMagicNext) {
-			laxMagicNext = false;
-			setLaxMagic(arg);
-			continue;
-		}
-        
         if (screenshotPathNext) {
             screenshotPathNext = false;     	
             settingsC64->set<unsigned>( "crop_type", (unsigned)EmuInt::CropType::Monitor );
@@ -259,7 +313,7 @@ auto Cmd::parse() -> void {
         else if (arg == "-sid-8580") {
             updateModel( emuC64, LIBC64::Interface::ModelIdSid, 0 );
         }
-        else if (arg == "-cia-6526a") {
+        else if (arg == "-cia-8521") {
             updateModel( emuC64, LIBC64::Interface::ModelIdCiaRev, 1 );
         }
         else if (arg == "-cia-6526") {
@@ -276,12 +330,6 @@ auto Cmd::parse() -> void {
         }
 		else if (arg == "-georam") {
             georamSizeNext = true;
-        }
-        else if (arg == "-ane-magic") {
-            aneMagicNext = true;
-        }
-		else if (arg == "-lax-magic") {
-            laxMagicNext = true;
         }
 		else if (arg == "-aggressive-warp") {
 			aggressiveWarp = 1;
@@ -584,20 +632,6 @@ auto Cmd::getCycles(std::string arg) -> unsigned {
     } catch (...) {}
 
 	return 0;
-}
-
-auto Cmd::setAneMagic(std::string arg) -> void {
-    
-    auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
-    
-    updateModel( program->getEmulator("C64"), LIBC64::Interface::ModelIdCpuAneMagic, magic );
-}
-
-auto Cmd::setLaxMagic(std::string arg) -> void {
-    
-    auto magic = GUIKIT::String::convertHexToInt( arg, 0xee ) & 0xff;
-    
-    updateModel( program->getEmulator("C64"), LIBC64::Interface::ModelIdCpuLaxMagic, magic );
 }
 
 auto Cmd::setAutoStartPrg(std::string arg) -> void {    
