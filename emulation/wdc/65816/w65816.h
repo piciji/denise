@@ -51,6 +51,7 @@ struct W65816 {
     auto debuggerAdd(DebuggerAction action, uint32_t addr, uint32_t addrTo = 0) -> void;
     auto debuggerRemove(DebuggerAction action, uint32_t addr) -> void;
     auto debuggerRemove(DebuggerAction action) -> void;
+    auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }
 
     enum {  RESET = 1, WAI = 2, STP = 4, IRQ_LINE = 8, NMI_LINE = 0x10, RDY_LINE = 0x20,
             NMI_TRANSITION = 0x40, IRQ_PENDING = 0x80, NMI_PENDING = 0x100,

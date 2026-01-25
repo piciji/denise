@@ -115,6 +115,7 @@ struct Denise {
         struct {
             uint16_t* data = nullptr;
             unsigned pos = 0;
+            unsigned lastPos = 0;
             uint8_t sprData[16];
             bool lock = false;
         } spr[8];
@@ -123,8 +124,7 @@ struct Denise {
             store = state;
             reset();
         }
-        auto reset() -> void { for (auto& s : spr) { s.pos = 0; s.lock = false; } }
-        auto resetPos() -> void { for (auto& s : spr) s.pos = 0; }
+        auto reset() -> void { for (auto& s : spr) { s.lastPos = s.pos; s.pos = 0; s.lock = false; } }
         auto resetLock() -> void { for (auto& s : spr) s.lock = false; }
     } debugger;
 

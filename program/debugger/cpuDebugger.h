@@ -3,6 +3,9 @@
 
 #include "debugger.h"
 
+#define LIST_INSTRUCTIONS 256
+#define LIST_TRACES 512
+
 struct CpuDebugger : Debugger {
 
     explicit CpuDebugger( Emulator::Interface* emulator );
@@ -80,6 +83,11 @@ struct CpuDebugger : Debugger {
         std::string data;
     };
 
+    struct Trace {
+        std::string disassembled;
+        uint16_t flags;
+    };
+
     struct Watcher {
         unsigned addr;
         std::string ident;
@@ -87,25 +95,25 @@ struct CpuDebugger : Debugger {
         bool enabled;
     };
 
-    struct {
-        unsigned addr = 0;
-        Emulator::Interface::DebuggerAction action = DebuggerAction::None;
-        bool maybeModified = false;
-    } last;
+    std::optional<unsigned> currentInstRow;
 
     std::vector<Watcher> watchers;
     Instruction instructions[LIST_INSTRUCTIONS];
+    Trace traces[LIST_TRACES];
 
     auto buildTheme() -> GUIKIT::Layout* override;
     auto searchTheme(unsigned addr) -> void override;
     auto translateTheme() -> void override;
     auto updateTheme() -> void override;
+    auto prepareTheme() -> void override;
     auto initTheme() -> void override;
     auto closeTheme() -> void override;
     auto saveIdent() -> std::string override;
     auto titleIdent() -> std::string override;
 
-    auto cacheInstructions(unsigned addr) -> void;
+    auto fetchTraces() -> void;
+    auto fetchInstructions(unsigned addr) -> void;
+
     auto updateInstructionList() -> void;
     auto updateTraceList() -> void;
     auto addToWatcherList(unsigned addr, DebuggerAction action, const std::string& ident = "") -> void;
@@ -126,5 +134,5 @@ struct CpuDebugger : Debugger {
     auto update6510(LIBC64::DebuggerSnapshot& s) -> void;
     auto update65816(LIBC64::DebuggerSnapshot& s) -> void;
 
-    auto getCpuType() -> Emulator::Interface::DebuggerChip;
+    auto getCpuType() -> DebuggerTheme;
 };

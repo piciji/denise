@@ -281,36 +281,37 @@ auto pLogicViewer::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
 }
 
 auto pLogicViewer::buildDrawArea(HDC hdc, RECT rcWork, unsigned firstSlot, unsigned buildSlots) -> void {
-    unsigned slots = logicViewer.state.logics.size();
-    if (slots == 0)
-        return;
+    unsigned maxSlots = logicViewer.state.logics.size();
     unsigned fullWidth = buildSlots * (DMA_SLOT_WIDTH + 1);
     unsigned height = rcWork.bottom - rcWork.top;
 
+    RECT rc = { 0, 0, (long)fullWidth, (long)height};
+
     drawDC = CreateCompatibleDC(hdc);
     drawBmp = CreateCompatibleBitmap(hdc, fullWidth, height);
-    RECT rc = { 0, 0, (long)fullWidth, (long)height};
 
     SelectObject(drawDC, drawBmp);
     SelectObject(drawDC, hfont);
     SelectObject(drawDC, pApplication::darkEdgePen);
     SelectObject(drawDC, pApplication::darkBGSofterBrush);
 
-    Gdiplus::Graphics g(drawDC);
-    g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
-
     SetBkMode(drawDC, TRANSPARENT);
     FillRect(drawDC, &rc, pApplication::darkBGSofterBrush);
 
+    if (maxSlots == 0)
+        return;
+
+    Gdiplus::Graphics g(drawDC);
+    g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
+
     rc.right = DMA_SLOT_WIDTH;
 
-    auto _maxSlots = logicViewer.state.logics.size();
-    if (firstSlot >= _maxSlots)
+    if (firstSlot >= maxSlots)
         firstSlot = 0;
 
     buildSlots = firstSlot + buildSlots;
-    if (buildSlots > _maxSlots)
-        buildSlots = _maxSlots;
+    if (buildSlots > maxSlots)
+        buildSlots = maxSlots;
 
     for (unsigned i = firstSlot; i < buildSlots; i++) {
         auto& logicState = logicViewer.state.logics[i];

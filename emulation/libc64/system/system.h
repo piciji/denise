@@ -153,6 +153,7 @@ struct System {
     std::vector<Prg*> prgs;
 	
 	Callback countDownPowerSupply;
+    Callback debuggerAutoUpdater;
 	
 	Emulator::Crop<uint8_t>* crop;
     unsigned serializationSize;
@@ -245,6 +246,8 @@ struct System {
         uint32_t addr;
     } debugger;
 
+    DebuggerSnapshot debuggerSnapshot;
+
 	Emulator::Interface::MemoryPattern memoryInit;
     
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
@@ -332,8 +335,8 @@ struct System {
     auto set2Mhz(bool state) -> void;
     auto toggle2Mhz() -> bool;
 
-    auto debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
-	auto debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
+    auto debuggerAdd(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
+	auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
 
 	auto debuggerStepOver() -> void;
 	auto debuggerStepInto() -> void;
@@ -342,7 +345,9 @@ struct System {
 	auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void;
 
     auto debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
-    auto updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateDebuggerSnapshot() -> void;
+    auto debuggerUpdate() -> void;
+    auto debuggerUpdateEvent() -> void;
 
 	auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
 	auto disassembleData(unsigned addr, unsigned bytes) -> std::string;

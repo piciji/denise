@@ -20,6 +20,9 @@
 #include "../expansionPort/gameCart/businessBasic.h"
 #include "../traps/traps.h"
 
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
+
 namespace LIBC64 {
 
 System::System(Interface* interface) :
@@ -521,7 +524,14 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
     };
 
-    sysTimer.registerCallback( { &countDownPowerSupply, 1 } );
+    debuggerAutoUpdater = [this]() {
+        if (debugger.action == DebuggerAction::None) {
+            debugger.action = DebuggerAction::AutoUpdate;
+            debuggerUpdate();
+        }
+    };
+
+    sysTimer.registerCallback( {{ &countDownPowerSupply, 1 }, { &debuggerAutoUpdater, 1 }} );
 
     // connect keyboard
     for( auto& device : interface->devices ) {
@@ -713,6 +723,7 @@ auto System::power( bool softReset ) -> void {
     }
 
     history.reset();
+    debuggerUpdateEvent();
     powerOn = true;
 }
 
@@ -859,10 +870,14 @@ auto System::run() -> void {
 
     debugCart->check();
 
-    if (debugger.action != Emulator::Interface::DebuggerAction::None) {
-        interface->debugger(debugger.action, debugger.addr, cpu.hasModifiedCode());
-        debugger.action = Emulator::Interface::DebuggerAction::None;
+    if (debugger.action != DebuggerAction::None) {
+        debuggerUpdate();
     }
+}
+
+auto System::debuggerUpdate() -> void {
+    debuggerUpdateEvent();
+    updateDebuggerSnapshot();
 }
 
 auto System::isUltimax() -> bool {
@@ -1313,48 +1328,62 @@ auto System::toggle2Mhz() -> bool {
     return mhz2 & 0x80;
 }
 
-auto System::debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
-    switch (chip) {
-        case Interface::DebuggerChip::Video:
+auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
+    switch (theme) {
+        case DebuggerTheme::Video:
+            debuggerSnapshot.themes |= (unsigned)theme;
             vicIICycle.debugInfo.setEnable( true );
             vicIIFast.debugInfo.setEnable( true );
             break;
-        case Emulator::Interface::DebuggerChip::C65c816:
-            superCpu->debuggerAdd((WDCFAMILY::W65816::DebuggerAction)action, addr, addrTo);
-            break;
-        case Emulator::Interface::DebuggerChip::C6510:
+        case DebuggerTheme::CheckpointsCore1:
             cpu.debuggerAdd( (M6510::DebuggerAction)action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
             break;
-        case Emulator::Interface::DebuggerChip::Unspecified: {
+        case DebuggerTheme::CheckpointsCore2:
+            superCpu->debuggerAdd((WDCFAMILY::W65816::DebuggerAction)action, addr, addrTo);
+            break;
+        case DebuggerTheme::Unspecified: {
             switch (action) {
-                case Emulator::Interface::DebuggerAction::Line:
-                case Emulator::Interface::DebuggerAction::Frame:
+                case DebuggerAction::Line:
+                case DebuggerAction::Frame:
                     vicII->debuggerAction = action;
+                    break;
+                case DebuggerAction::AutoUpdate:
+                    debuggerUpdate();
                     break;
             }
         } break;
+        default:
+            debuggerSnapshot.themes |= (unsigned)theme;
+            break;
     }
+
+    debuggerUpdateEvent();
 }
 
-auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void {
-    switch (chip) {
-        case Interface::DebuggerChip::Video:
+auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+    switch (theme) {
+        case DebuggerTheme::Video:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
             vicIICycle.debugInfo.setEnable( false );
             vicIIFast.debugInfo.setEnable( false );
             break;
-        case Interface::DebuggerChip::C65c816:
-            if (addr.has_value())
-                superCpu->debuggerRemove( (WDCFAMILY::W65816::DebuggerAction)action, addr.value());
-            else
-                superCpu->debuggerRemove((WDCFAMILY::W65816::DebuggerAction)action);
-            break;
-        case Emulator::Interface::DebuggerChip::C6510:
+        case DebuggerTheme::CheckpointsCore1:
             if (addr.has_value())
                 cpu.debuggerRemove( (M6510::DebuggerAction)action, addr.value() );
             else
                 cpu.debuggerRemove( (M6510::DebuggerAction)action);
             break;
+        case DebuggerTheme::CheckpointsCore2:
+            if (addr.has_value())
+                superCpu->debuggerRemove( (WDCFAMILY::W65816::DebuggerAction)action, addr.value());
+            else
+                superCpu->debuggerRemove((WDCFAMILY::W65816::DebuggerAction)action);
+            break;
+        default:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
+            break;
     }
+    debuggerUpdateEvent();
 }
 
 auto System::debuggerStepOver() -> void {
@@ -1396,33 +1425,47 @@ auto System::debugPointReached(Emulator::Interface::DebuggerAction action, unsig
     debugger.addr = addr;
 }
 
-auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
-    snap.superCpu = expansionPort->haltMainCpu();
+auto System::updateDebuggerSnapshot() -> void {
+    debuggerSnapshot.mutex.lock();
+    debuggerSnapshot.superCpu = expansionPort->haltMainCpu();
+    debuggerSnapshot.callbackAction = debugger.action;
+    debuggerSnapshot.callbackAddress = debugger.addr;
+    debuggerSnapshot.codeMaybeModified = debuggerSnapshot.superCpu ? superCpu->hasModifiedCode() : cpu.hasModifiedCode();
 
-    switch (snap.theme) {
-        case Emulator::Interface::DebuggerSnapshot::Theme::CPU:
-            if (expansionPort->haltMainCpu())
-                superCpu->updateSnapshot(snap);
-            else
-                cpu.updateSnapshot(snap);
-            break;
-        case Emulator::Interface::DebuggerSnapshot::Theme::Memory:
-            if (expansionPort->haltMainCpu())
-                superCpu->updateMemorySnapshot( snap );
-            else
-                updateMemorySnapshot(snap);
-            break;
-        case Emulator::Interface::DebuggerSnapshot::Theme::CIA:
-            updateCiaDebuggerSnapshot(snap);
-            break;
-        case Emulator::Interface::DebuggerSnapshot::Theme::Video:
-            vicII->updateSnapshot(snap);
-            break;
-        default:
-            break;
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CPU) {
+        if (expansionPort->haltMainCpu())
+            superCpu->updateSnapshot(debuggerSnapshot);
+        else
+            cpu.updateSnapshot(debuggerSnapshot);
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Memory) {
+        if (expansionPort->haltMainCpu())
+            superCpu->updateMemorySnapshot( debuggerSnapshot );
+        else
+            updateMemorySnapshot(debuggerSnapshot);
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CIA) {
+        updateCiaDebuggerSnapshot(debuggerSnapshot);
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Video) {
+        vicII->updateSnapshot(debuggerSnapshot);
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus) {
+
     }
 
-    vicII->updatePositionSnapshot(snap);
+    vicII->updatePositionSnapshot(debuggerSnapshot);
+
+    interface->debugger(&debuggerSnapshot);
+    debuggerSnapshot.mutex.unlock();
+    debugger.action = DebuggerAction::None;
+}
+
+auto System::debuggerUpdateEvent() -> void {
+    if (debuggerSnapshot.themes) {
+        sysTimer.add( &debuggerAutoUpdater, (63 * 312 + 31) * 5, Emulator::SystemTimer::Action::UpdateExisting );
+    } else
+        sysTimer.remove( &debuggerAutoUpdater );
 }
 
 auto System::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {

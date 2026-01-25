@@ -136,8 +136,8 @@ struct Interface : Emulator::Interface  {
     auto setRewind(bool state) -> void;
 
     // debugger
-    auto debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
-    auto debuggerRemove(DebuggerChip chip, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void;
+    auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void;
 
     auto debuggerStepOver() -> void;
     auto debuggerStepInto() -> void;
@@ -147,7 +147,6 @@ struct Interface : Emulator::Interface  {
     auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
     auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
-    auto getDebuggerSnapshot(LIBAMI::DebuggerSnapshot& snap) -> void;
     auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void;
     auto getDmaDump() -> uint8_t*;
 

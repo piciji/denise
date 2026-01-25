@@ -275,35 +275,24 @@ auto VideoDebugger::getSelectedSprite() -> unsigned {
 }
 
 auto VideoDebugger::updateTheme() -> void {
-    bool locked = emuThread->lock();
-    snapshot->theme = Emulator::Interface::DebuggerSnapshot::Theme::Video;
+    if (emulator != activeEmulator)
+        return;
 
     if (isC64()) {
-        auto* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
         LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
-
-        c64Emu->getDebuggerSnapshot(snap);
-
         updateView(snap);
     } else {
-        auto* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
         LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
-
-        amiEmu->getDebuggerSnapshot(snap);
-
         updateView(snap);
     }
-
-    if (locked)
-        emuThread->unlock();
 }
 
 auto VideoDebugger::initTheme() -> void {
-    emulator->debuggerAdd( DebuggerChip::Video, DebuggerAction::None, 0);
+    emulator->debuggerAdd( DebuggerTheme::Video, DebuggerAction::None, 0);
 }
 
 auto VideoDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( DebuggerChip::Video, DebuggerAction::None);
+    emulator->debuggerRemove( DebuggerTheme::Video, DebuggerAction::None);
 }
 
 auto VideoDebugger::updateView(LIBC64::DebuggerSnapshot& s) -> void {
@@ -434,7 +423,7 @@ auto VideoDebugger::updateView(LIBC64::DebuggerSnapshot& s) -> void {
     updateReg( lp.line, snap.lpPin );
     updateReg( lp.latched, snap.lpLatched );
 
-    control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateControl( s.vPos, s.hPos );
 }
 
 auto VideoDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
@@ -579,7 +568,7 @@ auto VideoDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
     updateReg(flags.blocks[3]->flag1, snap.bplCon3 & 1); // extblken
     updateReg(flags.blocks[3]->flag2, snap.bplCon3 & 0x20); // brdblnk
 
-    control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateControl( s.vPos, s.hPos );
 }
 
 auto VideoDebugger::translateTheme() -> void {

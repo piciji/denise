@@ -61,6 +61,9 @@ struct MemDebugger : Debugger {
     auto searchTheme(unsigned addr) -> void override;
     auto translateTheme() -> void override;
     auto updateTheme() -> void override;
+    auto prepareTheme() -> void override;
+    auto initTheme() -> void override;
+    auto closeTheme() -> void override;
     auto saveIdent() -> std::string override;
     auto titleIdent() -> std::string override;
 
@@ -68,5 +71,6 @@ struct MemDebugger : Debugger {
     auto updateMemory(LIBAMI::DebuggerSnapshot& s) -> void;
     auto updateMemory(LIBC64::DebuggerSnapshot& s) -> void;
     template<typename T> auto loadMemoryBank(uint8_t bank, bool noColorChanges) -> void;
+    template<typename T> auto fetchDump() -> void;
     static auto toAscii(const uint8_t* buf, int len, char* result, char pad = '.') -> void;
 };

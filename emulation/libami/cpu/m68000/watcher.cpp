@@ -39,12 +39,20 @@ auto WatchPoints::find(uint32_t addr) -> Watcher* {
     return nullptr;
 }
 
-auto WatchPoints::check(uint32_t addr, unsigned Size) -> bool {
+auto WatchPoints::check(uint32_t addr) -> bool {
     for ( auto& w : watchers ) {
-        if ((w.addr >= addr) && (w.addr < addr + Size))
+        if (w.addr == addr)
             return true;
     }
     return false;
+}
+
+auto WatchPoints::check(uint32_t addr, unsigned Size) -> Watcher* {
+    for ( auto& w : watchers ) {
+        if ((w.addr >= addr) && (w.addr < addr + Size))
+            return &w;
+    }
+    return nullptr;
 }
 
 auto WatchPoints::removeAll() -> void {

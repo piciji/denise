@@ -60,13 +60,14 @@ struct VicIIBase {
         struct {
             uint8_t* data = nullptr;
             unsigned pos = 0;
+            unsigned lastPos = 0;
         } spr[8];
 
         auto setEnable(bool state) -> void {
             store = state;
             reset();
         }
-        auto reset() -> void { for (auto& s : spr) s.pos = 0; }
+        auto reset() -> void { for (auto& s : spr) { s.lastPos = s.pos; s.pos = 0; } }
     } debugInfo;
 
     uint8_t reg2mhz;

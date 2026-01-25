@@ -556,13 +556,13 @@ End:
 
 auto pListView::addToImageList(Image& image, unsigned size) -> void {
     images.push_back(&image);
-    image.scaleNearest(size, size);
+    image.scaleLinear( size, size);
     HBITMAP bitmap = CreateBitmap(image);
     ImageList_Add(imageList, bitmap, NULL);
     DeleteObject(bitmap);
 }
 
-auto pListView::buildImageList() -> void {    
+auto pListView::buildImageList() -> void {
     images.clear();
 
     ListView_SetImageList(hwnd, NULL, LVSIL_SMALL);
@@ -574,8 +574,8 @@ auto pListView::buildImageList() -> void {
     auto& list = listView.state.images;
 
     for(unsigned y = 0; y < list.size(); y++) {
-        for(unsigned x = 0; x < list.at(y).size(); x++) {
-            Image* img = list.at(y).at(x);
+        for(unsigned x = 0; x < list[y].size(); x++) {
+            Image* img = list[y][x];
             if(!img || img->empty()) {
                 setImage(y, x, -1);
                 continue;
@@ -583,7 +583,7 @@ auto pListView::buildImageList() -> void {
 
             bool found = false;
             for(unsigned z = 0; z < images.size(); z++) {
-                if(img == images.at(z)) {
+                if(img == images[z]) {
                     found = true;
                     setImage(y, x, z);
                     break;

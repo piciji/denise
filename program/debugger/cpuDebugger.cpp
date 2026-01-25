@@ -185,7 +185,8 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
                     emulator->debuggerRemove(getCpuType(), DebuggerAction::Breakpoint, inst.addr);
             }
             updateWatcherList();
-            timer->setEnabled();
+            if (isPaused())
+                emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::AutoUpdate, 0 );
             emuThread->unlock();
             enableInstructionBreakpoint(row, watcher->enabled);
         }
@@ -284,6 +285,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
     cpu->state.trace.toggle.onToggle = [this]() {
         if (cpu->switchLayout.selection() == 0) {
             emuThread->lock();
+            fetchTraces();
             updateTraceList();
             emuThread->unlock();
             cpu->switchLayout.setSelection( 1 );
@@ -295,6 +297,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->lock();
         emulator->debuggerRemove( getCpuType(), DebuggerAction::History, 0 );
         emulator->debuggerAdd( getCpuType(), DebuggerAction::History, 0 );
+        fetchTraces();
         updateTraceList();
         emuThread->unlock();
     };
@@ -328,23 +331,6 @@ auto CpuDebugger::updateCpuFlags(const char* flagIdent, unsigned flags) -> void 
             f->setText( _t );
         }
     }
-}
-
-auto CpuDebugger::cacheInstructions(unsigned addr) -> void {
-    unsigned bytes = 0;
-    unsigned _addr = addr;
-
-    for (unsigned i = 0; i < LIST_INSTRUCTIONS; i++) {
-        auto& inst = instructions[i];
-
-        inst.addr = addr;
-        inst.disassembled = emulator->disassemble( addr, bytes );
-        inst.data = emulator->disassembleData( addr, bytes );
-
-        addr += bytes;
-    }
-
-    emulator->debuggerAdd( getCpuType(), DebuggerAction::ModifiedCode, _addr, addr );
 }
 
 auto CpuDebugger::updateInstructionList() -> void {
@@ -393,12 +379,15 @@ auto CpuDebugger::updateTraceList() -> void {
         flagIdent = &LIBC64::DebuggerSnapshot::flagIdent[0];
     }
 
-    for (int i = 0; i < 512; i++) {
-        uint16_t flags;
+    for (int i = 0; i < LIST_TRACES; i++) {
         std::string str;
-        std::string result = emulator->disassembleTrace( i, flags );
+        Trace& trace = traces[i];
+
+        uint16_t flags = trace.flags;
+        std::string result = trace.disassembled;
         if (result.empty())
             break;
+
         auto parts = GUIKIT::String::split( result, '|' );
 
         for (int f = flagSize - 1; f >= 0; f--) {
@@ -493,7 +482,7 @@ auto CpuDebugger::updateWatcherList() -> void {
 
         unsigned row = addrList.rowCount() - 1;
 
-        addrList.setImage( row, 0, w.enabled ? breakEnableImg : breakDisableImg, true );
+        addrList.setImage( row, 0, w.enabled ? breakEnableSmallImg : breakDisableSmallImg, true );
         if (w.action == DebuggerAction::Watchpoint)
             addrList.setImage( row, 2, memoryImg, true );
         else if (w.action == DebuggerAction::ExceptionPoint)
@@ -526,13 +515,13 @@ auto CpuDebugger::removeInstructionBreakpoint(unsigned row) -> void {
 
 auto CpuDebugger::enableWatcher(unsigned row, bool state) -> void {
     auto& addrList = cpu->watcher.list;
-    addrList.setImage( row, 0, state ? breakEnableImg : breakDisableImg );
+    addrList.setImage( row, 0, state ? breakEnableSmallImg : breakDisableSmallImg );
 }
 
 auto CpuDebugger::updateWatcherSelection() -> void {
     auto& watcherList = cpu->watcher.list;
-    if (last.action == DebuggerAction::Watchpoint || last.action == DebuggerAction::ExceptionPoint) {
-        auto row = findWatcherRowBy(last.addr, last.action);
+    if (snapshot->callbackAction == DebuggerAction::Watchpoint || snapshot->callbackAction == DebuggerAction::ExceptionPoint) {
+        auto row = findWatcherRowBy(snapshot->callbackAddress, snapshot->callbackAction);
         if (row.has_value())
             watcherList.setSelection( row.value() );
         else if (watcherList.selected())
@@ -547,63 +536,88 @@ auto CpuDebugger::searchTheme(unsigned addr) -> void {
         cpu->instructionLayout.list.setSelection( instRow.value() );
     else {
         emuThread->lock();
-        cacheInstructions(addr);
+        fetchInstructions(addr);
         emuThread->unlock();
         updateInstructionList();
     }
 }
 
-auto CpuDebugger::updateTheme() -> void {
-    bool locked = emuThread->lock();
-    unsigned addr;
-    snapshot->theme = Emulator::Interface::DebuggerSnapshot::Theme::CPU;
+auto CpuDebugger::fetchInstructions(unsigned addr) -> void {
+    unsigned bytes = 0;
+    unsigned _addr = addr;
 
-    if (isAmiga()) {
-        auto* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
-        LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
+    for (unsigned i = 0; i < LIST_INSTRUCTIONS; i++) {
+        auto& inst = instructions[i];
 
-        amiEmu->getDebuggerSnapshot(snap);
-        addr = snap.pc;
-        update68k(snap);
-        if (cpu->switchLayout.selection() == 1)
-            updateTraceList();
+        inst.addr = addr;
+        inst.disassembled = emulator->disassemble( addr, bytes );
+        inst.data = emulator->disassembleData( addr, bytes );
 
-    } else {
-        auto* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
-        LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
-
-        c64Emu->getDebuggerSnapshot(snap);
-        addr = snap.pc;
-
-        if (!snap.superCpu && mode == Mode::CPU) {
-            update6510( snap );
-            if (cpu->switchLayout.selection() == 1)
-                updateTraceList();
-        } else if (snap.superCpu && mode == Mode::SCPU) {
-            update65816( snap );
-            if (cpu->switchLayout.selection() == 1)
-                updateTraceList();
-
-        } else {
-            if (locked)
-                emuThread->unlock();
-            return;
-        }
+        addr += bytes;
     }
 
-    std::optional<unsigned> instRow = std::nullopt;
+    emulator->debuggerAdd( getCpuType(), DebuggerAction::ModifiedCode, _addr, addr );
+}
 
-    if (!last.maybeModified)
-        instRow = findInstructionRowBy(addr);
+auto CpuDebugger::fetchTraces() -> void {
+    for (int i = 0; i < LIST_TRACES; i++) {
+        uint16_t flags;
+        Trace& trace = traces[i];
+        trace.disassembled = emulator->disassembleTrace( i, flags );
+        trace.flags = flags;
+    }
+}
 
-    if (instRow.has_value()) {
-        if (locked)
-            emuThread->unlock();
-        cpu->instructionLayout.list.setSelection( instRow.value() );
+auto CpuDebugger::prepareTheme() -> void {
+    if (!snapshot)
+        return;
+
+    if (cpu->switchLayout.selection() == 1)
+        fetchTraces();
+
+    unsigned addr;
+    if (isAmiga()) {
+        LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
+        addr = snap.pc;
     } else {
-        cacheInstructions(addr);
-        if (locked)
-            emuThread->unlock();
+        LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
+        addr = snap.pc;
+    }
+
+    currentInstRow = std::nullopt;
+
+    if (!snapshot->codeMaybeModified)
+        currentInstRow = findInstructionRowBy(addr);
+
+    if (!currentInstRow.has_value())
+        fetchInstructions(addr);
+}
+
+auto CpuDebugger::updateTheme() -> void {
+    if (emulator != activeEmulator)
+        return;
+
+    if (isAmiga()) {
+        LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
+        update68k(snap);
+
+    } else {
+        LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
+
+        if (!snap.superCpu && mode == Mode::CPU)
+            update6510( snap );
+        else if (snap.superCpu && mode == Mode::SCPU)
+            update65816( snap );
+        else
+            return;
+    }
+
+    if (cpu->switchLayout.selection() == 1)
+        updateTraceList();
+
+    if (currentInstRow.has_value()) {
+        cpu->instructionLayout.list.setSelection( currentInstRow.value() );
+    } else {
         updateInstructionList();
     }
 
@@ -611,6 +625,7 @@ auto CpuDebugger::updateTheme() -> void {
 }
 
 auto CpuDebugger::initTheme() -> void {
+    emulator->debuggerAdd( DebuggerTheme::CPU, DebuggerAction::None, 0);
     emulator->debuggerAdd( getCpuType(), DebuggerAction::History, 0 );
 
     for (auto& watcher : watchers) {
@@ -620,10 +635,12 @@ auto CpuDebugger::initTheme() -> void {
             emulator->debuggerRemove( getCpuType(), watcher.action, watcher.addr );
     }
 
-    last.maybeModified = true;
+    // force reload of instruction cache
+    emulator->debuggerAdd( getCpuType(), DebuggerAction::ModifiedCode, 0, ~0 );
 }
 
 auto CpuDebugger::closeTheme() -> void {
+    emulator->debuggerRemove( DebuggerTheme::CPU, DebuggerAction::None);
     emulator->debuggerRemove( getCpuType(), DebuggerAction::Breakpoint );
     emulator->debuggerRemove( getCpuType(), DebuggerAction::Watchpoint );
     emulator->debuggerRemove( getCpuType(), DebuggerAction::ExceptionPoint );
@@ -656,7 +673,7 @@ auto CpuDebugger::update68k(LIBAMI::DebuggerSnapshot& s) -> void {
         i++;
     }
 
-    control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateControl( s.vPos, s.hPos );
     updateCpuFlags(&LIBAMI::DebuggerSnapshot::flagIdent[0], s.flags);
 }
 
@@ -683,7 +700,7 @@ auto CpuDebugger::update6510(LIBC64::DebuggerSnapshot& s) -> void {
         }
     }
 
-    control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateControl( s.vPos, s.hPos );
     updateCpuFlags(&LIBC64::DebuggerSnapshot::flagIdent[0], s.flags);
 }
 
@@ -710,7 +727,7 @@ auto CpuDebugger::update65816(LIBC64::DebuggerSnapshot& s) -> void {
         }
     }
 
-    control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateControl( s.vPos, s.hPos );
     updateCpuFlags(&LIBC64::DebuggerSnapshot::flagIdent65816[0], s.flags);
 }
 
@@ -767,13 +784,13 @@ auto CpuDebugger::translateTheme() -> void {
     cpu->state.trace.clear.setTooltip( showTips ? trans->getA( "clear trace") : "" );
 }
 
-inline auto CpuDebugger::getCpuType() -> Emulator::Interface::DebuggerChip {
+inline auto CpuDebugger::getCpuType() -> DebuggerTheme {
     if (isAmiga())
-        return DebuggerChip::C68000;
+        return DebuggerTheme::CheckpointsCore1;
     if (mode == Mode::SCPU)
-        return DebuggerChip::C65c816;
+        return DebuggerTheme::CheckpointsCore2;
 
-    return DebuggerChip::C6510;
+    return DebuggerTheme::CheckpointsCore1;
 }
 
 auto CpuDebugger::saveIdent() -> std::string {

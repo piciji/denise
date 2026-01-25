@@ -921,7 +921,7 @@ auto Denise::updateSnapshot(DebuggerSnapshot& snap) -> void {
         auto& spr = sprites[i];
         auto& _sprD = debugger.spr[i];
         auto& _sprT = s.spr[i];
-        unsigned pos = _sprD.pos;
+        unsigned pos = snap.callbackAction == Interface::DebuggerAction::AutoUpdate ? _sprD.lastPos : _sprD.pos;
 
         if (pos)
             std::memcpy(_sprT.data, _sprD.data, pos * 2);

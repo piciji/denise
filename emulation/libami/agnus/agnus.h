@@ -45,7 +45,7 @@ struct Agnus {
 
     enum { EVENT_ONE_CYCLE_DELAY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_INTREQ, EVENT_RARELY,
         EVENT_KBD, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_SERIAL, EVENT_FLOPPY, EVENT_BLANKEN,
-        EVENT_CHANNELS };
+        EVENT_DEBUGGER, EVENT_CHANNELS };
 
     enum { BLT_INIT = 0, DMACON = 1,
         PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
@@ -508,6 +508,8 @@ struct Agnus {
 
     auto addDmaLogEntry() -> void;
     auto peekDmaWatcher(Emulator::Interface::DebuggerDma& dmaLogger) -> void;
+    auto debuggerAutoUpdate() -> void;
+    auto debuggerUpdateEvent() -> void;
 };
 
 }

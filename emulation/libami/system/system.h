@@ -39,6 +39,8 @@ struct System {
     bool firmwareChanged;
     bool asyncHDDAccess = false;
 
+    DebuggerSnapshot debuggerSnapshot;
+
     Emulator::Crop<uint16_t> crop;
 
     Cia<MOS_8520> cia1;
@@ -146,10 +148,11 @@ struct System {
     auto getHDDAsync() -> bool;
     auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop crop ) -> void;
 
-    auto debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void;
-    auto debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
-    auto updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
+    auto debuggerAdd(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void;
+    auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
+    auto updateDebuggerSnapshot() -> void;
     auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
+    auto debuggerUpdate() -> void;
 };
 
 

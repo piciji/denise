@@ -62,6 +62,9 @@ auto Agnus::processEvents(int64_t curClock) -> void {
         if (curClock == eventClock[EVENT_BLANKEN])
             blanken();
 
+        if (curClock == eventClock[EVENT_DEBUGGER])
+            debuggerAutoUpdate();
+
         int64_t next = eventClock[EVENT_KBD];
         if (eventClock[EVENT_SERIAL] < next)
             next = eventClock[EVENT_SERIAL];
@@ -73,6 +76,8 @@ auto Agnus::processEvents(int64_t curClock) -> void {
             next = eventClock[EVENT_LEAVE_EMULATION];
         if (eventClock[EVENT_BLANKEN] < next)
             next = eventClock[EVENT_BLANKEN];
+        if (eventClock[EVENT_DEBUGGER] < next)
+            next = eventClock[EVENT_DEBUGGER];
 
         updateEventAbs<EVENT_RARELY>(next);
     }
@@ -421,6 +426,23 @@ auto Agnus::leaveEmulationEvent() -> void {
     system->leaveEmulation = true;
     system->runAhead.pos = 0;
     setEventInactive<Agnus::EVENT_LEAVE_EMULATION>();
+}
+
+auto Agnus::debuggerAutoUpdate() -> void {
+    if (debugger.action == Emulator::Interface::DebuggerAction::None) {
+        debugger.action = Emulator::Interface::DebuggerAction::AutoUpdate;
+        system->debuggerUpdate();
+    } else
+        setEventInactive<EVENT_DEBUGGER>();
+}
+
+auto Agnus::debuggerUpdateEvent() -> void {
+    auto& snap = system->debuggerSnapshot;
+
+    if (snap.themes) {
+        updateEvent<EVENT_DEBUGGER>(msecToDMACycles( 100 ));
+    } else
+        setEventInactive<EVENT_DEBUGGER>();
 }
 
 auto Agnus::HTotalEvent() -> void {

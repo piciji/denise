@@ -484,6 +484,7 @@ auto M68000::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
         case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
         case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
         case DebuggerAction::History:           historyHandler.disable( ); break;
+        case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
         default:
             break;
     }

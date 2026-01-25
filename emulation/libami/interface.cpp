@@ -802,10 +802,6 @@ auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
     return system->cpu.disassembleTrace( i, flags );
 }
 
-auto Interface::getDebuggerSnapshot(LIBAMI::DebuggerSnapshot& snap) -> void {
-    system->updateDebuggerSnapshot(snap);
-}
-
 auto Interface::getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {
     system->agnus.memoryDump(bank, dump);
 }
@@ -814,12 +810,12 @@ auto Interface::getDmaDump() -> uint8_t* {
     return system->agnus.debugger.dmaFrame;
 }
 
-auto Interface::debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
-    system->debuggerAdd( chip, action, addr, addrTo );
+auto Interface::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    system->debuggerAdd( theme, action, addr, addrTo );
 }
 
-auto Interface::debuggerRemove(DebuggerChip chip, DebuggerAction action, std::optional<unsigned> addr) -> void {
-    system->debuggerRemove( chip, action, addr );
+auto Interface::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+    system->debuggerRemove( theme, action, addr );
 }
 
 auto Interface::debuggerStepOver() -> void {

@@ -244,7 +244,7 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
         updateReg( sh.shiftCount, sc.shiftCount );
     }
 
-    control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateControl( s.vPos, s.hPos );
 }
 
 auto CiaDebugger::buildTheme() -> GUIKIT::Layout* {
@@ -304,25 +304,24 @@ auto CiaDebugger::translateTheme() -> void {
 }
 
 auto CiaDebugger::updateTheme() -> void {
-    bool locked = emuThread->lock();
-    snapshot->theme = Emulator::Interface::DebuggerSnapshot::Theme::CIA;
+    if (emulator != activeEmulator)
+        return;
 
     if (isAmiga()) {
-        auto* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
         LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
-
-        amiEmu->getDebuggerSnapshot(snap);
         updateCia<LIBAMI::DebuggerSnapshot>( snap);
     } else {
-        auto* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
         LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
-
-        c64Emu->getDebuggerSnapshot(snap);
         updateCia<LIBC64::DebuggerSnapshot>( snap);
     }
+}
 
-    if (locked)
-        emuThread->unlock();
+auto CiaDebugger::initTheme() -> void {
+    emulator->debuggerAdd( DebuggerTheme::CIA, DebuggerAction::None, 0 );
+}
+
+auto CiaDebugger::closeTheme() -> void {
+    emulator->debuggerRemove( DebuggerTheme::CIA, DebuggerAction::None );
 }
 
 auto CiaDebugger::saveIdent() -> std::string {

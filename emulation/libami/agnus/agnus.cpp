@@ -266,6 +266,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     vBlankOffset = 0;
     crop.reset();
     updateDdfEnableCache();
+    debuggerUpdateEvent();
 }
 
 auto Agnus::powerOff() -> void {
@@ -1044,6 +1045,10 @@ auto Agnus::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
 auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.hPos = hPos;
     snap.vPos = vPos;
+    //fprintf( stderr, "%i ", vPos );
+    snap.callbackAction = debugger.action;
+    snap.callbackAddress = debugger.addr;
+    snap.codeMaybeModified = cpu.hasModifiedCode();
 }
 
 auto Agnus::Debugger::enableDmaView(bool state, bool withScrolling) -> void {

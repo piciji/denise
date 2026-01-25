@@ -224,7 +224,7 @@ struct Program : Emulator::Interface::Bind {
     auto hasActiveDebugger() -> bool;
     auto hasFocusedDebugger() -> bool;
     auto getActiveDebuggers() -> std::vector<Debugger*>;
-    auto debugger(Emulator::Interface::DebuggerAction action, unsigned addr, bool maybeModified) -> void override;
+    auto debugger(Emulator::Interface::DebuggerSnapshot* snapshot) -> void override;
 
     static auto hasFocus() -> bool;
 

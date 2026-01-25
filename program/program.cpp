@@ -898,9 +898,8 @@ auto Program::getActiveDebuggers() -> std::vector<Debugger*> {
     return out;
 }
 
-auto Program::debugger(Emulator::Interface::DebuggerAction action, unsigned addr, bool maybeModified) -> void {
+auto Program::debugger(Emulator::Interface::DebuggerSnapshot* snapshot) -> void {
     if (hasActiveDebugger()) {
-        isPause |= 2;
-        Debugger::Callback( action, addr, maybeModified );
+        Debugger::Callback( snapshot );
     }
 }

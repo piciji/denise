@@ -173,10 +173,13 @@ auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
     memory->bankList.onChange = [this]() {
         unsigned selectedBank = memory->bankList.selection();
         emuThread->lock();
-        if (isAmiga())
+        if (isAmiga()) {
+            fetchDump<uint16_t>();
             loadMemoryBank<uint16_t>( selectedBank, true );
-        else
+        } else {
+            fetchDump<uint8_t>();
             loadMemoryBank<uint8_t>( selectedBank, true );
+        }
         emuThread->unlock();
     };
 
@@ -195,30 +198,32 @@ auto MemDebugger::translateTheme() -> void {
 }
 
 auto MemDebugger::updateTheme() -> void {
-    bool locked = emuThread->lock();
-    snapshot->theme = Emulator::Interface::DebuggerSnapshot::Theme::Memory;
+    if (emulator != activeEmulator)
+        return;
 
     if (isAmiga()) {
-        auto* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
         LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
-
-        amiEmu->getDebuggerSnapshot(snap);
         updateMemory( snap);
     } else {
-        auto* c64Emu = dynamic_cast<LIBC64::Interface*>(emulator);
         LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
-
-        c64Emu->getDebuggerSnapshot(snap);
-
         if (mode == Mode::Memory) {
             updateMemory( snap);
         } else if (snap.superCpu && mode == Mode::MemorySCPU) {
             updateMemory( snap);
         }
     }
+}
 
-    if (locked)
-        emuThread->unlock();
+auto MemDebugger::initTheme() -> void {
+    emulator->debuggerAdd( DebuggerTheme::Memory, DebuggerAction::None, 0);
+}
+
+auto MemDebugger::closeTheme() -> void {
+    emulator->debuggerRemove( DebuggerTheme::Memory, DebuggerAction::None);
+}
+
+auto MemDebugger::prepareTheme() -> void {
+    isAmiga() ? fetchDump<uint16_t>() : fetchDump<uint8_t>();
 }
 
 auto MemDebugger::updateMemory(LIBAMI::DebuggerSnapshot& s) -> void {
@@ -266,7 +271,7 @@ auto MemDebugger::updateMemory(LIBAMI::DebuggerSnapshot& s) -> void {
 
     loadMemoryBank<uint16_t>(selectedBank, false);
 
-    control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateControl( s.vPos, s.hPos );
 }
 
 auto MemDebugger::updateMemory(LIBC64::DebuggerSnapshot& s) -> void {
@@ -337,7 +342,7 @@ auto MemDebugger::updateMemory(LIBC64::DebuggerSnapshot& s) -> void {
 
     loadMemoryBank<uint8_t>(selectedBank, false);
 
-    control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateControl( s.vPos, s.hPos );
 
     updateC64MemControl(s.mode);
 }
@@ -361,15 +366,26 @@ auto MemDebugger::updateC64MemControl(uint8_t _mode, bool init) -> void {
 }
 
 template<typename T>
+auto MemDebugger::fetchDump() -> void {
+    auto& bankList = memory->bankList;
+    unsigned selectedBank = 0;
+    if (bankList.selected())
+        selectedBank = bankList.selection();
+
+    auto* pNew = reinterpret_cast<T*>(memDump);
+
+    if (isC64() && (mode == Mode::Memory))
+        emulator->getMemoryDumpPage( selectedBank, reinterpret_cast<uint8_t*>(pNew) );
+    else {
+        emulator->getMemoryDumpBank( selectedBank, pNew );
+    }
+}
+
+template<typename T>
 auto MemDebugger::loadMemoryBank(uint8_t bank, bool noColorChanges) -> void {
     auto& pageList = memory->pageList;
     auto* pNew = reinterpret_cast<T*>(memDump);
     auto* pOld = reinterpret_cast<T*>(memDumpOld);
-
-    if (isC64() && (mode == Mode::Memory))
-        emulator->getMemoryDumpPage( bank, reinterpret_cast<uint8_t*>(pNew) );
-    else
-        emulator->getMemoryDumpBank( bank, pNew );
 
     unsigned visibleRow = pageList.getFirstVisibleRow();
     unsigned allowedTextChanges = 24 * 8;

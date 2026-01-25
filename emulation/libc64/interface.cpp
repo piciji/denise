@@ -2065,16 +2065,12 @@ auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
     return system->disassembleTrace( i, (uint8_t&)flags );
 }
 
-auto Interface::getDebuggerSnapshot(LIBC64::DebuggerSnapshot& snap) -> void {
-    system->updateDebuggerSnapshot(snap);
+auto Interface::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    system->debuggerAdd( theme, action, addr, addrTo );
 }
 
-auto Interface::debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
-    system->debuggerAdd( chip, action, addr, addrTo );
-}
-
-auto Interface::debuggerRemove(DebuggerChip chip, DebuggerAction action, std::optional<unsigned> addr) -> void {
-    system->debuggerRemove( chip, action, addr );
+auto Interface::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+    system->debuggerRemove( theme, action, addr );
 }
 
 auto Interface::debuggerStepOver() -> void {

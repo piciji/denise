@@ -25,7 +25,9 @@ struct WatchPoints {
 
     auto remove(uint32_t addr) -> void;
 
-    auto check(uint32_t addr, unsigned Size = 1) -> bool;
+    auto check(uint32_t addr) -> bool;
+
+    auto check(uint32_t addr, unsigned Size) -> Watcher*;
 
     auto find(uint32_t addr) -> Watcher*;
 

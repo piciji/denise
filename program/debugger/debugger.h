@@ -4,10 +4,8 @@
 #include "../../guikit/api.h"
 #include "../../emulation/interface.h"
 
-#define LIST_INSTRUCTIONS 256
-
 typedef Emulator::Interface::DebuggerAction DebuggerAction;
-typedef Emulator::Interface::DebuggerChip DebuggerChip;
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
 
 namespace LIBAMI {
     struct Interface;
@@ -34,6 +32,8 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image trashImg;
     GUIKIT::Image breakEnableImg;
     GUIKIT::Image breakDisableImg;
+    GUIKIT::Image breakEnableSmallImg;
+    GUIKIT::Image breakDisableSmallImg;
     GUIKIT::Image searchImg;
     GUIKIT::Image nullImg;
     GUIKIT::Image pauseImg;
@@ -69,7 +69,6 @@ struct Debugger : GUIKIT::Window {
     Control* control = nullptr;
 
     Emulator::Interface::DebuggerSnapshot* snapshot = nullptr;
-    static GUIKIT::Timer* timer;
     static GUIKIT::Timer* timerVisibility;
     GUIKIT::VerticalLayout layout;
 
@@ -80,14 +79,15 @@ struct Debugger : GUIKIT::Window {
     virtual auto searchTheme(unsigned addr) -> void {}
     virtual auto translateTheme() -> void {}
     virtual auto updateTheme() -> void {}
+    virtual auto prepareTheme() -> void {}
     virtual auto initTheme() -> void {}
     virtual auto closeTheme() -> void {}
     virtual auto buildControl() -> GUIKIT::Layout* { return nullptr; }
 
     auto translate() -> void;
-    auto update() -> void;
+    auto updateControl(uint16_t v, uint8_t h) -> void;
 
-    static auto Callback(DebuggerAction action, unsigned addr, bool maybeModified) -> void;
+    static auto Callback(Emulator::Interface::DebuggerSnapshot* snapshot) -> void;
     static auto Callback() -> void;
     auto updateToolboxVisibility() -> void;
     auto makeVisible() -> void;

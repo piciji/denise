@@ -392,7 +392,8 @@ auto VicIIBase::updateSnapshot(DebuggerSnapshot& snap) -> void {
         auto& _sprD = debugInfo.spr[i];
         auto& _sprT = s.spr[i];
         auto& _spr = sprite[i];
-        unsigned pos = _sprD.pos;
+        unsigned pos = snap.callbackAction == Interface::DebuggerAction::AutoUpdate ? _sprD.lastPos : _sprD.pos;
+
         if (pos)
             std::memcpy(_sprT.data, _sprD.data, pos);
 

@@ -26,7 +26,7 @@ struct DmaDebugger : Debugger {
             struct Watcher : GUIKIT::HorizontalLayout {
                 GUIKIT::Button button;
                 GUIKIT::LineEdit edit;
-                DebuggerAction action;
+                unsigned position;
 
                 Watcher();
             };

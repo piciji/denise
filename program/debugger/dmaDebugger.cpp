@@ -28,7 +28,7 @@ DmaDebugger::Dma::Legend::Legend() {
 
     int i = 0;
     for (auto& watcher : watchers) {
-        watcher.action = static_cast<DebuggerAction>(static_cast<unsigned>(DebuggerAction::DmaWatch1) + i++);
+        watcher.position = i++;
         append( watcher, {0u, 0u}, 13 );
     }
 }
@@ -97,9 +97,9 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->lock();
         VideoManager::getInstance( emulator )->dmaColors = checked ? &dmaColors[0] : nullptr;
         if (checked)
-            emulator->debuggerAdd( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+            emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
         else
-            emulator->debuggerRemove( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+            emulator->debuggerRemove( DebuggerTheme::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
         emuThread->unlock();
     };
 
@@ -143,7 +143,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->unlock();
     };
 
-    scrollTimer.setInterval( 60 );
+    scrollTimer.setInterval( 100 );
     scrollTimer.onFinished = [this]() {
         dma->dmaLine.viewer.scrollToActive();
         scrollTimer.setEnabled( false );
@@ -177,7 +177,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
                     w->button.setStore( -1 );
                     updateTheme();
                     w->button.setStore( val );
-                    emulator->debuggerAdd( DebuggerChip::Bus, w->action, val );
+                    emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaWatch, val, w->position );
                     emuThread->unlock();
                     w->button.setText( _text );
                 }
@@ -209,7 +209,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
 
         if (w) {
             emuThread->lock();
-            emulator->debuggerRemove( DebuggerChip::Bus, w->action );
+            emulator->debuggerRemove( DebuggerTheme::Bus, DebuggerAction::DmaWatch, w->position );
             w->button.setStore( -1 );
             updateTheme();
             emuThread->unlock();
@@ -229,7 +229,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
             w->button.setStore( -1 );
             updateTheme();
             w->button.setStore( 1 << 24 );
-            emulator->debuggerAdd( DebuggerChip::Bus, w->action, 1 << 24 );
+            emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaWatch, 1 << 24, w->position );
             emuThread->unlock();
             w->button.setText( "IPL" );
         }
@@ -259,7 +259,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
                 w->button.setStore( -1 );
                 updateTheme();
                 w->button.setStore( _addr );
-                emulator->debuggerAdd( DebuggerChip::Bus, w->action, _addr );
+                emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaWatch, _addr, w->position );
                 emuThread->unlock();
                 w->button.setText( _ident );
             }
@@ -292,22 +292,15 @@ auto DmaDebugger::loadColors() -> void {
 }
 
 auto DmaDebugger::updateTheme() -> void {
-    bool locked = emuThread->lock();
-    snapshot->theme = Emulator::Interface::DebuggerSnapshot::Theme::Bus;
+    if (emulator != activeEmulator)
+        return;
 
     if (isAmiga()) {
-        auto* amiEmu = dynamic_cast<LIBAMI::Interface*>(emulator);
         LIBAMI::DebuggerSnapshot& snap = *static_cast<LIBAMI::DebuggerSnapshot*>(snapshot);
-
-        amiEmu->getDebuggerSnapshot(snap);
-
         updateView(snap);
     }
 
     scrollTimer.setEnabled(  );
-
-    if (locked)
-        emuThread->unlock();
 }
 
 auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
@@ -331,107 +324,109 @@ auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
         i++;
     }
 
-    for (unsigned i = 0; i < slots; i++) {
-        auto& lState = logics[i];
-        dStateNext = ( (i+1) == slots) ? nullptr : &snap.debuggerDma[i+1];
-        auto& debugState = snap.debuggerDma[i];
+    if (snap.debuggerDma) {
+        for (unsigned i = 0; i < slots; i++) {
+            auto& lState = logics[i];
+            dStateNext = ( (i+1) == slots) ? nullptr : &snap.debuggerDma[i+1];
+            auto& debugState = snap.debuggerDma[i];
 
-        lState.position = i;
-        lState.color = dmaColors[ debugState.usage & 0xf ].color;
-        lState.display = debugState.usage ? GUIKIT::LogicState::Display::SingleBlock : GUIKIT::LogicState::Display::None;
+            lState.position = i;
+            lState.color = dmaColors[ debugState.usage & 0xf ].color;
+            lState.display = debugState.usage ? GUIKIT::LogicState::Display::SingleBlock : GUIKIT::LogicState::Display::None;
 
-        lState.usage = (std::string)LIBAMI::DebuggerSnapshot::dmaModesShort[ debugState.usage ].ident;
-        if (symbolic) {
-            if (debugState.usage == 5) { // CPU
-                if (debugState.mapper == 1)
-                    lState.symbolicAddr = "CHIP";
-                else if (debugState.mapper == 2)
-                    lState.symbolicAddr = "SLOW";
-                else if (debugState.mapper == 6) { // register
-                    unsigned _rg = debugState.address & 0x1fe;
-                    auto& ri = LIBAMI::DebuggerSnapshot::registerIdents[_rg >> 1];
-                    uint8_t newRegister = (ri.vector >> 12) & 0xf;
-                    if ((snap.model < 4 ) && newRegister) // no OCS register
-                        lState.symbolicAddr = "OpenBUS";
-                    else if ((snap.model == 4 ) && (newRegister & 2)) // no ECS register
-                        lState.symbolicAddr = "OpenBUS";
-                    else
-                        lState.symbolicAddr = (std::string)ri.ident;
-                } else
-                    lState.symbolicAddr = "";
-            } else {
-                if ((debugState.address & snap.chipMemMask) != debugState.address)
-                    lState.symbolicAddr = "SLOW";
-                else
-                    lState.symbolicAddr = "CHIP";
-            }
-        } else
-            lState.addr = debugState.address;
-
-        lState.data = debugState.data;
-
-        if (debugState.mapper != 0xff) {
-            lState.display2 = GUIKIT::LogicState::Display::SingleBlock;
-            lState.usage2 = LIBAMI::DebuggerSnapshot::cpuAccess[debugState.mapper];
-            lState.addr2 = debugState.addrCpu;
-            lState.data2 = debugState.dataCpu;
-        } else {
-            lState.display2 = GUIKIT::LogicState::Display::None;
-        }
-
-        int j = 0;
-        for (auto& data : debugState.watcher) {
-            if (watcherStates & (1 << j)) {
-                bool dataChangeBefore = !dStateBefore || (dStateBefore->watcher[j] != data);
-                bool dataChangeNext = !dStateNext || (dStateNext->watcher[j] != data);
-
-                if (dataChangeBefore && dataChangeNext) {
-                    lState.watches[j] = {GUIKIT::LogicState::Display::SingleBlock, data};
-                } else if (dataChangeBefore && !dataChangeNext) {
-                    lState.watches[j] = {GUIKIT::LogicState::Display::BeginBlock, data};
-                } else if (!dataChangeBefore && dataChangeNext) {
-                    lState.watches[j] = {GUIKIT::LogicState::Display::EndBlock, data};
+            lState.usage = (std::string)LIBAMI::DebuggerSnapshot::dmaModesShort[ debugState.usage ].ident;
+            if (symbolic) {
+                if (debugState.usage == 5) { // CPU
+                    if (debugState.mapper == 1)
+                        lState.symbolicAddr = "CHIP";
+                    else if (debugState.mapper == 2)
+                        lState.symbolicAddr = "SLOW";
+                    else if (debugState.mapper == 6) { // register
+                        unsigned _rg = debugState.address & 0x1fe;
+                        auto& ri = LIBAMI::DebuggerSnapshot::registerIdents[_rg >> 1];
+                        uint8_t newRegister = (ri.vector >> 12) & 0xf;
+                        if ((snap.model < 4 ) && newRegister) // no OCS register
+                            lState.symbolicAddr = "OpenBUS";
+                        else if ((snap.model == 4 ) && (newRegister & 2)) // no ECS register
+                            lState.symbolicAddr = "OpenBUS";
+                        else
+                            lState.symbolicAddr = (std::string)ri.ident;
+                    } else
+                        lState.symbolicAddr = "";
                 } else {
-                    lState.watches[j] = {GUIKIT::LogicState::Display::KeepBlock, data};
+                    if ((debugState.address & snap.chipMemMask) != debugState.address)
+                        lState.symbolicAddr = "SLOW";
+                    else
+                        lState.symbolicAddr = "CHIP";
                 }
             } else
-                lState.watches[j].first = GUIKIT::LogicState::Display::None;
+                lState.addr = debugState.address;
 
-            j++;
+            lState.data = debugState.data;
+
+            if (debugState.mapper != 0xff) {
+                lState.display2 = GUIKIT::LogicState::Display::SingleBlock;
+                lState.usage2 = LIBAMI::DebuggerSnapshot::cpuAccess[debugState.mapper];
+                lState.addr2 = debugState.addrCpu;
+                lState.data2 = debugState.dataCpu;
+            } else {
+                lState.display2 = GUIKIT::LogicState::Display::None;
+            }
+
+            int j = 0;
+            for (auto& data : debugState.watcher) {
+                if (watcherStates & (1 << j)) {
+                    bool dataChangeBefore = !dStateBefore || (dStateBefore->watcher[j] != data);
+                    bool dataChangeNext = !dStateNext || (dStateNext->watcher[j] != data);
+
+                    if (dataChangeBefore && dataChangeNext) {
+                        lState.watches[j] = {GUIKIT::LogicState::Display::SingleBlock, data};
+                    } else if (dataChangeBefore && !dataChangeNext) {
+                        lState.watches[j] = {GUIKIT::LogicState::Display::BeginBlock, data};
+                    } else if (!dataChangeBefore && dataChangeNext) {
+                        lState.watches[j] = {GUIKIT::LogicState::Display::EndBlock, data};
+                    } else {
+                        lState.watches[j] = {GUIKIT::LogicState::Display::KeepBlock, data};
+                    }
+                } else
+                    lState.watches[j].first = GUIKIT::LogicState::Display::None;
+
+                j++;
+            }
+
+            lState.active = i <= s.hPos;
+
+            dStateBefore = &debugState;
         }
-
-        lState.active = i <= s.hPos;
-
-        dStateBefore = &debugState;
     }
-
     canvas.update();
 
-    control->position.setText("V: " + hex( s.vPos, 3 ) + " H: " + hex( s.hPos, 2 ) );
+    updateControl( s.vPos, s.hPos );
 }
 
 auto DmaDebugger::initTheme() -> void {
-    emulator->debuggerAdd( DebuggerChip::Bus, DebuggerAction::DmaLog, 0);
+    emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaLog, 0);
+
     if (dma->dmaFrame.showUsage.checked()) {
         VideoManager::getInstance( emulator )->dmaColors = &dmaColors[0];
-        emulator->debuggerAdd( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+        emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
     }
 
     for (auto& watcher : dma->legend.watchers) {
         if (watcher.button.getStore() == -1)
             continue;
 
-        emulator->debuggerAdd(DebuggerChip::Bus, watcher.action, watcher.button.getStore() );
+        emulator->debuggerAdd(DebuggerTheme::Bus, DebuggerAction::DmaWatch, watcher.button.getStore(), watcher.position );
     }
 }
 
 auto DmaDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( DebuggerChip::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
-    emulator->debuggerRemove( DebuggerChip::Bus, DebuggerAction::DmaLog);
+    emulator->debuggerRemove( DebuggerTheme::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+    emulator->debuggerRemove( DebuggerTheme::Bus, DebuggerAction::DmaLog);
     VideoManager::getInstance( emulator )->dmaColors = nullptr;
 
     for (auto& watcher : dma->legend.watchers)
-        emulator->debuggerRemove(DebuggerChip::Bus, watcher.action );
+        emulator->debuggerRemove(DebuggerTheme::Bus, DebuggerAction::DmaWatch, watcher.position );
 }
 
 auto DmaDebugger::translateTheme() -> void {

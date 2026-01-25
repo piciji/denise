@@ -8,6 +8,9 @@
 #include "dongle.cpp"
 #include "../expansionPort/builtinHD.h"
 
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
+
 namespace LIBAMI {
 
 System::System(Interface* interface) :
@@ -326,10 +329,14 @@ auto System::run() -> void {
     if (observer.stateChange)
         informAboutStateChange();
 
-    if (agnus.debugger.action != Emulator::Interface::DebuggerAction::None) {
-        interface->debugger(agnus.debugger.action, agnus.debugger.addr, cpu.hasModifiedCode());
-        agnus.debugger.action = Emulator::Interface::DebuggerAction::None;
+    if (agnus.debugger.action != DebuggerAction::None) {
+        debuggerUpdate();
     }
+}
+
+auto System::debuggerUpdate() -> void {
+    agnus.debuggerUpdateEvent();
+    updateDebuggerSnapshot();
 }
 
 auto System::informAboutKeyUpdate() -> void {
@@ -684,104 +691,100 @@ auto System::cropFrame( Emulator::Interface::CropType type, Emulator::Interface:
     agnus.debugger.crop.settings.crop = _crop;
 }
 
-auto System::debuggerAdd(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
-    switch (chip) {
-        case Interface::DebuggerChip::Video:
+auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    switch (theme) {
+        case DebuggerTheme::Video:
+            debuggerSnapshot.themes |= (unsigned)theme;
             denise.debugger.setEnable( true );
             break;
-        case Interface::DebuggerChip::Bus:
+        case DebuggerTheme::Bus:
             switch (action) {
-                case Emulator::Interface::DebuggerAction::DmaView:
+                case DebuggerAction::DmaView:
                     agnus.debugger.enableDmaView(true, addr == 0);
                     break;
-                case Emulator::Interface::DebuggerAction::DmaLog:
+                case DebuggerAction::DmaLog:
+                    debuggerSnapshot.themes |= (unsigned)theme;
                     agnus.debugger.enableDmaLog(true);
                     break;
-                case Emulator::Interface::DebuggerAction::DmaWatch1:
-                    agnus.debugger.dmaWatchers[0] = addr | (0x80 << 24);
-                    break;
-                case Emulator::Interface::DebuggerAction::DmaWatch2:
-                    agnus.debugger.dmaWatchers[1] = addr | (0x80 << 24);
-                    break;
-                case Emulator::Interface::DebuggerAction::DmaWatch3:
-                    agnus.debugger.dmaWatchers[2] = addr | (0x80 << 24);
-                    break;
-                case Emulator::Interface::DebuggerAction::DmaWatch4:
-                    agnus.debugger.dmaWatchers[3] = addr | (0x80 << 24);
+                case DebuggerAction::DmaWatch:
+                    agnus.debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
                     break;
             } break;
-        case Interface::DebuggerChip::C68000:
+        case DebuggerTheme::CheckpointsCore1:
             cpu.debuggerAdd( (M68FAMILY::M68000::DebuggerAction)action, addr, addrTo );
             break;
-        case Interface::DebuggerChip::Unspecified: {
+
+        case DebuggerTheme::Unspecified: {
             switch (action) {
-                case Emulator::Interface::DebuggerAction::Line:
-                case Emulator::Interface::DebuggerAction::Frame:
+                case DebuggerAction::Line:
+                case DebuggerAction::Frame:
                     agnus.debuggerAction = action;
+                    break;
+                case DebuggerAction::AutoUpdate:
+                    debuggerUpdate();
                     break;
             }
         } break;
+        default:
+            debuggerSnapshot.themes |= (unsigned)theme;
+            break;
     }
+
+    agnus.debuggerUpdateEvent();
 }
 
-auto System::debuggerRemove(Emulator::Interface::DebuggerChip chip, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void {
-    switch (chip) {
-        case Interface::DebuggerChip::Video:
+auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+    switch (theme) {
+        case DebuggerTheme::Video:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
             denise.debugger.setEnable( false );
             break;
-        case Interface::DebuggerChip::Bus:
+        case DebuggerTheme::Bus:
             switch (action) {
-                case Emulator::Interface::DebuggerAction::DmaView:
+                case DebuggerAction::DmaView:
                     agnus.debugger.enableDmaView(false, !addr.has_value() || (addr.value() == 0));
                     break;
-                case Emulator::Interface::DebuggerAction::DmaLog:
+                case DebuggerAction::DmaLog:
+                    debuggerSnapshot.themes &= ~(unsigned)theme;
                     agnus.debugger.enableDmaLog(false);
                     break;
-                case Emulator::Interface::DebuggerAction::DmaWatch1:
-                    agnus.debugger.dmaWatchers[0] = 0;
-                    break;
-                case Emulator::Interface::DebuggerAction::DmaWatch2:
-                    agnus.debugger.dmaWatchers[1] = 0;
-                    break;
-                case Emulator::Interface::DebuggerAction::DmaWatch3:
-                    agnus.debugger.dmaWatchers[2] = 0;
-                    break;
-                case Emulator::Interface::DebuggerAction::DmaWatch4:
-                    agnus.debugger.dmaWatchers[3] = 0;
+                case DebuggerAction::DmaWatch:
+                    agnus.debugger.dmaWatchers[addr.value() & 3] = 0;
                     break;
             } break;
-        case Interface::DebuggerChip::C68000:
+        case DebuggerTheme::CheckpointsCore1:
             if (addr.has_value())
                 cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr.value() );
             else
                 cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action );
             break;
+        default:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
+            break;
     }
+    agnus.debuggerUpdateEvent();
 }
 
-auto System::updateDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
-    switch (snap.theme) {
-        case Emulator::Interface::DebuggerSnapshot::Theme::CPU:
-            cpu.updateSnapshot(snap);
-            break;
-        case Emulator::Interface::DebuggerSnapshot::Theme::Memory:
-            agnus.updateMemorySnapshot(snap);
-            break;
-        case Emulator::Interface::DebuggerSnapshot::Theme::CIA:
-            updateCiaDebuggerSnapshot(snap);
-            break;
-        case Emulator::Interface::DebuggerSnapshot::Theme::Video:
-            denise.updateSnapshot(snap);
-            agnus.updateVideoSnapshot( snap );
-            break;
-        case Emulator::Interface::DebuggerSnapshot::Theme::Bus:
-            agnus.updateDmaSnapshot( snap );
-            break;
-        default:
-            break;
-    }
+auto System::updateDebuggerSnapshot() -> void {
+    debuggerSnapshot.mutex.lock();
+    agnus.updateSnapshot(debuggerSnapshot);
 
-    agnus.updateSnapshot(snap);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CPU)
+        cpu.updateSnapshot(debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Memory)
+        agnus.updateMemorySnapshot(debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CIA)
+        updateCiaDebuggerSnapshot(debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Video) {
+        denise.updateSnapshot(debuggerSnapshot);
+        agnus.updateVideoSnapshot( debuggerSnapshot );
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus)
+        agnus.updateDmaSnapshot( debuggerSnapshot );
+
+    interface->debugger(&debuggerSnapshot);
+    debuggerSnapshot.mutex.unlock();
+    agnus.debugger.action = DebuggerAction::None;
 }
 
 auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {

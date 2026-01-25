@@ -6,6 +6,7 @@
 #include <functional>
 #include <thread>
 #include <optional>
+#include <mutex>
 
 namespace Emulator {
     
@@ -340,13 +341,18 @@ struct Interface {
         uint16_t watcher[4];
     };
 
-    struct DebuggerSnapshot {
-        enum class Theme { CPU, Memory, CIA, Video, Bus } theme;
-    };
-
-    enum class DebuggerChip { Unspecified, C68000, C6502, C6510, C65c816, Video, Bus };
+    enum class DebuggerTheme { Unspecified = 0, CPU = 1, CheckpointsCore1 = 2, CheckpointsCore2 = 4,
+        Memory = 0x100, CIA = 0x200, Video = 0x400, Bus = 0x800,  };
     enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
-        DmaView, DmaLog, DmaWatch1, DmaWatch2, DmaWatch3, DmaWatch4 };
+        DmaView, DmaLog, DmaWatch, AutoUpdate };
+
+    struct DebuggerSnapshot {
+        unsigned themes = 0; // multiple themes
+        DebuggerAction callbackAction;
+        uint32_t callbackAddress;
+        bool codeMaybeModified = false;
+        std::mutex mutex;
+    };
 
     //callbacks
     struct Bind {
@@ -376,7 +382,7 @@ struct Interface {
         virtual auto fpsChanged() -> void {}
         virtual auto trapsResult(Media*, bool error) -> void {}
         virtual auto libraryMissing(std::string) -> void {}
-        virtual auto debugger(DebuggerAction action, unsigned addr, bool maybeModified) -> void {}
+        virtual auto debugger(DebuggerSnapshot* snapshot) -> void {}
     };
     Bind* bind = nullptr;
 
@@ -488,8 +494,8 @@ struct Interface {
         bind->libraryMissing(ident);
     }
 
-    auto debugger(DebuggerAction action, unsigned addr, bool maybeModified) -> void {
-        bind->debugger(action, addr, maybeModified);
+    auto debugger(DebuggerSnapshot* snapshot) -> void {
+        bind->debugger(snapshot);
     }
 
     template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {
@@ -663,8 +669,8 @@ struct Interface {
     virtual auto setMonitorFpsRatio(double ratio) -> void {}
 
     // debugger
-    virtual auto debuggerAdd(DebuggerChip chip, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
-    virtual auto debuggerRemove(DebuggerChip chip, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void {}
+    virtual auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
+    virtual auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void {}
 
     virtual auto debuggerStepOver() -> void {}
     virtual auto debuggerStepInto() -> void {}

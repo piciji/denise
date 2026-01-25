@@ -31,7 +31,7 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint16_t vPos;
 
     struct {
-        Emulator::Interface::DebuggerDma* debuggerDma;
+        Emulator::Interface::DebuggerDma* debuggerDma = nullptr;
         uint8_t lastHPos;
         unsigned model;
         unsigned chipMemMask;
