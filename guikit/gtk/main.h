@@ -302,6 +302,45 @@ struct pMultiSquareCanvas : pWidget {
 	~pMultiSquareCanvas();
 };
 
+struct pLogicViewer : pWidget {
+	LogicViewer& logicViewer;
+	GtkWidget* subWidget = nullptr;
+	Timer scrollTimer;
+
+	auto init() -> void;
+	auto create() -> void;
+	auto redraw(cairo_t* cr) -> void;
+	auto update() -> void;
+	auto buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry geo) -> void;
+	auto setGeometry(Geometry geometry) -> void;
+	auto setBox(Geometry& geo, unsigned offset) -> void;
+	auto getColorComponent(uint8_t component) -> double;
+	auto pg(int val) -> double;
+	auto drawText(cairo_t* cr, Geometry& geo, const std::string& text) -> void;
+	auto drawLine(cairo_t* cr, Geometry& geo) -> void;
+
+	auto drawRectRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void;
+	auto drawRectLeftRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void;
+	auto drawRectRightRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void;
+	auto getRoundedPath(cairo_t* cr, Geometry& geo) -> void;
+	auto getLeftRoundedPath(cairo_t* cr, Geometry& geo) -> void;
+	auto getRightRoundedPath(cairo_t* cr, Geometry& geo) -> void;
+
+	auto drawRect(cairo_t* cr, LogicState::Display display, Geometry& geo, const std::string& text, unsigned padding) -> void;
+	auto drawRect(cairo_t* cr, Geometry& geo, const std::string& text) -> void;
+
+	auto updateScrollRange() -> void {}
+	auto scrollToActive() -> void;
+	auto getOffset(unsigned pos) -> unsigned;
+
+	static auto expose(GtkWidget* widget, cairo_t* cr, pLogicViewer* self) -> gboolean;
+	static auto scrolled(GtkAdjustment* adj, pLogicViewer* self) -> void;
+	static auto onScroll(GtkWidget* widget, GdkEventScroll* event, pLogicViewer* self) -> gboolean;
+
+	pLogicViewer(LogicViewer& logicViewer) : pWidget(logicViewer), logicViewer(logicViewer) {}
+	~pLogicViewer();
+};
+
 struct pImageView : pWidget {
     ImageView& imageView;
     GdkPixbuf* surface = nullptr;
@@ -692,6 +731,7 @@ struct pMenu : pMenuBase {
     auto destroy() -> void;
     auto rebuild() -> void;
     auto init() -> void;
+	auto update(Window* window) -> void {}
 
     pMenu(Menu& menu);
     ~pMenu();
@@ -785,6 +825,10 @@ struct pFont {
     static auto size(std::string font, std::string text) -> Size;
 	static auto convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::string;
 	static auto scale( unsigned pixel ) -> unsigned;
+};
+
+struct pColorChooser {
+	static auto choose(ColorChooser::State& state) -> std::optional<unsigned>;
 };
 
 struct pSystem {

@@ -1474,6 +1474,10 @@ auto LogicViewer::setSymbolicAddr(bool symbolicAddr) -> void {
     state.symbolicAddr = symbolicAddr;
 }
 
+auto LogicViewer::setOffsets(std::vector<unsigned> offsets ) -> void {
+    state.offsets = std::move(offsets);
+}
+
 auto LogicViewer::update() -> void {
     p.update();
 }

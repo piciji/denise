@@ -961,7 +961,7 @@ struct Viewport : Widget {
 };
 
 struct LogicState {
-    enum class Display { None = 0, SingleBlock = 1, BeginBlock = 2, KeepBlock = 4, EndBlock = 8 };
+    enum class Display { EmptyBlock = 0, SingleBlock = 1, BeginBlock = 2, KeepBlock = 4, EndBlock = 8 };
 
     bool active;
     unsigned position;
@@ -987,6 +987,7 @@ struct LogicViewer : Widget {
     auto update() -> void;
     auto scrollToActive() -> void;
     auto setAddrAs24bit(bool addr24bit = true) -> void;
+    auto setOffsets(std::vector<unsigned> offsets ) -> void;
     auto addrAs24bit() -> bool { return state.addr24bit; }
     auto setSymbolicAddr(bool symbolicAddr) -> void;
     auto hasSymbolicAddr() -> bool { return state.symbolicAddr; }
@@ -995,6 +996,8 @@ struct LogicViewer : Widget {
         std::vector<LogicState> logics;
         bool addr24bit = false;
         bool symbolicAddr = false;
+
+        std::vector<unsigned> offsets;
     } state;
 
     pLogicViewer& p;
@@ -1757,6 +1760,7 @@ struct String {
     static auto isNumber(const std::string& str) -> bool;
     static auto isFloatNumber(const std::string& str) -> bool;
 	static auto convertToNumber(std::string str, int defaultVal = 0) -> int;
+    static auto convertToHex( unsigned val, int length = -1 ) -> std::string;
     static auto convertIntToHex( int number, bool prepend_0x = true ) -> std::string;
     static auto convertHexToInt( std::string hex, int defaultValueByFailure = 0 ) -> int;
     static auto formatFloatingPoint(double value, uint8_t roundDecimal = 0, bool cutTrailingZero = false) -> std::string;

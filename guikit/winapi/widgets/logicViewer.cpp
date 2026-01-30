@@ -338,17 +338,17 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
         SetTextColor(drawDC, pApplication::useDark ? DARK_DISABLE_COL : GetSysColor(COLOR_GRAYTEXT));
     }
 
-    DrawText(drawDC, utf16_t(convertToHex(logicState.position)), -1, &rc, DT_CENTER);
+    DrawText(drawDC, utf16_t(String::convertToHex(logicState.position)), -1, &rc, DT_CENTER);
     rc.top = rc.bottom;
     rc.bottom = rc.top + 5;
 
-    if (logicState.display != LogicState::Display::None) {
+    if (logicState.display != LogicState::Display::EmptyBlock) {
         FillRect(drawDC, &rc, getBrush(logicState.color));
     }
 
     setBox(rc);
 
-    if (logicState.display == LogicState::Display::None) {
+    if (logicState.display == LogicState::Display::EmptyBlock) {
         DrawText(drawDC, L"-", -1, &rc, DT_CENTER);
         setBox(rc);
         drawLine(rc);
@@ -358,15 +358,15 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
     } else {
         DrawText(drawDC, utf16_t(logicState.usage), -1, &rc, DT_CENTER);
         setBox(rc);
-        std::string _addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : convertToHex(logicState.addr, addrLength);
+        std::string _addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr, addrLength);
         drawRectRounded(g, &path, rc, _addr, 5, logicState.active);
         setBox(rc, 10);
-        drawRectRounded(g, &path, rc, convertToHex(logicState.data), 10, logicState.active);
+        drawRectRounded(g, &path, rc, String::convertToHex(logicState.data), 10, logicState.active);
     }
 
     setBox(rc, 10);
 
-    if (logicState.display2 == LogicState::Display::None) {
+    if (logicState.display2 == LogicState::Display::EmptyBlock) {
         DrawText(drawDC, L"-", -1, &rc, DT_CENTER);
         setBox(rc);
         drawLine(rc);
@@ -376,14 +376,14 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
     } else {
         DrawText(drawDC, utf16_t(logicState.usage2), -1, &rc, DT_CENTER);
         setBox(rc);
-        drawRectRounded(g, &path, rc, convertToHex(logicState.addr2, addrLength), 5, logicState.active);
+        drawRectRounded(g, &path, rc, String::convertToHex(logicState.addr2, addrLength), 5, logicState.active);
         setBox(rc, 10);
-        drawRectRounded(g, &path, rc, convertToHex(logicState.data2), 10, logicState.active);
+        drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 10, logicState.active);
     }
 
     for (auto& watch : logicState.watches) {
         setBox(rc, 15);
-        drawRect(watch.first, g, &path, rc, convertToHex(watch.second), 10, logicState.active);
+        drawRect(watch.first, g, &path, rc, String::convertToHex(watch.second), 10, logicState.active);
     }
 }
 
@@ -402,7 +402,7 @@ inline auto pLogicViewer::drawLine(RECT& rc) -> void {
 inline auto pLogicViewer::drawRect(LogicState::Display display, Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT& rc, const std::string& text, unsigned padding, bool active) -> void {
     switch (display) {
         default:
-        case LogicState::Display::None:
+        case LogicState::Display::EmptyBlock:
             drawLine(rc);
             break;
         case LogicState::Display::SingleBlock:

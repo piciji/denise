@@ -255,6 +255,19 @@ auto String::convertToNumber(std::string str, int defaultVal) -> int {
 	return value;
 }
 
+auto String::convertToHex( unsigned val, int length ) -> std::string {
+    char hex[9];
+    if (length == -1)
+        snprintf(hex, 9, "%x", val);
+    else {
+        std::string format = "%0" + std::to_string(length) + "x";
+        snprintf(hex, 9, format.c_str(), val);
+    }
+    std::string result = static_cast<std::string>(hex);
+    toUpperCase( result );
+    return result;
+}
+
 auto String::convertIntToHex( int number, bool prepend_0x ) -> std::string {
     
     std::string _out = prepend_0x ? "0x" : "";

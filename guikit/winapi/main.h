@@ -1148,5 +1148,4 @@ auto CreateHIcon(Image& image) -> HICON;
 auto getDropPaths(WPARAM wparam) -> std::vector<std::string>;
 static auto scrollTo(HWND hwndScroller, WPARAM wparam, int& scrollPos ) -> void;
 static auto makeColorRef(unsigned rgb) -> COLORREF;
-static auto convertToHex( unsigned val, int length = -1 ) -> std::string;
 }

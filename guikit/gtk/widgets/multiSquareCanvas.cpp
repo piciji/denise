@@ -12,7 +12,7 @@ auto pMultiSquareCanvas::create() -> void {
     pSystem::applyCss( gtkWidget, "scrolledwindow undershoot.top, scrolledwindow undershoot.right, scrolledwindow undershoot.bottom, scrolledwindow undershoot.left { background-image: none; }");
 
     pSystem::addCssClass(gtkWidget, "somePadding");
-    pSystem::applyCss( gtkWidget, ".somePadding { padding-top: 4px;} " );
+    pSystem::applyCss( gtkWidget, ".somePadding { padding-top: 8px;} " );
 
     subWidget = gtk_drawing_area_new();
 

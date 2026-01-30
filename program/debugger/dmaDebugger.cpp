@@ -1,8 +1,6 @@
 
 #include "dmaDebugger.h"
 
-#include <dwmapi.h>
-
 #include "../program.h"
 #include "../thread/emuThread.h"
 
@@ -19,10 +17,10 @@ DmaDebugger::Dma::Legend::Legend::Watcher::Watcher() {
 
 DmaDebugger::Dma::Legend::Legend() {
     append( spacer, {0u, 0u}, 37 );
-    append( dma, {0u, 0u}, 12 );
+    append( dma, {0u, 0u}, 14 );
     append( dmaAddr, {0u, 0u}, 14 );
     append( dmaData, {0u, 0u}, 14 );
-    append( cpu, {0u, 0u}, 12 );
+    append( cpu, {0u, 0u}, 14 );
     append( cpuAddr, {0u, 0u}, 14 );
     append( cpuData, {0u, 0u}, 16 );
 
@@ -38,7 +36,7 @@ DmaDebugger::DmaControl::DmaControl() {
 }
 
 DmaDebugger::Dma::DmaLine::DmaLine(DmaDebugger* debugger) {
-    append(viewer, {~0u, 395u});
+    append(viewer, {~0u, 400u});
     if (debugger->isAmiga())
         viewer.addrAs24bit();
 }
@@ -76,7 +74,7 @@ DmaDebugger::Dma::DmaFrame::DmaFrame(DmaDebugger* debugger) {
 
 DmaDebugger::Dma::Dma(DmaDebugger* debugger)
 : dmaFrame( debugger ), dmaLine( debugger ) {
-    append(legend, {0u, 0u}, 10);
+    append(legend, {100u, 0u}, 10);
     append(dmaLine, {~0u, 0u}, 10);
     append(dmaFrame, {0u, 0u});
 }
@@ -195,6 +193,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         if (w) {
             w->remove( w->button );
             w->append( w->edit, {70u, 0u} );
+            w->edit.setMaxLength(6);
             w->edit.setFocused();
             w->synchronizeLayout();
         }
@@ -332,7 +331,7 @@ auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
 
             lState.position = i;
             lState.color = dmaColors[ debugState.usage & 0xf ].color;
-            lState.display = debugState.usage ? GUIKIT::LogicState::Display::SingleBlock : GUIKIT::LogicState::Display::None;
+            lState.display = debugState.usage ? GUIKIT::LogicState::Display::SingleBlock : GUIKIT::LogicState::Display::EmptyBlock;
 
             lState.usage = (std::string)LIBAMI::DebuggerSnapshot::dmaModesShort[ debugState.usage ].ident;
             if (symbolic) {
@@ -370,7 +369,7 @@ auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
                 lState.addr2 = debugState.addrCpu;
                 lState.data2 = debugState.dataCpu;
             } else {
-                lState.display2 = GUIKIT::LogicState::Display::None;
+                lState.display2 = GUIKIT::LogicState::Display::EmptyBlock;
             }
 
             int j = 0;
@@ -389,7 +388,7 @@ auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
                         lState.watches[j] = {GUIKIT::LogicState::Display::KeepBlock, data};
                     }
                 } else
-                    lState.watches[j].first = GUIKIT::LogicState::Display::None;
+                    lState.watches[j].first = GUIKIT::LogicState::Display::EmptyBlock;
 
                 j++;
             }
@@ -418,6 +417,22 @@ auto DmaDebugger::initTheme() -> void {
 
         emulator->debuggerAdd(DebuggerTheme::Bus, DebuggerAction::DmaWatch, watcher.button.getStore(), watcher.position );
     }
+
+    std::vector<unsigned> offsets;
+
+
+    offsets.push_back(dma->legend.dma.geometry().y + (dma->legend.dma.geometry().height >> 1));
+    offsets.push_back(dma->legend.dmaAddr.geometry().y + (dma->legend.dmaAddr.geometry().height >> 1));
+    offsets.push_back(dma->legend.dmaData.geometry().y + (dma->legend.dmaData.geometry().height >> 1));
+    offsets.push_back(dma->legend.cpu.geometry().y + (dma->legend.cpu.geometry().height >> 1));
+    offsets.push_back(dma->legend.cpuAddr.geometry().y + (dma->legend.cpuAddr.geometry().height >> 1));
+    offsets.push_back(dma->legend.cpuData.geometry().y + (dma->legend.cpuData.geometry().height >> 1));
+
+    for (auto& watcher : dma->legend.watchers) {
+        offsets.push_back(watcher.button.geometry().y + (watcher.button.geometry().height >> 1));
+    }
+
+    dma->dmaLine.viewer.setOffsets(offsets);
 }
 
 auto DmaDebugger::closeTheme() -> void {

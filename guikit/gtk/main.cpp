@@ -11,6 +11,7 @@ namespace GUIKIT {
 #include "statusbar.cpp"
 #include "display.cpp"
 #include "interProcess.cpp"
+#include "colorChooser.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"   
@@ -33,6 +34,7 @@ namespace GUIKIT {
 #include "widgets/squareCanvas.cpp"
 #include "widgets/multiSquareCanvas.cpp"
 #include "widgets/imageView.cpp"
+#include "widgets/logicViewer.cpp"
 
 pApplication::DesktopSession pApplication::desktopSession = pApplication::DesktopSession::Unknown;
 
@@ -319,7 +321,7 @@ auto pWindow::stateChange(GtkWidget* widget, GdkEventWindowState* event, Window*
 
             window->p.isMinimized = false;
         }
-	} else {
+	} else if ((event->new_window_state & GDK_WINDOW_STATE_WITHDRAWN) == 0) {
 	    if(window->onUnFocus)
 	        window->onUnFocus();
 	}

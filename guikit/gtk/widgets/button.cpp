@@ -43,5 +43,12 @@ auto pButton::init() -> void {
 }
 
 auto pButton::onActivate(Button* self) -> void {
-    if(self->onActivate) self->onActivate();
+    if(self->onMenu) {
+        auto* menu = self->onMenu();
+        if (menu)
+            gtk_menu_popup_at_pointer(GTK_MENU(menu->p.gtkMenu), nullptr);
+    }
+
+    if(self->onActivate)
+        self->onActivate();
 }

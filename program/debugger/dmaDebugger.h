@@ -29,9 +29,8 @@ struct DmaDebugger : Debugger {
                 unsigned position;
 
                 Watcher();
-            };
+            } watchers[4];
 
-            Watcher watchers[4];
             Watcher* currentWatcher = nullptr;
 
             Legend();

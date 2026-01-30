@@ -694,15 +694,3 @@ auto makeColorRef(unsigned rgb) -> COLORREF {
     return RGB(rgb >> 16, rgb >> 8, rgb);
 }
 
-auto convertToHex( unsigned val, int length ) -> std::string {
-    char hex[9];
-    if (length == -1)
-        snprintf(hex, 9, "%x", val);
-    else {
-        std::string format = "%0" + std::to_string(length) + "x";
-        snprintf(hex, 9, format.c_str(), val);
-    }
-    std::string result = static_cast<std::string>(hex);
-    String::toUpperCase( result );
-    return result;
-}
