@@ -52,6 +52,11 @@ bool Program::focused = false;
 
 int main(int argc, char** argv) {  
     cmd = new Cmd(argc, argv);
+    if (cmd->hasInvalidParam()) {
+        cmd->printInvalidParam();
+        return -1;
+    }
+
     if (cmd->helpRequested || cmd->versionRequested) {
         cmd->printHelp();
         return 0;

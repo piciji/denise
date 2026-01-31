@@ -124,6 +124,7 @@ auto Denise::setBpl1Dat(uint16_t value) -> void {
         upd.dat4 = bpl4dat;
         upd.dat5 = bpl5dat;
         upd.dat6 = bpl6dat;
+        enableDisplay = true; // Desire Bacon of Hope
         upd.actions |= BPL1_WRITTEN;
     }
 }
@@ -768,7 +769,7 @@ template<bool _hires, bool _shres, bool _ham, bool _doublePlayfield, bool _displ
                             }
                         } else {
                             if constexpr (_ham) {
-                                if (sprPrio < pf2Prio)
+                                if (!colIndex || (sprPrio < pf2Prio))
                                     color = colors[sprData];
                                 else
                                     color = hamColor;
@@ -874,7 +875,6 @@ template<bool _hires, bool _shres, bool _ham, bool _doublePlayfield, bool _displ
                     dat4 = upd.dat4;
                     dat5 = upd.dat5;
                     dat6 = upd.dat6;
-                    enableDisplay = true;
                     pfShift = PF1_SHIFT | PF2_SHIFT;
                 }
                 upd.actions &= ~BPL1_WRITTEN;
