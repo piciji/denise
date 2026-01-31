@@ -155,6 +155,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
             }
 
             setRas();
+            debuggerUpdateEvent();
         } else {
             s.integer(chipMemMask);
             s.integer(slowMemSize);

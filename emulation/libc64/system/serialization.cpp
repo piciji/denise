@@ -98,6 +98,8 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
     
     serializeAll(s);
 
+    debuggerUpdateEvent();
+
     remapCpu();
 
     updateDriveSounds();

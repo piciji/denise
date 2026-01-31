@@ -184,7 +184,6 @@ auto Cmd::prepareOptions() -> void {
 	options.push_back({"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"});
 	options.push_back({"-aggressive-warp", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""});
 	options.push_back({"-fast-testbench", "analyze passed options and then decides on the use of aggressive warp and/or PRG memory injection", ""});
-
 }
 
 auto Cmd::printInvalidParam() -> void {

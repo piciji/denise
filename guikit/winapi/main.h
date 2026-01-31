@@ -457,7 +457,7 @@ struct pLogicViewer : pWidget {
     auto setEnabled(bool enabled) -> void;
     auto calcFullWidth() -> unsigned;
 
-    auto setBox(RECT& rc, unsigned offset = 5) -> void;
+    auto setBox(RECT& rc, unsigned offset) -> void;
     auto drawRect(LogicState::Display display, Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT& rc, const std::string& text, unsigned padding, bool active) -> void;
     auto drawRect(RECT& rc, const std::string& text) -> void;
     auto drawRectRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void;

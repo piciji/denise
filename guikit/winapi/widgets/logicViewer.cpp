@@ -346,49 +346,62 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
         FillRect(drawDC, &rc, getBrush(logicState.color));
     }
 
-    setBox(rc);
+    setBox(rc, 0);
 
     if (logicState.display == LogicState::Display::EmptyBlock) {
         DrawText(drawDC, L"-", -1, &rc, DT_CENTER);
-        setBox(rc);
+        setBox(rc, 1);
         drawLine(rc);
-        setBox(rc, 10);
+        setBox(rc, 2);
         drawLine(rc);
 
     } else {
         DrawText(drawDC, utf16_t(logicState.usage), -1, &rc, DT_CENTER);
-        setBox(rc);
+        setBox(rc, 1);
         std::string _addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr, addrLength);
         drawRectRounded(g, &path, rc, _addr, 5, logicState.active);
-        setBox(rc, 10);
+        setBox(rc, 2);
         drawRectRounded(g, &path, rc, String::convertToHex(logicState.data), 10, logicState.active);
     }
 
-    setBox(rc, 10);
+    setBox(rc, 3);
 
     if (logicState.display2 == LogicState::Display::EmptyBlock) {
         DrawText(drawDC, L"-", -1, &rc, DT_CENTER);
-        setBox(rc);
+        setBox(rc, 4);
         drawLine(rc);
-        setBox(rc, 10);
+        setBox(rc, 5);
         drawLine(rc);
 
     } else {
         DrawText(drawDC, utf16_t(logicState.usage2), -1, &rc, DT_CENTER);
-        setBox(rc);
+        setBox(rc, 4);
         drawRectRounded(g, &path, rc, String::convertToHex(logicState.addr2, addrLength), 5, logicState.active);
-        setBox(rc, 10);
+        setBox(rc, 5);
         drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 10, logicState.active);
     }
 
+    int i = 0;
     for (auto& watch : logicState.watches) {
-        setBox(rc, 15);
+        setBox(rc, 6 + i++);
         drawRect(watch.first, g, &path, rc, String::convertToHex(watch.second), 10, logicState.active);
     }
 }
 
 inline auto pLogicViewer::setBox(RECT& rc, unsigned offset) -> void {
-    rc.top = rc.bottom + offset;
+    unsigned y;
+    auto o = logicViewer.state.offsets;
+    if (o.size() <= offset)
+        y = o[o.size() - 1];
+    else
+        y = o[offset];
+
+    if (offset == 0 || offset == 3)
+        y += 4;
+
+    y = y > 22 ? y - 22 : y;
+
+    rc.top = y;
     rc.bottom = rc.top + 20;
 }
 
