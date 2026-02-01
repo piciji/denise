@@ -102,7 +102,7 @@ auto pWidget::getTextColor() -> NSColor* {
         
     if(widget.overrideForegroundColor()) {
         unsigned color = widget.foregroundColor();
-        textColor = pHelper::getColor( color );
+        textColor = pHelper::RGBToNSColor( color );
     }
 
     return textColor;

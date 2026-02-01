@@ -249,6 +249,19 @@
 }
 @end
 
+@interface CocoaLogicViewer : NSView {
+@public
+    GUIKIT::LogicViewer* logicViewer;
+}
+@end
+
+@interface CocoaLogicViewerScroll : NSScrollView {
+@public
+    GUIKIT::LogicViewer* logicViewer;
+    CocoaLogicViewer* content;
+}
+@end
+
 @interface CocoaImageView : NSImageView {
 @public
     GUIKIT::ImageView* imageView;

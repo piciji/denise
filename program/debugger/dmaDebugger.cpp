@@ -10,19 +10,24 @@ DmaDebugger::DmaDebugger( Emulator::Interface* emulator )
 }
 
 DmaDebugger::Dma::Legend::Legend::Watcher::Watcher() {
-    append( button, {70u, 0u} );
-
-    setAlignment( 0.5 );
+    append( button, {100u, 0u}, 0);
 }
 
 DmaDebugger::Dma::Legend::Legend() {
+    dma.setAlign(GUIKIT::Label::Align::Right);
+    dmaAddr.setAlign(GUIKIT::Label::Align::Right);
+    dmaData.setAlign(GUIKIT::Label::Align::Right);
+    cpu.setAlign(GUIKIT::Label::Align::Right);
+    cpuAddr.setAlign(GUIKIT::Label::Align::Right);
+    cpuData.setAlign(GUIKIT::Label::Align::Right);
+    
     append( spacer, {0u, 0u}, 37 );
-    append( dma, {0u, 0u}, 14 );
-    append( dmaAddr, {0u, 0u}, 14 );
-    append( dmaData, {0u, 0u}, 14 );
-    append( cpu, {0u, 0u}, 14 );
-    append( cpuAddr, {0u, 0u}, 14 );
-    append( cpuData, {0u, 0u}, 16 );
+    append( dma, {100u, 0u}, 14 );
+    append( dmaAddr, {100u, 0u}, 14 );
+    append( dmaData, {100u, 0u}, 14 );
+    append( cpu, {100u, 0u}, 14 );
+    append( cpuAddr, {100u, 0u}, 14 );
+    append( cpuData, {100u, 0u}, 16 );
 
     int i = 0;
     for (auto& watcher : watchers) {
@@ -38,7 +43,7 @@ DmaDebugger::DmaControl::DmaControl() {
 DmaDebugger::Dma::DmaLine::DmaLine(DmaDebugger* debugger) {
     append(viewer, {~0u, 400u});
     if (debugger->isAmiga())
-        viewer.addrAs24bit();
+        viewer.setAddrAs24bit();
 }
 
 DmaDebugger::Dma::DmaFrame::BusUsage::BusUsage() {
@@ -108,6 +113,14 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         busUsage->canvas.onMouseRelease = [this, busUsage, id](GUIKIT::Mouse::Button button) {
 
             GUIKIT::ColorChooser colorChooser;
+            colorChooser.onChoose = [this, id, busUsage](unsigned color) {
+                emuThread->lock();
+                dmaColors[ id ].color = color;
+                settings->set<unsigned>(saveIdent() + "_color_" + std::to_string( id ), color);
+                busUsage->canvas.setBackgroundColor( color );
+                emuThread->unlock();
+            };
+            
             colorChooser.setWindow( *this );
             colorChooser.setDefault( dmaColors[ id ].color );
             auto result = colorChooser.choose();
@@ -156,7 +169,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         watcher.button.onMenu = [this, w]() {
             for (auto& w : dma->legend.watchers) {
                 if (w.remove( w.edit )) {
-                    w.append( w.button, {70u, 0u} );
+                    w.append( w.button, {100u, 0u} );
                     w.synchronizeLayout();
                 }
             }
@@ -181,7 +194,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
                 }
 
                 w->remove( w->edit );
-                w->append( w->button, {70u, 0u} );
+                w->append( w->button, {100u, 0u} );
                 w->synchronizeLayout();
             }
         };
@@ -192,7 +205,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         auto* w = dma->legend.currentWatcher;
         if (w) {
             w->remove( w->button );
-            w->append( w->edit, {70u, 0u} );
+            w->append( w->edit, {100u, 0u} );
             w->edit.setMaxLength(6);
             w->edit.setFocused();
             w->synchronizeLayout();

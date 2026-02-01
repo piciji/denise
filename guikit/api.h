@@ -1462,6 +1462,8 @@ struct MessageWindow {
 };
 
 struct ColorChooser {
+    static std::function<void (unsigned color)> onChoose;
+    
     struct State {
         Window* window = nullptr;
         unsigned defaultColor = 0;

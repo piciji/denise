@@ -8,6 +8,7 @@
 #include "statusbar.cpp"
 #include "tooltip.m"
 #include "display.cpp"
+#include "colorChooser.cpp"
 
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"
@@ -30,6 +31,7 @@
 #include "widgets/multiSquareCanvas.cpp"
 #include "widgets/hyperlink.cpp"
 #include "widgets/imageView.cpp"
+#include "widgets/logicViewer.cpp"
 
 @implementation MyNSApplication : NSApplication
     
@@ -102,6 +104,10 @@
 
     if (Application::onDisplayChange)
         Application::onDisplayChange();
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)n {
+    [[NSColorPanel sharedColorPanel] orderOut:nil];
 }
 
 @end
@@ -419,6 +425,15 @@
     [super resetCursorRects];
 }
 
+- (void) colorDidChange:(id)sender {
+    NSColorPanel* colorPanel = (NSColorPanel*)sender;
+    NSColor* selectedColor = [colorPanel color];
+
+    if (GUIKIT::ColorChooser::onChoose) {
+        GUIKIT::ColorChooser::onChoose(GUIKIT::pHelper::NSColorToRGB(selectedColor));
+    }
+}
+
 @end
 
 @implementation BackgroundView : NSView
@@ -435,7 +450,7 @@
 }
 
 -(void) drawRect:(NSRect)rect {
-    [GUIKIT::pHelper::getColor(bgcolor) setFill];
+    [GUIKIT::pHelper::RGBToNSColor(bgcolor) setFill];
     NSRectFillUsingOperation(rect, NSCompositeSourceOver);
 }
 @end
@@ -509,6 +524,9 @@ auto pApplication::initialize() -> void {
     if ([[NSThread currentThread] respondsToSelector:@selector(setQualityOfService:)]) {
         [[NSThread currentThread] setQualityOfService: NSQualityOfServiceUserInteractive];
     }
+    
+    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                            forKey:@"ApplePersistenceIgnoreState"];
     
     @autoreleasepool {
         

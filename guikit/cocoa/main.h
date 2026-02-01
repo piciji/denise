@@ -235,6 +235,37 @@ struct pMultiSquareCanvas : pWidget {
     ~pMultiSquareCanvas();
 };
 
+struct pLogicViewer : pWidget {
+    LogicViewer& logicViewer;
+    NSFont* nsFont = nil;
+    Timer scrollTimer;
+
+    auto init() -> void;
+    auto redraw() -> void;
+    auto update() -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto updateScrollRange() -> void {}
+    auto scrollToActive() -> void;
+    auto buildDmaSlot(CGContextRef context, LogicState& logicState, Geometry geo, bool lastSlot) -> void;
+    auto setBox(Geometry& geo, unsigned offset) -> void;
+    auto pg(int val) -> CGFloat;
+    auto drawText(Geometry& geo, const std::string& str, NSColor* nsCol) -> void;
+    auto drawLine(CGContextRef context, Geometry& geo, NSColor* nsCol) -> void;
+    
+    auto drawRect(CGContextRef context, LogicState::Display display, Geometry& geo, const std::string& text, NSColor* nsCol, unsigned padding) -> void;
+    auto drawRect(CGContextRef context, Geometry& geo, const std::string& str, NSColor* nsCol) -> void;
+    auto drawRectRounded(CGContextRef context, Geometry& geo, const std::string& str, NSColor* nsCol, unsigned padding) -> void;
+    auto drawRectLeftRounded(CGContextRef context, Geometry& geo, const std::string& str, NSColor* nsCol, unsigned padding) -> void;
+    auto drawRectRightRounded(CGContextRef context, Geometry& geo, const std::string& str, NSColor* nsCol, unsigned padding) -> void;
+    
+    auto setRoundedPath(CGContextRef context, Geometry& geo) -> void;
+    auto setLeftRoundedPath(CGContextRef context, Geometry& geo) -> void;
+    auto setRightRoundedPath(CGContextRef context, Geometry& geo) -> void;
+
+    pLogicViewer(LogicViewer& logicViewer) : pWidget(logicViewer), logicViewer(logicViewer) {}
+    ~pLogicViewer();
+};
+
 struct pImageView : pWidget {
     ImageView& imageView;
     NSImage* surface = nullptr;
@@ -528,7 +559,7 @@ struct pMenu : pMenuBase {
     
     auto append(MenuBase& item) -> void;
     auto remove(MenuBase& item) -> void;
-    auto update(Window& window) -> void;
+    auto update(Window* window) -> void {}
     auto init() -> void;
     auto setText(const std::string& text) -> void;
     auto setIcon(Image& icon) -> void;
@@ -618,6 +649,10 @@ struct pFont {
     static auto getSizeFromString(std::string desc) -> unsigned;
 };
 
+struct pColorChooser {
+    static auto choose(ColorChooser::State& state) -> std::optional<unsigned>;
+};
+
 struct pSystem {
     static auto getUserDataFolder() -> std::string;
     static auto getResourceFolder(std::string appIdent) -> std::string;
@@ -681,7 +716,8 @@ struct pInterProcess {
 };
     
 struct pHelper {
-    static auto getColor(unsigned color) -> NSColor*;
+    static auto RGBToNSColor(unsigned color) -> NSColor*;
+    static auto NSColorToRGB(NSColor* color) -> unsigned;
 };
 
 auto NSMakeImage(Image& image, unsigned width = 0, unsigned height = 0, unsigned addLines = 0) -> NSImage*;

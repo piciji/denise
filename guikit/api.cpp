@@ -1908,6 +1908,8 @@ auto MessageWindow::translateCancel(const std::string& str) -> void {
     trans.cancel = str;
 }
 
+std::function<void (unsigned color)> ColorChooser::onChoose = nullptr;
+
 auto ColorChooser::setWindow(Window& window) -> ColorChooser& {
     state.window = &window;
     return *this;

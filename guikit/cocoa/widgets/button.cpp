@@ -15,6 +15,22 @@
 -(IBAction) activate:(id)sender {
     if(button->onActivate) button->onActivate();
 }
+
+- (void)mouseDown:(NSEvent*)event {
+    
+    if (button->onMenu) {
+        auto* menu = button->onMenu();
+        
+        if (menu) {
+            GUIKIT::pApplication::observeMenu([(id)menu->p.cocoaBase cocoaMenu]);
+            
+            [NSMenu popUpContextMenu: [(id)menu->p.cocoaBase cocoaMenu] withEvent:event forView:self];
+            
+            return;
+        }
+    }
+    [super mouseDown:event];
+}
 @end
 
 namespace GUIKIT {

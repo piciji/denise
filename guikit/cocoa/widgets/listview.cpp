@@ -147,23 +147,23 @@
     
     if ([self isHighlighted]) {
         if (listView->overrideSelectionColor())
-            textColor = GUIKIT::pHelper::getColor( listView->selectionForegroundColor());
+            textColor = GUIKIT::pHelper::RGBToNSColor( listView->selectionForegroundColor());
         else
             textColor = [NSColor alternateSelectedControlTextColor];
     } else {
         std::optional<unsigned> rowColor = listView->rowForegroundColor( _row, _col );
         
         if (rowColor.has_value()) {
-            textColor = GUIKIT::pHelper::getColor( rowColor.value() );
+            textColor = GUIKIT::pHelper::RGBToNSColor( rowColor.value() );
         
         } else if(listView->overrideForegroundColor()) {
-            textColor = GUIKIT::pHelper::getColor( listView->foregroundColor() );
+            textColor = GUIKIT::pHelper::RGBToNSColor( listView->foregroundColor() );
         } else
             textColor = [NSColor textColor];
     }
     
     if ([self isHighlighted] && listView->overrideSelectionColor()) {
-        NSColor* hicol = GUIKIT::pHelper::getColor( listView->selectionBackgroundColor() );
+        NSColor* hicol = GUIKIT::pHelper::RGBToNSColor( listView->selectionBackgroundColor() );
         
         [hicol set];
         if (listView->columnCount() > 1) {
@@ -177,7 +177,7 @@
     } else if (![self isHighlighted]) {
         std::optional<unsigned> rowColor = listView->rowBackgroundColor( _row );
         if (rowColor.has_value()) {
-            NSColor* frcol = GUIKIT::pHelper::getColor( rowColor.value() );
+            NSColor* frcol = GUIKIT::pHelper::RGBToNSColor( rowColor.value() );
             [frcol set];
             NSRectFill(frame);
         }
@@ -539,7 +539,7 @@ auto pListView::releaseRowImages(unsigned selection) -> void {
  
 auto pListView::setBackgroundColor(unsigned color) -> void {
     
-    NSColor* bg = pHelper::getColor( color );
+    NSColor* bg = pHelper::RGBToNSColor( color );
     
     @autoreleasepool {
         if (cocoaView) {
@@ -574,10 +574,10 @@ auto pListView::createCustomTooltip() -> void {
         if (listView.state.colorRowTooltips) {
             
             if (listView.overrideBackgroundColor()) {
-                [tooltip setBackgroundColor: pHelper::getColor(listView.backgroundColor()) ];
+                [tooltip setBackgroundColor: pHelper::RGBToNSColor(listView.backgroundColor()) ];
             }
             if (listView.overrideForegroundColor()) {
-                [tooltip setTextColor: pHelper::getColor(listView.foregroundColor()) ];
+                [tooltip setTextColor: pHelper::RGBToNSColor(listView.foregroundColor()) ];
             }
         }
     }
