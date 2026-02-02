@@ -34,14 +34,14 @@ MemDebugger::Memory::Memory(Debugger* debugger) {
 
         bankList.lockRedraw();
         for (unsigned i = 0; i < 0x100; i++) {
-            bankList.append({hex(i, 2), "Unmapped" }, true);
+            bankList.append({GUIKIT::String::convertToHex(i, 2), "Unmapped" }, true);
             bankList.setRowForegroundColor( UNUSED_COLOR, i );
         }
         bankList.unlockRedraw();
 
         pageList.lockRedraw();
         for (unsigned i = 0; i < 0x1000; i++)
-            pageList.append({hex(i * 16, 4), "   0", "   0", "   0", "   0", "   0", "   0", "   0", "   0", "................"}, true);
+            pageList.append({GUIKIT::String::convertToHex(i * 16, 4), "   0", "   0", "   0", "   0", "   0", "   0", "   0", "   0", "................"}, true);
         pageList.unlockRedraw();
     } else if (debugger->mode == Mode::MemorySCPU) {
         pageList.setHeaderText( { "address", "0","1", "2", "3", "4", "5", "6", "7", "8","9", "A", "B", "C", "D", "E","F", "ASCII" });
@@ -49,14 +49,14 @@ MemDebugger::Memory::Memory(Debugger* debugger) {
 
         bankList.lockRedraw();
         for (unsigned i = 0; i < 0x100; i++) {
-            bankList.append({hex(i, 2), "Unmapped" }, true);
+            bankList.append({GUIKIT::String::convertToHex(i, 2), "Unmapped" }, true);
             bankList.setRowForegroundColor( UNUSED_COLOR, i );
         }
         bankList.unlockRedraw();
 
         pageList.lockRedraw();
         for (unsigned i = 0; i < 0x1000; i++)
-            pageList.append({hex(i * 16, 4), "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "................"}, true);
+            pageList.append({GUIKIT::String::convertToHex(i * 16, 4), "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "................"}, true);
         pageList.unlockRedraw();
     } else {
         pageList.setHeaderText( { "address", "0","1", "2", "3", "4", "5", "6", "7", "8","9", "A", "B", "C", "D", "E","F", "ASCII" });
@@ -64,14 +64,14 @@ MemDebugger::Memory::Memory(Debugger* debugger) {
 
         bankList.lockRedraw();
         for (unsigned i = 0; i < 0x10; i++) {
-            bankList.append({hex(i, 1), "Unmapped" }, true);
+            bankList.append({GUIKIT::String::convertToHex(i, 1), "Unmapped" }, true);
             bankList.setRowForegroundColor( UNUSED_COLOR, i );
         }
         bankList.unlockRedraw();
 
         pageList.lockRedraw();
         for (unsigned i = 0; i < 0x100; i++)
-            pageList.append({hex(i * 16, 3), "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "................"}, true);
+            pageList.append({GUIKIT::String::convertToHex(i * 16, 3), "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "00", "................"}, true);
         pageList.unlockRedraw();
     }
 
@@ -427,9 +427,9 @@ auto MemDebugger::loadMemoryBank(uint8_t bank, bool noColorChanges) -> void {
                 allowedTextChanges--;
 
             if (_swapWords)
-                val = hex( _swapWord(*pNew) );
+                val = GUIKIT::String::convertToHex( _swapWord(*pNew) );
             else
-                val = hex( *pNew );
+                val = GUIKIT::String::convertToHex( *pNew );
             pageList.setText( line, 1 + (pos & mask), val, true );
         }
 

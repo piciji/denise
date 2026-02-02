@@ -506,7 +506,7 @@ auto VideoDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
         for (auto& col : row.cols) {
             uint16_t colIndex = snap.colors[i++] & colMask;
             uint32_t rgb = vManager->colorTable[ colIndex ];
-            std::string tooltip = "Index: " + hex(colIndex) + ", RGB: " + hex(rgb & 0xffffff);
+            std::string tooltip = "Index: " + GUIKIT::String::convertToHex(colIndex) + ", RGB: " + GUIKIT::String::convertToHex(rgb & 0xffffff);
             col.setTooltip( tooltip );
             col.setBackgroundColor( rgb );
         }

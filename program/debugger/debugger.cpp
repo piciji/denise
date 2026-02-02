@@ -290,19 +290,6 @@ auto Debugger::Callback() -> void {
     }
 }
 
-auto Debugger::hex( uint32_t val, int length ) -> std::string {
-    char hex[9];
-    if (length == -1)
-        snprintf(hex, 9, "%x", val);
-    else {
-        std::string format = "%0" + std::to_string(length) + "x";
-        snprintf(hex, 9, format.c_str(), val);
-    }
-    std::string result = static_cast<std::string>(hex);
-    GUIKIT::String::toUpperCase( result );
-    return result;
-}
-
 auto Debugger::stepOut(Emulator::Interface* emulator) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
@@ -411,7 +398,7 @@ auto Debugger::isAmiga() -> bool {
 auto Debugger::updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void {
     if ((unsigned)reg.getStore() != val) {
         reg.setStore( static_cast<int>(val) );
-        reg.setText( hex( val ) );
+        reg.setText( GUIKIT::String::convertToHex( val ) );
     }
 }
 
@@ -458,5 +445,5 @@ auto Debugger::getWidth(unsigned length, bool editField, bool bigger) -> unsigne
 }
 
 auto Debugger::updateControl(uint16_t v, uint8_t h) -> void {
-    control->position.setText("V: " + hex( v, 3 ) + " H: " + hex( h, 2 ) );
+    control->position.setText("V: " + GUIKIT::String::convertToHex( v, 3 ) + " H: " + GUIKIT::String::convertToHex( h, 2 ) );
 }

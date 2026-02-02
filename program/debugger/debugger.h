@@ -98,7 +98,6 @@ struct Debugger : GUIKIT::Window {
     auto isMemMode() const -> bool { return mode == Mode::Memory || mode == Mode::MemorySCPU; }
     auto isCiaMode() const -> bool { return mode == Mode::CIA; }
 
-    static auto hex( uint32_t val, int length = -1 ) -> std::string;
     static auto updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
     static auto updateReg(GUIKIT::CheckBox& reg, bool state) -> void;
     static auto updateReg(GUIKIT::LineEdit& widget, const std::string& text, unsigned ident) -> void;
