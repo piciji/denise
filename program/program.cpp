@@ -150,7 +150,7 @@ auto Program::initUserInterface() -> void {
     if (GUIKIT::Application::isQuit)
         return;
 
-    bool threadedEmu = globalSettings->get<bool>("threaded_emu", false);
+    bool threadedEmu = globalSettings->get<bool>("threaded_emu", true);
 
     if (cmd->noGui) {
 		emuThread->enable( false );

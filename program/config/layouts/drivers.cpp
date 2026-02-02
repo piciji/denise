@@ -98,7 +98,7 @@ DriversLayout::DriversLayout() {
         vdl.top.exclusiveFullscreen.setEnabled(false);
 
         if (videoDriver->canExclusiveFullscreen()) {
-            vdl.top.exclusiveFullscreen.setEnabled( !globalSettings->get<bool>("threaded_emu", false) );
+            vdl.top.exclusiveFullscreen.setEnabled( !globalSettings->get<bool>("threaded_emu", true) );
             vdl.top.exclusiveFullscreen.setChecked(globalSettings->get("exclusive_fullscreen", false));
         }
     } else
@@ -234,7 +234,7 @@ auto DriversLayout::translate() -> void {
 }
 
 auto DriversLayout::updateDriverPropsVisibility() -> void {
-    auto threadedEmu = globalSettings->get<bool>("threaded_emu", false);
+    auto threadedEmu = globalSettings->get<bool>("threaded_emu", true);
 
     vdl.top.exclusiveFullscreen.setEnabled( !threadedEmu && videoDriver->canExclusiveFullscreen() );
     vdl.top.hardSync.setEnabled( videoDriver->canHardSync() );

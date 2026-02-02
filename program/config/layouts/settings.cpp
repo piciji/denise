@@ -157,7 +157,7 @@ SettingsLayout::SettingsLayout() {
         globalSettings->set<bool>("question_media_write", checked);
     };
 
-    switches.threadedEmu.setChecked(globalSettings->get<bool>("threaded_emu", false));
+    switches.threadedEmu.setChecked(globalSettings->get<bool>("threaded_emu", true));
     switches.threadedEmu.onToggle = [](bool checked) {
         globalSettings->set<bool>("threaded_emu", checked);
         configView->driversLayout->updateDriverPropsVisibility();

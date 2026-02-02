@@ -356,7 +356,7 @@ auto Program::canExclusiveFullscreen() -> bool {
 
     return !isPause && videoDriver->canExclusiveFullscreen()
         && globalSettings->get<bool>("exclusive_fullscreen", false)
-        && !globalSettings->get<bool>("threaded_emu", false);
+        && !globalSettings->get<bool>("threaded_emu", true);
 }
 
 auto Program::hintExclusiveFullscreen() -> void {
