@@ -182,7 +182,7 @@ auto pLogicViewer::redraw(cairo_t* cr) -> void {
 }
 
 auto pLogicViewer::buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry geo) -> void {
-    bool addrLength = logicViewer.addrAs24bit() ? 6 : 4;
+    int addrLength = logicViewer.addrAs24bit() ? 6 : 4;
     double _col = getColorComponent(0x54);
     cairo_set_source_rgb(cr, _col, _col, _col);
     cairo_set_line_width(cr, 1.0);
@@ -203,7 +203,7 @@ auto pLogicViewer::buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry ge
     cairo_set_source_rgb(cr, _col, _col, _col);
     drawText(cr, geo, String::convertToHex(logicState.position));
 
-    setBox(geo, 5);
+    geo.y += geo.height + 5;
 
     if (logicState.display != LogicState::Display::EmptyBlock) {
         unsigned& sCol = logicState.color;
@@ -215,69 +215,56 @@ auto pLogicViewer::buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry ge
     }
 
     cairo_set_line_width(cr, 1.0);
-    //geo.y += 5;
-    geo.y = getOffset(0);
+
+    setBox(geo, (int)LogicState::Offset::Usage1);
 
     cairo_set_source_rgb(cr, _col, _col, _col);
 
     if (logicState.display == LogicState::Display::EmptyBlock) {
         drawText(cr, geo, "-");
-        //setBox(geo, 5);
-        geo.y = getOffset(1);
+        setBox(geo, (int)LogicState::Offset::Addr1);
         drawLine(cr, geo);
-        //setBox(geo, 10);
-        geo.y = getOffset(2);
+        setBox(geo, (int)LogicState::Offset::Data1);
         drawLine(cr, geo);
 
     } else {
         drawText(cr, geo, logicState.usage);
-       // setBox(geo, 5);
-        geo.y = getOffset(1);
+        setBox(geo, (int)LogicState::Offset::Addr1);
 
         std::string _addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr, addrLength);
         drawRectRounded(cr, geo, _addr, 5);
 
-        geo.y = getOffset(2);
-        //setBox(geo, 10);
+        setBox(geo, (int)LogicState::Offset::Data1);
         drawRectRounded(cr, geo, String::convertToHex(logicState.data), 10);
     }
 
-    geo.y = getOffset(3);
-   // setBox(geo, 10);
+    setBox(geo, (int)LogicState::Offset::Usage2);
 
     if (logicState.display2 == LogicState::Display::EmptyBlock) {
         drawText(cr, geo, "-");
-        //setBox(geo, 5);
-        geo.y = getOffset(4);
+        setBox(geo, (int)LogicState::Offset::Addr2);
         drawLine(cr, geo);
-        //setBox(geo, 10);
-        geo.y = getOffset(5);
+        setBox(geo, (int)LogicState::Offset::Data2);
         drawLine(cr, geo);
 
     } else {
         drawText(cr, geo, logicState.usage2);
-        //setBox(geo, 5);
-        geo.y = getOffset(4);
+        setBox(geo, (int)LogicState::Offset::Addr2);
         drawRectRounded(cr, geo, String::convertToHex(logicState.addr2, addrLength), 5);
 
-        //setBox(geo, 10);
-        geo.y = getOffset(5);
+        setBox(geo, (int)LogicState::Offset::Data2);
         drawRectRounded(cr, geo, String::convertToHex(logicState.data2), 10);
     }
 
     int i = 0;
     for (auto& watch : logicState.watches) {
-      //  setBox(geo, 20);
-        geo.y = getOffset(6 + i++);
+        setBox(geo, (int)(LogicState::Offset::Watch1) + i++);
         drawRect(cr, watch.first, geo, String::convertToHex(watch.second), 10);
     }
 }
 
-auto pLogicViewer::getOffset(unsigned pos) -> unsigned {
+auto pLogicViewer::getOffset(ínt pos) -> unsigned {
     auto o = logicViewer.state.offsets;
-    if (o.size() <= pos)
-        return o[o.size() - 1];
-
     unsigned y = o[pos];
     return y > 23 ? y - 23 : y;
 }
@@ -436,8 +423,10 @@ auto pLogicViewer::getRoundedPath(cairo_t* cr, Geometry& geo) -> void {
     cairo_close_path(cr);
 }
 
-inline auto pLogicViewer::setBox(Geometry& geo, unsigned offset) -> void {
-    geo.y += geo.height + offset;
+inline auto pLogicViewer::setBox(Geometry& geo, int offset) -> void {
+    auto o = logicViewer.state.offsets;
+    unsigned y = o[offset];
+    geo.y = y > 23 ? y - 23 : y;
 }
 
 inline auto pLogicViewer::getColorComponent(uint8_t component) -> double {

@@ -232,45 +232,45 @@ auto pLogicViewer::buildDmaSlot(CGContextRef context, LogicState& logicState, Ge
     CGContextSetStrokeColorWithColor(context, [nsCol CGColor]);
     CGContextSetLineWidth(context, 1.0);
     
-    setBox(geo, 0);
+    setBox(geo, (int)LogicState::Offset::Usage1);
     
     if (logicState.display == LogicState::Display::EmptyBlock) {
         drawText(geo, "-", nsCol);
-        setBox(geo, 1);
+        setBox(geo, (int)LogicState::Offset::Addr1);
         drawLine(context, geo, nsCol);
-        setBox(geo, 2);
+        setBox(geo, (int)LogicState::Offset::Data1);
         drawLine(context, geo, nsCol);
     } else {
         drawText(geo, logicState.usage, nsCol);
-        setBox(geo, 1);
+        setBox(geo, (int)LogicState::Offset::Addr1);
         
         std::string addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr, addrLength);
         drawRectRounded(context, geo, addr, nsCol, 5);
-        setBox(geo, 2);
+        setBox(geo, (int)LogicState::Offset::Data1);
         drawRectRounded(context, geo, String::convertToHex(logicState.data), nsCol, 10);
     }
     
-    setBox(geo, 3);
+    setBox(geo, (int)LogicState::Offset::Usage2);
     
     if (logicState.display2 == LogicState::Display::EmptyBlock) {
         drawText(geo, "-", nsCol);
-        setBox(geo, 4);
+        setBox(geo, (int)LogicState::Offset::Addr2);
         drawLine(context, geo, nsCol);
-        setBox(geo, 5);
+        setBox(geo, (int)LogicState::Offset::Data2);
         drawLine(context, geo, nsCol);
     } else {
         drawText(geo, logicState.usage2, nsCol);
-        setBox(geo, 4);
+        setBox(geo, (int)LogicState::Offset::Addr2);
         
         std::string addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr2, addrLength);
         drawRectRounded(context, geo, addr, nsCol, 5);
-        setBox(geo, 5);
+        setBox(geo, (int)LogicState::Offset::Data2);
         drawRectRounded(context, geo, String::convertToHex(logicState.data2), nsCol, 10);
     }
     
     int i = 0;
     for (auto& watch : logicState.watches) {
-        setBox(geo, 6 + i++);
+        setBox(geo, (int)(LogicState::Offset::Watch1) + i++);
         drawRect(context, watch.first, geo, String::convertToHex(watch.second), nsCol, 10);
     }
 }
@@ -428,14 +428,9 @@ auto pLogicViewer::drawText(Geometry& geo, const std::string& str, NSColor* nsCo
     }
 }
 
-auto pLogicViewer::setBox(Geometry& geo, unsigned offset) -> void {
+auto pLogicViewer::setBox(Geometry& geo, int offset) -> void {
     auto o = logicViewer.state.offsets;
-    unsigned y;
-    
-    if (o.size() <= offset)
-        y = o[o.size() - 1];
-    else
-        y = o[offset];
+    unsigned y = o[offset];
     
     if (offset == 0 || offset == 3)
         y += 1;

@@ -247,7 +247,7 @@ struct pLogicViewer : pWidget {
     auto updateScrollRange() -> void {}
     auto scrollToActive() -> void;
     auto buildDmaSlot(CGContextRef context, LogicState& logicState, Geometry geo, bool lastSlot) -> void;
-    auto setBox(Geometry& geo, unsigned offset) -> void;
+    auto setBox(Geometry& geo, int offset) -> void;
     auto pg(int val) -> CGFloat;
     auto drawText(Geometry& geo, const std::string& str, NSColor* nsCol) -> void;
     auto drawLine(CGContextRef context, Geometry& geo, NSColor* nsCol) -> void;

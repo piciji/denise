@@ -108,7 +108,6 @@ struct pApplication {
     static HBRUSH darkBGTabBrush; 
     static HBRUSH darkDisabledEdgeBrush;
     static HPEN darkEdgePen;
-    static HPEN darkFGPen;
     static ULONG_PTR gdiplusToken;
 
     static auto loadThemedFunctions() -> void;
@@ -437,13 +436,17 @@ struct pLogicViewer : pWidget {
     HWND hwndScroller;
     int scrollPos;
     unsigned showSlot;
-    GUIKIT::Timer scrollTimer;
+    Timer scrollTimer;
 
     HDC drawDC = nullptr;
     HBITMAP drawBmp = nullptr;
 
-    Gdiplus::Pen* penFG = nullptr;
-    Gdiplus::Pen* penDarkEdge = nullptr;
+    Gdiplus::Pen* penFG_gp = nullptr;
+    Gdiplus::Pen* penDarkEdge_gp = nullptr;
+    HPEN penFG = nullptr;
+    HPEN penDarkEdge = nullptr;
+
+    HBRUSH backgroundBrush = nullptr;
 
     std::vector<std::pair<unsigned, HBRUSH>> brushes;
 
@@ -456,8 +459,9 @@ struct pLogicViewer : pWidget {
     auto setVisible(bool visible) -> void;
     auto setEnabled(bool enabled) -> void;
     auto calcFullWidth() -> unsigned;
+    auto setBackgroundColor(unsigned color) -> void;
 
-    auto setBox(RECT& rc, unsigned offset) -> void;
+    auto setBox(RECT& rc, int offset) -> void;
     auto drawRect(LogicState::Display display, Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT& rc, const std::string& text, unsigned padding, bool active) -> void;
     auto drawRect(RECT& rc, const std::string& text) -> void;
     auto drawRectRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void;

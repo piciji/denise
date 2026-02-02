@@ -432,8 +432,6 @@ auto DmaDebugger::initTheme() -> void {
     }
 
     std::vector<unsigned> offsets;
-
-
     offsets.push_back(dma->legend.dma.geometry().y + (dma->legend.dma.geometry().height >> 1));
     offsets.push_back(dma->legend.dmaAddr.geometry().y + (dma->legend.dmaAddr.geometry().height >> 1));
     offsets.push_back(dma->legend.dmaData.geometry().y + (dma->legend.dmaData.geometry().height >> 1));
@@ -445,7 +443,11 @@ auto DmaDebugger::initTheme() -> void {
         offsets.push_back(watcher.button.geometry().y + (watcher.button.geometry().height >> 1));
     }
 
-    dma->dmaLine.viewer.setOffsets(offsets);
+    int i = 0;
+    for (auto& offset : offsets) {
+        dma->dmaLine.viewer.setOffset( GUIKIT::LogicState::Offset(i), offset );
+        i++;
+    }
 }
 
 auto DmaDebugger::closeTheme() -> void {

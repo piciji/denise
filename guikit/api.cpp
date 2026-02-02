@@ -1474,8 +1474,9 @@ auto LogicViewer::setSymbolicAddr(bool symbolicAddr) -> void {
     state.symbolicAddr = symbolicAddr;
 }
 
-auto LogicViewer::setOffsets(std::vector<unsigned> offsets ) -> void {
-    state.offsets = std::move(offsets);
+auto LogicViewer::setOffset(LogicState::Offset offset, unsigned value ) -> void {
+    if (offset != LogicState::Offset::Max)
+        state.offsets[(unsigned)offset] = value;
 }
 
 auto LogicViewer::update() -> void {

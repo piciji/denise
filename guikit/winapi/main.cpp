@@ -108,7 +108,6 @@ HBRUSH pApplication::darkBGHotBrush = nullptr;
 HBRUSH pApplication::darkEdgeBrush = nullptr;
 HBRUSH pApplication::darkDisabledEdgeBrush = nullptr;
 HPEN pApplication::darkEdgePen = nullptr;
-HPEN pApplication::darkFGPen = nullptr;
 ULONG_PTR pApplication::gdiplusToken = 0;
 
 HMODULE pApplication::uxTheme = nullptr;

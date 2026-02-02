@@ -962,6 +962,7 @@ struct Viewport : Widget {
 
 struct LogicState {
     enum class Display { EmptyBlock = 0, SingleBlock = 1, BeginBlock = 2, KeepBlock = 4, EndBlock = 8 };
+    enum class Offset { Usage1 = 0, Addr1, Data1, Usage2, Addr2, Data2, Watch1, Watch2, Watch3, Watch4, Max };
 
     bool active;
     unsigned position;
@@ -987,7 +988,7 @@ struct LogicViewer : Widget {
     auto update() -> void;
     auto scrollToActive() -> void;
     auto setAddrAs24bit(bool addr24bit = true) -> void;
-    auto setOffsets(std::vector<unsigned> offsets ) -> void;
+    auto setOffset(LogicState::Offset offset, unsigned value ) -> void;
     auto addrAs24bit() -> bool { return state.addr24bit; }
     auto setSymbolicAddr(bool symbolicAddr) -> void;
     auto hasSymbolicAddr() -> bool { return state.symbolicAddr; }
@@ -997,7 +998,7 @@ struct LogicViewer : Widget {
         bool addr24bit = false;
         bool symbolicAddr = false;
 
-        std::vector<unsigned> offsets;
+        unsigned offsets[(unsigned)LogicState::Offset::Max];
     } state;
 
     pLogicViewer& p;

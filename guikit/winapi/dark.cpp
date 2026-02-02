@@ -130,8 +130,6 @@ auto pApplication::initDarkTheme(bool force) -> void {
 
             darkEdgePen = ::CreatePen(PS_SOLID, 1, RGB(0x64, 0x64, 0x64));
 
-            darkFGPen = ::CreatePen(PS_SOLID, 1, RGB(0xa4, 0xa4, 0xa4));
-
             darkDisabledEdgeBrush = CreateSolidBrush(RGB(0x48, 0x48, 0x48));
     }
 }

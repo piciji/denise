@@ -313,7 +313,7 @@ struct pLogicViewer : pWidget {
 	auto update() -> void;
 	auto buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry geo) -> void;
 	auto setGeometry(Geometry geometry) -> void;
-	auto setBox(Geometry& geo, unsigned offset) -> void;
+	auto setBox(Geometry& geo, int offset) -> void;
 	auto getColorComponent(uint8_t component) -> double;
 	auto pg(int val) -> double;
 	auto drawText(cairo_t* cr, Geometry& geo, const std::string& text) -> void;
@@ -331,7 +331,6 @@ struct pLogicViewer : pWidget {
 
 	auto updateScrollRange() -> void {}
 	auto scrollToActive() -> void;
-	auto getOffset(unsigned pos) -> unsigned;
 
 	static auto expose(GtkWidget* widget, cairo_t* cr, pLogicViewer* self) -> gboolean;
 	static auto scrolled(GtkAdjustment* adj, pLogicViewer* self) -> void;

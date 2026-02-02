@@ -8,10 +8,16 @@ pLogicViewer::~pLogicViewer() {
     for (auto& brush : brushes)
         DeleteObject(brush.second);
 
+    if (penDarkEdge_gp)
+        delete penDarkEdge_gp;
+    if (penFG_gp)
+        delete penFG_gp;
     if (penDarkEdge)
-        delete penDarkEdge;
+        DeleteObject(penDarkEdge);
     if (penFG)
-        delete penFG;
+        DeleteObject(penFG);
+    if (backgroundBrush)
+        DeleteObject(backgroundBrush);
 }
 
 auto pLogicViewer::create() -> void {
@@ -37,8 +43,11 @@ auto pLogicViewer::create() -> void {
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
     wndprocOrigScroller = (WNDPROC)SetWindowLongPtr(hwndScroller, GWLP_WNDPROC, (LONG_PTR)subclassWndProcScroller);
 
-    penFG = new Gdiplus::Pen(Gdiplus::Color(0xa4, 0xa4, 0xa4));
-    penDarkEdge = new Gdiplus::Pen(Gdiplus::Color(0x64, 0x64, 0x64));
+    penFG_gp = new Gdiplus::Pen(Gdiplus::Color(0xa4, 0xa4, 0xa4));
+    penDarkEdge_gp = new Gdiplus::Pen(Gdiplus::Color(0x64, 0x64, 0x64));
+
+    penFG = CreatePen(PS_SOLID, 1, RGB(0xa4, 0xa4, 0xa4));
+    penDarkEdge = CreatePen(PS_SOLID, 1, RGB(0x64, 0x64, 0x64));
 
     scrollTimer.onFinished = [this]() {
         scrollToActive();
@@ -95,6 +104,7 @@ auto pLogicViewer::rebuild() -> void {
         SetWindowPos(hwndScroller, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
     pWidget::rebuild();
+    setBackgroundColor( widget.backgroundColor() );
 }
 
 auto pLogicViewer::invalidateDrawArea() -> void {
@@ -280,6 +290,16 @@ auto pLogicViewer::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     }
 }
 
+auto pLogicViewer::setBackgroundColor(unsigned color) -> void {
+    if (backgroundBrush)
+        DeleteObject(backgroundBrush);
+
+    if (widget.overrideBackgroundColor())
+        backgroundBrush = CreateSolidBrush( makeColorRef(color) );
+    else
+        backgroundBrush = CreateSolidBrush(DARK_BG_SOFTER_COL);
+}
+
 auto pLogicViewer::buildDrawArea(HDC hdc, RECT rcWork, unsigned firstSlot, unsigned buildSlots) -> void {
     unsigned maxSlots = logicViewer.state.logics.size();
     unsigned fullWidth = buildSlots * (DMA_SLOT_WIDTH + 1);
@@ -292,11 +312,11 @@ auto pLogicViewer::buildDrawArea(HDC hdc, RECT rcWork, unsigned firstSlot, unsig
 
     SelectObject(drawDC, drawBmp);
     SelectObject(drawDC, hfont);
-    SelectObject(drawDC, pApplication::darkEdgePen);
-    SelectObject(drawDC, pApplication::darkBGSofterBrush);
+    SelectObject(drawDC, penDarkEdge);
+    SelectObject(drawDC, backgroundBrush);
 
     SetBkMode(drawDC, TRANSPARENT);
-    FillRect(drawDC, &rc, pApplication::darkBGSofterBrush);
+    FillRect(drawDC, &rc, backgroundBrush);
 
     if (maxSlots == 0)
         return;
@@ -323,19 +343,23 @@ auto pLogicViewer::buildDrawArea(HDC hdc, RECT rcWork, unsigned firstSlot, unsig
 
 auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RECT rc) -> void {
     Gdiplus::GraphicsPath path;
-    SelectObject(drawDC, pApplication::darkEdgePen);
+    SelectObject(drawDC, penDarkEdge);
     MoveToEx(drawDC, rc.right, 0, NULL);
     LineTo(drawDC, rc.right, rc.bottom);
-    bool addrLength = logicViewer.addrAs24bit() ? 6 : 4;
+    int addrLength = logicViewer.addrAs24bit() ? 6 : 4;
 
     rc.top += 5;
     rc.bottom = rc.top + 20;
 
     if (logicState.active) {
-        SelectObject(drawDC, pApplication::darkFGPen);
-        SetTextColor(drawDC, pApplication::useDark ? DARK_FG_COL : GetSysColor(COLOR_WINDOW));
+        SelectObject(drawDC, penFG);
+
+        if (widget.overrideForegroundColor())
+            SetTextColor(drawDC, makeColorRef(widget.foregroundColor()) );
+        else
+            SetTextColor(drawDC, DARK_FG_COL);
     } else {
-        SetTextColor(drawDC, pApplication::useDark ? DARK_DISABLE_COL : GetSysColor(COLOR_GRAYTEXT));
+        SetTextColor(drawDC, DARK_DISABLE_COL);
     }
 
     DrawText(drawDC, utf16_t(String::convertToHex(logicState.position)), -1, &rc, DT_CENTER);
@@ -346,55 +370,52 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
         FillRect(drawDC, &rc, getBrush(logicState.color));
     }
 
-    setBox(rc, 0);
+    setBox(rc, (int)LogicState::Offset::Usage1);
 
     if (logicState.display == LogicState::Display::EmptyBlock) {
         DrawText(drawDC, L"-", -1, &rc, DT_CENTER);
-        setBox(rc, 1);
+        setBox(rc, (int)LogicState::Offset::Addr1);
         drawLine(rc);
-        setBox(rc, 2);
+        setBox(rc, (int)LogicState::Offset::Data1);
         drawLine(rc);
 
     } else {
         DrawText(drawDC, utf16_t(logicState.usage), -1, &rc, DT_CENTER);
-        setBox(rc, 1);
+        setBox(rc, (int)LogicState::Offset::Addr1);
         std::string _addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr, addrLength);
         drawRectRounded(g, &path, rc, _addr, 5, logicState.active);
-        setBox(rc, 2);
+        setBox(rc, (int)LogicState::Offset::Data1);
         drawRectRounded(g, &path, rc, String::convertToHex(logicState.data), 10, logicState.active);
     }
 
-    setBox(rc, 3);
+    setBox(rc, (int)LogicState::Offset::Usage2);
 
     if (logicState.display2 == LogicState::Display::EmptyBlock) {
         DrawText(drawDC, L"-", -1, &rc, DT_CENTER);
-        setBox(rc, 4);
+        setBox(rc, (int)LogicState::Offset::Addr2);
         drawLine(rc);
-        setBox(rc, 5);
+        setBox(rc, (int)LogicState::Offset::Data2);
         drawLine(rc);
 
     } else {
         DrawText(drawDC, utf16_t(logicState.usage2), -1, &rc, DT_CENTER);
-        setBox(rc, 4);
+        setBox(rc, (int)LogicState::Offset::Addr2);
         drawRectRounded(g, &path, rc, String::convertToHex(logicState.addr2, addrLength), 5, logicState.active);
-        setBox(rc, 5);
+        setBox(rc, (int)LogicState::Offset::Data2);
         drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 10, logicState.active);
     }
 
     int i = 0;
     for (auto& watch : logicState.watches) {
-        setBox(rc, 6 + i++);
+        setBox(rc, (int)(LogicState::Offset::Watch1) + i++);
         drawRect(watch.first, g, &path, rc, String::convertToHex(watch.second), 10, logicState.active);
     }
 }
 
-inline auto pLogicViewer::setBox(RECT& rc, unsigned offset) -> void {
+inline auto pLogicViewer::setBox(RECT& rc, int offset) -> void {
     unsigned y;
     auto o = logicViewer.state.offsets;
-    if (o.size() <= offset)
-        y = o[o.size() - 1];
-    else
-        y = o[offset];
+    y = o[offset];
 
     if (offset == 0 || offset == 3)
         y += 4;
@@ -446,7 +467,7 @@ inline auto pLogicViewer::drawRect(RECT& rc, const std::string& text) -> void {
 inline auto pLogicViewer::drawRectRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void {
     GetRoundRectPath(path, Gdiplus::Rect(rc.left + padding, rc.top, rc.right - rc.left - (padding * 2), rc.bottom - rc.top), 10 );
 
-    g.DrawPath(active ? penFG : penDarkEdge, path);
+    g.DrawPath(active ? penFG_gp : penDarkEdge_gp, path);
 
     unsigned center = (rc.bottom + rc.top) / 2;
 
@@ -462,7 +483,7 @@ inline auto pLogicViewer::drawRectRounded(Gdiplus::Graphics& g, Gdiplus::Graphic
 inline auto pLogicViewer::drawRectLeftRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void {
     GetRoundRectPathLeft(path, Gdiplus::Rect(rc.left + padding, rc.top, rc.right - rc.left - (padding), rc.bottom - rc.top), 10 );
 
-    g.DrawPath(active ? penFG : penDarkEdge, path);
+    g.DrawPath(active ? penFG_gp : penDarkEdge_gp, path);
 
     unsigned center = (rc.bottom + rc.top) / 2;
 
@@ -476,7 +497,7 @@ inline auto pLogicViewer::drawRectLeftRounded(Gdiplus::Graphics& g, Gdiplus::Gra
 inline auto pLogicViewer::drawRectRightRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void {
     GetRoundRectPathRight(path, Gdiplus::Rect(rc.left, rc.top, rc.right - rc.left - (padding), rc.bottom - rc.top), 10 );
 
-    g.DrawPath(active ? penFG : penDarkEdge, path);
+    g.DrawPath(active ? penFG_gp : penDarkEdge_gp, path);
 
     unsigned center = (rc.bottom + rc.top) / 2;
 
