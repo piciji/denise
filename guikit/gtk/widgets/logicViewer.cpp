@@ -263,12 +263,6 @@ auto pLogicViewer::buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry ge
     }
 }
 
-auto pLogicViewer::getOffset(ínt pos) -> unsigned {
-    auto o = logicViewer.state.offsets;
-    unsigned y = o[pos];
-    return y > 23 ? y - 23 : y;
-}
-
 auto pLogicViewer::drawRect(cairo_t* cr, LogicState::Display display, Geometry& geo, const std::string& text, unsigned padding) -> void {
     switch (display) {
         default:
