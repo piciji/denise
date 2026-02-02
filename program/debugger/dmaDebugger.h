@@ -24,6 +24,7 @@ struct DmaDebugger : Debugger {
             GUIKIT::Label cpuData;
 
             struct Watcher : GUIKIT::HorizontalLayout {
+                GUIKIT::Widget spacer;
                 GUIKIT::Button button;
                 GUIKIT::LineEdit edit;
                 unsigned position;

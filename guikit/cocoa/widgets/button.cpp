@@ -48,9 +48,13 @@ auto pButton::minimumSize() -> Size {
 }
     
 auto pButton::setGeometry(Geometry geometry) -> void {
+    int adjust = 2;
+      if (!button.image())
+        adjust = 6;
+    
     pWidget::setGeometry({
-        geometry.x - 2, geometry.y - 2,
-        geometry.width + 4, geometry.height + 4
+        geometry.x - adjust, geometry.y - 2,
+        geometry.width + (adjust * 2), geometry.height + 4
     });
 }
     

@@ -35,8 +35,8 @@
         [self setHasVerticalScroller:NO];
         [self setHasHorizontalScroller:YES];
         if (GUIKIT::hasMinimumVersion(10, 10)) {
-            [self setAutomaticallyAdjustsContentInsets:NO];
-            [self setContentInsets:NSEdgeInsetsMake(0, 0, 0, 0)];
+        //    [self setAutomaticallyAdjustsContentInsets:NO];
+          //  [self setContentInsets:NSEdgeInsetsMake(0, 0, 0, 0)];
         }
 
       //  [content setTarget:self];
@@ -51,6 +51,19 @@
 
 -(CocoaLogicViewer*) content {
     return content;
+}
+
+-(void)scrollWheel:(NSEvent*)event {
+    NSClipView* clipView = [self contentView];
+    //CGFloat deltaX = event.scrollingDeltaX;
+    CGFloat deltaY = event.scrollingDeltaY;
+    NSPoint point = clipView.bounds.origin;
+
+    CGFloat newX = point.x - (deltaY * 10.0);
+    NSPoint newOrigin = NSMakePoint(newX, point.y);
+    
+    [clipView setBoundsOrigin:newOrigin];
+    [self reflectScrolledClipView:clipView];
 }
 @end
 
@@ -261,9 +274,7 @@ auto pLogicViewer::buildDmaSlot(CGContextRef context, LogicState& logicState, Ge
     } else {
         drawText(geo, logicState.usage2, nsCol);
         setBox(geo, (int)LogicState::Offset::Addr2);
-        
-        std::string addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr2, addrLength);
-        drawRectRounded(context, geo, addr, nsCol, 5);
+        drawRectRounded(context, geo, String::convertToHex(logicState.addr2, addrLength), nsCol, 5);
         setBox(geo, (int)LogicState::Offset::Data2);
         drawRectRounded(context, geo, String::convertToHex(logicState.data2), nsCol, 10);
     }

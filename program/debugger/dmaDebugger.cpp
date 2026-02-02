@@ -10,7 +10,8 @@ DmaDebugger::DmaDebugger( Emulator::Interface* emulator )
 }
 
 DmaDebugger::Dma::Legend::Legend::Watcher::Watcher() {
-    append( button, {100u, 0u}, 0);
+    append( spacer, {10u, 0u}, 0);
+    append( button, {90u, 0u}, 0);
 }
 
 DmaDebugger::Dma::Legend::Legend() {
@@ -169,7 +170,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         watcher.button.onMenu = [this, w]() {
             for (auto& w : dma->legend.watchers) {
                 if (w.remove( w.edit )) {
-                    w.append( w.button, {100u, 0u} );
+                    w.append( w.button, {90u, 0u} );
                     w.synchronizeLayout();
                 }
             }
@@ -194,7 +195,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
                 }
 
                 w->remove( w->edit );
-                w->append( w->button, {100u, 0u} );
+                w->append( w->button, {90u, 0u} );
                 w->synchronizeLayout();
             }
         };
@@ -205,7 +206,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         auto* w = dma->legend.currentWatcher;
         if (w) {
             w->remove( w->button );
-            w->append( w->edit, {100u, 0u} );
+            w->append( w->edit, {90u, 0u} );
             w->edit.setMaxLength(6);
             w->edit.setFocused();
             w->synchronizeLayout();
