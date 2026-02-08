@@ -13,6 +13,7 @@ namespace LIBC64 {
 	
 VicIICycle::VicIICycle(System* system) : VicIIBase(system) {
 	greyDotBugDisabled = false;
+    debugger.dmaFrame = new uint8_t[VIC_MAX_LINE_LENGTH * 320];
 }
 
 auto VicIICycle::disableGreyDotBug(bool state) -> void {
@@ -101,11 +102,11 @@ auto VicIICycle::power() -> void {
 	firstVisiblePixel += 8;	// display is delayed 8 pixel
 }
 
-auto VicIICycle::updateSnapshot(DebuggerSnapshot& snap) -> void {
+auto VicIICycle::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
     auto& s = snap.vicII;
     s.vmli = vmli;
 
-    VicIIBase::updateSnapshot(snap);
+    VicIIBase::updateVideoSnapshot(snap);
 }
 
 }

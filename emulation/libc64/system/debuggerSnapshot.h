@@ -35,6 +35,9 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint8_t hPos;
     uint16_t vPos;
 
+    Emulator::Interface::DebuggerDma* debuggerDma = nullptr;
+    uint8_t lineCycles;
+
     struct {
         struct {
             uint8_t data[0x3fff];
@@ -108,6 +111,10 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         uint8_t sdr;
         unsigned shiftCount;
     } cia[2];
+
+    constexpr static const char* dmaModes[] { "Free", "Idle", "Graphics", "Character", "Sprite Pointer", "Sprite Data", "Refresh", "Cpu" };
+    constexpr static const char* dmaModesShort[] { "", "IDL", "GRA", "CHA", "SPP", "SPD", "REF", "CPU" };
+    constexpr static const char* cpuAccess[] { "-", "RAM", "VIC", "SID", "COL", "IO1", "IO2", "CIA1", "CIA2", "CHAR", "KERN", "BASC", "ROML", "ROMH", "ULT"};
 
     constexpr static Emulator::Interface::DebuggerIdent CiaPorts[2][2][8] = {
         { // CIA A

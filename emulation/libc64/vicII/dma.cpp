@@ -1,43 +1,25 @@
 
-//  This code is based on VIC-II cycle engine in VICE
-//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
-
-/*
- *
- * Written by
- *  Hannu Nuotio <hannu.nuotio@tut.fi>
- *  Daniel Kahlin <daniel@kahlin.net>
- *
- * Based on code by
- *  Ettore Perazzoli <ettore@comm2000.it>
- *  Andreas Boose <viceteam@t-online.de>
- *
- * This file is part of VICE, the Versatile Commodore Emulator.
- * See README for copyright notice.
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- *  02111-1307  USA.
- *
- */
-
 #include "vicII.h"
 #include "../system/system.h"
 
+#define DEBUG_SCROLL_MAX 30
+
 namespace LIBC64 {    
 
+auto VicIICycle::clockLogged() -> void {
+    clockCycle<true>();
+}
+
 auto VicIICycle::clock() -> void {
+    clockCycle<false>();
+}
+
+auto VicIICycle::clockMaybeLogged() -> void {
+    if (debugger.dmaLog)    clockCycle<true>();
+    else                    clockCycle<false>();
+}
+
+template<bool logDma> inline auto VicIICycle::clockCycle() -> void {
 	
 	if (!enableSequencer)
 		return clockSilence();	
@@ -62,8 +44,8 @@ auto VicIICycle::clock() -> void {
 		spriteUpdateBase();	
 	else if (isSprExp( flags ))
 		spriteExpand();
-	
-	lastReadPhi1 = fetchPhi1( flags );
+
+    lastReadPhi1 = fetchPhi1<logDma>( flags );
 	
 	if (isUpdateVc( flags ))
 		updateVc();	
@@ -90,8 +72,8 @@ inline auto VicIICycle::advanceCycle() -> void {
 		allowBadlines = true;
 	
 	if(initVCounter) {
-	    if (debugInfo.store)
-	        debugInfo.reset();
+	    if (debugger.storeSprites)
+	        debugger.resetSpriteStore();
         vCounter = 0;
         initVCounter = false;
 		lpLatched = false;	
@@ -124,31 +106,113 @@ inline auto VicIICycle::advanceCycle() -> void {
 			if ( !allowBadlines && (vCounter == 0x30) && den )
 				allowBadlines = true;
 		}
-		
-		setLineBuffer();
 
-		if ( vCounter == vStart ) {
-            updateBorderData();
-            // we buffer all pixel data in non blanking area, of course a CRT
-            // can not display the whole non blanking area.
-            // cropping is done later and not within Vic emulation
-            visibleLine = true; // non v-blank
+	    if (debugger.dmaView) {
+	        nextLineWithDmaView();
+	    } else {
+	        setLineBuffer();
 
-        } else if ( lineVCounter == vHeight ) {
-            visibleLine = false; // v-blank
+	        if ( vCounter == vStart ) {
+	            updateBorderData();
+	            // we buffer all pixel data in non blanking area, of course a CRT
+	            // can not display the whole non blanking area.
+	            // cropping is done later and not within Vic emulation
+	            visibleLine = true; // non v-blank
 
-            // push out the frame to host
-            // we crop the h-blanking area before
-            system->videoRefresh( frameBuffer + firstVisiblePixel,
-                hWidth, lineVCounter, VIC_MAX_LINE_LENGTH - hWidth
-            );
-			lineVCounter = 0;
-		}
+	        } else if ( lineVCounter == vHeight ) {
+	            visibleLine = false; // v-blank
+
+	            // push out the frame to host
+	            // we crop the h-blanking area before
+	            system->videoRefresh( frameBuffer + firstVisiblePixel,
+                    hWidth, lineVCounter, VIC_MAX_LINE_LENGTH - hWidth
+                );
+	            lineVCounter = 0;
+	        }
+	    }
+
 	    if (debuggerAction == Emulator::Interface::DebuggerAction::Line)
 	        oneTimeDebuggerAction();
 	}
 
     sprite0DmaLateBA = false;
+}
+
+auto VicIICycle::nextLineWithDmaView() -> void {
+    visibleLine = true;
+	setLineBuffer();
+	uint8_t usage;
+	for (int c = 0; c < lineCycles; c++ ) {
+	    usage = debugger.dma[c].usage;
+	    std::memset( debugger.frameLine, usage, 4 );
+
+	    usage = debugger.dma[c].usageCpu;
+	    if (usage != DMA_CHARACTER && usage != DMA_SPR_DATA)
+	        usage = DMA_CPU;
+
+	    std::memset( debugger.frameLine + 4, usage, 4 );
+
+	    debugger.frameLine += 8;
+	}
+
+	if (initVCounter) {
+	    auto& _crop = debugger.crop;
+	    unsigned _pitch = VIC_MAX_LINE_LENGTH - hWidth;
+	    uint8_t* _ptr = frameBuffer + firstVisiblePixel;
+	    unsigned _height = vHeight;
+	    unsigned _width = hWidth;
+	    _crop.apply( _ptr, _width, _height, _pitch);
+	    unsigned width = lineCycles * 8;
+
+	    int offsetX = 0;
+	    int offsetY = 0;
+	    int offsetFrameX = 0;
+	    int offsetFrameY = 0;
+	    bool endDmaView = false;
+
+	    if (debugger.scrollDirection != 0) {
+	        if (((debugger.scrollDirection == 1) && (debugger.scrollCounter < DEBUG_SCROLL_MAX))
+            || ((debugger.scrollDirection == -1) && debugger.scrollCounter)) {
+	            if (_crop.latest.width < width) {
+	                offsetX = width - _crop.latest.width;
+	                offsetX = offsetX - (offsetX * debugger.scrollCounter) / DEBUG_SCROLL_MAX;
+	            }
+
+	            if (_crop.latest.height < lineVCounter) {
+	                offsetY = lineVCounter - _crop.latest.height;
+	                offsetY = offsetY - (offsetY * debugger.scrollCounter) / DEBUG_SCROLL_MAX;
+	            }
+
+	            unsigned lastLeft = firstVisiblePixel + _crop.latest.left;
+	            offsetFrameX = lastLeft - ((lastLeft * debugger.scrollCounter) / DEBUG_SCROLL_MAX);
+
+	            unsigned lastTop = vStart + _crop.latest.top;
+	            offsetFrameY = lastTop - ((lastTop * debugger.scrollCounter) / DEBUG_SCROLL_MAX);
+
+	            debugger.scrollCounter += debugger.scrollDirection;
+            } else {
+                if (debugger.scrollDirection == -1)
+                    endDmaView = true;
+
+                debugger.scrollDirection = 0;
+            }
+	    }
+
+	    if (!endDmaView) {
+	        system->videoRefresh( frameBuffer + (offsetFrameY * VIC_MAX_LINE_LENGTH) + offsetFrameX,
+                width - offsetX, lineVCounter - offsetY, VIC_MAX_LINE_LENGTH - (width - offsetX)
+            );
+	    }
+
+	    lineVCounter = 0;
+
+	    if (endDmaView) {
+	        debugger.dmaView = false;
+	        debugger.dmaLog = debugger.requestDmaLog;
+	        visibleLine = false;
+	    }
+	}
+	debugger.frameLine = debugger.dmaFrame + lineVCounter * VIC_MAX_LINE_LENGTH;
 }
 
 inline auto VicIICycle::clearCollisions() -> void {
@@ -246,7 +310,6 @@ auto VicIICycle::updateRc() -> void {
 }
 
 inline auto VicIICycle::updateBAState( uint32_t flags ) -> void {
-	//static bool _baLow;
     bool _baLow = baLow;
     
 	if (badLine)

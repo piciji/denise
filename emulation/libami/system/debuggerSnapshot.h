@@ -74,20 +74,17 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
 
     } denise;
 
-    constexpr static Emulator::Interface::DebuggerIdent dmaModes[] {
-        {0, "Free"}, {1, "Bitplanes"},{2, "Sprites"},
-        {3, "Blitter"}, {4, "Copper"},{5, "Cpu"},
-        {6, "Refresh"}, {7, "Disk"}, {8, "Audio"},
-        {9, "Blt-Cop Conflict"}, {10, "Blt-Spr Conflict"},
-        {11, "Bpl-Ref Conflict"}, {12, "Bpl-Spr Conflict"}
+    constexpr static const char* dmaModes[] {
+        "Free", "Bitplanes", "Sprites",
+        "Blitter", "Copper", "Cpu", "Refresh", "Disk", "Audio",
+        "Blt-Cop Conflict", "Blt-Spr Conflict",
+        "Bpl-Ref Conflict", "Bpl-Spr Conflict"
     };
 
-    constexpr static Emulator::Interface::DebuggerIdent dmaModesShort[] {
-        {0, ""}, {1, "BPL"},{2, "SPR"},
-        {3, "BLT"}, {4, "COP"},{5, "CPU"},
-        {6, "REF"}, {7, "DSK"}, {8, "AUD"},
-        {9, "BLT-COP"}, {10, "BLT-SPR"},
-        {11, "BPL-REF"}, {12, "BPL-SPR"}
+    constexpr static const char* dmaModesShort[] {
+        "", "BPL", "SPR", "BLT", "COP", "CPU",
+        "REF", "DSK", "AUD", "BLT-COP", "BLT-SPR",
+        "BPL-REF", "BPL-SPR"
     };
 
     constexpr static const char* cpuAccess[] {

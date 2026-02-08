@@ -329,11 +329,13 @@ struct Interface {
     };
 
     struct DebuggerDma {
+        // DMA usage
         uint8_t usage;
-        uint8_t mapper;
         uint32_t address;
         uint16_t data;
 
+        // CPU usage or DMA
+        uint8_t usageCpu;
         uint32_t addrCpu;
         uint16_t dataCpu;
 

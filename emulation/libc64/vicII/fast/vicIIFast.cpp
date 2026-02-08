@@ -56,8 +56,8 @@ auto VicIIFast::clock() -> void {
     }    
     
     if (initVCounter) {
-        if (debugInfo.store)
-            debugInfo.reset();
+        if (debugger.storeSprites)
+            debugger.resetSpriteStore();
 
         vCounter = 0;
         if (debuggerAction == Emulator::Interface::DebuggerAction::Frame)
@@ -286,11 +286,11 @@ inline auto VicIIFast::applyMeta() -> void {
     }  
 }
 
-auto VicIIFast::updateSnapshot(DebuggerSnapshot& snap) -> void {
+auto VicIIFast::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
     auto& s = snap.vicII;
     s.vmli = 0;
 
-    VicIIBase::updateSnapshot(snap);
+    VicIIBase::updateVideoSnapshot(snap);
 }
 
 auto VicIIFast::initMetaPattern() -> void {

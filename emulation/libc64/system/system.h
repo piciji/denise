@@ -244,6 +244,7 @@ struct System {
     struct {
         Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
         uint32_t addr;
+        uint32_t dmaWatchers[4] = { 0 };
     } debugger;
 
     DebuggerSnapshot debuggerSnapshot;
@@ -355,6 +356,9 @@ struct System {
 
     auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
+
+    auto logCpu(uint16_t addr, uint8_t data) -> void;
+    auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop _crop ) -> void;
 };
 
 }

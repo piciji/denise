@@ -227,6 +227,7 @@ struct Interface : Emulator::Interface {
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
 	auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void;
 	auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void;
+    auto getDmaDump() -> uint8_t*;
 
 private:
 	auto prepareDevices() -> void;

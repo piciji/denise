@@ -8,7 +8,7 @@ namespace LIBAMI {
 #define LOG_DMA(res) if constexpr (logDma) { \
     auto& dmaLogger = debugger.dma[hPos]; \
     dmaLogger.usage = BUS_USAGE_CPU; \
-    dmaLogger.mapper = _map; \
+    dmaLogger.usageCpu = _map; \
     dmaLogger.address = dmaLogger.addrCpu = addrBus = adr; \
     dmaLogger.data = dmaLogger.dataCpu = res; \
     peekDmaWatcher(dmaLogger); \
@@ -16,7 +16,7 @@ namespace LIBAMI {
 
 #define LOG_DMA_CPU(res) if constexpr (logDma) { \
     auto& dmaLogger = debugger.dma[hPos]; \
-    dmaLogger.mapper = _map; \
+    dmaLogger.usageCpu = _map; \
     dmaLogger.addrCpu = adr; \
     dmaLogger.dataCpu = res; \
 }

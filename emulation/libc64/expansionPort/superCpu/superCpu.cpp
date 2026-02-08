@@ -1440,7 +1440,7 @@ inline auto SuperCpu::syncStockIO() -> void {
 inline auto SuperCpu::syncStock() -> void {
     sysTimer.process();
     cia1.clock();
-    vicII->clock();
+    vicII->clockMaybeLogged();
     cia2.clock();
     if (system->secondDriveCable.cycleSyncing)
 	    system->iecBus.syncDrivesEachCycle();

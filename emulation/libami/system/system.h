@@ -105,7 +105,7 @@ struct System {
     auto setRunAhead(unsigned frames) -> void;
     auto runAheadPreventJit() -> bool { return runAhead.preventJit && runAhead.frames; }
     auto allowRunAhead() -> const bool { return !warp.config && runAhead.frames && !agnus.resetFromKeyboard
-        && !cpu.inDebugMode() && agnus.womLocked() && !agnus.debugger.dmaLog; }
+        && !debuggerSnapshot.themes && agnus.womLocked(); }
     auto hintSlowSpeed(bool state) -> void;
 
     auto calcSerializationSize() -> void;

@@ -9,6 +9,8 @@ struct VicIIFast : VicIIBase {
     
     VicIIFast(System* system);
     auto clock() -> void;
+    auto clockLogged() -> void { clock(); }
+    auto clockMaybeLogged() -> void { clock(); }
     auto power() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto clockSilence() -> void;    
@@ -25,7 +27,7 @@ struct VicIIFast : VicIIBase {
 	auto reuBaLow() -> bool { return baLow; }
     auto reuSprite0() -> bool { return false; }
 	auto setMeta( bool state ) -> void;
-    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;
    
 protected:
 	#include "../flags.h"

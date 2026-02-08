@@ -49,7 +49,7 @@ auto VicIIFast::scanline() -> void {
     if (addMeta)
         applyMeta();  
 	
-	hFlipFlop = 1;
+	hFlipFlop = true;
 }
 
 inline auto VicIIFast::fetch(unsigned i) -> void {
@@ -368,7 +368,7 @@ auto VicIIFast::dmaSpritesOff() -> void {
     for (unsigned pos = 0; pos < 8; pos++) {
         Sprite* spr = &sprite[pos];
         spr->dataShiftReg = spr->dataS;
-         if (debugInfo.store && (spriteActive & (1 << pos)))
+         if (debugger.storeSprites && (spriteActive & (1 << pos)))
              storeSprite(*spr);
         
         if (spr->expandYFlop) {

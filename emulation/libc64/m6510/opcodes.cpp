@@ -1,7 +1,7 @@
 
 namespace LIBC64 {
 
-template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
+template<bool mhz2, bool busLogger, bool postBreakCheck> auto M6510::process() -> void {
 
 	uint8_t dataBus;
 	uint8_t zeroPage;
@@ -43,11 +43,11 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 #define SAMPLE_INTERRUPT	\
 	if(nmiPending | (irqPending & !GET_FLAG_I )) control |= IRQ;
 
-#define READ( addr ) 	dataBus = busRead<false, false, mhz2>( addr );
-#define READ_LAST( addr ) 	dataBus = busRead<true, false, mhz2>( addr );
+#define READ( addr ) 	dataBus = busRead<false, false, mhz2, busLogger>( addr );
+#define READ_LAST( addr ) 	dataBus = busRead<true, false, mhz2, busLogger>( addr );
 
 #define WRITE( addr, value )	\
-	busWrite<mhz2>( addr, value);
+	busWrite<mhz2, busLogger>( addr, value);
 
 #define WRITE_LAST( addr, value )	\
 	SAMPLE_INTERRUPT				\
@@ -102,7 +102,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	absolute |= dataBus << 8;		\
 	uint16_t absIndexed = absolute + regY;					\
 	if (FORCE || PAGE_CROSSED) {		\
-		busRead<false, true, mhz2>( ((absolute & 0xff00) | (absIndexed & 0xff)) );	\
+		busRead<false, true, mhz2, busLogger>( ((absolute & 0xff00) | (absIndexed & 0xff)) );	\
 	}
 
 #define ZERO_PAGE_INDEXED( REG )	\
@@ -120,7 +120,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	ABS										\
 	uint16_t absIndexed = absolute + REG;	\
 	if (FORCE || PAGE_CROSSED) {		\
-		busRead<false, true, mhz2>( ((absolute & 0xff00) | (absIndexed & 0xff)) ); \
+		busRead<false, true, mhz2, busLogger>( ((absolute & 0xff00) | (absIndexed & 0xff)) ); \
 	}
 
 // GET
@@ -437,11 +437,11 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	SET_FLAG_C( 1 )
 
 #define CLI				\
-	busAccessUpdateFlagI<false,mhz2>( pc ); \
+	busAccessUpdateFlagI<false, mhz2, busLogger>( pc ); \
 	SET_FLAG_I( 0 )
 
 #define SEI				\
-	busAccessUpdateFlagI<true,mhz2>( pc ); \
+	busAccessUpdateFlagI<true, mhz2, busLogger>( pc ); \
 	SET_FLAG_I( 1 )
 
 #define CLV	\
@@ -608,7 +608,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 	H1_AND_WRITE( REG ) }
 
 #define GET_IMM_AND_REMEMBER_RDY	\
-	dataBus = busRead<true, true, mhz2>( pc );			\
+	dataBus = busRead<true, true, mhz2, busLogger>( pc );			\
 	INC_PC( 1 )
 
 #define ANE	\
@@ -661,21 +661,21 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
             }
 
             if (control & IRQ) {
-                interrupt<false, mhz2>();
+                interrupt<false, mhz2, busLogger>();
                 if (control & (BreakPoint | SoftStop))
                     controlBreaks();
                 return;
             }
 
             if (control & ResetRoutine) {
-                resetRoutine<mhz2>();
+                resetRoutine<mhz2, busLogger>();
             }
 
             if (control & History)
                 loadTrace(historyHandler.getNext());
 
             if (control & (BreakPoint | SoftStop)) {
-                return process<mhz2, true>();
+                return process<mhz2, busLogger, true>();
             }
         }
     }
@@ -684,7 +684,7 @@ template<bool mhz2, bool postBreakCheck> auto M6510::process() -> void {
 
 	switch( dataBus ) {
         case 0x00:
-            interrupt<true, mhz2>( );
+            interrupt<true, mhz2, busLogger>( );
             break;
 
         #include "optable.h"

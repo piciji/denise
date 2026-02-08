@@ -4,9 +4,11 @@
 #include "cycleTable.cpp"
 #include "../system/debuggerSnapshot.h"
 
+#define DEBUG_SCROLL_MAX 30
+
 namespace LIBC64 { 
 
-uint8_t* VicIIBase::frameBuffer = new uint8_t[VIC_MAX_LINE_LENGTH * 294];
+uint8_t* VicIIBase::frameBuffer = new uint8_t[VIC_MAX_LINE_LENGTH * 320];
 
 VicIIBase::VicIIBase(System* system) : system(system), cpu(system->cpu) {
 	
@@ -28,7 +30,7 @@ VicIIBase::VicIIBase(System* system) : system(system), cpu(system->cpu) {
     sprite6->position = 6;
     sprite7->position = 7;
 
-    for(auto& s : debugInfo.spr)
+    for(auto& s : debugger.spr)
         s.data = new uint8_t[16384];
 }	
 
@@ -36,9 +38,13 @@ VicIIBase::~VicIIBase() {
 	if (frameBuffer)
 		delete[] frameBuffer;
 
-    for(auto& s : debugInfo.spr)
+    if (debugger.dmaFrame)
+        delete[] debugger.dmaFrame;
+
+    for(auto& s : debugger.spr)
         delete[] s.data;
-		
+
+    debugger.dmaFrame = nullptr;
 	frameBuffer = nullptr;
 }
 	
@@ -224,7 +230,7 @@ auto VicIIBase::getCyclesForNextLightTrigger(int x, int y, uint8_t& cyclePixel) 
 }
 
 auto VicIIBase::storeSprite(Sprite& spr) -> void {
-    auto& _spr = debugInfo.spr[spr.position];
+    auto& _spr = debugger.spr[spr.position];
 
     bool mcFlop = true;
     bool expandXFlop = true;
@@ -329,7 +335,12 @@ auto VicIIBase::power() -> void {
     idleMode = true;    
     initVCounter = false;
 
-    debugInfo.reset();
+    debugger.resetSpriteStore();
+    debugger.frameLine = debugger.dmaFrame;
+    for (auto& dma : debugger.dma) {
+        dma.usage = 0;
+        dma.usageCpu = 0;
+    }
 
     for (unsigned i = 0; i < 8; i++) {
         sprite[i].enabled = false;
@@ -385,11 +396,11 @@ auto VicIIBase::oneTimeDebuggerAction() -> void {
 }
 
 #define _fullAdr( __addr ) (((__addr) & 0x3fff) | vicBank)
-auto VicIIBase::updateSnapshot(DebuggerSnapshot& snap) -> void {
+auto VicIIBase::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
     auto& s = snap.vicII;
 
     for (unsigned i = 0; i < 8; i++) {
-        auto& _sprD = debugInfo.spr[i];
+        auto& _sprD = debugger.spr[i];
         auto& _sprT = s.spr[i];
         auto& _spr = sprite[i];
         unsigned pos = snap.callbackAction == Interface::DebuggerAction::AutoUpdate ? _sprD.lastPos : _sprD.pos;
@@ -438,9 +449,64 @@ auto VicIIBase::updateSnapshot(DebuggerSnapshot& snap) -> void {
 }
 #undef _fullAdr
 
+auto VicIIBase::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
+    snap.debuggerDma = &debugger.dma[0];
+    snap.lineCycles = lineCycles;
+}
+
 auto VicIIBase::updatePositionSnapshot(DebuggerSnapshot& snap) -> void {
     snap.vPos = vCounter;
     snap.hPos = cycle;
+}
+
+auto VicIIBase::enableDmaView(bool state, bool withScrolling) -> void {
+    debugger.enableDmaView(state, withScrolling);
+    lineVCounter = 0;
+    linePos = 0;
+    visibleLine = false;
+}
+
+auto VicIIBase::Debugger::enableDmaView(bool state, bool withScrolling) -> void {
+
+    if (state) {
+        dmaView = true;
+        if (!withScrolling) {
+            scrollDirection = 0;
+            scrollCounter = DEBUG_SCROLL_MAX;
+        } else
+            scrollDirection = 1;
+
+    } else {
+        if (!withScrolling) {
+            dmaView = false;
+            scrollCounter = 0;
+            scrollDirection = 0;
+        } else
+            scrollDirection = -1;
+    }
+
+    dmaLog = requestDmaLog || dmaView;
+}
+
+auto VicIIBase::Debugger::enableDmaLog(bool state) -> void {
+    requestDmaLog = state;
+    dmaLog = requestDmaLog || dmaView;
+}
+
+auto VicIIBase::Debugger::resetSpriteStore() -> void {
+    for (auto& s : spr) {
+        s.lastPos = s.pos;
+        s.pos = 0;
+    }
+}
+
+auto VicIIBase::Debugger::enableSpriteStore(bool state) -> void {
+    storeSprites = state;
+    resetSpriteStore();
+}
+
+auto VicIIBase::requestCurrentDmaLog() -> Emulator::Interface::DebuggerDma& {
+    return debugger.dma[cycle];
 }
 
 auto VicIIBase::setModel(Model model) -> void {

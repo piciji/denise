@@ -486,6 +486,14 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return vicII->getCrop(_w, _h);
     };
 
+    vicIICycle.debugger.crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+        crop->removeBorderCallback(top, bottom, left, right);
+    };
+
+    vicIICycle.debugger.crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+        crop->monitorBorderCallback(top, bottom, left, right);
+    };
+
     tape.setReadTransition = [this]() {
 
         cia1.setFlag();
@@ -792,7 +800,7 @@ auto System::run() -> void {
     iecBus.randomizeRpm();
 
     runAhead.active = !warp.config && runAhead.frames && !traps.installed
-        && !cpu.inDebugMode() && !keyBuffer->isPrgInjectionInQueue();
+        && !debuggerSnapshot.themes && !keyBuffer->isPrgInjectionInQueue();
 
     if (history.enable()) {
         if (history.rewind) {
@@ -831,14 +839,22 @@ auto System::run() -> void {
                 iecBus.syncDrives();
         }
     } else if (!mhz2) {
-        while( !leaveEmulation ) {
-            cpu.process<false>();
-            if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
-                iecBus.syncDrives();
+        if (vicII->debugger.dmaLog) {
+            while( !leaveEmulation ) {
+                cpu.process<false, true>();
+                if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
+                    iecBus.syncDrives();
+            }
+        } else {
+            while( !leaveEmulation ) {
+                cpu.process<false, false>();
+                if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
+                    iecBus.syncDrives();
+            }
         }
     } else {
         while( !leaveEmulation ) {
-            cpu.process<true>();
+            cpu.process<true, false>();
             if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
                 iecBus.syncDrives();
         }
@@ -1023,7 +1039,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
     }
 
     if (!runAhead.pos && frame) {
-        crop->apply( frame, width, height, linePitch );
+        crop->apply( frame, width, height, linePitch, vicII->debugger.dmaView ? 0x80 : 0);
         // for lightguns
         input.drawCursor();
     }
@@ -1332,9 +1348,22 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
     switch (theme) {
         case DebuggerTheme::Video:
             debuggerSnapshot.themes |= (unsigned)theme;
-            vicIICycle.debugInfo.setEnable( true );
-            vicIIFast.debugInfo.setEnable( true );
+            vicIICycle.debugger.enableSpriteStore( true );
+            vicIIFast.debugger.enableSpriteStore( true );
             break;
+        case DebuggerTheme::Bus:
+            switch (action) {
+                case DebuggerAction::DmaView:
+                    vicIICycle.enableDmaView(true, addr == 0);
+                    break;
+                case DebuggerAction::DmaLog:
+                    debuggerSnapshot.themes |= (unsigned)theme;
+                    vicIICycle.debugger.enableDmaLog(true);
+                    break;
+                case DebuggerAction::DmaWatch:
+                    debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
+                    break;
+            } break;
         case DebuggerTheme::CheckpointsCore1:
             cpu.debuggerAdd( (M6510::DebuggerAction)action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
             break;
@@ -1364,9 +1393,22 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
     switch (theme) {
         case DebuggerTheme::Video:
             debuggerSnapshot.themes &= ~(unsigned)theme;
-            vicIICycle.debugInfo.setEnable( false );
-            vicIIFast.debugInfo.setEnable( false );
+            vicIICycle.debugger.enableSpriteStore( false );
+            vicIIFast.debugger.enableSpriteStore( false );
             break;
+        case DebuggerTheme::Bus:
+            switch (action) {
+                case DebuggerAction::DmaView:
+                    vicIICycle.enableDmaView(false, !addr.has_value() || (addr.value() == 0));
+                    break;
+                case DebuggerAction::DmaLog:
+                    debuggerSnapshot.themes &= ~(unsigned)theme;
+                    vicIICycle.debugger.enableDmaLog(false);
+                    break;
+                case DebuggerAction::DmaWatch:
+                    debugger.dmaWatchers[addr.value() & 3] = 0;
+                    break;
+            } break;
         case DebuggerTheme::CheckpointsCore1:
             if (addr.has_value())
                 cpu.debuggerRemove( (M6510::DebuggerAction)action, addr.value() );
@@ -1448,10 +1490,10 @@ auto System::updateDebuggerSnapshot() -> void {
         updateCiaDebuggerSnapshot(debuggerSnapshot);
     }
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Video) {
-        vicII->updateSnapshot(debuggerSnapshot);
+        vicII->updateVideoSnapshot(debuggerSnapshot);
     }
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus) {
-
+        vicII->updateDmaSnapshot(debuggerSnapshot);
     }
 
     vicII->updatePositionSnapshot(debuggerSnapshot);
@@ -1503,6 +1545,14 @@ auto System::disassembleTrace(unsigned i, uint8_t& flags) -> std::string {
         return dynamic_cast<SuperCpu*>(expansionPort)->disassembleTrace(i, flags);
 
     return cpu.disassembleTrace( i, flags );
+}
+
+auto System::cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop _crop ) -> void {
+    crop->settings.type = type;
+    crop->settings.crop = _crop;
+
+    vicIICycle.debugger.crop.settings.type = type;
+    vicIICycle.debugger.crop.settings.crop = _crop;
 }
 
 auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {

@@ -119,6 +119,48 @@ auto System::remapCpu(bool speedHack) -> void {
     expansionPort->memoryMapUpdated();
 }
 
+auto System::logCpu(uint16_t addr, uint8_t data) -> void {
+    uint8_t page = addr >> 8;
+    uint8_t mapper = 0;
+    Memory::Read* ptr = memoryCpu.reads[page];
+
+    if (ptr == &readRam) mapper = 0x80 | 1;
+    else if (ptr == &readVicReg) mapper = 0x80 | 2;
+    else if (ptr == &readSidReg) mapper = 0x80 | 3;
+    else if (ptr == &readColorRam) mapper = 0x80 | 4;
+    else if (ptr == &readIo1Reg) mapper = 0x80 | 5;
+    else if (ptr == &readIo2Reg) mapper = 0x80 | 6;
+    else if (ptr == &readCia1Reg) mapper = 0x80 | 7;
+    else if (ptr == &readCia2Reg) mapper = 0x80 | 8;
+    else if (ptr == &readCharRom) mapper = 0x80 | 9;
+    else if (ptr == &readKernalRom) mapper = 0x80 | 10;
+    else if (ptr == &readBasicRom) mapper = 0x80 | 11;
+    else if (ptr == &readRomL) mapper = 0x80 | 12;
+    else if (ptr == &readRomH) mapper = 0x80 | 13;
+    else if (ptr == &readUltimaxA0) mapper = 0x80 | 14;
+
+    auto& dma = vicII->requestCurrentDmaLog();
+    dma.usageCpu = mapper;
+    dma.addrCpu = addr;
+    dma.dataCpu = data;
+
+    int i = 0;
+    for (auto& dmaWatcher : debugger.dmaWatchers ) {
+        if (dmaWatcher & 0x80000000) { // in use
+            if (dmaWatcher & (1 << 24)) {
+                if (cpu.irqPending)
+                    dma.watcher[i] = 0xfffe;
+                else if (cpu.nmiPending)
+                    dma.watcher[i] = 0xfffa;
+                else
+                    dma.watcher[i] = 0;
+            } else
+                dma.watcher[i] = memoryCpu.peek( dmaWatcher & 0xffff );
+        }
+        i++;
+    }
+}
+
 auto System::memoryDump(uint8_t page, uint8_t* dump) -> void {
     uint8_t temp[16];
     page &= 0xf;

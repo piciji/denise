@@ -75,7 +75,7 @@ auto M6510::reset() -> void {
     historyHandler.flagWhenNeeded();
 }
 
-template<bool mhz2> auto M6510::resetRoutine() -> void {
+template<bool mhz2, bool busLogger> auto M6510::resetRoutine() -> void {
 	
 	uint8_t dataBus;
 	
@@ -95,7 +95,7 @@ template<bool mhz2> auto M6510::resetRoutine() -> void {
     control &= ~ResetRoutine;
 }
 
-template<bool software, bool mhz2> inline auto M6510::interrupt() -> void {
+template<bool software, bool mhz2, bool busLogger> inline auto M6510::interrupt() -> void {
 	
 	uint8_t dataBus;
 	
@@ -211,8 +211,7 @@ auto M6510::busWatch() -> uint8_t {
 	// expansion port DMA pulls AEC low too.
 	if ( vicII->isAecLow() || expansionPort->isDma() )
 		// CPU is in tri-state and decoupled from BUS
-		// todo: memory last used bus value (read or write)
-		return (busState >> 16) & 0xff;
+		return lastBus;
 
 	// CPU is BUS Master in second half cycle, so it recognizes last BUS value from first half cycle,
 	// which is always accessed by VIC.
@@ -222,7 +221,8 @@ auto M6510::busWatch() -> uint8_t {
 #define SYNC	\
 	sysTimer.process();	\
 	cia1.clock();	\
-	vicII->clock();	\
+    if constexpr (busLogger)    vicII->clockLogged(); \
+    else                        vicII->clock();	\
 	cia2.clock();	\
 	expansionPort->clock(); \
     if (system->secondDriveCable.cycleSyncing) \
@@ -235,7 +235,8 @@ if ((addr & 0xd000) == 0xd000) \
 if (oddCycle) { \
     sysTimer.process();    \
     cia1.clock();    \
-    vicII->clock();    \
+    if constexpr (busLogger)    vicII->clockLogged(); \
+    else                        vicII->clock();	\
     cia2.clock();    \
     expansionPort->clock(); \
     if (system->secondDriveCable.cycleSyncing) \
@@ -246,7 +247,7 @@ if (oddCycle) { \
     oddCycle = true; \
 }
 
-template<bool setI, bool mhz2> auto M6510::busAccessUpdateFlagI( uint16_t addr ) -> void {
+template<bool setI, bool mhz2, bool busLogger> auto M6510::busAccessUpdateFlagI( uint16_t addr ) -> void {
 
 	busState = addr;
 
@@ -269,10 +270,12 @@ STEAL:
 	if (addr == 0x0000 || addr == 0x0001)
 		return;
 
-	memory.read( addr );
+	lastBus = memory.read( addr );
+    if constexpr (busLogger && !mhz2)
+        system->logCpu( addr, lastBus );
 }
 
-template<bool sampleInterrupt, bool rememberRdy, bool mhz2> auto M6510::busRead( uint16_t addr ) -> uint8_t {
+template<bool sampleInterrupt, bool rememberRdy, bool mhz2, bool busLogger> auto M6510::busRead( uint16_t addr ) -> uint8_t {
 	busState = addr;
 
 STEAL:	
@@ -296,32 +299,40 @@ STEAL:
     if ((control & WatchPoint) && watchPoints.check( addr )) {
         system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::Watchpoint, addr);
     }
-    
-	if (unlikely(addr == 0x0000)) {
-		return ddr;   
+
+    if (likely(addr > 0x0001)) {
+        lastBus = memory.read( addr );
+        if constexpr (busLogger && !mhz2)
+            system->logCpu( addr, lastBus );
+        return lastBus;
     }
-    
-	if (unlikely(addr == 0x0001)) {
-        
-		uint8_t data = ioLines;
 
-		if ( !(ddr & 0x40) ) {
-			data &= ~0x40;
-			data |= bit6charge;
-		}
+    if (addr == 0x0001) {
+        uint8_t data = ioLines;
 
-		if ( !(ddr & 0x80) ) {
-			data &= ~0x80;
-			data |= bit7charge;
-		}
-		
-		return data;
-	}		
-	  
-	return memory.read( addr );
+        if ( !(ddr & 0x40) ) {
+            data &= ~0x40;
+            data |= bit6charge;
+        }
+
+        if ( !(ddr & 0x80) ) {
+            data &= ~0x80;
+            data |= bit7charge;
+        }
+
+        if constexpr (busLogger && !mhz2)
+            system->logCpu( addr, data );
+
+        return data;
+    }
+
+    // addr == 0
+	if constexpr (busLogger && !mhz2)
+	    system->logCpu( addr, ddr );
+	return ddr;
 }
 
-template<bool mhz2> auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
+template<bool mhz2, bool busLogger> auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void {
     busState = CPU_WRITE_CYCLE | addr;
 
     if constexpr(mhz2)  { SYNC2 }
@@ -334,35 +345,43 @@ template<bool mhz2> auto M6510::busWrite( uint16_t addr, uint8_t data ) -> void 
             system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::Watchpoint, addr);
         }
     }
-    
-	if (addr == 0x0000) {						
-		
-		chargeUndefinedBits( data );
-		ddr = data;
-		updateLines();
-		
-		if (!expansionPort->isDma())
-			system->ram[ 0 ] = vicII->lastReadPhase1();
-		
-	} else if (addr == 0x0001) {
-		
-		por = data;
-		updateLines();			
-		
-		if (!expansionPort->isDma())
-			system->ram[ 1 ] = vicII->lastReadPhase1();
-        
-	} else {
-		// Expansion Port DMA send AEC and BA same cycle,
-		// it's possible that CPU take a 'Write' with decoupled BUS.
-		// VIC send AEC three cycles later than BA, because there is a maximum of three 'Writes' in a row,
-		// a 'Write' with decoupled BUS can not happen.	
-		// so need only check for expansion DMA
-		if (expansionPort->isDma())
-			return;
-		
-		memory.write( addr, data );
-	}        
+
+    if (likely(addr > 0x0001)) {
+        // Expansion Port DMA send AEC and BA same cycle,
+        // it's possible that CPU take a 'Write' with decoupled BUS.
+        // VIC send AEC three cycles later than BA, because there is a maximum of three 'Writes' in a row,
+        // a 'Write' with decoupled BUS can not happen.
+        // so need only check for expansion DMA
+        if (expansionPort->isDma())
+            return;
+
+        lastBus = data;
+        memory.write( addr, data );
+
+        if constexpr (busLogger && !mhz2)
+            system->logCpu( addr, data );
+
+    } else if (addr == 0x0001) {
+        por = data;
+        updateLines();
+
+        if (!expansionPort->isDma())
+            system->ram[ 1 ] = vicII->lastReadPhase1();
+
+        if constexpr (busLogger && !mhz2)
+            system->logCpu( addr, data );
+
+    } else {
+        chargeUndefinedBits( data );
+        ddr = data;
+        updateLines();
+
+        if (!expansionPort->isDma())
+            system->ram[ 0 ] = vicII->lastReadPhase1();
+
+        if constexpr (busLogger && !mhz2)
+            system->logCpu( addr, data );
+    }
 }
 
 auto M6510::serialize(Emulator::Serializer& s) -> void {
@@ -614,9 +633,13 @@ auto M6510::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.flags = STATUS;
 }
 
-template auto M6510::process<false>() -> void;
-template auto M6510::resetRoutine<false>() -> void;
-template auto M6510::process<true>() -> void;
-template auto M6510::resetRoutine<true>() -> void;
+template auto M6510::process<false, false>() -> void;
+template auto M6510::process<false, true>() -> void;
+template auto M6510::resetRoutine<false, false>() -> void;
+template auto M6510::resetRoutine<false, true>() -> void;
+template auto M6510::process<true, false>() -> void;
+template auto M6510::process<true, true>() -> void;
+template auto M6510::resetRoutine<true, false>() -> void;
+template auto M6510::resetRoutine<true, true>() -> void;
     
 }

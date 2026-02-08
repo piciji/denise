@@ -74,9 +74,9 @@ struct DmaDebugger : Debugger {
     DmaColor dmaColors[0xf];
 
     constexpr static unsigned defaultColor[0xf] = {
-        0,
+        0,        // no BUS activity
         0xFFD700, // BPL
-        0x00FF00, // Sprites
+        0x3CC464, // Sprites
         0x0000FF, // Blitter
         0x800080, // Copper
         0x00FFFF, // CPU
@@ -105,4 +105,5 @@ struct DmaDebugger : Debugger {
     auto buildControl() -> GUIKIT::Layout* override;
 
     auto updateView(LIBAMI::DebuggerSnapshot& s) -> void;
+    auto updateView(LIBC64::DebuggerSnapshot& s) -> void;
 };

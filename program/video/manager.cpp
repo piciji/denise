@@ -769,6 +769,9 @@ template<typename T> auto VideoManager::takeScreenshot(unsigned unscaled, const 
 template<typename T, bool interlace, bool field> auto VideoManager::renderToRgbWithDma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void {
     unsigned mask = (1 << countColorBits) - 1;
     uint8_t* dmaDump = emulator->getDmaDump();
+    if (!dmaDump)
+        return renderToRgb<T, interlace, field>(width, height, src, srcPitch, dest, destPitch);
+
     unsigned color;
     unsigned dmaColor;
     DmaColor* dmaPtr;

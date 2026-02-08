@@ -5,8 +5,9 @@
 #include "../../tools/macros.h"
 #include "../../tools/serializer.h"
 #include "../../interface.h"
+#include "../../tools/crop.h"
 
-#define VIC_MAX_LINE_LENGTH 65 * 8
+#define VIC_MAX_LINE_LENGTH (65 * 8)
 #define VIC_MODE_MCM(_mode) (_mode & 4)
 #define VIC_MODE_BMM(_mode) (_mode & 8)
 #define VIC_MODE_ECM(_mode) (_mode & 0x10)
@@ -55,20 +56,45 @@ struct VicIIBase {
 		unsigned rightOverscan;
 	} crop;
 
-    struct {
-        bool store = false;
+    constexpr static unsigned DMA_IDLE = 1;
+    constexpr static unsigned DMA_GRAPHICS = 2;
+    constexpr static unsigned DMA_CHARACTER = 3;
+    constexpr static unsigned DMA_SPR_PTR = 4;
+    constexpr static unsigned DMA_SPR_DATA = 5;
+    constexpr static unsigned DMA_REFRESH = 6;
+    constexpr static unsigned DMA_CPU = 7;
+
+
+    struct Debugger {
+        bool storeSprites = false;
         struct {
             uint8_t* data = nullptr;
             unsigned pos = 0;
             unsigned lastPos = 0;
         } spr[8];
 
-        auto setEnable(bool state) -> void {
-            store = state;
-            reset();
-        }
-        auto reset() -> void { for (auto& s : spr) { s.lastPos = s.pos; s.pos = 0; } }
-    } debugInfo;
+        auto enableSpriteStore(bool state) -> void;
+        auto resetSpriteStore() -> void;
+
+        bool dmaLog = false;
+        bool requestDmaLog = false;
+        bool dmaView = false;
+
+        uint8_t* frameLine = nullptr;
+        Emulator::Interface::DebuggerDma dma[65];
+
+        uint8_t* dmaFrame = nullptr;
+        uint8_t lastHpos = 65;
+
+        Emulator::Crop<uint8_t> crop;
+
+        int scrollDirection = 0;
+        unsigned scrollCounter = 0;
+        auto enableDmaView(bool state, bool withScrolling = true) -> void;
+        auto enableDmaLog(bool state) -> void;
+    } debugger;
+
+    auto requestCurrentDmaLog() -> Emulator::Interface::DebuggerDma&;
 
     uint8_t reg2mhz;
     Emulator::Interface::DebuggerAction debuggerAction;
@@ -82,7 +108,9 @@ struct VicIIBase {
 	auto setBorderData() -> void;
 	auto getCrop(unsigned w, unsigned h) -> Emulator::Interface::Crop;
 	
-    virtual auto clock() -> void = 0;    
+    virtual auto clock() -> void = 0;
+    virtual auto clockLogged() -> void = 0;
+    virtual auto clockMaybeLogged() -> void = 0;
 	virtual auto reuBaLow() -> bool = 0;
     virtual auto reuSprite0() -> bool = 0;
 	virtual auto serialize(Emulator::Serializer& s) -> void = 0;
@@ -121,10 +149,12 @@ struct VicIIBase {
     auto setUltimax(bool state ) -> void { ultimaxPhi1 = ultimaxPhi2 = state; };
     auto oldOne() -> bool { return oldIrqMode; }
     auto inVisibleArea() -> bool { return visibleLine; }
-    virtual auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    virtual auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateDmaSnapshot(DebuggerSnapshot& snap) -> void;
     auto updatePositionSnapshot(DebuggerSnapshot& snap) -> void;
     auto setVicBank(uint16_t data) -> void { vicBank = data; }
     auto getVicBank() -> uint16_t { return vicBank; }
+	auto enableDmaView(bool state, bool withScrolling) -> void;
 
 protected:     
     bool ultimaxPhi1;

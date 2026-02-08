@@ -1795,8 +1795,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
 }
 
 auto Interface::cropFrame( CropType type, Crop crop ) -> void {
-	system->crop->settings.type = type;
-    system->crop->settings.crop = crop;
+    system->cropFrame(type, crop);
 }
 
 auto Interface::cropWidth() -> unsigned {
@@ -2063,6 +2062,10 @@ auto Interface::disassembleData(unsigned addr, unsigned bytes) -> std::string {
 
 auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
     return system->disassembleTrace( i, (uint8_t&)flags );
+}
+
+auto Interface::getDmaDump() -> uint8_t* {
+    return system->vicII->debugger.dmaFrame;
 }
 
 auto Interface::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {

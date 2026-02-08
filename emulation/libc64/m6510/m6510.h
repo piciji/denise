@@ -62,6 +62,7 @@ struct M6510 {
 
     bool oddCycle;
     uint8_t reg2mhz;
+    uint8_t lastBus;
 	
 	unsigned busState;
     int control;
@@ -109,23 +110,23 @@ struct M6510 {
 
     auto registerCallbacks() -> void;
 
-	template<bool mhz2, bool postBreakCheck = false> auto process() -> void;
+	template<bool mhz2, bool busLogger, bool postBreakCheck = false> auto process() -> void;
 	
-	template<bool sampleInterrupt, bool rememberRdy, bool mhz2> auto busRead( uint16_t addr ) -> uint8_t;
+	template<bool sampleInterrupt, bool rememberRdy, bool mhz2, bool busLogger> auto busRead( uint16_t addr ) -> uint8_t;
 	
-	template<bool setI, bool mhz2> auto busAccessUpdateFlagI( uint16_t addr ) -> void;
+	template<bool setI, bool mhz2, bool busLogger> auto busAccessUpdateFlagI( uint16_t addr ) -> void;
 	
-	template<bool mhz2> auto busWrite( uint16_t addr, uint8_t value ) -> void;
+	template<bool mhz2, bool busLogger> auto busWrite( uint16_t addr, uint8_t value ) -> void;
 	
 	auto busWatch() -> uint8_t;
 	
-	template<bool software, bool mhz2> auto interrupt() -> void;
+	template<bool software, bool mhz2, bool busLogger> auto interrupt() -> void;
 	
 	auto power() -> void;
 	
 	auto reset() -> void;
 	
-	template<bool mhz2> auto resetRoutine() -> void;
+	template<bool mhz2, bool busLogger> auto resetRoutine() -> void;
 	
 	auto setIrq(bool state) -> void;
 	

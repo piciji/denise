@@ -1,37 +1,4 @@
 
-//  This code is based on VIC-II cycle engine in VICE
-//  You can get a copy of the original here: https://sourceforge.net/projects/vice-emu/
-
-/*
- *
- * Written by
- *  Hannu Nuotio <hannu.nuotio@tut.fi>
- *  Daniel Kahlin <daniel@kahlin.net>
- *
- * Based on code by
- *  Andreas Boose <viceteam@t-online.de>
- *  Ettore Perazzoli <ettore@comm2000.it>
- *
- * This file is part of VICE, the Versatile Commodore Emulator.
- * See README for copyright notice.
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
- *  02111-1307  USA.
- *
- */
-
 #include "vicII.h"
 #include "../expansionPort/expansionPort.h"
 
@@ -39,34 +6,42 @@
 
 namespace LIBC64 {
 	
-inline auto VicIICycle::fetchPhi1( uint32_t flags ) -> uint8_t {
+template<bool logDma> inline auto VicIICycle::fetchPhi1( uint32_t flags ) -> uint8_t {
 	uint8_t sprPos;
 	uint8_t value;
 	
-    if ( isFetchG(flags) )
-		value = !idleModeTemp ? fetchG() : fetchIdleG();    
-	
-    else if ( isSprFirstCycle(flags) ) {
-		sprPos = getSpr(flags);		
-        value = fetchSpriteP( sprPos );    
-	}	
-    else if ( isSprSecondCycle(flags) ) {
-		sprPos = getSpr(flags);		
-        value = fetchSpriteS1( sprPos );   
-	}	
-    else if ( isRefresh(flags) )
-        value = readPhi<true>( _fullAdr(0x3f00 | refreshCounter--) );
+    if ( isFetchG(flags) ) {
+        value = !idleModeTemp ? fetchG<logDma>() : fetchIdleG<logDma>();
+        if constexpr (logDma)
+            debugger.dma[cycle].usage = DMA_GRAPHICS;
+    } else if ( isSprFirstCycle(flags) ) {
+		sprPos = getSpr(flags);
+        value = fetchSpriteP<logDma>( sprPos );
+	} else if ( isSprSecondCycle(flags) ) {
+		sprPos = getSpr(flags);
+        value = fetchSpriteS1<logDma>( sprPos );
+	} else if ( isRefresh(flags) ) {
+        value = readPhi<true, logDma>( _fullAdr(0x3f00 | refreshCounter--) );
+	    if constexpr (logDma)
+            debugger.dma[cycle].usage = DMA_REFRESH;
+    } else { // idle cycle
+        value = readPhi<true, logDma>( _fullAdr(0x3fff) );
+        if constexpr (logDma)
+            debugger.dma[cycle].usage = DMA_IDLE;
+    }
 
-	else // idle cycle			
-		value = readPhi<true>( _fullAdr(0x3fff) );
+    if constexpr (logDma) {
+        debugger.dma[cycle].data = value;
+        debugger.dma[cycle].usageCpu = 0;
+    }
 
 	if (baLow && isFetchC(flags))
-		fetchC();
+		fetchC<logDma>();
 	
 	return value;
 }
 
-inline auto VicIICycle::fetchSprPhi2( uint32_t flags ) -> void {
+auto VicIICycle::fetchSprPhi2( uint32_t flags ) -> void {
 	uint8_t sprPos;
 	
 	if (isSprFirstCycle(flags)) {
@@ -79,9 +54,12 @@ inline auto VicIICycle::fetchSprPhi2( uint32_t flags ) -> void {
 	}
 }
 
-inline auto VicIICycle::fetchSpriteP( uint8_t pos ) -> uint8_t {
+template<bool logDma> inline auto VicIICycle::fetchSpriteP( uint8_t pos ) -> uint8_t {
     
-    sprite[pos].dataP = readPhi<true>( _fullAdr((vm << 10) | 0x3f8 | pos) );
+    sprite[pos].dataP = readPhi<true, logDma>( _fullAdr((vm << 10) | 0x3f8 | pos) );
+
+    if constexpr (logDma)
+        debugger.dma[cycle].usage = DMA_SPR_PTR;
 	
 	return sprite[pos].dataP;
 }
@@ -90,19 +68,22 @@ inline auto VicIICycle::sprHasDma(uint8_t pos) -> bool {
     return spriteDma & (1 << pos);
 }
 
-auto VicIICycle::fetchSpriteS1(uint8_t pos) -> uint8_t {	
+template<bool logDma> auto VicIICycle::fetchSpriteS1(uint8_t pos) -> uint8_t {
     uint8_t sprdata;
     Sprite& spr = sprite[pos];
 
     if (sprHasDma(pos)) {
-        sprdata = readPhi<true>( _fullAdr((spr.dataP << 6) | spr.mc) );
+        sprdata = readPhi<true, logDma>( _fullAdr((spr.dataP << 6) | spr.mc) );
 
         spr.mc++;
         spr.mc &= 0x3f;
 		
     } else {
-        sprdata = readPhi<true>( _fullAdr(0x3fff) );
+        sprdata = readPhi<true, logDma>( _fullAdr(0x3fff) );
     }
+
+    if constexpr (logDma)
+        debugger.dma[cycle].usage = DMA_SPR_DATA;
 
     spr.dataS &= 0xff00ff;
     spr.dataS |= sprdata << 8;
@@ -116,7 +97,12 @@ inline auto VicIICycle::fetchSpriteS0(uint8_t pos) -> void {
 
     if ( sprHasDma(pos) ) {
         if (!aecDelay) {
-            value = readPhi<false>( _fullAdr((spr.dataP << 6) | spr.mc) );
+            if (debugger.dmaLog) {
+                value = readPhi<false, true>( _fullAdr((spr.dataP << 6) | spr.mc) );
+                debugger.dma[cycle].usageCpu = DMA_SPR_DATA;
+                debugger.dma[cycle].dataCpu = value;
+            } else
+                value = readPhi<false, false>( _fullAdr((spr.dataP << 6) | spr.mc) );
 		}
 
         spr.mc++;
@@ -133,7 +119,12 @@ inline auto VicIICycle::fetchSpriteS2(uint8_t pos) -> void {
 	
     if ( sprHasDma(pos) ) {
         if (!aecDelay) {
-			value = readPhi<false>( _fullAdr((spr.dataP << 6) | spr.mc) );
+            if (debugger.dmaLog) {
+                value = readPhi<false, true>( _fullAdr((spr.dataP << 6) | spr.mc) );
+                debugger.dma[cycle].usageCpu = DMA_SPR_DATA;
+                debugger.dma[cycle].dataCpu = value;
+            } else
+                value = readPhi<false, false>( _fullAdr((spr.dataP << 6) | spr.mc) );
 		}
 		
         spr.mc++;
@@ -145,28 +136,35 @@ inline auto VicIICycle::fetchSpriteS2(uint8_t pos) -> void {
 	
 	spr.dataShiftReg = spr.dataS;
 
-    if (debugInfo.store && (spritePending & (1 << pos)))
+    if (debugger.storeSprites && (spritePending & (1 << pos)))
         storeSprite(spr);
 }
 
-auto VicIICycle::fetchC() -> void {
+template<bool logDma> auto VicIICycle::fetchC() -> void {
 	uint8_t _color;
 	uint8_t _dataC;
 	
 	if ( !aecDelay ) {
 		_color = system->colorRam[ vc ] & 0xf;
-		_dataC = readPhi<false>( _fullAdr((vm << 10) | vc) );
+		_dataC = readPhi<false, logDma>( _fullAdr((vm << 10) | vc) );
+	    if constexpr (logDma)
+	        debugger.dma[cycle].usageCpu = DMA_CHARACTER;
 	} else if (expansionPort->haltMainCpu()) {
 		_color = 0;
-		if (expansionPort->hasIoOnHost())
-			_dataC = readPhi<false>( _fullAdr((vm << 10) | vc) );
-		else
+		if (expansionPort->hasIoOnHost()) {
+		    _dataC = readPhi<false, logDma>( _fullAdr((vm << 10) | vc) );
+		    if constexpr (logDma)
+		        debugger.dma[cycle].usageCpu = DMA_CHARACTER;
+		} else
 			_dataC = 0xff;
 	} else {
 		_color = readCpu() & 0xf;
 		_dataC = 0xff;
 	}
-		
+
+    if constexpr (logDma)
+        debugger.dma[cycle].dataCpu = _dataC;
+
 	cBuffer[ vmli ] = (_color << 8) | _dataC;
 }
 
@@ -189,7 +187,7 @@ auto VicIICycle::addrG( uint8_t useMode ) -> uint16_t {
     return addr;
 }
 
-auto VicIICycle::fetchIdleG() -> uint8_t {
+template<bool logDma> auto VicIICycle::fetchIdleG() -> uint8_t {
 	uint8_t data;
 
 	if (rev65)
@@ -204,7 +202,7 @@ auto VicIICycle::fetchIdleG() -> uint8_t {
 	else
 		_addrG = 0x3fff;
 
-	gBuffer = readPhi<true>(_fullAdr(_addrG));
+	gBuffer = readPhi<true, logDma>(_fullAdr(_addrG));
 	
 	if (gBufferUse) {
 		gBufferPipe1 = gBuffer;
@@ -214,7 +212,7 @@ auto VicIICycle::fetchIdleG() -> uint8_t {
 	return gBuffer;
 }
 
-auto VicIICycle::fetchG() -> uint8_t {
+template<bool logDma> auto VicIICycle::fetchG() -> uint8_t {
     uint8_t data;
         
 	if (rev65) {
@@ -234,9 +232,9 @@ auto VicIICycle::fetchG() -> uint8_t {
 
 	vmli++;
 	vc++;
-	vc &= 0x3ff;	
+	vc &= 0x3ff;
            
-    data = readPhi<true>( _fullAdr(_addrG) );
+    data = readPhi<true, logDma>( _fullAdr(_addrG) );
 	
 	gBuffer = data;
 
@@ -269,7 +267,14 @@ inline auto VicIICycle::readCpu() -> uint8_t {
 	return system->memoryCpu.read( expansionPort->addressBus() );            
 }
 
-template<bool phi1> inline auto VicIICycle::readPhi(uint16_t addr) -> uint8_t {
+template<bool phi1, bool logDma, bool peek> inline auto VicIICycle::readPhi(uint16_t addr) -> uint8_t {
+
+    if constexpr (logDma) {
+        if constexpr (phi1)
+            debugger.dma[cycle].address = addr;
+        else
+            debugger.dma[cycle].addrCpu = addr;
+    }
 
     if ((phi1 && !ultimaxPhi1) || (!phi1 && !ultimaxPhi2)) {
         if ((addr & 0x7000) == 0x1000)
@@ -278,8 +283,12 @@ template<bool phi1> inline auto VicIICycle::readPhi(uint16_t addr) -> uint8_t {
         return *(system->ram + addr);
     }
 
-    if ((addr & 0x3000) == 0x3000)
+    if ((addr & 0x3000) == 0x3000) {
+        if constexpr (peek)
+            return expansionPort->peekRomH( 0x1000 | (addr & 0xfff) );
+
         return expansionPort->readRomH( 0x1000 | (addr & 0xfff) );
+    }
 
     // todo: a cartridge could modify address bus and prevent VIC in Ultimax mode from reading C64 memory,
     // instead provide data for it on expansion port.
