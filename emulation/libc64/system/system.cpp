@@ -1373,8 +1373,9 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
         case DebuggerTheme::Unspecified: {
             switch (action) {
                 case DebuggerAction::Line:
+                    vicII->debugger.stopLine = addr;
                 case DebuggerAction::Frame:
-                    vicII->debuggerAction = action;
+                    vicII->debugger.action = action;
                     break;
                 case DebuggerAction::AutoUpdate:
                     debuggerUpdate();

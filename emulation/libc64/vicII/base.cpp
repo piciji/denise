@@ -341,6 +341,7 @@ auto VicIIBase::power() -> void {
         dma.usage = 0;
         dma.usageCpu = 0;
     }
+    debugger.action = Interface::DebuggerAction::None;
 
     for (unsigned i = 0; i < 8; i++) {
         sprite[i].enabled = false;
@@ -390,9 +391,9 @@ auto VicIIBase::power() -> void {
 
 auto VicIIBase::oneTimeDebuggerAction() -> void {
     system->leaveEmulation = true;
-    system->debugger.action = debuggerAction;
+    system->debugger.action = debugger.action;
     system->debugger.addr = 0;
-    debuggerAction = Emulator::Interface::DebuggerAction::None;
+    debugger.action = Emulator::Interface::DebuggerAction::None;
 }
 
 #define _fullAdr( __addr ) (((__addr) & 0x3fff) | vicBank)

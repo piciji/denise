@@ -104,7 +104,6 @@ struct Agnus {
     int64_t eventClock[EVENT_CHANNELS];
     int64_t clock;
     int64_t nextClock;
-    Emulator::Interface::DebuggerAction debuggerAction;
 
     struct RapidJob {
         int job;
@@ -171,6 +170,9 @@ struct Agnus {
 
         uint8_t* dmaFrame = nullptr;
         uint8_t lastHpos = 0xe3;
+
+        Emulator::Interface::DebuggerAction oneTimeAction;
+        unsigned stopLine = ~0;
 
         Emulator::Crop<uint16_t> crop;
 

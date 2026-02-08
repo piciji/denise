@@ -781,7 +781,7 @@ auto CpuDebugger::translateTheme() -> void {
     cpu->traceLayout.list.setHeaderText( {trans->getA( "address"), trans->getA( "status"), trans->getA( "instruction") } );
     cpu->state.trace.toggle.setText( trans->getA( "trace") );
     cpu->state.trace.toggle.setTooltip( showTips ? trans->getA( "toggle trace") : "" );
-    cpu->state.trace.clear.setTooltip( showTips ? trans->getA( "clear trace") : "" );
+    cpu->state.trace.clear.setTooltip( showTips ? trans->getA( "empty trace") : "" );
 }
 
 inline auto CpuDebugger::getCpuType() -> DebuggerTheme {

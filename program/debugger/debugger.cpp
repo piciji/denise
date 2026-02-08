@@ -28,8 +28,10 @@ Debugger::Control::Control(Debugger* debugger) {
     line.setEnabled( false );
     frame.setEnabled( false );
 
-    searchEdit.setMaxLength( 8 );
+    searchEdit.setMaxLength( 6 );
     searchEdit.setFont(GUIKIT::Font::system(11));
+    lineEdit.setMaxLength( 3 );
+    lineEdit.setFont(GUIKIT::Font::system(11));
     position.setFont( GUIKIT::Font::system( 11 ) );
 
     append( spacer, {0u, 0u}, 10 );
@@ -37,9 +39,12 @@ Debugger::Control::Control(Debugger* debugger) {
     append( stepOver, {0u, 0u}, 10 );
     append( stepInto, {0u, 0u}, 10 );
     append( stepOut, {0u, 0u}, 10 );
+    append( frame, {0u, 0u}, 10 );
     append( line, {0u, 0u}, 10 );
-    append( frame, {0u, 0u}, 30 );
-    append( searchEdit, {120u, 0u}, 10 );
+    append( lineEdit, {50u, 0u}, 5 );
+    append( toLine, {0u, 0u}, 10 );
+
+    append( searchEdit, {90u, 0u}, 5 );
     append( search, {0u, 0u}, 20 );
     append( position, {~0u, 0u} );
 
@@ -95,6 +100,7 @@ auto Debugger::build() -> void {
 
     editImg.loadPng((uint8_t*)Icons::edit, sizeof(Icons::edit));
     checkedImg.loadPng((uint8_t*)Icons::checked, sizeof(Icons::checked));
+    forwardImg.loadPng((uint8_t*)Icons::forward, sizeof(Icons::forward));
 
     control = new Control(this);
 
@@ -105,6 +111,7 @@ auto Debugger::build() -> void {
     control->search.setImage( &searchImg );
     control->line.setImage( &lineImg );
     control->frame.setImage( &frameImg );
+    control->toLine.setImage( &forwardImg );
 
     layout.setMargin( 10 );
 
@@ -183,6 +190,25 @@ auto Debugger::build() -> void {
         control->search.onClick();
     };
 
+    control->toLine.onClick = [this]() {
+        if (emulator != activeEmulator)
+            return;
+
+        std::string lineTxt = control->lineEdit.text();
+        if (lineTxt.empty())
+            return;
+
+        int line = GUIKIT::String::convertToNumber( lineTxt, -1 );
+        if (line == -1)
+            return;
+
+        stepLine( emulator, line );
+    };
+
+    control->lineEdit.onReturn = [this]() {
+        control->toLine.onClick();
+    };
+
     control->showTips.onToggle = [this](bool checked) {
         settings->set<bool>("debugger_tips", checked);
         emuThread->lock();
@@ -219,12 +245,14 @@ auto Debugger::build() -> void {
 auto Debugger::translate() -> void {
     bool showTips = control->showTips.checked();
     control->searchEdit.setPlaceholder( trans->getA( "address" ) );
+    control->lineEdit.setPlaceholder( trans->getA( "line" ) );
     control->showTips.setText( trans->getA("popup hints") );
     control->stepInto.setTooltip( showTips ? trans->getA("step into") : "" );
     control->stepOver.setTooltip( showTips ? trans->getA("step over") : "" );
     control->stepOut.setTooltip( showTips ? trans->getA("step out") : "" );
-    control->line.setTooltip( showTips ? trans->getA("step end of line") : "" );
-    control->frame.setTooltip( showTips ? trans->getA("step end of frame") : "" );
+    control->line.setTooltip( showTips ? trans->getA("step next line") : "" );
+    control->toLine.setTooltip( showTips ? trans->getA("step selected line") : "" );
+    control->frame.setTooltip( showTips ? trans->getA("step next frame") : "" );
 
     translateTheme();
 }
@@ -323,14 +351,14 @@ auto Debugger::stepOver(Emulator::Interface* emulator) -> void {
     emuThread->unlock();
 }
 
-auto Debugger::stepLine(Emulator::Interface* emulator) -> void {
-    if (!isPaused() || (emulator != activeEmulator))
+auto Debugger::stepLine(Emulator::Interface* emulator, unsigned line) -> void {
+    if (emulator != activeEmulator)
         return;
     emuThread->lock();
     program->isPause &= ~2;
 
     timerVisibility->setEnabled();
-    emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::Line, 0 );
+    emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::Line, line );
     emuThread->unlock();
 }
 
@@ -445,5 +473,5 @@ auto Debugger::getWidth(unsigned length, bool editField, bool bigger) -> unsigne
 }
 
 auto Debugger::updateControl(uint16_t v, uint8_t h) -> void {
-    control->position.setText("V: " + GUIKIT::String::convertToHex( v, 3 ) + " H: " + GUIKIT::String::convertToHex( h, 2 ) );
+    control->position.setText("V: " + std::to_string( v ) + " H: " + GUIKIT::String::convertToHex( h, 2 ) );
 }

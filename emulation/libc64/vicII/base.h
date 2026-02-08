@@ -90,6 +90,10 @@ struct VicIIBase {
 
         int scrollDirection = 0;
         unsigned scrollCounter = 0;
+
+        Emulator::Interface::DebuggerAction action;
+        unsigned stopLine = ~0;
+
         auto enableDmaView(bool state, bool withScrolling = true) -> void;
         auto enableDmaLog(bool state) -> void;
     } debugger;
@@ -97,7 +101,6 @@ struct VicIIBase {
     auto requestCurrentDmaLog() -> Emulator::Interface::DebuggerDma&;
 
     uint8_t reg2mhz;
-    Emulator::Interface::DebuggerAction debuggerAction;
     
 	M6510& cpu;
 	ExpansionPort* expansionPort;

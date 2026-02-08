@@ -218,7 +218,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
             w->synchronizeLayout();
         }
     };
-    item->setText( "<address>" );
+    item->setText( "<" + trans->getA( "address" ) + ">" );
     watcherMenu.append(*item);
     watchItems.push_back(item);
 
@@ -232,10 +232,10 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
             w->button.setStore( -1 );
             updateTheme();
             emuThread->unlock();
-            w->button.setText( "Connect" );
+            w->button.setText( trans->getA( "connect" ) );
         }
     };
-    item->setText( "clear" );
+    item->setText( trans->getA( "remove" ) );
     watcherMenu.append(*item);
     watchItems.push_back(item);
 
@@ -532,7 +532,7 @@ auto DmaDebugger::closeTheme() -> void {
 auto DmaDebugger::translateTheme() -> void {
     dmaControl.symbolic.setText( "Symbolic" );
 
-    dma->dmaFrame.showUsage.setText( "Show DMA Usage" );
+    dma->dmaFrame.showUsage.setText( trans->getA( "Show DMA usage" ) );
 
     dma->legend.dma.setText( "DMA" );
     dma->legend.dmaAddr.setText( "Addr" );
@@ -542,7 +542,8 @@ auto DmaDebugger::translateTheme() -> void {
     dma->legend.cpuData.setText( "Data" );
 
     for (auto& watcher : dma->legend.watchers) {
-        watcher.button.setText( "Connect" );
+        if (watcher.button.getStore() == -1)
+            watcher.button.setText( trans->getA( "connect" ) );
     }
 }
 

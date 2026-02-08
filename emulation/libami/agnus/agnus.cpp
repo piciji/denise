@@ -108,7 +108,7 @@ auto Agnus::setRas() -> void {
 
 auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     overclock.cycles = 0;
-    debuggerAction = Interface::DebuggerAction::None;
+    debugger.oneTimeAction = Interface::DebuggerAction::None;
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
     dmaClock = 0;
@@ -402,9 +402,16 @@ auto Agnus::updateVCounter() -> void {
             vBlankStart = true;
         }
         copper.strobeCOPJMP(1, Trigger_Vsync);
+        if (debugger.oneTimeAction == Emulator::Interface::DebuggerAction::Frame)
+            oneTimeDebuggerAction();
     } else {
         vPos++;
         vPos &= ecsAndHigher() ? 0x7ff : 0x1ff; // register change of VPos could lead to a wrap around of 9-bit (OCS Agnus) counter.
+    }
+
+    if (debugger.oneTimeAction == Emulator::Interface::DebuggerAction::Line) {
+        if (debugger.stopLine == ~0 || debugger.stopLine == vPos )
+            oneTimeDebuggerAction();
     }
 
     if (beamCon & VARVBEN) {
@@ -1026,9 +1033,9 @@ auto Agnus::debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned
 
 auto Agnus::oneTimeDebuggerAction() -> void {
     system->leaveEmulation = true;
-    debugger.action = debuggerAction;
+    debugger.action = debugger.oneTimeAction;
     debugger.addr = 0;
-    debuggerAction = Emulator::Interface::DebuggerAction::None;
+    debugger.oneTimeAction = Emulator::Interface::DebuggerAction::None;
 }
 
 auto Agnus::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {

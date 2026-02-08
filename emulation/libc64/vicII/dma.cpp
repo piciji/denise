@@ -85,7 +85,7 @@ inline auto VicIICycle::advanceCycle() -> void {
 		vcBase = vc = 0;
 		refreshCounter = 0xff;
 		allowBadlines = false;
-	    if (debuggerAction == Emulator::Interface::DebuggerAction::Frame)
+	    if (debugger.action == Emulator::Interface::DebuggerAction::Frame)
 	        oneTimeDebuggerAction();
     }
     
@@ -131,8 +131,10 @@ inline auto VicIICycle::advanceCycle() -> void {
 	        }
 	    }
 
-	    if (debuggerAction == Emulator::Interface::DebuggerAction::Line)
-	        oneTimeDebuggerAction();
+	    if (debugger.action == Emulator::Interface::DebuggerAction::Line) {
+	        if (debugger.stopLine == ~0 || debugger.stopLine == vCounter )
+	            oneTimeDebuggerAction();
+	    }
 	}
 
     sprite0DmaLateBA = false;

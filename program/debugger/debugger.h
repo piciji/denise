@@ -50,6 +50,7 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image onImg;
     GUIKIT::Image editImg;
     GUIKIT::Image checkedImg;
+    GUIKIT::Image forwardImg;
 
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;
@@ -57,8 +58,10 @@ struct Debugger : GUIKIT::Window {
         GUIKIT::Button stepOver;
         GUIKIT::Button stepInto;
         GUIKIT::Button stepOut;
-        GUIKIT::Button line;
         GUIKIT::Button frame;
+        GUIKIT::Button line;
+        GUIKIT::LineEdit lineEdit;
+        GUIKIT::ImageView toLine;
         GUIKIT::LineEdit searchEdit;
         GUIKIT::ImageView search;
         GUIKIT::Label position;
@@ -106,7 +109,7 @@ struct Debugger : GUIKIT::Window {
     static auto stepOut(Emulator::Interface* emulator) -> void;
     static auto stepInto(Emulator::Interface* emulator) -> void;
     static auto stepOver(Emulator::Interface* emulator) -> void;
-    static auto stepLine(Emulator::Interface* emulator) -> void;
+    static auto stepLine(Emulator::Interface* emulator, unsigned line = ~0) -> void;
     static auto stepFrame(Emulator::Interface* emulator) -> void;
     static auto resume(Emulator::Interface* emulator) -> void;
     static auto reset() -> void;

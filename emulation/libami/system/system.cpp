@@ -717,8 +717,9 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
         case DebuggerTheme::Unspecified: {
             switch (action) {
                 case DebuggerAction::Line:
+                    agnus.debugger.stopLine = addr;
                 case DebuggerAction::Frame:
-                    agnus.debuggerAction = action;
+                    agnus.debugger.oneTimeAction = action;
                     break;
                 case DebuggerAction::AutoUpdate:
                     debuggerUpdate();

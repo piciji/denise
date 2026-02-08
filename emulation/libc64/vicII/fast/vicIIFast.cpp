@@ -60,7 +60,7 @@ auto VicIIFast::clock() -> void {
             debugger.resetSpriteStore();
 
         vCounter = 0;
-        if (debuggerAction == Emulator::Interface::DebuggerAction::Frame)
+        if (debugger.action == Emulator::Interface::DebuggerAction::Frame)
             oneTimeDebuggerAction();
         initVCounter = false;
         lpLatched = false;
@@ -73,11 +73,9 @@ auto VicIIFast::clock() -> void {
     
     if (++cycle == lineCycles) {
 		cycle = 0;
-        if (debuggerAction == Emulator::Interface::DebuggerAction::Line)
-            oneTimeDebuggerAction();
 
         if (vCounter == 0xf7)
-            allowBadlines = false;                    
+            allowBadlines = false;
 
         if (++vCounter == lines) {
             vCounter -= 1;
@@ -109,7 +107,12 @@ auto VicIIFast::clock() -> void {
         if (visibleLine) {
             linePtr = frameBuffer + lineVCounter * VIC_MAX_LINE_LENGTH;
             lineVCounter++;
-        }		 
+        }
+
+        if (debugger.action == Emulator::Interface::DebuggerAction::Line) {
+            if (debugger.stopLine == ~0 || debugger.stopLine == vCounter )
+                oneTimeDebuggerAction();
+        }
 
 		flags = cycleTab[0];
 		
