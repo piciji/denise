@@ -1609,4 +1609,37 @@ auto SuperCpu::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {
     }
 }
 
+auto SuperCpu::editMemory(uint32_t addr, uint8_t value) -> void {
+    if ((addr & 0xff0000) == 0) { // SRAM
+        (this->*writeTableReu[mirrorMemConf | (addr & 0xff00)])(addr, value);
+
+        if (readTable[(addr & 0xff00) | memConf] == &SuperCpu::readSramKernal<false>) {
+            sram[0x8000 + addr] = value;
+        } else if (readTable[(addr & 0xff00) | memConf] == &SuperCpu::readSramB1<false>) {
+            sram[0x10000 | addr] = value;
+        }
+        return;
+    } if ((addr & 0xff0000) == 0x10000) { // bank 1 SRAM
+        if (addr & 0xfffe)  sram[addr] = value;
+        else                sram[addr & 1] = value;
+        return;
+    } if ((addr & 0xf80000) == 0xf80000) { // ROM
+        return;
+    }
+
+    if (dram) {
+        if ((addr & 0xfe0000) == 0xf60000) {
+            if (dramPageSize != dramConfPageSize)
+                addr = ((addr >> dramConfPageSize) << dramPageSize) | (addr & ((1 << dramPageSize) - 1));
+
+            addr &= 0x1ffff; // map banks $f6/$f7 to banks 0/1 of DRAM
+        } else if (addr < dramConfSize) {
+            if (dramPageSize != dramConfPageSize)
+                addr = ((addr >> dramConfPageSize) << dramPageSize) | (addr & ((1 << dramPageSize) - 1));
+        }
+
+        dram[addr & dramMask] = value;
+    }
+}
+
 }

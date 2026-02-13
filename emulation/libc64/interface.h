@@ -229,6 +229,8 @@ struct Interface : Emulator::Interface {
 	auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void;
     auto getDmaDump() -> uint8_t*;
 
+    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
+
 private:
 	auto prepareDevices() -> void;
 	auto prepareMedia() -> void;

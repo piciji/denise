@@ -251,9 +251,6 @@ VideoDebugger::Video::Video( Debugger* debugger )
 auto VideoDebugger::buildTheme() -> GUIKIT::Layout* {
     video = new Video( this );
 
-    control->remove( control->searchEdit );
-    control->remove( control->search );
-
     for (auto& spr : video->sprites.selector.spr) {
         spr.onActivate = [this]() {
             if (isPaused())

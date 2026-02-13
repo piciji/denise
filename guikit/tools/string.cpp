@@ -281,6 +281,8 @@ auto String::convertIntToHex( int number, bool prepend_0x ) -> std::string {
 auto String::convertHexToInt( std::string hex, int defaultValueByFailure ) -> int {
     
     int _out;
+
+    remove( hex, {"$", "0x"} );
     
     int result = sscanf( hex.c_str(), "%x", &_out );
     

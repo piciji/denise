@@ -964,3 +964,5 @@ status = Status
 line = line
 connect = Connect
 Show DMA usage = Show DMA usage
+value = Value
+edit memory tooltip = to change the values of multiple consecutive addresses, use spaces

@@ -250,9 +250,6 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
 auto CiaDebugger::buildTheme() -> GUIKIT::Layout* {
     cia = new CIA(this);
 
-    control->remove( control->searchEdit );
-    control->remove( control->search );
-
     return cia;
 }
 

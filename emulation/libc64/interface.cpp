@@ -2068,6 +2068,10 @@ auto Interface::getDmaDump() -> uint8_t* {
     return system->vicII->debugger.dmaFrame;
 }
 
+auto Interface::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+    system->editMemory(addr, values);
+}
+
 auto Interface::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
     system->debuggerAdd( theme, action, addr, addrTo );
 }

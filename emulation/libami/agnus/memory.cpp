@@ -1,5 +1,6 @@
 
 #include "agnus.h"
+#include "../../tools/memory.h"
 
 #define eCyclePosition  10 - ((eClockCycle - clock) << 1)
 
@@ -475,6 +476,54 @@ template<bool logDma> inline auto Agnus::writeWord(uint32_t adr, uint16_t value)
     }
 }
 
+auto Agnus::editWord(uint32_t adr, uint16_t value) -> void {
+    adr &= 0xfffffe;
+    uint8_t _map = mapper[adr >> 16];
+
+    switch( _map ) {
+        case CHIP_MEM:
+            adr &= chipMemMask;
+            *(uint16_t*)(chipMem + adr) = _swapWord(value);
+            break;
+        case MMIO_CUSTOM:
+            break;
+        case MMIO_CIA: {
+            uint8_t reg = (adr >> 8) & 0xf;
+            if ((adr & 0x1000) == 0)
+                cia1.write( reg, (uint8_t)value );
+            if ((adr & 0x2000) == 0)
+                cia2.write( reg, (uint8_t)(value >> 8) );
+        } break;
+        case SLOW_MEM:
+            adr -= 0xc00000;
+            *(uint16_t*)(slowMem + adr) = _swapWord(value);
+            break;
+        case FAST_MEM:
+            adr -= fastMemExpansion.baseAdr;
+            *(uint16_t*)(fastMem + adr) = _swapWord(value);
+            break;
+        case KICK_ROM:
+            *(uint16_t*)(kickRom + (adr & kickRomMask)) = _swapWord(value);
+            break;
+        case EXPANSION:
+            break;
+        case EXT_ROM:
+            *(uint16_t*)(extRom + (adr & extRomMask)) = _swapWord(value);
+            break;
+        case WOM:
+            *(uint16_t*)(wom + (adr & 0x3ffff)) = _swapWord(value);
+            break;
+        case MMIO_RTC:
+            rtc.write( (adr >> 2) & 0xf, value & 0xff );
+            break;
+        case AUTO_CONF:
+            writeAutoConfWord(adr, value);
+            break;
+        case Unmapped:
+            break;
+    }
+}
+
 auto Agnus::fakeWriteByte(uint32_t adr, uint8_t value) -> void {
     adr &= 0xffffff;
 
@@ -761,9 +810,10 @@ auto Agnus::checkForRomEncryption() -> void {
             encryptedRom[i] ^= extRom[k];
     }
 
-    kickRom = encryptedRom;
+    Emulator::copyMemory<uint8_t>( kickRom, kickRomSize, encryptedRom, encSize );
     kickRomMask = Emulator::powerOfTwo( encSize ) - 1;
 
+    delete[] extRom;
     extRom = nullptr;
     extRomSize = 0;
     extRomMask = 0;

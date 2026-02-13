@@ -683,6 +683,8 @@ struct Interface {
     virtual auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {}
     virtual auto getDmaDump() -> uint8_t* { return nullptr; }
 
+    virtual auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {}
+
     // disassembler
     virtual auto disassemble(unsigned addr, unsigned& bytes) -> std::string { return ""; }
     virtual auto disassembleData(unsigned addr, unsigned bytes) -> std::string { return ""; }

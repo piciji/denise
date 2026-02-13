@@ -96,9 +96,6 @@ auto DmaDebugger::buildControl() -> GUIKIT::Layout* {
 auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
     dma = new Dma( this );
 
-    control->remove( control->searchEdit );
-    control->remove( control->search );
-
     loadColors();
 
     dma->dmaFrame.showUsage.onToggle = [this](bool checked) {

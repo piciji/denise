@@ -327,6 +327,7 @@ struct Agnus {
     template<bool logDma> auto readWord(uint32_t adr) -> uint16_t;
     auto peekWord(uint32_t adr) -> uint16_t;
     auto writeWord(uint32_t adr, uint16_t value) -> void;
+    auto editWord(uint32_t adr, uint16_t value) -> void;
     template<bool logDma> auto writeWord(uint32_t adr, uint16_t value) -> void;
     auto memoryDump(uint8_t bank, uint16_t* dump) -> void;
 

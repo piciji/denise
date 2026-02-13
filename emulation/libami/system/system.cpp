@@ -7,6 +7,7 @@
 #include "serialization.cpp"
 #include "dongle.cpp"
 #include "../expansionPort/builtinHD.h"
+#include "../../tools/memory.h"
 
 typedef Emulator::Interface::DebuggerAction DebuggerAction;
 typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
@@ -357,13 +358,11 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool all
     switch (typeId) {
         case 0:
         default:
-            agnus.kickRom = data;
-            agnus.kickRomSize = size;
+            Emulator::copyMemory<uint8_t>( agnus.kickRom, agnus.kickRomSize, data, size );
             agnus.kickRomMask = size ? (Emulator::powerOfTwo( size ) - 1) : 0;
             break;
         case 1:
-            agnus.extRom = data;
-            agnus.extRomSize = size;
+            Emulator::copyMemory<uint8_t>( agnus.extRom, agnus.extRomSize, data, size );
             agnus.extRomMask = size ? (Emulator::powerOfTwo( size ) - 1) : 0;
             break;
     }
@@ -764,6 +763,15 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             break;
     }
     agnus.debuggerUpdateEvent();
+}
+
+auto System::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+    for (int i = 0; i < values.size(); i++) {
+        uint32_t a = (addr + (i * 2) ) & 0xffffff;
+        uint16_t v = values[i] & 0xffff;
+
+        agnus.editWord( a, v );
+    }
 }
 
 auto System::updateDebuggerSnapshot() -> void {

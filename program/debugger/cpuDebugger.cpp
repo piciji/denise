@@ -1,5 +1,6 @@
 
 #include "cpuDebugger.h"
+#include "memDebugger.h"
 #include "../thread/emuThread.h"
 #include "../program.h"
 
@@ -106,8 +107,27 @@ CpuDebugger::CPU::State::State::Trace::Trace() {
     setAlignment( 0.5 );
 }
 
+CpuDebugger::CPU::State::Options::Address::Address(Debugger* debugger) {
+    edit.setMaxLength( debugger->isAmiga() ? 6 : 4 );
+    append(edit, {80u, 0u}, 5);
+    append(view, {0u, 0u});
+    setAlignment( 0.5 );
+}
+
+CpuDebugger::CPU::State::Options::Value::Value(Debugger* debugger) {
+    append(edit, {80u, 0u}, 5);
+    append(view, {0u, 0u});
+    setAlignment( 0.5 );
+}
+
+CpuDebugger::CPU::State::Options::Options(Debugger* debugger)
+: address( debugger ), value( debugger ) {
+    append( address, {0u, 0u}, 10 );
+    append( value, {0u, 0u}, 10 );
+}
+
 CpuDebugger::CPU::State::State(Debugger* debugger)
-: flags(debugger) {
+: flags(debugger), options( debugger ) {
     int i = 0;
     registers.resize( debugger->isAmiga() ? 11 : 4 );
 
@@ -122,7 +142,8 @@ CpuDebugger::CPU::State::State(Debugger* debugger)
     }
 
     append(flags, {0u, 0u}, 20);
-    append(trace, {0u, 0u});
+    append(trace, {0u, 0u}, 20);
+    append(options, {0u, 0u});
 }
 
 CpuDebugger::CPU::InstructionLayout::InstructionLayout() {
@@ -189,6 +210,9 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
                 emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::AutoUpdate, 0 );
             emuThread->unlock();
             enableInstructionBreakpoint(row, watcher->enabled);
+        } else if (isPaused()) {
+            auto& inst = instructions[row];
+            cpu->state.options.address.edit.setText( GUIKIT::String::convertToHex( inst.addr ) );
         }
     };
 
@@ -255,7 +279,6 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         std::string addressText = cpu->watcher.adder.address.text();
         if (addressText.empty())
             return;
-        GUIKIT::String::remove( addressText, {"$", "0x"} );
 
         int address = GUIKIT::String::convertHexToInt(addressText, -1);
         if (address == -1)
@@ -302,7 +325,45 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->unlock();
     };
 
+    cpu->state.options.address.view.setImage( &searchImg );
+    cpu->state.options.value.view.setImage( &editImg );
+
+    cpu->state.options.address.edit.onReturn = [this]() {
+        cpu->state.options.address.view.onClick();
+    };
+
+    cpu->state.options.value.edit.onReturn = [this]() {
+        cpu->state.options.value.view.onClick();
+    };
+
+    cpu->state.options.address.view.onClick = [this]() {
+        if (emulator != activeEmulator)
+            return;
+
+        std::string addressText = cpu->state.options.address.edit.text();
+        if (addressText.empty())
+            return;
+
+        int address = GUIKIT::String::convertHexToInt(addressText, -1);
+        if (address == -1)
+            return;
+
+        searchAddress(address);
+    };
+
+    cpu->state.options.value.view.onClick = [this]() {
+        auto valStr = cpu->state.options.value.edit.text();
+        auto addrStr = cpu->state.options.address.edit.text();
+
+        changeMemory( addrStr, valStr );
+    };
+
     return cpu;
+}
+
+auto CpuDebugger::memChanged() -> void {
+    prepareTheme();
+    updateTheme();
 }
 
 auto CpuDebugger::updateCpuFlags(const char* flagIdent, unsigned flags) -> void {
@@ -530,7 +591,7 @@ auto CpuDebugger::updateWatcherSelection() -> void {
         watcherList.setSelected( false );
 }
 
-auto CpuDebugger::searchTheme(unsigned addr) -> void {
+auto CpuDebugger::searchAddress(unsigned addr) -> void {
     auto instRow = findInstructionRowBy(static_cast<unsigned>(addr));
     if (instRow.has_value())
         cpu->instructionLayout.list.setSelection( instRow.value() );
@@ -732,7 +793,7 @@ auto CpuDebugger::update65816(LIBC64::DebuggerSnapshot& s) -> void {
 }
 
 auto CpuDebugger::translateTheme() -> void {
-    bool showTips = control->showTips.checked();
+    bool showTips = showTipsItem.checked();
 
     cpu->watcher.adder.address.setPlaceholder( trans->getA( "address" ) );
     cpu->watcher.breakPoint.setText( trans->getA( "instruction" ) );
@@ -782,6 +843,10 @@ auto CpuDebugger::translateTheme() -> void {
     cpu->state.trace.toggle.setText( trans->getA( "trace") );
     cpu->state.trace.toggle.setTooltip( showTips ? trans->getA( "toggle trace") : "" );
     cpu->state.trace.clear.setTooltip( showTips ? trans->getA( "empty trace") : "" );
+
+    cpu->state.options.address.edit.setPlaceholder( trans->getA( "address" )  );
+    cpu->state.options.value.edit.setPlaceholder( trans->getA( "value" )  );
+    cpu->state.options.value.edit.setTooltip( showTips ? trans->getA( "edit memory tooltip") : "" );
 }
 
 inline auto CpuDebugger::getCpuType() -> DebuggerTheme {

@@ -19,6 +19,7 @@
 #include "map.cpp"
 #include "../expansionPort/gameCart/businessBasic.h"
 #include "../traps/traps.h"
+#include "../../tools/memory.h"
 
 typedef Emulator::Interface::DebuggerAction DebuggerAction;
 typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
@@ -578,17 +579,23 @@ auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool al
 
             } else if (!data || (size != 8192))
                 data = (uint8_t*)Firmware::kernalRom;
-            kernalRom = data;
+
+            size = 8192;
+            Emulator::copyMemory<uint8_t>( kernalRom, size, data, size );
             break;
         case Interface::FirmwareIdBasic:
             if (!data || (size != 8192))
                 data = (uint8_t*)Firmware::basicRom;
-            basicRom = data;
+
+            size = 8192;
+            Emulator::copyMemory<uint8_t>( basicRom, size, data, size );
             break;
         case Interface::FirmwareIdChar:
             if (!data || (size != 4096))
                 data = (uint8_t*)Firmware::charRom;
-            charRom = data;
+
+            size = 4096;
+            Emulator::copyMemory<uint8_t>( charRom, size, data, size );
             break;
         default:
             iecBus.setFirmware( typeId, data, size );

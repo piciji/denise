@@ -5,9 +5,9 @@
 #include "../program.h"
 #include "../thread/emuThread.h"
 #include "../../data/icons.h"
-
-#include "cpuDebugger.h"
 #include "../../emulation/interface.h"
+#include "memDebugger.h"
+#include "cpuDebugger.h"
 
 GUIKIT::Timer* Debugger::timerVisibility = nullptr;
 
@@ -28,8 +28,6 @@ Debugger::Control::Control(Debugger* debugger) {
     line.setEnabled( false );
     frame.setEnabled( false );
 
-    searchEdit.setMaxLength( 6 );
-    searchEdit.setFont(GUIKIT::Font::system(11));
     lineEdit.setMaxLength( 3 );
     lineEdit.setFont(GUIKIT::Font::system(11));
     position.setFont( GUIKIT::Font::system( 11 ) );
@@ -43,15 +41,12 @@ Debugger::Control::Control(Debugger* debugger) {
     append( line, {0u, 0u}, 10 );
     append( lineEdit, {50u, 0u}, 5 );
     append( toLine, {0u, 0u}, 10 );
-
-    append( searchEdit, {90u, 0u}, 5 );
-    append( search, {0u, 0u}, 20 );
     append( position, {~0u, 0u} );
 
     if (auto _control = debugger->buildControl())
         append(*_control, {0u, 0u}, 20);
 
-    append( showTips, {0u, 0u} );
+    append( settings, {0u, 0u} );
 
     setAlignment( 0.5 );
 }
@@ -101,6 +96,7 @@ auto Debugger::build() -> void {
     editImg.loadPng((uint8_t*)Icons::edit, sizeof(Icons::edit));
     checkedImg.loadPng((uint8_t*)Icons::checked, sizeof(Icons::checked));
     forwardImg.loadPng((uint8_t*)Icons::forward, sizeof(Icons::forward));
+    systemImg.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
 
     control = new Control(this);
 
@@ -108,10 +104,10 @@ auto Debugger::build() -> void {
     control->stepOver.setImage( &stepOverImg );
     control->stepInto.setImage( &stepIntoImg );
     control->stepOut.setImage( &stepOutImg );
-    control->search.setImage( &searchImg );
     control->line.setImage( &lineImg );
     control->frame.setImage( &frameImg );
     control->toLine.setImage( &forwardImg );
+    control->settings.setImage( &systemImg );
 
     layout.setMargin( 10 );
 
@@ -170,26 +166,6 @@ auto Debugger::build() -> void {
         resume( emulator );
     };
 
-    control->search.onClick = [this]() {
-        if (emulator != activeEmulator)
-            return;
-
-        std::string addressText = control->searchEdit.text();
-        if (addressText.empty())
-            return;
-        GUIKIT::String::remove( addressText, {"$", "0x"} );
-
-        int address = GUIKIT::String::convertHexToInt(addressText, -1);
-        if (address == -1)
-            return;
-
-        searchTheme(address);
-    };
-
-    control->searchEdit.onReturn = [this]() {
-        control->search.onClick();
-    };
-
     control->toLine.onClick = [this]() {
         if (emulator != activeEmulator)
             return;
@@ -209,17 +185,23 @@ auto Debugger::build() -> void {
         control->toLine.onClick();
     };
 
-    control->showTips.onToggle = [this](bool checked) {
+    showTipsItem.onToggle = [this]() {
+        bool checked = showTipsItem.checked();
         settings->set<bool>("debugger_tips", checked);
         emuThread->lock();
         for (auto debugger : debuggers) {
             if (debugger->emulator == emulator) {
                 if (debugger != this)
-                    debugger->control->showTips.setChecked( checked );
+                    debugger->showTipsItem.setChecked( checked );
                 debugger->translate();
             }
         }
         emuThread->unlock();
+    };
+    settingsMenu.append( showTipsItem );
+
+    control->settings.onMenu = [this]() {
+        return &settingsMenu;
     };
 
     if (!timerVisibility) {
@@ -235,7 +217,7 @@ auto Debugger::build() -> void {
         };
     }
 
-    control->showTips.setChecked( settings->get<bool>("debugger_tips", true) );
+    showTipsItem.setChecked( settings->get<bool>("debugger_tips", true) );
     
     setTitle( titleIdent() );
 
@@ -243,10 +225,9 @@ auto Debugger::build() -> void {
 }
 
 auto Debugger::translate() -> void {
-    bool showTips = control->showTips.checked();
-    control->searchEdit.setPlaceholder( trans->getA( "address" ) );
+    bool showTips = showTipsItem.checked();
     control->lineEdit.setPlaceholder( trans->getA( "line" ) );
-    control->showTips.setText( trans->getA("popup hints") );
+    showTipsItem.setText( trans->getA("popup hints") );
     control->stepInto.setTooltip( showTips ? trans->getA("step into") : "" );
     control->stepOver.setTooltip( showTips ? trans->getA("step over") : "" );
     control->stepOut.setTooltip( showTips ? trans->getA("step out") : "" );
@@ -473,5 +454,50 @@ auto Debugger::getWidth(unsigned length, bool editField, bool bigger) -> unsigne
 }
 
 auto Debugger::updateControl(uint16_t v, uint8_t h) -> void {
-    control->position.setText("V: " + std::to_string( v ) + " H: " + GUIKIT::String::convertToHex( h, 2 ) );
+    control->position.setText("V: " + std::to_string( v ) + " H: " +  std::to_string( h ) );
+}
+
+auto Debugger::changeMemory(const std::string& addrStr, const std::string& valStr) -> void {
+    if (valStr.empty() || addrStr.empty())
+        return;
+
+    int addr = GUIKIT::String::convertHexToInt( addrStr, -1 );
+    if (addr == -1)
+        return;
+
+    auto valStrs = GUIKIT::String::split( valStr, ' ', true );
+
+    if (valStrs.empty())
+        return;
+
+    std::vector<uint16_t> values;
+
+    for (auto& _valStr : valStrs) {
+        int val = GUIKIT::String::convertHexToInt( _valStr, -1 );
+        if (val != -1) {
+            values.push_back( val );
+        }
+    }
+
+    if (values.empty())
+        return;
+
+    emuThread->lock();
+    emulator->editMemory( addr, values);
+
+    if (isPaused()) {
+        if (snapshot)
+            snapshot->codeMaybeModified = true;
+
+        for (auto& debugger : program->getActiveDebuggers()) {
+            if (debugger->mode == Mode::Memory || debugger->mode == Mode::MemorySCPU)
+                (dynamic_cast<MemDebugger*>(debugger))->memChanged(false);
+
+            if (debugger->mode == Mode::CPU || debugger->mode == Mode::SCPU) {
+                (dynamic_cast<CpuDebugger*>(debugger))->memChanged();
+            }
+        }
+    }
+
+    emuThread->unlock();
 }

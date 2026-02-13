@@ -964,3 +964,5 @@ status = Status
 line = Zeile
 connect = Verbinden
 Show DMA usage = DMA-Nutzung anzeigen
+value = Wert
+edit memory tooltip = um die Werte mehrerer aufeinanderfolgender Adressen zu ändern, verwende Leerzeichen.

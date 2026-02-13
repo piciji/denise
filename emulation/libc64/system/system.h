@@ -255,6 +255,7 @@ struct System {
     
     auto remapCpu(bool speedHack = false) -> void;
     auto memoryDump(uint8_t page, uint8_t* dump) -> void;
+    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
 	auto isUltimax() -> bool;
 	auto changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus = false, bool speedHack = false) -> void;
     

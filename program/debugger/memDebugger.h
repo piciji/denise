@@ -13,6 +13,24 @@ struct MemDebugger : Debugger {
         GUIKIT::ListView bankList;
         GUIKIT::ListView pageList;
 
+        struct Options : GUIKIT::VerticalLayout {
+            struct Address : GUIKIT::HorizontalLayout {
+                GUIKIT::LineEdit edit;
+                GUIKIT::ImageView view;
+
+                Address(Debugger* debugger);
+            } address;
+
+            struct Value : GUIKIT::HorizontalLayout {
+                GUIKIT::LineEdit edit;
+                GUIKIT::ImageView view;
+
+                Value(Debugger* debugger);
+            } value;
+
+            Options(Debugger* debugger);
+        } options;
+
         Memory(Debugger* debugger);
     };
 
@@ -58,7 +76,6 @@ struct MemDebugger : Debugger {
 
     auto buildTheme() -> GUIKIT::Layout* override;
     auto buildControl() -> GUIKIT::Layout* override;
-    auto searchTheme(unsigned addr) -> void override;
     auto translateTheme() -> void override;
     auto updateTheme() -> void override;
     auto prepareTheme() -> void override;
@@ -66,6 +83,9 @@ struct MemDebugger : Debugger {
     auto closeTheme() -> void override;
     auto saveIdent() -> std::string override;
     auto titleIdent() -> std::string override;
+
+    auto searchAddress(unsigned addr) -> void;
+    auto memChanged(bool noColorChanges = true) -> void;
 
     auto updateC64MemControl(uint8_t _mode, bool init = false) -> void;
     auto updateMemory(LIBAMI::DebuggerSnapshot& s) -> void;

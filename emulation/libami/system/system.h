@@ -153,6 +153,7 @@ struct System {
     auto updateDebuggerSnapshot() -> void;
     auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
     auto debuggerUpdate() -> void;
+    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
 };
 
 

@@ -161,6 +161,29 @@ auto System::logCpu(uint16_t addr, uint8_t data) -> void {
     }
 }
 
+auto System::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+    if (dynamic_cast<SuperCpu*>(expansionPort)) {
+        for (int i = 0; i < values.size(); i++) {
+            uint32_t a = (addr + i) & 0xffffff;
+            uint8_t v = values[i] & 0xff;
+
+            superCpu->editMemory( a, v );
+        }
+    } else {
+        for (int i = 0; i < values.size(); i++) {
+            uint16_t a = (addr + i) & 0xffff;
+            uint8_t v = values[i] & 0xff;
+
+            Memory::Read* ptr = memoryCpu.reads[a >> 8];
+            if (ptr == &readCharRom)            charRom[a & 0xfff] = v;
+            else if (ptr == &readKernalRom)     kernalRom[a & 0x1fff] = v;
+            else if (ptr == &readBasicRom)      basicRom[a & 0x1fff] = v;
+
+            memoryCpu.write(a, v);
+        }
+    }
+}
+
 auto System::memoryDump(uint8_t page, uint8_t* dump) -> void {
     uint8_t temp[16];
     page &= 0xf;

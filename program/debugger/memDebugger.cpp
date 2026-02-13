@@ -1,4 +1,5 @@
 #include "memDebugger.h"
+#include "cpuDebugger.h"
 #include "../thread/emuThread.h"
 #include "../program.h"
 #include "../tools/macros.h"
@@ -19,7 +20,8 @@ MemDebugger::~MemDebugger() {
     delete[] memDumpOld;
 }
 
-MemDebugger::Memory::Memory(Debugger* debugger) {
+MemDebugger::Memory::Memory(Debugger* debugger)
+: options( debugger ) {
     bankList.setHeaderText( { "bank", "mapping" } );
     bankList.setFont( GUIKIT::Font::system( 10 ,"", true ) );
     pageList.setFont( GUIKIT::Font::system( 10 ,"", true ) );
@@ -82,7 +84,27 @@ MemDebugger::Memory::Memory(Debugger* debugger) {
     pageList.autoSizeColumns();
 
     append(bankList, {200u, ~0u}, 10);
-    append(pageList, {~0u, ~0u});
+    append(pageList, {~0u, ~0u}, 10);
+    append(options, {0u, 0u} );
+}
+
+MemDebugger::Memory::Options::Address::Address(Debugger* debugger) {
+    edit.setMaxLength( debugger->isAmiga() || debugger->mode == Mode::MemorySCPU ? 6 : 4 );
+    append(edit, {80u, 0u}, 5);
+    append(view, {0u, 0u});
+    setAlignment( 0.5 );
+}
+
+MemDebugger::Memory::Options::Value::Value(Debugger* debugger) {
+    append(edit, {80u, 0u}, 5);
+    append(view, {0u, 0u});
+    setAlignment( 0.5 );
+}
+
+MemDebugger::Memory::Options::Options(Debugger* debugger)
+: address( debugger ), value( debugger ) {
+    append( address, {0u, 0u}, 10 );
+    append( value, {0u, 0u}, 10 );
 }
 
 MemDebugger::C64MemControl::Element::Element(Debugger* debugger) {
@@ -131,7 +153,7 @@ auto MemDebugger::buildControl() -> GUIKIT::Layout* {
     return nullptr;
 }
 
-auto MemDebugger::searchTheme(unsigned addr) -> void {
+auto MemDebugger::searchAddress(unsigned addr) -> void {
     if (mode == Mode::Memory) {
         if (isAmiga()) {
             uint8_t bank = (addr >> 16) & 0xff;
@@ -144,13 +166,13 @@ auto MemDebugger::searchTheme(unsigned addr) -> void {
             uint16_t page = addr & 0xfff;
             memory->pageList.setSelection( page / 16 );
         }
-        memory->bankList.onChange();
     } else if (mode == Mode::MemorySCPU) {
         uint8_t bank = (addr >> 16) & 0xff;
         memory->bankList.setSelection( bank );
         uint16_t page = addr & 0xffff;
         memory->pageList.setSelection( page / 16 );
     }
+    memory->bankList.onChange();
 }
 
 auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
@@ -170,17 +192,72 @@ auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
         updateC64MemControl(0, true);
     }
 
+    memory->options.address.view.setImage( &searchImg );
+    memory->options.value.view.setImage( &editImg );
+
+    memory->options.address.edit.onReturn = [this]() {
+        memory->options.address.view.onClick();
+    };
+
+    memory->options.value.edit.onReturn = [this]() {
+        memory->options.value.view.onClick();
+    };
+
+    memory->options.address.view.onClick = [this]() {
+        if (emulator != activeEmulator)
+            return;
+
+        std::string addressText = memory->options.address.edit.text();
+        if (addressText.empty())
+            return;
+
+        int address = GUIKIT::String::convertHexToInt(addressText, -1);
+        if (address == -1)
+            return;
+
+        searchAddress(address);
+    };
+
+    memory->options.value.view.onClick = [this]() {
+        auto valStr = memory->options.value.edit.text();
+        auto addrStr = memory->options.address.edit.text();
+
+        changeMemory( addrStr, valStr );
+    };
+
     memory->bankList.onChange = [this]() {
-        unsigned selectedBank = memory->bankList.selection();
         emuThread->lock();
-        if (isAmiga()) {
-            fetchDump<uint16_t>();
-            loadMemoryBank<uint16_t>( selectedBank, true );
-        } else {
-            fetchDump<uint8_t>();
-            loadMemoryBank<uint8_t>( selectedBank, true );
-        }
+        memChanged();
         emuThread->unlock();
+    };
+
+    memory->pageList.onClick = [this](unsigned row, unsigned col) {
+        if (col == 0)
+            return;
+
+        uint32_t addr = memory->bankList.selection();
+
+        if (isAmiga()) {
+            if (col == 9)
+                return;
+
+            addr = (addr & 0xff) << 16;
+            addr |= row * 16 + ((col - 1) << 1);
+
+        } else {
+            if (col == 17)
+                return;
+
+            if (mode == Mode::MemorySCPU) {
+                addr = (addr & 0xff) << 16;
+                addr |= row * 16 + (col - 1);
+            } else {
+                addr = (addr & 0xf) << 12;
+                addr |= row * 16 + (col - 1);
+            }
+        }
+
+        memory->options.address.edit.setText( GUIKIT::String::convertToHex( addr ) );
     };
 
     std::memset(bankListStore, 0, sizeof(bankListStore));
@@ -191,10 +268,14 @@ auto MemDebugger::buildTheme() -> GUIKIT::Layout* {
 }
 
 auto MemDebugger::translateTheme() -> void {
+    bool showTips = showTipsItem.checked();
     memory->bankList.setHeaderText( {trans->getA( "address"), trans->getA( "assignment") } );
     auto header = memory->pageList.state.header;
     header[0] = trans->getA( "address" );;
     memory->pageList.setHeaderText(header);
+    memory->options.address.edit.setPlaceholder( trans->getA( "address" )  );
+    memory->options.value.edit.setPlaceholder( trans->getA( "value" )  );
+    memory->options.value.edit.setTooltip( showTips ? trans->getA( "edit memory tooltip") : "" );
 }
 
 auto MemDebugger::updateTheme() -> void {
@@ -224,6 +305,17 @@ auto MemDebugger::closeTheme() -> void {
 
 auto MemDebugger::prepareTheme() -> void {
     isAmiga() ? fetchDump<uint16_t>() : fetchDump<uint8_t>();
+}
+
+auto MemDebugger::memChanged(bool noColorChanges) -> void {
+    unsigned selectedBank = memory->bankList.selection();
+    if (isAmiga()) {
+        fetchDump<uint16_t>();
+        loadMemoryBank<uint16_t>( selectedBank, noColorChanges );
+    } else {
+        fetchDump<uint8_t>();
+        loadMemoryBank<uint8_t>( selectedBank, noColorChanges );
+    }
 }
 
 auto MemDebugger::updateMemory(LIBAMI::DebuggerSnapshot& s) -> void {

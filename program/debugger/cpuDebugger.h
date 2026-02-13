@@ -69,6 +69,24 @@ struct CpuDebugger : Debugger {
                 Trace();
             } trace;
 
+            struct Options : GUIKIT::VerticalLayout {
+                struct Address : GUIKIT::HorizontalLayout {
+                    GUIKIT::LineEdit edit;
+                    GUIKIT::ImageView view;
+
+                    Address(Debugger* debugger);
+                } address;
+
+                struct Value : GUIKIT::HorizontalLayout {
+                    GUIKIT::LineEdit edit;
+                    GUIKIT::ImageView view;
+
+                    Value(Debugger* debugger);
+                } value;
+
+                Options(Debugger* debugger);
+            } options;
+
             State(Debugger* debugger);
         } state;
 
@@ -102,7 +120,6 @@ struct CpuDebugger : Debugger {
     Trace traces[LIST_TRACES];
 
     auto buildTheme() -> GUIKIT::Layout* override;
-    auto searchTheme(unsigned addr) -> void override;
     auto translateTheme() -> void override;
     auto updateTheme() -> void override;
     auto prepareTheme() -> void override;
@@ -113,6 +130,7 @@ struct CpuDebugger : Debugger {
 
     auto fetchTraces() -> void;
     auto fetchInstructions(unsigned addr) -> void;
+    auto searchAddress(unsigned addr) -> void;
 
     auto updateInstructionList() -> void;
     auto updateTraceList() -> void;
@@ -135,4 +153,5 @@ struct CpuDebugger : Debugger {
     auto update65816(LIBC64::DebuggerSnapshot& s) -> void;
 
     auto getCpuType() -> DebuggerTheme;
+    auto memChanged() -> void;
 };

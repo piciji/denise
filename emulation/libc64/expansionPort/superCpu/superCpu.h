@@ -132,6 +132,7 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto setDram() -> void;
 
     auto readByte(uint32_t addr) -> uint8_t;
+    auto editMemory(uint32_t addr, uint8_t value) -> void;
     auto readByteReu(uint16_t addr) -> uint8_t;
     auto peekByte(uint32_t addr) -> uint8_t;
     auto readVectorByte(uint16_t addr) -> uint8_t;

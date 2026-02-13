@@ -28,6 +28,9 @@ struct Debugger : GUIKIT::Window {
     Emulator::Interface* emulator;
     GUIKIT::Settings* settings = nullptr;
 
+    GUIKIT::Menu settingsMenu;
+    GUIKIT::MenuCheckItem showTipsItem;
+
     GUIKIT::Image addImg;
     GUIKIT::Image trashImg;
     GUIKIT::Image breakEnableImg;
@@ -51,6 +54,7 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image editImg;
     GUIKIT::Image checkedImg;
     GUIKIT::Image forwardImg;
+    GUIKIT::Image systemImg;
 
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;
@@ -62,11 +66,9 @@ struct Debugger : GUIKIT::Window {
         GUIKIT::Button line;
         GUIKIT::LineEdit lineEdit;
         GUIKIT::ImageView toLine;
-        GUIKIT::LineEdit searchEdit;
-        GUIKIT::ImageView search;
         GUIKIT::Label position;
+        GUIKIT::Button settings;
 
-        GUIKIT::CheckBox showTips;
         Control(Debugger* debugger);
     };
     Control* control = nullptr;
@@ -79,7 +81,6 @@ struct Debugger : GUIKIT::Window {
     virtual auto saveIdent() -> std::string = 0;
     virtual auto titleIdent() -> std::string = 0;
     virtual auto buildTheme() -> GUIKIT::Layout* = 0;
-    virtual auto searchTheme(unsigned addr) -> void {}
     virtual auto translateTheme() -> void {}
     virtual auto updateTheme() -> void {}
     virtual auto prepareTheme() -> void {}
@@ -100,6 +101,8 @@ struct Debugger : GUIKIT::Window {
     auto isCpuMode() const -> bool { return mode == Mode::CPU || mode == Mode::SCPU; }
     auto isMemMode() const -> bool { return mode == Mode::Memory || mode == Mode::MemorySCPU; }
     auto isCiaMode() const -> bool { return mode == Mode::CIA; }
+
+    auto changeMemory(const std::string& addrStr, const std::string& valStr) -> void;
 
     static auto updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
     static auto updateReg(GUIKIT::CheckBox& reg, bool state) -> void;
