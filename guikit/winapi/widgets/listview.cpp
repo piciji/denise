@@ -448,12 +448,22 @@ auto pListView::onChange(LPARAM lparam) -> void {
     }
 }
 
-auto pListView::onClick(LPARAM lparam) -> void {
+auto pListView::onClick(LPARAM lparam, bool rightClick) -> void {
+    if (locked)
+        return;
+
     LPNMLISTVIEW nmlistview = (LPNMLISTVIEW)lparam;
     unsigned selection = nmlistview->iItem;
     unsigned column = nmlistview->iSubItem;
-    if (!locked && listView.onClick)
-        listView.onClick(selection, column);
+
+    if (!rightClick) {
+        if (listView.onClick)
+            listView.onClick(selection, column);
+    } else if (listView.onContext) {
+        POINT pt;
+        GetCursorPos(&pt);
+        listView.onContext(selection, column, {static_cast<signed int>(pt.x), static_cast<signed int>(pt.y)});
+    }
 }
 
 auto pListView::onActivate(LPARAM lparam) -> void {

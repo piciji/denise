@@ -321,6 +321,7 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == LVN_ITEMCHANGED) { ((ListView*)base)->p.onChange(lparam); break; }
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == LVN_ITEMACTIVATE) { ((ListView*)base)->p.onActivate(lparam); break; }
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == NM_CLICK) { ((ListView*)base)->p.onClick(lparam); break; }
+            if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == NM_RCLICK) { ((ListView*)base)->p.onClick(lparam, true); break; }
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((ListView*)base)->p.onCustomDraw(lparam); }
             if(dynamic_cast<CheckBox*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((CheckBox*)base)->p.onCustomDraw(lparam); }
             if(dynamic_cast<RadioBox*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((RadioBox*)base)->p.onCustomDraw(lparam); }
@@ -539,7 +540,9 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 
     Geometry geo = window.state.geometry;
 
-    hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
+    bool noTitle = hints == Window::Hints::No_Title;
+
+    hwnd = CreateWindow( L"app_gui", L"", ResizableStyle(noTitle) | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
 
     hmenu = CreateMenu();
 	contextmenu = CreatePopupMenu();
@@ -671,8 +674,12 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
                 window.onFocus();
             break;
         case WM_KILLFOCUS:
-            if (window.onUnFocus)
+            if (window.onUnFocus) {
+                if (IsChild(hwnd, (HWND)wparam)) {
+                    break;
+                }
                 window.onUnFocus();
+            }
             break;
         case WM_SETCURSOR:
             if (LOWORD(lparam) == HTCLIENT) {
@@ -713,7 +720,8 @@ auto pWindow::restore() -> void {
 }
 
 auto pWindow::setResizable(bool resizable) -> void {
-    SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (window.fullScreen() ? 0 : 0) | (resizable ? ResizableStyle : FixedStyle));
+    bool noTitle = window.hints == Window::Hints::No_Title;
+    SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (window.fullScreen() ? 0 : 0) | (resizable ? ResizableStyle(noTitle) : FixedStyle(noTitle)));
     if(window.visible() && !window.fullScreen() ) setGeometry(window.state.geometry);
 }
 
@@ -755,8 +763,9 @@ auto pWindow::minimized() -> bool {
 
 auto pWindow::frameMargin() -> Geometry {
     static int menuWhatIsThis = GetSystemMetrics( SM_CYMENU ) - GetSystemMetrics( SM_CYMENUSIZE );
-    
-    unsigned style = window.resizable() ? ResizableStyle : FixedStyle;
+
+    bool noTitle = window.hints == Window::Hints::No_Title;
+    unsigned style = window.resizable() ? ResizableStyle(noTitle) : FixedStyle(noTitle);
     if(window.fullScreen()) style = 0;
 
     RECT rc = {0, 0, 0, 0};
@@ -883,7 +892,8 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     locked = true;
 
     if(!fullScreen) {
-        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle : FixedStyle) | (unfullscreenZoomed ? WS_MAXIMIZE : 0));
+        bool noTitle = window.hints == Window::Hints::No_Title;
+        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle(noTitle) : FixedStyle(noTitle)) | (unfullscreenZoomed ? WS_MAXIMIZE : 0));
 		SetWindowLongPtr(hwnd, GWL_EXSTYLE, (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & ~WS_EX_APPWINDOW));
 		
         setGeometry(window.state.geometry);

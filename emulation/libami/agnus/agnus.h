@@ -502,7 +502,7 @@ struct Agnus {
 
     inline auto updateDdfEnableCache() -> void;
 
-    auto debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned addr) -> void;
+    auto debugPointReached(int source, unsigned addr) -> void;
     auto oneTimeDebuggerAction() -> void;
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;

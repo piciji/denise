@@ -20,7 +20,7 @@ auto pMessageWindow::translateButtons(MessageWindow::Buttons buttons) -> UINT {
     return MB_OK;
 }
 
-LRESULT CALLBACK pMessageWindow::pfnCBTMsgBoxHook(int nCode, WPARAM wparam, LPARAM lparam) {
+auto CALLBACK pMessageWindow::pfnCBTMsgBoxHook(int nCode, WPARAM wparam, LPARAM lparam) -> LRESULT {
     if (nCode == HC_ACTION) {
         CWPSTRUCT* pwp = (CWPSTRUCT*)lparam;
 

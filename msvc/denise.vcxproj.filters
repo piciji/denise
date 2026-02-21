@@ -1183,9 +1183,6 @@
     <ClInclude Include="..\program\debugger\debugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
-    <ClInclude Include="..\emulation\libami\cpu\m68000\watcher.h">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClInclude>
     <ClInclude Include="..\emulation\libc64\m6510\dasmHandler.h">
       <Filter>emulation\libc64\m6510</Filter>
     </ClInclude>
@@ -1227,6 +1224,9 @@
     </ClInclude>
     <ClInclude Include="..\program\tools\colors.h">
       <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\expressionParser.h">
+      <Filter>emulation\tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2442,9 +2442,6 @@
     <ClCompile Include="..\program\debugger\debugger.cpp">
       <Filter>program\debugger</Filter>
     </ClCompile>
-    <ClCompile Include="..\emulation\libami\cpu\m68000\watcher.cpp">
-      <Filter>emulation\libami\cpu\m68000</Filter>
-    </ClCompile>
     <ClCompile Include="..\emulation\libc64\m6510\dasmHandler.cpp">
       <Filter>emulation\libc64\m6510</Filter>
     </ClCompile>
@@ -2477,6 +2474,9 @@
     </ClCompile>
     <ClCompile Include="..\guikit\winapi\widgets\logicViewer.cpp">
       <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\expressionParser.cpp">
+      <Filter>emulation\tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

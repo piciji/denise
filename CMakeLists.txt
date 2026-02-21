@@ -115,7 +115,6 @@ set(srcs
 
         emulation/libami/cpu/m68000/m68000.cpp
         emulation/libami/cpu/m68000/dasmHandler.cpp
-        emulation/libami/cpu/m68000/watcher.cpp
         emulation/libami/cpu/m68000.cpp
         emulation/libami/agnus/agnus.cpp
         emulation/libami/agnus/blitter.cpp
@@ -193,6 +192,7 @@ set(srcs
         data/icons/logos.cpp
         emulation/tools/socket.cpp
         emulation/tools/fpaq0.cpp
+        emulation/tools/expressionParser.cpp
 
         program/program.cpp
         program/input/manager.cpp

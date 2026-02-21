@@ -24,11 +24,17 @@ struct CpuDebugger : Debugger {
             TraceLayout();
         } traceLayout;
 
-        struct Watcher : GUIKIT::VerticalLayout {
+        struct WatcherLayout : GUIKIT::VerticalLayout {
             GUIKIT::ListView list;
 
             GUIKIT::RadioBox breakPoint;
-            GUIKIT::RadioBox watchPoint;
+
+            struct MemoryAccessLayout : GUIKIT::HorizontalLayout {
+                GUIKIT::RadioBox watchPoint;
+                GUIKIT::CheckBox writeCheck;
+
+                MemoryAccessLayout();
+            } memoryAccessLayout;
 
             struct Adder : GUIKIT::HorizontalLayout {
                 GUIKIT::LineEdit address;
@@ -42,7 +48,7 @@ struct CpuDebugger : Debugger {
                 ExcAdder();
             } excAdder;
 
-            Watcher();
+            WatcherLayout();
         } watcher;
 
         struct State : GUIKIT::VerticalLayout {
@@ -91,9 +97,37 @@ struct CpuDebugger : Debugger {
         } state;
 
         CPU(Debugger* debugger);
-    };
+    } *cpu = nullptr;
 
-    CPU* cpu = nullptr;
+    struct BreakConditionLayout : GUIKIT::VerticalLayout {
+
+        struct Expression : GUIKIT::HorizontalLayout {
+            GUIKIT::CheckBox check;
+            GUIKIT::ComboButton compareCombo;
+            GUIKIT::LineEdit compareVal;
+
+            Expression();
+        } expression;
+
+        struct HitCount : GUIKIT::HorizontalLayout {
+            GUIKIT::CheckBox check;
+            GUIKIT::ComboButton compareCombo;
+            GUIKIT::LineEdit compareVal;
+
+            HitCount();
+        } hitCount;
+
+        GUIKIT::MultilineEdit info;
+
+        struct Control : GUIKIT::HorizontalLayout {
+            GUIKIT::Widget spacer;
+            GUIKIT::Button closeButton;
+
+            Control();
+        } control;
+
+        BreakConditionLayout();
+    };
 
     struct Instruction {
         unsigned addr;
@@ -111,6 +145,14 @@ struct CpuDebugger : Debugger {
         std::string ident;
         DebuggerAction action;
         bool enabled;
+
+        bool useHitCount = false;
+        unsigned hitCount = 0;
+        unsigned hitCountCompare = 0;
+
+        bool useExpression = false;
+        std::string expression;
+        unsigned expressionCompare = 0;
     };
 
     std::optional<unsigned> currentInstRow;
@@ -118,6 +160,9 @@ struct CpuDebugger : Debugger {
     std::vector<Watcher> watchers;
     Instruction instructions[LIST_INSTRUCTIONS];
     Trace traces[LIST_TRACES];
+
+    GUIKIT::Window* breakConditionWindow = nullptr;
+    BreakConditionLayout* breakConditionLayout = nullptr;
 
     auto buildTheme() -> GUIKIT::Layout* override;
     auto translateTheme() -> void override;
@@ -140,9 +185,12 @@ struct CpuDebugger : Debugger {
 
     auto findWatcherBy(unsigned addr, DebuggerAction action) -> Watcher*;
     auto findWatcherRowBy(unsigned addr, DebuggerAction action) -> std::optional<unsigned>;
-    auto enableInstructionBreakpoint(unsigned row, bool state) -> void;
+
+    auto updateBreakpointVisuals(Watcher* watcher) -> void;
+    auto updateInstructionBreakpointVisuals(unsigned row, Watcher* watcher, bool preventColumResizing = false) -> void;
+    auto updateWatcherBreakpointVisuals(unsigned row, Watcher* watcher, bool preventColumResizing = false) -> void;
+
     auto removeInstructionBreakpoint(unsigned row) -> void;
-    auto enableWatcher(unsigned row, bool state) -> void;
     auto findInstructionRowBy(unsigned addr) -> std::optional<unsigned>;
 
     auto updateCpuFlags(const char* flagIdent, unsigned flags) -> void;
@@ -154,4 +202,7 @@ struct CpuDebugger : Debugger {
 
     auto getCpuType() -> DebuggerTheme;
     auto memChanged() -> void;
+
+    auto createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Position position) -> void;
+    auto updateWatchpointCondition(Watcher& watcher) -> bool;
 };

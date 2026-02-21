@@ -545,7 +545,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (!cmd->hasCustomConfig(emulator) && ("" == globalSettings->get<std::string>( emulator->ident + "_custom_settings", "")))
             return;
 
-        emuThread->lock();
+        emuThread->lock(true);
 
         if (!this->load(program->settingsFileFromEmuFolder(emulator->ident + "_"), false)) {
             if (!this->load(program->settingsFile(emulator->ident + "_"))) {
@@ -573,7 +573,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         std::string path = program->getSettingsFolder(emulator) + info->name;
 
-        emuThread->lock();
+        emuThread->lock(true);
         if (this->load(path)) {
             globalSettings->set<std::string>(emulator->ident + "_custom_settings", info->name);
             cmd->removeCustomConfig(emulator);
@@ -686,7 +686,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             if (!cmd->hasCustomConfig(emulator) && (info->name == globalSettings->get<std::string>(emulator->ident + "_custom_settings", ""))) {
                 globalSettings->set<std::string>(emulator->ident + "_custom_settings", "");
 
-                emuThread->lock();
+                emuThread->lock(true);
 
                 if (!this->load(program->settingsFileFromEmuFolder(emulator->ident + "_"), false)) {
                     if (!this->load(program->settingsFile(emulator->ident + "_"))) {
@@ -823,7 +823,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         stateFast.top.edit.setText( baseName );
         _settings->set<std::string>("save_ident", baseName);
 
-        emuThread->lock();
+        emuThread->lock(true);
         States::getInstance(emulator)->load(lview.text(selection, 1), true);
         emuThread->unlock();
         view->setFocused(100);
@@ -880,7 +880,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         path = GUIKIT::File::buildRelativePath(GUIKIT::File::getPath(filePath));
         _settings->set<std::string>("save_direct_folder", path);
 
-        emuThread->lock();
+        emuThread->lock(true);
         States::getInstance(emulator)->load(filePath);
         emuThread->unlock();
         view->setFocused(100);

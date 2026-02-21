@@ -63,7 +63,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     
     memorySliderReset.onFinished = [this]() {
         if (activeEmulator == this->emulator) {
-            emuThread->lock();
+            emuThread->lock(true);
             program->power(activeEmulator);
             emuThread->unlock();
         }
@@ -132,7 +132,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 updateExpansionMemory();
 
                 if (activeEmulator == this->emulator) {
-                    emuThread->lock();
+                    emuThread->lock(true);
                     program->power(activeEmulator);
                     emuThread->unlock();
                 }

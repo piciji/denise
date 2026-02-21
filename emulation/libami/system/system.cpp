@@ -295,6 +295,10 @@ auto System::run() -> void {
     } else
         agnus.updateEvent<Agnus::EVENT_LEAVE_EMULATION>(227 * 312 + 30000); // Blitter could block CPU too long
 
+    if (agnus.debugger.action == DebuggerAction::UIRequestedStop) {
+        debuggerUpdate();
+    }
+
     labelRunAhead:
 
     while( !leaveEmulation ) {
@@ -329,15 +333,15 @@ auto System::run() -> void {
 
     if (observer.stateChange)
         informAboutStateChange();
-
-    if (agnus.debugger.action != DebuggerAction::None) {
-        debuggerUpdate();
-    }
 }
 
 auto System::debuggerUpdate() -> void {
     agnus.debuggerUpdateEvent();
+
+    debuggerSnapshot.mutex.lock();
     updateDebuggerSnapshot();
+    interface->debugger(&debuggerSnapshot); // callback needs to unlock
+    agnus.debugger.action = DebuggerAction::None;
 }
 
 auto System::informAboutKeyUpdate() -> void {
@@ -710,7 +714,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                     break;
             } break;
         case DebuggerTheme::CheckpointsCore1:
-            cpu.debuggerAdd( (M68FAMILY::M68000::DebuggerAction)action, addr, addrTo );
+            cpu.debuggerAdd( action, addr, addrTo );
             break;
 
         case DebuggerTheme::Unspecified: {
@@ -721,7 +725,12 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                     agnus.debugger.oneTimeAction = action;
                     break;
                 case DebuggerAction::AutoUpdate:
-                    debuggerUpdate();
+                    if (addr == 1) {
+                        updateDebuggerSnapshot();
+                    }
+                    break;
+                case DebuggerAction::UIRequestedStop:
+                    agnus.debugger.action = DebuggerAction::UIRequestedStop;
                     break;
             }
         } break;
@@ -754,15 +763,19 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             } break;
         case DebuggerTheme::CheckpointsCore1:
             if (addr.has_value())
-                cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action, addr.value() );
+                cpu.debuggerRemove( action, addr.value() );
             else
-                cpu.debuggerRemove( (M68FAMILY::M68000::DebuggerAction)action );
+                cpu.debuggerRemove( action );
             break;
         default:
             debuggerSnapshot.themes &= ~(unsigned)theme;
             break;
     }
     agnus.debuggerUpdateEvent();
+}
+
+auto System::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
 }
 
 auto System::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
@@ -775,7 +788,6 @@ auto System::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
 }
 
 auto System::updateDebuggerSnapshot() -> void {
-    debuggerSnapshot.mutex.lock();
     agnus.updateSnapshot(debuggerSnapshot);
 
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CPU)
@@ -790,10 +802,6 @@ auto System::updateDebuggerSnapshot() -> void {
     }
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus)
         agnus.updateDmaSnapshot( debuggerSnapshot );
-
-    interface->debugger(&debuggerSnapshot);
-    debuggerSnapshot.mutex.unlock();
-    agnus.debugger.action = DebuggerAction::None;
 }
 
 auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {

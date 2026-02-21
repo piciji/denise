@@ -193,6 +193,9 @@ auto M68000::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_
 }
 
 auto M68000::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
+    if ((control & ExceptionPoint) && exceptionPoints.check( adr >> 2, true )) {
+        DEBUG_POINT_REACHED(ExceptionPoint, adr >> 2);
+    }
     pc = read<Long>(adr);
     
     if (misaligned<Long>(pc)) {
@@ -206,10 +209,6 @@ auto M68000::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
     firstPrefetch();
     SYNC(2);
     prefetch<SampleIPL>();
-
-    if ((control & ExceptionPoint) && exceptionPoints.check( adr >> 2 )) {
-        DEBUG_POINT_REACHED(DebuggerAction::ExceptionPoint, adr >> 2);
-    }
 }
 
 auto M68000::resetRoutine() -> void { // highest prioritized group 0 routine
@@ -217,7 +216,7 @@ auto M68000::resetRoutine() -> void { // highest prioritized group 0 routine
     control &= ~ResetRoutine;
 
     regsA[7] = ssp = read<Long, FC_PRG>(0); // sets FC1
-    pc = read<Long, FC_PRG>(4); // sets FC1 too
+    pc = pcEdge = read<Long, FC_PRG>(4); // sets FC1 too
 
     if (misaligned<Long>(pc)) { // bus/address error during group 0 service routine halts CPU.
         SYNC(4 + 4);

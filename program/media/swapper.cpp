@@ -163,7 +163,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
     controls.insertButton.onActivate = [this]() {
         if(!listView.selected()) return;
 
-        emuThread->lock();
+        emuThread->lock(true);
         Emulator::Interface::Media* media = fileloader->insertSwapDisk( emulator, listView.selection() + 1 );
         if (media) {
             std::string traps = "autostart_traps_on_dblclick";

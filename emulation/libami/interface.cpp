@@ -822,6 +822,10 @@ auto Interface::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::
     system->debuggerRemove( theme, action, addr );
 }
 
+auto Interface::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return system->setWatchpointCondition(action, addr, hitCount, hitCountMode, expression, expressionMode);
+}
+
 auto Interface::debuggerStepOver() -> void {
     system->cpu.debuggerStepOver();
 }

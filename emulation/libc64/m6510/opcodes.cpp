@@ -1,7 +1,7 @@
 
 namespace LIBC64 {
 
-template<bool mhz2, bool busLogger, bool postBreakCheck> auto M6510::process() -> void {
+template<bool mhz2, bool busLogger> auto M6510::process() -> void {
 
 	uint8_t dataBus;
 	uint8_t zeroPage;
@@ -653,35 +653,43 @@ template<bool mhz2, bool busLogger, bool postBreakCheck> auto M6510::process() -
 	SET##_DUMMY( result )	\
 	SBC( TEMP ) }
 
-    if constexpr (!postBreakCheck) {
-        if (control) {
-            if (control & Halt) {
-                READ( 0xffff )
-                return;
-            }
-
-            if (control & IRQ) {
-                interrupt<false, mhz2, busLogger>();
-                if (control & (BreakPoint | SoftStop))
-                    controlBreaks();
-                return;
-            }
-
-            if (control & ResetRoutine) {
-                resetRoutine<mhz2, busLogger>();
-            }
-
-            if (control & History)
-                loadTrace(historyHandler.getNext());
-
-            if (control & (BreakPoint | SoftStop)) {
-                return process<mhz2, busLogger, true>();
-            }
+    if (control) {
+        if (control & Halt) {
+            READ( 0xffff )
+            return;
         }
+
+        if (control & IRQ) {
+            interrupt<false, mhz2, busLogger>();
+            pcEdge = pc;
+            if (control & (BreakPoint | SoftStop))
+                controlBreaks();
+            return;
+        }
+
+        if (control & ResetRoutine) {
+            resetRoutine<mhz2, busLogger>();
+        }
+
+        if (control & History)
+            loadTrace(historyHandler.getNext());
+
+        READ_PC_INC
+        switch( dataBus ) {
+            case 0x00:
+                interrupt<true, mhz2, busLogger>( );
+                break;
+
+            #include "optable.h"
+        }
+        pcEdge = pc;
+        if (control & (BreakPoint | SoftStop))
+            controlBreaks();
+
+        return;
     }
 
 	READ_PC_INC
-
 	switch( dataBus ) {
         case 0x00:
             interrupt<true, mhz2, busLogger>( );
@@ -689,25 +697,23 @@ template<bool mhz2, bool busLogger, bool postBreakCheck> auto M6510::process() -
 
         #include "optable.h"
 	}
-
-    if constexpr (postBreakCheck)
-        controlBreaks();
 }
 
-auto M6510::loadTrace(Emulator::HistoryEntry& entry) -> void {
-    uint16_t addr = pc;
-    entry.addr = pc;
+auto M6510::loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void {
+    uint16_t addr = pcEdge;
+    entry.addr = addr;
     entry.flags = getFlags();
 
-    for (uint8_t& m : entry.mem)
-        m = memory.peek( addr++ );
+    for (int i = 0; i < 3; ++i) {
+        entry.mem[i] = memory.peek( addr++ );
+    }
 }
 
 inline auto M6510::controlBreaks() -> void {
-     if ((control & SoftStop) && checkSoftStop(pc)) {
-         system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::Softstop, pc);
-     } else if ((control & BreakPoint) && breakPoints.check(pc)) {
-         system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::Breakpoint, pc);
+     if ((control & SoftStop) && checkSoftStop(pcEdge)) {
+         system->debugPointReached(DebuggerAction::Softstop, pcEdge);
+     } else if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
+         system->debugPointReached(DebuggerAction::Breakpoint, pcEdge);
      }
 }
 

@@ -35,8 +35,10 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image trashImg;
     GUIKIT::Image breakEnableImg;
     GUIKIT::Image breakDisableImg;
+    GUIKIT::Image breakCondEnableImg;
     GUIKIT::Image breakEnableSmallImg;
     GUIKIT::Image breakDisableSmallImg;
+    GUIKIT::Image breakCondEnableSmallImg;
     GUIKIT::Image searchImg;
     GUIKIT::Image nullImg;
     GUIKIT::Image pauseImg;

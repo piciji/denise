@@ -13,6 +13,7 @@ struct EmuThread {
     bool enabled = false;
     std::atomic<bool> attention;
     std::atomic<bool> acknowledged;
+    std::atomic<bool> debugging;
     std::atomic<bool> updateBorder;
 
     enum {  EVT_AUTO_LOAD_NO_TRAPS = 4, EVT_DISMISS_PLACEHOLDER = 8,
@@ -30,9 +31,12 @@ struct EmuThread {
     std::mutex videoMutex;
     std::mutex paletteForSoftwareView;
 
-    auto lock() -> bool;
+    auto lock(bool unlockDebugging = false) -> bool;
     auto unlock() -> void;
     auto locked() -> bool { return attention || acknowledged; }
+
+    auto lockDebugger() -> void;
+    auto unlockDebugger() -> void;
 
     auto lockHotkeys() -> void;
     auto unlockHotkeys() -> void;

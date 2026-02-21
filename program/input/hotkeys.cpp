@@ -202,7 +202,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             else {
                 auto model = activeEmulator->getModel( activeEmulator->getModelIdOfCycleRenderer() );
                 if (model) {
-                    emuThread->lock();
+                    emuThread->lock(true);
                     bool val = activeEmulator->getModelValue( model->id );
                     settings->set<bool>( _underscore(model->name), !val );
                     activeEmulator->setModelValue( model->id, !val );
@@ -323,18 +323,18 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         } break;
 			
 		case Hotkey::Power:
-            emuThread->lock();
+            emuThread->lock(true);
 			program->power(emulator);
 			break;
 
         case Hotkey::PowerWithUnplugCart:
-            emuThread->lock();
+            emuThread->lock(true);
             program->power(emulator);
             program->removeExpansion(false);
             break;
 
         case Hotkey::PowerWithEjectDisks:
-            emuThread->lock();
+            emuThread->lock(true);
             for (auto& media : emulator->getDiskMediaGroup()->media)
                 fileloader->eject(emulator, &media);
             program->power(emulator);
@@ -342,7 +342,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
 			
 		case Hotkey::SoftReset:
-            emuThread->lock();
+            emuThread->lock(true);
 			program->reset(emulator);
 			break;
 
@@ -381,7 +381,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             
         case Hotkey::Id::CaptureMouse:
             if (inputDriver->mIsAcquired()) {
-                inputDriver->mUnacquire();					
+                inputDriver->mUnacquire();
             } else if (view->fullScreen()) {
                 // dinput needs this, when grab button is mapped to mouse
                 view->prepareCursorHide(200);
@@ -501,12 +501,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             }
             break;
         case Hotkey::Loadstate:
-            emuThread->lock();
+            emuThread->lock(true);
             States::getInstance( emulator )->load();
             break;
         case Hotkey::Savestate:
             if (emulator == activeEmulator) {
-                emuThread->lock();
+                emuThread->lock(true);
                 States::getInstance( activeEmulator )->save();
             }
             break;
@@ -811,7 +811,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         } break;
 
         case Hotkey::AutoStart: {
-            emuThread->lock();
+            emuThread->lock(true);
             bool trapped;
             unsigned selection;
             auto media = autoloader->get(emulator, trapped, selection);

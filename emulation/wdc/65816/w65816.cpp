@@ -30,77 +30,80 @@
 
 namespace WDCFAMILY {
 
-template<bool postBreakCheck> auto W65816::process()->void {
+auto W65816::process()->void {
 
-    if constexpr (!postBreakCheck) {
-        if (control) {
-            if (control & WAI) {
-                // WAI sets RDY (bidirectional) low and repeats the same cycle. It's same behavior like external RDY change.
-                // Since "WAI" can last a very long time, it is covered here to keep the emulation responsive.
-                // Otherwise, the UI may not be refreshed in time. Furthermore, no "RDY" check is required in each cycle.
-                // This requires additional power and can be switched off if no external "RDY" change is planned.
-                // IRQ/NMI set RDY hi again and resume processing but only if RDY is not forced low from external.
-                CHECK_INTR
-                return IDLE_CYCLE((pbr << 16) | pc);
-            }
-
-            if (control & NMI_PENDING) {
-                control &= ~NMI_PENDING;
-                interrupt( modeE ? 0xfffa : 0xffea );
-                if (control & (BreakPoint | SoftStop))
-                    controlBreaks();
-                return;
-            }
-
-            if (control & IRQ_PENDING) {
-                control &= ~IRQ_PENDING;
-                interrupt( modeE ? 0xfffe : 0xffee );
-                if (control & (BreakPoint | SoftStop))
-                    controlBreaks();
-                return;
-            }
-
-            // check STP and RESET last for performance reasons
-            if (control & STP) {
-                return IDLE_CYCLE((pbr << 16) | pc);
-            }
-
-            if (control & RESET) {
-                control &= ~RESET;
-                return interrupt( 0xfffc );
-            }
-
-            if (control & History)
-                loadTrace(historyHandler.getNext());
-
-            if (control & (BreakPoint | SoftStop)) {
-                return process<true>();
-            }
+    if (control) {
+        if (control & WAI) {
+            // WAI sets RDY (bidirectional) low and repeats the same cycle. It's same behavior like external RDY change.
+            // Since "WAI" can last a very long time, it is covered here to keep the emulation responsive.
+            // Otherwise, the UI may not be refreshed in time. Furthermore, no "RDY" check is required in each cycle.
+            // This requires additional power and can be switched off if no external "RDY" change is planned.
+            // IRQ/NMI set RDY hi again and resume processing but only if RDY is not forced low from external.
+            CHECK_INTR
+            return IDLE_CYCLE((pbr << 16) | pc);
         }
+
+        if (control & NMI_PENDING) {
+            control &= ~NMI_PENDING;
+            interrupt( modeE ? 0xfffa : 0xffea );
+            if (control & (BreakPoint | SoftStop))
+                controlBreaks();
+            return;
+        }
+
+        if (control & IRQ_PENDING) {
+            control &= ~IRQ_PENDING;
+            interrupt( modeE ? 0xfffe : 0xffee );
+            pcEdge = (pbr << 16) | pc;
+            if (control & (BreakPoint | SoftStop))
+                controlBreaks();
+            return;
+        }
+
+        // check STP and RESET last for performance reasons
+        if (control & STP) {
+            return IDLE_CYCLE((pbr << 16) | pc);
+        }
+
+        if (control & RESET) {
+            control &= ~RESET;
+            return interrupt( 0xfffc );
+        }
+
+        if (control & History)
+            loadTrace(historyHandler.getNext());
+
+        switch(readPC()) {
+            #include "optable.h"
+        }
+
+        pcEdge = (pbr << 16) | pc;
+        if (control & (BreakPoint | SoftStop))
+            controlBreaks();
+
+        return;
     }
 
     switch(readPC()) {
         #include "optable.h"
     }
-
-    if constexpr (postBreakCheck)
-        controlBreaks();
 }
 
-auto W65816::loadTrace(Emulator::HistoryEntry& entry) -> void {
-    uint32_t addr = (pbr << 16) | pc;
+auto W65816::loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void {
+    uint32_t addr = pcEdge;
     entry.addr = addr;
-    entry.flags = p;
+    entry.flags= p;
 
-    for (uint8_t& m : entry.mem)
-        m = PEEK_BYTE( addr++ );
+    for (int i = 0; i < 4; ++i) {
+        entry.mem[i] = PEEK_BYTE( addr++ );
+    }
 }
 
 inline auto W65816::controlBreaks() -> void {
-    if ((control & SoftStop) && checkSoftStop(pc)) {
-        DEBUG_POINT_REACHED(DebuggerAction::Softstop, pc);
-    } else if ((control & BreakPoint) && breakPoints.check(pc)) {
-        DEBUG_POINT_REACHED(DebuggerAction::Breakpoint, pc);
+    if ((control & SoftStop) && checkSoftStop(pcEdge)) {
+        DEBUG_POINT_REACHED(SoftStop, pcEdge);
+    } else if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
+        DEBUG_POINT_REACHED(BreakPoint, pcEdge);
     }
 }
 
@@ -119,16 +122,17 @@ template<bool hardware> auto W65816::interrupt(const uint16_t& vector) -> void {
     (hardware && modeE) ? push(p & ~0x10) : push(p);
     p.i = true;
     p.d = false;
+
+    if constexpr (hardware) {
+        if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
+            DEBUG_POINT_REACHED(ExceptionPoint, vector);
+        }
+    }
+
     uint16_t newPC = read<VECTOR>(vector);
     newPC |= read<SAMPLE_INTR | VECTOR>(vector + 1) << 8;
     pc = newPC;
     pbr = 0;
-
-    if constexpr (hardware) {
-        if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
-            DEBUG_POINT_REACHED(DebuggerAction::ExceptionPoint, vector);
-        }
-    }
 }
 
 auto W65816::power() -> void {
@@ -146,9 +150,9 @@ auto W65816::power() -> void {
     control = RESET;
 
     stepOuts.clear();
-    watchPoints.flagWhenNeeded();
-    breakPoints.flagWhenNeeded();
-    exceptionPoints.flagWhenNeeded();
+    watchPoints.reset();
+    breakPoints.reset();
+    exceptionPoints.reset();
     modifiedCode.disable();
     historyHandler.flagWhenNeeded();
 }
@@ -225,7 +229,7 @@ template<uint8_t actions> inline auto W65816::idle(uint32_t addr) -> void {
 #endif
 
     if ((control & WatchPoint) && watchPoints.check( addr )) {
-        DEBUG_POINT_REACHED(DebuggerAction::Watchpoint, addr);
+        DEBUG_POINT_REACHED(WatchPoint, addr);
     }
 
     IDLE_CYCLE(addr);
@@ -247,7 +251,7 @@ template<uint8_t actions> inline auto W65816::read(uint32_t addr) -> uint8_t {
 #endif
 
     if ((control & WatchPoint) && watchPoints.check( addr )) {
-        DEBUG_POINT_REACHED(DebuggerAction::Watchpoint, addr);
+        DEBUG_POINT_REACHED(WatchPoint, addr);
     }
 
 #ifdef SEPARATE_VECTOR_READ
@@ -272,8 +276,8 @@ template<uint8_t actions> inline auto W65816::write(uint32_t addr, uint8_t value
     if (control & (WatchPoint | ModifiedCode) ) {
         modifiedCode.checkAndSet( addr );
 
-        if ((control & WatchPoint) && watchPoints.check( addr )) {
-            DEBUG_POINT_REACHED(DebuggerAction::Watchpoint, addr);
+        if ((control & WatchPointWrite) && watchPointsWrite.check( addr )) {
+            DEBUG_POINT_REACHED(WatchPointWrite, addr);
         }
     }
 
@@ -588,7 +592,7 @@ auto W65816::flagDebugAction(int action, bool state) -> void {
 auto W65816::disassembleTrace(unsigned i, uint8_t& flags) -> std::string {
     DasmHandler65816 d;
     unsigned bytes;
-    Emulator::HistoryEntry* historyEntry = historyHandler.get(i);
+    Emulator::HistoryEntry<uint8_t>* historyEntry = historyHandler.get(i);
     if (!historyEntry)
         return "";
     d.hex24( historyEntry->addr );
@@ -608,9 +612,8 @@ auto W65816::checkSoftStop(uint32_t addr) -> bool {
 
 auto W65816::debuggerStepOver() -> void {
     unsigned bytes;
-    disassemble( (pbr << 16) | pc, bytes );
-
-    softStep = (pbr << 16) | ((pc + bytes) & 0xffff);
+    disassemble( pcEdge, bytes );
+    softStep = (pcEdge & 0xff0000) | ((pcEdge + bytes) & 0xffff);
     control |= SoftStop;
 }
 
@@ -633,52 +636,15 @@ inline auto W65816::appendStepOut(uint32_t addr) -> void {
     stepOuts.push_back( addr );
 }
 
-auto W65816::debuggerAdd(DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.add( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.add( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.add( addr ); break;
-        case DebuggerAction::History:           historyHandler.enable(); break;
-        case DebuggerAction::ModifiedCode:      modifiedCode.add( addr, addrTo ); break;
-        default:
-            break;
-    }
-}
-
-auto W65816::debuggerRemove(DebuggerAction action, uint32_t addr) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.remove( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
-        case DebuggerAction::History:           historyHandler.disable( ); break;
-        default:
-            break;
-    }
-}
-
-auto W65816::debuggerRemove(DebuggerAction action) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.removeAll(); break;
-        case DebuggerAction::Watchpoint:        watchPoints.removeAll(); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.removeAll(); break;
-        case DebuggerAction::History:           historyHandler.disable(); break;
-        case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
-        default:
-            break;
-    }
-}
-
 auto W65816::init() -> void {
     stepOuts.reserve(32);
 
     watchPoints.callback = [this](bool state) { this->flagDebugAction( WatchPoint, state ); };
+    watchPointsWrite.callback = [this](bool state) { this->flagDebugAction( WatchPointWrite, state ); };
     breakPoints.callback = [this](bool state) { this->flagDebugAction( BreakPoint, state ); };
     exceptionPoints.callback = [this](bool state) { this->flagDebugAction( ExceptionPoint, state ); };
     modifiedCode.callback = [this](bool state) { this->flagDebugAction( ModifiedCode, state ); };
     historyHandler.callback = [this](bool state) { this->flagDebugAction( History, state ); };
 }
-
-template auto W65816::process<false>() -> void;
-template auto W65816::process<true>() -> void;
 
 }

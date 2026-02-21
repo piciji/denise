@@ -505,6 +505,17 @@ auto Program::loop() -> void {
     if (statusHandler->hasUpdates())
         statusHandler->update();
 }
+
+auto Program::loopDebugging() -> void {
+    InputManager::poll();
+    GUIKIT::System::sleep( 10 );
+    audioDriver->clear();
+    repeatLastFrame();
+
+    if (statusHandler->hasUpdates())
+        statusHandler->update();
+}
+
 // when emu thread is active
 auto Program::loopUserInterface() -> void {
     GUIKIT::System::sleep( 1 );
@@ -530,7 +541,7 @@ auto Program::hasFocus() -> bool {
 auto Program::quit() -> void {
     videoDriver->disableExclusiveFullscreen();
     quitInProgress = true;
-    emuThread->lock();
+    emuThread->lock(true);
     for(auto emuView : emuConfigViews) {
         if (emuView->inputLayout)
             emuView->inputLayout->stopCapture();

@@ -96,7 +96,7 @@ auto pWidget::getParentHandle() -> HWND {
    // if (!parentTabFrameLayout || !pApplication::hasAppThemed())
 		return widget.window() ? widget.window()->p.hwnd : nullptr;
 	
-	return parentTabFrameLayout->frameWidget->p.hwnd;
+	//return parentTabFrameLayout->frameWidget->p.hwnd;
 }
 
 auto pWidget::getParentTabWidget() -> Widget* {

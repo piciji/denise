@@ -5,6 +5,7 @@
 #include "../disk/iec.h"
 #include "../traps/traps.h"
 #include "../../tools/serializer.h"
+#include "../../tools/expressionParser.h"
 #include "dasmHandler.h"
 #include "opcodes.cpp"
 #include "../system/debuggerSnapshot.h"
@@ -27,10 +28,81 @@ traps(traps) {
     stepOuts.reserve(32);
 
     watchPoints.callback = [this](bool state) { this->flagDebugAction( WatchPoint, state ); };
+    watchPointsWrite.callback = [this](bool state) { this->flagDebugAction( WatchPointWrite, state ); };
     breakPoints.callback = [this](bool state) { this->flagDebugAction( BreakPoint, state ); };
     exceptionPoints.callback = [this](bool state) { this->flagDebugAction( ExceptionPoint, state ); };
     modifiedCode.callback = [this](bool state) { this->flagDebugAction( ModifiedCode, state ); };
     historyHandler.callback = [this](bool state) { this->flagDebugAction( History, state ); };
+
+    watchPoints.expressionCallback = [this](const std::string& input, int& pos) {
+        return parseExpressionValue(input, pos);
+    };
+    watchPointsWrite.expressionCallback = [this](const std::string& input, int& pos) {
+        return parseExpressionValue(input, pos);
+    };
+    breakPoints.expressionCallback = [this](const std::string& input, int& pos) {
+        return parseExpressionValue(input, pos);
+    };
+    exceptionPoints.expressionCallback = [this](const std::string& input, int& pos) {
+        return parseExpressionValue(input, pos);
+    };
+}
+
+auto M6510::parseExpressionValue(const std::string& input, int& pos) -> uint32_t {
+    for (auto& cond : DebuggerSnapshot::breakConditions) {
+        std::string token = cond.ident;
+        if (input.compare(pos, token.size(), token) == 0) {
+            pos += token.size();
+
+            switch (cond.vector) {
+                default: return 0;
+                case 0: return vicII->getVcounter();
+                case 1: return vicII->getCycle();
+                case 2: return pc;
+                case 3: return regX;
+                case 4: return regY;
+                case 5: return regA;
+                case 6: return regS;
+                case 7: return regP;
+
+                case 8: return ddr;
+                case 9: return por;
+                case 10: return ioLines;
+                case 11: return rdyLine;
+                case 12: return irqPending;
+                case 13: return nmiPending;
+
+                case 14: return !!(regP & 1);
+                case 15: return !!(regP & 2);
+                case 16: return !!(regP & 4);
+                case 17: return !!(regP & 8);
+                case 18: return !!(regP & 0x10);
+                case 19: return !!(regP & 0x40);
+                case 20: return !!(regP & 0x80);
+
+                case 100:
+                case 101: {
+                    int radix = 10;
+                    if (input.compare(pos, 1, "$") == 0) {
+                        radix = 16;
+                        pos++;
+                    }
+                    const char* start = input.c_str() + pos;
+                    char* end;
+                    uint32_t value = std::strtoul(start, &end, radix);
+                    if (start != end) {
+                        pos += (end - start);
+                        if (cond.vector == 100)
+                            return system->ram[value & 0xffff];
+
+                        return system->memoryCpu.peek( value );
+                    }
+                    return 0;
+                }
+            }
+        }
+    }
+    return 0;
 }
 
 auto M6510::registerCallbacks() -> void {
@@ -68,9 +140,10 @@ auto M6510::reset() -> void {
 	bit6charge = bit7charge = 0;
 
     control = ResetRoutine;
-    watchPoints.flagWhenNeeded();
-    breakPoints.flagWhenNeeded();
-    exceptionPoints.flagWhenNeeded();
+    watchPoints.reset();
+    watchPointsWrite.reset();
+    breakPoints.reset();
+    exceptionPoints.reset();
     modifiedCode.disable();
     historyHandler.flagWhenNeeded();
 }
@@ -124,6 +197,12 @@ template<bool software, bool mhz2, bool busLogger> inline auto M6510::interrupt(
 	SET_FLAG_B( software )
 	
 	PUSH( STATUS );
+
+    if constexpr (!software) {
+        if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
+            system->debugPointReached(DebuggerAction::ExceptionPoint, vector);
+        }
+    }
 	
 	READ( vector )
 	
@@ -141,12 +220,6 @@ template<bool software, bool mhz2, bool busLogger> inline auto M6510::interrupt(
 	 */
 
     control &= ~IRQ;
-
-    if constexpr (!software) {
-        if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
-            system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::ExceptionPoint, vector);
-        }
-    }
 }
 
 inline auto M6510::appendStepOut(uint16_t addr) -> void {
@@ -264,7 +337,7 @@ STEAL:
     }
 
     if ((control & WatchPoint) && watchPoints.check( addr )) {
-        system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::Watchpoint, addr);
+        system->debugPointReached(DebuggerAction::Watchpoint, addr);
     }
 
 	if (addr == 0x0000 || addr == 0x0001)
@@ -297,7 +370,7 @@ STEAL:
     }
 
     if ((control & WatchPoint) && watchPoints.check( addr )) {
-        system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::Watchpoint, addr);
+        system->debugPointReached(DebuggerAction::Watchpoint, addr);
     }
 
     if (likely(addr > 0x0001)) {
@@ -341,8 +414,8 @@ template<bool mhz2, bool busLogger> auto M6510::busWrite( uint16_t addr, uint8_t
     if (control & (WatchPoint | ModifiedCode) ) {
         modifiedCode.checkAndSet( addr );
 
-        if ((control & WatchPoint) && watchPoints.check( addr )) {
-            system->debugPointReached((Emulator::Interface::DebuggerAction)DebuggerAction::Watchpoint, addr);
+        if ((control & WatchPointWrite) && watchPointsWrite.check( addr )) {
+            system->debugPointReached(DebuggerAction::WatchpointWrite, addr);
         }
     }
 
@@ -547,7 +620,7 @@ auto M6510::flagDebugAction(int action, bool state) -> void {
 auto M6510::disassembleTrace(unsigned i, uint8_t& flags) -> std::string {
     DasmHandler d;
     unsigned bytes;
-    Emulator::HistoryEntry* historyEntry = historyHandler.get(i);
+    Emulator::HistoryEntry<uint8_t>* historyEntry = historyHandler.get(i);
     if (!historyEntry)
         return "";
     d.hex16( historyEntry->addr );
@@ -567,9 +640,9 @@ auto M6510::checkSoftStop(uint16_t addr) -> bool {
 
 auto M6510::debuggerStepOver() -> void {
     unsigned bytes;
-    disassemble( pc, bytes );
+    disassemble( pcEdge, bytes );
 
-    softStep = pc + bytes;
+    softStep = pcEdge + bytes;
     control |= SoftStop;
 }
 
@@ -590,6 +663,7 @@ auto M6510::debuggerAdd(DebuggerAction action, uint16_t addr, uint16_t addrTo) -
     switch (action) {
         case DebuggerAction::Breakpoint:        breakPoints.add( addr ); break;
         case DebuggerAction::Watchpoint:        watchPoints.add( addr ); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.add( addr ); break;
         case DebuggerAction::ExceptionPoint:    exceptionPoints.add( addr ); break;
         case DebuggerAction::History:           historyHandler.enable(); break;
         case DebuggerAction::ModifiedCode:      modifiedCode.add( addr, addrTo ); break;
@@ -602,6 +676,7 @@ auto M6510::debuggerRemove(DebuggerAction action, uint16_t addr) -> void {
     switch (action) {
         case DebuggerAction::Breakpoint:        breakPoints.remove( addr ); break;
         case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.remove( addr ); break;
         case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
         case DebuggerAction::History:           historyHandler.disable( ); break;
         default:
@@ -613,6 +688,7 @@ auto M6510::debuggerRemove(DebuggerAction action) -> void {
     switch (action) {
         case DebuggerAction::Breakpoint:        breakPoints.removeAll(); break;
         case DebuggerAction::Watchpoint:        watchPoints.removeAll(); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.removeAll(); break;
         case DebuggerAction::ExceptionPoint:    exceptionPoints.removeAll(); break;
         case DebuggerAction::History:           historyHandler.disable(); break;
         case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
@@ -621,8 +697,44 @@ auto M6510::debuggerRemove(DebuggerAction action) -> void {
     }
 }
 
+auto M6510::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    bool expressionError = false;
+
+    if (!expression.empty()) {
+        ExpressionParser parser;
+        parser.setExpression( expression );
+        parser.callback = [this](const std::string& input, int& pos) {
+            return parseExpressionValue(input, pos);
+        };
+
+        try {
+            parser.parse();
+        } catch (ExpressionParseError& e) {
+            expressionError = true;
+        }
+    }
+
+    switch (action) {
+        case DebuggerAction::Breakpoint:
+            breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
+        case DebuggerAction::Watchpoint:
+            watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
+        case DebuggerAction::WatchpointWrite:
+            watchPointsWrite.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
+        case DebuggerAction::ExceptionPoint:
+            exceptionPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
+    }
+
+    return !expressionError;
+}
+
 auto M6510::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.pc = pc;
+    snap.pcEdge = pcEdge;
     snap.regA = regA;
     snap.regX = regX;
     snap.regY = regY;

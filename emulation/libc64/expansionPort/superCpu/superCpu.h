@@ -11,6 +11,7 @@ namespace CIA {
 }
 
 namespace LIBC64 {
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
 
 struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     SuperCpu(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& cia1, CIA::M6526& cia2, SidManager& sidManager, Traps& traps);
@@ -196,7 +197,14 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
 
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
-    auto debugPointReached(DebuggerAction action, unsigned addr) -> void;
+    auto debugPointReached(int source, unsigned addr) -> void;
+
+    auto debuggerAdd(DebuggerAction action, uint32_t addr, uint32_t addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerAction action, uint32_t addr) -> void;
+    auto debuggerRemove(DebuggerAction action) -> void;
+
+    auto parseExpressionValue(const std::string& input, int& pos) -> uint32_t;
+    auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 };
 
 }

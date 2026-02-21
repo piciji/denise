@@ -85,6 +85,7 @@ struct Program : Emulator::Interface::Bind {
 
     auto quit() -> void;
     auto loop() -> void;
+    auto loopDebugging() -> void;
 	auto loopNoGui() -> void;
     auto loopUserInterface() -> void;
     auto loadTranslation(std::string file) -> bool;

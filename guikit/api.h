@@ -239,7 +239,7 @@ struct Window : Base {
     std::function<void (bool keyDown, Mouse::Button button)> onMousePress = nullptr;
     std::function<void (int deltaX, int deltaY)> onMouseMove = nullptr;
 
-    enum class Hints { Default, Video } hints = Hints::Default;
+    enum class Hints { Default, Video, No_Title } hints = Hints::Default;
     
     enum class Cursor { Default, Pointer, Image, Blank } cursor = Cursor::Default;
 
@@ -788,6 +788,7 @@ struct ListView : Widget {
     std::function<void ()> onActivate = nullptr;
     std::function<void ()> onChange = nullptr;
     std::function<void (unsigned row, unsigned column)> onClick = nullptr;
+    std::function<void (unsigned row, unsigned column, Position position)> onContext = nullptr;
     enum class Align { Left, Right, Center } ;
 
     auto headerVisible() const -> bool { return state.headerVisible; }

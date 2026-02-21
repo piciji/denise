@@ -343,7 +343,7 @@ auto Autoloader::loadFiles() -> void {
 	if (archiveViewer) {
         filePool->assign("autoloader", file);
         archiveViewer->onCallback = [this](GUIKIT::File* file, GUIKIT::File::Item* item) {
-            bool locked = emuThread->lock();
+            bool locked = emuThread->lock(true);
 			this->loadFile( file, item );
             filePool->assign("autoloader", nullptr);
             if (locked)

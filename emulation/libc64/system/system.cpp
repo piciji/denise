@@ -837,6 +837,10 @@ auto System::run() -> void {
         sidManager.disableAudioOut( runAhead.frames > 1 );
     }
 
+    if (debugger.action == DebuggerAction::UIRequestedStop) {
+        debuggerUpdate();
+    }
+
     labelRunAhead:
 
     if (haltMainCpu) {
@@ -892,15 +896,15 @@ auto System::run() -> void {
         informAboutStateChange();
 
     debugCart->check();
-
-    if (debugger.action != DebuggerAction::None) {
-        debuggerUpdate();
-    }
 }
 
 auto System::debuggerUpdate() -> void {
     debuggerUpdateEvent();
+
+    debuggerSnapshot.mutex.lock();
     updateDebuggerSnapshot();
+    interface->debugger(&debuggerSnapshot);
+    debugger.action = DebuggerAction::None;
 }
 
 auto System::isUltimax() -> bool {
@@ -1372,10 +1376,10 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                     break;
             } break;
         case DebuggerTheme::CheckpointsCore1:
-            cpu.debuggerAdd( (M6510::DebuggerAction)action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
+            cpu.debuggerAdd( action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
             break;
         case DebuggerTheme::CheckpointsCore2:
-            superCpu->debuggerAdd((WDCFAMILY::W65816::DebuggerAction)action, addr, addrTo);
+            superCpu->debuggerAdd(action, addr, addrTo);
             break;
         case DebuggerTheme::Unspecified: {
             switch (action) {
@@ -1385,7 +1389,12 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                     vicII->debugger.action = action;
                     break;
                 case DebuggerAction::AutoUpdate:
-                    debuggerUpdate();
+                    if (addr == 1) {
+                        updateDebuggerSnapshot();
+                    }
+                    break;
+                case DebuggerAction::UIRequestedStop:
+                    debugger.action = DebuggerAction::UIRequestedStop;
                     break;
             }
         } break;
@@ -1419,21 +1428,28 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             } break;
         case DebuggerTheme::CheckpointsCore1:
             if (addr.has_value())
-                cpu.debuggerRemove( (M6510::DebuggerAction)action, addr.value() );
+                cpu.debuggerRemove( action, addr.value() );
             else
-                cpu.debuggerRemove( (M6510::DebuggerAction)action);
+                cpu.debuggerRemove( action);
             break;
         case DebuggerTheme::CheckpointsCore2:
             if (addr.has_value())
-                superCpu->debuggerRemove( (WDCFAMILY::W65816::DebuggerAction)action, addr.value());
+                superCpu->debuggerRemove( action, addr.value());
             else
-                superCpu->debuggerRemove((WDCFAMILY::W65816::DebuggerAction)action);
+                superCpu->debuggerRemove( action );
             break;
         default:
             debuggerSnapshot.themes &= ~(unsigned)theme;
             break;
     }
     debuggerUpdateEvent();
+}
+
+auto System::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    if (expansionPort->haltMainCpu())
+        return superCpu->setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+
+    return cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
 }
 
 auto System::debuggerStepOver() -> void {
@@ -1470,13 +1486,12 @@ auto System::getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {
 }
 
 auto System::debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
-    leaveEmulation = true;
     debugger.action = action;
     debugger.addr = addr;
+    debuggerUpdate();
 }
 
 auto System::updateDebuggerSnapshot() -> void {
-    debuggerSnapshot.mutex.lock();
     debuggerSnapshot.superCpu = expansionPort->haltMainCpu();
     debuggerSnapshot.callbackAction = debugger.action;
     debuggerSnapshot.callbackAddress = debugger.addr;
@@ -1505,10 +1520,6 @@ auto System::updateDebuggerSnapshot() -> void {
     }
 
     vicII->updatePositionSnapshot(debuggerSnapshot);
-
-    interface->debugger(&debuggerSnapshot);
-    debuggerSnapshot.mutex.unlock();
-    debugger.action = DebuggerAction::None;
 }
 
 auto System::debuggerUpdateEvent() -> void {

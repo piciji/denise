@@ -19,6 +19,7 @@ EmuThread::EmuThread() {
     attention = false;
     acknowledged = false;
     updateBorder = false;
+    debugging = false;
     enabled = false;
     events = 0;
 }
@@ -48,7 +49,42 @@ auto EmuThread::enable(bool state) -> void {
 	enabled = state;
 }
 
-auto EmuThread::lock() -> bool {
+auto EmuThread::lockDebugger() -> void {
+    debugging = true;
+    while (debugging) {
+
+        if (freeContext) {
+            freeContext = false;
+            videoDriver->freeContext();
+        }
+
+        if (attention && debugging) {
+            attention = false;
+            acknowledged = true;
+
+            while(acknowledged) {
+                std::this_thread::yield();
+            }
+
+            if (!debugging) {
+                break;
+            }
+        }
+
+        program->loopDebugging();
+    }
+}
+
+auto EmuThread::unlockDebugger() -> void {
+    if (debugging) {
+        debugging = false;
+        acknowledged = false;
+    }
+}
+
+auto EmuThread::lock(bool unlockDebugging) -> bool {
+    if (unlockDebugging)
+        unlockDebugger();
 
     if  (!enabled || acknowledged /* check for nesting */ )
         return false;
@@ -79,7 +115,7 @@ auto EmuThread::initWorker() -> void {
         acknowledged = false;
         freeContext = false;
 
-        while (1) {
+        while (true) {
 
             if (freeContext) {
                 freeContext = false;
@@ -130,7 +166,7 @@ auto EmuThread::handleStatusUpdate( ) -> void {
 
     statusMutex.lock();
 
-    if (!statusUpdates.size()) {
+    if (statusUpdates.empty()) {
         statusMutex.unlock();
         return;
     }
@@ -194,7 +230,7 @@ auto EmuThread::handleUIEvents() -> void {
             VideoManager::hidePlaceHolder();
 
         if (_events & EVT_AUTO_LOAD_NO_TRAPS) {
-            lock();
+            lock(true);
             fileloader->autoload(activeEmulator, autoloader->getLatestDrive(activeEmulator), 0, false, true);
             unlock();
         }

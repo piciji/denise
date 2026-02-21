@@ -216,6 +216,7 @@ struct Interface : Emulator::Interface {
     // debugger
     auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
     auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void;
+    auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
     auto debuggerStepOver() -> void;
     auto debuggerStepInto() -> void;

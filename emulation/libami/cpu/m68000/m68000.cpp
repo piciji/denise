@@ -69,6 +69,7 @@ auto M68000::process() -> void {
 
         if (control & IRQ) {
             IRQException();
+            pcEdge = (pc - 2) & 0xffffff;
             if (control & (BreakPoint | SoftStop))
                 controlBreaks();
             return;
@@ -89,9 +90,10 @@ auto M68000::process() -> void {
             resetRoutine();
 
         if (control & History)
-            historyHandler.add();
+            loadTrace(historyHandler.getNext());
 
         (this->*opTable[ird])(ird);
+        pcEdge = (pc - 2) & 0xffffff;
 
         if (control & (BreakPoint | SoftStop))
             controlBreaks();
@@ -103,11 +105,22 @@ auto M68000::controlBreaks() -> void {
     if (control & TraceScheduled)
         return;
 
-    if ((control & SoftStop) && checkSoftStop(pcEdge()))
-        return DEBUG_POINT_REACHED(DebuggerAction::Softstop, pcEdge());
+    if ((control & SoftStop) && checkSoftStop(pcEdge))
+        return DEBUG_POINT_REACHED(SoftStop, pcEdge);
 
-    if ((control & BreakPoint) && breakPoints.check(pcEdge()))
-        return DEBUG_POINT_REACHED(DebuggerAction::Breakpoint, pcEdge());
+    if ((control & BreakPoint) && breakPoints.check(pcEdge, true))
+        return DEBUG_POINT_REACHED(BreakPoint, pcEdge);
+}
+
+auto M68000::loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void {
+    uint32_t addr = pcEdge;
+    entry.addr = pcEdge;
+    entry.flags = getSR();
+
+    for (uint16_t& m : entry.mem) {
+        m = peek( addr );
+        addr += 2;
+    }
 }
 
 auto M68000::power() -> void {
@@ -130,9 +143,10 @@ auto M68000::reset() -> void { // highest prioritized group 0 routine
     iplPins = iplSample = 0;
     control = ResetRoutine; // emulation begins, when reset line is de-asserted
     stepOuts.clear();
-    watchPoints.flagWhenNeeded();
-    breakPoints.flagWhenNeeded();
-    exceptionPoints.flagWhenNeeded();
+    watchPoints.reset();
+    watchPointsWrite.reset();
+    breakPoints.reset();
+    exceptionPoints.reset();
     modifiedCode.disable();
     historyHandler.flagWhenNeeded();
 }
@@ -447,9 +461,9 @@ auto M68000::checkSoftStop(uint32_t addr) -> bool {
 auto M68000::debuggerStepOver() -> void {
     unsigned iSize;
 
-    disassemble( pcEdge(), iSize );
+    disassemble( pcEdge, iSize );
 
-    softStep = pcEdge() + iSize;
+    softStep = pcEdge + iSize;
     control |= SoftStop;
 }
 
@@ -466,40 +480,6 @@ auto M68000::debuggerStepOut() -> bool {
     return true;
 }
 
-auto M68000::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.add( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.add( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.add( addr ); break;
-        case DebuggerAction::ModifiedCode:      modifiedCode.add( addr, addrTo ); break;
-        case DebuggerAction::History:           historyHandler.enable(); break;
-        default:
-            break;
-    }
-}
 
-auto M68000::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.remove( addr ); break;
-        case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
-        case DebuggerAction::History:           historyHandler.disable( ); break;
-        case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
-        default:
-            break;
-    }
-}
-
-auto M68000::debuggerRemove(DebuggerAction action) -> void {
-    switch (action) {
-        case DebuggerAction::Breakpoint:        breakPoints.removeAll(); break;
-        case DebuggerAction::Watchpoint:        watchPoints.removeAll(); break;
-        case DebuggerAction::ExceptionPoint:    exceptionPoints.removeAll(); break;
-        case DebuggerAction::History:           historyHandler.disable(); break;
-        case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
-        default:
-            break;
-    }
-}
 
 }

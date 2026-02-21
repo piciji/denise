@@ -12,6 +12,7 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint16_t regY;
     uint16_t regS;
     uint16_t pc;
+    uint32_t pcEdge;
 
     uint8_t pbr;
     uint8_t dbr;
@@ -115,6 +116,27 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     constexpr static const char* dmaModes[] { "Free", "Idle", "Graphics", "Character", "Sprite Pointer", "Sprite Data", "Refresh", "Cpu" };
     constexpr static const char* dmaModesShort[] { "", "IDL", "GRA", "CHA", "SPP", "SPD", "REF", "CPU" };
     constexpr static const char* cpuAccess[] { "-", "RAM", "VIC", "SID", "COL", "IO1", "IO2", "CIA1", "CIA2", "CHAR", "KERN", "BASC", "ROML", "ROMH", "ULT"};
+
+    constexpr static Emulator::Interface::DebuggerIdent breakConditions[] {
+    {0, "VPOS"}, {1, "HPOS"}, {2, "PC"}, {3, "REGX"},
+    {4, "REGY"}, {5, "REGA"}, {6, "REGS"}, {7, "REGP"},
+    {8, "DDR"}, {9, "POR"}, {10, "IO"}, {11, "RDY"},
+    {12, "IRQ"}, {13, "NMI"},
+    {14, "C"}, {15, "Z"}, {16, "I"}, {17, "D"},
+    {18, "B"}, {19, "V"}, {20, "N"},
+    {100, "MEM:"}, {101, "CPU:"},
+    };
+
+    constexpr static Emulator::Interface::DebuggerIdent breakConditionsSCPU[] {
+    {0, "VPOS"}, {1, "HPOS"}, {2, "PC"}, {3, "REGX"},
+    {4, "REGY"}, {5, "REGA"}, {6, "REGS"}, {7, "REGD"},
+    {8, "REGP"}, {9, "DBR"},{10, "PBR"},
+    {11, "ME"}, {12, "RDY"}, {13, "IRQ"},
+    {14, "NMI"},
+    {20, "C"}, {21, "Z"}, {22, "I"}, {23, "D"},
+    {24, "X"}, {25, "M"}, {26, "V"}, {26, "N"},
+    {100, "C64RAM:"}, {101, "CPU:"},
+    };
 
     constexpr static Emulator::Interface::DebuggerIdent CiaPorts[2][2][8] = {
         { // CIA A

@@ -70,9 +70,11 @@ auto Debugger::build() -> void {
     addImg.loadPng((uint8_t*)Icons::add, sizeof(Icons::add));
     breakEnableImg.loadPng((uint8_t*)Icons::recordHi, sizeof(Icons::recordHi));
     breakDisableImg.loadPng((uint8_t*)Icons::record, sizeof(Icons::record));
+    breakCondEnableImg.loadPng((uint8_t*)Icons::circleBlue, sizeof(Icons::circleBlue));
     // don't share list view images at different scaling sizes, otherwise it scales again and again
     breakEnableSmallImg.loadPng((uint8_t*)Icons::recordHi, sizeof(Icons::recordHi));
     breakDisableSmallImg.loadPng((uint8_t*)Icons::record, sizeof(Icons::record));
+    breakCondEnableSmallImg.loadPng((uint8_t*)Icons::circleBlue, sizeof(Icons::circleBlue));
 
     searchImg.loadPng((uint8_t*)Icons::search, sizeof(Icons::search));
     trashImg.loadPng((uint8_t*)Icons::trash, sizeof(Icons::trash));
@@ -122,7 +124,7 @@ auto Debugger::build() -> void {
         setVisible(false);
 
         if (!program->hasActiveDebugger()) {
-            program->isPause &= ~2;
+            emuThread->unlockDebugger();
             timerVisibility->setEnabled( false );
         }
         emuThread->unlock();
@@ -261,18 +263,26 @@ auto Debugger::updateToolboxVisibility() -> void {
 }
 
 auto Debugger::Callback(Emulator::Interface::DebuggerSnapshot* snapshot) -> void {
-    if (snapshot->callbackAction != DebuggerAction::AutoUpdate)
-        program->isPause |= 2;
+    if (program->quitInProgress) {
+        snapshot->mutex.unlock();
+        return;
+    }
 
     for (auto debugger : program->getActiveDebuggers()) {
         debugger->snapshot = snapshot;
         debugger->prepareTheme();
     }
 
-    if (emuThread->enabled)
+    if (emuThread->enabled) {
         emuThread->events |= EmuThread::EVT_DEBUGGER;
-    else
+        snapshot->mutex.unlock();
+
+        if (snapshot->callbackAction != DebuggerAction::AutoUpdate) {
+            emuThread->lockDebugger();
+        }
+    } else {
         Callback();
+    }
 }
 
 auto Debugger::Callback() -> void {
@@ -302,69 +312,63 @@ auto Debugger::Callback() -> void {
 auto Debugger::stepOut(Emulator::Interface* emulator) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
-    emuThread->lock();
+
     if (emulator->debuggerStepOut()) {
-        program->isPause &= ~2;
+        emuThread->unlockDebugger();
         timerVisibility->setEnabled();
     }
-    emuThread->unlock();
 }
 
 auto Debugger::stepInto(Emulator::Interface* emulator) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
-    emuThread->lock();
-    program->isPause &= ~2;
-
     timerVisibility->setEnabled();
     emulator->debuggerStepInto();
-    emuThread->unlock();
+    emuThread->unlockDebugger();
 }
 
 auto Debugger::stepOver(Emulator::Interface* emulator) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
-    emuThread->lock();
-    program->isPause &= ~2;
 
     timerVisibility->setEnabled();
     emulator->debuggerStepOver();
-    emuThread->unlock();
+    emuThread->unlockDebugger();
 }
 
 auto Debugger::stepLine(Emulator::Interface* emulator, unsigned line) -> void {
     if (emulator != activeEmulator)
         return;
     emuThread->lock();
-    program->isPause &= ~2;
-
     timerVisibility->setEnabled();
     emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::Line, line );
+    emuThread->unlockDebugger();
     emuThread->unlock();
 }
 
 auto Debugger::stepFrame(Emulator::Interface* emulator) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
-    emuThread->lock();
+
     program->isPause &= ~2;
-
     timerVisibility->setEnabled();
-
     emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::Frame, 0 );
-    emuThread->unlock();
+    emuThread->unlockDebugger();
 }
 
 auto Debugger::resume(Emulator::Interface* emulator) -> void {
     if (emulator != activeEmulator)
         return;
-    program->isPause ^= 2;
 
-    emuThread->lock();
-    if (isPaused())
+    if (!isPaused()) {
+        emuThread->lock();
+        emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::UIRequestedStop, 0 );
+        emuThread->unlock();
+    } else {
         emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::AutoUpdate, 0 );
+        emuThread->unlockDebugger();
+    }
     timerVisibility->setEnabled();
-    emuThread->unlock();
 }
 
 auto Debugger::reset() -> void {
@@ -375,25 +379,35 @@ auto Debugger::reset() -> void {
 }
 
 auto Debugger::makeVisible() -> void {
-    bool result = program->hasActiveDebugger();
     setVisible();
     if (emulator != activeEmulator)
         return;
-
-    if (!result)
-        program->isPause &= ~2;
 
     updateToolboxVisibility();
 
     emuThread->lock();
     initTheme();
-    if (isPaused())
-        emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::AutoUpdate, 0 );
+    if (isPaused()) {
+        if (!snapshot) {
+            for (auto debugger : program->getActiveDebuggers()) {
+                if (debugger->snapshot) {
+                    snapshot = debugger->snapshot;
+                    break;
+                }
+            }
+        }
+
+        if (snapshot) {
+            emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::AutoUpdate, 1 );
+            prepareTheme();
+            updateTheme();
+        }
+    }
     emuThread->unlock();
 }
 
 auto Debugger::isPaused() -> bool {
-    return (program->isPause & 2) == 2;
+    return emuThread->debugging;
 }
 
 auto Debugger::isC64() -> bool {

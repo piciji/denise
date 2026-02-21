@@ -35,7 +35,7 @@ auto M68000::disassembleData(uint32_t addr, unsigned bytes) -> std::string {
 auto M68000::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
     DasmHandler d;
     unsigned bytes;
-    HistoryEntry* historyEntry = historyHandler.get(i);
+    Emulator::HistoryEntry<uint16_t>* historyEntry = historyHandler.get(i);
     if (!historyEntry)
         return "";
     d.hex24( historyEntry->addr );

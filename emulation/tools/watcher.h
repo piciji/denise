@@ -4,18 +4,28 @@
 #include <cstdint>
 #include <vector>
 #include <functional>
+#include "expressionParser.h"
 
 namespace Emulator {
 
 using WatcherCallback = std::function<void ( bool state )>;
+using ExpressionCallback = std::function< uint32_t (const std::string& input, int& pos)>;
 
 struct Watcher {
     uint32_t addr;
+    unsigned hitCount = 0;
+    unsigned curHitCount = 0;
+    unsigned hitCountMode = 0;
+    bool useExpression = false;
+    ExpressionParser expressionParser;
+    unsigned expressionMode = 0;
+    bool expressionBefore = false;
 };
 
 struct WatchPoints {
     std::vector<Watcher> watchers;
     WatcherCallback callback;
+    ExpressionCallback expressionCallback;
 
     WatchPoints();
 
@@ -25,11 +35,19 @@ struct WatchPoints {
 
     auto remove(uint32_t addr) -> void;
 
-    auto check(uint32_t addr) -> bool;
+    auto setBreakpointCondition(unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> void;
+
+    auto check(uint32_t addr, bool withConditions = true) -> bool;
+
+    auto check(uint32_t addr, unsigned Size, bool withConditions = true) -> Watcher*;
+
+    auto checkConditions(Watcher& w) -> bool;
 
     auto find(uint32_t addr) -> Watcher*;
 
     auto removeAll() -> void;
+
+    auto reset() -> void;
 
     auto flagWhenNeeded() -> void;
 };
@@ -45,16 +63,19 @@ struct ModifiedCodes {
 
     auto add(uint32_t addr, uint32_t addrTo) -> void;
     auto checkAndSet(uint32_t addr) -> void;
+    auto checkAndSet(uint32_t addr, unsigned Size) -> void;
     auto getAndForget() -> bool;
     auto disable() -> void;
 };
 
+template<typename T>
 struct HistoryEntry {
     uint32_t addr;
-    uint8_t mem[4] = {0}; // we should remember the actual values, because of potentially modified code.
-    uint8_t flags;
+    T mem[5] = {0}; // we should remember the actual values, because of potentially modified code.
+    uint16_t flags;
 };
 
+template<typename T>
 struct HistoryHandler {
     WatcherCallback callback;
 
@@ -63,10 +84,10 @@ struct HistoryHandler {
     bool _enable = false;
     bool _overflow = false;
     uint16_t pos;
-    std::vector<HistoryEntry> traces;
+    std::vector<HistoryEntry<T>> traces;
 
-    auto getNext() -> HistoryEntry&;
-    auto get(unsigned i) -> HistoryEntry*;
+    auto getNext() -> HistoryEntry<T>&;
+    auto get(unsigned i) -> HistoryEntry<T>*;
     auto flagWhenNeeded() -> void;
     auto enable() -> void;
     auto disable() -> void;

@@ -386,7 +386,7 @@ auto View::build() -> void {
 	    if (button == GUIKIT::Mouse::Button::Left) {
 
 	        if (VideoManager::placeHolderSplashScreen) {
-	            emuThread->lock();
+	            emuThread->lock(true);
 
 	            int result = cursorForPlaceholderInUpperTriangle();
 	            if (result != -1)
@@ -1096,7 +1096,7 @@ auto View::buildMenu() -> void {
         sM.poweron = new GUIKIT::MenuItem;
         sM.poweron->setIcon( powerImage );
         sM.poweron->onActivate = [emulator]() {
-            emuThread->lock();
+            emuThread->lock(true);
 		    program->power(emulator);
             emuThread->unlock();
 	    };	
@@ -1106,7 +1106,7 @@ auto View::buildMenu() -> void {
             sM.poweronAndRemoveExpansions = new GUIKIT::MenuItem;
             sM.poweronAndRemoveExpansions->setIcon(powerImage);
             sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
-                emuThread->lock();
+                emuThread->lock(true);
                 program->power(emulator);
                 program->removeExpansion(false);
                 view->updateCartButtons( emulator );
@@ -1118,7 +1118,7 @@ auto View::buildMenu() -> void {
             sM.poweronAndRemoveDisks = new GUIKIT::MenuItem;
             sM.poweronAndRemoveDisks->setIcon(powerImage);
             sM.poweronAndRemoveDisks->onActivate = [emulator]() {
-                emuThread->lock();
+                emuThread->lock(true);
                 for(auto& media : emulator->getDiskMediaGroup()->media)
                     fileloader->eject( emulator, &media );
                 program->power(emulator);
@@ -1130,7 +1130,7 @@ auto View::buildMenu() -> void {
 		        
         sM.reset = new GUIKIT::MenuItem;
         sM.reset->onActivate = [emulator]() {
-            emuThread->lock();
+            emuThread->lock(true);
 		    program->reset(emulator);
             emuThread->unlock();
 	    };	
@@ -1293,7 +1293,7 @@ auto View::buildMenu() -> void {
 
         sM.load = new GUIKIT::MenuItem;
         sM.load->onActivate = [emulator]() {
-            emuThread->lock();
+            emuThread->lock(true);
             States::getInstance( emulator )->load();
             emuThread->unlock();
         };
@@ -1909,13 +1909,13 @@ auto View::buildMenu() -> void {
     power.reset.setIcon( powerImage );
 
     power.power.onActivate = []() {
-        emuThread->lock();
+        emuThread->lock(true);
         program->power(activeEmulator);
         emuThread->unlock();
     };
 
     power.reset.onActivate = []() {
-        emuThread->lock();
+        emuThread->lock(true);
         program->reset(activeEmulator);
         emuThread->unlock();
     };

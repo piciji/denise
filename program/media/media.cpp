@@ -521,7 +521,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             auto selection = layout->listings.selection( );
 
             fileloader->insertCurrentPreview( layout->mediaGroup );
-            emuThread->lock();
+            emuThread->lock(true);
 
             auto media = layout->selectedBlock->media;
 
@@ -576,7 +576,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         if (tabWindow->systemLayout)
             tabWindow->systemLayout->setExpansion( mediaGroupLayout->mediaGroup->expansion );
 
-        emuThread->lock();
+        emuThread->lock(true);
         program->power( emulator );
         if (statusHandler && emulator->isExpansionUnsupported())
             statusHandler->setMessage(trans->getA("unsupported cartridge"), true);
@@ -592,7 +592,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         if (tabWindow->systemLayout)
             tabWindow->systemLayout->setExpansion( nullptr );
 
-        emuThread->lock();
+        emuThread->lock(true);
         program->power( emulator );
         emuThread->unlock();
         

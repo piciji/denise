@@ -345,8 +345,8 @@ struct Interface {
 
     enum class DebuggerTheme { Unspecified = 0, CPU = 1, CheckpointsCore1 = 2, CheckpointsCore2 = 4,
         Memory = 0x100, CIA = 0x200, Video = 0x400, Bus = 0x800,  };
-    enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
-        DmaView, DmaLog, DmaWatch, AutoUpdate };
+    enum class DebuggerAction { None, Breakpoint, Watchpoint, WatchpointWrite, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
+        DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop };
 
     struct DebuggerSnapshot {
         unsigned themes = 0; // multiple themes
@@ -673,6 +673,7 @@ struct Interface {
     // debugger
     virtual auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
     virtual auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void {}
+    virtual auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool { return true; }
 
     virtual auto debuggerStepOver() -> void {}
     virtual auto debuggerStepInto() -> void {}

@@ -13,7 +13,7 @@
 #include <cstdint>
 #include <optional>
 #include "dasmHandler.h"
-#include "watcher.h"
+#include "../../../tools/watcher.h"
 
 // Explanations are below
 // #define FC_SUPPORT
@@ -104,16 +104,15 @@ public:
 
     enum { Normal = 0, IRQ = 1, Trace = 2, Halt = 4, Stop = 8,
         TraceScheduled = 0x10, IRQScheduled = 0x20, ResetRoutine = 0x40,
-        WatchPoint = 0x80, BreakPoint = 0x100, ExceptionPoint = 0x200, SoftStop = 0x400, ModifiedCode = 0x800,
-        History = 0x1000
+        WatchPoint = 0x80, WatchPointWrite = 0x100, BreakPoint = 0x200, ExceptionPoint = 0x400,
+        SoftStop = 0x800, ModifiedCode = 0x1000, History = 0x2000
     };
-
-    enum class DebuggerAction { None, Breakpoint, Watchpoint, ExceptionPoint, Softstop, ModifiedCode, History };
 
 protected:
     uint32_t regsD[8];
     uint32_t regsA[8];
     uint32_t pc;
+    uint32_t pcEdge;
 
     uint32_t usp;
     uint32_t ssp;
@@ -135,11 +134,13 @@ protected:
     int control;
     std::vector<uint32_t> stepOuts;
 
-    WatchPoints watchPoints = WatchPoints(*this, WatchPoint);
-    WatchPoints breakPoints = WatchPoints(*this, BreakPoint);
-    WatchPoints exceptionPoints = WatchPoints(*this, ExceptionPoint);
-    ModifiedCodes modifiedCode = ModifiedCodes(*this, ModifiedCode);
-    HistoryHandler historyHandler = HistoryHandler(*this, History);
+    Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints watchPointsWrite = Emulator::WatchPoints();
+    Emulator::WatchPoints breakPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints exceptionPoints = Emulator::WatchPoints();
+    Emulator::ModifiedCodes modifiedCode = Emulator::ModifiedCodes();
+    Emulator::HistoryHandler<uint16_t> historyHandler = Emulator::HistoryHandler<uint16_t>();
+
     std::optional<uint32_t> softStep = std::nullopt;
 
 public:
@@ -158,18 +159,11 @@ public:
     auto debuggerStepOver() -> void;
     auto debuggerStepInto() -> void;
     auto debuggerStepOut() -> bool;
-    auto debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
-    auto debuggerRemove(DebuggerAction action, unsigned addr) -> void;
-    auto debuggerRemove(DebuggerAction action) -> void;
 
     auto disassemble(uint32_t addr, unsigned& bytes, uint16_t* memSnap = nullptr) -> std::string;
     auto disassembleData(uint32_t addr, unsigned words) -> std::string;
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
     auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }
-    auto inDebugMode() -> bool {
-        return control & (WatchPoint | BreakPoint | ExceptionPoint | SoftStop | History);
-    }
-    auto pcEdge() -> uint32_t { return (pc - 2) & 0xffffff; }
     auto appendStepOut(uint32_t addr) -> void;
 
     // use this to calculate the needed wait states by terminating a BUS cycle with VPA line
@@ -255,8 +249,10 @@ protected:
     virtual auto tasCycleBegin() -> void {}
     virtual auto tasCycleEnd() -> void {}
 
-    virtual auto debugPointReached(DebuggerAction action, unsigned addr) -> void {}
+    virtual auto debugPointReached(int source, unsigned addr) -> void {}
 #endif
+
+    auto flagDebugAction(int action, bool state) -> void;
 private:
     auto controlBreaks() -> void;
     auto setCCR(uint8_t data) -> void;
@@ -436,7 +432,7 @@ private:
     auto nextIsGroup1Exception() -> bool;
 
     auto checkSoftStop(uint32_t addr) -> bool;
-    auto flagDebugAction(int action, bool state) -> void;
+    auto loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void;
 };
 
 }

@@ -1025,17 +1025,28 @@ inline auto Agnus::csyncPolTrue(bool state) -> bool {
     return (beamCon & CSYTRUE) ? !state : state;
 }
 
-auto Agnus::debugPointReached(M68FAMILY::M68000::DebuggerAction action, unsigned addr) -> void {
-    system->leaveEmulation = true;
-    debugger.action = (Emulator::Interface::DebuggerAction)action;
+auto Agnus::debugPointReached(int source, unsigned addr) -> void {
+    Emulator::Interface::DebuggerAction action;
+
+    switch (source) {
+        case M68FAMILY::M68000::WatchPoint: action = DebuggerAction::Watchpoint; break;
+        case M68FAMILY::M68000::WatchPointWrite: action = DebuggerAction::WatchpointWrite; break;
+        case M68FAMILY::M68000::ExceptionPoint: action = DebuggerAction::ExceptionPoint; break;
+        case M68FAMILY::M68000::BreakPoint: action = DebuggerAction::Breakpoint; break;
+        case M68FAMILY::M68000::SoftStop: action = DebuggerAction::Softstop; break;
+        default: return;
+    }
+
+    debugger.action = action;
     debugger.addr = addr;
+    system->debuggerUpdate();
 }
 
 auto Agnus::oneTimeDebuggerAction() -> void {
-    system->leaveEmulation = true;
     debugger.action = debugger.oneTimeAction;
     debugger.addr = 0;
     debugger.oneTimeAction = Emulator::Interface::DebuggerAction::None;
+    system->debuggerUpdate();
 }
 
 auto Agnus::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
@@ -1057,7 +1068,6 @@ auto Agnus::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
 auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.hPos = hPos;
     snap.vPos = vPos;
-    //fprintf( stderr, "%i ", vPos );
     snap.callbackAction = debugger.action;
     snap.callbackAddress = debugger.addr;
     snap.codeMaybeModified = cpu.hasModifiedCode();

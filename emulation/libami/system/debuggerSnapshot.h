@@ -10,6 +10,7 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint32_t regsD[8];
     uint32_t regsA[8];
     uint32_t pc;
+    uint32_t pcEdge;
 
     uint32_t usp;
     uint32_t ssp;
@@ -89,6 +90,18 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
 
     constexpr static const char* cpuAccess[] {
         "-", "CHIP", "SLOW", "KICK", "EXT", "WOM", "Register", "CIA", "RTC", "AUTOCONF", "FAST", "EXP"
+    };
+
+    constexpr static Emulator::Interface::DebuggerIdent breakConditions[] {
+    {0, "VPOS"}, {1, "HPOS"}, {2, "IRC"}, {3, "IRD"},
+    {4, "IPL"}, {5, "PC"}, {6, "USP"}, {7, "SSP"},
+    {8, "A0"}, {9, "A1"}, {10, "A2"}, {11, "A3"},
+    {12, "A4"}, {13, "A5"}, {14, "A6"}, {15, "A7"},
+    {16, "D0"}, {17, "D1"}, {18, "D2"}, {19, "D3"},
+    {20, "D4"}, {21, "D5"}, {22, "D6"}, {23, "D7"},
+    {24, "C"}, {25, "V"}, {26, "Z"}, {27, "N"},
+    {28, "X"}, {29, "I"}, {30, "S"},
+    {100, "MEM:"},
     };
 
     struct {

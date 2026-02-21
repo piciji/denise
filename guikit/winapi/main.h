@@ -52,8 +52,8 @@ typedef bool (WINAPI *IsDarkModeAllowedForApp_t)();
 
 namespace GUIKIT {
 
-#define FixedStyle WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX
-#define ResizableStyle WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME
+#define FixedStyle(noTitle) ((noTitle) ? WS_CAPTION : (WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX))
+#define ResizableStyle(noTitle) ((noTitle) ? (WS_CAPTION | WS_THICKFRAME) : (WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME))
 	
 static const unsigned Windows2000  = 0x0500;
 static const unsigned WindowsXP    = 0x0501;
@@ -699,7 +699,7 @@ struct pListView : pWidget {
     
     auto onChange(LPARAM lparam) -> void;
     auto onActivate(LPARAM lparam) -> void;
-    auto onClick(LPARAM lparam) -> void;
+    auto onClick(LPARAM lparam, bool rightClick = false) -> void;
     
     auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> void;
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
@@ -1031,7 +1031,7 @@ struct pMessageWindow {
     static auto translateButtons(MessageWindow::Buttons buttons) -> UINT;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
-    static auto CALLBACK pfnCBTMsgBoxHook(int nCode, WPARAM wparam, LPARAM lparam) ->LRESULT;
+    static auto CALLBACK pfnCBTMsgBoxHook(int nCode, WPARAM wparam, LPARAM lparam) -> LRESULT;
 };
 
 struct pColorChooser {

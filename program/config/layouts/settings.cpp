@@ -117,7 +117,7 @@ SettingsLayout::SettingsLayout() {
 
                     for(auto& core : emuSelection.cores) {
                         if ( (core.emulator == activeEmulator) && !core.checkBox->checked()) {
-                            emuThread->lock();
+                            emuThread->lock(true);
                             program->power(altCore->emulator);
                             emuThread->unlock();
                             break;

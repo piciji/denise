@@ -183,7 +183,7 @@ auto ModelLayout::setEvents( ) -> void {
                     bool saveable = dynamic_cast<LIBAMI::Interface*>(this->emulator) || (model->id != LIBC64::Interface::ModelIdSidSeparateInput);
                     tabWindow->settings->set<bool>( _underscore(model->name), checked, saveable );
 
-                    bool locked = emuThread->lock();
+                    bool locked = emuThread->lock(true);
                     emulator->setModelValue( model->id, checked );
                     applyCustomStuff( block, model );
                     if (locked) // nested (e.g. changing speeder)
@@ -198,7 +198,7 @@ auto ModelLayout::setEvents( ) -> void {
 						
 						tabWindow->settings->set<unsigned>(_underscore(model->name), val);
 
-                        bool locked = emuThread->lock();
+                        bool locked = emuThread->lock(true);
 						emulator->setModelValue( model->id, val );
                         applyCustomStuff( block, model );
                         if (locked)
@@ -215,7 +215,7 @@ auto ModelLayout::setEvents( ) -> void {
 					
 					tabWindow->settings->set<unsigned>( _underscore(model->name), val);
 
-                    bool locked = emuThread->lock();
+                    bool locked = emuThread->lock(true);
 					emulator->setModelValue( model->id, val );
                     applyCustomStuff( block, model );
                     if (locked)
@@ -253,7 +253,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                     block->sliderLayout->value.setText( displayText + unit );
 
-                    bool locked = emuThread->lock();
+                    bool locked = emuThread->lock(true);
                     emulator->setModelValue( model->id, val );
                     applyCustomStuff( block, model );
                     if (locked)
@@ -265,7 +265,7 @@ auto ModelLayout::setEvents( ) -> void {
                     tabWindow->settings->set<int>( _underscore(model->name), defaultVal );
                     updateWidget(block);
 
-                    bool locked = emuThread->lock();
+                    bool locked = emuThread->lock(true);
                     emulator->setModelValue( model->id, defaultVal );
                     applyCustomStuff( block, model );
                     if (locked)
@@ -294,7 +294,7 @@ auto ModelLayout::setEvents( ) -> void {
 
                     tabWindow->settings->set<int>( _underscore(model->name), val );
 
-                    bool locked = emuThread->lock();
+                    bool locked = emuThread->lock(true);
                     emulator->setModelValue( model->id, val );
                     applyCustomStuff( block, model );
                     if (locked)

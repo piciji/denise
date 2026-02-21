@@ -390,10 +390,10 @@ auto VicIIBase::power() -> void {
 }
 
 auto VicIIBase::oneTimeDebuggerAction() -> void {
-    system->leaveEmulation = true;
     system->debugger.action = debugger.action;
     system->debugger.addr = 0;
     debugger.action = Emulator::Interface::DebuggerAction::None;
+    system->debuggerUpdate();
 }
 
 #define _fullAdr( __addr ) (((__addr) & 0x3fff) | vicBank)

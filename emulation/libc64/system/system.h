@@ -339,6 +339,7 @@ struct System {
 
     auto debuggerAdd(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
 	auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
+    auto setWatchpointCondition(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
 	auto debuggerStepOver() -> void;
 	auto debuggerStepInto() -> void;

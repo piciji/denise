@@ -154,6 +154,7 @@ struct System {
     auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
     auto debuggerUpdate() -> void;
     auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
+    auto setWatchpointCondition(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 };
 
 
