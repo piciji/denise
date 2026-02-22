@@ -51,15 +51,32 @@
 }
 
 -(void) mouseDown:(NSEvent *)event {
+    [super mouseDown:event];
+    
     if (listView->onClick) {
         NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
         
         auto _row = [self rowAtPoint:point];
         auto _col = [self columnAtPoint:point];
-        
         listView->onClick(_row, _col);
     }
-    [super mouseDown:event];
+}
+
+-(void) rightMouseDown:(NSEvent *)event {
+    [super rightMouseDown:event];
+    
+    if (listView->onContext) {
+        NSPoint pointInWindow = event.locationInWindow;
+        NSPoint point = [self convertPoint:pointInWindow fromView:nil];
+        auto _row = [self rowAtPoint:point];
+        auto _col = [self columnAtPoint:point];
+        
+        NSPoint screenPoint = [NSEvent mouseLocation];
+        NSScreen* screen = [NSScreen mainScreen];
+        CGFloat flippedY = screen.frame.size.height - screenPoint.y;
+        
+        listView->onContext(_row, _col, { (int)screenPoint.x, (int)flippedY });
+    }
 }
 
 -(void) mouseMoved:(NSEvent*)event {

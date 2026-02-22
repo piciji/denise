@@ -117,8 +117,13 @@
 -(id) initWith:(GUIKIT::Window&)windowReference {
     window = &windowReference;
 
-    NSUInteger style = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
-    if(window->resizable()) style |= NSResizableWindowMask;
+    NSUInteger style = NSTitledWindowMask;
+    
+    if (window->hints != GUIKIT::Window::Hints::No_Title)
+        style |= NSClosableWindowMask | NSMiniaturizableWindowMask;
+    
+    if(window->resizable())
+        style |= NSResizableWindowMask;
 
     GUIKIT::Geometry geo = window->state.geometry;
 
@@ -572,6 +577,7 @@ auto pApplication::setClipboardText( std::string text ) -> void {
 pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     @autoreleasepool {
         backgroundView = nullptr;
+        window.hints = hints;
         cocoaWindow = [[CocoaWindow alloc] initWith:window];
         
         resizeTimer.setInterval(500);
