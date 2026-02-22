@@ -179,9 +179,7 @@ auto ModelLayout::setEvents( ) -> void {
             if (model->isSwitch() ) {	
 
                 block->checkBox->onToggle = [this, block, model]( bool checked ) {
-
-                    bool saveable = dynamic_cast<LIBAMI::Interface*>(this->emulator) || (model->id != LIBC64::Interface::ModelIdSidSeparateInput);
-                    tabWindow->settings->set<bool>( _underscore(model->name), checked, saveable );
+                    tabWindow->settings->set<bool>( _underscore(model->name), checked );
 
                     bool locked = emuThread->lock(true);
                     emulator->setModelValue( model->id, checked );

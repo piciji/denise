@@ -643,7 +643,6 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskThread, "Disk Thread", Model::Type::Radio, Model::Purpose::Performance, 0, {0, 2}, {"Off", "On", "On obsolete"} });
 
     models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 1 });
-    models.push_back({ModelIdSidSeparateInput, "SID separate inputs", Model::Type::Switch, Model::Purpose::Performance, 0 });
 
     models.push_back({ModelIdReuRam, "REU Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 7}, { "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB", "16 MB" }});
     models.push_back({ModelIdGeoRam, "Geo Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 6}, { "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB" }});
@@ -1589,10 +1588,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdSid7: system->sidManager.setType( 6, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
         case ModelIdSid8: system->sidManager.setType( 7, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
 
-        case ModelIdSidSeparateInput:
-            system->sidManager.setSeparateFilterInputs(value & 1);
-            break;
-
         case ModelIdDiskDriveModel:
             system->iecBus.setDriveType( Drive::Type(value) );
             break;
@@ -1720,8 +1715,6 @@ auto Interface::getModelValue(unsigned modelId) -> int {
 			return system->vicIICycle.hasGreyDotBugDisbled();
         case ModelIdSidMulti:
             return (int)system->requestedSids;
-        case ModelIdSidSeparateInput:
-            return (int)system->sidManager.hasSeparateFilterInputs();
             
         case ModelIdSid1Adr: return system->sidManager.getIoPos(0);
         case ModelIdSid2Adr: return system->sidManager.getIoPos(1);
