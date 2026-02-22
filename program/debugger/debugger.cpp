@@ -263,7 +263,7 @@ auto Debugger::updateToolboxVisibility() -> void {
 }
 
 auto Debugger::Callback(Emulator::Interface::DebuggerSnapshot* snapshot) -> void {
-    if (program->quitInProgress) {
+    if (program->quitInProgress || !emuThread->enabled) {
         snapshot->mutex.unlock();
         return;
     }
@@ -273,29 +273,23 @@ auto Debugger::Callback(Emulator::Interface::DebuggerSnapshot* snapshot) -> void
         debugger->prepareTheme();
     }
 
-    if (emuThread->enabled) {
-        emuThread->events |= EmuThread::EVT_DEBUGGER;
-        snapshot->mutex.unlock();
+    emuThread->events |= EmuThread::EVT_DEBUGGER;
+    snapshot->mutex.unlock();
 
-        if (snapshot->callbackAction != DebuggerAction::AutoUpdate) {
-            emuThread->lockDebugger();
-        }
-    } else {
-        Callback();
+    if (snapshot->callbackAction != DebuggerAction::AutoUpdate) {
+        emuThread->lockDebugger();
     }
 }
 
 auto Debugger::Callback() -> void {
     Emulator::Interface::DebuggerSnapshot* snapshot = nullptr;
     timerVisibility->setEnabled(false);
-    bool _threaded = emuThread->enabled;
 
     for (auto debugger : program->getActiveDebuggers()) {
         if (debugger->snapshot) {
             if (!snapshot) {
                 snapshot = debugger->snapshot;
-                if (_threaded)
-                    snapshot->mutex.lock();
+                snapshot->mutex.lock();
             }
             debugger->updateTheme();
         }
@@ -304,8 +298,7 @@ auto Debugger::Callback() -> void {
     }
 
     if (snapshot) {
-        if (_threaded)
-            snapshot->mutex.unlock();
+        snapshot->mutex.unlock();
     }
 }
 

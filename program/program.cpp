@@ -150,14 +150,9 @@ auto Program::initUserInterface() -> void {
     if (GUIKIT::Application::isQuit)
         return;
 
-    bool threadedEmu = globalSettings->get<bool>("threaded_emu", true);
-
     if (cmd->noGui) {
 		emuThread->enable( false );
         GUIKIT::Application::loop = [this]() { loopNoGui(); };
-    } else if (!threadedEmu) {
-		emuThread->enable( false );
-        GUIKIT::Application::loop = [this]() { loop(); };
     } else {
         videoDriver->freeContext();
 		GUIKIT::Application::loop = [this]() { loopUserInterface(); };

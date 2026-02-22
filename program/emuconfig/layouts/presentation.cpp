@@ -2644,7 +2644,7 @@ auto PresentationLayout::loadSettings(bool init) -> void {
 
     layShader.main.info.shaderCache.setChecked( _settings->get<bool>("shader_cache", true) );
 
-    unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);
+    unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
     switch(tr) {
         case 0: layBase.view.option.trOff.setChecked(); break;
         default:

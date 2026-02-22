@@ -31,7 +31,6 @@ SwitchesLayout::SwitchesLayout() {
     append(saveSettingsOnExit, {~0u, 0u}, 3);
     append(openFullscreen, {~0u, 0u}, 3);
     append(questionMediaWrite, {~0u, 0u}, 3);
-    append(threadedEmu, {~0u, 0u}, 3);
 
     if (!GUIKIT::Application::isCocoa()) {
         append(splashScreen, {~0u, 0u}, 3);
@@ -155,14 +154,6 @@ SettingsLayout::SettingsLayout() {
     switches.questionMediaWrite.setChecked(globalSettings->get<bool>("question_media_write", true));
     switches.questionMediaWrite.onToggle = [](bool checked) {
         globalSettings->set<bool>("question_media_write", checked);
-    };
-
-    switches.threadedEmu.setChecked(globalSettings->get<bool>("threaded_emu", true));
-    switches.threadedEmu.onToggle = [](bool checked) {
-        globalSettings->set<bool>("threaded_emu", checked);
-        configView->driversLayout->updateDriverPropsVisibility();
-        program->hintExclusiveFullscreen();
-        program->initUserInterface();
     };
 
     switches.splashScreen.setChecked(globalSettings->get<bool>("splash_screen", true));
@@ -330,8 +321,6 @@ auto SettingsLayout::translate() -> void {
     switches.saveSettingsOnExit.setTooltip(trans->get("save changes on exit tooltip"));
     switches.openFullscreen.setText(trans->get("open_fullscreen"));
     switches.questionMediaWrite.setText(trans->get("confirm writes"));
-    switches.threadedEmu.setText(trans->get("Threaded Emulation"));
-    switches.threadedEmu.setTooltip(trans->get("Threaded Emulation tooltip"));
     switches.splashScreen.setText(trans->get("Splash Screen"));
     switches.singleInstance.setText(trans->get("Single Instance"));
 

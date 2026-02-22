@@ -456,7 +456,6 @@ auto Cmd::parse() -> void {
 	if (debug) {
 		dynamic_cast<LIBC64::Interface*> (emuC64)->activateDebugCart( cycles );
 		globalSettings->set<bool>("video_sync", false);
-        globalSettings->set<bool>("threaded_emu", false);
 		globalSettings->set<bool>("fps", true);
 		settingsC64->set<bool>("video_cycle_accuracy", true);
         settingsC64->set<bool>("Emulate_Mechanics", emulateDriveMechanics);

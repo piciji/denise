@@ -429,7 +429,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
         case Hotkey::Id::ThreadedRenderer: {
             auto _settings = program->getSettings( activeEmulator );
-            unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);
+            unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
             if (++tr == 3)
                 tr = 0;
 
