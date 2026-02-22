@@ -312,7 +312,7 @@ auto pListView::onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeView
 }
 
 auto pListView::onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* self) -> gboolean {
-	if(!self->onClick)
+	if(!self->onClick && !self->onContext)
 		return false;
 
 	GtkTreePath* path;
@@ -335,9 +335,13 @@ auto pListView::onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* 
 
 	g_free(pathname);
 
-	self->onClick(_sel, colPos.has_value() ? colPos.value() : 0 );
+	if (event->type == GDK_BUTTON_PRESS && event->button == 3) {
+		if (self->onContext)
+			self->onContext(_sel, colPos.has_value() ? colPos.value() : 0, {(int)event->x_root, (int)event->y_root} );
+	} else if (self->onClick)
+		self->onClick(_sel, colPos.has_value() ? colPos.value() : 0 );
 
-    return false;
+    return true;
 }
 
 auto pListView::onChange(GtkTreeView* treeView, ListView* self) -> void {

@@ -945,13 +945,22 @@ auto CpuDebugger::translateTheme() -> void {
 auto CpuDebugger::createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Position position) -> void {
     delete breakConditionWindow;
     delete breakConditionLayout;
+    delete unfocusTimer;
 
     breakConditionWindow = new GUIKIT::Window(GUIKIT::Window::Hints::No_Title);
-    breakConditionWindow->onUnFocus = [this, watcher]() {
-        emuThread->lock();
-        updateBreakpointVisuals(watcher);
-        emuThread->unlock();
-        breakConditionWindow->setVisible( false );
+
+    unfocusTimer = new GUIKIT::Timer();
+    unfocusTimer->setInterval(100);
+    unfocusTimer->onFinished = [this, watcher]() {
+        unfocusTimer->setEnabled(false);
+        breakConditionWindow->onUnFocus = [this, watcher]() {
+            if (breakConditionWindow->visible()) {
+                emuThread->lock();
+                updateBreakpointVisuals(watcher);
+                emuThread->unlock();
+                breakConditionWindow->setVisible( false );
+            }
+        };
     };
 
     breakConditionWindow->setGeometry( {position.x + 20, position.y + 20, 500, 200} );
@@ -1073,6 +1082,7 @@ auto CpuDebugger::createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Pos
     ex->children[1].size.width = neededWidth;
 
     breakConditionWindow->setVisible(  );
+    unfocusTimer->setEnabled();
 }
 
 auto CpuDebugger::updateWatchpointCondition(Watcher& watcher) -> bool {

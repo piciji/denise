@@ -163,6 +163,7 @@ struct CpuDebugger : Debugger {
 
     GUIKIT::Window* breakConditionWindow = nullptr;
     BreakConditionLayout* breakConditionLayout = nullptr;
+    GUIKIT::Timer* unfocusTimer = nullptr;
 
     auto buildTheme() -> GUIKIT::Layout* override;
     auto translateTheme() -> void override;

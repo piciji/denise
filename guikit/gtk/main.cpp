@@ -306,25 +306,27 @@ auto pWindow::onButtonPressed(GtkWidget* widget, GdkEventButton* event, Window* 
 }
 
 auto pWindow::stateChange(GtkWidget* widget, GdkEventWindowState* event, Window* window) -> gboolean {
+    if (event->changed_mask & GDK_WINDOW_STATE_FOCUSED) {
+        if(event->new_window_state & GDK_WINDOW_STATE_FOCUSED) {
+            if (window->onFocus)
+                window->onFocus();
+        } else if ((event->new_window_state & GDK_WINDOW_STATE_WITHDRAWN) == 0) {
+            if(window->onUnFocus)
+                window->onUnFocus();
+        }
+    }
 
-	if(event->new_window_state & GDK_WINDOW_STATE_ICONIFIED) {
-		window->p.isMinimized = true;
-		if(window->onMinimize)
-			window->onMinimize();
-	} else if(event->new_window_state & GDK_WINDOW_STATE_FOCUSED) {
-		if (window->onFocus)
-			window->onFocus();
-
-        if (window->p.isMinimized) {
+    if (event->changed_mask & GDK_WINDOW_STATE_ICONIFIED) {
+        if(event->new_window_state & GDK_WINDOW_STATE_ICONIFIED) {
+            window->p.isMinimized = true;
+            if (window->onMinimize)
+                window->onMinimize();
+        } else {
             if(window->onUnminimize)
                 window->onUnminimize();
-
             window->p.isMinimized = false;
         }
-	} else if ((event->new_window_state & GDK_WINDOW_STATE_WITHDRAWN) == 0) {
-	    if(window->onUnFocus)
-	        window->onUnFocus();
-	}
+    }
 
 	return false;
 }
@@ -333,6 +335,12 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 
     lastAllocation.width  = lastAllocation.height = 0;
     widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    if (hints == Window::Hints::No_Title) {
+        gtk_window_set_deletable(GTK_WINDOW(widget), FALSE);
+        gtk_window_set_type_hint(GTK_WINDOW(widget), GDK_WINDOW_TYPE_HINT_DIALOG);
+        gtk_window_set_title(GTK_WINDOW(widget), "");
+    }
+
     viewport = nullptr;
     
     setIcon( pSystem::getIconFolder() );
