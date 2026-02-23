@@ -23,8 +23,8 @@ MemDebugger::~MemDebugger() {
 MemDebugger::Memory::Memory(Debugger* debugger)
 : options( debugger ) {
     bankList.setHeaderText( { "bank", "mapping" } );
-    bankList.setFont( GUIKIT::Font::monospace( 10  ) );
-    pageList.setFont( GUIKIT::Font::monospace( 10 ) );
+    bankList.setFont( GUIKIT::Font::monospace() );
+    pageList.setFont( GUIKIT::Font::monospace() );
     bankList.setHeaderVisible( true );
     #define AL GUIKIT::ListView::Align::Left
     #define AR GUIKIT::ListView::Align::Right
