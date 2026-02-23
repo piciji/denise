@@ -98,7 +98,7 @@ CiaDebugger::CIA::Chip::Intr::Intr(bool isMask) {
     setAlignment( 0.5 );
 }
 
-CiaDebugger::CIA::Chip::Tod24bit::Tod24bit() {
+CiaDebugger::CIA::Chip::Tod24bit::Tod24bit(Debugger* debugger) {
     counter.setFont( GUIKIT::Font::monospace() );
     counterAlarm.setFont( GUIKIT::Font::monospace() );
 
@@ -110,9 +110,9 @@ CiaDebugger::CIA::Chip::Tod24bit::Tod24bit() {
     counterAlarm.setEditable( false );
 
     append(label, {50u, 0u}, 5);
-    append(counter, {getWidth(6, true), 0u}, 10);
+    append(counter, {getWidth( debugger->isC64() ? 8 : 6, true), 0u}, 10);
     append(labelAlarm, {0u, 0u}, 5);
-    append(counterAlarm, {getWidth(6, true), 0u});
+    append(counterAlarm, {getWidth(debugger->isC64() ? 8 : 6, true), 0u});
 
     setAlignment( 0.5 );
 }
@@ -137,7 +137,7 @@ CiaDebugger::CIA::Chip::Shifter::Shifter() {
 
 CiaDebugger::CIA::Chip::Chip(uint8_t chipNr, Debugger* debugger)
 : portIO{ {chipNr, 0, debugger }, { chipNr, 1, debugger }},
-    icr(false), icrMask( true ) {
+    icr(false), icrMask( true ), tod24bit( debugger ) {
 
     append( port[0], {0u, 0u}, 10 );
     append( portIO[0], {0u, 0u}, 10 );

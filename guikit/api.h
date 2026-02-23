@@ -1479,7 +1479,7 @@ struct ColorChooser {
 struct Font {
     static auto system(unsigned size, const std::string& style = "", bool monospaced = false) -> std::string;
     static auto system(const std::string& style = "", bool monospaced = false) -> std::string;
-    static auto monospace() -> std::string;
+    static auto monospace(unsigned size = 0) -> std::string;
     static auto systemFontFile() -> std::string;
     static auto size(const std::string& font, const std::string& text) -> Size;
 	static auto scale( unsigned pixel ) -> unsigned;

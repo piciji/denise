@@ -431,11 +431,11 @@ auto Debugger::updateReg(GUIKIT::CheckBox& reg, bool state) -> void {
     }
 }
 
-auto Debugger::getWidth(unsigned length, bool editField, bool bigger) -> unsigned {
-    static unsigned _w[8][2][2] = {0};
+auto Debugger::getWidth(unsigned length, bool editField) -> unsigned {
+    static unsigned _w[8][2] = {0};
     GUIKIT::Widget* widget;
 
-    unsigned& _width = _w[length - 1][bigger ? 1 : 0][editField ? 1 : 0];
+    unsigned& _width = _w[length - 1][editField ? 1 : 0];
 
     if (_width == 0) {
         if (editField)
@@ -443,10 +443,7 @@ auto Debugger::getWidth(unsigned length, bool editField, bool bigger) -> unsigne
         else
             widget = new GUIKIT::Label;
 
-        if (bigger)
-            widget->setFont( GUIKIT::Font::system( 11, "", true ) );
-        else
-            widget->setFont( GUIKIT::Font::system( "", true ) );
+        widget->setFont( GUIKIT::Font::monospace(  ) );
 
         std::string _str;
         while (length--)

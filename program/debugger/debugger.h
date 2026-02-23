@@ -118,5 +118,5 @@ struct Debugger : GUIKIT::Window {
     static auto stepFrame(Emulator::Interface* emulator) -> void;
     static auto resume(Emulator::Interface* emulator) -> void;
     static auto reset() -> void;
-    static auto getWidth(unsigned length, bool editField, bool bigger = false) -> unsigned;
+    static auto getWidth(unsigned length, bool editField) -> unsigned;
 };

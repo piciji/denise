@@ -46,8 +46,12 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
 
     std::string family = utf8_t(metrics.lfMessageFont.lfFaceName);
     
-    if (monospaced)
+    if (monospaced) {
         family = "Consolas";
+
+        if (size == 0)
+            size = 11;
+    }
 
     if (size == 0)
 		size = float(std::abs(metrics.lfMessageFont.lfHeight)) * 72.0 / dpiX;

@@ -51,7 +51,7 @@ struct CiaDebugger : Debugger {
                 GUIKIT::LineEdit counter;
                 GUIKIT::Label labelAlarm;
                 GUIKIT::LineEdit counterAlarm;
-                Tod24bit();
+                Tod24bit(Debugger* debugger);
             } tod24bit;
 
             struct Shifter : GUIKIT::HorizontalLayout {

@@ -1934,8 +1934,8 @@ auto Font::system(const std::string& style, bool monospaced) -> std::string {
     return pFont::system(0, style, monospaced);
 }
 
-auto Font::monospace() -> std::string {
-    return pFont::system(0, "", true);
+auto Font::monospace(unsigned size) -> std::string {
+    return pFont::system(size, "", true);
 }
 
 auto Font::systemFontFile() -> std::string {

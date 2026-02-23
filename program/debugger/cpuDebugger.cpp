@@ -114,10 +114,10 @@ CpuDebugger::CPU::State::Flags::Flags(Debugger* debugger) {
 }
 
 CpuDebugger::CPU::State::Registers::Registers(Debugger* debugger) {
-    left.setFont( GUIKIT::Font::system( 11, "", true ) );
-    leftVal.setFont( GUIKIT::Font::system( 11, "", true ) );
-    right.setFont( GUIKIT::Font::system( 11, "", true ) );
-    rightVal.setFont( GUIKIT::Font::system( 11, "", true ) );
+    left.setFont( GUIKIT::Font::monospace(  ) );
+    leftVal.setFont( GUIKIT::Font::monospace(  ) );
+    right.setFont( GUIKIT::Font::monospace() );
+    rightVal.setFont( GUIKIT::Font::monospace() );
 
     left.setAlign( GUIKIT::Label::Align::Right );
     right.setAlign( GUIKIT::Label::Align::Right );
@@ -130,10 +130,10 @@ CpuDebugger::CPU::State::Registers::Registers(Debugger* debugger) {
     rightVal.setText( "0" );
     rightVal.setStore( 0 );
 
-    append(left, {getWidth(4, false, true), 0u}, 5);
-    append(leftVal, {getWidth(debugger->isAmiga() ? 8 : 4, true, true), 0u}, 10);
-    append(right, {getWidth(4, false, true), 0u}, 5);
-    append(rightVal, {getWidth(debugger->isAmiga() ? 8 : 4, true, true), 0u});
+    append(left, {getWidth(4, false), 0u}, 5);
+    append(leftVal, {getWidth(debugger->isAmiga() ? 8 : 4, true), 0u}, 10);
+    append(right, {getWidth(4, false), 0u}, 5);
+    append(rightVal, {getWidth(debugger->isAmiga() ? 8 : 4, true), 0u});
 
     setAlignment( 0.5 );
 }
@@ -185,7 +185,7 @@ CpuDebugger::CPU::State::State(Debugger* debugger)
 
 CpuDebugger::CPU::InstructionLayout::InstructionLayout() {
     list.setHeaderText( { "", "address", "data", "instruction" } );
-    list.setFont( GUIKIT::Font::system( 11 ,"", true ) );
+    list.setFont( GUIKIT::Font::monospace() );
     list.setHeaderVisible( true );
 
     append(list, {~0u, ~0u});
@@ -193,7 +193,7 @@ CpuDebugger::CPU::InstructionLayout::InstructionLayout() {
 
 CpuDebugger::CPU::TraceLayout::TraceLayout() {
     list.setHeaderText( { "address", "status","instruction" } );
-    list.setFont( GUIKIT::Font::system( 11 ,"", true ) );
+    list.setFont( GUIKIT::Font::monospace() );
     list.setHeaderVisible( true );
 
     append(list, {~0u, ~0u});

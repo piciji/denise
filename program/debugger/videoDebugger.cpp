@@ -134,7 +134,7 @@ VideoDebugger::Video::Wraper::Lightpen::Lightpen(Debugger* debugger) {
     valX.setEditable( false );
     valX.setAlign( GUIKIT::LineEdit::Align::Right );
 
-    valY.setFont( GUIKIT::Font::system("", true ) );
+    valY.setFont( GUIKIT::Font::monospace() );
     valY.setText( "0" );
     valY.setStore( 0 );
     valY.setEditable( false );
