@@ -969,3 +969,4 @@ expression = Expression
 change = Change
 close = Close
 write = Write
+rdy tooltip = jump to the next cycle in which the RDY signal of the VIC-II is LOW.

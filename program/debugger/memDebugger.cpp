@@ -138,6 +138,7 @@ MemDebugger::C64MemControl::Right::Right(Debugger* debugger)
 
 MemDebugger::C64MemControl::C64MemControl(Debugger* debugger)
 : left(debugger), right(debugger), middle( debugger ) {
+    append(spacer, {~0u, 0u} );
     append(left, {0u, 0u}, 10);
     append(middle, {0u, 0u}, 10);
     append(right, {0u, 0u});

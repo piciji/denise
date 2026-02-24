@@ -38,6 +38,7 @@ DmaDebugger::Dma::Legend::Legend() {
 }
 
 DmaDebugger::DmaControl::DmaControl() {
+    append(spacer, {~0u, 0u} );
     append( symbolic, {0u, 0u} );
 }
 

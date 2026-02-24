@@ -63,6 +63,7 @@ struct DmaDebugger : Debugger {
     } *dma;
 
     struct DmaControl : GUIKIT::HorizontalLayout {
+        GUIKIT::Widget spacer;
         GUIKIT::CheckBox symbolic;
 
         DmaControl();

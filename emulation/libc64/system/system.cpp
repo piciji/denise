@@ -850,22 +850,16 @@ auto System::run() -> void {
                 iecBus.syncDrives();
         }
     } else if (!mhz2) {
-        if (vicII->debugger.dmaLog) {
-            while( !leaveEmulation ) {
-                cpu.process<false, true>();
-                if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
-                    iecBus.syncDrives();
-            }
-        } else {
-            while( !leaveEmulation ) {
-                cpu.process<false, false>();
-                if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
-                    iecBus.syncDrives();
-            }
+        while( !leaveEmulation ) {
+            vicII->debugger.dmaLog ? cpu.process<false, true>() : cpu.process<false, false>();
+
+            if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
+                iecBus.syncDrives();
         }
     } else {
         while( !leaveEmulation ) {
-            cpu.process<true, false>();
+            vicII->debugger.dmaLog ? cpu.process<true, true>() : cpu.process<true, false>();
+
             if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
                 iecBus.syncDrives();
         }
@@ -1386,6 +1380,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                 case DebuggerAction::Line:
                     vicII->debugger.stopLine = addr;
                 case DebuggerAction::Frame:
+                case DebuggerAction::HaltCPU:
                     vicII->debugger.action = action;
                     break;
                 case DebuggerAction::AutoUpdate:

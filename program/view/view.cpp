@@ -1322,26 +1322,34 @@ auto View::buildMenu() -> void {
 
         sM.debuggerCpu = new GUIKIT::MenuItem;
         sM.debuggerCpu->onActivate = [this, emulator]() {
+            emuThread->lock();
             program->openDebugger(emulator, Debugger::Mode::CPU);
+            emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerCpu );
 
         sM.debuggerMem = new GUIKIT::MenuItem;
         sM.debuggerMem->onActivate = [this, emulator]() {
+            emuThread->lock();
             program->openDebugger(emulator, Debugger::Mode::Memory);
+            emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerMem );
 
         if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
             sM.debuggerSCPU = new GUIKIT::MenuItem;
             sM.debuggerSCPU->onActivate = [this, emulator]() {
+                emuThread->lock();
                 program->openDebugger(emulator, Debugger::Mode::SCPU);
+                emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerSCPU );
 
             sM.debuggerMemSCPU = new GUIKIT::MenuItem;
             sM.debuggerMemSCPU->onActivate = [this, emulator]() {
+                emuThread->lock();
                 program->openDebugger(emulator, Debugger::Mode::MemorySCPU);
+                emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerMemSCPU );
 
@@ -1352,19 +1360,25 @@ auto View::buildMenu() -> void {
 
         sM.debuggerVideo = new GUIKIT::MenuItem;
         sM.debuggerVideo->onActivate = [this, emulator]() {
+            emuThread->lock();
             program->openDebugger(emulator, Debugger::Mode::Video);
+            emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerVideo );
 
         sM.debuggerDma = new GUIKIT::MenuItem;
         sM.debuggerDma->onActivate = [this, emulator]() {
+            emuThread->lock();
             program->openDebugger(emulator, Debugger::Mode::DMA);
+            emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerDma );
 
         sM.debuggerCia = new GUIKIT::MenuItem;
         sM.debuggerCia->onActivate = [this, emulator]() {
+            emuThread->lock();
             program->openDebugger(emulator, Debugger::Mode::CIA);
+            emuThread->unlock();
         };
         sM.debugger->append( *sM.debuggerCia );
 

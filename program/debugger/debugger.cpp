@@ -41,10 +41,12 @@ Debugger::Control::Control(Debugger* debugger) {
     append( line, {0u, 0u}, 10 );
     append( lineEdit, {50u, 0u}, 5 );
     append( toLine, {0u, 0u}, 10 );
-    append( position, {~0u, 0u} );
+    append( position, {90u, 0u}, 0 );
 
     if (auto _control = debugger->buildControl())
-        append(*_control, {0u, 0u}, 20);
+        append(*_control, {~0u, 0u}, 10);
+    else
+        append( spacer2, {~0u, 0u} );
 
     append( settings, {0u, 0u} );
 
@@ -378,7 +380,6 @@ auto Debugger::makeVisible() -> void {
 
     updateToolboxVisibility();
 
-    emuThread->lock();
     initTheme();
     if (isPaused()) {
         if (!snapshot) {
@@ -396,7 +397,6 @@ auto Debugger::makeVisible() -> void {
             updateTheme();
         }
     }
-    emuThread->unlock();
 }
 
 auto Debugger::isPaused() -> bool {

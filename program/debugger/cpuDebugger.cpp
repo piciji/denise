@@ -209,6 +209,11 @@ CpuDebugger::CPU::CPU(Debugger* debugger)
     append(state, {0u, 0u});
 }
 
+CpuDebugger::C64RdyControl::C64RdyControl() {
+    append( rdyButton, {0u, 0u} );
+    setAlignment( 0.5 );
+}
+
 auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
     cpu = new CPU(this);
     cpu->watcher.adder.add.setImage( &addImg );
@@ -940,6 +945,11 @@ auto CpuDebugger::translateTheme() -> void {
     cpu->state.options.address.edit.setPlaceholder( trans->getA( "address" )  );
     cpu->state.options.value.edit.setPlaceholder( trans->getA( "value" )  );
     cpu->state.options.value.edit.setTooltip( showTips ? trans->getA( "edit memory tooltip") : "" );
+
+    if (c64RdyControl) {
+        c64RdyControl->rdyButton.setText("RDY" );
+        c64RdyControl->rdyButton.setTooltip( showTips ? trans->getA( "rdy tooltip" ) : "" );
+    }
 }
 
 auto CpuDebugger::createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Position position) -> void {
@@ -1084,6 +1094,25 @@ auto CpuDebugger::createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Pos
 
     breakConditionWindow->setVisible(  );
     unfocusTimer->setEnabled();
+}
+
+auto CpuDebugger::buildControl() -> GUIKIT::Layout* {
+    if (isC64()) {
+        c64RdyControl = new C64RdyControl();
+
+        c64RdyControl->rdyButton.onActivate = [this]() {
+            if (emulator != activeEmulator)
+                return;
+            emuThread->lock();
+            timerVisibility->setEnabled();
+            emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::HaltCPU, 0 );
+            emuThread->unlockDebugger();
+            emuThread->unlock();
+        };
+
+        return c64RdyControl;
+    }
+    return nullptr;
 }
 
 auto CpuDebugger::updateWatchpointCondition(Watcher& watcher) -> bool {

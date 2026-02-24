@@ -69,6 +69,7 @@ struct Debugger : GUIKIT::Window {
         GUIKIT::LineEdit lineEdit;
         GUIKIT::ImageView toLine;
         GUIKIT::Label position;
+        GUIKIT::Widget spacer2;
         GUIKIT::Button settings;
 
         Control(Debugger* debugger);

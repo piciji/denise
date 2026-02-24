@@ -29,6 +29,12 @@ template<bool logDma> inline auto VicIICycle::clockCycle() -> void {
 	// sprite DMA is off. In such cases the VIC reads 0xff or value from a possible register access in this cycle.
 	// under normal conditions the VIC reads sprite data and the CPU is waiting (BA + AEC).
 	fetchSprPhi2( flags );
+
+    if constexpr (logDma) {
+        if (baLow && (debugger.action == DebuggerAction::HaltCPU)) {
+            oneTimeDebuggerAction();
+        }
+    }
 	
     advanceCycle();
 	

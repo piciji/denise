@@ -35,8 +35,17 @@ template<bool logDma> inline auto VicIICycle::fetchPhi1( uint32_t flags ) -> uin
         debugger.dma[cycle].usageCpu = 0;
     }
 
-	if (baLow && isFetchC(flags))
-		fetchC<logDma>();
+	if (baLow) {
+	    if (isFetchC(flags)) {
+	        fetchC<logDma>();
+	    }
+
+	    if constexpr (!logDma) {
+	        if (debugger.action == DebuggerAction::HaltCPU) {
+	            oneTimeDebuggerAction();
+	        }
+	    }
+	}
 	
 	return value;
 }

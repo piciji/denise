@@ -37,6 +37,7 @@ struct MemDebugger : Debugger {
     Memory* memory = nullptr;
 
     struct C64MemControl : GUIKIT::HorizontalLayout {
+        GUIKIT::Widget spacer;
 
         struct Element : GUIKIT::HorizontalLayout {
             GUIKIT::ImageView imgView;
@@ -66,9 +67,7 @@ struct MemDebugger : Debugger {
         } right;
 
         C64MemControl(Debugger* debugger);
-    };
-
-    C64MemControl* c64MemControl = nullptr;
+    } *c64MemControl = nullptr;
 
     uint8_t bankListStore[256] = {0};
     uint8_t* memDump = nullptr;

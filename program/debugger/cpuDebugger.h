@@ -99,6 +99,12 @@ struct CpuDebugger : Debugger {
         CPU(Debugger* debugger);
     } *cpu = nullptr;
 
+    struct C64RdyControl : GUIKIT::HorizontalLayout {
+        GUIKIT::Button rdyButton;
+
+        C64RdyControl();
+    } *c64RdyControl = nullptr;
+
     struct BreakConditionLayout : GUIKIT::VerticalLayout {
 
         struct Expression : GUIKIT::HorizontalLayout {
@@ -206,4 +212,6 @@ struct CpuDebugger : Debugger {
 
     auto createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Position position) -> void;
     auto updateWatchpointCondition(Watcher& watcher) -> bool;
+
+    auto buildControl() -> GUIKIT::Layout*;
 };
