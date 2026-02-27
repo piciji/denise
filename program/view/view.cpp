@@ -1366,6 +1366,18 @@ auto View::buildMenu() -> void {
         };
         sM.debugger->append( *sM.debuggerVideo );
 
+        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            sM.debuggerAudio = new GUIKIT::MenuItem;
+            sM.debuggerAudio->onActivate = [this, emulator]() {
+                emuThread->lock();
+                program->openDebugger(emulator, Debugger::Mode::Audio);
+                emuThread->unlock();
+            };
+            sM.debugger->append( *sM.debuggerAudio );
+        } else {
+            sM.debuggerAudio = nullptr;
+        }
+
         sM.debuggerDma = new GUIKIT::MenuItem;
         sM.debuggerDma->onActivate = [this, emulator]() {
             emuThread->lock();
@@ -2131,7 +2143,10 @@ auto View::translate() -> void {
         sysMenu.debuggerMem->setText(trans->get("MEM"));
         sysMenu.debuggerCia->setText(trans->get("CIA"));
 
-        sysMenu.debuggerVideo->setText(trans->get( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "VIC-II" : "Denise"));
+        sysMenu.debuggerVideo->setText(trans->getA( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "VIC-II" : "Denise"));
+        if (sysMenu.debuggerAudio)
+            sysMenu.debuggerAudio->setText(trans->getA( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "SID" : "Paula"));
+
         sysMenu.debuggerDma->setText(trans->get("DMA"));
 
         if (sysMenu.debuggerMemSCPU)

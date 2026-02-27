@@ -629,4 +629,46 @@ auto SidManager::searializeActiveSids(Emulator::Serializer& s, bool light) -> vo
     }
 }
 
+auto SidManager::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    Sid* _sid = sid;
+
+    uint8_t _potX = getPotX();
+    uint8_t _potY = getPotY();
+
+    for (unsigned i = 0; i < 8; i++) {
+        auto& s = snap.sids[i];
+
+        s.active = i == 0 || ((i - 1) < system->requestedSids);
+
+        if (s.active) {
+            s.volume = _sid->filter.vol;
+            s.potX = _potX;
+            s.potY = _potY;
+
+            s.filter.cutOff = _sid->filter.fc;
+            s.filter.resonance = _sid->filter.res;
+            s.filter.voices = _sid->filter.filt;
+            s.filter.mode = _sid->filter.mode >> 4;
+
+            for (unsigned v = 0; v < 3; v++) {
+                auto& sv = s.voices[v];
+                auto& _sidV = _sid->voice[v];
+                auto& _sidE = _sid->envelope[v];
+
+                sv.wave = _sidV.waveform;
+                sv.frequency = _sidV.freq;
+                sv.pulseWidth = _sidV.pw;
+                sv.attack = _sidE.attack;
+                sv.delay = _sidE.delay;
+                sv.sustain = _sidE.sustain;
+                sv.release = _sidE.release;
+                sv.control = _sidV.contr;
+            }
+        }
+
+        if (i < 7)
+            _sid = sids[i];
+    }
+}
+
 }

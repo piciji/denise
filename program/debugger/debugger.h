@@ -19,7 +19,7 @@ namespace LIBC64 {
 
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU, CIA, Video, DMA,
+        CPU, SCPU, Memory, MemorySCPU, CIA, Video, Audio, DMA,
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );

@@ -60,7 +60,7 @@ struct DmaDebugger : Debugger {
 
 
         Dma(DmaDebugger* debugger);
-    } *dma;
+    } *dma = nullptr;
 
     struct DmaControl : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;

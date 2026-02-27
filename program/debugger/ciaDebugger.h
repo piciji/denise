@@ -66,8 +66,7 @@ struct CiaDebugger : Debugger {
         } chip[2];
 
         CIA(Debugger* debugger);
-    };
-    CIA* cia = nullptr;
+    } *cia = nullptr;
 
     template<typename T> auto updateCia(T& s) -> void;
 

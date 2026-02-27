@@ -1036,6 +1036,7 @@ struct Layout : Sizable {
     auto getFrameInnerGeometry(Geometry geometry) -> Geometry;
     static auto getParentTabOrSwitchLayout(Sizable* sizable) -> Layout*;
     static auto getTopMostTabOrSwitchLayout(Layout* layout) -> Layout*;
+    static auto alignChildWidth(std::vector<Layout*> layouts, unsigned pos = 0) -> void;
     
     auto getAllChildWidgets() -> std::vector<Widget*>;
 

@@ -82,6 +82,7 @@ struct View : GUIKIT::Window {
             GUIKIT::MenuItem* debuggerCia;
             GUIKIT::MenuItem* debuggerVideo;
             GUIKIT::MenuItem* debuggerDma;
+            GUIKIT::MenuItem* debuggerAudio;
         GUIKIT::MenuItem* audio;
         GUIKIT::MenuItem* configurations;
         GUIKIT::Menu* shaderMenu;

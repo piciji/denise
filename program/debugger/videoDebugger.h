@@ -118,7 +118,7 @@ struct VideoDebugger : Debugger {
         } sprites;
 
         Video(Debugger* debugger);
-    } *video;
+    } *video = nullptr;
 
     auto saveIdent() -> std::string override;
     auto titleIdent() -> std::string override;

@@ -344,7 +344,7 @@ struct Interface {
     };
 
     enum class DebuggerTheme { Unspecified = 0, CPU = 1, CheckpointsCore1 = 2, CheckpointsCore2 = 4,
-        Memory = 0x100, CIA = 0x200, Video = 0x400, Bus = 0x800,  };
+        Memory = 0x100, CIA = 0x200, Video = 0x400, Bus = 0x800, Audio = 0x1000  };
     enum class DebuggerAction { None, Breakpoint, Watchpoint, WatchpointWrite, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
         DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop, HaltCPU };
 

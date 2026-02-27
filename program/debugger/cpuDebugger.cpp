@@ -1085,12 +1085,7 @@ auto CpuDebugger::createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Pos
     breakConditionLayout->control.closeButton.setText( trans->getA( "close" ) );
     breakConditionWindow->append( *breakConditionLayout );
 
-    unsigned neededWidth = std::max(hc->check.minimumSize().width, ex->check.minimumSize().width);
-    hc->children[0].size.width = neededWidth;
-    ex->children[0].size.width = neededWidth;
-    neededWidth = std::max(hc->compareCombo.minimumSize().width, ex->compareCombo.minimumSize().width);
-    hc->children[1].size.width = neededWidth;
-    ex->children[1].size.width = neededWidth;
+    GUIKIT::Layout::alignChildWidth({hc, ex});
 
     breakConditionWindow->setVisible(  );
     unfocusTimer->setEnabled();

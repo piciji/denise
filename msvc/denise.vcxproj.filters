@@ -1228,6 +1228,9 @@
     <ClInclude Include="..\emulation\tools\expressionParser.h">
       <Filter>emulation\tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\debugger\audioDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2477,6 +2480,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\tools\expressionParser.cpp">
       <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\audioDebugger.cpp">
+      <Filter>program\debugger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

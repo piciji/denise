@@ -6,6 +6,7 @@
 #include <functional>
 #include "../sid/sid.h"
 #include "../sid/usbSidPico.h"
+#include "debuggerSnapshot.h"
 
 namespace Emulator {
     struct Serializer;
@@ -115,7 +116,9 @@ struct SidManager {
 
     auto hasUSBSID() -> bool { return usbSIDPico.enabled; }
     auto getUSBSIDBuffSize() -> unsigned { return usbSIDPico.buffSize; }
-    auto getUSBSIDDiffSize() -> unsigned { return usbSIDPico.diffSize; }    
+    auto getUSBSIDDiffSize() -> unsigned { return usbSIDPico.diffSize; }
+
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }

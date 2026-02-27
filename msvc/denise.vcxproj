@@ -267,6 +267,7 @@
     <ClInclude Include="..\program\config\layouts\settings.h" />
     <ClInclude Include="..\program\config\slider.h" />
     <ClInclude Include="..\program\config\sliderAlt.h" />
+    <ClInclude Include="..\program\debugger\audioDebugger.h" />
     <ClInclude Include="..\program\debugger\ciaDebugger.h" />
     <ClInclude Include="..\program\debugger\cpuDebugger.h" />
     <ClInclude Include="..\program\debugger\debugger.h" />
@@ -1690,6 +1691,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\program\debugger\audioDebugger.cpp" />
     <ClCompile Include="..\program\debugger\ciaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\cpuDebugger.cpp" />
     <ClCompile Include="..\program\debugger\debugger.cpp" />

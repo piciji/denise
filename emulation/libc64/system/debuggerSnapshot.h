@@ -113,6 +113,31 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         unsigned shiftCount;
     } cia[2];
 
+    struct {
+        struct {
+            uint8_t wave;
+            uint16_t frequency;
+            uint16_t pulseWidth;
+            uint8_t attack;
+            uint8_t delay;
+            uint8_t sustain;
+            uint8_t release;
+            uint8_t control;
+        } voices[3];
+
+        struct {
+            uint16_t cutOff;
+            uint8_t resonance;
+            uint8_t voices;
+            uint8_t mode;
+        } filter;
+
+        uint8_t volume;
+        uint8_t potX;
+        uint8_t potY;
+        bool active;
+    } sids[8];
+
     constexpr static const char* dmaModes[] { "Free", "Idle", "Graphics", "Character", "Sprite Pointer", "Sprite Data", "Refresh", "Cpu" };
     constexpr static const char* dmaModesShort[] { "", "IDL", "GRA", "CHA", "SPP", "SPD", "REF", "CPU" };
     constexpr static const char* cpuAccess[] { "-", "RAM", "VIC", "SID", "COL", "IO1", "IO2", "CIA1", "CIA2", "CHAR", "KERN", "BASC", "ROML", "ROMH", "ULT"};

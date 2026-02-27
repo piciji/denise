@@ -32,9 +32,7 @@ struct MemDebugger : Debugger {
         } options;
 
         Memory(Debugger* debugger);
-    };
-
-    Memory* memory = nullptr;
+    } *memory = nullptr;
 
     struct C64MemControl : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;

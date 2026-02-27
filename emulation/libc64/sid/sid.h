@@ -113,6 +113,7 @@ struct Sid {
 		bool test;
         bool msbRising;
 		bool sync;
+        uint8_t contr;
 		uint32_t shiftRegister;
 		uint16_t noNoise;
 		uint16_t noiseOutput;
