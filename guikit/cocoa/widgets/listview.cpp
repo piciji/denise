@@ -216,6 +216,7 @@
         [self setBorderType:NSBezelBorder];
         [self setHasVerticalScroller:YES];
         [self setHasHorizontalScroller:YES];
+        [self setAutohidesScrollers:YES];
         if (GUIKIT::hasMinimumVersion(10, 10)) {
             [self setAutomaticallyAdjustsContentInsets:NO];
             [self setContentInsets:NSEdgeInsetsMake(2, 2, 2, 2)];
@@ -303,7 +304,7 @@
     } else if (_spacing > 0)
         [content setIntercellSpacing:NSMakeSize((CGFloat)_spacing, 3.0)];
     else
-        [content setIntercellSpacing:NSMakeSize(10.0, 3.0)];
+        [content setIntercellSpacing:NSMakeSize(8.0, 3.0)];
     
     [self reloadColumns];
 }
@@ -411,16 +412,20 @@ auto pListView::autoSizeColumns() -> void {
     int spacing = listView.spacing();
     if (spacing == -1)
         spacing = 10;
-    spacing += 4;
     
     @autoreleasepool {
         unsigned height = [[(id)cocoaView content] rowHeight];
         for(unsigned column = 0; column < listView.columnCount(); column++) {
             NSTableColumn* tableColumn = [[(id)cocoaView content] tableColumnWithIdentifier:[[NSNumber numberWithInteger:column] stringValue]];
-            unsigned minimumWidth = pFont::size([[tableColumn headerCell] font], listView.state.header.at(column)).width + spacing;
+            
+            auto _text = listView.state.header[column];
+            
+            unsigned minimumWidth = _text.empty() ? 0 : (pFont::size([[tableColumn headerCell] font], _text).width + spacing);
+            
             for(unsigned row = 0; row < listView.rowCount(); row++) {
-                unsigned width = pFont::size([(id)cocoaView font], listView.text(row, column)).width + spacing;
-                GUIKIT::Image* img = listView.state.images.at(row).at(column);
+                auto _text = listView.text(row, column);
+                unsigned width = _text.empty() ? 0 : (pFont::size([(id)cocoaView font], _text).width + spacing);
+                GUIKIT::Image* img = listView.state.images[row][column];
                 if(img) {
                     width += height + 2;
                 }
@@ -492,7 +497,6 @@ auto pListView::setSelection(unsigned selection) -> void {
         [[(id)cocoaView content] selectRowIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(selection, 1)] byExtendingSelection:NO];
         
         [[(id)cocoaView content] scrollRowToVisible: selection];
-        [[(id)cocoaView window] makeFirstResponder: cocoaView];
     }
 }
 

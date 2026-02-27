@@ -92,6 +92,7 @@
         [self setBorderType:NSBezelBorder];
         [self setHasVerticalScroller:YES];
         [self setHasHorizontalScroller:YES];
+        [self setAutohidesScrollers:YES];
         
         [content setDataSource:self];
         [content setDelegate:self];

@@ -1206,9 +1206,9 @@ auto ListView::countImages() -> unsigned {
 
 auto ListView::text(unsigned selection, unsigned position) -> std::string {
     if(selection >= state.rows.size()) return "";
-    std::vector<std::string>& row = state.rows.at(selection);
+    std::vector<std::string>& row = state.rows[selection];
     if(position >= row.size()) return "";
-    return row.at(position);
+    return row[position];
 }
 
 auto ListView::setRowTooltip(unsigned selection, std::string tooltip ) -> void {

@@ -66,7 +66,7 @@ CpuDebugger::CPU::WatcherLayout::ExcAdder::ExcAdder()
 }
 
 CpuDebugger::CPU::WatcherLayout::WatcherLayout() {
-    list.setHeaderText( { "", "address", "", "", ""} );
+    list.setHeaderText( { "", "", "", "", ""} );
 
     append(list, {~0u, ~0u}, 5);
     append(breakPoint, {0u, 0u}, 3);
@@ -205,7 +205,7 @@ CpuDebugger::CPU::CPU(Debugger* debugger)
     switchLayout.setLayout( 1, traceLayout, {~0u, ~0u} );
 
     append(switchLayout, {~0u, ~0u}, 20);
-    append(watcher, {200u, ~0u}, 10);
+    append(watcher, {210u, ~0u}, 10);
     append(state, {0u, 0u});
 }
 

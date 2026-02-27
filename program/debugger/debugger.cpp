@@ -29,8 +29,7 @@ Debugger::Control::Control(Debugger* debugger) {
     frame.setEnabled( false );
 
     lineEdit.setMaxLength( 3 );
-    lineEdit.setFont(GUIKIT::Font::system(11));
-    position.setFont( GUIKIT::Font::system( 11 ) );
+    position.setFont( GUIKIT::Font::monospace() );
 
     append( spacer, {0u, 0u}, 10 );
     append( resume, {0u, 0u}, 10 );
@@ -41,7 +40,7 @@ Debugger::Control::Control(Debugger* debugger) {
     append( line, {0u, 0u}, 10 );
     append( lineEdit, {50u, 0u}, 5 );
     append( toLine, {0u, 0u}, 10 );
-    append( position, {90u, 0u}, 0 );
+    append( position, {100u, 0u}, 0 );
 
     if (auto _control = debugger->buildControl())
         append(*_control, {~0u, 0u}, 10);
@@ -458,7 +457,7 @@ auto Debugger::getWidth(unsigned length, bool editField) -> unsigned {
 }
 
 auto Debugger::updateControl(uint16_t v, uint8_t h) -> void {
-    control->position.setText("V: " + std::to_string( v ) + " H: " +  std::to_string( h ) );
+    control->position.setText("V:" + std::to_string( v ) + " H:" +  std::to_string( h ) );
 }
 
 auto Debugger::changeMemory(const std::string& addrStr, const std::string& valStr) -> void {

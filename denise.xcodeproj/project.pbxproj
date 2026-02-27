@@ -196,6 +196,8 @@
 		9D8FB4E22CB47539006905BE /* icons.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E02CB47539006905BE /* icons.cpp */; };
 		9D8FB4E32CB47539006905BE /* logos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E12CB47539006905BE /* logos.cpp */; };
 		9D8FB4E42CB475A8006905BE /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAB412CB3F8EE006905BE /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
+		9D90B8952F52227B00EBF6F6 /* audioDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */; };
+		9D90B8962F52227B00EBF6F6 /* audioDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */; };
 		9D98A74B2F4B93EF00BB972F /* expressionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D98A7492F4B93EF00BB972F /* expressionParser.cpp */; };
 		9D98A74C2F4B93EF00BB972F /* expressionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D98A7492F4B93EF00BB972F /* expressionParser.cpp */; };
 		9D99AA7A2E4631490075FF62 /* libbrotlicommon.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */; };
@@ -1101,6 +1103,8 @@
 		9D8FAEB22CB415E3006905BE /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		9D8FB4E02CB47539006905BE /* icons.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = icons.cpp; path = data/icons/icons.cpp; sourceTree = "<group>"; };
 		9D8FB4E12CB47539006905BE /* logos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = logos.cpp; path = data/icons/logos.cpp; sourceTree = "<group>"; };
+		9D90B8932F52227A00EBF6F6 /* audioDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audioDebugger.h; sourceTree = "<group>"; };
+		9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audioDebugger.cpp; sourceTree = "<group>"; };
 		9D98A7492F4B93EF00BB972F /* expressionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = expressionParser.cpp; sourceTree = "<group>"; };
 		9D98A74A2F4B93EF00BB972F /* expressionParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = expressionParser.h; sourceTree = "<group>"; };
 		9D99AA642E462DE10075FF62 /* libbz2.1.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbz2.1.0.dylib; path = data/libs/shared/macIntel/libbz2.1.0.dylib; sourceTree = "<group>"; };
@@ -2691,6 +2695,8 @@
 		9DBA88402ED0C7D400DF0756 /* debugger */ = {
 			isa = PBXGroup;
 			children = (
+				9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */,
+				9D90B8932F52227A00EBF6F6 /* audioDebugger.h */,
 				9D6F44852F2E6CD4005BABFA /* dmaDebugger.cpp */,
 				9D6F44862F2E6CD4005BABFA /* dmaDebugger.h */,
 				9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */,
@@ -2978,6 +2984,7 @@
 				9D8FAB1A2CB3F6EF006905BE /* reverb.cpp in Sources */,
 				9D8FAE602CB40DF9006905BE /* system.cpp in Sources */,
 				9D8FAB042CB3F6EF006905BE /* config.cpp in Sources */,
+				9D90B8952F52227B00EBF6F6 /* audioDebugger.cpp in Sources */,
 				9D8FAAFE2CB3F6EF006905BE /* shaderParser.cpp in Sources */,
 				9D8FAC992CB40C9D006905BE /* driver.cpp in Sources */,
 				9D8FAE5B2CB40DF9006905BE /* sidManager.cpp in Sources */,
@@ -3160,6 +3167,7 @@
 				9DECF99F2E45F309005C0BBA /* reverb.cpp in Sources */,
 				9DECF9A02E45F309005C0BBA /* system.cpp in Sources */,
 				9DECF9A12E45F309005C0BBA /* config.cpp in Sources */,
+				9D90B8962F52227B00EBF6F6 /* audioDebugger.cpp in Sources */,
 				9DECF9A22E45F309005C0BBA /* shaderParser.cpp in Sources */,
 				9DECF9A32E45F309005C0BBA /* driver.cpp in Sources */,
 				9DECF9A42E45F309005C0BBA /* sidManager.cpp in Sources */,
