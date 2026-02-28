@@ -14,6 +14,14 @@ GUIKIT::Timer* Debugger::timerVisibility = nullptr;
 Debugger::~Debugger() {
     timerVisibility->setEnabled( false );
     setVisible(false);
+
+    if (themeLayout) {
+        layout.remove(*themeLayout);
+        delete themeLayout;
+    }
+
+    layout.remove(*control);
+    delete control;
 }
 
 Debugger::Debugger( Emulator::Interface* emulator, Mode mode )
@@ -54,6 +62,10 @@ Debugger::Control::Control(Debugger* debugger) {
 
 auto Debugger::build() -> void {
     GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1050), GUIKIT::Font::scale(550)};
+
+    if (GUIKIT::Application::isGtk()) {
+        defaultGeometry.height += 40;
+    }
 
     GUIKIT::Geometry geometry = {settings->get<int>(saveIdent() + "_x", defaultGeometry.x)
         ,settings->get<int>(saveIdent() + "_y", defaultGeometry.y)
@@ -114,7 +126,8 @@ auto Debugger::build() -> void {
 
     layout.setMargin( 10 );
 
-    layout.append( *buildTheme(), {~0u, ~0u}, 10 );
+    themeLayout = buildTheme();
+    layout.append( *themeLayout, {~0u, ~0u}, 10 );
     layout.append( *control, {~0u, 0u} );
 
     append( layout );
@@ -374,6 +387,7 @@ auto Debugger::reset() -> void {
 
 auto Debugger::makeVisible() -> void {
     setVisible();
+    setFocused();
     if (emulator != activeEmulator)
         return;
 

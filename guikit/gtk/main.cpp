@@ -677,6 +677,7 @@ auto pWindow::setVisible(bool visible) -> bool {
 		gtk_widget_set_visible(menu, true);
 	
     gtk_widget_set_visible(widget, visible);
+    gtk_window_set_focus( GTK_WINDOW(widget), nullptr );
 		
 	if (!window.menuVisible()) // dirty hack tail
 		setMenuVisible(false);

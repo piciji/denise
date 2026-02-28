@@ -77,6 +77,7 @@ struct Debugger : GUIKIT::Window {
         Control(Debugger* debugger);
     };
     Control* control = nullptr;
+    GUIKIT::Layout* themeLayout = nullptr;
 
     Emulator::Interface::DebuggerSnapshot* snapshot = nullptr;
     static GUIKIT::Timer* timerVisibility;

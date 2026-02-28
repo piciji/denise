@@ -7,7 +7,7 @@ AudioDebugger::AudioDebugger( Emulator::Interface* emulator )
     build();
 }
 
-AudioDebugger::Audio::Chip::Top::Voice::Wave::Wave() {
+AudioDebugger::Chip::Top::Voice::Wave::Wave() {
     append(label, {0u, 0u}, 10);
     append(noise, {0u, 0u}, 5);
     append(pulse, {0u, 0u}, 5);
@@ -20,21 +20,21 @@ AudioDebugger::Audio::Chip::Top::Voice::Wave::Wave() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Top::Voice::Frequency::Frequency() {
+AudioDebugger::Chip::Top::Voice::Frequency::Frequency() {
     append(label, {0u, 0u}, 10);
     append(edit, {~0u, 0u});
     edit.setEditable( false );
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Top::Voice::PulseWidth::PulseWidth() {
+AudioDebugger::Chip::Top::Voice::PulseWidth::PulseWidth() {
     append(label, {0u, 0u}, 10);
     append(edit, {~0u, 0u});
     edit.setEditable( false );
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Top::Voice::Adsr::Adsr() {
+AudioDebugger::Chip::Top::Voice::Adsr::Adsr() {
     append(label, {0u, 0u}, 10);
     append(editA, {~0u, 0u}, 10);
     append(editD, {~0u, 0u}, 10);
@@ -47,7 +47,7 @@ AudioDebugger::Audio::Chip::Top::Voice::Adsr::Adsr() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Top::Voice::Control::Control() {
+AudioDebugger::Chip::Top::Voice::Control::Control() {
     append(label, {0u, 0u}, 10);
     append(test, {~0u, 0u});
     append(ring, {~0u, 0u});
@@ -60,7 +60,7 @@ AudioDebugger::Audio::Chip::Top::Voice::Control::Control() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Top::Voice::Voice() {
+AudioDebugger::Chip::Top::Voice::Voice() {
     append( wave, {~0u, 0u}, 10 );
     append( frequency, {~0u, 0u}, 10 );
     append( pulseWidth, {~0u, 0u}, 10 );
@@ -69,13 +69,13 @@ AudioDebugger::Audio::Chip::Top::Voice::Voice() {
     setPadding( 10 );
 }
 
-AudioDebugger::Audio::Chip::Top::Top() {
+AudioDebugger::Chip::Top::Top() {
     append( voices[0], {~0u, 0u}, 10 );
     append( voices[1], {~0u, 0u}, 10 );
     append( voices[2], {~0u, 0u} );
 }
 
-AudioDebugger::Audio::Chip::Bottom::Mixer::Mode::Mode() {
+AudioDebugger::Chip::Bottom::Mixer::Mode::Mode() {
     append(label, {0u, 0u}, 10);
     append(highPass, {0u, 0u}, 10);
     append(bandPass, {0u, 0u}, 10);
@@ -87,7 +87,7 @@ AudioDebugger::Audio::Chip::Bottom::Mixer::Mode::Mode() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Bottom::Mixer::Filter::Filter() {
+AudioDebugger::Chip::Bottom::Mixer::Filter::Filter() {
     append(label, {0u, 0u}, 10);
     append(voice3, {0u, 0u}, 10);
     append(voice2, {0u, 0u}, 10);
@@ -99,7 +99,7 @@ AudioDebugger::Audio::Chip::Bottom::Mixer::Filter::Filter() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Bottom::Mixer::Params::Params() {
+AudioDebugger::Chip::Bottom::Mixer::Params::Params() {
     append(labelCutoff, {0u, 0u}, 10);
     append(editCutoff, {50u, 0u}, 10);
     append(labelResonance, {0u, 0u}, 10);
@@ -110,14 +110,14 @@ AudioDebugger::Audio::Chip::Bottom::Mixer::Params::Params() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Bottom::Mixer::Mixer() {
+AudioDebugger::Chip::Bottom::Mixer::Mixer() {
     append(mode, {0u, 0u}, 10);
     append(filter, {0u, 0u}, 10);
     append(params, {0u, 0u});
     setPadding( 10 );
 }
 
-AudioDebugger::Audio::Chip::Bottom::Misc::Volume::Volume() {
+AudioDebugger::Chip::Bottom::Misc::Volume::Volume() {
     append(label, {0u, 0u}, 10);
     append(edit, {50u, 0u}, 10);
     append(disableVoice3, {0u, 0u});
@@ -127,7 +127,7 @@ AudioDebugger::Audio::Chip::Bottom::Misc::Volume::Volume() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Bottom::Misc::Pot::Pot() {
+AudioDebugger::Chip::Bottom::Misc::Pot::Pot() {
     append(labelX, {0u, 0u}, 10);
     append(editX, {50u, 0u}, 10);
     append(labelY, {0u, 0u}, 10);
@@ -138,42 +138,39 @@ AudioDebugger::Audio::Chip::Bottom::Misc::Pot::Pot() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Audio::Chip::Bottom::Misc::Misc() {
+AudioDebugger::Chip::Bottom::Misc::Misc() {
     append( volume, {0u, 0u}, 10 );
     append( pot, {0u, 0u}, 10 );
     setPadding( 10 );
 }
 
-AudioDebugger::Audio::Chip::Bottom::Bottom() {
+AudioDebugger::Chip::Bottom::Bottom() {
     append( spacerL, {~0u, 0u} );
     append( mixer, {0u, 0u}, 10 );
     append( misc, {0u, 0u} );
     append( spacerR, {~0u, 0u} );
 }
 
-AudioDebugger::Audio::Chip::Chip() {
+AudioDebugger::Chip::Chip() {
     append( top, {~0u, 0u}, 10 );
     append( bottom, {~0u, 0u} );
     setMargin( 10 );
 }
 
-AudioDebugger::Audio::Audio( Debugger* debugger ) {
+auto AudioDebugger::buildTheme() -> GUIKIT::Layout* {
     int i = 0;
 
     for (auto& chip : chips) {
-        appendHeader( "SID " + std::to_string( i + 1 ) );
-        setLayout(i, chip, {~0u, ~0u});
+        tab.appendHeader( "SID " + std::to_string( i + 1 ) );
+        tab.setLayout(i, chip, {~0u, ~0u});
 
         i++;
     }
-    setMargin(10);
-    setSelection(0);
-}
 
-auto AudioDebugger::buildTheme() -> GUIKIT::Layout* {
-    audio = new Audio( this );
+    tab.setMargin(10);
+    tab.setSelection(0);
 
-    return audio;
+    return &tab;
 }
 
 auto AudioDebugger::updateTheme() -> void {
@@ -191,7 +188,7 @@ auto AudioDebugger::updateTheme() -> void {
 auto AudioDebugger::updateSID(LIBC64::DebuggerSnapshot& snap) -> void {
     int c = 0;
     for (auto& sid : snap.sids ) {
-        auto& chip = audio->chips[c++];
+        auto& chip = chips[c++];
 
         chip.setEnabled( sid.active );
         if (!sid.active)
@@ -241,7 +238,7 @@ auto AudioDebugger::updateSID(LIBC64::DebuggerSnapshot& snap) -> void {
 }
 
 auto AudioDebugger::translateTheme() -> void {
-    for (auto& chip : audio->chips) {
+    for (auto& chip : chips) {
         int v = 1;
         for (auto& voice : chip.top.voices) {
             voice.wave.label.setText( "Waveform" );
