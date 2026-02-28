@@ -90,6 +90,8 @@ auto Debugger::build() -> void {
     frameImg.loadPng((uint8_t*)Icons::frame, sizeof(Icons::frame));
 
     memoryImg.loadPng((uint8_t*)Icons::memory, sizeof(Icons::memory));
+    memoryBorderImg.loadPng((uint8_t*)Icons::memoryBorder, sizeof(Icons::memoryBorder));
+    processorImg.loadPng((uint8_t*)Icons::processor, sizeof(Icons::processor));
     exceptionImg.loadPng((uint8_t*)Icons::exception, sizeof(Icons::exception));
     clearImg.loadPng((uint8_t*)Icons::clear, sizeof(Icons::clear));
 

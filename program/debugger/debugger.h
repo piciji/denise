@@ -49,6 +49,8 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image lineImg;
     GUIKIT::Image frameImg;
     GUIKIT::Image memoryImg;
+    GUIKIT::Image memoryBorderImg;
+    GUIKIT::Image processorImg;
     GUIKIT::Image exceptionImg;
     GUIKIT::Image clearImg;
     GUIKIT::Image offImg;

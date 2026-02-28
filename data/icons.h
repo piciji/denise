@@ -192,6 +192,8 @@ extern uint8_t exception[450];
 
 extern uint8_t checked[529];
 
-extern uint8_t circleBlue[389];
+extern uint8_t circleBlue[364];
+
+extern uint8_t memoryBorder[396];
 
 }

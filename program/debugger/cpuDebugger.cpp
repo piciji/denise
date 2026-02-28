@@ -66,7 +66,7 @@ CpuDebugger::CPU::WatcherLayout::ExcAdder::ExcAdder()
 }
 
 CpuDebugger::CPU::WatcherLayout::WatcherLayout() {
-    list.setHeaderText( { "", "", "", "", ""} );
+    list.setHeaderText( { "", "", "", ""} );
 
     append(list, {~0u, ~0u}, 5);
     append(breakPoint, {0u, 0u}, 3);
@@ -205,7 +205,7 @@ CpuDebugger::CPU::CPU(Debugger* debugger)
     switchLayout.setLayout( 1, traceLayout, {~0u, ~0u} );
 
     append(switchLayout, {~0u, ~0u}, 20);
-    append(watcher, {210u, ~0u}, 10);
+    append(watcher, {200u, ~0u}, 10);
     append(state, {0u, 0u});
 }
 
@@ -283,7 +283,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         if (row >= watchers.size())
             return;
 
-        if (column != 0 && column != 4)
+        if (column != 0 && column != 3)
             return;
 
         if (row >= watchers.size())
@@ -308,7 +308,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
 
             if (instRow.has_value())
                 updateInstructionBreakpointVisuals(instRow.value(), &watcher);
-        } else {
+        } else if (column == 3) {
             emulator->debuggerRemove( getCpuType(), watcher.action, watcher.addr);
             if (instRow.has_value())
                 removeInstructionBreakpoint(instRow.value());
@@ -600,23 +600,26 @@ auto CpuDebugger::updateWatcherList() -> void {
 
     for (auto& w : watchers) {
         if (w.ident.empty()) {
-            std::string _access = w.action == DebuggerAction::WatchpointWrite ? "W" : "R";
             snprintf(hex, 7, format.c_str(), w.addr);
-            watcherList.append( {"", std::string(hex), _access, "", ""}, true );
+            watcherList.append( {"", std::string(hex),"", ""}, true );
         } else {
-            watcherList.append( {"", w.ident, "R", "", ""}, true );
+            watcherList.append( {"", w.ident, "", ""}, true );
         }
 
         unsigned row = watcherList.rowCount() - 1;
 
         updateWatcherBreakpointVisuals( row, &w, true );
 
-        if (w.action == DebuggerAction::Watchpoint || w.action == DebuggerAction::WatchpointWrite)
-            watcherList.setImage( row, 3, memoryImg, true );
+        if (w.action == DebuggerAction::Watchpoint)
+            watcherList.setImage( row, 2, memoryImg, true );
+        else if (w.action == DebuggerAction::WatchpointWrite)
+            watcherList.setImage( row, 2, memoryBorderImg, true );
         else if (w.action == DebuggerAction::ExceptionPoint)
-            watcherList.setImage( row, 3, exceptionImg, true );
+            watcherList.setImage( row, 2, exceptionImg, true );
+        else
+            watcherList.setImage( row, 2, processorImg, true );
 
-        watcherList.setImage( row, 4, trashImg, true );
+        watcherList.setImage( row, 3, trashImg, true );
     }
 
     watcherList.autoSizeColumns();
@@ -676,6 +679,7 @@ auto CpuDebugger::updateWatcherSelection() -> void {
     auto& watcherList = cpu->watcher.list;
     if (snapshot->callbackAction == DebuggerAction::Watchpoint
         || snapshot->callbackAction == DebuggerAction::WatchpointWrite
+        || snapshot->callbackAction == DebuggerAction::Breakpoint
         || snapshot->callbackAction == DebuggerAction::ExceptionPoint) {
         auto row = findWatcherRowBy(snapshot->callbackAddress, snapshot->callbackAction);
         if (row.has_value())
