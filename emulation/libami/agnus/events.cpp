@@ -440,7 +440,7 @@ auto Agnus::debuggerUpdateEvent() -> void {
     auto& snap = system->debuggerSnapshot;
 
     if (snap.themes) {
-        updateEvent<EVENT_DEBUGGER>(msecToDMACycles( 100 ) + 333);
+        updateEvent<EVENT_DEBUGGER>(msecToDMACycles( 100 ) + 3000);
     } else
         setEventInactive<EVENT_DEBUGGER>();
 }
