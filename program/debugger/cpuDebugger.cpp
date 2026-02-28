@@ -962,7 +962,6 @@ auto CpuDebugger::createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Pos
     delete unfocusTimer;
 
     breakConditionWindow = new GUIKIT::Window(GUIKIT::Window::Hints::No_Title);
-    breakConditionWindow->cocoa.keepMenuVisibilityOnDisplay();
 
     unfocusTimer = new GUIKIT::Timer();
     unfocusTimer->setInterval(100);
@@ -1089,7 +1088,8 @@ auto CpuDebugger::createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Pos
     breakConditionLayout->control.closeButton.setText( trans->getA( "close" ) );
     breakConditionWindow->append( *breakConditionLayout );
 
-    GUIKIT::Layout::alignChildWidth({hc, ex});
+    GUIKIT::Layout::alignChildWidth({hc, ex}, 0);
+    GUIKIT::Layout::alignChildWidth({hc, ex}, 1);
 
     breakConditionWindow->setVisible(  );
     unfocusTimer->setEnabled();

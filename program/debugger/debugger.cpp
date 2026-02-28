@@ -53,8 +53,6 @@ Debugger::Control::Control(Debugger* debugger) {
 }
 
 auto Debugger::build() -> void {
-    cocoa.keepMenuVisibilityOnDisplay();
-
     GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1024), GUIKIT::Font::scale(570)};
 
     GUIKIT::Geometry geometry = {settings->get<int>(saveIdent() + "_x", defaultGeometry.x)

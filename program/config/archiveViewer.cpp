@@ -8,8 +8,6 @@
 ArchiveViewer* archiveViewer = nullptr;
 
 auto ArchiveViewer::build() -> void {
-    cocoa.keepMenuVisibilityOnDisplay();
-
     imgFolderOpen.loadPng((uint8_t*)Icons::folderOpen, sizeof(Icons::folderOpen) );
     imgFolderClosed.loadPng((uint8_t*)Icons::folderClosed, sizeof(Icons::folderClosed) );
     imgDocument.loadPng((uint8_t*)Icons::document, sizeof(Icons::document) );

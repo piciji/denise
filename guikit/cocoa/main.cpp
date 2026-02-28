@@ -644,22 +644,18 @@ auto pWindow::setVisible(bool visible) -> bool {
         if(visible) {
             try {
                 [cocoaWindow makeKeyAndOrderFront:nil];
-                if(!keepMenuVisibility) setMenuVisible(window.menuVisible());
             } catch(...) {
                 window.setGeometry({100,100,400,300});
                 [cocoaWindow makeKeyAndOrderFront:nil];
-                if(!keepMenuVisibility) setMenuVisible(window.menuVisible());
             }
+            
+            if (window.state.menus.size() > 0)
+                setMenuVisible(window.menuVisible());
         }
         else [cocoaWindow orderOut:nil];
     }
     return true;
 }
-    
-auto pWindow::keepMenuVisibilityOnDisplay(bool state) -> void {
-    keepMenuVisibility = state;
-}
-
 
 auto pWindow::setResizable(bool resizable) -> void {
     @autoreleasepool {

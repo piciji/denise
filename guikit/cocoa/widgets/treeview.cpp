@@ -50,7 +50,7 @@
         [image drawInRect:targetRect fromRect:sourceRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
         
         [[NSGraphicsContext currentContext] restoreGraphicsState];
-        textDisplacement = frame.size.height + 4;
+        textDisplacement = frame.size.height + 6;
     }
     
     NSRect textRect = NSMakeRect(
@@ -105,7 +105,7 @@
         [content setAllowsEmptySelection:YES];
         [content setAllowsMultipleSelection:NO];
         [content setHeaderView:nil];
-        [content setColumnAutoresizingStyle:NSTableViewLastColumnOnlyAutoresizingStyle];
+        [content setColumnAutoresizingStyle:NSTableViewNoColumnAutoresizing];
         
         font = nil;
         [self setFont:nil];

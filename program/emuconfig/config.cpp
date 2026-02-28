@@ -45,7 +45,6 @@ auto TabWindow::getTabPos(Layout layout) -> int {
 }
 
 auto TabWindow::build() -> void {
-    cocoa.keepMenuVisibilityOnDisplay();
     setDroppable();
 
     GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1000), GUIKIT::Font::scale(570)};

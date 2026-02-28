@@ -25,7 +25,6 @@ struct pWindow {
     CocoaWindow* cocoaWindow = nullptr;
     bool locked = false;
     bool fullScreenToggleDelay = false;
-    bool keepMenuVisibility = false;
     NSCursor* customCursor = nullptr;
     BackgroundView* backgroundView = nullptr;
     Timer resizeTimer;
@@ -46,7 +45,6 @@ struct pWindow {
     auto setTitle(std::string text) -> void;
     auto setStatusVisible(bool visible) -> void;
     auto setMenuVisible(bool visible) -> void;
-    auto keepMenuVisibilityOnDisplay(bool state) -> void;
     auto setFullScreen(bool fullScreen) -> void;
     auto updateFullScreen( bool inUse, unsigned displayId = 0, unsigned settingId = 0) -> void;
     auto setDroppable(bool droppable) -> void;

@@ -248,7 +248,6 @@ struct Window : Base {
         enum AppMenuItem : unsigned { About = 0, Preferences = 2, Custom1 = 3, Hide = 5, HideOthers = 6, ShowAll = 7, Quit = 9 };
         auto setTitleForAppMenuItem(AppMenuItem appMenuItem, const std::string& title) -> void;
         auto setHiddenForAppMenuItem(AppMenuItem appMenuItem, bool state) -> void;
-        auto keepMenuVisibilityOnDisplay(bool state = true) -> void;
         auto setDisableIconsInTopMenu(bool state) -> void;
         Cocoa(Window& window) : window(window) {}
     } cocoa;

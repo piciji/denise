@@ -443,12 +443,6 @@ auto Window::Cocoa::setHiddenForAppMenuItem(AppMenuItem appMenuItem, bool state)
     window.p.setHiddenForAppMenuItem(appMenuItem, state);
 #endif
 }
-    
-auto Window::Cocoa::keepMenuVisibilityOnDisplay(bool state) -> void {
-#if GUIKIT_COCOA
-    window.p.keepMenuVisibilityOnDisplay( state );
-#endif
-}
 
 auto Window::Cocoa::setDisableIconsInTopMenu(bool state) -> void {
 #if GUIKIT_COCOA
