@@ -125,46 +125,57 @@ VideoDebugger::Video::Wraper::Intr::Intr(Debugger* debugger)
     setPadding( 10 );
 }
 
-VideoDebugger::Video::Wraper::Lightpen::Lightpen(Debugger* debugger) {
-    if (debugger->isAmiga())
-        return;
+VideoDebugger::Video::Wraper::Wraper(Debugger* debugger)
+: regWrapper( debugger), flags( debugger ), intr( debugger ) {
+    append( regWrapper, {~0u, 0u}, 7 );
+    append( flags, {~0u, 0u}, 7 );
+    if (debugger->isC64()) {
+        append( intr, {~0u, 0u}, 7 );
+    } else {
+        append( colors, {~0u, 0u} );
+    }
+}
+
+VideoDebugger::Video::WraperRight::Lightpen::Top::Top() {
     valX.setFont( GUIKIT::Font::monospace() );
     valX.setText( "0" );
     valX.setStore( 0 );
     valX.setEditable( false );
     valX.setAlign( GUIKIT::LineEdit::Align::Right );
+    line.setReadonly( );
 
+    append(labelX, {0u, 0u}, 5u);
+    append(valX, {getWidth(2, true), 0u}, 10u);
+    append(line, {0u, 0u}, 10u);
+
+    setAlignment( 0.5 );
+}
+
+VideoDebugger::Video::WraperRight::Lightpen::Bottom::Bottom() {
     valY.setFont( GUIKIT::Font::monospace() );
     valY.setText( "0" );
     valY.setStore( 0 );
     valY.setEditable( false );
     valY.setAlign( GUIKIT::LineEdit::Align::Right );
-
-    line.setReadonly( );
     latched.setReadonly( );
 
-    append(spacer, {~0u, 0u} );
-    append(labelX, {0u, 0u}, 5u);
-    append(valX, {getWidth(2, true), 0u}, 10u);
     append(labelY, {0u, 0u}, 5u);
     append(valY, {getWidth(2, true), 0u}, 10u);
-    append(line, {0u, 0u}, 10u);
     append(latched, {0u, 0u});
 
     setAlignment( 0.5 );
+}
+
+VideoDebugger::Video::WraperRight::Lightpen::Lightpen(Debugger* debugger) {
+    append( top, {0u, 0u}, 10 );
+    append( bottom, {0u, 0u} );
+
     setPadding( 10 );
 }
 
-VideoDebugger::Video::Wraper::Wraper(Debugger* debugger)
-: regWrapper( debugger), flags( debugger ), intr( debugger ), lightpen( debugger ) {
-    append( regWrapper, {~0u, 0u}, 7 );
-    append( flags, {~0u, 0u}, 7 );
-    if (debugger->isC64()) {
-        append( intr, {~0u, 0u}, 7 );
-        append( lightpen, {~0u, 0u} );
-    } else {
-        append( colors, {~0u, 0u} );
-    }
+VideoDebugger::Video::WraperRight::WraperRight(Debugger* debugger)
+: lightpen( debugger ) {
+    append( lightpen, {~0u, 0u} );
 }
 
 VideoDebugger::Video::Sprites::Viewer::Viewer(Debugger* debugger) {
@@ -243,9 +254,15 @@ VideoDebugger::Video::Sprites::Sprites(Debugger* debugger)
 }
 
 VideoDebugger::Video::Video( Debugger* debugger )
-: wraper( debugger ), sprites( debugger ) {
+: wraper( debugger ), wraperRight( debugger ), sprites( debugger ) {
     append(wraper, {0u, 0u}, 20);
-    append(sprites, {0u, 0u});
+
+    if (debugger->isC64()) {
+        append(sprites, {0u, 0u}, 20);
+        append(wraperRight, {0u, 0u});
+    } else {
+        append(sprites, {0u, 0u});
+    }
 }
 
 auto VideoDebugger::buildTheme() -> GUIKIT::Layout* {
@@ -414,11 +431,11 @@ auto VideoDebugger::updateView(LIBC64::DebuggerSnapshot& s) -> void {
     updateReg( *intMask.boxes[2], !!(snap.irqEnable & 2) );
     updateReg( *intMask.boxes[3], !!(snap.irqEnable & 1) );
 
-    auto& lp = video->wraper.lightpen;
-    updateReg( lp.valX, snap.lpx );
-    updateReg( lp.valY, snap.lpy );
-    updateReg( lp.line, snap.lpPin );
-    updateReg( lp.latched, snap.lpLatched );
+    auto& lp = video->wraperRight.lightpen;
+    updateReg( lp.top.valX, snap.lpx );
+    updateReg( lp.bottom.valY, snap.lpy );
+    updateReg( lp.top.line, snap.lpPin );
+    updateReg( lp.bottom.latched, snap.lpLatched );
 
     updateControl( s.vPos, s.hPos );
 }
@@ -607,12 +624,12 @@ auto VideoDebugger::translateTheme() -> void {
     intLatch.boxes[2]->setText( "SF Col" );
     intLatch.boxes[3]->setText( "Raster" );
 
-    auto& lp = video->wraper.lightpen;
+    auto& lp = video->wraperRight.lightpen;
     lp.setText( "Lightpen" );
-    lp.labelX.setText( "X" );
-    lp.labelY.setText( "Y" );
-    lp.line.setText( "LP Line" );
-    lp.latched.setText( "Latched" );
+    lp.top.labelX.setText( "X" );
+    lp.bottom.labelY.setText( "Y" );
+    lp.top.line.setText( "LP Line" );
+    lp.bottom.latched.setText( "Latched" );
 
     video->wraper.regWrapper.setText( "Register" );
 

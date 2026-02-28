@@ -53,7 +53,7 @@ Debugger::Control::Control(Debugger* debugger) {
 }
 
 auto Debugger::build() -> void {
-    GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1024), GUIKIT::Font::scale(570)};
+    GUIKIT::Geometry defaultGeometry = {50, 50, GUIKIT::Font::scale(1050), GUIKIT::Font::scale(550)};
 
     GUIKIT::Geometry geometry = {settings->get<int>(saveIdent() + "_x", defaultGeometry.x)
         ,settings->get<int>(saveIdent() + "_y", defaultGeometry.y)

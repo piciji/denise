@@ -64,19 +64,30 @@ struct VideoDebugger : Debugger {
                 Intr(Debugger* debugger);
             } intr;
 
-            struct Lightpen : GUIKIT::FramedHorizontalLayout {
-                GUIKIT::Widget spacer;
-                GUIKIT::Label labelX;
-                GUIKIT::LineEdit valX;
-                GUIKIT::Label labelY;
-                GUIKIT::LineEdit valY;
-                GUIKIT::CheckBox line;
-                GUIKIT::CheckBox latched;
+            Wraper(Debugger* debugger);
+        } wraper;
+
+        struct WraperRight : GUIKIT::VerticalLayout {
+            struct Lightpen : GUIKIT::FramedVerticalLayout {
+                struct Top : GUIKIT::HorizontalLayout {
+                    GUIKIT::Label labelX;
+                    GUIKIT::LineEdit valX;
+                    GUIKIT::CheckBox line;
+                    Top();
+                } top;
+
+                struct Bottom : GUIKIT::HorizontalLayout {
+                    GUIKIT::Label labelY;
+                    GUIKIT::LineEdit valY;
+                    GUIKIT::CheckBox latched;
+                    Bottom();
+                } bottom;
+
                 Lightpen(Debugger* debugger);
             } lightpen;
 
-            Wraper(Debugger* debugger);
-        } wraper;
+            WraperRight(Debugger* debugger);
+        } wraperRight;
 
         struct Sprites : GUIKIT::FramedVerticalLayout {
 
