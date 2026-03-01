@@ -9,6 +9,14 @@ DmaDebugger::DmaDebugger( Emulator::Interface* emulator )
     build();
 }
 
+DmaDebugger::~DmaDebugger() {
+    if (dmaControl) {
+        if (control)
+            control->remove( *dmaControl );
+        delete dmaControl;
+    }
+}
+
 DmaDebugger::Dma::Legend::Legend::Watcher::Watcher() {
     append( spacer, {10u, 0u}, 0);
     append( button, {90u, 0u}, 0);
@@ -37,9 +45,13 @@ DmaDebugger::Dma::Legend::Legend() {
     }
 }
 
-DmaDebugger::DmaControl::DmaControl() {
-    append(spacer, {~0u, 0u} );
-    append( symbolic, {0u, 0u} );
+DmaDebugger::DmaControl::DmaControl(DmaDebugger* debugger) {
+    if (debugger->isAmiga()) {
+        append(spacer, {~0u, 0u} );
+        append( symbolic, {0u, 0u} );
+    } else {
+        append(rdyButton, {0u, 0u} );
+    }
 }
 
 DmaDebugger::Dma::DmaLine::DmaLine(DmaDebugger* debugger) {
@@ -88,10 +100,15 @@ DmaDebugger::Dma::Dma(DmaDebugger* debugger)
 }
 
 auto DmaDebugger::buildControl() -> GUIKIT::Layout* {
-    if (isAmiga())
-        return &dmaControl;
+    dmaControl = new DmaControl(this);
 
-    return nullptr;
+    if (isC64()) {
+        dmaControl->rdyButton.onActivate = [this]() {
+            haltCpu(emulator);
+        };
+    }
+
+    return dmaControl;
 }
 
 auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
@@ -148,7 +165,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->unlock();
     };
 
-    dmaControl.symbolic.onToggle = [this](bool checked) {
+    dmaControl->symbolic.onToggle = [this](bool checked) {
         if (isC64())
             return;
         emuThread->lock();
@@ -165,8 +182,8 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         scrollTimer.setEnabled( false );
     };
 
-    dmaControl.symbolic.setChecked( isAmiga() ? settings->get<bool>(saveIdent() + "_symbolic", true) : false );
-    dma->dmaLine.viewer.setSymbolicAddr(dmaControl.symbolic.checked());
+    dmaControl->symbolic.setChecked( isAmiga() ? settings->get<bool>(saveIdent() + "_symbolic", true) : false );
+    dma->dmaLine.viewer.setSymbolicAddr(dmaControl->symbolic.checked());
 
     for (auto& watcher : dma->legend.watchers) {
         auto* w = &watcher;
@@ -398,7 +415,7 @@ auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
 
     canvas.setLength( slots );
     auto& logics = canvas.getDataRef();
-    bool symbolic = dmaControl.symbolic.checked();
+    bool symbolic = dmaControl->symbolic.checked();
     Emulator::Interface::DebuggerDma* dStateBefore = nullptr;
     Emulator::Interface::DebuggerDma* dStateNext = nullptr;
 
@@ -528,7 +545,13 @@ auto DmaDebugger::closeTheme() -> void {
 }
 
 auto DmaDebugger::translateTheme() -> void {
-    dmaControl.symbolic.setText( "Symbolic" );
+    bool showTips = showTipsItem.checked();
+
+    if (dmaControl) {
+        dmaControl->symbolic.setText( "Symbolic" );
+        dmaControl->rdyButton.setText("RDY" );
+        dmaControl->rdyButton.setTooltip( showTips ? trans->getA( "rdy tooltip" ) : "" );
+    }
 
     dma->dmaFrame.showUsage.setText( trans->getA( "Show DMA usage" ) );
 

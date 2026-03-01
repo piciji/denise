@@ -378,6 +378,16 @@ auto Debugger::resume(Emulator::Interface* emulator) -> void {
     timerVisibility->setEnabled();
 }
 
+auto Debugger::haltCpu(Emulator::Interface* emulator) -> void {
+    if (emulator != activeEmulator)
+        return;
+    emuThread->lock();
+    timerVisibility->setEnabled();
+    emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::HaltCPU, 0 );
+    emuThread->unlockDebugger();
+    emuThread->unlock();
+}
+
 auto Debugger::reset() -> void {
     for (auto debugger : program->getActiveDebuggers()) {
         debugger->initTheme();

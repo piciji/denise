@@ -201,7 +201,7 @@ auto pLogicViewer::buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry ge
     }
 
     cairo_set_source_rgb(cr, _col, _col, _col);
-    drawText(cr, geo, String::convertToHex(logicState.position));
+    drawText(cr, geo, std::to_string(logicState.position));
 
     geo.y += geo.height + 5;
 

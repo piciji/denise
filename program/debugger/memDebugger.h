@@ -7,7 +7,7 @@ struct MemDebugger : Debugger {
     explicit MemDebugger( Emulator::Interface* emulator );
     explicit MemDebugger( Emulator::Interface* emulator, Mode mode );
 
-    ~MemDebugger();
+    ~MemDebugger() override;
 
     struct Memory : GUIKIT::HorizontalLayout {
         GUIKIT::ListView bankList;

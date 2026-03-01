@@ -18,6 +18,11 @@ MemDebugger::MemDebugger( Emulator::Interface* emulator )
 MemDebugger::~MemDebugger() {
     delete[] memDump;
     delete[] memDumpOld;
+
+    if (c64MemControl) {
+        control->remove( *c64MemControl );
+        delete c64MemControl;
+    }
 }
 
 MemDebugger::Memory::Memory(Debugger* debugger)

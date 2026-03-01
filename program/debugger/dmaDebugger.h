@@ -11,6 +11,7 @@ struct DmaColor {
 
 struct DmaDebugger : Debugger {
     explicit DmaDebugger( Emulator::Interface* emulator );
+    ~DmaDebugger() override;
 
     struct Dma : GUIKIT::HorizontalLayout {
 
@@ -65,9 +66,10 @@ struct DmaDebugger : Debugger {
     struct DmaControl : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;
         GUIKIT::CheckBox symbolic;
+        GUIKIT::Button rdyButton;
 
-        DmaControl();
-    } dmaControl;
+        DmaControl(DmaDebugger* debugger);
+    } *dmaControl = nullptr;
 
     GUIKIT::Menu watcherMenu;
     std::vector<GUIKIT::MenuItem*> watchItems;

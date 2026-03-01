@@ -12,6 +12,14 @@ CpuDebugger::CpuDebugger( Emulator::Interface* emulator )
     build();
 }
 
+CpuDebugger::~CpuDebugger() {
+    if (c64RdyControl) {
+        if (control)
+            control->remove( *c64RdyControl );
+        delete c64RdyControl;
+    }
+}
+
 CpuDebugger::BreakConditionLayout::Expression::Expression() {
     append( check, {0u, 0u}, 10 );
     append( compareCombo, {0u, 0u}, 10 );
@@ -1104,13 +1112,7 @@ auto CpuDebugger::buildControl() -> GUIKIT::Layout* {
         c64RdyControl = new C64RdyControl();
 
         c64RdyControl->rdyButton.onActivate = [this]() {
-            if (emulator != activeEmulator)
-                return;
-            emuThread->lock();
-            timerVisibility->setEnabled();
-            emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::HaltCPU, 0 );
-            emuThread->unlockDebugger();
-            emuThread->unlock();
+            haltCpu(emulator);
         };
 
         return c64RdyControl;

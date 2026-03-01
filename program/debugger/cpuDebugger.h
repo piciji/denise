@@ -11,6 +11,8 @@ struct CpuDebugger : Debugger {
     explicit CpuDebugger( Emulator::Interface* emulator );
     explicit CpuDebugger( Emulator::Interface* emulator, Mode mode );
 
+    ~CpuDebugger() override;
+
     struct CPU : GUIKIT::HorizontalLayout {
         GUIKIT::SwitchLayout switchLayout;
 
@@ -213,5 +215,5 @@ struct CpuDebugger : Debugger {
     auto createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Position position) -> void;
     auto updateWatchpointCondition(Watcher& watcher) -> bool;
 
-    auto buildControl() -> GUIKIT::Layout*;
+    auto buildControl() -> GUIKIT::Layout* override;
 };

@@ -362,7 +362,7 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
         SetTextColor(drawDC, DARK_DISABLE_COL);
     }
 
-    DrawText(drawDC, utf16_t(String::convertToHex(logicState.position)), -1, &rc, DT_CENTER);
+    DrawText(drawDC, utf16_t(std::to_string( logicState.position )), -1, &rc, DT_CENTER);
     rc.top = rc.bottom;
     rc.bottom = rc.top + 5;
 
