@@ -353,10 +353,13 @@ auto Program::repeatLastFrame() -> void {
 }
 
 auto Program::canExclusiveFullscreen() -> bool {
+    // FSE fullscreen switch hangs sometimes, FSO replaces FSE and is more stable
+    return false;
 
-    return !isPause && videoDriver->canExclusiveFullscreen()
-        && globalSettings->get<bool>("exclusive_fullscreen", false)
-        && !globalSettings->get<bool>("threaded_emu", false);
+    bool result = videoDriver->canExclusiveFullscreen()
+        && globalSettings->get<bool>("exclusive_fullscreen", false);
+
+    return result;
 }
 
 auto Program::hintExclusiveFullscreen() -> void {

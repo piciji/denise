@@ -16,7 +16,7 @@ struct DriverLayout : GUIKIT::HorizontalLayout {
 struct VideoDriverLayout : GUIKIT::FramedVerticalLayout {
 
     struct Top : GUIKIT::HorizontalLayout {
-        GUIKIT::CheckBox exclusiveFullscreen;
+       // GUIKIT::CheckBox exclusiveFullscreen;
         GUIKIT::CheckBox hardSync;
         DriverLayout driver;
 
@@ -32,7 +32,7 @@ struct AudioDriverLayout : GUIKIT::FramedVerticalLayout {
         GUIKIT::Label frequencyLabel;
         GUIKIT::ComboButton frequencyCombo;
         GUIKIT::Label maxRateLabel;
-        GUIKIT::LineEdit maxRateEdit;
+        GUIKIT::ComboButton maxRateEditCombo;
         DriverLayout driver;
 
         Top();

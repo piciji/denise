@@ -98,6 +98,8 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
     
     serializeAll(s);
 
+    debuggerUpdateEvent();
+
     remapCpu();
 
     updateDriveSounds();
@@ -155,7 +157,6 @@ auto System::serialize(Emulator::Serializer& s) -> void {
     s.integer( serializationSize );
     s.integer( serializationSizeLight );
     s.integer( mode );
-    s.integer( vicBank );    
     s.integer( irqIncomming );
     s.integer( nmiIncomming );    
     s.integer( rdyIncomming );   

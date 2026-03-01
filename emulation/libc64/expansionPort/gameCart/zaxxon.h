@@ -9,6 +9,10 @@ struct Zaxxon : GameCart {
         
     }
 
+    auto peekRomL( uint16_t addr ) -> uint8_t {
+        return GameCart::readRomL( addr );
+    }
+
     auto readRomL( uint16_t addr ) -> uint8_t {
 
         if (  ((addr >> 12) & 1 ) == 1)

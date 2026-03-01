@@ -1,25 +1,25 @@
 
 #define IO_MAPPING  \
-    memoryCpu.map( &readVicReg, &writeVicReg, 0xd0, 0xd3);      \
+    memoryCpu.map( &readVicReg, &peekVicReg, &writeVicReg, 0xd0, 0xd3);      \
                                                                 \
     if (!debugCart->enable)                                     \
-        memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd7);  \
+        memoryCpu.map( &readSidReg, &peekSidReg, &writeSidReg, 0xd4, 0xd7);  \
     else {                                                      \
-        memoryCpu.map( &readSidReg, &writeSidReg, 0xd4, 0xd6);  \
-        memoryCpu.map( &readSidReg, &writeDebugReg, 0xd7, 0xd7);\
+        memoryCpu.map( &readSidReg, &peekSidReg, &writeSidReg, 0xd4, 0xd6);  \
+        memoryCpu.map( &readSidReg, &peekSidReg, &writeDebugReg, 0xd7, 0xd7);\
     }                                                           \
     memoryCpu.map( &readColorRam, &writeColorRam, 0xd8, 0xdb);  \
-    memoryCpu.map( &readCia1Reg, &writeCia1Reg, 0xdc, 0xdc);    \
-    memoryCpu.map( &readCia2Reg, &writeCia2Reg, 0xdd, 0xdd);    \
-    memoryCpu.map( &readIo1Reg, &writeIo1Reg, 0xde, 0xde);      \
-    memoryCpu.map( &readIo2Reg, &writeIo2Reg, 0xdf, 0xdf);
+    memoryCpu.map( &readCia1Reg, &peekCia1Reg, &writeCia1Reg, 0xdc, 0xdc);    \
+    memoryCpu.map( &readCia2Reg, &peekCia2Reg, &writeCia2Reg, 0xdd, 0xdd);    \
+    memoryCpu.map( &readIo1Reg, &peekIo1Reg, &writeIo1Reg, 0xde, 0xde);      \
+    memoryCpu.map( &readIo2Reg, &peekIo2Reg, &writeIo2Reg, 0xdf, 0xdf);
 
 namespace LIBC64 {
 
 auto System::remapCpu(bool speedHack) -> void {
 
     // speed hack is used for Final Cartridge Plus (not 3+)
-    // the cart uses Ulitmax in second half cycle when accessing some address ranges
+    // the cart uses Ultimax in second half cycle when accessing some address ranges
     // switching causes a rebuild of memory map, which happens very often (50 FPS speed hit)
     // the hack prevents to rebuild areas, which are not accessed when cart switched to Ultimax mode
 
@@ -39,7 +39,10 @@ auto System::remapCpu(bool speedHack) -> void {
             IO_MAPPING
         }
 
-        memoryCpu.map( (mode & 2) ? &readKernalRom : &readRam, &writeRam, 0xe0, 0xff );
+        if (mode & 2)
+            memoryCpu.map( &readKernalRom, &peekKernalRom, &writeRam, 0xe0, 0xff );
+        else
+            memoryCpu.map( &readRam, &writeRam, 0xe0, 0xff );
 
         return;
     } 
@@ -61,18 +64,18 @@ auto System::remapCpu(bool speedHack) -> void {
 
     // 80 - 9f
     if ( ultimax ) {
-        memoryCpu.map( &readRomL, 0x80, 0x9f);
+        memoryCpu.map( &readRomL, &peekRomL, 0x80, 0x9f);
         memoryCpu.map( &writeUltimaxRomL, 0x80, 0x9f );
 
     } else if ( (cartMode == 0 || cartMode == 1) && ramMode == 3 ) {
-        memoryCpu.map( &readRomL, 0x80, 0x9f);
+        memoryCpu.map( &readRomL, &peekRomL, 0x80, 0x9f);
         memoryCpu.map( &writeRomL, 0x80, 0x9f );
     } else
         memoryCpu.map( &readRam, &writeRamAt80To9F, 0x80, 0x9f );
 
     // a0 - bf
     if ( ultimax )
-        memoryCpu.map( &readUltimaxA0, &writeUltimaxA0, 0xa0, 0xbf );
+        memoryCpu.map( &readUltimaxA0, &peekUltimaxA0, &writeUltimaxA0, 0xa0, 0xbf );
 
     else if ( (cartMode == 1 || cartMode == 3) && ramMode == 3 ) {
         memoryCpu.map( &readBasicRom, 0xa0, 0xbf );
@@ -80,7 +83,7 @@ auto System::remapCpu(bool speedHack) -> void {
 
     } else if (cartMode == 0 && (ramMode == 2 || ramMode == 3) ) {
 
-        memoryCpu.map( &readRomH, 0xa0, 0xbf );
+        memoryCpu.map( &readRomH, &peekRomH, 0xa0, 0xbf );
         memoryCpu.map( &writeRomH, 0xa0, 0xbf );
     } else
         memoryCpu.map( &readRam, &writeRamAtA0ToBF, 0xa0, 0xbf );
@@ -103,17 +106,176 @@ auto System::remapCpu(bool speedHack) -> void {
 
     // e0 - ff
     if ( ultimax ) {
-        memoryCpu.map( &readRomH, 0xe0, 0xff);
+        memoryCpu.map( &readRomH, &peekRomH, 0xe0, 0xff);
         memoryCpu.map( &writeUltimaxRomH, 0xe0, 0xff );
 
     } else if (ramMode == 2 || ramMode == 3) {
-        memoryCpu.map( &readKernalRom, 0xe0, 0xff );
+        memoryCpu.map( &readKernalRom, &peekKernalRom,0xe0, 0xff );
         memoryCpu.map( &writeRam, 0xe0, 0xff );
 
     } else
         memoryCpu.map( &readRam, &writeRam, 0xe0, 0xff );
     
     expansionPort->memoryMapUpdated();
+}
+
+auto System::logCpu(uint16_t addr, uint8_t data) -> void {
+    uint8_t page = addr >> 8;
+    uint8_t mapper = 0;
+    Memory::Read* ptr = memoryCpu.reads[page];
+
+    if (ptr == &readRam) mapper = 0x80 | 1;
+    else if (ptr == &readVicReg) mapper = 0x80 | 2;
+    else if (ptr == &readSidReg) mapper = 0x80 | 3;
+    else if (ptr == &readColorRam) mapper = 0x80 | 4;
+    else if (ptr == &readIo1Reg) mapper = 0x80 | 5;
+    else if (ptr == &readIo2Reg) mapper = 0x80 | 6;
+    else if (ptr == &readCia1Reg) mapper = 0x80 | 7;
+    else if (ptr == &readCia2Reg) mapper = 0x80 | 8;
+    else if (ptr == &readCharRom) mapper = 0x80 | 9;
+    else if (ptr == &readKernalRom) mapper = 0x80 | 10;
+    else if (ptr == &readBasicRom) mapper = 0x80 | 11;
+    else if (ptr == &readRomL) mapper = 0x80 | 12;
+    else if (ptr == &readRomH) mapper = 0x80 | 13;
+    else if (ptr == &readUltimaxA0) mapper = 0x80 | 14;
+
+    auto& dma = vicII->requestCurrentDmaLog();
+    dma.usageCpu = mapper;
+    dma.addrCpu = addr;
+    dma.dataCpu = data;
+
+    int i = 0;
+    for (auto& dmaWatcher : debugger.dmaWatchers ) {
+        if (dmaWatcher & 0x80000000) { // in use
+            if (dmaWatcher & (1 << 24)) {
+                if (cpu.irqPending)
+                    dma.watcher[i] = 0xfffe;
+                else if (cpu.nmiPending)
+                    dma.watcher[i] = 0xfffa;
+                else
+                    dma.watcher[i] = 0;
+            } else
+                dma.watcher[i] = memoryCpu.peek( dmaWatcher & 0xffff );
+        }
+        i++;
+    }
+}
+
+auto System::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+    if (dynamic_cast<SuperCpu*>(expansionPort)) {
+        for (int i = 0; i < values.size(); i++) {
+            uint32_t a = (addr + i) & 0xffffff;
+            uint8_t v = values[i] & 0xff;
+
+            superCpu->editMemory( a, v );
+        }
+    } else {
+        for (int i = 0; i < values.size(); i++) {
+            uint16_t a = (addr + i) & 0xffff;
+            uint8_t v = values[i] & 0xff;
+
+            Memory::Read* ptr = memoryCpu.reads[a >> 8];
+            if (ptr == &readCharRom)            charRom[a & 0xfff] = v;
+            else if (ptr == &readKernalRom)     kernalRom[a & 0x1fff] = v;
+            else if (ptr == &readBasicRom)      basicRom[a & 0x1fff] = v;
+
+            memoryCpu.write(a, v);
+        }
+    }
+}
+
+auto System::memoryDump(uint8_t page, uint8_t* dump) -> void {
+    uint8_t temp[16];
+    page &= 0xf;
+    page <<= 4;
+
+    // for (uint16_t addr = bank << 8; addr <= ((bank << 8) | 0xfff); addr++ )
+    //     *dump++ = memoryCpu.peek(addr);
+    //
+    // return;
+    Memory::Read* ptr = memoryCpu.reads[page];
+
+    if (ptr == &readRam) {
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
+            *dump++ = this->ram[ addr ];
+    }
+
+    else if (ptr == &readVicReg) {
+        for (unsigned addr = 0xd000; addr <= 0xd3ff; addr++ )
+            *dump++ = vicII->peekReg( addr & 0xff );
+
+        if (sidManager.extraSids) {
+            for (unsigned addr = 0xd400; addr <= 0xd7ff; addr++ )
+                *dump++ = sidManager.getSidByAdr( addr )->peekIO( addr );
+        } else {
+            for (unsigned addr = 0xd400; addr <= 0xd7ff; addr++ )
+                *dump++ = sidManager.sid->peekIO( addr );
+        }
+
+        uint8_t _l = vicII->lastReadPhase1() & ~0xf;
+        for (unsigned addr = 0xd800; addr <= 0xdbff; addr++ )
+            *dump++ = (colorRam[ addr & 0x3ff ] & 0xf) | _l;
+
+        for (unsigned addr = 0xdc00; addr <= 0xdc0f; addr++ )
+            temp[addr & 0xf] = cia1.peek( addr );
+
+        for(int a = 0; a < 16; a++) {
+            std::memcpy(dump, &temp, 16);
+            dump += 16;
+        }
+
+        for (unsigned addr = 0xdd00; addr <= 0xdd0f; addr++ )
+            temp[addr & 0xf] = cia2.peek( addr );
+
+        for(int a = 0; a < 16; a++) {
+            std::memcpy(dump, &temp, 16);
+            dump += 16;
+        }
+
+        for (unsigned addr = 0xde00; addr <= 0xdeff; addr++ )
+            *dump++ = peekIo1Reg( addr );
+
+        for (unsigned addr = 0xdf00; addr <= 0xdfff; addr++ )
+            *dump++ = peekIo2Reg( addr );
+    }
+
+    else if (ptr == &readRomL) {
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
+            *dump++ = peekRomL( addr );
+    }
+
+    else if (ptr == &readRomH) {
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
+            *dump++ = peekRomH( addr );
+    }
+
+    else if (ptr == &readUltimaxA0) {
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
+            *dump++ = peekUltimaxA0( addr );
+    }
+
+    else if (ptr == &readCharRom) {
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
+            *dump++ = charRom[ addr & 0xfff ];
+    }
+
+    else if (ptr == &readBasicRom) {
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
+            *dump++ = basicRom[ addr & 0x1fff ];
+    }
+
+    else if (ptr == &readKernalRom) {
+        if (expansionPort->hasHiramCableConnected()) {
+            for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
+                *dump++ = peekRomH( addr & 0x1fff );
+        } else {
+            for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
+                *dump++ = kernalRom[ addr & 0x1fff ];
+        }
+    } else {
+        for (unsigned addr = page << 8; addr <= ((page << 8) | 0xfff); addr++ )
+            *dump++ = vicII->lastReadPhase1();
+    }
 }
 
 }

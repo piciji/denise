@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../interface.h"
+#include "system/debuggerSnapshot.h"
 
 namespace LIBAMI {
 
@@ -133,6 +134,24 @@ struct Interface : Emulator::Interface  {
 
     auto configRewind(unsigned steps, unsigned maxSizeInMb) -> void;
     auto setRewind(bool state) -> void;
+
+    // debugger
+    auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void;
+    auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+
+    auto debuggerStepOver() -> void;
+    auto debuggerStepInto() -> void;
+    auto debuggerStepOut() -> bool;
+
+    // disassembler
+    auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
+    auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
+    auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
+    auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void;
+    auto getDmaDump() -> uint8_t*;
+
+    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
 
 private:
     auto prepareDevices() -> void;

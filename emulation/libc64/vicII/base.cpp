@@ -2,11 +2,13 @@
 #include "base.h"
 #include "../system/system.h"
 #include "cycleTable.cpp"
-#include "verticalLineAnomaly.cpp"
+#include "../system/debuggerSnapshot.h"
+
+#define DEBUG_SCROLL_MAX 30
 
 namespace LIBC64 { 
 
-uint8_t* VicIIBase::frameBuffer = new uint8_t[VIC_MAX_LINE_LENGTH * 294];
+uint8_t* VicIIBase::frameBuffer = new uint8_t[VIC_MAX_LINE_LENGTH * 320];
 
 VicIIBase::VicIIBase(System* system) : system(system), cpu(system->cpu) {
 	
@@ -27,12 +29,22 @@ VicIIBase::VicIIBase(System* system) : system(system), cpu(system->cpu) {
     sprite5->position = 5;
     sprite6->position = 6;
     sprite7->position = 7;
+
+    for(auto& s : debugger.spr)
+        s.data = new uint8_t[16384];
 }	
 
 VicIIBase::~VicIIBase() {
 	if (frameBuffer)
 		delete[] frameBuffer;
-		
+
+    if (debugger.dmaFrame)
+        delete[] debugger.dmaFrame;
+
+    for(auto& s : debugger.spr)
+        delete[] s.data;
+
+    debugger.dmaFrame = nullptr;
 	frameBuffer = nullptr;
 }
 	
@@ -217,6 +229,51 @@ auto VicIIBase::getCyclesForNextLightTrigger(int x, int y, uint8_t& cyclePixel) 
     return (x / 8) + (y * lineCycles);
 }
 
+auto VicIIBase::storeSprite(Sprite& spr) -> void {
+    auto& _spr = debugger.spr[spr.position];
+
+    bool mcFlop = true;
+    bool expandXFlop = true;
+    bool useExpandX = spr.expandX;
+    bool useMultiColor = spr.useMultiColor;
+    uint32_t dataShiftReg = spr.dataShiftReg & 0xffffff;
+    uint8_t shiftOut = 0;
+    uint8_t colorCode = spr.colorCode;
+    unsigned _pos = _spr.pos;
+
+    std::memset(_spr.data + _pos, 0x80, 48);
+
+    while (dataShiftReg || shiftOut) {
+        if (expandXFlop) {
+            if (useMultiColor) {
+                if (mcFlop)
+                    shiftOut = (dataShiftReg >> 22) & 3;
+
+                mcFlop ^= 1;
+            } else
+                shiftOut = ((dataShiftReg >> 23) & 1) << 1;
+        }
+
+        if (expandXFlop) {
+            dataShiftReg <<= 1;
+            dataShiftReg &= 0xffffff;
+        }
+
+        if (useExpandX)
+            expandXFlop ^= 1;
+        else
+            expandXFlop = true;
+
+        if (shiftOut == 1)      _spr.data[_pos] = colorReg[0x25];
+        else if (shiftOut == 2) _spr.data[_pos] = colorReg[colorCode];
+        else if (shiftOut == 3) _spr.data[_pos] = colorReg[0x25];
+
+        _pos++;
+    }
+    _spr.pos += 48;
+    _spr.pos &= 0x3fff;
+}
+
 auto VicIIBase::power() -> void {
 
 	if (model == UnInitialized)
@@ -231,6 +288,9 @@ auto VicIIBase::power() -> void {
     vcBase = 0;
     vc = 0;
     rc = 0;
+
+    _addrG = 0;
+    vicBank = 0;
     
     std::memset(cBuffer, 0, sizeof cBuffer); 	            
     std::memset(colorReg, 0, sizeof (colorReg));
@@ -273,7 +333,15 @@ auto VicIIBase::power() -> void {
     hFlipFlop = true;
     vFlipFlop = true;
     idleMode = true;    
-    initVCounter = false;    
+    initVCounter = false;
+
+    debugger.resetSpriteStore();
+    debugger.frameLine = debugger.dmaFrame;
+    for (auto& dma : debugger.dma) {
+        dma.usage = 0;
+        dma.usageCpu = 0;
+    }
+    debugger.action = Interface::DebuggerAction::None;
 
     for (unsigned i = 0; i < 8; i++) {
         sprite[i].enabled = false;
@@ -319,25 +387,127 @@ auto VicIIBase::power() -> void {
     writeReg(0x16, controlReg2);
     
     reg2mhz = 0;
-        
-    initVerticalLineAnomaly();
 }
 
-auto VicIIBase::setVerticalLineAnomaly(uint8_t mode) -> void {
-    leftLineAnomaly.mode = mode;
-
-    if (mode)
-        initVerticalLineAnomaly();
+auto VicIIBase::oneTimeDebuggerAction() -> void {
+    system->debugger.action = debugger.action;
+    system->debugger.addr = 0;
+    debugger.action = Emulator::Interface::DebuggerAction::None;
+    system->debuggerUpdate();
 }
 
-auto VicIIBase::getVerticalLineAnomaly() -> uint8_t {
-    return leftLineAnomaly.mode;
+#define _fullAdr( __addr ) (((__addr) & 0x3fff) | vicBank)
+auto VicIIBase::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.vicII;
+
+    for (unsigned i = 0; i < 8; i++) {
+        auto& _sprD = debugger.spr[i];
+        auto& _sprT = s.spr[i];
+        auto& _spr = sprite[i];
+        unsigned pos = snap.callbackAction == Interface::DebuggerAction::AutoUpdate ? _sprD.lastPos : _sprD.pos;
+
+        if (pos)
+            std::memcpy(_sprT.data, _sprD.data, pos);
+
+        _sprT.pos = pos;
+        _sprT.expandX = _spr.expandX;
+        _sprT.expandY = _spr.expandY;
+        _sprT.prioMD = _spr.prioMD;
+        _sprT.multiColor = _spr.multiColor;
+        _sprT.x = _spr.x;
+        _sprT.y = _spr.y;
+        _sprT.addr = _fullAdr((_spr.dataP << 6) | _spr.mc);
+        _sprT.mcBase = _spr.mcBase;
+    }
+
+    s.spriteForegroundCollided = spriteForegroundCollided;
+    s.spriteSpriteCollided = spriteSpriteCollided;
+    s.xPos = xCounterLatch;
+    s.vcBase = vcBase;
+    s.vc = vc;
+    s.rc = rc;
+    s.den = den;
+    s.badLine = badLine;
+    s.visibleLine = visibleLine;
+    s.hFlipFlip = hFlipFlop;
+    s.vFlipFlip = vFlipFlop;
+    s.idleMode = idleMode;
+    s.mode = (modeEcmBmm | modeMcm) >> 2;
+    s.irqLatch = irqLatch;
+    s.irqEnable = irqEnable;
+    s.irqLine = irqLine;
+    s.xScroll = xScroll;
+    s.yScroll = yScroll;
+    s.vicBank = vicBank;
+    s.screenMemory = _fullAdr(_addrG);
+    s.charMemory = _fullAdr((vm << 10) | vc);
+    s.lpx = lpx;
+    s.lpy = lpy;
+    s.lpPin = lpPin;
+    s.lpLatched = lpLatched;
+    s.controlReg1 = controlReg1;
+    s.controlReg2 = controlReg2;
+}
+#undef _fullAdr
+
+auto VicIIBase::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
+    snap.debuggerDma = &debugger.dma[0];
+    snap.lineCycles = lineCycles;
 }
 
-auto VicIIBase::initVerticalLineAnomaly() -> void {
+auto VicIIBase::updatePositionSnapshot(DebuggerSnapshot& snap) -> void {
+    snap.vPos = vCounter;
+    snap.hPos = cycle;
+}
 
-    leftLineAnomaly.framePos = LEFT_LINE_ANOMALY;
-    leftLineAnomaly.permanent = false;
+auto VicIIBase::enableDmaView(bool state, bool withScrolling) -> void {
+    debugger.enableDmaView(state, withScrolling);
+    lineVCounter = 0;
+    linePos = 0;
+    visibleLine = false;
+}
+
+auto VicIIBase::Debugger::enableDmaView(bool state, bool withScrolling) -> void {
+
+    if (state) {
+        dmaView = true;
+        if (!withScrolling) {
+            scrollDirection = 0;
+            scrollCounter = DEBUG_SCROLL_MAX;
+        } else
+            scrollDirection = 1;
+
+    } else {
+        if (!withScrolling) {
+            dmaView = false;
+            scrollCounter = 0;
+            scrollDirection = 0;
+        } else
+            scrollDirection = -1;
+    }
+
+    dmaLog = requestDmaLog || dmaView;
+}
+
+auto VicIIBase::Debugger::enableDmaLog(bool state) -> void {
+    requestDmaLog = state;
+    dmaLog = requestDmaLog || dmaView;
+}
+
+auto VicIIBase::Debugger::resetSpriteStore() -> void {
+    for (auto& s : spr) {
+        s.lastPos = s.pos;
+        s.pos = 0;
+    }
+}
+
+auto VicIIBase::Debugger::enableSpriteStore(bool state) -> void {
+    storeSprites = state;
+    resetSpriteStore();
+}
+
+auto VicIIBase::requestCurrentDmaLog() -> Emulator::Interface::DebuggerDma& {
+    return debugger.dma[cycle];
 }
 
 auto VicIIBase::setModel(Model model) -> void {

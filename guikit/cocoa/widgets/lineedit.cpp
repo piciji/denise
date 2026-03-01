@@ -20,6 +20,13 @@
     return NO;
 }
 
+-(void)controlTextDidEndEditing:(NSNotification *)notification {
+    if ( [[[notification userInfo] objectForKey:@"NSTextMovement"] intValue] == NSReturnTextMovement ) {
+        if (lineEdit->onReturn)
+            lineEdit->onReturn();
+    }
+}
+
 -(void) controlTextDidChange:(NSNotification*)notification {
     NSTextField* textField = [notification object];
     NSString* value = [textField stringValue];
@@ -77,6 +84,18 @@ auto pLineEdit::setDroppable(bool droppable) -> void {
         } else {
             [cocoaView unregisterDraggedTypes];
         }
+    }
+}
+
+auto pLineEdit::setPlaceholder(const std::string& placeholder) -> void {
+    @autoreleasepool {
+        [(id)cocoaView setPlaceholderString: [NSString stringWithUTF8String : placeholder.c_str()]];
+    }
+}
+
+auto pLineEdit::setAlign( LineEdit::Align align ) -> void {
+    @autoreleasepool {
+        [(id)cocoaView setAlignment: align == LineEdit::Align::Right ? NSTextAlignmentRight : NSTextAlignmentLeft ];
     }
 }
 

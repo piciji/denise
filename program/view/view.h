@@ -74,6 +74,15 @@ struct View : GUIKIT::Window {
     		GUIKIT::MenuItem* slotDown;
     		GUIKIT::MenuItem* load;
         GUIKIT::MenuItem* systemManagement;
+        GUIKIT::Menu* debugger;
+            GUIKIT::MenuItem* debuggerCpu;
+    		GUIKIT::MenuItem* debuggerSCPU;
+            GUIKIT::MenuItem* debuggerMem;
+    		GUIKIT::MenuItem* debuggerMemSCPU;
+            GUIKIT::MenuItem* debuggerCia;
+            GUIKIT::MenuItem* debuggerVideo;
+            GUIKIT::MenuItem* debuggerDma;
+            GUIKIT::MenuItem* debuggerAudio;
         GUIKIT::MenuItem* audio;
         GUIKIT::MenuItem* configurations;
         GUIKIT::Menu* shaderMenu;
@@ -289,6 +298,8 @@ struct View : GUIKIT::Window {
 
 	GUIKIT::Image delImage;
     GUIKIT::Image recordAudioImage;
+
+    GUIKIT::Image debugImage;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels() -> void;

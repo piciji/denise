@@ -443,12 +443,6 @@ auto Window::Cocoa::setHiddenForAppMenuItem(AppMenuItem appMenuItem, bool state)
     window.p.setHiddenForAppMenuItem(appMenuItem, state);
 #endif
 }
-    
-auto Window::Cocoa::keepMenuVisibilityOnDisplay(bool state) -> void {
-#if GUIKIT_COCOA
-    window.p.keepMenuVisibilityOnDisplay( state );
-#endif
-}
 
 auto Window::Cocoa::setDisableIconsInTopMenu(bool state) -> void {
 #if GUIKIT_COCOA
@@ -706,9 +700,8 @@ auto Widget::setFocused() -> void {
     return p.setFocused();
 }
 
-auto Widget::setFont(const std::string& font, bool specialFont) -> void {
+auto Widget::setFont(const std::string& font) -> void {
     state.font = font;
-    state.specialFont = specialFont;
     p.setFont(font);
 }
 
@@ -801,9 +794,19 @@ auto LineEdit::setValue(int value) -> void {
 	setText( std::to_string( value ) );
 }
 
+auto LineEdit::setPlaceholder(const std::string& placeholder) -> void {
+    state.placeholder = placeholder;
+    p.setPlaceholder(placeholder);
+}
+
 auto LineEdit::setMaxLength( unsigned maxLength ) -> void {
     state.maxLength = maxLength;
     p.setMaxLength( maxLength );
+}
+
+auto LineEdit::setAlign( Align align ) -> void {
+    state.align = align;
+    p.setAlign(align);
 }
 
 LineEdit::LineEdit() : Widget(*new pLineEdit(*this)), p((pLineEdit&)Widget::p) { p.init(); }
@@ -847,6 +850,33 @@ auto SquareCanvas::setBorderColor(unsigned borderSize, unsigned borderColor) -> 
 }
 
 SquareCanvas::SquareCanvas() : Widget(*new pSquareCanvas(*this)), p((pSquareCanvas&)Widget::p) { p.init(); }
+
+auto MultiSquareCanvas::setGrid(unsigned squareSize, unsigned rows, unsigned cols) -> void {
+    state.squareSize = squareSize;
+
+    if (!state.dots || state.rows != rows || state.cols != cols) {
+        state.rows = rows;
+        state.cols = cols;
+        delete[] state.dots;
+        state.dots = nullptr;
+        unsigned s = rows * cols;
+        if (s)
+            state.dots = new unsigned[s];
+
+        p.updateScrollRange();
+    }
+}
+
+auto MultiSquareCanvas::update() -> void {
+    p.update();
+}
+
+auto MultiSquareCanvas::setPadding(unsigned padding) -> void {
+    state.padding = padding;
+    p.setPadding(padding);
+}
+
+MultiSquareCanvas::MultiSquareCanvas() : Widget(*new pMultiSquareCanvas(*this)), p((pMultiSquareCanvas&)Widget::p) { p.init(); }
 
 auto ImageView::setImage(Image* image) -> void {
     state.image = image;
@@ -899,6 +929,10 @@ CheckButton::CheckButton() : Widget(*new pCheckButton(*this)), p((pCheckButton&)
 auto CheckBox::setChecked(bool checked) -> void {
     state.checked = checked;
     p.setChecked(checked);
+}
+
+auto CheckBox::setReadonly(bool readonly) -> void {
+    state.readonly = readonly;
 }
 
 auto CheckBox::toggle() -> void {
@@ -1056,25 +1090,30 @@ auto ListView::unlockRedraw() -> void {
     p.unlockRedraw();
 }
 
-auto ListView::append(const std::vector<std::vector<std::string>>& rows, bool clearBefore) -> void {    
+auto ListView::appendMulti(const std::vector<std::vector<std::string>>& rows, bool clearBefore) -> void {
     p.lockRedraw();
     
     if (clearBefore)
         reset();
     
     for (auto& row : rows )
-        append( row );
-    
+        append( row, true );
+
+    p.autoSizeColumns();
     p.unlockRedraw();
 }
 
-auto ListView::append(const std::vector<std::string>& row) -> void {
+auto ListView::append(const std::vector<std::string>& row, bool preventColumnResizing) -> void {
     state.rows.push_back(row);
     std::vector<Image*> images;
     for (unsigned i = 0; i < row.size(); i++) images.push_back(nullptr);
     state.images.push_back(images);
 	state.rowTooltips.push_back({});
-    p.append(row);
+    p.append(row, preventColumnResizing);
+}
+
+auto ListView::autoSizeColumns() -> void {
+    p.autoSizeColumns();
 }
 
 auto ListView::remove(unsigned selection) -> void {
@@ -1116,27 +1155,32 @@ auto ListView::setHeaderText(const std::vector<std::string>& text) -> void {
     p.setHeaderText(text);
 }
 
-auto ListView::setText(unsigned selection, const std::vector<std::string>& text) -> void {
+auto ListView::setAlignment(std::vector<Align> aligns, bool centerHeader) -> void {
+    state.aligns = std::move(aligns);
+    state.centerHeader = centerHeader;
+}
+
+auto ListView::setText(unsigned selection, const std::vector<std::string>& text, bool preventColumnResizing) -> void {
     if(selection >= state.rows.size()) return;
     for(unsigned position = 0; position < text.size(); position++) {
-        setText(selection, position, text.at(position));
+        setText(selection, position, text[position], preventColumnResizing);
     }
 }
 
-auto ListView::setText(unsigned selection, unsigned position, const std::string& text) -> void {
+auto ListView::setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing) -> void {
     if(selection >= state.rows.size()) return;
-    std::vector<std::string>& row = state.rows.at(selection);
+    std::vector<std::string>& row = state.rows[selection];
     if(position >= row.size()) return;
-    row.at(position) = text;
-    p.setText(selection, position, text);
+    row[position] = text;
+    p.setText(selection, position, text, preventColumnResizing);
 }
 
-auto ListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
+auto ListView::setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing) -> void {
     if(selection >= state.images.size()) return;
     std::vector<Image*>& row = state.images[selection];
     if(position >= row.size()) return;
     row[position] = &image;
-    p.setImage(selection, position, image);
+    p.setImage(selection, position, image, preventColumnResizing);
 }
 
 auto ListView::getImage( unsigned selection, unsigned position ) -> Image* {
@@ -1156,9 +1200,9 @@ auto ListView::countImages() -> unsigned {
 
 auto ListView::text(unsigned selection, unsigned position) -> std::string {
     if(selection >= state.rows.size()) return "";
-    std::vector<std::string>& row = state.rows.at(selection);
+    std::vector<std::string>& row = state.rows[selection];
     if(position >= row.size()) return "";
-    return row.at(position);
+    return row[position];
 }
 
 auto ListView::setRowTooltip(unsigned selection, std::string tooltip ) -> void {
@@ -1192,19 +1236,93 @@ auto ListView::resetSelectionColor() -> void {
     p.setSelectionColor();
 }
 
-auto ListView::setFirstRowColor(unsigned foregroundColor, unsigned backgroundColor) -> void {
-    state.overrideFirstRowColor = true;
-    state.firstRowForegroundColor = foregroundColor;
-    state.firstRowBackgroundColor = backgroundColor;
-    p.setFirstRowColor(foregroundColor, backgroundColor);
+auto ListView::rowForegroundColor(unsigned row, std::optional<unsigned> col) -> std::optional<unsigned> {
+    std::optional<unsigned> result = std::nullopt;
+
+    for (auto& entry : state.rowForegroundColor) {
+        if(entry.row == row) {
+            if (entry.col == col)
+                return entry.color;
+
+            if (entry.col == std::nullopt)
+                result = entry.color;
+        }
+    }
+    return result;
 }
 
+auto ListView::setRowForegroundColor(unsigned foregroundColor, unsigned row, std::optional<unsigned> col) -> void {
+    for (auto& entry : state.rowForegroundColor) {
+        if(entry.row == row) {
+            if (entry.col == col) {
+                entry.color = foregroundColor;
+                p.updateRowForegroundColors();
+                return;
+            }
+        }
+    }
+    state.rowForegroundColor.push_back( {row, col, foregroundColor} );
+    p.updateRowForegroundColors();
+}
 
-auto ListView::resetFirstRowColor() -> void {
-    state.overrideFirstRowColor = false;
-    state.firstRowForegroundColor = 0;
-    state.firstRowBackgroundColor = 0;
-    p.setFirstRowColor();
+auto ListView::resetRowForegroundColor(std::optional<unsigned> row, std::optional<unsigned> col) -> void {
+    if (row == std::nullopt)
+        state.rowForegroundColor.clear();
+    else {
+        for (auto it = state.rowForegroundColor.begin(); it != state.rowForegroundColor.end();) {
+            if (it->row == row && it->col == col)
+                it = state.rowForegroundColor.erase(it);
+            else
+                ++it;
+        }
+    }
+    p.updateRowForegroundColors();
+}
+
+auto ListView::rowBackgroundColor(unsigned row) -> std::optional<unsigned> {
+    for (auto& pair : state.rowBackgroundColor) {
+        if(pair.first == row)
+            return pair.second;
+    }
+    return std::nullopt;
+}
+
+auto ListView::setRowBackgroundColor(unsigned backgroundColor, unsigned row) -> void {
+    for (auto& pair : state.rowBackgroundColor) {
+        if(pair.first == row) {
+            pair.second = backgroundColor;
+            p.updateRowColors();
+            return;
+        }
+    }
+    state.rowBackgroundColor.push_back( {row, backgroundColor} );
+    p.updateRowColors();
+}
+
+auto ListView::resetRowBackgroundColor(unsigned row) -> void {
+    for (auto it = state.rowBackgroundColor.begin(); it != state.rowBackgroundColor.end();) {
+        if (it->first == row)
+            it = state.rowBackgroundColor.erase(it);
+        else
+            ++it;
+    }
+    p.updateRowColors();
+}
+
+auto ListView::resetRowColors() -> void {
+    state.rowBackgroundColor.clear();
+    state.rowForegroundColor.clear();
+    p.updateRowColors();
+    p.updateRowForegroundColors();
+}
+
+auto ListView::setSpacing(unsigned spacing) -> void {
+    state.spacing = spacing;
+    p.updateSpacing();
+}
+
+auto ListView::getFirstVisibleRow() -> unsigned {
+    return p.getFirstVisibleRow();
 }
 
 ListView::ListView() : Widget(*new pListView(*this)), p((pListView&)Widget::p) { p.init(); }
@@ -1330,6 +1448,41 @@ auto Viewport::hideCursorByInactivity(unsigned delayMS) -> void {
 
 Viewport::Viewport() : Widget(*new pViewport(*this)), p((pViewport&)Widget::p) { p.init(); }
 
+auto LogicViewer::setLength(unsigned slots) -> void {
+    if (slots == state.logics.size())
+        return;
+
+    state.logics.resize(slots);
+    p.updateScrollRange();
+}
+
+auto LogicViewer::getDataRef() -> std::vector<LogicState>& {
+    return state.logics;
+}
+
+auto LogicViewer::setAddrAs24bit(bool addr24bit) -> void {
+    state.addr24bit = addr24bit;
+}
+
+auto LogicViewer::setSymbolicAddr(bool symbolicAddr) -> void {
+    state.symbolicAddr = symbolicAddr;
+}
+
+auto LogicViewer::setOffset(LogicState::Offset offset, unsigned value ) -> void {
+    if (offset != LogicState::Offset::Max)
+        state.offsets[(unsigned)offset] = value;
+}
+
+auto LogicViewer::update() -> void {
+    p.update();
+}
+
+auto LogicViewer::scrollToActive() -> void {
+    p.scrollToActive();
+}
+
+LogicViewer::LogicViewer() : Widget(*new pLogicViewer(*this)), p((pLogicViewer&)Widget::p) { p.init(); }
+
 //menu
 MenuBase::MenuBase(pMenuBase& p) : p(p), Base() {}
 MenuBase::~MenuBase() {
@@ -1393,6 +1546,10 @@ auto Menu::reset() -> void {
     for( auto child : childs ) {
         remove(*child);
     }
+}
+
+auto Menu::update() -> void {
+    p.update( nullptr );
 }
 
 MenuItem::MenuItem() : MenuBase(*new pMenuItem(*this)), p((pMenuItem&)MenuBase::p) { p.init(); }
@@ -1533,9 +1690,13 @@ auto BrowserWindow::addContentView(unsigned id, std::function<bool (std::string 
     return *this;
 }
     
-auto BrowserWindow::setContentViewFont(std::string font, bool specialFont) -> BrowserWindow& {
+auto BrowserWindow::setContentViewFont(std::string font) -> BrowserWindow& {
     state.contentView.font = font;
-    state.contentView.specialFont = specialFont;
+    return *this;
+}
+
+auto BrowserWindow::setSpacing(unsigned spacing) -> BrowserWindow& {
+    state.contentView.spacing = spacing;
     return *this;
 }
 
@@ -1741,6 +1902,23 @@ auto MessageWindow::translateYes(const std::string& str) -> void {
 auto MessageWindow::translateCancel(const std::string& str) -> void {
     trans.cancel = str;
 }
+
+std::function<void (unsigned color)> ColorChooser::onChoose = nullptr;
+
+auto ColorChooser::setWindow(Window& window) -> ColorChooser& {
+    state.window = &window;
+    return *this;
+}
+
+auto ColorChooser::setDefault(unsigned color) -> ColorChooser& {
+    state.defaultColor = color;
+    return *this;
+}
+
+auto ColorChooser::choose() -> std::optional<unsigned> {
+    return pColorChooser::choose(state);
+}
+
 //font
 auto Font::system(unsigned size, const std::string& style, bool monospaced) -> std::string {
     return pFont::system(size, style, monospaced);
@@ -1748,6 +1926,10 @@ auto Font::system(unsigned size, const std::string& style, bool monospaced) -> s
 
 auto Font::system(const std::string& style, bool monospaced) -> std::string {
     return pFont::system(0, style, monospaced);
+}
+
+auto Font::monospace(unsigned size) -> std::string {
+    return pFont::system(size, "", true);
 }
 
 auto Font::systemFontFile() -> std::string {

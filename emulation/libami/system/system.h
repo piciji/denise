@@ -15,8 +15,7 @@
 #include "../../tools/crop.h"
 #include "../../tools/history.h"
 #include "../../tools/serializer.h"
-
-//#define LOG_CPU_STATE
+#include "debuggerSnapshot.h"
 
 namespace LIBAMI {
 
@@ -39,6 +38,8 @@ struct System {
     bool ntsc;
     bool firmwareChanged;
     bool asyncHDDAccess = false;
+
+    DebuggerSnapshot debuggerSnapshot;
 
     Emulator::Crop<uint16_t> crop;
 
@@ -103,7 +104,8 @@ struct System {
     auto setWarpMode( unsigned config ) -> void;
     auto setRunAhead(unsigned frames) -> void;
     auto runAheadPreventJit() -> bool { return runAhead.preventJit && runAhead.frames; }
-    auto allowRunAhead() -> const bool { return !warp.config && runAhead.frames && !agnus.resetFromKeyboard && agnus.womLocked(); }
+    auto allowRunAhead() -> const bool { return !warp.config && runAhead.frames && !agnus.resetFromKeyboard
+        && !debuggerSnapshot.themes && agnus.womLocked(); }
     auto hintSlowSpeed(bool state) -> void;
 
     auto calcSerializationSize() -> void;
@@ -144,6 +146,15 @@ struct System {
 
     auto setHDDAsync(bool state) -> void;
     auto getHDDAsync() -> bool;
+    auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop crop ) -> void;
+
+    auto debuggerAdd(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned addrTo) -> void;
+    auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
+    auto updateDebuggerSnapshot() -> void;
+    auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
+    auto debuggerUpdate() -> void;
+    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
+    auto setWatchpointCondition(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 };
 
 

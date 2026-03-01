@@ -19,6 +19,15 @@
 #include "emuconfig/layouts/presentation.h"
 #include <random>
 
+#include "debugger/scpuDebugger.h"
+#include "debugger/cpuDebugger.h"
+#include "debugger/memScpuDebugger.h"
+#include "debugger/memDebugger.h"
+#include "debugger/ciaDebugger.h"
+#include "debugger/videoDebugger.h"
+#include "debugger/audioDebugger.h"
+#include "debugger/dmaDebugger.h"
+
 Program* program = nullptr;
 DRIVER::Input* inputDriver = new DRIVER::Input;
 DRIVER::Audio* audioDriver = new DRIVER::Audio;
@@ -26,6 +35,7 @@ DRIVER::Video* videoDriver = new DRIVER::Video;
 std::vector<Emulator::Interface*> emulators;
 Emulator::Interface* activeEmulator = nullptr;
 std::vector<GUIKIT::Settings*> settingsStorage;
+std::vector<Debugger*> debuggers;
 GUIKIT::Settings* globalSettings = nullptr;
 GUIKIT::Translation* trans = nullptr;
 FilePool* filePool = nullptr;
@@ -141,14 +151,9 @@ auto Program::initUserInterface() -> void {
     if (GUIKIT::Application::isQuit)
         return;
 
-    bool threadedEmu = globalSettings->get<bool>("threaded_emu", false);
-
     if (cmd->noGui) {
 		emuThread->enable( false );
         GUIKIT::Application::loop = [this]() { loopNoGui(); };
-    } else if (!threadedEmu) {
-		emuThread->enable( false );
-        GUIKIT::Application::loop = [this]() { loop(); };
     } else {
         videoDriver->freeContext();
 		GUIKIT::Application::loop = [this]() { loopUserInterface(); };
@@ -369,6 +374,8 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
             view->updateScreenshotUI();
         }
 
+	    Debugger::reset();
+
 		resetRunAhead();
 
 		archiveViewer->setVisible(false);
@@ -494,6 +501,17 @@ auto Program::loop() -> void {
     if (statusHandler->hasUpdates())
         statusHandler->update();
 }
+
+auto Program::loopDebugging() -> void {
+    InputManager::poll();
+    GUIKIT::System::sleep( 10 );
+    audioDriver->clear();
+    repeatLastFrame();
+
+    if (statusHandler->hasUpdates())
+        statusHandler->update();
+}
+
 // when emu thread is active
 auto Program::loopUserInterface() -> void {
     GUIKIT::System::sleep( 1 );
@@ -510,13 +528,16 @@ auto Program::hasFocus() -> bool {
         if (emuView->focused())
             return true;
 
+    if (program->hasFocusedDebugger())
+        return true;
+
     return false;
 }
 
 auto Program::quit() -> void {
     videoDriver->disableExclusiveFullscreen();
     quitInProgress = true;
-    emuThread->lock();
+    emuThread->lock(true);
     for(auto emuView : emuConfigViews) {
         if (emuView->inputLayout)
             emuView->inputLayout->stopCapture();
@@ -543,6 +564,8 @@ auto Program::quit() -> void {
         delete firmwareManager;
     for( auto paletteManager : paletteManagers )
         delete paletteManager;
+    for ( auto debugger : debuggers)
+        delete debugger;
         
     delete inputDriver;
     delete audioDriver;
@@ -830,4 +853,66 @@ auto Program::getAMIModelValue(LIBAMI::Interface::ModelId modelId) -> int {
     if (activeEmulator && dynamic_cast<LIBAMI::Interface*>(activeEmulator))
         return activeEmulator->getModelValue(modelId);
     return 0;
+}
+
+auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -> void {
+    for (auto debugger : debuggers) {
+        if (debugger->emulator == emulator && debugger->mode == mode) {
+            debugger->makeVisible();
+            return;
+        }
+    }
+    Debugger* debugger;
+    switch (mode) {
+        case Debugger::Mode::CPU: debugger = new CpuDebugger(emulator); break;
+        case Debugger::Mode::SCPU: debugger = new ScpuDebugger(emulator); break;
+        case Debugger::Mode::Memory: debugger = new MemDebugger(emulator); break;
+        case Debugger::Mode::MemorySCPU: debugger = new MemScpuDebugger(emulator); break;
+        case Debugger::Mode::CIA: debugger = new CiaDebugger(emulator); break;
+        case Debugger::Mode::Video: debugger = new VideoDebugger(emulator); break;
+        case Debugger::Mode::Audio: debugger = new AudioDebugger(emulator); break;
+        case Debugger::Mode::DMA: debugger = new DmaDebugger(emulator); break;
+        default:
+            return;
+    }
+
+    debuggers.push_back(debugger);
+    debugger->makeVisible();
+}
+
+auto Program::hasActiveDebugger() -> bool {
+    for (auto debugger : debuggers) {
+        if (debugger->emulator == activeEmulator) {
+            if (debugger->visible())
+                return true;
+        }
+    }
+    return false;
+}
+
+auto Program::hasFocusedDebugger() -> bool {
+    for (auto debugger : debuggers) {
+        if (debugger->emulator == activeEmulator) {
+            if (debugger->visible() && debugger->focused())
+                return true;
+        }
+    }
+    return false;
+}
+
+auto Program::getActiveDebuggers() -> std::vector<Debugger*> {
+    std::vector<Debugger*> out;
+    for (auto debugger : debuggers) {
+        if (debugger->emulator == activeEmulator) {
+            if (debugger->visible())
+                out.push_back(debugger);
+        }
+    }
+    return out;
+}
+
+auto Program::debugger(Emulator::Interface::DebuggerSnapshot* snapshot) -> void {
+    if (hasActiveDebugger()) {
+        Debugger::Callback( snapshot );
+    }
 }

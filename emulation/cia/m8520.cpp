@@ -25,6 +25,39 @@ auto M8520::reset() -> void {
 	Base::reset();
 }
 
+auto M8520::peek(unsigned pos) -> uint8_t {
+    pos &= 0xf;
+
+    switch (pos) {
+        case 8:
+            if (todLatched)
+                return todLatch & 0xff;
+
+            return todc & 0xff;
+
+        case 9:
+            if (todLatched) {
+                return (todLatch >> 8) & 0xff;
+            }
+            return (todc >> 8) & 0xff;
+
+        case 0xa:
+            if (!todLatched)
+                return (todc >> 16) & 0xff;
+
+            return (todLatch >> 16) & 0xff;
+
+        case 0xb:
+            return 0;
+
+        default:
+            break;
+    }
+
+    return Base::peek( pos );
+}
+
+
 auto M8520::read(unsigned pos) -> uint8_t {
     pos &= 0xf;
 

@@ -1,6 +1,6 @@
 
-#ifndef PROGRAM_H
-#define PROGRAM_H
+#pragma once
+#include "debugger/debugger.h"
 
 #ifndef APP_NAME
 #define APP_NAME "Denise"
@@ -35,9 +35,10 @@
 
 #define ERROR_COLOR 0xff4500
 #define SUCCESS_COLOR 0x009911
+#define DEBUG_COLOR 0xff514f
+#define UNUSED_COLOR 0x666666
 
 #include <vector>
-#include <time.h>
 #include "../guikit/api.h"
 #include "../emulation/libami/interface.h"
 #include "../emulation/libc64/interface.h"
@@ -59,6 +60,7 @@
 struct FileSetting;
 struct Message;
 struct InputManager;
+struct Debugger;
 
 struct Program : Emulator::Interface::Bind {
 	unsigned isPause = 0;
@@ -83,6 +85,7 @@ struct Program : Emulator::Interface::Bind {
 
     auto quit() -> void;
     auto loop() -> void;
+    auto loopDebugging() -> void;
 	auto loopNoGui() -> void;
     auto loopUserInterface() -> void;
     auto loadTranslation(std::string file) -> bool;
@@ -218,6 +221,12 @@ struct Program : Emulator::Interface::Bind {
     auto setJit(Emulator::Interface* emulator) -> void;
     auto setRewind(Emulator::Interface* emulator) -> void;
 
+    auto openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -> void;
+    auto hasActiveDebugger() -> bool;
+    auto hasFocusedDebugger() -> bool;
+    auto getActiveDebuggers() -> std::vector<Debugger*>;
+    auto debugger(Emulator::Interface::DebuggerSnapshot* snapshot) -> void override;
+
     static auto hasFocus() -> bool;
 
     Program();
@@ -230,9 +239,8 @@ extern DRIVER::Video* videoDriver;
 extern GUIKIT::Translation* trans;
 extern std::vector<Emulator::Interface*> emulators;
 extern std::vector<GUIKIT::Settings*> settingsStorage;
+extern std::vector<Debugger*> debuggers;
 extern GUIKIT::Settings* globalSettings;
 extern Emulator::Interface* activeEmulator;
 extern InputManager* activeInputManager;
 extern VideoManager* activeVideoManager;
-
-#endif

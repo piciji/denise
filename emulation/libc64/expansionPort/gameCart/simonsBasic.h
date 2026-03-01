@@ -14,6 +14,10 @@ namespace LIBC64 {
             system->changeExpansionPortMemoryMode( exRom = false, game = false );
         }
 
+        auto peekIo1( uint16_t addr ) -> uint8_t {
+            return ExpansionPort::readIo1( addr );
+        }
+
         auto readIo1( uint16_t addr ) -> uint8_t {
 
             system->changeExpansionPortMemoryMode( exRom = false, game = true );

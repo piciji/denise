@@ -50,6 +50,35 @@
     [listView->p.tooltip orderOut:nil];
 }
 
+-(void) mouseDown:(NSEvent *)event {
+    [super mouseDown:event];
+    
+    if (listView->onClick) {
+        NSPoint point = [self convertPoint:[event locationInWindow] fromView:nil];
+        
+        auto _row = [self rowAtPoint:point];
+        auto _col = [self columnAtPoint:point];
+        listView->onClick(_row, _col);
+    }
+}
+
+-(void) rightMouseDown:(NSEvent *)event {
+    [super rightMouseDown:event];
+    
+    if (listView->onContext) {
+        NSPoint pointInWindow = event.locationInWindow;
+        NSPoint point = [self convertPoint:pointInWindow fromView:nil];
+        auto _row = [self rowAtPoint:point];
+        auto _col = [self columnAtPoint:point];
+        
+        NSPoint screenPoint = [NSEvent mouseLocation];
+        NSScreen* screen = [NSScreen mainScreen];
+        CGFloat flippedY = screen.frame.size.height - screenPoint.y;
+        
+        listView->onContext(_row, _col, { (int)screenPoint.x, (int)flippedY });
+    }
+}
+
 -(void) mouseMoved:(NSEvent*)event {
     
     if (!listView->p.mouseIsOver || !listView->p.useCustomTooltip)
@@ -60,11 +89,6 @@
         return;
 
     auto mouseOverRow = [self rowAtPoint:[self convertPoint:[event locationInWindow] fromView:nil]];
-    
-    if (mouseOverRow == 0 && listView->overrideFirstRowColor()) {
-        [listView->p.tooltip orderOut:nil];
-        return;
-    }
     
     if (!listView->p.tooltip)
         listView->p.createCustomTooltip();
@@ -97,9 +121,11 @@
     NSString* text = [[self objectValue] objectForKey:@"text"];
     NSImage* image = [[self objectValue] objectForKey:@"image"];
     NSNumber* row = [[self objectValue] objectForKey:@"row"];
+    NSNumber* col = [[self objectValue] objectForKey:@"col"];
     
     int _row = [row intValue];
-    
+    int _col = [col intValue];
+        
     unsigned textDisplacement = 0;
     
     if(image) {
@@ -111,6 +137,23 @@
         
         [[NSGraphicsContext currentContext] restoreGraphicsState];
         textDisplacement = frame.size.height + 2;
+    } else {
+        auto& aligns = listView->state.aligns;
+        if (_col < aligns.size()) {
+            switch(aligns[_col]) {
+                case GUIKIT::ListView::Align::Center: {
+                    unsigned textWidth = GUIKIT::pFont::size([self font], listView->text(_row, _col)).width;
+                    if (frame.size.width > textWidth)
+                        textDisplacement = (frame.size.width - textWidth) / 2;
+                } break;
+                case GUIKIT::ListView::Align::Right: {
+                    unsigned textWidth = GUIKIT::pFont::size([self font], listView->text(_row, _col)).width;
+                    if (frame.size.width > textWidth)
+                        textDisplacement = (frame.size.width - textWidth);
+                } break;
+                default: break;
+            }
+        }
     }
     
     NSRect textRect = NSMakeRect(
@@ -121,24 +164,23 @@
     
     if ([self isHighlighted]) {
         if (listView->overrideSelectionColor())
-            textColor = GUIKIT::pHelper::getColor( listView->selectionForegroundColor());
+            textColor = GUIKIT::pHelper::RGBToNSColor( listView->selectionForegroundColor());
         else
             textColor = [NSColor alternateSelectedControlTextColor];
     } else {
-        if (_row == 0 && listView->overrideFirstRowColor()) {
-            NSColor* frcol = GUIKIT::pHelper::getColor( listView->firstRowBackgroundColor() );
-            
-            [frcol set];
-            textColor = GUIKIT::pHelper::getColor( listView->firstRowForegroundColor() );
-            NSRectFill(frame);
+        std::optional<unsigned> rowColor = listView->rowForegroundColor( _row, _col );
+        
+        if (rowColor.has_value()) {
+            textColor = GUIKIT::pHelper::RGBToNSColor( rowColor.value() );
+        
         } else if(listView->overrideForegroundColor()) {
-            textColor = GUIKIT::pHelper::getColor( listView->foregroundColor() );
+            textColor = GUIKIT::pHelper::RGBToNSColor( listView->foregroundColor() );
         } else
             textColor = [NSColor textColor];
     }
     
     if ([self isHighlighted] && listView->overrideSelectionColor()) {
-        NSColor* hicol = GUIKIT::pHelper::getColor( listView->selectionBackgroundColor() );
+        NSColor* hicol = GUIKIT::pHelper::RGBToNSColor( listView->selectionBackgroundColor() );
         
         [hicol set];
         if (listView->columnCount() > 1) {
@@ -149,6 +191,13 @@
             
         frame.origin.x -= 5;
         NSRectFill(frame);
+    } else if (![self isHighlighted]) {
+        std::optional<unsigned> rowColor = listView->rowBackgroundColor( _row );
+        if (rowColor.has_value()) {
+            NSColor* frcol = GUIKIT::pHelper::RGBToNSColor( rowColor.value() );
+            [frcol set];
+            NSRectFill(frame);
+        }
     }
     
     [text drawInRect:textRect withAttributes:@{ NSForegroundColorAttributeName:textColor, NSFontAttributeName:[self font] }];
@@ -167,6 +216,7 @@
         [self setBorderType:NSBezelBorder];
         [self setHasVerticalScroller:YES];
         [self setHasHorizontalScroller:YES];
+        [self setAutohidesScrollers:YES];
         if (GUIKIT::hasMinimumVersion(10, 10)) {
             [self setAutomaticallyAdjustsContentInsets:NO];
             [self setContentInsets:NSEdgeInsetsMake(2, 2, 2, 2)];
@@ -210,7 +260,7 @@
     listView->p.fontAdjust.yOffset = 0;
     listView->p.fontAdjust.height = 0;
     
-    if (listView->specialFont()) {
+    if (listView->spacing() == 0) {
         // this is a hack to completly remove row spacing
         unsigned fontSize = GUIKIT::pFont::getSizeFromString( listView->font() );
         
@@ -247,10 +297,14 @@
     [content setFont:_font];
     [content setRowHeight:fontHeight + listView->p.fontAdjust.rowHeight ];
     
-    if (listView->specialFont()) {
+    int _spacing = listView->spacing();
+    
+    if (_spacing == 0) {
         [content setIntercellSpacing:NSMakeSize(0.0, 0.0)];
-    } else
-        [content setIntercellSpacing:NSMakeSize(0.0, 3.0)];
+    } else if (_spacing > 0)
+        [content setIntercellSpacing:NSMakeSize((CGFloat)_spacing, 3.0)];
+    else
+        [content setIntercellSpacing:NSMakeSize(8.0, 3.0)];
     
     [self reloadColumns];
 }
@@ -271,7 +325,9 @@
         dataCell->listView = listView;
 
         [dataCell setEditable:NO];
-
+        if (listView->state.centerHeader)
+            [headerCell setAlignment:NSTextAlignmentCenter];
+        
         [tableColumn setResizingMask:NSTableColumnAutoresizingMask | NSTableColumnUserResizingMask];
         [tableColumn setHeaderCell:headerCell];
         [tableColumn setDataCell:dataCell];
@@ -289,9 +345,10 @@
     NSString* text = [NSString stringWithUTF8String:listView->text(row, column).c_str()];    
     NSImage* image = listView->p.images.at(row).at(column);
     NSNumber* _row = [NSNumber numberWithInt:row];
+    NSNumber* _col = [NSNumber numberWithInt:column];
     
-    if(image) return @{ @"text":text, @"image":image, @"row":_row };
-    return @{ @"text":text, @"row":_row };
+    if(image) return @{ @"text":text, @"image":image, @"row":_row, @"col":_col };
+    return @{ @"text":text, @"row":_row, @"col":_col };
 }
 
 -(BOOL) tableView:(NSTableView*)table shouldShowCellExpansionForTableColumn:(NSTableColumn*)tableColumn row:(NSInteger)row {
@@ -333,8 +390,7 @@ row:(NSInteger)row
 mouseLocation:(NSPoint)mouseLocation {
     auto& toolTips = listView->state.rowTooltips;
 
-    if (listView->p.useCustomTooltip && listView->overrideFirstRowColor() && row == 0);
-    else if ( listView->p.useCustomTooltip || !toolTips.size())
+    if ( listView->p.useCustomTooltip || !toolTips.size())
         return nil;
 
     if (row >= toolTips.size())
@@ -353,16 +409,26 @@ mouseLocation:(NSPoint)mouseLocation {
 namespace GUIKIT {
 
 auto pListView::autoSizeColumns() -> void {
+    int spacing = listView.spacing();
+    if (spacing == -1)
+        spacing = 10;
+    
     @autoreleasepool {
         unsigned height = [[(id)cocoaView content] rowHeight];
         for(unsigned column = 0; column < listView.columnCount(); column++) {
             NSTableColumn* tableColumn = [[(id)cocoaView content] tableColumnWithIdentifier:[[NSNumber numberWithInteger:column] stringValue]];
-            unsigned minimumWidth = pFont::size([[tableColumn headerCell] font], listView.state.header.at(column)).width + 4;
+            
+            auto _text = listView.state.header[column];
+            
+            unsigned minimumWidth = _text.empty() ? 0 : (pFont::size([[tableColumn headerCell] font], _text).width + spacing);
+            
             for(unsigned row = 0; row < listView.rowCount(); row++) {
-                unsigned width = pFont::size([(id)cocoaView font], listView.text(row, column)).width + 4;
-                GUIKIT::Image* img = listView.state.images.at(row).at(column);
-
-                if(img && !img->empty()) width += height + 2;
+                auto _text = listView.text(row, column);
+                unsigned width = _text.empty() ? 0 : (pFont::size([(id)cocoaView font], _text).width + spacing);
+                GUIKIT::Image* img = listView.state.images[row][column];
+                if(img) {
+                    width += height + 2;
+                }
                 if(width > minimumWidth) minimumWidth = width;
             }
             [tableColumn setWidth:minimumWidth];
@@ -372,7 +438,7 @@ auto pListView::autoSizeColumns() -> void {
     }
 }
 
-auto pListView::append(const std::vector<std::string>& list) -> void {
+auto pListView::append(const std::vector<std::string>& list, bool preventColumnResizing) -> void {
     @autoreleasepool {
 
         [[(id)cocoaView content] reloadData];
@@ -380,7 +446,8 @@ auto pListView::append(const std::vector<std::string>& list) -> void {
     std::vector<NSImage*> image;
     for (unsigned i = 0; i < list.size(); i++) image.push_back(nil);
     images.push_back(image);
-    autoSizeColumns();
+    if (!preventColumnResizing)
+        autoSizeColumns();
 }
 
 auto pListView::remove(unsigned selection) -> void {
@@ -433,12 +500,13 @@ auto pListView::setSelection(unsigned selection) -> void {
     }
 }
 
-auto pListView::setText(unsigned selection, unsigned position, const std::string& text) -> void {
+auto pListView::setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing) -> void {
     @autoreleasepool {
         [[(id)cocoaView content] reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:selection]
                                        columnIndexes:[NSIndexSet indexSetWithIndex:position]];
     }
-    autoSizeColumns();
+    if (!preventColumnResizing)
+        autoSizeColumns();
 }
 
 auto pListView::init() -> void {
@@ -448,7 +516,7 @@ auto pListView::init() -> void {
     }
 }
 
-auto pListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
+auto pListView::setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing) -> void {
     @autoreleasepool {
         [images.at(selection).at(position) release];
         images.at(selection).at(position) = NSMakeImage(image);
@@ -456,7 +524,8 @@ auto pListView::setImage(unsigned selection, unsigned position, Image& image) ->
         [[(id)cocoaView content] reloadDataForRowIndexes:[NSIndexSet indexSetWithIndex:selection]
                              columnIndexes:[NSIndexSet indexSetWithIndex:position]];
     }
-    autoSizeColumns();
+    if (!preventColumnResizing)
+        autoSizeColumns();
 }
     
 auto pListView::setEnabled(bool enabled) -> void {
@@ -491,7 +560,7 @@ auto pListView::releaseRowImages(unsigned selection) -> void {
  
 auto pListView::setBackgroundColor(unsigned color) -> void {
     
-    NSColor* bg = pHelper::getColor( color );
+    NSColor* bg = pHelper::RGBToNSColor( color );
     
     @autoreleasepool {
         if (cocoaView) {
@@ -507,7 +576,7 @@ auto pListView::setForegroundColor(unsigned color) -> void {
 }
 
 auto pListView::setFont(std::string font) -> void {
-    if (!listView.specialFont() && GUIKIT::hasMinimumVersion(10, 10))
+    if (listView.spacing() != 0 && GUIKIT::hasMinimumVersion(10, 10))
         [(id)cocoaView setContentInsets:NSEdgeInsetsMake(0, 2, 0, 2)];
     
     updateTooltipUsage();
@@ -525,11 +594,11 @@ auto pListView::createCustomTooltip() -> void {
         
         if (listView.state.colorRowTooltips) {
             
-            if (listView.Widget::state.overrideBackgroundColor) {
-                [tooltip setBackgroundColor: pHelper::getColor(listView.Widget::state.backgroundColor) ];
+            if (listView.overrideBackgroundColor()) {
+                [tooltip setBackgroundColor: pHelper::RGBToNSColor(listView.backgroundColor()) ];
             }
-            if (listView.Widget::state.overrideForegroundColor) {
-                [tooltip setTextColor: pHelper::getColor(listView.Widget::state.foregroundColor) ];
+            if (listView.overrideForegroundColor()) {
+                [tooltip setTextColor: pHelper::RGBToNSColor(listView.foregroundColor()) ];
             }
         }
     }
@@ -538,7 +607,7 @@ auto pListView::createCustomTooltip() -> void {
 auto pListView::updateTooltipUsage() -> void {
     useCustomTooltip = false;
     
-    if (listView.state.colorRowTooltips && (listView.Widget::state.overrideBackgroundColor || listView.Widget::state.overrideForegroundColor) )
+    if (listView.state.colorRowTooltips && (listView.overrideBackgroundColor() || listView.overrideForegroundColor()) )
         useCustomTooltip = true;
     else if ( listView.font() != Font::system() )
         useCustomTooltip = true;
@@ -551,6 +620,24 @@ auto pListView::updateTooltipUsage() -> void {
     
 auto pListView::colorRowTooltips( bool colorTip ) -> void {
     updateTooltipUsage();
+}
+
+auto pListView::updateRowColors() -> void {
+    @autoreleasepool {
+        [[(id)cocoaView content] reloadData];
+    }
+}
+
+auto pListView::updateRowForegroundColors() -> void {
+    @autoreleasepool {
+        [[(id)cocoaView content] reloadData];
+    }
+}
+
+auto pListView::getFirstVisibleRow() -> unsigned {
+    NSRect rect = [[(id)cocoaView content] visibleRect];
+    NSRange rows = [[(id)cocoaView content] rowsInRect:rect];
+    return rows.location > 2 ? rows.location + 2 : 0;
 }
 
 pListView::~pListView() {

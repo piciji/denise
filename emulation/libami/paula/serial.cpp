@@ -3,6 +3,22 @@
 
 namespace LIBAMI {
 
+auto Paula::peekSerdatR() -> uint16_t {
+    uint16_t out = serdatR & 0x3ff;
+
+    if (intreq & 0x800) {
+        out |= 0x4000;
+        if (overrun)
+            out |= 0x8000;
+    }
+
+    if (!serDat) out |= 0x2000;
+    if (!serShifter) out |= 0x1000;
+    if (rxd) out |= 0x800;
+
+    return out;
+}
+
 auto Paula::getSerdatR() -> uint16_t {
     uint16_t out = serdatR & 0x3ff;
 

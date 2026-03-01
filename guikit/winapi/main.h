@@ -14,6 +14,7 @@
 #include <Shellapi.h>
 #include <shlwapi.h>
 #include <Commdlg.h>
+#include <gdiplus.h>
 #include <direct.h>
 #include <dwmapi.h>
 #include <windowsx.h>
@@ -51,8 +52,8 @@ typedef bool (WINAPI *IsDarkModeAllowedForApp_t)();
 
 namespace GUIKIT {
 
-#define FixedStyle WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX
-#define ResizableStyle WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME
+#define FixedStyle(noTitle) ((noTitle) ? WS_CAPTION : (WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX))
+#define ResizableStyle(noTitle) ((noTitle) ? (WS_CAPTION | WS_THICKFRAME) : (WS_SYSMENU | WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME))
 	
 static const unsigned Windows2000  = 0x0500;
 static const unsigned WindowsXP    = 0x0501;
@@ -107,6 +108,7 @@ struct pApplication {
     static HBRUSH darkBGTabBrush; 
     static HBRUSH darkDisabledEdgeBrush;
     static HPEN darkEdgePen;
+    static ULONG_PTR gdiplusToken;
 
     static auto loadThemedFunctions() -> void;
     static auto hasAppThemed() -> bool;
@@ -179,7 +181,7 @@ struct pWindow {
     auto isOffscreen() -> bool;
     auto handle() -> uintptr_t;
     auto setForeground() -> void;
-    auto getScrollbarWidth() -> unsigned { return 20; }
+    auto getScrollbarWidth() -> unsigned { return 25; }
     auto applyAspectRatio() -> void {}
     auto applyMaximizeCorrection(Geometry& geo) -> void;
     static auto fixMenuBarInDarkMode(HWND& _hwnd) -> bool;
@@ -319,6 +321,8 @@ struct pLineEdit : pWidget {
     auto setDroppable(bool droppable) -> void;
     auto setMaxLength( unsigned maxLength ) -> void;
     auto setForegroundColor(unsigned color) -> void;
+    auto setPlaceholder(const std::string& placeholder) -> void;
+    auto setAlign( LineEdit::Align align ) -> void;
 
     pLineEdit(LineEdit& lineEdit) : pWidget(lineEdit), lineEdit(lineEdit) {}
     auto rebuild() -> void;
@@ -382,14 +386,102 @@ struct pHyperlink : pWidget {
 
 struct pSquareCanvas : pWidget {
     SquareCanvas& squareCanvas;
+    HCURSOR hCursor = nullptr;
 
     pSquareCanvas(SquareCanvas& squareCanvas) : pWidget(squareCanvas), squareCanvas(squareCanvas) {}
+    ~pSquareCanvas();
     auto rebuild() -> void;
     auto create() -> void;
     auto setBackgroundColor( unsigned color ) -> void;
     auto setBorderColor(unsigned borderSize, unsigned borderColor) -> void;
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
+};
+
+struct pMultiSquareCanvas : pWidget {
+    MultiSquareCanvas& multiSquareCanvas;
+    WNDPROC wndprocOrigScroller;
+
+    pMultiSquareCanvas(MultiSquareCanvas& multiSquareCanvas) : pWidget(multiSquareCanvas), multiSquareCanvas(multiSquareCanvas) {}
+    ~pMultiSquareCanvas();
+
+    HWND hwndScroller;
+    int scrollPos;
+    unsigned* drawArea = nullptr;
+
+    auto rebuild() -> void;
+    auto update() -> void;
+    auto create() -> void;
+    auto setPadding(unsigned padding) -> void;
+    auto updateScrollRange() -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto setVisible(bool visible) -> void;
+    auto setEnabled(bool enabled) -> void;
+    auto buildDrawArea() -> void;
+    auto scroll(int delta) -> void;
+
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK subclassWndProcScroller(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
+    auto onChange(WPARAM wparam) -> void;
+};
+
+struct pLogicViewer : pWidget {
+    LogicViewer& logicViewer;
+    WNDPROC wndprocOrigScroller;
+
+    pLogicViewer(LogicViewer& logicViewer) : pWidget(logicViewer), logicViewer(logicViewer) {}
+    ~pLogicViewer();
+
+    HWND hwndScroller;
+    int scrollPos;
+    unsigned showSlot;
+    Timer scrollTimer;
+
+    HDC drawDC = nullptr;
+    HBITMAP drawBmp = nullptr;
+
+    Gdiplus::Pen* penFG_gp = nullptr;
+    Gdiplus::Pen* penDarkEdge_gp = nullptr;
+    HPEN penFG = nullptr;
+    HPEN penDarkEdge = nullptr;
+
+    HBRUSH backgroundBrush = nullptr;
+
+    std::vector<std::pair<unsigned, HBRUSH>> brushes;
+
+    auto rebuild() -> void;
+    auto update() -> void;
+    auto scrollToActive() -> void;
+    auto create() -> void;
+    auto updateScrollRange() -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto setVisible(bool visible) -> void;
+    auto setEnabled(bool enabled) -> void;
+    auto calcFullWidth() -> unsigned;
+    auto setBackgroundColor(unsigned color) -> void;
+
+    auto setBox(RECT& rc, int offset) -> void;
+    auto drawRect(LogicState::Display display, Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT& rc, const std::string& text, unsigned padding, bool active) -> void;
+    auto drawRect(RECT& rc, const std::string& text) -> void;
+    auto drawRectRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void;
+    auto drawRectLeftRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void;
+    auto drawRectRightRounded(Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT rc, const std::string& text, unsigned padding, bool active) -> void;
+    auto drawLine(RECT& rc) -> void;
+
+    auto scroll(int delta) -> void;
+    auto buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RECT rc) -> void;
+    auto invalidateDrawArea() -> void;
+    auto buildDrawArea(HDC hdc, RECT rcWork, unsigned firstSlot, unsigned buildSlots) -> void;
+    auto getBrush(unsigned color) -> HBRUSH;
+    auto GetRoundRectPath(Gdiplus::GraphicsPath* pPath, Gdiplus::Rect r, int dia) -> void;
+    auto GetRoundRectPathLeft(Gdiplus::GraphicsPath* pPath, Gdiplus::Rect r, int dia) -> void;
+    auto GetRoundRectPathRight(Gdiplus::GraphicsPath* pPath, Gdiplus::Rect r, int dia) -> void;
+
+    static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    static auto CALLBACK subclassWndProcScroller(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
+    auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
+    auto onChange(WPARAM wparam) -> void;
 };
 
 struct pImageView : pWidget {
@@ -477,6 +569,7 @@ struct pCheckBox : pWidget {
     auto onToggle() -> void;
     auto rebuild() -> void;
     auto create() -> void;
+    auto setForegroundColor(unsigned color) -> void;
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
     
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
@@ -537,6 +630,7 @@ struct pRadioBox : pWidget {
     auto rebuild() -> void;
     auto create() -> void;
     auto onActivate() -> void;
+    auto setForegroundColor(unsigned color) -> void;
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
     
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
@@ -562,13 +656,12 @@ struct pListView : pWidget {
     ListView& listView;
     std::vector<Image*> images;
     int lastItem = -1;
-    
-    // for ownerdraw
+
     HBRUSH bgBrush = nullptr;
     HBRUSH hiBrush = nullptr;
-    HBRUSH firstRowBrush = nullptr;
+    std::vector<std::pair<unsigned, HBRUSH>> rowBrushes;
 
-    auto append(const std::vector<std::string>& list) -> void;
+    auto append(const std::vector<std::string>& list, bool preventColumnResizing = false) -> void;
     auto autoSizeColumns() -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
@@ -578,13 +671,13 @@ struct pListView : pWidget {
     auto setHeaderVisible(bool visible) -> void;
     auto setSelection(unsigned selection) -> void;
     auto setSelected(bool selected) -> void;
-    auto setText(unsigned selection, unsigned position, const std::string& text) -> void;
+    auto setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing) -> void;
     auto rebuild() -> void;
     auto create() -> void;
     auto setFont(std::string font) -> void;
     auto setContent() -> void;
     auto setImage(unsigned selection, unsigned position, int imageListPos) -> void;
-    auto setImage(unsigned selection, unsigned position, Image& image) -> void;
+    auto setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing = false) -> void;
     auto buildImageList() -> void;
     auto addToImageList(Image& image, unsigned size) -> void;
 	auto setBackgroundColor(unsigned color) -> void;
@@ -597,6 +690,8 @@ struct pListView : pWidget {
     auto colorRowTooltips( bool colorTip ) -> void {}
     auto lockRedraw() -> void;
     auto unlockRedraw() -> void;
+    auto getFirstVisibleRow() -> unsigned;
+    static auto getThemeHeaderColors(HPEN& captionPen) -> HBRUSH;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;    
     auto onCustomDraw(LPARAM lparam) -> LRESULT;
@@ -604,12 +699,16 @@ struct pListView : pWidget {
     
     auto onChange(LPARAM lparam) -> void;
     auto onActivate(LPARAM lparam) -> void;
+    auto onClick(LPARAM lparam, bool rightClick = false) -> void;
     
     auto measureItem(LPMEASUREITEMSTRUCT lpmis) -> void;
     auto drawItem(LPDRAWITEMSTRUCT lDraw) -> void;
     auto clearBrush() -> void;
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
-    auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
+    auto findRowBrush(unsigned row) -> HBRUSH;
+    auto updateRowColors() -> void;
+    auto updateRowForegroundColors() -> void {}
+    auto updateSpacing() -> void;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) {}
 };
@@ -932,7 +1031,12 @@ struct pMessageWindow {
     static auto translateButtons(MessageWindow::Buttons buttons) -> UINT;
 
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
-    static auto CALLBACK pfnCBTMsgBoxHook(int nCode, WPARAM wparam, LPARAM lparam) ->LRESULT;
+    static auto CALLBACK pfnCBTMsgBoxHook(int nCode, WPARAM wparam, LPARAM lparam) -> LRESULT;
+};
+
+struct pColorChooser {
+    static auto choose(ColorChooser::State& state) -> std::optional<unsigned>;
+    static auto CALLBACK chooseColorDlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) -> uintptr_t;
 };
 
 struct pFont {
@@ -1046,4 +1150,6 @@ auto CreateBitmapWithPremultipliedAlpha(Image& image) -> HBITMAP;
 auto CreateHCursor( HBITMAP hBitmap, unsigned hotSpotX, unsigned hotSpotY ) -> HCURSOR;
 auto CreateHIcon(Image& image) -> HICON;
 auto getDropPaths(WPARAM wparam) -> std::vector<std::string>;
+static auto scrollTo(HWND hwndScroller, WPARAM wparam, int& scrollPos ) -> void;
+static auto makeColorRef(unsigned rgb) -> COLORREF;
 }

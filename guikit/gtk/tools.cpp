@@ -5,6 +5,8 @@
 
 //timer
 static auto Timer_trigger(pTimer* self) -> guint {
+	if (GUIKIT::Application::isQuit)
+		return false;
     if(self->timer.onFinished) self->timer.onFinished();
 
     self->gtimer = 0;
@@ -263,7 +265,8 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
     std::vector<std::string> tokens = String::split(font, ' ');
     for(auto& token : tokens ) {
         if (String::isNumber(token)) {
-            if (size == 0) size = std::stoi(token);
+            if (size == 0)
+            	size = std::stoi(token);
         } else {
             family += token + " ";
         }
@@ -274,7 +277,14 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
 	else if (family.empty())
 		family = "Sans";
 	
-    if(size == 0)
+    if(fontName && size == 0) {
+    	PangoFontDescription* desc = pango_font_description_from_string(fontName);
+
+    	if (desc)
+    		size = pango_font_description_get_size(desc);
+    }
+
+	if (size == 0)
 		size = 9;
 	
     if(style == "")

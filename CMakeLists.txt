@@ -106,12 +106,15 @@ set(srcs
         emulation/libc64/interface.cpp
         emulation/libc64/m6510/m6510.cpp
         emulation/libc64/disk/cpu/m6502.cpp
+        emulation/libc64/m6510/dasmHandler.cpp
+        emulation/tools/watcher.cpp
 
         emulation/cia/base.cpp
         emulation/cia/m6526.cpp
         emulation/cia/new/cia.cpp
 
         emulation/libami/cpu/m68000/m68000.cpp
+        emulation/libami/cpu/m68000/dasmHandler.cpp
         emulation/libami/cpu/m68000.cpp
         emulation/libami/agnus/agnus.cpp
         emulation/libami/agnus/blitter.cpp
@@ -172,6 +175,7 @@ set(srcs
         emulation/libc64/expansionPort/acia/acia.cpp
         emulation/libc64/disk/wd177x/wd1770.cpp
         emulation/wdc/65816/w65816.cpp
+        emulation/wdc/65816/dasmHandler.cpp
         emulation/wdc/65C02/w65C02.cpp
         emulation/libc64/expansionPort/superCpu/superCpu.cpp
         emulation/libc64/traps/traps.cpp
@@ -188,10 +192,18 @@ set(srcs
         data/icons/logos.cpp
         emulation/tools/socket.cpp
         emulation/tools/fpaq0.cpp
+        emulation/tools/expressionParser.cpp
 
         program/program.cpp
         program/input/manager.cpp
         program/view/view.cpp
+        program/debugger/debugger.cpp
+        program/debugger/cpuDebugger.cpp
+        program/debugger/memDebugger.cpp
+        program/debugger/ciaDebugger.cpp
+        program/debugger/videoDebugger.cpp
+        program/debugger/audioDebugger.cpp
+        program/debugger/dmaDebugger.cpp
         program/view/status.cpp
         program/config/config.cpp
         program/emuconfig/config.cpp
@@ -379,7 +391,7 @@ add_executable( ${PROJECT_NAME} ${srcs} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(${PROJECT_NAME} "-static -lws2_32 -lgdi32 -lcomdlg32 -lole32 -lcomctl32 -lshlwapi -lmsimg32 -lwinmm -lopengl32 -ldwmapi -luxtheme")
+    target_link_libraries(${PROJECT_NAME} "-static -lws2_32 -lgdi32 -lcomdlg32 -lole32 -lcomctl32 -lshlwapi -lmsimg32 -lwinmm -lopengl32 -ldwmapi -luxtheme -lgdiplus")
     if(CMAKE_BUILD_TYPE STREQUAL Release)
         target_link_libraries(${PROJECT_NAME} "-mwindows")
     else()

@@ -350,7 +350,7 @@ auto MediaGroupLayout::fillListing( std::vector<Emulator::Interface::Listing>& e
     for( auto listing : mediaLayout->convertListing( emuListings, false ) )
         rows.push_back({listing});
         
-    listings.append(rows);
+    listings.appendMulti(rows);
 
     if (!mediaLayout->settings->get<bool>("software_preview_tooltips", true ))
         return;
@@ -368,7 +368,7 @@ auto MediaGroupLayout::fillListing( std::vector<GUIKIT::BrowserWindow::Listing>&
     for( auto listing : emuListings ) 
         rows.push_back({listing.entry});
         
-    listings.append(rows);
+    listings.appendMulti(rows);
 		
     if (!mediaLayout->settings->get<bool>("software_preview_tooltips", true ))
         return;
@@ -472,10 +472,13 @@ auto MediaGroupLayout::applyFont(unsigned fontSize) -> void {
 
     auto customFont = GUIKIT::Window::getCustomFont(mediaLayout->emulator);
 
-    if (customFont)
-        listings.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust),
-            dynamic_cast<LIBC64::Interface*>(mediaLayout->emulator) || GUIKIT::Application::isWinApi()); // todo handle this better
-    else
+    listings.setSelected( false );
+    if (customFont) {
+        listings.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust));
+
+        if (dynamic_cast<LIBC64::Interface*>(mediaLayout->emulator) || GUIKIT::Application::isWinApi())
+            listings.setSpacing( 0 );
+    } else
         listings.setFont(GUIKIT::Font::system(fontSize));
 }
 
@@ -540,9 +543,10 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
 
     auto fontSize = settings->get<unsigned>("dialog_preview_fontsize", 11, {8, 16});
 
-    if (customFont)
-        previewBox.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust), true);
-    else
+    if (customFont) {
+        previewBox.setFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust));
+        previewBox.setSpacing( 0 );
+    } else
         previewBox.setFont( GUIKIT::Font::system(fontSize) );
 
     if (!previewBox.rowCount()) {
@@ -599,10 +603,13 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
         else
             previewBox.resetSelectionColor();
 
-        if (dynamic_cast<LIBAMI::Interface*>(emulator))
-            previewBox.setFirstRowColor( backgroundColor, foregroundColor );
-        else
-            previewBox.resetFirstRowColor();
+        if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+            previewBox.setRowForegroundColor( backgroundColor, 0 );
+            previewBox.setRowBackgroundColor( foregroundColor, 0 );
+        } else {
+            previewBox.resetRowForegroundColor( 0 );
+            previewBox.resetRowBackgroundColor( 0 );
+        }
         
         for (unsigned i = 0; i < 8; i++) {
             previewBox.append( {out} );
@@ -612,7 +619,7 @@ auto DialogPreviewLayout::updatePreviewContent(GUIKIT::Settings* settings, Emula
     }
 
     unsigned newWidth = settings->get<unsigned>("dialog_preview_width", 450, {200, 600});
-    unsigned newHeight = 80;
+    unsigned newHeight = 100;
     if (GUIKIT::Application::isCocoa())
         newHeight = settings->get<unsigned>("dialog_preview_height", 200, {50, 400});
 

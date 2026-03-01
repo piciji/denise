@@ -56,7 +56,12 @@ auto VicIIFast::clock() -> void {
     }    
     
     if (initVCounter) {
+        if (debugger.storeSprites)
+            debugger.resetSpriteStore();
+
         vCounter = 0;
+        if (debugger.action == Emulator::Interface::DebuggerAction::Frame)
+            oneTimeDebuggerAction();
         initVCounter = false;
         lpLatched = false;
         if (!lpPin)
@@ -66,11 +71,11 @@ auto VicIIFast::clock() -> void {
         allowBadlines = false;
     } 
     
-    if (++cycle == lineCycles) {	
-		cycle = 0; 
+    if (++cycle == lineCycles) {
+		cycle = 0;
 
         if (vCounter == 0xf7)
-            allowBadlines = false;                    
+            allowBadlines = false;
 
         if (++vCounter == lines) {
             vCounter -= 1;
@@ -92,9 +97,6 @@ auto VicIIFast::clock() -> void {
         } else if (lineVCounter == vHeight) {
             visibleLine = false;
 
-            if (leftLineAnomaly.mode)
-                insertVerticalLineAnomaly(0, lineVCounter);
-
             system->videoRefresh(frameBuffer + firstVisiblePixel,
 				hWidth, lineVCounter, VIC_MAX_LINE_LENGTH - hWidth
 			);
@@ -105,7 +107,12 @@ auto VicIIFast::clock() -> void {
         if (visibleLine) {
             linePtr = frameBuffer + lineVCounter * VIC_MAX_LINE_LENGTH;
             lineVCounter++;
-        }		 
+        }
+
+        if (debugger.action == Emulator::Interface::DebuggerAction::Line) {
+            if (debugger.stopLine == ~0 || debugger.stopLine == vCounter )
+                oneTimeDebuggerAction();
+        }
 
 		flags = cycleTab[0];
 		
@@ -280,6 +287,13 @@ inline auto VicIIFast::applyMeta() -> void {
         *ptr |= *src++;
         ptr += 1;
     }  
+}
+
+auto VicIIFast::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.vicII;
+    s.vmli = 0;
+
+    VicIIBase::updateVideoSnapshot(snap);
 }
 
 auto VicIIFast::initMetaPattern() -> void {

@@ -63,7 +63,20 @@ auto pButton::rebuild() -> void {
     pWidget::rebuild();
 }
 
-auto pButton::onActivate() -> void {    
+auto pButton::onActivate() -> void {
+    if(button.onMenu) {
+        auto* menu = button.onMenu();
+        if (menu) {
+            POINT pt;
+            GetCursorPos(&pt);
+            int mid = TrackPopupMenuEx(menu->p.hmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, button.window()->p.hwnd, NULL);
+            if (mid) {
+                SendMessage(button.window()->p.hwnd, WM_COMMAND, mid, 0);
+                return;
+            }
+        }
+    }
+
     if(button.onActivate)
         button.onActivate();
 }
@@ -77,7 +90,7 @@ auto pButton::setText(const std::string& text) -> void {
 
 auto pButton::setEnabled(bool enabled) -> void {
     pWidget::setEnabled(enabled);
-    if(button.image())
+    if(button.image() && hwnd)
         RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
@@ -93,6 +106,9 @@ auto pButton::setImage(Image* image) -> void {
         DeleteObject(hbitmap);
 
     hbitmap = CreateBitmapWithPremultipliedAlpha( *image );
+
+    if (hwnd)
+        RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
 auto pButton::customDraw(HWND hWnd, HDC hdc, RECT& rc, RECT& rcpaint) -> void {

@@ -9,11 +9,14 @@ struct VicIIFast : VicIIBase {
     
     VicIIFast(System* system);
     auto clock() -> void;
+    auto clockLogged() -> void { clock(); }
+    auto clockMaybeLogged() -> void { clock(); }
     auto power() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto clockSilence() -> void;    
 	   
     auto readReg( uint8_t addr ) -> uint8_t;
+    auto peekReg( uint8_t addr ) -> uint8_t;
     auto writeReg( uint8_t addr, uint8_t value ) -> void;
     auto getCurrentLinePtr() -> uint8_t*;
 	auto getCurrentFramePtr() -> uint8_t*;
@@ -24,6 +27,7 @@ struct VicIIFast : VicIIBase {
 	auto reuBaLow() -> bool { return baLow; }
     auto reuSprite0() -> bool { return false; }
 	auto setMeta( bool state ) -> void;
+    auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;
    
 protected:
 	#include "../flags.h"
@@ -38,7 +42,6 @@ protected:
 	uint8_t* linePtr;
 	bool addMeta; // add aec and ba state to output 
 
-    uint16_t vicBank;
     Sprite* drawSprites[VIC_MAX_LINE_LENGTH << 1];
     uint8_t* patternBadline;
     uint8_t* patternLine;

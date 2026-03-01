@@ -111,6 +111,10 @@ auto BuiltinHD::read(uint32_t addr) -> uint8_t {
     return offset < romSize ? rom[offset] : 0;
 }
 
+auto BuiltinHD::peekW(uint32_t addr) -> uint16_t {
+    return readW(addr);
+}
+
 auto BuiltinHD::readW(uint32_t addr) -> uint16_t {
     unsigned offset = (addr & 0xffff) - 0x40;
 

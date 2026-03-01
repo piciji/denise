@@ -241,7 +241,7 @@ auto String::addThousandSeparator(std::string str) -> std::string {
     return out;
 }
 
-auto String::convertToNumber(std::string str) -> int {
+auto String::convertToNumber(std::string str, int defaultVal) -> int {
 	String::remove(str, {{"%"}});
 	String::trim(str);
 	int value = 0;
@@ -249,10 +249,23 @@ auto String::convertToNumber(std::string str) -> int {
 	try {
 		value = std::stoi( str );
 	} catch(...) {
-		value = 0;
+		value = defaultVal;
 	}
 	
 	return value;
+}
+
+auto String::convertToHex( unsigned val, int length ) -> std::string {
+    char hex[9];
+    if (length == -1)
+        snprintf(hex, 9, "%x", val);
+    else {
+        std::string format = "%0" + std::to_string(length) + "x";
+        snprintf(hex, 9, format.c_str(), val);
+    }
+    std::string result = static_cast<std::string>(hex);
+    toUpperCase( result );
+    return result;
 }
 
 auto String::convertIntToHex( int number, bool prepend_0x ) -> std::string {
@@ -268,6 +281,8 @@ auto String::convertIntToHex( int number, bool prepend_0x ) -> std::string {
 auto String::convertHexToInt( std::string hex, int defaultValueByFailure ) -> int {
     
     int _out;
+
+    remove( hex, {"$", "0x"} );
     
     int result = sscanf( hex.c_str(), "%x", &_out );
     

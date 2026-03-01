@@ -57,6 +57,11 @@ auto Input::writeCiaPort2(bool state) -> void {
     controlPort2->writeCia(state);
 }
 
+auto Input::peekDenisePortA() -> uint16_t {
+    jitPoll();
+    return controlPort1->readDirection();
+}
+
 auto Input::readDenisePortA() -> uint16_t {
     system->observeInputFetches();
     jitPoll();
@@ -69,6 +74,11 @@ auto Input::readDenisePortA() -> uint16_t {
 auto Input::writeDeniseJoytest(uint16_t data) -> void {
     controlPort1->writeJoytest(data);
     controlPort2->writeJoytest(data);
+}
+
+auto Input::peekDenisePortB() -> uint16_t {
+    jitPoll();
+    return controlPort2->readDirection();
 }
 
 auto Input::readDenisePortB() -> uint16_t {

@@ -76,6 +76,7 @@ struct HardDrive {
 
     auto power(bool softReset) -> void;
 
+    auto peekReg(uint8_t reg, uint8_t cs = 0) -> uint16_t;
     auto readReg(uint8_t reg, uint8_t cs = 0) -> uint16_t;
     auto writeReg(uint8_t reg, uint16_t data, uint8_t cs = 0) -> void;
     auto fail() -> void;

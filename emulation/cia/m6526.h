@@ -12,13 +12,14 @@ struct M6526 : Base {
 	 * impulse on tod line occured
 	 */
     auto tod() -> void;
-	
+
+    auto peek(unsigned pos) -> uint8_t;
 	auto read(unsigned pos) -> uint8_t;
 	auto write(unsigned pos, uint8_t value) -> void;
 	auto reset() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
         
-protected:        
+//protected:
 	bool todLatched;
 	bool todActive;
 	uint32_t todLatch;

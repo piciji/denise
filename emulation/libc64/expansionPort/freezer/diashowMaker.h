@@ -13,6 +13,10 @@ struct DiashowMaker : Freezer {
         return false;
     }
 
+    auto peekIo1( uint16_t addr ) -> uint8_t {
+        return 0;
+    }
+
     auto readIo1( uint16_t addr ) -> uint8_t {
 
         if (addr == 0xde00) {

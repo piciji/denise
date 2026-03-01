@@ -15,6 +15,7 @@
     bool, unsigned, bool, unsigned, bool, float, bool, float
 
 struct ShaderParser;
+struct DmaColor;
 
 namespace GUIKIT {
     struct Settings;
@@ -159,6 +160,8 @@ struct VideoManager {
     ColorLumaChroma* evenTable = nullptr;
     ColorLumaChroma* oddTable = nullptr;
 
+    DmaColor* dmaColors = nullptr;
+
     ShaderPreset::Param* driveLedParam = nullptr;
     uint8_t frameOptions = 0;
     bool colorTableUpdated = false;
@@ -179,6 +182,7 @@ struct VideoManager {
 
     template<typename T, bool interlace = false, bool field = false> auto renderToLumaChroma(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint32_t* dest, unsigned destPitch, bool odd) -> void;
     template<typename T, bool interlace = false, bool field = false> auto renderToRgb(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
+    template<typename T, bool interlace = false, bool field = false> auto renderToRgbWithDma(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch) -> void;
     template<typename T> auto renderToScreenshot(unsigned width, unsigned height, const T* src, unsigned srcPitch, uint8_t* dest, uint8_t _options) -> void;
     template<typename T, uint8_t options = 0> auto renderFrame(const T* src, unsigned width, unsigned height, unsigned srcPitch) -> void;
     template<typename T, uint8_t options = 0> auto renderCrt(unsigned width, unsigned height, const T* src, unsigned srcPitch, unsigned* dest, unsigned destPitch, unsigned& cropTop ) -> void;

@@ -24,6 +24,10 @@ struct System3 : GameCart {
         }            
     }
 
+    auto peekIo1( uint16_t addr ) -> uint8_t {
+        return ExpansionPort::readIo1( addr );
+    }
+
     auto readIo1( uint16_t addr ) -> uint8_t {
    
         cRomL = getChip(0);

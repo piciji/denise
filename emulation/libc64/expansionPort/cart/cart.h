@@ -49,7 +49,9 @@ struct Cart : ExpansionPort {
     virtual auto getListing() -> std::vector<Emulator::Interface::Listing>;
     
     virtual auto readRomL(uint16_t addr) -> uint8_t;
-    virtual auto readRomH(uint16_t addr) -> uint8_t;   
+    virtual auto peekRomL(uint16_t addr) -> uint8_t;
+    virtual auto readRomH(uint16_t addr) -> uint8_t;
+    virtual auto peekRomH(uint16_t addr) -> uint8_t;
     virtual auto serialize(Emulator::Serializer& s) -> void;
     virtual auto serializeStep2(Emulator::Serializer& s) -> void;	
         

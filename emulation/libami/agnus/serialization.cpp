@@ -82,6 +82,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
 
     s.integer(useRTC);
     s.integer(dataBus);
+    s.integer(addrBus);
     s.integer(dmaCon);
     s.integer(dmaConImm);
     s.integer(dmaConCop);
@@ -154,6 +155,7 @@ auto Agnus::serialize(Emulator::Serializer& s, bool light) -> void {
             }
 
             setRas();
+            debuggerUpdateEvent();
         } else {
             s.integer(chipMemMask);
             s.integer(slowMemSize);

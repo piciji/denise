@@ -109,7 +109,7 @@ auto pMultilineEdit::setForegroundColor(unsigned color) -> void {
         
         if(multilineEdit.overrideForegroundColor()) {
             unsigned color = multilineEdit.foregroundColor();
-            textColor = pHelper::getColor( color );
+            textColor = pHelper::RGBToNSColor( color );
         }
         
         [[(id)cocoaView content] setTextColor: textColor];

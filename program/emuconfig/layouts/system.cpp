@@ -63,7 +63,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     
     memorySliderReset.onFinished = [this]() {
         if (activeEmulator == this->emulator) {
-            emuThread->lock();
+            emuThread->lock(true);
             program->power(activeEmulator);
             emuThread->unlock();
         }
@@ -72,7 +72,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     };
 
     if (dynamic_cast<LIBC64::Interface*>(emulator))
-        dim = { 5, 3 };
+        dim = { 4, 2 };
     else
         dim = { 1, 3, 3 };
 
@@ -132,7 +132,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
                 updateExpansionMemory();
 
                 if (activeEmulator == this->emulator) {
-                    emuThread->lock();
+                    emuThread->lock(true);
                     program->power(activeEmulator);
                     emuThread->unlock();
                 }

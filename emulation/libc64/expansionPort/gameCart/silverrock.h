@@ -7,6 +7,10 @@ namespace LIBC64 {
 
         Silverrock(System* system) : GameCart(system, true, false) {}
 
+        auto peekRomL( uint16_t addr ) -> uint8_t {
+            return readRomL(addr);
+        }
+
         auto readRomL( uint16_t addr ) -> uint8_t {
             // tested with original Hugo image in Fallborg's package from CSDb
             addr = ((addr & 1) << 10) |

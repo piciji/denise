@@ -364,7 +364,7 @@ case 0x99:
     break;
 
 case 0x9a:
-    TRANSFER( regX, regS )
+    TRANSFER_REG_S( regX, regS )
     break;
 
 case 0x9d:

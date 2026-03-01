@@ -53,6 +53,13 @@ struct ActionReplayV4 : Freezer {
             enable = false;
     }
 
+    auto peekIo1( uint16_t addr ) -> uint8_t {
+        if (!enable)
+            return 0;
+
+        return ExpansionPort::readIo1(addr);
+    }
+
     auto readIo1( uint16_t addr ) -> uint8_t {
         if (!enable)
             return 0;
@@ -61,6 +68,10 @@ struct ActionReplayV4 : Freezer {
         uint8_t value = ExpansionPort::readIo1(addr);
         writeIo1( addr, value );
         return value;
+    }
+
+    auto peekIo2( uint16_t addr ) -> uint8_t {
+        return readIo2( addr );
     }
     
     auto readIo2( uint16_t addr ) -> uint8_t {
@@ -86,7 +97,11 @@ struct ActionReplayV4 : Freezer {
         if (useRam)
             ram[ (0x1f << 8) | (addr & 0xff) ] = value;
     }
-    
+
+    auto peekRomL( uint16_t addr ) -> uint8_t {
+        return readRomL(addr);
+    }
+
     auto readRomL( uint16_t addr ) -> uint8_t {
 
         if (bug)

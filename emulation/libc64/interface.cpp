@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "223";
+const std::string Interface::Version = "224";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -603,18 +603,11 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdSid8Right, "SID 8 Right Channel", Model::Type::Switch, Model::Purpose::AudioResampler, 1});
     models.push_back({ModelIdSid8Adr, "SID 8 Address", Model::Type::Combo, Model::Purpose::AudioSettings, 2, {0, (int)(Sid::adrOptions.size() - 1)}, Sid::adrOptions});
 
-    // ANE magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
-    models.push_back({ModelIdCpuAneMagic, "ANE Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xef, { 0, 0xff }});
-	// LAX magic byte value depends on cpu manufacturer and unemulatable behaviour like heat
-    models.push_back({ModelIdCpuLaxMagic, "LAX Magic Byte", Model::Type::Hex, Model::Purpose::Misc, 0xee, { 0, 0xff }});
     // c64c use custom ic instead of discrete glue logic
     models.push_back({ModelIdGlueLogic, "Custom IC Glue Logic", Model::Type::Switch, Model::Purpose::Misc, 0});
 	// disable grey dot bug for 85xx VIC-II
 	models.push_back({ModelIdDisableGreyDotBug, "Disable Grey Dot Bug", Model::Type::Switch, Model::Purpose::Misc, 1});
-    // emulate the buggy vertical line in first two border pixels
-    models.push_back({ModelIdLeftLineAnomaly, "Left Line Anomaly", Model::Type::Combo, Model::Purpose::Misc, 0, {0, 2},
-                      {"Off", "Solid White", "Register Color"}});
-    
+
     models.push_back({ModelId2Mhz, "C128 in C64 mode", Model::Type::Switch, Model::Purpose::Misc, 0});
 
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4},
@@ -650,7 +643,6 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdDiskThread, "Disk Thread", Model::Type::Radio, Model::Purpose::Performance, 0, {0, 2}, {"Off", "On", "On obsolete"} });
 
     models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 1 });
-    models.push_back({ModelIdSidSeparateInput, "SID separate inputs", Model::Type::Switch, Model::Purpose::Performance, 0 });
 
     models.push_back({ModelIdReuRam, "REU Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 7}, { "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB", "8 MB", "16 MB" }});
     models.push_back({ModelIdGeoRam, "Geo Ram", Model::Type::Slider, Model::Purpose::Memory, 0, {0, 6}, { "64 KB", "128 KB", "256 KB", "512 KB", "1 MB", "2 MB", "4 MB" }});
@@ -1547,20 +1539,8 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->cia1.setNewVersion( value & 1 );
             system->cia2.setNewVersion( value & 1 );
             break;
-        case ModelIdCpuAneMagic:
-            //this is annoying ... look in 6502 cpu code for more information
-            system->cpu.setMagicForAne( value & 0xff );
-            break;
-		case ModelIdCpuLaxMagic:
-            //this is annoying ... look in 6502 cpu code for more information
-            system->cpu.setMagicForLax( value & 0xff );
-            break;
         case ModelIdGlueLogic:
             system->glueLogic.setType( (GlueLogic::Type)(value & 1) );
-            break;
-        case ModelIdLeftLineAnomaly:
-            system->vicIIFast.setVerticalLineAnomaly( (unsigned)value );
-            system->vicIICycle.setVerticalLineAnomaly( (unsigned)value );
             break;
 		case ModelIdVicIIModel:
             system->vicIIFast.setModel( (VicIIBase::Model)value );
@@ -1607,10 +1587,6 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
         case ModelIdSid6: system->sidManager.setType( 5, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
         case ModelIdSid7: system->sidManager.setType( 6, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
         case ModelIdSid8: system->sidManager.setType( 7, (value & 1) ? Sid::Type::MOS_6581 : Sid::Type::MOS_8580 ); break;
-
-        case ModelIdSidSeparateInput:
-            system->sidManager.setSeparateFilterInputs(value & 1);
-            break;
 
         case ModelIdDiskDriveModel:
             system->iecBus.setDriveType( Drive::Type(value) );
@@ -1731,22 +1707,14 @@ auto Interface::getModelValue(unsigned modelId) -> int {
             return system->sidManager.getResampleQuality();
         case ModelIdCiaRev:
             return system->cia1.isNewVersion();
-        case ModelIdCpuAneMagic:
-            return system->cpu.getMagicForAne();
-		case ModelIdCpuLaxMagic:
-			return system->cpu.getMagicForLax();
         case ModelIdGlueLogic:
             return (int)system->glueLogic.type;
-        case ModelIdLeftLineAnomaly:
-            return (int)system->vicII->getVerticalLineAnomaly();
 		case ModelIdVicIIModel:
 			return (int)system->vicII->getModel();
 		case ModelIdDisableGreyDotBug:
 			return system->vicIICycle.hasGreyDotBugDisbled();
         case ModelIdSidMulti:
             return (int)system->requestedSids;
-        case ModelIdSidSeparateInput:
-            return (int)system->sidManager.hasSeparateFilterInputs();
             
         case ModelIdSid1Adr: return system->sidManager.getIoPos(0);
         case ModelIdSid2Adr: return system->sidManager.getIoPos(1);
@@ -1820,8 +1788,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
 }
 
 auto Interface::cropFrame( CropType type, Crop crop ) -> void {
-	system->crop->settings.type = type;
-    system->crop->settings.crop = crop;
+    system->cropFrame(type, crop);
 }
 
 auto Interface::cropWidth() -> unsigned {
@@ -2076,6 +2043,58 @@ auto Interface::configRewind(unsigned steps, unsigned maxSizeInMb) -> void {
 auto Interface::setRewind(bool state) -> void {
     if (system->powerOn)
         system->history.setRewind(state);
+}
+
+auto Interface::disassemble(unsigned addr, unsigned& bytes) -> std::string {
+    return system->disassemble(addr, bytes);
+}
+
+auto Interface::disassembleData(unsigned addr, unsigned bytes) -> std::string {
+    return system->disassembleData( (uint16_t)addr, bytes );
+}
+
+auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
+    return system->disassembleTrace( i, (uint8_t&)flags );
+}
+
+auto Interface::getDmaDump() -> uint8_t* {
+    return system->vicII->debugger.dmaFrame;
+}
+
+auto Interface::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+    system->editMemory(addr, values);
+}
+
+auto Interface::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    system->debuggerAdd( theme, action, addr, addrTo );
+}
+
+auto Interface::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+    system->debuggerRemove( theme, action, addr );
+}
+
+auto Interface::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return system->setWatchpointCondition(action, addr, hitCount, hitCountMode, expression, expressionMode);
+}
+
+auto Interface::debuggerStepOver() -> void {
+    system->debuggerStepOver();
+}
+
+auto Interface::debuggerStepInto() -> void {
+    system->debuggerStepInto();
+}
+
+auto Interface::debuggerStepOut() -> bool {
+    return system->debuggerStepOut();
+}
+
+auto Interface::getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {
+    system->getMemoryDumpBank(bank, dump);
+}
+
+auto Interface::getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {
+    system->getMemoryDumpPage(page, dump);
 }
 
 }

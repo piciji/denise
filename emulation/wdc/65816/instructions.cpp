@@ -1,4 +1,6 @@
 
+#include "w65816.h"
+
 #define SI_IF_M (M ? SAMPLE_INTR : 0)
 
 namespace WDCFAMILY {
@@ -9,6 +11,7 @@ template<bool JSR> auto W65816::opJmpAbsIndexedIndirect() -> void {
     if constexpr (JSR) {
         push<NATIVE>(pc >> 8);
         push<NATIVE>(pc & 0xff);
+        appendStepOut((pbr << 16) | ((pc + 1) & 0xffff));
     }
     addr |= readPCNoInc() << 8;
     readPCIdle();
@@ -417,6 +420,8 @@ auto W65816::opTXS() -> void {
         setByteL(s, x & 0xff);
     else
         s = x;
+
+    stepOuts.clear();
 }
 
 #define _TRANSFER(M, From, To) \
@@ -439,6 +444,7 @@ auto W65816::opTCS() -> void {
     idleIrq();
     s = a;
     if (modeE) setByteH(s, 1);
+    stepOuts.clear();
 }
 
 auto W65816::opTSX() -> void { _TRANSFER(p.x, s, x) }
@@ -488,8 +494,13 @@ auto W65816::opPHB() -> void {
 auto W65816::opPLP() -> void {
     readPCIdle();
     readPCIdle();
-    p = pull<SAMPLE_INTR>();
-    if (modeE) p.x = p.m = true;
+    uint8_t _p = pull<SAMPLE_INTR>();
+    if (modeE)
+        _p |= 0x10 | 0x20;
+    if (control & ModifiedCode)
+        observeRegLength(_p);
+
+    p = _p;
     if (p.x) {
         x &= 0xff;
         y &= 0xff;
@@ -546,6 +557,7 @@ auto W65816::opJSR() -> void {
     readPCIdle();
     push(pc >> 8);
     push<SAMPLE_INTR>(pc & 0xff);
+    appendStepOut((pbr << 16) | ((pc + 1) & 0xffff));
     pc = newPC;
 }
 
@@ -557,6 +569,7 @@ auto W65816::opJSL() -> void {
     uint8_t newPbr = readPCNoInc();
     push<NATIVE>(pc >> 8);
     push<NATIVE | SAMPLE_INTR>(pc & 0xff);
+    appendStepOut((pbr << 16) | ((pc + 1) & 0xffff));
     pc = newPC;
     pbr = newPbr;
     if (modeE) setByteH(s, 1);
@@ -565,9 +578,14 @@ auto W65816::opJSL() -> void {
 auto W65816::opRTI() -> void {
     readPCIdle();
     readPCIdle();
-    p = pull();
+
+    uint8_t _p = pull();
     if (modeE)
-        p.x = p.m = true;
+        _p |= 0x10 | 0x20;
+    if (control & ModifiedCode)
+        observeRegLength(_p);
+
+    p = _p;
 
     if (p.x) {
         x &= 0xff;
@@ -581,6 +599,8 @@ auto W65816::opRTI() -> void {
         pc |= pull() << 8;
         pbr = pull<SAMPLE_INTR>();
     }
+
+    if(!stepOuts.empty()) stepOuts.pop_back();
 }
 
 auto W65816::opRTS() -> void {
@@ -591,6 +611,7 @@ auto W65816::opRTS() -> void {
     idle<SAMPLE_INTR>(s);
     pc = newPC;
     pc++;
+    if(!stepOuts.empty()) stepOuts.pop_back();
 }
 
 auto W65816::opRTL() -> void {
@@ -602,6 +623,7 @@ auto W65816::opRTL() -> void {
     pc = newPC;
     pc++;
     if (modeE) setByteH(s, 1);
+    if(!stepOuts.empty()) stepOuts.pop_back();
 }
 
 auto W65816::opJmpAbsolute() -> void {
@@ -649,8 +671,15 @@ auto W65816::opResetP() -> void {
     uint8_t data = readPCNoInc();
     readPCIdle<SAMPLE_INTR>();
     pc++;
-    p = p & ~data;
-    if (modeE) p.x = p.m = true;
+
+    uint8_t _p = p & ~data;
+    if (modeE)
+        _p |= 0x10 | 0x20;
+    if (control & ModifiedCode)
+        observeRegLength(_p);
+
+    p = _p;
+
     if (p.x) {
         setByteH(x, 0);
         setByteH(y, 0);
@@ -661,8 +690,15 @@ auto W65816::opSetP() -> void {
     uint8_t data = readPCNoInc();
     readPCIdle<SAMPLE_INTR>();
     pc++;
-    p = p | data;
-    if (modeE) p.x = p.m = true;
+
+    uint8_t _p = p | data;
+    if (modeE)
+        _p |= 0x10 | 0x20;
+    if (control & ModifiedCode)
+        observeRegLength(_p);
+
+    p = _p;
+
     if (p.x) {
         setByteH(x, 0);
         setByteH(y, 0);
@@ -702,6 +738,9 @@ auto W65816::opXCE() -> void {
     modeE = _c;
 
     if(modeE) {
+        if (control & ModifiedCode)
+            observeRegLength(0x10 | 0x20);
+
         p.x = p.m = true;
         setByteH(s, 1);
         x &= 0xff;

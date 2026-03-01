@@ -28,7 +28,6 @@
  */ 
 
 #include <cstdint>
-#include <functional>
 #include "../../../tools/serializer.h"
 #include "../../../tools/macros.h"
 

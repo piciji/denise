@@ -47,6 +47,16 @@
 		9D0C948B2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D0C948C2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D31E3BE2DF2083600F88404 /* recentFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D31E3BC2DF2083600F88404 /* recentFiles.cpp */; };
+		9D4CCC482F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */; };
+		9D4CCC492F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */; };
+		9D4D10442F071C6B00296467 /* ciaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */; };
+		9D4D10452F071C6B00296467 /* ciaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */; };
+		9D4D10482F071C6B00296467 /* memDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103D2F071C6B00296467 /* memDebugger.cpp */; };
+		9D4D10492F071C6B00296467 /* memDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103D2F071C6B00296467 /* memDebugger.cpp */; };
+		9D4D104A2F071C6B00296467 /* cpuDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */; };
+		9D4D104B2F071C6B00296467 /* cpuDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */; };
+		9D4D104E2F071DA500296467 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D104D2F071DA500296467 /* dasmHandler.cpp */; };
+		9D4D104F2F071DA500296467 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D104D2F071DA500296467 /* dasmHandler.cpp */; };
 		9D55396B2D5A90940083E91B /* w65816.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539652D5A902D0083E91B /* w65816.cpp */; };
 		9D55396C2D5A909C0083E91B /* w65C02.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539692D5A902D0083E91B /* w65C02.cpp */; };
 		9D55396D2D5A90AE0083E91B /* chessCard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D5539582D5A8FBC0083E91B /* chessCard.cpp */; };
@@ -66,8 +76,14 @@
 		9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6404482DCDEF2E00624A00 /* hunk.cpp */; };
 		9D6C71762E4CD03A00F3F107 /* libmp3lame.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */; };
 		9D6C71772E4CD03A00F3F107 /* libmp3lame.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9D6F44872F2E6CD4005BABFA /* dmaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6F44852F2E6CD4005BABFA /* dmaDebugger.cpp */; };
+		9D6F44882F2E6CD4005BABFA /* dmaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D6F44852F2E6CD4005BABFA /* dmaDebugger.cpp */; };
 		9D7B485D2E40D7640010B152 /* cgif.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B48572E40D7640010B152 /* cgif.cpp */; };
 		9D7B485F2E40D7640010B152 /* cgif_raw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D7B485A2E40D7640010B152 /* cgif_raw.cpp */; };
+		9D8F51042EDB5A1B00153A53 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8F51032EDB5A1B00153A53 /* dasmHandler.cpp */; };
+		9D8F51052EDB5A1B00153A53 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8F51032EDB5A1B00153A53 /* dasmHandler.cpp */; };
+		9D8F51082EDB5A2A00153A53 /* watcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8F51062EDB5A2A00153A53 /* watcher.cpp */; };
+		9D8F51092EDB5A2A00153A53 /* watcher.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8F51062EDB5A2A00153A53 /* watcher.cpp */; };
 		9D8FA9542CB3DF78006905BE /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D8FA9532CB3DF78006905BE /* Cocoa.framework */; };
 		9D8FAAF72CB3F6EF006905BE /* cmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA702CB3F6EF006905BE /* cmd.cpp */; };
 		9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAA722CB3F6EF006905BE /* program.cpp */; };
@@ -180,6 +196,10 @@
 		9D8FB4E22CB47539006905BE /* icons.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E02CB47539006905BE /* icons.cpp */; };
 		9D8FB4E32CB47539006905BE /* logos.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FB4E12CB47539006905BE /* logos.cpp */; };
 		9D8FB4E42CB475A8006905BE /* images.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D8FAB412CB3F8EE006905BE /* images.cpp */; settings = {COMPILER_FLAGS = "-I$(PROJECT_DIR)/deps/stb/"; }; };
+		9D90B8952F52227B00EBF6F6 /* audioDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */; };
+		9D90B8962F52227B00EBF6F6 /* audioDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */; };
+		9D98A74B2F4B93EF00BB972F /* expressionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D98A7492F4B93EF00BB972F /* expressionParser.cpp */; };
+		9D98A74C2F4B93EF00BB972F /* expressionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D98A7492F4B93EF00BB972F /* expressionParser.cpp */; };
 		9D99AA7A2E4631490075FF62 /* libbrotlicommon.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */; };
 		9D99AA7B2E4631490075FF62 /* libbrotlicommon.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9D99AA7C2E4631490075FF62 /* libbrotlidec.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA6A2E462DE20075FF62 /* libbrotlidec.1.dylib */; };
@@ -195,6 +215,10 @@
 		9D99AA862E4631490075FF62 /* libz.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA672E462DE20075FF62 /* libz.1.dylib */; };
 		9D99AA872E4631490075FF62 /* libz.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA672E462DE20075FF62 /* libz.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA70F452E101AF000F1DC5B /* scp.cpp */; };
+		9DBA88382ED0B94400DF0756 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */; };
+		9DBA88392ED0B94400DF0756 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */; };
+		9DBA88432ED0C7D400DF0756 /* debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88412ED0C7D400DF0756 /* debugger.cpp */; };
+		9DBA88442ED0C7D400DF0756 /* debugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88412ED0C7D400DF0756 /* debugger.cpp */; };
 		9DD0A0B62E3B943B0018DA68 /* usbSidPico.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */; settings = {COMPILER_FLAGS = "-DLIBUSB -I$(PROJECT_DIR)/deps/USBSID-Pico/"; }; };
 		9DD0A0BA2E3B94AF0018DA68 /* USBSID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DD0A0B92E3B94AF0018DA68 /* USBSID.cpp */; settings = {COMPILER_FLAGS = "-DHAVE_ALIGNED_ALLOC -I$(PROJECT_DIR)/data/libs/include/"; }; };
 		9DD0A0BC2E3B9A220018DA68 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DD0A0BB2E3B9A220018DA68 /* Security.framework */; };
@@ -506,6 +530,19 @@
 		9D0C948A2E5E345E00A9B56C /* diskGuesser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = diskGuesser.h; sourceTree = "<group>"; };
 		9D31E3BC2DF2083600F88404 /* recentFiles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = recentFiles.cpp; sourceTree = "<group>"; };
 		9D31E3BD2DF2083600F88404 /* recentFiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = recentFiles.h; sourceTree = "<group>"; };
+		9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = videoDebugger.cpp; sourceTree = "<group>"; };
+		9D4CCC472F0BD4EB00ADD454 /* videoDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = videoDebugger.h; sourceTree = "<group>"; };
+		9D4D10392F07156300296467 /* multiSquareCanvas.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = multiSquareCanvas.cpp; sourceTree = "<group>"; };
+		9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ciaDebugger.cpp; sourceTree = "<group>"; };
+		9D4D103D2F071C6B00296467 /* memDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = memDebugger.cpp; sourceTree = "<group>"; };
+		9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cpuDebugger.cpp; sourceTree = "<group>"; };
+		9D4D103F2F071C6B00296467 /* ciaDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ciaDebugger.h; sourceTree = "<group>"; };
+		9D4D10402F071C6B00296467 /* memDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memDebugger.h; sourceTree = "<group>"; };
+		9D4D10412F071C6B00296467 /* cpuDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cpuDebugger.h; sourceTree = "<group>"; };
+		9D4D10422F071C6B00296467 /* memScpuDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = memScpuDebugger.h; sourceTree = "<group>"; };
+		9D4D10432F071C6B00296467 /* scpuDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scpuDebugger.h; sourceTree = "<group>"; };
+		9D4D104C2F071DA500296467 /* dasmHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dasmHandler.h; path = emulation/wdc/65816/dasmHandler.h; sourceTree = SOURCE_ROOT; };
+		9D4D104D2F071DA500296467 /* dasmHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dasmHandler.cpp; path = emulation/wdc/65816/dasmHandler.cpp; sourceTree = SOURCE_ROOT; };
 		9D5539552D5A8F4D0083E91B /* superCpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = superCpu.h; sourceTree = "<group>"; };
 		9D5539562D5A8F4D0083E91B /* superCpu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = superCpu.cpp; sourceTree = "<group>"; };
 		9D5539582D5A8FBC0083E91B /* chessCard.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = chessCard.cpp; sourceTree = "<group>"; };
@@ -548,11 +585,19 @@
 		9D6404482DCDEF2E00624A00 /* hunk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hunk.cpp; sourceTree = "<group>"; };
 		9D6404492DCDEF2E00624A00 /* hardDrive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hardDrive.h; sourceTree = "<group>"; };
 		9D6C71752E4CD03A00F3F107 /* libmp3lame.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libmp3lame.0.dylib; path = data/libs/shared/macIntel/libmp3lame.0.dylib; sourceTree = "<group>"; };
+		9D6F44832F2E5A8A005BABFA /* colorChooser.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = colorChooser.cpp; sourceTree = "<group>"; };
+		9D6F44842F2E67E7005BABFA /* logicViewer.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = logicViewer.cpp; sourceTree = "<group>"; };
+		9D6F44852F2E6CD4005BABFA /* dmaDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dmaDebugger.cpp; sourceTree = "<group>"; };
+		9D6F44862F2E6CD4005BABFA /* dmaDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dmaDebugger.h; sourceTree = "<group>"; };
 		9D7B48572E40D7640010B152 /* cgif.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif.cpp; sourceTree = "<group>"; };
 		9D7B48582E40D7640010B152 /* cgif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cgif.h; sourceTree = "<group>"; };
 		9D7B485A2E40D7640010B152 /* cgif_raw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cgif_raw.cpp; sourceTree = "<group>"; };
 		9D7B485B2E40D7640010B152 /* cgif_raw.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cgif_raw.h; sourceTree = "<group>"; };
 		9D7B485C2E40D7640010B152 /* LICENSE.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		9D8F51022EDB5A1B00153A53 /* dasmHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dasmHandler.h; sourceTree = "<group>"; };
+		9D8F51032EDB5A1B00153A53 /* dasmHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dasmHandler.cpp; sourceTree = "<group>"; };
+		9D8F51062EDB5A2A00153A53 /* watcher.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = watcher.cpp; sourceTree = "<group>"; };
+		9D8F51072EDB5A2A00153A53 /* watcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = watcher.h; sourceTree = "<group>"; };
 		9D8FA9322CB3D7A7006905BE /* Denise.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Denise.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D8FA9532CB3DF78006905BE /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		9D8FAA702CB3F6EF006905BE /* cmd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cmd.cpp; sourceTree = "<group>"; };
@@ -813,7 +858,6 @@
 		9D8FACE22CB40DF7006905BE /* system.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = system.h; sourceTree = "<group>"; };
 		9D8FACE32CB40DF7006905BE /* interface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = interface.cpp; sourceTree = "<group>"; };
 		9D8FACE52CB40DF7006905BE /* memory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = memory.cpp; sourceTree = "<group>"; };
-		9D8FACE62CB40DF7006905BE /* log.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = log.cpp; sourceTree = "<group>"; };
 		9D8FACE72CB40DF7006905BE /* blitterLLE.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = blitterLLE.cpp; sourceTree = "<group>"; };
 		9D8FACE82CB40DF7006905BE /* blitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blitter.h; sourceTree = "<group>"; };
 		9D8FACE92CB40DF7006905BE /* dma.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dma.cpp; sourceTree = "<group>"; };
@@ -1020,8 +1064,6 @@
 		9D8FADD22CB40DF8006905BE /* register.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = register.cpp; sourceTree = "<group>"; };
 		9D8FADD32CB40DF8006905BE /* vicII.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = vicII.h; sourceTree = "<group>"; };
 		9D8FADD42CB40DF8006905BE /* serialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = serialization.cpp; sourceTree = "<group>"; };
-		9D8FADD52CB40DF8006905BE /* verticalLineAnomaly.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = verticalLineAnomaly.cpp; sourceTree = "<group>"; };
-		9D8FADD62CB40DF8006905BE /* colorWheel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = colorWheel.cpp; sourceTree = "<group>"; };
 		9D8FADD72CB40DF8006905BE /* base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base.h; sourceTree = "<group>"; };
 		9D8FADD92CB40DF8006905BE /* voice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = voice.cpp; sourceTree = "<group>"; };
 		9D8FADDA2CB40DF8006905BE /* sid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = sid.cpp; sourceTree = "<group>"; };
@@ -1061,6 +1103,10 @@
 		9D8FAEB22CB415E3006905BE /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		9D8FB4E02CB47539006905BE /* icons.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = icons.cpp; path = data/icons/icons.cpp; sourceTree = "<group>"; };
 		9D8FB4E12CB47539006905BE /* logos.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = logos.cpp; path = data/icons/logos.cpp; sourceTree = "<group>"; };
+		9D90B8932F52227A00EBF6F6 /* audioDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audioDebugger.h; sourceTree = "<group>"; };
+		9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audioDebugger.cpp; sourceTree = "<group>"; };
+		9D98A7492F4B93EF00BB972F /* expressionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = expressionParser.cpp; sourceTree = "<group>"; };
+		9D98A74A2F4B93EF00BB972F /* expressionParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = expressionParser.h; sourceTree = "<group>"; };
 		9D99AA642E462DE10075FF62 /* libbz2.1.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbz2.1.0.dylib; path = data/libs/shared/macIntel/libbz2.1.0.dylib; sourceTree = "<group>"; };
 		9D99AA652E462DE10075FF62 /* libusb-1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libusb-1.0.0.dylib"; path = "data/libs/shared/macIntel/libusb-1.0.0.dylib"; sourceTree = "<group>"; };
 		9D99AA662E462DE20075FF62 /* libpng16.16.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpng16.16.dylib; path = data/libs/shared/macIntel/libpng16.16.dylib; sourceTree = "<group>"; };
@@ -1071,6 +1117,11 @@
 		9DA70F442E101AF000F1DC5B /* scp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scp.h; sourceTree = "<group>"; };
 		9DA70F452E101AF000F1DC5B /* scp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DA70F472E101AFF00F1DC5B /* scp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
+		9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dasmHandler.cpp; sourceTree = "<group>"; };
+		9DBA88372ED0B94400DF0756 /* dasmHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dasmHandler.h; sourceTree = "<group>"; };
+		9DBA883A2ED0B95700DF0756 /* disassembler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = disassembler.cpp; sourceTree = "<group>"; };
+		9DBA88412ED0C7D400DF0756 /* debugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = debugger.cpp; sourceTree = "<group>"; };
+		9DBA88422ED0C7D400DF0756 /* debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = debugger.h; sourceTree = "<group>"; };
 		9DC345C22E8EF1130071B38B /* history.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = history.h; sourceTree = "<group>"; };
 		9DC3A9982E8F07DD005B0F8C /* coreaudio3.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = coreaudio3.cpp; sourceTree = "<group>"; };
 		9DD0A0B42E3B943B0018DA68 /* usbSidPico.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = usbSidPico.cpp; sourceTree = "<group>"; };
@@ -1277,6 +1328,8 @@
 		9D5539662D5A902D0083E91B /* 65C02 */ = {
 			isa = PBXGroup;
 			children = (
+				9D4D104D2F071DA500296467 /* dasmHandler.cpp */,
+				9D4D104C2F071DA500296467 /* dasmHandler.h */,
 				9D5539672D5A902D0083E91B /* alu.cpp */,
 				9D5539682D5A902D0083E91B /* w65C02.h */,
 				9D5539692D5A902D0083E91B /* w65C02.cpp */,
@@ -1378,6 +1431,7 @@
 		9D8FAA6E2CB3F6EF006905BE /* program */ = {
 			isa = PBXGroup;
 			children = (
+				9DBA88402ED0C7D400DF0756 /* debugger */,
 				9D8FAA6F2CB3F6EF006905BE /* cmd */,
 				9D8FAA722CB3F6EF006905BE /* program.cpp */,
 				9D8FAA732CB3F6EF006905BE /* firmware */,
@@ -1725,6 +1779,7 @@
 		9D8FAB4D2CB3F8EE006905BE /* cocoa */ = {
 			isa = PBXGroup;
 			children = (
+				9D6F44832F2E5A8A005BABFA /* colorChooser.cpp */,
 				9D8FAB4E2CB3F8EE006905BE /* main.h */,
 				9D8FAB4F2CB3F8EE006905BE /* versioning.cpp */,
 				9D8FAB502CB3F8EE006905BE /* tooltip.m */,
@@ -1744,6 +1799,8 @@
 		9D8FAB592CB3F8EE006905BE /* widgets */ = {
 			isa = PBXGroup;
 			children = (
+				9D6F44842F2E67E7005BABFA /* logicViewer.cpp */,
+				9D4D10392F07156300296467 /* multiSquareCanvas.cpp */,
 				9D8FAB5A2CB3F8EE006905BE /* lineedit.cpp */,
 				9D8FAB5B2CB3F8EE006905BE /* widget.cpp */,
 				9D8FAB5C2CB3F8EE006905BE /* checkbox.cpp */,
@@ -1900,6 +1957,10 @@
 		9D8FAC9B2CB40DF6006905BE /* tools */ = {
 			isa = PBXGroup;
 			children = (
+				9D98A7492F4B93EF00BB972F /* expressionParser.cpp */,
+				9D98A74A2F4B93EF00BB972F /* expressionParser.h */,
+				9D8F51062EDB5A2A00153A53 /* watcher.cpp */,
+				9D8F51072EDB5A2A00153A53 /* watcher.h */,
 				9DC345C22E8EF1130071B38B /* history.h */,
 				9DE47D0E2DE8CD6200903CA4 /* uuid.cpp */,
 				9DE47D0F2DE8CD6200903CA4 /* uuid.h */,
@@ -1980,6 +2041,9 @@
 		9D8FACC32CB40DF6006905BE /* m68000 */ = {
 			isa = PBXGroup;
 			children = (
+				9DBA883A2ED0B95700DF0756 /* disassembler.cpp */,
+				9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */,
+				9DBA88372ED0B94400DF0756 /* dasmHandler.h */,
 				9D8FACC42CB40DF6006905BE /* memory.cpp */,
 				9D8FACC52CB40DF6006905BE /* m68000.h */,
 				9D8FACC62CB40DF6006905BE /* exception.cpp */,
@@ -2053,7 +2117,6 @@
 			isa = PBXGroup;
 			children = (
 				9D8FACE52CB40DF7006905BE /* memory.cpp */,
-				9D8FACE62CB40DF7006905BE /* log.cpp */,
 				9D8FACE72CB40DF7006905BE /* blitterLLE.cpp */,
 				9D8FACE82CB40DF7006905BE /* blitter.h */,
 				9D8FACE92CB40DF7006905BE /* dma.cpp */,
@@ -2318,6 +2381,8 @@
 		9D8FAD642CB40DF7006905BE /* m6510 */ = {
 			isa = PBXGroup;
 			children = (
+				9D8F51032EDB5A1B00153A53 /* dasmHandler.cpp */,
+				9D8F51022EDB5A1B00153A53 /* dasmHandler.h */,
 				9D8FAD652CB40DF7006905BE /* m6510.h */,
 				9D8FAD662CB40DF7006905BE /* opcodes.cpp */,
 				9D8FAD672CB40DF7006905BE /* m6510.cpp */,
@@ -2513,8 +2578,6 @@
 				9D8FADD22CB40DF8006905BE /* register.cpp */,
 				9D8FADD32CB40DF8006905BE /* vicII.h */,
 				9D8FADD42CB40DF8006905BE /* serialization.cpp */,
-				9D8FADD52CB40DF8006905BE /* verticalLineAnomaly.cpp */,
-				9D8FADD62CB40DF8006905BE /* colorWheel.cpp */,
 				9D8FADD72CB40DF8006905BE /* base.h */,
 			);
 			path = vicII;
@@ -2627,6 +2690,29 @@
 				9DA70F452E101AF000F1DC5B /* scp.cpp */,
 			);
 			path = scp;
+			sourceTree = "<group>";
+		};
+		9DBA88402ED0C7D400DF0756 /* debugger */ = {
+			isa = PBXGroup;
+			children = (
+				9D90B8942F52227B00EBF6F6 /* audioDebugger.cpp */,
+				9D90B8932F52227A00EBF6F6 /* audioDebugger.h */,
+				9D6F44852F2E6CD4005BABFA /* dmaDebugger.cpp */,
+				9D6F44862F2E6CD4005BABFA /* dmaDebugger.h */,
+				9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */,
+				9D4CCC472F0BD4EB00ADD454 /* videoDebugger.h */,
+				9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */,
+				9D4D103F2F071C6B00296467 /* ciaDebugger.h */,
+				9D4D103E2F071C6B00296467 /* cpuDebugger.cpp */,
+				9D4D10412F071C6B00296467 /* cpuDebugger.h */,
+				9D4D103D2F071C6B00296467 /* memDebugger.cpp */,
+				9D4D10402F071C6B00296467 /* memDebugger.h */,
+				9D4D10422F071C6B00296467 /* memScpuDebugger.h */,
+				9D4D10432F071C6B00296467 /* scpuDebugger.h */,
+				9DBA88412ED0C7D400DF0756 /* debugger.cpp */,
+				9DBA88422ED0C7D400DF0756 /* debugger.h */,
+			);
+			path = debugger;
 			sourceTree = "<group>";
 		};
 		9DD0A0B72E3B94900018DA68 /* USBSID-Pico */ = {
@@ -2757,6 +2843,7 @@
 				9D8FADFE2CB40DF8006905BE /* m68000.cpp in Sources */,
 				9D8FAB092CB3F6EF006905BE /* manager.cpp in Sources */,
 				9D8FAE8F2CB40DFA006905BE /* sid.cpp in Sources */,
+				9D4D10482F071C6B00296467 /* memDebugger.cpp in Sources */,
 				9D8FAB182CB3F6EF006905BE /* bass.cpp in Sources */,
 				9D8FAE212CB40DF8006905BE /* paula.cpp in Sources */,
 				9D8FAB132CB3F6EF006905BE /* cosinePrecise.cpp in Sources */,
@@ -2772,12 +2859,14 @@
 				9D07CD0A2E296CD000A9787E /* pm2_decoder.cpp in Sources */,
 				9D8FAE9D2CB40DFA006905BE /* m8520.cpp in Sources */,
 				9D8FAB1D2CB3F6F0006905BE /* status.cpp in Sources */,
+				9D4CCC482F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */,
 				9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */,
 				9D8FAE012CB40DF8006905BE /* m68000.cpp in Sources */,
 				9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */,
 				9D8FAB1C2CB3F6F0006905BE /* states.cpp in Sources */,
 				9D8FAE742CB40DF9006905BE /* drive.cpp in Sources */,
 				9D64044C2DCDEF2E00624A00 /* hardDrive.cpp in Sources */,
+				9D8F51082EDB5A2A00153A53 /* watcher.cpp in Sources */,
 				9D8FAAFF2CB3F6EF006905BE /* palette.cpp in Sources */,
 				9D8FAB112CB3F6EF006905BE /* cosine.cpp in Sources */,
 				9D8FAB282CB3F6F0006905BE /* model.cpp in Sources */,
@@ -2803,6 +2892,7 @@
 				9D8FAE462CB40DF9006905BE /* acia.cpp in Sources */,
 				9D8FAE472CB40DF9006905BE /* gameCart.cpp in Sources */,
 				9D8FAE482CB40DF9006905BE /* retroReplay.cpp in Sources */,
+				9D8F51042EDB5A1B00153A53 /* dasmHandler.cpp in Sources */,
 				9D07CD0E2E296CD000A9787E /* lhx_decoder.cpp in Sources */,
 				9D8FAE2D2CB40DF8006905BE /* diskDrive.cpp in Sources */,
 				9D8FAB2D2CB3F6F0006905BE /* autoloader.cpp in Sources */,
@@ -2824,11 +2914,13 @@
 				9D8FADF92CB40DF8006905BE /* DLLoader.cpp in Sources */,
 				9D8FAE4B2CB40DF9006905BE /* m6510.cpp in Sources */,
 				9DFA8D432E6F062C00DDD746 /* palette.cpp in Sources */,
+				9DBA88432ED0C7D400DF0756 /* debugger.cpp in Sources */,
 				9D8FAE822CB40DF9006905BE /* vicII.cpp in Sources */,
 				9D8FAE432CB40DF9006905BE /* easyFlash3.cpp in Sources */,
 				9D8FAE692CB40DF9006905BE /* iec.cpp in Sources */,
 				9D8FADFC2CB40DF8006905BE /* mx29lv640eb.cpp in Sources */,
 				9D8FAE2F2CB40DF9006905BE /* filesystem.cpp in Sources */,
+				9D4D10442F071C6B00296467 /* ciaDebugger.cpp in Sources */,
 				9D8FAB0E2CB3F6EF006905BE /* handler.cpp in Sources */,
 				9D07CD012E296CD000A9787E /* lha_input_stream.cpp in Sources */,
 				9D8FAE4D2CB40DF9006905BE /* input.cpp in Sources */,
@@ -2841,9 +2933,11 @@
 				9D64044B2DCDEF2E00624A00 /* filesystemExt.cpp in Sources */,
 				9D07CC8C2E296C5F00A9787E /* images.cpp in Sources */,
 				9D8FAB172CB3F6EF006905BE /* drive.cpp in Sources */,
+				9D4D104A2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
 				9D8FAAFC2CB3F6EF006905BE /* manager.cpp in Sources */,
 				9D8FAAF92CB3F6EF006905BE /* manager.cpp in Sources */,
 				9DE47D102DE8CD6200903CA4 /* uuid.cpp in Sources */,
+				9D4D104E2F071DA500296467 /* dasmHandler.cpp in Sources */,
 				9DD306D82DFAFF2200B8F12F /* httpClient.cpp in Sources */,
 				9D8FAB012CB3F6EF006905BE /* archiveViewer.cpp in Sources */,
 				9D8FADFD2CB40DF8006905BE /* denise.cpp in Sources */,
@@ -2858,6 +2952,7 @@
 				9D8FAB0D2CB3F6EF006905BE /* wavWriter.cpp in Sources */,
 				9D07CCFD2E296CD000A9787E /* lh7_decoder.cpp in Sources */,
 				9D8FAB162CB3F6EF006905BE /* manager.cpp in Sources */,
+				9D6F44872F2E6CD4005BABFA /* dmaDebugger.cpp in Sources */,
 				9DFA8D4D2E6F062C00DDD746 /* geometry.cpp in Sources */,
 				9D8FAE402CB40DF9006905BE /* freezer.cpp in Sources */,
 				9D8FAE832CB40DF9006905BE /* vicIIFast.cpp in Sources */,
@@ -2873,6 +2968,7 @@
 				9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */,
 				9D8FAE3C2CB40DF9006905BE /* pfile.cpp in Sources */,
 				9D8FAE0E2CB40DF8006905BE /* rtc.cpp in Sources */,
+				9DBA88382ED0B94400DF0756 /* dasmHandler.cpp in Sources */,
 				9D8FADFB2CB40DF8006905BE /* fpaq0.cpp in Sources */,
 				9DFA8D4F2E6F062C00DDD746 /* presentation.cpp in Sources */,
 				9D06E2772E4CC1D800CF5A5E /* mp3Writer.cpp in Sources */,
@@ -2888,6 +2984,7 @@
 				9D8FAB1A2CB3F6EF006905BE /* reverb.cpp in Sources */,
 				9D8FAE602CB40DF9006905BE /* system.cpp in Sources */,
 				9D8FAB042CB3F6EF006905BE /* config.cpp in Sources */,
+				9D90B8952F52227B00EBF6F6 /* audioDebugger.cpp in Sources */,
 				9D8FAAFE2CB3F6EF006905BE /* shaderParser.cpp in Sources */,
 				9D8FAC992CB40C9D006905BE /* driver.cpp in Sources */,
 				9D8FAE5B2CB40DF9006905BE /* sidManager.cpp in Sources */,
@@ -2899,6 +2996,7 @@
 				9D8FB4E22CB47539006905BE /* icons.cpp in Sources */,
 				9D8FAE502CB40DF9006905BE /* controlPort.cpp in Sources */,
 				9D8FAE082CB40DF8006905BE /* controlPort.cpp in Sources */,
+				9D98A74B2F4B93EF00BB972F /* expressionParser.cpp in Sources */,
 				9D8FAC7B2CB40C9D006905BE /* renderThread.cpp in Sources */,
 				9D6404382DCDEE1C00624A00 /* fastMem.cpp in Sources */,
 				9D8FAAF72CB3F6EF006905BE /* cmd.cpp in Sources */,
@@ -2928,6 +3026,7 @@
 				9DECF9272E45F309005C0BBA /* m68000.cpp in Sources */,
 				9DECF9282E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF9292E45F309005C0BBA /* sid.cpp in Sources */,
+				9D4D10492F071C6B00296467 /* memDebugger.cpp in Sources */,
 				9DECF92A2E45F309005C0BBA /* bass.cpp in Sources */,
 				9DECF92B2E45F309005C0BBA /* paula.cpp in Sources */,
 				9DECF92C2E45F309005C0BBA /* cosinePrecise.cpp in Sources */,
@@ -2943,12 +3042,14 @@
 				9DECF9362E45F309005C0BBA /* pm2_decoder.cpp in Sources */,
 				9DECF9372E45F309005C0BBA /* m8520.cpp in Sources */,
 				9DECF9382E45F309005C0BBA /* status.cpp in Sources */,
+				9D4CCC492F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */,
 				9DECF9392E45F309005C0BBA /* program.cpp in Sources */,
 				9DECF93A2E45F309005C0BBA /* m68000.cpp in Sources */,
 				9DECF93B2E45F309005C0BBA /* hunk.cpp in Sources */,
 				9DECF93C2E45F309005C0BBA /* states.cpp in Sources */,
 				9DECF93D2E45F309005C0BBA /* drive.cpp in Sources */,
 				9DECF93E2E45F309005C0BBA /* hardDrive.cpp in Sources */,
+				9D8F51092EDB5A2A00153A53 /* watcher.cpp in Sources */,
 				9DECF93F2E45F309005C0BBA /* palette.cpp in Sources */,
 				9DECF9402E45F309005C0BBA /* cosine.cpp in Sources */,
 				9DECF9412E45F309005C0BBA /* model.cpp in Sources */,
@@ -2974,6 +3075,7 @@
 				9DECF9532E45F309005C0BBA /* acia.cpp in Sources */,
 				9DECF9542E45F309005C0BBA /* gameCart.cpp in Sources */,
 				9DECF9552E45F309005C0BBA /* retroReplay.cpp in Sources */,
+				9D8F51052EDB5A1B00153A53 /* dasmHandler.cpp in Sources */,
 				9DECF9562E45F309005C0BBA /* lhx_decoder.cpp in Sources */,
 				9DECF9572E45F309005C0BBA /* diskDrive.cpp in Sources */,
 				9DECF9582E45F309005C0BBA /* autoloader.cpp in Sources */,
@@ -2995,11 +3097,13 @@
 				9DECF9672E45F309005C0BBA /* DLLoader.cpp in Sources */,
 				9DECF9682E45F309005C0BBA /* m6510.cpp in Sources */,
 				9DFA8D442E6F062C00DDD746 /* palette.cpp in Sources */,
+				9DBA88442ED0C7D400DF0756 /* debugger.cpp in Sources */,
 				9DECF9692E45F309005C0BBA /* vicII.cpp in Sources */,
 				9DECF96A2E45F309005C0BBA /* easyFlash3.cpp in Sources */,
 				9DECF96B2E45F309005C0BBA /* iec.cpp in Sources */,
 				9DECF96C2E45F309005C0BBA /* mx29lv640eb.cpp in Sources */,
 				9DECF96D2E45F309005C0BBA /* filesystem.cpp in Sources */,
+				9D4D10452F071C6B00296467 /* ciaDebugger.cpp in Sources */,
 				9DECF96E2E45F309005C0BBA /* handler.cpp in Sources */,
 				9DECF96F2E45F309005C0BBA /* lha_input_stream.cpp in Sources */,
 				9DECF9702E45F309005C0BBA /* input.cpp in Sources */,
@@ -3012,9 +3116,11 @@
 				9DECF9752E45F309005C0BBA /* filesystemExt.cpp in Sources */,
 				9DECF9762E45F309005C0BBA /* images.cpp in Sources */,
 				9DECF9772E45F309005C0BBA /* drive.cpp in Sources */,
+				9D4D104B2F071C6B00296467 /* cpuDebugger.cpp in Sources */,
 				9DECF9782E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF9792E45F309005C0BBA /* manager.cpp in Sources */,
 				9DECF97A2E45F309005C0BBA /* uuid.cpp in Sources */,
+				9D4D104F2F071DA500296467 /* dasmHandler.cpp in Sources */,
 				9DECF97B2E45F309005C0BBA /* httpClient.cpp in Sources */,
 				9DECF97C2E45F309005C0BBA /* archiveViewer.cpp in Sources */,
 				9DECF97D2E45F309005C0BBA /* denise.cpp in Sources */,
@@ -3029,6 +3135,7 @@
 				9DECF9862E45F309005C0BBA /* wavWriter.cpp in Sources */,
 				9DECF9872E45F309005C0BBA /* lh7_decoder.cpp in Sources */,
 				9DECF9882E45F309005C0BBA /* manager.cpp in Sources */,
+				9D6F44882F2E6CD4005BABFA /* dmaDebugger.cpp in Sources */,
 				9DFA8D4E2E6F062C00DDD746 /* geometry.cpp in Sources */,
 				9DECF9892E45F309005C0BBA /* freezer.cpp in Sources */,
 				9DECF98A2E45F309005C0BBA /* vicIIFast.cpp in Sources */,
@@ -3044,6 +3151,7 @@
 				9DECF9932E45F309005C0BBA /* scp.cpp in Sources */,
 				9DECF9942E45F309005C0BBA /* pfile.cpp in Sources */,
 				9DECF9952E45F309005C0BBA /* rtc.cpp in Sources */,
+				9DBA88392ED0B94400DF0756 /* dasmHandler.cpp in Sources */,
 				9DECF9962E45F309005C0BBA /* fpaq0.cpp in Sources */,
 				9DFA8D502E6F062C00DDD746 /* presentation.cpp in Sources */,
 				9D06E2782E4CC1D800CF5A5E /* mp3Writer.cpp in Sources */,
@@ -3059,6 +3167,7 @@
 				9DECF99F2E45F309005C0BBA /* reverb.cpp in Sources */,
 				9DECF9A02E45F309005C0BBA /* system.cpp in Sources */,
 				9DECF9A12E45F309005C0BBA /* config.cpp in Sources */,
+				9D90B8962F52227B00EBF6F6 /* audioDebugger.cpp in Sources */,
 				9DECF9A22E45F309005C0BBA /* shaderParser.cpp in Sources */,
 				9DECF9A32E45F309005C0BBA /* driver.cpp in Sources */,
 				9DECF9A42E45F309005C0BBA /* sidManager.cpp in Sources */,
@@ -3070,6 +3179,7 @@
 				9DECF9AA2E45F309005C0BBA /* icons.cpp in Sources */,
 				9DECF9AB2E45F309005C0BBA /* controlPort.cpp in Sources */,
 				9DECF9AC2E45F309005C0BBA /* controlPort.cpp in Sources */,
+				9D98A74C2F4B93EF00BB972F /* expressionParser.cpp in Sources */,
 				9DECF9AD2E45F309005C0BBA /* renderThread.cpp in Sources */,
 				9DECF9AE2E45F309005C0BBA /* fastMem.cpp in Sources */,
 				9DECF9AF2E45F309005C0BBA /* cmd.cpp in Sources */,
@@ -3217,9 +3327,11 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = data/denise.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2.6;
+				CURRENT_PROJECT_VERSION = 2.8;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = data/info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Denise;
@@ -3236,11 +3348,13 @@
 					"$(PROJECT_DIR)/data/libs/shared/macArm",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 2.6;
+				MARKETING_VERSION = 2.8;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
 				PRODUCT_NAME = Denise;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Debug;
@@ -3254,9 +3368,11 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = data/denise.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2.6;
+				CURRENT_PROJECT_VERSION = 2.8;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = data/info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Denise;
@@ -3273,11 +3389,13 @@
 					"$(PROJECT_DIR)/data/libs/shared/macArm",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 2.6;
+				MARKETING_VERSION = 2.8;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
 				PRODUCT_NAME = Denise;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;
@@ -3290,9 +3408,10 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = data/denise.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2.6;
+				CURRENT_PROJECT_VERSION = 2.8;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = data/info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Denise;
@@ -3309,11 +3428,12 @@
 					"$(PROJECT_DIR)/data/libs/shared/macIntel",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
-				MARKETING_VERSION = 2.6;
+				MARKETING_VERSION = 2.8;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
 				PRODUCT_NAME = Denise;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Debug;
@@ -3326,9 +3446,10 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = data/denise.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2.6;
+				CURRENT_PROJECT_VERSION = 2.8;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = data/info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Denise;
@@ -3345,11 +3466,12 @@
 					"$(PROJECT_DIR)/data/libs/shared/macIntel",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
-				MARKETING_VERSION = 2.6;
+				MARKETING_VERSION = 2.8;
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CODE_SIGN_FLAGS = "--deep";
 				PRODUCT_BUNDLE_IDENTIFIER = com.piciji.denise;
 				PRODUCT_NAME = Denise;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;

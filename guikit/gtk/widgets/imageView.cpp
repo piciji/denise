@@ -57,11 +57,7 @@ auto pImageView::setImage(Image* image) -> void {
     update();
 }
 
-auto pImageView::expose(GtkWidget* widget, GdkEventExpose* event, pImageView* self) -> signed {
-
-    GdkDrawingContext* gdc = gdk_window_begin_draw_frame( gtk_widget_get_window( self->gtkWidget ), cairo_region_create());
-    cairo_t* cr = gdk_drawing_context_get_cairo_context( gdc );
-
+auto pImageView::expose(GtkWidget* widget, cairo_t* cr, pImageView* self) -> gboolean {
     if (self->surface)
         gdk_cairo_set_source_pixbuf(cr, self->surface, 0, 0);
     else {
@@ -70,9 +66,8 @@ auto pImageView::expose(GtkWidget* widget, GdkEventExpose* event, pImageView* se
     }
 
     cairo_paint (cr);
-    gdk_window_end_draw_frame(gtk_widget_get_window(self->gtkWidget), gdc);
 
-    return true;
+    return FALSE;
 }
 
 auto pImageView::mousePress(GtkWidget* widget, GdkEventButton* event, pImageView* self) -> gboolean {

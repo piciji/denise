@@ -56,6 +56,13 @@ struct KCSPower : Freezer {
         system->changeExpansionPortMemoryMode(exRom, game);
     }
 
+    auto peekIo1(uint16_t addr) -> uint8_t override
+    {
+        // ROM mirror at $9E00-$9EFF (second-to-last page of ROML)
+        uint16_t romAddr = 0x1E00 | (addr & 0x00FF);
+        return Cart::readRomL(romAddr);
+    }
+
     // --- IO1: $DE00-$DEFF ---
 
     auto readIo1(uint16_t addr) -> uint8_t override
@@ -78,6 +85,11 @@ struct KCSPower : Freezer {
         //   1 = ULTIMAX mode (freeze mode)
         config = (addr & 0x0002) ? CMODE_ULTIMAX : CMODE_16KGAME;
         applyConfig();
+    }
+
+    auto peekIo2(uint16_t addr) -> uint8_t override
+    {
+        return readIo2( addr );
     }
 
     // --- IO2: $DF00-$DFFF ---

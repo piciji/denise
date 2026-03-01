@@ -127,6 +127,8 @@ auto Sid::Voice::setControl( uint8_t value ) -> void {
     
     waveform = (value >> 4) & 0x0f;
 	sync = !!(value & 2);
+    contr = value;
+
 	ringMsbMask = ((~value >> 5) & (value >> 2) & 0x1) << 23; //sawtooth = 0, ring mod = 1
 	noNoise = waveform & 0x8 ? 0x000 : 0xfff;
 	noNoiseOrNoiseOutput = noNoise | noiseOutput;

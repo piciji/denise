@@ -201,9 +201,12 @@ struct pLineEdit : pWidget {
     auto setText(const std::string& text) -> void;
     auto text() -> std::string;
     auto setMaxLength( unsigned maxLength ) -> void;
+	auto setPlaceholder(const std::string& placeholder) -> void;
+	auto setAlign( LineEdit::Align align ) -> void;
     auto init() -> void;
     static auto onChange(LineEdit* self) -> void;
     static auto onFocus(LineEdit* self) -> bool;
+	static auto onActivate(LineEdit* self) -> void;
     static auto dropEvent(GtkWidget* widget, GdkDragContext* context, gint x, gint y, GtkSelectionData* data, guint type, guint timestamp, LineEdit* lineEdit) -> void;
     auto create() -> void;
     auto setDroppable(bool droppable) -> void;
@@ -271,9 +274,70 @@ struct pSquareCanvas : pWidget {
     auto setGeometry(Geometry geometry) -> void;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pSquareCanvas* self) -> gboolean;
     static auto mouseRelease(GtkWidget* widget, GdkEventButton* event, pSquareCanvas* self) -> gboolean;
-    static auto expose(GtkWidget* widget, GdkEventExpose* event, pSquareCanvas* self) -> signed;
+   // static auto expose(GtkWidget* widget, GdkEventExpose* event, pSquareCanvas* self) -> signed;
+	static auto expose(GtkWidget* widget, cairo_t* cr, pSquareCanvas* self) -> gboolean;
     
     pSquareCanvas(SquareCanvas& squareCanvas) : pWidget(squareCanvas), squareCanvas(squareCanvas) {}
+};
+
+struct pMultiSquareCanvas : pWidget {
+	MultiSquareCanvas& multiSquareCanvas;
+	GdkPixbuf* surface = nullptr;
+	GtkWidget* subWidget = nullptr;
+	unsigned* drawArea = nullptr;
+
+	auto init() -> void;
+	auto create() -> void;
+	auto destroy() -> void;
+	auto redraw() -> void;
+	auto update() -> void;
+	auto setPadding(unsigned padding) -> void;
+	auto setGeometry(Geometry geometry) -> void;
+	auto buildDrawArea() -> void;
+	auto updateScrollRange() -> void {}
+
+	static auto expose(GtkWidget* widget, cairo_t* cr, pMultiSquareCanvas* self) -> gboolean;
+
+	pMultiSquareCanvas(MultiSquareCanvas& multiSquareCanvas) : pWidget(multiSquareCanvas), multiSquareCanvas(multiSquareCanvas) {}
+	~pMultiSquareCanvas();
+};
+
+struct pLogicViewer : pWidget {
+	LogicViewer& logicViewer;
+	GtkWidget* subWidget = nullptr;
+	Timer scrollTimer;
+
+	auto init() -> void;
+	auto create() -> void;
+	auto redraw(cairo_t* cr) -> void;
+	auto update() -> void;
+	auto buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry geo) -> void;
+	auto setGeometry(Geometry geometry) -> void;
+	auto setBox(Geometry& geo, int offset) -> void;
+	auto getColorComponent(uint8_t component) -> double;
+	auto pg(int val) -> double;
+	auto drawText(cairo_t* cr, Geometry& geo, const std::string& text) -> void;
+	auto drawLine(cairo_t* cr, Geometry& geo) -> void;
+
+	auto drawRectRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void;
+	auto drawRectLeftRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void;
+	auto drawRectRightRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void;
+	auto getRoundedPath(cairo_t* cr, Geometry& geo) -> void;
+	auto getLeftRoundedPath(cairo_t* cr, Geometry& geo) -> void;
+	auto getRightRoundedPath(cairo_t* cr, Geometry& geo) -> void;
+
+	auto drawRect(cairo_t* cr, LogicState::Display display, Geometry& geo, const std::string& text, unsigned padding) -> void;
+	auto drawRect(cairo_t* cr, Geometry& geo, const std::string& text) -> void;
+
+	auto updateScrollRange() -> void {}
+	auto scrollToActive() -> void;
+
+	static auto expose(GtkWidget* widget, cairo_t* cr, pLogicViewer* self) -> gboolean;
+	static auto scrolled(GtkAdjustment* adj, pLogicViewer* self) -> void;
+	static auto onScroll(GtkWidget* widget, GdkEventScroll* event, pLogicViewer* self) -> gboolean;
+
+	pLogicViewer(LogicViewer& logicViewer) : pWidget(logicViewer), logicViewer(logicViewer) {}
+	~pLogicViewer();
 };
 
 struct pImageView : pWidget {
@@ -289,8 +353,9 @@ struct pImageView : pWidget {
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void;
     static auto mousePress(GtkWidget* widget, GdkEventButton* event, pImageView* self) -> gboolean;
-    static auto expose(GtkWidget* widget, GdkEventExpose* event, pImageView* self) -> signed;
+    //static auto expose(GtkWidget* widget, GdkEventExpose* event, pImageView* self) -> signed;
     static auto mouseMove(GtkWidget* widget, GdkEventButton* event, pImageView* self) -> gboolean;
+	static auto expose(GtkWidget* widget, cairo_t* cr, pImageView* self) -> gboolean;
 
     pImageView(ImageView& imageView) : pWidget(imageView), imageView(imageView) {}
 };
@@ -420,7 +485,6 @@ struct pListView : pWidget {
 	
 	GtkWidget* customTooltip = nullptr;
 	Label* customTooltipLabel = nullptr;
-    bool pressed = false;
 
     struct GtkColumn {
         GtkTreeViewColumn* column;
@@ -430,7 +494,7 @@ struct pListView : pWidget {
     };
     std::vector<GtkColumn> column;
 	
-    auto append(const std::vector<std::string>& list) -> void;
+    auto append(const std::vector<std::string>& list, bool preventColumnResizing = false) -> void;
     auto autoSizeColumns() -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
@@ -438,11 +502,11 @@ struct pListView : pWidget {
     auto setHeaderVisible(bool visible) -> void;
     auto setSelection(unsigned selection) -> void;
     auto setSelected(bool selected) -> void;
-    auto setText(unsigned selection, unsigned position, const std::string& text) -> void;
+    auto setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing = false) -> void;
     auto init() -> void;
     auto create() -> void;
     auto setFont(std::string font) -> void;
-    auto setImage(unsigned selection, unsigned position, Image& image) -> void;
+    auto setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing = false) -> void;
     auto focused() -> bool;
     auto setFocused() -> void;
     auto setForegroundColor(unsigned color) -> void;
@@ -450,10 +514,13 @@ struct pListView : pWidget {
 	auto setRowTooltip(unsigned selection, std::string tooltip) -> void {}
 	auto createCustomTooltip() -> void;
 	auto colorRowTooltips( bool colorTip ) -> void {}
-    auto lockRedraw() -> void {}
-    auto unlockRedraw() -> void {}
+    auto lockRedraw() -> void;
+    auto unlockRedraw() -> void;
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void;
-	auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
+	auto updateRowColors() -> void {}
+	auto updateRowForegroundColors() -> void;
+	auto updateSpacing() -> void;
+	auto getFirstVisibleRow() -> unsigned;
 
     auto destroy() -> void;
 	auto applyDataFunc(GtkTreeViewColumn* gtkColumn, GtkCellRenderer* renderer, GtkTreeIter* iter, GtkTreeModel* model) -> void;
@@ -462,7 +529,9 @@ struct pListView : pWidget {
     static auto onChange(GtkTreeView* treeView, ListView* self) -> void;
     static auto onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* self) -> gboolean;
 	static auto onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_tip, GtkTooltip* tooltip, ListView* self) -> gboolean;
+	static auto onRealize(GtkTreeView* treeView, ListView* self) -> void;
 	static auto dataFunc(GtkTreeViewColumn* column, GtkCellRenderer* renderer, GtkTreeModel* model, GtkTreeIter* iter, pListView* p) -> void;
+	static auto getColPos(GtkTreeView* treeView, GtkTreeViewColumn* column) -> std::optional<unsigned>;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
     ~pListView() { destroy(); }
@@ -661,6 +730,7 @@ struct pMenu : pMenuBase {
     auto destroy() -> void;
     auto rebuild() -> void;
     auto init() -> void;
+	auto update(Window* window) -> void {}
 
     pMenu(Menu& menu);
     ~pMenu();
@@ -754,6 +824,10 @@ struct pFont {
     static auto size(std::string font, std::string text) -> Size;
 	static auto convertCss(GtkWidget* widget, PangoFontDescription* font) -> std::string;
 	static auto scale( unsigned pixel ) -> unsigned;
+};
+
+struct pColorChooser {
+	static auto choose(ColorChooser::State& state) -> std::optional<unsigned>;
 };
 
 struct pSystem {

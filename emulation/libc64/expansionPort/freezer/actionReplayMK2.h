@@ -27,6 +27,17 @@ struct ActionReplayMK2 : Freezer {
         _enable();
     }
 
+    auto peekIo2( uint16_t addr ) -> uint8_t {
+        auto chip = getChip(1);
+
+        if (!chip)
+            return ExpansionPort::readRomL( addr );
+
+        addr = (0x1f << 8) | (addr & 0xff); // last page of selected rom bank
+
+        return *(chip->ptr + addr);
+    }
+
     auto readIo2( uint16_t addr ) -> uint8_t {
         _disable();
 

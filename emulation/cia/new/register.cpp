@@ -2,6 +2,79 @@
 #include "cia.h"
 
 template<uint8_t model>
+auto Cia<model>::peek( unsigned pos ) -> uint8_t {
+
+    switch (pos & 0xf) {
+        case 0:
+            return readPort(PORTA, &lines);
+
+        case 1: {
+            uint8_t out = readPort(PORTB, &lines);
+
+            adjustBit6And7(out);
+
+            return out;
+        }
+        case 2:
+            return lines.ddra;
+
+        case 3:
+            return lines.ddrb;
+
+        case 4:
+            return readCounter<T_A>() & 0xff;
+
+        case 5:
+            return readCounter<T_A>() >> 8;
+
+        case 6:
+            return readCounter<T_B>() & 0xff;
+
+        case 7:
+            return readCounter<T_B>() >> 8;
+
+        case 8:
+            if (todLatched)
+                return todLatch & 0xff;
+
+            return todc & 0xff;
+
+        case 9:
+            if (todLatched)
+                return (todLatch >> 8) & 0xff;
+
+            return (todc >> 8) & 0xff;
+
+        case 0xa:
+            if (!todLatched)
+                return (todc >> 16) & 0xff;
+
+            return (todLatch >> 16) & 0xff;
+        case 0xb:
+            if constexpr (model == MOS_8520)
+                return 0xff;
+            else {
+                if (!todLatched)
+                    return (todc >> 24) & 0xff;
+
+                return (todLatch >> 24) & 0xff;
+            }
+        case 0xc:
+            return sdr;
+
+        case 0xd:
+            return icr;
+
+        case 0xe:
+            return timerA.control & 0xef;
+
+        case 0xf:
+            return timerB.control & 0xef;
+    }
+    _unreachable
+}
+
+template<uint8_t model>
 auto Cia<model>::read( unsigned pos ) -> uint8_t {
 
     switch (pos & 0xf) {

@@ -521,7 +521,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             auto selection = layout->listings.selection( );
 
             fileloader->insertCurrentPreview( layout->mediaGroup );
-            emuThread->lock();
+            emuThread->lock(true);
 
             auto media = layout->selectedBlock->media;
 
@@ -576,7 +576,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         if (tabWindow->systemLayout)
             tabWindow->systemLayout->setExpansion( mediaGroupLayout->mediaGroup->expansion );
 
-        emuThread->lock();
+        emuThread->lock(true);
         program->power( emulator );
         if (statusHandler && emulator->isExpansionUnsupported())
             statusHandler->setMessage(trans->getA("unsupported cartridge"), true);
@@ -592,7 +592,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
         if (tabWindow->systemLayout)
             tabWindow->systemLayout->setExpansion( nullptr );
 
-        emuThread->lock();
+        emuThread->lock(true);
         program->power( emulator );
         emuThread->unlock();
         
@@ -1362,10 +1362,13 @@ auto MediaLayout::colorListing( unsigned foregroundColor, unsigned backgroundCol
             else
                 mediaGroupLayout->listings.resetSelectionColor();
 
-            if (dynamic_cast<LIBAMI::Interface*>(emulator))
-                mediaGroupLayout->listings.setFirstRowColor( backgroundColor, foregroundColor );
-            else
-                mediaGroupLayout->listings.resetFirstRowColor();
+            if (dynamic_cast<LIBAMI::Interface*>(emulator)) {
+                mediaGroupLayout->listings.setRowForegroundColor( backgroundColor, 0 );
+                mediaGroupLayout->listings.setRowBackgroundColor( foregroundColor, 0 );
+            } else {
+                mediaGroupLayout->listings.resetRowForegroundColor( 0 );
+                mediaGroupLayout->listings.resetRowBackgroundColor( 0 );
+            }
         }
     }
 }
@@ -1569,6 +1572,7 @@ auto MediaLayout::convertListing( std::vector<Emulator::Interface::Listing>& emu
 }
 
 auto MediaLayout::updateListingFont( unsigned fontSize ) -> void {
+    auto selectedLayout = this->getActiveMediaGroupLayout();
 
     for(auto& nav : navElements) {
         if (!nav.mediaGroup || !nav.layout)

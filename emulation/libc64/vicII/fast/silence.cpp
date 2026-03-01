@@ -12,6 +12,8 @@ auto VicIIFast::clockSilence() -> void {
     }
 
     if (initVCounter) {
+        if (debugger.storeSprites)
+            debugger.resetSpriteStore();
         vCounter = 0;
         initVCounter = false;
         lpLatched = false;

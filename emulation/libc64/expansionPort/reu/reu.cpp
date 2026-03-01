@@ -445,6 +445,13 @@ inline auto Reu::decrementTransferLength() -> void {
     }
 }
 
+auto Reu::peekIo1( uint16_t addr ) -> uint8_t {
+    if (expander)
+        return expander->peekIo1( addr );
+
+    return ExpansionPort::peekIo1( addr );
+}
+
 auto Reu::readIo1( uint16_t addr ) -> uint8_t {
 	
 	if (expander)
@@ -460,6 +467,44 @@ auto Reu::writeIo1( uint16_t addr, uint8_t value ) -> void {
 		expander->writeIo1( addr, value );
 	
 	// REU don't use it
+}
+
+auto Reu::peekIo2( uint16_t addr ) -> uint8_t {
+    if (dma)
+        return ExpansionPort::peekIo2( addr ); // open address space
+
+    addr &= 0x1f;
+    uint8_t val = 0xff;
+
+    switch( addr ) {
+        case 0:
+            val = status; break;
+        case 1:
+            val = command; break;
+        case 2:
+            val = hostAddr & 0xff; break;
+        case 3:
+            val = (hostAddr >> 8) & 0xff; break;
+        case 4:
+            val = reuAddr & 0xff; break;
+        case 5:
+            val = (reuAddr >> 8) & 0xff; break;
+        case 6:
+            val = (reuAddr >> 16) | 0xf8; break;
+        case 7:
+            val = transferLength & 0xff; break;
+        case 8:
+            val = (transferLength >> 8) & 0xff; break;
+        case 9:
+            val = intMask | 0x1f; break;
+        case 0xa:
+            val = control | 0x3f; break;
+    }
+
+    if (expander)
+        return val | expander->peekIo2( addr );
+
+    return val;
 }
 
 auto Reu::readIo2( uint16_t addr ) -> uint8_t {
@@ -590,6 +635,19 @@ auto Reu::allowIrq() -> bool {
     return false;
 }
 
+auto Reu::peekRomL(uint16_t addr) -> uint8_t {
+
+    if (expander)
+        return expander->peekRomL(addr);
+
+    if (!rom)
+        return ExpansionPort::peekRomL( addr );
+
+    addr %= romSize;
+
+    return *(rom + addr);
+}
+
 auto Reu::readRomL(uint16_t addr) -> uint8_t {
 	
 	if (expander)
@@ -623,6 +681,13 @@ auto Reu::writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
 		ExpansionPort::writeUltimaxRomL( addr, data );
 }
 
+auto Reu::peekRomH( uint16_t addr ) -> uint8_t {
+    if (expander)
+        return expander->peekRomH(addr);
+
+    return ExpansionPort::peekRomH( addr );
+}
+
 auto Reu::readRomH( uint16_t addr ) -> uint8_t {
 	if (expander)
 		return expander->readRomH(addr);
@@ -635,6 +700,13 @@ auto Reu::readUltimaxA0( uint16_t addr ) -> uint8_t {
 		return expander->readUltimaxA0(addr);
 	
 	return ExpansionPort::readUltimaxA0( addr );
+}
+
+auto Reu::peekUltimaxA0( uint16_t addr ) -> uint8_t {
+    if (expander)
+        return expander->peekUltimaxA0(addr);
+
+    return ExpansionPort::peekUltimaxA0( addr );
 }
 
 auto Reu::writeRomH( uint16_t addr, uint8_t data ) -> void {

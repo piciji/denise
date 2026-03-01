@@ -20,6 +20,7 @@
 #include "../traps/traps.h"
 #include "../../tools/memchangetracker.h"
 #include "../../tools/history.h"
+#include "debuggerSnapshot.h"
 
 namespace Emulator {
     struct PowerSupply;
@@ -64,27 +65,36 @@ struct System {
     Memory::Write writeRamAt80To9F;
     Memory::Write writeRamAtA0ToBF;
     Memory::Read readVicReg;
+    Memory::Read peekVicReg;
     Memory::Write writeVicReg;
     Memory::Read readSidReg;
+    Memory::Read peekSidReg;
     Memory::Write writeSidReg;
     Memory::Read readColorRam;
     Memory::Write writeColorRam;
     Memory::Read readIo1Reg;
+    Memory::Read peekIo1Reg;
     Memory::Write writeIo1Reg;
     Memory::Read readIo2Reg;
+    Memory::Read peekIo2Reg;
     Memory::Write writeIo2Reg;
     Memory::Read readCia1Reg;
+    Memory::Read peekCia1Reg;
     Memory::Write writeCia1Reg;
     Memory::Read readCia2Reg;
+    Memory::Read peekCia2Reg;
     Memory::Write writeCia2Reg;
     
     Memory::Write writeDebugReg;
     
     Memory::Read readCharRom;
     Memory::Read readKernalRom;
+    Memory::Read peekKernalRom;
     Memory::Read readBasicRom; 
     Memory::Read readRomL;
     Memory::Read readRomH;
+    Memory::Read peekRomL;
+    Memory::Read peekRomH;
     Memory::Write writeRomL;
     Memory::Write writeRomH;
     // need this separated from writeRomL and writeRomH because of not writing to C64 memory
@@ -93,6 +103,7 @@ struct System {
     // in ultimax mode a cartridge can map following areas freely.
     // will add more when emulating a cartridge which maps something in unmapped spaces
     Memory::Read readUltimaxA0;
+    Memory::Read peekUltimaxA0;
     Memory::Write writeUltimaxA0;    
     
     Memory memoryCpu;
@@ -142,6 +153,7 @@ struct System {
     std::vector<Prg*> prgs;
 	
 	Callback countDownPowerSupply;
+    Callback debuggerAutoUpdater;
 	
 	Emulator::Crop<uint8_t>* crop;
     unsigned serializationSize;
@@ -149,9 +161,8 @@ struct System {
     uint8_t requestedSids;
     
     uint8_t mode; //bit 4: exrom, bit 3: game, bit 2: charen, bit 1: hiram, bit 0: loram
-    uint16_t vicBank;
     // the c64 shares multiple sources for irq and nmi
-    // achknowledging e.g. an irq from vic side doesn't mean the irq line on cpu changes immediately
+    // acknowledging e.g. an irq from vic side doesn't mean the irq line on cpu changes immediately
     // if cia1 holds up an irq too, the cpu irq pin goes hi if both sources are hi
     
     uint8_t irqIncomming; // bit 0: vicII, bit 1: cia1, bit 2: expansion port
@@ -165,7 +176,7 @@ struct System {
     bool cycleRendererNextBoot = false;
     uint8_t mhz2 = 0;
 
-    // petscii will be converted to ascii or screencodes to be viewed in host
+    // petscii will be converted to ascii or screen codes to be viewed in host
     bool convertToScreencode = false;
     bool loadWithColumn = false;
     
@@ -230,11 +241,21 @@ struct System {
         auto reset() -> void;
     } tapeNoise;
 
+    struct {
+        Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
+        uint32_t addr;
+        uint32_t dmaWatchers[4] = { 0 };
+    } debugger;
+
+    DebuggerSnapshot debuggerSnapshot;
+
 	Emulator::Interface::MemoryPattern memoryInit;
     
     auto setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool allowPatching ) -> void;
     
     auto remapCpu(bool speedHack = false) -> void;
+    auto memoryDump(uint8_t page, uint8_t* dump) -> void;
+    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
 	auto isUltimax() -> bool;
 	auto changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus = false, bool speedHack = false) -> void;
     
@@ -315,6 +336,31 @@ struct System {
 
     auto set2Mhz(bool state) -> void;
     auto toggle2Mhz() -> bool;
+
+    auto debuggerAdd(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
+	auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
+    auto setWatchpointCondition(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+
+	auto debuggerStepOver() -> void;
+	auto debuggerStepInto() -> void;
+	auto debuggerStepOut() -> bool;
+	auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void;
+	auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void;
+
+    auto debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+    auto updateDebuggerSnapshot() -> void;
+    auto debuggerUpdate() -> void;
+    auto debuggerUpdateEvent() -> void;
+
+	auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
+	auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
+	auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
+
+    auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
+
+    auto logCpu(uint16_t addr, uint8_t data) -> void;
+    auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop _crop ) -> void;
 };
 
 }

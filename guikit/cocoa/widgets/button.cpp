@@ -15,6 +15,22 @@
 -(IBAction) activate:(id)sender {
     if(button->onActivate) button->onActivate();
 }
+
+- (void)mouseDown:(NSEvent*)event {
+    
+    if (button->onMenu) {
+        auto* menu = button->onMenu();
+        
+        if (menu) {
+            GUIKIT::pApplication::observeMenu([(id)menu->p.cocoaBase cocoaMenu]);
+            
+            [NSMenu popUpContextMenu: [(id)menu->p.cocoaBase cocoaMenu] withEvent:event forView:self];
+            
+            return;
+        }
+    }
+    [super mouseDown:event];
+}
 @end
 
 namespace GUIKIT {
@@ -32,9 +48,13 @@ auto pButton::minimumSize() -> Size {
 }
     
 auto pButton::setGeometry(Geometry geometry) -> void {
+    int adjust = 2;
+      if (!button.image())
+        adjust = 6;
+    
     pWidget::setGeometry({
-        geometry.x - 2, geometry.y - 2,
-        geometry.width + 4, geometry.height + 4
+        geometry.x - adjust, geometry.y - 2,
+        geometry.width + (adjust * 2), geometry.height + 4
     });
 }
     

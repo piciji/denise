@@ -46,14 +46,18 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
 
     std::string family = utf8_t(metrics.lfMessageFont.lfFaceName);
     
-    if (monospaced)
-        family = "Lucida Console";
+    if (monospaced) {
+        family = "Consolas";
 
-    if (size == 0) {
-		size = float(std::abs(metrics.lfMessageFont.lfHeight)) * 72.0 / dpiX;
+        if (size == 0)
+            size = 11;
     }
 
-    if(style == "") style = "Normal";
+    if (size == 0)
+		size = float(std::abs(metrics.lfMessageFont.lfHeight)) * 72.0 / dpiX;
+
+    if(style == "")
+        style = "Normal";
 
     return family + ", " + std::to_string(size) + ", " + style;
 }
@@ -642,5 +646,55 @@ inline auto getHeight( RECT& rect ) -> int {
 
 inline auto getWidth( RECT& rect ) -> int {
     return rect.right - rect.left;
+}
+
+auto scrollTo(HWND hwndScroller, WPARAM wparam, int& scrollPos ) -> void {
+    SCROLLINFO info;
+    memset(&info, 0, sizeof(SCROLLINFO));
+    info.cbSize = sizeof(SCROLLINFO);
+    info.fMask = SIF_ALL;
+    GetScrollInfo(hwndScroller, SB_CTL, &info);
+    bool redraw = true;
+
+    switch (LOWORD(wparam)) {
+        case SB_THUMBTRACK:
+            scrollPos = info.nTrackPos;
+            redraw = false;
+            break;
+        case SB_LINERIGHT:
+            scrollPos = info.nPos + 10;
+            if (scrollPos > info.nMax)
+                scrollPos = info.nMax;
+            break;
+        case SB_LINELEFT:
+            scrollPos = info.nPos - 10;
+            if (scrollPos < info.nMin)
+                scrollPos = info.nMin;
+            break;
+        case SB_PAGERIGHT:
+            scrollPos += info.nMax >> 3;
+            if (scrollPos > info.nMax)
+                scrollPos = info.nMax;
+            break;
+        case SB_PAGELEFT:
+            scrollPos -= info.nMax >> 3;
+            if (scrollPos < info.nMin)
+                scrollPos = info.nMin;
+            break;
+        case SB_LEFT:
+            scrollPos = info.nMin;
+            break;
+        case SB_RIGHT:
+            scrollPos = info.nMax;
+            break;
+        default:
+            return;
+    }
+
+    SetScrollPos(hwndScroller, SB_CTL, scrollPos, redraw);
+}
+
+auto makeColorRef(unsigned rgb) -> COLORREF {
+    return RGB(rgb >> 16, rgb >> 8, rgb);
 }
 

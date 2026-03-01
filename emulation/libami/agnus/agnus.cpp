@@ -16,11 +16,11 @@
 #define FREQUENCY_NTSC  28636360
 
 #define LINE_MAX_WIDTH 384
+#define LINE_DEBUG_WIDTH (384 + 70 + 2)
 #define LINE_RENDER_OFFSET 5 // needed to avoid costly sanity checking for CRT emulation later on
 #define LINE_BUFFER_WIDTH (2048)
-#define LINE_BUFFER_HEIGHT 600
+#define LINE_BUFFER_HEIGHT 640
 #define LINE_CROP_TEST 150
-//#define LOG_DMA_USAGE
 
 #include "agnus.h"
 #include "../../tools/sanitizer.h"
@@ -32,7 +32,6 @@
 #include "blanking.cpp"
 #include "graphics.cpp"
 #include "register.cpp"
-#include "log.cpp"
 #include "serialization.cpp"
 #include <cmath>
 
@@ -54,6 +53,7 @@ Agnus::Agnus(System* system, Cpu& cpu, Denise& denise, Paula& paula, Cia<MOS_852
     ntsc = false;
 
     frameBuffer = new uint16_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT + LINE_RENDER_OFFSET];
+    debugger.dmaFrame = new uint8_t[LINE_BUFFER_WIDTH * LINE_BUFFER_HEIGHT];
 
     encryptedRom = nullptr;
     overclock.cycles = 0;
@@ -80,6 +80,7 @@ Agnus::~Agnus() {
     }
 
     delete[] frameBuffer;
+    delete[] debugger.dmaFrame;
 }
 
 auto Agnus::frequency() const -> unsigned {
@@ -107,10 +108,12 @@ auto Agnus::setRas() -> void {
 
 auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     overclock.cycles = 0;
+    debugger.oneTimeAction = Interface::DebuggerAction::None;
     unsigned resetDelay = hasActiveEvent<EVENT_KBD>() ? getEventDelay<EVENT_KBD>() : 0;
     clearEvents();
     dmaClock = 0;
     checkForRomEncryption();
+    std::memset(debugger.dma, 0, sizeof(debugger.dma));
 
     if (!chipMem)
         setChipmem(512 * 1024);
@@ -258,10 +261,17 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     hTotalFirst = true;
     updateEvent<EVENT_HTOTAL>(0xe2 - hPos);
     denise.linePtr = frameBuffer;
+    debugger.frameLine = debugger.dmaFrame;
     lineVCounter = 0;
     vBlankOffset = 0;
     crop.reset();
     updateDdfEnableCache();
+    debuggerUpdateEvent();
+
+    for (auto& dma : debugger.dma) {
+        dma.usage = 0;
+        dma.usageCpu = 0;
+    }
 }
 
 auto Agnus::powerOff() -> void {
@@ -310,10 +320,40 @@ auto Agnus::waitKeyboardReset() -> void {
     }
 }
 
-auto Agnus::addWaitstatesToCPU() -> void {
+inline auto Agnus::peekDmaWatcher(Emulator::Interface::DebuggerDma& dmaLogger) -> void {
+    int i = 0;
+    for (auto& dmaWatcher : debugger.dmaWatchers ) {
+        if (dmaWatcher & 0x80000000) { // in use
+            if (dmaWatcher & (1 << 24))
+                dmaLogger.watcher[i] = cpu.getIPL();
+            else
+                dmaLogger.watcher[i] = peekWord( dmaWatcher & 0xffffff );
+        }
+        i++;
+    }
+}
+
+inline auto Agnus::addDmaLogEntry() -> void {
+    auto& dmaLogger = debugger.dma[hPos];
+    dmaLogger.usage = busUsage;
+    dmaLogger.usageCpu = ~0; // unused for DMA, overwrite in case of DMA independent concurrent accesses, e.g. fastram, ROM, ...
+    dmaLogger.address = addrBus;
+    dmaLogger.data = dataBus;
+
+    peekDmaWatcher(dmaLogger);
+}
+
+template<bool logDma> auto Agnus::addWaitstatesToCPU() -> void {
     if (overclock.speed) {
-        if (overclock.cycles)
+        if (overclock.cycles) {
             dmaCycle(); // set address on BUS (clock stretch to stock speed)
+
+            if constexpr (logDma) {
+                if (busUsage != BUS_FREE) {
+                    addDmaLogEntry();
+                }
+            }
+        }
 
         // access BUS (clock stretch to stock speed)
         overclock.cycles = overclock.speed - 2;
@@ -323,9 +363,11 @@ auto Agnus::addWaitstatesToCPU() -> void {
         dmaCycle();
         countWaitCycles++;
 
-#ifdef LOG_DMA_USAGE
-        logDmaUsage();
-#endif
+        if constexpr (logDma) {
+            if (busUsage != BUS_FREE) {
+                addDmaLogEntry();
+            }
+        }
     }
 
     // in non nasty mode, CPU gets BUS after 3 wait cycles.
@@ -333,10 +375,6 @@ auto Agnus::addWaitstatesToCPU() -> void {
     // to find out if BUS is free for a possible read/write
     countWaitCycles = 1;
     busUsage = BUS_USAGE_CPU;
-
-#ifdef LOG_DMA_USAGE
-    logDmaUsage(true);
-#endif
 }
 
 auto Agnus::updateVCounter() -> void {
@@ -364,9 +402,16 @@ auto Agnus::updateVCounter() -> void {
             vBlankStart = true;
         }
         copper.strobeCOPJMP(1, Trigger_Vsync);
+        if (debugger.oneTimeAction == Emulator::Interface::DebuggerAction::Frame)
+            oneTimeDebuggerAction();
     } else {
         vPos++;
         vPos &= ecsAndHigher() ? 0x7ff : 0x1ff; // register change of VPos could lead to a wrap around of 9-bit (OCS Agnus) counter.
+    }
+
+    if (debugger.oneTimeAction == Emulator::Interface::DebuggerAction::Line) {
+        if (debugger.stopLine == ~0 || debugger.stopLine == vPos )
+            oneTimeDebuggerAction();
     }
 
     if (beamCon & VARVBEN) {
@@ -415,6 +460,7 @@ template<uint8_t slot> inline auto Agnus::refreshCycle() -> void {
         return;
     }
 
+    addrBus = rDmaPtr;
     rDmaPtr += rasAdder;
     rDmaPtr &= dmaChipMemMask;
 
@@ -429,6 +475,7 @@ inline auto Agnus::dmaCycle() -> void {
     busUsage = BUS_FREE;
 
     // de-adjust HRM DMA view by 4 cycles to Beam position.
+    // this is no hack. HRM DMA view is designed from a developer's perspective.
     switch(++hPos) {
         case 1:
             if (ERSY)
@@ -680,12 +727,20 @@ auto Agnus::POSR(bool vhpos) -> uint16_t {
 }
 
 auto Agnus::sync(unsigned cycles) -> void {
+    debugger.dmaLog ? sync<true>(cycles) : sync<false>(cycles);
+}
+
+template<bool logDma> inline auto Agnus::sync(unsigned cycles) -> void {
     if (overclock.speed) {
         overclock.cycles += cycles;
 
         while (overclock.cycles >= overclock.speed) {
             dmaCycle();
             overclock.cycles -= overclock.speed;
+
+            if constexpr (logDma) {
+                addDmaLogEntry();
+            }
         }
 
     } else {
@@ -694,9 +749,10 @@ auto Agnus::sync(unsigned cycles) -> void {
         while( cycles ) {
             dmaCycle();
             cycles -= 2;
-    #ifdef LOG_DMA_USAGE
-            logDmaUsage();
-    #endif
+
+            if constexpr (logDma) {
+                addDmaLogEntry();
+            }
         }
     }
 }
@@ -967,6 +1023,80 @@ auto Agnus::checkHardDrives() -> void {
 
 inline auto Agnus::csyncPolTrue(bool state) -> bool {
     return (beamCon & CSYTRUE) ? !state : state;
+}
+
+auto Agnus::debugPointReached(int source, unsigned addr) -> void {
+    Emulator::Interface::DebuggerAction action;
+
+    switch (source) {
+        case M68FAMILY::M68000::WatchPoint: action = DebuggerAction::Watchpoint; break;
+        case M68FAMILY::M68000::WatchPointWrite: action = DebuggerAction::WatchpointWrite; break;
+        case M68FAMILY::M68000::ExceptionPoint: action = DebuggerAction::ExceptionPoint; break;
+        case M68FAMILY::M68000::BreakPoint: action = DebuggerAction::Breakpoint; break;
+        case M68FAMILY::M68000::SoftStop: action = DebuggerAction::Softstop; break;
+        default: return;
+    }
+
+    debugger.action = action;
+    debugger.addr = addr;
+    system->debuggerUpdate();
+}
+
+auto Agnus::oneTimeDebuggerAction() -> void {
+    debugger.action = debugger.oneTimeAction;
+    debugger.addr = 0;
+    debugger.oneTimeAction = Emulator::Interface::DebuggerAction::None;
+    system->debuggerUpdate();
+}
+
+auto Agnus::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
+    int i = 0;
+    for (auto& spr : sprites) {
+        auto& _spr = snap.denise.spr[i++];
+        _spr.vStart = spr.vStart;
+        _spr.vStop = spr.vStop;
+    }
+}
+
+auto Agnus::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
+    snap.agnus.debuggerDma = &debugger.dma[0];
+    snap.agnus.lastHPos = debugger.lastHpos;
+    snap.agnus.chipMemMask = chipMemMask;
+    snap.agnus.model = model;
+}
+
+auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    snap.hPos = hPos;
+    snap.vPos = vPos;
+    snap.callbackAction = debugger.action;
+    snap.callbackAddress = debugger.addr;
+    snap.codeMaybeModified = cpu.hasModifiedCode();
+}
+
+auto Agnus::Debugger::enableDmaView(bool state, bool withScrolling) -> void {
+    if (state) {
+        dmaView = true;
+        if (!withScrolling) {
+            scrollDirection = 0;
+            scrollCounter = DEBUG_SCROLL_MAX;
+        } else
+            scrollDirection = 1;
+
+    } else {
+        if (!withScrolling) {
+            dmaView = false;
+            scrollCounter = 0;
+            scrollDirection = 0;
+        } else
+            scrollDirection = -1;
+    }
+
+    dmaLog = requestDmaLog || dmaView;
+}
+
+auto Agnus::Debugger::enableDmaLog(bool state) -> void {
+    requestDmaLog = state;
+    dmaLog = requestDmaLog || dmaView;
 }
 
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;

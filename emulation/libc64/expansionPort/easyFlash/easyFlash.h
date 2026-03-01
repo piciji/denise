@@ -28,6 +28,8 @@ struct EasyFlash : Cart {
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;
     
     auto readIo2( uint16_t addr ) -> uint8_t;
+
+    auto peekIo2( uint16_t addr ) -> uint8_t;
     
     auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
     
@@ -41,7 +43,9 @@ struct EasyFlash : Cart {
     auto reset(bool softReset = false) -> void;
     
     auto readRomL( uint16_t addr ) -> uint8_t;
+    auto peekRomL( uint16_t addr ) -> uint8_t;
     auto readRomH( uint16_t addr ) -> uint8_t;
+    auto peekRomH( uint16_t addr ) -> uint8_t;
     
     auto writeRomL( uint16_t addr, uint8_t data ) -> void;
     auto writeRomH( uint16_t addr, uint8_t data ) -> void;

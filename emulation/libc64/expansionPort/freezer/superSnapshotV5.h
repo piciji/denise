@@ -43,11 +43,19 @@ struct SuperSnapshotV5 : Freezer {
         }
     }
 
+    auto peekIo1( uint16_t addr ) -> uint8_t {
+        return readIo1( addr );
+    }
+
     auto readIo1( uint16_t addr ) -> uint8_t {
         if (!enable)
             return 0;
 
         return Cart::readRomL(0x1e00 | (addr & 0xff));
+    }
+
+    auto peekRomL( uint16_t addr ) -> uint8_t {
+        return readRomL(addr);
     }
 
     auto readRomL(uint16_t addr) -> uint8_t {

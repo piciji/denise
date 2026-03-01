@@ -10,6 +10,7 @@
 #include "../emuconfig/layouts/input.h"
 #include "../emuconfig/layouts/misc.h"
 #include "../emuconfig/layouts/system.h"
+#include "../debugger/debugger.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -67,7 +68,14 @@ auto InputManager::setHotkeys() -> void {
     hotkeys.push_back( {Hotkey::Id::DiskSwap13, "swap media13"} );
     hotkeys.push_back( {Hotkey::Id::DiskSwap14, "swap media14"} );
 
-    // not assignable, not saveable
+    hotkeys.push_back( {Hotkey::Id::DebuggerToggle, "debugger toggle"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerStepInto, "debugger step into"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerStepOver, "debugger step over"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerStepOut, "debugger step out"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerLine, "debugger step line"} );
+    hotkeys.push_back( {Hotkey::Id::DebuggerFrame, "debugger step frame"} );
+
+    // not assignable, not savable
     hiddenHotkeys.push_back( {Hotkey::Id::Warp, ""} );
     hiddenHotkeys.push_back( {Hotkey::Id::WarpOff, ""} );
 }
@@ -194,7 +202,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             else {
                 auto model = activeEmulator->getModel( activeEmulator->getModelIdOfCycleRenderer() );
                 if (model) {
-                    emuThread->lock();
+                    emuThread->lock(true);
                     bool val = activeEmulator->getModelValue( model->id );
                     settings->set<bool>( _underscore(model->name), !val );
                     activeEmulator->setModelValue( model->id, !val );
@@ -315,18 +323,18 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         } break;
 			
 		case Hotkey::Power:
-            emuThread->lock();
+            emuThread->lock(true);
 			program->power(emulator);
 			break;
 
         case Hotkey::PowerWithUnplugCart:
-            emuThread->lock();
+            emuThread->lock(true);
             program->power(emulator);
             program->removeExpansion(false);
             break;
 
         case Hotkey::PowerWithEjectDisks:
-            emuThread->lock();
+            emuThread->lock(true);
             for (auto& media : emulator->getDiskMediaGroup()->media)
                 fileloader->eject(emulator, &media);
             program->power(emulator);
@@ -334,7 +342,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
 			
 		case Hotkey::SoftReset:
-            emuThread->lock();
+            emuThread->lock(true);
 			program->reset(emulator);
 			break;
 
@@ -373,7 +381,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             
         case Hotkey::Id::CaptureMouse:
             if (inputDriver->mIsAcquired()) {
-                inputDriver->mUnacquire();					
+                inputDriver->mUnacquire();
             } else if (view->fullScreen()) {
                 // dinput needs this, when grab button is mapped to mouse
                 view->prepareCursorHide(200);
@@ -421,7 +429,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             break;
         case Hotkey::Id::ThreadedRenderer: {
             auto _settings = program->getSettings( activeEmulator );
-            unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);
+            unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
             if (++tr == 3)
                 tr = 0;
 
@@ -493,12 +501,12 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             }
             break;
         case Hotkey::Loadstate:
-            emuThread->lock();
+            emuThread->lock(true);
             States::getInstance( emulator )->load();
             break;
         case Hotkey::Savestate:
             if (emulator == activeEmulator) {
-                emuThread->lock();
+                emuThread->lock(true);
                 States::getInstance( activeEmulator )->save();
             }
             break;
@@ -803,7 +811,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         } break;
 
         case Hotkey::AutoStart: {
-            emuThread->lock();
+            emuThread->lock(true);
             bool trapped;
             unsigned selection;
             auto media = autoloader->get(emulator, trapped, selection);
@@ -926,6 +934,31 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             audioManager->setRewind(true);
             activeEmulator->setRewind(true);
 
+        } break;
+
+        case Hotkey::DebuggerToggle: {
+            if (program->hasActiveDebugger())
+                Debugger::resume( activeEmulator );
+        } break;
+        case Hotkey::DebuggerStepInto: {
+            if (program->hasActiveDebugger())
+                Debugger::stepInto( activeEmulator );
+        } break;
+        case Hotkey::DebuggerStepOver: {
+            if (program->hasActiveDebugger())
+                Debugger::stepOver( activeEmulator );
+        } break;
+        case Hotkey::DebuggerStepOut: {
+            if (program->hasActiveDebugger())
+                Debugger::stepOut( activeEmulator );
+        } break;
+        case Hotkey::DebuggerLine: {
+            if (program->hasActiveDebugger())
+                Debugger::stepLine( activeEmulator );
+        } break;
+        case Hotkey::DebuggerFrame: {
+            if (program->hasActiveDebugger())
+                Debugger::stepFrame( activeEmulator );
         } break;
     }
     emuThread->unlock();

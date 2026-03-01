@@ -1,10 +1,5 @@
 
-/**
- * v 1.9.5
- */
-
-#ifndef GUIKIT_H
-#define GUIKIT_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -13,6 +8,9 @@
 #include <unordered_set>
 #include <thread>
 #include <iterator>
+#include <optional>
+
+#include "api.h"
 
 namespace GUIKIT {
 
@@ -38,6 +36,7 @@ struct pMultilineEdit;
 struct pLabel;
 struct pHyperlink;
 struct pSquareCanvas;
+struct pMultiSquareCanvas;
 struct pButton;
 struct pStepButton;
 struct pCheckButton;
@@ -54,6 +53,7 @@ struct pFrame;
 struct pTabFrame;
 struct pBrowserWindow;
 struct pImageView;
+struct pLogicViewer;
 struct Zip;
 struct Gzip;
 struct Tar;
@@ -239,7 +239,7 @@ struct Window : Base {
     std::function<void (bool keyDown, Mouse::Button button)> onMousePress = nullptr;
     std::function<void (int deltaX, int deltaY)> onMouseMove = nullptr;
 
-    enum class Hints { Default, Video } hints = Hints::Default;
+    enum class Hints { Default, Video, No_Title } hints = Hints::Default;
     
     enum class Cursor { Default, Pointer, Image, Blank } cursor = Cursor::Default;
 
@@ -248,7 +248,6 @@ struct Window : Base {
         enum AppMenuItem : unsigned { About = 0, Preferences = 2, Custom1 = 3, Hide = 5, HideOthers = 6, ShowAll = 7, Quit = 9 };
         auto setTitleForAppMenuItem(AppMenuItem appMenuItem, const std::string& title) -> void;
         auto setHiddenForAppMenuItem(AppMenuItem appMenuItem, bool state) -> void;
-        auto keepMenuVisibilityOnDisplay(bool state = true) -> void;
         auto setDisableIconsInTopMenu(bool state) -> void;
         Cocoa(Window& window) : window(window) {}
     } cocoa;
@@ -429,14 +428,13 @@ struct Widget : Sizable {
     std::function<void ()> onSize = nullptr;
 
     auto font() -> std::string;
-    auto specialFont() -> bool { return state.specialFont; }
     auto geometry() const -> Geometry { return state.geometry; }
     auto text() -> std::string { return state.text; }
     auto tooltip() -> std::string { return state.tooltip; }
     auto isContainer() -> bool { return state.isContainer; }
     auto foregroundColor() -> unsigned { return state.foregroundColor; }
     auto backgroundColor() -> unsigned { return state.backgroundColor; }
-    auto overrideForegroundColor() -> bool { return state.overrideForegroundColor; } 
+    auto overrideForegroundColor() -> bool { return state.overrideForegroundColor; }
     auto overrideBackgroundColor() -> bool { return state.overrideBackgroundColor; }
     auto getStore() -> int { return state.store; }
 
@@ -445,9 +443,7 @@ struct Widget : Sizable {
     auto setEnabled(bool enabled = true) -> void;
     auto setEnabledThreaded(bool enabled = true) -> void;
     auto setVisible(bool visible = true) -> void;
-    // "special font" hint is only handled in listviews at the moment.
-    // in this case vertical spacing is completly removed.
-    auto setFont(const std::string& font, bool specialFont = false) -> void;
+    auto setFont(const std::string& font) -> void;
     auto minimumSize() -> Size;
     auto setGeometry(Geometry geometry) -> void; //use this to control geometry manually for widgets without layout, layouts set widget geometry automatically
     auto setText(const std::string& text) -> void;
@@ -466,7 +462,6 @@ struct Widget : Sizable {
     struct {
         Geometry geometry = {0, 0, 0, 0};
         std::string font;
-        bool specialFont = false;
         std::string text;
         std::string tooltip;
         unsigned foregroundColor = 0;
@@ -486,24 +481,33 @@ protected:
 };
 
 struct LineEdit : Widget {
+    enum class Align { Left, Right } ;
     std::function<void ()> onChange = nullptr;
     std::function<void ()> onFocus = nullptr;
+    std::function<void ()> onReturn = nullptr;
     std::function<void (std::vector<std::string>)> onDrop = nullptr;
+    std::function<GUIKIT::Menu* ()> onContext = nullptr;
 
     auto editable() const -> bool { return state.editable; }
     auto droppable() const -> bool { return state.droppable; }
     auto maxLength() const -> unsigned { return state.maxLength; }
     auto text() -> std::string;
+    auto align() -> Align { return state.align; }
 	auto value() -> int; // integer formated text, returns 0 if not possible
 	auto setValue(int value) -> void;
     auto setEditable(bool editable = true) -> void;
     auto setDroppable(bool droppable = true) -> void;
     auto setMaxLength( unsigned maxLength ) -> void;
+    auto setPlaceholder(const std::string& placeholder) -> void;
+    auto placeholder() const -> std::string { return state.placeholder; }
+    auto setAlign( Align align ) -> void;
     
     struct {
         bool editable = true;
         bool droppable = false;
+        std::string placeholder;
         unsigned maxLength = 0; // no limit
+        Align align = Align::Left;
     } state;
 
     pLineEdit& p;
@@ -573,6 +577,30 @@ struct SquareCanvas : Widget {
     SquareCanvas();
 };
 
+struct MultiSquareCanvas : Widget {
+    pMultiSquareCanvas& p;
+
+    auto setGrid(unsigned squareSize, unsigned rows, unsigned cols) -> void;
+    auto getDotPtr() -> unsigned* { return state.dots; }
+    auto update() -> void;
+    auto setPadding(unsigned padding) -> void;
+    auto padding() -> unsigned { return state.padding; }
+    auto cols() -> unsigned { return state.cols; }
+    unsigned rows() { return state.rows; }
+    unsigned squareSize() { return state.squareSize; }
+
+    struct {
+        unsigned squareSize = 0;
+        unsigned rows = 0;
+        unsigned cols = 0;
+        unsigned padding = 0;
+
+        unsigned* dots = nullptr;
+    } state;
+
+    MultiSquareCanvas();
+};
+
 struct ImageView : Widget {
     std::function<void ()> onClick = nullptr;
 
@@ -593,6 +621,7 @@ struct ImageView : Widget {
 
 struct Button : Widget {
     std::function<void ()> onActivate = nullptr;
+    std::function<GUIKIT::Menu* ()> onMenu = nullptr;
 
     auto setImage(Image* image) -> void;
     auto image() -> Image* { return state.image; }
@@ -639,10 +668,15 @@ struct CheckBox : Widget {
     std::function<void (bool checked)> onToggle = nullptr;
 
     auto setChecked(bool checked = true) -> void;
+    auto setReadonly(bool readonly = true) -> void;
     auto checked() const -> bool { return state.checked; }
+    auto readonly() const -> bool { return state.readonly; }
     auto toggle() -> void;
 
-    struct { bool checked = false; } state;
+    struct {
+        bool checked = false;
+        bool readonly = false;
+    } state;
 
     pCheckBox& p;
     CheckBox();
@@ -752,6 +786,9 @@ struct ProgressBar : Widget {
 struct ListView : Widget {
     std::function<void ()> onActivate = nullptr;
     std::function<void ()> onChange = nullptr;
+    std::function<void (unsigned row, unsigned column)> onClick = nullptr;
+    std::function<void (unsigned row, unsigned column, Position position)> onContext = nullptr;
+    enum class Align { Left, Right, Center } ;
 
     auto headerVisible() const -> bool { return state.headerVisible; }
     auto rowCount() const -> unsigned { return state.rows.size(); }
@@ -762,17 +799,18 @@ struct ListView : Widget {
     auto lockRedraw() -> void;
     auto unlockRedraw() -> void;
 
-    auto append(const std::vector<std::string>& row) -> void;
-    auto append(const std::vector<std::vector<std::string>>& rows, bool clearBefore = true) -> void;
+    auto append(const std::vector<std::string>& row, bool preventColumnResizing = false) -> void;
+    auto appendMulti(const std::vector<std::vector<std::string>>& rows, bool clearBefore = true) -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
     auto setSelection(unsigned selection) -> void;
     auto setSelected(bool selected = true) -> void;
     auto setHeaderVisible(bool visible = true) -> void;
     auto setHeaderText(const std::vector<std::string>& text) -> void;
-    auto setText(unsigned selection, const std::vector<std::string>& text) -> void;
-    auto setText(unsigned selection, unsigned position, const std::string& text) -> void;
-    auto setImage(unsigned selection, unsigned position, Image& image) -> void;
+    auto setAlignment(std::vector<Align> aligns, bool centerHeader = false) -> void;
+    auto setText(unsigned selection, const std::vector<std::string>& text, bool preventColumnResizing = false) -> void;
+    auto setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing = false) -> void;
+    auto setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing = false) -> void;
     auto getImage( unsigned selection, unsigned position ) -> Image*;
     auto countImages() -> unsigned;
     auto text(unsigned selection, unsigned position) -> std::string;
@@ -783,14 +821,28 @@ struct ListView : Widget {
     auto colorRowTooltips(bool colorTip) -> void;
     auto setSelectionColor(unsigned foregroundColor, unsigned backgroundColor) -> void;
     auto resetSelectionColor() -> void;
-    auto setFirstRowColor(unsigned foregroundColor, unsigned backgroundColor) -> void;
-    auto resetFirstRowColor() -> void;
     auto overrideSelectionColor() -> bool { return state.overrideSelectionColor; }
     auto selectionForegroundColor() -> unsigned { return state.selectionForegroundColor; }
     auto selectionBackgroundColor() -> unsigned { return state.selectionBackgroundColor; }
-    auto overrideFirstRowColor() -> bool { return state.overrideFirstRowColor; }
-    auto firstRowForegroundColor() -> unsigned { return state.firstRowForegroundColor; }
-    auto firstRowBackgroundColor() -> unsigned { return state.firstRowBackgroundColor; }
+    auto spacing() -> int { return state.spacing; }
+    auto autoSizeColumns() -> void;
+    auto getFirstVisibleRow() -> unsigned;
+
+    auto rowForegroundColor(unsigned row, std::optional<unsigned> col = std::nullopt) -> std::optional<unsigned>;
+    auto setRowForegroundColor(unsigned foregroundColor, unsigned row, std::optional<unsigned> col = std::nullopt) -> void;
+    auto resetRowForegroundColor(std::optional<unsigned> row = std::nullopt, std::optional<unsigned> col = std::nullopt) -> void;
+
+    auto rowBackgroundColor(unsigned row) -> std::optional<unsigned>;
+    auto setRowBackgroundColor(unsigned backgroundColor, unsigned row) -> void;
+    auto resetRowBackgroundColor(unsigned row) -> void;
+    auto resetRowColors() -> void;
+    auto setSpacing(unsigned spacing) -> void;
+
+    struct RowForegroundColor {
+        unsigned row;
+        std::optional<unsigned> col;
+        unsigned color;
+    };
 
     struct {
         bool headerVisible = false;
@@ -801,13 +853,15 @@ struct ListView : Widget {
         bool overrideSelectionColor = false;
         unsigned selectionForegroundColor;
         unsigned selectionBackgroundColor;
-        bool overrideFirstRowColor = false;
-        unsigned firstRowForegroundColor;
-        unsigned firstRowBackgroundColor;
+        int spacing = -1;
         std::vector<std::string> header;
+        std::vector<Align> aligns;
+        bool centerHeader = false;
         std::vector<std::vector<std::string>> rows;
 		std::vector<std::string> rowTooltips;
         std::vector<std::vector<Image*>> images;
+        std::vector<RowForegroundColor> rowForegroundColor;
+        std::vector<std::pair<unsigned, unsigned>> rowBackgroundColor;
     } state;
 
     pListView& p;
@@ -906,6 +960,51 @@ struct Viewport : Widget {
     Viewport();
 };
 
+struct LogicState {
+    enum class Display { EmptyBlock = 0, SingleBlock = 1, BeginBlock = 2, KeepBlock = 4, EndBlock = 8 };
+    enum class Offset { Usage1 = 0, Addr1, Data1, Usage2, Addr2, Data2, Watch1, Watch2, Watch3, Watch4, Max };
+
+    bool active;
+    unsigned position;
+    unsigned color;
+
+    std::string usage;
+    std::string symbolicAddr;
+    unsigned addr;
+    unsigned data;
+    Display display;
+
+    std::string usage2;
+    unsigned addr2;
+    unsigned data2;
+    Display display2;
+
+    std::pair<Display, unsigned> watches[4];
+};
+
+struct LogicViewer : Widget {
+    auto setLength(unsigned slots) -> void;
+    auto getDataRef() -> std::vector<LogicState>&;
+    auto update() -> void;
+    auto scrollToActive() -> void;
+    auto setAddrAs24bit(bool addr24bit = true) -> void;
+    auto setOffset(LogicState::Offset offset, unsigned value ) -> void;
+    auto addrAs24bit() -> bool { return state.addr24bit; }
+    auto setSymbolicAddr(bool symbolicAddr) -> void;
+    auto hasSymbolicAddr() -> bool { return state.symbolicAddr; }
+
+    struct {
+        std::vector<LogicState> logics;
+        bool addr24bit = false;
+        bool symbolicAddr = false;
+
+        unsigned offsets[(unsigned)LogicState::Offset::Max];
+    } state;
+
+    pLogicViewer& p;
+    LogicViewer();
+};
+
 struct Layout : Sizable {        
     struct Children {
         Sizable* sizable;
@@ -936,6 +1035,7 @@ struct Layout : Sizable {
     auto getFrameInnerGeometry(Geometry geometry) -> Geometry;
     static auto getParentTabOrSwitchLayout(Sizable* sizable) -> Layout*;
     static auto getTopMostTabOrSwitchLayout(Layout* layout) -> Layout*;
+    static auto alignChildWidth(std::vector<Layout*> layouts, unsigned pos = 0) -> void;
     
     auto getAllChildWidgets() -> std::vector<Widget*>;
 
@@ -1118,6 +1218,7 @@ struct Menu : MenuBase {
     auto append(MenuBase& item) -> void;
     auto remove(MenuBase& item) -> void;
     auto reset() -> void;
+    auto update() -> void;
     
     auto contextOnly() const -> bool { return state.contextOnly; }
     auto showContextOnly(bool contextOnly) -> void;
@@ -1251,7 +1352,9 @@ struct BrowserWindow {
 
     auto setTemplateId(int id) -> BrowserWindow&;
     auto addContentView(unsigned id, std::function<bool (std::string filePath, unsigned selection)> onDblClick) -> BrowserWindow&;
-    auto setContentViewFont(std::string font, bool specialFont = false) -> BrowserWindow&;
+    auto setContentViewFont(std::string font) -> BrowserWindow&;
+    auto setSpacing(unsigned spacing) -> BrowserWindow&;
+    auto spacing() -> int { return state.contentView.spacing; }
     auto setContentViewWidth(unsigned boxWidth) -> BrowserWindow&;
     auto setContentViewHeight(unsigned boxHeight) -> BrowserWindow&;
     auto setContentViewBackground(unsigned color) -> BrowserWindow&;
@@ -1274,7 +1377,7 @@ struct BrowserWindow {
     struct ContentView {
         unsigned id = 0; // for template usage
         std::string font = "";
-        bool specialFont = false;
+        int spacing = -1;
         unsigned width = 450;
         unsigned height = 200;
         unsigned foregroundColor = 0;
@@ -1360,9 +1463,23 @@ struct MessageWindow {
     static Trans trans;
 };
 
+struct ColorChooser {
+    static std::function<void (unsigned color)> onChoose;
+    
+    struct State {
+        Window* window = nullptr;
+        unsigned defaultColor = 0;
+    } state;
+
+    auto setWindow(Window& window) -> ColorChooser&;
+    auto setDefault(unsigned color) -> ColorChooser&;
+    auto choose() -> std::optional<unsigned>;
+};
+
 struct Font {
     static auto system(unsigned size, const std::string& style = "", bool monospaced = false) -> std::string;
     static auto system(const std::string& style = "", bool monospaced = false) -> std::string;
+    static auto monospace(unsigned size = 0) -> std::string;
     static auto systemFontFile() -> std::string;
     static auto size(const std::string& font, const std::string& text) -> Size;
 	static auto scale( unsigned pixel ) -> unsigned;
@@ -1646,7 +1763,8 @@ struct String {
     static auto replace(std::string& str, const std::string& search, const std::string& replace) -> std::string&;
     static auto isNumber(const std::string& str) -> bool;
     static auto isFloatNumber(const std::string& str) -> bool;
-	static auto convertToNumber(std::string str) -> int;
+	static auto convertToNumber(std::string str, int defaultVal = 0) -> int;
+    static auto convertToHex( unsigned val, int length = -1 ) -> std::string;
     static auto convertIntToHex( int number, bool prepend_0x = true ) -> std::string;
     static auto convertHexToInt( std::string hex, int defaultValueByFailure = 0 ) -> int;
     static auto formatFloatingPoint(double value, uint8_t roundDecimal = 0, bool cutTrailingZero = false) -> std::string;
@@ -1721,5 +1839,3 @@ struct Utf8 {
 };
 
 }
-
-#endif

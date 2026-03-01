@@ -63,8 +63,8 @@ inline auto pWidget::getMinimumSize() -> Size {
 auto pWidget::setText(const std::string& text) -> void {
     if(hwnd) {
         SetWindowText(hwnd, utf16_t(text));
-        calculatedMinimumSize.updated = false;
     }
+    calculatedMinimumSize.updated = false;
 }
 
 auto pWidget::setEnabledThreaded(bool enabled) -> void {
@@ -96,7 +96,7 @@ auto pWidget::getParentHandle() -> HWND {
    // if (!parentTabFrameLayout || !pApplication::hasAppThemed())
 		return widget.window() ? widget.window()->p.hwnd : nullptr;
 	
-	return parentTabFrameLayout->frameWidget->p.hwnd;
+	//return parentTabFrameLayout->frameWidget->p.hwnd;
 }
 
 auto pWidget::getParentTabWidget() -> Widget* {

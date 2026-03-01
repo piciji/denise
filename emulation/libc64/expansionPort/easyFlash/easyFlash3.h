@@ -47,12 +47,14 @@ struct EasyFlash3 : FreezeButton {
     bool kernalHack = true; // only here switchable
 
     auto readIo1( uint16_t addr ) -> uint8_t;
+    auto peekIo1( uint16_t addr ) -> uint8_t;
 
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;
     
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;
-    
+
     auto readIo2( uint16_t addr ) -> uint8_t;
+    auto peekIo2( uint16_t addr ) -> uint8_t;
     
     auto create( Interface::CartridgeId cartridgeId, unsigned _size ) -> Cart*;
     
@@ -67,7 +69,9 @@ struct EasyFlash3 : FreezeButton {
     auto resetButton() -> bool;
     
     auto readRomL( uint16_t addr ) -> uint8_t;
+    auto peekRomL( uint16_t addr ) -> uint8_t;
     auto readRomH( uint16_t addr ) -> uint8_t;
+    auto peekRomH( uint16_t addr ) -> uint8_t;
     
     auto writeRomL( uint16_t addr, uint8_t data ) -> void;
     auto writeRomH( uint16_t addr, uint8_t data ) -> void;

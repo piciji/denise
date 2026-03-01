@@ -21,9 +21,15 @@ Denise::Denise(System* system, Agnus& agnus, Input& input) : system(system), agn
 
         initialized = true;
     }
+
+    for(auto& s : debugger.spr)
+        s.data = new uint16_t[8192];
 }
 
-Denise::~Denise() {}
+Denise::~Denise() {
+    for(auto& s : debugger.spr)
+        delete[] s.data;
+}
 
 auto Denise::getId() -> unsigned {
     if (model == Model::ECS)
@@ -47,6 +53,8 @@ auto Denise::power(bool softReset) -> void {
     deniseClock = 0;
     for (int i = 0; i < 256; i++)
         bplUpdate[i].actions = 0;
+
+    debugger.reset();
 
     if (!softReset) {
         hPos = 2;
@@ -133,6 +141,8 @@ auto Denise::strhor() -> void {
         if (vBlank) {
             process(-1);
             vBlank = false;
+            if (debugger.store)
+                debugger.reset();
         }
         int cycle = agnus.fallBackCycles(deniseClock);
         BplUpdate& upd = bplUpdate[cycle & 0xff];
@@ -250,7 +260,35 @@ auto Denise::setSprDatB( uint8_t nr, uint16_t value, bool force ) -> bool {
     }
 
     spr.datB = value;
+    if (debugger.store)
+        storeSprite(nr, value | (spr.datA << 16));
     return true;
+}
+
+auto Denise::storeSprite(uint8_t nr, uint32_t shift) -> void {
+    auto& _spr = debugger.spr[nr];
+    if (_spr.lock) {
+        _spr.pos -= 16;
+    } else
+        _spr.lock = true;
+
+    auto& spr = sprites[nr];
+    uint8_t sprData;
+
+    for (unsigned i = 0; i < 16; i++) {
+        sprData = ((shift & 0x80000000) >> 31) | ((shift & 0x8000) >> 14);
+        shift = (shift << 1) & ~(0x10000);
+
+        if (spr.attached) {
+            sprData <<= 2;
+            sprData |= debugger.spr[nr & ~1].sprData[i];
+            _spr.data[_spr.pos++] = sprData ? colors[sprData + 16 ] : 0x8000;
+        } else {
+            _spr.data[_spr.pos++] = sprData ? colors[sprData + 16 + ((nr >> 1) << 2) ] : 0x8000;
+            _spr.sprData[i] = sprData;
+        }
+        _spr.pos &= 0x1fff;
+    }
 }
 
 auto Denise::setSprCtl( uint8_t nr, uint16_t value ) -> void {
@@ -845,6 +883,9 @@ template<bool _hires, bool _shres, bool _ham, bool _doublePlayfield, bool _displ
             if (upd.actions & RESET_HPOS) {
                 hPos = 2;
                 upd.actions &= ~RESET_HPOS;
+
+                if (debugger.store)
+                    debugger.resetLock();
             }
 
 //            if (upd.actions & UPD_COLOR) {
@@ -872,6 +913,43 @@ template<bool _hires, bool _shres, bool _ham, bool _doublePlayfield, bool _displ
             }
         }
     }
+}
+
+auto Denise::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.denise;
+    for (unsigned i = 0; i < 8; i++) {
+        auto& spr = sprites[i];
+        auto& _sprD = debugger.spr[i];
+        auto& _sprT = s.spr[i];
+        unsigned pos = snap.callbackAction == Interface::DebuggerAction::AutoUpdate ? _sprD.lastPos : _sprD.pos;
+
+        if (pos)
+            std::memcpy(_sprT.data, _sprD.data, pos * 2);
+
+        _sprT.pos = pos;
+        _sprT.attached = spr.attached;
+        _sprT.x = spr.x;
+        _sprT.datA = spr.datA;
+        _sprT.datB = spr.datB;
+    }
+
+    s.bplCon0 = bplCon0;
+    s.bplCon1 = bplCon1;
+    s.bplCon2 = bplCon2;
+    s.bplCon3 = bplCon3;
+    s.delayPf1 = delayPf1;
+    s.delayPf2 = delayPf2;
+    s.clxDat = clxDat;
+    s.bpl1dat = bpl1dat;
+    s.bpl2dat = bpl2dat;
+    s.bpl3dat = bpl3dat;
+    s.bpl4dat = bpl4dat;
+    s.bpl5dat = bpl5dat;
+    s.bpl6dat = bpl6dat;
+    s.hStart = hStart;
+    s.hStop = hStop;
+
+    std::memcpy(s.colors, colors, 32 * 2);
 }
 
 auto Denise::serialize(Emulator::Serializer& s) -> void {

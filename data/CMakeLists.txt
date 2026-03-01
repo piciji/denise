@@ -20,6 +20,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         guikit/winapi/widgets/tabframe.cpp
         guikit/winapi/widgets/treeview.cpp
         guikit/winapi/widgets/viewport.cpp
+        guikit/winapi/widgets/logicViewer.cpp
         guikit/winapi/widgets/widget.cpp
         guikit/winapi/browserWindow.cpp
         guikit/winapi/clipboard.cpp
@@ -230,7 +231,6 @@ set(headerSrcs ${headerSrcs}
     emulation/libami/agnus/dma.cpp
     emulation/libami/agnus/events.cpp
     emulation/libami/agnus/graphics.cpp
-    emulation/libami/agnus/log.cpp
     emulation/libami/agnus/memory.cpp
     emulation/libami/agnus/minterm.cpp
     emulation/libami/agnus/register.cpp
@@ -425,7 +425,6 @@ set(headerSrcs ${headerSrcs}
     emulation/libc64/vicII/sequencer.cpp
     emulation/libc64/vicII/serialization.cpp
     emulation/libc64/vicII/silence.cpp
-    emulation/libc64/vicII/verticalLineAnomaly.cpp
     emulation/libc64/vicII/vicII.h
 
     emulation/tools/bits.h

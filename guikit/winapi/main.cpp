@@ -19,6 +19,7 @@ namespace GUIKIT {
 #include "display.cpp"
 #include "dragndrop.cpp"
 #include "interProcess.cpp"
+#include "colorChooser.cpp"
     
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"
@@ -27,7 +28,8 @@ namespace GUIKIT {
 #include "widgets/multilineedit.cpp"
 #include "widgets/label.cpp"
 #include "widgets/hyperlink.cpp"
-#include "widgets/squareCanvas.cpp"   
+#include "widgets/squareCanvas.cpp"
+#include "widgets/multiSquareCanvas.cpp"
 #include "widgets/checkbutton.cpp"
 #include "widgets/checkbox.cpp"
 #include "widgets/combobutton.cpp"
@@ -40,6 +42,7 @@ namespace GUIKIT {
 #include "widgets/listview.cpp"
 #include "widgets/treeview.cpp"
 #include "widgets/imageView.cpp"
+#include "widgets/logicViewer.cpp"
    
 auto pApplication::run() -> void {
     Application::processEvents();
@@ -75,6 +78,8 @@ auto pApplication::quit() -> void {
     CoUninitialize();
     OleUninitialize();
     PostQuitMessage(0);
+
+    Gdiplus::GdiplusShutdown(gdiplusToken);
     
     if (uxTheme)
         FreeLibrary(uxTheme);
@@ -103,7 +108,7 @@ HBRUSH pApplication::darkBGHotBrush = nullptr;
 HBRUSH pApplication::darkEdgeBrush = nullptr;
 HBRUSH pApplication::darkDisabledEdgeBrush = nullptr;
 HPEN pApplication::darkEdgePen = nullptr;
-
+ULONG_PTR pApplication::gdiplusToken = 0;
 
 HMODULE pApplication::uxTheme = nullptr;
 SetWindowTheme_t pApplication::pSetWindowTheme = nullptr;
@@ -131,6 +136,9 @@ auto pApplication::initialize() -> void {
     SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
     InitCommonControls();
     OleInitialize(NULL);
+
+    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+    GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     WNDCLASS wc;
     wc.cbClsExtra = 0;
@@ -312,6 +320,8 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
             if(base == nullptr) break;
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == LVN_ITEMCHANGED) { ((ListView*)base)->p.onChange(lparam); break; }
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == LVN_ITEMACTIVATE) { ((ListView*)base)->p.onActivate(lparam); break; }
+            if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == NM_CLICK) { ((ListView*)base)->p.onClick(lparam); break; }
+            if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == NM_RCLICK) { ((ListView*)base)->p.onClick(lparam, true); break; }
             if(dynamic_cast<ListView*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((ListView*)base)->p.onCustomDraw(lparam); }
             if(dynamic_cast<CheckBox*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((CheckBox*)base)->p.onCustomDraw(lparam); }
             if(dynamic_cast<RadioBox*>(base) && ((LPNMHDR)lparam)->code == NM_CUSTOMDRAW) { return ((RadioBox*)base)->p.onCustomDraw(lparam); }
@@ -365,10 +375,11 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
         case WM_VSCROLL: {
             base = (Base*)GetWindowLongPtr((HWND)lparam, GWLP_USERDATA);
             if(base == nullptr) {
-
                 break;
             }
             if(dynamic_cast<Slider*>(base)) { ((Slider*)base)->p.onChange(); return true; }
+            if(dynamic_cast<MultiSquareCanvas*>(base)) { ((MultiSquareCanvas*)base)->p.onChange(wparam); return true; }
+            if(dynamic_cast<LogicViewer*>(base)) { ((LogicViewer*)base)->p.onChange(wparam); return true; }
             break;
         }
 		case WM_MEASUREITEM: {
@@ -423,6 +434,12 @@ auto CALLBACK pApplication::wndProc(WNDPROC windowProc, HWND hwnd, UINT msg, WPA
                     return true;
                 } else if (dynamic_cast<SquareCanvas*> (base)) {
                     ((SquareCanvas*)base)->p.drawItem(lDraw);
+                    return true;
+                } else if (dynamic_cast<MultiSquareCanvas*> (base)) {
+                    ((MultiSquareCanvas*)base)->p.drawItem(lDraw);
+                    return true;
+                } else if (dynamic_cast<LogicViewer*> (base)) {
+                    ((LogicViewer*)base)->p.drawItem(lDraw);
                     return true;
                 } else if (dynamic_cast<ImageView*> (base)) {
                     ((ImageView*)base)->p.drawItem(lDraw);
@@ -523,7 +540,9 @@ pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
 
     Geometry geo = window.state.geometry;
 
-    hwnd = CreateWindow( L"app_gui", L"", ResizableStyle | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
+    bool noTitle = hints == Window::Hints::No_Title;
+
+    hwnd = CreateWindow( L"app_gui", L"", ResizableStyle(noTitle) | WS_CLIPCHILDREN, geo.x, geo.y, geo.width, geo.height, 0, 0, GetModuleHandle(0), 0);
 
     hmenu = CreateMenu();
 	contextmenu = CreatePopupMenu();
@@ -655,8 +674,12 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
                 window.onFocus();
             break;
         case WM_KILLFOCUS:
-            if (window.onUnFocus)
+            if (window.onUnFocus) {
+                if (IsChild(hwnd, (HWND)wparam)) {
+                    break;
+                }
                 window.onUnFocus();
+            }
             break;
         case WM_SETCURSOR:
             if (LOWORD(lparam) == HTCLIENT) {
@@ -697,7 +720,8 @@ auto pWindow::restore() -> void {
 }
 
 auto pWindow::setResizable(bool resizable) -> void {
-    SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (window.fullScreen() ? 0 : 0) | (resizable ? ResizableStyle : FixedStyle));
+    bool noTitle = window.hints == Window::Hints::No_Title;
+    SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | (window.fullScreen() ? 0 : 0) | (resizable ? ResizableStyle(noTitle) : FixedStyle(noTitle)));
     if(window.visible() && !window.fullScreen() ) setGeometry(window.state.geometry);
 }
 
@@ -739,8 +763,9 @@ auto pWindow::minimized() -> bool {
 
 auto pWindow::frameMargin() -> Geometry {
     static int menuWhatIsThis = GetSystemMetrics( SM_CYMENU ) - GetSystemMetrics( SM_CYMENUSIZE );
-    
-    unsigned style = window.resizable() ? ResizableStyle : FixedStyle;
+
+    bool noTitle = window.hints == Window::Hints::No_Title;
+    unsigned style = window.resizable() ? ResizableStyle(noTitle) : FixedStyle(noTitle);
     if(window.fullScreen()) style = 0;
 
     RECT rc = {0, 0, 0, 0};
@@ -867,7 +892,8 @@ auto pWindow::setFullScreen(bool fullScreen) -> void {
     locked = true;
 
     if(!fullScreen) {
-        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle : FixedStyle) | (unfullscreenZoomed ? WS_MAXIMIZE : 0));
+        bool noTitle = window.hints == Window::Hints::No_Title;
+        SetWindowLongPtr(hwnd, GWL_STYLE, WS_VISIBLE | WS_CLIPCHILDREN | (window.resizable() ? ResizableStyle(noTitle) : FixedStyle(noTitle)) | (unfullscreenZoomed ? WS_MAXIMIZE : 0));
 		SetWindowLongPtr(hwnd, GWL_EXSTYLE, (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & ~WS_EX_APPWINDOW));
 		
         setGeometry(window.state.geometry);

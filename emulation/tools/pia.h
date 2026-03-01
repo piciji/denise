@@ -15,6 +15,7 @@ struct Pia {
     enum class Port : unsigned { A = 0, B = 1 };
 
     std::function<uint8_t ( Port port )> readPort;
+    std::function<uint8_t ( Port port )> peekPort;
     std::function<void ( Port port, uint8_t data )> writePort;
 
     std::function<void (bool state)> irqCall;
@@ -40,6 +41,7 @@ struct Pia {
     bool ca2;
     bool cb2;
 
+    auto peek(uint8_t adr) -> uint8_t;
     auto read(uint8_t adr) -> uint8_t;
     auto write(uint8_t adr, uint8_t value) -> void;
     auto reset() -> void;

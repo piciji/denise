@@ -24,6 +24,8 @@ struct HDBase {
 
     virtual auto read(uint32_t addr) -> uint8_t { return 0xff; }
 
+    virtual auto peekW(uint32_t addr) -> uint16_t { return 0xffff; }
+
     virtual auto readW(uint32_t addr) -> uint16_t { return 0xffff; }
 
     virtual auto write(uint32_t addr, uint8_t data) -> void {}

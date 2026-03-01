@@ -19,7 +19,6 @@ auto VicIIFast::scanline() -> void {
 		std::memset(linePtr + firstVisiblePixel, colorReg[ 0x21 ], hWidth);	
 	
     ecmBmmMcm = modeEcmBmm | modeMcm;
-    vicBank = system->vicBank;
     linePos = firstVisiblePixel + (ntscBorder ? 56 : 46);
 
     if (xScroll) {
@@ -50,7 +49,7 @@ auto VicIIFast::scanline() -> void {
     if (addMeta)
         applyMeta();  
 	
-	hFlipFlop = 1;
+	hFlipFlop = true;
 }
 
 inline auto VicIIFast::fetch(unsigned i) -> void {
@@ -332,8 +331,7 @@ inline auto VicIIFast::mode7() -> void {
 
 auto VicIIFast::dmaSprites() -> void {
     uint16_t dataP;     
-    vicBank = system->vicBank;
-    
+
     for (unsigned pos = 0; pos < 8; pos++) {
         Sprite* spr = &sprite[pos];
         uint8_t mask = 1 << pos;
@@ -360,7 +358,7 @@ auto VicIIFast::dmaSprites() -> void {
             spr->dataS |= readPhi<false>( ((dataP | spr->mc) & 0x3fff) | vicBank );
             spr->mc++;
             spr->mc &= 63;
-        }            
+        }
     }
 }
 
@@ -370,6 +368,8 @@ auto VicIIFast::dmaSpritesOff() -> void {
     for (unsigned pos = 0; pos < 8; pos++) {
         Sprite* spr = &sprite[pos];
         spr->dataShiftReg = spr->dataS;
+         if (debugger.storeSprites && (spriteActive & (1 << pos)))
+             storeSprite(*spr);
         
         if (spr->expandYFlop) {
             spr->mcBase = spr->mc;
@@ -401,7 +401,7 @@ auto VicIIFast::applySprites() -> void {
         spr->expandXFlop = true;
         spr->mcFlop = true;
         
-        dataShiftReg = spr->dataShiftReg & spr->mask;                
+        dataShiftReg = spr->dataShiftReg & spr->mask;
         
         while(dataShiftReg) {
             

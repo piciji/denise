@@ -88,7 +88,8 @@
                 auto listings = state.onSelectionChange( path, true );
                 
                 if (listView) {
-                    listView->resetFirstRowColor();
+                    listView->resetRowForegroundColor(0);
+                    listView->resetRowBackgroundColor(0);
                     int i = 0;
                     auto _s = GUIKIT::pFont::size([(id)listView->p.cocoaView font], " ");
                     int maxChars = state.contentView.width / _s.width;
@@ -109,8 +110,11 @@
                 auto rows = state.onSelectionChange(path, false);
                 
                 if (listView) {
-                    if (state.contentView.overrideFirstRowColor)
-                        listView->setFirstRowColor(state.contentView.firstRowForegroundColor, state.contentView.firstRowBackgroundColor);
+                    if (state.contentView.overrideFirstRowColor) {
+                        listView->setRowForegroundColor(state.contentView.firstRowForegroundColor, 0);
+                        
+                        listView->setRowBackgroundColor(state.contentView.firstRowBackgroundColor, 0);
+                    }
 
                     for(auto& row : rows) {
                         listView->append({row.entry});
@@ -344,8 +348,12 @@ auto pBrowserWindow::buildView(bool save) -> void {
             listView->setSelectionColor( state.contentView.selectionForegroundColor, state.contentView.selectionBackgroundColor );
 
         listView->colorRowTooltips( state.contentView.colorTooltips );
-        if (state.contentView.overrideFirstRowColor)
-            listView->setFirstRowColor( state.contentView.firstRowForegroundColor, state.contentView.firstRowBackgroundColor );
+        if (state.contentView.overrideFirstRowColor) {
+            listView->setRowForegroundColor(state.contentView.firstRowForegroundColor, 0);
+            
+            listView->setRowBackgroundColor(state.contentView.firstRowBackgroundColor, 0);
+        }
+
         listView->onActivate = [this]() {
             if (browserWindow.state.contentView.onDblClick) {
                 if (browserWindow.state.contentView.onDblClick( selectedPath, contentViewSelection() ) )
@@ -354,7 +362,9 @@ auto pBrowserWindow::buildView(bool save) -> void {
         };
         
         if (!state.contentView.font.empty())
-            listView->setFont( state.contentView.font, state.contentView.specialFont );
+            listView->setFont( state.contentView.font );
+        
+        listView->setSpacing( browserWindow.spacing() );
         
         maxListWidth = state.contentView.width;
         maxListHeight = state.contentView.height;

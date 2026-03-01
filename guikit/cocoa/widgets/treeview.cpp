@@ -50,7 +50,7 @@
         [image drawInRect:targetRect fromRect:sourceRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
         
         [[NSGraphicsContext currentContext] restoreGraphicsState];
-        textDisplacement = frame.size.height + 4;
+        textDisplacement = frame.size.height + 6;
     }
     
     NSRect textRect = NSMakeRect(
@@ -61,7 +61,7 @@
     
     if(treeView->overrideForegroundColor()) {
         unsigned color = treeView->foregroundColor();
-        textColor = GUIKIT::pHelper::getColor( color );
+        textColor = GUIKIT::pHelper::RGBToNSColor( color );
     }
     
     [text drawInRect:textRect withAttributes:@{ NSForegroundColorAttributeName:textColor, NSFontAttributeName:[self font] }];
@@ -92,6 +92,7 @@
         [self setBorderType:NSBezelBorder];
         [self setHasVerticalScroller:YES];
         [self setHasHorizontalScroller:YES];
+        [self setAutohidesScrollers:YES];
         
         [content setDataSource:self];
         [content setDelegate:self];
@@ -104,7 +105,7 @@
         [content setAllowsEmptySelection:YES];
         [content setAllowsMultipleSelection:NO];
         [content setHeaderView:nil];
-        [content setColumnAutoresizingStyle:NSTableViewLastColumnOnlyAutoresizingStyle];
+        [content setColumnAutoresizingStyle:NSTableViewNoColumnAutoresizing];
         
         font = nil;
         [self setFont:nil];
@@ -427,7 +428,7 @@ namespace GUIKIT {
     
     auto pTreeView::setBackgroundColor(unsigned color) -> void {
         
-        NSColor* bg = pHelper::getColor( color );
+        NSColor* bg = pHelper::RGBToNSColor( color );
         
         @autoreleasepool {
             if (cocoaView)

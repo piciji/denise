@@ -52,12 +52,30 @@ auto pRadioBox::setChecked() -> void {
         }
     }
 }
+
+auto pRadioBox::setForegroundColor(unsigned color) -> void {
+    setAttributedText();
+}
     
 auto pRadioBox::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [(id)inner setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        if (radioBox.overrideForegroundColor())
+            setAttributedText();
+        else
+            [(id)inner setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
+}
+
+auto pRadioBox::setAttributedText() -> void {
+    NSMutableAttributedString* attrTitle =
+        [[NSMutableAttributedString alloc] initWithString:[NSString stringWithUTF8String:widget.text().c_str()]];
+    
+    NSUInteger len = [attrTitle length];
+    NSRange range = NSMakeRange(0, len);
+    [attrTitle addAttribute:NSForegroundColorAttributeName value:getTextColor() range:range];
+    [attrTitle fixAttributesInRange:range];
+    [(id)inner setAttributedTitle:attrTitle];
 }
 
 auto pRadioBox::init() -> void {

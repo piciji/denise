@@ -11,6 +11,11 @@ auto pSquareCanvas::create() -> void {
     wndprocOrig = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)subclassWndProc);
 }
 
+pSquareCanvas::~pSquareCanvas() {
+    if (hCursor)
+        SetCursor(hCursor);
+}
+
 auto pSquareCanvas::rebuild() -> void {
     if(!needRebuild())
         return;
@@ -44,6 +49,12 @@ auto CALLBACK pSquareCanvas::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam,
         case WM_GETDLGCODE: return DLGC_STATIC | DLGC_WANTCHARS;
         case WM_ERASEBKGND:
             return 0;
+
+        case WM_SETCURSOR:
+            if (!squareCanvas->p.hCursor)
+                squareCanvas->p.hCursor = LoadCursor(0, IDC_HAND);
+            SetCursor(squareCanvas->p.hCursor);
+            return 1;
 
         case WM_NCHITTEST:
             return HTCLIENT;

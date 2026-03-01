@@ -12,7 +12,7 @@ auto pListView::autoSizeColumns() -> void {
     }
 }
 
-auto pListView::append(const std::vector<std::string>& list) -> void {
+auto pListView::append(const std::vector<std::string>& list, bool preventColumnResizing) -> void {
     if (!hwnd) return;
     unsigned row = ListView_GetItemCount(hwnd);
 
@@ -20,16 +20,16 @@ auto pListView::append(const std::vector<std::string>& list) -> void {
     item.mask = LVIF_TEXT;
     item.iItem = row;
     item.iSubItem = 0;
-    utf16_t wtext("");
-    item.pszText = wtext;
+    item.pszText = NULL;
     locked = true;
     ListView_InsertItem(hwnd, &item);
     locked = false;
     for(unsigned column = 0; column < list.size(); column++) {
-        utf16_t wtext(list.at(column));
+        utf16_t wtext(list[column]);
         ListView_SetItemText(hwnd, row, column, wtext );
     }
-    autoSizeColumns();
+    if (!preventColumnResizing)
+        autoSizeColumns();
 }
 
 auto pListView::lockRedraw() -> void {
@@ -38,8 +38,10 @@ auto pListView::lockRedraw() -> void {
 }
 
 auto pListView::unlockRedraw() -> void {
-    if (hwnd)
+    if (hwnd) {
         SendMessage( hwnd, WM_SETREDRAW, 1, 0);
+        InvalidateRect(hwnd, 0, false);
+    }
 }
 
 auto pListView::remove(unsigned selection) -> void {
@@ -63,12 +65,23 @@ auto pListView::buildHeaderText(std::vector<std::string> list) -> void {
     while(ListView_DeleteColumn(hwnd, 0));
 
     if(list.size() == 0) list.push_back("");
+    auto& aligns = listView.state.aligns;
 
     for(unsigned i = 0; i < list.size(); i++) {
+        int fmt = LVCFMT_LEFT;
+        if (i < aligns.size()) {
+            switch (aligns[i]) {
+                default:
+                case ListView::Align::Left: fmt = LVCFMT_LEFT; break;
+                case ListView::Align::Right: fmt = LVCFMT_RIGHT; break;
+                case ListView::Align::Center: fmt = LVCFMT_CENTER; break;
+            }
+        }
+
         utf16_t wtext( list[i] );
         LVCOLUMN column;
         column.mask = LVCF_FMT | LVCF_TEXT | LVCF_SUBITEM;
-        column.fmt = LVCFMT_LEFT;
+        column.fmt = fmt;
         column.iSubItem = i;
         column.pszText = wtext;
         ListView_InsertColumn(hwnd, i, &column);
@@ -82,6 +95,13 @@ auto pListView::buildHeaderText(std::vector<std::string> list) -> void {
     }
 
     autoSizeColumns();
+}
+
+auto pListView::getFirstVisibleRow() -> unsigned {
+    if (!hwnd)
+        return 0;
+
+    return ListView_GetTopIndex(hwnd);
 }
 
 auto pListView::setHeaderText(std::vector<std::string> list) -> void {
@@ -114,14 +134,38 @@ auto pListView::setSelection(unsigned selection) -> void {
     if (!hwnd) return;
     locked = true;
     ListView_SetItemState(hwnd, selection, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-    SendMessage(hwnd, LVM_ENSUREVISIBLE, (WPARAM)selection, false);
+    ListView_EnsureVisible(hwnd, selection, false);
     locked = false;
 }
 
-auto pListView::setText(unsigned selection, unsigned position, const std::string& text) -> void {
+auto pListView::setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing) -> void {
     utf16_t wtext(text);
     if (hwnd) ListView_SetItemText(hwnd, selection, position, wtext);
-    autoSizeColumns();
+    if (!preventColumnResizing)
+        autoSizeColumns();
+}
+
+auto pListView::getThemeHeaderColors(HPEN& captionPen) -> HBRUSH {
+    static bool initialized = false;
+    static HBRUSH darkHeadBrush = nullptr;
+    static HPEN pen = nullptr;
+
+    if (!initialized && pApplication::pOpenThemeData) {
+        HTHEME hTheme = pApplication::pOpenThemeData(NULL, L"ItemsView");
+        if (hTheme) {
+            COLORREF color;
+            if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, &color)))
+                darkHeadBrush = CreateSolidBrush( RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+
+            if (SUCCEEDED(GetThemeColor(hTheme, 0, 0, pApplication::useDark ? TMT_EDGEDKSHADOWCOLOR : TMT_EDGEFILLCOLOR, &color)))
+                pen = CreatePen(PS_SOLID, 1, color);
+
+            pApplication::pCloseThemeData(hTheme);
+        }
+        initialized = true;
+    }
+    captionPen = pen;
+    return darkHeadBrush;
 }
 
 auto CALLBACK pListView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
@@ -139,14 +183,43 @@ auto CALLBACK pListView::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             break;
 
         case WM_NOTIFY: {
-            if (pApplication::useDark && (reinterpret_cast<LPNMHDR>(lparam)->code == NM_CUSTOMDRAW)) {
+            if ((pApplication::useDark || listView->state.centerHeader) && (reinterpret_cast<LPNMHDR>(lparam)->code == NM_CUSTOMDRAW)) {
                 LPNMCUSTOMDRAW nmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lparam);
                 switch (nmcd->dwDrawStage) {
                     case CDDS_PREPAINT:
                         return CDRF_NOTIFYITEMDRAW;
-                    case CDDS_ITEMPREPAINT:                
-                        SetTextColor(nmcd->hdc, DARK_FG_COL);
-                        return CDRF_DODEFAULT;               
+
+                    case CDDS_ITEMPREPAINT:
+                        if (pApplication::useDark)
+                            SetTextColor(nmcd->hdc, DARK_FG_COL);
+
+                        if (listView->state.centerHeader) {
+                            if (nmcd->dwItemSpec < listView->columnCount()) {
+                                HPEN pen;
+                                HBRUSH darkHeadBrush = getThemeHeaderColors(pen);
+
+                                utf16_t wtext(listView->state.header[nmcd->dwItemSpec]);
+                                SetBkMode(nmcd->hdc, TRANSPARENT);
+                                if (pApplication::useDark && darkHeadBrush)
+                                    FillRect(nmcd->hdc, &nmcd->rc, darkHeadBrush);
+
+                                if (pen) {
+                                    SelectObject( nmcd->hdc, pen);
+                                    MoveToEx( nmcd->hdc, nmcd->rc.right - 1, nmcd->rc.top, NULL );
+                                    LineTo( nmcd->hdc, nmcd->rc.right - 1, nmcd->rc.bottom );
+                                }
+
+                                auto rect = nmcd->rc;
+                                int _h = rect.bottom - rect.top;
+                                int _th = listView->p.getMinimumSize().height;
+                                if (_h > _th)
+                                    rect.top += (_h - _th) / 2;
+
+                                DrawText(nmcd->hdc, wtext, -1, &rect, DT_CENTER | DT_NOPREFIX);
+                                return CDRF_SKIPDEFAULT;
+                            }
+                        }
+                        return CDRF_DODEFAULT;
                 }
             }
         }
@@ -237,28 +310,31 @@ auto pListView::clearBrush() -> void {
         DeleteObject(bgBrush);
     if (hiBrush)
         DeleteObject(hiBrush);
-    if (firstRowBrush)
-        DeleteObject(firstRowBrush);
                 
     bgBrush = nullptr;
     hiBrush = nullptr;
-    firstRowBrush = nullptr;
+
+    for (auto& pair : rowBrushes)
+        DeleteObject(pair.second);
+    rowBrushes.clear();
 }
 
 auto pListView::create() -> void {
     destroy();
     destroy(hwndTip); 
     clearBrush();
-    
+
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE, WC_LISTVIEW, L"",
-        WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | LVS_NOCOLUMNHEADER | WS_HSCROLL | 
-            ( listView.specialFont() ? LVS_OWNERDRAWFIXED : 0),
+        WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_SINGLESEL | ( !pApplication::useDark ? LVS_SHOWSELALWAYS : 0) | LVS_NOSORTHEADER | LVS_NOCOLUMNHEADER | WS_HSCROLL |
+            ( listView.spacing() >= 0 ? LVS_OWNERDRAWFIXED : 0),
         0, 0, 0, 0, getParentHandle(), (HMENU)(unsigned long long)listView.id, GetModuleHandle(0), 0);  
 
-    if (pApplication::useDark) {
-        SetWindowTheme(hwnd, L"Explorer", nullptr);
-        pApplication::pAllowDarkModeForWindow(hwnd, true);
+    if (pApplication::pSetWindowTheme) {
+        pApplication::pSetWindowTheme(hwnd, L"Explorer", nullptr);
+        if (pApplication::useDark) {
+            pApplication::pAllowDarkModeForWindow(hwnd, true);
+        }
         SendMessageW(hwnd, WM_THEMECHANGED, 0, 0);
     }
 
@@ -298,7 +374,7 @@ auto pListView::createTooltip(bool useBallon) -> void {
     if (hfont)
         SendMessage(hwndTip, WM_SETFONT, (WPARAM)hfont, 0);
 
-    if (!listView.specialFont()) {
+    if (listView.spacing() == -1) {
         SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, 25000);
         SendMessage(hwndTip, TTM_SETMAXTIPWIDTH, 0, 800);
     }
@@ -326,14 +402,15 @@ auto pListView::rebuild() -> void {
     pWidget::rebuild();
 }
 
-auto pListView::setFont(std::string font) -> void {
-    if (hwnd && listView.specialFont()) {
+auto pListView::updateSpacing() -> void {
+    if (hwnd) {
         destroy(hwnd);
         rebuild();
         setGeometry( widget.geometry() );
-        return;
     }
-    
+}
+
+auto pListView::setFont(std::string font) -> void {
     pWidget::setFont(font);    
     reset();
     setContent();
@@ -343,8 +420,12 @@ auto pListView::setFont(std::string font) -> void {
 auto pListView::setContent() -> void {
     buildHeaderText(listView.state.header);
     setHeaderVisible(listView.state.headerVisible);
-    for(auto& row : listView.state.rows) append(row);
+    for(auto& row : listView.state.rows)
+        append(row, true);
+
+    autoSizeColumns();
     if(listView.selected()) setSelection(listView.selection());
+
 }
 
 auto pListView::onChange(LPARAM lparam) -> void {
@@ -367,6 +448,24 @@ auto pListView::onChange(LPARAM lparam) -> void {
     }
 }
 
+auto pListView::onClick(LPARAM lparam, bool rightClick) -> void {
+    if (locked)
+        return;
+
+    LPNMLISTVIEW nmlistview = (LPNMLISTVIEW)lparam;
+    unsigned selection = nmlistview->iItem;
+    unsigned column = nmlistview->iSubItem;
+
+    if (!rightClick) {
+        if (listView.onClick)
+            listView.onClick(selection, column);
+    } else if (listView.onContext) {
+        POINT pt;
+        GetCursorPos(&pt);
+        listView.onContext(selection, column, {static_cast<signed int>(pt.x), static_cast<signed int>(pt.y)});
+    }
+}
+
 auto pListView::onActivate(LPARAM lparam) -> void {
     LPNMLISTVIEW nmlistview = (LPNMLISTVIEW)lparam;
     listView.state.column = nmlistview->iSubItem;
@@ -381,11 +480,44 @@ auto pListView::onCustomDraw(LPARAM lparam) -> LRESULT {
     switch(lvcd->nmcd.dwDrawStage) {
         case CDDS_PREPAINT:
             return CDRF_NOTIFYITEMDRAW;
-        case CDDS_ITEMPREPAINT:
-            if(!pApplication::useDark && (listView.columnCount() >= 2) && (lvcd->nmcd.dwItemSpec % 2) )
-                lvcd->clrTextBk = 0xfff8f0 ^ 0x0f0f0f;
 
-            break;
+        case CDDS_ITEMPREPAINT | CDDS_SUBITEM: {
+            auto rowColor = listView.rowForegroundColor( lvcd->nmcd.dwItemSpec, lvcd->iSubItem );
+            if (rowColor.has_value()) {
+                unsigned color = rowColor.value();
+                lvcd->clrText = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+            } else {
+                if (pApplication::useDark)
+                    lvcd->clrText = DARK_FG_COL;
+                else
+                    lvcd->clrText = GetSysColor(COLOR_WINDOWTEXT);
+            }
+            return CDRF_NEWFONT;
+        } break;
+
+        case CDDS_ITEMPREPAINT: {
+            if((listView.columnCount() >= 2) && (lvcd->nmcd.dwItemSpec % 2) ) {
+                lvcd->clrTextBk = pApplication::useDark ? DARK_BG_COL ^ 0x060606 : 0xfff8f0 ^ 0x0f0f0f;
+            }
+
+            auto rowColor = listView.rowBackgroundColor( lvcd->nmcd.dwItemSpec );
+            if (rowColor.has_value()) {
+                unsigned color = rowColor.value();
+                lvcd->clrTextBk = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+            }
+
+            for (auto& entry : listView.state.rowForegroundColor) {
+                if (entry.col != std::nullopt)
+                    return CDRF_NOTIFYSUBITEMDRAW;
+            }
+
+            rowColor = listView.rowForegroundColor(lvcd->nmcd.dwItemSpec);
+            if (rowColor.has_value()) {
+                unsigned color = rowColor.value();
+                lvcd->clrText = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+            }
+
+        } break;
     }
     return CDRF_DODEFAULT;
 }
@@ -404,35 +536,43 @@ auto pListView::setImage(unsigned selection, unsigned position, int imageListPos
     ListView_SetItem(hwnd, &item);
 }
 
-auto pListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
-    if(!hwnd) return;
+auto pListView::setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing) -> void {
+    unsigned size;
+    if(!hwnd)
+        return;
+
     if(image.empty()) {
         setImage(selection, position, -1);
-        return autoSizeColumns();
+        goto End;
     }
 
     for(unsigned n = 0; n < images.size(); n++) {
         if(images[n] == &image) {
             setImage(selection, position, n);
-            return autoSizeColumns();
+            goto End;
         }
     }
 
-    unsigned size = pFont::size(hfont, " ").height;
+    size = pFont::size(hfont, " ").height;
     addToImageList(image, size);
     setImage(selection, position, images.size()-1);
-    autoSizeColumns();
+
+End:
+    if (!preventColumnResizing)
+        autoSizeColumns();
+
+    InvalidateRect(hwnd, 0, false);
 }
 
 auto pListView::addToImageList(Image& image, unsigned size) -> void {
     images.push_back(&image);
-    image.scaleNearest(size, size);
+    image.scaleLinear( size, size);
     HBITMAP bitmap = CreateBitmap(image);
     ImageList_Add(imageList, bitmap, NULL);
     DeleteObject(bitmap);
 }
 
-auto pListView::buildImageList() -> void {    
+auto pListView::buildImageList() -> void {
     images.clear();
 
     ListView_SetImageList(hwnd, NULL, LVSIL_SMALL);
@@ -444,8 +584,8 @@ auto pListView::buildImageList() -> void {
     auto& list = listView.state.images;
 
     for(unsigned y = 0; y < list.size(); y++) {
-        for(unsigned x = 0; x < list.at(y).size(); x++) {
-            Image* img = list.at(y).at(x);
+        for(unsigned x = 0; x < list[y].size(); x++) {
+            Image* img = list[y][x];
             if(!img || img->empty()) {
                 setImage(y, x, -1);
                 continue;
@@ -453,7 +593,7 @@ auto pListView::buildImageList() -> void {
 
             bool found = false;
             for(unsigned z = 0; z < images.size(); z++) {
-                if(img == images.at(z)) {
+                if(img == images[z]) {
                     found = true;
                     setImage(y, x, z);
                     break;
@@ -504,7 +644,7 @@ auto pListView::setSelectionColor(unsigned foregroundColor, unsigned backgroundC
     clearBrush();
 }
 
-auto pListView::setFirstRowColor(unsigned foregroundColor, unsigned backgroundColor) -> void {
+auto pListView::updateRowColors() -> void {
     if (!hwnd) return;
     clearBrush();
 }
@@ -515,12 +655,13 @@ auto pListView::measureItem(LPMEASUREITEMSTRUCT lpmis) -> void {
         return;
     
     auto size = getMinimumSize();
+
+    int spacing = listView.spacing();
     
-    lpmis->itemHeight = size.height;
+    lpmis->itemHeight = size.height + 2 * spacing;
 }
 
 auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
-    
     HBRUSH hBrush = nullptr;
     COLORREF colorRef;
     
@@ -541,37 +682,41 @@ auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
 
         hBrush = hiBrush;
     } else {
-        if (lDraw->itemID == 0) {
-            if (!firstRowBrush) {
-                if (listView.overrideFirstRowColor()) {
-                    unsigned color = listView.firstRowBackgroundColor();
-                    firstRowBrush = CreateSolidBrush( RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
-                }
+        auto rowBackgroundColor = listView.rowBackgroundColor( lDraw->itemID );
+        if (rowBackgroundColor.has_value()) {
+            hBrush = findRowBrush(lDraw->itemID);
+            if (!hBrush) {
+                unsigned color = rowBackgroundColor.value();
+                hBrush = CreateSolidBrush( RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
+                rowBrushes.push_back( {lDraw->itemID, hBrush} );
             }
-            if (firstRowBrush)
-                hBrush = firstRowBrush;
         }
 
         if (!bgBrush) {
-            if (listView.Widget::state.overrideBackgroundColor) {
-                unsigned color = listView.Widget::state.backgroundColor;
+            if (listView.overrideBackgroundColor()) {
+                unsigned color = listView.backgroundColor();
                 bgBrush = CreateSolidBrush( RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff) );
-            } else
+            } else if (pApplication::useDark)
+                bgBrush = CreateSolidBrush( DARK_BG_COL );
+            else
                 bgBrush = CreateSolidBrush( GetSysColor( COLOR_WINDOW ) );                                    
         }
 
         if (!hBrush)
             hBrush = bgBrush;
 
-        if (lDraw->itemID == 0 && listView.overrideFirstRowColor()) {
-            unsigned color = listView.firstRowForegroundColor();
+        auto rowColor = listView.rowForegroundColor( lDraw->itemID );
+
+        if (rowColor.has_value()) {
+            unsigned color = rowColor.value();
+            colorRef = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+        } else if (listView.overrideForegroundColor()) {
+            unsigned color = listView.foregroundColor();
 
             colorRef = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
-        } else if (listView.Widget::state.overrideForegroundColor) {
-            unsigned color = listView.Widget::state.foregroundColor;
-
-            colorRef = RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
-        } else
+        } else if (pApplication::useDark)
+            colorRef = DARK_FG_COL;
+        else
             colorRef = GetSysColor( COLOR_WINDOWTEXT );
     }
         
@@ -579,11 +724,51 @@ auto pListView::drawItem(LPDRAWITEMSTRUCT lDraw) -> void {
     
     FillRect(lDraw->hDC, &lRow, hBrush);
 
-    wchar_t lBuf[100];
-
-    ListView_GetItemText(lDraw->hwndItem, lDraw->itemID, 0, (LPTSTR) lBuf, 100);
-    
     SetTextColor(lDraw->hDC, colorRef);
-    
-    DrawText(lDraw->hDC, lBuf, -1, &lRow, DT_LEFT | DT_NOPREFIX);
+
+    int spacing = listView.spacing();
+
+    for (int i = 0; i < listView.columnCount(); i++) {
+        RECT prc;
+
+        LVITEM lvItem = {0};
+        lvItem.mask = LVIF_IMAGE | LVIF_TEXT;
+        lvItem.iItem = lDraw->itemID;
+        lvItem.iSubItem = i;
+
+        auto image = listView.getImage(lDraw->itemID, i);
+
+        if (image && !image->empty() && ListView_GetItem(lDraw->hwndItem, &lvItem) && (lvItem.iImage >= 0)) {
+            ListView_GetSubItemRect(lDraw->hwndItem, lDraw->itemID, i, LVIR_ICON, &prc);
+
+            if (spacing > 0) {
+                prc.left += spacing;
+                prc.top += spacing;
+                prc.bottom -= spacing;
+            }
+
+            ImageList_Draw(listView.p.imageList, lvItem.iImage, lDraw->hDC, prc.left,prc.top, ILD_TRANSPARENT);
+        } else {
+            ListView_GetSubItemRect(lDraw->hwndItem, lDraw->itemID, i, LVIR_LABEL, &prc);
+            wchar_t lBuf[100];
+            ListView_GetItemText(lDraw->hwndItem, lDraw->itemID, i, (LPTSTR) lBuf, 100);
+
+            if (spacing > 0) {
+                prc.left += spacing;
+                prc.top += spacing;
+                prc.bottom -= spacing;
+            }
+
+            DrawText(lDraw->hDC, lBuf, -1, &prc, DT_LEFT | DT_NOPREFIX);
+        }
+    }
+}
+
+auto pListView::findRowBrush(unsigned row) -> HBRUSH {
+    for (auto& pair : rowBrushes) {
+        if (pair.first == row) {
+            return pair.second;
+        }
+    }
+    return nullptr;
 }

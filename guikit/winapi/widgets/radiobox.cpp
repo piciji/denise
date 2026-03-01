@@ -60,13 +60,15 @@ auto pRadioBox::onCustomDraw(LPARAM lparam) -> LRESULT {
                 static Size containerSize = pWidget::getScaledContainerSize({ 16, 1 });
                 ::SetBkMode(lpcd->hdc, TRANSPARENT);
                 auto color = radioBox.foregroundColor();
-                if (pApplication::useDark) {
+                if (radioBox.overrideForegroundColor())
+                    ::SetTextColor(lpcd->hdc, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
+                else {
                     if (radioBox.enabled())
                         ::SetTextColor(lpcd->hdc, DARK_FG_COL);
                     else
                         ::SetTextColor(lpcd->hdc, DARK_DISABLE_COL);
-                } else
-                    ::SetTextColor(lpcd->hdc, RGB((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff));
+                }
+
                 ::TextOut(lpcd->hdc, containerSize.width, containerSize.height, buttonText, textLength);
                 delete[] buttonText;
                 return CDRF_SKIPDEFAULT;
@@ -74,6 +76,11 @@ auto pRadioBox::onCustomDraw(LPARAM lparam) -> LRESULT {
         }
     }
     return CDRF_DODEFAULT;
+}
+
+auto pRadioBox::setForegroundColor(unsigned color) -> void {
+    if (hwnd)
+        InvalidateRect(hwnd, 0, false);
 }
 
 auto pRadioBox::rebuild() -> void {

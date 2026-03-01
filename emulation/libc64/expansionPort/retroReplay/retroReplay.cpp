@@ -147,6 +147,15 @@ auto RetroReplay::writeIo1( uint16_t addr, uint8_t value ) -> void {
     }
 }
 
+auto RetroReplay::peekIo1( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flash.byteToProgram;
+    uint8_t _sm = flash.eraseMask;
+    uint8_t result = readIo1( addr );
+    flash.byteToProgram = _btp;
+    flash.eraseMask = _sm;
+    return result;
+}
+
 auto RetroReplay::readIo1( uint16_t addr ) -> uint8_t {
     
     if (!enabled)
@@ -178,6 +187,15 @@ auto RetroReplay::writeIo2( uint16_t addr, uint8_t value ) -> void {
         ram[ getRamAddr( 0x1f00 | (addr & 0xff)) ] = value; 
 }
 
+auto RetroReplay::peekIo2( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flash.byteToProgram;
+    uint8_t _sm = flash.eraseMask;
+    uint8_t result = readIo2( addr );
+    flash.byteToProgram = _btp;
+    flash.eraseMask = _sm;
+    return result;
+}
+
 auto RetroReplay::readIo2( uint16_t addr ) -> uint8_t {
 
     if (!enabled || reuMapping || frozen)
@@ -192,6 +210,15 @@ auto RetroReplay::readIo2( uint16_t addr ) -> uint8_t {
         return flash.read( getFlashAddr( (0xdf00 | addr) & 0x1fff ) );
     
     return 0;
+}
+
+auto RetroReplay::peekRomL( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flash.byteToProgram;
+    uint8_t _sm = flash.eraseMask;
+    uint8_t result = readRomL(addr);
+    flash.byteToProgram = _btp;
+    flash.eraseMask = _sm;
+    return result;
 }
 
 // 80 - 9f [8k, 16k, ultimax]
@@ -246,6 +273,15 @@ auto RetroReplay::writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void {
         flash.write( getFlashAddr( addr & 0x1fff ), data );     
 }
 
+auto RetroReplay::peekRomH( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flash.byteToProgram;
+    uint8_t _sm = flash.eraseMask;
+    uint8_t result = readRomH(addr);
+    flash.byteToProgram = _btp;
+    flash.eraseMask = _sm;
+    return result;
+}
+
 // a0 - bf [16k], e0 - ff [ultimax]
 // Note: following mappings are not accessible while flash jumper is set
 auto RetroReplay::readRomH( uint16_t addr ) -> uint8_t {
@@ -278,6 +314,11 @@ auto RetroReplay::writeRomH( uint16_t addr, uint8_t data ) -> void {
 }
 
 // writeUltimaxRomH at $e0 is not mapped by retroReplay ?
+
+auto RetroReplay::peekUltimaxA0( uint16_t addr ) -> uint8_t {
+
+    return readUltimaxA0( addr );
+}
 
 // a0 - bf [ultimax] [NordicReplay only]
 auto RetroReplay::readUltimaxA0( uint16_t addr ) -> uint8_t {

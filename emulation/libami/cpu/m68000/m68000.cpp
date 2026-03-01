@@ -10,10 +10,12 @@
     #define REF_CALL
 #endif
 
-#define READ_WORD       REF_CALL readWord
-#define READ_BYTE       REF_CALL readByte
-#define WRITE_WORD      REF_CALL writeWord
-#define WRITE_BYTE      REF_CALL writeByte
+#define READ_WORD           REF_CALL readWord
+#define READ_BYTE           REF_CALL readByte
+#define WRITE_WORD          REF_CALL writeWord
+#define WRITE_BYTE          REF_CALL writeByte
+#define PEEK_WORD           REF_CALL peekWord
+#define DEBUG_POINT_REACHED REF_CALL debugPointReached
 
 #ifdef FC_SUPPORT
 #define READ_WORD_PRG   REF_CALL readWordPRG
@@ -35,22 +37,29 @@
 #include "instruction.cpp"
 #include "alu.cpp"
 #include "exception.cpp"
+#include "disassembler.cpp"
 
 namespace M68FAMILY {
 
 M68000::~M68000() {
     if (mulCycleLookup)
         delete[] mulCycleLookup;
+
+    delete[] dasmTable;
 }
 
-auto M68000::process()->void {
+auto M68000::process() -> void {
 
     if (control) {
         if (control & Halt)
             return SYNC(4);
 
-        if (control & TraceScheduled) // highest prioritized group 1 exception
-            return traceException();
+        if (control & TraceScheduled) { // highest prioritized group 1 exception
+            traceException();
+            if (control & (BreakPoint | SoftStop))
+                controlBreaks();
+            return;
+        }
 
         if ((control & Trace) && !(control & Stop))
             // trace happens if it was enabled at beginning of an instruction.
@@ -58,8 +67,13 @@ auto M68000::process()->void {
             // stop instruction can not schedule trace mode, but an already scheduled trace prevent "stop" at all.
             control |= TraceScheduled;
 
-        if (control & IRQ)
-            return IRQException();
+        if (control & IRQ) {
+            IRQException();
+            pcEdge = (pc - 2) & 0xffffff;
+            if (control & (BreakPoint | SoftStop))
+                controlBreaks();
+            return;
+        }
 
         if (control & Stop) {
             sampleInterrupt(); // if not detected, 4 extra cycles.
@@ -74,9 +88,39 @@ auto M68000::process()->void {
 
         if (control & ResetRoutine)
             resetRoutine();
+
+        if (control & History)
+            loadTrace(historyHandler.getNext());
+
+        (this->*opTable[ird])(ird);
+        pcEdge = (pc - 2) & 0xffffff;
+
+        if (control & (BreakPoint | SoftStop))
+            controlBreaks();
+    } else    
+        (this->*opTable[ird])(ird);
+}
+
+auto M68000::controlBreaks() -> void {
+    if (control & TraceScheduled)
+        return;
+
+    if ((control & SoftStop) && checkSoftStop(pcEdge))
+        return DEBUG_POINT_REACHED(SoftStop, pcEdge);
+
+    if ((control & BreakPoint) && breakPoints.check(pcEdge, true))
+        return DEBUG_POINT_REACHED(BreakPoint, pcEdge);
+}
+
+auto M68000::loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void {
+    uint32_t addr = pcEdge;
+    entry.addr = pcEdge;
+    entry.flags = getSR();
+
+    for (uint16_t& m : entry.mem) {
+        m = peek( addr );
+        addr += 2;
     }
-    
-    (this->*opTable[ird])(ird);
 }
 
 auto M68000::power() -> void {
@@ -98,6 +142,13 @@ auto M68000::reset() -> void { // highest prioritized group 0 routine
     i = 7;
     iplPins = iplSample = 0;
     control = ResetRoutine; // emulation begins, when reset line is de-asserted
+    stepOuts.clear();
+    watchPoints.reset();
+    watchPointsWrite.reset();
+    breakPoints.reset();
+    exceptionPoints.reset();
+    modifiedCode.disable();
+    historyHandler.flagWhenNeeded();
 }
 
 auto M68000::getCCR() -> uint8_t {
@@ -319,7 +370,7 @@ template<uint8_t phaseShift> auto M68000::internalWaitCyclesBasedOnMainClockCycl
     return internalWaitCyclesBasedOnEClock<phaseShift>( clockCycles % 10 );
 }
 
-// initial phase shift of E-Clock at power up (cold start) is non deterministic.
+// initial phase shift of E-Clock at power up (cold start) is non-deterministic.
 // keep phase shift after reset
 template<> auto M68000::internalWaitCyclesBasedOnEClock<0>(int eCyclePos) -> uint8_t {
     if (eCyclePos == 1) return 7;
@@ -385,5 +436,50 @@ template<> auto M68000::internalWaitCyclesBasedOnEClock<8>(int eCyclePos) -> uin
     if (eCyclePos == 9) return 7;
     /*if (eCyclePos == 0)*/ return 6;
 }
+
+inline auto M68000::appendStepOut(uint32_t addr) -> void {
+    if (stepOuts.size() == stepOuts.capacity())
+        stepOuts.clear();
+    stepOuts.push_back( addr );
+}
+
+auto M68000::flagDebugAction(int action, bool state) -> void {
+    if (state)
+        control |= action;
+    else
+        control &= ~action;
+}
+
+auto M68000::checkSoftStop(uint32_t addr) -> bool {
+    if (!softStep.has_value() || softStep.value() == addr) {
+        control &= ~SoftStop;
+        return true;
+    }
+    return false;
+}
+
+auto M68000::debuggerStepOver() -> void {
+    unsigned iSize;
+
+    disassemble( pcEdge, iSize );
+
+    softStep = pcEdge + iSize;
+    control |= SoftStop;
+}
+
+auto M68000::debuggerStepInto() -> void {
+    softStep = std::nullopt;
+    control |= SoftStop;
+}
+
+auto M68000::debuggerStepOut() -> bool {
+    if (stepOuts.empty())
+        return false;
+    softStep = stepOuts.back();
+    control |= SoftStop;
+    return true;
+}
+
+
 
 }

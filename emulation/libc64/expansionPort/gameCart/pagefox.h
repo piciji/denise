@@ -36,6 +36,10 @@ namespace LIBC64 {
             system->changeExpansionPortMemoryMode( exRom, game );
         }
 
+        auto peekRomL( uint16_t addr ) -> uint8_t {
+            return readRomL(addr);
+        }
+
         auto readRomL( uint16_t addr ) -> uint8_t {
 
             if (useRam)
@@ -50,6 +54,10 @@ namespace LIBC64 {
                 ram[ (addr & 0x1fff) + (bank << 14) ] = data;
 
             Cart::writeRomL(addr, data);
+        }
+
+        auto peekRomH( uint16_t addr ) -> uint8_t {
+            return readRomH(addr);
         }
 
         auto readRomH( uint16_t addr ) -> uint8_t {

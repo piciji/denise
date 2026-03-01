@@ -17,6 +17,7 @@
 #include "../emuconfig/layouts/presentation.h"
 #include "../emuconfig/layouts/audio.h"
 #include "../emuconfig/layouts/input.h"
+#include "../debugger/debugger.h"
 
 View* view = nullptr;
 
@@ -209,7 +210,7 @@ auto View::build() -> void {
     };
 
     onMinimize = [this]() {
-        if (program->quitInProgress)
+        if (program->quitInProgress || program->hasActiveDebugger())
             return;
         static auto pauseFocusLoss = globalSettings->getOrInit("pause_focus_loss", false);
         program->isPause &= ~2;
@@ -227,7 +228,8 @@ auto View::build() -> void {
     };
 
     onFocus = [this]() {
-        program->isPause &= ~2;
+        if (!program->hasActiveDebugger())
+            program->isPause &= ~2;
     };
 
     onUnFocus = [this]() {
@@ -237,6 +239,9 @@ auto View::build() -> void {
 
         if (inputDriver && inputDriver->mIsAcquired())
             inputDriver->mUnacquire();
+
+        if (program->hasActiveDebugger())
+            return;
 
         program->isPause &= ~2;
         program->isPause |= (!!*pauseFocusLoss) << 1;
@@ -381,7 +386,7 @@ auto View::build() -> void {
 	    if (button == GUIKIT::Mouse::Button::Left) {
 
 	        if (VideoManager::placeHolderSplashScreen) {
-	            emuThread->lock();
+	            emuThread->lock(true);
 
 	            int result = cursorForPlaceholderInUpperTriangle();
 	            if (result != -1)
@@ -1051,6 +1056,7 @@ auto View::loadImages() -> void {
     insertImage.setResourceId(ID_INSERT);
     screenshotImage.loadPng((uint8_t*)Icons::screenshot, sizeof(Icons::screenshot));
     screenshotImage.setResourceId(ID_SCREENSHOT);
+    debugImage.loadPng((uint8_t*)Icons::debug, sizeof(Icons::debug));
 
     playPauseStatusImage.loadPng((uint8_t*)Icons::playPauseStatus, sizeof(Icons::playPauseStatus));
     forwardPauseStatusImage.loadPng((uint8_t*)Icons::forwardPauseStatus, sizeof(Icons::forwardPauseStatus));
@@ -1090,7 +1096,7 @@ auto View::buildMenu() -> void {
         sM.poweron = new GUIKIT::MenuItem;
         sM.poweron->setIcon( powerImage );
         sM.poweron->onActivate = [emulator]() {
-            emuThread->lock();
+            emuThread->lock(true);
 		    program->power(emulator);
             emuThread->unlock();
 	    };	
@@ -1100,7 +1106,7 @@ auto View::buildMenu() -> void {
             sM.poweronAndRemoveExpansions = new GUIKIT::MenuItem;
             sM.poweronAndRemoveExpansions->setIcon(powerImage);
             sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
-                emuThread->lock();
+                emuThread->lock(true);
                 program->power(emulator);
                 program->removeExpansion(false);
                 view->updateCartButtons( emulator );
@@ -1112,7 +1118,7 @@ auto View::buildMenu() -> void {
             sM.poweronAndRemoveDisks = new GUIKIT::MenuItem;
             sM.poweronAndRemoveDisks->setIcon(powerImage);
             sM.poweronAndRemoveDisks->onActivate = [emulator]() {
-                emuThread->lock();
+                emuThread->lock(true);
                 for(auto& media : emulator->getDiskMediaGroup()->media)
                     fileloader->eject( emulator, &media );
                 program->power(emulator);
@@ -1124,7 +1130,7 @@ auto View::buildMenu() -> void {
 		        
         sM.reset = new GUIKIT::MenuItem;
         sM.reset->onActivate = [emulator]() {
-            emuThread->lock();
+            emuThread->lock(true);
 		    program->reset(emulator);
             emuThread->unlock();
 	    };	
@@ -1287,7 +1293,7 @@ auto View::buildMenu() -> void {
 
         sM.load = new GUIKIT::MenuItem;
         sM.load->onActivate = [emulator]() {
-            emuThread->lock();
+            emuThread->lock(true);
             States::getInstance( emulator )->load();
             emuThread->unlock();
         };
@@ -1310,6 +1316,85 @@ auto View::buildMenu() -> void {
             emuView->show(EmuConfigView::TabWindow::Layout::System);
 	    };
         sM.system->append( *sM.systemManagement );
+
+        sM.debugger = new GUIKIT::Menu;
+        sM.debugger->setIcon( debugImage );
+
+        sM.debuggerCpu = new GUIKIT::MenuItem;
+        sM.debuggerCpu->onActivate = [this, emulator]() {
+            emuThread->lock();
+            program->openDebugger(emulator, Debugger::Mode::CPU);
+            emuThread->unlock();
+        };
+        sM.debugger->append( *sM.debuggerCpu );
+
+        sM.debuggerMem = new GUIKIT::MenuItem;
+        sM.debuggerMem->onActivate = [this, emulator]() {
+            emuThread->lock();
+            program->openDebugger(emulator, Debugger::Mode::Memory);
+            emuThread->unlock();
+        };
+        sM.debugger->append( *sM.debuggerMem );
+
+        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            sM.debuggerSCPU = new GUIKIT::MenuItem;
+            sM.debuggerSCPU->onActivate = [this, emulator]() {
+                emuThread->lock();
+                program->openDebugger(emulator, Debugger::Mode::SCPU);
+                emuThread->unlock();
+            };
+            sM.debugger->append( *sM.debuggerSCPU );
+
+            sM.debuggerMemSCPU = new GUIKIT::MenuItem;
+            sM.debuggerMemSCPU->onActivate = [this, emulator]() {
+                emuThread->lock();
+                program->openDebugger(emulator, Debugger::Mode::MemorySCPU);
+                emuThread->unlock();
+            };
+            sM.debugger->append( *sM.debuggerMemSCPU );
+
+        } else {
+            sM.debuggerMemSCPU = nullptr;
+            sM.debuggerSCPU = nullptr;
+        }
+
+        sM.debuggerVideo = new GUIKIT::MenuItem;
+        sM.debuggerVideo->onActivate = [this, emulator]() {
+            emuThread->lock();
+            program->openDebugger(emulator, Debugger::Mode::Video);
+            emuThread->unlock();
+        };
+        sM.debugger->append( *sM.debuggerVideo );
+
+        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            sM.debuggerAudio = new GUIKIT::MenuItem;
+            sM.debuggerAudio->onActivate = [this, emulator]() {
+                emuThread->lock();
+                program->openDebugger(emulator, Debugger::Mode::Audio);
+                emuThread->unlock();
+            };
+            sM.debugger->append( *sM.debuggerAudio );
+        } else {
+            sM.debuggerAudio = nullptr;
+        }
+
+        sM.debuggerDma = new GUIKIT::MenuItem;
+        sM.debuggerDma->onActivate = [this, emulator]() {
+            emuThread->lock();
+            program->openDebugger(emulator, Debugger::Mode::DMA);
+            emuThread->unlock();
+        };
+        sM.debugger->append( *sM.debuggerDma );
+
+        sM.debuggerCia = new GUIKIT::MenuItem;
+        sM.debuggerCia->onActivate = [this, emulator]() {
+            emuThread->lock();
+            program->openDebugger(emulator, Debugger::Mode::CIA);
+            emuThread->unlock();
+        };
+        sM.debugger->append( *sM.debuggerCia );
+
+        sM.system->append( *sM.debugger );
             
         sM.configurations = new GUIKIT::MenuItem;
         sM.configurations->setIcon( scriptImage );
@@ -1588,7 +1673,7 @@ auto View::buildMenu() -> void {
         globalSettings->set<bool>("fps", fpsItem.checked() );
         statusHandler->updateFPS( fpsItem.checked() );
     };
-    if ( globalSettings->get<bool>("fps", false) ) fpsItem.setChecked();
+    if ( globalSettings->get<bool>("fps", true) ) fpsItem.setChecked();
     statusTextMenu.append(fpsItem);
 
     volumeItem.onToggle = [&]() {
@@ -1850,13 +1935,13 @@ auto View::buildMenu() -> void {
     power.reset.setIcon( powerImage );
 
     power.power.onActivate = []() {
-        emuThread->lock();
+        emuThread->lock(true);
         program->power(activeEmulator);
         emuThread->unlock();
     };
 
     power.reset.onActivate = []() {
-        emuThread->lock();
+        emuThread->lock(true);
         program->reset(activeEmulator);
         emuThread->unlock();
     };
@@ -2053,6 +2138,22 @@ auto View::translate() -> void {
         sysMenu.load->setText(trans->get("Loadstate"));
 
         sysMenu.systemManagement->setText(trans->get("system_management") + "...");
+        sysMenu.debugger->setText(trans->get("Debugger"));
+        sysMenu.debuggerCpu->setText(trans->get("CPU"));
+        sysMenu.debuggerMem->setText(trans->get("MEM"));
+        sysMenu.debuggerCia->setText(trans->get("CIA"));
+
+        sysMenu.debuggerVideo->setText(trans->getA( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "VIC-II" : "Denise"));
+        if (sysMenu.debuggerAudio)
+            sysMenu.debuggerAudio->setText(trans->getA( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "SID" : "Paula"));
+
+        sysMenu.debuggerDma->setText(trans->get("DMA"));
+
+        if (sysMenu.debuggerMemSCPU)
+            sysMenu.debuggerMemSCPU->setText(trans->get("MEM SCPU"));
+
+        if (sysMenu.debuggerSCPU)
+            sysMenu.debuggerSCPU->setText(trans->get("SCPU"));
 
         sysMenu.audio->setText(trans->get("Audio") + "...");
         sysMenu.firmware->setText(trans->get("Firmware") + "...");

@@ -12,7 +12,7 @@ auto VideoManager::setSynchronize() -> void {
         return;
 
     auto _settings = program->getSettings( activeEmulator );
-    unsigned tr = _settings->get<unsigned>("threaded_renderer", 1);
+    unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
 
     bool threadedRenderer = tr == 1;
     bool adaptive = tr == 2;

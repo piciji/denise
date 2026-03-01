@@ -5,6 +5,8 @@
 #include <vector>
 #include <functional>
 #include <thread>
+#include <optional>
+#include <mutex>
 
 namespace Emulator {
     
@@ -321,6 +323,39 @@ struct Interface {
         unsigned randomChance = 0;
     };
 
+    struct DebuggerIdent {
+        uint32_t vector;
+        const char* ident;
+    };
+
+    struct DebuggerDma {
+        // DMA usage
+        uint8_t usage;
+        uint32_t address;
+        uint16_t data;
+
+        // CPU usage or DMA
+        uint8_t usageCpu;
+        uint32_t addrCpu;
+        uint16_t dataCpu;
+
+        // free assignable
+        uint16_t watcher[4];
+    };
+
+    enum class DebuggerTheme { Unspecified = 0, CPU = 1, CheckpointsCore1 = 2, CheckpointsCore2 = 4,
+        Memory = 0x100, CIA = 0x200, Video = 0x400, Bus = 0x800, Audio = 0x1000  };
+    enum class DebuggerAction { None, Breakpoint, Watchpoint, WatchpointWrite, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
+        DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop, HaltCPU };
+
+    struct DebuggerSnapshot {
+        unsigned themes = 0; // multiple themes
+        DebuggerAction callbackAction;
+        uint32_t callbackAddress;
+        bool codeMaybeModified = false;
+        std::mutex mutex;
+    };
+
     //callbacks
     struct Bind {
         virtual auto jitPoll(int) -> bool { return false; }
@@ -349,6 +384,7 @@ struct Interface {
         virtual auto fpsChanged() -> void {}
         virtual auto trapsResult(Media*, bool error) -> void {}
         virtual auto libraryMissing(std::string) -> void {}
+        virtual auto debugger(DebuggerSnapshot* snapshot) -> void {}
     };
     Bind* bind = nullptr;
 
@@ -460,6 +496,10 @@ struct Interface {
         bind->libraryMissing(ident);
     }
 
+    auto debugger(DebuggerSnapshot* snapshot) -> void {
+        bind->debugger(snapshot);
+    }
+
     template<typename T> auto log(T data, bool newLine = true, bool asHex = false) -> void {
 
         std::string out = std::to_string(data);	
@@ -557,8 +597,8 @@ struct Interface {
 
     virtual auto getConnectedDevice( Connector* connector ) -> Device* { return getUnplugDevice(); }
     // for light devices you can disable cursor rendering by requesting cursor position in order to
-    // draw cursor by yourself. that is usefull if you want to draw the cursor in a higher resolution.
-    // of course, the coordinates are in native resoltion of the emulated system. you need to convert them.
+    // draw cursor by yourself. that is usefully if you want to draw the cursor in a higher resolution.
+    // of course, the coordinates are in native resolution of the emulated system. you need to convert them.
     virtual auto getCursorPosition( Device* device, int16_t& x, int16_t& y ) -> bool { return false; }
     // As a rule, retro systems query the status of the connected input devices. Some devices, such as the Amiga keyboard, take the initiative and send input to the computer.
     virtual auto needExternalKeyUpdates() -> bool { return false; }
@@ -629,6 +669,27 @@ struct Interface {
     
     // a ratio of 1.0 means monitor refresh rate is equal to emulated system original speed
     virtual auto setMonitorFpsRatio(double ratio) -> void {}
+
+    // debugger
+    virtual auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
+    virtual auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void {}
+    virtual auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool { return true; }
+
+    virtual auto debuggerStepOver() -> void {}
+    virtual auto debuggerStepInto() -> void {}
+    virtual auto debuggerStepOut() -> bool { return false; }
+
+    virtual auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {}
+    virtual auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {}
+    virtual auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {}
+    virtual auto getDmaDump() -> uint8_t* { return nullptr; }
+
+    virtual auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {}
+
+    // disassembler
+    virtual auto disassemble(unsigned addr, unsigned& bytes) -> std::string { return ""; }
+    virtual auto disassembleData(unsigned addr, unsigned bytes) -> std::string { return ""; }
+    virtual auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string { return ""; }
     
 	//shortcuts
 	auto insertMedium(Media* media, uint8_t* data, uint64_t size) -> void {

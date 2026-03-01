@@ -332,6 +332,9 @@
     <Filter Include="deps\cgif">
       <UniqueIdentifier>{d0862150-5b8f-4bef-81c4-14123c5c2c59}</UniqueIdentifier>
     </Filter>
+    <Filter Include="program\debugger">
+      <UniqueIdentifier>{8158eaa9-7989-47bb-85a6-02cd595b596d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1173,6 +1176,60 @@
     </ClInclude>
     <ClInclude Include="..\emulation\tools\history.h">
       <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libami\cpu\m68000\dasmHandler.h">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\debugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\m6510\dasmHandler.h">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\system\snapShots.h">
+      <Filter>emulation\libc64\system</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\watcher.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\freezer\kcsPower.h">
+      <Filter>emulation\libc64\expansionPort\freezer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\expansionPort\gameCart\structuredBasic.h">
+      <Filter>emulation\libc64\expansionPort\gameCart</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\cpuDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\scpuDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\wdc\65816\dasmHandler.h">
+      <Filter>emulation\wdc\65816</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\ciaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\memDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\memScpuDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\videoDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\dmaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\tools\colors.h">
+      <Filter>program\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\tools\expressionParser.h">
+      <Filter>emulation\tools</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\audioDebugger.h">
+      <Filter>program\debugger</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2378,6 +2435,54 @@
     </ClCompile>
     <ClCompile Include="..\program\emuconfig\layouts\presentation.cpp">
       <Filter>program\emuconfig\layouts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68000\dasmHandler.cpp">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libami\cpu\m68000\disassembler.cpp">
+      <Filter>emulation\libami\cpu\m68000</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\debugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\m6510\dasmHandler.cpp">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\watcher.cpp">
+      <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\cpuDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\wdc\65816\dasmHandler.cpp">
+      <Filter>emulation\wdc\65816</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\ciaDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\memDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\multiSquareCanvas.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\videoDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\colorChooser.cpp">
+      <Filter>guikit\winapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\dmaDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\guikit\winapi\widgets\logicViewer.cpp">
+      <Filter>guikit\winapi\widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\tools\expressionParser.cpp">
+      <Filter>emulation\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\audioDebugger.cpp">
+      <Filter>program\debugger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

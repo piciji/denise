@@ -16,7 +16,7 @@ namespace LIBC64 {
         char* ptr;
         char* nonWhitespace;
         uint8_t* ram = system->ram;
-        uint16_t addr = (system->vicBank << 14) | ((system->vicII->getReg18() & 0xf0) << 6);
+        uint16_t addr = system->vicII->getVicBank() | ((system->vicII->getReg18() & 0xf0) << 6);
         uint8_t data;
 
         out = new char[rows * (cols + lineEndingLength) + 1];

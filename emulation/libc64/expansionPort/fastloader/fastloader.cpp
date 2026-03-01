@@ -45,6 +45,11 @@ Fastloader::Fastloader(System* system) : via(3), Cart(system, true, true) {
         return (uint8_t)(this->pia.iob & system->iecBus.readParallel());
     };
 
+    pia.peekPort = [system, this]( Emulator::Pia::Port port ) {
+
+        return pia.readPort( port );
+    };
+
     pia.writePort = [this]( Emulator::Pia::Port port, uint8_t data ) {
         // nothing todo here, because CA(B)2 is triggered and port value is latched within PIA context
     };
@@ -85,6 +90,10 @@ Fastloader::Fastloader(System* system) : via(3), Cart(system, true, true) {
         return (uint8_t)(lines->iob & system->iecBus.readParallel());
     };
 
+    via.peekPort = [system, this]( Via::Port port, Via::Lines* lines ) {
+        return via.readPort( port, lines );
+    };
+
     via.writePort = [this]( Via::Port port, Via::Lines* lines ) {
         // nothing todo here, because CA(B)2 is triggered and port value is latched within VIA context
     };
@@ -119,6 +128,19 @@ auto Fastloader::writeIo1( uint16_t addr, uint8_t value ) -> void {
     }
 }
 
+auto Fastloader::peekIo1( uint16_t addr ) -> uint8_t {
+    addr &= 0xff;
+    if ( (mode & FASTLOADER_PIA_IO1) == FASTLOADER_PIA_IO1) {
+        if (addr == 0x5c || addr == 0x5d) {
+            return pia.peek(addr & 3);
+        }
+    } else if ( (mode & FASTLOADER_CHARGE_IO1) == FASTLOADER_CHARGE_IO1) {
+        return 0;
+    }
+
+    return ExpansionPort::peekIo1(addr);
+}
+
 auto Fastloader::readIo1( uint16_t addr ) -> uint8_t {
     addr &= 0xff;
     if ( (mode & FASTLOADER_PIA_IO1) == FASTLOADER_PIA_IO1) {
@@ -149,7 +171,17 @@ auto Fastloader::readIo2( uint16_t addr ) -> uint8_t {
         return 0;
     }
 
-    return ExpansionPort::readIo1(addr);
+    return ExpansionPort::readIo2(addr);
+}
+
+auto Fastloader::peekIo2( uint16_t addr ) -> uint8_t {
+    if ( (mode & FASTLOADER_VIA_IO2) == FASTLOADER_VIA_IO2) {
+        return via.peek( addr & 0xff );
+    } else if ( (mode & FASTLOADER_CHARGE_IO2) == FASTLOADER_CHARGE_IO2) {
+        return 0;
+    }
+
+    return ExpansionPort::peekIo2(addr);
 }
 
 auto Fastloader::charge() -> void {
@@ -187,11 +219,19 @@ auto Fastloader::hasHiramCableConnected() -> bool {
     return kernalJumper && rom;
 }
 
+auto Fastloader::peekRomL( uint16_t addr ) -> uint8_t {
+    return readRomL(addr);
+}
+
 auto Fastloader::readRomL( uint16_t addr ) -> uint8_t {
     if (cRomL)
         return *(cRomL->ptr + addr);
 
     return ExpansionPort::readRomL( addr );
+}
+
+auto Fastloader::peekRomH( uint16_t addr ) -> uint8_t {
+    return readRomH(addr);
 }
 
 auto Fastloader::readRomH( uint16_t addr ) -> uint8_t {

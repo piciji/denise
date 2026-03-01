@@ -35,6 +35,8 @@ auto VicIICycle::clockSilence() -> void {
 		allowBadlines = true;
     
     if (initVCounter) {
+        if (debugger.storeSprites)
+            debugger.resetSpriteStore();
         vCounter = 0;
         initVCounter = false;
         lpLatched = false;

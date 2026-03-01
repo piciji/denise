@@ -117,7 +117,83 @@ auto Via::read( uint16_t pos ) -> uint8_t {
     
    _unreachable
 }
-   
+
+auto Via::peek( uint16_t pos ) -> uint8_t {
+    pos &= 0xf;
+
+	switch (pos) {
+
+		case 0: { // orb
+            uint8_t out;
+
+            if ( acr & 2 )
+                out = lines.latchB;
+            else
+                out = peekPort( Port::B, &lines );
+
+            out = ( out & ~lines.ddrb ) | (lines.prb & lines.ddrb);
+
+            if(acr & 0x80) { // override pb7 output
+                out &= 0x7f;
+                if (timerAToggle)
+                    out |= 0x80;
+            }
+
+            return out;
+        }
+
+		case 1: // ora
+        case 0xf: // like ora but without handshake
+            if ( acr & 1 )
+                return lines.latchA;
+
+            return peekPort( Port::A, &lines );
+
+		case 3:
+			return lines.ddra;
+
+		case 2:
+			return lines.ddrb;
+
+        case 4: //T1CL
+			return timerACounterRead & 0xff;
+
+        case 5: //T1CH
+			return timerACounterRead >> 8;
+
+        case 6: //T1LL
+			return timerALatch & 0xff;
+
+        case 7: //T1LH
+			return timerALatch >> 8;
+
+		case 8: //T2CL
+            return timerBCounterRead & 0xff;
+
+		case 9: //T2CH
+            return timerBCounterRead >> 8;
+
+		case 0xa: //SR
+            return sdr;
+
+		case 0xb:
+			return acr;
+
+		case 0xc:
+            return pcr;
+
+		case 0xd:
+            if ( ifr & ier )
+                return ifr | 0x80;
+
+            return ifr;
+
+        case 0xe:
+			return ier | 0x80;
+	}
+
+   _unreachable
+}
 
 auto Via::write( uint16_t pos, uint8_t value ) -> void {
     pos &= 0xf;

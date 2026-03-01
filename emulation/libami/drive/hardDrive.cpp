@@ -129,6 +129,35 @@ auto HardDrive::process() -> bool {
     return false;
 }
 
+auto HardDrive::peekReg(uint8_t reg, uint8_t cs) -> uint16_t {
+    // todo Chip Select (when needed) for ALT status, device control
+    if (isBusy())
+        return status;
+
+    switch ((Register)reg) {
+        case Register::Data:
+            if (!transferSize)
+                return 0;
+
+            return buffer[transferOffset + 1] | (buffer[transferOffset] << 8);
+        case Register::Error:
+            return error;
+        case Register::SectorCount:
+            return sectorCount;
+        case Register::SectorNumber:
+            return lba.sector;
+        case Register::CylinderLow:
+            return lba.cylLo;
+        case Register::CylinderHigh:
+            return lba.cylHi;
+        case Register::DevHead:
+            return lba.devHead;
+        default:
+        case Register::Status:
+            return status;
+    }
+    _unreachable
+}
 
 auto HardDrive::readReg(uint8_t reg, uint8_t cs) -> uint16_t {
     // todo Chip Select (when needed) for ALT status, device control

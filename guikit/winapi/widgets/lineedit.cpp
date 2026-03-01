@@ -33,6 +33,11 @@ auto pLineEdit::setEditable(bool editable) -> void {
         SendMessage(hwnd, EM_SETREADONLY, !editable, 0);
 }
 
+auto pLineEdit::setPlaceholder(const std::string& placeholder) -> void {
+    if(hwnd)
+        SendMessage(hwnd, EM_SETCUEBANNER, false, (LPARAM)(wchar_t*)utf16_t(placeholder));
+}
+
 auto pLineEdit::setText(const std::string& text) -> void {
     locked = true;
     pWidget::setText(text);
@@ -55,6 +60,16 @@ auto pLineEdit::text() -> std::string {
 auto pLineEdit::setMaxLength( unsigned maxLength ) -> void {
     if(hwnd)
         SendMessage(hwnd, EM_SETLIMITTEXT, maxLength, 0);
+}
+
+auto pLineEdit::setAlign( LineEdit::Align align ) -> void {
+    if (!hwnd)
+        return;
+
+    if (align == LineEdit::Align::Right)
+        SetWindowLong(hwnd, GWL_STYLE, (GetWindowLong(hwnd, GWL_STYLE) | ES_RIGHT));
+    else
+        SetWindowLong(hwnd, GWL_STYLE, (GetWindowLong(hwnd, GWL_STYLE) & ~ES_RIGHT));
 }
 
 auto pLineEdit::onChange() -> void {
@@ -81,7 +96,9 @@ auto pLineEdit::rebuild() -> void {
     setFont( widget.font() );
     setEditable(lineEdit.editable());
     setDroppable(lineEdit.droppable());
+    setAlign( lineEdit.align() );
     setText(widget.text());
+    setPlaceholder(lineEdit.placeholder());
     setMaxLength( lineEdit.maxLength() );
     pWidget::rebuild();
 }
@@ -103,7 +120,25 @@ auto CALLBACK pLineEdit::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
             
             return false;
         }
-        
+        case WM_CONTEXTMENU: {
+            if (lineEdit->onContext) {
+                auto* menu = lineEdit->onContext();
+                if (menu) {
+                    POINT pt;
+                    GetCursorPos(&pt);
+                    int mid = TrackPopupMenuEx(menu->p.hmenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, lineEdit->window()->p.hwnd, NULL);
+                    if (mid) {
+                        SendMessage(lineEdit->window()->p.hwnd, WM_COMMAND, mid, 0);
+                        return 0;
+                    }
+                }
+            }
+        } break;
+        case WM_KEYUP:
+            if (wparam == VK_RETURN) {
+                if (lineEdit->onReturn)
+                    lineEdit->onReturn();
+            } break;
     }
 
     return CallWindowProc(lineEdit->p.wndprocOrig, hwnd, msg, wparam, lparam);

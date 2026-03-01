@@ -95,6 +95,14 @@ auto SidManager::readSidReg(uint16_t addr) -> uint8_t {
     return sid->readIO( addr );
 }
 
+auto SidManager::peekSidReg(uint16_t addr) -> uint8_t {
+    updateClock();
+    if (extraSids)
+        return getSidByAdr( addr )->peekIO( addr );
+
+    return sid->peekIO( addr );
+}
+
 auto SidManager::writeSidReg(uint16_t addr, uint8_t value) -> void {
     updateClock();
     if (extraSids)
@@ -109,6 +117,18 @@ auto SidManager::readIo(uint16_t& addr, uint8_t& value) -> bool {
         if (_sid) {
             updateClock();
             value = _sid->readIO( addr );
+            return true;
+        }
+    }
+    return false;
+}
+
+auto SidManager::peekIo(uint16_t& addr, uint8_t& value) -> bool {
+    if (extraSids) {
+        Sid* _sid = getSidByAdr( addr, true );
+        if (_sid) {
+            updateClock();
+            value = _sid->peekIO( addr );
             return true;
         }
     }
@@ -606,6 +626,48 @@ auto SidManager::searializeActiveSids(Emulator::Serializer& s, bool light) -> vo
             system->updateStats();
 
         updateOptionsInUse();
+    }
+}
+
+auto SidManager::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    Sid* _sid = sid;
+
+    uint8_t _potX = getPotX();
+    uint8_t _potY = getPotY();
+
+    for (unsigned i = 0; i < 8; i++) {
+        auto& s = snap.sids[i];
+
+        s.active = i == 0 || ((i - 1) < system->requestedSids);
+
+        if (s.active) {
+            s.volume = _sid->filter.vol;
+            s.potX = _potX;
+            s.potY = _potY;
+
+            s.filter.cutOff = _sid->filter.fc;
+            s.filter.resonance = _sid->filter.res;
+            s.filter.voices = _sid->filter.filt;
+            s.filter.mode = _sid->filter.mode >> 4;
+
+            for (unsigned v = 0; v < 3; v++) {
+                auto& sv = s.voices[v];
+                auto& _sidV = _sid->voice[v];
+                auto& _sidE = _sid->envelope[v];
+
+                sv.wave = _sidV.waveform;
+                sv.frequency = _sidV.freq;
+                sv.pulseWidth = _sidV.pw;
+                sv.attack = _sidE.attack;
+                sv.delay = _sidE.delay;
+                sv.sustain = _sidE.sustain;
+                sv.release = _sidE.release;
+                sv.control = _sidV.contr;
+            }
+        }
+
+        if (i < 7)
+            _sid = sids[i];
     }
 }
 

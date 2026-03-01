@@ -16,6 +16,10 @@
 
 namespace LIBAMI {
 
+auto Paula::peekPot0Dat() -> uint16_t {
+    return (pot.cntY0 << 8) | pot.cntX0;
+}
+
 auto Paula::pot0Dat() -> uint16_t {
     potOutput(pot.go);
     input.observePotPort1(pot.capX0, pot.capY0);
@@ -24,12 +28,23 @@ auto Paula::pot0Dat() -> uint16_t {
     return (pot.cntY0 << 8) | pot.cntX0;
 }
 
+auto Paula::peekPot1Dat() -> uint16_t {
+    return (pot.cntY1 << 8) | pot.cntX1;
+}
+
 auto Paula::pot1Dat() -> uint16_t {
     potOutput(pot.go);
     input.observePotPort2(pot.capX1, pot.capY1);
     pot.running = true;
 
     return (pot.cntY1 << 8) | pot.cntX1;
+}
+
+auto Paula::peekPotGoR() -> uint16_t {
+    auto potTemp = pot;
+    auto out = potGoR();
+    pot = potTemp;
+    return out;
 }
 
 auto Paula::potGoR() -> uint16_t {

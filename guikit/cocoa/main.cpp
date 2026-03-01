@@ -8,6 +8,7 @@
 #include "statusbar.cpp"
 #include "tooltip.m"
 #include "display.cpp"
+#include "colorChooser.cpp"
 
 #include "widgets/widget.cpp"   
 #include "widgets/button.cpp"
@@ -27,8 +28,10 @@
 #include "widgets/listview.cpp"
 #include "widgets/treeview.cpp"
 #include "widgets/squareCanvas.cpp"
+#include "widgets/multiSquareCanvas.cpp"
 #include "widgets/hyperlink.cpp"
 #include "widgets/imageView.cpp"
+#include "widgets/logicViewer.cpp"
 
 @implementation MyNSApplication : NSApplication
     
@@ -103,6 +106,10 @@
         Application::onDisplayChange();
 }
 
+- (void)applicationDidFinishLaunching:(NSNotification *)n {
+    [[NSColorPanel sharedColorPanel] orderOut:nil];
+}
+
 @end
 
 @implementation CocoaWindow : NSWindow
@@ -110,8 +117,13 @@
 -(id) initWith:(GUIKIT::Window&)windowReference {
     window = &windowReference;
 
-    NSUInteger style = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
-    if(window->resizable()) style |= NSResizableWindowMask;
+    NSUInteger style = NSTitledWindowMask;
+    
+    if (window->hints != GUIKIT::Window::Hints::No_Title)
+        style |= NSClosableWindowMask | NSMiniaturizableWindowMask;
+    
+    if(window->resizable())
+        style |= NSResizableWindowMask;
 
     GUIKIT::Geometry geo = window->state.geometry;
 
@@ -418,6 +430,15 @@
     [super resetCursorRects];
 }
 
+- (void) colorDidChange:(id)sender {
+    NSColorPanel* colorPanel = (NSColorPanel*)sender;
+    NSColor* selectedColor = [colorPanel color];
+
+    if (GUIKIT::ColorChooser::onChoose) {
+        GUIKIT::ColorChooser::onChoose(GUIKIT::pHelper::NSColorToRGB(selectedColor));
+    }
+}
+
 @end
 
 @implementation BackgroundView : NSView
@@ -434,7 +455,7 @@
 }
 
 -(void) drawRect:(NSRect)rect {
-    [GUIKIT::pHelper::getColor(bgcolor) setFill];
+    [GUIKIT::pHelper::RGBToNSColor(bgcolor) setFill];
     NSRectFillUsingOperation(rect, NSCompositeSourceOver);
 }
 @end
@@ -509,6 +530,9 @@ auto pApplication::initialize() -> void {
         [[NSThread currentThread] setQualityOfService: NSQualityOfServiceUserInteractive];
     }
     
+    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                            forKey:@"ApplePersistenceIgnoreState"];
+    
     @autoreleasepool {
         
         [MyNSApplication sharedApplication];
@@ -553,6 +577,7 @@ auto pApplication::setClipboardText( std::string text ) -> void {
 pWindow::pWindow(Window& window, Window::Hints hints) : window(window) {
     @autoreleasepool {
         backgroundView = nullptr;
+        window.hints = hints;
         cocoaWindow = [[CocoaWindow alloc] initWith:window];
         
         resizeTimer.setInterval(500);
@@ -619,22 +644,18 @@ auto pWindow::setVisible(bool visible) -> bool {
         if(visible) {
             try {
                 [cocoaWindow makeKeyAndOrderFront:nil];
-                if(!keepMenuVisibility) setMenuVisible(window.menuVisible());
             } catch(...) {
                 window.setGeometry({100,100,400,300});
                 [cocoaWindow makeKeyAndOrderFront:nil];
-                if(!keepMenuVisibility) setMenuVisible(window.menuVisible());
             }
+            
+            if (window.state.menus.size() > 0)
+                setMenuVisible(window.menuVisible());
         }
         else [cocoaWindow orderOut:nil];
     }
     return true;
 }
-    
-auto pWindow::keepMenuVisibilityOnDisplay(bool state) -> void {
-    keepMenuVisibility = state;
-}
-
 
 auto pWindow::setResizable(bool resizable) -> void {
     @autoreleasepool {

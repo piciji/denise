@@ -9,6 +9,9 @@ struct VicIICycle : VicIIBase {
 	VicIICycle(System* system);
 	
 	auto clock() -> void;
+    auto clockLogged() -> void;
+    auto clockMaybeLogged() -> void;
+    template<bool logDma> auto clockCycle() -> void;
 	auto clockSilence() -> void;
     // of course expansion port sees the same BA state like CPU RDY line.
     // but there is a known case, when BA calculation takes more time within cycle.
@@ -18,6 +21,7 @@ struct VicIICycle : VicIIBase {
     auto reuSprite0() -> bool { return sprite0DmaLateBA; }
 	auto serialize(Emulator::Serializer& s) -> void;
 	auto readReg(uint8_t addr) -> uint8_t;
+    auto peekReg(uint8_t addr) -> uint8_t;
 	auto writeReg(uint8_t addr, uint8_t value) -> void;
 	auto power() -> void;
 	
@@ -29,6 +33,7 @@ struct VicIICycle : VicIIBase {
 	auto lastReadPhase1() -> uint8_t { return lastReadPhi1; }
 	auto isAecLow() -> bool { return !aecDelay; }
 	auto isScanlineRenderer() -> bool { return false; }
+    auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;
 	
 protected:       
 	#include "flags.h"
@@ -87,7 +92,7 @@ protected:
 	inline auto setLineInterrupt() -> void;
 	inline auto setLineBuffer() -> void;
      	
-	//dma        
+	//dma
 	auto advanceCycle() -> void;	
 	auto clearCollisions() -> void;
 	auto spriteUpdateBase() -> void;
@@ -105,20 +110,20 @@ protected:
 	auto refresh() -> void;
 
 	// fetch
-	inline auto fetchPhi1( uint32_t flags ) -> uint8_t;
+	template<bool logDma> inline auto fetchPhi1( uint32_t flags ) -> uint8_t;
 	inline auto fetchSprPhi2( uint32_t flags ) -> void;
 	inline auto sprHasDma(uint8_t pos) -> bool;
 	inline auto addrG( uint8_t useMode ) -> uint16_t;
-	auto fetchIdleG() -> uint8_t;
-	auto fetchG() -> uint8_t;
-	auto fetchC() -> void;
-	inline auto fetchSpriteP( uint8_t pos ) -> uint8_t;
-	auto fetchSpriteS1(uint8_t pos) -> uint8_t;
-	inline auto fetchSpriteS0(uint8_t pos) -> void;	
-	inline auto fetchSpriteS2(uint8_t pos) -> void;	
+	template<bool logDma> auto fetchIdleG() -> uint8_t;
+	template<bool logDma> auto fetchG() -> uint8_t;
+	template<bool logDma> auto fetchC() -> void;
+	template<bool logDma> inline auto fetchSpriteP( uint8_t pos ) -> uint8_t;
+	template<bool logDma> auto fetchSpriteS1(uint8_t pos) -> uint8_t;
+	inline auto fetchSpriteS0(uint8_t pos) -> void;
+	inline auto fetchSpriteS2(uint8_t pos) -> void;
 	auto isCharRomAccessed(uint16_t addr) -> bool;
 	inline auto readCpu() -> uint8_t;
-    template<bool phi1> inline auto readPhi(uint16_t addr) -> uint8_t;
+    template<bool phi1, bool logDma, bool peek = false> inline auto readPhi(uint16_t addr) -> uint8_t;
     
     //sequencer
 	auto sequencer( uint32_t flags ) -> void;
@@ -139,6 +144,8 @@ protected:
 	inline auto draw65( unsigned offset, uint8_t x, uint8_t x1, uint8_t metaData ) -> void;    
 	inline auto draw85( unsigned offset, uint8_t x, uint8_t metaData, bool greyDot = false ) -> void;    
 	inline auto borderArea( bool hFlipFirstHalf  ) -> void;
+
+    auto nextLineWithDmaView() -> void;
 	
 };
 

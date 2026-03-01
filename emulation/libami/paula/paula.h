@@ -157,8 +157,11 @@ struct Paula {
     auto audioEvent() -> void;
 
     auto pot0Dat() -> uint16_t;
+    auto peekPot0Dat() -> uint16_t;
     auto pot1Dat() -> uint16_t;
+    auto peekPot1Dat() -> uint16_t;
     auto potGo(uint16_t value) -> void;
+    auto peekPotGoR() -> uint16_t;
     auto potGoR() -> uint16_t;
     auto potOutput(uint16_t data) -> void;
     auto potReset() -> void;
@@ -171,6 +174,7 @@ struct Paula {
     auto setAdkCon(uint16_t  value) -> void;
     auto getAdkCon() -> uint16_t;
     auto getDskBytR() -> uint16_t;
+    auto peekDskBytR() -> uint16_t;
     auto wordSync() -> bool const { return adkcon & 0x400; }
     auto msbSync() -> bool const { return adkcon & 0x200; }
     auto fast() -> bool const { return adkcon & 0x100; }
@@ -236,6 +240,7 @@ struct Paula {
 
     auto serialEvent() -> void;
     auto getSerdatR() -> uint16_t;
+    auto peekSerdatR() -> uint16_t;
     auto setSerdat(uint16_t value) -> void;
     auto setSerper(uint16_t value) -> void;
     auto prepareTransfer() -> void;

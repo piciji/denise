@@ -11,7 +11,7 @@ auto pListView::autoSizeColumns() -> void {
     gtk_tree_view_columns_autosize(GTK_TREE_VIEW(subWidget));
 }
 
-auto pListView::append(const std::vector<std::string>& list) -> void {
+auto pListView::append(const std::vector<std::string>& list, bool preventColumnResizing) -> void {
     GtkTreeIter iter;
     gtk_list_store_append(store, &iter);
     for(unsigned n = 0; n < list.size(); n++) {
@@ -67,11 +67,64 @@ auto pListView::setSelection(unsigned selection) -> void {
     gtk_tree_path_free(path);
 }
 
-auto pListView::setText(unsigned selection, unsigned position, const std::string& text) -> void {
+auto pListView::setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing) -> void {
     GtkTreeModel* model = gtk_tree_view_get_model(GTK_TREE_VIEW(subWidget));
     GtkTreeIter iter;
     gtk_tree_model_get_iter_from_string(model, &iter, std::to_string(selection).c_str());
     gtk_list_store_set(store, &iter, position * 2 + 1, text.c_str(), -1);
+}
+
+auto pListView::updateRowForegroundColors() -> void {
+	gtk_widget_queue_draw(GTK_WIDGET(subWidget));
+}
+
+auto pListView::getFirstVisibleRow() -> unsigned {
+	GtkTreePath* startPath;
+	unsigned row = 0;
+
+	if(!gtk_tree_view_get_visible_range(GTK_TREE_VIEW (subWidget), &startPath, nullptr))
+		return 0;
+
+	if (startPath) {
+		char* pathname = gtk_tree_path_to_string(startPath);
+
+		if (pathname) {
+			try {
+				row = std::stoi( pathname );
+			} catch( ... ) { }
+
+			g_free(pathname);
+		}
+
+		gtk_tree_path_free(startPath);
+	}
+
+	return row;
+}
+
+auto pListView::getColPos(GtkTreeView* treeView, GtkTreeViewColumn* column) -> std::optional<unsigned> {
+	GList* cols = gtk_tree_view_get_columns(treeView);
+
+	unsigned i = 0;
+	while(cols != NULL) {
+		if (column == GTK_TREE_VIEW_COLUMN(cols->data)) {
+			g_list_free (cols);
+			return i;
+		}
+
+		cols = cols->next;
+		i++;
+	}
+	g_list_free (cols);
+	return std::nullopt;
+}
+
+auto pListView::lockRedraw() -> void {
+	gtk_widget_freeze_child_notify(subWidget);
+}
+
+auto pListView::unlockRedraw() -> void {
+	gtk_widget_thaw_child_notify(subWidget);
 }
 
 auto pListView::dataFunc(GtkTreeViewColumn* column, GtkCellRenderer* renderer, GtkTreeModel* model, GtkTreeIter* iter, pListView* p) -> void {
@@ -86,17 +139,23 @@ auto pListView::applyDataFunc(GtkTreeViewColumn* gtkColumn, GtkCellRenderer* ren
 	} catch( ... ) { g_free(path); return; }
 	g_free(path);
 
-	if (selection == 0 && listView.overrideFirstRowColor() ) {
-		unsigned col = listView.firstRowBackgroundColor();
+	std::optional<unsigned> rowColor = listView.rowBackgroundColor( selection );
+	if (rowColor.has_value()) {
+		unsigned col = rowColor.value();
 		GdkColor gdkColor = CreateColor(col >> 16,col >> 8,col & 0xff);
 		g_object_set(G_OBJECT(renderer), "cell-background-gdk", &gdkColor, nullptr);
-		col = listView.firstRowForegroundColor();
-		gdkColor = CreateColor(col >> 16,col >> 8,col & 0xff);
-		g_object_set(G_OBJECT(renderer), "foreground-gdk", &gdkColor, nullptr);
-	} else {
+	} else
 		g_object_set(G_OBJECT(renderer), "cell-background-set", false, nullptr);
+
+	auto colPos =  getColPos(GTK_TREE_VIEW(subWidget), gtkColumn);
+
+	rowColor = listView.rowForegroundColor( selection, colPos);
+	if (rowColor.has_value()) {
+		unsigned col = rowColor.value();
+		GdkColor gdkColor = CreateColor(col >> 16,col >> 8,col & 0xff);
+		g_object_set(G_OBJECT(renderer), "foreground-gdk", &gdkColor, nullptr);
+	} else
 		g_object_set(G_OBJECT(renderer), "foreground-set", false, nullptr);
-	}
 }
 
 auto pListView::create() -> void {
@@ -111,6 +170,7 @@ auto pListView::create() -> void {
 
     if(headerText.size() == 0) headerText.push_back("");
 
+	auto& aligns = listView.state.aligns;
     column.clear();
     std::vector<GType> gtype;
     for(auto& text : headerText) {
@@ -119,6 +179,8 @@ auto pListView::create() -> void {
         cell.column = gtk_tree_view_column_new();
         gtk_tree_view_column_set_resizable(cell.column, true);
         gtk_tree_view_column_set_title(cell.column, "");
+    	if (listView.state.centerHeader)
+    		gtk_tree_view_column_set_alignment(cell.column, 0.5);
 
         cell.icon = gtk_cell_renderer_pixbuf_new();
         gtk_tree_view_column_pack_start(cell.column, cell.icon, false);
@@ -126,6 +188,17 @@ auto pListView::create() -> void {
         gtype.push_back(GDK_TYPE_PIXBUF);
 
         cell.text = gtk_cell_renderer_text_new();
+
+    	unsigned colPos = column.size();
+    	if (colPos< aligns.size()) {
+    		switch (aligns[colPos]) {
+    			default:
+    			case ListView::Align::Left: gtk_cell_renderer_set_alignment(cell.text, 0.0, 0.5); break;
+    			case ListView::Align::Right: gtk_cell_renderer_set_alignment(cell.text, 1.0, 0.5); break;
+    			case ListView::Align::Center: gtk_cell_renderer_set_alignment(cell.text, 0.5, 0.5); break;
+    		}
+    	}
+
 		//g_object_set(G_OBJECT(cell.text), "ypad", 0, nullptr);
 		gtk_cell_renderer_set_padding(cell.text, 0, 0);
 		
@@ -143,6 +216,7 @@ auto pListView::create() -> void {
     subWidget = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
     gtk_container_add(GTK_CONTAINER(gtkWidget), subWidget);
 	gtk_widget_set_has_tooltip(GTK_WIDGET(subWidget), TRUE);
+	//gtk_tree_view_set_grid_lines(GTK_TREE_VIEW(subWidget),GTK_TREE_VIEW_GRID_LINES_VERTICAL);
 
     for(auto& cell : column) {
         gtk_tree_view_column_set_widget(GTK_TREE_VIEW_COLUMN(cell.column), cell.label);
@@ -155,10 +229,15 @@ auto pListView::create() -> void {
 
     g_signal_connect(G_OBJECT(subWidget), "cursor-changed", G_CALLBACK(pListView::onChange), (gpointer)&listView);
     g_signal_connect(G_OBJECT(subWidget), "button-press-event", G_CALLBACK(pListView::onPress), (gpointer)&listView);
-    g_signal_connect(G_OBJECT(subWidget), "row-activated", G_CALLBACK(pListView::onActivate), (gpointer)&listView);	
+    g_signal_connect(G_OBJECT(subWidget), "row-activated", G_CALLBACK(pListView::onActivate), (gpointer)&listView);
     g_signal_connect(G_OBJECT(subWidget), "query-tooltip", G_CALLBACK(pListView::onTooltip), (gpointer)&listView);
-	
+	g_signal_connect(G_OBJECT(subWidget), "realize", G_CALLBACK(pListView::onRealize), (gpointer)&listView);
+
     gtk_widget_show(subWidget);
+}
+
+auto pListView::onRealize(GtkTreeView* treeView, ListView* self) -> void {
+	self->p.autoSizeColumns();
 }
 
 auto pListView::destroy() -> void {
@@ -179,6 +258,7 @@ auto pListView::init() -> void {
     setHeaderVisible( listView.headerVisible() );
     setForegroundColor( listView.foregroundColor() );
     setBackgroundColor( listView.backgroundColor() );
+	updateSpacing();
 
     for(unsigned i=0; i < listView.rowCount(); i++) {
         auto& row = listView.state.rows.at(i);
@@ -189,24 +269,28 @@ auto pListView::init() -> void {
         }
     }
     if(listView.selected()) setSelection(listView.selection());
-    autoSizeColumns();
 }
 
 auto pListView::setFont(std::string font) -> void {
-	pSystem::removeCssClass(subWidget, "removeRowSpacing");
-	
     pWidget::setFont(font);
     for(auto& cell : column)
 		pFont::setFont(cell.label, pfont);
 	
 	if (customTooltipLabel)
 		customTooltipLabel->setFont( listView.font() );
-	
-	if (listView.specialFont()) {
-		pSystem::addCssClass(subWidget, "removeRowSpacing");
+}
 
+auto pListView::updateSpacing() -> void {
+	pSystem::removeCssClass(subWidget, "removeRowSpacing");
+
+	if (listView.spacing() == 0) {
+		pSystem::addCssClass(subWidget, "removeRowSpacing");
 		pSystem::applyCss(subWidget, ".removeRowSpacing { padding: 0px; -GtkTreeView-expander-size: 0; -GtkTreeView-vertical-separator: 0; -GtkTreeView-horizontal-separator: 0; }");
-	}	
+
+	} else {
+		pSystem::addCssClass(subWidget, "removeRowSpacing");
+		pSystem::applyCss(subWidget, ".removeRowSpacing { -GtkTreeView-vertical-separator: 5; -GtkTreeView-horizontal-separator: 15;  }");
+	}
 }
 
 auto pListView::onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeViewColumn* column, ListView* self) -> void {
@@ -220,36 +304,47 @@ auto pListView::onActivate(GtkTreeView* treeView, GtkTreePath* path, GtkTreeView
 
     g_free(pathname);
 
-    GList* cols = gtk_tree_view_get_columns(treeView);
+	auto colPos = getColPos(treeView, column);
 
-    unsigned i = 0;
-    while(cols != NULL) {
-        if (column == GTK_TREE_VIEW_COLUMN(cols->data))
-            break;
-
-        cols = cols->next;
-        i++;
-    }
-
-    self->state.column = i;
-
-    g_list_free (cols);
+    self->state.column = colPos.has_value()	? colPos.value() : 0;
 
     if(self->onActivate) self->onActivate();
 }
 
 auto pListView::onPress(GtkTreeView* treeView, GdkEventButton* event, ListView* self) -> gboolean {
-    self->p.pressed = true;
+	if(!self->onClick && !self->onContext)
+		return false;
 
-    return false;
+	GtkTreePath* path;
+	GtkTreeViewColumn* col = nullptr;
+	if (!gtk_tree_view_get_path_at_pos (GTK_TREE_VIEW (treeView), event->x, event->y, &path, &col, NULL, NULL)) {
+		return false;
+	}
+
+	auto colPos = getColPos(treeView, col);
+
+	unsigned _sel;
+
+	char* pathname = gtk_tree_path_to_string(path);
+	try {
+		_sel= std::stoi( pathname );
+	} catch( ... ) {
+		g_free(pathname);
+		return false;
+	}
+
+	g_free(pathname);
+
+	if (event->type == GDK_BUTTON_PRESS && event->button == 3) {
+		if (self->onContext)
+			self->onContext(_sel, colPos.has_value() ? colPos.value() : 0, {(int)event->x_root, (int)event->y_root} );
+	} else if (self->onClick)
+		self->onClick(_sel, colPos.has_value() ? colPos.value() : 0 );
+
+    return true;
 }
 
 auto pListView::onChange(GtkTreeView* treeView, ListView* self) -> void {
-//    if (!self->p.pressed)
-//        return;
-//
-//    self->p.pressed = false;
-
     GtkTreeIter iter;
     if(!gtk_tree_selection_get_selected(gtk_tree_view_get_selection(treeView), 0, &iter)) return;
     char* path = gtk_tree_model_get_string_from_iter(gtk_tree_view_get_model(treeView), &iter);
@@ -297,9 +392,7 @@ auto pListView::onTooltip(GtkWidget* widget, gint x, gint y, gboolean keyboard_t
 
 		if (!tooltipText.empty()) {
 
-			if (self->overrideFirstRowColor() && hoverSelection == 0)
-				gtk_tooltip_set_text(tooltip, tooltipText.c_str() );
-			else if (self->state.colorRowTooltips) {
+			if (self->state.colorRowTooltips) {
 				if (!self->p.customTooltip)
 					self->p.createCustomTooltip();
 				
@@ -344,7 +437,7 @@ auto pListView::createCustomTooltip() -> void {
 	gtk_widget_set_tooltip_window(subWidget, GTK_WINDOW(customTooltip));
 }
 
-auto pListView::setImage(unsigned selection, unsigned position, Image& image) -> void {
+auto pListView::setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing) -> void {
     GtkTreeModel* model = gtk_tree_view_get_model(GTK_TREE_VIEW(subWidget));
     GtkTreeIter iter;
     gtk_tree_model_get_iter_from_string(model, &iter, std::to_string(selection).c_str());

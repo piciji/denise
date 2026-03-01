@@ -224,7 +224,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-            emuThread->lock();
+            emuThread->lock(true);
             autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartDblClick, selection );
             autoloader->setEmulator( emulator );
             if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
@@ -298,7 +298,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
 
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-        emuThread->lock();
+        emuThread->lock(true);
         autoloader->init( filePaths, false, Autoloader::Mode::Open );
         autoloader->setEmulator( emulator );
         if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
@@ -322,7 +322,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
                 return false;
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-            emuThread->lock();
+            emuThread->lock(true);
             autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartSecondary, selection );
             autoloader->setEmulator( emulator );
             if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
@@ -346,7 +346,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
                     return false;
                 settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePath ) );
 
-                emuThread->lock();
+                emuThread->lock(true);
                 autoloader->init( {filePath}, false, Autoloader::Mode::AutoStartPrimary, selection );
                 autoloader->setEmulator( emulator );
                 if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
@@ -368,7 +368,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
             std::string filePath = filePaths[0];
             settings->set<std::string>("anyload_path", GUIKIT::File::getPath(filePath));
 
-            emuThread->lock();
+            emuThread->lock(true);
             autoloader->init(filePaths, false, Autoloader::Mode::AutoStartDblClick, selection);
             autoloader->setEmulator( emulator );
             if (this->fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
@@ -434,7 +434,7 @@ auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore 
     if ( filePaths.size() && !filePaths[0].empty() ) {
         settings->set<std::string>("anyload_path", GUIKIT::File::getPath( filePaths[0] ) );
 
-        emuThread->lock();
+        emuThread->lock(true);
         autoloader->init( filePaths, false, Autoloader::Mode::AutoStartDblClick, fileDialogPtr ? fileDialogPtr->getContentViewSelection() : 0 );
         autoloader->setEmulator( emulator );
         if (fileDialogPtr->hasChecked() && dynamic_cast<LIBC64::Interface*>(emulator))
@@ -456,9 +456,12 @@ auto Fileloader::applyPreviewFont(Emulator::Interface* emulator, unsigned fontSi
     auto customFont = GUIKIT::Window::getCustomFont(emulator);
 
     if (customFont)
-        fileDialogPtr->setContentViewFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust), dynamic_cast<LIBC64::Interface*>(emulator));
-    else
+        fileDialogPtr->setContentViewFont(customFont->name + ", " + std::to_string(fontSize + customFont->sizeAdjust));
+    else {
         fileDialogPtr->setContentViewFont(GUIKIT::Font::system(fontSize));
+    }
+
+    fileDialogPtr->setSpacing( !customFont || !dynamic_cast<LIBC64::Interface*>(emulator) ? 2 : 0 );
 }
 
 auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulator, Emulator::Interface::Media* media ) -> std::vector<GUIKIT::BrowserWindow::Listing> {
@@ -744,7 +747,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         if (!item || (item->info.size == 0) )
             return program->errorOpen( file, item, emuView ? emuView->message : view->message );
 
-        emuThread->lock();
+        emuThread->lock(true);
         if (emuView && emuView->mediaLayout)
             emuView->mediaLayout->insertImage(media, file, item);
         else

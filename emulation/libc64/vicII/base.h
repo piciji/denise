@@ -5,8 +5,9 @@
 #include "../../tools/macros.h"
 #include "../../tools/serializer.h"
 #include "../../interface.h"
+#include "../../tools/crop.h"
 
-#define VIC_MAX_LINE_LENGTH 65 * 8
+#define VIC_MAX_LINE_LENGTH (65 * 8)
 #define VIC_MODE_MCM(_mode) (_mode & 4)
 #define VIC_MODE_BMM(_mode) (_mode & 8)
 #define VIC_MODE_ECM(_mode) (_mode & 0x10)
@@ -18,6 +19,7 @@ namespace LIBC64 {
 struct System;
 struct ExpansionPort;
 struct M6510;
+struct DebuggerSnapshot;
 
 struct VicIIBase {
 	VicIIBase(System* system);
@@ -54,11 +56,49 @@ struct VicIIBase {
 		unsigned rightOverscan;
 	} crop;
 
-	struct {
-		uint8_t mode = 0;
-		unsigned framePos = 1;
-		bool permanent = false;
-	} leftLineAnomaly;
+    constexpr static unsigned DMA_IDLE = 1;
+    constexpr static unsigned DMA_GRAPHICS = 2;
+    constexpr static unsigned DMA_CHARACTER = 3;
+    constexpr static unsigned DMA_SPR_PTR = 4;
+    constexpr static unsigned DMA_SPR_DATA = 5;
+    constexpr static unsigned DMA_REFRESH = 6;
+    constexpr static unsigned DMA_CPU = 7;
+
+
+    struct Debugger {
+        bool storeSprites = false;
+        struct {
+            uint8_t* data = nullptr;
+            unsigned pos = 0;
+            unsigned lastPos = 0;
+        } spr[8];
+
+        auto enableSpriteStore(bool state) -> void;
+        auto resetSpriteStore() -> void;
+
+        bool dmaLog = false;
+        bool requestDmaLog = false;
+        bool dmaView = false;
+
+        uint8_t* frameLine = nullptr;
+        Emulator::Interface::DebuggerDma dma[65];
+
+        uint8_t* dmaFrame = nullptr;
+        uint8_t lastHpos = 65;
+
+        Emulator::Crop<uint8_t> crop;
+
+        int scrollDirection = 0;
+        unsigned scrollCounter = 0;
+
+        Emulator::Interface::DebuggerAction action;
+        unsigned stopLine = ~0;
+
+        auto enableDmaView(bool state, bool withScrolling = true) -> void;
+        auto enableDmaLog(bool state) -> void;
+    } debugger;
+
+    auto requestCurrentDmaLog() -> Emulator::Interface::DebuggerDma&;
 
     uint8_t reg2mhz;
     
@@ -71,11 +111,14 @@ struct VicIIBase {
 	auto setBorderData() -> void;
 	auto getCrop(unsigned w, unsigned h) -> Emulator::Interface::Crop;
 	
-    virtual auto clock() -> void = 0;    
+    virtual auto clock() -> void = 0;
+    virtual auto clockLogged() -> void = 0;
+    virtual auto clockMaybeLogged() -> void = 0;
 	virtual auto reuBaLow() -> bool = 0;
     virtual auto reuSprite0() -> bool = 0;
 	virtual auto serialize(Emulator::Serializer& s) -> void = 0;
 	virtual auto readReg( uint8_t addr ) -> uint8_t = 0;
+    virtual auto peekReg( uint8_t addr ) -> uint8_t = 0;
     virtual auto writeReg( uint8_t addr, uint8_t value ) -> void = 0;	
     virtual auto power() -> void;
 	virtual auto triggerLightPen( bool state ) -> void;
@@ -95,9 +138,6 @@ struct VicIIBase {
     
     auto isBaLow() -> bool { return baLow; }
     
-    auto setVerticalLineAnomaly(uint8_t mode) -> void;
-    auto getVerticalLineAnomaly() -> uint8_t;
-    
     auto getVcounter() -> unsigned { return vCounter; }
 	
 	auto isNTSCGeometry() -> bool { return ntscGeometry; }
@@ -112,6 +152,12 @@ struct VicIIBase {
     auto setUltimax(bool state ) -> void { ultimaxPhi1 = ultimaxPhi2 = state; };
     auto oldOne() -> bool { return oldIrqMode; }
     auto inVisibleArea() -> bool { return visibleLine; }
+    virtual auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateDmaSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updatePositionSnapshot(DebuggerSnapshot& snap) -> void;
+    auto setVicBank(uint16_t data) -> void { vicBank = data; }
+    auto getVicBank() -> uint16_t { return vicBank; }
+	auto enableDmaView(bool state, bool withScrolling) -> void;
 
 protected:     
     bool ultimaxPhi1;
@@ -126,7 +172,7 @@ protected:
 	
 	uint16_t vcBase;
 	uint16_t vc;
-	uint8_t rc;	
+	uint8_t rc;
 	uint16_t cBuffer[40];
 
 	bool rev65; //true: 65xx chips, false: 85xx chips
@@ -192,7 +238,10 @@ protected:
 	bool hFlipFlop;
 	bool vFlipFlop;	
 	bool idleMode;	
-	bool initVCounter;	
+	bool initVCounter;
+
+    uint16_t _addrG;
+    uint16_t vicBank;
 
 	struct Sprite {
 		uint8_t position;
@@ -235,13 +284,10 @@ protected:
 	
 	bool enableSequencer = true;
 
+    auto oneTimeDebuggerAction() -> void;
 	auto updateIrq(Interrupt interrupt = Update) -> void;
-	auto checkLightPen() -> void;	
-	
-	auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
-	auto initVerticalLineAnomaly() -> void;
-	template<bool permanent> auto insertVerticalLineAnomaly(unsigned start, unsigned end) -> void;
-
+	auto checkLightPen() -> void;
+    auto storeSprite(Sprite& spr) -> void;
 };
 
 }

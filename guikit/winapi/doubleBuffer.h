@@ -12,7 +12,7 @@ struct DoubleBuffer {
         release();
     }
 
-    bool ensure(HDC hdc, const RECT& rcClient) {
+    auto ensure(HDC hdc, const RECT& rcClient) -> bool {
         int width = rcClient.right - rcClient.left;
         int height = rcClient.bottom - rcClient.top;
 
@@ -27,7 +27,7 @@ struct DoubleBuffer {
         return hMemDC != nullptr && hMemBmp != nullptr;
     }
 
-    void release() {
+    auto release() -> void {
         if (hMemDC) {
             SelectObject(hMemDC, hOldBmp);
             DeleteObject(hMemBmp);

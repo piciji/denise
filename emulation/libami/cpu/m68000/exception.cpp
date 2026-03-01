@@ -17,6 +17,7 @@ auto M68000::trapException(uint8_t vector) -> void { // group 2 exceptions
     sp -= 6;
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
+    appendStepOut( pc );
     executeAt( vector << 2, 2 );
 }
 
@@ -56,6 +57,7 @@ auto M68000::group1Exception(uint8_t vector) -> void {
     sp -= 6;
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
+    appendStepOut( pc );
     executeAt( vector << 2, 1 );
 }
 
@@ -82,6 +84,7 @@ auto M68000::IRQException() -> void { // a group 1 exception
     sp -= 6;
     write<Word>(sp + 0, SR);
     write<Word>(sp + 2, (pc >> 16) & 0xffff);
+    appendStepOut( pc );
     executeAt( vectorAdr, 1 );
 
     // when IPL sample state changes, another IRQ service routine could be processed without a single instruction in between.
@@ -185,11 +188,14 @@ auto M68000::addressException(uint32_t adr, uint32_t _pc, uint8_t flags, uint16_
     sp -= 14;
     write<Word>(sp + 0, code );
     write<Word>(sp + 2, (adr >> 16) & 0xffff);
-
+    appendStepOut( pc );
     executeAt(3 << 2, 0);
 }
 
 auto M68000::executeAt(uint16_t adr, uint8_t group) -> void { // 18 cycles
+    if ((control & ExceptionPoint) && exceptionPoints.check( adr >> 2, true )) {
+        DEBUG_POINT_REACHED(ExceptionPoint, adr >> 2);
+    }
     pc = read<Long>(adr);
     
     if (misaligned<Long>(pc)) {
@@ -210,7 +216,7 @@ auto M68000::resetRoutine() -> void { // highest prioritized group 0 routine
     control &= ~ResetRoutine;
 
     regsA[7] = ssp = read<Long, FC_PRG>(0); // sets FC1
-    pc = read<Long, FC_PRG>(4); // sets FC1 too
+    pc = pcEdge = read<Long, FC_PRG>(4); // sets FC1 too
 
     if (misaligned<Long>(pc)) { // bus/address error during group 0 service routine halts CPU.
         SYNC(4 + 4);

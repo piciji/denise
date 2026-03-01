@@ -12,6 +12,7 @@ namespace LIBAMI {
 struct System;
 struct Agnus;
 struct Input;
+struct DebuggerSnapshot;
 
 // A1000 + OCS Denise, todo: ECS Denise
 struct Denise {
@@ -109,6 +110,24 @@ struct Denise {
     bool hBlank;
     bool vBlank;
 
+    struct {
+        bool store = false;
+        struct {
+            uint16_t* data = nullptr;
+            unsigned pos = 0;
+            unsigned lastPos = 0;
+            uint8_t sprData[16];
+            bool lock = false;
+        } spr[8];
+
+        auto setEnable(bool state) -> void {
+            store = state;
+            reset();
+        }
+        auto reset() -> void { for (auto& s : spr) { s.lastPos = s.pos; s.pos = 0; s.lock = false; } }
+        auto resetLock() -> void { for (auto& s : spr) s.lock = false; }
+    } debugger;
+
     auto strhor() -> void;
     auto strequ() -> void;
     auto strvbl() -> void;
@@ -149,6 +168,12 @@ struct Denise {
     auto getId() -> unsigned;
     auto isHires() -> bool { return bplCon0 & 0x8000; }
     auto isShres() -> bool { return bplCon0 & 0x40; }
+    auto lineWidthMultiplier() -> unsigned {
+        return frameMode == LORES_FRAME ? 1 : (frameMode == HIRES_FRAME ? 2 : 4);
+    }
+    auto pixelPerDma() -> unsigned {
+        return frameMode == LORES_FRAME ? 2 : (frameMode == HIRES_FRAME ? 4 : 8);
+    }
 
     template<bool useHires> auto processDelayPf1() -> void;
     template<bool useHires> auto processDelayPf2() -> void;
@@ -157,6 +182,9 @@ struct Denise {
     auto updateECSFeatures() -> void;
     auto ecsena() -> bool { return !!(bplCon0 & 1) && (model > Model::OCS); }
     auto csync(bool state) -> void;
+
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto storeSprite(uint8_t nr, uint32_t shift) -> void;
 };
 
 }

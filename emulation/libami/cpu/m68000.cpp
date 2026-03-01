@@ -2,76 +2,185 @@
 #include "m68000.h"
 #include "../agnus/agnus.h"
 #include "../../tools/serializer.h"
-#include "../interface.h"
-
-#define CPU_LOG_START 88000000
-#define CPU_LOG_COUNT 500000
-
+#include "../system/debuggerSnapshot.h"
 
 namespace LIBAMI {
 
 Cpu::Cpu(Agnus& agnus) : M68FAMILY::M68000(agnus) {
 
+    watchPoints.callback = [this](bool state) { this->flagDebugAction( WatchPoint, state ); };
+    watchPointsWrite.callback = [this](bool state) { this->flagDebugAction( WatchPointWrite, state ); };
+    breakPoints.callback = [this](bool state) { this->flagDebugAction( BreakPoint, state ); };
+    exceptionPoints.callback = [this](bool state) { this->flagDebugAction( ExceptionPoint, state ); };
+    modifiedCode.callback = [this](bool state) { this->flagDebugAction( ModifiedCode, state ); };
+    historyHandler.callback = [this](bool state) { this->flagDebugAction( History, state ); };
+
+    watchPoints.expressionCallback = [this](const std::string& input, int& pos) {
+        return parseExpressionValue(input, pos);
+    };
+    watchPointsWrite.expressionCallback = [this](const std::string& input, int& pos) {
+        return parseExpressionValue(input, pos);
+    };
+    breakPoints.expressionCallback = [this](const std::string& input, int& pos) {
+        return parseExpressionValue(input, pos);
+    };
+    exceptionPoints.expressionCallback = [this](const std::string& input, int& pos) {
+        return parseExpressionValue(input, pos);
+    };
 }
 
-auto Cpu::getA(uint8_t pos) -> uint32_t {
-    return regsA[pos & 7];
+auto Cpu::debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    switch (action) {
+        case DebuggerAction::Breakpoint:        breakPoints.add( addr ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.add( addr ); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.add( addr ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.add( addr ); break;
+        case DebuggerAction::ModifiedCode:      modifiedCode.add( addr, addrTo ); break;
+        case DebuggerAction::History:           historyHandler.enable(); break;
+        default:
+            break;
+    }
 }
 
-auto Cpu::getD(uint8_t pos) -> uint32_t {
-    return regsD[pos & 7];
+auto Cpu::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
+    switch (action) {
+        case DebuggerAction::Breakpoint:        breakPoints.remove( addr ); break;
+        case DebuggerAction::Watchpoint:        watchPoints.remove( addr ); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.remove( addr ); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.remove( addr ); break;
+        case DebuggerAction::History:           historyHandler.disable( ); break;
+        case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
+        default:
+            break;
+    }
 }
 
-auto Cpu::getStatus() -> uint16_t {
-    return getSR();
+auto Cpu::debuggerRemove(DebuggerAction action) -> void {
+    switch (action) {
+        case DebuggerAction::Breakpoint:        breakPoints.removeAll(); break;
+        case DebuggerAction::Watchpoint:        watchPoints.removeAll(); break;
+        case DebuggerAction::WatchpointWrite:   watchPointsWrite.removeAll(); break;
+        case DebuggerAction::ExceptionPoint:    exceptionPoints.removeAll(); break;
+        case DebuggerAction::History:           historyHandler.disable(); break;
+        case DebuggerAction::ModifiedCode:      modifiedCode.disable(); break;
+        default:
+            break;
+    }
 }
 
-auto Cpu::getIrd() -> uint16_t {
-    return ird;
+auto Cpu::parseExpressionValue(const std::string& input, int& pos) -> uint32_t {
+    for (auto& cond : DebuggerSnapshot::breakConditions) {
+        std::string token = cond.ident;
+        if (input.compare(pos, token.size(), token) == 0) {
+            pos += token.size();
+
+            switch (cond.vector) {
+                default: return 0;
+                case 0: return ref.vPos;
+                case 1: return ref.hPos;
+                case 2: return irc;
+                case 3: return ird;
+                case 4: return iplPins;
+                case 5: return pc;
+                case 6: return usp;
+                case 7: return ssp;
+
+                case 8: return regsA[0];
+                case 9: return regsA[1];
+                case 10: return regsA[2];
+                case 11: return regsA[3];
+                case 12: return regsA[4];
+                case 13: return regsA[5];
+                case 14: return regsA[6];
+                case 15: return regsA[7];
+
+                case 16: return regsD[0];
+                case 17: return regsD[1];
+                case 18: return regsD[2];
+                case 19: return regsD[3];
+                case 20: return regsD[4];
+                case 21: return regsD[5];
+                case 22: return regsD[6];
+                case 23: return regsD[7];
+
+                case 24: return c;
+                case 25: return v;
+                case 26: return z;
+                case 27: return n;
+                case 28: return x;
+                case 29: return i;
+                case 30: return s;
+
+                case 100: {
+                    int radix = 10;
+                    if (input.compare(pos, 1, "$") == 0) {
+                        radix = 16;
+                        pos++;
+                    }
+                    const char* start = input.c_str() + pos;
+                    char* end;
+                    uint32_t value = std::strtoul(start, &end, radix);
+                    if (start != end) {
+                        pos += (end - start);
+                        return ref.peekWord(value);
+                    }
+                    return 0;
+                }
+            }
+        }
+    }
+    return 0;
 }
 
-auto Cpu::getPC() -> uint32_t {
-    return pc;
+auto Cpu::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    bool expressionError = false;
+
+    if (!expression.empty()) {
+        ExpressionParser parser;
+        parser.setExpression( expression );
+        parser.callback = [this](const std::string& input, int& pos) {
+            return parseExpressionValue(input, pos);
+        };
+
+        try {
+            parser.parse();
+        } catch (ExpressionParseError& e) {
+            expressionError = true;
+        }
+    }
+
+    switch (action) {
+        case DebuggerAction::Breakpoint:
+            breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
+        case DebuggerAction::Watchpoint:
+            watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
+        case DebuggerAction::WatchpointWrite:
+            watchPointsWrite.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
+        case DebuggerAction::ExceptionPoint:
+            exceptionPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
+    }
+
+    return !expressionError;
 }
 
-auto Cpu::logState() -> void {
-    if (logCounter == (CPU_LOG_COUNT + CPU_LOG_START) )
-        return;
+auto Cpu::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    std::copy(std::begin(regsD), std::end(regsD), std::begin(snap.regsD));
+    std::copy(std::begin(regsA), std::end(regsA), std::begin(snap.regsA));
+    snap.pc = pc;
+    snap.pcEdge = pcEdge;
+    snap.irc = irc;
+    snap.ird = ird;
+    snap.usp = usp;
+    snap.ssp = ssp;
+    snap.flags = getSR();
 
-    if (logCounter++ < CPU_LOG_START)
-        return;
-
-    ref.interface->log("H", true);
-    ref.interface->log(ref.hPos, false, true);
-    ref.interface->log("IRD", false);
-    ref.interface->log(ird, false, true);
-    ref.interface->log("PC", false);
-    ref.interface->log(pc, false, true);
-    ref.interface->log("S", false);
-    ref.interface->log(getSR(), false, true);
-    ref.interface->log("D", false);
-    for(unsigned i = 0; i < 8; i++)
-        ref.interface->log(regsD[i], false, true);
-    ref.interface->log("A", false);
-    for(unsigned i = 0; i < 8; i++)
-        ref.interface->log(regsA[i], false, true);
-
-//    ref.interface->log("USP", false);
-//    ref.interface->log(usp, false, true);
-//    ref.interface->log("SSP", false);
-//    ref.interface->log(ssp, false, true);
-}
-
-auto Cpu::logWrite(unsigned adr, unsigned val) -> void {
-    if (logCounter == (CPU_LOG_COUNT + CPU_LOG_START) )
-        return;
-
-    if (logCounter < CPU_LOG_START)
-        return;
-
-    ref.interface->log("W:", false);
-    ref.interface->log(adr, false, true);
-    ref.interface->log(val, false, true);
+    snap.ipl = iplPins;
+    snap.stp = control & Stop;
+    snap.hlt = control & Halt;
 }
 
 auto Cpu::serialize(Emulator::Serializer& s) -> void {
@@ -95,6 +204,3 @@ auto Cpu::serialize(Emulator::Serializer& s) -> void {
 }
 
 }
-
-#undef CPU_LOG_START
-#undef CPU_LOG_END

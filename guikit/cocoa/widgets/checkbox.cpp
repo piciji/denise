@@ -13,6 +13,10 @@
 }
 
 -(IBAction) activate:(id)sender {
+    if (checkBox->readonly()) {
+        [(id)self setState:checkBox->state.checked ? NSControlStateValueOn : NSControlStateValueOff];
+        return;
+    }
     checkBox->state.checked = [self state] != NSControlStateValueOff;
     if(checkBox->onToggle) checkBox->onToggle( checkBox->state.checked );
 }

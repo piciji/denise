@@ -169,4 +169,31 @@ extern uint8_t binary[339];
 extern uint8_t screenshot[383];
 
 extern uint8_t hdr[406];
+
+extern uint8_t resume[1052];
+
+extern uint8_t pause[797];
+
+extern uint8_t stepInto[286];
+
+extern uint8_t stepOver[302];
+
+extern uint8_t stepOut[294];
+
+extern uint8_t trash[172];
+
+extern uint8_t line[240];
+
+extern uint8_t frame[201];
+
+extern uint8_t debug[395];
+
+extern uint8_t exception[450];
+
+extern uint8_t checked[529];
+
+extern uint8_t circleBlue[364];
+
+extern uint8_t memoryBorder[396];
+
 }

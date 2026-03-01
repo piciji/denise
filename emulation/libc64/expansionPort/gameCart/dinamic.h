@@ -9,6 +9,10 @@ namespace LIBC64 {
 
         }
 
+        auto peekIo1( uint16_t addr) -> uint8_t {
+            return 0;
+        }
+
         auto readIo1( uint16_t addr) -> uint8_t {
             for( auto& chip : chips ) {
                 if (chip.bank == (addr & 0xf) ) {

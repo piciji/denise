@@ -106,32 +106,38 @@ auto Agnus::setDskPtL(uint16_t value) -> void {
 
 template<uint8_t pos, bool addMod> auto Agnus::fetchPlane() -> void {
     if constexpr ( pos == 1) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl1pt & dmaChipMemMask)));
+        addrBus = bpl1pt & dmaChipMemMask;
+        dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl1Dat( dataBus );
         bpl1pt += 2;
         if constexpr (addMod) bpl1pt += bpl1Mod;
     } else if constexpr ( pos == 2) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl2pt & dmaChipMemMask)));
+        addrBus = bpl2pt & dmaChipMemMask;
+        dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl2Dat( dataBus );
         bpl2pt += 2;
         if constexpr (addMod) bpl2pt += bpl2Mod;
     } else if constexpr ( pos == 3) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl3pt & dmaChipMemMask)));
+        addrBus = bpl3pt & dmaChipMemMask;
+        dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl3Dat( dataBus );
         bpl3pt += 2;
         if constexpr (addMod) bpl3pt += bpl1Mod;
     } else if constexpr ( pos == 4) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl4pt & dmaChipMemMask)));
+        addrBus = bpl4pt & dmaChipMemMask;
+        dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl4Dat( dataBus );
         bpl4pt += 2;
         if constexpr (addMod) bpl4pt += bpl2Mod;
     } else if constexpr ( pos == 5) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl5pt & dmaChipMemMask)));
+        addrBus = bpl5pt & dmaChipMemMask;
+        dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl5Dat( dataBus );
         bpl5pt += 2;
         if constexpr (addMod) bpl5pt += bpl1Mod;
     } else if constexpr ( pos == 6) {
-        dataBus = _swapWord(*(uint16_t*) (chipMem + (bpl6pt & dmaChipMemMask)));
+        addrBus = bpl6pt & dmaChipMemMask;
+        dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl6Dat( dataBus );
         bpl6pt += 2;
         if constexpr (addMod) bpl6pt += bpl2Mod;
@@ -199,7 +205,7 @@ template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict()
     }
 
     dmaClock = clock;
-    busUsage = BUS_USAGE_BPL;
+    busUsage = BUS_USAGE_BPL_CONFLICT_REFRESH;
 }
 
 auto Agnus::getSprConflictReg(uint8_t encoded) -> uint16_t {
@@ -236,7 +242,8 @@ template<uint8_t pos, bool addMod> auto Agnus::fetchPlaneSprConflict() -> void {
 
     if (cReg < 0x110 || cReg > 0x11a) {
         dmaClock = clock;
-        busUsage = BUS_USAGE_BPL;
+        busUsage = BUS_USAGE_BPL_CONFLICT_SPRITE;
+        addrBus = cPtr;
         dataBus = _swapWord(*(uint16_t*)(chipMem + cPtr));
         writeCustom(cReg, dataBus, Trigger_Read);
         return;
@@ -259,7 +266,8 @@ template<uint8_t pos, bool addMod> auto Agnus::fetchPlaneSprConflict() -> void {
 auto Agnus::diskDma(uint8_t slot, bool writeMode) -> void {
     dmaClock = clock;
     bplQueue &= ~0xff; // no BPL fetch
-    busUsage = BUS_USAGE_DMAL;
+    busUsage = BUS_USAGE_DISK;
+    addrBus = dskpt;
 
     if (writeMode) {
         dataBus = _swapWord(*(uint16_t*) (chipMem + dskpt));
@@ -309,6 +317,7 @@ auto Agnus::fakeDiskDma() -> uint16_t {
 
 template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
     AudioDmaChannel& cha = audioDmaChannels[nr];
+    addrBus = cha.ptr;
 
     dataBus = _swapWord(*(uint16_t*) (chipMem + cha.ptr));
 
@@ -323,7 +332,7 @@ template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
 
     dmaClock = clock;
     bplQueue &= ~0xff; // no BPL fetch
-    busUsage = BUS_USAGE_DMAL;
+    busUsage = BUS_USAGE_AUDIO;
 }
 
 template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
@@ -333,6 +342,7 @@ template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
     constexpr uint8_t control = (options >> 4) & 0xf;
 
     if constexpr (control == 0) {
+        addrBus = spr.ptr;
         dataBus = _swapWord(*(uint16_t*) (chipMem + spr.ptr));
 
         if constexpr (target == 0) {
@@ -348,7 +358,8 @@ template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
         }
 
         dmaClock = clock;
-        busUsage = BUS_USAGE_SPRITE;
+        if (busUsage != BUS_USAGE_BPL_CONFLICT_SPRITE)
+            busUsage = BUS_USAGE_SPRITE;
         spr.ptr += 2;
         spr.ptr &= dmaChipMemMask;
     } else if constexpr (control == 1) {
@@ -357,7 +368,8 @@ template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
         // not allocated -> could conflict with blitter
         setBltConflictThisCycle();
     } else if constexpr (control == 2) {
-        busUsage = BUS_USAGE_SPRITE;
+        if (busUsage != BUS_USAGE_BPL_CONFLICT_SPRITE)
+            busUsage = BUS_USAGE_SPRITE;
     }
 
     if constexpr (!!(target & 2)) {
@@ -397,6 +409,7 @@ auto Agnus::fetchCopperDma(uint32_t adr, uint16_t& result) -> bool {
 
     busUsage = BUS_USAGE_COPPER;
     dmaClock = clock;
+    addrBus = adr & dmaChipMemMask;
 
     result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
@@ -409,6 +422,7 @@ auto Agnus::fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
 
     busUsage = BUS_USAGE_COPPER;
     dmaClock = clock;
+    addrBus = adr & dmaChipMemMask;
 
     result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
@@ -439,11 +453,11 @@ auto Agnus::fetchBlitterDma(uint32_t& adr, uint16_t& result, const int16_t& modV
             return false;
     }
 
-    busUsage = BUS_USAGE_BLITTER;
-
     if (blitterConflict) {
         handleBlitterConflicts<ptrEvent, desc, add, mod, false>(adr, result, modVal);
     } else {
+        busUsage = BUS_USAGE_BLITTER;
+        addrBus = adr & dmaChipMemMask;
         result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
         if constexpr (add) {
@@ -477,6 +491,7 @@ auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVa
         handleBlitterConflicts<Agnus::PTR_BLT_D_H, desc, add, mod, true>(adr, value, modVal);
     } else {
         adr &= dmaChipMemMask;
+        addrBus = adr;
         if (memState)
             memState->trackers[TRACKER_CHIP].remember(adr);
 
@@ -503,8 +518,10 @@ auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVa
 template<uint8_t ptrEvent, bool desc, bool add, bool mod, bool writeMode>
 auto Agnus::handleBlitterConflicts(uint32_t& adr, uint16_t& result, const int16_t& modVal) -> void {
     if (copper.state == Copper::Read1Buggy) {
+        busUsage = BUS_USAGE_BLITTER_CONFLICT_COPPER;
         adr |= copper.copPtrBefore;
         adr &= dmaChipMemMask;
+        addrBus = adr;
 
         if constexpr (writeMode) {
             if (memState)
@@ -522,6 +539,7 @@ auto Agnus::handleBlitterConflicts(uint32_t& adr, uint16_t& result, const int16_
             else                 copper.copPtr += modVal;
         }
     } else { // or Sprite DMA was enabled just before a Sprite decision cycle
+        busUsage = BUS_USAGE_BLITTER_CONFLICT_SPRITE;
         RapidJob* rJob = getOneCycleEvent(Agnus::END_BLT_CONFLICT);
         if (rJob) {
             uint16_t sprReg = getSprConflictReg(rJob->data);
@@ -535,6 +553,7 @@ auto Agnus::handleBlitterConflicts(uint32_t& adr, uint16_t& result, const int16_
             Sprite& spr = sprites[nr];
             adr |= (spr.ptr - 2); // already incremented
             adr &= dmaChipMemMask;
+            addrBus = adr;
 
             uint16_t _fetch;
             if constexpr (writeMode) {

@@ -45,7 +45,7 @@ struct Cmd {
 
 	std::string invalidParam;
 	bool ambiguousParam = false;
-    
+
     auto parse() -> void;
     
     auto autoloadImages() -> void;
@@ -61,7 +61,7 @@ struct Cmd {
     auto setReuSize(std::string arg) -> void;
 	
 	auto setGeoRamSize(std::string arg) -> void;
-	
+
 	auto setAutoStartPrg(std::string arg) -> void;
 
     auto setCustomConfig(std::string& ident, std::string path) -> void;

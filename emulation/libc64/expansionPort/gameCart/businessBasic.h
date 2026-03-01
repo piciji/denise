@@ -8,6 +8,10 @@ namespace LIBC64 {
         BusinessBasic(System* system) : GameCart(system, false, false) {
         }
 
+        auto peekIo1( uint16_t addr) -> uint8_t {
+            return 0;
+        }
+
         auto readIo1( uint16_t addr) -> uint8_t {
             cRomH = getChip(1);
             system->changeExpansionPortMemoryMode( exRom = false, game = false );

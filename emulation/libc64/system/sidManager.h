@@ -6,6 +6,7 @@
 #include <functional>
 #include "../sid/sid.h"
 #include "../sid/usbSidPico.h"
+#include "debuggerSnapshot.h"
 
 namespace Emulator {
     struct Serializer;
@@ -80,8 +81,10 @@ struct SidManager {
     auto setIoMask(int nr, uint8_t pos) -> void;
     auto getIoPos(int nr) -> int;
     auto readSidReg(uint16_t addr) -> uint8_t;
+    auto peekSidReg(uint16_t addr) -> uint8_t;
     auto writeSidReg(uint16_t addr, uint8_t value) -> void;
     auto readIo(uint16_t& addr, uint8_t& value) -> bool;
+    auto peekIo(uint16_t& addr, uint8_t& value) -> bool;
     auto writeIo(uint16_t addr, uint8_t value) -> void;
 
     auto setResampleQuality( uint8_t val ) -> void;
@@ -113,7 +116,9 @@ struct SidManager {
 
     auto hasUSBSID() -> bool { return usbSIDPico.enabled; }
     auto getUSBSIDBuffSize() -> unsigned { return usbSIDPico.buffSize; }
-    auto getUSBSIDDiffSize() -> unsigned { return usbSIDPico.diffSize; }    
+    auto getUSBSIDDiffSize() -> unsigned { return usbSIDPico.diffSize; }
+
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }

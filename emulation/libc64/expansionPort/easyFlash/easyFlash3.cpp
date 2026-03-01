@@ -404,6 +404,13 @@ auto EasyFlash3::isBootable( ) -> bool {
     return true;
 }
 
+auto EasyFlash3::peekIo1( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flash.byteToProgram;
+    uint8_t result = readIo1( addr );
+    flash.byteToProgram = _btp;
+    return result;
+}
+
 auto EasyFlash3::readIo1( uint16_t addr ) -> uint8_t {
 
     if (mode == Mode::EF3 || mode == Mode::Kernal) {
@@ -679,10 +686,23 @@ auto EasyFlash3::readIo2( uint16_t addr ) -> uint8_t {
     return ExpansionPort::readIo2(addr);
 }
 
+auto EasyFlash3::peekIo2( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flash.byteToProgram;
+    uint8_t result = readIo2( addr );
+    flash.byteToProgram = _btp;
+    return result;
+}
 
 auto EasyFlash3::buildFlashBaseAdr() -> void {
 
     flashBaseAdr = (activeSlot << 20) | (((((bank >> 3) & 7) << 4) | (bank & 7)) << 13);
+}
+
+auto EasyFlash3::peekRomL( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flash.byteToProgram;
+    uint8_t result = readRomL(addr);
+    flash.byteToProgram = _btp;
+    return result;
 }
 
 auto EasyFlash3::readRomL( uint16_t addr ) -> uint8_t {
@@ -729,6 +749,13 @@ auto EasyFlash3::writeRomL( uint16_t addr, uint8_t data ) -> void {
     }
     
     ExpansionPort::writeRomL( addr, data );
+}
+
+auto EasyFlash3::peekRomH( uint16_t addr ) -> uint8_t {
+    uint8_t _btp = flash.byteToProgram;
+    uint8_t result = readRomH(addr);
+    flash.byteToProgram = _btp;
+    return result;
 }
 
 auto EasyFlash3::readRomH( uint16_t addr ) -> uint8_t {

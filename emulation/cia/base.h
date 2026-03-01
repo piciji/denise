@@ -40,6 +40,7 @@ struct Base {
 	std::function<void (bool state)> irqCall;
 	
     auto read(unsigned pos) -> uint8_t;
+    auto peek(unsigned pos) -> uint8_t;
     auto write(unsigned pos, uint8_t value) -> void;
     auto reset() -> void;
     auto registerCallbacks() -> void;
@@ -67,7 +68,7 @@ struct Base {
     auto serialize(Emulator::Serializer& s) -> void;
 	
 	uint8_t model; // for debugging purposes
-protected:
+//protected:
 	/**
 	 * cia's have an annoying timing
 	 * rules:

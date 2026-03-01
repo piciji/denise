@@ -219,6 +219,10 @@ auto Cart::assumeChips( std::vector<unsigned> sizes ) -> void {
     }        
 }
 
+auto Cart::peekRomL(uint16_t addr) -> uint8_t {
+    return Cart::readRomL(addr);
+}
+
 auto Cart::readRomL(uint16_t addr) -> uint8_t {
 	
     if (!cRomL)
@@ -228,7 +232,11 @@ auto Cart::readRomL(uint16_t addr) -> uint8_t {
     
     return *(cRomL->ptr + addr);
 }
-    
+
+auto Cart::peekRomH(uint16_t addr) -> uint8_t {
+    return Cart::readRomH(addr);
+}
+
 auto Cart::readRomH(uint16_t addr) -> uint8_t {
 
     if (!cRomH)

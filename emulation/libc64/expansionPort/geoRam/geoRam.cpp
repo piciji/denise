@@ -39,6 +39,10 @@ auto GeoRam::writeIo2( uint16_t addr, uint8_t value ) -> void {
 	}
 }
 
+auto GeoRam::peekIo1( uint16_t addr ) -> uint8_t {
+    return readIo1( addr );
+}
+
 auto GeoRam::readIo1( uint16_t addr ) -> uint8_t {
 	
 	return data[(blockOf16k << 14) + (page << 8) + (addr & 0xff)];

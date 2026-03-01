@@ -38,6 +38,10 @@ struct FinalCartridgePlus : Freezer {
         //system->interface->log( value, true, true );
     }
 
+    auto peekIo2( uint16_t addr ) -> uint8_t {
+        return readIo2( addr );
+    }
+
     auto readIo2( uint16_t addr ) -> uint8_t {
 
         return (bitCell << 7) | (enableRomL << 6) | (enableRomH << 5) | (enable << 4);
@@ -73,6 +77,11 @@ struct FinalCartridgePlus : Freezer {
         }
 
         system->changeExpansionPortMemoryMode( exRom = true, game = true, true );
+    }
+
+    auto peekUltimaxA0( uint16_t addr ) -> uint8_t {
+
+        return readUltimaxA0( addr );
     }
 
     auto readUltimaxA0( uint16_t addr ) -> uint8_t {

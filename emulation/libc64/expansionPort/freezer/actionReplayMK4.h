@@ -27,7 +27,11 @@ struct ActionReplayMK4 : Freezer {
         if (value & 4)
             enable = false;
     }    
-    
+
+    auto peekIo2( uint16_t addr ) -> uint8_t {
+        return readIo2( addr );
+    }
+
     auto readIo2( uint16_t addr ) -> uint8_t {
         
         addr = (0x1f << 8) | (addr & 0xff); // last page of selected rom bank

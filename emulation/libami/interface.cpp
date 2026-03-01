@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "242";
+const std::string Interface::Version = "243";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 
@@ -714,8 +714,7 @@ auto Interface::informAboutKeyUpdate() -> void {
 }
 
 auto Interface::cropFrame( CropType type, Crop crop ) -> void {
-    system->crop.settings.type = type;
-    system->crop.settings.crop = crop;
+    system->cropFrame( type, crop );
 }
 
 auto Interface::cropWidth() -> unsigned {
@@ -789,6 +788,54 @@ auto Interface::configRewind(unsigned steps, unsigned maxSizeInMb) -> void {
 auto Interface::setRewind(bool state) -> void {
     if (system->powerOn)
         system->history.setRewind(state);
+}
+
+auto Interface::disassemble(unsigned addr, unsigned& bytes) -> std::string {
+    return system->cpu.disassemble(addr, bytes);
+}
+
+auto Interface::disassembleData(unsigned addr, unsigned bytes) -> std::string {
+    return system->cpu.disassembleData( addr, bytes );
+}
+
+auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
+    return system->cpu.disassembleTrace( i, flags );
+}
+
+auto Interface::getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {
+    system->agnus.memoryDump(bank, dump);
+}
+
+auto Interface::getDmaDump() -> uint8_t* {
+    return system->agnus.debugger.dmaFrame;
+}
+
+auto Interface::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+    system->editMemory( addr, values );
+}
+
+auto Interface::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    system->debuggerAdd( theme, action, addr, addrTo );
+}
+
+auto Interface::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+    system->debuggerRemove( theme, action, addr );
+}
+
+auto Interface::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return system->setWatchpointCondition(action, addr, hitCount, hitCountMode, expression, expressionMode);
+}
+
+auto Interface::debuggerStepOver() -> void {
+    system->cpu.debuggerStepOver();
+}
+
+auto Interface::debuggerStepInto() -> void {
+    system->cpu.debuggerStepInto();
+}
+
+auto Interface::debuggerStepOut() -> bool {
+    return system->cpu.debuggerStepOut();
 }
 
 }

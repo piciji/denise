@@ -1,6 +1,6 @@
 
 VideoDriverLayout::Top::Top() {
-    append(exclusiveFullscreen, {0u, 0u}, 10);
+  //  append(exclusiveFullscreen, {0u, 0u}, 10);
     append(hardSync, {0u, 0u});
 	append(driver, {~0u, 0u});
 
@@ -15,13 +15,19 @@ VideoDriverLayout::VideoDriverLayout() {
 }
 
 AudioDriverLayout::Top::Top() {
-	GUIKIT::LineEdit test;
-	test.setText( "0.0005" );
 	append(frequencyLabel, {0u, 0u}, 5);
 	append(frequencyCombo, {0u, 0u}, 20);
 	append(maxRateLabel, {0u, 0u}, 5);
-	append(maxRateEdit, {test.minimumSize().width, 0u});
+	append(maxRateEditCombo, {0u, 0u});
 	append(driver, {~0u, 0u});
+
+    maxRateEditCombo.append("0.003", 30);
+    maxRateEditCombo.append("0.0035", 35);
+    maxRateEditCombo.append("0.004", 40);
+    maxRateEditCombo.append("0.0045", 45);
+    maxRateEditCombo.append("0.005", 50);
+    maxRateEditCombo.append("0.0055", 55);
+    maxRateEditCombo.append("0.006", 60);
 
 	frequencyCombo.append( "44100 Hz", 44100 );
 	frequencyCombo.append( "48000 Hz", 48000 );
@@ -60,7 +66,7 @@ InputDriverLayout::InputDriverLayout() {
 DriversLayout::DriversLayout() {
     setMargin(10);
 
-    bool showExclusiveFullscreenCheck = false;
+  //  bool showExclusiveFullscreenCheck = false;
     bool showHardSync = false;
     
 	auto selectedDriver = program->getVideoDriver();
@@ -70,8 +76,8 @@ DriversLayout::DriversLayout() {
 		if (driver == selectedDriver) {
 			vdl.top.driver.combo.setSelection( i );
 		}
-        if(GUIKIT::String::foundSubStr(driver, "Direct3D"))
-            showExclusiveFullscreenCheck = true;
+        // if(GUIKIT::String::foundSubStr(driver, "Direct3D"))
+        //     showExclusiveFullscreenCheck = true;
         
         if(GUIKIT::String::foundSubStr(driver, "GL") || GUIKIT::String::foundSubStr(driver, "Direct3D11"))
             showHardSync = true;
@@ -94,15 +100,15 @@ DriversLayout::DriversLayout() {
 
     if (vdl.top.driver.combo.rows() == 1) vdl.top.driver.setEnabled(false);
 	
-    if( showExclusiveFullscreenCheck ) {        
-        vdl.top.exclusiveFullscreen.setEnabled(false);
-
-        if (videoDriver->canExclusiveFullscreen()) {
-            vdl.top.exclusiveFullscreen.setEnabled( !globalSettings->get<bool>("threaded_emu", false) );
-            vdl.top.exclusiveFullscreen.setChecked(globalSettings->get("exclusive_fullscreen", false));
-        }
-    } else
-        vdl.top.remove( vdl.top.exclusiveFullscreen );
+    // if( showExclusiveFullscreenCheck ) {
+    //     vdl.top.exclusiveFullscreen.setEnabled(false);
+    //
+    //     if (videoDriver->canExclusiveFullscreen()) {
+    //         vdl.top.exclusiveFullscreen.setEnabled( true );
+    //         vdl.top.exclusiveFullscreen.setChecked(globalSettings->get("exclusive_fullscreen", false));
+    //     }
+    // } else
+    //     vdl.top.remove( vdl.top.exclusiveFullscreen );
     
     if( showHardSync ) {
         vdl.top.hardSync.setEnabled(videoDriver->canHardSync());
@@ -110,13 +116,13 @@ DriversLayout::DriversLayout() {
     } else
         vdl.top.remove( vdl.top.hardSync );
 	
-	vdl.top.exclusiveFullscreen.onToggle = [](bool checked) {
-        emuThread->lock();
-		globalSettings->set("exclusive_fullscreen", checked);
-
-		program->hintExclusiveFullscreen();
-        emuThread->unlock();
-	};
+	// vdl.top.exclusiveFullscreen.onToggle = [](bool checked) {
+ //        emuThread->lock();
+	// 	globalSettings->set("exclusive_fullscreen", checked);
+ //
+	// 	program->hintExclusiveFullscreen();
+ //        emuThread->unlock();
+	// };
     
     vdl.top.hardSync.onToggle = [](bool checked) {
         emuThread->lock();
@@ -167,14 +173,24 @@ DriversLayout::DriversLayout() {
         emuThread->unlock();
     };
 
-    adl.top.maxRateEdit.onChange = [this]() {
+    adl.top.maxRateEditCombo.onChange = [this]() {
         emuThread->lock();
-        globalSettings->set<std::string>("rate_control_delta", adl.top.maxRateEdit.text() );
+        float _rate = (float)adl.top.maxRateEditCombo.userData() / 10000.0;
+
+        globalSettings->set<float>("rate_control_delta", _rate );
         audioManager->setRateControl();
         emuThread->unlock();
     };
 
-    adl.top.maxRateEdit.setText( GUIKIT::String::formatFloatingPoint( globalSettings->get<double>("rate_control_delta", 0.005, {0.0, 0.010}) ) );
+    float _rate = globalSettings->get<float>("rate_control_delta", 0.005, {0.0, 0.010});
+    int curRate = (int)(_rate * 10000.0 + 0.5);
+    adl.top.maxRateEditCombo.setSelectionByUserId( 50 );
+    for(unsigned i = 0; i < adl.top.maxRateEditCombo.rows(); i++) {
+        if(adl.top.maxRateEditCombo.userData(i) == curRate) {
+            adl.top.maxRateEditCombo.setSelection(i);
+            break;
+        }
+    }
 
     auto valFre = globalSettings->get<unsigned>("audio_frequency_v2", 48000);
     for(unsigned i = 0; i < adl.top.frequencyCombo.rows(); i++) {
@@ -219,8 +235,8 @@ auto DriversLayout::translate() -> void {
 	adl.top.driver.name.setText( trans->get("driver", {}, true) );
 	idl.top.driver.name.setText( trans->get("driver", {}, true) );
 
-	vdl.top.exclusiveFullscreen.setText( trans->get("exclusive_fullscreen") );
-	vdl.top.exclusiveFullscreen.setTooltip( trans->get("exclusive_fullscreen_tooltip") );
+	//vdl.top.exclusiveFullscreen.setText( trans->get("exclusive_fullscreen") );
+	//vdl.top.exclusiveFullscreen.setTooltip( trans->get("exclusive_fullscreen_tooltip") );
     vdl.top.hardSync.setText( trans->get("hard_sync") );
 	vdl.top.hardSync.setTooltip( trans->get("hard_sync_tooltip") );
 
@@ -234,9 +250,7 @@ auto DriversLayout::translate() -> void {
 }
 
 auto DriversLayout::updateDriverPropsVisibility() -> void {
-    auto threadedEmu = globalSettings->get<bool>("threaded_emu", false);
-
-    vdl.top.exclusiveFullscreen.setEnabled( !threadedEmu && videoDriver->canExclusiveFullscreen() );
+    //vdl.top.exclusiveFullscreen.setEnabled( videoDriver->canExclusiveFullscreen() );
     vdl.top.hardSync.setEnabled( videoDriver->canHardSync() );
 }
 

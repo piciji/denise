@@ -3,6 +3,11 @@
 
 #include <cstdint>
 #include <functional>
+#include <string>
+#include <optional>
+#include "../../tools/watcher.h"
+#include "../system/memory.h"
+#include "../../interface.h"
 
 namespace Emulator {
     struct SystemTimer;
@@ -14,6 +19,7 @@ namespace CIA {
 }
 
 namespace LIBC64 {
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
 
 #define CPU_WRITE_CYCLE 0x80000000
 #define CPU_RDY_CYCLE	0x40000000
@@ -23,12 +29,22 @@ struct ExpansionPort;
 struct VicIIBase;
 struct IecBus;
 struct Traps;
+struct DebuggerSnapshot;
 
 struct M6510 {
-	
+    friend struct WatchPoints;
+    friend struct ModifiedCodes;
+    friend struct HistoryHandler;
+
+    enum { Normal = 0, IRQ = 1, Halt = 2, ResetRoutine = 4,
+        WatchPoint = 8, WatchPointWrite = 0x10, BreakPoint = 0x20, ExceptionPoint = 0x40, SoftStop = 0x80, ModifiedCode = 0x100,
+        History = 0x200
+    };
+
 	M6510(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& cia1, CIA::M6526& cia2, IecBus& iecBus, Traps& traps);
 
     System* system;
+    Memory& memory;
     Emulator::SystemTimer& sysTimer;
     CIA::M6526& cia1;
     CIA::M6526& cia2;
@@ -43,17 +59,16 @@ struct M6510 {
 	bool irqPending;
 	bool nmiPending;
 	bool nmiDetect;
-	
-	bool interruptSampled;
-	bool callResetRoutine;
-	
-	bool killed;
+
     bool oddCycle;
     uint8_t reg2mhz;
+    uint8_t lastBus;
 	
 	unsigned busState;
+    int control;
 	
 	uint16_t pc;
+    uint16_t pcEdge;
 	
 	uint8_t regX;
 	
@@ -79,35 +94,41 @@ struct M6510 {
 	
 	uint8_t pulldown;
 	
-	uint8_t magicAne = 0xef;
-	uint8_t magicLax = 0xee;
-	
-	uint8_t bit6charge;	
+	uint8_t bit6charge;
 	uint8_t bit7charge;
 	
 	using Callback = std::function<void ()>;
 	Callback unChargeBit6;
 	Callback unChargeBit7;
 
+    Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints watchPointsWrite = Emulator::WatchPoints();
+    Emulator::WatchPoints breakPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints exceptionPoints = Emulator::WatchPoints();
+    Emulator::ModifiedCodes modifiedCode = Emulator::ModifiedCodes();
+    Emulator::HistoryHandler<uint8_t> historyHandler = Emulator::HistoryHandler<uint8_t>();
+    std::optional<uint16_t> softStep = std::nullopt;
+    std::vector<uint16_t> stepOuts;
+
     auto registerCallbacks() -> void;
 
-	template<bool mhz2> auto process() -> void;
+	template<bool mhz2, bool busLogger> auto process() -> void;
 	
-	template<bool sampleInterrupt, bool rememberRdy, bool mhz2> auto busRead( uint16_t addr ) -> uint8_t;
+	template<bool sampleInterrupt, bool rememberRdy, bool mhz2, bool busLogger> auto busRead( uint16_t addr ) -> uint8_t;
 	
-	template<bool setI, bool mhz2> auto busAccessUpdateFlagI( uint16_t addr ) -> void;
+	template<bool setI, bool mhz2, bool busLogger> auto busAccessUpdateFlagI( uint16_t addr ) -> void;
 	
-	template<bool mhz2> auto busWrite( uint16_t addr, uint8_t value ) -> void;
+	template<bool mhz2, bool busLogger> auto busWrite( uint16_t addr, uint8_t value ) -> void;
 	
 	auto busWatch() -> uint8_t;
 	
-	template<bool software, bool mhz2> auto interrupt() -> void;
+	template<bool software, bool mhz2, bool busLogger> auto interrupt() -> void;
 	
 	auto power() -> void;
 	
 	auto reset() -> void;
 	
-	template<bool mhz2> auto resetRoutine() -> void;
+	template<bool mhz2, bool busLogger> auto resetRoutine() -> void;
 	
 	auto setIrq(bool state) -> void;
 	
@@ -125,17 +146,42 @@ struct M6510 {
 	
 	auto chargeUndefinedBits( uint8_t newDdr ) -> void;
 	
-	auto setMagicForAne(uint8_t magicAne) -> void;
-
-    auto getMagicForAne() -> uint8_t { return magicAne; }
-	
-	auto setMagicForLax(uint8_t magicLax) -> void;
-
-    auto getMagicForLax() -> uint8_t { return magicLax; }
-	
 	auto serialize(Emulator::Serializer& s) -> void;
     
 	auto setClock(bool state, bool aggressive = false) -> void;
+
+    auto getFlags() -> uint8_t;
+
+    auto loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void;
+
+    auto flagDebugAction(int action, bool state) -> void;
+
+    auto disassemble(uint16_t addr, unsigned& bytes, const uint8_t* memSnap = nullptr) -> std::string;
+
+    auto disassembleData(uint16_t addr, unsigned bytes) -> std::string;
+
+    auto controlBreaks() -> void;
+
+    auto checkSoftStop(uint16_t addr) -> bool;
+
+    auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
+
+    auto debuggerStepOver() -> void;
+    auto debuggerStepInto() -> void;
+    auto debuggerStepOut() -> bool;
+    auto debuggerAdd(DebuggerAction action, uint16_t addr, uint16_t addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerAction action, uint16_t addr) -> void;
+    auto debuggerRemove(DebuggerAction action) -> void;
+
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+
+    auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }
+
+    auto appendStepOut(uint16_t addr) -> void;
+
+    auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+
+    auto parseExpressionValue(const std::string& input, int& pos) -> uint32_t;
 };
 
 }

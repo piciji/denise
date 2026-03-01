@@ -184,7 +184,6 @@ auto Cmd::prepareOptions() -> void {
 	options.push_back({"-autostart-prg", "Set autostart mode for PRG files (1: Inject, 2: Disk image)", "<value>"});
 	options.push_back({"-aggressive-warp", "aggressive Warp mode (emulates VIC sequencer every 15 frames only)", ""});
 	options.push_back({"-fast-testbench", "analyze passed options and then decides on the use of aggressive warp and/or PRG memory injection", ""});
-
 }
 
 auto Cmd::printInvalidParam() -> void {
@@ -195,16 +194,16 @@ auto Cmd::printInvalidParam() -> void {
 }
 
 auto Cmd::printHelp() -> void {
-    
+
     GUIKIT::System::printToCmd( "\n" );
-    
+
     if (versionRequested) {
-        
+
         GUIKIT::System::printToCmd( "Version: " + (std::string)VERSION + "\n" );
-        
+
         return;
-    }    
-    
+    }
+
     GUIKIT::System::printToCmd( "Usage: Denise [option]... [image paths]... \n\n" );
     GUIKIT::System::printToCmd( "Available command-line options:\n" );
 
@@ -457,7 +456,6 @@ auto Cmd::parse() -> void {
 	if (debug) {
 		dynamic_cast<LIBC64::Interface*> (emuC64)->activateDebugCart( cycles );
 		globalSettings->set<bool>("video_sync", false);
-        globalSettings->set<bool>("threaded_emu", false);
 		globalSettings->set<bool>("fps", true);
 		settingsC64->set<bool>("video_cycle_accuracy", true);
         settingsC64->set<bool>("Emulate_Mechanics", emulateDriveMechanics);
@@ -634,7 +632,7 @@ auto Cmd::getCycles(std::string arg) -> unsigned {
 	return 0;
 }
 
-auto Cmd::setAutoStartPrg(std::string arg) -> void {    
+auto Cmd::setAutoStartPrg(std::string arg) -> void {
 		
     if (!GUIKIT::String::isNumber( arg ))
         return;

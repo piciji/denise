@@ -52,6 +52,7 @@ struct Via {
     } lines;
 
     std::function<uint8_t ( Port port, Lines* lines )> readPort;
+    std::function<uint8_t ( Port port, Lines* lines )> peekPort;
     std::function<void ( Port port, Lines* lines )> writePort;
 
     // outgoing transitions
@@ -71,6 +72,7 @@ struct Via {
     auto cb2In( bool direction, bool irqNextCycle = true ) -> void;
     
     auto read(uint16_t pos) -> uint8_t;
+    auto peek(uint16_t pos) -> uint8_t;
     auto write(uint16_t pos, uint8_t value) -> void;
     auto reset() -> void;
     

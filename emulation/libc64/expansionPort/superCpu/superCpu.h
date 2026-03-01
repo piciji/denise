@@ -11,6 +11,7 @@ namespace CIA {
 }
 
 namespace LIBC64 {
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
 
 struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     SuperCpu(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& cia1, CIA::M6526& cia2, SidManager& sidManager, Traps& traps);
@@ -71,6 +72,7 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     typedef void (SuperCpu::*WriteTable)(uint16_t, uint8_t);
     ReadTable readTable[0x10000] = {nullptr};
     ReadTable readTableReu[0x10000] = { nullptr };
+    ReadTable peekTable[0x10000] = {nullptr};
     WriteTable writeTable[0x90000] = {nullptr};
     WriteTable writeTableReu[0x90000] = { nullptr };
 
@@ -81,23 +83,30 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
         bool inProgress;
     } writeBuffer;
 
-    template<bool reuAccess = false> auto readC64Ram(uint16_t addr) -> uint8_t;
-    template<bool reuAccess = false> auto readSramB0(uint16_t addr) -> uint8_t;
-    template<bool reuAccess = false> auto readSramB1(uint16_t addr) -> uint8_t;
-    template<bool reuAccess = false> auto readSramChar(uint16_t addr) -> uint8_t;
-    template<bool reuAccess = false> auto readSramKernal(uint16_t addr) -> uint8_t;
-    template<bool reuAccess = false> auto readRom(uint16_t addr) -> uint8_t;
+    template<bool peekAccess = false> auto readC64Ram(uint16_t addr) -> uint8_t;
+    template<bool peekAccess = false> auto readSramB0(uint16_t addr) -> uint8_t;
+    template<bool peekAccess = false> auto readSramB1(uint16_t addr) -> uint8_t;
+    template<bool peekAccess = false> auto readSramChar(uint16_t addr) -> uint8_t;
+    template<bool peekAccess = false> auto readSramKernal(uint16_t addr) -> uint8_t;
+    template<bool peekAccess = false> auto readRom(uint16_t addr) -> uint8_t;
 
     template<bool reuAccess, uint8_t mode, uint8_t addrArea> auto writeSramAndOrHostRam(uint16_t addr, uint8_t value) -> void;
 
     template<bool reuAccess = false> auto readIoSCPU(uint16_t addr) -> uint8_t;
+    auto peekIoSCPU(uint16_t addr) -> uint8_t;
     template<bool reuAccess = false> auto readIoVIC(uint16_t addr) -> uint8_t;
+    auto peekIoVIC(uint16_t addr) -> uint8_t;
     template<bool reuAccess = false> auto readIoSID(uint16_t addr) -> uint8_t;
-    template<bool reuAccess = false> auto readIoColorRamInternal(uint16_t addr) -> uint8_t;
+    auto peekIoSID(uint16_t addr) -> uint8_t;
+    template<bool peekAccess = false> auto readIoColorRamInternal(uint16_t addr) -> uint8_t;
     template<bool reuAccess = false> auto readIoCIA1(uint16_t addr) -> uint8_t;
+    auto peekIoCIA1(uint16_t addr) -> uint8_t;
     template<bool reuAccess = false> auto readIoCIA2(uint16_t addr) -> uint8_t;
+    auto peekIoCIA2(uint16_t addr) -> uint8_t;
     template<bool reuAccess = false> auto readIo1(uint16_t addr) -> uint8_t;
+    auto peekIo1(uint16_t addr) -> uint8_t;
     template<bool reuAccess = false> auto readIo2(uint16_t addr) -> uint8_t;
+    auto peekIo2(uint16_t addr) -> uint8_t;
 
     template<bool reuAccess = false> auto writeIoSCPU(uint16_t addr, uint8_t value) -> void;
     template<bool reuAccess = false> auto writeIoVIC(uint16_t addr, uint8_t value) -> void;
@@ -124,11 +133,15 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto setDram() -> void;
 
     auto readByte(uint32_t addr) -> uint8_t;
+    auto editMemory(uint32_t addr, uint8_t value) -> void;
     auto readByteReu(uint16_t addr) -> uint8_t;
+    auto peekByte(uint32_t addr) -> uint8_t;
     auto readVectorByte(uint16_t addr) -> uint8_t;
     auto writeByte(uint32_t addr, uint8_t value) -> void;
     auto writeByteReu(uint16_t addr, uint8_t value) -> void;
     auto idleCycle(uint32_t addr) -> void;
+    auto memoryDumpBank(uint8_t bank, uint8_t* dump) -> void;
+    auto memoryDumpPage(uint8_t page, uint8_t* dump) -> void;
 
     auto trapHandler() -> bool;
 
@@ -181,6 +194,17 @@ struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     auto setRegP_N(bool state) -> void { p.n = state; }
     auto setRegP_Z(bool state) -> void { p.z = state; }
     auto setRegA(uint8_t data) -> void { a = (a & 0xff00) | data; }
+
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
+    auto debugPointReached(int source, unsigned addr) -> void;
+
+    auto debuggerAdd(DebuggerAction action, uint32_t addr, uint32_t addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerAction action, uint32_t addr) -> void;
+    auto debuggerRemove(DebuggerAction action) -> void;
+
+    auto parseExpressionValue(const std::string& input, int& pos) -> uint32_t;
+    auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 };
 
 }

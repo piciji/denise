@@ -231,8 +231,13 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
         NSFont* font = [NSFont systemFontOfSize: [NSFont systemFontSize]];
         std::string family([[font familyName] UTF8String]);
 
-        if (monospaced)
-            family = "Andale Mono";
+        if (monospaced) {
+            font = [NSFont monospacedSystemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular];
+            
+            family = [[font familyName] UTF8String];
+            // family = "Menlo";
+        }
+       
         
     //    NSLog(@"%@", [[[NSFontManager sharedFontManager] availableFontFamilies] description]);
             
@@ -343,13 +348,28 @@ auto pFont::getSizeFromString(std::string desc) -> unsigned {
     return size;
 }
     
-auto pHelper::getColor(unsigned color) -> NSColor* {
+auto pHelper::RGBToNSColor(unsigned color) -> NSColor* {
     return [NSColor
          colorWithSRGBRed:((color>>16) & 0xff) / 255.0
          green:((color>>8) & 0xff) / 255.0
          blue:(color & 0xff) / 255.0
          alpha: 1.0];
 
+}
+
+auto pHelper::NSColorToRGB(NSColor* color) -> unsigned {
+    NSColor* rgb = [color colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
+    if (!rgb)
+        return 0;
+
+    uint8_t r = (uint8_t)(rgb.redComponent   * 255.0f);
+    uint8_t g = (uint8_t)(rgb.greenComponent * 255.0f);
+    uint8_t b = (uint8_t)(rgb.blueComponent  * 255.0f);
+   // uint8_t a = (uint8_t)(rgb.alphaComponent * 255.0f);
+
+    return (uint32_t(r) << 16) |
+           (uint32_t(g) << 8) |
+           (uint32_t(b) << 0);
 }
 
 auto pThreadPriority::setPriority( ThreadPriority::Mode mode, float typicalProcessingTimeInMilliSeconds, float maxProcessingTimeInMilliSeconds ) -> bool {

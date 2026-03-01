@@ -11,6 +11,9 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <optional>
+#include "dasmHandler.h"
+#include "../../../tools/watcher.h"
 
 // Explanations are below
 // #define FC_SUPPORT
@@ -38,8 +41,15 @@ namespace M68FAMILY {
 
 class M68000 {
     typedef void (M68000::*OpTable)(uint16_t);
-    OpTable opTable[0x10000] = {0};
+    typedef void (M68000::*OpDasm)(uint16_t, uint32_t&, DasmHandler&);
+
+    OpTable opTable[0x10000] = {nullptr};
+    OpDasm* dasmTable = nullptr;
     uint8_t* mulCycleLookup = nullptr;
+
+    friend struct WatchPoints;
+    friend struct ModifiedCodes;
+    friend struct HistoryHandler;
 
 protected:
 #ifdef REF
@@ -51,18 +61,31 @@ protected:
 
     ~M68000();
 
-    enum { Byte = 1, Word = 2, Long = 4, BWL = 7, WL = 6, BW = 3 };
-    enum { Asl, Asr, Lsl, Lsr, Rol, Ror, Roxl, Roxr };
-    enum { Bchg, Bset, Bclr, Btst };
-    enum { Sub, Subx, Add, Addx, Not, Cmp, And, Or, Eor, Abcd, Sbcd };
-    enum { Adda, Suba };
-    enum { Mulu, Muls };
-    enum { Divu, Divs };
-    enum { UspAn, AnUsp };
-    enum { ToMem, ToReg };
+    enum { Asl, Asr, Lsl, Lsr, Rol, Ror, Roxl, Roxr,
+        Bchg, Bset, Bclr, Btst,
+        Sub, Subx, Add, Addx, Not, Cmp, And, Or, Eor, Abcd, Sbcd,
+        Adda, Suba, Cmpa,
+        Mulu, Muls, Divu, Divs,
+        Clr, Nbcd, Neg, Negx, Move, Movea,
+        St, Sf, Shi, Sls, Scc, Scs, Sne, Seq,
+        Svc, Svs, Spl, Smi, Sge, Slt, Sgt, Sle,
+        Bra, Bhi, Bls, Bcc, Bcs, Bne, Beq, Bvc,
+        Bvs, Bpl, Bmi, Bge, Blt, Bgt, Ble,
+        Dbt, Dbf, Dbhi, Dbls, Dbcc, Dbcs, Dbne, Dbeq,
+        Dbvc, Dbvs, Dbpl, Dbmi, Dbge, Dblt, Dbgt, Dble,
+        Addi, Subi, Cmpi, Andi, Ori, Eori, Cmpm,
+        Addq, Subq, Moveq, Movep,
+        Bsr, Jmp, Jsr, Link, Unlk, Tas, Tst,
+        Lea, Pea, Movem, Chk, Exg, Ext, Nop, Trap, Trapv,
+        Reset, Rte, Rtr, Rts, _Stop, Swap,
+    };
+
     enum { None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,
            PRG = 8, ConcurrentAdrCalc = 16 /* happens while prefetching */, Reverse = 32 };
     enum { SF_DATA = 1, SF_PRG = 2, SF_EXC = 8, SF_READ = 16 };
+
+public:
+    enum { Byte = 1, Word = 2, Long = 4, BWL = 7, WL = 6, BW = 3 };
 
     enum {
         DataRegisterDirect = 0,
@@ -78,11 +101,18 @@ protected:
         ProgramCounterIndirectWithIndex = 7 + 3,
         Immediate = 7 + 4,
     };
-    enum { Normal = 0, IRQ = 1, Trace = 2, Halt = 4, Stop = 8, TraceScheduled = 16, IRQScheduled = 32, ResetRoutine = 64 };
 
+    enum { Normal = 0, IRQ = 1, Trace = 2, Halt = 4, Stop = 8,
+        TraceScheduled = 0x10, IRQScheduled = 0x20, ResetRoutine = 0x40,
+        WatchPoint = 0x80, WatchPointWrite = 0x100, BreakPoint = 0x200, ExceptionPoint = 0x400,
+        SoftStop = 0x800, ModifiedCode = 0x1000, History = 0x2000
+    };
+
+protected:
     uint32_t regsD[8];
     uint32_t regsA[8];
     uint32_t pc;
+    uint32_t pcEdge;
 
     uint32_t usp;
     uint32_t ssp;
@@ -102,6 +132,16 @@ protected:
     uint8_t iplPins;
     uint8_t iplSample;
     int control;
+    std::vector<uint32_t> stepOuts;
+
+    Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints watchPointsWrite = Emulator::WatchPoints();
+    Emulator::WatchPoints breakPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints exceptionPoints = Emulator::WatchPoints();
+    Emulator::ModifiedCodes modifiedCode = Emulator::ModifiedCodes();
+    Emulator::HistoryHandler<uint16_t> historyHandler = Emulator::HistoryHandler<uint16_t>();
+
+    std::optional<uint32_t> softStep = std::nullopt;
 
 public:
     enum { USER_VECTOR = 0, AUTO_VECTOR = 1, UNINITIALIZED = 2,  SPURIOUS = -1};
@@ -115,6 +155,16 @@ public:
     auto setHalt() -> void; // I/O - could be halted from external device
     auto getCCR() -> uint8_t;
     auto getSR() -> uint16_t;
+
+    auto debuggerStepOver() -> void;
+    auto debuggerStepInto() -> void;
+    auto debuggerStepOut() -> bool;
+
+    auto disassemble(uint32_t addr, unsigned& bytes, uint16_t* memSnap = nullptr) -> std::string;
+    auto disassembleData(uint32_t addr, unsigned words) -> std::string;
+    auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
+    auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }
+    auto appendStepOut(uint32_t addr) -> void;
 
     // use this to calculate the needed wait states by terminating a BUS cycle with VPA line
     template<uint8_t phaseShift = 0> auto internalWaitCyclesBasedOnEClock(int eCyclePos) -> uint8_t;
@@ -145,6 +195,7 @@ protected:
     // after each cold start the phase of E-Clock could be different.
     virtual auto readByte(uint32_t adr) -> uint8_t = 0;
     virtual auto readWord(uint32_t adr) -> uint16_t = 0;
+    virtual auto peekWord(uint32_t adr) -> uint16_t = 0;
     virtual auto writeByte(uint32_t adr, uint8_t data) -> void = 0;
     virtual auto writeWord(uint32_t adr, uint16_t data) -> void = 0;
 
@@ -197,8 +248,13 @@ protected:
     // note: don't rely on TAS for Amiga, because DMA accesses don't respect AS line of CPU
     virtual auto tasCycleBegin() -> void {}
     virtual auto tasCycleEnd() -> void {}
+
+    virtual auto debugPointReached(int source, unsigned addr) -> void {}
 #endif
+
+    auto flagDebugAction(int action, bool state) -> void;
 private:
+    auto controlBreaks() -> void;
     auto setCCR(uint8_t data) -> void;
     auto setSR(uint16_t data) -> void;
     auto build() -> void;
@@ -218,10 +274,14 @@ private:
     template<uint8_t Flags = None> inline auto prefetch() -> void;
     template<uint8_t Flags = None> auto fullPrefetch() -> void;
     template<uint8_t Flags = None> inline auto readExtensionWord() -> void;
+
+    auto peek(uint32_t adr) -> uint16_t;
+    template<uint8_t Size> auto peekInc(uint32_t& adr, DasmHandler& d) -> uint32_t;
     
     template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto calcEA(int reg) -> uint32_t;
     template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto readEA(int reg, uint32_t& result, uint32_t& ea) -> bool;
     template<uint8_t Mode, uint8_t Size, uint8_t Flags = None> auto writeEA(uint32_t ea, uint32_t data) -> void;
+    template<uint8_t Mode, uint8_t Size> auto prepareEaForDasm(uint32_t& adr, uint8_t reg, DasmHandler& d) -> void;
 
     auto parse(const char* s, uint16_t sum = 0) -> uint16_t;
     template<uint8_t Size> inline auto clip(uint32_t data) -> uint32_t;
@@ -237,58 +297,71 @@ private:
         return clip<Size>(result) == 0;
     }
 
-    template<uint8_t Inst, uint8_t Size> auto opImmShift(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opRegShift(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opShift(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opBit(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opImmBit(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opClr(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opNbcd(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opNeg(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opScc(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opTas(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opTst(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opArithmetic(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opCmp(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opArithmeticEA(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opArithmeticA(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opCmpa(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opMul(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opDiv(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opMove(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opMoveA(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opArithmeticI(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opArithmeticQ(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opMoveQ(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opBcc(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opBsr(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opDbcc(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opJmp(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opJsr(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opLea(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opPea(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opMovemToReg(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opMovemToEa(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opArithmeticX(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opArithmeticXEa(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opArithmeticBCD(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opCmpm(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opCcr(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opSr(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opChk(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opMoveFromSr(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opMoveToSr(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto opMoveToCcr(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opExgDxDy(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opExgAxAy(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opExgAxDy(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opExt(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opLink(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opMoveUsp(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opSwap(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opTrap(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opUnlink(uint16_t opcode) -> void;
-    template<uint8_t Inst, uint8_t Size> auto opMovep(uint16_t opcode) -> void;
+    #define OP_DECLARE(ident) \
+        template<uint8_t Inst, uint8_t Size> auto op##ident(uint16_t) -> void; \
+        template<uint8_t Inst, uint8_t Size> auto dasm##ident(uint16_t, uint32_t&, DasmHandler&) -> void;
+
+    #define OP_DECLARE_EA(ident) \
+        template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto op##ident(uint16_t) -> void; \
+        template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto dasm##ident(uint16_t, uint32_t&, DasmHandler&) -> void;
+
+    OP_DECLARE(ImmShift)
+    OP_DECLARE(RegShift)
+    OP_DECLARE_EA(Shift)
+    OP_DECLARE_EA(Bit)
+    OP_DECLARE_EA(ImmBit)
+    OP_DECLARE_EA(Clr)
+    OP_DECLARE_EA(Nbcd)
+    OP_DECLARE_EA(Neg)
+    OP_DECLARE_EA(Scc)
+    OP_DECLARE_EA(Tas)
+    OP_DECLARE_EA(Tst)
+    OP_DECLARE_EA(Arithmetic)
+    OP_DECLARE_EA(Cmp)
+    OP_DECLARE_EA(ArithmeticEA)
+    OP_DECLARE_EA(ArithmeticA)
+    OP_DECLARE_EA(Cmpa)
+    OP_DECLARE_EA(Mul)
+    OP_DECLARE_EA(Div)
+    OP_DECLARE_EA(Move)
+    OP_DECLARE_EA(MoveA)
+    OP_DECLARE_EA(ArithmeticI)
+    OP_DECLARE_EA(ArithmeticQ)
+    OP_DECLARE(MoveQ)
+    OP_DECLARE(Bcc)
+    OP_DECLARE(Bsr)
+    OP_DECLARE(Dbcc)
+    OP_DECLARE_EA(Jmp)
+    OP_DECLARE_EA(Jsr)
+    OP_DECLARE_EA(Lea)
+    OP_DECLARE_EA(Pea)
+    OP_DECLARE_EA(MovemToReg)
+    OP_DECLARE_EA(MovemToEa)
+    OP_DECLARE(ArithmeticX)
+    OP_DECLARE(ArithmeticXEa)
+    OP_DECLARE(ArithmeticBCD)
+    OP_DECLARE(Cmpm)
+    OP_DECLARE(Ccr)
+    OP_DECLARE(Sr)
+    OP_DECLARE_EA(Chk)
+    OP_DECLARE_EA(MoveFromSr)
+    OP_DECLARE_EA(MoveToSr)
+    OP_DECLARE_EA(MoveToCcr)
+    OP_DECLARE(ExgDxDy)
+    OP_DECLARE(ExgAxAy)
+    OP_DECLARE(ExgAxDy)
+    OP_DECLARE(Ext)
+    OP_DECLARE(Link)
+    OP_DECLARE(MoveUspAn)
+    OP_DECLARE(MoveAnUsp)
+    OP_DECLARE(Swap)
+    OP_DECLARE(Trap)
+    OP_DECLARE(Unlink)
+    OP_DECLARE(MovepReg)
+    OP_DECLARE(MovepEa)
+
+    #undef OP_DECLARE_EA
+    #undef OP_DECLARE
 
     auto opTrapv(uint16_t opcode) -> void;
     auto opNop(uint16_t opcode) -> void;
@@ -297,6 +370,17 @@ private:
     auto opRtr(uint16_t opcode) -> void;
     auto opRts(uint16_t opcode) -> void;
     auto opStop(uint16_t opcode) -> void;
+
+    auto dasmTrapv(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmNop(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmReset(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmRte(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmRtr(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmRts(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmStop(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmIllegal(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmLineA(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
+    auto dasmLineF(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void;
 
     template<uint8_t Inst> auto bit(uint32_t data, int bit) -> uint32_t;
     template<uint8_t Inst, uint8_t Size, bool SingleShift = false> auto shifter(uint32_t data, int shift) -> uint32_t;
@@ -346,6 +430,9 @@ private:
 
     auto firstMovemWrite( uint16_t mask, unsigned shift, bool reverseOrder ) -> uint16_t;
     auto nextIsGroup1Exception() -> bool;
+
+    auto checkSoftStop(uint32_t addr) -> bool;
+    auto loadTrace(Emulator::HistoryEntry<uint16_t>& entry) -> void;
 };
 
 }

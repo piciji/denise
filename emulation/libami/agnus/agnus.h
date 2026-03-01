@@ -8,13 +8,17 @@
 #include "../expansionPort/fastMem.h"
 #include "../expansionPort/hdController.h"
 #include "../../tools/history.h"
+#include "../cpu/m68000/dasmHandler.h"
+#include "../cpu/m68000/m68000.h"
+#include "../system/debuggerSnapshot.h"
+#include "../../tools/crop.h"
 
 /**
  * todos:
  * AGA
  *
  * variable vsync, vblank, hsync, hblank, hcenter
- * UHRES/DUAL stuff (using two screens independantly ?)
+ * UHRES/DUAL stuff
  */
 
 namespace LIBAMI {
@@ -41,7 +45,7 @@ struct Agnus {
 
     enum { EVENT_ONE_CYCLE_DELAY, EVENT_AUDIO_STATE, EVENT_HTOTAL, EVENT_INTREQ, EVENT_RARELY,
         EVENT_KBD, EVENT_LEAVE_EMULATION, EVENT_POWER_SUPPLY, EVENT_SERIAL, EVENT_FLOPPY, EVENT_BLANKEN,
-        EVENT_CHANNELS };
+        EVENT_DEBUGGER, EVENT_CHANNELS };
 
     enum { BLT_INIT = 0, DMACON = 1,
         PTR_BLT_A_H, PTR_BLT_A_L, PTR_BLT_B_H, PTR_BLT_B_L, PTR_BLT_C_H, PTR_BLT_C_L, PTR_BLT_D_H, PTR_BLT_D_L,
@@ -61,7 +65,12 @@ struct Agnus {
 
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8, ACT_IPLCOUNTER = 0x10 };
 
-    enum { BUS_FREE, BUS_USAGE_BPL, BUS_USAGE_SPRITE, BUS_USAGE_BLITTER, BUS_USAGE_COPPER, BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_DMAL };
+    enum {
+        BUS_FREE, BUS_USAGE_BPL, BUS_USAGE_SPRITE, BUS_USAGE_BLITTER, BUS_USAGE_COPPER,
+        BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_DISK, BUS_USAGE_AUDIO,
+        BUS_USAGE_BLITTER_CONFLICT_COPPER, BUS_USAGE_BLITTER_CONFLICT_SPRITE,
+        BUS_USAGE_BPL_CONFLICT_REFRESH, BUS_USAGE_BPL_CONFLICT_SPRITE,
+    };
 
     enum { PAL, NTSC };
 
@@ -146,6 +155,33 @@ struct Agnus {
         unsigned cycles;
     } overclock;
 
+    struct Debugger {
+        Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
+        uint32_t addr;
+
+        bool dmaLog = false;
+        bool requestDmaLog = false;
+        bool dmaView = false;
+
+        uint32_t dmaWatchers[4] = { 0 };
+
+        uint8_t* frameLine = nullptr;
+        Emulator::Interface::DebuggerDma dma[256];
+
+        uint8_t* dmaFrame = nullptr;
+        uint8_t lastHpos = 0xe3;
+
+        Emulator::Interface::DebuggerAction oneTimeAction;
+        unsigned stopLine = ~0;
+
+        Emulator::Crop<uint16_t> crop;
+
+        int scrollDirection = 0;
+        unsigned scrollCounter = 0;
+        auto enableDmaView(bool state, bool withScrolling = true) -> void;
+        auto enableDmaLog(bool state) -> void;
+    } debugger;
+
     struct Sprite {
         uint32_t ptr;
         uint16_t pos;
@@ -196,6 +232,7 @@ struct Agnus {
 
     bool useRTC = false;
     uint16_t dataBus = 0;
+    uint32_t addrBus = 0;
     uint16_t dmaCon;
     uint16_t dmaConImm;
     bool dmaConCop;
@@ -283,9 +320,16 @@ struct Agnus {
     auto checkHardDrives() -> void;
 
     auto readByte(uint32_t adr) -> uint8_t;
+    template<bool logDma> auto readByte(uint32_t adr) -> uint8_t;
     auto writeByte(uint32_t adr, uint8_t value) -> void;
-    auto readWord(uint32_t adr) -> uint16_t;    
+    template<bool logDma> auto writeByte(uint32_t adr, uint8_t value) -> void;
+    auto readWord(uint32_t adr) -> uint16_t;
+    template<bool logDma> auto readWord(uint32_t adr) -> uint16_t;
+    auto peekWord(uint32_t adr) -> uint16_t;
     auto writeWord(uint32_t adr, uint16_t value) -> void;
+    auto editWord(uint32_t adr, uint16_t value) -> void;
+    template<bool logDma> auto writeWord(uint32_t adr, uint16_t value) -> void;
+    auto memoryDump(uint8_t bank, uint16_t* dump) -> void;
 
     auto fakeWriteByte(uint32_t adr, uint8_t value) -> void;
     auto fakeWriteByte(uint32_t adr, uint8_t* data, unsigned len) -> void;
@@ -300,8 +344,9 @@ struct Agnus {
     }
 
     auto sync(unsigned cycles) -> void;
+    template<bool logDma> auto sync(unsigned cycles) -> void;
     auto dmaCycle() -> void;
-    auto addWaitstatesToCPU() -> void;
+    template<bool logDma> auto addWaitstatesToCPU() -> void;
     auto iackCycle(uint8_t level, uint8_t& vector) -> int;
     auto resetOut() -> void;
     auto pullResetLine(bool state = true) -> void;
@@ -314,6 +359,7 @@ struct Agnus {
 
     auto writeCustom(uint16_t adr, uint16_t value, uint8_t triggeredBy = Trigger_CPU) -> void;
     template<bool byteAccess = false> auto readCustom(uint16_t adr, bool triggeredByWrite = false) -> uint16_t;
+    auto peekCustom(uint16_t addr) -> uint16_t;
 
     inline auto canBlitterUseBus() -> bool;
     auto canBlitterUseBusExt() -> bool;
@@ -418,16 +464,16 @@ struct Agnus {
     auto vposw(uint16_t value) -> void;
     auto vhposw(uint16_t value) -> void;
 
-    auto logDmaUsage(bool waitForCpu = false) -> void;
-    auto logDmaCondition() -> bool;
-
     auto startHblank() -> void;
+    auto startHblankDebug() -> void;
+
     auto endHblank() -> void;
     auto startHsync() -> void;
 
     template<bool quadruple> auto doubleResMidframe(bool fromHires) -> void;
-    inline auto doublePixel(uint16_t* _ptr, unsigned _xStart) -> void;
-    inline auto quadruplePixel(uint16_t* _ptr, unsigned _xStart) -> void;
+    template<bool quadruple> auto doubleResMidDebugframe(bool fromHires) -> void;
+    template<typename T> static auto doublePixel(T* _ptr, unsigned _xStart) -> void;
+    template<typename T> static auto quadruplePixel(T* _ptr, unsigned _xStart) -> void;
 
     auto updateCropTop() -> void;
     auto updateCropBottom() -> void;
@@ -455,6 +501,18 @@ struct Agnus {
     }
 
     inline auto updateDdfEnableCache() -> void;
+
+    auto debugPointReached(int source, unsigned addr) -> void;
+    auto oneTimeDebuggerAction() -> void;
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateDmaSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
+
+    auto addDmaLogEntry() -> void;
+    auto peekDmaWatcher(Emulator::Interface::DebuggerDma& dmaLogger) -> void;
+    auto debuggerAutoUpdate() -> void;
+    auto debuggerUpdateEvent() -> void;
 };
 
 }

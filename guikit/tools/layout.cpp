@@ -201,6 +201,22 @@ auto Layout::addFrameSize(Size min) -> Size {
     return min;
 }
 
+auto Layout::alignChildWidth(std::vector<Layout*> layouts, unsigned pos) -> void {
+    unsigned neededWidth = 0;
+
+    for (auto* layout : layouts) {
+        if (layout->children.size() > pos) {
+            unsigned minWidth = layout->children[pos].sizable->minimumSize().width;
+            neededWidth = std::max<unsigned>(neededWidth, minWidth);
+        }
+    }
+
+    for (auto* layout : layouts) {
+        if (layout->children.size() > pos)
+            layout->children[pos].size.width = neededWidth;
+    }
+}
+
 auto FixedLayout::append(Widget& widget, Geometry geometry) -> void {
     for(auto& child : children) if(child.sizable == &widget) return;
     children.push_back({&widget, geometry.size(), geometry.position(), 0, 0, false});

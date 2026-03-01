@@ -25,7 +25,6 @@ struct pWindow {
     CocoaWindow* cocoaWindow = nullptr;
     bool locked = false;
     bool fullScreenToggleDelay = false;
-    bool keepMenuVisibility = false;
     NSCursor* customCursor = nullptr;
     BackgroundView* backgroundView = nullptr;
     Timer resizeTimer;
@@ -46,7 +45,6 @@ struct pWindow {
     auto setTitle(std::string text) -> void;
     auto setStatusVisible(bool visible) -> void;
     auto setMenuVisible(bool visible) -> void;
-    auto keepMenuVisibilityOnDisplay(bool state) -> void;
     auto setFullScreen(bool fullScreen) -> void;
     auto updateFullScreen( bool inUse, unsigned displayId = 0, unsigned settingId = 0) -> void;
     auto setDroppable(bool droppable) -> void;
@@ -128,6 +126,7 @@ struct pWidget {
     virtual auto setBackgroundColor(unsigned color) -> void {}
     virtual auto setForegroundColor(unsigned color) -> void {}
     virtual auto setForegroundColorThreaded(unsigned color) -> void {}
+    auto getTextColor() -> NSColor*;
     auto getMinimumSize() -> Size;
     auto add() -> void;
     virtual auto init() -> void {}
@@ -147,6 +146,8 @@ struct pLineEdit : pWidget {
     auto text() -> std::string;
     auto init() -> void;
     auto setDroppable(bool droppable) -> void;
+    auto setPlaceholder(const std::string& placeholder) -> void;
+    auto setAlign( LineEdit::Align align ) -> void;
 
     pLineEdit(LineEdit& lineEdit) : pWidget(lineEdit), lineEdit(lineEdit) { }
 };
@@ -180,7 +181,6 @@ struct pLabel : pWidget {
     auto setForegroundColor(unsigned color) -> void;
     virtual auto setForegroundColorThreaded(unsigned color) -> void;
     auto setAlign( Label::Align align ) -> void;
-    auto getTextColor() -> NSColor*;
 
     pLabel(Label& label) : pWidget(label), label(label) { }
 };
@@ -213,6 +213,55 @@ struct pSquareCanvas : pWidget {
     auto setGeometry(Geometry geometry) -> void;
     
     pSquareCanvas(SquareCanvas& squareCanvas) : pWidget(squareCanvas), squareCanvas(squareCanvas) {}
+};
+
+struct pMultiSquareCanvas : pWidget {
+    MultiSquareCanvas& multiSquareCanvas;
+    NSImage* surface = nullptr;
+    NSBitmapImageRep* bitmap = nullptr;
+    unsigned* drawArea = nullptr;
+
+    auto init() -> void;
+    auto redraw() -> void;
+    auto update() -> void;
+    auto setPadding(unsigned padding) -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto buildDrawArea() -> void;
+    auto updateScrollRange() -> void {}
+
+    pMultiSquareCanvas(MultiSquareCanvas& multiSquareCanvas) : pWidget(multiSquareCanvas), multiSquareCanvas(multiSquareCanvas) {}
+    ~pMultiSquareCanvas();
+};
+
+struct pLogicViewer : pWidget {
+    LogicViewer& logicViewer;
+    NSFont* nsFont = nil;
+    Timer scrollTimer;
+
+    auto init() -> void;
+    auto redraw() -> void;
+    auto update() -> void;
+    auto setGeometry(Geometry geometry) -> void;
+    auto updateScrollRange() -> void {}
+    auto scrollToActive() -> void;
+    auto buildDmaSlot(CGContextRef context, LogicState& logicState, Geometry geo, bool lastSlot) -> void;
+    auto setBox(Geometry& geo, int offset) -> void;
+    auto pg(int val) -> CGFloat;
+    auto drawText(Geometry& geo, const std::string& str, NSColor* nsCol) -> void;
+    auto drawLine(CGContextRef context, Geometry& geo, NSColor* nsCol) -> void;
+    
+    auto drawRect(CGContextRef context, LogicState::Display display, Geometry& geo, const std::string& text, NSColor* nsCol, unsigned padding) -> void;
+    auto drawRect(CGContextRef context, Geometry& geo, const std::string& str, NSColor* nsCol) -> void;
+    auto drawRectRounded(CGContextRef context, Geometry& geo, const std::string& str, NSColor* nsCol, unsigned padding) -> void;
+    auto drawRectLeftRounded(CGContextRef context, Geometry& geo, const std::string& str, NSColor* nsCol, unsigned padding) -> void;
+    auto drawRectRightRounded(CGContextRef context, Geometry& geo, const std::string& str, NSColor* nsCol, unsigned padding) -> void;
+    
+    auto setRoundedPath(CGContextRef context, Geometry& geo) -> void;
+    auto setLeftRoundedPath(CGContextRef context, Geometry& geo) -> void;
+    auto setRightRoundedPath(CGContextRef context, Geometry& geo) -> void;
+
+    pLogicViewer(LogicViewer& logicViewer) : pWidget(logicViewer), logicViewer(logicViewer) {}
+    ~pLogicViewer();
 };
 
 struct pImageView : pWidget {
@@ -328,6 +377,8 @@ struct pRadioBox : pWidget {
     auto setEnabled(bool enabled) -> void;
     auto setFont(std::string font) -> void;
     auto setTooltip(std::string tooltip) -> void;
+    auto setForegroundColor(unsigned color) -> void;
+    auto setAttributedText() -> void;
 
     auto init() -> void;
     auto setText(const std::string& text) -> void;
@@ -359,7 +410,7 @@ struct pListView : pWidget {
         int height = 0;
     } fontAdjust;
 
-    auto append(const std::vector<std::string>& list) -> void;
+    auto append(const std::vector<std::string>& list, bool preventColumnResizing = false) -> void;
     auto autoSizeColumns() -> void;
     auto remove(unsigned selection) -> void;
     auto reset() -> void;
@@ -367,11 +418,11 @@ struct pListView : pWidget {
     auto setHeaderVisible(bool visible) -> void;
     auto setSelection(unsigned selection) -> void;
     auto setSelected(bool selected) -> void;
-    auto setText(unsigned selection, unsigned position, const std::string& text) -> void;
+    auto setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing = false) -> void;
     auto init() -> void;
     auto setEnabled(bool enabled) -> void;
     auto setGeometry(Geometry geometry) -> void;
-    auto setImage(unsigned selection, unsigned position, Image& image) -> void;
+    auto setImage(unsigned selection, unsigned position, Image& image, bool preventColumnResizing = false) -> void;
     auto releaseRowImages(unsigned selection) -> void;
     auto releaseAllImages() -> void;
     auto setForegroundColor(unsigned color) -> void;
@@ -384,7 +435,10 @@ struct pListView : pWidget {
     auto lockRedraw() -> void {}
     auto unlockRedraw() -> void {}
     auto setSelectionColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
-    auto setFirstRowColor(unsigned foregroundColor = 0, unsigned backgroundColor = 0) -> void {}
+    auto updateRowColors() -> void;
+    auto updateRowForegroundColors() -> void;
+    auto updateSpacing() -> void {}
+    auto getFirstVisibleRow() -> unsigned;
 
     pListView(ListView& listView) : pWidget(listView), listView(listView) { }
     ~pListView();
@@ -503,7 +557,7 @@ struct pMenu : pMenuBase {
     
     auto append(MenuBase& item) -> void;
     auto remove(MenuBase& item) -> void;
-    auto update(Window& window) -> void;
+    auto update(Window* window) -> void {}
     auto init() -> void;
     auto setText(const std::string& text) -> void;
     auto setIcon(Image& icon) -> void;
@@ -593,6 +647,10 @@ struct pFont {
     static auto getSizeFromString(std::string desc) -> unsigned;
 };
 
+struct pColorChooser {
+    static auto choose(ColorChooser::State& state) -> std::optional<unsigned>;
+};
+
 struct pSystem {
     static auto getUserDataFolder() -> std::string;
     static auto getResourceFolder(std::string appIdent) -> std::string;
@@ -656,7 +714,8 @@ struct pInterProcess {
 };
     
 struct pHelper {
-    static auto getColor(unsigned color) -> NSColor*;
+    static auto RGBToNSColor(unsigned color) -> NSColor*;
+    static auto NSColorToRGB(NSColor* color) -> unsigned;
 };
 
 auto NSMakeImage(Image& image, unsigned width = 0, unsigned height = 0, unsigned addLines = 0) -> NSImage*;

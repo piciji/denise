@@ -170,9 +170,9 @@ auto pComboButton::measureItem(LPMEASUREITEMSTRUCT lpmis) -> bool {
             if (_size.height > maxHeight)
                 maxHeight = _size.height;
         }
-    } else if (comboButton.rows()) {
-        std::string _str = comboButton.text(0);
-        maxHeight = pFont::size(hfont, _str).height;
+    } else /*if (comboButton.rows())*/ {
+        //std::string _str = comboButton.text(0);
+        maxHeight = pFont::size(hfont, " ").height;
     }
 
     if (maxHeight) {

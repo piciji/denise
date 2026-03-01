@@ -39,7 +39,9 @@ struct RetroReplay : FreezeButton {
     auto writeIo1( uint16_t addr, uint8_t value ) -> void;
     auto writeIo2( uint16_t addr, uint8_t value ) -> void;
     auto readIo1( uint16_t addr ) -> uint8_t;
+    auto peekIo1( uint16_t addr ) -> uint8_t;
     auto readIo2( uint16_t addr ) -> uint8_t;
+    auto peekIo2( uint16_t addr ) -> uint8_t;
     auto setJumper( unsigned jumperId, bool state ) -> void;
     auto getJumper( unsigned jumperId ) -> bool;
     template<bool specialCase = false> auto getFlashAddr( uint32_t addr ) -> uint32_t;
@@ -47,11 +49,14 @@ struct RetroReplay : FreezeButton {
     auto init() -> void;
     
     auto readRomL( uint16_t addr ) -> uint8_t;
+    auto peekRomL( uint16_t addr ) -> uint8_t;
     auto writeRomL( uint16_t addr, uint8_t data ) -> void;
     auto listenToWritesAt80To9F(uint16_t addr, uint8_t data ) -> void;
     auto writeUltimaxRomL( uint16_t addr, uint8_t data ) -> void;
     
     auto readRomH( uint16_t addr ) -> uint8_t;
+    auto peekRomH( uint16_t addr ) -> uint8_t;
+    auto peekUltimaxA0( uint16_t addr ) -> uint8_t;
     auto readUltimaxA0( uint16_t addr ) -> uint8_t;
     
     

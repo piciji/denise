@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../interface.h"
+#include "system/debuggerSnapshot.h"
 
 namespace LIBC64 {
 
@@ -15,8 +16,7 @@ struct Interface : Emulator::Interface {
     
     enum ModelId {
         ModelIdSid, ModelIdFilter, ModelIdDigiboost, ModelIdBias6581,
-        ModelIdCiaRev, ModelIdCpuAneMagic, ModelIdGlueLogic,
-        ModelIdLeftLineAnomaly, ModelIdVicIIModel, ModelIdCpuLaxMagic,
+        ModelIdCiaRev, ModelIdGlueLogic, ModelIdVicIIModel,
 		ModelIdDisableGreyDotBug, ModelIdSidFilterType, ModelIdSidSampleFetch, ModelIdBias8580,
         ModelIdSidMulti, ModelIdSidExternal, ModelIdSidFilterVolumeEqualizer,
                      ModelIdSid1Left, ModelIdSid1Right, ModelIdSid1Adr, ModelIdSid2, ModelIdSid2Left, ModelIdSid2Right, ModelIdSid2Adr,
@@ -29,7 +29,7 @@ struct Interface : Emulator::Interface {
         ModelIdCycleAccurateVideo, ModelIdDiskThread, ModelIdDiskOnDemand, ModelIdD64AccuracyDeprecated,
         ModelIdReuRam, ModelIdGeoRam, ModelIdIntensifyPseudoStereo,
     	ModelIdEmulateDriveMechanics, ModelIdDriveStepperDelay, ModelIdDriveAcceleration, ModelIdDriveDeceleration,
-    	ModelIdSidSeparateInput, ModelIdSuperCpuRam, ModelIdTrackZeroSensor, ModelId2Mhz,
+    	ModelIdSuperCpuRam, ModelIdTrackZeroSensor, ModelId2Mhz,
         ModelIdSidUsbPico, ModelIdSidUsbPicoBufferSize, ModelIdSidUsbPicoDiffSize,
     };
     
@@ -212,6 +212,26 @@ struct Interface : Emulator::Interface {
 
     auto configRewind(unsigned steps, unsigned maxSizeInMb) -> void;
     auto setRewind(bool state) -> void;
+
+    // debugger
+    auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
+    auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void;
+    auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+
+    auto debuggerStepOver() -> void;
+    auto debuggerStepInto() -> void;
+    auto debuggerStepOut() -> bool;
+
+    // disassembler
+    auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
+    auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
+    auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
+	auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void;
+	auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void;
+    auto getDmaDump() -> uint8_t*;
+
+    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
+
 private:
 	auto prepareDevices() -> void;
 	auto prepareMedia() -> void;

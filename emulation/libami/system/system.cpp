@@ -7,6 +7,10 @@
 #include "serialization.cpp"
 #include "dongle.cpp"
 #include "../expansionPort/builtinHD.h"
+#include "../../tools/memory.h"
+
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
 
 namespace LIBAMI {
 
@@ -181,6 +185,14 @@ rtc(agnus) {
         return _c;
     };
 
+    agnus.debugger.crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+        crop.removeBorderCallback(top, bottom, left, right);
+    };
+
+    agnus.debugger.crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+        crop.monitorBorderCallback(top, bottom, left, right);
+    };
+
     paula.activeDrive = &diskDrives[0];
     ntsc = false;
     firmwareChanged = true;
@@ -283,13 +295,14 @@ auto System::run() -> void {
     } else
         agnus.updateEvent<Agnus::EVENT_LEAVE_EMULATION>(227 * 312 + 30000); // Blitter could block CPU too long
 
+    if (agnus.debugger.action == DebuggerAction::UIRequestedStop) {
+        debuggerUpdate();
+    }
+
     labelRunAhead:
 
     while( !leaveEmulation ) {
         cpu.process();
-#ifdef LOG_CPU_STATE
-        cpu.logState();
-#endif
     }
 
     denise.process(); // keep up, so we don't need to serialize BplUpdate
@@ -322,6 +335,15 @@ auto System::run() -> void {
         informAboutStateChange();
 }
 
+auto System::debuggerUpdate() -> void {
+    agnus.debuggerUpdateEvent();
+
+    debuggerSnapshot.mutex.lock();
+    updateDebuggerSnapshot();
+    interface->debugger(&debuggerSnapshot); // callback needs to unlock
+    agnus.debugger.action = DebuggerAction::None;
+}
+
 auto System::informAboutKeyUpdate() -> void {
     input.sampling.externalKeyEvent = true; // call from another thread
 }
@@ -340,13 +362,11 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool all
     switch (typeId) {
         case 0:
         default:
-            agnus.kickRom = data;
-            agnus.kickRomSize = size;
+            Emulator::copyMemory<uint8_t>( agnus.kickRom, agnus.kickRomSize, data, size );
             agnus.kickRomMask = size ? (Emulator::powerOfTwo( size ) - 1) : 0;
             break;
         case 1:
-            agnus.extRom = data;
-            agnus.extRomSize = size;
+            Emulator::copyMemory<uint8_t>( agnus.extRom, agnus.extRomSize, data, size );
             agnus.extRomMask = size ? (Emulator::powerOfTwo( size ) - 1) : 0;
             break;
     }
@@ -354,7 +374,9 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool all
 
 auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
     if (!runAhead.pos && frame) {
-        crop.apply( frame, width, height, linePitch, options & 15 );
+        if (agnus.debugger.dmaView)
+            options |= 0x80;
+        crop.apply( frame, width, height, linePitch, options & 0x8f );
         // for lightguns
         // input.drawCursor();
     }
@@ -378,7 +400,7 @@ auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, uns
     }
 
     if (!runAhead.pos) {
-        this->interface->videoRefresh(frame, width, height, linePitch, options & 15);
+        this->interface->videoRefresh(frame, width, height, linePitch, options & 0xf);
     }
 
     leaveEmulation = true;
@@ -663,6 +685,184 @@ auto System::setHDDAsync(bool state) -> void {
 
 auto System::getHDDAsync() -> bool {
     return asyncHDDAccess;
+}
+
+auto System::cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop _crop ) -> void {
+    crop.settings.type = type;
+    crop.settings.crop = _crop;
+    agnus.debugger.crop.settings.type = type;
+    agnus.debugger.crop.settings.crop = _crop;
+}
+
+auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
+    switch (theme) {
+        case DebuggerTheme::Video:
+            debuggerSnapshot.themes |= (unsigned)theme;
+            denise.debugger.setEnable( true );
+            break;
+        case DebuggerTheme::Bus:
+            switch (action) {
+                case DebuggerAction::DmaView:
+                    agnus.debugger.enableDmaView(true, addr == 0);
+                    break;
+                case DebuggerAction::DmaLog:
+                    debuggerSnapshot.themes |= (unsigned)theme;
+                    agnus.debugger.enableDmaLog(true);
+                    break;
+                case DebuggerAction::DmaWatch:
+                    agnus.debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
+                    break;
+            } break;
+        case DebuggerTheme::CheckpointsCore1:
+            cpu.debuggerAdd( action, addr, addrTo );
+            break;
+
+        case DebuggerTheme::Unspecified: {
+            switch (action) {
+                case DebuggerAction::Line:
+                    agnus.debugger.stopLine = addr;
+                case DebuggerAction::Frame:
+                    agnus.debugger.oneTimeAction = action;
+                    break;
+                case DebuggerAction::AutoUpdate:
+                    if (addr == 1) {
+                        updateDebuggerSnapshot();
+                    }
+                    break;
+                case DebuggerAction::UIRequestedStop:
+                    agnus.debugger.action = DebuggerAction::UIRequestedStop;
+                    break;
+            }
+        } break;
+        default:
+            debuggerSnapshot.themes |= (unsigned)theme;
+            break;
+    }
+
+    agnus.debuggerUpdateEvent();
+}
+
+auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+    switch (theme) {
+        case DebuggerTheme::Video:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
+            denise.debugger.setEnable( false );
+            break;
+        case DebuggerTheme::Bus:
+            switch (action) {
+                case DebuggerAction::DmaView:
+                    agnus.debugger.enableDmaView(false, !addr.has_value() || (addr.value() == 0));
+                    break;
+                case DebuggerAction::DmaLog:
+                    debuggerSnapshot.themes &= ~(unsigned)theme;
+                    agnus.debugger.enableDmaLog(false);
+                    break;
+                case DebuggerAction::DmaWatch:
+                    agnus.debugger.dmaWatchers[addr.value() & 3] = 0;
+                    break;
+            } break;
+        case DebuggerTheme::CheckpointsCore1:
+            if (addr.has_value())
+                cpu.debuggerRemove( action, addr.value() );
+            else
+                cpu.debuggerRemove( action );
+            break;
+        default:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
+            break;
+    }
+    agnus.debuggerUpdateEvent();
+}
+
+auto System::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+}
+
+auto System::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+    for (int i = 0; i < values.size(); i++) {
+        uint32_t a = (addr + (i * 2) ) & 0xffffff;
+        uint16_t v = values[i] & 0xffff;
+
+        agnus.editWord( a, v );
+    }
+}
+
+auto System::updateDebuggerSnapshot() -> void {
+    agnus.updateSnapshot(debuggerSnapshot);
+
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CPU)
+        cpu.updateSnapshot(debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Memory)
+        agnus.updateMemorySnapshot(debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CIA)
+        updateCiaDebuggerSnapshot(debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Video) {
+        denise.updateSnapshot(debuggerSnapshot);
+        agnus.updateVideoSnapshot( debuggerSnapshot );
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus)
+        agnus.updateDmaSnapshot( debuggerSnapshot );
+}
+
+auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& c1p0 = snap.cia[0].port[0];
+    c1p0.pr = cia1.lines.pra;
+    c1p0.ddr = cia1.lines.ddra;
+    c1p0.io = cia1.peek( 0 );
+    c1p0.timer = cia1.timerA.counter;
+    c1p0.timerLatch = cia1.timerA.latch;
+    c1p0.oneshot = cia1.timerA.oneshot;
+    c1p0.pbOut = cia1.timerA.control & 2;
+    c1p0.toggleOut = cia1.timerA.control & 4;
+    c1p0.timerRunning = !!cia1.timerA.run;
+
+    auto& c1p1 = snap.cia[0].port[1];
+    c1p1.pr = cia1.lines.prb;
+    c1p1.ddr = cia1.lines.ddrb;
+    c1p1.io = cia1.peek( 1 );
+    c1p1.timer = cia1.timerB.counter;
+    c1p1.timerLatch = cia1.timerB.latch;
+    c1p1.oneshot = cia1.timerB.oneshot;
+    c1p1.pbOut = cia1.timerB.control & 2;
+    c1p1.toggleOut = cia1.timerB.control & 4;
+    c1p1.timerRunning = !!cia1.timerB.run;
+
+    auto& c2p0 = snap.cia[1].port[0];
+    c2p0.pr = cia2.lines.pra;
+    c2p0.ddr = cia2.lines.ddra;
+    c2p0.io = cia2.peek( 0 );
+    c2p0.timer = cia2.timerA.counter;
+    c2p0.timerLatch = cia2.timerA.latch;
+    c2p0.oneshot = cia2.timerA.oneshot;
+    c2p0.pbOut = cia2.timerA.control & 2;
+    c2p0.toggleOut = cia2.timerA.control & 4;
+    c2p0.timerRunning = !!cia2.timerA.run;
+
+    auto& c2p1 = snap.cia[1].port[1];
+    c2p1.pr = cia2.lines.prb;
+    c2p1.ddr = cia2.lines.ddrb;
+    c2p1.io = cia2.peek( 1 );
+    c2p1.timer = cia2.timerB.counter;
+    c2p1.timerLatch = cia2.timerB.latch;
+    c2p1.oneshot = cia2.timerB.oneshot;
+    c2p1.pbOut = cia2.timerB.control & 2;
+    c2p1.toggleOut = cia2.timerB.control & 4;
+    c2p1.timerRunning = !!cia2.timerB.run;
+
+    snap.cia[0].icr = cia1.icr;
+    snap.cia[0].icrMask = cia1.icrmask;
+    snap.cia[1].icr = cia2.icr;
+    snap.cia[1].icrMask = cia2.icrmask;
+
+    snap.cia[0].tod = cia1.todc;
+    snap.cia[0].todAlarm = cia1.alarm;
+    snap.cia[1].tod = cia2.todc;
+    snap.cia[1].todAlarm = cia2.alarm;
+
+    snap.cia[0].sdr = cia1.sdr;
+    snap.cia[0].shiftCount = cia1.sdrShiftCount;
+    snap.cia[1].sdr = cia2.sdr;
+    snap.cia[1].shiftCount = cia2.sdrShiftCount;
 }
 
 template auto System::dongleJoydat<false>(uint16_t& val) -> void;

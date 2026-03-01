@@ -94,4 +94,18 @@ auto pWidget::add() -> void {
     setFont( widget.font() );
 }
    
+auto pWidget::getTextColor() -> NSColor* {
+    if (!widget.enabled())
+        return [NSColor grayColor];
+
+    NSColor* textColor = [NSColor textColor];
+        
+    if(widget.overrideForegroundColor()) {
+        unsigned color = widget.foregroundColor();
+        textColor = pHelper::RGBToNSColor( color );
+    }
+
+    return textColor;
+}
+
 }

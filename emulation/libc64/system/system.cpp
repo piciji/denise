@@ -19,6 +19,10 @@
 #include "map.cpp"
 #include "../expansionPort/gameCart/businessBasic.h"
 #include "../traps/traps.h"
+#include "../../tools/memory.h"
+
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
 
 namespace LIBC64 {
 
@@ -109,6 +113,14 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return (uint8_t) this->kernalRom[ addr & 0x1fff ];
     };
 
+    peekKernalRom = [this](uint16_t addr) {
+
+        if (expansionPort->hasHiramCableConnected())
+            return expansionPort->peekRomH(addr & 0x1fff);
+
+        return (uint8_t) this->kernalRom[ addr & 0x1fff ];
+    };
+
     readBasicRom = [this](uint16_t addr) {
 
         return (uint8_t) this->basicRom[ addr & 0x1fff ];
@@ -119,9 +131,19 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return expansionPort->readRomL( addr & 0x1fff );
     };
 
+    peekRomL = [this](uint16_t addr) {
+
+        return expansionPort->peekRomL( addr & 0x1fff );
+    };
+
     readRomH = [this](uint16_t addr) {
 
         return expansionPort->readRomH( addr & 0x1fff );
+    };
+
+    peekRomH = [this](uint16_t addr) {
+
+        return expansionPort->peekRomH( addr & 0x1fff );
     };
 
     writeRomL = [this](uint16_t addr, uint8_t value) {
@@ -146,6 +168,10 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     readUltimaxA0 = [this](uint16_t addr) {
         return expansionPort->readUltimaxA0( addr & 0x1fff );
+    };
+
+    peekUltimaxA0 = [this](uint16_t addr) {
+        return expansionPort->peekUltimaxA0( addr & 0x1fff );
     };
 
     writeUltimaxA0 = [this](uint16_t addr, uint8_t value) {
@@ -184,6 +210,19 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return expansionPort->readIo1(addr);
     };
 
+    peekIo1Reg = [this](uint16_t addr) {
+
+        if (sidManager.extraSids) {
+            Sid* _sid = sidManager.getSidByAdr( addr, true );
+            if (_sid) {
+                sidManager.updateClock();
+                return _sid->peekIO( addr );
+            }
+        }
+
+        return expansionPort->peekIo1(addr);
+    };
+
     writeIo2Reg = [this](uint16_t addr, uint8_t value) {
 
         if (sidManager.extraSids) {
@@ -204,6 +243,19 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         }
 
         return expansionPort->readIo2(addr);
+    };
+
+    peekIo2Reg = [this](uint16_t addr) {
+
+        if (sidManager.extraSids) {
+            Sid* _sid = sidManager.getSidByAdr( addr, true );
+            if (_sid) {
+                sidManager.updateClock();
+                return _sid->peekIO( addr );
+            }
+        }
+
+        return expansionPort->peekIo2(addr);
     };
 
     writeSidReg = [this](uint16_t addr, uint8_t value) {
@@ -238,6 +290,16 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return sidManager.sid->readIO( addr );
     };
 
+    peekSidReg = [this](uint16_t addr) {
+
+        sidManager.updateClock();
+
+        if (sidManager.extraSids)
+            return sidManager.getSidByAdr( addr )->peekIO( addr );
+
+        return sidManager.sid->peekIO( addr );
+    };
+
     writeVicReg = [this](uint16_t addr, uint8_t value) {
 
         vicII->writeReg( addr & 0xff, value );
@@ -246,6 +308,11 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
     readVicReg = [this](uint16_t addr) {
 
         return vicII->readReg( addr & 0xff );
+    };
+
+    peekVicReg = [this](uint16_t addr) {
+
+        return vicII->peekReg( addr & 0xff );
     };
 
     writeCia1Reg = [this](uint16_t addr, uint8_t value) {
@@ -258,6 +325,11 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return cia1.read( addr );
     };
 
+    peekCia1Reg = [this](uint16_t addr) {
+
+        return cia1.peek( addr );
+    };
+
     writeCia2Reg = [this](uint16_t addr, uint8_t value) {
 
         cia2.write( addr, value );
@@ -266,6 +338,11 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
     readCia2Reg = [this](uint16_t addr) {
 
         return cia2.read(addr);
+    };
+
+    peekCia2Reg = [this](uint16_t addr) {
+
+        return cia2.peek(addr);
     };
 
     writeColorRam = [this](uint16_t addr, uint8_t value) {
@@ -410,6 +487,14 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return vicII->getCrop(_w, _h);
     };
 
+    vicIICycle.debugger.crop.removeBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+        crop->removeBorderCallback(top, bottom, left, right);
+    };
+
+    vicIICycle.debugger.crop.monitorBorderCallback = [this](unsigned& top, unsigned& bottom, unsigned& left, unsigned& right) {
+        crop->monitorBorderCallback(top, bottom, left, right);
+    };
+
     tape.setReadTransition = [this]() {
 
         cia1.setFlag();
@@ -432,7 +517,7 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         // and forced down when datasette is running
         // all other lines are not forced up or down in input mode?
         // means switching from output to input mode doesn't change line
-        // Note: when Dattasette not connected: motor line is forced down
+        // Note: when Datasette not connected: motor line is forced down
 
         if (!state)
             cpu.updateIoLines( 0x17 );
@@ -448,7 +533,14 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         sysTimer.add( &countDownPowerSupply, powerSupply->nextTickCount(), Emulator::SystemTimer::Action::UpdateExisting );
     };
 
-    sysTimer.registerCallback( { &countDownPowerSupply, 1 } );
+    debuggerAutoUpdater = [this]() {
+        if (debugger.action == DebuggerAction::None) {
+            debugger.action = DebuggerAction::AutoUpdate;
+            debuggerUpdate();
+        }
+    };
+
+    sysTimer.registerCallback( {{ &countDownPowerSupply, 1 }, { &debuggerAutoUpdater, 1 }} );
 
     // connect keyboard
     for( auto& device : interface->devices ) {
@@ -487,17 +579,23 @@ auto System::setFirmware( unsigned typeId, uint8_t* data, unsigned size, bool al
 
             } else if (!data || (size != 8192))
                 data = (uint8_t*)Firmware::kernalRom;
-            kernalRom = data;
+
+            size = 8192;
+            Emulator::copyMemory<uint8_t>( kernalRom, size, data, size );
             break;
         case Interface::FirmwareIdBasic:
             if (!data || (size != 8192))
                 data = (uint8_t*)Firmware::basicRom;
-            basicRom = data;
+
+            size = 8192;
+            Emulator::copyMemory<uint8_t>( basicRom, size, data, size );
             break;
         case Interface::FirmwareIdChar:
             if (!data || (size != 4096))
                 data = (uint8_t*)Firmware::charRom;
-            charRom = data;
+
+            size = 4096;
+            Emulator::copyMemory<uint8_t>( charRom, size, data, size );
             break;
         default:
             iecBus.setFirmware( typeId, data, size );
@@ -516,7 +614,6 @@ auto System::power( bool softReset ) -> void {
 
     mode = (expansionPort->isExrom() << 1) | expansionPort->isGame();
 
-    vicBank = 0;
     mhz2 &= ~0x80;
 
     mode <<= 3;
@@ -568,9 +665,6 @@ auto System::power( bool softReset ) -> void {
         // vic hasn't a reset line ... means no change ?
         cpu.reset();
     }
-    if (expansionPort->haltMainCpu())
-        cpu.callResetRoutine = false;
-
 
     // cpu doesn't leave halted state by reset request   
     //cpu->setRdy( false );
@@ -644,6 +738,7 @@ auto System::power( bool softReset ) -> void {
     }
 
     history.reset();
+    debuggerUpdateEvent();
     powerOn = true;
 }
 
@@ -700,14 +795,6 @@ auto System::run() -> void {
     leaveEmulation = false;
     runAhead.pos = 0;
     acia->connectionLock = false;
-
-    if (cpu.callResetRoutine) {
-        if (mhz2)
-            cpu.resetRoutine<true>();
-        else
-            cpu.resetRoutine<false>();
-    }
-
     input.poll();
 
     if (input.restore())
@@ -720,7 +807,7 @@ auto System::run() -> void {
     iecBus.randomizeRpm();
 
     runAhead.active = !warp.config && runAhead.frames && !traps.installed
-        && !keyBuffer->isPrgInjectionInQueue();
+        && !debuggerSnapshot.themes && !keyBuffer->isPrgInjectionInQueue();
 
     if (history.enable()) {
         if (history.rewind) {
@@ -750,23 +837,29 @@ auto System::run() -> void {
         sidManager.disableAudioOut( runAhead.frames > 1 );
     }
 
+    if (debugger.action == DebuggerAction::UIRequestedStop) {
+        debuggerUpdate();
+    }
+
     labelRunAhead:
 
     if (haltMainCpu) {
         while( !leaveEmulation ) {
-            expansionPort->clock();
+            superCpu->clock();
             if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
                 iecBus.syncDrives();
         }
     } else if (!mhz2) {
         while( !leaveEmulation ) {
-            cpu.process<false>();
+            vicII->debugger.dmaLog ? cpu.process<false, true>() : cpu.process<false, false>();
+
             if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
                 iecBus.syncDrives();
         }
     } else {
         while( !leaveEmulation ) {
-            cpu.process<true>();
+            vicII->debugger.dmaLog ? cpu.process<true, true>() : cpu.process<true, false>();
+
             if (!diskSilence.idle && !secondDriveCable.cycleSyncing)
                 iecBus.syncDrives();
         }
@@ -797,6 +890,15 @@ auto System::run() -> void {
         informAboutStateChange();
 
     debugCart->check();
+}
+
+auto System::debuggerUpdate() -> void {
+    debuggerUpdateEvent();
+
+    debuggerSnapshot.mutex.lock();
+    updateDebuggerSnapshot();
+    interface->debugger(&debuggerSnapshot);
+    debugger.action = DebuggerAction::None;
 }
 
 auto System::isUltimax() -> bool {
@@ -942,7 +1044,7 @@ auto System::videoRefresh( uint8_t* frame, unsigned width, unsigned height, unsi
     }
 
     if (!runAhead.pos && frame) {
-        crop->apply( frame, width, height, linePitch );
+        crop->apply( frame, width, height, linePitch, vicII->debugger.dmaView ? 0x80 : 0);
         // for lightguns
         input.drawCursor();
     }
@@ -1245,6 +1347,296 @@ auto System::toggle2Mhz() -> bool {
     }
     interface->updateLedState(Emulator::Interface::LedId::MHz2, (mhz2 & 0x80) ? 1 : 0);
     return mhz2 & 0x80;
+}
+
+auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void {
+    switch (theme) {
+        case DebuggerTheme::Video:
+            debuggerSnapshot.themes |= (unsigned)theme;
+            vicIICycle.debugger.enableSpriteStore( true );
+            vicIIFast.debugger.enableSpriteStore( true );
+            break;
+        case DebuggerTheme::Audio:
+            debuggerSnapshot.themes |= (unsigned)theme;
+            break;
+        case DebuggerTheme::Bus:
+            switch (action) {
+                case DebuggerAction::DmaView:
+                    vicIICycle.enableDmaView(true, addr == 0);
+                    break;
+                case DebuggerAction::DmaLog:
+                    debuggerSnapshot.themes |= (unsigned)theme;
+                    vicIICycle.debugger.enableDmaLog(true);
+                    break;
+                case DebuggerAction::DmaWatch:
+                    debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
+                    break;
+            } break;
+        case DebuggerTheme::CheckpointsCore1:
+            cpu.debuggerAdd( action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
+            break;
+        case DebuggerTheme::CheckpointsCore2:
+            superCpu->debuggerAdd(action, addr, addrTo);
+            break;
+        case DebuggerTheme::Unspecified: {
+            switch (action) {
+                case DebuggerAction::Line:
+                    vicII->debugger.stopLine = addr;
+                case DebuggerAction::Frame:
+                case DebuggerAction::HaltCPU:
+                    vicII->debugger.action = action;
+                    break;
+                case DebuggerAction::AutoUpdate:
+                    if (addr == 1) {
+                        updateDebuggerSnapshot();
+                    }
+                    break;
+                case DebuggerAction::UIRequestedStop:
+                    debugger.action = DebuggerAction::UIRequestedStop;
+                    break;
+            }
+        } break;
+        default:
+            debuggerSnapshot.themes |= (unsigned)theme;
+            break;
+    }
+
+    debuggerUpdateEvent();
+}
+
+auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr) -> void {
+    switch (theme) {
+        case DebuggerTheme::Video:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
+            vicIICycle.debugger.enableSpriteStore( false );
+            vicIIFast.debugger.enableSpriteStore( false );
+            break;
+        case DebuggerTheme::Audio:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
+            break;
+        case DebuggerTheme::Bus:
+            switch (action) {
+                case DebuggerAction::DmaView:
+                    vicIICycle.enableDmaView(false, !addr.has_value() || (addr.value() == 0));
+                    break;
+                case DebuggerAction::DmaLog:
+                    debuggerSnapshot.themes &= ~(unsigned)theme;
+                    vicIICycle.debugger.enableDmaLog(false);
+                    break;
+                case DebuggerAction::DmaWatch:
+                    debugger.dmaWatchers[addr.value() & 3] = 0;
+                    break;
+            } break;
+        case DebuggerTheme::CheckpointsCore1:
+            if (addr.has_value())
+                cpu.debuggerRemove( action, addr.value() );
+            else
+                cpu.debuggerRemove( action);
+            break;
+        case DebuggerTheme::CheckpointsCore2:
+            if (addr.has_value())
+                superCpu->debuggerRemove( action, addr.value());
+            else
+                superCpu->debuggerRemove( action );
+            break;
+        default:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
+            break;
+    }
+    debuggerUpdateEvent();
+}
+
+auto System::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    if (expansionPort->haltMainCpu())
+        return superCpu->setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+
+    return cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+}
+
+auto System::debuggerStepOver() -> void {
+    if (expansionPort->haltMainCpu())
+        superCpu->debuggerStepOver();
+    else
+        cpu.debuggerStepOver();
+}
+
+auto System::debuggerStepInto() -> void {
+    if (expansionPort->haltMainCpu())
+        superCpu->debuggerStepInto();
+    else
+        cpu.debuggerStepInto();
+}
+
+auto System::debuggerStepOut() -> bool {
+    if (expansionPort->haltMainCpu())
+        return superCpu->debuggerStepOut();
+
+    return cpu.debuggerStepOut();
+}
+
+auto System::getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {
+    if (expansionPort->haltMainCpu())
+        dynamic_cast<SuperCpu*>(expansionPort)->memoryDumpBank(bank, dump);
+}
+
+auto System::getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {
+    if (expansionPort->haltMainCpu())
+        dynamic_cast<SuperCpu*>(expansionPort)->memoryDumpPage(page, dump);
+    else
+        memoryDump(page, dump);
+}
+
+auto System::debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+    debugger.action = action;
+    debugger.addr = addr;
+    debuggerUpdate();
+}
+
+auto System::updateDebuggerSnapshot() -> void {
+    debuggerSnapshot.superCpu = expansionPort->haltMainCpu();
+    debuggerSnapshot.callbackAction = debugger.action;
+    debuggerSnapshot.callbackAddress = debugger.addr;
+    debuggerSnapshot.codeMaybeModified = debuggerSnapshot.superCpu ? superCpu->hasModifiedCode() : cpu.hasModifiedCode();
+
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CPU) {
+        if (expansionPort->haltMainCpu())
+            superCpu->updateSnapshot(debuggerSnapshot);
+        else
+            cpu.updateSnapshot(debuggerSnapshot);
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Memory) {
+        if (expansionPort->haltMainCpu())
+            superCpu->updateMemorySnapshot( debuggerSnapshot );
+        else
+            updateMemorySnapshot(debuggerSnapshot);
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CIA) {
+        updateCiaDebuggerSnapshot(debuggerSnapshot);
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Video) {
+        vicII->updateVideoSnapshot(debuggerSnapshot);
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus) {
+        vicII->updateDmaSnapshot(debuggerSnapshot);
+    }
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Audio) {
+        sidManager.updateSnapshot( debuggerSnapshot );
+    }
+
+    vicII->updatePositionSnapshot(debuggerSnapshot);
+}
+
+auto System::debuggerUpdateEvent() -> void {
+    if (debuggerSnapshot.themes) {
+        sysTimer.add( &debuggerAutoUpdater, (63 * 312 + 31) * 5, Emulator::SystemTimer::Action::UpdateExisting );
+    } else
+        sysTimer.remove( &debuggerAutoUpdater );
+}
+
+auto System::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {
+    snap.mode = mode;
+
+    for (uint8_t a = 0; a <= 0xf; a++ ) {
+        if (memoryCpu.isLocation(a << 4, &readRam)) snap.mapper[a] = 1;
+        else if (memoryCpu.isLocation(a << 4, &readVicReg)) snap.mapper[a] = 2;
+        else if (memoryCpu.isLocation(a << 4, &readCharRom)) snap.mapper[a] = 3;
+        else if (memoryCpu.isLocation(a << 4, &readKernalRom)) snap.mapper[a] = 4;
+        else if (memoryCpu.isLocation(a << 4, &readBasicRom)) snap.mapper[a] = 5;
+        else if (memoryCpu.isLocation(a << 4, &readRomL)) snap.mapper[a] = 6;
+        else if (memoryCpu.isLocation(a << 4, &readRomH)) snap.mapper[a] = 7;
+        else if (memoryCpu.isLocation(a << 4, &readUltimaxA0)) snap.mapper[a] = 8;
+        else snap.mapper[a] = 0; // unmapped
+    }
+}
+
+auto System::disassemble(unsigned addr, unsigned& bytes) -> std::string {
+    if (expansionPort->haltMainCpu())
+        return dynamic_cast<SuperCpu*>(expansionPort)->disassemble(addr, bytes);
+
+    return cpu.disassemble(addr, bytes);
+}
+
+auto System::disassembleData(unsigned addr, unsigned bytes) -> std::string {
+    if (expansionPort->haltMainCpu())
+        return dynamic_cast<SuperCpu*>(expansionPort)->disassembleData(addr, bytes);
+
+    return cpu.disassembleData( (uint16_t)addr, bytes );
+}
+
+auto System::disassembleTrace(unsigned i, uint8_t& flags) -> std::string {
+    if (expansionPort->haltMainCpu())
+        return dynamic_cast<SuperCpu*>(expansionPort)->disassembleTrace(i, flags);
+
+    return cpu.disassembleTrace( i, flags );
+}
+
+auto System::cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop _crop ) -> void {
+    crop->settings.type = type;
+    crop->settings.crop = _crop;
+
+    vicIICycle.debugger.crop.settings.type = type;
+    vicIICycle.debugger.crop.settings.crop = _crop;
+}
+
+auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& c1p0 = snap.cia[0].port[0];
+    c1p0.pr = cia1.lines.pra;
+    c1p0.ddr = cia1.lines.ddra;
+    c1p0.io = cia1.lines.ioa & cia1.peek(0);
+    c1p0.timer = cia1.timer[0].counter;
+    c1p0.timerLatch = cia1.timer[0].latch;
+    c1p0.oneshot = cia1.timer[0].oneshot;
+    c1p0.pbOut = cia1.timer[0].control & 2;
+    c1p0.toggleOut = cia1.timer[0].control & 4;
+    c1p0.timerRunning = !!cia1.timer[0].run;
+
+    auto& c1p1 = snap.cia[0].port[1];
+    c1p1.pr = cia1.lines.prb;
+    c1p1.ddr = cia1.lines.ddrb;
+    c1p1.io = cia1.lines.iob & cia1.peek(1);
+    c1p1.timer = cia1.timer[1].counter;
+    c1p1.timerLatch = cia1.timer[1].latch;
+    c1p1.oneshot = cia1.timer[1].oneshot;
+    c1p1.pbOut = cia1.timer[1].control & 2;
+    c1p1.toggleOut = cia1.timer[1].control & 4;
+    c1p1.timerRunning = !!cia1.timer[1].run;
+
+    auto& c2p0 = snap.cia[1].port[0];
+    c2p0.pr = cia2.lines.pra;
+    c2p0.ddr = cia2.lines.ddra;
+    c2p0.io = cia2.peek(0);
+    c2p0.timer = cia2.timer[0].counter;
+    c2p0.timerLatch = cia2.timer[0].latch;
+    c2p0.oneshot = cia2.timer[0].oneshot;
+    c2p0.pbOut = cia2.timer[0].control & 2;
+    c2p0.toggleOut = cia2.timer[0].control & 4;
+    c2p0.timerRunning = !!cia2.timer[0].run;
+
+    auto& c2p1 = snap.cia[1].port[1];
+    c2p1.pr = cia2.lines.prb;
+    c2p1.ddr = cia2.lines.ddrb;
+    c2p1.io = cia2.peek(1);
+    c2p1.timer = cia2.timer[1].counter;
+    c2p1.timerLatch = cia2.timer[1].latch;
+    c2p1.oneshot = cia2.timer[1].oneshot;
+    c2p1.pbOut = cia2.timer[1].control & 2;
+    c2p1.toggleOut = cia2.timer[1].control & 4;
+    c2p1.timerRunning = !!cia2.timer[1].run;
+
+    snap.cia[0].icr = cia1.icr;
+    snap.cia[0].icrMask = cia1.icrmask;
+    snap.cia[1].icr = cia2.icr;
+    snap.cia[1].icrMask = cia2.icrmask;
+
+    snap.cia[0].tod = cia1.todc;
+    snap.cia[0].todAlarm = cia1.alarm;
+    snap.cia[1].tod = cia2.todc;
+    snap.cia[1].todAlarm = cia2.alarm;
+
+    snap.cia[0].sdr = cia1.sdr;
+    snap.cia[0].shiftCount = cia1.sdrShiftCount;
+    snap.cia[1].sdr = cia2.sdr;
+    snap.cia[1].shiftCount = cia2.sdrShiftCount;
 }
 
 }
