@@ -109,16 +109,14 @@ auto pLogicViewer::update() -> void {
     unsigned neededWidth = maxSlots * (DMA_SLOT_WIDTH + 1);
     const auto& geometry = logicViewer.geometry();
     
-    unsigned width = geometry.width;
     unsigned height = geometry.height;
     
     CGFloat innerHeight = height;
     if ([(id)cocoaView hasHorizontalScroller]) {
-        CGFloat scrollHeight = [NSScroller scrollerWidthForControlSize:NSControlSizeRegular
-                                                         scrollerStyle:[(id)cocoaView scrollerStyle]] + 2.0;
+        CGFloat scrollHeight = [NSScroller scrollerWidthForControlSize:NSControlSizeRegular scrollerStyle:[(id)cocoaView scrollerStyle]] + 2.0;
         
         if (scrollHeight < height)
-        innerHeight = height - scrollHeight;
+            innerHeight = height - scrollHeight;
     }
     
     [[(id)cocoaView content] setFrameSize:NSMakeSize(neededWidth, innerHeight)];
@@ -188,25 +186,12 @@ auto pLogicViewer::redraw() -> void {
     unsigned width = geometry.width;
     unsigned height = geometry.height;
     
-  //  CGFloat innerHeight = height;
-    //if ([(id)cocoaView hasHorizontalScroller]) {
-      //  CGFloat scrollHeight = [NSScroller scrollerWidthForControlSize:NSControlSizeRegular
-        //                                 scrollerStyle:[(id)cocoaView scrollerStyle]] + 2.0;
-        
-       // if (scrollHeight < height)
-         //   innerHeight = height - scrollHeight;
-   // }
-
-  //  [[(id)cocoaView content] setFrameSize:NSMakeSize(neededWidth, innerHeight)];
-    
     NSClipView* clipView = [(id)cocoaView contentView];
     NSRect visibleRect = [clipView documentVisibleRect];
     CGFloat _scrollOffset = visibleRect.origin.x;
 
     unsigned offset = 0;
     unsigned scrollPos = (unsigned)_scrollOffset;
-
-   // fprintf(stderr, "%i ", scrollPos);
 
     if (neededWidth <= width)
         width = neededWidth;
