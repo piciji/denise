@@ -1417,25 +1417,25 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
         case DebuggerTheme::Bus:
             switch (action) {
                 case DebuggerAction::DmaView:
-                    vicIICycle.enableDmaView(false, !addr.has_value() || (addr.value() == 0));
+                    vicIICycle.enableDmaView(false, !addr.has_value() || (addr.value_or(0) == 0));
                     break;
                 case DebuggerAction::DmaLog:
                     debuggerSnapshot.themes &= ~(unsigned)theme;
                     vicIICycle.debugger.enableDmaLog(false);
                     break;
                 case DebuggerAction::DmaWatch:
-                    debugger.dmaWatchers[addr.value() & 3] = 0;
+                    debugger.dmaWatchers[addr.value_or(0) & 3] = 0;
                     break;
             } break;
         case DebuggerTheme::CheckpointsCore1:
             if (addr.has_value())
-                cpu.debuggerRemove( action, addr.value() );
+                cpu.debuggerRemove( action, addr.value_or(0) );
             else
                 cpu.debuggerRemove( action);
             break;
         case DebuggerTheme::CheckpointsCore2:
             if (addr.has_value())
-                superCpu->debuggerRemove( action, addr.value());
+                superCpu->debuggerRemove( action, addr.value_or(0));
             else
                 superCpu->debuggerRemove( action );
             break;

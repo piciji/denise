@@ -751,19 +751,19 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
         case DebuggerTheme::Bus:
             switch (action) {
                 case DebuggerAction::DmaView:
-                    agnus.debugger.enableDmaView(false, !addr.has_value() || (addr.value() == 0));
+                    agnus.debugger.enableDmaView(false, !addr.has_value() || (addr.value_or(0) == 0));
                     break;
                 case DebuggerAction::DmaLog:
                     debuggerSnapshot.themes &= ~(unsigned)theme;
                     agnus.debugger.enableDmaLog(false);
                     break;
                 case DebuggerAction::DmaWatch:
-                    agnus.debugger.dmaWatchers[addr.value() & 3] = 0;
+                    agnus.debugger.dmaWatchers[addr.value_or(0) & 3] = 0;
                     break;
             } break;
         case DebuggerTheme::CheckpointsCore1:
             if (addr.has_value())
-                cpu.debuggerRemove( action, addr.value() );
+                cpu.debuggerRemove( action, addr.value_or(0) );
             else
                 cpu.debuggerRemove( action );
             break;

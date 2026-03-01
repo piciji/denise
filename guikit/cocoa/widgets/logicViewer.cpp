@@ -80,7 +80,13 @@ auto pLogicViewer::init() -> void {
     @autoreleasepool {
         cocoaView = [[CocoaLogicViewerScroll alloc] initWith:logicViewer];
     }
-    nsFont = [[NSFont monospacedSystemFontOfSize:11 weight:NSFontWeightRegular] retain];
+    
+    if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:)]) {
+        nsFont = [[NSFont monospacedSystemFontOfSize:11 weight:NSFontWeightRegular] retain];
+    } else {
+        nsFont = [[[NSFontManager sharedFontManager] fontWithFamily:@"Menlo" traits:0 weight:NSFontWeightRegular size:10] retain];
+    }
+    
     scrollTimer.onFinished = [this]() {
         scrollToActive();
     };
@@ -90,6 +96,23 @@ auto pLogicViewer::init() -> void {
 
 auto pLogicViewer::update() -> void {
     [[(id)cocoaView content] setNeedsDisplay:YES];
+    unsigned maxSlots = logicViewer.state.logics.size();
+    unsigned neededWidth = maxSlots * (DMA_SLOT_WIDTH + 1);
+    const auto& geometry = logicViewer.geometry();
+    
+    unsigned width = geometry.width;
+    unsigned height = geometry.height;
+    
+    CGFloat innerHeight = height;
+    if ([(id)cocoaView hasHorizontalScroller]) {
+        CGFloat scrollHeight = [NSScroller scrollerWidthForControlSize:NSControlSizeRegular
+                                                         scrollerStyle:[(id)cocoaView scrollerStyle]] + 2.0;
+        
+        if (scrollHeight < height)
+        innerHeight = height - scrollHeight;
+    }
+    
+    [[(id)cocoaView content] setFrameSize:NSMakeSize(neededWidth, innerHeight)];
 }
 
 auto pLogicViewer::setGeometry(Geometry geometry) -> void {
@@ -156,16 +179,16 @@ auto pLogicViewer::redraw() -> void {
     unsigned width = geometry.width;
     unsigned height = geometry.height;
     
-    CGFloat innerHeight = height;
-    if ([(id)cocoaView hasHorizontalScroller]) {
-        CGFloat scrollHeight = [NSScroller scrollerWidthForControlSize:NSControlSizeRegular
-                                         scrollerStyle:[(id)cocoaView scrollerStyle]] + 2.0;
+  //  CGFloat innerHeight = height;
+    //if ([(id)cocoaView hasHorizontalScroller]) {
+      //  CGFloat scrollHeight = [NSScroller scrollerWidthForControlSize:NSControlSizeRegular
+        //                                 scrollerStyle:[(id)cocoaView scrollerStyle]] + 2.0;
         
-        if (scrollHeight < height)
-            innerHeight = height - scrollHeight;
-    }
+       // if (scrollHeight < height)
+         //   innerHeight = height - scrollHeight;
+   // }
 
-    [[(id)cocoaView content] setFrameSize:NSMakeSize(neededWidth, innerHeight)];
+  //  [[(id)cocoaView content] setFrameSize:NSMakeSize(neededWidth, innerHeight)];
     
     NSClipView* clipView = [(id)cocoaView contentView];
     NSRect visibleRect = [clipView documentVisibleRect];
@@ -231,7 +254,7 @@ auto pLogicViewer::buildDmaSlot(CGContextRef context, LogicState& logicState, Ge
     NSColor* nsCol = pHelper::RGBToNSColor(logicState.active ? 0xe0e0e0 : 0x808080);
     
     geo.height = 20;
-    drawText(geo, String::convertToHex(logicState.position), nsCol);
+    drawText(geo, std::to_string(logicState.position), nsCol);
     geo.y += geo.height + 5;
     
     if (logicState.display != LogicState::Display::EmptyBlock) {

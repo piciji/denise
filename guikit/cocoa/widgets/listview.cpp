@@ -133,6 +133,9 @@
         
         NSRect targetRect = NSMakeRect(frame.origin.x, frame.origin.y, frame.size.height, frame.size.height);
         NSRect sourceRect = NSMakeRect(0, 0, [image size].width, [image size].height);
+        
+       // [[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
+        
         [image drawInRect:targetRect fromRect:sourceRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
         
         [[NSGraphicsContext currentContext] restoreGraphicsState];
@@ -171,7 +174,7 @@
         std::optional<unsigned> rowColor = listView->rowForegroundColor( _row, _col );
         
         if (rowColor.has_value()) {
-            textColor = GUIKIT::pHelper::RGBToNSColor( rowColor.value() );
+            textColor = GUIKIT::pHelper::RGBToNSColor( rowColor.value_or(0) );
         
         } else if(listView->overrideForegroundColor()) {
             textColor = GUIKIT::pHelper::RGBToNSColor( listView->foregroundColor() );
@@ -194,7 +197,7 @@
     } else if (![self isHighlighted]) {
         std::optional<unsigned> rowColor = listView->rowBackgroundColor( _row );
         if (rowColor.has_value()) {
-            NSColor* frcol = GUIKIT::pHelper::RGBToNSColor( rowColor.value() );
+            NSColor* frcol = GUIKIT::pHelper::RGBToNSColor( rowColor.value_or(0) );
             [frcol set];
             NSRectFill(frame);
         }

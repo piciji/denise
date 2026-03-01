@@ -129,9 +129,9 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
             auto result = colorChooser.choose();
             if (result.has_value()) {
                 emuThread->lock();
-                dmaColors[ id ].color = result.value();
-                settings->set<unsigned>(saveIdent() + "_color_" + std::to_string( id ), result.value());
-                busUsage->canvas.setBackgroundColor( result.value() );
+                dmaColors[ id ].color = result.value_or(0);
+                settings->set<unsigned>(saveIdent() + "_color_" + std::to_string( id ), result.value_or(0));
+                busUsage->canvas.setBackgroundColor( result.value_or(0) );
                 emuThread->unlock();
             }
         };

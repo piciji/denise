@@ -603,7 +603,7 @@ auto W65816::disassembleTrace(unsigned i, uint8_t& flags) -> std::string {
 }
 
 auto W65816::checkSoftStop(uint32_t addr) -> bool {
-    if (!softStep.has_value() || softStep.value() == addr) {
+    if (!softStep.has_value() || softStep.value_or(0) == addr) {
         control &= ~SoftStop;
         return true;
     }

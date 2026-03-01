@@ -451,7 +451,7 @@ auto M68000::flagDebugAction(int action, bool state) -> void {
 }
 
 auto M68000::checkSoftStop(uint32_t addr) -> bool {
-    if (!softStep.has_value() || softStep.value() == addr) {
+    if (!softStep.has_value() || softStep.value_or(0) == addr) {
         control &= ~SoftStop;
         return true;
     }

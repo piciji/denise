@@ -232,10 +232,14 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
         std::string family([[font familyName] UTF8String]);
 
         if (monospaced) {
-            font = [NSFont monospacedSystemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular];
+            family = "Menlo";
             
-            family = [[font familyName] UTF8String];
-            // family = "Menlo";
+            if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:)]) {
+                font = [NSFont monospacedSystemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular];
+                
+                if (font)
+                    family = [[font familyName] UTF8String];
+            }
         }
        
         

@@ -251,7 +251,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             updateWatcherList();
             emuThread->unlock();
             updateInstructionBreakpointVisuals(row, watcher);
-            cpu->instructionLayout.list.setSelection( currentInstRow.has_value() ? currentInstRow.value() : 0 );
+            cpu->instructionLayout.list.setSelection( currentInstRow.has_value() ? currentInstRow.value_or(0) : 0 );
         } else if (isPaused()) {
             auto& inst = instructions[row];
             cpu->state.options.address.edit.setText( GUIKIT::String::convertToHex( inst.addr ) );
@@ -264,7 +264,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
             Watcher* watcher = findWatcherBy(inst.addr, DebuggerAction::Breakpoint);
             if (watcher)
                 createWatchpointConditionOverlay(watcher, position);
-            cpu->instructionLayout.list.setSelection( currentInstRow.has_value() ? currentInstRow.value() : 0 );
+            cpu->instructionLayout.list.setSelection( currentInstRow.has_value() ? currentInstRow.value_or(0) : 0 );
         }
     };
 
@@ -307,11 +307,11 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
                 emulator->debuggerRemove(getCpuType(), watcher.action, watcher.addr);
 
             if (instRow.has_value())
-                updateInstructionBreakpointVisuals(instRow.value(), &watcher);
+                updateInstructionBreakpointVisuals(instRow.value_or(0), &watcher);
         } else if (column == 3) {
             emulator->debuggerRemove( getCpuType(), watcher.action, watcher.addr);
             if (instRow.has_value())
-                removeInstructionBreakpoint(instRow.value());
+                removeInstructionBreakpoint(instRow.value_or(0));
 
             removeFromWatcherList(watcher.addr, watcher.action);
             updateWatcherList();
@@ -366,7 +366,7 @@ auto CpuDebugger::buildTheme() -> GUIKIT::Layout* {
         if (action == DebuggerAction::Breakpoint) {
             auto instRow = findInstructionRowBy(static_cast<unsigned>(address));
             if (instRow.has_value())
-                updateInstructionBreakpointVisuals(instRow.value(), findWatcherBy( address, action ));
+                updateInstructionBreakpointVisuals(instRow.value_or(0), findWatcherBy( address, action ));
         }
 
         emulator->debuggerAdd(getCpuType(), action, address);
@@ -630,12 +630,12 @@ auto CpuDebugger::updateBreakpointVisuals(Watcher* watcher) -> void {
     std::optional<unsigned> instRow = findInstructionRowBy(watcher->addr);
 
     if (instRow.has_value())
-        updateInstructionBreakpointVisuals(instRow.value(), watcher);
+        updateInstructionBreakpointVisuals(instRow.value_or(0), watcher);
 
     instRow = findWatcherRowBy( watcher->addr, watcher->action );
 
     if (instRow.has_value())
-        updateWatcherBreakpointVisuals(instRow.value(), watcher);
+        updateWatcherBreakpointVisuals(instRow.value_or(0), watcher);
 }
 
 auto CpuDebugger::updateInstructionBreakpointVisuals(unsigned row, Watcher* watcher, bool preventColumResizing) -> void {
@@ -683,7 +683,7 @@ auto CpuDebugger::updateWatcherSelection() -> void {
         || snapshot->callbackAction == DebuggerAction::ExceptionPoint) {
         auto row = findWatcherRowBy(snapshot->callbackAddress, snapshot->callbackAction);
         if (row.has_value())
-            watcherList.setSelection( row.value() );
+            watcherList.setSelection( row.value_or(0) );
         else if (watcherList.selected())
             watcherList.setSelected( false );
     } else if (watcherList.selected())
@@ -693,7 +693,7 @@ auto CpuDebugger::updateWatcherSelection() -> void {
 auto CpuDebugger::searchAddress(unsigned addr) -> void {
     auto instRow = findInstructionRowBy(static_cast<unsigned>(addr));
     if (instRow.has_value())
-        cpu->instructionLayout.list.setSelection( instRow.value() );
+        cpu->instructionLayout.list.setSelection( instRow.value_or(0) );
     else {
         emuThread->lock();
         fetchInstructions(addr);
@@ -776,7 +776,7 @@ auto CpuDebugger::updateTheme() -> void {
         updateTraceList();
 
     if (currentInstRow.has_value()) {
-        cpu->instructionLayout.list.setSelection( currentInstRow.value() );
+        cpu->instructionLayout.list.setSelection( currentInstRow.value_or(0) );
     } else {
         updateInstructionList();
     }
