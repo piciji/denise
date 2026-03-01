@@ -1070,6 +1070,8 @@ auto CpuDebugger::createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Pos
     if (isAmiga()) {
         for (auto& cond: LIBAMI::DebuggerSnapshot::breakConditions)
             placeHolder += " " + (std::string)cond.ident;
+
+        GUIKIT::String::replace( placeHolder, ":", ":$000000" );
     } else {
         if (mode == Mode::SCPU) {
             for (auto& cond: LIBC64::DebuggerSnapshot::breakConditionsSCPU)
@@ -1078,11 +1080,13 @@ auto CpuDebugger::createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Pos
             for (auto& cond: LIBC64::DebuggerSnapshot::breakConditions)
                 placeHolder += " " + (std::string)cond.ident;
         }
+
+        GUIKIT::String::replace( placeHolder, ":", ":$0000" );
     }
 
     breakConditionLayout->info.setText(
         trans->getA("operators") + ": $ | & ^ || &&  == != <= < << >= > >> + - * / % \n" +
-        trans->getA("replacements") + ": " + placeHolder + "$0000"
+        trans->getA("replacements") + ": " + placeHolder
     );
 
     breakConditionLayout->control.closeButton.setText( trans->getA( "close" ) );
