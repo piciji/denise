@@ -38,6 +38,11 @@
         //    [self setAutomaticallyAdjustsContentInsets:NO];
           //  [self setContentInsets:NSEdgeInsetsMake(0, 0, 0, 0)];
         }
+        
+        [[self contentView] setPostsBoundsChangedNotifications:YES];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+            selector:@selector(boundsDidChange:)
+            name:NSViewBoundsDidChangeNotification object:[self contentView]];
 
       //  [content setTarget:self];
     }
@@ -51,6 +56,10 @@
 
 -(CocoaLogicViewer*) content {
     return content;
+}
+
+-(void)boundsDidChange:(NSNotification*)notification {
+    logicViewer->p.update();
 }
 
 -(void)scrollWheel:(NSEvent*)event {
