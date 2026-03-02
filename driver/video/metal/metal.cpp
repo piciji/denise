@@ -1389,6 +1389,7 @@ namespace DRIVER {
 
         for (auto& pass : preset->passes) {
             MTLProgram* program = new MTLProgram;
+            program->pipelineState = nil;
             program->inUse = pass.inUse;
             program->codeVertex = pass.vertex;
             program->codeFragment = pass.fragment;
