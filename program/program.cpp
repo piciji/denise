@@ -155,6 +155,9 @@ auto Program::initUserInterface() -> void {
     if (cmd->noGui) {
 		emuThread->enable( false );
         GUIKIT::Application::loop = [this]() { loopNoGui(); };
+    } else if (cmd->debug) {
+        emuThread->enable( false );
+        GUIKIT::Application::loop = [this]() { loop(); };
     } else {
         videoDriver->freeContext();
 		GUIKIT::Application::loop = [this]() { loopUserInterface(); };

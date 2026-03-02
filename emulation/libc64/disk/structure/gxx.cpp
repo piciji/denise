@@ -233,12 +233,6 @@ auto DiskStructure::prepareGxx() -> void {
                 std::memset(ptr->data, 0x55, ptr->size);
             }
 
-            // this test expects the tracks to be realigned against the specification in G64. in contrast to the D64,
-            // a G64 has the possibility to align the tracks to each other according to the original.
-            // this test doesn't make sense to me.
-            if (system && system->debugCart->enable) // "true" for testbench only
-                disalignTrack(*ptr, halfTrack >> 1);
-
             if (!ptr->mfmSync) {
                 ptr->mfmSync = new uint8_t[ptr->size >> 3];
                 std::memset(ptr->mfmSync, 0x00, ptr->size >> 3);
