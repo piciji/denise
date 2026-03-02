@@ -7,7 +7,6 @@ Timer* pInterProcess::comTimer = nullptr;
 auto pInterProcess::closeOtherInstances() -> void {
     if (!fileMapping) {
         if (Acquire()) {
-            srand(time(NULL));
             if (!comTimer)
                 comTimer = new Timer;
 

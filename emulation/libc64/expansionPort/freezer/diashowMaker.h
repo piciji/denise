@@ -45,6 +45,7 @@ struct DiashowMaker : Freezer {
     auto reset(bool softReset = false) -> void {
         cRomH = cRomL = getChip(0);
         enable = true;
+        resetFreeze();
     }
 
     auto serializeStep2(Emulator::Serializer& s) -> void {

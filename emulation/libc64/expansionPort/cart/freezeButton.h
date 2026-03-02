@@ -13,6 +13,7 @@ struct FreezeButton : Cart {
     
     unsigned cyclesTillFreeze = 0;
     bool freezeArmed = false;
+    Emulator::Rand randomizer;
     
     uint8_t unbeatable = 0;
     unsigned writesInARow = 0;
@@ -31,7 +32,7 @@ struct FreezeButton : Cart {
             return;
         // UI events are processed only one time between frames.
         // real freeze trigger could happen at any frame position.
-        cyclesTillFreeze = Emulator::Rand::rand( 1, vicII->cyclesPerFrame() );
+        cyclesTillFreeze = randomizer.xorShift( 1, vicII->cyclesPerFrame() );
         freezeArmed = false;
         writesInARow = 0;
     }
@@ -92,6 +93,7 @@ struct FreezeButton : Cart {
         s.integer( freezeArmed );
         s.integer( unbeatable );
         s.integer( writesInARow );
+        s.integer( randomizer.xorShift32 );
     }
 
     auto serializeCustom(Emulator::Serializer& s) -> void {
@@ -99,10 +101,16 @@ struct FreezeButton : Cart {
         s.integer( cyclesTillFreeze );
         s.integer( freezeArmed );
         s.integer( writesInARow );
+        s.integer( randomizer.xorShift32 );
         
         ExpansionPort::serialize(s);
     }
-    
+
+    auto resetFreeze() -> void {
+        freezeArmed = false;
+        cyclesTillFreeze = 0;
+        randomizer.initXorShift();
+    }
     
 };    
     

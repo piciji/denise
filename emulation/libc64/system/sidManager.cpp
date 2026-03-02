@@ -67,7 +67,7 @@ auto SidManager::applyOffsetPseudoStereo() -> void {
         if ((useSid->leftChannel == useSid->rightChannel) || (useSid == sid) || useSid->ioMask)
             continue;
 
-        offsetPseudoStereo.offset = (system->vicII->frequency() >> 1) + (rand() & 0x3ffff);
+        offsetPseudoStereo.offset = (system->vicII->frequency() >> 1) + (Emulator::Rand::rand() & 0x3ffff);
         offsetPseudoStereo.delayedSid = useSid;
         break;
     }

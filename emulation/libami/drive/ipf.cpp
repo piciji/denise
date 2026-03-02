@@ -155,7 +155,8 @@ auto DiskStructure::prepareIPF(uint8_t* data, unsigned size) -> void {
             CapsTrackInfoT2 ti;
             ti.type = 2;
             int flags = CAPS_FLAGS | DI_LOCK_SETWSEED;
-            ti.wseed = rand();
+            Emulator::Rand _r;
+            ti.wseed = _r.xorShift32;
             void* _ti = reinterpret_cast<void*>(&ti);
 
             if (pLockTrack(DLPTR(CAPSLockTrack))(_ti, capsImageId, t / 2, t & 1, flags) == imgeOk) {

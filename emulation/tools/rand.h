@@ -9,7 +9,7 @@ struct Rand {
     
     uint32_t xorShift32 = 0x1234abcd;
     
-    auto initXorShift( uint32_t state ) -> void {
+    auto initXorShift( uint32_t state = 0x1234abcd ) -> void {
         xorShift32 = state;
     }
     

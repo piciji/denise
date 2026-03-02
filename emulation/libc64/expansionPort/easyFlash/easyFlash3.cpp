@@ -323,7 +323,8 @@ auto EasyFlash3::reset(bool softReset) -> void {
     
     romHLine = false;
     
-    portUpdated = false; 
+    portUpdated = false;
+    resetFreeze();
     
     buildFlashBaseAdr();
 }

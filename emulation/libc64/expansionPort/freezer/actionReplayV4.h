@@ -149,6 +149,7 @@ struct ActionReplayV4 : Freezer {
             exRom = false;
         }
         std::memset(ram, 0, 8 * 1024);
+        resetFreeze();
     }
         
     auto serializeStep2(Emulator::Serializer& s) -> void {

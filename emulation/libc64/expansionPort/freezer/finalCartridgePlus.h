@@ -176,11 +176,13 @@ struct FinalCartridgePlus : Freezer {
         enableRomH = true;
         enable = true;
         freezeArmed = true;
+        cyclesTillFreeze = 0;
         bitCell = true;
         game = false;
         exRom = true;
         cRomL = getChip(1);
         cRomH = getChip(0);
+        resetFreeze();
     }
 };
 

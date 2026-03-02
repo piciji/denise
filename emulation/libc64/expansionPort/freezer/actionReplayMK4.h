@@ -58,7 +58,8 @@ struct ActionReplayMK4 : Freezer {
             game = true;
             exRom = false;
         }
-        cRomH = cRomL = getChip(1);        
+        cRomH = cRomL = getChip(1);
+        resetFreeze();
     }
         
     auto serializeStep2(Emulator::Serializer& s) -> void {

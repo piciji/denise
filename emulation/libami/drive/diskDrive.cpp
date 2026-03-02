@@ -377,7 +377,7 @@ auto DiskDrive::power() -> void {
     stepperSeekTime = (stepperSeekTimeBase * agnus.frequency()) / 10000;
     stepperMinTime = (stepperMinTimeBase * agnus.frequency()) / 10000;
     structure.serializationSize = 0;
-    randomizer.initXorShift( 0x1234abcd );
+    randomizer.initXorShift(  );
     randCounter = 0;
     wobblePos = 0;
     wobbleLimit = wobble >> 1;
@@ -560,7 +560,7 @@ inline auto DiskDrive::updateTrack(bool init) -> void {
          structure.loadFirstRevSCP(*track);
 
     if (init)
-        headOffset = rand() % track->bits;
+        headOffset = randomizer.xorShift() % track->bits;
     else {
         if (oldTrack && oldTrack->bits && oldHeadOffset) {
             if (structure.type == DiskStructure::ADF) {

@@ -6,7 +6,6 @@ Timer* pInterProcess::comTimer = nullptr;
 
 auto pInterProcess::closeOtherInstances() -> void {
     if (Acquire()) {
-        srand(time(NULL));
         if (!comTimer)
             comTimer = new Timer;
 

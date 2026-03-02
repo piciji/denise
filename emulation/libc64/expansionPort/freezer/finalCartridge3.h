@@ -76,6 +76,7 @@ namespace LIBC64 {
             exRom = false;
             cRomL = getChip(0);
             cRomH = getChip(0);
+            resetFreeze();
         }
     };
 

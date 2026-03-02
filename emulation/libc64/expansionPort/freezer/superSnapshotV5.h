@@ -93,6 +93,7 @@ struct SuperSnapshotV5 : Freezer {
         game = false;
         exRom = true;
         std::memset(ram, 0, 32 * 1024);
+        resetFreeze();
     }
 
     auto serializeStep2(Emulator::Serializer& s) -> void {

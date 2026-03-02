@@ -55,6 +55,11 @@ namespace LIBC64 {
 
             Cart::assumeChips( {16384} );
         }
+
+        auto reset(bool softReset = false) -> void {
+
+            resetFreeze();
+        }
     };
 
 }

@@ -393,6 +393,7 @@ auto RetroReplay::reset(bool softReset) -> void {
 
     std::memset(ram, 0, 32 * 1024);
     flash.reset();
+    resetFreeze();
 }
 
 auto RetroReplay::setWriteProtect(bool state) -> void {

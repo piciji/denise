@@ -144,6 +144,7 @@ struct KCSPower : Freezer {
         if (!softReset && ram) {
             std::memset(ram, 0, 128);
         }
+        resetFreeze();
     }
 
     auto didFreeze() -> void override

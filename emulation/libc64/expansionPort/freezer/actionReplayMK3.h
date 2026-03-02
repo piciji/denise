@@ -53,7 +53,8 @@ struct ActionReplayMK3 : Freezer {
     
     auto reset(bool softReset = false) -> void {
         enable = true;
-        cRomH = cRomL = getChip(1);        
+        cRomH = cRomL = getChip(1);
+        resetFreeze();
     }
         
     auto serializeStep2(Emulator::Serializer& s) -> void {

@@ -77,6 +77,7 @@ Program::Program() {
     GUIKIT::Application::onQuitRequest = []() {
         view->onClose();
     };
+    srand(time(nullptr) );
 
     globalSettings = new GUIKIT::Settings;
 	autoloader = new Autoloader;
@@ -383,9 +384,6 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 		view->updateCartButtons( activeEmulator );
 
         view->showTapeMenu( emulator->getModelValue( emulator->getModelIdOfEnabledDrives( emulator->getTapeMediaGroup() ) ) );
-		// a few emulation units generate random values
-		// srand spreads a new seed for better randomness
-		srand( time( NULL ) );
 
 		globalSettings->set("last_used_emu", activeEmulator->ident);
 

@@ -95,6 +95,7 @@ struct ActionReplayMK2 : Freezer {
         enableCounter = 0;
         disableCounter = 0;
         enable = true;
+        resetFreeze();
     }
 
     auto serializeStep2(Emulator::Serializer& s) -> void {
