@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include "serializer.h"
+#include "rand.h"
 
 namespace Emulator {
 	
@@ -14,40 +15,29 @@ struct PowerSupply {
 	unsigned ticksPerSecond;
 	unsigned powerFrequency;
 	unsigned baseTicks;
-
-    unsigned waitDelay;
-    int aberration;
+    Rand randomizer;
+    unsigned deviation;
 	
 	auto init( unsigned ticksPerSecond, unsigned powerFrequency ) -> void {
 		
 		this->ticksPerSecond = ticksPerSecond;
 		this->powerFrequency = powerFrequency;
 		// ideal tick count for each impulse
-		this->baseTicks = ticksPerSecond / powerFrequency;
-
-        waitDelay = 0;
-        aberration = 0;
+		this->baseTicks = static_cast<float>(ticksPerSecond) / static_cast<float>(powerFrequency) + 0.5f;
+        deviation = 0;
+	    randomizer.initXorShift();
 	}	
 	
 	auto nextTickCount() -> unsigned {
 
         unsigned useTicks = baseTicks;
 
-        if (waitDelay == 0) {
-
-            unsigned _rand = rand();
-            waitDelay = _rand & 7;
-
-            if (aberration == 0) {
-                aberration = (_rand >> 3) & 3;
-                useTicks += aberration;
-            } else {
-                useTicks -= aberration;
-                aberration = 0;
-            }
-
+        if (deviation == 0) {
+            deviation = randomizer.xorShift() & 15;
+            useTicks += deviation;
         } else {
-            waitDelay--;
+            useTicks -= deviation;
+            deviation = 0;
         }
 
         return useTicks;
@@ -58,8 +48,8 @@ struct PowerSupply {
         s.integer( ticksPerSecond );
         s.integer( powerFrequency );
         s.integer( baseTicks );
-        s.integer( aberration );
-        s.integer( waitDelay );
+        s.integer( deviation );
+	    s.integer( randomizer.xorShift32 );
     }
 };
 	
