@@ -73,8 +73,7 @@ struct VideoManager {
 	static bool synchronized;
     static uint8_t frameRenderPos;
     static uint8_t frameRenderTrigger;
-    static unsigned placeHolderFrames;
-    static bool placeHolderSplashScreen;
+    static bool placeHolder;
     static bool needAUpdate;
     static unsigned takeScreenShots;
 
@@ -210,8 +209,6 @@ struct VideoManager {
 
     static auto getInstance( Emulator::Interface* emulator ) -> VideoManager*;
 	static auto updateAll() -> void;
-    static auto hidePlaceHolder() -> void;
-    
     auto useLumaDelay() -> bool;
     auto useRegionEncoding() -> bool;
     // seter props

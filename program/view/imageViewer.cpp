@@ -59,9 +59,9 @@ auto ImageViewer::build() -> void {
 
         emuThread->lock();
         overrideImage.free();
-        VideoManager::hidePlaceHolder();
+        videoDriver->hideSplashScreen();
         if (overrideImage.load( data, file.getSize()))
-            VideoManager::placeHolderFrames = ~0;
+            VideoManager::placeHolder = true;
 
         emuThread->unlock();
     };
@@ -75,8 +75,9 @@ auto ImageViewer::build() -> void {
 
 auto ImageViewer::unload() -> void {
     emuThread->lock();
-    VideoManager::hidePlaceHolder();
+    videoDriver->hideSplashScreen();
     overrideImage.free();
+    VideoManager::placeHolder = false;
     emuThread->unlock();
 }
 

@@ -24,9 +24,6 @@ auto View::loadPlaceholder() -> void {
     if (!splashScreen)
         return;
 
-	if (!placeholder.empty())
-		return;
-	
 	GUIKIT::File file( program->imgFolder() + "startscreen.png" );
 	
 	if (!file.open())
@@ -36,12 +33,23 @@ auto View::loadPlaceholder() -> void {
 	
 	if (!data)
 		return;	
-	
+
+    GUIKIT::Image placeholder;
 	if (!placeholder.loadPng( data, file.getSize() ))
 		return;
 
-    VideoManager::placeHolderFrames = 84;
-    VideoManager::placeHolderSplashScreen = true;
+    unsigned frames = dynamic_cast<LIBC64::Interface*>(program->getLastUsedEmu()) ? 100 : 220;
+
+    DRIVER::Video::SplashscreenCallback cb;
+    cb = [this]() {
+        if (emuThread->enabled)
+            emuThread->events |= EmuThread::EVT_DISMISS_PLACEHOLDER;
+        else
+            showSplashScreen = false;
+    };
+
+    videoDriver->setSplashScreen(placeholder.data, placeholder.width, placeholder.height, frames, cb);
+    showSplashScreen = true;
 }
 
 auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {
@@ -50,29 +58,17 @@ auto View::renderPlaceholder(uint8_t gpuOptions) -> bool {
     unsigned gpu_pitch;
     unsigned* gpu_data = nullptr;
     unsigned _w, _h;
-    ColorLumaChroma clc;
-    ColorRgb rgb;
-    bool useImgViewer = imageViewer && imageViewer->overrideImage.data;
+
+    if (GUIKIT::Application::isQuit || !imageViewer || !imageViewer->overrideImage.data)
+        return false;
+
     gpuOptions &= (DRIVER::OPT_DisallowShader | DRIVER::OPT_TakeScreenshot);
 
-    if (GUIKIT::Application::isQuit)
-        return false;
+    _width = imageViewer->overrideImage.width;
+    _height = imageViewer->overrideImage.height;
+    _data = imageViewer->overrideImage.data;
 
-    if (useImgViewer) {
-        _width = imageViewer->overrideImage.width;
-        _height = imageViewer->overrideImage.height;
-        _data = imageViewer->overrideImage.data;
-    } else if (!placeholder.empty()) {
-        _width = placeholder.width;
-        _height = placeholder.height;
-        _data = placeholder.data;
-
-        videoDriver->setLinearFilter( true );
-        gpuOptions |= (uint8_t)DRIVER::OPT_DisallowShader;
-    } else
-        return false;
-
-    if (useImgViewer && (activeVideoManager->crtMode == VideoManager::CrtMode::Gpu) && activeVideoManager->shaderLumaChromaInput()) {
+    if ((activeVideoManager->crtMode == VideoManager::CrtMode::Gpu) && activeVideoManager->shaderLumaChromaInput()) {
         if (videoDriver->lock(gpu_data, gpu_pitch, _width, _height, gpuOptions | (uint8_t)DRIVER::OPT_RGB10)) {
             for (_h = 0; _h < _height; _h++) {
                 for (_w = 0; _w < _width; _w++) {

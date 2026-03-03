@@ -559,7 +559,7 @@ auto Program::setWarp( bool activate, bool aggressive ) -> void {
     unsigned forward = 0;
 
     if (activate) {
-        VideoManager::hidePlaceHolder();
+        videoDriver->hideSplashScreen();
         warp.active = true;
         warp.aggressive = aggressive;
         VideoManager::setFrameRender(1);

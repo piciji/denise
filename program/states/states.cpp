@@ -78,7 +78,7 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     else
         program->warp.enableAutoWarp = false;
 
-    VideoManager::hidePlaceHolder();
+    videoDriver->hideSplashScreen();
 }
 
 auto States::save( std::string path ) -> void {

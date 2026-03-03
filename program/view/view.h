@@ -14,7 +14,7 @@ struct View : GUIKIT::Window {
 	GUIKIT::Timer fullscreenOnStartUp;
     GUIKIT::Timer cursorHideTimer;
     GUIKIT::StatusBar statusBar;
-    GUIKIT::Image placeholder;
+    bool showSplashScreen = false;
 	bool requestFullscreenSwitch = false;
     bool customResizeMode = false;
     int dropZone = 0;
@@ -315,6 +315,7 @@ struct View : GUIKIT::Window {
     auto clearScreenshotBuffer() -> void;
     auto updateScreenshotUI() -> void;
     auto setAudioRecordText() -> void;
+    auto hideSplashscreen() -> void;
     
     View();
 };

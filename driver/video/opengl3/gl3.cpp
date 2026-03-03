@@ -42,6 +42,7 @@ namespace DRIVER {
 
 namespace DRIVER {
 #include "dragndropOverlay.h"
+#include "splashScreen.h"
 
 #define UNIFORM_VERTEX_BLOCK_BINDING 1
 #define UNIFORM_FRAGMENT_BLOCK_BINDING 0
@@ -87,6 +88,7 @@ struct GL3 {
     ViewScreen viewScreen;
     Viewport viewport;
     GLDragndropOverlay dndOverlay;
+    GLSplashScreen splashScreen;
     OpenGLProgress progress;
 #ifdef DRV_FREETYPE
         GlScreenText screenText;
@@ -374,6 +376,9 @@ struct GL3 {
 
         if (!dndOverlay.init())
             dndOverlay.term();
+
+        if (!splashScreen.init())
+            splashScreen.term();
 
 #ifdef DRV_FREETYPE
         if (!screenText.init()) {

@@ -55,6 +55,7 @@
     <ClInclude Include="..\driver\video\d3d11\utility.h" />
     <ClInclude Include="..\driver\video\d3d9\dragnDropOverlay.h" />
     <ClInclude Include="..\driver\video\d3d9\screenText.h" />
+    <ClInclude Include="..\driver\video\d3d9\splashScreen.h" />
     <ClInclude Include="..\driver\video\d3d9\symbols.h" />
     <ClInclude Include="..\driver\video\dragnDropOverlay.h" />
     <ClInclude Include="..\driver\video\freetype.h" />
@@ -63,8 +64,10 @@
     <ClInclude Include="..\driver\video\opengl3\progress.h" />
     <ClInclude Include="..\driver\video\opengl3\screenText.h" />
     <ClInclude Include="..\driver\video\opengl3\shaders.h" />
+    <ClInclude Include="..\driver\video\opengl3\splashScreen.h" />
     <ClInclude Include="..\driver\video\opengl3\types.h" />
     <ClInclude Include="..\driver\video\opengl3\utility.h" />
+    <ClInclude Include="..\driver\video\splashScreen.h" />
     <ClInclude Include="..\driver\video\thread\renderThread.h" />
     <ClInclude Include="..\driver\video\viewport.h" />
     <ClInclude Include="..\emulation\cia\base.h" />

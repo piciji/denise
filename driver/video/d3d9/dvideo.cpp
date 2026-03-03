@@ -14,6 +14,7 @@
 namespace DRIVER {
 
 #include "dragnDropOverlay.h"
+#include "splashScreen.h"
 
 #ifndef MAX_MONITORS
 #define MAX_MONITORS 9
@@ -23,6 +24,7 @@ auto CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
 
 struct D3D9 : Video, RenderThread, D3D9Symbols {
     D3d9DragndropOverlay dndOverlay;
+    D3d9SplashScreen splashScreen;
 #ifdef DRV_FREETYPE
     D3d9ScreenText screenText;
 #endif
@@ -32,7 +34,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
     D3DCAPS9 d3dcaps;
     LPDIRECT3DSURFACE9 surface;
     LPDIRECT3DTEXTURE9 texture;
-    LPDIRECT3DVERTEXBUFFER9 vertexBuffer, vertexBufferText, vertexBufferOverlay;
+    LPDIRECT3DVERTEXBUFFER9 vertexBuffer, vertexBufferText, vertexBufferOverlay, vertexBufferSplashScreen;
     D3DLOCKED_RECT d3dlr;
     unsigned textureWidth = 0;
     unsigned textureHeight = 0;
@@ -86,6 +88,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         dxRelease(vertexBuffer);
         dxRelease(vertexBufferText);
         dxRelease(vertexBufferOverlay);
+        dxRelease(vertexBufferSplashScreen)
     }
 
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
@@ -102,6 +105,14 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
     auto sendDragnDropOverlayCoordinates(int x, int y) -> int {
         return dndOverlay.sendDragnDropOverlayCoordinates(x, y);
+    }
+
+    auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames, SplashscreenCallback cb) -> void {
+        splashScreen.setImage(_data, _width, _height, showFrames, cb);
+    }
+
+    auto hideSplashScreen() -> void {
+        splashScreen.hide();
     }
 
     auto updateFilter() -> void {
@@ -250,6 +261,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         lpD3DDevice->CreateVertexBuffer(sizeof (d3d9vertex) * 4, flags.v_usage, D3D9VERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertexBuffer, NULL);
         lpD3DDevice->CreateVertexBuffer(sizeof (d3d9vertex) * 4, flags.v_usage, D3D9VERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertexBufferText, NULL);
         lpD3DDevice->CreateVertexBuffer(sizeof (d3d9vertex) * 4, flags.v_usage, D3D9VERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertexBufferOverlay, NULL);
+        lpD3DDevice->CreateVertexBuffer(sizeof (d3d9vertex) * 4, flags.v_usage, D3D9VERTEX, static_cast<D3DPOOL> (flags.v_pool), &vertexBufferSplashScreen, NULL);
 
 #ifdef DRV_FREETYPE
         screenText.init(lpD3DDevice, vertexBufferText);
@@ -365,6 +377,7 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         RenderThread::reset();
 
         dndOverlay.init(lpD3DDevice);
+        splashScreen.init(lpD3DDevice);
 
         return true;
     }
@@ -491,6 +504,14 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
 
         lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 
+        if (splashScreen.enable) {
+            if (splashScreen.updateTex(viewport)) {
+                splashScreen.updateCoord(viewport, vertexBufferSplashScreen);
+                lpD3DDevice->SetStreamSource(0, vertexBufferSplashScreen, 0, sizeof (d3d9vertex));
+                lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+            }
+        }
+
         if (dndOverlay.enabled()) {
             dndOverlay.show(viewport);
             dndOverlay.updateCoord(viewport, vertexBufferOverlay);
@@ -577,6 +598,14 @@ struct D3D9 : Video, RenderThread, D3D9Symbols {
         lpD3DDevice->SetTexture(0, texture);
 
         lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+
+        if (splashScreen.enable) {
+            if (splashScreen.updateTex(viewport)) {
+                splashScreen.updateCoord(viewport, vertexBufferSplashScreen);
+                lpD3DDevice->SetStreamSource(0, vertexBufferSplashScreen, 0, sizeof (d3d9vertex));
+                lpD3DDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+            }
+        }
 
         if (dndOverlay.enabled()) {
             dndOverlay.show(viewport);
@@ -1045,6 +1074,7 @@ Clear:
         vertexBuffer = 0;
         vertexBufferText = 0;
         vertexBufferOverlay = 0;
+        vertexBufferSplashScreen = 0;
         surface = 0;
         texture = 0;
         tempBuffer = nullptr;

@@ -385,12 +385,12 @@ auto View::build() -> void {
         
 	    if (button == GUIKIT::Mouse::Button::Left) {
 
-	        if (VideoManager::placeHolderSplashScreen) {
+	        if (showSplashScreen) {
 	            emuThread->lock(true);
 
 	            int result = cursorForPlaceholderInUpperTriangle();
 	            if (result != -1)
-	                VideoManager::hidePlaceHolder();
+	                videoDriver->hideSplashScreen();
 
 	            if (result == 1)
 	                program->power(program->getEmulator("C64"));
@@ -408,7 +408,7 @@ auto View::build() -> void {
 #ifdef __APPLE__
         inputDriver->sentUIMouseMovement(deltaX, deltaY);
 #endif
-        if (!VideoManager::placeHolderSplashScreen)
+        if (!showSplashScreen)
             return;
 
         int result = cursorForPlaceholderInUpperTriangle(pos);
@@ -426,6 +426,13 @@ auto View::build() -> void {
     setDragnDrop();
 
     viewport.hideCursorByInactivity(2000);
+}
+
+auto View::hideSplashscreen() -> void {
+    if (showSplashScreen) {
+        showSplashScreen = false;
+        setDefaultCursor();
+    }
 }
 
 auto View::setAnyload( Emulator::Interface* emulator ) -> void {
@@ -2574,7 +2581,7 @@ auto View::takeScreenshot() -> void {
     screenshot.twoFrames = mergeTwoFrames;
     screenshot.pause = 0;
     screenshot.saveState = false;
-    screenshot.interval = VideoManager::placeHolderFrames ? 1 : screenGunEach;
+    screenshot.interval = VideoManager::placeHolder ? 1 : screenGunEach;
     screenshot.intervalPos = delayScreenshot ? (50 * 3) : 1;
 
     if (screenshot.animatedGif) {

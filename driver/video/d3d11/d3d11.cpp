@@ -61,6 +61,7 @@ namespace DRIVER {
     
     ScreenshotCallback screenshotCallback = nullptr;
 
+    Rectangle splash;
     Rectangle overlay;
     Rectangle message;
     Rectangle progress;
@@ -73,6 +74,7 @@ namespace DRIVER {
     unsigned shaderPasses = 0;
 
     DragndropOverlay dndOverlay;
+    SplashScreen splashScreen;
     ViewScreen viewScreen;
     Viewport viewport;
 
@@ -173,6 +175,8 @@ namespace DRIVER {
         message.buffer = nullptr;
         overlay.vbo = nullptr;
         overlay.buffer = nullptr;
+        splash.vbo = nullptr;
+        splash.buffer = nullptr;
         progress.vbo = nullptr;
         progress.buffer = nullptr;
         hdr.buffer = nullptr;
@@ -392,6 +396,14 @@ namespace DRIVER {
         _h = viewScreen.scaling.height >> 1;
     }
 
+    auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames, SplashscreenCallback cb) -> void {
+        splashScreen.setImage(_data, _width, _height, showFrames, cb);
+    }
+
+    auto hideSplashScreen() -> void {
+        splashScreen.hide();
+    }
+
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
         dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
     }
@@ -594,6 +606,8 @@ namespace DRIVER {
             return term(), false;
         if (FAILED(device->CreateBuffer(&descV, nullptr, &overlay.vbo)))
             return term(), false;
+        if (FAILED(device->CreateBuffer(&descV, nullptr, &splash.vbo)))
+            return term(), false;
         if (FAILED(device->CreateBuffer(&descV, nullptr, &progress.vbo)))
             return term(), false;
 
@@ -611,6 +625,9 @@ namespace DRIVER {
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11overlayShader, "PS", "VS", "", descShader, countof(descShader), &overlay.shader))
             return term(), false;
 
+        if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11overlayShader, "PS", "VS", "", descShader, countof(descShader), &splash.shader))
+            return term(), false;
+
         if (!D3D11Utility::createShader(symbols, featureLevel, device, D3D11progressShader, "PS", "VS", "", descShader, countof(descShader), &progress.shader))
             return term(), false;
 
@@ -618,6 +635,7 @@ namespace DRIVER {
             return term(), false;
 
         dndOverlay.initialized = true;
+        splashScreen.initialized = true;
         D3D11_BLEND_DESC blendDesc;
         std::memset(&blendDesc, 0, sizeof(blendDesc));
         blendDesc.AlphaToCoverageEnable                 = false;
@@ -1327,6 +1345,12 @@ namespace DRIVER {
 #ifdef DRV_FREETYPE
         showText();
 #endif
+
+        if (splashScreen.enable) {
+            if (buildSplashscreenTexture())
+                blendRect<false, true>(splash);
+        }
+
         if (dndOverlay.enabled()) {
             buildOverlayTexture();
             blendRect<false, true>(overlay);
@@ -1711,6 +1735,59 @@ namespace DRIVER {
         }
 
         context->Unmap((ID3D11Resource*)overlay.vbo, 0);
+    }
+
+    auto buildSplashscreenTexture() -> bool {
+        auto s = splashScreen.update(viewport);
+
+        if (s == SplashScreen::FINISH) {
+            return false;
+        }
+
+        if (!splash.texture.ptr || (s == SplashScreen::TEXTURE_UPDATE)) {
+            D3D11Utility::releaseTexture(splash.texture);
+            splash.texture.desc.Width = splashScreen.bitmap.scaledWidth;
+            splash.texture.desc.Height = splashScreen.bitmap.scaledHeight;
+            splash.texture.desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+            if(!D3D11Utility::initTexture(device, splash.texture, false)) {
+                splashScreen.finish();
+                return false;
+            }
+        }
+
+        if (s == SplashScreen::TEXTURE_UPDATE || s == SplashScreen::DATA_UPDATE) {
+            if (!D3D11Utility::buildTexture(context, splash.texture, splashScreen.bitmap.scaledData)) {
+                splashScreen.finish();
+                return false;
+            }
+        }
+
+        D3D11_MAPPED_SUBRESOURCE mappedVbo;
+        if (FAILED(context->Map((ID3D11Resource*)splash.vbo, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &mappedVbo))) {
+            splashScreen.finish();
+            return false;
+        }
+
+        float box[4][4] = {
+            {-1.0f,  1.0f, 0.0f, 0.0f},
+            { 1.0f,  1.0f, 1.0f, 0.0f},
+            {-1.0f, -1.0f, 0.0f, 1.0f},
+            { 1.0f, -1.0f, 1.0f, 1.0f}
+        };
+        D3DVertex* vertex = (D3DVertex*) mappedVbo.pData;
+
+        for (int i = 0; i < 4; i++) {
+            vertex->position[0] = box[i][0];
+            vertex->position[1] = box[i][1];
+            vertex->texcoord[0] = box[i][2];
+            vertex->texcoord[1] = box[i][3];
+            vertex++;
+        }
+
+        context->Unmap((ID3D11Resource*)splash.vbo, 0);
+
+        return true;
     }
 
     auto setProgressAnimation(uint8_t* _data, unsigned _width, unsigned _height) -> void {

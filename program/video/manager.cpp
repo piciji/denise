@@ -24,8 +24,7 @@
 bool VideoManager::synchronized = true;
 uint8_t VideoManager::frameRenderPos = 0;
 uint8_t VideoManager::frameRenderTrigger = 1;
-unsigned VideoManager::placeHolderFrames = 0;
-bool VideoManager::placeHolderSplashScreen = false;
+bool VideoManager::placeHolder = false;
 bool VideoManager::needAUpdate = true;
 unsigned VideoManager::takeScreenShots = 0;
 
@@ -606,7 +605,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
         updateAll();
 
     bool cropCoordUpdated = emulator->cropCoordUpdated(cropTop, cropLeft);
-    if (rebuildShader && !placeHolderSplashScreen) {
+    if (rebuildShader) {
         if (crtMode == CrtMode::Gpu) {
             setData("autoEmu_cropTop", (float)cropTop);
             setData("autoEmu_cropLeft", (float)cropLeft);
@@ -622,7 +621,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
             videoDriver->setShader(nullptr);
 
         rebuildShader  = false;
-    } else if (cropCoordUpdated && !placeHolderSplashScreen) {
+    } else if (cropCoordUpdated) {
         setData("autoEmu_cropTop", (float)cropTop);
         setData("autoEmu_cropLeft", (float)cropLeft);
     }
@@ -661,7 +660,7 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
                 }
             }
 
-            if (!placeHolderFrames) {
+            if (!placeHolder) {
                 if (!--takeScreenShots && screenshot.pause)
                     program->isPause = screenshot.pause;
             }
@@ -671,20 +670,10 @@ template<typename T, uint8_t options> auto VideoManager::renderFrame(const T* sr
     frameRenderPos = 0;
     videoDriver->setIntegerScalingDimension( lores ? (width << 1) : (hires ? width : (width >> 1)), interlace ? height : (height << 1), shres | hires | interlace);
 
-    if (unlikely(placeHolderFrames)) {
-        if (!placeHolderSplashScreen || ((placeHolderFrames & 3) == 0)) {
-            takeScreenShots = 0;
-            if (!view->renderPlaceholder(gpuOptions))
-                return hidePlaceHolder();
-        }
-
-        if (!--placeHolderFrames) {
-            if (emuThread->enabled) {
-                emuThread->events |= EmuThread::EVT_DISMISS_PLACEHOLDER;
-            } else {
-                hidePlaceHolder();
-            }
-        }
+    if (unlikely(placeHolder)) {
+        takeScreenShots = 0;
+        if (!view->renderPlaceholder(gpuOptions))
+            placeHolder = false;
         return;
     }
 
@@ -1486,15 +1475,6 @@ template<uint8_t options> auto VideoManager::getRenderOptions() -> unsigned {
     if (hires) out |= 32;
     if (shres) out |= 0x100;
     return out;
-}
-
-auto VideoManager::hidePlaceHolder() -> void {
-    if (placeHolderSplashScreen) {
-        placeHolderSplashScreen = false;
-        program->setVideoFilter();
-        view->setDefaultCursor();
-    }
-    placeHolderFrames = 0;
 }
 
 auto VideoManager::free() -> void {

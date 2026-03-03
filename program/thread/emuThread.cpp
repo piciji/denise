@@ -227,7 +227,7 @@ auto EmuThread::handleUIEvents() -> void {
             program->fpsChangeTimer.setEnabled();
 
         if (_events & EVT_DISMISS_PLACEHOLDER)
-            VideoManager::hidePlaceHolder();
+            view->hideSplashscreen();
 
         if (_events & EVT_AUTO_LOAD_NO_TRAPS) {
             lock(true);

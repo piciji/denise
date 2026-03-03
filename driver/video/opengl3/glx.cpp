@@ -30,6 +30,14 @@ struct GLX : public Video, GL3, RenderThread {
 
     bool hasRendererContext = false;
 
+    auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames, SplashscreenCallback cb) -> void {
+        splashScreen.setImage(_data, _width, _height, showFrames, cb);
+    }
+
+    auto hideSplashScreen() -> void {
+        splashScreen.hide();
+    }
+
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
         dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
     }
@@ -447,6 +455,11 @@ struct GLX : public Video, GL3, RenderThread {
 
     auto render() -> void {
         GL3::_redraw(options);
+
+        if (splashScreen.enable) {
+            if (splashScreen.updateTex( viewport ))
+                splashScreen.show( viewport );
+        }
 
         if (dndOverlay.enabled())
             dndOverlay.show(viewport);

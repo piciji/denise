@@ -227,7 +227,7 @@ auto Autoloader::postProcessing() -> void {
 			}
 		}
 
-        VideoManager::hidePlaceHolder();
+        videoDriver->hideSplashScreen();
         if ( dynamic_cast<LIBC64::Interface*>(ddControl.emulator) || (ddControl.emulator != activeEmulator)
             || (activeEmulator->getModelValue( LIBAMI::Interface::ModelIdSystem ) > 0 ) )
             program->power( ddControl.emulator, emuView != nullptr );

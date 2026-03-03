@@ -4,7 +4,7 @@
 #include <cmath>
 #include "driver.h"
 #include "video/dragnDropOverlay.h"
-#include "../program/tools/logger.h"
+#include "video/splashScreen.h"
 
 #ifdef DRV_DIRECT3D9
 	#include "video/d3d9/dvideo.cpp"

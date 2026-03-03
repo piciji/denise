@@ -1231,6 +1231,15 @@
     <ClInclude Include="..\program\debugger\audioDebugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
+    <ClInclude Include="..\driver\video\splashScreen.h">
+      <Filter>driver\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\d3d9\splashScreen.h">
+      <Filter>driver\video\d3d9</Filter>
+    </ClInclude>
+    <ClInclude Include="..\driver\video\opengl3\splashScreen.h">
+      <Filter>driver\video\opengl3</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
