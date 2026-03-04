@@ -1163,6 +1163,8 @@
 		9DFA8D3C2E6F062C00DDD746 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = geometry.cpp; sourceTree = "<group>"; };
 		9DFA8D3D2E6F062C00DDD746 /* presentation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = presentation.cpp; sourceTree = "<group>"; };
 		9DFA8D3E2E6F062C00DDD746 /* presentation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = presentation.h; sourceTree = "<group>"; };
+		9DFF965C2F58BBAA006602CC /* splashScreen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = splashScreen.h; sourceTree = "<group>"; };
+		9DFF965D2F58BBB9006602CC /* splashScreen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = splashScreen.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1841,6 +1843,7 @@
 		9D8FAC122CB40C9C006905BE /* video */ = {
 			isa = PBXGroup;
 			children = (
+				9DFF965D2F58BBB9006602CC /* splashScreen.h */,
 				9D8FAC132CB40C9C006905BE /* opengl3 */,
 				9D8FAC1F2CB40C9C006905BE /* dragnDropOverlay.h */,
 				9D8FAC202CB40C9C006905BE /* metal */,
@@ -1854,6 +1857,7 @@
 		9D8FAC132CB40C9C006905BE /* opengl3 */ = {
 			isa = PBXGroup;
 			children = (
+				9DFF965C2F58BBAA006602CC /* splashScreen.h */,
 				9D8FAC142CB40C9C006905BE /* progress.h */,
 				9D8FAC152CB40C9C006905BE /* dragndropOverlay.h */,
 				9D8FAC162CB40C9C006905BE /* types.h */,

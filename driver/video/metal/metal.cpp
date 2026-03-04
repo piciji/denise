@@ -69,6 +69,7 @@ namespace DRIVER {
     std::function<void (DiskFile& diskFile)> onShaderCacheCallback = nullptr;
 
     DragndropOverlay dndOverlay;
+    SplashScreen splashScreen;
     
     id<MTLDevice> device;
     CAMetalLayer* layer;
@@ -78,6 +79,7 @@ namespace DRIVER {
     id<MTLRenderPipelineState> outputPipelineState;
     id<MTLRenderPipelineState> messagePipelineState;
     id<MTLRenderPipelineState> dndOverlayPipelineState;
+    id<MTLRenderPipelineState> splashScreenPipelineState;
     id<MTLRenderPipelineState> progressPipelineState;
     id<MTLRenderPipelineState> hdrPipelineState;
         
@@ -88,6 +90,7 @@ namespace DRIVER {
     
     MTLVertex vertices[4];
     MTLVertex verticesDndOverlay[4];
+    MTLVertex verticesSplashScreen[4];
     MTLVertex verticesProgress[4];
     MTLVertexSlang verticesSlang[4];
     
@@ -119,6 +122,7 @@ namespace DRIVER {
     
     MTLTexture messageTex;
     MTLTexture dndOverlayTex;
+    MTLTexture splashScreenTex;
     MTLTexture progressTex;
     MTLTexture hdrTex;
 
@@ -236,6 +240,7 @@ namespace DRIVER {
         
         messageTex.view = nil;
         dndOverlayTex.view = nil;
+        splashScreenTex.view = nil;
         
         if (!initStockShader(settings.hdrEnable ? MTLPixelFormatBGRA8Unorm : layer.pixelFormat))
             return false;
@@ -307,6 +312,7 @@ namespace DRIVER {
         [view setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
         dndOverlay.initialized = true;
+        splashScreen.initialized = true;
         return true;
     }
     
@@ -382,6 +388,10 @@ namespace DRIVER {
             psd.label = @"blend dnd overlay";
             
             dndOverlayPipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
+            if (error != nil)
+                return false;
+            
+            splashScreenPipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
             if (error != nil)
                 return false;
             
@@ -461,6 +471,7 @@ namespace DRIVER {
         [messageColBuffer release]; messageColBuffer = nil;
 #endif
         [dndOverlayPipelineState release]; dndOverlayPipelineState = nil;
+        [splashScreenPipelineState release]; splashScreenPipelineState = nil;
         [progressPipelineState release]; progressPipelineState = nil;
         [hdrPipelineState release]; hdrPipelineState = nil;
         [hdrBuffer release]; hdrBuffer = nil;
@@ -712,6 +723,14 @@ namespace DRIVER {
     }
     
     auto canHardSync() -> bool { return true; }
+        
+    auto setSplashScreen(uint8_t* _data, unsigned _width, unsigned _height, unsigned showFrames, SplashscreenCallback cb) -> void {
+            splashScreen.setImage(_data, _width, _height, showFrames, cb);
+    }
+
+    auto hideSplashScreen() -> void {
+        splashScreen.hide();
+    }
     
     auto setDragnDropOverlay(uint8_t* _data, unsigned _width, unsigned _height, unsigned line = 0) -> void {
         dndOverlay.setDragnDropOverlay(_data, _width, _height, line);
@@ -979,6 +998,12 @@ namespace DRIVER {
 #ifdef DRV_FREETYPE
             showText(rce);
 #endif
+            
+            if (splashScreen.enable) {
+                if(buildSplashScreenTexture())
+                    showSplashScreen(rce);
+            }
+            
             if (dndOverlay.enabled()) {
                 buildDndOverlayTexture();
                 showDndOverlay(rce);
@@ -1145,6 +1170,33 @@ namespace DRIVER {
         verticesDndOverlay[2] = {simd_make_float2(x    , y - h),  simd_make_float2(0, 1)};
         verticesDndOverlay[3] = {simd_make_float2(x + w, y - h),  simd_make_float2(1, 1)};
     }
+
+    auto buildSplashScreenTexture() -> bool {
+        auto s = splashScreen.update(viewport);
+        
+        if (s == SplashScreen::FINISH)
+            return false;
+        
+        if (splashScreenTex.view == nil || s == SplashScreen::TEXTURE_UPDATE) {
+            MTLUtility::initTexture(splashScreenTex, splashScreen.bitmap.scaledWidth, splashScreen.bitmap.scaledHeight, MTLPixelFormatRGBA8Unorm, device);
+            
+            if (splashScreenTex.view == nil) {
+                splashScreen.finish();
+                return false;
+            }
+        }
+        
+        if (s == SplashScreen::DATA_UPDATE || s == SplashScreen::TEXTURE_UPDATE) {
+            [splashScreenTex.view replaceRegion:MTLRegionMake2D(0, 0, (NSUInteger)splashScreen.bitmap.scaledWidth, (NSUInteger)splashScreen.bitmap.scaledHeight) mipmapLevel:0 withBytes:splashScreen.bitmap.scaledData bytesPerRow: splashScreen.bitmap.scaledWidth * 4];
+        }
+        
+        verticesSplashScreen[0] = {simd_make_float2(-1.0,  1.0), simd_make_float2(0, 0)};
+        verticesSplashScreen[1] = {simd_make_float2( 1.0,  1.0), simd_make_float2(1, 0)};
+        verticesSplashScreen[2] = {simd_make_float2(-1.0, -1.0), simd_make_float2(0, 1)};
+        verticesSplashScreen[3] = {simd_make_float2( 1.0, -1.0), simd_make_float2(1, 1)};
+        
+        return true;
+    }
     
     auto setProgressAnimation(uint8_t* _data, unsigned _width, unsigned _height) -> void {
         MTLUtility::releaseTexture(progressTex);
@@ -1173,6 +1225,15 @@ namespace DRIVER {
         [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE][0] atIndex:0];
         [rce setVertexBytes:&verticesDndOverlay length:sizeof(verticesDndOverlay) atIndex:0];
         [rce setFragmentTexture:dndOverlayTex.view atIndex:0];
+
+        [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+    }
+        
+    auto showSplashScreen(id<MTLRenderCommandEncoder> rce) -> void {
+        [rce setRenderPipelineState:splashScreenPipelineState];
+        [rce setFragmentSamplerState:samplers[ShaderPreset::FILTER_LINEAR][ShaderPreset::WRAP_EDGE][0] atIndex:0];
+        [rce setVertexBytes:&verticesSplashScreen length:sizeof(verticesSplashScreen) atIndex:0];
+        [rce setFragmentTexture:splashScreenTex.view atIndex:0];
 
         [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
     }

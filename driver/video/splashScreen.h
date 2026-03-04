@@ -44,7 +44,8 @@ struct SplashScreen {
                 finish();
                 return Status::FINISH;
             }
-            status = Status::DATA_UPDATE;
+            if (status == NO_UPDATE)
+                status = Status::DATA_UPDATE;
         }
 
         return status;
