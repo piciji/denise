@@ -38,7 +38,7 @@ auto View::loadPlaceholder() -> void {
 	if (!placeholder.loadPng( data, file.getSize() ))
 		return;
 
-    unsigned frames = dynamic_cast<LIBC64::Interface*>(program->getLastUsedEmu()) ? 100 : 220;
+    unsigned frames = dynamic_cast<LIBC64::Interface*>(program->getLastUsedEmu()) ? 110 : 220;
 
     DRIVER::Video::SplashscreenCallback cb;
     cb = [this]() {
