@@ -16,12 +16,9 @@ namespace EmuConfigView {
 PaletteColorLayout::PaletteColorLayout(unsigned editWidth, unsigned canvasHeight) {
 
     append( color, {~0u, 0u}, 5 );
-    append( canvas, {(unsigned)((float)canvasHeight * 1.5), canvasHeight}, 10 );
-    append( hex, {0u, 0u}, 1 );
+    append( canvas, {(unsigned)((float)canvasHeight * 1.5), canvasHeight}, 20 );
     append( edit, {editWidth, 0u} );
-    
-    hex.setText( "0x" );
-    hex.setForegroundColor( 0x333333 );
+
     color.setFont( GUIKIT::Font::system("bold") );
     canvas.setBorderColor( 1, 0x666666 );
     edit.setMaxLength(6);
@@ -39,26 +36,6 @@ PaletteControlLayout::PaletteControlLayout() {
     setAlignment( 0.5 );
 }
 
-PaletteDetailLayout::PaletteDetailLayout::Right::Right() : 
-    r(""), g(""), b("")
-{ }
-
-PaletteDetailLayout::PaletteDetailLayout() {
-        
-    right.append( right.r, {~0u, 30u}, 10 );
-    right.append( right.g, {~0u, 30u}, 10 );
-    right.append( right.b, {~0u, 30u} );
-    
-    left.append( left.canvas, {100u, ~0u} );
-    
-    append(left, {0u, ~0u}, 10);
-    append(right, {~0u, 0u});
-    
-    left.canvas.setBorderColor(1, 0x666666);
-    
-    setEnabled( false );
-}
-
 PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     
     this->tabWindow = tabWindow;
@@ -68,10 +45,6 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     
     PaletteManager* paletteManager = PaletteManager::getInstance( emulator );
     GUIKIT::HorizontalLayout* colorLine = nullptr;
-    
-    detailLayout.right.r.slider.setLength(256);
-    detailLayout.right.g.slider.setLength(256);
-    detailLayout.right.b.slider.setLength(256);
     
     paletteLayout.append(controlLayout, {~0u, 0u}, 10);
     
@@ -131,11 +104,6 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
             emuThread->lock();
             program->setPalette( this->emulator );
             emuThread->unlock();
-            
-            if (!detailLayout.enabled())
-                detailLayout.setEnabled();
-            
-            this->updateDetailLayout();
         };
 		
         colorLayout->edit.onFocus = [this, colorLayout]() {
@@ -146,11 +114,6 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
 
             colorPos = colorLayout->pos;
             markSelectedColor(colorLayout);
-
-            if (!detailLayout.enabled())
-                detailLayout.setEnabled();
-
-            this->updateDetailLayout();
         };
 
         colorLayout->canvas.onMouseRelease = [this, colorLayout](GUIKIT::Mouse::Button button) {
@@ -163,10 +126,20 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
             colorPos = colorLayout->pos;
             markSelectedColor(colorLayout);
 
-            if (!detailLayout.enabled())
-                detailLayout.setEnabled();
+            GUIKIT::ColorChooser colorChooser;
+            colorChooser.onChoose = [this](unsigned color) {
+                updateChange(color );
+            };
 
-            this->updateDetailLayout();
+            unsigned defaultColor = palette.paletteColors[colorPos].rgb;
+
+            colorChooser.setWindow( *this->tabWindow );
+            colorChooser.setDefault( defaultColor );
+            auto result = colorChooser.choose();
+            if (GUIKIT::Application::isQuit)
+                return;
+
+            updateChange(result.value_or( defaultColor ));
         };
 
         if ((i % 3) != 0)
@@ -181,7 +154,6 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
 
     colorLines.push_back(colorLine);
     paletteLayout.append(*colorLine,{~0u, 0u}, 10);
-    paletteLayout.append(detailLayout, {~0u, 0u}, 10);
 
     main.append( listView, { GUIKIT::Font::scale( 180 ), paletteLayout.minimumSize().height - 10}, 10 );
     main.append( paletteLayout, {~0u, 0u} );
@@ -198,27 +170,6 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
         emuThread->unlock();
 
         this->setPalette( palette );
-    };
-
-    detailLayout.right.r.slider.onChange = [this](unsigned position) {
-
-        detailLayout.right.r.value.setText( std::to_string(position) );
-
-        updateSliderChange(position, 16);
-    };
-
-    detailLayout.right.g.slider.onChange = [this](unsigned position) {
-
-        detailLayout.right.g.value.setText( std::to_string(position) );
-
-        updateSliderChange(position, 8);
-    };
-
-    detailLayout.right.b.slider.onChange = [this](unsigned position) {
-
-        detailLayout.right.b.value.setText( std::to_string(position) );
-
-        updateSliderChange( position, 0);
     };
 
     controlLayout.create.onActivate = [this]() {
@@ -279,26 +230,6 @@ PaletteLayout::PaletteLayout(TabWindow* tabWindow) {
     loadSettings();
 }
 
-auto PaletteLayout::updateDetailLayout() -> void {
-
-    auto& palette = this->getSelectedPalette();
-
-    if (!palette.editable)
-        return;
-
-    auto& pC = palette.paletteColors[colorPos];
-
-    detailLayout.right.r.slider.setPosition( pC.r );
-    detailLayout.right.g.slider.setPosition( pC.g );
-    detailLayout.right.b.slider.setPosition( pC.b );
-
-    detailLayout.right.r.value.setText( std::to_string( pC.r ) );
-    detailLayout.right.g.value.setText( std::to_string( pC.g ) );
-    detailLayout.right.b.value.setText( std::to_string( pC.b ) );
-
-    detailLayout.left.canvas.setBackgroundColor( pC.rgb );
-}
-
 auto PaletteLayout::setPalette(Emulator::Interface::Palette& palette) -> void {
 
     auto& paletteColors = palette.paletteColors;
@@ -309,9 +240,6 @@ auto PaletteLayout::setPalette(Emulator::Interface::Palette& palette) -> void {
 
     controlLayout.remove.setEnabled( palette.editable );
 
-    detailLayout.setEnabled( false );
-
-    detailLayout.left.canvas.resetBackgroundColor();
 
     for( auto colorLayout : colorLayouts ) {
 
@@ -357,26 +285,17 @@ auto PaletteLayout::updateList() -> void {
     listView.setSelection( selected );
 }
 
-auto PaletteLayout::updateSliderChange( uint8_t colorChannel, uint8_t bits ) -> void {
+auto PaletteLayout::updateChange( uint32_t rgb ) -> void {
 
     auto& palette = getSelectedPalette();
 
     if (!palette.editable)
         return;
 
-    unsigned rgb = palette.paletteColors[colorPos].rgb;
-
-    rgb &= ~(0xff << bits);
-    rgb |= (colorChannel & 0xff) << bits;
-
     palette.paletteColors[colorPos].rgb = rgb;
     palette.paletteColors[colorPos].updateChannels();
 
-    emuThread->lock();
     program->setPalette(this->emulator);
-    emuThread->unlock();
-
-    detailLayout.left.canvas.setBackgroundColor(rgb);
 
     colorLayouts[colorPos]->canvas.setBackgroundColor(rgb);
 
@@ -392,17 +311,12 @@ auto PaletteLayout::translate() -> void {
         colorLayout->color.setText( trans->get( paletteManager->getIdent( colorLayout->pos ) ) );
     }
 
-    detailLayout.right.r.name.setText( trans->get("red", {}, true ));
-    detailLayout.right.g.name.setText( trans->get("green", {}, true ));
-    detailLayout.right.b.name.setText( trans->get("blue", {}, true ));
 
     controlLayout.ownPalette.setText( trans->get("own_palette", {}, true) );
     controlLayout.create.setText( trans->get("create") );
     controlLayout.remove.setText( trans->get("remove") );
     controlLayout.allChanges.setText(trans->get("all_changes"));
     controlLayout.save.setText(trans->get("save"));
-
-    SliderLayout::scale({&detailLayout.right.r, &detailLayout.right.g, &detailLayout.right.b}, "255");
 }
 
 auto PaletteLayout::markSelectedColor( PaletteColorLayout* selectColorLayout ) -> void {

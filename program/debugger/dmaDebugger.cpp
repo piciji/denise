@@ -111,6 +111,14 @@ auto DmaDebugger::buildControl() -> GUIKIT::Layout* {
     return dmaControl;
 }
 
+auto DmaDebugger::updateColor(Dma::DmaFrame::BusUsage* busUsage, unsigned id, unsigned _col) -> void {
+    emuThread->lock();
+    dmaColors[ id ].color = _col;
+    settings->set<unsigned>(saveIdent() + "_color_" + std::to_string( id ), _col);
+    busUsage->canvas.setBackgroundColor( _col );
+    emuThread->unlock();
+}
+
 auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
     dma = new Dma( this );
 
@@ -134,23 +142,17 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
 
             GUIKIT::ColorChooser colorChooser;
             colorChooser.onChoose = [this, id, busUsage](unsigned color) {
-                emuThread->lock();
-                dmaColors[ id ].color = color;
-                settings->set<unsigned>(saveIdent() + "_color_" + std::to_string( id ), color);
-                busUsage->canvas.setBackgroundColor( color );
-                emuThread->unlock();
+                updateColor(busUsage, id, color);
             };
             
             colorChooser.setWindow( *this );
-            colorChooser.setDefault( dmaColors[ id ].color );
+            unsigned defaultColor = dmaColors[ id ].color;
+            colorChooser.setDefault( defaultColor );
             auto result = colorChooser.choose();
-            if (result.has_value()) {
-                emuThread->lock();
-                dmaColors[ id ].color = result.value_or(0);
-                settings->set<unsigned>(saveIdent() + "_color_" + std::to_string( id ), result.value_or(0));
-                busUsage->canvas.setBackgroundColor( result.value_or(0) );
-                emuThread->unlock();
-            }
+            if (GUIKIT::Application::isQuit)
+                return;
+
+            updateColor(busUsage, id, result.value_or(defaultColor));
         };
 
         busUsage->enableUsage.onToggle = [this, id](bool checked) {
