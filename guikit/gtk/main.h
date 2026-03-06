@@ -828,6 +828,7 @@ struct pFont {
 
 struct pColorChooser {
 	static auto choose(ColorChooser::State& state) -> std::optional<unsigned>;
+	static auto onColorChanged(GObject* chooser, GParamSpec* pspec, gpointer user_data) -> void;
 };
 
 struct pSystem {
