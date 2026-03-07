@@ -970,4 +970,4 @@ change = Veränderung
 close = Schließen
 write = Schreiben
 rdy tooltip = zum nächsten Zyklus springen, in welchem das RDY Signal des VIC-II auf LOW steht.
-complex conditions tooltip = Rechtsklick auf einen Breakpoint öffnet Ansicht für komplexe Bedingungen
+complex conditions tooltip = Rechtsklick auf ein rundes Breakpoint Symbol öffnet die Ansicht für komplexe Bedingungen

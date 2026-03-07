@@ -117,7 +117,7 @@ auto pWidget::setGeometry(Geometry geometry) -> void {
 }
 
 auto pWidget::setTooltip(std::string tooltip) -> void {
-    if(tooltip.empty() || !gtkWidget) return;
+    if(!gtkWidget) return;
     gtk_widget_set_tooltip_text((GtkWidget*)gtkWidget, tooltip.c_str());
  
 }

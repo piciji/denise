@@ -970,4 +970,4 @@ change = Change
 close = Close
 write = Write
 rdy tooltip = jump to the next cycle in which the RDY signal of the VIC-II is LOW.
-complex conditions tooltip = Right-clicking on a breakpoint opens a view for complex conditions.
+complex conditions tooltip = Right-clicking on a round breakpoint symbol opens a view for complex conditions.
