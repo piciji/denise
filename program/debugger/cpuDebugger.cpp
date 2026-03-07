@@ -665,12 +665,20 @@ auto CpuDebugger::updateInstructionBreakpointVisuals(unsigned row, Watcher* watc
 
 auto CpuDebugger::updateWatcherBreakpointVisuals(unsigned row, Watcher* watcher, bool preventColumResizing) -> void {
     auto& watcherList = cpu->watcher.list;
+    bool showTips = showTipsItem.checked();
+    bool hasTip = !watcherList.getRowTooltip(row).empty();
+
+    if (hasTip)
+        watcherList.setRowTooltip( row, "" );
 
     if (watcher->enabled) {
         if (watcher->useHitCount || watcher->useExpression)
             watcherList.setImage( row, 0, breakCondEnableSmallImg, preventColumResizing );
-        else
+        else {
             watcherList.setImage( row, 0, breakEnableSmallImg, preventColumResizing );
+            if (showTips)
+                watcherList.setRowTooltip( row, trans->getA( "complex conditions tooltip" ) );
+        }
 
     } else {
         watcherList.setImage( row, 0, breakDisableSmallImg, preventColumResizing);

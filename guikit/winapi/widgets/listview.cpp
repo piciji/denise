@@ -17,7 +17,7 @@ auto pListView::append(const std::vector<std::string>& list, bool preventColumnR
     unsigned row = ListView_GetItemCount(hwnd);
 
     LVITEM item;
-    item.mask = LVIF_TEXT;
+    item.mask = LVIF_IMAGE | LVIF_TEXT;
     item.iItem = row;
     item.iSubItem = 0;
     item.pszText = NULL;
@@ -303,6 +303,7 @@ auto pListView::updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void {
     toolInfo.lpszText = wtooltip;
     
     SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
+    SendMessage(hwndTip, TTM_SETDELAYTIME, TTDT_INITIAL, 1000);
 }
 
 auto pListView::clearBrush() -> void {

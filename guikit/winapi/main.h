@@ -684,7 +684,7 @@ struct pListView : pWidget {
 	auto setForegroundColor(unsigned color) -> void;
     auto setDarkBackground() -> void;
     auto setDarkForeground() -> void;
-    auto setRowTooltip(unsigned selection, std::string tooltip) -> void {}
+    auto setRowTooltip(unsigned selection, std::string tooltip) -> void { lastItem = -1; }
     auto relayMesssageToToolTip(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam) -> void;
     auto updateRowToolTip(HWND hwnd, int curItem, RECT rect) -> void;
     auto colorRowTooltips( bool colorTip ) -> void {}
