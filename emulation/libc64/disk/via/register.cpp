@@ -350,20 +350,26 @@ auto Via::write( uint16_t pos, uint8_t value ) -> void {
             break;
             
         case 0xc: // pcr
-            if ( (value & 0xe) == 0xc ) {
+            if ( (value & 0x8) == 0 ) { // input
+                if (!ca2)
+                    ca2Out(ca2 = true);
+            } else if ( (value & 0xe) == 0xc ) {
                 if (ca2)
-                    ca2Out(ca2 = 0);
+                    ca2Out(ca2 = false);
             } else if ( (value & 0xe) == 0xe ) {
                 if (!ca2)
-                    ca2Out(ca2 = 1);
+                    ca2Out(ca2 = true);
             }
 
-            if ( (value & 0xe0) == 0xc0 ) {
+            if ( (value & 0x80) == 0 ) { // input
+                if (!cb2)
+                    cb2Out(cb2 = true);
+            } else if ( (value & 0xe0) == 0xc0 ) {
                 if (cb2)
-                    cb2Out(cb2 = 0);
+                    cb2Out(cb2 = false);
             } else if ( (value & 0xe0) == 0xe0 ) {
                 if (!cb2)
-                    cb2Out(cb2 = 1);
+                    cb2Out(cb2 = true);
             }
             pcr = value;
             break;
