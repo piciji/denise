@@ -4,6 +4,7 @@
 #include "../../guikit/api.h"
 #include "../../emulation/interface.h"
 
+
 typedef Emulator::Interface::DebuggerAction DebuggerAction;
 typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
 
@@ -17,9 +18,12 @@ namespace LIBC64 {
     struct DebuggerSnapshot;
 }
 
+struct ConditionViewDebugger;
+struct DbgWatcher;
+
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU, CIA, Video, Audio, DMA,
+        CPU, SCPU, Memory, MemorySCPU, CIA, Video, Audio, DMA, Copper
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );
@@ -83,16 +87,19 @@ struct Debugger : GUIKIT::Window {
     static GUIKIT::Timer* timerVisibility;
     GUIKIT::VerticalLayout layout;
 
+    ConditionViewDebugger* conditionViewDebugger = nullptr;
+
     auto build() -> void;
     virtual auto saveIdent() -> std::string = 0;
     virtual auto titleIdent() -> std::string = 0;
     virtual auto buildTheme() -> GUIKIT::Layout* = 0;
     virtual auto translateTheme() -> void {}
     virtual auto updateTheme() -> void {}
-    virtual auto prepareTheme() -> void {}
+    virtual auto prepareTheme(bool external) -> void {}
     virtual auto initTheme() -> void {}
     virtual auto closeTheme() -> void {}
     virtual auto buildControl() -> GUIKIT::Layout* { return nullptr; }
+    virtual auto updateBreakpointVisuals(DbgWatcher* watcher) -> void {}
 
     auto translate() -> void;
     auto updateControl(uint16_t v, uint8_t h) -> void;
@@ -109,6 +116,12 @@ struct Debugger : GUIKIT::Window {
     auto isCiaMode() const -> bool { return mode == Mode::CIA; }
 
     auto changeMemory(const std::string& addrStr, const std::string& valStr) -> void;
+
+    auto updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row, DbgWatcher* watcher, bool preventColumResizing = false) -> void;
+    auto removeInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row) -> void;
+
+    auto openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void;
+    auto updateWatchpointCondition(DbgWatcher& watcher) -> bool;
 
     static auto updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
     static auto updateReg(GUIKIT::CheckBox& reg, bool state) -> void;

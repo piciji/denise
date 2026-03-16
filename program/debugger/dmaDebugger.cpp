@@ -550,7 +550,7 @@ auto DmaDebugger::translateTheme() -> void {
     bool showTips = showTipsItem.checked();
 
     if (dmaControl) {
-        dmaControl->symbolic.setText( "Symbolic" );
+        dmaControl->symbolic.setText( trans->getA("symbolic") );
         dmaControl->rdyButton.setText("RDY" );
         dmaControl->rdyButton.setTooltip( showTips ? trans->getA( "rdy tooltip" ) : "" );
     }

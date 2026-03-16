@@ -1034,6 +1034,8 @@ auto Agnus::debugPointReached(int source, unsigned addr) -> void {
         case M68FAMILY::M68000::ExceptionPoint: action = DebuggerAction::ExceptionPoint; break;
         case M68FAMILY::M68000::BreakPoint: action = DebuggerAction::Breakpoint; break;
         case M68FAMILY::M68000::SoftStop: action = DebuggerAction::Softstop; break;
+        case (int)DebuggerAction::BreakpointCopper: action = DebuggerAction::BreakpointCopper; break;
+        case (int)DebuggerAction::WatchpointCopper: action = DebuggerAction::WatchpointCopper; break;
         default: return;
     }
 

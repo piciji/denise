@@ -204,6 +204,9 @@ set(srcs
         program/debugger/videoDebugger.cpp
         program/debugger/audioDebugger.cpp
         program/debugger/dmaDebugger.cpp
+        program/debugger/copperDebugger.cpp
+        program/debugger/conditionViewDebugger.cpp
+        program/debugger/watcherHelper.cpp
         program/view/status.cpp
         program/config/config.cpp
         program/emuconfig/config.cpp

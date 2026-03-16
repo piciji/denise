@@ -27,6 +27,7 @@
 #include "debugger/videoDebugger.h"
 #include "debugger/audioDebugger.h"
 #include "debugger/dmaDebugger.h"
+#include "debugger/copperDebugger.h"
 
 Program* program = nullptr;
 DRIVER::Input* inputDriver = new DRIVER::Input;
@@ -873,6 +874,7 @@ auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -
         case Debugger::Mode::Video: debugger = new VideoDebugger(emulator); break;
         case Debugger::Mode::Audio: debugger = new AudioDebugger(emulator); break;
         case Debugger::Mode::DMA: debugger = new DmaDebugger(emulator); break;
+        case Debugger::Mode::Copper: debugger = new CopperDebugger(emulator); break;
         default:
             return;
     }

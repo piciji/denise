@@ -272,6 +272,8 @@
     <ClInclude Include="..\program\config\sliderAlt.h" />
     <ClInclude Include="..\program\debugger\audioDebugger.h" />
     <ClInclude Include="..\program\debugger\ciaDebugger.h" />
+    <ClInclude Include="..\program\debugger\conditionViewDebugger.h" />
+    <ClInclude Include="..\program\debugger\copperDebugger.h" />
     <ClInclude Include="..\program\debugger\cpuDebugger.h" />
     <ClInclude Include="..\program\debugger\debugger.h" />
     <ClInclude Include="..\program\debugger\dmaDebugger.h" />
@@ -279,6 +281,7 @@
     <ClInclude Include="..\program\debugger\memScpuDebugger.h" />
     <ClInclude Include="..\program\debugger\scpuDebugger.h" />
     <ClInclude Include="..\program\debugger\videoDebugger.h" />
+    <ClInclude Include="..\program\debugger\watcherHelper.h" />
     <ClInclude Include="..\program\emuconfig\config.h" />
     <ClInclude Include="..\program\emuconfig\layouts\audio.h" />
     <ClInclude Include="..\program\emuconfig\layouts\configurations.h" />
@@ -1696,11 +1699,14 @@
     </ClCompile>
     <ClCompile Include="..\program\debugger\audioDebugger.cpp" />
     <ClCompile Include="..\program\debugger\ciaDebugger.cpp" />
+    <ClCompile Include="..\program\debugger\conditionViewDebugger.cpp" />
+    <ClCompile Include="..\program\debugger\copperDebugger.cpp" />
     <ClCompile Include="..\program\debugger\cpuDebugger.cpp" />
     <ClCompile Include="..\program\debugger\debugger.cpp" />
     <ClCompile Include="..\program\debugger\dmaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\memDebugger.cpp" />
     <ClCompile Include="..\program\debugger\videoDebugger.cpp" />
+    <ClCompile Include="..\program\debugger\watcherHelper.cpp" />
     <ClCompile Include="..\program\emuconfig\config.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_emuconfig</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_emuconfig</ObjectFileName>

@@ -44,9 +44,11 @@ auto pListView::unlockRedraw() -> void {
     }
 }
 
-auto pListView::remove(unsigned selection) -> void {
-    if (hwnd) ListView_DeleteItem(hwnd, selection);
-    autoSizeColumns();
+auto pListView::remove(unsigned selection, bool preventColumnResizing) -> void {
+    if (!hwnd) return;
+    ListView_DeleteItem(hwnd, selection);
+    if (!preventColumnResizing)
+        autoSizeColumns();
 }
 
 auto pListView::reset() -> void {

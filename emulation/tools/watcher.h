@@ -19,7 +19,7 @@ struct Watcher {
     bool useExpression = false;
     ExpressionParser expressionParser;
     unsigned expressionMode = 0;
-    bool expressionBefore = false;
+    bool expressionResultBefore = false;
 };
 
 struct WatchPoints {

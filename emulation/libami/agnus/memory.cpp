@@ -853,5 +853,18 @@ auto Agnus::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {
     std::memcpy(snap.mapper, mapper, sizeof(mapper));
 }
 
+auto Agnus::getCopperDump(unsigned addrFrom, unsigned addrTo) -> uint8_t* {
+    unsigned size = addrTo - addrFrom;
+    uint8_t* copData = new uint8_t[size];
+    uint16_t* ptr = reinterpret_cast<uint16_t*>(copData);
+    size >>= 1;
+
+    while (size--) {
+        *ptr++ = _swapWord(*(uint16_t*)(chipMem + (addrFrom & dmaChipMemMask)));
+        addrFrom += 2;
+    }
+
+    return copData;
+}
 
 }

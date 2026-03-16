@@ -162,6 +162,12 @@ auto Cpu::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned 
         case DebuggerAction::ExceptionPoint:
             exceptionPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
             break;
+        case DebuggerAction::BreakpointCopper:
+            ref.copper.breakPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
+        case DebuggerAction::WatchpointCopper:
+            ref.copper.watchPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
+            break;
     }
 
     return !expressionError;

@@ -1116,12 +1116,12 @@ auto ListView::autoSizeColumns() -> void {
     p.autoSizeColumns();
 }
 
-auto ListView::remove(unsigned selection) -> void {
+auto ListView::remove(unsigned selection, bool preventColumnResizing) -> void {
     if(selection >= state.rows.size()) return;
     state.rows.erase(state.rows.begin() + selection);
     state.images.erase(state.images.begin() + selection);
 	state.rowTooltips.erase(state.rowTooltips.begin() + selection);
-    p.remove(selection);
+    p.remove(selection, preventColumnResizing);
 }
 
 auto ListView::reset() -> void {

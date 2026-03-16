@@ -343,10 +343,11 @@ struct Interface {
         uint16_t watcher[4];
     };
 
-    enum class DebuggerTheme { Unspecified = 0, CPU = 1, CheckpointsCore1 = 2, CheckpointsCore2 = 4,
-        Memory = 0x100, CIA = 0x200, Video = 0x400, Bus = 0x800, Audio = 0x1000  };
+    enum class DebuggerTheme { Unspecified = 0, CPU = 1, CheckpointsCPU1 = 2, CheckpointsCPU2 = 4,
+        Memory = 0x100, CIA = 0x200, Video = 0x400, Bus = 0x800, Audio = 0x1000, Copper = 0x2000  };
+
     enum class DebuggerAction { None, Breakpoint, Watchpoint, WatchpointWrite, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
-        DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop, HaltCPU };
+        DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop, HaltCPU, BreakpointCopper, WatchpointCopper, SoftstopCopper };
 
     struct DebuggerSnapshot {
         unsigned themes = 0; // multiple themes

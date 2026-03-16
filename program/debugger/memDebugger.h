@@ -75,7 +75,7 @@ struct MemDebugger : Debugger {
     auto buildControl() -> GUIKIT::Layout* override;
     auto translateTheme() -> void override;
     auto updateTheme() -> void override;
-    auto prepareTheme() -> void override;
+    auto prepareTheme(bool external) -> void override;
     auto initTheme() -> void override;
     auto closeTheme() -> void override;
     auto saveIdent() -> std::string override;

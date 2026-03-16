@@ -1,11 +1,34 @@
 
 #include "copper.h"
 #include "agnus.h"
+#include "../cpu/m68000.h"
+
 #include "../interface.h"
+#include "../../tools/string.h"
 
 namespace LIBAMI {
 
-Copper::Copper(Agnus& agnus) : agnus(agnus), blitter(agnus.blitter) {}
+Copper::Copper(Agnus& agnus) : agnus(agnus), blitter(agnus.blitter) {
+    watchPoints.callback = [this](bool state) { flagDebugAction(WatchPoint, state); };
+    breakPoints.callback = [this](bool state) { flagDebugAction(BreakPoint, state); };
+
+    watchPoints.expressionCallback = [this](const std::string& input, int& pos) {
+        return this->agnus.cpu.parseExpressionValue(input, pos);
+    };
+
+    breakPoints.expressionCallback = [this](const std::string& input, int& pos) {
+        return this->agnus.cpu.parseExpressionValue(input, pos);
+    };
+
+    debuggerState = None;
+}
+
+auto Copper::flagDebugAction(int action, bool state) -> void {
+    if (state)
+        debuggerState |= action;
+    else
+        debuggerState &= ~action;
+}
 
 auto Copper::cycle1() -> void { // only gets here, if short line before
     // Copper requests BUS each second cycle, so we end here in a NON Copper cycle
@@ -35,6 +58,22 @@ inline auto Copper::assignCopPtr() -> void {
     else
         copPtr = cop2lc;
 
+    if (debuggerState & LogList) {
+        auto it = lists.find( copPtr );
+        if (it == lists.end()) {
+            lists.insert( std::make_pair( copPtr, copPtr ) );
+            it = lists.find( copPtr );
+        }
+
+        if (strobeCop & 1) {
+            listUse = 1;
+            list1 = &(*it);
+        } else {
+            listUse = 2;
+            list2 = &(*it);
+        }
+    }
+
     strobeCop = 0;
 }
 
@@ -62,7 +101,6 @@ auto Copper::process() -> void {
                 break;
         case Strobe_VBL_4:
             if (agnus.fetchCopperDma(copPtr, ir1)) {
-                copPtr += 2;
                 assignCopPtr();
                 state = Strobe_VBL_7;
             }
@@ -137,13 +175,15 @@ auto Copper::process() -> void {
         case Read1Buggy:
         case Read1:
             if (agnus.fetchCopperDma(copPtr, ir1)) {
+                if (debuggerState & (BreakPoint | SoftStep | LogList) )
+                    checkBreakpoints();
+
                 copPtr += 2;
                 state = Read2;
             }
             break;
         case Read2:
             if (agnus.fetchCopperDma(copPtr, ir2)) {
-                copPtr += 2;
 
                 if (ir1 & 1) { // wait or skip
                     comp.vMask = (ir2 | 0x8000) >> 8; // highest bit is not used for masking
@@ -155,6 +195,7 @@ auto Copper::process() -> void {
                     state = (ir2 & 1) ? Skip1 : Wait1;
 
                     skipped = false;
+                    copPtr += 2;
                 } else { // move
                     uint16_t reg = ir1 & 0x1fe;
 
@@ -168,6 +209,11 @@ auto Copper::process() -> void {
                         skipped = false;
                         reg = 0x1fe;
                     }
+
+                    if ((debuggerState & WatchPoint) && watchPoints.check(reg, true))
+                        agnus.debugPointReached( (int)DebuggerAction::WatchpointCopper, reg );
+
+                    copPtr += 2;
 
                     if (reg == 0x88) {
                         strobeCop |= 1;
@@ -347,7 +393,72 @@ auto Copper::reset() -> void {
     ir1 = ir2 = 0;
     cop1lc = cop2lc = 0;
     copPtr = 0;
+    copPtrEdge = 0;
     copPtrBefore = 0;
+    debuggerState &= LogList;
+    watchPoints.reset();
+    breakPoints.reset();
+    lists.clear();
+    list1 = list2 = nullptr;
+    listUse = 0;
+}
+
+auto Copper::debuggerAdd(DebuggerAction action, unsigned addr) -> void {
+    switch (action) {
+        case DebuggerAction::BreakpointCopper:      breakPoints.add( addr ); break;
+        case DebuggerAction::WatchpointCopper:      watchPoints.add( addr ); break;
+        case DebuggerAction::SoftstopCopper:        debuggerState |= SoftStep; break;
+        default:
+            break;
+    }
+}
+
+auto Copper::debuggerRemove(DebuggerAction action, unsigned addr) -> void {
+    switch (action) {
+        case DebuggerAction::BreakpointCopper:      breakPoints.remove( addr ); break;
+        case DebuggerAction::WatchpointCopper:      watchPoints.remove( addr ); break;
+        case DebuggerAction::SoftstopCopper:        debuggerState &= ~SoftStep; break;
+        default:
+            break;
+    }
+}
+
+auto Copper::debuggerRemove(DebuggerAction action) -> void {
+    switch (action) {
+        case DebuggerAction::BreakpointCopper:      breakPoints.removeAll(); break;
+        case DebuggerAction::WatchpointCopper:      watchPoints.removeAll(); break;
+        case DebuggerAction::SoftstopCopper:        debuggerState &= ~SoftStep; break;
+        default:
+            break;
+    }
+}
+
+auto Copper::checkBreakpoints() -> void {
+    if (debuggerState & LogList) {
+        copPtrEdge = copPtr;
+        auto list = listUse == 1 ? list1 : (listUse == 2 ? list2 : nullptr);
+        if (list && list->second < copPtr + 4)
+            list->second = copPtr + 4;
+    }
+
+    if (debuggerState & SoftStep) {
+        debuggerState &= ~SoftStep;
+        agnus.debugPointReached( (int)DebuggerAction::BreakpointCopper, copPtr );
+    } else if ((debuggerState & BreakPoint) && breakPoints.check(copPtr, true)) {
+        agnus.debugPointReached( (int)DebuggerAction::BreakpointCopper, copPtr );
+    }
+}
+
+auto Copper::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.copper;
+    s.cop1LC = cop1lc;
+    s.cop2LC = cop2lc;
+    s.copPC = copPtr;
+    s.copPCEdge = copPtrEdge;
+    s.listUse = listUse;
+    s.list1 = list1;
+    s.list2 = list2;
+    s.cdang = cdang != 0x80;
 }
 
 auto Copper::serialize(Emulator::Serializer& s) -> void {

@@ -3,6 +3,10 @@
 
 #include <cstdint>
 #include <functional>
+#include <unordered_map>
+#include "../../tools/watcher.h"
+#include "../../interface.h"
+#include "../system/debuggerSnapshot.h"
 
 namespace Emulator {
     struct Serializer;
@@ -12,6 +16,7 @@ namespace LIBAMI {
 
 struct Agnus;
 struct Blitter;
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
 
 struct Copper {
 
@@ -60,6 +65,7 @@ struct Copper {
     uint32_t cop1lc;
     uint32_t cop2lc;
     uint32_t copPtr;
+    uint32_t copPtrEdge;
     uint32_t copPtrBefore;
 
     uint16_t ir1;
@@ -73,6 +79,22 @@ struct Copper {
     } comp;
 
     bool skipped;
+
+    Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
+    Emulator::WatchPoints breakPoints = Emulator::WatchPoints();
+    std::unordered_map<uint32_t, uint32_t> lists;
+    std::pair<const uint32_t, uint32_t>* list1 = nullptr;
+    std::pair<const uint32_t, uint32_t>* list2 = nullptr;
+    int listUse = 0;
+
+    enum DebuggerState {None = 0, WatchPoint = 1, BreakPoint = 2, SoftStep = 4, LogList = 8};
+    int debuggerState;
+
+    auto debuggerAdd(DebuggerAction action, unsigned addr) -> void;
+    auto debuggerRemove(DebuggerAction action, unsigned addr) -> void;
+    auto debuggerRemove(DebuggerAction action) -> void;
+    auto updateDmaSnapshot(DebuggerSnapshot& snap) -> void;
+    auto checkBreakpoints() -> void;
 
     auto setCopCon( uint16_t value ) -> void;
 
@@ -91,6 +113,7 @@ struct Copper {
     auto blitterBusyUpdate() -> void;
     auto reset() -> void;
     auto serialize(Emulator::Serializer& s) -> void;
+    auto flagDebugAction(int action, bool state) -> void;
 
 };
 

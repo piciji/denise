@@ -801,7 +801,7 @@ struct ListView : Widget {
 
     auto append(const std::vector<std::string>& row, bool preventColumnResizing = false) -> void;
     auto appendMulti(const std::vector<std::vector<std::string>>& rows, bool clearBefore = true) -> void;
-    auto remove(unsigned selection) -> void;
+    auto remove(unsigned selection, bool preventColumnResizing = false) -> void;
     auto reset() -> void;
     auto setSelection(unsigned selection) -> void;
     auto setSelected(bool selected = true) -> void;

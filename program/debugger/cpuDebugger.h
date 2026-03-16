@@ -2,6 +2,7 @@
 #pragma once
 
 #include "debugger.h"
+#include "watcherHelper.h"
 
 #define LIST_INSTRUCTIONS 256
 #define LIST_TRACES 512
@@ -107,36 +108,6 @@ struct CpuDebugger : Debugger {
         C64RdyControl();
     } *c64RdyControl = nullptr;
 
-    struct BreakConditionLayout : GUIKIT::VerticalLayout {
-
-        struct Expression : GUIKIT::HorizontalLayout {
-            GUIKIT::CheckBox check;
-            GUIKIT::ComboButton compareCombo;
-            GUIKIT::LineEdit compareVal;
-
-            Expression();
-        } expression;
-
-        struct HitCount : GUIKIT::HorizontalLayout {
-            GUIKIT::CheckBox check;
-            GUIKIT::ComboButton compareCombo;
-            GUIKIT::LineEdit compareVal;
-
-            HitCount();
-        } hitCount;
-
-        GUIKIT::MultilineEdit info;
-
-        struct Control : GUIKIT::HorizontalLayout {
-            GUIKIT::Widget spacer;
-            GUIKIT::Button closeButton;
-
-            Control();
-        } control;
-
-        BreakConditionLayout();
-    };
-
     struct Instruction {
         unsigned addr;
         std::string disassembled;
@@ -148,35 +119,16 @@ struct CpuDebugger : Debugger {
         uint16_t flags;
     };
 
-    struct Watcher {
-        unsigned addr;
-        std::string ident;
-        DebuggerAction action;
-        bool enabled;
-
-        bool useHitCount = false;
-        unsigned hitCount = 0;
-        unsigned hitCountCompare = 0;
-
-        bool useExpression = false;
-        std::string expression;
-        unsigned expressionCompare = 0;
-    };
-
     std::optional<unsigned> currentInstRow;
 
-    std::vector<Watcher> watchers;
     Instruction instructions[LIST_INSTRUCTIONS];
     Trace traces[LIST_TRACES];
-
-    GUIKIT::Window* breakConditionWindow = nullptr;
-    BreakConditionLayout* breakConditionLayout = nullptr;
-    GUIKIT::Timer* unfocusTimer = nullptr;
+    WatcherHelper watcherHelper;
 
     auto buildTheme() -> GUIKIT::Layout* override;
     auto translateTheme() -> void override;
     auto updateTheme() -> void override;
-    auto prepareTheme() -> void override;
+    auto prepareTheme(bool external) -> void override;
     auto initTheme() -> void override;
     auto closeTheme() -> void override;
     auto saveIdent() -> std::string override;
@@ -188,18 +140,9 @@ struct CpuDebugger : Debugger {
 
     auto updateInstructionList() -> void;
     auto updateTraceList() -> void;
-    auto addToWatcherList(unsigned addr, DebuggerAction action, const std::string& ident = "") -> void;
-    auto removeFromWatcherList(unsigned addr, DebuggerAction action) -> void;
-    auto updateWatcherList() -> void;
 
-    auto findWatcherBy(unsigned addr, DebuggerAction action) -> Watcher*;
-    auto findWatcherRowBy(unsigned addr, DebuggerAction action) -> std::optional<unsigned>;
+    auto updateBreakpointVisuals(DbgWatcher* watcher) -> void override;
 
-    auto updateBreakpointVisuals(Watcher* watcher) -> void;
-    auto updateInstructionBreakpointVisuals(unsigned row, Watcher* watcher, bool preventColumResizing = false) -> void;
-    auto updateWatcherBreakpointVisuals(unsigned row, Watcher* watcher, bool preventColumResizing = false) -> void;
-
-    auto removeInstructionBreakpoint(unsigned row) -> void;
     auto findInstructionRowBy(unsigned addr) -> std::optional<unsigned>;
 
     auto updateCpuFlags(const char* flagIdent, unsigned flags) -> void;
@@ -211,9 +154,6 @@ struct CpuDebugger : Debugger {
 
     auto getCpuType() -> DebuggerTheme;
     auto memChanged() -> void;
-
-    auto createWatchpointConditionOverlay(Watcher* watcher, GUIKIT::Position position) -> void;
-    auto updateWatchpointCondition(Watcher& watcher) -> bool;
 
     auto buildControl() -> GUIKIT::Layout* override;
 };

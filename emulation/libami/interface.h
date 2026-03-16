@@ -148,6 +148,7 @@ struct Interface : Emulator::Interface  {
     auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
     auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
     auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
+    auto getCopperDump(unsigned addrFrom, unsigned addrTo) -> uint8_t*;
     auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void;
     auto getDmaDump() -> uint8_t*;
 

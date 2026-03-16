@@ -340,7 +340,7 @@ auto System::debuggerUpdate() -> void {
 
     debuggerSnapshot.mutex.lock();
     updateDebuggerSnapshot();
-    interface->debugger(&debuggerSnapshot); // callback needs to unlock
+    interface->debugger(&debuggerSnapshot); // callback needs to unlock mutex
     agnus.debugger.action = DebuggerAction::None;
 }
 
@@ -713,9 +713,20 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                     agnus.debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
                     break;
             } break;
-        case DebuggerTheme::CheckpointsCore1:
+        case DebuggerTheme::CheckpointsCPU1:
             cpu.debuggerAdd( action, addr, addrTo );
             break;
+
+        case DebuggerTheme::Copper:
+            switch (action) {
+                case DebuggerAction::None:
+                    agnus.copper.flagDebugAction(Copper::LogList, true);
+                    debuggerSnapshot.themes |= (unsigned)theme;
+                    break;
+                default:
+                    agnus.copper.debuggerAdd(action, addr);
+                    break;
+            } break;
 
         case DebuggerTheme::Unspecified: {
             switch (action) {
@@ -761,12 +772,26 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
                     agnus.debugger.dmaWatchers[addr.value_or(0) & 3] = 0;
                     break;
             } break;
-        case DebuggerTheme::CheckpointsCore1:
+        case DebuggerTheme::CheckpointsCPU1:
             if (addr.has_value())
                 cpu.debuggerRemove( action, addr.value_or(0) );
             else
                 cpu.debuggerRemove( action );
             break;
+        case DebuggerTheme::Copper:
+            switch (action) {
+                case DebuggerAction::None:
+                    agnus.copper.flagDebugAction(Copper::LogList, false);
+                    debuggerSnapshot.themes &= ~(unsigned)theme;
+                    break;
+                default:
+                    if (addr.has_value())
+                        agnus.copper.debuggerRemove( action, addr.value_or(0) );
+                    else
+                        agnus.copper.debuggerRemove( action );
+                    break;
+            } break;
+
         default:
             debuggerSnapshot.themes &= ~(unsigned)theme;
             break;
@@ -802,6 +827,8 @@ auto System::updateDebuggerSnapshot() -> void {
     }
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus)
         agnus.updateDmaSnapshot( debuggerSnapshot );
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Copper)
+        agnus.copper.updateDmaSnapshot( debuggerSnapshot );
 }
 
 auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {

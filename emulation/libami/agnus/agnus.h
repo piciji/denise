@@ -8,8 +8,7 @@
 #include "../expansionPort/fastMem.h"
 #include "../expansionPort/hdController.h"
 #include "../../tools/history.h"
-#include "../cpu/m68000/dasmHandler.h"
-#include "../cpu/m68000/m68000.h"
+#include "../cpu/m68000.h"
 #include "../system/debuggerSnapshot.h"
 #include "../../tools/crop.h"
 
@@ -513,6 +512,7 @@ struct Agnus {
     auto peekDmaWatcher(Emulator::Interface::DebuggerDma& dmaLogger) -> void;
     auto debuggerAutoUpdate() -> void;
     auto debuggerUpdateEvent() -> void;
+    auto getCopperDump(unsigned addrFrom, unsigned addrTo) -> uint8_t*;
 };
 
 }

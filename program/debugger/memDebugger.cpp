@@ -309,7 +309,7 @@ auto MemDebugger::closeTheme() -> void {
     emulator->debuggerRemove( DebuggerTheme::Memory, DebuggerAction::None);
 }
 
-auto MemDebugger::prepareTheme() -> void {
+auto MemDebugger::prepareTheme(bool external) -> void {
     isAmiga() ? fetchDump<uint16_t>() : fetchDump<uint8_t>();
 }
 

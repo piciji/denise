@@ -8,6 +8,9 @@
 #include "../../emulation/interface.h"
 #include "memDebugger.h"
 #include "cpuDebugger.h"
+#include "copperDebugger.h"
+#include "conditionViewDebugger.h"
+#include "watcherHelper.h"
 
 GUIKIT::Timer* Debugger::timerVisibility = nullptr;
 
@@ -284,7 +287,7 @@ auto Debugger::Callback(Emulator::Interface::DebuggerSnapshot* snapshot) -> void
 
     for (auto debugger : program->getActiveDebuggers()) {
         debugger->snapshot = snapshot;
-        debugger->prepareTheme();
+        debugger->prepareTheme(false);
     }
 
     emuThread->events |= EmuThread::EVT_DEBUGGER;
@@ -416,7 +419,7 @@ auto Debugger::makeVisible() -> void {
 
         if (snapshot) {
             emulator->debuggerAdd( DebuggerTheme::Unspecified, DebuggerAction::AutoUpdate, 1 );
-            prepareTheme();
+            prepareTheme(true);
             updateTheme();
         }
     }
@@ -523,8 +526,46 @@ auto Debugger::changeMemory(const std::string& addrStr, const std::string& valSt
             if (debugger->mode == Mode::CPU || debugger->mode == Mode::SCPU) {
                 (dynamic_cast<CpuDebugger*>(debugger))->memChanged();
             }
+
+            if (debugger->mode == Mode::Copper) {
+                (dynamic_cast<CopperDebugger*>(debugger))->memChanged();
+            }
         }
     }
 
     emuThread->unlock();
+}
+
+auto Debugger::updateInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row, DbgWatcher* watcher, bool preventColumResizing) -> void {
+    if (watcher->enabled) {
+        if (watcher->useHitCount || watcher->useExpression)
+            listView.setImage( row, 0, breakCondEnableImg, preventColumResizing );
+        else
+            listView.setImage( row, 0, breakEnableImg, preventColumResizing );
+
+        listView.setRowForegroundColor( DEBUG_COLOR, row );
+    } else {
+        listView.setImage( row, 0, breakDisableImg, preventColumResizing);
+        if (!preventColumResizing)
+            listView.resetRowForegroundColor( row );
+    }
+}
+
+auto Debugger::removeInstructionBreakpointVisuals(GUIKIT::ListView& listView, unsigned row) -> void {
+    listView.setImage( row, 0, nullImg);
+    listView.resetRowForegroundColor( row );
+}
+
+auto Debugger::updateWatchpointCondition(DbgWatcher& watcher) -> bool {
+    unsigned hitCount = watcher.useHitCount ? watcher.hitCount : 0;
+    const auto& expression = watcher.useExpression ? watcher.expression : "";
+    return emulator->setWatchpointCondition( watcher.action, watcher.addr, hitCount, watcher.hitCountCompare, expression, watcher.expressionCompare );
+}
+
+auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void {
+    delete conditionViewDebugger;
+
+    conditionViewDebugger = new ConditionViewDebugger(this);
+    conditionViewDebugger->create(watcher, position);
+    conditionViewDebugger->open();
 }

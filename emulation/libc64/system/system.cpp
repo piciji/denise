@@ -1372,10 +1372,10 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                     debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
                     break;
             } break;
-        case DebuggerTheme::CheckpointsCore1:
+        case DebuggerTheme::CheckpointsCPU1:
             cpu.debuggerAdd( action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
             break;
-        case DebuggerTheme::CheckpointsCore2:
+        case DebuggerTheme::CheckpointsCPU2:
             superCpu->debuggerAdd(action, addr, addrTo);
             break;
         case DebuggerTheme::Unspecified: {
@@ -1427,13 +1427,13 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
                     debugger.dmaWatchers[addr.value_or(0) & 3] = 0;
                     break;
             } break;
-        case DebuggerTheme::CheckpointsCore1:
+        case DebuggerTheme::CheckpointsCPU1:
             if (addr.has_value())
                 cpu.debuggerRemove( action, addr.value_or(0) );
             else
                 cpu.debuggerRemove( action);
             break;
-        case DebuggerTheme::CheckpointsCore2:
+        case DebuggerTheme::CheckpointsCPU2:
             if (addr.has_value())
                 superCpu->debuggerRemove( action, addr.value_or(0));
             else

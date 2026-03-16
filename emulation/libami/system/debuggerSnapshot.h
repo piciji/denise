@@ -128,6 +128,17 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         unsigned shiftCount;
     } cia[2];
 
+    struct {
+        uint32_t cop1LC;
+        uint32_t cop2LC;
+        uint32_t copPC;
+        uint32_t copPCEdge;
+        int listUse;
+        std::pair<const uint32_t, uint32_t>* list1 = nullptr;
+        std::pair<const uint32_t, uint32_t>* list2 = nullptr;
+        bool cdang;
+    } copper;
+
     constexpr static Emulator::Interface::DebuggerIdent CiaPorts[2][2][8] = {
         { // CIA A
             { // Port A

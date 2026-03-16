@@ -1240,6 +1240,15 @@
     <ClInclude Include="..\driver\video\opengl3\splashScreen.h">
       <Filter>driver\video\opengl3</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\debugger\conditionViewDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\watcherHelper.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\copperDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2491,6 +2500,15 @@
       <Filter>emulation\tools</Filter>
     </ClCompile>
     <ClCompile Include="..\program\debugger\audioDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\conditionViewDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\watcherHelper.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\copperDebugger.cpp">
       <Filter>program\debugger</Filter>
     </ClCompile>
   </ItemGroup>

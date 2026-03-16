@@ -453,12 +453,13 @@ auto pListView::append(const std::vector<std::string>& list, bool preventColumnR
         autoSizeColumns();
 }
 
-auto pListView::remove(unsigned selection) -> void {
+auto pListView::remove(unsigned selection, bool preventColumnResizing) -> void {
     @autoreleasepool {
         [[(id)cocoaView content] reloadData];
     }
     releaseRowImages(selection);
-    autoSizeColumns();
+    if (!preventColumnResizing)
+        autoSizeColumns();
 }
 
 auto pListView::reset() -> void {

@@ -86,7 +86,7 @@ auto WatchPoints::setBreakpointCondition( unsigned addr, unsigned hitCount, unsi
     w->useExpression = !expression.empty();
     w->expressionParser.setExpression( expression );
     w->expressionMode = expressionMode;
-    w->expressionBefore = false;
+    w->expressionResultBefore = false;
     w->expressionParser.callback = expressionCallback;
 }
 
@@ -97,8 +97,8 @@ auto WatchPoints::checkConditions( Watcher& w ) -> bool {
                 return false;
         } else if (w.expressionMode == 1) {
             bool result = w.expressionParser.parseSilent();
-            if (result != w.expressionBefore) {
-                w.expressionBefore = result;
+            if (result != w.expressionResultBefore) {
+                w.expressionResultBefore = result;
             } else {
                 return false;
             }

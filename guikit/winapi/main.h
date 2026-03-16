@@ -663,7 +663,7 @@ struct pListView : pWidget {
 
     auto append(const std::vector<std::string>& list, bool preventColumnResizing = false) -> void;
     auto autoSizeColumns() -> void;
-    auto remove(unsigned selection) -> void;
+    auto remove(unsigned selection, bool preventColumnResizing = false) -> void;
     auto reset() -> void;
     auto setGeometry(Geometry geometry) -> void;
     auto setHeaderText(std::vector<std::string> list) -> void;

@@ -1381,7 +1381,15 @@ auto View::buildMenu() -> void {
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerAudio );
+            sM.debuggerCopper = nullptr;
         } else {
+            sM.debuggerCopper = new GUIKIT::MenuItem;
+            sM.debuggerCopper->onActivate = [this, emulator]() {
+                emuThread->lock();
+                program->openDebugger(emulator, Debugger::Mode::Copper);
+                emuThread->unlock();
+            };
+            sM.debugger->append( *sM.debuggerCopper );
             sM.debuggerAudio = nullptr;
         }
 
@@ -2153,6 +2161,9 @@ auto View::translate() -> void {
         sysMenu.debuggerVideo->setText(trans->getA( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "VIC-II" : "Denise"));
         if (sysMenu.debuggerAudio)
             sysMenu.debuggerAudio->setText(trans->getA( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "SID" : "Paula"));
+
+        if (sysMenu.debuggerCopper)
+            sysMenu.debuggerCopper->setText(trans->getA( "Copper"));
 
         sysMenu.debuggerDma->setText(trans->get("DMA"));
 

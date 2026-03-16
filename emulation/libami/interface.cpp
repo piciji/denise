@@ -802,6 +802,10 @@ auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
     return system->cpu.disassembleTrace( i, flags );
 }
 
+auto Interface::getCopperDump(unsigned addrFrom, unsigned addrTo) -> uint8_t* {
+    return system->agnus.getCopperDump( addrFrom, addrTo );
+}
+
 auto Interface::getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {
     system->agnus.memoryDump(bank, dump);
 }

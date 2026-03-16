@@ -19,7 +19,7 @@ auto pListView::append(const std::vector<std::string>& list, bool preventColumnR
     }
 }
 
-auto pListView::remove(unsigned selection) -> void {
+auto pListView::remove(unsigned selection, bool preventColumnResizing) -> void {
     GtkTreeModel* model = gtk_tree_view_get_model(GTK_TREE_VIEW(subWidget));
     GtkTreeIter iter;
     gtk_tree_model_get_iter_from_string(model, &iter, std::to_string(selection).c_str());
