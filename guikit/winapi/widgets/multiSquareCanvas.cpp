@@ -3,6 +3,7 @@
 
 pMultiSquareCanvas::~pMultiSquareCanvas() {
     delete[] drawArea;
+    destroy(hwndScroller);
 }
 
 auto pMultiSquareCanvas::create() -> void {

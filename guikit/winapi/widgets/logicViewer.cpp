@@ -18,6 +18,8 @@ pLogicViewer::~pLogicViewer() {
         DeleteObject(penFG);
     if (backgroundBrush)
         DeleteObject(backgroundBrush);
+
+    destroy(hwndScroller);
 }
 
 auto pLogicViewer::create() -> void {
