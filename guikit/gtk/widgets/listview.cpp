@@ -68,10 +68,11 @@ auto pListView::setSelection(unsigned selection) -> void {
 }
 
 auto pListView::setText(unsigned selection, unsigned position, const std::string& text, bool preventColumnResizing) -> void {
-    GtkTreeModel* model = gtk_tree_view_get_model(GTK_TREE_VIEW(subWidget));
-    GtkTreeIter iter;
-    gtk_tree_model_get_iter_from_string(model, &iter, std::to_string(selection).c_str());
-    gtk_list_store_set(store, &iter, position * 2 + 1, text.c_str(), -1);
+    // GtkTreeModel* model = gtk_tree_view_get_model(GTK_TREE_VIEW(subWidget));
+    // GtkTreeIter iter;
+    // gtk_tree_model_get_iter_from_string(model, &iter, std::to_string(selection).c_str());
+    // gtk_list_store_set(store, &iter, position * 2 + 1, text.c_str(), -1);
+	gtk_widget_queue_draw(GTK_WIDGET(subWidget));
 }
 
 auto pListView::updateRowForegroundColors() -> void {
@@ -156,6 +157,11 @@ auto pListView::applyDataFunc(GtkTreeViewColumn* gtkColumn, GtkCellRenderer* ren
 		g_object_set(G_OBJECT(renderer), "foreground-gdk", &gdkColor, nullptr);
 	} else
 		g_object_set(G_OBJECT(renderer), "foreground-set", false, nullptr);
+
+	if (colPos.has_value()) {
+		auto text = listView.text(selection, colPos.value_or(0));
+		g_object_set(G_OBJECT(renderer),"text", text.c_str(), nullptr);
+	}
 }
 
 auto pListView::create() -> void {

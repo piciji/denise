@@ -12,7 +12,7 @@
 
 CopperDebugger::Copper::List::Control::Control() {
     append(labelCopLc, {0u, 0u}, 10);
-    append(copLc, {60u, 0u});
+    append(copLc, {70u, 0u});
 
     append(spacer, {~0u, 0u});
     append(addrEdit, {80u, 0u}, 10);
@@ -73,7 +73,7 @@ CopperDebugger::Copper::Watcher::Watcher() {
 CopperDebugger::Copper::Copper() {
     append( lists[0], {~0u, ~0u}, 10 );
     append( lists[1], {~0u, ~0u}, 10 );
-    append( watcher, {200u, ~0u} );
+    append( watcher, {210u, ~0u} );
 }
 
 CopperDebugger::CopperControl::CopperControl() {
@@ -140,8 +140,8 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
 
                 updateInstructionBreakpointVisualsInOtherList(lPtr, inst.addr, watcher);
 
-                if (lPtr->currentInstRow.has_value())
-                    lPtr->listView.setSelection( lPtr->currentInstRow.value_or(0) );
+              //  if (lPtr->currentInstRow.has_value())
+                //    lPtr->listView.setSelection( lPtr->currentInstRow.value_or(0) );
             } else if (isPaused()) {
                 if (row < lPtr->instructions.size()) {
                     auto& inst = lPtr->instructions[row];
@@ -157,8 +157,8 @@ auto CopperDebugger::buildTheme() -> GUIKIT::Layout* {
                 if (watcher)
                     openConditionView( watcher, position);
 
-                if (lPtr->currentInstRow.has_value())
-                    lPtr->listView.setSelection( lPtr->currentInstRow.value_or(0) );
+             //   if (lPtr->currentInstRow.has_value())
+               //     lPtr->listView.setSelection( lPtr->currentInstRow.value_or(0) );
             }
         };
 

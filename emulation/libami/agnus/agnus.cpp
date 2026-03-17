@@ -333,7 +333,7 @@ inline auto Agnus::peekDmaWatcher(Emulator::Interface::DebuggerDma& dmaLogger) -
     }
 }
 
-inline auto Agnus::addDmaLogEntry() -> void {
+auto Agnus::addDmaLogEntry() -> void {
     auto& dmaLogger = debugger.dma[hPos];
     dmaLogger.usage = busUsage;
     dmaLogger.usageCpu = ~0; // unused for DMA, overwrite in case of DMA independent concurrent accesses, e.g. fastram, ROM, ...

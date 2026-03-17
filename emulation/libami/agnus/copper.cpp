@@ -443,8 +443,12 @@ auto Copper::checkBreakpoints() -> void {
 
     if (debuggerState & SoftStep) {
         debuggerState &= ~SoftStep;
+        if (agnus.debugger.dmaLog)
+            agnus.addDmaLogEntry();
         agnus.debugPointReached( (int)DebuggerAction::BreakpointCopper, copPtr );
     } else if ((debuggerState & BreakPoint) && breakPoints.check(copPtr, true)) {
+        if (agnus.debugger.dmaLog)
+            agnus.addDmaLogEntry();
         agnus.debugPointReached( (int)DebuggerAction::BreakpointCopper, copPtr );
     }
 }
