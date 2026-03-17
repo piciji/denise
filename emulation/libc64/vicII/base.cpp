@@ -451,7 +451,7 @@ auto VicIIBase::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
 #undef _fullAdr
 
 auto VicIIBase::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
-    snap.debuggerDma = &debugger.dma[0];
+    std::memcpy(snap.debuggerDma, debugger.dma, sizeof(debugger.dma));
     snap.lineCycles = lineCycles;
 }
 

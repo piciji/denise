@@ -1061,7 +1061,7 @@ auto Agnus::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
 }
 
 auto Agnus::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
-    snap.agnus.debuggerDma = &debugger.dma[0];
+    std::memcpy(snap.agnus.debuggerDma, debugger.dma, sizeof(debugger.dma));
     snap.agnus.lastHPos = debugger.lastHpos;
     snap.agnus.chipMemMask = chipMemMask;
     snap.agnus.model = model;

@@ -36,7 +36,7 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint8_t hPos;
     uint16_t vPos;
 
-    Emulator::Interface::DebuggerDma* debuggerDma = nullptr;
+    Emulator::Interface::DebuggerDma debuggerDma[65];
     uint8_t lineCycles;
 
     struct {
