@@ -238,18 +238,9 @@ auto Paula::setResampleQuality( int val ) -> void {
 
     switch(val) {
         case 0: sampleLimit = 8; break;
-        case 1: sampleLimit = 16; break;
-        case 2: sampleLimit = 24; break;
-        case 3: sampleLimit = 32; break;
-        case 4: sampleLimit = 40; break;
-        case 5: sampleLimit = 48; break;
-        case 6: sampleLimit = 56; break;
         default:
-        case 7: sampleLimit = 64; break;
-        case 8: sampleLimit = 80; break;
-        case 9: sampleLimit = 96; break;
-        case 10: sampleLimit = 112; break;
-        case 11: sampleLimit = 128; break;
+        case 1: sampleLimit = 16; break;
+        case 2: sampleLimit = 32; break;
     }
 
     if (sampleLimitBefore != sampleLimit)
@@ -259,18 +250,9 @@ auto Paula::setResampleQuality( int val ) -> void {
 auto Paula::getResampleQuality( ) -> int {
     switch(sampleLimit) {
         case 8: return 0;
-        case 16: return 1;
-        case 24: return 2;
-        case 32: return 3;
-        case 40: return 4;
-        case 48: return 5;
-        case 56: return 6;
         default:
-        case 64: return 7;
-        case 80: return 8;
-        case 96: return 9;
-        case 112: return 10;
-        case 128: return 11;
+        case 16: return 1;
+        case 32: return 2;
     }
 
     _unreachable

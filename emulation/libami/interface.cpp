@@ -33,7 +33,7 @@ auto Interface::prepareFirmware() -> void {
 
 auto Interface::prepareModels() -> void {
     models.push_back({ModelIdSystem, "Amiga", Model::Type::Radio, Model::Purpose::SubModels, 1, {0, 3}, {"A1000", "A500/A2000 (Full OCS)", "A500 (ECS Agnus, OCS Denise)", "A500+/A600 (Full ECS)"} });
-    models.push_back({ModelIdSampleFetch, "PAULA Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 3, {0, 11}, {"8", "16", "24", "32", "40", "48", "56", "64", "80", "96", "112", "128"}});
+    models.push_back({ModelIdSampleFetch, "Sample Interval", Model::Type::Radio, Model::Purpose::AudioResampler, 1, {0, 2}, {"Highest", "High", "Medium"}});
     models.push_back({ModelIdAudioFilter, "PAULA Filter", Model::Type::Radio, Model::Purpose::AudioSettings, 0, {0, 6}, {"Auto", "Off (A500)", "Software (A500)", "On (A500)", "Off (A1200)", "Software (A1200)", "On (A1200)"}});
     models.push_back({ModelIdRegion, "Region", Model::Type::Radio, Model::Purpose::GraphicChip, 0, {0, 1}, { "PAL", "NTSC" }});
     models.push_back({ModelIdDiskDrivesConnected, "Disk Drives", Model::Type::Combo, Model::Purpose::DriveSettings, 1, {0, 4}, { "0", "1", "2", "3", "4" }});

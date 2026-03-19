@@ -556,11 +556,9 @@ auto SidManager::setResampleQuality( uint8_t val ) -> void {
 
     switch(val) {
         case 0: sampleLimit = 1; break;
+        default:
         case 1: sampleLimit = 2; break;
         case 2: sampleLimit = 7; break;
-        default:
-        case 3:
-            sampleLimit = 18; break;
     }
     system->history.reset();
 }
@@ -569,11 +567,9 @@ auto SidManager::getResampleQuality( ) -> uint8_t {
 
     switch(sampleLimit) {
         case 1: return 0;
+        default:
         case 2: return 1;
         case 7: return 2;
-        default:
-        case 18:
-            return 3;
     }
 
     _unreachable
