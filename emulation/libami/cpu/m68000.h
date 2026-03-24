@@ -34,6 +34,8 @@ struct Cpu : M68FAMILY::M68000 {
     auto debuggerAdd(DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
     auto debuggerRemove(DebuggerAction action, unsigned addr) -> void;
     auto debuggerRemove(DebuggerAction action) -> void;
+
+    auto mnemonic() -> const char*;
 };
 
 }

@@ -65,10 +65,25 @@ struct Agnus {
     enum { ACT_BLITTER = 1, ACT_COPPER = 2, ACT_BPL = 4, ACT_SPRITE = 8, ACT_IPLCOUNTER = 0x10 };
 
     enum {
-        BUS_FREE, BUS_USAGE_BPL, BUS_USAGE_SPRITE, BUS_USAGE_BLITTER, BUS_USAGE_COPPER,
-        BUS_USAGE_CPU, BUS_USAGE_REFRESH, BUS_USAGE_DISK, BUS_USAGE_AUDIO,
+        BUS_FREE, BUS_USAGE_CPU,
+        BUS_USAGE_BPL_1, BUS_USAGE_BPL_2, BUS_USAGE_BPL_3, BUS_USAGE_BPL_4, BUS_USAGE_BPL_5, BUS_USAGE_BPL_6,
+        BUS_USAGE_BPL_CONFLICT_REFRESH_1, BUS_USAGE_BPL_CONFLICT_REFRESH_2, BUS_USAGE_BPL_CONFLICT_REFRESH_3,
+        BUS_USAGE_BPL_CONFLICT_REFRESH_4, BUS_USAGE_BPL_CONFLICT_REFRESH_5, BUS_USAGE_BPL_CONFLICT_REFRESH_6,
+        BUS_USAGE_SPRITE_1_DATA, BUS_USAGE_SPRITE_1_DATB, BUS_USAGE_SPRITE_1_POS, BUS_USAGE_SPRITE_1_CTL,
+        BUS_USAGE_SPRITE_2_DATA, BUS_USAGE_SPRITE_2_DATB, BUS_USAGE_SPRITE_2_POS, BUS_USAGE_SPRITE_2_CTL,
+        BUS_USAGE_SPRITE_3_DATA, BUS_USAGE_SPRITE_3_DATB, BUS_USAGE_SPRITE_3_POS, BUS_USAGE_SPRITE_3_CTL,
+        BUS_USAGE_SPRITE_4_DATA, BUS_USAGE_SPRITE_4_DATB, BUS_USAGE_SPRITE_4_POS, BUS_USAGE_SPRITE_4_CTL,
+        BUS_USAGE_SPRITE_5_DATA, BUS_USAGE_SPRITE_5_DATB, BUS_USAGE_SPRITE_5_POS, BUS_USAGE_SPRITE_5_CTL,
+        BUS_USAGE_SPRITE_6_DATA, BUS_USAGE_SPRITE_6_DATB, BUS_USAGE_SPRITE_6_POS, BUS_USAGE_SPRITE_6_CTL,
+        BUS_USAGE_SPRITE_7_DATA, BUS_USAGE_SPRITE_7_DATB, BUS_USAGE_SPRITE_7_POS, BUS_USAGE_SPRITE_7_CTL,
+        BUS_USAGE_SPRITE_8_DATA, BUS_USAGE_SPRITE_8_DATB, BUS_USAGE_SPRITE_8_POS, BUS_USAGE_SPRITE_8_CTL,
+        BUS_USAGE_REFRESH_0, BUS_USAGE_REFRESH_1, BUS_USAGE_REFRESH_2, BUS_USAGE_REFRESH_3,
+        BUS_USAGE_DISK_0, BUS_USAGE_DISK_1, BUS_USAGE_DISK_2,
+        BUS_USAGE_AUDIO_0, BUS_USAGE_AUDIO_1, BUS_USAGE_AUDIO_2, BUS_USAGE_AUDIO_3,
+        BUS_USAGE_BLITTER_A, BUS_USAGE_BLITTER_B, BUS_USAGE_BLITTER_C, BUS_USAGE_BLITTER_D,
         BUS_USAGE_BLITTER_CONFLICT_COPPER, BUS_USAGE_BLITTER_CONFLICT_SPRITE,
-        BUS_USAGE_BPL_CONFLICT_REFRESH, BUS_USAGE_BPL_CONFLICT_SPRITE,
+        BUS_USAGE_COPPER_1, BUS_USAGE_COPPER_M, BUS_USAGE_COPPER_W, BUS_USAGE_COPPER_S,
+        BUS_USAGE_BPL_CONFLICT_SPRITE,
     };
 
     enum { PAL, NTSC };
@@ -319,11 +334,13 @@ struct Agnus {
     auto checkHardDrives() -> void;
 
     auto readByte(uint32_t adr) -> uint8_t;
-    template<bool logDma> auto readByte(uint32_t adr) -> uint8_t;
+    auto readBytePRG(uint32_t adr) -> uint8_t;
+    template<bool logDma, bool prg> auto readByte(uint32_t adr) -> uint8_t;
     auto writeByte(uint32_t adr, uint8_t value) -> void;
     template<bool logDma> auto writeByte(uint32_t adr, uint8_t value) -> void;
     auto readWord(uint32_t adr) -> uint16_t;
-    template<bool logDma> auto readWord(uint32_t adr) -> uint16_t;
+    auto readWordPRG(uint32_t adr) -> uint16_t;
+    template<bool logDma, bool prg> auto readWord(uint32_t adr) -> uint16_t;
     auto peekWord(uint32_t adr) -> uint16_t;
     auto writeWord(uint32_t adr, uint16_t value) -> void;
     auto editWord(uint32_t adr, uint16_t value) -> void;
@@ -364,7 +381,7 @@ struct Agnus {
     auto canBlitterUseBusExt() -> bool;
     template<bool oddCycle1 = false> auto canCopperUseBus() -> bool;
     template<bool oddCycle1 = false> auto allocateCopper() -> bool;
-    auto fetchCopperDma(uint32_t adr, uint16_t& result) -> bool;
+    template<uint8_t slot> auto fetchCopperDma(uint32_t adr, uint16_t& result) -> bool;
     auto fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void;
     auto checkCopperBlitterConflict(uint32_t& ptr) -> bool;
 
@@ -423,7 +440,7 @@ struct Agnus {
     template<uint8_t nr> auto setAudPtH(uint16_t value) -> void;
     template<uint8_t nr> auto setAudPtL(uint16_t value) -> void;
 
-    auto diskDma(uint8_t slot, bool writeMode) -> void;
+    template<uint8_t slot> auto diskDma(bool writeMode) -> void;
     auto fakeDiskDma(uint16_t& word) -> void;
     auto fakeDiskDmaNoTracking(uint16_t word) -> void;
     auto fakeDiskDma() -> uint16_t;
@@ -513,6 +530,9 @@ struct Agnus {
     auto debuggerAutoUpdate() -> void;
     auto debuggerUpdateEvent() -> void;
     auto getCopperDump(unsigned addrFrom, unsigned addrTo) -> uint8_t*;
+    auto logNextOpcode() -> void;
+    auto resetDebuggerDma() -> void;
+    template<bool _write, bool _word, bool _prg> auto memoryAcceesMnemonic() -> const char*;
 };
 
 }

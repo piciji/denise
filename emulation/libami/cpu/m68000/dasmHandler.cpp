@@ -3,8 +3,8 @@
 
 namespace M68FAMILY {
 
-auto DasmHandler::Ins( uint8_t inst ) -> DasmHandler& {
-    static const std::string mnemonics[]{
+auto DasmHandler::mnemonic(uint8_t inst) -> const char* {
+    static const char* mnemonics[] {
         "asl", "asr", "lsl", "lsr", "rol", "ror", "roxl", "roxr",
         "bchg", "bset", "bclr", "btst",
         "sub", "subx", "add", "addx", "not", "cmp", "and", "or", "eor", "abcd", "sbcd",
@@ -21,10 +21,15 @@ auto DasmHandler::Ins( uint8_t inst ) -> DasmHandler& {
         "addq", "subq", "moveq", "movep",
         "bsr","jmp", "jsr", "link", "unlk","tas", "tst",
         "lea", "pea", "movem", "chk", "exg", "ext", "nop", "trap", "trapv",
-        "reset", "rte", "rtr", "rts", "stop", "swap"
+        "reset", "rte", "rtr", "rts", "stop", "swap",
+        "Illegal", "LineA", "LineF"
     };
 
-    str = mnemonics[inst];
+    return mnemonics[ inst ];
+}
+
+auto DasmHandler::Ins( uint8_t inst ) -> DasmHandler& {
+    str = mnemonic(inst);
     return *this;
 }
 

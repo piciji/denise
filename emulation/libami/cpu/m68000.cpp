@@ -173,6 +173,20 @@ auto Cpu::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned 
     return !expressionError;
 }
 
+auto Cpu::mnemonic() -> const char* {
+    static const char* intrMnemonics[] {
+        "TRACE", "IRQ"
+    };
+
+    if (control & TraceScheduled)
+        return intrMnemonics[0];
+
+    if (control & IRQ)
+        return intrMnemonics[1];
+
+    return mnemonics[ird];
+}
+
 auto Cpu::updateSnapshot(DebuggerSnapshot& snap) -> void {
     std::copy(std::begin(regsD), std::end(regsD), std::begin(snap.regsD));
     std::copy(std::begin(regsA), std::end(regsA), std::begin(snap.regsA));

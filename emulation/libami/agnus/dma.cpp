@@ -111,40 +111,45 @@ template<uint8_t pos, bool addMod> auto Agnus::fetchPlane() -> void {
         denise.setBpl1Dat( dataBus );
         bpl1pt += 2;
         if constexpr (addMod) bpl1pt += bpl1Mod;
+        busUsage = BUS_USAGE_BPL_1;
     } else if constexpr ( pos == 2) {
         addrBus = bpl2pt & dmaChipMemMask;
         dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl2Dat( dataBus );
         bpl2pt += 2;
         if constexpr (addMod) bpl2pt += bpl2Mod;
+        busUsage = BUS_USAGE_BPL_2;
     } else if constexpr ( pos == 3) {
         addrBus = bpl3pt & dmaChipMemMask;
         dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl3Dat( dataBus );
         bpl3pt += 2;
         if constexpr (addMod) bpl3pt += bpl1Mod;
+        busUsage = BUS_USAGE_BPL_3;
     } else if constexpr ( pos == 4) {
         addrBus = bpl4pt & dmaChipMemMask;
         dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl4Dat( dataBus );
         bpl4pt += 2;
         if constexpr (addMod) bpl4pt += bpl2Mod;
+        busUsage = BUS_USAGE_BPL_4;
     } else if constexpr ( pos == 5) {
         addrBus = bpl5pt & dmaChipMemMask;
         dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl5Dat( dataBus );
         bpl5pt += 2;
         if constexpr (addMod) bpl5pt += bpl1Mod;
+        busUsage = BUS_USAGE_BPL_5;
     } else if constexpr ( pos == 6) {
         addrBus = bpl6pt & dmaChipMemMask;
         dataBus = _swapWord(*(uint16_t*) (chipMem + addrBus));
         denise.setBpl6Dat( dataBus );
         bpl6pt += 2;
         if constexpr (addMod) bpl6pt += bpl2Mod;
+        busUsage = BUS_USAGE_BPL_6;
     }
 
     dmaClock = clock;
-    busUsage = BUS_USAGE_BPL;
 }
 
 template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict() -> void {
@@ -157,6 +162,7 @@ template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict()
         if constexpr (addMod) bpl1pt += bpl1Mod | rasAdder;
         else bpl1pt += rasAdder;
         rDmaPtr = bpl1pt;
+        busUsage = BUS_USAGE_BPL_CONFLICT_REFRESH_1;
     } else if constexpr ( pos == 2) {
         if constexpr (!strobe) {
             dataBus = 0xffff;
@@ -166,6 +172,7 @@ template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict()
         if constexpr (addMod) bpl2pt += bpl2Mod | rasAdder;
         else bpl2pt += rasAdder;
         rDmaPtr = bpl2pt;
+        busUsage = BUS_USAGE_BPL_CONFLICT_REFRESH_2;
     } else if constexpr ( pos == 3) {
         if constexpr (!strobe) {
             dataBus = 0xffff;
@@ -175,6 +182,7 @@ template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict()
         if constexpr (addMod) bpl3pt += bpl1Mod | rasAdder;
         else bpl3pt += rasAdder;
         rDmaPtr = bpl3pt;
+        busUsage = BUS_USAGE_BPL_CONFLICT_REFRESH_3;
     } else if constexpr ( pos == 4) {
         if constexpr (!strobe) {
             dataBus = 0xffff;
@@ -184,6 +192,7 @@ template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict()
         if constexpr (addMod) bpl4pt += bpl2Mod | rasAdder;
         else bpl4pt += rasAdder;
         rDmaPtr = bpl4pt;
+        busUsage = BUS_USAGE_BPL_CONFLICT_REFRESH_4;
     } else if constexpr ( pos == 5) {
         if constexpr (!strobe) {
             dataBus = 0xffff;
@@ -193,6 +202,7 @@ template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict()
         if constexpr (addMod) bpl5pt += bpl1Mod | rasAdder;
         else bpl5pt += rasAdder;
         rDmaPtr = bpl5pt;
+        busUsage = BUS_USAGE_BPL_CONFLICT_REFRESH_5;
     } else if constexpr ( pos == 6) {
         if constexpr (!strobe) {
             dataBus = 0xffff;
@@ -202,10 +212,10 @@ template<uint8_t pos, bool addMod, bool strobe> auto Agnus::fetchPlaneConflict()
         if constexpr (addMod) bpl6pt += bpl2Mod | rasAdder;
         else bpl6pt += rasAdder;
         rDmaPtr = bpl6pt;
+        busUsage = BUS_USAGE_BPL_CONFLICT_REFRESH_6;
     }
 
     dmaClock = clock;
-    busUsage = BUS_USAGE_BPL_CONFLICT_REFRESH;
 }
 
 auto Agnus::getSprConflictReg(uint8_t encoded) -> uint16_t {
@@ -263,10 +273,10 @@ template<uint8_t pos, bool addMod> auto Agnus::fetchPlaneSprConflict() -> void {
     }
 }
 
-auto Agnus::diskDma(uint8_t slot, bool writeMode) -> void {
+template<uint8_t slot> auto Agnus::diskDma(bool writeMode) -> void {
     dmaClock = clock;
     bplQueue &= ~0xff; // no BPL fetch
-    busUsage = BUS_USAGE_DISK;
+    busUsage = BUS_USAGE_DISK_0 + slot;
     addrBus = dskpt;
 
     if (writeMode) {
@@ -332,7 +342,7 @@ template<uint8_t nr> auto Agnus::fetchSample(bool reset) -> void {
 
     dmaClock = clock;
     bplQueue &= ~0xff; // no BPL fetch
-    busUsage = BUS_USAGE_AUDIO;
+    busUsage = BUS_USAGE_AUDIO_0 + nr;
 }
 
 template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
@@ -359,7 +369,7 @@ template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
 
         dmaClock = clock;
         if (busUsage != BUS_USAGE_BPL_CONFLICT_SPRITE)
-            busUsage = BUS_USAGE_SPRITE;
+            busUsage = BUS_USAGE_SPRITE_1_DATA + 4 * nr + target;
         spr.ptr += 2;
         spr.ptr &= dmaChipMemMask;
     } else if constexpr (control == 1) {
@@ -369,7 +379,7 @@ template<uint8_t nr, uint8_t options> inline auto Agnus::fetchSprite() -> void {
         setBltConflictThisCycle();
     } else if constexpr (control == 2) {
         if (busUsage != BUS_USAGE_BPL_CONFLICT_SPRITE)
-            busUsage = BUS_USAGE_SPRITE;
+            busUsage = BUS_USAGE_SPRITE_1_DATA + 4 * nr + target;
     }
 
     if constexpr (!!(target & 2)) {
@@ -397,17 +407,17 @@ template<bool oddCycle1> inline auto Agnus::canCopperUseBus() -> bool {
 
 template<bool oddCycle1> auto Agnus::allocateCopper() -> bool {
     if (canCopperUseBus<oddCycle1>()) {
-        busUsage = BUS_USAGE_COPPER;
+        busUsage = BUS_USAGE_COPPER_1;
         return true;
     }
     return false;
 }
 
-auto Agnus::fetchCopperDma(uint32_t adr, uint16_t& result) -> bool {
+template<uint8_t slot> auto Agnus::fetchCopperDma(uint32_t adr, uint16_t& result) -> bool {
     if(!canCopperUseBus())
         return false;
 
-    busUsage = BUS_USAGE_COPPER;
+    busUsage = BUS_USAGE_COPPER_1 + slot;
     dmaClock = clock;
     addrBus = adr & dmaChipMemMask;
 
@@ -420,7 +430,7 @@ auto Agnus::fetchCopperDma(uint32_t adr, uint16_t& result) -> bool {
 
 auto Agnus::fetchCopperDmaNoBUSCheck(uint32_t adr, uint16_t& result) -> void {
 
-    busUsage = BUS_USAGE_COPPER;
+    busUsage = BUS_USAGE_COPPER_1;
     dmaClock = clock;
     addrBus = adr & dmaChipMemMask;
 
@@ -456,7 +466,10 @@ auto Agnus::fetchBlitterDma(uint32_t& adr, uint16_t& result, const int16_t& modV
     if (blitterConflict) {
         handleBlitterConflicts<ptrEvent, desc, add, mod, false>(adr, result, modVal);
     } else {
-        busUsage = BUS_USAGE_BLITTER;
+        if constexpr (ptrEvent == Agnus::PTR_BLT_A_H)       busUsage = BUS_USAGE_BLITTER_A;
+        else if constexpr (ptrEvent == Agnus::PTR_BLT_B_H)  busUsage = BUS_USAGE_BLITTER_B;
+        else if constexpr (ptrEvent == Agnus::PTR_BLT_C_H)  busUsage = BUS_USAGE_BLITTER_C;
+
         addrBus = adr & dmaChipMemMask;
         result = _swapWord(*(uint16_t*)(chipMem + (adr & dmaChipMemMask)));
 
@@ -485,7 +498,7 @@ auto Agnus::writeBlitterDma(uint32_t& adr, uint16_t& value, const int16_t& modVa
             return false;
     }
 
-    busUsage = BUS_USAGE_BLITTER;
+    busUsage = BUS_USAGE_BLITTER_D;
     
     if (blitterConflict) {
         handleBlitterConflicts<Agnus::PTR_BLT_D_H, desc, add, mod, true>(adr, value, modVal);

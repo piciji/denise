@@ -240,7 +240,7 @@ namespace LIBAMI {
         return addToFifo(value);
     }
 
-    auto Paula::dskDatR(uint8_t& slot, uint16_t& out) -> bool {
+    auto Paula::dskDatR(uint8_t slot, uint16_t& out) -> bool {
         uint8_t repeat = 1 << ((diskState == DiskState::READ) ? turbo : 0);
 
         do {

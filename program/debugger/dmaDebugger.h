@@ -20,6 +20,7 @@ struct DmaDebugger : Debugger {
             GUIKIT::Label dma;
             GUIKIT::Label dmaAddr;
             GUIKIT::Label dmaData;
+            GUIKIT::Label opCode;
             GUIKIT::Label cpu;
             GUIKIT::Label cpuAddr;
             GUIKIT::Label cpuData;
@@ -65,7 +66,6 @@ struct DmaDebugger : Debugger {
 
     struct DmaControl : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;
-        GUIKIT::CheckBox symbolic;
         GUIKIT::Button rdyButton;
 
         DmaControl(DmaDebugger* debugger);

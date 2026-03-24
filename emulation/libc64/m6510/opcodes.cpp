@@ -55,6 +55,10 @@ template<bool mhz2, bool busLogger> auto M6510::process() -> void {
 
 #define INC_PC(value) pc += value;
 
+#define READ_PC_INC_NEXT_OP	\
+    dataBus = busRead<false, false, mhz2, busLogger, true>( pc ); \
+    INC_PC( 1 )
+
 #define READ_PC_INC			\
 	READ( pc )				\
 	INC_PC( 1 )
@@ -674,7 +678,7 @@ template<bool mhz2, bool busLogger> auto M6510::process() -> void {
         if (control & History)
             loadTrace(historyHandler.getNext());
 
-        READ_PC_INC
+        READ_PC_INC_NEXT_OP
         switch( dataBus ) {
             case 0x00:
                 interrupt<true, mhz2, busLogger>( );
@@ -689,7 +693,7 @@ template<bool mhz2, bool busLogger> auto M6510::process() -> void {
         return;
     }
 
-	READ_PC_INC
+	READ_PC_INC_NEXT_OP
 	switch( dataBus ) {
         case 0x00:
             interrupt<true, mhz2, busLogger>( );

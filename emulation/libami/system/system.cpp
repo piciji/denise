@@ -301,8 +301,15 @@ auto System::run() -> void {
 
     labelRunAhead:
 
-    while( !leaveEmulation ) {
-        cpu.process();
+    if (agnus.debugger.dmaLog) {
+        while( !leaveEmulation ) {
+            cpu.process();
+            agnus.logNextOpcode();
+        }
+    } else {
+        while( !leaveEmulation ) {
+            cpu.process();
+        }
     }
 
     denise.process(); // keep up, so we don't need to serialize BplUpdate
@@ -707,7 +714,9 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                     break;
                 case DebuggerAction::DmaLog:
                     debuggerSnapshot.themes |= (unsigned)theme;
+                    agnus.resetDebuggerDma();
                     agnus.debugger.enableDmaLog(true);
+                    leaveEmulation = true;
                     break;
                 case DebuggerAction::DmaWatch:
                     agnus.debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);

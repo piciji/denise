@@ -627,6 +627,20 @@ auto CpuDebugger::prepareTheme(bool external) -> void {
 
     if (!currentInstRow.has_value())
         fetchInstructions(addr);
+    else {
+        unsigned row = currentInstRow.value_or( 0 );
+        unsigned bytes = 2;
+        if ((row + 1) < LIST_INSTRUCTIONS) {
+            unsigned nextAddr = instructions[row + 1].addr;
+            if (nextAddr > addr)
+                bytes = nextAddr - addr;
+        }
+
+        if (instructions[row].data != emulator->disassembleData( addr, bytes )) {
+            currentInstRow = std::nullopt;
+            fetchInstructions(addr);
+        }
+    }
 }
 
 auto CpuDebugger::updateTheme() -> void {

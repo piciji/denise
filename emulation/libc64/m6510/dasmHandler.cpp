@@ -3,8 +3,8 @@
 
 namespace LIBC64 {
 
-auto DasmHandler::Ins( uint8_t inst ) -> DasmHandler& {
-    static const std::string mnemonics[] {
+auto DasmHandler::mnemonic( uint8_t inst ) -> const char* {
+    static const char* mnemonics[] {
         "BRK", "ORA", "JAM", "SLO*", "NOP*", "ORA", "ASL", "SLO*", "PHP", "ORA", "ASL", "ANC*", "NOP*", "ORA", "ASL", "SLO*",
         "BPL", "ORA", "JAM", "SLO*", "NOP*", "ORA", "ASL", "SLO*", "CLC", "ORA", "NOP*", "SLO*", "NOP*", "ORA", "ASL", "SLO*",
         "JSR", "AND", "JAM", "RLA*", "BIT", "AND", "ROL", "RLA*", "PLP", "AND", "ROL", "ANC*", "BIT", "AND", "ROL", "RLA*",
@@ -24,8 +24,11 @@ auto DasmHandler::Ins( uint8_t inst ) -> DasmHandler& {
         "BEQ", "SBC", "ISC*", "ISC*", "NOP*", "SBC", "INC", "ISC*", "SED", "SBC", "NOP*", "ISC*", "NOP*", "SBC", "INC", "ISC*",
     };
 
-    str = mnemonics[inst];
+    return mnemonics[ inst ];
+}
 
+auto DasmHandler::Ins( uint8_t inst ) -> DasmHandler& {
+    str = mnemonic(inst);
     return *this;
 }
 

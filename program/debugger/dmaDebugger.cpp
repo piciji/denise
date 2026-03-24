@@ -26,6 +26,7 @@ DmaDebugger::Dma::Legend::Legend() {
     dma.setAlign(GUIKIT::Label::Align::Right);
     dmaAddr.setAlign(GUIKIT::Label::Align::Right);
     dmaData.setAlign(GUIKIT::Label::Align::Right);
+    opCode.setAlign(GUIKIT::Label::Align::Right);
     cpu.setAlign(GUIKIT::Label::Align::Right);
     cpuAddr.setAlign(GUIKIT::Label::Align::Right);
     cpuData.setAlign(GUIKIT::Label::Align::Right);
@@ -34,6 +35,7 @@ DmaDebugger::Dma::Legend::Legend() {
     append( dma, {100u, 0u}, 14 );
     append( dmaAddr, {100u, 0u}, 14 );
     append( dmaData, {100u, 0u}, 14 );
+    append( opCode, {100u, 0u}, 16 );
     append( cpu, {100u, 0u}, 14 );
     append( cpuAddr, {100u, 0u}, 14 );
     append( cpuData, {100u, 0u}, 16 );
@@ -47,8 +49,7 @@ DmaDebugger::Dma::Legend::Legend() {
 
 DmaDebugger::DmaControl::DmaControl(DmaDebugger* debugger) {
     if (debugger->isAmiga()) {
-        append(spacer, {~0u, 0u} );
-        append( symbolic, {0u, 0u} );
+
     } else {
         append(rdyButton, {0u, 0u} );
     }
@@ -70,8 +71,8 @@ DmaDebugger::Dma::DmaFrame::BusUsage::BusUsage() {
 DmaDebugger::Dma::DmaFrame::DmaFrame(DmaDebugger* debugger) {
     append(showUsage, {0u, 0u}, 10);
 
-    unsigned length = debugger->isAmiga() ? std::size(LIBAMI::DebuggerSnapshot::dmaModes) : std::size(LIBC64::DebuggerSnapshot::dmaModes);
-    const auto& entry = debugger->isAmiga() ? LIBAMI::DebuggerSnapshot::dmaModes : LIBC64::DebuggerSnapshot::dmaModes;
+    unsigned length = debugger->isAmiga() ? std::size(LIBAMI::DebuggerSnapshot::dmaModeGroups) : std::size(LIBC64::DebuggerSnapshot::dmaModeGroups);
+    const auto& entry = debugger->isAmiga() ? LIBAMI::DebuggerSnapshot::dmaModeGroups : LIBC64::DebuggerSnapshot::dmaModeGroups;
 
     // i == 0 is free BUS
     for (unsigned int i = 1; i < length; i++) {
@@ -100,9 +101,8 @@ DmaDebugger::Dma::Dma(DmaDebugger* debugger)
 }
 
 auto DmaDebugger::buildControl() -> GUIKIT::Layout* {
-    dmaControl = new DmaControl(this);
-
     if (isC64()) {
+        dmaControl = new DmaControl(this);
         dmaControl->rdyButton.onActivate = [this]() {
             haltCpu(emulator);
         };
@@ -167,25 +167,11 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->unlock();
     };
 
-    dmaControl->symbolic.onToggle = [this](bool checked) {
-        if (isC64())
-            return;
-        emuThread->lock();
-        settings->set<bool>(saveIdent() + "_symbolic", checked);
-        dma->dmaLine.viewer.setSymbolicAddr(checked);
-        updateTheme();
-        scrollTimer.setEnabled( false );
-        emuThread->unlock();
-    };
-
     scrollTimer.setInterval( 100 );
     scrollTimer.onFinished = [this]() {
         dma->dmaLine.viewer.scrollToActive();
         scrollTimer.setEnabled( false );
     };
-
-    dmaControl->symbolic.setChecked( isAmiga() ? settings->get<bool>(saveIdent() + "_symbolic", true) : false );
-    dma->dmaLine.viewer.setSymbolicAddr(dmaControl->symbolic.checked());
 
     for (auto& watcher : dma->legend.watchers) {
         auto* w = &watcher;
@@ -312,8 +298,8 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
 }
 
 auto DmaDebugger::loadColors() -> void {
-    unsigned length = isAmiga() ? std::size(LIBAMI::DebuggerSnapshot::dmaModes) : std::size(LIBC64::DebuggerSnapshot::dmaModes);
-    const auto& entry = isAmiga() ? LIBAMI::DebuggerSnapshot::dmaModes : LIBC64::DebuggerSnapshot::dmaModes;
+    unsigned length = isAmiga() ? std::size(LIBAMI::DebuggerSnapshot::dmaModeGroups) : std::size(LIBC64::DebuggerSnapshot::dmaModeGroups);
+    const auto& entry = isAmiga() ? LIBAMI::DebuggerSnapshot::dmaModeGroups : LIBC64::DebuggerSnapshot::dmaModeGroups;
 
     // i == 0 is free BUS
     dmaColors[0].enabled = false;
@@ -350,28 +336,29 @@ auto DmaDebugger::updateView(LIBC64::DebuggerSnapshot& s) -> void {
     Emulator::Interface::DebuggerDma* dStateBefore = nullptr;
     Emulator::Interface::DebuggerDma* dStateNext = nullptr;
 
-    if (!s.debuggerDma)
-        return;
-
     for (unsigned i = 0; i < slots; i++) {
         auto& lState = logics[i];
         dStateNext = ( (i+1) == slots) ? nullptr : &s.debuggerDma[i+1];
         auto& debugState = s.debuggerDma[i];
+        auto& usage = LIBC64::DebuggerSnapshot::dmaModes[ debugState.usage ];
 
         lState.position = i;
-        lState.color = dmaColors[ debugState.usage & 0xf ].color;
-        lState.display = GUIKIT::LogicState::Display::SingleBlock;
+        lState.color = dmaColors[ usage.vector & 0xf ].color;
+        lState.display = debugState.usage ? GUIKIT::LogicState::Display::SingleBlock : GUIKIT::LogicState::Display::EmptyBlock;
 
-        lState.usage = (std::string)LIBC64::DebuggerSnapshot::dmaModesShort[ debugState.usage ];
+        lState.usage = (std::string)usage.ident;
         lState.addr = debugState.address;
         lState.data = debugState.data;
+
+        lState.opCode = debugState.mnemonic;
+        lState.hilight = (GUIKIT::LogicState::Hilight)debugState.hilight;
 
         if (debugState.usageCpu) {
             lState.display2 = GUIKIT::LogicState::Display::SingleBlock;
             if (debugState.usageCpu & 0x80)
                 lState.usage2 = (std::string)LIBC64::DebuggerSnapshot::cpuAccess[ debugState.usageCpu & 0x7f ];
             else
-                lState.usage2 = (std::string)LIBC64::DebuggerSnapshot::dmaModesShort[ debugState.usageCpu ];
+                lState.usage2 = (std::string)LIBC64::DebuggerSnapshot::dmaModes[ debugState.usageCpu ].ident;
             lState.addr2 = debugState.addrCpu;
             lState.data2 = debugState.dataCpu;
         } else {
@@ -417,51 +404,43 @@ auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
 
     canvas.setLength( slots );
     auto& logics = canvas.getDataRef();
-    bool symbolic = dmaControl->symbolic.checked();
     Emulator::Interface::DebuggerDma* dStateBefore = nullptr;
     Emulator::Interface::DebuggerDma* dStateNext = nullptr;
-
-    if (!snap.debuggerDma)
-        return;
 
     for (unsigned i = 0; i < slots; i++) {
         auto& lState = logics[i];
         dStateNext = ( (i+1) == slots) ? nullptr : &snap.debuggerDma[i+1];
         auto& debugState = snap.debuggerDma[i];
+        auto& usage = LIBAMI::DebuggerSnapshot::dmaModes[ debugState.usage ];
 
         lState.position = i;
-        lState.color = dmaColors[ debugState.usage & 0xf ].color;
+        lState.color = dmaColors[ usage.vector & 0xf ].color;
         lState.display = debugState.usage ? GUIKIT::LogicState::Display::SingleBlock : GUIKIT::LogicState::Display::EmptyBlock;
 
-        lState.usage = (std::string)LIBAMI::DebuggerSnapshot::dmaModesShort[ debugState.usage ];
-        if (symbolic) {
-            if (debugState.usage == 5) { // CPU
-                if (debugState.usageCpu == 1)
-                    lState.symbolicAddr = "CHIP";
-                else if (debugState.usageCpu == 2)
-                    lState.symbolicAddr = "SLOW";
-                else if (debugState.usageCpu == 6) { // register
-                    unsigned _rg = debugState.address & 0x1fe;
-                    auto& ri = LIBAMI::DebuggerSnapshot::registerIdents[_rg >> 1];
-                    uint8_t newRegister = (ri.vector >> 12) & 0xf;
-                    if ((snap.model < 4 ) && newRegister) // no OCS register
-                        lState.symbolicAddr = "OpenBUS";
-                    else if ((snap.model == 4 ) && (newRegister & 2)) // no ECS register
-                        lState.symbolicAddr = "OpenBUS";
-                    else
-                        lState.symbolicAddr = (std::string)ri.ident;
-                } else
-                    lState.symbolicAddr = "";
-            } else {
-                if ((debugState.address & snap.chipMemMask) != debugState.address)
-                    lState.symbolicAddr = "SLOW";
+        lState.usage = (std::string)usage.ident;
+        lState.symbolicAddr = "";
+        if (debugState.usage == 1) { // CPU
+            if (debugState.usageCpu == 1)
+                lState.symbolicAddr = "CHIP";
+            else if (debugState.usageCpu == 2)
+                lState.symbolicAddr = "SLOW";
+            else if (debugState.usageCpu == 6) { // register
+                unsigned _rg = debugState.address & 0x1fe;
+                auto& ri = LIBAMI::DebuggerSnapshot::registerIdents[_rg >> 1];
+                uint8_t newRegister = (ri.vector >> 12) & 0xf;
+                if ((snap.model < 4 ) && newRegister) // no OCS register
+                    lState.symbolicAddr = "OpenBUS";
+                else if ((snap.model == 4 ) && (newRegister & 2)) // no ECS register
+                    lState.symbolicAddr = "OpenBUS";
                 else
-                    lState.symbolicAddr = "CHIP";
+                    lState.symbolicAddr = (std::string)ri.ident;
             }
-        } else
-            lState.addr = debugState.address;
+        }
+        lState.addr = debugState.address;
 
         lState.data = debugState.data;
+        lState.opCode = debugState.mnemonic;
+        lState.hilight = (GUIKIT::LogicState::Hilight)debugState.hilight;
 
         if (debugState.usageCpu != 0xff) {
             lState.display2 = GUIKIT::LogicState::Display::SingleBlock;
@@ -522,6 +501,7 @@ auto DmaDebugger::initTheme() -> void {
     offsets.push_back(dma->legend.dma.geometry().y + (dma->legend.dma.geometry().height >> 1));
     offsets.push_back(dma->legend.dmaAddr.geometry().y + (dma->legend.dmaAddr.geometry().height >> 1));
     offsets.push_back(dma->legend.dmaData.geometry().y + (dma->legend.dmaData.geometry().height >> 1));
+    offsets.push_back(dma->legend.opCode.geometry().y + (dma->legend.opCode.geometry().height >> 1));
     offsets.push_back(dma->legend.cpu.geometry().y + (dma->legend.cpu.geometry().height >> 1));
     offsets.push_back(dma->legend.cpuAddr.geometry().y + (dma->legend.cpuAddr.geometry().height >> 1));
     offsets.push_back(dma->legend.cpuData.geometry().y + (dma->legend.cpuData.geometry().height >> 1));
@@ -550,7 +530,6 @@ auto DmaDebugger::translateTheme() -> void {
     bool showTips = showTipsItem.checked();
 
     if (dmaControl) {
-        dmaControl->symbolic.setText( trans->getA("symbolic") );
         dmaControl->rdyButton.setText("RDY" );
         dmaControl->rdyButton.setTooltip( showTips ? trans->getA( "rdy tooltip" ) : "" );
     }
@@ -560,6 +539,7 @@ auto DmaDebugger::translateTheme() -> void {
     dma->legend.dma.setText( "DMA" );
     dma->legend.dmaAddr.setText( "Addr" );
     dma->legend.dmaData.setText( "Data" );
+    dma->legend.opCode.setText( "OpCode" );
     dma->legend.cpu.setText( "CPU" );
     dma->legend.cpuAddr.setText( "Addr" );
     dma->legend.cpuData.setText( "Data" );

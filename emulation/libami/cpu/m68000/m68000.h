@@ -16,7 +16,7 @@
 #include "../../../tools/watcher.h"
 
 // Explanations are below
-// #define FC_SUPPORT
+#define FC_SUPPORT
 // #define ADR_EXC_BUS_CYCLE
 // #define TAS_SPINLOCK
 
@@ -52,6 +52,7 @@ class M68000 {
     friend struct HistoryHandler;
 
 protected:
+    const char* mnemonics[0x10000] = {nullptr};
 #ifdef REF
     M68000(REF_NS::REF& ref) : ref(ref) { build(); }
     REF_NS::REF& ref;
@@ -78,6 +79,7 @@ protected:
         Bsr, Jmp, Jsr, Link, Unlk, Tas, Tst,
         Lea, Pea, Movem, Chk, Exg, Ext, Nop, Trap, Trapv,
         Reset, Rte, Rtr, Rts, _Stop, Swap,
+        Illegal, LineA, LineF,
     };
 
     enum { None = 0, SampleIPL = 1, SkipExtension = 2, TasCycle = 4,

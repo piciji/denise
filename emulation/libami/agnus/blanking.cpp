@@ -13,7 +13,7 @@ auto Agnus::startHblankDebug() -> void {
 
     uint8_t _pos = hPos;
     for (int i = 0; i < width;) {
-        std::memset( debugger.frameLine, debugger.dma[_pos].usage, _pixPerDma );
+        std::memset( debugger.frameLine, DebuggerSnapshot::dmaModes[debugger.dma[_pos].usage].vector, _pixPerDma );
         i += _pixPerDma;
         debugger.frameLine += _pixPerDma;
 

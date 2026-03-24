@@ -75,17 +75,32 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
 
     } denise;
 
-    constexpr static const char* dmaModes[] {
+    constexpr static const char* dmaModeGroups[] {
         "Free", "Bitplanes", "Sprites",
         "Blitter", "Copper", "Cpu", "Refresh", "Disk", "Audio",
         "Blt-Cop Conflict", "Blt-Spr Conflict",
         "Bpl-Ref Conflict", "Bpl-Spr Conflict"
     };
 
-    constexpr static const char* dmaModesShort[] {
-        "", "BPL", "SPR", "BLT", "COP", "CPU",
-        "REF", "DSK", "AUD", "BLT-COP", "BLT-SPR",
-        "BPL-REF", "BPL-SPR"
+    constexpr static Emulator::Interface::DebuggerIdent dmaModes[] {
+    {0,""}, {5,"CPU"},
+    {1,"BPL1"}, {1,"BPL2"}, {1,"BPL3"}, {1,"BPL4"}, {1,"BPL5"}, {1,"BPL6"},
+    {11,"BPL1-REF"}, {11,"BPL2-REF"}, {11,"BPL3-REF"}, {11,"BPL4-REF"}, {11,"BPL5-REF"}, {11,"BPL6-REF"},
+    {2,"SPR1-DATA"}, {2,"SPR1-DATB"}, {2,"SPR1-POS"}, {2,"SPR1-CTL"},
+    {2,"SPR2-DATA"}, {2,"SPR2-DATB"}, {2,"SPR2-POS"}, {2,"SPR2-CTL"},
+    {2,"SPR3-DATA"}, {2,"SPR3-DATB"}, {2,"SPR3-POS"}, {2,"SPR3-CTL"},
+    {2,"SPR4-DATA"}, {2,"SPR4-DATB"}, {2,"SPR4-POS"}, {2,"SPR4-CTL"},
+    {2,"SPR5-DATA"}, {2,"SPR5-DATB"}, {2,"SPR5-POS"}, {2,"SPR5-CTL"},
+    {2,"SPR6-DATA"}, {2,"SPR6-DATB"}, {2,"SPR6-POS"}, {2,"SPR6-CTL"},
+    {2,"SPR7-DATA"}, {2,"SPR7-DATB"}, {2,"SPR7-POS"}, {2,"SPR7-CTL"},
+    {2,"SPR8-DATA"}, {2,"SPR8-DATB"}, {2,"SPR8-POS"}, {2,"SPR8-CTL"},
+    {6,"RFS0"}, {6,"RFS1"}, {6,"RFS2"}, {6,"RFS3"},
+    {7,"DSK0"}, {7,"DSK1"}, {7,"DSK2"},
+    {8,"AUD0"}, {8,"AUD1"}, {8,"AUD2"}, {8,"AUD3"},
+    {3,"BLT-A"}, {3,"BLT-B"}, {3,"BLT-C"}, {3,"BLT-D"},
+    {9,"BLT-COP"}, {10,"BLT-SPR"},
+    {4,"COP-1"}, {4,"COP-M"}, {4,"COP-W"}, {4,"COP-S"},
+    {12,"BPL-SPR"}
     };
 
     constexpr static const char* cpuAccess[] {

@@ -90,7 +90,7 @@ auto Copper::process() -> void {
             // take over already requested DMA
             // fallthrough
         case Strobe_VBL_2:
-            if (agnus.fetchCopperDma(copPtr, ir2)) {
+            if (agnus.fetchCopperDma<1>(copPtr, ir2)) {
                 assignCopPtr();
                 state = Read1;
             }
@@ -100,7 +100,7 @@ auto Copper::process() -> void {
             if ((prevState & 0x80) == 0)
                 break;
         case Strobe_VBL_4:
-            if (agnus.fetchCopperDma(copPtr, ir1)) {
+            if (agnus.fetchCopperDma<0>(copPtr, ir1)) {
                 assignCopPtr();
                 state = Strobe_VBL_7;
             }
@@ -110,7 +110,7 @@ auto Copper::process() -> void {
             if ((prevState & 0x80) == 0)
                 break;
         case Strobe_VBL_6:
-            if (agnus.fetchCopperDma(copPtr, ir2)) {
+            if (agnus.fetchCopperDma<1>(copPtr, ir2)) {
                 assignCopPtr();
                 state = Strobe_VBL_7;
             }
@@ -174,7 +174,7 @@ auto Copper::process() -> void {
             // fallthrough
         case Read1Buggy:
         case Read1:
-            if (agnus.fetchCopperDma(copPtr, ir1)) {
+            if (agnus.fetchCopperDma<0>(copPtr, ir1)) {
                 if (debuggerState & (BreakPoint | SoftStep | LogList) )
                     checkBreakpoints();
 
@@ -183,7 +183,7 @@ auto Copper::process() -> void {
             }
             break;
         case Read2:
-            if (agnus.fetchCopperDma(copPtr, ir2)) {
+            if (agnus.fetchCopperDma<1>(copPtr, ir2)) {
 
                 if (ir1 & 1) { // wait or skip
                     comp.vMask = (ir2 | 0x8000) >> 8; // highest bit is not used for masking
@@ -193,6 +193,7 @@ auto Copper::process() -> void {
                     comp.hPos = ir1 & ir2 & 0xfe;
 
                     state = (ir2 & 1) ? Skip1 : Wait1;
+                    agnus.busUsage = state == Wait1 ? Agnus::BUS_USAGE_COPPER_W : Agnus::BUS_USAGE_COPPER_S;
 
                     skipped = false;
                     copPtr += 2;

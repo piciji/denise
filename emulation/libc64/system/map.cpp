@@ -16,6 +16,8 @@
 
 namespace LIBC64 {
 
+typedef Emulator::Interface::DebuggerDma DebuggerDma;
+
 auto System::remapCpu(bool speedHack) -> void {
 
     // speed hack is used for Final Cartridge Plus (not 3+)
@@ -119,7 +121,7 @@ auto System::remapCpu(bool speedHack) -> void {
     expansionPort->memoryMapUpdated();
 }
 
-auto System::logCpu(uint16_t addr, uint8_t data) -> void {
+auto System::logCpu(uint16_t addr, uint8_t data, bool write, bool nextOp) -> void {
     uint8_t page = addr >> 8;
     uint8_t mapper = 0;
     Memory::Read* ptr = memoryCpu.reads[page];
@@ -143,6 +145,19 @@ auto System::logCpu(uint16_t addr, uint8_t data) -> void {
     dma.usageCpu = mapper;
     dma.addrCpu = addr;
     dma.dataCpu = data;
+
+    if (nextOp) {
+        dma.mnemonic = DasmHandler::mnemonic(data);
+        dma.hilight = DebuggerDma::Hilight::Opcode;
+
+    } else if (write) {
+        dma.mnemonic = nullptr;
+        dma.hilight = DebuggerDma::Hilight::Write;
+
+    } else {
+        dma.mnemonic = nullptr;
+        dma.hilight = DebuggerDma::Hilight::Default;
+    }
 
     int i = 0;
     for (auto& dmaWatcher : debugger.dmaWatchers ) {

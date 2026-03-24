@@ -20,6 +20,8 @@ struct DasmHandler {
     std::string str;
     DasmHandler* comment = nullptr;
 
+    static auto mnemonic(uint8_t inst) -> const char*;
+
     auto Ins( uint8_t inst ) -> DasmHandler&;
 
     auto sr() -> DasmHandler;

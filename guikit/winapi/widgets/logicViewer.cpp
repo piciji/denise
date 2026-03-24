@@ -2,6 +2,9 @@
 #define SCROLLBAR_HEIGHT 20
 #define DMA_SLOT_WIDTH 70
 
+#define HI_LOGIC_WRITE  RGB(0xff, 0x6f, 0x61)
+#define HI_LOGIC_OPCODE RGB(0x87, 0xce, 0xfa)
+
 pLogicViewer::~pLogicViewer() {
     invalidateDrawArea();
 
@@ -343,16 +346,7 @@ auto pLogicViewer::buildDrawArea(HDC hdc, RECT rcWork, unsigned firstSlot, unsig
     }
 }
 
-auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RECT rc) -> void {
-    Gdiplus::GraphicsPath path;
-    SelectObject(drawDC, penDarkEdge);
-    MoveToEx(drawDC, rc.right, 0, NULL);
-    LineTo(drawDC, rc.right, rc.bottom);
-    int addrLength = logicViewer.addrAs24bit() ? 6 : 4;
-
-    rc.top += 5;
-    rc.bottom = rc.top + 20;
-
+inline auto pLogicViewer::setTextColor(LogicState& logicState) -> void {
     if (logicState.active) {
         SelectObject(drawDC, penFG);
 
@@ -363,6 +357,19 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
     } else {
         SetTextColor(drawDC, DARK_DISABLE_COL);
     }
+}
+
+auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RECT rc) -> void {
+    Gdiplus::GraphicsPath path;
+    SelectObject(drawDC, penDarkEdge);
+    MoveToEx(drawDC, rc.right, 0, NULL);
+    LineTo(drawDC, rc.right, rc.bottom);
+    int addrLength = logicViewer.addrAs24bit() ? 6 : 4;
+
+    rc.top += 5;
+    rc.bottom = rc.top + 20;
+
+    setTextColor(logicState);
 
     DrawText(drawDC, utf16_t(std::to_string( logicState.position )), -1, &rc, DT_CENTER);
     rc.top = rc.bottom;
@@ -384,11 +391,24 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
     } else {
         DrawText(drawDC, utf16_t(logicState.usage), -1, &rc, DT_CENTER);
         setBox(rc, (int)LogicState::Offset::Addr1);
-        std::string _addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr, addrLength);
+        std::string _addr = logicState.symbolicAddr.empty() ? String::convertToHex(logicState.addr, addrLength) : logicState.symbolicAddr;
         drawRectRounded(g, &path, rc, _addr, 5, logicState.active);
         setBox(rc, (int)LogicState::Offset::Data1);
         drawRectRounded(g, &path, rc, String::convertToHex(logicState.data), 10, logicState.active);
     }
+
+    setBox(rc, (int)LogicState::Offset::OpCode);
+    if (logicState.opCode) {
+        std::string _opCode = logicState.opCode;
+        String::toUpperCase( _opCode );
+        if (logicState.hilight == LogicState::Hilight::Opcode) {
+            SetTextColor(drawDC, HI_LOGIC_OPCODE);
+            DrawText(drawDC, utf16_t(_opCode), -1, &rc, DT_CENTER);
+            setTextColor( logicState );
+        } else
+            DrawText(drawDC, utf16_t(_opCode), -1, &rc, DT_CENTER);
+    } else
+        DrawText(drawDC, L"", -1, &rc, DT_CENTER);
 
     setBox(rc, (int)LogicState::Offset::Usage2);
 
@@ -404,7 +424,12 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
         setBox(rc, (int)LogicState::Offset::Addr2);
         drawRectRounded(g, &path, rc, String::convertToHex(logicState.addr2, addrLength), 5, logicState.active);
         setBox(rc, (int)LogicState::Offset::Data2);
-        drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 10, logicState.active);
+        if (logicState.hilight == LogicState::Hilight::Write) {
+            SetTextColor(drawDC, HI_LOGIC_WRITE);
+            drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 10, logicState.active);
+            setTextColor( logicState );
+        } else
+            drawRectRounded(g, &path, rc, String::convertToHex(logicState.data2), 10, logicState.active);
     }
 
     int i = 0;

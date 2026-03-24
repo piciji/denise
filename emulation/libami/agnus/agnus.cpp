@@ -26,6 +26,8 @@
 #include "../../tools/sanitizer.h"
 #include "../system/system.h"
 #include "../interface.h"
+typedef Emulator::Interface::DebuggerDma::Hilight DebuggerDmaHilight;
+
 #include "events.cpp"
 #include "memory.cpp"
 #include "dma.cpp"
@@ -267,11 +269,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     crop.reset();
     updateDdfEnableCache();
     debuggerUpdateEvent();
-
-    for (auto& dma : debugger.dma) {
-        dma.usage = 0;
-        dma.usageCpu = 0;
-    }
+    resetDebuggerDma();
 }
 
 auto Agnus::powerOff() -> void {
@@ -339,7 +337,8 @@ auto Agnus::addDmaLogEntry() -> void {
     dmaLogger.usageCpu = ~0; // unused for DMA, overwrite in case of DMA independent concurrent accesses, e.g. fastram, ROM, ...
     dmaLogger.address = addrBus;
     dmaLogger.data = dataBus;
-
+    dmaLogger.mnemonic = nullptr;
+    dmaLogger.hilight = DebuggerDmaHilight::Default;
     peekDmaWatcher(dmaLogger);
 }
 
@@ -438,7 +437,7 @@ auto Agnus::updateVCounter() -> void {
 }
 
 template<uint8_t slot> inline auto Agnus::refreshCycle() -> void {
-    busUsage = BUS_USAGE_REFRESH;
+    busUsage = BUS_USAGE_REFRESH_0 + slot;
     constexpr bool firstStrobe = slot == 0;
     bool secondStrobe = slot == 1 && lol;
 
@@ -498,7 +497,7 @@ inline auto Agnus::dmaCycle() -> void {
 
         case 0xb:
             if (dmal & 3)
-                diskDma(0, dmal & 2);
+                diskDma<0>(dmal & 2);
             dmal >>= 2;
             break;
         case 0xc:
@@ -506,7 +505,7 @@ inline auto Agnus::dmaCycle() -> void {
             break;
         case 0xd:
             if (dmal & 3)
-                diskDma(1, dmal & 2);
+                diskDma<1>(dmal & 2);
             bplQueue = 0;
             dmal >>= 2;
             if (hardDrivesBusy) // at least one
@@ -514,7 +513,7 @@ inline auto Agnus::dmaCycle() -> void {
             break;
         case 0xf:
             if (dmal & 3)
-                diskDma(2, dmal & 2);
+                diskDma<2>(dmal & 2);
             dmal >>= 2;
             break;
 
@@ -1044,6 +1043,28 @@ auto Agnus::debugPointReached(int source, unsigned addr) -> void {
     system->debuggerUpdate();
 }
 
+auto Agnus::logNextOpcode() -> void {
+    auto& dmaLogger = debugger.dma[hPos];
+    dmaLogger.mnemonic = cpu.mnemonic();
+    dmaLogger.hilight = DebuggerDmaHilight::Opcode;
+}
+
+template<bool _write, bool _word, bool _prg> auto Agnus::memoryAcceesMnemonic() -> const char* {
+    static const char* mnemonics[] {
+        "R-B-P", "R-B-D", "R-W-P", "R-W-D", "W-B-D", "W-W-D"
+    };
+
+    if constexpr (_write) {
+        return _word ? mnemonics[5] : mnemonics[4];
+    }
+
+    if constexpr (_prg) {
+        return _word ? mnemonics[2] : mnemonics[0];
+    }
+
+    return _word ? mnemonics[3] : mnemonics[1];
+}
+
 auto Agnus::oneTimeDebuggerAction() -> void {
     debugger.action = debugger.oneTimeAction;
     debugger.addr = 0;
@@ -1094,6 +1115,15 @@ auto Agnus::Debugger::enableDmaView(bool state, bool withScrolling) -> void {
     }
 
     dmaLog = requestDmaLog || dmaView;
+}
+
+auto Agnus::resetDebuggerDma() -> void {
+    for (auto& dma : debugger.dma) {
+        dma.usage = 0;
+        dma.usageCpu = 0xff;
+        dma.mnemonic = nullptr;
+        dma.hilight = DebuggerDmaHilight::Default;
+    }
 }
 
 auto Agnus::Debugger::enableDmaLog(bool state) -> void {
@@ -1184,5 +1214,8 @@ template auto Agnus::canCopperUseBus<true>() -> bool;
 
 template auto Agnus::doubleResMidframe<false>(bool fromHires) -> void;
 template auto Agnus::doubleResMidframe<true>(bool fromHires) -> void;
+
+template auto Agnus::fetchCopperDma<0>(uint32_t adr, uint16_t& result) -> bool;
+template auto Agnus::fetchCopperDma<1>(uint32_t adr, uint16_t& result) -> bool;
 
 }

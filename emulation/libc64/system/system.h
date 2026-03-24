@@ -359,7 +359,7 @@ struct System {
     auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
 
-    auto logCpu(uint16_t addr, uint8_t data) -> void;
+    auto logCpu(uint16_t addr, uint8_t data, bool write, bool nextOp) -> void;
     auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop _crop ) -> void;
 };
 

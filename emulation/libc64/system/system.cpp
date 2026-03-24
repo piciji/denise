@@ -16,6 +16,7 @@
 
 #include "expansion.cpp"
 #include "serialization.cpp"
+#include "../m6510/dasmHandler.h"
 #include "map.cpp"
 #include "../expansionPort/gameCart/businessBasic.h"
 #include "../traps/traps.h"
@@ -1366,6 +1367,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                     break;
                 case DebuggerAction::DmaLog:
                     debuggerSnapshot.themes |= (unsigned)theme;
+                    vicIICycle.resetDebuggerDma();
                     vicIICycle.debugger.enableDmaLog(true);
                     break;
                 case DebuggerAction::DmaWatch:

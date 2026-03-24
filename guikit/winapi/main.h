@@ -460,6 +460,7 @@ struct pLogicViewer : pWidget {
     auto setEnabled(bool enabled) -> void;
     auto calcFullWidth() -> unsigned;
     auto setBackgroundColor(unsigned color) -> void;
+    auto setTextColor(LogicState& logicState) -> void;
 
     auto setBox(RECT& rc, int offset) -> void;
     auto drawRect(LogicState::Display display, Gdiplus::Graphics& g, Gdiplus::GraphicsPath* path, RECT& rc, const std::string& text, unsigned padding, bool active) -> void;

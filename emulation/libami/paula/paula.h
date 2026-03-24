@@ -206,7 +206,7 @@ struct Paula {
     auto setDskLen(uint16_t value) -> void;
     auto setDskDat(uint16_t& value) -> bool;
     auto setDskSync(uint16_t value) -> void;
-    auto dskDatR(uint8_t& slot, uint16_t& out) -> bool;
+    auto dskDatR(uint8_t slot, uint16_t& out) -> bool;
     auto fdcWriteMode() -> bool { return diskState == DiskState::WRITE || diskState == DiskState::WAIT_SYNC_WRITE; }
     auto setDskState(DiskState next) -> void;
     auto handleFDControllerIdle() -> void;

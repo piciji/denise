@@ -114,7 +114,7 @@ struct M6510 {
 
 	template<bool mhz2, bool busLogger> auto process() -> void;
 	
-	template<bool sampleInterrupt, bool rememberRdy, bool mhz2, bool busLogger> auto busRead( uint16_t addr ) -> uint8_t;
+	template<bool sampleInterrupt, bool rememberRdy, bool mhz2, bool busLogger, bool nextOp = false> auto busRead( uint16_t addr ) -> uint8_t;
 	
 	template<bool setI, bool mhz2, bool busLogger> auto busAccessUpdateFlagI( uint16_t addr ) -> void;
 	

@@ -10,6 +10,8 @@ struct DasmHandler {
 
     std::string str;
 
+    static auto mnemonic(uint8_t inst) -> const char*;
+
     auto Ins( uint8_t inst ) -> DasmHandler&;
 
     auto tab() -> DasmHandler&;

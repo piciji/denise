@@ -1464,10 +1464,6 @@ auto LogicViewer::setAddrAs24bit(bool addr24bit) -> void {
     state.addr24bit = addr24bit;
 }
 
-auto LogicViewer::setSymbolicAddr(bool symbolicAddr) -> void {
-    state.symbolicAddr = symbolicAddr;
-}
-
 auto LogicViewer::setOffset(LogicState::Offset offset, unsigned value ) -> void {
     if (offset != LogicState::Offset::Max)
         state.offsets[(unsigned)offset] = value;

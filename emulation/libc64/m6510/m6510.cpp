@@ -345,10 +345,10 @@ STEAL:
 
 	lastBus = memory.read( addr );
     if constexpr (busLogger && !mhz2)
-        system->logCpu( addr, lastBus );
+        system->logCpu( addr, lastBus, false, false );
 }
 
-template<bool sampleInterrupt, bool rememberRdy, bool mhz2, bool busLogger> auto M6510::busRead( uint16_t addr ) -> uint8_t {
+template<bool sampleInterrupt, bool rememberRdy, bool mhz2, bool busLogger, bool nextOp> auto M6510::busRead( uint16_t addr ) -> uint8_t {
 	busState = addr;
 
 STEAL:	
@@ -376,7 +376,7 @@ STEAL:
     if (likely(addr > 0x0001)) {
         lastBus = memory.read( addr );
         if constexpr (busLogger && !mhz2)
-            system->logCpu( addr, lastBus );
+            system->logCpu( addr, lastBus, false, nextOp );
         return lastBus;
     }
 
@@ -394,14 +394,14 @@ STEAL:
         }
 
         if constexpr (busLogger && !mhz2)
-            system->logCpu( addr, data );
+            system->logCpu( addr, data, false, nextOp );
 
         return data;
     }
 
     // addr == 0
 	if constexpr (busLogger && !mhz2)
-	    system->logCpu( addr, ddr );
+	    system->logCpu( addr, ddr, false, nextOp );
 	return ddr;
 }
 
@@ -432,7 +432,7 @@ template<bool mhz2, bool busLogger> auto M6510::busWrite( uint16_t addr, uint8_t
         memory.write( addr, data );
 
         if constexpr (busLogger && !mhz2)
-            system->logCpu( addr, data );
+            system->logCpu( addr, data, true, false );
 
     } else if (addr == 0x0001) {
         por = data;
@@ -442,7 +442,7 @@ template<bool mhz2, bool busLogger> auto M6510::busWrite( uint16_t addr, uint8_t
             system->ram[ 1 ] = vicII->lastReadPhase1();
 
         if constexpr (busLogger && !mhz2)
-            system->logCpu( addr, data );
+            system->logCpu( addr, data, true, false );
 
     } else {
         chargeUndefinedBits( data );
@@ -453,7 +453,7 @@ template<bool mhz2, bool busLogger> auto M6510::busWrite( uint16_t addr, uint8_t
             system->ram[ 0 ] = vicII->lastReadPhase1();
 
         if constexpr (busLogger && !mhz2)
-            system->logCpu( addr, data );
+            system->logCpu( addr, data, true, false );
     }
 }
 

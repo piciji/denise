@@ -138,8 +138,14 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         bool active;
     } sids[8];
 
-    constexpr static const char* dmaModes[] { "Free", "Idle", "Graphics", "Character", "Sprite Pointer", "Sprite Data", "Refresh", "Cpu" };
-    constexpr static const char* dmaModesShort[] { "", "IDL", "GRA", "CHA", "SPP", "SPD", "REF", "CPU" };
+    constexpr static const char* dmaModeGroups[] { "Free", "Idle", "Graphics", "Character", "Sprite Pointer", "Sprite Data", "Refresh", "Cpu" };
+
+    constexpr static Emulator::Interface::DebuggerIdent dmaModes[] {
+        {0,""},
+        {1,"IDL"}, {2,"GRA"}, {3,"CHA"},
+        {4,"SPP"}, {5,"SPD"},
+        {6,"REF"}, {7,"CPU"}
+    };
     constexpr static const char* cpuAccess[] { "-", "RAM", "VIC", "SID", "COL", "IO1", "IO2", "CIA1", "CIA2", "CHAR", "KERN", "BASC", "ROML", "ROMH", "ULT"};
 
     constexpr static Emulator::Interface::DebuggerIdent breakConditions[] {

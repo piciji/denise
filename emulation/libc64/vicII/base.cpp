@@ -337,10 +337,7 @@ auto VicIIBase::power() -> void {
 
     debugger.resetSpriteStore();
     debugger.frameLine = debugger.dmaFrame;
-    for (auto& dma : debugger.dma) {
-        dma.usage = 0;
-        dma.usageCpu = 0;
-    }
+    resetDebuggerDma();
     debugger.action = Interface::DebuggerAction::None;
 
     for (unsigned i = 0; i < 8; i++) {
@@ -387,6 +384,15 @@ auto VicIIBase::power() -> void {
     writeReg(0x16, controlReg2);
     
     reg2mhz = 0;
+}
+
+auto VicIIBase::resetDebuggerDma() -> void {
+    for (auto& dma : debugger.dma) {
+        dma.usage = 0;
+        dma.usageCpu = 0;
+        dma.mnemonic = nullptr;
+        dma.hilight = Emulator::Interface::DebuggerDma::Hilight::Default;
+    }
 }
 
 auto VicIIBase::oneTimeDebuggerAction() -> void {

@@ -7,7 +7,7 @@
 
 namespace LIBAMI {
 
-const std::string Interface::Version = "244";
+const std::string Interface::Version = "245";
 
 Interface::Interface() : Emulator::Interface( "Amiga" ) {
 

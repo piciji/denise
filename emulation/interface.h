@@ -329,6 +329,7 @@ struct Interface {
     };
 
     struct DebuggerDma {
+        enum class Hilight { Default = 0, Write = 1, Opcode = 2 };
         // DMA usage
         uint8_t usage;
         uint32_t address;
@@ -338,6 +339,8 @@ struct Interface {
         uint8_t usageCpu;
         uint32_t addrCpu;
         uint16_t dataCpu;
+        Hilight hilight;
+        const char* mnemonic;
 
         // free assignable
         uint16_t watcher[4];

@@ -158,6 +158,7 @@ struct VicIIBase {
     auto setVicBank(uint16_t data) -> void { vicBank = data; }
     auto getVicBank() -> uint16_t { return vicBank; }
 	auto enableDmaView(bool state, bool withScrolling) -> void;
+    auto resetDebuggerDma() -> void;
 
 protected:     
     bool ultimaxPhi1;
