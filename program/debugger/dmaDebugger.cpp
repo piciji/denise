@@ -56,7 +56,7 @@ DmaDebugger::DmaControl::DmaControl(DmaDebugger* debugger) {
 }
 
 DmaDebugger::Dma::DmaLine::DmaLine(DmaDebugger* debugger) {
-    append(viewer, {~0u, 400u});
+    append(viewer, {~0u, 440u});
     if (debugger->isAmiga())
         viewer.setAddrAs24bit();
 }

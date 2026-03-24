@@ -230,13 +230,25 @@ auto pLogicViewer::buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry ge
     } else {
         drawText(cr, geo, logicState.usage);
         setBox(geo, (int)LogicState::Offset::Addr1);
-
-        std::string _addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr, addrLength);
+        std::string _addr = logicState.symbolicAddr.empty() ? String::convertToHex(logicState.addr, addrLength) : logicState.symbolicAddr;
         drawRectRounded(cr, geo, _addr, 5);
 
         setBox(geo, (int)LogicState::Offset::Data1);
         drawRectRounded(cr, geo, String::convertToHex(logicState.data), 10);
     }
+
+    setBox(geo, (int)LogicState::Offset::OpCode);
+    if (logicState.opCode) {
+        std::string _opCode = logicState.opCode;
+        String::toUpperCase( _opCode );
+        if (logicState.hilight == LogicState::Hilight::Opcode) {
+            cairo_set_source_rgb(cr, getColorComponent(0x87), getColorComponent(0xce), getColorComponent(0xfa));
+            drawText(cr, geo, _opCode);
+            cairo_set_source_rgb(cr, _col, _col, _col);
+        } else
+            drawText(cr, geo, _opCode);
+    } else
+        drawText(cr, geo, "-");
 
     setBox(geo, (int)LogicState::Offset::Usage2);
 
@@ -253,7 +265,15 @@ auto pLogicViewer::buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry ge
         drawRectRounded(cr, geo, String::convertToHex(logicState.addr2, addrLength), 5);
 
         setBox(geo, (int)LogicState::Offset::Data2);
-        drawRectRounded(cr, geo, String::convertToHex(logicState.data2), 10);
+
+        if (logicState.hilight == LogicState::Hilight::Write) {
+            drawRectRounded(cr, geo, 10);
+            cairo_stroke(cr);
+            cairo_set_source_rgb(cr, getColorComponent(0xff), getColorComponent(0x6f), getColorComponent(0x61));
+            drawText(cr, geo, String::convertToHex(logicState.data2) );
+            cairo_set_source_rgb(cr, _col, _col, _col);
+        } else
+            drawRectRounded(cr, geo, String::convertToHex(logicState.data2), 10);
     }
 
     int i = 0;
@@ -320,6 +340,11 @@ auto pLogicViewer::drawText(cairo_t* cr, Geometry& geo, const std::string& text)
 }
 
 auto pLogicViewer::drawRectRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void {
+    drawRectRounded(cr, geo, padding);
+    drawText(cr, geo, text );
+}
+
+inline auto pLogicViewer::drawRectRounded(cairo_t* cr, Geometry& geo, unsigned padding) -> void {
     unsigned center = geo.y + (geo.height / 2);
 
     cairo_move_to(cr, pg(geo.x), pg(center));
@@ -332,8 +357,6 @@ auto pLogicViewer::drawRectRounded(cairo_t* cr, Geometry& geo, const std::string
     _geo.x += padding;
     _geo.width -= padding * 2;
     getRoundedPath(cr, _geo);
-
-    drawText(cr, geo, text );
 }
 
 auto pLogicViewer::drawRectLeftRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void {

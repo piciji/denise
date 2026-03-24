@@ -319,6 +319,7 @@ struct pLogicViewer : pWidget {
 	auto drawText(cairo_t* cr, Geometry& geo, const std::string& text) -> void;
 	auto drawLine(cairo_t* cr, Geometry& geo) -> void;
 
+	auto drawRectRounded(cairo_t* cr, Geometry& geo, unsigned padding) -> void;
 	auto drawRectRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void;
 	auto drawRectLeftRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void;
 	auto drawRectRightRounded(cairo_t* cr, Geometry& geo, const std::string& text, unsigned padding) -> void;
