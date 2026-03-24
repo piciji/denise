@@ -77,6 +77,9 @@
 @end
 
 #define DMA_SLOT_WIDTH 70u
+#define SCROLL_STEPS 8
+#define HI_LOGIC_WRITE  0xff6f61
+#define HI_LOGIC_OPCODE 0x87cefa
 
 namespace GUIKIT {
 
@@ -131,8 +134,6 @@ auto pLogicViewer::setGeometry(Geometry geometry) -> void {
     pWidget::setGeometry(geometry);
     update();
 }
-
-#define SCROLL_STEPS 8
 
 auto pLogicViewer::scrollToActive() -> void {
     NSClipView* clipView = [(id)cocoaView contentView];
@@ -274,11 +275,22 @@ auto pLogicViewer::buildDmaSlot(CGContextRef context, LogicState& logicState, Ge
         drawText(geo, logicState.usage, nsCol);
         setBox(geo, (int)LogicState::Offset::Addr1);
         
-        std::string addr = logicViewer.hasSymbolicAddr() ? logicState.symbolicAddr : String::convertToHex(logicState.addr, addrLength);
+        std::string addr = logicState.symbolicAddr.empty() ? String::convertToHex(logicState.addr, addrLength) : logicState.symbolicAddr;
         drawRectRounded(context, geo, addr, nsCol, 5);
         setBox(geo, (int)LogicState::Offset::Data1);
         drawRectRounded(context, geo, String::convertToHex(logicState.data), nsCol, 10);
     }
+    
+    setBox(geo, (int)LogicState::Offset::OpCode);
+    if (logicState.opCode) {
+        std::string _opCode = logicState.opCode;
+        String::toUpperCase( _opCode );
+        if (logicState.hilight == LogicState::Hilight::Opcode) {
+            drawText(geo, _opCode, pHelper::RGBToNSColor(HI_LOGIC_OPCODE));
+        } else
+            drawText(geo, _opCode, nsCol);
+    } else
+        drawText(geo, "", nsCol);
     
     setBox(geo, (int)LogicState::Offset::Usage2);
     
@@ -293,7 +305,11 @@ auto pLogicViewer::buildDmaSlot(CGContextRef context, LogicState& logicState, Ge
         setBox(geo, (int)LogicState::Offset::Addr2);
         drawRectRounded(context, geo, String::convertToHex(logicState.addr2, addrLength), nsCol, 5);
         setBox(geo, (int)LogicState::Offset::Data2);
-        drawRectRounded(context, geo, String::convertToHex(logicState.data2), nsCol, 10);
+        if (logicState.hilight == LogicState::Hilight::Write) {
+            drawRectRounded(context, geo, String::convertToHex(logicState.data2), pHelper::RGBToNSColor(HI_LOGIC_WRITE), 10);
+            CGContextSetStrokeColorWithColor(context, [nsCol CGColor]);
+        } else
+            drawRectRounded(context, geo, String::convertToHex(logicState.data2), nsCol, 10);
     }
     
     int i = 0;
