@@ -248,7 +248,7 @@ auto pLogicViewer::buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry ge
         } else
             drawText(cr, geo, _opCode);
     } else
-        drawText(cr, geo, "-");
+        drawText(cr, geo, "");
 
     setBox(geo, (int)LogicState::Offset::Usage2);
 
