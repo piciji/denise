@@ -3,7 +3,7 @@
 #define DMA_SLOT_WIDTH 70
 
 #define HI_LOGIC_WRITE  RGB(0xff, 0x6f, 0x61)
-#define HI_LOGIC_OPCODE RGB(0x87, 0xce, 0xfa)
+#define HI_LOGIC_MNEMONIC RGB(0x87, 0xce, 0xfa)
 
 pLogicViewer::~pLogicViewer() {
     invalidateDrawArea();
@@ -397,16 +397,16 @@ auto pLogicViewer::buildDmaSlot(Gdiplus::Graphics& g, LogicState& logicState, RE
         drawRectRounded(g, &path, rc, String::convertToHex(logicState.data), 10, logicState.active);
     }
 
-    setBox(rc, (int)LogicState::Offset::OpCode);
-    if (logicState.opCode) {
-        std::string _opCode = logicState.opCode;
-        String::toUpperCase( _opCode );
-        if (logicState.hilight == LogicState::Hilight::Opcode) {
-            SetTextColor(drawDC, HI_LOGIC_OPCODE);
-            DrawText(drawDC, utf16_t(_opCode), -1, &rc, DT_CENTER);
+    setBox(rc, (int)LogicState::Offset::Mnemonic);
+    if (logicState.mnemonic) {
+        std::string _mnemonic = logicState.mnemonic;
+        String::toUpperCase( _mnemonic );
+        if (logicState.hilight == LogicState::Hilight::Mnemonic) {
+            SetTextColor(drawDC, HI_LOGIC_MNEMONIC);
+            DrawText(drawDC, utf16_t(_mnemonic), -1, &rc, DT_CENTER);
             setTextColor( logicState );
         } else
-            DrawText(drawDC, utf16_t(_opCode), -1, &rc, DT_CENTER);
+            DrawText(drawDC, utf16_t(_mnemonic), -1, &rc, DT_CENTER);
     } else
         DrawText(drawDC, L"", -1, &rc, DT_CENTER);
 

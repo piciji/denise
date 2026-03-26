@@ -20,7 +20,7 @@ struct DmaDebugger : Debugger {
             GUIKIT::Label dma;
             GUIKIT::Label dmaAddr;
             GUIKIT::Label dmaData;
-            GUIKIT::Label opCode;
+            GUIKIT::Label mnemonic;
             GUIKIT::Label cpu;
             GUIKIT::Label cpuAddr;
             GUIKIT::Label cpuData;

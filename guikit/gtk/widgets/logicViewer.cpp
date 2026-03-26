@@ -237,16 +237,16 @@ auto pLogicViewer::buildDmaSlot(cairo_t* cr, LogicState& logicState, Geometry ge
         drawRectRounded(cr, geo, String::convertToHex(logicState.data), 10);
     }
 
-    setBox(geo, (int)LogicState::Offset::OpCode);
-    if (logicState.opCode) {
-        std::string _opCode = logicState.opCode;
-        String::toUpperCase( _opCode );
-        if (logicState.hilight == LogicState::Hilight::Opcode) {
+    setBox(geo, (int)LogicState::Offset::Mnemonic);
+    if (logicState.mnemonic) {
+        std::string _mnemonic = logicState.mnemonic;
+        String::toUpperCase( _mnemonic );
+        if (logicState.hilight == LogicState::Hilight::Mnemonic) {
             cairo_set_source_rgb(cr, getColorComponent(0x87), getColorComponent(0xce), getColorComponent(0xfa));
-            drawText(cr, geo, _opCode);
+            drawText(cr, geo, _mnemonic);
             cairo_set_source_rgb(cr, _col, _col, _col);
         } else
-            drawText(cr, geo, _opCode);
+            drawText(cr, geo, _mnemonic);
     } else
         drawText(cr, geo, "");
 

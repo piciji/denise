@@ -325,7 +325,17 @@ private:
     OP_DECLARE_EA(Cmpa)
     OP_DECLARE_EA(Mul)
     OP_DECLARE_EA(Div)
+
     OP_DECLARE_EA(Move)
+    OP_DECLARE_EA(MoveDataRegisterDirect)
+    OP_DECLARE_EA(MoveAddressRegisterIndirect)
+    OP_DECLARE_EA(MoveAddressRegisterIndirectWithPostIncrement)
+    OP_DECLARE_EA(MoveAddressRegisterIndirectWithPreDecrement)
+    OP_DECLARE_EA(MoveAddressRegisterIndirectWithDisplacement)
+    OP_DECLARE_EA(MoveAddressRegisterIndirectWithIndex)
+    OP_DECLARE_EA(MoveAbsoluteShort)
+    OP_DECLARE_EA(MoveAbsoluteLong)
+
     OP_DECLARE_EA(MoveA)
     OP_DECLARE_EA(ArithmeticI)
     OP_DECLARE_EA(ArithmeticQ)

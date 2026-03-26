@@ -962,8 +962,8 @@ struct Viewport : Widget {
 
 struct LogicState {
     enum class Display { EmptyBlock = 0, SingleBlock = 1, BeginBlock = 2, KeepBlock = 4, EndBlock = 8 };
-    enum class Offset { Usage1 = 0, Addr1, Data1, OpCode, Usage2, Addr2, Data2, Watch1, Watch2, Watch3, Watch4, Max };
-    enum class Hilight { Default = 0, Write = 1, Opcode = 2 };
+    enum class Offset { Usage1 = 0, Addr1, Data1, Mnemonic, Usage2, Addr2, Data2, Watch1, Watch2, Watch3, Watch4, Max };
+    enum class Hilight { Default = 0, Write = 1, Mnemonic = 2 };
 
     bool active;
     unsigned position;
@@ -975,7 +975,7 @@ struct LogicState {
     unsigned data;
     Display display;
 
-    const char* opCode;
+    const char* mnemonic;
     Hilight hilight;
 
     std::string usage2;

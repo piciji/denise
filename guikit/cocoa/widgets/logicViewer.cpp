@@ -79,7 +79,7 @@
 #define DMA_SLOT_WIDTH 70u
 #define SCROLL_STEPS 8
 #define HI_LOGIC_WRITE  0xff6f61
-#define HI_LOGIC_OPCODE 0x87cefa
+#define HI_LOGIC_MNEMONIC 0x87cefa
 
 namespace GUIKIT {
 
@@ -281,14 +281,14 @@ auto pLogicViewer::buildDmaSlot(CGContextRef context, LogicState& logicState, Ge
         drawRectRounded(context, geo, String::convertToHex(logicState.data), nsCol, 10);
     }
     
-    setBox(geo, (int)LogicState::Offset::OpCode);
-    if (logicState.opCode) {
-        std::string _opCode = logicState.opCode;
-        String::toUpperCase( _opCode );
-        if (logicState.hilight == LogicState::Hilight::Opcode) {
-            drawText(geo, _opCode, pHelper::RGBToNSColor(HI_LOGIC_OPCODE));
+    setBox(geo, (int)LogicState::Offset::Mnemonic);
+    if (logicState.mnemonic) {
+        std::string _mnemonic = logicState.mnemonic;
+        String::toUpperCase( _mnemonic );
+        if (logicState.hilight == LogicState::Hilight::Mnemonic) {
+            drawText(geo, _mnemonic, pHelper::RGBToNSColor(HI_LOGIC_MNEMONIC));
         } else
-            drawText(geo, _opCode, nsCol);
+            drawText(geo, _mnemonic, nsCol);
     } else
         drawText(geo, "", nsCol);
     

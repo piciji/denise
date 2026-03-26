@@ -171,8 +171,40 @@ auto M68000::dasmDiv( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
     d.Ins( Inst ).si( Size ).tab().ea().sep().dn( (opcode >> 9) & 7 );
 }
 
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::dasmMoveDataRegisterDirect(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmMove<DataRegisterDirect, Mode, Size>(opcode, adr, d);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::dasmMoveAddressRegisterIndirect(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmMove<AddressRegisterIndirect, Mode, Size>(opcode, adr, d);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::dasmMoveAddressRegisterIndirectWithPostIncrement(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmMove<AddressRegisterIndirectWithPostIncrement, Mode, Size>(opcode, adr, d);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::dasmMoveAddressRegisterIndirectWithPreDecrement(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmMove<AddressRegisterIndirectWithPreDecrement, Mode, Size>(opcode, adr, d);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::dasmMoveAddressRegisterIndirectWithDisplacement(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmMove<AddressRegisterIndirectWithDisplacement, Mode, Size>(opcode, adr, d);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::dasmMoveAddressRegisterIndirectWithIndex(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmMove<AddressRegisterIndirectWithIndex, Mode, Size>(opcode, adr, d);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::dasmMoveAbsoluteShort(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmMove<AbsoluteShort, Mode, Size>(opcode, adr, d);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::dasmMoveAbsoluteLong(uint16_t opcode, uint32_t& adr, DasmHandler& d) -> void {
+    dasmMove<AbsoluteLong, Mode, Size>(opcode, adr, d);
+}
+
 template<uint8_t Inst, uint8_t Mode, uint8_t Size>
-auto M68000::dasmMove( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
+inline auto M68000::dasmMove( uint16_t opcode, uint32_t& adr, DasmHandler& d ) -> void {
     prepareEaForDasm<Mode, Size>( adr, opcode & 7, d );
     d.Ins( Move ).si( Size ).tab().ea().sep();
 

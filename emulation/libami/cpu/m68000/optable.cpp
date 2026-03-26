@@ -5,7 +5,7 @@ enum { S6 = 6, S8 = 8, S12 = 12, SO /* second operand */ = 1 << 4, O_16 = 2 << 4
 enum { DR = 1, AR = 2, AI = 4, AIPI = 8, AIPD = 16, AID = 32, AII = 64, AS = 128, AL = 256, PCD = 512, PCI = 1024, IM = 2048,
         ADR_TYPICAL = AI | AIPI | AIPD | AID | AII | AS | AL, ADR_FULL = ADR_TYPICAL | PCD | PCI | IM };
 
-#define _bindEA(id, F, I, M, S) { opTable[id] = &M68000::op##F<I, M, S>; dasmTable[id] = &M68000::dasm##F<I, M, S>; mnemonics[id] = DasmHandler::mnemonic( &M68000::dasm##F<I, M, S> == &M68000::dasmMove<I, M, S> ? (uint8_t)Move : I ); }
+#define _bindEA(id, F, I, M, S) { opTable[id] = &M68000::op##F<I, M, S>; dasmTable[id] = &M68000::dasm##F<I, M, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
 #define _bind(id, F, I, S) { opTable[id] = &M68000::op##F<I, S>; dasmTable[id] = &M68000::dasm##F<I, S>; mnemonics[id] = DasmHandler::mnemonic( I ); }
 
 #define _M_( op, F, I, M, S ) { \
@@ -290,36 +290,36 @@ auto M68000::build() -> void {
     
     // move
     o = parse("00ss ---0 00-- ----");
-    _EA_( o, S12 | SO, Move, DataRegisterDirect, ADR_FULL | DR, Byte )
-    _EA_( o, S12 | SO, Move, DataRegisterDirect, ADR_FULL | AR | DR, WL )
+    _EA_( o, S12 | SO, MoveDataRegisterDirect, Move, ADR_FULL | DR, Byte )
+    _EA_( o, S12 | SO, MoveDataRegisterDirect, Move, ADR_FULL | AR | DR, WL )
 
     o = parse("00ss ---0 10-- ----");
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirect, ADR_FULL | DR, Byte )
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirect, ADR_FULL | AR | DR, WL )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirect, Move, ADR_FULL | DR, Byte )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirect, Move, ADR_FULL | AR | DR, WL )
     
     o = parse("00ss ---0 11-- ----");
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirectWithPostIncrement, ADR_FULL | DR, Byte )
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirectWithPostIncrement, ADR_FULL | AR | DR, WL )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirectWithPostIncrement, Move, ADR_FULL | DR, Byte )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirectWithPostIncrement, Move, ADR_FULL | AR | DR, WL )
     
     o = parse("00ss ---1 00-- ----");
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirectWithPreDecrement, ADR_FULL | DR, Byte )
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirectWithPreDecrement, ADR_FULL | AR | DR, WL )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirectWithPreDecrement, Move, ADR_FULL | DR, Byte )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirectWithPreDecrement, Move, ADR_FULL | AR | DR, WL )
     
     o = parse("00ss ---1 01-- ----");
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirectWithDisplacement, ADR_FULL | DR, Byte )
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirectWithDisplacement, ADR_FULL | AR | DR, WL )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirectWithDisplacement, Move, ADR_FULL | DR, Byte )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirectWithDisplacement, Move, ADR_FULL | AR | DR, WL )
 
     o = parse("00ss ---1 10-- ----");
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirectWithIndex, ADR_FULL | DR, Byte )
-    _EA_( o, S12 | SO, Move, AddressRegisterIndirectWithIndex, ADR_FULL | AR | DR, WL )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirectWithIndex, Move, ADR_FULL | DR, Byte )
+    _EA_( o, S12 | SO, MoveAddressRegisterIndirectWithIndex, Move, ADR_FULL | AR | DR, WL )
     
     o = parse("00ss 0001 11-- ----");
-    _EA_( o, S12, Move, AbsoluteShort, ADR_FULL | DR, Byte )
-    _EA_( o, S12, Move, AbsoluteShort, ADR_FULL | AR | DR, WL )
+    _EA_( o, S12, MoveAbsoluteShort, Move, ADR_FULL | DR, Byte )
+    _EA_( o, S12, MoveAbsoluteShort, Move, ADR_FULL | AR | DR, WL )
     
     o = parse("00ss 0011 11-- ----");
-    _EA_( o, S12, Move, AbsoluteLong, ADR_FULL | DR, Byte )
-    _EA_( o, S12, Move, AbsoluteLong, ADR_FULL | AR | DR, WL )
+    _EA_( o, S12, MoveAbsoluteLong, Move, ADR_FULL | DR, Byte )
+    _EA_( o, S12, MoveAbsoluteLong, Move, ADR_FULL | AR | DR, WL )
     
     // movea
     o = parse("00ss ---0 01-- ----");

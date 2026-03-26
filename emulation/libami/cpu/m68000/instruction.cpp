@@ -302,7 +302,39 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opDiv(uint16_t o
     }
 }
 
-template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMove(uint16_t opcode) -> void {
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveDataRegisterDirect(uint16_t opcode) -> void {
+    opMove<DataRegisterDirect, Mode, Size>(opcode);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveAddressRegisterIndirect(uint16_t opcode) -> void {
+    opMove<AddressRegisterIndirect, Mode, Size>(opcode);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveAddressRegisterIndirectWithPostIncrement(uint16_t opcode) -> void {
+    opMove<AddressRegisterIndirectWithPostIncrement, Mode, Size>(opcode);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveAddressRegisterIndirectWithPreDecrement(uint16_t opcode) -> void {
+    opMove<AddressRegisterIndirectWithPreDecrement, Mode, Size>(opcode);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveAddressRegisterIndirectWithDisplacement(uint16_t opcode) -> void {
+    opMove<AddressRegisterIndirectWithDisplacement, Mode, Size>(opcode);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveAddressRegisterIndirectWithIndex(uint16_t opcode) -> void {
+    opMove<AddressRegisterIndirectWithIndex, Mode, Size>(opcode);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveAbsoluteShort(uint16_t opcode) -> void {
+    opMove<AbsoluteShort, Mode, Size>(opcode);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMoveAbsoluteLong(uint16_t opcode) -> void {
+    opMove<AbsoluteLong, Mode, Size>(opcode);
+}
+
+template<uint8_t Inst, uint8_t Mode, uint8_t Size> inline auto M68000::opMove(uint16_t opcode) -> void {
     // Inst is target Mode
     uint32_t result, ea;
     int reg = (opcode >> 9) & 7;

@@ -26,7 +26,7 @@ DmaDebugger::Dma::Legend::Legend() {
     dma.setAlign(GUIKIT::Label::Align::Right);
     dmaAddr.setAlign(GUIKIT::Label::Align::Right);
     dmaData.setAlign(GUIKIT::Label::Align::Right);
-    opCode.setAlign(GUIKIT::Label::Align::Right);
+    mnemonic.setAlign(GUIKIT::Label::Align::Right);
     cpu.setAlign(GUIKIT::Label::Align::Right);
     cpuAddr.setAlign(GUIKIT::Label::Align::Right);
     cpuData.setAlign(GUIKIT::Label::Align::Right);
@@ -35,7 +35,7 @@ DmaDebugger::Dma::Legend::Legend() {
     append( dma, {100u, 0u}, 14 );
     append( dmaAddr, {100u, 0u}, 14 );
     append( dmaData, {100u, 0u}, 14 );
-    append( opCode, {100u, 0u}, 16 );
+    append( mnemonic, {100u, 0u}, 16 );
     append( cpu, {100u, 0u}, 14 );
     append( cpuAddr, {100u, 0u}, 14 );
     append( cpuData, {100u, 0u}, 16 );
@@ -350,7 +350,7 @@ auto DmaDebugger::updateView(LIBC64::DebuggerSnapshot& s) -> void {
         lState.addr = debugState.address;
         lState.data = debugState.data;
 
-        lState.opCode = debugState.mnemonic;
+        lState.mnemonic = debugState.mnemonic;
         lState.hilight = (GUIKIT::LogicState::Hilight)debugState.hilight;
 
         if (debugState.usageCpu) {
@@ -439,7 +439,7 @@ auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
         lState.addr = debugState.address;
 
         lState.data = debugState.data;
-        lState.opCode = debugState.mnemonic;
+        lState.mnemonic = debugState.mnemonic;
         lState.hilight = (GUIKIT::LogicState::Hilight)debugState.hilight;
 
         if (debugState.usageCpu != 0xff) {
@@ -501,7 +501,7 @@ auto DmaDebugger::initTheme() -> void {
     offsets.push_back(dma->legend.dma.geometry().y + (dma->legend.dma.geometry().height >> 1));
     offsets.push_back(dma->legend.dmaAddr.geometry().y + (dma->legend.dmaAddr.geometry().height >> 1));
     offsets.push_back(dma->legend.dmaData.geometry().y + (dma->legend.dmaData.geometry().height >> 1));
-    offsets.push_back(dma->legend.opCode.geometry().y + (dma->legend.opCode.geometry().height >> 1));
+    offsets.push_back(dma->legend.mnemonic.geometry().y + (dma->legend.mnemonic.geometry().height >> 1));
     offsets.push_back(dma->legend.cpu.geometry().y + (dma->legend.cpu.geometry().height >> 1));
     offsets.push_back(dma->legend.cpuAddr.geometry().y + (dma->legend.cpuAddr.geometry().height >> 1));
     offsets.push_back(dma->legend.cpuData.geometry().y + (dma->legend.cpuData.geometry().height >> 1));
@@ -539,7 +539,7 @@ auto DmaDebugger::translateTheme() -> void {
     dma->legend.dma.setText( "DMA" );
     dma->legend.dmaAddr.setText( "Addr" );
     dma->legend.dmaData.setText( "Data" );
-    dma->legend.opCode.setText( "OpCode" );
+    dma->legend.mnemonic.setText( "Mnemonic" );
     dma->legend.cpu.setText( "CPU" );
     dma->legend.cpuAddr.setText( "Addr" );
     dma->legend.cpuData.setText( "Data" );
