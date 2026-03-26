@@ -13,45 +13,6 @@
 
 namespace EmuConfigView {
 
-FpsLayout::CustomRate::CustomRate() {
-    append(label, {0u, 0u}, 5);
-    append(fps, {0u, 0u}, 5 );
-    append(percent, {0u, 0u}, 10 );
-    GUIKIT::LineEdit test;
-    test.setText("999.99");
-    append(speed, {test.minimumSize().width, 0u}, 10 );
-    append(apply, {0u, 0u} );
-
-    GUIKIT::RadioBox::setGroup( fps, percent );
-
-    setAlignment(0.5);
-}
-
-FpsLayout::Refresh::Refresh() : updateDelay("ms") {
-    append(updateDelay, {~0u, 0u}, 10);
-
-    append(labelDecimalPlace, {0u, 0u}, 5);
-    append(Zero, {0u, 0u}, 5);
-    append(One, {0u, 0u}, 5);
-    append(Two, {0u, 0u}, 5);
-    append(Three, {0u, 0u});
-
-    GUIKIT::RadioBox::setGroup( Zero, One, Two, Three );
-
-    updateDelay.slider.setLength(25);
-    updateDelay.updateValueWidth( "5000 " + updateDelay.unit );
-
-    setAlignment(0.5);
-}
-
-FpsLayout::FpsLayout() {
-    append(customRate, {~0u, 0u}, 5);
-    append(refresh, {~0u, 0u});
-
-    setPadding(10);
-    setFont(GUIKIT::Font::system("bold"));
-}
-
 InputSamplingLayout::Options::Options() {
     append(staticMode, {0u, 0u}, 10);
     append(restrictedDynamicMode, {0u, 0u}, 10);
@@ -167,57 +128,9 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) : autostartLayout(tabWindow->emulat
     
     setMargin(10);
 
-    append( fpsLayout, {~0u, 0u}, 10 );
     append( inputSamplingLayout, {~0u, 0u}, 10 );
     append( runAheadLayout, {~0u, 0u}, 10 );
     append( autostartLayout, {~0u, 0u});
-
-    fpsLayout.refresh.updateDelay.slider.onChange = [this](unsigned position) {
-        emuThread->lock();
-
-        position = (position + 1) * 200;
-
-        _settings->set<unsigned>("fps_refresh", position);
-
-        fpsLayout.refresh.updateDelay.value.setText( std::to_string(position) + " " + fpsLayout.refresh.updateDelay.unit );
-
-        if (emulator == activeEmulator)
-            statusHandler->setFpsRefresh();
-        emuThread->unlock();
-    };
-
-    fpsLayout.refresh.Zero.setText("0");
-    fpsLayout.refresh.Zero.onActivate = [this]() {
-        emuThread->lock();
-        _settings->set<unsigned>("fps_decimal_point", 0);
-        if (emulator == activeEmulator)
-            statusHandler->setFpsRefresh();
-        emuThread->unlock();
-    };
-    fpsLayout.refresh.One.setText("1");
-    fpsLayout.refresh.One.onActivate = [this]() {
-        emuThread->lock();
-        _settings->set<unsigned>("fps_decimal_point", 1);
-        if (emulator == activeEmulator)
-            statusHandler->setFpsRefresh();
-        emuThread->unlock();
-    };
-    fpsLayout.refresh.Two.setText("2");
-    fpsLayout.refresh.Two.onActivate = [this]() {
-        emuThread->lock();
-        _settings->set<unsigned>("fps_decimal_point", 2);
-        if (emulator == activeEmulator)
-            statusHandler->setFpsRefresh();
-        emuThread->unlock();
-    };
-    fpsLayout.refresh.Three.setText("3");
-    fpsLayout.refresh.Three.onActivate = [this]() {
-        emuThread->lock();
-        _settings->set<unsigned>("fps_decimal_point", 3);
-        if (emulator == activeEmulator)
-            statusHandler->setFpsRefresh();
-        emuThread->unlock();
-    };
 
     autostartLayout.autoWarp.off.onActivate = [this]() {
 
@@ -379,61 +292,6 @@ MiscLayout::MiscLayout(TabWindow* tabWindow) : autostartLayout(tabWindow->emulat
         inputSamplingLayout.control.setEnabled(true);
     };
 
-    fpsLayout.customRate.speed.onChange = [this]() {
-        std::string userInput = fpsLayout.customRate.speed.text();
-
-        GUIKIT::String::replace(userInput, ",", ".");
-
-        if (userInput.empty() || !GUIKIT::String::isFloatNumber( userInput ) ) {
-            return;
-        }
-
-        std::stringstream ss( userInput );
-        float out = 0.0;
-        ss >> out;
-
-        if (out < 1.0)
-            return;
-
-        _settings->set<std::string>("custom_speed", userInput);
-
-        if (view->isCustomSpeed()) {
-            emuThread->lock();
-            audioManager->setResampler();
-            statusHandler->resetFrameCounter();
-            emuThread->unlock();
-        }
-        view->updateSpeedLabels();
-    };
-
-    fpsLayout.customRate.percent.onActivate = [this]() {
-        _settings->set<bool>("custom_speed_percent", true);
-
-        if (view->isCustomSpeed()) {
-            emuThread->lock();
-            audioManager->setResampler();
-            statusHandler->resetFrameCounter();
-            emuThread->unlock();
-        }
-        view->updateSpeedLabels();
-    };
-
-    fpsLayout.customRate.fps.onActivate = [this]() {
-        _settings->set<bool>("custom_speed_percent", false);
-
-        if (view->isCustomSpeed()) {
-            emuThread->lock();
-            audioManager->setResampler();
-            statusHandler->resetFrameCounter();
-            emuThread->unlock();
-        }
-        view->updateSpeedLabels();
-    };
-
-    fpsLayout.customRate.apply.onActivate = [this]() {
-        view->activateCustomSpeed();
-    };
-
     loadSettings();
 }
 
@@ -505,15 +363,6 @@ auto MiscLayout::translate() -> void {
 
     autostartLayout.dragnDrop.power.setText(trans->get("dragndrop power"));
     autostartLayout.dragnDrop.captureMouse.setText(trans->get("dragndrop capture mouse"));
-
-    fpsLayout.setText( trans->get("Speed") );
-    fpsLayout.customRate.label.setText( trans->get("Set speed", {}, true) );
-    fpsLayout.customRate.fps.setText( trans->get("FPS") );
-    fpsLayout.customRate.percent.setText( trans->get("Percent") );
-    fpsLayout.customRate.apply.setText( trans->get("enable") );
-
-    fpsLayout.refresh.updateDelay.name.setText( trans->get("Refresh", {}, true) );
-    fpsLayout.refresh.labelDecimalPlace.setText( trans->get("Decimal Place", {}, true) );
 }
 
 auto MiscLayout::initAutowarp(Emulator::Interface::MediaGroup* forGroup) -> void {
@@ -585,24 +434,6 @@ auto MiscLayout::loadSettings() -> void {
     inputSamplingLayout.control.value.setText(std::to_string(jitDelay) + " " + inputSamplingLayout.control.unit);
 
     inputSamplingLayout.control.setEnabled( inputSamplingMode == 2 );
-
-    fpsLayout.customRate.speed.setText( _settings->get<std::string>("custom_speed", "59.95") );
-    if (_settings->get<bool>("custom_speed_percent", false))
-        fpsLayout.customRate.percent.setChecked();
-    else
-        fpsLayout.customRate.fps.setChecked();
-
-    unsigned delay = _settings->get<unsigned>("fps_refresh", 1000u, {200u, 5000u});
-    fpsLayout.refresh.updateDelay.slider.setPosition( delay / 200 - 1 );
-    fpsLayout.refresh.updateDelay.value.setText( std::to_string( delay ) + " " + fpsLayout.refresh.updateDelay.unit );
-
-    unsigned countDecimal = _settings->get<unsigned>("fps_decimal_point", 3, {0u, 3u});
-    switch (countDecimal) {
-        case 0: fpsLayout.refresh.Zero.setChecked(); break;
-        case 1: fpsLayout.refresh.One.setChecked(); break;
-        case 2: fpsLayout.refresh.Two.setChecked(); break;
-        case 3: fpsLayout.refresh.Three.setChecked(); break;
-    }
 }
 
 }

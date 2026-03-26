@@ -206,6 +206,11 @@ struct View : GUIKIT::Window {
         GUIKIT::MenuCheckItem warpItem;
         GUIKIT::MenuCheckItem aggressiveWarpItem;
         GUIKIT::MenuCheckItem pauseItem;
+        GUIKIT::Menu fpsPresentationMenu;
+            GUIKIT::Menu fpsDecimalMenu;
+                std::vector<GUIKIT::MenuRadioItem*> fpsDecimalItems;
+            GUIKIT::Menu fpsRefreshMenu;
+                std::vector<GUIKIT::MenuRadioItem*> fpsRefreshItems;
         std::vector<GUIKIT::MenuRadioItem*> speedItems;
         GUIKIT::MenuRadioItem maximumSpeedItem;
         GUIKIT::MenuItem customizeSpeedItem;
@@ -301,6 +306,36 @@ struct View : GUIKIT::Window {
     GUIKIT::Image recordAudioImage;
 
     GUIKIT::Image debugImage;
+
+    struct FpsWindow : GUIKIT::Window {
+
+        struct Top : GUIKIT::HorizontalLayout {
+            GUIKIT::LineEdit fpsLineEdit;
+            GUIKIT::Widget spacer;
+            GUIKIT::RadioBox fpsRadioBox;
+            GUIKIT::RadioBox percentRadioBox;
+            Top();
+        } top;
+
+        struct Bottom : GUIKIT::HorizontalLayout {
+            GUIKIT::Button cancel;
+            GUIKIT::Widget spacer;
+            GUIKIT::Button apply;
+            Bottom();
+        } bottom;
+
+        GUIKIT::VerticalLayout layout;
+
+        View* view;
+        auto build() -> void;
+        auto show() -> void;
+
+        explicit FpsWindow(View* view) : GUIKIT::Window(Hints::No_Title) {
+            this->view = view;
+            build();
+        }
+
+    } *fpsWindow = nullptr;
             	
     auto questionToWrite(Emulator::Interface::Media* media) -> bool;
     auto updateSpeedLabels() -> void;
@@ -317,6 +352,8 @@ struct View : GUIKIT::Window {
     auto updateScreenshotUI() -> void;
     auto setAudioRecordText() -> void;
     auto hideSplashscreen() -> void;
+    auto updateFPSMenu() -> void;
+    auto buildFpsWindow() -> void;
     
     View();
 };

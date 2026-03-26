@@ -585,7 +585,7 @@ auto CALLBACK pWindow::wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         case WM_GETMINMAXINFO: {
             LPMINMAXINFO lpMMI = (LPMINMAXINFO)lparam;
             lpMMI->ptMinTrackSize.x = 200;
-            lpMMI->ptMinTrackSize.y = 200;
+            lpMMI->ptMinTrackSize.y = 100;
         } return 0;
         case WM_DROPFILES: window.p.onDrop(wparam); return false;
 		case WM_ENTERMENULOOP:

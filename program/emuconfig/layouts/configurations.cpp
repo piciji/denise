@@ -1079,7 +1079,6 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
 
     loadSettings();
 
-    view->updateSpeedLabels();
     view->buildShader();
 
     program->power(this->emulator);

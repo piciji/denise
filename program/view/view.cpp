@@ -18,6 +18,7 @@
 #include "../emuconfig/layouts/audio.h"
 #include "../emuconfig/layouts/input.h"
 #include "../debugger/debugger.h"
+#include <sstream>
 
 View* view = nullptr;
 
@@ -1810,6 +1811,42 @@ auto View::buildMenu() -> void {
     };
     speedControlMenu.append( pauseItem );
 
+    fpsRefreshItems.reserve( 15 );
+    for (int i = 1; i <= 15; i++) {
+        auto item = new GUIKIT::MenuRadioItem;
+        item->setText( std::to_string(i * 200 ) + " ms" );
+        item->onActivate = [this, i]() {
+            emuThread->lock();
+            unsigned delay = i * 200;
+            program->getSettings( activeEmulator )->set<unsigned>("fps_refresh", delay);
+            statusHandler->setFpsRefresh();
+            emuThread->unlock();
+        };
+        fpsRefreshItems.push_back( item );
+        fpsRefreshMenu.append( *item );
+    }
+    GUIKIT::MenuRadioItem::setGroup( fpsRefreshItems );
+    fpsPresentationMenu.append( fpsRefreshMenu );
+
+    fpsDecimalItems.reserve( 4 );
+    for (int i = 0; i <= 3; i++) {
+        auto item = new GUIKIT::MenuRadioItem;
+        item->setText( std::to_string(i) );
+        item->onActivate = [this, i]() {
+            emuThread->lock();
+            program->getSettings( activeEmulator )->set<unsigned>("fps_decimal_point", i);
+            statusHandler->setFpsRefresh();
+            emuThread->unlock();
+        };
+        fpsDecimalItems.push_back( item );
+        fpsDecimalMenu.append( *item );
+    }
+
+    GUIKIT::MenuRadioItem::setGroup( fpsDecimalItems );
+    fpsPresentationMenu.append( fpsDecimalMenu );
+
+    speedControlMenu.append( fpsPresentationMenu );
+
     speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
     GUIKIT::MenuRadioItem* speedItem;
@@ -1838,10 +1875,10 @@ auto View::buildMenu() -> void {
             speedControlMenu.append( *GUIKIT::MenuSeparator::getInstance() );
 
         if (i == (steps - 1)) {
-            customizeSpeedItem.onActivate = []() {
-                auto emuView = EmuConfigView::TabWindow::getView(activeEmulator, true);
-                if (emuView)
-                    emuView->show(EmuConfigView::TabWindow::Layout::Misc);
+            customizeSpeedItem.onActivate = [this]() {
+                if (!fpsWindow)
+                    fpsWindow = new FpsWindow(this);
+                fpsWindow->show();
             };
             speedControlMenu.append( customizeSpeedItem );
         }
@@ -2279,6 +2316,10 @@ auto View::translate() -> void {
 	statusBar.updateTooltip(12, trans->get("cartridges") );
 	statusBar.updateTooltip(15, trans->get("FPS") );
     pauseItem.setText( trans->get("Pause") );
+    fpsPresentationMenu.setText( trans->getA("FPS View") );
+    fpsDecimalMenu.setText( trans->getA("Decimal Place") );
+    fpsRefreshMenu.setText( trans->getA("Refresh") );
+
     warpItem.setText( trans->get("Toggle Warp") );
     aggressiveWarpItem.setText( trans->get("Toggle Warp aggressive") );
 
@@ -2628,4 +2669,108 @@ auto View::setAudioRecordText() -> void {
         recordAudio.setText(trans->getA("record audio start"));
     else
         recordAudio.setText(trans->getA("record audio stop"));
+}
+
+auto View::updateFPSMenu() -> void {
+    auto _settings = program->getSettings( activeEmulator );
+    auto decimals = _settings->get<unsigned>("fps_decimal_point", 1, {0u, 3u});
+    auto delay = _settings->get<unsigned>("fps_refresh", 1000u, {200u, 3000u});
+
+    if (decimals >= fpsDecimalItems.size())
+        decimals = 1;
+    fpsDecimalItems[decimals]->setChecked();
+    unsigned position = delay / 200;
+    if (position)
+        position--;
+
+    if (position >= fpsRefreshItems.size())
+        position = 4;
+    fpsRefreshItems[position]->setChecked();
+}
+
+View::FpsWindow::Top::Top() {
+    append( fpsLineEdit, {80u, 0u});
+    append( spacer, {~0u, 0u} );
+    append( fpsRadioBox, {0u, 0u}, 10);
+    append( percentRadioBox, {0u, 0u});
+
+    GUIKIT::RadioBox::setGroup( fpsRadioBox, percentRadioBox );
+    setAlignment( 0.5 );
+}
+
+View::FpsWindow::Bottom::Bottom() {
+    append( cancel, {0u, 0u} );
+    append( spacer, {~0u, 0u} );
+    append( apply, {0u, 0u} );
+
+    setAlignment( 0.5 );
+}
+
+auto View::FpsWindow::show() -> void {
+    auto geo = view->geometry();
+    int _x = geo.x + geo.width / 2 - 115;
+    int _y = geo.y + geo.height / 2 - 50;
+
+    setGeometry( { _x, _y, 230, 100} );
+    auto settings = program->getSettings( activeEmulator );
+    auto speed = settings->get<float>("custom_speed", 59.95);
+    auto percent = settings->get<bool>("custom_speed_percent", false);
+    std::string label = GUIKIT::String::formatFloatingPoint(speed, 3, true);
+
+    top.fpsLineEdit.setText( label );
+    if (percent)
+        top.percentRadioBox.setChecked();
+    else
+        top.fpsRadioBox.setChecked();
+
+    setVisible();
+    setFocused();
+}
+
+auto View::FpsWindow::build() -> void {
+
+    bottom.apply.onActivate = [this]() {
+        std::string userInput = top.fpsLineEdit.text();
+
+        GUIKIT::String::replace(userInput, ",", ".");
+
+        if (userInput.empty() || !GUIKIT::String::isFloatNumber( userInput ) ) {
+            return;
+        }
+
+        std::stringstream ss( userInput );
+        float out = 0.0;
+        ss >> out;
+
+        if (out < 1.0)
+            return;
+
+        program->getSettings( activeEmulator )->set<std::string>("custom_speed", userInput);
+        program->getSettings( activeEmulator )->set<bool>("custom_speed_percent", top.percentRadioBox.checked());
+
+        if (view->isCustomSpeed()) {
+            emuThread->lock();
+            audioManager->setResampler();
+            statusHandler->resetFrameCounter();
+            emuThread->unlock();
+        }
+        view->updateSpeedLabels();
+
+        setVisible( false );
+    };
+
+    bottom.cancel.onActivate = [this]() {
+        setVisible( false );
+    };
+
+    top.fpsRadioBox.setText( trans->get("FPS") );
+    top.percentRadioBox.setText( trans->get("Percent") );
+    bottom.apply.setText( trans->get("Apply") );
+    bottom.cancel.setText( trans->get("Cancel") );
+
+    layout.setMargin( 10 );
+    layout.append(top, {~0u, 0u}, 20);
+    layout.append(bottom, {~0u, 0u});
+
+    append( layout );
 }

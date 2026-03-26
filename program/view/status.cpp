@@ -111,10 +111,10 @@ auto StatusHandler::setFpsRefresh() -> void {
     if (!activeEmulator)
         return;
     auto settings = program->getSettings( activeEmulator );
-    fpsCounter.updateIntervall = settings->get<unsigned>("fps_refresh", 1000, {200u, 5000u});
+    fpsCounter.updateIntervall = settings->get<unsigned>("fps_refresh", 1000, {200u, 3000u});
 
     auto pointsBefore = fpsCounter.decimalPoints;
-    fpsCounter.decimalPoints = settings->get<unsigned>("fps_decimal_point", 3u, {0u, 3u});
+    fpsCounter.decimalPoints = settings->get<unsigned>("fps_decimal_point", 1u, {0u, 3u});
 
     if (pointsBefore != fpsCounter.decimalPoints) {
         switch(fpsCounter.decimalPoints) {
