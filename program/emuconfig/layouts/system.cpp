@@ -72,7 +72,7 @@ SystemLayout::SystemLayout(TabWindow* tabWindow) {
     };
 
     if (dynamic_cast<LIBC64::Interface*>(emulator))
-        dim = { 4, 2 };
+        dim = { 3, 3 };
     else
         dim = { 1, 3, 3 };
 

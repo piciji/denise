@@ -43,8 +43,7 @@ struct IecBus {
     std::atomic<bool> kill;
     uint8_t drivesConnected;
     std::condition_variable cv;
-    unsigned cpuBurnerRequested;
-    unsigned cpuBurner;
+    bool useThread;
     bool powerOn;
     
     auto writeCia( uint8_t byte ) -> bool;
@@ -97,7 +96,7 @@ struct IecBus {
     auto selectListing( Emulator::Interface::Media* media,  std::string fileName, uint8_t options = 0 ) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
     auto serializeLight(Emulator::Serializer& s) -> void;
-    auto setPowerThread( unsigned value ) -> void;
+    auto setThread( bool state ) -> void;
     auto updateIdleState() -> void;
     auto resetDriveState() -> void;
     auto setExpandedMemory( Drive::ExpandedMemMode expandedMemMode, bool state ) -> void;

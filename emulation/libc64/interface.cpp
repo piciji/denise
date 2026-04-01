@@ -26,7 +26,7 @@
 
 namespace LIBC64 {
 
-const std::string Interface::Version = "225";
+const std::string Interface::Version = "226";
     
 Interface::Interface() : Emulator::Interface( "C64" ) {
     
@@ -640,7 +640,8 @@ auto Interface::prepareModels() -> void {
     models.push_back({ModelIdTapeDriveWobble, "Tape Wobble", Model::Type::Switch, Model::Purpose::DriveSettings, 0});
 
     models.push_back({ModelIdCycleAccurateVideo, "Cycle Accurate Video", Model::Type::Switch, Model::Purpose::Performance, 1 });
-    models.push_back({ModelIdDiskThread, "Disk Thread", Model::Type::Radio, Model::Purpose::Performance, 0, {0, 2}, {"Off", "On", "On obsolete"} });
+
+    models.push_back({ModelIdDiskThread, "Disk Thread", Model::Type::Switch, Model::Purpose::Performance, 0 });
 
     models.push_back({ModelIdDiskOnDemand, "Disk On Demand", Model::Type::Switch, Model::Purpose::Performance, 1 });
 
@@ -1652,7 +1653,7 @@ auto Interface::setModelValue(unsigned modelId, int value) -> void {
             system->cycleRendererNextBoot = value & 1;
             break;
         case ModelIdDiskThread:
-            system->iecBus.setPowerThread( value );
+            system->iecBus.setThread( value & 1 );
             break;
         case ModelIdDiskOnDemand:
             system->diskSilence.active = value & 1;
@@ -1767,7 +1768,7 @@ auto Interface::getModelValue(unsigned modelId) -> int {
         case ModelIdDriveDeceleration:      return system->iecBus.getMotorDeceleration();
 
         case ModelIdCycleAccurateVideo:     return system->cycleRendererNextBoot;
-        case ModelIdDiskThread:             return (int)system->iecBus.cpuBurnerRequested;
+        case ModelIdDiskThread:             return (int)system->iecBus.useThread;
         case ModelIdDiskOnDemand:           return system->diskSilence.active;
 
         case ModelIdDriveRam20To3F:         return (int)system->iecBus.getExpandedMemory(Drive::ExpandedMemMode::M20);

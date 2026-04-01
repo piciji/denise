@@ -65,8 +65,7 @@ sysTimer(system->sysTimer) {
     powerOn = false;
     kill = false;
     threadInitialized = false;
-    cpuBurner = 0;
-    cpuBurnerRequested = 0;
+    useThread = false;
 }
 
 IecBus::~IecBus() {
@@ -132,19 +131,18 @@ auto IecBus::initThread() -> void {
     worker.detach();
 }
 
-auto IecBus::setPowerThread( unsigned value ) -> void {
-    cpuBurnerRequested = value;
+auto IecBus::setThread( bool state ) -> void {
+    useThread = state;
 
-    updateIdleState();          
+    updateIdleState();
 }
 
 auto IecBus::updateIdleState() -> void {
     bool _idle = idle;
 
-    cpuBurner = ((cpuBurnerRequested == 2) && (drivesConnected > 2)) ? 1 : cpuBurnerRequested;
-    idle = (powerOn && drivesConnected > 0) ? (cpuBurner != 1) : true;
+    idle = (powerOn && drivesConnected > 0) ? !useThread : true;
 
-    if (!threadInitialized && cpuBurner)
+    if (!threadInitialized && useThread)
         initThread();
     else if (_idle && !idle)
         cv.notify_one();
@@ -214,10 +212,10 @@ template<bool ciaAccess> auto IecBus::syncDrives( int direction ) -> bool {
       
     unsigned _delay = sysTimer.fallBackCycles( sysClock );
     
-    if (!ciaAccess && (_delay < ((cpuBurner == 2) ? 3000 : 100)))
+    if (!ciaAccess && (_delay < 100))
         return true;
 
-    if (cpuBurner)
+    if (useThread)
         waitForDrives();
 
     // drive cpu runs at 1 Mhz, pal c64 is slightly slower, NTSC c64 slightly faster.
@@ -238,13 +236,10 @@ template<bool ciaAccess> auto IecBus::syncDrives( int direction ) -> bool {
     sysClock = sysTimer.clock; // reset for next run 
     
     // now let the drive thread catch up with the main thread   
-    if ( ciaAccess || !cpuBurner )
+    if ( ciaAccess || !useThread )
         run();
-    else {
+    else
         ready.store(1); // run concurrent
-        if (cpuBurner == 2)
-            cv.notify_one();
-    }
 
     return true;
 }
