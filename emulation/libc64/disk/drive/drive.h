@@ -11,7 +11,8 @@
 #include "../via/via.h"
 
 #include "../structure/structure.h"
-#include "../cpu/m6502.h"
+//#include "../cpu/m6502.h"
+#include "../cpu/m6502New.h"
 #include "../../../tools/rand.h"
 #include "../../../tools/serializer.h"
 #include "../../../cia/new/cia.h"
@@ -96,7 +97,8 @@ struct Drive {
     Cia<MOS_8520> ciaSpeeder;
     WD1770 wd1770;
     Emulator::Pia pia;
-    M6502 cpu;
+    //M6502 cpu;
+    M6502New cpu;
     DiskStructure structure;
     int64_t cycleCounter;
     bool synced;

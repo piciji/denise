@@ -105,7 +105,8 @@ set(srcs
         emulation/libami/interface.cpp
         emulation/libc64/interface.cpp
         emulation/libc64/m6510/m6510.cpp
-        emulation/libc64/disk/cpu/m6502.cpp
+        #emulation/libc64/disk/cpu/m6502.cpp
+        emulation/libc64/disk/cpu/m6502New.cpp
         emulation/libc64/m6510/dasmHandler.cpp
         emulation/tools/watcher.cpp
 
