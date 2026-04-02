@@ -415,9 +415,6 @@
     <ClInclude Include="..\emulation\libc64\disk\cia\cia8520.h">
       <Filter>emulation\libc64\disk\cia</Filter>
     </ClInclude>
-    <ClInclude Include="..\emulation\libc64\disk\cpu\m6502.h">
-      <Filter>emulation\libc64\disk\cpu</Filter>
-    </ClInclude>
     <ClInclude Include="..\emulation\libc64\disk\drive\drive.h">
       <Filter>emulation\libc64\disk\drive</Filter>
     </ClInclude>
@@ -1249,6 +1246,9 @@
     <ClInclude Include="..\program\debugger\copperDebugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
+    <ClInclude Include="..\emulation\libc64\disk\cpu\m6502New.h">
+      <Filter>emulation\libc64\disk\cpu</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -1280,12 +1280,6 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\disk\iec.cpp">
       <Filter>emulation\libc64\disk</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libc64\disk\cpu\opcodes.cpp">
-      <Filter>emulation\libc64\disk\cpu</Filter>
-    </ClCompile>
-    <ClCompile Include="..\emulation\libc64\disk\cpu\m6502.cpp">
-      <Filter>emulation\libc64\disk\cpu</Filter>
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\disk\drive\mechanicsG64.cpp">
       <Filter>emulation\libc64\disk\drive</Filter>
@@ -2510,6 +2504,9 @@
     </ClCompile>
     <ClCompile Include="..\program\debugger\copperDebugger.cpp">
       <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\cpu\m6502New.cpp">
+      <Filter>emulation\libc64\disk\cpu</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -113,7 +113,7 @@
     <ClInclude Include="..\emulation\libami\system\system.h" />
     <ClInclude Include="..\emulation\libami\video\denise.h" />
     <ClInclude Include="..\emulation\libc64\disk\cia\cia8520.h" />
-    <ClInclude Include="..\emulation\libc64\disk\cpu\m6502.h" />
+    <ClInclude Include="..\emulation\libc64\disk\cpu\m6502New.h" />
     <ClInclude Include="..\emulation\libc64\disk\drive\drive.h" />
     <ClInclude Include="..\emulation\libc64\disk\iec.h" />
     <ClInclude Include="..\emulation\libc64\disk\structure\structure.h" />
@@ -907,13 +907,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_ami</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\emulation\libami\video\denise.cpp" />
-    <ClCompile Include="..\emulation\libc64\disk\cpu\m6502.cpp" />
-    <ClCompile Include="..\emulation\libc64\disk\cpu\opcodes.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\disk\cpu\m6502New.cpp" />
     <ClCompile Include="..\emulation\libc64\disk\drive\drive.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_disk</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_disk</ObjectFileName>
