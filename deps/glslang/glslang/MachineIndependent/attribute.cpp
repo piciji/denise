@@ -263,7 +263,7 @@ void TParseContext::handleLoopAttributes(const TAttributes& attributes, TIntermN
         };
 
         const auto unsignedArgument = [&](const char* feature, unsigned int& uiValue) {
-            int value;
+            int value = 0;
             if (!(it->size() == 1 && it->getInt(value))) {
                 warn(node->getLoc(), "expected a single integer argument", feature, "");
                 return false;

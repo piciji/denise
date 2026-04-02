@@ -131,7 +131,10 @@ struct IokitKeyboard {
             IOHIDManagerClose(hidManager,0);
         
         hidManager = nil;
-        if(hidKeyboard) delete hidKeyboard, hidKeyboard = nullptr;
+        if(hidKeyboard) {
+            delete hidKeyboard;
+            hidKeyboard = nullptr;
+        }
     }
     
     auto poll(std::vector<Hid::Device*>& devices) -> void {

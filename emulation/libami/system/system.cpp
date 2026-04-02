@@ -721,6 +721,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                 case DebuggerAction::DmaWatch:
                     agnus.debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
                     break;
+                default: break;
             } break;
         case DebuggerTheme::CheckpointsCPU1:
             cpu.debuggerAdd( action, addr, addrTo );
@@ -752,6 +753,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                 case DebuggerAction::UIRequestedStop:
                     agnus.debugger.action = DebuggerAction::UIRequestedStop;
                     break;
+                default: break;
             }
         } break;
         default:
@@ -780,6 +782,7 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
                 case DebuggerAction::DmaWatch:
                     agnus.debugger.dmaWatchers[addr.value_or(0) & 3] = 0;
                     break;
+                default: break;
             } break;
         case DebuggerTheme::CheckpointsCPU1:
             if (addr.has_value())

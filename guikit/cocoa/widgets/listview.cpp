@@ -220,10 +220,8 @@
         [self setHasVerticalScroller:YES];
         [self setHasHorizontalScroller:YES];
         [self setAutohidesScrollers:YES];
-        if (GUIKIT::hasMinimumVersion(10, 10)) {
-            [self setAutomaticallyAdjustsContentInsets:NO];
-            [self setContentInsets:NSEdgeInsetsMake(2, 2, 2, 2)];
-        }
+        [self setAutomaticallyAdjustsContentInsets:NO];
+        [self setContentInsets:NSEdgeInsetsMake(2, 2, 2, 2)];
 
         [content setDataSource:self];
         [content setDelegate:self];
@@ -580,7 +578,7 @@ auto pListView::setForegroundColor(unsigned color) -> void {
 }
 
 auto pListView::setFont(std::string font) -> void {
-    if (listView.spacing() != 0 && GUIKIT::hasMinimumVersion(10, 10))
+    if (listView.spacing() != 0)
         [(id)cocoaView setContentInsets:NSEdgeInsetsMake(0, 2, 0, 2)];
     
     updateTooltipUsage();
@@ -591,7 +589,7 @@ auto pListView::setFont(std::string font) -> void {
 auto pListView::createCustomTooltip() -> void {
     @autoreleasepool {
         
-        tooltip = [[TooltipWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO];
+        tooltip = [[TooltipWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0) styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:NO];
         
         if (cocoaView)
             [tooltip setFont: [(id)cocoaView font] ];

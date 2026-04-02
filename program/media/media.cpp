@@ -1572,8 +1572,6 @@ auto MediaLayout::convertListing( std::vector<Emulator::Interface::Listing>& emu
 }
 
 auto MediaLayout::updateListingFont( unsigned fontSize ) -> void {
-    auto selectedLayout = this->getActiveMediaGroupLayout();
-
     for(auto& nav : navElements) {
         if (!nav.mediaGroup || !nav.layout)
             continue;

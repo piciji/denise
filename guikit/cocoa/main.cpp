@@ -117,13 +117,13 @@
 -(id) initWith:(GUIKIT::Window&)windowReference {
     window = &windowReference;
 
-    NSUInteger style = NSTitledWindowMask;
+    NSUInteger style = NSWindowStyleMaskTitled;
     
     if (window->hints != GUIKIT::Window::Hints::No_Title)
-        style |= NSClosableWindowMask | NSMiniaturizableWindowMask;
+        style |= NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable;
     
     if(window->resizable())
-        style |= NSResizableWindowMask;
+        style |= NSWindowStyleMaskResizable;
 
     GUIKIT::Geometry geo = window->state.geometry;
 
@@ -172,7 +172,7 @@
         [item setTarget:NSApp];
         [appMenu addItem:item];
 
-        [item setKeyEquivalentModifierMask: NSAlternateKeyMask | NSCommandKeyMask];
+        [item setKeyEquivalentModifierMask: NSEventModifierFlagOption | NSEventModifierFlagCommand];
 
         item = [[[NSMenuItem alloc] initWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""] autorelease];
         [item setTarget:NSApp];
@@ -456,7 +456,7 @@
 
 -(void) drawRect:(NSRect)rect {
     [GUIKIT::pHelper::RGBToNSColor(bgcolor) setFill];
-    NSRectFillUsingOperation(rect, NSCompositeSourceOver);
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 }
 @end
 
@@ -502,7 +502,7 @@ auto pApplication::setAppTimer() -> void {
 auto pApplication::processEvents() -> void {
     @autoreleasepool {
         while(!Application::isQuit) {
-            NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
+            NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
             if(event == nil) break;
             [event retain];
             [NSApp sendEvent:event];
@@ -515,7 +515,7 @@ auto pApplication::quit() -> void {
     @autoreleasepool {
         [appTimer invalidate];
         [NSApp stop:nil];
-        NSEvent* event = [NSEvent otherEventWithType:NSApplicationDefined location:NSMakePoint(0, 0) modifierFlags:0 timestamp:0.0 windowNumber:0 context:nil subtype:0 data1:0 data2:0];
+        NSEvent* event = [NSEvent otherEventWithType:NSEventTypeApplicationDefined location:NSMakePoint(0, 0) modifierFlags:0 timestamp:0.0 windowNumber:0 context:nil subtype:0 data1:0 data2:0];
         [NSApp postEvent:event atStart:true];
     }
 }
@@ -623,7 +623,7 @@ auto pWindow::setHiddenForAppMenuItem(Window::Cocoa::AppMenuItem appMenuItem, bo
 auto pWindow::setDroppable(bool droppable) -> void {
     @autoreleasepool {
         if(droppable) {
-            [cocoaWindow registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
+            [cocoaWindow registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
         } else {
             [cocoaWindow unregisterDraggedTypes];
         }
@@ -659,8 +659,8 @@ auto pWindow::setVisible(bool visible) -> bool {
 
 auto pWindow::setResizable(bool resizable) -> void {
     @autoreleasepool {
-        NSUInteger style = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
-        if(resizable) style |= NSResizableWindowMask;
+        NSUInteger style = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable;
+        if(resizable) style |= NSWindowStyleMaskResizable;
         [cocoaWindow setStyleMask:style];
     }
 }

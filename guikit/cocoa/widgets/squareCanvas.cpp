@@ -120,7 +120,7 @@ auto pSquareCanvas::redraw() -> void {
                 hasAlpha: YES
                 isPlanar: NO
                 colorSpaceName: NSCalibratedRGBColorSpace
-                bitmapFormat: NSAlphaNonpremultipliedBitmapFormat
+                bitmapFormat: NSBitmapFormatAlphaNonpremultiplied
                 bytesPerRow: (width * 4)
                 bitsPerPixel: 32
                 ];

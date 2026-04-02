@@ -1740,6 +1740,7 @@ auto SuperCpu::setWatchpointCondition(DebuggerAction action, unsigned addr, unsi
         case DebuggerAction::ExceptionPoint:
             exceptionPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
             break;
+        default: break;
     }
 
     return !expressionError;

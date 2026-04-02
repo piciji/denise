@@ -6,8 +6,8 @@
         checkButton = &checkButtonReference;
         [self setTarget:self];
         [self setAction:@selector(activate:)];
-        [self setBezelStyle:NSRegularSquareBezelStyle];
-        [self setButtonType:NSOnOffButton];
+        [self setBezelStyle:NSBezelStyleFlexiblePush];
+        [self setButtonType:NSButtonTypeOnOff];
     }
     return self;
 }

@@ -123,7 +123,7 @@ auto pComboButton::setText(unsigned selection, const std::string& text) -> void 
 auto pComboButton::setDroppable(bool droppable) -> void {
     @autoreleasepool {
         if(droppable) {
-            [cocoaView registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
+            [cocoaView registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
         } else {
             [cocoaView unregisterDraggedTypes];
         }

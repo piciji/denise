@@ -34,10 +34,6 @@
         [self setBorderType:NSBezelBorder];
         [self setHasVerticalScroller:NO];
         [self setHasHorizontalScroller:YES];
-        if (GUIKIT::hasMinimumVersion(10, 10)) {
-        //    [self setAutomaticallyAdjustsContentInsets:NO];
-          //  [self setContentInsets:NSEdgeInsetsMake(0, 0, 0, 0)];
-        }
         
         [[self contentView] setPostsBoundsChangedNotifications:YES];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -93,7 +89,7 @@ auto pLogicViewer::init() -> void {
         cocoaView = [[CocoaLogicViewerScroll alloc] initWith:logicViewer];
     }
     
-    if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:)]) {
+    if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:weight:)]) {
         nsFont = [[NSFont monospacedSystemFontOfSize:11 weight:NSFontWeightRegular] retain];
     } else {
         nsFont = [[[NSFontManager sharedFontManager] fontWithFamily:@"Menlo" traits:0 weight:NSFontWeightRegular size:10] retain];

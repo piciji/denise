@@ -6,8 +6,7 @@
         button = &buttonReference;
         [self setTarget:self];
         [self setAction:@selector(activate:)];
-        if (!GUIKIT::hasMinimumVersion(14,0))
-            [self setBezelStyle:NSRegularSquareBezelStyle];
+        [self setBezelStyle:NSBezelStyleFlexiblePush];
     }
     return self;
 }

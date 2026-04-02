@@ -1373,6 +1373,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                 case DebuggerAction::DmaWatch:
                     debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
                     break;
+                default: break;
             } break;
         case DebuggerTheme::CheckpointsCPU1:
             cpu.debuggerAdd( action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
@@ -1396,6 +1397,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                 case DebuggerAction::UIRequestedStop:
                     debugger.action = DebuggerAction::UIRequestedStop;
                     break;
+                default: break;
             }
         } break;
         default:
@@ -1428,6 +1430,7 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
                 case DebuggerAction::DmaWatch:
                     debugger.dmaWatchers[addr.value_or(0) & 3] = 0;
                     break;
+                default: break;
             } break;
         case DebuggerTheme::CheckpointsCPU1:
             if (addr.has_value())

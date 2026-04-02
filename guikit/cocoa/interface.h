@@ -20,6 +20,7 @@
     NSMenu* menuBar;
     NSMenu* menuBarContext;
 }
+- (void)colorDidChange:(id)sender;
 @end
 
 @interface TooltipWindow : NSWindow {

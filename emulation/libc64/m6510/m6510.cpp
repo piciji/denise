@@ -727,6 +727,7 @@ auto M6510::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigne
         case DebuggerAction::ExceptionPoint:
             exceptionPoints.setBreakpointCondition( addr, hitCount, hitCountMode, expressionError ? "" : expression, expressionMode );
             break;
+        default: break;
     }
 
     return !expressionError;

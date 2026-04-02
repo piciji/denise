@@ -303,9 +303,9 @@ template<uint8_t Mode, uint8_t destMode, uint8_t Size> auto M68000::setMoveCCWhe
                 defaultFlags<Long>(data);
             else if constexpr(destMode == AddressRegisterIndirectWithDisplacement || destMode == AddressRegisterIndirectWithIndex) {
                 int16_t hi = (int16_t)(data >> 16);
-                if (hi < 0)     n = true, z = false;
-                else if (hi)    n = z = false;
-                else            n = false;
+                if (hi < 0)     { n = true; z = false; }
+                else if (hi)    { n = z = false; }
+                else            { n = false; }
             }
         } else if constexpr(Mode == AddressRegisterIndirect || Mode == AddressRegisterIndirectWithPostIncrement || Mode == AddressRegisterIndirectWithPreDecrement) {
             if constexpr(destMode == AddressRegisterIndirect || destMode == AddressRegisterIndirectWithPostIncrement || destMode == AbsoluteLong)

@@ -80,7 +80,7 @@ auto pLineEdit::setEditable(bool editable) -> void {
 auto pLineEdit::setDroppable(bool droppable) -> void {
     @autoreleasepool {
         if(droppable) {
-            [cocoaView registerForDraggedTypes:[NSArray arrayWithObject:NSFilenamesPboardType]];
+            [cocoaView registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
         } else {
             [cocoaView unregisterDraggedTypes];
         }

@@ -199,7 +199,7 @@ for:
     - sshpass-1.08.tar.gz
     
   before_build:
-    - sh: export MACOSX_DEPLOYMENT_TARGET=10.9
+    - sh: export MACOSX_DEPLOYMENT_TARGET=10.12
     
   build_script:
     - sh: |

@@ -473,7 +473,7 @@ auto pBrowserWindow::buildView(bool save) -> void {
     
     [panel setAccessoryView: accessoryView];
    
-    if (!save && GUIKIT::hasMinimumVersion(10, 11)) {
+    if (!save) {
         if (state.contentView.id || state.buttons.size() || state.checkButton)
             [(id)panel setAccessoryViewDisclosed:YES];
         else

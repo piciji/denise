@@ -835,7 +835,7 @@ namespace DRIVER {
             if (updateRTS)
                 updateRenderTargets(mainTex.view.width, mainTex.view.height);
             
-            id<MTLRenderCommandEncoder> rce;
+            id<MTLRenderCommandEncoder> rce = 0;
             dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
             id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
             drawable = layer.nextDrawable;
@@ -992,8 +992,10 @@ namespace DRIVER {
                 [rce setFragmentTexture:texture->view atIndex:0];
             }
             
-            [rce setViewport:frame.viewport];
-            [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+            if (rce) {
+                [rce setViewport:frame.viewport];
+                [rce drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+            }
             
 #ifdef DRV_FREETYPE
             showText(rce);
@@ -1308,8 +1310,6 @@ namespace DRIVER {
     }
     
     auto updateRenderTargets(unsigned width, unsigned height) -> void {
-        unsigned sourceWidth = width;
-        unsigned sourceHeight = height;
         frame.mvp = projectionMatrix; // assume: last shader pass is NOT final pass
 
         for(int i = 0; i < shaderPasses; i++) {

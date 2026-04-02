@@ -185,7 +185,7 @@ auto pSystem::printToCmd( std::string str ) -> void {
 //drag'n'drop
 auto DropPathsOperation(id<NSDraggingInfo> sender) -> NSDragOperation {
     NSPasteboard* pboard = [sender draggingPasteboard];
-    if([[pboard types] containsObject:NSFilenamesPboardType]) {
+    if([[pboard types] containsObject:NSPasteboardTypeFileURL]) {
         if([sender draggingSourceOperationMask] & NSDragOperationGeneric) return NSDragOperationGeneric;
     }
     return NSDragOperationNone;
@@ -194,14 +194,29 @@ auto DropPathsOperation(id<NSDraggingInfo> sender) -> NSDragOperation {
 auto getDropPaths(id<NSDraggingInfo> sender) -> std::vector<std::string> {
     std::vector<std::string> paths;
     NSPasteboard* pboard = [sender draggingPasteboard];
-    if([[pboard types] containsObject:NSFilenamesPboardType]) {
-        NSArray* files = [pboard propertyListForType:NSFilenamesPboardType];
-        for(unsigned n = 0; n < [files count]; n++) {
-            std::string path = [[files objectAtIndex:n] UTF8String];
-            if (File::isDir(path) && path.back() != '/') path.push_back('/');
+
+    if ([[pboard types] containsObject:NSPasteboardTypeFileURL]) {
+        NSArray<NSPasteboardItem*>* items = [pboard pasteboardItems];
+        for (NSPasteboardItem* item in items) {
+            NSString* urlString = [item stringForType:NSPasteboardTypeFileURL];
+            if (!urlString)
+                continue;
+
+            NSURL* url = [NSURL URLWithString:urlString];
+            if (!url)
+                continue;
+
+            NSString* pathStr = [url path];
+            std::string path = [pathStr UTF8String];
+
+            if (File::isDir(path) && !path.empty() && path.back() != '/') {
+                path.push_back('/');
+            }
+
             paths.push_back(path);
         }
     }
+
     return paths;
 }
 
@@ -234,7 +249,7 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
         if (monospaced) {
             family = "Menlo";
             
-            if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:)]) {
+            if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:weight:)]) {
                 font = [NSFont monospacedSystemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular];
                 
                 if (font)

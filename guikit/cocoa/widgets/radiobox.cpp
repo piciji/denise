@@ -7,7 +7,7 @@
         
         [self setTarget:self];
         [self setAction:@selector(activate:)];
-        [self setButtonType:NSRadioButton];
+        [self setButtonType:NSButtonTypeRadio];
     }
     return self;
 }

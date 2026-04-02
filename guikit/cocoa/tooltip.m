@@ -5,7 +5,7 @@
     static TooltipWindow* singleton = nil;
 
     if (singleton == nil) {
-        singleton = [[TooltipWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0) styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:NO];
+        singleton = [[TooltipWindow alloc] initWithContentRect:NSMakeRect(0, 0, 0, 0) styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:NO];
     }
     return singleton;
 }

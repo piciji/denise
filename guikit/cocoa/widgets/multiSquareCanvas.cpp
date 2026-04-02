@@ -30,10 +30,6 @@
         [self setBorderType:NSBezelBorder];
         [self setHasVerticalScroller:YES];
         [self setHasHorizontalScroller:YES];
-        if (GUIKIT::hasMinimumVersion(10, 10)) {
-       //     [self setAutomaticallyAdjustsContentInsets:NO];
-         //   [self setContentInsets:NSEdgeInsetsMake(2, 2, 2, 2)];
-        }
 
       //  [content setTarget:self];
     }
@@ -109,7 +105,7 @@ auto pMultiSquareCanvas::redraw() -> void {
                                         hasAlpha: YES
                                         isPlanar: NO
                                         colorSpaceName: NSCalibratedRGBColorSpace
-                                        bitmapFormat: NSAlphaNonpremultipliedBitmapFormat
+                                        bitmapFormat: NSBitmapFormatAlphaNonpremultiplied
                                         bytesPerRow: (width * 4)
                                         bitsPerPixel: 32
             ];
