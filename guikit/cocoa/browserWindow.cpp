@@ -361,10 +361,10 @@ auto pBrowserWindow::buildView(bool save) -> void {
             }
         };
         
+        listView->setSpacing( browserWindow.spacing() );
+
         if (!state.contentView.font.empty())
             listView->setFont( state.contentView.font );
-        
-        listView->setSpacing( browserWindow.spacing() );
         
         maxListWidth = state.contentView.width;
         maxListHeight = state.contentView.height;
