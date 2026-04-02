@@ -6,13 +6,8 @@
         checkButton = &checkButtonReference;
         [self setTarget:self];
         [self setAction:@selector(activate:)];
-        #ifdef NSBezelStyleFlexiblePush
-        if (GUIKIT::hasMinimumVersion(10, 15))
-            [self setBezelStyle:NSBezelStyleFlexiblePush];
-        #endif
-        {
-            [self setBezelStyle:NSRegularSquareBezelStyle];
-        }
+        #define _NSBezelStyleFlexiblePush 2
+        [self setBezelStyle:(NSBezelStyle)_NSBezelStyleFlexiblePush];
         [self setButtonType:NSButtonTypeOnOff];
     }
     return self;

@@ -6,14 +6,10 @@
         button = &buttonReference;
         [self setTarget:self];
         [self setAction:@selector(activate:)];
-        #ifdef NSBezelStyleFlexiblePush
-        if (GUIKIT::hasMinimumVersion(10, 15))
-            [self setBezelStyle:NSBezelStyleFlexiblePush];
-        else
-        #endif
-        {
-            [self setBezelStyle:NSRegularSquareBezelStyle];
-        }
+        // dirty workaround to build on 10.13 SDK, NSBezelStyleFlexiblePush needs at least 10.15
+        #define _NSBezelStyleFlexiblePush 2
+        [self setBezelStyle:(NSBezelStyle)_NSBezelStyleFlexiblePush];
+        
     }
     return self;
 }
