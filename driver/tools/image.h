@@ -81,10 +81,16 @@ struct Image {
         int d1hw = (height * outHeight) + (outWidth * outHeight);
         int d2wh = (outWidth * outHeight) * 3;
 
-        if(d1wh <= d1hw && d1wh <= d2wh)
-            return scaleLinearWidth(outWidth), scaleLinearHeight(outHeight);
-        if(d1hw <= d2wh)
-            return scaleLinearHeight(outHeight), scaleLinearWidth(outWidth);
+        if(d1wh <= d1hw && d1wh <= d2wh) {
+            scaleLinearWidth(outWidth);
+            scaleLinearHeight(outHeight);
+            return;
+        }
+        if(d1hw <= d2wh) {
+            scaleLinearHeight(outHeight);
+            scaleLinearWidth(outWidth);
+            return;
+        }
 
         scaleLinear(outWidth, outHeight);
     }
@@ -247,14 +253,14 @@ struct Image {
 
     inline auto interpolate4i(uint64_t a, uint64_t b, uint64_t c, uint64_t d, uint32_t x, uint32_t y) -> uint64_t {
         uint64_t o[4], pa[4], pb[4], pc[4], pd[4];
-        isplit(pa, a), isplit(pb, b), isplit(pc, c), isplit(pd, d);
+        isplit(pa, a); isplit(pb, b); isplit(pc, c); isplit(pd, d);
         for(int n = 0; n < 4; n++) o[n] = interpolate1i(pa[n], pb[n], pc[n], pd[n], x, y);
         return imerge(o);
     }
 
     inline auto interpolate4i(uint64_t a, uint64_t b, uint32_t x) -> uint64_t {
         uint64_t o[4], pa[4], pb[4];
-        isplit(pa, a), isplit(pb, b);
+        isplit(pa, a); isplit(pb, b);
         for(int n = 0; n < 4; n++) o[n] = interpolate1i(pa[n], pb[n], x);
         return imerge(o);
     }

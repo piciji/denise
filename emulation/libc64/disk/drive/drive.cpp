@@ -1328,18 +1328,28 @@ auto Drive::changeModelByType() -> bool {
     bool _d1571 = structure.type == DiskStructure::Type::D71 || structure.type == DiskStructure::Type::G71 || structure.type == DiskStructure::Type::P71;
     bool _d1581 = structure.type == DiskStructure::Type::D81 || structure.type == DiskStructure::Type::G81 || structure.type == DiskStructure::Type::P81;
 
-    if (_f1541 && _d1571)
-        return iecBus.setDriveType((globalType == Type::D1570) ? globalType : Type::D1571, media), true;
-    if (_f1541 && _d1581)
-        return iecBus.setDriveType(Type::D1581, media), true;
+    if (_f1541 && _d1571) {
+        iecBus.setDriveType((globalType == Type::D1570) ? globalType : Type::D1571, media);
+        return true;
+    }
+    if (_f1541 && _d1581) {
+        iecBus.setDriveType(Type::D1581, media);
+        return true;
+    }
     //if (_f1571 && _d1541)
       //  return iecBus.setDriveType(Type::D1541II, media), true;
-    if (_f1571 && _d1581)
-        return iecBus.setDriveType(Type::D1581, media), true;
-    if (_f1581 && _d1541)
-        return iecBus.setDriveType((globalType == Type::D1541 || globalType == Type::D1541C) ? globalType : Type::D1541II, media), true;
-    if (_f1581 && _d1571)
-        return iecBus.setDriveType((globalType == Type::D1570) ? globalType : Type::D1571, media), true;
+    if (_f1571 && _d1581) {
+        iecBus.setDriveType(Type::D1581, media);
+        return true;
+    }
+    if (_f1581 && _d1541) {
+        iecBus.setDriveType((globalType == Type::D1541 || globalType == Type::D1541C) ? globalType : Type::D1541II, media);
+        return true;
+    }
+    if (_f1581 && _d1571) {
+        iecBus.setDriveType((globalType == Type::D1570) ? globalType : Type::D1571, media);
+        return true;
+    }
 
     return false;
 }

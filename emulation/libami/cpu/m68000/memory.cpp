@@ -124,7 +124,7 @@ template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_
 
     if constexpr (Size == Long) {
         SYNC(2);
-        if constexpr (Flags & PRG) {
+        if constexpr (!!(Flags & PRG)) {
             result = READ_WORD_PRG(adr & 0xffffff) << 16;
             SYNC(4);
             result |= READ_WORD_PRG((adr + 2) & 0xffffff);
@@ -153,10 +153,10 @@ template<uint8_t Size, uint8_t Flags> auto M68000::read(uint32_t adr) -> uint32_
             TAS_CYCLE_BEGIN();
         #endif
         if constexpr (Size == Byte) {
-            if constexpr (Flags & PRG)  result = READ_BYTE_PRG(adr & 0xffffff);
+            if constexpr (!!(Flags & PRG))  result = READ_BYTE_PRG(adr & 0xffffff);
             else                        result = READ_BYTE(adr & 0xffffff);
         } else {
-            if constexpr (Flags & PRG)  result = READ_WORD_PRG(adr & 0xffffff);
+            if constexpr (!!(Flags & PRG))  result = READ_WORD_PRG(adr & 0xffffff);
             else                        result = READ_WORD(adr & 0xffffff);
         }
     }

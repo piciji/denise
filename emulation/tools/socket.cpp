@@ -54,8 +54,10 @@ namespace Emulator {
 
         handle = (int)socket( addrInfo->ai_family, addrInfo->ai_socktype, addrInfo->ai_protocol);
 
-        if (handle == -1)
-            return freeaddrinfo(addrInfo), false;
+        if (handle == -1) {
+            freeaddrinfo(addrInfo);
+            return false;
+        }
 
         setsockopt(handle, addrInfo->ai_protocol, TCP_NODELAY, (const char*)&optval, sizeof(optval));
 

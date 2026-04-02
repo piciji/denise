@@ -37,7 +37,7 @@ template<typename T> inline auto MatrixMultiply(T* output, const T* xdata, unsig
 	}
 }
 
-static auto getMipLevels(unsigned width, unsigned height) -> unsigned {
+[[maybe_unused]] static auto getMipLevels(unsigned width, unsigned height) -> unsigned {
     unsigned levels = 0;
     unsigned size = width > height ? width : height;
     if (!size)
@@ -103,7 +103,7 @@ template<typename T> static auto copyBufferToInt( uint8_t* buf ) -> T {
     return value;
 }
 
-static auto startsWith(const std::string& str, const std::string& prefix) -> bool {
+[[maybe_unused]] static auto startsWith(const std::string& str, const std::string& prefix) -> bool {
     return (prefix.size() <= str.size()) && std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 

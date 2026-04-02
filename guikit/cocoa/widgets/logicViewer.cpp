@@ -89,9 +89,13 @@ auto pLogicViewer::init() -> void {
         cocoaView = [[CocoaLogicViewerScroll alloc] initWith:logicViewer];
     }
     
-    if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:weight:)]) {
-        nsFont = [[NSFont monospacedSystemFontOfSize:11 weight:NSFontWeightRegular] retain];
-    } else {
+    if (@available(macOS 10.15, *)) {
+        if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:weight:)]) {
+            nsFont = [[NSFont monospacedSystemFontOfSize:11 weight:NSFontWeightRegular] retain];
+        }
+    }
+        
+    if (!nsFont) {
         nsFont = [[[NSFontManager sharedFontManager] fontWithFamily:@"Menlo" traits:0 weight:NSFontWeightRegular size:10] retain];
     }
     

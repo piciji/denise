@@ -249,14 +249,15 @@ auto pFont::system(unsigned size, std::string style, bool monospaced) -> std::st
         if (monospaced) {
             family = "Menlo";
             
-            if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:weight:)]) {
-                font = [NSFont monospacedSystemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular];
-                
-                if (font)
-                    family = [[font familyName] UTF8String];
+            if (@available(macOS 10.15, *)) {
+                if([NSFont respondsToSelector:@selector(monospacedSystemFontOfSize:weight:)]) {
+                    font = [NSFont monospacedSystemFontOfSize:[NSFont systemFontSize] weight:NSFontWeightRegular];
+                    
+                    if (font)
+                        family = [[font familyName] UTF8String];
+                }
             }
         }
-       
         
     //    NSLog(@"%@", [[[NSFontManager sharedFontManager] availableFontFamilies] description]);
             

@@ -731,12 +731,19 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
     settings->set<std::string>(_underscoreEx(media->group->name) + "_folder_auto", folderPath);
 
-    if (!file->exists())
-        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message), false;
-    if (!media->group->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message), false;
-    if (media->group->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
-        return program->errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), emuView ? emuView->message : view->message), false;
+    if (!file->exists()) {
+        program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message);
+        return false;
+    }
+    if (!media->group->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE)) {
+        program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message);
+        return false;
+    }
+    
+    if (media->group->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE)) {
+        program->errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), emuView ? emuView->message : view->message);
+        return false;
+    }
 
     auto& items = file->scanArchive();
 

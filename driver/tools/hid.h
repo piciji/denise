@@ -133,7 +133,7 @@ namespace Hid {
 	
 	struct Mouse : Device {
 		enum GroupID : unsigned { Axis, Button };
-		Mouse() : Device("Mouse") { append("Axis", GroupID::Axis), append("Button", GroupID::Button); }
+        Mouse() : Device("Mouse") { append("Axis", GroupID::Axis); append("Button", GroupID::Button); }
 		
 		auto isMouse() const -> bool { return true; }
 		auto axes() -> Group& { return group(GroupID::Axis); }
@@ -143,8 +143,8 @@ namespace Hid {
 	struct Joypad : Device {
 		enum GroupID : unsigned { Axis, Hat, Trigger, Button };
 		Joypad() : Device("Joypad") { 
-			append("Axis", GroupID::Axis), append("Hat", GroupID::Hat),
-			append("Trigger", GroupID::Trigger), append("Button", GroupID::Button); }
+            append("Axis", GroupID::Axis); append("Hat", GroupID::Hat);
+            append("Trigger", GroupID::Trigger); append("Button", GroupID::Button); }
 		
 		auto isJoypad() const -> bool { return true; }
 		auto axes() -> Group& { return group(GroupID::Axis); }

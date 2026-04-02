@@ -367,7 +367,7 @@ inline auto VicIICycle::updateMc6569() -> void {
         // is bit changed: 0 > 1 or 1 > 0
         bool toggled = spr.multiColor ^ spr.useMultiColor;
         // when register changed, reset the mc flop, unchanged otherwise
-        spr.mcFlop &= ~toggled;
+        spr.mcFlop &= !toggled;
 		// now use register value in calculation
         spr.useMultiColor = spr.multiColor;
     }
@@ -383,7 +383,7 @@ inline auto VicIICycle::updateMc8565() -> void {
         bool toggled = spr.multiColor ^ spr.useMultiColor;        
 		// mc flop is toggled, when register is changed and sprite is not x expanded
 		// unchanged otherwise
-    	if (toggled & ~spr.expandXFlop) {
+    	if (toggled & !spr.expandXFlop) {
     		if (spr.multiColor)
     			spr.mcFlop ^= 1;
     		else

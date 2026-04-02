@@ -387,7 +387,7 @@ inline auto interpolate1i(int64_t a, int64_t b, int64_t c, int64_t d, uint32_t x
 
 inline auto interpolate4i(uint64_t a, uint64_t b, uint32_t x) -> uint64_t {
     uint64_t o[4], pa[4], pb[4];
-    isplit(pa, a), isplit(pb, b);
+    isplit(pa, a); isplit(pb, b);
     for (unsigned n = 0; n < 4; n++)
         o[n] = interpolate1i(pa[n], pb[n], x);
     return imerge(o);
@@ -395,7 +395,7 @@ inline auto interpolate4i(uint64_t a, uint64_t b, uint32_t x) -> uint64_t {
 
 inline auto interpolate4i(uint64_t a, uint64_t b, uint64_t c, uint64_t d, uint32_t x, uint32_t y) -> uint64_t {
     uint64_t o[4], pa[4], pb[4], pc[4], pd[4];
-    isplit(pa, a), isplit(pb, b), isplit(pc, c), isplit(pd, d);
+    isplit(pa, a); isplit(pb, b); isplit(pc, c); isplit(pd, d);
     for (unsigned n = 0; n < 4; n++)
         o[n] = interpolate1i(pa[n], pb[n], pc[n], pd[n], x, y);
     return imerge(o);
@@ -416,10 +416,16 @@ auto Image::scaleLinear(unsigned outputWidth, unsigned outputHeight) -> void {
     unsigned d1hw = ((height * outputHeight) + (outputWidth * outputHeight)) * 1;
     unsigned d2wh = (outputWidth * outputHeight) * 3;
 
-    if(d1wh <= d1hw && d1wh <= d2wh)
-        return scaleLinearWidth(outputWidth), scaleLinearHeight(outputHeight);
-    if(d1hw <= d2wh)
-        return scaleLinearHeight(outputHeight), scaleLinearWidth(outputWidth);
+    if(d1wh <= d1hw && d1wh <= d2wh) {
+        scaleLinearWidth(outputWidth);
+        scaleLinearHeight(outputHeight);
+        return;
+    }
+    if(d1hw <= d2wh) {
+        scaleLinearHeight(outputHeight);
+        scaleLinearWidth(outputWidth);
+        return;
+    }
 
     return scaleLinearBoth(outputWidth, outputHeight);
 }

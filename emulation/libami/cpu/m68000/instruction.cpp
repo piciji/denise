@@ -231,7 +231,8 @@ template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opMul(uint16_t o
 }
 
 template<uint8_t Inst, uint8_t Mode, uint8_t Size> auto M68000::opDiv(uint16_t opcode) -> void {
-    uint32_t result, divisor, ea;
+    uint32_t result = 0;
+    uint32_t divisor, ea;
     int reg = (opcode >> 9) & 7;
     if (!readEA<Mode, Word>(opcode & 7, divisor, ea))
         return;
