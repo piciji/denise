@@ -314,12 +314,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(LIBLAME_FOUND true)
     set(LIBLAME_INCLUDE_DIRS "${APP_INCLUDE}")
 else()
-    SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
-            PROPERTIES COMPILE_FLAGS "-DGUIKIT_GTK")
-
-    SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp
-            PROPERTIES INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS}")
-
     if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # no udev
         SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
                 PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID")
@@ -449,11 +443,8 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
     set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "@executable_path/../Frameworks")
 else()
-    target_link_libraries(${PROJECT_NAME} "-lpthread -lfontconfig -lX11 -lXrandr")
-    target_link_directories(${PROJECT_NAME} PUBLIC ${GTK_LIBRARY_DIRS})    
     target_link_directories(${PROJECT_NAME} PUBLIC ${X11_LIBRARY_DIRS})
-    target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})    
-    target_link_libraries(${PROJECT_NAME} ${GTK_LIBRARIES})    
+    target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})
     target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
     target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
 
