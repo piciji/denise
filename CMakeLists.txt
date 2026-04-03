@@ -414,7 +414,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     endif()
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_link_libraries(${PROJECT_NAME} "-framework Cocoa -framework CoreVideo -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AVFoundation")
+    target_link_libraries(${PROJECT_NAME} "-framework CoreVideo -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AVFoundation")
     target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARY})
 
     if(LIBUSB_FOUND)

@@ -165,7 +165,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(guikit.resource data/resource_mingw.rc PARENT_SCOPE)
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_link_libraries(guikit "-framework Cocoa -framework Carbon")
+    target_link_libraries(guikit PRIVATE "-framework Cocoa")
 
     set(guikit.resource)
 else()
