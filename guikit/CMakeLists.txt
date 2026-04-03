@@ -41,6 +41,45 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         winapi/tools.cpp
         winapi/dark.cpp
     )
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    target_compile_definitions(guikit PUBLIC GUIKIT_COCOA)
+
+    SET_SOURCE_FILES_PROPERTIES(api.cpp
+            PROPERTIES COMPILE_FLAGS "-x objective-c++")
+
+    set(headers
+        cocoa/widgets/button.cpp
+        cocoa/widgets/checkbox.cpp
+        cocoa/widgets/checkbutton.cpp
+        cocoa/widgets/combobutton.cpp
+        cocoa/widgets/frame.cpp
+        cocoa/widgets/hyperlink.cpp
+        cocoa/widgets/imageView.cpp
+        cocoa/widgets/label.cpp
+        cocoa/widgets/lineedit.cpp
+        cocoa/widgets/listview.cpp
+        cocoa/widgets/multilineedit.cpp
+        cocoa/widgets/progressbar.cpp
+        cocoa/widgets/radiobox.cpp
+        cocoa/widgets/slider.cpp
+        cocoa/widgets/squareCanvas.cpp
+        cocoa/widgets/stepbutton.cpp
+        cocoa/widgets/tabframe.cpp
+        cocoa/widgets/treeview.cpp
+        cocoa/widgets/viewport.cpp
+        cocoa/widgets/widget.cpp
+        cocoa/browserWindow.cpp
+        cocoa/display.cpp
+        cocoa/interface.h
+        cocoa/main.cpp
+        cocoa/main.h
+        cocoa/menu.cpp
+        cocoa/messageWindow.cpp
+        cocoa/statusbar.cpp
+        cocoa/tools.cpp
+        cocoa/tooltip.m
+        cocoa/versioning.cpp
+    )
 else()
     target_compile_definitions(guikit PUBLIC GUIKIT_GTK)
 
@@ -124,6 +163,11 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         ws2_32 gdi32 comdlg32 ole32 comctl32 shlwapi msimg32 winmm dwmapi uxtheme gdiplus)
 
     set(guikit.resource data/resource_mingw.rc PARENT_SCOPE)
+
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    target_link_libraries(guikit "-framework Cocoa -framework Carbon")
+
+    set(guikit.resource)
 else()
     target_link_libraries(guikit PRIVATE fontconfig Xrandr)
 
