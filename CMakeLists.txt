@@ -91,11 +91,6 @@ else()
 endif()
 
 set(srcs
-        guikit/tools/decode/lha.cpp
-        guikit/tools/decode/images.cpp
-        guikit/tools/encode/images.cpp
-        guikit/api.cpp
-
         driver/driver.cpp
         driver/tools/spirvReflection.cpp
         driver/tools/ShaderCache.cpp
@@ -256,20 +251,18 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
             driver/audio/xaudio2/xaudio27.cpp
             driver/audio/xaudio2/xaudio28.cpp
             driver/audio/xaudio2/xaudio29.cpp
-            data/resource_mingw.rc
     )
 endif()
 
-SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/lha.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/lha")
-SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb")
-SET_SOURCE_FILES_PROPERTIES(guikit/tools/encode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb;${CMAKE_SOURCE_DIR}/deps/cgif")
 SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/usbSidPico.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/USBSID-Pico")
 
 set(headerSrcs)
 set(depSrcs)
 set(usblibSrcs)
+
 add_subdirectory(deps)
 add_subdirectory(data)
+add_subdirectory(guikit)
 
 set_source_files_properties(${headerSrcs} PROPERTIES HEADER_FILE_ONLY TRUE)
 
@@ -283,8 +276,6 @@ set(APP_INCLUDE "${CMAKE_SOURCE_DIR}/data/libs/include")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     SET_SOURCE_FILES_PROPERTIES(${depSrcs} PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
-
-    SET_SOURCE_FILES_PROPERTIES(guikit/api.cpp PROPERTIES COMPILE_FLAGS "-DGUIKIT_WINAPI")
 
     SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp PROPERTIES COMPILE_FLAGS "-DDRV_WGL -DDRV_DIRECT3D9 -DDRV_DIRECT3D11 -DDRV_DSOUND -DDRV_DINPUT5 -DDRV_DINPUT7 -DDRV_DINPUT8 -DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -DDRV_WASAPI -DDRV_RAWINPUT")
 
@@ -387,15 +378,15 @@ SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/filter/chamberlin.cpp
 SET_SOURCE_FILES_PROPERTIES(program/program.cpp
         PROPERTIES COMPILE_FLAGS "-DAPP_NAME=\"\\\"${AppName}\\\"\" -DTRANSLATION_FOLDER=\"\\\"${translationFolder}/\\\"\" -DDATA_FOLDER=\"\\\"${dataFolder}/\\\"\" -DSHADER_FOLDER=\"\\\"${shaderFolder}/\\\"\" -DIMAGES_FOLDER=\"\\\"${imagesFolder}/\\\"\" -DSOUND_FOLDER=\"\\\"${soundFolder}/\\\"\" ")
 
-SET_SOURCE_FILES_PROPERTIES(guikit/tools/decode/images.cpp
-        PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
-
 set(srcs ${srcs} ${depSrcs} ${usblibSrcs} ${headerSrcs})
-add_executable( ${PROJECT_NAME} ${srcs} )
+add_executable( ${PROJECT_NAME} ${srcs} ${guikit.resource} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
+target_link_libraries(${PROJECT_NAME} guikit)
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(${PROJECT_NAME} "-static -lws2_32 -lgdi32 -lcomdlg32 -lole32 -lcomctl32 -lshlwapi -lmsimg32 -lwinmm -lopengl32 -ldwmapi -luxtheme -lgdiplus")
+    target_link_libraries(${PROJECT_NAME} "-lopengl32")
+
     if(CMAKE_BUILD_TYPE STREQUAL Release)
         target_link_libraries(${PROJECT_NAME} "-mwindows")
     else()

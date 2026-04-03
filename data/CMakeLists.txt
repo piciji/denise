@@ -1,41 +1,7 @@
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(headerSrcs
-        guikit/winapi/widgets/button.cpp
-        guikit/winapi/widgets/checkbox.cpp
-        guikit/winapi/widgets/checkbutton.cpp
-        guikit/winapi/widgets/combobutton.cpp
-        guikit/winapi/widgets/frame.cpp
-        guikit/winapi/widgets/hyperlink.cpp
-        guikit/winapi/widgets/imageView.cpp
-        guikit/winapi/widgets/label.cpp
-        guikit/winapi/widgets/lineedit.cpp
-        guikit/winapi/widgets/listview.cpp
-        guikit/winapi/widgets/multilineedit.cpp
-        guikit/winapi/widgets/progressbar.cpp
-        guikit/winapi/widgets/radiobox.cpp
-        guikit/winapi/widgets/slider.cpp
-        guikit/winapi/widgets/squareCanvas.cpp
-        guikit/winapi/widgets/stepbutton.cpp
-        guikit/winapi/widgets/tabframe.cpp
-        guikit/winapi/widgets/treeview.cpp
-        guikit/winapi/widgets/viewport.cpp
-        guikit/winapi/widgets/logicViewer.cpp
-        guikit/winapi/widgets/widget.cpp
-        guikit/winapi/browserWindow.cpp
-        guikit/winapi/clipboard.cpp
-        guikit/winapi/dirent.h
-        guikit/winapi/display.cpp
-        guikit/winapi/dragndrop.cpp
-        guikit/winapi/interProcess.cpp
-        guikit/winapi/main.cpp
-        guikit/winapi/main.h
-        guikit/winapi/menu.cpp
-        guikit/winapi/messageWindow.cpp
-        guikit/winapi/processref.h
-        guikit/winapi/statusbar.cpp
-        guikit/winapi/tools.cpp
-        guikit/winapi/dark.cpp
+
 
         driver/audio/xaudio2/core.cpp
         driver/audio/xaudio2/header27.h
@@ -190,26 +156,7 @@ set(headerSrcs ${headerSrcs}
     driver/tools/tools.h
     driver/tools/utf8.h
 
-    guikit/api.h
-    guikit/tools/crc32.h
-    guikit/tools/image.cpp
-    guikit/tools/layout.cpp
-    guikit/tools/setting.cpp
-    guikit/tools/string.cpp
-    guikit/tools/translate.cpp
-    guikit/tools/ttf.cpp
-    guikit/tools/utf8.cpp
-    guikit/tools/decode/gzip.h
-    guikit/tools/decode/images.h
-    guikit/tools/decode/inflate.h
-    guikit/tools/decode/lha.h
-    guikit/tools/decode/png.h
-    guikit/tools/decode/zip.h
-    guikit/tools/encode/png.h
-    guikit/tools/file/chunk.h
-    guikit/tools/file/directory.h
-    guikit/tools/file/file.cpp
-    guikit/tools/file/tar.h
+
 
     emulation/interface.h
     emulation/cia/new/cia.h
