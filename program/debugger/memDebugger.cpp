@@ -501,6 +501,7 @@ auto MemDebugger::loadMemoryBank(uint8_t bank, bool noColorChanges) -> void {
 
     bool colorChangeLock = noColorChanges;
     bool textChangeLock = false;
+    bool updateCol;
 
     bool pause = isPaused();
     std::string val;
@@ -518,6 +519,7 @@ auto MemDebugger::loadMemoryBank(uint8_t bank, bool noColorChanges) -> void {
         limit = 0x10000;
 
     while (true) {
+        updateCol = false;
 
         if (!textChangeLock && (pause || (line >= visibleRow)) && (*pNew != *pOld) ) {
             lineChanged = true;
@@ -529,6 +531,7 @@ auto MemDebugger::loadMemoryBank(uint8_t bank, bool noColorChanges) -> void {
             else
                 val = GUIKIT::String::convertToHex( *pNew );
             pageList.setText( line, 1 + (pos & mask), val, true );
+            updateCol = true;
         }
 
         if (!colorChangeLock && (line >= visibleRow) && (*pNew != *pOld) ) {
@@ -537,6 +540,10 @@ auto MemDebugger::loadMemoryBank(uint8_t bank, bool noColorChanges) -> void {
             pageList.setRowForegroundColor(DEBUG_COLOR, line, 1 + (pos & mask));
         } else if (pageList.rowForegroundColor( line, 1 + (pos & mask) ) != std::nullopt)
             pageList.resetRowForegroundColor(line, 1 + (pos & mask));
+
+        if (updateCol) {
+            *pOld = *pNew;
+        }
 
         pNew++;
         pOld++;
@@ -563,7 +570,6 @@ auto MemDebugger::loadMemoryBank(uint8_t bank, bool noColorChanges) -> void {
     }
 
     pageList.unlockRedraw();
-    std::memcpy(memDumpOld, memDump, (isAmiga() || (mode == Mode::MemorySCPU)) ? 0x10000 : 0x1000);
 }
 
 auto MemDebugger::toAscii(const uint8_t* buf, int len, char* result, char pad) -> void {
