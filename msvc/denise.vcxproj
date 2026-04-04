@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\data\fonts.h" />
     <ClInclude Include="..\data\icons.h" />
     <ClInclude Include="..\data\logos.h" />
     <ClInclude Include="..\data\resource.h" />

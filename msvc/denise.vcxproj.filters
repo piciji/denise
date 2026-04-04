@@ -868,9 +868,6 @@
     <ClInclude Include="..\data\logos.h">
       <Filter>data\icons</Filter>
     </ClInclude>
-    <ClInclude Include="..\data\fonts.h">
-      <Filter>data\icons</Filter>
-    </ClInclude>
     <ClInclude Include="..\data\icons.h">
       <Filter>data\icons</Filter>
     </ClInclude>

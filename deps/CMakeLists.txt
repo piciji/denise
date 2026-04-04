@@ -1,101 +1,143 @@
 
-set(_depSrcs
-        deps/glslang/SPIRV/GlslangToSpv.cpp
-        deps/glslang/SPIRV/InReadableOrder.cpp
-        deps/glslang/SPIRV/Logger.cpp
-        deps/glslang/SPIRV/SpvBuilder.cpp
-        deps/glslang/SPIRV/SpvPostProcess.cpp
-        deps/glslang/glslang/GenericCodeGen/CodeGen.cpp
-        deps/glslang/glslang/GenericCodeGen/Link.cpp
-        deps/glslang/glslang/MachineIndependent/attribute.cpp
-        deps/glslang/glslang/MachineIndependent/Constant.cpp
-        deps/glslang/glslang/MachineIndependent/glslang_tab.cpp
-        deps/glslang/glslang/MachineIndependent/InfoSink.cpp
-        deps/glslang/glslang/MachineIndependent/Initialize.cpp
-        deps/glslang/glslang/MachineIndependent/Intermediate.cpp
-        deps/glslang/glslang/MachineIndependent/intermOut.cpp
-        deps/glslang/glslang/MachineIndependent/IntermTraverse.cpp
-        deps/glslang/glslang/MachineIndependent/iomapper.cpp
-        deps/glslang/glslang/MachineIndependent/limits.cpp
-        deps/glslang/glslang/MachineIndependent/linkValidate.cpp
-        deps/glslang/glslang/MachineIndependent/parseConst.cpp
-        deps/glslang/glslang/MachineIndependent/ParseContextBase.cpp
-        deps/glslang/glslang/MachineIndependent/ParseHelper.cpp
-        deps/glslang/glslang/MachineIndependent/PoolAlloc.cpp
-        deps/glslang/glslang/MachineIndependent/propagateNoContraction.cpp
-        deps/glslang/glslang/MachineIndependent/reflection.cpp
-        deps/glslang/glslang/MachineIndependent/RemoveTree.cpp
-        deps/glslang/glslang/MachineIndependent/Scan.cpp
-        deps/glslang/glslang/MachineIndependent/ShaderLang.cpp
-        deps/glslang/glslang/MachineIndependent/SymbolTable.cpp
-        deps/glslang/glslang/MachineIndependent/Versions.cpp
-        deps/glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp
-        deps/glslang/glslang/ResourceLimits/ResourceLimits.cpp
-        deps/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp
-        deps/glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp
-        deps/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp
-        deps/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp
-        deps/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp
+# LHA
+add_library(lha STATIC)
 
-        deps/SPIRV-Cross/spirv_cross.cpp
-        deps/SPIRV-Cross/spirv_cfg.cpp
-        deps/SPIRV-Cross/spirv_glsl.cpp
-        deps/SPIRV-Cross/spirv_parser.cpp
-        deps/SPIRV-Cross/spirv_cross_parsed_ir.cpp
-
-        deps/lha/lha_reader.cpp
-        deps/lha/lha_basic_reader.cpp
-        deps/lha/lha_input_stream.cpp
-        deps/lha/lha_file_header.cpp
-        deps/lha/lha_decoder.cpp
-        deps/lha/macbinary.cpp
-        deps/lha/ext_header.cpp
-        deps/lha/lha_endian.cpp
-        deps/lha/null_decoder.cpp
-        deps/lha/lh1_decoder.cpp
-        deps/lha/lh5_decoder.cpp
-        deps/lha/lh6_decoder.cpp
-        deps/lha/lh7_decoder.cpp
-        deps/lha/pm1_decoder.cpp
-        deps/lha/pm2_decoder.cpp
-        deps/lha/lz5_decoder.cpp
-        deps/lha/lzs_decoder.cpp
-        deps/lha/lhx_decoder.cpp
-        deps/lha/lk7_decoder.cpp
-        deps/lha/crc16.cpp
-
-        deps/cgif/cgif.cpp
-        deps/cgif/cgif_raw.cpp
+set(srcs
+        lha/lha_reader.cpp
+        lha/lha_basic_reader.cpp
+        lha/lha_input_stream.cpp
+        lha/lha_file_header.cpp
+        lha/lha_decoder.cpp
+        lha/macbinary.cpp
+        lha/ext_header.cpp
+        lha/lha_endian.cpp
+        lha/null_decoder.cpp
+        lha/lh1_decoder.cpp
+        lha/lh5_decoder.cpp
+        lha/lh6_decoder.cpp
+        lha/lh7_decoder.cpp
+        lha/pm1_decoder.cpp
+        lha/pm2_decoder.cpp
+        lha/lz5_decoder.cpp
+        lha/lzs_decoder.cpp
+        lha/lhx_decoder.cpp
+        lha/lk7_decoder.cpp
+        lha/crc16.cpp
 )
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set(_depSrcsHLSL
-        deps/glslang/glslang/HLSL/hlslAttributes.cpp
-        deps/glslang/glslang/HLSL/hlslGrammar.cpp
-        deps/glslang/glslang/HLSL/hlslOpMap.cpp
-        deps/glslang/glslang/HLSL/hlslParseables.cpp
-        deps/glslang/glslang/HLSL/hlslParseHelper.cpp
-        deps/glslang/glslang/HLSL/hlslScanContext.cpp
-        deps/glslang/glslang/HLSL/hlslTokenStream.cpp
-        deps/SPIRV-Cross/spirv_hlsl.cpp
-    )
-    set(_depSrcsMSL )
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(_depSrcsMSL
-        deps/SPIRV-Cross/spirv_msl.cpp
-    )
-    set(_depSrcsHLSL )
+    set(srcs ${srcs} lha/lha_arch_win32.cpp )
 else()
-    set(_depSrcsHLSL )
-    set(_depSrcsMSL )
+    set(srcs ${srcs} lha/lha_arch_unix.cpp )
 endif()
+
+target_sources(lha PRIVATE ${srcs})
+
+# GIF
+add_library(gif STATIC)
+
+target_sources(gif PRIVATE
+        cgif/cgif.cpp
+        cgif/cgif_raw.cpp
+)
+
+# PICO
+if(LIBUSB_FOUND)
+    add_library(pico STATIC)
+
+    set(srcs USBSID-Pico/USBSID.cpp)
+
+    SET_SOURCE_FILES_PROPERTIES(${srcs}
+            PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
+
+    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        SET_SOURCE_FILES_PROPERTIES(${srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_ALIGNED_ALLOC")
+    elseif(${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
+        SET_SOURCE_FILES_PROPERTIES(${srcs} PROPERTIES COMPILE_FLAGS "-DHAVE_ALIGNED_ALLOC")
+    endif()
+
+    target_sources(pico PRIVATE ${srcs})
+
+    target_link_directories(pico PRIVATE ${LIBUSB_LIBRARY_DIRS})
+    target_link_libraries(pico PRIVATE ${LIBUSB_LIBRARIES})
+endif()
+
+# glslang
+add_library(glslang STATIC)
+
+set(srcs
+        glslang/SPIRV/GlslangToSpv.cpp
+        glslang/SPIRV/InReadableOrder.cpp
+        glslang/SPIRV/Logger.cpp
+        glslang/SPIRV/SpvBuilder.cpp
+        glslang/SPIRV/SpvPostProcess.cpp
+        glslang/glslang/GenericCodeGen/CodeGen.cpp
+        glslang/glslang/GenericCodeGen/Link.cpp
+        glslang/glslang/MachineIndependent/attribute.cpp
+        glslang/glslang/MachineIndependent/Constant.cpp
+        glslang/glslang/MachineIndependent/glslang_tab.cpp
+        glslang/glslang/MachineIndependent/InfoSink.cpp
+        glslang/glslang/MachineIndependent/Initialize.cpp
+        glslang/glslang/MachineIndependent/Intermediate.cpp
+        glslang/glslang/MachineIndependent/intermOut.cpp
+        glslang/glslang/MachineIndependent/IntermTraverse.cpp
+        glslang/glslang/MachineIndependent/iomapper.cpp
+        glslang/glslang/MachineIndependent/limits.cpp
+        glslang/glslang/MachineIndependent/linkValidate.cpp
+        glslang/glslang/MachineIndependent/parseConst.cpp
+        glslang/glslang/MachineIndependent/ParseContextBase.cpp
+        glslang/glslang/MachineIndependent/ParseHelper.cpp
+        glslang/glslang/MachineIndependent/PoolAlloc.cpp
+        glslang/glslang/MachineIndependent/propagateNoContraction.cpp
+        glslang/glslang/MachineIndependent/reflection.cpp
+        glslang/glslang/MachineIndependent/RemoveTree.cpp
+        glslang/glslang/MachineIndependent/Scan.cpp
+        glslang/glslang/MachineIndependent/ShaderLang.cpp
+        glslang/glslang/MachineIndependent/SymbolTable.cpp
+        glslang/glslang/MachineIndependent/Versions.cpp
+        glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp
+        glslang/glslang/ResourceLimits/ResourceLimits.cpp
+        glslang/glslang/MachineIndependent/preprocessor/Pp.cpp
+        glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp
+        glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp
+        glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp
+        glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp
+)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set(_depSrcs ${_depSrcs} deps/lha/lha_arch_win32.cpp )
-else()
-    set(_depSrcs ${_depSrcs} deps/lha/lha_arch_unix.cpp )
+    set(srcs ${srcs}
+        glslang/glslang/HLSL/hlslAttributes.cpp
+        glslang/glslang/HLSL/hlslGrammar.cpp
+        glslang/glslang/HLSL/hlslOpMap.cpp
+        glslang/glslang/HLSL/hlslParseables.cpp
+        glslang/glslang/HLSL/hlslParseHelper.cpp
+        glslang/glslang/HLSL/hlslScanContext.cpp
+        glslang/glslang/HLSL/hlslTokenStream.cpp
+    )
+    SET_SOURCE_FILES_PROPERTIES(${srcs} PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
 endif()
 
-set(usblibSrcs deps/USBSID-Pico/USBSID.cpp PARENT_SCOPE)
+SET_SOURCE_FILES_PROPERTIES(${srcs}
+        PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
 
-set(depSrcs ${_depSrcs} ${_depSrcsHLSL} ${_depSrcsMSL} PARENT_SCOPE)
+target_sources(glslang PRIVATE ${srcs})
+
+# spirv
+add_library(spirv STATIC)
+
+set(srcs
+        SPIRV-Cross/spirv_cross.cpp
+        SPIRV-Cross/spirv_cfg.cpp
+        SPIRV-Cross/spirv_glsl.cpp
+        SPIRV-Cross/spirv_parser.cpp
+        SPIRV-Cross/spirv_cross_parsed_ir.cpp
+)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(srcs ${srcs} SPIRV-Cross/spirv_hlsl.cpp)
+
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(srcs ${srcs} SPIRV-Cross/spirv_msl.cpp)
+endif()
+
+target_sources(spirv PRIVATE ${srcs})

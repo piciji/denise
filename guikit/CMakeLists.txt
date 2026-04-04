@@ -119,44 +119,53 @@ else()
 endif()
 
 set(headers ${headers}
-    api.h
-    tools/crc32.h
-    tools/image.cpp
-    tools/layout.cpp
-    tools/setting.cpp
-    tools/string.cpp
-    tools/translate.cpp
-    tools/ttf.cpp
-    tools/utf8.cpp
-    tools/decode/gzip.h
-    tools/decode/images.h
-    tools/decode/inflate.h
-    tools/decode/lha.h
-    tools/decode/png.h
-    tools/decode/zip.h
-    tools/encode/png.h
-    tools/file/chunk.h
-    tools/file/directory.h
-    tools/file/file.cpp
-    tools/file/tar.h
+        api.h
+        tools/crc32.h
+        tools/image.cpp
+        tools/layout.cpp
+        tools/setting.cpp
+        tools/string.cpp
+        tools/translate.cpp
+        tools/ttf.cpp
+        tools/utf8.cpp
+        tools/decode/gzip.h
+        tools/decode/images.h
+        tools/decode/inflate.h
+        tools/decode/lha.h
+        tools/decode/png.h
+        tools/decode/zip.h
+        tools/encode/png.h
+        tools/file/chunk.h
+        tools/file/directory.h
+        tools/file/file.cpp
+        tools/file/tar.h
 )
 
-SET_SOURCE_FILES_PROPERTIES(tools/decode/lha.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/lha")
+SET_SOURCE_FILES_PROPERTIES(tools/decode/lha.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/lha")
 
-SET_SOURCE_FILES_PROPERTIES(tools/decode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb")
-SET_SOURCE_FILES_PROPERTIES(tools/decode/images.cpp PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
+SET_SOURCE_FILES_PROPERTIES(tools/decode/images.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb")
 
-SET_SOURCE_FILES_PROPERTIES(tools/encode/images.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb;${CMAKE_SOURCE_DIR}/deps/cgif")
+SET_SOURCE_FILES_PROPERTIES(tools/decode/images.cpp
+        PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
+
+SET_SOURCE_FILES_PROPERTIES(tools/encode/images.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb;${CMAKE_SOURCE_DIR}/deps/cgif")
+
+set_source_files_properties(guikit ${headers}
+        PROPERTIES HEADER_FILE_ONLY TRUE)
 
 target_sources(guikit PRIVATE
-    tools/decode/lha.cpp
-    tools/decode/images.cpp
-    tools/encode/images.cpp
-    api.cpp
-    ${headers}
+        tools/decode/lha.cpp
+        tools/decode/images.cpp
+        tools/encode/images.cpp
+        api.cpp
+        ${headers}
 )
 
-set_source_files_properties(guikit ${headers} PROPERTIES HEADER_FILE_ONLY TRUE)
+# the libraries lha and gif are built in "deps/CMakeLists.txt"
+target_link_libraries(guikit PRIVATE lha gif)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(guikit PRIVATE

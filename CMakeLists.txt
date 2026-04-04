@@ -76,7 +76,6 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 message(STATUS "Setting Install Folder to ${CMAKE_INSTALL_PREFIX}")
-#message(STATUS "LIBUSB ${LIBUSB_INCLUDE_DIRS}")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     message(STATUS "compile for architecture ${CMAKE_OSX_ARCHITECTURES}")
@@ -90,394 +89,96 @@ else()
     set(architecture "x64")
 endif()
 
-set(srcs
-        driver/driver.cpp
-        driver/tools/spirvReflection.cpp
-        driver/tools/ShaderCache.cpp
-
-        driver/video/thread/renderThread.cpp
-        program/thread/emuThread.cpp
-        emulation/libami/interface.cpp
-        emulation/libc64/interface.cpp
-        emulation/libc64/m6510/m6510.cpp
-        #emulation/libc64/disk/cpu/m6502.cpp
-        emulation/libc64/disk/cpu/m6502New.cpp
-        emulation/libc64/m6510/dasmHandler.cpp
-        emulation/tools/watcher.cpp
-
-        emulation/cia/base.cpp
-        emulation/cia/m6526.cpp
-        emulation/cia/new/cia.cpp
-
-        emulation/libami/cpu/m68000/m68000.cpp
-        emulation/libami/cpu/m68000/dasmHandler.cpp
-        emulation/libami/cpu/m68000.cpp
-        emulation/libami/agnus/agnus.cpp
-        emulation/libami/agnus/blitter.cpp
-        emulation/libami/agnus/copper.cpp
-        emulation/libami/video/denise.cpp
-        emulation/libami/paula/paula.cpp
-        emulation/libami/system/system.cpp
-        emulation/libami/input/input.cpp
-        emulation/libami/input/controlPort/controlPort.cpp
-        emulation/libami/input/keyboard/keyboard.cpp
-        emulation/libami/drive/diskDrive.cpp
-        emulation/libami/drive/hardDrive.cpp
-        emulation/libami/drive/hardDiskStructure.cpp
-        emulation/libami/drive/diskStructure.cpp
-        emulation/libami/drive/sectorBlock.cpp
-        emulation/libami/drive/filesystem.cpp
-        emulation/libami/drive/filesystemExt.cpp
-        emulation/libami/drive/hunk.cpp
-        emulation/libami/drive/scp/scp.cpp
-        emulation/libami/system/rtc.cpp
-        emulation/libami/drive/dms/pfile.cpp
-        emulation/libami/expansionPort/expansionPort.cpp
-        emulation/libami/expansionPort/fastMem.cpp
-        emulation/libami/expansionPort/hdController.cpp
-        emulation/libami/expansionPort/mtecAT500.cpp
-        emulation/libami/expansionPort/builtinHD.cpp
-        emulation/libami/system/firmware.cpp
-        emulation/tools/DLLoader.cpp
-        emulation/tools/uuid.cpp
-        emulation/libc64/vicII/base.cpp
-        emulation/libc64/vicII/vicII.cpp
-        emulation/libc64/vicII/fast/vicIIFast.cpp
-        emulation/libc64/system/system.cpp
-        emulation/libc64/system/gluelogic.cpp
-        emulation/libc64/system/firmware.cpp
-        emulation/libc64/expansionPort/cart/cart.cpp
-        emulation/libc64/system/keyBuffer.cpp
-        emulation/libc64/expansionPort/gameCart/gameCart.cpp
-        emulation/libc64/expansionPort/freezer/freezer.cpp
-        emulation/libc64/expansionPort/reu/reu.cpp
-        emulation/libc64/expansionPort/geoRam/geoRam.cpp
-        emulation/libc64/expansionPort/easyFlash/easyFlash.cpp
-        emulation/libc64/expansionPort/easyFlash/easyFlash3.cpp
-        emulation/libc64/expansionPort/retroReplay/retroReplay.cpp
-        emulation/libc64/expansionPort/gmod/gmod2.cpp
-        emulation/libc64/expansionPort/fastloader/fastloader.cpp
-        emulation/libc64/expansionPort/finalChessCard/chessCard.cpp
-        emulation/libc64/system/clipboard.cpp
-        emulation/libc64/sid/sid.cpp
-        emulation/libc64/sid/usbSidPico.cpp
-        emulation/libc64/system/sidManager.cpp
-        emulation/libc64/sid/filter/chamberlin.cpp
-        emulation/libc64/tape/tape.cpp
-        emulation/libc64/tape/structure.cpp
-        emulation/libc64/prg/prg.cpp
-        emulation/libc64/input/input.cpp
-        emulation/libc64/input/controlPort/controlPort.cpp
-        emulation/libc64/expansionPort/acia/acia.cpp
-        emulation/libc64/disk/wd177x/wd1770.cpp
-        emulation/wdc/65816/w65816.cpp
-        emulation/wdc/65816/dasmHandler.cpp
-        emulation/wdc/65C02/w65C02.cpp
-        emulation/libc64/expansionPort/superCpu/superCpu.cpp
-        emulation/libc64/traps/traps.cpp
-        emulation/libc64/disk/virtual/virtualDrive.cpp
-        emulation/libc64/disk/via/via.cpp
-        emulation/tools/pia.cpp
-        emulation/libc64/disk/iec.cpp
-        emulation/libc64/disk/drive/drive.cpp
-        emulation/libc64/disk/structure/structure.cpp
-        emulation/tools/m93c86.cpp
-        emulation/tools/mx29lv640eb.cpp
-        emulation/tools/error.cpp
-        data/icons/icons.cpp
-        data/icons/logos.cpp
-        emulation/tools/socket.cpp
-        emulation/tools/fpaq0.cpp
-        emulation/tools/expressionParser.cpp
-
-        program/program.cpp
-        program/input/manager.cpp
-        program/view/view.cpp
-        program/debugger/debugger.cpp
-        program/debugger/cpuDebugger.cpp
-        program/debugger/memDebugger.cpp
-        program/debugger/ciaDebugger.cpp
-        program/debugger/videoDebugger.cpp
-        program/debugger/audioDebugger.cpp
-        program/debugger/dmaDebugger.cpp
-        program/debugger/copperDebugger.cpp
-        program/debugger/conditionViewDebugger.cpp
-        program/debugger/watcherHelper.cpp
-        program/view/status.cpp
-        program/config/config.cpp
-        program/emuconfig/config.cpp
-        program/emuconfig/layouts/model.cpp
-        program/emuconfig/layouts/presentation.cpp
-        program/emuconfig/layouts/audio.cpp
-        program/emuconfig/layouts/configurations.cpp
-        program/emuconfig/layouts/firmware.cpp
-        program/emuconfig/layouts/geometry.cpp
-        program/emuconfig/layouts/input.cpp
-        program/emuconfig/layouts/misc.cpp
-        program/emuconfig/layouts/palette.cpp
-        program/emuconfig/layouts/system.cpp
-        program/media/media.cpp
-        program/media/autoloader.cpp
-        program/media/fileloader.cpp
-        program/media/recentFiles.cpp
-        program/config/archiveViewer.cpp
-        program/states/states.cpp
-        program/audio/manager.cpp
-        program/audio/dsp/bass.cpp
-        program/audio/dsp/reverb.cpp
-        program/audio/dsp/echo.cpp
-        program/audio/dsp/panning.cpp
-        program/audio/resampler/cosine.cpp
-        program/audio/resampler/cosineSSE.cpp
-        program/audio/resampler/sinc.cpp
-        program/audio/record/handler.cpp
-        program/audio/record/wavWriter.cpp
-        program/audio/mixer/drive.cpp
-        program/firmware/manager.cpp
-        program/cmd/cmd.cpp
-        program/video/palette.cpp
-        program/video/manager.cpp
-        program/video/shaderParser.cpp
-        program/view/imageViewer.cpp
-        program/tools/httpClient.cpp
-        program/tools/diskGuesser.cpp
-)
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set(srcs ${srcs}
-            driver/input/dinput/v5.cpp
-            driver/input/dinput/v7.cpp
-            driver/input/dinput/v8.cpp
-            driver/audio/xaudio2/xaudio27.cpp
-            driver/audio/xaudio2/xaudio28.cpp
-            driver/audio/xaudio2/xaudio29.cpp
-    )
-endif()
-
-SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/usbSidPico.cpp PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/USBSID-Pico")
-
-set(headerSrcs)
-set(depSrcs)
-set(usblibSrcs)
-
-add_subdirectory(deps)
-add_subdirectory(data)
-add_subdirectory(guikit)
-
-set_source_files_properties(${headerSrcs} PROPERTIES HEADER_FILE_ONLY TRUE)
-
-SET_SOURCE_FILES_PROPERTIES(${depSrcs}
-    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
-
-SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-    PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
-
 set(APP_INCLUDE "${CMAKE_SOURCE_DIR}/data/libs/include")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    SET_SOURCE_FILES_PROPERTIES(${depSrcs} PROPERTIES COMPILE_FLAGS "-DENABLE_HLSL")
+    if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
+        if(FREETYPE2_FOUND)
+            set(FREETYPE2_LIBRARIES ${FREETYPE2_STATIC_LIBRARIES})
+            set(FREETYPE2_LIBRARY_DIRS)
+        endif()
 
-    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp PROPERTIES COMPILE_FLAGS "-DDRV_WGL -DDRV_DIRECT3D9 -DDRV_DIRECT3D11 -DDRV_DSOUND -DDRV_DINPUT5 -DDRV_DINPUT7 -DDRV_DINPUT8 -DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -DDRV_WASAPI -DDRV_RAWINPUT")
+        if(LIBUSB_FOUND)
+            set(LIBUSB_LIBRARIES ${LIBUSB_STATIC_LIBRARIES})
+            set(LIBUSB_LIBRARY_DIRS)
+        endif()
 
-    if(NOT CMAKE_GENERATOR MATCHES "MSYS Makefiles")
+        if(LIBLAME_FOUND)
+            set(LIBLAME_LIBRARIES ${LIBLAME_STATIC_LIBRARIES})
+            set(LIBLAME_LIBRARY_DIRS)
+        endif()
+    else()
         set(FREETYPE2_FOUND true)
         set(FREETYPE2_INCLUDE_DIRS "${APP_INCLUDE}")
+        set(FREETYPE2_LIBRARIES)
+        set(FREETYPE2_LIBRARY_DIRS)
+        set(_libs libfreetype.a libpng16.a libz.a libbz2.a libbrotlidec.a libbrotlicommon.a)
+        foreach(_lib IN LISTS _libs)
+            set(FREETYPE2_LIBRARIES ${FREETYPE2_LIBRARIES} ${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/${_lib})
+        endforeach()
 
         set(LIBUSB_FOUND true)
         set(LIBUSB_INCLUDE_DIRS "${APP_INCLUDE}")
+        set(LIBUSB_LIBRARIES "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/libusb-1.0.a")
+        set(LIBUSB_LIBRARY_DIRS)
 
         set(LIBLAME_FOUND true)
         set(LIBLAME_INCLUDE_DIRS "${APP_INCLUDE}")
+        set(LIBLAME_LIBRARIES "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/libmp3lame.a")
+        set(LIBLAME_LIBRARY_DIRS)
     endif()
 
-    SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v5.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT5")
-    SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v7.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT7")
-    SET_SOURCE_FILES_PROPERTIES(driver/input/dinput/v8.cpp PROPERTIES COMPILE_FLAGS "-DDRV_DINPUT8")
-
-    SET_SOURCE_FILES_PROPERTIES(driver/audio/xaudio2/xaudio27.cpp PROPERTIES COMPILE_FLAGS "-DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29")
-    SET_SOURCE_FILES_PROPERTIES(driver/audio/xaudio2/xaudio28.cpp PROPERTIES COMPILE_FLAGS "-DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -Wno-attributes")
-    SET_SOURCE_FILES_PROPERTIES(driver/audio/xaudio2/xaudio29.cpp PROPERTIES COMPILE_FLAGS "-DDRV_XAUDIO27 -DDRV_XAUDIO28 -DDRV_XAUDIO29 -Wno-attributes")
-
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-            PROPERTIES COMPILE_FLAGS "-x objective-c++ -DDRV_METAL -DDRV_CGL -DDRV_COREAUDIO -DDRV_COREAUDIO3 -DDRV_IOKIT -DDRV_COCOA_IOKIT")
-
     set(FREETYPE2_FOUND true)
     set(FREETYPE2_INCLUDE_DIRS "${APP_INCLUDE}")
+    set(FREETYPE2_LIBRARIES)
+    set(FREETYPE2_LIBRARY_DIRS)
+    set(_libs libbrotlicommon.1.dylib libbrotlidec.1.dylib libbz2.1.0.dylib libpng16.16.dylib libz.1.dylib libfreetype.6.dylib)
+    foreach(_lib IN LISTS _libs)
+        set(FREETYPE2_LIBRARIES ${FREETYPE2_LIBRARIES} ${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/${_lib})
+    endforeach()
 
     set(LIBUSB_FOUND true)
     set(LIBUSB_INCLUDE_DIRS "${APP_INCLUDE}")
+    set(LIBUSB_LIBRARIES "${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/libusb-1.0.0.dylib")
+    set(LIBUSB_LIBRARY_DIRS)
 
     set(LIBLAME_FOUND true)
     set(LIBLAME_INCLUDE_DIRS "${APP_INCLUDE}")
+    set(LIBLAME_LIBRARIES "${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/libmp3lame.0.dylib")
+    set(LIBLAME_LIBRARY_DIRS)
 else()
-    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD" OR CMAKE_SYSTEM_NAME STREQUAL "OpenBSD" OR CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # no udev
-        SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UHID")
-    else()
-        SET_SOURCE_FILES_PROPERTIES(driver/driver.cpp
-                PROPERTIES COMPILE_FLAGS "-DDRV_GLX -DDRV_PULSEAUDIO -DDRV_XLIB -DDRV_XCB -DDRV_UDEV")
-    endif()
-
-    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};")
-
     if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD") # libusb_dev_mem_ stuff undeclared
         set(LIBUSB_FOUND false)
     endif()
 endif()
 
-if(LIBLAME_FOUND)
-    set(srcs ${srcs} program/audio/record/mp3Writer.cpp)
+add_subdirectory(data)
+add_subdirectory(deps)
+add_subdirectory(guikit)
+add_subdirectory(driver)
+add_subdirectory(emulation/cia)
+add_subdirectory(emulation/wdc/65C02)
+add_subdirectory(emulation/wdc/65816)
+add_subdirectory(emulation/libc64)
+add_subdirectory(emulation/libami)
+add_subdirectory(program)
 
-    SET_SOURCE_FILES_PROPERTIES(program/audio/record/mp3Writer.cpp
-        PROPERTIES INCLUDE_DIRECTORIES "${LIBLAME_INCLUDE_DIRS};")
-    SET_SOURCE_FILES_PROPERTIES(program/audio/record/handler.cpp
-        PROPERTIES INCLUDE_DIRECTORIES "${LIBLAME_INCLUDE_DIRS};")
-
-    set_property(SOURCE program/audio/record/handler.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DLIBLAME ")
-endif()
-
-if(FREETYPE2_FOUND)
-    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};")
-
-    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DDRV_FREETYPE ")
-endif()
-
-if(LIBUSB_FOUND)
-    SET_SOURCE_FILES_PROPERTIES(${usblibSrcs}
-            PROPERTIES INCLUDE_DIRECTORIES "${LIBUSB_INCLUDE_DIRS};")
-
-    if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        SET_SOURCE_FILES_PROPERTIES(${usblibSrcs} PROPERTIES COMPILE_FLAGS "-DHAVE_ALIGNED_ALLOC")
-    elseif(${CMAKE_OSX_ARCHITECTURES} STREQUAL "arm64")
-        SET_SOURCE_FILES_PROPERTIES(${usblibSrcs} PROPERTIES COMPILE_FLAGS "-DHAVE_ALIGNED_ALLOC")
-    endif()
-
-    SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/usbSidPico.cpp PROPERTIES COMPILE_FLAGS "-DLIBUSB")
-else()
-    set(usblibSrcs)
-endif()
-
-if(OPENAL_FOUND)
-    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${OPENAL_INCLUDE_DIRS};")
-    set_property(SOURCE driver/driver.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DDRV_OPENAL ")
-endif()
-
-SET_SOURCE_FILES_PROPERTIES(emulation/libc64/sid/filter/chamberlin.cpp
-        PROPERTIES COMPILE_FLAGS "-ffast-math -fno-exceptions")
-
-SET_SOURCE_FILES_PROPERTIES(program/program.cpp
-        PROPERTIES COMPILE_FLAGS "-DAPP_NAME=\"\\\"${AppName}\\\"\" -DTRANSLATION_FOLDER=\"\\\"${translationFolder}/\\\"\" -DDATA_FOLDER=\"\\\"${dataFolder}/\\\"\" -DSHADER_FOLDER=\"\\\"${shaderFolder}/\\\"\" -DIMAGES_FOLDER=\"\\\"${imagesFolder}/\\\"\" -DSOUND_FOLDER=\"\\\"${soundFolder}/\\\"\" ")
-
-set(srcs ${srcs} ${depSrcs} ${usblibSrcs} ${headerSrcs})
-add_executable( ${PROJECT_NAME} ${srcs} ${guikit.resource} )
+add_executable( ${PROJECT_NAME} ${guikit.resource} )
 target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 
-target_link_libraries(${PROJECT_NAME} guikit)
+target_link_libraries(${PROJECT_NAME} PRIVATE program guikit driver coreC64 coreAmiga)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(${PROJECT_NAME} "-lopengl32")
-
     if(CMAKE_BUILD_TYPE STREQUAL Release)
-        target_link_libraries(${PROJECT_NAME} "-mwindows")
+        target_link_libraries(${PROJECT_NAME} PRIVATE "-mwindows")
     else()
-        target_link_libraries(${PROJECT_NAME} "-mconsole")
-    endif()    
-
-    if(CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
-        if(FREETYPE2_FOUND)
-            target_link_libraries(${PROJECT_NAME} ${FREETYPE2_STATIC_LIBRARIES})
-        endif()
-
-        if(LIBUSB_FOUND)
-            target_link_libraries(${PROJECT_NAME} ${LIBUSB_STATIC_LIBRARIES})
-        endif()
-
-        if(LIBLAME_FOUND)
-            target_link_libraries(${PROJECT_NAME} ${LIBLAME_STATIC_LIBRARIES})
-        endif()
-    else()
-        if(FREETYPE2_FOUND)
-            set(FREETYPE_LIBS libfreetype.a libpng16.a libz.a libbz2.a libbrotlidec.a libbrotlicommon.a)
-            foreach(_lib IN LISTS FREETYPE_LIBS)
-                target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/${_lib}")
-            endforeach()
-        endif()
-
-        if(LIBUSB_FOUND)
-            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/libusb-1.0.a")
-        endif()
-
-        if(LIBLAME_FOUND)
-            target_link_libraries(${PROJECT_NAME} "${CMAKE_SOURCE_DIR}/data/libs/static/${architecture}/libmp3lame.a")
-        endif()
+        target_link_libraries(${PROJECT_NAME} PRIVATE "-mconsole")
     endif()
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_link_libraries(${PROJECT_NAME} "-framework CoreVideo -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AVFoundation")
-    target_link_libraries(${PROJECT_NAME} ${FREETYPE_LIBRARY})
-
-    if(LIBUSB_FOUND)
-        set(LIBUSB_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/libusb-1.0.0.dylib")
-        target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARY})
-    endif()
-
-    if(LIBLAME_FOUND)
-        set(LIBLAME_LIBRARY "${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/libmp3lame.0.dylib")
-        target_link_libraries(${PROJECT_NAME} ${LIBLAME_LIBRARY})
-    endif()
-
-    if(FREETYPE2_FOUND)
-        set(FREETYPE_LIBS libbrotlicommon.1.dylib libbrotlidec.1.dylib libbz2.1.0.dylib libpng16.16.dylib libz.1.dylib libfreetype.6.dylib)
-        set(FREETYPE2_LIBRARIES)
-        foreach(_lib IN LISTS FREETYPE_LIBS)
-           set(FREETYPE2_LIBRARIES ${FREETYPE2_LIBRARIES} ${CMAKE_SOURCE_DIR}/data/libs/shared/${macArchFolder}/${_lib})
-        endforeach()
-
-        target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
-    endif()
-
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
     set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "@executable_path/../Frameworks")
-else()
-    target_link_directories(${PROJECT_NAME} PUBLIC ${X11_LIBRARY_DIRS})
-    target_link_directories(${PROJECT_NAME} PUBLIC ${XCB_LIBRARY_DIRS})
-    target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
-    target_link_libraries(${PROJECT_NAME} ${XCB_LIBRARIES})
-
-    if(FREETYPE2_FOUND)
-        target_link_directories(${PROJECT_NAME} PUBLIC ${FREETYPE2_LIBRARY_DIRS})
-        target_link_libraries(${PROJECT_NAME} ${FREETYPE2_LIBRARIES})
-    endif()
-
-    if(LIBUSB_FOUND)
-        target_link_directories(${PROJECT_NAME} PUBLIC ${LIBUSB_LIBRARY_DIRS})
-        target_link_libraries(${PROJECT_NAME} ${LIBUSB_LIBRARIES})
-    endif()
-
-    if(LIBLAME_FOUND)
-        target_link_directories(${PROJECT_NAME} PUBLIC ${LIBLAME_LIBRARY_DIRS})
-        target_link_libraries(${PROJECT_NAME} ${LIBLAME_LIBRARIES})
-    endif()
-
-    # use -Wl,--verbose for detailed linker problems
-    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        target_link_libraries(${PROJECT_NAME} "-luuid -lrt -lGL -lpulse -lusbhid")
-        # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs
-        set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-    elseif (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-        target_link_libraries(${PROJECT_NAME} "-lGL -lpulse -lusbhid")
-        set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-    elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-        target_link_libraries(${PROJECT_NAME} "-lrt -ldl -lGL -lpulse -lusbhid")
-    else() # linux
-        target_link_libraries(${PROJECT_NAME} "-luuid -no-pie -lrt -ldl -lGL -ludev -lpulse")
-    endif()
-endif()
-
-if(OPENAL_FOUND)
-    target_link_directories(${PROJECT_NAME} PUBLIC ${OPENAL_LIBRARY_DIRS})
-    target_link_libraries(${PROJECT_NAME} ${OPENAL_LIBRARY})
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
