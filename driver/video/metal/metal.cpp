@@ -363,6 +363,7 @@ namespace DRIVER {
             if (error != nil)
                 return false;
             
+            ca.blendingEnabled = YES;
 #ifdef DRV_FREETYPE
             lib = [device newLibraryWithSource:messageShaderStr options:nil error:&error];
             if (error == nil) {
@@ -370,7 +371,6 @@ namespace DRIVER {
                 psd.fragmentFunction = [lib newFunctionWithName:@"_fragment"];
 
                 psd.label = @"blend msg";
-                ca.blendingEnabled = YES;
 
                 messageColBuffer = [device newBufferWithLength:32 options:MTLResourceStorageModeManaged];
                 messagePipelineState = [device newRenderPipelineStateWithDescriptor:psd error:&error];
