@@ -171,20 +171,17 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_link_libraries(guikit PRIVATE
         ws2_32 gdi32 comdlg32 ole32 comctl32 shlwapi msimg32 winmm dwmapi uxtheme gdiplus)
 
-    set(guikit.resource data/resource_mingw.rc PARENT_SCOPE)
+   set(guikit.resource data/resource_mingw.rc PARENT_SCOPE)
 
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(guikit PRIVATE "-framework Cocoa")
 
-    set(guikit.resource)
 else()
     target_link_libraries(guikit PRIVATE fontconfig Xrandr)
 
-    target_link_directories(guikit PUBLIC ${GTK_LIBRARY_DIRS})
+    target_link_directories(guikit PRIVATE ${GTK_LIBRARY_DIRS})
     target_link_libraries(guikit PRIVATE ${GTK_LIBRARIES})
-
-    set(guikit.resource)
 endif()
 
-# [Windows only] add guikit.resource to executable: add_executable( APP ${srcs} ${guikit.resource} )
-# link guikit as library: target_link_libraries( APP guikit )
+# [Windows only] add guikit.resource to executable: target_sources( APP PUBLIC ${guikit.resource} )
+# link guikit as library: target_link_libraries( APP PUBLIC guikit )

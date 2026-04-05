@@ -1,5 +1,5 @@
 
-add_library(icons STATIC)
+add_library(icons OBJECT)
 
 set(headers icons.h)
 
@@ -12,7 +12,7 @@ target_sources(icons PRIVATE
 )
 
 
-add_library(logos STATIC)
+add_library(logos OBJECT)
 
 set(headers logos.h)
 

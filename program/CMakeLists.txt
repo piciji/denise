@@ -1,5 +1,5 @@
 
-add_library(program STATIC)
+add_executable(${PROJECT_NAME})
 
 set(headers
         program.h
@@ -72,7 +72,7 @@ set(headers
         video.cpp
 )
 
-set_source_files_properties(program ${headers}
+set_source_files_properties(${PROJECT_NAME} ${headers}
         PROPERTIES HEADER_FILE_ONLY TRUE)
 
 set(srcs
@@ -142,13 +142,31 @@ if(LIBLAME_FOUND)
 
     set_property(SOURCE audio/record/handler.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DLIBLAME ")
 
-    target_link_directories(program PRIVATE ${LIBLAME_LIBRARY_DIRS})
-    target_link_libraries(program PRIVATE ${LIBLAME_LIBRARIES})
+    target_link_directories(${PROJECT_NAME} PUBLIC ${LIBLAME_LIBRARY_DIRS})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBLAME_LIBRARIES})
 endif()
 
 SET_SOURCE_FILES_PROPERTIES(program.cpp
         PROPERTIES COMPILE_FLAGS "-DAPP_NAME=\"\\\"${AppName}\\\"\" -DTRANSLATION_FOLDER=\"\\\"${translationFolder}/\\\"\" -DDATA_FOLDER=\"\\\"${dataFolder}/\\\"\" -DSHADER_FOLDER=\"\\\"${shaderFolder}/\\\"\" -DIMAGES_FOLDER=\"\\\"${imagesFolder}/\\\"\" -DSOUND_FOLDER=\"\\\"${soundFolder}/\\\"\" ")
 
-target_sources(program PRIVATE ${srcs})
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(srcs ${srcs} "${CMAKE_SOURCE_DIR}/${guikit.resource}" )
 
-target_link_libraries(program PRIVATE logos icons)
+    target_link_libraries(${PROJECT_NAME} PUBLIC "-static")
+
+    if(CMAKE_BUILD_TYPE STREQUAL Release)
+        target_link_libraries(${PROJECT_NAME} PUBLIC "-mwindows")
+    else()
+        target_link_libraries(${PROJECT_NAME} PUBLIC "-mconsole")
+    endif()
+
+elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
+    set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "@executable_path/../Frameworks")
+endif()
+
+#target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
+
+target_sources(${PROJECT_NAME} PUBLIC ${srcs} )
+
+target_link_libraries(${PROJECT_NAME} PUBLIC guikit driver coreC64 coreAmiga logos icons)

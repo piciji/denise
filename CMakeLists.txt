@@ -66,7 +66,6 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O3") # prevents NDEBUG, which slightly decrease execution speed
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 
-
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE ${CMAKE_BINARY_DIR}/out)
@@ -163,25 +162,6 @@ add_subdirectory(emulation/wdc/65816)
 add_subdirectory(emulation/libc64)
 add_subdirectory(emulation/libami)
 add_subdirectory(program)
-
-add_executable( ${PROJECT_NAME} ${guikit.resource} )
-target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE program guikit driver coreC64 coreAmiga)
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_link_libraries(program PRIVATE "-static")
-
-    if(CMAKE_BUILD_TYPE STREQUAL Release)
-        target_link_libraries(${PROJECT_NAME} PRIVATE "-mwindows")
-    else()
-        target_link_libraries(${PROJECT_NAME} PRIVATE "-mconsole")
-    endif()
-
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
-    set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "@executable_path/../Frameworks")
-endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX})
