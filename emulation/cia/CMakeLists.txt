@@ -17,6 +17,8 @@ target_sources(cia PRIVATE
         ${headers}
 )
 
+target_compile_options(cia PRIVATE -Wno-shift-count-overflow)
+
 add_library(ciaNew OBJECT)
 
 set(headers
@@ -33,3 +35,5 @@ target_sources(ciaNew PRIVATE
         new/cia.cpp
         ${headers}
 )
+
+target_compile_options(ciaNew PRIVATE -Wno-shift-count-overflow)

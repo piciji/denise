@@ -147,8 +147,10 @@ SET_SOURCE_FILES_PROPERTIES(tools/decode/lha.cpp
 SET_SOURCE_FILES_PROPERTIES(tools/decode/images.cpp
         PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb")
 
-SET_SOURCE_FILES_PROPERTIES(tools/decode/images.cpp
-        PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
+if(NOT COMPILER_ID STREQUAL "Clang")
+    SET_SOURCE_FILES_PROPERTIES(tools/decode/images.cpp
+            PROPERTIES COMPILE_FLAGS "-Wno-stringop-overflow")
+endif()
 
 SET_SOURCE_FILES_PROPERTIES(tools/encode/images.cpp
         PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/stb;${CMAKE_SOURCE_DIR}/deps/cgif")
