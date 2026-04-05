@@ -1,5 +1,5 @@
 
-add_library(cpu65c02 STATIC)
+add_library(cpu65c02 OBJECT)
 
 set(headers
         w65C02.h

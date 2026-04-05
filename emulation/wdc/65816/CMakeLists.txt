@@ -1,5 +1,5 @@
 
-add_library(cpu65816 STATIC)
+add_library(cpu65816 OBJECT)
 
 set(headers
         w65816.h

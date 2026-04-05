@@ -170,6 +170,8 @@ target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
 target_link_libraries(${PROJECT_NAME} PRIVATE program guikit driver coreC64 coreAmiga)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_link_libraries(program PRIVATE "-static")
+
     if(CMAKE_BUILD_TYPE STREQUAL Release)
         target_link_libraries(${PROJECT_NAME} PRIVATE "-mwindows")
     else()

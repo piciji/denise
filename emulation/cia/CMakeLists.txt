@@ -1,5 +1,5 @@
 
-add_library(cia STATIC)
+add_library(cia OBJECT)
 
 set(headers
         ../cia/base.h
@@ -17,7 +17,7 @@ target_sources(cia PRIVATE
         ${headers}
 )
 
-add_library(ciaNew STATIC)
+add_library(ciaNew OBJECT)
 
 set(headers
         new/cia.h
