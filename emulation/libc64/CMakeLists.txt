@@ -243,4 +243,6 @@ target_sources(coreC64 PRIVATE
         ${headers}
 )
 
+target_compile_options(coreC64 PRIVATE -Wno-shift-count-overflow)
+
 target_link_libraries(coreC64 PRIVATE cia ciaNew cpu65c02 cpu65816)

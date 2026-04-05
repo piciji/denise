@@ -165,8 +165,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set_target_properties(${PROJECT_NAME} PROPERTIES BUILD_RPATH "@executable_path/../Frameworks")
 endif()
 
-#target_compile_options(${PROJECT_NAME} PUBLIC -Wno-shift-count-overflow)
-
 target_sources(${PROJECT_NAME} PUBLIC ${srcs} )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC guikit driver coreC64 coreAmiga logos icons)
