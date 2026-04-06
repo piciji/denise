@@ -165,10 +165,13 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "@executable_path/../Frameworks")
 
 else()
-    target_link_libraries(${PROJECT_NAME} PRIVATE -no-pie rt dl)
+    target_link_libraries(${PROJECT_NAME} PUBLIC pthread rt dl)
 
     if (CMAKE_SYSTEM_NAME MATCHES "BSD")
+        # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs
         set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+    else()
+        target_link_libraries(${PROJECT_NAME} PUBLIC -no-pie)
     endif()
 endif()
 

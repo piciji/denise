@@ -179,10 +179,10 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(guikit PRIVATE "-framework Cocoa")
 
 else()
-    target_link_libraries(guikit PRIVATE fontconfig Xrandr)
+    target_link_libraries(guikit PUBLIC fontconfig Xrandr)
 
-    target_link_directories(guikit PRIVATE ${GTK_LIBRARY_DIRS})
-    target_link_libraries(guikit PRIVATE ${GTK_LIBRARIES})
+    target_link_directories(guikit PUBLIC ${GTK_LIBRARY_DIRS})
+    target_link_libraries(guikit PUBLIC ${GTK_LIBRARIES})
 endif()
 
 # [Windows only] add guikit.resource to executable: target_sources( APP PUBLIC ${guikit.resource} )

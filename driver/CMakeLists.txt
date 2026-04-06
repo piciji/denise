@@ -161,26 +161,17 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     target_link_libraries(driver PRIVATE "-framework CoreVideo -framework IOKit -framework Carbon -framework Metal -framework MetalKit -framework OpenGL -framework CoreAudio -framework AudioToolbox -framework AudioUnit -framework AVFoundation")
 
 else()
-    target_link_directories(driver PRIVATE ${X11_LIBRARY_DIRS})
-    target_link_directories(driver PRIVATE ${XCB_LIBRARY_DIRS})
-    target_link_libraries(driver PRIVATE ${X11_LIBRARIES})
-    target_link_libraries(driver PRIVATE ${XCB_LIBRARIES})
+    target_link_directories(driver PUBLIC ${X11_LIBRARY_DIRS})
+    target_link_directories(driver PUBLIC ${XCB_LIBRARY_DIRS})
+    target_link_libraries(driver PUBLIC ${X11_LIBRARIES})
+    target_link_libraries(driver PUBLIC ${XCB_LIBRARIES})
 
     # use -Wl,--verbose for detailed linker problems
     if (CMAKE_SYSTEM_NAME MATCHES "BSD")
-        target_link_libraries(driver PRIVATE GL pulse usbhid)
+        target_link_libraries(driver PUBLIC GL pulse usbhid)
 
-#    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-#        target_link_libraries(driver PRIVATE GL pulse usbhid)
-#        # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs
-#        set_target_properties(driver PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-#    elseif (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-#        target_link_libraries(driver PRIVATE GL pulse usbhid)
-#        set_target_properties(driver PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-#    elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-#        target_link_libraries(driver PRIVATE GL pulse usbhid)
     else() # linux
-        target_link_libraries(driver PRIVATE GL pulse udev)
+        target_link_libraries(driver PUBLIC GL pulse udev)
     endif()
 endif()
 

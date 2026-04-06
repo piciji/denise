@@ -147,6 +147,6 @@ target_compile_options(coreAmiga PRIVATE -Wno-shift-count-overflow)
 
 target_link_libraries(coreAmiga PRIVATE ciaNew)
 
-if(UNIX AND NOT APPLE) # includes BSD
-    target_link_libraries(coreAmiga PRIVATE uuid)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
+    target_link_libraries(coreAmiga PUBLIC uuid)
 endif()
