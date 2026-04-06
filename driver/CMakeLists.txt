@@ -101,6 +101,9 @@ set(srcs
         video/thread/renderThread.cpp
 )
 
+SET_SOURCE_FILES_PROPERTIES(driver.cpp
+        PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(srcs ${srcs}
             input/dinput/v5.cpp
@@ -137,9 +140,6 @@ else()
     set_property(SOURCE driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${GTK_INCLUDE_DIRS};")
 endif()
 
-SET_SOURCE_FILES_PROPERTIES(driver.cpp
-        PROPERTIES INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/deps/glslang;")
-
 if(FREETYPE2_FOUND)
     set_property(SOURCE driver.cpp APPEND_STRING PROPERTY INCLUDE_DIRECTORIES "${FREETYPE2_INCLUDE_DIRS};")
     set_property(SOURCE driver.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -DDRV_FREETYPE ")
@@ -167,17 +167,20 @@ else()
     target_link_libraries(driver PRIVATE ${XCB_LIBRARIES})
 
     # use -Wl,--verbose for detailed linker problems
-    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
-        target_link_libraries(driver PRIVATE "-luuid -lrt -lGL -lpulse -lusbhid")
-        # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs
-        set_target_properties(driver PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-    elseif (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
-        target_link_libraries(driver PRIVATE "-lGL -lpulse -lusbhid")
-        set_target_properties(driver PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-    elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-        target_link_libraries(driver PRIVATE "-lrt -ldl -lGL -lpulse -lusbhid")
+    if (CMAKE_SYSTEM_NAME MATCHES "BSD")
+        target_link_libraries(driver PRIVATE GL pulse usbhid)
+
+#    if (CMAKE_SYSTEM_NAME STREQUAL "NetBSD")
+#        target_link_libraries(driver PRIVATE GL pulse usbhid)
+#        # otherwise CMAKE removes runtime paths when installing to final location, check binary with ldd command to see assigned shared libs
+#        set_target_properties(driver PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+#    elseif (CMAKE_SYSTEM_NAME STREQUAL "OpenBSD")
+#        target_link_libraries(driver PRIVATE GL pulse usbhid)
+#        set_target_properties(driver PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+#    elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+#        target_link_libraries(driver PRIVATE GL pulse usbhid)
     else() # linux
-        target_link_libraries(driver PRIVATE "-luuid -no-pie -lrt -ldl -lGL -ludev -lpulse")
+        target_link_libraries(driver PRIVATE GL pulse udev)
     endif()
 endif()
 

@@ -146,3 +146,7 @@ target_sources(coreAmiga PRIVATE
 target_compile_options(coreAmiga PRIVATE -Wno-shift-count-overflow)
 
 target_link_libraries(coreAmiga PRIVATE ciaNew)
+
+if(UNIX AND NOT APPLE) # includes BSD
+    target_link_libraries(coreAmiga PRIVATE uuid)
+endif()

@@ -163,6 +163,13 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set_target_properties(${PROJECT_NAME} PROPERTIES OSX_ARCHITECTURES ${CMAKE_OSX_ARCHITECTURES})
     set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "@executable_path/../Frameworks")
+
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE -no-pie rt dl)
+
+    if (CMAKE_SYSTEM_NAME MATCHES "BSD")
+        set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+    endif()
 endif()
 
 target_sources(${PROJECT_NAME} PUBLIC ${srcs} )
