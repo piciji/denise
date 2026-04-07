@@ -120,6 +120,7 @@ struct InputLayout : GUIKIT::VerticalLayout {
     auto loadSettings() -> void;
     auto updateAutofireFrequency() -> void;
     auto updateMiscSettings() -> void;
+    auto updatePrio(unsigned prio) -> void;
     auto updatedAutofireButtonHints() -> void;
     auto updatedAutofireButtonHints(InputMapping* mappingPort, GUIKIT::Button* toggleButton) -> void;
     auto isAutomapEnabled(Emulator::Interface::Device& device) -> bool;

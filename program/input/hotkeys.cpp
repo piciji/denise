@@ -112,7 +112,8 @@ auto InputManager::setCustomHotkeys() -> void {
 		customHotkeys.push_back( {Hotkey::Id::ResetTapeCounter, "tape_counter_reset_key", false} );
         customHotkeys.push_back( {Hotkey::Id::EF3Menu, "ef3 menu button", false} );
 	    customHotkeys.push_back( {Hotkey::Id::ToggleSuperCpuTurbo, "SuperCPU Turbo", false} );
-        customHotkeys.push_back({ Hotkey::Id::Toggle2MHzCpuTurbo, "toggle 2 MHz Turbo", false });
+        customHotkeys.push_back( {Hotkey::Id::Toggle2MHzCpuTurbo, "toggle 2 MHz Turbo", false });
+	    customHotkeys.push_back( {Hotkey::Id::PrioDoubleAssignment, "Allow Keyset Joystick", false });
 	} else
         customHotkeys.push_back( {Hotkey::Id::SwapJoypadsPort2, "swap joypads Port2", false} );
     
@@ -125,6 +126,7 @@ auto InputManager::setCustomHotkeys() -> void {
     customHotkeys.push_back( {Hotkey::Id::Firmware, "Firmware", true} );
     customHotkeys.push_back( {Hotkey::Id::Audio, "Audio", true} );
 	customHotkeys.push_back( {Hotkey::Id::Geometry, "Geometry", true} );
+    customHotkeys.push_back( {Hotkey::Id::Misc, "Miscellaneous", true} );
     customHotkeys.push_back( {Hotkey::Id::DiskSwapper, "swapper", true} );
     customHotkeys.push_back( {Hotkey::Id::AutoStart, "autostart media", true} );
 }
@@ -402,6 +404,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         case Hotkey::Id::Control:
 		case Hotkey::Id::Configurations:
         case Hotkey::Id::Audio:
+        case Hotkey::Id::Misc:
             openMenu( emulator, id );
             break;
         case Hotkey::Id::SyncStatus: {
@@ -810,6 +813,19 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             program->toggle2Mhz();
         } break;
 
+        case Hotkey::PrioDoubleAssignment: {
+            emuThread->lock();
+            auto prio = settings->get<unsigned>("prioritise_mappings", 1, {0,2});
+            prio = prio <= 1 ? 2 : 1;
+            settings->set<unsigned>("prioritise_mappings", prio);
+            trigger->inputManager->updateMiscSettings();
+            trigger->inputManager->updateMappingsInUse();
+            auto emuView = EmuConfigView::TabWindow::getView( emulator );
+            if (emuView && emuView->inputLayout)
+                emuView->inputLayout->updatePrio(prio);
+            statusHandler->setMessage(trans->get(prio == 2 ? "prioritise keyboard" : "prioritise controlport"), false, true, 4);
+        } break;
+
         case Hotkey::AutoStart: {
             emuThread->lock(true);
             bool trapped;
@@ -1204,6 +1220,8 @@ auto InputManager::openMenu( Emulator::Interface* emulator, Hotkey::Id id ) -> v
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Configurations ); break;
         case Hotkey::Id::Audio:
             emuView->showDelayed( EmuConfigView::TabWindow::Layout::Audio ); break;
+        case Hotkey::Id::Misc:
+            emuView->showDelayed( EmuConfigView::TabWindow::Layout::Misc ); break;
         default:
             break;
     }

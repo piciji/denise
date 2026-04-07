@@ -420,13 +420,17 @@ auto InputLayout::updateMiscSettings() -> void {
     control.optionControl.oppositeDirections.setChecked( _settings->get<bool>("allow_opposite_directions", false) );
 
     auto prio = _settings->get<unsigned>("prioritise_mappings", 1, {0,2});
+    updatePrio(prio);
+
+    selector.grabMouseLeft.setChecked(_settings->get<bool>("grab_mouse_left", dynamic_cast<LIBAMI::Interface*>(emulator)));
+}
+
+auto InputLayout::updatePrio(unsigned prio) -> void {
     switch(prio) {
         case 0: control.optionControl.prioritiseLayout.none.setChecked(); break;
         case 1: control.optionControl.prioritiseLayout.controlPort.setChecked(); break;
         case 2: control.optionControl.prioritiseLayout.keyboard.setChecked(); break;
     }
-
-    selector.grabMouseLeft.setChecked(_settings->get<bool>("grab_mouse_left", dynamic_cast<LIBAMI::Interface*>(emulator)));
 }
 
 auto InputLayout::stopCapture() -> void {
@@ -686,9 +690,9 @@ auto InputLayout::translate() -> void {
     control.optionControl.prioritiseLayout.none.setText( trans->get("none") );
     control.optionControl.prioritiseLayout.none.setTooltip( trans->get("prioritise no input device") );
     control.optionControl.prioritiseLayout.controlPort.setText( trans->get("Controlport") );
-    control.optionControl.prioritiseLayout.controlPort.setTooltip( trans->get("prioritise controlport") );
+    control.optionControl.prioritiseLayout.controlPort.setTooltip( trans->get("prioritise controlport tooltip") );
     control.optionControl.prioritiseLayout.keyboard.setText( trans->get("Keyboard") );
-    control.optionControl.prioritiseLayout.keyboard.setTooltip( trans->get("prioritise keyboard") );
+    control.optionControl.prioritiseLayout.keyboard.setTooltip( trans->get("prioritise keyboard tooltip") );
     inputList.setHeaderText({ "", trans->get("input"), trans->get("map"), trans->get("alternate_map")});
     mapControl.reset.setText( trans->get( "reset" ) );
     mapControl.reset.setTooltip( trans->get( "reset_device_info" ) );
