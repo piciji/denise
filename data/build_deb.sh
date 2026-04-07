@@ -30,7 +30,7 @@ install -D -m 644 img/denise.png denisepackage/$prefix/share/icons
 install -D -m 644 images/* denisepackage/$prefix/share/denise/images
 install -D -m 644 denise.desktop denisepackage/$prefix/share/applications
 install -D -m 644 application-x-denise.xml denisepackage/$prefix/share/mime/packages
-install -D -m 755 ../builds/release/denise denisepackage/$prefix/bin
+install -D -m 755 ../builds/release/program/denise denisepackage/$prefix/bin
 
 INSTALLED_SIZE=$(du -ks denisepackage | cut -f 1)
 VERSION=$(cat ../program/program.h | grep '^#define VERSION' ../program/program.h | sed 's/.*"\(.*\)".*/\1/')
