@@ -213,6 +213,12 @@
 		9D99AA852E4631490075FF62 /* libusb-1.0.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA652E462DE10075FF62 /* libusb-1.0.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		9D99AA862E4631490075FF62 /* libz.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D99AA672E462DE20075FF62 /* libz.1.dylib */; };
 		9D99AA872E4631490075FF62 /* libz.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 9D99AA672E462DE20075FF62 /* libz.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		9D9D557E2F8C1EEA007A10D6 /* blitterDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D9D557D2F8C1EEA007A10D6 /* blitterDebugger.cpp */; };
+		9D9D557F2F8C1EEA007A10D6 /* blitterDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D9D557D2F8C1EEA007A10D6 /* blitterDebugger.cpp */; };
+		9D9D55842F8C2099007A10D6 /* settings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D9D55802F8C2099007A10D6 /* settings.cpp */; };
+		9D9D55852F8C2099007A10D6 /* settings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D9D55802F8C2099007A10D6 /* settings.cpp */; };
+		9D9D55862F8C2099007A10D6 /* drivers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D9D55812F8C2099007A10D6 /* drivers.cpp */; };
+		9D9D55872F8C2099007A10D6 /* drivers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D9D55812F8C2099007A10D6 /* drivers.cpp */; };
 		9DA70F462E101AF000F1DC5B /* scp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DA70F452E101AF000F1DC5B /* scp.cpp */; };
 		9DBA88382ED0B94400DF0756 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */; };
 		9DBA88392ED0B94400DF0756 /* dasmHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9DBA88362ED0B94300DF0756 /* dasmHandler.cpp */; };
@@ -634,10 +640,6 @@
 		9D8FAA8E2CB3F6EF006905BE /* archiveViewer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = archiveViewer.cpp; sourceTree = "<group>"; };
 		9D8FAA8F2CB3F6EF006905BE /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		9D8FAA902CB3F6EF006905BE /* slider.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = slider.h; sourceTree = "<group>"; };
-		9D8FAA922CB3F6EF006905BE /* settings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = settings.h; sourceTree = "<group>"; };
-		9D8FAA932CB3F6EF006905BE /* drivers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drivers.cpp; sourceTree = "<group>"; };
-		9D8FAA942CB3F6EF006905BE /* drivers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drivers.h; sourceTree = "<group>"; };
-		9D8FAA952CB3F6EF006905BE /* settings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = settings.cpp; sourceTree = "<group>"; };
 		9D8FAA962CB3F6EF006905BE /* config.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = config.cpp; sourceTree = "<group>"; };
 		9D8FAA972CB3F6EF006905BE /* archiveViewer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = archiveViewer.h; sourceTree = "<group>"; };
 		9D8FAA982CB3F6EF006905BE /* sliderAlt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sliderAlt.h; sourceTree = "<group>"; };
@@ -1118,6 +1120,12 @@
 		9D99AA682E462DE20075FF62 /* libfreetype.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libfreetype.6.dylib; path = data/libs/shared/macIntel/libfreetype.6.dylib; sourceTree = "<group>"; };
 		9D99AA692E462DE20075FF62 /* libbrotlicommon.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbrotlicommon.1.dylib; path = data/libs/shared/macIntel/libbrotlicommon.1.dylib; sourceTree = "<group>"; };
 		9D99AA6A2E462DE20075FF62 /* libbrotlidec.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbrotlidec.1.dylib; path = data/libs/shared/macIntel/libbrotlidec.1.dylib; sourceTree = "<group>"; };
+		9D9D557C2F8C1EEA007A10D6 /* blitterDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blitterDebugger.h; sourceTree = "<group>"; };
+		9D9D557D2F8C1EEA007A10D6 /* blitterDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = blitterDebugger.cpp; sourceTree = "<group>"; };
+		9D9D55802F8C2099007A10D6 /* settings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = settings.cpp; sourceTree = "<group>"; };
+		9D9D55812F8C2099007A10D6 /* drivers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = drivers.cpp; sourceTree = "<group>"; };
+		9D9D55822F8C2099007A10D6 /* drivers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drivers.h; sourceTree = "<group>"; };
+		9D9D55832F8C2099007A10D6 /* settings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = settings.h; sourceTree = "<group>"; };
 		9DA70F442E101AF000F1DC5B /* scp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = scp.h; sourceTree = "<group>"; };
 		9DA70F452E101AF000F1DC5B /* scp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
 		9DA70F472E101AFF00F1DC5B /* scp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = scp.cpp; sourceTree = "<group>"; };
@@ -1541,10 +1549,10 @@
 		9D8FAA912CB3F6EF006905BE /* layouts */ = {
 			isa = PBXGroup;
 			children = (
-				9D8FAA922CB3F6EF006905BE /* settings.h */,
-				9D8FAA932CB3F6EF006905BE /* drivers.cpp */,
-				9D8FAA942CB3F6EF006905BE /* drivers.h */,
-				9D8FAA952CB3F6EF006905BE /* settings.cpp */,
+				9D9D55812F8C2099007A10D6 /* drivers.cpp */,
+				9D9D55822F8C2099007A10D6 /* drivers.h */,
+				9D9D55802F8C2099007A10D6 /* settings.cpp */,
+				9D9D55832F8C2099007A10D6 /* settings.h */,
 			);
 			path = layouts;
 			sourceTree = "<group>";
@@ -2711,6 +2719,8 @@
 		9DBA88402ED0C7D400DF0756 /* debugger */ = {
 			isa = PBXGroup;
 			children = (
+				9D9D557D2F8C1EEA007A10D6 /* blitterDebugger.cpp */,
+				9D9D557C2F8C1EEA007A10D6 /* blitterDebugger.h */,
 				9DC0D17A2F69EA06005DB0ED /* conditionViewDebugger.cpp */,
 				9DC0D1792F69EA06005DB0ED /* conditionViewDebugger.h */,
 				9DC0D17B2F69EA06005DB0ED /* copperDebugger.cpp */,
@@ -2936,10 +2946,12 @@
 				9D8FADF92CB40DF8006905BE /* DLLoader.cpp in Sources */,
 				9D8FAE4B2CB40DF9006905BE /* m6510.cpp in Sources */,
 				9DFA8D432E6F062C00DDD746 /* palette.cpp in Sources */,
+				9D9D55862F8C2099007A10D6 /* drivers.cpp in Sources */,
 				9DBA88432ED0C7D400DF0756 /* debugger.cpp in Sources */,
 				9D8FAE822CB40DF9006905BE /* vicII.cpp in Sources */,
 				9D8FAE432CB40DF9006905BE /* easyFlash3.cpp in Sources */,
 				9D8FAE692CB40DF9006905BE /* iec.cpp in Sources */,
+				9D9D557E2F8C1EEA007A10D6 /* blitterDebugger.cpp in Sources */,
 				9D8FADFC2CB40DF8006905BE /* mx29lv640eb.cpp in Sources */,
 				9D8FAE2F2CB40DF9006905BE /* filesystem.cpp in Sources */,
 				9D4D10442F071C6B00296467 /* ciaDebugger.cpp in Sources */,
@@ -3015,6 +3027,7 @@
 				9D8FAB1F2CB3F6F0006905BE /* view.cpp in Sources */,
 				9D6404362DCDEE1C00624A00 /* hdController.cpp in Sources */,
 				9D64044A2DCDEF2E00624A00 /* hardDiskStructure.cpp in Sources */,
+				9D9D55842F8C2099007A10D6 /* settings.cpp in Sources */,
 				9D8FAB2B2CB3F6F0006905BE /* emuThread.cpp in Sources */,
 				9D8FADFA2CB40DF8006905BE /* m93c86.cpp in Sources */,
 				9D8FB4E22CB47539006905BE /* icons.cpp in Sources */,
@@ -3122,10 +3135,12 @@
 				9DECF9672E45F309005C0BBA /* DLLoader.cpp in Sources */,
 				9DECF9682E45F309005C0BBA /* m6510.cpp in Sources */,
 				9DFA8D442E6F062C00DDD746 /* palette.cpp in Sources */,
+				9D9D55872F8C2099007A10D6 /* drivers.cpp in Sources */,
 				9DBA88442ED0C7D400DF0756 /* debugger.cpp in Sources */,
 				9DECF9692E45F309005C0BBA /* vicII.cpp in Sources */,
 				9DECF96A2E45F309005C0BBA /* easyFlash3.cpp in Sources */,
 				9DECF96B2E45F309005C0BBA /* iec.cpp in Sources */,
+				9D9D557F2F8C1EEA007A10D6 /* blitterDebugger.cpp in Sources */,
 				9DECF96C2E45F309005C0BBA /* mx29lv640eb.cpp in Sources */,
 				9DECF96D2E45F309005C0BBA /* filesystem.cpp in Sources */,
 				9D4D10452F071C6B00296467 /* ciaDebugger.cpp in Sources */,
@@ -3201,6 +3216,7 @@
 				9DECF9A52E45F309005C0BBA /* view.cpp in Sources */,
 				9DECF9A62E45F309005C0BBA /* hdController.cpp in Sources */,
 				9DECF9A72E45F309005C0BBA /* hardDiskStructure.cpp in Sources */,
+				9D9D55852F8C2099007A10D6 /* settings.cpp in Sources */,
 				9DECF9A82E45F309005C0BBA /* emuThread.cpp in Sources */,
 				9DECF9A92E45F309005C0BBA /* m93c86.cpp in Sources */,
 				9DECF9AA2E45F309005C0BBA /* icons.cpp in Sources */,
@@ -3259,6 +3275,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -3325,6 +3342,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

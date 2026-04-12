@@ -746,6 +746,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                 case DebuggerAction::SoftstopBlitter:
                     agnus.debugger.softStopBlitterDma();
                     break;
+                default: break;
             }
             break;
 

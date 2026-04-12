@@ -126,6 +126,7 @@ struct pWidget {
     virtual auto setBackgroundColor(unsigned color) -> void {}
     virtual auto setForegroundColor(unsigned color) -> void {}
     virtual auto setForegroundColorThreaded(unsigned color) -> void {}
+    auto setAttributedText() -> void;
     auto getTextColor() -> NSColor*;
     auto getMinimumSize() -> Size;
     auto add() -> void;
@@ -329,6 +330,7 @@ struct pCheckBox : pWidget {
     auto setChecked(bool checked) -> void;
     auto setText(const std::string& text) -> void;
     auto setGeometry(Geometry geometry) -> void;
+    auto setForegroundColor(unsigned color) -> void;
     auto init() -> void;
 
     pCheckBox(CheckBox& checkBox) : pWidget(checkBox), checkBox(checkBox) { }

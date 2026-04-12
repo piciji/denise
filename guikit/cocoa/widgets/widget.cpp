@@ -108,4 +108,15 @@ auto pWidget::getTextColor() -> NSColor* {
     return textColor;
 }
 
+auto pWidget::setAttributedText() -> void {
+    NSMutableAttributedString* attrTitle =
+        [[NSMutableAttributedString alloc] initWithString:[NSString stringWithUTF8String:widget.text().c_str()]];
+    
+    NSUInteger len = [attrTitle length];
+    NSRange range = NSMakeRange(0, len);
+    [attrTitle addAttribute:NSForegroundColorAttributeName value:getTextColor() range:range];
+    [attrTitle fixAttributesInRange:range];
+    [(id)cocoaView setAttributedTitle:attrTitle];
+}
+
 }

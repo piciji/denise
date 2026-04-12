@@ -22,9 +22,9 @@ BlitterDebugger::Blitter::ColLeft::Control::BltSize::BltSize() {
     editCur.setEditable( false );
 
     append( label, {0u, 0u}, 10 );
-    append( edit, {40u, 0u}, 10 );
+    append( edit, {50u, 0u}, 10 );
     append( labelCur, {0u, 0u}, 10 );
-    append( editCur, {40u, 0u} );
+    append( editCur, {50u, 0u} );
 
     setAlignment( 0.5 );
 }

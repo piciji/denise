@@ -44,9 +44,16 @@ auto pCheckBox::setChecked(bool checked) -> void {
 
 auto pCheckBox::setText(const std::string& text) -> void {
     @autoreleasepool {
-        [(id)cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
+        if (checkBox.overrideForegroundColor())
+            setAttributedText();
+        else
+            [(id)cocoaView setTitle:[NSString stringWithUTF8String:text.c_str()]];
     }
     calculatedMinimumSize.updated = false;
+}
+
+auto pCheckBox::setForegroundColor(unsigned color) -> void {
+    setAttributedText();
 }
 
 auto pCheckBox::init() -> void {
