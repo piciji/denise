@@ -169,13 +169,13 @@ struct Agnus {
         unsigned cycles;
     } overclock;
 
+    enum DmaLog : int { DmaLogNone = 0, DmaLogBus = 1, DmaLogView = 2, DmaLogBlitter = 4 };
+
     struct Debugger {
         Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
         uint32_t addr;
 
-        bool dmaLog = false;
-        bool requestDmaLog = false;
-        bool dmaView = false;
+        unsigned dmaLog = DmaLogNone;
 
         uint32_t dmaWatchers[4] = { 0 };
 
@@ -194,6 +194,7 @@ struct Agnus {
         unsigned scrollCounter = 0;
         auto enableDmaView(bool state, bool withScrolling = true) -> void;
         auto enableDmaLog(bool state) -> void;
+        auto softStopBlitterDma() -> void;
     } debugger;
 
     struct Sprite {

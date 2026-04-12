@@ -19,6 +19,11 @@
     #define PBS_DISABLED 4
 #endif
 
+pButton::~pButton() {
+    if (hCursor)
+        SetCursor(hCursor);
+}
+
 auto pButton::minimumSize() -> Size {
     Size size = getMinimumSize();
 
@@ -212,6 +217,12 @@ auto CALLBACK pButton::subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
                 return 0;
             } break;
         }
+
+        case WM_SETCURSOR:
+            if (!button->p.hCursor)
+                button->p.hCursor = LoadCursor(0, IDC_HAND);
+            SetCursor(button->p.hCursor);
+            return 1;
 
         case WM_ERASEBKGND: {
             const auto* hdc = reinterpret_cast<HDC>(wparam);

@@ -505,6 +505,7 @@ struct pImageView : pWidget {
 struct pButton : pWidget {
     Button& button;
     HBITMAP hbitmap = nullptr;
+    HCURSOR hCursor = nullptr;
 
     auto setImage(Image* image) -> void;
     auto setText(const std::string& text) -> void;
@@ -519,6 +520,7 @@ struct pButton : pWidget {
     static auto CALLBACK subclassWndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT;
 
     pButton(Button& button) : pWidget(button), button(button) {}
+    ~pButton();
 };
 
 struct pStepButton : pWidget {

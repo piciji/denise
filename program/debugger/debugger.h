@@ -23,7 +23,7 @@ struct DbgWatcher;
 
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU, CIA, Video, Audio, DMA, Copper
+        CPU, SCPU, Memory, MemorySCPU, CIA, Video, Audio, DMA, Copper, Blitter
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );
@@ -63,6 +63,7 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image checkedImg;
     GUIKIT::Image forwardImg;
     GUIKIT::Image systemImg;
+    GUIKIT::Image nextImg;
 
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;
@@ -126,6 +127,11 @@ struct Debugger : GUIKIT::Window {
     static auto updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
     static auto updateReg(GUIKIT::CheckBox& reg, bool state) -> void;
     static auto updateReg(GUIKIT::LineEdit& widget, const std::string& text, unsigned ident) -> void;
+    static auto hilight(GUIKIT::CheckBox& reg, bool state) -> void;
+
+    template <unsigned length>
+    static auto updateRegBin(GUIKIT::LineEdit& reg, unsigned val) -> void;
+    auto updateRegDec(GUIKIT::LineEdit& reg, unsigned val) -> void;
 
     static auto isPaused() -> bool;
     static auto stepOut(Emulator::Interface* emulator) -> void;

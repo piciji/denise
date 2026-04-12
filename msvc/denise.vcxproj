@@ -270,6 +270,7 @@
     <ClInclude Include="..\program\config\slider.h" />
     <ClInclude Include="..\program\config\sliderAlt.h" />
     <ClInclude Include="..\program\debugger\audioDebugger.h" />
+    <ClInclude Include="..\program\debugger\blitterDebugger.h" />
     <ClInclude Include="..\program\debugger\ciaDebugger.h" />
     <ClInclude Include="..\program\debugger\conditionViewDebugger.h" />
     <ClInclude Include="..\program\debugger\copperDebugger.h" />
@@ -1679,18 +1680,19 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_config</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\program\config\layouts\drivers.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\program\config\layouts\settings.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\program\debugger\audioDebugger.cpp" />
+    <ClCompile Include="..\program\debugger\blitterDebugger.cpp" />
     <ClCompile Include="..\program\debugger\ciaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\conditionViewDebugger.cpp" />
     <ClCompile Include="..\program\debugger\copperDebugger.cpp" />

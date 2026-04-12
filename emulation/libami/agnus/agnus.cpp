@@ -264,6 +264,7 @@ auto Agnus::power(bool softReset, bool resetInstruction) -> void {
     updateEvent<EVENT_HTOTAL>(0xe2 - hPos);
     denise.linePtr = frameBuffer;
     debugger.frameLine = debugger.dmaFrame;
+    debugger.dmaLog &= ~(DmaLogBlitter);
     lineVCounter = 0;
     vBlankOffset = 0;
     crop.reset();
@@ -340,6 +341,13 @@ auto Agnus::addDmaLogEntry() -> void {
     dmaLogger.mnemonic = nullptr;
     dmaLogger.hilight = DebuggerDmaHilight::Default;
     peekDmaWatcher(dmaLogger);
+
+    if (debugger.dmaLog & DmaLogBlitter) {
+        if (busUsage >= BUS_USAGE_BLITTER_A && busUsage <= BUS_USAGE_BLITTER_D) {
+            debugger.dmaLog &= ~DmaLogBlitter;
+            debugPointReached( (int)DebuggerAction::SoftstopBlitter, 0 );
+        }
+    }
 }
 
 template<bool logDma> auto Agnus::addWaitstatesToCPU() -> void {
@@ -1035,6 +1043,7 @@ auto Agnus::debugPointReached(int source, unsigned addr) -> void {
         case M68FAMILY::M68000::SoftStop: action = DebuggerAction::Softstop; break;
         case (int)DebuggerAction::BreakpointCopper: action = DebuggerAction::BreakpointCopper; break;
         case (int)DebuggerAction::WatchpointCopper: action = DebuggerAction::WatchpointCopper; break;
+        case (int)DebuggerAction::SoftstopBlitter: action = DebuggerAction::SoftstopBlitter; break;
         default: return;
     }
 
@@ -1091,6 +1100,7 @@ auto Agnus::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
 auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.hPos = hPos;
     snap.vPos = vPos;
+    snap.busUsage = busUsage;
     snap.callbackAction = debugger.action;
     snap.callbackAddress = debugger.addr;
     snap.codeMaybeModified = cpu.hasModifiedCode();
@@ -1098,7 +1108,7 @@ auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
 
 auto Agnus::Debugger::enableDmaView(bool state, bool withScrolling) -> void {
     if (state) {
-        dmaView = true;
+        dmaLog |= DmaLogView;
         if (!withScrolling) {
             scrollDirection = 0;
             scrollCounter = DEBUG_SCROLL_MAX;
@@ -1107,14 +1117,12 @@ auto Agnus::Debugger::enableDmaView(bool state, bool withScrolling) -> void {
 
     } else {
         if (!withScrolling) {
-            dmaView = false;
+            dmaLog &= ~DmaLogView;
             scrollCounter = 0;
             scrollDirection = 0;
         } else
             scrollDirection = -1;
     }
-
-    dmaLog = requestDmaLog || dmaView;
 }
 
 auto Agnus::resetDebuggerDma() -> void {
@@ -1127,8 +1135,14 @@ auto Agnus::resetDebuggerDma() -> void {
 }
 
 auto Agnus::Debugger::enableDmaLog(bool state) -> void {
-    requestDmaLog = state;
-    dmaLog = requestDmaLog || dmaView;
+    if (state)
+        dmaLog |= DmaLogBus;
+    else
+        dmaLog &= ~DmaLogBus;
+}
+
+auto Agnus::Debugger::softStopBlitterDma() -> void {
+    dmaLog |= DmaLogBlitter;
 }
 
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;

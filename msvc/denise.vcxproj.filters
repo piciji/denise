@@ -1246,6 +1246,9 @@
     <ClInclude Include="..\emulation\libc64\disk\cpu\m6502New.h">
       <Filter>emulation\libc64\disk\cpu</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\debugger\blitterDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2504,6 +2507,9 @@
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\disk\cpu\m6502New.cpp">
       <Filter>emulation\libc64\disk\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\blitterDebugger.cpp">
+      <Filter>program\debugger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

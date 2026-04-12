@@ -20,9 +20,7 @@ set(headers
         audio/manager.h
         cmd/cmd.h
         config/layouts/drivers.h
-        config/layouts/drivers.cpp
         config/layouts/settings.h
-        config/layouts/settings.cpp
         config/archiveViewer.h
         config/config.h
         config/slider.h
@@ -90,8 +88,11 @@ set(srcs
         debugger/copperDebugger.cpp
         debugger/conditionViewDebugger.cpp
         debugger/watcherHelper.cpp
+        debugger/blitterDebugger.cpp
         view/status.cpp
         config/config.cpp
+        config/layouts/drivers.cpp
+        config/layouts/settings.cpp
         emuconfig/config.cpp
         emuconfig/layouts/model.cpp
         emuconfig/layouts/presentation.cpp

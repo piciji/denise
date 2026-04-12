@@ -95,8 +95,7 @@ auto Agnus::startHblankDebug() -> void {
         lineVCounter = 0;
 
         if (endDmaView) {
-            debugger.dmaView = false;
-            debugger.dmaLog = debugger.requestDmaLog;
+            debugger.dmaLog &= ~DmaLogView;
             hBlank = false;
             return;
         }
@@ -132,7 +131,7 @@ auto Agnus::startHblankDebug() -> void {
 }
 
 auto Agnus::startHblank() -> void {
-    if (debugger.dmaView)
+    if (debugger.dmaLog & DmaLogView)
         return startHblankDebug();
 
     bool _vblank = vBlank && !vBlankStart;
@@ -227,7 +226,7 @@ auto Agnus::startHsync() -> void {
     if (state) {
         vBlank = true;
         vBlankStart = true;
-        if (!debugger.dmaView)
+        if ((debugger.dmaLog & DmaLogView) == 0)
             startHblank();
         if (system->isProcessFrame())
             observeFrameDuration();
@@ -242,7 +241,7 @@ auto Agnus::startHsync() -> void {
 auto Agnus::endHblank() -> void {
     denise.process();
 
-    if (debugger.dmaView)
+    if (debugger.dmaLog & DmaLogView)
         return;
 
     if (hBlank) {
@@ -342,7 +341,7 @@ auto Agnus::sanitizeCrop(int width, int height) -> void {
 }
 
 template<bool quadruple> auto Agnus::doubleResMidframe(bool fromHires) -> void {
-    if (debugger.dmaView)
+    if (debugger.dmaLog & DmaLogView)
         return doubleResMidDebugframe<quadruple>(fromHires);
 
     uint16_t* curLinePtr;

@@ -56,8 +56,8 @@ VideoDebugger::Video::Wraper::RegWrapper::RegWrapper(Debugger* debugger) {
 }
 
 VideoDebugger::Video::Wraper::Flags::Block::Block() {
-    flag1.setReadonly( false );
-    flag2.setReadonly( false );
+    flag1.setReadonly( );
+    flag2.setReadonly( );
     append( flag1, {0u, 0u}, 7 );
     append( flag2, {0u, 0u} );
 }

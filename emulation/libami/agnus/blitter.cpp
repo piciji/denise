@@ -418,6 +418,34 @@ auto Blitter::setBltADat(uint16_t value) -> void {
     bltAdat = value;
 }
 
+auto Blitter::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.blitter;
+    s.bltCon0 = bltcon0;
+    s.bltCon1 = bltcon1;
+    s.bltSizeW = bltSizeW;
+    s.bltSizeH = bltSizeH;
+    s.curW = curW;
+    s.curH = curH;
+    s.bltAdat = bltAdat;
+    s.bltBdat = bltBdat;
+    s.bltCdat = bltCdat;
+    s.bltDdat = bltDdat;
+    s.bltADatOld = bltADatOld;
+    s.bltBDatOld = bltBDatOld;
+    s.bltADatShifted = bltADatShifted;
+    s.bltBDatShifted = bltBDatShifted;
+    s.bltAfwm = bltAfwm;
+    s.bltAlwm = bltAlwm;
+    s.fillIn = fillIn;
+    s.fillCarry = fillCarry;
+    s.zero = zero;
+    s.busy = busy;
+    if (bltcon1 & 1)
+        s.minterm = doMinterm(bltcon0 & 0xff, bltADatShifted, (bltBDatShifted & 1) ? 0xffff : 0, bltCdat);
+    else
+        s.minterm = doMinterm(bltcon0 & 0xff, bltADatShifted, bltBDatShifted, bltCdat);
+}
+
 auto Blitter::serialize(Emulator::Serializer& s) -> void {
     s.integer(bltcon0);
     s.integer(bltcon1);

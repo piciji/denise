@@ -317,8 +317,8 @@ auto CopperDebugger::translateTheme() -> void {
     copper->lists[0].control.valueEdit.setPlaceholder( trans->getA( "value" )  );
     copper->lists[1].control.valueEdit.setPlaceholder( trans->getA( "value" )  );
 
-    copperControl->softStopButton.setText( "NEXT" );
     copperControl->symbolic.setText( trans->getA("symbolic") );
+    copperControl->softStopButton.setTooltip( showTips ? trans->getA( "step next copper" ) : "" );
 }
 
 auto CopperDebugger::updateTheme() -> void {
@@ -414,6 +414,7 @@ auto CopperDebugger::prepareTheme(bool external) -> void {
 auto CopperDebugger::buildControl() -> GUIKIT::Layout* {
     copperControl = new CopperControl();
 
+    copperControl->softStopButton.setImage( &nextImg );
     copperControl->softStopButton.onActivate = [this]() {
         if (emulator != activeEmulator)
             return;

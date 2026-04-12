@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <functional>
 #include <vector>
+#include "../system/debuggerSnapshot.h"
 
 namespace Emulator {
     struct Serializer;
@@ -39,6 +40,8 @@ struct Blitter {
     uint16_t bltBdat;
     uint16_t bltCdat;
     uint16_t bltDdat;
+
+    uint16_t fillIn;
 
     uint16_t bltADatOld;
     uint16_t bltBDatOld;
@@ -112,6 +115,7 @@ struct Blitter {
 
     auto activateLLEWhenNeeded(uint8_t bltRegister, uint16_t value) -> void;
     auto serialize(Emulator::Serializer& s) -> void;
+    auto updateDmaSnapshot(DebuggerSnapshot& snap) -> void;
 
     auto setBltCon0(uint16_t value) -> void;
     auto setBltCon0L(uint16_t value) -> void;

@@ -30,6 +30,7 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
 
     uint8_t hPos;
     uint16_t vPos;
+    int busUsage;
 
     struct {
         Emulator::Interface::DebuggerDma debuggerDma[256];
@@ -153,6 +154,35 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         std::pair<const uint32_t, uint32_t>* list2 = nullptr;
         bool cdang;
     } copper;
+
+    struct {
+        uint16_t bltCon0;
+        uint16_t bltCon1;
+        uint16_t bltSizeW;
+        uint16_t bltSizeH;
+        uint16_t curW;
+        uint16_t curH;
+
+        uint16_t bltAdat;
+        uint16_t bltBdat;
+        uint16_t bltCdat;
+        uint16_t bltDdat;
+
+        uint16_t bltADatOld;
+        uint16_t bltBDatOld;
+        uint16_t bltADatShifted;
+        uint16_t bltBDatShifted;
+        uint16_t minterm;
+
+        uint16_t bltAfwm;
+        uint16_t bltAlwm;
+
+        uint16_t fillIn;
+
+        bool fillCarry;
+        bool zero;
+        bool busy;
+    } blitter;
 
     constexpr static Emulator::Interface::DebuggerIdent CiaPorts[2][2][8] = {
         { // CIA A

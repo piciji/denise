@@ -2,6 +2,7 @@
 #include "view.h"
 #include "../program.h"
 #include "../config/config.h"
+#include "../config/layouts/settings.h"
 #include "../emuconfig/config.h"
 #include "../input/manager.h"
 #include "../config/archiveViewer.h"
@@ -1383,6 +1384,7 @@ auto View::buildMenu() -> void {
             };
             sM.debugger->append( *sM.debuggerAudio );
             sM.debuggerCopper = nullptr;
+            sM.debuggerBlitter = nullptr;
         } else {
             sM.debuggerCopper = new GUIKIT::MenuItem;
             sM.debuggerCopper->onActivate = [this, emulator]() {
@@ -1391,6 +1393,15 @@ auto View::buildMenu() -> void {
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerCopper );
+
+            sM.debuggerBlitter = new GUIKIT::MenuItem;
+            sM.debuggerBlitter->onActivate = [this, emulator]() {
+                emuThread->lock();
+                program->openDebugger(emulator, Debugger::Mode::Blitter);
+                emuThread->unlock();
+            };
+            sM.debugger->append( *sM.debuggerBlitter );
+
             sM.debuggerAudio = nullptr;
         }
 
@@ -2201,6 +2212,8 @@ auto View::translate() -> void {
 
         if (sysMenu.debuggerCopper)
             sysMenu.debuggerCopper->setText(trans->getA( "Copper"));
+        if (sysMenu.debuggerBlitter)
+            sysMenu.debuggerBlitter->setText(trans->getA( "Blitter"));
 
         sysMenu.debuggerDma->setText(trans->get("DMA"));
 

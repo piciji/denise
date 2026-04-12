@@ -63,6 +63,7 @@ auto Blitter::stateMachine() -> void {
             bltDdat = doMinterm(bltcon0 & 0xff, bltADatShifted, bltBDatShifted, bltCdat);
 
             if (isFillMode()) {
+                fillIn = bltDdat;
                 uint16_t resultLo = fill[(fillCarry << 9) | (isExclusiveFill << 4) | (bltDdat & 0xff)];
                 fillCarry = resultLo >> 8;
                 uint16_t resultHi = fill[(fillCarry << 9) | (isExclusiveFill << 4) | ((bltDdat >> 8) & 0xff)];

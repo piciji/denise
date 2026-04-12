@@ -11,6 +11,7 @@
 #include "copperDebugger.h"
 #include "conditionViewDebugger.h"
 #include "watcherHelper.h"
+#include <bitset>
 
 GUIKIT::Timer* Debugger::timerVisibility = nullptr;
 
@@ -115,6 +116,7 @@ auto Debugger::build() -> void {
     checkedImg.loadPng((uint8_t*)Icons::checked, sizeof(Icons::checked));
     forwardImg.loadPng((uint8_t*)Icons::forward, sizeof(Icons::forward));
     systemImg.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
+    nextImg.loadPng((uint8_t*)Icons::next, sizeof(Icons::next));
 
     control = new Control(this);
 
@@ -444,6 +446,21 @@ auto Debugger::updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void {
     }
 }
 
+auto Debugger::updateRegDec(GUIKIT::LineEdit& reg, unsigned val) -> void {
+    if ((unsigned)reg.getStore() != val) {
+        reg.setStore( static_cast<int>(val) );
+        reg.setText( std::to_string(val) );
+    }
+}
+
+template <unsigned length>
+auto Debugger::updateRegBin(GUIKIT::LineEdit& reg, unsigned val) -> void {
+    if ((unsigned)reg.getStore() != val) {
+        reg.setStore( static_cast<int>(val) );
+        reg.setText( std::bitset<length>(val).to_string() );
+    }
+}
+
 auto Debugger::updateReg(GUIKIT::LineEdit& widget, const std::string& text, unsigned ident) -> void {
     if ((unsigned)widget.getStore() != ident) {
         widget.setStore( static_cast<int>(ident) );
@@ -454,6 +471,15 @@ auto Debugger::updateReg(GUIKIT::LineEdit& widget, const std::string& text, unsi
 auto Debugger::updateReg(GUIKIT::CheckBox& reg, bool state) -> void {
     if (reg.checked() != state) {
         reg.setChecked( state );
+    }
+}
+
+auto Debugger::hilight(GUIKIT::CheckBox& reg, bool state) -> void {
+    if (reg.overrideForegroundColor() != state) {
+        if (state)
+            reg.setForegroundColor( SUCCESS_COLOR );
+        else
+            reg.resetForegroundColor();
     }
 }
 
@@ -569,3 +595,5 @@ auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position)
     conditionViewDebugger->create(watcher, position);
     conditionViewDebugger->open();
 }
+
+template auto Debugger::updateRegBin<16>(GUIKIT::LineEdit& reg, unsigned val) -> void;

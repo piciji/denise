@@ -381,7 +381,7 @@ auto System::setFirmware(unsigned typeId, uint8_t* data, unsigned size, bool all
 
 auto System::videoRefresh( uint16_t* frame, unsigned width, unsigned height, unsigned linePitch, uint8_t options) -> void {
     if (!runAhead.pos && frame) {
-        if (agnus.debugger.dmaView)
+        if (agnus.debugger.dmaLog & Agnus::DmaLogView)
             options |= 0x80;
         crop.apply( frame, width, height, linePitch, options & 0x8f );
         // for lightguns
@@ -738,6 +738,17 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                     break;
             } break;
 
+        case DebuggerTheme::Blitter:
+            switch (action) {
+                case DebuggerAction::None:
+                    debuggerSnapshot.themes |= (unsigned)theme;
+                    break;
+                case DebuggerAction::SoftstopBlitter:
+                    agnus.debugger.softStopBlitterDma();
+                    break;
+            }
+            break;
+
         case DebuggerTheme::Unspecified: {
             switch (action) {
                 case DebuggerAction::Line:
@@ -804,6 +815,10 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
                     break;
             } break;
 
+        case DebuggerTheme::Blitter:
+            debuggerSnapshot.themes &= ~(unsigned)theme;
+            break;
+
         default:
             debuggerSnapshot.themes &= ~(unsigned)theme;
             break;
@@ -841,6 +856,8 @@ auto System::updateDebuggerSnapshot() -> void {
         agnus.updateDmaSnapshot( debuggerSnapshot );
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Copper)
         agnus.copper.updateDmaSnapshot( debuggerSnapshot );
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Blitter)
+        agnus.blitter.updateDmaSnapshot( debuggerSnapshot );
 }
 
 auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {

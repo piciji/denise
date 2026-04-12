@@ -196,4 +196,6 @@ extern uint8_t circleBlue[364];
 
 extern uint8_t memoryBorder[396];
 
+extern uint8_t next[231];
+
 }

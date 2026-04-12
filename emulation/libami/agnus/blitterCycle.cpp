@@ -84,6 +84,7 @@ template<uint16_t jobs, uint8_t nextCycle> auto Blitter::blockMode() -> void {
         if constexpr (!!(jobs & BLT_FILL)) {
             #define isExclusiveFill (bltcon1 & 0x10)
 
+            fillIn = bltDdat;
             uint16_t resultLo = fill[ (fillCarry << 9) | (isExclusiveFill << 4) | (bltDdat & 0xff)];
             fillCarry = resultLo >> 8;
             uint16_t resultHi = fill[ (fillCarry << 9) | (isExclusiveFill << 4) | ((bltDdat >> 8) & 0xff)];

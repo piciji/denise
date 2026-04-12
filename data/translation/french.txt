@@ -976,3 +976,5 @@ Medium = Medium
 FPS View = FPS View
 prioritise controlport = prioritise Controlport
 prioritise keyboard = prioritise Keyboard
+step next copper = jump to the next Copper instruction
+step next blitter = jump to the next Blitter cycle
