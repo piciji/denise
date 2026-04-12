@@ -44,9 +44,6 @@ struct USBSIDPico {
     auto reset() -> void;
 
     auto serialize(Emulator::Serializer& s) -> void;
-
-    auto setInitialState() -> void;
-
 };
 
 }

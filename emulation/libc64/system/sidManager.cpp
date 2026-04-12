@@ -580,8 +580,7 @@ auto SidManager::enableUSBSID(bool state) -> void {
     if (!state)
         usbSIDPico.close();
     else if (system->powerOn) {
-        if (usbSIDPico.open())
-            usbSIDPico.setInitialState(); // user enabled USBSID during emulation
+        usbSIDPico.open();
     }
 }
 
