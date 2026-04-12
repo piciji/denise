@@ -1,11 +1,18 @@
 
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../../program.h"
+
+namespace ConfigView {
+
 struct LangLayout : GUIKIT::FramedHorizontalLayout {
     GUIKIT::ListView listView;
     LangLayout();
 };
 
 struct SwitchesLayout : GUIKIT::FramedVerticalLayout {
-	GUIKIT::CheckBox pause;
+    GUIKIT::CheckBox pause;
     GUIKIT::CheckBox saveSettingsOnExit;
     GUIKIT::CheckBox openFullscreen;
     GUIKIT::CheckBox questionMediaWrite;
@@ -73,3 +80,5 @@ struct SettingsLayout : GUIKIT::VerticalLayout {
     SettingsLayout();
     ~SettingsLayout();
 };
+
+}

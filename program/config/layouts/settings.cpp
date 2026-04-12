@@ -1,21 +1,34 @@
 
+#include "settings.h"
+#include "../../../data/logos.h"
+#include "../../view/view.h"
+#include "../archiveViewer.h"
+#include "../../emuconfig/config.h"
+#include "../../emuconfig/layouts/input.h"
+#include "../../thread/emuThread.h"
+#include "../slider.h"
+#include "../config.h"
+
+namespace ConfigView {
+
 SettingsLayout::~SettingsLayout() {
-    for(auto& image : images) delete image;
+    for(auto& image : images)
+        delete image;
 }
 
 AboutLayout::AboutLayout() {
     setPadding(10);
     left.append(left.author, {0u, 0u}, 2);
     left.append(left.license, {0u, 0u}, 2);
-	left.append(left.version, {0u, 0u});
-	right.append(right.icons8, {0u, 0u}, 2);
+    left.append(left.version, {0u, 0u});
+    right.append(right.icons8, {0u, 0u}, 2);
     right.append(right.trackersWorld, {0u, 0u});
-	
-	append(left, {0u, 0u}, 10);
+
+    append(left, {0u, 0u}, 10);
     append(denise, {0u, 0u});
-	append( *new GUIKIT::Widget, {~0u, 0u});
-	append(right, {0u, 0u});
-	
+    append( *new GUIKIT::Widget, {~0u, 0u});
+    append(right, {0u, 0u});
+
     setFont(GUIKIT::Font::system("bold"));
 }
 
@@ -27,7 +40,7 @@ LangLayout::LangLayout() {
 
 SwitchesLayout::SwitchesLayout() {
     setPadding(10);
-	append(pause, {~0u, 0u}, 3);
+    append(pause, {~0u, 0u}, 3);
     append(saveSettingsOnExit, {~0u, 0u}, 3);
     append(openFullscreen, {~0u, 0u}, 3);
     append(questionMediaWrite, {~0u, 0u}, 3);
@@ -73,7 +86,7 @@ SettingsLayout::SettingsLayout() {
     about.denise.setImage( &denise );
     about.denise.setUri( "https://sourceforge.net/projects/deniseemu/" );
     about.denise.setTooltip( APP_NAME );
-    
+
     upperLayout.append(lang, {~0u, ~0u}, 10);
     upperLayout.append(switches, {~0u, 0u});
     append(upperLayout, {~0u, 0u}, 10);
@@ -82,10 +95,10 @@ SettingsLayout::SettingsLayout() {
         centerLayout.append(emuSelection, { ~0u, 0u }, 10);
         centerLayout.append(styleLayout, { ~0u, 0u });
         append(centerLayout, {~0u, 0u}, 10);
-    } else    
+    } else
         append(emuSelection, {~0u, 0u}, 10);
 
-    append(about, {~0u, 0u});    
+    append(about, {~0u, 0u});
 
     for(auto& core : emuSelection.cores) {
         auto checkBox = core.checkBox;
@@ -135,8 +148,8 @@ SettingsLayout::SettingsLayout() {
     switches.saveSettingsOnExit.onToggle = [&](bool checked) {
         globalSettings->set<bool>("save_settings_on_exit", checked);
     };
-    
-	switches.pause.setChecked(globalSettings->get<bool>("pause_focus_loss", false));
+
+    switches.pause.setChecked(globalSettings->get<bool>("pause_focus_loss", false));
     switches.pause.onToggle = [&](bool checked) {
         globalSettings->set<bool>("pause_focus_loss", checked);
         if (program->hasActiveDebugger())
@@ -145,7 +158,7 @@ SettingsLayout::SettingsLayout() {
         if (checked)
             program->isPause |= 2;
     };
-    
+
     switches.openFullscreen.setChecked(globalSettings->get<bool>("open_fullscreen", false));
     switches.openFullscreen.onToggle = [&](bool checked) {
         globalSettings->set<bool>("open_fullscreen", checked);
@@ -199,7 +212,7 @@ SettingsLayout::SettingsLayout() {
     }
 
     setLang();
-    
+
     lang.listView.onChange = [&]() {
         emuThread->lock();
         changeLang();
@@ -212,10 +225,10 @@ auto SettingsLayout::changeLang() -> void {
         return;
 
     unsigned selection = lang.listView.selection();
-    
+
     if (selection >= langIdents.size())
         return;
-    
+
     std::string file = langIdents[selection];
 
     if (file.empty())
@@ -227,7 +240,7 @@ auto SettingsLayout::changeLang() -> void {
     globalSettings->set<std::string>("translation", file);
 
     if (archiveViewer)
-	    archiveViewer->translate();
+        archiveViewer->translate();
 
     view->translate();
 
@@ -235,13 +248,13 @@ auto SettingsLayout::changeLang() -> void {
         configView->translate();
         configView->synchronizeLayout();
     }
-	
-	for( auto emuView : emuConfigViews ) {
+
+    for( auto emuView : emuConfigViews ) {
         emuView->translate();
         if(emuView->inputLayout)
             emuView->inputLayout->loadDeviceList();
         emuView->synchronizeLayout();
-	}
+    }
 }
 
 auto SettingsLayout::setLang() -> void {
@@ -254,7 +267,7 @@ auto SettingsLayout::setLang() -> void {
         if (GUIKIT::String::foundSubStr(file.name, ".png"))
             continue;
 
-        langIdents.push_back( file.name );        
+        langIdents.push_back( file.name );
         lang.listView.append( { file.name } );
         addLangImage(lang.listView.rowCount() - 1, file.name );
 
@@ -269,7 +282,7 @@ auto SettingsLayout::setLang() -> void {
     if (!foundDefaultLang) {
         lang.listView.append( {"english - system"} );
         langIdents.push_back( "english - system" );
-        
+
         if (!lang.listView.selected())
             lang.listView.setSelection( lang.listView.rowCount() - 1 );
     }
@@ -306,7 +319,7 @@ auto SettingsLayout::activateCore(Emulator::Interface* emulator) -> void {
 
 auto SettingsLayout::translate() -> void {
     lang.setText( trans->get("language") );
-    
+
     for(unsigned i = 0; i < lang.listView.rowCount(); i++) {
 
         std::string _displayString = langIdents[i];
@@ -316,7 +329,7 @@ auto SettingsLayout::translate() -> void {
 
     switches.setText( trans->get("settings") );
 
-	switches.pause.setText(trans->get("pause_focus_loss"));
+    switches.pause.setText(trans->get("pause_focus_loss"));
     switches.saveSettingsOnExit.setText(trans->get("save_changes_on_exit"));
     switches.saveSettingsOnExit.setTooltip(trans->get("save changes on exit tooltip"));
     switches.openFullscreen.setText(trans->get("open_fullscreen"));
@@ -326,14 +339,14 @@ auto SettingsLayout::translate() -> void {
 
     about.left.license.setText( trans->get("license", {}, true) + " " + LICENSE );
     about.left.author.setText( trans->get("author", {}, true) + " " + AUTHOR );
-	about.left.version.setText( trans->get("Version", {}, true) + " " + VERSION );
+    about.left.version.setText( trans->get("Version", {}, true) + " " + VERSION );
     about.setText( trans->get("about", {{"%app%", APP_NAME}}) );
-	
+
     auto link = trans->get("go_to_website");
-    
-	about.right.icons8.setText("Icons8: " + link);
-	about.right.icons8.setUri("https://icons8.com", link);
-	about.right.icons8.setTooltip("https://icons8.com");
+
+    about.right.icons8.setText("Icons8: " + link);
+    about.right.icons8.setUri("https://icons8.com", link);
+    about.right.icons8.setTooltip("https://icons8.com");
 
     about.right.trackersWorld.setText("Trackers-World.NET: " + link);
     about.right.trackersWorld.setUri("https://www.twdotnet.de/wp/2016/11/c64-floppy-sounds/", link);
@@ -345,4 +358,6 @@ auto SettingsLayout::translate() -> void {
     styleLayout.osSetting.setText(trans->getA("OS Setting"));
     styleLayout.light.setText( trans->getA("Light") );
     styleLayout.dark.setText(trans->getA("Dark"));
+}
+
 }

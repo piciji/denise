@@ -2,23 +2,21 @@
 #include "config.h"
 #include "archiveViewer.h"
 #include "../view/view.h"
-#include "../view/status.h"
+
 #include "../emuconfig/config.h"
 #include "../program.h"
 #include "../view/message.h"
 #include "../input/manager.h"
 #include "../audio/manager.h"
 #include "../../data/icons.h"
-#include "../../data/logos.h"
 #include "../thread/emuThread.h"
-#include "../emuconfig/layouts/input.h"
+
+#include "layouts/drivers.h"
+#include "layouts/settings.h"
 
 ConfigView::TabWindow* configView = nullptr;
 
 namespace ConfigView {
-
-#include "layouts/settings.cpp"
-#include "layouts/drivers.cpp"
 
 TabWindow::TabWindow() {
     message = new Message(this);

@@ -1,4 +1,11 @@
 
+#pragma once
+
+#include "../../../guikit/api.h"
+#include "../slider.h"
+
+namespace ConfigView {
+
 struct DriverLayout : GUIKIT::HorizontalLayout {
     GUIKIT::Widget spacer;
     GUIKIT::Label name;
@@ -16,7 +23,7 @@ struct DriverLayout : GUIKIT::HorizontalLayout {
 struct VideoDriverLayout : GUIKIT::FramedVerticalLayout {
 
     struct Top : GUIKIT::HorizontalLayout {
-       // GUIKIT::CheckBox exclusiveFullscreen;
+        // GUIKIT::CheckBox exclusiveFullscreen;
         GUIKIT::CheckBox hardSync;
         DriverLayout driver;
 
@@ -69,3 +76,5 @@ struct DriversLayout : GUIKIT::VerticalLayout {
 
     DriversLayout();
 };
+
+}

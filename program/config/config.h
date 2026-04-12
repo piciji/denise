@@ -9,12 +9,11 @@ namespace Emulator {
 }
 
 #include "../../guikit/api.h"
-#include "slider.h"
 
 namespace ConfigView {
 
-#include "layouts/drivers.h"
-#include "layouts/settings.h"
+struct DriversLayout;
+struct SettingsLayout;
 
 struct TabWindow : public GUIKIT::Window {
     
