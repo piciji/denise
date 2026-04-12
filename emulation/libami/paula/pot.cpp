@@ -141,10 +141,10 @@ auto Paula::potReset() -> void {
     pot.cntY0 = 0;
     pot.cntX1 = 0;
     pot.cntY1 = 0;
-    pot.capX0 = 0xff;
-    pot.capY0 = 0xff;
-    pot.capX1 = 0xff;
-    pot.capY1 = 0xff;
+    pot.capX0 = 0;
+    pot.capY0 = 0;
+    pot.capX1 = 0;
+    pot.capY1 = 0;
     pot.go = 0;
     pot.running = false;
     pot.dischargeCounter = 0;
