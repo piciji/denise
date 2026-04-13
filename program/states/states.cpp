@@ -8,13 +8,15 @@
 #include "../emuconfig/layouts/audio.h"
 #include "../emuconfig/layouts/input.h"
 #include "../emuconfig/layouts/system.h"
+#include "../helper/fileHelper.h"
+#include "../helper/miscHelper.h"
 
 std::vector<States*> states;
 
 States::States(Emulator::Interface* emulator) {
     saveSettings = new GUIKIT::Settings;
     this->emulator = emulator;
-    settings = program->getSettings(emulator);
+    settings = Program::getSettings(emulator);
 }
 
 auto States::load( std::string path, bool prependFolder ) -> void {
@@ -22,7 +24,7 @@ auto States::load( std::string path, bool prependFolder ) -> void {
     if (path.empty())
         path = generateAutoPath(false);
     else if (prependFolder)
-        path = program->generatedFolder(emulator, "states_folder", "states") + path;
+        path = FileHelper::generatedFolder(emulator, "states_folder", "states") + path;
         
     GUIKIT::File file( path );
 
@@ -50,7 +52,7 @@ auto States::load( std::string path, bool prependFolder ) -> void {
         loadFirmwarePaths( &loadSettings );
     }
         
-    program->showOpenError( errorPaths, true );
+    FileHelper::errorOpen( errorPaths, true );
 
     audioManager->drive.reset();
     emulator->loadstate( data, file.getSize() );
@@ -235,7 +237,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
             }
 
             if (IPMode) {
-                program->prepareSocket( &media, emulator, setting->path );
+                MiscHelper::prepareSocket( &media, emulator, setting->path );
                 updateImage( setting, mediaInUse );
                 continue;
             }
@@ -247,7 +249,7 @@ auto States::loadImagePaths( GUIKIT::Settings* loadSettings ) -> std::vector<Emu
 
             uint8_t* data = nullptr;
 
-            if (!program->loadImageDataWhenOk( file, setting->id, &mediaGroup, data )) {
+            if (!FileHelper::loadImageDataWhenOk( file, setting->id, &mediaGroup, data )) {
                 if ( !GUIKIT::Vector::find( errorPaths, setting->path ) )
                     errorPaths.push_back(setting->path);
                 continue;
@@ -394,7 +396,7 @@ auto States::generateAutoPath(bool createFolder) -> std::string {
         ident = "savestate";
     auto pos = settings->get<unsigned>( "save_slot", 0);
 
-    return program->generatedFolder(emulator, "states_folder", "states", createFolder) + ident + "_" + std::to_string(pos) + ".sav";
+    return FileHelper::generatedFolder(emulator, "states_folder", "states", createFolder) + ident + "_" + std::to_string(pos) + ".sav";
 }
 
 auto States::updateTapeMenu() -> void {

@@ -31,7 +31,7 @@ namespace EmuConfigView {
 
 TabWindow::TabWindow(Emulator::Interface* emulator) {
     this->emulator = emulator;
-    this->settings = program->getSettings( emulator );
+    this->settings = Program::getSettings( emulator );
     message = new Message(this);
 }
 

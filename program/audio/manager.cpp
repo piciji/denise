@@ -8,6 +8,7 @@
 #include "../view/status.h"
 #include "../view/view.h"
 #include "../tools/chronos.h"
+#include "../helper/settingsHelper.h"
 
 AudioManager* audioManager = nullptr;
 
@@ -157,7 +158,7 @@ auto AudioManager::setVolume() -> void {
     if (!activeEmulator)
         return;
 
-    auto settings = program->getSettings(activeEmulator);
+    auto settings = Program::getSettings(activeEmulator);
     unsigned volume = settings->get<unsigned>("audio_volume", 100u, {0u, 100u});
     bool mute = muteTimer.enabled() || globalSettings->get<bool>("audio_mute", false);
         
@@ -171,7 +172,7 @@ auto AudioManager::setTapeNoise( ) -> void {
     if (!activeEmulator)
         return;
 
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
 
     bool active = settings->get<bool>( "audio_tape_noise", false);
 
@@ -189,7 +190,7 @@ auto AudioManager::setDriveSounds( bool init ) -> void {
     if (!activeEmulator)
         return;
 
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
 
     bool mixFloppySounds = settings->get<bool>("audio_floppy", false);
     bool mixTapeSounds = settings->get<bool>("audio_tape", false);
@@ -250,7 +251,7 @@ auto AudioManager::setAudioDsp() -> void {
     
     stat = activeEmulator->getStatsForSelectedRegion();
     
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
 
     bool useBass = settings->get<bool>("audio_bass", false );
     

@@ -188,7 +188,7 @@ auto FirmwareManager::insert(bool onlyKernal) -> std::vector<std::string> {
     
     missingFirmware.clear();
     
-    auto storeLevel = program->getSettings(emulator)->get<unsigned>( "use_firmware", 0 ); 
+    auto storeLevel = Program::getSettings(emulator)->get<unsigned>( "use_firmware", 0 );
     
     for (auto& firmware : emulator->firmwares ) {
 
@@ -213,7 +213,7 @@ auto FirmwareManager::swapIn(unsigned storeLevel, int firmwareId) -> std::vector
 }
 
 auto FirmwareManager::getStoreLevelInConfig() -> unsigned {
-    static GUIKIT::Setting* setting = program->getSettings(emulator)->getOrInit("use_firmware", 0);
+    static GUIKIT::Setting* setting = Program::getSettings(emulator)->getOrInit("use_firmware", 0);
     return (unsigned)*setting;
 }
 

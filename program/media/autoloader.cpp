@@ -14,6 +14,8 @@
 #include "../thread/emuThread.h"
 #include "../view/status.h"
 #include "../emuconfig/layouts/system.h"
+#include "../helper/fileHelper.h"
+#include "../helper/miscHelper.h"
 
 Autoloader* autoloader = nullptr;
 
@@ -54,7 +56,7 @@ auto Autoloader::postProcessing() -> void {
     
     if (ddControl.saveFile) {
 
-        program->updateSaveIdentFromSav( ddControl.emulator, ddControl.saveFile );
+        FileHelper::updateSaveIdentFromSav( ddControl.emulator, ddControl.saveFile );
 
         filePool->assign("savestate", nullptr);
         
@@ -89,7 +91,7 @@ auto Autoloader::postProcessing() -> void {
     bool forceStandardKernal = false;
 
     FileSetting* fSetting = nullptr;
-    GUIKIT::Settings* settings = program->getSettings( ddControl.emulator );
+    GUIKIT::Settings* settings = Program::getSettings( ddControl.emulator );
     
     if (ddControl.mode == Mode::DragnDrop) {
         autoStart = settings->get<bool>("autostart_dragndrop", dynamic_cast<LIBC64::Interface*>(ddControl.emulator));
@@ -235,7 +237,7 @@ auto Autoloader::postProcessing() -> void {
             program->reset(ddControl.emulator); // because of A1000 WOM
 
         if (!useExpansion)
-            program->removeExpansion();
+            MiscHelper::removeExpansion();
         else if (statusHandler && activeEmulator->isExpansionUnsupported())
             statusHandler->setMessage(trans->getA("unsupported cartridge"), true);
 
@@ -285,7 +287,7 @@ auto Autoloader::postProcessing() -> void {
             audioManager->drive.reset(mediaGroup, true);
         
         if (fSetting)
-            program->updateSaveIdent(ddControl.emulator, fSetting);
+            FileHelper::updateSaveIdent(ddControl.emulator, fSetting);
         
 		if (view) {
 			if (mediaGroup->isTape())
@@ -333,7 +335,7 @@ auto Autoloader::loadFiles() -> void {
 
     if (!file->exists() || !file->isSizeValid(MAX_HARDDISK_SIZE)) {
         if (!ddControl.silentError)
-            program->errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), view->message);
+            FileHelper::errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), view->message);
 
         return loadFiles();
     }
@@ -474,7 +476,7 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 					else
                         fileloader->insertImage(emulator, media, file, item, alreadyInUse ? 2 : 0);
 
-                    auto settings = program->getSettings(emulator);
+                    auto settings = Program::getSettings(emulator);
                     auto folderPath = GUIKIT::File::buildRelativePath(file->getPath());
                     settings->set<std::string>(_underscoreEx(mediaGroup.name) + "_folder_auto", folderPath);
 
@@ -488,7 +490,7 @@ auto Autoloader::loadFile( GUIKIT::File* file, GUIKIT::File::Item* item ) -> voi
 
 errorOpen:
 	if (!ddControl.silentError)
-		program->errorOpen(file, item, view->message);
+		FileHelper::errorOpen(file, item, view->message);
 
 	return loadFiles();
 }
@@ -516,7 +518,7 @@ auto Autoloader::activateDrive( Emulator::Interface* emulator, Emulator::Interfa
 	if (counter >= requestedCount)
 		return;
 
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
 
     auto model = emulator->getModel( modelId );
 
@@ -575,7 +577,7 @@ auto Autoloader::checkForSavestate( GUIKIT::File* file, GUIKIT::File::Item* item
         file = filePool->get( path );
         
         if (!file->open()) {
-            program->errorOpen(file, nullptr, view->message);
+            FileHelper::errorOpen(file, nullptr, view->message);
             goto End;
         }
             
@@ -650,7 +652,7 @@ auto Autoloader::get(Emulator::Interface* emulator, bool& trapped, unsigned& sel
                 if (!fSetting->path.empty()) {
                     useMedia = &_media;
                     selection = 0;
-                    GUIKIT::Settings* settings = program->getSettings( emulator );
+                    GUIKIT::Settings* settings = Program::getSettings( emulator );
                     if (useMedia->group->isDisk())
                         trapped = settings->get<bool>("use_disk_traps", false);
                     else if (useMedia->group->isTape())

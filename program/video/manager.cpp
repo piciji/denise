@@ -11,6 +11,7 @@
 #include "../view/view.h"
 #include "../thread/emuThread.h"
 #include "shaderParser.h"
+#include "../helper/settingsHelper.h"
 #include "props.cpp"
 #include "sync.cpp"
 #include "../debugger/dmaDebugger.h"
@@ -64,7 +65,7 @@ auto VideoManager::setFrameRender(uint8_t limit) -> void {
 
 VideoManager::VideoManager(Emulator::Interface* emulator) {
     this->emulator = emulator;
-    this->settings = program->getSettings(emulator);
+    this->settings = Program::getSettings(emulator);
     this->palette = &emulator->palettes[0];        
     this->colorCount = this->palette->paletteColors.size();        
 

@@ -70,7 +70,7 @@ auto Program::getDevice( Emulator::Interface* emulator, Emulator::Interface::Con
         }
     }
 
-    unsigned deviceId = getSettings(emulator)->get<unsigned>( _underscore(connector->name), defaultDevice);
+    unsigned deviceId = Program::getSettings(emulator)->get<unsigned>( _underscore(connector->name), defaultDevice);
     
     return emulator->getDevice( deviceId );      
 }
@@ -144,7 +144,7 @@ auto Program::absoluteMouseToEmu( Emulator::Interface* emulator ) -> GUIKIT::Pos
 
 auto Program::resetRunAhead() -> void {
     
-    auto settings = getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
     
     if ( settings->get<bool>( "runahead_disable", true) ) {
         
@@ -161,7 +161,7 @@ auto Program::resetRunAhead() -> void {
 
 auto Program::setJit(Emulator::Interface* emulator) -> void {
 
-    auto settings = getSettings(emulator);
+    auto settings = Program::getSettings(emulator);
 
     emulator->setInputSampling( settings->get<unsigned>("input_sampling", 2, {0, 2}) );
 
@@ -172,7 +172,7 @@ auto Program::setJit(Emulator::Interface* emulator) -> void {
 
 auto Program::setRunAhead(Emulator::Interface* emulator) -> void {
     
-    auto settings = getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     
     emulator->runAhead( settings->get<unsigned>( "runahead", 0, {0u, 10u}) );
     
@@ -182,7 +182,7 @@ auto Program::setRunAhead(Emulator::Interface* emulator) -> void {
 }
 
 auto Program::setRewind(Emulator::Interface* emulator) -> void {
-    auto settings = getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
 
     bool rewindEnable = settings->get<bool>("rewind_enable", false);
     unsigned rewindStep = settings->get<unsigned>("rewind_step", 1, {1, 60});

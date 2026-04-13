@@ -65,9 +65,11 @@ set(headers
         view/status.h
         view/view.h
         audio.cpp
-        files.cpp
         input.cpp
         video.cpp
+        helper/fileHelper.h
+        helper/miscHelper.h
+        helper/settingsHelper.h
 )
 
 set_source_files_properties(${PROJECT_NAME} ${headers}
@@ -129,6 +131,9 @@ set(srcs
         view/imageViewer.cpp
         tools/httpClient.cpp
         tools/diskGuesser.cpp
+        helper/fileHelper.cpp
+        helper/miscHelper.cpp
+        helper/settingsHelper.cpp
         
         ${headers}
 )

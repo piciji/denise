@@ -8,6 +8,7 @@
 #include "../tools/filepool.h"
 #include "../tools/filesetting.h"
 #include "../tools/chronos.h"
+#include "../helper/settingsHelper.h"
 #include <algorithm>
 #include <cstdlib>
 

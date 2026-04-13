@@ -14,6 +14,7 @@
 #include "../../firmware/manager.h"
 #include "../../media/fileloader.h"
 #include "../../media/autoloader.h"
+#include "../../helper/fileHelper.h"
 #include "firmware.h"
 #include "geometry.h"
 #include "input.h"
@@ -511,7 +512,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         if (mes->question( trans->get("undock settings") ) ) {
             emuThread->lock();
-            program->undockSettings();
+            SettingsHelper::undockSettings();
             PresentationLayout::displayFonts.clear();
 
             for(auto _emulator : emulators) {
@@ -571,7 +572,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (info->isDir)
             return;
 
-        std::string path = program->getSettingsFolder(emulator) + info->name;
+        std::string path = FileHelper::getSettingsFolder(emulator) + info->name;
 
         emuThread->lock(true);
         if (this->load(path)) {
@@ -602,7 +603,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             fileName = info->name;
         }
 
-        std::string path = program->getSettingsFolder(emulator, true) + fileName;
+        std::string path = FileHelper::getSettingsFolder(emulator, true) + fileName;
 
         GUIKIT::File file(path);
 
@@ -618,7 +619,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
     };
 
     settings.control.create.onActivate = [this]() {
-        const std::string basePath = program->getSettingsFolder(emulator, true);
+        const std::string basePath = FileHelper::getSettingsFolder(emulator, true);
 
         std::string filePath = GUIKIT::BrowserWindow()
             .setWindow(*this->tabWindow)
@@ -669,7 +670,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         if (info->isDir)
             return;
 
-        std::string path = program->getSettingsFolder(emulator) + info->name;
+        std::string path = FileHelper::getSettingsFolder(emulator) + info->name;
 
         GUIKIT::File file( path );
 
@@ -749,7 +750,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
         globalSettings->set<std::string>( emulator->ident + "_settings_path", "" );
 
-        settingsFolder.pathEdit.setText(program->getSettingsFolder(emulator));
+        settingsFolder.pathEdit.setText(FileHelper::getSettingsFolder(emulator));
 
         settingsFolder.pathEdit.setEnabled(false);
 
@@ -797,7 +798,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         auto& lview = stateFast.selector.listView;
         auto selection = lview.selection();
         auto ident = lview.text(selection, 1);
-        auto path = program->generatedFolder(emulator, "states_folder", "states") + ident + ".png";
+        auto path = FileHelper::generatedFolder(emulator, "states_folder", "states") + ident + ".png";
 
         GUIKIT::Image* image = &stateFast.selector.image;
         image->free();
@@ -841,7 +842,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
             fileName = "savestate";
         }
 
-        auto infos = GUIKIT::File::getFolderList(program->generatedFolder(emulator, "states_folder", "states"), fileName);
+        auto infos = GUIKIT::File::getFolderList(FileHelper::generatedFolder(emulator, "states_folder", "states"), fileName);
 
         std::vector<StateLine> lines;
 
@@ -932,7 +933,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
 
     stateFolder.standard.onActivate = [this]() {
         _settings->set<std::string>("states_folder", "");
-        stateFolder.pathEdit.setText(program->generatedFolder(emulator, "states_folder", "states"));
+        stateFolder.pathEdit.setText(FileHelper::generatedFolder(emulator, "states_folder", "states"));
         stateFolder.pathEdit.setEnabled(false);
     };
 
@@ -952,7 +953,7 @@ auto ConfigurationsLayout::updateSettingsList(const std::string& expandFile, con
         delete item;
     }
 
-    std::string path = program->getSettingsFolder(emulator);
+    std::string path = FileHelper::getSettingsFolder(emulator);
     auto treeViewItem = new GUIKIT::TreeViewItem;
     auto info = new GUIKIT::File::Info;
     treeViewItem->setText(path);
@@ -1153,11 +1154,11 @@ auto ConfigurationsLayout::loadSettings() -> void {
 
 auto ConfigurationsLayout::updateStorePaths() -> void {
     std::string _statesFolder = _settings->get<std::string>("states_folder", "");
-    stateFolder.pathEdit.setText(program->generatedFolder(emulator, "states_folder", "states"));
+    stateFolder.pathEdit.setText(FileHelper::generatedFolder(emulator, "states_folder", "states"));
     stateFolder.pathEdit.setEnabled(!_statesFolder.empty());
 
     std::string _settingsFolder = globalSettings->get<std::string>(emulator->ident + "_settings_path", "");
-    settingsFolder.pathEdit.setText(program->getSettingsFolder(emulator));
+    settingsFolder.pathEdit.setText(FileHelper::getSettingsFolder(emulator));
     settingsFolder.pathEdit.setEnabled(!_settingsFolder.empty());
 }
 

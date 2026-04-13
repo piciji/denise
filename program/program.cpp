@@ -7,6 +7,7 @@
 #include "input/manager.h"
 #include "tools/filesetting.h"
 #include "tools/filepool.h"
+#include "tools/chronos.h"
 #include "view/status.h"
 #include "states/states.h"
 #include "audio/manager.h"
@@ -16,8 +17,10 @@
 #include "media/autoloader.h"
 #include "media/fileloader.h"
 #include "thread/emuThread.h"
+#include "helper/fileHelper.h"
+#include "helper/miscHelper.h"
+#include "helper/settingsHelper.h"
 #include "emuconfig/layouts/presentation.h"
-#include <random>
 
 #include "debugger/scpuDebugger.h"
 #include "debugger/cpuDebugger.h"
@@ -48,7 +51,6 @@ VideoManager* activeVideoManager = nullptr;
 InputManager* activeInputManager = nullptr;
 bool Program::focused = false;
 
-#include "files.cpp"
 #include "video.cpp"
 #include "audio.cpp"
 #include "input.cpp"
@@ -203,7 +205,7 @@ auto Program::addEmulators() -> void {
 auto Program::init() -> void {
     
     if (!cmd->debug) {
-        loadSettings();
+        SettingsHelper::loadSettings();
 
         auto style = globalSettings->get<unsigned>("visual_style", GUIKIT::Application::DarkMode::Auto);
         GUIKIT::Application::setDarkMode((GUIKIT::Application::DarkMode)style);
@@ -218,10 +220,10 @@ auto Program::init() -> void {
     for( auto emulator : emulators )        
         initEmulator( emulator );
     	
-	logger->setSavePath( generatedFolder("") );
+	logger->setSavePath( FileHelper::generatedFolder("") );
 
 	if (!cmd->debug)
-        addCustomFont();
+        MiscHelper::addCustomFont();
 
     upgradeCropSettings();
 }
@@ -245,7 +247,7 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
 
     setPalette( emulator );
     
-    setExpansionSelection( emulator );
+    MiscHelper::setExpansionSelection( emulator );
 
     setRunAhead( emulator );
 
@@ -253,7 +255,7 @@ auto Program::initEmulator( Emulator::Interface* emulator ) -> void {
 
     if (dynamic_cast<LIBC64::Interface*>( emulator )) {
         setMemoryPattern( emulator );
-        initExpansionRom(emulator, "SuperCPU 1", "scpu64");
+        MiscHelper::initExpansionRom(emulator, "SuperCPU 1", "scpu64");
     }
 }
 
@@ -320,7 +322,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                 if (!file)
                     continue;
 
-                if (!program->loadImageDataWhenOk(file, fSetting->id, &mediaGroup, data)) {
+                if (!FileHelper::loadImageDataWhenOk(file, fSetting->id, &mediaGroup, data)) {
                     if (regular && !GUIKIT::Vector::find(brokenPaths, fSetting->path))
                         brokenPaths.push_back(fSetting->path);
 
@@ -337,10 +339,10 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
                 }
 
                 if (regular)
-                    updateSaveIdent(&media, fSetting);
+                    FileHelper::updateSaveIdent(&media, fSetting);
 
             } else { // IP socket mode
-                program->prepareSocket( &media, emulator, fSetting->path );
+                MiscHelper::prepareSocket( &media, emulator, fSetting->path );
             }
 
             if (!cmd->noGui)
@@ -358,7 +360,7 @@ auto Program::power( Emulator::Interface* emulator, bool regular ) -> void {
 	if (!cmd->noGui) {
 		FirmwareManager::getInstance( activeEmulator )->insert();
 
-		showOpenError( brokenPaths );
+		FileHelper::errorOpen( brokenPaths );
 
 		filePool->unloadOrphaned();
 
@@ -458,7 +460,7 @@ auto Program::powerOff() -> void {
 		audioManager->powerOff();
 		filePool->unloadOrphaned();
 		view->updateCartButtons(nullptr);
-		updateSaveIdent( nullptr );
+		FileHelper::updateSaveIdent( nullptr );
 		InputManager::urgentUpdate = true;
 		InputManager::resetJit();
 	}
@@ -557,9 +559,9 @@ auto Program::quit() -> void {
             rF->save();
 
         if (globalSettings->get<bool>("save_settings_on_exit", true))
-		    saveSettings( true );
+		    SettingsHelper::saveSettings( true );
         else
-            forceSavingSomeGlobalSettings();
+            SettingsHelper::forceSavingSomeGlobalSettings();
     }
     
 	for(auto inputManager : inputManagers)
@@ -751,7 +753,7 @@ auto Program::initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool ini
     if (!activeEmulator)
         return;
 
-    auto _settings = program->getSettings( activeEmulator );
+    auto _settings = getSettings( activeEmulator );
 
     unsigned _autoWarp = _settings->get<unsigned>("auto_warp", 0);
     warp.manuellEndsAutoWarp = _settings->get<bool>("manuell_ends_auto_warp", true);
@@ -917,8 +919,49 @@ auto Program::getActiveDebuggers() -> std::vector<Debugger*> {
     return out;
 }
 
+auto Program::getSettings( Emulator::Interface* emulator ) -> GUIKIT::Settings* {
+    for(auto settings : settingsStorage) {
+        if ( (Emulator::Interface*)(settings->getGuid()) == emulator )
+            return settings;
+    }
+    // global setting
+    return settingsStorage[0];
+}
+
 auto Program::debugger(Emulator::Interface::DebuggerSnapshot* snapshot) -> void {
     if (hasActiveDebugger()) {
         Debugger::Callback( snapshot );
     }
+}
+
+auto Program::readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
+    return FileHelper::readMedia( media, buffer, length, offset );
+}
+
+auto Program::writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned {
+    return FileHelper::writeMedia( media, buffer, length, offset );
+}
+
+auto Program::readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer, bool preview) -> unsigned {
+    return FileHelper::readAssignedMedia( media, buffer, preview );
+}
+
+auto Program::writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length) -> unsigned {
+    return FileHelper::writeAssignedMedia( media, buffer, length );
+}
+
+auto Program::getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string {
+    return FileHelper::getFileNameFromMedia( media );
+}
+
+auto Program::unloadMedia(Emulator::Interface::Media* media) -> void {
+    FileHelper::unloadMedia( media );
+}
+
+auto Program::truncateMedia(Emulator::Interface::Media* media) -> bool {
+    return FileHelper::truncateMedia( media );
+}
+
+auto Program::libraryMissing(std::string plugin) -> void {
+    MiscHelper::libraryMissing(plugin);
 }

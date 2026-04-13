@@ -88,7 +88,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
             if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE)) {
                 if (!errorShown) {
                     errorShown = true;
-                    program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), this->mediaLayout->message);
+                    FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), this->mediaLayout->message);
                 }
                 continue;
             }
@@ -170,7 +170,7 @@ SwapperLayout::SwapperLayout( MediaLayout* mediaLayout ) {
             if (media->group->isTape())
                 traps = "autostart_tape_traps_on_dblclick";
 
-            auto settings = program->getSettings(emulator);
+            auto settings = Program::getSettings(emulator);
             fileloader->autoload(emulator, media, 0, settings->get<bool>(traps, false));
         }
         emuThread->unlock();

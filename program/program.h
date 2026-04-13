@@ -91,8 +91,6 @@ struct Program : Emulator::Interface::Bind {
     auto loadTranslation(std::string file) -> bool;
     auto installFolder() -> std::string;
     auto userFolder() -> std::string;
-    auto generatedFolder(const std::string& subPath, bool createFolder = false) -> std::string;
-    auto generatedFolder(Emulator::Interface* emulator, const std::string& settingIdent, const std::string& subPath, bool createFolder = false) -> std::string;
     auto translationFolder() -> std::string;
     auto dataFolder() -> std::string;
     auto fontFolder() -> std::string;
@@ -101,14 +99,8 @@ struct Program : Emulator::Interface::Bind {
     auto shaderFolder() -> std::string;
 	auto appFolder() -> std::string;
     auto getSystemLangFile() -> std::string;
-    auto saveSettings(bool onExit = false) -> void;
-    auto loadSettings() -> void;
-    auto undockSettings() -> bool;
     auto settingsFile( std::string ident = "" ) -> std::string;
     auto settingsFileFromEmuFolder( std::string ident ) -> std::string;
-    auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
-    auto forceSavingSomeGlobalSettings() -> void;
-    auto getSettingsFolder( Emulator::Interface* emulator, bool createFolder = false ) -> std::string;
     auto initEmulator( Emulator::Interface* emulator ) -> void;
     auto setMemoryPattern( Emulator::Interface* emulator ) -> void;
 	auto getMemoryPatternFromConfig(Emulator::Interface* emulator, Emulator::Interface::MemoryPattern& pattern) -> void;
@@ -120,19 +112,21 @@ struct Program : Emulator::Interface::Bind {
     auto power( Emulator::Interface* emulator, bool regular = true ) -> void;
 	auto reset( Emulator::Interface* emulator ) -> void;
     auto powerOff() -> void;
+
     auto readMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned override;
     auto writeMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length, uint64_t offset) -> unsigned override;
 	auto readAssignedMedia(Emulator::Interface::Media* media, uint8_t*& buffer, bool preview) -> unsigned override;
 	auto writeAssignedMedia(Emulator::Interface::Media* media, uint8_t* buffer, unsigned length) -> unsigned override;
-
     auto truncateMedia(Emulator::Interface::Media* media) -> bool override;
+    auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
+    auto unloadMedia(Emulator::Interface::Media* media) -> void override;
+
     auto updateDeviceState( Emulator::Interface::Media* media, bool write, unsigned position, uint8_t LED, bool motorOff ) -> void override;
     auto updateLedState(Emulator::Interface::LedId ledId, uint8_t state) -> void override;
 	auto log(std::string data, bool newLine = true) -> void override;
     auto questionToWrite(Emulator::Interface::Media* media) -> bool override;
     auto exit(int code) -> void override;
-	auto getFileNameFromMedia(Emulator::Interface::Media* media) -> std::string override;
-    auto unloadMedia(Emulator::Interface::Media* media) -> void override;
+
     auto hintAutoWarp(uint8_t state) -> void override;
     auto autoStartFinish(bool soft) -> void override;
     auto jam( Emulator::Interface::Media* media = nullptr ) -> void override;
@@ -140,30 +134,14 @@ struct Program : Emulator::Interface::Bind {
     auto finishStartup() -> void;
     auto trapsResult(Emulator::Interface::Media* media, bool error) -> void override;
     auto libraryMissing(std::string plugin) -> void override;
-    auto getAssignedSaveFile(Emulator::Interface::Media* media, bool createFolder = false) -> std::string;
-	auto initExpansionRom(Emulator::Interface* emulator, const std::string& ident, const std::string& file) -> void;
 
-    auto addCustomFont() -> void;
-    auto loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emulator::Interface::MediaGroup* group, uint8_t*& data ) -> bool;
-    auto showOpenError( std::vector<std::string>& paths, bool warning = false ) -> void;
-	
-    auto errorOpen(GUIKIT::File* file, GUIKIT::File::Item* item, Message* message ) -> void;
-    auto errorOpen(GUIKIT::File* file, Message* message ) -> void;
-    auto errorFileSize(uint64_t maxSize, std::string filePath, Message* message) -> void;
-    auto setExpansionSelection( Emulator::Interface* emulator ) -> void;
-    auto updateSaveIdent(Emulator::Interface::Media* media, FileSetting* fSetting = nullptr) -> void;
-    auto updateSaveIdentFromSav( Emulator::Interface* emulator, GUIKIT::File* file ) -> void;
 	auto getLastUsedEmu() -> Emulator::Interface*;
 	auto getEmulator( std::string ident ) -> Emulator::Interface*;
-    auto removeExpansion( bool bootableOnly = true ) -> void;
-    auto prepareSocket(Emulator::Interface::Media* media, Emulator::Interface* emulator, std::string address) -> void;
     auto initAutoWarp(Emulator::Interface::MediaGroup* mediaGroup, bool initOnly = false) -> void;
-    auto updateSaveIdent(Emulator::Interface* emulator, FileSetting* fSetting) -> void;
+
     auto initUserInterface() -> void;
     auto unsetObsoleteConfigs(GUIKIT::Settings* settings, Emulator::Interface* emulator) -> void;
-    auto toggle2Mhz() -> void;
-    auto hasSuperCpuActive() -> bool;
-    
+
     //audio
     auto initAudio() -> void;
 	auto getAudioDriver() -> std::string;
@@ -226,6 +204,8 @@ struct Program : Emulator::Interface::Bind {
     auto hasFocusedDebugger() -> bool;
     auto getActiveDebuggers() -> std::vector<Debugger*>;
     auto debugger(Emulator::Interface::DebuggerSnapshot* snapshot) -> void override;
+
+    static auto getSettings( Emulator::Interface* emulator = nullptr ) -> GUIKIT::Settings*;
 
     static auto hasFocus() -> bool;
 

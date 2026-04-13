@@ -11,6 +11,7 @@
 #include "copperDebugger.h"
 #include "conditionViewDebugger.h"
 #include "watcherHelper.h"
+#include "../helper/settingsHelper.h"
 #include <bitset>
 
 GUIKIT::Timer* Debugger::timerVisibility = nullptr;
@@ -30,7 +31,7 @@ Debugger::~Debugger() {
 
 Debugger::Debugger( Emulator::Interface* emulator, Mode mode )
 : emulator( emulator ), mode( mode ) {
-    this->settings = program->getSettings( emulator );
+    this->settings = Program::getSettings( emulator );
 }
 
 Debugger::Control::Control(Debugger* debugger) {

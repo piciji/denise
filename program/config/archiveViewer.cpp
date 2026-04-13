@@ -4,6 +4,7 @@
 #include "../tools/filepool.h"
 #include "../../data/icons.h"
 #include "../view/view.h"
+#include "../helper/fileHelper.h"
 
 ArchiveViewer* archiveViewer = nullptr;
 
@@ -183,7 +184,7 @@ auto ArchiveViewer::buildMedia(GUIKIT::File* file, std::vector<GUIKIT::File::Ite
         result = dynamic_cast<LIBAMI::Interface*>(activeEmulator)->buildDisk(fileName, _items);
 
     if (result.ptr) {
-        std::string _path = program->generatedFolder(activeEmulator, "disksave_folder", "disksave", true);
+        std::string _path = FileHelper::generatedFolder(activeEmulator, "disksave_folder", "disksave", true);
         if (nativeGroup->isHardDisk())
             _path += fileName + ".hdf";
         else

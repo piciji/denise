@@ -2,6 +2,8 @@
 #include "palette.h"
 #include "../program.h"
 #include "../cmd/cmd.h"
+#include "../helper/fileHelper.h"
+#include "../helper/settingsHelper.h"
 
 std::vector<PaletteManager*> paletteManagers;
 
@@ -29,7 +31,7 @@ PaletteManager::~PaletteManager() {
 
 auto PaletteManager::getCurrentPalette() -> Emulator::Interface::Palette* {
     
-    auto usedPaletteId = program->getSettings(emulator)->get<unsigned>( "palette", 0 );
+    auto usedPaletteId = Program::getSettings(emulator)->get<unsigned>( "palette", 0 );
     Emulator::Interface::Palette* palette = find( usedPaletteId );
     
     if (!palette)
@@ -247,5 +249,5 @@ auto PaletteManager::getIdent(unsigned i) -> std::string {
 }
 
 auto PaletteManager::path(bool createFolder) -> std::string {
-    return program->generatedFolder("", createFolder) + emulator->ident + ".pal";
+    return FileHelper::generatedFolder("", createFolder) + emulator->ident + ".pal";
 }

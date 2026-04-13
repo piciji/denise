@@ -16,6 +16,8 @@
 #include "../audio/manager.h"
 #include "recentFiles.h"
 #include "../emuconfig/layouts/system.h"
+#include "../helper/fileHelper.h"
+#include "../helper/miscHelper.h"
 
 #define HideMouseIfWasBefore \
     if (mIsAcquiredBefore && !inputDriver->mIsAcquired() && view->fullScreen() && fileDialogPtr && fileDialogPtr->detached()) \
@@ -46,7 +48,7 @@ Fileloader::~Fileloader() {
 auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media* media) -> void {
     auto group = media->group;
     auto suffix = group->suffix;
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
     auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? PREV_DIALOG : PREV_OFF, {0,2});
 
@@ -195,7 +197,7 @@ auto Fileloader::load(Emulator::Interface* emulator, Emulator::Interface::Media*
 }
 
 auto Fileloader::anyLoad( Emulator::Interface* emulator, bool mIsAcquiredBefore ) -> void {
-	auto settings = program->getSettings( emulator );
+	auto settings = Program::getSettings( emulator );
     auto prevMode = settings->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? PREV_DIALOG : PREV_OFF, {0,2});
     bool trapped = false;
     if (dynamic_cast<LIBC64::Interface*>(emulator))
@@ -483,7 +485,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
         previewTimer.onFinished = [this]() {
             std::unique_lock<std::mutex> lck(previewMutex);
             Emulator::Interface* emulator = queuePreview.emulator;
-            auto prevMode = program->getSettings( emulator )->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? PREV_DIALOG : PREV_OFF, {0,2});
+            auto prevMode = Program::getSettings( emulator )->get<unsigned>("dialog_preview_mode", dynamic_cast<LIBC64::Interface*>(emulator) ? PREV_DIALOG : PREV_OFF, {0,2});
             uint8_t _status = queuePreview.status;
             std::string filePath = queuePreview.filePath;
             Emulator::Interface::Media* media = queuePreview.media;
@@ -523,7 +525,7 @@ auto Fileloader::previewFile( std::string filePath, Emulator::Interface* emulato
                     fileDialogPtr->setListings(listings);
 
                 if ((queuePreview.status & 16) && listings.size()) {
-                    program->getSettings( emulator )->set<std::string>("anyload_path", GUIKIT::File::getPath(filePath));
+                    Program::getSettings( emulator )->set<std::string>("anyload_path", GUIKIT::File::getPath(filePath));
                 }
 
                 if ((prevMode == PREV_SOFTWARE) && emuView) {
@@ -721,7 +723,7 @@ auto Fileloader::eject(Emulator::Interface* emulator, Emulator::Interface::Media
 
 auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface::Media* media, std::string filePath, uint8_t autoLoad, unsigned selection ) -> bool {
 
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     GUIKIT::File* file = filePool->get(filePath);
@@ -732,16 +734,16 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
     settings->set<std::string>(_underscoreEx(media->group->name) + "_folder_auto", folderPath);
 
     if (!file->exists()) {
-        program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message);
+        FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message);
         return false;
     }
     if (!media->group->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE)) {
-        program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message);
+        FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message);
         return false;
     }
     
     if (media->group->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE)) {
-        program->errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), emuView ? emuView->message : view->message);
+        FileHelper::errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), emuView ? emuView->message : view->message);
         return false;
     }
 
@@ -752,7 +754,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
         if (!item || (item->info.size == 0) )
-            return program->errorOpen( file, item, emuView ? emuView->message : view->message );
+            return FileHelper::errorOpen( file, item, emuView ? emuView->message : view->message );
 
         emuThread->lock(true);
         if (emuView && emuView->mediaLayout)
@@ -778,7 +780,7 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
 
 auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Media* media, unsigned selection, bool trapped, bool forceOverrideSpeeder) -> void {
     auto mediaGroup = media->group;
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     auto emuView = EmuConfigView::TabWindow::getView( emulator );
 
     autoloader->set(emulator, media, trapped, selection);
@@ -796,7 +798,7 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     program->power( emulator );
 
     if (!mediaGroup->isExpansion())
-        program->removeExpansion();
+        MiscHelper::removeExpansion();
     else if (statusHandler && activeEmulator->isExpansionUnsupported())
         statusHandler->setMessage(trans->getA("unsupported cartridge"), true);
 
@@ -837,7 +839,7 @@ auto Fileloader::autoload(Emulator::Interface* emulator, Emulator::Interface::Me
     if (emuView) {
         auto fSetting = FileSetting::getInstance(emulator, _underscore(media->name) );
         if (fSetting)
-            program->updateSaveIdent(emulator, fSetting);
+            FileHelper::updateSaveIdent(emulator, fSetting);
     }
 
     if (mediaGroup->isTape())
@@ -865,7 +867,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
 
     auto mediaGroup = media->group;
 
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
 
     auto fSetting = FileSetting::getInstance( emulator, _underscore(media->name ) );
 
@@ -925,7 +927,7 @@ auto Fileloader::insertImage(Emulator::Interface* emulator, Emulator::Interface:
             States::getInstance(emulator)->forcePowerNextLoad = true;
 
         if (!fromState && mediaGroup->isDrive() && fSetting)
-            program->updateSaveIdent( emulator, fSetting );
+            FileHelper::updateSaveIdent( emulator, fSetting );
     }
 }
 
@@ -933,7 +935,7 @@ auto Fileloader::convertListing( Emulator::Interface* emulator, std::vector<Emul
 
     std::vector<GUIKIT::BrowserWindow::Listing> list;
     auto customFont = GUIKIT::Window::getCustomFont(emulator);
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
 
     bool useTooltips = settings->get<bool>("software_preview_tooltips", true );
 
@@ -1037,7 +1039,7 @@ auto Fileloader::loadSettings(Emulator::Interface* emulator) -> void {
 }
 
 auto Fileloader::getSwapPos(Emulator::Interface* emulator) -> unsigned {
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     Emulator::Interface::Media* media = autoloader->getLatestDrive(emulator);
     if (media->group->isDisk()) {
         auto mediaId = settings->get<unsigned>("access_floppy", 0u, {0u, 3u});
@@ -1055,7 +1057,7 @@ auto Fileloader::getSwapPos(Emulator::Interface* emulator) -> unsigned {
 }
 
 auto Fileloader::getSwapMedia(Emulator::Interface* emulator, int swapPos, FileSetting* fSetting) -> Emulator::Interface::Media* {
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     Emulator::Interface::Media* media = nullptr;
 
     if (fSetting->path.empty() || (swapPos == 0) ) {
@@ -1089,7 +1091,7 @@ auto Fileloader::getSwapMedia(Emulator::Interface* emulator, int swapPos, FileSe
 
 auto Fileloader::insertSwapDisk(Emulator::Interface* emulator, unsigned swapPos) -> Emulator::Interface::Media* {
     GUIKIT::File* file;
-    program->getSettings( emulator )->set<int>("swap_pos", swapPos, false);
+    Program::getSettings( emulator )->set<int>("swap_pos", swapPos, false);
     FileSetting* fSetting = FileSetting::getInstance( emulator, "swapper_" + std::to_string(swapPos) );
     Emulator::Interface::Media* media = getSwapMedia(emulator, swapPos, fSetting);
     if (!media)
@@ -1161,7 +1163,7 @@ auto Fileloader::getRecentFile(Emulator::Interface* emulator) -> RecentFiles* {
     auto _ident = emulator->ident;
     GUIKIT::String::toLowerCase(_ident);
 
-    std::string path = program->generatedFolder("") + _ident + "_recent.ini";
+    std::string path = FileHelper::generatedFolder("") + _ident + "_recent.ini";
 
     auto recentFile = new RecentFiles(emulator, path);
     recentFiles.push_back(recentFile);

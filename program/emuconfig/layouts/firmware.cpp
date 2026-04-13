@@ -12,6 +12,7 @@
 #include "../../firmware/manager.h"
 #include "../../media/fileloader.h"
 #include "../../config/archiveViewer.h"
+#include "../../helper/fileHelper.h"
 #include <cstring>
 
 #define mes this->tabWindow->message
@@ -155,7 +156,7 @@ auto FirmwareLayout::hotSwap( unsigned storeLevel, int firmwareId ) -> void {
 
     if ((emulator == activeEmulator) && dynamic_cast<LIBC64::Interface*>(emulator)) {
         auto missigFirmware = this->manager->swapIn( storeLevel, firmwareId  );
-        program->showOpenError( missigFirmware );
+        FileHelper::errorOpen( missigFirmware );
     }
 }
 
@@ -193,7 +194,7 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
     _settings->set<std::string>("firmware_path", GUIKIT::File::buildRelativePath(file->getPath()));
 
     if (!file->exists() || !file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), mes);
+        return FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), mes);
 
     auto& items = file->scanArchive();
 
@@ -201,10 +202,10 @@ auto FirmwareLayout::assign(std::string path, FirmwareContainer::Block* block, F
         auto& firmware = emulator->firmwares[block->typeId];
 
         if (!item || (item->info.size == 0))
-            return program->errorOpen(file, item, mes);
+            return FileHelper::errorOpen(file, item, mes);
 
         if (item->info.size > MAX_FIRMWARE_SIZE)
-            return program->errorFileSize(MAX_FIRMWARE_SIZE, item->info.name, mes);
+            return FileHelper::errorFileSize(MAX_FIRMWARE_SIZE, item->info.name, mes);
 
         auto path = GUIKIT::File::buildRelativePath(file->getFile());
         block->fileLabel.setText(item->info.name);

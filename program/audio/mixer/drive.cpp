@@ -5,6 +5,7 @@
 #include "../resampler/sinc.h"
 #include "../../tools/chronos.h"
 #include "../manager.h"
+#include "../../helper/settingsHelper.h"
 #include <cstring>
 
 namespace Mixer {
@@ -440,13 +441,13 @@ namespace Mixer {
     }
 
     auto Drive::getFloppyFolder(Emulator::Interface* emulator, bool external) -> std::string {
-        GUIKIT::Settings* settings = program->getSettings( emulator );
+        GUIKIT::Settings* settings = Program::getSettings( emulator );
 
         return settings->get<std::string>(getFloppyFolderIdent(emulator, external), getFloppyFolderDefault(emulator, external));
     }
 
     auto Drive::getFiles(Emulator::Interface* emulator, Emulator::Interface::MediaGroup* group, bool externalDevice, std::string& fullPath) -> std::vector<GUIKIT::File::Info> {
-        GUIKIT::Settings* settings = program->getSettings( emulator );
+        GUIKIT::Settings* settings = Program::getSettings( emulator );
         std::string ident = "";
         std::string type = "";
         auto baseFolder = program->soundFolder();

@@ -8,6 +8,8 @@
 #include "../../thread/emuThread.h"
 #include "../../view/view.h"
 #include "../../view/status.h"
+#include "../../helper/fileHelper.h"
+#include "../../helper/settingsHelper.h"
 
 #define _settings this->tabWindow->settings
 
@@ -663,7 +665,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         layShader.main.control.downloadShader.setUri("");
         layShader.main.control.downloadShader.setEnabled(false);
 
-        std::string shaderPath = program->generatedFolder("shaders");
+        std::string shaderPath = FileHelper::generatedFolder("shaders");
         layShader.main.progress.bar.setPosition(0);
         layShader.main.progress.label.resetForegroundColor();
         layShader.main.progress.label.setText( trans->getA("shader download") );
@@ -674,7 +676,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
             layShader.synchronizeLayout();
         }
 
-        auto settings = program->getSettings(emulator);
+        auto settings = Program::getSettings(emulator);
 
         std::thread t1([shaderPath, uri, settings, this] {
             try {
@@ -1305,7 +1307,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
     };
 
     layShader.main.info.clearCache.onActivate = [this]() {
-        std::string cacheFolder = program->generatedFolder("cache");
+        std::string cacheFolder = FileHelper::generatedFolder("cache");
         GUIKIT::File::removeDirectory( cacheFolder );
     };
 
@@ -1508,7 +1510,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (getTTF(_fn, -1))
             return;
 
-        std::string _path = program->generatedFolder("fonts", true);
+        std::string _path = FileHelper::generatedFolder("fonts", true);
 
         if (GUIKIT::File::xcopy(filePath, _path + _fn)) {
             for (auto view : emuConfigViews) {
@@ -1531,7 +1533,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
         if (_fn.empty())
             return;
 
-        std::string _path = program->generatedFolder("fonts");
+        std::string _path = FileHelper::generatedFolder("fonts");
 
         if (_path.empty())
             return;
@@ -1612,7 +1614,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
     layScreenShot.location.standard.onActivate = [this]() {
         _settings->set<std::string>("screen_record_path", "");
-        layScreenShot.location.pathEdit.setText(program->generatedFolder(emulator, "screen_record_path", "recordings/screenshots"));
+        layScreenShot.location.pathEdit.setText(FileHelper::generatedFolder(emulator, "screen_record_path", "recordings/screenshots"));
         layScreenShot.location.pathEdit.setEnabled(false);
     };
 
@@ -1800,7 +1802,7 @@ layScreenShot(dynamic_cast<LIBC64::Interface*>(tabWindow->emulator)) {
 
 auto PresentationLayout::updateRecordingPath() -> void {
     std::string _recordPath = _settings->get<std::string>("screen_record_path", "");
-    layScreenShot.location.pathEdit.setText(program->generatedFolder(emulator, "screen_record_path", "recordings/screenshots"));
+    layScreenShot.location.pathEdit.setText(FileHelper::generatedFolder(emulator, "screen_record_path", "recordings/screenshots"));
     layScreenShot.location.pathEdit.setEnabled(!_recordPath.empty());
 }
 
@@ -1819,7 +1821,7 @@ auto PresentationLayout::fillFontTypeList() -> void {
     for(auto& file : list)
         addTTF(1, file);
 
-    list = GUIKIT::File::getFolderListAlt(program->generatedFolder("fonts"), { ".ttf", ".otf", ".ttc" }, false);
+    list = GUIKIT::File::getFolderListAlt(FileHelper::generatedFolder("fonts"), { ".ttf", ".otf", ".ttc" }, false);
     for(auto& file : list)
         addTTF(2, file);
 
@@ -1856,7 +1858,7 @@ auto PresentationLayout::addTTF(unsigned mode, const std::string& _fontFile) -> 
     if (mode == 1) {
         screenTextFontPath = program->fontFolder() + _fontFile;
     } else if (mode == 2) {
-        screenTextFontPath = program->generatedFolder("fonts") + _fontFile;
+        screenTextFontPath = FileHelper::generatedFolder("fonts") + _fontFile;
     } else
         return;
 

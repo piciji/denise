@@ -12,6 +12,8 @@
 #include "../../thread/emuThread.h"
 #include "../../view/view.h"
 #include "../../emuconfig/layouts/audio.h"
+#include "../../helper/fileHelper.h"
+#include "../../helper/settingsHelper.h"
 
 namespace AudioRecord {
     
@@ -24,9 +26,9 @@ auto Handler::start( Emulator::Interface* emulator, std::string& errorText ) -> 
         return false;     
     }
     
-    GUIKIT::Settings* settings = program->getSettings( activeEmulator );
+    GUIKIT::Settings* settings = Program::getSettings( activeEmulator );
 
-    std::string path = program->generatedFolder(emulator, "audio_record_path", "recordings/audio", true);
+    std::string path = FileHelper::generatedFolder(emulator, "audio_record_path", "recordings/audio", true);
     
     std::string fileName = settings->get<std::string>( "audio_record_ident", "sample");
 
@@ -84,7 +86,7 @@ auto Handler::setTimeLimit() -> void {
     if (!activeEmulator)
         return;
     
-    GUIKIT::Settings* settings = program->getSettings( activeEmulator );
+    GUIKIT::Settings* settings = Program::getSettings( activeEmulator );
 
     if ( settings->get<bool>( "audio_record_timelimit", false) ) {
 

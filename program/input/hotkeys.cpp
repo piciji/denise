@@ -11,6 +11,7 @@
 #include "../emuconfig/layouts/misc.h"
 #include "../emuconfig/layouts/system.h"
 #include "../debugger/debugger.h"
+#include "../helper/miscHelper.h"
 
 std::vector<InputMapping*> InputManager::hotkeyTriggers;
 
@@ -141,7 +142,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
     typedef LIBC64::Interface C64Interface;
     typedef LIBAMI::Interface AmigaInterface;
     
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
     
     switch ( id ) {
         case Hotkey::Id::Rotation: {
@@ -237,7 +238,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
                 break;
 
             emuThread->lock();
-            auto settings = program->getSettings( emulator );
+            auto settings = Program::getSettings( emulator );
             auto connector = emulator->getConnector( 1 );
             auto connectedDevice = emulator->getConnectedDevice( connector );
 
@@ -269,7 +270,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 		        break;
 
             emuThread->lock();
-            auto settings = program->getSettings( emulator );
+            auto settings = Program::getSettings( emulator );
 			auto connector1 = emulator->getConnector( 0 );
             auto connectedDevice1 = emulator->getConnectedDevice( connector1 );
             
@@ -332,7 +333,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
         case Hotkey::PowerWithUnplugCart:
             emuThread->lock(true);
             program->power(emulator);
-            program->removeExpansion(false);
+            MiscHelper::removeExpansion(false);
             break;
 
         case Hotkey::PowerWithEjectDisks:
@@ -340,7 +341,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             for (auto& media : emulator->getDiskMediaGroup()->media)
                 fileloader->eject(emulator, &media);
             program->power(emulator);
-            program->removeExpansion(false);
+            MiscHelper::removeExpansion(false);
             break;
 			
 		case Hotkey::SoftReset:
@@ -431,7 +432,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
             }
             break;
         case Hotkey::Id::ThreadedRenderer: {
-            auto _settings = program->getSettings( activeEmulator );
+            auto _settings = Program::getSettings( activeEmulator );
             unsigned tr = _settings->get<unsigned>("threaded_renderer", 0);
             if (++tr == 3)
                 tr = 0;
@@ -810,7 +811,7 @@ auto InputManager::fireHotkey(InputMapping* trigger) -> void {
 
         case Hotkey::Toggle2MHzCpuTurbo: {
             emuThread->lock();
-            program->toggle2Mhz();
+            MiscHelper::toggle2Mhz();
         } break;
 
         case Hotkey::PrioDoubleAssignment: {

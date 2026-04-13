@@ -98,13 +98,13 @@ auto Program::initVideo(bool driverChange) -> void {
         std::string cacheFile = GUIKIT::String::getFileName(diskFile.path);
 
         if (diskFile.data && diskFile.size) {
-            std::string absPath = program->generatedFolder(subPath, true) + cacheFile;
+            std::string absPath = FileHelper::generatedFolder(subPath, true) + cacheFile;
             GUIKIT::File f(absPath, true);
 
             if (f.open(GUIKIT::File::Mode::Write))
                 f.write(diskFile.data, diskFile.size);
         } else {
-            std::string absPath = program->generatedFolder(subPath, false) + cacheFile;
+            std::string absPath = FileHelper::generatedFolder(subPath, false) + cacheFile;
             GUIKIT::File f(absPath, true);
 
             if (f.open()) {
@@ -119,7 +119,7 @@ auto Program::initVideo(bool driverChange) -> void {
     } );
     
     if (activeEmulator) {
-        videoDriver->useShaderCache( getSettings( activeEmulator )->get<bool>("shader_cache", true) );
+        videoDriver->useShaderCache( Program::getSettings( activeEmulator )->get<bool>("shader_cache", true) );
     }
 
     updateOnScreenText();
@@ -249,7 +249,7 @@ auto Program::setVideoDimension(Emulator::Interface* emulator) -> void {
     if (!activeEmulator || (emulator && (emulator != activeEmulator)))
         return;
 
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
 
     int aspectMode = settings->get<int>("aspect_mode", 1, {0, 3});
     bool integerScaling = settings->get<bool>("integer_scaling", false);
@@ -272,7 +272,7 @@ auto Program::activateGPU(Emulator::Interface* emulator, bool state) -> void {
     bool shaderActive = vManager->crtMode == VideoManager::CrtMode::Gpu;
 
     if (state != shaderActive) {
-        auto settings = program->getSettings(emulator);
+        auto settings = Program::getSettings(emulator);
         settings->set<unsigned>("video_crt", state ? (unsigned)VideoManager::CrtMode::Gpu : (unsigned)VideoManager::CrtMode::None);
         vManager->reloadSettings(true);
     }
@@ -372,7 +372,7 @@ auto Program::hintExclusiveFullscreen() -> void {
 
 auto Program::setVideoFilter() -> void {
 	if (activeEmulator)
-		videoDriver->setLinearFilter( getSettings( activeEmulator )->get<bool>("video_filter", true) );
+		videoDriver->setLinearFilter( Program::getSettings( activeEmulator )->get<bool>("video_filter", true) );
 }
 
 auto Program::setPalette( Emulator::Interface* emulator ) -> void {
@@ -416,7 +416,7 @@ auto Program::getCropDefault(Emulator::Interface* emulator, int pos, int directi
 
 auto Program::upgradeCropSettings() -> void {
     for(auto emulator : emulators) {
-        auto settings = getSettings( emulator );
+        auto settings = Program::getSettings( emulator );
 
         if (!settings->get<bool>("upd_crop", false)) {
             settings->set<bool>("upd_crop", true);
@@ -442,7 +442,7 @@ auto Program::upgradeCropSettings() -> void {
 
 auto Program::getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& crop) -> bool {
     typedef Emulator::Interface::CropType CropType;
-    auto settings = getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
 
     if ((CropType)type == CropType::AllSidesRatio || (CropType)type == CropType::AllSides) {
@@ -464,7 +464,7 @@ auto Program::getCrop(Emulator::Interface* emulator, Emulator::Interface::Crop& 
 auto Program::setCrop(Emulator::Interface* emulator, std::string ident, int value) -> void {
     typedef Emulator::Interface::CropType CropType;
     bool isDimension = ident == "crop_left" || ident == "crop_right" || ident == "crop_bottom" || ident == "crop_top";
-    auto settings = getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
 
     if (isDimension) {
         int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 11u});
@@ -515,7 +515,7 @@ auto Program::getScaleMessage(Emulator::Interface* emulator, int aspectMode ) ->
 }
 
 auto Program::updateCrop( Emulator::Interface* emulator ) -> void {
-    auto settings = getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     int type = settings->get<int>("crop_type", (unsigned)Emulator::Interface::CropType::Monitor, {0u, 6u});
     Emulator::Interface::Crop crop = {0};
     getCrop(emulator, crop);
@@ -613,7 +613,7 @@ auto Program::updateOverallSynchronize() -> void {
 auto Program::updateFullscreenSetting() -> void {
     if (!activeEmulator)
         return;
-    auto _settings = getSettings(activeEmulator);
+    auto _settings = Program::getSettings(activeEmulator);
 
     if (!view)
         return;
@@ -643,7 +643,7 @@ auto Program::fpsChanged() -> void {
 auto Program::setRotation() -> void {
     if (!activeEmulator)
         return;
-    auto _settings = getSettings(activeEmulator);
+    auto _settings = Program::getSettings(activeEmulator);
 
     DRIVER::Rotation rotation = (DRIVER::Rotation)_settings->get<unsigned>("rotation", (unsigned)DRIVER::ROT_0, {0u, 3u});
     videoDriver->setRotation(rotation);
@@ -658,7 +658,7 @@ auto Program::checkShaderSupport(Emulator::Interface* emulator) -> void {
         return;
     }
 
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     auto crtMode = settings->get<unsigned>("video_crt", (unsigned)VideoManager::CrtMode::None, {0u, 2u});
 
     if ((VideoManager::CrtMode)crtMode == VideoManager::CrtMode::Gpu)
@@ -678,7 +678,7 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
     if (!activeEmulator)
         return;
 
-    auto _settings = getSettings(activeEmulator);
+    auto _settings = Program::getSettings(activeEmulator);
     unsigned screenTextColor = _settings->get<unsigned>("screen_text_color", ~0);
     unsigned screenTextBgColor = _settings->get<unsigned>("screen_text_bgcolor", (255 << 24) | (69 << 16) | (128 << 8) | (116 << 0));
     unsigned screenWarnColor = _settings->get<unsigned>("screen_warn_color", (255 << 24) | (177 << 16) | (3 << 8) | (23 << 0));
@@ -707,7 +707,7 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
             file.unload();
 
             if (!found) {
-                screenTextFontPath = generatedFolder("fonts") + _fontFile;
+                screenTextFontPath = FileHelper::generatedFolder("fonts") + _fontFile;
                 file.setFile(screenTextFontPath);
                 found = file.exists();
                 file.unload();
@@ -751,7 +751,7 @@ auto Program::updateOnScreenText(bool keepFontPath) -> void {
 
 auto Program::updateHDR() -> void {
     auto _emu = activeEmulator ? activeEmulator : getLastUsedEmu();
-    auto _settings = getSettings(_emu);
+    auto _settings = Program::getSettings(_emu);
 
     bool enable = _settings->get<bool>("hdr_enable", false);
     bool gamut = _settings->get<bool>("hdr_gamut", true);
@@ -764,7 +764,7 @@ auto Program::updateHDR() -> void {
 
 auto Program::updateBFI() -> void {
     auto _emu = activeEmulator ? activeEmulator : getLastUsedEmu();
-    auto _settings = getSettings(_emu);
+    auto _settings = Program::getSettings(_emu);
 
     unsigned bfiFrames = _settings->get<unsigned>("bfi_frames", 0, { 0, 6 });
     unsigned darkFrames = _settings->get<unsigned>("dark_frames", 0, { 0, 6 });

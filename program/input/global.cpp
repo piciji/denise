@@ -32,7 +32,7 @@ auto InputManager::init() -> void {
 
         manager->updateMiscSettings();
         
-        auto settings = program->getSettings( manager->emulator );
+        auto settings = Program::getSettings( manager->emulator );
         
         auto alreadyMapped = settings->get<bool>( "automapped", false);    
         
@@ -69,7 +69,7 @@ auto InputManager::assumeLayoutType() -> KeyboardLayout::Type {
 auto InputManager::resetMappings() -> void {
     std::string settingIdent;
     InputMapping* mapper;    
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     
     for (auto& device : emulator->devices) {  
         for (auto& input : device.inputs) {
@@ -112,7 +112,7 @@ auto InputManager::setIllegalMappings() -> void {
 auto InputManager::setMappings() -> void {
 	for (auto manager : inputManagers) {
 		if (manager->emulator) {
-            auto settings = program->getSettings( manager->emulator );
+            auto settings = Program::getSettings( manager->emulator );
             
             for (auto& device : manager->emulator->devices) {  
                 for (auto& input : device.inputs) {
@@ -688,7 +688,7 @@ auto InputManager::updateMiscSettings() -> void {
     if (!emulator)
         return;
 
-    auto settings = program->getSettings(emulator);
+    auto settings = Program::getSettings(emulator);
     oppositeDirections = settings->get<bool>("allow_opposite_directions", false);
     prioritise = settings->get<unsigned>("prioritise_mappings", 1, {0,2});
 }
@@ -697,7 +697,7 @@ auto InputManager::updateAutofireFrequency() -> void {
     if (!emulator)
         return;
 
-    auto settings = program->getSettings(emulator);
+    auto settings = Program::getSettings(emulator);
     autoFireHold = settings->get<unsigned>( "autofire_hold", false );
     autoFireFrequency = settings->get<unsigned>( "autofire_frequency", 1, {1, 99} );
 
@@ -727,7 +727,7 @@ auto InputManager::updateAnalogSensitivity(Emulator::Interface::Device* updateDe
 		if (updateDevice && updateDevice != &device)
 			continue;		        
         
-        auto sensePercent = program->getSettings(emulator)->get<unsigned>( "analog_sensitivity_" + _underscore(device.name), 40u, { 0u, 100u});
+        auto sensePercent = Program::getSettings(emulator)->get<unsigned>( "analog_sensitivity_" + _underscore(device.name), 40u, { 0u, 100u});
 
 		int sense = sensePercent;
 				

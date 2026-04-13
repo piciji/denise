@@ -4,6 +4,7 @@
 #include "../media/autoloader.h"
 #include "../media/fileloader.h"
 #include "../thread/emuThread.h"
+#include "../helper/settingsHelper.h"
 
 Cmd::Cmd(int argc, char** argv) {
     if (!argv)
@@ -235,7 +236,7 @@ auto Cmd::parse() -> void {
     auto emuAmiga = program->getEmulator("Amiga");
 	auto diskGroup = emuC64->getDiskMediaGroup();
 	unsigned cycles = 0;
-    GUIKIT::Settings* settingsC64 = program->getSettings( emuC64 );
+    GUIKIT::Settings* settingsC64 = Program::getSettings( emuC64 );
 	bool hasFuxxorTest = false;
 	bool hasViciiTest = false;
 	bool hasRam0001Test = false;
@@ -588,7 +589,7 @@ auto Cmd::updateModel( Emulator::Interface* emulator, unsigned ident, int value)
 
         if(model.id == ident) {
 
-            auto settings = program->getSettings( emulator );
+            auto settings = Program::getSettings( emulator );
             
             settings->set<int>( _underscore( model.name ), value );
 
@@ -655,7 +656,7 @@ auto Cmd::setReuSize(std::string arg) -> void {
     }
 
     auto emulator = program->getEmulator("C64");
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdReu ];
     std::vector<int> ids = {128, 256, 512, 1024, 2048, 4096, 8192, 16384};
 
@@ -678,7 +679,7 @@ auto Cmd::setGeoRamSize(std::string arg) -> void {
     }
 
     auto emulator = program->getEmulator("C64");
-    auto settings = program->getSettings( emulator );
+    auto settings = Program::getSettings( emulator );
     auto& expansion = emulator->expansions[ LIBC64::Interface::ExpansionIdGeoRam ];
     std::vector<int> ids = {64, 128, 256, 512, 1024, 2048, 4096};
 

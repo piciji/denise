@@ -294,6 +294,9 @@
     <ClInclude Include="..\program\emuconfig\layouts\presentation.h" />
     <ClInclude Include="..\program\emuconfig\layouts\system.h" />
     <ClInclude Include="..\program\firmware\manager.h" />
+    <ClInclude Include="..\program\helper\fileHelper.h" />
+    <ClInclude Include="..\program\helper\miscHelper.h" />
+    <ClInclude Include="..\program\helper\settingsHelper.h" />
     <ClInclude Include="..\program\input\manager.h" />
     <ClInclude Include="..\program\media\autoloader.h" />
     <ClInclude Include="..\program\media\fileloader.h" />
@@ -1765,18 +1768,15 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_layout</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_layout</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\program\files.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\program\firmware\manager.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)_firmware</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_firmware</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|win32'">$(IntDir)%(Filename)_firmware</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|win32'">$(IntDir)%(Filename)_firmware</ObjectFileName>
     </ClCompile>
+    <ClCompile Include="..\program\helper\fileHelper.cpp" />
+    <ClCompile Include="..\program\helper\miscHelper.cpp" />
+    <ClCompile Include="..\program\helper\settingsHelper.cpp" />
     <ClCompile Include="..\program\input.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

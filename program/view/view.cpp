@@ -19,6 +19,8 @@
 #include "../emuconfig/layouts/audio.h"
 #include "../emuconfig/layouts/input.h"
 #include "../debugger/debugger.h"
+#include "../helper/fileHelper.h"
+#include "../helper/miscHelper.h"
 #include <sstream>
 
 View* view = nullptr;
@@ -136,7 +138,7 @@ auto View::build() -> void {
             }
         }
         GUIKIT::Size screenRatio = {0,0};
-        auto settings = program->getSettings( activeEmulator );
+        auto settings = Program::getSettings( activeEmulator );
 
         if (settings->get<bool>("aspect_correct_resizing", false)) {
             switch(videoDriver->getAspectRatio()) {
@@ -299,7 +301,7 @@ auto View::build() -> void {
         emuThread->lock();
         for (auto rF : fileloader->recentFiles)
             rF->save();
-		program->saveSettings();
+		SettingsHelper::saveSettings();
         emuThread->unlock();
 	};
 	
@@ -325,7 +327,7 @@ auto View::build() -> void {
     GUIKIT::Monitor::onFullscreenRefreshChange = [this](float rate) {
         if (!activeEmulator)
             return;
-        auto settings = program->getSettings( activeEmulator );
+        auto settings = Program::getSettings( activeEmulator );
         if (!settings->get<bool>("fullscreen_setting_adjust_emu_speed", false))
             return;
 
@@ -721,7 +723,7 @@ auto View::setConnectors() -> void {
 
         auto emulator = iM.emulator;
         
-        auto settings = program->getSettings( emulator );
+        auto settings = Program::getSettings( emulator );
         
         for(auto& connector : emulator->connectors) {
 
@@ -872,7 +874,7 @@ auto View::buildShader() -> void {
     for(auto& sM : sysMenus) {
         removeMenuTree( sM.shaderMenu );
         auto emulator = sM.emulator;
-        auto settings = program->getSettings(emulator);
+        auto settings = Program::getSettings(emulator);
 		auto vManager = VideoManager::getInstance( emulator );
         bool shaderActive = vManager->crtMode == VideoManager::CrtMode::Gpu;
 
@@ -1117,7 +1119,7 @@ auto View::buildMenu() -> void {
             sM.poweronAndRemoveExpansions->onActivate = [emulator]() {
                 emuThread->lock(true);
                 program->power(emulator);
-                program->removeExpansion(false);
+                MiscHelper::removeExpansion(false);
                 view->updateCartButtons( emulator );
                 emuThread->unlock();
             };
@@ -1717,7 +1719,7 @@ auto View::buildMenu() -> void {
         emuThread->lock();
         for (auto rF : fileloader->recentFiles)
             rF->save();
-        program->saveSettings();
+        SettingsHelper::saveSettings();
         emuThread->unlock();
     };
     saveItem.setIcon(diskImage);
@@ -1829,7 +1831,7 @@ auto View::buildMenu() -> void {
         item->onActivate = [this, i]() {
             emuThread->lock();
             unsigned delay = i * 200;
-            program->getSettings( activeEmulator )->set<unsigned>("fps_refresh", delay);
+            Program::getSettings( activeEmulator )->set<unsigned>("fps_refresh", delay);
             statusHandler->setFpsRefresh();
             emuThread->unlock();
         };
@@ -1845,7 +1847,7 @@ auto View::buildMenu() -> void {
         item->setText( std::to_string(i) );
         item->onActivate = [this, i]() {
             emuThread->lock();
-            program->getSettings( activeEmulator )->set<unsigned>("fps_decimal_point", i);
+            Program::getSettings( activeEmulator )->set<unsigned>("fps_decimal_point", i);
             statusHandler->setFpsRefresh();
             emuThread->unlock();
         };
@@ -1871,7 +1873,7 @@ auto View::buildMenu() -> void {
             speedItem = new GUIKIT::MenuRadioItem;
 
         speedItem->onActivate = [this, i]() {
-            auto settings = program->getSettings( activeEmulator );
+            auto settings = Program::getSettings( activeEmulator );
             settings->set<unsigned>("speed_profile", i);
             emuThread->lock();
             audioManager->setSynchronize();
@@ -1937,7 +1939,7 @@ auto View::buildMenu() -> void {
         diskControlMenu.clearSave.onActivate = [i]() {
             emuThread->lock();
             auto media = activeEmulator->getDisk(i);
-            auto path = program->getAssignedSaveFile( media );
+            auto path = FileHelper::getAssignedSaveFile( media );
             if (path.empty()) {
                 emuThread->unlock();
                 return;
@@ -2024,7 +2026,7 @@ auto View::buildMenu() -> void {
                 auto model = activeEmulator->getModel( LIBAMI::Interface::ModelId::ModelIdAudioFilter );
                 if (!model)
                     return;
-                auto settings = program->getSettings(activeEmulator);
+                auto settings = Program::getSettings(activeEmulator);
                 if (!settings)
                     return;
 
@@ -2097,7 +2099,7 @@ auto View::updateSpeedLabels() -> void {
             speedItems[i]->setText( label );
     }
 
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
     unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
     if (!speedItems[speedProfile]->checked())
         speedItems[speedProfile]->setChecked();
@@ -2117,7 +2119,7 @@ auto View::updateDiskMenu() -> void {
 }
 
 auto View::updateMouseGrab() -> void {
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
     grabMouseLeft = settings->get<bool>("grab_mouse_left", dynamic_cast<LIBAMI::Interface*>(activeEmulator));
 }
 
@@ -2454,7 +2456,7 @@ auto View::questionToWrite(Emulator::Interface::Media* media) -> bool {
 }
 
 auto View::getSpeedBySelectedProfile(float& speed, bool& percent) -> unsigned {
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
     unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
     getSpeed(speedProfile, speed, percent);
     return speedProfile;
@@ -2480,7 +2482,7 @@ auto View::getSpeed(unsigned pos, float& speed, bool& percent) -> void {
         case 10: speed = 120.0; break;
         case 11: speed = 250.0; break; // maximum
         case 12:
-            auto settings = program->getSettings( activeEmulator );
+            auto settings = Program::getSettings( activeEmulator );
             speed = settings->get<float>("custom_speed", 59.95);
             percent = settings->get<bool>("custom_speed_percent", false);
             break;
@@ -2495,7 +2497,7 @@ auto View::isCustomSpeed() -> bool {
     if (!activeEmulator)
         return false;
 
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
     unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
 
     return speedProfile == (speedItems.size() - 1);
@@ -2505,7 +2507,7 @@ auto View::isMaximumSpeed() -> bool {
     if (!activeEmulator)
         return false;
 
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
     unsigned speedProfile = settings->get<unsigned>("speed_profile", 1, {0, (unsigned)speedItems.size() - 1});
 
     return speedProfile == (speedItems.size() - 2);
@@ -2579,7 +2581,7 @@ auto View::updateToHoldDimension() -> void {
     if (view->fullScreen())
         return;
     
-    auto settings = program->getSettings(activeEmulator);
+    auto settings = Program::getSettings(activeEmulator);
     globalSettings->set<unsigned>("screen_width", settings->get<unsigned>("view_hold_width", 800));
     globalSettings->set<unsigned>("screen_height", settings->get<unsigned>("view_hold_height", 600));
 
@@ -2603,8 +2605,8 @@ auto View::clearRecentList(Emulator::Interface* emulator) -> void {
 
 auto View::takeScreenshot() -> void {
     videoDriver->waitRenderThread();
-    auto settings = program->getSettings(activeEmulator);
-    auto _path = program->generatedFolder(activeEmulator, "screen_record_path", "recordings/screenshots", true);
+    auto settings = Program::getSettings(activeEmulator);
+    auto _path = FileHelper::generatedFolder(activeEmulator, "screen_record_path", "recordings/screenshots", true);
     auto _file = settings->get<std::string>("save_ident", "screenshot");
     auto screenshotFormat = settings->get<std::string>("screen_record_format", "png");
     bool withEffects = globalSettings->get<bool>("screenshot_with_effects", true);
@@ -2685,7 +2687,7 @@ auto View::setAudioRecordText() -> void {
 }
 
 auto View::updateFPSMenu() -> void {
-    auto _settings = program->getSettings( activeEmulator );
+    auto _settings = Program::getSettings( activeEmulator );
     auto decimals = _settings->get<unsigned>("fps_decimal_point", 1, {0u, 3u});
     auto delay = _settings->get<unsigned>("fps_refresh", 1000u, {200u, 3000u});
 
@@ -2725,7 +2727,7 @@ auto View::FpsWindow::show() -> void {
     int _y = geo.y + geo.height / 2 - 50;
 
     setGeometry( { _x, _y, 230, 100} );
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
     auto speed = settings->get<float>("custom_speed", 59.95);
     auto percent = settings->get<bool>("custom_speed_percent", false);
     std::string label = GUIKIT::String::formatFloatingPoint(speed, 3, true);
@@ -2758,8 +2760,8 @@ auto View::FpsWindow::build() -> void {
         if (out < 1.0)
             return;
 
-        program->getSettings( activeEmulator )->set<std::string>("custom_speed", userInput);
-        program->getSettings( activeEmulator )->set<bool>("custom_speed_percent", top.percentRadioBox.checked());
+        Program::getSettings( activeEmulator )->set<std::string>("custom_speed", userInput);
+        Program::getSettings( activeEmulator )->set<bool>("custom_speed_percent", top.percentRadioBox.checked());
 
         if (view->isCustomSpeed()) {
             emuThread->lock();

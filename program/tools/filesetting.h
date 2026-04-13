@@ -2,6 +2,7 @@
 #pragma once
 
 #include "../program.h"
+#include "../helper/settingsHelper.h"
 
 struct FileSetting {
     
@@ -35,7 +36,7 @@ struct FileSetting {
 			if ( (emulator == instance->emulator) && (ident == instance->ident) )
 				return instance;			
 		}
-		auto instance = new FileSetting( program->getSettings( emulator ) );
+		auto instance = new FileSetting( Program::getSettings( emulator ) );
 		instance->ident = ident;
         instance->emulator = emulator;
 		instance->update();

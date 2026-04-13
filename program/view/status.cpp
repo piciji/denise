@@ -9,6 +9,7 @@
 #include "../media/media.h"
 #include "../input/manager.h"
 #include "../emuconfig/layouts/audio.h"
+#include "../helper/miscHelper.h"
 
 StatusHandler* statusHandler = nullptr;
 
@@ -110,7 +111,7 @@ auto StatusHandler::resetFrameCounter() -> void {
 auto StatusHandler::setFpsRefresh() -> void {
     if (!activeEmulator)
         return;
-    auto settings = program->getSettings( activeEmulator );
+    auto settings = Program::getSettings( activeEmulator );
     fpsCounter.updateIntervall = settings->get<unsigned>("fps_refresh", 1000, {200u, 3000u});
 
     auto pointsBefore = fpsCounter.decimalPoints;
@@ -202,7 +203,7 @@ auto StatusHandler::updateVolume( bool state ) -> void {
     unsigned volume = 100;
 
     if (activeEmulator) {
-        auto settings = program->getSettings(activeEmulator);
+        auto settings = Program::getSettings(activeEmulator);
         volume = settings->get<unsigned>("audio_volume", 100u, {0u, 100u});
     }
 
@@ -253,7 +254,7 @@ auto StatusHandler::updateTapeImage( GUIKIT::Image* image ) -> void {
 auto StatusHandler::setExpansionClick() -> void {
     auto expansion = activeEmulator->getExpansion();
 
-    if (program->hasSuperCpuActive()) {
+    if (MiscHelper::hasSuperCpuActive()) {
         emuThread->lock();
         bool state = activeEmulator->getExpansionJumper(expansion->mediaGroup->selected, 0);
         activeEmulator->setExpansionJumper(expansion->mediaGroup->selected, 0, !state);
@@ -267,7 +268,7 @@ auto StatusHandler::setExpansionClick() -> void {
                 block->selector.jumpers[0]->setChecked(!state);
         }
         std::string saveIdent = _underscore( expansion->mediaGroup->selected->name + "_jumper_" + jumper.name );
-        program->getSettings(activeEmulator)->set<bool>( saveIdent, !state);
+        Program::getSettings(activeEmulator)->set<bool>( saveIdent, !state);
         emuThread->unlock();
     }
 }
@@ -279,7 +280,7 @@ auto StatusHandler::hideTape() -> void {
 }
 
 auto StatusHandler::setVolumeSlider(Emulator::Interface* emulator) -> void {
-    auto settings = program->getSettings(emulator);
+    auto settings = Program::getSettings(emulator);
     auto volume = settings->get<unsigned>("audio_volume", 100, {0, 100});
 
     setVolumeSlider(volume);
@@ -300,7 +301,7 @@ auto StatusHandler::enableLEDs() -> void {
 }
 
 auto StatusHandler::toggleLED(Emulator::Interface::LedId ledId) -> void {
-    auto settings = program->getSettings(activeEmulator);
+    auto settings = Program::getSettings(activeEmulator);
 
     for (auto& ledState : ledStates) {
         if (ledState.ledId == ledId) {
@@ -316,11 +317,11 @@ auto StatusHandler::toggleLED(Emulator::Interface::LedId ledId) -> void {
 auto StatusHandler::enableLED(LEDState& ledState) -> void {
     GUIKIT::Settings* settings = nullptr;
     if (activeEmulator)
-        settings = program->getSettings(activeEmulator);
+        settings = Program::getSettings(activeEmulator);
 
     bool enabled = settings ? settings->get<bool>(ledState.name, false) : false;
 
-    if (enabled && (ledState.ledId == Emulator::Interface::LedId::MHz2) && program->hasSuperCpuActive())
+    if (enabled && (ledState.ledId == Emulator::Interface::LedId::MHz2) && MiscHelper::hasSuperCpuActive())
         enabled = false;
 
     ledState.enabled = enabled;
@@ -419,12 +420,12 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
 
     statusBar->append( 29, "2 MHz", [this]() {
         emuThread->lock();
-        program->toggle2Mhz();
+        MiscHelper::toggle2Mhz();
         emuThread->unlock();
     } );
     statusBar->append( 30, &(view->ledOffImage), [this]() {
         emuThread->lock();
-        program->toggle2Mhz();
+        MiscHelper::toggle2Mhz();
         emuThread->unlock();
     });
     
@@ -442,7 +443,7 @@ auto StatusHandler::init(GUIKIT::StatusBar* statusBar) -> void {
     statusBar->append( 18, 21, 60, [](unsigned position) {
         if (!activeEmulator)
             return;
-        auto settings = program->getSettings(activeEmulator);
+        auto settings = Program::getSettings(activeEmulator);
         settings->set<unsigned>("audio_volume", position * 5);
 
         emuThread->lock();
@@ -486,7 +487,7 @@ auto StatusHandler::reset() -> void {
 }
 
 auto StatusHandler::setMessageLevel() -> void {
-    auto settings = program->getSettings(activeEmulator);
+    auto settings = Program::getSettings(activeEmulator);
     showOnlyUrgentMessages = settings->get<bool>("only_urgent_messages", false);
 }
 

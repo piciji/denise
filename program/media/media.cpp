@@ -16,6 +16,7 @@
 #include "../thread/emuThread.h"
 #include "recentFiles.h"
 #include "../emuconfig/layouts/system.h"
+#include "../helper/fileHelper.h"
 
 #include <thread>
 #include <vector>
@@ -39,7 +40,7 @@ MediaLayout::MediaLayout(EmuConfigView::TabWindow* tabWindow) {
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
     this->message = tabWindow->message;     
-    this->settings = program->getSettings( emulator );
+    this->settings = Program::getSettings( emulator );
 }
 
 auto MediaLayout::setMediaView() -> void {
@@ -492,7 +493,7 @@ auto MediaLayout::bindSelectorAction(MediaGroupLayout* layout) -> void {
             GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(fSetting->path));
 			uint8_t* data = nullptr;
 
-            if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
+            if (FileHelper::loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
 
                 if (!mediaGroup->isProgram())
                     filePool->assign( _ident(emulator, block->media->name + "store"), file);
@@ -1302,7 +1303,7 @@ auto MediaLayout::insertImage( MediaGroupLayout::Block* block, GUIKIT::File* fil
     updateMediaBlock(block, fSetting);
     
     if (!fromState && fSetting && mediaGroup->isDrive())
-        program->updateSaveIdent( emulator, fSetting );
+        FileHelper::updateSaveIdent( emulator, fSetting );
 }
 
 auto MediaLayout::getMediaGroupLayout( Emulator::Interface::MediaGroup* mediaGroup ) -> MediaGroupLayout* {
@@ -1445,18 +1446,18 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         return;
 
     if (!file->exists())
-        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
+        return FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
     if (!mediaGroup->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
-        return program->errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
+        return FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
     if (mediaGroup->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
-        return program->errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), message);
+        return FileHelper::errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), message);
 
     auto& items = file->scanArchive();
 
     archiveViewer->onCallback = [this, block](GUIKIT::File* file, GUIKIT::File::Item* item) {
 
         if (!item || (item->info.size == 0) )
-            return program->errorOpen( file, item, message );        
+            return FileHelper::errorOpen( file, item, message );
 
         emuThread->lock();
         insertImage( block, file, item );
@@ -1651,7 +1652,7 @@ auto MediaLayout::loadSettings() -> void {
                 GUIKIT::File* file = filePool->get(GUIKIT::File::resolveRelativePath(fSetting->path));
                 uint8_t* data = nullptr;
                
-                if (program->loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
+                if (FileHelper::loadImageDataWhenOk(file, fSetting->id, mediaGroup, data)) {
                     block->media->guid = uintptr_t(file);
                     if (!mediaGroup->isProgram())
                         filePool->assign(_ident(emulator, block->media->name + "store"), file);

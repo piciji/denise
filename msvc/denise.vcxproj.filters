@@ -335,6 +335,9 @@
     <Filter Include="program\debugger">
       <UniqueIdentifier>{8158eaa9-7989-47bb-85a6-02cd595b596d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="program\helper">
+      <UniqueIdentifier>{48a57f84-eb56-42b4-8022-802e2da4b53f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\emulation\interface.h">
@@ -1249,6 +1252,15 @@
     <ClInclude Include="..\program\debugger\blitterDebugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\helper\fileHelper.h">
+      <Filter>program\helper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\helper\miscHelper.h">
+      <Filter>program\helper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\helper\settingsHelper.h">
+      <Filter>program\helper</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -1711,9 +1723,6 @@
       <Filter>program</Filter>
     </ClCompile>
     <ClCompile Include="..\program\audio.cpp">
-      <Filter>program</Filter>
-    </ClCompile>
-    <ClCompile Include="..\program\files.cpp">
       <Filter>program</Filter>
     </ClCompile>
     <ClCompile Include="..\program\input.cpp">
@@ -2510,6 +2519,15 @@
     </ClCompile>
     <ClCompile Include="..\program\debugger\blitterDebugger.cpp">
       <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\helper\fileHelper.cpp">
+      <Filter>program\helper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\helper\miscHelper.cpp">
+      <Filter>program\helper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\helper\settingsHelper.cpp">
+      <Filter>program\helper</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
