@@ -69,7 +69,13 @@ namespace LIBAMI {
 
         auto scsiCommand(scsiCmd& cmd) -> void;
 
-        auto verify(unsigned offset, unsigned length, uint32_t addr) -> int8_t;
+        auto scsiCopyData(scsiCmd& sc, uint8_t* data, unsigned len) -> void;
+
+        auto scsiFail(scsiCmd& sc, int error = -1, unsigned lba = ~0) -> void;
+
+        auto scsiResult(scsiCmd& sc, uint32_t len, uint8_t status = 0, uint16_t senseLength = 0) -> void;
+
+        auto verify(uint64_t offset, unsigned length, uint32_t addr) -> int8_t;
 
         auto fixKick12() -> void;
 

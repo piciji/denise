@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
 Program::Program() {
     program = this;
     GUIKIT::Application::name = APP_NAME;
-    GUIKIT::Application::vendor = "PiCiJi";
+    GUIKIT::Application::vendor = AUTHOR;
     GUIKIT::Application::onQuitRequest = []() {
         view->onClose();
     };

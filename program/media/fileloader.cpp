@@ -741,11 +741,6 @@ auto Fileloader::insertFile( Emulator::Interface* emulator, Emulator::Interface:
         FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), emuView ? emuView->message : view->message);
         return false;
     }
-    
-    if (media->group->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE)) {
-        FileHelper::errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), emuView ? emuView->message : view->message);
-        return false;
-    }
 
     auto& items = file->scanArchive();
 

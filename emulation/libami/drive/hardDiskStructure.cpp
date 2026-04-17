@@ -549,8 +549,22 @@ auto HardDiskStructure::getListing() -> std::vector<Emulator::Interface::Listing
         listing.push_back({ {'R','D','B'} });
 
     for (auto& partition : partitions) {
-        FilesystemExt fsExt(partition.size, (Filesystem::Structure)partition.dosType, partition.bSize);
-        fsExt.setDataSource(this, partition.offset);
+        std::vector<Emulator::Interface::Listing> _listing;
+
+        if (((partition.dosType >> 8) == 0x504453) || ((partition.dosType >> 8) == 0x504653)) { // PFS or PDS
+            uint8_t buf[32];
+            static std::vector<uint16_t> _preLabel = {'L','a','b','e','l',':',' '};
+            if (read(buf, partition.offset + (uint64_t)partition.bSize * (uint64_t)2 + (uint64_t)20, 32)) {
+                _listing.push_back( {} );
+                for (unsigned i = 0; i < std::min((unsigned)buf[0], 32u); i++)
+                    _listing[0].line.push_back( buf[i + 1] );
+                Filesystem::combine(_listing[0].line, _preLabel);
+            }
+        } else {
+            FilesystemExt fsExt(partition.size, (Filesystem::Structure)partition.dosType, partition.bSize);
+            fsExt.setDataSource(this, partition.offset);
+            _listing = fsExt.getDirectory(true);
+        }
          
         std::vector<uint16_t> out;
         std::string _name = partition.name;
@@ -559,8 +573,6 @@ auto HardDiskStructure::getListing() -> std::vector<Emulator::Interface::Listing
         for (unsigned i = 0; i < _name.size(); i++)
             out[i] = _name[i];
 
-        auto _listing = fsExt.getDirectory(true);
-
         if (_listing.size()) {
             if (!listing.empty())
                 listing.push_back({  });
@@ -568,6 +580,9 @@ auto HardDiskStructure::getListing() -> std::vector<Emulator::Interface::Listing
             Filesystem::combine(_listing[0].line, out, true);
 
             Filesystem::combine(listing, _listing, true);
+        } else {
+            out.erase( out.begin(), out.begin() + 3 );
+            listing.push_back({ out, {} });
         }
     }
 

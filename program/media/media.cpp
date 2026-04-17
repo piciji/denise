@@ -1449,8 +1449,6 @@ auto MediaLayout::drop( std::string filePath, MediaGroupLayout::Block* block ) -
         return FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
     if (!mediaGroup->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
         return FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), message);
-    if (mediaGroup->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
-        return FileHelper::errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), message);
 
     auto& items = file->scanArchive();
 

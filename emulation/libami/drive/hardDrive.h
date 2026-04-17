@@ -87,8 +87,8 @@ struct HardDrive {
     auto readSector(bool verify = false, bool useMultiple = false) -> void;
     auto writeSector(bool useMultiple = false) -> void;
 
-    auto read(unsigned offset, unsigned length) -> uint8_t*;
-    auto write(unsigned offset, unsigned length) -> bool;
+    auto read(uint64_t offset, unsigned length) -> uint8_t*;
+    auto write(uint64_t offset, unsigned length) -> bool;
 
     auto isBusy() const -> bool { return status & (uint8_t)State::BSY; }
 

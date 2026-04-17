@@ -6,6 +6,7 @@
 #include "../../tools/buffer.h"
 #include "../../tools/error.h"
 #include "../../tools/crc32.h"
+#include <inttypes.h>
 
 #pragma warning(disable:4996)
 namespace LIBAMI {
@@ -16,16 +17,16 @@ BuiltinHD::~BuiltinHD() {
 }
 
 auto BuiltinHD::reset() -> void {
-    bool asyncAccessUse = romSize == sizeof(Firmware::mras0RomAsyc);
+    bool asyncAccessUse = romSize == sizeof(Firmware::mras0RomAsync);
 
     if (!rom || (agnus.system->asyncHDDAccess != asyncAccessUse)) {
         if (rom)
             delete[] rom;
 
         if (agnus.system->asyncHDDAccess) {
-            romSize = sizeof(Firmware::mras0RomAsyc);
+            romSize = sizeof(Firmware::mras0RomAsync);
             rom = new uint8_t[romSize];
-            std::memcpy(rom, Firmware::mras0RomAsyc, romSize);
+            std::memcpy(rom, Firmware::mras0RomAsync, romSize);
         } else {
             romSize = sizeof(Firmware::mras0Rom);
             rom = new uint8_t[romSize];
@@ -392,13 +393,13 @@ auto BuiltinHD::handleCmd(bool delayed) -> void {
 
     constexpr int8_t IOERR_NOCMD = -3;
     constexpr int8_t IOERR_BADLENGTH = -4;
-    constexpr int8_t IOERR_BADADDRESS = -5;    
+    constexpr int8_t IOERR_BADADDRESS = -5;
 
     uint16_t cmd = agnus.fakeReadWord(memPtr + IO_COMMAND);
     uint32_t len = agnus.fakeReadLongWord(memPtr + IO_LENGTH);
     uint32_t addr = agnus.fakeReadLongWord(memPtr + IO_DATA);
     uint32_t offset = agnus.fakeReadLongWord(memPtr + IO_OFFSET);
-    bool asyncAccessUse = romSize == sizeof(Firmware::mras0RomAsyc);
+    bool asyncAccessUse = romSize == sizeof(Firmware::mras0RomAsync);
 
     int8_t error = 0;
     uint32_t actual = 0;
@@ -471,7 +472,7 @@ auto BuiltinHD::handleCmd(bool delayed) -> void {
                 agnus.fakeWriteByte(addr + scsi_Status, sc.scsi_Status);
                 agnus.fakeWriteWord(addr + scsi_SenseActual, sc.scsi_SenseActual);
 
-                error = 0;
+                error = static_cast<int8_t>(sc.scsi_Status);
                 actual = sc.scsi_Actual;
             }
         } break;
@@ -487,6 +488,45 @@ auto BuiltinHD::handleCmd(bool delayed) -> void {
         agnus.fakeWriteLongWord(memPtr + IO_ACTUAL, actual);
 }
 
+auto BuiltinHD::scsiCopyData(scsiCmd& sc, uint8_t* data, unsigned len) -> void {
+    const uint32_t actlen = std::min(sc.scsi_Length, static_cast<uint32_t>(len));
+    agnus.fakeWriteByte(sc.scsi_Data, data, actlen);
+    scsiResult(sc, actlen);
+}
+
+auto BuiltinHD::scsiFail(scsiCmd& sc, int error, unsigned lba) -> void {
+    constexpr uint16_t senseLength = 18;
+    uint8_t sense[senseLength] = {};
+    sense[0] = 0x70;
+
+    if (lba != ~0) {
+        sense[0] |= 0x80;
+        FromU32BE(sense + 3, lba);
+    }
+
+    if (error < 0) {
+        sense[2] = 5; // illegal
+        sense[12] = 0x21; // out of range
+    } else {
+        sense[2] = 3; // medium error
+        if (error == 1)
+            sense[12] = 0x11;
+        else if (error == 2)
+            sense[12] = 0x0c;
+    }
+
+    const uint32_t actlen = std::min(sc.scsi_SenseLength, senseLength);
+    agnus.fakeWriteByte(sc.scsi_SenseData, sense, actlen);
+    scsiResult(sc, 0, 2, actlen);
+}
+
+inline auto BuiltinHD::scsiResult(scsiCmd& sc, uint32_t len, uint8_t status, uint16_t senseLength) -> void {
+    sc.scsi_Actual = len;
+    sc.scsi_SenseActual = senseLength;
+    sc.scsi_Status = status;
+    sc.scsi_CmdActual = sc.scsi_CmdLength;
+}
+
 auto BuiltinHD::scsiCommand(scsiCmd& sc) -> void {
     auto& geometry = hardDrive.geometry();
 
@@ -496,23 +536,12 @@ auto BuiltinHD::scsiCommand(scsiCmd& sc) -> void {
 
     if (sc.scsi_CmdLength < 6) {
         warn("Invalid SCSI command length %i", sc.scsi_CmdLength);
-        sc.scsi_Status = 2; // check condition (TODO: sense data)
+        scsiFail(sc);
         return;
     }
 
-    auto copy_data = [&](uint8_t* data, size_t len) {
-        const uint32_t actlen = std::min(sc.scsi_Length, static_cast<uint32_t>(len));
-
-        agnus.fakeWriteByte(sc.scsi_Data, data, actlen);
-
-        sc.scsi_Actual = actlen;
-        sc.scsi_CmdActual = sc.scsi_CmdLength;
-        sc.scsi_Status = 0;
-        sc.scsi_SenseActual = 0;
-    };
-
     if (cmd[0] == 0x25 && sc.scsi_CmdLength == 10) {
-        uint8_t data[8] = {0,};
+        uint8_t data[8] = {};
         
         const uint32_t max_block = geometry.blocks() - 1;
         if (cmd[8] & 1) { // pmi
@@ -525,7 +554,7 @@ auto BuiltinHD::scsiCommand(scsiCmd& sc) -> void {
             FromU32BE(&data[0], max_block);
         }
         FromU32BE(&data[4], geometry.bSize);
-        copy_data(data, sizeof(data));    
+        scsiCopyData(sc, data, sizeof(data));
 
     } else if (cmd[0] == 0x12 && sc.scsi_CmdLength == 6) {
         // INQUIRY
@@ -545,7 +574,7 @@ auto BuiltinHD::scsiCommand(scsiCmd& sc) -> void {
         copy_string(&data[16], product.c_str(), 16); // product id
         copy_string(&data[32], "1.0", 4); // revision
 
-        copy_data(data, sizeof(data));
+        scsiCopyData(sc, data, sizeof(data));
 
     } else if (cmd[0] == 0x1a && sc.scsi_CmdLength == 6 && (cmd[2] == 3 || cmd[2] == 4)) {
         // MODE SENSE (6) with PC = 0 and Page Code = 3 (Format Parameters page) or 4 (Rigid drive geometry parameters)
@@ -577,29 +606,61 @@ auto BuiltinHD::scsiCommand(scsiCmd& sc) -> void {
 
         data[0] = static_cast<uint8_t>(page - data - 1);
 
-        copy_data(data, page - data);
+        scsiCopyData(sc, data, page - data);
+    } else if (cmd[0] == 0x28 && sc.scsi_CmdLength == 10) { // READ (10) max 65535 blocks
+        unsigned lba = ToU32BE(&cmd[2]);
+        uint64_t offset = (uint64_t)lba * (uint64_t)geometry.bSize;
+        unsigned len = ToU16BE(&cmd[7]) * geometry.bSize;
+        int8_t error = verify(offset, len, sc.scsi_Data);
+
+        if (!error) {
+            uint8_t* data = hardDrive.read(offset, len);
+            if (!data) {
+                warn("HD read error at offset: %" PRIu64, offset);
+                scsiFail( sc, 1, lba );
+            } else
+                scsiCopyData(sc, data, len);
+        } else {
+            warn("HD read out of bounds: %" PRIu64, offset);
+            scsiFail( sc );
+        }
+    } else if (cmd[0] == 0x2a && sc.scsi_CmdLength == 10) { // WRITE (10) max 65535 blocks
+        unsigned lba = ToU32BE(&cmd[2]);
+        uint64_t offset = (uint64_t)lba * (uint64_t)geometry.bSize;
+
+        unsigned len = ToU16BE(&cmd[7]) * geometry.bSize;
+
+        int8_t error = verify(offset, len, sc.scsi_Data);
+
+        if (!error) {
+            hardDrive.setBuffer(len);
+            agnus.fakeRead(sc.scsi_Data, hardDrive.buffer, len);
+            if (!hardDrive.write(offset, len)) {
+                scsiFail( sc, 2, lba );
+                warn("HD write error at offset: %" PRIu64, offset);
+            } else {
+                scsiResult(sc, len);
+            }
+        } else {
+            warn("HD write out of bounds: %" PRIu64, offset);
+            scsiFail( sc );
+        }
+
     } else if (cmd[0] == 0x37 && sc.scsi_CmdLength == 10) { // READ DEFECT DATA
         uint8_t data[4] = { 0, static_cast<uint8_t>(cmd[1] & 0x1f), 0, 0 };
-        copy_data(data, sizeof(data));
+        scsiCopyData(sc, data, sizeof(data));
     } else if (cmd[0] == 0x2f || cmd[0] == 0x0) { // verify or unit ready
         // pretend there are no errors :-)
-        sc.scsi_Actual = 0;
-        sc.scsi_CmdActual = sc.scsi_CmdLength;
-        sc.scsi_Status = 0;
-        sc.scsi_SenseActual = 0;
+        scsiResult(sc, 0);
 
     } else {
-        sc.scsi_Status = /*SCSI_INVALID_COMMAND*/ 0x20; // SCSI status
-        sc.scsi_Actual = 0; // sc.scsi_Length;
-        sc.scsi_CmdActual = 0; // sc.scsi_CmdLength; // Whole command used
-        sc.scsi_SenseActual = 0; // Not used
-
-        std::string s(cmd.begin(), cmd.end());
-        warn("unsupported scsi cmd: %s", s.c_str());
+        scsiResult(sc, 0, 0x20); // invalid
+        sc.scsi_CmdActual = 0;
+        warn("unsupported scsi cmd: %x", cmd[0]);
     }
 }
 
-auto BuiltinHD::verify(unsigned offset, unsigned length, uint32_t addr) -> int8_t {
+auto BuiltinHD::verify(uint64_t offset, unsigned length, uint32_t addr) -> int8_t {
     //constexpr int8_t IOERR_OPENFAIL = -1;
     //constexpr int8_t IOERR_ABORTED = -2;
     constexpr int8_t IOERR_BADLENGTH = -4;
@@ -615,7 +676,7 @@ auto BuiltinHD::verify(unsigned offset, unsigned length, uint32_t addr) -> int8_
 
     auto geometry = hardDrive.geometry();
 
-    if ((uint64_t)offset + (uint64_t)length > geometry.length())
+    if (offset + (uint64_t)length > geometry.length())
         return IOERR_BADADDRESS;
 
     if (!agnus.isMem(addr) || !agnus.isMem(addr + length))

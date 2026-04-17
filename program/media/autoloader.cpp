@@ -333,9 +333,9 @@ auto Autoloader::loadFiles() -> void {
     if (!file)
         return loadFiles();
 
-    if (!file->exists() || !file->isSizeValid(MAX_HARDDISK_SIZE)) {
+    if (!file->exists()) {
         if (!ddControl.silentError)
-            FileHelper::errorFileSize(MAX_HARDDISK_SIZE, file->getPath(), view->message);
+            FileHelper::errorFileSize(MAX_MEDIUM_SIZE, file->getPath(), view->message);
 
         return loadFiles();
     }

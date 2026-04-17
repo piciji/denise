@@ -52,8 +52,6 @@ auto FileHelper::loadImageDataWhenOk( GUIKIT::File* file, unsigned fileId, Emula
 
     if (!group->isHardDisk() && !file->isSizeValid(MAX_MEDIUM_SIZE))
         return false;
-    if (group->isHardDisk() && !file->isSizeValid(MAX_HARDDISK_SIZE))
-        return false;
 
     // non archived hard disk images will be loaded in chunks when needed
     if (group->isHardDisk() && !file->isArchived() ) {

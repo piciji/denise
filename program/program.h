@@ -31,7 +31,6 @@
 
 #define MAX_MEDIUM_SIZE (100u * 1024u * 1024u)
 #define MAX_FIRMWARE_SIZE (512u * 1024u + 11)
-#define MAX_HARDDISK_SIZE (4096ull * 1024ull * 1024ull)
 
 #define ERROR_COLOR 0xff4500
 #define SUCCESS_COLOR 0x009911

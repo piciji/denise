@@ -38,7 +38,7 @@ auto HardDrive::attach(uint8_t* data, uint64_t size) -> bool {
     if (!structure.attach(data, size))
         return false;
 
-    setBuffer( 256 * geometry().bSize ); // max for non builin devcies
+    setBuffer( 256 * geometry().bSize ); // max for non builtin devices
 
     setUsableFileDrivers();
 
@@ -472,10 +472,10 @@ auto HardDrive::identify() -> void {
 }
 
 // read/write for virtual builtin controller
-auto HardDrive::read(unsigned offset, unsigned length) -> uint8_t* {
+auto HardDrive::read(uint64_t offset, unsigned length) -> uint8_t* {
     setBuffer(length);
 
-    convertCHS(offset / geometry().bSize);
+    convertCHS(offset / (uint64_t)geometry().bSize);
     uint8_t LED = system->getModel() > 1 ? 1 : 2;
     agnus.interface->updateDeviceState(media, false, getPositonForUI(), 0x80 | 0x40 | LED, false);
 
@@ -485,11 +485,11 @@ auto HardDrive::read(unsigned offset, unsigned length) -> uint8_t* {
     return nullptr;
 }
 
-auto HardDrive::write(unsigned offset, unsigned length) -> bool {
+auto HardDrive::write(uint64_t offset, unsigned length) -> bool {
     if (writeProtected)
         return false;
 
-    convertCHS(offset / geometry().bSize);
+    convertCHS(offset / (uint64_t)geometry().bSize);
     agnus.interface->updateDeviceState(media, true, getPositonForUI(), 0x80 | 0x40 | 1, false);
 
     if (structure.write(buffer, offset, length))
