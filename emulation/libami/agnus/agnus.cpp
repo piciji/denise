@@ -1091,10 +1091,11 @@ auto Agnus::updateVideoSnapshot(DebuggerSnapshot& snap) -> void {
 }
 
 auto Agnus::updateDmaSnapshot(DebuggerSnapshot& snap) -> void {
-    std::memcpy(snap.agnus.debuggerDma, debugger.dma, sizeof(debugger.dma));
-    snap.agnus.lastHPos = debugger.lastHpos;
-    snap.agnus.chipMemMask = chipMemMask;
-    snap.agnus.model = model;
+    auto& s = snap.agnus;
+    std::memcpy(s.debuggerDma, debugger.dma,sizeof(debugger.dma));
+    s.lastHPos = debugger.lastHpos;
+    s.chipMemMask = chipMemMask;
+    s.model = model;
 }
 
 auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
@@ -1104,6 +1105,57 @@ auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.callbackAction = debugger.action;
     snap.callbackAddress = debugger.addr;
     snap.codeMaybeModified = cpu.hasModifiedCode();
+}
+
+auto Agnus::updatePtrSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.agnus;
+    s.bplPtr[0] = bpl1pt;
+    s.bplPtr[1] = bpl2pt;
+    s.bplPtr[2] = bpl3pt;
+    s.bplPtr[3] = bpl4pt;
+    s.bplPtr[4] = bpl5pt;
+    s.bplPtr[5] = bpl6pt;
+
+    int i = 0;
+    for (auto& spr : sprites) {
+        s.sprPtr[i] = spr.ptr;
+        s.sprEnable[i++] = spr.enable;
+    }
+
+    i = 0;
+    for (auto& spr : sprites) {
+        s.sprPtr[i] = spr.ptr;
+        s.sprEnable[i++] = spr.enable;
+    }
+
+    i = 0;
+    for (auto& aud : audioDmaChannels) {
+        s.audLcPtr[i] = aud.ptrLatch;
+        s.audPtr[i++] = aud.ptr;
+    }
+
+    s.bltPtr[0] = blitter.bltApt;
+    s.bltMod[0] = blitter.bltAmod;
+    s.bltPtr[1] = blitter.bltBpt;
+    s.bltMod[1] = blitter.bltBmod;
+    s.bltPtr[2] = blitter.bltCpt;
+    s.bltMod[2] = blitter.bltCmod;
+    s.bltPtr[3] = blitter.bltDpt;
+    s.bltMod[3] = blitter.bltDmod;
+
+    s.dskPtr = dskpt;
+    s.copPtr = copper.copPtr;
+    s.refPtr = rDmaPtr;
+    s.bltCon0 = blitter.bltcon0;
+    s.dmaCon = dmaConImm;
+    s.bpl1Mod = bpl1Mod;
+    s.bpl2Mod = bpl2Mod;
+    s.bplCon0 = bplCon0;
+    s.ddfStrt = ddfStart;
+    s.ddfStop = ddfStop;
+    s.diwStrt = vStart;
+    s.diwStop = vStop;
+    s.beamCon0 = beamCon;
 }
 
 auto Agnus::Debugger::enableDmaView(bool state, bool withScrolling) -> void {

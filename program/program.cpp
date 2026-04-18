@@ -32,6 +32,7 @@
 #include "debugger/dmaDebugger.h"
 #include "debugger/copperDebugger.h"
 #include "debugger/blitterDebugger.h"
+#include "debugger/agnusDebugger.h"
 
 Program* program = nullptr;
 DRIVER::Input* inputDriver = new DRIVER::Input;
@@ -880,6 +881,7 @@ auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -
         case Debugger::Mode::DMA: debugger = new DmaDebugger(emulator); break;
         case Debugger::Mode::Copper: debugger = new CopperDebugger(emulator); break;
         case Debugger::Mode::Blitter: debugger = new BlitterDebugger(emulator); break;
+        case Debugger::Mode::Agnus: debugger = new AgnusDebugger(emulator); break;
         default:
             return;
     }

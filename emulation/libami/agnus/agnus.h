@@ -524,6 +524,7 @@ struct Agnus {
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateVideoSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateDmaSnapshot(DebuggerSnapshot& snap) -> void;
+    auto updatePtrSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
 
     auto addDmaLogEntry() -> void;

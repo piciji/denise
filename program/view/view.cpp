@@ -1387,6 +1387,7 @@ auto View::buildMenu() -> void {
             sM.debugger->append( *sM.debuggerAudio );
             sM.debuggerCopper = nullptr;
             sM.debuggerBlitter = nullptr;
+            sM.debuggerAgnus = nullptr;
         } else {
             sM.debuggerCopper = new GUIKIT::MenuItem;
             sM.debuggerCopper->onActivate = [this, emulator]() {
@@ -1403,6 +1404,14 @@ auto View::buildMenu() -> void {
                 emuThread->unlock();
             };
             sM.debugger->append( *sM.debuggerBlitter );
+
+            sM.debuggerAgnus = new GUIKIT::MenuItem;
+            sM.debuggerAgnus->onActivate = [this, emulator]() {
+                emuThread->lock();
+                program->openDebugger(emulator, Debugger::Mode::Agnus);
+                emuThread->unlock();
+            };
+            sM.debugger->append( *sM.debuggerAgnus );
 
             sM.debuggerAudio = nullptr;
         }
@@ -2216,6 +2225,8 @@ auto View::translate() -> void {
             sysMenu.debuggerCopper->setText(trans->getA( "Copper"));
         if (sysMenu.debuggerBlitter)
             sysMenu.debuggerBlitter->setText(trans->getA( "Blitter"));
+        if (sysMenu.debuggerAgnus)
+            sysMenu.debuggerAgnus->setText(trans->getA( "Agnus"));
 
         sysMenu.debuggerDma->setText(trans->get("DMA"));
 

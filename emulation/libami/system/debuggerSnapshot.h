@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include "../../interface.h"
 
 namespace LIBAMI {
@@ -37,6 +36,27 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         uint8_t lastHPos;
         unsigned model;
         unsigned chipMemMask;
+
+        uint32_t bplPtr[6];
+        uint32_t sprPtr[8];
+        bool sprEnable[8];
+        uint16_t bplCon0;
+        uint32_t bltPtr[4];
+        uint16_t bltMod[4];
+        uint16_t bltCon0;
+        uint16_t dmaCon;
+        uint16_t bpl1Mod;
+        uint16_t bpl2Mod;
+        uint32_t audPtr[4];
+        uint32_t audLcPtr[4];
+        uint32_t dskPtr;
+        uint32_t refPtr;
+        uint32_t copPtr;
+        uint16_t ddfStrt;
+        uint16_t ddfStop;
+        uint16_t diwStrt;
+        uint16_t diwStop;
+        uint16_t beamCon0;
     } agnus;
 
     struct {
