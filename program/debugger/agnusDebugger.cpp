@@ -107,7 +107,7 @@ AgnusDebugger::Agnus::ContainerAudReg::Aud::Entry::Entry( ) {
 
     append( check, {0u, 0u}, 10 );
     append( edit, {70u, 0u}, 10 );
-    append( label, {0u, 0u}, 10 );
+    append( img, {0u, 0u}, 10 );
     append( editLatch, {70u, 0u}, 10 );
     append( labelLatch, {0u, 0u} );
 
@@ -118,8 +118,6 @@ AgnusDebugger::Agnus::ContainerAudReg::Aud::Aud() {
     for (int i = 0; i < 4; i++) {
         auto* entry = new Entry();
         entry->check.setText( "AUD" + std::to_string(i) + "PT" );
-        entry->label.setText( "\u21E6" );
-        entry->label.setFont( GUIKIT::Font::system( 13 ));
         entry->labelLatch.setText( "AUD" + std::to_string(i) + "LC" );
         append( *entry, {0u, 0u}, i < 3 ? 10 : 0 );
         entries.push_back( entry );
@@ -178,7 +176,9 @@ AgnusDebugger::Agnus::Agnus() {
 }
 
 auto AgnusDebugger::buildTheme() -> GUIKIT::Layout* {
-    agnus = new Agnus( );
+    agnus = new Agnus();
+    for (auto& entry : agnus->containerAudReg.aud.entries)
+        entry->img.setImage( &arrowLeftImg );
     return agnus;
 }
 
@@ -249,7 +249,7 @@ auto AgnusDebugger::updateTheme() -> void {
 }
 
 auto AgnusDebugger::translateTheme() -> void {
-    bool showTips = showTipsItem.checked();
+    //bool showTips = showTipsItem.checked();
 
     agnus->containerBplRef.bpl.setText( "Bitplanes" );
     agnus->containerBplRef.ref.setText( "Refresh" );
@@ -282,6 +282,11 @@ auto AgnusDebugger::translateTheme() -> void {
     for (auto& entry : agnus->containerSprDsk.spr.entries)
         entries.push_back( entry );
     entries.push_back( &agnus->containerSprDsk.dsk.entry );
+    GUIKIT::Layout::alignChildWidth( entries );
+
+    entries.clear();
+    for (auto& entry : agnus->containerAudReg.aud.entries)
+        entries.push_back( entry );
     GUIKIT::Layout::alignChildWidth( entries );
 
     entries.clear();

@@ -198,4 +198,6 @@ extern uint8_t memoryBorder[396];
 
 extern uint8_t next[231];
 
+extern uint8_t arrowLeft[169];
+
 }

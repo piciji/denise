@@ -118,6 +118,7 @@ auto Debugger::build() -> void {
     forwardImg.loadPng((uint8_t*)Icons::forward, sizeof(Icons::forward));
     systemImg.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
     nextImg.loadPng((uint8_t*)Icons::next, sizeof(Icons::next));
+    arrowLeftImg.loadPng((uint8_t*)Icons::arrowLeft, sizeof(Icons::arrowLeft));
 
     control = new Control(this);
 

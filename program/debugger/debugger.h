@@ -64,6 +64,7 @@ struct Debugger : GUIKIT::Window {
     GUIKIT::Image forwardImg;
     GUIKIT::Image systemImg;
     GUIKIT::Image nextImg;
+    GUIKIT::Image arrowLeftImg;
 
     struct Control : GUIKIT::HorizontalLayout {
         GUIKIT::Widget spacer;

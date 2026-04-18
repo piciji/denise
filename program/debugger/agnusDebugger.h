@@ -66,7 +66,7 @@ struct AgnusDebugger : Debugger {
                 struct Entry : GUIKIT::HorizontalLayout {
                     GUIKIT::CheckBox check;
                     GUIKIT::LineEdit edit;
-                    GUIKIT::Label label;
+                    GUIKIT::ImageView img;
                     GUIKIT::LineEdit editLatch;
                     GUIKIT::Label labelLatch;
 
