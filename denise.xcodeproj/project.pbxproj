@@ -47,6 +47,14 @@
 		9D0C948B2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D0C948C2E5E345E00A9B56C /* diskGuesser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D0C94892E5E345E00A9B56C /* diskGuesser.cpp */; };
 		9D31E3BE2DF2083600F88404 /* recentFiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D31E3BC2DF2083600F88404 /* recentFiles.cpp */; };
+		9D32BA8A2F940DF900AC6442 /* agnusDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D32BA882F940DF900AC6442 /* agnusDebugger.cpp */; };
+		9D32BA8B2F940DF900AC6442 /* agnusDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D32BA882F940DF900AC6442 /* agnusDebugger.cpp */; };
+		9D32BAA12F940EEF00AC6442 /* settingsHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D32BA9E2F940EEF00AC6442 /* settingsHelper.cpp */; };
+		9D32BAA22F940EEF00AC6442 /* settingsHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D32BA9E2F940EEF00AC6442 /* settingsHelper.cpp */; };
+		9D32BAA32F940EEF00AC6442 /* fileHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D32BA9F2F940EEF00AC6442 /* fileHelper.cpp */; };
+		9D32BAA42F940EEF00AC6442 /* fileHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D32BA9F2F940EEF00AC6442 /* fileHelper.cpp */; };
+		9D32BAA52F940EEF00AC6442 /* miscHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D32BAA02F940EEF00AC6442 /* miscHelper.cpp */; };
+		9D32BAA62F940EEF00AC6442 /* miscHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D32BAA02F940EEF00AC6442 /* miscHelper.cpp */; };
 		9D4CCC482F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */; };
 		9D4CCC492F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */; };
 		9D4D10442F071C6B00296467 /* ciaDebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D103B2F071C6B00296467 /* ciaDebugger.cpp */; };
@@ -542,6 +550,14 @@
 		9D0C948A2E5E345E00A9B56C /* diskGuesser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = diskGuesser.h; sourceTree = "<group>"; };
 		9D31E3BC2DF2083600F88404 /* recentFiles.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = recentFiles.cpp; sourceTree = "<group>"; };
 		9D31E3BD2DF2083600F88404 /* recentFiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = recentFiles.h; sourceTree = "<group>"; };
+		9D32BA882F940DF900AC6442 /* agnusDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = agnusDebugger.cpp; sourceTree = "<group>"; };
+		9D32BA892F940DF900AC6442 /* agnusDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = agnusDebugger.h; sourceTree = "<group>"; };
+		9D32BA9B2F940EEE00AC6442 /* miscHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = miscHelper.h; path = helper/miscHelper.h; sourceTree = "<group>"; };
+		9D32BA9C2F940EEE00AC6442 /* settingsHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = settingsHelper.h; path = helper/settingsHelper.h; sourceTree = "<group>"; };
+		9D32BA9D2F940EEE00AC6442 /* fileHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fileHelper.h; path = helper/fileHelper.h; sourceTree = "<group>"; };
+		9D32BA9E2F940EEF00AC6442 /* settingsHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = settingsHelper.cpp; path = helper/settingsHelper.cpp; sourceTree = "<group>"; };
+		9D32BA9F2F940EEF00AC6442 /* fileHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fileHelper.cpp; path = helper/fileHelper.cpp; sourceTree = "<group>"; };
+		9D32BAA02F940EEF00AC6442 /* miscHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = miscHelper.cpp; path = helper/miscHelper.cpp; sourceTree = "<group>"; };
 		9D4CCC462F0BD4EB00ADD454 /* videoDebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = videoDebugger.cpp; sourceTree = "<group>"; };
 		9D4CCC472F0BD4EB00ADD454 /* videoDebugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = videoDebugger.h; sourceTree = "<group>"; };
 		9D4D10392F07156300296467 /* multiSquareCanvas.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = multiSquareCanvas.cpp; sourceTree = "<group>"; };
@@ -683,7 +699,6 @@
 		9D8FAAC42CB3F6EF006905BE /* reverb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = reverb.cpp; sourceTree = "<group>"; };
 		9D8FAAC52CB3F6EF006905BE /* bass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bass.h; sourceTree = "<group>"; };
 		9D8FAAC62CB3F6EF006905BE /* base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base.h; sourceTree = "<group>"; };
-		9D8FAAC72CB3F6EF006905BE /* files.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = files.cpp; sourceTree = "<group>"; };
 		9D8FAAC92CB3F6EF006905BE /* states.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = states.h; sourceTree = "<group>"; };
 		9D8FAACA2CB3F6EF006905BE /* states.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = states.cpp; sourceTree = "<group>"; };
 		9D8FAACC2CB3F6EF006905BE /* status.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = status.h; sourceTree = "<group>"; };
@@ -1308,6 +1323,19 @@
 			path = deps/stb;
 			sourceTree = "<group>";
 		};
+		9D32BA9A2F940ED900AC6442 /* helper */ = {
+			isa = PBXGroup;
+			children = (
+				9D32BA9F2F940EEF00AC6442 /* fileHelper.cpp */,
+				9D32BA9D2F940EEE00AC6442 /* fileHelper.h */,
+				9D32BAA02F940EEF00AC6442 /* miscHelper.cpp */,
+				9D32BA9B2F940EEE00AC6442 /* miscHelper.h */,
+				9D32BA9E2F940EEF00AC6442 /* settingsHelper.cpp */,
+				9D32BA9C2F940EEE00AC6442 /* settingsHelper.h */,
+			);
+			name = helper;
+			sourceTree = "<group>";
+		};
 		9D5539542D5A8F4D0083E91B /* superCpu */ = {
 			isa = PBXGroup;
 			children = (
@@ -1453,6 +1481,7 @@
 		9D8FAA6E2CB3F6EF006905BE /* program */ = {
 			isa = PBXGroup;
 			children = (
+				9D32BA9A2F940ED900AC6442 /* helper */,
 				9DBA88402ED0C7D400DF0756 /* debugger */,
 				9D8FAA6F2CB3F6EF006905BE /* cmd */,
 				9D8FAA722CB3F6EF006905BE /* program.cpp */,
@@ -1465,7 +1494,6 @@
 				9D8FAAA12CB3F6EF006905BE /* audio.cpp */,
 				9D8FAAA22CB3F6EF006905BE /* video.cpp */,
 				9D8FAAA32CB3F6EF006905BE /* audio */,
-				9D8FAAC72CB3F6EF006905BE /* files.cpp */,
 				9D8FAAC82CB3F6EF006905BE /* states */,
 				9D8FAACB2CB3F6EF006905BE /* view */,
 				9D8FAAD22CB3F6EF006905BE /* program.h */,
@@ -2719,6 +2747,8 @@
 		9DBA88402ED0C7D400DF0756 /* debugger */ = {
 			isa = PBXGroup;
 			children = (
+				9D32BA882F940DF900AC6442 /* agnusDebugger.cpp */,
+				9D32BA892F940DF900AC6442 /* agnusDebugger.h */,
 				9D9D557D2F8C1EEA007A10D6 /* blitterDebugger.cpp */,
 				9D9D557C2F8C1EEA007A10D6 /* blitterDebugger.h */,
 				9DC0D17A2F69EA06005DB0ED /* conditionViewDebugger.cpp */,
@@ -2891,12 +2921,14 @@
 				9D8FAE9D2CB40DFA006905BE /* m8520.cpp in Sources */,
 				9D8FAB1D2CB3F6F0006905BE /* status.cpp in Sources */,
 				9D4CCC482F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */,
+				9D32BAA12F940EEF00AC6442 /* settingsHelper.cpp in Sources */,
 				9D8FAAF82CB3F6EF006905BE /* program.cpp in Sources */,
 				9D8FAE012CB40DF8006905BE /* m68000.cpp in Sources */,
 				9D64044D2DCDEF2E00624A00 /* hunk.cpp in Sources */,
 				9D8FAB1C2CB3F6F0006905BE /* states.cpp in Sources */,
 				9D8FAE742CB40DF9006905BE /* drive.cpp in Sources */,
 				9D64044C2DCDEF2E00624A00 /* hardDrive.cpp in Sources */,
+				9D32BAA32F940EEF00AC6442 /* fileHelper.cpp in Sources */,
 				9D8F51082EDB5A2A00153A53 /* watcher.cpp in Sources */,
 				9D8FAAFF2CB3F6EF006905BE /* palette.cpp in Sources */,
 				9D8FAB112CB3F6EF006905BE /* cosine.cpp in Sources */,
@@ -2957,6 +2989,7 @@
 				9D4D10442F071C6B00296467 /* ciaDebugger.cpp in Sources */,
 				9D8FAB0E2CB3F6EF006905BE /* handler.cpp in Sources */,
 				9D07CD012E296CD000A9787E /* lha_input_stream.cpp in Sources */,
+				9D32BA8A2F940DF900AC6442 /* agnusDebugger.cpp in Sources */,
 				9D8FAE4D2CB40DF9006905BE /* input.cpp in Sources */,
 				9D8FAE102CB40DF8006905BE /* system.cpp in Sources */,
 				9D8FAE9B2CB40DFA006905BE /* m6526.cpp in Sources */,
@@ -3041,6 +3074,7 @@
 				9DC0D17E2F69EA06005DB0ED /* watcherHelper.cpp in Sources */,
 				9D7B485D2E40D7640010B152 /* cgif.cpp in Sources */,
 				9D07CCF92E296CD000A9787E /* lh1_decoder.cpp in Sources */,
+				9D32BAA52F940EEF00AC6442 /* miscHelper.cpp in Sources */,
 				9D8FAE452CB40DF9006905BE /* cart.cpp in Sources */,
 				9D07CD122E296CD000A9787E /* lha_endian.cpp in Sources */,
 				9D8FAE412CB40DF9006905BE /* fastloader.cpp in Sources */,
@@ -3080,12 +3114,14 @@
 				9DECF9372E45F309005C0BBA /* m8520.cpp in Sources */,
 				9DECF9382E45F309005C0BBA /* status.cpp in Sources */,
 				9D4CCC492F0BD4EB00ADD454 /* videoDebugger.cpp in Sources */,
+				9D32BAA22F940EEF00AC6442 /* settingsHelper.cpp in Sources */,
 				9DECF9392E45F309005C0BBA /* program.cpp in Sources */,
 				9DECF93A2E45F309005C0BBA /* m68000.cpp in Sources */,
 				9DECF93B2E45F309005C0BBA /* hunk.cpp in Sources */,
 				9DECF93C2E45F309005C0BBA /* states.cpp in Sources */,
 				9DECF93D2E45F309005C0BBA /* drive.cpp in Sources */,
 				9DECF93E2E45F309005C0BBA /* hardDrive.cpp in Sources */,
+				9D32BAA42F940EEF00AC6442 /* fileHelper.cpp in Sources */,
 				9D8F51092EDB5A2A00153A53 /* watcher.cpp in Sources */,
 				9DECF93F2E45F309005C0BBA /* palette.cpp in Sources */,
 				9DECF9402E45F309005C0BBA /* cosine.cpp in Sources */,
@@ -3146,6 +3182,7 @@
 				9D4D10452F071C6B00296467 /* ciaDebugger.cpp in Sources */,
 				9DECF96E2E45F309005C0BBA /* handler.cpp in Sources */,
 				9DECF96F2E45F309005C0BBA /* lha_input_stream.cpp in Sources */,
+				9D32BA8B2F940DF900AC6442 /* agnusDebugger.cpp in Sources */,
 				9DECF9702E45F309005C0BBA /* input.cpp in Sources */,
 				9DECF9712E45F309005C0BBA /* system.cpp in Sources */,
 				9DECF9722E45F309005C0BBA /* m6526.cpp in Sources */,
@@ -3230,6 +3267,7 @@
 				9DC0D17F2F69EA06005DB0ED /* watcherHelper.cpp in Sources */,
 				9DECF9B12E45F309005C0BBA /* cgif.cpp in Sources */,
 				9DECF9B22E45F309005C0BBA /* lh1_decoder.cpp in Sources */,
+				9D32BAA62F940EEF00AC6442 /* miscHelper.cpp in Sources */,
 				9DECF9B32E45F309005C0BBA /* cart.cpp in Sources */,
 				9DECF9B42E45F309005C0BBA /* lha_endian.cpp in Sources */,
 				9DECF9B52E45F309005C0BBA /* fastloader.cpp in Sources */,
