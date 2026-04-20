@@ -100,6 +100,9 @@ auto W65816::loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void {
 }
 
 inline auto W65816::controlBreaks() -> void {
+    if (control & WAI)
+        return;
+
     if ((control & SoftStop) && checkSoftStop(pcEdge)) {
         DEBUG_POINT_REACHED(SoftStop, pcEdge);
     } else if ((control & BreakPoint) && breakPoints.check(pcEdge)) {

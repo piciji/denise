@@ -102,7 +102,7 @@ auto M68000::process() -> void {
 }
 
 auto M68000::controlBreaks() -> void {
-    if (control & TraceScheduled)
+    if (control & (TraceScheduled | Stop) )
         return;
 
     if ((control & SoftStop) && checkSoftStop(pcEdge))
