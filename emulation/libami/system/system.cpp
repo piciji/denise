@@ -728,6 +728,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
             break;
 
         case DebuggerTheme::Agnus:
+        case DebuggerTheme::Paula:
             debuggerSnapshot.themes |= (unsigned)theme;
             break;
 
@@ -808,6 +809,7 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             break;
 
         case DebuggerTheme::Agnus:
+        case DebuggerTheme::Paula:
             debuggerSnapshot.themes &= ~(unsigned)theme;
             break;
 
@@ -870,6 +872,8 @@ auto System::updateDebuggerSnapshot() -> void {
         agnus.blitter.updateDmaSnapshot( debuggerSnapshot );
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Agnus)
         agnus.updatePtrSnapshot( debuggerSnapshot );
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Paula)
+        paula.updateSnapshot( debuggerSnapshot );
 }
 
 auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {

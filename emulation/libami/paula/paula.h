@@ -2,7 +2,6 @@
 #pragma once
 
 #include <cstdint>
-#include <functional>
 
 namespace Emulator {
     struct Serializer;
@@ -15,6 +14,7 @@ struct Agnus;
 struct Cpu;
 struct Input;
 struct DiskDrive;
+struct DebuggerSnapshot;
 
 struct Paula {
     Paula(System* system, Agnus& agnus, Cpu& cpu, Input& input, DiskDrive& disk0, DiskDrive& disk1, DiskDrive& disk2, DiskDrive& disk3);
@@ -246,6 +246,7 @@ struct Paula {
     auto prepareTransfer() -> void;
     auto updateTxd() -> void;
     auto updateSerialEvent() -> void;
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
     
     auto iplUpdate() -> void;
     template<bool force = true> auto sampleUpdate() -> void;

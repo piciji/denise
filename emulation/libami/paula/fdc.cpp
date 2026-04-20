@@ -82,9 +82,6 @@
 // Halving the speed means writing double amount of data on same surface.
 // Reading needs halving the speed too, otherwise the Controller (DMA) could not handle the double amount of data.
 
-// todo: handle ADF writes bitwise to allow writing mixed disk formats same time, e.g. df1: adf, df2: ext.adf
-// writing multiple floppy with same format already works
-
 #include "paula.h"
 #include "../drive/diskDrive.h"
 

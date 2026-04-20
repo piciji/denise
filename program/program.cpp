@@ -33,6 +33,7 @@
 #include "debugger/copperDebugger.h"
 #include "debugger/blitterDebugger.h"
 #include "debugger/agnusDebugger.h"
+#include "debugger/paulaDebugger.h"
 
 Program* program = nullptr;
 DRIVER::Input* inputDriver = new DRIVER::Input;
@@ -882,6 +883,7 @@ auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -
         case Debugger::Mode::Copper: debugger = new CopperDebugger(emulator); break;
         case Debugger::Mode::Blitter: debugger = new BlitterDebugger(emulator); break;
         case Debugger::Mode::Agnus: debugger = new AgnusDebugger(emulator); break;
+        case Debugger::Mode::Paula: debugger = new PaulaDebugger(emulator); break;
         default:
             return;
     }

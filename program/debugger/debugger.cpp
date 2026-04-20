@@ -119,6 +119,7 @@ auto Debugger::build() -> void {
     systemImg.loadPng((uint8_t*)Icons::system, sizeof(Icons::system));
     nextImg.loadPng((uint8_t*)Icons::next, sizeof(Icons::next));
     arrowLeftImg.loadPng((uint8_t*)Icons::arrowLeft, sizeof(Icons::arrowLeft));
+    arrowRightImg.loadPng((uint8_t*)Icons::arrowRight, sizeof(Icons::arrowRight));
 
     control = new Control(this);
 
@@ -473,6 +474,12 @@ auto Debugger::updateReg(GUIKIT::LineEdit& widget, const std::string& text, unsi
 auto Debugger::updateReg(GUIKIT::CheckBox& reg, bool state) -> void {
     if (reg.checked() != state) {
         reg.setChecked( state );
+    }
+}
+
+auto Debugger::updateReg(GUIKIT::RadioBox& reg) -> void {
+    if (!reg.checked()) {
+        reg.setChecked();
     }
 }
 

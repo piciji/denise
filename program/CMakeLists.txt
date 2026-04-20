@@ -92,6 +92,7 @@ set(srcs
         debugger/watcherHelper.cpp
         debugger/blitterDebugger.cpp
         debugger/agnusDebugger.cpp
+        debugger/paulaDebugger.cpp
         view/status.cpp
         config/config.cpp
         config/layouts/drivers.cpp

@@ -369,23 +369,35 @@ template<bool force> auto Paula::sampleUpdate() -> void {
     sampleCycle = agnus.clock;
 }
 
-// auto Paula::sampleUpdate() -> void {
-//     sampleCycle = agnus.clock + sampleLimit;
-    
-//     if (audioOut) {
-//         int32_t sampleL = channels[0].sample + channels[3].sample; // sample: 14 bit (8bit * 6bit volume), mix two samples: 15 bit
-//         int32_t sampleR = channels[1].sample + channels[2].sample;
-//         sampleL <<= 1; // 16 bit
-//         sampleR <<= 1;
+auto Paula::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.paula;
+    s.intena = intena;
+    s.intreq = intreq;
+    s.adkcon = adkcon;
+    s.dskSync = dskSync;
+    s.dskLen = dskLen;
+    s.dskTransferLength = dskTransferLength;
+    s.dskBytr = peekDskBytR();
+    s.fifo = fifo;
+    s.fifoPos = fifoPos;
+    s.wordEqual = wordEqual;
+    s.diskState = (int)diskState;
+    s.selectedDrive = disk0.selected | disk1.selected << 1 | disk2.selected << 2 | disk3.selected << 3;
 
-//         if (filterMode != 4) { // A1200 Off don't use filter
-//             int _filterMode = filterMode;
-//             sampleL = lowPassfilter<0>(sampleL, _filterMode);
-//             sampleR = lowPassfilter<1>(sampleR, _filterMode);
-//         }
-        
-//         system->audioRefresh(Emulator::sclamp(16, sampleL), Emulator::sclamp(16, sampleR));
-//     }
-// }
+    int i = 0;
+    for (auto& cha : channels) {
+        auto& aud = s.chas[i++];
+
+        aud.perLatch = cha.perLatch;
+        aud.per = cha.percount != INT64_MAX && cha.percount > agnus.clock ? cha.percount - agnus.clock : 0;
+        aud.lenLatch = cha.lenLatch;
+        aud.len = cha.len;
+        aud.datLatch = cha.dat;
+        aud.dat = cha.buffer;
+        aud.volLatch = cha.volLatch;
+        aud.vol = static_cast<uint8_t>(cha.vol);
+        aud.state = cha.state;
+    }
+}
 
 }

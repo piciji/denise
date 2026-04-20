@@ -60,6 +60,34 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     } agnus;
 
     struct {
+        uint16_t intena;
+        uint16_t intreq;
+        uint16_t adkcon;
+
+        struct {
+            uint16_t perLatch;
+            uint32_t per; // max 0x10000
+            uint16_t lenLatch;
+            uint16_t len;
+            uint8_t volLatch;
+            uint8_t vol;
+            uint16_t datLatch;
+            uint16_t dat;
+            uint8_t state;
+        } chas[4];
+
+        uint16_t dskLen;
+        uint16_t dskSync;
+        uint16_t dskTransferLength;
+        uint16_t dskBytr;
+        uint64_t fifo;
+        uint8_t fifoPos;
+        bool wordEqual;
+        int diskState;
+        uint8_t selectedDrive;
+    } paula;
+
+    struct {
         struct {
             uint16_t data[0x1fff];
             unsigned pos = 0;
@@ -93,8 +121,11 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         uint16_t bpl4dat;
         uint16_t bpl5dat;
         uint16_t bpl6dat;
-
     } denise;
+
+    constexpr static const char* diskState[] {
+        "Idle", "Sync R.", "Sync W.", "Read", "Write", "Instant"
+    };
 
     constexpr static const char* dmaModeGroups[] {
         "Free", "Bitplanes", "Sprites",

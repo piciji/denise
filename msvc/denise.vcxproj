@@ -280,6 +280,7 @@
     <ClInclude Include="..\program\debugger\dmaDebugger.h" />
     <ClInclude Include="..\program\debugger\memDebugger.h" />
     <ClInclude Include="..\program\debugger\memScpuDebugger.h" />
+    <ClInclude Include="..\program\debugger\paulaDebugger.h" />
     <ClInclude Include="..\program\debugger\scpuDebugger.h" />
     <ClInclude Include="..\program\debugger\videoDebugger.h" />
     <ClInclude Include="..\program\debugger\watcherHelper.h" />
@@ -1705,6 +1706,7 @@
     <ClCompile Include="..\program\debugger\debugger.cpp" />
     <ClCompile Include="..\program\debugger\dmaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\memDebugger.cpp" />
+    <ClCompile Include="..\program\debugger\paulaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\videoDebugger.cpp" />
     <ClCompile Include="..\program\debugger\watcherHelper.cpp" />
     <ClCompile Include="..\program\emuconfig\config.cpp">

@@ -200,4 +200,6 @@ extern uint8_t next[231];
 
 extern uint8_t arrowLeft[169];
 
+extern uint8_t arrowRight[167];
+
 }

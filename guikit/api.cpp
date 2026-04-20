@@ -1068,6 +1068,10 @@ auto RadioBox::activate() -> void {
     if(onActivate) onActivate();
 }
 
+auto RadioBox::setReadonly(bool readonly) -> void {
+    state.readonly = readonly;
+}
+
 RadioBox::RadioBox() : Widget(*new pRadioBox(*this)), p((pRadioBox&)Widget::p) { p.init(); }
 
 auto ProgressBar::setPosition(unsigned position) -> void {

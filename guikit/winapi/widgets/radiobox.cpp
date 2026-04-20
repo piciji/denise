@@ -97,7 +97,7 @@ auto pRadioBox::rebuild() -> void {
 }
 
 auto pRadioBox::onActivate() -> void {
-    if(radioBox.state.checked)
+    if(radioBox.state.checked || radioBox.readonly())
         return;
     
     radioBox.setChecked();

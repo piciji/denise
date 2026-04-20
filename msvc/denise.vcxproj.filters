@@ -1264,6 +1264,9 @@
     <ClInclude Include="..\program\debugger\agnusDebugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
+    <ClInclude Include="..\program\debugger\paulaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\emulation\cia\base.cpp">
@@ -2533,6 +2536,9 @@
       <Filter>program\helper</Filter>
     </ClCompile>
     <ClCompile Include="..\program\debugger\agnusDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\paulaDebugger.cpp">
       <Filter>program\debugger</Filter>
     </ClCompile>
   </ItemGroup>
