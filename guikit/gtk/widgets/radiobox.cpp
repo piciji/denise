@@ -63,6 +63,15 @@ auto pRadioBox::init() -> void {
 
 auto pRadioBox::onActivate(GtkToggleButton* toggleButton, RadioBox* self) -> void {
     if(self->p.parent().locked) return;
+    if (self->readonly()) {
+        for(auto& item : self->state.group) {
+            if (item->checked()) {
+                item->setChecked();
+                break;
+            }
+        }
+        return;
+    }
     bool wasChecked = self->checked();
     self->setChecked();
     if(wasChecked) return;
