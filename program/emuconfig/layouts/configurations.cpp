@@ -168,13 +168,28 @@ SettingsLayout::Active::Active() {
     setAlignment(0.5);
 }
 
-SettingsLayout::SettingsLayout() {
+SettingsLayout::Options::Options(Emulator::Interface* emulator) {
+    append(startWithLastConfigCheckbox, {0u, 0u}, 15 );
+    if(dynamic_cast<LIBC64::Interface*>(emulator)) {
+        append(labelAutoStart, {0u, 0u}, 5 );
+        append(boxDefault, {0u, 0u}, 5 );
+        append(boxDisk, {0u, 0u}, 5 );
+        append(boxTape, {0u, 0u}, 5 );
+        append(boxPrg, {0u, 0u} );
+
+        GUIKIT::RadioBox::setGroup( boxDefault, boxDisk, boxTape, boxPrg );
+    }
+    setAlignment( 0.5 );
+}
+
+SettingsLayout::SettingsLayout(Emulator::Interface* emulator)
+: options( emulator ) {
     setPadding(10);
     setFont(GUIKIT::Font::system("bold"));
 
     append(control, {~0u, 0u}, 5);
     append(active, {~0u, 0u}, 5);
-    append(startWithLastConfigCheckbox,{~0u, 0u}, 5);
+    append(options,{~0u, 0u}, 5);
     append(treeView, { ~0u, ~0u }, 5);
 }
 
@@ -236,7 +251,8 @@ StateDirectLayout::StateDirectLayout() {
     setAlignment(0.5);
 }
 
-ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
+ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow)
+: settings( tabWindow->emulator ) {
 
     this->tabWindow = tabWindow;
     this->emulator = tabWindow->emulator;
@@ -494,11 +510,24 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         }
     };
 
-    settings.startWithLastConfigCheckbox.onToggle = [this](bool checked) {
+    settings.options.startWithLastConfigCheckbox.onToggle = [this](bool checked) {
         globalSettings->set<bool>( this->emulator->ident + "_load_last_settings", checked );
     };
 
-    settings.startWithLastConfigCheckbox.setChecked( globalSettings->get<bool>( this->emulator->ident + "_load_last_settings", false ) );
+    settings.options.startWithLastConfigCheckbox.setChecked( globalSettings->get<bool>( this->emulator->ident + "_load_last_settings", false ) );
+
+    settings.options.boxDefault.onActivate = [this]() {
+        _settings->set<unsigned>("config_autostart", 0);
+    };
+    settings.options.boxDisk.onActivate = [this]() {
+        _settings->set<unsigned>("config_autostart", 1);
+    };
+    settings.options.boxTape.onActivate = [this]() {
+        _settings->set<unsigned>("config_autostart", 2);
+    };
+    settings.options.boxPrg.onActivate = [this]() {
+        _settings->set<unsigned>("config_autostart", 3);
+    };
 
     settings.treeView.onActivate = [this]() {
 
@@ -757,7 +786,7 @@ ConfigurationsLayout::ConfigurationsLayout(TabWindow* tabWindow) {
         updateSettingsList();
     };
 
-    if (!settings.startWithLastConfigCheckbox.checked() || cmd->hasCustomConfig(emulator))
+    if (!settings.options.startWithLastConfigCheckbox.checked() || cmd->hasCustomConfig(emulator))
         settings.active.fileLabel.setText(trans->get("default"));
     else
         settings.active.fileLabel.setText( globalSettings->get<std::string>(emulator->ident + "_custom_settings", trans->get("default")));
@@ -1082,9 +1111,32 @@ auto ConfigurationsLayout::load( std::string path, bool showError ) -> bool {
 
     view->buildShader();
 
-    program->power(this->emulator);
+    unsigned ca = 0;
+    if (dynamic_cast<LIBC64::Interface*>(this->emulator))
+        ca = _settings->get<unsigned>("config_autostart", 0, {0, 3});
 
-    autoloader->set(this->emulator, nullptr, false, 0);
+    if (!ca) {
+        program->power(this->emulator);
+        autoloader->set(this->emulator, nullptr, false, 0);
+    } else {
+        Emulator::Interface::Media* media = nullptr;
+        bool trapped = false;
+        switch (ca) {
+            default:
+            case 1:
+                trapped = _settings->get<bool>("use_disk_traps", false);
+                media = emulator->getDisk( 0 );
+                break;
+            case 2:
+                trapped = _settings->get<bool>("use_tape_traps", false);
+                media = emulator->getTape( 0 );
+                break;
+            case 3:
+                media = emulator->getPRG( 0 );
+                break;
+        }
+        fileloader->autoload(this->emulator, media, 0, trapped);
+    }
 
     return true;
 }
@@ -1150,6 +1202,17 @@ auto ConfigurationsLayout::loadSettings() -> void {
         updateMemoryPreview();
     }
     stateFast.selector.preview.setImage(nullptr);
+
+    if (dynamic_cast<LIBC64::Interface*>(emulator)) {
+        unsigned ca = _settings->get<unsigned>("config_autostart", 0);
+        switch (ca) {
+            case 0:
+            default: settings.options.boxDefault.setChecked(); break;
+            case 1: settings.options.boxDisk.setChecked(); break;
+            case 2: settings.options.boxTape.setChecked(); break;
+            case 3: settings.options.boxPrg.setChecked(); break;
+        }
+    }
 }
 
 auto ConfigurationsLayout::updateStorePaths() -> void {
@@ -1222,7 +1285,12 @@ auto ConfigurationsLayout::translate() -> void {
     settings.active.activeLabel.setText( trans->get("active setting", {}, true) );
     settings.active.undockButton.setText( trans->get("undock") );
     settings.active.standardButton.setText( trans->get("default") );
-    settings.startWithLastConfigCheckbox.setText( trans->get("Start with last loaded Settings") );
+    settings.options.startWithLastConfigCheckbox.setText( trans->get("Start with last loaded Settings") );
+    settings.options.labelAutoStart.setText( trans->getA("Autostart", true) );
+    settings.options.boxDefault.setText( trans->getA("Default") );
+    settings.options.boxDisk.setText( trans->getA("Disk") );
+    settings.options.boxTape.setText( trans->getA("Tape") );
+    settings.options.boxPrg.setText( trans->getA("PRG") );
 
     stateFolder.label.setText( trans->get("folder", {}, true) );
     stateFolder.standard.setText( trans->getA("default") );

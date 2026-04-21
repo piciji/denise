@@ -71,10 +71,20 @@ struct SettingsLayout : GUIKIT::FramedVerticalLayout {
         Active();
     } active;
 
-    GUIKIT::CheckBox startWithLastConfigCheckbox;
+    struct Options : GUIKIT::HorizontalLayout {
+        GUIKIT::CheckBox startWithLastConfigCheckbox;
+        GUIKIT::Label labelAutoStart;
+        GUIKIT::RadioBox boxDefault;
+        GUIKIT::RadioBox boxDisk;
+        GUIKIT::RadioBox boxTape;
+        GUIKIT::RadioBox boxPrg;
+
+        Options(Emulator::Interface* emulator);
+    } options;
+
     GUIKIT::TreeView treeView;
 
-    SettingsLayout();
+    SettingsLayout(Emulator::Interface* emulator);
 };
 
 struct ConfigurationsFolderLayout : GUIKIT::HorizontalLayout {
