@@ -1,13 +1,13 @@
 
-#include "audioDebugger.h"
+#include "sidDebugger.h"
 #include "../program.h"
 
-AudioDebugger::AudioDebugger( Emulator::Interface* emulator )
-: Debugger( emulator, Mode::Audio ) {
+SidDebugger::SidDebugger( Emulator::Interface* emulator )
+: Debugger( emulator, Mode::SID ) {
     build();
 }
 
-AudioDebugger::Chip::Top::Voice::Wave::Wave() {
+SidDebugger::Chip::Top::Voice::Wave::Wave() {
     append(label, {0u, 0u}, 10);
     append(noise, {0u, 0u}, 5);
     append(pulse, {0u, 0u}, 5);
@@ -20,21 +20,21 @@ AudioDebugger::Chip::Top::Voice::Wave::Wave() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Top::Voice::Frequency::Frequency() {
+SidDebugger::Chip::Top::Voice::Frequency::Frequency() {
     append(label, {0u, 0u}, 10);
     append(edit, {~0u, 0u});
     edit.setEditable( false );
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Top::Voice::PulseWidth::PulseWidth() {
+SidDebugger::Chip::Top::Voice::PulseWidth::PulseWidth() {
     append(label, {0u, 0u}, 10);
     append(edit, {~0u, 0u});
     edit.setEditable( false );
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Top::Voice::Adsr::Adsr() {
+SidDebugger::Chip::Top::Voice::Adsr::Adsr() {
     append(label, {0u, 0u}, 10);
     append(editA, {~0u, 0u}, 10);
     append(editD, {~0u, 0u}, 10);
@@ -47,7 +47,7 @@ AudioDebugger::Chip::Top::Voice::Adsr::Adsr() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Top::Voice::Control::Control() {
+SidDebugger::Chip::Top::Voice::Control::Control() {
     append(label, {0u, 0u}, 10);
     append(test, {~0u, 0u});
     append(ring, {~0u, 0u});
@@ -60,7 +60,7 @@ AudioDebugger::Chip::Top::Voice::Control::Control() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Top::Voice::Voice() {
+SidDebugger::Chip::Top::Voice::Voice() {
     append( wave, {~0u, 0u}, 10 );
     append( frequency, {~0u, 0u}, 10 );
     append( pulseWidth, {~0u, 0u}, 10 );
@@ -69,13 +69,13 @@ AudioDebugger::Chip::Top::Voice::Voice() {
     setPadding( 10 );
 }
 
-AudioDebugger::Chip::Top::Top() {
+SidDebugger::Chip::Top::Top() {
     append( voices[0], {~0u, 0u}, 10 );
     append( voices[1], {~0u, 0u}, 10 );
     append( voices[2], {~0u, 0u} );
 }
 
-AudioDebugger::Chip::Bottom::Mixer::Mode::Mode() {
+SidDebugger::Chip::Bottom::Mixer::Mode::Mode() {
     append(label, {0u, 0u}, 10);
     append(highPass, {0u, 0u}, 10);
     append(bandPass, {0u, 0u}, 10);
@@ -87,7 +87,7 @@ AudioDebugger::Chip::Bottom::Mixer::Mode::Mode() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Bottom::Mixer::Filter::Filter() {
+SidDebugger::Chip::Bottom::Mixer::Filter::Filter() {
     append(label, {0u, 0u}, 10);
     append(voice3, {0u, 0u}, 10);
     append(voice2, {0u, 0u}, 10);
@@ -99,7 +99,7 @@ AudioDebugger::Chip::Bottom::Mixer::Filter::Filter() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Bottom::Mixer::Params::Params() {
+SidDebugger::Chip::Bottom::Mixer::Params::Params() {
     append(labelCutoff, {0u, 0u}, 10);
     append(editCutoff, {50u, 0u}, 10);
     append(labelResonance, {0u, 0u}, 10);
@@ -110,14 +110,14 @@ AudioDebugger::Chip::Bottom::Mixer::Params::Params() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Bottom::Mixer::Mixer() {
+SidDebugger::Chip::Bottom::Mixer::Mixer() {
     append(mode, {0u, 0u}, 10);
     append(filter, {0u, 0u}, 10);
     append(params, {0u, 0u});
     setPadding( 10 );
 }
 
-AudioDebugger::Chip::Bottom::Misc::Volume::Volume() {
+SidDebugger::Chip::Bottom::Misc::Volume::Volume() {
     append(label, {0u, 0u}, 10);
     append(edit, {50u, 0u}, 10);
     append(disableVoice3, {0u, 0u});
@@ -127,7 +127,7 @@ AudioDebugger::Chip::Bottom::Misc::Volume::Volume() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Bottom::Misc::Pot::Pot() {
+SidDebugger::Chip::Bottom::Misc::Pot::Pot() {
     append(labelX, {0u, 0u}, 10);
     append(editX, {50u, 0u}, 10);
     append(labelY, {0u, 0u}, 10);
@@ -138,26 +138,26 @@ AudioDebugger::Chip::Bottom::Misc::Pot::Pot() {
     setAlignment( 0.5 );
 }
 
-AudioDebugger::Chip::Bottom::Misc::Misc() {
+SidDebugger::Chip::Bottom::Misc::Misc() {
     append( volume, {0u, 0u}, 10 );
     append( pot, {0u, 0u}, 10 );
     setPadding( 10 );
 }
 
-AudioDebugger::Chip::Bottom::Bottom() {
+SidDebugger::Chip::Bottom::Bottom() {
     append( spacerL, {~0u, 0u} );
     append( mixer, {0u, 0u}, 10 );
     append( misc, {0u, 0u} );
     append( spacerR, {~0u, 0u} );
 }
 
-AudioDebugger::Chip::Chip() {
+SidDebugger::Chip::Chip() {
     append( top, {~0u, 0u}, 10 );
     append( bottom, {~0u, 0u} );
     setMargin( 10 );
 }
 
-auto AudioDebugger::buildTheme() -> GUIKIT::Layout* {
+auto SidDebugger::buildTheme() -> GUIKIT::Layout* {
     int i = 0;
 
     for (auto& chip : chips) {
@@ -173,7 +173,7 @@ auto AudioDebugger::buildTheme() -> GUIKIT::Layout* {
     return &tab;
 }
 
-auto AudioDebugger::updateTheme() -> void {
+auto SidDebugger::updateTheme() -> void {
     if (emulator != activeEmulator)
         return;
 
@@ -185,7 +185,7 @@ auto AudioDebugger::updateTheme() -> void {
     }
 }
 
-auto AudioDebugger::updateSID(LIBC64::DebuggerSnapshot& snap) -> void {
+auto SidDebugger::updateSID(LIBC64::DebuggerSnapshot& snap) -> void {
     int c = 0;
     for (auto& sid : snap.sids ) {
         auto& chip = chips[c++];
@@ -237,7 +237,7 @@ auto AudioDebugger::updateSID(LIBC64::DebuggerSnapshot& snap) -> void {
     }
 }
 
-auto AudioDebugger::translateTheme() -> void {
+auto SidDebugger::translateTheme() -> void {
     for (auto& chip : chips) {
         int v = 1;
         for (auto& voice : chip.top.voices) {
@@ -289,18 +289,18 @@ auto AudioDebugger::translateTheme() -> void {
     }
 }
 
-auto AudioDebugger::initTheme() -> void {
-    emulator->debuggerAdd( DebuggerTheme::Audio, DebuggerAction::None, 0);
+auto SidDebugger::initTheme() -> void {
+    emulator->debuggerAdd( DebuggerTheme::Sid, DebuggerAction::None, 0);
 }
 
-auto AudioDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( DebuggerTheme::Audio, DebuggerAction::None);
+auto SidDebugger::closeTheme() -> void {
+    emulator->debuggerRemove( DebuggerTheme::Sid, DebuggerAction::None);
 }
 
-auto AudioDebugger::saveIdent() -> std::string {
+auto SidDebugger::saveIdent() -> std::string {
     return "debugger_video";
 }
 
-auto AudioDebugger::titleIdent() -> std::string {
+auto SidDebugger::titleIdent() -> std::string {
     return emulator->ident + (isC64() ? " Debugger SID" : " Debugger Paula");
 }

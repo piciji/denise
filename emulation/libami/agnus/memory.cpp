@@ -15,6 +15,10 @@ namespace LIBAMI {
     dmaLogger.mnemonic = memoryAcceesMnemonic<_write, _word, _prg>(); \
     dmaLogger.hilight = _write ? DebuggerDmaHilight::Write : DebuggerDmaHilight::Default; \
     peekDmaWatcher(dmaLogger); \
+    if (debugger.dmaLog & DmaLogCycle) { \
+        debugger.dmaLog &= ~DmaLogCycle; \
+        debugPointReached( (int)DebuggerAction::SoftstopCycle, 0 ); \
+    } \
 }
 
 #define LOG_DMA_CPU(res, _write, _word, _prg) if constexpr (logDma) { \

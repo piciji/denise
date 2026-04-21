@@ -347,6 +347,9 @@ auto Agnus::addDmaLogEntry() -> void {
             debugger.dmaLog &= ~DmaLogBlitter;
             debugPointReached( (int)DebuggerAction::SoftstopBlitter, 0 );
         }
+    } else if (debugger.dmaLog & DmaLogCycle) {
+        debugger.dmaLog &= ~DmaLogCycle;
+        debugPointReached( (int)DebuggerAction::SoftstopCycle, 0 );
     }
 }
 
@@ -1044,6 +1047,7 @@ auto Agnus::debugPointReached(int source, unsigned addr) -> void {
         case (int)DebuggerAction::BreakpointCopper: action = DebuggerAction::BreakpointCopper; break;
         case (int)DebuggerAction::WatchpointCopper: action = DebuggerAction::WatchpointCopper; break;
         case (int)DebuggerAction::SoftstopBlitter: action = DebuggerAction::SoftstopBlitter; break;
+        case (int)DebuggerAction::SoftstopCycle: action = DebuggerAction::SoftstopCycle; break;
         default: return;
     }
 
@@ -1195,6 +1199,10 @@ auto Agnus::Debugger::enableDmaLog(bool state) -> void {
 
 auto Agnus::Debugger::softStopBlitterDma() -> void {
     dmaLog |= DmaLogBlitter;
+}
+
+auto Agnus::Debugger::softStopCycle() -> void {
+    dmaLog |= DmaLogCycle;
 }
 
 template auto Agnus::fetchBlitterDma<Agnus::PTR_BLT_A_H,false,true,false,true>(uint32_t& adr, uint16_t& result, const int16_t& mod) -> bool;

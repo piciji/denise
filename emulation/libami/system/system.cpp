@@ -721,6 +721,9 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                 case DebuggerAction::DmaWatch:
                     agnus.debugger.dmaWatchers[addrTo & 3] = addr | (0x80 << 24);
                     break;
+                case DebuggerAction::SoftstopCycle:
+                    agnus.debugger.softStopCycle();
+                    break;
                 default: break;
             } break;
         case DebuggerTheme::CheckpointsCPU1:

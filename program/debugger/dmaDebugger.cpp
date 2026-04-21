@@ -49,7 +49,7 @@ DmaDebugger::Dma::Legend::Legend() {
 
 DmaDebugger::DmaControl::DmaControl(DmaDebugger* debugger) {
     if (debugger->isAmiga()) {
-
+        append(cycleButton, {0u, 0u} );
     } else {
         append(rdyButton, {0u, 0u} );
     }
@@ -101,10 +101,22 @@ DmaDebugger::Dma::Dma(DmaDebugger* debugger)
 }
 
 auto DmaDebugger::buildControl() -> GUIKIT::Layout* {
+    dmaControl = new DmaControl(this);
+
     if (isC64()) {
-        dmaControl = new DmaControl(this);
         dmaControl->rdyButton.onActivate = [this]() {
             haltCpu(emulator);
+        };
+    } else {
+        dmaControl->cycleButton.setImage( &nextImg );
+        dmaControl->cycleButton.onActivate = [this]() {
+            if (emulator != activeEmulator)
+                return;
+            emuThread->lock();
+            timerVisibility->setEnabled();
+            emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::SoftstopCycle, 0 );
+            emuThread->unlockDebugger();
+            emuThread->unlock();
         };
     }
 
@@ -531,7 +543,8 @@ auto DmaDebugger::translateTheme() -> void {
 
     if (dmaControl) {
         dmaControl->rdyButton.setText("RDY" );
-        dmaControl->rdyButton.setTooltip( showTips ? trans->getA( "rdy tooltip" ) : "" );
+        dmaControl->rdyButton.setTooltip( showTips ? trans->getA( "step next rdy" ) : "" );
+        dmaControl->cycleButton.setTooltip( showTips ? trans->getA( "step next cycle" ) : "" );
     }
 
     dma->dmaFrame.showUsage.setText( trans->getA( "Show DMA usage" ) );

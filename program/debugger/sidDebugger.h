@@ -3,9 +3,9 @@
 
 #include "debugger.h"
 
-struct AudioDebugger : Debugger {
-    explicit AudioDebugger( Emulator::Interface* emulator );
-    ~AudioDebugger() override {
+struct SidDebugger : Debugger {
+    explicit SidDebugger( Emulator::Interface* emulator );
+    ~SidDebugger() override {
         themeLayout = nullptr;
     }
 

@@ -4,7 +4,7 @@
 #include "debugger.h"
 
 struct CiaDebugger : Debugger {
-    explicit CiaDebugger( Emulator::Interface* emulator, Mode mode = Mode::CIA );
+    explicit CiaDebugger( Emulator::Interface* emulator );
 
     struct CIA : GUIKIT::HorizontalLayout {
         struct Chip : GUIKIT::FramedVerticalLayout {

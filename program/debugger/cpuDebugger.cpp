@@ -843,7 +843,7 @@ auto CpuDebugger::translateTheme() -> void {
 
     if (c64RdyControl) {
         c64RdyControl->rdyButton.setText("RDY" );
-        c64RdyControl->rdyButton.setTooltip( showTips ? trans->getA( "rdy tooltip" ) : "" );
+        c64RdyControl->rdyButton.setTooltip( showTips ? trans->getA( "step next rdy" ) : "" );
     }
 }
 

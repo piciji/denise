@@ -1378,13 +1378,13 @@ auto View::buildMenu() -> void {
         sM.debugger->append( *sM.debuggerVideo );
 
         if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
-            sM.debuggerAudio = new GUIKIT::MenuItem;
-            sM.debuggerAudio->onActivate = [this, emulator]() {
+            sM.debuggerSid = new GUIKIT::MenuItem;
+            sM.debuggerSid->onActivate = [this, emulator]() {
                 emuThread->lock();
-                program->openDebugger(emulator, Debugger::Mode::Audio);
+                program->openDebugger(emulator, Debugger::Mode::SID);
                 emuThread->unlock();
             };
-            sM.debugger->append( *sM.debuggerAudio );
+            sM.debugger->append( *sM.debuggerSid );
             sM.debuggerCopper = nullptr;
             sM.debuggerBlitter = nullptr;
             sM.debuggerAgnus = nullptr;
@@ -1422,7 +1422,7 @@ auto View::buildMenu() -> void {
             };
             sM.debugger->append( *sM.debuggerPaula );
 
-            sM.debuggerAudio = nullptr;
+            sM.debuggerSid = nullptr;
         }
 
         sM.debuggerDma = new GUIKIT::MenuItem;
@@ -2227,9 +2227,8 @@ auto View::translate() -> void {
         sysMenu.debuggerCia->setText(trans->get("CIA"));
 
         sysMenu.debuggerVideo->setText(trans->getA( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "VIC-II" : "Denise"));
-        if (sysMenu.debuggerAudio)
-            sysMenu.debuggerAudio->setText(trans->getA( dynamic_cast<LIBC64::Interface*>(sysMenu.emulator) ? "SID" : "Paula"));
-
+        if (sysMenu.debuggerSid)
+            sysMenu.debuggerSid->setText(trans->getA( "SID"));
         if (sysMenu.debuggerCopper)
             sysMenu.debuggerCopper->setText(trans->getA( "Copper"));
         if (sysMenu.debuggerBlitter)

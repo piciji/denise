@@ -23,7 +23,7 @@ struct DbgWatcher;
 
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU, CIA, Video, Audio, DMA, Copper, Blitter, Agnus, Paula
+        CPU, SCPU, Memory, MemorySCPU, CIA, Video, SID, DMA, Copper, Blitter, Agnus, Paula
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );

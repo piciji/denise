@@ -3,8 +3,8 @@
 #include "../thread/emuThread.h"
 #include "../program.h"
 
-CiaDebugger::CiaDebugger( Emulator::Interface* emulator, Mode mode )
-: Debugger( emulator, mode ) {
+CiaDebugger::CiaDebugger( Emulator::Interface* emulator )
+: Debugger( emulator, Mode::CIA ) {
     build();
 }
 
@@ -38,7 +38,7 @@ CiaDebugger::CIA::Chip::PortIO::PortIO(uint8_t chipNr, uint8_t portNr, Debugger*
         auto* l = new GUIKIT::Label;
         l->setText( port.ident );
         l->setStore( 1 );
-        l->setFont( GUIKIT::Font::system( "bold" ) );
+        l->setFont( GUIKIT::Font::system( "bold", true ) );
         l->setEnabled( true );
         line.push_back(l);
         append( *l, {l->minimumSize().width, 0u}, 10 );
@@ -188,10 +188,10 @@ template<typename T> auto CiaDebugger::updateCia(T& s) -> void {
 
                     if (state) {
                         l->setEnabled(  );
-                        l->setFont( GUIKIT::Font::system( "bold" ) );
+                        l->setFont( GUIKIT::Font::system( "bold", true ) );
                     } else {
                         l->setEnabled( false );
-                        l->setFont( GUIKIT::Font::system( "" ) );
+                        l->setFont( GUIKIT::Font::system( "", true ) );
                         GUIKIT::String::toLowerCase( _t );
                     }
 

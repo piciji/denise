@@ -65,8 +65,8 @@ struct DmaDebugger : Debugger {
     } *dma = nullptr;
 
     struct DmaControl : GUIKIT::HorizontalLayout {
-        GUIKIT::Widget spacer;
         GUIKIT::Button rdyButton;
+        GUIKIT::Button cycleButton;
 
         DmaControl(DmaDebugger* debugger);
     } *dmaControl = nullptr;

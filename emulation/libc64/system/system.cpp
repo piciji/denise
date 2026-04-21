@@ -1357,7 +1357,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
             vicIICycle.debugger.enableSpriteStore( true );
             vicIIFast.debugger.enableSpriteStore( true );
             break;
-        case DebuggerTheme::Audio:
+        case DebuggerTheme::Sid:
             debuggerSnapshot.themes |= (unsigned)theme;
             break;
         case DebuggerTheme::Bus:
@@ -1415,7 +1415,7 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             vicIICycle.debugger.enableSpriteStore( false );
             vicIIFast.debugger.enableSpriteStore( false );
             break;
-        case DebuggerTheme::Audio:
+        case DebuggerTheme::Sid:
             debuggerSnapshot.themes &= ~(unsigned)theme;
             break;
         case DebuggerTheme::Bus:
@@ -1524,7 +1524,7 @@ auto System::updateDebuggerSnapshot() -> void {
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus) {
         vicII->updateDmaSnapshot(debuggerSnapshot);
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Audio) {
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Sid) {
         sidManager.updateSnapshot( debuggerSnapshot );
     }
 

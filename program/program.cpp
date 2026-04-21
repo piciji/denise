@@ -28,7 +28,7 @@
 #include "debugger/memDebugger.h"
 #include "debugger/ciaDebugger.h"
 #include "debugger/videoDebugger.h"
-#include "debugger/audioDebugger.h"
+#include "debugger/sidDebugger.h"
 #include "debugger/dmaDebugger.h"
 #include "debugger/copperDebugger.h"
 #include "debugger/blitterDebugger.h"
@@ -878,7 +878,7 @@ auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -
         case Debugger::Mode::MemorySCPU: debugger = new MemScpuDebugger(emulator); break;
         case Debugger::Mode::CIA: debugger = new CiaDebugger(emulator); break;
         case Debugger::Mode::Video: debugger = new VideoDebugger(emulator); break;
-        case Debugger::Mode::Audio: debugger = new AudioDebugger(emulator); break;
+        case Debugger::Mode::SID: debugger = new SidDebugger(emulator); break;
         case Debugger::Mode::DMA: debugger = new DmaDebugger(emulator); break;
         case Debugger::Mode::Copper: debugger = new CopperDebugger(emulator); break;
         case Debugger::Mode::Blitter: debugger = new BlitterDebugger(emulator); break;

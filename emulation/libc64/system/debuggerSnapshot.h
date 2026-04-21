@@ -184,12 +184,12 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
         { // CIA B
                 { // Port A
                     {7, "DATA IN"},{6, "CLK IN"},{5, "DATA OUT"},{4, "CLK OUT"},
-                    {3, "ATN OUT"},{2, "USER M"},{1, "VA15"},{0, "VA14"}
+                    {3, "ATN OUT"},{2, "M"},{1, "VA15"},{0, "VA14"}
 
                 },
                 { // Port B
-                    {7, "USER L"}, {6, "USER K"},{5, "USER J"},{4, "USER H"},
-                    {3, "USER F"},{2, "USER E"},{1, "USER D"},{0, "USER C"}
+                    {7, "USER-L"}, {6, "U-K"},{5, "U-J"},{4, "U-H"},
+                    {3, "U-F"},{2, "U-E"},{1, "U-D"},{0, "U-C"}
                 }
         }
     };
