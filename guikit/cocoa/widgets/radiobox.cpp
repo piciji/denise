@@ -13,6 +13,15 @@
 }
 
 -(IBAction) activate:(id)sender {
+    if (radioBox->readonly()) {
+        for(auto& item : radioBox->state.group) {
+            if (item->checked()) {
+                item->setChecked();
+                break;
+            }
+        }
+        return;
+    }
     radioBox->setChecked();
     if(radioBox->onActivate) radioBox->onActivate();
 }

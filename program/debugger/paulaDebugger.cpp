@@ -139,7 +139,7 @@ PaulaDebugger::Paula::Aud::Aud() {
     int i = 0;
     auto s = std::size( chas );
     for (auto& cha : chas) {
-        append( cha, {0u, 0u}, ++i < s ? 10 : 0 );
+        append( cha, {0u, 0u}, ++i < s ? 5 : 0 );
     }
 }
 
