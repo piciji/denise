@@ -682,7 +682,7 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
     if (mediaGroup->isHardDisk()) {
         try {
             size = std::stoi( hdCreatorLayout->creator.diskSize.text() );
-            if (size > 4096)
+            if (size > 102400) // 100 GB
                 throw "";
         } catch (...) {
             message->error(trans->getA("invalid_input"));
@@ -787,17 +787,20 @@ auto MediaLayout::createImage( Emulator::Interface::MediaGroup* mediaGroup ) -> 
             GUIKIT::File file(filePath);
             file.open(GUIKIT::File::Mode::Write);
 
-            unsigned totalKb = size << 10;
-            unsigned bufLengthKB = (totalKb * 2) / 100;
-            uint8_t* buf = new uint8_t[bufLengthKB << 10];
+            uint64_t totalKb = (uint64_t)size * 1024ull;
+            uint64_t bufLengthKB = (totalKb * 2ull) / 100ull;
+            if (bufLengthKB > (1024ull * 1024ull))
+                bufLengthKB = 1024ull * 1024ull;
 
-            for (unsigned offset = 0; offset < totalKb; offset += bufLengthKB) {
-                std::memset(buf, 0, bufLengthKB << 10);
+            uint8_t* buf = new uint8_t[bufLengthKB * 1024ull];
+
+            for (uint64_t offset = 0; offset < totalKb; offset += bufLengthKB) {
+                std::memset(buf, 0, bufLengthKB * 1024ull);
 
                 if ((offset + bufLengthKB) > totalKb)
                     bufLengthKB = totalKb - offset;
 
-                if (file.write(buf, bufLengthKB << 10, offset << 10) == 0) {
+                if (file.write(buf, bufLengthKB * 1024ull, offset * 1024ull) == 0) {
                     message->error(trans->get("file_creation_error", {
                         {"%path%", filePath}
                     }));
