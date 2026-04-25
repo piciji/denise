@@ -44,6 +44,14 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
 
     ram = new uint8_t[ 64 * 1024 ];
     colorRam = new uint8_t[ 1 * 1024 ];
+
+    unsigned _size = sizeof(Firmware::kernalRom);
+    Emulator::copyMemory<uint8_t>( kernalRom, _size, (uint8_t*)Firmware::kernalRom, _size );
+    _size = sizeof(Firmware::basicRom);
+    Emulator::copyMemory<uint8_t>( basicRom, _size, (uint8_t*)Firmware::basicRom, _size );
+    _size = sizeof(Firmware::charRom);
+    Emulator::copyMemory<uint8_t>( charRom, _size, (uint8_t*)Firmware::charRom, _size );
+
     kernalRom = (uint8_t*)Firmware::kernalRom;
     basicRom = (uint8_t*)Firmware::basicRom;
     charRom = (uint8_t*)Firmware::charRom;
@@ -407,6 +415,13 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
         return input.readCiaPortB( lines );
     };
 
+    cia1.peekPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+        if ( port == CIA::Base::PORTA )
+            return input.readCiaPortA( lines );
+
+        return input.readCiaPortB( lines );
+    };
+
     cia1.writePort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
 
         if ( port == CIA::Base::PORTA ) {
@@ -430,6 +445,24 @@ cpu(this, sysTimer, cia1, cia2, iecBus, traps) {
             return (uint8_t)(lines->iob & iecBus.readParallelWithHandshake());
         }
         else if (input.connectUserPort()) {
+            return (uint8_t)(lines->iob & input.readUserPort());
+        }
+
+        return lines->iob;
+    };
+
+    cia2.peekPort = [this]( CIA::Base::Port port, CIA::Base::Lines* lines ) {
+
+        if ( port == CIA::Base::PORTA ) {
+            diskIdleOff();
+
+            return (uint8_t) ( (lines->ioa & 0x3f) | iecBus.readCia() );
+
+        } if (secondDriveCable.parallelUserport) {
+            diskIdleOff();
+            return (uint8_t)(lines->iob & iecBus.readParallel());
+        }
+        if (input.connectUserPort()) {
             return (uint8_t)(lines->iob & input.readUserPort());
         }
 
@@ -1174,9 +1207,14 @@ auto System::burstOrParallelUpdate() -> void {
 }
 
 auto System::driveCycleSyncingUpdate() -> void {
+    if (debuggerSnapshot.themes & ((unsigned)DebuggerTheme::DriveCPU1 | (unsigned)DebuggerTheme::DriveCPU2
+        | (unsigned)DebuggerTheme::DriveCPU3 | (unsigned)DebuggerTheme::DriveCPU4)) {
+        secondDriveCable.cycleSyncing = true;
 
-    secondDriveCable.cycleSyncing = (secondDriveCable.burstUse || secondDriveCable.parallelExpansion || secondDriveCable.parallelUserport)
+    } else {
+        secondDriveCable.cycleSyncing = (secondDriveCable.burstUse || secondDriveCable.parallelExpansion || secondDriveCable.parallelUserport)
         && !diskSilence.idle;
+    }
 }
 
 auto System::diskIdleOff() -> void {
@@ -1357,10 +1395,10 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
             vicIICycle.debugger.enableSpriteStore( true );
             vicIIFast.debugger.enableSpriteStore( true );
             break;
-        case DebuggerTheme::Sid:
+        case DebuggerTheme::SID:
             debuggerSnapshot.themes |= (unsigned)theme;
             break;
-        case DebuggerTheme::Bus:
+        case DebuggerTheme::BUS:
             switch (action) {
                 case DebuggerAction::DmaView:
                     vicIICycle.enableDmaView(true, addr == 0);
@@ -1375,11 +1413,27 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, uint32_t ad
                     break;
                 default: break;
             } break;
-        case DebuggerTheme::CheckpointsCPU1:
-            cpu.debuggerAdd( action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
+        case DebuggerTheme::CPU:
+            if (action == DebuggerAction::None)
+                debuggerSnapshot.themes |= (unsigned)theme;
+            else
+                cpu.debuggerAdd( action, static_cast<uint16_t>(addr), static_cast<uint16_t>(addrTo) );
             break;
-        case DebuggerTheme::CheckpointsCPU2:
-            superCpu->debuggerAdd(action, addr, addrTo);
+        case DebuggerTheme::CPU2:
+            if (action == DebuggerAction::None)
+                debuggerSnapshot.themes |= (unsigned)theme;
+            else
+                superCpu->debuggerAdd(action, addr, addrTo);
+            break;
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            if (action == DebuggerAction::None) {
+                debuggerSnapshot.themes |= (unsigned)theme;
+                driveCycleSyncingUpdate();
+            } else
+                iecBus.debuggerAdd( theme, action, addr, addrTo );
             break;
         case DebuggerTheme::Unspecified: {
             switch (action) {
@@ -1415,10 +1469,10 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             vicIICycle.debugger.enableSpriteStore( false );
             vicIIFast.debugger.enableSpriteStore( false );
             break;
-        case DebuggerTheme::Sid:
+        case DebuggerTheme::SID:
             debuggerSnapshot.themes &= ~(unsigned)theme;
             break;
-        case DebuggerTheme::Bus:
+        case DebuggerTheme::BUS:
             switch (action) {
                 case DebuggerAction::DmaView:
                     vicIICycle.enableDmaView(false, !addr.has_value() || (addr.value_or(0) == 0));
@@ -1432,17 +1486,33 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
                     break;
                 default: break;
             } break;
-        case DebuggerTheme::CheckpointsCPU1:
-            if (addr.has_value())
+        case DebuggerTheme::CPU:
+            if (action == DebuggerAction::None)
+                debuggerSnapshot.themes &= ~(unsigned)theme;
+            else if (addr.has_value())
                 cpu.debuggerRemove( action, addr.value_or(0) );
             else
                 cpu.debuggerRemove( action);
             break;
-        case DebuggerTheme::CheckpointsCPU2:
-            if (addr.has_value())
+        case DebuggerTheme::CPU2:
+            if (action == DebuggerAction::None)
+                debuggerSnapshot.themes &= ~(unsigned)theme;
+            else if (addr.has_value())
                 superCpu->debuggerRemove( action, addr.value_or(0));
             else
                 superCpu->debuggerRemove( action );
+            break;
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            if (action == DebuggerAction::None) {
+                debuggerSnapshot.themes &= ~(unsigned)theme;
+                driveCycleSyncingUpdate();
+            } else if (addr.has_value())
+                iecBus.debuggerRemove( theme, action, addr.value_or(0));
+            else
+                iecBus.debuggerRemove( theme, action );
             break;
         default:
             debuggerSnapshot.themes &= ~(unsigned)theme;
@@ -1451,32 +1521,81 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
     debuggerUpdateEvent();
 }
 
-auto System::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
-    if (expansionPort->haltMainCpu())
-        return superCpu->setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+auto System::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    switch (theme) {
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            return iecBus.setWatchpointCondition( theme, action, addr, hitCount, hitCountMode, expression, expressionMode );
 
-    return cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+        default:
+        case DebuggerTheme::CPU:
+        case DebuggerTheme::CPU2:
+            if (expansionPort->haltMainCpu())
+                return superCpu->setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+
+            return cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+    }
+
+    return false;
 }
 
-auto System::debuggerStepOver() -> void {
-    if (expansionPort->haltMainCpu())
-        superCpu->debuggerStepOver();
-    else
-        cpu.debuggerStepOver();
+auto System::debuggerStepOver(DebuggerTheme theme) -> void {
+    switch (theme) {
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            iecBus.debuggerStepOver(theme);
+            break;
+        default:
+        case DebuggerTheme::CPU:
+        case DebuggerTheme::CPU2:
+            if (expansionPort->haltMainCpu())
+                superCpu->debuggerStepOver();
+            else
+                cpu.debuggerStepOver();
+            break;
+    }
 }
 
-auto System::debuggerStepInto() -> void {
-    if (expansionPort->haltMainCpu())
-        superCpu->debuggerStepInto();
-    else
-        cpu.debuggerStepInto();
+auto System::debuggerStepInto(DebuggerTheme theme) -> void {
+    switch (theme) {
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            iecBus.debuggerStepInto(theme);
+            break;
+        default:
+        case DebuggerTheme::CPU:
+        case DebuggerTheme::CPU2:
+            if (expansionPort->haltMainCpu())
+                superCpu->debuggerStepInto();
+            else
+                cpu.debuggerStepInto();
+            break;
+    }
 }
 
-auto System::debuggerStepOut() -> bool {
-    if (expansionPort->haltMainCpu())
-        return superCpu->debuggerStepOut();
+auto System::debuggerStepOut(DebuggerTheme theme) -> bool {
+    switch (theme) {
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            return iecBus.debuggerStepOut(theme);
 
-    return cpu.debuggerStepOut();
+        default:
+        case DebuggerTheme::CPU:
+        case DebuggerTheme::CPU2:
+            if (expansionPort->haltMainCpu())
+                return superCpu->debuggerStepOut();
+            return cpu.debuggerStepOut();
+    }
+
+    return false;
 }
 
 auto System::getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {
@@ -1491,8 +1610,9 @@ auto System::getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {
         memoryDump(page, dump);
 }
 
-auto System::debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
+auto System::debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr) -> void {
     debugger.action = action;
+    debugger.theme = theme;
     debugger.addr = addr;
     debuggerUpdate();
 }
@@ -1501,9 +1621,10 @@ auto System::updateDebuggerSnapshot() -> void {
     debuggerSnapshot.superCpu = expansionPort->haltMainCpu();
     debuggerSnapshot.callbackAction = debugger.action;
     debuggerSnapshot.callbackAddress = debugger.addr;
+    debuggerSnapshot.callbackTheme = debugger.theme;
     debuggerSnapshot.codeMaybeModified = debuggerSnapshot.superCpu ? superCpu->hasModifiedCode() : cpu.hasModifiedCode();
 
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::CPU) {
+    if (debuggerSnapshot.themes & ((unsigned)DebuggerTheme::CPU | (unsigned)DebuggerTheme::CPU2 )) {
         if (expansionPort->haltMainCpu())
             superCpu->updateSnapshot(debuggerSnapshot);
         else
@@ -1521,12 +1642,21 @@ auto System::updateDebuggerSnapshot() -> void {
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Video) {
         vicII->updateVideoSnapshot(debuggerSnapshot);
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus) {
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::BUS) {
         vicII->updateDmaSnapshot(debuggerSnapshot);
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Sid) {
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::SID) {
         sidManager.updateSnapshot( debuggerSnapshot );
     }
+
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::DriveCPU1)
+        iecBus.updateCpuSnapshot(DebuggerTheme::DriveCPU1, debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::DriveCPU2)
+        iecBus.updateCpuSnapshot(DebuggerTheme::DriveCPU2, debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::DriveCPU3)
+        iecBus.updateCpuSnapshot(DebuggerTheme::DriveCPU3, debuggerSnapshot);
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::DriveCPU4)
+        iecBus.updateCpuSnapshot(DebuggerTheme::DriveCPU4, debuggerSnapshot);
 
     vicII->updatePositionSnapshot(debuggerSnapshot);
 }
@@ -1554,25 +1684,61 @@ auto System::updateMemorySnapshot(DebuggerSnapshot& snap) -> void {
     }
 }
 
-auto System::disassemble(unsigned addr, unsigned& bytes) -> std::string {
-    if (expansionPort->haltMainCpu())
-        return dynamic_cast<SuperCpu*>(expansionPort)->disassemble(addr, bytes);
+auto System::disassemble(DebuggerTheme theme, unsigned addr, unsigned& bytes) -> std::string {
+    switch (theme) {
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            return iecBus.disassemble( theme, (uint16_t)addr, bytes );
 
-    return cpu.disassemble(addr, bytes);
+        default:
+        case DebuggerTheme::CPU:
+        case DebuggerTheme::CPU2:
+            if (expansionPort->haltMainCpu())
+                return superCpu->disassemble(addr, bytes);
+            return cpu.disassemble(addr, bytes);
+    }
+
+    return "";
 }
 
-auto System::disassembleData(unsigned addr, unsigned bytes) -> std::string {
-    if (expansionPort->haltMainCpu())
-        return dynamic_cast<SuperCpu*>(expansionPort)->disassembleData(addr, bytes);
+auto System::disassembleData(DebuggerTheme theme, unsigned addr, unsigned bytes) -> std::string {
+    switch (theme) {
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            return iecBus.disassembleData( theme, (uint16_t)addr, bytes );
 
-    return cpu.disassembleData( (uint16_t)addr, bytes );
+        default:
+        case DebuggerTheme::CPU:
+        case DebuggerTheme::CPU2:
+            if (expansionPort->haltMainCpu())
+                return superCpu->disassembleData(addr, bytes);
+            return cpu.disassembleData( (uint16_t)addr, bytes );
+    }
+
+    return "";
 }
 
-auto System::disassembleTrace(unsigned i, uint8_t& flags) -> std::string {
-    if (expansionPort->haltMainCpu())
-        return dynamic_cast<SuperCpu*>(expansionPort)->disassembleTrace(i, flags);
+auto System::disassembleTrace(DebuggerTheme theme, unsigned i, uint8_t& flags) -> std::string {
+    switch (theme) {
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            return iecBus.disassembleTrace( theme, i, flags );
 
-    return cpu.disassembleTrace( i, flags );
+        default:
+        case DebuggerTheme::CPU:
+        case DebuggerTheme::CPU2:
+            if (expansionPort->haltMainCpu())
+                return superCpu->disassembleTrace(i, flags);
+            return cpu.disassembleTrace( i, flags );
+    }
+
+    return "";
 }
 
 auto System::cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop _crop ) -> void {
@@ -1581,6 +1747,20 @@ auto System::cropFrame( Emulator::Interface::CropType type, Emulator::Interface:
 
     vicIICycle.debugger.crop.settings.type = type;
     vicIICycle.debugger.crop.settings.crop = _crop;
+}
+
+auto System::peekMemoryByIdent(uint16_t addr, unsigned id) -> uint8_t {
+    switch (id) {
+        case 100: return ram[addr];
+        case 101: return memoryCpu.peek( addr );
+        case 102: return iecBus.drives[0]->cpuRead<true>(addr);
+        case 103: return iecBus.drives[1]->cpuRead<true>(addr);
+        case 104: return iecBus.drives[2]->cpuRead<true>(addr);
+        case 105: return iecBus.drives[3]->cpuRead<true>(addr);
+        default:
+            break;
+    }
+    return 0;
 }
 
 auto System::updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void {

@@ -23,7 +23,8 @@ struct DbgWatcher;
 
 struct Debugger : GUIKIT::Window {
     enum class Mode {
-        CPU, SCPU, Memory, MemorySCPU, CIA, Video, SID, DMA, Copper, Blitter, Agnus, Paula
+        CPU, SCPU, Memory, MemorySCPU, CIA, Video, SID, DMA, Copper, Blitter, Agnus, Paula,
+        Drive8CPU, Drive9CPU, Drive10CPU, Drive11CPU,
     } mode;
 
     Debugger( Emulator::Interface* emulator, Mode mode );
@@ -103,6 +104,7 @@ struct Debugger : GUIKIT::Window {
     virtual auto closeTheme() -> void {}
     virtual auto buildControl() -> GUIKIT::Layout* { return nullptr; }
     virtual auto updateBreakpointVisuals(DbgWatcher* watcher) -> void {}
+    virtual auto isDriveCpu() -> bool { return false; }
 
     auto translate() -> void;
     auto updateControl(uint16_t v, uint8_t h) -> void;
@@ -126,6 +128,8 @@ struct Debugger : GUIKIT::Window {
     auto openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void;
     auto updateWatchpointCondition(DbgWatcher& watcher) -> bool;
 
+    auto getCpuType() -> DebuggerTheme;
+
     static auto updateReg(GUIKIT::LineEdit& reg, unsigned val) -> void;
     static auto updateReg(GUIKIT::CheckBox& reg, bool state) -> void;
     static auto updateReg(GUIKIT::RadioBox& reg) -> void;
@@ -137,9 +141,9 @@ struct Debugger : GUIKIT::Window {
     auto updateRegDec(GUIKIT::LineEdit& reg, unsigned val) -> void;
 
     static auto isPaused() -> bool;
-    static auto stepOut(Emulator::Interface* emulator) -> void;
-    static auto stepInto(Emulator::Interface* emulator) -> void;
-    static auto stepOver(Emulator::Interface* emulator) -> void;
+    static auto stepOut(Emulator::Interface* emulator, DebuggerTheme theme = DebuggerTheme::CPU) -> void;
+    static auto stepInto(Emulator::Interface* emulator, DebuggerTheme theme = DebuggerTheme::CPU) -> void;
+    static auto stepOver(Emulator::Interface* emulator, DebuggerTheme theme = DebuggerTheme::CPU) -> void;
     static auto stepLine(Emulator::Interface* emulator, unsigned line = ~0) -> void;
     static auto stepFrame(Emulator::Interface* emulator) -> void;
     static auto resume(Emulator::Interface* emulator) -> void;

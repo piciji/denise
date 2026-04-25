@@ -715,9 +715,9 @@ auto M6510::loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void {
 
 inline auto M6510::controlBreaks() -> void {
      if ((control & SoftStop) && checkSoftStop(pcEdge)) {
-         system->debugPointReached(DebuggerAction::Softstop, pcEdge);
+         system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::Softstop, pcEdge);
      } else if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
-         system->debugPointReached(DebuggerAction::Breakpoint, pcEdge);
+         system->debugPointReached(DebuggerTheme::CPU, DebuggerAction::Breakpoint, pcEdge);
      }
 }
 

@@ -36,14 +36,18 @@ namespace LIBC64 {
 #define STATUS	(regP | GET_FLAG_N | FLAG_UNUSED | GET_FLAG_Z)
 
 #define READ( addr ) 	\
-    dataBus = drive->cpuRead( addr );
+    { if ((control & WatchPoint) && watchPoints.check( addr )) \
+        system->debugPointReached(getTheme(), DebuggerAction::Watchpoint, addr); \
+    dataBus = drive->cpuRead( addr ); }
 
 #define READ_LAST( addr ) \
     SAMPLE_INTERRUPT    \
     READ( addr )
 
 #define WRITE( addr, value )	\
-    drive->cpuWrite( addr, value);
+    { if ((control & WatchPointWrite) && watchPointsWrite.check( addr )) \
+        system->debugPointReached(getTheme(), DebuggerAction::WatchpointWrite, addr); \
+    drive->cpuWrite( addr, value); }
 
 #define WRITE_LAST( addr, value )	\
     SAMPLE_INTERRUPT				\
@@ -64,16 +68,20 @@ namespace LIBC64 {
     INC_PC( 1 )
 
 #define PUSH( value )		\
-    WRITE( 0x100 | regS--, value)
+    WRITE( 0x100 | regS, value) \
+    regS--;
 
 #define PUSH_LAST( value )		\
-    WRITE_LAST( 0x100 | regS--, value)
+    WRITE_LAST( 0x100 | regS, value) \
+    regS--;
 
 #define PULL			\
-    READ( 0x100 | ++regS )
+    ++regS; \
+    READ( 0x100 | regS )
 
 #define PULL_LAST				\
-    READ_LAST( 0x100 | ++regS )
+    ++regS; \
+    READ_LAST( 0x100 | regS )
 
 #define PAGE_CROSSED 	((absIndexed ^ absolute) & 0xff00)
 
@@ -95,6 +103,18 @@ auto M6502New::reset() -> void {
     soBlock = 0;
     control = ResetRoutine;
     operation = 0;
+    M65Debugger::init();
+}
+
+auto M6502New::getTheme() -> DebuggerTheme {
+    switch( drive->number ) {
+        default:
+        case 0: return DebuggerTheme::DriveCPU1;
+        case 1: return DebuggerTheme::DriveCPU2;
+        case 2: return DebuggerTheme::DriveCPU3;
+        case 3: return DebuggerTheme::DriveCPU4;
+    }
+    _unreachable
 }
 
 auto M6502New::setStatus(uint8_t val) -> void {
@@ -107,9 +127,12 @@ auto M6502New::resetRoutine() -> void {
     READ( pc )
     READ( pc )
     READ( pc )
-    READ( 0x100 | regS-- )
-    READ( 0x100 | regS-- )
-    READ( 0x100 | regS-- )
+    READ( 0x100 | regS )
+    regS--;
+    READ( 0x100 | regS )
+    regS--;
+    READ( 0x100 | regS )
+    regS--;
 
     READ( 0xfffc )
     pc = dataBus;
@@ -142,6 +165,12 @@ template<bool software> inline auto M6502New::interrupt() -> void {
     SET_FLAG_B( software )
 
     PUSH_STATUS
+
+    if constexpr (!software) {
+        if ((control & ExceptionPoint) && exceptionPoints.check( vector )) {
+            system->debugPointReached(getTheme(), DebuggerAction::ExceptionPoint, vector);
+        }
+    }
 
     READ( vector )
 
@@ -202,7 +231,6 @@ auto M6502New::handleSo() -> void {
         }
     }
 }
-
 
 auto M6502New::serialize(Emulator::Serializer& s) -> void {
     s.integer( control );
@@ -284,6 +312,11 @@ auto M6502New::serialize(Emulator::Serializer& s) -> void {
 
 #define END \
     operation = 0; \
+    if (control) { \
+        pcEdge = pc; \
+        if (control & (BreakPoint | SoftStop)) \
+            controlBreaks(); \
+    } \
     return;
 
 // GET
@@ -767,19 +800,28 @@ auto M6502New::process() -> void {
 
                 if (control & IRQ) {
                     interrupt<false>();
+                    pcEdge = pc;
+                    if (control & (BreakPoint | SoftStop))
+                        controlBreaks();
                     return;
                 }
 
                 if (control & ResetRoutine) {
                     resetRoutine();
                 }
+
+                if (control & History)
+                    loadTrace(historyHandler.getNext());
+
+                if ((control & WatchPoint) && watchPoints.check( pc ))
+                    system->debugPointReached(getTheme(), DebuggerAction::Watchpoint, pc);
             }
 
             operation = drive->cpuRead( pc++ );
             switch (operation) {
                 case 0x00:
                     interrupt<true>( );
-                    return;
+                    END
 
                 case 0x01: // ORA( GET_INDEXED_INDIRECT )
                 case 0x21: // AND( GET_INDEXED_INDIRECT )
@@ -1899,6 +1941,101 @@ auto M6502New::process() -> void {
         case _N | 0xe2:
             READ_PC_INC_LAST
             END
+    }
+}
+
+auto M6502New::parseExpressionValue(const std::string& input, int& pos) -> uint32_t {
+    for (auto& cond : DebuggerSnapshot::breakConditions) {
+        std::string token = cond.ident;
+        if (input.compare(pos, token.size(), token) == 0) {
+            pos += token.size();
+
+            switch (cond.vector) {
+                default: return 0;
+                case 0: return system->vicII->getVcounter();
+                case 1: return system->vicII->getCycle();
+                case 2: return pc;
+                case 3: return regX;
+                case 4: return regY;
+                case 5: return regA;
+                case 6: return regS;
+                case 7: return regP;
+
+                case 12: return irqPending;
+                case 13: return nmiPending;
+
+                case 14: return !!(regP & 1);
+                case 15: return !!(regP & 2);
+                case 16: return !!(regP & 4);
+                case 17: return !!(regP & 8);
+                case 18: return !!(regP & 0x10);
+                case 19: return !!(regP & 0x40);
+                case 20: return !!(regP & 0x80);
+
+                case 100:
+                case 101:
+                case 102:
+                case 103:
+                case 104:
+                case 105: {
+                    int radix = 10;
+                    if (input.compare(pos, 1, "$") == 0) {
+                        radix = 16;
+                        pos++;
+                    }
+                    const char* start = input.c_str() + pos;
+                    char* end;
+                    uint32_t value = std::strtoul(start, &end, radix);
+                    if (start != end) {
+                        pos += (end - start);
+                        return system->peekMemoryByIdent( value, cond.vector );
+                    }
+                    return 0;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+auto M6502New::updateSnapshot(DebuggerSnapshot& snap) -> void {
+    auto& s = snap.drives[drive->number];
+
+    s.pc = pc;
+    s.pcEdge = pcEdge;
+    s.regA = regA;
+    s.regX = regX;
+    s.regY = regY;
+    s.regS = 0x100 | regS;
+    s.flags = STATUS;
+}
+
+auto M6502New::peek(uint16_t addr) -> uint8_t {
+    return drive->cpuRead<true>( addr );
+}
+
+auto M6502New::flagDebugAction(int action, bool state) -> void {
+    if (state)
+        control |= action;
+    else
+        control &= ~action;
+}
+
+auto M6502New::loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void {
+    uint16_t addr = pcEdge;
+    entry.addr = addr;
+    entry.flags = STATUS;
+
+    for (int i = 0; i < 3; ++i) {
+        entry.mem[i] = peek( addr++ );
+    }
+}
+
+auto M6502New::controlBreaks() -> void {
+    if ((control & SoftStop) && checkSoftStop(pcEdge)) {
+        system->debugPointReached(getTheme(), DebuggerAction::Softstop, pcEdge);
+    } else if ((control & BreakPoint) && breakPoints.check(pcEdge)) {
+        system->debugPointReached(getTheme(), DebuggerAction::Breakpoint, pcEdge);
     }
 }
 

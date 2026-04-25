@@ -5,6 +5,7 @@
 #include <functional>
 #include <string>
 #include <optional>
+#include "m65debugger.h"
 #include "../../tools/watcher.h"
 #include "../system/memory.h"
 #include "../../interface.h"
@@ -20,6 +21,7 @@ namespace CIA {
 
 namespace LIBC64 {
 typedef Emulator::Interface::DebuggerAction DebuggerAction;
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
 
 #define CPU_WRITE_CYCLE 0x80000000
 #define CPU_RDY_CYCLE	0x40000000
@@ -31,15 +33,12 @@ struct IecBus;
 struct Traps;
 struct DebuggerSnapshot;
 
-struct M6510 {
+struct M6510 : M65Debugger {
     friend struct WatchPoints;
     friend struct ModifiedCodes;
     friend struct HistoryHandler;
 
-    enum { Normal = 0, IRQ = 1, Halt = 2, ResetRoutine = 4,
-        WatchPoint = 8, WatchPointWrite = 0x10, BreakPoint = 0x20, ExceptionPoint = 0x40, SoftStop = 0x80, ModifiedCode = 0x100,
-        History = 0x200
-    };
+    enum { Normal = 0, IRQ = 1, Halt = 2, ResetRoutine = 4};
 
 	M6510(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& cia1, CIA::M6526& cia2, IecBus& iecBus, Traps& traps);
 
@@ -68,7 +67,6 @@ struct M6510 {
     int control;
 	
 	uint16_t pc;
-    uint16_t pcEdge;
 	
 	uint8_t regX;
 	
@@ -100,15 +98,6 @@ struct M6510 {
 	using Callback = std::function<void ()>;
 	Callback unChargeBit6;
 	Callback unChargeBit7;
-
-    Emulator::WatchPoints watchPoints = Emulator::WatchPoints();
-    Emulator::WatchPoints watchPointsWrite = Emulator::WatchPoints();
-    Emulator::WatchPoints breakPoints = Emulator::WatchPoints();
-    Emulator::WatchPoints exceptionPoints = Emulator::WatchPoints();
-    Emulator::ModifiedCodes modifiedCode = Emulator::ModifiedCodes();
-    Emulator::HistoryHandler<uint8_t> historyHandler = Emulator::HistoryHandler<uint8_t>();
-    std::optional<uint16_t> softStep = std::nullopt;
-    std::vector<uint16_t> stepOuts;
 
     auto registerCallbacks() -> void;
 
@@ -156,32 +145,13 @@ struct M6510 {
 
     auto flagDebugAction(int action, bool state) -> void;
 
-    auto disassemble(uint16_t addr, unsigned& bytes, const uint8_t* memSnap = nullptr) -> std::string;
-
-    auto disassembleData(uint16_t addr, unsigned bytes) -> std::string;
-
     auto controlBreaks() -> void;
-
-    auto checkSoftStop(uint16_t addr) -> bool;
-
-    auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
-
-    auto debuggerStepOver() -> void;
-    auto debuggerStepInto() -> void;
-    auto debuggerStepOut() -> bool;
-    auto debuggerAdd(DebuggerAction action, uint16_t addr, uint16_t addrTo = 0) -> void;
-    auto debuggerRemove(DebuggerAction action, uint16_t addr) -> void;
-    auto debuggerRemove(DebuggerAction action) -> void;
 
     auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 
-    auto hasModifiedCode() -> bool { return modifiedCode.getAndForget(); }
-
-    auto appendStepOut(uint16_t addr) -> void;
-
-    auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
-
     auto parseExpressionValue(const std::string& input, int& pos) -> uint32_t;
+
+    auto peek(uint16_t addr) -> uint8_t;
 };
 
 }

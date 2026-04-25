@@ -101,9 +101,27 @@ struct IecBus {
     auto resetDriveState() -> void;
     auto setExpandedMemory( Drive::ExpandedMemMode expandedMemMode, bool state ) -> void;
     auto getExpandedMemory( Drive::ExpandedMemMode expandedMemMode ) -> bool;
-	inline auto checkForIdleWrite(uint8_t byte) -> bool  { return (byte & 0x38) == lastByte; }
+	auto checkForIdleWrite(uint8_t byte) -> bool { return (byte & 0x38) == lastByte; }
     auto setTrackZeroSensor(bool state) -> void;
     auto hasTrackZeroSensor() -> bool;
+
+    auto debuggerAdd( DebuggerTheme theme, DebuggerAction action, uint16_t addr, uint16_t addrTo = 0) -> void;
+    auto debuggerRemove( DebuggerTheme theme, DebuggerAction action, uint16_t addr) -> void;
+    auto debuggerRemove( DebuggerTheme theme, DebuggerAction action) -> void;
+    auto updateCpuSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void;
+    auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+
+    auto disassemble(DebuggerTheme theme, uint16_t addr, unsigned& bytes) -> std::string;
+    auto disassembleData(DebuggerTheme theme, uint16_t addr, unsigned bytes) -> std::string;
+    auto disassembleTrace(DebuggerTheme theme, unsigned i, uint8_t& flags) -> std::string;
+
+    auto debuggerStepOver(DebuggerTheme theme) -> void;
+    auto debuggerStepInto(DebuggerTheme theme) -> void;
+    auto debuggerStepOut(DebuggerTheme theme) -> bool;
+
+    auto editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void;
+
+    auto getDriveId(DebuggerTheme theme) -> unsigned;
 
     auto updateSerializationSize() -> void;
 

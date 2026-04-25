@@ -167,15 +167,15 @@ auto Debugger::build() -> void {
     };
 
     control->stepInto.onActivate = [this]() {
-        stepInto( emulator );
+        stepInto( emulator, getCpuType() );
     };
 
     control->stepOut.onActivate = [this]() {
-        stepOut( emulator );
+        stepOut( emulator, getCpuType() );
     };
 
     control->stepOver.onActivate = [this]() {
-        stepOver( emulator );
+        stepOver( emulator, getCpuType() );
     };
 
     control->line.onActivate = [this]() {
@@ -324,30 +324,30 @@ auto Debugger::Callback() -> void {
     }
 }
 
-auto Debugger::stepOut(Emulator::Interface* emulator) -> void {
+auto Debugger::stepOut(Emulator::Interface* emulator, DebuggerTheme theme) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
 
-    if (emulator->debuggerStepOut()) {
+    if (emulator->debuggerStepOut(theme)) {
         emuThread->unlockDebugger();
         timerVisibility->setEnabled();
     }
 }
 
-auto Debugger::stepInto(Emulator::Interface* emulator) -> void {
+auto Debugger::stepInto(Emulator::Interface* emulator, DebuggerTheme theme) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
     timerVisibility->setEnabled();
-    emulator->debuggerStepInto();
+    emulator->debuggerStepInto(theme);
     emuThread->unlockDebugger();
 }
 
-auto Debugger::stepOver(Emulator::Interface* emulator) -> void {
+auto Debugger::stepOver(Emulator::Interface* emulator, DebuggerTheme theme) -> void {
     if (!isPaused() || (emulator != activeEmulator))
         return;
 
     timerVisibility->setEnabled();
-    emulator->debuggerStepOver();
+    emulator->debuggerStepOver(theme);
     emuThread->unlockDebugger();
 }
 
@@ -548,7 +548,7 @@ auto Debugger::changeMemory(const std::string& addrStr, const std::string& valSt
         return;
 
     emuThread->lock();
-    emulator->editMemory( addr, values);
+    emulator->editMemory( getCpuType(), addr, values);
 
     if (isPaused()) {
         if (snapshot)
@@ -558,7 +558,7 @@ auto Debugger::changeMemory(const std::string& addrStr, const std::string& valSt
             if (debugger->mode == Mode::Memory || debugger->mode == Mode::MemorySCPU)
                 (dynamic_cast<MemDebugger*>(debugger))->memChanged(false);
 
-            if (debugger->mode == Mode::CPU || debugger->mode == Mode::SCPU) {
+            if (debugger->isDriveCpu() || debugger->mode == Mode::CPU || debugger->mode == Mode::SCPU) {
                 (dynamic_cast<CpuDebugger*>(debugger))->memChanged();
             }
 
@@ -594,7 +594,7 @@ auto Debugger::removeInstructionBreakpointVisuals(GUIKIT::ListView& listView, un
 auto Debugger::updateWatchpointCondition(DbgWatcher& watcher) -> bool {
     unsigned hitCount = watcher.useHitCount ? watcher.hitCount : 0;
     const auto& expression = watcher.useExpression ? watcher.expression : "";
-    return emulator->setWatchpointCondition( watcher.action, watcher.addr, hitCount, watcher.hitCountCompare, expression, watcher.expressionCompare );
+    return emulator->setWatchpointCondition( getCpuType(), watcher.action, watcher.addr, hitCount, watcher.hitCountCompare, expression, watcher.expressionCompare );
 }
 
 auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position) -> void {
@@ -603,6 +603,24 @@ auto Debugger::openConditionView(DbgWatcher* watcher, GUIKIT::Position position)
     conditionViewDebugger = new ConditionViewDebugger(this);
     conditionViewDebugger->create(watcher, position);
     conditionViewDebugger->open();
+}
+auto Debugger::getCpuType() -> DebuggerTheme {
+    if (isAmiga())
+        return DebuggerTheme::CPU;
+
+    if (mode == Mode::SCPU)
+        return DebuggerTheme::CPU2;
+
+    if (mode == Mode::Drive8CPU)
+        return DebuggerTheme::DriveCPU1;
+    if (mode == Mode::Drive9CPU)
+        return DebuggerTheme::DriveCPU2;
+    if (mode == Mode::Drive10CPU)
+        return DebuggerTheme::DriveCPU3;
+    if (mode == Mode::Drive11CPU)
+        return DebuggerTheme::DriveCPU4;
+
+    return DebuggerTheme::CPU;
 }
 
 template auto Debugger::updateRegBin<16>(GUIKIT::LineEdit& reg, unsigned val) -> void;

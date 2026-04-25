@@ -87,6 +87,11 @@ struct View : GUIKIT::Window {
             GUIKIT::MenuItem* debuggerBlitter;
             GUIKIT::MenuItem* debuggerAgnus;
             GUIKIT::MenuItem* debuggerPaula;
+            struct {
+                GUIKIT::Menu* menu = nullptr;
+                    GUIKIT::MenuItem* cpu;
+            } debuggerDrives[4];
+
         GUIKIT::MenuItem* audio;
         GUIKIT::MenuItem* configurations;
         GUIKIT::Menu* shaderMenu;

@@ -176,26 +176,39 @@ auto System::logCpu(uint16_t addr, uint8_t data, bool write, bool nextOp) -> voi
     }
 }
 
-auto System::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
-    if (dynamic_cast<SuperCpu*>(expansionPort)) {
-        for (int i = 0; i < values.size(); i++) {
-            uint32_t a = (addr + i) & 0xffffff;
-            uint8_t v = values[i] & 0xff;
+auto System::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void {
+    switch (theme) {
+        case DebuggerTheme::DriveCPU1:
+        case DebuggerTheme::DriveCPU2:
+        case DebuggerTheme::DriveCPU3:
+        case DebuggerTheme::DriveCPU4:
+            iecBus.editMemory( theme, addr, values );
+            break;
 
-            superCpu->editMemory( a, v );
-        }
-    } else {
-        for (int i = 0; i < values.size(); i++) {
-            uint16_t a = (addr + i) & 0xffff;
-            uint8_t v = values[i] & 0xff;
+        default:
+        case DebuggerTheme::CPU:
+        case DebuggerTheme::CPU2: {
+            if (dynamic_cast<SuperCpu*>(expansionPort)) {
+                for (int i = 0; i < values.size(); i++) {
+                    uint32_t a = (addr + i) & 0xffffff;
+                    uint8_t v = values[i] & 0xff;
 
-            Memory::Read* ptr = memoryCpu.reads[a >> 8];
-            if (ptr == &readCharRom)            charRom[a & 0xfff] = v;
-            else if (ptr == &readKernalRom)     kernalRom[a & 0x1fff] = v;
-            else if (ptr == &readBasicRom)      basicRom[a & 0x1fff] = v;
+                    superCpu->editMemory( a, v );
+                }
+            } else {
+                for (int i = 0; i < values.size(); i++) {
+                    uint16_t a = (addr + i) & 0xffff;
+                    uint8_t v = values[i] & 0xff;
 
-            memoryCpu.write(a, v);
-        }
+                    Memory::Read* ptr = memoryCpu.reads[a >> 8];
+                    if (ptr == &readCharRom)            charRom[a & 0xfff] = v;
+                    else if (ptr == &readKernalRom)     kernalRom[a & 0x1fff] = v;
+                    else if (ptr == &readBasicRom)      basicRom[a & 0x1fff] = v;
+
+                    memoryCpu.write(a, v);
+                }
+            }
+        } break;
     }
 }
 

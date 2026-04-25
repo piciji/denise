@@ -1225,9 +1225,6 @@
     <ClInclude Include="..\emulation\tools\expressionParser.h">
       <Filter>emulation\tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\program\debugger\audioDebugger.h">
-      <Filter>program\debugger</Filter>
-    </ClInclude>
     <ClInclude Include="..\driver\video\splashScreen.h">
       <Filter>driver\video</Filter>
     </ClInclude>
@@ -1265,6 +1262,12 @@
       <Filter>program\debugger</Filter>
     </ClInclude>
     <ClInclude Include="..\program\debugger\paulaDebugger.h">
+      <Filter>program\debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\emulation\libc64\m6510\m65Debugger.h">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClInclude>
+    <ClInclude Include="..\program\debugger\sidDebugger.h">
       <Filter>program\debugger</Filter>
     </ClInclude>
   </ItemGroup>
@@ -2508,9 +2511,6 @@
     <ClCompile Include="..\emulation\tools\expressionParser.cpp">
       <Filter>emulation\tools</Filter>
     </ClCompile>
-    <ClCompile Include="..\program\debugger\audioDebugger.cpp">
-      <Filter>program\debugger</Filter>
-    </ClCompile>
     <ClCompile Include="..\program\debugger\conditionViewDebugger.cpp">
       <Filter>program\debugger</Filter>
     </ClCompile>
@@ -2539,6 +2539,12 @@
       <Filter>program\debugger</Filter>
     </ClCompile>
     <ClCompile Include="..\program\debugger\paulaDebugger.cpp">
+      <Filter>program\debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\emulation\libc64\m6510\m65Debugger.cpp">
+      <Filter>emulation\libc64\m6510</Filter>
+    </ClCompile>
+    <ClCompile Include="..\program\debugger\sidDebugger.cpp">
       <Filter>program\debugger</Filter>
     </ClCompile>
   </ItemGroup>

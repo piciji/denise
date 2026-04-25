@@ -6,10 +6,10 @@ auto Cia<model>::peek( unsigned pos ) -> uint8_t {
 
     switch (pos & 0xf) {
         case 0:
-            return readPort(PORTA, &lines);
+            return peekPort(PORTA, &lines);
 
         case 1: {
-            uint8_t out = readPort(PORTB, &lines);
+            uint8_t out = peekPort(PORTB, &lines);
 
             adjustBit6And7(out);
 

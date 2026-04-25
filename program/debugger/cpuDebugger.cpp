@@ -143,7 +143,7 @@ CpuDebugger::CPU::State::Options::Options(Debugger* debugger)
 CpuDebugger::CPU::State::State(Debugger* debugger)
 : flags(debugger), options( debugger ) {
     int i = 0;
-    registers.resize( debugger->isAmiga() ? 11 : 4 );
+    registers.resize( debugger->isAmiga() ? 11 : (debugger->isDriveCpu() ? 3 : 4 ));
 
     for (auto& reg : registers) {
         reg = new Registers(debugger);
@@ -548,16 +548,27 @@ auto CpuDebugger::updateBreakpointVisuals(DbgWatcher* watcher) -> void {
 
 auto CpuDebugger::updateWatcherSelection() -> void {
     auto& watcherList = cpu->watcher.list;
-    if (snapshot->callbackAction == DebuggerAction::Watchpoint
-        || snapshot->callbackAction == DebuggerAction::WatchpointWrite
-        || snapshot->callbackAction == DebuggerAction::Breakpoint
-        || snapshot->callbackAction == DebuggerAction::ExceptionPoint) {
-        auto row = watcherHelper.findRowBy(snapshot->callbackAddress, snapshot->callbackAction);
-        if (row.has_value())
-            watcherList.setSelection( row.value_or(0) );
-        else if (watcherList.selected())
-            watcherList.setSelected( false );
-    } else if (watcherList.selected())
+    auto& t = snapshot->callbackTheme;
+    auto& act = snapshot->callbackAction;
+    bool hiLight = false;
+
+    if ( (t == DebuggerTheme::Unspecified) || (t == DebuggerTheme::CPU && mode == Mode::CPU) || (t == DebuggerTheme::CPU2 && mode == Mode::SCPU)
+        || (t == DebuggerTheme::DriveCPU1 && mode == Mode::Drive8CPU) || (t == DebuggerTheme::DriveCPU2 && mode == Mode::Drive9CPU)
+        || (t == DebuggerTheme::DriveCPU3 && mode == Mode::Drive10CPU) || (t == DebuggerTheme::DriveCPU4 && mode == Mode::Drive11CPU)) {
+
+        if (act == DebuggerAction::Watchpoint
+        || act == DebuggerAction::WatchpointWrite
+        || act == DebuggerAction::Breakpoint
+        || act == DebuggerAction::ExceptionPoint) {
+            auto row = watcherHelper.findRowBy(snapshot->callbackAddress, act);
+            if (row.has_value()) {
+                watcherList.setSelection( row.value_or(0) );
+                hiLight = true;
+            }
+        }
+    }
+
+    if (!hiLight && watcherList.selected())
         watcherList.setSelected( false );
 }
 
@@ -581,8 +592,8 @@ auto CpuDebugger::fetchInstructions(unsigned addr) -> void {
         auto& inst = instructions[i];
 
         inst.addr = addr;
-        inst.disassembled = emulator->disassemble( addr, bytes );
-        inst.data = emulator->disassembleData( addr, bytes );
+        inst.disassembled = emulator->disassemble( getCpuType(), addr, bytes );
+        inst.data = emulator->disassembleData( getCpuType(), addr, bytes );
 
         addr += bytes;
     }
@@ -594,7 +605,7 @@ auto CpuDebugger::fetchTraces() -> void {
     for (int i = 0; i < LIST_TRACES; i++) {
         uint16_t flags;
         Trace& trace = traces[i];
-        trace.disassembled = emulator->disassembleTrace( i, flags );
+        trace.disassembled = emulator->disassembleTrace( getCpuType(), i, flags );
         trace.flags = flags;
     }
 }
@@ -609,12 +620,14 @@ auto CpuDebugger::prepareTheme(bool external) -> void {
         addr = snap.pcEdge;
     } else {
         LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
-        addr = snap.pcEdge;
-
-        if (!snap.superCpu && mode == Mode::CPU) {}
-        else if (snap.superCpu && mode == Mode::SCPU) {}
-        else
+        if (!isDriveCpu() && !(snap.superCpu && mode == Mode::SCPU) && !(!snap.superCpu && mode == Mode::CPU) )
             return;
+
+        if (isDriveCpu()) {
+            unsigned nr = (unsigned)mode - (unsigned)Mode::Drive8CPU;
+            addr = snap.drives[nr].pcEdge;
+        } else
+            addr = snap.pcEdge;
     }
 
     if (cpu->switchLayout.selection() == 1)
@@ -636,7 +649,7 @@ auto CpuDebugger::prepareTheme(bool external) -> void {
                 bytes = nextAddr - addr;
         }
 
-        if (instructions[row].data != emulator->disassembleData( addr, bytes )) {
+        if (instructions[row].data != emulator->disassembleData( getCpuType(), addr, bytes )) {
             currentInstRow = std::nullopt;
             fetchInstructions(addr);
         }
@@ -654,7 +667,9 @@ auto CpuDebugger::updateTheme() -> void {
     } else {
         LIBC64::DebuggerSnapshot& snap = *static_cast<LIBC64::DebuggerSnapshot*>(snapshot);
 
-        if (!snap.superCpu && mode == Mode::CPU)
+        if (isDriveCpu())
+            update6502( snap );
+        else if (!snap.superCpu && mode == Mode::CPU)
             update6510( snap );
         else if (snap.superCpu && mode == Mode::SCPU)
             update65816( snap );
@@ -675,7 +690,7 @@ auto CpuDebugger::updateTheme() -> void {
 }
 
 auto CpuDebugger::initTheme() -> void {
-    emulator->debuggerAdd( DebuggerTheme::CPU, DebuggerAction::None, 0);
+    emulator->debuggerAdd( getCpuType(), DebuggerAction::None, 0);
     emulator->debuggerAdd( getCpuType(), DebuggerAction::History, 0 );
 
     for (auto& watcher : watcherHelper.watchers) {
@@ -691,7 +706,7 @@ auto CpuDebugger::initTheme() -> void {
 }
 
 auto CpuDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( DebuggerTheme::CPU, DebuggerAction::None);
+    emulator->debuggerRemove( getCpuType(), DebuggerAction::None);
     emulator->debuggerRemove( getCpuType(), DebuggerAction::Breakpoint );
     emulator->debuggerRemove( getCpuType(), DebuggerAction::Watchpoint );
     emulator->debuggerRemove( getCpuType(), DebuggerAction::WatchpointWrite );
@@ -727,6 +742,33 @@ auto CpuDebugger::update68k(LIBAMI::DebuggerSnapshot& s) -> void {
 
     updateControl( s.vPos, s.hPos );
     updateCpuFlags(&LIBAMI::DebuggerSnapshot::flagIdent[0], s.flags);
+}
+
+auto CpuDebugger::update6502(LIBC64::DebuggerSnapshot& s) -> void {
+    int i = 0;
+    unsigned nr = (unsigned)mode - (unsigned)Mode::Drive8CPU;
+    auto& _s = s.drives[nr];
+
+    for (auto& reg : cpu->state.registers) {
+        switch (i++) {
+            case 0:
+                updateReg(reg->leftVal, _s.pc);
+                updateReg(reg->rightVal, _s.regS);
+                break;
+            case 1:
+                updateReg(reg->leftVal, _s.regX);
+                updateReg(reg->rightVal, _s.regY);
+                break;
+            case 2:
+                updateReg(reg->leftVal, _s.regA);
+                break;
+            case 3:
+                break;
+        }
+    }
+
+    updateControl( s.vPos, s.hPos );
+    updateCpuFlags(&LIBC64::DebuggerSnapshot::flagIdent[0], _s.flags);
 }
 
 auto CpuDebugger::update6510(LIBC64::DebuggerSnapshot& s) -> void {
@@ -820,10 +862,13 @@ auto CpuDebugger::translateTheme() -> void {
                 reg->right.setText( "Y" );
             } else if (i == 2) {
                 reg->left.setText( "A" );
-                reg->right.setText( mode == Mode::SCPU ? "M-E" : "I/O" );
+                if (!isDriveCpu())
+                    reg->right.setText( mode == Mode::SCPU ? "M-E" : "I/O" );
             } else if (i == 3) {
-                reg->left.setText( mode == Mode::SCPU ? "PBR" : "POR" );
-                reg->right.setText( mode == Mode::SCPU ? "DBR" : "DDR" );
+                if (!isDriveCpu()) {
+                    reg->left.setText( mode == Mode::SCPU ? "PBR" : "POR" );
+                    reg->right.setText( mode == Mode::SCPU ? "DBR" : "DDR" );
+                }
             }
 
             i++;
@@ -848,7 +893,7 @@ auto CpuDebugger::translateTheme() -> void {
 }
 
 auto CpuDebugger::buildControl() -> GUIKIT::Layout* {
-    if (isC64()) {
+    if (isC64() && !isDriveCpu()) {
         c64RdyControl = new C64RdyControl();
 
         c64RdyControl->rdyButton.onActivate = [this]() {
@@ -858,15 +903,6 @@ auto CpuDebugger::buildControl() -> GUIKIT::Layout* {
         return c64RdyControl;
     }
     return nullptr;
-}
-
-inline auto CpuDebugger::getCpuType() -> DebuggerTheme {
-    if (isAmiga())
-        return DebuggerTheme::CheckpointsCPU1;
-    if (mode == Mode::SCPU)
-        return DebuggerTheme::CheckpointsCPU2;
-
-    return DebuggerTheme::CheckpointsCPU1;
 }
 
 auto CpuDebugger::saveIdent() -> std::string {

@@ -47,9 +47,14 @@ crb( timer[T_B].control )
 {	
 	this->model = model;
 	
-    readPort = []( Port port, Lines* plines ) { 
+    readPort = []( Port port, Lines* plines ) {
         // basic mode, when lines not modified from external
         return port == PORTA ? plines->ioa : plines->iob;        
+    };
+
+    peekPort = []( Port port, Lines* plines ) {
+        // basic mode, when lines not modified from external
+        return port == PORTA ? plines->ioa : plines->iob;
     };
     
     writePort = []( Port, Lines* ) {};    

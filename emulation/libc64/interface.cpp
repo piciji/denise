@@ -2046,24 +2046,24 @@ auto Interface::setRewind(bool state) -> void {
         system->history.setRewind(state);
 }
 
-auto Interface::disassemble(unsigned addr, unsigned& bytes) -> std::string {
-    return system->disassemble(addr, bytes);
+auto Interface::disassemble(DebuggerTheme theme, unsigned addr, unsigned& bytes) -> std::string {
+    return system->disassemble( theme, addr, bytes);
 }
 
-auto Interface::disassembleData(unsigned addr, unsigned bytes) -> std::string {
-    return system->disassembleData( (uint16_t)addr, bytes );
+auto Interface::disassembleData(DebuggerTheme theme, unsigned addr, unsigned bytes) -> std::string {
+    return system->disassembleData( theme, (uint16_t)addr, bytes );
 }
 
-auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
-    return system->disassembleTrace( i, (uint8_t&)flags );
+auto Interface::disassembleTrace(DebuggerTheme theme, unsigned i, uint16_t& flags) -> std::string {
+    return system->disassembleTrace( theme, i, (uint8_t&)flags );
 }
 
 auto Interface::getDmaDump() -> uint8_t* {
     return system->vicII->debugger.dmaFrame;
 }
 
-auto Interface::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
-    system->editMemory(addr, values);
+auto Interface::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void {
+    system->editMemory(theme, addr, values);
 }
 
 auto Interface::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo) -> void {
@@ -2074,20 +2074,20 @@ auto Interface::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::
     system->debuggerRemove( theme, action, addr );
 }
 
-auto Interface::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
-    return system->setWatchpointCondition(action, addr, hitCount, hitCountMode, expression, expressionMode);
+auto Interface::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return system->setWatchpointCondition(theme, action, addr, hitCount, hitCountMode, expression, expressionMode);
 }
 
-auto Interface::debuggerStepOver() -> void {
-    system->debuggerStepOver();
+auto Interface::debuggerStepOver(DebuggerTheme theme) -> void {
+    system->debuggerStepOver(theme);
 }
 
-auto Interface::debuggerStepInto() -> void {
-    system->debuggerStepInto();
+auto Interface::debuggerStepInto(DebuggerTheme theme) -> void {
+    system->debuggerStepInto(theme);
 }
 
-auto Interface::debuggerStepOut() -> bool {
-    return system->debuggerStepOut();
+auto Interface::debuggerStepOut(DebuggerTheme theme) -> bool {
+    return system->debuggerStepOut(theme);
 }
 
 auto Interface::getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {

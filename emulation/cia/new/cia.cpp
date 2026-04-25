@@ -12,6 +12,10 @@ Cia<model>::Cia( uint8_t ident ) {
         // basic mode, when lines not modified from external
         return port == PORTA ? plines->ioa : plines->iob;
     };
+    peekPort = []( Port port, Lines* plines ) {
+        // basic mode, when lines not modified from external
+        return port == PORTA ? plines->ioa : plines->iob;
+    };
 
     writePort = []( Port, Lines* ) {};
     irqCall = [](bool state) {};

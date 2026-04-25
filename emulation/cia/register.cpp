@@ -4,10 +4,58 @@
 namespace CIA {
 
 auto Base::peek( unsigned pos ) -> uint8_t {
-    if (pos == 0xd)
-        return icr;
+    switch (pos & 0xf) {
 
-    return read( pos );
+        case 0:
+            return peekPort( PORTA, &lines );
+
+        case 1: {
+            uint8_t out = peekPort( PORTB, &lines );
+
+            adjustBit6And7( out );
+
+            return out;
+        }
+        case 2:
+            return lines.ddra;
+
+        case 3:
+            return lines.ddrb;
+
+        case 4:
+            return readCounter<T_A>() & 0xff;
+
+        case 5:
+            return readCounter<T_A>() >> 8;
+
+        case 6:
+            return readCounter<T_B>() & 0xff;
+
+        case 7:
+            return readCounter<T_B>() >> 8;
+
+        case 8:
+        case 9:
+        case 0xa:
+        case 0xb:
+            //tod handling differs between cia versions
+            //hence is handled in child class
+            return 0;
+
+        case 0xc:
+            return sdr;
+
+        case 0xd:
+            return icr;
+
+        case 0xe:
+            return timer[T_A].control & 0xef;
+
+        case 0xf:
+            return timer[T_B].control & 0xef;
+    }
+
+    _unreachable
 }
 
 auto Base::read( unsigned pos ) -> uint8_t {

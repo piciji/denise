@@ -138,6 +138,7 @@ struct System {
 
     template<bool CIA2> auto dongleCiaWrite(Cia<MOS_8520>::Lines* lines) -> void;
     template<bool CIA2> auto dongleCiaRead(Cia<MOS_8520>::Lines* lines, uint8_t& val) -> void;
+    template<bool CIA2> auto dongleCiaPeek(Cia<MOS_8520>::Lines* lines, uint8_t& val) -> void;
     template<bool portB> auto dongleJoydat(uint16_t& val) -> void;
     auto donglePotGo(uint16_t& val) -> void;
 

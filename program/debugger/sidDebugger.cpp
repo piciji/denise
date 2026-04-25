@@ -290,11 +290,11 @@ auto SidDebugger::translateTheme() -> void {
 }
 
 auto SidDebugger::initTheme() -> void {
-    emulator->debuggerAdd( DebuggerTheme::Sid, DebuggerAction::None, 0);
+    emulator->debuggerAdd( DebuggerTheme::SID, DebuggerAction::None, 0);
 }
 
 auto SidDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( DebuggerTheme::Sid, DebuggerAction::None);
+    emulator->debuggerRemove( DebuggerTheme::SID, DebuggerAction::None);
 }
 
 auto SidDebugger::saveIdent() -> std::string {

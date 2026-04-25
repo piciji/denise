@@ -3,6 +3,8 @@
 
 #include "debugger.h"
 #include "watcherHelper.h"
+#include <optional>
+#include <string>
 
 #define LIST_INSTRUCTIONS 256
 #define LIST_TRACES 512
@@ -150,9 +152,9 @@ struct CpuDebugger : Debugger {
 
     auto update68k(LIBAMI::DebuggerSnapshot& s) -> void;
     auto update6510(LIBC64::DebuggerSnapshot& s) -> void;
+    auto update6502(LIBC64::DebuggerSnapshot& s) -> void;
     auto update65816(LIBC64::DebuggerSnapshot& s) -> void;
 
-    auto getCpuType() -> DebuggerTheme;
     auto memChanged() -> void;
 
     auto buildControl() -> GUIKIT::Layout* override;

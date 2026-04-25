@@ -1441,6 +1441,30 @@ auto View::buildMenu() -> void {
         };
         sM.debugger->append( *sM.debuggerCia );
 
+        if ( dynamic_cast<LIBC64::Interface*>(emulator)) {
+            int nr = 8;
+            for (auto& debuggerDrive : sM.debuggerDrives) {
+                debuggerDrive.menu = new GUIKIT::Menu;
+                debuggerDrive.menu->setText( "Drive" + std::to_string( nr ));
+                debuggerDrive.cpu = new GUIKIT::MenuItem;
+                debuggerDrive.cpu->onActivate = [this, emulator, nr]() {
+                    emuThread->lock();
+                    switch (nr) {
+                        default:
+                        case 8: program->openDebugger(emulator, Debugger::Mode::Drive8CPU); break;
+                        case 9: program->openDebugger(emulator, Debugger::Mode::Drive9CPU); break;
+                        case 10: program->openDebugger(emulator, Debugger::Mode::Drive10CPU); break;
+                        case 11: program->openDebugger(emulator, Debugger::Mode::Drive11CPU); break;
+                    }
+                    emuThread->unlock();
+                };
+                debuggerDrive.menu->append( *debuggerDrive.cpu );
+
+                sM.debugger->append( *debuggerDrive.menu );
+                nr++;
+            }
+        }
+
         sM.system->append( *sM.debugger );
             
         sM.configurations = new GUIKIT::MenuItem;
@@ -2245,6 +2269,12 @@ auto View::translate() -> void {
 
         if (sysMenu.debuggerSCPU)
             sysMenu.debuggerSCPU->setText(trans->get("SCPU"));
+
+        if (dynamic_cast<LIBC64::Interface*>(sysMenu.emulator)) {
+            for (auto& debuggerDrive : sysMenu.debuggerDrives) {
+                debuggerDrive.cpu->setText( "CPU" );
+            }
+        }
 
         sysMenu.audio->setText(trans->get("Audio") + "...");
         sysMenu.firmware->setText(trans->get("Firmware") + "...");

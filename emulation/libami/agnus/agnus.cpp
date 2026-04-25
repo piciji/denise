@@ -1108,6 +1108,7 @@ auto Agnus::updateSnapshot(DebuggerSnapshot& snap) -> void {
     snap.busUsage = busUsage;
     snap.callbackAction = debugger.action;
     snap.callbackAddress = debugger.addr;
+    snap.callbackTheme = Interface::DebuggerTheme::Unspecified;
     snap.codeMaybeModified = cpu.hasModifiedCode();
 }
 

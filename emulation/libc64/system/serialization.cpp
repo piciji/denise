@@ -104,6 +104,8 @@ auto System::unserialize(uint8_t* data, unsigned size) -> bool {
 
     updateDriveSounds();
 
+    driveCycleSyncingUpdate();
+
     history.reset();
     
     return true;

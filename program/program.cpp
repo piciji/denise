@@ -22,8 +22,12 @@
 #include "helper/settingsHelper.h"
 #include "emuconfig/layouts/presentation.h"
 
-#include "debugger/scpuDebugger.h"
 #include "debugger/cpuDebugger.h"
+#include "debugger/scpuDebugger.h"
+#include "debugger/drive8CpuDebugger.h"
+#include "debugger/drive9CpuDebugger.h"
+#include "debugger/drive10CpuDebugger.h"
+#include "debugger/drive11CpuDebugger.h"
 #include "debugger/memScpuDebugger.h"
 #include "debugger/memDebugger.h"
 #include "debugger/ciaDebugger.h"
@@ -874,6 +878,10 @@ auto Program::openDebugger(Emulator::Interface* emulator, Debugger::Mode mode) -
     switch (mode) {
         case Debugger::Mode::CPU: debugger = new CpuDebugger(emulator); break;
         case Debugger::Mode::SCPU: debugger = new ScpuDebugger(emulator); break;
+        case Debugger::Mode::Drive8CPU: debugger = new Drive8CpuDebugger(emulator); break;
+        case Debugger::Mode::Drive9CPU: debugger = new Drive9CpuDebugger(emulator); break;
+        case Debugger::Mode::Drive10CPU: debugger = new Drive10CpuDebugger(emulator); break;
+        case Debugger::Mode::Drive11CPU: debugger = new Drive11CpuDebugger(emulator); break;
         case Debugger::Mode::Memory: debugger = new MemDebugger(emulator); break;
         case Debugger::Mode::MemorySCPU: debugger = new MemScpuDebugger(emulator); break;
         case Debugger::Mode::CIA: debugger = new CiaDebugger(emulator); break;

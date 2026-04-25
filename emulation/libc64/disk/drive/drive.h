@@ -53,22 +53,24 @@ struct Drive {
     IecBus& iecBus;
     uint8_t number;
     uint8_t* rom = nullptr;
-    uint16_t romMask;
-
-    uint8_t* rom1541II = nullptr;
-    uint16_t rom1541IISize = 0;
-    uint8_t* rom1541 = nullptr;
-    uint16_t rom1541Size = 0;
-    uint8_t* rom1541C = nullptr;
-    uint16_t rom1541CSize = 0;
-    uint8_t* rom1571 = nullptr;
-    uint16_t rom1571Size = 0;
-    uint8_t* rom1570 = nullptr;
-    uint16_t rom1570Size = 0;
-    uint8_t* rom1581 = nullptr;
-    uint16_t rom1581Size = 0;
+    uint16_t romMask = 0;
     uint8_t* romExpanded = nullptr;
     uint16_t romExpandedMask = 0;
+
+    uint8_t* rom1541II = nullptr;
+    unsigned rom1541IISize = 0;
+    uint8_t* rom1541 = nullptr;
+    unsigned rom1541Size = 0;
+    uint8_t* rom1541C = nullptr;
+    unsigned rom1541CSize = 0;
+    uint8_t* rom1571 = nullptr;
+    unsigned rom1571Size = 0;
+    uint8_t* rom1570 = nullptr;
+    unsigned rom1570Size = 0;
+    uint8_t* rom1581 = nullptr;
+    unsigned rom1581Size = 0;
+    uint8_t* romExtra = nullptr;
+    unsigned romExtraSize = 0;
 
     uint8_t* ram20To3F = nullptr;
     uint8_t* ram40To5F = nullptr;
@@ -184,7 +186,7 @@ struct Drive {
     auto sync() -> void;
     auto setSyncPos(int direction) -> void;
     auto cpuWrite(uint16_t addr, uint8_t data) -> void;
-    auto cpuRead(uint16_t addr) -> uint8_t;
+    template<bool peek = false> auto cpuRead(uint16_t addr) -> uint8_t;
     auto power( ) -> void;
     auto powerOff( ) -> void;
     auto setViaTransition( bool direction ) -> void;
@@ -241,6 +243,8 @@ struct Drive {
     auto prologicControlClassic(uint8_t addr, uint8_t data) -> void;
     auto prologicControl(uint16_t addr) -> void;
     auto stepSound(bool headBang) -> void;
+
+    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
 };
   
 }

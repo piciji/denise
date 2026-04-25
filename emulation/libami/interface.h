@@ -138,21 +138,21 @@ struct Interface : Emulator::Interface  {
     // debugger
     auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void;
     auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void;
-    auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+    auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
-    auto debuggerStepOver() -> void;
-    auto debuggerStepInto() -> void;
-    auto debuggerStepOut() -> bool;
+    auto debuggerStepOver(DebuggerTheme theme) -> void;
+    auto debuggerStepInto(DebuggerTheme theme) -> void;
+    auto debuggerStepOut(DebuggerTheme theme) -> bool;
 
     // disassembler
-    auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
-    auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
-    auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string;
+    auto disassemble(DebuggerTheme theme, unsigned addr, unsigned& bytes) -> std::string;
+    auto disassembleData(DebuggerTheme theme, unsigned addr, unsigned bytes) -> std::string;
+    auto disassembleTrace(DebuggerTheme theme, unsigned i, uint16_t& flags) -> std::string;
     auto getCopperDump(unsigned addrFrom, unsigned addrTo) -> uint8_t*;
     auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void;
     auto getDmaDump() -> uint8_t*;
 
-    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
+    auto editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void;
 
 private:
     auto prepareDevices() -> void;

@@ -12,6 +12,7 @@ namespace CIA {
 
 namespace LIBC64 {
 typedef Emulator::Interface::DebuggerAction DebuggerAction;
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
 
 struct SuperCpu : ExpansionPort, WDCFAMILY::W65816 {
     SuperCpu(System* system, Emulator::SystemTimer& sysTimer, CIA::M6526& cia1, CIA::M6526& cia2, SidManager& sidManager, Traps& traps);

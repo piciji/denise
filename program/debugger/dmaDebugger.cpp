@@ -114,7 +114,7 @@ auto DmaDebugger::buildControl() -> GUIKIT::Layout* {
                 return;
             emuThread->lock();
             timerVisibility->setEnabled();
-            emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::SoftstopCycle, 0 );
+            emulator->debuggerAdd( DebuggerTheme::BUS, DebuggerAction::SoftstopCycle, 0 );
             emuThread->unlockDebugger();
             emuThread->unlock();
         };
@@ -140,9 +140,9 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
         emuThread->lock();
         VideoManager::getInstance( emulator )->dmaColors = checked ? &dmaColors[0] : nullptr;
         if (checked)
-            emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+            emulator->debuggerAdd( DebuggerTheme::BUS, DebuggerAction::DmaView, isPaused() ? 1 : 0);
         else
-            emulator->debuggerRemove( DebuggerTheme::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+            emulator->debuggerRemove( DebuggerTheme::BUS, DebuggerAction::DmaView, isPaused() ? 1 : 0);
         emuThread->unlock();
     };
 
@@ -210,7 +210,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
                     w->button.setStore( -1 );
                     updateTheme();
                     w->button.setStore( val );
-                    emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaWatch, val, w->position );
+                    emulator->debuggerAdd( DebuggerTheme::BUS, DebuggerAction::DmaWatch, val, w->position );
                     emuThread->unlock();
                     w->button.setText( _text );
                 }
@@ -243,7 +243,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
 
         if (w) {
             emuThread->lock();
-            emulator->debuggerRemove( DebuggerTheme::Bus, DebuggerAction::DmaWatch, w->position );
+            emulator->debuggerRemove( DebuggerTheme::BUS, DebuggerAction::DmaWatch, w->position );
             w->button.setStore( -1 );
             updateTheme();
             emuThread->unlock();
@@ -263,7 +263,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
             w->button.setStore( -1 );
             updateTheme();
             w->button.setStore( 1 << 24 );
-            emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaWatch, 1 << 24, w->position );
+            emulator->debuggerAdd( DebuggerTheme::BUS, DebuggerAction::DmaWatch, 1 << 24, w->position );
             emuThread->unlock();
             w->button.setText( isAmiga() ? "IPL" : "IRQ/NMI" );
         }
@@ -294,7 +294,7 @@ auto DmaDebugger::buildTheme() -> GUIKIT::Layout* {
                     w->button.setStore( -1 );
                     updateTheme();
                     w->button.setStore( _addr );
-                    emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaWatch, _addr, w->position );
+                    emulator->debuggerAdd( DebuggerTheme::BUS, DebuggerAction::DmaWatch, _addr, w->position );
                     emuThread->unlock();
                     w->button.setText( _ident );
                 }
@@ -495,18 +495,18 @@ auto DmaDebugger::updateView(LIBAMI::DebuggerSnapshot& s) -> void {
 }
 
 auto DmaDebugger::initTheme() -> void {
-    emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaLog, 0);
+    emulator->debuggerAdd( DebuggerTheme::BUS, DebuggerAction::DmaLog, 0);
 
     if (dma->dmaFrame.showUsage.checked()) {
         VideoManager::getInstance( emulator )->dmaColors = &dmaColors[0];
-        emulator->debuggerAdd( DebuggerTheme::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+        emulator->debuggerAdd( DebuggerTheme::BUS, DebuggerAction::DmaView, isPaused() ? 1 : 0);
     }
 
     for (auto& watcher : dma->legend.watchers) {
         if (watcher.button.getStore() == -1)
             continue;
 
-        emulator->debuggerAdd(DebuggerTheme::Bus, DebuggerAction::DmaWatch, watcher.button.getStore(), watcher.position );
+        emulator->debuggerAdd(DebuggerTheme::BUS, DebuggerAction::DmaWatch, watcher.button.getStore(), watcher.position );
     }
 
     std::vector<unsigned> offsets;
@@ -530,12 +530,12 @@ auto DmaDebugger::initTheme() -> void {
 }
 
 auto DmaDebugger::closeTheme() -> void {
-    emulator->debuggerRemove( DebuggerTheme::Bus, DebuggerAction::DmaView, isPaused() ? 1 : 0);
-    emulator->debuggerRemove( DebuggerTheme::Bus, DebuggerAction::DmaLog);
+    emulator->debuggerRemove( DebuggerTheme::BUS, DebuggerAction::DmaView, isPaused() ? 1 : 0);
+    emulator->debuggerRemove( DebuggerTheme::BUS, DebuggerAction::DmaLog);
     VideoManager::getInstance( emulator )->dmaColors = nullptr;
 
     for (auto& watcher : dma->legend.watchers)
-        emulator->debuggerRemove(DebuggerTheme::Bus, DebuggerAction::DmaWatch, watcher.position );
+        emulator->debuggerRemove(DebuggerTheme::BUS, DebuggerAction::DmaWatch, watcher.position );
 }
 
 auto DmaDebugger::translateTheme() -> void {

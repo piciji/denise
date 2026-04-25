@@ -790,15 +790,15 @@ auto Interface::setRewind(bool state) -> void {
         system->history.setRewind(state);
 }
 
-auto Interface::disassemble(unsigned addr, unsigned& bytes) -> std::string {
+auto Interface::disassemble(DebuggerTheme theme, unsigned addr, unsigned& bytes) -> std::string {
     return system->cpu.disassemble(addr, bytes);
 }
 
-auto Interface::disassembleData(unsigned addr, unsigned bytes) -> std::string {
+auto Interface::disassembleData(DebuggerTheme theme, unsigned addr, unsigned bytes) -> std::string {
     return system->cpu.disassembleData( addr, bytes );
 }
 
-auto Interface::disassembleTrace(unsigned i, uint16_t& flags) -> std::string {
+auto Interface::disassembleTrace(DebuggerTheme theme, unsigned i, uint16_t& flags) -> std::string {
     return system->cpu.disassembleTrace( i, flags );
 }
 
@@ -814,7 +814,7 @@ auto Interface::getDmaDump() -> uint8_t* {
     return system->agnus.debugger.dmaFrame;
 }
 
-auto Interface::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+auto Interface::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void {
     system->editMemory( addr, values );
 }
 
@@ -826,19 +826,19 @@ auto Interface::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::
     system->debuggerRemove( theme, action, addr );
 }
 
-auto Interface::setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+auto Interface::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
     return system->setWatchpointCondition(action, addr, hitCount, hitCountMode, expression, expressionMode);
 }
 
-auto Interface::debuggerStepOver() -> void {
+auto Interface::debuggerStepOver(DebuggerTheme theme) -> void {
     system->cpu.debuggerStepOver();
 }
 
-auto Interface::debuggerStepInto() -> void {
+auto Interface::debuggerStepInto(DebuggerTheme theme) -> void {
     system->cpu.debuggerStepInto();
 }
 
-auto Interface::debuggerStepOut() -> bool {
+auto Interface::debuggerStepOut(DebuggerTheme theme) -> bool {
     return system->cpu.debuggerStepOut();
 }
 

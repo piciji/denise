@@ -346,9 +346,10 @@ struct Interface {
         uint16_t watcher[4];
     };
 
-    enum class DebuggerTheme { Unspecified = 0, CPU = 1, CheckpointsCPU1 = 2, CheckpointsCPU2 = 4,
-        Memory = 0x100, CIA = 0x200, Video = 0x400, Bus = 0x800, Sid = 0x1000, Copper = 0x2000, Blitter = 0x4000,
-        Agnus = 0x8000, Paula = 0x10000 };
+    enum class DebuggerTheme : unsigned { Unspecified = 0, CPU = 1, CPU2 = 2, DriveCPU1 = 4, DriveCPU2 = 8, DriveCPU3 = 0x10, DriveCPU4 = 0x20,
+        Memory = 0x100, CIA = 0x200, Video = 0x400, BUS = 0x800, SID = 0x1000, Copper = 0x2000, Blitter = 0x4000,
+        Agnus = 0x8000, Paula = 0x10000,
+    };
 
     enum class DebuggerAction { None, Breakpoint, Watchpoint, WatchpointWrite, ExceptionPoint, Softstop, ModifiedCode, History, Line, Frame,
         DmaView, DmaLog, DmaWatch, AutoUpdate, UIRequestedStop, HaltCPU, BreakpointCopper, WatchpointCopper,
@@ -357,6 +358,7 @@ struct Interface {
     struct DebuggerSnapshot {
         unsigned themes = 0; // multiple themes
         DebuggerAction callbackAction;
+        DebuggerTheme callbackTheme;
         uint32_t callbackAddress;
         bool codeMaybeModified = false;
         std::mutex mutex;
@@ -679,23 +681,23 @@ struct Interface {
     // debugger
     virtual auto debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned addrTo = 0) -> void {}
     virtual auto debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::optional<unsigned> addr = std::nullopt) -> void {}
-    virtual auto setWatchpointCondition(DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool { return true; }
+    virtual auto setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool { return true; }
 
-    virtual auto debuggerStepOver() -> void {}
-    virtual auto debuggerStepInto() -> void {}
-    virtual auto debuggerStepOut() -> bool { return false; }
+    virtual auto debuggerStepOver(DebuggerTheme theme) -> void {}
+    virtual auto debuggerStepInto(DebuggerTheme theme) -> void {}
+    virtual auto debuggerStepOut(DebuggerTheme theme) -> bool { return false; }
 
     virtual auto getMemoryDumpBank(uint8_t bank, uint16_t* dump) -> void {}
     virtual auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void {}
     virtual auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void {}
     virtual auto getDmaDump() -> uint8_t* { return nullptr; }
 
-    virtual auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {}
+    virtual auto editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void {}
 
     // disassembler
-    virtual auto disassemble(unsigned addr, unsigned& bytes) -> std::string { return ""; }
-    virtual auto disassembleData(unsigned addr, unsigned bytes) -> std::string { return ""; }
-    virtual auto disassembleTrace(unsigned i, uint16_t& flags) -> std::string { return ""; }
+    virtual auto disassemble(DebuggerTheme theme, unsigned addr, unsigned& bytes) -> std::string { return ""; }
+    virtual auto disassembleData(DebuggerTheme theme, unsigned addr, unsigned bytes) -> std::string { return ""; }
+    virtual auto disassembleTrace(DebuggerTheme theme, unsigned i, uint16_t& flags) -> std::string { return ""; }
     
 	//shortcuts
 	auto insertMedium(Media* media, uint8_t* data, uint64_t size) -> void {

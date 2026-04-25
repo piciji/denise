@@ -61,6 +61,10 @@ rtc(agnus) {
         return out;
     };
 
+    cia1.peekPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+        return cia1.readPort(port, lines);
+    };
+
     cia1.writePort = [this, interface]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
 
         if ( port == Cia<MOS_8520>::PORTA ) {
@@ -96,6 +100,20 @@ rtc(agnus) {
             uint8_t out = lines->ioa;
             if (dongle.connected())
                 dongleCiaRead<true>(lines, out);
+
+            input.readParallelportCIA2A(out);
+            return out;
+        }
+
+        return lines->iob;
+    };
+
+    cia2.peekPort = [this]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+
+        if ( port == Cia<MOS_8520>::PORTA ) {
+            uint8_t out = lines->ioa;
+            if (dongle.connected())
+                dongleCiaPeek<true>(lines, out);
 
             input.readParallelportCIA2A(out);
             return out;
@@ -707,7 +725,7 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
             debuggerSnapshot.themes |= (unsigned)theme;
             denise.debugger.setEnable( true );
             break;
-        case DebuggerTheme::Bus:
+        case DebuggerTheme::BUS:
             switch (action) {
                 case DebuggerAction::DmaView:
                     agnus.debugger.enableDmaView(true, addr == 0);
@@ -726,8 +744,11 @@ auto System::debuggerAdd(DebuggerTheme theme, DebuggerAction action, unsigned ad
                     break;
                 default: break;
             } break;
-        case DebuggerTheme::CheckpointsCPU1:
-            cpu.debuggerAdd( action, addr, addrTo );
+        case DebuggerTheme::CPU:
+            if (action == DebuggerAction::None)
+                debuggerSnapshot.themes |= (unsigned)theme;
+            else
+                cpu.debuggerAdd( action, addr, addrTo );
             break;
 
         case DebuggerTheme::Agnus:
@@ -790,7 +811,7 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
             debuggerSnapshot.themes &= ~(unsigned)theme;
             denise.debugger.setEnable( false );
             break;
-        case DebuggerTheme::Bus:
+        case DebuggerTheme::BUS:
             switch (action) {
                 case DebuggerAction::DmaView:
                     agnus.debugger.enableDmaView(false, !addr.has_value() || (addr.value_or(0) == 0));
@@ -804,8 +825,10 @@ auto System::debuggerRemove(DebuggerTheme theme, DebuggerAction action, std::opt
                     break;
                 default: break;
             } break;
-        case DebuggerTheme::CheckpointsCPU1:
-            if (addr.has_value())
+        case DebuggerTheme::CPU:
+            if (action == DebuggerAction::None)
+                debuggerSnapshot.themes &= ~(unsigned)theme;
+            else if (addr.has_value())
                 cpu.debuggerRemove( action, addr.value_or(0) );
             else
                 cpu.debuggerRemove( action );
@@ -867,7 +890,7 @@ auto System::updateDebuggerSnapshot() -> void {
         denise.updateSnapshot(debuggerSnapshot);
         agnus.updateVideoSnapshot( debuggerSnapshot );
     }
-    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Bus)
+    if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::BUS)
         agnus.updateDmaSnapshot( debuggerSnapshot );
     if (debuggerSnapshot.themes & (unsigned)DebuggerTheme::Copper)
         agnus.copper.updateDmaSnapshot( debuggerSnapshot );

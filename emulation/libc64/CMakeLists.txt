@@ -187,6 +187,7 @@ endif()
 target_sources(coreC64 PRIVATE
         interface.cpp
         m6510/m6510.cpp
+        m6510/m65Debugger.cpp;
         #disk/cpu/m6502.cpp
         disk/cpu/m6502New.cpp
         m6510/dasmHandler.cpp

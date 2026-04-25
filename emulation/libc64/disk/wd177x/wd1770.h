@@ -40,6 +40,7 @@ struct WD1770 {
 
     auto setDiskAccessible(bool state) -> void;
     auto read(uint16_t address) -> uint8_t;
+    auto peek(uint16_t address) -> uint8_t;
     auto write(uint16_t address, uint8_t value) -> void;
     auto rotate() -> void;
     auto rotateDecoded(unsigned revolutionCycles) -> void;

@@ -21,6 +21,7 @@
 #include "../../tools/memchangetracker.h"
 #include "../../tools/history.h"
 #include "debuggerSnapshot.h"
+#include "../../interface.h"
 
 namespace Emulator {
     struct PowerSupply;
@@ -243,6 +244,7 @@ struct System {
 
     struct {
         Emulator::Interface::DebuggerAction action = Emulator::Interface::DebuggerAction::None;
+        Emulator::Interface::DebuggerTheme theme = Emulator::Interface::DebuggerTheme::Unspecified;
         uint32_t addr;
         uint32_t dmaWatchers[4] = { 0 };
     } debugger;
@@ -255,7 +257,7 @@ struct System {
     
     auto remapCpu(bool speedHack = false) -> void;
     auto memoryDump(uint8_t page, uint8_t* dump) -> void;
-    auto editMemory(uint32_t addr, std::vector<uint16_t> values) -> void;
+    auto editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void;
 	auto isUltimax() -> bool;
 	auto changeExpansionPortMemoryMode(bool exrom, bool game, bool noUltimaxIfVicHasTheBus = false, bool speedHack = false) -> void;
     
@@ -339,28 +341,30 @@ struct System {
 
     auto debuggerAdd(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, uint32_t addr, uint32_t addrTo) -> void;
 	auto debuggerRemove(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, std::optional<unsigned> addr) -> void;
-    auto setWatchpointCondition(Emulator::Interface::DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
+    auto setWatchpointCondition(DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool;
 
-	auto debuggerStepOver() -> void;
-	auto debuggerStepInto() -> void;
-	auto debuggerStepOut() -> bool;
+	auto debuggerStepOver(DebuggerTheme theme) -> void;
+	auto debuggerStepInto(DebuggerTheme theme) -> void;
+	auto debuggerStepOut(DebuggerTheme theme) -> bool;
 	auto getMemoryDumpBank(uint8_t bank, uint8_t* dump) -> void;
 	auto getMemoryDumpPage(uint8_t page, uint8_t* dump) -> void;
 
-    auto debugPointReached(Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
+    auto debugPointReached(Emulator::Interface::DebuggerTheme theme, Emulator::Interface::DebuggerAction action, unsigned addr) -> void;
     auto updateDebuggerSnapshot() -> void;
     auto debuggerUpdate() -> void;
     auto debuggerUpdateEvent() -> void;
 
-	auto disassemble(unsigned addr, unsigned& bytes) -> std::string;
-	auto disassembleData(unsigned addr, unsigned bytes) -> std::string;
-	auto disassembleTrace(unsigned i, uint8_t& flags) -> std::string;
+	auto disassemble(DebuggerTheme theme, unsigned addr, unsigned& bytes) -> std::string;
+	auto disassembleData(DebuggerTheme theme, unsigned addr, unsigned bytes) -> std::string;
+	auto disassembleTrace(DebuggerTheme theme, unsigned i, uint8_t& flags) -> std::string;
 
     auto updateCiaDebuggerSnapshot(DebuggerSnapshot& snap) -> void;
     auto updateMemorySnapshot(DebuggerSnapshot& snap) -> void;
 
     auto logCpu(uint16_t addr, uint8_t data, bool write, bool nextOp) -> void;
     auto cropFrame( Emulator::Interface::CropType type, Emulator::Interface::Crop _crop ) -> void;
+
+    auto peekMemoryByIdent(uint16_t addr, unsigned id) -> uint8_t;
 };
 
 }

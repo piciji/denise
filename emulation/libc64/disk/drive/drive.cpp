@@ -11,6 +11,7 @@
 #include "serialization.cpp"
 #include "../../system/firmware.h"
 #include "../../../tools/gcr.h"
+#include "../../../tools/memory.h"
 
 // for 300 rpm = 5 rotation / sec = 16.000.000 / 5
 
@@ -256,33 +257,36 @@ auto Drive::cpuWrite(uint16_t addr, uint8_t data) -> void {
     }
 }
 
-auto Drive::cpuRead(uint16_t addr) -> uint8_t {
+template<bool peek> auto Drive::cpuRead(uint16_t addr) -> uint8_t {
     if (operation & DRIVE_MODE_154x) {
-        SYNC_1541
+        if constexpr (!peek) {
+            SYNC_1541
+        }
+
         if (extendedMemoryMap) {
             if (speeder == 4) {
                 if ((addr & 0xf000) == 0x5000) {
-                    return pia.read( addr & 3 );
+                    return peek ? pia.peek( addr & 3 ) : pia.read( addr & 3 );
                 }
             } else if (speeder == 6) {
-                if (profDosAutoSpeed)
+                if (!peek & profDosAutoSpeed)
                     profDosAutoClockControl(addr);
 
                 if((addr & 0xe000) == 0x8000) {
                     return readProfDosEncoderV1(addr);
                 }
-                else if((addr & 0xe000) == 0xe000) {
+                if((addr & 0xe000) == 0xe000) {
                     return this->romExpanded[ (addr & 0x1fff) & romExpandedMask];
                 }
 
             } else if (speeder == 7) {
-                if (profDosAutoSpeed)
+                if (!peek & profDosAutoSpeed)
                     profDosAutoClockControl(addr);
 
                 if((addr & 0xe000) == 0x6000) {
                     return readProfDosEncoder(addr);
                 }
-                else if((addr & 0xe000) == 0xe000) {
+                if((addr & 0xe000) == 0xe000) {
                     return this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask ];
                 }
             } else if (speeder == 10) {
@@ -290,8 +294,8 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                     addr = (addr >> 2) & 3;
 
                     if (addr & 2)
-                        return pia.read( addr );
-                    else if ((addr & 1) == 0) {
+                        return peek ? pia.peek( addr ) : pia.read( addr );
+                    if ((addr & 1) == 0) {
                         return prologic2Mhz;
                     }
                 }
@@ -299,10 +303,10 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                 if (((addr & 0xf000) == 0xa000) || ((addr & 0xf800) == 0xb000)) { // a0 - b7
                     return this->romExpanded[ (addr & 0x1fff) & romExpandedMask ];
                 }
-                else if (((addr & 0xf000) == 0xe000) || ((addr & 0xf800) == 0xf000)) { // e0 - f7
+                if (((addr & 0xf000) == 0xe000) || ((addr & 0xf800) == 0xf000)) { // e0 - f7
                     return this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask];
                 }
-                else if ((addr & 0xf800) == 0xf800) {
+                if ((addr & 0xf800) == 0xf800) {
                     if (prologic40TrackMode)
                         return this->romExpanded[ (0x1800 + (addr & 0x7ff)) & romExpandedMask];
 
@@ -314,11 +318,11 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                     out = this->romExpanded[ (addr & 0x1fff) & romExpandedMask ];
                     return (out & ~0xa0) | ((out & 0x20) << 2) | ((out & 0x80) >> 2);
                 }
-                else if (((addr & 0xf000) == 0xe000) || ((addr & 0xf800) == 0xf000)) { // e0 - f7
+                if (((addr & 0xf000) == 0xe000) || ((addr & 0xf800) == 0xf000)) { // e0 - f7
                     out = this->romExpanded[ (0x2000 | (addr & 0x1fff)) & romExpandedMask];
                     return (out & ~0xa0) | ((out & 0x20) << 2) | ((out & 0x80) >> 2);
                 }
-                else if ((addr & 0xf800) == 0xf800) {
+                if ((addr & 0xf800) == 0xf800) {
                     if (prologic40TrackMode) {
                         out = this->romExpanded[(0x1800 + (addr & 0x7ff)) & romExpandedMask];
                         return (out & ~0xa0) | ((out & 0x20) << 2) | ((out & 0x80) >> 2);
@@ -332,7 +336,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                 if (turboTransVisible & 2) {
                     if ((addr & 0xf800) == 0x6800) {
                         return turboTrans[(turboTransPage << 10) | (addr & 0x3ff)];
-                    } else if ((addr & 0xf800) == 0x7000) {
+                    } if ((addr & 0xf800) == 0x7000) {
                         return turboTrans[ 0x40000 | ((turboTransPage << 10) | (addr & 0x3ff))];
                     }
                 }
@@ -340,11 +344,11 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                 if (turboTransVisible & 1) {
                     if ((addr & 0xe000) == 0xc000) {
                         return this->romExpanded[ (addr & 0x1fff) & romExpandedMask];
-                    } else if ((addr & 0xe000) == 0x8000) {
+                    } if ((addr & 0xe000) == 0x8000) {
                         return this->romExpanded[ (0x4000 | (addr & 0x1fff)) & romExpandedMask];
-                    } else if ((addr & 0xe000) == 0xe000) {
+                    } if ((addr & 0xe000) == 0xe000) {
                         return this->romExpanded[ (0x6000 | (addr & 0x1fff)) & romExpandedMask];
-                    } else if ((addr & 0xe000) == 0xa000) {
+                    } if ((addr & 0xe000) == 0xa000) {
                         if (expandMemory & (uint8_t) ExpandedMemMode::MA0)
                             return this->ramA0ToBF[addr & 0x1fff];
 
@@ -366,37 +370,39 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
 
             if ((expandMemory & (uint8_t) ExpandedMemMode::M80) && ((addr & 0xe000) == 0x8000))
                 return this->ram80To9F[addr & 0x1fff];
-            else if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && ((addr & 0xe000) == 0x4000))
+            if ((expandMemory & (uint8_t) ExpandedMemMode::M40) && ((addr & 0xe000) == 0x4000))
                 return this->ram40To5F[addr & 0x1fff];
-            else if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000))
+            if ((expandMemory & (uint8_t) ExpandedMemMode::M60) && ((addr & 0xe000) == 0x6000))
                 return this->ram60To7F[addr & 0x1fff];
-            else if ((expandMemory & (uint8_t) ExpandedMemMode::MA0) && ((addr & 0xe000) == 0xA000))
+            if ((expandMemory & (uint8_t) ExpandedMemMode::MA0) && ((addr & 0xe000) == 0xA000))
                 return this->ramA0ToBF[addr & 0x1fff];
-            else if ((expandMemory & (uint8_t) ExpandedMemMode::M20) && ((addr & 0xe000) == 0x2000))
+            if ((expandMemory & (uint8_t) ExpandedMemMode::M20) && ((addr & 0xe000) == 0x2000))
                 return this->ram20To3F[addr & 0x1fff];
         }
 
         if (addr & 0x8000)
            return rom[addr & romMask];
 
-        else if ((addr & 0x9800) == 0)
+        if ((addr & 0x9800) == 0)
             return ram[addr & 0x7ff];
 
-        else if ((addr & 0x9c00) == 0x1800)
-            return via1.read(addr);
+        if ((addr & 0x9c00) == 0x1800)
+            return peek ? via1.peek(addr) : via1.read(addr);
 
-        else if ((addr & 0x9c00) == 0x1c00)
-            return via2.read(addr);
+        if ((addr & 0x9c00) == 0x1c00)
+            return peek ? via2.peek(addr) : via2.read(addr);
 
         return cpu.dataBus;
     }
 
     if (operation & DRIVE_MODE_157x) {
-        SYNC_1571
+        if constexpr (!peek) {
+            SYNC_1571
+        }
         if (extendedMemoryMap) {
             if (speeder == 5) {
                 if ((addr & 0xf000) == 0x5000) {
-                    return pia.read( addr & 3 );
+                    return peek ? pia.peek( addr & 3 ) : pia.read( addr & 3 );
                 }
             }
             else if (speeder == 8 || speeder == 9) { // profdos R5, R6
@@ -408,7 +414,7 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
                 if (proSpeedControl & (1 | 2 | 0x80)) {
 
                     if ((addr & 0xfff0) == 0x9e20) {
-                        return ciaSpeeder.read(addr);
+                        return peek ? ciaSpeeder.peek(addr) : ciaSpeeder.read(addr);
                     }
 
                     if (proSpeedControl & 0x2) {
@@ -457,22 +463,28 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
             return ram[addr & 0x7ff];
 
         if ((addr & 0xfc00) == 0x1800)
-            return via1.read(addr);
+            return peek ? via1.peek(addr) : via1.read(addr);
 
         if ((addr & 0xfc00) == 0x1c00) {
             // TED line of U6 clears the Byte line in 2 Mhz mode.
             // Line is connected to Chip select of VIA 2. any access of VIA2 clears the line.
-            byteReady = false;
-            return via2.read(addr);
+            if constexpr (peek) {
+                return via2.peek(addr);
+            } else {
+                byteReady = false;
+                return via2.read(addr);
+            }
         }
         if ((addr & 0xc000) == 0x4000)
-            return cia.read(addr);
+            return peek ? cia.peek(addr) : cia.read(addr);
 
         if ((addr & 0xe000) == 0x2000)
-            return wd1770.read(addr);
+            return peek ? wd1770.peek(addr) : wd1770.read(addr);
 
     } else { // DRIVE_MODE_158x
-        SYNC_1581
+        if constexpr (!peek) {
+            SYNC_1581
+        }
         if (addr & 0x8000)
             return rom[addr & romMask];
 
@@ -480,13 +492,25 @@ auto Drive::cpuRead(uint16_t addr) -> uint8_t {
             return ram[addr & 0x1fff];
 
         if ((addr & 0xf000) == 0x4000)
-            return cia.read(addr);
+            return peek ? cia.peek(addr) : cia.read(addr);
 
         if ((addr & 0xf000) == 0x6000)
-            return wd1770.read(addr);
+            return peek ? wd1770.peek(addr) : wd1770.read(addr);
     }
 
     return cpu.dataBus;
+}
+
+auto Drive::editMemory(uint32_t addr, std::vector<uint16_t> values) -> void {
+    for (int i = 0; i < values.size(); i++) {
+        uint16_t a = (addr + i) & 0xffff;
+        uint8_t v = values[i] & 0xff;
+
+        if (a & 0x8000)
+            rom[a & romMask] = v;
+
+        cpuWrite(a, v);
+    }
 }
 
 Drive::Drive(uint8_t number, System* system, IecBus& iecBus, Emulator::Interface::Media* media ) :
@@ -534,18 +558,8 @@ structure(system, this) {
     ram80To9F = new uint8_t[ 8 * 1024 ];
     ramA0ToBF = new uint8_t[ 8 * 1024 ];
 
-    rom1541II = (uint8_t*)Firmware::drive1541IIRom;
-    rom1541 = (uint8_t*)Firmware::drive1541Rom;
-    rom1541C = (uint8_t*)Firmware::drive1541CRom;
-    rom1571 = (uint8_t*)Firmware::drive1571Rom;
-    rom1570 = (uint8_t*)Firmware::drive1570Rom;
-    rom1581 = (uint8_t*)Firmware::drive1581Rom;
     rom1541IISize = sizeof( Firmware::drive1541IIRom );
-    rom1541Size = sizeof( Firmware::drive1541Rom );
-    rom1541CSize = sizeof( Firmware::drive1541CRom );
-    rom1571Size = sizeof( Firmware::drive1571Rom );
-    rom1570Size = sizeof( Firmware::drive1570Rom );
-    rom1581Size = sizeof( Firmware::drive1581Rom );
+    Emulator::copyMemory<uint8_t>( rom1541II, rom1541IISize, (uint8_t*)Firmware::drive1541IIRom, rom1541IISize );
 
     rom = rom1541II;
     romMask = rom1541IISize - 1;
@@ -595,6 +609,10 @@ structure(system, this) {
         return out;
     };
 
+    pia.peekPort = [this, system]( Emulator::Pia::Port port ) {
+        return pia.readPort (port);
+    };
+
     pia.writePort = [this]( Emulator::Pia::Port port, uint8_t data ) {
         // nothing todo here, because CA(B)2 is triggered and port value is latched on pins
     };
@@ -617,6 +635,23 @@ structure(system, this) {
                 return lines->iob;
 
             uint8_t out = system->readParallelWithHandshake();
+
+            for (auto drive : system->iecBus.drivesEnabled) {
+                out &= drive->ciaSpeeder.lines.iob;
+            }
+
+            return out;
+        }
+
+        return lines->ioa;
+    };
+
+    ciaSpeeder.peekPort = [this, system]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+        if ( port == Cia<MOS_8520>::PORTB ) {
+            if (!system->secondDriveCable.parallelUse )
+                return lines->iob;
+
+            uint8_t out = system->readParallel();
 
             for (auto drive : system->iecBus.drivesEnabled) {
                 out &= drive->ciaSpeeder.lines.iob;
@@ -704,6 +739,40 @@ structure(system, this) {
             out = this->number << 3;
 
            if (!motorOn) // RDY: todo: check for minimum delay when motor switching off (like Amiga)
+                out |= 2;
+            if (!dskChange) // DSK CHANGE: todo: check for minimum delay in case of stepping too fast after inserting disk (like Amiga)
+                out |= 0x80;
+
+            out = (lines->pra & lines->ddra) | (out & ~lines->ddra);
+            return out;
+        }
+
+        return lines->ioa;
+    };
+
+    cia.peekPort = [this, system]( Cia<MOS_8520>::Port port, Cia<MOS_8520>::Lines* lines ) {
+        uint8_t out;
+        if ( port == Cia<MOS_8520>::PORTB ) {
+
+            if (operation & DRIVE_MODE_158x)
+                return (uint8_t)( (((lines->iob & 0x1a) | this->iecBus.readPort()) ^ 0x85) | (writeProtected ? 0 : 0x40) );
+
+            if (!system->secondDriveCable.parallelUse || (operation & (DRIVE_HAS_PIA | DRIVE_HAS_EXTRA_CIA)) )
+                return lines->iob;
+
+            out = system->readParallel();
+
+            for (auto drive : system->iecBus.drivesEnabled) {
+                out &= drive->cia.lines.iob;
+            }
+
+            return out;
+        }
+
+        if (operation & DRIVE_MODE_158x) {
+            out = this->number << 3;
+
+            if (!motorOn) // RDY: todo: check for minimum delay when motor switching off (like Amiga)
                 out |= 2;
             if (!dskChange) // DSK CHANGE: todo: check for minimum delay in case of stepping too fast after inserting disk (like Amiga)
                 out |= 0x80;
@@ -841,6 +910,10 @@ structure(system, this) {
 
         return lines->ioa;
     };
+
+    via1.peekPort = [system, this]( Via::Port port, Via::Lines* lines ) {
+        return via1.readPort( port, lines );
+    };
     
     via2.writePort = [this, system]( Via::Port port, Via::Lines* lines ) {
         
@@ -918,6 +991,10 @@ structure(system, this) {
 
         // port A
         return (latchedByte & ~lines->ddra) | ( lines->pra & lines->ddra );
+    };
+
+    via2.peekPort = [system, this]( Via::Port port, Via::Lines* lines ) {
+        return via2.readPort( port, lines );
     };
     
     via2.ca2Out = [this]( bool direction ) {
@@ -1150,53 +1227,45 @@ auto Drive::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
                 data = (uint8_t*) Firmware::drive1541IIRom;
                 size = sizeof( Firmware::drive1541IIRom );
             }
-
-            rom1541II = data;
-            rom1541IISize = size;
+            Emulator::copyMemory<uint8_t>( rom1541II, rom1541IISize, data, size );
             break;
         case Interface::FirmwareIdVC1541:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1541Rom;
                 size = sizeof( Firmware::drive1541Rom );
             }
-            rom1541 = data;
-            rom1541Size = size;
+            Emulator::copyMemory<uint8_t>( rom1541, rom1541Size, data, size );
             break;
         case Interface::FirmwareIdVC1541C:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1541CRom;
                 size = sizeof( Firmware::drive1541CRom );
             }
-            rom1541C = data;
-            rom1541CSize = size;
+            Emulator::copyMemory<uint8_t>( rom1541C, rom1541CSize, data, size );
             break;
         case Interface::FirmwareIdVC1571:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1571Rom;
                 size = sizeof( Firmware::drive1571Rom );
             }
-            rom1571 = data;
-            rom1571Size = size;
+            Emulator::copyMemory<uint8_t>( rom1571, rom1571Size, data, size );
             break;
         case Interface::FirmwareIdVC1570:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1570Rom;
                 size = sizeof( Firmware::drive1570Rom );
             }
-            rom1570 = data;
-            rom1570Size = size;
+            Emulator::copyMemory<uint8_t>( rom1570, rom1570Size, data, size );
             break;
         case Interface::FirmwareIdVC1581:
             if (!data) {
                 data = (uint8_t*) Firmware::drive1581Rom;
                 size = sizeof( Firmware::drive1581Rom );
             }
-            rom1581 = data;
-            rom1581Size = size;
+            Emulator::copyMemory<uint8_t>( rom1581, rom1581Size, data, size );
             break;
         case Interface::FirmwareIdExpanded:
-            romExpanded = data;
-            romExpandedMask = size ? (size - 1) : 0;
+            Emulator::copyMemory<uint8_t>( romExtra, romExtraSize, data, size );
             break;
     }
 
@@ -1465,7 +1534,15 @@ auto Drive::setFirmwareByType( ) -> void {
             break;
     }
 
-    if (!romExpanded) {
+    // if (!romExpanded) {
+    //     romExpanded = rom;
+    //     romExpandedMask = romMask;
+    // }
+
+    if (romExtra && romExtraSize) {
+        romExpanded = romExtra;
+        romExpandedMask = romExtraSize - 1;
+    } else {
         romExpanded = rom;
         romExpandedMask = romMask;
     }
@@ -1503,5 +1580,8 @@ auto Drive::setSpeeder(uint8_t speeder) -> void {
 auto Drive::hide() -> void {
     hidden = true;
 }
+
+template auto Drive::cpuRead<false>(uint16_t addr) -> uint8_t;
+template auto Drive::cpuRead<true>(uint16_t addr) -> uint8_t;
 
 }

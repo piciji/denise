@@ -58,6 +58,22 @@ auto WD1770::read(uint16_t address) -> uint8_t {
     _unreachable
 }
 
+auto WD1770::peek(uint16_t address) -> uint8_t {
+
+    switch (address & 3) {
+        case 0:
+            return status;
+        case 1:
+            return trackReg;
+        case 2:
+            return sectorReg;
+        case 3:
+            return dataReg;
+    }
+
+    _unreachable
+}
+
 #define SET_TYPE(_type, _ident) \
     /*system->interface->log("type "#_type" "#_ident);*/ \
     commandType = _type;        \

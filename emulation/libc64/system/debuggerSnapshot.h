@@ -40,6 +40,16 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     uint8_t lineCycles;
 
     struct {
+        uint16_t regA;
+        uint16_t regX;
+        uint16_t regY;
+        uint16_t regS;
+        uint16_t pc;
+        uint32_t pcEdge;
+        uint8_t flags;
+    } drives[4];
+
+    struct {
         struct {
             uint8_t data[0x3fff];
             unsigned pos = 0;
@@ -156,6 +166,8 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     {14, "C"}, {15, "Z"}, {16, "I"}, {17, "D"},
     {18, "B"}, {19, "V"}, {20, "N"},
     {100, "MEM:"}, {101, "CPU:"},
+    {102, "DRIVE8:"}, {103, "DRIVE9:"},
+    {104, "DRIVE10:"},{105, "DRIVE11:"},
     };
 
     constexpr static Emulator::Interface::DebuggerIdent breakConditionsSCPU[] {
@@ -167,6 +179,8 @@ struct DebuggerSnapshot : Emulator::Interface::DebuggerSnapshot {
     {20, "C"}, {21, "Z"}, {22, "I"}, {23, "D"},
     {24, "X"}, {25, "M"}, {26, "V"}, {26, "N"},
     {100, "C64RAM:"}, {101, "CPU:"},
+    {102, "DRIVE8:"}, {103, "DRIVE9:"},
+    {104, "DRIVE10:"},{105, "DRIVE11:"},
     };
 
     constexpr static Emulator::Interface::DebuggerIdent CiaPorts[2][2][8] = {

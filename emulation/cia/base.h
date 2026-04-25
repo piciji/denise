@@ -29,6 +29,7 @@ struct Base {
     } lines;
 	    
     std::function<uint8_t ( Port port, Lines* lines )> readPort;
+    std::function<uint8_t ( Port port, Lines* lines )> peekPort;
     std::function<void ( Port port, Lines* lines )> writePort;
 	/**
 	 * send shifted out bit to external device 

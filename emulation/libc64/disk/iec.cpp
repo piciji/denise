@@ -151,7 +151,7 @@ auto IecBus::updateIdleState() -> void {
 auto IecBus::run() -> void {
     Drive* useDrive;
     
-    while (1) {
+    while (true) {
         // we have to sort enabled drives. first run the drives most behind the c64,
         // so a possible read/write to iec bus is executed at the right order.
         // second when more drives execute same time a possible read should happen
@@ -239,7 +239,7 @@ template<bool ciaAccess> auto IecBus::syncDrives( int direction ) -> bool {
     if ( ciaAccess || !useThread )
         run();
     else
-        ready.store(1); // run concurrent
+        ready.store(true); // run concurrent
 
     return true;
 }
@@ -528,7 +528,7 @@ auto IecBus::getStepperSeekTime( ) -> unsigned {
     
 auto IecBus::setFirmware(unsigned typeId, uint8_t* data, unsigned size) -> void {
     
-    for( auto drive : drives )
+    for( auto drive : drivesEnabled )
         drive->setFirmware( typeId, data, size );
 }
 
@@ -587,6 +587,65 @@ auto IecBus::selectListing( Emulator::Interface::Media* media, unsigned pos, uin
 auto IecBus::selectListing( Emulator::Interface::Media* media,  std::string fileName, uint8_t options ) -> void {
 
     drives[ media->id ]->structure.selectListing( fileName, options );
+}
+
+auto IecBus::debuggerAdd( DebuggerTheme theme, DebuggerAction action, uint16_t addr, uint16_t addrTo) -> void {
+    drives[ getDriveId(theme) ]->cpu.debuggerAdd( action, addr, addrTo );
+}
+
+auto IecBus::debuggerRemove( DebuggerTheme theme, DebuggerAction action, uint16_t addr) -> void {
+    drives[ getDriveId(theme) ]->cpu.debuggerRemove( action, addr );
+}
+
+auto IecBus::debuggerRemove( DebuggerTheme theme, DebuggerAction action) -> void {
+    drives[ getDriveId(theme) ]->cpu.debuggerRemove( action );
+}
+
+auto IecBus::disassemble(DebuggerTheme theme, uint16_t addr, unsigned& bytes) -> std::string {
+    return drives[ getDriveId(theme) ]->cpu.disassemble(addr, bytes);
+}
+
+auto IecBus::disassembleData(DebuggerTheme theme, uint16_t addr, unsigned bytes) -> std::string {
+    return drives[ getDriveId(theme) ]->cpu.disassembleData( addr, bytes );
+}
+
+auto IecBus::disassembleTrace(DebuggerTheme theme, unsigned i, uint8_t& flags) -> std::string {
+    return drives[ getDriveId(theme) ]->cpu.disassembleTrace( i, flags );
+}
+
+auto IecBus::debuggerStepOver(DebuggerTheme theme) -> void {
+    drives[ getDriveId(theme) ]->cpu.debuggerStepOver();
+}
+
+auto IecBus::debuggerStepInto(DebuggerTheme theme) -> void {
+    drives[ getDriveId(theme) ]->cpu.debuggerStepInto();
+}
+
+auto IecBus::debuggerStepOut(DebuggerTheme theme) -> bool {
+    return drives[ getDriveId(theme) ]->cpu.debuggerStepOut();
+}
+
+auto IecBus::updateCpuSnapshot( DebuggerTheme theme, DebuggerSnapshot& snap ) -> void {
+    drives[ getDriveId(theme) ]->cpu.updateSnapshot( snap );
+}
+
+auto IecBus::setWatchpointCondition(DebuggerTheme theme, DebuggerAction action, unsigned addr, unsigned hitCount, unsigned hitCountMode, const std::string& expression, unsigned expressionMode) -> bool {
+    return drives[ getDriveId(theme) ]->cpu.setWatchpointCondition( action, addr, hitCount, hitCountMode, expression, expressionMode );
+}
+
+auto IecBus::editMemory(DebuggerTheme theme, uint32_t addr, std::vector<uint16_t> values) -> void {
+    drives[ getDriveId(theme) ]->editMemory( addr, values );
+}
+
+inline auto IecBus::getDriveId(DebuggerTheme theme) -> unsigned {
+    switch( theme ) {
+        default:
+        case DebuggerTheme::DriveCPU1: return 0;
+        case DebuggerTheme::DriveCPU2: return 1;
+        case DebuggerTheme::DriveCPU3: return 2;
+        case DebuggerTheme::DriveCPU4: return 3;
+    }
+    _unreachable
 }
 
 auto IecBus::wasAutostarted() -> bool {

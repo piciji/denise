@@ -27,23 +27,24 @@
  */
 
 #include <cstdint>
+#include "../../m6510/m65Debugger.h"
 #include "../../../tools/serializer.h"
+#include "../../system/debuggerSnapshot.h"
 
 namespace LIBC64 {
+typedef Emulator::Interface::DebuggerAction DebuggerAction;
+typedef Emulator::Interface::DebuggerTheme DebuggerTheme;
 
 struct Drive;
 struct System;
 
-struct M6502New {
+struct M6502New : M65Debugger {
     M6502New(System* system, Drive* drive) : system(system), drive(drive) {}
 
     System* system;
     Drive* drive;
 
-    enum { Normal = 0, IRQ = 1, Halt = 2, ResetRoutine = 4,
-        WatchPoint = 8, WatchPointWrite = 0x10, BreakPoint = 0x20, ExceptionPoint = 0x40, SoftStop = 0x80, ModifiedCode = 0x100,
-        History = 0x200
-    };
+    enum { Normal = 0, IRQ = 1, Halt = 2, ResetRoutine = 4 };
 
     uint16_t pc;
 
@@ -102,6 +103,16 @@ struct M6502New {
     auto handleSo() -> void;
 
     auto serialize(Emulator::Serializer& s) -> void;
+
+    auto parseExpressionValue(const std::string& input, int& pos) -> uint32_t;
+    auto peek(uint16_t addr) -> uint8_t;
+    auto flagDebugAction(int action, bool state) -> void;
+
+    auto getTheme() -> DebuggerTheme;
+    auto controlBreaks() -> void;
+    auto loadTrace(Emulator::HistoryEntry<uint8_t>& entry) -> void;
+
+    auto updateSnapshot(DebuggerSnapshot& snap) -> void;
 };
 
 }

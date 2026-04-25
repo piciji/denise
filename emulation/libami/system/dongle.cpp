@@ -37,6 +37,20 @@ template<bool CIA2> auto System::dongleCiaRead(Cia<MOS_8520>::Lines* lines, uint
     }
 }
 
+template<bool CIA2> auto System::dongleCiaPeek(Cia<MOS_8520>::Lines* lines, uint8_t& val) -> void {
+    switch(dongle.type) {
+        case DongleBat2:
+            if (CIA2) {
+                if (!dongle.control || (agnus.fallBackCycles(dongle.clock) > 0xe2) ) {
+                    val &= ~0x10;
+                } else
+                    val |= 0x10;
+            }
+            break;
+        default: break;
+    }
+}
+
 template<bool portB> auto System::dongleJoydat(uint16_t& val) -> void {
     switch(dongle.type) {
         case DongleRoboCop3:

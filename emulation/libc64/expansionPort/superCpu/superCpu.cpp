@@ -1697,10 +1697,9 @@ auto SuperCpu::parseExpressionValue(const std::string& input, int& pos) -> uint3
                     uint32_t value = std::strtoul(start, &end, radix);
                     if (start != end) {
                         pos += (end - start);
-                        if (cond.vector == 100)
-                            return system->ram[value & 0xffff];
-
-                        return peekByte( value );
+                        if (cond.vector == 101)
+                            return peekByte( value );
+                        return system->peekMemoryByIdent( value, cond.vector );
                     }
                     return 0;
                 }
@@ -1795,7 +1794,7 @@ auto SuperCpu::debugPointReached(int source, unsigned addr) -> void {
         case SoftStop: action = DebuggerAction::Softstop; break;
         default: return;
     }
-    system->debugPointReached(action, addr);
+    system->debugPointReached(DebuggerTheme::CPU2, action, addr);
 }
 
 }

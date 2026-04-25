@@ -173,6 +173,7 @@
     <ClInclude Include="..\emulation\libc64\interface.h" />
     <ClInclude Include="..\emulation\libc64\m6510\dasmHandler.h" />
     <ClInclude Include="..\emulation\libc64\m6510\m6510.h" />
+    <ClInclude Include="..\emulation\libc64\m6510\m65Debugger.h" />
     <ClInclude Include="..\emulation\libc64\m6510\optable.h" />
     <ClInclude Include="..\emulation\libc64\prg\prg.h" />
     <ClInclude Include="..\emulation\libc64\sid\sid.h" />
@@ -270,7 +271,6 @@
     <ClInclude Include="..\program\config\slider.h" />
     <ClInclude Include="..\program\config\sliderAlt.h" />
     <ClInclude Include="..\program\debugger\agnusDebugger.h" />
-    <ClInclude Include="..\program\debugger\audioDebugger.h" />
     <ClInclude Include="..\program\debugger\blitterDebugger.h" />
     <ClInclude Include="..\program\debugger\ciaDebugger.h" />
     <ClInclude Include="..\program\debugger\conditionViewDebugger.h" />
@@ -282,6 +282,7 @@
     <ClInclude Include="..\program\debugger\memScpuDebugger.h" />
     <ClInclude Include="..\program\debugger\paulaDebugger.h" />
     <ClInclude Include="..\program\debugger\scpuDebugger.h" />
+    <ClInclude Include="..\program\debugger\sidDebugger.h" />
     <ClInclude Include="..\program\debugger\videoDebugger.h" />
     <ClInclude Include="..\program\debugger\watcherHelper.h" />
     <ClInclude Include="..\program\emuconfig\config.h" />
@@ -1112,6 +1113,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)_c64</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\emulation\libc64\m6510\m6510.cpp" />
+    <ClCompile Include="..\emulation\libc64\m6510\m65Debugger.cpp" />
     <ClCompile Include="..\emulation\libc64\m6510\opcodes.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -1697,7 +1699,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|win32'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\program\debugger\agnusDebugger.cpp" />
-    <ClCompile Include="..\program\debugger\audioDebugger.cpp" />
     <ClCompile Include="..\program\debugger\blitterDebugger.cpp" />
     <ClCompile Include="..\program\debugger\ciaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\conditionViewDebugger.cpp" />
@@ -1707,6 +1708,7 @@
     <ClCompile Include="..\program\debugger\dmaDebugger.cpp" />
     <ClCompile Include="..\program\debugger\memDebugger.cpp" />
     <ClCompile Include="..\program\debugger\paulaDebugger.cpp" />
+    <ClCompile Include="..\program\debugger\sidDebugger.cpp" />
     <ClCompile Include="..\program\debugger\videoDebugger.cpp" />
     <ClCompile Include="..\program\debugger\watcherHelper.cpp" />
     <ClCompile Include="..\program\emuconfig\config.cpp">
